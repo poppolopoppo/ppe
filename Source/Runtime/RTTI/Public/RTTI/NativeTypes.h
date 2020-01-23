@@ -169,7 +169,7 @@ bool TBaseTypeTraits<T, _Parent>::BasePromoteCopy(const void* src, const FAtom& 
         Copy(src, dst.Data());
         return true;
     }
-    else if (dst.Traits()->TypeId() == FTypeId(ENativeType::Any)) {
+    else if (dst.IsAny()) {
         AssignCopy(static_cast<FAny*>(dst.Data()), src, *this);
         return true;
     }
@@ -187,7 +187,7 @@ bool TBaseTypeTraits<T, _Parent>::BasePromoteMove(void* src, const FAtom& dst) c
         Move(src, dst.Data());
         return true;
     }
-    else if (dst.Traits()->TypeId() == FTypeId(ENativeType::Any)) {
+    else if (dst.IsAny()) {
         AssignMove(static_cast<FAny*>(dst.Data()), src, *this);
         return true;
     }

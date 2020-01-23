@@ -171,10 +171,10 @@ public:
     FTiti() {}
     virtual ~FTiti() = default;
     RTTI_CLASS_HEADER(, FTiti, PPE::RTTI::FMetaObject);
-    void Proc(int a, float b, const FString& c) { NOOP(a, b, c); }
+    void Proc(int, float, const FString&) { NOOP(); }
     float Id(float f) { return f; }
     float IdDeprecated(float f) { return f; }
-    void ProcConst(int a, float b, const FString& c) const { NOOP(a, b, c); }
+    void ProcConst(int, float, const FString&) const { NOOP(); }
     int Getter() { return 42; }
     int GetterConst() const { return 69;  }
     FString Func(float f) { return ToString(f); }
@@ -498,9 +498,9 @@ static NO_INLINE void TestRTTI_() {
 //----------------------------------------------------------------------------
 namespace RTTI {
 void RTTI_UnitTests() {
-    LOG(RTTI_UnitTest, Debug, L"begin unit tests");
+    LOG_DIRECT(RTTI_UnitTest, Debug, L"begin unit tests");
     TestRTTI_();
-    LOG(RTTI_UnitTest, Debug, L"end unit tests");
+    LOG_DIRECT(RTTI_UnitTest, Debug, L"end unit tests");
 }
 } //!namespace RTTI
 //----------------------------------------------------------------------------

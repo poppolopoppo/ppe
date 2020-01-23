@@ -10,6 +10,7 @@
 #include "RTTI/NativeTypes.h"
 #include "RTTI/Typedefs.h"
 
+#include "HAL/PlatformHash.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/String.h"
@@ -18,38 +19,31 @@
 #include "Memory/HashFunctions.h"
 #include "Memory/MemoryView.h"
 
-#include <intrin.h> // _mm_crc32_u32
-
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Using _mm_crc32_u32() to be platform agnostic !
+// Using FPlatformHash::CRC32() to be platform agnostic !
 // This is very important since we want this id to be stable across all platforms
 //----------------------------------------------------------------------------
 FTypeId MakeTupleTypeId(const TMemoryView<const PTypeTraits>& elements) {
     STATIC_ASSERT(sizeof(FTypeId) == sizeof(u32));
-    u32 h = 0xFFFFFFFF;
-    h = ::_mm_crc32_u32(h, u32(ETypeFlags::Tuple));
 
+    u32 h = u32(ETypeFlags::Tuple);
     foreachitem(it, elements)
-        h = ::_mm_crc32_u32(h, (*it)->TypeId());
+        h = FPlatformHash::CRC32((*it)->TypeId(), h);
 
     return FTypeId(h);
 }
 //----------------------------------------------------------------------------
 FTypeId MakeListTypeId(const PTypeTraits& value) {
-    u32 h = 0xFFFFFFFFul;
-    h = ::_mm_crc32_u32(h, u32(ETypeFlags::List));
-    return ::_mm_crc32_u32(h, value->TypeId());
+    return FPlatformHash::CRC32(u32(ETypeFlags::List), value->TypeId());
 }
 //----------------------------------------------------------------------------
 FTypeId MakeDicoTypeId(const PTypeTraits& key, const PTypeTraits& value) {
-    u32 h = 0xFFFFFFFFul;
-    h = ::_mm_crc32_u32(h, u32(ETypeFlags::Dico));
-    h = ::_mm_crc32_u32(h, key->TypeId());
-    return ::_mm_crc32_u32(h, value->TypeId());
+    return FPlatformHash::CRC32(u32(ETypeFlags::Dico),
+        FPlatformHash::CRC32(key->TypeId(), value->TypeId()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

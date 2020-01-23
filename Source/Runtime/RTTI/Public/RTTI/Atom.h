@@ -24,10 +24,39 @@ public:
     void* Data() const { return _data; }
     const PTypeTraits& Traits() const { return _traits; }
 
-    void* Cast(const PTypeTraits& to) const {
-        Assert(_data);
-        return _traits->Cast(_data, to);
-    }
+    void* Cast(const PTypeTraits& to) const;
+
+    FTypeId TypeId() const { return _traits->TypeId(); }
+    ETypeFlags TypeFlags() const { return _traits->TypeFlags(); }
+    FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
+    FStringView TypeName() const { return _traits->TypeName(); }
+    size_t SizeInBytes() const { return _traits->SizeInBytes(); }
+    FNamedTypeInfos NamedTypeInfos() const { return _traits->NamedTypeInfos(); }
+
+    bool IsScalar() const { return (_traits->TypeFlags() & ETypeFlags::Scalar); }
+    bool IsTuple() const { return (_traits->TypeFlags() & ETypeFlags::Tuple); }
+    bool IsList() const { return (_traits->TypeFlags() & ETypeFlags::List); }
+    bool IsDico() const { return (_traits->TypeFlags() & ETypeFlags::Dico); }
+    bool IsEnum() const { return (_traits->TypeFlags() & ETypeFlags::Enum); }
+    bool IsObject() const { return (_traits->TypeFlags() & ETypeFlags::Object); }
+    bool IsNative() const { return (_traits->TypeFlags() & ETypeFlags::Native); }
+    bool IsPOD() const { return (_traits->TypeFlags() & ETypeFlags::POD); }
+    bool IsTriviallyDestructible() const { return (_traits->TypeFlags() & ETypeFlags::TriviallyDestructible); }
+
+    bool IsAny() const;
+
+    bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
+    void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
+
+    bool Equals(const FAtom& other) const;
+    void Copy(const FAtom& dst) const;
+    void Move(const FAtom& dst);
+
+    bool DeepEquals(const FAtom& other) const;
+    bool DeepCopy(const FAtom& dst) const;
+
+    bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(_data, dst); }
+    bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
 
     template <typename T>
     T& FlatData() const {
@@ -59,57 +88,6 @@ public:
     const T* TypedConstDataIFP() const {
         return TypedDataIFP<T>();
     }
-
-    FTypeId TypeId() const { return _traits->TypeId(); }
-    ETypeFlags TypeFlags() const { return _traits->TypeFlags(); }
-    FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
-    FStringView TypeName() const { return _traits->TypeName(); }
-    size_t SizeInBytes() const { return _traits->SizeInBytes(); }
-    FNamedTypeInfos NamedTypeInfos() const { return _traits->NamedTypeInfos(); }
-
-    bool IsScalar() const { return (_traits->TypeFlags() & ETypeFlags::Scalar); }
-    bool IsTuple() const { return (_traits->TypeFlags() & ETypeFlags::Tuple); }
-    bool IsList() const { return (_traits->TypeFlags() & ETypeFlags::List); }
-    bool IsDico() const { return (_traits->TypeFlags() & ETypeFlags::Dico); }
-    bool IsEnum() const { return (_traits->TypeFlags() & ETypeFlags::Enum); }
-    bool IsObject() const { return (_traits->TypeFlags() & ETypeFlags::Object); }
-    bool IsNative() const { return (_traits->TypeFlags() & ETypeFlags::Native); }
-    bool IsPOD() const { return (_traits->TypeFlags() & ETypeFlags::POD); }
-    bool IsTriviallyDestructible() const { return (_traits->TypeFlags() & ETypeFlags::TriviallyDestructible); }
-
-    bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
-    void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
-
-    bool Equals(const FAtom& other) const {
-        return _traits->Equals(*this, other);
-    }
-
-    void Copy(const FAtom& dst) const {
-        Assert(dst && _traits);
-        Assert(*dst.Traits() == *_traits);
-        _traits->Copy(_data, dst.Data());
-    }
-
-    void Move(const FAtom& dst) {
-        Assert(dst && _traits);
-        Assert(*dst.Traits() == *_traits);
-        _traits->Move(_data, dst.Data());
-    }
-
-    bool DeepEquals(const FAtom& other) const {
-        return (_traits == other._traits && _traits->DeepEquals(_data, other._data));
-    }
-
-    bool DeepCopy(const FAtom& dst) const {
-        if (_traits == dst._traits) {
-            _traits->DeepCopy(_data, dst.Data());
-            return true;
-        }
-        return true;
-    }
-
-    bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(_data, dst); }
-    bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
 
     // /!\ slow, obviously
     PPE_RTTI_API FString ToString() const;

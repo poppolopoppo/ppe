@@ -4,6 +4,7 @@
 
 #include "MetaObject.h"
 #include "RTTI/AtomVisitor.h"
+#include "RTTI/NativeTypes.h"
 
 #include "IO/StringBuilder.h"
 
@@ -11,6 +12,44 @@ namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool FAtom::IsAny() const {
+    // used when ENativeType is only fwd declared
+    return (TypeId() == u32(ENativeType::Any));
+}
+//----------------------------------------------------------------------------
+void* FAtom::Cast(const PTypeTraits& to) const {
+    Assert(_data);
+    return _traits->Cast(_data, to);
+}
+//----------------------------------------------------------------------------
+bool FAtom::Equals(const FAtom& other) const {
+    return _traits->Equals(*this, other);
+}
+//----------------------------------------------------------------------------
+void FAtom::Copy(const FAtom& dst) const {
+    Assert(dst && _traits);
+    Assert(*dst.Traits() == *_traits);
+    _traits->Copy(_data, dst.Data());
+}
+//----------------------------------------------------------------------------
+void FAtom::Move(const FAtom& dst) {
+    Assert(dst && _traits);
+    Assert(*dst.Traits() == *_traits);
+    _traits->Move(_data, dst.Data());
+}
+//----------------------------------------------------------------------------
+bool FAtom::DeepEquals(const FAtom& other) const {
+    return (_traits == other._traits && _traits->DeepEquals(_data, other._data));
+}
+//----------------------------------------------------------------------------
+bool FAtom::DeepCopy(const FAtom& dst) const {
+    if (_traits == dst._traits) {
+        _traits->DeepCopy(_data, dst.Data());
+        return true;
+    }
+    return true;
+}
 //----------------------------------------------------------------------------
 FString FAtom::ToString() const {
     FStringBuilder oss;
