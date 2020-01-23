@@ -98,11 +98,11 @@ void FParseList::Clear() {
     _site = { Lexer::FLocation::None(), 0 };
 }
 //----------------------------------------------------------------------------
-void NORETURN FParseList::Error(const FParseResult& result) const {
+NORETURN void FParseList::Error(const FParseResult& result) const {
     Error(result.Error, result.Site);
 }
 //----------------------------------------------------------------------------
-void NORETURN FParseList::Error(const char* what, const Lexer::FSpan& site) const {
+NORETURN void FParseList::Error(const char* what, const Lexer::FSpan& site) const {
     PPE_THROW_IT(FParserException(what, site, nullptr));
 }
 //----------------------------------------------------------------------------

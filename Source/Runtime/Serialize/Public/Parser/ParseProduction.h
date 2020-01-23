@@ -213,7 +213,7 @@ public:
             PPE_STACKMARKER("except");
             FParseResult r = other.TryParse(input, &result);
             if (r)
-                return FParseResult::Failure("excepted parser succeeded", r.Site);
+                return FParseResult::Failure(r.Site);
             else
                 return second(input, result);
         }};

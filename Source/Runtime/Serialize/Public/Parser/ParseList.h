@@ -74,8 +74,8 @@ public:
 
     NODISCARD const FParseMatch* Read();
 
-    void NORETURN Error(const FParseResult& result) const;
-    void NORETURN Error(const char* what, const Lexer::FSpan& site) const;
+    NORETURN void Error(const FParseResult& result) const;
+    NORETURN void Error(const char* what, const Lexer::FSpan& site) const;
 
     void Clear();
 
