@@ -43,7 +43,7 @@ public:
         return QueueAndWaitFor_Dispatch_(clean, deps);
     }
 
-    virtual void WaitForAll() {
+    virtual void WaitForAll() override {
         _pool.RunInWorker([this](ITaskContext& task) {
             _global.JoinAndReset(task);
         });

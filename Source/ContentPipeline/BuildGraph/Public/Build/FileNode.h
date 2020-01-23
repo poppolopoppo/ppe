@@ -25,7 +25,7 @@ public:
     FTimestamp Timestamp() const { return _timestamp; }
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-    virtual void RTTI_VerifyPredicates() const PPE_THROW();
+    virtual void RTTI_VerifyPredicates() const PPE_THROW() override;
 #endif
 
 public: // FBuildNode:
