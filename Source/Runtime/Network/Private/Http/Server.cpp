@@ -24,7 +24,11 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace { static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocketBuffered&& socket); }
+class FHttpServerImpl;
+//----------------------------------------------------------------------------
+namespace {
+static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocketBuffered&& socket);
+} //!namespace
 //----------------------------------------------------------------------------
 class FHttpServerImpl {
 public:

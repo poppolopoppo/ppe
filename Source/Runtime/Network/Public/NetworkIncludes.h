@@ -12,7 +12,7 @@
 #    pragma GCC system_header
 #endif
 
-#ifdef PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
 
 #   ifndef _MSC_VER
 #       error "This source file is intended for Visual Studio"
@@ -27,6 +27,30 @@
 
 #   include "HAL/Windows/LastError.h"
 #   include "HAL/Windows/WindowsPlatformIncludes.h"
+
+using socklen_t = int;
+
+#   define SOCKET_S_ADDR(_ADDR) ((_ADDR).S_un.S_addr)
+
+#elif defined(PLATFORM_POSIX)
+
+#   include "HAL/Linux/Errno.h"
+
+#   include <arpa/inet.h>
+#   include <netdb.h>
+#   include <netinet/in.h>
+#   include <netinet/tcp.h>
+#   include <sys/types.h>
+#   include <sys/socket.h>
+
+#   define SOCKET int
+#   define SOCKET_ERROR (SOCKET(-1))
+#   define SOCKET_S_ADDR(_ADDR) ((_ADDR).s_addr)
+#   define INVALID_SOCKET (SOCKET(-1))
+
+inline int closesocket(SOCKET sock) {
+    return ::close(sock);
+}
 
 #else
 
@@ -48,23 +72,26 @@ namespace {
 STATIC_CONST_INTEGRAL(size_t, MaxRecvLength_, 1024*1024*100);
 STATIC_CONST_INTEGRAL(size_t, MaxSendLength_, 1024*1024*100);
 //----------------------------------------------------------------------------
-STATIC_ASSERT(sizeof(::SOCKET) <= sizeof(void*));
-STATIC_ASSERT(Meta::TIsPod<::SOCKET>::value);
+STATIC_ASSERT(sizeof(SOCKET) <= sizeof(void*));
+STATIC_ASSERT(Meta::TIsPod<SOCKET>::value);
 //----------------------------------------------------------------------------
-constexpr intptr_t PackSocket_(::SOCKET socket) {
+constexpr intptr_t PackSocket_(SOCKET socket) {
     return static_cast<intptr_t>(socket);
 }
 //----------------------------------------------------------------------------
-constexpr ::SOCKET UnpackSocket_(intptr_t handle) {
-    STATIC_ASSERT(sizeof(::SOCKET) <= sizeof(handle));
-    return static_cast<::SOCKET>(handle);
+constexpr SOCKET UnpackSocket_(intptr_t handle) {
+    STATIC_ASSERT(sizeof(SOCKET) <= sizeof(handle));
+    return static_cast<SOCKET>(handle);
 }
 //----------------------------------------------------------------------------
-#if USE_PPE_LOGGER && defined(PLATFORM_WINDOWS)
-#   define LOG_WSALASTERROR(_CONTEXT) \
+#if defined(PLATFORM_WINDOWS)
+#   define LOG_NETWORKERROR(_CONTEXT) \
         LOG(Network, Error, _CONTEXT " failed, WSA last error : {0}", ::PPE::FLastError(::WSAGetLastError()))
+#elif defined(PLATFORM_POSIX)
+#   define LOG_NETWORKERROR(_CONTEXT) \
+        LOG(Network, Error, _CONTEXT " failed, socket last error : {0}", ::PPE::FErrno{})
 #else
-#   define LOG_WSALASTERROR(_CONTEXT) NOOP()
+#   define LOG_NETWORKERROR(_CONTEXT) NOOP()
 #endif
 //----------------------------------------------------------------------------
 } //!namespace

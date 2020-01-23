@@ -2,6 +2,7 @@
 
 #include "Socket/Socket.h"
 
+#include "HAL/PlatformMemory.h"
 #include "NetworkIncludes.h"
 
 // FSocket implementation adapted/updated from C++ DLib
@@ -79,14 +80,14 @@ bool FSocket::Connect() {
 
     ::sockaddr_in local_sa;     // local socket structure
     ::sockaddr_in foreign_sa;   // foreign socket structure
-    ::ZeroMemory(&local_sa, sizeof(sockaddr_in));   // initialize local_sa
-    ::ZeroMemory(&foreign_sa, sizeof(sockaddr_in)); // initialize foreign_sa
+    FPlatformMemory::Memzero(&local_sa, sizeof(sockaddr_in));   // initialize local_sa
+    FPlatformMemory::Memzero(&foreign_sa, sizeof(sockaddr_in)); // initialize foreign_sa
 
-    ::SOCKET sockfd = ::socket(ai_family, SOCK_STREAM, 0);  // get a new socket
+    SOCKET sockfd = ::socket(ai_family, SOCK_STREAM, 0);  // get a new socket
 
     // if socket() returned an error then return OTHER_ERROR
     if (INVALID_SOCKET == sockfd) {
-        LOG_WSALASTERROR(L"socket()");
+        LOG_NETWORKERROR(L"socket()");
         return false;
     }
 
@@ -95,10 +96,10 @@ bool FSocket::Connect() {
     foreign_sa.sin_port = ::htons(checked_cast<::u_short>(_remote.Port()));
 
     // if inet_pton couldn't convert the ip then return an error
-    if (1 != ::inet_pton(ai_family, _remote.Host().c_str(), &foreign_sa.sin_addr.S_un.S_addr) ) {
-        LOG_WSALASTERROR(L"inet_pton()");
+    if (1 != ::inet_pton(ai_family, _remote.Host().c_str(), &SOCKET_S_ADDR(foreign_sa.sin_addr)) ) {
+        LOG_NETWORKERROR(L"inet_pton()");
         if (::closesocket(sockfd))
-            LOG_WSALASTERROR(L"closesocket()");
+            LOG_NETWORKERROR(L"closesocket()");
         return false;
     }
 
@@ -108,17 +109,17 @@ bool FSocket::Connect() {
     // set the local ip
     if (_local.empty()) {
         // if the listener should listen on any IP
-        local_sa.sin_addr.S_un.S_addr = ::htons(INADDR_ANY);
+        SOCKET_S_ADDR(local_sa.sin_addr) = ::htons(INADDR_ANY);
     }
     else {
         Assert(_local.IsIPv4()); // TODO : clearly handle IPv6
 
         // if there is a specific ip to listen on
         // if inet_pton couldn't convert the ip then return an error
-        if (1 != ::inet_pton(ai_family, _local.Host().c_str(), &local_sa.sin_addr.S_un.S_addr) ) {
-            LOG_WSALASTERROR(L"inet_pton()");
+        if (1 != ::inet_pton(ai_family, _local.Host().c_str(), &SOCKET_S_ADDR(local_sa.sin_addr)) ) {
+            LOG_NETWORKERROR(L"inet_pton()");
             if (::closesocket(sockfd))
-                LOG_WSALASTERROR(L"closesocket()");
+                LOG_NETWORKERROR(L"closesocket()");
             return false;
         }
     }
@@ -129,9 +130,9 @@ bool FSocket::Connect() {
     // bind the new socket to the requested local port and local ip
     if (_local.Port() != size_t(EServiceName::Any)) {
         if (SOCKET_ERROR == ::bind(sockfd, reinterpret_cast<sockaddr*>(&local_sa), sizeof(sockaddr_in)) ) {
-            LOG_WSALASTERROR(L"bind()");
+            LOG_NETWORKERROR(L"bind()");
             if (::closesocket(sockfd))
-                LOG_WSALASTERROR(L"closesocket()");
+                LOG_NETWORKERROR(L"closesocket()");
             return false;
         }
     }
@@ -139,7 +140,7 @@ bool FSocket::Connect() {
     // connect the socket
     if (SOCKET_ERROR == ::connect(sockfd, reinterpret_cast<sockaddr*>(&foreign_sa), sizeof(sockaddr_in)) ) {
         if (0 != ::closesocket(sockfd))
-            LOG_WSALASTERROR(L"closesocket()");
+            LOG_NETWORKERROR(L"closesocket()");
         return false;
     }
 
@@ -149,11 +150,11 @@ bool FSocket::Connect() {
     ::sockaddr_in local_info;
     FString used_local_ip;
     if (_local.Port() == size_t(EServiceName::Any)) {
-        int length = sizeof(::sockaddr_in);
+        ::socklen_t length = sizeof(::sockaddr_in);
         if (SOCKET_ERROR == ::getsockname(sockfd, reinterpret_cast<::sockaddr*>(&local_info), &length)) {
-            LOG_WSALASTERROR(L"getsockname()");
+            LOG_NETWORKERROR(L"getsockname()");
             if (::closesocket(sockfd))
-                LOG_WSALASTERROR(L"closesocket()");
+                LOG_NETWORKERROR(L"closesocket()");
             return false;
         }
 
@@ -167,11 +168,11 @@ bool FSocket::Connect() {
     if (_local.empty()) {
         // if local_port is not 0 then we must fill the local_info structure
         if (_local.Port() != 0) {
-            int length = sizeof(sockaddr_in);
+            ::socklen_t length = sizeof(sockaddr_in);
             if (SOCKET_ERROR == ::getsockname(sockfd, reinterpret_cast<::sockaddr*>(&local_info), &length) ) {
-                LOG_WSALASTERROR(L"getsockname()");
+                LOG_NETWORKERROR(L"getsockname()");
                 if (::closesocket(sockfd))
-                    LOG_WSALASTERROR(L"closesocket()");
+                    LOG_NETWORKERROR(L"closesocket()");
                 return false;
             }
         }
@@ -182,9 +183,9 @@ bool FSocket::Connect() {
 
         // check if inet_ntop returned an error
         if (nullptr == real_local_ip) {
-            LOG_WSALASTERROR(L"inet_ntop()");
+            LOG_NETWORKERROR(L"inet_ntop()");
             if (::closesocket(sockfd))
-                LOG_WSALASTERROR(L"closesocket()");
+                LOG_NETWORKERROR(L"closesocket()");
             return false;
         }
 
@@ -200,9 +201,9 @@ bool FSocket::Connect() {
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms740102(v=vs.85).aspx
     int flag_value = 1;
     if (SOCKET_ERROR == ::setsockopt(sockfd, SOL_SOCKET, SO_OOBINLINE, reinterpret_cast<const char*>(&flag_value), sizeof(int)) ) {
-        LOG_WSALASTERROR(L"setsockopt()");
+        LOG_NETWORKERROR(L"setsockopt()");
         if (::closesocket(sockfd))
-            LOG_WSALASTERROR(L"closesocket()");
+            LOG_NETWORKERROR(L"closesocket()");
         return false;
     }
 
@@ -219,7 +220,7 @@ bool FSocket::Connect() {
 bool FSocket::Disconnect(bool gracefully/* = false */) {
     Assert(IsConnected());
 
-    ::SOCKET sockfd = UnpackSocket_(_handle);
+    SOCKET sockfd = UnpackSocket_(_handle);
 
     if (gracefully) {
         // shutdown every outgoing packets
@@ -231,7 +232,7 @@ bool FSocket::Disconnect(bool gracefully/* = false */) {
     }
 
     if (::closesocket(sockfd)) {
-        LOG_WSALASTERROR(L"closesocket()");
+        LOG_NETWORKERROR(L"closesocket()");
         return false;
     }
 
@@ -248,7 +249,7 @@ bool FSocket::DisableNagle() {
     const int status = ::setsockopt(UnpackSocket_(_handle), IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag));
 
     if (SOCKET_ERROR == status) {
-        LOG_WSALASTERROR(L"setsockopt()");
+        LOG_NETWORKERROR(L"setsockopt()");
         return false;
     }
     else {
@@ -259,10 +260,15 @@ bool FSocket::DisableNagle() {
 bool FSocket::ShutdownOutgoing() {
     Assert(IsConnected());
 
-    const int status = ::shutdown(UnpackSocket_(_handle), SD_SEND);
+    const int status = ::shutdown(UnpackSocket_(_handle),
+#if defined(PLATFORM_WINDOWS)
+        SD_SEND);
+#else
+        SHUT_WR);
+#endif
 
     if (SOCKET_ERROR == status) {
-        LOG_WSALASTERROR(L"shutdown()");
+        LOG_NETWORKERROR(L"shutdown()");
         return false;
     }
     else {
@@ -300,7 +306,7 @@ bool FSocket::IsReadable(const FMilliseconds& timeout) const {
 
     // if select error
     if (SOCKET_ERROR == status) {
-        LOG_WSALASTERROR(L"select()");
+        LOG_NETWORKERROR(L"select()");
         return false;
     }
 
@@ -321,7 +327,7 @@ size_t FSocket::Read(const TMemoryView<u8>& rawData, bool block/* = false */) {
     const int status = ::recv(UnpackSocket_(_handle), (char*)rawData.data(), length, flags);
 
     if (SOCKET_ERROR == status) {
-        LOG_WSALASTERROR(L"recv()");
+        LOG_NETWORKERROR(L"recv()");
         return 0;
     }
     else {
@@ -337,7 +343,7 @@ size_t FSocket::Write(const TMemoryView<const u8>& rawData) {
     Assert(!rawData.empty());
     Assert(IsConnected());
 
-    ::SOCKET sockfd = UnpackSocket_(_handle);
+    SOCKET sockfd = UnpackSocket_(_handle);
 
     size_t offset = 0;
     while (offset < rawData.size()) {
@@ -348,7 +354,7 @@ size_t FSocket::Write(const TMemoryView<const u8>& rawData) {
 
         const int status = ::send(sockfd, (const char*)rawData.data() + offset, length, 0);
         if (SOCKET_ERROR == status) {
-            LOG_WSALASTERROR(L"send()");
+            LOG_NETWORKERROR(L"send()");
             return offset;
         }
 
@@ -364,7 +370,7 @@ bool FSocket::SetTimeout(const FMilliseconds& timeout) {
     _timeout = timeout;
 
     if (IsConnected()) {
-        ::SOCKET sockfd = UnpackSocket_(_handle);
+        SOCKET sockfd = UnpackSocket_(_handle);
 
 #ifdef PLATFORM_WINDOWS
         // setup a DWORD in milliseconds

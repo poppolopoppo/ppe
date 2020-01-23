@@ -237,7 +237,7 @@ void FlushDNSCache() {
 bool LocalHostName(FString& hostname) {
     char temp[NI_MAXHOST];
     if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR) {
-        LOG_WSALASTERROR(L"gethostname()");
+        LOG_NETWORKERROR(L"gethostname()");
         return false;
     }
     else {
@@ -346,7 +346,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // if inet_pton couldn't convert ip then return an error
     if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) ) {
-        LOG_WSALASTERROR(L"inet_pton()");
+        LOG_NETWORKERROR(L"inet_pton()");
 #if USE_PPE_NETWORK_DNSCACHE
         FDNSCache_::Get().PutHostnameToIPv4(ip, FStringView());
 #endif
@@ -356,7 +356,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
     char hostinfo[NI_MAXHOST];
     char servInfo[NI_MAXSERV];
 
-    const DWORD ret = ::getnameinfo(
+    const int ret = ::getnameinfo(
         (struct sockaddr *)&sa, sizeof(sa),
         hostinfo, NI_MAXHOST,
         servInfo, NI_MAXSERV,
@@ -364,7 +364,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // check if gethostbyaddr returned an error
     if (0 != ret) {
-        LOG_WSALASTERROR(L"getnameinfo()");
+        LOG_NETWORKERROR(L"getnameinfo()");
 #if USE_PPE_NETWORK_DNSCACHE
         FDNSCache_::Get().PutHostnameToIPv4(ip, FStringView());
 #endif
