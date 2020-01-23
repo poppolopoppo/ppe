@@ -41,7 +41,7 @@ bool FVirtualFileSystem::ReadAll(const FFilename& filename, TRawStorage<T, _Allo
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TRawStorage<T, _Allocator>& storage, EAccessPolicy policy /* = EAccessPolicy::None */) {
-    return WriteAll(filename, storage.MakeConstView().Cast<const u8>(), policy);
+    return WriteAll(filename, storage.MakeConstView().template Cast<const u8>(), policy);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -7,11 +7,12 @@
 #include "VirtualFileSystemTrie.h"
 
 #include "Container/RawStorage.h"
+#include "HAL/PlatformTime.h"
 #include "IO/FileSystem.h"
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
-#include "HAL/PlatformTime.h"
+#include "Time/DateTime.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -21,13 +22,11 @@ FBasename FVirtualFileSystem::TemporaryBasename(const FWStringView& prefix, cons
     Assert(not prefix.empty());
     Assert(not ext.empty());
 
-    u32 year, mon, mday, day, hour, min, sec, msec;
-    FPlatformTime::UtcTime(year, mon, mday, day, hour, min, sec, msec);
-
+    const FDateTime dt = FDateTime::Now();
     STACKLOCAL_WTEXTWRITER(buffer, FileSystem::MaxPathLength);
-    Format(buffer, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}_{7}{8}",
+    Format(buffer, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}_{7}",
         prefix,
-        year, mon, mday, hour, min, sec, msec,
+        dt.Year, dt.Month, dt.Day, dt.Hours, dt.Minutes, dt.Seconds,
         ext );
 
     return FBasename(buffer.Written());
@@ -37,13 +36,11 @@ FFilename FVirtualFileSystem::TemporaryFilename(const FWStringView& prefix, cons
     Assert(not prefix.empty());
     Assert(not ext.empty());
 
-    u32 year, mon, mday, day, hour, min, sec, msec;
-    FPlatformTime::UtcTime(year, mon, mday, day, hour, min, sec, msec);
-
+    const FDateTime dt = FDateTime::Now();
     STACKLOCAL_WTEXTWRITER(buffer, FileSystem::MaxPathLength);
-    Format(buffer, L"Tmp:/{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}_{7}{8}",
+    Format(buffer, L"Tmp:/{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}_{7}",
         prefix,
-        year, mon, mday, hour, min, sec, msec,
+        dt.Year, dt.Month, dt.Day, dt.Hours, dt.Minutes, dt.Seconds,
         ext );
 
     return FFilename(buffer.Written());
