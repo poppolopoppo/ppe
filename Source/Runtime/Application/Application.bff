@@ -10,5 +10,8 @@
     {
     }
     .UnityNumFiles = 2 // generated
+    // SDL support needed on Linux:
+    .ProjectCompilerOptions_Linux32 = ' -lsdl'
+    .ProjectCompilerOptions_Linux64 = .ProjectCompilerOptions_Linux32
     #include "$BuildPath$/Templates/Module.bff"
 }
