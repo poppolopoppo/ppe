@@ -16,7 +16,7 @@ module Build
         def facet()
             if @memoized.nil?
                 @memoized = Facet.new
-                @memoized + @platform.facet + @config.facet + @compiler.facet
+                @memoized << @platform.facet << @config.facet << @compiler.facet
 
                 apply_decorator(@memoized, self)
 
@@ -43,17 +43,17 @@ module Build
         end
     end #~ Environment
 
-    def self.make_environment(targetModule, compiler, platformsModule, configsModule)
+    def make_environment(compiler, platformsModule, configsModule)
         all = []
         platformsModule.const_get(:ALL).each do |platform|
             configsModule.const_get(:ALL).each do |config|
                 name = "#{compiler.name}_#{platform.name}_#{config.name}"
                 env = Environment.new(name, platform, config, compiler)
-                targetModule.const_set(name.to_sym, env)
+                self.const_set(name.to_sym, env)
                 all << env
             end
         end
-        targetModule.const_set(:ALL, all)
+        self.const_set(:Environments, all)
     end
 
 end #~ Build

@@ -8,8 +8,8 @@ module Build
         def initialize() @data = [] end
         def empty?() @data.empty? end
         def &(value) @data.include?(value) end
-        def +(other) @data.concat(other.data); @data.uniq!; self end
-        def -(other) @data.delete_if{|x| other.include?(x) }; self end
+        def <<(other) @data.concat(other.data); @data.uniq!; self end
+        def >>(other) @data.delete_if{|x| other.include?(x) }; self end
         def ==(other) @data.sort == other.data.sort end
         def append(value)
             case value
@@ -42,21 +42,32 @@ module Build
             :includePath,
             :library,
             :libraryPath,
+            :analysisOption,
             :preprocessorOption,
             :compilerOption,
             :linkerOption,
             :tag ]
+
         ATTRS = SETS.collect{|x| ('@'<<x.to_s<<'s').to_sym }
         attr_reader(*SETS.collect{|x| (x.to_s<<'s').to_sym })
+
+        SETS.each do |facet|
+            define_method("#{facet}=") do |value|
+                Log.debug "set facet <%s::%s> = '%s'", self, facet, value
+                instance_variable_get("@#{facet}s").append(value)
+            end
+        end
+
         def initialize(options={})
-            ATTRS.each{|facet| self.instance_variable_set(facet, ValueSet.new) }
-            self.set(options)
+            ATTRS.each do |facet|
+                #Log.debug "initialize facet <%s>", facet
+                instance_variable_set(facet, ValueSet.new)
+            end
+            set(options)
         end
         def set(options={})
             options.each do |facet, value|
-                facet = ('@'<<facet.to_s<<'s').to_sym
-                valueSet = self.instance_variable_get(facet)
-                valueSet.append(value)
+                send "#{facet}=", value
             end
             return self
         end
@@ -66,32 +77,35 @@ module Build
             end
             return true
         end
-        def +(other)
+        def <<(other)
             ATTRS.each do |facet|
-                self.instance_variable_get(facet) +
-                    other.instance_variable_get(facet)
+                dst = instance_variable_get(facet)
+                src = other.instance_variable_get(facet)
+                dst << src
             end
             self
         end
-        def -(other)
+        def >>(other)
             ATTRS.each do |facet|
-                self.instance_variable_get(facet) -
-                    other.instance_variable_get(facet)
+                dst = instance_variable_get(facet)
+                src = other.instance_variable_get(facet)
+                dst >> src
             end
             self
         end
         def ==(other)
             ATTRS.each do |facet|
-                return false unless self.instance_variable_get(facet) ==
-                    other.instance_variable_get(facet)
+                lhs = instance_variable_get(facet)
+                rhs = other.instance_variable_get(facet)
+                return false unless lhs == rhs
             end
             return true
         end
         def to_s()
-            "{\n" << ATTRS
+            attrs = ATTRS.clone
                 .delete_if{|x| instance_variable_get(x).empty? }
                 .collect{|x| "\t#{x}: "<<instance_variable_get(x).to_s }
-                .join(",\n") << "\n}"
+            attrs.empty? ? '{}' : "{\n" << attrs.join(",\n") << "\n}"
         end
     end #~ Facet
 
@@ -105,7 +119,7 @@ module Build
         end
         def apply_decorator(output, environment)
             @facets.each do |(filter, facet)|
-                output += facet if filter.call(environment)
+                output << facet if filter.call(environment)
             end
             return self
         end

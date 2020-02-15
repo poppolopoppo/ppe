@@ -21,6 +21,13 @@ module Build
         def parse(opt)
             opt.on(*@opts) { |x| @value = x }
         end
+        def restore(val)
+            Log.debug("restore <%s> option = '%s'", @name, val)
+            @value = val
+        end
+        def to_s()
+            "#{@name}=#{@value}"
+        end
         def self.attach(host, name, description, flag, default, values)
             var = OptionVariable.new("#{host}.#{name}", default, flag, description)
             var.opts << values unless values.nil?
@@ -30,15 +37,15 @@ module Build
         end
     end #~ OptionVariable
 
-    def self.opt_array(name, description, init: [], values: nil)
+    def opt_array(name, description, init: [], values: nil)
         var = OptionVariable.attach(self, name, description, '--'<<name.to_s<<' X,Y,Z', [], values)
         var.opts << Array
         return var
     end
-    def self.opt_value(name, description, init: nil, values: nil)
+    def opt_value(name, description, init: nil, values: nil)
         OptionVariable.attach(self, name, description, '--'<<name.to_s<<' VALUE', nil, values)
     end
-    def self.opt_switch(name, description, init: false)
+    def opt_switch(name, description, init: false)
         OptionVariable.attach(self, name, description, '--[no-]'<<name.to_s, false, nil)
     end
 
@@ -47,17 +54,17 @@ module Build
         vars: []
     }
 
-    def self.persistent_array(name, description, init: [], values: nil)
+    def persistent_array(name, description, init: [], values: nil)
         var = opt_array(name, description, init: init, values: values)
         PersistentConfig[:vars] << var
         return var
     end
-    def self.persistent_value(name, description, init: nil, values: nil)
+    def persistent_value(name, description, init: nil, values: nil)
         var = opt_value(name, description, init: init, values: values)
         PersistentConfig[:vars] << var
         return var
     end
-    def self.persistent_switch(name, description, init: false)
+    def persistent_switch(name, description, init: false)
         var = opt_switch(name, description, init: init)
         PersistentConfig[:vars] << var
         return var
@@ -75,6 +82,9 @@ module Build
             opts.separator ""
             opts.separator "Common options:"
 
+            opts.on_tail("-w PATH", "--workspace PATH", "Set workspace path") do |path|
+                Build.set_workspace_path(path)
+            end
             opts.on_tail("-c FILE", "--config FILE", "Set config file") do |fname|
                 Build.load_options(fname)
                 PersistentConfig[:file] = fname
@@ -90,11 +100,11 @@ module Build
                 Log.verbosity(:debug) if v
             end
             opts.on_tail("--version", "Show build version") do |v|
-                Log.info("Version: #{Build::VERSION}")
+                Log.info("Version: %s", Build::VERSION)
                 exit
             end
             opts.on_tail("-h", "--help", "Show this message") do
-                puts opts
+                Log.raw opts
                 exit
               end
 
@@ -103,7 +113,7 @@ module Build
     end
 
     def self.save_options(dst=PersistentConfig[:file])
-        Log.verbose("save persistent options to '#{dst}'")
+        Log.verbose("save persistent options to '%s'", dst)
         serialized = {}
         PersistentConfig[:vars].each do |var|
             serialized[var.name] = var.value unless var.value.nil?
@@ -114,7 +124,7 @@ module Build
             end
             return true
         rescue Errno::ENOENT
-            Log.warning('failed to save persistent options to '"#{dst}': non writable path ?")
+            Log.warning("failed to save persistent options to '%s': non writable path ?", dst)
         end
     end
 
@@ -124,12 +134,12 @@ module Build
             serialized = YAML.load(File.read(src))
             PersistentConfig[:vars].each do |var|
                 if serialized.key?(var.name)
-                    var.value = serialized[var.name]
+                    var.restore(serialized[var.name])
                 end
             end
             return true
         rescue Errno::ENOENT
-            Log.warning('failed to load persistent options from '"#{src}': file does not exist ?")
+            Log.warning("failed to load persistent options from '%s': file does not exist ?", src)
             return false
         end
     end
