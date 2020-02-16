@@ -14,13 +14,10 @@ require './Shared/Platform.rb'
 require './Utils/Log.rb'
 require './Utils/Options.rb'
 require './Utils/Prerequisite.rb'
+require './Utils/SourceControl.rb'
 
 require 'set'
 require 'pp'
-
-# Build::SharedEnvironments::ALL.each do |env|
-#     Build::Log.info env.name
-# end
 
 Build::SharedConfigurations::Debug.
     define!("_DEBUG").
@@ -84,6 +81,8 @@ END {
     Build::Log.info('total duration: %fs', Time.now - BUILD_STARTED_AT)
 }
 
+Build.init_source_control(provider: :git)
+
 Build::Log.info PPE::Environments.collect{|x| x.name }.join(', ')
 Build::Log.info PPE.all.join(', ')
 Build::Log.clear_pin
@@ -91,3 +90,4 @@ Build::Log.clear_pin
 Build::Log.info PPE::Dummy_x64_Release.expand(PPE::Runtime.VFS)
 Build::Log.info PPE::Dummy_x64_Debug.expand(PPE::Offline.ContentPipeline)
 Build::Log.info PPE.USERPROFILE
+
