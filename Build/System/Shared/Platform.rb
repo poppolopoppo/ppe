@@ -1,24 +1,32 @@
 
-require './Common.rb'
-require './Core/Policy.rb'
+require_once '../Common.rb'
+require_once '../Core/Policy.rb'
 
 module Build
 
     class Platform < Policy
-        attr_reader :target, :os
-        def initialize(name, target, os)
+        attr_reader :arch, :os
+        def initialize(name, arch, os)
             super(name)
-            @target = target
+            @arch = arch
             @os = os
         end
         def intrinsics_supported() Log.error("%s: intrinsics_supported() is not implemented", @name); [] end
+        def customize(facet, env, target)
+            facet.defines << "TARGET_PLATFORM=#{@os}"
+            super(facet, env, target)
+        end
     end #~ Platform
 
     module SharedPlatforms
-        X86 = Platform.new('x86', 'x86', :dummy)
-        X64 = Platform.new('x64', 'x64', :dummy)
-        ARM = Platform.new('arm', 'arm', :dummy)
-        PPC = Platform.new('ppc', 'ppc', :dummy)
+        X86 = Platform.new('x86', :x86, :Dummy).
+            define!('ARCH_X86', 'ARCH_32BIT')
+        X64 = Platform.new('x64', :x64, :Dummy).
+            define!('ARCH_X64', 'ARCH_64BIT')
+        ARM = Platform.new('arm', :arm, :Dummy).
+            define!('ARCH_ARM', 'ARCH_64BIT')
+        PPC = Platform.new('ppc', :ppc, :Dummy).
+            define!('ARCH_PPC', 'ARCH_64BIT')
         ALL = [ X86, X64, ARM, PPC ]
     end #~ SharedPlatforms
 

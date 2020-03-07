@@ -1,8 +1,8 @@
 
-require './Common.rb'
+require_once '../Common.rb'
 
-require './Utils/Options.rb'
-require './Utils/Log.rb'
+require_once '../Utils/Options.rb'
+require_once '../Utils/Log.rb'
 
 module Build
 
@@ -21,31 +21,52 @@ module Build
     public
         def need_cmdline!(*args)
             args.collect!{|x| x =~ /\s/ ? "'#{x}''" : x }
-            result = %{ #{args.join(' ')} }
-            if $?.sucess?
+            result = %x{ #{args.join(' ')} }
+            if $?.success?
                 Log.debug("command succeed: %s -> '%s'", args, result)
-                return result
+                return result.lines.map(&:chomp)
             else
                 Log.verbose("command failed: %s (exit code = %s)", args, $?)
                 return false
             end
         end
         def need_file!(path)
-            if File.exists?(id)
+            if File.exist?(path)
                 Log.debug("found file '%s'", path)
-                return true
+                return path
             else
                 Log.verbose("file does not exists '%s'", path)
                 return false
             end
         end
+        def need_fileset!(*filenames)
+            filenames.each do |path|
+                return false unless need_file!(path)
+            end
+            return filenames.length == 1 ? filenames.first : filenames
+        end
         def need_folder!(path)
-            if Dir.exists?(id)
+            if Dir.exists?(path)
                 Log.debug("found directory '%s'", path)
-                return true
+                return path
             else
                 Log.verbose("directory does not exists '%s'", path)
                 return false
+            end
+        end
+        def need_glob!(pattern, basepath: nil)
+            if basepath.nil?
+                basepath = File.dirname(pattern)
+                pattern = File.basename(pattern)
+            end
+            entries = Dir.glob(pattern, File::FNM_DOTMATCH, base: basepath)
+            unless entries.empty?
+                Log.debug("glob %d entries with pattern '%s'", entries.length, pattern)
+                entries.collect!{ |x| File.join(basepath, x) }
+                return entries
+            else
+                Log.verbose("didn't glob any entry with pattern '%s'", pattern)
+                return []
             end
         end
         def need_envvar!(id)
@@ -63,10 +84,12 @@ module Build
     def make_prerequisite(name, &getter)
         prereq = Prerequisite.new("#{self.name}.#{name}", getter)
         self.class.define_method(name) do
-            return prereq.evaluate!
+            return prereq.available?
         end
-        PersistentConfig[:vars] << prereq
-        return prereq
+        return Build.make_persistent_opt(prereq)
+    end
+    def self.restore_prerequisite(name, value)
+        Build.restore_persistent_opt(name, value)
     end
 
     def import_cmdline(name, *cmdline)
@@ -81,10 +104,22 @@ module Build
     end
     def import_fileset(name, *filenames)
         make_prerequisite(name) do
-            filenames.each do |path|
-                return unless need_file!(path)
+            need_fileset!(*filenames)
+        end
+    end
+    def import_folder(name, path)
+        make_prerequisite(name) do
+            need_folder!(path)
+        end
+    end
+    def import_glob(name, *patterns)
+        make_prerequisite(name) do
+            results = []
+            patterns.each do |pattern|
+                results.concat(need_glob!(pattern))
             end
-            return filenames
+            results.sort!{|a, b| b <=> a } # descending
+            results.empty? ? false : results
         end
     end
 

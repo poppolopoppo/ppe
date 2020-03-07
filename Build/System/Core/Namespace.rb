@@ -1,72 +1,99 @@
 
-require './Common.rb'
+require_once '../Common.rb'
+require_once '../Core/Facet.rb'
 
 module Build
 
-    module Namespace
-        def parent()
-            return @build_parent
+    class Namespace < Policy
+        ALL = {}
+
+        attr_reader :parent, :path, :children
+        def initialize(name, parent: nil)
+            super(name)
+            @all_targets = []
+            @self_targets = []
+            @parent = parent
+            @children = {}
+            if @parent.nil?
+                @path = @name.to_s
+                @root = self
+            else
+                inherits!(@parent)
+                @path = @parent.root? ? @name.to_s : File.join(@parent.path, @name.to_s)
+                @root = @parent
+                loop do
+                    break if @root.root?
+                    @root = @root.parent
+                end
+            end
         end
-        def namespace()
-            return @build_namespace.join('/')
-        end
-        def all()
-            return @build_all
-        end
-        def targets()
-            return @build_targets
-        end
-        def external(name, &block)
-            make_target(name, :external, :static, &block)
-        end
-        def library(name, link: nil, &block)
-            make_target(name, :library, link, &block)
-        end
-        def executable(name, &block)
-            make_target(name, :executable, :static, &block)
-        end
-        def append_target(target)
-            self.all() << target
-            self.parent().append_target(target) if self.parent()
+
+        def root?() @parent.nil? end
+
+        def all() @all_targets end
+        def targets() @self_targets end
+
+        def to_s() @path end
+
+        def external!(name, &cfg) make_target!(name, :external, :static, &cfg) end
+        def library!(name, link: nil, &cfg) make_target!(name, :library, link, &cfg) end
+        def executable!(name, &cfg) make_target!(name, :executable, :static, &cfg) end
+
+        def namespace(name, &block)
+            child = Namespace.new(name, parent: self)
+            ancestor = $Build
+            $Build = child
+            define_singleton_method(name) { child }
+            @children[name] = child
+            child.instance_exec(&block)
+            $Build = ancestor
             return self
         end
-        def make_target(name, type, link, &block)
-            target = Target.new(name, self.namespace(), type, link)
-            self.targets() << target
-            self.append_target(target)
-            Build.const_memoize(self, name) do
-                block.nil? ? target : target.instance_exec(&block)
-            end
-            return target
+
+        def [](*names, &block)
+            result = @root
+            names.each{|x| result = result / x }
+            return block.nil? ? result : result.instance_exec(result, &block)
         end
-        def self.extended(base)
-            path = []
-            parent = nil
+        def /(name) return @children[name] end
 
-            ancestors = base.name.split('::').reverse
-            name = ancestors[0]
-            ancestors = ancestors[1..-1]
-
-            ancestors.length.times do |i|
-                parent = instance_eval(ancestors[0..i].join('::'))
-                if parent.instance_variable_defined?(:@build_namespace)
-                    path = parent.instance_variable_get(:@build_namespace).clone
-                    break unless path.nil?
-                end
-                path = []
-                parent = nil
-            end
-
-            path << name
-            Log.debug "new namespace: %s -> %s", path, base
-
-            base.instance_variable_set(:@build_all, [])
-            base.instance_variable_set(:@build_targets, [])
-            base.instance_variable_set(:@build_parent, parent)
-            base.instance_variable_set(:@build_namespace, path)
-
-            base.send :extend, Build
+        def append!(target)
+            @all_targets << target
+            parent.append!(target) unless @parent.nil?
+            return self
         end
+        def make_target!(name, type, link, &config)
+            target = Target.new(name, self, type, link, &config)
+            @self_targets << target
+            append!(target)
+            name = name.to_s
+            name.gsub!('-', '_')
+            define_singleton_method(name) { target }
+            target.configure!
+            return self
+        end
+
+        def include!(*relpaths)
+            rootpath = File.dirname(caller_locations(1, 1)[0].path)
+            rootpath = File.realpath(rootpath)
+
+            relpaths.each do |relpath|
+                abspath = File.join(rootpath, relpath)
+                Log.verbose 'include "%s"', abspath
+                require abspath
+            end
+        end
+
     end #~ Namespace
+
+    def namespace(name, &block)
+        Build.const_memoize(self, name) do
+            result = Build::Namespace.new(name)
+            $Build = result
+            result.instance_exec(&block)
+            $Build = nil
+            result
+        end
+    end
 
 end #~ Build

@@ -1,37 +1,63 @@
 
-require './Common.rb'
+require_once '../Common.rb'
+require_once '../Core/Facet.rb'
 
 require 'set'
 
 module Build
 
-    class Target < Decorator
-        attr_reader :name, :namespace, :type, :link
+    class Target < Policy
+        attr_reader :namespace, :type, :link
 
         attr_reader :public_dependencies
         attr_reader :private_dependencies
         attr_reader :runtime_dependencies
 
-        attr_accessor :source_path, :source_glob
+        attr_reader :abs_path, :var_path
 
-        attr_reader :source_files, :isolated_files, :excluded_files
-        attr_reader :extra_files
+        attr_accessor :source_path
+        attr_accessor :unity_num_files
+        attr_accessor :glob_patterns
+        attr_reader :force_includes # not relative to source path
 
-        def initialize(name, namespace, type, link)
-            super()
+        def self.relative_path(*names)
+            names.each do |name|
+                ivar = "@#{name}".to_sym
+                define_method(name) do
+                    expand_path(instance_variable_get(ivar))
+                end
+                define_method("rel_#{name}") do
+                    instance_variable_get(ivar)
+                end
+            end
+        end
 
-            @name = name
+        relative_path :glob_path
+        relative_path :pch_header, :pch_source
+        relative_path :source_files, :isolated_files, :excluded_files
+        relative_path :extra_files
+
+        def initialize(name, namespace, type, link, &config)
+            super(name)
+
             @namespace = namespace
             @type = type
             @link = link
 
-            @source_path = self.abs_path()
-            @source_glob = '*.c,*.cpp'
-            @excluded_files = Set.new
+            @abs_path = File.join(@namespace.to_s, @name.to_s)
+            @var_path = @abs_path.gsub('/', '_').gsub('-', '_')
 
+            @source_path = @abs_path
+
+            @glob_path = ''
+            @glob_patterns = %w{ *.c *.cpp }
+            @unity_num_files = 1
+
+            @excluded_files = Set.new
             @source_files = Set.new
             @isolated_files = Set.new
             @extra_files = Set.new
+            @force_includes = Set.new
 
             @public_dependencies = []
             @private_dependencies = []
@@ -39,11 +65,71 @@ module Build
 
             @all_public_dependencies = nil
             @all_runtime_dependencies = nil
+
+            @config = config
+
+            Log.verbose 'new target %s <%s>', @type, abs_path
         end
 
-        def abs_path() "#{@namespace}/#{@name}" end
-        def public_path() abs_path << '/Public' end
-        def private_path() abs_path << '/Private' end
+        def executable?() @type == :executable end
+        def library?() @type == :library end
+        def shared?() @type == :shared end
+
+        def configure!()
+            if @config
+                instance_exec(&@config)
+                @config = nil
+            end
+            return self
+        end
+
+        def customize(facet, env, target)
+            facet << @facet
+            super(facet, env, target)
+
+            @namespace.customize(facet, env, target)
+
+            facet.includePaths <<
+                env.source_path(self.source_path) <<
+                env.source_path(self.public_path) <<
+                env.source_path(self.private_path)
+
+            self.force_includes.each do |header|
+                facet.includes << env.source_path(header)
+            end
+
+            expand_dep = lambda do |dep|
+                facet.includes << dep.includes
+                facet.includePaths << env.source_path(dep.public_path)
+
+                dep.force_includes.each do |header|
+                    facet.includes << env.source_path(header)
+                end
+            end
+
+            self.all_public_dependencies.each(&expand_dep)
+            self.private_dependencies.each(&expand_dep)
+
+            return facet
+        end
+
+        def expand_path(path)
+            case path
+            when String
+                File.join(@source_path, path)
+            when Array
+                path.collect{|x| expand_path(x) }
+            when Set
+                a = path.to_a
+                a.collect!{|x| expand_path(x) }
+                return a
+            else
+                Log.fatal 'unsupported path type: %s', path.inspect
+            end
+        end
+
+        def public_path() expand_path('Public') end
+        def private_path() expand_path('Private') end
 
         def to_s() abs_path end
 
@@ -57,30 +143,54 @@ module Build
             return self
         end
 
-        def glob!(path: @source_path, glob: @source_glob)
-            @source_path = path
-            @source_glob = glob
+        def glob!(path: @glob_path, glob: @glob_patterns)
+            @glob_path = path
+            glob = [ glob ] unless glob.is_a?(Array)
+            @glob_patterns = glob
             return self
         end
 
-        def source_files!(*filenames) @source_files.append(filenames); return self end
-        def isolated_files!(*filenames) @isolated_files.append(filenames); return self end
-        def excluded_files!(*filenames) @excluded_files.append(filenames); return self end
-        def extra_files!(*filenames) @extra_files.append(filenames); return self end
+        def pch?() not (@pch_header.nil? and @pch_source.nil?) end
+        def pch!(header, source)
+            @pch_header = header
+            @pch_source = source
+            return self
+        end
 
-        def depends!(other, visibility=:private)
+        def source_files!(*filenames) @source_files.merge(filenames); return self end
+        def isolated_files!(*filenames) @isolated_files.merge(filenames); return self end
+        def excluded_files!(*filenames) @excluded_files.merge(filenames); return self end
+        def extra_files!(*filenames) @extra_files.merge(filenames); return self end
+        def force_includes!(*filenames) @force_includes.merge(filenames); return self end
+
+        def unity_excluded_files() return (@isolated_files + @excluded_files).to_a end
+
+        def depends!(*others, visibility: :private)
             case visibility
             when :public
-                @public_dependencies << other unless @public_dependencies.include?(other)
+                dst = @public_dependencies
             when :private
-                @private_dependencies << other unless @private_dependencies.include?(other)
+                dst = @private_dependencies
             when :runtime
-                @runtime_dependencies << other unless @runtime_dependencies.include?(other)
+                dst = @runtime_dependencies
             else
                 raise ArgumentError.new('invalid visibility')
             end
+            others.each do |target|
+                Log.fatal 'expected a target, not: %s', target.inspect unless target.is_a?(Target)
+                if $DEBUG and (
+                    @public_dependencies.include?(target) or
+                    @private_dependencies.include?(target) or
+                    @runtime_dependencies.include?(target) ) then
+                    Log.fatal 'target already referenced: %s', target.abs_path,  dst.include?(target)
+                end
+                dst << target
+            end
             return self
         end
+        def public_deps!(*others) depends!(*others, visibility: :public) end
+        def private_deps!(*others) depends!(*others, visibility: :private) end
+        def runtime_deps!(*others) depends!(*others, visibility: :runtime) end
 
         def all_public_dependencies()
             if @all_public_dependencies.nil?

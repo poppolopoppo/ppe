@@ -16,7 +16,7 @@ module Build
 
         $started_at = Time.now
         $show_caller = false
-        $show_timestamp = true
+        $show_timestamp = false
 
         def self.elapsed?
             return (Time.now.to_f - $started_at.to_f) * 1000.0
@@ -24,6 +24,7 @@ module Build
 
         def self.verbosity(min = :info)
             VERBOSITY.clear
+            $show_timestamp = (min == :verbose or min == :debug)
             LEVELS.reverse.each do |level|
                 VERBOSITY << level
                 return if level == min
@@ -97,12 +98,15 @@ module Build
             log = ($show_timestamp ? ("[%010.5f]" % elapsed?()) : '') <<
                 " #{ICONS[verbosity]}  " <<
                 message.to_s
-            log << "\n\tat: " << caller[1].to_s if $show_caller
+            log << "\n\tat: " << caller_locations(1, 1)[0].to_s if $show_caller
 
             Log.raw(log, verbosity: verbosity)
         end
 
         LEVELS.each do |level|
+            define_singleton_method("#{level}?") do
+                VERBOSITY.include?(level)
+            end
             define_singleton_method(level) do |message, *args|
                 args = nil if args.empty?
                 Log.puts(message: message, args: args, verbosity: level)
@@ -110,6 +114,19 @@ module Build
         end
 
     end #~ Log
+
+    module Assert
+
+        def self.check(&block)
+            if $DEBUG
+                Log.fatal 'assertion failed' unless block.call
+            end
+        end
+
+        def unreached() Log.fatal 'unreachable state' end
+        def not_implemented() Log.fatal 'not implemented' end
+
+    end #~ Assert
 
 end #~ Build
 

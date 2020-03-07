@@ -1,25 +1,68 @@
 
-require './Common.rb'
-require './Core/Policy.rb'
+require_once '../Common.rb'
+require_once '../Core/Facet.rb'
+require_once '../Core/Policy.rb'
 
 module Build
 
     class Compiler < Policy
-        attr_reader :compiler, :linker, :extra_files
-        def initialize(name, compiler, linker, *extra_files)
+        attr_reader :executable, :librarian, :linker, :extra_files
+        def initialize(name, executable, librarian, linker, *extra_files)
             super(name)
-            @compiler = compiler
+            @executable = executable
+            @librarian = librarian
             @linker = linker
             @extra_files = extra_files
         end
+
+        def ext_for(output)
+            case output
+            when :binary
+                return self.ext_binary
+            when :debug
+                return self.ext_debug
+            when :library
+                return self.ext_library
+            when :obj
+                return self.ext_obj
+            when :shared
+                return self.ext_shared
+            else
+                Log.fatal 'unknown output type "%s"', output
+            end
+        end
+
+        def ext_binary() Log.error("%s: ext_binary() is not implemented", @name) end
+        def ext_debug() Log.error("%s: ext_debug() is not implemented", @name) end
+        def ext_library() Log.error("%s: ext_library() is not implemented", @name) end
+        def ext_obj() Log.error("%s: ext_obj() is not implemented", @name) end
+        def ext_shared() Log.error("%s: ext_shared() is not implemented", @name) end
+
+        def add_linkType(facet, link) Log.error("%s: add_linkType('%s') is not implemented", @name, link) end
+        def add_define(facet, key, value=nil) Log.error("%s: add_define('%s', '%s') is not implemented", @name, key, value) end
         def add_forceInclude(facet, filename) Log.error("%s: add_forceInclude('%s') is not implemented", @name, filename) end
         def add_includePath(facet, dirpath) Log.error("%s: add_includePath('%s') is not implemented", @name, dirpath) end
         def add_library(facet, filename) Log.error("%s: add_library('%s') is not implemented", @name, filename) end
         def add_libraryPath(facet, dirpath) Log.error("%s: add_libraryPath('%s') is not implemented", @name, dirpath) end
+
+        def add_compilerOption(facet, token)
+            facet.analysisOptions << token
+            facet.compilerOptions << token
+            facet.pchOptions << token
+            facet.preprocessorOptions << token
+        end
+
     end #~ Compiler
 
     module SharedCompilers
-        Dummy = Compiler.new('Dummy', nil, nil)
+        Dummy = Compiler.new('Dummy', nil, nil, nil)
     end #~ SharedCompilers
+
+    make_facet(:Compiler_PCHEnabled) do
+        defines << 'BUILD_PCH=1'
+    end
+    make_facet(:Compiler_PCHDisabled) do
+        defines << 'BUILD_PCH=0'
+    end
 
 end #~ Build

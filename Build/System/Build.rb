@@ -1,93 +1,129 @@
 
 BUILD_STARTED_AT = Time.now
 
-require './Core/Facet.rb'
-require './Core/Policy.rb'
-require './Core/Target.rb'
-require './Core/Environment.rb'
-require './Core/Namespace.rb'
+require 'pathname'
 
-require './Shared/Compiler.rb'
-require './Shared/Configuration.rb'
-require './Shared/Platform.rb'
+$ApplicationPath = Pathname.new(File.absolute_path(File.dirname($0)))
 
-require './Utils/Log.rb'
-require './Utils/Options.rb'
-require './Utils/Prerequisite.rb'
-require './Utils/SourceControl.rb'
+def require_once(relpath)
+    path = File.join(File.dirname(caller_locations(1, 1)[0].absolute_path), relpath)
+    path = Pathname.new(path).relative_path_from($ApplicationPath).to_s
+    path = './' << path unless path =~ /^\.\.\//
+    require(path)
+end
 
-require 'set'
-require 'pp'
+require_once 'Common.rb'
 
-Build::SharedConfigurations::Debug.
-    define!("_DEBUG").
-    compilerOption!('/Od', '/GS').
-    include!('Header/System/Toto.h').
-    linkerOption!('/OPT:ICF', '/INCREMENTAL').
-    tag!(:debug)
+require_once 'Utils/Options.rb'
 
-Build::SharedConfigurations::Release.
-    on_tag!(:x64, compilerOption: '/ARCH:X64')
+require_once 'Core/Facet.rb'
+require_once 'Core/Policy.rb'
+require_once 'Core/Target.rb'
+require_once 'Core/Environment.rb'
+require_once 'Core/Namespace.rb'
 
-FastPDBLinking = Build::Facet.new linkerOption: '/LINK:FASTPDB'
+require_once 'Shared/Compiler.rb'
+require_once 'Shared/Configuration.rb'
+require_once 'Shared/Platform.rb'
 
-module PPE
-    extend Build::Namespace
+require_once 'Utils/Log.rb'
+require_once 'Utils/Prerequisite.rb'
+require_once 'Utils/SourceControl.rb'
 
-    make_environment(
-        Build::SharedCompilers::Dummy,
-        Build::SharedPlatforms,
-        Build::SharedConfigurations )
+require_once 'HAL/hal.rb'
 
-    import_envvar(:APPDATA)
-    import_envvar(:USERPROFILE)
+require_once 'Commands/BFF.rb'
+require_once 'Commands/FASTBuild.rb'
+require_once 'Commands/VSCode.rb'
 
-    persistent_array(:Targets, 'targets to build')
+module Build
 
-    module Runtime
-        extend Build::Namespace
+    def self.elapsed_time()
+        return Time.now - BUILD_STARTED_AT
+    end
 
-        library(:Core)
-        library(:VFS) do
-            depends!(Runtime.Core, :public)
-            filter!(config: 'Deb*', options: {
-                compilerOption: '/Od',
-                includePath: 'Runtime/Core/Public'
-            })
-            filter!(platform: 'x64', options: {
-                define: ['ARCH_X64', 'ARCH=X64'],
-                tag: :x64
-            })
-            facet!(config: 'Release', facet: FastPDBLinking)
+    def self.main(provider: :git, &namespace)
+        Build::load_options()
+        Build::parse_options()
+
+        at_exit do
+            Build::save_options()
+            Build::Log.info('total duration: %fs', Build.elapsed_time)
         end
 
-    end #~ Runtime
+        Build.init_source_control(provider: provider)
+        Build.run_command(&namespace)
+    end
 
-    module Offline
-        extend Build::Namespace
+end #~ Build
 
-        library(:ContentPipeline) do
-            depends!(Runtime.VFS, :public)
+class Build::Namespace
+    def ppe_external!(name, &cfg)
+        self.external!(name) do
+            instance_exec(&cfg) if cfg
+            glob!(path: nil)
+            tag!(:nounity)
+            includePath!($SourcePath)
         end
+    end
+    def ppe_module!(name, &cfg)
+        self.library!(name) do
+            instance_exec(&cfg) if cfg
+            define!('EXPORT_PPE_'<<var_path.upcase)
+            isolated_files!('ModuleExport.cpp')
+            force_includes!(File.join(abs_path, 'ModuleExport.h'))
+            pch!('stdafx.h', 'stdafx.cpp')
+            glob!(path: 'Private')
+            includePath!($SourcePath)
+        end
+    end
+end
 
-    end #~ Offline
+Build.namespace(:PPE) do
+    namespace(:External) do
+        ppe_external!('double-conversion')
+        ppe_external!(:farmhash)
+        ppe_external!(:lz4)
+        ppe_external!(:xxHash)
+    end
+    namespace(:Runtime) do
+        ppe_module!(:Core) do
+            private_deps!(*namespace[:External]{[
+                double_conversion,
+                farmhash,
+                lz4,
+                xxHash ]})
+        end
+        ppe_module!(:RTTI) do
+            public_deps!(namespace.Core)
+        end
+        ppe_module!(:VFS) do
+            public_deps!(namespace.Core)
+        end
+        ppe_module!(:Serialize) do
+            public_deps!(namespace.Core)
+            public_deps!(namespace.RTTI)
+            public_deps!(namespace.VFS)
+        end
+        namespace(:Graphics) do
+            ppe_module!(:Test) do
+                depends!(namespace[:Runtime].Core)
+            end
+        end
+    end
+    namespace(:Offline) do
+        ppe_module!(:ContentPipeline) do
+            define!('PPE_CONTENTPIPELINE_VERSION=1.0.0')
+            public_deps!(namespace[:Runtime].Core)
+            public_deps!(namespace[:Runtime].VFS)
+            public_deps!(namespace[:Runtime, :Graphics].Test)
+        end
+        include!('Test.rb')
+    end
+end
 
-end #~ PPE
+Build.set_workspace_path('C:/Code/PPE')
 
-Build::load_options()
-Build::parse_options()
-END {
-    Build::save_options()
-    Build::Log.info('total duration: %fs', Time.now - BUILD_STARTED_AT)
-}
-
-Build.init_source_control(provider: :git)
-
-Build::Log.info PPE::Environments.collect{|x| x.name }.join(', ')
-Build::Log.info PPE.all.join(', ')
-Build::Log.clear_pin
-
-Build::Log.info PPE::Dummy_x64_Release.expand(PPE::Runtime.VFS)
-Build::Log.info PPE::Dummy_x64_Debug.expand(PPE::Offline.ContentPipeline)
-Build::Log.info PPE.USERPROFILE
-
+Build.main() do
+    Build.PPE
+end

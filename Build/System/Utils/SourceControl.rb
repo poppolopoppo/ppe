@@ -1,13 +1,14 @@
 
-require './Common.rb'
+require_once '../Common.rb'
 
 module Build
 
     class SourceControl
         def initialize(path, *cmdline)
-            @path = path
+            @path = File.expand_path(path)
             @modified_files = []
-            @handle = IO.popen(cmdline, chdir: @path)
+            Log.debug('%s: initialize source control \'%s\' in \'%s\'', self.name, cmdline.join(' '), @path)
+            @handle = IO.popen(cmdline, 'r+', chdir: @path)
         end
         def file_modified?(fname)
             fname = File.expand_path(fname)
@@ -18,18 +19,20 @@ module Build
         end
     protected
         def retrieve_status(fd)
-            Log.error('%s: retrieve_status(fd) is not implemented', self.class)
+            Log.error('%s: retrieve_status(fd) is not implemented', self.name)
         end
-    private
         def join()
             if @handle
-                Log.debug('%s: retrieving source control status', self.clasd)
+                Log.verbose('%s: retrieving source control status in \'%s\'', self.name, @path)
                 @modified_files = []
                 retrieve_status(@handle) do |fname|
-                    Log.verbose('%s: modified file "%s"', self.class, fname)
+                    Log.debug('%s: modified file "%s"', self.name, fname)
                     @modified_files << File.expand_path(fname)
                 end
                 @handle.close
+                unless $?.success?
+                    Log.error('%s: failed to retrieve source control status (exitcode=%s)', self.name, $?)
+                end
                 @handle = nil
             end
             return @modified_files
@@ -37,20 +40,30 @@ module Build
     end #~ SourceControl
 
     class DummySourceControl < SourceControl
+        def name() :Dummy end
         def initialize() end
         def file_modified?(fname) false end
         def modified_files() [] end
     end #~ DummySourceControl
 
     class GitSourceControl < SourceControl
+        def name() :Git end
         def initialize(path)
-            super(path, [ 'git', 'status', '--porcelain' ])
+            super(path, 'git', 'status', '-s')
         end
     protected
         def retrieve_status(fd)
-            fd.readlines do |ln|
-                fname = ln.chomp[3..-1]
-                yield fname if File.exist?(fname)
+            fd.readlines.each do |ln|
+                path = File.join(@path, ln.chomp[3..-1])
+                if Dir.exist?(path)
+                    Dir.chdir(path) do
+                        Dir.glob("**/*") do |p|
+                            yield File.expand_path(p)
+                        end
+                    end
+                elsif File.exist?(path)
+                    yield path
+                end
             end
         end
     end #~ GitSourceControl
@@ -70,6 +83,7 @@ module Build
         end
         return $SourceControlProvider
     end
+
     def file_modified?(fname)
         $SourceControlProvider.file_modified?(fname)
     end
