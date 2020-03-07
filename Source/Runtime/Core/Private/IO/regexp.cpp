@@ -297,7 +297,8 @@ bool TBasicRegexp<_Char>::ValidateSyntax(const stringview_type& expr) NOEXCEPT {
         errorStr = WSTRINGIZE(_NAME); \
         break
     PPE_CATCH(const std::regex_error& e)
-    PPE_CATCH_BLOCK({
+    //PPE_CATCH_BLOCK(
+        {
         FWString errorStr;
         switch (e.code()) {
             PPE_REGEXERROR_WSTR(error_collate);
@@ -323,7 +324,8 @@ bool TBasicRegexp<_Char>::ValidateSyntax(const stringview_type& expr) NOEXCEPT {
         UNUSED(errorStr); // when logger is disabled
         LOG(Regex, Error, L"regex_error caught: {0} (code: {1})\n\texpr: {2}", e.what(), errorStr, expr);
         return false;
-    })
+    }
+    //)
 #undef PPE_REGEXERROR_WSTR
 }
 //----------------------------------------------------------------------------

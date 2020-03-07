@@ -9,6 +9,6 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#if USE_PPE_PRECOMPILEDHEADERS
+#if BUILD_PCH
 #   include "Core.Graphics/stdafx.generated.h"
 #endif

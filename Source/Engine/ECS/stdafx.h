@@ -9,6 +9,6 @@
 
 #include "Core.Logic/Logic.h"
 
-#if USE_PPE_PRECOMPILEDHEADERS
+#if BUILD_PCH
 #   include "Core.Logic/stdafx.generated.h"
 #endif

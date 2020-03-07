@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 */
 #if 0 // dummy
-#elif defined(BUILDCONFIG_Win32_Debug) || defined(BUILDCONFIG_Win32_FastDebug) || defined(BUILDCONFIG_Win32_Release) || defined(BUILDCONFIG_Win32_Profiling) || defined(BUILDCONFIG_Win64_Debug) || defined(BUILDCONFIG_Win64_FastDebug) || defined(BUILDCONFIG_Win64_Release) || defined(BUILDCONFIG_Win64_Profiling)
+#elif defined(BUILD_Win32_Debug) || defined(BUILD_Win32_FastDebug) || defined(BUILD_Win32_Release) || defined(BUILD_Win32_Profiling) || defined(BUILD_Win64_Debug) || defined(BUILD_Win64_FastDebug) || defined(BUILD_Win64_Release) || defined(BUILD_Win64_Profiling)
 #    include <algorithm>
 #    include <cstdint>
 #    include <cstdlib>
@@ -77,7 +77,7 @@
 #    include <clocale>
 #    include <condition_variable>
 #    include <memory_resource>
-#elif defined(BUILDCONFIG_Win32_Final) || defined(BUILDCONFIG_Win64_Final)
+#elif defined(BUILD_Win32_Final) || defined(BUILD_Win64_Final)
 #    include <algorithm>
 #    include <cstdint>
 #    include <cstdlib>
@@ -148,7 +148,7 @@
 //------------------------------------------------------------------------------
 */
 #if 0 // dummy
-#elif defined(BUILDCONFIG_Win32_Debug) || defined(BUILDCONFIG_Win32_FastDebug) || defined(BUILDCONFIG_Win32_Release) || defined(BUILDCONFIG_Win64_Debug) || defined(BUILDCONFIG_Win64_FastDebug) || defined(BUILDCONFIG_Win64_Release)
+#elif defined(BUILD_Win32_Debug) || defined(BUILD_Win32_FastDebug) || defined(BUILD_Win32_Release) || defined(BUILD_Win64_Debug) || defined(BUILD_Win64_FastDebug) || defined(BUILD_Win64_Release)
 #    include "Runtime/Core/Public/Meta/Iterator.h"
 #    include "Runtime/Core/Public/Allocator/Allocation.h"
 #    include "Runtime/Core/Public/Allocator/Alloca.h"
@@ -200,7 +200,7 @@
 #    include "Runtime/RTTI/Public/RTTI/Atom.h"
 #    include "Runtime/RTTI/Public/RTTI/TypeInfos.h"
 #    include "Runtime/Core/Public/Thread/ThreadContext.h"
-#elif defined(BUILDCONFIG_Win32_Profiling) || defined(BUILDCONFIG_Win64_Profiling)
+#elif defined(BUILD_Win32_Profiling) || defined(BUILD_Win64_Profiling)
 #    include "Runtime/Core/Public/Meta/Iterator.h"
 #    include "Runtime/Core/Public/Allocator/Allocation.h"
 #    include "Runtime/Core/Public/Allocator/Alloca.h"
@@ -249,7 +249,7 @@
 #    include "Runtime/RTTI/Public/RTTI/Atom.h"
 #    include "Runtime/RTTI/Public/RTTI/TypeInfos.h"
 #    include "Runtime/Core/Public/Thread/ThreadContext.h"
-#elif defined(BUILDCONFIG_Win32_Final) || defined(BUILDCONFIG_Win64_Final)
+#elif defined(BUILD_Win32_Final) || defined(BUILD_Win64_Final)
 #    include "Runtime/Core/Public/Meta/Iterator.h"
 #    include "Runtime/Core/Public/Allocator/Allocation.h"
 #    include "Runtime/Core/Public/Allocator/Alloca.h"

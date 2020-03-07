@@ -2,7 +2,7 @@
 
 #include "Graphics.h"
 
-#ifndef EXPORT_PPE_GRAPHICS
+#ifndef EXPORT_PPE_RUNTIME_GRAPHICS
 #   error "This file should not be included outside of Core.Graphics"
 #endif
 

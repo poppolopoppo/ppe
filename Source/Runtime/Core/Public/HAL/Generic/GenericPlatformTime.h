@@ -23,8 +23,8 @@ public: // must be defined for every platform
     static u64 CpuTime() = delete; // can't convert to time
     static u64 NetworkTime() = delete;
 
-    static void LocalTime(u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) = delete;
-    static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) = delete;
+    static void LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) = delete;
+    static void UtcTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) = delete;
 
     static double ChronoMicroseconds() NOEXCEPT {
         using chrono_type = std::conditional_t<

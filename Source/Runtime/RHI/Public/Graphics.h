@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef EXPORT_PPE_GRAPHICS
+#ifdef EXPORT_PPE_RUNTIME_GRAPHICS
 #   define PPE_GRAPHICS_API DLL_EXPORT
 #else
 #   define PPE_GRAPHICS_API DLL_IMPORT

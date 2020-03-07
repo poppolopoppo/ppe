@@ -207,7 +207,7 @@ static const double_conversion::StringToDoubleConverter& DefaultStringToDoubleCo
 const char* StringToDoubleStr_(const char* str) { return str; }
 auto StringToDoubleStr_(const wchar_t* wstr) {
     IF_CONSTEXPR(sizeof(wchar_t) == sizeof(u16))
-        return reinterpret_cast<const char16_t*>(wstr);
+        return reinterpret_cast<const u16*>(wstr);
     else
         return WCHAR_TO_UTF_8<128>(wstr); // for platforms were wchart_t is 32 bits
 }

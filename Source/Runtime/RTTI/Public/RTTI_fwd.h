@@ -6,7 +6,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/RefPtr.h"
 
-#ifdef EXPORT_PPE_RTTI
+#ifdef EXPORT_PPE_RUNTIME_RTTI
 #   define PPE_RTTI_API DLL_EXPORT
 #else
 #   define PPE_RTTI_API DLL_IMPORT

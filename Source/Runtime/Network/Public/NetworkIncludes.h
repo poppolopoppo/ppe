@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef EXPORT_PPE_NETWORK
+#ifndef EXPORT_PPE_RUNTIME_NETWORK
 #   error "This file should not be included outside of Core.Network"
 #endif
 

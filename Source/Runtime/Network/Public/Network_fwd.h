@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef EXPORT_PPE_NETWORK
+#ifdef EXPORT_PPE_RUNTIME_NETWORK
 #   define PPE_NETWORK_API DLL_EXPORT
 #else
 #   define PPE_NETWORK_API DLL_IMPORT

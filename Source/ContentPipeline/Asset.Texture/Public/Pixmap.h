@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef EXPORT_PPE_PIXMAP
+#ifdef EXPORT_PPE_RUNTIME_PIXMAP
 #   define PPE_PIXMAP_API DLL_EXPORT
 #else
 #   define PPE_PIXMAP_API DLL_IMPORT

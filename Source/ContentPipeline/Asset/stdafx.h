@@ -9,6 +9,6 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
-#if USE_PPE_PRECOMPILEDHEADERS
+#if BUILD_PCH
 #   include "Core.ContentPipeline/stdafx.generated.h"
 #endif

@@ -20,7 +20,7 @@ namespace PPE {
 const double FWindowsPlatformTime::GSecondsPerCycle = FWindowsPlatformTime::SecondsPerCycle();
 //----------------------------------------------------------------------------
 i64 FWindowsPlatformTime::Timestamp() NOEXCEPT {
-    STATIC_ASSERT(std::is_same_v<i64, ::__time64_t>));
+    STATIC_ASSERT(std::is_same_v<i64, ::__time64_t>);
     return ::_time64(nullptr);
 }
 //----------------------------------------------------------------------------
@@ -32,7 +32,7 @@ u64 FWindowsPlatformTime::NetworkTime() NOEXCEPT {
 //----------------------------------------------------------------------------
 void FWindowsPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
     struct ::tm lc;
-    Verify(0 == ::_localtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t)));
+    Verify(0 == ::_localtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&timestamp)));
 
     year = 1900 + checked_cast<u32>(lc.tm_year);
     month = 1 + checked_cast<u32>(lc.tm_mon);
@@ -44,16 +44,15 @@ void FWindowsPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& 
     sec = checked_cast<u32>(lc.tm_sec);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformTime::UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
+void FWindowsPlatformTime::UtcTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
     struct ::tm lc;
-    Verify(0 == ::_gmtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t)));
+    Verify(0 == ::_gmtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&timestamp)));
 
     year = 1900 + checked_cast<u32>(lc.tm_year);
     month = 1 + checked_cast<u32>(lc.tm_mon);
     dayOfWeek = checked_cast<u32>(lc.tm_wday);
     dayOfYear = checked_cast<u32>(lc.tm_yday);
     dayOfMon = checked_cast<u32>(lc.tm_mday);
-    day = checked_cast<u32>(lc.tm_yday);
     hour = checked_cast<u32>(lc.tm_hour);
     min = checked_cast<u32>(lc.tm_min);
     sec = checked_cast<u32>(lc.tm_sec);

@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef EXPORT_PPE_LOGIC
+#ifdef EXPORT_PPE_RUNTIME_LOGIC
 #   define PPE_LOGIC_API DLL_EXPORT
 #else
 #   define PPE_LOGIC_API DLL_IMPORT

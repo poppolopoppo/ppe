@@ -2,7 +2,7 @@
 
 #include "Meta/Warnings.h"
 
-#ifndef EXPORT_PPE_EXTERNAL_FARMHASH
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_FARMHASH
     PRAGMA_MSVC_WARNING_PUSH()
 #endif
 
@@ -34,7 +34,7 @@ PRAGMA_MSVC_WARNING_DISABLE(6313) // Incorrect operator:  zero-valued flag canno
 #    pragma GCC system_header
 #endif
 
-#ifndef EXPORT_PPE_EXTERNAL_FARMHASH
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_FARMHASH
 
 #   include "External/farmhash/farmhash.git/src/farmhash.h"
 
@@ -52,4 +52,4 @@ PRAGMA_MSVC_WARNING_DISABLE(6313) // Incorrect operator:  zero-valued flag canno
 
     PRAGMA_MSVC_WARNING_POP()
 
-#endif //!EXPORT_PPE_EXTERNAL_FARMHASH
+#endif //!EXPORT_PPE_RUNTIME_EXTERNAL_FARMHASH

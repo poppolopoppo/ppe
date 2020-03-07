@@ -10,7 +10,7 @@
 #    pragma GCC system_header
 #endif
 
-#ifndef EXPORT_PPE_EXTERNAL_XXHASH
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_XXHASH
     PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("FORCE_INLINE")
 #   ifdef __clang__
@@ -37,7 +37,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to '
 #   pragma clang diagnostic ignored "-Wpass-failed=transform-warning"
 #endif
 
-#ifndef EXPORT_PPE_EXTERNAL_XXHASH
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_XXHASH
 
 #   include "External/xxHash/xxHash.git/xxhash.h"
 
@@ -51,6 +51,6 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to '
 
     PRAGMA_MSVC_WARNING_POP()
 
-#endif //!EXPORT_PPE_EXTERNAL_XXHASH
+#endif //!EXPORT_PPE_RUNTIME_EXTERNAL_XXHASH
 
 

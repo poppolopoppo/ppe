@@ -670,7 +670,7 @@ FWString FWindowsPlatformFile::MakeTemporaryFile(const char_type* prefix, const 
     Assert(L'.' == *extname);
 
     u32 year, mon, mday, day, hour, min, sec, msec;
-    FPlatformTime::UtcTime(year, mon, mday, day, hour, min, sec, msec);
+    FPlatformTime::UtcTime(FPlatformTime::Timestamp(), year, mon, mday, day, hour, min, sec, msec);
 
     char_type buffer[MaxPathLength + 1];
     FWFixedSizeTextWriter oss(buffer);

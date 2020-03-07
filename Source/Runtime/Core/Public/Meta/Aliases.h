@@ -23,7 +23,7 @@ typedef int64_t     i64;
 #   endif
 #   define CODE3264(_X32, _X64) _X64
 #elif   defined(ARCH_X86)
-#   if !(defined(_M_IX86) || defined(__i386__))
+#   if !(defined(_M_IX86) || defined(__i386__))
 #       error "invalid architecture"
 #   endif
 #   define CODE3264(_X32, _X64) _X32

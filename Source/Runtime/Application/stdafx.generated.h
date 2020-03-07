@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 */
 #if 0 // dummy
-#elif defined(BUILDCONFIG_Win32_Debug) || defined(BUILDCONFIG_Win32_Release) || defined(BUILDCONFIG_Win32_Profiling) || defined(BUILDCONFIG_Win32_Final) || defined(BUILDCONFIG_Win64_Debug) || defined(BUILDCONFIG_Win64_Release) || defined(BUILDCONFIG_Win64_Profiling) || defined(BUILDCONFIG_Win64_Final)
+#elif defined(BUILD_Win32_Debug) || defined(BUILD_Win32_Release) || defined(BUILD_Win32_Profiling) || defined(BUILD_Win32_Final) || defined(BUILD_Win64_Debug) || defined(BUILD_Win64_Release) || defined(BUILD_Win64_Profiling) || defined(BUILD_Win64_Final)
 #    include <algorithm>
 #    include <cstdint>
 #    include <cstdlib>
@@ -64,7 +64,7 @@
 #    include <cwctype>
 #    include <locale>
 #    include <ctime>
-#elif defined(BUILDCONFIG_Win32_FastDebug) || defined(BUILDCONFIG_Win64_FastDebug)
+#elif defined(BUILD_Win32_FastDebug) || defined(BUILD_Win64_FastDebug)
 #    include <algorithm>
 #    include <cstdint>
 #    include <cstdlib>
@@ -134,8 +134,8 @@
 //------------------------------------------------------------------------------
 */
 #if 0 // dummy
-#elif defined(BUILDCONFIG_Win32_Debug) || defined(BUILDCONFIG_Win32_Release) || defined(BUILDCONFIG_Win32_Profiling) || defined(BUILDCONFIG_Win32_Final) || defined(BUILDCONFIG_Win64_Debug) || defined(BUILDCONFIG_Win64_Release) || defined(BUILDCONFIG_Win64_Profiling) || defined(BUILDCONFIG_Win64_Final)
-#elif defined(BUILDCONFIG_Win32_FastDebug) || defined(BUILDCONFIG_Win64_FastDebug)
+#elif defined(BUILD_Win32_Debug) || defined(BUILD_Win32_Release) || defined(BUILD_Win32_Profiling) || defined(BUILD_Win32_Final) || defined(BUILD_Win64_Debug) || defined(BUILD_Win64_Release) || defined(BUILD_Win64_Profiling) || defined(BUILD_Win64_Final)
+#elif defined(BUILD_Win32_FastDebug) || defined(BUILD_Win64_FastDebug)
 #    include "Runtime/Core/Public/Core.h"
 #    include "Runtime/Core/Public/Meta/ThreadResource.h"
 #else

@@ -7,7 +7,7 @@
 #include <memory>
 #include <type_traits>
 
-#ifdef EXPORT_PPE_CORE
+#ifdef EXPORT_PPE_RUNTIME_CORE
 #   define PPE_CORE_API DLL_EXPORT
 #else
 #   define PPE_CORE_API DLL_IMPORT

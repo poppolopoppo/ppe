@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef EXPORT_PPE_VFS
+#ifdef EXPORT_PPE_RUNTIME_VFS
 #   define PPE_VFS_API DLL_EXPORT
 #else
 #   define PPE_VFS_API DLL_IMPORT

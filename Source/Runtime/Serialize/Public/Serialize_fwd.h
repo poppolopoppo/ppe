@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef EXPORT_PPE_SERIALIZE
+#ifdef EXPORT_PPE_RUNTIME_SERIALIZE
 #   define PPE_SERIALIZE_API DLL_EXPORT
 #else
 #   define PPE_SERIALIZE_API DLL_IMPORT

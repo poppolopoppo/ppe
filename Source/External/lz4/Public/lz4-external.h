@@ -3,7 +3,7 @@
 #include "Allocator/TrackingMalloc.h"
 #include "Memory/MemoryDomain.h"
 
-#ifndef EXPORT_PPE_EXTERNAL_LZ4
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_LZ4
 PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ALLOCATOR")
 #   pragma push_macro("FORCE_INLINE")
@@ -43,7 +43,7 @@ PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) alway
 #    pragma GCC system_header
 #endif
 
-#ifndef EXPORT_PPE_EXTERNAL_LZ4
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_LZ4
 
 #   include "External/lz4/lz4.git/lib/lz4.h"
 #   include "External/lz4/lz4.git/lib/lz4hc.h"
@@ -58,4 +58,4 @@ PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) alway
 
     PRAGMA_MSVC_WARNING_POP()
 
-#endif //!EXPORT_PPE_EXTERNAL_LZ4
+#endif //!EXPORT_PPE_RUNTIME_EXTERNAL_LZ4

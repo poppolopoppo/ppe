@@ -140,7 +140,7 @@ public:
 // https://gist.github.com/yizhang82/500da684837161055978011c5850d296#file-rw_spin_lock-h
 //----------------------------------------------------------------------------
 class FAtomicReadWriteLock : Meta::FNonCopyableNorMovable {
-    STATIC_CONST_INTEGRAL(unsigned, WRITER_LOCK, unsigned(INDEX_NONE));
+    STATIC_CONST_INTEGRAL(unsigned, WRITER_LOCK, unsigned(-1));
     std::atomic<unsigned> Readers{ 0 };
 
 #if USE_PPE_ASSERT

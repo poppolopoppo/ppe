@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 */
 #if 0 // dummy
-#elif defined(BUILDCONFIG_Win32_Debug) || defined(BUILDCONFIG_Win32_Release) || defined(BUILDCONFIG_Win32_Profiling) || defined(BUILDCONFIG_Win64_Debug) || defined(BUILDCONFIG_Win64_Release) || defined(BUILDCONFIG_Win64_Profiling)
+#elif defined(BUILD_Win32_Debug) || defined(BUILD_Win32_Release) || defined(BUILD_Win32_Profiling) || defined(BUILD_Win64_Debug) || defined(BUILD_Win64_Release) || defined(BUILD_Win64_Profiling)
 #    include <algorithm>
 #    include <cstdint>
 #    include <cstdlib>
@@ -72,7 +72,7 @@
 #    include <cassert>
 #    include <condition_variable>
 #    include <memory_resource>
-#elif defined(BUILDCONFIG_Win32_FastDebug) || defined(BUILDCONFIG_Win64_FastDebug)
+#elif defined(BUILD_Win32_FastDebug) || defined(BUILD_Win64_FastDebug)
 #    include <algorithm>
 #    include <cstdint>
 #    include <cstdlib>
@@ -123,7 +123,7 @@
 #    include <condition_variable>
 #    include <memory_resource>
 #    include <cstdarg>
-#elif defined(BUILDCONFIG_Win32_Final) || defined(BUILDCONFIG_Win64_Final)
+#elif defined(BUILD_Win32_Final) || defined(BUILD_Win64_Final)
 #    include <algorithm>
 #    include <cstdint>
 #    include <cstdlib>

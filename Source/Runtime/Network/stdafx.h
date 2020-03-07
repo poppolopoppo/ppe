@@ -12,6 +12,6 @@
 
 #include "Network_fwd.h"
 
-#if USE_PPE_PRECOMPILEDHEADERS
+#if BUILD_PCH
 #   include "stdafx.generated.h"
 #endif

@@ -86,6 +86,10 @@ struct IUnknown;
 #ifdef CreateWindow
 #   undef CreateWindow
 #endif
+#pragma push_macro("ERROR")
+#ifdef ERROR
+#   undef ERROR
+#endif
 #pragma push_macro("MemoryBarrier")
 #ifdef MemoryBarrier
 #   undef MemoryBarrier

@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifndef EXPORT_PPE_EXTERNAL_DOUBLECONVERSION
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_DOUBLECONVERSION
     PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ASSERT")
 #   pragma push_macro("UNIMPLEMENTED")
@@ -34,7 +34,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4505) // 'double_conversion::AssertTrimmedDigits': u
 #    pragma GCC system_header
 #endif
 
-#ifndef EXPORT_PPE_EXTERNAL_DOUBLECONVERSION
+#ifndef EXPORT_PPE_RUNTIME_EXTERNAL_DOUBLECONVERSION
 
 #   pragma include_alias(<double-conversion/utils.h>, <External/double-conversion/git/double-conversion/utils.h>)
 #   include "External/double-conversion/double-conversion.git/double-conversion/double-conversion.h"
@@ -47,4 +47,4 @@ PRAGMA_MSVC_WARNING_DISABLE(4505) // 'double_conversion::AssertTrimmedDigits': u
 
     PRAGMA_MSVC_WARNING_POP()
 
-#endif //!EXPORT_PPE_EXTERNAL_DOUBLECONVERSION
+#endif //!EXPORT_PPE_RUNTIME_EXTERNAL_DOUBLECONVERSION

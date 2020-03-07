@@ -9,6 +9,6 @@
 
 #include "Core.Pixmap/Pixmap.h"
 
-#if USE_PPE_PRECOMPILEDHEADERS
+#if BUILD_PCH
 #   include "Core.Pixmap/stdafx.generated.h"
 #endif

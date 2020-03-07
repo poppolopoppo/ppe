@@ -9,6 +9,6 @@
 
 #include "Core.Lattice/Lattice.h"
 
-#if USE_PPE_PRECOMPILEDHEADERS
+#if BUILD_PCH
 #   include "Core.Lattice/stdafx.generated.h"
 #endif

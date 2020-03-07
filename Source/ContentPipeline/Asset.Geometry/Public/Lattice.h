@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef EXPORT_PPE_LATTICE
+#ifdef EXPORT_PPE_RUNTIME_LATTICE
 #   define PPE_LATTICE_API DLL_EXPORT
 #else
 #   define PPE_LATTICE_API DLL_IMPORT

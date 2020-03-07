@@ -10,7 +10,7 @@
 
 #include "Meta/Aliases.h"
 
-#ifdef EXPORT_PPE_EXTERNAL_VSTOOLS
+#ifdef EXPORT_PPE_RUNTIME_EXTERNAL_VSTOOLS
 #   define PPE_VSTOOLS_API DLL_EXPORT
 #else
 #   define PPE_VSTOOLS_API DLL_IMPORT
