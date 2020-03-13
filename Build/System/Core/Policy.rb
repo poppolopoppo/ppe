@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 
@@ -15,6 +16,12 @@ module Build
         def tag?(*tags) @facet.tag?(*tags) end
 
         def to_s() @name.to_s end
+        def freeze()
+            @name.freeze
+            @facet.freeze
+            @customizations.freeze
+            super()
+        end
 
         def <<(other)
             case other
@@ -79,14 +86,21 @@ module Build
                 end
             end
         end
+
+        ## customize final environment + target
         def customize(facet, env, target)
             @customizations.each do |custom|
                 instance_exec(facet, env, target, &custom)
             end
         end
 
+        ## decorate shared environment facet
+        def decorate(facet, env)
+            facet << @facet
+        end
+
         Facet::SETS.each do |facet|
-            ivar = ('@'<<facet.to_s<<'s').to_sym
+            ivar = "@#{facet}s".to_sym
             define_method(facet.to_s<<'s') do
                 @facet.instance_variable_get(ivar)
             end
@@ -95,7 +109,7 @@ module Build
                 values.each {|v| f.append(v) }
                 self
             end
-            define_method('no_'<<facet.to_s<<'!') do |*values|
+            define_method("no_#{facet}!") do |*values|
                 f = @facet.instance_variable_get(ivar)
                 values.each {|v| f.remove(v) }
                 self

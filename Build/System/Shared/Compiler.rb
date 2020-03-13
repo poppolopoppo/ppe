@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 require_once '../Core/Facet.rb'
@@ -50,6 +51,14 @@ module Build
             facet.compilerOptions << token
             facet.pchOptions << token
             facet.preprocessorOptions << token
+        end
+
+        def freeze()
+            @executable.freeze
+            @librarian.freeze
+            @linker.freeze
+            @extra_files.freeze
+            super()
         end
 
     end #~ Compiler

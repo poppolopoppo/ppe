@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_once '../Common.rb'
 
 module Build

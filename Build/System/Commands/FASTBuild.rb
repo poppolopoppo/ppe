@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_once '../Common.rb'
 require_once '../Commands/BFF.rb'
 require_once '../Utils/Log.rb'
@@ -28,8 +30,8 @@ module Build
 
     module FBuild
 
-        def self.run(*args, quiet: false)
-            Log.verbose 'launching "%s"', Build.FBuild_binary
+        def self.run(*args, quiet: false, wait: true)
+            Log.debug 'FBuild: launching "%s"', Build.FBuild_binary
 
             cmd = []
             cmd << Build.FBuild_binary.to_s
@@ -39,12 +41,15 @@ module Build
             cmd << '-nounity' unless Build.Unity
             cmd << '-nostoponerror' unless Build.StopOnError
             cmd << '-noprogress' << '-m0'
-            cmd << '-wait' << '-wrapper'
 
             if quiet
                 cmd << '-quiet'
             else
                 cmd << '-summary' << '-nosummaryonerror'
+            end
+
+            if wait
+                cmd << '-wait' << '-wrapper'
             end
 
             cmd.concat(Build.send('x-fbuild').collect{|x| "-#{x}" })
@@ -57,10 +62,16 @@ module Build
                 loop do
                     if line = io_out.gets
                         line = FBuild.trim_crlf(line)
-                        Log.raw(line, verbosity: :info) if not quiet and line
+                        if block_given?
+                            yield line
+                        elsif not quiet and line
+                            Log.raw(line, verbosity: :info)
+                        end
                     elsif line = io_err.gets
                         line = FBuild.trim_crlf(line)
-                        Log.raw(line, verbosity: :error) if not quiet and line
+                        if not quiet and line
+                            Log.raw(line, verbosity: :error)
+                        end
                     else
                         break
                     end

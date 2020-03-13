@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Utils/Log.rb'
 
@@ -53,7 +54,7 @@ module Build
         def initialize(name, value)
             @name = name
             @value = value
-            @default = value.clone
+            @default = value.deep_dup
             @persistent = false
 
             @flag = nil
@@ -72,7 +73,7 @@ module Build
                 @description
 
             if @values
-                desc << ' [' << @values.join(',') << ']'
+                desc += "[#{@values.join(',')}]"
                 opt.on(@flag, desc, *@opts) do |x| 
                     @value = nil
                     @values.each do |y|
@@ -109,19 +110,19 @@ module Build
     end #~ OptionVariable
 
     def opt_array(name, description, init: [], values: nil)
-        var = OptionVariable.attach(self, name, description, '--'<<name.to_s<<' X,Y,Z', init, values)
+        var = OptionVariable.attach(self, name, description, "--#{name} X,Y,Z", init, values)
         var.opts << Array
         return var
     end
     def opt_value(name, description, init: nil, values: nil)
-        OptionVariable.attach(self, name, description, '--'<<name.to_s<<' VALUE', init, values)
+        OptionVariable.attach(self, name, description, "--#{name} VALUE", init, values)
     end
     def opt_switch(name, description, init: false)
-        OptionVariable.attach(self, name, description, '--[no-]'<<name.to_s, init, nil)
+        OptionVariable.attach(self, name, description, "--[no-]#{name}", init, nil)
     end
 
     PersistentConfig = {
-        file: File.join(File.dirname($0), '.'<<File.basename($0)<<'.yml'),
+        file: File.join(File.dirname($0), ".#{File.basename($0)}.yml"),
         vars: {},
         data: {},
     }

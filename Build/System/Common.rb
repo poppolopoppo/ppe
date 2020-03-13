@@ -1,4 +1,6 @@
+# frozen_string_literal: true
 
+require_once 'Utils/deep_dup.rb'
 require_once 'Utils/Log.rb'
 require_once 'Utils/Options.rb'
 
@@ -51,15 +53,14 @@ module Build
 
     def self.const_memoize(host, name, &memoized)
         cls = host.class
-        ivar = '@'<<name.to_s
-        ivar.gsub!('?', '_QUESTION')
-        ivar = ivar.to_sym
+        ivar = "@#{name}".gsub('?', '_QUESTION').to_sym
         cls.instance_variable_set(ivar, nil)
         cls.define_method(name) do
             value = cls.instance_variable_get(ivar)
             if value.nil?
                 Log.debug 'memoize method <%s.%s>', host, name
                 value = memoized.call
+                value.freeze
                 cls.instance_variable_set(ivar, value)
             end
             return value

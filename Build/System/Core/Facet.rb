@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 
@@ -53,19 +54,25 @@ module Build
             return self
         end
         def expand!(vars={})
-            @data.each do |value|
+            Assert.check{ not frozen? }
+            @data.collect! do |value|
                 case value
                 when String
+                    value = value.dup if value.frozen?
                     vars.each do |key, subst|
                         value.gsub!(key, subst)
                     end
                 end
+                value
             end
             return self
         end
         def each(&block) @data.each(&block) end
         def to_s() @data.join(' ') end
-        def clone() ValueSet.new(@data.clone) end
+        def freeze()
+            @data.freeze
+            super()
+        end
     end #~ ValueSet
 
     class Facet
@@ -83,8 +90,8 @@ module Build
             :linkerOption,
             :tag ]
 
-        ATTRS = SETS.collect{|x| ('@'<<x.to_s<<'s').to_sym }
-        attr_reader(*SETS.collect{|x| (x.to_s<<'s').to_sym })
+        ATTRS = SETS.collect{|x| "@#{x}s".to_sym }
+        attr_reader(*SETS.collect{|x| "#{x}s".to_sym })
 
         SETS.each do |facet|
             define_method("#{facet}=") do |value|
@@ -96,23 +103,12 @@ module Build
         attr_reader :vars
 
         def initialize(data={})
-            case data
-            when Hash
-                @vars = {}
-                ATTRS.each do |facet|
-                    #Log.debug "initialize facet <%s>", facet
-                    instance_variable_set(facet, ValueSet.new)
-                end
-                set!(data)
-            when Facet
-                @vars = data.vars.clone
-                ATTRS.each do |facet|
-                    src = data.instance_variable_get(facet)
-                    instance_variable_set(facet, src.clone)
-                end
-            else
-                Log.fatal 'unsupported value: %s', data.inspect
+            @vars = {}
+            ATTRS.each do |facet|
+                #Log.debug "initialize facet <%s>", facet
+                instance_variable_set(facet, ValueSet.new)
             end
+            set!(data)
         end
         def [](facet) instance_variable_get(facet) end
         def []=(facet, value) instance_variable_set(facet, value) end
@@ -168,10 +164,21 @@ module Build
         def to_s()
             attrs = ATTRS.clone
                 .delete_if{|x| instance_variable_get(x).empty? }
-                .collect{|x| "\t#{x}: "<<instance_variable_get(x).to_s }
-            attrs.empty? ? '{}' : "{\n" << attrs.join(",\n") << "\n}"
+                .collect{|x| "\t#{x}: #{instance_variable_get(x)}" }
+            attrs.empty? ? '{}' : "{\n#{attrs.join(",\n")}\n}"
         end
-        def clone() Facet.new(self) end
+        def copy() 
+            newFacet = Facet.new(self)
+            Assert.unreached if newFacet.frozen?
+            return facet
+        end
+        def freeze()
+            @vars.freeze
+            ATTRS.each do |facet|
+                instance_variable_get(facet).freeze
+            end
+            super()
+        end
     end #~ Facet
 
     def make_facet(name, options={}, &block)
@@ -196,6 +203,10 @@ module Build
                 output << facet if filter.call(environment)
             end
             return self
+        end
+        def freeze()
+            @facets.freeze
+            super()
         end
     public
         def facet!(platform: nil, config: nil, compiler: nil, facet: Facet.new)

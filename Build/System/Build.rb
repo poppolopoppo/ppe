@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 BUILD_STARTED_AT = Time.now
 
@@ -8,7 +9,7 @@ $ApplicationPath = Pathname.new(File.absolute_path(File.dirname($0)))
 def require_once(relpath)
     path = File.join(File.dirname(caller_locations(1, 1)[0].absolute_path), relpath)
     path = Pathname.new(path).relative_path_from($ApplicationPath).to_s
-    path = './' << path unless path =~ /^\.\.\//
+    path = "./#{path}" unless path =~ /^\.\.\//
     require(path)
 end
 
@@ -34,6 +35,7 @@ require_once 'HAL/hal.rb'
 
 require_once 'Commands/BFF.rb'
 require_once 'Commands/FASTBuild.rb'
+require_once 'Commands/PCH.rb'
 require_once 'Commands/VSCode.rb'
 
 module Build
@@ -58,33 +60,81 @@ module Build
 end #~ Build
 
 class Build::Namespace
+    def self.ppe_common(target, &cfg)
+        target.define!("EXPORT_PPE_#{target.var_path.upcase}")
+        target.includePath!($SourcePath)
+        target.instance_exec(&cfg) if cfg
+        return target
+    end
     def ppe_external!(name, &cfg)
         self.external!(name) do
-            instance_exec(&cfg) if cfg
             glob!(path: nil)
             tag!(:nounity)
-            includePath!($SourcePath)
+            force_includes!(File.join(abs_path, 'Public', name.to_s+'-external.h'))
+            includePath!(File.join($SourcePath, 'Runtime', 'Core', 'Public'))
+            Build::Namespace.ppe_common(self, &cfg)
         end
     end
     def ppe_module!(name, &cfg)
         self.library!(name) do
-            instance_exec(&cfg) if cfg
-            define!('EXPORT_PPE_'<<var_path.upcase)
             isolated_files!('ModuleExport.cpp')
             force_includes!(File.join(abs_path, 'ModuleExport.h'))
             pch!('stdafx.h', 'stdafx.cpp')
             glob!(path: 'Private')
-            includePath!($SourcePath)
+            Build::Namespace.ppe_common(self, &cfg)
         end
     end
 end
 
 Build.namespace(:PPE) do
     namespace(:External) do
-        ppe_external!('double-conversion')
-        ppe_external!(:farmhash)
-        ppe_external!(:lz4)
-        ppe_external!(:xxHash)
+        ppe_external!('double-conversion') do
+            extra_files!(*%w{
+                Public/double-conversion-external.h
+                double-conversion.git/double-conversion/bignum.h
+                double-conversion.git/double-conversion/bignum-dtoa.h
+                double-conversion.git/double-conversion/cached-powers.h
+                double-conversion.git/double-conversion/diy-fp.h
+                double-conversion.git/double-conversion/double-conversion.h
+                double-conversion.git/double-conversion/double-to-string.h
+                double-conversion.git/double-conversion/fast-dtoa.h
+                double-conversion.git/double-conversion/fixed-dtoa.h
+                double-conversion.git/double-conversion/ieee.h
+                double-conversion.git/double-conversion/string-to-double.h
+                double-conversion.git/double-conversion/strtod.h
+                double-conversion.git/double-conversion/utils.h })
+            isolated_files!(*%w{
+                double-conversion.git/double-conversion/bignum.cc
+                double-conversion.git/double-conversion/bignum-dtoa.cc
+                double-conversion.git/double-conversion/cached-powers.cc
+                double-conversion.git/double-conversion/double-to-string.cc
+                double-conversion.git/double-conversion/fast-dtoa.cc
+                double-conversion.git/double-conversion/fixed-dtoa.cc
+                double-conversion.git/double-conversion/string-to-double.cc
+                double-conversion.git/double-conversion/strtod.cc })
+        end
+        ppe_external!(:farmhash) do
+            extra_files!(*%w{
+                Public/farmhash-external.h
+                farmhash.git/src/farmhash.h })
+            isolated_files!('farmhash.git/src/farmhash.cc')
+        end
+        ppe_external!(:lz4) do
+            extra_files!(*%w{
+                Public/lz4-external.h
+                lz4.git/lib/lz4.h
+                lz4.git/lib/lz4hc.h
+                lz4.git/lib/lz4opt.h })
+            isolated_files!(*%w{
+                lz4.git/lib/lz4.c
+                lz4.git/lib/lz4hc.c })
+        end
+        ppe_external!(:xxHash) do
+            extra_files!(*%w{
+                Public/xxHash-external.h
+                xxHash.git/xxhash.h })
+            isolated_files!('Private/xxHash-dummy.cpp')
+        end
     end
     namespace(:Runtime) do
         ppe_module!(:Core) do
@@ -104,13 +154,10 @@ Build.namespace(:PPE) do
             public_deps!(namespace.Core)
             public_deps!(namespace.RTTI)
             public_deps!(namespace.VFS)
-        end
-        namespace(:Graphics) do
-            ppe_module!(:Test) do
-                depends!(namespace[:Runtime].Core)
-            end
+            excluded_files!('Private/Markup/MarkupSerializer.cpp') # TODO : still need some work, but is it really needed ?
         end
     end
+=begin
     namespace(:Offline) do
         ppe_module!(:ContentPipeline) do
             define!('PPE_CONTENTPIPELINE_VERSION=1.0.0')
@@ -120,6 +167,7 @@ Build.namespace(:PPE) do
         end
         include!('Test.rb')
     end
+=end
 end
 
 Build.set_workspace_path('C:/Code/PPE')

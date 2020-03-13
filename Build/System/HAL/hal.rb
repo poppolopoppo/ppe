@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Utils/Log.rb'
 require_once '../Utils/OS.rb'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 require_once '../Core/Environment.rb'
@@ -217,13 +218,14 @@ module Build
                 if Build.Unity and not target.tag?(:nounity) and target.rel_glob_path and target.glob_patterns
                     target_unity = target.var_path+'_Unity'
                     bff.func!('Unity', target_unity) do
+                        set!('UnityNumFiles', target.unity_num_files)
                         if target_pch_header
                             set!('UnityPCH', target.rel_pch_header)
                         end
-                        set!('UnityNumFiles', target.unity_num_files)
-                        set!('UnityInputPath', env.source_path(target.glob_path))
+                        glob_path = env.source_path(target.glob_path)
+                        set!('UnityInputPath', glob_path)
                         set!('UnityInputPattern', target.glob_patterns)
-                        set!('UnityInputExcludedFiles', env.source_path(target.unity_excluded_files))
+                        set!('UnityInputExcludedFiles', env.relative_path(glob_path, target.unity_excluded_files))
                         set!('UnityOutputPath', File.join($OutputPath, 'Unity', File.dirname(target.abs_path)))
                         set!('UnityOutputPattern', "#{target.name}_*_of_#{target.unity_num_files}.cpp")
                         set!('Hidden', true)
@@ -236,9 +238,10 @@ module Build
                     if target_unity
                         set!('CompilerInputUnity', target_unity)
                     elsif target.rel_glob_path and target.glob_patterns
-                        set!('CompilerInputPath', env.source_path(target.glob_path))
+                        glob_path = env.source_path(target.glob_path)
+                        set!('CompilerInputPath', glob_path)
                         set!('CompilerInputPattern', target.glob_patterns)
-                        set!('CompilerInputExcludedFiles', env.source_path(target.excluded_files))
+                        set!('CompilerInputExcludedFiles', env.relative_path(glob_path, target.excluded_files))
                     end
                     if target_pch_source
                         set!('PCHInputFile', env.source_path(target_pch_source))

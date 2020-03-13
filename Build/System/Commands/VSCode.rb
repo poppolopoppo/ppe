@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 require_once '../Core/Environment.rb'
@@ -16,7 +17,7 @@ module Build
     make_command(:vscode, 'Generate VisualStudio Code bindings') do |&namespace|
         vscode = Build.vscode_path
 
-        environments = Build.get_environments().collect{|x| Build.send(x) }
+        environments = Build.fetch_environments
         targets = namespace[].all
 
         JSONFile.serialize(File.join(vscode, VSCode::C_CPP_PROPERTIES), {

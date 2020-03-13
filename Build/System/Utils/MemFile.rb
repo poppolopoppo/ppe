@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 require_once '../Utils/Log.rb'
@@ -19,7 +20,7 @@ module Build
             @column = 1
         end
         def indent!()
-            @indent << @tab
+            @indent += @tab
             return self
         end
         def unindent!()
@@ -33,14 +34,14 @@ module Build
             end
             return self
         end
-        def print!(arg)
-            str = arg.to_s
+        def print!(fmt, *args)
+            str = args.empty? ? fmt.to_s : (fmt.to_s % args)
             indent?; @io.print(str)
             @column += str.length
             return self
         end
-        def puts!(arg)
-            str = arg.to_s
+        def puts!(fmt, *args)
+            str = args.empty? ? fmt.to_s : (fmt.to_s % args)
             indent?; @io.puts(str)
             @column = 1
             @line += 1

@@ -1,7 +1,10 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 require_once '../Core/Target.rb'
 require_once '../Shared/Compiler.rb'
+
+require 'pathname'
 
 module Build
 
@@ -13,28 +16,49 @@ module Build
             @platform = platform
             @config = config
             @compiler = compiler
-            @memoized = nil
+            @memoized = Facet.new
         end
+
         def familly() "#{@platform.name}-#{@config.name}" end
+        def varname() "#{@platform.name}_#{@config.name}" end
+
+        def ext_for(output) return @compiler.ext_for(output) end
+
         def intermediate_path(*args)
             args.collect!{|x| x.to_s }
             File.join($IntermediatePath.to_s, @platform.name.to_s, @config.name.to_s, *args)
         end
-        def source_path(relativePath)
-            case relativePath
+        def source_path(path)
+            case path
             when String
-                File.join($SourcePath, relativePath)
+                return path == File.absolute_path(path) ? path : File.join($SourcePath, path)
             when Array
-                relativePath.collect{|x| source_path(x) }
+                path.collect{|x| source_path(x) }
             when Set
-                a = relativePath.to_a
+                a = path.to_a
                 a.collect!{|x| source_path(x) }
                 return a
             else
-                Log.fatal 'unsupported source path: %s', relativePath.inspect
+                Log.fatal 'unsupported source path: %s', path.inspect
             end
         end
-        def ext_for(output) return @compiler.ext_for(output) end
+        def relative_path(root, path)
+            root = Pathname.new(root) if root.is_a?(String)
+            case path
+            when String
+                path = source_path(path)
+                return path.start_with?(root.to_s) ? Pathname.new(path).relative_path_from(root).to_s : path
+            when Array
+                path.collect{|x| relative_path(root, x) }
+            when Set
+                a = path.to_a
+                a.collect!{|x| relative_path(root, x) }
+                return a
+            else
+                Log.fatal 'unsupported relative path: %s', path.inspect
+            end
+        end
+
         def output_path(relativePath, output=:obj)
             relativePath = relativePath.to_s
             dstExt = @compiler.ext_for(output)
@@ -51,6 +75,7 @@ module Build
             Log.debug '%s: output_path("%s", %s) -> "%s"', self.name, relativePath, output, outputPath
             return outputPath
         end
+
         def target_artefact_type(target)
             case target.type
             when :external
@@ -99,26 +124,30 @@ module Build
                 File.basename(artefact, File.extname(artefact)) ) <<
                 self.ext_for(:debug)
         end
+
         def facet()
-            if @memoized.nil?
+            if @memoized.defines.empty?
                 Log.debug '%s: memoize facet', self.name
 
-                @memoized = Facet.new
                 @memoized.defines.append(
                     "BUILD_ENV=#{@name}",
                     "BUILD_PLATFORM=#{@platform.name}",
                     "BUILD_CONFIG=#{@config.name}",
                     "BUILD_COMPILER=#{@compiler.name}",
-                    "BUILD_#{@platform.name}_#{@config.name}" )
+                    "BUILD_#{self.varname}" )
 
-                @memoized << @platform.facet << @config.facet << @compiler.facet
+                @platform.decorate(@memoized, self)
+                @config.decorate(@memoized, self)
+                @compiler.decorate(@memoized, self)
 
                 apply_decorator(@memoized, self)
+
+                self.freeze
             end
             return @memoized
         end
         def expand(target)
-            result = self.facet().clone
+            result = self.facet().deep_dup
 
             target.customize(result, self, target)
 
@@ -156,6 +185,7 @@ module Build
 
             return result.expand!()
         end
+
     end #~ Environment
 
     def make_environment(compilerName, platformNames, configNames)
@@ -188,6 +218,9 @@ module Build
     $BuildEnvironments = []
     def self.get_environments()
         return $BuildEnvironments
+    end
+    def self.fetch_environments()
+        return $BuildEnvironments.collect{|x| Build.send(x) }
     end
     def self.append_environments(*env)
         $BuildEnvironments.concat(env)

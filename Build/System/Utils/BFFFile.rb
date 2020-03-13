@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_once '../Common.rb'
 require_once 'MemFile.rb'
 
@@ -23,7 +25,7 @@ module Build
                 source.write_to_disk()
                 Build.restore_prerequisite('Build.modified_fileslist_digest', digest)
             else
-                Log.verbose '%s: skip saving modified files list since it did\'t change'
+                Log.verbose '%s: skip saving modified files list since it did\'t change', $SourceControlProvider.name
             end
         end
 

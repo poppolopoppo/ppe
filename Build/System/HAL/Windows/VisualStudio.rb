@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../../Common.rb'
 
@@ -81,6 +82,10 @@ module Build
                 facet << Build.Compiler_PCHDisabled
                 facet.compilerOptions << '/Fo"%2"'
             end
+        end
+
+        def decorate(facet, env)
+            super(facet, env)
 
             if Build.PerfSDK and not env.config.shipping?
                 case env.platform.arch
@@ -249,14 +254,14 @@ module Build
         if Build.LTO
             if Build.Incremental
                 Log.verbose 'Windows: using incremental link-time code generation'
-                compilerOptions << '/LTCG:INCREMENTAL'
+                linkerOptions << '/LTCG:INCREMENTAL'
             else
                 Log.verbose 'Windows: using link-time code generation'
-                compilerOptions << '/LTCG'
+                linkerOptions << '/LTCG'
             end
         else
             Log.verbose 'Windows: using compile-time code generation'
-            compilerOptions << '/LTCG:OFF'
+            linkerOptions << '/LTCG:OFF'
         end
     end
 

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 module Build
 
@@ -32,12 +33,12 @@ module Build
             raise ArgumentError.new("unknown verbosity level: #{min}")
         end
 
-        $pinned_stream = $stdout
+        $pinned_stream = $stderr
         $pinned_message = nil
 
         def self.pin(message)
             Log.clear_pin
-            $pinned_message = message
+            $pinned_message = "[[ #{message} ]]"
             Log.attach_pin
         end
         def self.clear_pin()
@@ -76,7 +77,7 @@ module Build
                 when :fatal
                     $stdout.flush
                     $stderr.flush
-                    raise FatalError.new('fatal: '<<message)
+                    raise FatalError.new("fatal: #{message}")
                 else
                     $stderr.flush
                     raise ArgumentError.new("unsupported log verbosity: #{verbosity}")
@@ -95,9 +96,8 @@ module Build
                 message = message.to_s
             end
 
-            log = ($show_timestamp ? ("[%010.5f]" % elapsed?()) : '') <<
-                " #{ICONS[verbosity]}  " <<
-                message.to_s
+            log = ($show_timestamp ? ("[%011.4f]" % elapsed?()) : '') +
+                " #{ICONS[verbosity]}  #{message}"
             log << "\n\tat: " << caller_locations(1, 1)[0].to_s if $show_caller
 
             Log.raw(log, verbosity: verbosity)

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 require_once '../Core/Facet.rb'
@@ -115,8 +116,10 @@ module Build
 
         def expand_path(path)
             case path
+            when NilClass
+                return nil
             when String
-                File.join(@source_path, path)
+                return path == File.absolute_path(path) ? path : File.join(@source_path, path)
             when Array
                 path.collect{|x| expand_path(x) }
             when Set
@@ -163,7 +166,7 @@ module Build
         def extra_files!(*filenames) @extra_files.merge(filenames); return self end
         def force_includes!(*filenames) @force_includes.merge(filenames); return self end
 
-        def unity_excluded_files() return (@isolated_files + @excluded_files).to_a end
+        def unity_excluded_files() return (self.isolated_files + self.excluded_files) end
 
         def depends!(*others, visibility: :private)
             case visibility

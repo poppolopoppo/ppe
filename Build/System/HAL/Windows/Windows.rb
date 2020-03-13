@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once 'VisualStudio.rb'
 require_once 'WindowsSDK.rb'
@@ -25,11 +26,11 @@ module Build
             define!('_WIN64')
     end
 
-    const_memoize(self, :WindowsConfig_Debug) { SharedConfigs::Debug.clone.inherits!(Build.VisualStudio_Debug) }
-    const_memoize(self, :WindowsConfig_FastDebug) { SharedConfigs::FastDebug.clone.inherits!(Build.VisualStudio_FastDebug) }
-    const_memoize(self, :WindowsConfig_Release) { SharedConfigs::Release.clone.inherits!(Build.VisualStudio_Release) }
-    const_memoize(self, :WindowsConfig_Profiling) { SharedConfigs::Profiling.clone.inherits!(Build.VisualStudio_Profiling) }
-    const_memoize(self, :WindowsConfig_Final) { SharedConfigs::Final.clone.inherits!(Build.VisualStudio_Final) }
+    const_memoize(self, :WindowsConfig_Debug) { SharedConfigs::Debug.deep_dup.inherits!(Build.VisualStudio_Debug) }
+    const_memoize(self, :WindowsConfig_FastDebug) { SharedConfigs::FastDebug.deep_dup.inherits!(Build.VisualStudio_FastDebug) }
+    const_memoize(self, :WindowsConfig_Release) { SharedConfigs::Release.deep_dup.inherits!(Build.VisualStudio_Release) }
+    const_memoize(self, :WindowsConfig_Profiling) { SharedConfigs::Profiling.deep_dup.inherits!(Build.VisualStudio_Profiling) }
+    const_memoize(self, :WindowsConfig_Final) { SharedConfigs::Final.deep_dup.inherits!(Build.VisualStudio_Final) }
 
     WindowsConfigs = [
         :WindowsConfig_Debug,
@@ -39,8 +40,8 @@ module Build
         :WindowsConfig_Final,
     ]
 
-    const_memoize(self, :WindowsCompiler_X86) { Build.VisualStudio_Hostx86.clone.inherits!(Build.WindowsSDK_X86) }
-    const_memoize(self, :WindowsCompiler_X64) { Build.VisualStudio_Hostx64.clone.inherits!(Build.WindowsSDK_X64) }
+    const_memoize(self, :WindowsCompiler_X86) { Build.VisualStudio_Hostx86.deep_dup.inherits!(Build.WindowsSDK_X86) }
+    const_memoize(self, :WindowsCompiler_X64) { Build.VisualStudio_Hostx64.deep_dup.inherits!(Build.WindowsSDK_X64) }
 
     WindowsEnvironment =
         make_environment(
