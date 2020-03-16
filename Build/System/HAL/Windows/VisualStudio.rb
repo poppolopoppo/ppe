@@ -9,27 +9,69 @@ module Build
 
     persistent_switch(:PerfSDK, 'Use VisualStudio performance tools', init: true)
 
+    module Visual
+        MSC_VER_2019 = 1920
+        MSC_VER_2017 = 1910
+        MSC_VER_2015 = 1900
+        MSC_VER_2013 = 1800
+    end #~ Visual
+
     class VisualStudioCompiler < Compiler
-        attr_reader :version, :minor_version, :host, :rc, :visualStudioPath
-        def initialize(version, minor_version, host, compiler, librarian, linker, rc, *extra_files)
-            super("VisualStudio_#{version}_#{host}", compiler, librarian, linker, *extra_files)
+        attr_reader :version, :minor_version
+        attr_reader :host, :target
+        attr_reader :rc
+        attr_reader :visualStudioPath, :platformToolset
+        def initialize(
+            prefix,
+            version, minor_version,
+            host, target,
+            visualStudioPath, platformToolset,
+            compiler, librarian, linker, rc, *extra_files)
+            super("#{prefix}_#{version}_#{host}", compiler, librarian, linker, *extra_files)
             @version = version
             @minor_version = minor_version
             @host = host
+            @target = target
             @rc = rc
+            @visualStudioPath = visualStudioPath
+            @platformToolset = platformToolset
+            @platformToolset.gsub!(/[^\d]+/, '')
 
-            _, @visualStudioPath = *compiler.match(/^(.*)\/VC\/Tools\/MSVC\//)
-            Log.fatal 'invalid path for VisualStudio: "%s"', @visualStudioPath unless Dir.exist?(@visualStudioPath)
+            self.inherits!(Build.VisualStudio_Base)
+            self.inherits!(Build.send "VisualStudio_Base_#{target}")
+
             self.facet.export!('VisualStudioPath', @visualStudioPath)
 
-            Log.fatal 'invalid VisualStudio path "%"' unless Dir.exist?(@visualStudioPath)
-            Log.verbose 'Windows: new VisualStudio %s %s', @version, @minor_version
+            Log.fatal 'invalid VisualStudio path "%s"', @visualStudioPath unless Dir.exist?(@visualStudioPath)
+            Log.verbose 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
 
             self.facet.defines << 'CPP_VISUALSTUDIO'
             self.facet.includePaths <<
                 File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'include') <<
                 File.join(@visualStudioPath, 'VC', 'Auxiliary', 'VS', 'include')
         end
+
+        def self.infos_from(cl_exe)
+            minor_version = cl_exe.match(/\/(14\..*?)\//)[1]
+
+            _, host, target = *cl_exe.match(/\/Host(x86|x64)\/(x86|x64)\//i)
+            host = "#{target}_#{host[1..-1]}" if host.downcase != target.downcase
+            host = "Host#{host}"
+
+            platformToolset = minor_version[0..3]
+            platformToolset.gsub!(/[^\d]+/, '')
+
+            _, visualStudioPath = *cl_exe.match(/^(.*)\/VC\/Tools\/MSVC\//)
+
+            return [
+                minor_version,
+                host, target,
+                visualStudioPath,
+                platformToolset
+            ]
+        end
+
+        def familly() :msvc end
 
         def ext_binary() '.exe' end
         def ext_debug() '.pdb' end
@@ -380,18 +422,12 @@ module Build
         binpath = File.dirname(cl_exe)
         lib_exe = File.join(binpath, 'lib.exe')
         link_exe = File.join(binpath, 'link.exe')
-
-        minor_version = cl_exe.match(/\/(14\..*?)\//)[1]
-
-        _, host, target = *cl_exe.match(/\/Host(x86|x64)\/(x86|x64)\//i)
-        host = "#{target}_#{host[1..-1]}" if host.downcase != target.downcase
-        host = "Host#{host}"
-
         rc_exe = Build.WindowsSDK_RC_exe
 
-        return VisualStudioCompiler.new(version, minor_version, host, cl_exe, lib_exe, link_exe, rc_exe, *fileset).
-            inherits!(Build.VisualStudio_Base).
-            inherits!(Build.send "VisualStudio_Base_#{target}")
+        return VisualStudioCompiler.new(
+            'VisualStudio', version,
+            *VisualStudioCompiler.infos_from(cl_exe),
+            cl_exe, lib_exe, link_exe, rc_exe, *fileset)
     end
 
     const_memoize(self, :VisualStudio2019_Hostx86) do

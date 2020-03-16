@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_once 'ClangCl.rb'
 require_once 'VisualStudio.rb'
 require_once 'WindowsSDK.rb'
 
@@ -7,10 +8,13 @@ require_once '../../Core/Environment.rb'
 
 module Build
 
+    persistent_switch(:LLVM, 'Use LLVM for Windows toolchain')
+
     make_facet(:Windows_Base) do
         defines <<
             'PLATFORM_PC' << 'PLATFORM_WINDOWS' <<
             'WIN32' << '__WINDOWS__'
+        includes << File.join($SourcePath, 'winnt_version.h')
     end
 
     const_memoize(self, :WindowsPlatform_X86) do
@@ -40,8 +44,16 @@ module Build
         :WindowsConfig_Final,
     ]
 
-    const_memoize(self, :WindowsCompiler_X86) { Build.VisualStudio_Hostx86.deep_dup.inherits!(Build.WindowsSDK_X86) }
-    const_memoize(self, :WindowsCompiler_X64) { Build.VisualStudio_Hostx64.deep_dup.inherits!(Build.WindowsSDK_X64) }
+    const_memoize(self, :WindowsCompiler_X86) do
+        compiler = Build.LLVM ?
+            Build.LLVM_Windows_Hostx86 : Build.VisualStudio_Hostx86
+        compiler.deep_dup.inherits!(Build.WindowsSDK_X86)
+    end
+    const_memoize(self, :WindowsCompiler_X64) do
+        compiler = Build.LLVM ?
+            Build.LLVM_Windows_Hostx64 : Build.VisualStudio_Hostx64
+        compiler.deep_dup.inherits!(Build.WindowsSDK_X64)
+    end
 
     WindowsEnvironment =
         make_environment(

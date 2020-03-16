@@ -16,6 +16,8 @@ module Build
             @extra_files = extra_files
         end
 
+        def familly() nil end
+
         def ext_for(output)
             case output
             when :binary
@@ -47,7 +49,7 @@ module Build
         def add_libraryPath(facet, dirpath) Log.error("%s: add_libraryPath('%s') is not implemented", @name, dirpath) end
 
         def add_compilerOption(facet, token)
-            facet.analysisOptions << token
+            #facet.analysisOptions << token
             facet.compilerOptions << token
             facet.pchOptions << token
             facet.preprocessorOptions << token
