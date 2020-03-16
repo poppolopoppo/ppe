@@ -4,7 +4,7 @@ BUILD_STARTED_AT = Time.now
 
 require 'pathname'
 
-$ApplicationPath = Pathname.new(File.absolute_path(File.dirname($0)))
+$ApplicationPath = Pathname.new(Dir.pwd)
 
 def require_once(relpath)
     path = File.join(File.dirname(caller_locations(1, 1)[0].absolute_path), relpath)
@@ -36,6 +36,7 @@ require_once 'HAL/hal.rb'
 require_once 'Commands/BFF.rb'
 require_once 'Commands/FASTBuild.rb'
 require_once 'Commands/PCH.rb'
+require_once 'Commands/VCXProj.rb'
 require_once 'Commands/VSCode.rb'
 
 module Build
