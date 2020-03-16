@@ -14,7 +14,7 @@ module Build
 
         LEVELS = ICONS.keys
         VERBOSITY = [ :info, :warning, :error, :fatal ]
-        MAXMSGLEN = 2048
+        MAXMSGLEN = 4096
 
         $started_at = Time.now
         $show_caller = false
@@ -69,7 +69,9 @@ module Build
 
         def self.raw(message, args: nil, verbosity: :info)
             Log.without_pin do
+                message = message.to_s
                 message = message % args if args
+
                 if message.length > MAXMSGLEN
                     Log.error 'Log: cropping next entry because it\'s more than %d characters long (%d chars)', MAXMSGLEN, message.length
                     message = message[0..MAXMSGLEN]
