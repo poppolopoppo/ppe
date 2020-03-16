@@ -55,13 +55,13 @@ struct TScalarVectorExpr {
     // https://stackoverflow.com/questions/3888082/implicit-conversion-not-happening
     // https://stackoverflow.com/questions/44834415/implicit-template-type-deduction-with-two-arguments-of-different-types
 
-    inline friend constexpr auto Length(const TScalarVectorExpr& v) noexcept {
+    inline friend CONSTEXPR auto Length(const TScalarVectorExpr& v) noexcept {
         return Length(ExpandScalarVectorExpr(v));
     }
-    inline friend constexpr auto LengthSq(const TScalarVectorExpr& v) noexcept {
+    inline friend CONSTEXPR auto LengthSq(const TScalarVectorExpr& v) noexcept {
         return LengthSq(ExpandScalarVectorExpr(v));
     }
-    inline friend constexpr auto Normalize(const TScalarVectorExpr& v) noexcept {
+    inline friend CONSTEXPR auto Normalize(const TScalarVectorExpr& v) noexcept {
         return Normalize(ExpandScalarVectorExpr(v));
     }
 };
