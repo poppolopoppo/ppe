@@ -8,7 +8,7 @@ module Build
     class Namespace < Policy
         ALL = {}
 
-        attr_reader :parent, :path, :children
+        attr_reader :parent, :path, :children, :var_path
         def initialize(name, parent: nil)
             super(name)
             @all_targets = []
@@ -27,6 +27,7 @@ module Build
                     @root = @root.parent
                 end
             end
+            @var_path = @path.tr('/-', '_')
         end
 
         def root?() @parent.nil? end
@@ -74,7 +75,7 @@ module Build
             target = Target.new(name, self, type, link, &config)
             @self_targets << target
             append!(target)
-            safe_name = name.to_s.gsub('-', '_')
+            safe_name = name.to_s.tr('/-', '_')
             define_singleton_method(safe_name) { target }
             target.configure!
             return self

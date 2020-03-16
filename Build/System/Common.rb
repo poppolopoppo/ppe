@@ -35,6 +35,7 @@ module Build
         $SourcePath = File.join($WorkspacePath, 'Source')
         $OutputPath = File.join($WorkspacePath, 'Output')
         $BinariesPath = File.join($OutputPath, 'Binaries')
+        $ProjectsPath = File.join($OutputPath, 'Projects')
         $IntermediatePath = File.join($OutputPath, 'Intermediate')
         $SavedPath = File.join($OutputPath, 'Saved')
         $ExtrasPath = File.join($WorkspacePath, 'Extras')
@@ -49,7 +50,7 @@ module Build
         Log.debug("Extras path = '%s'", $ExtrasPath)
     end
 
-    Build.set_workspace_path(File.dirname($0)) # create global variables
+    Build.set_workspace_path($ApplicationPath.to_s) # create default global variables
 
     def self.const_memoize(host, name, &memoized)
         cls = host.class

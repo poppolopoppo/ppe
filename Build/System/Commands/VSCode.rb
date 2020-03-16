@@ -39,9 +39,6 @@ module Build
     def self.vscode_path() return File.join($WorkspacePath, VSCode::PATH) end
 
     module VSCode
-        BUILD_RB=File.realpath($0)
-        BUILD_CWD=File.dirname(BUILD_RB)
-
         PATH='.vscode'
         C_STANDARD='c11'
         C_CPP_PROPERTIES_VERSION=4
@@ -104,7 +101,7 @@ module Build
                     isBackground: true,
                     command: 'ruby',
                     args: Build.make_commandline('--fbuild', "#{m.abs_path}-${command:cpptools.activeConfigName}"),
-                    options: { cwd: BUILD_CWD },
+                    options: { cwd: $WorkspacePath },
                     group: { kind: 'build', isDefault: true },
                     presentation: {
                         clear: true,

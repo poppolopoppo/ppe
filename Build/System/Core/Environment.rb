@@ -64,7 +64,7 @@ module Build
             dstExt = @compiler.ext_for(output)
             case output
             when :binary, :shared
-                outputPath = File.join($BinariesPath, relativePath.gsub('/', '-')<<'-'<<@platform.name.to_s<<'-'<<@config.name.to_s<<dstExt)
+                outputPath = File.join($BinariesPath, relativePath.tr('/', '-')<<'-'<<@platform.name.to_s<<'-'<<@config.name.to_s<<dstExt)
             when :debug
                 Log.fatal 'you must use target_debug_path() instead'
             else

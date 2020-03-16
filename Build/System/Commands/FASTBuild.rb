@@ -30,17 +30,17 @@ module Build
 
     module FBuild
 
-        def self.run(*args, quiet: false, wait: true)
+        def self.run(*args, config: Build.bff_path, quiet: false, wait: true)
             Log.debug 'FBuild: launching "%s"', Build.FBuild_binary
 
             cmd = []
             cmd << Build.FBuild_binary.to_s
-            cmd << '-config' << Build.bff_path
+            cmd << '-config' << config
             cmd << '-cache' if Build.Cache
             cmd << '-clean' if Build.Rebuild
             cmd << '-nounity' unless Build.Unity
             cmd << '-nostoponerror' unless Build.StopOnError
-            cmd << '-noprogress' << '-m0'
+            cmd << '-fastcancel' << '-noprogress' << '-m0'
 
             if quiet
                 cmd << '-quiet'

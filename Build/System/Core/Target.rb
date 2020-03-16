@@ -46,7 +46,7 @@ module Build
             @link = link
 
             @abs_path = File.join(@namespace.to_s, @name.to_s)
-            @var_path = @abs_path.gsub('/', '_').gsub('-', '_')
+            @var_path = @abs_path.tr('/-', '_')
 
             @source_path = @abs_path
 
@@ -166,6 +166,7 @@ module Build
         def extra_files!(*filenames) @extra_files.merge(filenames); return self end
         def force_includes!(*filenames) @force_includes.merge(filenames); return self end
 
+        def all_source_files() return (self.source_files + self.isolated_files) end
         def unity_excluded_files() return (self.isolated_files + self.excluded_files) end
 
         def depends!(*others, visibility: :private)

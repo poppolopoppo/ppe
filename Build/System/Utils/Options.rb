@@ -9,6 +9,7 @@ module Build
 
     Args = []
     Commands = []
+    Script = File.absolute_path($0)
 
     $BuildClean = false
     def Clean() $BuildClean end
@@ -43,7 +44,12 @@ module Build
         return
     end
     def make_commandline(*args)
-        return [ RUBY_INTERPRETER_PATH, $0 ] + args
+        return [ RUBY_INTERPRETER_PATH, Build::Script ] + args
+    end
+    def make_commandstr(*args)
+        line = make_commandline(*args)
+        line.collect!{|x| x.match?(/\s/) ? "\"#{x}\"" : x }
+        return line.join(' ')
     end
 
     OptionVariables = []
@@ -74,7 +80,7 @@ module Build
 
             if @values
                 desc += "[#{@values.join(',')}]"
-                opt.on(@flag, desc, *@opts) do |x| 
+                opt.on(@flag, desc, *@opts) do |x|
                     @value = nil
                     @values.each do |y|
                         if x.downcase == y.downcase
@@ -122,7 +128,7 @@ module Build
     end
 
     PersistentConfig = {
-        file: File.join(File.dirname($0), ".#{File.basename($0)}.yml"),
+        file: File.join(File.dirname(Build::Script), ".#{File.basename(Build::Script)}.yml"),
         vars: {},
         data: {},
     }
@@ -154,7 +160,7 @@ module Build
 
     def self.parse_options(full=false)
         Args.replace(OptionParser.new do |opts|
-            opts.banner = "Usage: #{File.basename($0)} command [options] [args]"
+            opts.banner = "Usage: #{File.basename(Build::Script)} command [options] [args]"
 
             opts.separator ""
             opts.separator "Commands:"

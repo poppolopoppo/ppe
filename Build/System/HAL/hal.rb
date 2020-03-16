@@ -10,4 +10,4 @@ module Build
 
 end #~ Build
 
-require "./HAL/#{$HAL}/#{$HAL}.rb"
+require_once "./#{$HAL}/#{$HAL}.rb"

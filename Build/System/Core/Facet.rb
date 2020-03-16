@@ -68,6 +68,7 @@ module Build
             return self
         end
         def each(&block) @data.each(&block) end
+        def join(*args) @data.join(*args) end
         def to_s() @data.join(' ') end
         def freeze()
             @data.freeze
@@ -125,7 +126,7 @@ module Build
             return true
         end
         def export!(key, subst)
-            @vars["$#{key}$"] = subst
+            @vars["$#{key}$"] = subst.to_s
             return self
         end
         def expand!()

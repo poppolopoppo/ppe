@@ -112,7 +112,7 @@ module Build
                 when Set
                     value!(value.to_a)
                 else
-                    Log.fatal 'unsupported value type <%s>: %s', value.class, value.inspect
+                    Log.fatal 'unsupported value type <%s>: %s', value.class, value.to_s
                 end
                 return self
             end
