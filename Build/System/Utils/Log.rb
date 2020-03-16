@@ -14,6 +14,7 @@ module Build
 
         LEVELS = ICONS.keys
         VERBOSITY = [ :info, :warning, :error, :fatal ]
+        MAXMSGLEN = 2048
 
         $started_at = Time.now
         $show_caller = false
@@ -69,6 +70,11 @@ module Build
         def self.raw(message, args: nil, verbosity: :info)
             Log.without_pin do
                 message = message % args if args
+                if message.length > MAXMSGLEN
+                    Log.error 'Log: cropping next entry because it\'s more than %d characters long (%d chars)', MAXMSGLEN, message.length
+                    message = message[0..MAXMSGLEN]
+                end
+
                 case verbosity
                 when :debug, :verbose, :info
                     $stdout.puts(message)
@@ -82,6 +88,7 @@ module Build
                     $stderr.flush
                     raise ArgumentError.new("unsupported log verbosity: #{verbosity}")
                 end
+
             end if VERBOSITY.include?(verbosity)
         end
 
