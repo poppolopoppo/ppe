@@ -16,7 +16,7 @@ module Build
             evaluate!.value
         end
         def evaluate!()
-            restore(self.instance_exec(&@getter)) if @value.nil?
+            set!(self.instance_exec(&@getter)) if @value.nil?
             return self
         end
     public
@@ -79,6 +79,23 @@ module Build
                 Log.verbose("could not find environment variable <%s>", id)
                 return false
             end
+        end
+    public
+        def validate_FileExist!()
+            validator = lambda do |x|
+                case x
+                when String
+                    return File.exist?(x)
+                when Array,Set
+                    x.each do |y|
+                        return false unless validator[y]
+                    end
+                    return true
+                else
+                    Log.fatal 'unsupported value <%s>: %s', x.class, x.inspect
+                end
+            end
+            self.validate!(&validator)
         end
     end #~ Prerequisite
 

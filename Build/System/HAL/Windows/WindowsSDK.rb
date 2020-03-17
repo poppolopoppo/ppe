@@ -5,8 +5,8 @@ require_once '../../Utils/Prerequisite.rb'
 
 module Build
 
-    import_glob(:WindowsSDK_10_Glob, 'C:/Program Files (x86)/Windows Kits/10/Lib/10.*')
-    import_glob(:WindowsSDK_8_1_Glob, 'C:/Program Files (x86)/Windows Kits/8.1/Lib/8.*')
+    import_glob(:WindowsSDK_10_Glob, 'C:/Program Files (x86)/Windows Kits/10/Lib/10.*').validate_FileExist!
+    import_glob(:WindowsSDK_8_1_Glob, 'C:/Program Files (x86)/Windows Kits/8.1/Lib/8.*').validate_FileExist!
 
     const_memoize(self, :WindowsSDK_10_Info) do
         sdkLib = Build.WindowsSDK_10_Glob()

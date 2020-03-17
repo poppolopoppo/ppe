@@ -57,6 +57,7 @@ module Build
     class OptionVariable
         attr_reader :name, :opts
         attr_accessor :value, :default, :persistent
+        attr_reader :validator
         def initialize(name, value)
             @name = name
             @value = value
@@ -66,6 +67,8 @@ module Build
             @flag = nil
             @description = nil
             @opts = []
+
+            @validator = nil
         end
         def opt_on!(flag, description, values)
             @flag = flag
@@ -95,12 +98,27 @@ module Build
                 opt.on(@flag, desc, *@opts) { |x| @value = x }
             end
         end
-        def restore(val)
+        def restore!(val)
             Log.debug("restore <%s> option = '%s'", @name, val)
+            if @validator
+                unless self.instance_exec(val, &@validator)
+                    Log.warning("couldn't validate <%s> option = '%s', keeping '%s'", @name, val, @value)
+                    return @value
+                end
+            end
+            @value = val
+        end
+        def set!(val)
+            Log.debug("set <%s> option to explicit = '%s'", @name, val)
             @value = val
         end
         def default!()
-            restore(@default)
+            Log.debug("set <%s> option to default = '%s'", @name, val)
+            @value = @default
+        end
+        def validate!(&block)
+            @validator = block
+            return self
         end
         def to_s()
             "#{@name}=#{@value}"
@@ -128,7 +146,7 @@ module Build
     end
 
     PersistentConfig = {
-        file: File.join(File.dirname(Build::Script), ".#{File.basename(Build::Script)}.yml"),
+        file: File.join(File.dirname(Build::Script), ".#{File.basename(Build::Script, File.extname(Build::Script))}.build.yml"),
         vars: {},
         data: {},
     }
@@ -137,12 +155,12 @@ module Build
         var.persistent = true
         PersistentConfig[:vars][var.name] = var
         if PersistentConfig[:data].include?(var.name)
-            var.restore(PersistentConfig[:data][var.name])
+            var.set!(PersistentConfig[:data][var.name])
         end
         return var
     end
     def self.restore_persistent_opt(name, value)
-        PersistentConfig[:vars][name].restore(value)
+        PersistentConfig[:vars][name].restore!(value)
     end
 
     def persistent_array(name, description, init: [], values: nil)
@@ -259,7 +277,7 @@ module Build
             PersistentConfig[:data] = serialized
             PersistentConfig[:vars].each do |name, var|
                 if serialized.key?(var.name)
-                    var.restore(serialized[var.name])
+                    var.restore!(serialized[var.name])
                 end
             end
             return true
