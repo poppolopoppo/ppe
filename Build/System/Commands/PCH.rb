@@ -17,6 +17,8 @@ require 'set'
 
 module Build
 
+    PCH_THRESHOLD = 98 / 100.0 # % of sources include an header -> PCH
+
     make_command(:genpch, 'Generate precompiled headers') do |&namespace|
         environments = Build.fetch_environments
         targets = namespace[].select(*Build::Args)
@@ -66,7 +68,7 @@ module Build
 
                 deps = PCH.dependencies(env, artefact, resolver)
 
-                pch_deps[config] = deps.keep_only_if_above!
+                pch_deps[config] = deps.keep_only_if_above!(PCH_THRESHOLD)
             end
 
             Log.clear_pin
@@ -368,7 +370,7 @@ module Build
                 when :system
                     @systemHeaders.add(path, refcount)
                 when :project
-                    @projectHeaders.add(path, refcount)
+                    @projectHeaders.add(path, refcount) unless path =~ /-(inl|impl)\.h$/i
                 else
                     Log.fatal 'unsupported header type <%s>', type
                 end
