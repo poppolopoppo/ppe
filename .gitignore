@@ -1,3 +1,9 @@
+#### Custom for PPE ####
+
+# Build system configuration
+.*.build.yml
+
+#### Automatically Generated ####
 # Created by https://www.gitignore.io
 
 # Git
