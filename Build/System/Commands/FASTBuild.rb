@@ -14,12 +14,12 @@ module Build
 
     make_prerequisite(:FBuild_binary) do
         case Build.os_name
-        when 'Windows'
+        when :Windows
             need_fileset!(File.join($BuildPath, 'Windows', 'FBuild.exe'))
-        when 'Linux'
+        when :Linux
             need_fileset!(File.join($BuildPath, 'Linux', 'fbuild'))
         else
-            Log.fatal 'unsupported os <%s>', OS.os_name
+            Log.fatal 'unsupported os <%s>', os_name
         end
     end
 
