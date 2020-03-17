@@ -34,6 +34,7 @@ require_once 'Utils/SourceControl.rb'
 require_once 'HAL/hal.rb'
 
 require_once 'Commands/BFF.rb'
+require_once 'Commands/DistClean.rb'
 require_once 'Commands/FASTBuild.rb'
 require_once 'Commands/PCH.rb'
 require_once 'Commands/VCXProj.rb'

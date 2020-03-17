@@ -67,7 +67,7 @@ module Build
 
                 set!('ProjectBuildCommand', Build.make_commandstr('--fbuild', target_alias))
                 set!('ProjectRebuildCommand', Build.make_commandstr('--fbuild', target_alias, '--Rebuild'))
-                set!('ProjectCleanCommand', Build.make_commandstr('--dist-clean', '-v', target_alias))
+                set!('ProjectCleanCommand', Build.make_commandstr('--dist-clean', '-v', target_alias, "#{env.platform.name}/#{env.config.name}/#{target.abs_path}"))
 
                 set!('AdditionalOptions', expanded.analysisOptions.join(' '))
                 set!('ForcedIncludes', expanded.includes.join(';'))
