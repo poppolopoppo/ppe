@@ -95,7 +95,7 @@ module Build
 
         def self.preprocess()
             Log.info 'PCH: preprocessing all targets...'
-            FBuild.run('-preprocess', 'All', quiet: true)
+            FBuild.run('-preprocess', '-nounity', 'All', quiet: true)
         end
 
         RE_otherfile = /File\s(.*)$/i
