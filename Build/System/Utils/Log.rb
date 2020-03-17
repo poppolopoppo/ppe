@@ -52,7 +52,7 @@ module Build
             return
         end
         def self.backout_pin()
-            $pinned_stream.print("\b" * $pinned_message.length) if $pinned_message
+            $pinned_stream.print("\r" + ' ' * $pinned_message.length + "\r") if $pinned_message
             return
         end
         def self.without_pin(&block)
