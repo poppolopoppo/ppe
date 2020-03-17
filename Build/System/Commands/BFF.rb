@@ -110,7 +110,7 @@ module Build
                     end
 
                     bff.comment!("Alias for all targets using <%s>", envname)
-                    bff.func!('Alias', env.familly) do
+                    bff.func!('Alias', env.family) do
                         set!('Targets', aliases)
                     end
                 end
@@ -160,7 +160,7 @@ module Build
         end
 
         def self.make_target_alias(env, target)
-            return "#{target.abs_path}-#{env.familly}"
+            return "#{target.abs_path}-#{env.family}"
         end
 
         def self.make_library(bff, env, target, target_alias, expanded)
@@ -201,7 +201,7 @@ module Build
                 func!('Compiler', env.compiler.name.to_s) do
                     set!('Executable', env.compiler.executable)
                     set!('ExtraFiles', env.compiler.extra_files)
-                    set!('CompilerFamilly', env.compiler.familly.to_s) if env.compiler.familly
+                    set!('CompilerFamily', env.compiler.family.to_s) if env.compiler.family
                     set!('UseLightCache_Experimental', Build.LightCache)
                 end
                 struct!(compiler_details) do

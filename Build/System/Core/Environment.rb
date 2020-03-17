@@ -19,7 +19,7 @@ module Build
             @memoized = Facet.new
         end
 
-        def familly() "#{@platform.name}-#{@config.name}" end
+        def family() "#{@platform.name}-#{@config.name}" end
         def varname() "#{@platform.name}_#{@config.name}" end
 
         def ext_for(output) return @compiler.ext_for(output) end

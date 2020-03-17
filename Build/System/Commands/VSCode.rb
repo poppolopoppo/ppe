@@ -76,7 +76,7 @@ module Build
             end
 
             return {
-                name: env.familly,
+                name: env.family,
                 includePath: globalIncludePaths,
                 intelliSenseMode: intelliSenseMode,
                 macFrameworkPath: macFrameworkPath,
@@ -135,8 +135,8 @@ module Build
 
         def self.compdb(filename, env)
             compdb = File.join($WorkspacePath, 'compile_commands.json')
-            Log.debug 'VSCode: generate <%s> compdb in "%s"', env.familly, compdb
-            FBuild.run('-compdb', env.familly, quiet: true)
+            Log.debug 'VSCode: generate <%s> compdb in "%s"', env.family, compdb
+            FBuild.run('-compdb', env.family, quiet: true)
             Log.verbose 'VSCode: move compdb to "%s"', filename
             FileUtils.mv(compdb, filename)
         end

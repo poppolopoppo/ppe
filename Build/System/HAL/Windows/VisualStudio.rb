@@ -71,7 +71,7 @@ module Build
             ]
         end
 
-        def familly() :msvc end
+        def family() :msvc end
 
         def ext_binary() '.exe' end
         def ext_debug() '.pdb' end
@@ -241,10 +241,6 @@ module Build
         # https://devblogs.microsoft.com/cppblog/stl-features-and-fixes-in-vs-2017-15-8/
         defines.append('_ENABLE_EXTENDED_ALIGNED_STORAGE')
 
-        # https://blogs.msdn.microsoft.com/vcblog/2019/12/13/broken-warnings-theory/
-        defines.append('USE_PPE_MSVC_PRAGMA_SYSTEMHEADER')
-        compilerOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
-
         if Build.Cache
             Log.verbose 'Windows: put debug symbols inside .obj (/Z7)'
             compilerOptions.append('/Z7') # debug symbols inside .obj
@@ -256,7 +252,7 @@ module Build
 
         if Build.Incremental
             Log.verbose 'Windows: using incremental linker with fastlink'
-            linkerOptions.append('/INCREMENTAL', '/DEBUG:FASTLINK') # enable incremental linker
+            linkerOptions.append('/INCREMENTAL') # enable incremental linker
         else
             Log.verbose 'Windows: using non-incremental linker'
             linkerOptions.append('/INCREMENTAL:NO') # disable incremental linker
@@ -362,19 +358,31 @@ module Build
         self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
     end
 
-    import_cmdline(:VsWhere_Hostx86_x86, './HAL/Windows/vswhere.exe', '-find', '**/Hostx86/x86/cl.exe')
-    import_cmdline(:VsWhere_Hostx86_x64, './HAL/Windows/vswhere.exe', '-find', '**/Hostx86/x64/cl.exe')
-    import_cmdline(:VsWhere_Hostx64_x86, './HAL/Windows/vswhere.exe', '-find', '**/Hostx64/x86/cl.exe')
-    import_cmdline(:VsWhere_Hostx64_x64, './HAL/Windows/vswhere.exe', '-find', '**/Hostx64/x64/cl.exe')
+    make_facet(:VisualStudio_Base_2019) do
+        # https://blogs.msdn.microsoft.com/vcblog/2019/12/13/broken-warnings-theory/
+        defines.append('USE_PPE_MSVC_PRAGMA_SYSTEMHEADER')
+        compilerOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
+
+        if Build.Incremental
+            Log.verbose 'Windows: using /DEBUG:FASTLINK to speed-up the linker (non shippable!)'
+            linkerOptions.append('/DEBUG:FASTLINK') # enable incremental linker
+        end
+    end
+
+    VSWhere_exe = File.join($BuildPath, 'System', 'HAL', 'Windows', 'vswhere.exe')
+    import_cmdline(:VsWhere_Hostx86_x86, VSWhere_exe, '-find', '**/Hostx86/x86/cl.exe')
+    import_cmdline(:VsWhere_Hostx86_x64, VSWhere_exe, '-find', '**/Hostx86/x64/cl.exe')
+    import_cmdline(:VsWhere_Hostx64_x86, VSWhere_exe, '-find', '**/Hostx64/x86/cl.exe')
+    import_cmdline(:VsWhere_Hostx64_x64, VSWhere_exe, '-find', '**/Hostx64/x64/cl.exe')
 
     const_memoize(self, :VsWhere_Hostx86) do
-        where = is_x64? ? Build.VsWhere_Hostx64_x86 : Build.VsWhere_Hostx86_x86
+        where = os_x64? ? Build.VsWhere_Hostx64_x86 : Build.VsWhere_Hostx86_x86
         where.collect!{|x| File.expand_path(x) }
         where.sort!{|a,b| b <=> a } # descending
         where
     end
     const_memoize(self, :VsWhere_Hostx64) do
-        where = is_x64? ? Build.VsWhere_Hostx64_x64 : Build.VsWhere_Hostx86_x64
+        where = os_x64? ? Build.VsWhere_Hostx64_x64 : Build.VsWhere_Hostx86_x64
         where.collect!{|x| File.expand_path(x) }
         where.sort!{|a,b| b <=> a } # descending
         where
@@ -427,7 +435,8 @@ module Build
         return VisualStudioCompiler.new(
             'VisualStudio', version,
             *VisualStudioCompiler.infos_from(cl_exe),
-            cl_exe, lib_exe, link_exe, rc_exe, *fileset)
+            cl_exe, lib_exe, link_exe, rc_exe, *fileset).
+            inherits!(Build.VisualStudio_Base_2019)
     end
 
     const_memoize(self, :VisualStudio2019_Hostx86) do

@@ -16,7 +16,7 @@ module Build
             @extra_files = extra_files
         end
 
-        def familly() nil end
+        def family() nil end
 
         def ext_for(output)
             case output

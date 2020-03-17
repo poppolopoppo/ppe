@@ -54,7 +54,7 @@ module Build
             pch_deps = {}
             environments.each_with_index do |env, env_i|
                 config = "BUILD_#{env.varname}"
-                artefact = "#{target.abs_path}-#{env.familly}"
+                artefact = "#{target.abs_path}-#{env.family}"
 
                 Log.pin(target_status + " -> #{config} #{env_i+1}/#{environments.length}")
 
