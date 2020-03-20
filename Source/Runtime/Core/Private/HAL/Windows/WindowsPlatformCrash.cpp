@@ -30,7 +30,7 @@
 #   include "Memory/MemoryTracking.h"
 #endif
 
-#include "HAL/Windows/DbghelpWrapper.h"
+#include "HAL/Windows/DbgHelpWrapper.h"
 #include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <winnt.h>

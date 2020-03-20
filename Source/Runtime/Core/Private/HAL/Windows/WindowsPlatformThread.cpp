@@ -165,7 +165,7 @@ void FWindowsPlatformThread::SetPriority(EThreadPriority priority) {
 auto FWindowsPlatformThread::BackgroundThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
     info.Priority = EThreadPriority::Lowest;
-    info.NumWorkers = Min(2, FWindowsPlatformMisc::NumCores() / 2);
+    info.NumWorkers = Min(size_t(2), FWindowsPlatformMisc::NumCores() / 2);
     forrange(i, 0, FAffinityMask(info.NumWorkers))
         info.Affinities[i] = SecondaryThreadAffinity();
     return info;

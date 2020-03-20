@@ -279,10 +279,10 @@ int FProcess::CaptureOutput(
     FProcess proc = Create(
         executable, parameters, workingDir,
         static_cast<EProcessFlags>(flags |
-            (!!pStderr ? RedirectStderr : 0) |
-            (!!pStdout ? RedirectStdout : 0) |
-            (!!pStdout & (pStdout == pStderr) ? StderrToStdout : 0) |
-            (!!pStdout | !!pStderr ? InheritHandles : 0) ),
+            ((!!pStderr) ? RedirectStderr : 0) |
+            ((!!pStdout) ? RedirectStdout : 0) |
+            ((!!pStdout & (pStdout == pStderr)) ? StderrToStdout : 0) |
+            ((!!pStdout | !!pStderr) ? InheritHandles : 0) ),
         priority );
 
     if (not proc.IsValid())
@@ -314,10 +314,10 @@ int FProcess::CaptureOutput(
     FProcess proc = Create(
         executable, parameters, workingDir,
         static_cast<EProcessFlags>(flags |
-            (!!pStderr ? RedirectStderr : 0) |
-            (!!pStdout ? RedirectStdout : 0) |
-            (!!pStdout & (pStdout == pStderr) ? StderrToStdout : 0) |
-            (!!pStdout | !!pStderr ? InheritHandles : 0) ),
+            ((!!pStderr) ? RedirectStderr : 0) |
+            ((!!pStdout) ? RedirectStdout : 0) |
+            ((!!pStdout & (pStdout == pStderr)) ? StderrToStdout : 0) |
+            ((!!pStdout | !!pStderr) ? InheritHandles : 0) ),
         priority );
 
     if (not proc.IsValid())

@@ -32,18 +32,18 @@ FTypeId MakeTupleTypeId(const TMemoryView<const PTypeTraits>& elements) {
 
     u32 h = u32(ETypeFlags::Tuple);
     foreachitem(it, elements)
-        h = FPlatformHash::CRC32((*it)->TypeId(), h);
+        h = u32(FPlatformHash::CRC32((*it)->TypeId(), h));
 
     return FTypeId(h);
 }
 //----------------------------------------------------------------------------
 FTypeId MakeListTypeId(const PTypeTraits& value) {
-    return FPlatformHash::CRC32(u32(ETypeFlags::List), value->TypeId());
+    return u32(FPlatformHash::CRC32(u32(ETypeFlags::List), value->TypeId()));
 }
 //----------------------------------------------------------------------------
 FTypeId MakeDicoTypeId(const PTypeTraits& key, const PTypeTraits& value) {
-    return FPlatformHash::CRC32(u32(ETypeFlags::Dico),
-        FPlatformHash::CRC32(key->TypeId(), value->TypeId()) );
+    return u32(FPlatformHash::CRC32(u32(ETypeFlags::Dico),
+        FPlatformHash::CRC32(key->TypeId(), value->TypeId()) ));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
