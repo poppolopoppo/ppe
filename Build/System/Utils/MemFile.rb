@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require_once '../Common.rb'
-require_once '../Utils/Log.rb'
 
-require 'digest' # sha1
+require_once 'Log.rb'
+
 require 'fileutils' # mkdir_p
 
 module Build
@@ -16,8 +16,7 @@ module Build
             @io = StringIO.new
             @tab = tab
             @indent = ''
-            @line = 1
-            @column = 1
+            @line = @column = 1
         end
         def indent!()
             @indent += @tab
@@ -61,14 +60,25 @@ module Build
             unindent!
         end
         def str() @io.string end
-        def digest() MemFile.str_digest(@io.string) end
+        def checksum() FileChecksum.new(@filename, Checksum.from_memfile(self)) end
         def write_to_disk()
-            Log.debug 'writing memfile to disk: "%s"', @filename
-            FileUtils.mkdir_p(File.dirname(@filename))
-            File.write(@filename, @io.string)
+            Log.info 'writing memfile to disk: "%s"', @filename
+            dirname = File.dirname(@filename)
+            FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
+            File.write(@filename, @io.string, mode: 'wb')
         end
-        def self.str_digest(str) Digest::SHA1.hexdigest(str) end
-        def self.file_digest(fname) Digest::SHA1.hexdigest(File.read(fname)) end
+        def export_ifn?(external_checksum)
+            in_memory_checksum = self.checksum()
+            if external_checksum.check?(in_memory_checksum)
+                Log.verbose 'skip saving "%s" since it did not change', @filename
+                return false
+            else
+                Log.debug "invalidate '%s' since checksum did not match:\n\t- cfg: %s\n\t- new: %s", @filename, external_checksum.checksum, in_memory_checksum.checksum
+                write_to_disk()
+                external_checksum.apply!(in_memory_checksum)
+                return true
+            end
+        end
     end #~ MemFile
 
 end #~ Build

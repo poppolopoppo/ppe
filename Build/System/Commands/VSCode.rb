@@ -136,7 +136,7 @@ module Build
         def self.compdb(filename, env)
             compdb = File.join($WorkspacePath, 'compile_commands.json')
             Log.debug 'VSCode: generate <%s> compdb in "%s"', env.family, compdb
-            FBuild.run('-compdb', env.family, quiet: true)
+            FBuild.run('-compdb', env.family, quiet: !Log.debug?)
             Log.verbose 'VSCode: move compdb to "%s"', filename
             FileUtils.mv(compdb, filename)
         end

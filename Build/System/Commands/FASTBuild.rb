@@ -15,9 +15,9 @@ module Build
     make_prerequisite(:FBuild_binary) do
         case Build.os_name
         when :Windows
-            need_fileset!(File.join($BuildPath, 'Windows', 'FBuild.exe'))
+            need_fileset!(File.join($BuildPath, 'System', 'HAL', 'Windows', 'FBuild.exe'))
         when :Linux
-            need_fileset!(File.join($BuildPath, 'Linux', 'fbuild'))
+            need_fileset!(File.join($BuildPath, 'System', 'HAL', 'Linux', 'fbuild'))
         else
             Log.fatal 'unsupported os <%s>', os_name
         end
@@ -30,7 +30,7 @@ module Build
 
     module FBuild
 
-        def self.run(*args, config: Build.bff_path, quiet: false, wait: true)
+        def self.run(*args, config: Build.bff_output.filename, quiet: false, wait: true)
             Log.debug 'FBuild: launching "%s"', Build.FBuild_binary
 
             cmd = []
@@ -40,7 +40,7 @@ module Build
             cmd << '-clean' if Build.Rebuild
             cmd << '-nounity' unless Build.Unity
             cmd << '-nostoponerror' unless Build.StopOnError
-            cmd << '-fastcancel' << '-noprogress' << '-m0'
+            cmd << '-fastcancel' << '-noprogress'
 
             if quiet
                 cmd << '-quiet'
@@ -48,17 +48,17 @@ module Build
                 cmd << '-summary' << '-nosummaryonerror'
             end
 
-            if wait
-                cmd << '-wait' << '-wrapper'
-            end
-
             cmd.concat(Build.send('x-fbuild').collect{|x| "-#{x}" })
             cmd.concat(args)
+
+            if (wait && !cmd.include?('-showtargets')) # TODO: https://github.com/fastbuild/fastbuild/issues/719
+                cmd << '-wait' << '-ide'
+            end
 
             Log.verbose 'FBuild: %s', cmd.join(' ')
 
             result = nil
-            fd = Open3.popen3(*cmd, chdir: $WorkspacePath) do |io_in, io_out, io_err, wait_thr|
+            Open3.popen3(*cmd, chdir: $WorkspacePath) do |io_in, io_out, io_err, wait_thr|
                 loop do
                     if line = io_out.gets
                         line = FBuild.trim_crlf(line)
@@ -69,7 +69,7 @@ module Build
                         end
                     elsif line = io_err.gets
                         line = FBuild.trim_crlf(line)
-                        if not quiet and line
+                        if line
                             Log.raw(line, verbosity: :error)
                         end
                     else
@@ -82,7 +82,7 @@ module Build
             if result.success?
                 Log.debug 'FBuild: success'
             else
-                Log.fatal 'FBuild: command failed (exit code: %d)', $?.to_i
+                Log.fatal 'FBuild: command failed (exit code: %d)', result.to_i
             end
 
             return result.success?

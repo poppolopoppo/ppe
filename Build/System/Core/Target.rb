@@ -54,6 +54,9 @@ module Build
             @glob_patterns = %w{ *.c *.cpp }
             @unity_num_files = 1
 
+            @pch_header = nil
+            @pch_source = nil
+
             @excluded_files = Set.new
             @source_files = Set.new
             @isolated_files = Set.new

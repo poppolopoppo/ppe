@@ -12,21 +12,12 @@ module Build
         end
         def self.write_modified_fileslist()
             source = MemFile.new(BFF.modified_fileslist_path)
-            Log.verbose '%s: saving modified list to "%s"', $SourceControlProvider.name, source.filename
 
-            files = Build.modified_files?
-            files.each do |filename|
+            Build.modified_files?.each do |filename|
                 source.puts!(filename)
             end
 
-            digest = source.digest
-            if digest != Build.modified_fileslist_digest
-                Log.info '%s: write modified files list (%d files)', $SourceControlProvider.name, files.count
-                source.write_to_disk()
-                Build.restore_prerequisite('Build.modified_fileslist_digest', digest)
-            else
-                Log.verbose '%s: skip saving modified files list since it did\'t change', $SourceControlProvider.name
-            end
+            source.export_ifn?(Build.modified_fileslist_output)
         end
 
         class Source
@@ -37,9 +28,12 @@ module Build
                 @minify = minify
                 @spacer = minify ? '' : ' '
             end
-            def digest() @source.digest end
+            def checksum() @source.checksum end
             def filename() @source.filename end
-            def write_to_disk() @source.write_to_disk end
+
+            def export!() @source.write_to_disk end
+            def export_ifn?(external_checksum) @source.export_ifn?(external_checksum) end
+
             def once?(key, &block)
                 if @aliases.add?(key)
                     instance_exec(&block)

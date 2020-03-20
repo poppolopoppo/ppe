@@ -15,8 +15,6 @@ require 'fileutils'
 module Build
 
     make_command(:vcxproj, 'Generate VisualStudio project files') do |&namespace|
-        vscode = Build.vscode_path
-
         environments = Build.fetch_environments
         namespace = namespace[]
 
@@ -31,7 +29,7 @@ module Build
 
         VCXProj.make_sln(bff, environments, namespace)
 
-        bff.write_to_disk
+        bff.export!
 
         FBuild.run('sln', config: bff.filename)
     end

@@ -72,6 +72,8 @@ module Build
             '-Wno-unused-local-typedef',            # ignore les typedefs locaux non utilisés (nécessaire pour STATIC_ASSERT(x))
             '-Wno-#pragma-messages',                # don't consider #pragma message as warnings
         ]
+
+=begin # not needed anymore, since we dodge all warnings from system headers using /imsvc in LLVMWindowsCompiler.add_includePath()
         extraWarning = [
             '-Wno-invalid-noreturn',                # nécessaire pour STL M$
             '-Wno-dllimport-static-field-def',      # definition of dllimport static field (M$TL)
@@ -86,6 +88,7 @@ module Build
             '-Wno-microsoft-explicit-constructor-call',
             '-Wno-pragma-pack',
         ]
+=end
 
         compilerOptions.append(*warningOptions)
         compilerOptions.append("-fmsc-version=#{Visual::MSC_VER_2019}")

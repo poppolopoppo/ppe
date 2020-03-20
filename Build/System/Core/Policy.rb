@@ -12,7 +12,6 @@ module Build
             @customizations = []
         end
 
-        def tag!(*tags) @facet.tag!(*tags) end
         def tag?(*tags) @facet.tag?(*tags) end
 
         def to_s() @name.to_s end

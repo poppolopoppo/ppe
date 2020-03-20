@@ -37,7 +37,7 @@ module Build
     end
     def run_command(&namespace)
         $BuildCommand.each do |cmd|
-            Log.info 'run <%s> command', cmd.name
+            Log.info 'run <%s> command: %s', cmd.name, Build::Args
             cmd.block.call(&namespace)
         end
         $BuildCommand.clear
@@ -147,6 +147,7 @@ module Build
 
     PersistentConfig = {
         file: File.join(File.dirname(Build::Script), ".#{File.basename(Build::Script, File.extname(Build::Script))}.build.yml"),
+        hash: nil,
         vars: {},
         data: {},
     }
@@ -250,19 +251,19 @@ module Build
     end
 
     def self.save_options(dst=PersistentConfig[:file])
-        Log.verbose("save persistent options to '%s'", dst)
         serialized = {}
         PersistentConfig[:vars].each do |name, var|
             serialized[var.name] = var.value unless var.value.nil?
         end
         begin
-            if PersistentConfig[:data].hash != serialized.hash
+            if PersistentConfig[:hash] != serialized.hash
+                Log.verbose("save persistent options to '%s'", dst)
                 File.open(dst, 'w') do |fd|
                     fd.write(serialized.to_yaml)
                 end
                 PersistentConfig[:data] = serialized
             else
-                Log.verbose('skip saving since persitent options did not change')
+                Log.verbose('skip saving persitent options since they did not change')
             end
             return true
         rescue Errno::ENOENT
@@ -275,6 +276,7 @@ module Build
         begin
             serialized = YAML.load(File.read(src))
             PersistentConfig[:data] = serialized
+            PersistentConfig[:hash] = serialized.hash
             PersistentConfig[:vars].each do |name, var|
                 if serialized.key?(var.name)
                     var.restore!(serialized[var.name])

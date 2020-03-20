@@ -8,8 +8,8 @@ require_once '../Utils/Log.rb'
 module Build
 
     class Prerequisite < OptionVariable
-        def initialize(name, getter)
-            super(name, nil)
+        def initialize(name, default, getter)
+            super(name, default)
             @getter = getter
         end
         def available?()
@@ -99,8 +99,8 @@ module Build
         end
     end #~ Prerequisite
 
-    def make_prerequisite(name, &getter)
-        prereq = Prerequisite.new("#{self.name}.#{name}", getter)
+    def make_prerequisite(name, namespace: 'Prerequisite', default: nil, &getter)
+        prereq = Prerequisite.new("#{namespace}.#{name}", default, getter)
         self.class.define_method(name) do
             return prereq.available?
         end

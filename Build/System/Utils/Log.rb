@@ -12,6 +12,8 @@ module Build
             fatal:      'KO!',
         }
 
+        $stdout.sync = $stderr.sync = true
+
         LEVELS = ICONS.keys
         VERBOSITY = [ :info, :warning, :error, :fatal ]
         MAXMSGLEN = 4096
