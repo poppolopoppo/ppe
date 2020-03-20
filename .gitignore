@@ -3,6 +3,9 @@
 # Build system configuration
 .*.build.yml
 
+# Ignore everything sitting in Output/**
+Output/**
+
 #### Automatically Generated ####
 # Created by https://www.gitignore.io
 
