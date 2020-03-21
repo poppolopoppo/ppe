@@ -137,8 +137,14 @@ module Build
             compdb = File.join($WorkspacePath, 'compile_commands.json')
             Log.debug 'VSCode: generate <%s> compdb in "%s"', env.family, compdb
             FBuild.run('-compdb', env.family, quiet: !Log.debug?)
-            Log.verbose 'VSCode: move compdb to "%s"', filename
-            FileUtils.mv(compdb, filename)
+            if File.exist?(compdb)
+                Log.verbose 'VSCode: move compdb to "%s"', filename
+                dirname = File.dirname(filename)
+                FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
+                FileUtils.mv(compdb, filename)
+            else
+                Log.fatal 'VSCode: compdb "%s" not found, generation failed ?', compdb
+            end
         end
 
     end #~ VSCode
