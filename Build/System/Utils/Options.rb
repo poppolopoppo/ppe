@@ -113,7 +113,7 @@ module Build
             @value = val
         end
         def default!()
-            Log.debug("set <%s> option to default = '%s'", @name, val)
+            Log.debug("set <%s> option to default = '%s'", @name, @default)
             @value = @default
         end
         def validate!(&block)

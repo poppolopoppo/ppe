@@ -60,24 +60,31 @@ module Build
             unindent!
         end
         def str() @io.string end
-        def checksum() FileChecksum.new(@filename, Checksum.from_memfile(self)) end
         def write_to_disk()
-            Log.info 'writing memfile to disk: "%s"', @filename
-            dirname = File.dirname(@filename)
-            FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
-            File.write(@filename, @io.string, mode: 'wb')
+            content_write(content_string())
         end
         def export_ifn?(external_checksum)
-            in_memory_checksum = self.checksum()
+            data = content_string()
+            in_memory_checksum = FileChecksum.new(@filename, Checksum.from_str(data))
             if external_checksum.check?(in_memory_checksum)
                 Log.verbose 'skip saving "%s" since it did not change', @filename
                 return false
             else
                 Log.debug "invalidate '%s' since checksum did not match:\n\t- cfg: %s\n\t- new: %s", @filename, external_checksum.checksum, in_memory_checksum.checksum
-                write_to_disk()
+                content_write(data)
                 external_checksum.apply!(in_memory_checksum)
                 return true
             end
+        end
+    protected
+        def content_string()
+            return @io.string
+        end
+        def content_write(data)
+            Log.info 'writing memfile to disk: "%s"', @filename
+            dirname = File.dirname(@filename)
+            FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
+            File.write(@filename, data, mode: 'wb')
         end
     end #~ MemFile
 

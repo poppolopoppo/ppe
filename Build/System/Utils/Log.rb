@@ -134,8 +134,8 @@ module Build
             end
         end
 
-        def unreached() Log.fatal 'unreachable state' end
-        def not_implemented() Log.fatal 'not implemented' end
+        def self.unreached() Log.fatal 'unreachable state' end
+        def self.not_implemented() Log.fatal 'not implemented' end
 
     end #~ Assert
 

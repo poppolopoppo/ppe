@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require_once '../Common.rb'
+
 require_once 'MemFile.rb'
+require_once 'StringCompress.rb'
 
 module Build
 
@@ -20,19 +22,20 @@ module Build
             source.export_ifn?(Build.modified_fileslist_output)
         end
 
-        class Source
+        def self.escape(str)
+            return str.gsub('"', '^"')
+        end
+
+        class Source < MemFile
             attr_reader :source, :aliases, :minify
             def initialize(filename, minify: false)
-                @source = MemFile.new(filename, tab: minify ? '' : '  ')
+                super(filename, tab: minify ? '' : '  ')
+                @source = self
                 @aliases = Set.new
                 @minify = minify
                 @spacer = minify ? '' : ' '
+                @tokenizer = minify ? Tokenizer.new : nil
             end
-            def checksum() @source.checksum end
-            def filename() @source.filename end
-
-            def export!() @source.write_to_disk end
-            def export_ifn?(external_checksum) @source.export_ifn?(external_checksum) end
 
             def once?(key, &block)
                 if @aliases.add?(key)
@@ -56,7 +59,11 @@ module Build
                     @source.print!(value)
                 when String
                     @source.print!('"')
-                    @source.print!(value.gsub('"', '^"'))
+                    if @minify
+                        @source.print!(minify_string(value))
+                    else
+                        @source.print!(value.gsub('"', '^"'))
+                    end
                     @source.print!('"')
                 when Symbol
                     @source.print!(value.to_s)
@@ -153,7 +160,7 @@ module Build
                     @source.print!(')')
                 end
                 @source.puts!("#{@spacer}{")
-                @source.scope!(self, &block)
+                @source.scope!(&block)
                 if @minify
                     @source.print!('}')
                 else
@@ -169,7 +176,7 @@ module Build
                 if @minify
                     instance_exec(&block)
                 else
-                    @source.scope!(self, &block)
+                    super(&block)
                 end
                 return self
             end
@@ -178,6 +185,31 @@ module Build
                 self.scope!(&block)
                 @source.puts!(']')
                 return self
+            end
+            def content_string()
+                if @minify
+                    return export_minified_strings() + super()
+                else
+                    return super()
+                end
+            end
+        private
+            def minify_string(str)
+                return str.split(/\s+/).collect do |sub|
+                    if sub.length > 5 && !sub.include?('$')
+                        "$#{@tokenizer.token?(sub)}$"
+                    else
+                        BFF.escape(sub)
+                    end
+                end.join(' ')
+            end
+            def export_minified_strings()
+                Assert.check{ @minify }
+                minified = StringIO.new
+                @tokenizer.each do |str, token|
+                    minified.puts(".#{token} = \"#{BFF.escape(str)}\"")
+                end
+                return minified.string
             end
         end #~ Source
 

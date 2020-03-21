@@ -51,12 +51,8 @@ module Build
                 return Checksum::INVALID
             end
         end
-        def self.from_str(str, mtime, size)
+        def self.from_str(str, mtime=Time.now, size=str.bytesize)
             return Checksum.new(Digest::SHA1.hexdigest(str), mtime, size)
-        end
-        def self.from_memfile(file)
-            str = file.str
-            return Checksum.from_str(str, Time.now, str.bytesize)
         end
         INVALID = Checksum.new(nil, nil, nil)
     end #~ Checksum

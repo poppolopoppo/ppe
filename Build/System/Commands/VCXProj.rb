@@ -29,7 +29,7 @@ module Build
 
         VCXProj.make_sln(bff, environments, namespace)
 
-        bff.export!
+        bff.write_to_disk
 
         FBuild.run('sln', config: bff.filename)
     end
