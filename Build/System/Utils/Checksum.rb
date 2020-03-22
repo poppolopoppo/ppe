@@ -93,7 +93,11 @@ module Build
             force!()
         end
         def check?(other)
-            return ((@filename == other.filename) and (@checksum.digest == other.checksum.digest))
+            if ((@filename == other.filename) and (@checksum.digest == other.checksum.digest))
+                return @checksum.filesystem_check?(@filename)
+            else
+                return false
+            end
         end
         def to_s() "#{@filename}-#{@checksum}" end
         def hash() self.to_s.hash end
