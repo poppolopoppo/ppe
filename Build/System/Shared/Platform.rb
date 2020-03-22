@@ -11,6 +11,7 @@ module Build
             super(name)
             @arch = arch
             @os = os
+            export!('PlatformArch', @arch)
         end
         def intrinsics_supported() Log.error("%s: intrinsics_supported() is not implemented", @name); [] end
         def customize(facet, env, target)

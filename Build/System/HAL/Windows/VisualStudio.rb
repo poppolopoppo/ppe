@@ -40,7 +40,8 @@ module Build
             self.inherits!(Build.VisualStudio_Base)
             self.inherits!(Build.send "VisualStudio_Base_#{target}")
 
-            self.facet.export!('VisualStudioPath', @visualStudioPath)
+            self.export!('VisualStudioPath', @visualStudioPath)
+            self.export!('VisualStudioVersion', @minor_version)
 
             Log.fatal 'invalid VisualStudio path "%s"', @visualStudioPath unless Dir.exist?(@visualStudioPath)
             Log.verbose 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
@@ -49,6 +50,9 @@ module Build
             self.facet.includePaths <<
                 File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'include') <<
                 File.join(@visualStudioPath, 'VC', 'Auxiliary', 'VS', 'include')
+            self.facet.libraryPaths <<
+                File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'lib', '$PlatformArch$') <<
+                File.join(@visualStudioPath, 'VC', 'Auxiliary', 'VS', 'lib', '$PlatformArch$')
         end
 
         def self.infos_from(cl_exe)
@@ -77,6 +81,7 @@ module Build
         def ext_debug() '.pdb' end
         def ext_library() '.lib' end
         def ext_obj() '.obj' end
+        def ext_pch() '.pch' end
         def ext_shared() '.dll' end
 
         def add_linkType(facet, link)
@@ -114,7 +119,7 @@ module Build
             facet.linkerOptions << "/PDB:\"#{pdb_path}\""
 
             if Build.PCH and target.pch?
-                pch_object_path = env.output_path(target.pch_source, :obj)
+                pch_object_path = env.output_path(target.pch_source, :pch)
 
                 facet << Build.Compiler_PCHEnabled
                 facet.pchOptions << facet.compilerOptions << '/Fp"%2"' << '/Fo"%3"'

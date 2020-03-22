@@ -12,6 +12,7 @@ module Build
             @customizations = []
         end
 
+        def export!(key, value) @facet.export!(key, value) end
         def tag?(*tags) @facet.tag?(*tags) end
 
         def to_s() @name.to_s end
