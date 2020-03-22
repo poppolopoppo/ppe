@@ -28,6 +28,8 @@ module Build
                 return self.ext_library
             when :obj
                 return self.ext_obj
+            when :pch
+                return self.ext_pch
             when :shared
                 return self.ext_shared
             else
@@ -35,11 +37,12 @@ module Build
             end
         end
 
-        def ext_binary() Log.error("%s: ext_binary() is not implemented", @name) end
-        def ext_debug() Log.error("%s: ext_debug() is not implemented", @name) end
-        def ext_library() Log.error("%s: ext_library() is not implemented", @name) end
-        def ext_obj() Log.error("%s: ext_obj() is not implemented", @name) end
-        def ext_shared() Log.error("%s: ext_shared() is not implemented", @name) end
+        def ext_binary() Assert.not_implemented end
+        def ext_debug() Assert.not_implemented end
+        def ext_library() Assert.not_implemented end
+        def ext_obj() Assert.not_implemented end
+        def ext_pch() Assert.not_implemented end
+        def ext_shared() Assert.not_implemented end
 
         def add_linkType(facet, link) Log.error("%s: add_linkType('%s') is not implemented", @name, link) end
         def add_define(facet, key, value=nil) Log.error("%s: add_define('%s', '%s') is not implemented", @name, key, value) end
