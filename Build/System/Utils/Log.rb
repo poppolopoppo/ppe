@@ -12,8 +12,6 @@ module Build
             fatal:      'KO!',
         }
 
-        $stdout.sync = $stderr.sync = true
-
         LEVELS = ICONS.keys
         VERBOSITY = [ :info, :warning, :error, :fatal ]
         MAXMSGLEN = 4096
@@ -28,6 +26,7 @@ module Build
 
         def self.verbosity(min = :info)
             VERBOSITY.clear
+            $stdout.sync = $stderr.sync = (min == :debug)
             $show_timestamp = (min == :verbose or min == :debug)
             LEVELS.reverse.each do |level|
                 VERBOSITY << level
@@ -82,8 +81,10 @@ module Build
                 case verbosity
                 when :debug, :verbose, :info
                     $stdout.puts(message)
+                    $stdout.flush
                 when :warning, :error
                     $stderr.puts(message)
+                    $stdout.flush
                 when :fatal
                     $stdout.flush
                     $stderr.flush
