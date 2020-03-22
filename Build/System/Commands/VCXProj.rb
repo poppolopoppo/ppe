@@ -18,7 +18,7 @@ module Build
         environments = Build.fetch_environments
         namespace = namespace[]
 
-        bff = BFF::Source.new(File.join($IntermediatePath, 'VCXProj.bff'))
+        bff = BFF::Source.new(File.join($OutputPath, 'VCXProj.bff'))
 
         environments.each do |env|
             namespace.all.each do |target|
@@ -121,8 +121,8 @@ module Build
 
                 # meta commands used to regen the solution or delete all generated files
                 set!('ProjectBuildCommand', Build.make_commandstr('--vcxproj', '-v'))
-                set!('ProjectRebuildCommand', Build.make_commandstr('--vcxproj', '-v', '--Rebuild'))
-                set!('ProjectCleanCommand', Build.make_commandstr('--dist-clean', '-v'))
+                set!('ProjectRebuildCommand', Build.make_commandstr('--bff', '--vcxproj', '-v', '--clean', '--Rebuild'))
+                set!('ProjectCleanCommand', Build.make_commandstr('--dist-clean', '-v', '--clean'))
             end
             vcxprojects << 'Build-VCXProject'
 

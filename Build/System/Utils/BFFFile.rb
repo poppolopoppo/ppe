@@ -10,7 +10,7 @@ module Build
     module BFF
 
         def self.modified_fileslist_path()
-            return File.join($IntermediatePath, '.modified_files')
+            return File.join($OutputPath, '.modified_files')
         end
         def self.write_modified_fileslist()
             source = MemFile.new(BFF.modified_fileslist_path)

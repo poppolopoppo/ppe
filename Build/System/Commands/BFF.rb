@@ -47,7 +47,7 @@ module Build
 
     make_persistent_file(:bff_output) do
         ext = File.extname(Build::Script)
-        File.join($IntermediatePath, File.basename(Build::Script, ext) << '.bff')
+        File.join($OutputPath, File.basename(Build::Script, ext) << '.bff')
     end
     make_persistent_file(:modified_fileslist_output) do
         BFF.modified_fileslist_path
@@ -248,7 +248,7 @@ module Build
                 set!('LibrarianOutput', env.output_path(target.abs_path, :library))
                 facet!(expanded, :@librarianOptions)
                 if target_pch_source
-                    set!('PCHOutputFile', env.output_path(target_pch_source, :obj))
+                    set!('PCHOutputFile', env.output_path(target_pch_source, :pch))
                     facet!(expanded, PCHOptions: :@pchOptions)
                 end
                 set!('Hidden', true)
