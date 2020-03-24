@@ -24,7 +24,7 @@ public:
     void* Data() const { return _data; }
     const PTypeTraits& Traits() const { return _traits; }
 
-    void* Cast(const PTypeTraits& to) const;
+    PPE_RTTI_API void* Cast(const PTypeTraits& to) const;
 
     FTypeId TypeId() const { return _traits->TypeId(); }
     ETypeFlags TypeFlags() const { return _traits->TypeFlags(); }
@@ -43,17 +43,17 @@ public:
     bool IsPOD() const { return (_traits->TypeFlags() & ETypeFlags::POD); }
     bool IsTriviallyDestructible() const { return (_traits->TypeFlags() & ETypeFlags::TriviallyDestructible); }
 
-    bool IsAny() const;
+    PPE_RTTI_API bool IsAny() const;
 
     bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
     void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
 
-    bool Equals(const FAtom& other) const;
-    void Copy(const FAtom& dst) const;
-    void Move(const FAtom& dst);
+    PPE_RTTI_API bool Equals(const FAtom& other) const;
+    PPE_RTTI_API void Copy(const FAtom& dst) const;
+    PPE_RTTI_API void Move(const FAtom& dst);
 
-    bool DeepEquals(const FAtom& other) const;
-    bool DeepCopy(const FAtom& dst) const;
+    PPE_RTTI_API bool DeepEquals(const FAtom& other) const;
+    PPE_RTTI_API bool DeepCopy(const FAtom& dst) const;
 
     bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(_data, dst); }
     bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
