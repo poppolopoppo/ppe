@@ -8,13 +8,19 @@ require_once '../Utils/JSONFile.rb'
 require_once '../Utils/Options.rb'
 require_once '../Utils/Prerequisite.rb'
 
-require_once '../Commands/FASTBuild.rb'
+require_once 'BFF.rb'
+require_once 'FASTBuild.rb'
 
 require 'fileutils'
 
 module Build
 
     make_command(:vscode, 'Generate VisualStudio Code bindings') do |&namespace|
+        unless File.exist?(Build.bff_output.filename)
+            Log.warning 'VSCode: could not find BFF source "%s"', Build.bff_output.filename
+            Log.fatal 'VSCode: BFF source not present, you should probably run --bff before'
+        end
+
         vscode = Build.vscode_path
 
         environments = Build.fetch_environments
