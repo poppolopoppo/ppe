@@ -131,7 +131,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) do { \
     static_assert( /* validate format strings statically */ \
         ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
-        "invalid format : check arguments" ); \
+        "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) ); \
     ::PPE::FLogger::Log( \
         LOG_CATEGORY_GET(_CATEGORY), \
         ::PPE::FLogger::EVerbosity::_LEVEL, \
@@ -194,7 +194,13 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #if USE_PPE_FINAL_RELEASE
 #   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
 #else
-#   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) do { \
+#   if !defined(_MSC_VER) || (defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL)
+#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) do { \
         if (_CONDITION) LOG(_CATEGORY, _LEVEL, _FORMAT, __VA_ARGS__); \
     } while (0)
+#   else
+#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) do { \
+        if (_CONDITION) LOG(_CATEGORY, _LEVEL, _FORMAT, __VA_ARGS__); \
+    } while (0)
+#   endif
 #endif

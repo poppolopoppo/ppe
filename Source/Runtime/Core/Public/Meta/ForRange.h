@@ -66,7 +66,7 @@ constexpr auto static_for(F f) {
  * to 8 args.
  */
 #define PP_FOREACH_ARGS(x, ...) \
-    EXPAND( _GET_NTH_ARG("ignored", ##__VA_ARGS__, \
+    EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, \
         _PP_FE_ARGS_8, _PP_FE_ARGS_7, _PP_FE_ARGS_6, _PP_FE_ARGS_5, _PP_FE_ARGS_4, _PP_FE_ARGS_3, _PP_FE_ARGS_2, _PP_FE_ARGS_1, _PP_FE_ARGS_0) \
             (x, ##__VA_ARGS__) )
 //----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ constexpr auto static_for(F f) {
  *     PP_FOREACH(END_NS, MY_NAMESPACES)
  */
 #define PP_FOREACH(x, ...) \
-    EXPAND( _GET_NTH_ARG("ignored", ##__VA_ARGS__, \
+    EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, \
         _PP_FE_8, _PP_FE_7, _PP_FE_6, _PP_FE_5, _PP_FE_4, _PP_FE_3, _PP_FE_2, _PP_FE_1, _PP_FE_0) \
             (x, ##__VA_ARGS__) )
 //----------------------------------------------------------------------------
@@ -116,11 +116,16 @@ constexpr auto static_for(F f) {
 *       PP_COUNT_ARGS() // expanded as 0
 */
 #if defined(_MSC_VER) && not defined(__clang__)
-#   define PP_NUM_ARGS(...) \
-    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA("ignored", ##__VA_ARGS__), 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
+#   if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
+#       define PP_NUM_ARGS(...) \
+    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA(unused, ##__VA_ARGS__), 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
+#   else // should work with every compiler supporting C++20 thanks to new __VA_OPT__()
+#       define PP_NUM_ARGS(...) \
+    EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0) )
+#   endif
 #else
 #   define PP_NUM_ARGS(...) \
-    EXPAND( _GET_NTH_ARG("ignored", ##__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0) )
+    EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0, error) )
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
