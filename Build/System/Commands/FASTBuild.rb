@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require_once '../Common.rb'
-require_once '../Commands/BFF.rb'
 require_once '../Utils/Log.rb'
 require_once '../Utils/Options.rb'
 require_once '../Utils/Prerequisite.rb'
 
+require_once '../Commands/BFF.rb'
+
+require 'fileutils'
 require 'open3'
 
 module Build
@@ -31,6 +33,8 @@ module Build
     module FBuild
 
         def self.run(*args, config: Build.bff_output.filename, quiet: false, wait: true)
+            FBuild.prepare_for_build()
+
             Log.debug 'FBuild: launching "%s"', Build.FBuild_binary
 
             cmd = []
@@ -92,6 +96,18 @@ module Build
             str.chomp!
             str.rstrip!
             str.empty? ? nil : str
+        end
+
+        @@_build_prepared = false
+        def self.prepare_for_build()
+            unless @@_build_prepared
+                @@_build_prepared = true
+                verbose = Log.verbose?
+                FileUtils.mkdir_p($BinariesPath, verbose: verbose) unless Dir.exist?($BinariesPath)
+                FileUtils.mkdir_p($IntermediatePath, verbose: verbose) unless Dir.exist?($IntermediatePath)
+                FileUtils.mkdir_p($ProjectsPath, verbose: verbose) unless Dir.exist?($ProjectsPath)
+                FileUtils.mkdir_p($UnitiesPath, verbose: verbose) unless Dir.exist?($UnitiesPath)
+            end
         end
 
     end #~ FBuild
