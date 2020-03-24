@@ -219,10 +219,10 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if     defined(STATIC_LINK)
+#if     defined(BUILD_LINK_STATIC)
 #   define DLL_IMPORT
 #   define DLL_EXPORT
-#elif   defined(DYNAMIC_LINK)
+#elif   defined(BUILD_LINK_DYNAMIC)
 #   if     defined(CPP_CLANG)
 #       define DLL_IMPORT __declspec(dllimport)
 #       define DLL_EXPORT __declspec(dllexport)
@@ -239,7 +239,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   error "inconsistent configuration"
 #endif
 //----------------------------------------------------------------------------
-#ifdef DYNAMIC_LINK
+#ifdef BUILD_LINK_DYNAMIC
 #   define EXPORT_DELETED_FUNCTION = default
 #else
 #   define EXPORT_DELETED_FUNCTION = delete

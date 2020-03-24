@@ -10,7 +10,7 @@
 #       define PPE_ISOLATE_NEW_OPERATORS 0 // defined inline from this header
 #   endif
 
-#   ifdef DYNAMIC_LINK
+#   ifdef BUILD_LINK_DYNAMIC
 #       define PPE_OVERRIDE_NEW_IN_MODULE (PPE_ISOLATE_NEW_OPERATORS) // defined in each New-impl.h
 #   else
 #       define PPE_OVERRIDE_NEW_IN_MODULE 0 // defined only on Core/ModuleExport.cpp

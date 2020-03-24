@@ -255,7 +255,7 @@ struct TAllocatorTraits {
             return a.Owns(b);
         }
         else {
-#if defined(DYNAMIC_LINK) || defined(__clang__)
+#if defined(BUILD_LINK_DYNAMIC) || defined(__clang__)
             UNUSED(a);
             UNUSED(b);
             AssertNotImplemented();
