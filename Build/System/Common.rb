@@ -33,21 +33,24 @@ module Build
         $DataPath = File.join($WorkspacePath, 'Data')
         $BuildPath = File.join($WorkspacePath, 'Build')
         $SourcePath = File.join($WorkspacePath, 'Source')
+        $ExtrasPath = File.join($WorkspacePath, 'Extras')
         $OutputPath = File.join($WorkspacePath, 'Output')
         $BinariesPath = File.join($OutputPath, 'Binaries')
         $ProjectsPath = File.join($OutputPath, 'Projects')
+        $UnitiesPath = File.join($OutputPath, 'Unity')
         $IntermediatePath = File.join($OutputPath, 'Intermediate')
         $SavedPath = File.join($OutputPath, 'Saved')
-        $ExtrasPath = File.join($WorkspacePath, 'Extras')
 
         Log.debug("Data path = '%s'", $DataPath)
         Log.debug("Build path = '%s'", $BuildPath)
         Log.debug("Source path = '%s'", $SourcePath)
+        Log.debug("Extras path = '%s'", $ExtrasPath)
         Log.debug("Output path = '%s'", $OutputPath)
         Log.debug("Binaries path = '%s'", $BinariesPath)
+        Log.debug("Projects path = '%s'", $ProjectsPath)
+        Log.debug("Unities path = '%s'", $UnitiesPath)
         Log.debug("Intermediate path = '%s'", $IntermediatePath)
         Log.debug("Saved path = '%s'", $SavedPath)
-        Log.debug("Extras path = '%s'", $ExtrasPath)
     end
 
     Build.set_workspace_path($ApplicationPath.to_s) # create default global variables

@@ -117,8 +117,7 @@ module Build
         def target_artefact_path(target)
             return output_path(target.abs_path, target_artefact_type(target))
         end
-        def target_debug_path(target)
-            artefact = target_artefact_path(target)
+        def target_debug_path(artefact)
             return File.join(
                 File.dirname(artefact),
                 File.basename(artefact, File.extname(artefact)) ) <<
@@ -155,17 +154,7 @@ module Build
             @config.customize(result, self, target)
             @compiler.customize(result, self, target)
 
-            link = target.link.nil? ? @config.link : target.link
-            case link
-            when :static
-                result.defines << 'BUILD_LINK_STATIC'
-            when :dynamic
-                result.defines << 'BUILD_LINK_DYNAMIC'
-            else
-                Log.fatal 'unsupported link type <%s>', link
-            end
-
-            @compiler.add_linkType(result, link)
+            @compiler.add_linkType(result, target.link.nil? ? @config.link : target.link)
 
             result.defines.each do |token|
                 @compiler.add_define(result, token)

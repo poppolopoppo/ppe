@@ -145,9 +145,9 @@ module Build
         end
 
         def self.make_library(bff, env, target, target_alias, expanded)
-            BFF.target_base(bff, env, target, target_alias, expanded)
+            artefact = BFF.target_base(bff, env, target, target_alias, expanded)
             bff.func!('Alias', target_alias) do
-                set!('Targets', target_alias+'-Lib')
+                set!('Targets', artefact)
             end
         end
 
@@ -159,13 +159,13 @@ module Build
         end
 
         def self.make_deliverable(bff, env, target, target_alias, expanded, func)
-            BFF.target_base(bff, env, target, target_alias, expanded)
+            artefact = BFF.target_base(bff, env, target, target_alias, expanded)
             bff.func!(func, target_alias) do
                 using!(env.compiler.name.to_s+'_Details')
                 facet!(expanded, :@linkerOptions)
                 set!('LinkerOutput', env.target_artefact_path(target))
 
-                libraries = [ target_alias+'-Lib' ]
+                libraries = [ artefact ]
                 target.all_private_dependencies do |dep|
                     libraries << BFF.make_target_alias(env, dep)
                 end
@@ -216,7 +216,7 @@ module Build
                         set!('UnityInputPath', glob_path)
                         set!('UnityInputPattern', target.glob_patterns)
                         set!('UnityInputExcludedFiles', env.relative_path(glob_path, target.unity_excluded_files))
-                        set!('UnityOutputPath', File.join($OutputPath, 'Unity', File.dirname(target.abs_path)))
+                        set!('UnityOutputPath', File.join($UnitiesPath, File.dirname(target.abs_path)))
                         set!('UnityOutputPattern', "#{target.name}_*_of_#{target.unity_num_files}.cpp")
                         set!('Hidden', true)
                     end
@@ -239,20 +239,44 @@ module Build
                 end
             end
 
-            bff.func!('Library', target_alias+'-Lib') do
+            case env.config.link
+            when :static
+                link_library_objects = false
+            when :dynamic
+                link_library_objects = true
+            else
+                Assert.not_implemented
+            end
+
+            if link_library_objects
+                artefactFunc = 'ObjectList'
+                artefactName = target_alias+'-Obj'
+            else
+                artefactFunc = 'Library'
+                artefactName = target_alias+'-Lib'
+            end
+
+            bff.func!(artefactFunc, artefactName) do
                 using!(compiler_details)
                 using!(target_source)
 
                 set!('CompilerOutputPath', env.intermediate_path(target.abs_path))
                 facet!(expanded, :@compilerOptions, :@preprocessorOptions)
-                set!('LibrarianOutput', env.output_path(target.abs_path, :library))
-                facet!(expanded, :@librarianOptions)
+
+                unless link_library_objects
+                    set!('LibrarianOutput', env.output_path(target.abs_path, :library))
+                    facet!(expanded, :@librarianOptions)
+                end
+
                 if target_pch_source
                     set!('PCHOutputFile', env.output_path(target_pch_source, :pch))
                     facet!(expanded, PCHOptions: :@pchOptions)
                 end
+
                 set!('Hidden', true)
             end
+
+            return artefactName
         end
 
     end #~ BFF

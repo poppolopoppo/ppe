@@ -114,9 +114,25 @@ module Build
         def customize(facet, env, target)
             super(facet, env, target)
 
-            pdb_path = env.target_debug_path(target)
-            facet.compilerOptions << "/Fd\"#{pdb_path}\"" if facet.compilerOptions & '/Zi'
-            facet.linkerOptions << "/PDB:\"#{pdb_path}\""
+            nopdb = facet.tag?(:nopdb)
+            if nopdb || Build.Cache
+                facet.compilerOptions << '/Z7' # debug symbols inside .obj
+            else
+                facet.compilerOptions << '/Zi' # debug symbols inside .pdb
+                facet.compilerOptions << '/FS' # synchronous filesystem (necessary for concurrent cl.exe instances)
+            end
+
+            unless nopdb
+                artefact = env.target_artefact_path(target)
+                pdb_path = env.target_debug_path(artefact)
+                facet.linkerOptions << "/PDB:\"#{pdb_path}\""
+
+                if facet.compilerOptions & '/Zi'
+                    artefact = env.output_path(target.abs_path, :library)
+                    pdb_path = env.target_debug_path(artefact)
+                    facet.compilerOptions << "/Fd\"#{pdb_path}\""
+                end
+            end
 
             if Build.PCH and target.pch?
                 pch_object_path = env.output_path(target.pch_source, :pch)
@@ -134,7 +150,7 @@ module Build
         def decorate(facet, env)
             super(facet, env)
 
-            if Build.PerfSDK and not env.config.shipping?
+            if Build.PerfSDK and !env.config.tag?(:shipping)
                 case env.platform.arch
                 when :x86
                     facet << Build.VisualStudio_PerfSDK_X86
@@ -144,6 +160,26 @@ module Build
                     Log.fatal 'unsupported arch: <%s>', env.platform.arch
                 end
             end
+
+            if facet.tag?(:debug)
+                runtime_library = '/MDd'
+            else
+                runtime_library = '/MD'
+            end
+
+            case env.config.link
+            when :static
+            when :dynamic
+                if facet.tag?(:debug)
+                    runtime_library = '/LDd'
+                else
+                    runtime_library = '/LD'
+                end
+            else
+                Assert.not_implemented
+            end
+
+            add_compilerOption(facet, runtime_library)
         end
 
     end #~ VisualStudioCompiler
@@ -187,7 +223,6 @@ module Build
         '/Zc:strictStrings',        # https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
         '/Zc:wchar_t',              # promote wchar_t as a native type
         '/Zc:forScope',             # prevent from spilling iterators outside loops
-        '/permissive-',             # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
         '/utf-8',                   # https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
         '/W4',                      # warning level 4 (verbose)
         '/TP',                      # compile as C++
@@ -245,15 +280,6 @@ module Build
 
         # https://devblogs.microsoft.com/cppblog/stl-features-and-fixes-in-vs-2017-15-8/
         defines.append('_ENABLE_EXTENDED_ALIGNED_STORAGE')
-
-        if Build.Cache
-            Log.verbose 'Windows: put debug symbols inside .obj (/Z7)'
-            compilerOptions.append('/Z7') # debug symbols inside .obj
-        else
-            Log.verbose 'Windows: put debug symbols inside .pdb (/Zi)'
-            compilerOptions.append('/Zi') # debug symbols inside .pdb
-            compilerOptions.append('/FS') # synchronous filesystem (necessary for concurrent cl.exe instances)
-        end
 
         if Build.Incremental
             Log.verbose 'Windows: using incremental linker with fastlink'
@@ -326,7 +352,7 @@ module Build
     end
 
     make_facet(:VisualStudio_Debug) do
-        compilerOptions.append('/MDd', '/Od', '/Oy-', '/Gw-', '/GR')
+        compilerOptions.append('/Od', '/Oy-', '/Gw-', '/GR')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
             # https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx
@@ -336,7 +362,7 @@ module Build
         self << Build.VisualStudio_STL_EnableIteratorDebug
     end
     make_facet(:VisualStudio_FastDebug) do
-        compilerOptions.append('/MDd', '/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
+        compilerOptions.append('/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
             compilerOptions.append('/GS', '/sdl')
@@ -352,13 +378,13 @@ module Build
     end
     make_facet(:VisualStudio_Profiling) do
         defines << '_NO_DEBUG_HEAP=1'
-        compilerOptions.append('/MD', '/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
+        compilerOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/PROFILE', '/OPT:REF')
         self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
     end
     make_facet(:VisualStudio_Final) do
         defines << '_NO_DEBUG_HEAP=1'
-        compilerOptions.append('/MD', '/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
+        compilerOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/OPT:REF', '/OPT:ICF=3')
         self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
     end
@@ -367,6 +393,13 @@ module Build
         # https://blogs.msdn.microsoft.com/vcblog/2019/12/13/broken-warnings-theory/
         defines.append('USE_PPE_MSVC_PRAGMA_SYSTEMHEADER')
         compilerOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
+
+        # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
+        compilerOptions.append('/permissive-')
+
+        # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
+        # TODO: disabled since there is no support for __VA_OPT__(x), and it's necessary to handle some funky macros
+        # compilerOptions.append('/experimental:preprocessor')
 
         if Build.Incremental
             Log.verbose 'Windows: using /DEBUG:FASTLINK to speed-up the linker (non shippable!)'

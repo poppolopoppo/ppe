@@ -71,7 +71,7 @@ class Build::Namespace
     def ppe_external!(name, &cfg)
         self.external!(name) do
             glob!(path: nil)
-            tag!(:nounity)
+            tag!(:nopdb, :nounity)
             force_includes!(File.join(abs_path, 'Public', name.to_s+'-external.h'))
             includePath!(File.join($SourcePath, 'Runtime', 'Core', 'Public'))
             Build::Namespace.ppe_common(self, &cfg)
