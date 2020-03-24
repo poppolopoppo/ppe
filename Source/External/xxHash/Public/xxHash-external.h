@@ -20,7 +20,6 @@
 
 #define USE_PPE_XXH3 1 // new algorithm, 2x to 3x times faster
 
-#define XXH_NAMESPACE xxHash
 #define XXH_INLINE_ALL // inlining for better performance
 #define XXH_STATIC_LINKING_ONLY // unlocks XXH3
 
