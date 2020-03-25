@@ -162,24 +162,22 @@ module Build
             end
 
             if facet.tag?(:debug)
-                runtime_library = '/MDd'
+                facet.compilerOptions << '/MDd'
             else
-                runtime_library = '/MD'
+                facet.compilerOptions << '/MD'
             end
 
             case env.config.link
             when :static
             when :dynamic
                 if facet.tag?(:debug)
-                    runtime_library = '/LDd'
+                    facet.compilerOptions << '/LDd'
                 else
-                    runtime_library = '/LD'
+                    facet.compilerOptions << '/LD'
                 end
             else
                 Assert.not_implemented
             end
-
-            add_compilerOption(facet, runtime_library)
         end
 
     end #~ VisualStudioCompiler
@@ -372,7 +370,7 @@ module Build
     end
     make_facet(:VisualStudio_Release) do
         defines << '_NO_DEBUG_HEAP=1'
-        compilerOptions.append('/MD', '/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
+        compilerOptions.append('/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE:NO')
         self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
     end

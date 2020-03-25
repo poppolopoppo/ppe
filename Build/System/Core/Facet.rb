@@ -16,8 +16,8 @@ module Build
             values.each do |value|
                 case value
                 when Integer,Float,String,Symbol
-                    if $DEBUG
-                        Log.fatal 'already append "%s"', value if value.is_a?(String) && @data.include?(value)
+                    if $DEBUG && value.is_a?(String) && @data.include?(value)
+                        Log.fatal 'already append "%s"', value
                     end
                     @data << value
                 when Array
