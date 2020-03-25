@@ -194,7 +194,38 @@ module Build
                 end
             end
         private
+            def minify_string_seq(str, sep: ' ', next_sep: nil)
+                return str if str.include?('$') # ignore compression on strings with substitution
+                seq = str.split(sep)
+                seq.collect! do |sub|
+                    if sub.length >= @tokenizer.min_length
+                        sub = minify_string_seq(sub, sep: next_sep) if next_sep && sub.include?(next_sep)
+                        sub = @tokenizer.token?(sub, refs: 2)
+                    end
+                    sub
+                end
+                return seq.join(sep)
+                result = String.new
+                i = 0; while i < seq.length do
+                    result << sep if i != 0
+                    consume, ins, sub = 1, nil, seq[i]
+                    (seq.length - i - 1).times do |n|
+                        exp = (sub+sep)<<seq[i+n+1]
+                        nxt = @tokenizer.token?(exp) { ins = sub if ins.nil? }
+                        break unless ins.nil?
+                        sub = nxt
+                        consume += 1
+                    end
+                    result << (ins.nil? ? sub : ins)
+                    i += consume
+                end
+                return result
+            end
             def minify_string(str)
+                return minify_string_seq(str, next_sep: '/')
+                #return minify_string_seq(str)
+            end
+            def minify_string_old(str)
                 return str.split(/\s+/).collect do |sub|
                     if sub.length > 5 && !sub.include?('$')
                         "$#{@tokenizer.token?(sub)}$"
@@ -207,7 +238,9 @@ module Build
                 Assert.check{ @minify }
                 minified = StringIO.new
                 @tokenizer.each do |str, token|
-                    minified.puts(".#{token} = \"#{BFF.escape(str)}\"")
+                    if token.refs > 1
+                        minified.puts(".#{token.key}=\"#{BFF.escape(str)}\"")
+                    end
                 end
                 return minified.string
             end

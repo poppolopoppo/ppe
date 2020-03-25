@@ -4,19 +4,36 @@ require_once '../Common.rb'
 module Build
 
     class Tokenizer
-        attr_reader :str_to_token
-        def initialize()
+        class Token
+            attr_reader :key, :value, :var, :refs
+            def initialize(key, value, var_fmt, refs=1)
+                @key = key
+                @value = value
+                @var = var_fmt % @key
+                @refs = refs
+            end
+            def inc!(r=1) @refs += r; return self end
+        end #~ Token
+        attr_reader :var_fmt, :min_length, :str_to_token
+        def initialize(min_length: 5, var_fmt: '$%s$')
             @str_to_token = {}
+            @min_length = min_length
+            @var_fmt = var_fmt
             @token_count = 0
         end
         def each(&block) @str_to_token.each(&block) end
-        def token?(str)
+        def token?(str, refs: 1)
+            #return str if str.length < @min_length
+            str.freeze
             token = @str_to_token[str]
-            return token if token
-            token = next_token!()
-            @str_to_token[str] = token
-            yield token if block_given?
-            return token
+            if token
+                token.inc!(refs)
+            else
+                token = Token.new(next_token!(), str, @var_fmt, refs)
+                @str_to_token[str] = token
+                yield token if block_given?
+            end
+            return token.var
         end
     private
         ALPHABET = ('a'..'z').to_a+('A'..'Z').to_a+('0'..'9').to_a<<'_'
