@@ -141,6 +141,8 @@ module Build
 
                 apply_decorator(@memoized, self)
 
+                @memoized.expand!
+
                 self.freeze
             end
             return @memoized
