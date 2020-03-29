@@ -50,6 +50,10 @@ module Build
         Build::load_options()
         Build::parse_options()
 
+        if $DEBUG
+            require_once 'Utils/BreakOnException.rb'
+        end
+
         at_exit do
             Build::save_options()
             Build::Log.info('total duration: %fs', Build.elapsed_time)
