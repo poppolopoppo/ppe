@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 $Build.ppe_external!('double-conversion') do
+    force_includes!(File.join(abs_path, 'Public', 'double-conversion-external.h'))
     extra_files!(*%w{
         Public/double-conversion-external.h
         double-conversion.git/double-conversion/bignum.h

@@ -14,7 +14,6 @@ class Build::Namespace
         self.external!(name) do
             tag!(:nopdb, :nounity)
             glob!(path: nil)
-            force_includes!(File.join(abs_path, 'Public', name.to_s+'-external.h'))
             includePath!(File.join($SourcePath, 'Runtime', 'Core', 'Public'))
             Build::Namespace.ppe_common(self, &cfg)
         end
