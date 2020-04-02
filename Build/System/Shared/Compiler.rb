@@ -20,7 +20,7 @@ module Build
 
         def ext_for(output)
             case output
-            when :binary
+            when :executable
                 return self.ext_binary
             when :debug
                 return self.ext_debug
@@ -51,11 +51,13 @@ module Build
         def add_library(facet, filename) Log.error("%s: add_library('%s') is not implemented", @name, filename) end
         def add_libraryPath(facet, dirpath) Log.error("%s: add_libraryPath('%s') is not implemented", @name, dirpath) end
 
-        def add_compilerOption(facet, token)
-            #facet.analysisOptions << token
-            facet.compilerOptions << token
-            facet.pchOptions << token
-            facet.preprocessorOptions << token
+        def add_compilerOption(facet, *tokens)
+            tokens.each do |token|
+                #facet.analysisOptions << token
+                facet.compilerOptions << token
+                facet.pchOptions << token
+                facet.preprocessorOptions << token
+            end
         end
 
         def freeze()

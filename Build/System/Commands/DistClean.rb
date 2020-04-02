@@ -19,11 +19,11 @@ module Build
         else
             re_delete = Regexp.new(Build::Args.collect{|x| Regexp.escape(x) }.join('|'))
             Log.info 'Clean: wiping generated files matching /%s/ ...', re_delete
+            Log.info 'Clean: scanning for generated files inside "%s"', $OutputPath
             Find.find($OutputPath) do |entry|
                 path = Pathname.new(entry).expand_path
                 if entry =~ re_delete
                     FileUtils.rm_rf(path.to_s, verbose: Log.verbose?)
-                    Find.prune
                 end
             end
         end

@@ -6,8 +6,8 @@ require_once '../Utils/MemFile.rb'
 module Build
 
     class JSONFile < MemFile
-        def initialize(filename)
-            super(filename, tab: "\t")
+        def initialize(filename, minify: false)
+            super(filename, tab: minify ? "\t" : '')
         end
         def set!(key, value)
             print!(key.to_s.inspect)
@@ -27,6 +27,8 @@ module Build
                 print!(value.to_s)
             when String
                 print!(value.inspect)
+            when Symbol
+                value!(value.to_s)
             when Set
                 value!(value.to_a)
             when Array

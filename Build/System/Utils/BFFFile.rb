@@ -51,7 +51,7 @@ module Build
                 end
                 return self
             end
-            def value!(value)
+            def value!(value, allow_var: false)
                 case value
                 when TrueClass,FalseClass
                     @source.print!(value ? 'true' : 'false')
@@ -59,7 +59,7 @@ module Build
                     @source.print!(value)
                 when String
                     if @minify
-                        @source.print!(minify_string(value))
+                        @source.print!(minify_string(value, allow_var: allow_var))
                     else
                         @source.print!('"')
                         @source.print!(value.gsub('"', '^"'))
@@ -81,7 +81,7 @@ module Build
                                         @source.puts!(',')
                                     end
                                 end
-                                value!(x)
+                                value!(x, allow_var: allow_var)
                             end
                         end
                         if @minify
@@ -92,7 +92,7 @@ module Build
                         end
                     end
                 when ValueSet
-                    self.value!(value.data)
+                    self.value!(value.data, allow_var: allow_var)
                 when Hash
                     if value.empty?
                         @source.puts!('[]')
@@ -111,7 +111,7 @@ module Build
                         end
                     end
                 when Set
-                    value!(value.to_a)
+                    value!(value.to_a, allow_var: allow_var)
                 else
                     Log.fatal 'unsupported value type <%s>: %s', value.class, value.to_s
                 end
@@ -145,7 +145,7 @@ module Build
                     return if force == false && value.empty?
                 end
                 @source.print!("#{parent ? '^' : '.'}#{var}#{@spacer}#{op}#{@spacer}")
-                self.value!(value)
+                self.value!(value, allow_var: true)
                 @source.newline?
                 return self
             end
@@ -194,7 +194,7 @@ module Build
                 end
             end
         private
-            def minify_string(str)
+            def minify_string(str, allow_var: false)
                 Assert.check{ @minify }
                 if str.include?('$')
                     return ('"'+str.to_s.gsub('"', '^"'))<<'"'
@@ -204,7 +204,7 @@ module Build
                     when String
                         return ('"'+it.to_s.gsub('"', '^"'))<<'"'
                     when Symbol
-                        return ('"$'+it.to_s)<<'$"'
+                        return allow_var ? '.'+it.to_s : ('"$'+it.to_s)<<'$"'
                     else
                         Assert.unexpected(it)
                     end

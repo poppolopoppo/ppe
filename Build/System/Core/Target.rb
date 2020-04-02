@@ -163,11 +163,11 @@ module Build
             return self
         end
 
-        def source_files!(*filenames) @source_files.merge(filenames); return self end
-        def isolated_files!(*filenames) @isolated_files.merge(filenames); return self end
-        def excluded_files!(*filenames) @excluded_files.merge(filenames); return self end
-        def extra_files!(*filenames) @extra_files.merge(filenames); return self end
-        def force_includes!(*filenames) @force_includes.merge(filenames); return self end
+        def source_files!(*filenames) @source_files.merge(filenames.flatten); return self end
+        def isolated_files!(*filenames) @isolated_files.merge(filenames.flatten); return self end
+        def excluded_files!(*filenames) @excluded_files.merge(filenames.flatten); return self end
+        def extra_files!(*filenames) @extra_files.merge(filenames.flatten); return self end
+        def force_includes!(*filenames) @force_includes.merge(filenames.flatten); return self end
 
         def all_source_files() return (self.source_files + self.isolated_files) end
         def unity_excluded_files() return (self.isolated_files + self.excluded_files) end

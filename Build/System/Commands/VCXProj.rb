@@ -112,7 +112,7 @@ module Build
                     ('.'+projectConfig).to_sym
                 end
 
-                set!('PlatformToolset', platformToolset)
+                #set!('PlatformToolset', platformToolset)
                 set!('ProjectOutput', File.join($ProjectsPath, 'Build.vcxproj'))
                 set!('ProjectBasePath', $BuildPath)
                 set!('ProjectInputPaths', $BuildPath)

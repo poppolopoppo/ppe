@@ -102,7 +102,7 @@ module Build
             add_compilerOption(facet, "/FI\"#{filename}\"")
         end
         def add_includePath(facet, dirpath)
-            add_compilerOption(facet, "/I\"#{dirpath}\"")
+            add_compilerOption(facet, '/I', "\"#{dirpath}\"")
         end
         def add_library(facet, filename)
             facet.linkerOptions << "\"#{filename}\""

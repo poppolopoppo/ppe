@@ -223,30 +223,37 @@ module Build
                 end
             end
 
-            opts.on_tail("-v", "--verbose", "Run verbosely") do
+            opts.separator ''
+
+            opts.on("-v", "--verbose", "Run verbosely") do
                 Log.verbosity(:verbose)
             end
-            opts.on_tail("-q", "--quiet", "Run quietly") do
+            opts.on("-q", "--quiet", "Run quietly") do
                 Log.verbosity(:error)
             end
-            opts.on_tail("-d", "--debug", "Run with dbeug") do
+            opts.on("-d", "--debug", "Run with dbeug") do
                 $DEBUG = true
                 Log.verbosity(:debug)
             end
-            opts.on_tail("-t", "--trace", "Trace program execution") do
+            opts.on("-T", "--trace", "Trace program execution") do
                 $show_caller = true
             end
+            opts.on("-t", "--timestamp", "Show log timestamp") do
+                $show_timestamp = true
+            end
 
-            opts.on_tail("--version", "Show build version") do
+            opts.separator ''
+
+            opts.on("--version", "Show build version") do
                 Log.info("Version: %s", Build::VERSION)
                 exit
             end
-            opts.on_tail("-h", "--help", "Show this message") do
+            opts.on("-h", "--help", "Show this message") do
                 Log.raw opts
                 exit
             end
 
-            opts.separator ""
+            opts.separator ''
         end.parse!)
     end
 
@@ -255,6 +262,7 @@ module Build
         PersistentConfig[:vars].each do |name, var|
             serialized[var.name] = var.value unless var.value.nil?
         end
+        serialized = serialized.sort.to_h
         begin
             if PersistentConfig[:hash] != serialized.hash
                 Log.verbose("save persistent options to '%s'", dst)

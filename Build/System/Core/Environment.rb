@@ -63,7 +63,7 @@ module Build
             relativePath = relativePath.to_s
             dstExt = @compiler.ext_for(output)
             case output
-            when :binary, :shared
+            when :executable, :shared
                 outputPath = File.join($BinariesPath, relativePath.tr('/', '-')<<'-'<<@platform.name.to_s<<'-'<<@config.name.to_s<<dstExt)
             when :debug
                 Log.fatal 'you must use target_debug_path() instead'
@@ -78,10 +78,7 @@ module Build
 
         def target_artefact_type(target)
             case target.type
-            when :external
-                Log.fatal 'executable must have static link type: "%s" -> <%s>', target.abs_path, target.link if target.link != :static
-                return :library
-            when :library
+            when :external, :library
                 case target.link
                 when :static
                     return :library
@@ -93,7 +90,7 @@ module Build
                 end
             when :executable
                 Log.fatal 'executable must have static link type: "%s" -> <%s>', abs_path, target.link if target.link != :static
-                return :binary
+                return :executable
             else
                 Log.fatal 'unsupported target type <%s>', target.type
             end
@@ -103,7 +100,7 @@ module Build
                 when :external, :library
                     return :library
                 when :executable
-                    return :binary
+                    return :executable
                 else
                     Log.fatal 'unsupported target type <%s>', target.type
                 end

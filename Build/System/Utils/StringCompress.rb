@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require_once '../Common.rb'
 
@@ -5,10 +6,10 @@ module Build
 
     class UUID
         ALPHABET = ('a'..'z').to_a+('A'..'Z').to_a+('0'..'9').to_a<<'_'
-        def initialize(alphabet: ALPHABET, prefix: '_')
+        def initialize(alphabet: ALPHABET, prefix: '')
             @alphabet = alphabet
+            @prefix = prefix
             @count = 0
-            @prefix = '_'
         end
         def next!
             uuid = @count

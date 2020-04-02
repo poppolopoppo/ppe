@@ -36,6 +36,7 @@ module Build
         $ExtrasPath = File.join($WorkspacePath, 'Extras')
         $OutputPath = File.join($WorkspacePath, 'Output')
         $BinariesPath = File.join($OutputPath, 'Binaries')
+        $CachePath = File.join($OutputPath, 'Cache')
         $ProjectsPath = File.join($OutputPath, 'Projects')
         $UnitiesPath = File.join($OutputPath, 'Unity')
         $IntermediatePath = File.join($OutputPath, 'Intermediate')

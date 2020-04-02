@@ -73,13 +73,13 @@ module Build
             return self
         end
         def on_tag!(tag, options)
-            custom!() do |facet, env, target|
-                if facet.tag?(tag)
+            custom!() do |env, target|
+                if tag?(tag)
                     case options
                     when Facet
-                        facet << options
+                        self << options
                     when Hash
-                        facet.set!(options)
+                        set!(options)
                     else
                         raise ArgumentError.new("unexpected options: #{options.inspect}")
                     end
@@ -90,7 +90,7 @@ module Build
         ## customize final environment + target
         def customize(facet, env, target)
             @customizations.each do |custom|
-                instance_exec(facet, env, target, &custom)
+                facet.instance_exec(env, target, &custom)
             end
         end
 

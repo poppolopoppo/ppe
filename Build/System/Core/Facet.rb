@@ -69,6 +69,7 @@ module Build
         end
         def each(&block) @data.each(&block) end
         def join(*args) @data.join(*args) end
+        def to_a() @data end
         def to_s() @data.join(' ') end
         def freeze()
             @data.freeze
@@ -113,6 +114,7 @@ module Build
         end
         def [](facet) instance_variable_get(facet) end
         def []=(facet, value) instance_variable_set(facet, value) end
+        def each(&block) ATTRS.each{|facet| yield(facet, self[facet]) } end
         def set!(options={})
             options.each do |facet, value|
                 send "#{facet}=", value
