@@ -10,7 +10,7 @@ $Build.ppe_module!(:Core) do
         double_conversion,
         farmhash,
         lz4,
-        xxHash,
-        vstools ]})
+        xxHash ]})
+    runtime_deps!(*namespace[:External]{[ vstools ]})
     extra_files!('resource.rc')
 end
