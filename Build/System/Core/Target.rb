@@ -67,8 +67,8 @@ module Build
             @private_dependencies = []
             @runtime_dependencies = []
 
-            @all_public_dependencies = nil
-            @all_runtime_dependencies = nil
+            @_all_dependencies = nil
+            @_ordinal = nil
 
             @config = config
 
@@ -98,21 +98,21 @@ module Build
                 env.source_path(self.public_path) <<
                 env.source_path(self.private_path)
 
-            self.force_includes.each do |header|
-                facet.includes << env.source_path(header)
-            end
-
-            expand_dep = lambda do |dep|
-                facet.includes << dep.includes
+            self.all_dependencies do |(dep, visibility)|
                 facet.includePaths << env.source_path(dep.public_path)
 
-                dep.force_includes.each do |header|
-                    facet.includes << env.source_path(header)
+                case visibility
+                when :public
+                    facet.includes << dep.includes
+                    dep.force_includes.each do |header|
+                        facet.includes << env.source_path(header)
+                    end
                 end
             end
 
-            self.all_public_dependencies.each(&expand_dep)
-            self.private_dependencies.each(&expand_dep)
+            self.force_includes.each do |header|
+                facet.includes << env.source_path(header)
+            end
 
             return facet
         end
@@ -199,41 +199,71 @@ module Build
         def private_deps!(*others) depends!(*others, visibility: :private) end
         def runtime_deps!(*others) depends!(*others, visibility: :runtime) end
 
-        def all_public_dependencies()
-            if @all_public_dependencies.nil?
-                @all_public_dependencies = []
-                queue = [ self ]
-                while m = queue.pop
-                    m.public_dependencies.each do |dep|
-                        unless @all_public_dependencies.include?(dep)
-                            @all_public_dependencies << dep
-                            queue << dep
-                        end
+        def all_public_dependencies(&block) all_dependencies(:public, &block) end
+        def all_private_dependencies(&block) all_dependencies(:private, &block) end
+        def all_runtime_dependencies(&block) all_dependencies(:runtime, &block) end
+
+        def all_dependencies(scope=nil)
+            if @_all_dependencies.nil?
+                visiteds = Hash.new
+                dependency_visitor_(visiteds, self)
+                @_all_dependencies = visiteds.values
+                @_all_dependencies.sort!{|a, b| a.first.ordinal <=> b.first.ordinal }
+            end
+            if block_given?
+                if scope.nil?
+                    @_all_dependencies.each{|it| yield it }
+                else
+                    @_all_dependencies.each do |(dep, visibility)|
+                        yield dep if visibility == scope
+                    end
+                end
+            else
+                Assert.check{ scope.nil? }
+            end
+            return @_all_dependencies
+        end
+
+        @@_ordinal_cnt = 0
+        def ordinal()
+            if @_ordinal.nil?
+                deps = []
+                self.private_dependencies.each{|x| deps << x }
+                self.public_dependencies.each{|x| deps << x }
+                self.runtime_dependencies.each{|x| deps << x }
+                deps.sort!{|a, b| a.abs_path <=> b.abs_path }
+                deps.each{|x| x.ordinal }
+                @_ordinal = (@@_ordinal_cnt += 1)
+            end
+            return @_ordinal
+        end
+
+    private
+        def dependency_visitor_(result, target, depth: 0)
+            target.private_dependencies.each do |dep|
+                result[dep] = [dep, :private]
+            end if 0 == depth
+            target.public_dependencies.each do |dep|
+                unless result.include?(dep)
+                    result[dep] = [dep, :public]
+                    dep.all_dependencies do |it|
+                        next if it.last == :private
+                        next if result.include?(it.first)
+                        result[it.first] = it
                     end
                 end
             end
-            @all_public_dependencies.each{ |dep| yield(dep) } if block_given?
-            return @all_public_dependencies
-        end
-        def all_private_dependencies()
-            @private_dependencies.each{ |dep| yield(dep) } if block_given?
-            return @private_dependencies
-        end
-        def all_runtime_dependencies()
-            if @all_runtime_dependencies.nil?
-                @all_runtime_dependencies = []
-                queue = [ self ]
-                while m = queue.pop
-                    m.runtime_dependencies.each do |dep|
-                        unless @all_runtime_dependencies.include?(dep)
-                            @all_runtime_dependencies << dep
-                            queue << dep
-                        end
+            target.runtime_dependencies.each do |dep|
+                unless result.include?(dep)
+                    result[dep] = [dep, :runtime]
+                    dep.all_dependencies do |it|
+                        next if it.last == :private
+                        next if result.include?(it.first)
+                        result[it.first] = it
                     end
                 end
             end
-            @all_runtime_dependencies.each{ |dep| yield(dep) } if block_given?
-            return @all_runtime_dependencies
+            return
         end
 
     end #~ Target
