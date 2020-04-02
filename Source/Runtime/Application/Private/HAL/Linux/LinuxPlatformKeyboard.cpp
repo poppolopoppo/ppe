@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxPlatformKeyboard.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxPlatformKeyboard.h"
 
 #include "Input/KeyboardKey.h"
 #include "Input/KeyboardState.h"

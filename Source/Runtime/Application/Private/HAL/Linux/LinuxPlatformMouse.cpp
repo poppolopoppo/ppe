@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxPlatformMouse.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxPlatformMouse.h"
 
 #include "Input/MouseState.h"
 #include "HAL/Linux/LinuxWindow.h"

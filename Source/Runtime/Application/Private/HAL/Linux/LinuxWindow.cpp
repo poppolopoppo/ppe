@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxWindow.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxWindow.h"
 
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"

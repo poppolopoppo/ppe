@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxPlatformNotification.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxPlatformNotification.h"
 
 #include "ApplicationBase.h"
 

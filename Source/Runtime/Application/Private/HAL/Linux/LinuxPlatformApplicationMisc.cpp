@@ -1,8 +1,8 @@
 ﻿#include "stdafx.h"
 
-#include "HAL/Linux/LinuxPlatformApplicationMisc.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxPlatformApplicationMisc.h"
 
 #include "Color/Color.h"
 #include "Diagnostic/Logger.h"

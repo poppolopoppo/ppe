@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxPlatformMessageHandler.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxPlatformMessageHandler.h"
 
 #include "HAL/Linux/LinuxWindow.h"
 #include "HAL/PlatformIncludes.h"

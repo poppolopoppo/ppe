@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxApplication.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxApplication.h"
 
 namespace PPE {
 namespace Application {

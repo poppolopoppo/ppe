@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxPlatformSurvey.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxPlatformSurvey.h"
 
 #include "HAL/PlatformFile.h"
 #include "HAL/PlatformIncludes.h"

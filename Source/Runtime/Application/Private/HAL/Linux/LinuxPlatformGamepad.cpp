@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Linux/LinuxPlatformGamepad.h"
-
 #ifdef PLATFORM_LINUX
+
+#include "HAL/Linux/LinuxPlatformGamepad.h"
 
 #include "HAL/Linux/XInputWrapper.h"
 #include "Input/GamepadState.h"
