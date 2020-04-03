@@ -56,7 +56,7 @@ module Build
                 set!('Platform', VCXProj.solution_platform(env))
                 set!('Config', env.config.name.to_s)
 
-                set!('PlatformToolset', env.compiler.platformToolset)
+                set!('PlatformToolset', "v#{env.compiler.platformToolset}")
 
                 set!('IntermediateDirectory', intermediate)
                 set!('BuildLogFile', File.join(intermediate, 'Build.log'))
@@ -115,7 +115,7 @@ module Build
                     ('.'+projectConfig).to_sym
                 end
 
-                #set!('PlatformToolset', platformToolset)
+                set!('PlatformToolset', "v#{platformToolset}") if platformToolset
                 set!('ProjectOutput', File.join($ProjectsPath, 'Build.vcxproj'))
                 set!('ProjectBasePath', $BuildPath)
                 set!('ProjectInputPaths', $BuildPath)

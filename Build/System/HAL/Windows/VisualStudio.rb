@@ -35,7 +35,6 @@ module Build
             @rc = rc
             @visualStudioPath = visualStudioPath
             @platformToolset = platformToolset
-            @platformToolset.gsub!(/[^\d]+/, '')
 
             self.inherits!(Build.VisualStudio_Base)
             self.inherits!(Build.send "VisualStudio_Base_#{target}")
@@ -201,73 +200,69 @@ module Build
         Log.verbose 'Windows: default thread stack size is %d', Build.StackSize
 
         compilerOptions.append(
-            '/nologo',              # no copyright when compiling
-            "/std:#{Build.CppStd}", # C++2017
-            '/WX',                  # warning as errors
-            '/Gm-',                 # minimal rebuild is handled by FASTBuild
-            '/GF',                  # string pooling
-            '/GT',                  # fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
-            '/EHsc',                # structure exception support (#TODO: optional ?)
-            '/fp:fast',             # non-deterministic, allow vendor specific float intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
-            '/bigobj',              # more sections inside obj files, support larger translation units, needed for unity builds
-            '/d2FH4',               # https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
-            '/vmb',                 # class is always defined before pointer to member (https://docs.microsoft.com/en-us/cpp/build/reference/vmb-vmg-representation-method?view=vs-2019)
-            '/openmp-' )            # disable OpenMP automatic parallelization
-        options = [
-        #'/Za',                     # disable non-ANSI features
-        '/Zc:inline',               # https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
-        '/Zc:implicitNoexcept',     # https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
-        '/Zc:rvalueCast',           # https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
-        '/Zc:strictStrings',        # https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
-        '/Zc:wchar_t',              # promote wchar_t as a native type
-        '/Zc:forScope',             # prevent from spilling iterators outside loops
-        '/utf-8',                   # https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
-        '/W4',                      # warning level 4 (verbose)
-        '/TP',                      # compile as C++
-        '/F', Build.StackSize       # set default thread stack size
-        ]
-        analysisOptions.append(*options)
-        compilerOptions.append(*options)
+            "/std:#{Build.CppStd}",     # C++2017
+            '/WX',                      # warning as errors
+            '/Gm-',                     # minimal rebuild is handled by FASTBuild
+            '/GF',                      # string pooling
+            '/GT',                      # fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
+            '/EHsc',                    # structure exception support (#TODO: optional ?)
+            '/fp:fast',                 # non-deterministic, allow vendor specific float intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
+            '/bigobj',                  # more sections inside obj files, support larger translation units, needed for unity builds
+            '/d2FH4',                   # https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
+            '/vmb',                     # class is always defined before pointer to member (https://docs.microsoft.com/en-us/cpp/build/reference/vmb-vmg-representation-method?view=vs-2019)
+            '/openmp-',                 # disable OpenMP automatic parallelization
+            #'/Za',                     # disable non-ANSI features
+            '/Zc:inline',               # https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
+            '/Zc:implicitNoexcept',     # https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
+            '/Zc:rvalueCast',           # https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
+            '/Zc:strictStrings',        # https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
+            '/Zc:wchar_t',              # promote wchar_t as a native type
+            '/Zc:forScope',             # prevent from spilling iterators outside loops
+            '/utf-8',                   # https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
+            '/W4',                      # warning level 4 (verbose)
+            '/TP',                      # compile as C++
+            '/F', Build.StackSize )     # set default thread stack size
 
-        warnings = [
+        compilerOptions.append(
         ### ERRORS ###
-        '/we4062',                  # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
-        '/we4263',                  # 'function' : member function does not override any base class virtual member function
-        '/we4265',                  # 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
-        '/we4296',                  # 'operator': expression is always false
-        '/we4555',                  # expression has no effect; expected expression with side-effect
-        '/we4619',                  # #pragma warning : there is no warning number 'number'
-        '/we4640',                  # 'instance' : construction of local static object is not thread-safe
-        '/we4826',                  # Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
-        '/we4836',                  # nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
-        '/we4905',                  # wide string literal cast to 'LPSTR'
-        '/we4906',                  # string literal cast to 'LPWSTR'
+            '/we4062',                  # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
+            '/we4263',                  # 'function' : member function does not override any base class virtual member function
+            '/we4265',                  # 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
+            '/we4296',                  # 'operator': expression is always false
+            '/we4555',                  # expression has no effect; expected expression with side-effect
+            '/we4619',                  # #pragma warning : there is no warning number 'number'
+            '/we4640',                  # 'instance' : construction of local static object is not thread-safe
+            '/we4826',                  # Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
+            '/we4836',                  # nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
+            '/we4905',                  # wide string literal cast to 'LPSTR'
+            '/we4906',                  # string literal cast to 'LPWSTR'
         ### IGNORED ###
-        '/wd4201',                  # nonstandard extension used: nameless struct/union'
-        '/wd4251',                  # 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
-        ]
-        analysisOptions.append(*warnings, '/analyze', '/analyze:stacksize', Build.StackSize)
-        compilerOptions.append(*warnings)
+            '/wd4201',                  # nonstandard extension used: nameless struct/union'
+            '/wd4251' )                 # 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
 
-        compilerOptions.append('/c', '%1') # input file injection
+        analysisOptions << compilerOptions
+        analysisOptions.append('/analyze', '/analyze:stacksize', Build.StackSize)
+
+        compilerOptions.append('/nologo')   # no copyright when compiling
+        compilerOptions.append('/c', '%1')  # input file injection
 
         librarianOptions.append('/nologo', '/WX', '/SUBSYSTEM:WINDOWS', '/IGNORE:4221', '/OUT:"%2"', '%1')
         linkerOptions.append(
-            '/nologo',              # no copyright when compiling
-            '/WX',                  # warning as errors
-            '/TLBID:1',             # https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
-            '/DEBUG',               # generate debug infos
-            '/IGNORE:4001',         # https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
-            '/NXCOMPAT:NO',         # disable Data Execution Prevention (DEP)
-            '/LARGEADDRESSAWARE',   # inddicate support for VM > 2Gb (if 3Gb flag is toggled)
-            '/VERBOSE:INCR',        # incremental linker diagnosis
+            '/nologo',                  # no copyright when compiling
+            '/WX',                      # warning as errors
+            '/TLBID:1',                 # https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
+            '/DEBUG',                   # generate debug infos
+            '/IGNORE:4001',             # https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
+            '/NXCOMPAT:NO',             # disable Data Execution Prevention (DEP)
+            '/LARGEADDRESSAWARE',       # inddicate support for VM > 2Gb (if 3Gb flag is toggled)
+            '/VERBOSE:INCR',            # incremental linker diagnosis
             #'/VERBOSE',
             #'/VERBOSE:REF',
             #'/VERBOSE:UNUSEDLIBS',
-            '/SUBSYSTEM:WINDOWS',   # ~Windows~ application type (vs Console)
+            '/SUBSYSTEM:WINDOWS',       # ~Windows~ application type (vs Console)
             "/STACK:#{Build.StackSize}",
             'kernel32.lib',
-            'User32.lib',           # TODO : slim that list down
+            'User32.lib',               # TODO : slim that list down
             'Shell32.lib',
             'Gdi32.lib',
             'Shlwapi.lib',
@@ -292,11 +287,13 @@ module Build
     end
 
     make_facet(:VisualStudio_Base_x86) do
+        analysisOptions << '/arch:AVX2'
         compilerOptions << '/favor:blend' << '/arch:AVX2'
         librarianOptions << '/MACHINE:X86'
         linkerOptions << '/MACHINE:X86' << '/SAFESEH'
     end
     make_facet(:VisualStudio_Base_x64) do
+        analysisOptions << '/arch:AVX2'
         compilerOptions << '/favor:AMD64' << '/arch:AVX2'
         librarianOptions << '/MACHINE:X64'
         linkerOptions << '/MACHINE:X64'
@@ -334,16 +331,16 @@ module Build
 
     make_facet(:VisualStudio_STL_DisableIteratorDebug) do
         defines.append(
-            "_SECURE_SCL=0",                 # https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
-            "_ITERATOR_DEBUG_LEVEL=0",       # https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
-            "_HAS_ITERATOR_DEBUGGING=0")     # https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
+            "_SECURE_SCL=0",                # https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
+            "_ITERATOR_DEBUG_LEVEL=0",      # https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
+            "_HAS_ITERATOR_DEBUGGING=0")    # https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
     end
     make_facet(:VisualStudio_STL_EnableIteratorDebug) do
         if Build.RuntimeChecks
             defines.append(
-                "_SECURE_SCL=1",                 # https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
-                "_ITERATOR_DEBUG_LEVEL=2",       # https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
-                "_HAS_ITERATOR_DEBUGGING=1")     # https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
+                "_SECURE_SCL=1",            # https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
+                "_ITERATOR_DEBUG_LEVEL=2",  # https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
+                "_HAS_ITERATOR_DEBUGGING=1")# https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
         else
             self << Build.VisualStudio_STL_DisableIteratorDebug
         end
