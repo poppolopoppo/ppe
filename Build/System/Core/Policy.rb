@@ -89,6 +89,7 @@ module Build
 
         ## customize final environment + target
         def customize(facet, env, target)
+            Log.debug 'customize target <%s> with environement <%s> and policy <%s>', target.abs_path, env.family, @name
             @customizations.each do |custom|
                 facet.instance_exec(env, target, &custom)
             end

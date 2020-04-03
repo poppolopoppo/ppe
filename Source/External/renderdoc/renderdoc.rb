@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-$Build.ppe_external!(:renderdoc) do
+$Build.ppe_headers!(:renderdoc) do
     extra_files!(*%w{
-        stb.git/stb_dxt.h
-        stb.git/stb_image.h
-        stb.git/stb_image_resize.h
-        stb.git/stb_image_write.h })
+        Public/renderdoc-external.h
+        renderdoc.git/renderdoc/api/app/renderdoc.h })
     # header-only library
 end

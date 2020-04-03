@@ -58,7 +58,9 @@ module Build
         def self.make_targets(bff, environments, namespace)
             platforms = Set.new
             configs = Set.new
-            targets = namespace.all
+
+            targets = namespace.all.dup
+            targets.delete_if{|target| target.headers? }
 
             environments.each do |envname|
                 env = Build.send(envname)
@@ -77,6 +79,8 @@ module Build
                         expanded = env.expand(target)
 
                         case env.target_artefact_type(target)
+                        when :headers
+                            Assert.not_implemented
                         when :executable
                             BFF.make_executable(bff, env, target, target_alias, expanded)
                         when :shared
@@ -89,6 +93,8 @@ module Build
 
                         target_alias
                     end
+
+                    aliases.delete_if{|x| x.nil? } # some targets don't produce output
 
                     bff.comment!("Alias for all targets using <%s>", envname)
                     bff.func!('Alias', env.family) do

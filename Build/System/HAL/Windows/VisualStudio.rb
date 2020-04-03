@@ -114,7 +114,7 @@ module Build
         def customize(facet, env, target)
             super(facet, env, target)
 
-            nopdb = facet.tag?(:nopdb)
+            nopdb = target.headers? || facet.tag?(:nopdb)
             if nopdb || Build.Cache
                 facet.compilerOptions << '/Z7' # debug symbols inside .obj
             else

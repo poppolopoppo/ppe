@@ -14,7 +14,7 @@ module Build
         def customize(facet, env, target)
             artefact_type = env.target_artefact_type(target)
             case artefact_type
-            when :executable, :library
+            when :executable, :library, :headers
                 facet.defines << 'BUILD_LINK_STATIC'
             when :shared
                 facet.defines << 'BUILD_LINK_DYNAMIC'

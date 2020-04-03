@@ -44,6 +44,7 @@ module Build
                 end
         end
 
+        def headers!(name, &cfg) make_target!(name, :headers, nil, &cfg) end
         def external!(name, &cfg) make_target!(name, :external, :static, &cfg) end
         def library!(name, link: nil, &cfg) make_target!(name, :library, link, &cfg) end
         def executable!(name, &cfg) make_target!(name, :executable, :static, &cfg) end

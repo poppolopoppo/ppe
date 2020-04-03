@@ -61,16 +61,21 @@ module Build
 
         def output_path(relativePath, output=:obj)
             relativePath = relativePath.to_s
-            dstExt = @compiler.ext_for(output)
             case output
             when :executable, :shared
-                outputPath = File.join($BinariesPath, relativePath.tr('/', '-')<<'-'<<@platform.name.to_s<<'-'<<@config.name.to_s<<dstExt)
+                outputPath = File.join($BinariesPath, relativePath.tr('/', '-')<<'-'<<
+                    @platform.name.to_s<<'-'<<@config.name.to_s<<@compiler.ext_for(output))
             when :debug
                 Log.fatal 'you must use target_debug_path() instead'
-            else
+            when :library, :obj, :pch
                 outputPath = File.join($IntermediatePath, @platform.name.to_s, @config.name.to_s,
                     File.dirname(relativePath),
-                    File.basename(relativePath, File.extname(relativePath)) ) << dstExt
+                    File.basename(relativePath, File.extname(relativePath)) ) <<
+                        @compiler.ext_for(output)
+            when :headers
+                return nil
+            else
+                Log.fatal 'unsupported output type: <%s>', output
             end
             Log.debug '%s: output_path("%s", %s) -> "%s"', self.name, relativePath, output, outputPath
             return outputPath
@@ -91,6 +96,8 @@ module Build
             when :executable
                 Log.fatal 'executable must have static link type: "%s" -> <%s>', abs_path, target.link if target.link != :static
                 return :executable
+            when :headers
+                return :headers
             else
                 Log.fatal 'unsupported target type <%s>', target.type
             end

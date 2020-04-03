@@ -58,14 +58,17 @@ module Build
 
                 set!('PlatformToolset', env.compiler.platformToolset)
 
-                set!('BuildLogFile', File.join(intermediate, 'Build.log'))
-                set!('Output', artefact)
-                set!('OutputDirectory', File.dirname(artefact))
                 set!('IntermediateDirectory', intermediate)
+                set!('BuildLogFile', File.join(intermediate, 'Build.log'))
 
-                set!('ProjectBuildCommand', Build.make_commandstr('--fbuild', target_alias))
-                set!('ProjectRebuildCommand', Build.make_commandstr('--fbuild', target_alias, '--Rebuild'))
-                set!('ProjectCleanCommand', Build.make_commandstr('--dist-clean', '-v', target_alias, "#{env.platform.name}/#{env.config.name}/#{target.abs_path}"))
+                if artefact
+                    set!('Output', artefact)
+                    set!('OutputDirectory', File.dirname(artefact))
+
+                    set!('ProjectBuildCommand', Build.make_commandstr('--fbuild', target_alias))
+                    set!('ProjectRebuildCommand', Build.make_commandstr('--fbuild', target_alias, '--Rebuild'))
+                    set!('ProjectCleanCommand', Build.make_commandstr('--dist-clean', '-v', target_alias, "#{env.platform.name}/#{env.config.name}/#{target.abs_path}"))
+                end
 
                 set!('AdditionalOptions', expanded.analysisOptions.join(' '))
                 set!('ForcedIncludes', expanded.includes.join(';'))

@@ -10,6 +10,13 @@ class Build::Namespace
         target.instance_exec(&cfg) if cfg
         return target
     end
+    def ppe_headers!(name, &cfg)
+        self.headers!(name) do
+            glob!(path: nil)
+            includePath!($SourcePath, File.join($SourcePath, 'Runtime', 'Core', 'Public'))
+            instance_exec(&cfg) if cfg
+        end
+    end
     def ppe_external!(name, &cfg)
         self.external!(name) do
             tag!(:nopdb, :nounity)

@@ -75,6 +75,7 @@ module Build
             Log.verbose 'new target %s <%s>', @type, abs_path
         end
 
+        def headers?() @type == :headers end
         def executable?() @type == :executable end
         def library?() @type == :library end
         def shared?() @type == :shared end
