@@ -17,7 +17,8 @@ require 'set'
 
 module Build
 
-    PCH_THRESHOLD = 98 / 100.0 # % of sources include an header -> PCH
+    PCH_MINREFNUM = 20 # # of sources include for a projec header -> PCH
+    PCH_THRESHOLD = 98 / 100.0 # % of sources include for a project header -> PCH
 
     make_command(:genpch, 'Generate precompiled headers') do |&namespace|
         environments = Build.fetch_environments
@@ -95,7 +96,7 @@ module Build
 
         def self.preprocess()
             Log.info 'PCH: preprocessing all targets...'
-            FBuild.run('-preprocess', '-nounity', 'All', quiet: !Log.debug?)
+            FBuild.run('-preprocess', '-nounity', 'All', quiet: !Log.verbose?)
         end
 
         RE_otherfile = /File\s(.*)$/i
@@ -336,7 +337,8 @@ module Build
             end
             def threshold!(delete_if_under_n)
                 @data.delete_if do |filename, refcount|
-                    refcount < delete_if_under_n
+                    refcount < delete_if_under_n ||
+                        refcount < PCH_MINREFNUM
                 end
                 return self
             end
