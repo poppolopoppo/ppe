@@ -230,14 +230,15 @@ module Build
 
                 bff.struct!(target_source) do
                     set!('CompilerInputFilesRoot', env.source_path(target.source_path))
-                    set!('CompilerInputFiles', env.source_path(target.all_source_files))
                     if target_unity
+                        set!('CompilerInputFiles', env.source_path(target.all_source_files))
                         set!('CompilerInputUnity', target_unity)
                     elsif target.rel_glob_path and target.glob_patterns
                         glob_path = env.source_path(target.glob_path)
                         set!('CompilerInputPath', glob_path)
                         set!('CompilerInputPattern', target.glob_patterns)
                         set!('CompilerInputExcludedFiles', env.relative_path(glob_path, target.excluded_files))
+                        set!('CompilerInputFiles', env.source_path(target.source_files))
                     end
                     if target_pch_source
                         set!('PCHInputFile', env.source_path(target_pch_source))

@@ -16,7 +16,7 @@ $Build.ppe_external!('double-conversion') do
         double-conversion.git/double-conversion/string-to-double.h
         double-conversion.git/double-conversion/strtod.h
         double-conversion.git/double-conversion/utils.h })
-    isolated_files!(*%w{
+    source_files!(*%w{
         double-conversion.git/double-conversion/bignum.cc
         double-conversion.git/double-conversion/bignum-dtoa.cc
         double-conversion.git/double-conversion/cached-powers.cc

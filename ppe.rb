@@ -29,7 +29,7 @@ class Build::Namespace
         self.library!(name) do
             glob!(path: 'Private')
             pch!('stdafx.h', 'stdafx.cpp')
-            isolated_files!('ModuleExport.cpp')
+            source_files!('ModuleExport.cpp')
             force_includes!(File.join(abs_path, 'ModuleExport.h'))
             Build::Namespace.ppe_common(self, &cfg)
         end
