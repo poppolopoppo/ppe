@@ -64,10 +64,13 @@ module Build
             globalIncludePaths.concat(env.facet.includePaths.data)
 
             targets.each do |m|
-                globalIncludePaths <<
-                    env.source_path(m.source_path) <<
-                    env.source_path(m.public_path) <<
-                    env.source_path(m.private_path)
+                globalIncludePaths << env.source_path(m.source_path)
+
+                public_path = env.source_path(m.public_path)
+                globalIncludePaths << public_path if Dir.exist?(public_path)
+
+                private_path = env.source_path(m.private_path)
+                globalIncludePaths << private_path if Dir.exist?(private_path)
             end
 
             case env.platform.os

@@ -95,8 +95,10 @@ module Build
 
             facet.includePaths <<
                 env.source_path(self.source_path) <<
-                env.source_path(self.public_path) <<
-                env.source_path(self.private_path)
+                env.source_path(self.public_path)
+
+            private_path = env.source_path(self.private_path)
+            facet.includePaths << private_path if Dir.exist?(private_path)
 
             self.all_dependencies do |(dep, visibility)|
                 facet.includePaths << env.source_path(dep.public_path)
