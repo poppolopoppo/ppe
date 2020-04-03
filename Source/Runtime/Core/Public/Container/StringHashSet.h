@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Container/HashSet.h"
+#include "IO/ConstChar.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
 
