@@ -12,5 +12,4 @@ $Build.ppe_module!(:Core) do
         lz4,
         xxHash ]})
     runtime_deps!(*namespace[:External]{[ vstools ]})
-    extra_files!('resource.rc')
 end
