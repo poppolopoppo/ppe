@@ -415,7 +415,7 @@ public:
         bucket_t* const pbucket = &_buckets[(h0 >> 7) & _bucketMask];
         for (bitmask_t bm{ m256i_epi8_findeq(
             m256i_epi8_load_aligned(&pbucket->States),
-            m256i_epi8_broadcast(u8(h0 & 0x7f))) }; bm.Data;) {
+            m256i_epi8_broadcast(i8(h0 & 0x7f))) }; bm.Data;) {
             const u32 e = bm.PopFront_AssumeNotEmpty();
 
             pointer const pkey = &pbucket->at(e);

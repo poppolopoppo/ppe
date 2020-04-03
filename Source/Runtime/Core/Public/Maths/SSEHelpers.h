@@ -144,7 +144,7 @@ using mask32_t = u32;
 using m256i_t = ::__m256i;
 //----------------------------------------------------------------------------
 #define m256i_epi8_tznct_mask() u64(1 << 32)
-#define m256i_epi8_broadcast(v) ::_mm256_set1_epi8(v)
+#define m256i_epi8_broadcast(v) ::_mm256_set1_epi8((char)v)
 #define m256i_epi8_set_zero() ::_mm256_setzero_si256()
 #define m256i_epi8_set_false() ::_mm256_setzero_si256()
 #define m256i_epi8_set_true() ::_mm256_cmpeq_epi32(::_mm256_setzero_si256(), ::_mm256_setzero_si256())
@@ -154,21 +154,22 @@ using m256i_t = ::__m256i;
 #define m256i_epi8_load_unaligned(p) ::_mm256_lddqu_si256((const m256i_t*)(p))
 #define m256i_epi8_store_aligned(p, v) ::_mm256_store_si256((m256i_t*)(p), v)
 #define m256i_epi8_blend(if_false, if_true, m) ::_mm256_blendv_epi8(if_false, if_true, m)
+#define m256i_epi8_movemask(m) (unsigned int)::_mm256_movemask_epi8(m)
 #if USE_PPE_AVX512
 #   define m256i_epi8_findlt(v, h) ::_mm256_cmplt_epi8_mask(v, h)
 #   define m256i_epi8_findgt(v, h) ::_mm256_cmpgt_epi8_mask(v, h)
 #   define m256i_epi8_findge(v, h) ::_mm256_cmpge_epi8_mask(v, h)
 #   define m256i_epi8_findeq(v, h) ::_mm256_cmpeq_epi8_mask(v, h)
 #else
-#   define m256i_epi8_findlt(v, h) ::_mm256_movemask_epi8(::_mm256_cmpgt_epi8(h, v))
-#   define m256i_epi8_findgt(v, h) ::_mm256_movemask_epi8(::_mm256_cmpgt_epi8(v, h))
+#   define m256i_epi8_findlt(v, h) m256i_epi8_movemask(::_mm256_cmpgt_epi8(h, v))
+#   define m256i_epi8_findgt(v, h) m256i_epi8_movemask(::_mm256_cmpgt_epi8(v, h))
 #	if 1
-#		define m256i_epi8_findle(v, h) ::_mm256_movemask_epi8(::_mm256_cmpeq_epi8(::_mm256_min_epi8(v, h), v))
+#		define m256i_epi8_findle(v, h) m256i_epi8_movemask(::_mm256_cmpeq_epi8(::_mm256_min_epi8(v, h), v))
 #		define m256i_epi8_findge(v, h) m256i_epi8_findle(h, v)
 #	else
-#		define m256i_epi8_findge(v, h) ::_mm256_movemask_epi8(::_mm256_or_si256(::_mm256_cmpgt_epi8(v, h), ::_mm256_cmpeq_epi8(v, h)))
+#		define m256i_epi8_findge(v, h) m256i_epi8_movemask(::_mm256_or_si256(::_mm256_cmpgt_epi8(v, h), ::_mm256_cmpeq_epi8(v, h)))
 #	endif
-#   define m256i_epi8_findeq(v, h) ::_mm256_movemask_epi8(::_mm256_cmpeq_epi8(v, h))
+#   define m256i_epi8_findeq(v, h) m256i_epi8_movemask(::_mm256_cmpeq_epi8(v, h))
 #endif
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_AVX2
