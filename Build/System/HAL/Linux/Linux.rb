@@ -15,13 +15,13 @@ module Build
     const_memoize(self, :LinuxPlatform_X86) do
         Platform.new('Win32', :x86, :Windows).
             inherits!(SharedPlatforms::X86).
-            inherits!(Build.Windows_Base).
+            inherits!(Build.Linux_Base).
             define!('_WIN32')
     end
     const_memoize(self, :LinuxPlatform_X64) do
         Platform.new('Win64', :x64, :Windows).
             inherits!(SharedPlatforms::X64).
-            inherits!(Build.Windows_Base).
+            inherits!(Build.Linux_Base).
             define!('_WIN64')
     end
 
