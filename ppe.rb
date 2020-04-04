@@ -39,6 +39,7 @@ class Build::Namespace
             tag!(:nounity)
             glob!(path: 'Private')
             pch!('stdafx.h', 'stdafx.cpp')
+            linkerOptions << "/NATVIS:\"#{File.join($ExtrasPath, 'Debug', 'PPE.natvis')}\"" if Build.os_windows?
             Build::Namespace.ppe_common(self, &cfg)
         end
     end
