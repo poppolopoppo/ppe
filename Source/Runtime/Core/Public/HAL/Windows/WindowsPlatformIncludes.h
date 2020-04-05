@@ -52,7 +52,9 @@
 #define NOCOMM					// COMM driver routines
 #define NOKANJI					// Kanji support stuff.
 #define NOHELP					// Help engine interface.
+#if USE_PPE_FINAL_RELEASE
 #define NOPROFILER				// Profiler interface.
+#endif
 #define NODEFERWINDOWPOS		// DeferWindowPos routines
 #define NOMCX					// Modem Configuration Extensions
 #define NOCRYPT
@@ -69,40 +71,17 @@ struct IUnknown;
 #include <Windows.h>
 #include <winnt.h>
 
-//  Stupid M$ macros removal ...
-#pragma push_macro("CreateDirectory")
-#ifdef CreateDirectory
-#   undef CreateDirectory
-#endif
-#pragma push_macro("CreateProcess")
-#ifdef CreateProcess
-#   undef CreateProcess
-#endif
-#pragma push_macro("CreateSemaphore")
-#ifdef CreateSemaphore
-#   undef CreateSemaphore
-#endif
-#pragma push_macro("CreateWindow")
-#ifdef CreateWindow
-#   undef CreateWindow
-#endif
-#pragma push_macro("ERROR")
 #ifdef ERROR
 #   undef ERROR
 #endif
-#pragma push_macro("MemoryBarrier")
-#ifdef MemoryBarrier
-#   undef MemoryBarrier
-#endif
-#pragma push_macro("MoveFile")
-#ifdef MoveFile
-#   undef MoveFile
-#endif
-#pragma push_macro("RegisterClass")
-#ifdef RegisterClass
-#   undef RegisterClass
-#endif
-#pragma push_macro("RemoveDirectory")
-#ifdef RemoveDirectory
-#   undef RemoveDirectory
-#endif
+
+//  Stupid M$ macros removal ...
+
+#undef CreateDirectory
+#undef CreateProcess
+#undef CreateSemaphore
+#undef CreateWindow
+#undef MemoryBarrier
+#undef MoveFile
+#undef RegisterClass
+#undef RemoveDirectory

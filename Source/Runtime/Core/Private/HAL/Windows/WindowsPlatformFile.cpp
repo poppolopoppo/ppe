@@ -28,6 +28,25 @@
 #include <ShlObj.h> // UserDirectory()
 #include <wchar.h> // wcschr()
 
+// stupid Shlwapi macros removal
+
+#undef StrChr
+#undef StrRChr
+#undef StrChrI
+#undef StrRChrI
+#undef StrCmpN
+#undef StrCmpNI
+#undef StrStr
+#undef StrStrI
+#undef StrDup
+#undef StrRStrI
+#undef StrCSpn
+#undef StrCSpnI
+#undef StrSpn
+#undef StrToInt
+#undef StrPBrk
+#undef StrToIntEx
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
