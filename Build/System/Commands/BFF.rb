@@ -248,7 +248,7 @@ module Build
 
             case env.config.link
             when :static
-                link_library_objects = false
+                link_library_objects = target.executable?
             when :dynamic
                 link_library_objects = true
             else
