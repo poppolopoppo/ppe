@@ -71,7 +71,7 @@ module Build
 
     $SourceControlProvider = DummySourceControl.new
 
-    def self.init_source_control(provider: :git, path: $WorkspacePath)
+    def self.init_source_control(provider: :git, path: $SourcePath)
         unless Dir.exist?(path)
             Log.error "can't initialize source control, invalida path: '%s'", path
             return
