@@ -69,8 +69,6 @@ module Build
                 platforms << env.platform
                 configs << env.config
 
-                bff.set!('CompilerOutputExtension', env.compiler.ext_for(:obj))
-
                 bff.source.scope!() do
                     aliases = targets.collect do |target|
                         target_alias = BFF.make_target_alias(env, target)
@@ -183,18 +181,19 @@ module Build
         end
 
         def self.target_base(bff, env, target, target_alias, expanded)
-            compiler_details = env.compiler.name.to_s+'_Details'
-            bff.once?(env.compiler.name) do
-                func!('Compiler', env.compiler.name.to_s) do
-                    set!('Executable', env.compiler.executable)
-                    set!('ExtraFiles', env.compiler.extra_files)
-                    set!('CompilerFamily', env.compiler.family.to_s) if env.compiler.family
+            compiler_details = expanded.compiler.name.to_s+'_Details'
+            bff.once?(expanded.compiler.name) do
+                func!('Compiler', expanded.compiler.name.to_s) do
+                    set!('Executable', expanded.compiler.executable)
+                    set!('ExtraFiles', expanded.compiler.extra_files)
+                    set!('CompilerFamily', expanded.compiler.family.to_s) if expanded.compiler.family
                     set!('UseLightCache_Experimental', Build.LightCache)
                 end
                 struct!(compiler_details) do
-                    set!('Compiler', env.compiler.name.to_s)
-                    set!('Librarian', env.compiler.librarian)
-                    set!('Linker', env.compiler.linker)
+                    set!('Compiler', expanded.compiler.name.to_s)
+                    set!('Librarian', expanded.compiler.librarian)
+                    set!('Linker', expanded.compiler.linker)
+                    set!('CompilerOutputExtension', expanded.compiler.ext_for(:obj))
                 end
             end
 

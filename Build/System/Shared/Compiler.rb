@@ -62,6 +62,11 @@ module Build
             end
         end
 
+        def customize(facet, env, target)
+            facet.compiler!(self)
+            super(facet, env, target)
+        end
+
         def freeze()
             @executable.freeze
             @librarian.freeze

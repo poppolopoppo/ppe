@@ -71,6 +71,7 @@ module Build
         def join(*args) @data.join(*args) end
         def to_a() @data end
         def to_s() @data.join(' ') end
+        def clear() @data.clear end
         def freeze()
             @data.freeze
             super()
@@ -104,9 +105,11 @@ module Build
             end
         end
 
+        attr_reader :compiler
         attr_reader :vars
 
         def initialize(data={})
+            @compiler = nil
             @vars = {}
             ATTRS.each do |facet|
                 #Log.debug "initialize facet <%s>", facet
@@ -138,6 +141,11 @@ module Build
             end
             return true
         end
+        def compiler!(compiler)
+            Assert.expect(compiler, Compiler)
+            @compiler = compiler
+            return self
+        end
         def export!(key, subst)
             @vars["$#{key}$"] = subst.to_s
             return self
@@ -155,7 +163,7 @@ module Build
                 src = other.instance_variable_get(facet)
                 dst << src
             end
-            self
+            return self
         end
         def >>(other)
             other.vars.each{|k,v| @vars.delete(k) }
@@ -164,7 +172,7 @@ module Build
                 src = other.instance_variable_get(facet)
                 dst >> src
             end
-            self
+            return self
         end
         def ==(other)
             return false unless @vars == other.vars
@@ -179,9 +187,17 @@ module Build
             attrs = ATTRS.clone
                 .delete_if{|x| instance_variable_get(x).empty? }
                 .collect{|x| "\t#{x}: #{instance_variable_get(x)}" }
-            attrs.empty? ? '{}' : "{\n#{attrs.join(",\n")}\n}"
+            return attrs.empty? ? '{}' : "{\n#{attrs.join(",\n")}\n}"
         end
-        def copy() 
+        def clear()
+            @compiler = nil
+            @vars.clear
+            ATTRS.each do |facet|
+                instance_variable_get(facet).clear
+            end
+            return
+        end
+        def copy()
             newFacet = Facet.new(self)
             Assert.unreached if newFacet.frozen?
             return facet

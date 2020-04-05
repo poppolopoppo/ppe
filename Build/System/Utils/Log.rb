@@ -135,6 +135,8 @@ module Build
             end
         end
 
+        def self.expect(x, klass) Log.fatal 'unexpected value: <%s> "%s", need <%s>', x.class, x.to_s, klass unless x.is_a?(klass) end
+        def self.expect?(x, klass) Log.fatal 'unexpected value: <%s> "%s", need <%s>', x.class, x.to_s, klass unless x.nil? || x.is_a?(klass) end
         def self.unexpected(x) Log.fatal 'unexpected value: <%s> "%s"', x.class, x.to_s end
         def self.unreached() Log.fatal 'unreachable state' end
         def self.not_implemented() Log.fatal 'not implemented' end

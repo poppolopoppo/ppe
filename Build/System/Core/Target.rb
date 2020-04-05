@@ -8,7 +8,47 @@ require 'set'
 module Build
 
     class Target < Policy
+
+        # specialize build settings for a specific translation unit
+        class Unit < Policy
+            attr_reader :name, :target
+            attr_reader :abs_path, :var_path
+            attr_reader :rel_source_files
+            attr_reader :compiler_override
+            def initialize(name, target)
+                @name = name
+                @target = target
+                @abs_path = File.join(target.abs_path, @name.to_s)
+                @var_path = @abs_path.tr('/-', '_')
+                @source_files = Set.new
+                @compiler_override = nil
+            end
+
+            def source_files!(*filenames) @rel_source_files.merge(filenames.flatten); return self end
+            def source_files() @target.expand_path(@rel_source_files) end
+
+            def compiler_override!(compiler)
+                Assert.expect(compiler, Compiler)
+                @compiler_override = compiler
+                return self
+            end
+
+            def customize(facet, env, target)
+                # unit can completely override the facet using compiler override
+                unless @compiler_override.nil?
+                    facet.clear
+                    @compiler_override.customize(facet, env, target)
+                end
+
+                facet << @facet
+                super(facet, env, target)
+            end
+
+        end #~Unit
+
         attr_reader :namespace, :type, :link
+
+        attr_reader :units
 
         attr_reader :public_dependencies
         attr_reader :private_dependencies
@@ -21,13 +61,13 @@ module Build
         attr_accessor :glob_patterns
         attr_reader :force_includes # not relative to source path
 
-        def self.relative_path(*names)
+        def self.relative_path(*names, klass: self)
             names.each do |name|
                 ivar = "@#{name}".to_sym
-                define_method(name) do
+                klass.define_method(name) do
                     expand_path(instance_variable_get(ivar))
                 end
-                define_method("rel_#{name}") do
+                klass.define_method("rel_#{name}") do
                     instance_variable_get(ivar)
                 end
             end
@@ -44,6 +84,8 @@ module Build
             @namespace = namespace
             @type = type
             @link = link
+
+            @units = Hash.new
 
             @abs_path = File.join(@namespace.to_s, @name.to_s)
             @var_path = @abs_path.tr('/-', '_')
@@ -75,6 +117,7 @@ module Build
             Log.verbose 'new target %s <%s>', @type, abs_path
         end
 
+    public ## build facet
         def headers?() @type == :headers end
         def executable?() @type == :executable end
         def library?() @type == :library end
@@ -120,6 +163,7 @@ module Build
             return facet
         end
 
+    public ## input files
         def expand_path(path)
             case path
             when NilClass
@@ -175,6 +219,30 @@ module Build
         def all_source_files() return (self.source_files + self.isolated_files) end
         def unity_excluded_files() return (self.isolated_files + self.excluded_files) end
 
+    public ## units
+
+        def unit!(name, &config)
+            unit = @units[name]
+            unit = @units[name] = Unit.new(name, self) if unit.nil?
+            unit.instance_exec(&cfg)
+            return self
+        end
+
+        def all_units()
+            @units.values.each{|x| yield x } if block_given?
+            return @units.values
+        end
+
+        def expand_units(facet, env, &each_unit)
+            @units.each do |name, unit|
+                child = facet.deep_dup
+                unit.customize(child, env, self)
+                each_unit.call(unit, child)
+            end
+            return
+        end
+
+    public ## dependencies
         def depends!(*others, visibility: :private)
             case visibility
             when :public
@@ -227,6 +295,7 @@ module Build
             return @_all_dependencies
         end
 
+        ## sort dependencies with a (lazy) global order that must be stable
         @@_ordinal_cnt = 0
         def ordinal()
             if @_ordinal.nil?
