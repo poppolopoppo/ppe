@@ -24,7 +24,7 @@ TBasicSparseArray<T>::~TBasicSparseArray() {
 template <typename T>
 TBasicSparseArray<T>::TBasicSparseArray(TBasicSparseArray&& rvalue) NOEXCEPT
 :   TBasicSparseArray() {
-    Swap(*this, rvalue);
+    Swap(rvalue);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -34,9 +34,9 @@ auto TBasicSparseArray<T>::operator =(TBasicSparseArray&& rvalue) -> TBasicSpars
     AssertRelease(0 == _highestIndex); // can't move over a used container (restriction for pointer validity)
     Assert(0 == _uniqueKey);
     Assert(0 == _numChunks);
-    Assert(nullptr == _numChunks);
+    Assert(nullptr == _chunks);
 
-    Swap(*this, rvalue);
+    Swap(rvalue);
 
     return (*this);
 }
