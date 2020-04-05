@@ -14,7 +14,7 @@ module Build
 
         LEVELS = ICONS.keys
         VERBOSITY = [ :info, :warning, :error, :fatal ]
-        MAXMSGLEN = 4096
+        MAXMSGLEN = 4096*4
 
         $started_at = Time.now
         $show_caller = false
