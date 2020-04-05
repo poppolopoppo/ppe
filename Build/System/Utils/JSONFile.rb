@@ -7,7 +7,7 @@ module Build
 
     class JSONFile < MemFile
         def initialize(filename, minify: false)
-            super(filename, tab: minify ? "\t" : '')
+            super(filename, tab: minify ? '' : "\t")
         end
         def set!(key, value)
             print!(key.to_s.inspect)
@@ -64,8 +64,8 @@ module Build
             end
             return self
         end
-        def self.serialize(filename, data)
-            json = JSONFile.new(filename)
+        def self.serialize(filename, data, minify: false)
+            json = JSONFile.new(filename, minify: minify)
             json.value!(data)
             json.write_to_disk()
             Log.verbose 'wrote JSON file to "%s"', filename
