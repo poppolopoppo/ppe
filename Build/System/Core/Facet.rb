@@ -83,7 +83,9 @@ module Build
             :include,
             :includePath,
             :library,
-            :libraryPath,
+            :libraryPath,   # project include paths (user)
+            :externPath,    # extern include paths (sdk)
+            :systemPath,    # system include paths (stl)
             :analysisOption,
             :preprocessorOption,
             :compilerOption,
@@ -112,6 +114,15 @@ module Build
             end
             set!(data)
         end
+
+        def any_includePaths() 
+            any = []
+            any.concat(@systemPaths.to_a)
+            any.concat(@externPaths.to_a)
+            any.concat(@includePaths.to_a)
+            return any
+        end
+
         def [](facet) instance_variable_get(facet) end
         def []=(facet, value) instance_variable_set(facet, value) end
         def each(&block) ATTRS.each{|facet| yield(facet, self[facet]) } end

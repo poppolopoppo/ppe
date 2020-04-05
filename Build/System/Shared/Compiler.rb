@@ -48,6 +48,8 @@ module Build
         def add_define(facet, key, value=nil) Log.error("%s: add_define('%s', '%s') is not implemented", @name, key, value) end
         def add_forceInclude(facet, filename) Log.error("%s: add_forceInclude('%s') is not implemented", @name, filename) end
         def add_includePath(facet, dirpath) Log.error("%s: add_includePath('%s') is not implemented", @name, dirpath) end
+        def add_externPath(facet, dirpath) Log.error("%s: add_externPath('%s') is not implemented", @name, dirpath) end
+        def add_systemPath(facet, dirpath) Log.error("%s: add_systemPath('%s') is not implemented", @name, dirpath) end
         def add_library(facet, filename) Log.error("%s: add_library('%s') is not implemented", @name, filename) end
         def add_libraryPath(facet, dirpath) Log.error("%s: add_libraryPath('%s') is not implemented", @name, dirpath) end
 

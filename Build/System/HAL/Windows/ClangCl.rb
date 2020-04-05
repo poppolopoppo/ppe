@@ -35,12 +35,12 @@ module Build
             self.inherits!(Build.send "LLVM_Windows_Base_#{target}")
         end
         def add_includePath(facet, dirpath)
-            if dirpath.start_with?($SourcePath)
-                super(facet, dirpath)
-            else
-                add_compilerOption(facet, "/imsvc\"#{dirpath}\"")
-            end
+            super(facet, dirpath)
         end
+        def add_externPath(facet, dirpath)
+            add_compilerOption(facet, "/imsvc\"#{dirpath}\"")
+        end
+        alias add_systemPath add_externPath
     end #~ LLVM
 
     def self.import_llvm(name, path)

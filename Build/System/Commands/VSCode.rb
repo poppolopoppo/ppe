@@ -61,7 +61,7 @@ module Build
             VSCode.compdb(compdb, env)
 
             globalIncludePaths = [ env.source_path('.') ]
-            globalIncludePaths.concat(env.facet.includePaths.data)
+            globalIncludePaths.concat(env.facet.any_includePaths)
 
             targets.each do |m|
                 globalIncludePaths << env.source_path(m.source_path)
@@ -72,6 +72,8 @@ module Build
                 private_path = env.source_path(m.private_path)
                 globalIncludePaths << private_path if Dir.exist?(private_path)
             end
+
+            globalIncludePaths.uniq!
 
             case env.platform.os
             when :Windows
@@ -104,12 +106,11 @@ module Build
 
         def self.tasks(targets)
             targets.collect do |m|
+                args = Build.make_commandline('--fbuild', "#{m.abs_path}-${command:cpptools.activeConfigName}")
                 {
                     label: m.abs_path,
-                    type: 'shell',
-                    isBackground: true,
-                    command: 'ruby',
-                    args: Build.make_commandline('--fbuild', "#{m.abs_path}-${command:cpptools.activeConfigName}"),
+                    command: args.shift,
+                    args: args,
                     options: { cwd: $WorkspacePath },
                     group: { kind: 'build', isDefault: true },
                     presentation: {

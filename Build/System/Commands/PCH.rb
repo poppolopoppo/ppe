@@ -4,7 +4,6 @@ require_once '../Common.rb'
 require_once '../Core/Environment.rb'
 require_once '../Core/Target.rb'
 require_once '../Utils/Log.rb'
-require_once '../Utils/JSONFile.rb'
 require_once '../Utils/Options.rb'
 require_once '../Utils/Prerequisite.rb'
 
@@ -61,7 +60,10 @@ module Build
 
                 Log.pin(target_status + " -> #{config} #{env_i+1}/#{environments.length}")
 
-                env.facet.includePaths.each do |path|
+                env.facet.externPaths.each do |path|
+                    resolver.extern_path!(path)
+                end
+                env.facet.systemPaths.each do |path|
                     resolver.system_path!(path)
                 end
 
@@ -206,6 +208,7 @@ module Build
             def initialize()
                 @headers = {}
                 @includes = {}
+                @externPaths = Set.new
                 @systemPaths = Set.new
                 @projectPaths = Set.new
                 @sourcePath = Pathname.new($SourcePath)
@@ -213,6 +216,7 @@ module Build
             end
 
             def project_path!(path) @projectPaths << Pathname.new(path).expand_path end
+            def extern_path!(path) @externPaths <<  Pathname.new(path).expand_path end
             def system_path!(path) @systemPaths <<  Pathname.new(path).expand_path end
 
             def merge_from!(other)

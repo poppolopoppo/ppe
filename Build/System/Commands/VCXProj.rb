@@ -72,7 +72,7 @@ module Build
 
                 set!('AdditionalOptions', expanded.analysisOptions.join(' '))
                 set!('ForcedIncludes', expanded.includes.join(';'))
-                set!('IncludeSearchPath', expanded.includePaths.join(';'))
+                set!('IncludeSearchPath', expanded.any_includePaths.join(';'))
                 set!('PreprocessorDefinitions', expanded.defines.join(';'))
             end
         end

@@ -46,7 +46,7 @@ module Build
             Log.verbose 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
 
             self.facet.defines << 'CPP_VISUALSTUDIO'
-            self.facet.includePaths <<
+            self.facet.systemPaths <<
                 File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'include') <<
                 File.join(@visualStudioPath, 'VC', 'Auxiliary', 'VS', 'include')
             self.facet.libraryPaths <<
@@ -103,6 +103,8 @@ module Build
         def add_includePath(facet, dirpath)
             add_compilerOption(facet, '/I', "\"#{dirpath}\"")
         end
+        alias add_externPath add_includePath
+        alias add_systemPath add_includePath
         def add_library(facet, filename)
             facet.linkerOptions << "\"#{filename}\""
         end
@@ -303,14 +305,14 @@ module Build
         Log.verbose 'Windows: using VisualStudio PerfSDK for x86'
         perfSDK = '$VisualStudioPath$/Team Tools/Performance Tools/PerfSDK'
         defines << 'WITH_VISUALSTUDIO_PERFSDK'
-        includePaths << perfSDK
+        externPaths << perfSDK
         libraryPaths << perfSDK
     end
     make_facet(:VisualStudio_PerfSDK_X64) do
         Log.verbose 'Windows: using VisualStudio PerfSDK for x64'
         perfSDK = '$VisualStudioPath$/Team Tools/Performance Tools/x64/PerfSDK'
         defines << 'WITH_VISUALSTUDIO_PERFSDK'
-        includePaths << perfSDK
+        externPaths << perfSDK
         libraryPaths << perfSDK
     end
 
@@ -336,14 +338,10 @@ module Build
             "_HAS_ITERATOR_DEBUGGING=0")    # https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
     end
     make_facet(:VisualStudio_STL_EnableIteratorDebug) do
-        if Build.RuntimeChecks
-            defines.append(
-                "_SECURE_SCL=1",            # https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
-                "_ITERATOR_DEBUG_LEVEL=2",  # https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
-                "_HAS_ITERATOR_DEBUGGING=1")# https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
-        else
-            self << Build.VisualStudio_STL_DisableIteratorDebug
-        end
+        defines.append(
+            "_SECURE_SCL=1",                # https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
+            "_ITERATOR_DEBUG_LEVEL=2",      # https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
+            "_HAS_ITERATOR_DEBUGGING=1")    # https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
     end
 
     make_facet(:VisualStudio_Debug) do

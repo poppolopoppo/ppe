@@ -21,7 +21,7 @@ module Build
     make_facet(:WindowsSDK_10_Includes) do
         sdkPath, sdkVer = *Build.WindowsSDK_10_Info
         export!('WindowsSDKPath', sdkPath)
-        includePaths <<
+        externPaths <<
             File.join(sdkPath, 'Include', sdkVer, 'ucrt') <<
             File.join(sdkPath, 'Include', sdkVer, 'um') <<
             File.join(sdkPath, 'Include', sdkVer, 'shared')
