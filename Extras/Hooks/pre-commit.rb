@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-SOURCE_FILES = /\.(h|hh|hxx|inl|cpp|cc|c|bff)$/i
+SOURCE_FILES = /\.(h|hh|hxx|inl|cpp|cc|c|bff|rb)$/i
 
 user = ENV['USER']
 
