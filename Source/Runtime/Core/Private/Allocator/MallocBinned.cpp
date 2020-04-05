@@ -366,7 +366,7 @@ static void OnBinnedFree_(size_t sz) {
     Verify(0 <= (GBinnedAllocSizeInBytes_ -= checked_cast<i64>(sz)));
 }
 //----------------------------------------------------------------------------
-#endif //!WITH_PPE_ASSERT
+#endif //!USE_PPE_ASSERT
 //----------------------------------------------------------------------------
 // Helpers
 //----------------------------------------------------------------------------
@@ -1177,7 +1177,7 @@ FBinnedGlobalCache_::~FBinnedGlobalCache_() {
             numDanglingChunks++;
             totalSizeDangling += (size_t(FMallocBinned::SizeClasses[ch->SizeClass]) * ch->NumBlocksInUse);
 
-#ifdef   WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
             size_t n = 0;
             const size_t sz = FMallocBinned::SizeClasses[ch->SizeClass];
             for (auto* b = ch->FreeBlocks; b; ) {

@@ -1079,7 +1079,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
         _Test{ 1089, "1089" },
         _Test{ 1122, "1122" }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
-#endif //!WITH_PPE_ASSERT
+#endif //!USE_PPE_ASSERT
     );
 
     bm.UseMultiThread = !!(PPE_RUN_BENCHMARK_MULTITHREADED);

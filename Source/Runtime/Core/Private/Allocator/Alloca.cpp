@@ -68,7 +68,7 @@ public:
         Deallocate_AssumeLast(ptr, sz);
     }
 
-#endif //!WITH_PPE_ASSERT
+#endif //!USE_PPE_ASSERT
 };
 #endif //!USE_PPE_ALLOCA_LINEARHEAP
 //----------------------------------------------------------------------------
@@ -101,7 +101,7 @@ u32 AllocaDepth() {
     return 0;
 #endif
 }
-#endif //!WITH_PPE_ASSERT
+#endif //!USE_PPE_ASSERT
 //----------------------------------------------------------------------------
 void* Alloca(size_t size) {
     if (0 == size)

@@ -142,7 +142,7 @@ void SetAssertionHandler(FAssertHandler handler) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-#endif //!WITH_PPE_ASSERT
+#endif //!USE_PPE_ASSERT
 
 #if USE_PPE_ASSERT_RELEASE
 namespace PPE {
@@ -224,4 +224,4 @@ void SetAssertionReleaseHandler(FAssertReleaseHandler handler) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-#endif //!WITH_PPE_ASSERT_RELEASE
+#endif //!USE_PPE_ASSERT_RELEASE
