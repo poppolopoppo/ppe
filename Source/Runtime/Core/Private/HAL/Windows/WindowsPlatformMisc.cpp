@@ -499,24 +499,31 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
     Assert(filename);
 
     CONSTEXPR const FWStringView editors[] = {
-        // visual studio code
-        L"\"C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
+        // visual studio code (appdata)
+        L"\"%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
+        // visual studio code (classic program files)
+        L"\"%ProgramFiles%\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
         // sublime text 3
-        L"\"C:\\Program Files\\Sublime Text 3\\sublime_text.exe\" \"{0}:{1}:{2}\"",
+        L"\"%ProgramFiles%\\Sublime Text 3\\sublime_text.exe\" \"{0}:{1}:{2}\"",
         // notepad++ (not tested :p)
-        L"\"C:\\Program Files\\Notepad++\\Notepad++.exe\" \"{0}\" -n{1} -c{2}",
+        L"\"%ProgramFiles%\\Notepad++\\Notepad++.exe\" \"{0}\" -n{1} -c{2}",
         // notepad(2-mod)
         L"\"C:\\Windows\\System32\\notepad.exe\" \"{0}\" /g {1}",
     };
 
+    wchar_t format[2048];
     wchar_t buffer[2048];
     ::STARTUPINFO startupInfo;
     ::PROCESS_INFORMATION processInfo;
 
     for (const FWStringView& ed : editors) {
-        FWFixedSizeTextWriter oss(buffer);
-        Format(oss, ed, filename, line, column);
-        oss << Eos;
+        {
+            FWFixedSizeTextWriter oss(format);
+            Format(oss, ed, filename, line, column);
+            oss << Eos;
+        }
+
+        ::ExpandEnvironmentStringsW(format, buffer, lengthof(buffer));
 
         ZeroMemory(&startupInfo, sizeof(startupInfo));
         ZeroMemory(&processInfo, sizeof(processInfo));
@@ -528,14 +535,14 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
             &startupInfo, &processInfo) == 0) {
 
             LOG(HAL, Error, L"failed to open external editor : {0}\n\t{1}",
-                FLastError(), oss.Written() );
+                FLastError(), MakeCStringView(buffer));
         }
         else {
             // Immediately close handles since we run detached :
             ::CloseHandle(processInfo.hThread);
             ::CloseHandle(processInfo.hProcess);
 
-            LOG(HAL, Emphasis, L"opened external editor : {0}", oss.Written());
+            LOG(HAL, Emphasis, L"opened external editor : {0}", MakeCStringView(buffer));
 
             return true;
         }
