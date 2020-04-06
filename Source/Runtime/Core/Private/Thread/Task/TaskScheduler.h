@@ -350,13 +350,16 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
             Meta::FUniqueLock scopeLock(w.Barrier, std::defer_lock);
             if (Likely(scopeLock.try_lock())) {
                 // push the new task to the priority heap
-                w.PriorityHeap.push_back(std::move(queued));
-                std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end(), FPrioritySort_{});
+                {
+                    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+                    w.PriorityHeap.push_back(std::move(queued));
+                    std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end(), FPrioritySort_{});
+                }
 
                 // keep track of worker priority
                 w.HighestPriority = UnpackPriorityFromRevision_(w.PriorityHeap.front().Priority);
 
-                // used as hints for work stealing : worker will try to steal a job if a more priority task is available
+                // used as hints for work stealing : worker will try to steal a job if a higher priority task is available
                 ++p.NumTasks;
 
                 scopeLock.unlock();
@@ -417,8 +420,10 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
 inline void FTaskScheduler::ReleaseMemory() {
     for (FWorkerQueue_& w : _queues) {
         Meta::FUniqueLock scopeLock(w.Barrier, std::defer_lock);
-        if (scopeLock.try_lock())
+        if (scopeLock.try_lock()) {
+            PPE_LEAKDETECTOR_WHITELIST_SCOPE();
             w.PriorityHeap.shrink_to_fit();
+        }
     }
 }
 //----------------------------------------------------------------------------
