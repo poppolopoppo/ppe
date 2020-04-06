@@ -19,20 +19,18 @@ module Build
     class VisualStudioCompiler < Compiler
         attr_reader :version, :minor_version
         attr_reader :host, :target
-        attr_reader :rc
         attr_reader :visualStudioPath, :platformToolset
         def initialize(
             prefix,
             version, minor_version,
             host, target,
             visualStudioPath, platformToolset,
-            compiler, librarian, linker, rc, *extra_files)
+            compiler, librarian, linker, *extra_files)
             super("#{prefix}_#{version}_#{host}", compiler, librarian, linker, *extra_files)
             @version = version
             @minor_version = minor_version
             @host = host
             @target = target
-            @rc = rc
             @visualStudioPath = visualStudioPath
             @platformToolset = platformToolset
 
@@ -113,8 +111,6 @@ module Build
         end
 
         def customize(facet, env, target)
-            super(facet, env, target)
-
             nopdb = target.headers? || facet.tag?(:nopdb)
             if nopdb || Build.Cache
                 facet.compilerOptions << '/Z7' # debug symbols inside .obj
@@ -146,6 +142,8 @@ module Build
                 facet << Build.Compiler_PCHDisabled
                 facet.compilerOptions << '/Fo"%2"'
             end
+
+            super(facet, env, target)
         end
 
         def decorate(facet, env)
@@ -179,6 +177,16 @@ module Build
             else
                 Assert.not_implemented
             end
+        end
+
+        def freeze()
+            @version.freeze
+            @minor_version.freeze
+            @host.freeze
+            @target.freeze
+            @visualStudioPath.freeze
+            @platformToolset.freeze
+            super()
         end
 
     end #~ VisualStudioCompiler
@@ -345,19 +353,23 @@ module Build
     end
 
     make_facet(:VisualStudio_Debug) do
+        analysisOptions.append('/Od', '/Oy-', '/Gw-', '/GR')
         compilerOptions.append('/Od', '/Oy-', '/Gw-', '/GR')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
             # https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx
+            analysisOptions.append('/GS', '/sdl', '/RTC1')
             compilerOptions.append('/GS', '/sdl', '/RTC1')
         end
         linkerOptions.append('/DYNAMICBASE:NO')
         self << Build.VisualStudio_STL_EnableIteratorDebug
     end
     make_facet(:VisualStudio_FastDebug) do
+        analysisOptions.append('/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
         compilerOptions.append('/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
+            analysisOptions.append('/GS', '/sdl')
             compilerOptions.append('/GS', '/sdl')
         end
         linkerOptions.append('/DYNAMICBASE:NO')
@@ -365,18 +377,21 @@ module Build
     end
     make_facet(:VisualStudio_Release) do
         defines << '_NO_DEBUG_HEAP=1'
+        analysisOptions.append('/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
         compilerOptions.append('/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE:NO')
         self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
     end
     make_facet(:VisualStudio_Profiling) do
         defines << '_NO_DEBUG_HEAP=1'
+        analysisOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         compilerOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/PROFILE', '/OPT:REF')
         self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
     end
     make_facet(:VisualStudio_Final) do
         defines << '_NO_DEBUG_HEAP=1'
+        analysisOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         compilerOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/OPT:REF', '/OPT:ICF=3')
         self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
@@ -385,13 +400,17 @@ module Build
     make_facet(:VisualStudio_Base_2019) do
         # https://blogs.msdn.microsoft.com/vcblog/2019/12/13/broken-warnings-theory/
         defines.append('USE_PPE_MSVC_PRAGMA_SYSTEMHEADER')
+
+        analysisOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
         compilerOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
 
         # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
+        analysisOptions.append('/permissive-')
         compilerOptions.append('/permissive-')
 
         # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
         # TODO: disabled since there is no support for __VA_OPT__(x), and it's necessary to handle some funky macros
+        # analysisOptions.append('/experimental:preprocessor')
         # compilerOptions.append('/experimental:preprocessor')
 
         if Build.Incremental
@@ -461,12 +480,11 @@ module Build
         binpath = File.dirname(cl_exe)
         lib_exe = File.join(binpath, 'lib.exe')
         link_exe = File.join(binpath, 'link.exe')
-        rc_exe = Build.WindowsSDK_RC_exe
 
         return VisualStudioCompiler.new(
             'VisualStudio', version,
             *VisualStudioCompiler.infos_from(cl_exe),
-            cl_exe, lib_exe, link_exe, rc_exe, *fileset).
+            cl_exe, lib_exe, link_exe, *fileset).
             inherits!(Build.VisualStudio_Base_2019)
     end
 

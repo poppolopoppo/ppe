@@ -160,30 +160,6 @@ module Build
             @config.customize(result, self, target)
             @compiler.customize(result, self, target)
 
-            @compiler.add_linkType(result, target.link.nil? ? @config.link : target.link)
-
-            result.defines.each do |token|
-                @compiler.add_define(result, token)
-            end
-            result.systemPaths.each do |path|
-                @compiler.add_systemPath(result, path)
-            end
-            result.externPaths.each do |path|
-                @compiler.add_externPath(result, path)
-            end
-            result.includePaths.each do |path|
-                @compiler.add_includePath(result, path)
-            end
-            result.includes.each do |path|
-                @compiler.add_forceInclude(result, path)
-            end
-            result.libraryPaths.each do |path|
-                @compiler.add_libraryPath(result, path)
-            end
-            result.librarys.each do |path|
-                @compiler.add_library(result, path)
-            end
-
             return result.expand!()
         end
 

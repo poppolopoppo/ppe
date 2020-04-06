@@ -13,10 +13,10 @@ module Build
             version, minor_version,
             host, target,
             visualStudioPath, platformToolset,
-            clang_cl, llvm_lib, lld_link, rc, *extra_files)
+            clang_cl, llvm_lib, lld_link, *extra_files)
             super(prefix, version, minor_version, host, target,
                 visualStudioPath, platformToolset,
-                clang_cl, llvm_lib, lld_link, rc, *extra_files )
+                clang_cl, llvm_lib, lld_link, *extra_files )
 
             @llvmWindowsPath = Pathname.new(File.join(File.dirname(clang_cl), '..'))
             @llvmWindowsPath = @llvmWindowsPath.cleanpath
@@ -41,7 +41,7 @@ module Build
             add_compilerOption(facet, "/imsvc\"#{dirpath}\"")
         end
         alias add_systemPath add_externPath
-    end #~ LLVM
+    end #~ LLVMWindowsCompiler
 
     def self.import_llvm(name, path)
         Build.import_fileset(name,
@@ -121,12 +121,10 @@ module Build
         cl_exe = vs_fileset.first
         fileset = vs_fileset[1..-1]
 
-        rc_exe = Build.WindowsSDK_RC_exe
-
         return LLVMWindowsCompiler.new(
             'LLVM_Windows', version,
             *VisualStudioCompiler.infos_from(cl_exe),
-            clang_cl, llvm_lib, lld_link, rc_exe, *fileset )
+            clang_cl, llvm_lib, lld_link, *fileset )
     end
 
     const_memoize(self, :LLVM_Windows_VS2019_Hostx86) do

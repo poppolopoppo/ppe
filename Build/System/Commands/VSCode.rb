@@ -146,7 +146,7 @@ module Build
         def self.compdb(filename, env)
             compdb = File.join($WorkspacePath, 'compile_commands.json')
             Log.debug 'VSCode: generate <%s> compdb in "%s"', env.family, compdb
-            FBuild.run('-compdb', '-nounity', env.family, quiet: !Log.debug?)
+            FBuild.run('-compdb', '-nounity', env.family, quiet: !Log.debug?, wait: false)
             if File.exist?(compdb)
                 Log.verbose 'VSCode: move compdb to "%s"', filename
                 dirname = File.dirname(filename)

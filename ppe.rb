@@ -4,6 +4,7 @@
 require_relative 'Build/System/Build.rb'
 
 class Build::Namespace
+    include Build
     def self.ppe_common(target, &cfg)
         target.define!("EXPORT_PPE_#{target.var_path.upcase}")
         target.includePath!($SourcePath)
@@ -22,7 +23,7 @@ class Build::Namespace
             tag!(:nopdb, :nounity)
             glob!(path: nil)
             includePath!(File.join($SourcePath, 'Runtime', 'Core', 'Public'))
-            Build::Namespace.ppe_common(self, &cfg)
+            Namespace.ppe_common(self, &cfg)
         end
     end
     def ppe_module!(name, &cfg)
@@ -31,7 +32,7 @@ class Build::Namespace
             pch!('stdafx.h', 'stdafx.cpp')
             source_files!('ModuleExport.cpp')
             force_includes!(File.join(abs_path, 'ModuleExport.h'))
-            Build::Namespace.ppe_common(self, &cfg)
+            Namespace.ppe_common(self, &cfg)
         end
     end
     def ppe_executable!(name, &cfg)
@@ -39,8 +40,19 @@ class Build::Namespace
             tag!(:nounity)
             glob!(path: 'Private')
             pch!('stdafx.h', 'stdafx.cpp')
-            linkerOptions << "/NATVIS:\"#{File.join($ExtrasPath, 'Debug', 'PPE.natvis')}\"" if Build.os_windows?
-            Build::Namespace.ppe_common(self, &cfg)
+            if Build.os_windows?
+                ## natvis integration
+                linkerOptions << "/NATVIS:\"#{File.join($ExtrasPath, 'Debug', 'PPE.natvis')}\""
+                ## resource compiler
+                rel_resource_rc = 'resource.rc'
+                abs_resource_rc = File.join($SourcePath, expand_path(rel_resource_rc))
+                unit!('Resource') do
+                    Log.verbose('add resource rc unit to <%s> for "%s"', abs_path, abs_resource_rc)
+                    compiler_override!(Build.WindowsResourceCompiler)
+                    source_files!(rel_resource_rc)
+                end if File.exist?(abs_resource_rc)
+            end
+            Namespace.ppe_common(self, &cfg)
         end
     end
 end

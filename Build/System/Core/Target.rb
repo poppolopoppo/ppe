@@ -16,13 +16,16 @@ module Build
             attr_reader :rel_source_files
             attr_reader :compiler_override
             def initialize(name, target)
+                super(name)
                 @name = name
                 @target = target
                 @abs_path = File.join(target.abs_path, @name.to_s)
                 @var_path = @abs_path.tr('/-', '_')
-                @source_files = Set.new
+                @rel_source_files = Set.new
                 @compiler_override = nil
             end
+
+            def source_path() @target.source_path end
 
             def source_files!(*filenames) @rel_source_files.merge(filenames.flatten); return self end
             def source_files() @target.expand_path(@rel_source_files) end
@@ -37,6 +40,8 @@ module Build
                 # unit can completely override the facet using compiler override
                 unless @compiler_override.nil?
                     facet.clear
+                    @compiler_override.decorate(facet, env)
+                    @target.customize(facet, env, @target)
                     @compiler_override.customize(facet, env, target)
                 end
 
@@ -121,7 +126,6 @@ module Build
         def headers?() @type == :headers end
         def executable?() @type == :executable end
         def library?() @type == :library end
-        def shared?() @type == :shared end
 
         def configure!()
             if @config
@@ -133,6 +137,7 @@ module Build
 
         def customize(facet, env, target)
             facet << @facet
+
             super(facet, env, target)
 
             @namespace.customize(facet, env, target)
@@ -186,6 +191,9 @@ module Build
 
         def to_s() abs_path end
 
+        def dynamic?() @link == :dynamic end
+        def static?() @link == :static end
+
         def link!(type)
             case type
             when :static, :dynamic
@@ -224,13 +232,13 @@ module Build
         def unit!(name, &config)
             unit = @units[name]
             unit = @units[name] = Unit.new(name, self) if unit.nil?
-            unit.instance_exec(&cfg)
+            unit.instance_exec(&config)
             return self
         end
 
         def all_units()
             @units.values.each{|x| yield x } if block_given?
-            return @units.values
+            return @units
         end
 
         def expand_units(facet, env, &each_unit)

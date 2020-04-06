@@ -16,5 +16,4 @@ $Build.ppe_executable!(:BuildRobot) do
         Application() ]})
     public_deps!(*namespace[:ContentPipeline]{[ 
         BuildGraph() ]})
-    extra_files!('resource.rc')
 end

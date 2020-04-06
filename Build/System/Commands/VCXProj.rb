@@ -75,32 +75,38 @@ module Build
                 set!('IncludeSearchPath', expanded.any_includePaths.join(';'))
                 set!('PreprocessorDefinitions', expanded.defines.join(';'))
             end
+            return target_alias
         end
 
         def self.make_sln(bff, environments, namespace)
             solutionOutput = File.join($OutputPath, namespace.name.to_s + '.sln')
+
+            buildProjects = []
             solutionFolders = {}
 
             vcxprojects = namespace.all.collect do |target|
-                target_vcxproject = "#{target.abs_path}-VCXProject"
+                targetVcxproject = "#{target.abs_path}-VCXProject"
 
-                bff.func!('VCXProject', target_vcxproject) do
+                bff.func!('VCXProject', targetVcxproject) do
+                    set!('ProjectConfigs', environments.collect{|env| :".#{target.var_path}_#{env.varname}_VCXConfig" })
                     set!('ProjectOutput', File.join($ProjectsPath, target.abs_path + '.vcxproj'))
                     set!('ProjectBasePath', File.join($SourcePath, target.abs_path))
                     set!('ProjectInputPaths', File.join($SourcePath, target.abs_path))
                     set!('ProjectAllowedFileExtensions', target.glob_patterns + %w{ *.h *.rb *.rc })
-                    set!('ProjectFiles', target.all_source_files.to_a.collect{|x| File.join($SourcePath, x) })
                     set!('ProjectFilesToExclude', target.excluded_files.to_a.collect{|x| File.join($SourcePath, x) })
-                    set!('ProjectConfigs', environments.collect do |env|
-                        :".#{target.var_path}_#{env.varname}_VCXConfig"
-                    end)
+                    set!('ProjectFiles', target.all_source_files.to_a.collect{|x| File.join($SourcePath, x) }, force: true)
+                    target.all_units do |unit|
+                        append!('ProjectFiles', unit.source_files.to_a.collect{|x| File.join($SourcePath, x) })
+                    end
                 end
 
                 solutionFolder = solutionFolders[target.namespace]
                 solutionFolder = solutionFolders[target.namespace] = [] if solutionFolder.nil?
-                solutionFolder << target_vcxproject
+                solutionFolder << targetVcxproject
 
-                target_vcxproject
+                buildProjects << targetVcxproject if target.executable?
+
+                targetVcxproject
             end
 
             bff.func!('VCXProject', 'Build-VCXProject') do
@@ -152,6 +158,7 @@ module Build
                 set!('SolutionProjects', vcxprojects)
                 set!('SolutionConfigs', solutionConfigs)
                 set!('SolutionFolders', solutionFolders)
+                set!('SolutionBuildProject', buildProjects)
             end
         end
 

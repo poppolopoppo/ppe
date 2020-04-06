@@ -62,9 +62,24 @@ module Build
             end
         end
 
-        def customize(facet, env, target)
+        def decorate(facet, env)
+            super(facet, env)
+
             facet.compiler!(self)
+        end
+
+        def customize(facet, env, target)
             super(facet, env, target)
+
+            add_linkType(facet, target.link.nil? ? env.config.link : target.link)
+
+            facet.defines.each{|x| add_define(facet, x) }
+            facet.systemPaths.each{|x| add_systemPath(facet, x) }
+            facet.externPaths.each{|x| add_externPath(facet, x) }
+            facet.includePaths.each{|x| add_includePath(facet, x) }
+            facet.includes.each{|x| add_forceInclude(facet, x) }
+            facet.libraryPaths.each{|x| add_libraryPath(facet, x) }
+            facet.librarys.each{|x| add_library(facet, x) }
         end
 
         def freeze()

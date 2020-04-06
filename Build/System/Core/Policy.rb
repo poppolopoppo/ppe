@@ -97,6 +97,7 @@ module Build
 
         ## decorate shared environment facet
         def decorate(facet, env)
+            Log.debug 'decorate facet with environement <%s> and policy <%s>', env.family, @name
             facet << @facet
         end
 

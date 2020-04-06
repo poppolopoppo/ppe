@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_once 'ClangCl.rb'
+require_once 'ResourceCompiler.rb'
 require_once 'VisualStudio.rb'
 require_once 'WindowsSDK.rb'
 

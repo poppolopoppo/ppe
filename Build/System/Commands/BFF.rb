@@ -149,7 +149,7 @@ module Build
         end
 
         def self.make_library(bff, env, target, target_alias, expanded)
-            artefact = BFF.target_base(bff, env, target, target_alias, expanded)
+            artefact = BFF.make_target_base(bff, env, target, target_alias, expanded)
             bff.func!('Alias', target_alias) do
                 set!('Targets', artefact)
             end
@@ -163,13 +163,17 @@ module Build
         end
 
         def self.make_deliverable(bff, env, target, target_alias, expanded, func)
-            artefact = BFF.target_base(bff, env, target, target_alias, expanded)
+            libraries = []
+            libraries << BFF.make_target_base(bff, env, target, target_alias, expanded)
+
+            target.expand_units(expanded, env) do |unit, facet|
+                libraries << BFF.make_target_unit(bff, env, target, target_alias, facet, unit)
+            end
+
             bff.func!(func, target_alias) do
-                using!(env.compiler.name.to_s+'_Details')
+                using!(expanded.compiler.name.to_s+'_Details')
                 facet!(expanded, :@linkerOptions)
                 set!('LinkerOutput', env.target_artefact_path(target))
-
-                libraries = [ artefact ]
                 target.all_private_dependencies do |dep|
                     libraries << BFF.make_target_alias(env, dep)
                 end
@@ -180,24 +184,32 @@ module Build
             end
         end
 
-        def self.target_base(bff, env, target, target_alias, expanded)
-            compiler_details = expanded.compiler.name.to_s+'_Details'
-            bff.once?(expanded.compiler.name) do
-                func!('Compiler', expanded.compiler.name.to_s) do
-                    set!('Executable', expanded.compiler.executable)
-                    set!('ExtraFiles', expanded.compiler.extra_files)
-                    set!('CompilerFamily', expanded.compiler.family.to_s) if expanded.compiler.family
-                    set!('UseLightCache_Experimental', Build.LightCache)
-                end
-                struct!(compiler_details) do
-                    set!('Compiler', expanded.compiler.name.to_s)
-                    set!('Librarian', expanded.compiler.librarian)
-                    set!('Linker', expanded.compiler.linker)
-                    set!('CompilerOutputExtension', expanded.compiler.ext_for(:obj))
+        def self.make_target_unit(bff, env, target, target_alias, expanded, unit)
+            compiler_details = BFF.make_compiler_details(bff, expanded.compiler)
+
+            unit_source = unit.var_path+'_Source'
+            bff.once?(unit_source) do
+                bff.comment!('Unit source details for <%s>', unit.var_path)
+                bff.struct!(unit_source) do
+                    set!('CompilerInputFilesRoot', env.source_path(unit.source_path))
+                    set!('CompilerInputFiles', env.source_path(unit.source_files))
                 end
             end
 
-            target_source = target.var_path+'_Source'
+            artefactName = "#{target_alias}-#{unit.name}"
+            bff.func!('ObjectList', artefactName) do
+                using!(compiler_details)
+                using!(unit_source)
+                set!('CompilerOutputPath', env.intermediate_path(unit.abs_path))
+                set!('Hidden', true)
+                facet!(expanded, :@compilerOptions)
+            end
+
+            return artefactName
+        end
+
+        def self.make_target_base(bff, env, target, target_alias, expanded)
+            compiler_details = BFF.make_compiler_details(bff, expanded.compiler)
 
             if Build.PCH and target.pch?
                 target_pch_header = target.pch_header
@@ -206,6 +218,7 @@ module Build
                 target_pch_header, target_pch_source = nil
             end
 
+            target_source = target.var_path+'_Source'
             bff.once?(target_source) do
                 bff.comment!('Target source details for <%s>', target.abs_path)
 
@@ -283,6 +296,25 @@ module Build
             end
 
             return artefactName
+        end
+
+        def self.make_compiler_details(bff, compiler)
+            compiler_details = compiler.name.to_s+'_Details'
+            bff.once?(compiler.name) do
+                func!('Compiler', compiler.name.to_s) do
+                    set!('Executable', compiler.executable)
+                    set!('ExtraFiles', compiler.extra_files) if compiler.extra_files
+                    set!('CompilerFamily', compiler.family.to_s) if compiler.family
+                    set!('UseLightCache_Experimental', Build.LightCache && compiler.tag?(:lightcache))
+                end
+                struct!(compiler_details) do
+                    set!('Compiler', compiler.name.to_s)
+                    set!('Librarian', compiler.librarian) if compiler.librarian
+                    set!('Linker', compiler.linker) if compiler.linker
+                    set!('CompilerOutputExtension', compiler.ext_for(:obj))
+                end
+            end
+            return compiler_details
         end
 
     end #~ BFF
