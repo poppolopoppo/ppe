@@ -1263,15 +1263,17 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 FGrammarImpl::~FGrammarImpl() = default;
 //----------------------------------------------------------------------------
 Parser::PCParseExpression FGrammarImpl::ParseExpression(Parser::FParseList& input) const {
-    return ((input.Peek() == nullptr)
-        ? expr_t{}
-        : _expr.Parse(input) );
+    Parser::PCParseExpression result; // exception safety
+    if (input.Peek())
+        result = _expr.Parse(input);
+    return result;
 }
 //----------------------------------------------------------------------------
 Parser::PCParseStatement FGrammarImpl::ParseStatement(Parser::FParseList& input) const {
-    return ((input.Peek() == nullptr)
-        ? Parser::PCParseStatement{}
-        : _statement.Parse(input) );
+    Parser::PCParseStatement result; // exception safety
+    if (input.Peek())
+        result = _statement.Parse(input);
+    return result;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
