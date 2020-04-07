@@ -499,10 +499,10 @@ private:
     }
 
     CONSTEXPR bool has_content_() const NOEXCEPT {
-        return (_bucketMask | _size);
+        return (bucket_t::Sentinel() != _buckets);
     }
     CONSTEXPR u32 num_buckets_() const NOEXCEPT {
-        return (bucket_t::Sentinel() != _buckets ? _bucketMask + 1 : 0);
+        return (has_content_() ? _bucketMask + 1 : 0);
     }
     CONSTEXPR static size_t allocation_size_(size_t numBuckets) NOEXCEPT {
         return (numBuckets * sizeof(bucket_t) + sizeof(FSSEHashStates3)/* sentinel */);
@@ -559,13 +559,10 @@ private:
             Assert_NoAssume(oldSize == _size);
         }
 
-        if (oldBucketMask | _size) {
+        if (bucket_t::Sentinel() != oldBuckets) {
             Assert_NoAssume(not oldBuckets->is_sentinel());
             const u32 oldNumBuckets = (oldBucketMask + 1);
             allocator_traits::Deallocate(*this, FAllocatorBlock{ oldBuckets, allocation_size_(oldNumBuckets) });
-        }
-        else {
-            Assert_NoAssume(bucket_t::Sentinel() == oldBuckets);
         }
     }
 
