@@ -179,17 +179,17 @@ public:
     bool DontDisregard() const { return (_enabled && not WhiteListedTLS()); }
 
     void Allocate(void* ptr, size_t sizeInBytes) {
+        Assert(ptr);
+        Assert(sizeInBytes);
+
         const FRecursiveLockTLS reentrantLock;
         if (reentrantLock.WasLocked)
             return;
 
-        Assert(ptr);
-        Assert(sizeInBytes);
-
         FCallstackData callstackData;
         callstackData.CaptureBacktrace();
 
-        FBlockHeader alloc{
+        const FBlockHeader alloc{
             DontDisregard(),
             checked_cast<u32>(sizeInBytes),
             _callstacks.FindOrAdd(callstackData) };
@@ -225,14 +225,14 @@ public:
 #endif
 
     void Release(void* ptr) {
+        Assert(ptr);
+
         const FRecursiveLockTLS reentrantLock;
         if (reentrantLock.WasLocked)
             return;
 
-        Assert(ptr);
-
-        const FBlockHeader alloc = _blocks.Release(ptr);
-        _callstacks.Delete(alloc.CallstackUID);
+        const u32 callstackUID = _blocks.Release(ptr).CallstackUID;
+        _callstacks.Delete(callstackUID);
     }
 
     void FindLeaks(FLeakReport* report) {
@@ -380,11 +380,52 @@ private:
         }
 
         template <typename _Functor>
+        void Foreach(const _Functor& foreach) {
+            if (NumAllocs) {
+                forrange(b, 0, NumBuckets) {
+                    Buckets[b].Foreach([&foreach, b](uintptr_t key, uintptr_t value) {
+                        foreach((void*)(key | (b * ALLOCATION_BOUNDARY)), FBlockHeader::Unpack(value));
+                        });
+                }
+            }
+        }
+    };
+
+    // kinda bad solution for lock contention around compressed radix-trie
+    struct FHashedBlockTracker {
+        STATIC_CONST_INTEGRAL(size_t, NumTrackers, 0xFB);
+
+        std::atomic<size_t> TotalAllocs;
+
+        FBlockTracker Trackers[NumTrackers];
+
+        FBlockTracker& PtrToTracker(void* ptr) {
+            Assert(ptr);
+            Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, ptr));
+            return Trackers[hash_ptr(ptr) % NumTrackers];
+        }
+
+        void Allocate(void* ptr, const FBlockHeader& header) {
+            TotalAllocs++;
+            PtrToTracker(ptr).Allocate(ptr, header);
+        }
+
+        const FBlockHeader& Fetch(void* ptr) {
+            Assert(TotalAllocs);
+            return PtrToTracker(ptr).Fetch(ptr);
+        }
+
+        FBlockHeader Release(void* ptr) {
+            Assert(TotalAllocs);
+            TotalAllocs--;
+            return PtrToTracker(ptr).Release(ptr);
+        }
+
+        template <typename _Functor>
         void Foreach(_Functor&& foreach) {
-            forrange(b, 0, NumBuckets) {
-                Buckets[b].Foreach([&foreach, b](uintptr_t key, uintptr_t value) {
-                    foreach((void*)(key | (b * ALLOCATION_BOUNDARY)), FBlockHeader::Unpack(value));
-                });
+            if (TotalAllocs) {
+                for (FBlockTracker& tracker : Trackers)
+                    tracker.Foreach(foreach);
             }
         }
     };
@@ -582,7 +623,7 @@ private:
     };
 
     bool _enabled;
-    FBlockTracker _blocks;
+    FHashedBlockTracker _blocks;
     FCallstackTracker _callstacks;
 
     FLeakDetector()
