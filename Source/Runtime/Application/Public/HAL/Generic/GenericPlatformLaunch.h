@@ -1,14 +1,5 @@
 ﻿#pragma once
 
-#ifndef PPE_APPLICATIONLAUNCH_TYPE
-#   error "must define PPE_APPLICATIONLAUNCH_TYPE to implement main function"
-#endif
-
-#ifdef PPE_APPLICATIONLAUNCH_INCLUDED
-#   error "should be included only once inside your main.cpp"
-#endif
-#define PPE_APPLICATIONLAUNCH_INCLUDED
-
 #include "Application.h"
 
 #include "ModuleManager.h"
@@ -23,8 +14,6 @@ namespace Application {
 //----------------------------------------------------------------------------
 class FGenericPlatformLaunch {
 public:
-    using application_type = PPE_APPLICATIONLAUNCH_TYPE;
-
     static auto& AppDomain() {
         static PPE_STATICMODULES_STARTUP GModules;
         return GModules;

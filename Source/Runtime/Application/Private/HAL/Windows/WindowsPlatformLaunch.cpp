@@ -1,28 +1,25 @@
-﻿#pragma once
+﻿#include "stdafx.h"
 
-#include "HAL/Generic/GenericPlatformLaunch.h"
+#ifdef PLATFORM_WINDOWS
 
-#ifndef PLATFORM_WINDOWS
-#   error "invalid include for current platform"
-#endif
+#include "HAL/Windows/WindowsPlatformLaunch.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FWindowsPlatformLaunch : public FGenericPlatformLaunch {
-public:
-    using FGenericPlatformLaunch::AppDomain;
-    using FGenericPlatformLaunch::RunApplication;
-
-    static PPE_APPLICATION_API void OnPlatformLaunch(
-        void* appHandle, int nShowCmd,
-        const wchar_t* filename, size_t argc, const wchar_t* const* argv);
-    static PPE_APPLICATION_API void OnPlatformShutdown();
-};
+void FWindowsPlatformLaunch::OnPlatformLaunch(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t* const* argv) {
+    FGenericPlatformLaunch::OnPlatformLaunch(appHandle, nShowCmd, filename, argc, argv);
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformLaunch::OnPlatformShutdown() {
+    FGenericPlatformLaunch::OnPlatformShutdown();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Application
 } //!namespace PPE
+
+#endif //!PLATFORM_WINDOWS

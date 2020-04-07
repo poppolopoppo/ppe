@@ -3,5 +3,4 @@
 #include "BuildRobotApp.h"
 
 #define PPE_APPLICATIONLAUNCH_TYPE PPE::FBuildRobotApp
-
-#include "HAL/PlatformLaunch.h"
+#include "HAL/PlatformLaunch-impl.h"

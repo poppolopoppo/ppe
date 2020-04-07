@@ -3,5 +3,4 @@
 #include "TestApp.h"
 
 #define PPE_APPLICATIONLAUNCH_TYPE PPE::Test::FTestApp
-
-#include "HAL/PlatformLaunch.h"
+#include "HAL/PlatformLaunch-impl.h"
