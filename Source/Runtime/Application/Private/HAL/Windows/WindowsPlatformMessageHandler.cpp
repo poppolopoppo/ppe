@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/WindowsPlatformMessageHandler.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsPlatformMessageHandler.h"
 
 #include "HAL/Windows/WindowsWindow.h"
 #include "HAL/PlatformIncludes.h"

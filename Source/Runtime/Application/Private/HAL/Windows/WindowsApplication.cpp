@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/WindowsApplication.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsApplication.h"
 
 namespace PPE {
 namespace Application {

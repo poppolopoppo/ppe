@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/WindowsPlatformSurvey.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsPlatformSurvey.h"
 
 #include "HAL/PlatformFile.h"
 #include "HAL/PlatformIncludes.h"

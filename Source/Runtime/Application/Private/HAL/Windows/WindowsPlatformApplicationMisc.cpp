@@ -1,8 +1,8 @@
 ﻿#include "stdafx.h"
 
-#include "HAL/Windows/WindowsPlatformApplicationMisc.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsPlatformApplicationMisc.h"
 
 #include "Color/Color.h"
 #include "Diagnostic/Logger.h"

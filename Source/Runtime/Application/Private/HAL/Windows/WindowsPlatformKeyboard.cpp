@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/WindowsPlatformKeyboard.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsPlatformKeyboard.h"
 
 #include "Input/KeyboardKey.h"
 #include "Input/KeyboardState.h"

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/WindowsPlatformMouse.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsPlatformMouse.h"
 
 #include "Input/MouseState.h"
 #include "HAL/Windows/WindowsWindow.h"

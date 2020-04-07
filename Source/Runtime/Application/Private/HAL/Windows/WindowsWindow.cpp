@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/WindowsWindow.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsWindow.h"
 
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"

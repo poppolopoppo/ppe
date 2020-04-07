@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/WindowsPlatformGamepad.h"
-
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/WindowsPlatformGamepad.h"
 
 #include "HAL/Windows/XInputWrapper.h"
 #include "Input/GamepadState.h"
