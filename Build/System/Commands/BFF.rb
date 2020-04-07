@@ -172,15 +172,24 @@ module Build
 
             bff.func!(func, target_alias) do
                 using!(expanded.compiler.name.to_s+'_Details')
-                facet!(expanded, :@linkerOptions)
-                set!('LinkerOutput', env.target_artefact_path(target))
-                target.all_private_dependencies do |dep|
-                    libraries << BFF.make_target_alias(env, dep)
+
+                prebuilds = []
+                target.all_dependencies do |(dep, visibility)|
+                    case visibility
+                    when :public, :private
+                        libraries << BFF.make_target_alias(env, dep)
+                    when :runtime
+                        prebuilds << BFF.make_target_alias(env, dep)
+                    else
+                        Assert.unexpected(visibility)
+                    end
                 end
-                target.all_public_dependencies do |dep|
-                    libraries << BFF.make_target_alias(env, dep)
-                end
+
                 set!('Libraries', libraries)
+                set!('PreBuildDependencies', prebuilds)
+                set!('LinkerOutput', env.target_artefact_path(target))
+
+                facet!(expanded, :@linkerOptions)
             end
         end
 
