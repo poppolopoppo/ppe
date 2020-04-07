@@ -80,7 +80,7 @@ inline FVSToolsWrapper::FHeapTracker FVSToolsWrapper::HEAP_Linear = nullptr;
 //----------------------------------------------------------------------------
 inline FVSToolsWrapper::FVSToolsWrapper() {
     static const wchar_t* GVSToolsDLL[] = {
-        L"vstools-" WSTRINGIZE(BUILDCONFIG) L".dll"
+        L"External-vstools-" WSTRINGIZE(BUILD_PLATFORM) L"-" WSTRINGIZE(BUILD_CONFIG) L".dll"
     };
 
     for (const wchar_t* filename : GVSToolsDLL) {
