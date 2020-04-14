@@ -53,8 +53,8 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-auto* MakeLiteral(T&& rvalue, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, TLiteral< Meta::TDecay<T> >)(std::forward<T>(rvalue), site);
+auto MakeLiteral(T&& rvalue, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, TLiteral< Meta::TDecay<T> >, std::forward<T>(rvalue), site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -80,8 +80,8 @@ private:
     EFlags _scope;
 };
 //----------------------------------------------------------------------------
-inline FVariableExport *MakeVariableExport(const RTTI::FName& name, const PCParseExpression& value, const FVariableExport::EFlags scope, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FVariableExport)(name, value, scope, site);
+inline TRefPtr<FVariableExport> MakeVariableExport(const RTTI::FName& name, const PCParseExpression& value, const FVariableExport::EFlags scope, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FVariableExport, name, value, scope, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -100,8 +100,8 @@ private:
 
 };
 //----------------------------------------------------------------------------
-inline FVariableReference *MakeVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FVariableReference)(pathName, site);
+inline TRefPtr<FVariableReference> MakeVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FVariableReference, pathName, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -121,8 +121,8 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-TUnaryFunction<T> *MakeUnaryFunction(T&& functor, const FParseExpression *expr, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, TUnaryFunction<T>)(std::move(functor), expr, site);
+TRefPtr<TUnaryFunction<T>> MakeUnaryFunction(T&& functor, const FParseExpression *expr, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, TUnaryFunction<T>, std::move(functor), expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -143,8 +143,8 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-TBinaryFunction<T> *MakeBinaryFunction(T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, TBinaryFunction<T>)(std::move(functor), lhs, rhs, site);
+TRefPtr<TBinaryFunction<T>> MakeBinaryFunction(T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, TBinaryFunction<T>, std::move(functor), lhs, rhs, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -166,8 +166,8 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Test>
-TTernary<_Test> *MakeTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, TTernary<_Test>)(std::move(test), pif, ptrue, pfalse, site);
+TRefPtr<TTernary<_Test>> MakeTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, TTernary<_Test>, std::move(test), pif, ptrue, pfalse, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -194,11 +194,11 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _It>
-inline FObjectDefinition *MakeObjectDefinition(
+inline TRefPtr<FObjectDefinition> MakeObjectDefinition(
     const RTTI::FName& name,
     const Lexer::FSpan& site,
     _It&& statementsBegin, _It&& statementsEnd) {
-    FObjectDefinition *const def = NEW_REF(Parser, FObjectDefinition)(name, site);
+    TRefPtr<FObjectDefinition> def = NEW_REF(Parser, FObjectDefinition, name, site);
     def->AddStatements(statementsBegin, statementsEnd);
     return def;
 }
@@ -219,11 +219,11 @@ private:
     RTTI::FName _member;
 };
 //----------------------------------------------------------------------------
-inline FPropertyReference *MakePropertyReference(
+inline TRefPtr<FPropertyReference> MakePropertyReference(
     const PCParseExpression& object,
     const RTTI::FName& member,
     const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FPropertyReference)(object, member, site);
+    return NEW_REF(Parser, FPropertyReference, object, member, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -244,8 +244,8 @@ private:
     elements_type _elements;
 };
 //----------------------------------------------------------------------------
-inline FTupleExpr* MakeTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FTupleExpr)(elts, site);
+inline TRefPtr<FTupleExpr> MakeTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FTupleExpr, elts, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -271,12 +271,12 @@ private:
     items_type _items;
 };
 //----------------------------------------------------------------------------
-inline FArrayExpr* MakeArrayExpr(const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FArrayExpr)(site);
+inline TRefPtr<FArrayExpr> MakeArrayExpr(const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FArrayExpr, site);
 }
 //----------------------------------------------------------------------------
-inline FArrayExpr* MakeArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FArrayExpr)(elts, site);
+inline TRefPtr<FArrayExpr> MakeArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FArrayExpr, elts, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -302,12 +302,12 @@ private:
     dico_type _dico;
 };
 //----------------------------------------------------------------------------
-inline FDictionaryExpr* MakeDictionaryExpr(const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FDictionaryExpr)(site);
+inline TRefPtr<FDictionaryExpr> MakeDictionaryExpr(const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FDictionaryExpr, site);
 }
 //----------------------------------------------------------------------------
-inline FDictionaryExpr* MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FDictionaryExpr)(std::move(ritems), site);
+inline TRefPtr<FDictionaryExpr> MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FDictionaryExpr, std::move(ritems), site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -326,8 +326,8 @@ private:
     PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
-inline FCastExpr* MakeCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FCastExpr)(traits, expr, site);
+inline TRefPtr<FCastExpr> MakeCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FCastExpr, traits, expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -349,8 +349,8 @@ private:
     args_type _args;
 };
 //----------------------------------------------------------------------------
-inline FFunctionCall *MakeFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FFunctionCall)(std::move(obj), funcname, args, site);
+inline TRefPtr<FFunctionCall> MakeFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FFunctionCall, std::move(obj), funcname, args, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

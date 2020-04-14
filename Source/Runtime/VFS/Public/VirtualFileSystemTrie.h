@@ -49,12 +49,13 @@ public:
 
     void Clear();
 
-    void Mount(FVirtualFileSystemComponent* component);
-    void Unmount(FVirtualFileSystemComponent* component);
+    void Mount(PVirtualFileSystemComponent&& rcomponent);
+    void Mount(const PVirtualFileSystemComponent& component);
+    void Unmount(const PVirtualFileSystemComponent& component);
 
-    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, const FWStringView& nativepPath);
-    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, FWString&& nativepPath);
-    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, const FWString& nativepPath);
+    void MountNativePath(const FDirpath& alias, const FWStringView& nativepPath);
+    void MountNativePath(const FDirpath& alias, FWString&& nativepPath);
+    void MountNativePath(const FDirpath& alias, const FWString& nativepPath);
 
 private:
     FReadWriteLock _barrier;

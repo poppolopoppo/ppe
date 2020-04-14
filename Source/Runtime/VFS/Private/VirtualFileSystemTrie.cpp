@@ -213,14 +213,18 @@ void FVirtualFileSystemTrie::Clear() {
     _nodes.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
-void FVirtualFileSystemTrie::Mount(FVirtualFileSystemComponent* component) {
-    Assert(component);
-    Assert(component->Alias().HasMountingPoint());
+void FVirtualFileSystemTrie::Mount(PVirtualFileSystemComponent&& rcomponent) {
+    Assert(rcomponent);
+    Assert(rcomponent->Alias().HasMountingPoint());
     WRITESCOPELOCK(_barrier);
-    _nodes.Insert_AssertUnique(component->Alias().MountingPoint(), component);
+    _nodes.Insert_AssertUnique(rcomponent->Alias().MountingPoint(), std::move(rcomponent));
 }
 //----------------------------------------------------------------------------
-void FVirtualFileSystemTrie::Unmount(FVirtualFileSystemComponent* component) {
+void FVirtualFileSystemTrie::Mount(const PVirtualFileSystemComponent& component) {
+    Mount(PVirtualFileSystemComponent{ component });
+}
+//----------------------------------------------------------------------------
+void FVirtualFileSystemTrie::Unmount(const PVirtualFileSystemComponent& component) {
     Assert(component);
     Assert(component->Alias().HasMountingPoint());
     LOG(VFS, Info, L"unmount component '{0}'", component->Alias());
@@ -228,27 +232,21 @@ void FVirtualFileSystemTrie::Unmount(FVirtualFileSystemComponent* component) {
     _nodes.Remove_AssertExists(component->Alias().MountingPoint(), component);
 }
 //----------------------------------------------------------------------------
-FVirtualFileSystemComponent* FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWStringView& nativepPath) {
+void FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWStringView& nativepPath) {
     Assert(not nativepPath.empty());
-    const SVirtualFileSystemComponent component{ NEW_REF(FileSystem, FVirtualFileSystemNativeComponent)(alias, FWString(nativepPath)) };
-    Mount(component);
-    return component;
+    Mount(NEW_REF(FileSystem, FVirtualFileSystemNativeComponent, alias, FWString(nativepPath)));
 }
 //----------------------------------------------------------------------------
-FVirtualFileSystemComponent *FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, FWString&& nativepPath) {
+void FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, FWString&& nativepPath) {
     Assert(nativepPath.size());
     LOG(VFS, Info, L"mount native component '{0}' -> '{1}'", alias, nativepPath);
-    const SVirtualFileSystemComponent component{ NEW_REF(FileSystem, FVirtualFileSystemNativeComponent)(alias, std::move(nativepPath)) };
-    Mount(component);
-    return component;
+    Mount(NEW_REF(FileSystem, FVirtualFileSystemNativeComponent, alias, std::move(nativepPath)));
 }
 //----------------------------------------------------------------------------
-FVirtualFileSystemComponent *FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWString& nativepPath) {
+void FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWString& nativepPath) {
     Assert(nativepPath.size());
     LOG(VFS, Info, L"mount native component '{0}' -> '{1}'", alias, nativepPath);
-    const SVirtualFileSystemComponent component{ NEW_REF(FileSystem, FVirtualFileSystemNativeComponent)(alias, nativepPath) };
-    Mount(component);
-    return component;
+    Mount(NEW_REF(FileSystem, FVirtualFileSystemNativeComponent, alias, nativepPath));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

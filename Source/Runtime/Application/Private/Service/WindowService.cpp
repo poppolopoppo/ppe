@@ -53,17 +53,17 @@ private:
 //----------------------------------------------------------------------------
 void FDefaultWindowService_::CreateMainWindow(PWindowBase* window, FWString&& title) {
     Assert(window);
-    window->reset(NEW_REF(Window, FWindowMain)(std::move(title)));
+    *window = NEW_REF(Window, FWindowMain, std::move(title));
 }
 //----------------------------------------------------------------------------
 void FDefaultWindowService_::CreateMainWindow(PWindowBase* window, FWString&& title, size_t width, size_t height) {
     Assert(window);
-    window->reset(NEW_REF(Window, FWindowMain)(std::move(title), width, height));
+    *window = NEW_REF(Window, FWindowMain, std::move(title), width, height);
 }
 //----------------------------------------------------------------------------
 void FDefaultWindowService_::CreateMainWindow(PWindowBase* window, FWString&& title, int left, int top, size_t width, size_t height) {
     Assert(window);
-    window->reset(NEW_REF(Window, FWindowMain)(std::move(title), left, top, width, height));
+    *window = NEW_REF(Window, FWindowMain, std::move(title), left, top, width, height);
 }
 //----------------------------------------------------------------------------
 FWindowBase* FDefaultWindowService_::MainWindow() const {

@@ -258,7 +258,7 @@ public:
     }
 
     static bool WaitFor(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority, int timeoutMS) {
-        PWaitForTask_ pWaitfor{ NEW_REF(Task, FWaitForTask_)(std::move(rtask), 1) };
+        PWaitForTask_ pWaitfor{ NEW_REF(Task, FWaitForTask_, std::move(rtask), 1) };
 
         Meta::FUniqueLock scopeLock(pWaitfor->Barrier);
         pimpl.Scheduler().Produce(priority, [pWaitfor](ITaskContext& ctx) {

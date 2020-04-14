@@ -26,10 +26,10 @@
 // used for tracking memory allocated by instances derived from FRefCountable
 #if USE_PPE_MEMORYDOMAINS
 #   include "Allocator/TrackingMalloc.h"
-#   define NEW_REF(_DOMAIN, T) new (MEMORYDOMAIN_TRACKING_DATA(_DOMAIN)) T
+#   define NEW_REF(_DOMAIN, T, ...) PPE::NewRef< T >( MEMORYDOMAIN_TRACKING_DATA(_DOMAIN) ,## __VA_ARGS__ )
 #else
 #   include "Allocator/Malloc.h"
-#   define NEW_REF(_DOMAIN, T) new (Meta::ForceInit) T
+#   define NEW_REF(_DOMAIN, T, ...) PPE::NewRef< T >( __VA_ARGS__ )
 #endif
 
 #ifdef SAFEPTR
@@ -47,6 +47,13 @@ template <typename T>
 class TSafePtr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class FRefCountable;
+//----------------------------------------------------------------------------
+template <typename T>
+using IsRefCountable = std::is_base_of<FRefCountable, Meta::TDecay<T> >;
+template <typename T, typename _Result = T>
+using TEnableIfRefCountable = Meta::TEnableIf< IsRefCountable<T>::value, _Result >;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FRefCountable {
 public:
@@ -66,38 +73,45 @@ public:
 #endif
 
 public: // override new/delete operators for memory tracking
-#if USE_PPE_MEMORYDOMAINS
-    static void* operator new(size_t sz, FMemoryTracking& trackingData) { return tracking_malloc(trackingData, sz); }
-    static void operator delete(void* p, FMemoryTracking&) { tracking_free(p); }
-    static void operator delete(void* p) { tracking_free(p); }
-#else
-    static void* operator new(size_t sz, Meta::FForceInit/* force to use macro even wout domains */) { return PPE::malloc(sz); }
-    static void operator delete(void* p, Meta::FForceInit/* force to use macro even wout domains */) { PPE::free(p); }
-    static void operator delete(void* p) { PPE::free(p); }
-#endif
-
     // general allocators are forbidden to force the client to provide metadata
-    static void * operator new(std::size_t) = delete;
-    static void * operator new[](std::size_t) = delete;
+    static void* operator new(std::size_t) = delete;
+    static void* operator new[](std::size_t) = delete;
+
+    static void operator delete(void* p);
+
+    // provide memory tracking, don't support custom allocator (see FWeakRefCountable for that)
+    template <typename T, typename... _Args>
+#if USE_PPE_MEMORYDOMAINS
+    friend TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args);
+#else
+    friend TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args);
+#endif
 
 protected:
     friend void AddRef(const FRefCountable* ptr);
     template <typename T>
+    friend void OnStrongRefCountReachZero(TEnableIfRefCountable<T>* ptr) NOEXCEPT;
+
+    template <typename T>
     friend void RemoveRef(T* ptr);
     template <typename T>
-    friend T* RemoveRef_AssertAlive(TRefPtr<T>& ptr);
+    friend T* RemoveRef_AssertAlive(TRefPtr<T>& refptr);
     template <typename T>
-    friend T* RemoveRef_KeepAlive(TRefPtr<T>& ptr);
-    template <typename T>
-    friend void OnRefCountReachZero(T* ptr);
+    friend T* RemoveRef_KeepAlive(TRefPtr<T>& refptr);
     template <typename T>
     friend void RemoveRef_AssertReachZero_NoDelete(T* ptr);
     template <typename T>
-    friend void RemoveRef_AssertReachZero(TRefPtr<T>& ptr);
+    friend void RemoveRef_AssertReachZero(TRefPtr<T>& refptr);
     template <typename T>
-    friend T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr);
+    friend T* RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& refptr);
+
+    void IncStrongRefCount() const NOEXCEPT;
+    bool DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT;
 
 #if USE_PPE_SAFEPTR
+    void IncSafeRefCount() const NOEXCEPT;
+    void DecSafeRefCount() const NOEXCEPT;
+
     friend void AddSafeRef(const FRefCountable* ptr) NOEXCEPT;
     friend void RemoveSafeRef(const FRefCountable* ptr) NOEXCEPT;
 #else
@@ -106,24 +120,22 @@ protected:
 #endif
 
 private:
-    void IncRefCount() const NOEXCEPT;
-    bool DecRefCount_ReturnIfReachZero() const NOEXCEPT;
-
     mutable std::atomic<int> _refCount;
+
+    // still allows inplace new, but only for friends
+    static void* operator new(std::size_t, void* p) { return p; }
+    static void operator delete(void*, void*) { }
+
+    static void* operator new[](std::size_t, void* p) { return p; }
+    static void operator delete[](void*, void*) {}
 
 #if USE_PPE_SAFEPTR
     // for debugging purpose : assert if TSafePtr<> are still tracking that object
     template <typename T>
     friend class TSafePtr;
     mutable std::atomic<int> _safeRefCount;
-
-    void IncSafeRefCount() const NOEXCEPT;
-    void DecSafeRefCount() const NOEXCEPT;
 #endif
 };
-//----------------------------------------------------------------------------
-template <typename T>
-using IsRefCountable = std::is_base_of<FRefCountable, Meta::TDecay<T> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -147,6 +159,7 @@ public:
 
     template <typename U>
     TRefPtr(const TRefPtr<U>& other);
+
     template <typename U>
     TRefPtr& operator =(const TRefPtr<U>& other);
 
@@ -156,7 +169,7 @@ public:
     TRefPtr& operator =(TRefPtr<U>&& rvalue) NOEXCEPT;
 
     FORCE_INLINE T* get() const { return _ptr; }
-    void reset(T* ptr = nullptr);
+    void reset(T* ptr = nullptr) NOEXCEPT;
 
     template <typename U>
     U *as() const { return checked_cast<U*>(_ptr); }
@@ -168,11 +181,11 @@ public:
     bool valid() const { return (!!_ptr); }
 
     template <typename U>
-    void Swap(TRefPtr<U>& other);
+    void Swap(TRefPtr<U>& other) NOEXCEPT;
 
 protected:
-    void IncRefCountIFP() const NOEXCEPT;
-    void DecRefCountIFP() const NOEXCEPT;
+    static void IncRefCountIFP(T* ptr) NOEXCEPT;
+    static void DecRefCountIFP(T* ptr) NOEXCEPT;
 
 private:
     T* _ptr;
@@ -181,11 +194,6 @@ STATIC_ASSERT(sizeof(TRefPtr<FRefCountable>) == sizeof(FRefCountable*));
 //----------------------------------------------------------------------------
 template <typename T> struct IsRefPtr : public std::false_type {};
 template <typename T> struct IsRefPtr<TRefPtr<T>> : public std::true_type {};
-//----------------------------------------------------------------------------
-template <typename T>
-Meta::TEnableIf< IsRefCountable<T>::value, TRefPtr<T> > MakeRefPtr(T* ptr) {
-    return TRefPtr<T>(ptr);
-}
 //----------------------------------------------------------------------------
 template <typename T>
 hash_t hash_value(const TRefPtr<T>& refPtr) {
@@ -268,8 +276,8 @@ public:
 
 #if USE_PPE_SAFEPTR
 protected:
-    void IncRefCountIFP() const NOEXCEPT;
-    void DecRefCountIFP() const NOEXCEPT;
+    static void IncRefCountIFP(T* ptr) NOEXCEPT;
+    static void DecRefCountIFP(T* ptr) NOEXCEPT;
 #endif //!USE_PPE_SAFEPTR
 private:
     T* _ptr;

@@ -42,6 +42,7 @@ MEMORYDOMAIN_IMPL(String,                               Core)
 MEMORYDOMAIN_IMPL(Task,                                 Core)
 MEMORYDOMAIN_IMPL(Token,                                Core)
 MEMORYDOMAIN_IMPL(UnitTest,                             Core)
+MEMORYDOMAIN_IMPL(WeakRef,                              Core)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(RTTI,                           UsedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Any,                      RTTI)

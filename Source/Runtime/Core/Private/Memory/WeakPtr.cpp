@@ -2,64 +2,37 @@
 
 #include "Memory/WeakPtr.h"
 
+#include "HAL/PlatformProcess.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWeakAndRefCountable::~FWeakAndRefCountable() {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
-    FWeakPtrBase *prev = nullptr;
-    while (_weakPtrs) {
-        Assert(_weakPtrs);
-        Assert(prev == _weakPtrs->_prev);
-
-        FWeakPtrBase *const next = _weakPtrs->_next;
-
-        _weakPtrs->_weakAndRefCountable = nullptr;
-        _weakPtrs->_prev = _weakPtrs->_next = nullptr;
-
-        prev = _weakPtrs;
-        _weakPtrs = next;
-    }
+#if USE_PPE_ASSERT
+PWeakRefCounter FWeakRefCounter::Allocate(FWeakRefCountable* holder, deleter_func deleter) {
+    Assert(holder);
+    Assert(deleter);
+    return NEW_REF(WeakRef, FWeakRefCounter, holder, deleter);
 }
+#else
+PWeakRefCounter FWeakRefCounter::Allocate(deleter_func deleter) {
+    Assert(deleter);
+    return NEW_REF(WeakRef, FWeakRefCounter, deleter);
+}
+#endif
 //----------------------------------------------------------------------------
-void FWeakPtrBase::set_(FWeakAndRefCountable* ptr) {
-    if (_weakAndRefCountable == ptr)
-        return;
+bool FWeakRefCounter::TryLockForWeakPtr() {
+    size_t backoff = 0;
+    for (;;) {
+        int expected = _strongRefCount;
 
-    if (_weakAndRefCountable) {
-        THREADRESOURCE_CHECKACCESS(_weakAndRefCountable);
+        if (0 >= expected)
+            return false;
+        else if (_strongRefCount.compare_exchange_weak(expected, expected + 1,
+            std::memory_order_release, std::memory_order_relaxed))
+            return true;
 
-        if (_prev) _prev->_next = _next;
-        if (_next) _next->_prev = _prev;
-
-        if (this == _weakAndRefCountable->_weakPtrs) {
-            Assert(nullptr == _prev);
-            _weakAndRefCountable->_weakPtrs = _next;
-        }
-        else {
-            Assert(_prev);
-            _prev = nullptr;
-        }
-
-         _next = nullptr;
-        _weakAndRefCountable = nullptr;
-    }
-
-    Assert(nullptr == _weakAndRefCountable);
-    Assert(nullptr == _next);
-    Assert(nullptr == _prev);
-
-    if (ptr) {
-        THREADRESOURCE_CHECKACCESS(ptr);
-
-        _next = ptr->_weakPtrs;
-        if (ptr->_weakPtrs)
-            ptr->_weakPtrs->_prev = this;
-
-        ptr->_weakPtrs = this;
-        _weakAndRefCountable = ptr;
+        FPlatformProcess::SleepForSpinning(backoff);
     }
 }
 //----------------------------------------------------------------------------

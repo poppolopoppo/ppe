@@ -69,7 +69,7 @@ void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
 #endif
 }
 //----------------------------------------------------------------------------
-void  (tracking_free)(void *ptr) {
+void  (tracking_free)(void *ptr) NOEXCEPT {
 #if USE_PPE_MEMORYDOMAINS
     if (nullptr == ptr)
         return;

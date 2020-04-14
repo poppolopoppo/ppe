@@ -333,7 +333,7 @@ struct TPayloadTraits< T, PFunctionPayload<T> > {
     template <typename... _Extra>
     static void Set(void* embed, _Extra&&... extra) NOEXCEPT {
         INPLACE_NEW(embed, PFunctionPayload<T>) {
-            NEW_REF(Function, TFunctionPayload<T>) { std::forward<_Extra>(extra)... }
+            NEW_REF(Function, TFunctionPayload<T>, std::forward<_Extra>(extra)...)
         };
     }
 };

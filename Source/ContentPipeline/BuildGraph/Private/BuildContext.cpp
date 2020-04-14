@@ -185,7 +185,7 @@ FFileNode* FScanContext::GetOrCreateFileNode(const FFilename& input) {
 
     PFileNode& n = _fileNodes.FindOrAdd(input);
     if (not n)
-        n.reset(NEW_RTTI(FFileNode) { input });
+        n = NEW_RTTI(FFileNode, input);
 
     return n.get();
 }

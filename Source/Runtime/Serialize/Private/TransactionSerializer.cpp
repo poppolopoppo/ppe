@@ -90,7 +90,7 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
     LOG(Serialize, Emphasis, L"building transaction '{0}' with namespace <{1}> from {2} sources ...",
         _id, _namespace, sources.size() );
 
-    _transaction = NEW_REF(MetaSerialize, RTTI::FMetaTransaction) { _namespace };
+    _transaction = NEW_REF(MetaSerialize, RTTI::FMetaTransaction, _namespace);
 
     VECTOR(Transient, FTransactionLinker) linkers;
     linkers.resize(sources.size());
@@ -196,7 +196,7 @@ void FTransactionSerializer::LoadTransaction() {
         });
     }
 
-    _transaction = NEW_REF(MetaSerialize, RTTI::FMetaTransaction) { _namespace };
+    _transaction = NEW_REF(MetaSerialize, RTTI::FMetaTransaction, _namespace);
 
     linker.Resolve(*_transaction);
 

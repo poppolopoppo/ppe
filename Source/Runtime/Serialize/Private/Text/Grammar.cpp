@@ -895,7 +895,7 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
     .Select<expr_t>([](expr_t* dst, const site_t& site, many_expr_t&& src) {
         Assert(not src.empty());
         *dst = (src.size() > 1
-            ? Parser::MakeTupleExpr(src.MakeView(), site)
+            ? expr_t{ Parser::MakeTupleExpr(src.MakeView(), site) }
             : src.front() /* tuple of 1 elt aren't wrapped inside a tuple expr, act as a parenthesized expr */ );
     }))
 

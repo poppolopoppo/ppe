@@ -50,7 +50,7 @@ PFuture<T> Future(
     TFunction<T()>&& func,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr *//* uses FGlobalThreadPool by default */) {
-    PFuture<T> future(NEW_REF(Task, TFuture<T>) { std::move(func) });
+    PFuture<T> future{ NEW_REF(Task, TFuture<T>, std::move(func)) };
     future->Async(priority, manager);
     return future;
 }

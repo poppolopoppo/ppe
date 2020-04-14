@@ -21,7 +21,7 @@ namespace Parser {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FParseContext::FParseContext(Meta::FForceInit)
-:   FParseContext(NEW_REF(Parser, RTTI::FAtomHeap)())
+:   FParseContext(NEW_REF(Parser, RTTI::FAtomHeap))
 {}
 //----------------------------------------------------------------------------
 FParseContext::FParseContext(const RTTI::PAtomHeap& atomHeap)

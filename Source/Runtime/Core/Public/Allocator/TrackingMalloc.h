@@ -20,7 +20,7 @@ class FMemoryTracking;
 //----------------------------------------------------------------------------
 PPE_CORE_API void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size);
 //----------------------------------------------------------------------------
-PPE_CORE_API void  (tracking_free)(void *ptr);
+PPE_CORE_API void  (tracking_free)(void *ptr) NOEXCEPT;
 //----------------------------------------------------------------------------
 PPE_CORE_API void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size);
 //----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ T* tracking_new(_Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void tracking_delete(T* ptr) {
+void tracking_delete(T* ptr) NOEXCEPT {
     Assert(ptr);
     Meta::Destroy(ptr);
     tracking_free(ptr);

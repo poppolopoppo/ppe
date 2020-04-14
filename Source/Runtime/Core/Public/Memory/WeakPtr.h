@@ -2,12 +2,13 @@
 
 #include "Core.h"
 
+#include "Allocator/AllocatorBase.h"
 #include "Memory/RefPtr.h"
 #include "Meta/ThreadResource.h"
 
 #define _FWD_WEAKPTR_IMPL(T, _PREFIX)                                   \
     class CONCAT(_PREFIX, T);                                           \
-    typedef PPE::TWeakPtr<CONCAT(_PREFIX, T)>           CONCAT(W,  T); \
+    typedef PPE::TWeakPtr<CONCAT(_PREFIX, T)>           CONCAT(W,  T);  \
     typedef PPE::TWeakPtr<const CONCAT(_PREFIX, T)>     CONCAT(WC, T)
 
 #define FWD_WEAKPTR(T_WITHOUT_F)            _FWD_WEAKPTR_IMPL(T_WITHOUT_F, F)
@@ -20,120 +21,264 @@ namespace PPE {
 template <typename T>
 class TWeakPtr;
 //----------------------------------------------------------------------------
-class FWeakPtrBase;
+class FWeakRefCountable;
+//----------------------------------------------------------------------------
+FWD_REFPTR(WeakRefCounter);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FWeakAndRefCountable : public FRefCountable, public Meta::FThreadResource {
+class FWeakRefCounter : public FRefCountable, Meta::FNonCopyableNorMovable {
 public:
-    FWeakAndRefCountable();
-    ~FWeakAndRefCountable();
+#if USE_PPE_ASSERT
+    ~FWeakRefCounter() {
+        Assert_NoAssume(0 == _strongRefCount);
+    }
+#endif
 
-    FWeakAndRefCountable(FWeakAndRefCountable&& );
-    FWeakAndRefCountable& operator =(FWeakAndRefCountable&& );
+    int RefCount() const { return _strongRefCount; }
+    int WeakRefCount() const { return FRefCountable::RefCount(); }
 
-    FWeakAndRefCountable(const FWeakAndRefCountable& );
-    FWeakAndRefCountable& operator =(const FWeakAndRefCountable& );
+#if USE_PPE_SAFEPTR
+    int SafeRefCount() const { return FRefCountable::SafeRefCount(); }
+#endif
+
+    // custom deleter can be used with FWeakRefCountable (!= FRefCountable)
+    typedef void (*deleter_func)(void*) NOEXCEPT;
+
+#if USE_PPE_ASSERT
+    static PPE_CORE_API PWeakRefCounter Allocate(FWeakRefCountable* holder, deleter_func deleter);
+#else
+    static PPE_CORE_API PWeakRefCounter Allocate(deleter_func deleter);
+#endif
 
 private:
-    friend class FWeakPtrBase;
+    template <typename T>
+    friend class TWeakPtr;
+    friend class FWeakRefCountable;
 
-    mutable FWeakPtrBase *_weakPtrs = nullptr;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-class FWeakPtrBase {
-public:
-    ~FWeakPtrBase();
+    // NewRef() should be the only way to allocate this object !
+    template <typename T, typename... _Args>
+#if USE_PPE_MEMORYDOMAINS
+    friend TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args);
+#else
+    friend TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args);
+#endif
 
-protected:
-    FWeakPtrBase();
+#if USE_PPE_ASSERT
+    explicit FWeakRefCounter(FWeakRefCountable* holder, deleter_func deleter) NOEXCEPT
+    :   _strongRefCount(0)
+    ,   _deleter(deleter)
+    ,   _holder(holder) {
+        Assert(_deleter);
+        Assert(_holder);
+    }
+#else
+    explicit FWeakRefCounter(deleter_func deleter) NOEXCEPT
+    :   _strongRefCount(0)
+    ,   _deleter(deleter)
+    {}
+#endif
 
-    template <typename T = FWeakAndRefCountable>
-    T* get_() const NOEXCEPT { return static_cast<T*>(_weakAndRefCountable); }
-    void set_(FWeakAndRefCountable* ptr);
+    PPE_CORE_API bool TryLockForWeakPtr();
 
-    void swap_(FWeakPtrBase& other) NOEXCEPT {
-        FWeakAndRefCountable* const self = get_<>();
-        set_(other.get_<>());
-        other.set_(self);
+    void Weak_IncWeakRefCount() const NOEXCEPT {
+        FRefCountable::IncStrongRefCount();
+    }
+    bool Weak_DecWeakRefCount_ReturnIfReachZero() const NOEXCEPT {
+        return FRefCountable::DecStrongRefCount_ReturnIfReachZero();
     }
 
-private:
-    friend class FWeakAndRefCountable;
+    void Weak_IncStrongRefCount() const NOEXCEPT {
+        Assert(_strongRefCount >= 0);
+        _strongRefCount.fetch_add(1, std::memory_order_relaxed);
+    }
+    bool Weak_DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT {
+        Assert(_strongRefCount > 0);
+        const int n = atomic_fetch_sub_explicit(&_strongRefCount, 1, std::memory_order_release);
+        if (1 == n) {
+            std::atomic_thread_fence(std::memory_order_acquire);
+            return true;
+        }
+        else {
+            Assert(n > 0);
+            return false;
+        }
+    }
 
-    FWeakAndRefCountable* _weakAndRefCountable;
-    FWeakPtrBase *_next, *_prev;
+#if USE_PPE_SAFEPTR
+    using FRefCountable::IncSafeRefCount;
+    using FRefCountable::DecSafeRefCount;
+#endif
+
+    mutable std::atomic<int> _strongRefCount;
+
+    deleter_func _deleter;
+
+#if USE_PPE_ASSERT
+    FWeakRefCountable* const _holder;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class TWeakPtr : public FWeakPtrBase {
+using IsWeakRefCountable = std::is_base_of<FWeakRefCountable, Meta::TDecay<T> >;
+template <typename T, typename _Result = T>
+using TEnableIfWeakRefCountable = Meta::TEnableIf< IsWeakRefCountable<T>::value, _Result >;
+//----------------------------------------------------------------------------
+class PPE_CORE_API FWeakRefCountable {
+public:
+    FWeakRefCountable();
+    ~FWeakRefCountable();
+
+    FWeakRefCountable(FWeakRefCountable&& ) : FWeakRefCountable() {}
+    FWeakRefCountable& operator =(FWeakRefCountable&& ) { return (*this); }
+
+    FWeakRefCountable(const FWeakRefCountable& ) : FWeakRefCountable() {}
+    FWeakRefCountable& operator =(const FWeakRefCountable&) { return (*this); }
+
+    int RefCount() const { return _cnt->RefCount(); }
+    int WeakRefCount() const { return _cnt->WeakRefCount(); }
+
+#if USE_PPE_SAFEPTR
+    int SafeRefCount() const { return _cnt->SafeRefCount(); }
+#endif
+
+private: // override new/delete operators for custom allocation schemes
+    using deleter_func = typename FWeakRefCounter::deleter_func;
+
+    template <typename T, typename... _Args>
+    static TRefPtr<T> NewRefImpl(void* p, deleter_func deleter, _Args&&... args) NOEXCEPT;
+
+public:
+    // general allocators are forbidden to force the client to provide metadata
+    static void* operator new(std::size_t) = delete;
+    static void* operator new[](std::size_t) = delete;
+
+    static void operator delete(void* p) = delete; // always use the deleter stored inside the counter
+
+    // provide a custom allocator, deleter will be exported in the counter
+    template <typename T, typename _Allocator, typename... _Args>
+    friend TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args);
+
+    // provide memory tracking, correct deleter is deduced
+    template <typename T, typename... _Args>
+#if USE_PPE_MEMORYDOMAINS
+    friend TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args);
+#else
+    friend TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args);
+#endif
+
+protected:
+    friend void AddRef(const FWeakRefCountable* ptr);
+    template <typename T>
+    friend void OnStrongRefCountReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
+
+    template <typename T>
+    friend void RemoveRef(T* ptr);
+    template <typename T>
+    friend T* RemoveRef_AssertAlive(TRefPtr<T>& refptr);
+    template <typename T>
+    friend T* RemoveRef_KeepAlive(TRefPtr<T>& refptr);
+    template <typename T>
+    friend void RemoveRef_AssertReachZero_NoDelete(T* ptr);
+    template <typename T>
+    friend void RemoveRef_AssertReachZero(TRefPtr<T>& refptr);
+    template <typename T>
+    friend T* RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& refptr);
+
+#if USE_PPE_SAFEPTR
+    friend void AddSafeRef(const FWeakRefCountable* ptr) NOEXCEPT;
+    friend void RemoveSafeRef(const FWeakRefCountable* ptr) NOEXCEPT;
+#else
+    FORCE_INLINE friend void AddSafeRef(const FWeakRefCountable*) NOEXCEPT {}
+    FORCE_INLINE friend void RemoveSafeRef(const FWeakRefCountable*) NOEXCEPT {}
+#endif
+
+private:
+    template <typename T>
+    friend class TWeakPtr;
+
+    deleter_func Deleter_Unsafe() const {
+        Assert_NoAssume(_cnt->_holder == this);
+        return _cnt->_deleter;
+    }
+
+    // still allows inplace new, but only for friends
+    static void* operator new(std::size_t, void* p) { return p; }
+    static void operator delete(void*, void*) { }
+
+    static void* operator new[](std::size_t, void* p) { return p; }
+    static void operator delete[](void*, void*) {}
+
+    // forward ref counting to internal counter
+    void IncWeakRefCount() const NOEXCEPT { _cnt->Weak_IncWeakRefCount(); }
+    bool DecWeakRefCount_ReturnIfReachZero() const NOEXCEPT { return _cnt->Weak_DecWeakRefCount_ReturnIfReachZero(); }
+
+    void IncStrongRefCount() const NOEXCEPT { _cnt->Weak_IncStrongRefCount(); }
+    bool DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT { return _cnt->Weak_DecStrongRefCount_ReturnIfReachZero(); }
+
+#if USE_PPE_SAFEPTR
+    void IncSafeRefCount() const NOEXCEPT { _cnt->IncSafeRefCount(); }
+    void DecSafeRefCount() const NOEXCEPT { _cnt->DecSafeRefCount(); }
+#endif
+
+    mutable PWeakRefCounter _cnt;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+class TWeakPtr {
 public:
     template <typename U>
     friend class TWeakPtr;
 
-    TWeakPtr() NOEXCEPT = default;
+    TWeakPtr() NOEXCEPT : _ptr(nullptr) {}
 
-    explicit TWeakPtr(T* ptr);
-    ~TWeakPtr();
+    template <typename U, class = TEnableIfWeakRefCountable<U> >
+    explicit TWeakPtr(const TRefPtr<U>& refptr) NOEXCEPT;
 
-    TWeakPtr(TWeakPtr&& rvalue);
-    TWeakPtr& operator =(TWeakPtr&& rvalue);
+    void reset() NOEXCEPT;
+    template <typename U, class = TEnableIfWeakRefCountable<U> >
+    void reset(const TRefPtr<U>& refptr) NOEXCEPT;
 
-    TWeakPtr(const TWeakPtr& other);
-    TWeakPtr& operator =(const TWeakPtr& other);
+    template <typename U, class = TEnableIfWeakRefCountable<U> >
+    bool TryLock(TRefPtr<U>* pLocked) const NOEXCEPT;
 
-    template <typename U>
-    TWeakPtr(const TWeakPtr<U>& other);
-    template <typename U>
-    TWeakPtr& operator =(const TWeakPtr<U>& other);
-
-    template <typename U>
-    TWeakPtr(TWeakPtr<U>&& rvalue);
-    template <typename U>
-    TWeakPtr& operator =(TWeakPtr<U>&& rvalue);
-
-    void reset(T* ptr = nullptr);
-
-    template <typename U>
-    bool TryLock(TRefPtr<U> *pLocked) const;
-
-    friend void swap(TWeakPtr& lhs, TWeakPtr& rhs) NOEXCEPT {
-        lhs.swap_(rhs);
+public:
+    friend hash_t hash_value(const TWeakPtr<T>& weakPtr) NOEXCEPT {
+        return hash_ptr(weakPtr._ptr);
     }
+
+    template <typename U>
+    friend bool operator ==(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+        return (lhs._ptr == rhs._ptr);
+    }
+    template <typename U>
+    friend bool operator !=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+
+    template <typename U>
+    friend bool operator <(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+        return (lhs._ptr < rhs._ptr);
+    }
+    template <typename U>
+    friend bool operator >=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+        return (not operator <(lhs, rhs));
+    }
+
+    template <typename U>
+    friend void swap(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) {
+        std::swap(lhs._ptr, rhs._ptr);
+        std::swap(lhs._cnt, rhs._cnt);
+    }
+
+private:
+    T* _ptr;
+    mutable/* remove ref ASAP */PWeakRefCounter _cnt;
 };
-//----------------------------------------------------------------------------
-template <typename T>
-hash_t hash_value(const TWeakPtr<T>& weakPtr) = delete; // *NEVER* index on TWeakPtr<>
-// This is completely unsafe since the state of weakPtr can change based of owner lifetime
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-void swap(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
-    lhs.Swap(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-bool operator ==(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
-    return (lhs.get() == reinterpret_cast<_Lhs*>(rhs.get()) );
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-bool operator !=(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-bool operator <(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
-    return (lhs.get() < reinterpret_cast<_Lhs*>(rhs.get()) );
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-bool operator >=(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
-    return !operator <(lhs, rhs);
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
