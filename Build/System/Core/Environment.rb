@@ -137,6 +137,7 @@ module Build
                     "BUILD_PLATFORM=#{@platform.name}",
                     "BUILD_CONFIG=#{@config.name}",
                     "BUILD_COMPILER=#{@compiler.name}",
+                    "BUILD_FAMILY=#{self.family}",
                     "BUILD_#{self.varname}" )
 
                 @platform.decorate(@memoized, self)

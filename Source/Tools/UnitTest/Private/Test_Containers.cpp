@@ -943,7 +943,7 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
 
     {
         const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
-            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
+            MakeStringView(WSTRINGIZE(BUILD_FAMILY)), name) };
 
         FStringBuilder sb;
         FBenchmark::StackedBarCharts(bm, sb);
@@ -1091,7 +1091,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 #if 1
     {
         const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
-            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
+            MakeStringView(WSTRINGIZE(BUILD_FAMILY)), name) };
 
         FStringBuilder sb;
         FBenchmark::StackedBarCharts(bm, sb);
@@ -1100,7 +1100,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 #else
     auto graph = [&](const FWStringView& feature, auto projector) {
         const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}_{2}.csv",
-            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name, feature) };
+            MakeStringView(WSTRINGIZE(BUILD_FAMILY)), name, feature) };
 
         FStringBuilder sb;
         FBenchmark::Csv(bm, sb, projector);

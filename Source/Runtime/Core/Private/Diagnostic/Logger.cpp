@@ -551,7 +551,7 @@ void FLogger::Start() {
         RegisterLogger(MakeStdout());
 
         const FWString logPath = FPlatformFile::JoinPath({
-        proc.SavedPath(), L"Log", MakeStringView(WSTRINGIZE(BUILDCONFIG)) });
+        proc.SavedPath(), L"Log", MakeStringView(WSTRINGIZE(BUILD_FAMILY)) });
 
         VerifyRelease(FPlatformFile::CreateDirectoryRecursively(*logPath, nullptr));
 
@@ -766,7 +766,7 @@ PLogger FLogger::MakeAppendFile(const wchar_t* filename) {
             EOpenPolicy::Writable,
             EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
     AssertRelease(FPlatformLowLevelIO::InvalidHandle != hFile);
-    return NEW_REF(Logger, FFileHandleLogger_)(hFile);
+    return NEW_REF(Logger, FFileHandleLogger_, hFile);
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeRollFile(const wchar_t* filename) {
