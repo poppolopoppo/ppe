@@ -902,6 +902,23 @@ static NO_INLINE void Test_TransactionSerialization_() {
     }
 
     const FLoadindScope importScope(import);
+    {
+        const FWString basePath = StringFormat(L"Saved:/RTTI/UnitTest_Import_{0}", RTTI::MetaClass<T>()->Name());
+        {
+            Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
+            Test_Serializer_(import, *bin, basePath + L"_bin.bin");
+        }
+        {
+            Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
+            json->SetMinify(minify);
+            Test_Serializer_(import, *json, basePath + L"_json.json");
+        }
+        {
+            Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
+            text->SetMinify(minify);
+            Test_Serializer_(import, *text, basePath + L"_text.txt");
+        }
+    }
 
     RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
     {
@@ -915,40 +932,57 @@ static NO_INLINE void Test_TransactionSerialization_() {
     }
 
     const FLoadindScope inputScope(input);
-
-    const FWString basePath = StringFormat(L"Saved:/RTTI/robotapp_{0}", RTTI::MetaClass<T>()->Name());
-
     {
-        Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
-        Test_Serializer_(input, *bin, basePath + L"_bin.bin");
-    }
-    {
-        Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
-        json->SetMinify(minify);
-        Test_Serializer_(input, *json, basePath + L"_json.json");
-    }
-    {
-        Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
-        text->SetMinify(minify);
-        Test_Serializer_(input, *text, basePath + L"_text.txt");
+        const FWString basePath = StringFormat(L"Saved:/RTTI/UnitTest_Input_{0}", RTTI::MetaClass<T>()->Name());
+        {
+            Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
+            Test_Serializer_(input, *bin, basePath + L"_bin.bin");
+        }
+        {
+            Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
+            json->SetMinify(minify);
+            Test_Serializer_(input, *json, basePath + L"_json.json");
+        }
+        {
+            Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
+            text->SetMinify(minify);
+            Test_Serializer_(input, *text, basePath + L"_text.txt");
+        }
     }
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_TransactionSerializer_() {
-    Serialize::FDirectoryTransaction serializer(
+    Serialize::FDirectoryTransaction import(
         RTTI::FName("Saved/RTTI/Robotapp"),
-        RTTI::FName("Tests/UnitTest"),
-        L"robotapp_.*\\.txt",
+        RTTI::FName("UnitTest_Import"),
+        L"UnitTest_Import_.*\\.txt",
         { L"Saved:/RTTI" } );
 
-    Serialize::FTransactionSources sources;
-    serializer.BuildTransaction(sources);
-    serializer.SaveTransaction();
-    serializer.UnloadTransaction();
-    serializer.LoadTransaction();
-    serializer.MountToDB();
-    serializer.UnmountFromDB();
-    serializer.UnloadTransaction();
+    Serialize::FTransactionSources importSources;
+    import.BuildTransaction(importSources);
+    import.SaveTransaction();
+    import.UnloadTransaction();
+    import.LoadTransaction();
+    import.MountToDB();
+
+    Serialize::FDirectoryTransaction input(
+        RTTI::FName("Saved/RTTI/Robotapp"),
+        RTTI::FName("UnitTest_Input"),
+        L"UnitTest_Input_.*\\.txt",
+        { L"Saved:/RTTI" });
+
+    Serialize::FTransactionSources inputSources;
+    input.BuildTransaction(inputSources);
+    input.SaveTransaction();
+    input.UnloadTransaction();
+    input.LoadTransaction();
+    input.MountToDB();
+
+    input.UnmountFromDB();
+    input.UnloadTransaction();
+
+    import.UnmountFromDB();
+    import.UnloadTransaction();
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Serialize_() {

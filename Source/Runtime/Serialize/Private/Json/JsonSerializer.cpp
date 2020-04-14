@@ -269,7 +269,7 @@ public:
         if (ref->RTTI_IsExported()) {
             Assert_NoAssume(not ref->RTTI_Name().empty());
 
-            name = StringFormat("~/{0}", ref->RTTI_Name());
+            name = ref->RTTI_Name().MakeView();
         }
         else { // generate temporary name (for internal references)
             Assert_NoAssume(ref->RTTI_Name().empty());
