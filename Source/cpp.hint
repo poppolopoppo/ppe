@@ -1,0 +1,322 @@
+#define BUILD_ENV
+#define BUILD_PLATFORM
+#define BUILD_FAMILY
+#define TARGET_PLATFORM
+#define FOREACH_FILESYSTEMCONSTNAMES(_Macro)
+#define DEF_FILESYSTEMCONSTNAMES_STORAGE(_Type, _Name, _Content)
+#define DEF_FILESYSTEMCONSTNAMES_ACCESSOR(_Type, _Name, _Content)
+#define DEF_FILESYSTEMCONSTNAMES_STARTUP(_Type, _Name, _Content)
+#define DEF_FILESYSTEMCONSTNAMES_SHUTDOWN(_Type, _Name, _Content)
+#define PPE_REGEXERROR_WSTR(_NAME)
+#define AXISTEST_X01(a, b, fa, fb)
+#define AXISTEST_X2(a, b, fa, fb)
+#define AXISTEST_Y02(a, b, fa, fb)
+#define AXISTEST_Y1(a, b, fa, fb)
+#define AXISTEST_Z12(a, b, fa, fb)
+#define AXISTEST_Z0(a, b, fa, fb)
+#define SSE_CONST4(name, val)
+#define CONST(name)
+#define CONSTF(name)
+#define DEF_SHPROJECTFUNCTION_IMPL(_DIM, _FUNCTYPE)
+#define UNITS_BEGIN(NAME)
+#define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER)
+#define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent)
+#define MEMORYDOMAIN_IMPL(_Name, _Parent)
+#define MEMORYDOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
+#define TRACKINGDATA_ARG_IFP
+#define TRACKINGDATA_ARG_FWD
+#define WITH_PPE_THREADCONTEXT_NAME
+#define SYSALLOCA_IFP(_SIZEINBYTES)
+#define MALLOCA_ASSUMEPOD(T, _NAME, _COUNT)
+#define MALLOCA_POD(T, _NAME, _COUNT)
+#define INLINE_MALLOCA(T, _COUNT)
+#define STACKLOCAL_ASSUMEPOD_ARRAY(T, _NAME, _COUNT)
+#define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT)
+#define ALLOCATOR(_Domain)
+#define ALLOCATOR_MINSIZE(_Domain, T, N)
+#define ALIGNED_ALLOCATOR(_Domain, _Alignment)
+#define BATCH_ALLOCATOR(_Domain, T)
+#define INLINE_ALLOCATOR(_Domain, T, N)
+#define INLINE_STACK_ALLOCATOR(_Domain, T, N)
+#define FALLBACK_USING_DEF(_NAME, _OP)
+#define PROXY_USING_DEF(_NAME)
+#define SEGREGATOR_USING_DEF(_NAME, _OP)
+#define CASCADED_USING_DEF(_NAME)
+#define VECTOR_LINEARHEAP(T)
+#define SPARSEARRAY_LINEARHEAP(_DOMAIN, T, _ChunkSize)
+#define HASHSET_LINEARHEAP(T)
+#define HASHMAP_LINEARHEAP(_KEY, _VALUE)
+#define MEMORYSTREAM_LINEARHEAP()
+#define LINEARHEAP(_DOMAIN)
+#define LINEARHEAP_POOLED(_DOMAIN)
+#define PPE_LEAKDETECTOR_WHITELIST_SCOPE()
+#define WITH_PPE_MALLOCSTOMP
+#define PPE_NEW_API
+#define PPE_RETURN_MAYBE_NULL
+#define PPE_CHECK_RETURN_NOT_NULL
+#define TRACKING_USING_DEF(_NAME)
+#define TRACKING_MALLOC(_DOMAIN, _SIZE)
+#define TRACKING_CALLOC(_DOMAIN, _NMEMB, _SIZE)
+#define TRACKING_REALLOC(_DOMAIN, _PTR, _SIZE)
+#define TRACKING_FREE(_DOMAIN, _PTR)
+#define TRACKING_NEW(_DOMAIN, ...)
+#define TRACKING_DELETE(_DOMAIN, _PTR)
+#define STRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY)
+#define STRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY)
+#define WSTRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY)
+#define WSTRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY)
+#define INTRUSIVELIST_ACCESSOR(_Member)
+#define INTRUSIVELIST(_Member)
+#define INTRUSIVESINGLELIST_ACCESSOR(_Member)
+#define INTRUSIVESINGLELIST(_Member)
+#define PATRICIASET(_DOMAIN, _KEY, _INSITU)
+#define STACKLOCAL_POD_RINGBUFFER(T, _NAME, _COUNT)
+#define STACKLOCAL_ASSUMEPOD_RINGBUFFER(T, _NAME, _COUNT)
+#define STACKLOCAL_RINGBUFFER(T, _NAME, _COUNT)
+#define SPARSEARRAY_INSITU(_DOMAIN, T)
+#define STACKLOCAL_POD_HEAP(T, _Pred, _NAME, _COUNT)
+#define STACKLOCAL_ASSUMEPOD_HEAP(T, _Pred, _NAME, _COUNT)
+#define STACKLOCAL_HEAP(T, _Pred, _NAME, _COUNT)
+#define STRINGVIEW_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define WSTRINGVIEW_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define STRINGVIEW_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define WSTRINGVIEW_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define STRING_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define WSTRING_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define STRING_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define WSTRING_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define STRINGVIEW_HASHSET(_DOMAIN, _CASE_SENSITIVE)
+#define WSTRINGVIEW_HASHSET(_DOMAIN, _CASE_SENSITIVE)
+#define STRINGVIEW_HASHSET_MEMOIZE(_DOMAIN, _CASE_SENSITIVE)
+#define WSTRINGVIEW_HASHSET_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define CONSTCHAR_HASHSET(_DOMAIN, _CASE_SENSITIVE)
+#define CONSTWCHAR_HASHSET(_DOMAIN, _CASE_SENSITIVE)
+#define CONSTCHAR_HASHSET_MEMOIZE(_DOMAIN, _CASE_SENSITIVE)
+#define CONSTWCHAR_HASHSET_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
+#define TERNARYSEARCHSET(_DOMAIN, _KEY)
+#define BASICTOKEN_CLASS_DECL(_API, _NAME, _CHAR, _CASESENSITIVE, _TRAITS)
+#define BASICTOKEN_CLASS_DEF(_NAME)
+#define DEBUG_FUNCTION_START()
+#define DEBUG_FUNCTION_SHUTDOWN()
+#define DEBUG_FUNCTION(_API, _NAME, _RET, _ARGS, ...)
+#define PPE_DEFAULT_EXCEPTION_DESCRIPTION(_Name)
+#define LOG(_CATEGORY, _LEVEL, _FORMAT, ...)
+#define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST)
+#define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE)
+#define EXTERN_LOG_CATEGORY(_API, _NAME)
+#define PPE_DECLSPEC_ALLOCATOR()
+#define PPE_DEBUG_NAMEDSCOPE(_NAME)
+#define PPE_DEBUG_ALLOCATEEVENT(_HEAP, _PTR, _SZ)
+#define PPE_DEBUG_REALLOCATEEVENT(_HEAP, _NEWP, _SZ, _OLDP)
+#define PPE_DEBUG_DEALLOCATEEVENT(_HEAP, _PTR)
+#define PPE_PROFILING_MARK(_COMMENT)
+#define PPE_PROFILING_SCOPE(_COMMENT)
+#define PPE_HAL_MAKEALIAS(_BASENAME)
+#define PPE_HAL_MAKEALIAS_NAMESPACE(_NAMESPACE, _BASENAME)
+#define NOCRYPT
+#define NOIMAGE
+#define NORPC
+#define INLINE_FORMAT(_CAPACITY, _FORMAT, ...)
+#define INLINE_WFORMAT(_CAPACITY, _FORMAT, ...)
+#define STACKLOCAL_TEXTWRITER(_NAME, _COUNT)
+#define STACKLOCAL_WTEXTWRITER(_NAME, _COUNT)
+#define m128i_epi8_broadcast(v)
+#define m128i_epi8_load_aligned(p)
+#define m128i_epi8_load_unaligned(p)
+#define m128i_epi8_load_stream(p)
+#define m128i_epi8_loadlo_epi64(p)
+#define m128i_epi8_blend(if_false, if_true, m)
+#define m128i_epi8_cmple(a, b)
+#define m128i_epi8_movemask(m)
+#define m128i_epi8_maskmoveu(v, m, p)
+#define m256i_epi8_broadcast(v)
+#define m256i_epi8_load_aligned(p)
+#define m256i_epi8_load_unaligned(p)
+#define m256i_epi8_blend(if_false, if_true, m)
+#define m256i_epi8_movemask(m)
+#define m256i_epi8_findle(v, h)
+#define DEF_SCALARBOUNDINGBOX_SHUFFLE2(_Name, _0, _1)
+#define DEF_SCALARBOUNDINGBOX_SHUFFLE3(_Name, _0, _1, _2)
+#define DEF_SCALARBOUNDINGBOX_SHUFFLE4(_Name, _0, _1, _2, _3)
+#define DEF_SCALARMATRIX_SCALAR_OP_LHS(_Op)
+#define DEF_SCALARMATRIX_SCALAR_OP_RHS(_Op)
+#define DECL_SCALARMATRIX_SCALAR_ACCESSOR(_X, _Y, _Col, _Row)
+#define DECL_SCALARMATRIX_SCALAR_OP_LHS(_Op)
+#define DECL_SCALARMATRIX_SCALAR_OP_RHS(_Op)
+#define DECL_SCALARMATRIX_ALIAS(_Scalar, _ALIAS)
+#define PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(_DIM, _OFF, ...)
+#define PPE_SCALARVECTOR_UNARYFUNC_DEF(_NAME, _FUNC)
+#define PPE_SCALARVECTOR_BINARYFUNC_DEF(_NAME, _FUNC)
+#define PPE_SCALARVECTOR_TERNARYFUNC_DEF(_NAME, _FUNC)
+#define DECL_SCALARVECTOR_ALIAS(_Scalar, _ALIAS)
+#define UNITS_END() }
+#define UNITS_LITERAL_OP(SYMBOL, TYPE)
+#define MEMORYDOMAIN_TAG(_Name)
+#define MEMORYDOMAIN_TRACKING_DATA(_Name)
+#define _FWD_REFPTR_IMPL(T, _PREFIX)
+#define WITH_PPE_POOL_ALLOCATOR_VERBOSE
+#define _FWD_UNIQUEPTR_IMPL(T, _PREFIX)
+#define TRACKINGDATA_FWD_IFP
+#define _FWD_WEAKPTR_IMPL(T, _PREFIX)
+#define UNUSED(_X)
+#define lengthof(_ARRAY)
+#define STATIC_ASSERT(...)
+#define NOALIAS
+#define NOOP(...)
+#define NORETURN
+#define THREAD_LOCAL
+#define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...)
+#define EMPTY_BASES
+#define RESTRICT
+#define STDCALL
+#define VECTORCALL
+#define NOEXCEPT
+#define FORCE_INLINE
+#define NO_INLINE
+#define Likely(...)
+#define Unlikely(...)
+#define CONSTEXPR
+#define IF_CONSTEXPR(...)
+#define PPE_THROW()
+#define PPE_THROW_IT(_EX)
+#define PPE_THROW_VOID()
+#define PPE_TRY
+#define PPE_CATCH(_SPEC)
+#define INPLACE_NEW(_STORAGE, ...)
+#define DLL_IMPORT
+#define DLL_EXPORT
+#define EXPORT_DELETED_FUNCTION
+#define EXTERN_TEMPLATE_CLASS_DECL(_API)
+#define EXTERN_TEMPLATE_CLASS_DEF(_API)
+#define PRAGMA_INITSEG_LIB
+#define PRAGMA_INITSEG_COMPILER
+#define INITSEG_LIB_PRIORITY
+#define INITSEG_COMPILER_PRIORITY
+#define PPE_TYPEID_NAME(T)
+#define POD_STORAGE(T)
+#define ROUND_TO_NEXT_4(v)
+#define ROUND_TO_NEXT_8(v)
+#define ROUND_TO_NEXT_16(v)
+#define ROUND_TO_NEXT_32(v)
+#define ROUND_TO_NEXT_64(v)
+#define ROUND_TO_NEXT_128(v)
+#define ROUND_TO_NEXT_64K(v)
+#define ALIGN(_BOUNDARY)
+#define CACHELINE_SIZE
+#define AssertMessage(_Message, ...)
+#define AssertReleaseMessage(_Message, ...)
+#define AssertNotReached()
+#define _ENUM_FLAGS_IMPL(_PREFIX, _ENUMTYPE)
+#define ENUM_FLAGS(_ENUMTYPE)
+#define ENUM_FLAGS_FRIEND(_ENUMTYPE)
+#define forrange(_Variable, _Start, _End)
+#define reverseforrange(_Variable, _Start, _End)
+#define foreachitem(_Variable, _ContainerLike)
+#define reverseforeachitem(_Variable, _ContainerLike)
+#define _PP_FE_ARGS_0(_call, ...)
+#define _PP_FE_0(_call, ...)
+#define FWD_DECLARE_CLASS(cls)
+#define START_NS(ns) namespace ns {
+#define END_NS(ns) }
+#define PPE_HAS_MAGIC_STATICS
+#define _ONE_TIME_INITIALIZE_IMPL_(_Type, _Name, _Initializer, _ThreadLocal, _TypenameIfInTemplate)
+#define PPE_INTERLOCKEDCOMPAREEXCHANGE_32(_Var, _Src, _Operand)
+#define PPE_INTERLOCKEDEXCHANGE_PTR(_Var, _Value)
+#define PPE_INTERLOCKEDEXCHANGE_32(_Var, _Value)
+#define PPE_SHORTSYNCWAIT()
+#define ONE_TIME_INITIALIZE_TPL(_Type, _Name, ...)
+#define ONE_TIME_DEFAULT_INITIALIZE_TPL(_Type, _Name)
+#define ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(_Type, _Name, ...)
+#define ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL_TPL(_Type, _Name)
+#define POINTERWFLAGS_BASE_DEF()
+#define PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, _DefaultValue)
+#define PPE_FAKEBOOL_OPERATOR_DECL()
+#define WITH_PPE_THREADRESOURCE_CHECKS
+#define THIS_THREADRESOURCE_CHECKACCESS()
+#define THREADRESOURCE_CHECKACCESS_IFN(_pResource)
+#define PPE_ASSERT_TYPE_IS_POD(T)
+#define PPE_ASSUME_TYPE_AS_POD(...)
+#define PPE_ASSUME_TEMPLATE_AS_POD(T, ...)
+#define PPE_META_OPERATOR(_NAME, _OP)
+#define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...)
+#define ON_SCOPE_EXIT(...)
+#define PPE_WARNING(_Code, _Message)
+#define PPE_DEPRECATED
+#define PRAGMA_MSVC_WARNING_PUSH()
+#define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE)
+#define PRAGMA_MSVC_WARNING_POP()
+#define PUBLIC_EVENT(_NAME, _DELEGATE)
+#define PPE_STATICMODULE_STARTUP_DEF(_NAME)
+#define READSCOPELOCK(_ReadWriteLock)
+#define WRITESCOPELOCK(_ReadWriteLock)
+#define AssertIsMainThread()
+#define BENCHMARK_SCOPE(_CATEGORY, _MSG)
+#define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR)
+#define NATIVE_ENTITYNAME_MAXSIZE
+#define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId)
+#define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId)
+#define DEF_RTTI_MAKETRAITS(_Name, T, _TypeId)
+#define DEF_RTTI_MAKEANYTUPLE(N, ...)
+#define DEF_ATOMVISIT_SCALAR(_Name, T, _TypeId)
+#define PPE_RTTI_OPAQUEDATA_NATIVETYPE_DEF(_Name, _Type, _Uid)
+#define DECL_RTTI_NATIVETYPE_PRINT(_Name, T, _TypeId)
+#define WITH_RTTI_VERIFY_PREDICATES
+#define WITH_PPE_RTTI_PROPERTY_CHECKS
+#define STACKLOCAL_ATOM(_NAME, _PTYPE_TRAITS)
+#define RTTI_STRUCT_DEF(_Api, _Name)
+#define RTTI_CLASS_BEGIN(_Module, _Name, ...) \
+    ::PPE::RTTI::FMetaModule& _Name::RTTI_FMetaClass::Module() { \
+        return RTTI_MODULE(_Module); \
+    } \
+    _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) \
+        : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
+            (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
+            metaModule ) {
+#define RTTI_CLASS_END() }
+#define _RTTI_FUNCTION_IMPL(_Name, _Flags, _Func, ...)
+#define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags)
+#define RTTI_ENUM_BEGIN_EX(_Module, _Name, _Attributes) \
+    const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT { \
+        return static_cast<const CONCAT(RTTI_, _Name)*>(CONCAT(RTTI_, _Name)::Get()); \
+    } \
+    \
+    ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() { \
+        return RTTI_MODULE(_Module); \
+    } \
+    \
+    CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) \
+        : metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
+        using enum_type = _Name;
+#define RTTI_ENUM_VALUE(_Name)
+#define RTTI_ENUM_END() }
+#define RTTI_STRUCT_DECL(_Api, _Name)
+#define RTTI_CLASS_HEADER(_Api, _Name, _Parent)
+#define RTTI_ENUM_HEADER(_Api, _Name)
+#define RTTI_MODULE_DEF(_Api, _Name, _Domain)
+#define RTTI_MODULE_DECL(_Api, _Name)
+#define DEF_RTTI_ALIASING_TRAITS(_FROM, ...)
+#define DEF_RTTI_ALIASING_STRUCT(T)
+#define FOREACH_RTTI_NATIVETYPES(_Macro)
+#define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId)
+#define DECL_ATOMVISIT_SCALAR(_Name, T, _TypeId)
+#define PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL(_Name, _Type, _Uid)
+#define BINA_READ_TRAITS(_Traits)
+#define RTTI_INSERT_TYPENAME(_Name, T, _TypeId)
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused)
+#define DEF_UNARYOPERATOR_FUNCTOR(_Name, _Op)
+#define FORBID_UNARYOPERATOR_FUNCTOR(_Name, _Op, _Type)
+#define DEF_BINARYOPERATOR_FUNCTOR(_Name, _Op)
+#define FORBID_BINARYOPERATOR_FUNCTOR(_Name, _Op, _Type)
+#define DEF_BINARYOPERATOR_COMPARATOR(_Name, _Op)
+#define FOREACH_HTTPCONSTNAMES(_Macro)
+#define DEF_HTTPCONSTNAMES_STORAGE(_Type, _Name, _Content)
+#define DEF_HTTPCONSTNAMES_ACCESSOR(_Type, _Name, _Content)
+#define DEF_HTTPCONSTNAMES_STARTUP(_Type, _Name, _Content)
+#define DEF_HTTPCONSTNAMES_SHUTDOWN(_Type, _Name, _Content)
+#define HTTP_STATUSCODE_TOCSTR(_Name, _Value, _Desc)
+#define HTTP_STATUSCODE_CODECSTR(_Name, _Value, _Desc)
+#define HTTP_STATUSCODE_DESCRIPTION(_Name, _Value, _Desc)
+#define FOREACH_HTTP_STATUSCODE(_MACRO)
+#define SOCKET
+#define TEST_XINPUT_BTN(_GAMEPADBTN, _XINPUTBTN)
+#define PPE_TESTPROCESS_IMAGENAME_ARGS

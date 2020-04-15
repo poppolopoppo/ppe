@@ -123,6 +123,7 @@ module Build
         end
 
     public ## build facet
+        def external?() @type == :external end
         def headers?() @type == :headers end
         def executable?() @type == :executable end
         def library?() @type == :library end

@@ -183,21 +183,18 @@ module Build
                 @visiteds = Set.new
             end
             def parse_dir(path)
-                return if @visiteds.include?(path)
-                @visiteds << path
+                return unless @visiteds.add?(path)
                 Find.find(path) do |entry|
-                    if entry =~ /\.(h|cpp|cc|c)$/i and not @visiteds.include?(entry)
-                        @visiteds << entry
-                        IncludeParser.parse_file(@resolver, entry)
-                    end
+                    parse_file(entry) if entry =~ /\.(h|cpp|cc|c)$/i
                 end
             end
-            def self.parse_file(resolver, filename)
+            def parse_file(filename)
+                return unless @visiteds.add?(filename)
                 File.open(filename, 'r') do |fd|
                     fd.each do |line|
                         m = line.match(RE_SYSTEM_INCLUDE)
                         next unless m
-                        resolver.add_system_include(m[1])
+                        @resolver.add_system_include(m[1])
                     end
                 end
             end
