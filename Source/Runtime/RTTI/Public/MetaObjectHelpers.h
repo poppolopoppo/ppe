@@ -2,6 +2,7 @@
 
 #include "RTTI_fwd.h"
 
+#include "MetaObject.h"
 #include "RTTI/Typedefs.h"
 
 #include "Memory/RefPtr.h"
@@ -45,12 +46,12 @@ PPE_RTTI_API u128 Fingerprint128(const FMetaObject& obj);
 namespace details {
 template <typename T, typename _Any>
 bool CreateMetaObject_(PMetaObject& dst, std::true_type, _Any) {
-    dst = NEW_RTTI(T) { ConstructorTag };
+    dst = NEW_RTTI(T, ConstructorTag);
     return true;
 }
 template <typename T>
 bool CreateMetaObject_(PMetaObject& dst, std::false_type, std::true_type) {
-    dst = NEW_RTTI(T) {};
+    dst = NEW_RTTI(T);
     return true;
 }
 template <typename T>

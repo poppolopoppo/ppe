@@ -894,7 +894,7 @@ static NO_INLINE void Test_TransactionSerialization_() {
         FWStringBuilder oss;
 
         forrange(i, 0, test_count) {
-            TRefPtr<T> t = NEW_RTTI(T)();
+            TRefPtr<T> t = NEW_RTTI(T);
             rand.Randomize(t.get());
             t->RTTI_Export(RTTI::FName(StringFormat("import_{0}", intptr_t(t.get()))));
             import.Add(t.get());
@@ -925,7 +925,7 @@ static NO_INLINE void Test_TransactionSerialization_() {
         FWStringBuilder oss;
 
         forrange(i, 0, test_count) {
-            TRefPtr<T> t = NEW_RTTI(T)();
+            TRefPtr<T> t = NEW_RTTI(T);
             rand.Randomize(t.get(), &import);
             input.Add(t.get());
         }
