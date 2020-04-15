@@ -74,6 +74,14 @@ FCurrentProcess::FCurrentProcess(
     }
 #endif
 
+#if !USE_PPE_FINAL_RELEASE
+    if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-AbortOnAssert"); })) {
+        const FAssertHandler abortHandler = [](const wchar_t*, const wchar_t*, unsigned) -> bool { abort(); };
+        SetAssertionHandler(abortHandler);
+        SetAssertionReleaseHandler(abortHandler);
+    }
+#endif
+
     LogProcessInfos();
     LogMemoryStats();
     LogStorageInfos();
@@ -198,7 +206,7 @@ void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
     {
         auto& platform = CurrentPlatform();
         Format(oss, "platform = {0} ({1})", platform.DisplayName(), CurrentPlatform().FullName()) << Eol;
-        Format(oss, "build configuration = " STRINGIZE(BUILDCONFIG)) << Eol;
+        Format(oss, "build configuration = " STRINGIZE(BUILD_FAMILY)) << Eol;
         Format(oss, "compiled at = " __DATE__ "  " __TIME__) << Eol;
         Format(oss, "   client supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Client)) << Eol;
         Format(oss, "   server supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Server)) << Eol;
