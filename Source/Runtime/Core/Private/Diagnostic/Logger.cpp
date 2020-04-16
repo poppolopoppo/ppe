@@ -276,6 +276,7 @@ public: // ILowLevelLogger
             {
                 FWTextWriter oss(&buf);
                 FormatArgs(oss, format, args);
+                oss << Eos; // null-terminated
             }
 
             log = INPLACE_NEW(buf.Pointer(), FDeferredLog)(scopeAlloc.Heap());
@@ -289,7 +290,7 @@ public: // ILowLevelLogger
             log->Category = &category;
             log->Level = level;
             log->Site = site;
-            log->TextLength = checked_cast<u32>((sizeInBytes - sizeof(FDeferredLog)) / sizeof(wchar_t));
+            log->TextLength = checked_cast<u32>((sizeInBytes - sizeof(FDeferredLog)) / sizeof(wchar_t) - 1/* \0 */);
             log->Bucket = checked_cast<u32>(scopeAlloc.Index);
             log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes);
         }
@@ -541,9 +542,11 @@ void FLogger::Start() {
 
     FUserLogger::Create();
 
-    const auto& proc = FCurrentProcess::Get();
+    // always create the system trace
+    RegisterLogger(FLogger::MakeSystemTrace());
 
     // don't create a log file when running with an attached debugger
+    const auto& proc = FCurrentProcess::Get();
     if (proc.StartedWithDebugger()) {
         RegisterLogger(MakeOutputDebug());
     }
@@ -559,7 +562,6 @@ void FLogger::Start() {
             logPath, proc.ExecutableName() + L".log" });
 
         RegisterLogger(FLogger::MakeRollFile(*logFile));
-
     }
 
     IF_CONSTEXPR(USE_PPE_MEMORY_DEBUGGING) {
@@ -743,6 +745,41 @@ private:
     FBufferedStreamWriter _buffered;
 };
 //----------------------------------------------------------------------------
+#if USE_PPE_PLATFORM_DEBUG
+class FSystemTraceLogger_ final : public ILogger {
+public:
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        switch (level)
+        {
+        case EVerbosity::Debug:
+        case EVerbosity::Verbose:
+            FPlatformDebug::TraceVerbose(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            break;
+
+        case EVerbosity::Info:
+        case EVerbosity::Emphasis:
+            FPlatformDebug::TraceInformation(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            break;
+
+        case EVerbosity::Warning:
+            FPlatformDebug::TraceWarning(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            break;
+        case EVerbosity::Error:
+            FPlatformDebug::TraceError(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            break;
+        case EVerbosity::Fatal:
+            FPlatformDebug::TraceFatal(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            break;
+
+        default:
+            AssertNotImplemented();
+        }
+    }
+
+    virtual void Flush(bool) override final {} // always synched
+};
+#endif //!USE_PPE_PLATFORM_DEBUG
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -772,6 +809,14 @@ PLogger FLogger::MakeAppendFile(const wchar_t* filename) {
 PLogger FLogger::MakeRollFile(const wchar_t* filename) {
     Verify(FPlatformFile::RollFile(filename));
     return MakeAppendFile(filename);
+}
+//----------------------------------------------------------------------------
+PLogger FLogger::MakeSystemTrace() {
+#if USE_PPE_PLATFORM_DEBUG
+    return NEW_REF(Logger, FSystemTraceLogger_);
+#else
+    return PLogger();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

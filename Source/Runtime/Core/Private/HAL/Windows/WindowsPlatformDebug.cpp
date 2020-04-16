@@ -5,6 +5,7 @@
 #if USE_PPE_PLATFORM_DEBUG && defined(PLATFORM_WINDOWS)
 
 #   include "HAL/PlatformProfiler.h"
+#   include "HAL/Windows/TraceLogging.h"
 #   include "HAL/Windows/VSToolsWrapper.h"
 
 namespace PPE {
@@ -56,6 +57,70 @@ void FWindowsPlatformDebug::SetThreadDebugName(const char* name) {
     }
 }
 PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
+// Windows trace logging
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceVerbose(category, timestamp, filename, line, text);
+#else
+    UNUSED(category);
+    UNUSED(timestamp);
+    UNUSED(filename);
+    UNUSED(line);
+    UNUSED(text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceInformation(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceInformation(category, timestamp, filename, line, text);
+#else
+    UNUSED(category);
+    UNUSED(timestamp);
+    UNUSED(filename);
+    UNUSED(line);
+    UNUSED(text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceWarning(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceWarning(category, timestamp, filename, line, text);
+#else
+    UNUSED(category);
+    UNUSED(timestamp);
+    UNUSED(filename);
+    UNUSED(line);
+    UNUSED(text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceError(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceError(category, timestamp, filename, line, text);
+#else
+    UNUSED(category);
+    UNUSED(timestamp);
+    UNUSED(filename);
+    UNUSED(line);
+    UNUSED(text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceFatal(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceFatal(category, timestamp, filename, line, text);
+#else
+    UNUSED(category);
+    UNUSED(timestamp);
+    UNUSED(filename);
+    UNUSED(line);
+    UNUSED(text);
+#endif
+}
+//----------------------------------------------------------------------------
+// #TODO: Windows trace activity
 //----------------------------------------------------------------------------
 void FWindowsPlatformDebug::BeginNamedEvent(u32 uid, const char* name) {
 #if USE_PPE_PLATFORM_PROFILER

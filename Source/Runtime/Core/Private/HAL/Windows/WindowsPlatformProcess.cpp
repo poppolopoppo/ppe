@@ -19,9 +19,10 @@
 #include "HAL/PlatformMisc.h"
 
 #include "HAL/Windows/DbgHelpWrapper.h"
+#include "HAL/Windows/LastError.h"
+#include "HAL/Windows/TraceLogging.h"
 #include "HAL/Windows/VSPerfWrapper.h"
 #include "HAL/Windows/VSToolsWrapper.h"
-#include "HAL/Windows/LastError.h"
 
 #include <Psapi.h>
 #include <shellapi.h>
@@ -208,6 +209,9 @@ void FWindowsPlatformProcess::OnProcessStart(
 
     GIsFirstInstance = MakeNamedMutex_(nullptr);
 
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::Create();
+#endif
 #if USE_PPE_VSTOOLS_WRAPPER
     FVSToolsWrapper::Create();
 #endif
@@ -226,6 +230,9 @@ void FWindowsPlatformProcess::OnProcessShutdown() {
 #endif
 #if USE_PPE_VSTOOLS_WRAPPER
     FVSToolsWrapper::Destroy();
+#endif
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::Destroy();
 #endif
 
     ReleaseNamedMutex_();

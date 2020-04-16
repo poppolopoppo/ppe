@@ -101,6 +101,7 @@ public:
     static PPE_CORE_API PLogger MakeOutputDebug();
     static PPE_CORE_API PLogger MakeAppendFile(const wchar_t* filename);
     static PPE_CORE_API PLogger MakeRollFile(const wchar_t* filename);
+    static PPE_CORE_API PLogger MakeSystemTrace();
 };
 //----------------------------------------------------------------------------
 class ILogger : FLogger, public FRefCountable {
