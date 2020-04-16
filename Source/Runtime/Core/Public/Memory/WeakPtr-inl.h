@@ -8,27 +8,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FWeakRefCountable::FWeakRefCountable()
-:   _cnt(nullptr)
-{}
-//----------------------------------------------------------------------------
+#if USE_PPE_ASSERT
 inline FWeakRefCountable::~FWeakRefCountable() {
     Assert_NoAssume(not _cnt or _cnt->RefCount() == 0);
     Assert_NoAssume(not _cnt or _cnt->SafeRefCount() == 0);
 }
-//----------------------------------------------------------------------------
-inline void AddRef(const FWeakRefCountable* ptr) {
-    ptr->IncStrongRefCount();
-}
-//----------------------------------------------------------------------------
-#if USE_PPE_SAFEPTR
-inline void AddSafeRef(const FWeakRefCountable* ptr) NOEXCEPT {
-    ptr->IncSafeRefCount();
-}
-inline void RemoveSafeRef(const FWeakRefCountable* ptr) NOEXCEPT {
-    ptr->DecSafeRefCount();
-}
-#endif //!WITH_PPE_SAFEPTR
+#endif
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 TRefPtr<T> FWeakRefCountable::NewRefImpl(void* p, deleter_func deleter, _Args&&... args) NOEXCEPT {
@@ -76,8 +61,55 @@ TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
 }
 #endif
 //----------------------------------------------------------------------------
+inline void AddRef(const FWeakRefCountable* ptr) {
+    Assert(ptr);
+    ptr->IncStrongRefCount();
+}
+//----------------------------------------------------------------------------
+inline void AddRefIFP(const FWeakRefCountable* ptr) {
+    Assert(ptr);
+    if (ptr->_cnt) {
+        Assert_NoAssume(ptr->RefCount() > 0); // object must be already *locked* !
+        AddRef(ptr->_cnt.get()); // also needs to keep the counter alive
+        AddRef(ptr);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+void RemoveRefIFP(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT {
+    Assert(ptr);
+    if (ptr->_cnt) {
+        Assert_NoAssume(ptr->_cnt->WeakRefCount() > 0); // counter must be already *locked* !
+        Assert_NoAssume(ptr->_cnt->RefCount() > 0); // object must be already *locked* !
+        RemoveRef(ptr->_cnt.get());
+        RemoveRef(ptr);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool RemoveRefIFP_KeepAlive_ReturnIfReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT {
+    Assert(ptr);
+    if (Likely(ptr->_cnt)) {
+        Assert_NoAssume(ptr->_cnt->WeakRefCount() > 0); // counter must be already *locked* !
+        Assert_NoAssume(ptr->_cnt->RefCount() > 0); // object must be already *locked* !
+        RemoveRef(ptr->_cnt.get());
+        return ptr->DecStrongRefCount_ReturnIfReachZero();
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+#if USE_PPE_SAFEPTR
+inline void AddSafeRef(const FWeakRefCountable* ptr) NOEXCEPT {
+    ptr->IncSafeRefCount();
+}
+inline void RemoveSafeRef(const FWeakRefCountable* ptr) NOEXCEPT {
+    ptr->DecSafeRefCount();
+}
+#endif //!WITH_PPE_SAFEPTR
+//----------------------------------------------------------------------------
 template <typename T>
 NO_INLINE void OnStrongRefCountReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT {
+    Assert(ptr);
     Assert_NoAssume(0 == ptr->RefCount());
 #if USE_PPE_SAFEPTR
     Assert_NoAssume(0 == ptr->SafeRefCount());

@@ -7,7 +7,7 @@
 #include "Meta/ThreadResource.h"
 
 #define _FWD_WEAKPTR_IMPL(T, _PREFIX)                                   \
-    class CONCAT(_PREFIX, T);                                           \
+    _FWD_REFPTR_IMPL(T, _PREFIX);                                       \
     typedef PPE::TWeakPtr<CONCAT(_PREFIX, T)>           CONCAT(W,  T);  \
     typedef PPE::TWeakPtr<const CONCAT(_PREFIX, T)>     CONCAT(WC, T)
 
@@ -21,9 +21,9 @@ namespace PPE {
 template <typename T>
 class TWeakPtr;
 //----------------------------------------------------------------------------
-class FWeakRefCountable;
-//----------------------------------------------------------------------------
 FWD_REFPTR(WeakRefCounter);
+//----------------------------------------------------------------------------
+FWD_WEAKPTR(WeakRefCountable);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -31,7 +31,11 @@ class FWeakRefCounter : public FRefCountable, Meta::FNonCopyableNorMovable {
 public:
 #if USE_PPE_ASSERT
     ~FWeakRefCounter() {
-        Assert_NoAssume(0 == _strongRefCount);
+        Assert_NoAssume(0 == RefCount());
+        Assert_NoAssume(0 == WeakRefCount());
+#   if USE_PPE_SAFEPTR
+        Assert_NoAssume(0 == SafeRefCount());
+#   endif
     }
 #endif
 
@@ -128,8 +132,11 @@ using TEnableIfWeakRefCountable = Meta::TEnableIf< IsWeakRefCountable<T>::value,
 //----------------------------------------------------------------------------
 class PPE_CORE_API FWeakRefCountable {
 public:
-    FWeakRefCountable();
+    FWeakRefCountable() = default;
+
+#if USE_PPE_ASSERT
     ~FWeakRefCountable();
+#endif
 
     FWeakRefCountable(FWeakRefCountable&& ) : FWeakRefCountable() {}
     FWeakRefCountable& operator =(FWeakRefCountable&& ) { return (*this); }
@@ -157,6 +164,13 @@ public:
 
     static void operator delete(void* p) = delete; // always use the deleter stored inside the counter
 
+    // still allows inplace new
+    static void* operator new(std::size_t, void* p) { return p; }
+    static void operator delete(void*, void*) { }
+
+    static void* operator new[](std::size_t, void* p) { return p; }
+    static void operator delete[](void*, void*) {}
+
     // provide a custom allocator, deleter will be exported in the counter
     template <typename T, typename _Allocator, typename... _Args>
     friend TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args);
@@ -173,6 +187,13 @@ protected:
     friend void AddRef(const FWeakRefCountable* ptr);
     template <typename T>
     friend void OnStrongRefCountReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
+
+    // manipulate if ref count, only if *already* ref-counted
+    friend void AddRefIFP(const FWeakRefCountable* ptr);
+    template <typename T>
+    friend void RemoveRefIFP(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
+    template <typename T>
+    friend bool RemoveRefIFP_KeepAlive_ReturnIfReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
 
     template <typename T>
     friend void RemoveRef(T* ptr);
@@ -203,13 +224,6 @@ private:
         Assert_NoAssume(_cnt->_holder == this);
         return _cnt->_deleter;
     }
-
-    // still allows inplace new, but only for friends
-    static void* operator new(std::size_t, void* p) { return p; }
-    static void operator delete(void*, void*) { }
-
-    static void* operator new[](std::size_t, void* p) { return p; }
-    static void operator delete[](void*, void*) {}
 
     // forward ref counting to internal counter
     void IncWeakRefCount() const NOEXCEPT { _cnt->Weak_IncWeakRefCount(); }

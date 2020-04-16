@@ -56,7 +56,7 @@ inline bool FRefCountable::DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT 
         return true;
     }
     else {
-        Assert(n > 0);
+        Assert_NoAssume(n > 0);
         return false;
     }
 }
@@ -81,8 +81,14 @@ TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args) {
 }
 #endif
 //----------------------------------------------------------------------------
+inline void AddRef(const FRefCountable* ptr) {
+    Assert(ptr);
+    ptr->IncStrongRefCount();
+}
+//----------------------------------------------------------------------------
 template <typename T>
 NO_INLINE void OnStrongRefCountReachZero(TEnableIfRefCountable<T>* ptr) NOEXCEPT {
+    Assert(ptr);
     Assert_NoAssume(0 == ptr->RefCount());
 #if USE_PPE_SAFEPTR
     Assert_NoAssume(0 == ptr->SafeRefCount());
@@ -91,10 +97,6 @@ NO_INLINE void OnStrongRefCountReachZero(TEnableIfRefCountable<T>* ptr) NOEXCEPT
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline void AddRef(const FRefCountable* ptr) {
-    ptr->IncStrongRefCount();
-}
 //----------------------------------------------------------------------------
 template <typename T>
 void RemoveRef(T* ptr) {
