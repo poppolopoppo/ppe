@@ -6,6 +6,14 @@
 #include <functional>
 #include <type_traits>
 
+#if USE_PPE_MEMORY_DEBUGGING
+#   define USE_PPE_MEMORY_CHECK_INITIALIZATION  (1) // %_NOCOMMIT%
+#   define USE_PPE_MEMORY_CHECK_NECROPHILIA     (1) // %_NOCOMMIT%
+#else
+#   define USE_PPE_MEMORY_CHECK_INITIALIZATION  (USE_PPE_ASSERT) // %_NOCOMMIT%
+#   define USE_PPE_MEMORY_CHECK_NECROPHILIA     (USE_PPE_ASSERT) // %_NOCOMMIT%
+#endif
+
 #define PPE_ASSERT_TYPE_IS_POD(T) \
     static_assert(::PPE::Meta::TIsPod_v<T>, STRINGIZE(T) " is not a POD type");
 #define PPE_ASSUME_TYPE_AS_POD(...) \
@@ -369,7 +377,7 @@ void Construct(T* p) {
     Assume(p);
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
-#if USE_PPE_MEMORY_DEBUGGING
+#if USE_PPE_MEMORY_CHECK_INITIALIZATION
     ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
 #endif
     INPLACE_NEW(p, T)();
@@ -378,7 +386,7 @@ void Construct(T* p) {
 template <typename T>
 void Construct(T* p, T&& rvalue) {
     Assume(p);
-#if USE_PPE_MEMORY_DEBUGGING
+#if USE_PPE_MEMORY_CHECK_INITIALIZATION
     ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
 #endif
     INPLACE_NEW(p, T)(std::move(rvalue));
@@ -387,7 +395,7 @@ void Construct(T* p, T&& rvalue) {
 template <typename T>
 void Construct(T* p, const T& other) {
     Assume(p);
-#if USE_PPE_MEMORY_DEBUGGING
+#if USE_PPE_MEMORY_CHECK_INITIALIZATION
     ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
 #endif
     INPLACE_NEW(p, T)(other);
@@ -396,7 +404,7 @@ void Construct(T* p, const T& other) {
 template <typename T, typename... _Args>
 void Construct(T* p, _Args&&... args) {
     Assume(p);
-#if USE_PPE_MEMORY_DEBUGGING
+#if USE_PPE_MEMORY_CHECK_INITIALIZATION
     ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
 #endif
     INPLACE_NEW(p, T){ std::forward<_Args>(args)... };
@@ -408,7 +416,7 @@ void Destroy(T* p) NOEXCEPT {
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
     p->~T();
-#if USE_PPE_MEMORY_DEBUGGING
+#if USE_PPE_MEMORY_CHECK_NECROPHILIA
     ::memset(p, 0xDD, sizeof(T)); // necrophilia detection
 #endif
 }
