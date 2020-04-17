@@ -20,15 +20,14 @@ namespace PPE {
 class FAtomicSpinLock : Meta::FNonCopyableNorMovable {
     std::atomic<bool> _locked{ false };
 
-#if USE_PPE_ASSERT
 public:
+#if USE_PPE_ASSERT
     FAtomicSpinLock() = default;
     ~FAtomicSpinLock() NOEXCEPT {
-        Assert_NoAssume(TryLock());
+        Assert_Lightweight(!_locked);
     }
 #endif
 
-public:
     void Lock() NOEXCEPT {
         for (size_t backoff = 0; !TryLock(); )
             FPlatformProcess::SleepForSpinning(backoff);
