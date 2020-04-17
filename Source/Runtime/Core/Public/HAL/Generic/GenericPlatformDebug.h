@@ -65,6 +65,7 @@ public: // profiling
 
 #else
 #   define PPE_DEBUG_BREAK() NOOP()
+#   define PPE_DEBUG_CRASH() NOOP()
 #   define PPE_DECLSPEC_ALLOCATOR()
 
 #endif //!USE_PLATFORM_DEBUG
