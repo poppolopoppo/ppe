@@ -46,6 +46,9 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 
 #   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 
+#   define Assert_Lightweight(...) \
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_DEBUG_CRASH() ) // when we need to break immediately
+
 #   define Verify(...) AssertMessage(WIDESTRING(#__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 //----------------------------------------------------------------------------
@@ -61,6 +64,8 @@ inline void SetAssertionHandler(FAssertHandler ) {}
 #   endif
 
 #   define AssertMessage_NoAssume(_Message, ...) NOOP()
+
+#   define Assert_Lightweight(...) NOOP()
 
 #   define Verify(...) (void)(__VA_ARGS__)
 
