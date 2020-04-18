@@ -177,83 +177,87 @@ module Build
         return Build.make_persistent_opt(var)
     end
 
+    def self.make_pgm_options(opts, full=false)
+        opts.banner = "Usage: #{File.basename(Build::Script)} command [options] [args]"
+
+        opts.separator ""
+        opts.separator "Commands:"
+        Commands.sort_by(&:name).each do |cmd|
+            opts.on("--#{cmd.name}", cmd.desc) do
+                Build.defer_command(cmd)
+            end
+        end
+
+        vars = OptionVariables.sort_by(&:name)
+
+        opts.separator ""
+        opts.separator "Command options:"
+        vars.each do |var|
+            next if var.persistent
+            var.parse(opts)
+        end
+
+        opts.separator ""
+        opts.separator "Persistent config:"
+        vars.each do |var|
+            next unless var.persistent
+            var.parse(opts)
+        end
+
+        opts.separator ""
+        opts.separator "Common options:"
+
+        opts.on("-w PATH", "--workspace PATH", "Set workspace path") do |path|
+            Build.set_workspace_path(path)
+        end
+        opts.on("-c FILE", "--config FILE", "Set config file") do |fname|
+            Build.load_options(fname)
+            PersistentConfig[:file] = fname
+        end
+        opts.on("--clean", "Clear persistent data") do |fname|
+            $BuildClean = true
+            PersistentConfig[:data] = {}
+            PersistentConfig[:vars].each do |name, var|
+                var.default!
+            end
+        end
+
+        opts.separator ''
+
+        opts.on("-v", "--verbose", "Run verbosely") do
+            Log.verbosity(:verbose)
+        end
+        opts.on("-q", "--quiet", "Run quietly") do
+            Log.verbosity(:error)
+        end
+        opts.on("-d", "--debug", "Run with dbeug") do
+            $DEBUG = true
+            Log.verbosity(:debug)
+        end
+        opts.on("-T", "--trace", "Trace program execution") do
+            $show_caller = true
+        end
+        opts.on("-t", "--timestamp", "Show log timestamp") do
+            $show_timestamp = true
+        end
+
+        opts.separator ''
+
+        opts.on("--version", "Show build version") do
+            Log.info("Version: %s", Build::VERSION)
+            exit
+        end
+        opts.on("-h", "--help", "Show this message") do
+            Log.raw opts
+            exit
+        end
+
+        opts.separator ''
+    end
+
     def self.parse_options(full=false)
         Args.replace(OptionParser.new do |opts|
-            opts.banner = "Usage: #{File.basename(Build::Script)} command [options] [args]"
-
-            opts.separator ""
-            opts.separator "Commands:"
-            Commands.sort_by(&:name).each do |cmd|
-                opts.on("--#{cmd.name}", cmd.desc) do
-                    Build.defer_command(cmd)
-                end
-            end
-
-            vars = OptionVariables.sort_by(&:name)
-
-            opts.separator ""
-            opts.separator "Command options:"
-            vars.each do |var|
-                next if var.persistent
-                var.parse(opts)
-            end
-
-            opts.separator ""
-            opts.separator "Persistent config:"
-            vars.each do |var|
-                next unless var.persistent
-                var.parse(opts)
-            end
-
-            opts.separator ""
-            opts.separator "Common options:"
-
-            opts.on("-w PATH", "--workspace PATH", "Set workspace path") do |path|
-                Build.set_workspace_path(path)
-            end
-            opts.on("-c FILE", "--config FILE", "Set config file") do |fname|
-                Build.load_options(fname)
-                PersistentConfig[:file] = fname
-            end
-            opts.on("--clean", "Clear persistent data") do |fname|
-                $BuildClean = true
-                PersistentConfig[:data] = {}
-                PersistentConfig[:vars].each do |name, var|
-                    var.default!
-                end
-            end
-
-            opts.separator ''
-
-            opts.on("-v", "--verbose", "Run verbosely") do
-                Log.verbosity(:verbose)
-            end
-            opts.on("-q", "--quiet", "Run quietly") do
-                Log.verbosity(:error)
-            end
-            opts.on("-d", "--debug", "Run with dbeug") do
-                $DEBUG = true
-                Log.verbosity(:debug)
-            end
-            opts.on("-T", "--trace", "Trace program execution") do
-                $show_caller = true
-            end
-            opts.on("-t", "--timestamp", "Show log timestamp") do
-                $show_timestamp = true
-            end
-
-            opts.separator ''
-
-            opts.on("--version", "Show build version") do
-                Log.info("Version: %s", Build::VERSION)
-                exit
-            end
-            opts.on("-h", "--help", "Show this message") do
-                Log.raw opts
-                exit
-            end
-
-            opts.separator ''
+            Build.make_pgm_options(opts, full)
         end.parse!)
     end
 

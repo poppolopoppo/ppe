@@ -14,7 +14,7 @@ require 'set'
 
 module Build
 
-    make_command(:genhint, 'Generate cpp.hint for Intellisense') do |&namespace|
+    make_command(:cpphint, 'Generate cpp.hint for Intellisense') do |&namespace|
         environments = Build.fetch_environments
         targets = namespace[].select(*Build::Args)
 
@@ -22,7 +22,7 @@ module Build
         parser = CppHint::DefineParser.new(resolver)
 
         environments.each do |env|
-            targets.collect do |target|
+            targets.each do |target|
                 next unless target.executable? or target.library?
                 expanded = env.expand(target)
                 expanded.defines.each do |it|
@@ -41,9 +41,14 @@ module Build
         end
 
         cpphint = File.join($SourcePath, 'cpp.hint')
-        Log.info('Hint: generating CPP hint file wiht %d macros (%d disruptives)', resolver.macros.length, resolver.disruptives.length)
+        Log.info('Hint: generating CPP hint file with %d macros (%d disruptives)', resolver.macros.length, resolver.disruptives.length)
 
         File.open(cpphint, 'w') do |fd|
+            fd.puts <<~HEADER
+// Hint files help the Visual Studio IDE interpret Visual C++ identifiers
+// such as names of functions and macros.
+// For more information see https://go.microsoft.com/fwlink/?linkid=865984
+            HEADER
             resolver.disruptives.each do |macro|
                 decl = "#define %s%s" % [ macro.id, macro.params ]
                 if macro.unbalanced
