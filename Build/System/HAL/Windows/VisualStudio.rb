@@ -120,6 +120,8 @@ module Build
             end
 
             unless nopdb
+                facet.linkerOptions << '/fastfail' # better error reporting
+
                 artefact = env.target_artefact_path(target)
                 pdb_path = env.target_debug_path(artefact)
                 facet.linkerOptions << "/PDB:\"#{pdb_path}\""
