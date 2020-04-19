@@ -125,7 +125,11 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 } //!namespace PPE
 
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
-    _API ::PPE::FLoggerCategory LOG_CATEGORY_GET(_NAME){ WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY };
+    _API ::PPE::FLoggerCategory& LOG_CATEGORY_GET(_NAME) { \
+        ONE_TIME_INITIALIZE(::PPE::FLoggerCategory, GLogCategory, \
+            WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY ); \
+        return GLogCategory; \
+    }
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
 

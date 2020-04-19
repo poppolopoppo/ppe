@@ -503,7 +503,7 @@ public: // export table results
         const bool detailed = (table.dim() < 5);
         WTxt(table, sb, detailed);
         FLogger::Log(
-            GLogCategory_Benchmark,
+            LOG_CATEGORY_GET(Benchmark),
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             sb.ToString() );

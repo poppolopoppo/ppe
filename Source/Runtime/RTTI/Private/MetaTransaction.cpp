@@ -108,7 +108,7 @@ void ReportLoadedTransaction_(
             << Eol;
 
         FLogger::Log(
-            GLogCategory_RTTI,
+            LOG_CATEGORY_GET(RTTI),
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             oss.ToString());
@@ -127,7 +127,7 @@ void ReportLoadedTransaction_(
             << Eol;
 
         FLogger::Log(
-            GLogCategory_RTTI,
+            LOG_CATEGORY_GET(RTTI),
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             oss.ToString());
@@ -145,7 +145,7 @@ void ReportLoadedTransaction_(
             << Eol;
 
         FLogger::Log(
-            GLogCategory_RTTI,
+            LOG_CATEGORY_GET(RTTI),
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             oss.ToString());
@@ -164,7 +164,7 @@ void ReportLoadedTransaction_(
             << Eol;
 
         FLogger::Log(
-            GLogCategory_RTTI,
+            LOG_CATEGORY_GET(RTTI),
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             oss.ToString());

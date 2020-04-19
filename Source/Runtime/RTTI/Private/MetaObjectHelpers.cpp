@@ -487,7 +487,7 @@ private:
         }
 
         FLogger::Log(
-            GLogCategory_RTTI,
+            LOG_CATEGORY_GET(RTTI),
             FLogger::EVerbosity::Error,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             oss.ToString() );
