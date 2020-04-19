@@ -116,7 +116,7 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
         _offset = _capacity = 0;
     }
 
-    return (_offset + _offset);
+    return (_origin + _offset);
 }
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
