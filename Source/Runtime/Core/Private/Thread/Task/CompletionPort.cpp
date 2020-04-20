@@ -76,9 +76,7 @@ FCompletionPort::~FCompletionPort() {
 #endif //!USE_PPE_ASSERT
 //----------------------------------------------------------------------------
 void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPriority priority) NOEXCEPT {
-    // check that the port is still running before allocating and yielding to a new fiber
-    if (Unlikely(_countDown == CP_Finished))
-        return;
+    // /!\ DO NOT EARLY OUT HERE, WE *NEED* TO LOCK ONCE TO BE THREAD-SAFE !!
 
     // *IMPORTANT* once in the waiting queue, any decref could resume the fiber,
     // so when a fiber is added it *MUST* be dormant and ready to be resumed.
@@ -116,6 +114,9 @@ void FCompletionPort::Start(size_t n) NOEXCEPT {
     Assert(n > 0);
     Assert_NoAssume(CP_NotReady == _countDown);
 
+    // make sure port is kept alive while working with it
+    AddRefIFP(this); // increment only if already ref-counted
+
 #if USE_PPE_COMPLETIONPORT_LIFETIME_CHECKS
     GCompletionsPorts.Add(*this);
 #endif
@@ -131,7 +132,7 @@ void FCompletionPort::Start(size_t n) NOEXCEPT {
 void FCompletionPort::OnJobComplete() {
     Assert_NoAssume(_countDown > 0);
 
-    const size_t n = atomic_fetch_sub_explicit(&_countDown, 1, std::memory_order_relaxed);
+    const int n = atomic_fetch_sub_explicit(&_countDown, 1, std::memory_order_release);
     if (1 == n) {
         OnCountDownReachedZero_(this);
     }
@@ -140,24 +141,51 @@ void FCompletionPort::OnJobComplete() {
     }
 }
 //----------------------------------------------------------------------------
+void FCompletionPort::ResetToNotReady_AssumeFinished_() {
+    Assert_Lightweight(CP_Finished == _countDown);
+
+    ONLY_IF_ASSERT(const FAtomicSpinLock::FScope scopeLock(_barrier));
+
+    Assert_NoAssume(Finished());
+    Assert_NoAssume(_queue.empty());
+    Assert_NoAssume(_children.empty());
+
+#if USE_PPE_ASSERT
+    int expected = CP_Finished;
+    Verify(_countDown.compare_exchange_strong(expected, CP_NotReady));
+#else
+    _countDown = CP_NotReady;
+#endif
+}
+//----------------------------------------------------------------------------
 void FCompletionPort::OnCountDownReachedZero_(FCompletionPort* port) {
     Assert(port);
 
+    PCompletionPort keepAlive;
     decltype(_queue) localQueue;
     decltype(_children) localChildren;
     {
         const FAtomicSpinLock::FScope scopeLock(port->_barrier);
         Assert_NoAssume(port->_countDown >= 0);
 
+        AddRefIFP<FCompletionPort>(keepAlive, port);
+
         int expected = 0;
         if (port->_countDown.compare_exchange_weak(expected, CP_Finished,
-                std::memory_order_release, std::memory_order_relaxed)) {
-            Assert_NoAssume(port->Finished());
+                std::memory_order_acquire, std::memory_order_relaxed)) {
+            Assert_NoAssume(port->Finished()); // sanity check
+            Assert_NoAssume(port->_queue.size() < 100); // sanity check
+            Assert_NoAssume(port->_children.size() < 100); // sanity check
 
             localQueue = std::move(port->_queue);
             localChildren = std::move(port->_children);
 
-            ONLY_IF_ASSERT(port = nullptr);
+            Assert_NoAssume(port->_queue.empty());
+            Assert_NoAssume(port->_children.empty());
+
+            // release our internal ref (if ref-counted), see Start()
+            RemoveRefIFP<FCompletionPort>(port); // won't release allocation thx to 'keepAlive'
+            // /!\ beware that we still need to unlock the barrier here !
         }
         else {
             Assert_NoAssume(expected > 0);
@@ -165,12 +193,17 @@ void FCompletionPort::OnCountDownReachedZero_(FCompletionPort* port) {
         }
     }
 
-#if USE_PPE_COMPLETIONPORT_LIFETIME_CHECKS
-    GCompletionsPorts.Remove(*port);
-#endif
+    // release completion port immediately (if ref-counted)
+    keepAlive.reset(); // must happen *outside* the barrier !
+    ONLY_IF_ASSERT(port = nullptr); // port could be destroyed right after this barrier !
 
-    if (not localQueue.empty())
+    // process collected data
+    if (not localQueue.empty()) {
+        std::stable_sort(localQueue.begin(), localQueue.end(), [](const FInteruptedTask& lhs, const FInteruptedTask& rhs) NOEXCEPT{
+            return (lhs.Priority() < rhs.Priority());
+        });
         FInteruptedTask::Resume(localQueue.MakeView());
+    }
 
     // decrement the ref of potentially attached parent counters
     // only need to decrement the parents once, since their _countDown was incremented from 1 only once
@@ -188,10 +221,11 @@ FAggregationPort::FAggregationPort() NOEXCEPT {
 bool FAggregationPort::Attach(FCompletionPort* dep) {
     Assert(dep);
     Assert_NoAssume(dep != &_port);
-    Assert_NoAssume(_port.Running());
+    //Assert_NoAssume(_port.Running()); // not mandatory
 
     // early out before locking to avoid contention when finished
     if (FCompletionPort::CP_Finished != dep->_countDown) {
+
         // needs locking to avoid releasing the lock before we finish attaching
         const FAtomicSpinLock::FScope scopeLock(dep->_barrier);
 
@@ -215,8 +249,7 @@ bool FAggregationPort::Attach(FAggregationPort* other) {
 FCompletionPort* FAggregationPort::Increment(size_t n) NOEXCEPT {
     Assert(_port.Running());
 
-    // increments the port, safe since we force lifetime until Join()
-
+    // increments the port, safe since we force lifetime until Join())
     _port._countDown += checked_cast<int>(n);
 
     return (&_port);
@@ -235,8 +268,7 @@ void FAggregationPort::JoinAndReset(ITaskContext& ctx) {
     Join(ctx);
 
     // reset the completion in-place
-    Meta::Destroy(&_port);
-    Meta::Construct(&_port);
+    _port.ResetToNotReady_AssumeFinished_();
 
     // need to keep the port alive until Join()
     _port.Start(1);

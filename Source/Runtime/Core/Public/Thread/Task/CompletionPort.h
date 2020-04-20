@@ -6,6 +6,7 @@
 
 #include "Container/Vector.h"
 #include "Memory/MemoryView.h"
+#include "Memory/WeakPtr.h"
 #include "Meta/PointerWFlags.h"
 #include "Thread/AtomicSpinLock.h"
 
@@ -47,10 +48,11 @@ PPE_ASSUME_TYPE_AS_POD(FInteruptedTask)
 // This is the main synchronization API :
 //  - use only when you need to wait for task(s) ;
 //  - must be handled through ITaskContext ;
-//  - value semantics, but not copyable nor movable ;
+//  - supports weakref counting for thread-safe attachment ;
 //  - see FAggregationPort bellow to wait for tasks already in-flight.
 //----------------------------------------------------------------------------
-class PPE_CORE_API FCompletionPort : Meta::FNonCopyableNorMovable {
+FWD_WEAKPTR(CompletionPort);
+class PPE_CORE_API FCompletionPort : public FWeakRefCountable, Meta::FNonCopyableNorMovable {
 public:
     FCompletionPort() = default;
 
@@ -78,9 +80,10 @@ private:
     std::atomic<int> _countDown{ CP_NotReady };
 
     FAtomicSpinLock _barrier;
-
     VECTORINSITU(Task, FInteruptedTask, 8) _queue;
     VECTORINSITU(Task, FCompletionPort*, 8) _children;
+
+    void ResetToNotReady_AssumeFinished_();
 
     static NO_INLINE void OnCountDownReachedZero_(FCompletionPort* port);
 };

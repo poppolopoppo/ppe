@@ -56,7 +56,7 @@ template <typename T, typename... _Args>
 TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
     return FWeakRefCountable::NewRefImpl<T>(
         PPE::malloc(sizeof(T)),
-        &PPE::free,
+        [](void* p) NOEXCEPT { PPE::free(p); },
         std::forward<_Args>(args)... );
 }
 #endif
@@ -72,6 +72,15 @@ inline void AddRefIFP(const FWeakRefCountable* ptr) {
         Assert_NoAssume(ptr->RefCount() > 0); // object must be already *locked* !
         AddRef(ptr->_cnt.get()); // also needs to keep the counter alive
         AddRef(ptr);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+void AddRefIFP(TRefPtr<T>& pRefPtr, T* ptr) {
+    Assert(ptr);
+    if (ptr->_cnt) {
+        Assert_NoAssume(ptr->RefCount() > 0); // object must be already *locked* !
+        pRefPtr.reset(ptr);
     }
 }
 //----------------------------------------------------------------------------

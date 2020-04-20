@@ -191,6 +191,8 @@ protected:
     // manipulate if ref count, only if *already* ref-counted
     friend void AddRefIFP(const FWeakRefCountable* ptr);
     template <typename T>
+    friend void AddRefIFP(TRefPtr<T>& pRefPtr, TEnableIfWeakRefCountable<T>* ptr);
+    template <typename T>
     friend void RemoveRefIFP(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
     template <typename T>
     friend bool RemoveRefIFP_KeepAlive_ReturnIfReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;

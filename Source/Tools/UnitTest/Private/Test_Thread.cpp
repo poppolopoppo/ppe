@@ -19,6 +19,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/RefPtr.h"
+#include "Memory/WeakPtr.h"
 #include "Misc/Event.h"
 #include "Misc/Function.h"
 #include "Time/DateTime.h"
@@ -196,10 +197,9 @@ struct FGraphNode {
     int Depth{ 0 };
 
     std::atomic<int> Revision{ 0 };
-    std::atomic<void*> UserData2{ 0 };
     void* UserData{ 0 };
 
-    FAtomicReadWriteLock RWLock;
+    WWeakRefCountable Payload;
 
     FTimestamp Timestamp;
     VECTOR(Task, FGraphNode*) Dependencies;
@@ -403,87 +403,26 @@ NO_INLINE void Test_Graph_Incremental_(FGraph& g) {
     });
 }
 //----------------------------------------------------------------------------
-struct FOutOfCoreBuilder_ : Meta::FNonCopyableNorMovable {
-    FGraph* Graph;
-    FAggregationPort WaitSink;
+struct FPackedRevision {
+    struct FUnpack {
+        STATIC_ASSERT(sizeof(int) == sizeof(i32));
+        int Ord : 31;
+        int Uninitialized : 1;
+    };
 
-    VECTOR(Generation, FCompletionPort) CompletionPorts;
+    union {
+        int Packed;
+        FUnpack Unpacked;
+    };
 
-    FOutOfCoreBuilder_()
-    :   Graph(nullptr) {
-        WaitSink.Join(ITaskContext::Get());
-        Assert_NoAssume(WaitSink.Finished());
+    FPackedRevision(int ord, bool ready) {
+        Unpacked.Ord = ord;
+        Unpacked.Uninitialized = (ready ? 0 : 1);
     }
 
-    void Build(ITaskContext& ctx, FGraph& g) {
-        Graph = &g;
-        Graph->Reset();
-
-        CompletionPorts.resize_AssumeEmpty(g.Nodes.size());
-
-        forrange(i, 0, g.Nodes.size())
-            g.Nodes[i]->UserData = (&CompletionPorts[i]);
-
-        BatchBuild(ctx, g.Nodes);
-
-        CompletionPorts.clear_ReleaseMemory();
-
-        forrange(i, 0, g.Nodes.size())
-            g.Nodes[i]->UserData = nullptr;
-
-        g.OnBuildFinished(L"OutOfOrder");
+    operator int() const {
+        return  Packed;
     }
-
-private:
-    void BatchBuild(ITaskContext& ctx, const TMemoryView<FGraphNode* const>& nodes) {
-        Assert(not nodes.empty());
-
-        FAggregationPort port;
-
-        for (FGraphNode* const node : nodes) {
-            FCompletionPort* const completionPort = static_cast<FCompletionPort*>(node->UserData);
-
-            int rev = node->Revision;
-            if (rev != Graph->Revision && node->Revision.compare_exchange_weak(rev, Graph->Revision)) {
-                ctx.Run(completionPort,
-                    FTaskFunc::Bind<&FOutOfCoreBuilder_::AsyncWork>(this, node),
-                    node->Dependencies.empty()
-                        ? ETaskPriority::High
-                        : ETaskPriority::Normal );
-            }
-
-            port.Attach(completionPort);
-        }
-
-        port.Join(ctx);
-    }
-
-    void AsyncWork(ITaskContext& ctx, FGraphNode* node) {
-        Assert(node);
-        Assert_NoAssume(node->UserData != this);
-
-        Graph->WorkerBegin();
-
-        if (not node->Dependencies.empty())
-            BatchBuild(ctx, node->Dependencies);
-
-        node->Build(ctx);
-        node->UserData = &WaitSink;
-
-        Graph->WorkerEnd();
-    }
-
-};
-NO_INLINE void Test_Graph_OutOfCore_(FGraph& g) {
-    FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
-        FOutOfCoreBuilder_ builder;
-        builder.Build(ctx, g);
-    });
-}
-//----------------------------------------------------------------------------
-class FGraphCompletionBucket : public FRefCountable {
-public:
-    SPARSEARRAY_INSITU(Generation, FCompletionPort) children;
 };
 struct FOutOfCoreBuilder_Incremental_ : Meta::FNonCopyableNorMovable {
     FGraph* Graph;
@@ -511,54 +450,64 @@ private:
             return ETaskPriority::Low;
     }
 
+    static PCompletionPort MakeBuildPort() {
+        return NEW_REF(Generation, FCompletionPort);
+    }
+
+    void LaunchBuild(ITaskContext& ctx, FAggregationPort* batch, FGraphNode& node) {
+        PCompletionPort port{ MakeBuildPort() };
+        node.Payload.reset(port);
+
+        Verify(batch->Attach(port.get()));
+
+        ctx.Run(port.get(),
+            FTaskFunc::Bind<&FOutOfCoreBuilder_Incremental_::AsyncWork>(this, &node),
+            PriorityFromArity_(node.Dependencies.size()));
+    }
+
     void BatchBuild(ITaskContext& ctx, const TMemoryView<FGraphNode* const>& nodes) {
         Assert(not nodes.empty());
 
-        FAggregationPort port;
-        SPARSEARRAY_INSITU(Generation, FCompletionPort) children;
+        FAggregationPort batch;
 
-        FCompletionPort* tmp = nullptr;
-        const int globalRev = Graph->Revision;
+        const FPackedRevision readyRev{ Graph->Revision, true };
+        const FPackedRevision unreadyRev{ Graph->Revision, false };
 
         for (FGraphNode* const node : nodes) {
-            if (globalRev != node->Revision) {
-                if (not tmp)
-                    tmp = &children.Add();
+            int expectedRev = node->Revision.load(std::memory_order_relaxed);
+            if (expectedRev != readyRev) {
+                if (expectedRev != unreadyRev &&
+                    node->Revision.compare_exchange_strong(expectedRev, unreadyRev) ) {
+                    LaunchBuild(ctx, &batch, *node);
+                    node->Revision.store(readyRev, std::memory_order_release);
+                    continue;
+                }
+                else {
+                    size_t backoff = 0;
 
-                const FAtomicReadWriteLock::FReaderScope readScope(node->RWLock);
+                    for (;;) {
+                        const int expected = node->Revision.load(std::memory_order_relaxed);
+                        if (expected == readyRev)
+                            break;
 
-                if (globalRev != node->Revision) {
-                    void* usr = nullptr;
-                    if (node->UserData2.compare_exchange_weak(usr, tmp)) {
-                        ctx.Run(tmp,
-                            FTaskFunc::Bind<&FOutOfCoreBuilder_Incremental_::AsyncWork>(this, node),
-                            PriorityFromArity_(node->Dependencies.size()) );
-
-                        usr = tmp;
-                        tmp = nullptr;
+                        Assert_NoAssume(unreadyRev == expected);
+                        FPlatformProcess::SleepForSpinning(backoff);
                     }
-
-                    port.Attach(static_cast<FCompletionPort*>(usr));
-
-                    Assert_NoAssume(globalRev == Graph->Revision);
                 }
             }
+
+            Assert_NoAssume(node->Revision == readyRev);
+
+            PWeakRefCountable payload;
+            if (node->Payload.TryLock(&payload))
+                batch.Attach(static_cast<FCompletionPort*>(payload.get()));
         }
 
-        port.Join(ctx);
-
-        for (FGraphNode* const node : nodes) {
-            int nodeRev = node->Revision;
-            if (nodeRev != globalRev && node->Revision.compare_exchange_weak(nodeRev, globalRev)) {
-                const FAtomicReadWriteLock::FWriterScope readScope(node->RWLock);
-                node->UserData2 = nullptr;
-            }
-        }
+        batch.Join(ctx);
     }
 
     void AsyncWork(ITaskContext& ctx, FGraphNode* node) {
         Assert(node);
-        Assert(node->Revision != Graph->Revision);
 
         Graph->WorkerBegin();
 
@@ -585,14 +534,13 @@ NO_INLINE void Test_Graph_ParallelExecution_() {
 
         Test_Graph_Preprocess_(g);
         Test_Graph_Incremental_(g);
-        Test_Graph_OutOfCore_(g);
         Test_Graph_OutOfCore_Incremental_(g);
     }
 #if 0 //%_NOCOMMIT%
     {
         forrange(i, 0, 1000) {
             FGraph g;
-            g.Randomize(4096, 20);
+            g.Randomize(10000, 20);
 
             forrange(j, 0, 30)
                 Test_Graph_OutOfCore_Incremental_(g);
