@@ -45,7 +45,7 @@
 #define PPE_RUN_BENCHARMK_ALLTESTS      (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_MULTITHREADED (1) // %_NOCOMMIT%
-#define PPE_DONT_USE_STD_UNORDEREDSET   (0) // %_NOCOMMIT%
+#define PPE_DONT_USE_STD_UNORDEREDSET   (1) // %_NOCOMMIT%
 #define USE_PPE_CONTAINERS_LONGRUN      (0) // %_NOCOMMIT%
 #define USE_PPE_CONTAINERS_MEMOIZER     (0) // %_NOCOMMIT%
 #define USE_PPE_CONTAINERS_DEBUGGING    (0) // %_NOCOMMIT%
@@ -1229,7 +1229,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SSEHashSet3", set, input);
         }
 #endif
-#if 0//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TSSEHashSet4<T> set;
             bm.Run("SSEHashSet4", set, input);
