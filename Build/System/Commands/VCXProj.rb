@@ -127,6 +127,9 @@ module Build
                 set!('ProjectInputPaths', $BuildPath)
                 set!('ProjectAllowedFileExtensions', %w{ *.exe *.rb *.yml })
                 set!('ProjectConfigs', projectConfigs)
+                set!('ProjectFiles', [
+                    # VS will include automatically every .natvis referenced in the solution
+                    File.join($ExtrasPath, 'Debug', 'PPE.natvis') ])
 
                 # meta commands used to regen the solution or delete all generated files
                 set!('ProjectBuildCommand', Build.make_commandstr('--vcxproj', '-v'))
