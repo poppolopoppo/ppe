@@ -41,7 +41,7 @@ template <typename T> const FMetaClass* MetaClass();
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaClass {
 public:
-    FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module);
+    FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module) NOEXCEPT;
     virtual ~FMetaClass();
 
     FMetaClass(const FMetaClass& ) = delete;
@@ -108,9 +108,9 @@ public:
 
     // Virtual helpers
 
-    virtual const FMetaClass* Parent() const = 0;
+    virtual const FMetaClass* Parent() const NOEXCEPT = 0;
     virtual bool CreateInstance(PMetaObject& dst, bool resetToDefaultValue = true) const = 0;
-    virtual PTypeTraits MakeTraits() const = 0;
+    virtual PTypeTraits MakeTraits() const NOEXCEPT = 0;
 
     // Called by meta namespace
 

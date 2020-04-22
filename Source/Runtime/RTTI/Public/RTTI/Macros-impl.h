@@ -24,7 +24,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_STRUCT_DEF(_Api, _Name) \
-    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name > t) { \
+    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name > t) NOEXCEPT { \
         return ::PPE::RTTI::StructTraits(t); \
     }
 //----------------------------------------------------------------------------
@@ -32,10 +32,16 @@
 //----------------------------------------------------------------------------
 #define _RTTI_COMBINE_CLASSFLAGS_IMPL(_Attribute) ::PPE::RTTI::EClassFlags::_Attribute |
 #define RTTI_CLASS_BEGIN(_Module, _Name, ...) \
-    ::PPE::RTTI::FMetaModule& _Name::RTTI_FMetaClass::Module() { \
+    static const _Name::RTTI_FMetaClass::RTTI_FMetaClassHandle CONCAT(GRTTI_MetaClass_, _Name); \
+    auto _Name::RTTI_FMetaClass::metaclass_handle() NOEXCEPT -> const RTTI_FMetaClassHandle& { \
+        return CONCAT(GRTTI_MetaClass_, _Name); \
+    } \
+    \
+    ::PPE::RTTI::FMetaModule& _Name::RTTI_FMetaClass::Module() NOEXCEPT { \
         return RTTI_MODULE(_Module); \
     } \
-    _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) \
+    \
+    _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) NOEXCEPT \
         : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
             (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
             metaModule ) {
@@ -98,15 +104,20 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_ENUM_BEGIN_EX(_Module, _Name, _Attributes) \
+    static const CONCAT(RTTI_, _Name)::RTTI_FMetaEnumHandle CONCAT(GRTTI_MetaEnum_, _Name); \
+    auto _CONCAT(RTTI_, _Name)::metaenum_handle() NOEXCEPT -> const RTTI_FMetaEnumHandle& { \
+        return CONCAT(GRTTI_MetaEnum_, _Name); \
+    } \
+    \
     const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT { \
         return static_cast<const CONCAT(RTTI_, _Name)*>(CONCAT(RTTI_, _Name)::Get()); \
     } \
     \
-    ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() { \
+    ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() NOEXCEPT { \
         return RTTI_MODULE(_Module); \
     } \
     \
-    CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) \
+    CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) NOEXCEPT \
         : metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
         using enum_type = _Name;
 //----------------------------------------------------------------------------

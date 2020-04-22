@@ -111,24 +111,23 @@ public:
 public: // Meta class
     class PPE_RTTI_API RTTI_FMetaClass : public FMetaClass {
     public:
-        typedef FMetaObject object_type;
-        typedef void parent_type;
+        using object_type = FMetaObject;
+        using parent_type = void;
 
-        virtual const FMetaClass* Parent() const override final;
+        virtual const FMetaClass* Parent() const NOEXCEPT override final;
         virtual bool CreateInstance(PMetaObject& dst, bool resetToDefaultValue = true) const override final;
-        virtual PTypeTraits MakeTraits() const override final;
+        virtual PTypeTraits MakeTraits() const NOEXCEPT override final;
 
-        static const FMetaClass* Get();
-        static FMetaModule& Module();
+        static const FMetaClass* Get() NOEXCEPT;
+        static FMetaModule& Module() NOEXCEPT;
+
+        static FMetaClass* CreateMetaClass(FClassId id, const FMetaModule* module);
 
     private:
-        static const FMetaClassHandle GMetaClassHandle;
-        static FMetaClass* CreateMetaClass_(FClassId id, const FMetaModule* module);
-
-        RTTI_FMetaClass(FClassId id, const FMetaModule* module);
+        RTTI_FMetaClass(FClassId id, const FMetaModule* module) NOEXCEPT;
     };
 
-    virtual const RTTI::FMetaClass* RTTI_Class() const {
+    virtual const RTTI::FMetaClass* RTTI_Class() const NOEXCEPT {
         return RTTI_FMetaClass::Get();
     }
 

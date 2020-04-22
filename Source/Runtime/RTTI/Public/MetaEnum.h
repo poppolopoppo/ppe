@@ -28,7 +28,7 @@ struct FMetaEnumValue {
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaEnum : Meta::FNonCopyableNorMovable {
 public:
-    FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaModule* module);
+    FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaModule* module) NOEXCEPT;
     virtual ~FMetaEnum();
 
     const FName& Name() const { return _name; }
@@ -65,7 +65,7 @@ public:
 
     // virtual helpers
 
-    virtual PTypeTraits MakeTraits() const = 0;
+    virtual PTypeTraits MakeTraits() const NOEXCEPT = 0;
 
 private:
     FName _name;

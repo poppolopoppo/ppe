@@ -16,6 +16,19 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static const FMetaClassHandle GMetaObject_MetaClassHandle_{
+    FMetaObject::RTTI_FMetaClass::Module(),
+    &FMetaObject::RTTI_FMetaClass::CreateMetaClass,
+    [](FMetaClass* metaClass) {
+        TRACKING_DELETE(MetaClass, metaClass);
+    }};
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FMetaObject::FMetaObject()
 :   _flags(EObjectFlags::Unloaded)
 {}
@@ -187,11 +200,11 @@ void FMetaObject::RTTI_VerifyPredicates() const PPE_THROW() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaModule* module)
+FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaModule* module) NOEXCEPT
 :   FMetaClass(id, FName("FMetaObject"), EClassFlags::Abstract, module)
 {}
 //----------------------------------------------------------------------------
-const FMetaClass* FMetaObject::RTTI_FMetaClass::Parent() const {
+const FMetaClass* FMetaObject::RTTI_FMetaClass::Parent() const NOEXCEPT {
     return nullptr;
 }
 //----------------------------------------------------------------------------
@@ -199,30 +212,22 @@ bool FMetaObject::RTTI_FMetaClass::CreateInstance(PMetaObject& dst, bool resetTo
     return RTTI::CreateMetaObject<FMetaObject>(dst, resetToDefaultValue);
 }
 //----------------------------------------------------------------------------
-PTypeTraits FMetaObject::RTTI_FMetaClass::MakeTraits() const {
+PTypeTraits FMetaObject::RTTI_FMetaClass::MakeTraits() const NOEXCEPT {
     return RTTI::MakeTraits<PMetaObject>();
 }
 //----------------------------------------------------------------------------
-const FMetaClass* FMetaObject::RTTI_FMetaClass::Get() {
-    Assert(GMetaClassHandle.Class());
-    return GMetaClassHandle.Class();
+const FMetaClass* FMetaObject::RTTI_FMetaClass::Get() NOEXCEPT {
+    Assert(GMetaObject_MetaClassHandle_.Class());
+    return GMetaObject_MetaClassHandle_.Class();
 }
 //----------------------------------------------------------------------------
-FMetaModule& FMetaObject::RTTI_FMetaClass::Module() {
+FMetaModule& FMetaObject::RTTI_FMetaClass::Module() NOEXCEPT {
     return RTTI_MODULE(RTTI);
 }
 //----------------------------------------------------------------------------
-FMetaClass* FMetaObject::RTTI_FMetaClass::CreateMetaClass_(FClassId id, const FMetaModule* module) {
+FMetaClass* FMetaObject::RTTI_FMetaClass::CreateMetaClass(FClassId id, const FMetaModule* module) {
     return TRACKING_NEW(MetaClass, FMetaObject::RTTI_FMetaClass) { id, module };
 }
-//----------------------------------------------------------------------------
-const FMetaClassHandle FMetaObject::RTTI_FMetaClass::GMetaClassHandle(
-    FMetaObject::RTTI_FMetaClass::Module(),
-    &FMetaObject::RTTI_FMetaClass::CreateMetaClass_,
-    [](FMetaClass* metaClass) {
-        TRACKING_DELETE(MetaClass, metaClass);
-    }
-);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -13,7 +13,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaEnum::FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaModule* module)
+FMetaEnum::FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaModule* module) NOEXCEPT
 :   _name(name)
 ,   _flags(flags)
 ,   _sizeInBytes(sizeInBytes)

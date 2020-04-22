@@ -13,10 +13,10 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename _Self, typename T>
 class TInScopeMetaClass : public FMetaClass {
 protected:
-    TInScopeMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module)
+    TInScopeMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module) NOEXCEPT
     :   FMetaClass(id, name, std::is_abstract<T>::value
             ? flags + EClassFlags::Abstract
             : flags + EClassFlags::Concrete,
@@ -25,8 +25,18 @@ protected:
     }
 
 public:
-    virtual const FMetaClass* Parent() const override final {
-        typedef typename TMetaClass<T>::parent_type parent_type;
+    class RTTI_FMetaClassHandle : public FMetaClassHandle {
+    public:
+        RTTI_FMetaClassHandle() NOEXCEPT
+        :   FMetaClassHandle(
+                TMetaClass<T>::Module(),
+                &CreateMetaClass_,
+                [](FMetaClass* metaClass) { TRACKING_DELETE(MetaClass, metaClass); })
+        {}
+    };
+
+    virtual const FMetaClass* Parent() const NOEXCEPT override final {
+        using parent_type = typename TMetaClass<T>::parent_type;
         return RTTI::MetaClass<parent_type>();
     }
 
@@ -35,29 +45,21 @@ public:
         return RTTI::CreateMetaObject<T>(dst, resetToDefaultValue);
     }
 
-    virtual PTypeTraits MakeTraits() const override final {
+    virtual PTypeTraits MakeTraits() const NOEXCEPT override final {
         return RTTI::MakeTraits<TRefPtr<T>>();
     }
 
-    static const FMetaClass* Get() {
-        Assert(GMetaClassHandle.Class());
-        return GMetaClassHandle.Class();
+    static const FMetaClass* Get() NOEXCEPT {
+        const FMetaClassHandle& handle = _Self::metaclass_handle();
+        Assert(handle.Class());
+        return handle.Class();
     }
 
 private:
-    static const FMetaClassHandle GMetaClassHandle;
-
     static FMetaClass* CreateMetaClass_(FClassId id, const FMetaModule* module) {
         return TRACKING_NEW(MetaClass, TMetaClass<T>) { id, module };
     }
 };
-//----------------------------------------------------------------------------
-template <typename T>
-const FMetaClassHandle TInScopeMetaClass<T>::GMetaClassHandle(
-    TMetaClass<T>::Module(),
-    &TInScopeMetaClass<T>::CreateMetaClass_,
-    [](FMetaClass* metaClass) { TRACKING_DELETE(MetaClass, metaClass); }
-);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

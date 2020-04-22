@@ -14,7 +14,7 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module)
+FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module) NOEXCEPT
     : _id(id)
     , _flags(flags)
     , _name(name)

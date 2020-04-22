@@ -7,6 +7,7 @@
 #include "MetaEnum.h"
 
 #include "Diagnostic/Logger.h"
+#include "IO/FormatHelpers.h"
 #include "Thread/ThreadContext.h"
 
 namespace PPE {
@@ -100,9 +101,10 @@ void FMetaModule::Start() {
 
         const FMetaEnum* metaEnum = phandle->_enum;
         const FName& metaEnumName = metaEnum->Name();
-        Insert_AssertUnique(_enums, metaEnumName, metaEnum);
 
-        LOG(RTTI, Info, L"create meta enum <{0}::{1}>", _nameCStr, metaEnumName);
+        LOG(RTTI, Info, L"create meta enum <{0}::{1}> ({2})", _nameCStr, metaEnumName, Fmt::Pointer(phandle));
+
+        Insert_AssertUnique(_enums, metaEnumName, metaEnum);
     }
 
     /* Create meta classes */
@@ -118,9 +120,10 @@ void FMetaModule::Start() {
 
         const FMetaClass* metaClass = phandle->_class;
         const FName& metaClassName = metaClass->Name();
-        Insert_AssertUnique(_classes, metaClassName, metaClass);
 
-        LOG(RTTI, Info, L"create meta class <{0}::{1}> = #{2}", _nameCStr, metaClassName, classId);
+        LOG(RTTI, Info, L"create meta class <{0}::{1}> = #{2} ({3})", _nameCStr, metaClassName, classId, Fmt::Pointer(phandle));
+
+        Insert_AssertUnique(_classes, metaClassName, metaClass);
     }
     Assert_NoAssume(classIndex == _classCount);
 
@@ -130,9 +133,9 @@ void FMetaModule::Start() {
         Assert(phandle->_class);
         Assert(phandle->_class->Module() == this);
 
-        phandle->_class->CallOnRegister_IFN();
-
         LOG(RTTI, Info, L"register meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+
+        phandle->_class->CallOnRegister_IFN();
     }
 
     {

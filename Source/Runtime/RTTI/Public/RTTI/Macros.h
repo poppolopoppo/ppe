@@ -12,43 +12,45 @@
     CONSTEXPR ::PPE::RTTI::PTypeInfos TypeInfos(::PPE::RTTI::TType< _Name > t) { \
         return ::PPE::RTTI::StructInfos(t); \
     } \
-    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name >)
+    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name >) NOEXCEPT
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_HEADER(_Api, _Name, _Parent) \
 public: \
-    typedef _Parent RTTI_parent_type; \
+    using RTTI_parent_type = _Parent; \
     \
-    virtual const ::PPE::RTTI::FMetaClass *RTTI_Class() const override { \
+    virtual const ::PPE::RTTI::FMetaClass *RTTI_Class() const NOEXCEPT override { \
         return RTTI_FMetaClass::Get(); \
     } \
     \
-    class _Api RTTI_FMetaClass : public ::PPE::RTTI::TInScopeMetaClass<_Name> { \
-        friend class ::PPE::RTTI::TInScopeMetaClass<_Name>; \
-        typedef ::PPE::RTTI::TInScopeMetaClass<_Name> metaclass_type; \
+    class _Api RTTI_FMetaClass : public ::PPE::RTTI::TInScopeMetaClass<RTTI_FMetaClass, _Name> { \
+        friend class ::PPE::RTTI::TInScopeMetaClass<RTTI_FMetaClass, _Name>; \
+        using metaclass_type = ::PPE::RTTI::TInScopeMetaClass<RTTI_FMetaClass, _Name>; \
+        static const RTTI_FMetaClassHandle& metaclass_handle() NOEXCEPT; \
         \
     public: \
-        typedef _Name object_type; \
-        typedef _Parent parent_type; \
+        using object_type = _Name; \
+        using parent_type = _Parent; \
         \
         using metaclass_type::Get; \
         \
-        static ::PPE::RTTI::FMetaModule& Module(); \
+        static ::PPE::RTTI::FMetaModule& Module() NOEXCEPT; \
         \
     private: \
-        RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* module); \
+        RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* module) NOEXCEPT; \
     }
 //----------------------------------------------------------------------------
 #define RTTI_ENUM_HEADER(_Api, _Name) \
-    class _Api CONCAT(RTTI_, _Name) : public ::PPE::RTTI::TInScopeMetaEnum<_Name> { \
-        friend class ::PPE::RTTI::TInScopeMetaEnum<_Name>; \
-        typedef ::PPE::RTTI::TInScopeMetaEnum<_Name> metaenum_type; \
+    class _Api CONCAT(RTTI_, _Name) : public ::PPE::RTTI::TInScopeMetaEnum<CONCAT(RTTI_, _Name), _Name> { \
+        friend class ::PPE::RTTI::TInScopeMetaEnum<CONCAT(RTTI_, _Name), _Name>; \
+        using metaenum_type = ::PPE::RTTI::TInScopeMetaEnum<CONCAT(RTTI_, _Name), _Name>; \
+        static const RTTI_FMetaEnumHandle& metaenum_handle() NOEXCEPT; \
         \
     public: \
         using metaenum_type::Get; \
-        static ::PPE::RTTI::FMetaModule& Module(); \
+        static ::PPE::RTTI::FMetaModule& Module() NOEXCEPT; \
         \
     private: \
-        explicit CONCAT(RTTI_, _Name)(const PPE::RTTI::FMetaModule* module); \
+        explicit CONCAT(RTTI_, _Name)(const PPE::RTTI::FMetaModule* module) NOEXCEPT; \
     }; \
     _Api const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT
 //----------------------------------------------------------------------------
