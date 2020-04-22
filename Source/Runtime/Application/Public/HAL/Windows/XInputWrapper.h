@@ -19,6 +19,8 @@ namespace Application {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FXInputWrapper : Meta::TSingleton<FXInputWrapper> {
+    friend Meta::TSingleton<FXInputWrapper>;
+    using singleton_type = Meta::TSingleton<FXInputWrapper>;
 public:
     typedef DWORD (WINAPI* FXInputGetState)(
         _In_  DWORD           dwUserIndex,  // Index of the gamer associated with the device
@@ -57,16 +59,14 @@ public:
     bool Available() const { return (_XInputDLL.IsValid()); }
 
 #if USE_PPE_ASSERT
-    using Meta::TSingleton<FXInputWrapper>::HasInstance;
+    using singleton_type::HasInstance;
 #endif
-    using Meta::TSingleton<FXInputWrapper>::Get;
+    using singleton_type::Get;
 
-    static void Create() { Meta::TSingleton<FXInputWrapper>::Create(); }
-    using Meta::TSingleton<FXInputWrapper>::Destroy;
+    static void Create() { singleton_type::Create(); }
+    using singleton_type::Destroy;
 
 private:
-    friend Meta::TSingleton<FXInputWrapper>;
-
     FXInputWrapper();
 
     mutable std::mutex _barrier;

@@ -82,6 +82,10 @@ static void CheckSymbol_(const FSymbols::hashmap_type& symbols, const FSymbol* s
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FSymbols::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 bool FSymbols::IsPrefix(const FSymbol** psymbol, const FStringView& cstr) const {
     Assert(psymbol);
     Assert(not cstr.empty());

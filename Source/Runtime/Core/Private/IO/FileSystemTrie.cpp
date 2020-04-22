@@ -96,6 +96,10 @@ bool FFileSystemNode::IsChildOf(const FFileSystemNode& parent) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FFileSystemTrie::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 FFileSystemTrie::FFileSystemTrie()
 :   _numNodes(0) {
     CreateRootNode_();

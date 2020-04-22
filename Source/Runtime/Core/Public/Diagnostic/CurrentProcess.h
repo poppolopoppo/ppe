@@ -13,9 +13,11 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_CORE_API FCurrentProcess : Meta::TSingleton<FCurrentProcess> {
-public:
-    typedef Meta::TSingleton<FCurrentProcess> parent_type;
+    friend class Meta::TSingleton<FCurrentProcess>;
+    using singleton_type = Meta::TSingleton<FCurrentProcess>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT; // for shared lib
 
+public:
     ~FCurrentProcess();
 
     const FWString& ExecutableName() const { return _executableName; }
@@ -56,14 +58,14 @@ public:
 
     const FTimepoint& StartedAt() const { return _startedAt; }
 
-    using parent_type::Get;
+    using singleton_type::Get;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
-    using parent_type::Destroy;
+    using singleton_type::Destroy;
 
     static void Create(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t * const* argv) {
-        parent_type::Create(appHandle, nShowCmd, filename, argc, argv);
+        singleton_type::Create(appHandle, nShowCmd, filename, argc, argv);
     }
 
     static FSeconds ElapsedSeconds() {
@@ -71,7 +73,6 @@ public:
     }
 
 private:
-    friend class Meta::TSingleton<FCurrentProcess>;
     FCurrentProcess(
         void* appHandle, int nShowCmd,
         const wchar_t* filename, size_t argc, const wchar_t * const* argv );

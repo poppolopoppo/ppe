@@ -18,15 +18,18 @@ namespace RTTI {
 class FMetaDatabaseReadable;
 class FMetaDatabaseReadWritable;
 class PPE_RTTI_API FMetaDatabase : Meta::TSingleton<FMetaDatabase> {
+    friend class Meta::TSingleton<FMetaDatabase>;
+    using singleton_type = Meta::TSingleton<FMetaDatabase>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 public:
     /* Singleton */
 
 #if USE_PPE_ASSERT
-    using Meta::TSingleton<FMetaDatabase>::HasInstance;
+    using singleton_type::HasInstance;
 #endif
 
-    static void Create() { Meta::TSingleton<FMetaDatabase>::Create(); }
-    using Meta::TSingleton<FMetaDatabase>::Destroy;
+    static void Create() { singleton_type::Create(); }
+    using singleton_type::Destroy;
 
     /* Objects */
 
@@ -80,7 +83,6 @@ public:
     const auto& Traits() const { return _traits; }
 
 private:
-    friend Meta::TSingleton<FMetaDatabase>;
     friend class FMetaDatabaseReadable;
     friend class FMetaDatabaseReadWritable;
 
@@ -91,7 +93,7 @@ private:
     void UnregisterTraits_(const FName& name, const PTypeTraits& traits);
 
     // must use FMetaDatabaseReadable or FMetaDatabaseReadWritable helpers (batch your work)
-    //using Meta::TSingleton<FMetaDatabase>::Get;
+    //using singleton_type::Get;
 
     FMetaDatabase();
     ~FMetaDatabase();

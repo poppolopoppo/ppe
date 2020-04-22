@@ -18,6 +18,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FVirtualFileSystem::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 FBasename FVirtualFileSystem::TemporaryBasename(const FWStringView& prefix, const FWStringView& ext) {
     Assert(not prefix.empty());
     Assert(not ext.empty());

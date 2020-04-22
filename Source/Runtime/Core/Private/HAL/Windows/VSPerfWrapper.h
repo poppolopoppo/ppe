@@ -22,6 +22,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FVSPerfWrapper : Meta::TSingleton<FVSPerfWrapper> {
+    friend class Meta::TSingleton<FVSPerfWrapper>;
+    using singleton_type = Meta::TSingleton<FVSPerfWrapper>;
 public:
     typedef ::PROFILE_COMMAND_STATUS (STDCALL* FStopProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
     typedef ::PROFILE_COMMAND_STATUS (STDCALL* FStartProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
@@ -77,13 +79,11 @@ public:
 
     bool Available() const { return (_dll.IsValid()); }
 
-    using Meta::TSingleton<FVSPerfWrapper>::Get;
-    using Meta::TSingleton<FVSPerfWrapper>::Destroy;
-    static void Create() { Meta::TSingleton<FVSPerfWrapper>::Create(); }
+    using singleton_type::Get;
+    using singleton_type::Destroy;
+    static void Create() { singleton_type::Create(); }
 
 private:
-    friend class Meta::TSingleton<FVSPerfWrapper>;
-
     FVSPerfWrapper();
     FDynamicLibrary _dll;
 };

@@ -20,6 +20,10 @@ LOG_CATEGORY(PPE_CORE_API, Process)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FCurrentProcess::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared lib
+}
+//----------------------------------------------------------------------------
 FCurrentProcess::FCurrentProcess(
     void* appHandle, int nShowCmd,
     const wchar_t* filename, size_t argc, const wchar_t * const* argv )

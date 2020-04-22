@@ -13,12 +13,13 @@ class FSymbol;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FSymbols : Meta::TSingleton<FSymbols>, Meta::FThreadResource {
+    friend class Meta::TSingleton<FSymbols>;
+    using singleton_type = Meta::TSingleton<FSymbols>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxLength, 32);
     typedef STRINGVIEW_HASHMAP(Lexer, FSymbol, ECase::Sensitive) hashmap_type;
 private:
-    friend class Meta::TSingleton<FSymbols>;
-    typedef Meta::TSingleton<FSymbols> singleton_type;
 
     hashmap_type _symbols;
 

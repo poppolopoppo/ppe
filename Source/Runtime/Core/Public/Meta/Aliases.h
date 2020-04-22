@@ -222,6 +222,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #if     defined(BUILD_LINK_STATIC)
 #   define DLL_IMPORT
 #   define DLL_EXPORT
+#   define DLL_NOINLINE
 #elif   defined(BUILD_LINK_DYNAMIC)
 #   if     defined(CPP_CLANG)
 #       define DLL_IMPORT __declspec(dllimport)
@@ -235,6 +236,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   else
 #       error "unsupported compiler"
 #   endif
+#   define DLL_NOINLINE NO_INLINE
 #else
 #   error "inconsistent configuration"
 #endif

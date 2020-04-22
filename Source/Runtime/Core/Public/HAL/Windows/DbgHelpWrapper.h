@@ -26,6 +26,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FDbghelpWrapper : Meta::TSingleton<FDbghelpWrapper> {
+    friend class Meta::TSingleton<FDbghelpWrapper>;
+    using singleton_type = Meta::TSingleton<FDbghelpWrapper>;
 public:
     typedef BOOL (WINAPI *FSymInitializeW)(
         _In_ HANDLE hProcess,
@@ -112,16 +114,14 @@ public:
     bool Available() const { return _available; }
 
 #if USE_PPE_ASSERT
-    using Meta::TSingleton<FDbghelpWrapper>::HasInstance;
+    using singleton_type::HasInstance;
 #endif
-    using Meta::TSingleton<FDbghelpWrapper>::Get;
+    using singleton_type::Get;
 
-    static void Create() { Meta::TSingleton<FDbghelpWrapper>::Create(); }
-    using Meta::TSingleton<FDbghelpWrapper>::Destroy;
+    static void Create() { singleton_type::Create(); }
+    using singleton_type::Destroy;
 
 private:
-    friend Meta::TSingleton<FDbghelpWrapper>;
-
     FDbghelpWrapper();
 
     mutable std::mutex _barrier;

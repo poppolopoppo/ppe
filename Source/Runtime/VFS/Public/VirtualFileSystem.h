@@ -16,13 +16,16 @@ class TRawStorage;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_VFS_API FVirtualFileSystem : Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> {
-public:
-    friend class FVirtualFileSystemModule;
-    typedef Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> parent_type;
+    friend class Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem>;
+    using singleton_type = Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 
-    using parent_type::Get;
+public:
+    using singleton_type::Get;
+    using singleton_type::Create;
+    using singleton_type::Destroy;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
 
     static FBasename TemporaryBasename(const FWStringView& prefix, const FWStringView& ext);

@@ -72,6 +72,9 @@ private:
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FFileSystemTrie : private Meta::TSingleton<FFileSystemTrie> {
+    friend class Meta::TSingleton<FFileSystemTrie>;
+    using singleton_type = Meta::TSingleton<FFileSystemTrie>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 public:
     using FGenealogy = FFileSystemNode::FGenealogy;
 
@@ -90,19 +93,15 @@ public:
     void Clear();
 
 public: // Singleton
-    using  parent_type = Meta::TSingleton<FFileSystemTrie>;
-
-    using parent_type::Get;
+    using singleton_type::Get;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
-    using parent_type::Destroy;
+    using singleton_type::Destroy;
 
-    static void Create() { parent_type::Create(); }
+    static void Create() { singleton_type::Create(); }
 
 private:
-    friend class Meta::TSingleton<FFileSystemTrie>;
-
     FReadWriteLock _barrier;
     size_t _numNodes;
     FFileSystemNode _root;

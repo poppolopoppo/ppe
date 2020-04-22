@@ -30,43 +30,59 @@ static void DestroyThreadPool_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FGlobalThreadPool::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 void FGlobalThreadPool::Create() {
-    CreateThreadPool_<parent_type>("Global", PPE_THREADTAG_WORKER, FPlatformThread::GlobalThreadsInfo());
+    CreateThreadPool_<singleton_type>("Global", PPE_THREADTAG_WORKER, FPlatformThread::GlobalThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FGlobalThreadPool::Destroy() {
-    DestroyThreadPool_<parent_type>();
+    DestroyThreadPool_<singleton_type>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FIOThreadPool::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 void FIOThreadPool::Create() {
-    CreateThreadPool_<parent_type>("IO", PPE_THREADTAG_IO, FPlatformThread::IOThreadsInfo());
+    CreateThreadPool_<singleton_type>("IO", PPE_THREADTAG_IO, FPlatformThread::IOThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FIOThreadPool::Destroy() {
-    DestroyThreadPool_<parent_type>();
+    DestroyThreadPool_<singleton_type>();
 }
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FHighPriorityThreadPool::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 void FHighPriorityThreadPool::Create() {
-    CreateThreadPool_<parent_type>("HighPriority", PPE_THREADTAG_HIGHPRIORITY, FPlatformThread::HighPriorityThreadsInfo());
+    CreateThreadPool_<singleton_type>("HighPriority", PPE_THREADTAG_HIGHPRIORITY, FPlatformThread::HighPriorityThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FHighPriorityThreadPool::Destroy() {
-    DestroyThreadPool_<parent_type>();
+    DestroyThreadPool_<singleton_type>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FBackgroundThreadPool::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 void FBackgroundThreadPool::Create() {
-    CreateThreadPool_<parent_type>("Background", PPE_THREADTAG_BACKGROUND, FPlatformThread::BackgroundThreadsInfo());
+    CreateThreadPool_<singleton_type>("Background", PPE_THREADTAG_BACKGROUND, FPlatformThread::BackgroundThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Destroy() {
-    DestroyThreadPool_<parent_type>();
+    DestroyThreadPool_<singleton_type>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

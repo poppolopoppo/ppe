@@ -13,12 +13,14 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_CORE_API FGlobalThreadPool : Meta::TSingleton<FTaskManager, FGlobalThreadPool> {
-public:
-    typedef Meta::TSingleton<FTaskManager, FGlobalThreadPool> parent_type;
+    friend class Meta::TSingleton<FTaskManager, FGlobalThreadPool>;
+    using singleton_type = Meta::TSingleton<FTaskManager, FGlobalThreadPool>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 
-    using parent_type::Get;
+public:
+    using singleton_type::Get;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
 
     static void Create();
@@ -26,12 +28,14 @@ public:
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
-public:
-    typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
+    friend class Meta::TSingleton<FTaskManager, FIOThreadPool>;
+    using singleton_type = Meta::TSingleton<FTaskManager, FIOThreadPool>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 
-    using parent_type::Get;
+public:
+    using singleton_type::Get;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
 
     static void Create();
@@ -39,12 +43,14 @@ public:
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FHighPriorityThreadPool : Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> {
-public:
-    typedef Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> parent_type;
+    friend class Meta::TSingleton<FTaskManager, FHighPriorityThreadPool>;
+    using singleton_type = Meta::TSingleton<FTaskManager, FHighPriorityThreadPool>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 
-    using parent_type::Get;
+public:
+    using singleton_type::Get;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
 
     static void Create();
@@ -52,12 +58,14 @@ public:
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FBackgroundThreadPool : Meta::TSingleton<FTaskManager, FBackgroundThreadPool> {
-public:
-    typedef Meta::TSingleton<FTaskManager, FBackgroundThreadPool> parent_type;
+    friend class Meta::TSingleton<FTaskManager, FBackgroundThreadPool>;
+    using singleton_type = Meta::TSingleton<FTaskManager, FBackgroundThreadPool>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
 
-    using parent_type::Get;
+public:
+    using singleton_type::Get;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
 
     static void Create();

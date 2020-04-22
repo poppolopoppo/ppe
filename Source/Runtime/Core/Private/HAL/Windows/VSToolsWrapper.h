@@ -23,6 +23,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FVSToolsWrapper : Meta::TSingleton<FVSToolsWrapper> {
+    friend class Meta::TSingleton<FVSToolsWrapper>;
+    using singleton_type = Meta::TSingleton<FVSToolsWrapper>;
 public:
     using FHeapTracker = vstools_FHeapTracker;
 
@@ -61,13 +63,11 @@ public:
 
     bool Available() const { return (_dll.IsValid()); }
 
-    using Meta::TSingleton<FVSToolsWrapper>::Get;
-    using Meta::TSingleton<FVSToolsWrapper>::Destroy;
-    static void Create() { Meta::TSingleton<FVSToolsWrapper>::Create(); }
+    using singleton_type::Get;
+    using singleton_type::Destroy;
+    static void Create() { singleton_type::Create(); }
 
 private:
-    friend class Meta::TSingleton<FVSToolsWrapper>;
-
     FVSToolsWrapper();
     FDynamicLibrary _dll;
 };

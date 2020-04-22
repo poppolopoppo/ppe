@@ -18,6 +18,10 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FMetaDatabase::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
 FMetaDatabase::FMetaDatabase() {
     LOG(RTTI, Info, L"create meta database");
 

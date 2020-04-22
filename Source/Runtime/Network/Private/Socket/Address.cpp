@@ -113,22 +113,23 @@ namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_NETWORK_DNSCACHE
 class FDNSCache_ : Meta::TSingleton<FDNSCache_> {
+    friend class Meta::TSingleton<FDNSCache_>;
+    using singleton_type = Meta::TSingleton<FDNSCache_>;
 public: // TSingleton<>
-    typedef Meta::TSingleton<FDNSCache_> parent_type;
 
-    using parent_type::Get;
+    using singleton_type::Get;
 #if USE_PPE_ASSERT
-    using parent_type::HasInstance;
+    using singleton_type::HasInstance;
 #endif
 
     static void Create() {
         LOG(Network, Debug, L"starting DNS cache ...");
-        parent_type::Create();
+        singleton_type::Create();
     }
 
     static void Destroy() {
         LOG(Network, Debug, L"stopping DNS cache ...");
-        parent_type::Destroy();
+        singleton_type::Destroy();
     }
 
 public: // DNS cache
