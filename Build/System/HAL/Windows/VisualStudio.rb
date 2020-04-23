@@ -112,14 +112,27 @@ module Build
 
         def customize(facet, env, target)
             nopdb = target.headers? || facet.tag?(:nopdb)
-            if nopdb || Build.Cache
-                facet.compilerOptions << '/Z7' # debug symbols inside .obj
+            nosymbols = facet.tag?(:nosymbols)
+
+            if nosymbols
+                Log.debug('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
+                facet.linkerOptions << '/DEBUG:NONE'
             else
-                facet.compilerOptions << '/Zi' # debug symbols inside .pdb
-                facet.compilerOptions << '/FS' # synchronous filesystem (necessary for concurrent cl.exe instances)
+                if Build.Incremental
+                    facet.linkerOptions << '/DEBUG:FASTLINK' # enable incremental linker
+                else
+                    facet.linkerOptions << '/DEBUG'
+                end
+
+                if nopdb || Build.Cache
+                    facet.compilerOptions << '/Z7' # debug symbols inside .obj
+                else
+                    facet.compilerOptions << '/Zi' # debug symbols inside .pdb
+                    facet.compilerOptions << '/FS' # synchronous filesystem (necessary for concurrent cl.exe instances)
+                end
             end
 
-            unless nopdb
+            unless nopdb || nosymbols
                 facet.linkerOptions << '/fastfail' # better error reporting
 
                 artefact = env.target_artefact_path(target)
@@ -263,14 +276,10 @@ module Build
             '/nologo',                  # no copyright when compiling
             '/WX',                      # warning as errors
             '/TLBID:1',                 # https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
-            '/DEBUG',                   # generate debug infos
             '/IGNORE:4001',             # https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
             '/NXCOMPAT:NO',             # disable Data Execution Prevention (DEP)
             '/LARGEADDRESSAWARE',       # inddicate support for VM > 2Gb (if 3Gb flag is toggled)
             '/VERBOSE:INCR',            # incremental linker diagnosis
-            #'/VERBOSE',
-            #'/VERBOSE:REF',
-            #'/VERBOSE:UNUSEDLIBS',
             '/SUBSYSTEM:WINDOWS',       # ~Windows~ application type (vs Console)
             "/STACK:#{Build.StackSize}",
             'kernel32.lib',
@@ -282,6 +291,13 @@ module Build
             'advapi32.lib',
             'version.lib',
             '/OUT:"%2"', '%1' )
+
+        if Log.verbose?
+            linkerOptions.append(
+                '/VERBOSE',
+                '/VERBOSE:REF',
+                '/VERBOSE:UNUSEDLIBS' )
+        end
 
         # https://devblogs.microsoft.com/cppblog/stl-features-and-fixes-in-vs-2017-15-8/
         defines.append('_ENABLE_EXTENDED_ALIGNED_STORAGE')
@@ -414,11 +430,6 @@ module Build
         # TODO: disabled since there is no support for __VA_OPT__(x), and it's necessary to handle some funky macros
         # analysisOptions.append('/experimental:preprocessor')
         # compilerOptions.append('/experimental:preprocessor')
-
-        if Build.Incremental
-            Log.verbose 'Windows: using /DEBUG:FASTLINK to speed-up the linker (non shippable!)'
-            linkerOptions.append('/DEBUG:FASTLINK') # enable incremental linker
-        end
     end
 
     VSWhere_exe = File.join($BuildPath, 'System', 'HAL', 'Windows', 'vswhere.exe')

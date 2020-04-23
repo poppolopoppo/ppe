@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 $Build.ppe_external!(:vstools) do
+    tag!(:nosymbols)
     link!(:dynamic)
     extra_files!('Public/vstools.h')
     source_files!('Private/vstools.cpp')
