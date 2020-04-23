@@ -25,7 +25,7 @@
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, MemoryDomain)
 #if USE_PPE_MEMORYDOMAINS
-CONSTEXPR size_t MemoryDomainsMaxCount = 128;
+CONSTEXPR size_t MemoryDomainsMaxCount = 200;
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
