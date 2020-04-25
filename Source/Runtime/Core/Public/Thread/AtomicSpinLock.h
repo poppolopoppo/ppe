@@ -221,4 +221,55 @@ public: // Writer
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Atomic phase transition, hook on actual transition event
+//----------------------------------------------------------------------------
+class FAtomicPhaseLock : Meta::FNonCopyableNorMovable {
+    STATIC_CONST_INTEGRAL(int, PhaseMask_, INT_MAX>>1);
+    STATIC_CONST_INTEGRAL(int, TransitionBit_, INT_MAX & ~PhaseMask_);
+    
+    std::atomic<int> _phase{ 0 };
+    
+public:
+    FAtomicPhaseLock() = default;
+    
+    explicit FAtomicPhaseLock(int phase) : _phase(phase) {}
+
+#if USE_PPE_ASSERT
+    ~FAtomicPhaseLock() {
+        Assert_NoAssume(not (_phase & TransitionBit_));
+    }
+#endif
+    
+    template <typename _Functor>
+    bool Transition(const int nextPhase, _Functor&& onTransition) {
+        Assert_NoAssume(not (nextPhase & TransitionBit_));
+        
+        int expected = _phase.load(std::memory_order_relaxed);
+        if (expected != nextPhase) {
+            expected &= PhaseMask_; // clear potentially set transition bit
+            
+            if (Likely(_phase.compare_exchange_strong(expected, nextPhase | TransitionBit_))) {
+                onTransition();
+                _phase.store(nextPhase, std::memory_order_release);
+
+                return true;
+            }
+            else for (size_t backoff = 0; expected != nextPhase;) {
+                FPlatformProcess::SleepForSpinning(backoff);
+                expected = _phase.load(std::memory_order_relaxed);
+            }
+
+            Assert_NoAssume(_phase == nextPhase);
+        }
+
+        return false;
+    }
+
+    static CONSTEXPR int Inc(int revision) {
+       return (revision + 1) & PhaseMask_; 
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE

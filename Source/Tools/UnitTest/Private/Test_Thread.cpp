@@ -98,7 +98,7 @@ NO_INLINE void Test_Event_() {
     FEventHandle id = evt.Add([](int i) {
         UNUSED(i);
         LOG(Test_Thread, Info, L"DELETED = {0}", i);
-        });
+    });
 
     evt(42);
 
@@ -199,6 +199,8 @@ struct FGraphNode {
     std::atomic<int> Revision{ 0 };
     void* UserData{ 0 };
 
+
+    FAtomicPhaseLock Phase;
     WWeakRefCountable Payload;
 
     FTimestamp Timestamp;
@@ -284,7 +286,7 @@ struct FGraph {
             Timer.Elapsed(),
             Fmt::CountOfElements(MaxWorkers.load()) );
 
-        CheckBuild();
+        Verify(CheckBuild());
     }
 
     void Randomize(const size_t n, size_t depth) {
@@ -403,27 +405,6 @@ NO_INLINE void Test_Graph_Incremental_(FGraph& g) {
     });
 }
 //----------------------------------------------------------------------------
-struct FPackedRevision {
-    struct FUnpack {
-        STATIC_ASSERT(sizeof(int) == sizeof(i32));
-        int Ord : 31;
-        int Uninitialized : 1;
-    };
-
-    union {
-        int Packed;
-        FUnpack Unpacked;
-    };
-
-    FPackedRevision(int ord, bool ready) {
-        Unpacked.Ord = ord;
-        Unpacked.Uninitialized = (ready ? 0 : 1);
-    }
-
-    operator int() const {
-        return  Packed;
-    }
-};
 struct FOutOfCoreBuilder_Incremental_ : Meta::FNonCopyableNorMovable {
     FGraph* Graph;
 
@@ -454,15 +435,17 @@ private:
         return NEW_REF(Generation, FCompletionPort);
     }
 
-    void LaunchBuild(ITaskContext& ctx, FAggregationPort* batch, FGraphNode& node) {
+    void LaunchBuild(ITaskContext& ctx, FAggregationPort* batch, FGraphNode* node) {
+        Assert(node);
+        
         PCompletionPort port{ MakeBuildPort() };
-        node.Payload.reset(port);
+        node->Payload.reset(port);
 
         Verify(batch->Attach(port.get()));
 
         ctx.Run(port.get(),
-            FTaskFunc::Bind<&FOutOfCoreBuilder_Incremental_::AsyncWork>(this, &node),
-            PriorityFromArity_(node.Dependencies.size()));
+            FTaskFunc::Bind<&FOutOfCoreBuilder_Incremental_::AsyncWork>(this, node),
+            PriorityFromArity_(node->Dependencies.size()));
     }
 
     void BatchBuild(ITaskContext& ctx, const TMemoryView<FGraphNode* const>& nodes) {
@@ -470,37 +453,18 @@ private:
 
         FAggregationPort batch;
 
-        const FPackedRevision readyRev{ Graph->Revision, true };
-        const FPackedRevision unreadyRev{ Graph->Revision, false };
-
         for (FGraphNode* const node : nodes) {
-            int expectedRev = node->Revision.load(std::memory_order_relaxed);
-            if (expectedRev != readyRev) {
-                if (expectedRev != unreadyRev &&
-                    node->Revision.compare_exchange_strong(expectedRev, unreadyRev) ) {
-                    LaunchBuild(ctx, &batch, *node);
-                    node->Revision.store(readyRev, std::memory_order_release);
-                    continue;
-                }
-                else {
-                    size_t backoff = 0;
+            auto onTransition = [&, node]() {
+                LaunchBuild(ctx, &batch, node);
+                ONLY_IF_ASSERT(node->Revision = Graph->Revision);
+            };
+            if (not node->Phase.Transition(Graph->Revision, std::move(onTransition))) {
+                Assert_NoAssume(node->Revision == Graph->Revision);
 
-                    for (;;) {
-                        const int expected = node->Revision.load(std::memory_order_relaxed);
-                        if (expected == readyRev)
-                            break;
-
-                        Assert_NoAssume(unreadyRev == expected);
-                        FPlatformProcess::SleepForSpinning(backoff);
-                    }
-                }
+                PWeakRefCountable payload;
+                if (node->Payload.TryLock(&payload))
+                    batch.Attach(static_cast<FCompletionPort*>(payload.get()));   
             }
-
-            Assert_NoAssume(node->Revision == readyRev);
-
-            PWeakRefCountable payload;
-            if (node->Payload.TryLock(&payload))
-                batch.Attach(static_cast<FCompletionPort*>(payload.get()));
         }
 
         batch.Join(ctx);
