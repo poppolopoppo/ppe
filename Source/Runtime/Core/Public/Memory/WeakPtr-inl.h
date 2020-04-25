@@ -162,19 +162,12 @@ bool TWeakPtr<T>::TryLock(TRefPtr<U> *pLocked) const NOEXCEPT {
 
     if (Likely(!!_ptr & !!_cnt)) {
         Assert_NoAssume(_cnt->_holder == _ptr);
-        // try to increment the counter if > 0, atomically
         if (_cnt->TryLockForWeakPtr()) {
-            Assert_NoAssume(_cnt.get() == _ptr->_cnt.get());
+            Assert_NoAssume(_cnt == _ptr->_cnt);
             pLocked->reset(_ptr);
             // release the lock, guaranteed to not delete since we just added a ref
             Verify(not _cnt->Weak_DecStrongRefCount_ReturnIfReachZero());
             return true;
-        }
-        // cleanup the counter ref if failed to lock, to keeping it alive too long
-        else {
-            // /!\ don't cleanup _ptr, since we don't want to invalidate the
-            // hash value or relation order (potentially used in containers)
-            _cnt.reset();
         }
     }
 
