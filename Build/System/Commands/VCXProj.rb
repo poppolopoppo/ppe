@@ -128,6 +128,8 @@ module Build
                 set!('ProjectAllowedFileExtensions', %w{ *.exe *.rb *.yml })
                 set!('ProjectConfigs', projectConfigs)
                 set!('ProjectFiles', [
+                    # Include startup script
+                    Build::Script,
                     # VS will include automatically every .natvis referenced in the solution
                     File.join($ExtrasPath, 'Debug', 'PPE.natvis') ])
 
