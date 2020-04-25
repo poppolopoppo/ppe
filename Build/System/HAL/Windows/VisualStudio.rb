@@ -266,7 +266,9 @@ module Build
             '/wd4251' )                 # 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
 
         analysisOptions << compilerOptions
-        analysisOptions.append('/analyze', '/analyze:stacksize', Build.StackSize)
+        if Build.Diagnose
+            analysisOptions.append('/analyze', '/analyze:stacksize', Build.StackSize)
+        end
 
         compilerOptions.append('/nologo')   # no copyright when compiling
         compilerOptions.append('/c', '%1')  # input file injection
@@ -292,9 +294,12 @@ module Build
             'version.lib',
             '/OUT:"%2"', '%1' )
 
-        if Log.verbose?
+        if Build.Diagnose
             linkerOptions.append(
                 '/VERBOSE',
+                '/VERBOSE:LIB',
+                '/VERBOSE:LIB',
+                '/VERBOSE:ICF',
                 '/VERBOSE:REF',
                 '/VERBOSE:UNUSEDLIBS' )
         end

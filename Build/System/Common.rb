@@ -10,6 +10,7 @@ module Build
     VERSION = '1.0.0'
 
     persistent_switch(:Cache, 'Use compilation cache')
+    persistent_switch(:Diagnose, 'Use compilation diagnostics')
     persistent_switch(:Incremental, 'Use incremental linker')
     persistent_switch(:LTO, 'Use link time optimization')
     persistent_switch(:Minify, 'Use minified format for exported files', init: true)
