@@ -9,6 +9,7 @@
 #include "RTTI/Typedefs.h"
 
 #include "Container/Vector.h"
+#include "Memory/WeakPtr.h"
 #include "Thread/AtomicSpinLock.h"
 
 #include <atomic>
@@ -20,11 +21,10 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 RTTI_MODULE_DECL(PPE_BUILDGRAPH_API, BuildGraph);
 //----------------------------------------------------------------------------
-struct FBuildState {
-    FAtomicReadWriteLock RWLock;
-    std::atomic<void*> UserData;
-    std::atomic<FBuildRevision> Revision;
-    EBuildResult Result{};
+struct FBuildState : Meta::FNonCopyableNorMovable {
+    FAtomicPhaseLock Phase;
+    EBuildResult Result;
+    WWeakRefCountable Payload;
 };
 //----------------------------------------------------------------------------
 class PPE_BUILDGRAPH_API FBuildNode : public RTTI::FMetaObject {

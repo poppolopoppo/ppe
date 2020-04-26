@@ -224,30 +224,27 @@ public: // Writer
 // Atomic phase transition, hook on actual transition event
 //----------------------------------------------------------------------------
 class FAtomicPhaseLock : Meta::FNonCopyableNorMovable {
-    STATIC_CONST_INTEGRAL(int, PhaseMask_, INT_MAX>>1);
-    STATIC_CONST_INTEGRAL(int, TransitionBit_, INT_MAX & ~PhaseMask_);
-    
-    std::atomic<int> _phase{ 0 };
-    
 public:
+    using size_type = size_t;
+
     FAtomicPhaseLock() = default;
-    
-    explicit FAtomicPhaseLock(int phase) : _phase(phase) {}
+
+    explicit FAtomicPhaseLock(size_type phase) : _phase(phase) {}
 
 #if USE_PPE_ASSERT
     ~FAtomicPhaseLock() {
         Assert_NoAssume(not (_phase & TransitionBit_));
     }
 #endif
-    
+
     template <typename _Functor>
-    bool Transition(const int nextPhase, _Functor&& onTransition) {
+    bool Transition(const size_type nextPhase, _Functor&& onTransition) {
         Assert_NoAssume(not (nextPhase & TransitionBit_));
-        
-        int expected = _phase.load(std::memory_order_relaxed);
+
+        size_type expected = _phase.load(std::memory_order_relaxed);
         if (expected != nextPhase) {
             expected &= PhaseMask_; // clear potentially set transition bit
-            
+
             if (Likely(_phase.compare_exchange_strong(expected, nextPhase | TransitionBit_))) {
                 onTransition();
                 _phase.store(nextPhase, std::memory_order_release);
@@ -265,9 +262,15 @@ public:
         return false;
     }
 
-    static CONSTEXPR int Inc(int revision) {
-       return (revision + 1) & PhaseMask_; 
+    static CONSTEXPR size_type Inc(size_type revision) {
+       return ((revision + 1) & PhaseMask_);
     }
+
+private:
+    STATIC_CONST_INTEGRAL(size_type, PhaseMask_, SIZE_MAX >> 1);
+    STATIC_CONST_INTEGRAL(size_type, TransitionBit_, SIZE_MAX & ~PhaseMask_);
+
+    std::atomic<size_type> _phase{ 0 };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

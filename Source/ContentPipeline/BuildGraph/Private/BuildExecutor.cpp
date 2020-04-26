@@ -123,59 +123,42 @@ private:
         Assert(deps.data());
         Assert_NoAssume(not deps.empty());
 
-        FAggregationPort port;
-        SPARSEARRAY_INSITU(BuildGraph, FCompletionPort) children;
-
-        FCompletionPort* tmp = nullptr;
         const FBuildRevision globalRev = action.Revision();
 
+        FAggregationPort batch;
         for (const PBuildNode& node : deps) {
             FBuildState& st = node->State();
 
-            if (globalRev != st.Revision) {
-                if (not tmp)
-                    tmp = &children.Add();
+            auto launchBuild = [&]() {
+                PCompletionPort port = NEW_REF(Task, FCompletionPort);
 
-                const FAtomicReadWriteLock::FReaderScope readScope(st.RWLock);
+                st.Result = EBuildResult::Unbuilt;
+                st.Payload.reset(port);
 
-                if (globalRev != st.Revision) {
-                    void* usr = nullptr;
-                    if (st.UserData.compare_exchange_weak(usr, tmp)) {
-                        st.Result = EBuildResult::Unbuilt;
+                task.Run(port.get(),
+                    FTaskFunc::Bind< &DispatchNode_<_Context> >(&action, MakeSafePtr(node.get())),
+                    PriorityFromNode_(*node) );
+            };
 
-                        task.Run(tmp,
-                            FTaskFunc::Bind< &DispatchNode_<_Context> >(&action, MakeSafePtr(node.get())),
-                            PriorityFromNode_(*node) );
-
-                        usr = tmp;
-                        tmp = nullptr;
-                    }
-
-                    port.Attach(static_cast<FCompletionPort*>(usr));
-
-                    Assert_NoAssume(globalRev == action.Revision());
-                }
+            if (not st.Phase.Transition(globalRev, std::move(launchBuild))) {
+                PWeakRefCountable payload;
+                if (st.Payload.TryLock(&payload))
+                    batch.Attach(static_cast<FCompletionPort*>(payload.get()));
             }
         }
 
-        port.Join(task);
+        batch.Join(task);
 
-        EBuildResult result = EBuildResult::Unbuilt;
+        if (pResult) {
+            EBuildResult result = EBuildResult::Unbuilt;
 
-        for (const PBuildNode& node : deps) {
-            FBuildState& st = node->State();
-
-            FBuildRevision nodeRev = st.Revision;
-            if (nodeRev != globalRev && st.Revision.compare_exchange_weak(nodeRev, globalRev)) {
-                const FAtomicReadWriteLock::FWriterScope readScope(st.RWLock);
-                st.UserData = nullptr;
+            for (const PBuildNode& node : deps) {
+                FBuildState& st = node->State();
+                result = Combine(result, st.Result);
             }
 
-            result = Combine(result, st.Result);
-        }
-
-        if (pResult)
             *pResult = result;
+        }
     }
 };
 //----------------------------------------------------------------------------
