@@ -158,15 +158,15 @@ constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<_Class*, 
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<TPtrRef<_Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
-    return (std::get<0>(extra)->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+    return (std::get<0>(extra).get()->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<TSafePtr<_Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
-    return (std::get<0>(extra)->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+    return (std::get<0>(extra).get()->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<TRefPtr<_Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
-    return (std::get<0>(extra)->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+    return (std::get<0>(extra).get()->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
@@ -175,15 +175,15 @@ constexpr _Ret CallTupleEx_(_Ret(_Class::*mc)(_Params...) const, const TTuple<co
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*mc)(_Params...) const, const TTuple<TPtrRef<const _Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
-    return (std::get<0>(extra)->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+    return (std::get<0>(extra).get()->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*mc)(_Params...) const, const TTuple<TSafePtr<const _Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
-    return (std::get<0>(extra)->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+    return (std::get<0>(extra).get()->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*mc)(_Params...) const, const TTuple<TRefPtr<const _Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
-    return (std::get<0>(extra)->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+    return (std::get<0>(extra).get()->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 //----------------------------------------------------------------------------
 } //details

@@ -274,6 +274,14 @@ struct TFunctionTraits<_Ret(_Args...)> {
         struct extra_t<_Class*, _ExtraArgs...> {
             using type = details::TFunctionTuple<_Class*, _ExtraArgs...>;
         };
+        template <typename... _ExtraArgs>
+        struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
+            using type = details::TFunctionTuple<TSafePtr<_Class>, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
+        struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
+            using type = details::TFunctionTuple<TRefPtr<_Class>, _ExtraArgs...>;
+        };
         template <_Ret(_Class::*_MemFunc)(_Args..., _Extra...), typename _Payload>
         struct bind_t {
             static CONSTEXPR _Ret invoke(const void* embed, _Args... args) {
@@ -293,8 +301,24 @@ struct TFunctionTraits<_Ret(_Args...)> {
             using type = details::TFunctionTuple<const _Class*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
+        struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
+            using type = details::TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
+        struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
+            using type = details::TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
         struct extra_t<const _Class*, _ExtraArgs...> {
             using type = details::TFunctionTuple<const _Class*, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
+        struct extra_t<TSafePtr<const _Class>, _ExtraArgs...> {
+            using type = details::TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
+        struct extra_t<TRefPtr<const _Class>, _ExtraArgs...> {
+            using type = details::TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
         };
         template <_Ret(_Class::*_MemFuncConst)(_Args..., _Extra...) const, typename _Payload>
         struct bind_t {
