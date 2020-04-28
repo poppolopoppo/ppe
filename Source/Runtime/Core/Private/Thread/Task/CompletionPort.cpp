@@ -6,58 +6,7 @@
 #include "Thread/Task/TaskFiberPool.h"
 #include "Thread/Task/TaskManagerImpl.h"
 
-#define USE_PPE_COMPLETIONPORT_LIFETIME_CHECKS (0) //%_NOCOMMIT%
-
-#if USE_PPE_COMPLETIONPORT_LIFETIME_CHECKS
-#   include "Container/HashHelpers.h"
-#   include "Container/HashSet.h"
-#   include <mutex>
-#endif
-
 namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-#if USE_PPE_COMPLETIONPORT_LIFETIME_CHECKS
-struct FCompletionPortHolder_ {
-    using port_t = THashMemoizer<FCompletionPort*>;
-    struct bucket_t {
-        std::mutex Barrier;
-        HASHSET(Task, port_t) Ports;
-    };
-    STATIC_CONST_INTEGRAL(size_t, NumBuckets, 0x29/*0x89*/);
-    bucket_t Buckets[NumBuckets];
-
-    FCompletionPortHolder_() = default;
-    ~FCompletionPortHolder_() {
-        forrange(b, Buckets, Buckets + NumBuckets) {
-            const Meta::FLockGuard scopeLock(b->Barrier);
-            AssertRelease(b->Ports.empty());
-        }
-    }
-
-    bucket_t& Bucket(hash_t h) { return Buckets[h % NumBuckets]; }
-
-    void Add(FCompletionPort& port) {
-        const hash_t h = hash_ptr(&port);
-        bucket_t& b = Bucket(h);
-        const Meta::FLockGuard scopeLock(b.Barrier);
-        Insert_AssertUnique(b.Ports, port_t{ &port, h });
-    }
-
-    void Remove(FCompletionPort& port) {
-        const hash_t h = hash_ptr(&port);
-        bucket_t& b = Bucket(h);
-        const Meta::FLockGuard scopeLock(b.Barrier);
-        Remove_AssertExists(b.Ports, port_t{ &port, h });
-    }
-};
-static FCompletionPortHolder_ GCompletionsPorts;
-#endif //!USE_PPE_COMPLETIONPORT_LIFETIME_CHECKS
-//----------------------------------------------------------------------------
-} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -66,6 +15,8 @@ STATIC_ASSERT(uintptr_t(ETaskPriority::High) == 0);
 STATIC_ASSERT(uintptr_t(ETaskPriority::Normal) == 1);
 STATIC_ASSERT(uintptr_t(ETaskPriority::Low) == 2);
 STATIC_ASSERT(uintptr_t(ETaskPriority::Internal) == 3);
+// Also checks FCompletionPort alignment for packing in FTaskQueued
+STATIC_ASSERT(Meta::IsAligned(16, sizeof(FCompletionPort)));
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 FCompletionPort::~FCompletionPort() {
@@ -116,10 +67,6 @@ void FCompletionPort::Start(size_t n) NOEXCEPT {
 
     // make sure port is kept alive while working with it
     AddRefIFP(this); // increment only if already ref-counted
-
-#if USE_PPE_COMPLETIONPORT_LIFETIME_CHECKS
-    GCompletionsPorts.Add(*this);
-#endif
 
 #if USE_PPE_ASSERT
     int expected = CP_NotReady;
