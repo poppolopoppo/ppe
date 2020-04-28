@@ -10,8 +10,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 inline FWeakRefCountable::~FWeakRefCountable() {
-    Assert_NoAssume(not _cnt or _cnt->RefCount() == 0);
-    Assert_NoAssume(not _cnt or _cnt->SafeRefCount() == 0);
+#    if USE_PPE_SAFEPTR
+    Assert_NoAssume(0 == _safeRefCount);
+#    endif
+    Assert_NoAssume(not _cnt || _cnt->RefCount() == 0);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -113,6 +115,12 @@ inline void AddSafeRef(const FWeakRefCountable* ptr) NOEXCEPT {
 }
 inline void RemoveSafeRef(const FWeakRefCountable* ptr) NOEXCEPT {
     ptr->DecSafeRefCount();
+}
+inline void FWeakRefCountable::IncSafeRefCount() const NOEXCEPT {
+    _safeRefCount.fetch_add(1, std::memory_order_relaxed);
+}
+inline void FWeakRefCountable::DecSafeRefCount() const NOEXCEPT {
+    Verify(_safeRefCount.fetch_sub(1, std::memory_order_release) > 0);
 }
 #endif //!WITH_PPE_SAFEPTR
 //----------------------------------------------------------------------------

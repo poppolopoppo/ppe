@@ -33,18 +33,11 @@ public:
     ~FWeakRefCounter() {
         Assert_NoAssume(0 == RefCount());
         Assert_NoAssume(0 == WeakRefCount());
-#   if USE_PPE_SAFEPTR
-        Assert_NoAssume(0 == SafeRefCount());
-#   endif
     }
 #endif
 
     int RefCount() const { return _strongRefCount; }
     int WeakRefCount() const { return FRefCountable::RefCount(); }
-
-#if USE_PPE_SAFEPTR
-    int SafeRefCount() const { return FRefCountable::SafeRefCount(); }
-#endif
 
     // custom deleter can be used with FWeakRefCountable (!= FRefCountable)
     typedef void (*deleter_func)(void*) NOEXCEPT;
@@ -108,11 +101,6 @@ private:
             return false;
         }
     }
-
-#if USE_PPE_SAFEPTR
-    using FRefCountable::IncSafeRefCount;
-    using FRefCountable::DecSafeRefCount;
-#endif
 
     mutable std::atomic<int> _strongRefCount;
 
@@ -211,6 +199,9 @@ protected:
     friend T* RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& refptr);
 
 #if USE_PPE_SAFEPTR
+    void IncSafeRefCount() const NOEXCEPT;
+    void DecSafeRefCount() const NOEXCEPT;
+
     friend void AddSafeRef(const FWeakRefCountable* ptr) NOEXCEPT;
     friend void RemoveSafeRef(const FWeakRefCountable* ptr) NOEXCEPT;
 #else
@@ -234,12 +225,14 @@ private:
     void IncStrongRefCount() const NOEXCEPT { _cnt->Weak_IncStrongRefCount(); }
     bool DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT { return _cnt->Weak_DecStrongRefCount_ReturnIfReachZero(); }
 
-#if USE_PPE_SAFEPTR
-    void IncSafeRefCount() const NOEXCEPT { _cnt->IncSafeRefCount(); }
-    void DecSafeRefCount() const NOEXCEPT { _cnt->DecSafeRefCount(); }
-#endif
-
     mutable PWeakRefCounter _cnt;
+
+#if USE_PPE_SAFEPTR
+    // for debugging purpose : assert if TSafePtr<> are still tracking that object
+    template <typename T>
+    friend class TSafePtr;
+    mutable std::atomic<int> _safeRefCount;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
