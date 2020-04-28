@@ -52,21 +52,29 @@ public:
 #if USE_PPE_THREAD_WORKSTEALINGQUEUE
         size_t Priority;
 #endif
+        SCompletionPort Port;
         FTaskFunc Pending;
-        FCompletionPort* Port;
 
         FTaskQueued() = default;
 
 #if USE_PPE_THREAD_WORKSTEALINGQUEUE
         FTaskQueued(size_t priority, FTaskFunc&& pending, FCompletionPort* port) NOEXCEPT
         :   Priority(priority)
-        ,   Pending(std::move(pending))
         ,   Port(port)
+        ,   Pending(std::move(pending))
         {}
+
+        friend bool operator <(const FTaskQueued& lhs, const FTaskQueued& rhs) NOEXCEPT {
+            return (lhs.Priority > rhs.Priority);  // smaller means higher priority
+        }
+        friend bool operator >=(const FTaskQueued& lhs, const FTaskQueued& rhs) NOEXCEPT {
+            return (not operator <(lhs, rhs));
+        }
+
 #else
         FTaskQueued(FTaskFunc&& pending, FCompletionPort* counter) NOEXCEPT
-        :   Pending(std::move(pending))
-        ,   Port(counter)
+        :   Port(counter)
+        ,   Pending(std::move(pending))
         {}
 #endif
 
@@ -94,12 +102,6 @@ public:
 
 private:
 #if USE_PPE_THREAD_WORKSTEALINGQUEUE
-    struct FPrioritySort_ {
-        bool operator ()(const FTaskQueued& lhs, const FTaskQueued& rhs) const {
-            return (lhs.Priority > rhs.Priority); // smaller means higher priority
-        }
-    };
-
     static CONSTEXPR size_t PackPriorityWRevision_(ETaskPriority priority, size_t revision) {
         const size_t packed = (size_t(priority) << 28) | revision;
         Assert_NoAssume((packed >> 28) == size_t(priority));
@@ -186,7 +188,7 @@ private:
                 PriorityHeap.push_back(std::move(rvalue));
             }
 
-            std::push_heap(PriorityHeap.begin(), PriorityHeap.end(), FPrioritySort_{});
+            std::push_heap(PriorityHeap.begin(), PriorityHeap.end());
             HighestPriority = PriorityHeap.front().Priority;
 
             scope.unlock(); // unlock before notification to minimize mutex contention
@@ -199,7 +201,7 @@ private:
 
             Empty.wait(scope, [this] { return (not PriorityHeap.empty()); });
 
-            std::pop_heap(PriorityHeap.begin(), PriorityHeap.end(), FPrioritySort_{});
+            std::pop_heap(PriorityHeap.begin(), PriorityHeap.end());
             *task = std::move(PriorityHeap.back());
             PriorityHeap.pop_back();
 
@@ -353,7 +355,7 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
                 {
                     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
                     w.PriorityHeap.push_back(std::move(queued));
-                    std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end(), FPrioritySort_{});
+                    std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end());
                 }
 
                 // keep track of worker priority
@@ -393,7 +395,7 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
                 });
 
                 if (not (w.PriorityHeap.empty() | HasHigherPriorityTask_(w.HighestPriority))) {
-                    std::pop_heap(w.PriorityHeap.begin(), w.PriorityHeap.end(), FPrioritySort_{});
+                    std::pop_heap(w.PriorityHeap.begin(), w.PriorityHeap.end());
                     *pop = std::move(w.PriorityHeap.back());
                     w.PriorityHeap.pop_back();
 
@@ -474,7 +476,7 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
             if (Likely(scopeLock.try_lock())) {
                 // push the new task to the priority heap
                 w.PriorityHeap.push_back(std::move(queued));
-                std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end(), FPrioritySort_{});
+                std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end());
 
                 // keep track of worker priority
                 const size_t localPriority = w.HighestPriority;
@@ -518,7 +520,7 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
                 });
 
                 if (not (w.PriorityHeap.empty() | HasHigherPriorityWRevision_(_globalPriority, w.HighestPriority))) {
-                    std::pop_heap(w.PriorityHeap.begin(), w.PriorityHeap.end(), FPrioritySort_{});
+                    std::pop_heap(w.PriorityHeap.begin(), w.PriorityHeap.end());
                     *pop = std::move(w.PriorityHeap.back());
                     w.PriorityHeap.pop_back();
 

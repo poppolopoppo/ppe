@@ -8,11 +8,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API ITaskContext {
+class ITaskContext {
 public:
     virtual ~ITaskContext() = default;
 
-    static ITaskContext& Get() NOEXCEPT; // get current thread task context
+    static PPE_CORE_API ITaskContext& Get() NOEXCEPT; // get current thread task context
 
     virtual size_t ThreadTag() const NOEXCEPT = 0;
 
@@ -29,6 +29,11 @@ public:
     virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+
+public: // helpers
+    void FireAndForget(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) { Run(nullptr, std::move(rtask), priority); }
+    void FireAndForget(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) { Run(nullptr, rtasks, priority); }
+    void FireAndForget(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) { Run(nullptr, tasks, priority); }
 
 };
 //----------------------------------------------------------------------------
