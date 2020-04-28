@@ -13,7 +13,8 @@
 #define PPE_THREADTAG_IO                   size_t(2)
 #define PPE_THREADTAG_HIGHPRIORITY         size_t(3)
 #define PPE_THREADTAG_BACKGROUND           size_t(4)
-#define PPE_THREADTAG_OTHER                size_t(5)
+#define PPE_THREADTAG_SERVICING            size_t(5)
+#define PPE_THREADTAG_OTHER                size_t(6)
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -63,6 +64,7 @@ inline bool IsInIOThread()          { return (PPE_THREADTAG_IO == CurrentThreadC
 inline bool IsInWorkerThread()      { return (PPE_THREADTAG_WORKER == CurrentThreadContext().Tag()); }
 inline bool IsInHighPriorityThread(){ return (PPE_THREADTAG_HIGHPRIORITY == CurrentThreadContext().Tag()); }
 inline bool IsInBackgroundThread()  { return (PPE_THREADTAG_BACKGROUND == CurrentThreadContext().Tag()); }
+inline bool IsInServicingThread()   { return (PPE_THREADTAG_SERVICING == CurrentThreadContext().Tag()); }
 inline bool IsInOtherThread()       { return (PPE_THREADTAG_OTHER == CurrentThreadContext().Tag()); }
 //----------------------------------------------------------------------------
 #define AssertIsMainThread() Assert_NoAssume(PPE::IsInMainThread())
