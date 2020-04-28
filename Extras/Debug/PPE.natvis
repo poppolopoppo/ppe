@@ -244,6 +244,17 @@
     </Expand>
   </Type>
 
+  <Type Name="PPE::FWeakRefCountable">
+    <DisplayString>{(void*)this} [Refs:{_cnt._ptr ? _cnt._ptr->_strongRefCount : 0}]</DisplayString>
+    <Expand>
+        <Item Name="[RefCount]"  Condition="_cnt._ptr != nullptr">_cnt._ptr->_strongRefCount</Item>
+        <Item Name="[SafeCount]" Condition="_cnt._ptr != nullptr">_cnt._ptr->_safeRefCount</Item>
+        <Item Name="[WeakCount]" Condition="_cnt._ptr != nullptr">_cnt._ptr->_refCount</Item>
+        <Item Name="[Deleter]" Condition="_cnt._ptr != nullptr">_cnt._ptr->_deleter</Item>
+        <Item Name="[RefCount]" Condition="_cnt._ptr == nullptr">-1</Item>
+    </Expand>
+  </Type>
+
   <Type Name="PPE::TRefPtr&lt;* &gt;">
     <DisplayString Condition="_ptr != nullptr">{(void*)_ptr} [Refs:{_ptr->_refCount}]</DisplayString>
     <DisplayString Condition="_ptr == nullptr">nullptr</DisplayString>
@@ -259,6 +270,15 @@
     <Expand>
       <Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
       <Item Name="[SafeCount]" Condition="_ptr != nullptr">_ptr-&gt;_safeRefCount</Item>
+      <ExpandedItem>_ptr</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::TWeakPtr&lt;* &gt;">
+    <DisplayString Condition="_ptr != nullptr">{(void*)_ptr} [Refs:{_cnt._ptr ? _cnt._ptr->_strongRefCount : 0}]</DisplayString>
+    <DisplayString Condition="_ptr == nullptr">nullptr</DisplayString>
+    <Expand>
+      <Item Name="[Counter]">_cnt</Item>
       <ExpandedItem>_ptr</ExpandedItem>
     </Expand>
   </Type>
