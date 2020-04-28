@@ -40,17 +40,17 @@
 #include <random>
 #include <unordered_set>
 
-#define PPE_RUN_BENCHMARK_POOLSIZE      (512) // avoid cache coherency
-#define PPE_RUN_EXHAUSTIVE_BENCHMARKS   (0) // %_NOCOMMIT%
-#define PPE_RUN_BENCHARMK_ALLTESTS      (0) // %_NOCOMMIT%
-#define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
-#define PPE_RUN_BENCHMARK_MULTITHREADED (1) // %_NOCOMMIT%
-#define PPE_DONT_USE_STD_UNORDEREDSET   (1) // %_NOCOMMIT%
-#define USE_PPE_CONTAINERS_LONGRUN      (0) // %_NOCOMMIT%
-#define USE_PPE_CONTAINERS_MEMOIZER     (0) // %_NOCOMMIT%
-#define USE_PPE_CONTAINERS_DEBUGGING    (0) // %_NOCOMMIT%
-#define USE_PPE_CONTAINERS_FASTRANDOM   (0) // %_NOCOMMIT%
-#define USE_PPE_CONTAINERS_STRING       (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHMARK_POOLSIZE          (512) // avoid cache coherency
+#define PPE_RUN_EXHAUSTIVE_BENCHMARKS       (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHARMK_ALLTESTS          (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHMARK_ONE_CONTAINER     (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHMARK_MULTITHREADED     (1) // %_NOCOMMIT%
+#define PPE_DONT_USE_STD_UNORDEREDSET       (1) // %_NOCOMMIT%
+#define USE_PPE_CONTAINERS_LONGRUN          (0) // %_NOCOMMIT%
+#define USE_PPE_CONTAINERS_MEMOIZER         (0) // %_NOCOMMIT%
+#define USE_PPE_CONTAINERS_DEBUGGING        (0) // %_NOCOMMIT%
+#define USE_PPE_CONTAINERS_FASTRANDOM       (0) // %_NOCOMMIT%
+#define USE_PPE_CONTAINERS_STRING           (0) // %_NOCOMMIT%
 
 static_assert(PPE_RUN_BENCHMARK_POOLSIZE > 0, "must have at least one sample");
 
@@ -531,6 +531,7 @@ public:
 
                 size_t n = 0;
                 for (const auto& it : c) {
+                    Assert_NoAssume(n < c.size());
                     FBenchmark::DoNotOptimize(it);
                     n++;
                 }
@@ -1223,7 +1224,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SSEHashSet2_CRC32", set, input);
     }
 #endif
-#if USE_PPE_AVX2//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 0//USE_PPE_AVX2//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TSSEHashSet3<T> set;
             bm.Run("SSEHashSet3", set, input);
@@ -1235,22 +1236,28 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SSEHashSet4", set, input);
         }
 #endif
-#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 0//PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TSSEHashSet5<T> set;
             bm.Run("SSEHashSet5", set, input);
         }
 #endif
-#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 0//PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TSSEHashSet5<T, Meta::TCRC32<T> > set;
             bm.Run("SSEHashSet5_CRC32", set, input);
         }
 #endif
-#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 0//PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TSSEHashSet6<T> set;
             bm.Run("SSEHashSet6", set, input);
+        }
+#endif
+#if 0//PPE_RUN_EXHAUSTIVE_BENCHMARKS
+        {
+            TSSEHashSet6<T, Meta::TCRC32<T>> set;
+            bm.Run("SSEHashSet6_CRC32", set, input);
         }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
@@ -1618,7 +1625,7 @@ NO_INLINE static void Test_StringSet_() {
          }
  #   endif
  #endif
- #if USE_PPE_AVX2//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+ #if 0//USE_PPE_AVX2//!PPE_RUN_BENCHMARK_ONE_CONTAINER
          {
              TSSEHashSet3<
                  FStringView,

@@ -3,6 +3,7 @@
 #include "Allocator/Allocation.h"
 #include "HAL/PlatformMaths.h"
 #include "HAL/PlatformMemory.h"
+
 #include "Maths/SSEHelpers.h"
 #include "Memory/MemoryView.h"
 #include "Meta/AlignedStorage.h"
@@ -59,13 +60,13 @@ struct ALIGN(16) TSSEHashBucket6 {
         // otherwise use default
         default:
             // first try to align on cache line size
-            for (size_t c = 11; c <= 16; ++c) {
+            for (u32 c = 11; c <= 16; ++c) {
                 if (Meta::IsAligned(CACHELINE_SIZE, sizeof(states_t) + sizeof(storage_t) * c))
                     return c; // succeed, bail out
             }
 
             // then try to align on simd alignment requirement
-            for (size_t c = 11; c <= 16; ++c)
+            for (u32 c = 11; c <= 16; ++c)
                 if (Meta::IsAligned(16, sizeof(states_t) + sizeof(storage_t) * c))
                     return c; // succeed, bail out
 

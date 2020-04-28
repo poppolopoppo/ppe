@@ -295,6 +295,7 @@ public:
             m256i_epi8_store_aligned(&_buckets[numBuckets].States, m256i_epi8_set_zero());
         }
 
+        Assert_NoAssume(num_buckets_() == other.num_buckets_());
         Assert_NoAssume(_buckets[numBuckets].is_sentinel());
     }
 
@@ -528,6 +529,7 @@ private:
 
         _bucketMask = (numBuckets - 1);
         _buckets = (bucket_t*)allocator_traits::Allocate(*this, allocation_size_(numBuckets)).Data;
+        Assert_NoAssume(num_buckets_() == numBuckets);
 
         forrange(pbucket, _buckets, _buckets + numBuckets)
             INPLACE_NEW(pbucket, bucket_t);
@@ -567,7 +569,7 @@ private:
     }
 
     NO_INLINE void clear_NotEmpty_() NOEXCEPT {
-        Assert_NoAssume(_bucketMask);
+        Assert_NoAssume(_bucketMask + 1);
 
         _size = 0;
         forrange(pbucket, _buckets, _buckets + num_buckets_())
@@ -598,20 +600,20 @@ private:
 
     template <bool _Const>
     FORCE_INLINE TSSEHashIterator3<value_type, _Const> iterator_begin_() const NOEXCEPT {
-        TSSEHashIterator3<value_type, _Const> it{ Meta::NoInit };
         if (_size) {
-            it.BucketAndSlot.Reset(_buckets, 0);
+            TSSEHashIterator3<value_type, _Const> it{ _buckets, 0 };
             it.FirstSet(i8(-1));
+            return it;
         }
         else {
             // avoids traversing empty containers with reserved memory
-            it.BucketAndSlot.Reset(_buckets + num_buckets_(), 0);
+            return iterator_end_<_Const>();
         }
-        return it;
     }
 
     template <bool _Const>
     FORCE_INLINE TSSEHashIterator3<value_type, _Const> iterator_end_() const NOEXCEPT {
+        Assert_NoAssume(_buckets[num_buckets_()].is_sentinel());
         return TSSEHashIterator3<value_type, _Const>{ _buckets + num_buckets_(), 0 };
     }
 
