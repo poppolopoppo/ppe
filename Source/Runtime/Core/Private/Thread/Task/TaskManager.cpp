@@ -173,8 +173,9 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
 #endif // !USE_PPE_FINAL_RELEASE
     const FThreadContextStartup threadStartup(workerName, pmanager->ThreadTag());
 
-    threadStartup.Context().SetAffinityMask(affinityMask);
     threadStartup.Context().SetPriority(pmanager->Priority());
+    if (affinityMask)
+        threadStartup.Context().SetAffinityMask(affinityMask);
 
     FWorkerContext_ workerContext(pmanager->Pimpl(), workerIndex);
     {
@@ -462,6 +463,16 @@ FTaskManager::FTaskManager(const FStringView& name, size_t threadTag, size_t wor
 //----------------------------------------------------------------------------
 FTaskManager::~FTaskManager() {
     Assert(nullptr == _pimpl);
+}
+//----------------------------------------------------------------------------
+bool FTaskManager::IsRunning() const NOEXCEPT {
+    return (!!_pimpl);
+}
+//----------------------------------------------------------------------------
+void FTaskManager::Start() {
+    STACKLOCAL_POD_ARRAY(u64, fakeThreadAffinities, _workerCount);
+    std::fill(fakeThreadAffinities.begin(), fakeThreadAffinities.end(), 0);
+    Start(fakeThreadAffinities);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Start(const TMemoryView<const u64>& threadAffinities) {

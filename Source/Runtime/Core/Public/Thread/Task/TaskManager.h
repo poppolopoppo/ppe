@@ -29,6 +29,9 @@ public:
     size_t WorkerCount() const { return _workerCount; }
     EThreadPriority Priority() const { return _priority; }
 
+    bool IsRunning() const NOEXCEPT;
+
+    void Start();
     void Start(const TMemoryView<const u64>& threadAffinities);
     void Shutdown();
 
