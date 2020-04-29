@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS) && !defined(CPP_CLANG) && !defined(FINAL_RELEASE)
-#   define USE_PPE_EXTERNAL_VSTOOLS 1
+#   define USE_PPE_EXTERNAL_VSTOOLS 0 // #TODO: fatal error C1090: PDB API call failed, error code '3': Q:\cmd\1k\out\Intermediate\ClientDiagnostics\vscustomnativeheapetwprovider.vcxproj__jrw_jij\objr\amd64\VSCustomNativeHeapEtwProvider.pd
 #else
 #   define USE_PPE_EXTERNAL_VSTOOLS 0
 #endif
