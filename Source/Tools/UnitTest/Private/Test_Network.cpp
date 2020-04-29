@@ -29,6 +29,9 @@
 
 #define WITH_PPE_NETWORK_INTERACTIVE_TESTS (not USE_PPE_FINAL_RELEASE && not USE_PPE_PROFILING)
 
+#define WITH_PPE_NETWORK_Test_SocketAccept_ (WITH_PPE_NETWORK_INTERACTIVE_TESTS && 1) //%_NOCOMMIT%
+#define WITH_PPE_NETWORK_Test_HttpServer_   (WITH_PPE_NETWORK_INTERACTIVE_TESTS && 1) //%_NOCOMMIT%
+
 namespace PPE {
 namespace Test {
 LOG_CATEGORY(, Test_Network)
@@ -149,7 +152,7 @@ static void LogResponse_(const FHttpResponse& resp) {
 #endif
 }
 //----------------------------------------------------------------------------
-#if WITH_PPE_NETWORK_INTERACTIVE_TESTS
+#if WITH_PPE_NETWORK_Test_SocketAccept_
 static void Test_SocketAccept_() {
     FListener listener = FListener::Localhost(8123);
 
@@ -175,7 +178,8 @@ static void Test_SocketAccept_() {
             PPE_TRY
             {
                 FHttpRequest request;
-                FHttpRequest::Read(&request, socket, maxContentLength);
+                if (not FHttpRequest::Read(&request, socket, maxContentLength))
+                    continue;
 
                 LogRequest_(request);
 
@@ -210,7 +214,7 @@ static void Test_SocketAccept_() {
     if (not succeed)
         LOG(Test_Network, Warning, L"no incomming HTTP connexion :'(");
 }
-#endif //!WITH_PPE_NETWORK_INTERACTIVE_TESTS
+#endif //!WITH_PPE_NETWORK_Test_SocketAccept_
 //----------------------------------------------------------------------------
 static void Test_HttpGet_() {
     FUri uri;
@@ -268,14 +272,7 @@ public:
     FTestHttpServer() : FHttpServer("localhost", FAddress::Localhost(8776)) {}
 
 private:
-    virtual void OnAccept(FSocketBuffered& socket) const override {
-        UNUSED(socket);
-        LOG(Test_Network, Info, L"[{0}] accept connection on test server : {1}", socket.Local(), socket.Remote());
-    }
-
-    virtual void OnRequest(FSocketBuffered& socket, const FHttpRequest& request) const PPE_THROW() override {
-        LOG(Test_Network, Info, L"[{0}] {1} requested", socket.Local(), socket.Remote());
-
+    virtual bool OnRequest(FServicingPort& port, const FHttpRequest& request) const override {
         LogRequest_(request);
 
         FHttpResponse response;
@@ -286,6 +283,8 @@ private:
 
         oss << "<html>" << Eol
             << "    <body>" << Eol;
+
+        oss << "<h1>" << port.UID() << "</h1>" << Eol;
 
         oss << "Method: " << request.Method() << "<br/>" << Eol;
         oss << "Uri   : " << request.Uri() << "<br/>" << Eol;
@@ -304,23 +303,20 @@ private:
 
         oss.Flush();
 
-        FHttpResponse::Write(&socket, response);
-    }
+        FHttpResponse::Write(&port.Socket(), response);
 
-    virtual void OnDisconnect(FSocketBuffered& socket) const override{
-        UNUSED(socket);
-        LOG(Test_Network, Info, L"[{0}] disconnected from test server : {1}", socket.Local(), socket.Remote());
+        return true;
     }
 };
 //----------------------------------------------------------------------------
-#if WITH_PPE_NETWORK_INTERACTIVE_TESTS
+#if WITH_PPE_NETWORK_Test_HttpServer_
 static void Test_HttpServer_() {
     FTestHttpServer srv;
-    srv.Start();
+    srv.Start(2);
     std::this_thread::sleep_for(std::chrono::seconds(30));
     srv.Stop();
 }
-#endif //!WITH_PPE_NETWORK_INTERACTIVE_TESTS
+#endif //!WITH_PPE_NETWORK_Test_HttpServer_
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -334,8 +330,10 @@ void Test_Network() {
     Test_ParseUri_();
     Test_HttpGet_();
     Test_HttpPost_();
-#if WITH_PPE_NETWORK_INTERACTIVE_TESTS
+#if WITH_PPE_NETWORK_Test_SocketAccept_
     Test_SocketAccept_();
+#endif
+#if WITH_PPE_NETWORK_Test_HttpServer_
     Test_HttpServer_();
 #endif
 }
