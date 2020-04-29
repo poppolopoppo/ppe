@@ -21,7 +21,7 @@ def scan_files(dir, filters, &block)
 end
 
 SOURCEFILES = Queue.new
-def all_sources(&block) TARGET.nil? ? 
+def all_sources(&block) TARGET.nil? ?
     scan_files(SOURCEDIR, /.*\.(h|cpp)$/i, &block) :
     block.call(TARGET)
 end
