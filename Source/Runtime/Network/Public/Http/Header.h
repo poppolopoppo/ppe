@@ -59,6 +59,27 @@ public:
 
     static FStringView ProtocolVersion();
 
+public:
+    FStringView HTTP_Accept() const NOEXCEPT;
+    FStringView HTTP_AcceptCharset() const NOEXCEPT;
+    FStringView HTTP_AcceptEncoding() const NOEXCEPT;
+    FStringView HTTP_AcceptLanguage() const NOEXCEPT;
+    FStringView HTTP_CacheControl() const NOEXCEPT;
+    FStringView HTTP_Connection() const NOEXCEPT;
+    FStringView HTTP_Cookie() const NOEXCEPT;
+    FStringView HTTP_ContentLanguage() const NOEXCEPT;
+    FStringView HTTP_ContentLength() const NOEXCEPT;
+    FStringView HTTP_ContentType() const NOEXCEPT;
+    FStringView HTTP_Date() const NOEXCEPT;
+    FStringView HTTP_Host() const NOEXCEPT;
+    FStringView HTTP_KeepAlive() const NOEXCEPT;
+    FStringView HTTP_Location() const NOEXCEPT;
+    FStringView HTTP_Referer() const NOEXCEPT;
+    FStringView HTTP_RetryAfter() const NOEXCEPT;
+    FStringView HTTP_Server() const NOEXCEPT;
+    FStringView HTTP_Status() const NOEXCEPT;
+    FStringView HTTP_UserAgent() const NOEXCEPT;
+
 private:
     FEntries _headers;
     FBody _body;

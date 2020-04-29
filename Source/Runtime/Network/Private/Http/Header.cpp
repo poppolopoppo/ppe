@@ -220,6 +220,26 @@ FStringView FHttpHeader::ProtocolVersion() {
     return "HTTP/1.1";
 }
 //----------------------------------------------------------------------------
+FStringView FHttpHeader::HTTP_Accept() const NOEXCEPT { return GetIFP(FHttpConstNames::Accept()); }
+FStringView FHttpHeader::HTTP_AcceptCharset() const NOEXCEPT { return GetIFP(FHttpConstNames::AcceptCharset()); }
+FStringView FHttpHeader::HTTP_AcceptEncoding() const NOEXCEPT { return GetIFP(FHttpConstNames::AcceptEncoding()); }
+FStringView FHttpHeader::HTTP_AcceptLanguage() const NOEXCEPT { return GetIFP(FHttpConstNames::AcceptLanguage()); }
+FStringView FHttpHeader::HTTP_CacheControl() const NOEXCEPT { return GetIFP(FHttpConstNames::CacheControl()); }
+FStringView FHttpHeader::HTTP_Connection() const NOEXCEPT { return GetIFP(FHttpConstNames::Connection()); }
+FStringView FHttpHeader::HTTP_Cookie() const NOEXCEPT { return GetIFP(FHttpConstNames::Cookie()); }
+FStringView FHttpHeader::HTTP_ContentLanguage() const NOEXCEPT { return GetIFP(FHttpConstNames::ContentLanguage()); }
+FStringView FHttpHeader::HTTP_ContentLength() const NOEXCEPT { return GetIFP(FHttpConstNames::ContentLength()); }
+FStringView FHttpHeader::HTTP_ContentType() const NOEXCEPT { return GetIFP(FHttpConstNames::ContentType()); }
+FStringView FHttpHeader::HTTP_Date() const NOEXCEPT { return GetIFP(FHttpConstNames::Date()); }
+FStringView FHttpHeader::HTTP_Host() const NOEXCEPT { return GetIFP(FHttpConstNames::Host()); }
+FStringView FHttpHeader::HTTP_KeepAlive() const NOEXCEPT { return GetIFP(FHttpConstNames::KeepAlive()); }
+FStringView FHttpHeader::HTTP_Location() const NOEXCEPT { return GetIFP(FHttpConstNames::Location()); }
+FStringView FHttpHeader::HTTP_Referer() const NOEXCEPT { return GetIFP(FHttpConstNames::Referer()); }
+FStringView FHttpHeader::HTTP_RetryAfter() const NOEXCEPT { return GetIFP(FHttpConstNames::RetryAfter()); }
+FStringView FHttpHeader::HTTP_Server() const NOEXCEPT { return GetIFP(FHttpConstNames::Server()); }
+FStringView FHttpHeader::HTTP_Status() const NOEXCEPT { return GetIFP(FHttpConstNames::Status()); }
+FStringView FHttpHeader::HTTP_UserAgent() const NOEXCEPT { return GetIFP(FHttpConstNames::UserAgent()); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network
