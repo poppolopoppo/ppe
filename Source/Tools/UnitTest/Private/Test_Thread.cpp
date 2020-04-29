@@ -47,6 +47,14 @@ struct FTask_Member_ : Meta::FNonCopyableNorMovable {
     void TaskConst_Extra(ITaskContext&, int, bool, float, void*) const {}
 };
 
+FWD_REFPTR(RefCountableTask_);
+class FRefCountableTask_ : public FRefCountable {
+public:
+    void Task(ITaskContext&) {
+        NOOP();
+    }
+};
+
 void TaskFunc_(ITaskContext&) {}
 void TaskFunc_Extra_(ITaskContext&, int, bool, float, void*) {}
 void TaskFunc_ExtraRef_(ITaskContext&, FTask_Member_&) {}
@@ -71,6 +79,14 @@ NO_INLINE void Test_Function_() {
     task = FTaskFunc::Bind<&FTask_Member_::Task_Extra>(&m, 42, false, 3.1415f, &task);
     task = FTaskFunc::Bind<&FTask_Member_::TaskConst>(&m);
     task = FTaskFunc::Bind<&FTask_Member_::TaskConst_Extra>(&m, 42, false, 3.1415f, &task);
+
+    FRefCountableTask_ c;
+    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(&c);
+    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(MakeSafePtr(&c));
+
+    PRefCountableTask_ a = NEW_REF(Task, FRefCountableTask_);
+    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(a);
+    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(a.get());
 }
 //--------------------1--------------------------------------------------------
 NO_INLINE void Test_Aggregation_() {
@@ -437,7 +453,7 @@ private:
 
     void LaunchBuild(ITaskContext& ctx, FAggregationPort* batch, FGraphNode* node) {
         Assert(node);
-        
+
         PCompletionPort port{ MakeBuildPort() };
         node->Payload.reset(port);
 
@@ -463,7 +479,7 @@ private:
 
                 PWeakRefCountable payload;
                 if (node->Payload.TryLock(&payload))
-                    batch.Attach(static_cast<FCompletionPort*>(payload.get()));   
+                    batch.Attach(static_cast<FCompletionPort*>(payload.get()));
             }
         }
 
