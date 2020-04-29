@@ -8,11 +8,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ITaskContext {
+class PPE_CORE_API ITaskContext {
 public:
     virtual ~ITaskContext() = default;
 
-    static PPE_CORE_API ITaskContext& Get() NOEXCEPT; // get current thread task context
+    static ITaskContext& Get() NOEXCEPT; // get current thread task context
 
     virtual size_t ThreadTag() const NOEXCEPT = 0;
 

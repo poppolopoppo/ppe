@@ -13,6 +13,13 @@
 #   error "there is someone messing with the project configuration"
 #endif
 
+// #TODO: this is a dirt hack, must define PPE_DEBUG_CRASH macro earlier
+#ifndef PPE_DEBUG_CRASH
+#   define PPE_ASSERT_LIGHTWEIHGT_CRASH() ::abort()
+#else
+#   define PPE_ASSERT_LIGHTWEIHGT_CRASH() PPE_DEBUG_CRASH()
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -47,7 +54,7 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 #   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 
 #   define Assert_Lightweight(...) \
-    ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_DEBUG_CRASH() ) // when we need to break immediately
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_ASSERT_LIGHTWEIHGT_CRASH() ) // when we need to break immediately
 
 #   define Verify(...) AssertMessage(WIDESTRING(#__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
