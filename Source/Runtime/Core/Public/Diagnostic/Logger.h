@@ -27,7 +27,7 @@ enum class ELoggerVerbosity {
 #if USE_PPE_PROFILING
     All         = NoDebugInfo
 #else
-    All         = (Debug|Info|Emphasis|Warning|Error|Fatal)
+    All         = (Debug|Verbose|Info|Emphasis|Warning|Error|Fatal)
 #endif
 };
 ENUM_FLAGS(ELoggerVerbosity);
