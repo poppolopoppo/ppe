@@ -28,7 +28,7 @@ function die()
 ##  List modified files
 ##  -------------------
 
-MODIFIED_FILES=$(git diff-index --cached --name-only $against)
+MODIFIED_FILES=$(git diff-index --diff-filter=AM --cached --name-only $against)
 
 ##  Bail out for git-repo commits, they should *NEVER* fail
 ##  -------------------------------------------------------
