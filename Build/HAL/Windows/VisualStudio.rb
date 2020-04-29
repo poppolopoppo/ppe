@@ -437,7 +437,7 @@ module Build
         # compilerOptions.append('/experimental:preprocessor')
     end
 
-    VSWhere_exe = File.join($BuildPath, 'System', 'HAL', 'Windows', 'vswhere.exe')
+    VSWhere_exe = File.join($BuildPath, 'HAL', 'Windows', 'vswhere.exe')
     import_cmdline(:VsWhere_Hostx86_x86, VSWhere_exe, '-find', '**/Hostx86/x86/cl.exe').validate_FileExist!
     import_cmdline(:VsWhere_Hostx86_x64, VSWhere_exe, '-find', '**/Hostx86/x64/cl.exe').validate_FileExist!
     import_cmdline(:VsWhere_Hostx64_x86, VSWhere_exe, '-find', '**/Hostx64/x86/cl.exe').validate_FileExist!

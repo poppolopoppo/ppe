@@ -17,9 +17,9 @@ module Build
     make_prerequisite(:FBuild_binary) do
         case Build.os_name
         when :Windows
-            need_fileset!(File.join($BuildPath, 'System', 'HAL', 'Windows', 'FBuild.exe'))
+            need_fileset!(File.join($BuildPath, 'HAL', 'Windows', 'FBuild.exe'))
         when :Linux
-            need_fileset!(File.join($BuildPath, 'System', 'HAL', 'Linux', 'fbuild'))
+            need_fileset!(File.join($BuildPath, 'HAL', 'Linux', 'fbuild'))
         else
             Log.fatal 'unsupported os <%s>', os_name
         end
