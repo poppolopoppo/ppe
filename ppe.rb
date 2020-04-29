@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative 'Build/System/Build.rb'
+require_relative 'Build/Build.rb'
 
 class Build::Namespace
     include Build

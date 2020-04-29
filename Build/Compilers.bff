@@ -1,9 +1,0 @@
-#once
-
-#include "Common.bff"
-
-#include "Shared/SharedArch.bff"
-#include "Shared/SharedConfig.bff"
-#include "Shared/SharedPlatform.bff"
-
-#include "$OS$/Compilers.bff"

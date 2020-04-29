@@ -1,9 +1,0 @@
-#once
-{
-    .ModuleList = {}
-    .ModulePath = 'ContentPipeline'
-
-    #include "BuildGraph/BuildGraph.bff"
-
-    #include "$BuildPath$/Templates/Namespace.bff"
-}

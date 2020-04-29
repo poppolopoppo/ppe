@@ -118,7 +118,7 @@ module Build
             set!(data)
         end
 
-        def any_includePaths() 
+        def any_includePaths()
             any = []
             any.concat(@systemPaths.to_a)
             any.concat(@externPaths.to_a)
