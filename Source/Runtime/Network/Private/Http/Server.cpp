@@ -10,13 +10,13 @@
 
 #include "Network_fwd.h"
 #include "Socket/Address.h"
+#include "Socket/HandShaker.h"
 #include "Socket/Listener.h"
+#include "Socket/ServicingPort.h"
 #include "Socket/SocketBuffered.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/StringBuilder.h"
-#include "Thread/ThreadContext.h"
-#include "Thread/ThreadPool.h"
 
 namespace PPE {
 namespace Network {
@@ -24,96 +24,103 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FHttpServerImpl;
+FHttpServer::FHttpServer(
+    const FStringView& name,
+    FAddress&& localhost,
+    FMilliseconds timeout,
+    FBytes maxContentLength )
+:   _name(name)
+,   _localhost(std::move(localhost))
+,   _timeout(timeout)
+,   _maxContentLength(static_cast<size_t>(maxContentLength.Value()))
+{}
 //----------------------------------------------------------------------------
-namespace {
-static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocketBuffered&& socket);
-} //!namespace
-//----------------------------------------------------------------------------
-class FHttpServerImpl {
-public:
-    FHttpServerImpl(const FHttpServer* owner);
-    ~FHttpServerImpl();
-
-    FHttpServerImpl(const FHttpServerImpl& ) = delete;
-    FHttpServerImpl& operator =(const FHttpServerImpl& ) = delete;
-
-    size_t MaxContentLength() const { return _maxContentLength; }
-
-    bool Serve_ReturnIfQuit(const FMilliseconds& timeout);
-
-    void OnAccept(FSocketBuffered& socket) const { _owner->OnAccept(socket); }
-    void OnRequest(FSocketBuffered& socket, const FHttpRequest& request) const PPE_THROW() { _owner->OnRequest(socket, request); }
-    void OnDisconnect(FSocketBuffered& socket) const { _owner->OnDisconnect(socket); }
-
-private:
-    const FHttpServer* _owner;
-    FListener _listener;
-    const size_t _maxContentLength;
-};
-//----------------------------------------------------------------------------
-FHttpServerImpl::FHttpServerImpl(const FHttpServer* owner)
-:   _owner(owner)
-,   _listener(owner->Localhost())
-,   _maxContentLength(owner->MaxContentLength()) {
-    _listener.Connect();
-
-    LOG(Network, Info, L"starting HTTP server on {0}",  _listener.Listening());
+FHttpServer::~FHttpServer() {
+    Assert(not IsRunning());
 }
 //----------------------------------------------------------------------------
-FHttpServerImpl::~FHttpServerImpl() {
-    LOG(Network, Info, L"stopping HTTP server on {0}",  _listener.Listening());
-
-    if (_listener.IsConnected())
-        _listener.Disconnect();
+bool FHttpServer::IsRunning() const {
+    return (!!_service);
 }
 //----------------------------------------------------------------------------
-bool FHttpServerImpl::Serve_ReturnIfQuit(const FMilliseconds& timeout) {
-    if (_owner->_quit)
-        return true;
+void FHttpServer::Start(size_t workerCount) {
+    Assert(not IsRunning());
 
-    if (_listener.IsConnected() == false) {
-        LOG(Network, Error, L"got disconnected from HTTP listener on {0}", _listener.Listening());
-        return true;
-    }
+    LOG(Network, Info, L"HTTP: starting <{0}> server on {1}", _name, Localhost());
 
-    FSocketBuffered socket;
-    if (_listener.Accept(socket, timeout)) {
-        Assert(socket.IsConnected());
+    _service = NEW_REF(Socket, FHandShaker, _name, workerCount,
+        FListener{ Localhost() },
+        FServicingTask::Bind<&FHttpServer::Servicing_ReturnKeepAlive_>(this) );
 
-        socket.SetTimeout(_owner->Timeout());
+    _service->Start();
 
-        HttpServicingHandleConnection_(this, std::move(socket));
-    }
-
-    return (_owner->_quit);
+    Assert_NoAssume(IsRunning());
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-void HttpServicingTask_(ITaskContext& , const FHttpServerImpl* server, FSocketBuffered& socket) {
-    Assert(server);
-    Assert(socket.IsConnected());
+void FHttpServer::OnConnect(FServicingPort& port) const {
+    UNUSED(port);
 
-    server->OnAccept(socket);
+    LOG(Network, Verbose, L"HTTP: <{0}> server has new connection {1} -> {2} ({3})",
+        _name, port.Socket().Local(), port.Socket().Remote(), port.UID() );
+}
+//----------------------------------------------------------------------------
+bool FHttpServer::OnRequest(FServicingPort& port, const FHttpRequest& request) const {
 
-    PPE_TRY {
+    LOG(Network, Error, L"HTTP: <{0}> server unhandled request: {1} {2} ({3})",
+        _name, request.Method(), request.Uri(), port.UID() );
+
+    PPE_THROW_IT(FHttpException(EHttpStatus::NotFound, "unhandled request"));
+}
+//----------------------------------------------------------------------------
+void FHttpServer::OnDisconnect(FServicingPort& port) const {
+    UNUSED(port);
+
+    LOG(Network, Verbose, L"HTTP: <{0}> server closed connection {1} ({2})",
+        _name, port.Socket().Remote(), port.UID());
+}
+//----------------------------------------------------------------------------
+void FHttpServer::Stop() {
+    Assert(IsRunning());
+
+    _service->Shutdown();
+    _service.reset();
+
+    Assert(not IsRunning());
+}
+//----------------------------------------------------------------------------
+bool FHttpServer::Servicing_ReturnKeepAlive_(FServicingPort& port) const {
+
+    Assert(port.Socket().IsConnected());
+
+    if (port.LastAlive().Value() == 0)
+        OnConnect(port);
+
+    FSocketBuffered& socket = port.Socket();
+
+    PPE_TRY{
         FHttpRequest request;
-        FHttpRequest::Read(&request, socket, server->MaxContentLength());
+        if (not FHttpRequest::Read(&request, socket, _maxContentLength))
+            return false;
 
-        LOG(Network, Info, L"HTTP server request : method={0}, uri={1} from {2}:{3}",
+        const bool keepAlive = (EqualsI("keep-alive", request.HTTP_Connection()));
+
+        LOG(Network, Info, L"HTTP: <{0}> server request method={1}, uri={2} from {3}:{4} (keep-alive={5})",
+            _name,
             request.Method(), request.Uri(),
-            socket.Remote().Host(), socket.Remote().Port() );
+            socket.Remote().Host(), socket.Remote().Port(),
+            keepAlive );
 
-        server->OnRequest(socket, request);
+        if (OnRequest(port, request) && keepAlive) {
+            port.KeepAlive(); // avoid timeout
+            return true;
+        }
     }
     PPE_CATCH(FHttpException e)
     PPE_CATCH_BLOCK({
-        LOG(Network, Error, L"HTTP server error : status={0}, reason={1} on {2}:{3}",
+        LOG(Network, Error, L"HTTP: <{0}> server error status={1}, reason={2} on {3}:{4}",
+            _name,
             e.Status(), e.What(),
-            socket.Local().Host(), socket.Local().Port() );
+            socket.Local().Host(), socket.Local().Port());
 
         FHttpResponse response;
         response.Clear();
@@ -123,75 +130,8 @@ void HttpServicingTask_(ITaskContext& , const FHttpServerImpl* server, FSocketBu
         FHttpResponse::Write(&socket, response);
     })
 
-    server->OnDisconnect(socket);
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-static void HttpServicingThreadLaunchPad_(FHttpServer* owner) {
-    const FThreadContextStartup threadStartup("HttpServer", PPE_THREADTAG_OTHER);
-    threadStartup.Context().SetPriority(EThreadPriority::Lowest);
-
-    const FMilliseconds acceptTimeout = 1.0_s;
-
-    FHttpServerImpl server(owner);
-    for (; not server.Serve_ReturnIfQuit(acceptTimeout); );
-
-    FIOThreadPool::Get().WaitForAll(); // wait for eventual pending tasks before leaving
-}
-//----------------------------------------------------------------------------
-static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocketBuffered&& socket) {
-    TUniquePtr<FSocketBuffered> psocket{ new FSocketBuffered(std::move(socket)) };
-    FIOThreadPool::Get().Run([server, psocket{ std::move(psocket) }](ITaskContext & ctx) {
-        HttpServicingTask_(ctx, server, *psocket);
-        psocket->Disconnect(true);
-    });
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FHttpServer::FHttpServer(
-    const FStringView& name,
-    FAddress&& localhost,
-    const FMilliseconds& timeout/* = FSeconds(3) */,
-    size_t maxContentLength/* = DefaultMaxContentLength */)
-:   _name(name)
-,   _localhost(std::move(localhost))
-,   _timeout(timeout)
-,   _maxContentLength(maxContentLength)
-,   _userData(nullptr)
-,   _quit(true) {}
-//----------------------------------------------------------------------------
-FHttpServer::~FHttpServer() {
-    Assert(not IsRunning());
-}
-//----------------------------------------------------------------------------
-bool FHttpServer::IsRunning() const {
-    return (not _quit && _servicing.joinable());
-}
-//----------------------------------------------------------------------------
-void FHttpServer::Start() {
-    Assert(not IsRunning());
-
-    _quit = false;
-    _servicing = std::thread(&HttpServicingThreadLaunchPad_, this);
-
-    Assert(IsRunning());
-}
-//----------------------------------------------------------------------------
-void FHttpServer::Stop() {
-    Assert(IsRunning());
-
-    _quit = true;
-    _servicing.join();
-
-    Assert(not IsRunning());
+    OnDisconnect(port);
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

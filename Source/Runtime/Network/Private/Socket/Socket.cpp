@@ -314,7 +314,7 @@ bool FSocket::IsReadable(const FMilliseconds& timeout) const {
     return true;
 }
 //----------------------------------------------------------------------------
-size_t FSocket::Read(const TMemoryView<u8>& rawData, bool block/* = false */) {
+size_t FSocket::Read(const TMemoryView<u8>& rawData, bool block/* = true */) {
     Assert(!rawData.empty());
     Assert(IsConnected());
 

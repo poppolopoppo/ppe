@@ -56,7 +56,7 @@ public:
     bool IsConnected() const;
     bool IsReadable(const FMilliseconds& timeout) const;
 
-    size_t Read(const TMemoryView<u8>& rawData, bool block = false);
+    size_t Read(const TMemoryView<u8>& rawData, bool block = true);
     size_t Read(const TMemoryView<u8>& rawData, const FMilliseconds& timeout);
     size_t Write(const TMemoryView<const u8>& rawData);
 

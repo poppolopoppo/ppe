@@ -3,60 +3,58 @@
 #include "Network.h"
 
 #include "Socket/Address.h"
+#include "Socket/ServicingPort.h"
 
 #include "IO/String.h"
 #include "Maths/Units.h"
-
-#include <atomic>
-#include <thread>
+#include "Misc/Guid.h"
+#include "Time/Timepoint.h"
 
 namespace PPE {
 namespace Network {
 class FHttpRequest;
 class FHttpResponse;
 class FSocketBuffered;
+FWD_REFPTR(HandShaker);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_NETWORK_API FHttpServer {
+class PPE_NETWORK_API FHttpServer : Meta::FNonCopyable {
 public:
-    STATIC_CONST_INTEGRAL(size_t, DefaultMaxContentLength, 10*1024*1024); // 10 mo
-
-    FHttpServer(const FStringView& name, FAddress&& localhost, const FMilliseconds& timeout = 3.0_s, size_t maxContentLength = DefaultMaxContentLength);
+    FHttpServer(
+        const FStringView& name,
+        FAddress&& localhost,
+        FMilliseconds timeout = 1.0_s,
+        FBytes maxContentLength = 10.0_mb );
     virtual ~FHttpServer();
-
-    FHttpServer(const FHttpServer& ) = delete;
-    FHttpServer& operator =(const FHttpServer& ) = delete;
 
     const FString& Name() const { return _name; }
     const FAddress& Localhost() const { return _localhost; }
-    const FMilliseconds& Timeout() const { return _timeout; }
+
     size_t MaxContentLength() const { return _maxContentLength; }
 
-    void* UserData() const { return _userData; }
-    void SetUserData(void* userData) { _userData = userData; }
+    const FMilliseconds& Timeout() const { return _timeout; }
+    void SetTimeout(FMilliseconds value) { _timeout = value; }
 
     bool IsRunning() const;
 
-    void Start();
+    void Start(size_t workerCount);
     void Stop();
 
 protected:
-    friend class FHttpServerImpl;
-
-    virtual void OnAccept(FSocketBuffered& socket) const = 0;
-    virtual void OnRequest(FSocketBuffered& socket, const FHttpRequest& request) const PPE_THROW() = 0;
-    virtual void OnDisconnect(FSocketBuffered& socket) const = 0;
+    virtual void OnConnect(FServicingPort& port) const;
+    virtual bool OnRequest(FServicingPort& port, const FHttpRequest& request) const;
+    virtual void OnDisconnect(FServicingPort& port) const;
 
 private:
+    bool Servicing_ReturnKeepAlive_(FServicingPort& port) const;
+
     FString _name;
     FAddress _localhost;
     FMilliseconds _timeout;
     size_t _maxContentLength;
-    void* _userData;
 
-    std::atomic_bool _quit;
-    std::thread _servicing;
+    PHandShaker _service;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

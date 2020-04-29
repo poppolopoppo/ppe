@@ -81,7 +81,7 @@ bool FSocketBuffered::IsReadable() const {
 }
 //----------------------------------------------------------------------------
 bool FSocketBuffered::IsReadable(const FMilliseconds& timeout) const {
-    return (not _bufferI.empty() || _socket.IsReadable(timeout));
+    return (_sizeI > _offsetI || _socket.IsReadable(timeout));
 }
 //----------------------------------------------------------------------------
 size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData) {
@@ -151,20 +151,18 @@ bool FSocketBuffered::ReadUntil(FTextWriter* poss, char delim) {
     constexpr size_t maxLength = 64 * 1024;
 
     char ch;
-    for(size_t len = 0; Peek(ch) && ch != delim && ch != '\n'; ++len ) {
+    for(size_t len = 0; Peek(ch); ++len ) {
+        if (ch == delim)
+            return true;
         if (len == maxLength)
             return false;
-
         if (not Get(ch))
             AssertNotReached();
 
         poss->Put(ch);
     }
 
-    if (not Peek(ch))
-        return false;
-
-    return true;
+    return false;
 }
 //----------------------------------------------------------------------------
 void FSocketBuffered::FlushRead(bool block/* = false */) {

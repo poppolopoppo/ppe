@@ -40,9 +40,12 @@ FHttpRequest::FHttpRequest(EHttpMethod method, FUri&& uri, FBody&& body)
 ,   _method(method)
 ,   _uri(std::move(uri)) {}
 //----------------------------------------------------------------------------
-void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength) {
+bool FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength) {
     Assert(prequest);
     Assert(socket.IsConnected());
+
+    if (not socket.IsReadable())
+        return false;
 
     STACKLOCAL_TEXTWRITER(oss, 1024);
 
@@ -106,6 +109,8 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
         oss.Reset();
     }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) {

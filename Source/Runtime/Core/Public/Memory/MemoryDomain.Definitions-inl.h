@@ -92,6 +92,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Image,                    Pixmap)
 MEMORYDOMAIN_GROUP_IMPL(Network,                        UsedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(DNS,                      Network)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(HTTP,                     Network)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(Socket,                   Network)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(URI,                      Network)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(ContentPipeline,                UsedMemory)

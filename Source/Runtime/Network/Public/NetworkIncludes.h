@@ -86,10 +86,10 @@ constexpr SOCKET UnpackSocket_(intptr_t handle) {
 //----------------------------------------------------------------------------
 #if defined(PLATFORM_WINDOWS)
 #   define LOG_NETWORKERROR(_CONTEXT) \
-        LOG(Network, Error, _CONTEXT " failed, WSA last error : {0}", ::PPE::FLastError(::WSAGetLastError()))
+        LOG(Network, Warning, _CONTEXT " failed, WSA last error : {0}", ::PPE::FLastError(::WSAGetLastError()))
 #elif defined(PLATFORM_POSIX)
 #   define LOG_NETWORKERROR(_CONTEXT) \
-        LOG(Network, Error, _CONTEXT " failed, socket last error : {0}", ::PPE::FErrno{})
+        LOG(Network, Warning, _CONTEXT " failed, socket last error : {0}", ::PPE::FErrno{})
 #else
 #   define LOG_NETWORKERROR(_CONTEXT) NOOP()
 #endif
