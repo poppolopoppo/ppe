@@ -236,7 +236,7 @@ void TBasicString<_Char>::shrink_to_fit() {
             else
 #endif //!USE_PPE_BASICSTRING_SBO
             {
-                mutableview_type b{ _large.Storage, _large.Size + 1/* null char */ };
+                mutableview_type b{ _large.Storage, _large.Size + size_t(1)/* null char */ };
                 ReallocateAllocatorBlock_AssumePOD(allocator_traits::Get(*this), b, _large.Capacity, newCapacity);
 
                 _large.Storage = b.data();

@@ -270,20 +270,24 @@ bool FWindowsPlatformSurvey::MonitorInfos(FMonitorInfos* monitors) {
     Assert(monitors);
     Assert(monitors->empty());
 
-    auto const addMonitor = [](::HMONITOR hMonitor, ::HDC , ::LPRECT , ::LPARAM lParam) -> ::BOOL {
-        Assert(hMonitor);
+    struct FMonitorIterator_ {
+        static BOOL CALLBACK Iterate(::HMONITOR hMonitor, ::HDC , ::LPRECT , ::LPARAM lParam) {
+            Assert(hMonitor);
 
-        FMonitorInfo monitor;
-        if (WindowsMonitorInfo_(hMonitor, &monitor)) {
-            FMonitorInfos* const _monitors = (FMonitorInfos*)lParam;
-            _monitors->emplace_back(std::move(monitor));
-            return TRUE;
+            FMonitorInfo monitor;
+            if (WindowsMonitorInfo_(hMonitor, &monitor)) {
+                FMonitorInfos* const _monitors = (FMonitorInfos*)lParam;
+                _monitors->emplace_back(std::move(monitor));
+                return TRUE;
+            }
+            else {
+                return FALSE;
+            }
         }
-        else {
-            return FALSE;
-        }
+
     };
 
+    ::MONITORENUMPROC const addMonitor = &FMonitorIterator_::Iterate;
     if (::EnumDisplayMonitors(NULL, NULL, addMonitor, (::LPARAM)monitors)) {
         LOG(Survey, Info, L"found {0} monitors", monitors->size());
         return true;

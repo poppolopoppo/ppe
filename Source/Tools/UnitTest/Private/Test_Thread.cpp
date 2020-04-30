@@ -166,6 +166,7 @@ NO_INLINE void Test_Future_() {
 
     const PFuture<int> future = Future<int>([]() -> int {
         auto threadName = MakeCStringView(CurrentThreadContext().Name());
+        UNUSED(threadName);
         LOG(Test_Thread, Info, L"{0}: future start", threadName);
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
         LOG(Test_Thread, Info, L"{0}: future stop", threadName);
@@ -191,7 +192,7 @@ NO_INLINE void Test_ParallelFor_() {
     LOG(Test_Thread, Info, L"ParallelFor start");
 
     ParallelForEach(std::begin(values), std::end(values), [](size_t v) {
-        NOOP(v);
+        UNUSED(v);
         LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}",
             MakeCStringView(CurrentThreadContext().Name()), v );
         FPlatformProcess::Sleep(0);

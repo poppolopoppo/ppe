@@ -44,7 +44,7 @@ static void FormatParameters_(
         if (prm.front() == L'$') {
             if (Equals(prm, FCommandNode::Token_Input)) {
                 // assumes dynamic deps <=> input files to avoid calling again FillFileNodeList()
-                for (const SBuildNode& input : sources) {
+                for (const PBuildNode& input : sources) {
                     const FFileNode* const file = RTTI::CastChecked<FFileNode>(input.get());
                     prmFormat(VFS_Unalias(file->Filename()));
                 }

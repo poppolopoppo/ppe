@@ -194,7 +194,7 @@ const char* FThreadContext::GetThreadName(std::thread::id thread_id) {
 #ifdef WITH_PPE_THREADCONTEXT_NAME
     return GetThreadName_(thread_id).data();
 #else
-    NOOP(thread_id);
+    UNUSED(thread_id);
     return nullptr;
 #endif
 }

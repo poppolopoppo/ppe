@@ -278,7 +278,7 @@ CONSTEXPR bool has_defined_v = has_defined_t<_Using, T>::value;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
-template <template<class> class _Using, class _Fallback, typename T, class = _Using<T>>
+template <template<class> class _Using, class _Fallback, typename T>
 _Using<T> optional_definition_(int);
 template <template<class> class _Using, class _Fallback, typename T>
 _Fallback optional_definition_(...);

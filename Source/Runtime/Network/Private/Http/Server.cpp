@@ -65,6 +65,8 @@ void FHttpServer::OnConnect(FServicingPort& port) const {
 }
 //----------------------------------------------------------------------------
 bool FHttpServer::OnRequest(FServicingPort& port, const FHttpRequest& request) const {
+    UNUSED(port);
+    UNUSED(request);
 
     LOG(Network, Error, L"HTTP: <{0}> server unhandled request: {1} {2} ({3})",
         _name, request.Method(), request.Uri(), port.UID() );

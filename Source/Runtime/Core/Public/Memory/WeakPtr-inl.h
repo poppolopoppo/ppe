@@ -78,7 +78,7 @@ inline void AddRefIFP(const FWeakRefCountable* ptr) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void AddRefIFP(TRefPtr<T>& pRefPtr, T* ptr) {
+void AddRefIFP(TRefPtr<T>& pRefPtr, TEnableIfWeakRefCountable<T>* ptr) {
     Assert(ptr);
     if (ptr->_cnt) {
         Assert_NoAssume(ptr->RefCount() > 0); // object must be already *locked* !

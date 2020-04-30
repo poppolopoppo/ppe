@@ -37,6 +37,9 @@ static void Test_ProcessCapture_(const FWString& executable, const FWString& par
     const FStringView errA = errb.MakeConstView().Cast<const char>();
     const FStringView outA = outb.MakeConstView().Cast<const char>();
 
+    UNUSED(errA);
+    UNUSED(outA);
+
     LOG_DIRECT(Test_Process, Info, ToWString(outA));
 
     if (not errA.empty())
@@ -57,6 +60,8 @@ static void Test_ProcessLog_(const FWString& executable, const FWString& params)
         FProcess::NoWindow );
 
     const FStringView logA = log.MakeView().Cast<const char>();
+
+    UNUSED(logA);
 
     LOG_DIRECT(Test_Process, Info, ToWString(logA));
     FLUSH_LOG();

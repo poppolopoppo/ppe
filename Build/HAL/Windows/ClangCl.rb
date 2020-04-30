@@ -34,6 +34,12 @@ module Build
             self.inherits!(Build.LLVM_Windows_Base)
             self.inherits!(Build.send "LLVM_Windows_Base_#{target}")
         end
+        def customize(facet, env, target)
+            super(facet, env, target)
+            facet.compilerOptions >> '/WX'
+            facet.librarianOptions >> '/SUBSYSTEM:WINDOWS' >> '/WX'
+            facet.linkerOptions >> '/LTCG:INCREMENTAL' >> '/LTCG' >> '/LTCG:OFF' >> '/WX'
+        end
         def add_includePath(facet, dirpath)
             super(facet, dirpath)
         end
@@ -64,31 +70,16 @@ module Build
         defines << 'CPP_CLANG' << 'LLVM_FOR_WINDOWS' << '_CRT_SECURE_NO_WARNINGS'
 
         warningOptions = [ # fix windows headers
-            '-Wno-error',
             '-Wno-ignored-pragma-optimize',         # pragma optimize n'est pas supporté
             '-Wno-unused-command-line-argument',    # ignore les options non suportées par CLANG (sinon échoue a cause de /WError)
             '-Wno-ignored-attributes',              # ignore les attributs de classe/fonction non supportées par CLANG (sinon échoue a cause de /WError)
             '-Wno-unknown-pragmas',                 # ignore les directives pragma non supportées par CLANG (sinon échoue a cause de /WError)
             '-Wno-unused-local-typedef',            # ignore les typedefs locaux non utilisés (nécessaire pour STATIC_ASSERT(x))
             '-Wno-#pragma-messages',                # don't consider #pragma message as warnings
+            '-Wno-unneeded-internal-declaration',   # ignore unused internal functions beeing stripped
         ]
 
-=begin # not needed anymore, since we dodge all warnings from system headers using /imsvc in LLVMWindowsCompiler.add_includePath()
-        extraWarning = [
-            '-Wno-invalid-noreturn',                # nécessaire pour STL M$
-            '-Wno-dllimport-static-field-def',      # definition of dllimport static field (M$TL)
-            '-Wno-nonportable-include-path',        # windows libs are filled with includes not matching file system case, this will ignore those
-            '-Wno-inconsistent-missing-override',   # <optional> has a method without override ...
-            '-Wno-expansion-to-defined',            # macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
-            '-Wno-int-to-void-pointer-cast',        # cast to 'void *' from smaller integer type 'unsigned long' (nécessaire pour WinAPI)
-            '-Wno-macro-redefined',                 # '_MM_HINT_T0' macro redefined (nécessaire pour WinAPI)
-            '-Wno-microsoft-enum-value',            # ignore les dépassements de valeurs d'enums (nécessaire pour WinAPI)
-            '-Wno-missing-declarations',            # typedef requires a name (nécessaire pour DbgHelp)
-            '-Wno-unused-value',                    # ignore les expressions non utilisées (UNUSED(x) ou CRT)
-            '-Wno-microsoft-explicit-constructor-call',
-            '-Wno-pragma-pack',
-        ]
-=end
+        warningOptions << (Build.Strict ? '-Werror' : '-Wno-error')
 
         compilerOptions.append(*warningOptions)
         compilerOptions.append("-fmsc-version=#{Visual::MSC_VER_2019}")
@@ -130,12 +121,12 @@ module Build
     const_memoize(self, :LLVM_Windows_VS2019_Hostx86) do
         Build.make_llvmwindows_compiler('ClangCl_VS2019',
             Build.LLVM_Windows_Hostx86_FileSet,
-            Build.VS2019_Hostx86_FileSet )
+            Build.VsWhere_2019_Hostx86 )
     end
     const_memoize(self, :LLVM_Windows_VS2019_Hostx64) do
         Build.make_llvmwindows_compiler('ClangCl_VS2019',
             Build.LLVM_Windows_Hostx64_FileSet,
-            Build.VS2019_Hostx64_FileSet )
+            Build.VsWhere_2019_Hostx64 )
     end
 
     def LLVM_Windows_Hostx86() Build.LLVM_Windows_VS2019_Hostx86 end

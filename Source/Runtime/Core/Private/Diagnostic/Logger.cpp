@@ -751,23 +751,23 @@ public:
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
         switch (level)
         {
-        case EVerbosity::Debug:
-        case EVerbosity::Verbose:
+        case ELoggerVerbosity::Debug:
+        case ELoggerVerbosity::Verbose:
             FPlatformDebug::TraceVerbose(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
             break;
 
-        case EVerbosity::Info:
-        case EVerbosity::Emphasis:
+        case ELoggerVerbosity::Info:
+        case ELoggerVerbosity::Emphasis:
             FPlatformDebug::TraceInformation(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
             break;
 
-        case EVerbosity::Warning:
+        case ELoggerVerbosity::Warning:
             FPlatformDebug::TraceWarning(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
             break;
-        case EVerbosity::Error:
+        case ELoggerVerbosity::Error:
             FPlatformDebug::TraceError(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
             break;
-        case EVerbosity::Fatal:
+        case ELoggerVerbosity::Fatal:
             FPlatformDebug::TraceFatal(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
             break;
 

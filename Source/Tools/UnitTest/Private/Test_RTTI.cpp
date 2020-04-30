@@ -394,6 +394,7 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject, const RTTI::FMe
 }
 //----------------------------------------------------------------------------
 static void print_atom(const RTTI::FAtom& atom) {
+#if USE_PPE_LOGGER
     const RTTI::FNamedTypeInfos typeInfo = atom.NamedTypeInfos();
     LOG(Test_RTTI, Info, L"{0}[0x{1:#8x}] : {2} = {3} (flags: {4}, default:{5:a})",
         typeInfo.Name(),
@@ -402,6 +403,9 @@ static void print_atom(const RTTI::FAtom& atom) {
         atom,
         typeInfo.Flags(),
         atom.IsDefaultValue());
+#else
+    UNUSED(atom);
+#endif
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Atoms_() {
@@ -1040,6 +1044,7 @@ static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) 
 
         const RTTI::FAtom result = expr->Eval(context);
 
+        UNUSED(result);
         LOG(Test_RTTI, Info, L" -> {0}", result);
 
         return true;

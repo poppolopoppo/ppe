@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#include "HAL/windows/WindowsPlatformDebug.h"
+#include "HAL/Windows/WindowsPlatformDebug.h"
 
 #define USE_PPE_WINDOWS_TRACELOGGING (USE_PPE_PLATFORM_DEBUG)
 

@@ -816,6 +816,7 @@ auto FWindowsPlatformProcess::CreateProcess(
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
+            UNUSED(stats);
             LOG(HAL, Warning, TEXT("Mem used: {0}, OS Free {1}"),
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical) );
@@ -890,6 +891,7 @@ bool FWindowsPlatformProcess::ExecDetachedProcess(
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
+            UNUSED(stats);
             LOG(HAL, Warning, TEXT("Mem used: {0}, OS Free {1}"),
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical));

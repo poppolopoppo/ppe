@@ -21,9 +21,9 @@ FHandShaker::FHandShaker(
 :   _running(false)
 ,   _lastAlive(0)
 ,   _listener(std::move(rlistener))
-,   _userData(nullptr)
 ,   _acceptTimeout(acceptTimeout)
 ,   _keepAliveTimeout(keepAliveTimeout)
+,   _userData(nullptr)
 ,   _dispatch(std::move(rdispatch))
 ,   _workers(name, PPE_THREADTAG_SERVICING, workerCount, EThreadPriority::Lowest) {
     Assert_NoAssume(_dispatch.Valid());

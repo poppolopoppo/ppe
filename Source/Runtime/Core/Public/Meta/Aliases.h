@@ -134,7 +134,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #endif
 #if !defined(_DEBUG) || defined(NDEBUG)
 #   if defined(CPP_CLANG) || defined(CPP_GCC)
-#       define FORCE_INLINE __attribute__((always_inline))
+#       define FORCE_INLINE inline __attribute__((always_inline))
 #   else
 #       define FORCE_INLINE __forceinline
 #   endif

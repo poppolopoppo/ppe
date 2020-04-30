@@ -14,6 +14,7 @@ $Build.ppe_executable!(:UnitTest) do
         Serialize(),
         Network(),
         Application() ]})
-    public_deps!(*namespace[:ContentPipeline]{[ 
+    public_deps!(*namespace[:ContentPipeline]{[
         BuildGraph() ]})
+    excluded_files!(*%w{ Private/Test_Pixmap.cpp Private/Test_Lattice.cpp })
 end

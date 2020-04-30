@@ -54,6 +54,10 @@
 
 static_assert(PPE_RUN_BENCHMARK_POOLSIZE > 0, "must have at least one sample");
 
+#ifdef __clang__
+#   pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+
 namespace PPE {
 LOG_CATEGORY(, Test_Containers)
 //----------------------------------------------------------------------------

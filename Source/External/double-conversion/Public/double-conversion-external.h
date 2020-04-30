@@ -4,6 +4,9 @@
 
 #ifndef EXPORT_PPE_EXTERNAL_DOUBLE_CONVERSION
     PRAGMA_MSVC_WARNING_PUSH()
+#   ifdef __clang__
+#       pragma clang diagnostic push
+#   endif
 #   pragma push_macro("ASSERT")
 #   pragma push_macro("UNIMPLEMENTED")
 #   pragma push_macro("UNREACHABLE")
@@ -34,6 +37,10 @@ PRAGMA_MSVC_WARNING_DISABLE(4505) // 'double_conversion::AssertTrimmedDigits': u
 #    pragma GCC system_header
 #endif
 
+#ifdef __clang__
+#   pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
 #ifndef EXPORT_PPE_EXTERNAL_DOUBLE_CONVERSION
 
 #   pragma include_alias(<double-conversion/utils.h>, <External/double-conversion/git/double-conversion/utils.h>)
@@ -44,6 +51,10 @@ PRAGMA_MSVC_WARNING_DISABLE(4505) // 'double_conversion::AssertTrimmedDigits': u
 #   pragma pop_macro("ASSERT")
 #   pragma pop_macro("UNIMPLEMENTED")
 #   pragma pop_macro("UNREACHABLE")
+
+#   ifdef __clang__
+#       pragma clang diagnostic pop
+#   endif
 
     PRAGMA_MSVC_WARNING_POP()
 

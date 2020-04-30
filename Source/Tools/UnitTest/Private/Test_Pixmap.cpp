@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include "Core.h"
+
 #if 0 // #TODO refactoring the asset generation
 
 // #TODO : use AMD Compressonator instead of stb

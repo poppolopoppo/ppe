@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include "Core.h"
+
 /* %_NOCOMMIT% TODO
 
 #include "GenericMaterial.h"
