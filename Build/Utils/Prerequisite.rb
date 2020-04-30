@@ -23,11 +23,12 @@ module Build
         def need_cmdline!(*args)
             args.collect!{|x| x =~ /\s/ ? "'#{x}''" : x }
             result = %x{ #{args.join(' ')} }
+            Log.debug("command result: %s", result)
             if $?.success?
                 Log.debug("command succeed: %s -> '%s'", args, result)
                 return result.lines.map(&:chomp)
             else
-                Log.verbose("command failed: %s (exit code = %s)", args, $?)
+                Log.warning("command failed: %s (exit code = %s)", args, $?)
                 return false
             end
         end

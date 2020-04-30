@@ -9,7 +9,7 @@ require_once '../../Core/Environment.rb'
 
 module Build
 
-    persistent_switch(:LLVM, 'Use LLVM for Windows toolchain')
+    persistent_value(:Compiler, 'Select Windows C++ compiler', init: '2019', values: %w{ 2019 Insider LLVM })
 
     make_facet(:Windows_Base) do
         defines <<
@@ -46,13 +46,31 @@ module Build
     ]
 
     const_memoize(self, :WindowsCompiler_X86) do
-        compiler = Build.LLVM ?
-            Build.LLVM_Windows_Hostx86 : Build.VisualStudio_Hostx86
+        case Build.Compiler
+        when '2019'
+            compiler = Build.VisualStudio_2019_Hostx86
+        when 'Insider'
+            compiler = Build.VisualStudio_Insider_Hostx86
+        when 'LLVM'
+            compiler = Build.LLVM_Windows_Hostx86
+        else
+            Assert.unexpected(Build.Compiler)
+        end
+
         compiler.deep_dup.inherits!(Build.WindowsSDK_X86)
     end
     const_memoize(self, :WindowsCompiler_X64) do
-        compiler = Build.LLVM ?
-            Build.LLVM_Windows_Hostx64 : Build.VisualStudio_Hostx64
+        case Build.Compiler
+        when '2019'
+            compiler = Build.VisualStudio_2019_Hostx64
+        when 'Insider'
+            compiler = Build.VisualStudio_Insider_Hostx64
+        when 'LLVM'
+            compiler = Build.LLVM_Windows_Hostx64
+        else
+            Assert.unexpected(Build.Compiler)
+        end
+
         compiler.deep_dup.inherits!(Build.WindowsSDK_X64)
     end
 

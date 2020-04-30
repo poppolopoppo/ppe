@@ -226,7 +226,6 @@ module Build
 
         compilerOptions.append(
             "/std:#{Build.CppStd}",     # C++2017
-            '/WX',                      # warning as errors
             '/Gm-',                     # minimal rebuild is handled by FASTBuild
             '/GF',                      # string pooling
             '/GT',                      # fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
@@ -248,19 +247,28 @@ module Build
             '/TP',                      # compile as C++
             '/F', Build.StackSize )     # set default thread stack size
 
+        if Build.Strict
+            # toggle warning as error for whole build chain
+            compilerOptions.append('/WX')
+            librarianOptions.append('/WX')
+            linkerOptions.append('/WX')
+            # promote some warnings as errors
+            compilerOptions.append(
+                '/we4062',                  # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
+                '/we4263',                  # 'function' : member function does not override any base class virtual member function
+                '/we4265',                  # 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
+                '/we4296',                  # 'operator': expression is always false
+                '/we4555',                  # expression has no effect; expected expression with side-effect
+                '/we4619',                  # #pragma warning : there is no warning number 'number'
+                '/we4640',                  # 'instance' : construction of local static object is not thread-safe
+                '/we4826',                  # Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
+                '/we4836',                  # nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
+                '/we4905',                  # wide string literal cast to 'LPSTR'
+                '/we4906',                  # string literal cast to 'LPWSTR'
+            )
+        end
+
         compilerOptions.append(
-        ### ERRORS ###
-            '/we4062',                  # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
-            '/we4263',                  # 'function' : member function does not override any base class virtual member function
-            '/we4265',                  # 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
-            '/we4296',                  # 'operator': expression is always false
-            '/we4555',                  # expression has no effect; expected expression with side-effect
-            '/we4619',                  # #pragma warning : there is no warning number 'number'
-            '/we4640',                  # 'instance' : construction of local static object is not thread-safe
-            '/we4826',                  # Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
-            '/we4836',                  # nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
-            '/we4905',                  # wide string literal cast to 'LPSTR'
-            '/we4906',                  # string literal cast to 'LPWSTR'
         ### IGNORED ###
             '/wd4201',                  # nonstandard extension used: nameless struct/union'
             '/wd4251' )                 # 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
@@ -273,10 +281,9 @@ module Build
         compilerOptions.append('/nologo')   # no copyright when compiling
         compilerOptions.append('/c', '%1')  # input file injection
 
-        librarianOptions.append('/nologo', '/WX', '/SUBSYSTEM:WINDOWS', '/IGNORE:4221', '/OUT:"%2"', '%1')
+        librarianOptions.append('/nologo', '/SUBSYSTEM:WINDOWS', '/IGNORE:4221', '/OUT:"%2"', '%1')
         linkerOptions.append(
             '/nologo',                  # no copyright when compiling
-            '/WX',                      # warning as errors
             '/TLBID:1',                 # https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
             '/IGNORE:4001',             # https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
             '/NXCOMPAT:NO',             # disable Data Execution Prevention (DEP)
@@ -427,9 +434,11 @@ module Build
         analysisOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
         compilerOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
 
-        # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
-        analysisOptions.append('/permissive-')
-        compilerOptions.append('/permissive-')
+        if Build.Strict
+            # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
+            analysisOptions.append('/permissive-')
+            compilerOptions.append('/permissive-')
+        end
 
         # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
         # TODO: disabled since there is no support for __VA_OPT__(x), and it's necessary to handle some funky macros
@@ -437,23 +446,13 @@ module Build
         # compilerOptions.append('/experimental:preprocessor')
     end
 
-    VSWhere_exe = File.join($BuildPath, 'HAL', 'Windows', 'vswhere.exe')
-    import_cmdline(:VsWhere_Hostx86_x86, VSWhere_exe, '-find', '**/Hostx86/x86/cl.exe').validate_FileExist!
-    import_cmdline(:VsWhere_Hostx86_x64, VSWhere_exe, '-find', '**/Hostx86/x64/cl.exe').validate_FileExist!
-    import_cmdline(:VsWhere_Hostx64_x86, VSWhere_exe, '-find', '**/Hostx64/x86/cl.exe').validate_FileExist!
-    import_cmdline(:VsWhere_Hostx64_x64, VSWhere_exe, '-find', '**/Hostx64/x64/cl.exe').validate_FileExist!
 
-    const_memoize(self, :VsWhere_Hostx86) do
-        where = os_x64? ? Build.VsWhere_Hostx64_x86 : Build.VsWhere_Hostx86_x86
-        where.collect!{|x| File.expand_path(x) }
-        where.sort!{|a,b| b <=> a } # descending
-        where
-    end
-    const_memoize(self, :VsWhere_Hostx64) do
-        where = os_x64? ? Build.VsWhere_Hostx64_x64 : Build.VsWhere_Hostx86_x64
-        where.collect!{|x| File.expand_path(x) }
-        where.sort!{|a,b| b <=> a } # descending
-        where
+    VSWhere_exe = File.join($BuildPath, 'HAL', 'Windows', 'vswhere.exe')
+    def self.import_vswhere(name, pattern, *args)
+        make_prerequisite(name) do
+            validate_FileExist!
+            need_cmdline!(VSWhere_exe, '-latest', '-find', pattern, *args)
+        end
     end
 
     def self.make_fileset_vs2019(prereq, cl_exe)
@@ -480,12 +479,43 @@ module Build
             File.join(root_base, 'vcruntime140.dll') )
     end
 
-    make_prerequisite(:VS2019_Hostx86_FileSet) do
-        Build.make_fileset_vs2019(self, Build.VsWhere_Hostx86.detect{|x| x.include?('/2019/') })
+    def self.import_visualstudio_fileset(version, *args)
+        import_vswhere(:"VsWhere_#{version}_Hostx86_x86", '**/Hostx86/x86/cl.exe', *args)
+        import_vswhere(:"VsWhere_#{version}_Hostx86_x64", '**/Hostx86/x64/cl.exe', *args)
+        import_vswhere(:"VsWhere_#{version}_Hostx64_x86", '**/Hostx64/x86/cl.exe', *args)
+        import_vswhere(:"VsWhere_#{version}_Hostx64_x64", '**/Hostx64/x64/cl.exe', *args)
+
+        make_prerequisite(:"VsWhere_#{version}_Hostx86") do
+            fileset = Build.os_x64? ?
+                Build.send("VsWhere_#{version}_Hostx64_x86") :
+                Build.send("VsWhere_#{version}_Hostx86_x86")
+
+            if fileset
+                fileset = fileset.collect{|x| File.expand_path(x) }
+                fileset.sort!{|a,b| b <=> a } # descending
+                Build.make_fileset_vs2019(self, fileset.first)
+            else
+                nil
+            end
+        end
+
+        make_prerequisite(:"VsWhere_#{version}_Hostx64") do
+            fileset = Build.os_x64? ?
+                Build.send("VsWhere_#{version}_Hostx64_x64") :
+                Build.send("VsWhere_#{version}_Hostx86_x64")
+
+            if fileset
+                fileset = fileset.collect{|x| File.expand_path(x) }
+                fileset.sort!{|a,b| b <=> a } # descending
+                Build.make_fileset_vs2019(self, fileset.first)
+            else
+                nil
+            end
+        end
     end
-    make_prerequisite(:VS2019_Hostx64_FileSet) do
-        Build.make_fileset_vs2019(self, Build.VsWhere_Hostx64.detect{|x| x.include?('/2019/') })
-    end
+
+    import_visualstudio_fileset('2019', '-version', '[16.0,17.0)')
+    import_visualstudio_fileset('Insider', '-prerelease')
 
     def self.make_visualstudio_compiler(version, fileset)
         return unless fileset
@@ -506,14 +536,18 @@ module Build
             inherits!(Build.VisualStudio_Base_2019)
     end
 
-    const_memoize(self, :VisualStudio2019_Hostx86) do
-        Build.make_visualstudio_compiler('2019', Build.VS2019_Hostx86_FileSet)
+    const_memoize(self, :VisualStudio_2019_Hostx86) do
+        Build.make_visualstudio_compiler('2019', Build.VsWhere_2019_Hostx86)
     end
-    const_memoize(self, :VisualStudio2019_Hostx64) do
-        Build.make_visualstudio_compiler('2019', Build.VS2019_Hostx64_FileSet)
+    const_memoize(self, :VisualStudio_2019_Hostx64) do
+        Build.make_visualstudio_compiler('2019', Build.VsWhere_2019_Hostx64)
     end
 
-    def VisualStudio_Hostx86() Build.VisualStudio2019_Hostx86 end
-    def VisualStudio_Hostx64() Build.VisualStudio2019_Hostx64 end
+    const_memoize(self, :VisualStudio_Insider_Hostx86) do
+        Build.make_visualstudio_compiler('Insider', Build.VsWhere_Insider_Hostx86)
+    end
+    const_memoize(self, :VisualStudio_Insider_Hostx64) do
+        Build.make_visualstudio_compiler('Insider', Build.VsWhere_Insider_Hostx64)
+    end
 
 end #~ Build
