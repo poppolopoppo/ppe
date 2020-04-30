@@ -111,7 +111,7 @@ module Build
         end
 
         def customize(facet, env, target)
-            nopdb = target.headers? || facet.tag?(:nopdb)
+            nopdb = !Build.Symbols || target.headers? || facet.tag?(:nopdb)
             nosymbols = facet.tag?(:nosymbols)
 
             if nosymbols

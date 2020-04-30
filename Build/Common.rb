@@ -19,6 +19,7 @@ module Build
     persistent_switch(:ShowTimings, 'Show compilation timings')
     persistent_switch(:StopOnError, 'Stop on first compilation error', init: false)
     persistent_switch(:Strict, 'Toggle warning as error and non permissive warnings', init: true)
+    persistent_switch(:Symbols, 'Toggle generation of debug symbols', init: true)
     persistent_switch(:Unity, 'Use unity builds', init: true)
 
     opt_switch(:Rebuild, 'Clean build all specified targets', init: false)
