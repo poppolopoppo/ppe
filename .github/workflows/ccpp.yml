@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@master
       with:
         submodules: true
-    - uses: actions/setup-ruby@latest
+    - uses: actions/setup-ruby@v1
       with:
         ruby-version: '2.6'
     - name: build
