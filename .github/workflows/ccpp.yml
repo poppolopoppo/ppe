@@ -12,13 +12,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Checkout submodules
-      uses: srt32/git-actions@v0.0.3
+    - uses: actions/checkout@master
       with:
-        args: git submodule update --init --recursive
-    - uses: actions/setup-ruby@v1
+        submodules: true
+    - uses: actions/setup-ruby@latest
       with:
         ruby-version: '2.6'
     - name: build
-      run: ruby ppe.rb --bff --fbuild --Unity -v
+      run: ruby ppe.rb --bff --fbuild --Unity --no-Symbols -v
