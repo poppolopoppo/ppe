@@ -7,7 +7,7 @@ require_once './VisualStudio.rb'
 module Build
 
     class LLVMWindowsCompiler < VisualStudioCompiler
-        attr_reader :llvmWindowsPath, :llvmWindowsVersion
+        attr_reader :llvmPath, :llvmVersion
         def initialize(
             prefix,
             version, minor_version,
@@ -18,18 +18,18 @@ module Build
                 visualStudioPath, platformToolset,
                 clang_cl, llvm_lib, lld_link, *extra_files )
 
-            @llvmWindowsPath = Pathname.new(File.join(File.dirname(clang_cl), '..'))
-            @llvmWindowsPath = @llvmWindowsPath.cleanpath
+            @llvmPath = Pathname.new(File.join(File.dirname(clang_cl), '..'))
+            @llvmPath = @llvmPath.cleanpath
 
-            Log.fatal 'invalid LLVMWindows path "%s"', @llvmWindowsPath unless Dir.exist?(@llvmWindowsPath)
-            self.facet.export!('LLVMWindowsPath', @llvmWindowsPath)
+            Log.fatal 'Windows: invalid LLVM  path "%s"', @llvmPath unless Dir.exist?(@llvmPath)
+            self.facet.export!('LLVMPath', @llvmPath)
 
-            versions = Dir.entries(File.join(@llvmWindowsPath, 'lib', 'clang'))
+            versions = Dir.entries(File.join(@llvmPath, 'lib', 'clang'))
             versions.sort!
-            @llvmWindowsVersion = versions.last
+            @llvmersion = versions.last
 
-            Log.verbose 'Windows: found LLVM for Windows v%s in "%s"', @llvmWindowsVersion, @llvmWindowsPath
-            self.facet.export!('LLVMWindowsVersion', @llvmWindowsVersion)
+            Log.verbose 'Windows: found LLVM v%s in "%s"', @llvmVersion, @llvmPath
+            self.facet.export!('LLVMVersion', @llvmVersion)
 
             self.inherits!(Build.LLVM_Windows_Base)
             self.inherits!(Build.send "LLVM_Windows_Base_#{target}")
@@ -49,15 +49,15 @@ module Build
         alias add_systemPath add_externPath
     end #~ LLVMWindowsCompiler
 
-    def self.import_llvm(name, path)
+    def self.import_llvm_windows(name, path)
         Build.import_fileset(name,
             File.join(path, 'bin', 'clang-cl.exe'),
             File.join(path, 'bin', 'llvm-lib.exe'),
             File.join(path, 'bin', 'lld-link.exe') )
     end
 
-    import_llvm(:LLVM_Windows_x86, 'C:\Program Files (x86)\LLVM')
-    import_llvm(:LLVM_Windows_x64, 'C:\Program Files\LLVM')
+    import_llvm_windows(:LLVM_Windows_x86, 'C:\Program Files (x86)\LLVM')
+    import_llvm_windows(:LLVM_Windows_x64, 'C:\Program Files\LLVM')
 
     def LLVM_Windows_Hostx86_FileSet()
         Build.LLVM_Windows_x86 ? Build.LLVM_Windows_x86 : Build.LLVM_Windows_x64
@@ -87,12 +87,12 @@ module Build
         compilationFlag!(*%w{ -fms-compatibility -fms-extensions -fcolor-diagnostics })
 
         includePaths <<
-            File.join('$LLVMWindowsPath$', 'include', 'clang-c') <<
-            File.join('$LLVMWindowsPath$', 'include', 'llvm-c') <<
-            File.join('$LLVMWindowsPath$', 'lib', 'clang', '$LLVMWindowsVersion$', 'include')
+            File.join('$LLVMPath$', 'include', 'clang-c') <<
+            File.join('$LLVMPath$', 'include', 'llvm-c') <<
+            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'include')
         libraryPaths <<
-            File.join('$LLVMWindowsPath$', 'lib') <<
-            File.join('$LLVMWindowsPath$', 'lib', 'clang', '$LLVMWindowsVersion$', 'lib', 'windows')
+            File.join('$LLVMPath$', 'lib') <<
+            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'lib', 'windows')
     end
 
     make_facet(:LLVM_Windows_Base_x86) do

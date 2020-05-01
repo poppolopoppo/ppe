@@ -1,35 +1,34 @@
 
 require_once '../../Core/Environment.rb'
 
+require_once '../Posix/Posix.rb'
+
 module Build
 
-    persistent_switch(:LLVM, 'Use LLVM instead of GCC', init: true)
-
     make_facet(:Linux_Base) do
-        defines <<
-            'PLATFORM_PC' << 'PLATFORM_WINDOWS' <<
-            'WIN32' << '__WINDOWS__'
-        includes << File.join($SourcePath, 'winnt_version.h')
+        defines << 'PLATFORM_PC' <<
+            'PLATFORM_LINUX' <<
+            '__LINUX__'
     end
 
     const_memoize(self, :LinuxPlatform_X86) do
-        Platform.new('Win32', :x86, :Windows).
+        Platform.new('Linux32', :x86, :Linux).
             inherits!(SharedPlatforms::X86).
             inherits!(Build.Linux_Base).
-            define!('_WIN32')
+            define!('_LINUX32')
     end
     const_memoize(self, :LinuxPlatform_X64) do
-        Platform.new('Win64', :x64, :Windows).
+        Platform.new('Linux64', :x64, :Linux).
             inherits!(SharedPlatforms::X64).
             inherits!(Build.Linux_Base).
-            define!('_WIN64')
+            define!('_LINUX64')
     end
 
-    const_memoize(self, :LinuxConfig_Debug) { SharedConfigs::Debug.deep_dup.inherits!(Build.PosixCompiler_Debug) }
-    const_memoize(self, :LinuxConfig_FastDebug) { SharedConfigs::FastDebug.deep_dup.inherits!(Build.PosixCompiler_FastDebug) }
-    const_memoize(self, :LinuxConfig_Release) { SharedConfigs::Release.deep_dup.inherits!(Build.PosixCompiler_Release) }
-    const_memoize(self, :LinuxConfig_Profiling) { SharedConfigs::Profiling.deep_dup.inherits!(Build.PosixCompiler_Profiling) }
-    const_memoize(self, :LinuxConfig_Final) { SharedConfigs::Final.deep_dup.inherits!(Build.PosixCompiler_Final) }
+    const_memoize(self, :LinuxConfig_Debug) { SharedConfigs::Debug.deep_dup.inherits!(Build.PosixConfig_Debug) }
+    const_memoize(self, :LinuxConfig_FastDebug) { SharedConfigs::FastDebug.deep_dup.inherits!(Build.PosixConfig_FastDebug) }
+    const_memoize(self, :LinuxConfig_Release) { SharedConfigs::Release.deep_dup.inherits!(Build.PosixConfig_Release) }
+    const_memoize(self, :LinuxConfig_Profiling) { SharedConfigs::Profiling.deep_dup.inherits!(Build.PosixConfig_Profiling) }
+    const_memoize(self, :LinuxConfig_Final) { SharedConfigs::Final.deep_dup.inherits!(Build.PosixConfig_Final) }
 
     LinuxConfigs = [
         :LinuxConfig_Debug,
@@ -40,14 +39,12 @@ module Build
     ]
 
     const_memoize(self, :LinuxCompiler_X86) do
-        compiler = Build.LLVM ?
-            Build.LLVM_Windows_Hostx86 : Build.VisualStudio_Hostx86
-        compiler.deep_dup.inherits!(Build.WindowsSDK_X86)
+        compiler = Build.PosixCompiler_Hostx86
+        compiler.deep_dup.inherits!(Build.PosixSDK_X86)
     end
     const_memoize(self, :LinuxCompiler_X64) do
-        compiler = Build.LLVM ?
-            Build.LLVM_Windows_Hostx64 : Build.VisualStudio_Hostx64
-        compiler.deep_dup.inherits!(Build.WindowsSDK_X64)
+        compiler = Build.PosixCompiler_Hostx64
+        compiler.deep_dup.inherits!(Build.PosixSDK_X64)
     end
 
     LinuxEnvironment =
