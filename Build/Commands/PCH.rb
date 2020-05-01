@@ -39,7 +39,7 @@ module Build
 
             pch_to_generate << [ target, pch_generated ]
 
-            Log.verbose 'PCH: clear generated file "%s"', pch_generated
+            Log.log 'PCH: clear generated file "%s"', pch_generated
             File.write(pch_generated, '')
         end
 
@@ -51,7 +51,7 @@ module Build
             target_status = "Building PCH for <#{target}> #{target_i+1}/#{pch_to_generate.length}"
             Log.pin(target_status)
 
-            Log.verbose 'PCH: generate precompiled for <%s>', target.abs_path
+            Log.log 'PCH: generate precompiled for <%s>', target.abs_path
 
             pch_deps = {}
             environments.each_with_index do |env, env_i|
@@ -105,7 +105,7 @@ module Build
         RE_header = /File\s(.*\.h)$/i
         RE_source = /File\s(.*\.(c|cc|cpp))$/i
         def self.dependencies(env, target, resolver)
-            Log.verbose 'PCH: parsing target <%s> dependencies', target
+            Log.log 'PCH: parsing target <%s> dependencies', target
 
             deps = PCH::Dependencies.new(resolver)
 
@@ -123,7 +123,7 @@ module Build
                 end
             end
 
-            Log.verbose 'PCH: target <%s> has %d system / %d project headers', target, deps.systemHeaders.length, deps.projectHeaders.length
+            Log.log 'PCH: target <%s> has %d system / %d project headers', target, deps.systemHeaders.length, deps.projectHeaders.length
 
             return deps
         end
@@ -249,7 +249,7 @@ module Build
                         header << '.h'
                     end
                     @includes[key] = :none
-                    Log.verbose 'PCH: ignoring unkown system header <%s>', header
+                    Log.log 'PCH: ignoring unkown system header <%s>', header
                 end
             end
 

@@ -28,7 +28,7 @@ module Build
             versions.sort!
             @llvmersion = versions.last
 
-            Log.verbose 'Windows: found LLVM v%s in "%s"', @llvmVersion, @llvmPath
+            Log.log 'Windows: found LLVM v%s in "%s"', @llvmVersion, @llvmPath
             self.facet.export!('LLVMVersion', @llvmVersion)
 
             self.inherits!(Build.LLVM_Windows_Base)

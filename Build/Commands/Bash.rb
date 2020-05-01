@@ -31,10 +31,10 @@ module Build
         script = File.basename(Build::Script, ext)
 
         interceptor.opts.each do |flag, opt|
-            Log.verbose('Bash: found option "%s>" -> %s', flag, opt.desc)
+            Log.log('Bash: found option "%s>" -> %s', flag, opt.desc)
         end
         aliases.each do |target|
-            Log.verbose('Bash: found alias <%s>', target)
+            Log.log('Bash: found alias <%s>', target)
         end
 
         completion = File.join($ExtrasPath,  script + '-completion.bash')

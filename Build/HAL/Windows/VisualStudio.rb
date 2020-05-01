@@ -41,7 +41,7 @@ module Build
             self.export!('VisualStudioVersion', @minor_version)
 
             Log.fatal 'invalid VisualStudio path "%s"', @visualStudioPath unless Dir.exist?(@visualStudioPath)
-            Log.verbose 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
+            Log.log 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
 
             self.facet.defines << 'CPP_VISUALSTUDIO'
             self.facet.systemPaths <<
@@ -209,13 +209,13 @@ module Build
     end #~ VisualStudioCompiler
 
     make_facet(:VisualStudio_ShowTimings) do
-        Log.verbose 'Windows: using MSVC /d2cgsummary /d2:-cgsummary /Bt+ to analyze compilation times'
+        Log.log 'Windows: using MSVC /d2cgsummary /d2:-cgsummary /Bt+ to analyze compilation times'
         compilerOptions << '/d2cgsummary' << '/Bt+'
         linkerOptions << '/d2:-cgsummary'
     end
 
     make_facet(:VisualStudio_Win10SlowDown_Workaround) do
-        Log.verbose 'Windows: using MSVC /DELAYLOAD:Shell32.dll for Win10 workaround'
+        Log.log 'Windows: using MSVC /DELAYLOAD:Shell32.dll for Win10 workaround'
         linkerOptions <<
             'delayimp.lib' <<
             '/DELAYLOAD:Shell32.dll' <<
@@ -223,8 +223,8 @@ module Build
     end
 
     make_facet(:VisualStudio_Base) do
-        Log.verbose 'Windows: using %s ISO standard', Build.CppStd
-        Log.verbose 'Windows: default thread stack size is %d', Build.StackSize
+        Log.log 'Windows: using %s ISO standard', Build.CppStd
+        Log.log 'Windows: default thread stack size is %d', Build.StackSize
 
         compilationArgs = [
             '/nologo',                  # no copyright when compiling
@@ -261,7 +261,7 @@ module Build
             '/F', Build.StackSize )     # set default thread stack size
 
         if Build.Strict
-            Log.verbose 'Windows: using strict warnings and warning as error'
+            Log.log 'Windows: using strict warnings and warning as error'
 
             # toggle warning as error for whole build chain
             compilationFlag!('/WX')
@@ -311,11 +311,11 @@ module Build
 
 
         if Build.Diagnose
-            Log.verbose 'Windows: using static analysis options'
+            Log.log 'Windows: using static analysis options'
 
             analysisOptions.append('/analyze', '/analyze:stacksize', Build.StackSize)
 
-            Log.verbose 'Windows: using verbose output for the linker'
+            Log.log 'Windows: using verbose output for the linker'
 
             linkerOptions.append(
                 '/VERBOSE',
@@ -329,10 +329,10 @@ module Build
         defines.append('_ENABLE_EXTENDED_ALIGNED_STORAGE')
 
         if Build.Incremental
-            Log.verbose 'Windows: using incremental linker with fastlink'
+            Log.log 'Windows: using incremental linker with fastlink'
             linkerOptions.append('/INCREMENTAL') # enable incremental linker
         else
-            Log.verbose 'Windows: using non-incremental linker'
+            Log.log 'Windows: using non-incremental linker'
             linkerOptions.append('/INCREMENTAL:NO') # disable incremental linker
         end
 
@@ -352,14 +352,14 @@ module Build
     end
 
     make_facet(:VisualStudio_PerfSDK_X86) do
-        Log.verbose 'Windows: using VisualStudio PerfSDK for x86'
+        Log.log 'Windows: using VisualStudio PerfSDK for x86'
         perfSDK = '$VisualStudioPath$/Team Tools/Performance Tools/PerfSDK'
         defines << 'WITH_VISUALSTUDIO_PERFSDK'
         externPaths << perfSDK
         libraryPaths << perfSDK
     end
     make_facet(:VisualStudio_PerfSDK_X64) do
-        Log.verbose 'Windows: using VisualStudio PerfSDK for x64'
+        Log.log 'Windows: using VisualStudio PerfSDK for x64'
         perfSDK = '$VisualStudioPath$/Team Tools/Performance Tools/x64/PerfSDK'
         defines << 'WITH_VISUALSTUDIO_PERFSDK'
         externPaths << perfSDK
@@ -372,14 +372,14 @@ module Build
     make_facet(:VisualStudio_LTO_Enabled) do
         if Build.LTO
             if Build.Incremental
-                Log.verbose 'Windows: using incremental link-time code generation'
+                Log.log 'Windows: using incremental link-time code generation'
                 linkerOptions << '/LTCG:INCREMENTAL'
             else
-                Log.verbose 'Windows: using link-time code generation'
+                Log.log 'Windows: using link-time code generation'
                 linkerOptions << '/LTCG'
             end
         else
-            Log.verbose 'Windows: using compile-time code generation'
+            Log.log 'Windows: using compile-time code generation'
             self << Build.VisualStudio_LTO_Disabled
         end
     end

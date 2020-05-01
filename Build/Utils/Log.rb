@@ -4,7 +4,17 @@ require_once 'ANSIColor.rb'
 
 module Build
 
-    def self.Interactive() $stdout.isatty && !ENV['TERM'].nil? end
+    @@_interactive_ = nil
+    def self.Interactive()
+        if @@_interactive_.nil?
+            @@_interactive_ = $stdout.isatty
+            case ENV['TERM']
+            when 'xterm-256'
+                @@_interactive_ = true
+            end
+        end
+        return @@_interactive_
+    end
 
     module Log
         ICONS = {
@@ -26,7 +36,7 @@ module Build
             debug: ANSI[:fg0_blue],
             verbose: ANSI[:fg0_green],
             log: ANSI[:fg0_white],
-            info: ANSI[:fg1_white],
+            info: ANSI[:fg1_white]+ANSI[:bold],
             warning: ANSI[:fg0_yellow],
             error: ANSI[:fg1_red],
             fatal: ANSI[:fg1_white]+ANSI[:bg0_red]+ANSI[:bold],
@@ -127,7 +137,7 @@ module Build
 
             log = ($show_timestamp ? ("[%011.4f]" % elapsed?()) : '') +
                 " #{ICONS[verbosity]}  #{message}"
-            log << "\n\tat: " << caller_locations(1, 1)[0].to_s if $show_caller
+            log << "\n\tat: " << caller_locations(2, 1)[0].to_s if $show_caller
 
             Log.raw(log, verbosity: verbosity)
         end
@@ -174,3 +184,5 @@ end #~ Build
 if $DEBUG
     Build::Log.verbosity(:debug)
 end
+
+Build::Log.warning 'TERM is <%s>', ENV['TERM']

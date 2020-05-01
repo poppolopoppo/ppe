@@ -35,7 +35,7 @@ module Build
         def self.run(*args, config: Build.bff_output.filename, quiet: false, wait: true)
             FBuild.prepare_for_build()
 
-            Log.debug 'FBuild: launching "%s"', Build.FBuild_binary
+            Log.log 'FBuild: launching "%s"', Build.FBuild_binary
 
             cmd = []
             cmd << Build.FBuild_binary.to_s
@@ -77,7 +77,7 @@ module Build
                 'FASTBUILD_TEMP_PATH' => $TemporaryPath,
             }
 
-            Log.verbose 'FBuild: %s (env: %s)', cmd.join(' '), env
+            Log.log 'FBuild: %s (env: %s)', cmd.join(' '), env
 
             result = nil
             Open3.popen3(env, *cmd, chdir: $WorkspacePath) do |io_in, io_out, io_err, wait_thr|

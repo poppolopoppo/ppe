@@ -160,7 +160,7 @@ module Build
                     Log.warning('Hint: disruptive macro <%s%s> = "%s" (keywords=%s unbalanced=%s)', m.id, m.params, m.value, m.keywords, m.unbalanced)
                     @disruptives << m
                 else
-                    Log.verbose('Hint: new macro <%s%s> = "%s"', m.id, m.params, m.value)
+                    Log.log('Hint: new macro <%s%s> = "%s"', m.id, m.params, m.value)
                 end
                 @macros[id] = m
                 return self

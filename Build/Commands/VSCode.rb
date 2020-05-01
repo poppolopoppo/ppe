@@ -148,7 +148,7 @@ module Build
             Log.debug 'VSCode: generate <%s> compdb in "%s"', env.family, compdb
             FBuild.run('-compdb', '-nounity', env.family, quiet: !Log.debug?, wait: false)
             if File.exist?(compdb)
-                Log.verbose 'VSCode: move compdb to "%s"', filename
+                Log.log 'VSCode: move compdb to "%s"', filename
                 dirname = File.dirname(filename)
                 FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
                 FileUtils.mv(compdb, filename)

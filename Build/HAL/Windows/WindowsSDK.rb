@@ -14,7 +14,7 @@ module Build
         sdkLib = sdkLib.first
         sdkVer = File.basename(sdkLib)
         sdkPath = File.expand_path(File.join(sdkLib, '..', '..'))
-        Log.verbose('Windows: found WindowsSDK %s in \'%s\'', sdkVer, sdkPath)
+        Log.log('Windows: found WindowsSDK %s in \'%s\'', sdkVer, sdkPath)
         [ sdkPath, sdkVer ]
     end
 

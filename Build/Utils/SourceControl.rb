@@ -24,7 +24,7 @@ module Build
         end
         def join()
             if @handle
-                Log.verbose('%s: retrieving source control status in \'%s\'', self.name, @path)
+                Log.log('%s: retrieving source control status in \'%s\'', self.name, @path)
                 @modified_files = []
                 retrieve_status(@handle) do |fname|
                     Log.debug('%s: modified file "%s"', self.name, fname)

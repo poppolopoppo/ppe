@@ -58,7 +58,9 @@ module Build
             Assert.unexpected(Build.Compiler)
         end
 
-        Log.verbose('Windows: using compiler <%s> for X86 (%s)', compiler.name, Build.Compiler)
+        Assert.expect(compiler, Compiler)
+        Log.log('Windows: using compiler <%s> for X86 (%s)', compiler.name, Build.Compiler)
+
         compiler.deep_dup.inherits!(Build.WindowsSDK_X86)
     end
     const_memoize(self, :WindowsCompiler_X64) do
@@ -73,7 +75,9 @@ module Build
             Assert.unexpected(Build.Compiler)
         end
 
-        Log.verbose('Windows: using compiler <%s> for X64 (%s)', compiler.name, Build.Compiler)
+        Assert.expect(compiler, Compiler)
+        Log.log('Windows: using compiler <%s> for X64 (%s)', compiler.name, Build.Compiler)
+
         compiler.deep_dup.inherits!(Build.WindowsSDK_X64)
     end
 
