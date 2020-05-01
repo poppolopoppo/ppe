@@ -95,26 +95,45 @@ module Build
             :linkerOption,
             :tag ]
 
-        ATTRS = SETS.collect{|x| "@#{x}s".to_sym }
-        attr_reader(*SETS.collect{|x| "#{x}s".to_sym })
+
+        def self.pluralize(name)
+            case name
+            when :library
+                return :libraries
+            else
+                return "#{name}s".to_sym
+            end
+        end
+
+        ATTRS = SETS.collect{|x| "@#{Facet.pluralize(x)}".to_sym }
+        attr_reader(*SETS.collect{|x| Facet.pluralize(x).to_sym })
 
         SETS.each do |facet|
             define_method("#{facet}=") do |value|
                 Log.debug "set facet <%s::%s> = '%s'", self, facet, value
-                instance_variable_get("@#{facet}s").append(value)
+                instance_variable_get("@#{Facet.pluralize(facet)}").append(value)
             end
         end
 
-        attr_reader :compiler
+        attr_reader :compiler, :preprocessor
         attr_reader :vars
 
         def initialize(data={})
-            @compiler = nil
-            @vars = {}
+            if data.is_a?(Facet)
+                @compiler = data.compiler
+                @preprocessor = data.preprocessor
+                @vars = other.vars.dup
+            else
+                @compiler = nil
+                @preprocessor = nil
+                @vars = {}
+            end
+
             ATTRS.each do |facet|
                 #Log.debug "initialize facet <%s>", facet
                 instance_variable_set(facet, ValueSet.new)
             end
+
             set!(data)
         end
 
@@ -146,6 +165,30 @@ module Build
             @compiler = compiler
             return self
         end
+        def compilationFlag!(*flags)
+            flags.each do |flag|
+                @analysisOptions << flag
+                @preprocessorOptions << flag
+                @compilerOptions << flag
+                @pchOptions << flag
+            end
+            return self
+        end
+        def no_compilationFlag!(*flags)
+            flags.each do |flag|
+                @analysisOptions >> flag
+                @preprocessorOptions >> flag
+                @compilerOptions >> flag
+                @pchOptions >> flag
+            end
+            return self
+        end
+        def preprocessor?() return !@preprocessor.nil? end
+        def preprocessor!(preprocessor)
+            Assert.expect(preprocessor, Compiler)
+            @preprocessor = preprocessor
+            return self
+        end
         def export!(key, subst)
             @vars["$#{key}$"] = subst.to_s
             return self
@@ -157,7 +200,10 @@ module Build
             return self
         end
         def <<(other)
+            @compiler = other.compiler unless other.compiler.nil?
+            @preprocessor = other.preprocessor unless other.preprocessor.nil?
             @vars.merge!(other.vars)
+
             ATTRS.each do |facet|
                 dst = instance_variable_get(facet)
                 src = other.instance_variable_get(facet)
@@ -191,6 +237,7 @@ module Build
         end
         def clear()
             @compiler = nil
+            @preprocessor = nil
             @vars.clear
             ATTRS.each do |facet|
                 instance_variable_get(facet).clear
@@ -203,6 +250,8 @@ module Build
             return facet
         end
         def freeze()
+            @compiler.freeze
+            @preprocessor.freeze
             @vars.freeze
             ATTRS.each do |facet|
                 instance_variable_get(facet).freeze

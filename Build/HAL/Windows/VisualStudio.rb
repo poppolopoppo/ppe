@@ -93,13 +93,13 @@ module Build
         end
         def add_define(facet, key, value=nil)
             token = value.nil? ? key : "#{key}=#{value}"
-            add_compilerOption(facet, "/D#{token}")
+            add_compilationFlag(facet, "/D#{token}")
         end
         def add_forceInclude(facet, filename)
-            add_compilerOption(facet, "/FI\"#{filename}\"")
+            add_compilationFlag(facet, "/FI\"#{filename}\"")
         end
         def add_includePath(facet, dirpath)
-            add_compilerOption(facet, '/I', "\"#{dirpath}\"")
+            add_compilationFlag(facet, '/I', "\"#{dirpath}\"")
         end
         alias add_externPath add_includePath
         alias add_systemPath add_includePath
@@ -111,8 +111,8 @@ module Build
         end
 
         def customize(facet, env, target)
-            nopdb = !Build.Symbols || target.headers? || facet.tag?(:nopdb)
-            nosymbols = facet.tag?(:nosymbols)
+            nopdb = !Build.PDB || target.headers? || facet.tag?(:nopdb)
+            nosymbols = !Build.Symbols || facet.tag?(:nosymbols)
 
             if nosymbols
                 Log.debug('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
@@ -125,24 +125,28 @@ module Build
                 end
 
                 if nopdb || Build.Cache
-                    facet.compilerOptions << '/Z7' # debug symbols inside .obj
+                    # debug symbols inside .obj
+                    facet.compilerOptions << '/Z7'
+                    facet.pchOptions << '/Z7'
                 else
-                    facet.compilerOptions << '/Zi' # debug symbols inside .pdb
-                    facet.compilerOptions << '/FS' # synchronous filesystem (necessary for concurrent cl.exe instances)
+                    # debug symbols inside .pdb / synchronous filesystem (necessary for concurrent cl.exe instances)
+                    facet.compilerOptions << '/Zi' << '/FS'
+                    facet.pchOptions << '/Zi' << '/FS'
                 end
             end
 
             unless nopdb || nosymbols
-                facet.linkerOptions << '/fastfail' # better error reporting
-
                 artefact = env.target_artefact_path(target)
                 pdb_path = env.target_debug_path(artefact)
+
                 facet.linkerOptions << "/PDB:\"#{pdb_path}\""
 
                 if facet.compilerOptions & '/Zi'
                     artefact = env.output_path(target.abs_path, :library)
                     pdb_path = env.target_debug_path(artefact)
+
                     facet.compilerOptions << "/Fd\"#{pdb_path}\""
+                    facet.pchOptions << "/Fd\"#{pdb_path}\""
                 end
             end
 
@@ -150,12 +154,10 @@ module Build
                 pch_object_path = env.output_path(target.pch_source, :pch)
 
                 facet << Build.Compiler_PCHEnabled
-                facet.pchOptions << facet.compilerOptions << '/Fp"%2"' << '/Fo"%3"'
                 facet.pchOptions << "/Yc\"#{target.rel_pch_header}\""
-                facet.compilerOptions << "/Yu\"#{target.rel_pch_header}\"" << "/Fp\"#{pch_object_path}\"" << '/Fo"%2"'
+                facet.compilerOptions << "/Yu\"#{target.rel_pch_header}\"" << "/Fp\"#{pch_object_path}\""
             else
                 facet << Build.Compiler_PCHDisabled
-                facet.compilerOptions << '/Fo"%2"'
             end
 
             super(facet, env, target)
@@ -164,7 +166,7 @@ module Build
         def decorate(facet, env)
             super(facet, env)
 
-            if Build.PerfSDK and !env.config.tag?(:shipping)
+            if Build.PerfSDK and !facet.tag?(:shipping)
                 case env.platform.arch
                 when :x86
                     facet << Build.VisualStudio_PerfSDK_X86
@@ -176,18 +178,18 @@ module Build
             end
 
             if facet.tag?(:debug)
-                facet.compilerOptions << '/MDd'
+                compilationFlag!('/MDd')
             else
-                facet.compilerOptions << '/MD'
+                compilationFlag!('/MD')
             end
 
             case env.config.link
             when :static
             when :dynamic
                 if facet.tag?(:debug)
-                    facet.compilerOptions << '/LDd'
+                    compilationFlag!('/LDd')
                 else
-                    facet.compilerOptions << '/LD'
+                    compilationFlag!('/LD')
                 end
             else
                 Assert.not_implemented
@@ -224,15 +226,26 @@ module Build
         Log.verbose 'Windows: using %s ISO standard', Build.CppStd
         Log.verbose 'Windows: default thread stack size is %d', Build.StackSize
 
-        compilerOptions.append(
-            "/std:#{Build.CppStd}",     # C++2017
+        compilationArgs = [
+            '/nologo',                  # no copyright when compiling
+            '/c', '%1' ]                # input file injection
+        compilerOptions.append(*compilationArgs)
+        pchOptions.append(*compilationArgs)
+        preprocessorOptions.append(*compilationArgs)
+
+        compilerOptions.append('/Fo"%2"')
+        pchOptions.append('/Fp"%2"', '/Fo"%3"')
+        preprocessorOptions.append('/Fo"%2"')
+
+        compilationFlag!(
             '/Gm-',                     # minimal rebuild is handled by FASTBuild
             '/GF',                      # string pooling
             '/GT',                      # fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
-            '/EHsc',                    # structure exception support (#TODO: optional ?)
-            '/fp:fast',                 # non-deterministic, allow vendor specific float intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
+            "/std:#{Build.CppStd}",     # specify Cpp standard (c++14,c++17,c++latest)
             '/bigobj',                  # more sections inside obj files, support larger translation units, needed for unity builds
             '/d2FH4',                   # https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
+            '/EHsc',                    # structure exception support (#TODO: optional ?)
+            '/fp:fast',                 # non-deterministic, allow vendor specific float intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
             '/vmb',                     # class is always defined before pointer to member (https://docs.microsoft.com/en-us/cpp/build/reference/vmb-vmg-representation-method?view=vs-2019)
             '/openmp-',                 # disable OpenMP automatic parallelization
             #'/Za',                     # disable non-ANSI features
@@ -248,38 +261,32 @@ module Build
             '/F', Build.StackSize )     # set default thread stack size
 
         if Build.Strict
+            Log.verbose 'Windows: using strict warnings and warning as error'
+
             # toggle warning as error for whole build chain
-            compilerOptions.append('/WX')
+            compilationFlag!('/WX')
             librarianOptions.append('/WX')
             linkerOptions.append('/WX')
             # promote some warnings as errors
-            compilerOptions.append(
-                '/we4062',                  # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
-                '/we4263',                  # 'function' : member function does not override any base class virtual member function
-                '/we4265',                  # 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
-                '/we4296',                  # 'operator': expression is always false
-                '/we4555',                  # expression has no effect; expected expression with side-effect
-                '/we4619',                  # #pragma warning : there is no warning number 'number'
-                '/we4640',                  # 'instance' : construction of local static object is not thread-safe
-                '/we4826',                  # Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
-                '/we4836',                  # nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
-                '/we4905',                  # wide string literal cast to 'LPSTR'
-                '/we4906',                  # string literal cast to 'LPWSTR'
+            compilationFlag!(
+            '/we4062',                  # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
+            '/we4263',                  # 'function' : member function does not override any base class virtual member function
+            '/we4265',                  # 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
+            '/we4296',                  # 'operator': expression is always false
+            '/we4555',                  # expression has no effect; expected expression with side-effect
+            '/we4619',                  # #pragma warning : there is no warning number 'number'
+            '/we4640',                  # 'instance' : construction of local static object is not thread-safe
+            '/we4826',                  # Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
+            '/we4836',                  # nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
+            '/we4905',                  # wide string literal cast to 'LPSTR'
+            '/we4906',                  # string literal cast to 'LPWSTR'
             )
         end
 
-        compilerOptions.append(
+        compilationFlag!(
         ### IGNORED ###
             '/wd4201',                  # nonstandard extension used: nameless struct/union'
             '/wd4251' )                 # 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
-
-        analysisOptions << compilerOptions
-        if Build.Diagnose
-            analysisOptions.append('/analyze', '/analyze:stacksize', Build.StackSize)
-        end
-
-        compilerOptions.append('/nologo')   # no copyright when compiling
-        compilerOptions.append('/c', '%1')  # input file injection
 
         librarianOptions.append('/nologo', '/SUBSYSTEM:WINDOWS', '/IGNORE:4221', '/OUT:"%2"', '%1')
         linkerOptions.append(
@@ -287,10 +294,11 @@ module Build
             '/TLBID:1',                 # https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
             '/IGNORE:4001',             # https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
             '/NXCOMPAT:NO',             # disable Data Execution Prevention (DEP)
-            '/LARGEADDRESSAWARE',       # inddicate support for VM > 2Gb (if 3Gb flag is toggled)
+            '/LARGEADDRESSAWARE',       # indicate support for VM > 2Gb (if 3Gb flag is toggled)
             '/VERBOSE:INCR',            # incremental linker diagnosis
             '/SUBSYSTEM:WINDOWS',       # ~Windows~ application type (vs Console)
             "/STACK:#{Build.StackSize}",
+            '/fastfail',                # better error reporting
             'kernel32.lib',
             'User32.lib',               # TODO : slim that list down
             'Shell32.lib',
@@ -301,10 +309,16 @@ module Build
             'version.lib',
             '/OUT:"%2"', '%1' )
 
+
         if Build.Diagnose
+            Log.verbose 'Windows: using static analysis options'
+
+            analysisOptions.append('/analyze', '/analyze:stacksize', Build.StackSize)
+
+            Log.verbose 'Windows: using verbose output for the linker'
+
             linkerOptions.append(
                 '/VERBOSE',
-                '/VERBOSE:LIB',
                 '/VERBOSE:LIB',
                 '/VERBOSE:ICF',
                 '/VERBOSE:REF',
@@ -327,14 +341,12 @@ module Build
     end
 
     make_facet(:VisualStudio_Base_x86) do
-        analysisOptions << '/arch:AVX2'
-        compilerOptions << '/favor:blend' << '/arch:AVX2'
+        compilationFlag!('/favor:blend', '/arch:AVX2')
         librarianOptions << '/MACHINE:X86'
         linkerOptions << '/MACHINE:X86' << '/SAFESEH'
     end
     make_facet(:VisualStudio_Base_x64) do
-        analysisOptions << '/arch:AVX2'
-        compilerOptions << '/favor:AMD64' << '/arch:AVX2'
+        compilationFlag!('/favor:AMD64', '/arch:AVX2')
         librarianOptions << '/MACHINE:X64'
         linkerOptions << '/MACHINE:X64'
     end
@@ -354,7 +366,10 @@ module Build
         libraryPaths << perfSDK
     end
 
-    make_facet(:VisualStudio_LTO) do
+    make_facet(:VisualStudio_LTO_Disabled) do
+        linkerOptions << '/LTCG:OFF'
+    end
+    make_facet(:VisualStudio_LTO_Enabled) do
         if Build.LTO
             if Build.Incremental
                 Log.verbose 'Windows: using incremental link-time code generation'
@@ -365,7 +380,7 @@ module Build
             end
         else
             Log.verbose 'Windows: using compile-time code generation'
-            linkerOptions << '/LTCG:OFF'
+            self << Build.VisualStudio_LTO_Disabled
         end
     end
 
@@ -383,67 +398,57 @@ module Build
     end
 
     make_facet(:VisualStudio_Debug) do
-        analysisOptions.append('/Od', '/Oy-', '/Gw-', '/GR')
-        compilerOptions.append('/Od', '/Oy-', '/Gw-', '/GR')
+        compilationFlag!('/Od', '/Oy-', '/Gw-', '/GR')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
             # https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx
-            analysisOptions.append('/GS', '/sdl', '/RTC1')
-            compilerOptions.append('/GS', '/sdl', '/RTC1')
+            compilationFlag!('/GS', '/sdl', '/RTC1')
         end
         linkerOptions.append('/DYNAMICBASE:NO')
-        self << Build.VisualStudio_STL_EnableIteratorDebug
+        self << Build.VisualStudio_LTO_Disabled << Build.VisualStudio_STL_EnableIteratorDebug
     end
     make_facet(:VisualStudio_FastDebug) do
-        analysisOptions.append('/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
-        compilerOptions.append('/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
+        compilationFlag!('/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
-            analysisOptions.append('/GS', '/sdl')
-            compilerOptions.append('/GS', '/sdl')
+            compilationFlag!('/GS', '/sdl')
         end
         linkerOptions.append('/DYNAMICBASE:NO')
-        self << Build.VisualStudio_STL_EnableIteratorDebug
+        self << Build.VisualStudio_LTO_Disabled << Build.VisualStudio_STL_EnableIteratorDebug
     end
     make_facet(:VisualStudio_Release) do
         defines << '_NO_DEBUG_HEAP=1'
-        analysisOptions.append('/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
-        compilerOptions.append('/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
+        compilationFlag!('/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE:NO')
-        self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
+        self << Build.VisualStudio_LTO_Enabled << Build.VisualStudio_STL_DisableIteratorDebug
     end
     make_facet(:VisualStudio_Profiling) do
         defines << '_NO_DEBUG_HEAP=1'
-        analysisOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
-        compilerOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
+        compilationFlag!('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/PROFILE', '/OPT:REF')
-        self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
+        self << Build.VisualStudio_LTO_Enabled << Build.VisualStudio_STL_DisableIteratorDebug
     end
     make_facet(:VisualStudio_Final) do
         defines << '_NO_DEBUG_HEAP=1'
-        analysisOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
-        compilerOptions.append('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
+        compilationFlag!('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/OPT:REF', '/OPT:ICF=3')
-        self << Build.VisualStudio_LTO << Build.VisualStudio_STL_DisableIteratorDebug
+        self << Build.VisualStudio_LTO_Enabled << Build.VisualStudio_STL_DisableIteratorDebug
     end
 
     make_facet(:VisualStudio_Base_2019) do
         # https://blogs.msdn.microsoft.com/vcblog/2019/12/13/broken-warnings-theory/
         defines.append('USE_PPE_MSVC_PRAGMA_SYSTEMHEADER')
 
-        analysisOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
-        compilerOptions.append('/experimental:external', '/external:anglebrackets', '/external:W0')
+        compilationFlag!('/experimental:external', '/external:anglebrackets', '/external:W0')
 
         if Build.Strict
             # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
-            analysisOptions.append('/permissive-')
-            compilerOptions.append('/permissive-')
+            compilationFlag!('/permissive-')
         end
 
         # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
         # TODO: disabled since there is no support for __VA_OPT__(x), and it's necessary to handle some funky macros
-        # analysisOptions.append('/experimental:preprocessor')
-        # compilerOptions.append('/experimental:preprocessor')
+        # compilationFlag!('/experimental:preprocessor')
     end
 
 

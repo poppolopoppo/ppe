@@ -36,7 +36,7 @@ module Build
         end
         def customize(facet, env, target)
             super(facet, env, target)
-            facet.compilerOptions >> '/WX'
+            facet.no_compilationFlag!('/WX')
             facet.librarianOptions >> '/SUBSYSTEM:WINDOWS' >> '/WX'
             facet.linkerOptions >> '/LTCG:INCREMENTAL' >> '/LTCG' >> '/LTCG:OFF' >> '/WX'
         end
@@ -44,7 +44,7 @@ module Build
             super(facet, dirpath)
         end
         def add_externPath(facet, dirpath)
-            add_compilerOption(facet, "/imsvc\"#{dirpath}\"")
+            add_compilationFlag(facet, "/imsvc\"#{dirpath}\"")
         end
         alias add_systemPath add_externPath
     end #~ LLVMWindowsCompiler
@@ -81,10 +81,10 @@ module Build
 
         warningOptions << (Build.Strict ? '-Werror' : '-Wno-error')
 
-        compilerOptions.append(*warningOptions)
-        compilerOptions.append("-fmsc-version=#{Visual::MSC_VER_2019}")
-        compilerOptions.append('-msse4.2', '-Xclang', "-std=#{Build.CppStd}")
-        compilerOptions.append(*%w{ -fms-compatibility -fms-extensions -fcolor-diagnostics })
+        compilationFlag!(*warningOptions)
+        compilationFlag!("-fmsc-version=#{Visual::MSC_VER_2019}")
+        compilationFlag!('-msse4.2', '-Xclang', "-std=#{Build.CppStd}")
+        compilationFlag!(*%w{ -fms-compatibility -fms-extensions -fcolor-diagnostics })
 
         includePaths <<
             File.join('$LLVMWindowsPath$', 'include', 'clang-c') <<
@@ -96,10 +96,10 @@ module Build
     end
 
     make_facet(:LLVM_Windows_Base_x86) do
-        compilerOptions.append('-m32')
+        compilationFlag!('-m32')
     end
     make_facet(:LLVM_Windows_Base_x64) do
-        compilerOptions.append('-m64')
+        compilationFlag!('-m64')
     end
 
     def self.make_llvmwindows_compiler(version, llvm_fileset, vs_fileset)

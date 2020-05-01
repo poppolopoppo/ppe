@@ -21,10 +21,10 @@ module Build
         end
         def add_define(facet, key, value=nil)
             token = value.nil? ? key : "#{key}=#{value}"
-            add_compilerOption(facet, "/d#{token}")
+            add_compilationFlag(facet, "/d#{token}")
         end
         def add_includePath(facet, dirpath)
-            add_compilerOption(facet, "/i\"#{dirpath}\"")
+            add_compilationFlag(facet, "/i\"#{dirpath}\"")
         end
         def customize(facet, env, target)
             super(facet, env, target)

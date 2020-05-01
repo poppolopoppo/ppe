@@ -82,12 +82,12 @@ module Build
                 @description
 
             if @values
-                desc += "[#{@values.join(',')}]"
+                desc += " [#{@values.join(',')}]"
                 opt.on(@flag, desc, *@opts) do |x|
                     @value = nil
                     @values.each do |y|
-                        if x.downcase == y.downcase
-                            @value = y
+                        if x.downcase == y.to_s.downcase
+                            @value = y.to_s
                         end
                     end
                     if @value.nil?
@@ -181,6 +181,24 @@ module Build
         opts.banner = "Usage: #{File.basename(Build::Script)} command [options] [args]"
 
         opts.separator ""
+        opts.separator "Config options:"
+
+        opts.on("-w PATH", "--workspace PATH", "Set workspace path") do |path|
+            Build.set_workspace_path(path)
+        end
+        opts.on("-c FILE", "--config FILE", "Set config file") do |fname|
+            Build.load_options(fname)
+            PersistentConfig[:file] = fname
+        end
+        opts.on("--clean", "Clear persistent data") do |fname|
+            $BuildClean = true
+            PersistentConfig[:data] = {}
+            PersistentConfig[:vars].each do |name, var|
+                var.default!
+            end
+        end
+
+        opts.separator ""
         opts.separator "Commands:"
         Commands.sort_by(&:name).each do |cmd|
             opts.on("--#{cmd.name}", cmd.desc) do
@@ -206,23 +224,6 @@ module Build
 
         opts.separator ""
         opts.separator "Common options:"
-
-        opts.on("-w PATH", "--workspace PATH", "Set workspace path") do |path|
-            Build.set_workspace_path(path)
-        end
-        opts.on("-c FILE", "--config FILE", "Set config file") do |fname|
-            Build.load_options(fname)
-            PersistentConfig[:file] = fname
-        end
-        opts.on("--clean", "Clear persistent data") do |fname|
-            $BuildClean = true
-            PersistentConfig[:data] = {}
-            PersistentConfig[:vars].each do |name, var|
-                var.default!
-            end
-        end
-
-        opts.separator ''
 
         opts.on("-v", "--verbose", "Run verbosely") do
             Log.verbosity(:verbose)

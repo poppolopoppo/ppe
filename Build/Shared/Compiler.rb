@@ -53,13 +53,8 @@ module Build
         def add_library(facet, filename) Log.error("%s: add_library('%s') is not implemented", @name, filename) end
         def add_libraryPath(facet, dirpath) Log.error("%s: add_libraryPath('%s') is not implemented", @name, dirpath) end
 
-        def add_compilerOption(facet, *tokens)
-            tokens.each do |token|
-                #facet.analysisOptions << token
-                facet.compilerOptions << token
-                facet.pchOptions << token
-                facet.preprocessorOptions << token
-            end
+        def add_compilationFlag(facet, *tokens)
+            facet.compilationFlag!(*tokens)
         end
 
         def decorate(facet, env)
@@ -79,7 +74,7 @@ module Build
             facet.includePaths.each{|x| add_includePath(facet, x) }
             facet.includes.each{|x| add_forceInclude(facet, x) }
             facet.libraryPaths.each{|x| add_libraryPath(facet, x) }
-            facet.librarys.each{|x| add_library(facet, x) }
+            facet.libraries.each{|x| add_library(facet, x) }
         end
 
         def freeze()

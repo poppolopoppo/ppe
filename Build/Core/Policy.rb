@@ -12,8 +12,9 @@ module Build
             @customizations = []
         end
 
-        def export!(key, value) @facet.export!(key, value) end
+        def export!(key, value) @facet.export!(key, value); return self end
         def tag?(*tags) @facet.tag?(*tags) end
+        def compilationFlag!(*flags) @facet.compilationFlag!(*tags); return self end
 
         def to_s() @name.to_s end
         def freeze()
@@ -102,8 +103,8 @@ module Build
         end
 
         Facet::SETS.each do |facet|
-            ivar = "@#{facet}s".to_sym
-            define_method(facet.to_s<<'s') do
+            ivar = "@#{Facet.pluralize(facet)}".to_sym
+            define_method(Facet.pluralize(facet)) do
                 @facet.instance_variable_get(ivar)
             end
             define_method(facet.to_s<<'!') do |*values|

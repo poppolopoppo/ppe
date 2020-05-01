@@ -10,6 +10,7 @@ require_once '../../Core/Environment.rb'
 module Build
 
     persistent_value(:Compiler, 'Select Windows C++ compiler', init: '2019', values: %w{ 2019 Insider LLVM })
+    persistent_switch(:PDB, 'Generate a Program Debug Database', init: true)
 
     make_facet(:Windows_Base) do
         defines <<
@@ -57,6 +58,7 @@ module Build
             Assert.unexpected(Build.Compiler)
         end
 
+        Log.verbose('Windows: using compiler <%s> for X86 (%s)', compiler.name, Build.Compiler)
         compiler.deep_dup.inherits!(Build.WindowsSDK_X86)
     end
     const_memoize(self, :WindowsCompiler_X64) do
@@ -71,6 +73,7 @@ module Build
             Assert.unexpected(Build.Compiler)
         end
 
+        Log.verbose('Windows: using compiler <%s> for X64 (%s)', compiler.name, Build.Compiler)
         compiler.deep_dup.inherits!(Build.WindowsSDK_X64)
     end
 
