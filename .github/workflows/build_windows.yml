@@ -1,0 +1,22 @@
+name: Windows build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@master
+      with:
+        submodules: true
+    - uses: actions/setup-ruby@v1
+      with:
+        ruby-version: '2.6'
+    - name: build
+      run: ruby ppe.rb --bff --fbuild --Unity --no-Symbols -v Tools/UnitTest-Win64-Debug
