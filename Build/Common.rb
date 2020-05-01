@@ -11,6 +11,7 @@ module Build
 
     persistent_switch(:Cache, 'Use compilation cache')
     persistent_switch(:Diagnose, 'Use compilation diagnostics')
+    persistent_switch(:Dist, 'Use distributed compilation')
     persistent_switch(:Incremental, 'Use incremental linker')
     persistent_switch(:LTO, 'Use link time optimization')
     persistent_switch(:Minify, 'Use minified format for exported files', init: true)
@@ -44,6 +45,7 @@ module Build
         $UnitiesPath = File.join($OutputPath, 'Unity')
         $IntermediatePath = File.join($OutputPath, 'Intermediate')
         $SavedPath = File.join($OutputPath, 'Saved')
+        $TemporaryPath = File.join($OutputPath, 'Temp')
 
         Log.debug("Data path = '%s'", $DataPath)
         Log.debug("Build path = '%s'", $BuildPath)
@@ -51,10 +53,12 @@ module Build
         Log.debug("Extras path = '%s'", $ExtrasPath)
         Log.debug("Output path = '%s'", $OutputPath)
         Log.debug("Binaries path = '%s'", $BinariesPath)
+        Log.debug("Cache path = '%s'", $CachePath)
         Log.debug("Projects path = '%s'", $ProjectsPath)
         Log.debug("Unities path = '%s'", $UnitiesPath)
         Log.debug("Intermediate path = '%s'", $IntermediatePath)
         Log.debug("Saved path = '%s'", $SavedPath)
+        Log.debug("Temporary path = '%s'", $TemporaryPath)
     end
 
     Build.set_workspace_path($ApplicationPath.to_s) # create default global variables

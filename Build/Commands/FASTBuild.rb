@@ -40,11 +40,16 @@ module Build
             cmd = []
             cmd << Build.FBuild_binary.to_s
             cmd << '-config' << config
-            cmd << '-cache' if Build.Cache
             cmd << '-clean' if Build.Rebuild
             cmd << '-nounity' unless Build.Unity
             cmd << '-nostoponerror' unless Build.StopOnError
-            cmd << '-fastcancel' << '-noprogress'
+            #cmd << '-fastcancel' # EXPERIMENTAL: crashing and PDB errors
+
+            if Build.Interactive
+                cmd << '-progress'
+            else
+                cmd << '-noprogress'
+            end
 
             if quiet
                 cmd << '-quiet'
@@ -52,24 +57,37 @@ module Build
                 cmd << '-summary' << '-nosummaryonerror'
             end
 
-            cmd.concat(Build.send('x-fbuild').collect{|x| "-#{x}" })
-            cmd.concat(args)
-
             if (wait && !cmd.include?('-showtargets')) # TODO: https://github.com/fastbuild/fastbuild/issues/719
                 cmd << '-wait' << '-ide'
             end
 
-            Log.verbose 'FBuild: %s', cmd.join(' ')
+            if Build.Diagnose
+                cmd << '-j1' # limit to one worker thread, disable cache and distribution
+                cmd << '-report' # emit a report.html after building
+            else
+                cmd << '-cache' if Build.Cache  # compilation cache
+                cmd << '-dist'  if Build.Dist   # compilation distribution
+            end
+
+            cmd.concat(Build.send('x-fbuild').collect{|x| "-#{x}" })
+            cmd.concat(args)
+
+            env = {
+                'FASTBUILD_CACHE_PATH' => $CachePath,
+                'FASTBUILD_TEMP_PATH' => $TemporaryPath,
+            }
+
+            Log.verbose 'FBuild: %s (env: %s)', cmd.join(' '), env
 
             result = nil
-            Open3.popen3(*cmd, chdir: $WorkspacePath) do |io_in, io_out, io_err, wait_thr|
+            Open3.popen3(env, *cmd, chdir: $WorkspacePath) do |io_in, io_out, io_err, wait_thr|
                 loop do
                     if line = io_out.gets
                         line = FBuild.trim_crlf(line)
                         if block_given?
                             yield line
                         elsif not quiet and line
-                            Log.raw(line, verbosity: :info)
+                            Log.raw(line, verbosity: :log)
                         end
                     elsif line = io_err.gets
                         line = FBuild.trim_crlf(line)
@@ -107,6 +125,7 @@ module Build
                 FileUtils.mkdir_p($IntermediatePath, verbose: verbose) unless Dir.exist?($IntermediatePath)
                 FileUtils.mkdir_p($ProjectsPath, verbose: verbose) unless Dir.exist?($ProjectsPath)
                 FileUtils.mkdir_p($UnitiesPath, verbose: verbose) unless Dir.exist?($UnitiesPath)
+                FileUtils.mkdir_p($TemporaryPath, verbose: verbose) unless Dir.exist?($TemporaryPath)
             end
         end
 

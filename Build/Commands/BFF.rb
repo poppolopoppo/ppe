@@ -28,6 +28,10 @@ module Build
             set!('AllowDBMigration_Experimental', true)
             set!('RootPath', $WorkspacePath)
             set!('CachePath', $CachePath) if Build.Cache
+            set!('Environment', {
+                'TMP' => $TemporaryPath,
+                'TEMP' => $TemporaryPath
+            })
         end
 
         modified_fileslist_path = BFF.modified_fileslist_path
@@ -38,7 +42,7 @@ module Build
         source.set!('LinkerVerboseOutput', true)
         source.set!('UnityInputIsolateListFile', modified_fileslist_path)
 
-        namespace = namespace[] # <=> .call() => evaluate lambda to defer namespace instanciation
+        namespace = namespace[] # <=> .call() => evaluate lambda to defer namespace instantiation
 
         BFF.make_targets(source, Build.get_environments(), namespace)
 
@@ -289,7 +293,8 @@ module Build
                 using!(target_source)
 
                 set!('CompilerOutputPath', env.intermediate_path(target.abs_path))
-                facet!(expanded, :@compilerOptions, :@preprocessorOptions)
+                facet!(expanded, :@compilerOptions)
+                facet!(expanded, :@preprocessorOptions) if expanded.preprocessor?
 
                 unless link_library_objects
                     set!('LibrarianOutput', env.output_path(target.abs_path, :library))
