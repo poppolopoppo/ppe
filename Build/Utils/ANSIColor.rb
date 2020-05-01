@@ -53,7 +53,7 @@ module ANSI
         else
             fakeCodes = {}
             ANSI::Codes.keys.each{|x| fakeCodes[x] = ''}
-            reutrn fakeCodes
+            return fakeCodes
         end
     end
 
