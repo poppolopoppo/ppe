@@ -1,3 +1,4 @@
 # README #
 
-![C/C++ CI](https://github.com/poppolopoppo/ppe/workflows/C/C++%20CI/badge.svg)
+![Windows build](https://github.com/poppolopoppo/ppe/workflows/Windows%20build/badge.svg)
+![Linux tests](https://github.com/poppolopoppo/ppe/workflows/Linux%20tests/badge.svg)
