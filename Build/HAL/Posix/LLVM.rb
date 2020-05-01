@@ -2,16 +2,20 @@
 
 require_once '../../Common.rb'
 
+# TODO: debug symbols
+# TODO: diagnostics
+# TODO: incremental linker
+# TODO: precompiled headers
+# TODO: runtime checks (ASAN, TSAN)
+
 module Build
 
     class LLVMPosixCompiler < Compiler
         attr_reader :llvmPath, :llvmVersion
         def initialize(
-            prefix, version,
-            host, target,
-            clang, lld, *extra_files)
-            super(prefix, version, minor_version, host, target,
-                clang, clang, lld, *extra_files )
+            prefix, version, target,
+            clang, ar, lld, *extra_files)
+            super("#{prefix}_#{version.tr('.', '_')}_#{target}", clang, ar, lld, *extra_files)
 
             @llvmPath = Pathname.new(File.join(File.dirname(clang), '..'))
             @llvmPath = @llvmPath.cleanpath
@@ -23,11 +27,11 @@ module Build
             versions.sort!
             @llvmersion = versions.last
 
-            Log.verbose 'Posix: found LLVM v%s in "%s"', @llvmVersion, @llvmPath
+            Log.log 'Posix: found LLVM %s in "%s" (%s)', @llvmVersion, @llvmPath, version
             self.facet.export!('LLVMVersion', @llvmVersion)
 
             self.inherits!(Build.LLVM_Posix_Base)
-            self.inherits!(Build.send "LLVM_Posix_Base_#{target}")
+            self.inherits!(Build.send("LLVM_Posix_Base_#{target}"))
         end
 
         def ext_binary() '.out' end
@@ -42,13 +46,13 @@ module Build
         end
         def add_define(facet, key, value=nil)
             token = value.nil? ? key : "#{key}=#{value}"
-            add_compilerOption(facet, "-D#{token}")
+            add_compilationFlag(facet, "-D#{token}")
         end
         def add_forceInclude(facet, filename)
-            add_compilerOption(facet, '-include' "\"#{filename}\"")
+            add_compilationFlag(facet, '-include' "\"#{filename}\"")
         end
         def add_includePath(facet, dirpath)
-            add_compilerOption(facet, "-I\"#{dirpath}\"")
+            add_compilationFlag(facet, "-I\"#{dirpath}\"")
         end
         alias add_externPath add_includePath
         alias add_systemPath add_includePath
@@ -61,10 +65,7 @@ module Build
 
         def customize(facet, env, target)
             super(facet, env, target)
-            # TODO: PDB %NOCOMMIT%
-            # TODO: PCH %NOCOMMIT%
-            # TODO: ASAN %NOCOMMIT%
-            # TODO: TSAN %NOCOMMIT%
+
         end
 
     end #~ LLVMPosixCompiler
@@ -72,10 +73,12 @@ module Build
     def self.import_llvm_posix(name, binary)
         make_prerequisite(name) do
             if fullpath = need_cmdline!('realpath', '$(', 'which', binary, ')')
-                dirpath = File.dirname(fullpath)
+                dirpath = File.dirname(fullpath.first)
+                Log.log 'LLVM: found binary path "%s"', dirpath
                 need_fileset!(
                     File.join(dirpath, 'clang'),
-                    File.join(dirpath, 'lld') )
+                    File.join(dirpath, 'llvm-ar'),
+                    File.join(dirpath, 'lld-link') )
             end
         end
     end
@@ -85,35 +88,36 @@ module Build
     make_facet(:LLVM_Posix_Base) do
         defines << 'CPP_CLANG' << 'LLVM_FOR_POSIX'
 
-        compilerOptions.append("-std=#{Build.CppStd}")
-        compilerOptions.append('-mavx2','-msse4.2')
-        compilerOptions.append('-mlzcnt','-mpopcnt')
+        compilationFlag!(
+            "-std=#{Build.CppStd}",
+            '-Wall', '-Wextra', '-Wshadow',
+            '-Werror', '-Wfatal-errors',
+            '-mavx2','-msse4.2',
+            '-mlzcnt','-mpopcnt',
+            '-fcolor-diagnostics',
+            '-c', # compile
+            '-g', # generate debug infos
+            '-o', '%2', '%1' )
 
-        compilerOptions.append('-Wall', '-Wextra', '-Wshadow')
-        compilerOptions.append('-Werror', '-Wfatal-errors')
-        compilerOptions.append('-fcolor-diagnostics')
-
-        compilerOptions.append('-c') # compile
-        compilerOptions.append('-g') # generate debug infos
-        compilerOptions.append('-o', '%2', '%1')
-
-        compilerOptions.append('-pthread')
+        librarianOptions << 'rc' << '%2' << '%1'
+        linkerOptions << '-o' << '%2' << '%1'
 
         includePaths <<
             File.join('$LLVMPath$', 'include', 'clang-c') <<
             File.join('$LLVMPath$', 'include', 'llvm-c') <<
             File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'include')
+
         libraryPaths <<
             File.join('$LLVMPath$', 'lib') <<
             File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'lib', 'windows')
     end
 
     make_facet(:LLVM_Posix_Base_x86) do
-        compilerOptions.append('-m32')
+        compilationFlag!('-m32')
         linkerOptions.append('-m32')
     end
     make_facet(:LLVM_Posix_Base_x64) do
-        compilerOptions.append('-m64')
+        compilationFlag!('-m64')
         linkerOptions.append('-m64')
     end
 
@@ -121,77 +125,70 @@ module Build
         librarianOptions << '-fno-lto'
         linkerOptions << '-fno-lto'
     end
-
     make_facet(:LLVM_Posix_LTO_Enabled) do
         if Build.LTO
             if Build.Incremental
-                Log.verbose 'Linux: using incremental link-time code generation'
+                Log.log 'Linux: using incremental link-time code generation'
                 librarianOptions << '-flto=thin'
                 linkerOptions << '-flto=thin'
             else
-                Log.verbose 'Linux: using link-time code generation'
+                Log.log 'Linux: using link-time code generation'
                 librarianOptions << '-flto'
                 linkerOptions << '-flto'
             end
         else
-            Log.verbose 'Linux: using compile-time code generation'
+            Log.log 'Linux: using compile-time code generation'
             self << Build.LLVM_Posix_LTO_Disabled
         end
     end
 
     make_facet(:LLVM_Posix_Debug) do
-        analysisOptions.append('-O0')
-        compilerOptions.append('-O0')
+        compilationFlag!('-O0')
         linkerOptions.append('-fno-pie', '-frtti')
         self << Build.LLVM_Posix_LTO_Disabled
     end
     make_facet(:LLVM_Posix_FastDebug) do
-        analysisOptions.append('/O1')
-        compilerOptions.append('/O1')
+        compilationFlag!('/O1')
         linkerOptions.append('-fno-pie', '-frtti')
         self << Build.LLVM_Posix_LTO_Disabled
     end
     make_facet(:LLVM_Posix_Release) do
-        analysisOptions.append('/O2')
-        compilerOptions.append('/O2')
+        compilationFlag!('/O2')
         linkerOptions.append('-fno-pie', '-fno-rtti')
         self << Build.LLVM_Posix_LTO_Enabled
     end
     make_facet(:LLVM_Posix_Profiling) do
-        analysisOptions.append('/O3')
-        compilerOptions.append('/O3')
+        compilationFlag!('/O3')
         linkerOptions.append('-fpie', '-fno-rtti')
         self << Build.LLVM_Posix_LTO_Enabled
     end
     make_facet(:LLVM_Posix_Final) do
-        analysisOptions.append('/O3')
-        compilerOptions.append('/O3')
+        compilationFlag!('/O3')
         linkerOptions.append('-fpie', '-fno-rtti')
         self << Build.LLVM_Posix_LTO_Enabled
     end
 
-    def self.make_llvmposix_compiler(version, target, llvm_fileset)
-        return unless llvm_fileset
-        clang, lld = *llvm_fileset
+    def self.make_llvmposix_compiler(target, llvm_fileset)
+        Assert.expect(llvm_fileset, Array)
+
+        clang, ar, lld = *llvm_fileset
 
         Log.debug 'Posix: found LLVM posix compiler in "%s"', clang
 
         clang = llvm_fileset.first
-        fileset = llvm_fileset[1..-1]
+        fileset = llvm_fileset[3..-1]
+        version = %x{clang -dumpversion}.lines.first.chomp.strip
 
         return LLVMPosixCompiler.new(
-            'LLVM_Posix', version,
-            host, target,
-            clang, lld, *fileset )
+            'LLVM_Posix', version, target,
+            clang, ar, lld, *fileset )
     end
 
     const_memoize(self, :LLVM_Posix_Hostx86) do
-        Build.make_llvmposix_compiler('Clang', 'x86',
-            Build.LLVM_Posix_Fileset )
+        Build.make_llvmposix_compiler('x86', Build.LLVM_Posix_Fileset)
     end
     const_memoize(self, :LLVM_Posix_Hostx64) do
-        Build.make_llvmposix_compiler('Clang', 'x64',
-            Build.LLVM_Posix_Fileset )
+        Build.make_llvmposix_compiler('x64', Build.LLVM_Posix_Fileset)
     end
 
 end #~ Build

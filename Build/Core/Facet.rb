@@ -17,7 +17,7 @@ module Build
                 case value
                 when Integer,Float,String,Symbol
                     if $DEBUG && value.is_a?(String) && !(value[0] =~ /[\\\/-]/) && @data.include?(value)
-                        Log.fatal 'already append "%s"', value
+                        Log.fatal "already append \"%s\"\n\tcontent: %s", value, @data.collect{|x|"'#{x}'"}.join(' ')
                     end
                     @data << value
                 when Array
@@ -94,7 +94,6 @@ module Build
             :librarianOption,
             :linkerOption,
             :tag ]
-
 
         def self.pluralize(name)
             case name

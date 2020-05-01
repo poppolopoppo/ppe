@@ -6,7 +6,7 @@ require_once '../../Utils/Prerequisite.rb'
 module Build
 
     make_facet(:PosixSDK_Base) do
-        defines << 'PLATFORM_POSIX'
+        compilerOptions << '-pthread' # need libthread for all threading
     end
 
     make_facet(:PosixSDK_X86) do

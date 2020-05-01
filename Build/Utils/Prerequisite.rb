@@ -23,10 +23,10 @@ module Build
         def need_cmdline!(*args)
             args.collect!{|x| x =~ /\s/ ? "'#{x}''" : x }
             result = %x{ #{args.join(' ')} }
-            Log.debug("command result: %s", result)
             if $?.success?
+                result = result.lines.map(&:chomp)
                 Log.debug("command succeed: %s -> '%s'", args, result)
-                return result.lines.map(&:chomp)
+                return result
             else
                 Log.warning("command failed: %s (exit code = %s)", args, $?)
                 return false
@@ -37,7 +37,7 @@ module Build
                 Log.debug("found file '%s'", path)
                 return path
             else
-                Log.verbose("file does not exists '%s'", path)
+                Log.warning("file does not exists '%s'", path)
                 return false
             end
         end
@@ -52,7 +52,7 @@ module Build
                 Log.debug("found directory '%s'", path)
                 return path
             else
-                Log.verbose("directory does not exists '%s'", path)
+                Log.warnig("directory does not exists '%s'", path)
                 return false
             end
         end
@@ -67,7 +67,7 @@ module Build
                 entries.collect!{ |x| File.join(basepath, x) }
                 return entries
             else
-                Log.verbose("didn't glob any entry with pattern '%s'", pattern)
+                Log.warning("didn't glob any entry with pattern '%s'", pattern)
                 return []
             end
         end
@@ -77,7 +77,7 @@ module Build
                 Log.debug("found environment variable <%s> = '%s'", id, result)
                 return result
             else
-                Log.verbose("could not find environment variable <%s>", id)
+                Log.warning("could not find environment variable <%s>", id)
                 return false
             end
         end
