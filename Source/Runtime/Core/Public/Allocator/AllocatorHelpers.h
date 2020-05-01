@@ -22,21 +22,23 @@ public:
     using fallback_traits = TAllocatorTraits<_Fallback>;
 
 #define FALLBACK_USING_DEF(_NAME, _OP) \
+    using CONCAT(primary_, _NAME) = typename primary_traits::_NAME; \
+    using CONCAT(fallback_, _NAME) = typename fallback_traits::_NAME; \
     using _NAME = typename std::bool_constant< \
-        primary_traits::_NAME::value _OP \
-        fallback_traits::_NAME::value >::type
+        CONCAT(primary_, _NAME)::value _OP \
+        CONCAT(fallback_, _NAME)::value >::type
 
-    FALLBACK_USING_DEF(propagate_on_container_copy_assignment, and);
-    FALLBACK_USING_DEF(propagate_on_container_move_assignment, and);
-    FALLBACK_USING_DEF(propagate_on_container_swap, and);
+    FALLBACK_USING_DEF(propagate_on_container_copy_assignment, &&);
+    FALLBACK_USING_DEF(propagate_on_container_move_assignment, &&);
+    FALLBACK_USING_DEF(propagate_on_container_swap, &&);
 
-    FALLBACK_USING_DEF(is_always_equal, and);
+    FALLBACK_USING_DEF(is_always_equal, &&);
 
-    FALLBACK_USING_DEF(has_maxsize, or);
-    FALLBACK_USING_DEF(has_owns, and);
-    FALLBACK_USING_DEF(has_reallocate, or);
-    FALLBACK_USING_DEF(has_acquire, or);
-    FALLBACK_USING_DEF(has_steal, or);
+    FALLBACK_USING_DEF(has_maxsize, ||);
+    FALLBACK_USING_DEF(has_owns, &&);
+    FALLBACK_USING_DEF(has_reallocate, ||);
+    FALLBACK_USING_DEF(has_acquire, ||);
+    FALLBACK_USING_DEF(has_steal, ||);
 
 #undef FALLBACK_USING_DEF
 
@@ -314,21 +316,23 @@ public:
     using above_traits = TAllocatorTraits<_Above>;
 
 #define SEGREGATOR_USING_DEF(_NAME, _OP) \
+    using CONCAT(under_, _NAME) = typename under_traits::_NAME; \
+    using CONCAT(above_, _NAME) = typename above_traits::_NAME; \
     using _NAME = typename std::bool_constant< \
-        under_traits::_NAME::value _OP \
-        above_traits::_NAME::value >::type
+        CONCAT(under_, _NAME)::value _OP \
+        CONCAT(above_, _NAME)::value >::type
 
-    SEGREGATOR_USING_DEF(propagate_on_container_copy_assignment, and);
-    SEGREGATOR_USING_DEF(propagate_on_container_move_assignment, and);
-    SEGREGATOR_USING_DEF(propagate_on_container_swap, and);
+    SEGREGATOR_USING_DEF(propagate_on_container_copy_assignment, &&);
+    SEGREGATOR_USING_DEF(propagate_on_container_move_assignment, &&);
+    SEGREGATOR_USING_DEF(propagate_on_container_swap, &&);
 
-    SEGREGATOR_USING_DEF(is_always_equal, and);
+    SEGREGATOR_USING_DEF(is_always_equal, &&);
 
     using has_maxsize = typename above_traits::has_maxsize;
-    SEGREGATOR_USING_DEF(has_owns, and);
-    SEGREGATOR_USING_DEF(has_reallocate, or);
-    SEGREGATOR_USING_DEF(has_acquire, or);
-    SEGREGATOR_USING_DEF(has_steal, or);
+    SEGREGATOR_USING_DEF(has_owns, &&);
+    SEGREGATOR_USING_DEF(has_reallocate, ||);
+    SEGREGATOR_USING_DEF(has_acquire, ||);
+    SEGREGATOR_USING_DEF(has_steal, ||);
 
 #undef SEGREGATOR_USING_DEF
 

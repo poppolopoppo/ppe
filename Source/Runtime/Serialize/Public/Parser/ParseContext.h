@@ -17,6 +17,8 @@ FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FParseContext : Meta::FNonCopyableNorMovable {
 public:
+    using local_scope_t = HASHMAP(Parser, RTTI::FName, RTTI::FAtom);
+
     explicit FParseContext(Meta::FForceInit);
     explicit FParseContext(const RTTI::PAtomHeap& atomHeap);
     explicit FParseContext(const FParseContext* parent);
@@ -25,7 +27,7 @@ public:
 
     const FParseContext* Parent() const { return _parent; }
     const FParseContext* GlobalScope() const;
-    const auto& LocalScope() const { return _localScope; }
+    const local_scope_t& LocalScope() const { return _localScope; }
 
     RTTI::FMetaObject* ScopeObject() const { return _scopeObject.get(); }
     void SetScopeObject(RTTI::FMetaObject *object);
@@ -60,7 +62,7 @@ private:
     const RTTI::PAtomHeap _atomHeap;
 
     RTTI::PMetaObject _scopeObject;
-    HASHMAP(Parser, RTTI::FName, RTTI::FAtom) _localScope;
+    local_scope_t _localScope;
 
     FPooledLinearHeap& LinearHeap_() const;
 };
