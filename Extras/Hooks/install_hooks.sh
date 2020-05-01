@@ -1,8 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." >/dev/null 2>&1 && pwd)"
 
-pushd $ROOT_DIR
+echo "ROOT=$ROOT_DIR"
+pushd "$ROOT_DIR"
 
 GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"
 if [ -n "$MSYSTEM" ]; then
