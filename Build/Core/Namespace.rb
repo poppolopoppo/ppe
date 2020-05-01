@@ -88,7 +88,7 @@ module Build
 
             relpaths.each do |relpath|
                 abspath = File.join(rootpath, relpath)
-                Log.verbose 'include "%s"', abspath
+                Log.debug 'include "%s"', abspath
                 require abspath
             end
         end

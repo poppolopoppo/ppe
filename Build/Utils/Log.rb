@@ -1,11 +1,16 @@
 # frozen_string_literal: true
 
+require_once 'ANSIColor.rb'
+
 module Build
+
+    def self.Interactive() $stdout.isatty && !ENV['TERM'].nil? end
 
     module Log
         ICONS = {
             debug:      ' ~ ',
             verbose:    '---',
+            log:        '',
             info:       '-->',
             warning:    '/?\\',
             error:      '[!]',
@@ -15,6 +20,17 @@ module Build
         LEVELS = ICONS.keys
         VERBOSITY = [ :info, :warning, :error, :fatal ]
         MAXMSGLEN = 4096*4
+
+        ANSI = ANSI.colors(Build.Interactive)
+        STYLES = {
+            debug: ANSI[:fg0_blue],
+            verbose: ANSI[:fg0_green],
+            log: ANSI[:fg0_white],
+            info: ANSI[:fg1_white],
+            warning: ANSI[:fg0_yellow],
+            error: ANSI[:fg1_red],
+            fatal: ANSI[:fg1_white]+ANSI[:bg0_red]+ANSI[:bold],
+        }
 
         $started_at = Time.now
         $show_caller = false
@@ -79,16 +95,17 @@ module Build
                 end
 
                 case verbosity
-                when :debug, :verbose, :info
-                    $stdout.puts(message)
+                when :debug, :verbose, :log, :info
+                    $stdout.puts(Log.ansi_style(verbosity, message))
                     $stdout.flush
                 when :warning, :error
-                    $stderr.puts(message)
+                    $stderr.puts(Log.ansi_style(verbosity, message))
                     $stdout.flush
                 when :fatal
                     $stdout.flush
                     $stderr.flush
-                    raise FatalError.new("fatal: #{message}")
+                    $stderr.puts(Log.ansi_style(verbosity, message))
+                    raise FatalError.new("fatal error")
                 else
                     $stderr.flush
                     raise ArgumentError.new("unsupported log verbosity: #{verbosity}")
@@ -122,6 +139,15 @@ module Build
             define_singleton_method(level) do |message, *args|
                 args = nil if args.empty?
                 Log.puts(message: message, args: args, verbosity: level)
+            end
+        end
+
+    private
+        def self.ansi_style(verbosity, message)
+            if Build.Interactive
+                return STYLES[verbosity]+message.to_s+ANSI[:reset]
+            else
+                return message
             end
         end
 
