@@ -5,10 +5,19 @@ require_once '../Common.rb'
 module ANSI
 
     Codes = {
-        bold: "\u001b[1m",
-        underline:  "\u001b[4m",
-        reversed: "\u001b[7m",
         reset: "\u001b[0m",
+
+        bold: "\u001b[1m",
+        faint:  "\u001b[2m",
+        italic: "\u001b[3m",
+        underline:  "\u001b[4m",
+        blink0: "\u001b[5m",
+        blink1: "\u001b[6m",
+        reversed: "\u001b[7m",
+
+        frame: "\u001b[51m",
+        encircle: "\u001b[52m",
+        overline: "\u001b[53m",
 
         fg0_black: "\u001b[30m",
         fg0_red: "\u001b[31m",
@@ -46,6 +55,12 @@ module ANSI
         bg1_cyan: "\u001b[46;1m",
         bg1_white: "\u001b[47;1m",
     }
+
+    All_colors = [ :black, :red, :green, :yellow, :blue, :magenta, :cyan ]
+
+    def self.random_color(prefix)
+        return "#{prefix}_#{All_colors[rand(All_colors.length)]}".to_sym
+    end
 
     def self.colors(enabled)
         if enabled

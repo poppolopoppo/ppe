@@ -77,7 +77,7 @@ module Build
             else
                 Log.fatal 'unsupported output type: <%s>', output
             end
-            Log.debug '%s: output_path("%s", %s) -> "%s"', self.name, relativePath, output, outputPath
+            #Log.debug '%s: output_path("%s", %s) -> "%s"', self.name, relativePath, output, outputPath
             return outputPath
         end
 

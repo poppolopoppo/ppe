@@ -37,7 +37,8 @@ module Build
     end
     def run_command(&namespace)
         $BuildCommand.each do |cmd|
-            Log.info 'run <%s> command: %s', cmd.name, Build::Args
+            Log.log 'run <%s> command: %s', cmd.name, Build::Args
+            started_at = Time.now
             cmd.block.call(&namespace)
         end
         $BuildCommand.clear
@@ -245,7 +246,7 @@ module Build
         opts.separator ''
 
         opts.on("--version", "Show build version") do
-            Log.info("Version: %s", Build::VERSION)
+            Log.log("Version: %s", Build::VERSION)
             exit
         end
         opts.on("-h", "--help", "Show this message") do
@@ -304,7 +305,7 @@ module Build
 
     Build.make_command(:print, 'Show config data') do
         PersistentConfig[:vars].each do |name, var|
-            Log.info 'persitent[%s] = %s', name, var.value.to_s
+            Log.log 'persitent[%s] = %s', name, var.value.to_s
         end
     end
 

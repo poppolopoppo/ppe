@@ -107,7 +107,7 @@ module Build
 
         clang_cl, llvm_lib, lld_link = *llvm_fileset
 
-        Log.debug 'Windows: found LLVM Windows compiler in "%s"', clang_cl
+        Log.log 'Windows: found LLVM Windows compiler in "%s"', clang_cl
 
         cl_exe = vs_fileset.first
         fileset = vs_fileset[1..-1]

@@ -8,7 +8,7 @@ module Build
         def initialize(path, *cmdline)
             @path = File.expand_path(path)
             @modified_files = []
-            Log.debug('%s: initialize source control \'%s\' in \'%s\'', self.name, cmdline.join(' '), @path)
+            Log.log('%s: initialize source control \'%s\' in \'%s\'', self.name, cmdline.join(' '), @path)
             @handle = IO.popen(cmdline, 'r+', chdir: @path)
         end
         def file_modified?(fname)

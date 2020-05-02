@@ -115,7 +115,7 @@ module Build
             nosymbols = !Build.Symbols || facet.tag?(:nosymbols)
 
             if nosymbols
-                Log.debug('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
+                Log.log('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
                 facet.linkerOptions << '/DEBUG:NONE'
             else
                 if Build.Incremental
@@ -178,18 +178,18 @@ module Build
             end
 
             if facet.tag?(:debug)
-                compilationFlag!('/MDd')
+                facet.compilationFlag!('/MDd')
             else
-                compilationFlag!('/MD')
+                facet.compilationFlag!('/MD')
             end
 
             case env.config.link
             when :static
             when :dynamic
                 if facet.tag?(:debug)
-                    compilationFlag!('/LDd')
+                    facet.compilationFlag!('/LDd')
                 else
-                    compilationFlag!('/LD')
+                    facet.compilationFlag!('/LD')
                 end
             else
                 Assert.not_implemented
@@ -319,9 +319,9 @@ module Build
 
             linkerOptions.append(
                 '/VERBOSE',
-                '/VERBOSE:LIB',
-                '/VERBOSE:ICF',
-                '/VERBOSE:REF',
+                #'/VERBOSE:LIB',
+                #'/VERBOSE:ICF',
+                #'/VERBOSE:REF',
                 '/VERBOSE:UNUSEDLIBS' )
         end
 
@@ -528,7 +528,7 @@ module Build
         cl_exe = fileset.first
         fileset = fileset[1..-1]
 
-        Log.debug 'Windows: found VisualStudio compiler in "%s"', cl_exe
+        Log.log 'Windows: found VS compiler in "%s"', cl_exe
 
         binpath = File.dirname(cl_exe)
         lib_exe = File.join(binpath, 'lib.exe')

@@ -19,8 +19,8 @@ module Build
     module Log
         ICONS = {
             debug:      ' ~ ',
-            verbose:    '---',
-            log:        '',
+            verbose:    ' - ',
+            log:        '---',
             info:       '-->',
             warning:    '/?\\',
             error:      '[!]',
@@ -28,15 +28,15 @@ module Build
         }
 
         LEVELS = ICONS.keys
-        VERBOSITY = [ :info, :warning, :error, :fatal ]
+        VERBOSITY = [ :info, :warning, :error, :fatal, :success ]
         MAXMSGLEN = 4096*4
 
         ANSI = ANSI.colors(Build.Interactive)
         STYLES = {
-            debug: ANSI[:fg0_blue],
-            verbose: ANSI[:fg0_green],
+            debug: ANSI[:fg0_magenta],
+            verbose: ANSI[:fg1_black],
             log: ANSI[:fg0_white],
-            info: ANSI[:fg1_white]+ANSI[:bold],
+            info: ANSI[:fg1_white]+ANSI[:underline]+ANSI[:bold],
             warning: ANSI[:fg0_yellow],
             error: ANSI[:fg1_red],
             fatal: ANSI[:fg1_white]+ANSI[:bg0_red]+ANSI[:bold],
@@ -94,7 +94,7 @@ module Build
             end
         end #~ FatalError
 
-        def self.raw(message, args: nil, verbosity: :info)
+        def self.raw(message, args: nil, verbosity: :log)
             Log.without_pin do
                 message = message.to_s
                 message = message % args if args
@@ -155,7 +155,24 @@ module Build
     private
         def self.ansi_style(verbosity, message)
             if Build.Interactive
-                return STYLES[verbosity]+message.to_s+ANSI[:reset]
+                case verbosity
+                when :success
+                    result = String.new << ANSI[:bg0_white]
+                    col = nil
+                    och = nil
+                    message.each_char do |ch|
+                        if col.nil? || ch =~ /\s/
+                            prv = col
+                            col = ANSI[::ANSI.random_color(:fg1)] while prv == col
+                            result << col
+                        end
+                        result << ch
+                    end
+                    result << ANSI[:reset]
+                    return result
+                else
+                    return STYLES[verbosity]+message.to_s+ANSI[:reset]
+                end
             else
                 return message
             end
@@ -184,5 +201,3 @@ end #~ Build
 if $DEBUG
     Build::Log.verbosity(:debug)
 end
-
-Build::Log.warning 'TERM is <%s>', ENV['TERM']
