@@ -82,17 +82,17 @@ module Build
                 $pinned_stream.print(ANSI[:cursor_up]+ANSI[:kill_line]) if $pinned_message
                 return
             end
-            def self.without_pin(&block)
-                Log.backout_pin
-                block.call
-                Log.attach_pin
-            end
         else
             def self.pin(message) end
             def self.clear_pin() end
             def self.attach_pin() end
             def self.backout_pin() end
-            def self.without_pin(&block) end
+        end
+
+        def self.without_pin(&block)
+            Log.backout_pin
+            block.call
+            Log.attach_pin
         end
 
         class FatalError < RuntimeError
@@ -128,7 +128,7 @@ module Build
                     raise ArgumentError.new("unsupported log verbosity: #{verbosity}")
                 end
 
-            end if VERBOSITY.include?(verbosity)
+            end if VERBOSITY.include?(verbosity) || verbosity == :fatal
         end
 
         def self.puts(message: '', args: nil, verbosity: :info)
@@ -166,7 +166,6 @@ module Build
                 when :success
                     result = String.new << ANSI[:bg0_white]
                     col = nil
-                    och = nil
                     message.each_char do |ch|
                         if col.nil? || ch =~ /\s/
                             prv = col

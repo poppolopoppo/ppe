@@ -89,10 +89,10 @@ module Build
                     make_opt(flag, desc: desc)
                 when 3
                     flag, desc, long = *args
-                    make_opt(flag, long: desc, desc: desc)
+                    make_opt(flag, long: long, desc: desc)
                 else
                     flag, desc, long = *args[0..2]
-                    make_opt(flag, long: desc, desc: desc, params: args[3..-1])
+                    make_opt(flag, long: long, desc: desc, params: args[3..-1])
                 end
                 return
             end

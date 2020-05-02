@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 $Build.ppe_module!(:Core) do
-    unity_num_files = 5
     isolated_files!(
         'Private/Allocator/MallocBinned.cpp',
         'Private/Allocator/MallocStomp.cpp',

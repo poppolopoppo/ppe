@@ -119,7 +119,7 @@ module Build
             nosymbols = !Build.Symbols || facet.tag?(:nosymbols)
 
             if nosymbols
-                Log.log('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
+                Log.debug('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
                 facet.linkerOptions << '/DEBUG:NONE'
             else
                 if Build.Incremental
