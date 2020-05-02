@@ -49,6 +49,8 @@ struct PPE_RTTI_API FLinearizedTransaction {
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
+    using top_objects_t = VECTORINSITU(MetaTransaction, PMetaObject, 8);
+
     explicit FMetaTransaction(
         const FName& namespace_,
         ETransactionFlags flags = ETransactionFlags::Default );
@@ -85,7 +87,7 @@ public:
     void LoadAndMount();
     void UnmountAndUnload();
 
-    const auto& TopObjects() const { return _topObjects; }
+    const top_objects_t& TopObjects() const { return _topObjects; }
     const FLinearizedTransaction& Linearized() const {
         AssertRelease(IsLoaded() || IsMounted());
         return _linearized;
