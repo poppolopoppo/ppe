@@ -104,8 +104,8 @@ module Build
                     make_opt("--#{flag[7..-1]}", long: long, params: params, desc: desc)
                     make_opt("--no-#{flag[7..-1]}", long: long, params: params, desc: desc)
                 else
-                    flag = flag.split(/\s+/).first
-                    long = long.split(/\s+/).first unless long.nil?
+                    flag = flag.to_s.split(/\s+/).first
+                    long = long.to_s.split(/\s+/).first unless long.nil?
                     @opts[flag] = Option.new(flag, long: long, params: params, desc: desc)
                 end
             end

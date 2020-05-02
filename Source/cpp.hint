@@ -1,3 +1,6 @@
+// Hint files help the Visual Studio IDE interpret Visual C++ identifiers
+// such as names of functions and macros.
+// For more information see https://go.microsoft.com/fwlink/?linkid=865984
 #define BUILD_ENV
 #define BUILD_PLATFORM
 #define BUILD_FAMILY
@@ -100,6 +103,7 @@
 #define DEBUG_FUNCTION_SHUTDOWN()
 #define DEBUG_FUNCTION(_API, _NAME, _RET, _ARGS, ...)
 #define PPE_DEFAULT_EXCEPTION_DESCRIPTION(_Name)
+#define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY)
 #define LOG(_CATEGORY, _LEVEL, _FORMAT, ...)
 #define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST)
 #define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE)
@@ -184,6 +188,7 @@
 #define PPE_CATCH(_SPEC)
 #define INPLACE_NEW(_STORAGE, ...)
 #define DLL_IMPORT
+#define DLL_NOINLINE
 #define DLL_EXPORT
 #define EXPORT_DELETED_FUNCTION
 #define EXTERN_TEMPLATE_CLASS_DECL(_API)
@@ -204,6 +209,7 @@
 #define ALIGN(_BOUNDARY)
 #define CACHELINE_SIZE
 #define AssertMessage(_Message, ...)
+#define Assert_Lightweight(...)
 #define AssertReleaseMessage(_Message, ...)
 #define AssertNotReached()
 #define _ENUM_FLAGS_IMPL(_PREFIX, _ENUMTYPE)
@@ -265,10 +271,16 @@
 #define STACKLOCAL_ATOM(_NAME, _PTYPE_TRAITS)
 #define RTTI_STRUCT_DEF(_Api, _Name)
 #define RTTI_CLASS_BEGIN(_Module, _Name, ...) \
-    ::PPE::RTTI::FMetaModule& _Name::RTTI_FMetaClass::Module() { \
+    static const _Name::RTTI_FMetaClass::RTTI_FMetaClassHandle CONCAT(GRTTI_MetaClass_, _Name); \
+    auto _Name::RTTI_FMetaClass::metaclass_handle() NOEXCEPT -> const RTTI_FMetaClassHandle& { \
+        return CONCAT(GRTTI_MetaClass_, _Name); \
+    } \
+    \
+    ::PPE::RTTI::FMetaModule& _Name::RTTI_FMetaClass::Module() NOEXCEPT { \
         return RTTI_MODULE(_Module); \
     } \
-    _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) \
+    \
+    _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) NOEXCEPT \
         : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
             (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
             metaModule ) {
@@ -276,15 +288,20 @@
 #define _RTTI_FUNCTION_IMPL(_Name, _Flags, _Func, ...)
 #define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags)
 #define RTTI_ENUM_BEGIN_EX(_Module, _Name, _Attributes) \
+    static const CONCAT(RTTI_, _Name)::RTTI_FMetaEnumHandle CONCAT(GRTTI_MetaEnum_, _Name); \
+    auto _CONCAT(RTTI_, _Name)::metaenum_handle() NOEXCEPT -> const RTTI_FMetaEnumHandle& { \
+        return CONCAT(GRTTI_MetaEnum_, _Name); \
+    } \
+    \
     const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT { \
         return static_cast<const CONCAT(RTTI_, _Name)*>(CONCAT(RTTI_, _Name)::Get()); \
     } \
     \
-    ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() { \
+    ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() NOEXCEPT { \
         return RTTI_MODULE(_Module); \
     } \
     \
-    CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) \
+    CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) NOEXCEPT \
         : metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
         using enum_type = _Name;
 #define RTTI_ENUM_VALUE(_Name)
@@ -318,5 +335,6 @@
 #define HTTP_STATUSCODE_DESCRIPTION(_Name, _Value, _Desc)
 #define FOREACH_HTTP_STATUSCODE(_MACRO)
 #define SOCKET
+#define LOG_NETWORKERROR(_CONTEXT)
 #define TEST_XINPUT_BTN(_GAMEPADBTN, _XINPUTBTN)
 #define PPE_TESTPROCESS_IMAGENAME_ARGS
