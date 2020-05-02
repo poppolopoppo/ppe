@@ -37,7 +37,7 @@ module Build
     end
     def run_command(&namespace)
         $BuildCommand.each do |cmd|
-            Log.log 'run <%s> command: %s', cmd.name, Build::Args
+            Log.info 'run <%s> command: %s', cmd.name, Build::Args
             started_at = Time.now
             cmd.block.call(&namespace)
         end

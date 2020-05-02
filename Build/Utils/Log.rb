@@ -36,7 +36,7 @@ module Build
             debug: ANSI[:fg0_magenta],
             verbose: ANSI[:fg1_black],
             log: ANSI[:fg0_white],
-            info: ANSI[:fg1_white]+ANSI[:underline]+ANSI[:bold],
+            info: ANSI[:fg1_white]+ANSI[:bold],
             warning: ANSI[:fg0_yellow],
             error: ANSI[:fg1_red],
             fatal: ANSI[:fg1_white]+ANSI[:bg0_red]+ANSI[:bold],
@@ -61,31 +61,38 @@ module Build
             raise ArgumentError.new("unknown verbosity level: #{min}")
         end
 
-        $pinned_stream = $stderr
-        $pinned_message = nil
-
-        def self.pin(message)
-            Log.clear_pin
-            $pinned_message = "[[ #{message} ]]"
-            Log.attach_pin
-        end
-        def self.clear_pin()
-            Log.backout_pin
+        if Build.Interactive
+            $pinned_stream = $stderr
             $pinned_message = nil
-            return
-        end
-        def self.attach_pin()
-            $pinned_stream.print($pinned_message) if $pinned_message
-            return
-        end
-        def self.backout_pin()
-            $pinned_stream.print("\r" + ' ' * $pinned_message.length + "\r") if $pinned_message
-            return
-        end
-        def self.without_pin(&block)
-            Log.backout_pin
-            block.call
-            Log.attach_pin
+            def self.pin(message)
+                Log.clear_pin
+                $pinned_message = message
+                Log.attach_pin
+            end
+            def self.clear_pin()
+                Log.backout_pin
+                $pinned_message = nil
+                return
+            end
+            def self.attach_pin()
+                $pinned_stream.print("\r#{ANSI[:kill_line]}#{$pinned_message}\n") if $pinned_message
+                return
+            end
+            def self.backout_pin()
+                $pinned_stream.print(ANSI[:cursor_up]+ANSI[:kill_line]) if $pinned_message
+                return
+            end
+            def self.without_pin(&block)
+                Log.backout_pin
+                block.call
+                Log.attach_pin
+            end
+        else
+            def self.pin(message) end
+            def self.clear_pin() end
+            def self.attach_pin() end
+            def self.backout_pin() end
+            def self.without_pin(&block) end
         end
 
         class FatalError < RuntimeError
@@ -153,8 +160,8 @@ module Build
         end
 
     private
-        def self.ansi_style(verbosity, message)
-            if Build.Interactive
+        if Build.Interactive
+            def self.ansi_style(verbosity, message)
                 case verbosity
                 when :success
                     result = String.new << ANSI[:bg0_white]
@@ -173,7 +180,9 @@ module Build
                 else
                     return STYLES[verbosity]+message.to_s+ANSI[:reset]
                 end
-            else
+            end
+        else
+            def self.ansi_style(verbosity, message)
                 return message
             end
         end

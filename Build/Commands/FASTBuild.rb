@@ -87,7 +87,11 @@ module Build
                         if block_given?
                             yield line
                         elsif not quiet and line
-                            Log.raw(line, verbosity: :log)
+                            if Log.log?
+                                Log.raw(line, verbosity: :log)
+                            else
+                                Log.pin(line)
+                            end
                         end
                     elsif line = io_err.gets
                         line = FBuild.trim_crlf(line)
@@ -100,6 +104,8 @@ module Build
                 end
                 result = wait_thr.value
             end
+
+            Log.clear_pin
 
             if result.success?
                 Log.debug 'FBuild: success'

@@ -54,6 +54,9 @@ module ANSI
         bg1_magenta: "\u001b[45;1m",
         bg1_cyan: "\u001b[46;1m",
         bg1_white: "\u001b[47;1m",
+
+        kill_line: "\u001b[K",
+        cursor_up: "\u001b[A",
     }
 
     All_colors = [ :black, :red, :green, :yellow, :blue, :magenta, :cyan ]

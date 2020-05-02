@@ -81,7 +81,7 @@ module Build
             return @io.string
         end
         def content_write(data)
-            Log.info 'writing memfile to disk: "%s"', @filename
+            Log.log 'writing memfile to disk: "%s"', @filename
             dirname = File.dirname(@filename)
             FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
             File.write(@filename, data, mode: 'wb')
