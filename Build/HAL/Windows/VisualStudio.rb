@@ -9,6 +9,10 @@ module Build
 
     persistent_switch(:PerfSDK, 'Use VisualStudio performance tools', init: true)
 
+    # https://developercommunity.visualstudio.com/content/problem/552999/fatal-error-c1090-pdb-api-call-failed-error-code-3.html
+    # https://developercommunity.visualstudio.com/content/problem/48897/c1090-pdb-api-call-failed-error-code-23.html
+    Workaround_C1090_PDB_API_call_failed_error_code_3 = true
+
     module Visual
         MSC_VER_2019 = 1920
         MSC_VER_2017 = 1910
@@ -124,7 +128,7 @@ module Build
                     facet.linkerOptions << '/DEBUG'
                 end
 
-                if nopdb || Build.Cache
+                if nopdb || Build.Cache || Workaround_C1090_PDB_API_call_failed_error_code_3
                     # debug symbols inside .obj
                     facet.compilerOptions << '/Z7'
                     facet.pchOptions << '/Z7'

@@ -28,9 +28,9 @@ module Build
             set!('AllowDBMigration_Experimental', true)
             set!('RootPath', $WorkspacePath)
             set!('CachePath', $CachePath) if Build.Cache
-            set!('Environment', [
-                "TMP=#{$TemporaryPath}",
-                "TEMP=#{$TemporaryPath}" ])
+            #set!('Environment', [
+            #    "TMP=#{$TemporaryPath}",
+            #    "TEMP=#{$TemporaryPath}" ])
         end
 
         modified_fileslist_path = BFF.modified_fileslist_path
