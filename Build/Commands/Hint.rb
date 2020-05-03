@@ -157,7 +157,7 @@ module Build
                 return if @macros.include?(id)
                 m = Macro.sanitize(id, params, value)
                 if m.disruptive?
-                    Log.warning('Hint: disruptive macro <%s%s> = "%s" (keywords=%s unbalanced=%s)', m.id, m.params, m.value, m.keywords, m.unbalanced)
+                    Log.warning('Hint: disruptive macro <%s%s> (keywords=%s unbalanced=%s)', m.id, m.params, m.keywords, m.unbalanced)
                     @disruptives << m
                 else
                     Log.log('Hint: new macro <%s%s> = "%s"', m.id, m.params, m.value)

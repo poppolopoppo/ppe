@@ -14,14 +14,8 @@ module Build
         targets = namespace[].select(*Build::Args)
 
         aliases = []
-        targets.each do |target|
-            aliases << target.abs_path
-        end
-        environments.each do |env|
-            aliases << env.family
-            targets.each do |target|
-                aliases << "#{target.abs_path}-#{env.family}"
-            end
+        Build.each_build_aliases(environments, targets) do |alias_name, alias_targets|
+            aliases << alias_name
         end
 
         interceptor = Bash::OptionInterceptor.new

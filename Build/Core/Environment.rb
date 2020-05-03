@@ -5,6 +5,7 @@ require_once '../Core/Target.rb'
 require_once '../Shared/Compiler.rb'
 
 require 'pathname'
+require 'set'
 
 module Build
 
@@ -191,6 +192,92 @@ module Build
             end
         end
         return all
+    end
+
+    def each_build_aliases(environments, targets, &each_alias)
+        Assert.expect(environments, Array)
+        Assert.expect(targets, Array)
+
+        configs = Set.new
+        platforms = Set.new
+        namespaces = Hash.new
+        target_aliases = Set.new
+
+        all_aliases = []
+
+        environments.each do |env|
+            Assert.expect(env, Environment)
+
+            configs << env.config
+            platforms << env.platform
+
+            targets.each do |target|
+                Assert.expect(target, Target)
+
+                nsp = target.namespace
+                set = namespaces[nsp]
+                set = namespaces[nsp] = Set.new if set.nil?
+                set << target
+
+                each_alias.call (all_aliases << "#{target.abs_path}-#{env.family}").last, []
+            end
+        end
+
+        namespaces.each do |namespace, namespace_targets|
+            Assert.expect(namespace, Namespace)
+            Assert.expect(namespace_targets, Set)
+
+            namespace_aliases = []
+            platforms.each do |platform|
+                configs.each do |config|
+                    each_alias.call((namespace_aliases << "#{namespace.path}-#{platform.name}-#{config.name}").last,  namespace_targets.collect do |target|
+                        "#{target.abs_path}-#{platform.name}-#{config.name}"
+                    end.to_a)
+                end
+            end
+
+            each_alias.call "#{namespace.path}", namespace_aliases
+        end
+
+        platforms.each do |platform|
+            Assert.expect(platform, Platform)
+
+            platform_aliases = []
+            targets.each do |target|
+                each_alias.call((platform_aliases << "#{target.abs_path}-#{platform.name}").last, configs.collect do |config|
+                    "#{target.abs_path}-#{platform.name}-#{config.name}"
+                end.to_a)
+            end
+
+            each_alias.call "#{platform.name}", platform_aliases
+
+            namespaces.keys.each do |namespace|
+                each_alias.call("#{namespace.path}-#{platform.name}", configs.collect do |config|
+                    "#{namespace.path}-#{platform.name}-#{config.name}"
+                end.to_a)
+            end
+        end
+
+        configs.each do |config|
+            Assert.expect(config, Configuration)
+
+            config_aliases = []
+            targets.each do |target|
+                each_alias.call((config_aliases << "#{target.abs_path}-#{config.name}").last, platforms.collect do |platform|
+                    "#{target.abs_path}-#{platform.name}-#{config.name}"
+                end.to_a)
+            end
+
+            each_alias.call "#{config.name}", config_aliases
+
+            namespaces.keys.each do |namespace|
+                each_alias.call("#{namespace.path}-#{config.name}", platforms.collect do |platform|
+                    "#{namespace.path}-#{platform.name}-#{config.name}"
+                end.to_a)
+            end
+        end
+
+        each_alias.call 'All', all_aliases # default target
     end
 
     $BuildEnvironments = []
