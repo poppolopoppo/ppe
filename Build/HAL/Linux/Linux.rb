@@ -19,7 +19,7 @@ module Build
     end
     const_memoize(self, :LinuxPlatform_X64) do
         Platform.new('Linux64', :x64, :Linux).
-            inherits!(Build.PosixPlatform_X86).
+            inherits!(Build.PosixPlatform_X64).
             inherits!(Build.Linux_Base).
             define!('_LINUX64')
     end
@@ -40,11 +40,11 @@ module Build
 
     const_memoize(self, :LinuxCompiler_X86) do
         compiler = Build.PosixCompiler_X86
-        compiler.deep_dup.inherits!(Build.PosixSDK_X86)
+        compiler.deep_dup
     end
     const_memoize(self, :LinuxCompiler_X64) do
         compiler = Build.PosixCompiler_X64
-        compiler.deep_dup.inherits!(Build.PosixSDK_X64)
+        compiler.deep_dup
     end
 
     LinuxEnvironment =

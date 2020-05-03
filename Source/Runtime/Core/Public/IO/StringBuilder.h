@@ -61,6 +61,8 @@ public:
     auto begin() const { return Written().begin(); }
     auto end() const { return Written().end(); }
 
+    const _Char* c_str() const NOEXCEPT { return Written().data(); }
+
     string_type ToString();
     void ToString(string_type& output);
 

@@ -52,6 +52,12 @@ public: // profiling
 
     static void SetThreadDebugName(const char* name); // sets current thread name for debuggers
 
+    static void TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
+    static void TraceInformation(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
+    static void TraceWarning(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
+    static void TraceError(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
+    static void TraceFatal(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
+
     static void BeginNamedEvent(u32 uid, const char* name);
     static void EndNamedEvent(u32 uid);
 

@@ -86,10 +86,11 @@ module Build
         compilationFlag!('-msse4.2', '-Xclang', "-std=#{Build.CppStd}")
         compilationFlag!(*%w{ -fms-compatibility -fms-extensions -fcolor-diagnostics })
 
-        includePaths <<
+        systemPaths <<
             File.join('$LLVMPath$', 'include', 'clang-c') <<
             File.join('$LLVMPath$', 'include', 'llvm-c') <<
             File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'include')
+
         libraryPaths <<
             File.join('$LLVMPath$', 'lib') <<
             File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'lib', 'windows')

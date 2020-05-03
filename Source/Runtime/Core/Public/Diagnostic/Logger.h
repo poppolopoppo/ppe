@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Diagnostic/Logger_fwd.h"
 #include "Meta/Enum.h"

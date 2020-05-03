@@ -249,11 +249,9 @@ module Build
             exit
         end
         opts.on("-h", "--help", "Show this message") do
-            Log.raw opts
+            Log.raw opts, verbosity: :info
             exit
         end
-
-        opts.separator ''
     end
 
     def self.parse_options(full=false)

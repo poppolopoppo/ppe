@@ -42,7 +42,7 @@ TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
     return FWeakRefCountable::NewRefImpl<T>(
         TStaticAllocator<_Allocator>::template AllocateOneT<T>(),
         reinterpret_cast<deleter_func>(&TStaticAllocator<_Allocator>::template DeallocateOneT<T>),
-        std::forward<_Args>(args) );
+        std::forward<_Args>(args)... );
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS

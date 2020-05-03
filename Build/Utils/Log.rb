@@ -66,6 +66,10 @@ module Build
             $pinned_message = nil
             def self.pin(message)
                 Log.clear_pin
+                message = message.chomp.strip
+                message.tr!("\r", '')
+                message.gsub!(ANSI[:kill_line], '')
+                message.gsub!(ANSI[:cursor_up], '')
                 $pinned_message = message
                 Log.attach_pin
             end
@@ -102,6 +106,13 @@ module Build
         end #~ FatalError
 
         def self.raw(message, args: nil, verbosity: :log)
+            unless VERBOSITY.include?(verbosity)
+                case verbosity
+                when log
+                    self.pin(message)
+                end
+                return
+            end
             Log.without_pin do
                 message = message.to_s
                 message = message % args if args

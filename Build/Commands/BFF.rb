@@ -98,7 +98,8 @@ module Build
 
                 next if alias_targets.empty? # already defined
 
-                Log.verbose('BFF: alias <%s> = [%s]', alias_name, alias_targets.join(','))
+                Log.debug('BFF: alias <%s> = [%s]', alias_name, alias_targets.join(','))
+
                 bff.func!('Alias', alias_name) do
                     set!('Targets', alias_targets)
                 end

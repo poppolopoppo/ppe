@@ -23,11 +23,9 @@ module Build
             Log.fatal 'Posix: invalid LLVM  path "%s"', @llvmPath unless Dir.exist?(@llvmPath)
             self.facet.export!('LLVMPath', @llvmPath)
 
-            versions = Dir.entries(File.join(@llvmPath, 'lib', 'clang'))
-            versions.sort!
-            @llvmersion = versions.last
+            @llvmVersion = File.basename(@llvmPath)
 
-            Log.log 'Posix: found LLVM %s in "%s" (%s)', @llvmVersion, @llvmPath, version
+            Log.log 'Posix: found %s-%s in "%s" (%s)', @llvmVersion, target, @llvmPath, version
             self.facet.export!('LLVMVersion', @llvmVersion)
 
             self.inherits!(Build.LLVM_Posix_Base)
@@ -49,23 +47,27 @@ module Build
             add_compilationFlag(facet, "-D#{token}")
         end
         def add_forceInclude(facet, filename)
-            add_compilationFlag(facet, '-include' "\"#{filename}\"")
+            add_compilationFlag(facet, "-include#{filename}")
         end
         def add_includePath(facet, dirpath)
-            add_compilationFlag(facet, "-I\"#{dirpath}\"")
+            add_compilationFlag(facet, "-I#{dirpath}")
         end
-        alias add_externPath add_includePath
-        alias add_systemPath add_includePath
+        def add_externPath(facet, dirpath)
+            add_compilationFlag(facet, "-iframework#{dirpath}")
+        end
+        def add_systemPath(facet, dirpath)
+            add_compilationFlag(facet, "-isystem#{dirpath}")
+        end
         def add_library(facet, filename)
-            facet.linkerOptions << "\"#{filename}\""
+            facet.linkerOptions << filename
         end
         def add_libraryPath(facet, dirpath)
-            facet.linkerOptions << "-I\"#{dirpath}\""
+            facet.linkerOptions << "-I#{dirpath}"
         end
 
         def customize(facet, env, target)
             super(facet, env, target)
-
+            # TODO: PCH,PDB
         end
 
     end #~ LLVMPosixCompiler
@@ -102,7 +104,7 @@ module Build
         librarianOptions << 'rc' << '%2' << '%1'
         linkerOptions << '-o' << '%2' << '%1'
 
-        includePaths <<
+        systemPaths <<
             File.join('$LLVMPath$', 'include', 'clang-c') <<
             File.join('$LLVMPath$', 'include', 'llvm-c') <<
             File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'include')

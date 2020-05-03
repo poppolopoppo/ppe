@@ -2,6 +2,8 @@
 
 #include "Core.h"
 
+#ifdef PLATFORM_WINDOWS
+
 #include "HAL/Windows/WindowsPlatformDebug.h"
 
 #define USE_PPE_WINDOWS_TRACELOGGING (USE_PPE_PLATFORM_DEBUG)
@@ -29,3 +31,7 @@ public:
 } //!namespace PPE
 
 #endif //!USE_PPE_WINDOWS_TRACELOGGING
+
+#else
+#   define USE_PPE_WINDOWS_TRACELOGGING (0)
+#endif //!PLATFORM_WINDOWS

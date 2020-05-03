@@ -211,7 +211,8 @@ module Build
             configs << env.config
             platforms << env.platform
 
-            targets.each do |target|
+            target_aliases = []
+            targets.collect do |target|
                 Assert.expect(target, Target)
 
                 nsp = target.namespace
@@ -219,8 +220,13 @@ module Build
                 set = namespaces[nsp] = Set.new if set.nil?
                 set << target
 
-                each_alias.call (all_aliases << "#{target.abs_path}-#{env.family}").last, []
+                target_aliases << "#{target.abs_path}-#{env.family}"
+                each_alias.call target_aliases.last, []
             end
+
+            yield "#{env.family}", target_aliases
+
+            all_aliases.concat(target_aliases)
         end
 
         namespaces.each do |namespace, namespace_targets|

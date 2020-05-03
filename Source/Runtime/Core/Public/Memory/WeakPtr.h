@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
 #include "Memory/RefPtr.h"

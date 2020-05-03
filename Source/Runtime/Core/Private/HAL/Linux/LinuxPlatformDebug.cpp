@@ -4,12 +4,35 @@
 
 #if USE_PPE_PLATFORM_DEBUG && defined(PLATFORM_LINUX)
 
+#   include "IO/StringBuilder.h"
+
+#   include <inttypes.h>
 #   include <iostream>
 #   include <pthread.h>
 #   include <sys/types.h>
 #   include <sys/ptrace.h>
+#   include <syslog.h>
 
 namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static void SyslogTrace_(int priority,
+    const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line,
+    const wchar_t* text) {
+    UNUSED(timestamp);
+
+    FStringBuilder sb;
+    sb  << '[' << MakeCStringView(category) << "] "
+        << MakeCStringView(text) << " at: "
+        << MakeCStringView(filename);
+
+    ::syslog(priority, "%s (%d)", sb.c_str(), checked_cast<int>(line));
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -49,6 +72,26 @@ void FLinuxPlatformDebug::SetThreadDebugName(const char* name) {
     Verify(0 == ::pthread_setname_np(
         ::pthread_self(), name
     ));
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformDebug::TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+    SyslogTrace_(LOG_DEBUG, category, timestamp, filename, line, text);
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformDebug::TraceInformation(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+    SyslogTrace_(LOG_INFO, category, timestamp, filename, line, text);
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformDebug::TraceWarning(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+    SyslogTrace_(LOG_WARNING, category, timestamp, filename, line, text);
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformDebug::TraceError(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+    SyslogTrace_(LOG_ERR, category, timestamp, filename, line, text);
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformDebug::TraceFatal(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+    SyslogTrace_(LOG_CRIT, category, timestamp, filename, line, text);
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformDebug::BeginNamedEvent(u32 uid, const char* name) {
