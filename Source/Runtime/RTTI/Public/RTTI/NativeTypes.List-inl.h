@@ -25,10 +25,10 @@ public: // IListTraits
 //----------------------------------------------------------------------------
 template <typename T>
 FStringView TBaseListTraits<T>::TypeName() const {
-    ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeListTypeName(
+    ONE_TIME_INITIALIZE(const FStringView, GTypeName, MakeListTypeName(
         MakeTraits<T>()
     ));
-    return GCachedTypeName.MakeView();
+    return GTypeName;
 }
 //----------------------------------------------------------------------------
 // TListTraits<T>

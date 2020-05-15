@@ -10,7 +10,7 @@
 
 #include "RTTI/NativeTypes.Definitions-inl.h"
 
-#include "IO/String.h"
+#include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Misc/Function.h"
 
@@ -198,9 +198,15 @@ bool TBaseTypeTraits<T, _Parent>::BasePromoteMove(void* src, const FAtom& dst) c
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_RTTI_API FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements);
-PPE_RTTI_API FString MakeListTypeName(const PTypeTraits& value);
-PPE_RTTI_API FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value);
+// static type names are allocated with a dedicated heap:
+PPE_RTTI_API void TypeNamesStart();
+PPE_RTTI_API void TypeNamesShutdown();
+// this is why these methods can return a FStringView instead of a FString:
+PPE_RTTI_API FStringView MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements);
+PPE_RTTI_API FStringView MakeListTypeName(const PTypeTraits& value);
+PPE_RTTI_API FStringView MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH() // #TODO : find where overflow really is when VS2019 get fixed
 PRAGMA_MSVC_WARNING_DISABLE(4307) // '*': integral constant overflow

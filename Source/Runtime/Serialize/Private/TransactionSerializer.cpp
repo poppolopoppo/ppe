@@ -24,6 +24,7 @@
 #include "Memory/MemoryStream.h"
 #include "Thread/DeferredStream.h"
 #include "Thread/Task/TaskHelpers.h"
+#include "VirtualFileSystem_fwd.h"
 
 namespace PPE {
 namespace Serialize {

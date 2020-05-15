@@ -68,7 +68,7 @@ struct FBinaryFormat {
     ENUM_FLAGS_FRIEND(EObjectFlags);
 
     struct FAnyData {
-        RTTI::ENativeType Type;
+        u32 NativeType;
     };
     STATIC_ASSERT(sizeof(FAnyData) == sizeof(u32));
 

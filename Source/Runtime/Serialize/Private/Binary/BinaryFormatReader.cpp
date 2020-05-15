@@ -437,8 +437,9 @@ void FBinaryFormatReader::Read_(const RTTI::IScalarTraits*, RTTI::FAny& any) {
     FBinaryFormat::FAnyData anyData;
     Verify(_iss->ReadPOD(&anyData));
 
-    if (RTTI::ENativeType::Invalid != anyData.Type) {
-        any = RTTI::FAny(anyData.Type);
+    const auto anyType = RTTI::ENativeType(anyData.NativeType);
+    if (RTTI::ENativeType::Invalid != anyType) {
+        any = RTTI::FAny(anyType);
         Verify(any.InnerAtom().Accept(this));
     }
     else {

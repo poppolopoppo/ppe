@@ -27,11 +27,11 @@ public: // IDicoTraits
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 FStringView TBaseDicoTraits<_Key, _Value>::TypeName() const {
-    ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeDicoTypeName(
+    ONE_TIME_INITIALIZE(const FStringView, GTypeName, MakeDicoTypeName(
         MakeTraits<_Key>(),
         MakeTraits<_Value>()
     ));
-    return GCachedTypeName.MakeView();
+    return GTypeName;
 }
 //----------------------------------------------------------------------------
 // TDicoTraits<_Dico, _Key, _Value>

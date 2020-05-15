@@ -30,6 +30,12 @@
 #include "Misc/Guid.h"
 #include "Time/Timestamp.h"
 
+// static type names:
+#include "Allocator/LinearHeap.h"
+#include "HAL/PlatformMemory.h"
+#include "Meta/Singleton.h"
+#include <mutex>
+
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -475,29 +481,99 @@ STATIC_ASSERT(not TIsSupportedType<FAtom>::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+namespace {
+class FTypeNamesBuilder_ : public Meta::TStaticSingleton<FTypeNamesBuilder_> {
+    using singleton_type = Meta::TStaticSingleton<FTypeNamesBuilder_>;
 
-    FStringBuilder oss;
-    oss << "TTuple<";
+    std::mutex _barrier;
+    LINEARHEAP(TypeNames) _heap;
 
-    auto sep = Fmt::NotFirstTime(", ");
-    for (const auto& elt : elements)
-        oss << sep << elt->TypeName();
+public:
+    using singleton_type::Get;
+    using singleton_type::Destroy;
 
-    oss << '>';
+    static void Create() {
+        singleton_type::Create();
+    }
 
-    return oss.ToString();
+    class FWritePort : Meta::FNonCopyableNorMovable {
+    public:
+        explicit FWritePort(FTypeNamesBuilder_& builder)
+        :   _builder(builder) {
+            _builder._barrier.lock();
+        }
+
+        ~FWritePort() {
+            _builder._barrier.unlock();
+        }
+
+        void Append(const FStringView& str) {
+            const size_t oldSize = _buffer.size();
+            const size_t newSize = oldSize + str.size();
+
+            _buffer = FRawMemory{
+                (u8*)_builder._heap.Reallocate(_buffer.data(), newSize, oldSize),
+                newSize };
+
+            FPlatformMemory::Memcpy(_buffer.data() + oldSize, str.data(), str.size());
+        }
+
+        FStringView Written() const {
+            return _buffer.Cast<const char>();
+        }
+
+    private:
+        FTypeNamesBuilder_& _builder;
+        FRawMemory _buffer;
+    };
+
+};
+} //!namespace
+//----------------------------------------------------------------------------
+void TypeNamesStart() {
+    FTypeNamesBuilder_::Create();
 }
 //----------------------------------------------------------------------------
-FString MakeListTypeName(const PTypeTraits& value) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    return StringFormat("TList<{0}>", value->TypeName());
+void TypeNamesShutdown() {
+    FTypeNamesBuilder_::Destroy();
 }
 //----------------------------------------------------------------------------
-FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    return StringFormat("TDico<{0}, {1}>", key->TypeName(), value->TypeName());
+FStringView MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
+    STACKLOCAL_POD_ARRAY(FStringView, elementNames, elements.size());
+    forrange(i, 0, elements.size()) // fetch outside of the lock
+        elementNames[i] = elements[i]->TypeName(); // <- can recurse in this function
+
+    FTypeNamesBuilder_::FWritePort sb{ FTypeNamesBuilder_::Get() };
+    sb.Append("TTuple<");
+    bool first = true;
+    for (const FStringView& name : elementNames) {
+        if (!first) sb.Append(", ");
+        sb.Append(name);
+        first = false;
+    }
+    sb.Append(">");
+    return sb.Written();
+}
+//----------------------------------------------------------------------------
+FStringView MakeListTypeName(const PTypeTraits& value) {
+    const FStringView valueName = value->TypeName(); // <- can recurse in this function
+    FTypeNamesBuilder_::FWritePort sb{ FTypeNamesBuilder_::Get() };
+    sb.Append("TList<");
+    sb.Append(valueName);
+    sb.Append(">");
+    return sb.Written();
+}
+//----------------------------------------------------------------------------
+FStringView MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
+    const FStringView keyName = key->TypeName(); // outside of the lock
+    const FStringView valueName = value->TypeName(); // <- can recurse in this function
+    FTypeNamesBuilder_::FWritePort sb{ FTypeNamesBuilder_::Get() };
+    sb.Append("TDico<");
+    sb.Append(keyName);
+    sb.Append(", ");
+    sb.Append(valueName);
+    sb.Append(">");
+    return sb.Written();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

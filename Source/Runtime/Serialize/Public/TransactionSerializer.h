@@ -4,6 +4,7 @@
 
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
+#include "IO/String.h"
 
 #include "MetaObject.h"
 #include "RTTI_fwd.h"

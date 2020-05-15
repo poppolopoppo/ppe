@@ -253,15 +253,15 @@ void FBinaryFormatWriter::Visit_(const RTTI::FAny& any) {
         const RTTI::PTypeTraits traits = any.Traits();
         AssertRelease_NoAssume(traits->TypeFlags() ^ RTTI::ETypeFlags::Native);
 
-        anyData.Type = RTTI::ENativeType(traits->TypeId());
+        anyData.NativeType = traits->TypeId();
     }
     else {
-        anyData.Type = RTTI::ENativeType::Invalid;
+        anyData.NativeType = u32(RTTI::ENativeType::Invalid);
     }
 
     _sections.Data.WritePOD(anyData);
 
-    if (anyData.Type != RTTI::ENativeType::Invalid)
+    if (RTTI::ENativeType(anyData.NativeType) != RTTI::ENativeType::Invalid)
         Verify(any.InnerAtom().Accept(this));
 }
 //----------------------------------------------------------------------------

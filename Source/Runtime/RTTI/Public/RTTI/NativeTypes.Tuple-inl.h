@@ -40,8 +40,8 @@ public: // ITupleTraits
 //----------------------------------------------------------------------------
 template <typename... _Args>
 FStringView TBaseTupleTraits<_Args...>::TypeName() const {
-    ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeTupleTypeName({ MakeTraits<_Args>()... }));
-    return GCachedTypeName.MakeView();
+    ONE_TIME_INITIALIZE(const FStringView, GTypeName, MakeTupleTypeName({ MakeTraits<_Args>()... }));
+    return GTypeName;
 }
 //----------------------------------------------------------------------------
 template <typename... _Args>
