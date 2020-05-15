@@ -517,6 +517,14 @@ void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void TVector<T, _Allocator>::shrink_to_fit() {
+    if (Likely(_size))
+        reserve_Exactly(_size);
+    else
+        clear_ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::swap(TVector& other) {
     typedef typename allocator_traits::propagate_on_container_swap propagate_type;
     if (this != &other)
@@ -697,6 +705,21 @@ bool Add_Unique(TVector<T, _Allocator>& v, T&& elt) {
     else {
         return false;
     }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _Pred>
+size_t Remove_If(TVector<T, _Allocator>& v, _Pred&& pred) {
+    // avoid iterator checking
+    size_t numDeleted = 0;
+    for (size_t i = 0; i < v.size(); ) {
+        if (pred(v[i])) {
+            numDeleted++;
+            v.erase_DontPreserveOrder(v.begin() + i);
+        }
+        else
+            ++i;
+    }
+    return numDeleted;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

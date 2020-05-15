@@ -239,7 +239,7 @@ public:
     void resize_Uninitialized(size_type count);
     void resize_AssumeEmpty(size_type count);
     void resize_AssumeEmpty(size_type count, const_reference value);
-    void shrink_to_fit() { reserve_Exactly(_size); }
+    void shrink_to_fit();
 
     void swap(TVector& other);
     friend void swap(TVector& lhs, TVector& rhs) { lhs.swap(rhs); }
@@ -310,6 +310,9 @@ bool Add_Unique(TVector<T, _Allocator>& v, T&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename... _Args>
 auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVector<T, _Allocator>::iterator;
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _Pred>
+size_t Remove_If(TVector<T, _Allocator>& v, _Pred&& pred);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt);
