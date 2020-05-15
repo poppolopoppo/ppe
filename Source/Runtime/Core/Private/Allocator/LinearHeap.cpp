@@ -481,8 +481,11 @@ void FLinearHeap::ReleaseAll() {
     }
 
 #if USE_PPE_LINEARHEAP_DEBUG_FALLBACK
-    for (FLinearHeapBlock_*& head = FLinearHeapBlock_::Head(_blocks); head;)
+    FLinearHeapBlock_*& head = FLinearHeapBlock_::Head(_blocks);
+    while (head)
         Deallocate(head->Data(), head->SizeInBytes);
+
+    Assert(nullptr == _blocks);
 
 #else
     FLinearHeapBlock_*& head = FLinearHeapBlock_::Head(_blocks);
