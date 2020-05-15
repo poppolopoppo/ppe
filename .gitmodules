@@ -14,12 +14,6 @@
     branch = HEAD
 #    shallow = true
     method = rebase
-[submodule "External/renderdoc"]
-	path = Source/External/renderdoc/renderdoc.git
-    url = https://github.com/baldurk/renderdoc.git
-#    shallow = true
-    branch = HEAD
-    method = rebase
 [submodule "External/stb"]
 	path = Source/External/stb/stb.git
     url = https://github.com/nothings/stb.git

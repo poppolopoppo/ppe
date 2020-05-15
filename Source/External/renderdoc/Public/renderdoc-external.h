@@ -8,4 +8,4 @@
 #    pragma GCC system_header
 #endif
 
-#include "External/renderdoc/renderdoc.git/renderdoc/api/app/renderdoc_app.h"
+#include "External/renderdoc/Public/renderdoc_app.h"
