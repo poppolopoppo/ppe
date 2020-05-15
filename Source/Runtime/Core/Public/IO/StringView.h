@@ -107,7 +107,7 @@ public:
     friend bool operator ==(const TBasicStringView& lhs, const TBasicStringView& rhs) { return Equals(lhs, rhs); }
     friend bool operator !=(const TBasicStringView& lhs, const TBasicStringView& rhs) { return not operator ==(lhs, rhs); }
 
-    friend bool operator < (const TBasicStringView& lhs, const TBasicStringView& rhs) { return Compare(lhs, rhs); }
+    friend bool operator < (const TBasicStringView& lhs, const TBasicStringView& rhs) { return (Compare(lhs, rhs) < 0); }
     friend bool operator >=(const TBasicStringView& lhs, const TBasicStringView& rhs) { return not operator < (lhs, rhs); }
 };
 //----------------------------------------------------------------------------
