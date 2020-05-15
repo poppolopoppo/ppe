@@ -12,26 +12,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FDateTime::Set(u32 year, u32 mon, u32 wday, u32 yday, u32 mday, u32 hour, u32 min, u32 sec) NOEXCEPT {
-    Year = year;
-    Month = mon;
-    DayOfWeek = wday;
-    DayOfYear = yday;
-    Day = mday;
-    Hours = hour;
-    Minutes = min;
-    Seconds = sec;
-
-    Assert_NoAssume(Year == year);
-    Assert_NoAssume(Month == mon);
-    Assert_NoAssume(DayOfYear == yday);
-    Assert_NoAssume(DayOfWeek == wday);
-    Assert_NoAssume(Day == mday);
-    Assert_NoAssume(Hours == hour);
-    Assert_NoAssume(Minutes == min);
-    Assert_NoAssume(Seconds == sec);
-}
-//----------------------------------------------------------------------------
 FDateTime FDateTime::Now() {
     return FromLocalTime(FTimestamp::Now());
 }

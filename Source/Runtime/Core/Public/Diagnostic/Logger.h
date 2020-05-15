@@ -42,7 +42,7 @@ ENUM_FLAGS(ELoggerVerbosity);
 #   include "IO/String_fwd.h"
 #   include "IO/TextWriter.h"
 #   include "Memory/RefPtr.h"
-#   include "Time/Timestamp.h"
+#   include "Time/Timepoint.h"
 
 #   include <thread>
 
@@ -63,13 +63,13 @@ public:
     using FCategory = FLoggerCategory;
 
     struct FSiteInfo {
-        FTimestamp Timestamp;
+        FTimepoint Timepoint;
         std::thread::id ThreadId;
         const wchar_t* Filename;
         size_t Line;
 
         static FSiteInfo Make(const wchar_t* filename, size_t line) {
-            return FSiteInfo{ FTimestamp::Now(), std::this_thread::get_id(), filename, line };
+            return FSiteInfo{ FTimepoint::Now(), std::this_thread::get_id(), filename, line };
         }
     };
 

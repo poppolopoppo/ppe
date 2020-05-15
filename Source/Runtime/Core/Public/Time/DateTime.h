@@ -25,8 +25,23 @@ public:
 
     FDateTime() NOEXCEPT : FDateTime(0) {}
 
-    FDateTime(u32 year, u32 mon, u32 wday, u32 yday, u32 mday, u32 hour, u32 min, u32 sec) NOEXCEPT {
-        Set(year, mon, wday, yday, mday, hour, min, sec);
+    CONSTEXPR FDateTime(u32 year, u32 mon, u32 wday, u32 yday, u32 mday, u32 hour, u32 min, u32 sec) NOEXCEPT
+    :    DayOfWeek(wday)
+    ,    DayOfYear(yday)
+    ,    Day(mday)
+    ,    Month(mon)
+    ,    Year(year)
+    ,    Hours(hour)
+    ,    Minutes(min)
+    ,    Seconds(sec) {
+        Assert_NoAssume(Year == year);
+        Assert_NoAssume(Month == mon);
+        Assert_NoAssume(DayOfYear == yday);
+        Assert_NoAssume(DayOfWeek == wday);
+        Assert_NoAssume(Day == mday);
+        Assert_NoAssume(Hours == hour);
+        Assert_NoAssume(Minutes == min);
+        Assert_NoAssume(Seconds == sec);
     }
 
     explicit FDateTime(u64 ord) NOEXCEPT { *reinterpret_cast<u64*>(this) = ord; }
@@ -35,7 +50,25 @@ public:
 
     u64 Ord() const { return *reinterpret_cast<const u64*>(this); }
 
-    void Set(u32 year, u32 mon, u32 wday, u32 yday, u32 mday, u32 hour, u32 min, u32 sec) NOEXCEPT;
+    CONSTEXPR void Set(u32 year, u32 mon, u32 wday, u32 yday, u32 mday, u32 hour, u32 min, u32 sec) NOEXCEPT {
+        Year = year;
+        Month = mon;
+        DayOfWeek = wday;
+        DayOfYear = yday;
+        Day = mday;
+        Hours = hour;
+        Minutes = min;
+        Seconds = sec;
+
+        Assert_NoAssume(Year == year);
+        Assert_NoAssume(Month == mon);
+        Assert_NoAssume(DayOfYear == yday);
+        Assert_NoAssume(DayOfWeek == wday);
+        Assert_NoAssume(Day == mday);
+        Assert_NoAssume(Hours == hour);
+        Assert_NoAssume(Minutes == min);
+        Assert_NoAssume(Seconds == sec);
+    }
 
     static FDateTime Now();
     static FDateTime FromLocalTime(const FTimestamp& t);
