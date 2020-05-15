@@ -266,6 +266,13 @@ public:
     template <typename U>
     U *as() const NOEXCEPT { return checked_cast<U*>(_ptr); }
 
+    NODISCARD T* Release() NOEXCEPT {
+        T* const p = get();
+        Assert(p);
+        reset();
+        return p;
+    }
+
     T& operator *() const NOEXCEPT { Assert(_ptr); return *_ptr; }
     T* operator ->() const NOEXCEPT { Assert(_ptr); return _ptr; }
 
@@ -289,6 +296,11 @@ template <typename T> struct IsSafePtr<TSafePtr<T>> : public std::true_type {};
 template <typename T>
 Meta::TEnableIf< IsRefCountable<T>::value, TSafePtr<T> > MakeSafePtr(T* ptr) NOEXCEPT {
     return TSafePtr<T>(ptr);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+Meta::TEnableIf< IsRefCountable<T>::value, TSafePtr<T> > MakeSafePtr(const TRefPtr<T>& refptr) NOEXCEPT {
+    return TSafePtr<T>(refptr.get());
 }
 //----------------------------------------------------------------------------
 template <typename T>

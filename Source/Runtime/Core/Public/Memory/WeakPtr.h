@@ -136,7 +136,7 @@ public:
     int WeakRefCount() const { return _cnt->WeakRefCount(); }
 
 #if USE_PPE_SAFEPTR
-    int SafeRefCount() const { return _cnt->SafeRefCount(); }
+    int SafeRefCount() const { return _safeRefCount; }
 #endif
 
 private: // override new/delete operators for custom allocation schemes
@@ -231,7 +231,7 @@ private:
     // for debugging purpose : assert if TSafePtr<> are still tracking that object
     template <typename T>
     friend class TSafePtr;
-    mutable std::atomic<int> _safeRefCount;
+    mutable std::atomic<int> _safeRefCount{ 0 };
 #endif
 };
 //----------------------------------------------------------------------------

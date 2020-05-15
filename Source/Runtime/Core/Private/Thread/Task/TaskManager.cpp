@@ -441,7 +441,7 @@ void FTaskManagerImpl::WorkerLoop_() {
             // Decrement the counter and resume waiting tasks if any.
             // Won't steal the thread from this fiber, so the loop can safely finish
             if (task.Port)
-                task.Port->OnJobComplete();
+                task.Port.Release()/* release safe ptr before port */->OnJobComplete();
         }
 
         // this loop is thigh to a fiber, *NOT A THREAD*
@@ -640,6 +640,17 @@ bool FTaskManager::WaitForAll(int timeoutMS) const {
 void FTaskManager::DumpStats() {
     if (_pimpl)
         _pimpl->DumpStats();
+}
+//----------------------------------------------------------------------------
+void FTaskManager::DutyCycle() {
+    if (not _pimpl)
+        return;
+
+    BroadcastAndWaitFor(
+        [](ITaskContext&) {
+            CurrentThreadContext().DutyCycle();
+        },
+        ETaskPriority::High/* highest priority, to avoid block waiting for all the jobs queued before */);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::ReleaseMemory() {

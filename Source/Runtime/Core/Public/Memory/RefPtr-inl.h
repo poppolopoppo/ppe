@@ -17,7 +17,7 @@ inline FRefCountable::~FRefCountable() {
     Assert(0 == _refCount);
 #if USE_PPE_SAFEPTR
     // check if a TSafePtr<> is still holding a reference to this object
-    AssertRelease(0 == _safeRefCount);
+    Assert_Lightweight(0 == _safeRefCount);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -91,8 +91,9 @@ NO_INLINE void OnStrongRefCountReachZero(TEnableIfRefCountable<T>* ptr) NOEXCEPT
     Assert(ptr);
     Assert_NoAssume(0 == ptr->RefCount());
 #if USE_PPE_SAFEPTR
-    Assert_NoAssume(0 == ptr->SafeRefCount());
+    Assert_Lightweight(0 == ptr->SafeRefCount());
 #endif
+
     checked_delete(ptr);
 }
 //----------------------------------------------------------------------------

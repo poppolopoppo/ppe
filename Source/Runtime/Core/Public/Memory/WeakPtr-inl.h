@@ -11,9 +11,9 @@ namespace PPE {
 #if USE_PPE_ASSERT
 inline FWeakRefCountable::~FWeakRefCountable() {
 #    if USE_PPE_SAFEPTR
-    Assert_NoAssume(0 == _safeRefCount);
+    Assert_Lightweight(0 == _safeRefCount);
 #    endif
-    Assert_NoAssume(not _cnt || _cnt->RefCount() == 0);
+    Assert_Lightweight(not _cnt || _cnt->RefCount() == 0);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -129,7 +129,7 @@ NO_INLINE void OnStrongRefCountReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEX
     Assert(ptr);
     Assert_NoAssume(0 == ptr->RefCount());
 #if USE_PPE_SAFEPTR
-    Assert_NoAssume(0 == ptr->SafeRefCount());
+    Assert_Lightweight(0 == ptr->SafeRefCount());
 #endif
 
     // retrieve internal deleter *before* object destruction (don't AddRef() the counter)
