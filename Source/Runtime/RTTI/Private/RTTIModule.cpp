@@ -1,20 +1,25 @@
 #include "stdafx.h"
 
-#include "ModuleExport.h"
-
-#include "RTTI.h"
+#include "RTTIModule.h"
 
 #include "RTTI/Module.h"
 #include "RTTI/Module-impl.h"
+#include "RTTI/NativeTypes.h"
 
 #include "MetaDatabase.h"
+#include "MetaObject.h"
 
-#include "Module-impl.h"
+#include "Modular/ModuleRegistration.h"
+
+#include "Diagnostic/Logger.h"
 
 namespace PPE {
-namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace RTTI {
+//----------------------------------------------------------------------------
+LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 // This the module used for RTTI backend
 RTTI_MODULE_DEF(PPE_RTTI_API, RTTI, MetaObject);
@@ -23,17 +28,30 @@ RTTI_MODULE_DEF(PPE_RTTI_API, RTTI, MetaObject);
 extern void RTTI_UnitTests();
 #endif
 //----------------------------------------------------------------------------
+} //!namespace RTTI
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FRTTIModule::FRTTIModule()
-:   FModule("Runtime/RTTI")
+const FModuleInfo FRTTIModule::StaticInfo{
+    FModuleStaticRegistration::MakeInfo<FRTTIModule>(
+        STRINGIZE(BUILD_TARGET_NAME),
+        EModulePhase::Bare,
+        EModuleUsage::Runtime,
+        EModuleSource::Core,
+        BUILD_TARGET_ORDINAL,
+        STRINGIZE(BUILD_TARGET_DEPS) )
+};
+//----------------------------------------------------------------------------
+FRTTIModule::FRTTIModule() NOEXCEPT
+:   IModuleInterface(StaticInfo)
 {}
 //----------------------------------------------------------------------------
-FRTTIModule::~FRTTIModule() = default;
-//----------------------------------------------------------------------------
-void FRTTIModule::Start() {
-    FModule::Start();
+void FRTTIModule::Start(FModularDomain& domain) {
+    IModuleInterface::Start(domain);
 
+    using namespace RTTI;
+
+    TypeNamesStart();
     FName::Start();
 
     FMetaDatabase::Create();
@@ -45,21 +63,29 @@ void FRTTIModule::Start() {
 #endif
 }
 //----------------------------------------------------------------------------
-void FRTTIModule::Shutdown() {
-    FModule::Shutdown();
+void FRTTIModule::Shutdown(FModularDomain& domain) {
+    IModuleInterface::Shutdown(domain);
+
+    using namespace RTTI;
 
     RTTI_MODULE(RTTI).Shutdown();
 
     FMetaDatabase::Destroy();
 
     FName::Shutdown();
+    TypeNamesShutdown();
 }
 //----------------------------------------------------------------------------
-void FRTTIModule::ReleaseMemory() {
-    FModule::ReleaseMemory();
+void FRTTIModule::DutyCycle(FModularDomain& domain) {
+    IModuleInterface::DutyCycle(domain);
+
+}
+//----------------------------------------------------------------------------
+void FRTTIModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
+    IModuleInterface::ReleaseMemory(domain);
+
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RTTI
 } //!namespace PPE

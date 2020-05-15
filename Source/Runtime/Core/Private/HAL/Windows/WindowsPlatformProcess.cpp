@@ -175,6 +175,8 @@ struct FWindowsCommandLine_ {
 void FWindowsPlatformProcess::OnProcessStart(
     void* appHandle, int nShowCmd,
     const wchar_t* filename, size_t argc, const wchar_t* const* argv ) {
+    FDbghelpWrapper::Create(); // early on
+
     FGenericPlatformProcess::OnProcessStart(appHandle, nShowCmd, filename, argc, argv);
 
 #   if USE_PPE_MEMORY_DEBUGGING || USE_PPE_DEBUG
@@ -218,12 +220,9 @@ void FWindowsPlatformProcess::OnProcessStart(
 #if USE_PPE_PLATFORM_PROFILER
     FVSPerfWrapper::Create();
 #endif
-
-    FDbghelpWrapper::Create();
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::OnProcessShutdown() {
-    FDbghelpWrapper::Destroy();
 
 #if USE_PPE_PLATFORM_PROFILER
     FVSPerfWrapper::Destroy();
@@ -235,9 +234,11 @@ void FWindowsPlatformProcess::OnProcessShutdown() {
     FWindowsTraceLogging::Destroy();
 #endif
 
+    FGenericPlatformProcess::OnProcessShutdown();
+
     ReleaseNamedMutex_();
 
-    FGenericPlatformProcess::OnProcessShutdown();
+    FDbghelpWrapper::Destroy(); // latest (for debug callstacks)
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

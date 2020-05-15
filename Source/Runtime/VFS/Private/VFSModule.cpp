@@ -1,27 +1,38 @@
 #include "stdafx.h"
 
-#include "ModuleExport.h"
+#include "VFSModule.h"
+
+#include "Modular/ModuleRegistration.h"
 
 #include "VirtualFileSystem.h"
+#include "VirtualFileSystemTrie.h"
 
 #include "Diagnostic/CurrentProcess.h"
+#include "Diagnostic/Logger.h"
 #include "HAL/PlatformFile.h"
 #include "IO/FileSystem.h"
 
-#include "Module-impl.h"
-
 namespace PPE {
+LOG_CATEGORY(PPE_VFS_API, VFS)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVirtualFileSystemModule::FVirtualFileSystemModule()
-:   FModule("Runtime/VFS")
+const FModuleInfo FVFSModule::StaticInfo{
+    FModuleStaticRegistration::MakeInfo<FVFSModule>(
+        STRINGIZE(BUILD_TARGET_NAME),
+        EModulePhase::Bare,
+        EModuleUsage::Runtime,
+        EModuleSource::Core,
+        BUILD_TARGET_ORDINAL,
+        STRINGIZE(BUILD_TARGET_DEPS) )
+};
+//----------------------------------------------------------------------------
+FVFSModule::FVFSModule() NOEXCEPT
+:   IModuleInterface(StaticInfo)
 {}
 //----------------------------------------------------------------------------
-FVirtualFileSystemModule::~FVirtualFileSystemModule() = default;
-//----------------------------------------------------------------------------
-void FVirtualFileSystemModule::Start() {
-    FModule::Start();
+void FVFSModule::Start(FModularDomain& domain) {
+    IModuleInterface::Start(domain);
 
     FVirtualFileSystem::Create();
 
@@ -50,14 +61,20 @@ void FVirtualFileSystemModule::Start() {
     vfs.MountNativePath(L"System:/", FPlatformFile::SystemDirectory());
 }
 //----------------------------------------------------------------------------
-void FVirtualFileSystemModule::Shutdown() {
-    FModule::Shutdown();
+void FVFSModule::Shutdown(FModularDomain& domain) {
+    IModuleInterface::Shutdown(domain);
 
     FVirtualFileSystem::Destroy();
 }
 //----------------------------------------------------------------------------
-void FVirtualFileSystemModule::ReleaseMemory() {
-    FModule::ReleaseMemory();
+void FVFSModule::DutyCycle(FModularDomain& domain) {
+    IModuleInterface::DutyCycle(domain);
+
+}
+//----------------------------------------------------------------------------
+void FVFSModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
+    IModuleInterface::ReleaseMemory(domain);
+
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

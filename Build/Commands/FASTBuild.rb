@@ -128,6 +128,7 @@ module Build
                 @@_build_prepared = true
                 verbose = Log.verbose?
                 FileUtils.mkdir_p($BinariesPath, verbose: verbose) unless Dir.exist?($BinariesPath)
+                FileUtils.mkdir_p($GeneratedPath, verbose: verbose) unless Dir.exist?($GeneratedPath)
                 FileUtils.mkdir_p($IntermediatePath, verbose: verbose) unless Dir.exist?($IntermediatePath)
                 FileUtils.mkdir_p($ProjectsPath, verbose: verbose) unless Dir.exist?($ProjectsPath)
                 FileUtils.mkdir_p($UnitiesPath, verbose: verbose) unless Dir.exist?($UnitiesPath)

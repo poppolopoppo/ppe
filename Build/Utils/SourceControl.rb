@@ -8,6 +8,7 @@ module Build
         def initialize(path, *cmdline)
             @path = File.expand_path(path)
             @modified_files = []
+            @branch = @revison = @timestamp = nil
             Log.log('%s: initialize source control \'%s\' in \'%s\'', self.name, cmdline.join(' '), @path)
             @handle = IO.popen(cmdline, 'r+', chdir: @path)
         end
@@ -18,20 +19,31 @@ module Build
         def modified_files?()
             return self.join()
         end
+        def branch?()
+            return @branch
+        end
+        def revision?()
+            return @revision
+        end
+        def timestamp?()
+            return @timestamp
+        end
     protected
         def retrieve_status(fd)
             Log.error('%s: retrieve_status(fd) is not implemented', self.name)
         end
         def join()
             if @handle
-                Log.log('%s: retrieving source control status in \'%s\'', self.name, @path)
+                Log.verbose('%s: retrieving source control status in \'%s\'', self.name, @path)
                 @modified_files = []
                 retrieve_status(@handle) do |fname|
                     Log.debug('%s: modified file "%s"', self.name, fname)
                     @modified_files << File.expand_path(fname)
                 end
                 @handle.close
-                unless $?.success?
+                if $?.success?
+                    Log.log('%s: found %d modified files on current branch is <%s> (revision=%s)', self.name, @modified_files.length, self.branch?, self.revision?)
+                else
                     Log.error('%s: failed to retrieve source control status (exitcode=%s)', self.name, $?)
                 end
                 @handle = nil
@@ -50,7 +62,38 @@ module Build
     class GitSourceControl < SourceControl
         def name() :Git end
         def initialize(path)
-            super(path, 'git', 'status', '-s')
+            super(path, *%w{ git status -s })
+        end
+        def branch?()
+            if @branch.nil?
+                Dir.chdir(@path) do
+                    @branch = %x{ git branch --show-current }
+                    @branch.chomp!
+                    @branch.strip!
+                end
+            end
+            return @branch
+        end
+        def revision?()
+            if @revision.nil?
+                Dir.chdir(@path) do
+                    @revision = %x{ git rev-parse HEAD }
+                    @revision.chomp!
+                    @revision.strip!
+                end
+            end
+            return @revision
+        end
+        def timestamp?()
+            if @timestamp.nil?
+                Dir.chdir(@path) do
+                    @timestamp = %x{ git log -1 --format=%at }
+                    @timestamp.chomp!
+                    @timestamp.strip!
+                    @timestamp = @timestamp.to_i
+                end
+            end
+            return @timestamp
         end
     protected
         def retrieve_status(fd)
@@ -90,6 +133,16 @@ module Build
     end
     def modified_files?()
         $SourceControlProvider.modified_files?()
+    end
+
+    def branch?()
+        $SourceControlProvider.branch?()
+    end
+    def revision?()
+        $SourceControlProvider.revision?()
+    end
+    def timestamp?()
+        $SourceControlProvider.timestamp?()
     end
 
 end #~ Build

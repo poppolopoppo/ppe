@@ -1,6 +1,9 @@
 #include "stdafx.h"
 
-#include "ModuleExport.h"
+#include "CoreModule.h"
+
+#include "Modular/ModularDomain.h"
+#include "Modular/ModuleRegistration.h"
 
 #include "Allocator/Allocation.h"
 #include "Allocator/StlAllocator.h"
@@ -8,13 +11,9 @@
 #include "Diagnostic/Logger.h"
 #include "IO/FileStream.h"
 #include "IO/FileSystem.h"
-#include "IO/TextWriter.h"
 #include "Meta/AutoSingleton.h"
-#include "ModuleManager.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
-
-#include "Module-impl.h"
 
 #if PPE_OVERRIDE_NEW_ONCE
 //  when compiling statically without inlined new operators it must be defined once in a separate TU
@@ -40,14 +39,22 @@ STATIC_ASSERT(std::allocator_traits<TStlAllocator<char, ALLOCATOR(Container)>>::
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FCoreModule::FCoreModule()
-:   FModule("Runtime/Core")
+const FModuleInfo FCoreModule::StaticInfo{
+    FModuleStaticRegistration::MakeInfo<FCoreModule>(
+        STRINGIZE(BUILD_TARGET_NAME),
+        EModulePhase::Bare,
+        EModuleUsage::Runtime,
+        EModuleSource::Core,
+        BUILD_TARGET_ORDINAL,
+        FStringView{}/* always empty since this is the root module */)
+};
+//----------------------------------------------------------------------------
+FCoreModule::FCoreModule() NOEXCEPT
+:   IModuleInterface(StaticInfo)
 {}
 //----------------------------------------------------------------------------
-FCoreModule::~FCoreModule() = default;
-//----------------------------------------------------------------------------
-void FCoreModule::Start() {
-    FModule::Start();
+void FCoreModule::Start(FModularDomain& domain) {
+    IModuleInterface::Start(domain);
 
     // 0 - main thread context
     FThreadContextStartup::Start_MainThread();
@@ -67,11 +74,11 @@ void FCoreModule::Start() {
 #endif
 }
 //----------------------------------------------------------------------------
-void FCoreModule::Shutdown() {
-    FModule::Shutdown();
+void FCoreModule::Shutdown(FModularDomain& domain) {
+    IModuleInterface::Shutdown(domain);
 
     // 6 - logger
-#if USE_PPE_LOGGER
+    #if USE_PPE_LOGGER
     FLogger::Shutdown();
 #endif
     // 5 - file system
@@ -88,8 +95,18 @@ void FCoreModule::Shutdown() {
     FThreadContextStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FCoreModule::ReleaseMemory() {
-    FModule::ReleaseMemory();
+void FCoreModule::DutyCycle(FModularDomain& domain) {
+    IModuleInterface::DutyCycle(domain);
+
+    // will release dangling blocks in every worker thread (keep cache)
+    FThreadPoolStartup::ReleaseMemory();
+
+    // release dangling block in current thread
+    malloc_release_pending_blocks();
+}
+//----------------------------------------------------------------------------
+void FCoreModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
+    IModuleInterface::ReleaseMemory(domain);
 
     // will release cached memory in every worker thread
     FThreadPoolStartup::ReleaseMemory();

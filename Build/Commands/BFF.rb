@@ -213,7 +213,7 @@ module Build
 
                 bff.struct!(target_source) do
                     set!('CompilerInputFilesRoot', env.source_path(target.source_path))
-                    set!('CompilerInputFiles', env.source_path(target.source_files))
+                    set!('CompilerInputFiles', env.source_path(target.source_files), force: true) # force for append bellow
                     if target_unity
                         append!('CompilerInputFiles', env.source_path(target.isolated_files))
                         set!('CompilerInputUnity', target_unity)

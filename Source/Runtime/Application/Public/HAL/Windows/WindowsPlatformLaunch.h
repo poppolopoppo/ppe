@@ -13,7 +13,6 @@ namespace Application {
 //----------------------------------------------------------------------------
 class FWindowsPlatformLaunch : public FGenericPlatformLaunch {
 public:
-    using FGenericPlatformLaunch::AppDomain;
     using FGenericPlatformLaunch::RunApplication;
 
     static PPE_APPLICATION_API void OnPlatformLaunch(

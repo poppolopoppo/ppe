@@ -94,7 +94,7 @@ void FDefaultInputService_::Clear() {
 //----------------------------------------------------------------------------
 void IInputService::MakeDefault(UInputService* input) {
     Assert(input);
-    input->reset(new FDefaultInputService_());
+    input->reset<FDefaultInputService_>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

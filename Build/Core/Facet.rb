@@ -198,6 +198,9 @@ module Build
             end unless @vars.empty?
             return self
         end
+        def expand?(key)
+            return @vars[key]
+        end
         def <<(other)
             @compiler = other.compiler unless other.compiler.nil?
             @preprocessor = other.preprocessor unless other.preprocessor.nil?

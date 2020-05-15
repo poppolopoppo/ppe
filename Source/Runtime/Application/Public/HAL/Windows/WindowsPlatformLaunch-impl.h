@@ -3,7 +3,6 @@
 #include "HAL/Generic/GenericPlatformLaunch-impl.h"
 
 #include "Diagnostic/CurrentProcess.h"
-#include "HAL/PlatformIncludes.h"
 #include "HAL/Windows/resource.h"
 
 #include <shellapi.h>
@@ -27,11 +26,18 @@ int APIENTRY wWinMain(
     using namespace PPE;
     using namespace PPE::Application;
 
+    int exitCode = 0;
+
     FWindowsPlatformLaunch::OnPlatformLaunch(hInstance, nCmdShow, filename, argc, argv);
-
     FCurrentProcess::Get().SetAppIcon(IDI_WINDOW_ICON);
+    {
+        FApplicationDomain appDomain;
+        appDomain.LoadDependencies();
 
-    const int exitCode = FWindowsPlatformLaunch::RunApplication<PPE_APPLICATIONLAUNCH_TYPE>();
+        exitCode  = FWindowsPlatformLaunch::RunApplication<PPE_APPLICATIONLAUNCH_TYPE>(appDomain);
+
+        appDomain.UnloadDependencies();
+    }
 
     FWindowsPlatformLaunch::OnPlatformShutdown();
 

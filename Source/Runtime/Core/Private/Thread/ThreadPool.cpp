@@ -150,6 +150,13 @@ void FThreadPoolStartup::DumpStats() {
     FGlobalThreadPool::Get().DumpStats();
 }
 //----------------------------------------------------------------------------
+void FThreadPoolStartup::DutyCycle() {
+    FBackgroundThreadPool::Get().DutyCycle();
+    FHighPriorityThreadPool::Get().DutyCycle();
+    FIOThreadPool::Get().DutyCycle();
+    FGlobalThreadPool::Get().DutyCycle();
+}
+//----------------------------------------------------------------------------
 void FThreadPoolStartup::ReleaseMemory() {
     FBackgroundThreadPool::Get().ReleaseMemory();
     FHighPriorityThreadPool::Get().ReleaseMemory();

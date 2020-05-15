@@ -100,39 +100,40 @@ module Build
         end
     end #~ Prerequisite
 
-    def make_prerequisite(name, namespace: 'Prerequisite', default: nil, &getter)
+    def make_prerequisite(name, namespace: 'Prerequisite', default: nil, host: self.class, &getter)
         prereq = Prerequisite.new("#{namespace}.#{name}", default, getter)
-        self.class.define_method(name) do
+        host.define_method(name) do
             return prereq.available?
         end
         return Build.make_persistent_opt(prereq)
     end
+
     def self.restore_prerequisite(name, value)
         Build.restore_persistent_opt(name, value)
     end
 
     def import_cmdline(name, *cmdline)
-        make_prerequisite(name) do
+        make_prerequisite(name, namespace: 'Import') do
             need_cmdline!(*cmdline)
         end
     end
     def import_envvar(name)
-        make_prerequisite(name) do
+        make_prerequisite(name, namespace: 'Import') do
             need_envvar!(name)
         end
     end
     def import_fileset(name, *filenames)
-        make_prerequisite(name) do
+        make_prerequisite(name, namespace: 'Import') do
             need_fileset!(*filenames)
         end
     end
     def import_folder(name, path)
-        make_prerequisite(name) do
+        make_prerequisite(name, namespace: 'Import') do
             need_folder!(path)
         end
     end
     def import_glob(name, *patterns)
-        make_prerequisite(name) do
+        make_prerequisite(name, namespace: 'Import') do
             results = []
             patterns.each do |pattern|
                 results.concat(need_glob!(pattern))

@@ -3,6 +3,9 @@
 require_once '../Common.rb'
 require_once '../Core/Facet.rb'
 
+require_once 'Generated.rb'
+require_once 'Policy.rb'
+
 require 'set'
 
 module Build
@@ -53,7 +56,7 @@ module Build
 
         attr_reader :namespace, :type, :link
 
-        attr_reader :units
+        attr_reader :generateds, :units
 
         attr_reader :public_dependencies
         attr_reader :private_dependencies
@@ -90,6 +93,7 @@ module Build
             @type = type
             @link = link
 
+            @generateds = Hash.new
             @units = Hash.new
 
             @abs_path = File.join(@namespace.to_s, @name.to_s)
@@ -166,6 +170,27 @@ module Build
                 facet.includes << env.source_path(header)
             end
 
+            unless @generateds.empty?
+                facet.includePaths << env.generated_path(target.abs_path)
+                @generateds.each do |name, gen|
+                    gen.generate(facet, env, self)
+                end
+            end
+
+            if @unity_num_files.nil? && !tag?(:nounity)
+                total_files = 0
+                total_size = 0
+                find_all_fileset(env).each do |fname|
+                    sz = File.size(fname)
+                    total_files += 1
+                    total_size += sz
+                    Log.debug('%s: fileset << "%s"', @abs_path, fname)
+                end
+                @unity_num_files = (total_size.to_f / Build.UnitySize).ceil
+                Log.verbose("%s: found %d for a total of %.4fKiB -> use %d unity files",
+                    @abs_path, total_files, total_size / (1024.0), @unity_num_files )
+            end
+
             return facet
         end
 
@@ -227,6 +252,12 @@ module Build
 
         def all_source_files() return (self.source_files + self.isolated_files) end
         def unity_excluded_files() return (self.isolated_files + self.excluded_files) end
+
+        def generate!(filename, &generator)
+            Assert.check{ !@generateds.include?(filename) }
+            @generateds[filename] = Generated.new(filename, &generator)
+            return self
+        end
 
     public ## units
 
@@ -302,6 +333,17 @@ module Build
                 Assert.check{ scope.nil? }
             end
             return @_all_dependencies
+        end
+
+        ## format dependencies into a single string "depA,depB,depC"
+        def dependency_list()
+            all_dependencies.dup.
+                delete_if do |(dep, visibility)|
+                    !dep.library?
+                end.
+                collect do |(dep, visibility)|
+                    dep.abs_path.to_s
+                end.join(',')
         end
 
         ## sort dependencies with a (lazy) global order that must be stable

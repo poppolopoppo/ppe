@@ -67,7 +67,7 @@ module Build
             data = content_string()
             in_memory_checksum = FileChecksum.new(@filename, Checksum.from_str(data))
             if external_checksum.check?(in_memory_checksum)
-                Log.verbose 'skip saving "%s" since it did not change', @filename
+                Log.debug 'skip saving "%s" since it did not change', @filename
                 return false
             else
                 Log.debug "invalidate '%s' since checksum did not match:\n\t- cfg: %s\n\t- new: %s", @filename, external_checksum.checksum, in_memory_checksum.checksum

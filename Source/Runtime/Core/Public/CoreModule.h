@@ -2,32 +2,23 @@
 
 #include "Core_fwd.h"
 
+#include "Modular/ModuleInterface.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FModule;
-struct FBaseModuleStartup;
-//----------------------------------------------------------------------------
-class PPE_CORE_API FModuleManager : Meta::FNonCopyableNorMovable {
+class PPE_CORE_API FCoreModule final : public IModuleInterface {
 public:
-    ~FModuleManager();
+    static const FModuleInfo StaticInfo;
 
-    void PreInit(FBaseModuleStartup& startup);
-    void PostDestroy(FBaseModuleStartup& startup);
+    explicit FCoreModule() NOEXCEPT;
 
-    void Start(FModule& m);
-    void Shutdown(FModule& m);
-    void ReleaseMemory(FModule& m);
+    virtual void Start(FModularDomain& domain) override;
+    virtual void Shutdown(FModularDomain& domain) override;
 
-    void ReleaseMemoryInModules();
-
-    static FModuleManager& Get() NOEXCEPT;
-
-private:
-    FBaseModuleStartup* _startup;
-
-    FModuleManager() NOEXCEPT;
+    virtual void DutyCycle(FModularDomain& domain) override;
+    virtual void ReleaseMemory(FModularDomain& domain) NOEXCEPT override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

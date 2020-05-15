@@ -13,6 +13,7 @@ module Build
         end
 
         def export!(key, value) @facet.export!(key, value); return self end
+        def expand?(key) @facet.expand?(key) end
         def tag?(*tags) @facet.tag?(*tags) end
         def compilationFlag!(*flags) @facet.compilationFlag!(*tags); return self end
 

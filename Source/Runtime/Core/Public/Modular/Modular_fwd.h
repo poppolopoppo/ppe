@@ -1,43 +1,30 @@
-#include "stdafx.h"
+#pragma once
 
-#include "ModuleExport.h"
+#include "Core_fwd.h"
 
-#include "ApplicationBase.h"
-
-#include "HAL/PlatformApplicationMisc.h"
-
-#include "Module-impl.h"
-
-PRAGMA_INITSEG_LIB
+#include "Diagnostic/Logger_fwd.h"
 
 namespace PPE {
-namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationModule::FApplicationModule()
-:   FModule("Runtime/Application")
-{}
+EXTERN_LOG_CATEGORY(PPE_CORE_API, Modular)
 //----------------------------------------------------------------------------
-FApplicationModule::~FApplicationModule() = default;
+enum class EModulePhase;
+enum class EModuleSource;
+enum class EModuleUsage;
 //----------------------------------------------------------------------------
-void FApplicationModule::Start() {
-    FModule::Start();
-
-    FPlatformApplicationMisc::Start();
-}
+struct FModuleInfo;
+class IModuleInterface;
 //----------------------------------------------------------------------------
-void FApplicationModule::Shutdown() {
-    FModule::Shutdown();
-
-    FPlatformApplicationMisc::Shutdown();
-}
+class FModularDomain;
+class FModularServices;
 //----------------------------------------------------------------------------
-void FApplicationModule::ReleaseMemory() {
-    FModule::ReleaseMemory();
-}
+using FModuleLoadOrder = int;
+//----------------------------------------------------------------------------
+PPE_CORE_API void DutyCycleForModules() NOEXCEPT;
+PPE_CORE_API void ReleaseMemoryInModules() NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
 } //!namespace PPE

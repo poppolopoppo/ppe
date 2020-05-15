@@ -135,7 +135,7 @@ void FDefaultWindowService_::EndTaskbarProgress() {
 //----------------------------------------------------------------------------
 void IWindowService::MakeDefault(UWindowService* window) {
     Assert(window);
-    window->reset(new FDefaultWindowService_());
+    window->reset<FDefaultWindowService_>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

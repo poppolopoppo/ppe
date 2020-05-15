@@ -2,10 +2,10 @@
 
 #include "Application.h"
 
-#include "ModuleManager.h"
-
 #include "HAL/PlatformApplication.h"
 #include "HAL/PlatformProcess.h"
+
+#include "Modular/ModularDomain.h"
 
 namespace PPE {
 namespace Application {
@@ -14,11 +14,6 @@ namespace Application {
 //----------------------------------------------------------------------------
 class FGenericPlatformLaunch {
 public:
-    static auto& AppDomain() {
-        static PPE_STATICMODULES_STARTUP GModules;
-        return GModules;
-    }
-
     static void OnPlatformLaunch(
         void* appHandle, int nShowCmd,
         const wchar_t* filename, size_t argc, const wchar_t* const* argv ) {
@@ -30,14 +25,14 @@ public:
     }
 
     template <typename _ApplicationType>
-    static int RunApplication() {
+    static int RunApplication(FModularDomain& domain) {
         int exitCode;
-        AppDomain().Start(FModuleManager::Get());
+        FModularDomain::Start(domain);
         {
             _ApplicationType app;
             exitCode = LaunchApplication(&app);
         }
-        AppDomain().Shutdown(FModuleManager::Get());
+        FModularDomain::Shutdown(domain);
         return exitCode;
     }
 };

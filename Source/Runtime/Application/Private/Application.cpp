@@ -26,7 +26,7 @@ PRAGMA_INITSEG_LIB
 
 namespace PPE {
 namespace Application {
-LOG_CATEGORY(PPE_APPLICATION_API, Application)
+EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -72,10 +72,6 @@ int LaunchApplication(FApplicationBase* app) {
 #if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::Name(FPlatformProfiler::ProcessLevel, ToString(app->Name()).data());
 #endif
-#if !USE_PPE_FINAL_RELEASE
-    ReportAllTrackingData();
-    FMallocDebug::StartLeakDetector();
-#endif
     {
 #if USE_APPLICATION_EXCEPTION_TRAP
         PPE_TRY
@@ -108,10 +104,6 @@ int LaunchApplication(FApplicationBase* app) {
         })
 #endif
     }
-#if !USE_PPE_FINAL_RELEASE
-    ReportAllTrackingData();
-    FMallocDebug::ShutdownLeakDetector();
-#endif
 
     Assert(app == GRunningApp_);
     GRunningApp_ = nullptr;

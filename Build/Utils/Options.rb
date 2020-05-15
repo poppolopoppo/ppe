@@ -10,6 +10,7 @@ module Build
     Args = []
     Commands = []
     Script = File.absolute_path($0)
+    Project = File.basename(Build::Script, File.extname(Build::Script))
 
     $BuildClean = false
     def Clean() $BuildClean end
@@ -146,7 +147,7 @@ module Build
     end
 
     PersistentConfig = {
-        file: File.join(File.dirname(Build::Script), ".#{File.basename(Build::Script, File.extname(Build::Script))}.build.yml"),
+        file: File.join(File.dirname(Build::Script), ".#{Build::Project}.build.yml"),
         hash: nil,
         vars: {},
         data: {},
@@ -160,6 +161,10 @@ module Build
         end
         return var
     end
+    def self.fetch_persistent_opt(var_name)
+        return PersistentConfig[:vars][var_name]
+    end
+
     def self.restore_persistent_opt(name, value)
         PersistentConfig[:vars][name].restore!(value)
     end

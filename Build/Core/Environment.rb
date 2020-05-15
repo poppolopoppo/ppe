@@ -25,6 +25,15 @@ module Build
 
         def ext_for(output) return @compiler.ext_for(output) end
 
+        def generated_key(*args)
+            args.collect!{|x| x.to_s }
+            File.join(@platform.name.to_s, @config.name.to_s, *args)
+        end
+        def generated_path(*args)
+            args.collect!{|x| x.to_s }
+            File.join($GeneratedPath.to_s, @platform.name.to_s, @config.name.to_s, *args)
+        end
+
         def intermediate_path(*args)
             args.collect!{|x| x.to_s }
             File.join($IntermediatePath.to_s, @platform.name.to_s, @config.name.to_s, *args)
@@ -128,17 +137,21 @@ module Build
                 File.basename(artefact, File.extname(artefact)) ) <<
                 self.ext_for(:debug)
         end
-
         def facet()
             if @memoized.defines.empty?
                 Log.debug '%s: memoize facet', self.name
 
                 @memoized.defines.append(
-                    "BUILD_ENV=#{@name}",
+                    "BUILD_ENVIRONMENT=#{@name}",
                     "BUILD_PLATFORM=#{@platform.name}",
                     "BUILD_CONFIG=#{@config.name}",
                     "BUILD_COMPILER=#{@compiler.name}",
                     "BUILD_FAMILY=#{self.family}",
+                    ### *DONT* do that: it would invalidate the build at every call
+                    ### see Shared/Generated.rb instead ;)
+                    #"BUILD_BRANCH=#{Build.branch?}",
+                    #"BUILD_REVISION=#{Build.revision?}",
+                    #"BUILD_TIMESTAMP=#{Time.now.to_i}",
                     "BUILD_#{self.varname}" )
 
                 @platform.decorate(@memoized, self)
@@ -155,6 +168,11 @@ module Build
         end
         def expand(target)
             result = self.facet().deep_dup
+
+            result.defines.append(
+                "BUILD_TARGET_NAME=#{target.abs_path}",
+                "BUILD_TARGET_ORDINAL=#{target.ordinal}",
+                "BUILD_TARGET_DEPS=#{target.dependency_list}")
 
             target.customize(result, self, target)
 

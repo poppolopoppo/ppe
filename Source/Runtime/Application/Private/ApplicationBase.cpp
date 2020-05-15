@@ -6,6 +6,7 @@
 #include "HAL/PlatformCrash.h"
 #include "HAL/PlatformDebug.h"
 #include "HAL/PlatformNotification.h"
+#include "Modular/Modular_fwd.h"
 
 namespace PPE {
 namespace Application {

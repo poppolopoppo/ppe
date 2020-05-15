@@ -23,11 +23,23 @@ void FGenericPlatformProcess::OnProcessStart(
     // Install crash exception handlers
     FPlatformCrash::SetExceptionHandlers();
 
+#if !USE_PPE_FINAL_RELEASE
+    FMallocDebug::StartLeakDetector();
+#endif
+
     FCurrentProcess::Create(appHandle, nShowCmd, filename, argc, argv);
+
+    ReportAllTrackingData();
 }
 //----------------------------------------------------------------------------
 void FGenericPlatformProcess::OnProcessShutdown() {
+    ReportAllTrackingData();
+
     FCurrentProcess::Destroy();
+
+#if !USE_PPE_FINAL_RELEASE
+    FMallocDebug::ShutdownLeakDetector();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
