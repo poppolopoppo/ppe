@@ -162,8 +162,10 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX14 || PPE_HAS_CXX17
 #   define CONSTEXPR constexpr
+#   define NOEXCEPT_IF(...) noexcept(__VA_ARGS__)
 #else
 #   define CONSTEXPR
+#   define NOEXCEPT_IF(...)
 #endif
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
