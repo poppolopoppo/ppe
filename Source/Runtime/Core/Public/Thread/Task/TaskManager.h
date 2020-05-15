@@ -8,6 +8,7 @@
 
 #include "IO/StringView.h"
 #include "Memory/MemoryView.h"
+#include "Memory/UniquePtr.h"
 
 namespace PPE {
 enum class EThreadPriority;
@@ -58,6 +59,8 @@ public:
     bool WaitForAll(int timeoutMS) const; // can timeout, recommended over WaitForAll() to avoid blocking the program
 
     void DumpStats();
+
+    void DutyCycle(); // release dangling blocks, but keep cache
     void ReleaseMemory(); // release potentially unused memory
 
     FTaskManagerImpl* Pimpl() const { return _pimpl.get(); }

@@ -5,11 +5,11 @@
 #include "Container/SparseArray.h"
 #include "Misc/Function.h"
 
-#define PUBLIC_EVENT(_NAME, _DELEGATE) \
+#define PUBLIC_EVENT(_NAME, ...) \
     private: \
-        ::PPE::TEvent<_DELEGATE> CONCAT(_, _NAME); \
+        ::PPE::TEvent< __VA_ARGS__ > CONCAT(_, _NAME); \
     public: \
-        ::PPE::TPublicEvent<_DELEGATE>& _NAME() { \
+        ::PPE::TPublicEvent< __VA_ARGS__ >& _NAME() { \
             return CONCAT(_, _NAME).Public(); \
         }
 
@@ -86,6 +86,8 @@ public:
     TPublicEvent(TPublicEvent&&) = delete;
     TPublicEvent& operator =(TPublicEvent&&) = delete;
 
+    bool empty() const { return _delegates.empty(); }
+
     FHandle Add(FDelegate&& func) {
         Assert(func);
         return FHandle(_delegates.Emplace(std::move(func)));
@@ -108,10 +110,10 @@ protected:
 //----------------------------------------------------------------------------
 template <typename T>
 class TEvent;
-template <typename _Ret, typename... _Args>
-class TEvent< TFunction<_Ret(_Args...)> > : public TPublicEvent< TFunction<_Ret(_Args...)> > {
+template <typename _Ret, typename... _Args, size_t _InSitu>
+class TEvent< TFunction<_Ret(_Args...), _InSitu> > : public TPublicEvent< TFunction<_Ret(_Args...), _InSitu> > {
 public:
-    using parent_type = TPublicEvent< TFunction<_Ret(_Args...)> >;
+    using parent_type = TPublicEvent< TFunction<_Ret(_Args...), _InSitu> >;
 
     using typename parent_type::FDelegate;
     using typename parent_type::FHandle;

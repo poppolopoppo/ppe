@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Memory/MemoryView.h"
+#include "Meta/Delete.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

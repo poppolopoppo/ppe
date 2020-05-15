@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <random>
 
+#include "Modular/ModularDomain.h"
+
 #define USE_TESTALLOCATOR_MEMSET 0
 
 namespace PPE {

@@ -18,9 +18,9 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FXInputWrapper : Meta::TSingleton<FXInputWrapper> {
-    friend Meta::TSingleton<FXInputWrapper>;
-    using singleton_type = Meta::TSingleton<FXInputWrapper>;
+class FXInputWrapper : Meta::TStaticSingleton<FXInputWrapper> {
+    friend Meta::TStaticSingleton<FXInputWrapper>;
+    using singleton_type = Meta::TStaticSingleton<FXInputWrapper>;
 public:
     typedef DWORD (WINAPI* FXInputGetState)(
         _In_  DWORD           dwUserIndex,  // Index of the gamer associated with the device

@@ -163,7 +163,7 @@ private:
 };
 //----------------------------------------------------------------------------
 UBuildExecutor MakeParallelExecutor(FTaskManager& pool) {
-    return UBuildExecutor{ new FParallelExecutor(pool) };
+    return MakeUnique<FParallelExecutor>(pool);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

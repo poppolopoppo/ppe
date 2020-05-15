@@ -88,6 +88,8 @@ public:
     static void Shutdown();
 
     static void DumpStats();
+
+    static void DutyCycle();
     static void ReleaseMemory();
 
     FThreadPoolStartup() { Start(); }

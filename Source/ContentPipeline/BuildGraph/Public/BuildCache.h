@@ -4,7 +4,7 @@
 
 #include "IO/FileSystem_fwd.h"
 #include "IO/StreamProvider.h"
-#include "Memory/RefPtr.h"
+#include "Time/Timestamp.h"
 
 namespace PPE {
 namespace ContentPipeline {

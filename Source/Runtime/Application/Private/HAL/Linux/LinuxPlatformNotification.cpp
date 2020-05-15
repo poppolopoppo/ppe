@@ -31,10 +31,10 @@ LOG_CATEGORY(, Notification)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class FLinuxSystrayCmds_ : Meta::TSingleton<FLinuxSystrayCmds_> {
-    friend class Meta::TSingleton<FLinuxSystrayCmds_>;
+class FLinuxSystrayCmds_ : Meta::TStaticSingleton<FLinuxSystrayCmds_> {
+    friend class Meta::TStaticSingleton<FLinuxSystrayCmds_>;
 public:
-    using singleton_type = Meta::TSingleton<FLinuxSystrayCmds_>;
+    using singleton_type = Meta::TStaticSingleton<FLinuxSystrayCmds_>;
 
     using singleton_type::Get;
     using singleton_type::Destroy;
@@ -64,10 +64,10 @@ public:
 //----------------------------------------------------------------------------
 static ::HWND GLinuxSystrayWindow_ = NULL;
 //----------------------------------------------------------------------------
-class FLinuxSystray_ : Meta::TSingleton<FLinuxSystray_> {
-    friend class Meta::TSingleton<FLinuxSystray_>;
+class FLinuxSystray_ : Meta::TStaticSingleton<FLinuxSystray_> {
+    friend class Meta::TStaticSingleton<FLinuxSystray_>;
 public:
-    using singleton_type = Meta::TSingleton<FLinuxSystray_>;
+    using singleton_type = Meta::TStaticSingleton<FLinuxSystray_>;
 
     ~FLinuxSystray_() {
         _active = false;

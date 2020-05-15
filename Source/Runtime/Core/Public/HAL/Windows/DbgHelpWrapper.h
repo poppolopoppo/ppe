@@ -25,9 +25,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FDbghelpWrapper : Meta::TSingleton<FDbghelpWrapper> {
-    friend class Meta::TSingleton<FDbghelpWrapper>;
-    using singleton_type = Meta::TSingleton<FDbghelpWrapper>;
+class FDbghelpWrapper : Meta::TStaticSingleton<FDbghelpWrapper> {
+    friend Meta::TStaticSingleton<FDbghelpWrapper>;
+    using singleton_type = Meta::TStaticSingleton<FDbghelpWrapper>;
 public:
     typedef BOOL (WINAPI *FSymInitializeW)(
         _In_ HANDLE hProcess,

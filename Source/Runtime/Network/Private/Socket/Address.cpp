@@ -112,9 +112,9 @@ bool FAddress::ParseIPv4(u8 (&ipV4)[4], const FAddress& addr) {
 namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_NETWORK_DNSCACHE
-class FDNSCache_ : Meta::TSingleton<FDNSCache_> {
-    friend class Meta::TSingleton<FDNSCache_>;
-    using singleton_type = Meta::TSingleton<FDNSCache_>;
+class FDNSCache_ : Meta::TStaticSingleton<FDNSCache_> {
+    friend Meta::TStaticSingleton<FDNSCache_>;
+    using singleton_type = Meta::TStaticSingleton<FDNSCache_>;
 public: // TSingleton<>
 
     using singleton_type::Get;

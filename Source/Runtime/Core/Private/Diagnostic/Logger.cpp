@@ -9,10 +9,13 @@
 #   include "Allocator/TrackingMalloc.h"
 #   include "Container/Vector.h"
 #   include "Diagnostic/CurrentProcess.h"
+
 #   include "HAL/PlatformConsole.h"
 #   include "HAL/PlatformDebug.h"
 #   include "HAL/PlatformFile.h"
+#   include "HAL/PlatformMaths.h"
 #   include "HAL/PlatformMemory.h"
+
 #   include "IO/BufferedStream.h"
 #   include "IO/FileSystem.h"
 #   include "IO/FileStream.h"
@@ -22,19 +25,24 @@
 #   include "IO/StringBuilder.h"
 #   include "IO/StringView.h"
 #   include "IO/TextWriter.h"
+
 #   include "Memory/InSituPtr.h"
 #   include "Memory/MemoryView.h"
 #   include "Memory/UniquePtr.h"
+
 #   include "Meta/Optional.h"
 #   include "Meta/Singleton.h"
 #   include "Meta/ThreadResource.h"
+
 #   include "Thread/AtomicSpinLock.h"
 #   include "Thread/Task/TaskManager.h"
 #   include "Thread/Task/TaskHelpers.h"
 #   include "Thread/Fiber.h"
 #   include "Thread/ThreadContext.h"
 #   include "Thread/ThreadPool.h"
+
 #   include "Time/DateTime.h"
+#   include "Time/Timestamp.h"
 
 #   include <atomic>
 #   include <mutex>
@@ -78,12 +86,18 @@ public:
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) = 0;
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) = 0;
     virtual void Flush(bool synchronous) = 0;
+
+    static FTimepoint StartedAt() {
+        ONE_TIME_INITIALIZE(const FTimepoint, GStartedAt, FTimepoint::Now());
+        return GStartedAt;
+    }
 };
 //----------------------------------------------------------------------------
 // Use a custom allocator for logger to diminish content, fragmentation and get re-entrancy
-class FLogAllocator : public Meta::TSingleton<FLogAllocator> {
-    friend class Meta::TSingleton<FLogAllocator>;
-    using singleton_type = Meta::TSingleton<FLogAllocator>;
+class FLogAllocator : public Meta::TStaticSingleton<FLogAllocator> {
+    friend Meta::TStaticSingleton<FLogAllocator>;
+    using singleton_type = Meta::TStaticSingleton<FLogAllocator>;
+
 public:
     using singleton_type::Create;
     using singleton_type::Destroy;
@@ -152,9 +166,9 @@ private:
 };
 //----------------------------------------------------------------------------
 // Composite for all loggers supplied through public API
-class FUserLogger final : Meta::TSingleton<FUserLogger>, public ILowLevelLogger {
-    friend class Meta::TSingleton<FUserLogger>;
-    using singleton_type = Meta::TSingleton<FUserLogger>;
+class FUserLogger final : Meta::TStaticSingleton<FUserLogger>, public ILowLevelLogger {
+    friend Meta::TStaticSingleton<FUserLogger>;
+    using singleton_type = Meta::TStaticSingleton<FUserLogger>;
 public:
     using singleton_type::Create;
     using singleton_type::Destroy;
@@ -195,8 +209,8 @@ public: // ILowLevelLogger
         const FLogAllocator::FScope scopeAlloc; // #TODO : could be a dead lock issue to keep the lock open while dispatching
 
         MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc);
-        FWTextWriter oss(&buf);
 
+        FWTextWriter oss(&buf);
         FormatArgs(oss, format, args);
 
         Log(category, level, site, buf.MakeView().Cast<const wchar_t>());
@@ -234,9 +248,9 @@ private:
 THREAD_LOCAL bool FUserLogger::FReentrancyProtection_::GLockTLS{ false };
 //----------------------------------------------------------------------------
 // Asynchronous logger used during the game
-class FBackgroundLogger final : Meta::TSingleton<FBackgroundLogger>, public ILowLevelLogger {
-    friend class Meta::TSingleton<FBackgroundLogger>;
-    using singleton_type = Meta::TSingleton<FBackgroundLogger>;
+class FBackgroundLogger final : Meta::TStaticSingleton<FBackgroundLogger>, public ILowLevelLogger {
+    friend Meta::TStaticSingleton<FBackgroundLogger>;
+    using singleton_type = Meta::TStaticSingleton<FBackgroundLogger>;
 public:
     using singleton_type::Create;
     using singleton_type::Destroy;
@@ -400,14 +414,15 @@ static void SetupLoggerImpl_(ILowLevelLogger* pimpl) {
 class FLogFormat {
 public:
     static void Header(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const ILogger::FSiteInfo& site) {
+        const FSeconds elapsed = site.Timepoint.ElapsedSince(ILowLevelLogger::StartedAt());
 #if PPE_DUMP_THREAD_ID
 #   if PPE_DUMP_THREAD_NAME
-        Format(oss, L"[{0}][{1:20}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{1:20}][{3:-8}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
 #   else // only thread hash :
-        Format(oss, L"[{0}][{1:#5}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{1:#5}][{3:-8}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
 #   endif
 #else
-        Format(oss, L"[{0}][{2:-8}][{1:-15}] ", site.Timestamp.ToDateTimeUTC(), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{2:-8}][{1:-15}] ", elapsed.Value(), MakeCStringView(category.Name), level);
 #endif
     }
 
@@ -614,7 +629,7 @@ public:
         FPlatformDebug::OutputDebug(oss.Written().data());
     }
 
-    virtual void Flush(bool) override final {} // always synched
+    virtual void Flush(bool) override final {} // always synced
 };
 #endif //!USE_PPE_PLATFORM_DEBUG
 //----------------------------------------------------------------------------
@@ -749,26 +764,27 @@ private:
 class FSystemTraceLogger_ final : public ILogger {
 public:
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        switch (level)
-        {
+        const FTimestamp date = FTimestamp::Now();
+
+        switch (level) {
         case ELoggerVerbosity::Debug:
         case ELoggerVerbosity::Verbose:
-            FPlatformDebug::TraceVerbose(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceVerbose(category.Name, date.Value(), site.Filename, site.Line, text.data());
             break;
 
         case ELoggerVerbosity::Info:
         case ELoggerVerbosity::Emphasis:
-            FPlatformDebug::TraceInformation(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceInformation(category.Name, date.Value(), site.Filename, site.Line, text.data());
             break;
 
         case ELoggerVerbosity::Warning:
-            FPlatformDebug::TraceWarning(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceWarning(category.Name, date.Value(), site.Filename, site.Line, text.data());
             break;
         case ELoggerVerbosity::Error:
-            FPlatformDebug::TraceError(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceError(category.Name, date.Value(), site.Filename, site.Line, text.data());
             break;
         case ELoggerVerbosity::Fatal:
-            FPlatformDebug::TraceFatal(category.Name, site.Timestamp.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceFatal(category.Name, date.Value(), site.Filename, site.Line, text.data());
             break;
 
         default:
@@ -776,7 +792,7 @@ public:
         }
     }
 
-    virtual void Flush(bool) override final {} // always synched
+    virtual void Flush(bool) override final {} // always synced
 };
 #endif //!USE_PPE_PLATFORM_DEBUG
 //----------------------------------------------------------------------------

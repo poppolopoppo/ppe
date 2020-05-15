@@ -269,7 +269,7 @@ UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& f
     FFileStreamReader tmp = FFileStream::OpenRead(nativeFilename, policy);
     if (tmp.Good()) {
         LOG(VFS, Debug, L"open native readable '{0}' : {1}", filename, policy);
-        result.reset(new FFileStreamReader(std::move(tmp)));
+        result.reset<FFileStreamReader>(std::move(tmp));
     }
     else {
         LOG(VFS, Error, L"failed to open native readable '{0}' : {1}", filename, policy);
@@ -375,7 +375,7 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
     FFileStreamWriter tmp = FFileStream::OpenWrite(nativeFilename, policy);
     if (tmp.Good()) {
         LOG(VFS, Debug, L"open native writable '{0}' : {1}", filename, policy);
-        result.reset(new FFileStreamWriter(std::move(tmp)));
+        result.reset<FFileStreamWriter>(std::move(tmp));
     }
     else {
         LOG(VFS, Error, L"failed to open native writable '{0}' : {1}", filename, policy);
@@ -400,7 +400,7 @@ UStreamReadWriter FVirtualFileSystemNativeComponent::OpenReadWritable(const FFil
     FFileStreamReadWriter tmp = FFileStream::OpenReadWrite(nativeFilename, policy);
     if (tmp.Good()) {
         LOG(VFS, Debug, L"open native read/writable '{0}' : {1}", filename, policy);
-        result.reset(new FFileStreamReadWriter(std::move(tmp)));
+        result.reset<FFileStreamReadWriter>(std::move(tmp));
     }
     else {
         LOG(VFS, Error, L"failed to open native read/writable '{0}' : {1}", filename, policy);

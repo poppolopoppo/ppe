@@ -16,7 +16,7 @@
 
 namespace PPE {
 namespace ContentPipeline {
-LOG_CATEGORY(PPE_BUILDGRAPH_API, BuildGraph)
+EXTERN_LOG_CATEGORY(PPE_BUILDGRAPH_API, BuildGraph)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

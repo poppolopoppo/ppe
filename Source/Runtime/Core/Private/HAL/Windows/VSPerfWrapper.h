@@ -21,9 +21,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FVSPerfWrapper : Meta::TSingleton<FVSPerfWrapper> {
-    friend class Meta::TSingleton<FVSPerfWrapper>;
-    using singleton_type = Meta::TSingleton<FVSPerfWrapper>;
+class FVSPerfWrapper : Meta::TStaticSingleton<FVSPerfWrapper> {
+    friend Meta::TStaticSingleton<FVSPerfWrapper>;
+    using singleton_type = Meta::TStaticSingleton<FVSPerfWrapper>;
 public:
     typedef ::PROFILE_COMMAND_STATUS (STDCALL* FStopProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
     typedef ::PROFILE_COMMAND_STATUS (STDCALL* FStartProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);

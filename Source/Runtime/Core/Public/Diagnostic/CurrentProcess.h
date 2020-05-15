@@ -7,6 +7,7 @@
 #include "Memory/UniqueView.h"
 #include "Meta/Singleton.h"
 #include "Time/Timepoint.h"
+#include "Time/Timestamp.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -56,7 +57,8 @@ public:
     void LogProcessInfos() const;
     void LogStorageInfos() const;
 
-    const FTimepoint& StartedAt() const { return _startedAt; }
+    const FTimestamp& StartDate() const { return _startDate; }
+    const FTimepoint& StartTicks() const { return _startTicks; }
 
     using singleton_type::Get;
 #if USE_PPE_ASSERT
@@ -69,7 +71,7 @@ public:
     }
 
     static FSeconds ElapsedSeconds() {
-        return FSeconds(FTimepoint::ElapsedSince(Get().StartedAt()));
+        return FSeconds(FTimepoint::ElapsedSince(Get().StartTicks()));
     }
 
 private:
@@ -93,7 +95,8 @@ private:
     size_t _appIcon;
     bool _startedWithDebugger;
 
-    FTimepoint _startedAt;
+    const FTimestamp _startDate;
+    const FTimepoint _startTicks;
 };
 //----------------------------------------------------------------------------
 inline const FCurrentProcess& CurrentProcess() {

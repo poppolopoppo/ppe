@@ -523,7 +523,7 @@ FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
 //----------------------------------------------------------------------------
 void FMemoryPool::DeallocateChunk_(FMemoryPoolChunk* chunk) {
 #if USE_PPE_MEMORYPOOL_FALLBACK_TO_MALLOC
-    NOOP(chunk);
+    UNUSED(chunk);
     AssertNotReached();
 
 #else

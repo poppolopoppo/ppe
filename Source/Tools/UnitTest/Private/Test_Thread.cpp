@@ -10,23 +10,18 @@
 #include "Container/SparseArray.h"
 #include "Container/Vector.h"
 
-#include "IO/BufferedStream.h"
-#include "IO/FileStream.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringView.h"
-#include "IO/TextWriter.h"
 #include "Maths/RandomGenerator.h"
 #include "Memory/MemoryDomain.h"
-#include "Memory/MemoryTracking.h"
 #include "Memory/RefPtr.h"
 #include "Memory/WeakPtr.h"
+#include "Modular/Modular_fwd.h"
 #include "Misc/Event.h"
 #include "Misc/Function.h"
-#include "Time/DateTime.h"
 #include "Time/Timestamp.h"
 #include "Time/TimedScope.h"
 
-#include "Thread/ReadWriteLock.h"
 #include "Thread/Task.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
@@ -80,13 +75,12 @@ NO_INLINE void Test_Function_() {
     task = FTaskFunc::Bind<&FTask_Member_::TaskConst>(&m);
     task = FTaskFunc::Bind<&FTask_Member_::TaskConst_Extra>(&m, 42, false, 3.1415f, &task);
 
-    FRefCountableTask_ c;
-    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(&c);
-    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(MakeSafePtr(&c));
-
     PRefCountableTask_ a = NEW_REF(Task, FRefCountableTask_);
-    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(a);
-    task = FTaskFunc::Bind<&FRefCountableTask_::Task>(a.get());
+
+    FTaskFunc taskRef;
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(a);
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(a.get());
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(MakeSafePtr(a));
 }
 //--------------------1--------------------------------------------------------
 NO_INLINE void Test_Aggregation_() {
@@ -360,9 +354,10 @@ NO_INLINE void Test_Graph_Preprocess_(FGraph& g) {
 
         FTimedScope time;
         {
-            FAggregationPort waitAll;
+            FAggregationPort dispatch;
 
             for (FGraphNode* dep : q) {
+                dispatch.Attach(&dep->Port);
                 ctx.Run(&dep->Port, [&g, dep](ITaskContext& c) {
                     g.WorkerBegin();
 
@@ -373,11 +368,9 @@ NO_INLINE void Test_Graph_Preprocess_(FGraph& g) {
 
                     g.WorkerEnd();
                 });
-
-                waitAll.Attach(&dep->Port);
             }
 
-            waitAll.Join(ctx);
+            dispatch.Join(ctx);
         }
 
         g.OnBuildFinished(L"Preprocess");

@@ -91,7 +91,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 UBuildCache MakeLocalBuildCache(const FDirpath& path, bool writable) {
-    return UBuildCache{ new FFilesystemBuildCache(path, writable) };
+    return MakeUnique<FFilesystemBuildCache>(path, writable);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

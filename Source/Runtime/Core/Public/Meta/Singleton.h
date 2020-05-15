@@ -39,20 +39,17 @@ protected:
 };
 } //!details
 //----------------------------------------------------------------------------
-template <typename T, typename _Tag = T, bool _ThreadLocal = false>
+template <typename T, typename _Tag = T, bool _ThreadLocal = false, bool _Shared = true>
 class TSingleton : details::TSingletonStorage_<T, _Tag, _ThreadLocal> {
     using pod_type = details::TSingletonPOD_<T>;
     using storage_type = details::TSingletonStorage_<T, _Tag, _ThreadLocal>;
 
-    template <typename U>
-    using has_class_singleton_storage_ = decltype(U::class_singleton_storage());
-
     static pod_type& SRef_() NOEXCEPT {
         // client can provide their own storage (way to handle shared libraries)
-        IF_CONSTEXPR(Meta::has_defined_v<has_class_singleton_storage_, _Tag>)
+        IF_CONSTEXPR(_Shared)
             return (*static_cast<pod_type*>(_Tag::class_singleton_storage()));
         else
-            return (*static_cast<pod_type*>(storage_type::make_singleton_storage()));
+        return (*static_cast<pod_type*>(storage_type::make_singleton_storage()));
     }
 
 protected:
@@ -95,14 +92,17 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-template <typename T, typename _Tag = T>
-using TThreadLocalSingleton = TSingleton<T, _Tag, true>;
+template <typename T, typename _Tag = T, bool _Shared = false>
+using TThreadLocalSingleton = TSingleton<T, _Tag, true, _Shared>;
+//----------------------------------------------------------------------------
+template <typename T, typename _Tag = T, bool _ThreadLocal = false>
+using TStaticSingleton = TSingleton<T, _Tag, _ThreadLocal, false>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _Tag = T, bool _ThreadLocal = false>
-class TIndirectSingleton : TSingleton<TUniquePtr<T>, _Tag, _ThreadLocal> {
-    using parent_type = TSingleton<TUniquePtr<T>, _Tag, _ThreadLocal>;
+template <typename T, typename _Tag = T, bool _ThreadLocal = false, bool _Shared = true>
+class TIndirectSingleton : TSingleton<TUniquePtr<T>, _Tag, _ThreadLocal, _Shared> {
+    using parent_type = TSingleton<TUniquePtr<T>, _Tag, _ThreadLocal, _Shared>;
 protected:
     TIndirectSingleton() = default;
 
@@ -117,7 +117,7 @@ public:
 
     template <typename... _Args>
     static void Create(_Args&&... args) {
-        parent_type::Create(new T{ std::forward<_Args>(args)... });
+        parent_type::Create(TUniquePtr<T>::New(std::forward<_Args>(args)...));
     }
 
     static void Destroy() {
@@ -125,8 +125,11 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-template <typename T, typename _Tag = T>
-using TThreadLocalIndirectSingleton = TIndirectSingleton<T, _Tag, true>;
+template <typename T, typename _Tag = T, bool _Shared = false>
+using TThreadLocalIndirectSingleton = TIndirectSingleton<T, _Tag, true, _Shared>;
+//----------------------------------------------------------------------------
+template <typename T, typename _Tag = T, bool _ThreadLocal = false>
+using TStaticIndirectSingleton = TIndirectSingleton<T, _Tag, _ThreadLocal, false>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

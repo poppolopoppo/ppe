@@ -2,6 +2,7 @@
 
 #include "Diagnostic/CurrentProcess.h"
 
+#include "Diagnostic/BuildVersion.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformDebug.h"
 #include "HAL/PlatformFile.h"
@@ -14,6 +15,8 @@
 #include "IO/TextWriter.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
+#include "Time/DateTime.h"
+#include "Time/Timestamp.h"
 
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, Process)
@@ -31,7 +34,8 @@ FCurrentProcess::FCurrentProcess(
 ,   _args(NewArray<FWString>(argc))
 ,   _exitCode(0)
 ,   _appIcon(0)
-,   _startedAt(FTimepoint::Now()) {
+,   _startDate(FTimestamp::Now())
+,   _startTicks(FTimepoint::Now()) {
 
     for (size_t i = 0; i < argc; ++i) {
         Assert(argv[i]);
@@ -198,6 +202,7 @@ void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
+    Format(oss, "Process infos:") << Eol;
     {
         Format(oss, "host = {0} @ {1}", FPlatformMisc::UserName(), FPlatformMisc::MachineName()) << Eol;
         Format(oss, "os = {0}", FPlatformMisc::OSName()) << Eol;
@@ -208,10 +213,17 @@ void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
             Format(oss, "   [{0:2}] '{1}'", i, _args[i]) << Eol;
     }
     {
-        auto& platform = CurrentPlatform();
+        const FBuildVersion build = CurrentBuildVersion();
+        Format(oss, "build version =") << Eol;
+        Format(oss, "    branch = {0}", build.Branch) << Eol;
+        Format(oss, "    revision = {0}", build.Revision) << Eol;
+        Format(oss, "    family = {0}", build.Family) << Eol;
+        Format(oss, "    compiler = {0}", build.Compiler) << Eol;
+        Format(oss, "    timestamp = {0}", build.Timestamp.ToDateTime()) << Eol;
+    }
+    {
+        const ITargetPlaftorm& platform = CurrentPlatform();
         Format(oss, "platform = {0} ({1})", platform.DisplayName(), CurrentPlatform().FullName()) << Eol;
-        Format(oss, "build configuration = " STRINGIZE(BUILD_FAMILY)) << Eol;
-        Format(oss, "compiled at = " __DATE__ "  " __TIME__) << Eol;
         Format(oss, "   client supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Client)) << Eol;
         Format(oss, "   server supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Server)) << Eol;
         Format(oss, "   editor supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Editor)) << Eol;
@@ -220,7 +232,7 @@ void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
         Format(oss, "   cooked data supported = {0:A}", platform.SupportsFeature(EPlatformFeature::CookedData)) << Eol;
     }
     {
-        auto mem = FPlatformMemory::Constants();
+        const FPlatformMemory::FConstants mem = FPlatformMemory::Constants();
         Format(oss, "cpu = {0}, {1}", FPlatformMisc::CPUVendor(), FPlatformMisc::CPUBrand()) << Eol;
         Format(oss, "   {0} physical cores ({1} logical)", FPlatformMisc::NumCores(), FPlatformMisc::NumCoresWithSMT()) << Eol;
         Format(oss, "   allocation granularity = {0}", Fmt::SizeInBytes(mem.AllocationGranularity)) << Eol;

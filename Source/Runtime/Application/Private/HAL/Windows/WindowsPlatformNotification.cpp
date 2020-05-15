@@ -34,10 +34,10 @@ LOG_CATEGORY(, Notification)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class FWindowsSystrayCmds_ : Meta::TSingleton<FWindowsSystrayCmds_> {
-    friend class Meta::TSingleton<FWindowsSystrayCmds_>;
+class FWindowsSystrayCmds_ : Meta::TStaticSingleton<FWindowsSystrayCmds_> {
+    friend Meta::TStaticSingleton<FWindowsSystrayCmds_>;
 public:
-    using singleton_type = Meta::TSingleton<FWindowsSystrayCmds_>;
+    using singleton_type = Meta::TStaticSingleton<FWindowsSystrayCmds_>;
 
     using singleton_type::Get;
     using singleton_type::Destroy;
@@ -67,10 +67,10 @@ public:
 //----------------------------------------------------------------------------
 static ::HWND GWindowsSystrayWindow_ = NULL;
 //----------------------------------------------------------------------------
-class FWindowsSystray_ : Meta::TSingleton<FWindowsSystray_> {
-    friend class Meta::TSingleton<FWindowsSystray_>;
+class FWindowsSystray_ : Meta::TStaticSingleton<FWindowsSystray_> {
+    friend Meta::TStaticSingleton<FWindowsSystray_>;
 public:
-    using singleton_type = Meta::TSingleton<FWindowsSystray_>;
+    using singleton_type = Meta::TStaticSingleton<FWindowsSystray_>;
 
     ~FWindowsSystray_() {
         _active = false;

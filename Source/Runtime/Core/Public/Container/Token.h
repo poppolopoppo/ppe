@@ -43,7 +43,7 @@ namespace PPE {
     }
 //----------------------------------------------------------------------------
 #define BASICTOKEN_CLASS_DEF(_NAME) \
-    using CONCAT(_NAME, TokenFactory) = ::PPE::Meta::TIndirectSingleton<::PPE::FTokenFactory, _NAME>; \
+    using CONCAT(_NAME, TokenFactory) = ::PPE::Meta::TStaticIndirectSingleton<::PPE::FTokenFactory, _NAME>; \
     void CONCAT(_NAME, ActualTokenTraits)::CreateFactory() { \
         CONCAT(_NAME, TokenFactory)::Create(); \
     } \
