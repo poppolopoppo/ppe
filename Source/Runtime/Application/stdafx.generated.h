@@ -3,84 +3,81 @@
 */
 #ifdef PLATFORM_WINDOWS
 // Global system includes (33)
-#include <algorithm> // 191 refs
-#include <stdint.h> // 191 refs
-#include <limits.h> // 191 refs
-#include <limits> // 191 refs
-#include <initializer_list> // 191 refs
-#include <new> // 191 refs
-#include <exception> // 191 refs
-#include <type_traits> // 191 refs
-#include <utility> // 191 refs
-#include <atomic> // 189 refs
-#include <memory> // 189 refs
-#include <typeinfo> // 189 refs
-#include <functional> // 189 refs
-#include <tuple> // 189 refs
-#include <cmath> // 189 refs
-#include <list> // 189 refs
-#include <stdexcept> // 189 refs
-#include <iterator> // 189 refs
-#include <mutex> // 189 refs
-#include <chrono> // 189 refs
-#include <thread> // 189 refs
-#include <comdef.h> // 181 refs
-#include <comutil.h> // 181 refs
-#include <emmintrin.h> // 145 refs
-#include <xmmintrin.h> // 145 refs
-#include <intrin.h> // 143 refs
-#include <immintrin.h> // 144 refs
-#include <smmintrin.h> // 144 refs
-#include <tmmintrin.h> // 144 refs
-#include <pmmintrin.h> // 145 refs
-#include <cctype> // 103 refs
-#include <cwctype> // 103 refs
-#include <locale> // 104 refs
-// Global project includes (23)
-#include "winnt_version.h" // 191 refs
-#include "Runtime/Core/Public/Core_fwd.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Config.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Aliases.h" // 191 refs
-#include "Runtime/Core/Public/Meta/Alignment.h" // 189 refs
-#include "Runtime/Core/Public/Meta/TypeTraits.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Assert.h" // 189 refs
-#include "Runtime/Core/Public/Diagnostic/Exception.h" // 189 refs
-#include "Runtime/Core/Public/IO/TextWriter_fwd.h" // 189 refs
-#include "Runtime/Core/Public/IO/String_fwd.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Cast.h" // 189 refs
-#include "Runtime/Core/Public/Meta/TypeHash.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Hash_fwd.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Warnings.h" // 191 refs
-#include "Runtime/Core/Public/Meta/Delete.h" // 189 refs
-#include "Runtime/Core/Public/Core.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Enum.h" // 189 refs
-#include "Runtime/Core/Public/Meta/ForRange.h" // 189 refs
-#include "Runtime/Core/Public/Meta/Iterator.h" // 189 refs
-#include "Runtime/Core/Public/Meta/NumericLimits.h" // 189 refs
-#include "Runtime/Core/Public/Meta/OneTimeInitialize.h" // 189 refs
-#include "Runtime/Core/Public/Meta/StronglyTyped.h" // 189 refs
-#include "Runtime/Core/Public/Meta/ThreadResource.h" // 189 refs
+#include <algorithm> // 196 refs
+#include <stdint.h> // 196 refs
+#include <limits.h> // 196 refs
+#include <limits> // 196 refs
+#include <initializer_list> // 196 refs
+#include <new> // 196 refs
+#include <exception> // 196 refs
+#include <type_traits> // 196 refs
+#include <utility> // 196 refs
+#include <atomic> // 194 refs
+#include <memory> // 194 refs
+#include <typeinfo> // 194 refs
+#include <functional> // 194 refs
+#include <tuple> // 194 refs
+#include <cmath> // 194 refs
+#include <list> // 194 refs
+#include <stdexcept> // 194 refs
+#include <iterator> // 194 refs
+#include <mutex> // 194 refs
+#include <chrono> // 194 refs
+#include <thread> // 194 refs
+#include <comdef.h> // 186 refs
+#include <comutil.h> // 186 refs
+#include <emmintrin.h> // 151 refs
+#include <xmmintrin.h> // 151 refs
+#include <intrin.h> // 149 refs
+#include <immintrin.h> // 150 refs
+#include <smmintrin.h> // 150 refs
+#include <tmmintrin.h> // 150 refs
+#include <pmmintrin.h> // 151 refs
+#include <cctype> // 106 refs
+#include <cwctype> // 106 refs
+#include <locale> // 107 refs
+// Global project includes (22)
+#include "winnt_version.h" // 197 refs
+#include "Runtime/Core/Public/Core_fwd.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Config.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Aliases.h" // 196 refs
+#include "Runtime/Core/Public/Meta/Alignment.h" // 194 refs
+#include "Runtime/Core/Public/Meta/TypeTraits.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Assert.h" // 194 refs
+#include "Runtime/Core/Public/Diagnostic/Exception.h" // 194 refs
+#include "Runtime/Core/Public/IO/TextWriter_fwd.h" // 194 refs
+#include "Runtime/Core/Public/IO/String_fwd.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Cast.h" // 194 refs
+#include "Runtime/Core/Public/Meta/TypeHash.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Hash_fwd.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Warnings.h" // 196 refs
+#include "Runtime/Core/Public/Meta/Delete.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Enum.h" // 194 refs
+#include "Runtime/Core/Public/Meta/ForRange.h" // 194 refs
+#include "Runtime/Core/Public/Meta/Iterator.h" // 194 refs
+#include "Runtime/Core/Public/Meta/NumericLimits.h" // 194 refs
+#include "Runtime/Core/Public/Meta/OneTimeInitialize.h" // 194 refs
+#include "Runtime/Core/Public/Meta/StronglyTyped.h" // 194 refs
+#include "Runtime/Core/Public/Meta/ThreadResource.h" // 194 refs
 #ifdef BUILD_Win32_Debug
 // system includes (0)
-// project includes (18)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
+// project includes (16)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 41 refs
 #endif // BUILD_Win32_Debug
 #ifdef BUILD_Win32_FastDebug
 // system includes (5)
@@ -93,88 +90,80 @@
 #endif // BUILD_Win32_FastDebug
 #ifdef BUILD_Win32_Release
 // system includes (0)
-// project includes (18)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
+// project includes (16)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 41 refs
 #endif // BUILD_Win32_Release
 #ifdef BUILD_Win32_Profiling
 // system includes (0)
-// project includes (17)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
+// project includes (15)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 41 refs
 #endif // BUILD_Win32_Profiling
 #ifdef BUILD_Win32_Final
 // system includes (0)
-// project includes (16)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
+// project includes (14)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
 #endif // BUILD_Win32_Final
 #ifdef BUILD_Win64_Debug
 // system includes (0)
-// project includes (18)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
+// project includes (16)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 41 refs
 #endif // BUILD_Win64_Debug
 #ifdef BUILD_Win64_FastDebug
 // system includes (5)
@@ -187,65 +176,59 @@
 #endif // BUILD_Win64_FastDebug
 #ifdef BUILD_Win64_Release
 // system includes (0)
-// project includes (18)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
+// project includes (16)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/TrackingMalloc.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 41 refs
 #endif // BUILD_Win64_Release
 #ifdef BUILD_Win64_Profiling
 // system includes (0)
-// project includes (17)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
+// project includes (15)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h" // 41 refs
 #endif // BUILD_Win64_Profiling
 #ifdef BUILD_Win64_Final
 // system includes (0)
-// project includes (16)
-#include "Runtime/Core/ModuleExport.h" // 40 refs
-#include "Runtime/Core/Public/Module.h" // 40 refs
-#include "Runtime/Application/ModuleExport.h" // 40 refs
-#include "Runtime/Application/Public/Application_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/RefPtr.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 40 refs
-#include "Runtime/Core/Public/Allocator/Malloc.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 40 refs
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 40 refs
-#include "Runtime/Core/Public/Memory/MemoryView.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 40 refs
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 40 refs
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 40 refs
+// project includes (14)
+#include "Runtime/Core/Public/HAL/PlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform.h" // 41 refs
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryView.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h" // 41 refs
+#include "Runtime/Application/Public/Application_fwd.h" // 41 refs
+#include "Runtime/Core/Public/Core.h" // 41 refs
+#include "Runtime/Core/Public/Memory/RefPtr.h" // 41 refs
+#include "Runtime/Core/Public/Memory/MemoryDomain.h" // 41 refs
+#include "Runtime/Core/Public/Allocator/Malloc.h" // 41 refs
+#include "Runtime/Core/Public/HAL/PlatformDebug.h" // 41 refs
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h" // 41 refs
 #endif // BUILD_Win64_Final
 #endif //! PLATFORM_WINDOWS
