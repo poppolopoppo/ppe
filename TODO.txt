@@ -1,8 +1,16 @@
 # PPE TODO LIST
 
-- Optimize THashTable<> by using a mix between THopscopScotch<> and SIMD :
-    -> load (States+aligned_first) instead of using unaligned load at (States+first)
-    -> used loaded bucket for insertion, after and *before* first
+- Handle configuration/command line inside Core, seed from external configuration files, configuration cache
+    -> format ? (ini like UE? meh... json? no comment, meh...)
+    -> don't want a direct dependency to RTTI (but could be separated cleanly)
+    -> override from the commande line  } could generate a RTTI dynamic object
+    -> override from the console        } with all properties
+
+- RTTI dynamic metaclass/metaobject ?
+    -> long time goal, some limitations with current code
+        -> may not be possible to remove a field ? since we use static offsets
+
+- wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
 
 - Add a large mipmap allocator inside FMallocBinned in addition to current medium mipmaps
     -> current medium mips can't allocate more than 2mb, and virtual memory cache is weak (concurrency bottleneck)
@@ -15,10 +23,6 @@
         -> should cap allocation size to something reasonnable, like 64mb
         -> could work better than virtual memory cache with a careful implementation
 
-- Finish the build graph :p
-
 - Integrate AMD's texture library for content pipeline (replacing clunky STB)
     -> *OR* https://github.com/bkaradzic/bimg
 - Integrate AMD's mesh library for content pipeline (replacing old custom code)
-
-- wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
