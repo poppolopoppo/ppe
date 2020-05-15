@@ -7,7 +7,7 @@ require_once 'Utils/Options.rb'
 module Build
     extend self
 
-    VERSION = '1.0.0'
+    VERSION = '1.0.2'
 
     persistent_switch(:Cache, 'Use compilation cache')
     persistent_switch(:Diagnose, 'Use compilation diagnostics')
@@ -17,13 +17,13 @@ module Build
     persistent_switch(:Minify, 'Use minified format for exported files', init: true)
     persistent_switch(:PCH, 'Use precompiled headers', init: true)
     persistent_switch(:RuntimeChecks, 'Use runtime checks')
-    persistent_switch(:ShowTimings, 'Show compilation timings')
     persistent_switch(:StopOnError, 'Stop on first compilation error', init: false)
     persistent_switch(:Strict, 'Toggle warning as error and non permissive warnings', init: true)
     persistent_switch(:Symbols, 'Toggle generation of debug symbols', init: true)
     persistent_switch(:Unity, 'Use unity builds', init: true)
 
     opt_switch(:Rebuild, 'Clean build all specified targets', init: false)
+    opt_switch(:Timings, 'Measure compilation timings')
 
     persistent_value(:CppStd, 'Select C++ ISO standard', init: 'c++17', values: %w{ c++14 c++17 c++latest })
     persistent_value(:StackSize, 'Define default thread stack size', init: 2000000)
@@ -41,6 +41,7 @@ module Build
         $OutputPath = File.join($WorkspacePath, 'Output')
         $BinariesPath = File.join($OutputPath, 'Binaries')
         $CachePath = File.join($OutputPath, 'Cache')
+        $GeneratedPath = File.join($OutputPath, 'Generated')
         $ProjectsPath = File.join($OutputPath, 'Projects')
         $UnitiesPath = File.join($OutputPath, 'Unity')
         $IntermediatePath = File.join($OutputPath, 'Intermediate')
@@ -54,6 +55,7 @@ module Build
         Log.debug("Output path = '%s'", $OutputPath)
         Log.debug("Binaries path = '%s'", $BinariesPath)
         Log.debug("Cache path = '%s'", $CachePath)
+        Log.debug("Generated path = '%s'", $GeneratedPath)
         Log.debug("Projects path = '%s'", $ProjectsPath)
         Log.debug("Unities path = '%s'", $UnitiesPath)
         Log.debug("Intermediate path = '%s'", $IntermediatePath)

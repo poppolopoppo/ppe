@@ -26,22 +26,22 @@ module Build
         def <=>(other) @name <=> other.name end
     end #~ Command
 
-    $BuildCommand = []
+    $BuildCommands = []
     def self.make_command(name, desc, &block)
         cmd = Command.new(name, desc, &block)
         Commands << cmd
         return cmd
     end
-    def defer_command(cmd)
-        Log.debug 'defer <%s> command execution', cmd.name
-        $BuildCommand << cmd
+    def defer_command(name, &block)
+        Log.debug 'defer <%s> command execution', name
+        $BuildCommands << [name, block]
     end
     def run_command(&namespace)
-        $BuildCommand.each do |cmd|
-            Log.info 'run <%s> command: %s', cmd.name, Build::Args
-            cmd.block.call(&namespace)
+        $BuildCommands.each do |(name, block)|
+            Log.info 'run <%s> command: %s', name, Build::Args
+            block.call(&namespace)
         end
-        $BuildCommand.clear
+        $BuildCommands.clear
         return
     end
     def make_commandline(*args)
@@ -207,7 +207,7 @@ module Build
         opts.separator "Commands:"
         Commands.sort_by(&:name).each do |cmd|
             opts.on("--#{cmd.name}", cmd.desc) do
-                Build.defer_command(cmd)
+                Build.defer_command(cmd.name, &cmd.block)
             end
         end
 

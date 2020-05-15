@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$Build.ppe_executable!(:UnitTest) do
+$Build.ppe_executable!(:UnitTest, :Tools) do
     private_deps!(*namespace[:External]{[
         double_conversion,
         farmhash,

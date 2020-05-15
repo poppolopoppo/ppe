@@ -47,6 +47,11 @@ module Build
             add_compilationFlag(facet, "/imsvc\"#{dirpath}\"")
         end
         alias add_systemPath add_externPath
+        def freeze()
+            @llvmPath.freeze
+            @llvmVersion.freeze
+            super()
+        end
     end #~ LLVMWindowsCompiler
 
     def self.import_llvm_windows(name, path)

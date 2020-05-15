@@ -93,4 +93,12 @@ module Build
 
     Build.append_environments(*WindowsEnvironment)
 
+    def self.run_as(*args)
+        cmd = [ 'powershell', '-command', "&{start-process -filepath '#{args.first}' -ArgumentList #{args[1..-1].collect{|x| "'#{x}'"}.join(',')} -wait -verb RunAs}" ]
+        Log.verbose('RunAs: %s', cmd.join(' '))
+        system(*cmd)
+        Log.fatal('RunAs: command "%s" failed (code: %d)', cmd.join(' '), $?) unless $?.success?
+        return $?
+    end
+
 end #~ Build

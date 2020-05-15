@@ -65,8 +65,8 @@ module Build
                     set!('Output', artefact)
                     set!('OutputDirectory', File.dirname(artefact))
 
-                    set!('ProjectBuildCommand', Build.make_commandstr('--fbuild', target_alias))
-                    set!('ProjectRebuildCommand', Build.make_commandstr('--fbuild', target_alias, '--Rebuild'))
+                    set!('ProjectBuildCommand', Build.make_commandstr('--fbuild', target_alias, '-v'))
+                    set!('ProjectRebuildCommand', Build.make_commandstr('--fbuild', target_alias, '--Rebuild', '-v'))
                     set!('ProjectCleanCommand', Build.make_commandstr('--dist-clean', '-v', target_alias, "#{env.platform.name}/#{env.config.name}/#{target.abs_path}"))
                 end
 
@@ -104,7 +104,7 @@ module Build
                 solutionFolder = solutionFolders[target.namespace] = [] if solutionFolder.nil?
                 solutionFolder << targetVcxproject
 
-                buildProjects << targetVcxproject if target.executable?
+                buildProjects << targetVcxproject unless target.headers? #if target.executable?
 
                 targetVcxproject
             end

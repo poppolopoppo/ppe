@@ -30,7 +30,7 @@ module Build
             host, target,
             visualStudioPath, platformToolset,
             compiler, librarian, linker, *extra_files)
-            super("#{prefix}_#{version}_#{host}", compiler, librarian, linker, *extra_files)
+            super("#{prefix}_#{version}_#{target}", compiler, librarian, linker, *extra_files)
             @version = version
             @minor_version = minor_version
             @host = host
@@ -43,6 +43,7 @@ module Build
 
             self.export!('VisualStudioPath', @visualStudioPath)
             self.export!('VisualStudioVersion', @minor_version)
+            self.export!('VisualStudioTools', File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'bin', @host, @target))
 
             Log.fatal 'invalid VisualStudio path "%s"', @visualStudioPath unless Dir.exist?(@visualStudioPath)
             Log.log 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
@@ -341,7 +342,7 @@ module Build
         end
 
         self << Build.VisualStudio_Win10SlowDown_Workaround
-        self << Build.VisualStudio_ShowTimings if Build.ShowTimings
+        self << Build.VisualStudio_ShowTimings if Build.Timings
     end
 
     make_facet(:VisualStudio_Base_x86) do
@@ -485,7 +486,8 @@ module Build
             File.join(root_base, 'mspft140.dll'),
             File.join(root_base, 'msvcp140_1.dll'),
             File.join(root_base, 'msvcp140_2.dll'),
-            File.join(root_base, 'vcruntime140.dll') )
+            File.join(root_base, 'vcruntime140.dll'),
+            File.join(root_base, 'vcperf.exe'),)
     end
 
     def self.import_visualstudio_fileset(version, *args)

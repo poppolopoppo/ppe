@@ -10,6 +10,8 @@ require 'set'
 
 module Build
 
+    persistent_value(:UnitySize, 'Size limit for spliting unity files', init: 600*1024.0)
+
     class Target < Policy
 
         # specialize build settings for a specific translation unit
@@ -103,7 +105,7 @@ module Build
 
             @glob_path = ''
             @glob_patterns = %w{ *.c *.cpp }
-            @unity_num_files = 1
+            @unity_num_files = nil
 
             @pch_header = nil
             @pch_source = nil
@@ -257,6 +259,34 @@ module Build
             Assert.check{ !@generateds.include?(filename) }
             @generateds[filename] = Generated.new(filename, &generator)
             return self
+        end
+
+        ## list all source files with globing
+        def find_source_fileset(env)
+            fileset = Set.new
+            @source_files.each do |fname|
+                fileset << env.source_path(expand_path(fname))
+            end
+            @isolated_files.each do |fname|
+                fileset << env.source_path(expand_path(fname))
+            end
+            @glob_patterns.each do |pattern|
+                fileset.merge(Dir["#{env.source_path(@source_path)}/**/#{pattern}"])
+            end
+            @excluded_files.each do |fname|
+                fileset.delete?(env.source_path(expand_path(fname)))
+            end
+            return fileset
+        end
+
+        ## list all header and source files with globing
+        def find_all_fileset(env)
+            fileset = find_source_fileset(env)
+            fileset.merge(Dir["#{env.source_path(@source_path)}/**/*.h"])
+            @generateds.each do |name, gen|
+                fileset << env.generated_path(expand_path(gen.path))
+            end
+            return fileset
         end
 
     public ## units

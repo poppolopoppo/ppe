@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$Build.ppe_executable!(:BuildRobot) do
+$Build.ppe_executable!(:BuildRobot, :Tools) do
     private_deps!(*namespace[:External]{[
         double_conversion,
         farmhash,

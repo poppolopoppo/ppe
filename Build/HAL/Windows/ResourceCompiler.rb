@@ -37,6 +37,7 @@ module Build
             # .rc file must be the last parameter
             facet.compilerOptions << '/fo"%2"' << '%1'
         end
+        alias add_libraryPath add_includePath
         alias add_externPath add_includePath
         alias add_systemPath add_externPath
     end #~ WindowsCompilerRC
