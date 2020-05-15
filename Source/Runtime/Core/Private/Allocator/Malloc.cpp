@@ -31,7 +31,7 @@
 #if USE_PPE_MEMORY_DEBUGGING && !PPE_MALLOC_FORCE_STD
 #   define PPE_MALLOC_DEBUG_PROXY          1
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
-#   define PPE_MALLOC_LEAKDETECTOR_PROXY   0 // Disabled since it adds payload to each allocation
+#   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) // %_NOCOMMIT%
 #   define PPE_MALLOC_POISON_PROXY         1 // Erase all data from blocks when allocating and releasing them, helps to find necrophilia
 #elif not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING)
 #   define PPE_MALLOC_DEBUG_PROXY          1

@@ -107,6 +107,7 @@ static void UnregisterThreadName_(std::thread::id thread_id) {
     FThreadNames_& thread_names = FThreadNames_::Get();
     WRITESCOPELOCK(thread_names.RWLock);
     thread_names.Names.Remove_AssertExists(thread_id);
+    thread_names.Names.Vector().shrink_to_fit(); // release memory early-on
 #else
     UNUSED(thread_id);
 #endif

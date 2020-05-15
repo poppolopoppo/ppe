@@ -386,21 +386,24 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     forrange(i, 0, classes.size()) {
         if (0 == classes[i]) continue;
 
-        if (0 == allocations[i])
+        if (0 == allocations[i]) {
             Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |",
                 i,
                 Fmt::SizeInBytes(classes[i]),
                 Fmt::SizeInBytes(checked_cast<u64>(totalBytes[i])),
                 0.f );
-        else
+        }
+        else {
+            const auto delta = (allocations[i] - GPrevAllocations[i]);
             Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |{4}> {5} +{6}",
                 i,
                 Fmt::SizeInBytes(classes[i]),
                 Fmt::SizeInBytes(checked_cast<u64>(totalBytes[i])),
                 100 * float(allocations[i]) / totalCount,
-                Fmt::Repeat(L'=', size_t(std::round(Min(width, width * distribution(allocations[i]) / distributionScale)))),
+                Fmt::Repeat(delta ? L'=' : L'-', size_t(std::round(Min(width, width * distribution(allocations[i]) / distributionScale)))),
                 Fmt::CountOfElements(checked_cast<u64>(allocations[i])),
-                allocations[i] - GPrevAllocations[i] );
+                delta );
+        }
 
         oss << Eol;
 
@@ -419,19 +422,28 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
     FWStringBuilder sb;
     FWTextWriter& oss = (optional ? *optional : sb);
 
+    auto flushLogIFN = [optional, &sb]() {
+        if (not optional) {
+            FLogger::Log(
+                LOG_CATEGORY_GET(MemoryDomain),
+                FLogger::EVerbosity::Info,
+                FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+                sb.Written());
+            sb.clear();
+        }
+    };
+
     FCurrentProcess::Get().DumpPhysicalMemory(oss);
+    flushLogIFN();
 
     ReportTrackingDatas_(oss, L"Memory domains", datas.MakeView());
-    ReportAllocationHistogram(oss);
-    ReportAllocationFragmentation(oss);
+    flushLogIFN();
 
-    if (not optional) {
-        FLogger::Log(
-            LOG_CATEGORY_GET(MemoryDomain),
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            sb.Written() );
-    }
+    ReportAllocationHistogram(oss);
+    flushLogIFN();
+
+    ReportAllocationFragmentation(oss);
+    flushLogIFN();
 
 #else
     UNUSED(optional);

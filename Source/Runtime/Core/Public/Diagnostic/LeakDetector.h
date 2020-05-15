@@ -32,6 +32,8 @@
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/ThreadContext.h"
 
+#define USE_PPE_MALLOC_LEAKDETECTOR_WHITESCOPE (true) //%_NOCOMMIT%
+
 namespace PPE {
 LOG_CATEGORY_VERBOSITY(, Leaks, All)
 //----------------------------------------------------------------------------
@@ -155,7 +157,7 @@ public:
 
     struct FWhiteListScope {
         bool WasWhiteListed;
-        FWhiteListScope() : WasWhiteListed(WhiteListedTLS()) { WhiteListedTLS() = true; }
+        FWhiteListScope() : WasWhiteListed(WhiteListedTLS()) { WhiteListedTLS() = USE_PPE_MALLOC_LEAKDETECTOR_WHITESCOPE; }
         ~FWhiteListScope() { WhiteListedTLS() = WasWhiteListed; }
     };
 
@@ -236,6 +238,8 @@ public:
     }
 
     void FindLeaks(FLeakReport* report) {
+        const FWhiteListScope ignoreLeaksHere;
+
         HASHMAP(Internal, u32, u32) callstackUIDtoIndex;
         callstackUIDtoIndex.reserve(_callstacks.NumCallstacks);
         report->Callstacks.reserve(_callstacks.NumCallstacks);
@@ -364,7 +368,7 @@ private:
             bucket.Insert(key, header.Pack());
         }
 
-        const FBlockHeader& Fetch(void* ptr) {
+        FBlockHeader Fetch(void* ptr) {
             Assert(NumAllocs);
             uintptr_t key;
             FCompressedRadixTrie& bucket = PtrToBucket(ptr, &key);
@@ -410,7 +414,7 @@ private:
             PtrToTracker(ptr).Allocate(ptr, header);
         }
 
-        const FBlockHeader& Fetch(void* ptr) {
+        FBlockHeader Fetch(void* ptr) {
             Assert(TotalAllocs);
             return PtrToTracker(ptr).Fetch(ptr);
         }
@@ -492,7 +496,6 @@ private:
         }
 
         void OpenStream() {
-            AssertIsMainThread();
             Assert(FPlatformLowLevelIO::InvalidHandle == FileHandle);
 
             const FWString fname = FPlatformFile::MakeTemporaryFile(L"LeakDetector", L".bin");
