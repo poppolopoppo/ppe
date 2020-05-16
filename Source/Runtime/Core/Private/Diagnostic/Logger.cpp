@@ -470,13 +470,12 @@ public: // ILowLevelLogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
         Assert(category.Verbosity ^ level);
 
-        wchar_t tmp[8192];
+        wchar_t tmp[16 << 10];
         FWFixedSizeTextWriter oss(tmp);
 
         FLogFormat::Header(oss, category, level, site);
         oss.Write(text);
         FLogFormat::Footer(oss, category, level, site);
-
         oss << Eos;
 
         FPlatformDebug::OutputDebug(tmp);
@@ -485,13 +484,12 @@ public: // ILowLevelLogger
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
         Assert(category.Verbosity ^ level);
 
-        wchar_t tmp[8192];
+        wchar_t tmp[16 << 10];
         FWFixedSizeTextWriter oss(tmp);
 
         FLogFormat::Header(oss, category, level, site);
         FormatArgs(oss, format, args);
         FLogFormat::Footer(oss, category, level, site);
-
         oss << Eos;
 
         FPlatformDebug::OutputDebug(tmp);
