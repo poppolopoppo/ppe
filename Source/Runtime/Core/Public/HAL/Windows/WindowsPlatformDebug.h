@@ -7,7 +7,7 @@
 #include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #define PPE_DEBUG_BREAK() __debugbreak() // more comfy to break in current frame
-#define PPE_DEBUG_CRASH() (*((int *) NULL) = 123, exit(3)) // Mozilla javascript crash function
+#define PPE_DEBUG_CRASH() ::FatalExit(-1) // transfers execution control to the debugger
 #define PPE_DECLSPEC_ALLOCATOR() __declspec(allocator)
 
 namespace PPE {
