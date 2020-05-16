@@ -157,7 +157,9 @@ module Build
             facet.includePaths << private_path if Dir.exist?(private_path)
 
             self.all_dependencies do |(dep, visibility)|
-                facet.includePaths << env.source_path(dep.public_path)
+                unless :runtime == visibility && env.target_dynamic_link?(dep)
+                    facet.includePaths << env.source_path(dep.public_path)
+                end
 
                 case visibility
                 when :public

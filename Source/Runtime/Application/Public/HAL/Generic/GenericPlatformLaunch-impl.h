@@ -26,9 +26,11 @@ public:
     FApplicationDomain() NOEXCEPT
     :   PPE::FModularDomain(STRINGIZE(BUILD_TARGET_NAME), PPE::EModuleUsage::PPE_TARGET_USAGE) {
         Generated::RegisterStaticModules();
+        Generated::RegisterDynamicModules();
     }
 
     ~FApplicationDomain() {
+        Generated::UnregisterDynamicModules();
         Generated::UnregisterStaticModules();
     }
 

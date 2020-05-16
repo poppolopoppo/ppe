@@ -3,6 +3,8 @@
 
 require_relative 'Build/Build.rb'
 
+require 'pathname'
+
 class Build::Namespace
     include Build
     def ppe_headers!(name, &cfg)
@@ -67,7 +69,7 @@ private
         return "#{target.name}Module"
     end
     def self.ppe_target_module_anchor(target)
-        return "PPE_#{Namespace.ppe_target_module_name(target)}_StaticInfo"
+        return "PPE_#{target.var_path}_StaticInfo"
     end
     def self.ppe_generated(target)
         target.generate!('BuildVersion.generated.h') do |facet, env, io|
@@ -95,12 +97,12 @@ private
             end
 
             static_modules = []
-            runtime_modules = []
+            dynamic_modules = []
             target.all_dependencies do |(dep, visibility)|
                 next unless dep.library?
                 case visibility
                 when :runtime
-                    runtime_modules << dep
+                    (env.target_dynamic_link?(dep) ? dynamic_modules : static_modules) << dep
                 when :public, :private
                     static_modules << dep
                 else
@@ -134,6 +136,32 @@ private
                     puts! "registry.UnregisterAnchor(&#{Namespace.ppe_target_module_anchor(dep)});"
                 end
             end unless static_modules.empty?
+            io.puts! "}"
+            io.unindent!
+            io.puts! "} //!namespace Generated"
+
+            io.puts! '// register/unregister for runtime modules:'
+            io.puts! "namespace Generated {"
+            io.indent!
+            io.puts! "inline void RegisterDynamicModules() NOEXCEPT {"
+            io.scope! do
+                puts! "using namespace ::PPE;"
+                puts! "auto& registry = FModuleDynamicRegistration::Get();"
+                dynamic_modules.each do |dep|
+                    libpath = env.target_artifact_path(dep)
+                    libpath = env.relative_path($BinariesPath, libpath)
+                    puts! "registry.RegisterLibrary(\"#{dep.abs_path}\", \"#{Namespace.ppe_target_module_anchor(dep)}\", L\"#{libpath}\");"
+                end
+            end unless dynamic_modules.empty?
+            io.puts! "}"
+            io.puts! "inline void UnregisterDynamicModules() NOEXCEPT {"
+            io.scope! do
+                puts! "using namespace ::PPE;"
+                puts! "auto& registry = FModuleDynamicRegistration::Get();"
+                dynamic_modules.reverse_each do |dep|
+                    puts! "registry.UnregisterLibrary(\"#{dep.abs_path}\");"
+                end
+            end unless dynamic_modules.empty?
             io.puts! "}"
             io.unindent!
             io.puts! "} //!namespace Generated"

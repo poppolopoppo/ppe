@@ -6,13 +6,23 @@
 #include "Modular/ModuleInfo.h"
 
 #include "Container/FlatMap.h"
+#include "IO/StringView.h"
+#include "Misc/DynamicLibrary.h"
 #include "Thread/ReadWriteLock.h"
+
+#include <mutex>
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 extern "C" typedef const void* (*FModuleStaticAnchor)();
+//----------------------------------------------------------------------------
+inline const FModuleInfo& ModuleInfo(FModuleStaticAnchor anchor) NOEXCEPT {
+    return (*static_cast<const FModuleInfo*>(anchor()));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_CORE_API FModuleStaticRegistration : Meta::FNonCopyableNorMovable {
 public:
@@ -48,8 +58,45 @@ public:
     }
 
 private:
-    FReadWriteLock _barrier;
+    FReadWriteLock _rwlock;
     FLATMAP_INSITU(Modular, FStringView, FModuleInfo, 8) _modules;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class PPE_CORE_API FModuleDynamicRegistration : Meta::FNonCopyableNorMovable {
+public:
+    FModuleDynamicRegistration();
+    ~FModuleDynamicRegistration();
+
+    bool Load(FModuleInfo* pinfo, const FStringView& name) NOEXCEPT;
+    void Unload(const FStringView& name) NOEXCEPT;
+    bool UnloadIFP(const FStringView& name) NOEXCEPT;
+
+    void RegisterLibrary(
+        const FStringView& name,
+        const char* anchor,
+        const wchar_t* path );
+    void UnregisterLibrary(const FStringView& name);
+
+    static FModuleDynamicRegistration& Get() NOEXCEPT;
+
+private:
+    struct FDynamicModule {
+        int RefCount;
+        const char* Anchor;
+        const wchar_t* Path;
+        FDynamicLibrary Library;
+
+        FDynamicModule(const char* anchor, const wchar_t* path) NOEXCEPT
+        :   RefCount(0)
+        ,   Anchor(anchor)
+        ,   Path(path)
+        {}
+    };
+
+    std::mutex _barrier;
+    FLATMAP_INSITU(Modular, FStringView, FDynamicModule, 8) _modules;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

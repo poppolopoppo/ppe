@@ -89,6 +89,7 @@ module Build
         def add_linkType(facet, link)
             case link
             when :static
+                return # nothing todo
             when :dynamic
                 # https://msdn.microsoft.com/en-us/library/527z7zfs.aspx
                 facet.linkerOptions << '/DLL'
@@ -190,6 +191,7 @@ module Build
 
             case env.config.link
             when :static
+                # nothing to do
             when :dynamic
                 if facet.tag?(:debug)
                     facet.compilationFlag!('/LDd')

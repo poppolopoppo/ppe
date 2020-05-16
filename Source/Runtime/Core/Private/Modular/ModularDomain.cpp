@@ -105,14 +105,18 @@ IModuleInterface* FModularDomain::LoadModuleIFP(const FStringView& name) {
     if (IModuleInterface* const present = ModuleIFP(name))
         return present;
 
-    // check for a statically linked module:
     FModuleInfo info;
-    if (not FModuleStaticRegistration::Get().Find(&info, name)) {
-        LOG(Modular, Error, L"failed to find module <{0}>", name);
-        return nullptr;
-    }
 
-    return LoadModule_(info);
+    // check for a statically linked module:
+    if (FModuleStaticRegistration::Get().Find(&info, name))
+        return LoadModule_(info);
+
+    // check for a dynamically linked module:
+    if (FModuleDynamicRegistration::Get().Load(&info, name))
+        return LoadModule_(info);
+
+    LOG(Modular, Error, L"failed to find module <{0}>", name);
+    return nullptr;
 }
 //----------------------------------------------------------------------------
 void FModularDomain::LoadDependencyList(const FStringView& dependencyList) {
@@ -139,6 +143,12 @@ bool FModularDomain::UnloadModuleIFP(const FStringView& name) {
         not HasPhaseStarted(it->second->Phase()) );
 
     _modules.Erase(it);
+
+    // maybe it's a dynamically loaded module?
+    FModuleDynamicRegistration::Get().UnloadIFP(name);
+
+    LOG(Modular, Info, L"unloaded module <{0}>", name);
+
     return true;
 }
 //----------------------------------------------------------------------------
@@ -241,6 +251,8 @@ IModuleInterface* FModularDomain::LoadModule_(const FModuleInfo& info) {
 
     IModuleInterface* const result = pmod.get();
     _modules.Emplace_AssertUnique(FStringView{ info.Name }, std::move(pmod));
+
+    LOG(Modular, Info, L"loaded module <{0}>", info.Name);
 
     return result;
 }
