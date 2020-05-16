@@ -74,7 +74,7 @@ module Build
 
                         expanded = env.expand(target)
 
-                        case env.target_artefact_type(target)
+                        case env.target_artifact_type(target)
                         when :headers
                             Assert.not_implemented
                         when :executable
@@ -111,9 +111,9 @@ module Build
         end
 
         def self.make_library(bff, env, target, target_alias, expanded)
-            artefact = BFF.make_target_base(bff, env, target, target_alias, expanded)
+            artifact = BFF.make_target_base(bff, env, target, target_alias, expanded)
             bff.func!('Alias', target_alias) do
-                set!('Targets', artefact)
+                set!('Targets', artifact)
             end
         end
 
@@ -141,7 +141,7 @@ module Build
                     when :public, :private
                         libraries << BFF.make_target_alias(env, dep)
                     when :runtime
-                        prebuilds << BFF.make_target_alias(env, dep)
+                        (env.target_dynamic_link?(dep) ? prebuilds : libraries) << BFF.make_target_alias(env, dep)
                     else
                         Assert.unexpected(visibility)
                     end
@@ -149,7 +149,7 @@ module Build
 
                 set!('Libraries', libraries)
                 set!('PreBuildDependencies', prebuilds)
-                set!('LinkerOutput', env.target_artefact_path(target))
+                set!('LinkerOutput', env.target_artifact_path(target))
 
                 facet!(expanded, :@linkerOptions)
             end
@@ -167,8 +167,8 @@ module Build
                 end
             end
 
-            artefactName = "#{target_alias}-#{unit.name}"
-            bff.func!('ObjectList', artefactName) do
+            artifactName = "#{target_alias}-#{unit.name}"
+            bff.func!('ObjectList', artifactName) do
                 using!(compiler_details)
                 using!(unit_source)
                 set!('CompilerOutputPath', env.intermediate_path(unit.abs_path))
@@ -176,7 +176,7 @@ module Build
                 facet!(expanded, :@compilerOptions)
             end
 
-            return artefactName
+            return artifactName
         end
 
         def self.make_target_base(bff, env, target, target_alias, expanded)
@@ -239,14 +239,14 @@ module Build
             end
 
             if link_library_objects
-                artefactFunc = 'ObjectList'
-                artefactName = target_alias+'-Obj'
+                artifactFunc = 'ObjectList'
+                artifactName = target_alias+'-Obj'
             else
-                artefactFunc = 'Library'
-                artefactName = target_alias+'-Lib'
+                artifactFunc = 'Library'
+                artifactName = target_alias+'-Lib'
             end
 
-            bff.func!(artefactFunc, artefactName) do
+            bff.func!(artifactFunc, artifactName) do
                 using!(compiler_details)
                 using!(target_source)
 
@@ -267,7 +267,7 @@ module Build
                 set!('Hidden', true)
             end
 
-            return artefactName
+            return artifactName
         end
 
         def self.make_compiler_details(bff, compiler)

@@ -91,7 +91,7 @@ module Build
             return outputPath
         end
 
-        def target_artefact_type(target)
+        def target_artifact_type(target)
             case target.type
             when :external, :library
                 case target.link
@@ -128,13 +128,16 @@ module Build
                 Log.fatal 'unsupported config link type <%s>', @config.link
             end
         end
-        def target_artefact_path(target)
-            return output_path(target.abs_path, target_artefact_type(target))
+        def target_dynamic_link?(target)
+            return (:shared == target_artifact_type(target))
         end
-        def target_debug_path(artefact)
+        def target_artifact_path(target)
+            return output_path(target.abs_path, target_artifact_type(target))
+        end
+        def target_debug_path(artifact)
             return File.join(
-                File.dirname(artefact),
-                File.basename(artefact, File.extname(artefact)) ) <<
+                File.dirname(artifact),
+                File.basename(artifact, File.extname(artifact)) ) <<
                 self.ext_for(:debug)
         end
         def facet()

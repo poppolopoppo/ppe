@@ -50,7 +50,7 @@ module Build
         def self.make_vcxconfig(bff, env, target, expanded)
             target_alias = "#{target.abs_path}-#{env.family}"
             bff.struct!("#{target.var_path}_#{env.varname}_VCXConfig") do
-                artefact = env.target_artefact_path(target)
+                artifact = env.target_artifact_path(target)
                 intermediate = env.intermediate_path(target.abs_path)
 
                 set!('Platform', VCXProj.solution_platform(env))
@@ -61,9 +61,9 @@ module Build
                 set!('IntermediateDirectory', intermediate)
                 set!('BuildLogFile', File.join(intermediate, 'Build.log'))
 
-                if artefact
-                    set!('Output', artefact)
-                    set!('OutputDirectory', File.dirname(artefact))
+                if artifact
+                    set!('Output', artifact)
+                    set!('OutputDirectory', File.dirname(artifact))
 
                     set!('ProjectBuildCommand', Build.make_commandstr('--fbuild', target_alias, '-v'))
                     set!('ProjectRebuildCommand', Build.make_commandstr('--fbuild', target_alias, '--Rebuild', '-v'))

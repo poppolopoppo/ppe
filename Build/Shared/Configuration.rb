@@ -12,14 +12,14 @@ module Build
             @link = link
         end
         def customize(facet, env, target)
-            artefact_type = env.target_artefact_type(target)
-            case artefact_type
+            artifact_type = env.target_artifact_type(target)
+            case artifact_type
             when :executable, :library, :headers
                 facet.defines << 'BUILD_LINK_STATIC'
             when :shared
                 facet.defines << 'BUILD_LINK_DYNAMIC'
             else
-                Log.fatal 'unsupported artefact type <%s>', artefact_type
+                Log.fatal 'unsupported artifact type <%s>', artifact_type
             end
             super(facet, env, target)
         end

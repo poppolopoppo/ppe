@@ -141,14 +141,14 @@ module Build
             end
 
             unless nopdb || nosymbols
-                artefact = env.target_artefact_path(target)
-                pdb_path = env.target_debug_path(artefact)
+                artifact = env.target_artifact_path(target)
+                pdb_path = env.target_debug_path(artifact)
 
                 facet.linkerOptions << "/PDB:\"#{pdb_path}\""
 
                 if facet.compilerOptions & '/Zi'
-                    artefact = env.output_path(target.abs_path, :library)
-                    pdb_path = env.target_debug_path(artefact)
+                    artifact = env.output_path(target.abs_path, :library)
+                    pdb_path = env.target_debug_path(artifact)
 
                     facet.compilerOptions << "/Fd\"#{pdb_path}\""
                     facet.pchOptions << "/Fd\"#{pdb_path}\""

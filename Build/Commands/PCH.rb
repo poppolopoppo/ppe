@@ -56,7 +56,7 @@ module Build
             pch_deps = {}
             environments.each_with_index do |env, env_i|
                 config = "BUILD_#{env.varname}"
-                artefact = "#{target.abs_path}-#{env.family}"
+                artifact = "#{target.abs_path}-#{env.family}"
 
                 Log.pin(target_status + " -> #{config} #{env_i+1}/#{environments.length}")
 
@@ -69,7 +69,7 @@ module Build
 
                 includes.parse_dir(env.source_path(target.source_path))
 
-                deps = PCH.dependencies(env, artefact, resolver)
+                deps = PCH.dependencies(env, artifact, resolver)
 
                 pch_deps[config] = deps.keep_only_if_above!(PCH_THRESHOLD)
             end
