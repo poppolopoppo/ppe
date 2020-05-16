@@ -242,7 +242,7 @@ module Build
                 each_alias.call target_aliases.last, []
             end
 
-            yield "#{env.family}", target_aliases
+            each_alias.call("#{env.family}", target_aliases)
 
             all_aliases.concat(target_aliases)
         end
@@ -299,6 +299,14 @@ module Build
                     "#{namespace.path}-#{platform.name}-#{config.name}"
                 end.to_a)
             end
+        end
+
+        targets.each do |target|
+            target_aliases = []
+            environments.each do |env|
+                target_aliases << "#{target.abs_path}-#{env.family}"
+            end
+            each_alias.call target.abs_path, target_aliases
         end
 
         each_alias.call 'All', all_aliases # default target
