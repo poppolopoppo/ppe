@@ -314,8 +314,7 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
     CONSTEXPR size_t width = 175;
     const auto hr = Fmt::Repeat(L'-', width);
 
-    oss << hr << Eol
-        << FTextFormat::Float(FTextFormat::FixedFloat, 2)
+    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
         << L"  Report allocation internal fragmentation : "
         << Fmt::SizeInBytes(mipSizeInBytes)
         << L" x "
@@ -375,7 +374,6 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     const auto hr = Fmt::Repeat(L'-', 175);
 
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
-        << hr << Eol
         << L"  Report allocations size histogram" << Eol
         << hr << Eol;
 
