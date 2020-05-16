@@ -12,6 +12,8 @@
 #include "HAL/PlatformFile.h"
 #include "IO/FileSystem.h"
 
+#include "BuildModules.generated.h"
+
 namespace PPE {
 LOG_CATEGORY(PPE_VFS_API, VFS)
 //----------------------------------------------------------------------------

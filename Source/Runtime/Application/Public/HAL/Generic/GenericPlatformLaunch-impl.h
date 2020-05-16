@@ -25,11 +25,11 @@ class FApplicationDomain : public PPE::FModularDomain {
 public:
     FApplicationDomain() NOEXCEPT
     :   PPE::FModularDomain(STRINGIZE(BUILD_TARGET_NAME), PPE::EModuleUsage::PPE_TARGET_USAGE) {
-        Generated::Build_RegisterStaticModules();
+        Generated::RegisterStaticModules();
     }
 
     ~FApplicationDomain() {
-        Generated::Build_UnregisterStaticModules();
+        Generated::UnregisterStaticModules();
     }
 
     void LoadDependencies() {

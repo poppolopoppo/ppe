@@ -11,6 +11,8 @@
 #include "Diagnostic/Logger.h"
 #include "RTTI/Module-impl.h"
 
+#include "BuildModules.generated.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

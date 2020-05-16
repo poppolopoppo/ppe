@@ -6,6 +6,7 @@
 #include "Modular/ModuleRegistration.h"
 
 #include "Allocator/Allocation.h"
+#include "Allocator/New.h"
 #include "Allocator/StlAllocator.h"
 #include "Diagnostic/Diagnostics.h"
 #include "Diagnostic/Logger.h"
@@ -19,6 +20,8 @@
 //  when compiling statically without inlined new operators it must be defined once in a separate TU
 #   include "Allocator/New.Definitions-inl.h"
 #endif
+
+#include "BuildModules.generated.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

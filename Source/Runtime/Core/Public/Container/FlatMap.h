@@ -145,6 +145,8 @@ public:
     template <typename _It>
     void insert(_It&& begin, _It&& end);
 
+    void shrink_to_fit() { _vector.shrink_to_fit(); }
+
     size_t HashValue() const { return hash_value(_vector); }
 
     TMemoryView<value_type> MakeView() { return _vector.MakeView(); }

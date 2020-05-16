@@ -107,8 +107,7 @@ IModuleInterface* FModularDomain::LoadModuleIFP(const FStringView& name) {
 
     // check for a statically linked module:
     FModuleInfo info;
-    FModuleRegistration& staticRegistry = ModuleStaticRegistry();
-    if (not staticRegistry.Find(&info, name)) {
+    if (not FModuleStaticRegistration::Get().Find(&info, name)) {
         LOG(Modular, Error, L"failed to find module <{0}>", name);
         return nullptr;
     }
