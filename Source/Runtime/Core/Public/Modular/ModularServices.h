@@ -15,7 +15,7 @@ namespace PPE {
 class PPE_CORE_API FModularServices : Meta::FNonCopyableNorMovable {
 public:
     FModularServices();
-    explicit FModularServices(FModularServices* parent);
+    explicit FModularServices(const FModularServices* parent);
 
     ~FModularServices();
 
@@ -31,23 +31,52 @@ public:
     void Add(_Service&& rservice);
     template <typename _Interface>
     void Remove();
+    template <typename _Interface, typename _Service>
+    void CheckedRemove(_Service&& rservice);
 
     void Clear();
 
 private:
     using FServiceKey_ = size_t;
 
-    struct IServiceHolder_ {
-        FServiceKey_ Key;
+    class FServiceHolder_ : Meta::FNonCopyable {
+    public:
+        using getter_f = void* (*)(void*);
+        using destructor_f = void (*)(void*) NOEXCEPT;
 
-        IServiceHolder_(FServiceKey_ key) : Key(key) {}
+        FServiceHolder_() = default;
 
-        virtual ~IServiceHolder_() = default;
+        FServiceHolder_(void* service, getter_f getter, destructor_f destructor) NOEXCEPT
+        :    _service(service)
+        ,    _getter(getter)
+        ,    _destructor(destructor)
+        {}
 
-        virtual void* Get() const NOEXCEPT = 0;
+        FServiceHolder_(FServiceHolder_&& rvalue) NOEXCEPT
+        :    FServiceHolder_() {
+            swap(*this, rvalue);
+        }
+
+        ~FServiceHolder_() NOEXCEPT {
+            if (_destructor)
+                _destructor(_service);
+        }
+
+        void* Get() const NOEXCEPT {
+            return (_getter ? _getter(_service) : _service);
+        }
+
+        friend void swap(FServiceHolder_& lhs, FServiceHolder_& rhs) {
+            std::swap(lhs._service, rhs._service);
+            std::swap(lhs._getter, rhs._getter);
+            std::swap(lhs._destructor, rhs._destructor);
+        }
+
+    private:
+        void* _service;
+        getter_f _getter;
+        destructor_f _destructor;
     };
-
-    using UServiceHolder_ = TUniquePtr<IServiceHolder_>;
 
     template <typename _Interface>
     static CONSTEXPR FServiceKey_ ServiceKey() NOEXCEPT {
@@ -55,58 +84,35 @@ private:
     }
 
     template <typename T>
-    static void* ServicePtr_(T& ref) NOEXCEPT { return (&ref); }
+    static FServiceHolder_ MakeHolder_(T* rawptr) {
+        Assert(rawptr);
+        return FServiceHolder_{ rawptr, nullptr, nullptr };
+    }
     template <typename T>
-    static void* ServicePtr_(const TRefPtr<T>& ptr) NOEXCEPT { return ptr.get(); }
+    static FServiceHolder_ MakeHolder_(const TRefPtr<T>& refptr) {
+        Assert(refptr);
+        AddRef(refptr.get());
+        return FServiceHolder_{ refptr.get(), nullptr,
+            [](void* ptr) NOEXCEPT {
+                RemoveRef(static_cast<FRefCountable*>(ptr));
+            }};
+    }
     template <typename T>
-    static void* ServicePtr_(const TUniquePtr<T>& ptr) NOEXCEPT { return ptr.get(); }
-
-    template <typename T>
-    struct TServiceHolder_ final : IServiceHolder_ {
-        mutable T Service;
-
-        template <typename... _Args>
-        TServiceHolder_(FServiceKey_ key, _Args&&... args)
-        :    IServiceHolder_(key)
-        ,    Service(std::forward<_Args>(args)...)
-        {}
-
-        virtual void* Get() const NOEXCEPT override final {
-            return ServicePtr_(Service);
-        }
-    };
-
-    template <typename T>
-    struct TServiceHolder_<T*> final : IServiceHolder_ {
-        T* pService;
-
-        TServiceHolder_(FServiceKey_ key, T* p)
-        :   IServiceHolder_(key)
-        ,   pService(p) {
-            Assert(p);
-            IF_CONSTEXPR(IsRefCountable<T>::value) {
-                AddSafeRef(pService);
-            }
-        }
-
-        ~TServiceHolder_() {
-            IF_CONSTEXPR(IsRefCountable<T>::value) {
-                RemoveSafeRef(pService);
-            }
-        }
-
-        virtual void* Get() const NOEXCEPT override final {
-            return pService;
-        }
-    };
+    static FServiceHolder_ MakeHolder_(TUniquePtr<T>&& uniqueptr) {
+        Assert(uniqueptr);
+        T* const rawptr = uniqueptr.get();
+        POD_STORAGE(TUniquePtr<T>) no_dtor; // #HACK: steal reference without destroying
+        new (&no_dtor) TUniquePtr<T>(std::move(uniqueptr));
+        return FServiceHolder_{ rawptr, nullptr, TUniquePtr<T>::Deleter() };
+    }
 
     void* GetService_(FServiceKey_ key) const NOEXCEPT;
 
-    void AddService_(FServiceKey_ key, UServiceHolder_&& rholder);
+    void AddService_(FServiceKey_ key, FServiceHolder_&& rholder);
     void RemoveService_(FServiceKey_ key);
 
-    FModularServices* _parent;
-    FLATMAP_INSITU(Internal, FServiceKey_, UServiceHolder_, 5) _services;
+    const FModularServices* _parent;
+    FLATMAP_INSITU(Internal, FServiceKey_, FServiceHolder_, 5) _services;
 };
 //----------------------------------------------------------------------------
 template <typename _Interface>
@@ -125,14 +131,21 @@ NODISCARD _Interface* FModularServices::GetIFP() const NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _Interface, typename _Service>
 void FModularServices::Add(_Service&& rservice) {
-    STATIC_ASSERT(std::is_base_of_v<_Interface, _Service>);
     CONSTEXPR const FServiceKey_ key = ServiceKey<_Interface>();
-    AddService_(key, MakeUnique<TServiceHolder_<_Service>>(key, std::move(rservice)) );
+    AddService_(key, MakeHolder_(std::move(rservice)));
 }
 //----------------------------------------------------------------------------
 template <typename _Interface>
 void FModularServices::Remove() {
     CONSTEXPR const FServiceKey_ key = ServiceKey<_Interface>();
+    RemoveService_(key);
+}
+//----------------------------------------------------------------------------
+template <typename _Interface, typename _Service>
+void FModularServices::CheckedRemove(_Service&& rservice) {
+    CONSTEXPR const FServiceKey_ key = ServiceKey<_Interface>();
+    UNUSED(rservice);
+    Assert_NoAssume(GetService_(key) == MakeHolder_(std::move(rservice)).Get());
     RemoveService_(key);
 }
 //----------------------------------------------------------------------------

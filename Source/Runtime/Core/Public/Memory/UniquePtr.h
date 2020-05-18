@@ -75,9 +75,12 @@ public:
 
     CONSTEXPR T* get() const NOEXCEPT { return _ptr; }
 
+    using deleter_f = void (*)(T*) NOEXCEPT;
+    static deleter_f Deleter() { return &tracking_delete<T>; }
+
     void reset() NOEXCEPT {
         if (_ptr) {
-            tracking_delete(_ptr);
+            Deleter()(_ptr);
             _ptr = nullptr;
         }
     }

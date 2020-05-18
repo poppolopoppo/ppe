@@ -14,8 +14,7 @@ FModuleStaticRegistration& FModuleStaticRegistration::Get() NOEXCEPT {
     return GStaticRegistry;
 }
 //----------------------------------------------------------------------------
-FModuleStaticRegistration::FModuleStaticRegistration()
-{}
+FModuleStaticRegistration::FModuleStaticRegistration() = default;
 //----------------------------------------------------------------------------
 FModuleStaticRegistration::~FModuleStaticRegistration() {
     WRITESCOPELOCK(_rwlock);
@@ -80,9 +79,7 @@ FModuleDynamicRegistration& FModuleDynamicRegistration::Get() NOEXCEPT {
     return GDynamicRegistry;
 }
 //----------------------------------------------------------------------------
-FModuleDynamicRegistration::FModuleDynamicRegistration() {
-
-}
+FModuleDynamicRegistration::FModuleDynamicRegistration() = default;
 //----------------------------------------------------------------------------
 FModuleDynamicRegistration::~FModuleDynamicRegistration() {
     const Meta::FLockGuard scopeLock(_barrier);
