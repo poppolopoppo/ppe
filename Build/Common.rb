@@ -30,7 +30,7 @@ module Build
 
     def self.set_workspace_path(path)
         path = File.absolute_path(path)
-        Log.debug("set workspace root = '%s'", path)
+        Log.log("set workspace root = '%s'", path)
 
         $WorkspacePath = path
 

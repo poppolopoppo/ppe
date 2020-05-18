@@ -9,10 +9,10 @@ module Build
         def initialize(data=[]) @data = data end
         def empty?() @data.empty? end
         def &(value) @data.include?(value) end
-        def <<(other) append(other); self end
+        def <<(other) push_back(other); self end
         def >>(other) remove(other); self end
         def ==(other) @data.sort == other.data.sort end
-        def append(*values)
+        def push_back(*values)
             values.each do |value|
                 case value
                 when Integer,Float,String,Symbol
@@ -22,15 +22,42 @@ module Build
                     @data << value
                 when Array
                     if $DEBUG
-                        append(*value)
+                        push_back(*value)
                     else
                         @data.concat(value)
                     end
                 when ValueSet
                     if $DEBUG
-                        append(*value.data)
+                        push_back(*value.data)
                     else
                         @data.concat(value.data)
+                    end
+                else
+                    Log.fatal 'unexpected value: %s', value
+                end
+            end
+            return self
+        end
+        alias :append :push_back
+        def push_front(*values)
+            values.each do |value|
+                case value
+                when Integer,Float,String,Symbol
+                    if $DEBUG && value.is_a?(String) && !(value[0] =~ /[\\\/-]/) && @data.include?(value)
+                        Log.fatal "already append \"%s\"\n\tcontent: %s", value, @data.collect{|x|"'#{x}'"}.join(' ')
+                    end
+                    @data.insert(0, value)
+                when Array
+                    if $DEBUG
+                        push_front(*value)
+                    else
+                        @data = value + @data
+                    end
+                when ValueSet
+                    if $DEBUG
+                        push_front(*value.data)
+                    else
+                        @data = value.data + @data
                     end
                 else
                     Log.fatal 'unexpected value: %s', value
@@ -110,7 +137,7 @@ module Build
         SETS.each do |facet|
             define_method("#{facet}=") do |value|
                 Log.debug "set facet <%s::%s> = '%s'", self, facet, value
-                instance_variable_get("@#{Facet.pluralize(facet)}").append(value)
+                instance_variable_get("@#{Facet.pluralize(facet)}").push_back(value)
             end
         end
 
@@ -201,17 +228,25 @@ module Build
         def expand?(key)
             return @vars[key]
         end
-        def <<(other)
+        def append(other, push_front: false)
             @compiler = other.compiler unless other.compiler.nil?
             @preprocessor = other.preprocessor unless other.preprocessor.nil?
             @vars.merge!(other.vars)
-
             ATTRS.each do |facet|
                 dst = instance_variable_get(facet)
                 src = other.instance_variable_get(facet)
-                dst << src
+                if push_front
+                    dst.push_front(src)
+                else
+                    dst.push_back(src)
+                end
             end
             return self
+        end
+        def push_front(other) append(other, push_front: true) end
+        def push_back(other) append(other, push_front: false) end
+        def <<(other)
+            return push_back(other)
         end
         def >>(other)
             other.vars.each{|k,v| @vars.delete(k) }

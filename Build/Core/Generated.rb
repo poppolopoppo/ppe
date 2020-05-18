@@ -17,7 +17,7 @@ module Build
 
         ## generate a file in the output file for a target
         def generate(facet, env, target)
-            key = 'Generated/'+env.generated_key(target.abs_path, @path)
+            key = 'Generated.'+env.generated_key(target.abs_path, @path)
             path = env.generated_path(target.expand_path(@path))
 
             prereq = Build.fetch_persistent_opt(key)
