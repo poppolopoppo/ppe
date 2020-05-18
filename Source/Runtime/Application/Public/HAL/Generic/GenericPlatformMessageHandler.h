@@ -27,7 +27,8 @@ public:
     using FMessage = FGenericMessage;
     using FMessageHandler = TFunction<void(const FGenericWindow&, FGenericMessage*)>;
 
-    static bool PumpMessages(FWindowsWindow* windowIFP) = delete;
+    static bool PumpGlobalMessages() = delete;
+    static bool PumpMessages(FWindowsWindow& window) = delete;
 
 };
 //----------------------------------------------------------------------------

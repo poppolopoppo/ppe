@@ -13,40 +13,45 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FWindowsPlatformMessageHandler::PumpMessages(FWindowsWindow* windowIFP) {
-    bool quit = false;
+bool FWindowsPlatformMessageHandler::PumpGlobalMessages() {
+    bool alive = true;
 
     ::MSG msg;
-    if (nullptr == windowIFP) {
-        if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE | PM_QS_SENDMESSAGE)) {
-            switch (LOWORD(msg.message)) {
-            case WM_QUIT:
-                quit = true;
-                break;
-            default:
-                break;
-            }
-        }
-    }
-    else {
-        ::HWND const hWnd = windowIFP->HandleWin32();
-        Assert(hWnd);
-
-        while (::PeekMessageW(&msg, hWnd, 0, 0, PM_REMOVE)) {
+    if (::PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+        switch (LOWORD(msg.message)) {
+        case WM_QUIT:
+            alive = false;
+            break;
+        default:
             ::TranslateMessage(&msg);
             ::DispatchMessageW(&msg);
-
-            switch (LOWORD(msg.message)) {
-            case WM_QUIT:
-                quit = true;
-                break;
-            default:
-                break;
-            }
+            break;
         }
     }
 
-    return false;
+    return alive;
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformMessageHandler::PumpMessages(FWindowsWindow& window) {
+    bool alive = true;
+
+    ::HWND const hWnd = window.HandleWin32();
+    Assert(hWnd);
+
+    ::MSG msg;
+    while (::PeekMessageW(&msg, hWnd, 0, 0, PM_REMOVE)) {
+        switch (LOWORD(msg.message)) {
+        case WM_QUIT:
+            alive = false;
+            break;
+        default:
+            ::TranslateMessage(&msg);
+            ::DispatchMessageW(&msg);
+            break;
+        }
+    }
+
+    return alive;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

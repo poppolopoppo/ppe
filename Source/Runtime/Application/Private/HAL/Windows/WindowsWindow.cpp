@@ -63,22 +63,30 @@ static FWindowsWindow* WindowsWindowFromHWnd_(::HWND hWnd) {
 }
 //----------------------------------------------------------------------------
 static ::LRESULT CALLBACK WindowsWindowProc_(::HWND hWnd, ::UINT msg, ::WPARAM wParam, ::LPARAM lParam) {
-    FWindowsWindow* window;
-    if (WM_NCCREATE == msg) {
-        // backup window in user data from create data :
+    Assert(hWnd);
+    FWindowsWindow* window = nullptr;
+
+    switch (msg) {
+    case WM_NCCREATE:
+    {
+        // backup window in user data from create data:
         window = reinterpret_cast<FWindowsWindow*>(((::LPCREATESTRUCT)lParam)->lpCreateParams);
         window->SetHandleWin32(hWnd);
         ::SetWindowLongPtr(hWnd, GWLP_USERDATA, checked_cast<LONG_PTR>(window));
+        break;
     }
-    else {
+    default:
+    {
         // retrieve owner window from user data :
         window = reinterpret_cast<FWindowsWindow*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
+        break;
+    }}
+
+    if (window) {
+        Assert(window->HandleWin32() == hWnd);
+        if (window->WindowProcWin32(msg, wParam, lParam))
+            return 0;
     }
-
-    Assert(window->HandleWin32() == hWnd);
-
-    if (window->WindowProcWin32(msg, wParam, lParam))
-        return 0;
 
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
@@ -507,16 +515,16 @@ bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lPara
     // Window events :
     case WM_SHOWWINDOW:
         OnWindowShow(TRUE == wParam);
-        return true;
+        break;
     case WM_CLOSE:
         OnWindowClose();
-        return true;
+        break;
     case WM_MOVE:
         OnWindowMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-        return true;
+        break;
     case WM_SIZE:
         OnWindowResize(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-        return true;
+        break;
     case WM_DESTROY:
         OnWindowClose();
         if (Type() == EWindowType::Main)

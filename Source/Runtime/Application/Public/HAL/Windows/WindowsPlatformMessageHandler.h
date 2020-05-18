@@ -60,7 +60,8 @@ public:
     using FMessage = FWindowsMessage;
     using FMessageHandler = TFunction<void(const FWindowsWindow&, FWindowsMessage*)>;
 
-    static bool PumpMessages(FWindowsWindow* windowIFP);
+    static bool PumpGlobalMessages();
+    static bool PumpMessages(FWindowsWindow& window);
 
 };
 //----------------------------------------------------------------------------

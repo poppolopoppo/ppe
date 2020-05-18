@@ -6,6 +6,9 @@
 #include "Service/WindowService.h"
 #include "Window/WindowMain.h"
 
+#include "Time/Timeline.h"
+#include "Thread/ThreadPool.h"
+
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
@@ -75,16 +78,30 @@ void FApplicationWindow::Shutdown() {
     FApplicationBase::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FApplicationWindow::PumpMessages() {
-    FApplicationBase::PumpMessages();
+bool FApplicationWindow::PumpMessages() NOEXCEPT {
+    if (FApplicationBase::PumpMessages() &&
+        _main->PumpMessages() ) {
+        _input->Poll();
+        return true;
+    }
 
-    _input->Poll();
+    return false;
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Tick(FTimespan dt) {
     FApplicationBase::Tick(dt);
 
     _input->Update(dt);
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::ApplicationLoop() {
+    FTimespan dt;
+    FTimeline tick = FTimeline::StartNow();
+
+    while (PumpMessages()) {
+        if (tick.Tick_Target60FPS(dt))
+            Tick(dt);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

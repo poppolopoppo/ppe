@@ -5,6 +5,7 @@
 #include "ApplicationBase.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
+#include "Modular/ModularDomain.h"
 
 namespace PPE {
 namespace Application {
@@ -27,9 +28,11 @@ public:
     IWindowService& Window() const { return *_window; }
 
     virtual void Start() override;
-    virtual void PumpMessages() override;
+    virtual bool PumpMessages() NOEXCEPT override;
     virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
+
+    void ApplicationLoop();
 
 private:
     PWindowBase _main;
