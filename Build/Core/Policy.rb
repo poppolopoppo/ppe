@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_once '../Common.rb'
+require_once '../Utils/Options.rb'
+require_once '../Utils/Prerequisite.rb'
 
 module Build
 
@@ -89,9 +91,20 @@ module Build
             end
         end
 
+        ## cache method result inside configuration
+        def cached_attribute(name, &memoizer)
+            key = "Cached.#{self.name}.#{name}"
+            prereq = Build.fetch_persistent_opt(key)
+            unless prereq
+                prereq = Prerequisite.new(key, nil, memoizer)
+                prereq = Build.make_persistent_opt(prereq)
+            end
+            return prereq.available?
+        end
+
         ## customize final environment + target
         def customize(facet, env, target)
-            Log.debug 'customize target <%s> with environement <%s> and policy <%s>', target.abs_path, env.family, @name
+            Log.debug 'customize target <%s> with environement <%s> and %s <%s>', target.abs_path, env.family, self.class, @name
             @customizations.each do |custom|
                 facet.instance_exec(env, target, &custom)
             end
@@ -99,8 +112,8 @@ module Build
 
         ## decorate shared environment facet
         def decorate(facet, env)
-            Log.debug 'decorate facet with environement <%s> and policy <%s>', env.family, @name
-            facet << @facet
+            Log.debug 'decorate facet with environement <%s> and %s <%s>', env.family, self.class, @name
+            facet.push_back(@facet)
         end
 
         Facet::SETS.each do |facet|

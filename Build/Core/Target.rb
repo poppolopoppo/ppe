@@ -184,17 +184,19 @@ module Build
             end
 
             if @unity_num_files.nil? && !tag?(:nounity)
-                total_files = 0
-                total_size = 0
-                find_all_fileset(env).each do |fname|
-                    sz = File.size(fname)
-                    total_files += 1
-                    total_size += sz
-                    Log.debug('%s: fileset << "%s"', @abs_path, fname)
+                @unity_num_files = cached_attribute('UnityNumFiles') do
+                    total_files = total_size = 0
+                    target.find_all_fileset(env).each do |fname|
+                        sz = File.size(fname)
+                        total_files += 1
+                        total_size += sz
+                        Log.debug('%s: fileset << "%s"', @abs_path, fname)
+                    end
+                    num_files = (total_size.to_f / Build.UnitySize).ceil
+                    Log.verbose("%s: found %d for a total of %.4fKiB -> use %d unity files",
+                        @abs_path, total_files, total_size / (1024.0), num_files )
+                    num_files
                 end
-                @unity_num_files = (total_size.to_f / Build.UnitySize).ceil
-                Log.verbose("%s: found %d for a total of %.4fKiB -> use %d unity files",
-                    @abs_path, total_files, total_size / (1024.0), @unity_num_files )
             end
 
             return facet
