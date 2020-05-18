@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Application.h"
 
@@ -29,7 +29,7 @@ public:
         int exitCode;
         FModularDomain::Start(domain);
         {
-            _ApplicationType app;
+            _ApplicationType app(domain);
             exitCode = LaunchApplication(&app);
         }
         FModularDomain::Shutdown(domain);

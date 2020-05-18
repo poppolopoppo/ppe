@@ -6,7 +6,7 @@
 #include "HAL/PlatformCrash.h"
 #include "HAL/PlatformDebug.h"
 #include "HAL/PlatformNotification.h"
-#include "Modular/Modular_fwd.h"
+#include "Modular/ModularDomain.h"
 
 namespace PPE {
 namespace Application {
@@ -102,8 +102,8 @@ static void TearDebugMenuInSystray_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationBase::FApplicationBase(FWString&& name)
-    : FPlatformApplication(std::move(name))
+FApplicationBase::FApplicationBase(const FModularDomain& domain, FWString&& name)
+:   FPlatformApplication(domain, std::move(name))
 {}
 //----------------------------------------------------------------------------
 FApplicationBase::~FApplicationBase() = default;

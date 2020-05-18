@@ -42,7 +42,6 @@ void FApplicationModule::Start(FModularDomain& domain) {
     using namespace Application;
 
     FPlatformApplicationMisc::Start();
-
 }
 //----------------------------------------------------------------------------
 void FApplicationModule::Shutdown(FModularDomain& domain) {
@@ -51,7 +50,6 @@ void FApplicationModule::Shutdown(FModularDomain& domain) {
     using namespace Application;
 
     FPlatformApplicationMisc::Shutdown();
-
 }
 //----------------------------------------------------------------------------
 void FApplicationModule::DutyCycle(FModularDomain& domain) {

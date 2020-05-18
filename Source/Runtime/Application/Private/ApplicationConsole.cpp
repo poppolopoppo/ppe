@@ -9,8 +9,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationConsole::FApplicationConsole(FWString&& name)
-:   FApplicationBase(std::move(name)) {}
+FApplicationConsole::FApplicationConsole(const FModularDomain& domain, FWString&& name)
+:   FApplicationBase(domain, std::move(name)) {}
 //----------------------------------------------------------------------------
 FApplicationConsole::~FApplicationConsole() = default;
 //----------------------------------------------------------------------------

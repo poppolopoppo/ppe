@@ -9,8 +9,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWindowsApplication::FWindowsApplication(FWString&& name)
-:   FGenericApplication(std::move(name))
+FWindowsApplication::FWindowsApplication(const FModularDomain& domain, FWString&& name)
+:   FGenericApplication(domain, std::move(name))
 {}
 //----------------------------------------------------------------------------
 FWindowsApplication::~FWindowsApplication()
@@ -20,8 +20,8 @@ void FWindowsApplication::Start() {
     parent_type::Start();
 }
 //----------------------------------------------------------------------------
-void FWindowsApplication::PumpMessages() {
-    parent_type::PumpMessages();
+bool FWindowsApplication::PumpMessages() NOEXCEPT {
+    return parent_type::PumpMessages();
 }
 //----------------------------------------------------------------------------
 void FWindowsApplication::Tick(FTimespan dt) {

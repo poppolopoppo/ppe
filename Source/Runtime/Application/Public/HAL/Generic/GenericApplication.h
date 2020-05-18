@@ -3,7 +3,8 @@
 #include "Application_fwd.h"
 
 #include "IO/String.h"
-#include "Misc/ServiceContainer.h"
+#include "Modular/ModularDomain.h"
+#include "Modular/ModularServices.h"
 #include "Time/Timepoint.h"
 
 namespace PPE {
@@ -16,22 +17,26 @@ public: // must be defined for every platform
 
     virtual ~FGenericApplication();
 
+    const FModularDomain& Domain() const { return _domain; }
     const FWString& Name() const { return _name; }
-    const FServiceContainer& Services() const { return _services; }
+    const FModularServices& Services() const { return _services; }
+    const FSeconds& Elapsed() const { return _elapsed; }
 
     virtual void Start();
-    virtual void PumpMessages();
+    virtual bool PumpMessages() NOEXCEPT;
     virtual void Tick(FTimespan dt);
     virtual void Shutdown();
 
 protected:
-    explicit FGenericApplication(FWString&& name);
+    explicit FGenericApplication(const FModularDomain& domain, FWString&& name);
 
-    FServiceContainer& Services() { return _services; }
+    FModularServices& Services() { return _services; }
 
 private:
+    const FModularDomain& _domain;
     FWString _name;
-    FServiceContainer _services;
+    FModularServices _services;
+    FSeconds _elapsed;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -16,9 +16,10 @@ FWD_INTEFARCE_UNIQUEPTR(WindowService);
 //----------------------------------------------------------------------------
 class PPE_APPLICATION_API FApplicationWindow : public FApplicationBase {
 public:
-    explicit FApplicationWindow(FWString&& name);
-    FApplicationWindow(FWString&& name, size_t width, size_t height);
-    FApplicationWindow(FWString&& name, int left, int top, size_t width, size_t height);
+    explicit FApplicationWindow(const FModularDomain& domain, FWString&& name);
+    explicit FApplicationWindow(const FModularDomain& domain, FWString&& name, size_t width, size_t height);
+    explicit FApplicationWindow(const FModularDomain& domain, FWString&& name, int left, int top, size_t width, size_t height);
+
     virtual ~FApplicationWindow();
 
     FWindowBase& Main() const { return *_main; }

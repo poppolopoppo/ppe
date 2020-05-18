@@ -15,11 +15,11 @@ class PPE_APPLICATION_API FWindowsApplication : public FGenericApplication {
 public: // must be defined for every platform
     using parent_type = FGenericApplication;
 
-    explicit FWindowsApplication(FWString&& name);
+    explicit FWindowsApplication(const FModularDomain& domain, FWString&& name);
     virtual ~FWindowsApplication();
 
     virtual void Start() override;
-    virtual void PumpMessages() override;
+    virtual bool PumpMessages() NOEXCEPT override;
     virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
 

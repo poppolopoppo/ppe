@@ -12,8 +12,10 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FGenericApplication::FGenericApplication(FWString&& name)
-:   _name(std::move(name)) {
+FGenericApplication::FGenericApplication(const FModularDomain& domain, FWString&& name)
+:    _domain(domain)
+,    _name(std::move(name))
+,    _services(&_domain.Services()) {
     Assert(not _name.empty());
 }
 //----------------------------------------------------------------------------
@@ -23,14 +25,16 @@ void FGenericApplication::Start() {
     LOG(Application, Emphasis, L"start application <{0}>", _name);
 
     FPlatformTime::EnterHighResolutionTimer();
-}
-//----------------------------------------------------------------------------
-void FGenericApplication::PumpMessages() {
-    FPlatformMessageHandler::PumpMessages(nullptr);
-}
-//----------------------------------------------------------------------------
-void FGenericApplication::Tick(FTimespan ) {
 
+    _elapsed = 0.;
+}
+//----------------------------------------------------------------------------
+bool FGenericApplication::PumpMessages() NOEXCEPT {
+    return FPlatformMessageHandler::PumpGlobalMessages();
+}
+//----------------------------------------------------------------------------
+void FGenericApplication::Tick(FTimespan dt) {
+    _elapsed += dt;
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::Shutdown() {

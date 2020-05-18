@@ -32,18 +32,18 @@ static void CreateApplicationWindow_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(FWString&& name)
-:   FApplicationBase(std::move(name)) {
+FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name)
+:   FApplicationBase(domain, std::move(name)) {
     CreateApplicationWindow_(&_input, &_window, &_main, Name());
 }
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(FWString&& name, size_t width, size_t height)
-:   FApplicationBase(std::move(name)) {
+FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, size_t width, size_t height)
+:   FApplicationBase(domain, std::move(name)) {
     CreateApplicationWindow_(&_input, &_window, &_main, Name(), width, height);
 }
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(FWString&& name, int left, int top, size_t width, size_t height)
-:   FApplicationBase(std::move(name)) {
+FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, int left, int top, size_t width, size_t height)
+:   FApplicationBase(domain, std::move(name)) {
     CreateApplicationWindow_(&_input, &_window, &_main, Name(), left, top, width, height);
 }
 //----------------------------------------------------------------------------
@@ -55,19 +55,20 @@ void FApplicationWindow::Start() {
     _window->SetMainWindow(_main.get());
 
     auto& services = Services();
-    services.Register<IInputService>(_input.get());
-    services.Register<IWindowService>(_window.get());
+    services.Add<IInputService>(_input.get());
+    services.Add<IWindowService>(_window.get());
 
-    _main->Show();
+    VerifyRelease(_main->Show());
+    VerifyRelease(_main->SetFocus());
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Shutdown() {
-
-    _main->Close();
+    if (_main->Visible())
+        VerifyRelease(_main->Close());
 
     auto& services = Services();
-    services.Unregister<IWindowService>(_window.get());
-    services.Unregister<IInputService>(_input.get());
+    services.CheckedRemove<IWindowService>(_window.get());
+    services.CheckedRemove<IInputService>(_input.get());
 
     _window->SetMainWindow(nullptr);
 
