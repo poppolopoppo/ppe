@@ -3,5 +3,6 @@
 $Build.namespace(:Tools) do
     include!(
         'BuildRobot/BuildRobot.rb',
-        'UnitTest/UnitTest.rb' )
+        'UnitTest/UnitTest.rb',
+        'WindowTest/WindowTest.rb')
 end
