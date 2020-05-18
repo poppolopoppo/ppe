@@ -1,5 +1,10 @@
 # PPE TODO LIST
 
+- Vulkan integration, bootstrap new Runtime.RHI module :)
+    -> add external with https://github.com/KhronosGroup/Vulkan-Headers
+    -> https://github.com/SaschaWillems/Vulkan/ for great samples
+    -> french tutorials https://vulkan-tutorial.com/
+
 - Handle configuration/command line inside Core, seed from external configuration files, configuration cache
     -> format ? (ini like UE? meh... json? no comment, meh...)
     -> don't want a direct dependency to RTTI (but could be separated cleanly)
