@@ -156,7 +156,10 @@ module Build
             facet.includePaths << private_path if Dir.exist?(private_path)
 
             self.all_dependencies do |(dep, visibility)|
-                unless :runtime == visibility && env.target_dynamic_link?(dep)
+                shouldInclude = true
+                shouldInclude &= (visibility != :private || @private_dependencies.include?(dep)) # only direct private deps
+                shouldInclude &= (visibility != :runtime || !env.target_dynamic_link?(dep)) # don't include runtime deps with dynamic link
+                if shouldInclude
                     facet.includePaths << env.source_path(dep.public_path)
                 end
 
@@ -401,7 +404,6 @@ module Build
                 unless result.include?(dep)
                     result[dep] = [dep, :public]
                     dep.all_dependencies do |it|
-                        next if it.last == :private
                         next if result.include?(it.first)
                         result[it.first] = it
                     end
@@ -411,7 +413,6 @@ module Build
                 unless result.include?(dep)
                     result[dep] = [dep, :runtime]
                     dep.all_dependencies do |it|
-                        next if it.last == :private
                         next if result.include?(it.first)
                         result[it.first] = it
                     end
