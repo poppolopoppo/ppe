@@ -135,6 +135,7 @@ void FGenericWindow::MainWindowDefinition(FWindowDefinition* def) {
     def->Width = 0; // overridden by Maximized
     def->Height = 0;
 
+    def->AutoSize = true;
     def->AllowDragDrop = true;
     def->Centered = true;
     def->Maximized = true;
@@ -158,6 +159,7 @@ void FGenericWindow::HiddenWindowDefinition(FWindowDefinition* def) {
     def->Width = 0; // overridden by Maximized
     def->Height = 0;
 
+    def->AutoSize = false;
     def->AllowDragDrop = false;
     def->Centered = false;
     def->Maximized = false;

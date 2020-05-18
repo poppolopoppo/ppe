@@ -27,6 +27,7 @@ struct PPE_APPLICATION_API FGenericWindowDefinition {
     size_t Width;
     size_t Height;
 
+    bool AutoSize           : 1;
     bool AllowDragDrop      : 1;
     bool Centered           : 1;
     bool Maximized          : 1;

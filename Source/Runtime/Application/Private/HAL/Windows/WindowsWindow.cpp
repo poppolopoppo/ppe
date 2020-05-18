@@ -10,6 +10,7 @@
 #include "HAL/PlatformMessageHandler.h"
 #include "HAL/PlatformMouse.h"
 #include "HAL/PlatformNotification.h"
+#include "HAL/PlatformSurvey.h"
 #include "HAL/Windows/LastError.h"
 #include "Input/MouseButton.h"
 
@@ -131,31 +132,34 @@ bool FWindowsWindow::Show() {
     ::HWND const hWnd = HandleWin32();
     Assert(hWnd);
 
-    ::BOOL succeed;
-
-    succeed = ::ShowWindow(hWnd, FCurrentProcess::Get().nShowCmd());
-    CLOG_LASTERROR(not succeed, Window, L"ShowWindow");
-    if (not succeed)
+    if (::ShowWindow(hWnd, FCurrentProcess::Get().nShowCmd())) {
+        LOG_LASTERROR(Window, L"ShowWindow");
         return false;
+    }
 
-    succeed = ::UpdateWindow(hWnd);
-    CLOG_LASTERROR(not succeed, Window, L"UpdateWindow");
-    if (not succeed)
+    if (not ::UpdateWindow(hWnd)) {
+        LOG_LASTERROR(Window, L"UpdateWindow");
         return false;
+    }
 
     return parent_type::Show();
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Close() {
-    const ::BOOL succeed = ::CloseWindow(HandleWin32());
-    CLOG_LASTERROR(not succeed, Window, L"CloseWindow");
+    if (not parent_type::Close())
+        return false;
 
-    return (succeed && parent_type::Close());
+    if (not ::CloseWindow(HandleWin32())) {
+        LOG_LASTERROR(Window, L"CloseWindow");
+        return false;
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::PumpMessages() {
     return (parent_type::PumpMessages() &&
-        FPlatformMessageHandler::PumpMessages(this));
+        FPlatformMessageHandler::PumpMessages(*this));
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Center() {
@@ -339,6 +343,8 @@ bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, cons
     Assert(window);
     Assert(not window->Handle());
 
+    Verify(parent_type::CreateWindow(window, FWString(title), def));
+
     ::DWORD dwStyle = WS_OVERLAPPEDWINDOW;
     ::DWORD dwStyleEx = 0;
 
@@ -379,27 +385,35 @@ bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, cons
         dwStyle &= ~(WS_EX_APPWINDOW);
     }
 
-    ::RECT wRect = {
-        checked_cast<::LONG>(def.Left),
-        checked_cast<::LONG>(def.Top),
-        checked_cast<::LONG>(def.Left + def.Width),
-        checked_cast<::LONG>(def.Top + def.Height) };
+    FWindowDefinition corrected = def;
 
-    if (not ::AdjustWindowRect(&wRect, dwStyle, FALSE))
-        PPE_THROW_IT(FLastErrorException("AdjustWindowRect"));
+    if (def.AutoSize) {
+        corrected.Left = CW_USEDEFAULT;
+        corrected.Top = CW_USEDEFAULT;
+        corrected.Width = size_t(CW_USEDEFAULT);
+        corrected.Height = size_t(CW_USEDEFAULT);
+    }
+    else {
+        ::RECT wRect = {
+            checked_cast<::LONG>(def.Left),
+            checked_cast<::LONG>(def.Top),
+            checked_cast<::LONG>(def.Left + def.Width),
+            checked_cast<::LONG>(def.Top + def.Height) };
+
+        if (not ::AdjustWindowRect(&wRect, dwStyle, FALSE))
+            PPE_THROW_IT(FLastErrorException("AdjustWindowRect"));
+
+
+        corrected.Left = checked_cast<int>(wRect.left);
+        corrected.Top = checked_cast<int>(wRect.top);
+        corrected.Width = checked_cast<size_t>(wRect.right - wRect.left);
+        corrected.Height = checked_cast<size_t>(wRect.bottom - wRect.top);
+    }
 
     ::HWND const hParent = (def.Parent
         ? checked_cast<FWindowsWindow*>(def.Parent)->HandleWin32()
         : NULL );
     Assert(not def.Parent || hParent);
-
-    FWindowDefinition corrected = def;
-    corrected.Left = checked_cast<int>(wRect.left);
-    corrected.Top = checked_cast<int>(wRect.top);
-    corrected.Width = checked_cast<size_t>(wRect.right - wRect.left);
-    corrected.Height = checked_cast<size_t>(wRect.bottom - wRect.top);
-
-    Verify(parent_type::CreateWindow(window, std::move(title), def));
 
     ::HWND const hWnd = ::CreateWindowExW(
         dwStyleEx,
@@ -408,8 +422,8 @@ bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, cons
         dwStyle,
         checked_cast<int>(corrected.Left),
         checked_cast<int>(corrected.Top),
-        checked_cast<int>(corrected.Width),
-        checked_cast<int>(corrected.Height),
+        int(corrected.Width),
+        int(corrected.Height),
         hParent,
         NULL,
         AppHandleWin32_(),
