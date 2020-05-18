@@ -103,7 +103,12 @@ static void AppCreateWindowClass_() {
     wc.lpfnWndProc = WindowsWindowProc_;
     wc.hInstance = hInstance;
     wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon = ::LoadIconW(NULL, MAKEINTRESOURCEW(appIcon));
+    wc.hIcon = (HICON)LoadImage(hInstance,
+        MAKEINTRESOURCE(appIcon),
+        IMAGE_ICON,
+        ::GetSystemMetrics(SM_CXICON),
+        ::GetSystemMetrics(SM_CYICON),
+        LR_DEFAULTCOLOR);
     wc.hIconSm = (::HICON)::LoadImageW(hInstance,
         MAKEINTRESOURCEW(appIcon),
         IMAGE_ICON,
