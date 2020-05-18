@@ -55,6 +55,12 @@ public:
 
     CONSTEXPR value_type operator *() const { return _value; }
 
+    CONSTEXPR TUnit operator +(const TUnit& other) const { return TUnit{ _value + other._value }; }
+    CONSTEXPR TUnit operator -(const TUnit& other) const { return TUnit{ _value - other._value }; }
+
+    CONSTEXPR TUnit& operator +=(const TUnit& other) { _value += other._value; return (*this); }
+    CONSTEXPR TUnit& operator -=(const TUnit& other) { _value -= other._value; return (*this); }
+
     CONSTEXPR bool operator ==(const TUnit& other) const { return _value == other._value; }
     CONSTEXPR bool operator !=(const TUnit& other) const { return !operator ==(other); }
 
