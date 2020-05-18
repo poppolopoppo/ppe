@@ -9,7 +9,7 @@ namespace PPE {
 class FBuildRobotApp : public Application::FApplicationConsole {
     typedef Application::FApplicationConsole parent_type;
 public:
-    FBuildRobotApp();
+    explicit FBuildRobotApp(const FModularDomain& domain);
     ~FBuildRobotApp();
 
     virtual void Start() override;

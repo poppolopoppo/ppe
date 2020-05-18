@@ -8,8 +8,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBuildRobotApp::FBuildRobotApp()
-    : parent_type(L"BuildRobot") {
+FBuildRobotApp::FBuildRobotApp(const FModularDomain& domain)
+:   parent_type(domain, L"BuildRobot") {
 }
 //----------------------------------------------------------------------------
 FBuildRobotApp::~FBuildRobotApp() = default;
