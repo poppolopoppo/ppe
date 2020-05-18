@@ -53,7 +53,9 @@ public:
     void DumpCrashInfos(FTextWriter& oss) const;
     void DumpCrashInfos(FWTextWriter& oss) const;
 
+    void LogAllInfos() const;
     void LogMemoryStats() const;
+    void LogPhysicalMemory() const;
     void LogProcessInfos() const;
     void LogStorageInfos() const;
 

@@ -90,13 +90,26 @@ FCurrentProcess::FCurrentProcess(
     }
 #endif
 
-    LogProcessInfos();
-    LogMemoryStats();
-    LogStorageInfos();
+    LogAllInfos();
 }
 //----------------------------------------------------------------------------
 FCurrentProcess::~FCurrentProcess() {
     LOG(Process, Info, L"exit with code = {0}.", _exitCode.load());
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::LogAllInfos() const {
+    LogProcessInfos();
+    LogPhysicalMemory();
+    LogStorageInfos();
+    LogMemoryStats();
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::LogPhysicalMemory() const {
+#if USE_PPE_LOGGER
+    FStringBuilder sb;
+    DumpPhysicalMemory(sb);
+    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
+#endif
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::LogMemoryStats() const {
@@ -164,12 +177,11 @@ void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
             Format(oss,
                 "   [{0}]", domain->Name()) << Eol;
             Format(oss,
-                "       $usr\n"
-                "           num allocs          = {0}\n"
-                "           min / max size      = {1:8f3} / {2:8f3}\n"
-                "           total size          = {3:8f3}\n"
-                "           peak allocs / size  = {4:8f3} / {5:8f3}\n"
-                "           accum allocs / size = {6:8f3} / {7:8f3}",
+                "      usr: num allocs          = {0}\n"
+                "      usr: min / max size      = {1:8f3} / {2:8f3}\n"
+                "      usr: total size          = {3:8f3}\n"
+                "      usr: peak allocs / size  = {4:8f3} / {5:8f3}\n"
+                "      usr: accum allocs / size = {6:8f3} / {7:8f3}",
                 Fmt::CountOfElements(usr.NumAllocs),
                 Fmt::SizeInBytes(usr.MinSize),
                 Fmt::SizeInBytes(usr.MaxSize),
@@ -179,12 +191,11 @@ void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
                 Fmt::CountOfElements(usr.AccumulatedAllocs),
                 Fmt::SizeInBytes(usr.AccumulatedSize)) << Eol;
             Format(oss,
-                "       $sys\n"
-                "           num allocs          = {0}\n"
-                "           min / max size      = {1:8f3} / {2:8f3}\n"
-                "           total size          = {3:8f3}\n"
-                "           peak allocs / size  = {4:8f3} / {5:8f3}\n"
-                "           accum allocs / size = {6:8f3} / {7:8f3}",
+                "      sys: num allocs          = {0}\n"
+                "      sys: min / max size      = {1:8f3} / {2:8f3}\n"
+                "      sys: total size          = {3:8f3}\n"
+                "      sys: peak allocs / size  = {4:8f3} / {5:8f3}\n"
+                "      sys: accum allocs / size = {6:8f3} / {7:8f3}",
                 Fmt::CountOfElements(sys.NumAllocs),
                 Fmt::SizeInBytes(sys.MinSize),
                 Fmt::SizeInBytes(sys.MaxSize),
@@ -215,11 +226,11 @@ void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
     {
         const FBuildVersion build = CurrentBuildVersion();
         Format(oss, "build version =") << Eol;
-        Format(oss, "    branch = {0}", build.Branch) << Eol;
-        Format(oss, "    revision = {0}", build.Revision) << Eol;
-        Format(oss, "    family = {0}", build.Family) << Eol;
-        Format(oss, "    compiler = {0}", build.Compiler) << Eol;
-        Format(oss, "    timestamp = {0}", build.Timestamp.ToDateTime()) << Eol;
+        Format(oss, "   branch = {0}", build.Branch) << Eol;
+        Format(oss, "   revision = {0}", build.Revision) << Eol;
+        Format(oss, "   family = {0}", build.Family) << Eol;
+        Format(oss, "   compiler = {0}", build.Compiler) << Eol;
+        Format(oss, "   timestamp = {0}", build.Timestamp.ToDateTime()) << Eol;
     }
     {
         const ITargetPlaftorm& platform = CurrentPlatform();

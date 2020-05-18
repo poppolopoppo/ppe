@@ -7,6 +7,7 @@
 #   include "Allocator/LinearHeap.h"
 #   include "Allocator/LinearAllocator.h"
 #   include "Allocator/TrackingMalloc.h"
+#   include "Container/SparseArray.h"
 #   include "Container/Vector.h"
 #   include "Diagnostic/CurrentProcess.h"
 
@@ -457,6 +458,74 @@ public: // ILowLevelLogger
     virtual void Flush(bool) override final {}
 };
 //----------------------------------------------------------------------------
+// Used before main when logger is not yet created
+class FAccumulatingLogger final : public ILowLevelLogger {
+public:
+    static ILowLevelLogger* Get() {
+        ONE_TIME_DEFAULT_INITIALIZE(FAccumulatingLogger, GInstance);
+        return (&GInstance);
+    }
+
+    ~FAccumulatingLogger() {
+        FlushAccumulatedLogs();
+    }
+
+    void DeferLog(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
+        Assert_NoAssume(category.Verbosity ^ level);
+
+        const Meta::FUniqueLock scopeLock(_barrier);
+
+        const TMemoryView<wchar_t> message{
+            static_cast<wchar_t*>(_heap.Allocate(text.SizeInBytes())),
+            text.size()
+        };
+
+        text.CopyTo(message);
+        _logs.Emplace(&category, level, site, message);
+    }
+
+    void FlushAccumulatedLogs() {
+        const Meta::FUniqueLock scopeLock(_barrier);
+
+        for (const FDeferredLog_& log : _logs)
+            FLogger::Log(*log.pCategory, log.Level, log.Site, log.Message);
+
+        _logs.Clear_ReleaseMemory();
+        _heap.ReleaseAll();
+    }
+
+public:
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        if (category.Verbosity ^ level)
+            DeferLog(category, level, site, text);
+    }
+
+    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
+        if (category.Verbosity ^ level) {
+            wchar_t tmp[16 << 10];
+            FWFixedSizeTextWriter oss(tmp);
+            FormatArgs(oss, format, args);
+            DeferLog(category, level, site, oss.Written());
+        }
+    }
+
+    virtual void Flush(bool) override final {
+        FlushAccumulatedLogs();
+    }
+
+private:
+    struct FDeferredLog_ {
+        const FCategory* pCategory;
+        EVerbosity Level;
+        FSiteInfo Site;
+        FWStringView Message;
+    };
+
+    std::mutex _barrier;
+    LINEARHEAP(Logger) _heap;
+    SPARSEARRAY_INSITU(Logger, FDeferredLog_) _logs;
+};
+//----------------------------------------------------------------------------
 // Used before & after main when debugger attached, no dependencies on allocators, always immediate
 #if USE_PPE_PLATFORM_DEBUG
 class FDebuggingLogger final : public ILowLevelLogger {
@@ -499,24 +568,38 @@ public: // ILowLevelLogger
 };
 #endif //!USE_PPE_PLATFORM_DEBUG
 //----------------------------------------------------------------------------
-static ILowLevelLogger* LowLevelLogger_() {
+static ILowLevelLogger* LowLevelLogger_BeforeMain_() {
 #if USE_PPE_PLATFORM_DEBUG
     return (FPlatformDebug::IsDebuggerPresent()
         ? FDebuggingLogger::Get()
-        : FDevNullLogger::Get() );
+        : FAccumulatingLogger::Get() );
+#else
+    return FAccumulatingLogger::Get();
+#endif
+}
+//----------------------------------------------------------------------------
+static ILowLevelLogger* LowLevelLogger_AfterMain_() {
+#if USE_PPE_PLATFORM_DEBUG
+    return (FPlatformDebug::IsDebuggerPresent()
+        ? FDebuggingLogger::Get()
+        : FDevNullLogger::Get());
 #else
     return FDevNullLogger::Get();
 #endif
 }
 //----------------------------------------------------------------------------
-static NO_INLINE void SetupLowLevelLoggerImpl_() {
-    SetupLoggerImpl_(LowLevelLogger_());
+static NO_INLINE void SetupLowLevelLoggerImpl_BeforeMain_() {
+    SetupLoggerImpl_(LowLevelLogger_BeforeMain_());
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void SetupLowLevelLoggerImpl_AfterMain_() {
+    SetupLoggerImpl_(LowLevelLogger_AfterMain_());
 }
 //----------------------------------------------------------------------------
 static ILowLevelLogger& CurrentLogger_() {
     // fall back for pre-logger start
     if (Unlikely(nullptr == GLoggerImpl_))
-        SetupLowLevelLoggerImpl_();
+        SetupLowLevelLoggerImpl_BeforeMain_();
 
     return (*GLoggerImpl_);
 }
@@ -587,7 +670,7 @@ void FLogger::Start() {
 }
 //----------------------------------------------------------------------------
 void FLogger::Shutdown() {
-    SetupLowLevelLoggerImpl_();
+    SetupLowLevelLoggerImpl_AfterMain_();
 
     IF_CONSTEXPR(not USE_PPE_MEMORY_DEBUGGING) {
         FBackgroundLogger::Destroy();

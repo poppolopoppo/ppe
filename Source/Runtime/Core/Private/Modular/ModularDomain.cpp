@@ -197,6 +197,8 @@ void FModularDomain::Start(FModularDomain& domain) {
 
     foreachitem(phase, GApplicationPhases_)
         domain.StartPhase(*phase);
+
+    FLUSH_LOG();
 }
 //----------------------------------------------------------------------------
 void FModularDomain::Shutdown(FModularDomain& domain) {
@@ -206,6 +208,8 @@ void FModularDomain::Shutdown(FModularDomain& domain) {
         domain.ShutdownPhase(*phase);
 
     GAppDomainRef_ = nullptr;
+
+    FLUSH_LOG();
 }
 //----------------------------------------------------------------------------
 void FModularDomain::DutyCycle() {

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Application.h"
 
@@ -18,9 +18,13 @@ public:
         void* appHandle, int nShowCmd,
         const wchar_t* filename, size_t argc, const wchar_t* const* argv ) {
         FPlatformProcess::OnProcessStart(appHandle, nShowCmd, filename, argc, argv);
+
+        ReportAllTrackingData();
     }
 
     static void OnPlatformShutdown() {
+        ReportAllTrackingData();
+
         FPlatformProcess::OnProcessShutdown();
     }
 

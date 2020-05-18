@@ -8,6 +8,7 @@
 #include "Allocator/Allocation.h"
 #include "Allocator/New.h"
 #include "Allocator/StlAllocator.h"
+#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Diagnostics.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FileStream.h"
@@ -75,6 +76,8 @@ void FCoreModule::Start(FModularDomain& domain) {
 #if USE_PPE_LOGGER
     FLogger::Start();
 #endif
+
+    FCurrentProcess::Get().LogAllInfos();
 }
 //----------------------------------------------------------------------------
 void FCoreModule::Shutdown(FModularDomain& domain) {

@@ -28,13 +28,9 @@ void FGenericPlatformProcess::OnProcessStart(
 #endif
 
     FCurrentProcess::Create(appHandle, nShowCmd, filename, argc, argv);
-
-    ReportAllTrackingData();
 }
 //----------------------------------------------------------------------------
 void FGenericPlatformProcess::OnProcessShutdown() {
-    ReportAllTrackingData();
-
     FCurrentProcess::Destroy();
 
 #if !USE_PPE_FINAL_RELEASE
