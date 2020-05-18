@@ -14,7 +14,7 @@ FWD_INTEFARCE_UNIQUEPTR(WindowService);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationWindow : public FApplicationBase {
+class PPE_APPLICATION_API FApplicationWindow : public FApplicationBase {
 public:
     explicit FApplicationWindow(FWString&& name);
     FApplicationWindow(FWString&& name, size_t width, size_t height);
