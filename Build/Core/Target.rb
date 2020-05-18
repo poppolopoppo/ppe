@@ -46,6 +46,7 @@ module Build
                 unless @compiler_override.nil?
                     facet.clear
                     @compiler_override.decorate(facet, env)
+                    @target.decorate(facet, env)
                     @target.customize(facet, env, @target)
                     @compiler_override.customize(facet, env, target)
                 end
@@ -143,8 +144,6 @@ module Build
         end
 
         def customize(facet, env, target)
-            facet << @facet
-
             super(facet, env, target)
 
             @namespace.customize(facet, env, target)

@@ -177,6 +177,7 @@ module Build
                 "BUILD_TARGET_ORDINAL=#{target.ordinal}",
                 "BUILD_TARGET_DEPS=#{target.dependency_list}")
 
+            target.decorate(result, self)
             target.customize(result, self, target)
 
             @platform.customize(result, self, target)
