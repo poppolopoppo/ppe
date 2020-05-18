@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 $Build.ppe_executable!(:UnitTest, :Tools) do
+    private_deps!(*namespace[:External]{[
+        iaca ]}) # for SIMD profiling
     public_deps!(*namespace[:Runtime]{[
         Core(),
         VFS(),
