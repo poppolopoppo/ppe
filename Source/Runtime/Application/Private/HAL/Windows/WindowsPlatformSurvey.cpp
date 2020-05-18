@@ -215,7 +215,9 @@ bool FWindowsPlatformSurvey::DisplayAdapters(FDisplayAdapters* displayAdapters) 
 bool FWindowsPlatformSurvey::PrimaryMonitor(FMonitorInfo* monitor) {
     Assert(monitor);
 
-    if (WindowsMonitorInfo_(NULL, monitor)) {
+    ::HMONITOR const hMonitor = ::MonitorFromWindow(NULL, MONITOR_DEFAULTTOPRIMARY);
+
+    if (WindowsMonitorInfo_(hMonitor, monitor)) {
         LOG(Survey, Info, L"primary monitor <{0}> : {1}x{2} {3}bpp @ {4}hz",
             monitor->MonitorName,
             monitor->CurrentResolution.Width,
@@ -284,7 +286,6 @@ bool FWindowsPlatformSurvey::MonitorInfos(FMonitorInfos* monitors) {
                 return FALSE;
             }
         }
-
     };
 
     ::MONITORENUMPROC const addMonitor = &FMonitorIterator_::Iterate;
