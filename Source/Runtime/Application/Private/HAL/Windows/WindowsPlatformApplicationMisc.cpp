@@ -9,6 +9,7 @@
 #include "HAL/PlatformIncludes.h"
 #include "HAL/PlatformProcess.h"
 #include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformGamepad.h"
 #include "HAL/Windows/WindowsPlatformNotification.h"
 #include "HAL/Windows/WindowsWindow.h"
 
@@ -22,6 +23,7 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 void FWindowsPlatformApplicationMisc::Start() {
     Verify(SUCCEEDED(::CoInitialize(NULL)));
+    FWindowsPlatformGamepad::Start();
     FWindowsWindow::Start();
     FWindowsPlatformNotification::Start();
 }
@@ -29,6 +31,7 @@ void FWindowsPlatformApplicationMisc::Start() {
 void FWindowsPlatformApplicationMisc::Shutdown() {
     FWindowsPlatformNotification::Shutdown();
     FWindowsWindow::Shutdown();
+    FWindowsPlatformGamepad::Shutdown();
     ::CoUninitialize();
 }
 //----------------------------------------------------------------------------

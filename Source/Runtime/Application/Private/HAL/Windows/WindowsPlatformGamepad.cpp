@@ -137,6 +137,14 @@ bool FWindowsPlatformGamepad::Rumble(FControllerId index, float left, float righ
     return (ERROR_SUCCESS == dwError);
 }
 //----------------------------------------------------------------------------
+void FWindowsPlatformGamepad::Start() {
+    FXInputWrapper::Create();
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformGamepad::Shutdown() {
+    FXInputWrapper::Destroy();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Application

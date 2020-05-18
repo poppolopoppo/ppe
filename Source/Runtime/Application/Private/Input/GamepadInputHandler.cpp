@@ -54,7 +54,7 @@ void FGamepadInputHandler::Rumble(size_t index, float left, float right) {
     if (not _states[index].IsConnected())
         return;
 
-    // non blocking rumble :
+    // non blocking rumble:
     AsyncBackround([=](ITaskContext&) {
         FPlatformGamepad::Rumble(index, left, right);
     },  ETaskPriority::High);

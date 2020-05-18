@@ -23,6 +23,9 @@ public: // must be defined for every platform
     static bool Poll(FControllerId index, FGamepadState* gamepad);
     static bool Rumble(FControllerId index, float left, float right);
 
+    static void Start();
+    static void Shutdown();
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
