@@ -124,18 +124,15 @@ module Build
     end
 
     make_facet(:LLVM_Posix_LTO_Disabled) do
-        librarianOptions << '-fno-lto'
         linkerOptions << '-fno-lto'
     end
     make_facet(:LLVM_Posix_LTO_Enabled) do
         if Build.LTO
             if Build.Incremental
                 Log.log 'Linux: using incremental link-time code generation'
-                librarianOptions << '-flto=thin'
                 linkerOptions << '-flto=thin'
             else
                 Log.log 'Linux: using link-time code generation'
-                librarianOptions << '-flto'
                 linkerOptions << '-flto'
             end
         else
