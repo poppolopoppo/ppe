@@ -19,4 +19,4 @@ jobs:
       with:
         ruby-version: '2.6'
     - name: build
-      run: ruby ppe.rb --bff --fbuild --Unity --no-Symbols -v Tools/UnitTest-Linux64-Debug
+      run: ruby ppe.rb --bff --fbuild --Unity --no-Symbols --x-fbuild showcmds -v Tools/UnitTest-Linux64-Debug
