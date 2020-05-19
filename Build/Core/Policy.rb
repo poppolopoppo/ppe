@@ -113,7 +113,7 @@ module Build
         ## decorate shared environment facet
         def decorate(facet, env)
             Log.debug 'decorate facet with environement <%s> and %s <%s>', env.family, self.class, @name
-            facet.push_back(@facet)
+            facet.push_front(@facet)
         end
 
         Facet::SETS.each do |facet|
