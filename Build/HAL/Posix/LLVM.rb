@@ -150,22 +150,22 @@ module Build
         self << Build.LLVM_Posix_LTO_Disabled
     end
     make_facet(:LLVM_Posix_FastDebug) do
-        compilationFlag!('/O1')
+        compilationFlag!('-O1')
         linkerOptions.append('-fno-pie', '-frtti')
         self << Build.LLVM_Posix_LTO_Disabled
     end
     make_facet(:LLVM_Posix_Release) do
-        compilationFlag!('/O2')
+        compilationFlag!('-O2')
         linkerOptions.append('-fno-pie', '-fno-rtti')
         self << Build.LLVM_Posix_LTO_Enabled
     end
     make_facet(:LLVM_Posix_Profiling) do
-        compilationFlag!('/O3')
+        compilationFlag!('-O3')
         linkerOptions.append('-fpie', '-fno-rtti')
         self << Build.LLVM_Posix_LTO_Enabled
     end
     make_facet(:LLVM_Posix_Final) do
-        compilationFlag!('/O3')
+        compilationFlag!('-O3')
         linkerOptions.append('-fpie', '-fno-rtti')
         self << Build.LLVM_Posix_LTO_Enabled
     end
