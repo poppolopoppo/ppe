@@ -8,6 +8,8 @@ $Build.ppe_executable!(:WindowTest, :Tools) do
         Serialize(),
         Network(),
         Application() ]})
+    private_deps!(*namespace[:External]{[
+        vulkan ]})
     runtime_deps!(*namespace[:ContentPipeline]{[
         BuildGraph() ]})
 end

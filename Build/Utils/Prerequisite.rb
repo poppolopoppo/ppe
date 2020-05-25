@@ -82,8 +82,23 @@ module Build
             end
         end
     public
+        def validate_DirExist!()
+            self.validate!(&lambda do |x|
+                case x
+                when String
+                    return Dir.exist?(x)
+                when Array,Set
+                    x.each do |y|
+                        return false unless validator[y]
+                    end
+                    return true
+                else
+                    Log.fatal 'unsupported value <%s>: %s', x.class, x.inspect
+                end
+            end)
+        end
         def validate_FileExist!()
-            validator = lambda do |x|
+            self.validate!(&lambda do |x|
                 case x
                 when String
                     return File.exist?(x)
@@ -95,8 +110,7 @@ module Build
                 else
                     Log.fatal 'unsupported value <%s>: %s', x.class, x.inspect
                 end
-            end
-            self.validate!(&validator)
+            end)
         end
     end #~ Prerequisite
 

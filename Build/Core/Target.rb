@@ -10,7 +10,7 @@ require 'set'
 
 module Build
 
-    persistent_value(:UnitySize, 'Size limit for spliting unity files', init: 600*1024.0)
+    persistent_value(:UnitySize, 'Size limit for splitting unity files', init: 600*1024.0)
 
     class Target < Policy
 
@@ -70,6 +70,7 @@ module Build
         attr_accessor :source_path
         attr_accessor :unity_num_files
         attr_accessor :glob_patterns
+        attr_accessor :excluded_patterns
         attr_reader :force_includes # not relative to source path
 
         def self.relative_path(*names, klass: self)
@@ -106,6 +107,7 @@ module Build
 
             @glob_path = ''
             @glob_patterns = %w{ *.c *.cpp }
+            @excluded_patterns = []
             @unity_num_files = nil
 
             @pch_header = nil
@@ -156,19 +158,25 @@ module Build
             facet.includePaths << private_path if Dir.exist?(private_path)
 
             self.all_dependencies do |(dep, visibility)|
-                shouldInclude = true
-                shouldInclude &= (visibility != :private || @private_dependencies.include?(dep)) # only direct private deps
-                shouldInclude &= (visibility != :runtime || !env.target_dynamic_link?(dep)) # don't include runtime deps with dynamic link
-                if shouldInclude
+                addIncludePaths = true
+                addIncludePaths &= (visibility != :private || @private_dependencies.include?(dep)) # only direct private deps
+                addIncludePaths &= (visibility != :runtime || !env.target_dynamic_link?(dep)) # don't include runtime deps with dynamic link
+                if addIncludePaths
                     facet.includePaths << env.source_path(dep.public_path)
                 end
 
-                case visibility
-                when :public
+                addIncludes = (visibility == :public)
+                if addIncludes
                     facet.includes << dep.includes
                     dep.force_includes.each do |header|
                         facet.includes << env.source_path(header)
                     end
+                end
+
+                addLibraries = (!env.target_dynamic_link?(dep))
+                if addLibraries
+                    facet.libraries << dep.libraries
+                    facet.libraryPaths << dep.libraryPaths
                 end
             end
 
@@ -183,18 +191,18 @@ module Build
                 end
             end
 
-            if @unity_num_files.nil? && !tag?(:nounity)
+            if @unity_num_files.nil? && !headers? && !tag?(:nounity)
                 @unity_num_files = cached_attribute('UnityNumFiles') do
                     total_files = total_size = 0
                     target.find_all_fileset(env).each do |fname|
                         sz = File.size(fname)
                         total_files += 1
                         total_size += sz
-                        Log.debug('%s: fileset << "%s"', @abs_path, fname)
+                        Log.debug('%s: fileset << "%s"', target.abs_path, fname)
                     end
                     num_files = (total_size.to_f / Build.UnitySize).ceil
                     Log.verbose("%s: found %d for a total of %.4fKiB -> use %d unity files",
-                        @abs_path, total_files, total_size / (1024.0), num_files )
+                        target.abs_path, total_files, total_size / (1024.0), num_files )
                     num_files
                 end
             end
@@ -242,6 +250,13 @@ module Build
             @glob_path = path
             glob = [ glob ] unless glob.is_a?(Array)
             @glob_patterns = glob
+            return self
+        end
+
+        def exclude!(path: @glob_path, glob: @excluded_patterns)
+            @glob_path = path
+            glob = [ glob ] unless glob.is_a?(Array)
+            @excluded_patterns = glob
             return self
         end
 

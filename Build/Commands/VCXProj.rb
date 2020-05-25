@@ -95,6 +95,7 @@ module Build
                     set!('ProjectAllowedFileExtensions', target.glob_patterns + %w{ *.h *.rb *.rc })
                     set!('ProjectFilesToExclude', target.excluded_files.to_a.collect{|x| File.join($SourcePath, x) })
                     set!('ProjectFiles', target.all_source_files.to_a.collect{|x| File.join($SourcePath, x) }, force: true)
+                    append!('ProjectFiles', target.extra_files.to_a.collect{|x| File.join($SourcePath, x) })
                     target.all_units do |unit|
                         append!('ProjectFiles', unit.source_files.to_a.collect{|x| File.join($SourcePath, x) })
                     end

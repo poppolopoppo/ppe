@@ -130,9 +130,11 @@ module Build
         if Build.LTO
             if Build.Incremental
                 Log.log 'Linux: using incremental link-time code generation'
+                librarianOptions << '-T'
                 linkerOptions << '-flto=thin'
             else
                 Log.log 'Linux: using link-time code generation'
+                librarianOptions << '-T'
                 linkerOptions << '-flto'
             end
         else

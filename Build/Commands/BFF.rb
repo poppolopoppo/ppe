@@ -137,6 +137,7 @@ module Build
 
                 prebuilds = []
                 target.all_dependencies do |(dep, visibility)|
+                    next if dep.headers?
                     case visibility
                     when :public, :private
                         libraries << BFF.make_target_alias(env, dep)

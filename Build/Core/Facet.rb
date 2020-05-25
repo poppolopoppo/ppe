@@ -7,6 +7,8 @@ module Build
     class ValueSet
         attr_reader :data
         def initialize(data=[]) @data = data end
+        def first() @data.first end
+        def last() @data.last end
         def empty?() @data.empty? end
         def &(value) @data.include?(value) end
         def <<(other) push_back(other); self end

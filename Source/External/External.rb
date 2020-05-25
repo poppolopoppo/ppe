@@ -5,8 +5,9 @@ $Build.namespace(:External) do
     include!('farmhash/farmhash.rb')
     include!('iaca/iaca.rb')
     include!('lz4/lz4.rb')
-    include!('stb/stb.rb')
     include!('renderdoc/renderdoc.rb')
+    include!('stb/stb.rb')
     include!('vstools/vstools.rb')
+    include!('vulkan/vulkan.rb')
     include!('xxHash/xxHash.rb')
 end
