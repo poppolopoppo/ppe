@@ -126,8 +126,8 @@ public:
     ~FWeakRefCountable();
 #endif
 
-    FWeakRefCountable(FWeakRefCountable&& ) : FWeakRefCountable() {}
-    FWeakRefCountable& operator =(FWeakRefCountable&& ) { return (*this); }
+    FWeakRefCountable(FWeakRefCountable&& ) NOEXCEPT : FWeakRefCountable() {}
+    FWeakRefCountable& operator =(FWeakRefCountable&& ) NOEXCEPT { return (*this); }
 
     FWeakRefCountable(const FWeakRefCountable& ) : FWeakRefCountable() {}
     FWeakRefCountable& operator =(const FWeakRefCountable&) { return (*this); }

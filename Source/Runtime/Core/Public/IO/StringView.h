@@ -60,27 +60,27 @@ public:
     CONSTEXPR TBasicStringView(TBasicStringView&& rvalue) = default;
     CONSTEXPR TBasicStringView& operator =(TBasicStringView&& rvalue) = default;
 
-    CONSTEXPR TBasicStringView(const parent_type& other) : parent_type(other) {}
-    CONSTEXPR TBasicStringView& operator =(const parent_type& other) { parent_type::operator =(other); return *this; }
+    CONSTEXPR TBasicStringView(const parent_type& other) NOEXCEPT : parent_type(other) {}
+    CONSTEXPR TBasicStringView& operator =(const parent_type& other) NOEXCEPT { parent_type::operator =(other); return *this; }
 
-    CONSTEXPR TBasicStringView(const TMemoryView<_Char>& other) : parent_type(other) {}
-    CONSTEXPR TBasicStringView& operator =(const TMemoryView<_Char>& other) { parent_type::operator =(other); return *this; }
+    CONSTEXPR TBasicStringView(const TMemoryView<_Char>& other) NOEXCEPT : parent_type(other) {}
+    CONSTEXPR TBasicStringView& operator =(const TMemoryView<_Char>& other) NOEXCEPT { parent_type::operator =(other); return *this; }
 
-    CONSTEXPR TBasicStringView(parent_type&& rvalue) : parent_type(std::move(rvalue)) {}
-    CONSTEXPR TBasicStringView& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; }
+    CONSTEXPR TBasicStringView(parent_type&& rvalue) NOEXCEPT : parent_type(std::move(rvalue)) {}
+    CONSTEXPR TBasicStringView& operator =(parent_type&& rvalue) NOEXCEPT { parent_type::operator =(std::move(rvalue)); return *this; }
 
-    TBasicStringView(std::initializer_list<value_type> list) : parent_type(list) {}
-    TBasicStringView(const iterator& first, const iterator& last) : parent_type(first, last) {}
-    CONSTEXPR TBasicStringView(pointer storage, size_type size) : parent_type(storage, size) {}
+    TBasicStringView(std::initializer_list<value_type> list) NOEXCEPT : parent_type(list) {}
+    TBasicStringView(const iterator& first, const iterator& last) NOEXCEPT : parent_type(first, last) {}
+    CONSTEXPR TBasicStringView(pointer storage, size_type size) NOEXCEPT : parent_type(storage, size) {}
 
     template <size_t _Dim>
-    CONSTEXPR TBasicStringView(const _Char(&staticChars)[_Dim])
+    CONSTEXPR TBasicStringView(const _Char(&staticChars)[_Dim]) NOEXCEPT
         : parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
         static_assert(_Dim, "invalid string");
     }
 
     template <size_t _Dim>
-    CONSTEXPR TBasicStringView& operator =(const _Char(&staticChars)[_Dim]) {
+    CONSTEXPR TBasicStringView& operator =(const _Char(&staticChars)[_Dim]) NOEXCEPT {
         static_assert(_Dim, "invalid string");
         return (*this = TBasicStringView(staticChars, _Dim - 1));
     }
@@ -92,23 +92,23 @@ public:
         dst[parent_type::size()] = _Char(0);
     }
 
-    const parent_type& MakeView() const { return *this; }
+    const parent_type& MakeView() const NOEXCEPT { return *this; }
 
-    auto ToLower() const {
+    auto ToLower() const NOEXCEPT {
         _Char(*transform)(_Char) = &PPE::ToLower;
         return parent_type::Map(transform);
     }
 
-    auto ToUpper() const {
+    auto ToUpper() const NOEXCEPT {
         _Char(*transform)(_Char) = &PPE::ToUpper;
         return parent_type::Map(transform);
     }
 
-    friend bool operator ==(const TBasicStringView& lhs, const TBasicStringView& rhs) { return Equals(lhs, rhs); }
-    friend bool operator !=(const TBasicStringView& lhs, const TBasicStringView& rhs) { return not operator ==(lhs, rhs); }
+    friend bool operator ==(const TBasicStringView& lhs, const TBasicStringView& rhs) NOEXCEPT { return Equals(lhs, rhs); }
+    friend bool operator !=(const TBasicStringView& lhs, const TBasicStringView& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
 
-    friend bool operator < (const TBasicStringView& lhs, const TBasicStringView& rhs) { return (Compare(lhs, rhs) < 0); }
-    friend bool operator >=(const TBasicStringView& lhs, const TBasicStringView& rhs) { return not operator < (lhs, rhs); }
+    friend bool operator < (const TBasicStringView& lhs, const TBasicStringView& rhs) NOEXCEPT { return (Compare(lhs, rhs) < 0); }
+    friend bool operator >=(const TBasicStringView& lhs, const TBasicStringView& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FStringView)
