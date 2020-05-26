@@ -317,6 +317,7 @@ module Build
             return self
         end
         def apply_decorator(output, environment)
+            Log.debug "apply decorator <%s> to environment <%s>", self.class, environment.family
             @facets.each do |(filter, facet)|
                 output << facet if filter.call(environment)
             end
@@ -327,7 +328,8 @@ module Build
             super()
         end
     public
-        def facet!(platform: nil, config: nil, compiler: nil, facet: Facet.new)
+        def facet!(platform: nil, config: nil, compiler: nil, facet: Facet.new, &block)
+            facet.instance_exec(&block) unless block.nil?
             if platform or config or compiler
                 decorate!(facet) do |env|
                     (platform.nil? or env.platform.match?(platform)) and

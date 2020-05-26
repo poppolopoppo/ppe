@@ -13,6 +13,9 @@ module Build
             @os = os
             export!('PlatformArch', @arch)
         end
+        def match?(expr)
+            super(expr) || Policy.match_expr?(@arch, expr) || Policy.match_expr?(@os, expr)
+        end
         def intrinsics_supported() Log.error("%s: intrinsics_supported() is not implemented", @name); [] end
         def customize(facet, env, target)
             facet.defines << "TARGET_PLATFORM=#{@os}"

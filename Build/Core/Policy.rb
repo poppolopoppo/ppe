@@ -33,8 +33,13 @@ module Build
                 @facet << other.facet
             when Facet
                 @facet << other
+            when Decorator
+                custom!() do |env, target|
+                    Log.debug 'target <%s-%s> inherits from <%s>', target.abs_path, env.family, other.class
+                    other.apply_decorator(self, env)
+                end
             else
-                Log.fatal 'unsupported type <%s>', other.class
+                Assert.unexpected(other)
             end
             return self
         end
@@ -48,7 +53,7 @@ module Build
             when Facet
                 @facet >> other
             else
-                Log.fatal 'unsupported type <%s>', other.class
+                Assert.unexpected(other)
             end
         end
         def ==(other)
@@ -58,20 +63,28 @@ module Build
             when Facet
                 return @facet == other
             else
-                Log.fatal 'unsupported type <%s>', other.class
+                Assert.unexpected(other)
             end
         end
 
-        def match?(expr)
+        def self.match_expr?(name, expr)
             case expr
+            when Symbol
+                return name == expr
             when Regexp
-                return @name =~ expr
+                return name =~ expr
             when String # assume glob string
-                return File.fnmatch?(expr, @name.to_s)
+                return File.fnmatch?(expr, name.to_s)
+            when Array
+                return other.any?{|x| Policy.match_expr?(name, x) }
             else
-                raise ArgumentError.new('unexpected match expression')
+                Assert.unexpected(expr)
             end
         end
+        def match?(expr)
+            return Policy.match_expr?(@name, expr)
+        end
+
         def custom!(&block)
             @customizations << block
             return self
@@ -85,7 +98,7 @@ module Build
                     when Hash
                         set!(options)
                     else
-                        raise ArgumentError.new("unexpected options: #{options.inspect}")
+                        Assert.unexpected(options)
                     end
                 end
             end
