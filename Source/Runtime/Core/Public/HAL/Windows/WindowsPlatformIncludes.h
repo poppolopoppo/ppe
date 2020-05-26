@@ -85,3 +85,4 @@ struct IUnknown;
 #undef MoveFile
 #undef RegisterClass
 #undef RemoveDirectory
+#undef Yield

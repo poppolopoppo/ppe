@@ -9,7 +9,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FTaskManagerImpl : public ITaskContext {
+class FTaskManagerImpl final : public ITaskContext {
 public:
     explicit FTaskManagerImpl(FTaskManager& manager);
     ~FTaskManagerImpl();
@@ -42,6 +42,8 @@ public: // ITaskContext
     virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
+
+    virtual bool Yield(ETaskPriority priority) override final;
 
 private:
     using FTaskQueued = FTaskScheduler::FTaskQueued;

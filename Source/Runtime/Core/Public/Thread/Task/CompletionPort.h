@@ -5,7 +5,6 @@
 #include "Thread/Task_fwd.h"
 
 #include "Container/Vector.h"
-#include "Memory/MemoryView.h"
 #include "Memory/WeakPtr.h"
 #include "Meta/PointerWFlags.h"
 #include "Thread/AtomicSpinLock.h"
@@ -21,11 +20,11 @@ class FTaskManagerImpl;
 // Holds a fiber with its original ITaskContext* and priority for resuming
 //----------------------------------------------------------------------------
 using FTaskFiberRef = const void*;
-class FInteruptedTask {
+class FInterruptedTask {
 public:
-    FInteruptedTask() = default;
+    FInterruptedTask() = default;
 
-    FInteruptedTask(
+    FInterruptedTask(
         ITaskContext& ctx,
         FTaskFiberRef fiber,
         ETaskPriority priority ) NOEXCEPT
@@ -37,13 +36,21 @@ public:
     ITaskContext* Context() const { return _taskContextAndPriority.Get(); }
     ETaskPriority Priority() const { return ETaskPriority(_taskContextAndPriority.Flag01()); }
 
-    static PPE_CORE_API void Resume(const TMemoryView<FInteruptedTask>& tasks);
+    friend bool operator <(const FInterruptedTask& lhs, const FInterruptedTask& rhs) NOEXCEPT {
+        return (lhs.Priority() < rhs.Priority());
+    }
+    friend bool operator >=(const FInterruptedTask& lhs, const FInterruptedTask& rhs) NOEXCEPT {
+        return (not operator <(lhs, rhs));
+    }
+
+    static PPE_CORE_API FTaskFunc ResumeTask(const FInterruptedTask& task);
+    static PPE_CORE_API void Resume(const TMemoryView<FInterruptedTask>& tasks);
 
 private:
     FTaskFiberRef _fiber;
     Meta::TPointerWFlags<ITaskContext> _taskContextAndPriority;
 };
-PPE_ASSUME_TYPE_AS_POD(FInteruptedTask)
+PPE_ASSUME_TYPE_AS_POD(FInterruptedTask)
 //----------------------------------------------------------------------------
 // This is the main synchronization API :
 //  - use only when you need to wait for task(s) ;
@@ -80,7 +87,7 @@ private:
     std::atomic<int> _countDown{ CP_NotReady };
 
     FAtomicSpinLock _barrier;
-    VECTORINSITU(Task, FInteruptedTask, 8) _queue;
+    VECTORINSITU(Task, FInterruptedTask, 8) _queue;
     VECTORINSITU(Task, FCompletionPort*, 8) _children;
 
     void ResetToNotReady_AssumeFinished_();

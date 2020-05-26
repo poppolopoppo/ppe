@@ -7,7 +7,6 @@
 #include "Thread/Task/TaskManagerImpl.h"
 
 #include "Diagnostic/Logger.h"
-#include "HAL/PlatformMemory.h"
 #include "Memory/RefPtr.h"
 #include "Meta/ThreadResource.h"
 
@@ -19,6 +18,7 @@
 
 #include <algorithm>
 #include <condition_variable>
+#include <iterator>
 #include <mutex>
 
 namespace PPE {
@@ -36,7 +36,7 @@ public:
     FWorkerContext_(const FWorkerContext_& ) = delete;
     FWorkerContext_& operator =(const FWorkerContext_& ) = delete;
 
-    ITaskContext& Context() const { return _pimpl; }
+    FTaskManagerImpl& Context() const { return _pimpl; }
     const FTaskManager& Manager() const { return _pimpl.Manager(); }
     FTaskFiberLocalCache& Fibers() { return _fibers; }
     size_t WorkerIndex() const { return _workerIndex; }
@@ -46,10 +46,10 @@ public:
     static FWorkerContext_& Get();
     static void PostWork();
     static void ExitWorkerTask(ITaskContext& ctx);
-    static ITaskContext& Consume(FTaskScheduler::FTaskQueued* task);
+    static FTaskManagerImpl& Consume(FTaskScheduler::FTaskQueued* task);
 
 private:
-    NO_INLINE void DutyCycle_();
+    NO_INLINE void DutyCycle_() const;
 
     FTaskManagerImpl& _pimpl;
     FTaskFiberLocalCache _fibers;
@@ -101,7 +101,7 @@ bool FWorkerContext_::SetPostTaskDelegate(FTaskFunc&& postWork) {
     return true;
 }
 //----------------------------------------------------------------------------
-ITaskContext& FWorkerContext_::Consume(FTaskScheduler::FTaskQueued* task) {
+FTaskManagerImpl& FWorkerContext_::Consume(FTaskScheduler::FTaskQueued* task) {
     FWorkerContext_& ctx = Get();
     ctx._pimpl.Consume(ctx._workerIndex, task);
     return ctx._pimpl;
@@ -124,7 +124,7 @@ void FWorkerContext_::PostWork() {
     }
 }
 //----------------------------------------------------------------------------
-void FWorkerContext_::DutyCycle_() {
+void FWorkerContext_::DutyCycle_() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _pimpl.DumpStats();
@@ -201,6 +201,8 @@ public:
     ,   NumTotal(numTotal)
     ,   NumPending(NumTotal)
     {}
+
+    static void DoNothing(ITaskContext&) { NOOP(); }
 
     static void Broadcast(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
         Assert_NoAssume(not FFiber::IsInFiber()); // won't work if we stall a worker thread !
@@ -405,6 +407,28 @@ void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, 
     FCompletionPort handle;
     Run(&handle, tasks, priority);
     WaitFor(handle, priority);
+}
+//----------------------------------------------------------------------------
+bool FTaskManagerImpl::Yield(ETaskPriority priority) {
+    if (not _scheduler.HasPendingTask(priority))
+        return false; // don't yield if there's no task with gte priority
+
+    FTaskFiberPool::FHandleRef const cur = FTaskFiberPool::CurrentHandleRef();
+    FTaskFiberPool::FHandleRef const nxt = _fibers.AcquireFiber();
+
+    FInterruptedTask waiting{ *this, cur, priority };
+
+    // The wakeup callback will be executed just after YieldFiber(), and will perform
+    // the actual FireAndForget(), so we can't try to resume current fiber before
+    // it's stalled.
+    nxt->AttachWakeUpCallback([waiting]() {
+       waiting.Context()->FireAndForget(FInterruptedTask::ResumeTask(waiting), waiting.Priority());
+    });
+
+    cur->YieldFiber(nxt, false/* keep current fiber alive */);
+    // Note: after previous we may have jumped to another thread !
+
+    return true;
 }
 //----------------------------------------------------------------------------
 FCompletionPort* FTaskManagerImpl::StartPortIFN_(FCompletionPort* phandle, size_t n) NOEXCEPT {
@@ -623,16 +647,16 @@ void FTaskManager::WaitForAll() const {
     if (FFiber::IsInFiber())
         AssertNotImplemented(); // not easily done inside fibers because of mutex locking used atm
     else
-        FWaitForTask_::Broadcast(*_pimpl, [](ITaskContext&) { NOOP(); }, ETaskPriority::Internal);
+        FWaitForTask_::Broadcast(*_pimpl, &FWaitForTask_::DoNothing, ETaskPriority::Internal);
 }
 //----------------------------------------------------------------------------
 bool FTaskManager::WaitForAll(int timeoutMS) const {
     Assert(nullptr != _pimpl);
 
     if (FFiber::IsInFiber())
-        _pimpl->RunAndWaitFor([](ITaskContext&) { NOOP(); }, ETaskPriority::Internal);
+        _pimpl->RunAndWaitFor(&FWaitForTask_::DoNothing, ETaskPriority::Internal);
     else
-        FWaitForTask_::WaitFor(*_pimpl, [](ITaskContext&) { NOOP(); }, ETaskPriority::Internal, timeoutMS);
+        FWaitForTask_::WaitFor(*_pimpl, &FWaitForTask_::DoNothing, ETaskPriority::Internal, timeoutMS);
 
     return _pimpl->Scheduler().HasPendingTask();
 }
@@ -710,22 +734,23 @@ ITaskContext& ITaskContext::Get() NOEXCEPT {
     return *pimpl;
 }
 //----------------------------------------------------------------------------
-void FInteruptedTask::Resume(const TMemoryView<FInteruptedTask>& tasks) {
+FTaskFunc FInterruptedTask::ResumeTask(const FInterruptedTask& task) {
+    return [resume{ static_cast<FTaskFiberPool::FHandleRef>(task.Fiber()) }](ITaskContext&) {
+        FTaskFiberPool::CurrentHandleRef()->YieldFiber(resume, true/* release current fiber */);
+    };
+}
+//----------------------------------------------------------------------------
+void FInterruptedTask::Resume(const TMemoryView<FInterruptedTask>& tasks) {
     Assert(not tasks.empty());
 
     // sort all queued fibers by priority before resuming and outside of the lock
     // (no need for stable sort since each task should have a unique priority)
-    std::sort(tasks.begin(), tasks.end(),
-        [](const FInteruptedTask& lhs, const FInteruptedTask& rhs) {
-            return (lhs.Priority() < rhs.Priority());
-        });
+    std::stable_sort(tasks.begin(), tasks.end());
 
     bool postTaskAvailable = true;
     FWorkerContext_& worker = FWorkerContext_::Get();
-    for (const FInteruptedTask& task : tasks) {
-        FTaskFunc func([resume{ static_cast<FTaskFiberPool::FHandleRef>(task.Fiber()) }](ITaskContext&) {
-            FTaskFiberPool::CurrentHandleRef()->YieldFiber(resume, true/* release current fiber */);
-        });
+    for (const FInterruptedTask& task : tasks) {
+        FTaskFunc func{ ResumeTask(task) };
 
         // it's faster when using PostTaskDelegate versus spawning a new fiber,
         // but there's only one task that can benefit from this : we can't stole
@@ -740,7 +765,7 @@ void FInteruptedTask::Resume(const TMemoryView<FInteruptedTask>& tasks) {
             // stalled fibers are resumed through a task to let the current fiber dispatch
             // all jobs to every worker thread before yielding (won't steal execution from current fiber)
 
-            task.Context()->Run(nullptr, std::move(func), task.Priority());
+            task.Context()->FireAndForget(std::move(func), task.Priority());
         }
     }
 

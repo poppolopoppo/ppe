@@ -30,6 +30,8 @@ public:
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
+    virtual bool Yield(ETaskPriority priority = ETaskPriority::Normal) = 0;
+
 public: // helpers
     void FireAndForget(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) { Run(nullptr, std::move(rtask), priority); }
     void FireAndForget(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) { Run(nullptr, rtasks, priority); }

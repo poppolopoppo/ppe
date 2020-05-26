@@ -38,9 +38,9 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
     FTaskFiberPool::FHandleRef const cur = FTaskFiberPool::CurrentHandleRef();
     FTaskFiberPool::FHandleRef const nxt = fibers.AcquireFiber();
 
-    FInteruptedTask waiting{ ITaskContext::Get(), cur, priority };
+    FInterruptedTask waiting{ ITaskContext::Get(), cur, priority };
 
-    // The wakeup callback will be executed just after the yield, and will perform
+    // The wakeup callback will be executed just after YieldFiber(), and will perform
     // the actual call to Queue(). If by this time the counter would have been
     // already finished then we'd switch directly back to the original fiber.
 
@@ -52,13 +52,14 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
     _barrier.Lock();
 
     if (CP_Finished == _countDown) {
+        // task already completed, abort call to YieldFiber()
         _barrier.Unlock();
 
         nxt->OnWakeUp.Reset();
         fibers.ReleaseFiber(nxt);
     }
     else {
-        // the lock will be closed when the next fiber awaken
+        // the lock will be closed *only* when the next fiber awaken
         cur->YieldFiber(nxt, false/* keep current fiber alive */);
     }
 }
@@ -147,12 +148,8 @@ void FCompletionPort::OnCountDownReachedZero_(FCompletionPort* port) {
     ONLY_IF_ASSERT(port = nullptr); // port could be destroyed right after this barrier !
 
     // process collected data
-    if (not localQueue.empty()) {
-        std::stable_sort(localQueue.begin(), localQueue.end(), [](const FInteruptedTask& lhs, const FInteruptedTask& rhs) NOEXCEPT{
-            return (lhs.Priority() < rhs.Priority());
-        });
-        FInteruptedTask::Resume(localQueue.MakeView());
-    }
+    if (not localQueue.empty())
+        FInterruptedTask::Resume(localQueue.MakeView());
 
     // decrement the ref of potentially attached parent counters
     // only need to decrement the parents once, since their _countDown was incremented from 1 only once
