@@ -14,11 +14,9 @@ module Build
         end
         def self.write_modified_fileslist()
             source = MemFile.new(BFF.modified_fileslist_path)
-
-            Build.modified_files?.each do |filename|
-                source.puts!(filename)
+            Build.modified_files?.each do |fname|
+                source.puts!(fname) if fname.start_with?($SourcePath)
             end
-
             source.export_ifn?(Build.modified_fileslist_output)
         end
 

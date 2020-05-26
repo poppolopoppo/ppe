@@ -7,7 +7,8 @@ module Build
     class SourceControl
         def initialize(path, *cmdline)
             @path = File.expand_path(path)
-            @modified_files = []
+            @modified_files = nil
+            @staged_files = nil
             @branch = @revison = @timestamp = nil
             Log.log('%s: initialize source control \'%s\' in \'%s\'', self.name, cmdline.join(' '), @path)
             @handle = IO.popen(cmdline, 'r+', chdir: @path)
@@ -18,6 +19,9 @@ module Build
         end
         def modified_files?()
             return self.join()
+        end
+        def staged_files?()
+            return @staged_files
         end
         def branch?()
             return @branch
@@ -57,12 +61,21 @@ module Build
         def initialize() end
         def file_modified?(fname) false end
         def modified_files() [] end
+        def staged_files?() [] end
     end #~ DummySourceControl
 
     class GitSourceControl < SourceControl
         def name() :Git end
         def initialize(path)
             super(path, *%w{ git status -s })
+        end
+        def staged_files?()
+            if @staged_files.nil?
+                Dir.chdir(@path) do
+                    @staged_files = %x{ git ls-files --recurse-submodules }.lines.collect{|x| x.chomp.strip }
+                end
+            end
+            return @staged_files
         end
         def branch?()
             if @branch.nil?
@@ -114,7 +127,7 @@ module Build
 
     $SourceControlProvider = DummySourceControl.new
 
-    def self.init_source_control(provider: :git, path: $SourcePath)
+    def self.init_source_control(provider: :git, path: $WorkspacePath)
         unless Dir.exist?(path)
             Log.error "can't initialize source control, invalida path: '%s'", path
             return
@@ -133,6 +146,10 @@ module Build
     end
     def modified_files?()
         $SourceControlProvider.modified_files?()
+    end
+
+    def staged_files?()
+        $SourceControlProvider.staged_files?()
     end
 
     def branch?()

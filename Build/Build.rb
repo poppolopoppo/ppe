@@ -35,6 +35,7 @@ require_once 'Utils/SourceControl.rb'
 
 require_once 'HAL/hal.rb'
 
+require_once 'Commands/Backup.rb'
 require_once 'Commands/Bash.rb'
 require_once 'Commands/BFF.rb'
 require_once 'Commands/DistClean.rb'
