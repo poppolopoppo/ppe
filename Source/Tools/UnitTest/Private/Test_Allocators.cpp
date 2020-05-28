@@ -35,9 +35,9 @@ LOG_CATEGORY(, Test_Allocators)
 namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
-static constexpr size_t GNumBlocks_ = 1000;
+static constexpr size_t GTotalAllocationSize_ = CODE3264(32u, 128u) * 1024u * size_t(1024);
 #else
-static constexpr size_t GNumBlocks_ = 10000;
+static constexpr size_t GTotalAllocationSize_ = CODE3264(2u, 8u) * 1024u * 1024u * size_t(1024);
 #endif
 #if USE_PPE_ASSERT
 static constexpr size_t GLoopCount_ = 10;
@@ -278,35 +278,40 @@ void Test_Allocators() {
 
     constexpr size_t BlockSizeMin = 16;
     constexpr size_t BlockSizeMid = 32768;
-    const size_t BlockSizeMax = checked_cast<size_t>(FPlatformMemory::Constants().AllocationGranularity);
+#if USE_PPE_ASSERT
+    constexpr size_t BlockSizeLarge = 2*1024*1024;
+#else
+    constexpr size_t BlockSizeLarge = 32*1024*1024;
+#endif
 
     size_t smallBlocksSizeInBytes = 0;
     size_t largeBlocksSizeInBytes = 0;
     size_t mixedBlocksSizeInBytes = 0;
 
-    VECTOR(Container, size_t) smallBlocks;
-    VECTOR(Container, size_t) largeBlocks;
-    VECTOR(Container, size_t) mixedBlocks;
+    using blocksizes_t = VECTORMINSIZE(Container, size_t, 1024);
+
+    blocksizes_t smallBlocks;
+    blocksizes_t largeBlocks;
+    blocksizes_t mixedBlocks;
     {
         FRandomGenerator rand;
 
-        smallBlocks.resize_Uninitialized(GNumBlocks_);
-        for (size_t& blockSize : smallBlocks) {
-            blockSize = Lerp(BlockSizeMin, BlockSizeMid, rand.NextFloat01());
-            smallBlocksSizeInBytes += blockSize * sizeof(value_type);
-        }
+        auto generator = [&rand](blocksizes_t* blks, size_t minSize, size_t maxSize, size_t totalSize) NOEXCEPT -> size_t {
+            size_t currentSize = 0;
+            for (;;) {
+                size_t sz = Lerp(minSize, maxSize, rand.NextFloat01());
+                if (currentSize + sz > totalSize)
+                    break;
+                blks->push_back(sz);
+                currentSize += sz;
+            }
+            return currentSize;
+        };
 
-        largeBlocks.resize_Uninitialized(GNumBlocks_);
-        for (size_t& blockSize : largeBlocks) {
-            blockSize = Lerp(BlockSizeMid+1, BlockSizeMax, rand.NextFloat01());
-            largeBlocksSizeInBytes += blockSize * sizeof(value_type);
-        }
-
-        mixedBlocks.resize_Uninitialized(GNumBlocks_);
-        for (size_t& blockSize : mixedBlocks) {
-            blockSize = Lerp(BlockSizeMin, BlockSizeMax, Sqr(rand.NextFloat01()));
-            mixedBlocksSizeInBytes += blockSize * sizeof(value_type);
-        }
+        smallBlocksSizeInBytes += generator(&smallBlocks, BlockSizeMin, BlockSizeMid, GTotalAllocationSize_);
+        largeBlocksSizeInBytes += generator(&largeBlocks, BlockSizeMid, BlockSizeLarge, GTotalAllocationSize_);
+        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMin, BlockSizeMid, GTotalAllocationSize_ / 2);
+        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMid, BlockSizeLarge, GTotalAllocationSize_ / 2);
     }
 
     LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::SizeInBytes(smallBlocksSizeInBytes) );
