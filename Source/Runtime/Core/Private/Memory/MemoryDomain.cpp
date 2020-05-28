@@ -278,6 +278,56 @@ void DumpTrackingDataFullName_(TBasicTextWriter<_Char>& oss, const FMemoryTracki
 }
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+void DumpMipsFragmentation_(
+    FWTextWriter& oss,
+    const FWStringView& name,
+    void* vspace,
+    size_t numCommited,
+    size_t numReserved,
+    size_t mipSizeInBytes,
+    const TMemoryView<const u32>& mipMasks ) {
+
+    CONSTEXPR size_t width = 175;
+    const auto hr = Fmt::Repeat(L'-', width);
+
+    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
+        << L"  Report allocation internal fragmentation for <"
+        << name
+        << L"> : "
+        << Fmt::SizeInBytes(mipSizeInBytes)
+        << L" x "
+        << Fmt::CountOfElements(numCommited)
+        << L'/'
+        << Fmt::CountOfElements(numReserved)
+        << L" => "
+        << Fmt::SizeInBytes(numCommited * mipSizeInBytes)
+        << Eol << hr << Eol;
+
+    Assert_NoAssume(numCommited == mipMasks.size());
+
+    FWString tmp;
+    CONSTEXPR const size_t perRow = 16;
+    for (size_t r = 0, rows = (numCommited + perRow - 1) / perRow; r < rows; ++r) {
+        Format(oss, L"{0}|{1:#3}| ", Fmt::Pointer((u8*)vspace + mipSizeInBytes * r), r * perRow);
+
+        forrange(i, 0, perRow) {
+            if (i == 4 || i == 8 || i == 12)
+                oss << L' ';
+
+            const size_t mipIndex = (r * perRow + i);
+            if (mipIndex < numCommited) {
+                tmp = StringFormat(L"{0:#8X}", mipMasks[mipIndex]);
+                tmp.gsub('0', '.');
+                oss << L' ' << tmp;
+            }
+        }
+    }
+
+    oss << Eol;
+}
+#endif //!!USE_PPE_FINAL_RELEASE
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -308,44 +358,13 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
     size_t numCommited, numReserved, mipSizeInBytes;
     TMemoryView<const u32> mipMasks;
 
-    if (not FMallocDebug::FetchMediumMips(&vspace, &numCommited, &numReserved, &mipSizeInBytes, &mipMasks))
-        return;
+    oss << Eol;
 
-    CONSTEXPR size_t width = 175;
-    const auto hr = Fmt::Repeat(L'-', width);
+    if (FMallocDebug::FetchMediumMips(&vspace, &numCommited, &numReserved, &mipSizeInBytes, &mipMasks))
+        DumpMipsFragmentation_(oss, L"MediumMips", vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
+    if (FMallocDebug::FetchLargeMips(&vspace, &numCommited, &numReserved, &mipSizeInBytes, &mipMasks))
+        DumpMipsFragmentation_(oss, L"LargeMips", vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
 
-    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
-        << L"  Report allocation internal fragmentation : "
-        << Fmt::SizeInBytes(mipSizeInBytes)
-        << L" x "
-        << Fmt::CountOfElements(numCommited)
-        << L'/'
-        << Fmt::CountOfElements(numReserved)
-        << L" => "
-        << Fmt::SizeInBytes(numCommited * mipSizeInBytes)
-        << Eol << hr << Eol;
-
-    Assert_NoAssume(numCommited == mipMasks.size());
-
-    FWString tmp;
-    CONSTEXPR const size_t perRow = 16;
-    for (size_t r = 0, rows = (numCommited + perRow - 1) / perRow; r < rows; ++r) {
-        Format(oss, L"{0}|{1:#3}| ", Fmt::Pointer((u8*)vspace + mipSizeInBytes * r), r * perRow);
-
-        forrange(i, 0, perRow) {
-            if (i == 4 || i == 8 || i == 12)
-                oss << L' ';
-
-            const size_t mipIndex = (r * perRow + i);
-            if (mipIndex < numCommited) {
-                tmp = StringFormat(L"{0:#8X}", mipMasks[mipIndex]);
-                tmp.gsub('0', '.');
-                oss << L' ' << tmp;
-            }
-        }
-
-        oss << Eol;
-    }
 #endif
 }
 //----------------------------------------------------------------------------

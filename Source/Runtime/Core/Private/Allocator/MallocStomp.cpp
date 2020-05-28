@@ -15,9 +15,9 @@
 #   define PPE_MALLOCSTOMP_BLOCK_OVERLAP 0 // need PPE_MALLOCSTOMP_DELAY_DELETES
 
 #   if PPE_MALLOCSTOMP_DELAY_DELETES
+#       include "Allocator/InitSegAllocator.h"
 #       include "Container/RingBuffer.h"
 #       include "Thread/AtomicSpinLock.h"
-        PRAGMA_INITSEG_COMPILER
 #   endif
 
 namespace PPE {
@@ -129,12 +129,29 @@ static const FStompPayload_* StompGetPayload_(const void* userPtr) {
 #if PPE_MALLOCSTOMP_DELAY_DELETES
 class FStompDelayedDeletes_ {
 public:
-    static FStompDelayedDeletes_& Get() {
-        static FStompDelayedDeletes_ GLocalInstance;
+    static FStompDelayedDeletes_& Get() NOEXCEPT {
+        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FStompDelayedDeletes_>, GLocalInstance);
         return GLocalInstance;
     }
 
-    static FStompDelayedDeletes_& GInstance;
+    FStompDelayedDeletes_() NOEXCEPT
+        : _delayeds((FDeletedBlock_*)FPlatformMemory::VirtualAlloc(sizeof(FDeletedBlock_)* MaxDelayedDeletes, true), MaxDelayedDeletes)
+        , _delayedSizeInBytes(0)
+    {}
+
+    ~FStompDelayedDeletes_() {
+        // need thread safety from here
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        // flush remaining blocks to prevent from leaking the program
+        FDeletedBlock_ toDelete;
+        while (_delayeds.pop_back(&toDelete))
+            ReleaseDelayedDelete_(toDelete);
+
+        Assert(0 == _delayedSizeInBytes);
+
+        FPlatformMemory::VirtualFree(_delayeds.data(), sizeof(FDeletedBlock_) * MaxDelayedDeletes, true);
+    }
 
     void Delete(void* ptr, size_t sizeInBytes) {
         Assert(ptr);
@@ -212,25 +229,6 @@ private:
     TRingBuffer<FDeletedBlock_> _delayeds;
     size_t _delayedSizeInBytes;
 
-    FStompDelayedDeletes_()
-        : _delayeds((FDeletedBlock_*)FPlatformMemory::VirtualAlloc(sizeof(FDeletedBlock_) * MaxDelayedDeletes, true), MaxDelayedDeletes)
-        , _delayedSizeInBytes(0)
-    {}
-
-    ~FStompDelayedDeletes_() {
-        // need thread safety from here
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
-
-        // flush remaining blocks to prevent from leaking the program
-        FDeletedBlock_ toDelete;
-        while (_delayeds.pop_back(&toDelete))
-            ReleaseDelayedDelete_(toDelete);
-
-        Assert(0 == _delayedSizeInBytes);
-
-        FPlatformMemory::VirtualFree(_delayeds.data(), sizeof(FDeletedBlock_) * MaxDelayedDeletes, true);
-    }
-
     void ReleaseDelayedDelete_(const FDeletedBlock_& toDelete) {
         Assert(toDelete.SizeInBytes <= _delayedSizeInBytes);
         _delayedSizeInBytes -= toDelete.SizeInBytes;
@@ -238,7 +236,6 @@ private:
         FPlatformMemory::PageFree(toDelete.Ptr, toDelete.SizeInBytes);
     }
 };
-FStompDelayedDeletes_& FStompDelayedDeletes_::GInstance INITSEG_COMPILER_PRIORITY = FStompDelayedDeletes_::Get();
 #endif //!PPE_MALLOCSTOMP_DELAY_DELETES
 //----------------------------------------------------------------------------
 } //!namespace
@@ -305,7 +302,7 @@ void  FMallocStomp::AlignedFree(void* ptr) {
     u8* const allocationPtr = ((u8*)ptr - payload->UserOffset);
 
 #if PPE_MALLOCSTOMP_DELAY_DELETES
-    FStompDelayedDeletes_::GInstance.Delete(allocationPtr, payload->AllocationSize);
+    FStompDelayedDeletes_::Get().Delete(allocationPtr, payload->AllocationSize);
 #else
     StompVMFree_(allocationPtr, payload->AllocationSize);
 #endif

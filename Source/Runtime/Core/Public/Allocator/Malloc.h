@@ -128,6 +128,12 @@ public: // statistics
         size_t* numReserved,
         size_t* mipSizeInBytes,
         TMemoryView<const u32>* mipMasks );
+    static PPE_CORE_API bool FetchLargeMips(
+        void** vspace,
+        size_t* numCommited,
+        size_t* numReserved,
+        size_t* mipSizeInBytes,
+        TMemoryView<const u32>* mipMasks );
 };
 struct FLeakDetectorWhiteListScope {
     const bool WasIgnoringLeaks;

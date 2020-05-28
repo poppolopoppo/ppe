@@ -2,8 +2,7 @@
 
 $Build.ppe_module!(:Core) do
     isolated_files!(
-        'Private/Allocator/MallocBinned.cpp',
-        'Private/Allocator/MallocStomp.cpp',
+        'Private/Allocator/InitSegAllocator.cpp',
         'Private/Diagnostic/Benchmark.cpp' )
     private_deps!(*namespace[:External]{[
         double_conversion,

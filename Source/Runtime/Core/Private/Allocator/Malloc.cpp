@@ -3,6 +3,7 @@
 #include "Allocator/Malloc.h"
 #include "Allocator/Mallocator.h"
 #include "Allocator/MallocBinned.h"
+#include "Allocator/MallocMipMap.h"
 #include "Allocator/MallocStomp.h"
 
 #include "Diagnostic/LeakDetector.h"
@@ -81,7 +82,8 @@ struct FMallocLowLevel {
     FORCE_INLINE static size_t  RegionSize(void* ptr);
 #endif
 #if !USE_PPE_FINAL_RELEASE
-    FORCE_INLINE static size_t  FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks);
+    FORCE_INLINE static bool    FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks);
+    FORCE_INLINE static bool    FetchLargeMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks);
 #endif
 };
 //----------------------------------------------------------------------------
@@ -112,7 +114,10 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 #   endif
 #endif
 #if !USE_PPE_FINAL_RELEASE
-size_t FMallocLowLevel::FetchMediumMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
+bool FMallocLowLevel::FetchMediumMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
+    return false; // unsupported
+}
+bool FMallocLowLevel::FetchLargeMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
     return false; // unsupported
 }
 #endif
@@ -153,8 +158,13 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 }
 #endif
 #if !USE_PPE_FINAL_RELEASE
-size_t FMallocLowLevel::FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
-    return FMallocBinned::FetchMediumMips(vspace, numReserved, numCommited, mipSizeInBytes, mipMasks);
+bool FMallocLowLevel::FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
+    FMallocMipMap::MediumMips(vspace, numReserved, numCommited, mipSizeInBytes, mipMasks);
+    return true;
+}
+bool FMallocLowLevel::FetchLargeMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
+    FMallocMipMap::LargeMips(vspace, numReserved, numCommited, mipSizeInBytes, mipMasks);
+    return true;
 }
 #endif
 #endif //!PPE_MALLOC_ALLOCATOR_BINNED
@@ -187,7 +197,10 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 }
 #endif
 #if !USE_PPE_FINAL_RELEASE
-size_t FMallocLowLevel::FetchMediumMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
+bool FMallocLowLevel::FetchMediumMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
+    return false; // unsupported
+}
+bool FMallocLowLevel::FetchLargeMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
     return false; // unsupported
 }
 #endif
@@ -261,8 +274,11 @@ public:
     }
 #endif
 #if !USE_PPE_FINAL_RELEASE
-    FORCE_INLINE static size_t FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
+    FORCE_INLINE static bool FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
         return FMallocLowLevel::FetchMediumMips(vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
+    }
+    FORCE_INLINE static bool FetchLargeMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
+        return FMallocLowLevel::FetchLargeMips(vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
     }
 #endif
 
@@ -474,6 +490,17 @@ bool FMallocDebug::FetchMediumMips(
     size_t* mipSizeInBytes,
     TMemoryView<const u32>* mipMasks ) {
     return FMallocProxy::FetchMediumMips(vspace, numReserved, numCommited, mipSizeInBytes, mipMasks);
+}
+#endif //!USE_PPE_FINAL_RELEASE
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+bool FMallocDebug::FetchLargeMips(
+    void** vspace,
+    size_t* numCommited,
+    size_t* numReserved,
+    size_t* mipSizeInBytes,
+    TMemoryView<const u32>* mipMasks ) {
+    return FMallocProxy::FetchLargeMips(vspace, numReserved, numCommited, mipSizeInBytes, mipMasks);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------

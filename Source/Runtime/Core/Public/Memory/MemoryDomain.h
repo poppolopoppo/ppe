@@ -13,6 +13,12 @@
 #define WITH_PPE_MEMORYDOMAINS_COLLAPSING (USE_PPE_MEMORYDOMAINS && USE_PPE_PROFILING) // %_NOCOMMIT%
 #define WITH_PPE_MEMORYDOMAINS_FULL_COLLAPSING (WITH_PPE_MEMORYDOMAINS_COLLAPSING && 0) // turn to 1 to collapse all domains to Used/ReservedMemory %_NOCOMMIT%
 
+#if USE_PPE_MEMORYDOMAINS
+#    define ONLY_IF_MEMORYDOMAINS(...) __VA_ARGS__
+#else
+#    define ONLY_IF_MEMORYDOMAINS(...) NOOP()
+#endif
+
 namespace PPE {
 template <typename T>
 class TMemoryView;

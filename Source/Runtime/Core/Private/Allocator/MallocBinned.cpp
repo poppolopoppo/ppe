@@ -13,14 +13,14 @@
 #include "Thread/AtomicSpinLock.h"
 
 #if USE_PPE_ASSERT
-#   include "Diagnostic/Callstack.h"
 #   include "Diagnostic/DecodedCallstack.h"
 #endif
 #if USE_PPE_LOGGER
-#   include "IO/TextWriter.h"
 #   include "IO/FormatHelpers.h"
 #   include "Thread/ThreadContext.h"
 #endif
+
+#include "Allocator/InitSegAllocator.h"
 
 #if (USE_PPE_ASSERT || USE_PPE_MEMORY_DEBUGGING)
 #   define USE_MALLOCBINNED_PAGE_PROTECT    1// Crash when using a cached block
@@ -31,13 +31,8 @@
 // for medium > large block size allocations + used as FBinnedChunk allocator (*WAY* faster)
 #define USE_MALLOCBINNED_MIPMAPS 1 //%_NOCOMMIT%
 #if USE_MALLOCBINNED_MIPMAPS
-//  reserved virtual size for mip maps (not everything is consumed systematically)
-#   define PPE_MIPMAPS_RESERVEDSIZE (CODE3264(512, 1024) * 1024 * 1024) // 512/1024mo
-#   include "Allocator/MallocMipMap.h"
-// #TODO use larger mips (2mb per bit <=> 64mb per mip) in addition to medium mips ?
+#    include "Allocator/MallocMipMap.h"
 #endif
-
-PRAGMA_INITSEG_COMPILER
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
@@ -165,36 +160,12 @@ struct FBinnedBucket_ {
 };
 STATIC_ASSERT(Meta::TIsPod_v<FBinnedBucket_>);
 // using POD for fast access to buckets without singleton to help inline trivial allocations
-static THREAD_LOCAL FBinnedBucket_ GBinnedThreadBuckets_[FMallocBinned::NumSizeClasses + 1/* extra for large blocks optimization */] INITSEG_COMPILER_PRIORITY;
-//----------------------------------------------------------------------------
-// FBinnedMediumBlocks_
-//----------------------------------------------------------------------------
-#if USE_MALLOCBINNED_MIPMAPS
-struct FBinnedMipMapTraits {
-    STATIC_CONST_INTEGRAL(size_t, Granularity, ALLOCATION_GRANULARITY);
-    STATIC_CONST_INTEGRAL(size_t, ReservedSize, PPE_MIPMAPS_RESERVEDSIZE);
-    static void* PageReserve(size_t sizeInBytes) { return FVirtualMemory::PageReserve(sizeInBytes); }
-#   if USE_PPE_MEMORYDOMAINS
-    using domain_tag = MEMORYDOMAIN_TAG(MediumMipMaps);
-    static void PageCommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageCommit(ptr, sizeInBytes, domain_tag::TrackingData()); }
-    static void PageDecommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageDecommit(ptr, sizeInBytes, domain_tag::TrackingData()); }
-#   else
-    static void PageCommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageCommit(ptr, sizeInBytes); }
-    static void PageDecommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageDecommit(ptr, sizeInBytes); }
-#   endif
-    static void PageRelease(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageRelease(ptr, sizeInBytes); }
-};
-using FBinnedMediumBlocks_ = TMallocMipMap<FBinnedMipMapTraits>;
-#endif //!USE_MALLOCBINNED_MIPMAPS
+static THREAD_LOCAL FBinnedBucket_ GBinnedThreadBuckets_[FMallocBinned::NumSizeClasses + 1/* extra for large blocks optimization */];
 //----------------------------------------------------------------------------
 // FBinnedGlobalCache_
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedGlobalCache_ : Meta::FNonCopyableNorMovable {
     STATIC_CONST_INTEGRAL(size_t, MaxFreeBatches, 4); // x 8 x 64kb = 2mb max reserve globally
-
-#if USE_MALLOCBINNED_MIPMAPS
-    CACHELINE_ALIGNED FBinnedMediumBlocks_ MediumMips;
-#endif
 
     CACHELINE_ALIGNED FAtomicSpinLock Barrier;
     u32 NumFreeBatches;
@@ -210,32 +181,11 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ : Meta::FNonCopyableNorMovable {
     // this dtor is the sole reason why FBinnedGlobalCache_ is a non POD type
     ~FBinnedGlobalCache_();
 
-    void* MediumAlloc(size_t sizeInBytes) {
-        Assert_NoAssume(Meta::IsAligned(FBinnedMediumBlocks_::Granularity, sizeInBytes));
-        ONE_TIME_INITIALIZE_THREAD_LOCAL(size_t, GHintTLS, 0);
-        void* const newp = MediumMips.Allocate(sizeInBytes, &GHintTLS);
-#if USE_PPE_MEMORYDOMAINS
-        if (newp)
-            MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).AllocateUser(MediumMips.AllocationSize(newp));
-#endif
-        return newp;
-    }
-
-    bool MediumFree(void* ptr) {
-        if (MediumMips.AliasesToMipMaps(ptr)) {
-            Assert_NoAssume(Meta::IsAligned(FBinnedMediumBlocks_::Granularity, ptr));
-#if USE_PPE_MEMORYDOMAINS
-            MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).DeallocateUser(MediumMips.AllocationSize(ptr));
-#endif
-            MediumMips.Free(ptr);
-            return true;
-        }
-        else {
-            return false;
-        }
+    static FBinnedGlobalCache_& Get() NOEXCEPT {
+        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBinnedGlobalCache_>, GInstance);
+        return GInstance;
     }
 };
-static FBinnedGlobalCache_ GBinnedGlobalCache_ INITSEG_COMPILER_PRIORITY; // should be in compiler segment, so destroyed last hopefully
 //----------------------------------------------------------------------------
 // FBinnedThreadCache_
 //----------------------------------------------------------------------------
@@ -274,10 +224,14 @@ struct CACHELINE_ALIGNED FBinnedLargeBlocks_ : Meta::FNonCopyableNorMovable {
     STATIC_CONST_INTEGRAL(size_t, CacheSizeInBytes, 16 * 1024 * 1024); // <=> 16 mo global cache for large blocks
 
     std::mutex Barrier;
-    VIRTUALMEMORYCACHE(LargeBlocks, NumLargeBlocks, CacheSizeInBytes) VM;
+    VIRTUALMEMORYCACHE(VeryLargeBlocks, NumLargeBlocks, CacheSizeInBytes) VM;
 
     FBinnedLargeBlocks_() {}
     ~FBinnedLargeBlocks_();
+
+    size_t RegionSize(void* ptr) const NOEXCEPT {
+        return VM.RegionSize(ptr);
+    }
 
     void* LargeAlloc(const size_t sizeInBytes) {
         Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
@@ -287,7 +241,7 @@ struct CACHELINE_ALIGNED FBinnedLargeBlocks_ : Meta::FNonCopyableNorMovable {
 
 #if USE_PPE_MEMORYDOMAINS
         Assert_NoAssume(VM.RegionSize(newp) == sizeInBytes);
-        MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).AllocateUser(sizeInBytes);
+        MEMORYDOMAIN_TRACKING_DATA(VeryLargeBlocks).AllocateUser(sizeInBytes);
 #endif
         return newp;
     }
@@ -299,7 +253,7 @@ struct CACHELINE_ALIGNED FBinnedLargeBlocks_ : Meta::FNonCopyableNorMovable {
         if (0 == sizeInBytes)
             sizeInBytes = VM.RegionSize(p);
 
-        MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).DeallocateUser(sizeInBytes);
+        MEMORYDOMAIN_TRACKING_DATA(VeryLargeBlocks).DeallocateUser(sizeInBytes);
 #endif
 
         VM.Free(p, sizeInBytes);
@@ -355,16 +309,26 @@ static void PoisonChunk_(FBinnedChunk_* ch) {
     ch->FreeBlocks = (FBinnedBlock_*)intptr_t(-1);
 }
 //----------------------------------------------------------------------------
-static std::atomic<i64> GBinnedAllocCount_ INITSEG_COMPILER_PRIORITY;
-static std::atomic<i64> GBinnedAllocSizeInBytes_ INITSEG_COMPILER_PRIORITY;
-static void OnBinnedAlloc_(size_t sz) {
-    GBinnedAllocCount_++;
-    GBinnedAllocSizeInBytes_ += checked_cast<i64>(FMallocBinned::SnapSize(sz));
-}
-static void OnBinnedFree_(size_t sz) {
-    Verify(0 <= --GBinnedAllocCount_);
-    Verify(0 <= (GBinnedAllocSizeInBytes_ -= checked_cast<i64>(sz)));
-}
+struct FBinnedStats_ {
+    std::atomic<i64> NumAllocs;
+    std::atomic<i64> SizeInBytes;
+
+    static FBinnedStats_& Get() NOEXCEPT {
+        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBinnedStats_>, GStats);
+        return GStats;
+    }
+
+    void OnAlloc(size_t sz) {
+        NumAllocs++;
+        SizeInBytes += checked_cast<i64>(FMallocBinned::SnapSize(sz));
+    }
+
+    void OnFree(size_t sz) {
+        Verify(0 <= --NumAllocs);
+        Verify(0 <= (SizeInBytes -= checked_cast<i64>(sz)));
+    }
+
+};
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_ASSERT
 //----------------------------------------------------------------------------
@@ -375,8 +339,7 @@ static void* AllocateNewBinnedChunk_() {
 
 #if USE_MALLOCBINNED_MIPMAPS
     // better reuse the same memory than mip maps, plus it's *WAY* faster
-    FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
-    p = gc.MediumAlloc(FBinnedChunk_::ChunkSizeInBytes);
+    p = FMallocMipMap::MediumAlloc(FBinnedChunk_::ChunkSizeInBytes, ALLOCATION_BOUNDARY);
     if (p)
         return p;
 #endif
@@ -395,8 +358,10 @@ static void DeallocateBinnedChunk_(void* p) {
 
 #if USE_MALLOCBINNED_MIPMAPS
     // need to check if the container is aliasing
-    if (GBinnedGlobalCache_.MediumFree(p))
+    if (FMallocMipMap::AliasesToMediumMips(p)) {
+        FMallocMipMap::MediumFree(p);
         return;
+    }
 #endif
 
 #if USE_PPE_MEMORYDOMAINS
@@ -454,13 +419,13 @@ static size_t NonSmallBlockRegionSize_(void* ptr) {
     Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
 
 #if USE_MALLOCBINNED_MIPMAPS
-    FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
-    return (gc.MediumMips.AliasesToMipMaps(ptr)
-        ? gc.MediumMips.AllocationSize(ptr)
-        : FVirtualMemory::SizeInBytes(ptr));
-#else
-    return FVirtualMemory::SizeInBytes(ptr);
+    if (FMallocMipMap::AliasesToMediumMips(ptr))
+        return FMallocMipMap::MediumRegionSize(ptr);
+    if (FMallocMipMap::AliasesToLargeMips(ptr))
+        return FMallocMipMap::LargeRegionSize(ptr);
 #endif
+
+    return FBinnedLargeBlocks_::Get().RegionSize(ptr);
 }
 //----------------------------------------------------------------------------
 static size_t NonSmallBlockSnapSize_(size_t sizeInBytes) {
@@ -468,11 +433,14 @@ static size_t NonSmallBlockSnapSize_(size_t sizeInBytes) {
 
 #if USE_MALLOCBINNED_MIPMAPS
     sizeInBytes = ROUND_TO_NEXT_64K(sizeInBytes);
-    return (sizeInBytes <= FBinnedMediumBlocks_::TopMipSize
-        ? FBinnedMediumBlocks_::SnapSize(sizeInBytes)
-        : sizeInBytes );
+    if (sizeInBytes <= FMallocMipMap::MediumTopMipSize)
+        return FMallocMipMap::MediumSnapSize(sizeInBytes);
+    else
+        return FMallocMipMap::LargeSnapSize(sizeInBytes);
+
 #else
     return ROUND_TO_NEXT_64K(sizeInBytes);
+
 #endif
 }
 //----------------------------------------------------------------------------
@@ -597,7 +565,7 @@ static void DetachDanglingChunk_(FBinnedGlobalCache_& gc, FBinnedChunk_* ch) {
 // BinnedMalloc_()
 //----------------------------------------------------------------------------
 static FBinnedBatch_ FetchFreeBatch_() {
-    FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
+    FBinnedGlobalCache_& gc = FBinnedGlobalCache_::Get();
 
     if (gc.FreeBatches) {
         const FAtomicSpinLock::FScope scopeLock(gc.Barrier);
@@ -711,7 +679,7 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
             if (Unlikely(tc.DanglingBlocks && ReleaseDanglingBlocks_(tc) && bk.NumBlocksAvailable)) {
                 // needed to avoid assertion due to recursive call to FMallocBinned::Malloc() below
                 ONLY_IF_ASSERT(FBinnedNoReentrancy_ noReentrancy);
-                ONLY_IF_ASSERT(OnBinnedFree_(FMallocBinned::SizeClasses[sizeClass]));
+                ONLY_IF_ASSERT(FBinnedStats_::Get().OnFree(FMallocBinned::SizeClasses[sizeClass]));
 
                 // recurse to Malloc() if we freed some blocks in the current bucket
                 return FMallocBinned::Malloc(size);
@@ -812,20 +780,14 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
 
         void* p = nullptr;
 #if USE_MALLOCBINNED_MIPMAPS
-        if (size <= FBinnedMediumBlocks_::TopMipSize)
-            p = GBinnedGlobalCache_.MediumAlloc(size);
+        size = FMallocMipMap::SnapSize(size);
+        p = FMallocMipMap::MipAlloc(size, ALLOCATION_BOUNDARY);
 
         if (nullptr == p) // also handle mip map OOM
 #endif
         {
             p = FBinnedLargeBlocks_::Get().LargeAlloc(size);
         }
-#if USE_MALLOCBINNED_MIPMAPS
-        else {
-            Assert_NoAssume(GBinnedGlobalCache_.MediumMips.AliasesToMipMaps(p));
-            Assert_NoAssume(GBinnedGlobalCache_.MediumMips.AllocationSize(p) >= size);
-        }
-#endif
 
         Assert_NoAssume(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p));
         return p;
@@ -850,7 +812,7 @@ static NO_INLINE void RejectFreeBatch_(FBinnedThreadCache_& tc) {
     tc.FreeChunks = nullptr;
     tc.NumChunksFreed = 0;
 
-    FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
+    FBinnedGlobalCache_& gc = FBinnedGlobalCache_::Get();
 
     if (gc.NumFreeBatches < FBinnedGlobalCache_::MaxFreeBatches) {
         const FAtomicSpinLock::FScope scopeLock(gc.Barrier);
@@ -898,7 +860,7 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
         }
         // else the chunk itself is dangling
         else {
-            FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
+            FBinnedGlobalCache_& gc = FBinnedGlobalCache_::Get();
 
             FAtomicSpinLock::FTryScope lockGlobal(gc.Barrier);
             if (not lockGlobal.Locked)
@@ -968,7 +930,7 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
 
     // needed to avoid an error due to call to FMallocBinned::Free() below
     ONLY_IF_ASSERT(FBinnedNoReentrancy_ noReentrancy);
-    ONLY_IF_ASSERT(OnBinnedAlloc_(FMallocBinned::SizeClasses[ch->SizeClass]));
+    ONLY_IF_ASSERT(FBinnedStats_::Get().OnAlloc(FMallocBinned::SizeClasses[ch->SizeClass]));
 
     // finally recurse for FMallocBinned::Free() *OUTSIDE* the chunk lock scope
     FMallocBinned::Free(blk);
@@ -1077,7 +1039,9 @@ static NO_INLINE void LargeFree_(void* ptr) {
     Assert(ptr);
 
 #if USE_MALLOCBINNED_MIPMAPS
-    if (GBinnedGlobalCache_.MediumFree(ptr) == false)
+    if (FMallocMipMap::AliasesToMips(ptr))
+        FMallocMipMap::MipFree(ptr);
+    else
 #endif
     {
         FBinnedLargeBlocks_::Get().LargeFree(ptr);
@@ -1104,7 +1068,7 @@ FBinnedThreadCache_::~FBinnedThreadCache_() {
 
     ReleaseFreeChunks_(*this);
 
-    FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
+    FBinnedGlobalCache_& gc = FBinnedGlobalCache_::Get();
 
     // need to refurbish chunks with blocks still allocated
     forrange(bk, &GBinnedThreadBuckets_[0], &GBinnedThreadBuckets_[FMallocBinned::NumSizeClasses]) {
@@ -1201,8 +1165,8 @@ FBinnedGlobalCache_::~FBinnedGlobalCache_() {
     }
 
     // tries to know if it's a bug in the allocator
-    ONLY_IF_ASSERT(const i64 binnedAllocCount = GBinnedAllocCount_);
-    ONLY_IF_ASSERT(const i64 binnedAllocSizeInBytes = GBinnedAllocSizeInBytes_);
+    ONLY_IF_ASSERT(const i64 binnedAllocCount = FBinnedStats_::Get().NumAllocs);
+    ONLY_IF_ASSERT(const i64 binnedAllocSizeInBytes = FBinnedStats_::Get().SizeInBytes);
     Assert_NoAssume(checked_cast<i64>(numDanglingBlocks) == binnedAllocCount);
     Assert_NoAssume(checked_cast<i64>(totalSizeDangling) == binnedAllocSizeInBytes);
 #endif
@@ -1218,7 +1182,7 @@ FBinnedLargeBlocks_::~FBinnedLargeBlocks_() {
 //----------------------------------------------------------------------------
 void* FMallocBinned::Malloc(size_t size) {
     Assert_NoAssume(size);
-    ONLY_IF_ASSERT(OnBinnedAlloc_(size));
+    ONLY_IF_ASSERT(FBinnedStats_::Get().OnAlloc(size));
 
     const size_t sizeClass = MakeBinnedClass_(size);
 
@@ -1252,7 +1216,7 @@ void* FMallocBinned::Malloc(size_t size) {
 //----------------------------------------------------------------------------
 void FMallocBinned::Free(void* ptr) {
     Assert(ptr);
-    ONLY_IF_ASSERT(OnBinnedFree_(RegionSize(ptr)));
+    ONLY_IF_ASSERT(FBinnedStats_::Get().OnFree(RegionSize(ptr)));
 
     if (Likely(uintptr_t(ptr) & (FBinnedChunk_::ChunkSizeInBytes - 1))) {
         FBinnedBlock_* const blk = (FBinnedBlock_*)ptr;
@@ -1337,11 +1301,11 @@ void FMallocBinned::ReleaseCacheMemory() {
     ReleaseDanglingBlocks_(tc);
     ReleaseFreeChunks_(tc);
 
-    ReleaseFreeBatches_(GBinnedGlobalCache_);
+    ReleaseFreeBatches_(FBinnedGlobalCache_::Get());
     ReleaseLargeBlocks_(FBinnedLargeBlocks_::Get());
 
 #if USE_MALLOCBINNED_MIPMAPS
-    GBinnedGlobalCache_.MediumMips.GarbageCollect();
+    FMallocMipMap::MemoryTrim();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -1371,48 +1335,6 @@ size_t FMallocBinned::RegionSize(void* ptr) {
 size_t FMallocBinned::SizeClass(size_t size) NOEXCEPT {
     return MakeBinnedClass_(SnapSize(size));
 }
-//----------------------------------------------------------------------------
-#if !USE_PPE_FINAL_RELEASE
-bool FMallocBinned::FetchMediumMips(
-    void** vspace,
-    size_t* numCommited,
-    size_t* numReserved,
-    size_t* mipSizeInBytes,
-    TMemoryView<const u32>* mipMasks ) {
-    Assert(vspace);
-    Assert(numCommited);
-    Assert(numReserved);
-    Assert(mipSizeInBytes);
-    Assert(mipMasks);
-
-#   if USE_MALLOCBINNED_MIPMAPS
-    // #TODO : this is *really* ugly, even for debug code :/
-    constexpr size_t NumReserved = PPE_MIPMAPS_RESERVEDSIZE / FBinnedMediumBlocks_::TopMipSize;
-    static u32 GMips[NumReserved];
-
-    const size_t n = GBinnedGlobalCache_.MediumMips.EachCommitedMipMap([](size_t mipIndex, u32 mipMask) {
-        GMips[mipIndex] = mipMask;
-    });
-
-    *vspace = GBinnedGlobalCache_.MediumMips.VSpace();
-    *numCommited = n;
-    *numReserved = NumReserved;
-    *mipSizeInBytes = FBinnedMediumBlocks_::TopMipSize;
-    *mipMasks = MakeConstView(GMips).CutBefore(n);
-
-    return true;
-
-#   else
-    UNUSED(vspace);
-    UNUSED(numCommited);
-    UNUSED(numReserved);
-    UNUSED(mipSizeInBytes);
-    UNUSED(mipMasks);
-
-    return false;
-#   endif //!USE_MALLOCBINNED_MIPMAPS
-}
-#endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

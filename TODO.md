@@ -31,12 +31,12 @@
 
 ## Memory
 
-- [ ] Add a large mipmap allocator inside FMallocBinned in addition to current medium mipmaps
+- [x] Add a large mipmap allocator inside FMallocBinned in addition to current medium mipmaps
     - current medium mips can't allocate more than 2mb, and virtual memory cache is weak (concurrency bottleneck)
         - large mips would have 2mb/bit <=> 64mb per chunk
         - could use large mips to allocate medium mips
         - this could avoid reserving/commiting too much memory and achieve better load balancing
-    - *OR* implement a system that can allocate from several contiguous mips
+    - NOPE, prefer using more virtual memory to keep the code simpler ==> *OR* implement a system that can allocate from several contiguous mips
         - might be done atomically at the end of the mip table
         - allocations would be aligned on mip granularity <=> 2mb
         - should cap allocation size to something reasonnable, like 64mb
