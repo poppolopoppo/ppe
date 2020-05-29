@@ -82,7 +82,8 @@ const size_t FMallocMipMap::MediumTopMipSize = FMediumMipMaps_::TopMipSize;
 const size_t FMallocMipMap::LargeTopMipSize = FLargeMipMaps_::TopMipSize;
 //----------------------------------------------------------------------------
 void* FMallocMipMap::MediumAlloc(size_t sz, size_t alignment) {
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(size_t, GHintTLS, 0);
+    UNUSED(alignment);
+    ONE_TIME_INITIALIZE_THREAD_LOCAL(u32, GHintTLS, 0);
     void* const newp = MediumMips_().Allocate(sz, &GHintTLS);
 #if USE_PPE_MEMORYDOMAINS
     if (newp) {
@@ -119,7 +120,8 @@ size_t FMallocMipMap::MediumRegionSize(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void* FMallocMipMap::LargeAlloc(size_t sz, size_t alignment) {
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(size_t, GHintTLS, 0);
+    UNUSED(alignment);
+    ONE_TIME_INITIALIZE_THREAD_LOCAL(u32, GHintTLS, 0);
     void* const newp = LargeMips_().Allocate(sz, &GHintTLS);
 #if USE_PPE_MEMORYDOMAINS
     if (newp) {
@@ -156,9 +158,9 @@ size_t FMallocMipMap::LargeRegionSize(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void* FMallocMipMap::MipAlloc(size_t sz, size_t alignment) {
-    if (sz <= FMediumMipMaps_::TopMipSize)
+    if (sz <= FMediumMipMaps_::MaxAllocSize)
         return MediumAlloc(sz, alignment);
-    if (sz <= FMediumMipMaps_::TopMipSize)
+    if (sz <= FLargeMipMaps_::MaxAllocSize)
         return LargeAlloc(sz, alignment);
 
     return nullptr;
@@ -184,7 +186,7 @@ bool FMallocMipMap::AliasesToMips(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 size_t FMallocMipMap::SnapSize(size_t sz) NOEXCEPT {
-    if (sz < FMediumMipMaps_::TopMipSize)
+    if (sz <= FMediumMipMaps_::MaxAllocSize)
         return FMediumMipMaps_::SnapSize(sz);
     else
         return FLargeMipMaps_::SnapSize(sz);
