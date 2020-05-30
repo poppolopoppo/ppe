@@ -35,9 +35,9 @@ LOG_CATEGORY(, Test_Allocators)
 namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
-static constexpr size_t GTotalAllocationSize_ = CODE3264(32u, 128u) * 1024u * size_t(1024);
+static constexpr size_t GTotalAllocationSize_ = CODE3264( 64u, 128u) * 1024u * size_t(1024);
 #else
-static constexpr size_t GTotalAllocationSize_ = CODE3264(2u, 8u) * 1024u * 1024u * size_t(1024);
+static constexpr size_t GTotalAllocationSize_ = CODE3264(128u, 256u) * 1024u * size_t(1024);
 #endif
 #if USE_PPE_ASSERT
 static constexpr size_t GLoopCount_ = 10;
@@ -278,11 +278,7 @@ void Test_Allocators() {
 
     constexpr size_t BlockSizeMin = 16;
     constexpr size_t BlockSizeMid = 32768;
-#if USE_PPE_ASSERT
-    constexpr size_t BlockSizeLarge = 2*1024*1024;
-#else
-    constexpr size_t BlockSizeLarge = 32*1024*1024;
-#endif
+    constexpr size_t BlockSizeLarge = 8*1024*1024;
 
     size_t smallBlocksSizeInBytes = 0;
     size_t largeBlocksSizeInBytes = 0;
@@ -308,10 +304,12 @@ void Test_Allocators() {
             return currentSize;
         };
 
-        smallBlocksSizeInBytes += generator(&smallBlocks, BlockSizeMin, BlockSizeMid, GTotalAllocationSize_);
-        largeBlocksSizeInBytes += generator(&largeBlocks, BlockSizeMid, BlockSizeLarge, GTotalAllocationSize_);
-        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMin, BlockSizeMid, GTotalAllocationSize_ / 2);
-        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMid, BlockSizeLarge, GTotalAllocationSize_ / 2);
+        const size_t totalSizePerWorker = GTotalAllocationSize_;
+
+        smallBlocksSizeInBytes += generator(&smallBlocks, BlockSizeMin, BlockSizeMid, totalSizePerWorker);
+        largeBlocksSizeInBytes += generator(&largeBlocks, BlockSizeMid, BlockSizeLarge, totalSizePerWorker);
+        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMin, BlockSizeMid, totalSizePerWorker / 2);
+        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMid, BlockSizeLarge, totalSizePerWorker / 2);
     }
 
     LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::SizeInBytes(smallBlocksSizeInBytes) );

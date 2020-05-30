@@ -83,8 +83,7 @@ const size_t FMallocMipMap::LargeTopMipSize = FLargeMipMaps_::TopMipSize;
 //----------------------------------------------------------------------------
 void* FMallocMipMap::MediumAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(u32, GHintTLS, 0);
-    void* const newp = MediumMips_().Allocate(sz, &GHintTLS);
+    void* const newp = MediumMips_().Allocate(sz);
 #if USE_PPE_MEMORYDOMAINS
     if (newp) {
         Assert(Meta::IsAligned(alignment, newp));
@@ -121,8 +120,7 @@ size_t FMallocMipMap::MediumRegionSize(void* ptr) NOEXCEPT {
 //----------------------------------------------------------------------------
 void* FMallocMipMap::LargeAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(u32, GHintTLS, 0);
-    void* const newp = LargeMips_().Allocate(sz, &GHintTLS);
+    void* const newp = LargeMips_().Allocate(sz);
 #if USE_PPE_MEMORYDOMAINS
     if (newp) {
         Assert(Meta::IsAligned(alignment, newp));
