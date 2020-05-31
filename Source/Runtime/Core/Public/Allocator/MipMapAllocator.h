@@ -7,6 +7,7 @@
 #include "HAL/PlatformMaths.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/VirtualMemory.h"
+#include "Meta/Utility.h"
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/ReadWriteLock.h"
 
@@ -132,6 +133,7 @@ private:
         }
 
         FAtomicSpinLock Barrier;
+        std::atomic<i32> NumEmptyMips;
 
         STATIC_CONST_INTEGRAL(u32, NumBitMasks, (MaxNumMipMaps + bitmask_t::BitCount - 1) / bitmask_t::BitCount);
         std::atomic<FBitMask::word_t> LiveMips[NumBitMasks];
@@ -198,7 +200,7 @@ private:
         FAddressSpace() = default;
         mutable FReadWriteLock GClockRW;
         void* pAddr;
-        u32 CommittedMips;
+        u32 NumCommittedMips;
     };
 
     CACHELINE_ALIGNED FAddressSpace _vSpace;
@@ -361,7 +363,7 @@ size_t TMipMapAllocator<_VMemTraits>::TotalAvailableSize() const {
 
     const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
 
-    const u32 n = _vSpace.CommittedMips; // cpy atomic to local stack
+    const u32 n = _vSpace.NumCommittedMips; // cpy atomic to local stack
     forrange(i, 0, n)
         availableSize += MipAvailableSizeInBytes_(i);
 
@@ -370,7 +372,7 @@ size_t TMipMapAllocator<_VMemTraits>::TotalAvailableSize() const {
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
 size_t TMipMapAllocator<_VMemTraits>::TotalCommittedSize() const {
-    return (_vSpace.CommittedMips * NumBottomMips * BottomMipSize);
+    return (_vSpace.NumCommittedMips * NumBottomMips * BottomMipSize);
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
@@ -394,7 +396,7 @@ void* TMipMapAllocator<_VMemTraits>::AllocateWithHint_(size_t sizeInBytes, FMipH
     const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
 
     void* p = nullptr;
-    if (mipIndex < _vSpace.CommittedMips) {
+    if (mipIndex < _vSpace.NumCommittedMips) {
         p = AllocateFromMip_(mipIndex, lvl, fst, msk);
         if (nullptr != p)
             return p;
@@ -402,7 +404,7 @@ void* TMipMapAllocator<_VMemTraits>::AllocateWithHint_(size_t sizeInBytes, FMipH
 
     Assert(nullptr == p);
     for (mipIndex = 0;; ++mipIndex) {
-        if (Unlikely(not _freeMips.FirstMipAvailable(&mipIndex, mipIndex, _vSpace.CommittedMips))) {
+        if (Unlikely(not _freeMips.FirstMipAvailable(&mipIndex, mipIndex, _vSpace.NumCommittedMips))) {
             if (Unlikely(not AcquireFreeMipMap_(&mipIndex)))
                 break;
         }
@@ -422,6 +424,12 @@ template <typename _VMemTraits>
 void TMipMapAllocator<_VMemTraits>::Free(void* ptr) {
     Assert(ptr);
     Assert_NoAssume(AliasesToMipMaps(ptr));
+
+    bool runGCAfterFree = false;
+    ON_SCOPE_EXIT([&runGCAfterFree, this]() {
+        if (runGCAfterFree)
+            GarbageCollect();
+    });
 
     const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
 
@@ -460,9 +468,12 @@ void TMipMapAllocator<_VMemTraits>::Free(void* ptr) {
             std::memory_order_release, std::memory_order_relaxed)) {
 
             // enable mips again if it was full previously
-            if (Unlikely(mip == GMipMaskFull_)) {
+            if (Unlikely(mip == GMipMaskFull_))
                 _freeMips.Enable(mipIndex);
-            }
+            // garbage collect free mips if more than 4 are completely empty
+            else if (Unlikely(upd == GMipMaskEmpty_))
+                runGCAfterFree = (u32(++_freeMips.NumEmptyMips) * 2 >= _vSpace.NumCommittedMips &&
+                    _mipMaps[_vSpace.NumCommittedMips - 1].MipMask == GMipMaskEmpty_ );
 
             return;
         }
@@ -478,29 +489,33 @@ void TMipMapAllocator<_VMemTraits>::GarbageCollect() {
 
     const FReadWriteLock::FScopeLockWrite GClockWrite(_vSpace.GClockRW); // this is an exclusive process
 
-    if (0 == _vSpace.CommittedMips)
+    if (0 == _vSpace.NumCommittedMips)
         return;
 
-    for (u32 mipIndex = (_vSpace.CommittedMips - 1); mipIndex; --mipIndex) {
+
+    u32 numDecommittedMips = 0;
+    for (u32 mipIndex = (_vSpace.NumCommittedMips - 1); mipIndex; --mipIndex) {
         FMipMap& mipMap = _mipMaps[mipIndex];
         if (mipMap.MipMask.load(std::memory_order_relaxed) == GMipMaskEmpty_) {
             Assert_NoAssume(0 == mipMap.SizeMask);
-
-            --_vSpace.CommittedMips;
-
-            vmem_traits::PageDecommit((u8*)_vSpace.pAddr + (mipIndex * TopMipSize), TopMipSize);
-
-            _freeMips.Disable(mipIndex);
-
 #if USE_PPE_DEBUG
             mipMap.MipMask = GDeletedMask_;
             mipMap.SizeMask = GDeletedMask_;
 #endif
+
+            vmem_traits::PageDecommit((u8*)_vSpace.pAddr + (mipIndex * TopMipSize), TopMipSize);
+
+            _freeMips.Disable(mipIndex);
+            ++numDecommittedMips;
         }
         else {
             break;
         }
     }
+
+    _vSpace.NumCommittedMips -= numDecommittedMips;
+    _freeMips.NumEmptyMips -= numDecommittedMips;
+    Assert_NoAssume(_freeMips.NumEmptyMips >= 0);
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
@@ -510,7 +525,7 @@ size_t TMipMapAllocator<_VMemTraits>::EachCommitedMipMap(_Each&& each) const {
 
     const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
 
-    const size_t n = _vSpace.CommittedMips;
+    const size_t n = _vSpace.NumCommittedMips;
 
     // convert the mip mask to a 32 bits mask (ie lowest mip)
     forrange(mipIndex, 0, n) {
@@ -536,13 +551,13 @@ template <typename _VMemTraits>
 bool TMipMapAllocator<_VMemTraits>::AcquireFreeMipMap_(u32* pMipIndex) {
     Assert(pMipIndex);
 
-    u32 mipIndex = _vSpace.CommittedMips;
+    u32 mipIndex = _vSpace.NumCommittedMips;
     if (Unlikely(mipIndex == MaxNumMipMaps))
         return false; // OOM
 
     const FAtomicSpinLock::FScope scopeLock(_freeMips.Barrier);
 
-    if (mipIndex == _vSpace.CommittedMips) {
+    if (mipIndex == _vSpace.NumCommittedMips) {
         ONLY_IF_ASSERT(CheckSanity_());
 
         FMipMap& mipMap = _mipMaps[mipIndex];
@@ -553,11 +568,12 @@ bool TMipMapAllocator<_VMemTraits>::AcquireFreeMipMap_(u32* pMipIndex) {
 
         FPlatformAtomics::MemoryBarrier();
 
-        ++_vSpace.CommittedMips;
+        ++_vSpace.NumCommittedMips;
+        ++_freeMips.NumEmptyMips;
         _freeMips.Enable(mipIndex);
     }
 
-    Assert_NoAssume(mipIndex < _vSpace.CommittedMips);
+    Assert_NoAssume(mipIndex < _vSpace.NumCommittedMips);
     *pMipIndex = mipIndex;
     return true;
 }
@@ -565,7 +581,7 @@ bool TMipMapAllocator<_VMemTraits>::AcquireFreeMipMap_(u32* pMipIndex) {
 template <typename _VMemTraits>
 void* TMipMapAllocator<_VMemTraits>::AllocateFromMip_(u32 mipIndex, u32 lvl, u32 fst, u64 msk) NOEXCEPT {
     Assert(mipIndex < MaxNumMipMaps);
-    Assert_NoAssume(mipIndex < _vSpace.CommittedMips);
+    Assert_NoAssume(mipIndex < _vSpace.NumCommittedMips);
 
     FMipMap& mipMap = _mipMaps[mipIndex];
     Assert_NoAssume(GDeletedMask_ != mipMap.MipMask);
@@ -590,8 +606,11 @@ void* TMipMapAllocator<_VMemTraits>::AllocateFromMip_(u32 mipIndex, u32 lvl, u32
 
             mipMap.SizeMask |= (u64(1) << bit);
 
+            // book-keeping for full/empty mipmaps
             if (Unlikely(GMipMaskFull_ == upd))
                 _freeMips.Disable(mipIndex);
+            else if (Unlikely(GMipMaskEmpty_ == mip))
+                Verify(--_freeMips.NumEmptyMips >= 0);
 
             const u32 off = (bit - fst) * u32(TopMipSize / (size_t(1) << lvl));
             Assert_NoAssume(FPlatformMaths::popcnt64(mipMap.SizeMask & GSizeMasks_[off / BottomMipSize]) == 1);
@@ -607,7 +626,7 @@ void* TMipMapAllocator<_VMemTraits>::AllocateFromMip_(u32 mipIndex, u32 lvl, u32
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
 u64 TMipMapAllocator<_VMemTraits>::MipAvailableSizeInBytes_(u32 mipIndex) const {
-    Assert(mipIndex < _vSpace.CommittedMips);
+    Assert(mipIndex < _vSpace.NumCommittedMips);
 
     const u64 numBottomMips = FPlatformMaths::popcnt(
         _mipMaps[mipIndex].MipMask & GLevelMasks_[lengthof(GLevelMasks_) - 1]);
@@ -621,14 +640,14 @@ void TMipMapAllocator<_VMemTraits>::CheckSanity_() const {
     const size_t totalAvail = TotalAvailableSize();
     const size_t totalCmmit = TotalCommittedSize();
     const float percentAvail = (100.0f * totalAvail) / totalCmmit;
-    const bool wtf = (0 != totalCmmit && percentAvail > 20.f && _vSpace.CommittedMips > 10);
+    const bool wtf = (0 != totalCmmit && percentAvail > 60.f && _vSpace.NumCommittedMips > 10);
 
     // /!\ time for some sanity checks
     if (wtf) {
         // convert the mip mask to a 32 bits mask (ie lowest mip)
         wchar_t tok[] = L"#";
         wchar_t chr[] = L"AB";
-        forrange(mi, 0, _vSpace.CommittedMips) {
+        forrange(mi, 0, _vSpace.NumCommittedMips) {
             const FMipMap& mipMap = _mipMaps[mi];
             FPlatformDebug::OutputDebug(L"\n -0- ");
             {
