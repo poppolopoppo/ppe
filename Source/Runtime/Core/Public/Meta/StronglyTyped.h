@@ -18,7 +18,7 @@ struct TNumeric {
     T Value;
 
     CONSTEXPR explicit TNumeric(T value = DefaultValue()) : Value(value) {
-        STATIC_ASSERT(std::is_arithmetic_v<T>);
+        STATIC_ASSERT(std::is_arithmetic_v<T> || std::is_same_v<T, void*>);
     }
 
     CONSTEXPR operator T () const { return Value; }
@@ -68,7 +68,7 @@ struct TNumericDefault : public TNumeric<T, TNumericDefault<T, _Tag, _DefaultVal
     using _Name = ::PPE::TNumeric<T, StronglyTyped::_Name>
 //----------------------------------------------------------------------------
 #define PPE_STRONGLYTYPED_NUMERIC_DEF(T, _Name) \
-    PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, T{})
+    PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, ::PPE::Meta::DefaultValue<T>())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

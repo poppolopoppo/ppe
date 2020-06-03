@@ -60,9 +60,11 @@ module Build
         end
         def add_library(facet, filename)
             facet.linkerOptions << filename
+            facet.librarianOptions << filename
         end
         def add_libraryPath(facet, dirpath)
             facet.linkerOptions << "-I#{dirpath}"
+            facet.librarianOptions << "-I#{dirpath}"
         end
 
         def customize(facet, env, target)

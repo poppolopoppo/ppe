@@ -47,6 +47,8 @@ require_once 'Commands/PCH.rb'
 require_once 'Commands/VCXProj.rb'
 require_once 'Commands/VSCode.rb'
 
+require_once 'SDK/VulkanSDK.rb'
+
 module Build
 
     def self.elapsed_time()

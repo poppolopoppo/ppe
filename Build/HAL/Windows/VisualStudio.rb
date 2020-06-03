@@ -111,9 +111,11 @@ module Build
         alias add_systemPath add_includePath
         def add_library(facet, filename)
             facet.linkerOptions << "\"#{filename}\""
+            facet.librarianOptions << "\"#{filename}\""
         end
         def add_libraryPath(facet, dirpath)
             facet.linkerOptions << "/LIBPATH:\"#{dirpath}\""
+            facet.librarianOptions << "/LIBPATH:\"#{dirpath}\""
         end
 
         def customize(facet, env, target)

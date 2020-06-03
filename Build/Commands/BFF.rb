@@ -257,6 +257,7 @@ module Build
 
                 unless link_library_objects
                     set!('LibrarianOutput', env.output_path(target.abs_path, :library))
+                    #set!('LibrarianAdditionalInputs', expanded.libraries)
                     facet!(expanded, :@librarianOptions)
                 end
 
