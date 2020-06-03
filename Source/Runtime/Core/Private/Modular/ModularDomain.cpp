@@ -198,11 +198,17 @@ void FModularDomain::Start(FModularDomain& domain) {
     foreachitem(phase, GApplicationPhases_)
         domain.StartPhase(*phase);
 
+    foreachitem(it, domain._modules)
+        it->second->PostStart(domain);
+
     FLUSH_LOG();
 }
 //----------------------------------------------------------------------------
 void FModularDomain::Shutdown(FModularDomain& domain) {
     Assert(&domain == GAppDomainRef_);
+
+    reverseforeachitem(it, domain._modules)
+        it->second->PreShutdown(domain);
 
     reverseforeachitem(phase, GApplicationPhases_)
         domain.ShutdownPhase(*phase);
@@ -266,6 +272,8 @@ void FModularDomain::StartModule_(IModuleInterface& mod) {
 
     mod.Start(*this);
 
+    ReportAllTrackingData();
+
     _OnPostModuleStart(*this, mod);
 }
 //----------------------------------------------------------------------------
@@ -273,6 +281,8 @@ void FModularDomain::ShutdownModule_(IModuleInterface& mod) {
     _OnPreModuleShutdown(*this, mod);
 
     mod.Shutdown(*this);
+
+    ReportAllTrackingData();
 
     _OnPostModuleShutdown(*this, mod);
 }

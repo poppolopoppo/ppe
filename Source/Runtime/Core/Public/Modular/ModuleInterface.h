@@ -22,6 +22,9 @@ public:
     virtual void Start(FModularDomain& domain);
     virtual void Shutdown(FModularDomain& domain);
 
+    virtual void PostStart(FModularDomain& domain);
+    virtual void PreShutdown(FModularDomain& domain);
+
     virtual void DutyCycle(FModularDomain& domain);
     virtual void ReleaseMemory(FModularDomain& domain) NOEXCEPT;
 

@@ -32,6 +32,16 @@ void IModuleInterface::Shutdown(FModularDomain& domain) {
     LOG(Modular, Info, L"Shutdown application module <{0}> in domain <{1}>", _name, domain.Name());
 }
 //----------------------------------------------------------------------------
+void IModuleInterface::PostStart(FModularDomain& domain) {
+    UNUSED(domain);
+    LOG(Modular, Info, L"PostStart application module <{0}> in domain <{1}>", _name, domain.Name());
+}
+//----------------------------------------------------------------------------
+void IModuleInterface::PreShutdown(FModularDomain& domain) {
+    UNUSED(domain);
+    LOG(Modular, Info, L"PreShutdown application module <{0}> in domain <{1}>", _name, domain.Name());
+}
+//----------------------------------------------------------------------------
 void IModuleInterface::DutyCycle(FModularDomain& domain) {
     UNUSED(domain);
     LOG(Modular, Info, L"Duty cycle in application module <{0}> in domain <{1}>", _name, domain.Name());
