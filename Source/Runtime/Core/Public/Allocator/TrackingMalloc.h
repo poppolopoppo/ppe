@@ -6,6 +6,7 @@
 #include "Memory/MemoryDomain.h"
 
 #define TRACKING_MALLOC(_DOMAIN, _SIZE) ::PPE::tracking_malloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_SIZE)
+#define TRACKING_ALIGNED_MALLOC(_DOMAIN, _SIZE, _ALIGN) ::PPE::tracking_aligned_malloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_SIZE, _ALIGN)
 #define TRACKING_CALLOC(_DOMAIN, _NMEMB, _SIZE) ::PPE::tracking_calloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_NMEMB, _SIZE)
 #define TRACKING_REALLOC(_DOMAIN, _PTR, _SIZE) ::PPE::tracking_realloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_PTR, _SIZE)
 #define TRACKING_FREE(_DOMAIN, _PTR) ::PPE::tracking_free(_PTR)
@@ -28,12 +29,43 @@ PPE_CORE_API void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+inline void* (tracking_aligned_malloc)(FMemoryTracking& trackingData, size_t size, size_t alignment) {
+    UNUSED(alignment);
+    void* const p = (tracking_malloc)(trackingData, size);
+    Assert_NoAssume(Meta::IsAligned(alignment, p));
+    return p;
+}
+//----------------------------------------------------------------------------
+inline void* (tracking_aligned_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t alignment) {
+    UNUSED(alignment);
+    void* const p = (tracking_realloc)(trackingData, ptr, size);
+    Assert_NoAssume(Meta::IsAligned(alignment, p));
+    return p;
+}
+//----------------------------------------------------------------------------
+inline void (tracking_aligned_free)(void* ptr) {
+    (tracking_free)(ptr);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _MemoryDomain>
 void* tracking_malloc(size_t size) {
 #if USE_PPE_MEMORYDOMAINS
     return (tracking_malloc)(_MemoryDomain::TrackingData(), size);
 #else
     return (PPE::malloc)(size);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename _MemoryDomain>
+void* tracking_aligned_malloc(size_t size, size_t alignment) {
+#if USE_PPE_MEMORYDOMAINS
+    return (tracking_aligned_malloc)(_MemoryDomain::TrackingData(), size, alignment);
+#else
+    UNUSED(alignment); // assume always naturally aligned with target
+    void* const p = (PPE::malloc)(size);
+    Assert_NoAssume(Meta::IsAligned(alignment, p));
 #endif
 }
 //----------------------------------------------------------------------------
