@@ -5,6 +5,12 @@
 #include "Allocator/InitSegAllocator.h"
 #include "Allocator/MipMapAllocator.h"
 
+#include "Memory/MemoryDomain.h"
+
+#if USE_PPE_MEMORYDOMAINS
+#    include "Memory/MemoryTracking.h"
+#endif
+
 //reserved virtual size for mip maps (not everything is consumed systematically)
 
 #define PPE_MIPMAPS_MEDIUM_GRANULARITY  (size_t(64)*1024) // x 32 = 2Mb per chunk
@@ -48,12 +54,12 @@ template <typename _MipMaps>
 static void FetchMipsForDebug_(
     _MipMaps& mips,
     void** vspace,
-    size_t* numCommited,
+    size_t* numCommitted,
     size_t* numReserved,
     size_t* mipSizeInBytes,
     TMemoryView<const u32>* mipMasks ) {
     Assert(vspace);
-    Assert(numCommited);
+    Assert(numCommitted);
     Assert(numReserved);
     Assert(mipSizeInBytes);
     Assert(mipMasks);
@@ -67,7 +73,7 @@ static void FetchMipsForDebug_(
     });
 
     *vspace = mips.VSpace();
-    *numCommited = n;
+    *numCommitted = n;
     *numReserved = NumReserved;
     *mipSizeInBytes = _MipMaps::TopMipSize;
     *mipMasks = MakeConstView(GMips).CutBefore(n);
@@ -157,9 +163,9 @@ size_t FMallocMipMap::LargeRegionSize(void* ptr) NOEXCEPT {
 //----------------------------------------------------------------------------
 void* FMallocMipMap::MipAlloc(size_t sz, size_t alignment) {
     if (sz <= FMediumMipMaps_::MaxAllocSize)
-        return MediumAlloc(sz, alignment);
+        return MediumAlloc(MediumSnapSize(sz), alignment);
     if (sz <= FLargeMipMaps_::MaxAllocSize)
-        return LargeAlloc(sz, alignment);
+        return LargeAlloc(LargeSnapSize(sz), alignment);
 
     return nullptr;
 }
@@ -202,22 +208,22 @@ size_t FMallocMipMap::RegionSize(void* ptr) NOEXCEPT {
 #if !USE_PPE_FINAL_RELEASE
 void FMallocMipMap::MediumMips(
     void** vspace,
-    size_t* numCommited,
+    size_t* numCommitted,
     size_t* numReserved,
     size_t* mipSizeInBytes,
     TMemoryView<const u32>* mipMasks ) {
-    FetchMipsForDebug_(MediumMips_(), vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
+    FetchMipsForDebug_(MediumMips_(), vspace, numCommitted, numReserved, mipSizeInBytes, mipMasks);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
 void FMallocMipMap::LargeMips(
     void** vspace,
-    size_t* numCommited,
+    size_t* numCommitted,
     size_t* numReserved,
     size_t* mipSizeInBytes,
     TMemoryView<const u32>* mipMasks ) {
-    FetchMipsForDebug_(LargeMips_(), vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
+    FetchMipsForDebug_(LargeMips_(), vspace, numCommitted, numReserved, mipSizeInBytes, mipMasks);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------

@@ -283,7 +283,7 @@ void DumpMipsFragmentation_(
     FWTextWriter& oss,
     const FWStringView& name,
     void* vspace,
-    size_t numCommited,
+    size_t numCommitted,
     size_t numReserved,
     size_t mipSizeInBytes,
     const TMemoryView<const u32>& mipMasks ) {
@@ -297,18 +297,18 @@ void DumpMipsFragmentation_(
         << L"> : "
         << Fmt::SizeInBytes(mipSizeInBytes)
         << L" x "
-        << Fmt::CountOfElements(numCommited)
+        << Fmt::CountOfElements(numCommitted)
         << L'/'
         << Fmt::CountOfElements(numReserved)
         << L" => "
-        << Fmt::SizeInBytes(numCommited * mipSizeInBytes)
+        << Fmt::SizeInBytes(numCommitted * mipSizeInBytes)
         << Eol << hr << Eol;
 
-    Assert_NoAssume(numCommited == mipMasks.size());
+    Assert_NoAssume(numCommitted == mipMasks.size());
 
     FWString tmp;
     CONSTEXPR const size_t perRow = 16;
-    for (size_t r = 0, rows = (numCommited + perRow - 1) / perRow; r < rows; ++r) {
+    for (size_t r = 0, rows = (numCommitted + perRow - 1) / perRow; r < rows; ++r) {
         Format(oss, L"{0}|{1:#3}| ", Fmt::Pointer((u8*)vspace + mipSizeInBytes * r), r * perRow);
 
         forrange(i, 0, perRow) {
@@ -316,7 +316,7 @@ void DumpMipsFragmentation_(
                 oss << L' ';
 
             const size_t mipIndex = (r * perRow + i);
-            if (mipIndex < numCommited) {
+            if (mipIndex < numCommitted) {
                 tmp = StringFormat(L"{0:#8X}", mipMasks[mipIndex]);
                 tmp.gsub('0', '.');
                 oss << L' ' << tmp;
@@ -355,15 +355,15 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
     UNUSED(oss);
 #else
     void* vspace;
-    size_t numCommited, numReserved, mipSizeInBytes;
+    size_t numCommitted, numReserved, mipSizeInBytes;
     TMemoryView<const u32> mipMasks;
 
     oss << Eol;
 
-    if (FMallocDebug::FetchMediumMips(&vspace, &numCommited, &numReserved, &mipSizeInBytes, &mipMasks))
-        DumpMipsFragmentation_(oss, L"MediumMips", vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
-    if (FMallocDebug::FetchLargeMips(&vspace, &numCommited, &numReserved, &mipSizeInBytes, &mipMasks))
-        DumpMipsFragmentation_(oss, L"LargeMips", vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
+    if (FMallocDebug::FetchMediumMips(&vspace, &numCommitted, &numReserved, &mipSizeInBytes, &mipMasks))
+        DumpMipsFragmentation_(oss, L"MediumMips", vspace, numCommitted, numReserved, mipSizeInBytes, mipMasks);
+    if (FMallocDebug::FetchLargeMips(&vspace, &numCommitted, &numReserved, &mipSizeInBytes, &mipMasks))
+        DumpMipsFragmentation_(oss, L"LargeMips", vspace, numCommitted, numReserved, mipSizeInBytes, mipMasks);
 
 #endif
 }

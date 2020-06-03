@@ -46,13 +46,13 @@ public:
     // used for memory diagnostics only
     static void MediumMips(
         void** vspace,
-        size_t* numCommited,
+        size_t* numCommitted,
         size_t* numReserved,
         size_t* mipSizeInBytes,
         TMemoryView<const u32>* mipMasks );
     static void LargeMips(
         void** vspace,
-        size_t* numCommited,
+        size_t* numCommitted,
         size_t* numReserved,
         size_t* mipSizeInBytes,
         TMemoryView<const u32>* mipMasks );

@@ -775,18 +775,15 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
     else {
         Assert_NoAssume(size > FBinnedChunk_::MaxSizeInBytes);
 
-        STATIC_ASSERT(ALLOCATION_GRANULARITY == 64 * 1024);
-        size = ROUND_TO_NEXT_64K(size);
-
         void* p = nullptr;
 #if USE_MALLOCBINNED_MIPMAPS
-        size = FMallocMipMap::SnapSize(size);
         p = FMallocMipMap::MipAlloc(size, ALLOCATION_BOUNDARY);
 
         if (nullptr == p) // also handle mip map OOM
 #endif
         {
-            p = FBinnedLargeBlocks_::Get().LargeAlloc(size);
+            STATIC_ASSERT(ALLOCATION_GRANULARITY == 64 * 1024);
+            p = FBinnedLargeBlocks_::Get().LargeAlloc(ROUND_TO_NEXT_64K(size));
         }
 
         Assert_NoAssume(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p));
