@@ -62,7 +62,7 @@ FCurrentProcess::FCurrentProcess(
     _nShowCmd = nShowCmd;
 #if !USE_PPE_FINAL_RELEASE
     _startedWithDebugger = FPlatformDebug::IsDebuggerPresent();
-    if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-IgnoreDebugger"); })) {
+    if (HasArgument(L"-IgnoreDebugger")) {
         _startedWithDebugger = false;
     }
 #else
@@ -70,7 +70,7 @@ FCurrentProcess::FCurrentProcess(
 #endif
 
 #if !USE_PPE_FINAL_RELEASE
-    if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-WaitForDebugger"); })) {
+    if (HasArgument(L"-WaitForDebugger")) {
         _startedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformDebug::IsDebuggerPresent());
         volatile size_t loopCount = 0;
@@ -83,7 +83,7 @@ FCurrentProcess::FCurrentProcess(
 #endif
 
 #if !USE_PPE_FINAL_RELEASE
-    if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-AbortOnAssert"); })) {
+    if (HasArgument(L"-AbortOnAssert")) {
         const FAssertHandler abortHandler = [](const wchar_t*, const wchar_t*, unsigned) -> bool { abort(); };
         SetAssertionHandler(abortHandler);
         SetAssertionReleaseHandler(abortHandler);
@@ -322,6 +322,13 @@ void FCurrentProcess::DumpCrashInfos(FWTextWriter& oss) const {
     DumpPhysicalMemory(oss);
     DumpMemoryStats(oss);
     DumpStorageInfos(oss);
+}
+//----------------------------------------------------------------------------
+bool FCurrentProcess::HasArgument(const FWStringView& arg) const NOEXCEPT {
+    return (_args.end() != _args.FindIf(
+        [arg](const FWString& it) NOEXCEPT -> bool {
+            return EqualsI(it, arg);
+        }) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

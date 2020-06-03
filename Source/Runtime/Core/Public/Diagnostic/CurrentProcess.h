@@ -62,6 +62,8 @@ public:
     const FTimestamp& StartDate() const { return _startDate; }
     const FTimepoint& StartTicks() const { return _startTicks; }
 
+    bool HasArgument(const FWStringView& arg) const NOEXCEPT;
+
     using singleton_type::Get;
 #if USE_PPE_ASSERT
     using singleton_type::HasInstance;

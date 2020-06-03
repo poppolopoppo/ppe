@@ -23,7 +23,7 @@ struct TBasicConstChar {
         const _Char* a = Data;
         const _Char* b = other.Data;
 
-        if (not (a & b))
+        if (not (!!a & !!b))
             return (a == b);
 
         for (; *a & *b; ++a, ++b)
@@ -37,7 +37,7 @@ struct TBasicConstChar {
         const _Char* a = Data;
         const _Char* b = other.Data;
 
-        if (not (a & b))
+        if (not (!!a & !!b))
             return (a == b);
 
         for (; *a & *b; ++a, ++b)
@@ -51,7 +51,7 @@ struct TBasicConstChar {
         const _Char* a = Data;
         const _Char* b = other.Data;
 
-        if (not (a & b))
+        if (not (!!a & !!b))
             return (!a & b);
 
         for (; *a & *b; ++a, ++b)
@@ -65,7 +65,7 @@ struct TBasicConstChar {
         const _Char* a = Data;
         const _Char* b = other.Data;
 
-        if (not (a & b))
+        if (not (!!a & !!b))
             return (!a & b);
 
         for (; *a & *b; ++a, ++b)
