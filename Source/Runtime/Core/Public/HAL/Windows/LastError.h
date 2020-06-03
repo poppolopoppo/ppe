@@ -8,7 +8,6 @@
 
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/Logger.h"
-#include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
 
 namespace PPE {

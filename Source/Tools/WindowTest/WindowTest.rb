@@ -4,12 +4,11 @@ $Build.ppe_executable!(:WindowTest, :Tools) do
     public_deps!(*namespace[:Runtime]{[
         Core(),
         VFS(),
+        RHI(),
         RTTI(),
         Serialize(),
         Network(),
         Application() ]})
-    private_deps!(*namespace[:External]{[
-        vulkan ]})
     runtime_deps!(*namespace[:ContentPipeline]{[
         BuildGraph() ]})
 end

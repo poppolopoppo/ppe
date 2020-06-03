@@ -1,28 +1,28 @@
 #pragma once
 
-#include "HAL/TargetPlatform.h"
+#include "HAL/TargetRHI.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FWindowsTargetPlatform final : public ITargetPlaftorm {
+class PPE_RHI_API FVulkanTargetRHI final : public ITargetRHI {
 public:
-    static const FWindowsTargetPlatform& Get();
+    static const FVulkanTargetRHI& Get();
 
-    virtual ETargetPlatform Platform() const override {
-        return ETargetPlatform::Windows;
+    virtual ETargetRHI RHI() const override {
+        return ETargetRHI::Vulkan;
     }
 
     virtual FString DisplayName() const override;
     virtual FString FullName() const override;
     virtual FString ShortName() const override;
 
-    virtual bool RequiresFeature(EPlatformFeature feature) const override;
-    virtual bool SupportsFeature(EPlatformFeature feature) const override;
+    virtual bool RequiresFeature(ERHIFeature feature) const override;
+    virtual bool SupportsFeature(ERHIFeature feature) const override;
 
 private:
-    FWindowsTargetPlatform() = default;
+    FVulkanTargetRHI() = default;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

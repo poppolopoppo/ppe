@@ -10,7 +10,17 @@
     - RHI:
         - add external with https://github.com/KhronosGroup/Vulkan-Headers
         - https://github.com/SaschaWillems/Vulkan/ for great samples
-        - french tutorials https://vulkan-tutorial.com/
+        - english/french tutorials: https://vulkan-tutorial.com/ (but using GFLW :/)
+        - hello vulkan, pure vulkan sample: https://github.com/GPUOpen-LibrariesAndSDKs/HelloVulkan/
+    - GPU Open:
+        - Barriers explained: https://gpuopen.com/learn/vulkan-barriers-explained/
+        - Memory management: https://gpuopen.com/learn/vulkan-device-memory/
+        - Render passes: https://gpuopen.com/learn/vulkan-renderpasses/
+        - Validation layers: https://gpuopen.com/learn/using-the-vulkan-validation-layers/
+    - Best practices:
+        - Vulkan dos and don'ts by Nvidia: https://devblogs.nvidia.com/vulkan-dos-donts/
+        - Optimizing AAA for desktop: https://gpuopen.com/presentations/2019/Vulkanised2019_06_optimising_aaa_vulkan_title_on_desktop.pdf
+
     - RenderGraph:
         - “Design Patterns for Low-Level Real-Time Rendering” https://www.youtube.com/watch?v=mdPeXJ0eiGc
         - “Work Stealing" https://www.youtube.com/watch?v=iLHNF7SgVN4

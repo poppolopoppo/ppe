@@ -2,4 +2,4 @@
 
 #include "HAL/TargetPlatform.h"
 
-// Add here files included for *EVERY* plaftorm only !
+// Add here files included for *EVERY* platform only !
