@@ -5,47 +5,46 @@
 #include "HAL/Vulkan/VulkanRHIDevice.h"
 
 namespace PPE {
+namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVulkanRHIDevice::FVulkanRHIDevice(
-     FVulkanRHIDeviceHandle deviceHandle,
-     FVulkanRHIQueue graphicsQueue,
-     FVulkanRHIQueue asyncComputeQueue,
-     FVulkanRHIQueue transferQueue,
-     FVulkanRHIQueue readbackQueue ) NOEXCEPT
+FVulkanDevice::FVulkanDevice(
+     FVulkanDeviceHandle deviceHandle,
+     FVulkanQueue graphicsQueue,
+     FVulkanQueue presentQueue,
+     FVulkanQueue asyncComputeQueue,
+     FVulkanQueue transferQueue,
+     FVulkanQueue readbackQueue ) NOEXCEPT
 :    _deviceHandle(deviceHandle)
 ,    _graphicsQueue(graphicsQueue)
+,    _presentQueue(presentQueue)
 ,    _asyncComputeQueue(asyncComputeQueue)
 ,    _transferQueue(transferQueue)
-,    _readbackQueue(readbackQueue) {
+,    _readBackQueue(readbackQueue) {
      Assert_NoAssume(VK_NULL_HANDLE != _deviceHandle);
      Assert_NoAssume( // at least one queue should be created !
           VK_NULL_HANDLE != _graphicsQueue ||
+          VK_NULL_HANDLE != _presentQueue ||
           VK_NULL_HANDLE != _asyncComputeQueue ||
           VK_NULL_HANDLE != _transferQueue ||
-          VK_NULL_HANDLE != _readbackQueue );
-     Assert_NoAssume(VK_NULL_HANDLE != _graphicsQueue ||
-          (_graphicsQueue != _asyncComputeQueue && _graphicsQueue != _transferQueue && _graphicsQueue != _readbackQueue));
-     Assert_NoAssume(VK_NULL_HANDLE != _asyncComputeQueue ||
-          (_asyncComputeQueue != _graphicsQueue && _asyncComputeQueue != _transferQueue && _asyncComputeQueue != _readbackQueue));
-     Assert_NoAssume(VK_NULL_HANDLE != _transferQueue ||
-          (_transferQueue != _graphicsQueue && _transferQueue != _asyncComputeQueue && _transferQueue != _readbackQueue));
-     Assert_NoAssume(VK_NULL_HANDLE != _readbackQueue ||
-          (_readbackQueue != _asyncComputeQueue && _readbackQueue != _transferQueue && _readbackQueue != _graphicsQueue));
+          VK_NULL_HANDLE != _readBackQueue );
+     Assert_NoAssume(VK_NULL_HANDLE != _graphicsQueue || VK_NULL_HANDLE != _presentQueue);
 }
 //----------------------------------------------------------------------------
-FVulkanRHIDevice::~FVulkanRHIDevice() {
-     // should have been destroyed by FVulkanRHIInstance::DestroyLogicalDevice() !
+FVulkanDevice::~FVulkanDevice() {
+     // should have been destroyed by FVulkanInstance::DestroyLogicalDevice() !
      Assert_NoAssume(nullptr == _deviceHandle);
      Assert_NoAssume(nullptr == _graphicsQueue);
+     Assert_NoAssume(nullptr == _presentQueue);
      Assert_NoAssume(nullptr == _asyncComputeQueue);
      Assert_NoAssume(nullptr == _transferQueue);
-     Assert_NoAssume(nullptr == _readbackQueue);
+     Assert_NoAssume(nullptr == _readBackQueue);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RHI
 } //!namespace PPE
 
 #endif //!RHI_VULKAN

@@ -1,22 +1,18 @@
 ﻿#pragma once
 
-#include "RHI_fwd.h"
+#include "HAL/TargetRHI_fwd.h"
 
-#include "Meta/StronglyTyped.h"
+#include PPE_RHI_MAKEINCLUDE(RHI_fwd)
 
-namespace PPE {
-namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FGenericInstance;
-enum class EGenericPhysicalDeviceFlags;
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowHandle);
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowSurface);
+PPE_RHI_MAKEALIAS_F(Instance)
+PPE_RHI_MAKEALIAS_E(PhysicalDeviceFlags)
+PPE_RHI_MAKEALIAS_F(WindowHandle)
+PPE_RHI_MAKEALIAS_F(WindowSurface)
 //----------------------------------------------------------------------------
-class FGenericRHIDevice;
+PPE_RHI_MAKEALIAS_F(Device)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RHI
-} //!namespace PPE

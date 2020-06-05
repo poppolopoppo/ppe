@@ -7,28 +7,30 @@
 #include "Meta/Optional.h"
 
 namespace PPE {
+namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FVulkanRHIPhysicalDevice = FGenericRHIPhysicalDevice;
-using EVulkanRHIPhysicalDeviceFlags = EGenericRHIPhysicalDeviceFlags;
-//----------------------------------------------------------------------------
-struct PPE_RHI_API FVulkanRHIInstance : public FGenericRHIInstance {
-public: // must be defined by every RHI:
-    static void Start();
+struct PPE_RHI_API FVulkanInstance : public FGenericInstance {
+    public: // must be defined by every RHI:
+        static void Start();
     static void Shutdown();
 
-    using FPhysicalDevice = FVulkanRHIPhysicalDevice;
-    using EPhysicalDeviceFlags = EVulkanRHIPhysicalDeviceFlags;
+    using FWindowHandle = FVulkanWindowHandle;
+    using FWindowSurface = FVulkanWindowSurface;
 
-    static FPhysicalDevice PickPhysicalDevice(EPhysicalDeviceFlags flags);
+    static FWindowSurface CreateWindowSurface(FWindowHandle hwnd);
+    static void DestroyWindowSurface(FWindowSurface surface);
 
-    static FVulkanRHIDevice* CreateLogicalDevice(
-        FPhysicalDevice physicalDevice,
-        EPhysicalDeviceFlags flags );
-    static void DestroyLogicalDevice(FVulkanRHIDevice** pLogicalDevice);
+    using EPhysicalDeviceFlags = EVulkanPhysicalDeviceFlags;
+
+    static FVulkanDevice* CreateLogicalDevice(
+        EPhysicalDeviceFlags deviceFlags,
+        FWindowSurface surfaceIFN );
+    static void DestroyLogicalDevice(FVulkanDevice* pLogicalDevice);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RHI
 } //!namespace PPE

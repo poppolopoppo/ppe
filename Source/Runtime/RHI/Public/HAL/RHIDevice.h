@@ -2,6 +2,5 @@
 
 // simple wrapper for target platform
 
-#include "HAL/TargetRHI.h"
+#include "HAL/RHI_fwd.h"
 #include PPE_RHI_MAKEINCLUDE(RHIDevice)
-PPE_RHI_MAKEALIAS(RHIDevice)

@@ -11,7 +11,9 @@
 #include "BuildModules.generated.h"
 
 namespace PPE {
+namespace RHI {
 LOG_CATEGORY(PPE_RHI_API, RHI)
+} //!namespace RHI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -24,8 +26,6 @@ const FModuleInfo FRHIModule::StaticInfo{
         BUILD_TARGET_ORDINAL,
         STRINGIZE(BUILD_TARGET_DEPS) )
 };
-
-FRHIDevice* GRHIDevice = nullptr; // #TODO: remove this after initial support for Vulkan
 //----------------------------------------------------------------------------
 FRHIModule::FRHIModule() NOEXCEPT
 :   IModuleInterface(StaticInfo)
@@ -34,19 +34,14 @@ FRHIModule::FRHIModule() NOEXCEPT
 void FRHIModule::Start(FModularDomain& domain) {
     IModuleInterface::Start(domain);
 
-    FRHIInstance::Start();
-
-    auto deviceFlags = FRHIInstance::EPhysicalDeviceFlags::Default;
-    FRHIInstance::FPhysicalDevice physicalDevice = FRHIInstance::PickPhysicalDevice(deviceFlags);
-    GRHIDevice = FRHIInstance::CreateLogicalDevice(physicalDevice, deviceFlags);
+    RHI::FInstance::ParseOptions();
+    RHI::FInstance::Start();
 }
 //----------------------------------------------------------------------------
 void FRHIModule::Shutdown(FModularDomain& domain) {
     IModuleInterface::Shutdown(domain);
 
-    FRHIInstance::DestroyLogicalDevice(&GRHIDevice);
-
-    FRHIInstance::Shutdown();
+    RHI::FInstance::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FRHIModule::DutyCycle(FModularDomain& domain) {

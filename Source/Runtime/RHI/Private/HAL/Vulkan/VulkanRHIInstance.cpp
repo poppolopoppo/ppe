@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Diagnostic/CurrentProcess.h"
 
 #ifdef RHI_VULKAN
 
@@ -8,10 +9,12 @@
 #include "HAL/Vulkan/VulkanRHIDevice.h"
 
 #include "Allocator/Allocation.h"
+#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
 #include "Container/BitMask.h"
 #include "IO/ConstChar.h"
 #include "Memory/MemoryDomain.h"
+#include "Meta/Optional.h"
 
 #define USE_PPE_VULKAN_DEBUGLAYER (USE_PPE_RHIDEBUG || USE_PPE_LOGGER)
 
@@ -22,175 +25,13 @@
 #include <mutex>
 
 namespace PPE {
+namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI)
 LOG_CATEGORY(, Vulkan)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-//----------------------------------------------------------------------------
-struct FVulkanProperties_ {
-    using FNameList = VECTORINSITU(RHIInternal, const char*, 8);
-
-    FNameList Extensions;
-    FNameList Layers;
-
-    FVulkanProperties_() = default;
-
-    bool SetupInstance(bool headless, bool debug) NOEXCEPT {
-        Extensions.clear();
-        if (not headless) {
-            Append(Extensions, {
-                "VK_KHR_surface",
-#if defined(_WIN32)
-                VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#elif defined(VK_USE_PLATFORM_ANDROID_KHR)
-                VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
-#elif defined(_DIRECT2DISPLAY)
-                VK_KHR_DISPLAY_EXTENSION_NAME,
-#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-                VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
-                VK_KHR_XCB_SURFACE_EXTENSION_NAME,
-#elif defined(VK_USE_PLATFORM_IOS_MVK)
-                VK_MVK_IOS_SURFACE_EXTENSION_NAME,
-#elif defined(VK_USE_PLATFORM_MACOS_MVK)
-                VK_MVK_MACOS_SURFACE_EXTENSION_NAME,
-#endif
-            });
-        }
-
-#if USE_PPE_RHIDEBUG
-        if (debug) {
-            Append(Extensions, {
-                "VK_EXT_debug_report",
-#if USE_PPE_LOGGER
-                "VK_EXT_debug_utils"
-#endif
-            });
-        }
-#endif
-
-        bool validated = true;
-        validated &= CheckNames_(
-            "vkEnumerateInstanceExtensionProperties",
-            Extensions.MakeConstView(),
-            &VkExtensionProperties::extensionName,
-            [](u32* pNumExtensions, VkExtensionProperties* pExtensions) {
-                return vkEnumerateInstanceExtensionProperties(nullptr, pNumExtensions, pExtensions);
-            });
-
-        SetupValidationLayers_(debug);
-
-        validated &= CheckNames_(
-            "vkEnumerateInstanceLayerProperties",
-            Layers.MakeConstView(),
-            &VkLayerProperties::layerName,
-            [](u32* pNumLayers, VkLayerProperties* pLayers) {
-                return vkEnumerateInstanceLayerProperties(pNumLayers, pLayers);
-            });
-
-        return validated;
-    }
-
-    bool SetupDevice(VkPhysicalDevice device, EVulkanRHIPhysicalDeviceFlags flags, bool debug) {
-        if (EVulkanRHIPhysicalDeviceFlags::Swapchain ^ flags)
-            Extensions.push_back("VK_KHR_swapchain");
-
-        bool validated = true;
-
-        validated &= CheckNames_(
-            "vkEnumerateDeviceExtensionProperties",
-            Extensions.MakeConstView(),
-            &VkExtensionProperties::extensionName,
-            [device](u32* pNumExtensions, VkExtensionProperties* pExtensions) {
-                return vkEnumerateDeviceExtensionProperties(device, nullptr, pNumExtensions, pExtensions);
-            });
-
-        SetupValidationLayers_(debug);
-
-        validated &= CheckNames_(
-            "vkEnumerateDeviceLayerProperties",
-            Layers.MakeConstView(),
-            &VkLayerProperties::layerName,
-            [device](u32* pNumLayers, VkLayerProperties* pLayers) {
-                return vkEnumerateDeviceLayerProperties(device, pNumLayers, pLayers);
-            });
-
-        return validated;
-    }
-
-private:
-    void SetupValidationLayers_(bool debug) NOEXCEPT {
-#if USE_PPE_RHIDEBUG
-        if (debug)
-            Layers.assign({
-                "VK_LAYER_KHRONOS_validation",
-                "VK_LAYER_LUNARG_standard_validation",
-            });
-        else
-            Layers.clear();
-#endif
-    }
-
-    using FVulkanStaticName = char[VK_MAX_EXTENSION_NAME_SIZE];
-    template <typename T, typename _Enumerate>
-    static bool CheckNames_(
-        const char* name,
-        const TMemoryView<const char* const>& neededNames,
-        FVulkanStaticName T::* member,
-        _Enumerate&& each ) {
-        u32 numElements = 0;
-
-        VkResult result;
-        result = each(&numElements, nullptr);
-        if (VK_SUCCESS != result)
-            PPE_THROW_IT(FVulkanDeviceException(name, result));
-
-        STACKLOCAL_POD_ARRAY(T, elements, numElements);
-        result = each(&numElements, elements.data());
-        if (VK_SUCCESS != result)
-            PPE_THROW_IT(FVulkanDeviceException(name, result));
-
-        LOG(Vulkan, Verbose, L"{0}: found = [{1}] ({2} results)",
-            MakeCStringView(name),
-            Fmt::Join(
-                MakeOutputIterable(elements.begin(), elements.end(),
-                    [member](const T& elt) NOEXCEPT {
-                        return MakeCStringView(elt.*member);
-                    }),
-                MakeCStringView(L", ")),
-                elements.size() );
-
-        for (const char* needed : neededNames) {
-            bool found = false;
-            for (const T& elt : elements) {
-                if (FConstChar{ needed }.EqualsI(elt.*member)) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (not found) {
-                LOG(Vulkan, Error, L"{0}: failed to find <{1}> !",
-                    MakeCStringView(name), MakeCStringView(needed) );
-                return false;
-            }
-        }
-
-        LOG(Vulkan, Info, L"{0}: selected = [{1}] ({2} results)",
-            MakeCStringView(name),
-            Fmt::Join(
-                MakeOutputIterable(neededNames.begin(), neededNames.end(),
-                    [member](const char* cstr) NOEXCEPT {
-                        return MakeCStringView(cstr);
-                    }),
-                MakeCStringView(L", ")),
-                neededNames.size() );
-
-        return true;
-    }
-};
 //----------------------------------------------------------------------------
 struct FVulkanAllocator_ {
     VkAllocationCallbacks Callbacks{
@@ -282,7 +123,177 @@ struct FVulkanAllocator_ {
     }
 #endif
 };
+//----------------------------------------------------------------------------
+struct FVulkanProperties_ {
+    using FNameList = VECTORINSITU(RHIInternal, const char*, 8);
 
+    FNameList Extensions;
+    FNameList Layers;
+
+    FVulkanProperties_() = default;
+
+    void Reset() {
+        Extensions.clear();
+        Layers.clear();
+    }
+
+    NODISCARD bool SetupInstance(bool headless, bool debug) NOEXCEPT {
+        Reset();
+
+        if (not headless) {
+            Append(Extensions, {
+                VK_KHR_SURFACE_EXTENSION_NAME,
+#if defined(_WIN32)
+                VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#elif defined(VK_USE_PLATFORM_ANDROID_KHR)
+                VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
+#elif defined(_DIRECT2DISPLAY)
+                VK_KHR_DISPLAY_EXTENSION_NAME,
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+                VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+                VK_KHR_XCB_SURFACE_EXTENSION_NAME,
+#elif defined(VK_USE_PLATFORM_IOS_MVK)
+                VK_MVK_IOS_SURFACE_EXTENSION_NAME,
+#elif defined(VK_USE_PLATFORM_MACOS_MVK)
+                VK_MVK_MACOS_SURFACE_EXTENSION_NAME,
+#endif
+            });
+        }
+
+#if USE_PPE_RHIDEBUG
+        if (debug) {
+            Append(Extensions, {
+                "VK_EXT_debug_report",
+#if USE_PPE_LOGGER
+                "VK_EXT_debug_utils"
+#endif
+            });
+        }
+#endif
+
+        bool validated = true;
+        validated &= CheckNames_(
+            "vkEnumerateInstanceExtensionProperties",
+            Extensions.MakeConstView(),
+            &VkExtensionProperties::extensionName,
+            [](u32* pNumExtensions, VkExtensionProperties* pExtensions) {
+                return vkEnumerateInstanceExtensionProperties(nullptr, pNumExtensions, pExtensions);
+            });
+
+        SetupValidationLayers_(debug);
+
+        validated &= CheckNames_(
+            "vkEnumerateInstanceLayerProperties",
+            Layers.MakeConstView(),
+            &VkLayerProperties::layerName,
+            [](u32* pNumLayers, VkLayerProperties* pLayers) {
+                return vkEnumerateInstanceLayerProperties(pNumLayers, pLayers);
+            });
+
+        return validated;
+    }
+
+    NODISCARD bool SetupDevice(VkPhysicalDevice device, EVulkanPhysicalDeviceFlags flags, bool debug) {
+        Reset();
+
+        if (EVulkanPhysicalDeviceFlags::Swapchain ^ flags)
+            Extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+        bool validated = true;
+
+        validated &= CheckNames_(
+            "vkEnumerateDeviceExtensionProperties",
+            Extensions.MakeConstView(),
+            &VkExtensionProperties::extensionName,
+            [device](u32* pNumExtensions, VkExtensionProperties* pExtensions) {
+                return vkEnumerateDeviceExtensionProperties(device, nullptr, pNumExtensions, pExtensions);
+            });
+
+        SetupValidationLayers_(debug);
+
+        validated &= CheckNames_(
+            "vkEnumerateDeviceLayerProperties",
+            Layers.MakeConstView(),
+            &VkLayerProperties::layerName,
+            [device](u32* pNumLayers, VkLayerProperties* pLayers) {
+                return vkEnumerateDeviceLayerProperties(device, pNumLayers, pLayers);
+            });
+
+        return validated;
+    }
+
+private:
+    void SetupValidationLayers_(bool debug) NOEXCEPT {
+#if USE_PPE_RHIDEBUG
+        if (debug)
+            Layers.assign({
+                "VK_LAYER_KHRONOS_validation",
+                "VK_LAYER_LUNARG_standard_validation",
+            });
+        else
+            Layers.clear();
+#endif
+    }
+
+    using FVulkanStaticName = char[VK_MAX_EXTENSION_NAME_SIZE];
+    template <typename T, typename _Enumerate>
+    static NODISCARD bool CheckNames_(
+        const char* name,
+        const TMemoryView<const char* const>& neededNames,
+        FVulkanStaticName T::* member,
+        _Enumerate&& each ) {
+        u32 numElements = 0;
+
+        VkResult result;
+        result = each(&numElements, nullptr);
+        if (VK_SUCCESS != result)
+            PPE_THROW_IT(FVulkanDeviceException(name, result));
+
+        STACKLOCAL_POD_ARRAY(T, elements, numElements);
+        result = each(&numElements, elements.data());
+        if (VK_SUCCESS != result)
+            PPE_THROW_IT(FVulkanDeviceException(name, result));
+
+        LOG(Vulkan, Verbose, L"{0}: found {2} results = [{1}]",
+            MakeCStringView(name),
+            Fmt::Join(
+                MakeOutputIterable(elements.begin(), elements.end(),
+                    [member](const T& elt) NOEXCEPT {
+                        return MakeCStringView(elt.*member);
+                    }),
+                MakeCStringView(L", ")),
+            elements.size() );
+
+        for (const char* needed : neededNames) {
+            bool found = false;
+            for (const T& elt : elements) {
+                if (FConstChar{ needed }.EqualsI(elt.*member)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (not found) {
+                LOG(Vulkan, Error, L"{0}: failed to find <{1}> !",
+                    MakeCStringView(name), MakeCStringView(needed) );
+                return false;
+            }
+        }
+
+        LOG(Vulkan, Info, L"{0}: selected {2} results = [{1}]",
+            MakeCStringView(name),
+            Fmt::Join(
+                MakeOutputIterable(neededNames.begin(), neededNames.end(),
+                    [member](const char* cstr) NOEXCEPT {
+                        return MakeCStringView(cstr);
+                    }),
+                MakeCStringView(L", ")),
+            neededNames.size() );
+
+        return true;
+    }
+};
 //----------------------------------------------------------------------------
 #if USE_PPE_VULKAN_DEBUGLAYER
 struct FVulkanDebugLayer_ {
@@ -457,7 +468,7 @@ struct FVulkanInstanceData_ {
     }
 
     std::mutex Barrier;
-    VkInstance Ref{VK_NULL_HANDLE};
+    VkInstance Instance{VK_NULL_HANDLE};
     FVulkanAllocator_ Allocator;
     FVulkanProperties_ Properties;
 #if USE_PPE_VULKAN_DEBUGLAYER
@@ -466,19 +477,19 @@ struct FVulkanInstanceData_ {
 
     void Start(VkInstance instance) {
         Assert(VK_NULL_HANDLE != instance);
-        Assert_NoAssume(VK_NULL_HANDLE == Ref);
-        Ref = instance;
+        Assert_NoAssume(VK_NULL_HANDLE == Instance);
+        Instance = instance;
 #if USE_PPE_VULKAN_DEBUGLAYER
         DebugLayer.Start(instance, Allocator.Callbacks);
 #endif
     }
 
     void Shutdown() {
-        Assert_NoAssume(VK_NULL_HANDLE != Ref);
+        Assert_NoAssume(VK_NULL_HANDLE != Instance);
 #if USE_PPE_VULKAN_DEBUGLAYER
-        DebugLayer.Shutdown(Ref, Allocator.Callbacks);
+        DebugLayer.Shutdown(Instance, Allocator.Callbacks);
 #endif
-        Ref = VK_NULL_HANDLE;
+        Instance = VK_NULL_HANDLE;
     }
 };
 //----------------------------------------------------------------------------
@@ -496,27 +507,41 @@ struct FVulkanQueueFamilies_ {
     };
 
     STATIC_CONST_INTEGRAL(size_t, InSitu, 4);
+
+    VkPhysicalDevice Device;
     VECTORINSITU(RHIInternal, FQueueFamily, InSitu) Families;
     VECTORINSITU(RHIInternal, FDeviceQueue, InSitu) Queues;
     VECTORINSITU(RHIInternal, VkDeviceQueueCreateInfo, InSitu) CreateInfos;
 
-    u32 Add(VkFlags queueFlags) NOEXCEPT {
+    NODISCARD bool AddIFP(u32* pQueueIndex, VkFlags queueFlags, VkSurfaceKHR surfaceIFN = VK_NULL_HANDLE) NOEXCEPT {
+        Assert(pQueueIndex);
+
         FQueueFamily* candidate = nullptr;
         for (FQueueFamily& family : Families) {
-            if (queueFlags == (queueFlags & family.QueueFlags)) {
-                candidate = &family;
-                if (0 == family.FirstQueueAvailable)
-                    break; // try to spread queues across all families
+            if (queueFlags != (queueFlags & family.QueueFlags))
+                continue;
+
+            if (VK_NULL_HANDLE != surfaceIFN) {
+                VkBool32 presentSupport = false;
+                vkGetPhysicalDeviceSurfaceSupportKHR(Device, family.FamilyIndex, surfaceIFN, &presentSupport);
+
+                if (not presentSupport)
+                    continue;
             }
+
+            candidate = &family;
+            if (0 == family.FirstQueueAvailable)
+                break; // try to spread queues across all families
         }
 
-        AssertRelease(candidate);
-        Assert(candidate->FirstQueueAvailable < candidate->NumQueues);
+        if (not candidate)
+            return false;
 
-        const u32 queueIndex = checked_cast<u32>(Queues.size());
+        Assert(candidate->FirstQueueAvailable < candidate->NumQueues);
+        *pQueueIndex = checked_cast<u32>(Queues.size());
         Queues.emplace_back(candidate->FamilyIndex, candidate->FirstQueueAvailable++);
 
-        return queueIndex;
+        return true;
     }
 
     VkQueue Get(VkDevice device, u32 queueIndex) const NOEXCEPT {
@@ -535,12 +560,14 @@ struct FVulkanQueueFamilies_ {
         0.30f,0.25f,0.20f,0.15f,0.10f,0.05f,0.00f
     };
 
-    void Setup(VkPhysicalDevice device) NOEXCEPT {
+    void SetupDevice(VkPhysicalDevice device) NOEXCEPT {
+        Device = device;
+
         u32 numQueueFamilies = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &numQueueFamilies, nullptr);
+        vkGetPhysicalDeviceQueueFamilyProperties(Device, &numQueueFamilies, nullptr);
 
         STACKLOCAL_POD_ARRAY(VkQueueFamilyProperties, queueFamilies, numQueueFamilies);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &numQueueFamilies, queueFamilies.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(Device, &numQueueFamilies, queueFamilies.data());
 
         // sort queue families from least to most number of flags enabled
         std::sort(queueFamilies.begin(), queueFamilies.end(),
@@ -549,6 +576,7 @@ struct FVulkanQueueFamilies_ {
                 return (bmask_t{ a.queueFlags }.Count() < bmask_t{ b.queueFlags }.Count());
             });
 
+        Queues.clear();
         Families.resize_Uninitialized(numQueueFamilies);
 
         forrange(i, 0, numQueueFamilies) {
@@ -565,6 +593,8 @@ struct FVulkanQueueFamilies_ {
     void PrepareCreateInfos() NOEXCEPT {
         const auto defaultPriorities = MakeView(GDefaultQueuePriorities);
 
+        CreateInfos.clear();
+
         for (const FQueueFamily& family : Families) {
             if (family.FirstQueueAvailable > 0) {
                 Assert_NoAssume(family.FirstQueueAvailable <= defaultPriorities.size());
@@ -579,6 +609,37 @@ struct FVulkanQueueFamilies_ {
 
                 CreateInfos.push_back(createInfo);
             }
+        }
+    }
+};
+//----------------------------------------------------------------------------
+struct FVulkanQueueIndices_ {
+    Meta::TOptional<u32> Graphics;
+    Meta::TOptional<u32> Present;
+    Meta::TOptional<u32> AsyncCompute;
+    Meta::TOptional<u32> Transfer;
+    Meta::TOptional<u32> ReadBack;
+
+    NODISCARD bool SetupDevice(FVulkanQueueFamilies_& queueFamilies, VkSurfaceKHR surfaceIFN = VK_NULL_HANDLE) NOEXCEPT {
+        bool result = true;
+        result &= SetupQueue(&Graphics, queueFamilies, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+        result &= SetupQueue(&Present, queueFamilies, VK_QUEUE_TRANSFER_BIT, surfaceIFN);
+        result &= SetupQueue(&AsyncCompute, queueFamilies, VK_QUEUE_COMPUTE_BIT);
+        result &= SetupQueue(&Transfer, queueFamilies, VK_QUEUE_TRANSFER_BIT);
+        result &= SetupQueue(&ReadBack, queueFamilies, VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+        return result;
+    }
+
+    static bool SetupQueue(Meta::TOptional<u32>* pQueueIndex, FVulkanQueueFamilies_& queueFamilies, VkFlags queueFlags, VkSurfaceKHR surfaceIFN = VK_NULL_HANDLE) NOEXCEPT {
+        Assert(pQueueIndex);
+        u32 result;
+        if (queueFamilies.AddIFP(&result, queueFlags, surfaceIFN)) {
+            *pQueueIndex = result;
+            return true;
+        }
+        else {
+            pQueueIndex->reset();
+            return false;
         }
     }
 };
@@ -608,17 +669,100 @@ struct FVulkanDeviceFeatures_ {
     }
 };
 //----------------------------------------------------------------------------
+static VkPhysicalDevice PickPhysicalDevice_(
+    FVulkanProperties_* pDeviceProperties,
+    FVulkanQueueFamilies_* pQueueFamilies,
+    FVulkanQueueIndices_* pQueueIndices,
+    VkInstance instance,
+    EVulkanPhysicalDeviceFlags deviceFlags,
+    VkSurfaceKHR surfaceIFN ) {
+    Assert(pDeviceProperties);
+    Assert(pQueueFamilies);
+    Assert(pQueueIndices);
+
+    AssertRelease(not (deviceFlags ^ EVulkanPhysicalDeviceFlags::Swapchain) || not FVulkanInstance::GHeadless);
+    AssertRelease(not FVulkanInstance::GHeadless || VK_NULL_HANDLE == surfaceIFN); // can't create window surface when headless
+
+    u32 numDevices = 0;
+
+    VkResult result;
+    result = vkEnumeratePhysicalDevices(instance, &numDevices, nullptr);
+    if  (VK_SUCCESS != result)
+        PPE_THROW_IT(FVulkanDeviceException("vkEnumeratePhysicalDevices", result));
+
+    STACKLOCAL_POD_ARRAY(VkPhysicalDevice, devices, numDevices);
+    result = vkEnumeratePhysicalDevices(instance, &numDevices, devices.data());
+    if  (VK_SUCCESS != result)
+        PPE_THROW_IT(FVulkanDeviceException("vkEnumeratePhysicalDevices", result));
+
+    int bestScore = 0;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkPhysicalDevice lastDeviceValidated = VK_NULL_HANDLE;
+    auto setupDeviceIFP = [=, &lastDeviceValidated](VkPhysicalDevice device) NOEXCEPT -> bool {
+        if (device == lastDeviceValidated)
+            return true;
+
+        if (not pDeviceProperties->SetupDevice(device, deviceFlags, FVulkanInstance::GDebugEnabled))
+            return false;
+
+        pQueueFamilies->SetupDevice(device);
+
+        if (not pQueueIndices->SetupDevice(*pQueueFamilies, surfaceIFN))
+            return false;
+
+        lastDeviceValidated = device;
+        return true;
+    };
+
+    for (const VkPhysicalDevice device : devices) {
+        Assert(VK_NULL_HANDLE != device);
+
+        if (not setupDeviceIFP(device))
+            continue;
+
+        VkPhysicalDeviceProperties properties;
+        vkGetPhysicalDeviceProperties(device, &properties);
+
+        VkPhysicalDeviceFeatures features;
+        vkGetPhysicalDeviceFeatures(device, &features);
+
+        int score = 0;
+
+        if (deviceFlags ^ EVulkanPhysicalDeviceFlags::Graphics) {
+            if (not FVulkanDeviceFeatures_::CheckGraphics(features))
+                continue;
+        }
+
+        if (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == properties.deviceType)
+            score += 1000;
+        else if (deviceFlags ^ EVulkanPhysicalDeviceFlags::Discrete)
+            continue;
+
+        score += properties.limits.maxImageDimension2D;
+        score += properties.limits.maxImageDimension3D;
+        score += properties.limits.maxImageDimensionCube;
+
+        if (score > bestScore) {
+            bestScore = score;
+            physicalDevice = device;
+        }
+    }
+
+    if (VK_NULL_HANDLE != physicalDevice && setupDeviceIFP(physicalDevice))
+        return physicalDevice;
+    else
+        return VK_NULL_HANDLE;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FVulkanRHIInstance::Start() {
-    ParseOptions();
+void FVulkanInstance::Start() {
+    FVulkanInstanceData_& vk = FVulkanInstanceData_::Get();
+    const Meta::FUniqueLock scopeLock(vk.Barrier);
 
-    FVulkanInstanceData_& data = FVulkanInstanceData_::Get();
-    const Meta::FUniqueLock scopeLock(data.Barrier);
-
-    VerifyRelease(data.Properties.SetupInstance(GHeadless, GDebugEnabled));
+    VerifyRelease(vk.Properties.SetupInstance(GHeadless, GDebugEnabled));
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -633,176 +777,153 @@ void FVulkanRHIInstance::Start() {
     createInfo.pApplicationInfo = &appInfo;
     createInfo.pNext = nullptr;
 
-    createInfo.enabledExtensionCount = checked_cast<u32>(data.Properties.Extensions.size());
-    createInfo.ppEnabledExtensionNames = data.Properties.Extensions.data();
+    createInfo.enabledExtensionCount = checked_cast<u32>(vk.Properties.Extensions.size());
+    createInfo.ppEnabledExtensionNames = vk.Properties.Extensions.data();
 
-    createInfo.enabledLayerCount = checked_cast<u32>(data.Properties.Layers.size());
-    createInfo.ppEnabledLayerNames = data.Properties.Layers.data();
+    createInfo.enabledLayerCount = checked_cast<u32>(vk.Properties.Layers.size());
+    createInfo.ppEnabledLayerNames = vk.Properties.Layers.data();
 
     VkInstance instance;
-    VkResult result = vkCreateInstance(&createInfo, &data.Allocator.Callbacks, &instance);
+    VkResult result = vkCreateInstance(&createInfo, &vk.Allocator.Callbacks, &instance);
     if (VK_SUCCESS != result)
         PPE_THROW_IT(FVulkanDeviceException("vkCreateInstance", result));
 
-    data.Start(instance);
+    vk.Start(instance);
 }
 //----------------------------------------------------------------------------
-void FVulkanRHIInstance::Shutdown() {
-    FVulkanInstanceData_& data = FVulkanInstanceData_::Get();
-    const Meta::FUniqueLock scopeLock(data.Barrier);
+void FVulkanInstance::Shutdown() {
+    FVulkanInstanceData_& vk = FVulkanInstanceData_::Get();
+    const Meta::FUniqueLock scopeLock(vk.Barrier);
 
-    VkInstance instance = data.Ref;
+    VkInstance instance = vk.Instance;
 
-    data.Shutdown();
+    vk.Shutdown();
 
-    vkDestroyInstance(instance, &data.Allocator.Callbacks);
+    vkDestroyInstance(instance, &vk.Allocator.Callbacks);
 }
 //----------------------------------------------------------------------------
-auto FVulkanRHIInstance::PickPhysicalDevice(EPhysicalDeviceFlags flags) -> FPhysicalDevice {
-    AssertRelease(not (flags ^ EPhysicalDeviceFlags::Swapchain) || not GHeadless);
+auto FVulkanInstance::CreateWindowSurface(FWindowHandle hwnd) -> FWindowSurface {
+    AssertRelease(not GHeadless); // can't create window surface when headless
+    Assert(nullptr != *hwnd);
 
-    FVulkanInstanceData_& data = FVulkanInstanceData_::Get();
-    const Meta::FUniqueLock scopeLock(data.Barrier);
+    FVulkanInstanceData_& vk = FVulkanInstanceData_::Get();
+    const Meta::FUniqueLock scopeLock(vk.Barrier);
 
-    u32 numDevices = 0;
+    VkSurfaceKHR surface;
 
-    VkResult result;
-    result = vkEnumeratePhysicalDevices(data.Ref, &numDevices, nullptr);
-    if  (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkEnumeratePhysicalDevices", result));
+#ifdef PLATFORM_WINDOWS
+    VkWin32SurfaceCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    createInfo.hwnd = static_cast<::HWND>(*hwnd);
+    createInfo.hinstance = static_cast<::HINSTANCE>(FCurrentProcess::Get().AppHandle());
 
-    STACKLOCAL_POD_ARRAY(VkPhysicalDevice, devices, numDevices);
-    result = vkEnumeratePhysicalDevices(data.Ref, &numDevices, devices.data());
-    if  (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkEnumeratePhysicalDevices", result));
+    const VkResult result = vkCreateWin32SurfaceKHR(vk.Instance, &createInfo, &vk.Allocator.Callbacks, &surface);
+    if (VK_SUCCESS != result)
+        PPE_THROW_IT(FVulkanDeviceException("vkCreateWin32SurfaceKHR", result));
 
-    int bestScore = 0;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+#else
+#     error "unsupported platform"
+#endif
 
-    for (const VkPhysicalDevice dev : devices) {
-        Assert(VK_NULL_HANDLE != dev);
-
-        FVulkanProperties_ props;
-        if (not props.SetupDevice(dev, flags, GDebugEnabled))
-            continue;
-
-        VkPhysicalDeviceProperties properties;
-        vkGetPhysicalDeviceProperties(dev, &properties);
-
-        VkPhysicalDeviceFeatures features;
-        vkGetPhysicalDeviceFeatures(dev, &features);
-
-        int score = 0;
-
-        if (flags ^ EVulkanRHIPhysicalDeviceFlags::Graphics) {
-            if (not FVulkanDeviceFeatures_::CheckGraphics(features))
-                continue;
-        }
-
-        if (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == properties.deviceType)
-            score += 1000;
-        else if (flags ^ EVulkanRHIPhysicalDeviceFlags::Discrete)
-            continue;
-
-        score += properties.limits.maxImageDimension2D;
-        score += properties.limits.maxImageDimension3D;
-        score += properties.limits.maxImageDimensionCube;
-
-        if (score > bestScore) {
-            bestScore = score;
-            physicalDevice = dev;
-        }
-    }
-
-    CLOG(!physicalDevice, Vulkan, Error, L"failed to pick a compliant physical device");
-    return FVulkanRHIPhysicalDevice{ physicalDevice };
+    Assert_NoAssume(VK_NULL_HANDLE != surface);
+    return FVulkanWindowSurface{ surface };
 }
 //----------------------------------------------------------------------------
-FVulkanRHIDevice* FVulkanRHIInstance::CreateLogicalDevice(FPhysicalDevice physicalDevice, EPhysicalDeviceFlags flags) {
-    Assert(VK_NULL_HANDLE != physicalDevice);
+void FVulkanInstance::DestroyWindowSurface(FWindowSurface surface) {
+    AssertRelease(not GHeadless); // can't create window surface when headless
+    Assert(nullptr != *surface);
 
-    VkResult result;
-    VkPhysicalDevice const vkPhysicalDevice = static_cast<VkPhysicalDevice>(physicalDevice.Value);
+    FVulkanInstanceData_& vk = FVulkanInstanceData_::Get();
+    const Meta::FUniqueLock scopeLock(vk.Barrier);
 
-    FVulkanInstanceData_& data = FVulkanInstanceData_::Get();
-    const Meta::FUniqueLock scopeLock(data.Barrier);
+    vkDestroySurfaceKHR(vk.Instance, static_cast<VkSurfaceKHR>(*surface), &vk.Allocator.Callbacks);
+}
+//----------------------------------------------------------------------------
+FVulkanDevice* FVulkanInstance::CreateLogicalDevice(
+    EPhysicalDeviceFlags deviceFlags,
+    FWindowSurface surfaceIFN ) {
 
-    // setup queues
+    FVulkanInstanceData_& vk = FVulkanInstanceData_::Get();
+    const Meta::FUniqueLock scopeLock(vk.Barrier);
+
+    // iterate to find a matching device
+    FVulkanProperties_ deviceProperties;
+    FVulkanQueueIndices_ queueIndices;
     FVulkanQueueFamilies_ queueFamilies;
-    queueFamilies.Setup(vkPhysicalDevice);
-    const u32 graphicsQueue = queueFamilies.Add(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
-    const u32 asyncComputeQueue = queueFamilies.Add(VK_QUEUE_COMPUTE_BIT);
-    const u32 transferQueue = queueFamilies.Add(VK_QUEUE_TRANSFER_BIT);
-    const u32 readbackQueue = queueFamilies.Add(VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+
+    const VkPhysicalDevice physicalDevice = PickPhysicalDevice_(
+        &deviceProperties, &queueFamilies, &queueIndices,
+        vk.Instance, deviceFlags,
+        static_cast<VkSurfaceKHR>(*surfaceIFN) );
+    CLOG(VK_NULL_HANDLE == physicalDevice, Vulkan, Fatal, L"failed to pick a compliant physical device");
+
+    // setup queue and features
     queueFamilies.PrepareCreateInfos();
 
-    // setup features
     VkPhysicalDeviceFeatures features{};
-    if (EPhysicalDeviceFlags::Graphics ^ flags)
+    if (EPhysicalDeviceFlags::Graphics ^ deviceFlags)
         FVulkanDeviceFeatures_::SetupGraphics(&features);
-
-    // setup properties
-    FVulkanProperties_ properties;
-    VerifyRelease(properties.SetupDevice(vkPhysicalDevice, flags, GDebugEnabled));
 
     // main device info
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
     createInfo.pEnabledFeatures = &features;
 
     createInfo.pQueueCreateInfos = queueFamilies.CreateInfos.data();
     createInfo.queueCreateInfoCount = checked_cast<u32>(queueFamilies.CreateInfos.size());
 
-    createInfo.enabledExtensionCount = checked_cast<u32>(properties.Extensions.size());
-    createInfo.ppEnabledExtensionNames = properties.Extensions.data();
+    createInfo.enabledExtensionCount = checked_cast<u32>(deviceProperties.Extensions.size());
+    createInfo.ppEnabledExtensionNames = deviceProperties.Extensions.data();
 
-    createInfo.enabledLayerCount = checked_cast<u32>(properties.Layers.size());
-    createInfo.ppEnabledLayerNames = properties.Layers.data();;
+    createInfo.enabledLayerCount = checked_cast<u32>(deviceProperties.Layers.size());
+    createInfo.ppEnabledLayerNames = deviceProperties.Layers.data();;
 
     VkDevice logicalDevice = VK_NULL_HANDLE;
-    result = vkCreateDevice(
-        static_cast<VkPhysicalDevice>(physicalDevice.Value),
+    const VkResult result = vkCreateDevice(
+        physicalDevice,
         &createInfo,
-        &data.Allocator.Callbacks,
+        &vk.Allocator.Callbacks,
         &logicalDevice );
     if (VK_SUCCESS != result)
         PPE_THROW_IT(FVulkanInstanceException("vkCreateDevice", result));
 
-    return TRACKING_NEW(RHIInstance, FVulkanRHIDevice) {
-        FVulkanRHIDeviceHandle{ logicalDevice },
-        FVulkanRHIQueue{ queueFamilies.Get(logicalDevice, graphicsQueue) },
-        FVulkanRHIQueue{ queueFamilies.Get(logicalDevice, asyncComputeQueue) },
-        FVulkanRHIQueue{ queueFamilies.Get(logicalDevice, transferQueue) },
-        FVulkanRHIQueue{ queueFamilies.Get(logicalDevice, readbackQueue) }
+    return TRACKING_NEW(RHIInstance, FVulkanDevice) {
+        FVulkanDeviceHandle{ logicalDevice },
+        FVulkanQueue{ queueFamilies.Get(logicalDevice, *queueIndices.Graphics) },
+        FVulkanQueue{ queueFamilies.Get(logicalDevice, *queueIndices.Present) },
+        FVulkanQueue{ queueFamilies.Get(logicalDevice, *queueIndices.AsyncCompute) },
+        FVulkanQueue{ queueFamilies.Get(logicalDevice, *queueIndices.Transfer) },
+        FVulkanQueue{ queueFamilies.Get(logicalDevice, *queueIndices.ReadBack) }
     };
 }
 //----------------------------------------------------------------------------
-void FVulkanRHIInstance::DestroyLogicalDevice(FVulkanRHIDevice** pLogicalDevice) {
+void FVulkanInstance::DestroyLogicalDevice(FVulkanDevice* pLogicalDevice) {
     Assert(pLogicalDevice);
-    Assert(VK_NULL_HANDLE != *pLogicalDevice);
+    Assert(VK_NULL_HANDLE != pLogicalDevice);
 
-    FVulkanInstanceData_& data = FVulkanInstanceData_::Get();
-    const Meta::FUniqueLock scopeLock(data.Barrier);
+    FVulkanInstanceData_& vk = FVulkanInstanceData_::Get();
+    const Meta::FUniqueLock scopeLock(vk.Barrier);
 
     vkDestroyDevice(
-        static_cast<VkDevice>((*pLogicalDevice)->_deviceHandle.Value),
-        &data.Allocator.Callbacks );
+        static_cast<VkDevice>(*pLogicalDevice->_deviceHandle),
+        &vk.Allocator.Callbacks );
 
-#if USE_PPE_ASSERT // see ~FVulkanRHIDevice
-    (*pLogicalDevice)->_deviceHandle.Value = nullptr;
-    (*pLogicalDevice)->_graphicsQueue.Value = nullptr;
-    (*pLogicalDevice)->_asyncComputeQueue.Value = nullptr;
-    (*pLogicalDevice)->_transferQueue.Value = nullptr;
-    (*pLogicalDevice)->_readbackQueue.Value = nullptr;
+#if USE_PPE_ASSERT // see ~FVulkanDevice
+    *pLogicalDevice->_deviceHandle = nullptr;
+    *pLogicalDevice->_graphicsQueue = nullptr;
+    *pLogicalDevice->_presentQueue = nullptr;
+    *pLogicalDevice->_asyncComputeQueue = nullptr;
+    *pLogicalDevice->_transferQueue = nullptr;
+    *pLogicalDevice->_readBackQueue = nullptr;
 #endif
 
-    TRACKING_DELETE(RHIInstance, *pLogicalDevice);
-
-    *pLogicalDevice = nullptr;
+    TRACKING_DELETE(RHIInstance, pLogicalDevice);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RHI
 } //!namespace PPE
 
 #endif //!RHI_VULKAN

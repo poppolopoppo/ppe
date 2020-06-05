@@ -5,15 +5,20 @@
 #ifdef RHI_VULKAN
 
 namespace PPE {
+namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FVulkanRHIInstance;
+struct FVulkanInstance;
+using EVulkanPhysicalDeviceFlags = EGenericPhysicalDeviceFlags;
+using FVulkanWindowHandle = FGenericWindowHandle;
+using FVulkanWindowSurface = FGenericWindowSurface;
 //----------------------------------------------------------------------------
-class FVulkanRHIDevice;
+class FVulkanDevice;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RHI
 } //!namespace PPE
 
 #endif //!RHI_VULKAN

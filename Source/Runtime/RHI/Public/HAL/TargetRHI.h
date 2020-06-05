@@ -7,18 +7,8 @@
 #include "Diagnostic/Logger_fwd.h"
 #include "IO/String_fwd.h"
 
-#define PPE_RHI_MAKEINCLUDE(_BASENAME) \
-    STRINGIZE(HAL/TARGET_RHI/CONCAT(TARGET_RHI, _BASENAME).h)
-
-#define PPE_RHI_TARGETALIAS(_BASENAME) \
-    CONCAT3(F, TARGET_RHI, _BASENAME)
-
-#define PPE_RHI_MAKEALIAS(_BASENAME) \
-    namespace PPE { \
-        using CONCAT(F, _BASENAME) = PPE_RHI_TARGETALIAS(_BASENAME); \
-    }
-
 namespace PPE {
+namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -59,4 +49,5 @@ inline const ITargetRHI& CurrentRHI() { return TargetRHI(ETargetRHI::Current); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RHI
 } //!namespace PPE

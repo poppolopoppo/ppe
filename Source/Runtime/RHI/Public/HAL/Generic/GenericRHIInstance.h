@@ -3,15 +3,13 @@
 #include "HAL/Generic/GenericRHI_fwd.h"
 
 #include "Meta/Enum.h"
-#include "Meta/StronglyTyped.h"
 
 namespace PPE {
+namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericRHIPhysicalDevice);
-//----------------------------------------------------------------------------
-enum class EGenericRHIPhysicalDeviceFlags {
+enum class EGenericPhysicalDeviceFlags {
     None        = 0,
     Swapchain   = 1<<0,
     Graphics    = 1<<1,
@@ -20,31 +18,36 @@ enum class EGenericRHIPhysicalDeviceFlags {
 
     Default     = Swapchain|Graphics|Compute,
 };
-ENUM_FLAGS(EGenericRHIPhysicalDeviceFlags);
+ENUM_FLAGS(EGenericPhysicalDeviceFlags);
 //----------------------------------------------------------------------------
-struct PPE_RHI_API FGenericRHIInstance : Meta::FNonCopyableNorMovable {
+struct PPE_RHI_API FGenericInstance : Meta::FNonCopyableNorMovable {
 public: // must be defined by every RHI:
     static void Start() = delete;
     static void Shutdown() = delete;
 
-    using FPhysicalDevice = FGenericRHIPhysicalDevice;
-    using EPhysicalDeviceFlags = EGenericRHIPhysicalDeviceFlags;
+    using FWindowHandle = FGenericWindowHandle;
+    using FWindowSurface = FGenericWindowSurface;
 
-    static FPhysicalDevice PickPhysicalDevice(EPhysicalDeviceFlags flags) = delete;
+    static FWindowSurface CreateWindowSurface(FWindowHandle hwnd) = delete;
+    static void DestroyWindowSurface(FWindowSurface surface) = delete;
+
+    using EPhysicalDeviceFlags = EGenericPhysicalDeviceFlags;
 
     static FGenericRHIDevice* CreateLogicalDevice(
-        FPhysicalDevice physicalDevice,
-        EPhysicalDeviceFlags flags ) = delete;
-    static void DestroyLogicalDevice(FGenericRHIDevice** pLogicalDevice) = delete;
+        EPhysicalDeviceFlags deviceFlags,
+        FWindowSurface surfaceIFN ) = delete;
+    static void DestroyLogicalDevice(FGenericRHIDevice* pLogicalDevice) = delete;
 
 public: // shared by each instance
     static bool GHeadless;
 #if USE_PPE_RHIDEBUG
     static bool GDebugEnabled;
 #endif
+
     static void ParseOptions();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RHI
 } //!namespace PPE

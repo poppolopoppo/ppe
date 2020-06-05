@@ -2,19 +2,19 @@
 
 #include "HAL/Generic/GenericRHIInstance.h"
 
-
 #if USE_PPE_RHIDEBUG
-#        include "Diagnostic/CurrentProcess.h"
+#    include "Diagnostic/CurrentProcess.h"
 #endif
 
 namespace PPE {
+namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FGenericRHIInstance::GHeadless = false;
+bool FGenericInstance::GHeadless = false;
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-bool FGenericRHIInstance::GDebugEnabled =
+bool FGenericInstance::GDebugEnabled =
 #    if USE_PPE_ASSERT
         true;
 #else
@@ -22,7 +22,7 @@ bool FGenericRHIInstance::GDebugEnabled =
 #    endif
 #endif
 //----------------------------------------------------------------------------
-void FGenericRHIInstance::ParseOptions() {
+void FGenericInstance::ParseOptions() {
     auto& process = FCurrentProcess::Get();
 
     GHeadless |= process.HasArgument(L"-RHIHeadless");
@@ -36,4 +36,5 @@ void FGenericRHIInstance::ParseOptions() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RHI
 } //!namespace PPE
