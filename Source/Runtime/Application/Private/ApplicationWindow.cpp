@@ -3,8 +3,11 @@
 #include "ApplicationWindow.h"
 
 #include "Service/InputService.h"
+#include "Service/RHIService.h"
 #include "Service/WindowService.h"
-#include "Window/WindowMain.h"
+
+#include "Window/WindowBase.h"
+#include "Window/WindowRHI.h"
 
 #include "Time/Timeline.h"
 #include "Thread/ThreadPool.h"
@@ -18,36 +21,52 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename... _Args>
 static void CreateApplicationWindow_(
-    UInputService* input,
-    UWindowService* window,
-    PWindowBase* main,
+    UInputService* pInput,
+    URHIService* pRHI,
+    UWindowService* pWindow,
+    PWindowBase* pMain,
     const FWString& name,
+    bool needRHI,
     _Args&&... args) {
 
-    IInputService::MakeDefault(input);
-    IWindowService::MakeDefault(window);
+    IInputService::MakeDefault(pInput);
+    IWindowService::MakeDefault(pWindow);
 
-    (*window)->CreateMainWindow(main, FWString(name), std::forward<_Args>(args)...);
-    (*input)->SetupWindow(**main);
+    if (needRHI) {
+        IRHIService::MakeDefault(pRHI);
+
+        PWindowRHI windowRHI;
+        (*pWindow)->CreateRHIWindow(&windowRHI, FWString(name), std::forward<_Args>(args)...);
+
+        *pMain = std::move(windowRHI);
+    }
+    else {
+        PWindowBare windowBare;
+        (*pWindow)->CreateMainWindow(&windowBare, FWString(name), std::forward<_Args>(args)...);
+
+        *pMain = std::move(windowBare);
+    }
+
+    (*pInput)->SetupWindow(**pMain);
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name)
+FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, bool needRHI)
 :   FApplicationBase(domain, std::move(name)) {
-    CreateApplicationWindow_(&_input, &_window, &_main, Name());
+    CreateApplicationWindow_(&_input, &_rhi, &_window, &_main, Name(), needRHI);
 }
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, size_t width, size_t height)
+FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, bool needRHI, size_t width, size_t height)
 :   FApplicationBase(domain, std::move(name)) {
-    CreateApplicationWindow_(&_input, &_window, &_main, Name(), width, height);
+    CreateApplicationWindow_(&_input, &_rhi, &_window, &_main, Name(), needRHI, width, height);
 }
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, int left, int top, size_t width, size_t height)
+FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, bool needRHI, int left, int top, size_t width, size_t height)
 :   FApplicationBase(domain, std::move(name)) {
-    CreateApplicationWindow_(&_input, &_window, &_main, Name(), left, top, width, height);
+    CreateApplicationWindow_(&_input, &_rhi, &_window, &_main, Name(), needRHI, left, top, width, height);
 }
 //----------------------------------------------------------------------------
 FApplicationWindow::~FApplicationWindow() = default;
@@ -61,6 +80,16 @@ void FApplicationWindow::Start() {
     services.Add<IInputService>(_input.get());
     services.Add<IWindowService>(_window.get());
 
+    if (_rhi) {
+        services.Add<IRHIService>(_rhi.get());
+
+        FWindowRHI* const windowRHI = checked_cast<FWindowRHI*>(_main.get());
+        RHI::FDevice* const device = _rhi->CreateMainDevice(windowRHI);
+        Assert(device);
+
+        _rhi->SetMainDevice(device);
+    }
+
     VerifyRelease(_main->Show());
     VerifyRelease(_main->SetFocus());
 }
@@ -70,6 +99,17 @@ void FApplicationWindow::Shutdown() {
         VerifyRelease(_main->Close());
 
     auto& services = Services();
+    if (_rhi) {
+        FWindowRHI* const windowRHI = checked_cast<FWindowRHI*>(_main.get());
+        RHI::FDevice* const device = _rhi->MainDevice();
+
+        _rhi->SetMainDevice(nullptr);
+        _rhi->DestroyMainDevice(windowRHI, device);
+
+        services.CheckedRemove<IRHIService>(_rhi.get());
+    }
+
+
     services.CheckedRemove<IWindowService>(_window.get());
     services.CheckedRemove<IInputService>(_input.get());
 

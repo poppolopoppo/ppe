@@ -1,6 +1,8 @@
 ﻿#pragma once
 
-#include "Application.h"
+#include "Application_fwd.h"
+
+#include "RHI_fwd.h"
 
 #include "Window/WindowBase.h"
 
@@ -9,12 +11,16 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(WindowMain);
-class PPE_APPLICATION_API FWindowMain : public FWindowBase {
+FWD_REFPTR(WindowRHI);
+class PPE_APPLICATION_API FWindowRHI : public FWindowBase {
 public:
-    explicit FWindowMain(FWString&& title);
-    FWindowMain(FWString&& title, size_t width, size_t height);
-    FWindowMain(FWString&& title, int left, int top, size_t width, size_t height);
+    FWindowRHI(FWString&& title, const FWindowDefinition& def);
+
+    RHI::FWindowSurface SurfaceRHI() const { return _surfaceRHI; }
+    void SetSurfaceRHI(RHI::FWindowSurface surfaceRHI) NOEXCEPT;
+
+private:
+    RHI::FWindowSurface _surfaceRHI;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

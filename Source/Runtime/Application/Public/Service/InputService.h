@@ -14,7 +14,7 @@ namespace Application {
 FWD_INTEFARCE_UNIQUEPTR(InputService);
 class IInputService {
 public:
-    IInputService() {}
+    IInputService() = default;
     virtual ~IInputService() = default;
 
     IInputService(const IInputService&) = delete;

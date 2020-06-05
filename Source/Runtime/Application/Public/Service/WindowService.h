@@ -15,14 +15,18 @@ FWD_REFPTR(WindowBase);
 FWD_INTEFARCE_UNIQUEPTR(WindowService);
 class IWindowService {
 public:
-    IWindowService() {}
+    IWindowService() = default;
     virtual ~IWindowService() = default;
 
-    virtual void CreateMainWindow(PWindowBase* window, FWString&& title) = 0;
-    virtual void CreateMainWindow(PWindowBase* window, FWString&& title, size_t width, size_t height) = 0;
-    virtual void CreateMainWindow(PWindowBase* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
+    virtual void CreateMainWindow(PWindowBare* window, FWString&& title) = 0;
+    virtual void CreateMainWindow(PWindowBare* window, FWString&& title, size_t width, size_t height) = 0;
+    virtual void CreateMainWindow(PWindowBare* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
 
-    virtual FWindowBase* MainWindow() const = 0;
+    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title) = 0;
+    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title, size_t width, size_t height) = 0;
+    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
+
+    virtual FWindowBase* MainWindow() const NOEXCEPT = 0;
     virtual void SetMainWindow(FWindowBase* window) = 0;
 
     virtual void NotifySystrayNone(const FWStringView& title, const FWStringView& text) = 0;

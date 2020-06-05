@@ -9,7 +9,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWindowTestApp::FWindowTestApp(const FModularDomain& domain)
-    : parent_type(domain, L"WindowTest") {
+    : parent_type(domain, L"WindowTest", true) {
 }
 //----------------------------------------------------------------------------
 FWindowTestApp::~FWindowTestApp() = default;

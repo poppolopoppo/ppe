@@ -22,10 +22,14 @@ enum class EMouseButton : u8;
 class FKeyboardState;
 class FGamepadState;
 class FMouseState;
-class FGenericApplication;
-class FGenericWindow;
 //----------------------------------------------------------------------------
+class FGenericApplication;
 class FApplicationBase;
+//----------------------------------------------------------------------------
+class FGenericWindow;
+FWD_REFPTR(WindowBase);
+FWD_REFPTR(WindowBare);
+FWD_REFPTR(WindowRHI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

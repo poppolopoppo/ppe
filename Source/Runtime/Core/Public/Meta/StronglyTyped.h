@@ -23,6 +23,9 @@ struct TNumeric {
 
     CONSTEXPR operator T () const { return Value; }
 
+    CONSTEXPR T operator * () const { return Value; }
+    CONSTEXPR T& operator * () NOEXCEPT { return Value; }
+
     CONSTEXPR TNumeric(const TNumeric& other) : Value(other.Value) {}
     CONSTEXPR TNumeric& operator =(const TNumeric& other) { Value =other.Value; return *this; }
 
@@ -43,6 +46,7 @@ struct TNumeric {
     CONSTEXPR static TNumeric MinusOne() { return TNumeric(T(-1)); }
     CONSTEXPR static TNumeric One() { return TNumeric(T(1)); }
     CONSTEXPR static TNumeric Zero() { return TNumeric(T(0)); }
+    CONSTEXPR static TNumeric Null() { return TNumeric(T(0)); }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag, T _DefaultValue, typename = Meta::TEnableIf<std::is_integral_v<T>/* C++ forbid float as template arg */> >

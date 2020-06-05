@@ -17,7 +17,7 @@ namespace {
 //----------------------------------------------------------------------------
 class FDefaultInputService_ : public IInputService {
 public:
-    FDefaultInputService_() {}
+    FDefaultInputService_() = default;
 
     virtual const FKeyboardState& Keyboard() const override final;
     virtual const FMouseState& Mouse() const override final;

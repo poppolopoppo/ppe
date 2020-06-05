@@ -51,6 +51,10 @@ public:
     using FPlatformWindow::SetCursorCapture;
     using FPlatformWindow::SetCursorOnWindowCenter;
 
+    static FWindowDefinition MainWindowDefinition() NOEXCEPT;
+    static FWindowDefinition MainWindowDefinition(size_t width, size_t height) NOEXCEPT;
+    static FWindowDefinition MainWindowDefinition(int left, int top, size_t width, size_t height) NOEXCEPT;
+
 protected:
     FWindowBase(FWString&& title, const FWindowDefinition& def);
 
@@ -69,6 +73,11 @@ protected:
     using FPlatformWindow::OnWindowResize;
     using FPlatformWindow::OnWindowPaint;
 
+};
+//----------------------------------------------------------------------------
+class PPE_APPLICATION_API FWindowBare : public FWindowBase {
+public:
+    FWindowBare(FWString&& title, const FWindowDefinition& def);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
