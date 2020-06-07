@@ -391,6 +391,17 @@ CONSTEXPR void Collect(const TMemoryView<T>& dst, _Lambda&& collect) {
         collect(i, &dst[i]);
 }
 //----------------------------------------------------------------------------
+template <typename T, typename U>
+bool Contains(const TMemoryView<T>& v, const U& elt) {
+    return (v.end() != std::find(v.begin(), v.end(), elt));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename U>
+size_t IndexOf(const TMemoryView<T>& v, const U& elt) {
+    const auto it = std::find(v.begin(), v.end(), elt);
+    return (v.end() == it ? std::distance(v.begin(), it) : INDEX_NONE);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename T >
