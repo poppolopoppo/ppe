@@ -9,12 +9,20 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EGenericColorSpace;
+enum class EGenericPixelFormat;
+struct FGenericPixelInfo;
+struct FGenericSurfaceFormat;
+//----------------------------------------------------------------------------
 struct FGenericInstance;
 enum class EGenericPhysicalDeviceFlags;
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowHandle);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowSurface);
 //----------------------------------------------------------------------------
-class FGenericRHIDevice;
+class FGenericSwapChain;
+//----------------------------------------------------------------------------
+class FGenericDevice;
+enum class EGenericPresentMode;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

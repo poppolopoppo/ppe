@@ -33,15 +33,16 @@ public: // must be defined by every RHI:
 
     using EPhysicalDeviceFlags = EGenericPhysicalDeviceFlags;
 
-    static FGenericRHIDevice* CreateLogicalDevice(
+    static FGenericDevice* CreateLogicalDevice(
         EPhysicalDeviceFlags deviceFlags,
         FWindowSurface surfaceIFN ) = delete;
-    static void DestroyLogicalDevice(FGenericRHIDevice* pLogicalDevice) = delete;
+    static void DestroyLogicalDevice(FGenericDevice* pLogicalDevice) = delete;
 
 public: // shared by each instance
     static bool GHeadless;
+    static bool GEnableHDR;
 #if USE_PPE_RHIDEBUG
-    static bool GDebugEnabled;
+    static bool GEnableDebug;
 #endif
 
     static void ParseOptions();

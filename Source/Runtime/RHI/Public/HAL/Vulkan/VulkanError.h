@@ -4,6 +4,10 @@
 
 #include "RHIException.h"
 
+#ifndef RHI_VULKAN
+#    error "invalid RHI !"
+#endif
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -34,6 +38,13 @@ private:
 //----------------------------------------------------------------------------
 PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, const FVulkanError& error);
 PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, const FVulkanError& error);
+//----------------------------------------------------------------------------
+#if USE_PPE_LOGGER && defined(PLATFORM_WINDOWS)
+#   define LOG_VULKANERROR(_CONTEXT, _VKRESULT) \
+    LOG(Vulkan, Error, _CONTEXT " failed, vulkan result: {0}", ::PPE::RHI::FVulkanError(_VKRESULT))
+#else
+#   define LOG_VULKANERROR(_CONTEXT, _VKRESULT) NOOP()
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -109,7 +109,6 @@ void FApplicationWindow::Shutdown() {
         services.CheckedRemove<IRHIService>(_rhi.get());
     }
 
-
     services.CheckedRemove<IWindowService>(_window.get());
     services.CheckedRemove<IInputService>(_input.get());
 

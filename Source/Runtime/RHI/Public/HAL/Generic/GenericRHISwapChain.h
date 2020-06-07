@@ -1,25 +1,24 @@
-#pragma once
+﻿#pragma once
 
-#include "Core_fwd.h"
+#include "HAL/Generic/GenericRHI_fwd.h"
 
-#ifdef EXPORT_PPE_RUNTIME_RHI
-#   define PPE_RHI_API DLL_EXPORT
-#else
-#   define PPE_RHI_API DLL_IMPORT
-#endif
-
-#define USE_PPE_RHIDEBUG (USE_PPE_ASSERT || USE_PPE_MEMORY_DEBUGGING)
-
-#include "HAL/RHI_fwd.h"
-#include "Diagnostic/Logger_fwd.h"
+#include "Maths/ScalarVector.h"
 
 namespace PPE {
 namespace RHI {
-EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FRHIException;
+class PPE_RHI_API FGenericSwapChain : Meta::FNonCopyable {
+public: // must be defined by every RHI:
+    FGenericSwapChain() = default;
+
+    const FGenericSurfaceFormat& SurfaceFormat() const NOEXCEPT = delete;
+    const u322 Extent() const NOEXCEPT = delete;
+    const u322 NumImages() const NOEXCEPT = delete;
+
+public: // shared by each device
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

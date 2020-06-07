@@ -25,7 +25,7 @@ enum class ETargetRHI;
 //----------------------------------------------------------------------------
 enum class ERHIFeature;
 //----------------------------------------------------------------------------
-class PPE_CORE_API ITargetRHI;
+class PPE_RHI_API ITargetRHI;
 //----------------------------------------------------------------------------
 PPE_RHI_API TMemoryView<const ITargetRHI* const> AllTargetRHIs();
 PPE_RHI_API const ITargetRHI& TargetRHI(ETargetRHI rhi);

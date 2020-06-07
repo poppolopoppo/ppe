@@ -8,6 +8,7 @@
 #include "HAL/RHIDevice.h"
 #include "HAL/RHIInstance.h"
 #include "HAL/TargetRHI.h"
+#include "HAL/Vulkan/VulkanRHI_fwd.h"
 
 namespace PPE {
 namespace Application {
@@ -50,6 +51,22 @@ RHI::FDevice* FDefaultRHIService_::CreateMainDevice(FWindowRHI* window) {
     RHI::FDevice* const device = RHI::FInstance::CreateLogicalDevice(
         RHI::EPhysicalDeviceFlags::Default, surface );
 
+    const TMemoryView<const RHI::EPresentMode> presentModes = device->PresentModes();
+    Assert_NoAssume(Contains(device->PresentModes(), RHI::EVulkanPresentMode::Fifo));
+
+    RHI::EPresentMode const present = (
+        Contains(device->PresentModes(), RHI::EVulkanPresentMode::Mailbox)
+            ? RHI::EVulkanPresentMode::Mailbox
+            : (Contains(device->PresentModes(), RHI::EVulkanPresentMode::RelaxedFifo)
+                ? RHI::EVulkanPresentMode::RelaxedFifo
+                : RHI::EVulkanPresentMode::Fifo) );
+
+    const TMemoryView<const RHI::FSurfaceFormat> surfaceFormats = device->SurfaceFormats();
+    const size_t bestFormat = RHI::FSurfaceFormat::BestAvailable(surfaceFormats);
+    Assert_NoAssume(INDEX_NONE != bestFormat);
+
+    device->CreateSwapChain(surface, present, surfaceFormats[bestFormat]);
+
     window->SetSurfaceRHI(surface);
 
     return device;
@@ -62,7 +79,9 @@ void FDefaultRHIService_::DestroyMainDevice(FWindowRHI* window, RHI::FDevice* de
     const RHI::FWindowSurface surface = window->SurfaceRHI();
     Assert_NoAssume(surface);
 
-    window->SetSurfaceRHI(RHI::FWindowSurface::Null());
+    window->SetSurfaceRHI(nullptr);
+
+    device->DestroySwapChain();
 
     RHI::FInstance::DestroyLogicalDevice(device);
     RHI::FInstance::DestroyWindowSurface(surface);
@@ -73,7 +92,7 @@ RHI::FDevice* FDefaultRHIService_::CreateHeadlessDevice(bool computeOnly) {
     if (not computeOnly)
         deviceFlags = deviceFlags | RHI::EPhysicalDeviceFlags::Graphics;
 
-    return RHI::FInstance::CreateLogicalDevice(deviceFlags, RHI::FWindowSurface::Null());
+    return RHI::FInstance::CreateLogicalDevice(deviceFlags, nullptr);
 }
 //----------------------------------------------------------------------------
 void FDefaultRHIService_::DestroyHeadlessDevice(RHI::FDevice* device) {

@@ -13,8 +13,10 @@ namespace RHI {
 //----------------------------------------------------------------------------
 bool FGenericInstance::GHeadless = false;
 //----------------------------------------------------------------------------
+bool FGenericInstance::GEnableHDR = true;
+//----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-bool FGenericInstance::GDebugEnabled =
+bool FGenericInstance::GEnableDebug =
 #    if USE_PPE_ASSERT
         true;
 #else
@@ -28,9 +30,12 @@ void FGenericInstance::ParseOptions() {
     GHeadless |= process.HasArgument(L"-RHIHeadless");
     GHeadless &= process.HasArgument(L"-RHINoHeadless");
 
+    GEnableHDR |= process.HasArgument(L"-RHIHdr");
+    GEnableHDR &= !process.HasArgument(L"-RHINoHdr");
+
 #if USE_PPE_RHIDEBUG
-    GDebugEnabled |= process.HasArgument(L"-RHIDebug");
-    GDebugEnabled &= !process.HasArgument(L"-RHINoDebug");
+    GEnableDebug |= process.HasArgument(L"-RHIDebug");
+    GEnableDebug &= !process.HasArgument(L"-RHINoDebug");
 #endif
 }
 //----------------------------------------------------------------------------

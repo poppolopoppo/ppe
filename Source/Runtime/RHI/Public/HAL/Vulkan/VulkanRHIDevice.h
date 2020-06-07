@@ -1,53 +1,88 @@
 #pragma once
 
-#include "VulkanRHIDevice.h"
 #include "HAL/Vulkan/VulkanRHI_fwd.h"
+
+#ifdef RHI_VULKAN
 
 #include "HAL/Generic/GenericRHIDevice.h"
 
+#include "HAL/Vulkan/VulkanRHISurfaceFormat.h"
+
 #include "Container/Vector.h"
+#include "Memory/UniquePtr.h"
 #include "Meta/StronglyTyped.h"
+
+#include <mutex>
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FVulkanQueue);
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FVulkanDeviceHandle);
-//----------------------------------------------------------------------------
 class PPE_RHI_API FVulkanDevice : public FGenericDevice {
+public:
+    using FPresentModeList = VECTOR(RHIDevice, EVulkanPresentMode);
+    using FSurfaceFormatList = VECTOR(RHIDevice, FVulkanSurfaceFormat);
+
 protected:
     friend struct FVulkanInstance;
 
     FVulkanDevice(
-        FVulkanDeviceHandle deviceHandle,
-        FVulkanQueue graphicsQueue,
-        FVulkanQueue presentQueue,
-        FVulkanQueue asyncComputeQueue,
-        FVulkanQueue transferQueue,
-        FVulkanQueue readBackQueue ) NOEXCEPT;
-
-    FVulkanQueue GraphicsQueue() const NOEXCEPT { return _graphicsQueue; }
-    FVulkanQueue PresentQueue() const NOEXCEPT { return _presentQueue; }
-    FVulkanQueue AsyncComputeQueue() const NOEXCEPT { return _asyncComputeQueue; }
-    FVulkanQueue TransferQueue() const NOEXCEPT { return _transferQueue; }
-    FVulkanQueue ReadBackQueue() const NOEXCEPT { return _readBackQueue; }
+        FVulkanPhysicalDevice physicalDevice,
+        FVulkanDeviceHandle logicalDevice,
+        FVulkanQueueHandle graphicsQueue,
+        FVulkanQueueHandle presentQueue,
+        FVulkanQueueHandle asyncComputeQueue,
+        FVulkanQueueHandle transferQueue,
+        FVulkanQueueHandle readBackQueue,
+        FPresentModeList&& presentModes,
+        FSurfaceFormatList&& surfaceFormats ) NOEXCEPT;
 
 public: // must be implemented:
-    virtual ~FVulkanDevice();
+    ~FVulkanDevice();
+
+    const TMemoryView<const EVulkanPresentMode> PresentModes() const { return _presentModes.MakeView(); }
+    const TMemoryView<const FVulkanSurfaceFormat> SurfaceFormats() const { return _surfaceFormats.MakeView(); }
+
+    const FVulkanSwapChain* SwapChain() const { return _swapChain.get(); }
+
+    void CreateSwapChain(
+        FVulkanWindowSurface surface,
+        EVulkanPresentMode present,
+        const FVulkanSurfaceFormat& surfaceFormat );
+    void DestroySwapChain();
+
+public: // vulkan specific:
+    FVulkanPhysicalDevice PhysicalDevice() const { return _physicalDevice; }
+    FVulkanDeviceHandle LogicalDevice() const { return _logicalDevice; }
+
+    FVulkanQueueHandle GraphicsQueue() const { return _graphicsQueue; }
+    FVulkanQueueHandle PresentQueue() const { return _presentQueue; }
+    FVulkanQueueHandle AsyncComputeQueue() const { return _asyncComputeQueue; }
+    FVulkanQueueHandle TransferQueue() const { return _transferQueue; }
+    FVulkanQueueHandle ReadBackQueue() const { return _readBackQueue; }
 
 private:
-    FVulkanDeviceHandle _deviceHandle;
+    std::recursive_mutex _barrier;
 
-    FVulkanQueue _graphicsQueue;
-    FVulkanQueue _presentQueue;
-    FVulkanQueue _asyncComputeQueue;
-    FVulkanQueue _transferQueue;
-    FVulkanQueue _readBackQueue;
+    FVulkanPhysicalDevice _physicalDevice;
+    FVulkanDeviceHandle _logicalDevice;
+
+    TUniquePtr<FVulkanSwapChain> _swapChain;
+
+    FVulkanQueueHandle _graphicsQueue;
+    FVulkanQueueHandle _presentQueue;
+    FVulkanQueueHandle _asyncComputeQueue;
+    FVulkanQueueHandle _transferQueue;
+    FVulkanQueueHandle _readBackQueue;
+
+    const FPresentModeList _presentModes;
+    const FSurfaceFormatList _surfaceFormats;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
+
+#endif //!RHI_VULKAN
