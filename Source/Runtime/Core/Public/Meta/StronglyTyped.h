@@ -18,7 +18,10 @@ struct TNumeric {
     T Value;
 
     CONSTEXPR explicit TNumeric(T value = DefaultValue()) : Value(value) {
-        STATIC_ASSERT(std::is_arithmetic_v<T> || std::is_same_v<T, void*>);
+        STATIC_ASSERT(
+            std::is_arithmetic_v<T> ||
+            std::is_same_v<T, void*> ||
+            std::is_same_v<T, const void*> );
     }
 
     CONSTEXPR operator T () const { return Value; }
