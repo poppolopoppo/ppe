@@ -241,8 +241,8 @@ public:
     void resize_AssumeEmpty(size_type count, const_reference value);
     void shrink_to_fit();
 
-    void swap(TVector& other);
-    friend void swap(TVector& lhs, TVector& rhs) { lhs.swap(rhs); }
+    void swap(TVector& other) NOEXCEPT;
+    friend void swap(TVector& lhs, TVector& rhs) NOEXCEPT { lhs.swap(rhs); }
 
     operator TMemoryView<Meta::TAddConst<value_type>>() const { return MakeConstView(); }
 
@@ -271,8 +271,8 @@ private:
     template <typename _It, typename _ItCat>
     iterator insert_(const_iterator pos, _It first, _It last, _ItCat );
 
-    void swap_(TVector& other, std::true_type );
-    void swap_(TVector& other, std::false_type );
+    void swap_(TVector& other, std::true_type ) NOEXCEPT;
+    void swap_(TVector& other, std::false_type ) NOEXCEPT;
 
     u32 _capacity;
     u32 _size;

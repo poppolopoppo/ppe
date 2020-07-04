@@ -525,14 +525,14 @@ void TVector<T, _Allocator>::shrink_to_fit() {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TVector<T, _Allocator>::swap(TVector& other) {
+void TVector<T, _Allocator>::swap(TVector& other) NOEXCEPT {
     typedef typename allocator_traits::propagate_on_container_swap propagate_type;
     if (this != &other)
         swap_(other, propagate_type());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TVector<T, _Allocator>::swap_(TVector& other, std::true_type ) {
+void TVector<T, _Allocator>::swap_(TVector& other, std::true_type ) NOEXCEPT {
     std::swap(_data, other._data);
     std::swap(_size, other._size);
     std::swap(_capacity, other._capacity);
@@ -540,7 +540,7 @@ void TVector<T, _Allocator>::swap_(TVector& other, std::true_type ) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TVector<T, _Allocator>::swap_(TVector& other, std::false_type ) {
+void TVector<T, _Allocator>::swap_(TVector& other, std::false_type ) NOEXCEPT {
     TVector* plhs = nullptr;
     TVector* prhs = nullptr;
     if (_size < other._size) {
