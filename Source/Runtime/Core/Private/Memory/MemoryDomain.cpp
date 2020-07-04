@@ -48,16 +48,20 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace MemoryDomain {
+    FMemoryTracking& MEMORYDOMAIN_NAME(GpuMemory)::TrackingData() {
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "GpuMemory", nullptr);
+        return GInstance;
+    }
     FMemoryTracking& MEMORYDOMAIN_NAME(PooledMemory)::TrackingData() {
         ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "PooledMemory", nullptr);
         return GInstance;
     }
-    FMemoryTracking& MEMORYDOMAIN_NAME(UsedMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr);
-        return GInstance;
-    }
     FMemoryTracking& MEMORYDOMAIN_NAME(ReservedMemory)::TrackingData() {
         ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "ReservedMemory", nullptr);
+        return GInstance;
+    }
+    FMemoryTracking& MEMORYDOMAIN_NAME(UsedMemory)::TrackingData() {
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr);
         return GInstance;
     }
 }
@@ -203,14 +207,14 @@ void ReportTrackingDatas_(
     for (const FMemoryTracking* data : datas) {
         Assert(data);
 
-        if (data->Parent() == nullptr)
-            oss << hr << Eol;
-
         const FMemoryTracking::FSnapshot usr = data->User();
         const FMemoryTracking::FSnapshot sys = data->System();
 
         if (sys.AccumulatedAllocs == 0)
             continue; // skip domains that never allocated
+
+        if (data->Parent() == nullptr)
+            oss << hr << Eol;
 
         tmp.Reset();
         const FStringView name = MakeCStringView(data->Name());
