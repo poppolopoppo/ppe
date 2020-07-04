@@ -9,6 +9,10 @@
 #endif
 
 //------------------------------------------------------------------------------
+// Gpu memory
+//------------------------------------------------------------------------------
+MEMORYDOMAIN_IMPL(DeviceHeap,                           GpuMemory)
+//------------------------------------------------------------------------------
 // Reserved memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_IMPL(Fibers,                               ReservedMemory)
@@ -74,6 +78,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Parser,                   Serialize)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Transient,                Serialize)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(RHI,                            UsedMemory)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(FrameGraph,				RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHICache,                 RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHICommand,               RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIDevice,                RHI)
@@ -81,6 +86,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIInstance,              RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIInternal,              RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIMisc,                  RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIObject,                RHI)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIState,                 RHI)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Graphics,                       UsedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Device,                   Graphics)

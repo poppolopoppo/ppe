@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "Diagnostic/CurrentProcess.h"
 
 #ifdef RHI_VULKAN
 
@@ -10,6 +9,7 @@
 #include "HAL/Vulkan/VulkanRHIDevice.h"
 
 #include "Allocator/Allocation.h"
+#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
 #include "Container/BitMask.h"
 #include "IO/ConstChar.h"
@@ -613,15 +613,13 @@ struct FVulkanQueueIndices_ {
     Meta::TOptional<u32> Present;
     Meta::TOptional<u32> AsyncCompute;
     Meta::TOptional<u32> Transfer;
-    Meta::TOptional<u32> ReadBack;
 
     NODISCARD bool SetupDevice(FVulkanQueueFamilies_& queueFamilies, VkSurfaceKHR surfaceIFN = VK_NULL_HANDLE) NOEXCEPT {
         bool result = true;
         result &= SetupQueue(&Graphics, queueFamilies, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
-        result &= SetupQueue(&Present, queueFamilies, VK_QUEUE_TRANSFER_BIT, surfaceIFN);
+        result &= SetupQueue(&Present, queueFamilies, VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT, surfaceIFN);
         result &= SetupQueue(&AsyncCompute, queueFamilies, VK_QUEUE_COMPUTE_BIT);
         result &= SetupQueue(&Transfer, queueFamilies, VK_QUEUE_TRANSFER_BIT);
-        result &= SetupQueue(&ReadBack, queueFamilies, VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
         return result;
     }
 
@@ -690,7 +688,7 @@ struct FVulkanSwapChainDetails_ {
             PresentModes.assign(MakeOutputIterable(
                 vkPresentModes.begin(), vkPresentModes.end(),
                 [](VkPresentModeKHR vkPresentMode) {
-                    return FVulkanInterop::VkPresentModeKHR_to_PresentMode(vkPresentMode);
+                    return FVulkanInterop::RHI(vkPresentMode);
                 }));
         }
         else {
@@ -717,8 +715,8 @@ struct FVulkanSwapChainDetails_ {
                 vkSurfaceFormats.begin(), vkSurfaceFormats.end(),
                 [](const VkSurfaceFormatKHR& vkSurfaceFormat) {
                     FVulkanSurfaceFormat surfaceFormat;
-                    surfaceFormat.Format = FVulkanInterop::VkFormat_to_PixelFormat(vkSurfaceFormat.format);
-                    surfaceFormat.ColorSpace = FVulkanInterop::VkColorSpaceKHR_to_ColorSpace(vkSurfaceFormat.colorSpace);
+                    surfaceFormat.Format = FVulkanInterop::RHI(vkSurfaceFormat.format);
+                    surfaceFormat.ColorSpace = FVulkanInterop::RHI(vkSurfaceFormat.colorSpace);
                     return surfaceFormat;
                 }));
         }
@@ -958,13 +956,13 @@ FVulkanDevice* FVulkanInstance::CreateLogicalDevice(
         PPE_THROW_IT(FVulkanInstanceException("vkCreateDevice", result));
 
     return TRACKING_NEW(RHIInstance, FVulkanDevice) {
+        Allocator(),
         FVulkanPhysicalDevice{ physicalDevice },
         FVulkanDeviceHandle{ logicalDevice },
         FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.Graphics) },
         FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.Present) },
         FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.AsyncCompute) },
         FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.Transfer) },
-        FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.ReadBack) },
         std::move(swapChainDetails.PresentModes),
         std::move(swapChainDetails.SurfaceFormats)
     };
@@ -988,7 +986,6 @@ void FVulkanInstance::DestroyLogicalDevice(FVulkanDevice* pLogicalDevice) {
     pLogicalDevice->_presentQueue = nullptr;
     pLogicalDevice->_asyncComputeQueue = nullptr;
     pLogicalDevice->_transferQueue = nullptr;
-    pLogicalDevice->_readBackQueue = nullptr;
 #endif
 
     TRACKING_DELETE(RHIInstance, pLogicalDevice);

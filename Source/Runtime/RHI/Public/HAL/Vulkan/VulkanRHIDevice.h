@@ -6,6 +6,7 @@
 
 #include "HAL/Generic/GenericRHIDevice.h"
 
+#include "HAL/Vulkan/VulkanRHIMemoryAllocator.h"
 #include "HAL/Vulkan/VulkanRHISurfaceFormat.h"
 
 #include "Container/Vector.h"
@@ -28,13 +29,13 @@ protected:
     friend struct FVulkanInstance;
 
     FVulkanDevice(
+        FVulkanAllocationCallbacks allocator,
         FVulkanPhysicalDevice physicalDevice,
         FVulkanDeviceHandle logicalDevice,
         FVulkanQueueHandle graphicsQueue,
         FVulkanQueueHandle presentQueue,
         FVulkanQueueHandle asyncComputeQueue,
         FVulkanQueueHandle transferQueue,
-        FVulkanQueueHandle readBackQueue,
         FPresentModeList&& presentModes,
         FSurfaceFormatList&& surfaceFormats ) NOEXCEPT;
 
@@ -52,6 +53,15 @@ public: // must be implemented:
         const FVulkanSurfaceFormat& surfaceFormat );
     void DestroySwapChain();
 
+    FVulkanShaderModule CreateShaderModule(const FRawMemoryConst& code);
+    void DestroyShaderModule(FVulkanShaderModule shaderModule);
+
+    FVulkanDescriptorSetLayoutHandle CreateDescriptorSetLayout(const FVulkanDescriptorSetLayout& desc);
+    void DestroyDescriptorSetLayout(FVulkanDescriptorSetLayoutHandle setLayout);
+
+    FVulkanPipelineLayoutHandle CreatePipelineLayout(const FVulkanPipelineLayout& desc);
+    void DestroyPipelineLayout(FVulkanPipelineLayoutHandle pipelineLayout);
+
 public: // vulkan specific:
     FVulkanPhysicalDevice PhysicalDevice() const { return _physicalDevice; }
     FVulkanDeviceHandle LogicalDevice() const { return _logicalDevice; }
@@ -60,10 +70,16 @@ public: // vulkan specific:
     FVulkanQueueHandle PresentQueue() const { return _presentQueue; }
     FVulkanQueueHandle AsyncComputeQueue() const { return _asyncComputeQueue; }
     FVulkanQueueHandle TransferQueue() const { return _transferQueue; }
-    FVulkanQueueHandle ReadBackQueue() const { return _readBackQueue; }
+
+    FVulkanAllocationCallbacks Allocator() const { return _allocator; }
+
+    FVulkanMemoryAllocator& DeviceMemory() { return _deviceMemory; }
+    const FVulkanMemoryAllocator& DeviceMemory() const { return _deviceMemory; }
 
 private:
     std::recursive_mutex _barrier;
+
+    FVulkanAllocationCallbacks _allocator;
 
     FVulkanPhysicalDevice _physicalDevice;
     FVulkanDeviceHandle _logicalDevice;
@@ -74,10 +90,12 @@ private:
     FVulkanQueueHandle _presentQueue;
     FVulkanQueueHandle _asyncComputeQueue;
     FVulkanQueueHandle _transferQueue;
-    FVulkanQueueHandle _readBackQueue;
 
     const FPresentModeList _presentModes;
     const FSurfaceFormatList _surfaceFormats;
+
+    FVulkanMemoryAllocator _deviceMemory;
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

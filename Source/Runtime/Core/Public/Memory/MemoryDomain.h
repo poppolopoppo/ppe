@@ -32,9 +32,10 @@ class FMemoryTracking;
 #define MEMORYDOMAIN_TRACKING_DATA(_Name) MEMORYDOMAIN_TAG(_Name)::TrackingData()
 //----------------------------------------------------------------------------
 namespace MemoryDomain {
+struct MEMORYDOMAIN_NAME(GpuMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
 struct MEMORYDOMAIN_NAME(PooledMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
-struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
 struct MEMORYDOMAIN_NAME(ReservedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
+struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
 }   // ^^^ don't use those directly ! always prefer explicit domains vvv
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

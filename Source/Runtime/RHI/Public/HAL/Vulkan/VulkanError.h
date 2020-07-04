@@ -8,6 +8,12 @@
 #    error "invalid RHI !"
 #endif
 
+#define PPE_VKDEVICE_CHECKED(_Function, ...) do { \
+        const VkResult CONCAT(result, __LINE__) = _Function( __VA_ARGS__ ); \
+        if (VK_SUCCESS != CONCAT(result, __LINE__)) \
+            PPE_THROW_IT(FVulkanDeviceException{ STRINGIZE(_Function) "(" STRINGIZE(__VA_ARGS__) ")", CONCAT(result, __LINE__) }); \
+    } while(0)
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------

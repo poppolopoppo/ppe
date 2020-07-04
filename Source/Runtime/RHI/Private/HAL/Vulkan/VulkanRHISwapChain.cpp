@@ -2,13 +2,11 @@
 
 #include "HAL/Vulkan/VulkanRHISwapChain.h"
 
-#include <vulkan/vulkan_core.h>
-
-#include "HAL/Vulkan/VulkanInterop.h"
-
 #ifdef RHI_VULKAN
 
 #include "HAL/Vulkan/VulkanError.h"
+#include "HAL/Vulkan/VulkanInterop.h"
+
 #include "HAL/Vulkan/VulkanRHIIncludes.h"
 #include "HAL/Vulkan/VulkanRHIDevice.h"
 #include "HAL/Vulkan/VulkanRHIInstance.h"
@@ -39,18 +37,12 @@ void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
     Assert_NoAssume(_images.empty());
     Assert_NoAssume(_imageViews.empty());
 
-    VkResult result;
-
     // retrieve all images
     u32 numImagesInSwapChain;
-    result = vkGetSwapchainImagesKHR(device.LogicalDevice(), _handle, &numImagesInSwapChain, nullptr);
-    if (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkGetSwapchainImagesKHR", result));
+    PPE_VKDEVICE_CHECKED(vkGetSwapchainImagesKHR, device.LogicalDevice(), _handle, &numImagesInSwapChain, nullptr);
 
     _images.resize_Uninitialized(numImagesInSwapChain);
-    result = vkGetSwapchainImagesKHR(device.LogicalDevice(), _handle, &numImagesInSwapChain, _images.data());
-    if (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkGetSwapchainImagesKHR", result));
+    PPE_VKDEVICE_CHECKED(vkGetSwapchainImagesKHR, device.LogicalDevice(), _handle, &numImagesInSwapChain, _images.data());
 
     // create image views
     _imageViews.resize_Uninitialized(numImagesInSwapChain);
@@ -59,7 +51,7 @@ void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = _images[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = FVulkanInterop::PixelFormat_to_VkFormat(_surfaceFormat.Format);
+        createInfo.format = FVulkanInterop::Vk(_surfaceFormat.Format);
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -70,13 +62,11 @@ void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
         createInfo.subresourceRange.baseArrayLayer  = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        result = vkCreateImageView(
+        PPE_VKDEVICE_CHECKED(vkCreateImageView,
             device.LogicalDevice(),
             &createInfo,
             FVulkanInstance::Allocator(),
             &_imageViews[i] );
-        if (VK_SUCCESS != result)
-            PPE_THROW_IT(FVulkanDeviceException("vkCreateImageView", result));
     }
 }
 //----------------------------------------------------------------------------

@@ -46,6 +46,13 @@ struct PPE_RHI_API FVulkanSurfaceFormat : FGenericSurfaceFormat {
     static size_t BestAvailable(const TMemoryView<const FVulkanSurfaceFormat>& surfaceFormats) NOEXCEPT {
         return FGenericSurfaceFormat::BestAvailable(surfaceFormats.Cast<const FVulkanSurfaceFormat>());
     }
+
+    static FVulkanSurfaceFormat Default_NonHDR() NOEXCEPT {
+        return { FGenericSurfaceFormat::Default_NonHDR() };
+    }
+	static FVulkanSurfaceFormat Default_Linear() NOEXCEPT {
+		return { FGenericSurfaceFormat::Default_Linear() };
+	}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

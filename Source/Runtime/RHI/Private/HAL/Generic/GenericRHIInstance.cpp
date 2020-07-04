@@ -13,7 +13,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 bool FGenericInstance::GHeadless = false;
 //----------------------------------------------------------------------------
-bool FGenericInstance::GEnableHDR = true;
+bool FGenericInstance::GEnableHDR = false;
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 bool FGenericInstance::GEnableDebug =

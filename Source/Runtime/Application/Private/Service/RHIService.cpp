@@ -52,21 +52,20 @@ RHI::FDevice* FDefaultRHIService_::CreateMainDevice(FWindowRHI* window) {
         RHI::EPhysicalDeviceFlags::Default, surface );
 
     const TMemoryView<const RHI::EPresentMode> presentModes = device->PresentModes();
-    Assert_NoAssume(Contains(device->PresentModes(), RHI::EVulkanPresentMode::Fifo));
+    Assert_NoAssume(Contains(device->PresentModes(), RHI::EPresentMode::Fifo));
 
     RHI::EPresentMode const present = (
-        Contains(device->PresentModes(), RHI::EVulkanPresentMode::Mailbox)
-            ? RHI::EVulkanPresentMode::Mailbox
-            : (Contains(device->PresentModes(), RHI::EVulkanPresentMode::RelaxedFifo)
-                ? RHI::EVulkanPresentMode::RelaxedFifo
-                : RHI::EVulkanPresentMode::Fifo) );
+        Contains(device->PresentModes(), RHI::EPresentMode::Mailbox)
+            ? RHI::EPresentMode::Mailbox
+            : (Contains(device->PresentModes(), RHI::EPresentMode::RelaxedFifo)
+                ? RHI::EPresentMode::RelaxedFifo
+                : RHI::EPresentMode::Fifo) );
 
     const TMemoryView<const RHI::FSurfaceFormat> surfaceFormats = device->SurfaceFormats();
     const size_t bestFormat = RHI::FSurfaceFormat::BestAvailable(surfaceFormats);
     Assert_NoAssume(INDEX_NONE != bestFormat);
 
     device->CreateSwapChain(surface, present, surfaceFormats[bestFormat]);
-
     window->SetSurfaceRHI(surface);
 
     return device;

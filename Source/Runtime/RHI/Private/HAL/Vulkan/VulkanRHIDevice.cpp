@@ -6,6 +6,8 @@
 
 #include "HAL/Vulkan/VulkanRHIIncludes.h"
 #include "HAL/Vulkan/VulkanRHIInstance.h"
+#include "HAL/Vulkan/VulkanRHIPipelineLayout.h"
+#include "HAL/Vulkan/VulkanRHIShaderStage.h"
 #include "HAL/Vulkan/VulkanRHISwapChain.h"
 
 #include "HAL/Vulkan/VulkanError.h"
@@ -19,32 +21,33 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanDevice::FVulkanDevice(
+    FVulkanAllocationCallbacks allocator,
     FVulkanPhysicalDevice physicalDevice,
     FVulkanDeviceHandle logicalDevice,
     FVulkanQueueHandle graphicsQueue,
     FVulkanQueueHandle presentQueue,
     FVulkanQueueHandle asyncComputeQueue,
     FVulkanQueueHandle transferQueue,
-    FVulkanQueueHandle readbackQueue,
     FPresentModeList&& presentModes,
     FSurfaceFormatList&& surfaceFormats ) NOEXCEPT
-:   _physicalDevice(physicalDevice)
+:   _allocator(allocator)
+,   _physicalDevice(physicalDevice)
 ,   _logicalDevice(logicalDevice)
 ,   _graphicsQueue(graphicsQueue)
 ,   _presentQueue(presentQueue)
 ,   _asyncComputeQueue(asyncComputeQueue)
 ,   _transferQueue(transferQueue)
-,   _readBackQueue(readbackQueue)
 ,   _presentModes(std::move(presentModes))
-,   _surfaceFormats(std::move(surfaceFormats)) {
+,   _surfaceFormats(std::move(surfaceFormats))
+,   _deviceMemory(*this) {
+    Assert_NoAssume(_allocator);
     Assert_NoAssume(VK_NULL_HANDLE != _physicalDevice);
     Assert_NoAssume(VK_NULL_HANDLE != _logicalDevice);
     Assert_NoAssume( // at least one queue should be created !
         VK_NULL_HANDLE != _graphicsQueue ||
         VK_NULL_HANDLE != _presentQueue ||
         VK_NULL_HANDLE != _asyncComputeQueue ||
-        VK_NULL_HANDLE != _transferQueue ||
-        VK_NULL_HANDLE != _readBackQueue );
+        VK_NULL_HANDLE != _transferQueue );
     Assert_NoAssume(VK_NULL_HANDLE != _graphicsQueue || VK_NULL_HANDLE != _presentQueue);
     Assert_NoAssume(_presentModes.size());
     Assert_NoAssume(_surfaceFormats.size());
@@ -57,9 +60,10 @@ FVulkanDevice::~FVulkanDevice() {
     Assert_NoAssume(VK_NULL_HANDLE == _presentQueue);
     Assert_NoAssume(VK_NULL_HANDLE == _asyncComputeQueue);
     Assert_NoAssume(VK_NULL_HANDLE == _transferQueue);
-    Assert_NoAssume(VK_NULL_HANDLE == _readBackQueue);
     Assert_NoAssume(VK_NULL_HANDLE == _swapChain);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FVulkanDevice::CreateSwapChain(
     FVulkanWindowSurface surface,
@@ -108,13 +112,13 @@ void FVulkanDevice::CreateSwapChain(
     createInfo.preTransform = capabilities.currentTransform; // screen rotation
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // desktop composition
 
-    createInfo.presentMode = FVulkanInterop::PresentMode_to_VkPresentModeKHR(present);
+    createInfo.presentMode = FVulkanInterop::Vk(present);
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
     createInfo.minImageCount = numImages;
-    createInfo.imageFormat = FVulkanInterop::PixelFormat_to_VkFormat(surfaceFormat.Format);
-    createInfo.imageColorSpace = FVulkanInterop::ColorSpace_to_VkColorSpaceKHR(surfaceFormat.ColorSpace);
+    createInfo.imageFormat = FVulkanInterop::Vk(surfaceFormat.Format);
+    createInfo.imageColorSpace = FVulkanInterop::Vk(surfaceFormat.ColorSpace);
     createInfo.imageExtent = viewport;
     createInfo.imageArrayLayers = 1; // stereoscopy
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;  // #TODO: VK_IMAGE_USAGE_TRANSFER_DST_BIT
@@ -125,13 +129,13 @@ void FVulkanDevice::CreateSwapChain(
     createInfo.queueFamilyIndexCount = 0;
     createInfo.pQueueFamilyIndices = nullptr;
 
-    LOG(RHI, Debug, L"creating swapchain with viewport {0}x{1}", viewport.width, viewport.height);
+    LOG(RHI, Debug, L"creating swapchain with viewport {0}x{1} and {2} images", viewport.width, viewport.height, numImages);
 
     VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
     result = vkCreateSwapchainKHR(
         _logicalDevice,
         &createInfo,
-        FVulkanInstance::Allocator(),
+        _allocator,
         &vkSwapChain );
     if (VK_SUCCESS != result)
         PPE_THROW_IT(FVulkanDeviceException("vkCreateSwapchainKHR", result));
@@ -153,12 +157,119 @@ void FVulkanDevice::DestroySwapChain() {
     LOG_DIRECT(RHI, Debug, L"destroying swapchain with viewport");
 
     _swapChain->TearDownSwapChain(*this);
-    _swapChain.reset();
 
     vkDestroySwapchainKHR(
         _logicalDevice,
         _swapChain->Handle(),
-        FVulkanInstance::Allocator() );;
+        _allocator );
+
+    _swapChain.reset();
+}
+//----------------------------------------------------------------------------
+FVulkanShaderModule FVulkanDevice::CreateShaderModule(const FRawMemoryConst& code) {
+    Assert(not code.empty());
+
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = checked_cast<u32>(code.SizeInBytes());
+    createInfo.pCode = reinterpret_cast<const u32*>(code.data());
+
+    const Meta::FRecursiveLockGuard scopeLock(_barrier);
+
+    VkShaderModule shaderModule;
+    const VkResult result = vkCreateShaderModule(_logicalDevice, &createInfo, _allocator, &shaderModule);
+    if (VK_SUCCESS != result)
+        PPE_THROW_IT(FVulkanDeviceException("vkCreateShaderModule", result));
+
+    Assert(VK_NULL_HANDLE != shaderModule);
+    return shaderModule;
+}
+//----------------------------------------------------------------------------
+void FVulkanDevice::DestroyShaderModule(FVulkanShaderModule pShaderMod) {
+    const Meta::FRecursiveLockGuard scopeLock(_barrier);
+
+    vkDestroyShaderModule(_logicalDevice, pShaderMod, _allocator);
+}
+//----------------------------------------------------------------------------
+FVulkanDescriptorSetLayoutHandle FVulkanDevice::CreateDescriptorSetLayout(const FVulkanDescriptorSetLayout& desc) {
+    STACKLOCAL_POD_ARRAY(VkDescriptorBindingFlags, vkDescriptorBindingFlags, desc.Bindings.size());
+    STACKLOCAL_POD_ARRAY(VkDescriptorSetLayoutBinding, vkDescriptorSetLayouBindings, desc.Bindings.size());
+
+    forrange(i, 0, desc.Bindings.size()) {
+        const FVulkanDescriptorBinding& binding = desc.Bindings[i];
+        vkDescriptorBindingFlags[i] = FVulkanInterop::Vk(binding.BindingFlags);
+        VkDescriptorSetLayoutBinding& vkBinding = vkDescriptorSetLayouBindings[i];
+        vkBinding.binding = binding.BindingIndex;
+        vkBinding.descriptorCount = checked_cast<u32>(binding.NumDescriptors);
+        vkBinding.stageFlags = FVulkanInterop::Vk(binding.StageFlags);
+        vkBinding.descriptorType = FVulkanInterop::Vk(binding.DescriptorType);
+        vkBinding.pImmutableSamplers = nullptr; // #TODO ?
+    }
+
+    VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{};
+    bindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+    bindingFlags.bindingCount = checked_cast<u32>(vkDescriptorBindingFlags.size());
+    bindingFlags.pBindingFlags = vkDescriptorBindingFlags.data();
+
+    VkDescriptorSetLayoutCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    createInfo.flags = FVulkanInterop::Vk(desc.SetFlags);
+    createInfo.bindingCount = checked_cast<u32>(vkDescriptorSetLayouBindings.size());
+    createInfo.pBindings = vkDescriptorSetLayouBindings.data();
+    createInfo.pNext = &bindingFlags;
+
+    const Meta::FRecursiveLockGuard scopeLock(_barrier);
+
+    VkDescriptorSetLayout setLayout;
+    const VkResult result = vkCreateDescriptorSetLayout(_logicalDevice,&createInfo, _allocator, &setLayout);
+    if (VK_SUCCESS != result)
+        PPE_THROW_IT(FVulkanDeviceException("vkCreateDescriptorSetLayout", result));
+
+    return setLayout;
+}
+//----------------------------------------------------------------------------
+void FVulkanDevice::DestroyDescriptorSetLayout(FVulkanDescriptorSetLayoutHandle setLayout) {
+    Assert(VK_NULL_HANDLE != setLayout);
+
+    const Meta::FRecursiveLockGuard scopeLock(_barrier);
+
+    vkDestroyDescriptorSetLayout(_logicalDevice, setLayout, _allocator);
+}
+//----------------------------------------------------------------------------
+FVulkanPipelineLayoutHandle FVulkanDevice::CreatePipelineLayout(const FVulkanPipelineLayout& desc) {
+    STACKLOCAL_POD_ARRAY(VkPushConstantRange, vkPushConstantRanges, desc.PushConstantRanges.size());
+
+    forrange(i, 0, desc.PushConstantRanges.size()) {
+        const FVulkanPushConstantRange& range = desc.PushConstantRanges[i];
+        VkPushConstantRange& vkRange = vkPushConstantRanges[i];
+        vkRange.offset = range.Offset;
+        vkRange.size = range.Size;
+        vkRange.stageFlags = FVulkanInterop::Vk(range.StageFlags);
+    }
+
+    VkPipelineLayoutCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    createInfo.setLayoutCount = checked_cast<u32>(desc.SetLayouts.size());
+    createInfo.pSetLayouts = desc.SetLayouts.data();
+    createInfo.pushConstantRangeCount = checked_cast<u32>(vkPushConstantRanges.size());
+    createInfo.pPushConstantRanges = vkPushConstantRanges.data();
+
+    const Meta::FRecursiveLockGuard scopeLock(_barrier);
+
+    VkPipelineLayout pipelineLayout;
+    const VkResult result = vkCreatePipelineLayout(_logicalDevice, &createInfo, _allocator, &pipelineLayout);
+    if (VK_SUCCESS != result)
+        PPE_THROW_IT(FVulkanDeviceException("vkCreatePipelineLayout", result));
+
+    return pipelineLayout;
+}
+//----------------------------------------------------------------------------
+void FVulkanDevice::DestroyPipelineLayout(FVulkanPipelineLayoutHandle pipelineLayout) {
+    Assert(VK_NULL_HANDLE != pipelineLayout);
+
+    const Meta::FRecursiveLockGuard scopeLock(_barrier);
+
+    vkDestroyPipelineLayout(_logicalDevice, pipelineLayout, _allocator);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

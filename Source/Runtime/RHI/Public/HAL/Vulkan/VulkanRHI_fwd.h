@@ -4,74 +4,16 @@
 
 #ifdef RHI_VULKAN
 
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Vulkan
-//----------------------------------------------------------------------------
-#define PPE_VK_HANDLE(_NAME) \
-    struct CONCAT(_NAME, _T); \
-    namespace PPE { namespace RHI { \
-        using _NAME = ::CONCAT(_NAME, _T)*; \
-    }}
-#ifdef ARCH_64BIT
-#    define PPE_VK_HANDLE_NON_DISPATCHABLE(_NAME) PPE_VK_HANDLE(_NAME)
-#else
-#    define PPE_VK_HANDLE_NON_DISPATCHABLE(_NAME) namespace PPE { namespace RHI { \
-    using _NAME = u64; \
-}}
-#endif
-//----------------------------------------------------------------------------
-namespace PPE {
-namespace RHI {
-using VkFlags = u32;
-using VkBool32 = u32;
-using VkDeviceSize = u64;
-using VkSampleMask =  u32;
-}}
-struct VkAllocationCallbacks;
-PPE_VK_HANDLE(VkInstance)
-PPE_VK_HANDLE(VkPhysicalDevice)
-PPE_VK_HANDLE(VkDevice)
-PPE_VK_HANDLE(VkQueue)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkSemaphore)
-PPE_VK_HANDLE(VkCommandBuffer)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkFence)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkDeviceMemory)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkBuffer)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkImage)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkEvent)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkQueryPool)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkBufferView)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkImageView)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkShaderModule)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkPipelineCache)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkPipelineLayout)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkRenderPass)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkPipeline)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkDescriptorSetLayout)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkSampler)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkDescriptorPool)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkDescriptorSet)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkFramebuffer)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkCommandPool)
-//----------------------------------------------------------------------------
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkSwapchainKHR)
-PPE_VK_HANDLE_NON_DISPATCHABLE(VkSurfaceKHR)
-//----------------------------------------------------------------------------
-#undef PPE_VK_HANDLE
-#undef PPE_VK_HANDLE_NON_DISPATCHABLE
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
+#include "HAL/Vulkan/VulkanRHIIncludes_fwd.h"
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using EVulkanPixelFormat = EGenericPixelFormat;
 using EVulkanColorSpace = EGenericColorSpace;
+using EVulkanPixelFormat = EGenericPixelFormat;
+using EVulkanVertexFormat = EGenericVertexFormat;
 struct FVulkanPixelInfo;
 struct FVulkanSurfaceFormat;
 //----------------------------------------------------------------------------
@@ -82,6 +24,11 @@ using FVulkanWindowHandle = FGenericWindowHandle;
 using FVulkanWindowSurface = VkSurfaceKHR;
 using FVulkanAllocationCallbacks = const VkAllocationCallbacks*;
 //----------------------------------------------------------------------------
+using EVulkanMemoryTypeFlags = EGenericMemoryTypeFlags;
+using FVulkanDeviceMemory = VkDeviceMemory;
+struct FVulkanMemoryBlock;
+class FVulkanMemoryAllocator;
+//----------------------------------------------------------------------------
 class FVulkanDevice;
 using FVulkanDeviceHandle = VkDevice;
 using FVulkanQueueHandle = VkQueue;
@@ -90,8 +37,53 @@ using EVulkanPresentMode = EGenericPresentMode;
 using FVulkanSwapChainHandle = VkSwapchainKHR;
 class FVulkanSwapChain;
 //----------------------------------------------------------------------------
+using FVulkanShaderModule = VkShaderModule;
+//----------------------------------------------------------------------------
 using FVulkanImageHandle = VkImage;
 using FVulkanImageViewHandle = VkImageView;
+//----------------------------------------------------------------------------
+using EVulkanBlendFactor = EGenericBlendFactor;
+using EVulkanBlendOp = EGenericBlendOp;
+using EVulkanColorComponentMask = EGenericColorComponentMask;
+using EVulkanLogicOp = EGenericLogicOp;
+using FVulkanBlendAttachmentState = FGenericBlendAttachmentState;
+using FVulkanBlendState = FGenericBlendState;
+//----------------------------------------------------------------------------
+using EVulkanCompareOp = EGenericCompareOp;
+using EVulkanStencilOp = EGenericStencilOp;
+using FVulkanStencilOpState = FGenericStencilOpState;
+using FVulkanDepthStencilState = FGenericDepthStencilState;
+using FVulkanMultisampleState = FGenericMultisampleState;
+//----------------------------------------------------------------------------
+using EVulkanCullMode = EGenericCullMode;
+using EVulkanFrontFace = EGenericFrontFace;
+using EVulkanPolygonMode = EGenericPolygonMode;
+using EVulkanConservativeRasterizationMode = EGenericConservativeRasterizationMode;
+using FVulkanRasterizerState = FGenericRasterizerState;
+//----------------------------------------------------------------------------
+using EVulkanDynamicState = EGenericDynamicState;
+struct FVulkanFixedFunctionState;
+//----------------------------------------------------------------------------
+using EVulkanPrimitiveTopology = EGenericPrimitiveTopology;
+using EVulkanVertexInputRate = EGenericVertexInputRate;
+using FVulkanVertexBinding = FGenericVertexBinding;
+using FVulkanVertexAttribute = FGenericVertexAttribute;
+struct FVulkanInputAssembly;
+//----------------------------------------------------------------------------
+using EVulkanShaderStageFlags = EGenericShaderStageFlags;
+using EVulkanShaderStageCreateFlags = EGenericShaderStageCreateFlags;
+using FVulkanShaderSpecialization = FGenericShaderSpecialization;
+struct FVulkanShaderStage;
+//----------------------------------------------------------------------------
+using FVulkanDescriptorSetLayoutHandle = VkDescriptorSetLayout;
+using FVulkanPipelineLayoutHandle = VkPipelineLayout;
+using EVulkanDescriptorFlags = EGenericDescriptorFlags;
+using EVulkanDescriptorType = EGenericDescriptorType;
+using EVulkanDescriptorSetFlags = EGenericDescriptorSetFlags;
+using FVulkanPushConstantRange = FGenericPushConstantRange;
+using FVulkanDescriptorBinding = FGenericDescriptorBinding;
+struct FVulkanDescriptorSetLayout;
+struct FVulkanPipelineLayout;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
