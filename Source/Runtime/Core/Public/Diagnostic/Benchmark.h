@@ -319,7 +319,7 @@ public: // TTable<>
     struct TTable {
         static constexpr size_t Dim = sizeof...(_Benchmarks);
         using FHeaders = TTuple<_Benchmarks...>;
-        using FRow = TArray<FRun, Dim>;
+        using FRow = TStaticArray<FRun, Dim>;
 
         struct FEntry {
             FStringView Name;

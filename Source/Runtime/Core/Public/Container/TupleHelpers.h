@@ -233,13 +233,13 @@ constexpr _Ret CallTupleEx(_Ret(_Class::*mc)(_Params...) const, const TTuple<TRe
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T, typename _Lambda, typename... _Args, size_t... _Idx>
-CONSTEXPR TArray<T, sizeof...(_Args)> MapTuple_(_Lambda map, const TTuple<_Args...>& tuple, std::index_sequence<_Idx...>) {
+CONSTEXPR TStaticArray<T, sizeof...(_Args)> MapTuple_(_Lambda map, const TTuple<_Args...>& tuple, std::index_sequence<_Idx...>) {
     return { map(std::get<_Idx>(tuple))... };
 }
 } //!details
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args, typename _Lambda>
-CONSTEXPR TArray<T, sizeof...(_Args)> MapTuple(const TTuple<_Args...>& tuple, _Lambda map) {
+CONSTEXPR TStaticArray<T, sizeof...(_Args)> MapTuple(const TTuple<_Args...>& tuple, _Lambda map) {
     return details::MapTuple_<T>(map, tuple, std::index_sequence_for<_Args...>{});
 }
 //----------------------------------------------------------------------------

@@ -9,6 +9,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define ARRAY_LINEARHEAP(T) ::PPE::TArray<T, ::PPE::FLinearAllocator>
+//----------------------------------------------------------------------------
 #define VECTOR_LINEARHEAP(T) ::PPE::TVector<T, ::PPE::FLinearAllocator>
 //----------------------------------------------------------------------------
 #define SPARSEARRAY_LINEARHEAP(_DOMAIN, T, _ChunkSize) ::PPE::TAlignedSparseArray<T, _ChunkSize, ::PPE::FLinearAllocator>

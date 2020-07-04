@@ -17,7 +17,7 @@ public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(size_t, MaxNumGamepad, 8);
 
     using FControllerId = FGenericPlatformGamepad::FControllerId;
-    using FControllerStates = TArray<FGamepadState, MaxNumGamepad>;
+    using FControllerStates = TStaticArray<FGamepadState, MaxNumGamepad>;
 
     static bool Poll(FControllerStates* gamepads);
     static bool Poll(FControllerId index, FGamepadState* gamepad);

@@ -278,7 +278,7 @@ bool TPairTraits<_First, _Second>::ForEach(void* data, const foreach_fun& foreac
 namespace details {
 template <typename T, size_t _Dim>
 struct TArrayToTupleTraits {
-    using array_type = TArray<T, _Dim>;
+    using array_type = TStaticArray<T, _Dim>;
     template <size_t _Idx>
     using id_t = T;
     template <size_t... _Idx>
@@ -308,15 +308,15 @@ public: // ITupleTraits
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR PTypeInfos TypeInfos(TType< TArray<T, _Dim> >) {
+CONSTEXPR PTypeInfos TypeInfos(TType< TStaticArray<T, _Dim> >) {
     using tuple_type = typename details::TArrayToTupleTraits<T, _Dim>::tuple_type;
-    return TupleTypeInfos< TArray<T, _Dim> >(Type< tuple_type >);
+    return TupleTypeInfos< TStaticArray<T, _Dim> >(Type< tuple_type >);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR PTypeTraits Traits(TType< TArray<T, _Dim> >) {
-    STATIC_ASSERT(sizeof(TArray<T, _Dim>) == sizeof(typename details::TArrayToTupleTraits<T, _Dim>::tuple_type));
-    return MakeStaticType< TStaticArrayTraits<T, _Dim>, TArray<T, _Dim> >();
+CONSTEXPR PTypeTraits Traits(TType< TStaticArray<T, _Dim> >) {
+    STATIC_ASSERT(sizeof(TStaticArray<T, _Dim>) == sizeof(typename details::TArrayToTupleTraits<T, _Dim>::tuple_type));
+    return MakeStaticType< TStaticArrayTraits<T, _Dim>, TStaticArray<T, _Dim> >();
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
