@@ -194,14 +194,14 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   else
 #    define PPE_THROW()               throw ()
 #   endif
-#   define PPE_THROW_IT(_EX)          throw _EX
+#   define PPE_THROW_IT(...)          throw __VA_ARGS__
 #   define PPE_THROW_VOID()           throw
 #   define PPE_TRY                    try
 #   define PPE_CATCH_BLOCK(...)       __VA_ARGS__
 #   define PPE_CATCH(_SPEC)           catch(_SPEC)
 #else
 #   define PPE_THROW()
-#   define PPE_THROW_IT(_EX)          PPE_ABORT(STRINGIZE(_EX))
+#   define PPE_THROW_IT(...)          PPE_ABORT(STRINGIZE(__VA_ARGS__))
 #   define PPE_THROW_VOID()           PPE_ABORT("throw")
 #   define PPE_TRY                    if (true)
 #   define PPE_CATCH_BLOCK(...)
