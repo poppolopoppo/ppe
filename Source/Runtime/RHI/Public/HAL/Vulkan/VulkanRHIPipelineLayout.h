@@ -16,7 +16,7 @@ struct FVulkanDescriptorSetLayout : FGenericDescriptorSetLayout {
 };
 //----------------------------------------------------------------------------
 struct FVulkanPipelineLayout /*: FGenericPipelineLayout*/ {
-    VECTORINSITU(RHIState, FVulkanDescriptorSetLayoutHandle, 2) SetLayouts;
+    VECTORINSITU(RHIState, VkDescriptorSetLayout, 2) DescriptorSetLayouts;
     VECTORINSITU(RHIState, FVulkanPushConstantRange, 2) PushConstantRanges;
 };
 //----------------------------------------------------------------------------

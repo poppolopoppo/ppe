@@ -23,24 +23,27 @@ public: // must be implemented by each RHI:
 
 public: // vulkan specific:
     FVulkanSwapChain(
-        FVulkanSwapChainHandle swapChainHandle,
+        FVulkanAllocationCallbacks allocator,
+        VkSwapchainKHR swapChainHandle,
         u322 extent,
         const FVulkanSurfaceFormat& surfaceFormat ) NOEXCEPT;
 
     ~FVulkanSwapChain();
 
-    FVulkanSwapChainHandle Handle() const { return _handle; }
+    VkSwapchainKHR Handle() const { return _handle; }
 
-    TMemoryView<const FVulkanImageHandle> Images() const { return _images.MakeView(); }
-    TMemoryView<const FVulkanImageViewHandle> ImageViews() const { return _imageViews.MakeView(); }
+    TMemoryView<const VkImage> Images() const { return _images.MakeView(); }
+    TMemoryView<const VkImageView> ImageViews() const { return _imageViews.MakeView(); }
 
 private:
-    FVulkanSwapChainHandle _handle;
+    FVulkanAllocationCallbacks _allocator;
+
+    VkSwapchainKHR _handle;
     u322 _extent;
     FVulkanSurfaceFormat _surfaceFormat;
 
-    VECTORINSITU(RHIDevice, FVulkanImageHandle, 4) _images;
-    VECTORINSITU(RHIDevice, FVulkanImageViewHandle, 4) _imageViews;
+    VECTORINSITU(RHIDevice, VkImage, 4) _images;
+    VECTORINSITU(RHIDevice, VkImageView, 4) _imageViews;
 
     friend class FVulkanDevice;
     void InitializeSwapChain(const FVulkanDevice& device);

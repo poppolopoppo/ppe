@@ -29,7 +29,7 @@ namespace RHI {
 using VkFlags = u32;
 using VkBool32 = u32;
 using VkDeviceSize = u64;
-using VkSampleMask =  u32;
+using VkSampleMask = u32;
 }}
 //----------------------------------------------------------------------------
 PPE_VK_ENUM(VkColorSpaceKHR);
@@ -50,6 +50,8 @@ PPE_VK_ENUM(VkConservativeRasterizationModeEXT);
 PPE_VK_ENUM(VkDynamicState);
 PPE_VK_ENUM(VkPrimitiveTopology);
 PPE_VK_ENUM(VkVertexInputRate);
+//----------------------------------------------------------------------------
+PPE_VK_ENUM(VkDebugReportObjectTypeEXT);
 //----------------------------------------------------------------------------
 PPE_VK_HANDLE(VkInstance)
 PPE_VK_HANDLE(VkPhysicalDevice)

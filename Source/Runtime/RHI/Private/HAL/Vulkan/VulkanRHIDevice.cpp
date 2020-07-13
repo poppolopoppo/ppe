@@ -23,11 +23,11 @@ namespace RHI {
 FVulkanDevice::FVulkanDevice(
     FVulkanAllocationCallbacks allocator,
     FVulkanPhysicalDevice physicalDevice,
-    FVulkanDeviceHandle logicalDevice,
-    FVulkanQueueHandle graphicsQueue,
-    FVulkanQueueHandle presentQueue,
-    FVulkanQueueHandle asyncComputeQueue,
-    FVulkanQueueHandle transferQueue,
+    VkDevice logicalDevice,
+    VkQueue graphicsQueue,
+    VkQueue presentQueue,
+    VkQueue asyncComputeQueue,
+    VkQueue transferQueue,
     FPresentModeList&& presentModes,
     FSurfaceFormatList&& surfaceFormats ) NOEXCEPT
 :   _allocator(allocator)
@@ -39,7 +39,11 @@ FVulkanDevice::FVulkanDevice(
 ,   _transferQueue(transferQueue)
 ,   _presentModes(std::move(presentModes))
 ,   _surfaceFormats(std::move(surfaceFormats))
-,   _deviceMemory(*this) {
+,   _deviceMemory(*this)
+#if USE_PPE_RHIDEBUG
+,   _debug(logicalDevice)
+#endif
+{
     Assert_NoAssume(_allocator);
     Assert_NoAssume(VK_NULL_HANDLE != _physicalDevice);
     Assert_NoAssume(VK_NULL_HANDLE != _logicalDevice);
@@ -51,6 +55,11 @@ FVulkanDevice::FVulkanDevice(
     Assert_NoAssume(VK_NULL_HANDLE != _graphicsQueue || VK_NULL_HANDLE != _presentQueue);
     Assert_NoAssume(_presentModes.size());
     Assert_NoAssume(_surfaceFormats.size());
+
+    PPE_VKDEVICE_SETDEBUGNAME(*this, _graphicsQueue, "GraphicsQueue");
+    PPE_VKDEVICE_SETDEBUGNAME(*this, _presentQueue, "PresentQueue");
+    PPE_VKDEVICE_SETDEBUGNAME(*this, _asyncComputeQueue, "AsyncComputeQueue");
+    PPE_VKDEVICE_SETDEBUGNAME(*this, _transferQueue, "TransferQueue");
 }
 //----------------------------------------------------------------------------
 FVulkanDevice::~FVulkanDevice() {
@@ -77,12 +86,8 @@ void FVulkanDevice::CreateSwapChain(
 
     Assert(VK_NULL_HANDLE == _swapChain);
 
-    VkResult result;
-
     VkSurfaceCapabilitiesKHR capabilities{};
-    result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_physicalDevice, surface, &capabilities);
-    if (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkGetPhysicalDeviceSurfaceCapabilitiesKHR", result));
+    PPE_VKDEVICE_CHECKED(vkGetPhysicalDeviceSurfaceCapabilitiesKHR, _physicalDevice, surface, &capabilities);
 
     // viewport size:
     VkExtent2D viewport;
@@ -132,18 +137,13 @@ void FVulkanDevice::CreateSwapChain(
     LOG(RHI, Debug, L"creating swapchain with viewport {0}x{1} and {2} images", viewport.width, viewport.height, numImages);
 
     VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
-    result = vkCreateSwapchainKHR(
-        _logicalDevice,
-        &createInfo,
-        _allocator,
-        &vkSwapChain );
-    if (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkCreateSwapchainKHR", result));
+    PPE_VKDEVICE_CHECKED(vkCreateSwapchainKHR, _logicalDevice, &createInfo, _allocator, &vkSwapChain);
 
     Assert(VK_NULL_HANDLE != vkSwapChain);
 
     _swapChain.reset(
-        FVulkanSwapChainHandle{ vkSwapChain },
+        _allocator,
+        vkSwapChain,
         u322{ viewport.width, viewport.height },
         surfaceFormat );
     _swapChain->InitializeSwapChain(*this);
@@ -166,7 +166,7 @@ void FVulkanDevice::DestroySwapChain() {
     _swapChain.reset();
 }
 //----------------------------------------------------------------------------
-FVulkanShaderModule FVulkanDevice::CreateShaderModule(const FRawMemoryConst& code) {
+VkShaderModule FVulkanDevice::CreateShaderModule(const FRawMemoryConst& code) {
     Assert(not code.empty());
 
     VkShaderModuleCreateInfo createInfo{};
@@ -177,21 +177,19 @@ FVulkanShaderModule FVulkanDevice::CreateShaderModule(const FRawMemoryConst& cod
     const Meta::FRecursiveLockGuard scopeLock(_barrier);
 
     VkShaderModule shaderModule;
-    const VkResult result = vkCreateShaderModule(_logicalDevice, &createInfo, _allocator, &shaderModule);
-    if (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkCreateShaderModule", result));
+    PPE_VKDEVICE_CHECKED(vkCreateShaderModule, _logicalDevice, &createInfo, _allocator, &shaderModule);
 
     Assert(VK_NULL_HANDLE != shaderModule);
     return shaderModule;
 }
 //----------------------------------------------------------------------------
-void FVulkanDevice::DestroyShaderModule(FVulkanShaderModule pShaderMod) {
+void FVulkanDevice::DestroyShaderModule(VkShaderModule pShaderMod) {
     const Meta::FRecursiveLockGuard scopeLock(_barrier);
 
     vkDestroyShaderModule(_logicalDevice, pShaderMod, _allocator);
 }
 //----------------------------------------------------------------------------
-FVulkanDescriptorSetLayoutHandle FVulkanDevice::CreateDescriptorSetLayout(const FVulkanDescriptorSetLayout& desc) {
+VkDescriptorSetLayout FVulkanDevice::CreateDescriptorSetLayout(const FVulkanDescriptorSetLayout& desc) {
     STACKLOCAL_POD_ARRAY(VkDescriptorBindingFlags, vkDescriptorBindingFlags, desc.Bindings.size());
     STACKLOCAL_POD_ARRAY(VkDescriptorSetLayoutBinding, vkDescriptorSetLayouBindings, desc.Bindings.size());
 
@@ -221,14 +219,12 @@ FVulkanDescriptorSetLayoutHandle FVulkanDevice::CreateDescriptorSetLayout(const 
     const Meta::FRecursiveLockGuard scopeLock(_barrier);
 
     VkDescriptorSetLayout setLayout;
-    const VkResult result = vkCreateDescriptorSetLayout(_logicalDevice,&createInfo, _allocator, &setLayout);
-    if (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkCreateDescriptorSetLayout", result));
+    PPE_VKDEVICE_CHECKED(vkCreateDescriptorSetLayout, _logicalDevice,&createInfo, _allocator, &setLayout);
 
     return setLayout;
 }
 //----------------------------------------------------------------------------
-void FVulkanDevice::DestroyDescriptorSetLayout(FVulkanDescriptorSetLayoutHandle setLayout) {
+void FVulkanDevice::DestroyDescriptorSetLayout(VkDescriptorSetLayout setLayout) {
     Assert(VK_NULL_HANDLE != setLayout);
 
     const Meta::FRecursiveLockGuard scopeLock(_barrier);
@@ -236,7 +232,7 @@ void FVulkanDevice::DestroyDescriptorSetLayout(FVulkanDescriptorSetLayoutHandle 
     vkDestroyDescriptorSetLayout(_logicalDevice, setLayout, _allocator);
 }
 //----------------------------------------------------------------------------
-FVulkanPipelineLayoutHandle FVulkanDevice::CreatePipelineLayout(const FVulkanPipelineLayout& desc) {
+VkPipelineLayout FVulkanDevice::CreatePipelineLayout(const FVulkanPipelineLayout& desc) {
     STACKLOCAL_POD_ARRAY(VkPushConstantRange, vkPushConstantRanges, desc.PushConstantRanges.size());
 
     forrange(i, 0, desc.PushConstantRanges.size()) {
@@ -249,22 +245,20 @@ FVulkanPipelineLayoutHandle FVulkanDevice::CreatePipelineLayout(const FVulkanPip
 
     VkPipelineLayoutCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    createInfo.setLayoutCount = checked_cast<u32>(desc.SetLayouts.size());
-    createInfo.pSetLayouts = desc.SetLayouts.data();
+    createInfo.setLayoutCount = checked_cast<u32>(desc.DescriptorSetLayouts.size());
+    createInfo.pSetLayouts = desc.DescriptorSetLayouts.data();
     createInfo.pushConstantRangeCount = checked_cast<u32>(vkPushConstantRanges.size());
     createInfo.pPushConstantRanges = vkPushConstantRanges.data();
 
     const Meta::FRecursiveLockGuard scopeLock(_barrier);
 
     VkPipelineLayout pipelineLayout;
-    const VkResult result = vkCreatePipelineLayout(_logicalDevice, &createInfo, _allocator, &pipelineLayout);
-    if (VK_SUCCESS != result)
-        PPE_THROW_IT(FVulkanDeviceException("vkCreatePipelineLayout", result));
+    PPE_VKDEVICE_CHECKED(vkCreatePipelineLayout, _logicalDevice, &createInfo, _allocator, &pipelineLayout);
 
     return pipelineLayout;
 }
 //----------------------------------------------------------------------------
-void FVulkanDevice::DestroyPipelineLayout(FVulkanPipelineLayoutHandle pipelineLayout) {
+void FVulkanDevice::DestroyPipelineLayout(VkPipelineLayout pipelineLayout) {
     Assert(VK_NULL_HANDLE != pipelineLayout);
 
     const Meta::FRecursiveLockGuard scopeLock(_barrier);

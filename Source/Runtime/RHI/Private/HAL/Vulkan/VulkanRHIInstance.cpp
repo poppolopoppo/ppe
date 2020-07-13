@@ -957,12 +957,12 @@ FVulkanDevice* FVulkanInstance::CreateLogicalDevice(
 
     return TRACKING_NEW(RHIInstance, FVulkanDevice) {
         Allocator(),
-        FVulkanPhysicalDevice{ physicalDevice },
-        FVulkanDeviceHandle{ logicalDevice },
-        FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.Graphics) },
-        FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.Present) },
-        FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.AsyncCompute) },
-        FVulkanQueueHandle{ queueFamilies.Get(logicalDevice, *queueIndices.Transfer) },
+        physicalDevice,
+        logicalDevice,
+        queueFamilies.Get(logicalDevice, *queueIndices.Graphics),
+        queueFamilies.Get(logicalDevice, *queueIndices.Present),
+        queueFamilies.Get(logicalDevice, *queueIndices.AsyncCompute),
+        queueFamilies.Get(logicalDevice, *queueIndices.Transfer),
         std::move(swapChainDetails.PresentModes),
         std::move(swapChainDetails.SurfaceFormats)
     };

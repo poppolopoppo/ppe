@@ -6,6 +6,7 @@
 
 #include "HAL/Generic/GenericRHIDevice.h"
 
+#include "HAL/Vulkan/VulkanDebug.h"
 #include "HAL/Vulkan/VulkanRHIMemoryAllocator.h"
 #include "HAL/Vulkan/VulkanRHISurfaceFormat.h"
 
@@ -31,11 +32,11 @@ protected:
     FVulkanDevice(
         FVulkanAllocationCallbacks allocator,
         FVulkanPhysicalDevice physicalDevice,
-        FVulkanDeviceHandle logicalDevice,
-        FVulkanQueueHandle graphicsQueue,
-        FVulkanQueueHandle presentQueue,
-        FVulkanQueueHandle asyncComputeQueue,
-        FVulkanQueueHandle transferQueue,
+        VkDevice logicalDevice,
+        VkQueue graphicsQueue,
+        VkQueue presentQueue,
+        VkQueue asyncComputeQueue,
+        VkQueue transferQueue,
         FPresentModeList&& presentModes,
         FSurfaceFormatList&& surfaceFormats ) NOEXCEPT;
 
@@ -53,49 +54,56 @@ public: // must be implemented:
         const FVulkanSurfaceFormat& surfaceFormat );
     void DestroySwapChain();
 
-    FVulkanShaderModule CreateShaderModule(const FRawMemoryConst& code);
-    void DestroyShaderModule(FVulkanShaderModule shaderModule);
+    VkShaderModule CreateShaderModule(const FRawMemoryConst& code);
+    void DestroyShaderModule(VkShaderModule shaderModule);
 
-    FVulkanDescriptorSetLayoutHandle CreateDescriptorSetLayout(const FVulkanDescriptorSetLayout& desc);
-    void DestroyDescriptorSetLayout(FVulkanDescriptorSetLayoutHandle setLayout);
+    VkDescriptorSetLayout CreateDescriptorSetLayout(const FVulkanDescriptorSetLayout& desc);
+    void DestroyDescriptorSetLayout(VkDescriptorSetLayout setLayout);
 
-    FVulkanPipelineLayoutHandle CreatePipelineLayout(const FVulkanPipelineLayout& desc);
-    void DestroyPipelineLayout(FVulkanPipelineLayoutHandle pipelineLayout);
+    VkPipelineLayout CreatePipelineLayout(const FVulkanPipelineLayout& desc);
+    void DestroyPipelineLayout(VkPipelineLayout pipelineLayout);
 
 public: // vulkan specific:
-    FVulkanPhysicalDevice PhysicalDevice() const { return _physicalDevice; }
-    FVulkanDeviceHandle LogicalDevice() const { return _logicalDevice; }
+    VkPhysicalDevice PhysicalDevice() const { return _physicalDevice; }
+    VkDevice LogicalDevice() const { return _logicalDevice; }
 
-    FVulkanQueueHandle GraphicsQueue() const { return _graphicsQueue; }
-    FVulkanQueueHandle PresentQueue() const { return _presentQueue; }
-    FVulkanQueueHandle AsyncComputeQueue() const { return _asyncComputeQueue; }
-    FVulkanQueueHandle TransferQueue() const { return _transferQueue; }
+    VkQueue GraphicsQueue() const { return _graphicsQueue; }
+    VkQueue PresentQueue() const { return _presentQueue; }
+    VkQueue AsyncComputeQueue() const { return _asyncComputeQueue; }
+    VkQueue TransferQueue() const { return _transferQueue; }
 
     FVulkanAllocationCallbacks Allocator() const { return _allocator; }
 
     FVulkanMemoryAllocator& DeviceMemory() { return _deviceMemory; }
     const FVulkanMemoryAllocator& DeviceMemory() const { return _deviceMemory; }
 
+#if USE_PPE_RHIDEBUG
+    const FVulkanDebug& Debug() const { return _debug; }
+#endif
+
 private:
     std::recursive_mutex _barrier;
 
     FVulkanAllocationCallbacks _allocator;
 
-    FVulkanPhysicalDevice _physicalDevice;
-    FVulkanDeviceHandle _logicalDevice;
+    VkPhysicalDevice _physicalDevice;
+    VkDevice _logicalDevice;
 
     TUniquePtr<FVulkanSwapChain> _swapChain;
 
-    FVulkanQueueHandle _graphicsQueue;
-    FVulkanQueueHandle _presentQueue;
-    FVulkanQueueHandle _asyncComputeQueue;
-    FVulkanQueueHandle _transferQueue;
+    VkQueue _graphicsQueue;
+    VkQueue _presentQueue;
+    VkQueue _asyncComputeQueue;
+    VkQueue _transferQueue;
 
     const FPresentModeList _presentModes;
     const FSurfaceFormatList _surfaceFormats;
 
     FVulkanMemoryAllocator _deviceMemory;
 
+#if USE_PPE_RHIDEBUG
+    FVulkanDebug _debug;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

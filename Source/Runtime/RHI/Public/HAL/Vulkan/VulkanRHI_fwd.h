@@ -30,17 +30,9 @@ struct FVulkanMemoryBlock;
 class FVulkanMemoryAllocator;
 //----------------------------------------------------------------------------
 class FVulkanDevice;
-using FVulkanDeviceHandle = VkDevice;
-using FVulkanQueueHandle = VkQueue;
 using EVulkanPresentMode = EGenericPresentMode;
 //----------------------------------------------------------------------------
-using FVulkanSwapChainHandle = VkSwapchainKHR;
 class FVulkanSwapChain;
-//----------------------------------------------------------------------------
-using FVulkanShaderModule = VkShaderModule;
-//----------------------------------------------------------------------------
-using FVulkanImageHandle = VkImage;
-using FVulkanImageViewHandle = VkImageView;
 //----------------------------------------------------------------------------
 using EVulkanBlendFactor = EGenericBlendFactor;
 using EVulkanBlendOp = EGenericBlendOp;
@@ -75,8 +67,6 @@ using EVulkanShaderStageCreateFlags = EGenericShaderStageCreateFlags;
 using FVulkanShaderSpecialization = FGenericShaderSpecialization;
 struct FVulkanShaderStage;
 //----------------------------------------------------------------------------
-using FVulkanDescriptorSetLayoutHandle = VkDescriptorSetLayout;
-using FVulkanPipelineLayoutHandle = VkPipelineLayout;
 using EVulkanDescriptorFlags = EGenericDescriptorFlags;
 using EVulkanDescriptorType = EGenericDescriptorType;
 using EVulkanDescriptorSetFlags = EGenericDescriptorSetFlags;
