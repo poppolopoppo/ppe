@@ -36,6 +36,11 @@
         - http://themaister.net/blog/2017/08/15/render-graphs-and-vulkan-a-deep-dive/
         - <3 vulkan abstraction layer that represent frame as a task graph: https://github.com/azhirnov/FrameGraph
 
+- [ ] Volumetric clouds
+    - https://gist.github.com/pxv8270/e3904c49cbd8ff52cb53d95ceda3980e
+    - https://github.com/AmanSachan1/Meteoros
+    - https://www.guerrilla-games.com/read/nubis-authoring-real-time-volumetric-cloudscapes-with-the-decima-engine
+
 ## Architecture
 
 - [ ] Handle configuration/command line inside Core, seed from external configuration files, configuration cache
