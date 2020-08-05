@@ -3,13 +3,27 @@
 #include "Core.h"
 
 #include "Container/SparseArray.h"
+#include "Misc/EventHandle.h"
 #include "Misc/Function.h"
+#include "Thread/AtomicSpinLock.h"
+
+#if USE_PPE_ASSERT
+#   include "Meta/ThreadResource.h"
+#endif
 
 #define PUBLIC_EVENT(_NAME, ...) \
     private: \
-        ::PPE::TEvent< __VA_ARGS__ > CONCAT(_, _NAME); \
+        ::PPE::TEvent< __VA_ARGS__ , false > CONCAT(_, _NAME); \
     public: \
-        ::PPE::TPublicEvent< __VA_ARGS__ >& _NAME() { \
+        ::PPE::TPublicEvent< __VA_ARGS__ , false >& _NAME() { \
+            return CONCAT(_, _NAME).Public(); \
+        }
+
+#define THREADSAFE_EVENT(_NAME, ...) \
+    private: \
+        ::PPE::TEvent< __VA_ARGS__ , true > CONCAT(_, _NAME); \
+    public: \
+        ::PPE::TPublicEvent< __VA_ARGS__ , true >& _NAME() { \
             return CONCAT(_, _NAME).Public(); \
         }
 
@@ -17,116 +31,116 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// TEvent<> is equivalent to C# events
-// FEventHandle handles registration lifetime
-// TPublicEvent<> is the public interface, while TEvent<> allows full control
+// - TEvent<> is equivalent to C# events
+// - FEventHandle handles registration lifetime
+// - TPublicEvent<> is the public interface, while TEvent<> allows full control
+// - TEvent<> can be optionally thread-safe (see TThreadSafeEvent<>)
 //----------------------------------------------------------------------------
-template <typename _Delegate>
-class TPublicEvent;
-//----------------------------------------------------------------------------
-class FEventHandle {
-    template <typename _Delegate>
-    friend class TPublicEvent;
-
+namespace details {
+template <bool _ThreadSafe>
+class TEventTraits_
+#if USE_PPE_ASSERT
+	: Meta::FThreadResource
+#endif
+{
 public:
-    FEventHandle() NOEXCEPT : _id(0) {}
-    explicit FEventHandle(FSparseDataId id)
-        : _id(id) {
-        Assert(_id);
-    }
-
-    FEventHandle(const FEventHandle&) = delete;
-    FEventHandle& operator =(const FEventHandle&) = delete;
-
-    FEventHandle(FEventHandle&& rvalue) NOEXCEPT
-        : FEventHandle() {
-        Swap(rvalue);
-    }
-
-    FEventHandle& operator =(FEventHandle&& rvalue) NOEXCEPT {
-        Assert(0 == _id); // don't support assigning to initialized handle !
-        Swap(rvalue);
-        return (*this);
-    }
-
-    ~FEventHandle() {
-        Assert_NoAssume(0 == _id);
-    }
-
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (_id ? this : nullptr); }
-
-    void Forget() {
-        _id = 0; // won't asset on destruction, use wisely ;O
-    }
-
-    void Swap(FEventHandle& other) {
-        std::swap(_id, other._id);
-    }
-
-    inline friend void swap(FEventHandle& lhs, FEventHandle& rhs) {
-        lhs.Swap(rhs);
-    }
-
-private:
-    FSparseDataId _id;
+    struct FScopeLock
+    {
+#if USE_PPE_ASSERT
+        const TEventTraits_& Traits;
+		FScopeLock(const TEventTraits_& traits)
+		:   Traits(traits) {
+            THREADRESOURCE_CHECKACCESS(&Traits);
+        }
+        ~FScopeLock() {
+            THREADRESOURCE_CHECKACCESS(&Traits);
+        }
+#else
+        CONSTEXPR FScopeLock(const TEventTraits_&) NOEXCEPT {}
+#endif
+    };
 };
-//----------------------------------------------------------------------------
-template <typename _Delegate>
-class TPublicEvent {
+template <>
+class TEventTraits_<true> {
 public:
-    using FDelegate = _Delegate;
-    using FHandle = FEventHandle;
-    using FInvocationList = SPARSEARRAY_INSITU(Event, FDelegate);
+    mutable FAtomicSpinLock Barrier;
+	struct FScopeLock : FAtomicSpinLock::FScope {
+        FScopeLock(const TEventTraits_& traits) NOEXCEPT
+        :   FAtomicSpinLock::FScope(traits.Barrier)
+        {}
+	};
+};
+template <typename _Delegate, typename _Traits>
+class TPublicEvent_ : protected _Traits {
+public:
+	using FDelegate = _Delegate;
+	using FHandle = FEventHandle;
+	using FInvocationList = SPARSEARRAY_INSITU(Event, FDelegate);
 
-    TPublicEvent() NOEXCEPT {}
+    TPublicEvent_() NOEXCEPT {}
 
-    TPublicEvent(const TPublicEvent&) = delete;
-    TPublicEvent& operator =(const TPublicEvent&) = delete;
+    TPublicEvent_(const TPublicEvent_&) = delete;
+    TPublicEvent_& operator =(const TPublicEvent_&) = delete;
 
-    TPublicEvent(TPublicEvent&&) = delete;
-    TPublicEvent& operator =(TPublicEvent&&) = delete;
+    TPublicEvent_(TPublicEvent_&&) = delete;
+    TPublicEvent_& operator =(TPublicEvent_&&) = delete;
 
-    bool empty() const { return _delegates.empty(); }
+	bool empty() const { return _delegates.empty(); }
 
-    FHandle Add(FDelegate&& func) {
-        Assert(func);
-        return FHandle(_delegates.Emplace(std::move(func)));
-    }
+	FHandle Add(FDelegate&& rfunc) {
+		Assert(rfunc);
+		const FScopeLock scopeLock(*this);
+		return FHandle(_delegates.Emplace(std::move(rfunc)));
+	}
 
-    void Emplace(FDelegate&& func) {
-        Assert(func);
-        _delegates.Emplace(std::move(func));
-    }
+	void Emplace(FDelegate&& rfunc) {
+		Assert(rfunc);
+		const FScopeLock scopeLock(*this);
+		_delegates.Emplace(std::move(rfunc));
+	}
 
-    void Remove(FHandle& handle) {
-        Assert(handle);
-        VerifyRelease(_delegates.Remove(handle._id));
-        handle._id = 0;
-    }
+	void Remove(FHandle& handle) {
+		Assert(handle);
+		const FScopeLock scopeLock(*this);
+		VerifyRelease(_delegates.Remove(handle.Forget()));
+	}
 
 protected:
-    FInvocationList _delegates;
+	using typename _Traits::FScopeLock;
+	FInvocationList _delegates;
 };
+} //!details
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename _Delegate, bool _ThreadSafe = false >
+using TPublicEvent = details::TPublicEvent_<_Delegate, details::TEventTraits_<_ThreadSafe> >;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, bool _ThreadSafe = false >
 class TEvent;
-template <typename _Ret, typename... _Args, size_t _InSitu>
-class TEvent< TFunction<_Ret(_Args...), _InSitu> > : public TPublicEvent< TFunction<_Ret(_Args...), _InSitu> > {
+template <typename T>
+using TThreadSafeEvent = TEvent< T, true >;
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args, size_t _InSitu, bool _ThreadSafe>
+class TEvent< TFunction<_Ret(_Args...), _InSitu>, _ThreadSafe >
+:   public TPublicEvent< TFunction<_Ret(_Args...), _InSitu>, _ThreadSafe > {
 public:
-    using parent_type = TPublicEvent< TFunction<_Ret(_Args...), _InSitu> >;
+    using public_event_t = TPublicEvent< TFunction<_Ret(_Args...), _InSitu>, _ThreadSafe >;
 
-    using typename parent_type::FDelegate;
-    using typename parent_type::FHandle;
-    using typename parent_type::FInvocationList;
+    using typename public_event_t::FDelegate;
+    using typename public_event_t::FHandle;
+    using typename public_event_t::FInvocationList;
 
-    TEvent() NOEXCEPT : parent_type() {}
+    TEvent() = default;
 
-    using parent_type::Add;
-    using parent_type::Remove;
+    using public_event_t::Add;
+    using public_event_t::Emplace;
+    using public_event_t::Remove;
 
-    parent_type& Public() { return *this; }
+    public_event_t& Public() { return *this; }
 
     PPE_FAKEBOOL_OPERATOR_DECL() {
+        const FScopeLock scopeLock(*this);
         return (_delegates.empty() ? nullptr : this);
     }
 
@@ -135,22 +149,36 @@ public:
     }
 
     void Invoke(_Args... args) const {
+        const FScopeLock scopeLock(*this);
         for (auto& it : _delegates) {
             it(std::forward<_Args>(args)...);
         }
     }
 
+	void FireAndForget(_Args... args) const {
+        FInvocationList tmp;
+        {
+            const FScopeLock scopeLock(*this);
+            tmp = std::move(_delegates);
+        }
+		for (auto& it : tmp) {
+		    it(std::forward<_Args>(args)...);
+		}
+	}
+
     void Clear() {
+        const FScopeLock scopeLock(*this);
         _delegates.Clear();
     }
 
 private:
-    using parent_type::_delegates;
+    using typename public_event_t::FScopeLock;
+    using public_event_t::_delegates;
 };
 //----------------------------------------------------------------------------
-template <typename _Delegate, typename T, class = Meta::TEnableIf<_Delegate::template is_callable_v<T>> >
-TPublicEvent<_Delegate>& operator <<(TPublicEvent<_Delegate>& publicEvent, T&& callback) {
-    publicEvent.Emplace(std::move(callback));
+template <typename _Delegate, bool _ThreadSafe, typename T, class = Meta::TEnableIf<_Delegate::template is_callable_v<T>> >
+TPublicEvent<_Delegate, _ThreadSafe>& operator <<(TPublicEvent<_Delegate, _ThreadSafe>& publicEvent, T&& rcallback) {
+    publicEvent.Emplace(std::move(rcallback));
     return publicEvent;
 }
 //----------------------------------------------------------------------------
