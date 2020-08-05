@@ -24,12 +24,13 @@ static bool SplitIf_(TBasicStringView<_Char>& str, TBasicStringView<_Char>& slic
         return false;
 
     const auto it = str.FindIf(pred);
+
     if (str.end() == it) {
         slice = str;
         str = TBasicStringView<_Char>();
     }
     else {
-        Assert(pred(*it));
+        Assert_NoAssume(pred(*it));
         slice = str.CutBefore(it);
         str = str.CutStartingAt(it + 1);
     }
@@ -37,18 +38,46 @@ static bool SplitIf_(TBasicStringView<_Char>& str, TBasicStringView<_Char>& slic
     return true;
 }
 //----------------------------------------------------------------------------
-template <typename _Char>
-static bool Split_(TBasicStringView<_Char>& str, _Char separator, TBasicStringView<_Char>& slice) {
-    return SplitIf_<_Char>(str, slice, [separator](const _Char ch) {
-        return separator == ch;
-    });
+template <typename _Char, typename _Pred>
+static bool SplitIfR_(TBasicStringView<_Char>& str, TBasicStringView<_Char>& slice, _Pred&& pred) {
+    if (str.empty())
+        return false;
+
+    const auto it = str.FindIfR(pred);
+
+    if (str.rend() == it) {
+        slice = str;
+        str = TBasicStringView<_Char>();
+    }
+    else {
+        Assert_NoAssume(pred(*it));
+        slice = str.CutStartingAt(it + 1);
+        str = str.CutBefore(it);
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
-template <typename _Char>
+template <typename _Char, bool _FindFirst>
+static bool Split_(TBasicStringView<_Char>& str, _Char separator, TBasicStringView<_Char>& slice) {
+    auto pred = [separator](const _Char ch) {
+        return separator == ch;
+    };
+    IF_CONSTEXPR(_FindFirst)
+        return SplitIf_<_Char>(str, slice, std::move(pred));
+    else
+        return SplitIfR_<_Char>(str, slice, std::move(pred));
+}
+//----------------------------------------------------------------------------
+template <typename _Char, bool _FindFirst>
 static bool SplitMulti_(TBasicStringView<_Char>& str, const TBasicStringView<_Char>& separators, TBasicStringView<_Char>& slice) {
-    return SplitIf_<_Char>(str, slice, [separators](const _Char ch) {
+    auto pred = [separators](const _Char ch) {
         return (separators.end() != std::find(separators.begin(), separators.end(), ch));
-    });
+    };
+    IF_CONSTEXPR(_FindFirst)
+        return SplitIf_<_Char>(str, slice, std::move(pred));
+    else
+        return SplitIfR_<_Char>(str, slice, std::move(pred));
 }
 //----------------------------------------------------------------------------
 template <typename _Char> struct TAtoN_traits {};
@@ -753,19 +782,35 @@ bool EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool Split(FStringView& str, char separator, FStringView& slice) {
-    return Split_<char>(str, separator, slice);
+    return Split_<char, true>(str, separator, slice);
 }
 //----------------------------------------------------------------------------
 bool Split(FWStringView& wstr, wchar_t separator, FWStringView& slice) {
-    return Split_<wchar_t>(wstr, separator, slice);
+    return Split_<wchar_t, true>(wstr, separator, slice);
 }
 //----------------------------------------------------------------------------
 bool Split(FStringView& str, const FStringView& separators, FStringView& slice) {
-    return SplitMulti_<char>(str, separators, slice);
+    return SplitMulti_<char, true>(str, separators, slice);
 }
 //----------------------------------------------------------------------------
 bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) {
-    return SplitMulti_<wchar_t>(wstr, separators, slice);
+    return SplitMulti_<wchar_t, true>(wstr, separators, slice);
+}
+//----------------------------------------------------------------------------
+bool SplitR(FStringView& str, char separator, FStringView& slice) {
+    return Split_<char, false>(str, separator, slice);
+}
+//----------------------------------------------------------------------------
+bool SplitR(FWStringView& wstr, wchar_t separator, FWStringView& slice) {
+    return Split_<wchar_t, false>(wstr, separator, slice);
+}
+//----------------------------------------------------------------------------
+bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice) {
+    return SplitMulti_<char, false>(str, separators, slice);
+}
+//----------------------------------------------------------------------------
+bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) {
+    return SplitMulti_<wchar_t, false>(wstr, separators, slice);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

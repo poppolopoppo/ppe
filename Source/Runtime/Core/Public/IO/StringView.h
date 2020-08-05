@@ -377,6 +377,12 @@ PPE_CORE_API bool Split(FWStringView& wstr, wchar_t separator, FWStringView& sli
 PPE_CORE_API bool Split(FStringView& str, const FStringView& separators, FStringView& slice);
 PPE_CORE_API bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice);
 //----------------------------------------------------------------------------
+PPE_CORE_API bool SplitR(FStringView& str, char separator, FStringView& slice);
+PPE_CORE_API bool SplitR(FWStringView& wstr, wchar_t separator, FWStringView& slice);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice);
+PPE_CORE_API bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice);
+//----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringView<_Char> Slice(const TBasicStringView<_Char>& str, size_t offset, size_t count) {
     return str.SubRange(offset, count);
