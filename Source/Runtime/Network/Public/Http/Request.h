@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #include "Http/Header.h"
 #include "Uri.h"
@@ -10,8 +10,6 @@
 
 namespace PPE {
 namespace Network {
-enum class EHttpMethod;
-class FSocketBuffered;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

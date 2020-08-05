@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #include "Socket/Address.h"
 #include "Socket/ServicingPort.h"
@@ -12,10 +12,6 @@
 
 namespace PPE {
 namespace Network {
-class FHttpRequest;
-class FHttpResponse;
-class FSocketBuffered;
-FWD_REFPTR(HandShaker);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

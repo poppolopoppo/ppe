@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #include "NetworkExceptions.h"
 
 namespace PPE {
 namespace Network {
-enum class EHttpStatus;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

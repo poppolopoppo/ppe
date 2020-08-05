@@ -6,11 +6,10 @@
 #pragma once
 
 // Include all network related includes (priority matters)
-#include "NetworkIncludes.h"
-
-#include "HAL/PlatformIncludes.h"
 
 #include "Network_fwd.h"
+#include "NetworkIncludes.h"
+#include "HAL/PlatformIncludes.h"
 
 #if BUILD_PCH
 #   include "stdafx.generated.h"

@@ -1,13 +1,11 @@
 #pragma once
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #include "Http/Header.h"
 
 namespace PPE {
 namespace Network {
-enum class EHttpStatus;
-class FSocketBuffered;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

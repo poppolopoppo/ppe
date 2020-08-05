@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #include "Socket/Address.h"
 #include "Socket/SocketBuffered.h"
@@ -9,10 +9,6 @@
 
 namespace PPE {
 namespace Network {
-class FUri;
-class FHttpRequest;
-class FHttpResponse;
-enum class EHttpStatus;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

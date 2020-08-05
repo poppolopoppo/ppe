@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"

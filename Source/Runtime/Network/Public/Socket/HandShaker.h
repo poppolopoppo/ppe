@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #include "Socket/Listener.h"
 #include "Socket/ServicingPort.h"
