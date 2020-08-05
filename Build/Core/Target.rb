@@ -394,7 +394,7 @@ module Build
                 end.
                 collect do |(dep, visibility)|
                     dep.abs_path.to_s
-                end.join(',')
+                end
         end
 
         ## sort dependencies with a (lazy) global order that must be stable

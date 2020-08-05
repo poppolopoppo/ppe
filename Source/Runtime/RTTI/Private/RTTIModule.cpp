@@ -41,7 +41,7 @@ const FModuleInfo FRTTIModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        STRINGIZE(BUILD_TARGET_DEPS) )
+        Generated::DependencyList )
 };
 //----------------------------------------------------------------------------
 FRTTIModule::FRTTIModule() NOEXCEPT

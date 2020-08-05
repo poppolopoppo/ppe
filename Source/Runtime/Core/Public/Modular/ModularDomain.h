@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core_fwd.h"
+#include "ModuleInfo.h"
 
 #include "Modular/Modular_fwd.h"
 #include "Modular/ModularServices.h"
@@ -38,7 +39,7 @@ public:
     IModuleInterface& LoadModule(const FStringView& name);
     IModuleInterface* LoadModuleIFP(const FStringView& name);
 
-    void LoadDependencyList(const FStringView& dependencyList); // comma separated module name list
+    void LoadDependencyList(FModuleDependencyList dependencyList); // comma separated module name list
 
     void UnloadModule(const FStringView& name);
     bool UnloadModuleIFP(const FStringView& name);
@@ -55,6 +56,13 @@ public:
 
     static void Start(FModularDomain& domain);
     static void Shutdown(FModularDomain& domain);
+
+public: // typed module interface
+
+    template <typename _Module, class = Meta::TEnableIf<std::is_base_of_v<IModuleInterface, _Module>> >
+    _Module& ModuleChekced(const FStringView& name) const NOEXCEPT {
+        return (*checked_cast<_Module*>(&Module(name)));
+    }
 
 public: // events
     using FModuleDelegate = TFunction<void(const FModularDomain&, IModuleInterface&)>;

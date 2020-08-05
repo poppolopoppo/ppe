@@ -33,7 +33,7 @@ const FModuleInfo FBuildGraphModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        STRINGIZE(BUILD_TARGET_DEPS) )
+        Generated::DependencyList )
 };
 //----------------------------------------------------------------------------
 FBuildGraphModule::FBuildGraphModule() NOEXCEPT

@@ -8,10 +8,13 @@
 #include "Diagnostic/BuildVersion.h"
 #include "Memory/UniquePtr.h"
 
+#include <initializer_list>
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+using FModuleDependencyList = TMemoryView<const FStringView>;
 using FModuleStaticInitializer = TUniquePtr<IModuleInterface> (*)() NOEXCEPT;
 //----------------------------------------------------------------------------
 struct FModuleInfo {
@@ -20,7 +23,7 @@ struct FModuleInfo {
     EModuleUsage Usage;
     EModuleSource Source;
     FModuleLoadOrder LoadOrder;
-    FStringView DependencyList;
+    FModuleDependencyList DependencyList;
     FBuildVersion BuildVersion;
     FModuleStaticInitializer Initializer;
 
@@ -32,7 +35,7 @@ struct FModuleInfo {
         EModuleUsage usage,
         EModuleSource source,
         FModuleLoadOrder loadOrder,
-        FStringView dependencyList,
+        FModuleDependencyList dependencyList,
         FBuildVersion buildVersion,
         FModuleStaticInitializer initializer ) NOEXCEPT
     :   Name(name)

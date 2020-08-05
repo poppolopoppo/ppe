@@ -26,7 +26,7 @@ const FModuleInfo FVFSModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        STRINGIZE(BUILD_TARGET_DEPS) )
+        Generated::DependencyList )
 };
 //----------------------------------------------------------------------------
 FVFSModule::FVFSModule() NOEXCEPT

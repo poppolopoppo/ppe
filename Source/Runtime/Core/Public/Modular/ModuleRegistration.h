@@ -46,7 +46,7 @@ public:
         EModuleUsage usage,
         EModuleSource source,
         FModuleLoadOrder loadOrder,
-        const FStringView& dependencyList ) NOEXCEPT {
+        FModuleDependencyList dependencyList ) NOEXCEPT {
         FModuleInfo info{
             name, phase, usage, source, loadOrder, dependencyList,
             CurrentBuildVersion(),

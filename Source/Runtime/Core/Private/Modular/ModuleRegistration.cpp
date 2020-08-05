@@ -117,7 +117,7 @@ bool FModuleDynamicRegistration::Load(FModuleInfo* pinfo, const FStringView& nam
         return false;
     }
 
-    *pinfo = ModuleInfo(static_cast<FModuleStaticAnchor>(fAnchor));
+    *pinfo = ModuleInfo(reinterpret_cast<FModuleStaticAnchor>(fAnchor));
     AssertRelease(name == pinfo->Name);
 
     return true;

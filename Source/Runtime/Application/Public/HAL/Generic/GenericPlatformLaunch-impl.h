@@ -15,32 +15,30 @@
 
 #include "BuildModules.generated.h"
 
-CONSTEXPR const PPE::FStringView GApplicationDependencies[] = {
-#define DUMMY_EXPAND(...) PP_FOREACH_ARGS(STRINGIZE, __VA_ARGS__)
-    DUMMY_EXPAND(BUILD_TARGET_DEPS)
-#undef DUMMY_EXPAND
-};
-
 class FApplicationDomain : public PPE::FModularDomain {
 public:
     FApplicationDomain() NOEXCEPT
-    :   PPE::FModularDomain(STRINGIZE(BUILD_TARGET_NAME), PPE::EModuleUsage::PPE_TARGET_USAGE) {
+    :   FModularDomain(STRINGIZE(BUILD_TARGET_NAME), PPE::EModuleUsage::PPE_TARGET_USAGE) {
+        using namespace PPE;
         Generated::RegisterStaticModules();
         Generated::RegisterDynamicModules();
     }
 
     ~FApplicationDomain() {
+        using namespace PPE;
         Generated::UnregisterDynamicModules();
         Generated::UnregisterStaticModules();
     }
 
     void LoadDependencies() {
-        foreachitem(name, GApplicationDependencies)
+        using namespace PPE;
+        foreachitem(name, Generated::DependencyList)
             FModularDomain::LoadModule(*name);
     }
 
     void UnloadDependencies() {
-        reverseforeachitem(name, GApplicationDependencies)
+        using namespace PPE;
+        reverseforeachitem(name, Generated::DependencyList)
             FModularDomain::UnloadModule(*name);
     }
 };

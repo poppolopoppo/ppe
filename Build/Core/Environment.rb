@@ -174,8 +174,7 @@ module Build
 
             result.defines.append(
                 "BUILD_TARGET_NAME=#{target.abs_path}",
-                "BUILD_TARGET_ORDINAL=#{target.ordinal}",
-                "BUILD_TARGET_DEPS=#{target.dependency_list}")
+                "BUILD_TARGET_ORDINAL=#{target.ordinal}" )
 
             target.decorate(result, self)
             target.customize(result, self, target)

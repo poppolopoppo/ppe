@@ -119,9 +119,8 @@ IModuleInterface* FModularDomain::LoadModuleIFP(const FStringView& name) {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-void FModularDomain::LoadDependencyList(const FStringView& dependencyList) {
-    FStringView dependencyName, it = dependencyList;
-    while (Split(it, ',', dependencyName)) {
+void FModularDomain::LoadDependencyList(FModuleDependencyList dependencyList) {
+    for (const FStringView& dependencyName : dependencyList) {
         LOG(Modular, Info, L" -> load module dependency <{0}>", dependencyName);
         LoadModule(dependencyName);
     }

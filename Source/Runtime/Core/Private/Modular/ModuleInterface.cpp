@@ -18,9 +18,7 @@ IModuleInterface::IModuleInterface(const FModuleInfo& info) NOEXCEPT
     Assert_NoAssume(not _name.empty());
 }
 //----------------------------------------------------------------------------
-IModuleInterface::~IModuleInterface() {
-
-}
+IModuleInterface::~IModuleInterface() NOEXCEPT {}
 //----------------------------------------------------------------------------
 void IModuleInterface::Start(FModularDomain& domain) {
     UNUSED(domain);

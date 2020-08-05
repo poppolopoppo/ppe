@@ -45,7 +45,7 @@ const FModuleInfo FCoreModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        FStringView{}/* always empty since this is the root module */)
+        FModuleDependencyList{}/* always empty since this is the root module */)
 };
 //----------------------------------------------------------------------------
 FCoreModule::FCoreModule() NOEXCEPT

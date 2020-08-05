@@ -54,6 +54,18 @@ module Build
             end
             return self
         end
+        def heredoc!(str)
+            @io.print(str)
+            str.each_char do |ch|
+                if ch == "\n"
+                    @column = 1
+                    @line += 1
+                else
+                    @column += 1
+                end
+            end
+            return self
+        end
         def scope!(instance=self, &block)
             newline?.indent!
             instance.instance_exec(&block)
