@@ -6,6 +6,7 @@
 #include "Meta/Iterator.h"
 
 #include <algorithm>
+#include <array>
 #include <initializer_list>
 #include <iterator>
 #include <type_traits>
@@ -39,6 +40,14 @@ public:
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
     CONSTEXPR TMemoryView(std::initializer_list<T> list) NOEXCEPT
         : TMemoryView(list.begin(), std::distance(list.begin(), list.end())) {}
+
+    // enables type promotion between std::array<T, _Dim> and TMemoryView<T>
+    template <size_t _Dim>
+    CONSTEXPR TMemoryView(std::array<T, _Dim>& arr) NOEXCEPT
+        : TMemoryView(arr.data(), _Dim) {}
+    template <size_t _Dim>
+    CONSTEXPR TMemoryView(const std::array<Meta::TRemoveConst<T>, _Dim>& arr) NOEXCEPT
+        : TMemoryView(arr.data(), _Dim) {}
 
     // enables type promotion between T[] and TMemoryView<T>
     template <size_t _Dim>
@@ -156,7 +165,18 @@ public:
     }
 
     iterator Find(const T& elem) const { return std::find(begin(), end(), elem); }
+    iterator FindAfter(const T& elem, iterator first) const {
+        Assert(AliasesToContainer(first));
+        const iterator last = end();
+        return (first == last ? last : std::find(++first, last, elem));
+    }
+
     reverse_iterator FindR(const T& elem) const { return std::find(rbegin(), rend(), elem); }
+    reverse_iterator FindAfterR(const T& elem, reverse_iterator rfirst) const {
+        Assert(AliasesToContainer(rfirst));
+        const reverse_iterator rlast = rend();
+        return (rfirst == rlast ? rlast : std::find(++rfirst, rlast, elem));
+    }
 
     bool Contains(const T& elem) const { return (end() != Find(elem)); }
 
@@ -187,6 +207,9 @@ public:
 
     bool EndsWith(const TMemoryView<T>& suffix) const;
     bool StartsWith(const TMemoryView<T>& prefix) const;
+
+    TMemoryView Concat(const TMemoryView& other) const;
+    TMemoryView Concat_AssumeNotEmpty(const TMemoryView& other) const;
 
     template <typename _Pred>
     TMemoryView SplitIf(const _Pred& pred) const { return TMemoryView(_storage, FindFirst(pred)); }
@@ -293,6 +316,21 @@ CONSTEXPR TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
 template <typename T, size_t _Dim>
 CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T(&staticArray)[_Dim]) {
     return TMemoryView<Meta::TAddConst<T> >(&staticArray[0], _Dim);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+CONSTEXPR TMemoryView<T> MakeView(std::array<T, _Dim>& arr) {
+    return TMemoryView<T>(arr.data(), _Dim);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+CONSTEXPR TMemoryView<const T> MakeView(const std::array<T, _Dim>& arr) {
+    return TMemoryView<const T>(arr.data(), _Dim);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(const std::array<T, _Dim>& arr) {
+    return TMemoryView<Meta::TAddConst<T> >(arr.data(), _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename _It>

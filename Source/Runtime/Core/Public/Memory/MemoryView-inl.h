@@ -132,6 +132,28 @@ bool TMemoryView<T>::StartsWith(const TMemoryView<T>& prefix) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+TMemoryView<T> TMemoryView<T>::Concat(const TMemoryView& other) const {
+    if (Likely(_storage && other._storage)) {
+        Assert(_storage + _size == other._storage);
+        return TMemoryView<T>{ _storage, _size + other._size };
+    }
+    else if (_storage) {
+        return (*this);
+    }
+    else {
+        return other;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TMemoryView<T> TMemoryView<T>::Concat_AssumeNotEmpty(const TMemoryView& other) const {
+    Assert(_storage);
+    Assert(other._storage);
+    Assert_NoAssume(_storage + _size == other._storage);
+    return TMemoryView<T>{ _storage, _size + other._size };
+}
+//----------------------------------------------------------------------------
+template <typename T>
 void TMemoryView<T>::CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const {
     Assert(dst.size() == size());
     std::copy(begin(), end(), dst.begin());
