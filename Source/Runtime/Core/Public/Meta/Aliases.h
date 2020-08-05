@@ -173,10 +173,13 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define IF_CONSTEXPR(...) if constexpr(__VA_ARGS__)
 //  http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4295.html
 #   define FOLD_EXPR(...) ((__VA_ARGS__), ...)
+//  https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
+#   define MAYBE_UNUSED [[maybe_unused]]
 #else
 #   define IF_CONSTEXPR(...) if (__VA_ARGS__)
 //  Workaround from Jason Turner: https://youtu.be/nnY4e4faNp0?t=39m51s
 #   define FOLD_EXPR(...) (void)std::initializer_list<int>{ ((__VA_ARGS__), 0)... }
+#   define MAYBE_UNUSED
 #endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
