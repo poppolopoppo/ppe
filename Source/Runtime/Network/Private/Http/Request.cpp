@@ -91,7 +91,7 @@ bool FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
     // body
     {
-        const FStringView contentLengthCStr = prequest->GetIFP(FHttpConstNames::ContentLength());
+        const FStringView contentLengthCStr = prequest->GetIFP(FHttpHeaders::ContentLength());
 
         if (contentLengthCStr.size()) {
             i64 contentLengthI = 0;
@@ -148,12 +148,12 @@ void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) 
 
     // add content-length header if omitted :
     if (request.Body().SizeInBytes() &&
-        request.GetIFP(FHttpConstNames::ContentLength()).empty()) {
+        request.GetIFP(FHttpHeaders::ContentLength()).empty()) {
         char tmp[32];
         FFixedSizeTextWriter oss(tmp);
         Format(oss, "{0}", request.Body().SizeInBytes());
 
-        psocket->Write(FHttpConstNames::ContentLength().MakeView());
+        psocket->Write(FHttpHeaders::ContentLength().MakeView());
         psocket->Write(": ");
         psocket->Write(oss.Written());
         psocket->Write("\r\n");

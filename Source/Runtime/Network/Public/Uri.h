@@ -16,6 +16,8 @@ class PPE_NETWORK_API FUri {
 public:
     typedef ASSOCIATIVE_VECTORINSITU(URI, FString, FString, 3) FQueryMap;
 
+    static constexpr FString::char_type PathSeparator = '/';
+
     FUri();
     ~FUri();
 
@@ -69,6 +71,8 @@ private:
 
     FString _str;
 };
+//----------------------------------------------------------------------------
+using FUriQueryMap = FUri::FQueryMap;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -50,8 +50,8 @@ void FHttpResponse::UpdateContentHeaders(const FStringView& mimeType) {
     FString contentLength;
     Format(contentLength, "{0}", Body().SizeInBytes());
 
-    Add(FHttpConstNames::ContentType(), ToString(mimeType));
-    Add(FHttpConstNames::ContentLength(), std::move(contentLength));
+    Add(FHttpHeaders::ContentType(), ToString(mimeType));
+    Add(FHttpHeaders::ContentLength(), std::move(contentLength));
 }
 //----------------------------------------------------------------------------
 void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size_t maxContentLength) {
@@ -105,7 +105,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
 
     // body
     {
-        const FStringView contentLengthCStr = presponse->GetIFP(FHttpConstNames::ContentLength());
+        const FStringView contentLengthCStr = presponse->GetIFP(FHttpHeaders::ContentLength());
 
         if (contentLengthCStr.size()) {
             i64 contentLengthI = 0;

@@ -23,12 +23,12 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API,Network)
 namespace {
 //----------------------------------------------------------------------------
 static void HttpTypicalRequestHeaders_(FHttpRequest* request) {
-    request->Add(FHttpConstNames::UserAgent(),      FString("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"));
-    request->Add(FHttpConstNames::Accept(),         FString("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"));
-    request->Add(FHttpConstNames::AcceptLanguage(), FString("en-us,en;q=0.5"));
-    request->Add(FHttpConstNames::AcceptEncoding(), FString("identity"));
-    request->Add(FHttpConstNames::Connection(),     FString("keep-alive"));
-    request->Add(FHttpConstNames::CacheControl(),   FString("max-age=0"));
+    request->Add(FHttpHeaders::UserAgent(),      FString("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"));
+    request->Add(FHttpHeaders::Accept(),         FString("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"));
+    request->Add(FHttpHeaders::AcceptLanguage(), FString("en-us,en;q=0.5"));
+    request->Add(FHttpHeaders::AcceptEncoding(), FString("identity"));
+    request->Add(FHttpHeaders::Connection(),     FString("keep-alive"));
+    request->Add(FHttpHeaders::CacheControl(),   FString("max-age=0"));
 }
 //----------------------------------------------------------------------------
 static void HttpMakeRequest_(
@@ -39,7 +39,7 @@ static void HttpMakeRequest_(
     const FHttpClient::FCookieMap& cookie ) {
     prequest->SetMethod(method);
     prequest->SetUri(FUri(uri));
-    prequest->Add(FHttpConstNames::Host(), ToString(hostname));
+    prequest->Add(FHttpHeaders::Host(), ToString(hostname));
 
     HttpTypicalRequestHeaders_(prequest);
 
