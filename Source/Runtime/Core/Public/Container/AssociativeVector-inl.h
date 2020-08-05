@@ -154,6 +154,33 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key, 
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <typename _KeyLike>
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindLike(const _KeyLike& keyLike) -> iterator {
+    return std::find_if(std::begin(_vector), std::end(_vector), [&keyLike](const value_type& it) {
+        return key_equal()(it.first, keyLike);
+    });
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <typename _KeyLike>
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindLike(const _KeyLike& keyLike) const -> const_iterator {
+    return std::find_if(std::begin(_vector), std::end(_vector), [&keyLike](const value_type& it) {
+        return key_equal()(it.first, keyLike);
+    });
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <typename _KeyLike>
+bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindLike(const _KeyLike& keyLike, _Value *pvalue) const {
+    const const_iterator it = FindLike(keyLike);
+    if (end() == it)
+        return false;
+    Assert(pvalue);
+    *pvalue = it->second;
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 template <class... _Args>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_ReturnIfExists(_Key&& key, _Args&&... args) {
     if (end() == Find(key)) {

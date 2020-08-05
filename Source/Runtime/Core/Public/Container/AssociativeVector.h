@@ -135,6 +135,13 @@ public:
 
     bool Find(const _Key& key, _Value *pvalue) const;
 
+    template <typename _KeyLike>
+    iterator FindLike(const _KeyLike& keyLike);
+    template <typename _KeyLike>
+    const_iterator FindLike(const _KeyLike& keyLike) const;
+    template <typename _KeyLike>
+    bool FindLike(const _KeyLike& keyLike, _Value *pvalue) const;
+
     template <class... _Args>
     bool Emplace_ReturnIfExists(_Key&& key, _Args&&... args);
     template <class... _Args>
