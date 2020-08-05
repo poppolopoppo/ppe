@@ -5,6 +5,9 @@
 #include "Modular/ModuleInterface.h"
 
 #include "Diagnostic/Logger_fwd.h"
+#include "Misc/Event.h"
+#include "Misc/Function.h"
+#include "Time/Timepoint.h"
 
 namespace PPE {
 namespace Application {
@@ -24,6 +27,21 @@ public:
 
     virtual void DutyCycle(FModularDomain& domain) override;
     virtual void ReleaseMemory(FModularDomain& domain) NOEXCEPT override;
+
+public:
+    friend class Application::FApplicationBase;
+
+    using FApplicationEvent = TFunction<void(Application::FApplicationBase&)>;
+
+    PUBLIC_EVENT(OnApplicationCreate, FApplicationEvent);
+    PUBLIC_EVENT(OnApplicationDestroy, FApplicationEvent);
+
+    PUBLIC_EVENT(OnApplicationStart, FApplicationEvent);
+    PUBLIC_EVENT(OnApplicationShutdown, FApplicationEvent);
+
+    using FApplicationTick = TFunction<void(Application::FApplicationBase&, FTimespan dt)>;
+
+    PUBLIC_EVENT(OnApplicationTick, FApplicationTick);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

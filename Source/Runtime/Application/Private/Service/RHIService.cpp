@@ -52,12 +52,12 @@ RHI::FDevice* FDefaultRHIService_::CreateMainDevice(FWindowRHI* window) {
         RHI::EPhysicalDeviceFlags::Default, surface );
 
     const TMemoryView<const RHI::EPresentMode> presentModes = device->PresentModes();
-    Assert_NoAssume(Contains(device->PresentModes(), RHI::EPresentMode::Fifo));
+    Assert_NoAssume(Contains(presentModes, RHI::EPresentMode::Fifo));
 
     RHI::EPresentMode const present = (
-        Contains(device->PresentModes(), RHI::EPresentMode::Mailbox)
+        Contains(presentModes, RHI::EPresentMode::Mailbox)
             ? RHI::EPresentMode::Mailbox
-            : (Contains(device->PresentModes(), RHI::EPresentMode::RelaxedFifo)
+            : (Contains(presentModes, RHI::EPresentMode::RelaxedFifo)
                 ? RHI::EPresentMode::RelaxedFifo
                 : RHI::EPresentMode::Fifo) );
 

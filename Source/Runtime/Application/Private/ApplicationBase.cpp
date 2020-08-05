@@ -2,6 +2,8 @@
 
 #include "ApplicationBase.h"
 
+#include "ApplicationModule.h"
+
 #include "Diagnostic/CurrentProcess.h"
 #include "HAL/PlatformCrash.h"
 #include "HAL/PlatformDebug.h"
@@ -98,15 +100,25 @@ static void TearDebugMenuInSystray_() {
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
+static FApplicationModule& ApplicationModule_(const FModularDomain& domain) NOEXCEPT {
+    return domain.ModuleChekced<FApplicationModule>("Runtime/Application");
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationBase::FApplicationBase(const FModularDomain& domain, FWString&& name)
 :   FPlatformApplication(domain, std::move(name))
-{}
+,   _module(ApplicationModule_(Domain()))  {
+
+    _module._OnApplicationCreate.Invoke(*this);
+}
 //----------------------------------------------------------------------------
-FApplicationBase::~FApplicationBase() = default;
+FApplicationBase::~FApplicationBase() NOEXCEPT {
+
+    _module._OnApplicationDestroy.Invoke(*this);
+}
 //----------------------------------------------------------------------------
 void FApplicationBase::Start() {
     FPlatformApplication::Start();
@@ -115,6 +127,14 @@ void FApplicationBase::Start() {
     if (ShouldUseDebugSystray_())
         SetupDebugMenuInSystray_();
 #endif
+
+    _module._OnApplicationStart.Invoke(*this);
+}
+//----------------------------------------------------------------------------
+void FApplicationBase::Tick(FTimespan dt) {
+    FPlatformApplication::Tick(dt);
+
+    _module._OnApplicationTick.Invoke(*this, dt);
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Shutdown() {
@@ -122,6 +142,8 @@ void FApplicationBase::Shutdown() {
     if (ShouldUseDebugSystray_())
         TearDebugMenuInSystray_();
 #endif
+
+    _module._OnApplicationShutdown.Invoke(*this);
 
     FPlatformApplication::Shutdown();
 }

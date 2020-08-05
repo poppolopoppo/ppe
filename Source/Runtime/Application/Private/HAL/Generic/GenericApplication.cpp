@@ -19,7 +19,7 @@ FGenericApplication::FGenericApplication(const FModularDomain& domain, FWString&
     Assert(not _name.empty());
 }
 //----------------------------------------------------------------------------
-FGenericApplication::~FGenericApplication() = default;
+FGenericApplication::~FGenericApplication() NOEXCEPT {}
 //----------------------------------------------------------------------------
 void FGenericApplication::Start() {
     LOG(Application, Emphasis, L"start application <{0}>", _name);
