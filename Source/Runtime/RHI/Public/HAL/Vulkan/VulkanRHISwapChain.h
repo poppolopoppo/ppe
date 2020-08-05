@@ -18,8 +18,8 @@ namespace RHI {
 class PPE_RHI_API FVulkanSwapChain : public FGenericSwapChain {
 public: // must be implemented by each RHI:
     const FVulkanSurfaceFormat& SurfaceFormat() const { return _surfaceFormat; }
-    const u322 Extent() const { return _extent; }
-    const u32 NumImages() const { return checked_cast<u32>(_images.size()); }
+    const u322& Extent() const { return _extent; }
+    u32 NumImages() const { return checked_cast<u32>(_images.size()); }
 
 public: // vulkan specific:
     FVulkanSwapChain(

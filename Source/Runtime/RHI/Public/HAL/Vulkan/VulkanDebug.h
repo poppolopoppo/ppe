@@ -60,7 +60,7 @@ public:
 	void SetDebugName(VkEvent _event, string_t name) const;
 
 private:
-	using callback_t = const void*;
+	using callback_t = void (*)(void);
 
 	VkDevice const _vkDevice;
 

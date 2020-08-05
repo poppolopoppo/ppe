@@ -26,7 +26,7 @@ struct FGenericMemoryBlock {
     EGenericMemoryTypeFlags Flags;
 };
 //----------------------------------------------------------------------------
-class FGenericMemoryAllocator : Meta::FNonCopyable {
+class PPE_RHI_API FGenericMemoryAllocator : Meta::FNonCopyable {
 public:
     FGenericMemoryBlock Allocate(
         u32 size,

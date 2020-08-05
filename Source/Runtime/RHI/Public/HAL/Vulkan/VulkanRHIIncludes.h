@@ -3,7 +3,6 @@
 #include "HAL/Vulkan/VulkanRHI_fwd.h"
 
 #include "vulkan-external.h"
-#include <vulkan/vulkan.h>
 
 namespace PPE {
 namespace RHI {

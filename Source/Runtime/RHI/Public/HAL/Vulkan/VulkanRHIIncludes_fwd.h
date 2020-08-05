@@ -4,12 +4,21 @@
 
 #ifdef RHI_VULKAN
 
+#   ifdef __clang__
+#       pragma clang diagnostic push
+#       pragma clang diagnostic ignored "-Wmicrosoft-enum-forward-reference"
+#   endif
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Vulkan
 //----------------------------------------------------------------------------
-#define PPE_VK_ENUM(_NAME) enum _NAME : int
+#   ifdef __clang__
+#    define PPE_VK_ENUM(_NAME) enum _NAME
+#    else
+#    define PPE_VK_ENUM(_NAME) enum _NAME : int
+#    endif
 #define PPE_VK_STRUCT(_NAME) struct _NAME
 #define PPE_VK_HANDLE(_NAME) \
     struct CONCAT(_NAME, _T); \
@@ -89,5 +98,9 @@ PPE_VK_HANDLE_NON_DISPATCHABLE(VkSurfaceKHR)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+
+#   ifdef __clang__
+#       pragma clang diagnostic pop
+#   endif
 
 #endif //!RHI_VULKAN

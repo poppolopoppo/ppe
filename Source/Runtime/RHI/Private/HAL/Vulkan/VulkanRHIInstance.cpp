@@ -233,7 +233,7 @@ private:
 
     using FVulkanStaticName = char[VK_MAX_EXTENSION_NAME_SIZE];
     template <typename T, typename _Enumerate>
-    static NODISCARD bool CheckNames_(
+    NODISCARD static bool CheckNames_(
         const char* name,
         const TMemoryView<const char* const>& neededNames,
         FVulkanStaticName T::* member,
@@ -279,10 +279,7 @@ private:
         LOG(Vulkan, Info, L"{0}: selected {2} results = [{1}]",
             MakeCStringView(name),
             Fmt::Join(
-                MakeOutputIterable(neededNames.begin(), neededNames.end(),
-                    [member](const char* cstr) NOEXCEPT {
-                        return MakeCStringView(cstr);
-                    }),
+                MakeOutputIterable(neededNames.begin(), neededNames.end(), &MakeCStringView<char>),
                 MakeCStringView(L", ")),
             neededNames.size() );
 

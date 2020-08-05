@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "RHI_fwd.h"
+#include "HAL/RHI_fwd.h"
 
 #include "Meta/StronglyTyped.h"
 

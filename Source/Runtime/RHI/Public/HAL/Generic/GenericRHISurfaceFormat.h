@@ -11,7 +11,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FGenericPixelInfo {
+struct PPE_RHI_API FGenericPixelInfo {
 
     enum EChannel {
         R         = 0,
@@ -45,7 +45,7 @@ struct FGenericPixelInfo {
     u32 NumericFormat          : 4;
     //                          22
 
-    CONSTEXPR FGenericPixelInfo() = default;
+    FGenericPixelInfo() = default;
     CONSTEXPR FGenericPixelInfo(
         u32 uid,
         u32 blockWindowLog2,
@@ -53,9 +53,9 @@ struct FGenericPixelInfo {
         EChannel channels,
         ENumericFormat numericFormat ) NOEXCEPT
     :   UID(uid)
-    ,   Channels(channels)
     ,   BlockWindowLog2(blockWindowLog2)
     ,   BlockNumBitsLog2(blockNumBitsLog2)
+    ,   Channels(channels)
     ,   NumericFormat(numericFormat)
     {}
 
@@ -104,7 +104,7 @@ struct FGenericPixelInfo {
 
 };
 //----------------------------------------------------------------------------
-struct FGenericSurfaceFormat {
+struct PPE_RHI_API FGenericSurfaceFormat {
     using EPixelFormat = EGenericPixelFormat;
     using EColorSpace = EGenericColorSpace;
     using FPixelInfo = FGenericPixelInfo;
