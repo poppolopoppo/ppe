@@ -405,12 +405,13 @@ struct TScalarVectorSwizzle : TScalarVectorAssignable<TScalarVectorSwizzle<T, _S
     using promote_type = decltype(PromoteScalarVectorExpr<T>(std::declval<parent_type&>()));
     using promote_const_type = decltype(PromoteScalarVectorExpr<T>(std::declval<const parent_type&>()));
 
-#if !defined(_MSC_VER) || defined(CPP_CLANG)
+#if !defined(_MSC_VER) || defined(CPP_CLANG) || defined(CPP_GCC) || (_MSC_VER >= 1927)
     CONSTEXPR operator promote_type () NOEXCEPT { return PromoteScalarVectorExpr<T>(*this); }
     CONSTEXPR operator promote_const_type () const NOEXCEPT { return PromoteScalarVectorExpr<T>(*this); }
 
 #else // workaround a bug with MSVC compiler, #TODO remove when fixed since this is not valid C++
     // https://developercommunity.visualstudio.com/content/problem/149701/c2833-with-operator-decltype.html#reply-152822
+    // => Seems to be fixed with VS19 16.7.0 Preview 3.1 at least, waiting for the fix to be released in the main branch
     constexpr operator auto () noexcept -> promote_type { return PromoteScalarVectorExpr<T>(*this); }
     constexpr operator auto () const noexcept -> promote_const_type { return PromoteScalarVectorExpr<T>(*this); }
 
