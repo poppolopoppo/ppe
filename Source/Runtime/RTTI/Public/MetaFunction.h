@@ -6,10 +6,13 @@
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
 
-#include "Container/Tuple.h"
 #include "Container/Vector.h"
 #include "IO/TextWriter_fwd.h"
 #include "Meta/PointerWFlags.h"
+
+#if USE_PPE_RTTI_CHECKS
+#   define WITH_PPE_RTTI_FUNCTION_CHECKS
+#endif
 
 namespace PPE {
 namespace RTTI {
@@ -27,8 +30,8 @@ ENUM_FLAGS(EParameterFlags);
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaParameter {
 public:
-    FMetaParameter();
-    FMetaParameter(const FName& name, const PTypeTraits& traits, EParameterFlags flags);
+    FMetaParameter() NOEXCEPT;
+    FMetaParameter(const FName& name, const PTypeTraits& traits, EParameterFlags flags) NOEXCEPT;
 
     const FName& Name() const { return _name; }
     PTypeTraits Traits() const { return union_cast_t{ _traitsAndFlags.Get() }.Traits; }
@@ -69,13 +72,13 @@ public:
             const FAtom& result,
             const TMemoryView<const FAtom>& arguments );
 
-    FMetaFunction();
+    FMetaFunction() NOEXCEPT;
     FMetaFunction(
         const FName& name,
         EFunctionFlags flags,
         const PTypeTraits& result,
         std::initializer_list<FMetaParameter> parameters,
-        invoke_func invoke );
+        invoke_func invoke ) NOEXCEPT;
     ~FMetaFunction();
 
     const FName& Name() const { return _name; }
@@ -96,7 +99,25 @@ public:
         const FAtom& result,
         const TMemoryView<const FAtom>& arguments ) const;
 
+    bool InvokeIFP(
+        const FMetaObject& obj,
+        const FAtom& result,
+        const TMemoryView<const FAtom>& arguments ) const;
+
 private:
+    bool PromoteInvoke_(
+        const FMetaObject& obj,
+        const FAtom& result,
+        const TMemoryView<const FAtom>& arguments,
+        size_t strideInBytes ) const;
+
+#ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
+    void CheckFunctionCall_(
+        const FMetaObject& obj,
+        const FAtom& result,
+        const TMemoryView<const FAtom>& arguments ) const;
+#endif
+
     FName _name;
     invoke_func _invoke;
     EFunctionFlags _flags;
@@ -104,10 +125,11 @@ private:
     VECTORINSITU(MetaFunction, FMetaParameter, 4) _parameters;
 };
 //----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(RTTI::FMetaParameter);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
-PPE_ASSUME_TYPE_AS_POD(RTTI::FMetaParameter);
 } //!namespace PPE
 
 namespace PPE {

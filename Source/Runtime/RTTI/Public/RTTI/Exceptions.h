@@ -30,6 +30,21 @@ private:
     const FMetaClass* _class;
 };
 //----------------------------------------------------------------------------
+class PPE_RTTI_API FFunctionException : public FRTTIException {
+    public:
+    FFunctionException(const char* what, const FMetaFunction* func = nullptr)
+        : FRTTIException(what), _function(func) {}
+
+    const FMetaFunction* Function() const { return _function; }
+
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
+
+    private:
+    const FMetaFunction* _function;
+};
+//----------------------------------------------------------------------------
 class PPE_RTTI_API FObjectException : public FRTTIException {
 public:
     FObjectException(const char* what, const FMetaObject* obj = nullptr)

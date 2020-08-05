@@ -3,7 +3,6 @@
 #include "RTTI_fwd.h"
 
 #include "MetaClass.h"
-#include "RTTI/Exceptions.h"
 #include "RTTI/Typedefs.h"
 
 #include "IO/TextWriter_fwd.h"
@@ -100,6 +99,20 @@ public:
 
     void RTTI_MarkAsTopObject(); // should only be called by FMetaTransaction
     void RTTI_UnmarkAsTopObject(); // should only be called by FMetaTransaction
+
+    // Note: FStringView variants won't create a FName (useful for user input)
+
+    bool RTTI_Function(const FName& funcName, const FMetaFunction** pFunc) const NOEXCEPT;
+    bool RTTI_Function(const FStringView& funcName, const FMetaFunction** pFunc) const NOEXCEPT;
+
+    bool RTTI_Property(const FName& propName, FAtom* pValue) const NOEXCEPT;
+    bool RTTI_Property(const FStringView& propName, FAtom* pValue) const NOEXCEPT;
+
+    bool RTTI_PropertyCopyFrom(const FName& propName, const FAtom& src);
+    bool RTTI_PropertyCopyFrom(const FStringView& propName, const FAtom& src);
+
+    bool RTTI_PropertyMoveFrom(const FName& propName, FAtom& src) NOEXCEPT;
+    bool RTTI_PropertyMoveFrom(const FStringView& propName, FAtom& src) NOEXCEPT;
 
     virtual void RTTI_Load(ILoadContext& context);
     virtual void RTTI_Unload(IUnloadContext& context);

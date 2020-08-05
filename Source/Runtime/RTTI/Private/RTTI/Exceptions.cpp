@@ -29,6 +29,16 @@ FWTextWriter& FClassException::Description(FWTextWriter& oss) const {
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FFunctionException::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": in function ("
+        << _function->Name()
+        << L") !";
+}
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
 FWTextWriter& FPropertyException::Description(FWTextWriter& oss) const {
     return oss
         << MakeCStringView(What())

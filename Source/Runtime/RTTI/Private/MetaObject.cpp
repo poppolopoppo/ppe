@@ -3,9 +3,12 @@
 #include "MetaObject.h"
 
 #include "MetaClass.h"
+#include "MetaProperty.h"
 #include "MetaObjectHelpers.h"
 #include "MetaTransaction.h"
 
+#include "RTTI/Atom.h"
+#include "RTTI/Exceptions.h"
 #include "RTTI/Module.h"
 
 #include "IO/FormatHelpers.h"
@@ -107,6 +110,130 @@ void FMetaObject::RTTI_Unexport() {
     _name = FName();
 
     Assert_NoAssume(not RTTI_IsExported());
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Function(const FName& funcName, const FMetaFunction** pFunc) const NOEXCEPT {
+    Assert_NoAssume(not funcName.empty());
+    Assert(pFunc);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaFunction* const func = klass->FunctionIFP(funcName)) {
+            *pFunc = func;
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Function(const FStringView& funcName, const FMetaFunction** pFunc) const NOEXCEPT {
+    Assert_NoAssume(not funcName.empty());
+    Assert(pFunc);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaFunction* const func = klass->FunctionIFP(funcName)) {
+            *pFunc = func;
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Property(const FName& propName, FAtom* pValue) const NOEXCEPT {
+    Assert_NoAssume(not propName.empty());
+    Assert(pValue);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaProperty* const prop = klass->PropertyIFP(propName)) {
+            *pValue = prop->Get(*this);
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Property(const FStringView& propName, FAtom* pValue) const NOEXCEPT {
+    Assert_NoAssume(not propName.empty());
+    Assert(pValue);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaProperty* const prop = klass->PropertyIFP(propName)) {
+            *pValue = prop->Get(*this);
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_PropertyCopyFrom(const FName& propName, const FAtom& src) {
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(not propName.empty());
+    Assert(src);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaProperty* const prop = klass->PropertyIFP(propName)) {
+            prop->CopyFrom(*this, src);
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_PropertyCopyFrom(const FStringView& propName, const FAtom& src) {
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(not propName.empty());
+    Assert(src);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaProperty* const prop = klass->PropertyIFP(propName)) {
+            prop->CopyFrom(*this, src);
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_PropertyMoveFrom(const FName& propName, FAtom& src) NOEXCEPT {
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(not propName.empty());
+    Assert(src);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaProperty* const prop = klass->PropertyIFP(propName)) {
+            prop->MoveFrom(*this, src);
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_PropertyMoveFrom(const FStringView& propName, FAtom& src) NOEXCEPT {
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(not propName.empty());
+    Assert(src);
+
+    const FMetaClass* const klass = RTTI_Class();
+    if (Likely(klass)) {
+        if (const FMetaProperty* const prop = klass->PropertyIFP(propName)) {
+            prop->MoveFrom(*this, src);
+            return true;
+        }
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Load(ILoadContext& context) {
