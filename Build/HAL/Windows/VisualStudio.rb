@@ -7,6 +7,8 @@ require_once '../../Utils/Prerequisite.rb'
 
 module Build
 
+    persistent_switch(:ASAN, 'Use VisualStudio Address Sanitizer (ASAN)', init: false)
+    persistent_switch(:StaticCRT, 'Use VisualStudio static CRT (/MT vs /MD)', init: false)
     persistent_switch(:PerfSDK, 'Use VisualStudio performance tools', init: true)
 
     # https://developercommunity.visualstudio.com/content/problem/552999/fatal-error-c1090-pdb-api-call-failed-error-code-3.html
@@ -23,7 +25,8 @@ module Build
     class VisualStudioCompiler < Compiler
         attr_reader :version, :minor_version
         attr_reader :host, :target
-        attr_reader :visualStudioPath, :platformToolset
+        attr_reader :platformToolset
+        attr_reader :visualStudioPath, :visualStudioTools
         def initialize(
             prefix,
             version, minor_version,
@@ -37,13 +40,14 @@ module Build
             @target = target
             @visualStudioPath = visualStudioPath
             @platformToolset = platformToolset
+            @visualStudioTools = File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'bin', "Host#{target}", @target)
 
             self.inherits!(Build.VisualStudio_Base)
             self.inherits!(Build.send "VisualStudio_Base_#{target}")
 
             self.export!('VisualStudioPath', @visualStudioPath)
             self.export!('VisualStudioVersion', @minor_version)
-            self.export!('VisualStudioTools', File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'bin', @host, @target))
+            self.export!('VisualStudioTools', @visualStudioTools)
 
             Log.fatal 'invalid VisualStudio path "%s"', @visualStudioPath unless Dir.exist?(@visualStudioPath)
             Log.log 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
@@ -168,6 +172,33 @@ module Build
                 facet << Build.Compiler_PCHDisabled
             end
 
+            if Build.ASAN
+                # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
+                asan_type = ( facet.tag?(:debug) ? 'asan_dbg' : 'asan')
+                case env.platform.arch
+                when :x86
+                    asan_host = 'i386'
+                when :x64
+                    asan_host = 'x86_64'
+                else
+                    Assert.not_implemented
+                end
+                if Build.StaticCRT
+                    case env.config.link
+                    when :static
+                        facet.libraries << "clang_rt.#{asan_type}-#{asan_host}.lib"
+                    when :dynamic
+                        facet.libraries << "clang_rt.#{asan_type}_dll_thunk-#{asan_host}.lib"
+                    end
+                elsif env.target_need_link?(target)
+                    facet.libraries <<
+                        "clang_rt.#{asan_type}_dynamic-#{asan_host}.lib" <<
+                        "clang_rt.#{asan_type}_dynamic_runtime_thunk-#{asan_host}.lib"
+                    dll = File.join(@visualStudioTools, "clang_rt.#{asan_type}_dynamic-#{asan_host}.dll")
+                    #env.target_deploy(target, dll)
+                end
+            end
+
             super(facet, env, target)
         end
 
@@ -185,21 +216,17 @@ module Build
                 end
             end
 
-            if facet.tag?(:debug)
-                facet.compilationFlag!('/MDd')
+            if Build.StaticCRT
+                facet.compilationFlag!(facet.tag?(:debug) ? '/MTd' : '/MT')
             else
-                facet.compilationFlag!('/MD')
+                facet.compilationFlag!(facet.tag?(:debug) ? '/MDd' : '/MD')
             end
 
             case env.config.link
             when :static
-                # nothing to do
+                # nothing todo
             when :dynamic
-                if facet.tag?(:debug)
-                    facet.compilationFlag!('/LDd')
-                else
-                    facet.compilationFlag!('/LD')
-                end
+                facet.compilationFlag!(facet.tag?(:debug) ? '/LDd' : '/LD')
             else
                 Assert.not_implemented
             end
@@ -212,6 +239,7 @@ module Build
             @target.freeze
             @visualStudioPath.freeze
             @platformToolset.freeze
+            @visualStudioTools.freeze
             super()
         end
 
@@ -455,6 +483,11 @@ module Build
             compilationFlag!('/permissive-')
         end
 
+        if Build.ASAN
+            # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
+            compilationFlag!('/fsanitize=address')
+        end
+
         # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
         # TODO: disabled since there is no support for __VA_OPT__(x), and it's necessary to handle some funky macros
         # compilationFlag!('/experimental:preprocessor')
@@ -512,7 +545,7 @@ module Build
             else
                 nil
             end
-        end
+        end.validate_FileExist!
 
         make_prerequisite(:"VsWhere_#{version}_Hostx64") do
             fileset = Build.os_x64? ?
@@ -526,7 +559,7 @@ module Build
             else
                 nil
             end
-        end
+        end.validate_FileExist!
     end
 
     import_visualstudio_fileset('2019', '-version', '[16.0,17.0)')

@@ -4,6 +4,7 @@ require_once '../Common.rb'
 require_once '../Core/Target.rb'
 require_once '../Shared/Compiler.rb'
 
+require 'fileutils'
 require 'pathname'
 require 'set'
 
@@ -128,6 +129,16 @@ module Build
                 Log.fatal 'unsupported config link type <%s>', @config.link
             end
         end
+        def target_need_link?(target)
+            case target_artifact_type(target)
+            when :executable, :shared
+                return true
+            when :headers, :library
+                return false
+            else
+                Assert.unexpected(target_artifact_type(target))
+            end
+        end
         def target_dynamic_link?(target)
             return (:shared == target_artifact_type(target))
         end
@@ -139,6 +150,17 @@ module Build
                 File.dirname(artifact),
                 File.basename(artifact, File.extname(artifact)) ) <<
                 self.ext_for(:debug)
+        end
+        def target_deploy(target, filename)
+            dst = File.join(
+                File.dirname(target_artifact_path(target)),
+                File.basename(filename) )
+            unless FileUtils.identical?(filename, dst)
+                FileUtils.copy_file(filename, dst, :verbose => Log.verbose?)
+                return true
+            else
+                return false
+            end
         end
         def facet()
             if @memoized.defines.empty?
