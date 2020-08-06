@@ -70,12 +70,13 @@ public:
     bool Running() const { return (_countDown >= 0); }
     bool Finished() const { return (CP_Finished == _countDown); }
 
+    void Start(size_t n) NOEXCEPT;
+    void OnJobComplete();
+
 private: // only accessible through ITaskContext
     friend class FTaskManagerImpl;
 
     void AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPriority priority) NOEXCEPT;
-    void Start(size_t n) NOEXCEPT;
-    void OnJobComplete();
 
 private:
     friend class FAggregationPort;

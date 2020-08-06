@@ -8,7 +8,8 @@ $Build.ppe_executable!(:WindowTest, :Tools) do
         RTTI(),
         Serialize(),
         Network(),
-        Application() ]})
+        Application(),
+        Remoting() ]})
     runtime_deps!(*namespace[:ContentPipeline]{[
         BuildGraph() ]})
 end

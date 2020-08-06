@@ -81,6 +81,10 @@ NO_INLINE void Test_Function_() {
     taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(a);
     taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(a.get());
     taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(MakeSafePtr(a));
+
+    FTaskFunc taskComposite = [taskRef](ITaskContext& ctx) {
+        taskRef(ctx);
+    };
 }
 //--------------------1--------------------------------------------------------
 NO_INLINE void Test_Aggregation_() {

@@ -8,4 +8,5 @@ $Build.namespace(:Runtime) do
     include!('Serialize/Serialize.rb')
     include!('Network/Network.rb')
     include!('Application/Application.rb')
+    include!('Remoting/Remoting.rb')
 end

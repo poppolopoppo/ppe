@@ -9,10 +9,6 @@
 
 #include <mutex>
 
-namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // Needs to access the singleton through an exported function for DLLs builds
 //----------------------------------------------------------------------------
 #define BASICTOKEN_CLASS_DECL(_API, _NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
@@ -41,7 +37,7 @@ namespace PPE {
         using parent_type::parent_type; \
         using parent_type::operator =; \
     }
-//----------------------------------------------------------------------------
+
 #define BASICTOKEN_CLASS_DEF(_NAME) \
     using CONCAT(_NAME, TokenFactory) = ::PPE::Meta::TStaticIndirectSingleton<::PPE::FTokenFactory, _NAME>; \
     void CONCAT(_NAME, ActualTokenTraits)::CreateFactory() { \
@@ -53,6 +49,8 @@ namespace PPE {
     void CONCAT(_NAME, ActualTokenTraits)::DestroyFactory() { \
         CONCAT(_NAME, TokenFactory)::Destroy(); \
     }
+
+namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -119,6 +117,8 @@ private:
     FEntry* _bucketHeads[NumBuckets] = { 0 };
     FEntry* _bucketTails[NumBuckets] = { 0 };
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
     typename        _Tag,
@@ -223,8 +223,6 @@ PPE_ASSUME_TEMPLATE_AS_POD(
     typename _Char,
     ECase    _Sensitive,
     typename _TokenTraits)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
 FTextWriter& operator <<(FTextWriter& oss, const TToken<_Tag, _Char, _Sensitive, _TokenTraits>& token) {
