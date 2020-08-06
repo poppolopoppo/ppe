@@ -153,6 +153,12 @@ struct FTypeHelpers {
         return FTypeInfos::CombineTypes(FTypeId(ETypeFlags::Dico), BasicInfos<T>(ETypeFlags::Dico), MakeTypeInfos<_Key>(), MakeTypeInfos<_Value>() );
     };
 
+    template <typename _From, typename _To>
+    static CONSTEXPR const PTypeInfos Alias = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+        //STATIC_ASSERT(sizeof(_From) == sizeof(_To));
+        return MakeTypeInfos<_To>();
+    };
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

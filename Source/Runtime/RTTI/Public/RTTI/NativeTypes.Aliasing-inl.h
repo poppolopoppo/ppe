@@ -17,21 +17,11 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace details {
-template <typename _From, typename _To>
-struct TAliasedTypeInfos {
-    CONSTEXPR FTypeInfos operator ()() const {
-        STATIC_ASSERT(sizeof(_From) == sizeof(_To));
-        return MakeTypeInfos<_To>();
-    }
-};
-} //!details
-//----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_TRAITS(_FROM, ...) \
-    CONSTEXPR auto TypeInfos(TType< _FROM >) { \
-        return details::TAliasedTypeInfos< _FROM, __VA_ARGS__ >{}; \
+    CONSTEXPR PPE::RTTI::PTypeInfos TypeInfos(TType< _FROM >) { \
+        return PPE::RTTI::FTypeHelpers::Alias< _FROM, __VA_ARGS__ >; \
     } \
-    inline PTypeTraits Traits(TType< _FROM >) NOEXCEPT { \
+    inline PPE::RTTI::PTypeTraits Traits(TType< _FROM >) NOEXCEPT { \
         return Traits(Type< __VA_ARGS__ >); \
     }
 //----------------------------------------------------------------------------
@@ -83,7 +73,7 @@ DEF_RTTI_ALIASING_TRAITS(u128, TStaticArray<u64, 2>)
 // Bindings for some basic types which don't justify being a native type
 //----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_STRUCT(T) \
-    CONSTEXPR auto TypeInfos(TType< T > t) { \
+    CONSTEXPR PTypeInfos TypeInfos(TType< T > t) { \
         return StructInfos(t); \
     } \
     CONSTEXPR PTypeTraits Traits(TType< T > t) NOEXCEPT { \
