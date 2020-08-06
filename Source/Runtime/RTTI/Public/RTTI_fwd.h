@@ -33,6 +33,10 @@ struct FPathName;
 class FAny;
 class FAtom;
 //----------------------------------------------------------------------------
+class FBinaryData;
+class FOpaqueData;
+class FOpaqueArray;
+//----------------------------------------------------------------------------
 class ITypeTraits;
 struct PTypeTraits;
 //----------------------------------------------------------------------------

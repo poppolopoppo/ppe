@@ -74,6 +74,7 @@ public:
     bool IsUnloading() const { return (_state == ETransactionState::Unloading); }
 
     void Add(FMetaObject* object);
+    void Add(PMetaObject&& robject);
     void Remove(FMetaObject* object);
 
     void Load(ILoadContext* load = nullptr);

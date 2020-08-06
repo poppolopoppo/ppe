@@ -3,8 +3,10 @@
 
 #include "RTTI_fwd.h"
 
+#include "Container/AssociativeVector.h"
 #include "Container/RawStorage.h"
 #include "Container/Token.h"
+#include "Container/Vector.h"
 #include "IO/TextWriter_fwd.h"
 #include "Maths/PrimeNumbers.h" // FClassId
 
@@ -30,6 +32,25 @@ struct FConstructorTag {};
 CONSTEXPR FConstructorTag ConstructorTag;
 //----------------------------------------------------------------------------
 INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(BinaryData, u8, ALLOCATION_BOUNDARY));
+//----------------------------------------------------------------------------
+// Instantiate official "opaque" data containers, TRawInlineAllocator<> is used InSitu without defining FAny
+namespace details {
+constexpr int _sizeof_FAny = (4 * sizeof(intptr_t));
+using FOpaqueArrayContainer_ = TVector<
+    FAny,
+    TRawInlineAllocator<MEMORYDOMAIN_TAG(OpaqueData), _sizeof_FAny * 3>
+>;
+using FOpaqueDataContainer_ = TAssociativeVector<
+    FName, FAny,
+    Meta::TEqualTo<FName>,
+    TVector<
+        TPair<FName, FAny>,
+        TRawInlineAllocator<MEMORYDOMAIN_TAG(OpaqueData), (sizeof(FName) + _sizeof_FAny) * 3>
+    >
+ >;
+} //!details
+INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FOpaqueArray, details::FOpaqueArrayContainer_);
+INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FOpaqueData, details::FOpaqueDataContainer_);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

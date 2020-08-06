@@ -25,7 +25,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaProperty::FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, ptrdiff_t memberOffset)
+FMetaProperty::FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, ptrdiff_t memberOffset) NOEXCEPT
     : _name(name)
     , _traits(traits)
     , _flags(flags)
@@ -37,7 +37,7 @@ FMetaProperty::FMetaProperty(const FName& name, EPropertyFlags flags, const PTyp
 //----------------------------------------------------------------------------
 FMetaProperty::~FMetaProperty() = default;
 //----------------------------------------------------------------------------
-FAtom FMetaProperty::Get(const FMetaObject& obj) const {
+FAtom FMetaProperty::Get(const FMetaObject& obj) const NOEXCEPT {
     CheckPropertyIFN(obj, false);
     return MakeAtom_(obj);
 }
@@ -47,7 +47,7 @@ void FMetaProperty::CopyTo(const FMetaObject& obj, const FAtom& dst) const {
     MakeAtom_(obj).Copy(dst);
 }
 //----------------------------------------------------------------------------
-void FMetaProperty::MoveTo(FMetaObject& obj, const FAtom& dst) const {
+void FMetaProperty::MoveTo(FMetaObject& obj, const FAtom& dst) const NOEXCEPT {
     CheckPropertyIFN(obj, true);
     MakeAtom_(obj).Move(dst);
 }
@@ -57,12 +57,12 @@ void FMetaProperty::CopyFrom(FMetaObject& obj, const FAtom& src) const {
     src.Copy(MakeAtom_(obj));
 }
 //----------------------------------------------------------------------------
-void FMetaProperty::MoveFrom(FMetaObject& obj, FAtom& src) const {
+void FMetaProperty::MoveFrom(FMetaObject& obj, FAtom& src) const NOEXCEPT {
     CheckPropertyIFN(obj, true);
     src.Move(MakeAtom_(obj));
 }
 //----------------------------------------------------------------------------
-FAtom FMetaProperty::ResetToDefaultValue(FMetaObject& obj) const {
+FAtom FMetaProperty::ResetToDefaultValue(FMetaObject& obj) const NOEXCEPT {
     CheckPropertyIFN(obj, true);
     FAtom value = MakeAtom_(obj);
     value.ResetToDefaultValue();
@@ -143,6 +143,4 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EPropertyFlags flags) {
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#ifdef WITH_PPE_RTTI_PROPERTY_CHECKS
-#   undef CheckPropertyIFN
-#endif
+#undef CheckPropertyIFN

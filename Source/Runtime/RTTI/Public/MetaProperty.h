@@ -33,7 +33,7 @@ ENUM_FLAGS(EPropertyFlags);
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaProperty {
 public:
-    FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, ptrdiff_t memberOffset);
+    FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, ptrdiff_t memberOffset) NOEXCEPT;
     ~FMetaProperty();
 
     const FName& Name() const { return _name; }
@@ -49,12 +49,12 @@ public:
     bool IsDynamic() const      { return (_flags ^ EPropertyFlags::Dynamic      ); }
     bool IsTransient() const    { return (_flags ^ EPropertyFlags::Transient    ); }
 
-    FAtom Get(const FMetaObject& obj) const;
+    FAtom Get(const FMetaObject& obj) const NOEXCEPT;
     void CopyTo(const FMetaObject& obj, const FAtom& dst) const;
-    void MoveTo(FMetaObject& obj, const FAtom& dst) const;
+    void MoveTo(FMetaObject& obj, const FAtom& dst) const NOEXCEPT;
     void CopyFrom(FMetaObject& obj, const FAtom& src) const;
-    void MoveFrom(FMetaObject& obj, FAtom& src) const;
-    FAtom ResetToDefaultValue(FMetaObject& obj) const;
+    void MoveFrom(FMetaObject& obj, FAtom& src) const NOEXCEPT;
+    FAtom ResetToDefaultValue(FMetaObject& obj) const NOEXCEPT;
 
 private:
 #ifdef WITH_PPE_RTTI_PROPERTY_CHECKS

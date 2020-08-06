@@ -2,10 +2,11 @@
 
 #include "RTTI/OpaqueData.h"
 
-#include "RTTI/Any.h"
 #include "RTTI/Atom.h"
+#include "RTTI/AtomVisitor.h"
 #include "RTTI/NativeTypes.h"
-#include "RTTI/TypeTraits.h"
+#include "RTTI/Typedefs.h"
+#include "MetaClass.h"
 #include "MetaObject.h"
 
 namespace PPE {

@@ -262,13 +262,17 @@ FMetaTransaction::~FMetaTransaction() {
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Add(FMetaObject* object) {
-    Assert(object);
-    Assert_NoAssume(object->RTTI_IsUnloaded());
+    return Add(PMetaObject{ object });
+}
+//----------------------------------------------------------------------------
+void FMetaTransaction::Add(PMetaObject&& robject) {
+    Assert(robject);
+    Assert_NoAssume(robject->RTTI_IsUnloaded());
     Assert_NoAssume(IsUnloaded());
 
-    Add_AssertUnique(_topObjects, PMetaObject(object));
+    robject->RTTI_MarkAsTopObject();
 
-    object->RTTI_MarkAsTopObject();
+    Add_AssertUnique(_topObjects, std::move(robject));
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Remove(FMetaObject* object) {

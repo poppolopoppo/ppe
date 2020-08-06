@@ -2,16 +2,13 @@
 
 #include "RTTI_fwd.h"
 
+#include "RTTI/Any.h"
 #include "RTTI/NativeTypes.Definitions-inl.h"
-
-#include "Container/AssociativeVector.h"
 
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-using FOpaqueData = ASSOCIATIVE_VECTOR(OpaqueData, FName, FAny);
 //----------------------------------------------------------------------------
 PPE_RTTI_API FAny& GetOpaqueData(FOpaqueData* opaque, const FName& name) NOEXCEPT;
 PPE_RTTI_API const FAny* GetOpaqueDataIFP(const FOpaqueData* opaque, const FName& name) NOEXCEPT;
@@ -32,6 +29,17 @@ PPE_RTTI_API void MergeOpaqueData(FOpaqueData* dst, const FOpaqueData& src, bool
     PPE_RTTI_API void SetOpaqueData(FOpaqueData* opaque, const FName& name, _Type&& value);
 FOREACH_RTTI_NATIVETYPES(PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL)
 #undef PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL
+//----------------------------------------------------------------------------
+#define DEF_RTTI_ALIASING_OPAQUE_TRAITS(_FROM, ...) \
+    CONSTEXPR PTypeInfos TypeInfos(TType< _FROM >) { \
+        return FTypeHelpers::Alias< _FROM, __VA_ARGS__ >; \
+    } \
+    inline PTypeTraits Traits(TType< _FROM >) NOEXCEPT { \
+        return Traits(Type< __VA_ARGS__ >); \
+    }
+DEF_RTTI_ALIASING_OPAQUE_TRAITS(FOpaqueArray, details::FOpaqueArrayContainer_)
+DEF_RTTI_ALIASING_OPAQUE_TRAITS(FOpaqueData, details::FOpaqueDataContainer_)
+#undef DEF_RTTI_ALIASING_OPAQUE_TRAITS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -38,6 +38,7 @@
 
 namespace PPE {
 namespace RTTI {
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -177,6 +178,91 @@ static bool PromoteValue_(const FName& name, const FAtom& dst) {
 }
 //----------------------------------------------------------------------------
 } //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool PromoteEnum(const IScalarTraits& traits, FMetaEnumOrd src, const FAtom& dst) {
+    if (ENativeType(dst.TypeId()) == ENativeType::Name) {
+        const FMetaEnum* metaEnum = traits.EnumClass();
+        Assert(metaEnum);
+
+        if (const FMetaEnumValue* v = metaEnum->ValueToNameIFP(src)) {
+            dst.TypedData<RTTI::FName>() = v->Name;
+            return true;
+        }
+
+        return false;
+    }
+    else
+    {
+        return PromoteValue_(src, dst);
+    }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool DeepEqualsObject(const PMetaObject& lhs, const PMetaObject& rhs) {
+    if (lhs == rhs)
+        return true;
+    else if (!lhs || !rhs)
+        return false;
+    else
+        return RTTI::DeepEquals(*lhs, *rhs);
+}
+//----------------------------------------------------------------------------
+void DeepCopyObject(const IScalarTraits& , const PMetaObject& src, PMetaObject& dst) {
+    if (src == dst) {
+        return;
+    }
+    else if (nullptr == src) {
+        dst = nullptr;
+        return;
+    }
+    else if (nullptr == dst) {
+        Verify(src->RTTI_Class()->CreateInstance(dst, false/* don't reset since we deep copy */));
+    }
+
+    RTTI::DeepCopy(*src, *dst);
+}
+//----------------------------------------------------------------------------
+bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const FAtom& dst) {
+    Assert(dst);
+    Assert(*dst.Traits() != self);
+
+    if (ENativeType(dst.TypeId()) == ENativeType::MetaObject) {
+        if (IsAssignableObject_(self, *dst.Traits(), src)) {
+            (*static_cast<PMetaObject*>(dst.Data())) = src;
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst) NOEXCEPT {
+    Assert(dst);
+    Assert(*dst.Traits() != self);
+
+    if (ENativeType(dst.TypeId()) == ENativeType::MetaObject) {
+        if (IsAssignableObject_(self, *dst.Traits(), src)) {
+            (*static_cast<PMetaObject*>(dst.Data())) = std::move(src);
+            return true;
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits& dst) NOEXCEPT {
+    if (self == *dst) {
+        return &obj;
+    }
+    else if (dst->TypeId() == FTypeId(ENativeType::MetaObject)) {
+        if (IsAssignableObject_(self, *dst, obj))
+            return &obj;
+    }
+    return nullptr;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -346,104 +432,6 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
 FOREACH_RTTI_NATIVETYPES(DEF_RTTI_NATIVETYPE_TRAITS)
 
 #undef DEF_RTTI_NATIVETYPE_TRAITS
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT {
-    switch (nativeType) {
-#define DEF_RTTI_MAKETRAITS(_Name, T, _TypeId) \
-    case ENativeType::_Name: return MakeTraits<T>();
-    FOREACH_RTTI_NATIVETYPES(DEF_RTTI_MAKETRAITS)
-#undef DEF_RTTI_MAKETRAITS
-    default:
-        AssertNotImplemented();
-    }
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool PromoteEnum(const IScalarTraits& traits, FMetaEnumOrd src, const FAtom& dst) {
-    if (ENativeType(dst.TypeId()) == ENativeType::Name) {
-        const FMetaEnum* metaEnum = traits.EnumClass();
-        Assert(metaEnum);
-
-        if (const FMetaEnumValue* v = metaEnum->ValueToNameIFP(src)) {
-            dst.TypedData<RTTI::FName>() = v->Name;
-            return true;
-        }
-
-        return false;
-    }
-    else
-    {
-        return PromoteValue_(src, dst);
-    }
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool DeepEqualsObject(const PMetaObject& lhs, const PMetaObject& rhs) {
-    if (lhs == rhs)
-        return true;
-    else if (!lhs || !rhs)
-        return false;
-    else
-        return RTTI::DeepEquals(*lhs, *rhs);
-}
-//----------------------------------------------------------------------------
-void DeepCopyObject(const IScalarTraits& , const PMetaObject& src, PMetaObject& dst) {
-    if (src == dst) {
-        return;
-    }
-    else if (nullptr == src) {
-        dst = nullptr;
-        return;
-    }
-    else if (nullptr == dst) {
-        Verify(src->RTTI_Class()->CreateInstance(dst, false/* don't reset since we deep copy */));
-    }
-
-    RTTI::DeepCopy(*src, *dst);
-}
-//----------------------------------------------------------------------------
-bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const FAtom& dst) {
-    Assert(dst);
-    Assert(*dst.Traits() != self);
-
-    if (ENativeType(dst.TypeId()) == ENativeType::MetaObject) {
-        if (IsAssignableObject_(self, *dst.Traits(), src)) {
-            (*static_cast<PMetaObject*>(dst.Data())) = src;
-            return true;
-        }
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst) NOEXCEPT {
-    Assert(dst);
-    Assert(*dst.Traits() != self);
-
-    if (ENativeType(dst.TypeId()) == ENativeType::MetaObject) {
-        if (IsAssignableObject_(self, *dst.Traits(), src)) {
-            (*static_cast<PMetaObject*>(dst.Data())) = std::move(src);
-            return true;
-        }
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits& dst) NOEXCEPT {
-    if (self == *dst) {
-        return &obj;
-    }
-    else if (dst->TypeId() == FTypeId(ENativeType::MetaObject)) {
-        if (IsAssignableObject_(self, *dst, obj))
-            return &obj;
-    }
-    return nullptr;
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

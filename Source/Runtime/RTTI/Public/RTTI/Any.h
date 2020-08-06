@@ -78,6 +78,27 @@ public:
         AssignCopy(RTTI::MakeAtom(&value));
     }
 
+    template <typename T, class = TWrapable<T> >
+    T& MakeDefault_AssumeNotValid() {
+        Assert_NoAssume(not Valid());
+        Assign(Meta::DefaultValue<T>());
+        return FlatData<T>();
+    }
+
+    bool PromoteCopy(const FAtom& dst) const { return InnerAtom().PromoteCopy(dst); }
+    bool PromoteMove(const FAtom& dst) const { return InnerAtom().PromoteMove(dst); }
+
+    template <typename T>
+    T& FlatData() const { return InnerAtom().FlatData<T>(); }
+    template <typename T>
+    T& TypedData() const { return InnerAtom().TypedData<T>(); }
+    template <typename T>
+    const T& TypedConstData() const { return InnerAtom().TypedConstData<T>(); }
+    template <typename T>
+    T* TypedDataIFP() const { return InnerAtom().TypedDataIFP<T>(); }
+    template <typename T>
+    const T* TypedConstDataIFP() const { return InnerAtom().TypedConstDataIFP<T>(); }
+
     bool Equals(const FAny& other) const;
     inline friend bool operator ==(const FAny& lhs, const FAny& rhs) { return lhs.Equals(rhs); }
     inline friend bool operator !=(const FAny& lhs, const FAny& rhs) { return (not operator ==(lhs, rhs)); }

@@ -12,7 +12,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FStackLocalAtom::FStackLocalAtom(const void* data, size_t sizeInBytes, const PTypeTraits& traits)
-    : _traits(traits) {
+:   _traits(traits) {
     Assert(_traits);
     Assert(_traits->SizeInBytes() == sizeInBytes);
 

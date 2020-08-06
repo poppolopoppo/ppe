@@ -245,7 +245,7 @@ public: // IListTraits
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-CONSTEXPR auto TypeInfos(TType< TVector<T, _Allocator> >) {
+CONSTEXPR PTypeInfos TypeInfos(TType< TVector<T, _Allocator> >) {
     return FTypeHelpers::List< TVector<T, _Allocator>, T >;
 }
 //----------------------------------------------------------------------------
