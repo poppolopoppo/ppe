@@ -254,15 +254,7 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const FStringVie
                 // but the default value isn't necessarily the optional value :'(
             }
             else {
-                switch (it->second.Type()) {
-                case Serialize::FJson::Null:     AssertNotImplemented(); // #TODO: null can't be a type: should be extracting the parameter type and create a default  //*pArg = RTTI::MakeAtom(nullptr); break;
-                case Serialize::FJson::Bool:     *pArg = RTTI::MakeAtom(&it->second.ToBool()); break;
-                case Serialize::FJson::Integer:  *pArg = RTTI::MakeAtom(&it->second.ToInteger()); break;
-                case Serialize::FJson::Float:    *pArg = RTTI::MakeAtom(&it->second.ToFloat()); break;
-                case Serialize::FJson::String:   *pArg = RTTI::MakeAtom(&it->second.ToString()); break;
-                case Serialize::FJson::Array:    *pArg = RTTI::MakeAtom(&it->second.ToArray()); break;
-                case Serialize::FJson::Object:   *pArg = RTTI::MakeAtom(&it->second.ToObject()); break;
-                }
+                *pArg = MakeAtom(it->second);
             }
 
             pArg++;
@@ -270,7 +262,7 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const FStringVie
 
         STACKLOCAL_ATOM(result, pFunc->Result());
         if (pFunc->InvokeIFP(*pObj, result, call)) {
-            Serialize::RTTI_to_Json(result, &json);
+            RTTI_to_Json(result, &json);
             return Network::EHttpStatus::OK;
         }
         else {

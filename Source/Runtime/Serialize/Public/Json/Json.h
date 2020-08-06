@@ -116,7 +116,11 @@ public:
         friend bool operator ==(const FValue& lhs, const FValue& rhs) NOEXCEPT { return lhs.Equals(rhs); }
         friend bool operator !=(const FValue& lhs, const FValue& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
 
-        friend hash_t hash_value(const FValue& v) { return v.HashValue(); }
+        friend hash_t hash_value(const FValue& v) NOEXCEPT { return v.HashValue(); }
+
+        friend RTTI::FAtom MakeAtom(const FJson::FValue& value) NOEXCEPT {
+            return value.InnerAtom();
+        }
 
         // restrict FAny to Json types
 
@@ -142,6 +146,37 @@ public:
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
         const T* TypedConstDataIFP() const { return RTTI::FAny::TypedConstDataIFP<T>(); }
 
+        FNull& ToNull() { return FlatData<FNull>(); }
+        FBool& ToBool() { return FlatData<FBool>(); }
+        FInteger& ToInteger() { return FlatData<FInteger>(); }
+        FFloat& ToFloat() { return FlatData<FFloat>(); }
+        FString& ToString() { return FlatData<FString>(); }
+        FArray& ToArray() { return FlatData<FArray>(); }
+        FObject& ToObject() { return FlatData<FObject>(); }
+
+        const FNull& ToNull() const { return FlatData<FNull>(); }
+        const FBool& ToBool() const { return FlatData<FBool>(); }
+        const FInteger& ToInteger() const { return FlatData<FInteger>(); }
+        const FFloat& ToFloat() const { return FlatData<FFloat>(); }
+        const FString& ToString() const { return FlatData<FString>(); }
+        const FArray& ToArray() const { return FlatData<FArray>(); }
+        const FObject& ToObject() const { return FlatData<FObject>(); }
+
+        FNull* AsNull() { return TypedDataIFP<FNull>(); }
+        FBool* AsBool() { return TypedDataIFP<FBool>(); }
+        FInteger* AsInteger() { return TypedDataIFP<FInteger>(); }
+        FFloat* AsFloat() { return TypedDataIFP<FFloat>(); }
+        FString* AsString() { return TypedDataIFP<FString>(); }
+        FArray* AsArray() { return TypedDataIFP<FArray>(); }
+        FObject* AsObject() { return TypedDataIFP<FObject>(); }
+
+        const FNull* AsNull() const { return TypedConstDataIFP<FNull>(); }
+        const FBool* AsBool() const { return TypedConstDataIFP<FBool>(); }
+        const FInteger* AsInteger() const { return TypedConstDataIFP<FInteger>(); }
+        const FFloat* AsFloat() const { return TypedConstDataIFP<FFloat>(); }
+        const FString* AsString() const { return TypedConstDataIFP<FString>(); }
+        const FArray* AsArray() const { return TypedConstDataIFP<FArray>(); }
+        const FObject* AsObject() const { return TypedConstDataIFP<FObject>(); }
     };
 
     // assumes FValue is a FAny, as far as RTTI will ever know

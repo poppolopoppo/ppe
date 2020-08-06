@@ -46,7 +46,7 @@ public:
     PPE_RTTI_API bool IsAny() const;
 
     bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
-    void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
+    void ResetToDefaultValue() const { _traits->ResetToDefaultValue(_data); }
 
     PPE_RTTI_API bool Equals(const FAtom& other) const;
     PPE_RTTI_API void Copy(const FAtom& dst) const;

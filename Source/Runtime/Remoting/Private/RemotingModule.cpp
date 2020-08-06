@@ -43,11 +43,7 @@ void FRemotingModule::Start(FModularDomain& domain) {
     using namespace Remoting;
 
     _srv.reset<FRemotingServer>();
-
-    TUniquePtr<FRTTIEndpoint> rtti;
-    rtti.reset<FRTTIEndpoint>();
-    _srv->Add(std::move(rtti));
-
+    _srv->Add(MakeUnique<FRTTIEndpoint>());
     _srv->Start();
 
     _tickHandle = domain.ModuleChekced<FApplicationModule>("Runtime/Application").OnApplicationTick().Add([this](Application::FApplicationBase&, FTimespan dt) {

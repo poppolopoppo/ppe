@@ -45,7 +45,7 @@ public:
         }
     };
 
-    void Allocate(FAlloc& alloc) NOEXCEPT;
+    NO_INLINE void Allocate(FAlloc& alloc) NOEXCEPT;
 
     static FInitSegAllocator& Get() NOEXCEPT;
 
