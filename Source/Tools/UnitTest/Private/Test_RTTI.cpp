@@ -995,7 +995,7 @@ static NO_INLINE void Test_Serialize_() {
 
         Serialize::FJson in, out;
         {
-            in.Root().SetValue(165674.5454 / 0.666666);
+            in.Root().Assign(165674.5454 / 0.666666);
             serialized << in;
 
             if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))
@@ -1011,7 +1011,7 @@ static NO_INLINE void Test_Serialize_() {
             rand.Randomize(RTTI::MakeAtom(&binData));
 
             FStringView str = binData.MakeConstView().Cast<const char>();
-            in.Root().SetValue(in.MakeString(str));
+            in.Root().Assign(ToString(str));
             serialized << in;
 
             if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))

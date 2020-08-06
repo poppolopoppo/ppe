@@ -131,7 +131,7 @@ public:
             return FText::MakeSmall_(str);
         }
 #endif
-        else if (Likely(mergeable && str.size() <= GMaxSizeForMerge)) {
+        else if (Likely(mergeable & (str.size() <= GMaxSizeForMerge))) {
             // always reserve a minimum size of 64 (avoid wasting too much on relocate)
             if (_texts.capacity() == 0)
                 _texts.reserve(64);

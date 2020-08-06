@@ -6,6 +6,7 @@
 
 #include "Container/Vector.h"
 #include "SerializeExceptions.h"
+
 #include "RTTI_fwd.h"
 
 namespace PPE {
@@ -39,6 +40,9 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FAtom& atom, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaObject& obj, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::PMetaObject& pobj, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const FTransactionSaver& saved, class FJson* dst);
 //----------------------------------------------------------------------------
 PPE_SERIALIZE_API bool Json_to_RTTI(const class FJson& src, FTransactionLinker* link);
