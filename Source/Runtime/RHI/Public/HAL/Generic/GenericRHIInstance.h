@@ -43,6 +43,8 @@ public: // shared by each instance
     static bool GEnableHDR;
 #if USE_PPE_RHIDEBUG
     static bool GEnableDebug;
+#else
+    static constexpr bool GEnableDebug = false;
 #endif
 
     static void ParseOptions();

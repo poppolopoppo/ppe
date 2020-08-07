@@ -2,9 +2,7 @@
 
 #include "HAL/Generic/GenericRHIInstance.h"
 
-#if USE_PPE_RHIDEBUG
-#    include "Diagnostic/CurrentProcess.h"
-#endif
+#include "Diagnostic/CurrentProcess.h"
 
 namespace PPE {
 namespace RHI {

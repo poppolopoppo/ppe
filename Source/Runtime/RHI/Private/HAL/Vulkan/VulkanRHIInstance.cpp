@@ -228,6 +228,8 @@ private:
             });
         else
             Layers.clear();
+#else
+        UNUSED(debug);
 #endif
     }
 
