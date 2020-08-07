@@ -183,19 +183,21 @@ module Build
                 else
                     Assert.not_implemented
                 end
-                if Build.StaticCRT
-                    case env.config.link
-                    when :static
-                        facet.libraries << "clang_rt.#{asan_type}-#{asan_host}.lib"
-                    when :dynamic
-                        facet.libraries << "clang_rt.#{asan_type}_dll_thunk-#{asan_host}.lib"
+
+                if env.target_need_link?(target)
+                    if Build.StaticCRT && facet.tag?(:debug) == false # ASAN is not supported with static debug (/MTd)
+                        if target.executable?
+                            facet.libraries << "/wholearchive:clang_rt.#{asan_type}-#{asan_host}.lib"
+                        else
+                            facet.libraries << "/wholearchive:clang_rt.#{asan_type}_dll_thunk-#{asan_host}.lib"
+                        end
+                    else
+                        facet.libraries <<
+                            "/wholearchive:clang_rt.#{asan_type}_dynamic-#{asan_host}.lib" <<
+                            "/wholearchive:clang_rt.#{asan_type}_dynamic_runtime_thunk-#{asan_host}.lib"
+                        dll = File.join(@visualStudioTools, "clang_rt.#{asan_type}_dynamic-#{asan_host}.dll")
+                        env.target_deploy(target, dll)
                     end
-                elsif env.target_need_link?(target)
-                    facet.libraries <<
-                        "clang_rt.#{asan_type}_dynamic-#{asan_host}.lib" <<
-                        "clang_rt.#{asan_type}_dynamic_runtime_thunk-#{asan_host}.lib"
-                    dll = File.join(@visualStudioTools, "clang_rt.#{asan_type}_dynamic-#{asan_host}.dll")
-                    #env.target_deploy(target, dll)
                 end
             end
 

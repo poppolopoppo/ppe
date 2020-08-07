@@ -155,8 +155,9 @@ module Build
             dst = File.join(
                 File.dirname(target_artifact_path(target)),
                 File.basename(filename) )
-            unless FileUtils.identical?(filename, dst)
-                FileUtils.copy_file(filename, dst, :verbose => Log.verbose?)
+            unless File.exists?(dst) && FileUtils.identical?(filename, dst)
+                Log.verbose("deploy '%s' to '%s'", filename, dst)
+                FileUtils.copy_file(filename, dst)
                 return true
             else
                 return false
