@@ -20,7 +20,7 @@ public:
     const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.' || ch == '/'; }
 };
-BASICTOKEN_CLASS_DECL(PPE_RTTI_API, FName, char, ECase::Insensitive, FNameTokenTraits);
+BASICTOKEN_CLASS_DECL(PPE_RTTI_API, Name, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
 // /!\ not guaranteed to be stable : depends on initialization order
 using FClassId = TPrimeNumberProduct<class FMetaClass>;
@@ -54,30 +54,75 @@ INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FOpaqueData, details::FOpaqueDataContain
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FPathName {
+struct FLazyPathName {
+    PPE_ASSUME_FRIEND_AS_POD(RTTI::FLazyPathName)
+
+    FLazyName Namespace;
+    FLazyName Identifier;
+
+    bool empty() const NOEXCEPT { return (Identifier.empty()); }
+
+    static PPE_RTTI_API bool Parse(FLazyPathName* pathName, const FStringView& text);
+
+    friend bool operator ==(const FLazyPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
+        return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));
+    }
+    friend bool operator !=(const FLazyPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+
+    friend bool operator < (const FLazyPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
+        return (lhs.Namespace == rhs.Namespace ? lhs.Identifier < rhs.Identifier : lhs.Namespace < rhs.Namespace);
+    }
+    friend bool operator >=(const FLazyPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
+        return (not operator < (lhs, rhs));
+    }
+
+    friend hash_t hash_value(const FLazyPathName& pathName) NOEXCEPT {
+        return hash_tuple(pathName.Namespace, pathName.Identifier);
+    }
+};
+//----------------------------------------------------------------------------
+struct FPathName {
+    PPE_ASSUME_FRIEND_AS_POD(RTTI::FPathName)
+
     FName Namespace;
     FName Identifier;
 
     bool empty() const NOEXCEPT { return (Identifier.empty()); }
 
-    static FPathName FromObject(const FMetaObject& obj) NOEXCEPT;
-    static bool Parse(FPathName* pathName, const FStringView& text);
+    static PPE_RTTI_API FPathName FromObject(const FMetaObject& obj) NOEXCEPT;
+    static PPE_RTTI_API bool Parse(FPathName* pathName, const FStringView& text);
 
-    inline friend bool operator ==(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
+    friend bool operator ==(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));
     }
-    inline friend bool operator !=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
+    friend bool operator !=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
-    inline friend bool operator < (const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
+    friend bool operator < (const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (lhs.Namespace == rhs.Namespace ? lhs.Identifier < rhs.Identifier : lhs.Namespace < rhs.Namespace);
     }
-    inline friend bool operator >=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
+    friend bool operator >=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (not operator < (lhs, rhs));
     }
 
-    inline friend hash_t hash_value(const FPathName& pathName) {
+    friend bool operator ==(const FPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
+        return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));
+    }
+    friend bool operator !=(const FPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+
+    friend bool operator < (const FLazyPathName& lhs, const FPathName& rhs) NOEXCEPT {
+        return (lhs.Namespace == rhs.Namespace ? lhs.Identifier < rhs.Identifier : lhs.Namespace < rhs.Namespace);
+    }
+    friend bool operator >=(const FLazyPathName& lhs, const FPathName& rhs) NOEXCEPT {
+        return (not operator < (lhs, rhs));
+    }
+
+    friend hash_t hash_value(const FPathName& pathName) NOEXCEPT {
         return hash_tuple(pathName.Namespace, pathName.Identifier);
     }
 };
@@ -91,11 +136,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_ASSUME_TYPE_AS_POD(RTTI::FName)
-PPE_ASSUME_TYPE_AS_POD(RTTI::FPathName)
-//----------------------------------------------------------------------------
 PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FBinaryData& bindata);
 PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata);
+//----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FLazyPathName& pathName);
+PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FLazyPathName& pathName);
 //----------------------------------------------------------------------------
 PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FPathName& pathName);
 PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FPathName& pathName);

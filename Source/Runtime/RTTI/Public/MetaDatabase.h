@@ -39,6 +39,9 @@ public:
     FMetaObject& Object(const FPathName& pathName) const;
     FMetaObject* ObjectIFP(const FPathName& pathName) const;
     FMetaObject* ObjectIFP(const FStringView& text) const;
+    FMetaObject* ObjectIFP(const FStringView& namespace_, const FStringView& identifier) const;
+    FMetaObject* ObjectIFP(const FLazyName& namespace_, const FLazyName& identifier) const;
+    FMetaObject* ObjectIFP(const FLazyPathName& pathName) const;
     const auto& Objects() const { return _objects; }
 
     /* Transaction */
@@ -49,6 +52,7 @@ public:
     TMemoryView<const SCMetaTransaction> Transaction(const FName& namespace_) const;
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FName& namespace_) const;
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FStringView& namespace_) const;
+    TMemoryView<const SCMetaTransaction> TransactionIFP(const FLazyName& namespace_) const;
     const auto& Transactions() const { return _transactions; }
 
     /* Modules */
@@ -59,6 +63,7 @@ public:
     const FMetaModule& Module(const FName& name) const;
     const FMetaModule* ModuleIFP(const FName& name) const;
     const FMetaModule* ModuleIFP(const FStringView& name) const;
+    const FMetaModule* ModuleIFP(const FLazyName& name) const;
     const auto& Modules() const { return _modules; }
 
     /* Classes */
@@ -66,6 +71,7 @@ public:
     const FMetaClass& Class(const FName& name) const;
     const FMetaClass* ClassIFP(const FName& name) const;
     const FMetaClass* ClassIFP(const FStringView& name) const;
+    const FMetaClass* ClassIFP(const FLazyName& name) const;
     const auto& Classes() const { return _classes; }
 
     /* Enums */
@@ -73,6 +79,7 @@ public:
     const FMetaEnum& Enum(const FName& name) const;
     const FMetaEnum* EnumIFP(const FName& name) const;
     const FMetaEnum* EnumIFP(const FStringView& name) const;
+    const FMetaEnum* EnumIFP(const FLazyName& name) const;
     const auto& Enums() const { return _enums; }
 
     /* Traits */
@@ -80,6 +87,7 @@ public:
     const PTypeTraits& Traits(const FName& name) const;
     PTypeTraits TraitsIFP(const FName& name) const;
     PTypeTraits TraitsIFP(const FStringView& name) const;
+    PTypeTraits TraitsIFP(const FLazyName& name) const;
     const auto& Traits() const { return _traits; }
 
 private:

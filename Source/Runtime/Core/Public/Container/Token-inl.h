@@ -26,31 +26,33 @@ bool IsValidToken(const TBasicStringView<_Char>& content) {
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
 auto TToken<_Tag, _Char, _Sensitive, _TokenTraits>::FindOrAdd_(const stringview_type& str) -> const handle_type* {
-    if (str.empty())
+    return FindOrAdd_(lazytoken_type{ str });
+}
+//----------------------------------------------------------------------------
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
+auto TToken<_Tag, _Char, _Sensitive, _TokenTraits>::FindOrAdd_(const lazytoken_type& lazy) -> const handle_type* {
+    if (Unlikely(lazy.empty()))
         return nullptr;
 
-    Assert(not str.empty());
-    Assert_NoAssume(IsValidToken(str));
-
-    const hash_t hash = hasher_type{}(str);
+    Assert(lazy.data());
+    Assert_NoAssume(IsValidToken(lazy.MakeView()));
 
     FTokenFactory& factory = token_traits::Factory();
     const handle_type* head = nullptr;
     const handle_type* result;
     for (;;) {
-        result = factory.Lookup(str.size(), hash, head);
-        if (nullptr == result)
+        result = factory.Lookup(lazy.size(), lazy.HashValue(), head);
+        if (nullptr == result) {
+            result = factory.Allocate((void*)lazy.data(), lazy.size(), sizeof(_Char), lazy.HashValue(), head);
             break;
+        }
 
         const stringview_type cmp(reinterpret_cast<const _Char*>(result->Data()), result->Length);
-        if (equalto_type{}(str, cmp))
+        if (Likely(lazy == cmp))
             break;
 
         head = result;
     }
-
-    if (nullptr == result)
-        result = factory.Allocate((void*)str.data(), str.size(), sizeof(_Char), hash, head);
 
     Assert(result);
     return result;

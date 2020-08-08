@@ -109,12 +109,15 @@ TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FName& 
 }
 //----------------------------------------------------------------------------
 TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FStringView& namespace_) const {
+    return TransactionIFP(FLazyName{ namespace_ });
+}
+//----------------------------------------------------------------------------
+TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FLazyName& namespace_) const {
     Assert(not namespace_.empty());
 
     TMemoryView<const SCMetaTransaction> v;
 
-    const hash_t h = FName::HashValue(namespace_);
-    const auto it = _transactions.find_like(namespace_, h);
+    const auto it = _transactions.find_like(namespace_, namespace_.HashValue());
     if (_transactions.end() != it)
         v = it->second;
 
@@ -214,10 +217,36 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
 FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& text) const {
     Assert(not text.empty());
 
-    FPathName pathName;
-    VerifyRelease(FPathName::Parse(&pathName, text));
+    FLazyPathName pathName;
+    VerifyRelease(FLazyPathName::Parse(&pathName, text));
 
     return ObjectIFP(pathName);
+}
+//----------------------------------------------------------------------------
+FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& namespace_, const FStringView& identifier) const {
+    return ObjectIFP(FLazyPathName{ FLazyName(namespace_),FLazyName(identifier) });
+}
+//----------------------------------------------------------------------------
+FMetaObject* FMetaDatabase::ObjectIFP(const FLazyName& namespace_, const FLazyName& identifier) const {
+    return ObjectIFP(FLazyPathName{ namespace_, identifier });
+}
+//----------------------------------------------------------------------------
+FMetaObject* FMetaDatabase::ObjectIFP(const FLazyPathName& pathName) const {
+	Assert(not pathName.empty());
+	Assert(not pathName.Namespace.empty());
+
+	const auto it = _objects.find_like(pathName, hash_value(pathName));
+	if (_objects.end() != it) {
+		Assert_NoAssume(it->second->RTTI_IsLoaded());
+		return it->second.get();
+	}
+	else {
+#if USE_PPE_ASSERT
+		CLOG(TransactionIFP(pathName.Namespace).empty(),
+			RTTI, Error, L"trying to fetch an object from an unmounted transaction : {0}", pathName);
+#endif
+		return nullptr;
+	}
 }
 //----------------------------------------------------------------------------
 // Modules
@@ -310,6 +339,10 @@ const FMetaModule* FMetaDatabase::ModuleIFP(const FName& name) const {
 }
 //----------------------------------------------------------------------------
 const FMetaModule* FMetaDatabase::ModuleIFP(const FStringView& name) const {
+    return ModuleIFP(FLazyName{ name });
+}
+//----------------------------------------------------------------------------
+const FMetaModule* FMetaDatabase::ModuleIFP(const FLazyName& name) const {
     Assert(not name.empty());
 
     const auto it = std::find_if(_modules.begin(), _modules.end(), [&name](const FMetaModule* metaModule) {
@@ -336,10 +369,13 @@ const FMetaClass* FMetaDatabase::ClassIFP(const FName& name) const {
 }
 //----------------------------------------------------------------------------
 const FMetaClass* FMetaDatabase::ClassIFP(const FStringView& name) const {
+    return ClassIFP(FLazyName{ name });
+}
+//----------------------------------------------------------------------------
+const FMetaClass* FMetaDatabase::ClassIFP(const FLazyName& name) const {
     Assert(not name.empty());
 
-    const hash_t h = FName::HashValue(name);
-    const auto it = _classes.find_like(name, h);
+    const auto it = _classes.find_like(name, name.HashValue());
 
     return (_classes.end() == it ? nullptr : it->second);
 }
@@ -360,10 +396,13 @@ const FMetaEnum* FMetaDatabase::EnumIFP(const FName& name) const {
 }
 //----------------------------------------------------------------------------
 const FMetaEnum* FMetaDatabase::EnumIFP(const FStringView& name) const {
+    return EnumIFP(FLazyName{ name });
+}
+//----------------------------------------------------------------------------
+const FMetaEnum* FMetaDatabase::EnumIFP(const FLazyName& name) const {
     Assert(not name.empty());
 
-    const hash_t h = FName::HashValue(name);
-    const auto it = _enums.find_like(name, h);
+    const auto it = _enums.find_like(name, name.HashValue());
     return (_enums.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
@@ -383,10 +422,13 @@ PTypeTraits FMetaDatabase::TraitsIFP(const FName& name) const {
 }
 //----------------------------------------------------------------------------
 PTypeTraits FMetaDatabase::TraitsIFP(const FStringView& name) const {
+    return TraitsIFP(FLazyName{ name });
+}
+//----------------------------------------------------------------------------
+PTypeTraits FMetaDatabase::TraitsIFP(const FLazyName& name) const {
     Assert(not name.empty());
 
-    const hash_t h = FName::HashValue(name);
-    const auto it = _traits.find_like(name, h);
+    const auto it = _traits.find_like(name, name.HashValue());
     return (_traits.end() == it ? PTypeTraits{} : it->second);
 }
 //----------------------------------------------------------------------------

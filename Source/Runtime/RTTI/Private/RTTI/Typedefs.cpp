@@ -16,18 +16,7 @@ BASICTOKEN_CLASS_DEF(FName);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FPathName FPathName::FromObject(const FMetaObject& obj) NOEXCEPT {
-    Assert(obj.RTTI_IsExported());
-    Assert(obj.RTTI_Outer());
-
-    FPathName p;
-    p.Namespace = obj.RTTI_Outer()->Namespace();
-    p.Identifier = obj.RTTI_Name();
-
-    return p;
-}
-//----------------------------------------------------------------------------
-bool FPathName::Parse(FPathName* pathName, const FStringView& text) {
+bool FLazyPathName::Parse(FLazyPathName* pathName, const FStringView& text) {
     Assert(pathName);
 
     if (text.size() < 3)
@@ -43,12 +32,37 @@ bool FPathName::Parse(FPathName* pathName, const FStringView& text) {
     if (namespace_.empty() ||
         identifier.empty() ||
         identifier.Contains('/') )
-        return false;
+            return false;
 
-    pathName->Namespace = FName(namespace_);
-    pathName->Identifier = FName(identifier);
+    pathName->Namespace = FLazyName(namespace_);
+    pathName->Identifier = FLazyName(identifier);
 
     return true;
+}
+//----------------------------------------------------------------------------
+FPathName FPathName::FromObject(const FMetaObject& obj) NOEXCEPT {
+    Assert(obj.RTTI_IsExported());
+    Assert(obj.RTTI_Outer());
+
+    FPathName p;
+    p.Namespace = obj.RTTI_Outer()->Namespace();
+    p.Identifier = obj.RTTI_Name();
+
+    return p;
+}
+//----------------------------------------------------------------------------
+bool FPathName::Parse(FPathName* pathName, const FStringView& text) {
+    Assert(pathName);
+
+    FLazyPathName lazy;
+    if (FLazyPathName::Parse(&lazy, text)) {
+        pathName->Namespace = lazy.Namespace;
+        pathName->Identifier = lazy.Identifier;
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -57,6 +71,29 @@ bool FPathName::Parse(FPathName* pathName, const FStringView& text) {
 } //!namespace PPE
 
 namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::is_pod_v<RTTI::FName>);
+STATIC_ASSERT(Meta::is_pod_v<RTTI::FLazyName>);
+STATIC_ASSERT(Meta::is_pod_v<RTTI::FLazyPathName>);
+STATIC_ASSERT(Meta::is_pod_v<RTTI::FPathName>);
+//----------------------------------------------------------------------------
+static FTextWriter& FormatPath_(FTextWriter& oss, const FStringView& namespace_, const FStringView& id) {
+    if (not namespace_.empty())
+        oss << '$' << '/' << namespace_ << '/';
+    return oss << id;
+}
+//----------------------------------------------------------------------------
+static FWTextWriter& FormatPath_(FWTextWriter& oss, const FStringView& namespace_, const FStringView& id) {
+    if (not namespace_.empty())
+        oss << L'$' << L'/' << namespace_ << L'/';
+    return oss << id;
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -74,16 +111,22 @@ FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const RTTI::FLazyPathName& pathName) {
+    return FormatPath_(oss, pathName.Namespace.MakeView(), pathName.Identifier.MakeView());
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FLazyPathName& pathName) {
+    return FormatPath_(oss, pathName.Namespace.MakeView(), pathName.Identifier.MakeView());
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const RTTI::FPathName& pathName) {
-    if (not pathName.Namespace.empty())
-        oss << '$' << '/' << pathName.Namespace << '/';
-    return oss << pathName.Identifier;
+    return FormatPath_(oss, pathName.Namespace.MakeView(), pathName.Identifier.MakeView());
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FPathName& pathName) {
-    if (not pathName.Namespace.empty())
-        oss << L'$' << L'/' << pathName.Namespace << L'/';
-    return oss << pathName.Identifier;
+    return FormatPath_(oss, pathName.Namespace.MakeView(), pathName.Identifier.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
