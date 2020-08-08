@@ -98,7 +98,7 @@ private:
 
     }   _sections;
 
-    template <typename T, class = Meta::TEnableIf< Meta::TIsPod_v<T> > >
+    template <typename T, class = Meta::TEnableIf< Meta::is_pod_v<T> > >
     void Visit_(T pod) { _sections.Data.WritePOD(pod); }
 
     void Visit_(const FDirpath& dirpath);

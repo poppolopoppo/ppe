@@ -169,7 +169,7 @@ template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, t
 TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::~TFixedSizeHashSet() NOEXCEPT {
     // trivial destructor thanks to PODs
     STATIC_ASSERT(_Capacity > 1); // trivial, but who knows...
-    STATIC_ASSERT(Meta::TIsPod_v<_Key>); // #TODO support for non POD ?
+    STATIC_ASSERT(Meta::is_pod_v<_Key>); // #TODO support for non POD ?
 }
 //----------------------------------------------------------------------------
 template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>

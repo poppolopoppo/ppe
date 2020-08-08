@@ -123,8 +123,8 @@ struct TPointerWFlags<const void> {
 #undef POINTERWFLAGS_BASE_DEF
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(TPointerWFlags<int>) == sizeof(void*));
-STATIC_ASSERT(Meta::TIsPod< TPointerWFlags<int> >::value);
-STATIC_ASSERT(Meta::TIsPod< TPointerWFlags<void> >::value);
+STATIC_ASSERT(Meta::is_pod_v< TPointerWFlags<int> >);
+STATIC_ASSERT(Meta::is_pod_v< TPointerWFlags<void> >);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

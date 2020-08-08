@@ -14,12 +14,17 @@
 #   define USE_PPE_MEMORY_CHECK_NECROPHILIA     (USE_PPE_ASSERT) // %_NOCOMMIT%
 #endif
 
+// Can override POD detection in PPE codebase, respects ADL
 #define PPE_ASSERT_TYPE_IS_POD(T) \
-    static_assert(::PPE::Meta::TIsPod_v<T>, STRINGIZE(T) " is not a POD type");
+    static_assert(::PPE::Meta::is_pod_v<T>, STRINGIZE(T) " is not a POD type");
 #define PPE_ASSUME_TYPE_AS_POD(...) \
-    CONSTEXPR bool is_pod(Meta::TType<__VA_ARGS__>) NOEXCEPT { return true; }
+    CONSTEXPR bool is_pod_type(__VA_ARGS__*) NOEXCEPT { return true; }
+#define PPE_ASSUME_FRIEND_AS_POD(...) \
+    friend PPE_ASSUME_TYPE_AS_POD(__VA_ARGS__)
 #define PPE_ASSUME_TEMPLATE_AS_POD(T, ...) \
     template <__VA_ARGS__> PPE_ASSUME_TYPE_AS_POD(T)
+#define PPE_ASSUME_TEMPLATE_FRIEND_AS_POD(T, ...) \
+    template <__VA_ARGS__> PPE_ASSUME_FRIEND_AS_POD(T)
 
 namespace PPE {
 namespace Meta {
@@ -150,30 +155,25 @@ using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Replaces std::is_pod<>, can be overrided for specific types
+// is_pod_type(T*) can be overloaded for specific types, respects ADL
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR bool is_pod(TType<T>) NOEXCEPT {
-    return std::is_pod_v<T>;
-}
+CONSTEXPR bool is_pod_type(T*) NOEXCEPT { return std::is_pod_v<T>; }
 template <typename T>
-using TIsPod = std::bool_constant< is_pod(Type<T>) >;
-//----------------------------------------------------------------------------
-template <typename... _Args>
-CONSTEXPR bool TIsPod_v{ (TIsPod<_Args>::value && ...) };
+CONSTEXPR bool is_pod_v{ is_pod_type(static_cast<T*>(nullptr)) };
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_constructor = std::bool_constant<TIsPod_v<T> || std::is_trivially_constructible<T>::value >;
+using has_trivial_constructor = std::bool_constant<is_pod_v<T> || std::is_trivially_constructible<T>::value >;
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_destructor = std::bool_constant<TIsPod_v<T> || std::is_trivially_destructible<T>::value >;
+using has_trivial_destructor = std::bool_constant<is_pod_v<T> || std::is_trivially_destructible<T>::value >;
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_copy = std::bool_constant<TIsPod_v<T> || (
+using has_trivial_copy = std::bool_constant<is_pod_v<T> || (
     std::is_trivially_copy_constructible_v<T> && std::is_trivially_copy_assignable_v<T>)>;
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_move = std::bool_constant<TIsPod_v<T> || (
+using has_trivial_move = std::bool_constant<is_pod_v<T> || (
     std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

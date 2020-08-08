@@ -40,7 +40,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, bool _IsPod = Meta::TIsPod<T>::value >
+template <typename T, bool _IsPod = Meta::is_pod_v<T> >
 class TStack {
 public:
     typedef T value_type;
@@ -286,7 +286,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _Less = Meta::TLess<T>, bool _IsPod = Meta::TIsPod<T>::value>
+template <typename T, typename _Less = Meta::TLess<T>, bool _IsPod = Meta::is_pod_v<T>>
 class TStackHeapAdapter : private _Less {
 public:
     typedef TStack<T, _IsPod> stack_type;

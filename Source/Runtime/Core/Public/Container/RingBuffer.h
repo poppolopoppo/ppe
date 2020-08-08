@@ -26,7 +26,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, bool _IsPod = Meta::TIsPod<T>::value >
+template <typename T, bool _IsPod = Meta::is_pod_v<T> >
 class TRingBuffer {
 public:
     typedef T value_type;

@@ -27,6 +27,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::is_pod_v<FDirpath>);
+//----------------------------------------------------------------------------
 static bool NormalizePath_(size_t* plength, const TMemoryView<FDirname>& dirnames) {
     Assert(plength);
 

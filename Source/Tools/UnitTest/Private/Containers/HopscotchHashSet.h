@@ -19,7 +19,7 @@ struct FHopscotchState {
     u16 Bitmap : 15;
 };
 STATIC_ASSERT(sizeof(FHopscotchState) == sizeof(u16));
-STATIC_ASSERT(Meta::TIsPod_v<FHopscotchState>);
+STATIC_ASSERT(Meta::is_pod_v<FHopscotchState>);
 template <
     typename _Key
 ,   typename _Hash = Meta::THash<_Key>

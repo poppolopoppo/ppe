@@ -158,7 +158,7 @@ struct FBinnedBucket_ {
     u32 NumBlocksAvailable;
     FBinnedChunk_* UsedChunks;
 };
-STATIC_ASSERT(Meta::TIsPod_v<FBinnedBucket_>);
+STATIC_ASSERT(Meta::is_pod_v<FBinnedBucket_>);
 // using POD for fast access to buckets without singleton to help inline trivial allocations
 static THREAD_LOCAL FBinnedBucket_ GBinnedThreadBuckets_[FMallocBinned::NumSizeClasses + 1/* extra for large blocks optimization */];
 //----------------------------------------------------------------------------

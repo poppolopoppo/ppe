@@ -300,7 +300,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear() {
     Assert(CheckInvariants());
 
     if (_data.Size)
-        clear_keepSound_(typename Meta::TIsPod<value_type>::type{});
+        clear_keepSound_(std::bool_constant<Meta::is_pod_v<value_type>>{});
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -308,7 +308,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemor
     Assert(CheckInvariants());
 
     if (_data.Capacity)
-        clear_ReleaseMemory_(typename Meta::TIsPod<value_type>::type{});
+        clear_ReleaseMemory_(std::bool_constant<Meta::is_pod_v<value_type>>{});
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>

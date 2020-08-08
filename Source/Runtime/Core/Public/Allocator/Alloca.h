@@ -150,7 +150,7 @@ public:
 //----------------------------------------------------------------------------
 #define MALLOCA_POD(T, _NAME, _COUNT) \
     STATIC_ASSERT(/* only POD or classes with FForceInit ctor */ \
-        ::PPE::Meta::TIsPod<T>::value || \
+        ::PPE::Meta::is_pod_v<T> || \
         ::PPE::Meta::has_forceinit_constructor<T>::value ); \
     MALLOCA_ASSUMEPOD(T, _NAME, _COUNT)
 //----------------------------------------------------------------------------

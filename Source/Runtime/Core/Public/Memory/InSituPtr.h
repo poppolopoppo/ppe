@@ -94,15 +94,10 @@ struct TInSituPtr {
     inline friend bool operator !=(const TInSituPtr& lhs, const TInSituPtr& rhs) {
         return (not operator ==(lhs, rhs));
     }
+
+    // Consider TInSituPtr<T> as POD if and only if T is considered as POD
+    friend CONSTEXPR bool is_pod_type(TInSituPtr<T>*) { return Meta::is_pod_v<T>; }
 };
-//----------------------------------------------------------------------------
-// Consider TInSituPtr<T> as POD if and only if T is considered as POD
-namespace Meta {
-template <typename T>
-CONSTEXPR bool is_pod(TType< TInSituPtr<T> >) NOEXCEPT {
-    return TIsPod_v<T>;
-}
-} //!Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

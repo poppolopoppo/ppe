@@ -29,11 +29,12 @@ CONSTEXPR TTuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) N
     return std::make_tuple(std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
-namespace Meta {
 template <typename... _Args>
-CONSTEXPR bool is_pod(TType< TTuple<_Args...> >) NOEXCEPT {
-    return TIsPod_v<_Args...>;
+CONSTEXPR bool is_pod_type(TTuple<_Args...>*) NOEXCEPT {
+    return ( Meta::is_pod_v<_Args> && ... );
 }
+//----------------------------------------------------------------------------
+namespace Meta {
 template <typename... _Args>
 CONSTEXPR TTuple<_Args...> NoInitType(TType< TTuple<_Args...> >) NOEXCEPT {
     return MakeTuple(MakeNoInit<_Args>()...);

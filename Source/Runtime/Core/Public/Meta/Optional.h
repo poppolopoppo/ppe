@@ -17,7 +17,7 @@ namespace Meta {
 template <typename T>
 using TOptional = std::optional<T>;
 #else
-template <typename T, typename = TEnableIf< TIsPod<T>::value > >
+template <typename T, typename = TEnableIf< is_pod_v<T> > >
 struct TOptional {
     TOptional() = default;
 
@@ -72,7 +72,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T>
 hash_t hash_value(const Meta::TOptional<T>& optional) {
-    STATIC_ASSERT(Meta::TIsPod<T>::value);
+    STATIC_ASSERT(Meta::is_pod_v<T>);
     return hash_as_pod(*optional);
 }
 //----------------------------------------------------------------------------

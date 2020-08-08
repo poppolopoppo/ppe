@@ -17,7 +17,7 @@ public:
     bool IsAllowedChar(FileSystem::char_type ch) const { return FPlatformFile::IsAllowedChar(ch); }
 };
 //----------------------------------------------------------------------------
-BASICTOKEN_CLASS_DECL(PPE_CORE_API, FFileSystemToken, FileSystem::char_type, FileSystem::CaseSensitive, FFileSystemTokenTraits);
+BASICTOKEN_CLASS_DECL(PPE_CORE_API, FileSystemToken, FileSystem::char_type, FileSystem::CaseSensitive, FFileSystemTokenTraits);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

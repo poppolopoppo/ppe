@@ -53,7 +53,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-STATIC_ASSERT(Meta::TIsPod_v<POD_STORAGE(FName)>);
+STATIC_ASSERT(Meta::is_pod_v<POD_STORAGE(FName)>);
 #define DEF_HTTPCONSTNAMES_STORAGE(_Type, _Name, _Content) \
     static POD_STORAGE(FName) CONCAT(G, CONCAT(_Type, _Name));
 FOREACH_HTTPHEADERS(DEF_HTTPCONSTNAMES_STORAGE)

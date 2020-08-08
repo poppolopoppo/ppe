@@ -17,7 +17,7 @@ struct FDenseHashTableState {
     STATIC_CONST_INTEGRAL(u16, TombIndex, u16(-2));
     STATIC_CONST_INTEGRAL(u16, EmptyMask, EmptyIndex&TombIndex);
 };
-STATIC_ASSERT(Meta::TIsPod_v<FDenseHashTableState>);
+STATIC_ASSERT(Meta::is_pod_v<FDenseHashTableState>);
 template <
     typename _Key
     , typename _Hash = Meta::THash<_Key>

@@ -24,7 +24,7 @@ struct FHopscotchState2 {
     }
 };
 STATIC_ASSERT(sizeof(FHopscotchState2) == sizeof(u16));
-STATIC_ASSERT(Meta::TIsPod_v<FHopscotchState2>);
+STATIC_ASSERT(Meta::is_pod_v<FHopscotchState2>);
 template <
     typename _Key
 ,   typename _Hash = Meta::THash<_Key>

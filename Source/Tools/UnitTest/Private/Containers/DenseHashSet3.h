@@ -19,7 +19,7 @@ struct FDenseHashTableState3 {
         std::swap(reinterpret_cast<u32&>(*this), reinterpret_cast<u32&>(other));
     }
 };
-STATIC_ASSERT(Meta::TIsPod_v<FDenseHashTableState3>);
+STATIC_ASSERT(Meta::is_pod_v<FDenseHashTableState3>);
 template <
     typename _Key
     , typename _Hash = Meta::THash<_Key>

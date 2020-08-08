@@ -91,7 +91,7 @@ private:
     bool RetrieveText_(const FBinaryFormat::FHeaders& h);
     bool RetrieveData_(const FBinaryFormat::FHeaders& h);
 
-    template <typename T, class = Meta::TEnableIf< Meta::TIsPod_v<T> > >
+    template <typename T, class = Meta::TEnableIf< Meta::is_pod_v<T> > >
     void Read_(const RTTI::IScalarTraits* , T& pod) { _iss->ReadPOD(&pod); }
     void Read_(const RTTI::IScalarTraits* traits, FDirpath& dirpath);
     void Read_(const RTTI::IScalarTraits* traits, RTTI::FName& name);

@@ -25,11 +25,12 @@ FORCE_INLINE hash_t hash_value(const TPair<_First, _Second>& pair) {
     return hash_tuple(pair.first, pair.second);
 }
 //----------------------------------------------------------------------------
-namespace Meta {
 template <typename _First, typename _Second>
-CONSTEXPR bool is_pod(TType< TPair<_First, _Second> >) NOEXCEPT {
-    return TIsPod_v<_First, _Second>;
+CONSTEXPR bool is_pod(TPair<_First, _Second>*) NOEXCEPT {
+    return ( Meta::is_pod_v<_First> && Meta::is_pod_v<_Second> );
 }
+//----------------------------------------------------------------------------
+namespace Meta {
 template <typename _First, typename _Second>
 TPair<_First, _Second> NoInitType(TType< TPair<_First, _Second> >) {
     return MakePair(MakeNoInit<_First>(), MakeNoInit<_Second>());

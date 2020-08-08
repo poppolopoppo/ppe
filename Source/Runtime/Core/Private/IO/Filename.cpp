@@ -20,6 +20,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::is_pod_v<FFilename>);
+//----------------------------------------------------------------------------
 static void ParseFilename_(const FileSystem::FStringView& str, FDirpath& dirpath, FBasename& basename) {
     dirpath = FDirpath();
     basename = FBasename();

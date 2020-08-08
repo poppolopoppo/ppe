@@ -119,7 +119,7 @@ struct FTypeHelpers {
     static CONSTEXPR FSizeAndFlags BasicInfos(ETypeFlags base = ETypeFlags::Default) {
         return {
             sizeof(T), base
-            + (Meta::TIsPod_v<T> ? ETypeFlags::POD : ETypeFlags::Default)
+            + (Meta::is_pod_v<T> ? ETypeFlags::POD : ETypeFlags::Default)
             + (Meta::has_trivial_destructor<T>::value ? ETypeFlags::TriviallyDestructible : ETypeFlags::Default)
         };
     }

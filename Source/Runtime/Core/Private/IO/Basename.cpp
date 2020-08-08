@@ -15,6 +15,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::is_pod_v<FBasename>);
+//----------------------------------------------------------------------------
 static bool ParseBasename_(const FileSystem::FStringView& str, FBasenameNoExt& basenameNoExt, FExtname& extname) {
     basenameNoExt = FBasenameNoExt();
     extname = FExtname();
