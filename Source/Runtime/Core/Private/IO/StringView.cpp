@@ -51,7 +51,7 @@ static bool SplitIfR_(TBasicStringView<_Char>& str, TBasicStringView<_Char>& sli
     }
     else {
         Assert_NoAssume(pred(*it));
-        slice = str.CutStartingAt(it + 1);
+        slice = str.CutStartingAt(it - 1);
         str = str.CutBefore(it);
     }
 
