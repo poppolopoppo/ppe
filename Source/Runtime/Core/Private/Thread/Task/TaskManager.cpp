@@ -745,10 +745,18 @@ void FInterruptedTask::Resume(const TMemoryView<FInterruptedTask>& tasks) {
 
     // sort all queued fibers by priority before resuming and outside of the lock
     // (no need for stable sort since each task should have a unique priority)
-    std::stable_sort(tasks.begin(), tasks.end());
+    std::sort(tasks.begin(), tasks.end());
 
-    bool postTaskAvailable = true;
-    FWorkerContext_& worker = FWorkerContext_::Get();
+    bool postTaskAvailable = false;
+    FWorkerContext_* workerIFP = nullptr;
+    FTaskManagerImpl* workerCtx = nullptr;
+    if (FFiber::IsInFiber()) {
+        postTaskAvailable = true;
+        workerIFP = &FWorkerContext_::Get();
+        workerCtx = &workerIFP->Context();
+    }
+    Assert(not workerIFP || workerCtx);
+
     for (const FInterruptedTask& task : tasks) {
         FTaskFunc func{ ResumeTask(task) };
 
@@ -758,8 +766,8 @@ void FInterruptedTask::Resume(const TMemoryView<FInterruptedTask>& tasks) {
         // also we can't use PostTaskDelegate when the stalled fiber belongs to
         // another task manager.
 
-        if ((postTaskAvailable & (task.Context() == &worker.Context())) == false ||
-            (postTaskAvailable = worker.SetPostTaskDelegate(std::move(func))) == false ) {
+        if ((postTaskAvailable & (task.Context() == workerCtx)) == false ||
+            (postTaskAvailable = workerIFP->SetPostTaskDelegate(std::move(func))) == false ) {
             Assert_NoAssume(func);
 
             // stalled fibers are resumed through a task to let the current fiber dispatch
@@ -769,7 +777,7 @@ void FInterruptedTask::Resume(const TMemoryView<FInterruptedTask>& tasks) {
         }
     }
 
-    Assert_NoAssume(&worker == &FWorkerContext_::Get()); // didn't change thread
+    Assert_NoAssume(not workerIFP || workerIFP == &FWorkerContext_::Get()); // didn't change thread
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
