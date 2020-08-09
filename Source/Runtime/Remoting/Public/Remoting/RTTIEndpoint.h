@@ -17,7 +17,7 @@ public:
     virtual ~FRTTIEndpoint() NOEXCEPT;
 
 protected:
-    virtual void ProcessImpl(const FRemotingContext& ctx) override;
+    virtual void ProcessImpl(const FRemotingContext& ctx, const FStringView& relativePath) override;
 
 private:
     RTTI::PMetaTransaction _transaction;

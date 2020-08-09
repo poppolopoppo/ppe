@@ -41,69 +41,20 @@ RTTI_MODULE_DEF(, RTTI_Endpoint, Remoting);
 class FRemotingObject : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(, FRemotingObject, RTTI::FMetaObject);
 public:
+    FString Address;
+    u32 Port;
+
     explicit FRemotingObject(FRTTIEndpoint& rtti) NOEXCEPT
     :    _rtti(rtti) {
 
     }
 
-    /*
-    auto classes() const {
-        VECTOR(Remoting, RTTI::FName) results;
-        const RTTI::FMetaDatabaseReadable db;
-        const auto names = db->Classes().Keys();
-        results.insert(results.end(), names.begin(), names.end());
-        return results;
-    }
-
-    auto enums() const {
-        VECTOR(Remoting, RTTI::FName) results;
-        const RTTI::FMetaDatabaseReadable db;
-        const auto names = db->Enums().Keys();
-        results.insert(results.end(), names.begin(), names.end());
-        std::sort(results.begin(), results.end());
-        return results;
-    }
-
-    auto objects() const {
-        VECTOR(Remoting, RTTI::FPathName) results;
-        const RTTI::FMetaDatabaseReadable db;
-        const auto names = db->Objects().Keys();
-        results.insert(results.end(), names.begin(), names.end());
-        std::sort(results.begin(), results.end());
-        return results;
-    }
-
-    auto functions(const RTTI::PMetaObject& obj) const {
-        VECTOR(Remoting, FString) results;
-        if (obj) {
-            const RTTI::FMetaClass* const klass = obj->RTTI_Class();
-            for (const RTTI::FMetaFunction* f : klass->AllFunctions())
-                results.push_back(ToString(*f));
-            std::sort(results.begin(), results.end());
-        }
-        return results;
-    }
-
-    auto properties(const RTTI::PMetaObject& obj) const {
-        VECTOR(Remoting, RTTI::FName) results;
-        if (obj) {
-            const RTTI::FMetaClass* const klass = obj->RTTI_Class();
-            for (const RTTI::FMetaProperty* p : klass->AllProperties())
-                results.push_back(p->Name());
-            std::sort(results.begin(), results.end());
-        }
-        return results;
-    }*/
-
 private:
     FRTTIEndpoint& _rtti;
 };
 RTTI_CLASS_BEGIN(RTTI_Endpoint, FRemotingObject, Concrete)
-/*RTTI_FUNCTION(classes)
-RTTI_FUNCTION(objects)
-RTTI_FUNCTION(enums)
-RTTI_FUNCTION(functions, obj)
-RTTI_FUNCTION(properties, obj)*/
+RTTI_PROPERTY_PUBLIC_FIELD(Address)
+RTTI_PROPERTY_PUBLIC_FIELD(Port)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 template <typename _Query>
@@ -122,7 +73,7 @@ static void Dispatch_JsonQuery_(const FRemotingContext& ctx, _Query&& query) {
     json.ToStream(oss);
 }
 //----------------------------------------------------------------------------
-static void Dispatch_Object_(const FRemotingContext& ctx, const FStringView& id) {
+static void Dispatch_Object_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id) {
     switch (ctx.Request.Method()) {
     case Network::EHttpMethod::Get: break;
     case Network::EHttpMethod::Put: AssertNotImplemented(); // #TODO: call to property set, while reading the body
@@ -146,7 +97,7 @@ static void Dispatch_Object_(const FRemotingContext& ctx, const FStringView& id)
     });
 }
 //----------------------------------------------------------------------------
-static void Dispatch_PropertyGet_(const FRemotingContext& ctx, const FStringView& id, const FStringView& propName) {
+static void Dispatch_PropertyGet_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id, const RTTI::FLazyName& propName) {
     switch (ctx.Request.Method()) {
     case Network::EHttpMethod::Get: break;
     case Network::EHttpMethod::Put: AssertNotImplemented(); // #TODO: call to property set, while reading the body
@@ -180,7 +131,7 @@ static void Dispatch_PropertyGet_(const FRemotingContext& ctx, const FStringView
     });
 }
 //----------------------------------------------------------------------------
-static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const FStringView& id, const FStringView& funcName) {
+static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id, const RTTI::FLazyName& funcName) {
     // Parse function arguments asap, in the worker thread (less contention compared to sync)
     Serialize::FJson args;
 
@@ -278,7 +229,7 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const FStringVie
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FRTTIEndpoint::FRTTIEndpoint() NOEXCEPT
-:   IRemotingEndpoint("RTTI") {
+:   IRemotingEndpoint("/RTTI") {
     RTTI_MODULE(RTTI_Endpoint).Start();
 
     TRefPtr<FRemotingObject> o;
@@ -297,26 +248,42 @@ FRTTIEndpoint::~FRTTIEndpoint() NOEXCEPT {
     RTTI_MODULE(RTTI_Endpoint).Shutdown();
 }
 //----------------------------------------------------------------------------
-void FRTTIEndpoint::ProcessImpl(const FRemotingContext& ctx) {
-    Assert_NoAssume(ctx.Request.Uri().Path().StartsWith(_path));
-    FStringView module = ctx.Request.Uri().Path().CutStartingAt(_path.length());
-
-    FStringView identifier;
-    if (not SplitR(module, Network::FUri::PathSeparator, identifier)) {
+void FRTTIEndpoint::ProcessImpl(const FRemotingContext& ctx, const FStringView& relativePath) {
+    FStringView namespace_(relativePath), identifier;
+    if (not SplitR(namespace_, Network::FUri::PathSeparator, identifier) || namespace_.empty()) {
         ctx.pResponse->SetStatus(Network::EHttpStatus::BadRequest);
-        ctx.pResponse->SetReason(StringFormat("invalid path name: \"{0}\"", module));
+        ctx.pResponse->SetReason(StringFormat("invalid path name: \"{0}\"", namespace_));
         return;
     }
 
     ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_json());
 
-    FStringView subname;
-    if (SplitR(identifier, '-', subname)) // function
-        Dispatch_FunctionCall_(ctx, module.Concat_AssumeNotEmpty(identifier), subname);
-    else if (SplitR(identifier, '.', subname)) // property
-        Dispatch_PropertyGet_(ctx, module.Concat_AssumeNotEmpty(identifier), subname);
-    else // whole object
-        Dispatch_Object_(ctx, module.Concat_AssumeNotEmpty(identifier));
+    const auto sep = identifier.FindIf([](char c) {
+        return (c == '-' || c == '.');
+    });
+
+    void (*dispatch_subpart_f)(const FRemotingContext&, const RTTI::FLazyPathName&, const RTTI::FLazyName&) = nullptr;
+    FStringView subpart;
+    if (identifier.end() != sep) {
+        dispatch_subpart_f = (*sep == '-'
+            ? &Dispatch_FunctionCall_
+            : &Dispatch_PropertyGet_ );
+
+        subpart = identifier.CutStartingAt(sep + 1);
+        identifier = identifier.CutBefore(sep);
+    }
+
+    RTTI::FLazyPathName id{
+        RTTI::FLazyName(namespace_),
+        RTTI::FLazyName(identifier)
+    };
+
+    if (dispatch_subpart_f) { // function or property
+        dispatch_subpart_f(ctx, id, RTTI::FLazyName{ subpart });
+    }
+    else { // whole object
+        Dispatch_Object_(ctx, id);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

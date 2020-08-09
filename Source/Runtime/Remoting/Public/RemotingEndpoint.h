@@ -26,7 +26,7 @@ public:
     void Process(const FRemotingContext& ctx);
 
 protected:
-    virtual void ProcessImpl(const FRemotingContext& ctx) = 0;
+    virtual void ProcessImpl(const FRemotingContext& ctx, const FStringView& relativePath) = 0;
 
     const FString _path;
 };

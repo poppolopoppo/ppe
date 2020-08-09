@@ -23,7 +23,7 @@ namespace Remoting {
 void FRemotingContext::WaitForSync(FRemotingCallback&& callback) const NOEXCEPT {
     FCompletionPort cp;
     cp.Start(1);
-    Sync.Emplace([&cp, &callback](const FRemotingServer& srv) {
+    Sync.FireAndForget([&cp, &callback](const FRemotingServer& srv) {
         callback(srv);
         cp.OnJobComplete(); // resume remoting job on worker thread
     });
@@ -72,20 +72,17 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
     IRemotingEndpoint* pEndpoint = nullptr;
 
     const FStringView& path = request.Uri().Path();
-    auto sep = path.Find(PathSeparator);
+    Assert_NoAssume(PathSeparator == path.front());
+    auto sep = path.FindAfter(PathSeparator, path.begin()/* skip first */);
 
-    for (;;) {
-        const FStringView name = path.CutBefore(sep);
-        {
-            READSCOPELOCK(_barrierRW);
-            auto it = _endpoints.find(name);
-            if (_endpoints.end() != it) {
-                pEndpoint = it->second.get();
-                break;
-            }
-        }
-        sep = path.FindAfter(PathSeparator, sep);
-    }
+    const FStringView name = path.CutBefore(sep);
+	if (not name.empty()) {
+		READSCOPELOCK(_barrierRW);
+		auto it = _endpoints.find(name);
+		if (_endpoints.end() != it) {
+			pEndpoint = it->second.get();
+		}
+	}
 
     FRemotingResponse response;
     if (Likely(pEndpoint)) {
@@ -94,7 +91,7 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
         });
     }
     else {
-        response.SetStatus(Network::EHttpStatus::ServiceUnavailable);
+        response.SetStatus(Network::EHttpStatus::Forbidden);
         response.SetReason("No endpoint found");
     }
 
