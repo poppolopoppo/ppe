@@ -433,6 +433,9 @@ public:
     void Remove(const_iterator it);
     void Remove(reference data);
 
+    template <typename _Pred>
+    size_type RemoveIf(_Pred pred);
+
     void Clear(); // won't release memory
     void Clear_ReleaseMemory();
     void Reserve(size_t n);

@@ -294,7 +294,8 @@ void TSparseArray<T, _Allocator>::AddRange(_It first, _It last) {
     Assert_NoAssume(CheckInvariants());
 
     using iterator_t = Meta::TIteratorTraits<_It>;
-    AddRange_(first, last, typename iterator_t::iterator_category{});
+    if (first != last)
+        AddRange_(first, last, typename iterator_t::iterator_category{});
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -393,6 +394,23 @@ void TSparseArray<T, _Allocator>::Remove(reference data) {
     Assert(unpacked.Index < _highestIndex);
 
     ReleaseItem_(unpacked, it);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+template <typename _Pred>
+auto TSparseArray<T, _Allocator>::RemoveIf(_Pred pred) -> size_type {
+    Assert_NoAssume(CheckInvariants());
+
+    size_type numDeleted = 0;
+    for (auto end_ = end(), it = begin(); it != end_;) {
+        const auto cur = it++;
+        if (pred(*cur)) {
+            numDeleted++;
+            Remove(cur);
+        }
+    }
+
+    return numDeleted;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
