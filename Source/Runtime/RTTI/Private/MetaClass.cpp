@@ -105,13 +105,16 @@ const FMetaFunction* FMetaClass::FunctionIFP(const FName& name, EFunctionFlags f
 }
 //----------------------------------------------------------------------------
 const FMetaFunction* FMetaClass::FunctionIFP(const FStringView& name, EFunctionFlags flags/* = EFunctionFlags::All */, bool inherited/* = true */) const {
+    return FunctionIFP(FLazyName{ name }, flags, inherited);
+}
+//----------------------------------------------------------------------------
+const FMetaFunction* FMetaClass::FunctionIFP(const FLazyName& name, EFunctionFlags flags/* = EFunctionFlags::All */, bool inherited/* = true */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
 
     const FMetaFunction* pfunction;
     if (inherited) {
-        const hash_t h = FName::HashValue(name);
-        const auto it = _functionsAll.find_like(name, h);
+        const auto it = _functionsAll.find_like(name, name.HashValue());
         if (_functionsAll.end() == it)
             return nullptr;
         pfunction = it->second;
@@ -184,13 +187,16 @@ const FMetaProperty* FMetaClass::PropertyIFP(const FName& name, EPropertyFlags f
 }
 //----------------------------------------------------------------------------
 const FMetaProperty* FMetaClass::PropertyIFP(const FStringView& name, EPropertyFlags flags/* = EPropertyFlags::All */, bool inherited/* = true */) const {
+    return PropertyIFP(FLazyName{ name }, flags, inherited);
+}
+//----------------------------------------------------------------------------
+const FMetaProperty* FMetaClass::PropertyIFP(const FLazyName& name, EPropertyFlags flags/* = EPropertyFlags::All */, bool inherited/* = true */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
 
     const FMetaProperty* pproperty = nullptr;
     if (inherited) {
-        const hash_t h = FName::HashValue(name);
-        const auto it = _propertiesAll.find_like(name, h);
+        const auto it = _propertiesAll.find_like(name, name.HashValue());
         if (_propertiesAll.end() == it)
             return nullptr;
         pproperty = it->second;

@@ -104,9 +104,11 @@ public:
 
     bool RTTI_Function(const FName& funcName, const FMetaFunction** pFunc) const NOEXCEPT;
     bool RTTI_Function(const FStringView& funcName, const FMetaFunction** pFunc) const NOEXCEPT;
+    bool RTTI_Function(const FLazyName& funcName, const FMetaFunction** pFunc) const NOEXCEPT;
 
     bool RTTI_Property(const FName& propName, FAtom* pValue) const NOEXCEPT;
     bool RTTI_Property(const FStringView& propName, FAtom* pValue) const NOEXCEPT;
+    bool RTTI_Property(const FLazyName& propName, FAtom* pValue) const NOEXCEPT;
 
     bool RTTI_PropertyCopyFrom(const FName& propName, const FAtom& src);
     bool RTTI_PropertyCopyFrom(const FStringView& propName, const FAtom& src);

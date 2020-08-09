@@ -128,6 +128,10 @@ bool FMetaObject::RTTI_Function(const FName& funcName, const FMetaFunction** pFu
 }
 //----------------------------------------------------------------------------
 bool FMetaObject::RTTI_Function(const FStringView& funcName, const FMetaFunction** pFunc) const NOEXCEPT {
+    return RTTI_Function(FLazyName{ funcName }, pFunc);
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Function(const FLazyName& funcName, const FMetaFunction** pFunc) const NOEXCEPT {
     Assert_NoAssume(not funcName.empty());
     Assert(pFunc);
 
@@ -158,6 +162,10 @@ bool FMetaObject::RTTI_Property(const FName& propName, FAtom* pValue) const NOEX
 }
 //----------------------------------------------------------------------------
 bool FMetaObject::RTTI_Property(const FStringView& propName, FAtom* pValue) const NOEXCEPT {
+    return RTTI_Property(FLazyName{ propName }, pValue);
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Property(const FLazyName& propName, FAtom* pValue) const NOEXCEPT {
     Assert_NoAssume(not propName.empty());
     Assert(pValue);
 

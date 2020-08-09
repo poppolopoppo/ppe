@@ -85,6 +85,7 @@ public:
     const FMetaFunction& Function(const FName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
     const FMetaFunction* FunctionIFP(const FName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
     const FMetaFunction* FunctionIFP(const FStringView& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
+    const FMetaFunction* FunctionIFP(const FLazyName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
 
     virtual const FMetaFunction* OnMissingFunction(const FName& name, EFunctionFlags flags = EFunctionFlags::All) const;
 
@@ -103,6 +104,7 @@ public:
     const FMetaProperty& Property(const FName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
     const FMetaProperty* PropertyIFP(const FName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
     const FMetaProperty* PropertyIFP(const FStringView& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
+    const FMetaProperty* PropertyIFP(const FLazyName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
 
     virtual const FMetaProperty* OnMissingProperty(const FName& name, EPropertyFlags flags = EPropertyFlags::All) const;
 
