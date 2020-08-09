@@ -4,8 +4,8 @@
 #include "Container/TupleHelpers.h"
 #include "Memory/PtrRef.h"
 #include "Memory/RefPtr.h"
+#include "Meta/PointerWFlags.h"
 #include "Meta/TypeTraits.h"
-
 #include "Misc/Function_fwd.h"
 
 /*
@@ -364,6 +364,13 @@ struct TPayloadTraits< T, PFunctionPayload<T> > {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EFunctionFlags : u32 {
+    None            = 0,
+    FireAndForget   = 1<<0,
+    Unused          = 1<<1,
+};
+ENUM_FLAGS(EFunctionFlags);
+//----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args, size_t _InSitu>
 class TFunction<_Ret(_Args...), _InSitu> {
 public:
@@ -374,14 +381,14 @@ public:
     using vtable_type = typename traits_type::vtable_type;
 
 private:
-    const vtable_type* _vtable;
+    Meta::TPointerWFlags<const vtable_type> _vtable;
     embed_type _embed;
 
 public:
     CONSTEXPR TFunction() NOEXCEPT : TFunction(&traits_type::dummy_vtable) {}
-    CONSTEXPR explicit TFunction(const vtable_type* vtable) NOEXCEPT
-    :   _vtable(vtable)
-    {}
+    CONSTEXPR explicit TFunction(const vtable_type* vtable) NOEXCEPT {
+        _vtable.Reset(vtable);
+    }
 
     ~TFunction() NOEXCEPT {
         _vtable->Destroy(&_embed);
@@ -401,15 +408,18 @@ public:
     CONSTEXPR TFunction(TFunction&& rvalue) NOEXCEPT
     :   _vtable(rvalue._vtable) {
         _vtable->Move(&_embed, &rvalue._embed);
-        rvalue._vtable = &traits_type::dummy_vtable;
+        rvalue._vtable.Reset(&traits_type::dummy_vtable);
     }
     CONSTEXPR TFunction& operator =(TFunction&& rvalue) NOEXCEPT {
         _vtable->Destroy(&_embed);
         _vtable = rvalue._vtable;
         _vtable->Move(&_embed, &rvalue._embed);
-        rvalue._vtable = &traits_type::dummy_vtable;
+        rvalue._vtable.Reset(&traits_type::dummy_vtable);
         return (*this);
     }
+
+    EFunctionFlags Flags() const { return static_cast<EFunctionFlags>(_vtable.Flag01()); }
+    void SetFlags(EFunctionFlags flags) { _vtable.SetFlag01(static_cast<u32>(flags)); }
 
     CONSTEXPR bool Valid() const NOEXCEPT {
         return (not _vtable->IsDummy());
@@ -434,7 +444,7 @@ public:
 
     CONSTEXPR void Reset() NOEXCEPT {
         _vtable->Destroy(&_embed);
-        _vtable = &traits_type::dummy_vtable;
+        _vtable.Reset(&traits_type::dummy_vtable);
     }
 
     template <size_t S>

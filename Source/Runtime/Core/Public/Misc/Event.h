@@ -99,6 +99,13 @@ public:
 		_delegates.Emplace(std::move(rfunc));
 	}
 
+    void FireAndForget(FDelegate&& rfunc) {
+		Assert(rfunc);
+		const FScopeLock scopeLock(*this);
+		const auto it = _delegates.EmplaceIt(std::move(rfunc));
+		it->SetFlags(it->Flags() + EFunctionFlags::FireAndForget);
+    }
+
 	void Remove(FHandle& handle) {
 		Assert(handle);
 		const FScopeLock scopeLock(*this);
@@ -144,26 +151,24 @@ public:
         return (_delegates.empty() ? nullptr : this);
     }
 
-    void operator ()(_Args... args) const {
+    void operator ()(_Args... args) {
         Invoke(std::forward<_Args>(args)...);
     }
 
-    void Invoke(_Args... args) const {
+    void Invoke(_Args... args) {
         const FScopeLock scopeLock(*this);
-        for (auto& it : _delegates) {
-            it(std::forward<_Args>(args)...);
-        }
+        _delegates.RemoveIf([&](const FDelegate& fn) -> bool {
+            fn(std::forward<_Args>(args)...);
+            return (fn.Flags() & EFunctionFlags::FireAndForget);
+        });
     }
 
-	void FireAndForget(_Args... args) const {
-        FInvocationList tmp;
-        {
-            const FScopeLock scopeLock(*this);
-            tmp = std::move(_delegates);
-        }
-		for (auto& it : tmp) {
-		    it(std::forward<_Args>(args)...);
-		}
+	void FireAndForget(_Args... args) {
+        const FScopeLock scopeLock(*this);
+        _delegates.RemoveIf([&](const FDelegate& fn) -> bool {
+            fn(std::forward<_Args>(args)...);
+            return true; // remove all functions while iterating
+        });
 	}
 
     void Clear() {
