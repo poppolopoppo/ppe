@@ -92,6 +92,8 @@ module Build
                         return false unless validator[y]
                     end
                     return true
+                when nil,false
+                    return false
                 else
                     Log.fatal 'unsupported value <%s>: %s', x.class, x.inspect
                 end
@@ -107,7 +109,7 @@ module Build
                         return false unless validator[y]
                     end
                     return true
-                when nil
+                when nil,false
                     return false
                 else
                     Log.fatal 'unsupported value <%s>: %s', x.class, x.inspect

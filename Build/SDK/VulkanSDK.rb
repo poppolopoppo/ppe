@@ -10,9 +10,15 @@ module Build
 
     const_memoize(self, :VulkanSDK_Path) do
         sdkPath = Build.VULKAN_SDK || Build.VK_SDK_PATH
-        sdkVer = File.basename(sdkPath)
-        Log.log 'Vulkan: found SDK v%s in "%s"', sdkVer, sdkPath
-        File.expand_path(sdkPath)
+        if sdkPath
+            sdkVer = File.basename(sdkPath)
+            sdkPath = File.expand_path(sdkPath)
+            Log.log 'Vulkan: found SDK v%s in "%s"', sdkVer, sdkPath
+        else
+            sdkPath = VulkanDecorator.default_sdk_path
+            Log.warning 'Vulkan: didn\'t found the SDK, assuming default installation in "%s"', sdkPath
+        end
+        sdkPath
     end
 
     class VulkanDecorator < Decorator
@@ -38,6 +44,16 @@ module Build
                 defines << 'VK_USE_PLATFORM_WAYLAND_KHR'
                 libraryPaths << File.join(Build.VulkanSDK_Path, 'lib')
                 libraries << 'vulkan-1.a'
+            end
+        end
+        def self.default_sdk_path
+            case Build.os_name
+            when :Windows
+                return 'C:/Program Files (x86)/VulkanSDK'
+            when :Linux
+                return '/usr/share/lib/VulkanSDK'
+            else
+                Assert.unexpected(Build.os_name)
             end
         end
     end #~ VulkanDecorator
