@@ -32,7 +32,8 @@ module Build
         end
 
         completion = File.join($ExtrasPath,  script + '-completion.bash')
-        Log.info('Bash: generating bash completion script with %d aliases and %s options', aliases.length, interceptor.opts.length)
+        Log.info('Bash: export completion config to "%s"', completion)
+        Log.verbose('Bash: generating bash completion script with %d aliases and %s options', aliases.length, interceptor.opts.length)
 
         File.open(completion, 'w') do |fd|
             fd.puts '#/usr/bin/env bash'

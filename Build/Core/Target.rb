@@ -389,10 +389,10 @@ module Build
         ## format dependencies into a single string "depA,depB,depC"
         def dependency_list()
             all_dependencies.dup.
-                delete_if do |(dep, visibility)|
+                delete_if do |(dep)|
                     !dep.library?
                 end.
-                collect do |(dep, visibility)|
+                collect do |(dep)|
                     dep.abs_path.to_s
                 end
         end

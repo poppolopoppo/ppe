@@ -9,7 +9,7 @@ module Build
         if @@_interactive_.nil?
             @@_interactive_ = $stdout.isatty
             case ENV['TERM']
-            when 'xterm-256'
+            when 'xterm','xterm-256'
                 @@_interactive_ = true
             end
         end
