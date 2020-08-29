@@ -2,6 +2,7 @@
 
 #include "Core_fwd.h"
 
+#include "Container/Array.h"
 #include "Container/Hash.h"
 #include "Container/Pair.h"
 #include "HAL/PlatformMaths.h"
@@ -55,7 +56,7 @@ public:
     using pair_type = TPair<_Key, _Value>;
 
     template <size_t M, typename = std::enable_if_t<M <= N> >
-    CONSTEXPR bool Build(const pair_type (&values)[M]) NOEXCEPT {
+    CONSTEXPR bool Build(const TStaticArray<pair_type, M>& values) NOEXCEPT {
         // 1 -- prepare nodes and buckets to collect collisions
         node_t nodes[M] = {};
         list_t buckets[G] = {};
@@ -145,6 +146,13 @@ public:
     }
 
 private:
+    static CONSTEXPR auto addressof(const _Value& v) NOEXCEPT {
+        IF_CONSTEXPR(std::is_pointer_v<_Value>)
+            return v;
+        else
+            return std::addressof(v);
+    }
+
     struct keys_values_t {
         _Key Keys[N];
         _Value Values[N];
@@ -152,12 +160,12 @@ private:
             : Keys{}
             , Values{}
         {}
-        CONSTEXPR const _Value* get(size_t i, const _Key& k) const NOEXCEPT {
-            return (equalto_type()(Keys[i], k) ? &Values[i] : nullptr);
+        CONSTEXPR auto get(size_t i, const _Key& k) const NOEXCEPT {
+            return (equalto_type()(Keys[i], k) ? addressof(Values[i]) : nullptr);
         }
         template <typename _Pred>
-        CONSTEXPR const _Value* get(size_t i, const _Pred& pred) const NOEXCEPT {
-            return (pred(Keys[i]) ? &Values[i] : nullptr);
+        CONSTEXPR auto get(size_t i, const _Pred& pred) const NOEXCEPT {
+            return (pred(Keys[i]) ? addressof(Values[i]) : nullptr);
         }
         CONSTEXPR void set(size_t i, const _Key& k, const _Value& v) NOEXCEPT {
             Keys[i] = k;
@@ -210,7 +218,7 @@ private:
 template <bool _AlwaysExists, typename _Key, typename _Value, size_t N,
     typename _Hash = Meta::THash<_Key>,
     typename _EqualTo = Meta::TEqualTo<_Key> >
-CONSTEXPR auto MinimalPerfectHashMap(const TPair<_Key, _Value> (&values)[N],
+CONSTEXPR auto MinimalPerfectHashMap(const TStaticArray<TPair<_Key, _Value>, N>& values,
     _Hash hasher = _Hash{},
     _EqualTo equalTo = _EqualTo{} ) NOEXCEPT{
     CONSTEXPR size_t R = 5;
