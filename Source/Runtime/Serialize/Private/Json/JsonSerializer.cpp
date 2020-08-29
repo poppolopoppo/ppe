@@ -9,10 +9,11 @@
 #include "RTTI/AtomHelpers.h"
 #include "RTTI/AtomVisitor.h"
 #include "RTTI/NativeTypes.h"
-#include "RTTI/OpaqueData.h"
 #include "RTTI/Typedefs.h"
 #include "MetaClass.h"
 #include "MetaDatabase.h"
+#include "MetaEnum.h"
+#include "MetaModule.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 
@@ -90,10 +91,15 @@ enum class EJsonRTTI_ : u32 {
 };
 ENUM_FLAGS(EJsonRTTI_);
 //----------------------------------------------------------------------------
-static RTTI::FName Json_Class()         { return RTTI::FName("Class"); };
-static RTTI::FName Json_Name()          { return RTTI::FName("Name"); };
-static RTTI::FName Json_Flags()         { return RTTI::FName("Flags"); };
-static RTTI::FName Json_Properties()    { return RTTI::FName("Properties"); };
+static RTTI::FName Json_Class()         { return RTTI::FName("Class"); }
+static RTTI::FName Json_Name()          { return RTTI::FName("Name"); }
+static RTTI::FName Json_Parent()        { return RTTI::FName("Parent"); }
+static RTTI::FName Json_Flags()         { return RTTI::FName("Flags"); }
+static RTTI::FName Json_Functions()     { return RTTI::FName("Functions"); }
+static RTTI::FName Json_Properties()    { return RTTI::FName("Properties"); }
+static RTTI::FName Json_Traits()        { return RTTI::FName("Traits"); }
+static RTTI::FName Json_TypeId()        { return RTTI::FName("TypeId"); }
+static RTTI::FName Json_SizeInBytes()   { return RTTI::FName("SizeInBytes"); }
 //----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TJson_RTTI_traits;
@@ -707,6 +713,114 @@ void RTTI_to_Json(const FTransactionSaver& saved, FJson* dst) {
 
     for (const RTTI::SMetaObject& ref : saved.LoadedRefs())
         toJson.Append(ref.get(), arr.push_back_Default());
+}
+//----------------------------------------------------------------------------
+// Meta data reflection
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const RTTI::FMetaClass& klass, FJson* dst) {
+    Assert(dst);
+
+    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
+    obj[Json_Name()].Assign(ToString(klass.Name()));
+    obj[Json_Flags()].Assign(ToString(klass.Flags()));
+
+    if (klass.Parent())
+        obj[Json_Parent()].Assign(ToString(klass.Parent()->Name()));
+
+    FJson traits;
+    RTTI_to_Json(klass.MakeTraits(), &traits);
+    obj[Json_Traits()] = std::move(traits.Root());
+
+    FJson::FObject& funcs = obj[Json_Functions()].MakeDefault_AssumeNotValid<FJson::FObject>();
+    for (const auto& it : klass.AllFunctions()) {
+        FJson prop;
+        RTTI_to_Json(*it, &prop);
+        funcs[it->Name()] = std::move(prop.Root());
+    }
+
+    FJson::FObject& props = obj[Json_Properties()].MakeDefault_AssumeNotValid<FJson::FObject>();
+    for (const auto& it : klass.AllProperties()) {
+        FJson func;
+        RTTI_to_Json(*it, &func);
+        props[it->Name()] = std::move(func.Root());
+    }
+}
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const RTTI::FMetaFunction& func, FJson* dst) {
+    Assert(dst);
+
+    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
+    obj[Json_Name()].Assign(ToString(func.Name()));
+    obj[Json_Flags()].Assign(ToString(func.Flags()));
+
+    FJson traits;
+    if (func.Result()) {
+        RTTI_to_Json(func.Result(), &traits);
+        obj[RTTI::FName("Result")] = std::move(traits.Root());
+    }
+
+    FJson::FObject& prms = obj[RTTI::FName("Parameters")].MakeDefault_AssumeNotValid<FJson::FObject>();
+    for (const RTTI::FMetaParameter& it : func.Parameters()) {
+        FJson::FObject& prm = prms[it.Name()].MakeDefault_AssumeNotValid<FJson::FObject>();
+        prm[Json_Name()].Assign(ToString(it.Name()));
+        prm[Json_Flags()].Assign(ToString(it.Flags()));
+
+        RTTI_to_Json(it.Traits(), &traits);
+        prm[Json_Traits()] = std::move(traits.Root());
+    }
+}
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const RTTI::FMetaProperty& prop, FJson* dst) {
+    Assert(dst);
+
+    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
+    obj[Json_Name()].Assign(ToString(prop.Name()));
+    obj[Json_Flags()].Assign(ToString(prop.Flags()));
+
+    FJson traits;
+    RTTI_to_Json(prop.Traits(), &traits);
+    obj[Json_Traits()] = std::move(traits.Root());
+}
+
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const RTTI::FMetaModule& mod, FJson* dst) {
+    Assert(dst);
+
+    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
+    obj[Json_Name()].Assign(ToString(mod.Name()));
+
+    FJson traits;
+
+    FJson::FObject& classes = obj[RTTI::FName("Classes")].MakeDefault_AssumeNotValid<FJson::FObject>();
+    for (const RTTI::FMetaClass* it : mod.Classes()) {
+        FJson::FObject& mclass = classes[it->Name()].MakeDefault_AssumeNotValid<FJson::FObject>();
+        mclass[Json_Name()].Assign(ToString(it->Name()));
+        mclass[Json_Flags()].Assign(ToString(it->Flags()));
+
+        RTTI_to_Json(it->MakeTraits(), &traits);
+        mclass[Json_Traits()] = std::move(traits.Root());
+    }
+
+    FJson::FObject& enums = obj[RTTI::FName("Enums")].MakeDefault_AssumeNotValid<FJson::FObject>();
+    for (const RTTI::FMetaEnum* it : mod.Enums()) {
+        FJson::FObject& menum = enums[it->Name()].MakeDefault_AssumeNotValid<FJson::FObject>();
+        menum[Json_Name()].Assign(ToString(it->Name()));
+        menum[Json_Flags()].Assign(ToString(it->Flags()));
+
+        RTTI_to_Json(it->MakeTraits(), &traits);
+        menum[Json_Traits()] = std::move(traits.Root());
+    }
+}
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const RTTI::PTypeTraits& traits, FJson* dst) {
+    Assert(dst);
+    Assert(traits);
+
+    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
+    obj[Json_Name()].Assign(ToString(traits->TypeName()));
+    obj[Json_TypeId()].Assign(checked_cast<i64>(traits->TypeId()));
+    obj[Json_Flags()].Assign(ToString(traits->TypeFlags()));
+    obj[Json_SizeInBytes()].Assign(checked_cast<i64>(traits->SizeInBytes()));
 }
 //----------------------------------------------------------------------------
 // Json -> RTTI

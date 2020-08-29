@@ -15,10 +15,29 @@
 #include "Thread/Task/TaskContext.h"
 #include "Thread/ThreadContext.h"
 
+#include "IO/Format.h"
+
 namespace PPE {
 namespace Remoting {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void FRemotingContext::Failed(Network::EHttpStatus status, FString&& reason) const {
+    pResponse->SetStatus(status);
+    pResponse->SetReason(std::move(reason));
+}
+//----------------------------------------------------------------------------
+void FRemotingContext::BadRequest(const FStringView& what) const {
+    Failed(Network::EHttpStatus::BadRequest, StringFormat("bad request: {0}", what));
+}
+//----------------------------------------------------------------------------
+void FRemotingContext::ExpectationFailed(const FStringView& what) const {
+    Failed(Network::EHttpStatus::ExpectationFailed, StringFormat("expectation failed: {0}", what));
+}
+//----------------------------------------------------------------------------
+void FRemotingContext::NotFound(const FStringView& what) const {
+    Failed(Network::EHttpStatus::NotFound, StringFormat("failed to find: {0}", what));
+}
 //----------------------------------------------------------------------------
 void FRemotingContext::WaitForSync(FRemotingCallback&& callback) const NOEXCEPT {
     FCompletionPort cp;

@@ -457,31 +457,59 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& sli
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR auto MakeLowerIterable(const TBasicStringView<_Char>& str) NOEXCEPT {
+    return MakeOutputIterable(str.begin(), str.end(), &ToLower);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim>
+CONSTEXPR auto MakeLowerIterable(const _Char (&staticChars)[_Dim]) NOEXCEPT {
+    return MakeOutputIterable(std::begin(staticChars), std::end(staticChars), &ToLower);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR auto MakeUpperIterable(const TBasicStringView<_Char>& str) NOEXCEPT {
+    return MakeOutputIterable(str.begin(), str.end(), &ToUpper);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim>
+CONSTEXPR auto MakeUpperIterable(const _Char (&staticChars)[_Dim]) NOEXCEPT {
+    return MakeOutputIterable(std::begin(staticChars), std::end(staticChars), &ToUpper);
+}
+//----------------------------------------------------------------------------
+using FLowerIterable = decltype(MakeLowerIterable(std::declval<FStringView>()));
+using FWLowerIterable = decltype(MakeLowerIterable(std::declval<FWStringView>()));
+//----------------------------------------------------------------------------
+using FUpperIterable = decltype(MakeUpperIterable(std::declval<FStringView>()));
+using FWUpperIterable = decltype(MakeUpperIterable(std::declval<FWStringView>()));
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TCharEqualTo {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return lhs == rhs; }
+    CONSTEXPR bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return lhs == rhs; }
 };
 template <typename _Char>
 struct TCharEqualTo<_Char, ECase::Insensitive> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return ToLower(lhs) == ToLower(rhs); }
+    CONSTEXPR bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return ToLower(lhs) == ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TCharLess {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return lhs < rhs; }
+    CONSTEXPR bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return lhs < rhs; }
 };
 template <typename _Char>
 struct TCharLess<_Char, ECase::Insensitive> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return ToLower(lhs) < ToLower(rhs); }
+    CONSTEXPR bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return ToLower(lhs) < ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TCharCase {
-    _Char operator ()(const _Char& ch) const NOEXCEPT { return ch; }
+    CONSTEXPR _Char operator ()(const _Char& ch) const NOEXCEPT { return ch; }
 };
 template <typename _Char>
 struct TCharCase<_Char, ECase::Insensitive> {
-    _Char operator ()(const _Char& ch) const NOEXCEPT { return ToLower(ch); }
+    CONSTEXPR _Char operator ()(const _Char& ch) const NOEXCEPT { return ToLower(ch); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

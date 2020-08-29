@@ -21,6 +21,8 @@
 #include "Json/Json.h"
 
 #include "Allocator/Alloca.h"
+#include "Container/PerfectHashing.h"
+#include "Container/Stack.h"
 #include "Container/Vector.h"
 #include "IO/Format.h"
 #include "IO/String.h"
@@ -78,8 +80,7 @@ static void Dispatch_Object_(const FRemotingContext& ctx, const RTTI::FLazyPathN
     case Network::EHttpMethod::Get: break;
     case Network::EHttpMethod::Put: AssertNotImplemented(); // #TODO: call to property set, while reading the body
     default:
-        ctx.pResponse->SetReason("Only GET or PUT http query is supported");
-        ctx.pResponse->SetStatus(Network::EHttpStatus::BadRequest);
+        ctx.BadRequest("Only GET or PUT http query is supported");
         return;
     }
 
@@ -102,8 +103,7 @@ static void Dispatch_PropertyGet_(const FRemotingContext& ctx, const RTTI::FLazy
     case Network::EHttpMethod::Get: break;
     case Network::EHttpMethod::Put: AssertNotImplemented(); // #TODO: call to property set, while reading the body
     default:
-        ctx.pResponse->SetReason("Only GET or PUT http query is supported");
-        ctx.pResponse->SetStatus(Network::EHttpStatus::BadRequest);
+        ctx.BadRequest("Only GET or PUT http query is supported");
         return;
     }
 
@@ -143,14 +143,12 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLaz
 
         const auto it = get.FindLike(MakeStringView("json"));
         if (get.end() == it) {
-            ctx.pResponse->SetReason("Missing <json> parameter");
-            ctx.pResponse->SetStatus(Network::EHttpStatus::ExpectationFailed);
+            ctx.ExpectationFailed("missing <json> parameter");
             return;
         }
 
         if (not Serialize::FJson::Load(&args, L"HttpGet", it->second.MakeView())) {
-            ctx.pResponse->SetReason("Invalid <json> data");
-            ctx.pResponse->SetStatus(Network::EHttpStatus::ExpectationFailed);
+            ctx.ExpectationFailed("invalid <json> data");
             return;
         }
     }
@@ -160,14 +158,12 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLaz
         const FStringView bodyStr{ ctx.Request.Body().MakeView().Cast<const char>() };
 
         if (not Serialize::FJson::Load(&args, L"HttpPost", bodyStr)) {
-            ctx.pResponse->SetReason("Invalid <json> data");
-            ctx.pResponse->SetStatus(Network::EHttpStatus::ExpectationFailed);
+            ctx.ExpectationFailed("invalid <json> data");
         }
     }
         break;
     default:
-        ctx.pResponse->SetReason("Only GET or POST http query are supported");
-        ctx.pResponse->SetStatus(Network::EHttpStatus::BadRequest);
+        ctx.BadRequest("Only GET or POST http query are supported");
         return;
     }
 
@@ -176,13 +172,13 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLaz
 
         const RTTI::PMetaObject pObj{ db->ObjectIFP(id) };
         if (Unlikely(not pObj)) {
-            ctx.pResponse->SetReason(StringFormat("Object not found '{0}'", id));
+            ctx.NotFound(ToString(id));
             return Network::EHttpStatus::NotFound;
         }
 
         const RTTI::FMetaFunction* pFunc;
         if (Unlikely(not pObj->RTTI_Function(funcName, &pFunc))) {
-            ctx.pResponse->SetReason(StringFormat("Function not found <{0}::{1}()>",
+            ctx.NotFound(StringFormat("{0}::{1}()",
                 pObj->RTTI_Class()->Name(), funcName ));
             return Network::EHttpStatus::NotFound;
         }
@@ -224,6 +220,108 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLaz
     });
 }
 //----------------------------------------------------------------------------
+static void RTTIEndpoint_Class_(const FRemotingContext& ctx, const FStringView& args) {
+    switch (ctx.Request.Method()) {
+    case Network::EHttpMethod::Get: break;
+    default:
+        ctx.BadRequest("only HTTP Get is supported");
+        return;
+    }
+
+    Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+        const RTTI::FMetaDatabaseReadable db;
+        if (const RTTI::FMetaClass* const mclass = db->ClassIFP(args))
+            RTTI_to_Json(*mclass, &json);
+        else
+            ctx.NotFound(args);
+    });
+}
+//----------------------------------------------------------------------------
+static void RTTIEndpoint_Module_(const FRemotingContext& ctx, const FStringView& args) {
+    switch (ctx.Request.Method()) {
+    case Network::EHttpMethod::Get: break;
+    default:
+        ctx.BadRequest("only HTTP Get is supported");
+        return;
+    }
+
+    Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+        const RTTI::FMetaDatabaseReadable db;
+        if (const RTTI::FMetaModule* const mmodule = db->ModuleIFP(args))
+            RTTI_to_Json(*mmodule, &json);
+        else
+            ctx.NotFound(args);
+    });
+}
+//----------------------------------------------------------------------------
+static void RTTIEndpoint_Export_(const FRemotingContext& ctx, const FStringView& args) {
+    RTTI::FLazyPathName id;
+    FStringView path{ args }, subpart;
+    SplitR(path, '.', subpart);
+
+    if (not RTTI::FLazyPathName::Parse(&id, path)) {
+        ctx.BadRequest(path);
+        return;
+    }
+
+    if (subpart.empty())
+        Dispatch_Object_(ctx, id);
+    else if (subpart.EndsWith("()"))
+        Dispatch_FunctionCall_(ctx, id, RTTI::FLazyName{ subpart.ShiftBack(2) });
+    else
+        Dispatch_PropertyGet_(ctx, id, RTTI::FLazyName{ subpart });
+}
+//----------------------------------------------------------------------------
+static void RTTIEndpoint_Complete_(const FRemotingContext& ctx, const FStringView& args) {
+    switch (ctx.Request.Method()) {
+    case Network::EHttpMethod::Get: break;
+    default:
+        ctx.BadRequest("only HTTP Get is supported");
+        return;
+    }
+
+    struct FAutoCompleteResult {
+        int Distance;
+        RTTI::PTypeTraits Traits;
+        bool operator <(const FAutoCompleteResult& other) const NOEXCEPT {
+            return (Distance < other.Distance || (Distance == other.Distance &&
+                Traits->TypeName() < other.Traits->TypeName() ));
+        }
+        bool operator ==(const FAutoCompleteResult& other) const NOEXCEPT {
+            return (Traits == other.Traits);
+        }
+    };
+
+    Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+        STACKLOCAL_HEAP(FAutoCompleteResult, Meta::TLess<FAutoCompleteResult>{}, results, 10);
+        {
+            RTTI::FMetaDatabaseReadable db;
+            for (const RTTI::PTypeTraits& traits : db->Traits().Values())
+                results.PushHeap(EditDistanceI(traits->TypeName(), args), traits);
+        }
+
+        Serialize::FJson::FArray& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
+        arr.reserve(results.size());
+
+        Serialize::FJson traits;
+        for (const FAutoCompleteResult& it : results) {
+            RTTI_to_Json(it.Traits, &traits);
+            arr.emplace_back(std::move(traits.Root()));
+        }
+    });
+}
+//----------------------------------------------------------------------------
+using FRTTIMethodFunc_ = void(*)(const FRemotingContext& ctx, const FStringView& args);
+CONSTEXPR const auto GRTTIMethodDispatch_ = MinimalPerfectHashMap<
+    false, // has negative search
+    FStringView, FRTTIMethodFunc_, 4
+>({{
+    {  "class",     &RTTIEndpoint_Class_      },
+    {  "module",    &RTTIEndpoint_Module_     },
+    {  "export",    &RTTIEndpoint_Export_     },
+    {  "complete",  &RTTIEndpoint_Complete_   }
+}});
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -249,41 +347,21 @@ FRTTIEndpoint::~FRTTIEndpoint() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FRTTIEndpoint::ProcessImpl(const FRemotingContext& ctx, const FStringView& relativePath) {
-    FStringView namespace_(relativePath), identifier;
-    if (not SplitR(namespace_, Network::FUri::PathSeparator, identifier) || namespace_.empty()) {
-        ctx.pResponse->SetStatus(Network::EHttpStatus::BadRequest);
-        ctx.pResponse->SetReason(StringFormat("invalid path name: \"{0}\"", namespace_));
+    FStringView method(relativePath), args;
+    if (not Split(method, Network::FUri::PathSeparator, args)) {
+        ctx.BadRequest(relativePath);
+        return;
+    }
+
+    FRTTIMethodFunc_* const pFunc = GRTTIMethodDispatch_[method];
+    if (not pFunc) {
+        ctx.NotFound(method);
         return;
     }
 
     ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_json());
 
-    const auto sep = identifier.FindIf([](char c) {
-        return (c == '-' || c == '.');
-    });
-
-    void (*dispatch_subpart_f)(const FRemotingContext&, const RTTI::FLazyPathName&, const RTTI::FLazyName&) = nullptr;
-    FStringView subpart;
-    if (identifier.end() != sep) {
-        dispatch_subpart_f = (*sep == '-'
-            ? &Dispatch_FunctionCall_
-            : &Dispatch_PropertyGet_ );
-
-        subpart = identifier.CutStartingAt(sep + 1);
-        identifier = identifier.CutBefore(sep);
-    }
-
-    RTTI::FLazyPathName id{
-        RTTI::FLazyName(namespace_),
-        RTTI::FLazyName(identifier)
-    };
-
-    if (dispatch_subpart_f) { // function or property
-        dispatch_subpart_f(ctx, id, RTTI::FLazyName{ subpart });
-    }
-    else { // whole object
-        Dispatch_Object_(ctx, id);
-    }
+    (*pFunc)(ctx, args);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -45,6 +45,12 @@ PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaObject& obj, class FJson* d
 PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::PMetaObject& pobj, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const FTransactionSaver& saved, class FJson* dst);
 //----------------------------------------------------------------------------
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaClass& klass, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaFunction& func, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaProperty& prop, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaModule& mod, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::PTypeTraits& traits, class FJson* dst);
+//----------------------------------------------------------------------------
 PPE_SERIALIZE_API bool Json_to_RTTI(const class FJson& src, FTransactionLinker* link);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

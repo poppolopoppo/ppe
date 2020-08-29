@@ -127,7 +127,7 @@ void FMetaModule::Start() {
     }
     Assert_NoAssume(classIndex == _classCount);
 
-    /* Call OnRegister() on every classes, every parent are guaranted to be already constructed */
+    /* Call OnRegister() on every classes, every parent are guaranteed to be already constructed */
 
     for (FMetaClassHandle* phandle = _classHandles.Head(); phandle; phandle = phandle->_node.Next) {
         Assert(phandle->_class);
@@ -159,7 +159,7 @@ void FMetaModule::Shutdown() {
 
     _nameToken = FName();
 
-    /* Call OnRegister() on every classes, every parent are guaranted to be still alive */
+    /* Call OnRegister() on every classes, every parent are guaranteed to be still alive */
 
     for (FMetaClassHandle* phandle = _classHandles.Head(); phandle; phandle = phandle->_node.Next) {
         Assert(phandle->_class);

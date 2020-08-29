@@ -23,6 +23,11 @@ struct FRemotingContext {
     const FRemotingRequest& Request;
     TPublicEvent<FRemotingCallback, true>& Sync;
 
+    void Failed(Network::EHttpStatus status, FString&& reason) const;
+    void BadRequest(const FStringView& what) const;
+    void ExpectationFailed(const FStringView& what) const;
+    void NotFound(const FStringView& what) const;
+
     void WaitForSync(FRemotingCallback&& callback) const NOEXCEPT;
 };
 //----------------------------------------------------------------------------
