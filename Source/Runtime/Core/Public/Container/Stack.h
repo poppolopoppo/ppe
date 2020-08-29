@@ -294,12 +294,18 @@ public:
     typedef typename stack_type::const_pointer const_pointer;
     typedef typename stack_type::size_type size_type;
 
+    using iterator_category = typename stack_type::iterator_category;
+    using iterator = typename stack_type::const_iterator;
+
     explicit TStackHeapAdapter(const TMemoryView<T>& storage) : _stack(storage) {}
     TStackHeapAdapter(const TMemoryView<T>& storage, _Less&& pred) : _Less(std::move(pred)), _stack(storage) {}
 
     size_type capacity() const { return _stack.capacity(); }
     size_type size() const { return _stack.size(); }
     bool empty() const { return _stack.empty(); }
+
+    iterator begin() const { return _stack.begin(); }
+    iterator end() const { return _stack.end(); }
 
     const_pointer PeekHeap() const {
         return _stack.Peek();
