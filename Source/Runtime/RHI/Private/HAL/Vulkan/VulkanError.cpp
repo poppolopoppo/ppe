@@ -86,7 +86,6 @@ FTextWriter& operator <<(FTextWriter& oss, const FVulkanError& error) {
     case VK_OPERATION_DEFERRED_KHR: return oss << "VK_OPERATION_DEFERRED_KHR";
     case VK_OPERATION_NOT_DEFERRED_KHR: return oss << "VK_OPERATION_NOT_DEFERRED_KHR";
     case VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT: return oss << "VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT";
-    case VK_RESULT_RANGE_SIZE: return oss << "VK_RESULT_RANGE_SIZE";
     case VK_RESULT_MAX_ENUM: return oss << "VK_RESULT_MAX_ENUM";
     }
 
@@ -134,7 +133,6 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FVulkanError& error) {
     case VK_OPERATION_DEFERRED_KHR: return oss << L"VK_OPERATION_DEFERRED_KHR";
     case VK_OPERATION_NOT_DEFERRED_KHR: return oss << L"VK_OPERATION_NOT_DEFERRED_KHR";
     case VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT: return oss << L"VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT";
-    case VK_RESULT_RANGE_SIZE: return oss << L"VK_RESULT_RANGE_SIZE";
     case VK_RESULT_MAX_ENUM: return oss << L"VK_RESULT_MAX_ENUM";
     }
 
