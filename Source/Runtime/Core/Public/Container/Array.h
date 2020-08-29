@@ -43,51 +43,40 @@ struct TStaticArray {
 
     T Data[_Dim];
 
-    TStaticArray() = default;
-    TStaticArray(std::initializer_list<T> v) {
-        std::copy(v.begin(), v.end(), std::begin(Data));
-    }
+    NODISCARD iterator begin() { return MakeCheckedIterator(Data, 0); }
+    NODISCARD iterator end() { return MakeCheckedIterator(Data, _Dim); }
 
-    TStaticArray(const TStaticArray&) = default;
-    TStaticArray& operator =(const TStaticArray&) = default;
+    NODISCARD const_iterator begin() const { return MakeCheckedIterator(Data, 0); }
+    NODISCARD const_iterator end() const { return MakeCheckedIterator(Data, _Dim); }
 
-    TStaticArray(TStaticArray&&) = default;
-    TStaticArray& operator =(TStaticArray&&) = default;
+    NODISCARD reverse_iterator rbegin() { return reverse_iterator(end()); }
+    NODISCARD reverse_iterator rend() { return reverse_iterator(begin()); }
 
-    iterator begin() { return MakeCheckedIterator(Data, 0); }
-    iterator end() { return MakeCheckedIterator(Data, _Dim); }
+    NODISCARD const_reverse_iterator rbegin() const { return reverse_iterator(end()); }
+    NODISCARD const_reverse_iterator rend() const { return reverse_iterator(begin()); }
 
-    const_iterator begin() const { return MakeCheckedIterator(Data, 0); }
-    const_iterator end() const { return MakeCheckedIterator(Data, _Dim); }
+    CONSTEXPR reference at(size_t index) { Assert(index < _Dim); return Data[index]; }
+    CONSTEXPR const_reference at(size_t index) const { Assert(index < _Dim); return Data[index]; }
 
-    reverse_iterator rbegin() { return reverse_iterator(end()); }
-    reverse_iterator rend() { return reverse_iterator(begin()); }
+    CONSTEXPR reference operator [](size_t index) { return at(index); }
+    CONSTEXPR const_reference operator [](size_t index) const { return at(index); }
 
-    const_reverse_iterator rbegin() const { return reverse_iterator(end()); }
-    const_reverse_iterator rend() const { return reverse_iterator(begin()); }
+    CONSTEXPR pointer data() { return (&Data[0]); }
+    CONSTEXPR const_pointer data() const { return (&Data[0]); }
 
-    constexpr reference at(size_t index) { Assert(index < _Dim); return Data[index]; }
-    constexpr const_reference at(size_t index) const { Assert(index < _Dim); return Data[index]; }
+    CONSTEXPR TMemoryView<T> MakeView() { return PPE::MakeView(Data); }
+    CONSTEXPR TMemoryView<const T> MakeView() const { return PPE::MakeView(Data); }
+    CONSTEXPR TMemoryView<const T> MakeConstView() const { return PPE::MakeView(Data); }
 
-    constexpr reference operator [](size_t index) { return at(index); }
-    constexpr const_reference operator [](size_t index) const { return at(index); }
-
-    constexpr pointer data() { return (&Data[0]); }
-    constexpr const_pointer data() const { return (&Data[0]); }
-
-    TMemoryView<T> MakeView() { return PPE::MakeView(Data); }
-    TMemoryView<const T> MakeView() const { return PPE::MakeView(Data); }
-    TMemoryView<const T> MakeConstView() const { return PPE::MakeView(Data); }
-
-    inline friend bool operator ==(const TStaticArray& lhs, const TStaticArray& rhs) {
+    CONSTEXPR inline friend bool operator ==(const TStaticArray& lhs, const TStaticArray& rhs) {
         return std::equal(lhs.begin(), lhs.end(), rhs.Data);
     }
-    inline friend bool operator !=(const TStaticArray& lhs, const TStaticArray& rhs) {
+    CONSTEXPR inline friend bool operator !=(const TStaticArray& lhs, const TStaticArray& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
-    inline friend hash_t hash_value(const TStaticArray& arr) {
-        return hash_range(arr.Data, _Dim);
+    CONSTEXPR inline friend hash_t hash_value(const TStaticArray& arr) {
+        return hash_fwdit_constexpr(arr.Data, arr.Data + _Dim);
     }
 };
 //----------------------------------------------------------------------------
