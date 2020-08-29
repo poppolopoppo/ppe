@@ -275,45 +275,45 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
-    TCountingIterator(_Int it) : _it(it) {}
+    CONSTEXPR TCountingIterator(_Int it) : _it(it) {}
 
-    TCountingIterator(const TCountingIterator&) = default;
-    TCountingIterator& operator =(const TCountingIterator&) = default;
+    CONSTEXPR TCountingIterator(const TCountingIterator&) = default;
+    CONSTEXPR TCountingIterator& operator =(const TCountingIterator&) = default;
 
-    TCountingIterator& operator++() /* prefix */ { _it += _Inc; return *this; }
-    TCountingIterator& operator--() /* prefix */ { _it -= _Inc; return *this; }
+    CONSTEXPR TCountingIterator& operator++() /* prefix */ { _it += _Inc; return *this; }
+    CONSTEXPR TCountingIterator& operator--() /* prefix */ { _it -= _Inc; return *this; }
 
-    TCountingIterator operator++(int) /* postfix */ { const auto jt(_it); _it += _Inc; return TCountingIterator(jt); }
-    TCountingIterator operator--(int) /* postfix */ { const auto jt(_it); _it -= _Inc; return TCountingIterator(jt); }
+    CONSTEXPR TCountingIterator operator++(int) /* postfix */ { const auto jt(_it); _it += _Inc; return TCountingIterator(jt); }
+    CONSTEXPR TCountingIterator operator--(int) /* postfix */ { const auto jt(_it); _it -= _Inc; return TCountingIterator(jt); }
 
-    TCountingIterator& operator+=(difference_type n) { _it += n * _Inc; return *this; }
-    TCountingIterator& operator-=(difference_type n) { _it -= n * _Inc; return *this; }
+    CONSTEXPR TCountingIterator& operator+=(difference_type n) { _it += n * _Inc; return *this; }
+    CONSTEXPR TCountingIterator& operator-=(difference_type n) { _it -= n * _Inc; return *this; }
 
-    TCountingIterator operator+(difference_type n) const { return TCountingIterator(_it + n * _Inc); }
-    TCountingIterator operator-(difference_type n) const { return TCountingIterator(_it - n * _Inc); }
+    CONSTEXPR TCountingIterator operator+(difference_type n) const { return TCountingIterator(_it + n * _Inc); }
+    CONSTEXPR TCountingIterator operator-(difference_type n) const { return TCountingIterator(_it - n * _Inc); }
 
-    _Int operator*() const { return _it; }
+    CONSTEXPR _Int operator*() const { return _it; }
     //pointer operator->() const { return _it.operator ->(); }
 
-    _Int operator[](difference_type n) const { return (_it + n * _Inc); }
+    CONSTEXPR _Int operator[](difference_type n) const { return (_it + n * _Inc); }
 
-    difference_type operator-(const TCountingIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
+    CONSTEXPR difference_type operator-(const TCountingIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
 
-    bool operator==(const TCountingIterator& other) const { return (_it == other._it); }
-    bool operator!=(const TCountingIterator& other) const { return (_it != other._it); }
+    CONSTEXPR bool operator==(const TCountingIterator& other) const { return (_it == other._it); }
+    CONSTEXPR bool operator!=(const TCountingIterator& other) const { return (_it != other._it); }
 
-    bool operator< (const TCountingIterator& other) const { return (_it < other._it); }
-    bool operator> (const TCountingIterator& other) const { return (_it > other._it); }
+    CONSTEXPR bool operator< (const TCountingIterator& other) const { return (_it < other._it); }
+    CONSTEXPR bool operator> (const TCountingIterator& other) const { return (_it > other._it); }
 
-    bool operator<=(const TCountingIterator& other) const { return (_it <= other._it); }
-    bool operator>=(const TCountingIterator& other) const { return (_it >= other._it); }
+    CONSTEXPR bool operator<=(const TCountingIterator& other) const { return (_it <= other._it); }
+    CONSTEXPR bool operator>=(const TCountingIterator& other) const { return (_it >= other._it); }
 
 private:
     _Int _it;
 };
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
-TCountingIterator<_Int, _Inc> MakeCountingIterator(_Int it) {
+CONSTEXPR TCountingIterator<_Int, _Inc> MakeCountingIterator(_Int it) {
     return TCountingIterator<_Int, _Inc>(it);
 }
 //----------------------------------------------------------------------------
@@ -336,39 +336,39 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
-    TOutputIterator(_It it) : _it(it) {}
-    TOutputIterator(_It it, _Transform transform) : _it(it), _transform(transform) {}
+    CONSTEXPR TOutputIterator(_It it) : _it(it) {}
+    CONSTEXPR TOutputIterator(_It it, _Transform transform) : _it(it), _transform(transform) {}
 
-    TOutputIterator(const TOutputIterator& ) = default;
-    TOutputIterator& operator =(const TOutputIterator& ) = default;
+    CONSTEXPR TOutputIterator(const TOutputIterator& ) = default;
+    CONSTEXPR TOutputIterator& operator =(const TOutputIterator& ) = default;
 
-    TOutputIterator& operator++() /* prefix */ { ++_it; return *this; }
-    TOutputIterator& operator--() /* prefix */ { --_it; return *this; }
+    CONSTEXPR TOutputIterator& operator++() /* prefix */ { ++_it; return *this; }
+    CONSTEXPR TOutputIterator& operator--() /* prefix */ { --_it; return *this; }
 
-    TOutputIterator operator++(int) /* postfix */ { const auto jt(_it); ++_it; return TOutputIterator(jt); }
-    TOutputIterator operator--(int) /* postfix */ { const auto jt(_it); --_it; return TOutputIterator(jt); }
+    CONSTEXPR TOutputIterator operator++(int) /* postfix */ { const auto jt(_it); ++_it; return TOutputIterator(jt); }
+    CONSTEXPR TOutputIterator operator--(int) /* postfix */ { const auto jt(_it); --_it; return TOutputIterator(jt); }
 
-    TOutputIterator& operator+=(difference_type n) { _it += n; return *this; }
-    TOutputIterator& operator-=(difference_type n) { _it -= n; return *this; }
+    CONSTEXPR TOutputIterator& operator+=(difference_type n) { _it += n; return *this; }
+    CONSTEXPR TOutputIterator& operator-=(difference_type n) { _it -= n; return *this; }
 
-    TOutputIterator operator+(difference_type n) const { return TOutputIterator(_it + n); }
-    TOutputIterator operator-(difference_type n) const { return TOutputIterator(_it - n); }
+    CONSTEXPR TOutputIterator operator+(difference_type n) const { return TOutputIterator(_it + n); }
+    CONSTEXPR TOutputIterator operator-(difference_type n) const { return TOutputIterator(_it - n); }
 
-    decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator*() const { return _transform(*_it); }
+    CONSTEXPR decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator*() const { return _transform(*_it); }
     //pointer operator->() const { return _it.operator ->(); }
 
-    decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator[](difference_type n) const { return _transform(_it[n]); }
+    CONSTEXPR decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator[](difference_type n) const { return _transform(_it[n]); }
 
-    difference_type operator-(const TOutputIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
+    CONSTEXPR difference_type operator-(const TOutputIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
 
-    bool operator==(const TOutputIterator& other) const { return (_it == other._it); }
-    bool operator!=(const TOutputIterator& other) const { return (_it != other._it); }
+    CONSTEXPR bool operator==(const TOutputIterator& other) const { return (_it == other._it); }
+    CONSTEXPR bool operator!=(const TOutputIterator& other) const { return (_it != other._it); }
 
-    bool operator< (const TOutputIterator& other) const { return (_it <  other._it); }
-    bool operator> (const TOutputIterator& other) const { return (_it >  other._it); }
+    CONSTEXPR bool operator< (const TOutputIterator& other) const { return (_it <  other._it); }
+    CONSTEXPR bool operator> (const TOutputIterator& other) const { return (_it >  other._it); }
 
-    bool operator<=(const TOutputIterator& other) const { return (_it <= other._it); }
-    bool operator>=(const TOutputIterator& other) const { return (_it >= other._it); }
+    CONSTEXPR bool operator<=(const TOutputIterator& other) const { return (_it <= other._it); }
+    CONSTEXPR bool operator>=(const TOutputIterator& other) const { return (_it >= other._it); }
 
 private:
     _It _it;
@@ -376,7 +376,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
-TOutputIterator<_It, _Transform> MakeOutputIterator(const _It& it, const _Transform& transform) {
+CONSTEXPR TOutputIterator<_It, _Transform> MakeOutputIterator(const _It& it, const _Transform& transform) {
     return TOutputIterator<_It, _Transform>(it, transform);
 }
 //----------------------------------------------------------------------------
@@ -399,38 +399,38 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
-    TKeyIterator() NOEXCEPT {}
+    CONSTEXPR TKeyIterator() NOEXCEPT {}
 
-    explicit TKeyIterator(_It&& it) : _it(std::move(it)) {}
-    explicit TKeyIterator(const _It& it) : _it(it) {}
+    CONSTEXPR explicit TKeyIterator(_It&& it) : _it(std::move(it)) {}
+    CONSTEXPR explicit TKeyIterator(const _It& it) : _it(it) {}
 
-    TKeyIterator(const TKeyIterator&) = default;
-    TKeyIterator& operator =(const TKeyIterator&) = default;
+    CONSTEXPR TKeyIterator(const TKeyIterator&) = default;
+    CONSTEXPR TKeyIterator& operator =(const TKeyIterator&) = default;
 
-    const _It& inner() const { return _it; }
+    CONSTEXPR const _It& inner() const { return _it; }
 
-    TKeyIterator& operator++() /* prefix */ { _it.operator++(); return *this; }
-    TKeyIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TKeyIterator(jt); }
+    CONSTEXPR TKeyIterator& operator++() /* prefix */ { _it.operator++(); return *this; }
+    CONSTEXPR TKeyIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TKeyIterator(jt); }
 
-    reference operator*() const { return (_it->first); }
-    pointer operator->() const { return (&_it->first); }
+    CONSTEXPR reference operator*() const { return (_it->first); }
+    CONSTEXPR pointer operator->() const { return (&_it->first); }
 
-    void swap(TKeyIterator& other) { std::swap(_it, other._it); }
-    inline friend void swap(TKeyIterator& lhs, TKeyIterator& rhs) { lhs.swap(rhs); }
+    CONSTEXPR void swap(TKeyIterator& other) { std::swap(_it, other._it); }
+    CONSTEXPR inline friend void swap(TKeyIterator& lhs, TKeyIterator& rhs) { lhs.swap(rhs); }
 
     template <typename U>
-    bool operator ==(const TKeyIterator<U>& other) const { return (_it == other.inner()); }
+    CONSTEXPR bool operator ==(const TKeyIterator<U>& other) const { return (_it == other.inner()); }
     template <typename U>
-    bool operator !=(const TKeyIterator<U>& other) const { return (_it != other.inner()); }
+    CONSTEXPR bool operator !=(const TKeyIterator<U>& other) const { return (_it != other.inner()); }
 
 private:
     _It _it;
 };
 //----------------------------------------------------------------------------
 template <typename _It>
-TKeyIterator<_It> MakeKeyIterator(const _It& it) { return TKeyIterator<_It>(it); }
+CONSTEXPR TKeyIterator<_It> MakeKeyIterator(const _It& it) { return TKeyIterator<_It>(it); }
 template <typename _It>
-TKeyIterator<_It> MakeKeyIterator(_It&& it) { return TKeyIterator<_It>(std::move(it)); }
+CONSTEXPR TKeyIterator<_It> MakeKeyIterator(_It&& it) { return TKeyIterator<_It>(std::move(it)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -451,38 +451,38 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
-    TValueIterator() NOEXCEPT {}
+    TValueIterator() = default;
 
-    explicit TValueIterator(_It&& it) : _it(std::move(it)) {}
-    explicit TValueIterator(const _It& it) : _it(it) {}
+    CONSTEXPR explicit TValueIterator(_It&& it) : _it(std::move(it)) {}
+    CONSTEXPR explicit TValueIterator(const _It& it) : _it(it) {}
 
-    TValueIterator(const TValueIterator&) = default;
-    TValueIterator& operator =(const TValueIterator&) = default;
+    CONSTEXPR TValueIterator(const TValueIterator&) = default;
+    CONSTEXPR TValueIterator& operator =(const TValueIterator&) = default;
 
-    const _It& inner() const { return _it; }
+    CONSTEXPR const _It& inner() const { return _it; }
 
-    TValueIterator& operator++() /* prefix */ { _it.operator++(); return *this; }
-    TValueIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TValueIterator(jt); }
+    CONSTEXPR TValueIterator& operator++() /* prefix */ { _it.operator++(); return *this; }
+    CONSTEXPR TValueIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TValueIterator(jt); }
 
-    reference operator*() const { return (_it->second); }
-    pointer operator->() const { return (&_it->second); }
+    CONSTEXPR reference operator*() const { return (_it->second); }
+    CONSTEXPR pointer operator->() const { return (&_it->second); }
 
-    void swap(TValueIterator& other) { std::swap(_it, other._it); }
-    inline friend void swap(TValueIterator& lhs, TValueIterator& rhs) { lhs.swap(rhs); }
+    CONSTEXPR void swap(TValueIterator& other) { std::swap(_it, other._it); }
+    CONSTEXPR friend void swap(TValueIterator& lhs, TValueIterator& rhs) { lhs.swap(rhs); }
 
     template <typename U>
-    bool operator ==(const TValueIterator<U>& other) const { return (_it == other.inner()); }
+    CONSTEXPR bool operator ==(const TValueIterator<U>& other) const { return (_it == other.inner()); }
     template <typename U>
-    bool operator !=(const TValueIterator<U>& other) const { return (_it != other.inner()); }
+    CONSTEXPR bool operator !=(const TValueIterator<U>& other) const { return (_it != other.inner()); }
 
 private:
     _It _it;
 };
 //----------------------------------------------------------------------------
 template <typename _It>
-TValueIterator<_It> MakeValueIterator(const _It& it) { return TValueIterator<_It>(it); }
+CONSTEXPR TValueIterator<_It> MakeValueIterator(const _It& it) { return TValueIterator<_It>(it); }
 template <typename _It>
-TValueIterator<_It> MakeValueIterator(_It&& it) { return TValueIterator<_It>(std::move(it)); }
+CONSTEXPR TValueIterator<_It> MakeValueIterator(_It&& it) { return TValueIterator<_It>(std::move(it)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -553,29 +553,29 @@ CONSTEXPR TIterable<const T*> MakeIterable(const T (&arr)[N]) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TIterable< decltype(std::declval<T&>().begin()) > MakeIterable(T& container) NOEXCEPT {
+CONSTEXPR TIterable< decltype(std::declval<T&>().begin()) > MakeIterable(T& container) NOEXCEPT {
     return MakeIterable(std::begin(container), std::end(container));
 }
 template <typename T>
-TIterable< decltype(std::declval<const T&>().begin()) > MakeConstIterable(const T& container) NOEXCEPT {
+CONSTEXPR TIterable< decltype(std::declval<const T&>().begin()) > MakeConstIterable(const T& container) NOEXCEPT {
     return MakeIterable(std::begin(container), std::end(container));
 }
 //----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
-TIterable<TOutputIterator<_It, _Transform>> MakeOutputIterable(_It first, _It last, _Transform&& transform) NOEXCEPT {
+CONSTEXPR TIterable<TOutputIterator<_It, _Transform>> MakeOutputIterable(_It first, _It last, _Transform&& transform) NOEXCEPT {
     return MakeIterable(
         TOutputIterator<_It, _Transform>(first, transform),
         TOutputIterator<_It, _Transform>(last, transform) );
 }
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
-TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int first, _Int last) NOEXCEPT {
+CONSTEXPR TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int first, _Int last) NOEXCEPT {
     return MakeIterable(TCountingIterator<_Int, _Inc>(first),
                         TCountingIterator<_Int, _Inc>(last) );
 }
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
-TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int count) NOEXCEPT {
+CONSTEXPR TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int count) NOEXCEPT {
     return MakeInterval(_Int(0), count);
 }
 //----------------------------------------------------------------------------
@@ -598,7 +598,7 @@ namespace Meta {
 // Construct/Destroy ranges
 //----------------------------------------------------------------------------
 template <typename _It, typename... _Args>
-void Construct(const TIterable<_It>& range, _Args&&... args) {
+CONSTEXPR void Construct(const TIterable<_It>& range, _Args&&... args) {
     using value_type = typename TIterable<_It>::value_type;
     IF_CONSTEXPR(sizeof...(args) || not Meta::has_trivial_constructor<value_type>::value) {
         for (auto& it : range)
@@ -610,7 +610,7 @@ void Construct(const TIterable<_It>& range, _Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename _It>
-void Destroy(const TIterable<_It>& range) {
+CONSTEXPR void Destroy(const TIterable<_It>& range) {
     using value_type = typename TIterable<_It>::value_type;
     IF_CONSTEXPR(not Meta::has_trivial_destructor<value_type>::value) {
         for (auto& it : range)
