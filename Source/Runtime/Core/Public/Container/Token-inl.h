@@ -35,7 +35,7 @@ auto TToken<_Tag, _Char, _Sensitive, _TokenTraits>::FindOrAdd_(const lazytoken_t
         return nullptr;
 
     Assert(lazy.data());
-    Assert_NoAssume(IsValidToken(lazy.MakeView()));
+    AssertRelease_NoAssume(lazy.Valid());
 
     FTokenFactory& factory = token_traits::Factory();
     const handle_type* head = nullptr;

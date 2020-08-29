@@ -336,6 +336,8 @@ public:
         std::swap(_hash, other._hash);
     }
 
+    bool Valid() const { return IsValidToken(_str); }
+
     bool Equals(const TLazyToken& other) const { return (_hash == other._hash && equalto_type{}(_str, other._str)); }
     bool Less(const TLazyToken& other) const { return (less_type{}(_str, other._str)); }
 
@@ -352,7 +354,6 @@ public:
     static bool IsValidToken(const stringview_type & str) {
         return PPE::IsValidToken<token_traits>(str);
     }
-
 
     friend bool operator ==(const TLazyToken& lhs, const TLazyToken& rhs) { return lhs.Equals(rhs); }
     friend bool operator !=(const TLazyToken& lhs, const TLazyToken& rhs) { return !operator ==(lhs, rhs); }
