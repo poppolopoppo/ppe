@@ -152,11 +152,11 @@ public:
     TMemoryView<T> TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
     TMemoryView<T> TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
 
-    TMemoryView<T> ShiftBack() const { Assert(_size > 0); return TMemoryView<T>(_storage, _size - 1); }
-    TMemoryView<T> ShiftFront() const { Assert(_size > 0); return TMemoryView<T>(_storage + 1, _size - 1); }
+    TMemoryView<T> ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage, _size - n); }
+    TMemoryView<T> ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage + n, _size - n); }
 
-    TMemoryView<T> GrowBack() const { return TMemoryView<T>(_storage, _size + 1); }
-    TMemoryView<T> GrowFront() const { return TMemoryView<T>(_storage - 1, _size + 1); }
+    TMemoryView<T> GrowBack(const size_type n = 1) const { return TMemoryView<T>(_storage, _size + n); }
+    TMemoryView<T> GrowFront(const size_type n = 1) const { return TMemoryView<T>(_storage - n, _size + n); }
 
     template <typename U>
     bool IsSubRangeOf(const TMemoryView<U>& parent) const {
