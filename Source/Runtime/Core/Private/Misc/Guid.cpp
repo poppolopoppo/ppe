@@ -108,7 +108,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FGuid& guid) {
         << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << guid.Data.as_rfc.G3
         << L'-'
         << FTextFormat::Hexadecimal << FTextFormat::PadLeft(12, L'0') << guid.Data.as_rfc.G4
-        << '}'
+        << L'}'
         << fmt;
     return oss;
 }
