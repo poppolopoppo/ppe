@@ -6,6 +6,8 @@
 
 #include "RemotingEndpoint.h"
 
+#include "Container/StringHashMap.h"
+
 namespace PPE {
 namespace Remoting {
 //----------------------------------------------------------------------------
@@ -21,6 +23,9 @@ protected:
 
 private:
     RTTI::PMetaTransaction _transaction;
+
+    using FDispatchFunc = void(*)(const FRemotingContext& ctx, const FStringView& args);
+    STRINGVIEW_HASHMAP_MEMOIZE(Remoting, FDispatchFunc, ECase::Insensitive) _dispatch;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

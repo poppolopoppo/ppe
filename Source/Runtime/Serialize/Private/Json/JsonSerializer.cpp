@@ -16,6 +16,7 @@
 #include "MetaModule.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
+#include "MetaTransaction.h"
 
 #include "Container/HashMap.h"
 #include "Container/RawStorage.h"
@@ -96,6 +97,7 @@ static RTTI::FName Json_Name()          { return RTTI::FName("Name"); }
 static RTTI::FName Json_Parent()        { return RTTI::FName("Parent"); }
 static RTTI::FName Json_Flags()         { return RTTI::FName("Flags"); }
 static RTTI::FName Json_Functions()     { return RTTI::FName("Functions"); }
+static RTTI::FName Json_Module()        { return RTTI::FName("Module"); }
 static RTTI::FName Json_Properties()    { return RTTI::FName("Properties"); }
 static RTTI::FName Json_Traits()        { return RTTI::FName("Traits"); }
 static RTTI::FName Json_TypeId()        { return RTTI::FName("TypeId"); }
@@ -703,47 +705,93 @@ void RTTI_to_Json(const RTTI::PMetaObject& pobj, FJson* dst) {
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const FTransactionSaver& saved, FJson* dst) {
+	RTTI_to_Json(saved.LoadedRefs(), dst);
+}
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const TMemoryView<const RTTI::SMetaObject>& objs, class FJson* dst) {
+	Assert(dst);
+
+	FRTTI_to_Json_ toJson;
+	toJson.reserve(objs.size());
+
+	FJson::FArray& arr = dst->Root().MakeDefault_AssumeNotValid<FJson::FArray>();
+	arr.reserve_AssumeEmpty(objs.size());
+
+	for (const RTTI::SMetaObject& ref : objs)
+		toJson.Append(ref.get(), arr.push_back_Default());
+}
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const TMemoryView<const RTTI::SCMetaTransaction>& mnamespace, class FJson* dst) {
     Assert(dst);
 
-    FRTTI_to_Json_ toJson;
-    toJson.reserve(saved.LoadedRefs().size());
+    const size_t numObjs = mnamespace.MapReduce(
+        [](const RTTI::SCMetaTransaction& n) { return n->Linearized().LoadedRefs.size(); },
+        [](size_t a, size_t b) { return a + b; });
 
-    FJson::FArray& arr = dst->Root().MakeDefault_AssumeNotValid<FJson::FArray>();
-    arr.reserve_AssumeEmpty(saved.LoadedRefs().size());
+	FRTTI_to_Json_ toJson;
+	toJson.reserve(numObjs);
 
-    for (const RTTI::SMetaObject& ref : saved.LoadedRefs())
-        toJson.Append(ref.get(), arr.push_back_Default());
+	FJson::FArray& arr = dst->Root().MakeDefault_AssumeNotValid<FJson::FArray>();
+	arr.reserve_AssumeEmpty(numObjs);
+
+    for (const RTTI::SCMetaTransaction& tr : mnamespace) {
+        for (const RTTI::SMetaObject& ref : tr->Linearized().LoadedRefs)
+            toJson.Append(ref.get(), arr.push_back_Default());
+    }
 }
 //----------------------------------------------------------------------------
 // Meta data reflection
 //----------------------------------------------------------------------------
-void RTTI_to_Json(const RTTI::FMetaClass& klass, FJson* dst) {
+void RTTI_to_Json(const RTTI::FMetaClass& mclass, FJson* dst) {
     Assert(dst);
 
     FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    obj[Json_Name()].Assign(ToString(klass.Name()));
-    obj[Json_Flags()].Assign(ToString(klass.Flags()));
+    obj[Json_Name()].Assign(ToString(mclass.Name()));
+    obj[Json_Flags()].Assign(ToString(mclass.Flags()));
 
-    if (klass.Parent())
-        obj[Json_Parent()].Assign(ToString(klass.Parent()->Name()));
+    if (mclass.Module())
+        obj[Json_Module()].Assign(ToString(mclass.Module()->Name()));
+
+    if (mclass.Parent())
+        obj[Json_Parent()].Assign(ToString(mclass.Parent()->Name()));
 
     FJson traits;
-    RTTI_to_Json(klass.MakeTraits(), &traits);
+    RTTI_to_Json(mclass.MakeTraits(), &traits);
     obj[Json_Traits()] = std::move(traits.Root());
 
     FJson::FObject& funcs = obj[Json_Functions()].MakeDefault_AssumeNotValid<FJson::FObject>();
-    for (const auto& it : klass.AllFunctions()) {
+    for (const auto& it : mclass.AllFunctions()) {
         FJson prop;
         RTTI_to_Json(*it, &prop);
         funcs[it->Name()] = std::move(prop.Root());
     }
 
     FJson::FObject& props = obj[Json_Properties()].MakeDefault_AssumeNotValid<FJson::FObject>();
-    for (const auto& it : klass.AllProperties()) {
+    for (const auto& it : mclass.AllProperties()) {
         FJson func;
         RTTI_to_Json(*it, &func);
         props[it->Name()] = std::move(func.Root());
     }
+}
+//----------------------------------------------------------------------------
+void RTTI_to_Json(const RTTI::FMetaEnum& menum, FJson* dst) {
+	Assert(dst);
+
+	FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
+	obj[Json_Name()].Assign(ToString(menum.Name()));
+	obj[Json_Flags()].Assign(ToString(menum.Flags()));
+
+	if (menum.Module())
+		obj[Json_Module()].Assign(ToString(menum.Module()->Name()));
+
+	FJson traits;
+	RTTI_to_Json(menum.MakeTraits(), &traits);
+	obj[Json_Traits()] = std::move(traits.Root());
+
+	FJson::FObject& values = obj[Json_Functions()].MakeDefault_AssumeNotValid<FJson::FObject>();
+	for (const auto& it : menum.Values()) {
+		values[it.Name].Assign(it.Value);
+	}
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const RTTI::FMetaFunction& func, FJson* dst) {

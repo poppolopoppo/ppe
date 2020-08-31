@@ -44,8 +44,11 @@ PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FAtom& atom, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaObject& obj, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::PMetaObject& pobj, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const FTransactionSaver& saved, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const TMemoryView<const RTTI::SMetaObject>& objs, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const TMemoryView<const RTTI::SCMetaTransaction>& mnamespace, class FJson* dst);
 //----------------------------------------------------------------------------
-PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaClass& klass, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaClass& mclass, class FJson* dst);
+PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaEnum& menum, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaFunction& func, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaProperty& prop, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaModule& mod, class FJson* dst);

@@ -101,7 +101,7 @@ TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FName& 
 
 #if USE_PPE_ASSERT
     for (const SCMetaTransaction& t : v) {
-        Assert_NoAssume(t->IsLoaded());
+        Assert_NoAssume(t->IsMounted());
     }
 #endif
 
@@ -123,7 +123,7 @@ TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FLazyNa
 
 #if USE_PPE_ASSERT
     for (const SCMetaTransaction& t : v) {
-        Assert_NoAssume(t->IsLoaded());
+        Assert_NoAssume(t->IsMounted());
     }
 #endif
 

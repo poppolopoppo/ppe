@@ -112,6 +112,7 @@ public:
         RTTI::FTypeId TypeId() const { return RTTI::FAny::Traits()->TypeId(); }
 
         void Reset() { RTTI::FAny::Reset(); }
+        bool Valid() const { return RTTI::FAny::Valid(); }
 
         friend bool operator ==(const FValue& lhs, const FValue& rhs) NOEXCEPT { return lhs.Equals(rhs); }
         friend bool operator !=(const FValue& lhs, const FValue& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }

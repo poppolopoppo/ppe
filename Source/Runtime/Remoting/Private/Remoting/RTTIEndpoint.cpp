@@ -21,8 +21,8 @@
 #include "Json/Json.h"
 
 #include "Allocator/Alloca.h"
+#include "Container/MinMaxHeap.h"
 #include "Container/PerfectHashing.h"
-#include "Container/Stack.h"
 #include "Container/Vector.h"
 #include "IO/Format.h"
 #include "IO/String.h"
@@ -43,9 +43,6 @@ RTTI_MODULE_DEF(, RTTI_Endpoint, Remoting);
 class FRemotingObject : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(, FRemotingObject, RTTI::FMetaObject);
 public:
-    FString Address;
-    u32 Port;
-
     explicit FRemotingObject(FRTTIEndpoint& rtti) NOEXCEPT
     :    _rtti(rtti) {
 
@@ -55,24 +52,35 @@ private:
     FRTTIEndpoint& _rtti;
 };
 RTTI_CLASS_BEGIN(RTTI_Endpoint, FRemotingObject, Concrete)
-RTTI_PROPERTY_PUBLIC_FIELD(Address)
-RTTI_PROPERTY_PUBLIC_FIELD(Port)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 template <typename _Query>
 static void Dispatch_JsonQuery_(const FRemotingContext& ctx, _Query&& query) {
     Serialize::FJson json;
-    Network::EHttpStatus status = Network::EHttpStatus::OK;
 
-    ctx.WaitForSync([&query, &json, &status](const FRemotingServer&) {
+    ctx.WaitForSync([&query, &json](const FRemotingServer&) {
         AssertIsMainThread();
-        status = query(json);
+        query(json);
     });
 
-    ctx.pResponse->SetStatus(status);
+    if (json.Root().Valid()) {
+        FTextWriter oss(&ctx.pResponse->Body());
+        json.ToStream(oss);
+    }
+}
+//----------------------------------------------------------------------------
+static void Dispatch_Namespace_(const FRemotingContext& ctx, const RTTI::FLazyName& id) {
+	switch (ctx.Request.Method()) {
+	case Network::EHttpMethod::Get: break;
+	default:
+		ctx.BadRequest("Only GET http query is supported");
+		return;
+	}
 
-    FTextWriter oss(&ctx.pResponse->Body());
-    json.ToStream(oss);
+	Dispatch_JsonQuery_(ctx, [&](Serialize::FJson& json) {
+		const RTTI::FMetaDatabaseReadable db;
+        RTTI_to_Json(db->TransactionIFP(id), &json);
+	});
 }
 //----------------------------------------------------------------------------
 static void Dispatch_Object_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id) {
@@ -87,14 +95,10 @@ static void Dispatch_Object_(const FRemotingContext& ctx, const RTTI::FLazyPathN
     Dispatch_JsonQuery_(ctx, [&](Serialize::FJson& json) {
         const RTTI::FMetaDatabaseReadable db;
 
-        if (const RTTI::PMetaObject pObj{ db->ObjectIFP(id) }) {
+        if (const RTTI::PMetaObject pObj{ db->ObjectIFP(id) })
             Serialize::RTTI_to_Json(pObj, &json);
-            return Network::EHttpStatus::OK;
-        }
-        else {
-            ctx.pResponse->SetReason(StringFormat("Object not found '{0}'", id));
-            return Network::EHttpStatus::NotFound;
-        }
+        else
+            ctx.NotFound(ToString(id));
     });
 }
 //----------------------------------------------------------------------------
@@ -113,21 +117,14 @@ static void Dispatch_PropertyGet_(const FRemotingContext& ctx, const RTTI::FLazy
         if (const RTTI::PMetaObject pObj{ db->ObjectIFP(id) }) {
             RTTI::FAtom value;
 
-            if (pObj->RTTI_Property(propName, &value)) {
+            if (pObj->RTTI_Property(propName, &value))
                 Serialize::RTTI_to_Json(value, &json);
-                return Network::EHttpStatus::OK;
-            }
-            else {
-                ctx.pResponse->SetReason(StringFormat("Property not found <{0}::{1}>",
+            else
+                ctx.NotFound(StringFormat("{0}::{1}",
                     pObj->RTTI_Class()->Name(), propName ));
-                return Network::EHttpStatus::NotFound;
-            }
-
         }
-        else {
-            ctx.pResponse->SetReason(StringFormat("Object not found '{0}'", id));
-            return Network::EHttpStatus::NotFound;
-        }
+        else
+            ctx.NotFound(ToString(id));
     });
 }
 //----------------------------------------------------------------------------
@@ -173,14 +170,14 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLaz
         const RTTI::PMetaObject pObj{ db->ObjectIFP(id) };
         if (Unlikely(not pObj)) {
             ctx.NotFound(ToString(id));
-            return Network::EHttpStatus::NotFound;
+            return;
         }
 
         const RTTI::FMetaFunction* pFunc;
         if (Unlikely(not pObj->RTTI_Function(funcName, &pFunc))) {
             ctx.NotFound(StringFormat("{0}::{1}()",
                 pObj->RTTI_Class()->Name(), funcName ));
-            return Network::EHttpStatus::NotFound;
+            return;
         }
 
         STACKLOCAL_POD_ARRAY(RTTI::FAtom, call, pFunc->Parameters().size());
@@ -192,9 +189,10 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLaz
 
             if (Unlikely(it == input.end())) {
                 if (not prm.IsOptional()) {
-                    ctx.pResponse->SetReason(StringFormat("Missing mandatory parameter <{0}> for {1}::{2}()",
+                    ctx.Failed(Network::EHttpStatus::NotAcceptable,
+                        StringFormat("Missing mandatory parameter <{0}> for {1}::{2}()",
                         prm.Name(), pObj->RTTI_Class()->Name(), pFunc->Name() ));
-                    return Network::EHttpStatus::NotAcceptable;
+                    return;
                 }
 
                 AssertNotImplemented(); // #TODO: should fill <call> array with the default value ?
@@ -208,15 +206,13 @@ static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLaz
         }
 
         STACKLOCAL_ATOM(result, pFunc->Result());
-        if (pFunc->InvokeIFP(*pObj, result, call)) {
+        if (pFunc->InvokeIFP(*pObj, result, call))
             RTTI_to_Json(result, &json);
-            return Network::EHttpStatus::OK;
-        }
-        else {
-            ctx.pResponse->SetReason(StringFormat("Call to function {0}::{1}() on <{2}> failed",
+        else
+            ctx.Failed(
+                Network::EHttpStatus::NotAcceptable,
+                StringFormat("Call to function {0}::{1}() on <{2}> failed",
                 pObj->RTTI_Class()->Name(), pFunc->Name(), pObj->RTTI_PathName() ));
-            return Network::EHttpStatus::NotAcceptable;
-        }
     });
 }
 //----------------------------------------------------------------------------
@@ -237,6 +233,23 @@ static void RTTIEndpoint_Class_(const FRemotingContext& ctx, const FStringView& 
     });
 }
 //----------------------------------------------------------------------------
+static void RTTIEndpoint_Enum_(const FRemotingContext& ctx, const FStringView& args) {
+	switch (ctx.Request.Method()) {
+	case Network::EHttpMethod::Get: break;
+	default:
+		ctx.BadRequest("only HTTP Get is supported");
+		return;
+	}
+
+	Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+		const RTTI::FMetaDatabaseReadable db;
+		if (const RTTI::FMetaEnum* const menum = db->EnumIFP(args))
+			RTTI_to_Json(*menum, &json);
+		else
+			ctx.NotFound(args);
+	});
+}
+//----------------------------------------------------------------------------
 static void RTTIEndpoint_Module_(const FRemotingContext& ctx, const FStringView& args) {
     switch (ctx.Request.Method()) {
     case Network::EHttpMethod::Get: break;
@@ -254,17 +267,31 @@ static void RTTIEndpoint_Module_(const FRemotingContext& ctx, const FStringView&
     });
 }
 //----------------------------------------------------------------------------
+static void RTTIEndpoint_Traits_(const FRemotingContext& ctx, const FStringView& args) {
+	switch (ctx.Request.Method()) {
+	case Network::EHttpMethod::Get: break;
+	default:
+		ctx.BadRequest("only HTTP Get is supported");
+		return;
+	}
+
+	Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+		const RTTI::FMetaDatabaseReadable db;
+		if (const RTTI::PTypeTraits mtraits = db->TraitsIFP(args))
+			RTTI_to_Json(mtraits, &json);
+		else
+			ctx.NotFound(args);
+	});
+}
+//----------------------------------------------------------------------------
 static void RTTIEndpoint_Export_(const FRemotingContext& ctx, const FStringView& args) {
     RTTI::FLazyPathName id;
     FStringView path{ args }, subpart;
     SplitR(path, '.', subpart);
 
-    if (not RTTI::FLazyPathName::Parse(&id, path)) {
-        ctx.BadRequest(path);
-        return;
-    }
-
-    if (subpart.empty())
+    if (not RTTI::FLazyPathName::Parse(&id, path))
+        Dispatch_Namespace_(ctx, RTTI::FLazyName{ args });
+    else if (subpart.empty())
         Dispatch_Object_(ctx, id);
     else if (subpart.EndsWith("()"))
         Dispatch_FunctionCall_(ctx, id, RTTI::FLazyName{ subpart.ShiftBack(2) });
@@ -281,7 +308,7 @@ static void RTTIEndpoint_Complete_(const FRemotingContext& ctx, const FStringVie
     }
 
     struct FAutoCompleteResult {
-        int Distance;
+        size_t Distance;
         RTTI::PTypeTraits Traits;
         bool operator <(const FAutoCompleteResult& other) const NOEXCEPT {
             return (Distance < other.Distance || (Distance == other.Distance &&
@@ -294,33 +321,24 @@ static void RTTIEndpoint_Complete_(const FRemotingContext& ctx, const FStringVie
 
     Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
         STACKLOCAL_HEAP(FAutoCompleteResult, Meta::TLess<FAutoCompleteResult>{}, results, 10);
-        {
+        { // #TODO:  https://github.com/jeancroy/FuzzySearch/blob/master/src/score.js
             RTTI::FMetaDatabaseReadable db;
             for (const RTTI::PTypeTraits& traits : db->Traits().Values())
-                results.PushHeap(EditDistanceI(traits->TypeName(), args), traits);
+                results.Roll(LevenshteinDistanceI(traits->TypeName(), args), traits);
         }
+
+        results.Sort(); // largest to smallest distance
 
         Serialize::FJson::FArray& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
         arr.reserve(results.size());
 
         Serialize::FJson traits;
-        for (const FAutoCompleteResult& it : results) {
-            RTTI_to_Json(it.Traits, &traits);
+        reverseforeachitem(it, results) {
+            RTTI_to_Json(it->Traits, &traits);
             arr.emplace_back(std::move(traits.Root()));
         }
     });
 }
-//----------------------------------------------------------------------------
-using FRTTIMethodFunc_ = void(*)(const FRemotingContext& ctx, const FStringView& args);
-CONSTEXPR const auto GRTTIMethodDispatch_ = MinimalPerfectHashMap<
-    false, // has negative search
-    FStringView, FRTTIMethodFunc_, 4
->({{
-    {  "class",     &RTTIEndpoint_Class_      },
-    {  "module",    &RTTIEndpoint_Module_     },
-    {  "export",    &RTTIEndpoint_Export_     },
-    {  "complete",  &RTTIEndpoint_Complete_   }
-}});
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -329,6 +347,14 @@ CONSTEXPR const auto GRTTIMethodDispatch_ = MinimalPerfectHashMap<
 FRTTIEndpoint::FRTTIEndpoint() NOEXCEPT
 :   IRemotingEndpoint("/RTTI") {
     RTTI_MODULE(RTTI_Endpoint).Start();
+
+    _dispatch.reserve(6);
+    _dispatch.emplace_AssertUnique("class", &RTTIEndpoint_Class_);
+    _dispatch.emplace_AssertUnique("enum", &RTTIEndpoint_Enum_);
+    _dispatch.emplace_AssertUnique("module", &RTTIEndpoint_Module_);
+    _dispatch.emplace_AssertUnique("export", &RTTIEndpoint_Export_);
+    _dispatch.emplace_AssertUnique("traits", &RTTIEndpoint_Traits_);
+    _dispatch.emplace_AssertUnique("complete", &RTTIEndpoint_Complete_);
 
     TRefPtr<FRemotingObject> o;
     o = NEW_REF(Remoting, FRemotingObject, *this);
@@ -347,21 +373,21 @@ FRTTIEndpoint::~FRTTIEndpoint() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FRTTIEndpoint::ProcessImpl(const FRemotingContext& ctx, const FStringView& relativePath) {
-    FStringView method(relativePath), args;
-    if (not Split(method, Network::FUri::PathSeparator, args)) {
+    FStringView args(relativePath), method;
+    if (not Split(args, Network::FUri::PathSeparator, method)) {
         ctx.BadRequest(relativePath);
         return;
     }
 
-    FRTTIMethodFunc_* const pFunc = GRTTIMethodDispatch_[method];
-    if (not pFunc) {
-        ctx.NotFound(method);
-        return;
+    const auto it = _dispatch.find(method);
+    if (Likely(it != _dispatch.end())) {
+        // set JSON mime-type when succeeded
+        ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_json());
+        it->second(ctx, args);
     }
-
-    ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_json());
-
-    (*pFunc)(ctx, args);
+    else {
+        ctx.NotFound(method);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
