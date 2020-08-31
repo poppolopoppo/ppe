@@ -68,13 +68,13 @@ public:
     template <typename U>
     CONSTEXPR TMemoryView& operator =(const TMemoryView<U>& other) NOEXCEPT;
 
-    pointer Pointer() const { return _storage; }
-    size_t SizeInBytes() const { return _size * sizeof(T); }
-    size_t StrideInBytes() const { return sizeof(T); }
+    CONSTEXPR pointer Pointer() const { return _storage; }
+    CONSTEXPR size_t SizeInBytes() const { return _size * sizeof(T); }
+    CONSTEXPR size_t StrideInBytes() const { return sizeof(T); }
 
-    pointer data() const { return _storage; }
-    size_type size() const { return _size; }
-    bool empty() const { return 0 == _size; }
+    CONSTEXPR pointer data() const { return _storage; }
+    CONSTEXPR size_type size() const { return _size; }
+    CONSTEXPR bool empty() const { return 0 == _size; }
 
     iterator begin() const { return MakeCheckedIterator(_storage, _size, 0); }
     iterator end() const { return MakeCheckedIterator(_storage, _size, _size); }
@@ -99,7 +99,7 @@ public:
         CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst + offset, _size));
     }
 
-    TMemoryView<T> Eat(size_t n) {
+    CONSTEXPR TMemoryView<T> Eat(size_t n) {
         Assert_NoAssume(n <= _size);
         const TMemoryView<T> eaten{ _storage, n };
         _storage += n;
@@ -216,9 +216,9 @@ public:
     template <typename _Pred>
     TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
-    bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
-    bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it < end()); }
-    bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it < rend()); }
+    CONSTEXPR bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
+    CONSTEXPR bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it < end()); }
+    CONSTEXPR bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it < rend()); }
 
     template <typename U>
     TMemoryView<U> Cast() const;
@@ -253,17 +253,17 @@ public:
         return MakeIterable(begin(), end());
     }
 
-    friend void swap(TMemoryView& lhs, TMemoryView& rhs) {
+    CONSTEXPR friend void swap(TMemoryView& lhs, TMemoryView& rhs) {
         std::swap(lhs._storage, rhs._storage);
         std::swap(lhs._size, rhs._size);
     }
 
-    friend bool operator ==(const TMemoryView& lhs, const TMemoryView& rhs) {
+    CONSTEXPR friend bool operator ==(const TMemoryView& lhs, const TMemoryView& rhs) {
         return (lhs._storage == rhs._storage &&
                 lhs._size == rhs._size );
     }
 
-    friend bool operator !=(const TMemoryView& lhs, const TMemoryView& rhs) {
+    CONSTEXPR friend bool operator !=(const TMemoryView& lhs, const TMemoryView& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
