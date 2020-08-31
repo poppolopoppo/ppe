@@ -30,10 +30,12 @@ namespace PPE {
 template <typename T, size_t _Dim>
 struct TStaticArray {
     typedef T value_type;
+
     typedef Meta::TAddPointer<T> pointer;
     typedef Meta::TAddPointer<const T> const_pointer;
+
     typedef Meta::TAddReference<T> reference;
-    typedef Meta::TAddReference<T> const_reference;
+    typedef Meta::TAddReference<const T> const_reference;
 
     typedef TCheckedArrayIterator<T> iterator;
     typedef TCheckedArrayIterator<const T> const_iterator;
