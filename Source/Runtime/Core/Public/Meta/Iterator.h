@@ -275,7 +275,7 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
-    CONSTEXPR TCountingIterator(_Int it) : _it(it) {}
+    CONSTEXPR explicit TCountingIterator(_Int it) : _it(it) {}
 
     CONSTEXPR TCountingIterator(const TCountingIterator&) = default;
     CONSTEXPR TCountingIterator& operator =(const TCountingIterator&) = default;
@@ -335,6 +335,8 @@ public:
     using typename parent_type::value_type;
     using typename parent_type::pointer;
     using typename parent_type::reference;
+
+    TOutputIterator() = default;
 
     CONSTEXPR TOutputIterator(_It it) : _it(it) {}
     CONSTEXPR TOutputIterator(_It it, _Transform transform) : _it(it), _transform(transform) {}
