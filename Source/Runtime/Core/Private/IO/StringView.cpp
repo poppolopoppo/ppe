@@ -883,19 +883,19 @@ bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-size_t EditDistance(const FStringView& lhs, const FStringView& rhs) {
+size_t LevenshteinDistance(const FStringView& lhs, const FStringView& rhs) {
     return LevenshteinDistance_<char, ECase::Sensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-size_t EditDistance(const FWStringView& lhs, const FWStringView& rhs) {
+size_t LevenshteinDistance(const FWStringView& lhs, const FWStringView& rhs) {
     return LevenshteinDistance_<wchar_t, ECase::Sensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-size_t EditDistanceI(const FStringView& lhs, const FStringView& rhs) {
+size_t LevenshteinDistanceI(const FStringView& lhs, const FStringView& rhs) {
     return LevenshteinDistance_<char, ECase::Insensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-size_t EditDistanceI(const FWStringView& lhs, const FWStringView& rhs) {
+size_t LevenshteinDistanceI(const FWStringView& lhs, const FWStringView& rhs) {
     return LevenshteinDistance_<wchar_t, ECase::Insensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
@@ -1118,7 +1118,7 @@ void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FWStringView& wslice) {
-    return oss << WCHAR_to_CHAR(ECodePage::ACP, INLINE_MALLOCA(char, (wslice.size() * 130)/100/* for multi bytes chars */ + 1), wslice);
+    return oss << WCHAR_to_CHAR(ECodePage::ACP, INLINE_MALLOCA(char, wslice.size() * 2/* for multi bytes chars */ + 1), wslice);
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& slice) {

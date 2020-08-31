@@ -414,13 +414,11 @@ PPE_CORE_API bool WildMatch(const FWStringView& pattern, const FWStringView& wst
 PPE_CORE_API bool WildMatchI(const FStringView& pattern, const FStringView& str);
 PPE_CORE_API bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+PPE_CORE_API size_t LevenshteinDistance(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API size_t LevenshteinDistance(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t EditDistance(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API size_t EditDistance(const FWStringView& lhs, const FWStringView& rhs);
-//----------------------------------------------------------------------------
-PPE_CORE_API size_t EditDistanceI(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API size_t EditDistanceI(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API size_t LevenshteinDistanceI(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API size_t LevenshteinDistanceI(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -457,34 +455,6 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& sli
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-CONSTEXPR auto MakeLowerIterable(const TBasicStringView<_Char>& str) NOEXCEPT {
-    return MakeOutputIterable(str.begin(), str.end(), &ToLower);
-}
-//----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim>
-CONSTEXPR auto MakeLowerIterable(const _Char (&staticChars)[_Dim]) NOEXCEPT {
-    return MakeOutputIterable(std::begin(staticChars), std::end(staticChars), &ToLower);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-CONSTEXPR auto MakeUpperIterable(const TBasicStringView<_Char>& str) NOEXCEPT {
-    return MakeOutputIterable(str.begin(), str.end(), &ToUpper);
-}
-//----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim>
-CONSTEXPR auto MakeUpperIterable(const _Char (&staticChars)[_Dim]) NOEXCEPT {
-    return MakeOutputIterable(std::begin(staticChars), std::end(staticChars), &ToUpper);
-}
-//----------------------------------------------------------------------------
-using FLowerIterable = decltype(MakeLowerIterable(std::declval<FStringView>()));
-using FWLowerIterable = decltype(MakeLowerIterable(std::declval<FWStringView>()));
-//----------------------------------------------------------------------------
-using FUpperIterable = decltype(MakeUpperIterable(std::declval<FStringView>()));
-using FWUpperIterable = decltype(MakeUpperIterable(std::declval<FWStringView>()));
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TCharEqualTo {
     CONSTEXPR bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return lhs == rhs; }
@@ -511,6 +481,21 @@ template <typename _Char>
 struct TCharCase<_Char, ECase::Insensitive> {
     CONSTEXPR _Char operator ()(const _Char& ch) const NOEXCEPT { return ToLower(ch); }
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR auto MakeCaseInsensitive(const TBasicStringView<_Char>& str) NOEXCEPT {
+    return MakeOutputIterable(str.data(), str.data() + str.size(), TCharCase<_Char, ECase::Insensitive>{});
+}
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim>
+CONSTEXPR auto MakeCaseInsensitive(const _Char (&staticChars)[_Dim]) NOEXCEPT {
+    return MakeCaseInsensitive(MakeStringView(staticChars));
+}
+//----------------------------------------------------------------------------
+using FCaseInsensitive = decltype(MakeCaseInsensitive(std::declval<FStringView>()));
+using FWCaseInsensitive = decltype(MakeCaseInsensitive(std::declval<FWStringView>()));
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
