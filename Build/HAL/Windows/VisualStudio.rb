@@ -130,13 +130,13 @@ module Build
                 Log.debug('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
                 facet.linkerOptions << '/DEBUG:NONE'
             else
-                if Build.Incremental
+                if Build.Incremental && !Build.ASAN
                     facet.linkerOptions << '/DEBUG:FASTLINK' # enable incremental linker
                 else
                     facet.linkerOptions << '/DEBUG'
                 end
 
-                if nopdb || Build.Cache || Workaround_C1090_PDB_API_call_failed_error_code_3
+                if nopdb || Build.Cache || (Workaround_C1090_PDB_API_call_failed_error_code_3 && !Build.ASAN)
                     # debug symbols inside .obj
                     facet.compilerOptions << '/Z7'
                     facet.pchOptions << '/Z7'
@@ -174,7 +174,7 @@ module Build
 
             if Build.ASAN
                 # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
-                asan_type = ( facet.tag?(:debug) ? 'asan_dbg' : 'asan')
+                asan_type = 'asan' # ( facet.tag?(:debug) ? 'asan_dbg' : 'asan')
                 case env.platform.arch
                 when :x86
                     asan_host = 'i386'
@@ -187,7 +187,7 @@ module Build
                 if env.target_need_link?(target)
                     if Build.StaticCRT && facet.tag?(:debug) == false # ASAN is not supported with static debug (/MTd)
                         if target.executable?
-                            facet.libraries << "/wholearchive:clang_rt.#{asan_type}-#{asan_host}.lib"
+                            facet.libraries << "/wholearchive:clang_rt.#{asan_type}_cxx-#{asan_host}.lib"
                         else
                             facet.libraries << "/wholearchive:clang_rt.#{asan_type}_dll_thunk-#{asan_host}.lib"
                         end
@@ -367,7 +367,7 @@ module Build
         # https://devblogs.microsoft.com/cppblog/stl-features-and-fixes-in-vs-2017-15-8/
         defines.append('_ENABLE_EXTENDED_ALIGNED_STORAGE')
 
-        if Build.Incremental
+        if Build.Incremental && !Build.ASAN
             Log.log 'Windows: using incremental linker with fastlink'
             linkerOptions.append('/INCREMENTAL') # enable incremental linker
         else
@@ -410,7 +410,7 @@ module Build
     end
     make_facet(:VisualStudio_LTO_Enabled) do
         if Build.LTO
-            if Build.Incremental
+            if Build.Incremental && !Build.ASAN
                 Log.log 'Windows: using incremental link-time code generation'
                 linkerOptions << '/LTCG:INCREMENTAL'
             else
@@ -487,6 +487,7 @@ module Build
 
         if Build.ASAN
             # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
+            defines.append('USE_PPE_SANITIZER')
             compilationFlag!('/fsanitize=address')
         end
 
