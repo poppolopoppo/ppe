@@ -5,6 +5,7 @@
 #include "Thread/Task/Task.h"
 #include "Thread/Task/CompletionPort.h"
 
+#include "Container/MinMaxHeap.h"
 #include "HAL/PlatformProcess.h"
 #include "Memory/RefPtr.h"
 #include "Thread/Task/Task.h"
@@ -50,7 +51,7 @@ public:
         {}
 
         friend bool operator <(const FTaskQueued& lhs, const FTaskQueued& rhs) NOEXCEPT {
-            return (lhs.Priority > rhs.Priority);  // smaller means higher priority
+            return (lhs.Priority < rhs.Priority);
         }
         friend bool operator >=(const FTaskQueued& lhs, const FTaskQueued& rhs) NOEXCEPT {
             return (not operator <(lhs, rhs));
@@ -187,11 +188,11 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
                 {
                     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
                     w.PriorityHeap.push_back(std::move(queued));
-                    std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end());
+                    Push_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end());
                 }
 
                 // keep track of worker priority
-                w.HighestPriority = UnpackPriorityFromRevision_(w.PriorityHeap.front().Priority);
+                w.HighestPriority = UnpackPriorityFromRevision_(Min_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end())->Priority);
 
                 // used as hints for work stealing : worker will try to steal a job if a higher priority task is available
                 ++p.NumTasks;
@@ -227,13 +228,13 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
                 });
 
                 if (not (w.PriorityHeap.empty() | HasHigherPriorityTask_(w.HighestPriority))) {
-                    std::pop_heap(w.PriorityHeap.begin(), w.PriorityHeap.end());
+                    PopMin_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end());
                     *pop = std::move(w.PriorityHeap.back());
                     w.PriorityHeap.pop_back();
 
                     w.HighestPriority = (w.PriorityHeap.empty()
                         ? INDEX_NONE
-                        : UnpackPriorityFromRevision_(w.PriorityHeap.front().Priority));
+                        : UnpackPriorityFromRevision_(Min_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end())->Priority));
 
                     priority_group_t& p = _priorityGroups[UnpackPriorityFromRevision_(pop->Priority)];
                     if (0 == --p.NumTasks)

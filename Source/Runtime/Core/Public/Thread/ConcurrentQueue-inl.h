@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Thread/ConcurrentQueue.h"
+
+#include "Container/MinMaxHeap.h"
 #include "Meta/ThreadResource.h"
 
 namespace PPE {
@@ -109,7 +111,7 @@ void TConcurrentPriorityQueue<T, _Allocator>::Produce(u32 priority, T&& rvalue) 
     Assert((insertion_order_preserving_priority >> 16) == priority);
 
     _queue.emplace_back(insertion_order_preserving_priority, std::move(rvalue));
-    std::push_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
+    Push_MinMaxHeap(_queue.begin(), _queue.end(), FPrioritySort_{});
 
     scopeLock.unlock();  // unlock before notification to minimize mutex contention
     _empty.notify_one(); // notify one consumer thread
@@ -141,7 +143,7 @@ void TConcurrentPriorityQueue<T, _Allocator>::Produce(u32 priority, size_t count
 
             forrange(i, 0, batchCount) {
                 _queue.emplace_back(++insertion_order_preserving_priority, std::move(lambda(batchIndex + i)));
-                std::push_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
+                Push_MinMaxHeap(_queue.begin(), _queue.end(), FPrioritySort_{});
             }
 
             scopeLock.unlock();  // unlock before notification to minimize mutex contention
@@ -167,7 +169,7 @@ void TConcurrentPriorityQueue<T, _Allocator>::Consume(T *pvalue) {
         return (not _queue.empty());
     });
 
-    std::pop_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
+    PopMin_MinMaxHeap(_queue.begin(), _queue.end(), FPrioritySort_{});
     *pvalue = std::move(_queue.back().second);
     _queue.pop_back();
 
@@ -199,7 +201,7 @@ bool TConcurrentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
         return (not _queue.empty());
     });
 
-    std::pop_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
+    PopMin_MinMaxHeap(_queue.begin(), _queue.end(), FPrioritySort_{});
     *pvalue = std::move(_queue.back().second);
     _queue.pop_back();
 

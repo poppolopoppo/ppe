@@ -10,6 +10,7 @@
 #include "Container/FlatMap.h"
 #include "Container/FlatSet.h"
 #include "Container/HashTable.h"
+#include "Container/MinMaxHeap.h"
 #include "Container/StringHashSet.h"
 #include "Container/Vector.h"
 
@@ -1776,6 +1777,28 @@ NO_INLINE static void Test_StealFromDifferentAllocator_() {
     }
 }
 //----------------------------------------------------------------------------
+NO_INLINE void Test_MinMaxHeap_() {
+    STACKLOCAL_POD_HEAP(int, Meta::TLess<int>{}, heap, 4);
+
+    int seq[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    FRandomGenerator rng;
+    rng.Shuffle(MakeView(seq));
+
+    for (int i : seq)
+        heap.Roll(i);
+
+    int vmin;
+    VerifyRelease(heap.PopMin(&vmin));
+
+    int vmax;
+    VerifyRelease(heap.PopMax(&vmax));
+
+    AssertRelease(vmin == 0);
+    AssertRelease(vmax == 3);
+
+    LOG(Test_Containers, Emphasis, L"MinMax heap: {0} -> [{1}, {2}]", heap.MakeView(), vmin, vmax);
+}
+//----------------------------------------------------------------------------
 NO_INLINE void Test_SSEHashSet() {
     TSSEHashSet<int> set;
     set.insert(32);
@@ -1797,6 +1820,7 @@ void Test_Containers() {
     });
 
     Test_StealFromDifferentAllocator_();
+    Test_MinMaxHeap_();
     Test_SSEHashSet();
 
 #if USE_PPE_BENCHMARK

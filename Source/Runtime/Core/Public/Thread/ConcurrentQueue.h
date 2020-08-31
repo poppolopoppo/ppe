@@ -61,7 +61,7 @@ private:
 //----------------------------------------------------------------------------
 /*
 // Naive concurrent priority queue
-// The queue uses a TVector<> and can grow, based on std::push_heap()/pop_heap().
+// The queue uses a TVector<> and can grow, based on Push_MinMaxHeap()/PopMin_MinMaxHeap().
 // TNot using std::priority_queue<> since it is too restrictive (no non-const reference to top, no reserve()).
 */
 //----------------------------------------------------------------------------
@@ -91,7 +91,7 @@ private:
 
     struct FPrioritySort_ {
         bool operator ()(const item_type& lhs, const item_type& rhs) const {
-            return (lhs.first > rhs.first);
+            return (lhs.first < rhs.first);
         }
     };
 

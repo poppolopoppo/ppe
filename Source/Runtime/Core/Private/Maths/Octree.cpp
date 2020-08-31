@@ -2,7 +2,7 @@
 
 #include "Maths/Octree.h"
 
-#include "Container/Stack.h"
+#include "Container/MinMaxHeap.h"
 #include "HAL/PlatformMaths.h"
 
 #include "Maths/Ray.h"
@@ -109,7 +109,7 @@ static bool RayIntersectsOctree_(
                 Assert(d >= 0.f);
 
                 if (halfExtent > 1) {
-                    candidates.PushHeap(d, x, y, z, halfExtent, p.Get());
+                    candidates.Push(d, x, y, z, halfExtent, p.Get());
                 }
                 else if (d < hit.Distance){
                     hit.Distance = d;
@@ -124,7 +124,7 @@ static bool RayIntersectsOctree_(
             return true;
         }
 
-    } while (candidates.PopHeap(&it));
+    } while (candidates.PopMin(&it));
 
     return false;
 }
@@ -159,7 +159,7 @@ static bool BatchRaysIntersectsOctree_(
         if (RayIntersectsOctree_(localRay, firstHit, root, voxelSize, dimension, candidates))
             intersections++;
 
-        candidates.clear();
+        candidates.Clear();
     }
 
     return intersections;

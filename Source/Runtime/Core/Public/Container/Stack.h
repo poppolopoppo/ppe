@@ -26,18 +26,6 @@ namespace PPE {
     MALLOCA_ASSUMEPOD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
     PPE::TStack<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
-#define STACKLOCAL_POD_HEAP(T, _Pred, _NAME, _COUNT) \
-    MALLOCA_POD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
-    PPE::TPODStackHeapAdapter<T, Meta::TDecay<decltype(_Pred)> > _NAME( CONCAT(_Alloca_, _NAME).MakeView(), _Pred )
-//----------------------------------------------------------------------------
-#define STACKLOCAL_ASSUMEPOD_HEAP(T, _Pred, _NAME, _COUNT) \
-    MALLOCA_ASSUMEPOD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
-    PPE::TPODStackHeapAdapter<T, Meta::TDecay<decltype(_Pred)> > _NAME( CONCAT(_Alloca_, _NAME).MakeView(), _Pred )
-//----------------------------------------------------------------------------
-#define STACKLOCAL_HEAP(T, _Pred, _NAME, _COUNT) \
-    MALLOCA_ASSUMEPOD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
-    PPE::TStackHeapAdapter<T, Meta::TDecay<decltype(_Pred)> > _NAME( CONCAT(_Alloca_, _NAME).MakeView(), _Pred )
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod = Meta::is_pod_v<T> >
@@ -283,60 +271,6 @@ private:
     using parent_type::_capacity;
     using parent_type::_storage;
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, typename _Less = Meta::TLess<T>, bool _IsPod = Meta::is_pod_v<T>>
-class TStackHeapAdapter : private _Less {
-public:
-    typedef TStack<T, _IsPod> stack_type;
-    typedef typename stack_type::pointer pointer;
-    typedef typename stack_type::const_pointer const_pointer;
-    typedef typename stack_type::size_type size_type;
-
-    using iterator_category = typename stack_type::iterator_category;
-    using iterator = typename stack_type::const_iterator;
-
-    explicit TStackHeapAdapter(const TMemoryView<T>& storage) : _stack(storage) {}
-    TStackHeapAdapter(const TMemoryView<T>& storage, _Less&& pred) : _Less(std::move(pred)), _stack(storage) {}
-
-    size_type capacity() const { return _stack.capacity(); }
-    size_type size() const { return _stack.size(); }
-    bool empty() const { return _stack.empty(); }
-
-    iterator begin() const { return _stack.begin(); }
-    iterator end() const { return _stack.end(); }
-
-    const_pointer PeekHeap() const {
-        return _stack.Peek();
-    }
-
-    template <typename _Arg0, typename... _Args>
-    void PushHeap(_Arg0&& arg0, _Args&&... args) {
-        _stack.Push(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-        std::push_heap(_stack.begin(), _stack.end(), static_cast<_Less&>(*this));
-    }
-
-    bool PopHeap(pointer pvalue) {
-        std::pop_heap(_stack.begin(), _stack.end(), static_cast<_Less&>(*this));
-        return _stack.Pop(pvalue);
-    }
-
-    void clear() {
-        _stack.clear();
-    }
-
-    inline friend void swap(TStackHeapAdapter& lhs, TStackHeapAdapter& rhs) {
-        swap(static_cast<_Less&>(lhs), static_cast<_Less&>(rhs));
-        lhs._stack.Swap(rhs._stack);
-    }
-
-private:
-    stack_type _stack;
-};
-//----------------------------------------------------------------------------
-template <typename T, typename _Less>
-using TPODStackHeapAdapter = TStackHeapAdapter<T, _Less, true>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

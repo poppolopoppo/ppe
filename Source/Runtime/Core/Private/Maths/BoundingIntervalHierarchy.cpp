@@ -2,13 +2,12 @@
 
 #include "Maths/BoundingIntervalHierarchy.h"
 
-#include "Container/Stack.h"
+#include "Container/MinMaxHeap.h"
 #include "HAL/PlatformMaths.h"
 
 #include "Maths/Frustum.h"
 #include "Maths/PackingHelpers.h"
 #include "Maths/Ray.h"
-#include "Maths/ScalarBoundingBoxHelpers.h"
 #include "Maths/ScalarVectorHelpers.h"
 #include "Maths/Sphere.h"
 
@@ -363,14 +362,14 @@ bool FBasicBIHTree::Intersects(const FRay& ray, FHitResult* firstHit, size_t cou
             if (it.Node->IsLeaf())
                 intersectsLeaf |= raycast(ray, it.Node->Split, it.End, &hit);
             else
-                candidates.PushHeap(distance, it.Node + it.Node->Child0 + 1, bounds1, split, it.End);
+                candidates.Push(distance, it.Node + it.Node->Child0 + 1, bounds1, split, it.End);
         }
 
         if (ray.Intersects(bounds0, &distance)) {
             if (it.Node->IsLeaf())
                 intersectsLeaf |= raycast(ray, it.Begin, it.Node->Split, &hit);
             else
-                candidates.PushHeap(distance, it.Node + it.Node->Child0, bounds0, it.Begin, split);
+                candidates.Push(distance, it.Node + it.Node->Child0, bounds0, it.Begin, split);
         }
 
         if (intersectsLeaf) {
@@ -380,12 +379,12 @@ bool FBasicBIHTree::Intersects(const FRay& ray, FHitResult* firstHit, size_t cou
             if (nullptr == firstHit)
                 return true; // don't need to find closest hit
 
-            const FBIHCandidate_* nextBest = candidates.PeekHeap();
+            const FBIHCandidate_* nextBest = candidates.PeekMin();
             if (nextBest && nextBest->Distance > hit.Distance)
                 break;
         }
 
-    } while (candidates.PopHeap(&it));
+    } while (candidates.PopMin(&it));
 
     if (hit.Item < count) {
         if (firstHit) *firstHit = hit;
