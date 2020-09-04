@@ -9,7 +9,6 @@
 #include "Window/WindowBase.h"
 #include "Window/WindowRHI.h"
 
-#include "Time/Timeline.h"
 #include "Thread/ThreadPool.h"
 
 namespace PPE {
@@ -131,16 +130,6 @@ void FApplicationWindow::Tick(FTimespan dt) {
     FApplicationBase::Tick(dt);
 
     _input->Update(dt);
-}
-//----------------------------------------------------------------------------
-void FApplicationWindow::ApplicationLoop() {
-    FTimespan dt;
-    FTimeline tick = FTimeline::StartNow();
-
-    while (PumpMessages()) {
-        if (tick.Tick_Target60FPS(dt))
-            Tick(dt);
-    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

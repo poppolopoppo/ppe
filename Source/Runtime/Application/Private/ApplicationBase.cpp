@@ -9,6 +9,7 @@
 #include "HAL/PlatformDebug.h"
 #include "HAL/PlatformNotification.h"
 #include "Modular/ModularDomain.h"
+#include "Time/Timeline.h"
 
 namespace PPE {
 namespace Application {
@@ -146,6 +147,16 @@ void FApplicationBase::Shutdown() {
     _module._OnApplicationShutdown.Invoke(*this);
 
     FPlatformApplication::Shutdown();
+}
+//----------------------------------------------------------------------------
+void FApplicationBase::ApplicationLoop() {
+	FTimespan dt;
+	FTimeline tick = FTimeline::StartNow();
+
+	while (PumpMessages()) {
+		if (tick.Tick_Target60FPS(dt))
+			Tick(dt);
+	}
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

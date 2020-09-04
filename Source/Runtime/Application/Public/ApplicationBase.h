@@ -21,6 +21,8 @@ public:
     virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
 
+    void ApplicationLoop();
+
 private:
     FApplicationModule& _module;
 };
