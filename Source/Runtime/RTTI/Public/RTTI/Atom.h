@@ -33,15 +33,25 @@ public:
     size_t SizeInBytes() const { return _traits->SizeInBytes(); }
     FNamedTypeInfos NamedTypeInfos() const { return _traits->NamedTypeInfos(); }
 
-    bool IsScalar() const { return (_traits->TypeFlags() & ETypeFlags::Scalar); }
-    bool IsTuple() const { return (_traits->TypeFlags() & ETypeFlags::Tuple); }
-    bool IsList() const { return (_traits->TypeFlags() & ETypeFlags::List); }
-    bool IsDico() const { return (_traits->TypeFlags() & ETypeFlags::Dico); }
-    bool IsEnum() const { return (_traits->TypeFlags() & ETypeFlags::Enum); }
-    bool IsObject() const { return (_traits->TypeFlags() & ETypeFlags::Object); }
-    bool IsNative() const { return (_traits->TypeFlags() & ETypeFlags::Native); }
-    bool IsPOD() const { return (_traits->TypeFlags() & ETypeFlags::POD); }
-    bool IsTriviallyDestructible() const { return (_traits->TypeFlags() & ETypeFlags::TriviallyDestructible); }
+    bool IsScalar() const { return _traits->TypeInfos().IsScalar(); }
+    bool IsTuple() const { return _traits->TypeInfos().IsTuple(); }
+    bool IsList() const { return _traits->TypeInfos().IsList(); }
+    bool IsDico() const { return _traits->TypeInfos().IsDico(); }
+
+    bool IsAlias() const { return _traits->TypeInfos().IsAlias(); }
+    bool IsArithmetic() const { return _traits->TypeInfos().IsArithmetic(); }
+    bool IsBoolean() const { return _traits->TypeInfos().IsBoolean(); }
+    bool IsEnum() const { return _traits->TypeInfos().IsEnum(); }
+    bool IsFloatingPoint() const { return _traits->TypeInfos().IsFloatingPoint(); }
+    bool IsNative() const { return _traits->TypeInfos().IsNative(); }
+    bool IsObject() const { return _traits->TypeInfos().IsObject(); }
+    bool IsString() const { return _traits->TypeInfos().IsString(); }
+    bool IsIntegral() const { return _traits->TypeInfos().IsIntegral(); }
+    bool IsSignedIntegral() const { return _traits->TypeInfos().IsSignedIntegral(); }
+    bool IsUnsignedIntegral() const { return _traits->TypeInfos().IsUnsignedIntegral(); }
+
+    bool IsPOD() const { return _traits->TypeInfos().IsPOD(); }
+    bool IsTriviallyDestructible() const { return _traits->TypeInfos().IsTriviallyDestructible(); }
 
     PPE_RTTI_API bool IsAny() const;
 
@@ -118,6 +128,8 @@ private:
     PTypeTraits _traits;
 };
 //----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(FAtom);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
@@ -142,7 +154,23 @@ T* CastChecked(const FAtom& atom) {
     return (&atom.TypedData<T>());
 }
 //----------------------------------------------------------------------------
-PPE_ASSUME_TYPE_AS_POD(FAtom);
+inline bool is_scalar_v(const FAtom& atom) { return (atom.IsScalar()); }
+inline bool is_tuple_v(const FAtom& atom) { return (atom.IsTuple()); }
+inline bool is_list_v(const FAtom& atom) { return (atom.IsList()); }
+inline bool is_dico_v(const FAtom& atom) { return (atom.IsDico()); }
+inline bool is_alias_v(const FAtom& atom) { return (atom.IsAlias()); }
+inline bool is_arithmetic_v(const FAtom& atom) { return (atom.IsArithmetic()); }
+inline bool is_boolean_v(const FAtom& atom) { return (atom.IsBoolean()); }
+inline bool is_enum_v(const FAtom& atom) { return (atom.IsEnum()); }
+inline bool is_floating_point_v(const FAtom& atom) { return (atom.IsFloatingPoint()); }
+inline bool is_native_v(const FAtom& atom) { return (atom.IsNative()); }
+inline bool is_object_v(const FAtom& atom) { return (atom.IsObject()); }
+inline bool is_string_v(const FAtom& atom) { return (atom.IsString()); }
+inline bool is_integral_v(const FAtom& atom) { return (atom.IsIntegral()); }
+inline bool is_signed_integral_v(const FAtom& atom) { return (atom.IsSignedIntegral()); }
+inline bool is_unsigned_integral_v(const FAtom& atom) { return (atom.IsUnsignedIntegral()); }
+inline bool is_pod_v(const FAtom& atom) { return (atom.IsPOD()); }
+inline bool is_trivially_destructible_v(const FAtom& atom) { return (atom.IsTriviallyDestructible()); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

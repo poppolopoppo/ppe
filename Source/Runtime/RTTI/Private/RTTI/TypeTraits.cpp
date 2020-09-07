@@ -125,14 +125,22 @@ namespace PPE {
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
     auto sep = Fmt::NotFirstTime('|');
-;
+
     if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << "Scalar";; }
     if (flags & RTTI::ETypeFlags::Tuple)    { oss << sep << "Tuple"; ;}
     if (flags & RTTI::ETypeFlags::List)     { oss << sep << "List"; }
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << "Dico"; }
-    if (flags & RTTI::ETypeFlags::Native)   { oss << sep << "Native"; }
+
+    if (flags & RTTI::ETypeFlags::Arithmetic)  { oss << sep << "Arithmetic"; }
+    if (flags & RTTI::ETypeFlags::Boolean)     { oss << sep << "Boolean"; }
     if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << "Enum"; }
+    if (flags & RTTI::ETypeFlags::FloatingPoint)  { oss << sep << "FloatingPoint"; }
+    if (flags & RTTI::ETypeFlags::Native)   { oss << sep << "Native"; }
     if (flags & RTTI::ETypeFlags::Object)   { oss << sep << "Object"; }
+    if (flags & RTTI::ETypeFlags::String)   { oss << sep << "String"; }
+    if (flags & RTTI::ETypeFlags::SignedIntegral)  { oss << sep << "SignedIntegral"; }
+    if (flags & RTTI::ETypeFlags::UnsignedIntegral)  { oss << sep << "UnsignedIntegral"; }
+
     if (flags & RTTI::ETypeFlags::POD)      { oss << sep << "POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << "TriviallyDestructible"; }
 
@@ -142,13 +150,21 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags) {
     auto sep = Fmt::NotFirstTime(L'|');
 
-    if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << L"Scalar"; }
+    if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << L"Scalar";; }
     if (flags & RTTI::ETypeFlags::Tuple)    { oss << sep << L"Tuple"; ;}
     if (flags & RTTI::ETypeFlags::List)     { oss << sep << L"List"; }
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << L"Dico"; }
+
+    if (flags & RTTI::ETypeFlags::Arithmetic)  { oss << sep << L"Arithmetic"; }
+    if (flags & RTTI::ETypeFlags::Boolean)     { oss << sep << L"Boolean"; }
     if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << L"Enum"; }
-    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << L"Object"; }
+    if (flags & RTTI::ETypeFlags::FloatingPoint)  { oss << sep << L"FloatingPoint"; }
     if (flags & RTTI::ETypeFlags::Native)   { oss << sep << L"Native"; }
+    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << L"Object"; }
+    if (flags & RTTI::ETypeFlags::String)   { oss << sep << L"String"; }
+    if (flags & RTTI::ETypeFlags::SignedIntegral)  { oss << sep << L"SignedIntegral"; }
+    if (flags & RTTI::ETypeFlags::UnsignedIntegral)  { oss << sep << L"UnsignedIntegral"; }
+
     if (flags & RTTI::ETypeFlags::POD)      { oss << sep << L"POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << L"TriviallyDestructible"; }
 
