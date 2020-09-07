@@ -16,28 +16,34 @@ BASICTOKEN_CLASS_DEF(FName);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FLazyPathName::Parse(FLazyPathName* pathName, const FStringView& text) {
+bool FLazyPathName::Parse(FLazyPathName* pathName, const FStringView& text, bool withPrefix/* = true */) {
     Assert(pathName);
 
-    if (text.size() < 3)
-        return false;
-    if (text[0] != '$' || text[1] != '/')
-        return false;
-
-    FStringView namespace_;
-    FStringView identifier = text.CutStartingAt(2);
-    if (not Split(identifier, '/', namespace_))
-        return false;
-
-    if (namespace_.empty() ||
-        identifier.empty() ||
-        identifier.Contains('/') )
+    FStringView namespace_{ text };
+    if (withPrefix) {
+        if (text.size() < 3)
             return false;
+        if (text[0] != '$' || text[1] != '/')
+            return false;
+
+        namespace_ = text.ShiftFront(2); // skip '$/'
+    }
+
+    const auto sep = namespace_.FindR('/');
+    if (namespace_.rend() == sep)
+        return false;
+
+    const FStringView identifier = namespace_.CutStartingAt(sep - 1);
+    namespace_ = namespace_.CutBefore(sep);
+
+    if (namespace_.empty() || identifier.empty() ||
+        identifier.Contains('/') )
+        return false;
 
     pathName->Namespace = FLazyName(namespace_);
     pathName->Identifier = FLazyName(identifier);
 
-    return true;
+    return pathName->Valid();
 }
 //----------------------------------------------------------------------------
 FPathName FPathName::FromObject(const FMetaObject& obj) NOEXCEPT {
@@ -83,13 +89,13 @@ STATIC_ASSERT(Meta::is_pod_v<RTTI::FPathName>);
 //----------------------------------------------------------------------------
 static FTextWriter& FormatPath_(FTextWriter& oss, const FStringView& namespace_, const FStringView& id) {
     if (not namespace_.empty())
-        oss << '$' << '/' << namespace_ << '/';
+        oss << "$/" << namespace_ << '/';
     return oss << id;
 }
 //----------------------------------------------------------------------------
 static FWTextWriter& FormatPath_(FWTextWriter& oss, const FStringView& namespace_, const FStringView& id) {
     if (not namespace_.empty())
-        oss << L'$' << L'/' << namespace_ << L'/';
+        oss << L"$/" << namespace_ << L'/';
     return oss << id;
 }
 //----------------------------------------------------------------------------
