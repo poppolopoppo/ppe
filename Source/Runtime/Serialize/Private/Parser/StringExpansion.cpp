@@ -56,7 +56,7 @@ public:
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
     virtual bool Visit(const RTTI::IScalarTraits* scalar, T& value) override final { \
-        PrintValue_(scalar, value, std::bool_constant< RTTI::is_integral(RTTI::FTypeId(_TypeId)) >{}); \
+        PrintValue_(scalar, value, typename std::is_integral<T>::type{}); \
         return true; \
     }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
