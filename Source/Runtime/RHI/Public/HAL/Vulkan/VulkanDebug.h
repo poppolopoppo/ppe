@@ -60,7 +60,12 @@ public:
 	void SetDebugName(VkEvent _event, string_t name) const;
 
 private:
-	using callback_t = void (*)(void);
+	using callback_t =
+#if defined(ARCH_X86) && defined(PLATFORM_WINDOWS)
+    void (__stdcall  *)(void) ;
+#else
+	void (*)(void);
+#endif
 
 	VkDevice const _vkDevice;
 

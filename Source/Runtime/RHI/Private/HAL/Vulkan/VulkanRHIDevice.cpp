@@ -246,7 +246,7 @@ VkPipelineLayout FVulkanDevice::CreatePipelineLayout(const FVulkanPipelineLayout
     VkPipelineLayoutCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     createInfo.setLayoutCount = checked_cast<u32>(desc.DescriptorSetLayouts.size());
-    createInfo.pSetLayouts = desc.DescriptorSetLayouts.data();
+    createInfo.pSetLayouts = &desc.DescriptorSetLayouts.front();
     createInfo.pushConstantRangeCount = checked_cast<u32>(vkPushConstantRanges.size());
     createInfo.pPushConstantRanges = vkPushConstantRanges.data();
 

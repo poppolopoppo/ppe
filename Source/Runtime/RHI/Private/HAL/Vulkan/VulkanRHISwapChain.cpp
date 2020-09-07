@@ -45,7 +45,7 @@ void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
     PPE_VKDEVICE_CHECKED(vkGetSwapchainImagesKHR, device.LogicalDevice(), _handle, &numImagesInSwapChain, nullptr);
 
     _images.resize_Uninitialized(numImagesInSwapChain);
-    PPE_VKDEVICE_CHECKED(vkGetSwapchainImagesKHR, device.LogicalDevice(), _handle, &numImagesInSwapChain, _images.data());
+    PPE_VKDEVICE_CHECKED(vkGetSwapchainImagesKHR, device.LogicalDevice(), _handle, &numImagesInSwapChain, &_images.front());
 
     // create image views
     _imageViews.resize_Uninitialized(numImagesInSwapChain);

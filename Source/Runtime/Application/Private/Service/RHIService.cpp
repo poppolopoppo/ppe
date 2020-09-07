@@ -78,7 +78,7 @@ void FDefaultRHIService_::DestroyMainDevice(FWindowRHI* window, RHI::FDevice* de
     const RHI::FWindowSurface surface = window->SurfaceRHI();
     Assert_NoAssume(surface);
 
-    window->SetSurfaceRHI(nullptr);
+    window->SetSurfaceRHI(RHI::FWindowSurface{0});
 
     device->DestroySwapChain();
 
@@ -91,7 +91,7 @@ RHI::FDevice* FDefaultRHIService_::CreateHeadlessDevice(bool computeOnly) {
     if (not computeOnly)
         deviceFlags = deviceFlags | RHI::EPhysicalDeviceFlags::Graphics;
 
-    return RHI::FInstance::CreateLogicalDevice(deviceFlags, nullptr);
+    return RHI::FInstance::CreateLogicalDevice(deviceFlags, RHI::FWindowSurface{0});
 }
 //----------------------------------------------------------------------------
 void FDefaultRHIService_::DestroyHeadlessDevice(RHI::FDevice* device) {

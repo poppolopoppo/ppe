@@ -66,7 +66,7 @@ FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device) NOEX
 
     forrange(i, 0, deviceMem.memoryHeapCount) {
         FMemoryHeap* const heap = INPLACE_NEW(&_memoryHeaps[i], FMemoryHeap) {
-        Min(checked_cast<u32>(deviceMem.memoryHeaps[i].size / 8),GVulkanMaxGranularity ),
+        Min(checked_cast<u32>(deviceMem.memoryHeaps[i].size / 8), GVulkanMaxGranularity),
             deviceMem.memoryHeaps[i].size
     #if USE_PPE_MEMORYDOMAINS
             , i, &MEMORYDOMAIN_TRACKING_DATA(DeviceHeap)
@@ -78,6 +78,8 @@ FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device) NOEX
 
 #if USE_PPE_MEMORYDOMAINS
         RegisterTrackingData(&heap->TrackingData);
+#else
+        UNUSED(heap);
 #endif
     }
 
@@ -92,6 +94,8 @@ FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device) NOEX
 
 #if USE_PPE_MEMORYDOMAINS
         RegisterTrackingData(&mem->TrackingData);
+#else
+        UNUSED(mem);
 #endif
     }
 }

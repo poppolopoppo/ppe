@@ -894,7 +894,7 @@ auto FVulkanInstance::CreateWindowSurface(FWindowHandle hwnd) -> FWindowSurface 
 //----------------------------------------------------------------------------
 void FVulkanInstance::DestroyWindowSurface(FWindowSurface surface) {
     AssertRelease(not GHeadless); // can't create window surface when headless
-    Assert(nullptr != surface);
+    Assert(VK_NULL_HANDLE != surface);
 
     FVulkanInstanceData_& vk = FVulkanInstanceData_::Get();
     const Meta::FUniqueLock scopeLock(vk.Barrier);

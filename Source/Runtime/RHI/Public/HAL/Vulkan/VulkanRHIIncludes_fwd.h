@@ -2,6 +2,8 @@
 
 #include "HAL/Generic/GenericRHI_fwd.h"
 
+#include "Meta/StronglyTyped.h"
+
 #ifdef RHI_VULKAN
 
 #   ifdef __clang__
@@ -15,23 +17,56 @@
 // Vulkan
 //----------------------------------------------------------------------------
 #   ifdef __clang__
-#    define PPE_VK_ENUM(_NAME) enum _NAME
-#    else
-#    define PPE_VK_ENUM(_NAME) enum _NAME : int
-#    endif
+#       define PPE_VK_ENUM(_NAME) enum _NAME
+#   else
+#       define PPE_VK_ENUM(_NAME) enum _NAME : int
+#   endif
+
 #define PPE_VK_STRUCT(_NAME) struct _NAME
 #define PPE_VK_HANDLE(_NAME) \
     struct CONCAT(_NAME, _T); \
     namespace PPE { namespace RHI { \
         using _NAME = ::CONCAT(_NAME, _T)*; \
     }}
+
 #ifdef ARCH_64BIT
 #    define PPE_VK_HANDLE_NON_DISPATCHABLE(_NAME) PPE_VK_HANDLE(_NAME)
 #else
-#    define PPE_VK_HANDLE_NON_DISPATCHABLE(_NAME) namespace PPE { namespace RHI { \
-    using _NAME = u64; \
-}}
+    namespace PPE { namespace RHI {
+    // keep static type checking with u64 impersonation
+        template <typename _Tag>
+        struct TVulkanNonDispatchableHandle {
+            u64 Handle;
+
+            TVulkanNonDispatchableHandle() = default;
+
+            TVulkanNonDispatchableHandle(const TVulkanNonDispatchableHandle&) = default;
+            TVulkanNonDispatchableHandle& operator =(const TVulkanNonDispatchableHandle&) = default;
+
+            TVulkanNonDispatchableHandle(TVulkanNonDispatchableHandle&&) = default;
+            TVulkanNonDispatchableHandle& operator =(TVulkanNonDispatchableHandle&&) = default;
+
+            CONSTEXPR TVulkanNonDispatchableHandle(u64 handle) : Handle(handle) {}
+
+            CONSTEXPR operator u64 () const { return Handle; }
+
+            CONSTEXPR u64* operator &() { return &Handle; }
+            CONSTEXPR u64& operator *() { return Handle; }
+
+            CONSTEXPR const u64* operator &() const { return &Handle; }
+            CONSTEXPR const u64& operator *() const { return Handle; }
+
+            CONSTEXPR bool operator ==(u64 other) const { return (Handle == other); }
+            CONSTEXPR bool operator !=(u64 other) const { return (Handle != other); }
+        };
+    }}
+#   define PPE_VK_HANDLE_NON_DISPATCHABLE(_NAME) \
+    struct CONCAT(_NAME, _T) {}; \
+    namespace PPE { namespace RHI { \
+        using _NAME = TVulkanNonDispatchableHandle< CONCAT(_NAME, _T) >; \
+    }}
 #endif
+
 //----------------------------------------------------------------------------
 namespace PPE {
 namespace RHI {
