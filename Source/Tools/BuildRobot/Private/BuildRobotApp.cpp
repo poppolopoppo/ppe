@@ -3,6 +3,10 @@
 #include "BuildRobotApp.h"
 
 #include "HAL/PlatformNotification.h"
+#include "HAL/PlatformProcess.h"
+#include "HAL/PlatformThread.h"
+
+#include "ApplicationModule.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -20,14 +24,22 @@ void FBuildRobotApp::Start() {
     Application::FPlatformNotification::NotifySystray(
         Application::FPlatformNotification::ENotificationIcon::Warning,
         L"Worker listening for new tasks",
-        L"BuildRobot");
+        L"BuildRobot" );
+
+    ApplicationLoop(); // wait for Remoting events
+}
+//----------------------------------------------------------------------------
+bool FBuildRobotApp::PumpMessages() NOEXCEPT {
+    FPlatformProcess::Sleep(0.1f); // cool-down
+
+    return FApplicationConsole::PumpMessages();
 }
 //----------------------------------------------------------------------------
 void FBuildRobotApp::Shutdown() {
     Application::FPlatformNotification::NotifySystray(
         Application::FPlatformNotification::ENotificationIcon::Warning,
         L"Shutting down worker",
-        L"BuildRobot");
+        L"BuildRobot" );
 
     parent_type::Shutdown();
 }

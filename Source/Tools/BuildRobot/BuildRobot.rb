@@ -7,6 +7,7 @@ $Build.ppe_executable!(:BuildRobot, :Tools) do
         RTTI(),
         Serialize(),
         Network(),
+        Remoting(),
         Application() ]})
     public_deps!(*namespace[:ContentPipeline]{[
         BuildGraph() ]})

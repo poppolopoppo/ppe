@@ -13,6 +13,7 @@ public:
     ~FBuildRobotApp();
 
     virtual void Start() override;
+    virtual bool PumpMessages() NOEXCEPT override;
     virtual void Shutdown() override;
 };
 //----------------------------------------------------------------------------
