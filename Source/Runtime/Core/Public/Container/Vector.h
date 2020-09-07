@@ -149,7 +149,7 @@ public:
     const_iterator end() const { return MakeCheckedIterator((const_pointer)_data, _size, _size); }
 
     const_iterator cbegin() const { return begin(); }
-    const_iterator cend() const { return end; }
+    const_iterator cend() const { return end(); }
 
     reverse_iterator rbegin() { return reverse_iterator(end()); }
     reverse_iterator rend() { return reverse_iterator(begin()); }
@@ -271,7 +271,7 @@ private:
     template <typename _It, typename _ItCat>
     iterator insert_(const_iterator pos, _It first, _It last, _ItCat );
 
-    void swap_(TVector& other, std::true_type ) NOEXCEPT;
+    void swap_(TVector& other, std::true_type  ) NOEXCEPT;
     void swap_(TVector& other, std::false_type ) NOEXCEPT;
 
     u32 _capacity;

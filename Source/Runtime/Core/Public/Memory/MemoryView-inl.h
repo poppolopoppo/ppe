@@ -132,7 +132,7 @@ bool TMemoryView<T>::StartsWith(const TMemoryView<T>& prefix) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T> TMemoryView<T>::Concat(const TMemoryView& other) const {
+NODISCARD TMemoryView<T> TMemoryView<T>::Concat(const TMemoryView& other) const {
     if (Likely(_storage && other._storage)) {
         Assert(_storage + _size == other._storage);
         return TMemoryView<T>{ _storage, _size + other._size };
@@ -146,7 +146,7 @@ TMemoryView<T> TMemoryView<T>::Concat(const TMemoryView& other) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T> TMemoryView<T>::Concat_AssumeNotEmpty(const TMemoryView& other) const {
+NODISCARD TMemoryView<T> TMemoryView<T>::Concat_AssumeNotEmpty(const TMemoryView& other) const {
     Assert(_storage);
     Assert(other._storage);
     Assert_NoAssume(_storage + _size == other._storage);
@@ -160,21 +160,21 @@ void TMemoryView<T>::CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T> TMemoryView<T>::SubRange(size_t offset, size_t count) const {
+NODISCARD TMemoryView<T> TMemoryView<T>::SubRange(size_t offset, size_t count) const {
     Assert(offset <= _size);
     Assert(offset + count <= _size);
     return TMemoryView(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
+NODISCARD TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
     Assert(offset <= _size);
     Assert(offset + count <= _size);
     return TMemoryView< Meta::TAddConst<T> >(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last) const {
+NODISCARD TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last) const {
     Assert(AliasesToContainer(first));
     Assert(AliasesToContainer(last));
     Assert(first <= last);
@@ -182,7 +182,7 @@ TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterator first, iterator last) const {
+NODISCARD TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterator first, iterator last) const {
     Assert(AliasesToContainer(first));
     Assert(AliasesToContainer(last));
     Assert(first <= last);
@@ -190,7 +190,7 @@ TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterator first, 
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) const {
+NODISCARD TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) const {
     Assert(stride <= _size);
     Assert(index < (_size + stride - 1) / stride);
     const size_t offset = index * stride;
@@ -199,13 +199,13 @@ TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SliceConst(size_t index, size_t stride) const {
+NODISCARD TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SliceConst(size_t index, size_t stride) const {
     return Slice(index, stride).template Cast< Meta::TAddConst<T> >();
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-TMemoryView<U> TMemoryView<T>::Cast() const {
+NODISCARD TMemoryView<U> TMemoryView<T>::Cast() const {
     STATIC_ASSERT(  (0 == (sizeof(T) % sizeof(U)) ) ||
                     (0 == (sizeof(U) % sizeof(T)) ) );
     Assert_NoAssume((_size * sizeof(T)) % sizeof(U) == 0);

@@ -107,56 +107,56 @@ public:
         return eaten;
     }
 
-    TMemoryView<T> Slice(size_t index, size_t stride) const;
-    TMemoryView< Meta::TAddConst<T> > SliceConst(size_t index, size_t stride) const;
+    NODISCARD TMemoryView<T> Slice(size_t index, size_t stride) const;
+    NODISCARD TMemoryView< Meta::TAddConst<T> > SliceConst(size_t index, size_t stride) const;
 
-    TMemoryView<T> SubRange(size_t offset, size_t count) const;
-    TMemoryView< Meta::TAddConst<T> > SubRangeConst(size_t offset, size_t count) const;
+    NODISCARD TMemoryView<T> SubRange(size_t offset, size_t count) const;
+    NODISCARD TMemoryView< Meta::TAddConst<T> > SubRangeConst(size_t offset, size_t count) const;
 
-    TMemoryView<T> SubRange(iterator first, iterator last) const;
-    TMemoryView< Meta::TAddConst<T> > SubRangeConst(iterator first, iterator last) const;
+    NODISCARD TMemoryView<T> SubRange(iterator first, iterator last) const;
+    NODISCARD TMemoryView< Meta::TAddConst<T> > SubRangeConst(iterator first, iterator last) const;
 
-    TMemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
-    TMemoryView< Meta::TAddConst<T> > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
+    NODISCARD TMemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
+    NODISCARD TMemoryView< Meta::TAddConst<T> > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
-    TMemoryView<T> CutStartingAt(const iterator& it) const {
+    NODISCARD TMemoryView<T> CutStartingAt(const iterator& it) const {
         Assert_NoAssume(end() == it || AliasesToContainer(it));
         return (end() != it
             ? TMemoryView(std::addressof(*it), std::distance(it, end()))
             : TMemoryView(_storage+_size, size_type(0)) );
     }
 
-    TMemoryView<T> CutStartingAt(const reverse_iterator& it) const {
+    NODISCARD TMemoryView<T> CutStartingAt(const reverse_iterator& it) const {
         Assert_NoAssume(rend() == it || AliasesToContainer(it));
         return (rend() != it
             ? TMemoryView(std::addressof(*it), _storage + _size - std::addressof(*it))
             : TMemoryView(_storage, size_type(0)) );
     }
 
-    TMemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
-    TMemoryView< Meta::TAddConst<T> > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
+    NODISCARD TMemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
+    NODISCARD TMemoryView< Meta::TAddConst<T> > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
 
-    TMemoryView<T> CutBefore(const iterator& it) const {
+    NODISCARD TMemoryView<T> CutBefore(const iterator& it) const {
         Assert_NoAssume(end() == it || AliasesToContainer(it));
         return TMemoryView<T>(_storage, std::distance(begin(), it));
     }
 
-    TMemoryView<T> CutBefore(const reverse_iterator& it) const {
+    NODISCARD TMemoryView<T> CutBefore(const reverse_iterator& it) const {
         Assert_NoAssume(rend() == it || AliasesToContainer(it));
         return TMemoryView<T>(_storage, std::addressof(*it) - _storage);
     }
 
-    TMemoryView<T> FirstNElements(size_t count) const { return CutBefore(count); }
-    TMemoryView<T> LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
+    NODISCARD TMemoryView<T> FirstNElements(size_t count) const { return CutBefore(count); }
+    NODISCARD TMemoryView<T> LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
 
-    TMemoryView<T> TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
-    TMemoryView<T> TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
+    NODISCARD TMemoryView<T> TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
+    NODISCARD TMemoryView<T> TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
 
-    TMemoryView<T> ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage, _size - n); }
-    TMemoryView<T> ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage + n, _size - n); }
+    NODISCARD TMemoryView<T> ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage, _size - n); }
+    NODISCARD TMemoryView<T> ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage + n, _size - n); }
 
-    TMemoryView<T> GrowBack(const size_type n = 1) const { return TMemoryView<T>(_storage, _size + n); }
-    TMemoryView<T> GrowFront(const size_type n = 1) const { return TMemoryView<T>(_storage - n, _size + n); }
+    NODISCARD TMemoryView<T> GrowBack(const size_type n = 1) const { return TMemoryView<T>(_storage, _size + n); }
+    NODISCARD TMemoryView<T> GrowFront(const size_type n = 1) const { return TMemoryView<T>(_storage - n, _size + n); }
 
     template <typename U>
     bool IsSubRangeOf(const TMemoryView<U>& parent) const {
@@ -208,21 +208,21 @@ public:
     bool EndsWith(const TMemoryView<T>& suffix) const;
     bool StartsWith(const TMemoryView<T>& prefix) const;
 
-    TMemoryView Concat(const TMemoryView& other) const;
-    TMemoryView Concat_AssumeNotEmpty(const TMemoryView& other) const;
+    NODISCARD TMemoryView Concat(const TMemoryView& other) const;
+    NODISCARD TMemoryView Concat_AssumeNotEmpty(const TMemoryView& other) const;
 
     template <typename _Pred>
-    TMemoryView SplitIf(const _Pred& pred) const { return TMemoryView(_storage, FindFirst(pred)); }
+    NODISCARD TMemoryView SplitIf(const _Pred& pred) const { return TMemoryView(_storage, FindFirst(pred)); }
     template <typename _Pred>
-    TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
+    NODISCARD TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
     CONSTEXPR bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
     CONSTEXPR bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it < end()); }
     CONSTEXPR bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it < rend()); }
 
     template <typename U>
-    TMemoryView<U> Cast() const;
-    TMemoryView<const u8> RawView() const { return Cast<const u8>(); }
+    NODISCARD TMemoryView<U> Cast() const;
+    NODISCARD TMemoryView<const u8> RawView() const { return Cast<const u8>(); }
 
     template <typename _Map>
     auto Map(_Map&& map) const {
@@ -247,6 +247,12 @@ public:
             [](auto a, auto b) CONSTEXPR NOEXCEPT{ return a + b; },
             std::move(init) );
     }
+
+	auto Sum() const {
+        return MapReduce(
+            [](auto x) { return x; },
+			[](auto a, auto b) CONSTEXPR NOEXCEPT{ return a + b; } );
+	}
 
     // implicit cast to TIterable<>
     CONSTEXPR operator TIterable<iterator>() const {

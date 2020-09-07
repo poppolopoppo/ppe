@@ -195,7 +195,7 @@ public:
 
     size_t HashValue() const { return hash_value(_vector); }
 
-    friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) {
+    friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) NOEXCEPT {
         swap(lhs._vector, rhs._vector);
     }
 

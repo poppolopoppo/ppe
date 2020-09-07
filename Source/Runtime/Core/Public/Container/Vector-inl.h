@@ -265,7 +265,7 @@ auto TVector<T, _Allocator>::erase(const_iterator first, const_iterator last) ->
     for (size_type i = _size - n; i < _size; ++i)
         Meta::Destroy(&_data[i]);
 
-    _size -= n;
+    _size = checked_cast<u32>(_size - n);
     return MakeCheckedIterator(_data, _capacity, p);
 }
 //----------------------------------------------------------------------------
@@ -351,7 +351,7 @@ auto TVector<T, _Allocator>::insert(const_iterator pos, size_type count, const T
         reserve_Additional(count);
 
         const size_t offset = _size;
-        _size += count;
+        _size = checked_cast<u32>(_size + count);
         Assert(_capacity >= _size);
 
         std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, offset), count, value);
