@@ -145,7 +145,7 @@ inline void UnregisterStaticModules() NOEXCEPT {
 }
 // register/unregister for runtime modules:
 inline void RegisterDynamicModules() NOEXCEPT {
-    #{dynamic_modules.empty? ? '//' : ''}auto& registry = FModuleStaticRegistration::Get();
+    #{dynamic_modules.empty? ? '//' : ''}auto& registry = FModuleDynamicRegistration::Get();
 #{dynamic_modules.collect do |dep|
     libpath = env.target_artifact_path(dep)
     libpath = env.relative_path($BinariesPath, libpath)
@@ -153,7 +153,7 @@ inline void RegisterDynamicModules() NOEXCEPT {
 }end.join('')}
 }
 inline void UnregisterDynamicModules() NOEXCEPT {
-    #{dynamic_modules.empty? ? '//' : ''}auto& registry = FModuleStaticRegistration::Get();
+    #{dynamic_modules.empty? ? '//' : ''}auto& registry = FModuleDynamicRegistration::Get();
 #{dynamic_modules.collect do |dep|
 %{    registry.UnregisterLibrary("#{dep.abs_path}");
 }end.join('')}
@@ -162,8 +162,7 @@ inline void UnregisterDynamicModules() NOEXCEPT {
 constexpr std::array<FStringView, #{dependency_list.length}> DependencyList {
 #{dependency_list.collect do |dep|
 %{    MakeStringView("#{dep}"),
-}end.join('')}
-    };
+}end.join('')}};
 } //!namespace Generated
 } //!namespace PPE
 }
