@@ -10,6 +10,25 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Instantiate official "opaque" data containers, TRawInlineAllocator<> is used InSitu without defining FAny
+namespace details {
+constexpr int _sizeof_FAny = (4 * sizeof(intptr_t));
+using FOpaqueArrayContainer_ = TVector<
+    FAny,
+    TRawInlineAllocator<MEMORYDOMAIN_TAG(OpaqueData), _sizeof_FAny * 3>
+>;
+using FOpaqueDataContainer_ = TAssociativeVector<
+    FName, FAny,
+    Meta::TEqualTo<FName>,
+    TVector<
+        TPair<FName, FAny>,
+        TRawInlineAllocator<MEMORYDOMAIN_TAG(OpaqueData), (sizeof(FName) + _sizeof_FAny) * 3>
+    >
+ >;
+} //!details
+INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FOpaqueArray, details::FOpaqueArrayContainer_);
+INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FOpaqueData, details::FOpaqueDataContainer_);
+//----------------------------------------------------------------------------
 PPE_RTTI_API FAny& GetOpaqueData(FOpaqueData* opaque, const FName& name) NOEXCEPT;
 PPE_RTTI_API const FAny* GetOpaqueDataIFP(const FOpaqueData* opaque, const FName& name) NOEXCEPT;
 //----------------------------------------------------------------------------
@@ -31,7 +50,7 @@ FOREACH_RTTI_NATIVETYPES(PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL)
 #undef PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL
 //----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_OPAQUE_TRAITS(_FROM, ...) \
-    CONSTEXPR PTypeInfos TypeInfos(TType< _FROM >) { \
+    CONSTEXPR auto/* forward-declaration */ TypeInfos(TType< _FROM >) { \
         return FTypeHelpers::Alias< _FROM, __VA_ARGS__ >; \
     } \
     inline PTypeTraits Traits(TType< _FROM >) NOEXCEPT { \

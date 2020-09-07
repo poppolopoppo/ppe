@@ -13,6 +13,8 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EVisitorFlags : u32 {
+    // /!\ Report changes to MetaEnumHelpers.cpp
+
     Default             = 0,
     KeepDeprecated      = 1<<0,
     KeepTransient       = 1<<1,

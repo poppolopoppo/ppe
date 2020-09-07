@@ -1,5 +1,6 @@
 #pragma once
 
+#include "NativeTraits.h"
 #include "RTTI_fwd.h"
 
 #include "RTTI/Atom.h"
@@ -68,11 +69,13 @@ protected:
     virtual void DeepCopy(const void* src, void* dst) const override final;
     virtual hash_t HashValue(const void* data) const override final;
     virtual void* Cast(void* data, const PTypeTraits& dst) const override final;
+    virtual PTypeTraits CommonType(const PTypeTraits& other) const override final;
     virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
     virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT override final;
 */
 
-    void* BaseCast(void* data, const PTypeTraits& dst) const;
+    void* BaseCast(void* data, const PTypeTraits& dst) const NOEXCEPT;
+
     bool BasePromoteCopy(const void* src, const FAtom& dst) const;
     bool BasePromoteMove(void* src, const FAtom& dst) const NOEXCEPT;
 };
@@ -153,12 +156,12 @@ void TBaseTypeTraits<T, _Parent>::Swap(void* lhs, void* rhs) const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void* TBaseTypeTraits<T, _Parent>::BaseCast(void* data, const PTypeTraits& dst) const {
+void* TBaseTypeTraits<T, _Parent>::BaseCast(void* data, const PTypeTraits& dst) const NOEXCEPT {
     Assert(data);
+    Assert(dst);
 
     return (*dst == *this ? data : nullptr);
 }
-
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
 bool TBaseTypeTraits<T, _Parent>::BasePromoteCopy(const void* src, const FAtom& dst) const {
@@ -222,6 +225,26 @@ CONSTEXPR PTypeTraits MakeStaticType() {
 }
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR PTypeTraits MakeCommonType(const PTypeTraits& other) {
+    Assert(other);
+
+    if (other->TypeId() == MakeTypeInfos<T>().TypeId)
+        return other;
+
+    switch (other->TypeId()) {
+#define DECL_NATIVETYPE_COMMONTYPE(_Name, _Other, _TypeId) \
+case _TypeId: \
+IF_CONSTEXPR( Meta::has_common_type_v<T, _Other> ) \
+return MakeTraits< typename std::common_type<T, _Other>::type >(); \
+break;
+        FOREACH_RTTI_NATIVETYPES(DECL_NATIVETYPE_COMMONTYPE)
+    #undef DECL_NATIVETYPE_COMMONTYPE
+        }
+
+    return PTypeTraits{};
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
@@ -252,19 +275,6 @@ struct TIsSupportedType {
     using is_supported = decltype(details::IsSupportedType_<T>(0));
     STATIC_CONST_INTEGRAL(bool, value, not std::is_same<void, T>::value && is_supported::value);
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Helpers traits for natives types
-//----------------------------------------------------------------------------
-CONSTEXPR bool is_arithmethic(FTypeId typeId);
-CONSTEXPR bool is_integral(FTypeId typeId);
-CONSTEXPR bool is_boolean(FTypeId typeId);
-CONSTEXPR bool is_non_bool_integral(FTypeId typeId);
-CONSTEXPR bool is_signed_integral(FTypeId typeId);
-CONSTEXPR bool is_unsigned_integral(FTypeId typeId);
-CONSTEXPR bool is_floating_point(FTypeId typeId);
-CONSTEXPR bool is_string(FTypeId typeId);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

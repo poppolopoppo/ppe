@@ -5,13 +5,13 @@
 #include <numeric>
 
 #include "Container/Stack.h"
+#include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
 #   include "MetaObject.h"
-#   include "Diagnostic/Logger.h"
 #   define CheckFunctionCallIFN(obj, result, args) CheckFunctionCall_(obj, result, args)
 namespace PPE {
 namespace RTTI {
@@ -24,6 +24,7 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 
 namespace PPE {
 namespace RTTI {
+EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -137,15 +138,19 @@ bool FMetaFunction::InvokeIFP(const FMetaObject& obj, const FAtom& result, const
     Assert(_invoke);
 
     if (arguments.size() != _parameters.size()) {
+#ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
         LOG(RTTI, Warning, L"given {0} arguments instead of {1} when calling {2}",
             arguments.size(), _parameters.size(),
             FMetaFunctionCallFormattor_(obj COMMA *this) );
+#endif
         return false;
     }
 
     if (!!_result != !!result) {
+#ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
         LOG(RTTI, Warning, L"no result is returned by {0}",
             FMetaFunctionCallFormattor_(obj COMMA *this) );
+#endif
         return false;
     }
 
@@ -210,9 +215,11 @@ bool FMetaFunction::PromoteInvoke_(
         Assert(nativeResult != result);
 
         if (not nativeResult.PromoteMove(result)) {
+#ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
             LOG(RTTI, Warning, L"wrong result type <{1}> when calling {0}",
                 FMetaFunctionCallFormattor_(obj COMMA *this),
                 result.Traits()->NamedTypeInfos() );
+#endif
             succeed = false;
         }
 
@@ -223,9 +230,11 @@ bool FMetaFunction::PromoteInvoke_(
         FAtom& arg = nativeArgs[i];
         if (arg != arguments[i]) {
             if (not arg.PromoteMove(arguments[i])) {
+#ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
                 LOG(RTTI, Warning, L"wrong type for argument #{1} {2} instead of {3} when calling {0}",
                     FMetaFunctionCallFormattor_(obj COMMA *this),
                     i, arguments[i].Traits()->NamedTypeInfos(), arg.Traits()->NamedTypeInfos() );
+#endif
                 succeed = false;
             }
 
@@ -254,7 +263,7 @@ void FMetaFunction::CheckFunctionCall_(
     AssertRelease(_parameters.size() == arguments.size());
     // check return value
     AssertRelease((!!_result) == (!!result));
-    AssertRelease((!!_result) || (_result->TypeId() == result.TypeId()));
+    AssertRelease((not _result) || (_result->TypeId() == result.TypeId()));
 }
 #endif //!WITH_PPE_RTTI_FUNCTION_CHECKS
 //----------------------------------------------------------------------------

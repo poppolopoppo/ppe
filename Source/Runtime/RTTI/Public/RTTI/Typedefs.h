@@ -33,25 +33,6 @@ CONSTEXPR FConstructorTag ConstructorTag;
 //----------------------------------------------------------------------------
 INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(BinaryData, u8, ALLOCATION_BOUNDARY));
 //----------------------------------------------------------------------------
-// Instantiate official "opaque" data containers, TRawInlineAllocator<> is used InSitu without defining FAny
-namespace details {
-constexpr int _sizeof_FAny = (4 * sizeof(intptr_t));
-using FOpaqueArrayContainer_ = TVector<
-    FAny,
-    TRawInlineAllocator<MEMORYDOMAIN_TAG(OpaqueData), _sizeof_FAny * 3>
->;
-using FOpaqueDataContainer_ = TAssociativeVector<
-    FName, FAny,
-    Meta::TEqualTo<FName>,
-    TVector<
-        TPair<FName, FAny>,
-        TRawInlineAllocator<MEMORYDOMAIN_TAG(OpaqueData), (sizeof(FName) + _sizeof_FAny) * 3>
-    >
- >;
-} //!details
-INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FOpaqueArray, details::FOpaqueArrayContainer_);
-INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FOpaqueData, details::FOpaqueDataContainer_);
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FLazyPathName {
@@ -61,8 +42,9 @@ struct FLazyPathName {
     FLazyName Identifier;
 
     bool empty() const NOEXCEPT { return (Identifier.empty()); }
+    bool Valid() const NOEXCEPT { return (Identifier.Valid() && (Namespace.empty() || Namespace.Valid())); }
 
-    static PPE_RTTI_API bool Parse(FLazyPathName* pathName, const FStringView& text);
+    static PPE_RTTI_API bool Parse(FLazyPathName* pathName, const FStringView& text, bool withPrefix = true);
 
     friend bool operator ==(const FLazyPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
         return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));

@@ -20,7 +20,6 @@ namespace RTTI {
 namespace {
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(FAny) == FAny::GInSituSize + sizeof(intptr_t)); // checks for padding
-STATIC_ASSERT(sizeof(FAny) == details::_sizeof_FAny); // checks for opaque data aliases in Typedefs.h
 constexpr size_t GNumSupportedTypes = size_t(0)
 #define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + size_t(1)
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)

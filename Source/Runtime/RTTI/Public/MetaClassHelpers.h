@@ -4,7 +4,6 @@
 
 #include "MetaClass.h"
 #include "MetaObjectHelpers.h"
-#include "RTTI/NativeTypes.h"
 
 #include "Allocator/TrackingMalloc.h"
 

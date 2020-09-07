@@ -18,7 +18,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_TRAITS(_FROM, ...) \
-    CONSTEXPR PPE::RTTI::PTypeInfos TypeInfos(TType< _FROM >) { \
+    CONSTEXPR auto/* forward-declaration */ TypeInfos(TType< _FROM >) { \
         return PPE::RTTI::FTypeHelpers::Alias< _FROM, __VA_ARGS__ >; \
     } \
     inline PPE::RTTI::PTypeTraits Traits(TType< _FROM >) NOEXCEPT { \
