@@ -18,8 +18,6 @@ IRemotingEndpoint::IRemotingEndpoint(FString&& path) NOEXCEPT
 :    _path(std::move(path))
 {}
 //----------------------------------------------------------------------------
-IRemotingEndpoint::~IRemotingEndpoint() = default;
-//----------------------------------------------------------------------------
 void IRemotingEndpoint::Process(const FRemotingContext& ctx) {
     Assert(ctx.pResponse);
 

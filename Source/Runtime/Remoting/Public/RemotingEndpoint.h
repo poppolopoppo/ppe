@@ -19,7 +19,7 @@ namespace Remoting {
 class PPE_REMOTING_API IRemotingEndpoint : Meta::FNonCopyable {
 public:
     explicit IRemotingEndpoint(FString&& path) NOEXCEPT;
-    virtual ~IRemotingEndpoint() NOEXCEPT;
+    virtual ~IRemotingEndpoint() NOEXCEPT = default;
 
     const FString& Path() const { return _path; }
 
