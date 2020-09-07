@@ -189,12 +189,16 @@ NO_INLINE void Test_ParallelFor_() {
 
     LOG(Test_Thread, Info, L"ParallelFor start");
 
-    ParallelForEach(std::begin(values), std::end(values), [](size_t v) {
+    std::atomic<size_t> parallel_sum{ 0 };
+    ParallelForEachValue(std::begin(values), std::end(values), [&parallel_sum](size_t v) {
         UNUSED(v);
         LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}",
             MakeCStringView(CurrentThreadContext().Name()), v );
+        parallel_sum += v;
         FPlatformProcess::Sleep(0);
     });
+
+    AssertRelease(MakeView(values).Sum() == parallel_sum);
 
     LOG(Test_Thread, Info, L"ParallelFor stop");
 }
@@ -213,7 +217,6 @@ struct FGraphNode {
 
     std::atomic<int> Revision{ 0 };
     void* UserData{ 0 };
-
 
     FAtomicPhaseLock Phase;
     WWeakRefCountable Payload;
@@ -377,7 +380,7 @@ NO_INLINE void Test_Graph_Preprocess_(FGraph& g) {
             dispatch.Join(ctx);
         }
 
-        g.OnBuildFinished(L"Preprocess");
+        g.OnBuildFinished(L"PreProcess");
     });
 }
 //----------------------------------------------------------------------------

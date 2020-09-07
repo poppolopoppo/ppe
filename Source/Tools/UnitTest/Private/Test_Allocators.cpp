@@ -76,7 +76,7 @@ static void Test_Allocator_MT_(const FWStringView& category, const FWStringView&
     BENCHMARK_SCOPE(category, name);
 
     forrange(loop, 0, GLoopCount_) {
-        ParallelForEach(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
+        ParallelForEachValue(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
             _Alloc alloc(allocator);
             auto* ptr = alloc.allocate(sz);
 #if USE_TESTALLOCATOR_MEMSET
