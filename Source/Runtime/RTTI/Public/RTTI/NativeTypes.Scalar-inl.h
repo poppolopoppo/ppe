@@ -17,6 +17,9 @@ protected:
 
 public: // ITypeTraits
     virtual bool Equals(const void* lhs, const void* rhs) const NOEXCEPT override final;
+
+    virtual PTypeTraits CommonType(const PTypeTraits& other) const NOEXCEPT override final;
+
     virtual hash_t HashValue(const void* data) const NOEXCEPT override final;
 };
 //----------------------------------------------------------------------------
@@ -26,6 +29,11 @@ bool TBaseScalarTraits<T>::Equals(const void* lhs, const void* rhs) const NOEXCE
     Assert(rhs);
 
     return (*static_cast<const T*>(lhs) == *static_cast<const T*>(rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+PTypeTraits TBaseScalarTraits<T>::CommonType(const PTypeTraits& other) const NOEXCEPT {
+    return MakeCommonType<T>(other);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -73,7 +81,7 @@ public: // ITypeTraits
 //----------------------------------------------------------------------------
 template <typename _Enum, class = Meta::TEnableIf< std::is_enum_v<_Enum> > >
 CONSTEXPR PTypeInfos TypeInfos(TType< _Enum >) {
-    return FTypeHelpers::Enum< _Enum, NativeTypeId< TEnumOrd<_Enum> >() >;
+    return FTypeHelpers::Enum< TEnumOrd<_Enum>, NativeTypeId< TEnumOrd<_Enum> >() >;
 }
 //----------------------------------------------------------------------------
 template <typename _Enum>

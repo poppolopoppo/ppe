@@ -33,6 +33,10 @@ public: // ITypeTraits
     virtual bool DeepEquals(const void* lhs, const void* dst) const override final;
     virtual void DeepCopy(const void* src, void* dst) const override final;
 
+    virtual PTypeTraits CommonType(const PTypeTraits& other) const NOEXCEPT override final {
+        return MakeCommonType<tuple_type>(other);
+    }
+
 public: // ITupleTraits
     virtual size_t Arity() const NOEXCEPT override final { return (sizeof...(_Args)); }
     virtual TMemoryView<const PTypeTraits> TupleTraits() const NOEXCEPT override final;

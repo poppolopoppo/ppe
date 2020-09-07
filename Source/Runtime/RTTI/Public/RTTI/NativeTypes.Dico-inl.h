@@ -64,6 +64,10 @@ public: // ITypeTraits
         return base_traits::BaseCast(data, dst);
     }
 
+    virtual PTypeTraits CommonType(const PTypeTraits& other) const NOEXCEPT override final {
+        return MakeCommonType<_Dico>(other);
+    }
+
 protected:
     static _Dico& Unwrap(void* data) NOEXCEPT {
         Assert(data);

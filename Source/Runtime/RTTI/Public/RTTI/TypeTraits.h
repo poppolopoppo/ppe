@@ -53,6 +53,8 @@ public:
 
     virtual void* Cast(void* data, const PTypeTraits& dst) const = 0;
 
+    virtual PTypeTraits CommonType(const PTypeTraits& other) const NOEXCEPT = 0;
+
     virtual hash_t HashValue(const void* data) const NOEXCEPT = 0;
 
     virtual bool Accept(IAtomVisitor* visitor, void* data) const = 0;

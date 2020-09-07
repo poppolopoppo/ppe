@@ -61,6 +61,10 @@ public: // ITypeTraits
         return base_traits::BaseCast(data, dst);
     }
 
+    virtual PTypeTraits CommonType(const PTypeTraits& other) const NOEXCEPT override final {
+        return MakeCommonType<_List>(other);
+    }
+
 protected:
     static _List& Unwrap(void* data) NOEXCEPT {
         Assert(data);
