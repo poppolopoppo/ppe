@@ -267,6 +267,8 @@ template <template<class> class _Using, typename T, class = _Using<T>>
 std::true_type has_defined_(int);
 template <template<class> class _Using, typename T>
 std::false_type has_defined_(...);
+template <typename T>
+using get_type_t_ = typename T::value_type;
 } //!details
 //----------------------------------------------------------------------------
 template <template<class> class _Using, typename T>
@@ -274,6 +276,12 @@ using has_defined_t = decltype(details::has_defined_<_Using, T>(0));
 //----------------------------------------------------------------------------
 template <template<class> class _Using, typename T>
 CONSTEXPR bool has_defined_v = has_defined_t<_Using, T>::value;
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR bool has_type_v = has_defined_t<details::get_type_t_, T>::value;
+//----------------------------------------------------------------------------
+template <typename U, typename V>
+CONSTEXPR bool has_common_type_v = has_type_v<std::common_type<U, V>>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
