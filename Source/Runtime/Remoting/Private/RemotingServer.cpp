@@ -4,7 +4,6 @@
 #include "RemotingServer.h"
 
 #include "RemotingEndpoint.h"
-#include "Container/HashMap.h"
 
 #include "Http/Request.h"
 #include "Http/Response.h"
@@ -15,14 +14,21 @@
 #include "Thread/Task/TaskContext.h"
 #include "Thread/ThreadContext.h"
 
+#include "Container/HashMap.h"
+#include "Diagnostic/Logger.h"
 #include "IO/Format.h"
+#include "IO/StringBuilder.h"
+#include "Thread/DeferredStream.h"
 
 namespace PPE {
 namespace Remoting {
+EXTERN_LOG_CATEGORY(PPE_REMOTING_API, Remoting)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FRemotingContext::Failed(Network::EHttpStatus status, FString&& reason) const {
+    LOG(Remoting, Error, L"request \"{0}\" failed with: {1} ({2})", Request.Uri(), status, reason);
+
     pResponse->SetStatus(status);
     pResponse->SetReason(std::move(reason));
 }
@@ -95,19 +101,20 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
     auto sep = path.FindAfter(PathSeparator, path.begin()/* skip first */);
 
     const FStringView name = path.CutBefore(sep);
-	if (not name.empty()) {
-		READSCOPELOCK(_barrierRW);
-		auto it = _endpoints.find(name);
-		if (_endpoints.end() != it) {
-			pEndpoint = it->second.get();
-		}
-	}
+    if (not name.empty()) {
+        READSCOPELOCK(_barrierRW);
+        auto it = _endpoints.find(name);
+        if (_endpoints.end() != it) {
+            pEndpoint = it->second.get();
+        }
+    }
 
     FRemotingResponse response;
+    response.HTTP_SetAccessControlAllowOrigin(MakeStringView("*")); // avoid CORS policy issues
+
     if (Likely(pEndpoint)) {
-        pEndpoint->Process(FRemotingContext{
-            &response, request, _sync.Public()
-        });
+        response.SetStatus(Network::EHttpStatus::OK);
+        pEndpoint->Process({ &response, request, _sync.Public() });
     }
     else {
         response.SetStatus(Network::EHttpStatus::Forbidden);
@@ -116,7 +123,7 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
 
     FRemotingResponse::Write(&port.Socket(), response);
 
-    return true;
+    return request.AskToKeepAlive();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
