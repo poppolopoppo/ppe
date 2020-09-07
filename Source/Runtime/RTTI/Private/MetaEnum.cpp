@@ -3,9 +3,10 @@
 #include "MetaEnum.h"
 
 #include "RTTI/Atom.h"
-#include "RTTI/TypeInfos.h"
+#include "RTTI/NativeTypes.h"
 
 #include "IO/FormatHelpers.h"
+#include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 
 namespace PPE {
@@ -42,7 +43,7 @@ const FMetaEnumValue* FMetaEnum::NameToValueIFP(const RTTI::FName& name) const {
     return (view.end() == it ? nullptr : std::addressof(*it));
 }
 //----------------------------------------------------------------------------
-const FMetaEnumValue* FMetaEnum::NameToValueIFP(const FStringView& name) const {
+const FMetaEnumValue* FMetaEnum::NameToValueIFP(const FLazyName& name) const {
     Assert_NoAssume(not name.empty());
 
     const auto view = _values.MakeConstView();
@@ -51,6 +52,10 @@ const FMetaEnumValue* FMetaEnum::NameToValueIFP(const FStringView& name) const {
     });
 
     return (view.end() == it ? nullptr : std::addressof(*it));
+}
+//----------------------------------------------------------------------------
+const FMetaEnumValue* FMetaEnum::NameToValueIFP(const FStringView& name) const {
+    return NameToValueIFP(FLazyName{ name });
 }
 //----------------------------------------------------------------------------
 const FMetaEnumValue& FMetaEnum::ValueToName(FMetaEnumOrd value) const {
@@ -62,10 +67,52 @@ const FMetaEnumValue& FMetaEnum::ValueToName(FMetaEnumOrd value) const {
 const FMetaEnumValue* FMetaEnum::ValueToNameIFP(FMetaEnumOrd value) const {
     const auto view = _values.MakeConstView();
     const auto it = view.FindIf([value](const FMetaEnumValue& v) {
-        return (v.Value == value);
+        return (v.Ord == value);
     });
 
     return (view.end() == it ? nullptr : std::addressof(*it));
+}
+//----------------------------------------------------------------------------
+FString FMetaEnum::ValueToString(FMetaEnumOrd value) const {
+    FExpansion expanded;
+    Verify(ExpandValues(value, &expanded));
+
+    FStringBuilder oss;
+    auto sep = Fmt::NotFirstTime('|');
+
+    for (const FMetaEnumValue& v : expanded)
+        oss << sep << v.Name;
+
+    return oss.ToString();
+}
+//----------------------------------------------------------------------------
+bool FMetaEnum::ParseValue(const FStringView& str, FMetaEnumOrd* value) const {
+    Assert(value);
+
+    FMetaEnumOrd parsed{ 0 };
+
+    if (IsFlags()) {
+        FStringView input{ str }, name;
+        while (Split(input, '|', name)) {
+            if (const FMetaEnumValue* const enumFlag = NameToValueIFP(name)) {
+                parsed |= enumFlag->Ord;
+            }
+            else {
+                return false;
+            }
+        }
+    }
+    else {
+        if (const FMetaEnumValue* const enumValue = NameToValueIFP(str)) {
+            parsed = enumValue->Ord;
+        }
+        else {
+            return false;
+        }
+    }
+
+    *value = parsed;
+    return true;
 }
 //----------------------------------------------------------------------------
 bool FMetaEnum::ExpandValues(FMetaEnumOrd value, FExpansion* expansion) const {
@@ -73,7 +120,7 @@ bool FMetaEnum::ExpandValues(FMetaEnumOrd value, FExpansion* expansion) const {
 
     if (IsFlags()) {
         for (const FMetaEnumValue& v : _values) {
-            if ((v.Value & value) == v.Value)
+            if ((v.Ord & value) == v.Ord)
                 expansion->push_back(v);
         }
     }
@@ -104,11 +151,11 @@ bool FMetaEnum::ExpandValues(const FAtom& src, FExpansion* expansion) const {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-bool FMetaEnum::IsValidName(const FName& name) const {
+bool FMetaEnum::IsValidName(const FName& name) const NOEXCEPT {
     return (NameToValueIFP(name) != nullptr);
 }
 //----------------------------------------------------------------------------
-bool FMetaEnum::IsValidName(const FAtom& src) const {
+bool FMetaEnum::IsValidName(const FAtom& src) const NOEXCEPT {
     Assert_NoAssume(src);
 
     FName name;
@@ -117,24 +164,24 @@ bool FMetaEnum::IsValidName(const FAtom& src) const {
         : false );
 }
 //----------------------------------------------------------------------------
-bool FMetaEnum::IsValidValue(FMetaEnumOrd value) const {
+bool FMetaEnum::IsValidValue(FMetaEnumOrd value) const NOEXCEPT {
     if (IsFlags()) {
         for (const FMetaEnumValue& it : _values)
-            if ((it.Value & value) == it.Value)
-                value &= ~it.Value;
+            if ((it.Ord & value) == it.Ord)
+                value &= ~it.Ord;
 
         return (0 == value); // no unknown values
     }
     else {
         for (const FMetaEnumValue& it : _values)
-            if (it.Value == value)
+            if (it.Ord == value)
                 return true;
 
         return false;
     }
 }
 //----------------------------------------------------------------------------
-bool FMetaEnum::IsValidValue(const FAtom& src) const {
+bool FMetaEnum::IsValidValue(const FAtom& src) const NOEXCEPT {
     Assert_NoAssume(src);
 
     FMetaEnumOrd value = 0;
@@ -151,16 +198,16 @@ void FMetaEnum::SetValue(const FAtom& dst, const FMetaEnumValue& v) const {
 
     switch (_sizeInBytes) {
     case sizeof(u8) :
-        *static_cast<u8*>(dst.Data()) = checked_cast<u8>(v.Value);
+        *static_cast<u8*>(dst.Data()) = checked_cast<u8>(v.Ord);
         return;
     case sizeof(u16):
-        *static_cast<u16*>(dst.Data()) = checked_cast<u16>(v.Value);
+        *static_cast<u16*>(dst.Data()) = checked_cast<u16>(v.Ord);
         return;
     case sizeof(u32):
-        *static_cast<u32*>(dst.Data()) = checked_cast<u32>(v.Value);
+        *static_cast<u32*>(dst.Data()) = checked_cast<u32>(v.Ord);
         return;
     case sizeof(u64):
-        *static_cast<u64*>(dst.Data()) = checked_cast<u64>(v.Value);
+        *static_cast<u64*>(dst.Data()) = checked_cast<u64>(v.Ord);
         return;
     }
 
@@ -209,11 +256,11 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EEnumFlags flags) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaEnumValue& value) {
-    return oss << value.Name << '(' << value.Value << ')';
+    return oss << value.Name << '(' << value.Ord << ')';
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaEnumValue& value) {
-    return oss << value.Name << L'(' << value.Value << L')';
+    return oss << value.Name << L'(' << value.Ord << L')';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

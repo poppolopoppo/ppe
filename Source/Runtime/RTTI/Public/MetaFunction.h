@@ -20,6 +20,8 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EParameterFlags : u32 {
+    // /!\ Report changes to MetaEnumHelpers.cpp
+
     Default     = 0,
     Output      = 1<<0,
     Optional    = 1<<1,
@@ -55,6 +57,8 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EFunctionFlags : u32 {
+    // /!\ Report changes to MetaEnumHelpers.cpp
+
     Const       = 1<<0,
     Public      = 1<<1,
     Protected   = 1<<2,

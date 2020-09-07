@@ -23,6 +23,8 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EObjectFlags : u32 {
+    // /!\ Report changes to MetaEnumHelpers.cpp
+
     None        = 0,
     Loaded      = 1<<0,
     Unloaded    = 1<<1,

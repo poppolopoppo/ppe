@@ -352,14 +352,14 @@ static NO_INLINE void TestRTTI_() {
         const auto defaultValue = metaEnum->DefaultValue();
         LOG(RTTI_UnitTest, Debug, L"Enum<{0}> : {1} = {2} ({3})",
             metaEnum->Name(),
-            defaultValue.Name, defaultValue.Value,
+            defaultValue.Name, defaultValue.Ord,
             metaEnum->Flags() );
 
         for (const auto it : metaEnum->Values()) {
-            LOG(RTTI_UnitTest, Debug, L"  -- '{0}' = {1}", it.Name, it.Value);
+            LOG(RTTI_UnitTest, Debug, L"  -- '{0}' = {1}", it.Name, it.Ord);
 
-            AssertRelease(metaEnum->NameToValue(it.Name).Value == it.Value);
-            AssertRelease(metaEnum->ValueToName(it.Value).Name == it.Name);
+            AssertRelease(metaEnum->NameToValue(it.Name).Ord == it.Ord);
+            AssertRelease(metaEnum->ValueToName(it.Ord).Name == it.Name);
         }
 
         ETutut tutut = ETutut::Maybe;

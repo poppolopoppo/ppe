@@ -109,8 +109,8 @@
         return CONCAT(GRTTI_MetaEnum_, _Name); \
     } \
     \
-    const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT { \
-        return static_cast<const CONCAT(RTTI_, _Name)*>(CONCAT(RTTI_, _Name)::Get()); \
+    const ::PPE::RTTI::FMetaEnum* RTTI_Enum(_Name) NOEXCEPT { \
+        return CONCAT(RTTI_, _Name)::Get(); \
     } \
     \
     ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() NOEXCEPT { \

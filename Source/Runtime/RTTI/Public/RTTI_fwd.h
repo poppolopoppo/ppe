@@ -80,12 +80,12 @@ class IAtomVisitor;
 //----------------------------------------------------------------------------
 FWD_REFPTR(AtomHeap);
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename _Enum>
 const FMetaEnum* MetaEnum();
 FStringView MetaEnumName(const FMetaEnum* metaEnum);
 i64 MetaEnumDefaultValue(const FMetaEnum* metaEnum);
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename _Class>
 const FMetaClass* MetaClass();
 FStringView MetaClassName(const FMetaClass* metaClass);
 //----------------------------------------------------------------------------

@@ -18,6 +18,8 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EPropertyFlags : u32 {
+    // /!\ Report changes to MetaEnumHelpers.cpp
+
     Public      = 1<<0,
     Protected   = 1<<1,
     Private     = 1<<2,

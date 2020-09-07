@@ -19,6 +19,8 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EClassFlags : u32 {
+    // /!\ Report changes to MetaEnumHelpers.cpp
+
     None        = 0,
 
     Concrete    = 1<<0,
@@ -144,20 +146,13 @@ protected: // for access in CreateInstance()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-using TMetaClass = typename T::RTTI_FMetaClass;
+template <typename _Class>
+using TMetaClass = typename _Class::RTTI_FMetaClass;
 //----------------------------------------------------------------------------
-namespace details {
-template <typename T>
-static const FMetaClass* MetaClass_(std::false_type) { return nullptr; }
-template <typename T>
-static const FMetaClass* MetaClass_(std::true_type) { return TMetaClass<T>::Get(); }
-} //!details
-template <typename T>
+template <typename _Class>
 const FMetaClass* MetaClass() {
-    return details::MetaClass_< Meta::TDecay<T> >(
-        typename std::is_base_of< FMetaObject, Meta::TDecay<T> >::type {}
-    );
+    STATIC_ASSERT(std::is_base_of_v<FMetaObject, _Class>);
+    return TMetaClass<_Class>::Get();
 }
 //----------------------------------------------------------------------------
 inline FStringView MetaClassName(const FMetaClass* metaClass) {

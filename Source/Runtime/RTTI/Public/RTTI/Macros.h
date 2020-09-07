@@ -52,7 +52,7 @@ public: \
     private: \
         explicit CONCAT(RTTI_, _Name)(const PPE::RTTI::FMetaModule* module) NOEXCEPT; \
     }; \
-    _Api const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT
+    _Api const ::PPE::RTTI::FMetaEnum* RTTI_Enum(_Name) NOEXCEPT
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

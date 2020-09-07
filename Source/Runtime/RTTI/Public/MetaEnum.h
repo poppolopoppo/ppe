@@ -13,6 +13,8 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EEnumFlags : u32 {
+    // /!\ Report changes to MetaEnumHelpers.cpp
+
     None        = 0,
     Flags       = 1<<0,
     Deprecated  = 1<<1,
@@ -23,7 +25,7 @@ ENUM_FLAGS(EEnumFlags);
 //----------------------------------------------------------------------------
 struct FMetaEnumValue {
     FName Name;
-    FMetaEnumOrd Value;
+    FMetaEnumOrd Ord;
 };
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaEnum : Meta::FNonCopyableNorMovable {
@@ -44,20 +46,24 @@ public:
 
     const FMetaEnumValue& NameToValue(const RTTI::FName& name) const;
     const FMetaEnumValue* NameToValueIFP(const RTTI::FName& name) const;
+    const FMetaEnumValue* NameToValueIFP(const FLazyName& name) const;
     const FMetaEnumValue* NameToValueIFP(const FStringView& name) const;
 
     const FMetaEnumValue& ValueToName(FMetaEnumOrd value) const;
     const FMetaEnumValue* ValueToNameIFP(FMetaEnumOrd value) const;
 
+    FString ValueToString(FMetaEnumOrd value) const;
+    bool ParseValue(const FStringView& str, FMetaEnumOrd* value) const;
+
     using FExpansion = VECTORINSITU(MetaEnum, FMetaEnumValue, 6);
     bool ExpandValues(FMetaEnumOrd value, FExpansion* expansion) const;
     bool ExpandValues(const FAtom& src, FExpansion* expansion) const;
 
-    bool IsValidName(const FName& name) const;
-    bool IsValidName(const FAtom& src) const;
+    bool IsValidName(const FName& name) const NOEXCEPT;
+    bool IsValidName(const FAtom& src) const NOEXCEPT;
 
-    bool IsValidValue(FMetaEnumOrd value) const;
-    bool IsValidValue(const FAtom& src) const;
+    bool IsValidValue(FMetaEnumOrd value) const NOEXCEPT;
+    bool IsValidValue(const FAtom& src) const NOEXCEPT;
 
     void SetValue(const FAtom& dst, const FMetaEnumValue& v) const;
 
@@ -77,18 +83,10 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// must be overloaded for each supported enum type (see RTTI_Macros.h)
-//void* RTTI_Enum(void) NOEXCEPT = delete;
-//----------------------------------------------------------------------------
-template <typename T>
-using TMetaEnum = Meta::TRemoveConst<
-    Meta::TRemovePointer<decltype(
-        RTTI_Enum(std::declval<Meta::TDecay<T>>())
-    )> >;
-//----------------------------------------------------------------------------
-template <typename T>
+template <typename _Enum>
 const FMetaEnum* MetaEnum() {
-    return TMetaEnum<T>::Get();
+    STATIC_ASSERT(std::is_enum_v<_Enum>);
+    return RTTI_Enum(_Enum{});
 }
 //----------------------------------------------------------------------------
 inline FStringView MetaEnumName(const FMetaEnum* metaEnum) {
@@ -98,7 +96,7 @@ inline FStringView MetaEnumName(const FMetaEnum* metaEnum) {
 //----------------------------------------------------------------------------
 inline FMetaEnumOrd MetaEnumDefaultValue(const FMetaEnum* metaEnum) {
     Assert(metaEnum);
-    return metaEnum->DefaultValue().Value;
+    return metaEnum->DefaultValue().Ord;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

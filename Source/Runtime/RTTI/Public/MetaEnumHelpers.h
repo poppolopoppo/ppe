@@ -28,7 +28,7 @@ public:
     public:
         RTTI_FMetaEnumHandle() NOEXCEPT
             : FMetaEnumHandle(
-                TMetaEnum<T>::Module(),
+                _Self::Module(),
                 CreateMetaEnum_,
                 [](FMetaEnum* metaEnum) { TRACKING_DELETE(MetaEnum, metaEnum); })
         {}
@@ -42,9 +42,37 @@ public:
 
 private:
     static FMetaEnum* CreateMetaEnum_(const FMetaModule* metaNamespace) {
-        return TRACKING_NEW(MetaEnum, TMetaEnum<T>) { metaNamespace };
+        return TRACKING_NEW(MetaEnum, _Self) { metaNamespace };
     }
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Bind RTTI internal enums
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(ENativeType) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(EClassFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(EEnumFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(EFunctionFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(EObjectFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(EParameterFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(EPropertyFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(ETypeFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(EVisitorFlags) NOEXCEPT;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_RTTI_API bool MetaEnumParse(const FMetaEnum& menum, const FStringView& str, FMetaEnumOrd* ord) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename _Enum>
+bool MetaEnumParse(const FStringView& str, _Enum* value) NOEXCEPT {
+    Assert(value);
+    FMetaEnumOrd ord;
+    if (MetaEnumParse(*MetaEnum<_Enum>(), str, &ord)) {
+        *value = static_cast<_Enum>(ord);
+        return true;
+    }
+    return false;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
