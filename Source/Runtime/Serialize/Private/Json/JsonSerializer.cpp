@@ -99,9 +99,10 @@ static RTTI::FName Json_Flags()         { return RTTI::FName("Flags"); }
 static RTTI::FName Json_Functions()     { return RTTI::FName("Functions"); }
 static RTTI::FName Json_Module()        { return RTTI::FName("Module"); }
 static RTTI::FName Json_Properties()    { return RTTI::FName("Properties"); }
+static RTTI::FName Json_SizeInBytes()   { return RTTI::FName("SizeInBytes"); }
 static RTTI::FName Json_Traits()        { return RTTI::FName("Traits"); }
 static RTTI::FName Json_TypeId()        { return RTTI::FName("TypeId"); }
-static RTTI::FName Json_SizeInBytes()   { return RTTI::FName("SizeInBytes"); }
+static RTTI::FName Json_Values()        { return RTTI::FName("Values"); }
 //----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TJson_RTTI_traits;
@@ -264,6 +265,13 @@ public:
     void reserve(size_t n) {
         _visiteds.reserve(n);
         _stack.reserve(n);
+    }
+
+    void Append(const RTTI::FAtom& atom, FJson::FValue& value) {
+		Assert(atom);
+		Assert_NoAssume(_stack.empty());
+
+        VerifyRelease(Recurse_(atom, &value));
     }
 
     void Append(const RTTI::FMetaObject* ref, FJson::FValue& value) {
@@ -673,7 +681,7 @@ void RTTI_to_Json(const RTTI::FAny& any, FJson* dst) {
 
     if (any) {
         FRTTI_to_Json_ toJson;
-        any.InnerAtom().Accept(&toJson);
+        toJson.Append(any.InnerAtom(), dst->Root());
     }
     else
         dst->Root().MakeDefault_AssumeNotValid<FJson::FNull>();
@@ -683,7 +691,7 @@ void RTTI_to_Json(const RTTI::FAtom& atom, FJson* dst) {
     Assert(dst);
 
     FRTTI_to_Json_ toJson;
-    atom.Accept(&toJson);
+    toJson.Append(atom, dst->Root());
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const RTTI::FMetaObject& obj, FJson* dst) {
@@ -788,9 +796,9 @@ void RTTI_to_Json(const RTTI::FMetaEnum& menum, FJson* dst) {
 	RTTI_to_Json(menum.MakeTraits(), &traits);
 	obj[Json_Traits()] = std::move(traits.Root());
 
-	FJson::FObject& values = obj[Json_Functions()].MakeDefault_AssumeNotValid<FJson::FObject>();
+	FJson::FObject& values = obj[Json_Values()].MakeDefault_AssumeNotValid<FJson::FObject>();
 	for (const auto& it : menum.Values()) {
-		values[it.Name].Assign(it.Value);
+		values[it.Name].Assign(it.Ord);
 	}
 }
 //----------------------------------------------------------------------------
@@ -865,7 +873,7 @@ void RTTI_to_Json(const RTTI::PTypeTraits& traits, FJson* dst) {
     Assert(traits);
 
     FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    obj[Json_Name()].Assign(ToString(traits->TypeName()));
+    //obj[Json_Name()].Assign(ToString(traits->TypeName())); // not relevant here
     obj[Json_TypeId()].Assign(checked_cast<i64>(traits->TypeId()));
     obj[Json_Flags()].Assign(ToString(traits->TypeFlags()));
     obj[Json_SizeInBytes()].Assign(checked_cast<i64>(traits->SizeInBytes()));

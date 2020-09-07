@@ -106,9 +106,6 @@ public:
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
         FValue(const T& value) NOEXCEPT : RTTI::FAny(value) {}
 
-        operator RTTI::FAny& () { return (*this);  }
-        operator const RTTI::FAny& () const { return (*this); }
-
         RTTI::FTypeId TypeId() const { return RTTI::FAny::Traits()->TypeId(); }
 
         void Reset() { RTTI::FAny::Reset(); }
@@ -181,7 +178,7 @@ public:
     };
 
     // assumes FValue is a FAny, as far as RTTI will ever know
-    friend CONSTEXPR RTTI::PTypeInfos TypeInfos(RTTI::TType<FValue>) {
+    friend CONSTEXPR auto/* forward-declaration */ TypeInfos(RTTI::TType<FValue>) {
         return RTTI::FTypeHelpers::Alias<FValue, RTTI::FAny>;
     }
     friend RTTI::PTypeTraits Traits(RTTI::TType<FValue>) NOEXCEPT {
