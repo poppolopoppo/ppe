@@ -208,7 +208,11 @@ bool FUri::Unpack(FQueryMap& dst, const FUri& src) {
         if (not Decode(decodedValue, value))
             return false;
 
-        dst.Insert_AssertUnique(std::move(decodedKey), std::move(decodedValue));
+        FLazyName validatedKey{ decodedKey };
+        if (not validatedKey.Valid())
+            return false;
+
+        dst.Insert_AssertUnique(FName{ validatedKey }, std::move(decodedValue));
     }
 
     return true;

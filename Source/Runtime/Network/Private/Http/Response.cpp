@@ -46,12 +46,17 @@ bool FHttpResponse::Succeed() const {
     return HttpIsSuccessful(_status);
 }
 //----------------------------------------------------------------------------
-void FHttpResponse::UpdateContentHeaders(const FStringView& mimeType) {
-    FString contentLength;
-    Format(contentLength, "{0}", Body().SizeInBytes());
+void FHttpResponse::OverrideBody(UStreamReader&& overrideBody) {
+    Assert(overrideBody);
+    Assert(not _overrideBody);
 
+    _overrideBody = std::move(overrideBody);
+}
+//----------------------------------------------------------------------------
+void FHttpResponse::UpdateContentHeaders(const FStringView& mimeType) {
     Add(FHttpHeaders::ContentType(), ToString(mimeType));
-    Add(FHttpHeaders::ContentLength(), std::move(contentLength));
+    if (not _overrideBody)
+        Add(FHttpHeaders::ContentLength(), ToString(Body().SizeInBytes()));
 }
 //----------------------------------------------------------------------------
 void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size_t maxContentLength) {
@@ -77,12 +82,12 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
     {
         ResponseReadUntil_(&oss, socket, ' ');
 
-        i32 statusCodeI = 0;
+        i32 statusCodeN = 0;
         const FStringView statusCodeCstr = Strip(oss.Written());
-        if (not Atoi(&statusCodeI, statusCodeCstr, 10))
+        if (not Atoi(&statusCodeN, statusCodeCstr, 10))
             PPE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP invalid status code"));
 
-        presponse->_status = EHttpStatus(statusCodeI);
+        presponse->_status = EHttpStatus(statusCodeN);
 
         oss.Reset();
     }
@@ -124,34 +129,56 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
     }
 }
 //----------------------------------------------------------------------------
-void FHttpResponse::Write(FSocketBuffered* psocket, const FHttpResponse& response) {
+bool FHttpResponse::Write(FSocketBuffered* psocket, const FHttpResponse& response) {
     Assert(psocket);
     Assert(psocket->IsConnected());
 
-    psocket->Write(FHttpHeader::ProtocolVersion());
-    psocket->Put(' ');
-    psocket->Write(HttpStatusCode(response._status));
-    psocket->Put(' ');
-    psocket->Write(HttpStatusName(response._status));
-    if (response._reason.size()) {
-        psocket->Put(' ');
-        psocket->Write(MakeStringView(response._reason));
+    bool succeed = true;
+
+    succeed &= psocket->Write(ProtocolVersion());
+    succeed &= psocket->Put(' ');
+    succeed &= psocket->Write(HttpStatusCode(response.Status()));
+    succeed &= psocket->Put(' ');
+    succeed &= psocket->Write(HttpStatusName(response.Status()));
+    if (response.Reason().size()) {
+        succeed &= psocket->Put(' ');
+        succeed &= psocket->Write(response.Reason());
     }
-    psocket->Write("\r\n");
+    succeed &= psocket->Write("\r\n");
 
     for (const auto& it : response.Headers()) {
-        psocket->Write(it.first.MakeView());
-        psocket->Write(": ");
-        psocket->Write(it.second.MakeView());
-        psocket->Write("\r\n");
+        succeed &= psocket->Write(it.first.MakeView());
+        succeed &= psocket->Write(": ");
+        succeed &= psocket->Write(it.second.MakeView());
+        succeed &= psocket->Write("\r\n");
     }
 
-    psocket->Write("\r\n");
+    succeed &= psocket->Write("\r\n");
 
-    if (not response.Body().empty())
-        psocket->Write(response.Body().MakeView());
+    if (Likely(not response._overrideBody)) {
+        if (not response.Body().empty())
+            succeed &= psocket->Write(response.Body().MakeView());
+    }
+    else {
+        Assert(response.Body().empty());
 
-    psocket->FlushWrite();
+        u8 buf[2048]; // don't use STACKLOCAL() since overrideBody may change the executing thread thanks to fibers
+
+        for (;;) {
+            const size_t read = response._overrideBody->ReadSome(buf, sizeof(buf[0]), lengthof(buf));
+            if (read > 0) {
+                Assert(read <= lengthof(buf));
+                if (psocket->Write(FRawMemoryConst{ buf, read }) != read)
+                    return false;
+                if (not psocket->FlushWrite())
+                    break;
+            }
+        }
+    }
+
+    succeed &= psocket->FlushWrite();
+
+    return succeed;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

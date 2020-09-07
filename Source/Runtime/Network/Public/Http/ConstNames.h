@@ -14,6 +14,7 @@ struct FHttpHeaders {
     static PPE_NETWORK_API const FName& AcceptCharset();
     static PPE_NETWORK_API const FName& AcceptEncoding();
     static PPE_NETWORK_API const FName& AcceptLanguage();
+    static PPE_NETWORK_API const FName& AccessControlAllowOrigin();
     static PPE_NETWORK_API const FName& CacheControl();
     static PPE_NETWORK_API const FName& Connection();
     static PPE_NETWORK_API const FName& Cookie();

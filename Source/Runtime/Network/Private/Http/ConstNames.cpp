@@ -9,6 +9,7 @@
     _Macro(FHttpHeaders,    AcceptCharset,              "Accept-Charset") \
     _Macro(FHttpHeaders,    AcceptEncoding,             "Accept-Encoding") \
     _Macro(FHttpHeaders,    AcceptLanguage,             "Accept-Language") \
+    _Macro(FHttpHeaders,    AccessControlAllowOrigin,   "Access-Control-Allow-Origin") \
     _Macro(FHttpHeaders,    CacheControl,               "Cache-Control") \
     _Macro(FHttpHeaders,    Connection,                 "Connection") \
     _Macro(FHttpHeaders,    Cookie,                     "Cookie") \

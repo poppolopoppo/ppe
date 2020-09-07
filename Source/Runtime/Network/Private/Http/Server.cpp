@@ -129,7 +129,11 @@ bool FHttpServer::Servicing_ReturnKeepAlive_(FServicingPort& port) const {
         response.SetStatus(e.Status());
         response.SetReason(FString(MakeCStringView(e.What())));
 
-        FHttpResponse::Write(&socket, response);
+        if (not FHttpResponse::Write(&socket, response)) {
+            LOG(Network, Error, L"HTTP: <{0}> server failed to respond to {1}:{2}",
+                _name, socket.Local().Host(), socket.Local().Port());
+            // still try to disconnect gracefully
+        }
     })
 
     OnDisconnect(port);

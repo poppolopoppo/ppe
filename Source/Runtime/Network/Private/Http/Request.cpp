@@ -40,6 +40,16 @@ FHttpRequest::FHttpRequest(EHttpMethod method, FUri&& uri, FBody&& body)
 ,   _method(method)
 ,   _uri(std::move(uri)) {}
 //----------------------------------------------------------------------------
+bool FHttpRequest::AskToKeepAlive() const NOEXCEPT {
+    const FStringView connection = HTTP_Connection();
+    if (EqualsI(connection, "close"))
+        return false;
+    if (EqualsI(connection, "keep-alive"))
+        return true;
+    //  Having a persistent connection is the default on HTTP/1.1 requests
+    return true; // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
+}
+//----------------------------------------------------------------------------
 bool FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength) {
     Assert(prequest);
     Assert(socket.IsConnected());

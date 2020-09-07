@@ -25,14 +25,16 @@ public:
     bool Succeed() const;
     bool Failed() const { return (not Succeed()); }
 
+    void OverrideBody(UStreamReader&& overrideBody);
     void UpdateContentHeaders(const FStringView& mimeType);
 
     static void Read(FHttpResponse* presponse, FSocketBuffered& socket, size_t maxContentLength);
-    static void Write(FSocketBuffered* psocket, const FHttpResponse& response);
+    NODISCARD static bool Write(FSocketBuffered* psocket, const FHttpResponse& response);
 
 private:
     EHttpStatus _status;
     FString _reason;
+    UStreamReader _overrideBody;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

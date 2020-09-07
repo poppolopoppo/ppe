@@ -224,6 +224,7 @@ FStringView FHttpHeader::HTTP_Accept() const NOEXCEPT { return GetIFP(FHttpHeade
 FStringView FHttpHeader::HTTP_AcceptCharset() const NOEXCEPT { return GetIFP(FHttpHeaders::AcceptCharset()); }
 FStringView FHttpHeader::HTTP_AcceptEncoding() const NOEXCEPT { return GetIFP(FHttpHeaders::AcceptEncoding()); }
 FStringView FHttpHeader::HTTP_AcceptLanguage() const NOEXCEPT { return GetIFP(FHttpHeaders::AcceptLanguage()); }
+FStringView FHttpHeader::HTTP_AccessControlAllowOrigin() const NOEXCEPT { return GetIFP(FHttpHeaders::AccessControlAllowOrigin()); }
 FStringView FHttpHeader::HTTP_CacheControl() const NOEXCEPT { return GetIFP(FHttpHeaders::CacheControl()); }
 FStringView FHttpHeader::HTTP_Connection() const NOEXCEPT { return GetIFP(FHttpHeaders::Connection()); }
 FStringView FHttpHeader::HTTP_Cookie() const NOEXCEPT { return GetIFP(FHttpHeaders::Cookie()); }
@@ -244,6 +245,7 @@ void FHttpHeader::HTTP_SetAccept(FString&& value) { Add(FHttpHeaders::Accept(), 
 void FHttpHeader::HTTP_SetAcceptCharset(FString&& value) { Add(FHttpHeaders::AcceptCharset(), std::move(value)); }
 void FHttpHeader::HTTP_SetAcceptEncoding(FString&& value) { Add(FHttpHeaders::AcceptEncoding(), std::move(value)); }
 void FHttpHeader::HTTP_SetAcceptLanguage(FString&& value) { Add(FHttpHeaders::AcceptLanguage(), std::move(value)); }
+void FHttpHeader::HTTP_SetAccessControlAllowOrigin(FString&& value) { Add(FHttpHeaders::AccessControlAllowOrigin(), std::move(value)); }
 void FHttpHeader::HTTP_SetCacheControl(FString&& value) { Add(FHttpHeaders::CacheControl(), std::move(value)); }
 void FHttpHeader::HTTP_SetConnection(FString&& value) { Add(FHttpHeaders::Connection(), std::move(value)); }
 void FHttpHeader::HTTP_SetCookie(FString&& value) { Add(FHttpHeaders::Cookie(), std::move(value)); }
@@ -264,6 +266,7 @@ void FHttpHeader::HTTP_SetAccept(const FStringView& value) { HTTP_SetAccept(FStr
 void FHttpHeader::HTTP_SetAcceptCharset(const FStringView& value) { HTTP_SetAcceptCharset(FString{ value }); }
 void FHttpHeader::HTTP_SetAcceptEncoding(const FStringView& value) { HTTP_SetAcceptEncoding(FString{ value }); }
 void FHttpHeader::HTTP_SetAcceptLanguage(const FStringView& value) { HTTP_SetAcceptLanguage(FString{ value }); }
+void FHttpHeader::HTTP_SetAccessControlAllowOrigin(const FStringView& value) { HTTP_SetAccessControlAllowOrigin(FString{ value }); }
 void FHttpHeader::HTTP_SetCacheControl(const FStringView& value) { HTTP_SetCacheControl(FString{ value }); }
 void FHttpHeader::HTTP_SetConnection(const FStringView& value) { HTTP_SetConnection(FString{ value }); }
 void FHttpHeader::HTTP_SetCookie(const FStringView& value) { HTTP_SetCookie(FString{ value }); }
@@ -284,6 +287,7 @@ void FHttpHeader::HTTP_SetAccept(const FName& value) { HTTP_SetAccept(value.Make
 void FHttpHeader::HTTP_SetAcceptCharset(const FName& value) { HTTP_SetAcceptCharset(value.MakeView()); }
 void FHttpHeader::HTTP_SetAcceptEncoding(const FName& value) { HTTP_SetAcceptEncoding(value.MakeView()); }
 void FHttpHeader::HTTP_SetAcceptLanguage(const FName& value) { HTTP_SetAcceptLanguage(value.MakeView()); }
+void FHttpHeader::HTTP_SetAccessControlAllowOrigin(const FName& value) { HTTP_SetAccessControlAllowOrigin(value.MakeView()); }
 void FHttpHeader::HTTP_SetCacheControl(const FName& value) { HTTP_SetCacheControl(value.MakeView()); }
 void FHttpHeader::HTTP_SetConnection(const FName& value) { HTTP_SetConnection(value.MakeView()); }
 void FHttpHeader::HTTP_SetCookie(const FName& value) { HTTP_SetCookie(value.MakeView()); }

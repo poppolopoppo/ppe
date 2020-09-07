@@ -2,6 +2,8 @@
 
 #include "Network.h"
 
+#include "NetworkName.h"
+
 #include "Container/AssociativeVector.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
@@ -14,7 +16,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 class PPE_NETWORK_API FUri {
 public:
-    typedef ASSOCIATIVE_VECTORINSITU(URI, FString, FString, 3) FQueryMap;
+    typedef ASSOCIATIVE_VECTORINSITU(URI, FName, FString, 3) FQueryMap;
 
     static constexpr FString::char_type PathSeparator = '/';
 

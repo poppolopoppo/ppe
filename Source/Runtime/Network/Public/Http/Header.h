@@ -61,6 +61,7 @@ public:
     FStringView HTTP_AcceptCharset() const NOEXCEPT;
     FStringView HTTP_AcceptEncoding() const NOEXCEPT;
     FStringView HTTP_AcceptLanguage() const NOEXCEPT;
+    FStringView HTTP_AccessControlAllowOrigin() const NOEXCEPT;
     FStringView HTTP_CacheControl() const NOEXCEPT;
     FStringView HTTP_Connection() const NOEXCEPT;
     FStringView HTTP_Cookie() const NOEXCEPT;
@@ -81,6 +82,7 @@ public:
     void HTTP_SetAcceptCharset(FString&& value);
     void HTTP_SetAcceptEncoding(FString&& value);
     void HTTP_SetAcceptLanguage(FString&& value);
+    void HTTP_SetAccessControlAllowOrigin(FString&& value);
     void HTTP_SetCacheControl(FString&& value);
     void HTTP_SetConnection(FString&& value);
     void HTTP_SetCookie(FString&& value);
@@ -101,6 +103,7 @@ public:
     void HTTP_SetAcceptCharset(const FStringView& value);
     void HTTP_SetAcceptEncoding(const FStringView& value);
     void HTTP_SetAcceptLanguage(const FStringView& value);
+    void HTTP_SetAccessControlAllowOrigin(const FStringView& value);
     void HTTP_SetCacheControl(const FStringView& value);
     void HTTP_SetConnection(const FStringView& value);
     void HTTP_SetCookie(const FStringView& value);
@@ -121,6 +124,7 @@ public:
     void HTTP_SetAcceptCharset(const FName& value);
     void HTTP_SetAcceptEncoding(const FName& value);
     void HTTP_SetAcceptLanguage(const FName& value);
+    void HTTP_SetAccessControlAllowOrigin(const FName& value);
     void HTTP_SetCacheControl(const FName& value);
     void HTTP_SetConnection(const FName& value);
     void HTTP_SetCookie(const FName& value);

@@ -185,14 +185,17 @@ void FSocketBuffered::FlushRead(bool block/* = false */) {
         _sizeI += _socket.Read(rawData, block);
 }
 //----------------------------------------------------------------------------
-void FSocketBuffered::FlushWrite() {
+bool FSocketBuffered::FlushWrite() {
     if (_sizeO == 0)
-        return;
+        return true;
 
     Assert(_bufferO);
 
-    _socket.Write(_bufferO.CutBefore(_sizeO));
+    if (_socket.Write(_bufferO.CutBefore(_sizeO)) != _sizeO)
+        return false;
+
     _sizeO = 0;
+    return true;
 }
 //----------------------------------------------------------------------------
 bool FSocketBuffered::Accept(FSocketBuffered& buffered, FListener& listener, const FMilliseconds& timeout) {

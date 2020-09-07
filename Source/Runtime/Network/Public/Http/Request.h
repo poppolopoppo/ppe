@@ -26,6 +26,8 @@ public:
     const FUri& Uri() const { return _uri; }
     void SetUri(FUri&& uri) { _uri = std::move(uri); }
 
+    bool AskToKeepAlive() const NOEXCEPT;
+
     NODISCARD static bool Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength);
     static void Write(FSocketBuffered* psocket, const FHttpRequest& request);
 

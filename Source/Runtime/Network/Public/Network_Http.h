@@ -2,10 +2,10 @@
 
 #include "Network_fwd.h"
 
-#include "HTTP/ConstNames.h"
-#include "HTTP/Exceptions.h"
-#include "HTTP/Header.h"
-#include "HTTP/Method.h"
-#include "HTTP/Request.h"
-#include "HTTP/Response.h"
-#include "HTTP/Status.h"
+#include "Http/ConstNames.h"
+#include "Http/Exceptions.h"
+#include "Http/Header.h"
+#include "Http/Method.h"
+#include "Http/Request.h"
+#include "Http/Response.h"
+#include "Http/Status.h"

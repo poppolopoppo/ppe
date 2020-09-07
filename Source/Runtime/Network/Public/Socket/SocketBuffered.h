@@ -64,7 +64,7 @@ public:
     bool ReadUntil(FTextWriter* poss, char delim);
 
     void FlushRead(bool block = false);
-    void FlushWrite();
+    bool FlushWrite();
 
     static bool Accept(FSocketBuffered& buffered, FListener& listener, const FMilliseconds& timeout);
     static bool MakeConnection(FSocketBuffered& buffered, const FAddress& remoteHostnameOrIP);
