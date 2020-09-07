@@ -3,6 +3,7 @@
 #include "ApplicationConsole.h"
 
 #include "HAL/PlatformConsole.h"
+#include "HAL/PlatformProcess.h"
 
 namespace PPE {
 namespace Application {
@@ -22,6 +23,14 @@ void FApplicationConsole::Start() {
 void FApplicationConsole::Shutdown() {
     FApplicationBase::Shutdown();
     FPlatformConsole::Close();
+}
+//----------------------------------------------------------------------------
+void FApplicationConsole::Daemonize() {
+	FPlatformProcess::SetPriority(
+		FPlatformProcess::CurrentProcess(),
+		EProcessPriority::Idle );
+
+    ApplicationLoop();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
