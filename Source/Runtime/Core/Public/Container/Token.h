@@ -324,7 +324,6 @@ public:
     size_t size() const { return _str.size(); }
     bool empty() const { return _str.empty(); }
 
-    const _Char* c_str() const { return _str.c_str(); }
     const _Char* data() const { return _str.data(); }
 
     stringview_type MakeView() const { return _str; }
@@ -377,7 +376,7 @@ public:
     friend bool operator < (const TLazyToken& lhs, const token_type& rhs) { return lhs.Less(rhs); }
     friend bool operator >=(const TLazyToken& lhs, const token_type& rhs) { return !operator < (lhs, rhs); }
 
-    friend bool operator < (const token_type& lhs, const TLazyToken& rhs) { return lhs.Less(rhs); }
+    friend bool operator < (const token_type& lhs, const TLazyToken& rhs) { return lhs.Less(rhs.MakeView()); }
     friend bool operator >=(const token_type& lhs, const TLazyToken& rhs) { return !operator < (lhs, rhs); }
 
 private:
