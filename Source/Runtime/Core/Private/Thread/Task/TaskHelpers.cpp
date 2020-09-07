@@ -36,7 +36,7 @@ void ParallelFor(
     const TFunction<void(size_t)>& foreach,
     ETaskPriority priority /* = ETaskPriority::Normal */,
     FTaskManager* manager /* = nullptr *//* uses FHighPriorityThreadPool by default */) {
-    return ParallelForEach(
+    return ParallelForEachValue(
         MakeCountingIterator(first),
         MakeCountingIterator(last),
         foreach, priority, manager);

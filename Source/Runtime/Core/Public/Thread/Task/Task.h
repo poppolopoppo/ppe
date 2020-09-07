@@ -2,8 +2,8 @@
 
 #include "Core.h"
 
-#include "Thread/Task_fwd.h"
 #include "Misc/Function.h"
+#include "Thread/Task_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

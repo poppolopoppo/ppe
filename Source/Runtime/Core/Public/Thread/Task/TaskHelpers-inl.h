@@ -2,10 +2,6 @@
 
 #include "Thread/Task/TaskHelpers.h"
 
-#include "Container/Stack.h"
-#include "HAL/PlatformMisc.h"
-#include "HAL/PlatformProcess.h"
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -57,23 +53,25 @@ PFuture<T> Future(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _It>
-void ParallelForEach(
+namespace details {
+template <typename _It, typename _Value>
+static void ParallelForEach_(
     _It first, _It last,
-    const TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
-    ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    const TFunction<void(_Value)>& foreach,
+    ETaskPriority priority,
+    FTaskManager* manager ) {
     STATIC_ASSERT(Meta::is_random_access_iterator<_It>::value);
 
-    const size_t range_count = std::distance(first, last);
-
-    if (0 == range_count) {
+    if (first == last) {
         // skip completely empty sequences
         return;
     }
-    else if (1 == range_count) {
+    else if (first + 1 == last) {
         // skip task creation if there is only 1 iteration
-        foreach_item(*first);
+        IF_CONSTEXPR(std::is_same_v<_Value, _It>)
+            foreach(first);
+        else
+            foreach(*first);
         return;
     }
 
@@ -81,44 +79,45 @@ void ParallelForEach(
     if (!manager)
         manager = &HighPriorityThreadPool();
 
-    // less space needed to pass arguments to TFunction<>
+    // less space needed to pass arguments to TFunction<> (debug iterators can be huge)
     const struct loop_t_ {
+        const TFunction<void(_Value)>& foreach;
         _It first, last;
-        decltype(foreach_item) foreach_item;
-    }   loop{ first, last, foreach_item };
+        void Task(ITaskContext&, u32 off, u32 num) const {
+            for(_It it = first + off, cend = it + num; it != cend; ++it) {
+                IF_CONSTEXPR(std::is_same_v<_Value, _It>)
+                    foreach(it);
+                else
+                    foreach(*it);
+            }
+        }
+    }   loop{ foreach, first, last };
 
     // all iterations are dispatch by regular slices to worker threads (less overhead)
-    const size_t worker_count = Min(manager->WorkerCount(), range_count);
-    const size_t worker_tasks = range_count / worker_count;
-    const size_t tasks_remain = range_count - worker_tasks * worker_count;
+    const u32 range_dist = checked_cast<u32>(std::distance(first, last));
+    const u32 worker_count = Min(checked_cast<u32>(manager->WorkerCount()), range_dist);
+    const u32 worker_tasks = range_dist / worker_count;
+    const u32 tasks_remain = range_dist - worker_tasks * worker_count;
     Assert(tasks_remain < worker_count);
 
     // creates tasks for multi-threaded completion
-    size_t task_first = 0;
     STACKLOCAL_STACK(FTaskFunc, tasks, worker_count);
+
+    u32 tasks_offset = 0;
     forrange(i, 0, worker_count - 1) {
         // even out workload by spreading reminder
-        const size_t task_last = (task_first + worker_tasks + (i < tasks_remain ? 1 : 0));
+        const u32 work_slice = (worker_tasks + (i < tasks_remain ? 1 : 0));
 
         // push a new task for this slice of the loop
-        tasks.Push([&loop, task_first, task_last](ITaskContext&) {
-            forrange(it, loop.first + task_first, loop.first + task_last)
-                loop.foreach_item(*it);
-        });
-
-        task_first = task_last;
+        tasks.Push(FTaskFunc::Bind<&loop_t_::Task>(&loop, tasks_offset, work_slice));
+        tasks_offset += work_slice;
     }
 
-    Assert(task_first + worker_tasks == range_count);
-    FTaskFunc last_task = [&loop, task_first, task_last{ range_count }](ITaskContext&) {
-        forrange(it, loop.first + task_first, loop.first + task_last)
-            loop.foreach_item(*it);
-    };
+    Assert(tasks_offset + worker_tasks == range_dist);
+    FTaskFunc last_task = FTaskFunc::Bind<&loop_t_::Task>(&loop, tasks_offset, worker_tasks);
 
     // decide if it's worth to process part of load on the current thread
-    const bool busy_wait = (worker_count < FPlatformMisc::NumCoresWithSMT());
-
-    if (busy_wait) {
+    if (worker_count < FPlatformMisc::NumCoresWithSMT()) {
         // wait for end of the loop while processing the last slice
         manager->RunAndWaitFor(tasks.MakeView(), last_task, priority);
     }
@@ -130,6 +129,34 @@ void ParallelForEach(
         Assert(tasks.size() == tasks.capacity());
         manager->RunAndWaitFor(tasks.MakeView(), priority);
     }
+}
+} //!details
+//----------------------------------------------------------------------------
+template <typename _It>
+void ParallelForEach(
+    _It first, _It last,
+    const TFunction<void(_It)>& foreach_it,
+    ETaskPriority priority/* = ETaskPriority::Normal */,
+    FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    details::ParallelForEach_(first, last, foreach_it, priority, manager);
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+void ParallelForEachValue(
+    _It first, _It last,
+    const TFunction<void(typename Meta::TIteratorTraits<_It>::value_type)>& foreach_value,
+    ETaskPriority priority/* = ETaskPriority::Normal */,
+    FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    details::ParallelForEach_(first, last, foreach_value, priority, manager);
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+void ParallelForEachRef(
+    _It first, _It last,
+    const TFunction<void(typename Meta::TIteratorTraits<_It>::reference)>& foreach_ref,
+    ETaskPriority priority/* = ETaskPriority::Normal */,
+    FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    details::ParallelForEach_(first, last, foreach_ref, priority, manager);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

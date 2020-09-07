@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "Thread/Task_fwd.h"
+#include "Thread/Task/Task.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

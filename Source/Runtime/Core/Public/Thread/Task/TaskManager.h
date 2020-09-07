@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
-#include "Thread/Task_fwd.h"
 #include "Thread/Task/Task.h"
 #include "Thread/Task/TaskContext.h"
 
