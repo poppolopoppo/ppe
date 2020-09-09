@@ -297,7 +297,7 @@ module Build
             '/utf-8',                   # https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
             '/W4',                      # warning level 4 (verbose)
             '/TP',                      # compile as C++
-            '/F', Build.StackSize )     # set default thread stack size
+            "/F\"#{FBuild.StackSize}\"" )     # set default thread stack size
 
         if Build.Strict
             Log.log 'Windows: using strict warnings and warning as error'
