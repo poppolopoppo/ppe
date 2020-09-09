@@ -121,9 +121,8 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
         response.SetReason("No endpoint found");
     }
 
-    FRemotingResponse::Write(&port.Socket(), response);
-
-    return request.AskToKeepAlive();
+    return (FRemotingResponse::Write(&port.Socket(), response) &&
+            request.AskToKeepAlive() );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
