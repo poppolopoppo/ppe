@@ -20,7 +20,7 @@ class PPE_RTTI_API FAny {
 public:
     template <typename T>
     using TWrapable = Meta::TEnableIf<
-        TIsSupportedType<T>::value &&
+        has_support_for_v<T> &&
         not std::is_same_v<FAny, T> // forbid to wrap FAny in another FAny
     >;
 

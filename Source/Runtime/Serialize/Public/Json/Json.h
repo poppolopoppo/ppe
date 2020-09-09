@@ -178,14 +178,16 @@ public:
     };
 
     // assumes FValue is a FAny, as far as RTTI will ever know
-    friend CONSTEXPR auto/* forward-declaration */ TypeInfos(RTTI::TType<FValue>) {
-        return RTTI::FTypeHelpers::Alias<FValue, RTTI::FAny>;
+    friend CONSTEXPR auto/* forward-declaration */ RTTI_TypeInfos(RTTI::TTypeTag< FValue >) {
+        return RTTI::MakeAliasTypeInfos<FValue, RTTI::FAny>;
     }
-    friend RTTI::PTypeTraits Traits(RTTI::TType<FValue>) NOEXCEPT {
-        return RTTI::Traits(RTTI::Type<RTTI::FAny>);
+    friend RTTI::PTypeTraits RTTI_Traits(RTTI::TTypeTag< FValue >) NOEXCEPT {
+        return RTTI_Traits(RTTI::TypeTag< RTTI::FAny >);
     }
 
-    static FValue MakeValue(EType type) NOEXCEPT;
+    static FValue MakeValue(EType type) NOEXCEPT {
+        return FValue{ type };
+    }
 
 public:
     FJson() = default;

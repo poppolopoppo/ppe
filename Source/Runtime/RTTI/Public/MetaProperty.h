@@ -72,6 +72,7 @@ private:
         return FAtom((const u8*)&obj + _memberOffset, _traits);
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FMetaProperty);
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaProperty>
@@ -87,7 +88,6 @@ Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaProperty>
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
-PPE_ASSUME_TYPE_AS_POD(RTTI::FMetaProperty);
 } //!namespace PPE
 
 namespace PPE {

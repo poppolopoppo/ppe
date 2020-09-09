@@ -13,12 +13,6 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// need to be in RTTI namespace for ADL
-template <typename T>
-struct TType {};
-template <typename T>
-CONSTEXPR TType<T> Type{};
-//----------------------------------------------------------------------------
 enum class ETypeFlags : u16 {
     // /!\ Report changes to MetaEnumHelpers.cpp
 
@@ -95,6 +89,14 @@ public:
     }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FSizeAndFlags);
+//----------------------------------------------------------------------------
+using PTypeInfos = struct FTypeInfos (*)(void) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T>
+struct TTypeTag {};
+template <typename T>
+CONSTEXPR const TTypeTag< Meta::TDecay<T> > TypeTag;
 //----------------------------------------------------------------------------
 struct FTypeInfos {
     FTypeId TypeId{ 0 };
@@ -135,41 +137,6 @@ struct FTypeInfos {
         return (not operator ==(lhs, rhs));
     }
 
-
-    template <typename... _TypeId>
-    static CONSTEXPR FTypeId CombineIds(FTypeId seed, _TypeId... typeId) {
-        return static_cast<u32>(hash_tuple(seed, typeId...));
-    }
-    template <typename... _TypeFlags>
-    static CONSTEXPR ETypeFlags CombineFlags(ETypeFlags seed, _TypeFlags... typeFlags) {
-        return (seed
-            // if any has object then the result has object
-            + ( ... + (typeFlags ^ ETypeFlags::Object ? ETypeFlags::Object : ETypeFlags::Default) )
-            // if any non POD then the result can't be POD
-            - ( ... + (typeFlags ^ ETypeFlags::POD ? ETypeFlags::Default : ETypeFlags::POD) )
-            // if any non trivially destructible then the result can't be trivially destructible
-            - ( ... + (typeFlags ^ ETypeFlags::TriviallyDestructible ? ETypeFlags::Default : ETypeFlags::TriviallyDestructible) )
-        );
-    }
-    template <typename... _TypeInfos>
-    static CONSTEXPR FTypeInfos CombineTypes(FTypeId typeId, FSizeAndFlags base, _TypeInfos... typeInfos) {
-        return {
-            CombineIds(typeId, typeInfos.Id()...),
-            { base.SizeInBytes, CombineFlags(base.Flags, typeInfos.Flags()...) }
-        };
-    }
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-using PTypeInfos = FTypeInfos(*)(void) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR FTypeInfos MakeTypeInfos() NOEXCEPT {
-    return TypeInfos(Type< Meta::TDecay<T> >)();
-}
-//----------------------------------------------------------------------------
-struct FTypeHelpers {
     template <typename T>
     static CONSTEXPR FSizeAndFlags BasicInfos(ETypeFlags base = ETypeFlags::Default) {
         return {
@@ -183,62 +150,32 @@ struct FTypeHelpers {
         };
     }
 
-    template <typename T, FTypeId _NativeType, ETypeFlags _TypeFlags>
-    static CONSTEXPR const PTypeInfos Scalar = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
-        return FTypeInfos{ _NativeType, BasicInfos<T>(ETypeFlags::Scalar + _TypeFlags) };
-    };
+    template <typename... _TypeId>
+    static CONSTEXPR FTypeId CombineIds(FTypeId seed, _TypeId... typeId) {
+        return static_cast<u32>(hash_tuple(seed, typeId...));
+    }
 
-    template <typename T, FTypeId _NativeType>
-    static CONSTEXPR const PTypeInfos Boolean = Scalar<T, _NativeType, ETypeFlags::Boolean + ETypeFlags::Native>;
-    template <typename T, FTypeId _NativeType>
-    static CONSTEXPR const PTypeInfos Enum = Scalar<T, _NativeType, ETypeFlags::Enum + ETypeFlags::Native>;
-    template <typename T, FTypeId _NativeType>
-    static CONSTEXPR const PTypeInfos Native = Scalar<T, _NativeType, ETypeFlags::Native>;
-    template <typename T, FTypeId _NativeType>
-    static CONSTEXPR const PTypeInfos NativeObject = Scalar<T, _NativeType, ETypeFlags::Native + ETypeFlags::Object>;
-    template <typename T, FTypeId _NativeType>
-    static CONSTEXPR const PTypeInfos Object = Scalar<T, _NativeType, ETypeFlags::Object>;
-    template <typename T, FTypeId _NativeType>
-    static CONSTEXPR const PTypeInfos String = Scalar<T, _NativeType, ETypeFlags::String + ETypeFlags::Native>;
+    template <typename... _TypeFlags>
+    static CONSTEXPR ETypeFlags CombineFlags(ETypeFlags seed, _TypeFlags... typeFlags) {
+        return (seed
+            // if any has object then the result has object
+            + ( ... + (typeFlags ^ ETypeFlags::Object ? ETypeFlags::Object : ETypeFlags::Default) )
+            // if any non POD then the result can't be POD
+            - ( ... + (typeFlags ^ ETypeFlags::POD ? ETypeFlags::Default : ETypeFlags::POD) )
+            // if any non trivially destructible then the result can't be trivially destructible
+            - ( ... + (typeFlags ^ ETypeFlags::TriviallyDestructible ? ETypeFlags::Default : ETypeFlags::TriviallyDestructible) )
+        );
+    }
 
-    template <typename T, typename... _Args>
-    static CONSTEXPR const PTypeInfos Tuple = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
-        return FTypeInfos::CombineTypes(FTypeId(ETypeFlags::Tuple), BasicInfos<T>(ETypeFlags::Tuple), MakeTypeInfos<_Args>()... );
-    };
-
-    template <typename T, typename _Item>
-    static CONSTEXPR const PTypeInfos List = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
-        return FTypeInfos::CombineTypes(FTypeId(ETypeFlags::List), BasicInfos<T>(ETypeFlags::List), MakeTypeInfos<_Item>() );
-    };
-
-    template <typename T, typename _Key, typename _Value>
-    static CONSTEXPR const PTypeInfos Dico = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
-        return FTypeInfos::CombineTypes(FTypeId(ETypeFlags::Dico), BasicInfos<T>(ETypeFlags::Dico), MakeTypeInfos<_Key>(), MakeTypeInfos<_Value>() );
-    };
-
-    // defer alias evaluation, so _From/_To don't need to defined (forward declaration is enough)
-    template <typename _From, typename _To, typename _Aliased>
-    struct aliased_type_infos_t {
-        _Aliased AliasedPTypeInfos;
-        CONSTEXPR FTypeInfos operator ()() const {
-            //STATIC_ASSERT(sizeof(_From) == sizeof(_To));
-            const FTypeInfos infos = AliasedPTypeInfos();
-            return FTypeInfos{
-                infos.TypeId,
-                FSizeAndFlags{
-                    infos.SizeInBytes(),
-                    infos.Flags() + ETypeFlags::Alias
-                }};
-        }
-    };
-
-    template <typename _From, typename _To>
-    static CONSTEXPR const auto Alias = aliased_type_infos_t<
-        _From, _To, decltype(TypeInfos(Type<_To>))> {
-        TypeInfos(Type<_To>)
-    };
-
+    template <typename... _TypeInfos>
+    static CONSTEXPR FTypeInfos CombineTypes(FTypeId typeId, FSizeAndFlags base, _TypeInfos... typeInfos) {
+        return {
+            CombineIds(typeId, typeInfos.Id()...),
+            { base.SizeInBytes, CombineFlags(base.Flags, typeInfos.Flags()...) }
+        };
+    }
 };
+PPE_ASSUME_TYPE_AS_POD(FTypeInfos);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -270,6 +207,7 @@ private:
     FStringView _name;
     FTypeInfos _typeInfos;
 };
+PPE_ASSUME_TYPE_AS_POD(FNamedTypeInfos);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

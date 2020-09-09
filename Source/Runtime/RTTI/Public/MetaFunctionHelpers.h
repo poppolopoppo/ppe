@@ -13,7 +13,15 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-FMetaParameter MakeParameter(TType<T>, const FStringView& name) {
+static PTypeTraits MakeFunctionResultTraits() {
+    IF_CONSTEXPR(std::is_same_v<void, T>) // void as a special case, only for function result type
+        return PTypeTraits{};
+    else
+        return MakeTraits<T>();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FMetaParameter MakeParameter(TTypeTag< T >, const FStringView& name) {
     static_assert(not std::is_pointer<T>::value, "pointers are not supported, use non-const references instead");
     return FMetaParameter(
         FName(name),
@@ -29,16 +37,17 @@ template <typename T> struct TMakeFunction {};
 //----------------------------------------------------------------------------
 template <typename _Result, class _Class, typename... _Args>
 struct TMakeFunction<_Result (_Class::*)(_Args...)> {
+
     template <_Result (_Class::* _Member)(_Args...)>
     static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
         Assert(sizeof...(_Args) == parametersName.size());
         auto nameIt = std::begin(parametersName);
-        NOOP(nameIt);
+        UNUSED(nameIt);
         return FMetaFunction(
             name,
             flags,
-            MakeTraits<_Result>(),
-            { MakeParameter(Type<_Args>, *nameIt++)... },
+            MakeFunctionResultTraits<_Result>(),
+            { MakeParameter(TypeTag< _Args >, *nameIt++)... },
             &TMemberFunction_<_Member, typename std::is_void<_Result>::type>::Invoke
         );
     }
@@ -48,7 +57,7 @@ private:
     struct TMemberFunction_ {
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             const FAtom* parg = arguments.data();
-            NOOP(parg);
+            UNUSED(parg);
             result.TypedData<_Result>() = CallTuple(_Member,
                 const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
                 TTuple<Meta::TReference<_Args>...>{
@@ -62,7 +71,7 @@ private:
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             Assert(not result);
             const FAtom* parg = arguments.data();
-            NOOP(parg);
+            UNUSED(parg);
             CallTuple(_Member,
                 const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
                 TTuple<Meta::TReference<_Args>...>{
@@ -78,12 +87,12 @@ struct TMakeFunction<_Result (_Class::*)(_Args...) const> {
     static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
         Assert(sizeof...(_Args) == parametersName.size());
         auto nameIt = std::begin(parametersName);
-        NOOP(nameIt);
+        UNUSED(nameIt);
         return FMetaFunction(
             name,
             flags,
-            MakeTraits<_Result>(),
-            { MakeParameter(Type<_Args>, *nameIt++)... },
+            MakeFunctionResultTraits<_Result>(),
+            { MakeParameter(TypeTag< _Args >, *nameIt++)... },
             &TMemberFunction_<_Member>::Invoke
         );
     }
@@ -93,7 +102,7 @@ private:
     struct TMemberFunction_ {
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             const FAtom* parg = arguments.data();
-            NOOP(parg);
+            UNUSED(parg);
             result.TypedData<_Result>() = CallTuple(_Member,
                 RTTI::CastChecked<_Class>(&obj),
                 TTuple<Meta::TReference<_Args>...>{
@@ -107,7 +116,7 @@ private:
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             Assert(not result);
             const FAtom* parg = arguments.data();
-            NOOP(parg);
+            UNUSED(parg);
             CallTuple(_Member,
                 RTTI::CastChecked<_Class>(&obj),
                 TTuple<Meta::TReference<_Args>...>{

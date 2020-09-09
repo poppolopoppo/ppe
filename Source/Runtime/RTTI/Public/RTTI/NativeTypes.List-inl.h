@@ -9,6 +9,15 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, typename _Item>
+static CONSTEXPR const PTypeInfos MakeListTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+    return FTypeInfos::CombineTypes(
+        FTypeId(ETypeFlags::List),
+        FTypeInfos::BasicInfos<T>(ETypeFlags::List),
+        MakeTypeInfos<_Item>()
+    );
+};
+//----------------------------------------------------------------------------
 // TBaseListTraits<T>
 //----------------------------------------------------------------------------
 template <typename T>
@@ -249,12 +258,12 @@ public: // IListTraits
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-CONSTEXPR PTypeInfos TypeInfos(TType< TVector<T, _Allocator> >) {
-    return FTypeHelpers::List< TVector<T, _Allocator>, T >;
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TVector<T, _Allocator> >) {
+    return MakeListTypeInfos< TVector<T, _Allocator>, T >;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-CONSTEXPR PTypeTraits Traits(TType< TVector<T, _Allocator> >) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TVector<T, _Allocator> >) {
     return MakeStaticType< TVectorTraits<T, _Allocator>, TVector<T, _Allocator> >();
 }
 //----------------------------------------------------------------------------

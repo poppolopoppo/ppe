@@ -20,7 +20,10 @@
 #include "Memory/MemoryView.h"
 
 namespace PPE {
+STATIC_ASSERT(Meta::is_pod_v<RTTI::PTypeTraits>);
 namespace RTTI {
+STATIC_ASSERT(Meta::is_pod_v<PTypeTraits>);
+STATIC_ASSERT(Meta::has_trivial_destructor<ITypeTraits>::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

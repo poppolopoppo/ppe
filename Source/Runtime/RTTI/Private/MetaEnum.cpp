@@ -10,7 +10,9 @@
 #include "IO/TextWriter.h"
 
 namespace PPE {
+STATIC_ASSERT(Meta::is_pod_v<RTTI::FMetaEnumValue>);
 namespace RTTI {
+STATIC_ASSERT(Meta::is_pod_v<FMetaEnumValue>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

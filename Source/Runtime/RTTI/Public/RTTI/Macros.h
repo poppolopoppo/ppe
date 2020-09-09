@@ -9,10 +9,10 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_STRUCT_DECL(_Api, _Name) \
-    CONSTEXPR ::PPE::RTTI::PTypeInfos TypeInfos(::PPE::RTTI::TType< _Name > t) { \
-        return ::PPE::RTTI::StructInfos(t); \
+    CONSTEXPR ::PPE::RTTI::PTypeInfos RTTI_TypeInfos(::PPE::RTTI::TTypeTag< _Name > tag) { \
+        return ::PPE::RTTI::StructInfos(tag); \
     } \
-    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name >) NOEXCEPT
+    _Api ::PPE::RTTI::PTypeTraits RTTI_Traits(::PPE::RTTI::TTypeTag< _Name >) NOEXCEPT
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_HEADER(_Api, _Name, _Parent) \
 public: \

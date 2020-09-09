@@ -420,11 +420,11 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
 //----------------------------------------------------------------------------
 #define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
     template <> \
-    FStringView TNativeTypeTraits<T>::TypeName() const { \
+    FStringView TNativeTypeTraits< T >::TypeName() const { \
         return STRINGIZE(_Name); \
     } \
     /* Global helper for MakeTraits<T>() */ \
-    PTypeTraits Traits(TType<T>) NOEXCEPT { \
+    PTypeTraits RTTI_Traits(TTypeTag< T >) NOEXCEPT { \
         return MakeStaticType< TNativeTypeTraits<T>, T >(); \
     }
 
@@ -441,7 +441,7 @@ PTypeTraits MakeAnyTuple(size_t arity) NOEXCEPT {
     Assert(arity > 1); // tuple with arity < 2 aren't supported, should at least be a pair
     using a = FAny;
     switch (arity) {
-#define DEF_RTTI_MAKEANYTUPLE(N, ...) case N: return Traits(Type< TTuple<__VA_ARGS__> >)
+#define DEF_RTTI_MAKEANYTUPLE(N, ...) case N: return RTTI_Traits(TypeTag< TTuple<__VA_ARGS__> >)
     DEF_RTTI_MAKEANYTUPLE(2, a, a);
     DEF_RTTI_MAKEANYTUPLE(3, a, a, a);
     DEF_RTTI_MAKEANYTUPLE(4, a, a, a, a);
@@ -459,12 +459,12 @@ PTypeTraits MakeAnyTuple(size_t arity) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define DECL_RTTI_NATIVETYPE_ISSUPPORTED(_Name, T, _TypeId) STATIC_ASSERT(TIsSupportedType<T>::value);
+#define DECL_RTTI_NATIVETYPE_ISSUPPORTED(_Name, T, _TypeId) STATIC_ASSERT(has_support_for_v<T>);
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ISSUPPORTED)
 #undef DECL_RTTI_NATIVETYPE_ISSUPPORTED
 //----------------------------------------------------------------------------
-STATIC_ASSERT(not TIsSupportedType<void>::value);
-STATIC_ASSERT(not TIsSupportedType<FAtom>::value);
+STATIC_ASSERT(not has_support_for_v<void>);
+STATIC_ASSERT(not has_support_for_v<FAtom>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

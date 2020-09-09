@@ -10,6 +10,16 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, typename _Key, typename _Value>
+static CONSTEXPR const PTypeInfos MakeDicoTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+    return FTypeInfos::CombineTypes(
+        FTypeId(ETypeFlags::Dico),
+        FTypeInfos::BasicInfos<T>(ETypeFlags::Dico),
+        MakeTypeInfos<_Key>(),
+        MakeTypeInfos<_Value>()
+    );
+};
+//----------------------------------------------------------------------------
 // TBaseDicoTraits<_Key, _Value>
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
@@ -270,12 +280,12 @@ public: // IDicoTraits:
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-CONSTEXPR PTypeInfos TypeInfos(TType< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) {
-    return FTypeHelpers::Dico< TAssociativeVector<_Key, _Value, _EqualTo, _Vector>, _Key, _Value >;
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) {
+    return MakeDicoTypeInfos< TAssociativeVector<_Key, _Value, _EqualTo, _Vector>, _Key, _Value >;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-CONSTEXPR PTypeTraits Traits(TType< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) {
     return MakeStaticType< TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>, TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >();
 }
 //----------------------------------------------------------------------------
@@ -431,12 +441,12 @@ public: // IDicoTraits:
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-CONSTEXPR PTypeInfos TypeInfos(TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) {
-    return FTypeHelpers::Dico< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>, _Key, _Value >;
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) {
+    return MakeDicoTypeInfos< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>, _Key, _Value >;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-CONSTEXPR PTypeTraits Traits(TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) {
     return MakeStaticType< THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>, THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >();
 }
 //----------------------------------------------------------------------------

@@ -14,6 +14,14 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::is_pod_v<FSizeAndFlags>);
+STATIC_ASSERT(Meta::is_pod_v<FTypeInfos>);
+STATIC_ASSERT(Meta::is_pod_v<FNamedTypeInfos>);
+//----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::has_trivial_destructor<FSizeAndFlags>::value);
+STATIC_ASSERT(Meta::has_trivial_destructor<FTypeInfos>::value);
+STATIC_ASSERT(Meta::has_trivial_destructor<FNamedTypeInfos>::value);
+//----------------------------------------------------------------------------
 // Add some static unit-testing to all TypeInfos() boilerplate:
 STATIC_ASSERT(MakeTypeInfos<bool>().IsBoolean());
 STATIC_ASSERT(MakeTypeInfos<i8>().IsArithmetic());
@@ -26,7 +34,7 @@ STATIC_ASSERT(MakeTypeInfos<u32>().IsPOD());
 STATIC_ASSERT(MakeTypeInfos<u64>().IsNative());
 STATIC_ASSERT(MakeTypeInfos<FString>().IsString());
 STATIC_ASSERT(MakeTypeInfos<FWString>().IsString());
-STATIC_ASSERT(MakeTypeInfos<FWString>().IsTriviallyDestructible() == false);
+STATIC_ASSERT(not MakeTypeInfos<FWString>().IsTriviallyDestructible());
 STATIC_ASSERT(MakeTypeInfos<FName>().IsTriviallyDestructible());
 STATIC_ASSERT(MakeTypeInfos<UX10Y10Z10W2N>().IsUnsignedIntegral());
 STATIC_ASSERT(MakeTypeInfos<UX10Y10Z10W2N>().IsTriviallyDestructible());
@@ -37,6 +45,7 @@ STATIC_ASSERT(MakeTypeInfos<u32>().IsNative());
 STATIC_ASSERT(not MakeTypeInfos<u32>().IsAlias());
 STATIC_ASSERT(MakeTypeInfos<float4>().IsPOD());
 STATIC_ASSERT(MakeTypeInfos<float4>().IsTriviallyDestructible());
+STATIC_ASSERT(not MakeTypeInfos<PMetaObject>().IsTriviallyDestructible());
 //----------------------------------------------------------------------------
 PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT {
     switch (nativeType) {

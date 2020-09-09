@@ -10,6 +10,7 @@
 #include "RTTI/Atom.h"
 #include "RTTI/Exceptions.h"
 #include "RTTI/Module.h"
+#include "RTTI/NativeTypes.h"
 
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"

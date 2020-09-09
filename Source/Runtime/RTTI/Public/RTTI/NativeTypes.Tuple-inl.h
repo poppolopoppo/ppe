@@ -13,6 +13,15 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 PPE_RTTI_API PTypeTraits MakeAnyTuple(size_t arity) NOEXCEPT;
 //----------------------------------------------------------------------------
+template <typename T, typename... _Args>
+static CONSTEXPR const PTypeInfos MakeTupleTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+    return FTypeInfos::CombineTypes(
+        FTypeId(ETypeFlags::Tuple),
+        FTypeInfos::BasicInfos<T>(ETypeFlags::Tuple),
+        MakeTypeInfos<_Args>()...
+    );
+};
+//----------------------------------------------------------------------------
 // TBaseTupleTraits<_Args...>
 //----------------------------------------------------------------------------
 template <typename... _Args>
@@ -217,11 +226,9 @@ bool TTupleTraits<T, _Args...>::PromoteMove(void* src, const FAtom& dst) const N
     return false;
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _Tuple, typename... _Args>
-CONSTEXPR PTypeInfos TupleTypeInfos(TType< TTuple<_Args...> >) {
-    return FTypeHelpers::Tuple< _Tuple, _Args... >;
+CONSTEXPR PTypeInfos TupleTypeInfos(TTypeTag< TTuple<_Args...> >) {
+    return MakeTupleTypeInfos< _Tuple, _Args... >;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -247,12 +254,12 @@ public: // ITupleTraits
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-CONSTEXPR PTypeInfos TypeInfos(TType< TPair<_First, _Second> >) {
-    return FTypeHelpers::Tuple< TPair<_First, _Second>, _First, _Second >;
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TPair<_First, _Second> >) {
+    return MakeTupleTypeInfos< TPair<_First, _Second>, _First, _Second >;
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-CONSTEXPR PTypeTraits Traits(TType< TPair<_First, _Second> >) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TPair<_First, _Second> >) {
     return MakeStaticType< TPairTraits<_First, _Second>, TPair<_First, _Second> >();
 }
 //----------------------------------------------------------------------------
@@ -312,13 +319,13 @@ public: // ITupleTraits
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR PTypeInfos TypeInfos(TType< TStaticArray<T, _Dim> >) {
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TStaticArray<T, _Dim> >) {
     using tuple_type = typename details::TArrayToTupleTraits<T, _Dim>::tuple_type;
-    return TupleTypeInfos< TStaticArray<T, _Dim> >(Type< tuple_type >);
+    return TupleTypeInfos< TStaticArray<T, _Dim> >(TypeTag< tuple_type >);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR PTypeTraits Traits(TType< TStaticArray<T, _Dim> >) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TStaticArray<T, _Dim> >) {
     STATIC_ASSERT(sizeof(TStaticArray<T, _Dim>) == sizeof(typename details::TArrayToTupleTraits<T, _Dim>::tuple_type));
     return MakeStaticType< TStaticArrayTraits<T, _Dim>, TStaticArray<T, _Dim> >();
 }
@@ -371,12 +378,12 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
-CONSTEXPR PTypeInfos TypeInfos(TType< TTuple<_Arg0, _Args...> >) {
-    return TupleTypeInfos< TTuple<_Arg0, _Args...> >(Type< TTuple<_Arg0, _Args...> >);
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TTuple<_Arg0, _Args...> > tag) {
+    return TupleTypeInfos< TTuple<_Arg0, _Args...> >(tag);
 }
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
-CONSTEXPR PTypeTraits Traits(TType< TTuple<_Arg0, _Args...> >) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TTuple<_Arg0, _Args...> >) {
     return MakeStaticType< TStdTupleTraits<_Arg0, _Args...>, TTuple<_Arg0, _Args...> >();
 }
 //----------------------------------------------------------------------------

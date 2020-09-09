@@ -56,13 +56,13 @@ template <typename T>
 class TEnumTraits final : public TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<TEnumOrd<T>> > {
     using base_traits = TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<TEnumOrd<T>> >;
 
-public: // ITypeTraits
+    public: // ITypeTraits
     using base_traits::base_traits;
 
     virtual const FMetaEnum* EnumClass() const NOEXCEPT override final { return RTTI::MetaEnum<T>(); }
     virtual const FMetaClass* ObjectClass() const NOEXCEPT override final { return nullptr; }
 
-public: // ITypeTraits
+    public: // ITypeTraits
     virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
@@ -80,12 +80,12 @@ public: // ITypeTraits
 };
 //----------------------------------------------------------------------------
 template <typename _Enum, class = Meta::TEnableIf< std::is_enum_v<_Enum> > >
-CONSTEXPR PTypeInfos TypeInfos(TType< _Enum >) {
-    return FTypeHelpers::Enum< TEnumOrd<_Enum>, NativeTypeId< TEnumOrd<_Enum> >() >;
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< _Enum >) {
+    return MakeEnumTypeInfos< TEnumOrd<_Enum>, NativeTypeId< TEnumOrd<_Enum> >() >;
 }
 //----------------------------------------------------------------------------
 template <typename _Enum>
-CONSTEXPR PTypeTraits Traits(TType<_Enum>, Meta::TEnableIf< std::is_enum_v<_Enum> >* = nullptr) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< _Enum >, Meta::TEnableIf< std::is_enum_v<_Enum> >* = nullptr) {
     return MakeStaticType< TEnumTraits<_Enum>, _Enum >();
 }
 //----------------------------------------------------------------------------
@@ -165,11 +165,11 @@ template <typename T>
 class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
     using base_traits = TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>>;
 
-public: // IScalarTraits
+    public: // IScalarTraits
     virtual const FMetaEnum* EnumClass() const NOEXCEPT override final { return nullptr; }
     virtual const FMetaClass* ObjectClass() const NOEXCEPT override final { return RTTI::MetaClass<T>(); }
 
-public: // ITypeTraits
+    public: // ITypeTraits
     using base_traits::base_traits;
 
     virtual FStringView TypeName() const override final;
@@ -189,12 +189,12 @@ public: // ITypeTraits
 };
 //----------------------------------------------------------------------------
 template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >
-CONSTEXPR PTypeInfos TypeInfos(TType< TRefPtr<_Class> >) {
-    return FTypeHelpers::Object< TRefPtr<_Class>, FTypeId(ENativeType::MetaObject) >;
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TRefPtr<_Class> >) {
+    return MakeObjectTypeInfos< TRefPtr<_Class>, FTypeId(ENativeType::MetaObject) >;
 }
 //----------------------------------------------------------------------------
 template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >
-CONSTEXPR PTypeTraits Traits(TType< TRefPtr<_Class> >) {
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TRefPtr<_Class> >) {
     return MakeStaticType< TObjectTraits<Meta::TDecay<_Class>>, TRefPtr<_Class> >();
 }
 //----------------------------------------------------------------------------
@@ -268,3 +268,5 @@ void TObjectTraits<T>::ResetToDefaultValue(void* data) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RTTI
+} //!namespace PPE

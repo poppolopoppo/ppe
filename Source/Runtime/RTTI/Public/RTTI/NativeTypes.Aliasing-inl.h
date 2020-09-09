@@ -2,6 +2,8 @@
 
 #include "RTTI/NativeTypes.h"
 
+#include "RTTI/NativeTypes.Scalar-inl.h"
+#include "RTTI/NativeTypes.Tuple-inl.h"
 #include "RTTI/NativeTypes.Struct-inl.h"
 
 #include "Maths/Packing_fwd.h"
@@ -17,13 +19,25 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// defer alias evaluation, so _From/_To don't need to be defined (forward declaration is enough)
+template <typename _From, typename _To>
+static CONSTEXPR const PTypeInfos MakeAliasTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+    const FTypeInfos infos = RTTI_TypeInfos(TypeTag< _To >)();
+    return FTypeInfos{
+        infos.TypeId,
+        FSizeAndFlags{
+            infos.SizeInBytes(),
+            infos.Flags() + ETypeFlags::Alias
+        }};
+};
+//----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_TRAITS(_FROM, ...) \
-    CONSTEXPR auto/* forward-declaration */ TypeInfos(TType< _FROM >) { \
-        return PPE::RTTI::FTypeHelpers::Alias< _FROM, __VA_ARGS__ >; \
-    } \
-    inline PPE::RTTI::PTypeTraits Traits(TType< _FROM >) NOEXCEPT { \
-        return Traits(Type< __VA_ARGS__ >); \
-    }
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< _FROM >) { \
+    return MakeAliasTypeInfos< _FROM, __VA_ARGS__ >; \
+} \
+inline PTypeTraits RTTI_Traits(TTypeTag<_FROM >) NOEXCEPT { \
+    return MakeTraits< __VA_ARGS__ >(); \
+}
 //----------------------------------------------------------------------------
 // packed/quantized data are wrapped as encoded forms :
 //----------------------------------------------------------------------------
@@ -73,12 +87,12 @@ DEF_RTTI_ALIASING_TRAITS(u128, TStaticArray<u64, 2>)
 // Bindings for some basic types which don't justify being a native type
 //----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_STRUCT(T) \
-    CONSTEXPR PTypeInfos TypeInfos(TType< T > t) { \
-        return StructInfos(t); \
-    } \
-    CONSTEXPR PTypeTraits Traits(TType< T > t) NOEXCEPT { \
-        return StructTraits(t); \
-    }
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< T > tag) { \
+    return StructInfos(tag); \
+} \
+inline PTypeTraits RTTI_Traits(TTypeTag< T > tag) NOEXCEPT { \
+    return StructTraits(tag); \
+}
 //----------------------------------------------------------------------------
 DEF_RTTI_ALIASING_STRUCT(FPathName)
 //DEF_RTTI_ALIASING_STRUCT(FTransform) #TODO : wrap ahead without definition ?

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "NativeTraits.h"
 #include "RTTI_fwd.h"
 
 #include "RTTI/Atom.h"
@@ -10,6 +9,7 @@
 #include "RTTI/Typedefs.h"
 
 #include "RTTI/NativeTypes.Definitions-inl.h"
+#include "NativeTraits.h"
 
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
@@ -250,31 +250,15 @@ break;
 } //!namespace RTTI
 } //!namespace PPE
 
-#include "NativeTypes.Scalar-inl.h"
-#include "NativeTypes.Tuple-inl.h"
-#include "NativeTypes.List-inl.h"
-#include "NativeTypes.Dico-inl.h"
-#include "NativeTypes.Struct-inl.h"
-#include "NativeTypes.Aliasing-inl.h"
+#include "RTTI/NativeTypes.Scalar-inl.h"
+#include "RTTI/NativeTypes.Tuple-inl.h"
+#include "RTTI/NativeTypes.List-inl.h"
+#include "RTTI/NativeTypes.Dico-inl.h"
+#include "RTTI/NativeTypes.Struct-inl.h"
+#include "RTTI/NativeTypes.Aliasing-inl.h"
 
 namespace PPE {
 namespace RTTI {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// SFINAE to detect RTTI support (need to be defined at the end of this file for CLANG)
-//----------------------------------------------------------------------------
-namespace details {
-template <typename T, typename = decltype(Traits(std::declval<TType<T>>())) >
-std::true_type IsSupportedType_(int);
-template <typename T>
-std::false_type IsSupportedType_(...);
-} //!details
-template <typename T>
-struct TIsSupportedType {
-    using is_supported = decltype(details::IsSupportedType_<T>(0));
-    STATIC_CONST_INTEGRAL(bool, value, not std::is_same<void, T>::value && is_supported::value);
-};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -282,8 +266,21 @@ struct TIsSupportedType {
 //----------------------------------------------------------------------------
 template <typename T>
 PTypeTraits MakeTraits() NOEXCEPT {
-    return Traits(Type< Meta::TDecay<T> >);
+    return RTTI_Traits(TypeTag< T >);
 }
+//----------------------------------------------------------------------------
+// SFINAE to detect RTTI support (need to be defined at the end of this file for CLANG)
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T, typename = decltype( RTTI_TypeInfos(TypeTag< T >) ) >
+std::true_type has_support_for_(int);
+template <typename T>
+std::false_type has_support_for_(...);
+} //!details
+template <typename T>
+using has_support_for = decltype(details::has_support_for_<T>(0));
+template <typename T>
+CONSTEXPR bool has_support_for_v = has_support_for<T>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

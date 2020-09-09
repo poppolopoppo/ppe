@@ -2,8 +2,6 @@
 
 #include "RTTI/AtomHeap.h"
 
-#include "MetaObject.h"
-
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------

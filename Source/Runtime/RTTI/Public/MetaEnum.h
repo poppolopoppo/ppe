@@ -27,6 +27,7 @@ struct FMetaEnumValue {
     FName Name;
     FMetaEnumOrd Ord;
 };
+PPE_ASSUME_TYPE_AS_POD(FMetaEnumValue);
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaEnum : Meta::FNonCopyableNorMovable {
 public:
@@ -102,7 +103,6 @@ inline FMetaEnumOrd MetaEnumDefaultValue(const FMetaEnum* metaEnum) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
-PPE_ASSUME_TYPE_AS_POD(RTTI::FMetaEnumValue);
 } //!namespace PPE
 
 namespace PPE {

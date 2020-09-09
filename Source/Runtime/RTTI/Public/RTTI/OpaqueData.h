@@ -50,11 +50,11 @@ FOREACH_RTTI_NATIVETYPES(PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL)
 #undef PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL
 //----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_OPAQUE_TRAITS(_FROM, ...) \
-    CONSTEXPR auto/* forward-declaration */ TypeInfos(TType< _FROM >) { \
-        return FTypeHelpers::Alias< _FROM, __VA_ARGS__ >; \
+    CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< _FROM >) { \
+        return MakeAliasTypeInfos< _FROM, __VA_ARGS__ >; \
     } \
-    inline PTypeTraits Traits(TType< _FROM >) NOEXCEPT { \
-        return Traits(Type< __VA_ARGS__ >); \
+    inline PTypeTraits RTTI_Traits(TTypeTag< _FROM >) NOEXCEPT { \
+        return MakeTraits< __VA_ARGS__ >(); \
     }
 DEF_RTTI_ALIASING_OPAQUE_TRAITS(FOpaqueArray, details::FOpaqueArrayContainer_)
 DEF_RTTI_ALIASING_OPAQUE_TRAITS(FOpaqueData, details::FOpaqueDataContainer_)

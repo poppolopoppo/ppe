@@ -43,12 +43,12 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Tuple = decltype(tie_as_tuple(std::declval<T&>())) >
-CONSTEXPR PTypeInfos StructInfos(TType< T >) {
-    return TupleTypeInfos< T >(Type< _Tuple >);
+CONSTEXPR PTypeInfos StructInfos(TTypeTag< T >) {
+    return TupleTypeInfos< T >(TypeTag< _Tuple >);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Tuple = decltype(tie_as_tuple(std::declval<T&>())) >
-CONSTEXPR PTypeTraits StructTraits(TType< T >) {
+CONSTEXPR PTypeTraits StructTraits(TTypeTag< T >) {
     return MakeStaticType< TStructAsTupleTraits<T, _Tuple>, T >();
 }
 //----------------------------------------------------------------------------

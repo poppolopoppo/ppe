@@ -25,6 +25,7 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 namespace PPE {
 namespace RTTI {
 EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
+STATIC_ASSERT(Meta::is_pod_v<FMetaParameter>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

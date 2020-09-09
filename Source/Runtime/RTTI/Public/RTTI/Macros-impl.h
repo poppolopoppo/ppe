@@ -24,8 +24,8 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_STRUCT_DEF(_Api, _Name) \
-    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name > t) NOEXCEPT { \
-        return ::PPE::RTTI::StructTraits(t); \
+    _Api ::PPE::RTTI::PTypeTraits RTTI_Traits(::PPE::RTTI::TTypeTag< _Name > tag) NOEXCEPT { \
+        return ::PPE::RTTI::StructTraits(tag); \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
