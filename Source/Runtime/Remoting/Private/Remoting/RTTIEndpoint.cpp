@@ -328,15 +328,15 @@ static void RTTIEndpoint_Export_(const FRemotingContext& ctx, const FStringView&
 //----------------------------------------------------------------------------
 struct FAutoCompleteResult {
     FString Text;
-    size_t Distance;
+    float Score;
 
     bool operator <(const FAutoCompleteResult& other) const NOEXCEPT {
-        return ((Distance < other.Distance) | (Distance == other.Distance &&
+        return ((Score < other.Score) | (Score == other.Score &&
             Text < other.Text ));
     }
 
     bool operator ==(const FAutoCompleteResult& other) const NOEXCEPT {
-        return (Distance == other.Distance && Text == other.Text);
+        return (Score == other.Score && Text == other.Text);
     }
 };
 //----------------------------------------------------------------------------
@@ -394,8 +394,9 @@ static void RTTIEndpoint_Complete_Export_(const FRemotingContext& ctx) {
             if ((nullptr == mclass) || (obj->RTTI_InheritsFrom(*mclass))) {
                 sb << obj->RTTI_PathName().Namespace << '/' << obj->RTTI_PathName().Identifier;
                 const size_t dist = LevenshteinDistanceI(sb.Written(), term);
-                if (results.empty() || dist < results.Max().Distance)
-                    results.Roll(sb.ToString(), dist);
+                const float score = ( static_cast<float>(dist) / sb.Written().size() );
+                if (results.empty() || score < results.Max().Score)
+                    results.Roll(sb.ToString(), score);
                 else
                     sb.clear();
             }
@@ -427,8 +428,9 @@ static void RTTIEndpoint_Complete_Traits_(const FRemotingContext& ctx) {
         for (const RTTI::PTypeTraits& traits : db->Traits().Values()) {
             if ((typeFlags == RTTI::ETypeFlags{ 0 }) || (typeFlags ^ traits->TypeFlags())) {
                 const size_t dist = LevenshteinDistanceI(traits->TypeName(), term);
-                if (results.empty() || dist < results.Max().Distance)
-                    results.Roll(ToString(traits->TypeName()), dist);
+                const float score = ( static_cast<float>(dist) / traits->TypeName().size() );
+                if (results.empty() || score < results.Max().Score)
+                    results.Roll(ToString(traits->TypeName()), score);
             }
         }
     });
