@@ -6,6 +6,8 @@
 #include "Lexer/Match.h"
 #include "Lexer/Symbols.h"
 
+#include "MetaObject.h"
+
 #include "Container/AssociativeVector.h"
 #include "Container/RawStorage.h"
 #include "Container/Vector.h"
@@ -230,7 +232,9 @@ static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, 
                 for (const auto& member : obj) {
                     oss << indent << Fmt::DoubleQuote;
                     EscapeString_(oss, member.first);
-                    oss << Fmt::DoubleQuote << Fmt::Colon << Fmt::Space;
+                    oss << Fmt::DoubleQuote << Fmt::Colon;
+                    if (not minify)
+                        oss << Fmt::Space;
                     ToStream_(member.second, oss, indent, minify);
                     if (--n)
                         oss << Fmt::Comma;
@@ -268,7 +272,7 @@ static RTTI::PTypeTraits MakeTraits_(FJson::EType type) NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FJson::FValue::FValue(EType type) noexcept
-:   RTTI::FAny(MakeTraits_(type))
+:   FAny(MakeTraits_(type))
 {}
 //----------------------------------------------------------------------------
 void FJson::ToStream(FTextWriter& oss, bool minify/* = false */) const {

@@ -4,6 +4,7 @@
 
 #include "HAL/Windows/WindowsPlatformNotification.h"
 
+#include "Application.h"
 #include "ApplicationBase.h"
 
 #include "Container/SparseArray.h"

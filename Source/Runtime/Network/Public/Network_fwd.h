@@ -20,6 +20,7 @@ class FAddress;
 enum class EServiceName : size_t;
 //----------------------------------------------------------------------------
 class FListener;
+class FSocket;
 class FSocketBuffered;
 FWD_REFPTR(HandShaker);
 FWD_REFPTR(ServicingPort);

@@ -453,7 +453,7 @@ CONSTEXPR T DefaultValue() NOEXCEPT {
         \
         template < \
             typename... _Args, \
-            typename = PPE::Meta::TEnableIf< Meta::has_constructor<parent_type, _Args...>::value > \
+            typename = ::PPE::Meta::TEnableIf< Meta::has_constructor<parent_type, _Args...>::value > \
         > \
         explicit _NAME(_Args&&... args) NOEXCEPT \
             : parent_type(std::forward<_Args>(args)...) {} \
