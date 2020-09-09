@@ -135,29 +135,29 @@ bool FHttpResponse::Write(FSocketBuffered* psocket, const FHttpResponse& respons
 
     bool succeed = true;
 
-    succeed &= psocket->Write(ProtocolVersion());
+    succeed &= !!psocket->Write(ProtocolVersion());
     succeed &= psocket->Put(' ');
-    succeed &= psocket->Write(HttpStatusCode(response.Status()));
+    succeed &= !!psocket->Write(HttpStatusCode(response.Status()));
     succeed &= psocket->Put(' ');
-    succeed &= psocket->Write(HttpStatusName(response.Status()));
+    succeed &= !!psocket->Write(HttpStatusName(response.Status()));
     if (response.Reason().size()) {
         succeed &= psocket->Put(' ');
-        succeed &= psocket->Write(response.Reason());
+        succeed &= !!psocket->Write(response.Reason());
     }
-    succeed &= psocket->Write("\r\n");
+    succeed &= !!psocket->Write("\r\n");
 
     for (const auto& it : response.Headers()) {
-        succeed &= psocket->Write(it.first.MakeView());
-        succeed &= psocket->Write(": ");
-        succeed &= psocket->Write(it.second.MakeView());
-        succeed &= psocket->Write("\r\n");
+        succeed &= !!psocket->Write(it.first.MakeView());
+        succeed &= !!psocket->Write(": ");
+        succeed &= !!psocket->Write(it.second.MakeView());
+        succeed &= !!psocket->Write("\r\n");
     }
 
-    succeed &= psocket->Write("\r\n");
+    succeed &= !!psocket->Write("\r\n");
 
     if (Likely(not response._overrideBody)) {
         if (not response.Body().empty())
-            succeed &= psocket->Write(response.Body().MakeView());
+            succeed &= !!!!psocket->Write(response.Body().MakeView());
     }
     else {
         Assert(response.Body().empty());
