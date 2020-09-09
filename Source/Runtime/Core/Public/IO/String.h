@@ -548,15 +548,15 @@ PPE_CORE_API FString ToString(const wchar_t *wcstr, size_t length);
 PPE_CORE_API FString ToString(const wchar_t *wcstr);
 PPE_CORE_API FString ToString(const FWString& wstr);
 inline const FString& ToString(const FString& str) { return str; }
-inline FString ToString(const TMemoryView<const char>& strview) { return FString(strview.Pointer(), strview.size()); }
-inline FString ToString(const TMemoryView<const wchar_t>& strview) { return ToString(strview.Pointer(), strview.size()); }
+PPE_CORE_API FString ToString(const TMemoryView<const char>& strview);
+PPE_CORE_API FString ToString(const TMemoryView<const wchar_t>& strview);
 //----------------------------------------------------------------------------
 PPE_CORE_API FWString ToWString(const char *cstr, size_t length);
 PPE_CORE_API FWString ToWString(const char *cstr);
 PPE_CORE_API FWString ToWString(const FString& str);
 inline const FWString& ToWString(const FWString& wstr) { return wstr; }
-inline FWString ToWString(const TMemoryView<const wchar_t>& strview) { return FWString(strview.Pointer(), strview.size()); }
-inline FWString ToWString(const TMemoryView<const char>& strview) { return ToWString(strview.Pointer(), strview.size()); }
+PPE_CORE_API FWString ToWString(const TMemoryView<const wchar_t>& strview);
+PPE_CORE_API FWString ToWString(const TMemoryView<const char>& strview);
 //----------------------------------------------------------------------------
 template <typename _Char>
 FString ToString(const TBasicStringView<_Char>& str) {

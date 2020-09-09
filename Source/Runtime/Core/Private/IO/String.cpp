@@ -145,6 +145,14 @@ FString ToString(const FWString& wstr) {
     return ToString(wstr.c_str(), wstr.size());
 }
 //----------------------------------------------------------------------------
+FString ToString(const TMemoryView<const char>& strview) {
+    return FString(strview.Pointer(), strview.size());
+}
+//----------------------------------------------------------------------------
+FString ToString(const TMemoryView<const wchar_t>& strview) {
+    return ToString(strview.Pointer(), strview.size());
+}
+//----------------------------------------------------------------------------
 FWString ToWString(const char *cstr, size_t length) {
     if (0 == length)
         return FWString();
@@ -163,6 +171,14 @@ FWString ToWString(const char *cstr) {
 //----------------------------------------------------------------------------
 FWString ToWString(const FString& str) {
     return ToWString(str.c_str(), str.size());
+}
+//----------------------------------------------------------------------------
+FWString ToWString(const TMemoryView<const wchar_t>& strview) {
+    return FWString(strview.Pointer(), strview.size());
+}
+//----------------------------------------------------------------------------
+FWString ToWString(const TMemoryView<const char>& strview) {
+    return ToWString(strview.Pointer(), strview.size());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
