@@ -873,7 +873,7 @@ void RTTI_to_Json(const RTTI::PTypeTraits& traits, FJson* dst) {
     Assert(traits);
 
     FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    //obj[Json_Name()].Assign(ToString(traits->TypeName())); // not relevant here
+    obj[Json_Name()].Assign(ToString(traits->TypeName())); // not relevant here
     obj[Json_TypeId()].Assign(checked_cast<i64>(traits->TypeId()));
     obj[Json_Flags()].Assign(ToString(traits->TypeFlags()));
     obj[Json_SizeInBytes()].Assign(checked_cast<i64>(traits->SizeInBytes()));
