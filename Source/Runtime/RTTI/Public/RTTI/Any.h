@@ -21,7 +21,7 @@ public:
     template <typename T>
     using TWrapable = Meta::TEnableIf<
         has_support_for_v<T> &&
-        not std::is_same_v<FAny, T> // forbid to wrap FAny in another FAny
+        not std::is_same_v<FAny, Meta::TDecay<T> > // forbid to wrap FAny in another FAny
     >;
 
     FAny() NOEXCEPT;
