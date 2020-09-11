@@ -55,6 +55,8 @@ public:
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FLazyName& namespace_) const;
     const auto& Transactions() const { return _transactions; }
 
+    auto Namespaces() const { return _transactions.Keys(); }
+
     /* Modules */
 
     void RegisterModule(const FMetaModule* metaModule);

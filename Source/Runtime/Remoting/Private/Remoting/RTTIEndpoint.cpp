@@ -88,10 +88,22 @@ static void Dispatch_Namespace_(const FRemotingContext& ctx, const RTTI::FLazyNa
         return;
     }
 
-    Dispatch_JsonQuery_(ctx, [&](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-        RTTI_to_Json(db->TransactionIFP(id), &json);
-    });
+    if (id.empty())
+        // list all namespaces
+        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+
+            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
+
+            for (const RTTI::FName& namespaceName : db->Namespaces())
+                arr.emplace_back(ToString(namespaceName));
+        });
+    else
+        // search for a specific namespace
+        Dispatch_JsonQuery_(ctx, [id](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+            RTTI_to_Json(db->TransactionIFP(id), &json);
+        });
 }
 //----------------------------------------------------------------------------
 static void Dispatch_Object_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id) {
@@ -103,7 +115,9 @@ static void Dispatch_Object_(const FRemotingContext& ctx, const RTTI::FLazyPathN
         return;
     }
 
-    Dispatch_JsonQuery_(ctx, [&](Serialize::FJson& json) {
+    Assert(not id.empty());
+
+    Dispatch_JsonQuery_(ctx, [&ctx, id](Serialize::FJson& json) {
         const RTTI::FMetaDatabaseReadable db;
 
         if (const RTTI::PMetaObject pObj{ db->ObjectIFP(id) })
@@ -235,13 +249,25 @@ static void RTTIEndpoint_Class_(const FRemotingContext& ctx, const FStringView& 
         return;
     }
 
-    Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-        if (const RTTI::FMetaClass* const mclass = db->ClassIFP(args))
-            RTTI_to_Json(*mclass, &json);
-        else
-            ctx.NotFound(args);
-    });
+    if (args.empty())
+        // list all classes available
+        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+
+            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
+
+            for (const RTTI::FName& className : db->Classes().Keys())
+                arr.emplace_back(ToString(className));
+        });
+    else
+        // search for a particular class
+        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+            if (const RTTI::FMetaClass* const mclass = db->ClassIFP(args))
+                RTTI_to_Json(*mclass, &json);
+            else
+                ctx.NotFound(args);
+        });
 }
 //----------------------------------------------------------------------------
 static void RTTIEndpoint_Enum_(const FRemotingContext& ctx, const FStringView& args) {
@@ -252,13 +278,25 @@ static void RTTIEndpoint_Enum_(const FRemotingContext& ctx, const FStringView& a
         return;
     }
 
-    Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-        if (const RTTI::FMetaEnum* const menum = db->EnumIFP(args))
-            RTTI_to_Json(*menum, &json);
-        else
-            ctx.NotFound(args);
-    });
+    if (args.empty())
+        // list all enums available
+        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+
+            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
+
+            for (const RTTI::FName& enumName : db->Enums().Keys())
+                arr.emplace_back(ToString(enumName));
+        });
+    else
+        // search for a particular enum
+        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+            if (const RTTI::FMetaEnum* const menum = db->EnumIFP(args))
+                RTTI_to_Json(*menum, &json);
+            else
+                ctx.NotFound(args);
+        });
 }
 //----------------------------------------------------------------------------
 static void RTTIEndpoint_Module_(const FRemotingContext& ctx, const FStringView& args) {
@@ -269,13 +307,25 @@ static void RTTIEndpoint_Module_(const FRemotingContext& ctx, const FStringView&
         return;
     }
 
-    Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-        if (const RTTI::FMetaModule* const mmodule = db->ModuleIFP(args))
-            RTTI_to_Json(*mmodule, &json);
-        else
-            ctx.NotFound(args);
-    });
+    if (args.empty())
+        // list all modules available
+        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+
+            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
+
+            for (const RTTI::FMetaModule* mmodule : db->Modules())
+                arr.emplace_back(ToString(mmodule->Name()));
+        });
+    else
+        // search for a particular module
+        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+            if (const RTTI::FMetaModule* const mmodule = db->ModuleIFP(args))
+                RTTI_to_Json(*mmodule, &json);
+            else
+                ctx.NotFound(args);
+        });
 }
 //----------------------------------------------------------------------------
 static void RTTIEndpoint_Traits_(const FRemotingContext& ctx, const FStringView& args) {
@@ -286,13 +336,28 @@ static void RTTIEndpoint_Traits_(const FRemotingContext& ctx, const FStringView&
         return;
     }
 
-    Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-        if (const RTTI::PTypeTraits mtraits = db->TraitsIFP(args))
-            RTTI_to_Json(mtraits, &json);
-        else
-            ctx.NotFound(args);
-    });
+    if (args.empty())
+        // list all traits available
+        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+
+            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
+
+            Serialize::FJson traits;
+            for (RTTI::PTypeTraits it : db->Traits().Values()) {
+                RTTI_to_Json(it, &traits);
+                arr.emplace_back(std::move(traits.Root()));
+            }
+        });
+    else
+        // search for a particular traits
+        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
+            const RTTI::FMetaDatabaseReadable db;
+            if (const RTTI::PTypeTraits mtraits = db->TraitsIFP(args))
+                RTTI_to_Json(mtraits, &json);
+            else
+                ctx.NotFound(args);
+        });
 }
 //----------------------------------------------------------------------------
 static void RTTIEndpoint_Export_(const FRemotingContext& ctx, const FStringView& args) {
@@ -308,12 +373,14 @@ static void RTTIEndpoint_Export_(const FRemotingContext& ctx, const FStringView&
 
     RTTI::FLazyPathName id;
     if (subpart.empty()) {
+        // export all object or all namespace
         if (RTTI::FLazyPathName::Parse(&id, path, false))
             Dispatch_Object_(ctx, id);
         else
             Dispatch_Namespace_(ctx, RTTI::FLazyName{ args });
     }
     else {
+        // export a specific function/property for an object
         if (not RTTI::FLazyPathName::Parse(&id, path, false)) {
             ctx.ExpectationFailed("malformed RTTI pathname");
             return;
