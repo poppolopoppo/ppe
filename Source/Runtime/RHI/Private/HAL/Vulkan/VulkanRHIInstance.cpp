@@ -16,7 +16,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Meta/Optional.h"
 
-#define USE_PPE_VULKAN_DEBUGLAYER (USE_PPE_RHIDEBUG || USE_PPE_LOGGER)
+#define USE_PPE_VULKAN_DEBUGLAYER (USE_PPE_RHIDEBUG && USE_PPE_LOGGER)
 
 #if USE_PPE_LOGGER
 #    include "IO/FormatHelpers.h"
