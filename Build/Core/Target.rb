@@ -430,6 +430,7 @@ module Build
                 unless result.include?(dep)
                     result[dep] = [dep, :runtime]
                     dep.all_dependencies do |it|
+                        next if it.last == :private
                         next if result.include?(it.first)
                         result[it.first] = it
                     end
