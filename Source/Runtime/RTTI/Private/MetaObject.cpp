@@ -33,6 +33,26 @@ static const FMetaClassHandle GMetaObject_MetaClassHandle_{
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Used for forward-declaration of PMetaObject
+//----------------------------------------------------------------------------
+void AddRef(const FMetaObject* objref) {
+    PPE::AddRef(static_cast<const FMetaObject*>(objref));
+}
+//----------------------------------------------------------------------------
+void RemoveRef(FMetaObject* objref) {
+    PPE::RemoveRef<FMetaObject>(static_cast<FMetaObject*>(objref));
+}
+//----------------------------------------------------------------------------
+void RemoveRef(const FMetaObject* objref) {
+	PPE::RemoveRef<const FMetaObject>(static_cast<const FMetaObject*>(objref));
+}
+//----------------------------------------------------------------------------
+hash_t hash_value(const PMetaObject& pobj) {
+    return PPE::hash_value(pobj);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FMetaObject::FMetaObject()
 :   _flags(EObjectFlags::Unloaded)
 {}

@@ -71,6 +71,11 @@ class FMetaDatabaseReadWritable;
 //----------------------------------------------------------------------------
 enum class EObjectFlags : u32;
 FWD_REFPTR(MetaObject);
+// manipulate TRefPtr<FMetaObject> without defining FMetaObject
+PPE_RTTI_API void AddRef(const FMetaObject* objref);
+PPE_RTTI_API void RemoveRef(FMetaObject* objref);
+PPE_RTTI_API void RemoveRef(const FMetaObject* objref);
+PPE_RTTI_API hash_t hash_value(const PMetaObject& pobj);
 //----------------------------------------------------------------------------
 class ILoadContext;
 class IUnloadContext;
