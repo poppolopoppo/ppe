@@ -61,8 +61,8 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
-inline void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
-inline void SetAssertionHandler(FAssertHandler ) {}
+inline CONSTEXPR void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
+inline CONSTEXPR void SetAssertionHandler(FAssertHandler ) {}
 
 #   if WITH_PPE_ASSERT_FALLBACK_TO_ASSUME
 #       define AssertMessage(_Message, ...) Assume(__VA_ARGS__)
@@ -132,9 +132,9 @@ NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t* msg, const w
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
-inline void AssertionReleaseFailed(const wchar_t*, const wchar_t*, unsigned ) {}
+inline CONSTEXPR void AssertionReleaseFailed(const wchar_t*, const wchar_t*, unsigned ) {}
 NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t*, const wchar_t*, unsigned ) { abort(); }
-inline void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
+inline CONSTEXPR void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 
 #   if WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME
 #       define AssertReleaseMessage(_Message, ...)  Assume(__VA_ARGS__)
@@ -171,6 +171,10 @@ inline void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 #else
 #   define ONLY_IF_ASSERT_RELEASE(_Code) NOOP()
 #endif
+
+#define AssertFinalMessage(_Message, ...) \
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : AssertReleaseFailed(_Message) )
+#define AssertFinal(...) AssertFinalMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 namespace PPE {
 //----------------------------------------------------------------------------

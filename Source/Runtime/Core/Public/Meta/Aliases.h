@@ -31,6 +31,12 @@ typedef int64_t     i64;
 #   error "unknown architecture !"
 #endif
 //----------------------------------------------------------------------------
+#if (defined(__cplusplus) && __cplusplus >/* strict */ 201703L) || (defined(_HAS_CXX20) && _HAS_CXX20 == 1)
+#   define PPE_HAS_CXX20 1
+#else
+#   define PPE_HAS_CXX20 0
+#endif
+//----------------------------------------------------------------------------
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
 #   define PPE_HAS_CXX17 1
 #else
