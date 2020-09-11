@@ -371,7 +371,7 @@ static void DeallocateBinnedChunk_(void* p) {
 #endif
 }
 //----------------------------------------------------------------------------
-static FORCE_INLINE FBinnedChunk_* ChunkFromBlock_(FBinnedBlock_* blk) {
+static FORCE_INLINE FBinnedChunk_* ChunkFromBlock_(FBinnedBlock_* const blk) {
     STATIC_ASSERT(Meta::IsPow2(FBinnedChunk_::ChunkSizeInBytes));
     Assert_NoAssume(uintptr_t(blk) & (FBinnedChunk_::ChunkSizeInBytes - 1));
 
@@ -381,7 +381,7 @@ static FORCE_INLINE FBinnedChunk_* ChunkFromBlock_(FBinnedBlock_* blk) {
     return ch;
 }
 //----------------------------------------------------------------------------
-static void PokeChunkToFront_(FBinnedBucket_& bk, FBinnedChunk_* ch) {
+static void PokeChunkToFront_(FBinnedBucket_& bk, FBinnedChunk_* const ch) {
     Assert(ch);
     Assert(ch != bk.UsedChunks);
     Assert_NoAssume(ch->CheckCanary());
@@ -415,7 +415,7 @@ static void PokeChunkToFront_(FBinnedBucket_& bk, FBinnedChunk_* ch) {
 }
 
 //----------------------------------------------------------------------------
-static size_t NonSmallBlockRegionSize_(void* ptr) {
+static size_t NonSmallBlockRegionSize_(void* const ptr) {
     Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
 
 #if USE_MALLOCBINNED_MIPMAPS
@@ -590,7 +590,7 @@ static FBinnedBatch_ FetchFreeBatch_() {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-static void InitializeChunk_(FBinnedChunk_* ch, const size_t sizeClass) {
+static void InitializeChunk_(FBinnedChunk_* const ch, const size_t sizeClass) {
     Assert(ch);
     Assert_NoAssume(0 == ch->NumBlocksInUse);
 
@@ -610,7 +610,7 @@ static void InitializeChunk_(FBinnedChunk_* ch, const size_t sizeClass) {
     ch->FreeBlocks->Next = nullptr;
 }
 //----------------------------------------------------------------------------
-static void* AllocateBlockFromChunk_(FBinnedChunk_* ch, size_t sizeClass) {
+static void* AllocateBlockFromChunk_(FBinnedChunk_* const ch, size_t sizeClass) {
     Assert(ch);
     Assert_NoAssume(sizeClass == ch->SizeClass);
     Assert_NoAssume(ch->NumBlocksInUse < ch->NumBlocksTotal);
@@ -631,7 +631,7 @@ static void* AllocateBlockFromChunk_(FBinnedChunk_* ch, size_t sizeClass) {
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t sizeClass) {
-    Assert_NoAssume(size);
+    Assert(size);
 
     // for small blocks < 32kb :
     if (Likely(sizeClass < FMallocBinned::NumSizeClasses)) {
@@ -1032,8 +1032,8 @@ static NO_INLINE void BinnedFree_(FBinnedBucket_& bk, FBinnedChunk_* ch, FBinned
     }
 }
 //----------------------------------------------------------------------------
-static NO_INLINE void LargeFree_(void* ptr) {
-    Assert(ptr);
+static NO_INLINE void LargeFree_(void* const ptr) {
+    AssertRelease(ptr);
 
 #if USE_MALLOCBINNED_MIPMAPS
     if (FMallocMipMap::AliasesToMips(ptr))
@@ -1178,7 +1178,7 @@ FBinnedLargeBlocks_::~FBinnedLargeBlocks_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void* FMallocBinned::Malloc(size_t size) {
-    Assert_NoAssume(size);
+    AssertRelease(size);
     ONLY_IF_ASSERT(FBinnedStats_::Get().OnAlloc(size));
 
     const size_t sizeClass = MakeBinnedClass_(size);
@@ -1211,8 +1211,8 @@ void* FMallocBinned::Malloc(size_t size) {
     }
 }
 //----------------------------------------------------------------------------
-void FMallocBinned::Free(void* ptr) {
-    Assert(ptr);
+void FMallocBinned::Free(void* const ptr) {
+    AssertRelease(ptr);
     ONLY_IF_ASSERT(FBinnedStats_::Get().OnFree(RegionSize(ptr)));
 
     if (Likely(uintptr_t(ptr) & (FBinnedChunk_::ChunkSizeInBytes - 1))) {
@@ -1237,18 +1237,20 @@ void FMallocBinned::Free(void* ptr) {
         }
     }
     else {
-        return LargeFree_(ptr);
+        LargeFree_(ptr);
     }
 }
 //----------------------------------------------------------------------------
-void* FMallocBinned::Realloc(void* ptr, size_t size) {
-    Assert_NoAssume(ptr || size);
+void* FMallocBinned::Realloc(void* const ptr, size_t size) {
+    AssertRelease(ptr || size);
 
     if (Likely(ptr)) {
         void* newp = nullptr;
 
         if (Likely(size)) {
             const size_t old = FMallocBinned::RegionSize(ptr);
+
+            // skip reallocation if not growth is needed
             if (MakeBinnedClass_(old) == MakeBinnedClass_(size))
                 return ptr;
 
@@ -1281,11 +1283,11 @@ void* FMallocBinned::AlignedMalloc(size_t size, size_t alignment) {
     return p;
 }
 //----------------------------------------------------------------------------
-void FMallocBinned::AlignedFree(void* ptr) {
+void FMallocBinned::AlignedFree(void* const ptr) {
     return FMallocBinned::Free(ptr);
 }
 //----------------------------------------------------------------------------
-void* FMallocBinned::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
+void* FMallocBinned::AlignedRealloc(void* const ptr, size_t size, size_t alignment) {
     void* const p = FMallocBinned::Realloc(ptr, Meta::RoundToNext(size, alignment));
     Assert_NoAssume(0 == size || Meta::IsAligned(alignment, p));
     return p;

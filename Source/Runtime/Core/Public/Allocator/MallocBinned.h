@@ -13,12 +13,12 @@ namespace PPE {
 class PPE_CORE_API FMallocBinned {
 public:
     static void*    Malloc(size_t size);
-    static void     Free(void* ptr);
-    static void*    Realloc(void* ptr, size_t size);
+    static void     Free(void* const ptr);
+    static void*    Realloc(void* const ptr, size_t size);
 
     static void*    AlignedMalloc(size_t size, size_t alignment);
-    static void     AlignedFree(void* ptr);
-    static void*    AlignedRealloc(void* ptr, size_t size, size_t alignment);
+    static void     AlignedFree(void* const ptr);
+    static void*    AlignedRealloc(void* const ptr, size_t size, size_t alignment);
 
     static void     ReleaseCacheMemory();
     static void     ReleasePendingBlocks();

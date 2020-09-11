@@ -362,17 +362,19 @@ private:
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT PPE_DECLSPEC_ALLOCATOR()
 void*   (malloc)(size_t size) {
-    return FMallocProxy::Malloc(size);
+    return (Likely(size) ? FMallocProxy::Malloc(size) : nullptr);
 }
 //----------------------------------------------------------------------------
 NOALIAS
 void    (free)(void *ptr) {
-    return FMallocProxy::Free(ptr);
+    if (Likely(ptr))
+        FMallocProxy::Free(ptr);
 }
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
 void*   (calloc)(size_t nmemb, size_t size) {
-    return FMallocProxy::Calloc(nmemb, size);
+    AssertRelease(size);
+    return (Likely(nmemb) ? FMallocProxy::Calloc(nmemb, size) : nullptr);
 }
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
@@ -383,18 +385,20 @@ void*   (realloc)(void *ptr, size_t size) {
 NOALIAS RESTRICT
 void*   (aligned_malloc)(size_t size, size_t alignment) {
     Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
-    return FMallocProxy::AlignedMalloc(size, alignment);
+    return (Likely(size) ? FMallocProxy::AlignedMalloc(size, alignment) : nullptr);
 }
 //----------------------------------------------------------------------------
 NOALIAS
 void    (aligned_free)(void *ptr) {
-    FMallocProxy::AlignedFree(ptr);
+    if (Likely(ptr))
+        FMallocProxy::AlignedFree(ptr);
 }
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
 void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment) {
+    AssertRelease(size);
     Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
-    return FMallocProxy::AlignedCalloc(nmemb, size, alignment);
+    return (Likely(nmemb) ? FMallocProxy::AlignedCalloc(nmemb, size, alignment) : nullptr);
 }
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
@@ -415,7 +419,9 @@ void    (malloc_release_pending_blocks)() {
 //----------------------------------------------------------------------------
 NOALIAS
 size_t  (malloc_snap_size)(size_t size) NOEXCEPT {
-    return FMallocProxy::SnapSize(size);
+    const size_t snapped = FMallocProxy::SnapSize(size);
+    Assert_NoAssume((0 == snapped) || (size != 0));
+    return snapped;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
