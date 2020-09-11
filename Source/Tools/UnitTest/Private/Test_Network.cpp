@@ -198,7 +198,7 @@ static void Test_SocketAccept_() {
 
                 LogResponse_(response);
 
-                FHttpResponse::Write(&socket, response);
+                succeed &= FHttpResponse::Write(&socket, response);
             }
             PPE_CATCH(FHttpException e)
             PPE_CATCH_BLOCK({
@@ -303,9 +303,7 @@ private:
 
         oss.Flush();
 
-        FHttpResponse::Write(&port.Socket(), response);
-
-        return true;
+        return FHttpResponse::Write(&port.Socket(), response);
     }
 };
 //----------------------------------------------------------------------------

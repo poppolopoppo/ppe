@@ -464,9 +464,9 @@ static NO_INLINE void Test_Atoms_() {
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Any_() {
-    STATIC_ASSERT(RTTI::TIsSupportedType<decltype(42)>::value);
-    STATIC_ASSERT(RTTI::TIsSupportedType<decltype(42.)>::value);
-    STATIC_ASSERT(RTTI::TIsSupportedType<FString>::value);
+    STATIC_ASSERT(RTTI::has_support_for_v<decltype(42)>);
+    STATIC_ASSERT(RTTI::has_support_for_v<decltype(42.)>);
+    STATIC_ASSERT(RTTI::has_support_for_v<FString>);
 
     RTTI::FAny any;
     any.Assign(42);
