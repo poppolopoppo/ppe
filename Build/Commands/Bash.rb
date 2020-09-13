@@ -31,7 +31,7 @@ module Build
             Log.log('Bash: found alias <%s>', target)
         end
 
-        completion = File.join($ExtrasPath,  script + '-completion.bash')
+        completion = File.join($ExtrasPath, "#{script}-#{Build.os_name}-completion.bash")
         Log.info('Bash: export completion config to "%s"', completion)
         Log.verbose('Bash: generating bash completion script with %d aliases and %s options', aliases.length, interceptor.opts.length)
 
