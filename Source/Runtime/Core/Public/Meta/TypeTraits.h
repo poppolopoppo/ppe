@@ -353,6 +353,26 @@ using TDontDeduce = typename TType<T>::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Macro to make string literal ASCII/WIDE agnostic:
+namespace details {
+template <typename _Ascii, typename _Wide>
+CONSTEXPR _Ascii string_literal_(char, _Ascii ascii, _Wide ) { return ascii; }
+template <typename _Ascii, typename _Wide>
+CONSTEXPR _Wide string_literal_(wchar_t, _Ascii , _Wide wide) { return wide; }
+} //!details
+template <typename _Char>
+CONSTEXPR auto string_literal(const char ascii, const wchar_t wide) {
+    return details::string_literal_(_Char{}, ascii, wide);
+}
+template <typename _Char, size_t _AsciiLen, size_t _WideLen>
+CONSTEXPR auto string_literal(const char (&ascii)[_AsciiLen], const wchar_t (&wide)[_WideLen]) {
+    return details::string_literal_(_Char{}, ascii, wide);
+}
+#define STRING_LITERAL(_CHAR, _ASCII) \
+    ::PPE::Meta::string_literal< _CHAR >( _ASCII, WIDESTRING(_ASCII) )
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 FORCE_INLINE void Construct_(T* p, FNoInit, std::false_type) { INPLACE_NEW(p, T){}; }
