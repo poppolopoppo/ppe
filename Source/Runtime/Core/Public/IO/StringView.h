@@ -211,23 +211,52 @@ PPE_CORE_API FWStringView::iterator StrStr(const FWStringView& wstr, const FWStr
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsAlpha(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) || ( ( ch >= 'A' ) && ( ch <= 'Z' ) ); }
+// Used LLVM to reverse the optimal ASM generated to C: https://godbolt.org/z/hanWdq
+//----------------------------------------------------------------------------
+#if 1 //optimized ASM
+CONSTEXPR bool IsAlpha(char ch) { return (static_cast<uint8_t>('z' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a' - 1)) - 'A')); }
+#else
+CONSTEXPR bool IsAlpha(char ch) { return ( ( ch >= 'a' ) & ( ch <= 'z' ) ) | ( ( ch >= 'A' ) & ( ch <= 'Z' ) ); }
+#endif
 inline bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsDigit(char ch) { return ( ( ch >= '0' ) && ( ch <= '9' ) ); }
+#if 1 //optimized ASM
+CONSTEXPR bool IsDigit(char ch) { return (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0')); }
+#else
+CONSTEXPR bool IsDigit(char ch) { return ( ( ch >= '0' ) & ( ch <= '9' ) ); }
+#endif
 inline bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsEndLine(char ch) { return ( ( ch == '\r' ) || ( ch == '\n' ) ); }
-CONSTEXPR bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) || ( wch == L'\n' ) ); }
+CONSTEXPR bool IsEndLine(char ch) { return ( ( ch == '\r' ) | ( ch == '\n' ) ); }
+CONSTEXPR bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) | ( wch == L'\n' ) ); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsXDigit(char ch) { return IsDigit(ch) || ( ch >= 'a' && ch <= 'f' ) || ( ch >= 'A' && ch <= 'F' ); }
+#if 1 //optimized ASM
+CONSTEXPR bool IsXDigit(char ch) { return (
+    (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0')) |
+    (static_cast<uint8_t>('f' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a'  - 1)) - 'A')) ); }
+#else
+CONSTEXPR bool IsXDigit(char ch) { return IsDigit(ch) | ( ( ch >= 'a' ) & ( ch <= 'f' ) ) | ( ( ch >= 'A' ) & ( ch <= 'F' ) ); }
+#endif
 inline bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsAlnum(char ch) { return IsAlpha(ch) || IsDigit(ch); }
+#if 1 //optimized ASM
+CONSTEXPR bool IsAlnum(char ch) { return (
+    (static_cast<uint8_t>('z' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a' - 1)) - 'A')) |
+    (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0'))  ); }
+#else
+CONSTEXPR bool IsAlnum(char ch) { return (IsAlpha(ch) | IsDigit(ch)); }
+#endif
 inline bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsIdentifier(char ch) { return (IsAlnum(ch) || ch == '_' || ch == '.'); }
-inline bool IsIdentifier(wchar_t wch) { return (IsAlnum(wch) || wch == L'_' || wch == L'.'); }
+CONSTEXPR bool IsIdentifier(char ch) { return (IsAlnum(ch) | ( ch == '_' ) | ( ch == '.' )); }
+inline bool IsIdentifier(wchar_t wch) { return (IsAlnum(wch) || ((wch == L'_') | (wch == L'.'))); }
+//----------------------------------------------------------------------------
+#if 1 //optimized ASM
+CONSTEXPR bool IsOctal(char ch) { return (static_cast<uint8_t>('7' - '0' + 1) > static_cast<uint8_t>(ch - '0')); }
+#else
+CONSTEXPR bool IsOctal(char ch) { return ( ( ch >= '0' ) & ( ch <= '7' ) ); }
+#endif
+inline bool IsOctal(wchar_t wch) { return (IsDigit(wch) & (wch != '8') & (wch != '9')); }
 //----------------------------------------------------------------------------
 inline bool IsPrint(char ch) { return 0 != std::isprint((int)((unsigned char)ch)); }
 inline bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
@@ -235,7 +264,7 @@ inline bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
 inline bool IsPunct(char ch) { return 0 != std::ispunct((int)((unsigned char)ch)); }
 inline bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
+CONSTEXPR bool IsSpace(char ch) { return ((ch == ' ') | (ch == '\f') | (ch == '\n') | (ch == '\r') | (ch == '\t') | (ch == '\v')); }
 inline bool IsSpace(wchar_t wch) { return 0 != std::iswspace(wch); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -254,6 +283,9 @@ PPE_CORE_API bool IsXDigit(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 PPE_CORE_API bool IsIdentifier(const FStringView& str);
 PPE_CORE_API bool IsIdentifier(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool IsOctal(const FStringView& str);
+PPE_CORE_API bool IsOctal(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 PPE_CORE_API bool IsPrint(const FStringView& str);
 PPE_CORE_API bool IsPrint(const FWStringView& wstr);
@@ -294,6 +326,9 @@ PPE_CORE_API FWStringView EatDigits(FWStringView& wstr);
 //----------------------------------------------------------------------------
 PPE_CORE_API FStringView EatXDigits(FStringView& str);
 PPE_CORE_API FWStringView EatXDigits(FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatOctals(FStringView& str);
+PPE_CORE_API FWStringView EatOctals(FWStringView& wstr);
 //----------------------------------------------------------------------------
 PPE_CORE_API FStringView EatPrints(FStringView& str);
 PPE_CORE_API FWStringView EatPrints(FWStringView& wstr);
@@ -445,10 +480,12 @@ enum class EEscape {
 };
 //----------------------------------------------------------------------------
 PPE_CORE_API void Escape(FTextWriter& oss, const FStringView& str, EEscape escape);
+PPE_CORE_API void Escape(FTextWriter& oss, const FWStringView& str, EEscape escape);
+PPE_CORE_API void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape);
 PPE_CORE_API void Escape(FWTextWriter& oss, const FWStringView& str, EEscape escape);
 //----------------------------------------------------------------------------
-PPE_CORE_API void Escape(FTextWriter& oss, const FStringView& wstr, EEscape escape);
-PPE_CORE_API void Escape(FWTextWriter& oss, const FWStringView& str, EEscape escape);
+PPE_CORE_API void Unescape(FTextWriter& oss, const FStringView& str);
+PPE_CORE_API void Unescape(FWTextWriter& oss, const FWStringView& str);
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FWStringView& wslice);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& slice);

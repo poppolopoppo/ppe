@@ -534,6 +534,9 @@ bool IsXDigit(const FWStringView& wstr) { return IsAll_(wstr, &IsXDigit); }
 bool IsIdentifier(const FStringView& str) { return IsAll_(str, &IsIdentifier); }
 bool IsIdentifier(const FWStringView& wstr) { return IsAll_(wstr, &IsIdentifier); }
 //----------------------------------------------------------------------------
+bool IsOctal(const FStringView& str) { return IsAll_(str, &IsOctal); }
+bool IsOctal(const FWStringView& wstr) { return IsAll_(wstr, &IsOctal); }
+//----------------------------------------------------------------------------
 bool IsPrint(const FStringView& str) { return IsAll_(str, &IsPrint); }
 bool IsPrint(const FWStringView& wstr) { return IsAll_(wstr, &IsPrint); }
 //----------------------------------------------------------------------------
@@ -573,6 +576,9 @@ FWStringView EatDigits(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(
 //----------------------------------------------------------------------------
 FStringView EatXDigits(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsXDigit); }
 FWStringView EatXDigits(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsXDigit); }
+//----------------------------------------------------------------------------
+FStringView EatOctals(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsOctal); }
+FWStringView EatOctals(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsOctal); }
 //----------------------------------------------------------------------------
 FStringView EatPrints(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsPrint); }
 FWStringView EatPrints(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsPrint); }
@@ -1068,10 +1074,16 @@ void Escape(FWTextWriter& oss, const FWStringView& wstr, EEscape escape) {
                     oss << FTextFormat::Octal << ord;
                     break;
                 case PPE::EEscape::Hexadecimal:
-                    oss.Put(L"\\x");
-                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << ((ord >> 8) & 0xFF);
-                    oss.Put(L"\\x");
-                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << (ord & 0xFF);
+                    if (ord <= 0xFF) {
+						oss.Put(L"\\x");
+						oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << ord;
+                    }
+                    else {
+                        oss.Put(L"\\x");
+                        oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << ((ord >> 8) & 0xFF);
+                        oss.Put(L"\\x");
+                        oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << (ord & 0xFF);
+                    }
                     break;
                 case PPE::EEscape::Unicode:
                     oss.Put(L"\\u");
@@ -1114,6 +1126,95 @@ void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape) {
 
     oss.SetFormat(fmt);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _DstChar, typename _SrcChar>
+static size_t Unescape_Hexadecimal_(TBasicTextWriter<_DstChar>& oss, TBasicStringView<_SrcChar>&& str) {
+    const TBasicStringView<_SrcChar> xdigits = EatXDigits(str);
+    if (xdigits.size()) {// don't have character limit, as per cpp standard
+        u32 ch;
+        if (Atoi(&ch, xdigits, 16)) {
+            oss.Put(static_cast<_DstChar>(ch));
+            return (xdigits.size() + 1/* leading 'x'/'u' */);
+        }
+    }
+    return 0; // this is undefined behavior in cpp standard
+}
+//----------------------------------------------------------------------------
+template <typename _DstChar, typename _SrcChar>
+static size_t Unescape_Octal_(TBasicTextWriter<_DstChar>& oss, TBasicStringView<_SrcChar>&& str) {
+    TBasicStringView<_SrcChar> octal = EatOctals(str);
+    if (octal.size()) {
+        if (octal.size() > 3)// limit to 3 chars, as per cpp standard
+            octal = octal.CutBefore(3);
+
+        u32 ch;
+        if (Atoi(&ch, octal, 8)) {
+            oss.Put(static_cast<_DstChar>(ch));
+            return octal.size();
+        }
+    }
+    return 0; // this is undefined behavior in cpp standard
+}
+//----------------------------------------------------------------------------
+template <typename _DstChar, typename _SrcChar>
+static void Unescape_(TBasicTextWriter<_DstChar>& oss, const TBasicStringView<_SrcChar>& str) {
+#define STR(X) STRING_LITERAL(_DstChar, X)
+    for (size_t i = 0; i < str.size(); ++i) {
+        if ((str[i] == STR('\\')) & (i + 1 < str.size())) {
+            size_t eaten = 1;
+            switch (str[i + 1]) {
+            // special characters
+            case STR('t'):case STR('T'):
+                oss.Put(STR('\t'));
+                break;
+            case STR('r'):case STR('R'):
+                oss.Put(STR('\r'));
+                break;
+            case STR('n'):case STR('N'):
+                oss.Put(STR('\n'));
+                break;
+            case STR('\\'):
+            case STR('"'):
+                oss.Put(str[i + 1]);
+                break;
+            case STR('b'):case STR('B'):
+                oss.Put(STR('\b'));
+                break;
+            case STR('f'):case STR('F'):
+                oss.Put(STR('\f'));
+                break;
+            // hexadecimal + unicode
+            case STR('x'):case STR('X'):
+            case STR('u'):case STR('U'):
+                eaten = Unescape_Hexadecimal_<_DstChar, _SrcChar>(oss, str.CutStartingAt(i + 2));
+                break;
+            // octal
+            case STR('0'):case STR('1'):case STR('2'):case STR('3'):
+            case STR('4'):case STR('5'):case STR('6'):case STR('7'):
+                eaten = Unescape_Octal_<_DstChar, _SrcChar>(oss, str.CutStartingAt(i + 1));
+                break;
+            // unknown escape sequence
+            default:
+                eaten = 0;// don't escape the sequence
+                break;
+            }
+
+            if (Likely(eaten))
+                i += eaten;
+            else
+                oss.Put('\\'); // print escaping '\' to hint at error in the result
+        }
+        else {
+            oss.Put(str[i]);
+        }
+    }
+#undef STR
+}
+//----------------------------------------------------------------------------
+void Unescape(FTextWriter& oss, const FStringView& str) { Unescape_(oss, str); }
+void Unescape(FWTextWriter& oss, const FWStringView& str) { Unescape_(oss, str); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

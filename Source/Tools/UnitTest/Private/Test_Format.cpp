@@ -4,6 +4,7 @@
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Format.h"
+#include "IO/FormatHelpers.h"
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
@@ -150,6 +151,28 @@ static void Test_TextWriter_() {
     Test_TextWriter_Wide_();
 }
 //----------------------------------------------------------------------------
+template <typename _DstChar, typename _SrcChar>
+static void Test_StringEscaping_(TBasicStringView<_SrcChar> input, EEscape escape) {
+    TBasicStringBuilder<_DstChar> escaped;
+    Escape(escaped, input, escape);
+    TBasicString<_DstChar> tmp{ escaped.ToString() };
+
+    TBasicStringBuilder<_SrcChar> unescaped;
+    Unescape(unescaped, tmp);
+    TBasicString<_SrcChar> output{ unescaped.ToString() };
+
+    LOG(Test_Format, Info, L"Src: {0}\n{1}", Fmt::Quoted(input, L'"'), Fmt::HexDump(input.MakeView()) );
+    LOG(Test_Format, Info, L"Dst: {0}\n{1}", Fmt::Quoted(output, L'"'), Fmt::HexDump(output.MakeView()) );
+    AssertRelease(output == input);
+}
+static void Test_StringEscaping_() {
+    Test_StringEscaping_<char>(MakeStringView("This\t\x10\nescaPed\23\b\r\n\"123"), EEscape::Octal);
+    Test_StringEscaping_<char>(MakeStringView("This\t\x10\nescaPed\23\b\r\n\"123"), EEscape::Hexadecimal);
+    Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Octal);
+    Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Hexadecimal);
+    Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Unicode);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -161,6 +184,7 @@ void Test_Format() {
 
     Test_Format_();
     Test_TextWriter_();
+    Test_StringEscaping_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
