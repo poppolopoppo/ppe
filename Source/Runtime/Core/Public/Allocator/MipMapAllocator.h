@@ -88,7 +88,8 @@ public:
     void* Allocate(size_t sizeInBytes);
     void Free(void* ptr);
 
-    void GarbageCollect();
+    NO_INLINE void GarbageCollect(); // try to lock
+    void ForceGarbageCollect(); // force lock
 
     template <typename _Each>
     size_t EachCommitedMipMap(_Each&& each) const;
@@ -217,6 +218,8 @@ private:
     NO_INLINE bool AcquireFreeMipMap_(u32* pMipIndex);
 
     u64 MipAvailableSizeInBytes_(u32 mipIndex) const;
+
+    void GarbageCollect_AssumeLocked_() NOEXCEPT;
 
 #if USE_PPE_ASSERT
     NO_INLINE void CheckSanity_() const;
@@ -395,29 +398,29 @@ void* TMipMapAllocator<_VMemTraits>::AllocateWithHint_(size_t sizeInBytes, FMipH
 
     const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
 
-    void* p = nullptr;
-    if (mipIndex < _vSpace.NumCommittedMips) {
-        p = AllocateFromMip_(mipIndex, lvl, fst, msk);
-        if (nullptr != p)
+    if (Likely(mipIndex < _vSpace.NumCommittedMips)) {
+        void* const p = AllocateFromMip_(mipIndex, lvl, fst, msk);
+        if (Likely(nullptr != p))
             return p;
     }
 
-    Assert(nullptr == p);
-    for (mipIndex = 0;; ++mipIndex) {
-        if (Unlikely(not _freeMips.FirstMipAvailable(&mipIndex, mipIndex, _vSpace.NumCommittedMips))) {
-            if (Unlikely(not AcquireFreeMipMap_(&mipIndex)))
-                break;
-        }
+    return Meta::unlikely([this, sizeInBytes, lvl, fst, msk, &hint]() -> void* {
+		for (u32 mipIndex = 0;; ++mipIndex) {
+			if (Unlikely(not _freeMips.FirstMipAvailable(&mipIndex, mipIndex, _vSpace.NumCommittedMips))) {
+				if (Unlikely(not AcquireFreeMipMap_(&mipIndex)))
+					break;
+			}
 
-        p = AllocateFromMip_(mipIndex, lvl, fst, msk);
-        if (Likely(p)) {
-            Assert(sizeInBytes == AllocationSize(p));
-            hint.LastMipIndex = mipIndex;
-            return p;
-        }
-    }
+			void* const p = AllocateFromMip_(mipIndex, lvl, fst, msk);
+			if (Likely(p)) {
+				Assert(sizeInBytes == AllocationSize(p));
+				hint.LastMipIndex = mipIndex;
+				return p;
+			}
+		}
 
-    return nullptr;
+		return nullptr;
+    });
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
@@ -426,72 +429,69 @@ void TMipMapAllocator<_VMemTraits>::Free(void* ptr) {
     Assert_NoAssume(AliasesToMipMaps(ptr));
 
     bool runGCAfterFree = false;
-    ON_SCOPE_EXIT([&runGCAfterFree, this]() {
-        if (runGCAfterFree)
-            GarbageCollect();
-    });
+    {
+        const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
 
-    const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
+        const intptr_t vptr = ((u8*)ptr - (u8*)_vSpace.pAddr);
+        const u32 mipIndex = checked_cast<u32>(vptr / TopMipSize);
 
-    const intptr_t vptr = ((u8*)ptr - (u8*)_vSpace.pAddr);
-    const u32 mipIndex = checked_cast<u32>(vptr / TopMipSize);
+        FMipMap& mipMap = _mipMaps[mipIndex];
 
-    FMipMap& mipMap = _mipMaps[mipIndex];
+        const u32 idx = checked_cast<u32>((vptr - mipIndex * TopMipSize) / BottomMipSize);
+        Assert_NoAssume(FPlatformMaths::popcnt64(mipMap.SizeMask & GSizeMasks_[idx]) == 1);
 
-    const u32 idx = checked_cast<u32>((vptr - mipIndex * TopMipSize) / BottomMipSize);
-    Assert_NoAssume(FPlatformMaths::popcnt64(mipMap.SizeMask & GSizeMasks_[idx]) == 1);
+        const u32 bit = FirstBitSet_(mipMap.SizeMask & GSizeMasks_[idx]);
+        Assert_NoAssume((mipMap.MipMask & ~GSetMasks_[bit]) == 0);
+        Assert_NoAssume(mipMap.SizeMask & (u64(1) << bit));
 
-    const u32 bit = FirstBitSet_(mipMap.SizeMask & GSizeMasks_[idx]);
-    Assert_NoAssume((mipMap.MipMask & ~GSetMasks_[bit]) == 0);
-    Assert_NoAssume(mipMap.SizeMask & (u64(1) << bit));
+        // first clear the allocated bit from the SizeMask,
+        // so we can't allocate from MipMask when SizeMask is still set
+        mipMap.SizeMask &= ~(u64(1) << bit);
 
-    // first clear the allocated bit from the SizeMask,
-    // so we can't allocate from MipMask when SizeMask is still set
-    mipMap.SizeMask &= ~(u64(1) << bit);
-
-    u64 mip = mipMap.MipMask.load(std::memory_order_relaxed); // <== updated by compare_exchange_weak
-    for (;;) {
-        Assert_NoAssume((mip & ~GSetMasks_[bit]) == 0);
-        u64 upd = mip;
-        u32 del = bit;
-
+        u64 mip = mipMap.MipMask.load(std::memory_order_relaxed); // <== updated by compare_exchange_weak
         for (;;) {
-            upd |= GUnsetMasks_[del];
-            const u64 sib = (u64(1) << (del & 1 ? del + 1 : del - 1));
-            if (0 == del || 0 == (upd & sib))
+            Assert_NoAssume((mip & ~GSetMasks_[bit]) == 0);
+            u64 upd = mip;
+            u32 del = bit;
+
+            for (;;) {
+                upd |= GUnsetMasks_[del];
+                const u64 sib = (u64(1) << (del & 1 ? del + 1 : del - 1));
+                if (0 == del || 0 == (upd & sib))
+                    break;
+                del = ParentBit_(del);
+            }
+
+            Assert_NoAssume(mip != upd);
+            if (mipMap.MipMask.compare_exchange_weak(mip, upd,
+                std::memory_order_release, std::memory_order_relaxed)) {
+
+                // enable mips again if it was full previously
+                if (Unlikely(mip == GMipMaskFull_))
+                    _freeMips.Enable(mipIndex);
+                // garbage collect free mips if more than 4 are completely empty
+                else if (Unlikely(upd == GMipMaskEmpty_))
+                    runGCAfterFree = (u32(++_freeMips.NumEmptyMips) * 2 >= _vSpace.NumCommittedMips &&
+                        _mipMaps[_vSpace.NumCommittedMips - 1].MipMask == GMipMaskEmpty_);
+
                 break;
-            del = ParentBit_(del);
-        }
-
-        Assert_NoAssume(mip != upd);
-        if (mipMap.MipMask.compare_exchange_weak(mip, upd,
-            std::memory_order_release, std::memory_order_relaxed)) {
-
-            // enable mips again if it was full previously
-            if (Unlikely(mip == GMipMaskFull_))
-                _freeMips.Enable(mipIndex);
-            // garbage collect free mips if more than 4 are completely empty
-            else if (Unlikely(upd == GMipMaskEmpty_))
-                runGCAfterFree = (u32(++_freeMips.NumEmptyMips) * 2 >= _vSpace.NumCommittedMips &&
-                    _mipMaps[_vSpace.NumCommittedMips - 1].MipMask == GMipMaskEmpty_ );
-
-            return;
+            }
         }
     }
+
+	if (Unlikely(runGCAfterFree))
+		GarbageCollect();
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
-void TMipMapAllocator<_VMemTraits>::GarbageCollect() {
+void TMipMapAllocator<_VMemTraits>::GarbageCollect_AssumeLocked_() NOEXCEPT {
     // will release mip maps ATE of committed space IFP
     // this is locking all other threads attempting to allocate
     // sadly due to fragmentation blocks maybe too scattered to release a
     // substantial amount of virtual memory
 
-    const FReadWriteLock::FScopeLockWrite GClockWrite(_vSpace.GClockRW); // this is an exclusive process
-
     if (0 == _vSpace.NumCommittedMips)
         return;
-
 
     u32 numDecommittedMips = 0;
     for (u32 mipIndex = (_vSpace.NumCommittedMips - 1); mipIndex; --mipIndex) {
@@ -516,6 +516,20 @@ void TMipMapAllocator<_VMemTraits>::GarbageCollect() {
     _vSpace.NumCommittedMips -= numDecommittedMips;
     _freeMips.NumEmptyMips -= numDecommittedMips;
     Assert_NoAssume(_freeMips.NumEmptyMips >= 0);
+}
+//----------------------------------------------------------------------------
+template <typename _VMemTraits>
+void TMipMapAllocator<_VMemTraits>::GarbageCollect() {
+	if (_vSpace.GClockRW.TryLockWrite()) {
+        GarbageCollect_AssumeLocked_();
+		_vSpace.GClockRW.UnlockWrite();
+	}
+}
+//----------------------------------------------------------------------------
+template <typename _VMemTraits>
+void TMipMapAllocator<_VMemTraits>::ForceGarbageCollect() {
+    const FReadWriteLock::FScopeLockWrite scopeLock{ _vSpace.GClockRW };
+    GarbageCollect_AssumeLocked_();
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>

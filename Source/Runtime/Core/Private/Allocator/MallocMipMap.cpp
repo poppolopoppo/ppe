@@ -108,7 +108,7 @@ void FMallocMipMap::MediumFree(void* ptr) {
 }
 //----------------------------------------------------------------------------
 void FMallocMipMap::MediumTrim() {
-    MediumMips_().GarbageCollect();
+    MediumMips_().ForceGarbageCollect();
 }
 //----------------------------------------------------------------------------
 bool FMallocMipMap::AliasesToMediumMips(void* ptr) NOEXCEPT {
@@ -145,7 +145,7 @@ void FMallocMipMap::LargeFree(void* ptr) {
 }
 //----------------------------------------------------------------------------
 void FMallocMipMap::LargeTrim() {
-    LargeMips_().GarbageCollect();
+    LargeMips_().ForceGarbageCollect();
 }
 //----------------------------------------------------------------------------
 bool FMallocMipMap::AliasesToLargeMips(void* ptr) NOEXCEPT {
@@ -181,8 +181,8 @@ void FMallocMipMap::MipFree(void* ptr) {
 }
 //----------------------------------------------------------------------------
 void FMallocMipMap::MemoryTrim() {
-    MediumMips_().GarbageCollect();
-    LargeMips_().GarbageCollect();
+    MediumMips_().ForceGarbageCollect();
+    LargeMips_().ForceGarbageCollect();
 }
 //----------------------------------------------------------------------------
 bool FMallocMipMap::AliasesToMips(void* ptr) NOEXCEPT {
