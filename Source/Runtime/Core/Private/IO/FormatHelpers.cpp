@@ -186,7 +186,8 @@ FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump) {
         oss << "  ";
         offset = origin;
         for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
-            oss << (IsPrint(char(hexDump.RawData[offset])) ? char(hexDump.RawData[offset]) : '.');
+            oss << (IsPrint(char(hexDump.RawData[offset])) && (char(hexDump.RawData[offset]) != '\t')
+                ? char(hexDump.RawData[offset]) : '.');
         oss << Eol;
     }
     return oss;
@@ -206,7 +207,8 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump) {
         oss << L"  ";
         offset = origin;
         for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
-            oss << (IsPrint(char(hexDump.RawData[offset])) ? wchar_t(hexDump.RawData[offset]) : L'.');
+            oss << (IsPrint(char(hexDump.RawData[offset])) && (char(hexDump.RawData[offset]) != '\t')
+                ? wchar_t(hexDump.RawData[offset]) : L'.');
         oss << Eol;
     }
     return oss;
