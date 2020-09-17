@@ -100,7 +100,7 @@ void* FMallocMipMap::MediumAlloc(size_t sz, size_t alignment) {
 }
 //----------------------------------------------------------------------------
 void FMallocMipMap::MediumFree(void* ptr) {
-    Assert(AliasesToMediumMips(ptr));
+    Assert_NoAssume(AliasesToMediumMips(ptr));
 #if USE_PPE_MEMORYDOMAINS
     MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).DeallocateUser(MediumMips_().AllocationSize(ptr));
 #endif
@@ -137,7 +137,7 @@ void* FMallocMipMap::LargeAlloc(size_t sz, size_t alignment) {
 }
 //----------------------------------------------------------------------------
 void FMallocMipMap::LargeFree(void* ptr) {
-    Assert(AliasesToLargeMips(ptr));
+    Assert_NoAssume(AliasesToLargeMips(ptr));
 #if USE_PPE_MEMORYDOMAINS
     MEMORYDOMAIN_TRACKING_DATA(LargeMipMaps).DeallocateUser(LargeMips_().AllocationSize(ptr));
 #endif
@@ -157,7 +157,7 @@ size_t FMallocMipMap::LargeSnapSize(size_t sz) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 size_t FMallocMipMap::LargeRegionSize(void* ptr) NOEXCEPT {
-    Assert(LargeMips_().AliasesToMipMaps(ptr));
+    Assert_NoAssume(LargeMips_().AliasesToMipMaps(ptr));
     return LargeMips_().AllocationSize(ptr);
 }
 //----------------------------------------------------------------------------
@@ -175,7 +175,7 @@ void FMallocMipMap::MipFree(void* ptr) {
         MediumFree(ptr);
     }
     else {
-        Assert(LargeMips_().AliasesToMipMaps(ptr));
+        Assert_NoAssume(LargeMips_().AliasesToMipMaps(ptr));
         LargeFree(ptr);
     }
 }
@@ -186,7 +186,7 @@ void FMallocMipMap::MemoryTrim() {
 }
 //----------------------------------------------------------------------------
 bool FMallocMipMap::AliasesToMips(void* ptr) NOEXCEPT {
-    return AliasesToMediumMips(ptr) || AliasesToLargeMips(ptr);
+    return (AliasesToMediumMips(ptr) || AliasesToLargeMips(ptr));
 }
 //----------------------------------------------------------------------------
 size_t FMallocMipMap::SnapSize(size_t sz) NOEXCEPT {
@@ -200,7 +200,7 @@ size_t FMallocMipMap::RegionSize(void* ptr) NOEXCEPT {
     if (MediumMips_().AliasesToMipMaps(ptr))
         return MediumMips_().AllocationSize(ptr);
     else {
-        Assert(LargeMips_().AliasesToMipMaps(ptr));
+        Assert_NoAssume(LargeMips_().AliasesToMipMaps(ptr));
         return LargeMips_().AllocationSize(ptr);
     }
 }
