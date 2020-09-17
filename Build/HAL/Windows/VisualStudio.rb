@@ -500,9 +500,8 @@ module Build
     VSWhere_exe = File.join($BuildPath, 'HAL', 'Windows', 'vswhere.exe')
     def self.import_vswhere(name, pattern, *args)
         make_prerequisite(name) do
-            validate_FileExist!
             need_cmdline!(VSWhere_exe, '-latest', '-find', pattern, *args)
-        end
+        end.validate_FileExist!
     end
 
     def self.make_fileset_vs2019(prereq, cl_exe)
