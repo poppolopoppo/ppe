@@ -22,6 +22,7 @@ module Build
             Zlib::GzipWriter.wrap(fd) do |gzip|
                 Gem::Package::TarWriter.new(gzip) do |tar|
                     fileset.each do |fname|
+                        next unless File.exists?(fname)
                         content = IO.binread(File.join($WorkspacePath, fname))
                         if Log.log?
                             Log.log('Backup: append "%s" to archive (%d bytes)', fname, content.length)
