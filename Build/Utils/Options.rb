@@ -307,7 +307,7 @@ module Build
 
     Build.make_command(:print, 'Show config data') do
         PersistentConfig[:vars].each do |name, var|
-            Log.log 'persitent[%s] = %s', name, var.value.to_s
+            Log.display 'persitent[%s] = %s', name, var.value.to_s
         end
     end
 

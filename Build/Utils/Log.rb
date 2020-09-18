@@ -1,3 +1,4 @@
+
 # frozen_string_literal: true
 
 require_once 'ANSIColor.rb'
@@ -22,13 +23,14 @@ module Build
             verbose:    ' - ',
             log:        '---',
             info:       '-->',
+            display:    '',
             warning:    '/?\\',
             error:      '[!]',
             fatal:      'KO!',
         }
 
         LEVELS = ICONS.keys
-        VERBOSITY = [ :info, :warning, :error, :fatal, :success ]
+        VERBOSITY = [ :info, :display, :warning, :error, :fatal, :success ]
         MAXMSGLEN = 4096*4
 
         ANSI = ANSI.colors(Build.Interactive)
@@ -37,6 +39,7 @@ module Build
             verbose: ANSI[:fg1_black],
             log: ANSI[:fg0_white],
             info: ANSI[:fg1_white]+ANSI[:bold],
+            display: ANSI[:fg1_white]+ANSI[:bold],
             warning: ANSI[:fg0_yellow],
             error: ANSI[:fg1_red],
             fatal: ANSI[:fg1_white]+ANSI[:bg0_red]+ANSI[:bold],
@@ -123,7 +126,7 @@ module Build
                 end
 
                 case verbosity
-                when :debug, :verbose, :log, :info
+                when :debug, :verbose, :log, :info, :display
                     $stdout.puts(Log.ansi_style(verbosity, message))
                     $stdout.flush
                 when :warning, :error
@@ -142,7 +145,7 @@ module Build
             end if VERBOSITY.include?(verbosity) || verbosity == :fatal
         end
 
-        def self.puts(message: '', args: nil, verbosity: :info)
+        def self.puts(message: '', args: nil, verbosity: :display)
             return unless VERBOSITY.include?(verbosity)
 
             case message
