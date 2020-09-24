@@ -24,6 +24,7 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <array>
 #include <intrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>

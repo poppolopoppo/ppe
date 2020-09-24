@@ -1,7 +1,7 @@
 // Hint files help the Visual Studio IDE interpret Visual C++ identifiers
 // such as names of functions and macros.
 // For more information see https://go.microsoft.com/fwlink/?linkid=865984
-#define BUILD_ENV
+#define BUILD_ENVIRONMENT
 #define BUILD_PLATFORM
 #define BUILD_FAMILY
 #define TARGET_PLATFORM
@@ -45,6 +45,7 @@
 #define PROXY_USING_DEF(_NAME)
 #define SEGREGATOR_USING_DEF(_NAME, _OP)
 #define CASCADED_USING_DEF(_NAME)
+#define ARRAY_LINEARHEAP(T)
 #define VECTOR_LINEARHEAP(T)
 #define SPARSEARRAY_LINEARHEAP(_DOMAIN, T, _ChunkSize)
 #define HASHSET_LINEARHEAP(T)
@@ -59,6 +60,7 @@
 #define PPE_CHECK_RETURN_NOT_NULL
 #define TRACKING_USING_DEF(_NAME)
 #define TRACKING_MALLOC(_DOMAIN, _SIZE)
+#define TRACKING_ALIGNED_MALLOC(_DOMAIN, _SIZE, _ALIGN)
 #define TRACKING_CALLOC(_DOMAIN, _NMEMB, _SIZE)
 #define TRACKING_REALLOC(_DOMAIN, _PTR, _SIZE)
 #define TRACKING_FREE(_DOMAIN, _PTR)
@@ -72,14 +74,14 @@
 #define INTRUSIVELIST(_Member)
 #define INTRUSIVESINGLELIST_ACCESSOR(_Member)
 #define INTRUSIVESINGLELIST(_Member)
+#define STACKLOCAL_POD_HEAP(T, _Pred, _NAME, _COUNT)
+#define STACKLOCAL_ASSUMEPOD_HEAP(T, _Pred, _NAME, _COUNT)
+#define STACKLOCAL_HEAP(T, _Pred, _NAME, _COUNT)
 #define PATRICIASET(_DOMAIN, _KEY, _INSITU)
 #define STACKLOCAL_POD_RINGBUFFER(T, _NAME, _COUNT)
 #define STACKLOCAL_ASSUMEPOD_RINGBUFFER(T, _NAME, _COUNT)
 #define STACKLOCAL_RINGBUFFER(T, _NAME, _COUNT)
 #define SPARSEARRAY_INSITU(_DOMAIN, T)
-#define STACKLOCAL_POD_HEAP(T, _Pred, _NAME, _COUNT)
-#define STACKLOCAL_ASSUMEPOD_HEAP(T, _Pred, _NAME, _COUNT)
-#define STACKLOCAL_HEAP(T, _Pred, _NAME, _COUNT)
 #define STRINGVIEW_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE)
 #define WSTRINGVIEW_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE)
 #define STRINGVIEW_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
@@ -97,12 +99,13 @@
 #define CONSTCHAR_HASHSET_MEMOIZE(_DOMAIN, _CASE_SENSITIVE)
 #define CONSTWCHAR_HASHSET_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE)
 #define TERNARYSEARCHSET(_DOMAIN, _KEY)
-#define BASICTOKEN_CLASS_DECL(_API, _NAME, _CHAR, _CASESENSITIVE, _TRAITS)
+#define BASICTOKEN_CLASS_DECL(_API, _NAME_WITHOUT_F, _CHAR, _CASESENSITIVE, _TRAITS)
 #define BASICTOKEN_CLASS_DEF(_NAME)
 #define DEBUG_FUNCTION_START()
 #define DEBUG_FUNCTION_SHUTDOWN()
 #define DEBUG_FUNCTION(_API, _NAME, _RET, _ARGS, ...)
 #define PPE_DEFAULT_EXCEPTION_DESCRIPTION(_Name)
+#define USE_PPE_MALLOC_LEAKDETECTOR_WHITESCOPE
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY)
 #define LOG(_CATEGORY, _LEVEL, _FORMAT, ...)
 #define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST)
@@ -180,9 +183,10 @@
 #define Likely(...)
 #define Unlikely(...)
 #define CONSTEXPR
+#define NOEXCEPT_IF(...)
 #define IF_CONSTEXPR(...)
 #define PPE_THROW()
-#define PPE_THROW_IT(_EX)
+#define PPE_THROW_IT(...)
 #define PPE_THROW_VOID()
 #define PPE_TRY
 #define PPE_CATCH(_SPEC)
@@ -212,6 +216,8 @@
 #define Assert_Lightweight(...)
 #define AssertReleaseMessage(_Message, ...)
 #define AssertNotReached()
+#define AssertFinalMessage(_Message, ...)
+#define AssertFinal(...)
 #define _ENUM_FLAGS_IMPL(_PREFIX, _ENUMTYPE)
 #define ENUM_FLAGS(_ENUMTYPE)
 #define ENUM_FLAGS_FRIEND(_ENUMTYPE)
@@ -242,8 +248,11 @@
 #define THREADRESOURCE_CHECKACCESS_IFN(_pResource)
 #define PPE_ASSERT_TYPE_IS_POD(T)
 #define PPE_ASSUME_TYPE_AS_POD(...)
+#define PPE_ASSUME_FRIEND_AS_POD(...)
 #define PPE_ASSUME_TEMPLATE_AS_POD(T, ...)
+#define PPE_ASSUME_TEMPLATE_FRIEND_AS_POD(T, ...)
 #define PPE_META_OPERATOR(_NAME, _OP)
+#define STRING_LITERAL(_CHAR, _ASCII)
 #define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...)
 #define ON_SCOPE_EXIT(...)
 #define PPE_WARNING(_Code, _Message)
@@ -251,21 +260,29 @@
 #define PRAGMA_MSVC_WARNING_PUSH()
 #define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE)
 #define PRAGMA_MSVC_WARNING_POP()
-#define PUBLIC_EVENT(_NAME, _DELEGATE)
-#define PPE_STATICMODULE_STARTUP_DEF(_NAME)
+#define PUBLIC_EVENT(_NAME, ...)
+#define THREADSAFE_EVENT(_NAME, ...)
 #define READSCOPELOCK(_ReadWriteLock)
 #define WRITESCOPELOCK(_ReadWriteLock)
 #define AssertIsMainThread()
 #define BENCHMARK_SCOPE(_CATEGORY, _MSG)
 #define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR)
 #define NATIVE_ENTITYNAME_MAXSIZE
+#define DEF_PIXELINFO(_ENUM,_WINDOWLOG2,_NUMBITSLOG2,_CHANNELS,_FORMATS)
+#define PPE_RHI_MAKEALIAS(_PREFIX, _BASENAME)
+#define PPE_VKDEVICE_CHECKED(_Function, ...)
+#define PPE_VK_ENUM(_NAME)
+#define PPE_VK_STRUCT(_NAME)
+#define PPE_VK_HANDLE(_NAME)
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId)
-#define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId)
 #define DEF_RTTI_MAKETRAITS(_Name, T, _TypeId)
+#define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId)
 #define DEF_RTTI_MAKEANYTUPLE(N, ...)
+#define DECL_RTTI_NATIVETYPE_ISSUPPORTED(_Name, T, _TypeId)
 #define DEF_ATOMVISIT_SCALAR(_Name, T, _TypeId)
 #define PPE_RTTI_OPAQUEDATA_NATIVETYPE_DEF(_Name, _Type, _Uid)
 #define DECL_RTTI_NATIVETYPE_PRINT(_Name, T, _TypeId)
+#define WITH_PPE_RTTI_FUNCTION_CHECKS
 #define WITH_RTTI_VERIFY_PREDICATES
 #define WITH_PPE_RTTI_PROPERTY_CHECKS
 #define STACKLOCAL_ATOM(_NAME, _PTYPE_TRAITS)
@@ -293,8 +310,8 @@
         return CONCAT(GRTTI_MetaEnum_, _Name); \
     } \
     \
-    const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT { \
-        return static_cast<const CONCAT(RTTI_, _Name)*>(CONCAT(RTTI_, _Name)::Get()); \
+    const ::PPE::RTTI::FMetaEnum* RTTI_Enum(_Name) NOEXCEPT { \
+        return CONCAT(RTTI_, _Name)::Get(); \
     } \
     \
     ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() NOEXCEPT { \
@@ -311,12 +328,14 @@
 #define RTTI_ENUM_HEADER(_Api, _Name)
 #define RTTI_MODULE_DEF(_Api, _Name, _Domain)
 #define RTTI_MODULE_DECL(_Api, _Name)
+#define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId)
 #define DEF_RTTI_ALIASING_TRAITS(_FROM, ...)
 #define DEF_RTTI_ALIASING_STRUCT(T)
 #define FOREACH_RTTI_NATIVETYPES(_Macro)
-#define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId)
 #define DECL_ATOMVISIT_SCALAR(_Name, T, _TypeId)
+#define DECL_NATIVETYPE_COMMONTYPE(_Name, _Other, _TypeId)
 #define PPE_RTTI_OPAQUEDATA_NATIVETYPE_DECL(_Name, _Type, _Uid)
+#define DEF_RTTI_ALIASING_OPAQUE_TRAITS(_FROM, ...)
 #define BINA_READ_TRAITS(_Traits)
 #define RTTI_INSERT_TYPENAME(_Name, T, _TypeId)
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused)
@@ -325,7 +344,8 @@
 #define DEF_BINARYOPERATOR_FUNCTOR(_Name, _Op)
 #define FORBID_BINARYOPERATOR_FUNCTOR(_Name, _Op, _Type)
 #define DEF_BINARYOPERATOR_COMPARATOR(_Name, _Op)
-#define FOREACH_HTTPCONSTNAMES(_Macro)
+#define FOREACH_HTTPHEADERS(_Macro)
+#define FOREACH_MIMETYPES(_Macro)
 #define DEF_HTTPCONSTNAMES_STORAGE(_Type, _Name, _Content)
 #define DEF_HTTPCONSTNAMES_ACCESSOR(_Type, _Name, _Content)
 #define DEF_HTTPCONSTNAMES_STARTUP(_Type, _Name, _Content)
@@ -337,4 +357,5 @@
 #define SOCKET
 #define LOG_NETWORKERROR(_CONTEXT)
 #define TEST_XINPUT_BTN(_GAMEPADBTN, _XINPUTBTN)
+#define PPE_APPLICATIONLAUNCH_INCLUDED
 #define PPE_TESTPROCESS_IMAGENAME_ARGS

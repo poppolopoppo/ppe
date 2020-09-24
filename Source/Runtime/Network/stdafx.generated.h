@@ -3,9 +3,9 @@
 */
 #ifdef PLATFORM_WINDOWS
 // Global system includes
-#include <limits.h>
 #include <algorithm>
 #include <stdint.h>
+#include <limits.h>
 #include <limits>
 #include <initializer_list>
 #include <new>
@@ -24,6 +24,7 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <array>
 #include <comdef.h>
 #include <comutil.h>
 #include <intrin.h>
@@ -63,11 +64,8 @@
 #ifdef BUILD_Win32_Debug
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -75,11 +73,15 @@
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/IO/Format.h"
 #include "Runtime/Core/Public/IO/TextWriter.h"
@@ -122,10 +124,10 @@
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
 #include "Runtime/Core/Public/Memory/PtrRef.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win32_Debug
 #ifdef BUILD_Win32_FastDebug
@@ -139,11 +141,8 @@
 #ifdef BUILD_Win32_Release
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -151,11 +150,15 @@
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/IO/Format.h"
 #include "Runtime/Core/Public/IO/TextWriter.h"
@@ -198,31 +201,32 @@
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
 #include "Runtime/Core/Public/Memory/PtrRef.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win32_Release
 #ifdef BUILD_Win32_Profiling
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/IO/Format.h"
 #include "Runtime/Core/Public/IO/TextWriter.h"
@@ -266,43 +270,40 @@
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
 #include "Runtime/Core/Public/Memory/PtrRef.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win32_Profiling
 #ifdef BUILD_Win32_Final
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win32_Final
 #ifdef BUILD_Win64_Debug
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -310,11 +311,15 @@
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/IO/Format.h"
 #include "Runtime/Core/Public/IO/TextWriter.h"
@@ -357,10 +362,10 @@
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
 #include "Runtime/Core/Public/Memory/PtrRef.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win64_Debug
 #ifdef BUILD_Win64_FastDebug
@@ -374,11 +379,8 @@
 #ifdef BUILD_Win64_Release
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -386,11 +388,15 @@
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/IO/Format.h"
 #include "Runtime/Core/Public/IO/TextWriter.h"
@@ -433,31 +439,32 @@
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
 #include "Runtime/Core/Public/Memory/PtrRef.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win64_Release
 #ifdef BUILD_Win64_Profiling
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformDebug.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/IO/Format.h"
 #include "Runtime/Core/Public/IO/TextWriter.h"
@@ -501,33 +508,33 @@
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
 #include "Runtime/Core/Public/Memory/PtrRef.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win64_Profiling
 #ifdef BUILD_Win64_Final
 // system includes
 // project includes
-#include "Runtime/Network/Public/NetworkIncludes.h"
-#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/Core.h"
-#include "Runtime/Core/Public/Diagnostic/Logger.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"
 #include "Runtime/Core/Public/HAL/PlatformDebug.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform.h"
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformDebug.h"
+#include "Runtime/Network/Public/NetworkIncludes.h"
+#include "Runtime/Core/Public/HAL/Windows/LastError.h"
+#include "Runtime/Core/Public/Diagnostic/Logger.h"
 #include "Runtime/Core/Public/Time/Timestamp.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/Network/Public/Network.h"
-#include "Runtime/Network/Public/Network_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
 #endif // BUILD_Win64_Final
 #endif //! PLATFORM_WINDOWS

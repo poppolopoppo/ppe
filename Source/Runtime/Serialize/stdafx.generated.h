@@ -24,6 +24,7 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <array>
 #include <comdef.h>
 #include <comutil.h>
 #include <intrin.h>
@@ -86,6 +87,7 @@
 #include <iostream>
 #include <clocale>
 #include <condition_variable>
+#include <numeric>
 // project includes
 #endif // BUILD_Win32_FastDebug
 #ifdef BUILD_Win32_Release
@@ -170,6 +172,7 @@
 #include <iostream>
 #include <clocale>
 #include <condition_variable>
+#include <numeric>
 // project includes
 #endif // BUILD_Win64_FastDebug
 #ifdef BUILD_Win64_Release

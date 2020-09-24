@@ -24,6 +24,7 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <array>
 #include <comdef.h>
 #include <comutil.h>
 #include <emmintrin.h>
@@ -45,6 +46,7 @@
 #include <optional>
 #include <clocale>
 #include <condition_variable>
+#include <numeric>
 // Global project includes
 #include "winnt_version.h"
 #include "Runtime/Core/Public/Core_fwd.h"

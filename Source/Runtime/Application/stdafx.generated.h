@@ -24,6 +24,7 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <array>
 #include <comdef.h>
 #include <comutil.h>
 #include <emmintrin.h>
@@ -36,6 +37,7 @@
 #include <cctype>
 #include <cwctype>
 #include <locale>
+#include <optional>
 // Global project includes
 #include "winnt_version.h"
 #include "Runtime/Core/Public/Core_fwd.h"
@@ -81,7 +83,6 @@
 #endif // BUILD_Win32_Debug
 #ifdef BUILD_Win32_FastDebug
 // system includes
-#include <optional>
 #include <iostream>
 #include <clocale>
 #include <regex>
@@ -167,7 +168,6 @@
 #endif // BUILD_Win64_Debug
 #ifdef BUILD_Win64_FastDebug
 // system includes
-#include <optional>
 #include <iostream>
 #include <clocale>
 #include <regex>

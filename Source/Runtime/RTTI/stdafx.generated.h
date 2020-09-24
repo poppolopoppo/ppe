@@ -24,6 +24,7 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <array>
 #include <comdef.h>
 #include <comutil.h>
 #include <intrin.h>
@@ -36,6 +37,7 @@
 #include <cctype>
 #include <cwctype>
 #include <locale>
+#include <numeric>
 // Global project includes
 #include "winnt_version.h"
 #include "Runtime/Core/Public/Core_fwd.h"
