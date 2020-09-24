@@ -83,6 +83,12 @@ public:
     operator T& () { return _value; }
     operator const T& () const { return _value; }
 
+    T& operator *() { return _value; }
+    const T& operator *() const { return _value; }
+
+    T* operator ->() { return &_value; }
+    const T* operator ->() const { return &_value; }
+
     void Swap(THashMemoizer& other) {
         std::swap(_value, other._value);
         std::swap(_hash, other._hash);
