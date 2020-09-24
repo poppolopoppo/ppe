@@ -80,7 +80,7 @@ private:
 
     template <typename _Interface>
     static CONSTEXPR FServiceKey_ ServiceKey() NOEXCEPT {
-        return Meta::type_id<_Interface>::value;
+        return Meta::type_id_v<_Interface>;
     }
 
     template <typename T>

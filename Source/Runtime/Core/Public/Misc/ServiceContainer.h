@@ -56,7 +56,7 @@ private:
 
     template <typename _Interface>
     static constexpr FServiceId  StaticServiceId() {
-        return Meta::type_id<_Interface>::value;
+        return Meta::type_id_v<_Interface>;
     }
 
     class FServiceHolder {
