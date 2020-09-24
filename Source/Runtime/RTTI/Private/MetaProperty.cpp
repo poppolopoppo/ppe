@@ -32,9 +32,10 @@ FMetaProperty::FMetaProperty(const FName& name, EPropertyFlags flags, const PTyp
     , _traits(traits)
     , _flags(flags)
     , _memberOffset(checked_cast<i32>(memberOffset)) {
-    Assert(not _name.empty());
-    Assert(_traits.Valid());
-    Assert(0 != u32(_flags));
+    Assert_NoAssume(not _name.empty());
+    Assert_NoAssume(_traits.Valid());
+    Assert_NoAssume(0 != u32(_flags));
+    Assert_NoAssume(Meta::IsAligned(sizeof(u32), memberOffset) || static_cast<size_t>(memberOffset & 3) == traits->SizeInBytes());
 }
 //----------------------------------------------------------------------------
 FMetaProperty::~FMetaProperty() = default;

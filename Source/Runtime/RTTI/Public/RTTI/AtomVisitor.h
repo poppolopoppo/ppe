@@ -25,8 +25,8 @@ ENUM_FLAGS(EVisitorFlags);
 //----------------------------------------------------------------------------
 class IAtomVisitor {
 public:
-    explicit IAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) NOEXCEPT
-        : _flags(flags) {}
+    explicit IAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) NOEXCEPT : _flags(flags) {}
+
     virtual ~IAtomVisitor() = default;
 
     EVisitorFlags Flags() const { return _flags; }
@@ -61,7 +61,6 @@ public: // helpers
 
 protected:
     EVisitorFlags _flags;
-    bool _keepTransient : 1;
 };
 //----------------------------------------------------------------------------
 class FBaseAtomVisitor : public IAtomVisitor {

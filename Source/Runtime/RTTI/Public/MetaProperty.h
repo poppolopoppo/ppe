@@ -68,8 +68,8 @@ private:
     EPropertyFlags _flags;
     i32 _memberOffset;
 
-    FORCE_INLINE FAtom MakeAtom_(const FMetaObject& obj) const {
-        return FAtom((const u8*)&obj + _memberOffset, _traits);
+    FORCE_INLINE FAtom MakeAtom_(const FMetaObject& obj) const NOEXCEPT {
+        return FAtom(reinterpret_cast<const u8*>(&obj) + _memberOffset, _traits);
     }
 };
 PPE_ASSUME_TYPE_AS_POD(FMetaProperty);
@@ -81,7 +81,7 @@ Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaProperty>
         name,
         flags,
         MakeTraits<T>(),
-        (ptrdiff_t)&(((_Class*)0)->*member)
+        reinterpret_cast<ptrdiff_t>(&(static_cast<_Class*>(nullptr)->*member))
     );
 }
 //----------------------------------------------------------------------------
