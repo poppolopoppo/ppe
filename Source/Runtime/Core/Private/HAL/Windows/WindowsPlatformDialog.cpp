@@ -371,7 +371,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
     VECTORINSITU(Diagnostic, FWString, FCallstack::MaxDepth) callstackFrames;
     {
         FCallstack callstack;
-        FCallstack::Capture(&callstack, 4, FCallstack::MaxDepth);
+        FCallstack::Capture(&callstack, 5, FCallstack::MaxDepth);
 
         ctx.DecodedCallstack = FDecodedCallstack(callstack);
         callstackFrames.reserve(ctx.DecodedCallstack.Frames().size());
@@ -386,12 +386,12 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
     }
     ctx.CallstackFrames = callstackFrames.MakeConstView();
 
-    static constexpr size_t GAllocSize = 8192;
+    CONSTEXPR const size_t GAllocSize = 8192;
 
     ::HGLOBAL const hgbl = ::GlobalAlloc(GMEM_ZEROINIT, GAllocSize);
     Assert(nullptr != hgbl);
     {
-        constexpr size_t buttonWidthPerChar = 4;
+        constexpr size_t buttonWidthPerChar = 8;
         constexpr size_t buttonWidthPadding = 3;
         constexpr size_t buttonHeight = 15;
 
@@ -403,8 +403,8 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
 
         tpl->x = 10;
         tpl->y = 10;
-        tpl->cx = 400;
-        tpl->cy = 200;
+        tpl->cx = 600;
+        tpl->cy = 300;
         tpl->style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION | DS_SETFONT;
         tpl->cdit = 0;
 
@@ -447,14 +447,14 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         writer.WritePOD(::WORD(0)); // no creation data
         tpl->cdit++;
 
-        Template_AddItem_(writer, 45, 8, 350, 47,
+        Template_AddItem_(writer, 45, 8, 550, 47,
             DIALOG_ID_TEXT,
             WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN | ES_READONLY, EAtomClass_::Edit);
         Template_AddCaption_(writer, text);
         writer.WritePOD(::WORD(0)); // no creation data
         tpl->cdit++;
 
-        Template_AddItem_(writer, 5, 5+50+5, 390, 127,
+        Template_AddItem_(writer, 5, 5+50+5, 590, 227,
             DIALOG_ID_STACK,
             WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, EAtomClass_::ListBox);
         writer.WritePOD(::WORD(0));
