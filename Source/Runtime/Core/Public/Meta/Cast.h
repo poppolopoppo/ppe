@@ -17,17 +17,17 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Dst>
-constexpr FORCE_INLINE NOALIAS _Dst checked_cast(_Dst id) noexcept {
+CONSTEXPR NOALIAS _Dst checked_cast(_Dst id) NOEXCEPT {
     return id;
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
-NOALIAS Meta::TEnableIf<
+CONSTEXPR NOALIAS Meta::TEnableIf<
     std::is_arithmetic<_Dst>::value &&
     std::is_arithmetic<_Src>::value &&
     !std::is_same<_Dst, _Src>::value,
     _Dst >
-    checked_cast(const _Src value) noexcept {
+    checked_cast(const _Src value) NOEXCEPT {
 #if USE_PPE_CHECKEDCAST
     const _Dst result = static_cast<_Dst>(value);
     Assert(static_cast<_Src>(result) == value);
@@ -41,7 +41,7 @@ NOALIAS Meta::TEnableIf<
     (std::is_pointer<_Dst>::value ^ std::is_pointer<_Src>::value) &&
     !std::is_same<_Dst, _Src>::value,
     _Dst >
-    checked_cast(const _Src value) noexcept {
+    checked_cast(const _Src value) NOEXCEPT {
 #if USE_PPE_CHECKEDCAST
     const _Dst result = reinterpret_cast<_Dst>(value);
     Assert(reinterpret_cast<_Src>(result) == value);
@@ -51,11 +51,14 @@ NOALIAS Meta::TEnableIf<
 #endif
 }
 template <typename _Dst, typename _Src>
+#if !USE_PPE_CHECKEDCAST
+    CONSTEXPR
+#endif
 NOALIAS Meta::TEnableIf<
     (std::is_pointer<_Dst>::value && std::is_pointer<_Src>::value) &&
     !std::is_same<_Dst, _Src>::value,
     _Dst >
-    checked_cast(_Src value) {
+    checked_cast(_Src value) NOEXCEPT {
 #if USE_PPE_CHECKEDCAST
     if (nullptr == value)
         return nullptr;
@@ -70,12 +73,12 @@ NOALIAS Meta::TEnableIf<
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE NOALIAS T& remove_const(const T& value) {
+CONSTEXPR NOALIAS T& remove_const(const T& value) NOEXCEPT {
     return const_cast< T& >(value);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE NOALIAS T* remove_const(const T* pvalue) {
+CONSTEXPR NOALIAS T* remove_const(const T* pvalue) NOEXCEPT {
     return const_cast< T* >(pvalue);
 }
 //----------------------------------------------------------------------------
