@@ -673,10 +673,9 @@ private:
     Parser::TProduction< TEnumerable<TTuple<expr_t, match_p, expr_t>> > _dictionaryInner;
     Parser::TProduction< expr_t > _dictionary;
 
-    Parser::TProduction< expr_t > _cast;
     Parser::TProduction< expr_t > _variable;
-
     Parser::TProduction< expr_t > _reference;
+    Parser::TProduction< expr_t > _accessor;
     Parser::TProduction< expr_t > _rvalue;
 
     Parser::TProduction< expr_t > _pow;
@@ -949,43 +948,6 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
     }))
 
 #if !USE_GRAMMAR_WORKAROUND_VS2019
-,   _cast(Parser::And(
-        ExpectTypenameRTTI(),
-        Parser::Expect<symbol_t::Colon>(),
-#if 0
-        _rvalue.Ref() )
-#else
-        _unary.Ref() ) // must allow '-123' which uses the unary operator '-' for instance
-#endif
-    .Select<expr_t>([](expr_t* dst, const site_t& site, TTuple<RTTI::PTypeTraits, match_p, expr_t>&& src) {
-        *dst = Parser::MakeCastExpr(std::get<0>(src), std::get<2>(src).get(), site);
-    }))
-#else
-,   _cast([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
-        const Lexer::FSpan start = input.Site();
-
-        RTTI::PTypeTraits traits;
-        Parser::FParseResult result = ExpectTypenameRTTI()(input, &traits);
-        if (not result)
-            return result;
-
-        match_p colon = nullptr;
-        if (not input.Expect<symbol_t::Colon>(&colon))
-            return Parser::FParseResult::Unexpected(symbol_t::Colon, colon, input);
-
-        expr_t value;
-        result = _unary(input, &value);
-        if (not result)
-            return result;
-
-        const site_t site{ Lexer::FSpan::FromSite(start, value->Site()) };
-        *dst = Parser::MakeCastExpr(traits, value.get(), site);
-
-        return Parser::FParseResult::Success(site);
-    })
-#endif
-
-#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _variable(Parser::Or(
         Parser::Expect<symbol_t::Identifier>()
             .Select<expr_t>([](expr_t* dst, const site_t& site, match_p&& src) {
@@ -1077,56 +1039,99 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         _array,
         _dictionary,
         _object,
-        _cast,
         _variable
     ))
 
-,   _rvalue([this](Parser::FParseList& input, expr_t* value) -> Parser::FParseResult {
+,   _accessor([this](Parser::FParseList& input, expr_t* value) -> Parser::FParseResult {
         Parser::FParseResult result = _reference(input, value);
 
-        while (Unlikely(result && input.PeekType() == symbol_t::Dot)) {
-            const match_p dot = input.Read(); // skip the dot
+        while (result) {
+            if (Unlikely(input.PeekType() == symbol_t::Dot)) {
+                const match_p dot = input.Read(); // skip the dot
 
-            match_p id;
-            if (not input.Expect<symbol_t::Identifier>(&id))
-                input.Error("expected an identifier", input.Site());
+                match_p id;
+                if (not input.Expect<symbol_t::Identifier>(&id))
+                    input.Error("expected an identifier", input.Site());
 
-            if (Unlikely(input.PeekType() == symbol_t::LParenthese)) {
-                Verify(input.Read()); // skip the lparen
+                if (Unlikely(input.PeekType() == symbol_t::LParenthese)) {
+                    Verify(input.Read()); // skip the lparen
 
-                Parser::TEnumerable<expr_t> args;
+                    Parser::TEnumerable<expr_t> args;
 
-                for (;;) {
-                    expr_t arg;
-                    const Parser::FParseResult r = _expr.TryParse(input, &arg);
-                    if (not r.Succeed())
-                        break;
+                    for (;;) {
+                        expr_t arg;
+                        const Parser::FParseResult r = _expr.TryParse(input, &arg);
+                        if (not r.Succeed())
+                            break;
 
-                    args.push_back(std::move(arg));
+                        args.push_back(std::move(arg));
 
-                    if (input.PeekType() != symbol_t::Comma)
-                        break;
+                        if (input.PeekType() != symbol_t::Comma)
+                            break;
 
-                    Verify(input.Read()); // skip the comma separator
+                        Verify(input.Read()); // skip the comma separator
+                    }
+
+                    match_p rparen;
+                    if (not input.Expect<symbol_t::RParenthese>(&rparen))
+                        input.Error("expected a closing ')' for function call", input.Site());
+
+                    *value = Parser::MakeFunctionCall(std::move(*value), RTTI::FName(id->Value()), args.MakeView(),
+                        site_t::FromSite(dot->Site(), input.Site()) );
+
                 }
+                else {
+                    *value = Parser::MakePropertyReference(std::move(*value), RTTI::FName(id->Value()),
+                        site_t::FromSite(dot->Site(), id->Site()) );
+                }
+            }
+            else if (Unlikely(input.PeekType() == symbol_t::LBracket)) {
+                const match_p lbracket = input.Read(); // skip the [
 
-                match_p rparen;
-                if (not input.Expect<symbol_t::RParenthese>(&rparen))
-                    input.Error("expected a closing ')' for function call", input.Site());
+                expr_t subscript;
+                const Parser::FParseResult r = _expr.TryParse(input, &subscript);
+                if (not r.Succeed())
+                    break;
 
-                *value = Parser::MakeFunctionCall(std::move(*value), RTTI::FName(id->Value()), args,
-                    site_t::FromSite(dot->Site(), input.Site()) );
+                match_p rbracket;
+                if (not input.Expect<symbol_t::RBracket>(&rbracket))
+                    input.Error("expected a closing ']' for subscript operator", input.Site());
 
+                *value = Parser::MakeSubscriptOperator(std::move(*value), std::move(subscript),
+                    site_t::FromSite(lbracket->Site(), input.Site()) );
             }
             else {
-                *value = Parser::MakePropertyReference(*value, RTTI::FName(id->Value()),
-                    site_t::FromSite(dot->Site(), id->Site()) );
+                break; // nothing matching, stop chain parsing
             }
 
             result = Parser::FParseResult::Success(result.Site, input.Site());
         }
 
         return result;
+    })
+
+,   _rvalue([this](Parser::FParseList& input, expr_t* value) -> Parser::FParseResult {
+        RTTI::PTypeTraits traits; // cast with `<TYPENAME>:x`
+        const Parser::FParseMatch* const start = input.Peek();
+        if (Unlikely(const Parser::FParseResult cast = ExpectTypenameRTTI().TryParse(input, &traits))) {
+            match_p colon = nullptr;
+            if (input.TryRead<symbol_t::Colon>(&colon)) {
+                expr_t expr;
+                const Parser::FParseResult inner = _unary(input, &expr);
+                if (Unlikely(not inner))
+                    return inner;
+
+                const site_t site{ Lexer::FSpan::FromSite(cast.Site, expr->Site()) };
+                *value = Parser::MakeCastExpr(traits, expr.get(), site);
+
+                return Parser::FParseResult::Success(site);
+            }
+
+            // restore input before fall-backing to accessor
+            input.Seek(start);
+        }
+
+        return _accessor(input, value);
     })
 
 ,   _pow(Parser::BinaryOp<symbol_t::Pow, expr_t>(_rvalue,
@@ -1263,7 +1268,7 @@ FGrammarImpl::~FGrammarImpl() = default;
 Parser::PCParseExpression FGrammarImpl::ParseExpression(Parser::FParseList& input) const {
     Parser::PCParseExpression result; // exception safety
     if (input.Peek())
-        result = _expr.Parse(input);
+3        result = _expr.Parse(input);
     return result;
 }
 //----------------------------------------------------------------------------

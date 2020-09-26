@@ -1045,7 +1045,7 @@ static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) 
         const RTTI::FAtom result = expr->Eval(context);
 
         UNUSED(result);
-        LOG(Test_RTTI, Info, L" -> {0}", result);
+        LOG(Test_RTTI, Info, L" -> {0} : {1}", result, result.NamedTypeInfos());
 
         return true;
     }
@@ -1061,6 +1061,7 @@ static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) 
         LOG(Test_RTTI, Error, L" ?? Lexer error : <{0}>: {1}, {2}.", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site());
     }
 
+    FLUSH_LOG();
     return false;
 }
 //----------------------------------------------------------------------------
@@ -1070,21 +1071,36 @@ static void Test_Grammar_() {
     VerifyRelease(EvalExpr_(&context, "(1)"));
     VerifyRelease(EvalExpr_(&context, "('foo','bar')"));
     VerifyRelease(EvalExpr_(&context, "(1,true,'toto')"));
+    VerifyRelease(EvalExpr_(&context, "[]"));
     VerifyRelease(EvalExpr_(&context, "['toto']"));
     VerifyRelease(EvalExpr_(&context, "[1,2,3]"));
-    VerifyRelease(EvalExpr_(&context, "[]"));
-    VerifyRelease(EvalExpr_(&context, "{('a',1),('b',2),('c',3)}"));
-    VerifyRelease(EvalExpr_(&context, "{('a',1.0)}"));
+    VerifyRelease(EvalExpr_(&context, "[1,2,3][2]"));
+    VerifyRelease(EvalExpr_(&context, "[1,2,3][-2]"));
     VerifyRelease(EvalExpr_(&context, "{}"));
+    VerifyRelease(EvalExpr_(&context, "{('a',1.0)}"));
+    VerifyRelease(EvalExpr_(&context, "{('a',1),('b',2),('c',3)}"));
+    VerifyRelease(EvalExpr_(&context, "{('a',1),('b',2),('c',3)}['a']"));
+    VerifyRelease(EvalExpr_(&context, "{('a',1),('b',2),('c',3)}[String:'b']"));
+    VerifyRelease(EvalExpr_(&context, "Int32:0"));
+    VerifyRelease(EvalExpr_(&context, "Name:'toto'"));
+    VerifyRelease(EvalExpr_(&context, "Float:-1"));
+    VerifyRelease(EvalExpr_(&context, "String:('toto'+'tata')"));
     VerifyRelease(EvalExpr_(&context, "(Any:\"toto\",Any:42,Any:3.456)"));
     VerifyRelease(EvalExpr_(&context, "[Any:42]"));
     VerifyRelease(EvalExpr_(&context, "Any:[1,2,3]"));
+    VerifyRelease(EvalExpr_(&context, "Any:[1,2,3][0]"));
     VerifyRelease(EvalExpr_(&context, "Any:[Any:\"toto\"]"));
     VerifyRelease(EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]"));
     VerifyRelease(EvalExpr_(&context, "(Int32:-1317311908, WString:'zee')"));
     VerifyRelease(EvalExpr_(&context, "ETest:'a'+ETest:1"));
-    VerifyRelease(EvalExpr_(&context, "FRTTITest__xxx is FRTTITest_ { AnyTPair = (Int32:-1317311908, WString:'zee') }"));
+    VerifyRelease(EvalExpr_(&context, "FRTTITest_ {}"));
+    VerifyRelease(EvalExpr_(&context, "FRTTITest__xxx is FRTTITest_ {}"));
+    VerifyRelease(EvalExpr_(&context, "FRTTITest__yyy is FRTTITest_ { Int32Scalar = 69 }"));
+    VerifyRelease(EvalExpr_(&context, "FRTTITest__zzz is FRTTITest_ { AnyTPair = ('toto', 42) }"));
+    VerifyRelease(EvalExpr_(&context, "FRTTITest__www is FRTTITest_ { AnyTPair = (Int32:-1317311908, WString:'zee') }"));
     VerifyRelease(EvalExpr_(&context, "Any:[{(1,[(Double:Int64:(1+(2+(3*(2*(4+1))))),Int32:1)])}]"));
+    VerifyRelease(EvalExpr_(&context, "true ? 42.0 : 'toto'"));
+    VerifyRelease(EvalExpr_(&context, "((1 >= 3) ? Float:42 : (1+2)*3)"));
 }
 //----------------------------------------------------------------------------
 } //!namespace

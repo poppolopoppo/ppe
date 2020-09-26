@@ -46,6 +46,7 @@ public:
 
     RTTI::FAtom CreateAtom(const RTTI::PTypeTraits& traits);
     RTTI::FAtom CreateAtom(const RTTI::PTypeTraits& traits, void* rvalue);
+    RTTI::FAtom CreateAtomCopy(const RTTI::FAtom& atom);
 
     template <typename T>
     RTTI::FAtom CreateAtomFrom(T&& rvalue) {

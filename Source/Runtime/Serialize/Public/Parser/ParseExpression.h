@@ -207,7 +207,7 @@ inline TRefPtr<FObjectDefinition> MakeObjectDefinition(
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FPropertyReference : public FParseExpression {
 public:
-    FPropertyReference(const PCParseExpression& object, const RTTI::FName& member, const Lexer::FSpan& site);
+    FPropertyReference(PCParseExpression&& object, const RTTI::FName& member, const Lexer::FSpan& site);
     virtual ~FPropertyReference();
 
     virtual FStringView Alias() const override final { return "PropertyReference"; }
@@ -220,10 +220,10 @@ private:
 };
 //----------------------------------------------------------------------------
 inline TRefPtr<FPropertyReference> MakePropertyReference(
-    const PCParseExpression& object,
+    PCParseExpression&& object,
     const RTTI::FName& member,
     const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FPropertyReference, object, member, site);
+    return NEW_REF(Parser, FPropertyReference, std::move(object), member, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -336,7 +336,7 @@ class PPE_SERIALIZE_API FFunctionCall : public FParseExpression {
 public:
     using args_type = VECTORINSITU(Parser, PCParseExpression, 4);
 
-    FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site);
+    FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<PCParseExpression>& args, const Lexer::FSpan& site);
     virtual ~FFunctionCall();
 
     virtual FStringView Alias() const override final { return "FunctionCall"; }
@@ -349,8 +349,36 @@ private:
     args_type _args;
 };
 //----------------------------------------------------------------------------
-inline TRefPtr<FFunctionCall> MakeFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site) {
+inline TRefPtr<FFunctionCall> MakeFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<PCParseExpression>& args, const Lexer::FSpan& site) {
     return NEW_REF(Parser, FFunctionCall, std::move(obj), funcname, args, site);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class PPE_SERIALIZE_API FSubscriptOperator : public FParseExpression {
+public:
+    FSubscriptOperator(PCParseExpression&& lvalue, PCParseExpression&& subscript, const Lexer::FSpan& site);
+    virtual ~FSubscriptOperator();
+
+    virtual FStringView Alias() const override final { return "SubscriptOperator"; }
+    virtual RTTI::FAtom Eval(FParseContext *context) const override final;
+    virtual FString ToString() const override final;
+
+private:
+    PCParseExpression _lvalue;
+    PCParseExpression _subscript;
+
+    size_t WrapIndexAround_(RTTI::FAtom subscript, size_t count) const;
+
+    RTTI::FAtom Subscript_Scalar_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const;
+    RTTI::FAtom Subscript_Object_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const;
+    RTTI::FAtom Subscript_Tuple_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const;
+    RTTI::FAtom Subscript_List_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const;
+    RTTI::FAtom Subscript_Dico_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const;
+};
+//----------------------------------------------------------------------------
+inline TRefPtr<FSubscriptOperator> MakeSubscriptOperator(PCParseExpression&& lvalue, PCParseExpression&& subscript, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FSubscriptOperator, std::move(lvalue), std::move(subscript), site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

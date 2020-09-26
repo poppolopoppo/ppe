@@ -142,6 +142,11 @@ RTTI::FAtom FParseContext::CreateAtom(const RTTI::PTypeTraits& traits, void* rva
     return _atomHeap->AllocateMove(traits, rvalue);
 }
 //----------------------------------------------------------------------------
+RTTI::FAtom FParseContext::CreateAtomCopy(const RTTI::FAtom& atom) {
+    Assert(atom);
+    return _atomHeap->AllocateCopy(atom.Traits(), atom.Data());
+}
+//----------------------------------------------------------------------------
 FPooledLinearHeap& FParseContext::LinearHeap_() const {
     return _atomHeap->Heap();
 }

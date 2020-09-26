@@ -8,7 +8,6 @@
 #include "RTTI/Any.h"
 #include "RTTI/AtomHeap.h"
 #include "MetaClass.h"
-#include "MetaEnum.h"
 #include "MetaDatabase.h"
 #include "MetaFunction.h"
 #include "MetaObject.h"
@@ -16,6 +15,7 @@
 
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
+#include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 
@@ -157,13 +157,14 @@ FString FObjectDefinition::ToString() const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FPropertyReference::FPropertyReference(
-    const PCParseExpression& object,
+    PCParseExpression&& object,
     const RTTI::FName& member,
     const Lexer::FSpan& site)
-:   FParseExpression(site),
-    _object(object), _member(member) {
-    Assert(object);
-    Assert(!member.empty());
+:   FParseExpression(site)
+,   _object(std::move(object))
+,   _member(member) {
+    Assert(_object);
+    Assert(not _member.empty());
 }
 //----------------------------------------------------------------------------
 FPropertyReference::~FPropertyReference() = default;
@@ -374,11 +375,11 @@ FString FCastExpr::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FFunctionCall::FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site)
+FFunctionCall::FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<PCParseExpression>& args, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _obj(std::move(obj))
 ,   _funcname(funcname)
-,   _args(args) {
+,   _args(MakeMoveIterator(args.begin()), MakeMoveIterator(args.end())) {
     Assert_NoAssume(_obj);
     Assert_NoAssume(not _funcname.empty());
 }
@@ -463,6 +464,137 @@ FString FFunctionCall::ToString() const {
         oss << sep << e->ToString();
 
     oss << ')';
+    return oss.ToString();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FSubscriptOperator::FSubscriptOperator(PCParseExpression&& lvalue, PCParseExpression&& subscript, const Lexer::FSpan& site)
+:   FParseExpression(site)
+,   _lvalue(std::move(lvalue))
+,   _subscript(std::move(subscript)) {
+    Assert_NoAssume(_lvalue);
+    Assert_NoAssume(_subscript);
+}
+//----------------------------------------------------------------------------
+FSubscriptOperator::~FSubscriptOperator() = default;
+//----------------------------------------------------------------------------
+RTTI::FAtom FSubscriptOperator::Eval(FParseContext* context) const {
+    Assert(context);
+
+    const RTTI::FAtom lvalue = _lvalue->Eval(context);
+    if (not lvalue)
+        PPE_THROW_IT(FParserException("void lvalue reference in subscript operator", _lvalue->Site(), this));
+
+    const RTTI::FAtom subscript = _subscript->Eval(context);
+    if (not subscript)
+        PPE_THROW_IT(FParserException("void subscript reference in subscript operator", _subscript->Site(), this));
+
+    RTTI::FAtom result;
+    if (lvalue.IsScalar())
+        result = Subscript_Scalar_(lvalue, subscript);
+    else if (lvalue.IsTuple())
+        result = Subscript_Tuple_(lvalue, subscript);
+    else if (lvalue.IsList())
+        result = Subscript_List_(lvalue, subscript);
+    else if (lvalue.IsDico())
+        result = Subscript_Dico_(lvalue, subscript);
+    else
+        AssertNotImplemented();
+
+    AssertRelease(result);
+
+    // we may need a copy, hard to detect from here, so we are forced to safe copy:
+    return context->CreateAtomCopy(result);
+}
+//----------------------------------------------------------------------------
+size_t FSubscriptOperator::WrapIndexAround_(RTTI::FAtom subscript, size_t count) const {
+    int index;
+    if (Unlikely(not subscript.PromoteCopy(RTTI::MakeAtom(&index))))
+        PPE_THROW_IT(FParserException("expected an integral index for subscript operator", _subscript->Site(), this));
+
+    if (index < 0)
+        index = checked_cast<int>(count + index);
+
+    if (Unlikely((index < 0) | (index >= checked_cast<int>(count))))
+        PPE_THROW_IT(FParserException("out-of-bounds index in subscript operator", _subscript->Site(), this));
+
+    return checked_cast<size_t>(index);
+}
+//----------------------------------------------------------------------------
+RTTI::FAtom FSubscriptOperator::Subscript_Scalar_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const {
+    switch (lvalue.TypeId()) {
+    case RTTI::FTypeId(RTTI::ENativeType::MetaObject):
+        return Subscript_Object_(lvalue, subscript);
+    default:
+        PPE_THROW_IT(FParserException("invalid scalar for subscript operator", _lvalue->Site(), this));
+    }
+}
+//----------------------------------------------------------------------------
+RTTI::FAtom FSubscriptOperator::Subscript_Object_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const {
+    const RTTI::PMetaObject& objref = lvalue.FlatData<RTTI::PMetaObject>();
+    if (not objref)
+        PPE_THROW_IT(FParserException("subscript operator called on null object", _lvalue->Site(), this));
+
+    const RTTI::FMetaClass* const klass = objref->RTTI_Class();
+    Assert(klass);
+
+    const RTTI::FMetaProperty* prop = nullptr;
+    switch (subscript.Traits()->TypeId()) {
+    case RTTI::FTypeId(RTTI::ENativeType::Name):
+        prop = klass->PropertyIFP(subscript.FlatData<RTTI::FName>());
+        break;
+    case RTTI::FTypeId(RTTI::ENativeType::String):
+        prop = klass->PropertyIFP(subscript.FlatData<FString>().MakeView());
+        break;
+    case RTTI::FTypeId(RTTI::ENativeType::WString):
+        prop = klass->PropertyIFP(PPE::ToString(subscript.FlatData<FWString>()).MakeView());
+        break;
+    default:
+        PPE_THROW_IT(FParserException("invalid name for object subscript", _subscript->Site(), this));
+    }
+
+    if (nullptr == prop)
+        PPE_THROW_IT(FParserException("property not found in object subscript", _subscript->Site(), this));
+
+    return prop->Get(*objref);
+}
+//----------------------------------------------------------------------------
+RTTI::FAtom FSubscriptOperator::Subscript_Tuple_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const {
+    const RTTI::ITupleTraits& tuple = lvalue.Traits()->ToTuple();
+    return tuple.At(lvalue.Data(), WrapIndexAround_(subscript, tuple.Arity()));
+}
+//----------------------------------------------------------------------------
+RTTI::FAtom FSubscriptOperator::Subscript_List_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const {
+    const RTTI::IListTraits& list = lvalue.Traits()->ToList();
+    return list.At(lvalue.Data(), WrapIndexAround_(subscript, list.Count(lvalue.Data())));
+}
+//----------------------------------------------------------------------------
+RTTI::FAtom FSubscriptOperator::Subscript_Dico_(RTTI::FAtom lvalue, RTTI::FAtom subscript) const {
+    const RTTI::IDicoTraits& dico = lvalue.Traits()->ToDico();
+    const RTTI::PTypeTraits key = dico.KeyTraits();
+
+    RTTI::FAtom value;
+    if (Likely(key == subscript.Traits())) {
+        value = dico.Find(lvalue.Data(), subscript);
+    }
+    else {
+        STACKLOCAL_ATOM(tmp, key);
+        if (Unlikely(not subscript.PromoteCopy(tmp)))
+            PPE_THROW_IT(FParserException("invalid key type given to dico subscript", _subscript->Site(), this));
+
+        value = dico.Find(lvalue.Data(), tmp);
+    }
+
+    if (not value)
+        PPE_THROW_IT(FParserException("key not found in dico subscript", _subscript->Site(), this));
+
+    return value;
+}
+//----------------------------------------------------------------------------
+FString FSubscriptOperator::ToString() const {
+    FStringBuilder oss;
+    oss << _lvalue->ToString() << '[' << _subscript->ToString() << ']';
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
