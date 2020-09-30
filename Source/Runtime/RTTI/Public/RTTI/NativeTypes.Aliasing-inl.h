@@ -22,7 +22,7 @@ namespace RTTI {
 // defer alias evaluation, so _From/_To don't need to be defined (forward declaration is enough)
 template <typename _From, typename _To>
 static CONSTEXPR const PTypeInfos MakeAliasTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
-    const FTypeInfos infos = RTTI_TypeInfos(TypeTag< _To >)();
+    CONSTEXPR FTypeInfos infos = RTTI_TypeInfos(TypeTag< _To >)();
     return FTypeInfos{
         infos.TypeId,
         FSizeAndFlags{
@@ -98,6 +98,19 @@ DEF_RTTI_ALIASING_STRUCT(FPathName)
 //DEF_RTTI_ALIASING_STRUCT(FTransform) #TODO : wrap ahead without definition ?
 //----------------------------------------------------------------------------
 #undef DEF_RTTI_ALIASING_STRUCT
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Bindings for all TRawData<> template instances
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TRawData<T> >) {
+    return MakeAliasTypeInfos< TRawStorage<T, typename FBinaryData::allocator_type>, FBinaryData >;
+}
+template <typename T>
+CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TRawData<T> >) NOEXCEPT {
+    return MakeTraits< FBinaryData >();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

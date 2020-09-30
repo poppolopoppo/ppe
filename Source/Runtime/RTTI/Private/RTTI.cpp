@@ -151,6 +151,7 @@ STATIC_ASSERT(details::detect_fields_count_dispatch<FAnonymousStructAsTuple>(det
 struct FAnonymousStructAsTuple2 {
     FAnonymousStructAsTuple Struct;
     FFilename File;
+    RTTI::PMetaObject Obj;
 };
 RTTI_STRUCT_DECL(CONSTEXPR, FAnonymousStructAsTuple2);
 RTTI_STRUCT_DEF(CONSTEXPR, FAnonymousStructAsTuple2);
@@ -185,6 +186,7 @@ private:
     ASSOCIATIVE_VECTOR(UnitTest, PPE::TPair<int COMMA PTiti>, VECTORINSITU(UnitTest, PPE::TPair<float COMMA PPE::FString>, 2)) _dict;
     PToto _toto;
     ETutut _tutut;
+    RTTI::TRawData<float4> _positions;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, Public, Concrete)
 RTTI_PROPERTY_PRIVATE_FIELD(_count)
@@ -198,6 +200,7 @@ RTTI_PROPERTY_PRIVATE_FIELD(_consttities)
 RTTI_PROPERTY_PRIVATE_FIELD(_dict)
 RTTI_PROPERTY_PRIVATE_FIELD(_toto)
 RTTI_PROPERTY_PRIVATE_FIELD(_tutut)
+RTTI_PROPERTY_PRIVATE_FIELD(_positions)
 RTTI_FUNCTION(Id, f)
 RTTI_FUNCTION_DEPRECATED(IdDeprecated, f)
 RTTI_FUNCTION(Func, f)

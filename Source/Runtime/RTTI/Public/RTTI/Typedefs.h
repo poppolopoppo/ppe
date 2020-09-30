@@ -3,10 +3,9 @@
 
 #include "RTTI_fwd.h"
 
-#include "Container/AssociativeVector.h"
 #include "Container/RawStorage.h"
 #include "Container/Token.h"
-#include "Container/Vector.h"
+#include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Maths/PrimeNumbers.h" // FClassId
 
@@ -31,7 +30,9 @@ using FClassId = TPrimeNumberProduct<class FMetaClass>;
 struct FConstructorTag {};
 CONSTEXPR FConstructorTag ConstructorTag;
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(BinaryData, u8, ALLOCATION_BOUNDARY));
+template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
+using TRawData = RAWSTORAGE_ALIGNED(BinaryData, T, ALLOCATION_BOUNDARY);
+INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, TRawData<u8>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
