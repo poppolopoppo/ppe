@@ -6,8 +6,9 @@
 #include "Binary/BinaryFormatReader.h"
 #include "Binary/BinaryFormatWriter.h"
 
-#include "IO/ConstNames.h"
 #include "IO/BufferedStream.h"
+#include "IO/ConstNames.h"
+#include "IO/Extname.h"
 
 namespace PPE {
 namespace Serialize {

@@ -1268,7 +1268,7 @@ FGrammarImpl::~FGrammarImpl() = default;
 Parser::PCParseExpression FGrammarImpl::ParseExpression(Parser::FParseList& input) const {
     Parser::PCParseExpression result; // exception safety
     if (input.Peek())
-3        result = _expr.Parse(input);
+        result = _expr.Parse(input);
     return result;
 }
 //----------------------------------------------------------------------------

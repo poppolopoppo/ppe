@@ -21,7 +21,7 @@ public:
     PPE_DEFAULT_EXCEPTION_DESCRIPTION(FJsonSerializerException);
 };
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FJsonSerializer : public ISerializer {
+class PPE_SERIALIZE_API FJsonSerializer final : public ISerializer {
 public:
     virtual ~FJsonSerializer();
 

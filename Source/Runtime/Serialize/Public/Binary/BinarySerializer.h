@@ -19,7 +19,7 @@ public:
     PPE_DEFAULT_EXCEPTION_DESCRIPTION(FBinarySerializerException)
 };
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FBinarySerializer : public ISerializer {
+class PPE_SERIALIZE_API FBinarySerializer final : public ISerializer {
 public:
     virtual ~FBinarySerializer();
 
