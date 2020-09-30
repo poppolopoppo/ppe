@@ -8,6 +8,10 @@
 #include <intrin.h>
 #include <xmmintrin.h>
 
+#ifdef __AVX2__
+#   include <immintrin.h>
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -67,21 +71,43 @@ public:
         Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
         STATIC_ASSERT(sizeof(::__m128i) == 16);
 
-        const size_t blks = (sizeInBytes / sizeof(::__m128i));
-
         // use SSE2 to minimize cache pollution
-        const ::__m128i* pSrc = reinterpret_cast<const ::__m128i*>(src);
-        ::__m128i* pDst = reinterpret_cast<::__m128i*>(dst);
-        for (size_t b = blks; b > 0; b--, pSrc++, pDst++) {
-            const ::__m128i loaded = ::_mm_stream_load_si128(pSrc);
-            ::_mm_stream_si128(pDst, loaded);
+        const size_t nblks128 = (sizeInBytes / sizeof(::__m128i));
+		const ::__m128i* __restrict src128 = reinterpret_cast<const ::__m128i*>(src);
+		::__m128i* __restrict dst128 = reinterpret_cast<::__m128i*>(dst);
+        for (size_t b = nblks128; b > 0; b--, src128++, dst128++) {
+            const ::__m128i loaded = ::_mm_stream_load_si128(src128);
+            ::_mm_stream_si128(dst128, loaded);
         }
 
-        // synchronize loads and stores before yielding
-        ::_mm_mfence();
+        ::_mm_sfence(); // synchronize stores before yielding
 
         return dst;
     }
+
+	static FORCE_INLINE void* MemstreamLarge(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
+#if __AVX2__
+		AssertRelease(Meta::IsAligned(32, dst)); // everything assumed to be aligned, no reminder
+		AssertRelease(Meta::IsAligned(32, src));
+		AssertRelease(Meta::IsAligned(32, sizeInBytes));
+		Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
+		STATIC_ASSERT(sizeof(::__m256i) == 32);
+
+		// use SSE2 to minimize cache pollution
+		const ::__m256i* __restrict pSrc = reinterpret_cast<const ::__m256i*>(src);
+		::__m256i* __restrict pDst = reinterpret_cast<::__m256i*>(dst);
+		for (size_t b = (sizeInBytes / sizeof(::__m256i)); b > 0; b--, pSrc++, pDst++) {
+			const ::__m256i loaded = ::_mm256_stream_load_si256(pSrc);
+			::_mm256_stream_si256(pDst, loaded);
+		}
+
+        ::_mm_sfence(); // synchronize stores before yielding
+
+		return dst;
+#else
+        return Memstream(dst, src, sizeInBytes);
+#endif
+	}
 
     static FORCE_INLINE void* MemcpyLarge(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
         AssertRelease(Meta::IsAligned(16, dst)); // only need ptr aligned, not size
@@ -89,11 +115,10 @@ public:
         Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
         STATIC_ASSERT(sizeof(::__m128i) == 16);
 
-        const size_t blks = (sizeInBytes / sizeof(::__m128i));
-
         // use SSE2 to minimize cache pollution
-        const ::__m128i *pSrc = reinterpret_cast<const ::__m128i*>(src);
-        ::__m128i *pDst = reinterpret_cast<::__m128i*>(dst);
+        const size_t blks = (sizeInBytes / sizeof(::__m128i));
+        const ::__m128i* __restrict pSrc = reinterpret_cast<const ::__m128i*>(src);
+        ::__m128i* __restrict pDst = reinterpret_cast<::__m128i*>(dst);
         for (size_t b = blks; b > 0; b--, pSrc++, pDst++) {
             const ::__m128i loaded = ::_mm_stream_load_si128(pSrc);
             ::_mm_stream_si128(pDst, loaded);
@@ -102,8 +127,7 @@ public:
         // use regular copy for unaligned reminder
         FGenericPlatformMemory::MemcpyLarge(pDst, pSrc, sizeInBytes - blks * sizeof(::__m128i));
 
-        // synchronize loads and stores before yielding
-        ::_mm_mfence();
+        ::_mm_sfence(); // synchronize stores before yielding
 
         return dst;
     }

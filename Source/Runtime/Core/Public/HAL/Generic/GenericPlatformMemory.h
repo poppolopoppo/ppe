@@ -114,6 +114,10 @@ public: // must be defined for every platform
         // on some platform it's possible to avoid trashing L2 cache with streaming intrinsics
         return MemcpyLarge(dst, src, sizeInBytes);
     }
+	static FORCE_INLINE void* MemstreamLarge(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
+		// on some platform it's possible to avoid trashing L2 cache with streaming intrinsics (larger block assumptions)
+		return MemcpyLarge(dst, src, sizeInBytes);
+	}
 
     static FORCE_INLINE void Memswap(void* __restrict lhs, void* __restrict rhs, size_t sizeInBytes) {
         Assert_NoAssume(not Memoverlap(lhs, sizeInBytes, rhs, sizeInBytes));

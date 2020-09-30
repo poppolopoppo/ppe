@@ -15,6 +15,7 @@
 #define USE_PPE_AVX2   (1) // deployed since Haswell, 2013
 #define USE_PPE_AVX512 (0) // only since high-end Skylake, 2013 (%_NOCOMMIT%)
 #else
+#define USE_PPE_AVX2   (0)
 #define USE_PPE_AVX512 (0)
 #endif
 namespace PPE {
