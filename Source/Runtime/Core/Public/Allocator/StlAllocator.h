@@ -82,6 +82,11 @@ public:
         ppe_traits::Deallocate(*this, FAllocatorBlock{ p, n * sizeof(T) });
     }
 
+    // ** this one is *NOT* in STL, but can be still very useful **
+    void reallocate(pointer p, size_type newn, size_t oldn) {
+        ppe_traits::Reallocate(*this, FAllocatorBlock{ p, oldn * sizeof(T) }, newn * sizeof(T));
+    }
+
     size_type max_size() const NOEXCEPT {
         return (ppe_traits::MaxSize() / sizeof(T));
     }
@@ -125,6 +130,52 @@ public: // PPE allocators :
 
     const _Allocator& InnerAlloc() const NOEXCEPT {
         return ppe_traits::Get(*this);
+    }
+};
+//----------------------------------------------------------------------------
+class FStdMallocator : private FGenericAllocator {
+public:
+    using propagate_on_container_copy_assignment = std::true_type;
+    using propagate_on_container_move_assignment = std::true_type;
+    using propagate_on_container_swap = std::true_type;
+
+    using is_always_equal = std::true_type; // STL allocators can't have a state
+
+    using has_maxsize = std::false_type;
+    using has_owns = std::false_type;
+    using has_reallocate = std::true_type;
+    using has_acquire = std::true_type;
+    using has_steal = std::true_type;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
+
+    FStdMallocator() = default;
+
+    static size_t SnapSize(size_t s) NOEXCEPT {
+        return Meta::RoundToNext(s, Alignment);
+    }
+
+    FAllocatorBlock Allocate(size_t s) const {
+        return FAllocatorBlock{ std::malloc(s), s };
+    }
+
+    void Deallocate(FAllocatorBlock b) const {
+        std::free(b.Data);
+    }
+
+    void Reallocate(FAllocatorBlock& b, size_t s) const {
+        b.Data = std::realloc(b.Data, s);
+        b.SizeInBytes = s;
+    }
+
+    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+        UNUSED(b); // nothing to do
+        return true;
+    }
+
+    bool Steal(FAllocatorBlock b) NOEXCEPT {
+        UNUSED(b); // nothing to do
+        return true;
     }
 };
 //----------------------------------------------------------------------------
