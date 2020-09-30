@@ -73,6 +73,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
     STATIC_CONST_INTEGRAL(size_t, MinSizeInBytes, ALLOCATION_BOUNDARY);
     STATIC_CONST_INTEGRAL(size_t, MaxSizeInBytes, 32768);
+    STATIC_ASSERT(MaxSizeInBytes == FMallocBinned::MaxSmallBlockSize);
     STATIC_CONST_INTEGRAL(size_t, ChunkSizeInBytes, ALLOCATION_GRANULARITY);
     STATIC_CONST_INTEGRAL(size_t, ChunkSizeMask, ~(ChunkSizeInBytes - 1));
     STATIC_CONST_INTEGRAL(size_t, ChunkAvailableSizeInBytes, ChunkSizeInBytes - CACHELINE_SIZE);
@@ -110,8 +111,8 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     FBinnedChunk_* NextBatch;
 
 #if USE_MALLOCBINNED_PAGE_PROTECT
-    void ProtectPage() { FVirtualMemory::Protect(this, ChunkSizeInBytes, false, false); }
-    void UnprotectPage() { FVirtualMemory::Protect(this, ChunkSizeInBytes, true, true); }
+    void ProtectPage() { FVirtualMemory::Protect(this, ChunkSizeInBytes, true, true); }
+    void UnprotectPage() { FVirtualMemory::Protect(this, ChunkSizeInBytes, false, false); }
 #endif
 
     static FBinnedChunk_* Allocate() {
@@ -433,7 +434,7 @@ static size_t NonSmallBlockSnapSize_(size_t sizeInBytes) {
 
 #if USE_MALLOCBINNED_MIPMAPS
     sizeInBytes = ROUND_TO_NEXT_64K(sizeInBytes);
-    if (sizeInBytes <= FMallocMipMap::MediumTopMipSize)
+    if (sizeInBytes <= FMallocMipMap::MediumMaxAllocSize)
         return FMallocMipMap::MediumSnapSize(sizeInBytes);
     else
         return FMallocMipMap::LargeSnapSize(sizeInBytes);
@@ -1045,6 +1046,56 @@ static NO_INLINE void LargeFree_(void* const ptr) {
     }
 }
 //----------------------------------------------------------------------------
+static NODISCARD NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize, size_t oldSize) {
+    Assert(oldp);
+    Assert(newSize);
+    Assert(oldSize);
+    Assert(newSize > FBinnedChunk_::MaxSizeInBytes);
+    Assert(oldSize > FBinnedChunk_::MaxSizeInBytes);
+
+    // only called when both new and old size are large blocks
+
+    void* newp = nullptr;
+#if USE_MALLOCBINNED_MIPMAPS
+    if (oldSize <= FMallocMipMap::MipMaxAllocSize &&
+        FMallocMipMap::AliasesToMips(oldp) )
+        newp = FMallocMipMap::MipResize(oldp, newSize, oldSize); // try to resize the mipmap allocation
+    else
+        Assert_NoAssume(FMallocMipMap::AliasesToMips(oldp) == false);
+
+    if (Unlikely(nullptr == newp)) // if resize failed fallback on alloc+free (specialized for large allocs)
+#endif
+    {
+#if USE_MALLOCBINNED_MIPMAPS
+        newp = FMallocMipMap::MipAlloc(newSize, ALLOCATION_BOUNDARY);
+
+        if (nullptr == newp) // also handle mip map OOM
+#endif
+        {
+            STATIC_ASSERT(ALLOCATION_GRANULARITY == 64 * 1024);
+            newp = FBinnedLargeBlocks_::Get().LargeAlloc(ROUND_TO_NEXT_64K(newSize));
+        }
+
+        // need to align on 16 for Memstream()
+        const size_t cpySize = ROUND_TO_NEXT_16(Min(oldSize, newSize));
+        Assert_NoAssume(cpySize <= FMallocMipMap::RegionSize(newp));
+
+        // copy previous data to new block without polluting caches
+        FPlatformMemory::MemstreamLarge(newp, oldp, cpySize);
+
+#if USE_MALLOCBINNED_MIPMAPS
+        if (FMallocMipMap::AliasesToMips(oldp))
+            FMallocMipMap::MipFree(oldp);
+        else
+#endif
+        {
+            FBinnedLargeBlocks_::Get().LargeFree(oldp);
+        }
+    }
+
+    return newp;
+}
+//----------------------------------------------------------------------------
 // Destructors
 //----------------------------------------------------------------------------
 FBinnedThreadCache_::~FBinnedThreadCache_() {
@@ -1250,19 +1301,29 @@ void* FMallocBinned::Realloc(void* const ptr, size_t size) {
         if (Likely(size)) {
             const size_t old = FMallocBinned::RegionSize(ptr);
 
-            // skip reallocation if not growth is needed
-            if (MakeBinnedClass_(old) == MakeBinnedClass_(size))
+            // skip reallocation if no growth is needed
+            if (Unlikely(MakeBinnedClass_(old) == MakeBinnedClass_(size)))
                 return ptr;
 
-            // get a new block
-            newp = FMallocBinned::Malloc(size);
+            // for small blocks < 32kb:
+            if (Likely((size <= FMallocBinned::MaxSmallBlockSize) | (old <= FMallocBinned::MaxSmallBlockSize))) {
+                // get a new block
+                newp = FMallocBinned::Malloc(size);
 
-            // need to align on 16 for Memstream()
-            const size_t cpy = ROUND_TO_NEXT_16(Min(old, size));
-            Assert_NoAssume(cpy <= RegionSize(newp));
+                // need to align on 16 for Memstream()
+                const size_t cpy = ROUND_TO_NEXT_16(Min(old, size));
+                Assert_NoAssume(cpy <= RegionSize(newp));
 
-            // copy previous data to new block without polluting caches
-            FPlatformMemory::Memstream(newp, ptr, cpy);
+                // copy previous data to new block without polluting caches
+				FPlatformMemory::Memstream(newp, ptr, cpy);
+            }
+			// for large blocks we get other opportunities:
+            else {
+                ONLY_IF_ASSERT(FBinnedStats_::Get().OnFree(old));
+                ONLY_IF_ASSERT(FBinnedStats_::Get().OnAlloc(size));
+
+                return LargeRealloc_(ptr, size, old);
+            }
         }
 
         // release old block

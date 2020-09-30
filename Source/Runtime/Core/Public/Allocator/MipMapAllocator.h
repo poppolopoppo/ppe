@@ -65,6 +65,8 @@ public:
     STATIC_CONST_INTEGRAL(size_t, BottomMipSize, Granularity);
     STATIC_CONST_INTEGRAL(size_t, TopMipSize, NumBottomMips * BottomMipSize);
     STATIC_CONST_INTEGRAL(size_t, MaxNumMipMaps, ReservedSize / TopMipSize);
+
+    STATIC_CONST_INTEGRAL(size_t, MinAllocSize, BottomMipSize);
     STATIC_CONST_INTEGRAL(size_t, MaxAllocSize, TopMipSize / 2);
 
     TMipMapAllocator();
@@ -87,6 +89,9 @@ public:
 
     void* Allocate(size_t sizeInBytes);
     void Free(void* ptr);
+
+    // try to shrink/grow block **INPLACE**
+    void* Resize(void* ptr, size_t sizeInBytes) NOEXCEPT;
 
     NO_INLINE void GarbageCollect(); // try to lock
     void ForceGarbageCollect(); // force lock
@@ -300,13 +305,23 @@ private:
         Assert(sizeInBytes);
         return FPlatformMaths::FloorLog2(checked_cast<u32>(TopMipSize / sizeInBytes));
     }
-    static FORCE_INLINE u32 MipOffset_(u32 level) NOEXCEPT {
+    static CONSTEXPR u32 MipOffset_(u32 level) NOEXCEPT {
         Assert_NoAssume(level < lengthof(GLevelMasks_));
         return ((u32(1) << level) - 1);
     }
-    static FORCE_INLINE u32 ParentBit_(u32 index) NOEXCEPT {
+    static CONSTEXPR u32 ParentBit_(u32 index) NOEXCEPT {
         Assert(index);
         return (index - 1) / 2;
+    }
+
+    static CONSTEXPR u64 UnsetMask_(u64 mip, u32 bit) NOEXCEPT {
+        for (;; bit = ParentBit_(bit)) {
+            mip |= GUnsetMasks_[bit];
+            const u64 sib = (u64(1) << (bit + ((bit & 1) << 1) - 1));
+            if ((0 == bit) | (0 == (mip & sib)))
+                break;
+        }
+        return mip;
     }
 
 };
@@ -405,21 +420,21 @@ void* TMipMapAllocator<_VMemTraits>::AllocateWithHint_(size_t sizeInBytes, FMipH
     }
 
     return Meta::unlikely([this, sizeInBytes, lvl, fst, msk, &hint]() -> void* {
-		for (u32 mipIndex = 0;; ++mipIndex) {
-			if (Unlikely(not _freeMips.FirstMipAvailable(&mipIndex, mipIndex, _vSpace.NumCommittedMips))) {
-				if (Unlikely(not AcquireFreeMipMap_(&mipIndex)))
-					break;
-			}
+        for (u32 mipIndex = 0;; ++mipIndex) {
+            if (Unlikely(not _freeMips.FirstMipAvailable(&mipIndex, mipIndex, _vSpace.NumCommittedMips))) {
+                if (Unlikely(not AcquireFreeMipMap_(&mipIndex)))
+                    break;
+            }
 
-			void* const p = AllocateFromMip_(mipIndex, lvl, fst, msk);
-			if (Likely(p)) {
-				Assert(sizeInBytes == AllocationSize(p));
-				hint.LastMipIndex = mipIndex;
-				return p;
-			}
-		}
+            void* const p = AllocateFromMip_(mipIndex, lvl, fst, msk);
+            if (Likely(p)) {
+                Assert(sizeInBytes == AllocationSize(p));
+                hint.LastMipIndex = mipIndex;
+                return p;
+            }
+        }
 
-		return nullptr;
+        return nullptr;
     });
 }
 //----------------------------------------------------------------------------
@@ -430,14 +445,14 @@ void TMipMapAllocator<_VMemTraits>::Free(void* ptr) {
 
     bool runGCAfterFree = false;
     {
-        const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
-
         const intptr_t vptr = ((u8*)ptr - (u8*)_vSpace.pAddr);
         const u32 mipIndex = checked_cast<u32>(vptr / TopMipSize);
+        const u32 idx = checked_cast<u32>((vptr - mipIndex * TopMipSize) / BottomMipSize);
+
+        const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
 
         FMipMap& mipMap = _mipMaps[mipIndex];
 
-        const u32 idx = checked_cast<u32>((vptr - mipIndex * TopMipSize) / BottomMipSize);
         Assert_NoAssume(FPlatformMaths::popcnt64(mipMap.SizeMask & GSizeMasks_[idx]) == 1);
 
         const u32 bit = FirstBitSet_(mipMap.SizeMask & GSizeMasks_[idx]);
@@ -451,16 +466,8 @@ void TMipMapAllocator<_VMemTraits>::Free(void* ptr) {
         u64 mip = mipMap.MipMask.load(std::memory_order_relaxed); // <== updated by compare_exchange_weak
         for (;;) {
             Assert_NoAssume((mip & ~GSetMasks_[bit]) == 0);
-            u64 upd = mip;
-            u32 del = bit;
 
-            for (;;) {
-                upd |= GUnsetMasks_[del];
-                const u64 sib = (u64(1) << (del & 1 ? del + 1 : del - 1));
-                if (0 == del || 0 == (upd & sib))
-                    break;
-                del = ParentBit_(del);
-            }
+            u64 upd = UnsetMask_(mip, bit);
 
             Assert_NoAssume(mip != upd);
             if (mipMap.MipMask.compare_exchange_weak(mip, upd,
@@ -471,7 +478,7 @@ void TMipMapAllocator<_VMemTraits>::Free(void* ptr) {
                     _freeMips.Enable(mipIndex);
                 // garbage collect free mips if more than 4 are completely empty
                 else if (Unlikely(upd == GMipMaskEmpty_))
-                    runGCAfterFree = (u32(++_freeMips.NumEmptyMips) * 2 >= _vSpace.NumCommittedMips &&
+                    runGCAfterFree = (u32(++_freeMips.NumEmptyMips) * 3 >= _vSpace.NumCommittedMips * 2 &&
                         _mipMaps[_vSpace.NumCommittedMips - 1].MipMask == GMipMaskEmpty_);
 
                 break;
@@ -479,8 +486,90 @@ void TMipMapAllocator<_VMemTraits>::Free(void* ptr) {
         }
     }
 
-	if (Unlikely(runGCAfterFree))
-		GarbageCollect();
+    if (Unlikely(runGCAfterFree))
+        GarbageCollect();
+}
+//----------------------------------------------------------------------------
+template <typename _VMemTraits>
+void* TMipMapAllocator<_VMemTraits>::Resize(void* ptr, size_t sizeInBytes) NOEXCEPT {
+    Assert(ptr);
+    Assert(sizeInBytes);
+    Assert_NoAssume(AliasesToMipMaps(ptr));
+    Assert_NoAssume(sizeInBytes <= TopMipSize);
+    Assert_NoAssume(Meta::IsAligned(BottomMipSize, sizeInBytes));
+
+    const intptr_t vptr = ((u8*)ptr - (u8*)_vSpace.pAddr);
+    const u32 mipIndex = checked_cast<u32>(vptr / TopMipSize);
+    const u32 idx = checked_cast<u32>((vptr - mipIndex * TopMipSize) / BottomMipSize);
+
+    const u32 nlvl = MipLevel_(sizeInBytes);
+    const u64 nmsk = (GLevelMasks_[nlvl] & GSizeMasks_[idx]); // don't move the pointer
+    if (Unlikely(0 == nmsk))
+        return nullptr; // can't grow this block (by design)
+
+    const FReadWriteLock::FScopeLockRead GClockRead(_vSpace.GClockRW);
+
+    FMipMap& mipMap = _mipMaps[mipIndex];
+    Assert_NoAssume(FPlatformMaths::popcnt64(mipMap.SizeMask & GSizeMasks_[idx]) == 1);
+
+    const u32 obit = FirstBitSet_(mipMap.SizeMask & GSizeMasks_[idx]);
+    Assert_NoAssume((mipMap.MipMask & ~GSetMasks_[obit]) == 0);
+    Assert_NoAssume(mipMap.SizeMask & (u64(1) << obit));
+
+    const u32 olvl = FPlatformMaths::FloorLog2(obit + 1);
+    if (Unlikely(olvl == nlvl))
+        return ptr; // same mip level, no need to reallocate
+
+    // first clear the allocated bit from the SizeMask,
+    // so we can't allocate from MipMask when SizeMask is still set
+    mipMap.SizeMask &= ~(u64(1) << obit);
+
+    for (size_t backoff = 0;; ++backoff) {
+        u64 mip = mipMap.MipMask.load(std::memory_order_relaxed);
+        Assert_NoAssume(GDeletedMask_ != mip);
+
+        // reset old block mask
+        u64 upd = UnsetMask_(mip, obit);
+
+        // try to allocate the new block (shrink or growth)
+        const u64 avail = upd & nmsk;
+        if (Unlikely(not avail))
+            break; // not enough space
+
+        const u32 nbit = FirstBitSet_(avail);
+        Assert(nbit != obit);
+        Assert_NoAssume(upd & ~GSetMasks_[nbit]);
+        Assert_NoAssume(upd != (upd & GSetMasks_[nbit]));
+
+        upd &= GSetMasks_[nbit];
+        if (mipMap.MipMask.compare_exchange_weak(mip, upd,
+            std::memory_order_release, std::memory_order_relaxed)) {
+            Assert_NoAssume((mipMap.MipMask & ~GSetMasks_[nbit]) == 0);
+            Assert_NoAssume((mipMap.SizeMask & (u64(1) << nbit)) == 0);
+
+            mipMap.SizeMask |= (u64(1) << nbit);
+
+            // book-keeping for full/empty mipmaps
+            if (Unlikely(GMipMaskFull_ == upd))
+                _freeMips.Disable(mipIndex);
+            Assert_NoAssume(GMipMaskEmpty_ != mip);
+
+#if USE_PPE_ASSERT
+            const u32 nfst = MipOffset_(nlvl);
+            const u32 noff = (nbit - nfst) * u32(TopMipSize / (size_t(1) << nlvl));
+            Assert_NoAssume(FPlatformMaths::popcnt64(mipMap.SizeMask & GSizeMasks_[noff / BottomMipSize]) == 1);
+            Assert_NoAssume(((u8*)_vSpace.pAddr + (mipIndex * TopMipSize + noff)) == ptr);
+#endif
+
+            return ptr;
+        }
+
+        FPlatformProcess::SleepForSpinning(backoff);
+    }
+
+    Assert_NoAssume((TopMipSize / (size_t(1) << olvl)) < sizeInBytes); // verify we fail only when growing
+    mipMap.SizeMask |= (u64(1) << obit); // restore previous size mask before leaving
+    return nullptr; // failed to grow
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
@@ -520,10 +609,10 @@ void TMipMapAllocator<_VMemTraits>::GarbageCollect_AssumeLocked_() NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
 void TMipMapAllocator<_VMemTraits>::GarbageCollect() {
-	if (_vSpace.GClockRW.TryLockWrite()) {
+    if (_vSpace.GClockRW.TryLockWrite()) {
         GarbageCollect_AssumeLocked_();
-		_vSpace.GClockRW.UnlockWrite();
-	}
+        _vSpace.GClockRW.UnlockWrite();
+    }
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>

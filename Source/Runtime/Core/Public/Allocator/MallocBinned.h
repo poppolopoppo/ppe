@@ -29,9 +29,9 @@ public:
 
 public:
     // made public so that external code can align on block sizes
-    static constexpr const size_t MinSizeClass = 19;
-    static constexpr const size_t NumSizeClasses = 45;
-    static constexpr const u16 SizeClasses[NumSizeClasses] = {
+    static CONSTEXPR const size_t MinSizeClass = 19;
+    static CONSTEXPR const size_t NumSizeClasses = 45;
+    static CONSTEXPR const u16 SizeClasses[NumSizeClasses] = {
         /*  0 */    16    , 0     , 0     , 0     ,
         /*  4 */    32    , 0     , 48    , 0     ,
         /*  8 */    64    , 80    , 96    , 112   ,
@@ -45,6 +45,8 @@ public:
         /* 40 */    16384 , 20480 , 24576 , 28672 ,
         /* 44 */    32768
     };
+
+    static CONSTEXPR const size_t MaxSmallBlockSize = SizeClasses[NumSizeClasses - 1];
 
     static size_t SizeClass(size_t size) NOEXCEPT;
     static CONSTEXPR size_t SnapSizeConstexpr(size_t size, size_t index = 0) NOEXCEPT {

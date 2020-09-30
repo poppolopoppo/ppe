@@ -3,6 +3,7 @@
 #include "Allocator/MallocMipMap.h"
 
 #include "Allocator/InitSegAllocator.h"
+#include "Allocator/MallocBinned.h"
 #include "Allocator/MipMapAllocator.h"
 
 #include "Memory/MemoryDomain.h"
@@ -84,8 +85,9 @@ static void FetchMipsForDebug_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const size_t FMallocMipMap::MediumTopMipSize = FMediumMipMaps_::TopMipSize;
-const size_t FMallocMipMap::LargeTopMipSize = FLargeMipMaps_::TopMipSize;
+const size_t FMallocMipMap::MediumMaxAllocSize = FMediumMipMaps_::MaxAllocSize;
+const size_t FMallocMipMap::LargeMaxAllocSize = FLargeMipMaps_::MaxAllocSize;
+const size_t FMallocMipMap::MipMaxAllocSize = FLargeMipMaps_::MaxAllocSize;
 //----------------------------------------------------------------------------
 void* FMallocMipMap::MediumAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
@@ -96,6 +98,28 @@ void* FMallocMipMap::MediumAlloc(size_t sz, size_t alignment) {
         MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).AllocateUser(MediumMips_().AllocationSize(newp));
     }
 #endif
+    return newp;
+}
+//----------------------------------------------------------------------------
+void* FMallocMipMap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT {
+    Assert(ptr);
+    Assert_NoAssume(newSize <= FMediumMipMaps_::TopMipSize);
+    Assert_NoAssume(oldSize <= FMediumMipMaps_::TopMipSize);
+    Assert_NoAssume(oldSize >= FMediumMipMaps_::BottomMipSize);
+    Assert_NoAssume(MediumMips_().AllocationSize(ptr) == oldSize);
+
+    void* const newp = MediumMips_().Resize(ptr, newSize);
+#if USE_PPE_MEMORYDOMAINS
+    if (newp) {
+        Assert(newp == ptr);
+        Assert_NoAssume(MediumMips_().AllocationSize(newp) == newSize);
+        MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).DeallocateUser(oldSize);
+        MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).AllocateUser(newSize);
+    }
+#else
+    UNUSED(oldSize);
+#endif
+
     return newp;
 }
 //----------------------------------------------------------------------------
@@ -136,6 +160,29 @@ void* FMallocMipMap::LargeAlloc(size_t sz, size_t alignment) {
     return newp;
 }
 //----------------------------------------------------------------------------
+void* FMallocMipMap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT {
+    Assert(ptr);
+    Assert_NoAssume(newSize <= FLargeMipMaps_::TopMipSize);
+    Assert_NoAssume(oldSize <= FLargeMipMaps_::TopMipSize);
+    Assert_NoAssume(oldSize >= FLargeMipMaps_::BottomMipSize);
+    Assert_NoAssume(LargeMips_().AllocationSize(ptr) == oldSize);
+
+    void* const newp = LargeMips_().Resize(ptr, newSize);
+#if USE_PPE_MEMORYDOMAINS
+    if (newp) {
+        Assert(newp == ptr);
+        const size_t actualSize = LargeMips_().AllocationSize(newp);
+        Assert_NoAssume(actualSize == newSize);
+        MEMORYDOMAIN_TRACKING_DATA(LargeMipMaps).DeallocateUser(oldSize);
+        MEMORYDOMAIN_TRACKING_DATA(LargeMipMaps).AllocateUser(newSize);
+    }
+#else
+    UNUSED(oldSize);
+#endif
+
+    return newp;
+}
+//----------------------------------------------------------------------------
 void FMallocMipMap::LargeFree(void* ptr) {
     Assert_NoAssume(AliasesToLargeMips(ptr));
 #if USE_PPE_MEMORYDOMAINS
@@ -162,6 +209,7 @@ size_t FMallocMipMap::LargeRegionSize(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void* FMallocMipMap::MipAlloc(size_t sz, size_t alignment) {
+    Assert_NoAssume(sz > FMallocBinned::MaxSmallBlockSize);
     if (sz <= FMediumMipMaps_::MaxAllocSize)
         return MediumAlloc(MediumSnapSize(sz), alignment);
     if (sz <= FLargeMipMaps_::MaxAllocSize)
@@ -170,10 +218,28 @@ void* FMallocMipMap::MipAlloc(size_t sz, size_t alignment) {
     return nullptr;
 }
 //----------------------------------------------------------------------------
+void* FMallocMipMap::MipResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT {
+    Assert(ptr);
+    Assert(newSize);
+    Assert(oldSize);
+    Assert(newSize != oldSize);
+    Assert_NoAssume(newSize > FMallocBinned::MaxSmallBlockSize);
+    Assert_NoAssume(oldSize > FMallocBinned::MaxSmallBlockSize);
+    Assert_NoAssume(AliasesToMips(ptr));
+
+    if ((newSize <= FMediumMipMaps_::MaxAllocSize) & (oldSize <= FMediumMipMaps_::MaxAllocSize))
+        return MediumResize(ptr, MediumSnapSize(newSize), MediumSnapSize(oldSize));
+
+    if ((newSize <= FLargeMipMaps_::MaxAllocSize) & (oldSize <= FLargeMipMaps_::MaxAllocSize) &
+        (newSize > FMediumMipMaps_::MaxAllocSize) & (oldSize > FMediumMipMaps_::MaxAllocSize) )
+        return LargeResize(ptr, LargeSnapSize(newSize), LargeSnapSize(oldSize));
+
+    return nullptr; // can't resize without moving the data, but there might still be some space left
+}
+//----------------------------------------------------------------------------
 void FMallocMipMap::MipFree(void* ptr) {
-    if (MediumMips_().AliasesToMipMaps(ptr)) {
+    if (Likely(MediumMips_().AliasesToMipMaps(ptr)))
         MediumFree(ptr);
-    }
     else {
         Assert_NoAssume(LargeMips_().AliasesToMipMaps(ptr));
         LargeFree(ptr);
@@ -190,14 +256,14 @@ bool FMallocMipMap::AliasesToMips(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 size_t FMallocMipMap::SnapSize(size_t sz) NOEXCEPT {
-    if (sz <= FMediumMipMaps_::MaxAllocSize)
+    if (Likely(sz <= FMediumMipMaps_::MaxAllocSize))
         return FMediumMipMaps_::SnapSize(sz);
     else
         return FLargeMipMaps_::SnapSize(sz);
 }
 //----------------------------------------------------------------------------
 size_t FMallocMipMap::RegionSize(void* ptr) NOEXCEPT {
-    if (MediumMips_().AliasesToMipMaps(ptr))
+    if (Likely(MediumMips_().AliasesToMipMaps(ptr)))
         return MediumMips_().AllocationSize(ptr);
     else {
         Assert_NoAssume(LargeMips_().AliasesToMipMaps(ptr));

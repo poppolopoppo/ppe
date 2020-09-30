@@ -9,9 +9,10 @@ namespace PPE {
 class PPE_CORE_API FMallocMipMap {
 public:
     // 64k-2Mb
-    static const size_t MediumTopMipSize;
+    static const size_t MediumMaxAllocSize;
 
     static void* MediumAlloc(size_t sz, size_t alignment);
+    static void* MediumResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
     static void MediumFree(void* ptr);
 
     static void MediumTrim();
@@ -21,9 +22,10 @@ public:
     static size_t MediumRegionSize(void* ptr) NOEXCEPT;
 
     // 2Mb-64Mb
-    static const size_t LargeTopMipSize;
+    static const size_t LargeMaxAllocSize;
 
     static void* LargeAlloc(size_t sz, size_t alignment);
+    static void* LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
     static void LargeFree(void* ptr);
 
     static void LargeTrim();
@@ -33,7 +35,10 @@ public:
     static size_t LargeRegionSize(void* ptr) NOEXCEPT;
 
     // large+medium
+    static const size_t MipMaxAllocSize;
+
     static void* MipAlloc(size_t sz, size_t alignment);
+    static void* MipResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
     static void MipFree(void* ptr);
 
     static void MemoryTrim();
