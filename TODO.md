@@ -34,7 +34,7 @@
         - “Work Stealing" https://www.youtube.com/watch?v=iLHNF7SgVN4
         - "Reducers and other Cilk++ HyperObjects" https://www.cse.wustl.edu/~angelee/cse539/papers/reducer.pdf
         - http://themaister.net/blog/2017/08/15/render-graphs-and-vulkan-a-deep-dive/
-        - <3 vulkan abstraction layer that represent frame as a task graph: https://github.com/azhirnov/FrameGraph
+        - <3<3<3 vulkan abstraction layer that represent frame as a task graph: https://github.com/azhirnov/FrameGraph
 
 - [ ] Volumetric clouds
     - https://gist.github.com/pxv8270/e3904c49cbd8ff52cb53d95ceda3980e
@@ -51,6 +51,7 @@
 - [ ] RTTI dynamic metaclass/metaobject ?
     - long time goal, some limitations with current code
         - may not be possible to remove a field ? since we use static offsets
+- [ ] Fast dynamic dispatch by hacking VTable: https://medium.com/@calebleak/fast-virtual-functions-hacking-the-vtable-for-fun-and-profit-25c36409c5e0
 - [ ] Wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
 - [ ] Destiny's Multithreaded Rendering Architecture: https://www.youtube.com/watch?v=0nTDFLMLX9k
 - [ ] Destiny's Shader System: http://advances.realtimerendering.com/destiny/gdc_2017/Destiny_shader_system_GDC_2017_v.4.0.pdf
