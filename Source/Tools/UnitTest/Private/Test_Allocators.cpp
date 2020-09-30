@@ -12,7 +12,7 @@
 #include "IO/StringView.h"
 #include "HAL/PlatformMemory.h"
 #include "Maths/MathHelpers.h"
-#include "Maths/RandomGenerator.h"
+#include "Maths/Threefy.h"
 #include "Memory/MemoryView.h"
 #include "Memory/UniqueView.h"
 #include "Time/TimedScope.h"
@@ -52,123 +52,108 @@ static constexpr size_t GSlidingWindow_ = 150;
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static void Test_Allocator_ST_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    typedef typename std::allocator_traits<_Alloc>::value_type value_type;
-
-    NOOP(category, name);
+    UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
+
+    using allocator_traits = TAllocatorTraits<_Alloc>;
 
     forrange(loop, 0, GLoopCount_) {
         for (size_t sz : blockSizes) {
-            auto* ptr = allocator.allocate(sz);
+            const FAllocatorBlock blk = allocator_traits::Allocate(allocator, sz);
 #if USE_TESTALLOCATOR_MEMSET
-            FPlatformMemory::Memset(ptr, 0xFA, sizeof(value_type) * sz);
+            FPlatformMemory::Memset(blk.Data, 0xFA, blk.SizeInBytes);
 #endif
-            allocator.deallocate(ptr, sz);
+            allocator_traits::Deallocate(allocator, blk);
         }
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static void Test_Allocator_MT_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    typedef typename std::allocator_traits<_Alloc>::value_type value_type;
-
-    NOOP(category, name);
+    UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
+
+    using allocator_traits = TAllocatorTraits<_Alloc>;
 
     forrange(loop, 0, GLoopCount_) {
         ParallelForEachValue(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
             _Alloc alloc(allocator);
-            auto* ptr = alloc.allocate(sz);
+            const FAllocatorBlock blk = allocator_traits::Allocate(alloc, sz);
 #if USE_TESTALLOCATOR_MEMSET
-            FPlatformMemory::Memset(ptr, 0xFB, sizeof(value_type) * sz);
+            FPlatformMemory::Memset(blk.Data, 0xFB, blk.SizeInBytes);
 #endif
-            alloc.deallocate(ptr, sz);
+            allocator_traits::Deallocate(alloc, blk);
         });
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static void Test_Allocator_Sliding_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
-    typedef typename std::allocator_traits<_Alloc>::value_type value_type;
-
-    NOOP(category, name);
+    UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
     const size_t numDeallocs = Max(size_t(1), window / 10);
 
-    using pointer = typename std::allocator_traits<_Alloc>::pointer;
-    using block_type = TPair<pointer, size_t>;
-    STACKLOCAL_RINGBUFFER(block_type, blockAddrs, window);
-
-    block_type block;
+    using allocator_traits = TAllocatorTraits<_Alloc>;
+    STACKLOCAL_RINGBUFFER(FAllocatorBlock, blockAddrs, window);
 
     forrange(loop, 0, GLoopCount_) {
+        FAllocatorBlock prev;
         for(size_t sz : blockSizes) {
-            pointer ptr = allocator.allocate(sz);
+            FAllocatorBlock blk = allocator_traits::Allocate(allocator, sz);
 #if USE_TESTALLOCATOR_MEMSET
-            FPlatformMemory::Memset(ptr, 0xFC, sizeof(value_type) * sz);
+            FPlatformMemory::Memset(blk.Data, 0xFC, blk.SizeInBytes);
 #endif
 
             if (blockAddrs.size() == window) {
                 forrange(i, 0, numDeallocs) {
-                    if (not blockAddrs.pop_front(&block))
+                    if (blockAddrs.pop_front(&prev))
+                        allocator_traits::Deallocate(allocator, prev);
+                    else
                         AssertNotReached();
-
-                    allocator.deallocate(block.first, block.second);
                 }
             }
 
-            blockAddrs.push_back(ptr, sz);
+            blockAddrs.push_back(blk);
         }
 
-        while (blockAddrs.pop_back(&block))
-            allocator.deallocate(block.first, block.second);
+        while (blockAddrs.pop_back(&prev))
+            allocator_traits::Deallocate(allocator, prev);
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static void Test_Allocator_Trashing_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    typedef typename std::allocator_traits<_Alloc>::value_type value_type;
-
-    NOOP(category, name);
+    UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
-    using pointer = typename std::allocator_traits<_Alloc>::pointer;
-    STACKLOCAL_POD_ARRAY(pointer, blockAddrs, blockSizes.size());
+    using allocator_traits = TAllocatorTraits<_Alloc>;
+    STACKLOCAL_POD_ARRAY(void*, blockAddrs, blockSizes.size());
 
     forrange(loop, 0, GLoopCount_) {
         forrange(i, 0, blockSizes.size()) {
             const size_t sz = blockSizes[i];
-            auto* ptr = allocator.allocate(sz);
-            blockAddrs[i] = ptr;
+            FAllocatorBlock blk = allocator_traits::Allocate(allocator, sz);
+            blockAddrs[i] = blk.Data;
         }
 
-        forrange(i, 0, blockSizes.size()) {
-            allocator.deallocate(blockAddrs[i], blockSizes[i]);
-        }
+        forrange(i, 0, blockSizes.size())
+            allocator_traits::Deallocate(allocator, FAllocatorBlock{ blockAddrs[i], blockSizes[i] });
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static void Test_Allocator_Dangling_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    typedef typename std::allocator_traits<_Alloc>::value_type value_type;
-
     FTaskManager& threadPool = FHighPriorityThreadPool::Get();
 
     const size_t numWorkers = threadPool.WorkerCount();
     const size_t allocsPerWorker = ((blockSizes.size() + numWorkers - 1) / numWorkers);
     Assert(numWorkers * allocsPerWorker >= blockSizes.size());
 
-    using alloc_traits = std::allocator_traits<_Alloc>;
-    struct FBlock {
-        typename alloc_traits::pointer Ptr;
-        size_t SizeInBytes;
-    };
+    using allocator_traits = TAllocatorTraits<_Alloc>;
+    using blocks_type = TUniqueArray<FAllocatorBlock>;
 
-    using pointer = typename std::allocator_traits<_Alloc>::pointer;
-    using blocks_type = TUniqueArray<FBlock>;
-
-    TVector<FBlock> blocks;
+    TVector<FAllocatorBlock> blocks;
     blocks.reserve(blockSizes.size());
     for (size_t sz : blockSizes)
         blocks.emplace_back_AssumeNoGrow(nullptr, sz);
@@ -180,7 +165,7 @@ static void Test_Allocator_Dangling_(const FWStringView& category, const FWStrin
 
     struct payload_t {
         _Alloc& Allocator;
-        TMemoryView<FBlock> Blocks;
+        TMemoryView<FAllocatorBlock> Blocks;
     }   payload{ allocator, blocks.MakeView() };
 
     forrange(i, 0, numWorkers) {
@@ -191,19 +176,19 @@ static void Test_Allocator_Dangling_(const FWStringView& category, const FWStrin
             break;
 
         allocateTasks.emplace_back_AssumeNoGrow([bbegin, bend, &payload](ITaskContext&) {
-            for (FBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
-                b.Ptr = payload.Allocator.allocate(b.SizeInBytes);
+            for (FAllocatorBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
+                b = allocator_traits::Allocate(payload.Allocator, b.SizeInBytes);
         });
         deallocateTasks.emplace_back_AssumeNoGrow([bbegin, bend, &payload](ITaskContext&) {
-            for (FBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
-                payload.Allocator.deallocate(b.Ptr, b.SizeInBytes);
+            for (FAllocatorBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
+                allocator_traits::Deallocate(payload.Allocator, b);
         });
     }
 
     std::random_device rdevice;
     std::mt19937 rand(rdevice());
 
-    NOOP(category, name);
+    UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
     // tries to free blocks from another thread from which they were allocated initially
@@ -219,12 +204,34 @@ static void Test_Allocator_Dangling_(const FWStringView& category, const FWStrin
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
+static void Test_Allocator_Realloc_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+    UNUSED(category); UNUSED(name);
+    BENCHMARK_SCOPE(category, name);
+
+    using allocator_traits = TAllocatorTraits<_Alloc>;
+
+    forrange(loop, 0, GLoopCount_) {
+        const size_t numWorkers = checked_cast<size_t>(std::thread::hardware_concurrency()) / 2;
+        ParallelFor(0, numWorkers, [&allocator, blockSizes](size_t) {
+            for (u32 b = 0; b + 3 < blockSizes.size(); b += 4) {
+                FAllocatorBlock blk{};
+                allocator_traits::Reallocate(allocator, blk, blockSizes[b + 0]);
+                allocator_traits::Reallocate(allocator, blk, blockSizes[b + 1]);
+                allocator_traits::Reallocate(allocator, blk, blockSizes[b + 2]);
+                allocator_traits::Reallocate(allocator, blk, blockSizes[b + 3]);
+                allocator_traits::Deallocate(allocator, blk);
+            }
+        });
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Alloc>
 static void Test_Allocator_(
     const FWStringView& name, _Alloc&& allocator,
     const TMemoryView<const size_t>& smallBlocks,
     const TMemoryView<const size_t>& largeBlocks,
     const TMemoryView<const size_t>& mixedBlocks ) {
-
+    STATIC_ASSERT(is_allocator_v<_Alloc>);
     LOG(Test_Allocators, Emphasis, L"benchmarking <{0}>", name);
 
     BENCHMARK_SCOPE(name, L"Global");
@@ -263,6 +270,13 @@ static void Test_Allocator_(
         Test_Allocator_Dangling_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_Dangling_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
+    {
+        BENCHMARK_SCOPE(name, L"Realloc");
+
+        Test_Allocator_Realloc_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
+        Test_Allocator_Realloc_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
+        Test_Allocator_Realloc_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
+    }
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -290,26 +304,34 @@ void Test_Allocators() {
     blocksizes_t largeBlocks;
     blocksizes_t mixedBlocks;
     {
-        FRandomGenerator rand;
+        FThreefy_4x32 rnd;
+        rnd.RandomSeed();
 
-        auto generator = [&rand](blocksizes_t* blks, size_t minSize, size_t maxSize, size_t totalSize) NOEXCEPT -> size_t {
-            size_t currentSize = 0;
+        auto generator = [&rnd](blocksizes_t* blks, u32 minSize, u32 maxSize, size_t alignment, size_t totalSize) NOEXCEPT -> size_t {
+            u32 currentSize = 0;
             for (;;) {
-                size_t sz = Lerp(minSize, maxSize, rand.NextFloat01());
-                if (currentSize + sz > totalSize)
-                    break;
-                blks->push_back(sz);
-                currentSize += sz;
+                auto sz4 = rnd.UniformI(minSize, maxSize);
+
+                sz4.x = u32(Meta::RoundToNext(sz4.x, alignment));
+                sz4.y = u32(Meta::RoundToNext(sz4.y, alignment));
+                sz4.z = u32(Meta::RoundToNext(sz4.z, alignment));
+                sz4.w = u32(Meta::RoundToNext(sz4.w, alignment));
+
+                if (currentSize + sz4.x <= totalSize) { currentSize += sz4.x; blks->push_back(sz4.x); }
+                if (currentSize + sz4.y <= totalSize) { currentSize += sz4.y; blks->push_back(sz4.y); }
+                if (currentSize + sz4.z <= totalSize) { currentSize += sz4.z; blks->push_back(sz4.z); }
+                if (currentSize + sz4.w <= totalSize) { currentSize += sz4.w; blks->push_back(sz4.w); }
+                else break;
             }
             return currentSize;
         };
 
         const size_t totalSizePerWorker = GTotalAllocationSize_;
 
-        smallBlocksSizeInBytes += generator(&smallBlocks, BlockSizeMin, BlockSizeMid, totalSizePerWorker);
-        largeBlocksSizeInBytes += generator(&largeBlocks, BlockSizeMid, BlockSizeLarge, totalSizePerWorker);
-        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMin, BlockSizeMid, totalSizePerWorker / 2);
-        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMid, BlockSizeLarge, totalSizePerWorker / 2);
+        smallBlocksSizeInBytes += generator(&smallBlocks, BlockSizeMin, BlockSizeMid, ALLOCATION_BOUNDARY, totalSizePerWorker);
+        largeBlocksSizeInBytes += generator(&largeBlocks, BlockSizeMid, BlockSizeLarge, 128, totalSizePerWorker);
+        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMin, BlockSizeMid, ALLOCATION_BOUNDARY, totalSizePerWorker / 2);
+        mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMid, BlockSizeLarge, 128, totalSizePerWorker / 2);
     }
 
     LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::SizeInBytes(smallBlocksSizeInBytes) );
@@ -318,11 +340,11 @@ void Test_Allocators() {
 
     ReleaseMemoryInModules();
 
-    Test_Allocator_(L"TMallocator", TStlAllocator<value_type, FMallocator>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+    Test_Allocator_(L"FMallocator", FMallocator{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
 
     ReleaseMemoryInModules();
 
-    Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+    Test_Allocator_(L"FStdMallocator", FStdMallocator{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
 
     ReleaseMemoryInModules();
 }
