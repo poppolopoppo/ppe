@@ -2,6 +2,7 @@
 
 #include "Core.h"
 
+#include "HAL/PlatformAtomics.h"
 #include "HAL/PlatformProcess.h"
 
 #include <atomic>
@@ -338,6 +339,110 @@ public:
 
 private:
     std::atomic<size_type> _mask{ 0 };
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Order preserving + read/write
+// "Scalable Reader-Writer Synchronization for Shared-Memory Multiprocessors"
+// https://www.cs.utexas.edu/~pingali/CS378/2015sp/lectures/Spinlocks%20and%20Read-Write%20Locks.htm
+//----------------------------------------------------------------------------
+struct CACHELINE_ALIGNED FAtomicTicketRWLock : Meta::FNonCopyableNorMovable {
+    union UQueue {
+        u32 u;
+        u16 us;
+        struct
+        {
+            u8 Write;
+            u8 Read;
+            u8 Users;
+        } s;
+    };
+
+    volatile UQueue Queue{ 0 };
+
+public: // Read
+    struct FReaderScope : Meta::FNonCopyableNorMovable {
+        FAtomicTicketRWLock& RWLock;
+        explicit FReaderScope(FAtomicTicketRWLock& rwlock) NOEXCEPT
+        :   RWLock(rwlock) {
+            RWLock.LockRead();
+        }
+        ~FReaderScope() NOEXCEPT {
+            RWLock.UnlockRead();
+        }
+    };
+
+    void LockRead() NOEXCEPT {
+        const u32 me = FPlatformAtomics::Add(reinterpret_cast<volatile i32*>(&Queue.u), (1<<16));
+        const u8 val = static_cast<u8>(me >> 16);
+
+        for (i32 backoff = 0; Queue.s.Read != val;)
+            FPlatformProcess::SleepForSpinning(backoff);
+
+        Queue.s.Read++;
+    }
+
+    void UnlockRead() NOEXCEPT {
+        FPlatformAtomics::Increment(reinterpret_cast<volatile i8*>(&Queue.s.Write));
+    }
+
+    bool TryLockRead() NOEXCEPT {
+        const u32 me = Queue.s.Users;
+        const u8 menew = static_cast<u8>(me + 1);
+        const u32 write = Queue.s.Write;
+        const u32 cmp =  (me << 16) + (me << 8) + write;
+        const u32 cmpnew = (u32(menew) << 16) + (menew << 8) + write;
+
+        return (FPlatformAtomics::CompareExchange(
+            reinterpret_cast<volatile i32*>(&Queue.u),
+            static_cast<i32>(cmp),
+            static_cast<i32>(cmpnew)) == static_cast<i32>(cmp));
+    }
+
+public: // Write
+    struct FWriterScope : Meta::FNonCopyableNorMovable {
+        FAtomicTicketRWLock& RWLock;
+        explicit FWriterScope(FAtomicTicketRWLock& rwlock) NOEXCEPT
+        :   RWLock(rwlock) {
+            RWLock.LockWrite();
+        }
+        ~FWriterScope() NOEXCEPT {
+            RWLock.UnlockWrite();
+        }
+    };
+
+    void LockWrite() NOEXCEPT {
+        const u32 me = FPlatformAtomics::Add(reinterpret_cast<volatile i32*>(&Queue.u), (1<<16));
+        const u8 val = static_cast<u8>(me >> 16);
+
+        for (i32 backoff = 0; Queue.s.Write != val;)
+            FPlatformProcess::SleepForSpinning(backoff);
+    }
+
+    void UnlockWrite() NOEXCEPT {
+        UQueue t{ Queue.u };
+        FPlatformAtomics::MemoryBarrier();
+
+        t.s.Read++;
+        t.s.Write++;
+
+        *reinterpret_cast<volatile u16*>(&Queue) = t.us;
+    }
+
+    bool TryLockWrite() NOEXCEPT {
+        const u32 me = Queue.s.Users;
+        const u8 menew = static_cast<u8>(me + 1);
+
+        const u32 read = Queue.s.Read << 8;
+        const u32 cmp =  (me << 16) + read + me;
+        const u32 cmpnew = (u32(menew) << 16) + read + me;
+
+        return (FPlatformAtomics::CompareExchange(
+            reinterpret_cast<volatile i32*>(&Queue.u),
+            static_cast<i32>(cmp),
+            static_cast<i32>(cmpnew)) == static_cast<i32>(cmp));
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
