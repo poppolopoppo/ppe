@@ -6,8 +6,7 @@
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Meta/Singleton.h"
-
-#include <mutex>
+#include "Thread/AtomicSpinLock.h"
 
 // Needs to access the singleton through an exported function for DLLs builds
 //----------------------------------------------------------------------------
@@ -127,10 +126,10 @@ public:
     const FEntry* Allocate(void* src, size_t len, size_t stride, size_t hash, const FEntry* tail);
 
 private:
-    STATIC_CONST_INTEGRAL(size_t, MaskBuckets, 0xFFFF);
+    STATIC_CONST_INTEGRAL(size_t, MaskBuckets, 0x7FFF);
     STATIC_CONST_INTEGRAL(size_t, NumBuckets, MaskBuckets + 1);
 
-    std::mutex _barrier;
+    FAtomicMaskLock _barrier;
     LINEARHEAP(Token) _heap;
 
     FEntry* _bucketHeads[NumBuckets] = { 0 };

@@ -16,7 +16,8 @@ FTokenFactory::FTokenFactory()
 {}
 //----------------------------------------------------------------------------
 FTokenFactory::~FTokenFactory() {
-    const Meta::FLockGuard scopeLock(_barrier);
+    // here we lock *all* buckets thanks to AllMask
+    const FAtomicMaskLock::FScopeLock scopeLock(_barrier, FAtomicMaskLock::AllMask);
     _heap.ReleaseAll();
 }
 //----------------------------------------------------------------------------
@@ -40,9 +41,11 @@ const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size
     if (result)
         return result;
 
-    const Meta::FLockGuard scopeLock(_barrier);
-
     const size_t bucket = (hash & MaskBuckets);
+
+    // the lock is not exclusive to all buckets, instead we only lock the chunk where lie the current bucket
+    const FAtomicMaskLock::FScopeLock scopeLock(_barrier, FAtomicMaskLock::size_type(1) << (bucket / FAtomicMaskLock::NumBuckets));
+
     FEntry* head = _bucketHeads[bucket];
     tail = _bucketTails[bucket];
 

@@ -286,4 +286,60 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Can lock a subset instead of all resource
+//----------------------------------------------------------------------------
+class CACHELINE_ALIGNED FAtomicMaskLock : Meta::FNonCopyableNorMovable {
+public:
+    using size_type = size_t;
+    STATIC_CONST_INTEGRAL(size_type, AllMask, size_type(-1));
+    STATIC_CONST_INTEGRAL(size_type, NumBuckets, sizeof(size_type) << 3);
+
+    struct FScopeLock : Meta::FNonCopyableNorMovable {
+        FAtomicMaskLock& Owner;
+        const size_type Subset;
+        FScopeLock(FAtomicMaskLock& owner, size_type subset) NOEXCEPT
+        :   Owner(owner), Subset(subset) {
+            Owner.Lock(Subset);
+        }
+        ~FScopeLock() NOEXCEPT {
+            Owner.Unlock(Subset);
+        }
+    };
+
+    void Lock(size_type subset) NOEXCEPT {
+        Assert(subset);
+        for (i32 backoff = 0;;) {
+            size_type msk = _mask.load(std::memory_order_relaxed);
+            if ((msk & subset) == 0 && _mask.compare_exchange_weak(msk, msk | subset,
+                    std::memory_order_release, std::memory_order_relaxed) ) {
+                return;
+            }
+
+            FPlatformProcess::SleepForSpinning(backoff);
+        }
+    }
+
+    bool TryLock(size_type subset) NOEXCEPT {
+        Assert(subset);
+        size_type msk = _mask.load(std::memory_order_relaxed);
+        if ((msk & subset) == 0 && _mask.compare_exchange_weak(msk, msk | subset,
+            std::memory_order_release, std::memory_order_relaxed)) {
+            return true;
+        }
+        return false;
+    }
+
+    void Unlock(size_type subset) NOEXCEPT {
+        Assert(subset);
+        size_type msk = _mask.load(std::memory_order_relaxed);
+        Assert((msk & subset) == subset);
+        _mask = (msk & ~subset);
+    }
+
+private:
+    std::atomic<size_type> _mask{ 0 };
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE
