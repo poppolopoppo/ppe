@@ -102,6 +102,7 @@ bool FVirtualMemory::Protect(void* ptr, size_t sizeInBytes, bool read, bool writ
 void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(sizeInBytes);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, alignment));
     Assert(Meta::IsPow2(alignment));
 
     void* const p = FPlatformMemory::VirtualAlloc(alignment, sizeInBytes, true);
@@ -139,6 +140,13 @@ void* FVirtualMemory::PageReserve(size_t sizeInBytes) {
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
 
     return FPlatformMemory::VirtualAlloc(sizeInBytes, false);
+}
+//----------------------------------------------------------------------------
+void* FVirtualMemory::PageReserve(size_t alignment, size_t sizeInBytes) {
+    Assert(sizeInBytes);
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+
+    return FPlatformMemory::VirtualAlloc(alignment, sizeInBytes, false);
 }
 //----------------------------------------------------------------------------
 void FVirtualMemory::PageCommit(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
