@@ -37,7 +37,7 @@ public: // must be defined for every platform
 
     static void Sleep(float seconds) = delete;
     static void SleepInfinite() = delete;
-    static void SleepForSpinning(size_t& backoff) = delete;
+    static void SleepForSpinning(i32& backoff) = delete;
 
     //------------------------------------------------------------------------
     // system process

@@ -251,9 +251,10 @@ void FWindowsPlatformProcess::Sleep(float seconds) {
         ::Sleep(milliseconds);
 }
 //----------------------------------------------------------------------------
-// Hybrid spinning
-// http://www.1024cores.net/home/lock-free-algorithms/tricks/spinning
-void FWindowsPlatformProcess::SleepForSpinning(size_t& backoff) {
+void FWindowsPlatformProcess::SleepForSpinning(i32& backoff) {
+#if 0
+    // Hybrid spinning
+    // http://www.1024cores.net/home/lock-free-algorithms/tricks/spinning
     if (backoff < 10)
         ::_mm_pause();
         // (1) improve performance (help to fight memory ordering issues inside of a processor),
@@ -271,6 +272,40 @@ void FWindowsPlatformProcess::SleepForSpinning(size_t& backoff) {
         ::Sleep(10); // all threads
 
     ++backoff;
+#else
+    // exponential backoff
+    // https://github.com/marcgh/intel-tbb/blob/master/include/tbb/tbb_machine.h#L349
+    STATIC_CONST_INTEGRAL(i32, LoopsBeforeExp, 4);
+    STATIC_CONST_INTEGRAL(i32, LoopsBeforeYield, 50);
+    STATIC_CONST_INTEGRAL(i32, LoopsBeforeSleep, 150);
+    //STATIC_CONST_INTEGRAL(i32, LoopsBeforeStall, 2000);
+
+    ++backoff;
+
+    if (Likely(backoff <= LoopsBeforeExp)) {
+        ::_mm_pause();
+    }
+    else if (backoff <= LoopsBeforeYield) {
+        forrange(i, 0, backoff)
+            ::_mm_pause();
+        // Pause twice as long the next time.
+        backoff *= 2;
+    }
+    else if (backoff < LoopsBeforeSleep) {
+        // Pause is so long that we might as well yield CPU to scheduler.
+        ::SwitchToThread();
+    }
+    else { //if (backoff < LoopsBeforeStall) {
+        // Limited to threads of no-less priority
+        ::Sleep(0);
+    }/*
+    else {
+        // Don't yield but sleep to ensure that the thread is not
+        // immediately run again in case scheduler's run queue is empty
+        using namespace std::chrono;
+        std::this_thread::sleep_for(500us);
+    }*/
+#endif
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformProcess::CurrentPID() -> FProcessId {

@@ -120,7 +120,7 @@ FVulkanMemoryBlock FVulkanMemoryAllocator::Allocate(
     EVulkanMemoryTypeFlags preferredFlags ) {
     Assert(!(requiredFlags ^ preferredFlags));
 
-    for (size_t backoff = 0;;) {
+    for (i32 backoff = 0;;) {
         // find best memory type available
         u32 memoryTypeIndex = u32(-1);
         forrange(i, 0, checked_cast<u32>(_memoryTypes.size())) {

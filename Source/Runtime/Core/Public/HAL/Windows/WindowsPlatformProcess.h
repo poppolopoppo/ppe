@@ -29,7 +29,7 @@ public:
     // sleep
 
     static void Sleep(float seconds);
-    static void SleepForSpinning(size_t& backoff);
+    static void SleepForSpinning(i32& backoff);
 
     //------------------------------------------------------------------------
     // system process

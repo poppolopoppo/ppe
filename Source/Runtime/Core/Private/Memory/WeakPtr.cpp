@@ -22,7 +22,7 @@ PWeakRefCounter FWeakRefCounter::Allocate(deleter_func deleter) {
 #endif
 //----------------------------------------------------------------------------
 bool FWeakRefCounter::TryLockForWeakPtr() {
-    size_t backoff = 0;
+    i32 backoff = 0;
     for (;;) {
         int expected = _strongRefCount;
 

@@ -1100,7 +1100,7 @@ static NODISCARD NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize,
 //----------------------------------------------------------------------------
 FBinnedThreadCache_::~FBinnedThreadCache_() {
     // let other thread release blocks belonging to this thread, if any
-    for (size_t backoff = 0;;) {
+    for (i32 backoff = 0;;) {
         ReleaseDanglingBlocks_(*this);
         FPlatformProcess::SleepForSpinning(backoff);
         if (nullptr == DanglingBlocks)

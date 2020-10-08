@@ -20,7 +20,7 @@ TFuture<T>::~TFuture() {
 template <typename T>
 T& TFuture<T>::Result() {
     Assert(Idle != _state);
-    size_t backoff = 0;
+    i32 backoff = 0;
     while (Ready != _state)
         FPlatformProcess::SleepForSpinning(backoff);
     return _value;

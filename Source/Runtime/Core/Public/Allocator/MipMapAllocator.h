@@ -175,7 +175,7 @@ private:
             // set the corresponding bit
             const word_t enable = bitmask_t::One << (mipIndex - MaskIndex_To_MipIndex(m));
 
-            for (size_t backoff = 0;; ++backoff) {
+            for (i32 backoff = 0;; ++backoff) {
                 word_t mask = LiveMips[m].load(std::memory_order_relaxed);
                 if (LiveMips[m].compare_exchange_weak(mask, mask | enable,
                     std::memory_order_release, std::memory_order_relaxed))
@@ -191,7 +191,7 @@ private:
             // unset the corresponding bit
             const word_t disable = ~(bitmask_t::One << (mipIndex - MaskIndex_To_MipIndex(m)));
 
-            for (size_t backoff = 0;; ++backoff) {
+            for (i32 backoff = 0;; ++backoff) {
                 word_t mask = LiveMips[m].load(std::memory_order_relaxed);
                 if (LiveMips[m].compare_exchange_weak(mask, mask & disable,
                     std::memory_order_release, std::memory_order_relaxed))
@@ -524,7 +524,7 @@ void* TMipMapAllocator<_VMemTraits>::Resize(void* ptr, size_t sizeInBytes) NOEXC
     // so we can't allocate from MipMask when SizeMask is still set
     mipMap.SizeMask &= ~(u64(1) << obit);
 
-    for (size_t backoff = 0;; ++backoff) {
+    for (i32 backoff = 0;; ++backoff) {
         u64 mip = mipMap.MipMask.load(std::memory_order_relaxed);
         Assert_NoAssume(GDeletedMask_ != mip);
 
@@ -689,7 +689,7 @@ void* TMipMapAllocator<_VMemTraits>::AllocateFromMip_(u32 mipIndex, u32 lvl, u32
     FMipMap& mipMap = _mipMaps[mipIndex];
     Assert_NoAssume(GDeletedMask_ != mipMap.MipMask);
 
-    for (size_t backoff = 0;; ++backoff) {
+    for (i32 backoff = 0;; ++backoff) {
         u64 mip = mipMap.MipMask.load(std::memory_order_relaxed);
         Assert_NoAssume(GDeletedMask_ != mip);
 

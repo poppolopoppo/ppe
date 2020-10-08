@@ -7,6 +7,9 @@
 #include <atomic>
 #include <emmintrin.h>
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -29,11 +32,11 @@ public:
 #endif
 
     void Lock() NOEXCEPT {
-        for (size_t backoff = 0; !TryLock(); )
+        for (i32 backoff = 0; !TryLock(); )
             FPlatformProcess::SleepForSpinning(backoff);
     }
     bool TryLock() NOEXCEPT {
-        return (not _locked.load(std::memory_order_relaxed) and
+        return (not _locked.load(std::memory_order_relaxed) &&
                 not _locked.exchange(true, std::memory_order_acquire) );
     }
     void Unlock() NOEXCEPT {
@@ -42,7 +45,7 @@ public:
 
     struct FScope : Meta::FNonCopyableNorMovable {
         FAtomicSpinLock& Barrier;
-        FScope(FAtomicSpinLock& barrier) NOEXCEPT
+        explicit FScope(FAtomicSpinLock& barrier) NOEXCEPT
         :   Barrier(barrier) {
             Barrier.Lock();
         }
@@ -54,12 +57,12 @@ public:
     struct FTryScope : Meta::FNonCopyableNorMovable {
         FAtomicSpinLock& Barrier;
         bool Locked;
-        FTryScope(FAtomicSpinLock& barrier) NOEXCEPT
+        explicit FTryScope(FAtomicSpinLock& barrier) NOEXCEPT
         :   Barrier(barrier)
         ,   Locked(barrier.TryLock()) {
         }
         PPE_FAKEBOOL_OPERATOR_DECL() { return (Locked ? this : nullptr); }
-        void Unlock() {
+        void Unlock() NOEXCEPT {
             Assert_NoAssume(Locked);
             Barrier.Unlock();
             Locked = false;
@@ -73,7 +76,7 @@ public:
     struct FUniqueLock : Meta::FNonCopyableNorMovable {
         FAtomicSpinLock& Barrier;
         bool NeedUnlock;
-        FUniqueLock(FAtomicSpinLock& barrier) NOEXCEPT
+        explicit FUniqueLock(FAtomicSpinLock& barrier) NOEXCEPT
         :   Barrier(barrier)
         ,   NeedUnlock(true) {
             Barrier.Lock();
@@ -100,7 +103,7 @@ public:
 // And more consistent :
 // https://probablydance.com/2019/12/30/measuring-mutexes-spinlocks-and-how-bad-the-linux-scheduler-really-is/
 //----------------------------------------------------------------------------
-class FAtomicOrderedLock : Meta::FNonCopyableNorMovable {
+class CACHELINE_ALIGNED FAtomicOrderedLock : Meta::FNonCopyableNorMovable {
     std::atomic<unsigned> In{ 0 };
     std::atomic<unsigned> Out{ 0 };
 
@@ -111,7 +114,7 @@ public:
         const unsigned Ticket;
 #endif
 
-        FScope(FAtomicOrderedLock& barrier) NOEXCEPT
+        explicit FScope(FAtomicOrderedLock& barrier) NOEXCEPT
         :   Barrier(barrier)
 #if USE_PPE_ASSERT
         ,   Ticket(barrier.In.fetch_add(1, std::memory_order_relaxed))
@@ -120,7 +123,7 @@ public:
         {
             const unsigned Ticket = barrier.In.fetch_add(1, std::memory_order_relaxed);
 #endif
-            for (size_t backoff = 0; Barrier.Out.load(std::memory_order_acquire) != Ticket;)
+            for (i32 backoff = 0; Barrier.Out.load(std::memory_order_acquire) != Ticket;)
                 FPlatformProcess::SleepForSpinning(backoff);
         }
 
@@ -151,20 +154,20 @@ public:
 #endif
 
 public: // Reader
-    struct FReaderScope {
+    struct FReaderScope : Meta::FNonCopyableNorMovable {
         FAtomicReadWriteLock& Lock;
-        FReaderScope(FAtomicReadWriteLock& lock)
+        explicit FReaderScope(FAtomicReadWriteLock& lock) NOEXCEPT
         :   Lock(lock) {
             Lock.AcquireReader();
         }
-        ~FReaderScope() {
+        ~FReaderScope() NOEXCEPT {
             Lock.ReleaseReader();
         }
     };
 
     void AcquireReader() NOEXCEPT {
-        for (size_t backoff = 0;;) {
-            unsigned r = Readers;
+        for (i32 backoff = 0;;) {
+            unsigned r = Readers.load(std::memory_order_relaxed);
             if (WRITER_LOCK != r) {
                 if (Readers.compare_exchange_weak(r, r + 1))
                     return; // lock read
@@ -175,12 +178,13 @@ public: // Reader
     }
 
     void ReleaseReader() NOEXCEPT {
-        for (size_t backoff = 0;;) {
-            unsigned r = Readers;
+        for (i32 backoff = 0;;) {
+            unsigned r = Readers.load(std::memory_order_relaxed);
             Assert(r);
             if (WRITER_LOCK != r) {
                 Assert_NoAssume(r > 0);
-                if (Readers.compare_exchange_weak(r, r - 1))
+                if (Readers.compare_exchange_weak(r, r - 1,
+                    std::memory_order_release, std::memory_order_relaxed))
                     return; // release read lock
             }
 
@@ -189,27 +193,34 @@ public: // Reader
     }
 
 public: // Writer
-    struct FWriterScope {
+    struct FWriterScope : Meta::FNonCopyableNorMovable {
         FAtomicReadWriteLock& Lock;
-        FWriterScope(FAtomicReadWriteLock& lock)
+        explicit FWriterScope(FAtomicReadWriteLock& lock) NOEXCEPT
         :   Lock(lock) {
             Lock.AcquireWriter();
         }
-        ~FWriterScope() {
+        ~FWriterScope() NOEXCEPT {
             Lock.ReleaseWriter();
         }
     };
 
     void AcquireWriter() NOEXCEPT {
-        for (size_t backoff = 0;;) {
-            unsigned r = Readers;
+        for (i32 backoff = 0;;) {
+            unsigned r = Readers.load(std::memory_order_relaxed);
             if (0 == r) {
-                if (Readers.compare_exchange_weak(r, WRITER_LOCK))
+                if (Readers.compare_exchange_weak(r, WRITER_LOCK,
+                    std::memory_order_release, std::memory_order_relaxed))
                     return; // lock write
             }
 
             FPlatformProcess::SleepForSpinning(backoff);
         }
+    }
+
+    bool TryAcquireWriter() NOEXCEPT {
+        unsigned r = Readers.load(std::memory_order_relaxed);
+        return ((0 == r) && Readers.compare_exchange_weak(r, WRITER_LOCK,
+            std::memory_order_release, std::memory_order_relaxed));
     }
 
     void ReleaseWriter() NOEXCEPT {
@@ -229,16 +240,16 @@ public:
 
     FAtomicPhaseLock() = default;
 
-    explicit FAtomicPhaseLock(size_type phase) : _phase(phase) {}
+    explicit FAtomicPhaseLock(size_type phase) NOEXCEPT : _phase(phase) {}
 
 #if USE_PPE_ASSERT
-    ~FAtomicPhaseLock() {
+    ~FAtomicPhaseLock() NOEXCEPT {
         Assert_NoAssume(not (_phase & TransitionBit_));
     }
 #endif
 
     template <typename _Functor>
-    bool Transition(const size_type nextPhase, _Functor&& onTransition) {
+    bool Transition(const size_type nextPhase, _Functor&& onTransition) NOEXCEPT {
         Assert_NoAssume(not (nextPhase & TransitionBit_));
 
         size_type expected = _phase.load(std::memory_order_relaxed);
@@ -251,7 +262,7 @@ public:
 
                 return true;
             }
-            else for (size_t backoff = 0; expected != nextPhase;) {
+            else for (i32 backoff = 0; expected != nextPhase;) {
                 FPlatformProcess::SleepForSpinning(backoff);
                 expected = _phase.load(std::memory_order_relaxed);
             }
@@ -262,7 +273,7 @@ public:
         return false;
     }
 
-    static CONSTEXPR size_type Inc(size_type revision) {
+    static CONSTEXPR size_type Inc(size_type revision) NOEXCEPT {
        return ((revision + 1) & PhaseMask_);
     }
 

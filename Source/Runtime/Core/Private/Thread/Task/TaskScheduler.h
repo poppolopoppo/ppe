@@ -177,7 +177,7 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
     const size_t numWorkers = _queues.size();
 
     size_t workerIndex = (insertion_order_preserving_priority % numWorkers);
-    for (size_t backoff = 0;;) {
+    for (i32 backoff = 0;;) {
         // push the job to some worker's local queue
         forrange(n, 0, numWorkers) {
             FWorkerQueue_& w = _queues[workerIndex]; // use revision packed in first 24 bits
@@ -217,7 +217,7 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
 
     const size_t numWorkers = _queues.size();
 
-    for (size_t backoff = 0;;) {
+    for (i32 backoff = 0;;) {
         forrange(n, 0, numWorkers) {
             FWorkerQueue_& w = _queues[workerIndex];
 
