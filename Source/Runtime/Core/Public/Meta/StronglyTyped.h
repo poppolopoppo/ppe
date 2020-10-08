@@ -90,7 +90,7 @@ struct FFakeBool {
     inline friend void swap(FFakeBool& lhs, FFakeBool& rhs) { std::swap(lhs.Value, rhs.Value); }
 };
 //----------------------------------------------------------------------------
-#define PPE_FAKEBOOL_OPERATOR_DECL() operator const void* () const
+#define PPE_FAKEBOOL_OPERATOR_DECL() operator const void* () const NOEXCEPT
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

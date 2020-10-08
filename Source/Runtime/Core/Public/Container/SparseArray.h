@@ -179,18 +179,18 @@ protected:
         return id.Unpacked;
     }
 
-    // each time a sparse must grow it doubles capacity with a new chunk as big as current capacity
+    // each time a sparse array must grow it doubles capacity with a new chunk as big as current capacity
 
     static size_t ckIndex_(size_t i) NOEXCEPT {
         return (FPlatformMaths::CeilLog2(Max(i + 1, MinChunkSize)) - MinChunkExp);
     }
-    static size_t ckSize_(size_t o) NOEXCEPT {
+    static CONSTEXPR size_t ckSize_(size_t o) NOEXCEPT {
         return (size_t(1) << (MinChunkExp + o));
     }
-    static size_t ckOffset_(size_t o) NOEXCEPT {
+    static CONSTEXPR size_t ckOffset_(size_t o) NOEXCEPT {
         return (o ? ckSize_(o - 1) : 0);
     }
-    static size_t ckAllocation_(size_t o) NOEXCEPT {
+    static CONSTEXPR size_t ckAllocation_(size_t o) NOEXCEPT {
         return (ckSize_(o) - ckOffset_(o));
     }
 };
@@ -252,11 +252,11 @@ public:
         return tmp;
     }
 
-    void Swap(TSparseArrayIterator& other) {
+    void Swap(TSparseArrayIterator& other) NOEXCEPT {
         std::swap(_index, other._index);
         std::swap(_owner, other._owner);
     }
-    inline friend void swap(TSparseArrayIterator& lhs, TSparseArrayIterator& rhs) {
+    inline friend void swap(TSparseArrayIterator& lhs, TSparseArrayIterator& rhs) NOEXCEPT {
         lhs.Swap(rhs);
     }
 
@@ -356,7 +356,7 @@ public:
     TSparseArray() NOEXCEPT : parent_type() {}
     ~TSparseArray();
 
-    explicit TSparseArray(Meta::FForceInit) noexcept
+    explicit TSparseArray(Meta::FForceInit) NOEXCEPT
         : allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
     {}
 
@@ -394,7 +394,7 @@ public:
     using parent_type::CheckInvariants;
     using parent_type::AliasesToContainer;
 
-    const allocator_type& get_allocator() const {
+    const allocator_type& get_allocator() const NOEXCEPT {
         return static_cast<const allocator_type&>(*this);
     }
 
@@ -449,8 +449,8 @@ public:
         return (not lhs.Equals(rhs));
     }
 
-    void Swap(TSparseArray& other) { parent_type::Swap(other); }
-    inline friend void swap(TSparseArray& lhs, TSparseArray& rhs) {
+    void Swap(TSparseArray& other) NOEXCEPT { parent_type::Swap(other); }
+    inline friend void swap(TSparseArray& lhs, TSparseArray& rhs) NOEXCEPT {
         lhs.Swap(rhs);
     }
 

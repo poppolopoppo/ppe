@@ -488,7 +488,7 @@ void FLinearHeap::ReleaseAll() {
     Assert(nullptr == _blocks);
 
 #else
-    FLinearHeapBlock_*& head = FLinearHeapBlock_::Head(_blocks);
+    FLinearHeapBlock_* head = FLinearHeapBlock_::Head(_blocks);
 
 #   if USE_PPE_MEMORYDOMAINS
     _trackingData.ReleaseAllUser();

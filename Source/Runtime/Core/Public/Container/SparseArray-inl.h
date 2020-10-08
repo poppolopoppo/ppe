@@ -506,7 +506,7 @@ void TSparseArray<T, _Allocator>::Reserve(size_t n) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool TSparseArray<T, _Allocator>::Equals(const TSparseArray& other) const {
-    return ( (&other == this) || (other._size == _size and
+    return ( (&other == this) || (other._size == _size &&
         std::equal(begin(), end(), other.begin(), other.end())) );
 }
 //----------------------------------------------------------------------------
