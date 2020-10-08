@@ -1136,7 +1136,7 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
 ,   _pow(Parser::BinaryOp<symbol_t::Pow, expr_t>(_rvalue,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
-            return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Pow>(), lhs.get(), rhs.get(), op->Site());
+            return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Pow>(), lhs.get(), rhs.get(), op->Site());
         }))
 
 ,   _unary(Parser::UnaryOp<
@@ -1149,11 +1149,11 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
             case symbol_t::Add:
                 return rhs; // +1 <=> 1 : nothing to do
             case symbol_t::Sub:
-                return Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Sub>(), rhs.get(), op->Site());
+                return Parser::MakeUnaryFunction(op->Symbol()->CStr(), TUnaryOp<TUnOp_Sub>(), rhs.get(), op->Site());
             case symbol_t::Not:
-                return Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Not>(), rhs.get(), op->Site());
+                return Parser::MakeUnaryFunction(op->Symbol()->CStr(), TUnaryOp<TUnOp_Not>(), rhs.get(), op->Site());
             case symbol_t::Complement:
-                return Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Cpl>(), rhs.get(), op->Site());
+                return Parser::MakeUnaryFunction(op->Symbol()->CStr(), TUnaryOp<TUnOp_Cpl>(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
             }
@@ -1166,11 +1166,11 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
             case symbol_t::Mul:
-                return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Mul>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Mul>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::Div:
-                return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Div>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Div>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::Mod:
-                return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Mod>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Mod>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
             }
@@ -1182,9 +1182,9 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
             case symbol_t::Add:
-                return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Add>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Add>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::Sub:
-                return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Sub>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Sub>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
             }
@@ -1196,9 +1196,9 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
             case symbol_t::LShift:
-                return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Lsh>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Lsh>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::RShift:
-                return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Rsh>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Rsh>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
             }
@@ -1212,13 +1212,13 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
             case symbol_t::Less:
-                return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Less>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<FCmpOp_Less>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::LessOrEqual:
-                return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_LessOrEqual>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<FCmpOp_LessOrEqual>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::Greater:
-                return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Greater>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<FCmpOp_Greater>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::GreaterOrEqual:
-                return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_GreaterOrEqual>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<FCmpOp_GreaterOrEqual>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
             }
@@ -1230,9 +1230,9 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
             case symbol_t::Equals:
-                return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Equals>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<FCmpOp_Equals>(), lhs.get(), rhs.get(), op->Site());
             case symbol_t::NotEquals:
-                return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_NotEquals>(), lhs.get(), rhs.get(), op->Site());
+                return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<FCmpOp_NotEquals>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
             }
@@ -1240,17 +1240,17 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
 ,   _and(Parser::BinaryOp<symbol_t::And, expr_t>(_equalsNotEquals,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
-            return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_And>(), lhs.get(), rhs.get(), op->Site());
+            return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_And>(), lhs.get(), rhs.get(), op->Site());
         }))
 
 ,   _xor(Parser::BinaryOp<symbol_t::Xor, expr_t>(_and,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
-            return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Xor>(), lhs.get(), rhs.get(), op->Site());
+            return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Xor>(), lhs.get(), rhs.get(), op->Site());
         }))
 
 ,   _or(Parser::BinaryOp<symbol_t::Or, expr_t>(_xor,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
-            return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Or>(), lhs.get(), rhs.get(), op->Site());
+            return Parser::MakeBinaryFunction(op->Symbol()->CStr(), TBinaryOp<TBinOp_Or>(), lhs.get(), rhs.get(), op->Site());
         }))
 
 ,   _ternary(Parser::TernaryOp<symbol_t::Question, symbol_t::Colon, expr_t>(_or,

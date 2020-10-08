@@ -109,20 +109,22 @@ inline TRefPtr<FVariableReference> MakeVariableReference(const RTTI::FPathName& 
 template <typename _Functor>
 class TUnaryFunction : public FParseExpression {
 public:
-    explicit TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site);
+    explicit TUnaryFunction(FString&& symbol, _Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site);
     virtual ~TUnaryFunction();
 
     virtual FStringView Alias() const override final { return "UnaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
+    virtual FString ToString() const override final;
 
 private:
+    FString _symbol;
     _Functor _functor;
     PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-TRefPtr<TUnaryFunction<T>> MakeUnaryFunction(T&& functor, const FParseExpression *expr, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, TUnaryFunction<T>, std::move(functor), expr, site);
+TRefPtr<TUnaryFunction<T>> MakeUnaryFunction(const FStringView& symbol, T&& functor, const FParseExpression* expr, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, TUnaryFunction<T>, FString(symbol), std::move(functor), expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -130,21 +132,23 @@ TRefPtr<TUnaryFunction<T>> MakeUnaryFunction(T&& functor, const FParseExpression
 template <typename _Functor>
 class TBinaryFunction : public FParseExpression {
 public:
-    explicit TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site);
+    explicit TBinaryFunction(FString&& symbol, _Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site);
     virtual ~TBinaryFunction();
 
     virtual FStringView Alias() const override final { return "BinaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
+    virtual FString ToString() const override final;
 
 private:
+    FString _symbol;
     _Functor _functor;
     PCParseExpression _lhs;
     PCParseExpression _rhs;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-TRefPtr<TBinaryFunction<T>> MakeBinaryFunction(T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site) {
-    return NEW_REF(Parser, TBinaryFunction<T>, std::move(functor), lhs, rhs, site);
+TRefPtr<TBinaryFunction<T>> MakeBinaryFunction(const FStringView& symbol, T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, TBinaryFunction<T>, FString(symbol), std::move(functor), lhs, rhs, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -157,6 +161,7 @@ public:
 
     virtual FStringView Alias() const override final { return "Ternary"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
+    virtual FString ToString() const override final;
 
 private:
     _Test _test;

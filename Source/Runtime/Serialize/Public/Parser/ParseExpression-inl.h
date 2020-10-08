@@ -33,10 +33,13 @@ FString TLiteral<T>::ToString() const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Functor>
-TUnaryFunction<_Functor>::TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site)
+TUnaryFunction<_Functor>::TUnaryFunction(FString&& symbol, _Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site)
 :   FParseExpression(site)
-,   _functor(std::move(functor)), _expr(expr) {
-    Assert(expr);
+,   _symbol(std::move(symbol))
+,   _functor(std::move(functor))
+,   _expr(expr) {
+    Assert(_expr);
+    Assert(not _symbol.empty());
 }
 //----------------------------------------------------------------------------
 template <typename _Functor>
@@ -49,14 +52,25 @@ RTTI::FAtom TUnaryFunction<_Functor>::Eval(FParseContext *context) const {
     return _functor(context, _expr.get());
 }
 //----------------------------------------------------------------------------
+template <typename _Functor>
+FString TUnaryFunction<_Functor>::ToString() const {
+    FStringBuilder oss;
+    oss << _symbol << _expr->ToString();
+    return oss.ToString();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Functor>
-TBinaryFunction<_Functor>::TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site)
+TBinaryFunction<_Functor>::TBinaryFunction(FString&& symbol, _Functor&& functor, const FParseExpression* lhs, const FParseExpression* rhs, const Lexer::FSpan& site)
 :   FParseExpression(site)
-,   _functor(std::move(functor)), _lhs(lhs), _rhs(rhs) {
-    Assert(lhs);
-    Assert(rhs);
+,   _symbol(std::move(symbol))
+,   _functor(std::move(functor))
+,   _lhs(lhs)
+,   _rhs(rhs) {
+    Assert(not _symbol.empty());
+    Assert(_lhs);
+    Assert(_rhs);
 }
 //----------------------------------------------------------------------------
 template <typename _Functor>
@@ -68,6 +82,13 @@ RTTI::FAtom TBinaryFunction<_Functor>::Eval(FParseContext *context) const {
     Assert(_rhs);
 
     return _functor(context, _lhs.get(), _rhs.get());
+}
+//----------------------------------------------------------------------------
+template <typename _Functor>
+FString TBinaryFunction<_Functor>::ToString() const {
+    FStringBuilder oss;
+    oss << _lhs->ToString() << ' ' << _symbol << ' ' << _rhs->ToString();
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -94,6 +115,13 @@ RTTI::FAtom TTernary<_Test>::Eval(FParseContext *context) const {
     return _test(context, _if.get())
         ? _true->Eval(context)
         : _false->Eval(context);
+}
+//----------------------------------------------------------------------------
+template <typename _Test>
+FString TTernary<_Test>::ToString() const {
+    FStringBuilder oss;
+    oss << _if->ToString() << '?' << _true->ToString() << ':' << _false->ToString();
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
