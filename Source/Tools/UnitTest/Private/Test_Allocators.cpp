@@ -22,6 +22,9 @@
 #include <algorithm>
 #include <random>
 
+
+#include "Container/CompressedRadixTrie.h"
+#include "Maths/RandomGenerator.h"
 #include "Modular/ModularDomain.h"
 
 #define USE_TESTALLOCATOR_MEMSET 0
@@ -279,12 +282,108 @@ static void Test_Allocator_(
     }
 }
 //----------------------------------------------------------------------------
+static void Test_CompressedRadixTrie_() {
+    FCompressedRadixTrie radixTrie{
+#if USE_PPE_MEMORYDOMAINS
+        MEMORYDOMAIN_TRACKING_DATA(SizePtrie)
+#endif
+    };
+
+    FRandomGenerator rng;
+    VECTOR(Benchmark, TPair<uintptr_t COMMA uintptr_t>) blocks;
+
+    forrange(loop, 0, 100) {
+        {
+            const size_t numBlocks = 2000;
+            blocks.reserve(numBlocks);
+            forrange(i, 0, numBlocks)
+                blocks.emplace_back(uintptr_t(i) << 10, rng.NextU32(1, 8192) << 1);
+
+            rng.Shuffle(blocks.MakeView());
+        }
+
+        for (const auto& it : blocks)
+            radixTrie.Insert(it.first, it.second);
+
+        auto blocksToDelete = blocks.MakeView().CutBefore(blocks.size() / 3);
+        auto blocksToKeep = blocks.MakeView().CutStartingAt(blocks.size() / 3);
+
+        rng.Shuffle(blocksToKeep);
+        rng.Shuffle(blocksToDelete);
+
+        radixTrie.Insert(1 << 8, 0xABC0);
+        radixTrie.Insert(2 << 8, 0xBCE0);
+        radixTrie.Insert(3 << 8, 0xECF0);
+
+        u32 total = 0;
+        radixTrie.Foreach([&total](uintptr_t, uintptr_t) {
+            total++;
+            });
+        AssertRelease(total == blocks.size() + 3);
+
+        AssertRelease(radixTrie.Lookup(1 << 8) == 0xABC0);
+        AssertRelease(radixTrie.Lookup(2 << 8) == 0xBCE0);
+        AssertRelease(radixTrie.Lookup(3 << 8) == 0xECF0);
+
+        uintptr_t value;
+        AssertRelease(radixTrie.Find(&value, 2 << 8));
+        AssertRelease(0xBCE0 == value);
+        AssertRelease(radixTrie.Find(&value, 3 << 8));
+        AssertRelease(0xECF0 == value);
+
+        radixTrie.Erase(1 << 8);
+
+        AssertRelease(not radixTrie.Find(&value, 1 << 8));
+
+        radixTrie.Erase(2 << 8);
+        radixTrie.Erase(3 << 8);
+
+        u32 hits = 0;
+        total = 0;
+        radixTrie.Foreach([=, &hits, &total](uintptr_t key, uintptr_t) {
+            total++;
+            hits += (std::find_if(blocksToDelete.begin(), blocksToDelete.end(), [=](auto x) {
+                return x.first == key;
+                }) != blocksToDelete.end()) ? 1 : 0;
+            });
+        AssertRelease(blocks.size() == total);
+        AssertRelease(blocksToDelete.size() == hits);
+
+#if 1
+        radixTrie.DeleteIf([=](uintptr_t key, uintptr_t) {
+            return std::find_if(blocksToDelete.begin(), blocksToDelete.end(), [=](auto x) {
+                return x.first == key;
+                }) != blocksToDelete.end();
+            });
+#else
+        for (const auto& it : blocksToDelete)
+            AssertRelease(radixTrie.Erase(it.first) == it.second);
+#endif
+
+        total = 0;
+        radixTrie.Foreach([&total](uintptr_t, uintptr_t) {
+            total++;
+            });
+        AssertRelease(total == blocksToKeep.size());
+
+        ParallelForEachRef(blocksToKeep.begin(), blocksToKeep.end(),
+            [&radixTrie](const TPair<uintptr_t COMMA uintptr_t>& it) {
+            VerifyRelease(radixTrie.Erase(it.first) == it.second);
+        },  ETaskPriority::Normal, &FGlobalThreadPool::Get() );
+
+        Assert(radixTrie.empty());
+        blocks.clear();
+    }
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Allocators() {
     PPE_DEBUG_NAMEDSCOPE("Test_Allocators");
+
+    Test_CompressedRadixTrie_();
 
     LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
 
