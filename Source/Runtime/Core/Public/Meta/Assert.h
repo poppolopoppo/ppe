@@ -8,6 +8,12 @@
 #define WITH_PPE_ASSERT_FALLBACK_TO_ASSUME 1 // when enabled every assert becomes an __assume() when !USE_PPE_DEBUG // %_NOCOMMIT%
 #define WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME 1 // when enabled every assert release becomes an __assume() when !USE_PPE_FINAL_RELEASE // %_NOCOMMIT%
 
+#if defined(__INTELLISENSE__) || defined(_PREFAST_)
+#   define WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE (1) // fall back to assume for Intellisense, so /analyze can understand the predicates
+#else
+#   define WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE (0)
+#endif
+
 #if defined(NDEBUG) && USE_PPE_ASSERT
 #   undef WITH_PPE_ASSERT
 #   error "there is someone messing with the project configuration"
@@ -48,14 +54,17 @@ private:
 PPE_CORE_API void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
 PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 
+#if WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
+#   define AssertMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))
+#   define Assert_Lightweight(...) AnalysisAssume(!!(__VA_ARGS__))
+#else
 #   define AssertMessage(_Message, ...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : []{ ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
-
-#   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
-
 #   define Assert_Lightweight(...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_ASSERT_LIGHTWEIHGT_CRASH() ) // when we need to break immediately
+#endif
 
+#   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 #   define Verify(...) AssertMessage(WIDESTRING(#__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 //----------------------------------------------------------------------------
@@ -64,8 +73,8 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 inline CONSTEXPR void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
 inline CONSTEXPR void SetAssertionHandler(FAssertHandler ) {}
 
-#   if WITH_PPE_ASSERT_FALLBACK_TO_ASSUME
-#       define AssertMessage(_Message, ...) Assume(__VA_ARGS__)
+#   if WITH_PPE_ASSERT_FALLBACK_TO_ASSUME || WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
+#       define AssertMessage(_Message, ...) (AnalysisAssume(!!(__VA_ARGS__)), Assume(!!(__VA_ARGS__))
 #   else
 #       define AssertMessage(_Message, ...) NOOP()
 #   endif
@@ -119,14 +128,17 @@ NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t* msg, const w
     abort();
 }
 
+#if WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
+#   define AssertReleaseMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))
+#   define AssertReleaseFailed(_Message) AnalysisAssume(!!(__VA_ARGS__))
+#else
 #   define AssertReleaseMessage(_Message, ...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : []{ ::PPE::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
-
 #   define AssertReleaseFailed(_Message) \
     ::PPE::AssertionReleaseFailed_NoReturn(_Message, WIDESTRING(__FILE__), __LINE__)
+#endif
 
 #   define AssertReleaseMessage_NoAssume(_Message, ...) AssertReleaseMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
-
 #   define VerifyRelease(...) AssertReleaseMessage(WIDESTRING(#__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 //----------------------------------------------------------------------------
@@ -136,8 +148,8 @@ inline CONSTEXPR void AssertionReleaseFailed(const wchar_t*, const wchar_t*, uns
 NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t*, const wchar_t*, unsigned ) { abort(); }
 inline CONSTEXPR void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 
-#   if WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME
-#       define AssertReleaseMessage(_Message, ...)  Assume(__VA_ARGS__)
+#   if WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME || WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
+#       define AssertReleaseMessage(_Message, ...)  (AnalysisAssume(!!(__VA_ARGS__)), Assume(!!(__VA_ARGS__))
 #   else
 #       define AssertReleaseMessage(_Message, ...)  NOOP()
 #   endif

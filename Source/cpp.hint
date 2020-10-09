@@ -70,6 +70,8 @@
 #define STRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY)
 #define WSTRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY)
 #define WSTRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY)
+#define COMPRESSEDRADIXTRIE_READER_SCOPE(_RWLOCK)
+#define COMPRESSEDRADIXTRIE_WRITER_SCOPE(_RWLOCK)
 #define INTRUSIVELIST_ACCESSOR(_Member)
 #define INTRUSIVELIST(_Member)
 #define INTRUSIVESINGLELIST_ACCESSOR(_Member)
@@ -212,9 +214,6 @@
 #define ROUND_TO_NEXT_64K(v)
 #define ALIGN(_BOUNDARY)
 #define CACHELINE_SIZE
-#define AssertMessage(_Message, ...)
-#define Assert_Lightweight(...)
-#define AssertReleaseMessage(_Message, ...)
 #define AssertNotReached()
 #define AssertFinalMessage(_Message, ...)
 #define AssertFinal(...)

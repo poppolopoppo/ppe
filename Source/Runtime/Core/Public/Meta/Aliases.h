@@ -158,10 +158,20 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
 #   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
 #   define Assume(...) Likely(__VA_ARGS__)
+#   define AnalysisAssume(...) NOOP(!!(__VA_ARGS__))
 #elif defined(CPP_VISUALSTUDIO)
 #   define Likely(...) __VA_ARGS__
 #   define Unlikely(...) __VA_ARGS__
 #   define Assume(...) __assume(__VA_ARGS__)
+#   if 1 // expands to do { ... } while(0) with pragmas....
+#       define AnalysisAssume(...) __analysis_assume(__VA_ARGS__)
+#   else // should do the same thing, without bullshit
+#       if defined(_PREFAST_) || defined(__INTELLISENSE__)
+#           define AnalysisAssume(...) (__noop(!!(__VA_ARGS__)),__assume(!!(__VA_ARGS__)))
+#       else
+#           define AnalysisAssume(...) NOOP();
+#       endif
+#   endif
 #else
 #   error "unsupported compiler"
 #endif
