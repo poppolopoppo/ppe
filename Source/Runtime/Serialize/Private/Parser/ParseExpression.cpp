@@ -369,7 +369,7 @@ RTTI::FAtom FCastExpr::Eval(FParseContext* context) const {
 //----------------------------------------------------------------------------
 FString FCastExpr::ToString() const {
     FStringBuilder oss;
-    oss << _traits->TypeName() << ": " << _expr->ToString();
+    oss << _traits->TypeName() << ":(" << _expr->ToString() << ')';
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
@@ -456,8 +456,8 @@ RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
 //----------------------------------------------------------------------------
 FString FFunctionCall::ToString() const {
     FStringBuilder oss;
-    oss << _obj->ToString()
-        << '.' << _funcname << '(';
+    oss << '(' << _obj->ToString()
+        << ")." << _funcname << '(';
 
     auto sep = Fmt::NotFirstTime(MakeStringView(", "));
     for (const PCParseExpression& e : _args)
@@ -594,7 +594,7 @@ RTTI::FAtom FSubscriptOperator::Subscript_Dico_(RTTI::FAtom lvalue, RTTI::FAtom 
 //----------------------------------------------------------------------------
 FString FSubscriptOperator::ToString() const {
     FStringBuilder oss;
-    oss << _lvalue->ToString() << '[' << _subscript->ToString() << ']';
+    oss << '(' << _lvalue->ToString() << ")[" << _subscript->ToString() << ']';
     return oss.ToString();
 }
 //----------------------------------------------------------------------------

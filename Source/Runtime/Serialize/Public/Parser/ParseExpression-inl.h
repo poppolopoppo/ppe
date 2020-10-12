@@ -87,7 +87,7 @@ RTTI::FAtom TBinaryFunction<_Functor>::Eval(FParseContext *context) const {
 template <typename _Functor>
 FString TBinaryFunction<_Functor>::ToString() const {
     FStringBuilder oss;
-    oss << _lhs->ToString() << ' ' << _symbol << ' ' << _rhs->ToString();
+    oss << '(' << _lhs->ToString() << ' ' << _symbol << ' ' << _rhs->ToString() << ')';
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ RTTI::FAtom TTernary<_Test>::Eval(FParseContext *context) const {
 template <typename _Test>
 FString TTernary<_Test>::ToString() const {
     FStringBuilder oss;
-    oss << _if->ToString() << '?' << _true->ToString() << ':' << _false->ToString();
+    oss << '(' << _if->ToString() << " ? " << _true->ToString() << " : " << _false->ToString() << ')';
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
