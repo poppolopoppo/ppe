@@ -293,10 +293,12 @@ void FWindowsPlatformProcess::SleepForSpinning(i32& backoff) {
     }
     else if (backoff < LoopsBeforeSleep) {
         // Pause is so long that we might as well yield CPU to scheduler.
+        ::_mm_pause();
         ::SwitchToThread();
     }
     else { //if (backoff < LoopsBeforeStall) {
         // Limited to threads of no-less priority
+        ::_mm_pause();
         ::Sleep(0);
     }/*
     else {
