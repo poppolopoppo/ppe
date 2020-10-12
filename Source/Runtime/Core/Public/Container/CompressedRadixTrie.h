@@ -6,20 +6,13 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/VirtualMemory.h"
-
-#define USE_PPE_COMPRESSEDRADIXTRIE_MUTEX (1)
-
-#if USE_PPE_COMPRESSEDRADIXTRIE_MUTEX
-#   include "Thread/ReadWriteLock.h"
-#else
-#   include "Thread/AtomicSpinLock.h"
-#endif
+#include "Thread/ReadWriteLock.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Thread safe radix trie optimized for storing pointers with some limitations :
+// Radix-trie optimized for storing pointers with some limitations:
 //  - Key must have 8 lower bits set to 0
 //  - Value must have first lower bit set to 0
 //  - Value can't be 0
@@ -52,21 +45,11 @@ public:
 
     bool empty() const { return (NullSentinel_ == uintptr_t(_root)); }
 
-#if USE_PPE_COMPRESSEDRADIXTRIE_MUTEX
-#   define COMPRESSEDRADIXTRIE_READER_SCOPE(_RWLOCK)  const FReadWriteLock::FScopeLockRead ANONYMIZE(scopeReader)(_RWLOCK)
-#   define COMPRESSEDRADIXTRIE_WRITER_SCOPE(_RWLOCK)  const FReadWriteLock::FScopeLockWrite ANONYMIZE(scopeWriter)(_RWLOCK)
-#else
-#   define COMPRESSEDRADIXTRIE_READER_SCOPE(_RWLOCK)  const FAtomicTicketRWLock::FReaderScope ANONYMIZE(scopeReader)(_RWLOCK)
-#   define COMPRESSEDRADIXTRIE_WRITER_SCOPE(_RWLOCK)  const FAtomicTicketRWLock::FWriterScope ANONYMIZE(scopeWiter)(_RWLOCK)
-#endif
-
     void Insert(const void* pkey, const void* pvalue) { Insert(uintptr_t(pkey), uintptr_t(pvalue)); }
     void Insert(uintptr_t key, uintptr_t value) {
         Assert(!(key & 0xFF));
         Assert(!(value & 1));
         Assert(value);
-
-        COMPRESSEDRADIXTRIE_WRITER_SCOPE(_rwlock);
 
         FNode* newNode;
         if (_freeList) {
@@ -95,86 +78,121 @@ public:
             _newPageAllocated = newPage + 1;
         }
 
-        Insert_AssumeLocked_(key, value, newNode);
+        InsertAt_(key, value, newNode);
     }
 
     void* Lookup(const void* pkey) const NOEXCEPT { return reinterpret_cast<void*>(Lookup(uintptr_t(pkey))); }
     uintptr_t Lookup(uintptr_t key) const NOEXCEPT {
         Assert(!(key & 0xFF));
+        const FNode* node = _root;
+        const uintptr_t* pkey = nullptr;
 
-        COMPRESSEDRADIXTRIE_READER_SCOPE(_rwlock);
+        while (!(uintptr_t(node) & 1)) {
+            int branch = ((key >> (node->Keys[0] & 0xFF)) & 1);
+            pkey = &node->Keys[branch];
+            node = node->Children[branch];
+        }
 
-        return Lookup_AssumeLocked_(key);
+        Assert(pkey && (*pkey & ~uintptr_t(0xFF)) == key);
+        return (uintptr_t(node) & ~uintptr_t(1)); // can't fail, key is *ALWAYS* here
     }
 
     bool Find(void** pvalue, const void* pkey) const NOEXCEPT { return Find((uintptr_t*)pvalue, uintptr_t(pkey)); }
     bool Find(uintptr_t* pvalue, uintptr_t key) const NOEXCEPT {
         Assert(pvalue);
         Assert(!(key & 0xFF));
+        const FNode* node = _root;
+        const uintptr_t* pkey = nullptr;
 
-        COMPRESSEDRADIXTRIE_READER_SCOPE(_rwlock);
+        while (!(uintptr_t(node) & 1)) {
+            int branch = ((key >> (node->Keys[0] & 0xFF)) & 1);
+            pkey = &node->Keys[branch];
+            node = node->Children[branch];
+        }
 
-        return Find_AssumeLocked_(pvalue, key);
+        if (Likely(pkey && (*pkey & ~uintptr_t(0xFF)) == key)) {
+            *pvalue = (uintptr_t(node) & ~uintptr_t(1));
+            Assert_NoAssume(uintptr_t(node) != NullSentinel_ || *pvalue == 0);
+            return (uintptr_t(node) != NullSentinel_);
+        }
+        else {
+            return false;
+        }
     }
 
     void* Erase(const void* pkey) NOEXCEPT { return reinterpret_cast<void*>(Erase(uintptr_t(pkey))); }
     uintptr_t Erase(uintptr_t key) NOEXCEPT {
         Assert(!(key & 0xFF));
         Assert(uintptr_t(_root) != NullSentinel_); // can't erase from empty trie !
+        FNode** parent = &_root;
+        uintptr_t* pkey = nullptr;
 
-        COMPRESSEDRADIXTRIE_WRITER_SCOPE(_rwlock);
+        for (;;) {
+            FNode* n = *parent;
 
-        return Erase_AssumeLocked_(key);
+            const u32 branch = u32((key >> (n->Keys[0] & 0xFF)) & 1);
+            FNode* const child = n->Children[branch]; // current child node
+            if (uintptr_t(child) & 1) { // leaf
+                Assert((n->Keys[branch] & ~uintptr_t(0xFF)) == key);
+                return EraseAt_(parent, pkey, branch);
+            }
+
+            pkey = &n->Keys[branch];
+            parent = &n->Children[branch];
+        }
     }
 
     template <typename _Predicate>
     void DeleteIf(_Predicate&& pred) NOEXCEPT {
-        COMPRESSEDRADIXTRIE_WRITER_SCOPE(_rwlock);
-
-        DeleteIf_AssumeLocked_(std::forward<_Predicate>(pred));
-    }
-
-    template <typename _Predicate>
-    bool TryDeleteIf(_Predicate&& pred) NOEXCEPT {
-        if (_rwlock.TryLockRead()) {
-            DeleteIf_AssumeLocked_(std::forward<_Predicate>(pred));
-            _rwlock.UnlockRead();
-            return true;
-        }
-        return false;
+        if (NullSentinel_ != uintptr_t(_root))
+            DeleteIf_Recursive_(pred, &_root, nullptr);
     }
 
     template <typename _Predicate>
     bool Where(_Predicate&& pred) const NOEXCEPT {
-        COMPRESSEDRADIXTRIE_READER_SCOPE(_rwlock);
-        return Foreach_AssumeLocked_(std::forward<_Predicate>(pred));
+        return Foreach(std::forward<_Predicate>(pred));
     }
 
     template <typename _Functor>
-    void Foreach(_Functor&& functor) const NOEXCEPT {
-        COMPRESSEDRADIXTRIE_READER_SCOPE(_rwlock);
-        Foreach_AssumeLocked_(std::forward<_Functor>(functor));
-    }
+    auto Foreach(_Functor&& functor) const NOEXCEPT {
+        using result_type = decltype(functor(uintptr_t{}, uintptr_t{}));
+        if (Likely(NullSentinel_ != uintptr_t(_root))) {
+            CONSTEXPR u32 stack_capacity = 128;
+            const FNode* stack[stack_capacity];
+            stack[0] = _root;
+            u32 stacked = 1;
 
-    template <typename _Functor>
-    bool TryForeach(_Functor&& functor) const NOEXCEPT {
-        if (_rwlock.TryLockRead()) {
-            Foreach_AssumeLocked_(std::forward<_Functor>(functor));
-            _rwlock.UnlockRead();
-            return true;
+            do {
+                const FNode* node = stack[--stacked];
+
+                forrange(branch, 0, u32(2)) {
+                    if (uintptr_t(node->Children[branch]) & 1) {
+                        if (uintptr_t(node->Children[branch]) != NullSentinel_) {
+                            const uintptr_t key = (node->Keys[branch] & ~uintptr_t(0xFF));
+                            const uintptr_t value = (uintptr_t(node->Children[branch]) & ~uintptr_t(1));
+
+                            IF_CONSTEXPR(std::is_same_v<void, result_type>)
+                                functor(key, value);
+                        else if (const result_type result = functor(key, value))
+                            return result;
+                        }
+                    }
+                    else {
+                        Assert(stacked < stack_capacity);
+                        stack[stacked++] = node->Children[branch];
+                    }
+                }
+
+            } while (stacked);
         }
-        return false;
+
+        IF_CONSTEXPR(not std::is_same_v<void, result_type>)
+            return Meta::DefaultValue<result_type>();
     }
 
 private:
     STATIC_CONST_INTEGRAL(uintptr_t, NullSentinel_, 1);
     STATIC_CONST_INTEGRAL(size_t, TriePageSize_, ALLOCATION_GRANULARITY);
-
-#if USE_PPE_COMPRESSEDRADIXTRIE_MUTEX
-    mutable FReadWriteLock _rwlock;
-#else
-    mutable FAtomicTicketRWLock _rwlock;
-#endif
 
     FNode* _root;
     FNode* _freeList;
@@ -184,7 +202,7 @@ private:
     FMemoryTracking* const _trackingDataRef;
 #endif
 
-    void Insert_AssumeLocked_(const uintptr_t key, const uintptr_t value, FNode* const newNode) {
+    void InsertAt_(const uintptr_t key, const uintptr_t value, FNode* const newNode) {
         uintptr_t xcmp = 0;
         uintptr_t nkey = (uintptr_t(_root) == NullSentinel_ ? 0 : _root->Keys[0]);
 
@@ -244,40 +262,7 @@ private:
         *parent = newNode;
     }
 
-    uintptr_t Lookup_AssumeLocked_(uintptr_t key) const NOEXCEPT {
-        const FNode* node = _root;
-        const uintptr_t* pkey = nullptr;
-
-        while (!((uintptr_t)node & 1)) {
-            int branch = ((key >> (node->Keys[0] & 0xFF)) & 1);
-            pkey = &node->Keys[branch];
-            node = node->Children[branch];
-        }
-
-        Assert(pkey && (*pkey & ~uintptr_t(0xFF)) == key);
-        return ((uintptr_t)node & ~uintptr_t(1)); // can't fail, key is *ALWAYS* here
-    }
-
-    bool Find_AssumeLocked_(uintptr_t* pvalue, uintptr_t key) const NOEXCEPT {
-        const FNode* node = _root;
-        const uintptr_t* pkey = nullptr;
-
-        while (!((uintptr_t)node & 1)) {
-            int branch = ((key >> (node->Keys[0] & 0xFF)) & 1);
-            pkey = &node->Keys[branch];
-            node = node->Children[branch];
-        }
-
-        if (Likely(pkey && (*pkey & ~uintptr_t(0xFF)) == key)) {
-            *pvalue = ((uintptr_t)node & ~uintptr_t(1));
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    FORCE_INLINE uintptr_t EraseAt_AssumeLocked_(FNode** parent, uintptr_t* pkey, u32 branch) NOEXCEPT {
+    FORCE_INLINE uintptr_t EraseAt_(FNode** parent, uintptr_t* pkey, u32 branch) NOEXCEPT {
         Assert(parent);
         FNode* const n = *parent;
         Assert(n);
@@ -305,33 +290,8 @@ private:
         return ((uintptr_t)child & ~uintptr_t(1));
     }
 
-    uintptr_t Erase_AssumeLocked_(uintptr_t key) NOEXCEPT {
-        FNode** parent = &_root;
-        uintptr_t* pkey = nullptr;
-
-        for (;;) {
-            FNode* n = *parent;
-
-            const u32 branch = u32((key >> (n->Keys[0] & 0xFF)) & 1);
-            FNode* const child = n->Children[branch]; // current child node
-            if (uintptr_t(child) & 1) { // leaf
-                Assert((n->Keys[branch] & ~uintptr_t(0xFF)) == key);
-                return EraseAt_AssumeLocked_(parent, pkey, branch);
-            }
-
-            pkey = &n->Keys[branch];
-            parent = &n->Children[branch];
-        }
-    }
-
     template <typename _Predicate>
-    void DeleteIf_AssumeLocked_(_Predicate&& pred) NOEXCEPT {
-        if (NullSentinel_ != uintptr_t(_root))
-            DeleteIf_AssumeLocked_(pred, &_root, nullptr);
-    }
-
-    template <typename _Predicate>
-    bool DeleteIf_AssumeLocked_(const _Predicate& pred, FNode** parent, uintptr_t* pkey) NOEXCEPT {
+    bool DeleteIf_Recursive_(const _Predicate& pred, FNode** parent, uintptr_t* pkey) NOEXCEPT {
     RESET_TO_PARENT: // avoid keeping track of visited nodes
         Assert_NoAssume(not (uintptr_t(*parent) & 1));
         FNode* const n = *parent;
@@ -340,12 +300,12 @@ private:
         if (uintptr_t(child) & 1) { // leaf
             if (NullSentinel_ != uintptr_t(child) &&
                 pred(n->Keys[0] & ~uintptr_t(0xFF), (uintptr_t)child & ~uintptr_t(1)) ) {
-                EraseAt_AssumeLocked_(parent, pkey, 0);
+                EraseAt_(parent, pkey, 0);
                 return false; // goto RESET_TO_PARENT in callee
             }
         }
         else {
-            if (not DeleteIf_AssumeLocked_(pred, &n->Children[0], &n->Keys[0]))
+            if (not DeleteIf_Recursive_(pred, &n->Children[0], &n->Keys[0]))
                 goto RESET_TO_PARENT;
         }
 
@@ -353,60 +313,74 @@ private:
         if (uintptr_t(other) & 1) { // leaf
             if (NullSentinel_ != uintptr_t(other) &&
                 pred(n->Keys[1] & ~uintptr_t(0xFF), (uintptr_t)other & ~uintptr_t(1)) ) {
-                EraseAt_AssumeLocked_(parent, pkey, 1);
+                EraseAt_(parent, pkey, 1);
             }
         }
         else {
-            if (not DeleteIf_AssumeLocked_(pred, &n->Children[1], &n->Keys[1]))
+            if (not DeleteIf_Recursive_(pred, &n->Children[1], &n->Keys[1]))
                 goto RESET_TO_PARENT;
         }
 
         return true;
     }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class FReadWriteCompressedRadixTrie : private FCompressedRadixTrie {
+public:
+#if USE_PPE_MEMORYDOMAINS
+    FReadWriteCompressedRadixTrie(FMemoryTracking& trackingData) NOEXCEPT
+    :   FCompressedRadixTrie(trackingData)
+    {}
+#else
+    FReadWriteCompressedRadixTrie() = default;
+#endif
 
-    template <typename _Functor>
-    auto Foreach_AssumeLocked_(_Functor&& foreach) const NOEXCEPT {
-        using result_type = decltype(foreach(uintptr_t{}, uintptr_t{}));
-        if (Likely(NullSentinel_ != uintptr_t(_root))) {
-            CONSTEXPR u32 stack_capacity = 128;
-            u32 stacked = 1;
-            const FNode* stack[stack_capacity];
-            stack[0] = _root;
+    using FCompressedRadixTrie::empty;
 
-            do {
-                const FNode* node = stack[--stacked];
-
-                forrange(branch, 0, u32(2)) {
-                    if ((uintptr_t)node->Children[branch] & 1) {
-                        if (uintptr_t(node->Children[branch]) != NullSentinel_) {
-                            const uintptr_t key = (node->Keys[branch] & ~uintptr_t(0xFF));
-                            const uintptr_t value  = ((uintptr_t)node->Children[branch] & ~uintptr_t(1));
-
-                            IF_CONSTEXPR(std::is_same_v<void, result_type>)
-                                foreach(key, value);
-                            else if (const result_type result = foreach(key, value))
-                                return result;
-                        }
-                    }
-                    else {
-                        Assert(stacked < stack_capacity);
-                        stack[stacked++] = node->Children[branch];
-                    }
-                }
-
-            } while (stacked);
-        }
-
-        IF_CONSTEXPR(not std::is_same_v<void, result_type>)
-            return Meta::DefaultValue<result_type>();
+    void Insert(uintptr_t key, uintptr_t value) {
+        const FReadWriteLock::FScopeLockWrite scopeWrite(_rwlock);
+        FCompressedRadixTrie::Insert(key, value);
     }
 
-#undef COMPRESSEDRADIXTRIE_READER_SCOPE
-#undef COMPRESSEDRADIXTRIE_WRITER_SCOPE
+    uintptr_t Lookup(uintptr_t key) const NOEXCEPT {
+        const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
+        return FCompressedRadixTrie::Lookup(key);
+    }
+
+    bool Find(uintptr_t* pvalue, uintptr_t key) const NOEXCEPT {
+        const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
+        return FCompressedRadixTrie::Find(pvalue, key);
+    }
+
+    uintptr_t Erase(uintptr_t key) NOEXCEPT {
+        const FReadWriteLock::FScopeLockWrite scopeWrite(_rwlock);
+        return FCompressedRadixTrie::Erase(key);
+    }
+
+    template <typename _Predicate>
+    void DeleteIf(_Predicate&& pred) NOEXCEPT {
+        const FReadWriteLock::FScopeLockWrite scopeWrite(_rwlock);
+        FCompressedRadixTrie::DeleteIf(std::move(pred));
+    }
+
+    template <typename _Predicate>
+    bool Where(_Predicate&& pred) const NOEXCEPT {
+        const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
+        return FCompressedRadixTrie::Where(std::move(pred));
+    }
+
+    template <typename _Functor>
+    auto Foreach(_Functor&& functor) const NOEXCEPT {
+        const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
+        return FCompressedRadixTrie::Foreach(std::move(functor));
+    }
+
+private:
+    FReadWriteLock _rwlock;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#undef USE_PPE_COMPRESSEDRADIXTRIE_MUTEX

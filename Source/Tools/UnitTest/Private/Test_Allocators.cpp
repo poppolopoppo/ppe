@@ -283,7 +283,9 @@ static void Test_Allocator_(
 }
 //----------------------------------------------------------------------------
 static void Test_CompressedRadixTrie_() {
-    FCompressedRadixTrie radixTrie{
+    LOG(Test_Allocators, Emphasis, L"testing FCompressedRadixTrie");
+
+    FReadWriteCompressedRadixTrie radixTrie{
 #if USE_PPE_MEMORYDOMAINS
         MEMORYDOMAIN_TRACKING_DATA(SizePtrie)
 #endif

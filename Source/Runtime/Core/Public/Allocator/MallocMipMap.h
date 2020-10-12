@@ -2,6 +2,8 @@
 
 #include "Core_fwd.h"
 
+#include "Allocator/Malloc.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -49,18 +51,11 @@ public:
 
 #if !USE_PPE_FINAL_RELEASE
     // used for memory diagnostics only
-    static void MediumMips(
-        void** vspace,
-        size_t* numCommitted,
-        size_t* numReserved,
-        size_t* mipSizeInBytes,
-        TMemoryView<const u32>* mipMasks );
-    static void LargeMips(
-        void** vspace,
-        size_t* numCommitted,
-        size_t* numReserved,
-        size_t* mipSizeInBytes,
-        TMemoryView<const u32>* mipMasks );
+    using FMipmapInfo = FMallocDebug::FMipmapInfo;
+
+    // return the number of mipmap, call twice to know how much to allocate for infos
+    static u32 FetchMediumMipsInfo(FMipmapInfo* pinfo) NOEXCEPT;
+    static u32 FetchLargeMipsInfo(FMipmapInfo* pinfo) NOEXCEPT;
 #endif
 
 };

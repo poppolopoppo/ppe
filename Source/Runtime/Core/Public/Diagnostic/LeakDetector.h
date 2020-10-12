@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #ifndef USE_PPE_MALLOC_LEAKDETECTOR
 #   ifdef ARCH_X64
@@ -30,6 +30,7 @@
 #include "Memory/MemoryView.h"
 #include "Memory/VirtualMemory.h"
 #include "Thread/AtomicSpinLock.h"
+#include "Thread/ReadWriteLock.h"
 #include "Thread/ThreadContext.h"
 
 #define USE_PPE_MALLOC_LEAKDETECTOR_WHITESCOPE (true) //%_NOCOMMIT%
@@ -336,14 +337,15 @@ private:
     struct FBlockTracker {
         std::atomic<size_t> NumAllocs;
 
-        class FBlockCompressedRadixTrie : public FCompressedRadixTrie {
+        class FBlockCompressedRadixTrie : public FReadWriteCompressedRadixTrie {
         public:
 #if USE_PPE_MEMORYDOMAINS
-            FBlockCompressedRadixTrie() : FCompressedRadixTrie(MEMORYDOMAIN_TRACKING_DATA(LeakDetector))
-#else
-            FBlockCompressedRadixTrie()
-#endif
+            FBlockCompressedRadixTrie() NOEXCEPT
+            :   FReadWriteCompressedRadixTrie(MEMORYDOMAIN_TRACKING_DATA(LeakDetector))
             {}
+#else
+            FBlockCompressedRadixTrie() = default;
+#endif
         };
 
         STATIC_CONST_INTEGRAL(size_t, NumBuckets, 256 / ALLOCATION_BOUNDARY);
@@ -352,7 +354,7 @@ private:
         FBlockTracker() : NumAllocs(0) {}
         ~FBlockTracker() = default;
 
-        FCompressedRadixTrie& PtrToBucket(void* ptr, uintptr_t* key) {
+        FBlockCompressedRadixTrie& PtrToBucket(void* ptr, uintptr_t* key) {
             Assert(ptr);
             Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, ptr));
             *key = (uintptr_t(ptr) & ~uintptr_t(0xFF));
@@ -364,14 +366,14 @@ private:
         void Allocate(void* ptr, const FBlockHeader& header) {
             NumAllocs++;
             uintptr_t key;
-            FCompressedRadixTrie& bucket = PtrToBucket(ptr, &key);
+            FBlockCompressedRadixTrie& bucket = PtrToBucket(ptr, &key);
             bucket.Insert(key, header.Pack());
         }
 
         FBlockHeader Fetch(void* ptr) {
             Assert(NumAllocs);
             uintptr_t key;
-            FCompressedRadixTrie& bucket = PtrToBucket(ptr, &key);
+            FBlockCompressedRadixTrie& bucket = PtrToBucket(ptr, &key);
             return FBlockHeader::Unpack(bucket.Lookup(key));
         }
 
@@ -379,7 +381,7 @@ private:
             Assert(NumAllocs);
             NumAllocs--;
             uintptr_t key;
-            FCompressedRadixTrie& bucket = PtrToBucket(ptr, &key);
+            FBlockCompressedRadixTrie& bucket = PtrToBucket(ptr, &key);
             return FBlockHeader::Unpack(bucket.Erase(key));
         }
 

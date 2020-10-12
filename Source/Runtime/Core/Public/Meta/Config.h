@@ -50,6 +50,11 @@
 #else
 #   define USE_PPE_DEBUG 0
 #endif
+#if defined(FASTDEBUG)
+#   define USE_PPE_FASTDEBUG 1
+#else
+#   define USE_PPE_FASTDEBUG 0
+#endif
 #ifdef PROFILING_ENABLED
 #   define USE_PPE_PROFILING 1
 #else
