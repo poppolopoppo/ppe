@@ -181,13 +181,10 @@ public: // Reader
     void ReleaseReader() NOEXCEPT {
         for (i32 backoff = 0;;) {
             unsigned r = Readers.load(std::memory_order_relaxed);
-            Assert(r);
-            if (WRITER_LOCK != r) {
-                Assert_NoAssume(r > 0);
-                if (Readers.compare_exchange_weak(r, r - 1,
-                    std::memory_order_release, std::memory_order_relaxed))
-                    return; // release read lock
-            }
+            Assert(r > 0); // or we couldn't have locked reader
+            if (Readers.compare_exchange_weak(r, r - 1,
+                std::memory_order_release, std::memory_order_relaxed))
+                return; // release read lock
 
             FPlatformProcess::SleepForSpinning(backoff);
         }
