@@ -4,6 +4,10 @@
 
 #include "HAL/PlatformDebug.h"
 
+#if !USE_PPE_FINAL_RELEASE
+#   include "IO/TextWriter_fwd.h"
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -122,28 +126,7 @@ public: // statistics
         TMemoryView<const size_t>* classes,
         TMemoryView<const i64>* allocations,
         TMemoryView<const i64>* totalBytes );
-
-    struct FMipmapInfo {
-        struct FPage {
-            struct FBlock {
-                u32 AllocationMask;
-                u32 CommittedMask;
-            };
-            void* vAddress;
-            size_t NumBlocks;
-            float ExternalFragmentation;
-            FBlock Blocks[32];
-        };
-        size_t BlockSize;
-        size_t TotalAllocationCount;
-        size_t TotalSizeAllocated;
-        size_t TotalSizeCommitted;
-        size_t TotalSizeReserved;
-        TMemoryView<FPage> Pages;
-    };
-
-    static PPE_CORE_API size_t FetchMediumMipmapInfos(FMipmapInfo* pinfo) NOEXCEPT;
-    static PPE_CORE_API size_t FetchLargeMipmapInfos(FMipmapInfo* pinfo) NOEXCEPT;
+    static PPE_CORE_API void DumpMemoryInfo(FWTextWriter& oss);
 };
 struct FLeakDetectorWhiteListScope {
     const bool WasIgnoringLeaks;

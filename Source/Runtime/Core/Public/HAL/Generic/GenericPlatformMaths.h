@@ -207,6 +207,50 @@ public: // must be defined for every platform
     }
 
     //------------------------------------------------------------------------
+    // Misc integral bit tweed ling
+
+    static CONSTEXPR u32 ContiguousBits(u32 x) {
+        u32 nbits = 0;
+        for (; x; x &= x << 1, ++nbits);
+        return nbits;
+    }
+    static CONSTEXPR u32 ContiguousBits(u64 x) {
+        u32 nbits = 0;
+        for (; x; x &= x << 1, ++nbits);
+        return nbits;
+    }
+
+    // https://graphics.stanford.edu/~seander/bithacks.html#:~:text=Reverse%20an%20N%2Dbit%20quantity%20in%20parallel%20in%205%20*%20lg(N)%20operations%3A
+    static CONSTEXPR u32 ReverseBits(u32 v) NOEXCEPT {
+        // swap odd and even bits
+        v = ((v >> 1) & 0x55555555u) | ((v & 0x55555555u) << 1);
+        // swap consecutive pairs
+        v = ((v >> 2) & 0x33333333u) | ((v & 0x33333333u) << 2);
+        // swap nibbles ...
+        v = ((v >> 4) & 0x0F0F0F0Fu) | ((v & 0x0F0F0F0Fu) << 4);
+        // swap bytes
+        v = ((v >> 8) & 0x00FF00FFu) | ((v & 0x00FF00FFu) << 8);
+        // swap 2-byte long pairs
+        v = (v >> 16) | (v << 16);
+        return v;
+    }
+    static CONSTEXPR u64 ReverseBits(u64 v) NOEXCEPT {
+        // swap odd and even bits
+        v = ((v >>  1) & 0x5555555555555555ull) | ((v & 0x5555555555555555ull) << 1);
+        // swap consecutive pairs
+        v = ((v >>  2) & 0x3333333333333333ull) | ((v & 0x3333333333333333ull) << 2);
+        // swap nibbles ...
+        v = ((v >>  4) & 0x0F0F0F0F0F0F0F0Full) | ((v & 0x0F0F0F0F0F0F0F0Full) << 4);
+        // swap bytes
+        v = ((v >>  8) & 0x00FF00FF00FF00FFull) | ((v & 0x00FF00FF00FF00FFull) << 8);
+        // swap 2-byte long pairs
+        v = ((v >> 16) & 0x0000FFFF0000FFFFull) | ((v & 0x0000FFFF0000FFFFull) << 16);
+        // swap 4-byte long pairs
+        v = (v >> 32) | (v << 32);
+        return v;
+    }
+
+    //------------------------------------------------------------------------
     // see http://codinggorilla.domemtech.com/?p=81 or http://en.wikipedia.org/wiki/Binary_logarithm
     // but modified to return 0 for a input value of 0, 686ms on test data
 

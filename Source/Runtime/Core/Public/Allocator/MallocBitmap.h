@@ -3,12 +3,13 @@
 #include "Core_fwd.h"
 
 #include "Allocator/Malloc.h"
+#include "IO/TextWriter_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FMallocMipMap {
+class PPE_CORE_API FMallocBitmap {
 public:
     // 64k-2Mb
     static const size_t MediumMaxAllocSize;
@@ -19,7 +20,7 @@ public:
 
     static void MediumTrim();
 
-    static bool AliasesToMediumMips(void* ptr) NOEXCEPT;
+    static bool AliasesToMediumHeap(void* ptr) NOEXCEPT;
     static size_t MediumSnapSize(size_t sz) NOEXCEPT;
     static size_t MediumRegionSize(void* ptr) NOEXCEPT;
 
@@ -32,49 +33,31 @@ public:
 
     static void LargeTrim();
 
-    static bool AliasesToLargeMips(void* ptr) NOEXCEPT;
+    static bool AliasesToLargeHeap(void* ptr) NOEXCEPT;
     static size_t LargeSnapSize(size_t sz) NOEXCEPT;
     static size_t LargeRegionSize(void* ptr) NOEXCEPT;
 
     // large+medium
-    static const size_t MipMaxAllocSize;
+    static const size_t MaxAllocSize;
 
-    static void* MipAlloc(size_t sz, size_t alignment);
-    static void* MipResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
-    static void MipFree(void* ptr);
+    static void* HeapAlloc(size_t sz, size_t alignment);
+    static void* HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
+    static void HeapFree(void* ptr);
 
     static void MemoryTrim();
 
-    static bool AliasesToMips(void* ptr) NOEXCEPT;
+    static bool AliasesToHeaps(void* ptr) NOEXCEPT;
     static size_t SnapSize(size_t sz) NOEXCEPT;
     static size_t RegionSize(void* ptr) NOEXCEPT;
 
 #if !USE_PPE_FINAL_RELEASE
-    // used for memory diagnostics only
-    struct FMipmapInfo {
-        struct FPage {
-            struct FBlock {
-                u32 AllocationMask;
-                u32 CommittedMask;
-            };
-            void* vAddress;
-            size_t NumBlocks;
-            float ExternalFragmentation;
-            FBlock Blocks[32];
-        };
-        size_t BlockSize;
-        size_t TotalAllocationCount;
-        size_t TotalSizeAllocated;
-        size_t TotalSizeCommitted;
-        size_t TotalSizeReserved;
-        TMemoryView<FPage> Pages;
-    };
+    static void DumpMediumHeapInfo(FWTextWriter& oss) NOEXCEPT;
+    static void DumpLargeHeapInfo(FWTextWriter& oss) NOEXCEPT;
 
-    // return the number of mipmap, call twice to know how much to allocate for infos
-    static u32 FetchMediumMipsInfo(FMipmapInfo* pinfo) NOEXCEPT;
-    static u32 FetchLargeMipsInfo(FMipmapInfo* pinfo) NOEXCEPT;
-
-    static void DumpMemoryInfo(FWTextWriter& oss);
+    static void DumpHeapInfo(FWTextWriter& oss) NOEXCEPT {
+        DumpMediumHeapInfo(oss);
+        DumpLargeHeapInfo(oss);
+    }
 #endif
 
 };

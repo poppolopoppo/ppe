@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #if !USE_PPE_FINAL_RELEASE
+#   include "IO/TextWriter_fwd.h"
 #   include "Memory/MemoryView.h"
 #endif
 
@@ -26,6 +27,10 @@ public:
     static size_t   SnapSize(size_t size) NOEXCEPT;
 
     static size_t   RegionSize(void* ptr);
+
+#if !USE_PPE_FINAL_RELEASE
+    static void     DumpMemoryInfo(FWTextWriter& oss);
+#endif
 
 public:
     // made public so that external code can align on block sizes

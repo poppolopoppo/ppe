@@ -29,7 +29,16 @@
 #endif
 
 // for medium > large block size allocations + used as FBinnedChunk allocator (*WAY* faster)
-#define USE_MALLOCBINNED_MIPMAPS 1 //%_NOCOMMIT%
+#define USE_MALLOCBINNED_BITMAPS 1 // less internal fragmentation %_NOCOMMIT%
+#define USE_MALLOCBINNED_MIPMAPS 0 // less external fragmentation %_NOCOMMIT%
+
+#if USE_MALLOCBINNED_BITMAPS && USE_MALLOCBINNED_MIPMAPS
+#   error "can't use both bitmaps and mipmaps"
+#endif
+
+#if USE_MALLOCBINNED_BITMAPS
+#    include "Allocator/MallocBitmap.h"
+#endif
 #if USE_MALLOCBINNED_MIPMAPS
 #    include "Allocator/MallocMipMap.h"
 #endif
@@ -191,7 +200,7 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ : Meta::FNonCopyableNorMovable {
 // FBinnedThreadCache_
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedThreadCache_ : Meta::FNonCopyableNorMovable {
-    STATIC_CONST_INTEGRAL(size_t, MaxFreeChunks, 8); // x 64kb = 512kb max reserve per *thread* (NOT per *core*)
+    STATIC_CONST_INTEGRAL(size_t, MaxFreeChunks, 2); // x 64kb = 128kb max reserve per *thread* (NOT per *core*)
     STATIC_CONST_INTEGRAL(uintptr_t, InvalidBlockRef, uintptr_t(-1));
 
     u32 NumChunksFreed;
@@ -338,8 +347,14 @@ struct FBinnedStats_ {
 static void* AllocateNewBinnedChunk_() {
     void* p;
 
+#if USE_MALLOCBINNED_BITMAPS
+    // better reuse the same memory than bitmaps, plus it's *WAY* faster
+    p = FMallocBitmap::MediumAlloc(FBinnedChunk_::ChunkSizeInBytes, ALLOCATION_BOUNDARY);
+    if (p)
+        return p;
+#endif
 #if USE_MALLOCBINNED_MIPMAPS
-    // better reuse the same memory than mip maps, plus it's *WAY* faster
+    // better reuse the same memory than mipmaps, plus it's *WAY* faster
     p = FMallocMipMap::MediumAlloc(FBinnedChunk_::ChunkSizeInBytes, ALLOCATION_BOUNDARY);
     if (p)
         return p;
@@ -357,6 +372,13 @@ static void* AllocateNewBinnedChunk_() {
 static void DeallocateBinnedChunk_(void* p) {
     Assert(p);
 
+#if USE_MALLOCBINNED_BITMAPS
+    // need to check if the container is aliasing
+    if (FMallocBitmap::AliasesToMediumHeap(p)) {
+        FMallocBitmap::MediumFree(p);
+        return;
+    }
+#endif
 #if USE_MALLOCBINNED_MIPMAPS
     // need to check if the container is aliasing
     if (FMallocMipMap::AliasesToMediumMips(p)) {
@@ -419,6 +441,12 @@ static void PokeChunkToFront_(FBinnedBucket_& bk, FBinnedChunk_* const ch) {
 static size_t NonSmallBlockRegionSize_(void* const ptr) {
     Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
 
+#if USE_MALLOCBINNED_BITMAPS
+    if (FMallocBitmap::AliasesToMediumHeap(ptr))
+        return FMallocBitmap::MediumRegionSize(ptr);
+    if (FMallocBitmap::AliasesToLargeHeap(ptr))
+        return FMallocBitmap::LargeRegionSize(ptr);
+#endif
 #if USE_MALLOCBINNED_MIPMAPS
     if (FMallocMipMap::AliasesToMediumMips(ptr))
         return FMallocMipMap::MediumRegionSize(ptr);
@@ -432,7 +460,14 @@ static size_t NonSmallBlockRegionSize_(void* const ptr) {
 static size_t NonSmallBlockSnapSize_(size_t sizeInBytes) {
     Assert_NoAssume(sizeInBytes > FBinnedChunk_::MaxSizeInBytes);
 
-#if USE_MALLOCBINNED_MIPMAPS
+#if USE_MALLOCBINNED_BITMAPS
+    sizeInBytes = ROUND_TO_NEXT_64K(sizeInBytes);
+    if (sizeInBytes <= FMallocBitmap::MediumMaxAllocSize)
+        return FMallocBitmap::MediumSnapSize(sizeInBytes);
+    else
+        return FMallocBitmap::LargeSnapSize(sizeInBytes);
+
+#elif USE_MALLOCBINNED_MIPMAPS
     sizeInBytes = ROUND_TO_NEXT_64K(sizeInBytes);
     if (sizeInBytes <= FMallocMipMap::MediumMaxAllocSize)
         return FMallocMipMap::MediumSnapSize(sizeInBytes);
@@ -691,6 +726,7 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
             // try to fetch from thread local cache
             if (Likely(tc.FreeChunks)) {
                 Assert(tc.NumChunksFreed);
+                Assert_NoAssume(tc.FreeChunks->CheckCanary());
                 Assert_NoAssume(tc.NumChunksFreed < FBinnedThreadCache_::MaxFreeChunks);
                 Assert_NoAssume(nullptr == tc.FreeChunks->PrevChunk);
 
@@ -777,10 +813,15 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
         Assert_NoAssume(size > FBinnedChunk_::MaxSizeInBytes);
 
         void* p = nullptr;
+#if USE_MALLOCBINNED_BITMAPS
+        p = FMallocBitmap::HeapAlloc(size, ALLOCATION_BOUNDARY);
+
+        if (nullptr == p) // also handle bitmap OOM
+#endif
 #if USE_MALLOCBINNED_MIPMAPS
         p = FMallocMipMap::MipAlloc(size, ALLOCATION_BOUNDARY);
 
-        if (nullptr == p) // also handle mip map OOM
+        if (nullptr == p) // also handle mipmap OOM
 #endif
         {
             STATIC_ASSERT(ALLOCATION_GRANULARITY == 64 * 1024);
@@ -1036,7 +1077,11 @@ static NO_INLINE void BinnedFree_(FBinnedBucket_& bk, FBinnedChunk_* ch, FBinned
 static NO_INLINE void LargeFree_(void* const ptr) {
     AssertRelease(ptr);
 
-#if USE_MALLOCBINNED_MIPMAPS
+#if USE_MALLOCBINNED_BITMAPS
+    if (FMallocBitmap::AliasesToHeaps(ptr))
+        FMallocBitmap::HeapFree(ptr);
+    else
+#elif USE_MALLOCBINNED_MIPMAPS
     if (FMallocMipMap::AliasesToMips(ptr))
         FMallocMipMap::MipFree(ptr);
     else
@@ -1056,7 +1101,15 @@ static NODISCARD NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize,
     // only called when both new and old size are large blocks
 
     void* newp = nullptr;
-#if USE_MALLOCBINNED_MIPMAPS
+#if USE_MALLOCBINNED_BITMAPS
+    if (oldSize <= FMallocBitmap::MaxAllocSize &&
+        FMallocBitmap::AliasesToHeaps(oldp))
+        newp = FMallocBitmap::HeapResize(oldp, newSize, oldSize); // try to resize the mipmap allocation
+    else
+        Assert_NoAssume(FMallocBitmap::AliasesToHeaps(oldp) == false);
+
+    if (Unlikely(nullptr == newp)) // if resize failed fallback on alloc+free (specialized for large allocs)
+#elif USE_MALLOCBINNED_MIPMAPS
     if (oldSize <= FMallocMipMap::MipMaxAllocSize &&
         FMallocMipMap::AliasesToMips(oldp) )
         newp = FMallocMipMap::MipResize(oldp, newSize, oldSize); // try to resize the mipmap allocation
@@ -1066,7 +1119,11 @@ static NODISCARD NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize,
     if (Unlikely(nullptr == newp)) // if resize failed fallback on alloc+free (specialized for large allocs)
 #endif
     {
-#if USE_MALLOCBINNED_MIPMAPS
+#if USE_MALLOCBINNED_BITMAPS
+        newp = FMallocBitmap::HeapAlloc(newSize, ALLOCATION_BOUNDARY);
+
+        if (nullptr == newp) // also handle mip map OOM
+#elif USE_MALLOCBINNED_MIPMAPS
         newp = FMallocMipMap::MipAlloc(newSize, ALLOCATION_BOUNDARY);
 
         if (nullptr == newp) // also handle mip map OOM
@@ -1078,12 +1135,20 @@ static NODISCARD NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize,
 
         // need to align on 16 for Memstream()
         const size_t cpySize = ROUND_TO_NEXT_16(Min(oldSize, newSize));
+#if USE_MALLOCBINNED_BITMAPS
+        Assert_NoAssume(cpySize <= FMallocBitmap::RegionSize(newp));
+#elif USE_MALLOCBINNED_MIPMAPS
         Assert_NoAssume(cpySize <= FMallocMipMap::RegionSize(newp));
+#endif
 
         // copy previous data to new block without polluting caches
         FPlatformMemory::MemstreamLarge(newp, oldp, cpySize);
 
-#if USE_MALLOCBINNED_MIPMAPS
+#if USE_MALLOCBINNED_BITMAPS
+        if (FMallocBitmap::AliasesToHeaps(oldp))
+            FMallocBitmap::HeapFree(oldp);
+        else
+#elif USE_MALLOCBINNED_MIPMAPS
         if (FMallocMipMap::AliasesToMips(oldp))
             FMallocMipMap::MipFree(oldp);
         else
@@ -1300,9 +1365,10 @@ void* FMallocBinned::Realloc(void* const ptr, size_t size) {
 
         if (Likely(size)) {
             const size_t old = FMallocBinned::RegionSize(ptr);
+            Assert_NoAssume(SnapSize(old) == old);
 
             // skip reallocation if no growth is needed
-            if (Unlikely(MakeBinnedClass_(old) == MakeBinnedClass_(size)))
+            if (Unlikely(SnapSize(size) == old))
                 return ptr;
 
             // for small blocks < 32kb:
@@ -1364,6 +1430,9 @@ void FMallocBinned::ReleaseCacheMemory() {
     ReleaseFreeBatches_(FBinnedGlobalCache_::Get());
     ReleaseLargeBlocks_(FBinnedLargeBlocks_::Get());
 
+#if USE_MALLOCBINNED_BITMAPS
+    FMallocBitmap::MemoryTrim();
+#endif
 #if USE_MALLOCBINNED_MIPMAPS
     FMallocMipMap::MemoryTrim();
 #endif
@@ -1395,6 +1464,16 @@ size_t FMallocBinned::RegionSize(void* ptr) {
 size_t FMallocBinned::SizeClass(size_t size) NOEXCEPT {
     return MakeBinnedClass_(SnapSize(size));
 }
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+void FMallocBinned::DumpMemoryInfo(FWTextWriter& oss) {
+#if USE_MALLOCBINNED_BITMAPS
+    FMallocBitmap::DumpHeapInfo(oss);
+#elif USE_MALLOCBINNED_MIPMAPS
+    FMallocMipMap::DumpMemoryInfo(oss);
+#endif
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -112,7 +112,7 @@ struct FMipmapGlobalCache {
             STATIC_ASSERT(sizeof(FMipmapPool) == ALLOCATION_GRANULARITY);
             FVirtualMemory::InternalFree(pool, sizeof(FMipmapPool)
             #if USE_PPE_MEMORYDOMAINS
-                , MEMORYDOMAIN_TRACKING_DATA(MipmapPool)
+                , MEMORYDOMAIN_TRACKING_DATA(Bookkeeping)
             #endif
                 );
         }
@@ -121,7 +121,7 @@ struct FMipmapGlobalCache {
     FMipmapPage* GrabFreePage() NOEXCEPT {
 #if USE_PPE_MEMORYDOMAINS
         ON_SCOPE_EXIT([]() { // after AllocateSystem() call
-            MEMORYDOMAIN_TRACKING_DATA(MipmapPool).AllocateUser(sizeof(FMipmapPage));
+            MEMORYDOMAIN_TRACKING_DATA(Bookkeeping).AllocateUser(sizeof(FMipmapPage));
         });
 #endif
         for (FMipmapPool* pool = Pools.Head(); pool; pool = pool->Node.Next) {
@@ -146,7 +146,7 @@ struct FMipmapGlobalCache {
         if ((pool == nullptr) || (pool->NumBusy == FMipmapPool::MaxPages) ) {
             void* const alloc = FVirtualMemory::InternalAlloc(sizeof(FMipmapPool)
 #if USE_PPE_MEMORYDOMAINS
-                , MEMORYDOMAIN_TRACKING_DATA(MipmapPool)
+                , MEMORYDOMAIN_TRACKING_DATA(Bookkeeping)
 #endif
                 );
             Assert(alloc);
@@ -165,7 +165,7 @@ struct FMipmapGlobalCache {
         Assert_NoAssume(busyPage->NumUnused == 0);
 
 #if USE_PPE_MEMORYDOMAINS
-        MEMORYDOMAIN_TRACKING_DATA(MipmapPool).DeallocateUser(sizeof(FMipmapPage));
+        MEMORYDOMAIN_TRACKING_DATA(Bookkeeping).DeallocateUser(sizeof(FMipmapPage));
 #endif
 
         FMipmapPool* const pool = FMipmapPool::PoolFromPage(busyPage);
@@ -188,7 +188,7 @@ struct FMipmapGlobalCache {
         if (Likely(0 == pool->NumBusy)) {
             FVirtualMemory::InternalFree(pool, sizeof(FMipmapPool)
 #if USE_PPE_MEMORYDOMAINS
-                , MEMORYDOMAIN_TRACKING_DATA(MipmapPool)
+                , MEMORYDOMAIN_TRACKING_DATA(Bookkeeping)
 #endif
                 );
         }

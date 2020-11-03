@@ -282,71 +282,6 @@ void DumpTrackingDataFullName_(TBasicTextWriter<_Char>& oss, const FMemoryTracki
 }
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
-#if !USE_PPE_FINAL_RELEASE
-void DumpMipsFragmentation_(
-    FWTextWriter& oss,
-    const FWStringView& name,
-    size_t(*fFetchMips)(FMallocDebug::FMipmapInfo*) ) {
-    // call with nullptr to know how much we must reserve
-    const size_t reservedSize = fFetchMips(nullptr);
-
-    // preallocate the space needed before fetching debug infos (can't allocate during fetch since this is our main allocator)
-    STACKLOCAL_POD_ARRAY(FMallocDebug::FMipmapInfo::FPage, ReservedPages, reservedSize);
-    FMallocDebug::FMipmapInfo info;
-    info.Pages = ReservedPages;
-    info.Pages = info.Pages.CutBefore(fFetchMips(&info));
-
-    CONSTEXPR size_t width = 175;
-    const auto hr = Fmt::Repeat(L'-', width);
-
-    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
-        << L"  Report allocation internal fragmentation for <"
-        << name
-        << L"> : "
-        << Fmt::CountOfElements(info.TotalAllocationCount)
-        << L" , "
-        << Fmt::SizeInBytes(info.BlockSize)
-        << L" -> "
-        << Fmt::SizeInBytes(info.TotalSizeAllocated)
-        << L" / "
-        << Fmt::SizeInBytes(info.TotalSizeCommitted)
-        << L" / "
-        << Fmt::SizeInBytes(info.TotalSizeReserved)
-        << L" (" << Fmt::CountOfElements(info.Pages.size()) << L" pages)"
-        << Eol << hr << Eol;
-
-    CONSTEXPR const FWStringView AllocationTags = L"◇◈"; //L"◉○";// L"►◄"; // L"▬▭";// L"▪▫";// L"▮▯"; // L"▼▲";// L"○●";
-
-    forrange(p, 0, info.Pages.size()) {
-        const FMallocDebug::FMipmapInfo::FPage& page = info.Pages[p];
-
-        Format(oss, L"Page#{0} : {1} blocks committed -> {2}, external fragmentation = {3}",
-            p, page.NumBlocks, Fmt::SizeInBytes(page.NumBlocks * info.BlockSize), Fmt::FPercentage{ page.ExternalFragmentation });
-        const u8* const vAddr = reinterpret_cast<const u8*>(page.vAddress);
-
-        size_t tag = size_t(-1);
-        forrange(b, 0, 32) {
-            if ((b % 4) == 0) {
-                oss << Eol << Fmt::Pointer(vAddr + b * info.BlockSize) << L"   ";
-            }
-            if (b < page.NumBlocks) {
-                const FMallocDebug::FMipmapInfo::FPage::FBlock& block = page.Blocks[b];
-                forrange(m, 0, u32(32)) {
-                    if (block.AllocationMask & (u32(1) << m)) tag = (tag + 1) % AllocationTags.size();
-                    oss.Put((block.CommittedMask & (u32(1) << m)) ? AllocationTags[tag] : L'▒');
-                }
-            }
-            else {
-                oss << Fmt::Repeat(L'░', 32);
-            }
-            oss << L' ';
-        }
-
-        oss << Eol;
-    }
-}
-#endif //!USE_PPE_FINAL_RELEASE
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -373,11 +308,8 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
 #if USE_PPE_FINAL_RELEASE
     UNUSED(oss);
 #else
-    oss << Eol;
-
-    DumpMipsFragmentation_(oss, L"MediumMips", &FMallocDebug::FetchMediumMipmapInfos);
-    DumpMipsFragmentation_(oss, L"LargeMips", &FMallocDebug::FetchLargeMipmapInfos);
-
+    oss << L"Reporting allocator memory info:" << Eol;
+    FMallocDebug::DumpMemoryInfo(oss);
 #endif
 }
 //----------------------------------------------------------------------------

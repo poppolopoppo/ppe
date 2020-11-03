@@ -82,8 +82,7 @@ struct FMallocLowLevel {
     FORCE_INLINE static size_t  RegionSize(void* ptr);
 #endif
 #if !USE_PPE_FINAL_RELEASE
-    FORCE_INLINE static size_t  FetchMediumMipmapInfos(FMallocDebug::FMipmapInfo* pinfo) NOEXCEPT;
-    FORCE_INLINE static size_t  FetchLargeMipmapInfos(FMallocDebug::FMipmapInfo* pinfo) NOEXCEPT;
+    FORCE_INLINE static void    DumpMemoryInfo(FWTextWriter& oss);
 #endif
 };
 //----------------------------------------------------------------------------
@@ -114,12 +113,7 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 #   endif
 #endif
 #if !USE_PPE_FINAL_RELEASE
-size_t FMallocLowLevel::FetchMediumMipmapInfos(FMallocDebug::FMipmapInfo* ) NOEXCEPT {
-    return 0; // unsupported
-}
-size_t FMallocLowLevel::FetchLargeMipmapInfos(FMallocDebug::FMipmapInfo* ) NOEXCEPT {
-    return 0; // unsupported
-}
+void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {/* #TODO */ }
 #endif
 }
 #endif //!PPE_MALLOC_ALLOCATOR_STD
@@ -158,11 +152,8 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 }
 #endif
 #if !USE_PPE_FINAL_RELEASE
-size_t FMallocLowLevel::FetchMediumMipmapInfos(FMallocDebug::FMipmapInfo* pinfo) NOEXCEPT {
-    return FMallocMipMap::FetchMediumMipsInfo(pinfo);
-}
-size_t FMallocLowLevel::FetchLargeMipmapInfos(FMallocDebug::FMipmapInfo* pinfo) NOEXCEPT {
-    return FMallocMipMap::FetchLargeMipsInfo(pinfo);
+void FMallocLowLevel::DumpMemoryInfo(FWTextWriter& oss) {
+    FMallocBinned::DumpMemoryInfo(oss);
 }
 #endif
 #endif //!PPE_MALLOC_ALLOCATOR_BINNED
@@ -195,12 +186,7 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 }
 #endif
 #if !USE_PPE_FINAL_RELEASE
-size_t FMallocLowLevel::FetchMediumMipmapInfos(FMallocDebug::FMipmapInfo*) NOEXCEPT {
-    return 0; // unsupported
-}
-size_t FMallocLowLevel::FetchLargeMipmapInfos(FMallocDebug::FMipmapInfo*) NOEXCEPT {
-    return 0; // unsupported
-}
+void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {/* #TODO */}
 #endif
 #endif //!PPE_MALLOC_ALLOCATOR_STOMP
 //----------------------------------------------------------------------------
@@ -272,11 +258,8 @@ public:
     }
 #endif
 #if !USE_PPE_FINAL_RELEASE
-    FORCE_INLINE static size_t FetchMediumMipmapInfos(FMallocDebug::FMipmapInfo* pinfo) NOEXCEPT {
-        return FMallocLowLevel::FetchMediumMipmapInfos(pinfo);
-    }
-    FORCE_INLINE static size_t FetchLargeMipmapInfos(FMallocDebug::FMipmapInfo* pinfo) NOEXCEPT {
-        return FMallocLowLevel::FetchLargeMipmapInfos(pinfo);
+    FORCE_INLINE static void DumpMemoryInfo(FWTextWriter& oss) {
+        FMallocLowLevel::DumpMemoryInfo(oss);
     }
 #endif
 
@@ -487,14 +470,8 @@ bool FMallocDebug::FetchAllocationHistogram(
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
-size_t FMallocDebug::FetchMediumMipmapInfos(FMipmapInfo* pinfo) NOEXCEPT {
-    return FMallocProxy::FetchMediumMipmapInfos(pinfo);
-}
-#endif //!USE_PPE_FINAL_RELEASE
-//----------------------------------------------------------------------------
-#if !USE_PPE_FINAL_RELEASE
-size_t FMallocDebug::FetchLargeMipmapInfos(FMipmapInfo* pinfo) NOEXCEPT {
-    return FMallocProxy::FetchLargeMipmapInfos(pinfo);
+void FMallocDebug::DumpMemoryInfo(FWTextWriter& oss) {
+    FMallocProxy::DumpMemoryInfo(oss);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------

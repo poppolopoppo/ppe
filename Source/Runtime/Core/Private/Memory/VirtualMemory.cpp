@@ -61,7 +61,7 @@ private:
     FReadWriteCompressedRadixTrie _allocs;
 
 #if USE_PPE_MEMORYDOMAINS
-    FVMAllocSizePTrie_() : _allocs(MEMORYDOMAIN_TRACKING_DATA(SizePtrie)) {}
+    FVMAllocSizePTrie_() : _allocs(MEMORYDOMAIN_TRACKING_DATA(Bookkeeping)) {}
 #else
     FVMAllocSizePTrie_() {}
 #endif

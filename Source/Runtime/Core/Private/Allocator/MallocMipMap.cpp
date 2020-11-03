@@ -8,8 +8,14 @@
 
 #include "Memory/MemoryDomain.h"
 
+#if !USE_PPE_FINAL_RELEASE
+#   include "Allocator/StackLocalAllocator.h"
+#   include "IO/Format.h"
+#   include "IO/FormatHelpers.h"
+#   include "IO/TextWriter.h"
+#endif
 #if USE_PPE_MEMORYDOMAINS
-#    include "Memory/MemoryTracking.h"
+#   include "Memory/MemoryTracking.h"
 #endif
 
 //reserved virtual size for mip maps (not everything is consumed systematically)
@@ -30,7 +36,7 @@ namespace {
 //----------------------------------------------------------------------------
 using FMediumMipMaps_ = TMipMapAllocator2 < TMipmapCpuTraits<
 #if USE_PPE_MEMORYDOMAINS
-    MEMORYDOMAIN_TAG(MediumMipmaps),
+    MEMORYDOMAIN_TAG(MediumHeap),
 #endif
     PPE_MIPMAPS_MEDIUM_GRANULARITY
 >>;
@@ -41,7 +47,7 @@ static FMediumMipMaps_& MediumMips_() NOEXCEPT {
 //----------------------------------------------------------------------------
 using FLargeMipMaps_ = TMipMapAllocator2 < TMipmapCpuTraits<
 #if USE_PPE_MEMORYDOMAINS
-    MEMORYDOMAIN_TAG(LargeMipmaps),
+    MEMORYDOMAIN_TAG(LargeHeap),
 #endif
     PPE_MIPMAPS_LARGE_GRANULARITY
 >>;
@@ -102,6 +108,71 @@ static u32 FetchMipmapInfos_(FMallocMipMap::FMipmapInfo* pinfo, TMipMapAllocator
     else {
         CONSTEXPR u32 SafetySlack = 32;
         return (numPages + SafetySlack/* reserve more because of MT */);
+    }
+}
+#endif //!USE_PPE_FINAL_RELEASE
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+void DumpMipsFragmentation_(
+    FWTextWriter& oss,
+    const FWStringView& name,
+    u32 (*fFetchMips)(FMallocMipMap::FMipmapInfo*)) {
+    // call with nullptr to know how much we must reserve
+    const u32 reservedSize = fFetchMips(nullptr);
+
+    // preallocate the space needed before fetching debug infos (can't allocate during fetch since this is our main allocator)
+    STACKLOCAL_POD_ARRAY(FMallocMipMap::FMipmapInfo::FPage, reservedPages, reservedSize);
+    FMallocMipMap::FMipmapInfo info;
+    info.Pages = reservedPages;
+    info.Pages = info.Pages.CutBefore(fFetchMips(&info));
+
+    CONSTEXPR size_t width = 175;
+    const auto hr = Fmt::Repeat(L'-', width);
+
+    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
+        << L"  Report allocation internal fragmentation for <"
+        << name
+        << L"> : "
+        << Fmt::CountOfElements(info.TotalAllocationCount)
+        << L" , "
+        << Fmt::SizeInBytes(info.BlockSize)
+        << L" -> "
+        << Fmt::SizeInBytes(info.TotalSizeAllocated)
+        << L" / "
+        << Fmt::SizeInBytes(info.TotalSizeCommitted)
+        << L" / "
+        << Fmt::SizeInBytes(info.TotalSizeReserved)
+        << L" (" << Fmt::CountOfElements(info.Pages.size()) << L" pages)"
+        << Eol << hr << Eol;
+
+    CONSTEXPR const FWStringView AllocationTags = L"◇◈"; //L"◉○";// L"►◄"; // L"▬▭";// L"▪▫";// L"▮▯"; // L"▼▲";// L"○●";
+
+    forrange(p, 0, info.Pages.size()) {
+        const FMallocMipMap::FMipmapInfo::FPage& page = info.Pages[p];
+
+        Format(oss, L"Page#{0} : {1} blocks committed -> {2}, external fragmentation = {3}",
+            p, page.NumBlocks, Fmt::SizeInBytes(page.NumBlocks * info.BlockSize), Fmt::FPercentage{ page.ExternalFragmentation });
+        const u8* const vAddr = reinterpret_cast<const u8*>(page.vAddress);
+
+        size_t tag = size_t(-1);
+        forrange(b, 0, 32) {
+            if ((b % 4) == 0) {
+                oss << Eol << Fmt::Pointer(vAddr + b * info.BlockSize) << L"   ";
+            }
+            if (b < page.NumBlocks) {
+                const FMallocMipMap::FMipmapInfo::FPage::FBlock& block = page.Blocks[b];
+                forrange(m, 0, u32(32)) {
+                    if (block.AllocationMask & (u32(1) << m)) tag = (tag + 1) % AllocationTags.size();
+                    oss.Put((block.CommittedMask & (u32(1) << m)) ? AllocationTags[tag] : L'▒');
+                }
+            }
+            else {
+                oss << Fmt::Repeat(L'░', 32);
+            }
+            oss << L' ';
+        }
+
+        oss << Eol;
     }
 }
 #endif //!USE_PPE_FINAL_RELEASE
@@ -275,6 +346,10 @@ u32 FMallocMipMap::FetchMediumMipsInfo(FMipmapInfo* pinfo) NOEXCEPT {
 }
 u32 FMallocMipMap::FetchLargeMipsInfo(FMipmapInfo* pinfo) NOEXCEPT {
     return FetchMipmapInfos_(pinfo, LargeMips_());
+}
+void FMallocMipMap::DumpMemoryInfo(FWTextWriter& oss) {
+    DumpMipsFragmentation_(oss, L"MediumMips", &FetchMediumMipsInfo);
+    DumpMipsFragmentation_(oss, L"LargeMips", &FetchLargeMipsInfo);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------

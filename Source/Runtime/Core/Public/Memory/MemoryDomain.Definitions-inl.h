@@ -15,18 +15,17 @@ MEMORYDOMAIN_IMPL(DeviceHeap,                           GpuMemory)
 //------------------------------------------------------------------------------
 // Reserved memory
 //------------------------------------------------------------------------------
+MEMORYDOMAIN_IMPL(Bookkeeping,                          ReservedMemory)
 MEMORYDOMAIN_IMPL(Fibers,                               ReservedMemory)
 MEMORYDOMAIN_IMPL(LeakDetector,                         ReservedMemory)
 MEMORYDOMAIN_IMPL(LinearHeap,                           ReservedMemory)
 MEMORYDOMAIN_GROUP_IMPL(Malloc,                         ReservedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(SmallTables,              Malloc)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Mipmaps,                  Malloc)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(MediumMipmaps,            Mipmaps)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(LargeMipmaps,             Mipmaps)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(Heaps,                    Malloc)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(MediumHeap,               Heaps)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(LargeHeap,                Heaps)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VeryLargeBlocks,          Malloc)
 MEMORYDOMAIN_IMPL(MemoryPool,                           ReservedMemory)
-MEMORYDOMAIN_IMPL(MipmapPool,                           ReservedMemory)
-MEMORYDOMAIN_IMPL(SizePtrie,                            ReservedMemory)
 //------------------------------------------------------------------------------
 // Used memory
 //------------------------------------------------------------------------------
@@ -35,6 +34,7 @@ MEMORYDOMAIN_GROUP_IMPL(Core,                           UsedMemory)
 MEMORYDOMAIN_IMPL(Alloca,                               Core)
 MEMORYDOMAIN_IMPL(Benchmark,                            Core)
 MEMORYDOMAIN_IMPL(Compress,                             Core)
+MEMORYDOMAIN_IMPL(Config,                               Core)
 MEMORYDOMAIN_IMPL(Container,                            Core)
 MEMORYDOMAIN_IMPL(Diagnostic,                           Core)
 MEMORYDOMAIN_IMPL(Event,                                Core)

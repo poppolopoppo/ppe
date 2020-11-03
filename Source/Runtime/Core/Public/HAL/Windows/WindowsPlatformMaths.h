@@ -129,6 +129,13 @@ public:
     using FGenericPlatformMaths::IsPrime;
     using FGenericPlatformMaths::NextPrime;
 
+
+    //------------------------------------------------------------------------
+    // Misc integral bit tweed ling
+
+    using FGenericPlatformMaths::ContiguousBits;
+    using FGenericPlatformMaths::ReverseBits;
+
     //------------------------------------------------------------------------
     // using _BitScanReverse
 

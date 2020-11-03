@@ -210,21 +210,21 @@ public:
     // Bit Scan Reverse
 
     static FORCE_INLINE bool bsr(unsigned long* __restrict r, u32 v) NOEXCEPT {
-        *r = 32 - __builtin_clz(v);
+        *r = 31 ^ __builtin_clz(v);
         return (0 != v);
     }
     static FORCE_INLINE bool bsr(u32* __restrict r, u32 v) NOEXCEPT {
-        *r = 32 - __builtin_clz(v);
+        *r = 31 ^ __builtin_clz(v);
         return (0 != v);
     }
 
 #   ifdef ARCH_X64
     static FORCE_INLINE bool bsr(unsigned long* __restrict r, u64 v) NOEXCEPT {
-        *r = 64 - __builtin_clz(v);
+        *r = 63 ^ __builtin_clz(v);
         return (0 != v);
     }
     static FORCE_INLINE bool bsr(u32* __restrict r, u64 v) NOEXCEPT {
-        *r = 64 - __builtin_clz(v);
+        *r = 63 ^ __builtin_clz(v);
         return (0 != v);
     }
 #   endif
