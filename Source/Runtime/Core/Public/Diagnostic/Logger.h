@@ -96,6 +96,9 @@ public:
     static PPE_CORE_API void RegisterLogger(const PLogger& logger);
     static PPE_CORE_API void UnregisterLogger(const PLogger& logger);
 
+    static PPE_CORE_API ELoggerVerbosity GlobalVerbosity();
+    static PPE_CORE_API void SetGlobalVerbosity(ELoggerVerbosity verbosity);
+
 public:
     static PPE_CORE_API PLogger MakeStdout();
     static PPE_CORE_API PLogger MakeOutputDebug();

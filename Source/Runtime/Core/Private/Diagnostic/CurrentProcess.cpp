@@ -90,6 +90,13 @@ FCurrentProcess::FCurrentProcess(
     }
 #endif
 
+#if !USE_PPE_FINAL_RELEASE && USE_PPE_LOGGER
+    if (HasArgument(L"-Unattended"))
+        FLogger::SetGlobalVerbosity(ELoggerVerbosity::Warning);
+    if (HasArgument(L"-Quiet"))
+        FLogger::SetGlobalVerbosity(ELoggerVerbosity::None);
+#endif
+
     LogAllInfos();
 }
 //----------------------------------------------------------------------------

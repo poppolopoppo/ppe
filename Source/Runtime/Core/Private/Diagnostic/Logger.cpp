@@ -67,6 +67,7 @@ LOG_CATEGORY(PPE_CORE_API, LogDefault)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+static ELoggerVerbosity GLoggerVerbosity_ = ELoggerVerbosity::All;
 static THREAD_LOCAL bool GIsInLogger_ = false;
 struct FIsInLoggerScope {
     const bool WasInLogger;
@@ -618,7 +619,7 @@ static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
 void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
     const FIsInLoggerScope loggerScope;
 
-    if (category.Verbosity ^ level)
+    if ((category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level))
         CurrentLogger_().Log(category, level, site, text);
 
     HandleFatalLogIFN_(level);
@@ -627,7 +628,7 @@ void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& 
 void FLogger::LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) {
     const FIsInLoggerScope loggerScope;
 
-    if (category.Verbosity ^ level)
+    if ((category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level))
         CurrentLogger_().LogArgs(category, level, site, format, args);
 
     HandleFatalLogIFN_(level);
@@ -694,6 +695,14 @@ void FLogger::UnregisterLogger(const PLogger& logger) {
     Assert(logger);
 
     FUserLogger::Get().Remove(logger);
+}
+//----------------------------------------------------------------------------
+ELoggerVerbosity FLogger::GlobalVerbosity() {
+    return GLoggerVerbosity_;
+}
+//----------------------------------------------------------------------------
+void FLogger::SetGlobalVerbosity(ELoggerVerbosity verbosity) {
+    GLoggerVerbosity_ = verbosity;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
