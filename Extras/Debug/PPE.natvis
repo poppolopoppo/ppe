@@ -171,6 +171,31 @@
     </Expand>
   </Type>
 
+    <Type Name="PPE::TScalarVectorComponent&lt;*, 0&gt;">
+		<DisplayString>x:{data[0]}</DisplayString>
+	    <Expand>
+			<Item Name="x">data[0]</Item>
+	    </Expand>
+    </Type>
+	<Type Name="PPE::TScalarVectorComponent&lt;*, 1&gt;">
+		<DisplayString>y:{data[1]}</DisplayString>
+		<Expand>
+			<Item Name="y">data[1]</Item>
+		</Expand>
+	</Type>
+	<Type Name="PPE::TScalarVectorComponent&lt;*, 2&gt;">
+		<DisplayString>z:{data[2]}</DisplayString>
+		<Expand>
+			<Item Name="z">data[2]</Item>
+		</Expand>
+	</Type>
+	<Type Name="PPE::TScalarVectorComponent&lt;*, 3&gt;">
+		<DisplayString>w:{data[3]}</DisplayString>
+		<Expand>
+			<Item Name="w">data[3]</Item>
+		</Expand>
+	</Type>
+
   <Type Name="PPE::TScalarMatrix&lt;*, *, *&gt;">
     <Expand>
       <ArrayItems>
