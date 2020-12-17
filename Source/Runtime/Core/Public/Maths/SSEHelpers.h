@@ -95,6 +95,15 @@ FORCE_INLINE m128i_t VECTORCALL m128i_epi8_mask_move(mask16_t m) NOEXCEPT {
     return mask;
 }
 //----------------------------------------------------------------------------
+/*
+FORCE_INLINE int VECTORCALL m128i_tzcnt(m128i_t mask) NOEXCEPT { // find first bit set
+    // https://mischasan.wordpress.com/2011/11/03/sse2-bit-trick-ffsfls-for-xmm-registers/
+    int pos = ::_mm_movemask_epi8(::_mm_cmpeq_epi8(mask, ::_mm_setzero_si128()));
+    pos = int(::_tzcnt_u32((u16)~pos)) - 1;
+    return (pos < 0 ? -1 : (pos << 3) + ::_tzcnt_u32(((unsigned char const*)&mask)[pos]) - 1);
+}
+*/
+//----------------------------------------------------------------------------
 FORCE_INLINE m128i_t VECTORCALL m128i_epi8_tzcnt_mask(m128i_t mask_epi8) NOEXCEPT {
     const m128i_t shuf_epi64 = ::_mm_set_epi64x(0x0706050403020100ULL, 0x8080808080808080ULL);
     const m128i_t shuf_epi32 = ::_mm_set_epi64x(0x0b0a090880808080ULL, 0x0302010080808080ULL);
