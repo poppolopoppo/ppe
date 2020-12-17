@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "Allocator/MallocBinned.h"
+#include "Allocator/AllocatorBinning.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 
@@ -103,7 +103,7 @@ public:
 
 private:
     FLinearHeap _heap;
-    void* _pools[FMallocBinned::NumSizeClasses];
+    void* _pools[FAllocatorBinning::NumBins];
 };
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS

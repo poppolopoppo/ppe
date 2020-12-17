@@ -7,7 +7,6 @@
 #include "Memory/VirtualMemory.h"
 #include "Meta/Utility.h" // unlikely
 #include "Thread/AtomicSpinLock.h"
-#include "Thread/ThreadContext.h"
 
 #include "Diagnostic/Logger.h"
 #if USE_PPE_LOGGER
@@ -604,15 +603,15 @@ void* FPooledLinearHeap::Allocate(size_t size) {
     Assert(size);
 
 #if USE_PPE_LINEARHEAP_POOLING
-    const size_t cls = FMallocBinned::SizeClass(size);
+    const u32 cls = FAllocatorBinning::IndexFromSize(size);
 
     if (Likely((cls < lengthof(_pools)) && _pools[cls])) {
         auto* blk = static_cast<FPoolLinearHeapBlock_*>(_pools[cls]);
-        Assert_NoAssume(FMallocBinned::SizeClasses[cls] == blk->SizeInBytes);
+        Assert_NoAssume(FAllocatorBinning::IndexToBlockSize(cls) == blk->SizeInBytes);
         _pools[cls] = blk->Node.Next;
 
 #   if USE_PPE_MEMORYDOMAINS
-        _heap._trackingData.AllocateUser(FMallocBinned::SizeClasses[cls]);
+        _heap._trackingData.AllocateUser(FAllocatorBinning::IndexToBlockSize(cls));
 #   endif
 
         return blk;
@@ -620,7 +619,7 @@ void* FPooledLinearHeap::Allocate(size_t size) {
     else {
         return _heap.Allocate(
             (cls < lengthof(_pools)
-                ? FMallocBinned::SizeClasses[cls]
+                ? FAllocatorBinning::IndexToBlockSize(cls)
                 : FLinearHeap::SnapSize(size) ));
     }
 
@@ -669,9 +668,9 @@ void FPooledLinearHeap::Deallocate(void* ptr, size_t size) {
     if (Likely(_heap.IsLastBlock(ptr, size) == false)) {
         Assert_NoAssume(sizeof(FPoolLinearHeapBlock_) <= size);
 
-        const size_t cls = FMallocBinned::SizeClass(size);
+        const u32 cls = FAllocatorBinning::IndexFromSize(size);
         if (cls < lengthof(_pools)) {
-            Assert_NoAssume(FMallocBinned::SizeClasses[cls] == size);
+            Assert_NoAssume(FAllocatorBinning::IndexToBlockSize(cls) == size);
 
             auto* blk = static_cast<FPoolLinearHeapBlock_*>(ptr);
             blk->SizeInBytes = size; // stores the size only for trimming
@@ -716,7 +715,7 @@ void FPooledLinearHeap::TrimPools() {
 
     FPoolLinearHeapBlock_* sorted = nullptr;
 
-    forrange(cls, 0, FMallocBinned::NumSizeClasses) {
+    forrange(cls, 0, FAllocatorBinning::NumBins) {
         for (auto* blk = static_cast<FPoolLinearHeapBlock_*>(_pools[cls]); blk; ) {
             FPoolLinearHeapBlock_* const b = blk;
             blk = blk->Node.Next;
@@ -745,7 +744,7 @@ void FPooledLinearHeap::TrimPools() {
     // finally reconstruct the free lists if we found a hole and stopped the process
 
     while (FPoolLinearHeapBlock_* const blk = FPoolLinearHeapList_::PopHead(&sorted)) {
-        const size_t cls = FMallocBinned::SizeClass(blk->SizeInBytes);
+        const u32 cls = FAllocatorBinning::IndexFromSize(blk->SizeInBytes);
         blk->Node.Next = static_cast<FPoolLinearHeapBlock_*>(_pools[cls]);
         _pools[cls] = blk;
     }
@@ -755,9 +754,9 @@ void FPooledLinearHeap::TrimPools() {
 //----------------------------------------------------------------------------
 size_t FPooledLinearHeap::SnapSize(size_t sizeInBytes) NOEXCEPT {
 #if USE_PPE_LINEARHEAP_POOLING
-    const size_t cls = FMallocBinned::SizeClass(sizeInBytes);
+    const u32 cls = FAllocatorBinning::IndexFromSize(sizeInBytes);
     return (cls < lengthof(_pools)
-        ? FMallocBinned::SizeClasses[cls]
+        ? FAllocatorBinning::IndexToBlockSize(cls)
         : FLinearHeap::SnapSize(sizeInBytes) );
 #else
     return FLinearHeap::SnapSize(sizeInBytes);
