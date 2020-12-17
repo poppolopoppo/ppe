@@ -36,11 +36,13 @@ public:
         operator const T& () const NOEXCEPT {
             return (*reinterpret_cast<const T*>(&Storage));
         }
-        TAlloc() NOEXCEPT
+
+        template <typename... _Args>
+        TAlloc(_Args&&... args) NOEXCEPT
         :   FAlloc(&Storage, [](void* p) NOEXCEPT {
             Meta::Destroy(reinterpret_cast<T*>(p));
         }) {
-            Meta::Construct(reinterpret_cast<T*>(&Storage));
+            Meta::Construct(reinterpret_cast<T*>(&Storage), std::forward<_Args>(args)...);
             Get().Allocate(*this);
         }
     };
