@@ -13,7 +13,7 @@ class PPE_CORE_API FMallocBitmap {
 public:
     static const size_t Alignment;
 
-    // 64k-2Mb
+    // 32k-2Mb
     static const size_t MediumMaxAllocSize;
 
     static void* MediumAlloc(size_t sz, size_t alignment);
@@ -26,7 +26,7 @@ public:
     static size_t MediumSnapSize(size_t sz) NOEXCEPT;
     static size_t MediumRegionSize(void* ptr) NOEXCEPT;
 
-    // 2Mb-64Mb
+    // 1Mb-64Mb
     static const size_t LargeMaxAllocSize;
 
     static void* LargeAlloc(size_t sz, size_t alignment);
