@@ -46,7 +46,7 @@ void FFATSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* ou
 }
 //----------------------------------------------------------------------------
 FExtname FFATSerializer::Extname() {
-    return FFSConstNames::Fat();
+    return FFSConstNames::Z(); // #TODO
 }
 //----------------------------------------------------------------------------
 PSerializer FFATSerializer::Get() {
