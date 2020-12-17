@@ -45,7 +45,7 @@ module Build
         return
     end
     def make_commandline(*args)
-        return [ RUBY_INTERPRETER_PATH, Build::Script ] + args
+        return [ RUBY_INTERPRETER_PATH, *RUBY_INTERPRETER_OPTS, Build::Script ] + args
     end
     def make_commandstr(*args)
         line = make_commandline(*args)
