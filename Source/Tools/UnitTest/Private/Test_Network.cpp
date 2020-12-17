@@ -178,8 +178,10 @@ static void Test_SocketAccept_() {
             PPE_TRY
             {
                 FHttpRequest request;
-                if (not FHttpRequest::Read(&request, socket, maxContentLength))
+                if (not FHttpRequest::Read(&request, socket, maxContentLength)) {
+                    socket.Disconnect();
                     continue;
+                }
 
                 LogRequest_(request);
 
