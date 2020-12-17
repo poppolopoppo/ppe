@@ -418,6 +418,11 @@ TMemoryView<const u8> MakeRawConstView(const TMemoryView<T>& assumePods) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename U, typename V>
+CONSTEXPR void Broadcast(const TMemoryView<U>& dst, V&& value) {
+    std::fill(dst.begin(), dst.end(), std::forward<V>(value));
+}
+//----------------------------------------------------------------------------
+template <typename U, typename V>
 CONSTEXPR void Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
     Assert(dst.size() == src.size());
     std::copy(src.begin(), src.end(), dst.begin());
