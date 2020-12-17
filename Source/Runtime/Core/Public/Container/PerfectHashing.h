@@ -116,7 +116,7 @@ public:
 
                 while (n) {
                     /* expecting linear time according to academia */
-                    const size_t h = (hash_size_t_constexpr(n->Hash +  d) % N);
+                    const size_t h = (hash_size_t_constexpr(n->Hash, d) % N);
                     if (tmp.test(h)) {
                         tmp = slots;
                         n = b.Head;
