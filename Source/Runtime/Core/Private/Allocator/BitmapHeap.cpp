@@ -28,7 +28,7 @@ static FBitmapPageGlobalCache_& BitmapPageGlobalCache_() NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FBitmapPageCache::ReleaseCacheMemory() NOEXCEPT {
-    BitmapPageGlobalCache_().ReleaseCacheMemory();
+    BitmapPageGlobalCache_().ReleaseCacheMemory(false);
 }
 //----------------------------------------------------------------------------
 void* FBitmapPageCache::GragPage_(size_t sz) NOEXCEPT {

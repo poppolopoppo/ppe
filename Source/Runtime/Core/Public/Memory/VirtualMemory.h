@@ -148,7 +148,7 @@ struct TVirtualMemoryPool {
 #endif
 
     ~TVirtualMemoryPool() NOEXCEPT {
-        ReleaseCacheMemory(); // release all pages, supposedly
+        ReleaseCacheMemory(true); // release all pages, supposedly
         AssertRelease(nullptr == FreeList); // leaking ?
     }
 
@@ -188,7 +188,7 @@ struct TVirtualMemoryPool {
     }
 
     void* AllocateExternal() NOEXCEPT;
-    void ReleaseCacheMemory() NOEXCEPT;
+    void ReleaseCacheMemory(bool all) NOEXCEPT;
 
 };
 //----------------------------------------------------------------------------
@@ -243,11 +243,11 @@ void* TVirtualMemoryPool<T>::AllocateExternal() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void TVirtualMemoryPool<T>::ReleaseCacheMemory() NOEXCEPT {
+void TVirtualMemoryPool<T>::ReleaseCacheMemory(bool all) NOEXCEPT {
     const Meta::FLockGuard scopeLock(Barrier);
 
     // first check if there's actually something to salvage
-    if (not Pages || not Pages->NextPage)
+    if (not Pages || (!all & !Pages->NextPage/* keep one page alive if !all */))
         return;
 
     // detach the free list (other thread can still pop blocks)
