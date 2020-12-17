@@ -94,6 +94,33 @@ public:
     }
 
     //------------------------------------------------------------------------
+    // critical section
+
+    using FCriticalSection = ::CRITICAL_SECTION;
+
+    static FORCE_INLINE void CreateCriticalSection(FCriticalSection* pcs) {
+        Assert(pcs);
+        ::InitializeCriticalSection(pcs);
+    }
+
+    static FORCE_INLINE void Lock(FCriticalSection& cs) {
+        ::EnterCriticalSection(&cs);
+    }
+
+    static FORCE_INLINE bool TryLock(FCriticalSection& cs) {
+        return ::TryEnterCriticalSection(&cs);
+    }
+
+    static FORCE_INLINE void Unlock(FCriticalSection& cs) {
+        ::LeaveCriticalSection(&cs);
+    }
+
+    static FORCE_INLINE void DestroyCriticalSection(FCriticalSection* pcs) {
+        Assert(pcs);
+    ::  DeleteCriticalSection(pcs);
+    }
+
+    //------------------------------------------------------------------------
     // read-write lock
 
     using FReadWriteLock = ::SRWLOCK;

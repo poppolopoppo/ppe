@@ -81,6 +81,17 @@ public: // must be defined for every platform
     static void DestroyFiber(FFiber fiber) = delete;
 
     //------------------------------------------------------------------------
+    // critical section
+
+    using FCriticalSection = void*;
+
+    static void CreateCriticalSection(FCriticalSection* pcs) = delete;
+    static void Lock(FCriticalSection& cs) = delete;
+    static bool TryLock(FCriticalSection& cs) = delete;
+    static void Unlock(FCriticalSection& cs) = delete;
+    static void DestroyCriticalSection(FCriticalSection* pcs) = delete;
+
+    //------------------------------------------------------------------------
     // read-write lock
 
     using FReadWriteLock = void*;
