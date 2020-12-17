@@ -271,8 +271,6 @@ void FModularDomain::StartModule_(IModuleInterface& mod) {
 
     mod.Start(*this);
 
-    ReportAllTrackingData();
-
     _OnPostModuleStart(*this, mod);
 }
 //----------------------------------------------------------------------------
@@ -280,8 +278,6 @@ void FModularDomain::ShutdownModule_(IModuleInterface& mod) {
     _OnPreModuleShutdown(*this, mod);
 
     mod.Shutdown(*this);
-
-    ReportAllTrackingData();
 
     _OnPostModuleShutdown(*this, mod);
 }
