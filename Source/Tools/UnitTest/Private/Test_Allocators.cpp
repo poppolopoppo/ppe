@@ -10,8 +10,8 @@
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringView.h"
-#include "HAL/PlatformMemory.h"
 #include "Maths/MathHelpers.h"
+#include "Maths/ScalarVectorHelpers.h"
 #include "Maths/Threefy.h"
 #include "Memory/MemoryView.h"
 #include "Memory/UniqueView.h"
@@ -37,7 +37,7 @@ LOG_CATEGORY(, Test_Allocators)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#if USE_PPE_ASSERT
+#if USE_PPE_DEBUG && !USE_PPE_FASTDEBUG
 static constexpr size_t GTotalAllocationSize_ = CODE3264( 64u, 128u) * 1024u * size_t(1024);
 #else
 static constexpr size_t GTotalAllocationSize_ = CODE3264(128u, 256u) * 1024u * size_t(1024);
@@ -285,16 +285,17 @@ static void Test_Allocator_(
 static void Test_CompressedRadixTrie_() {
     LOG(Test_Allocators, Emphasis, L"testing FCompressedRadixTrie");
 
+    ONLY_IF_MEMORYDOMAINS(FMemoryTracking dummyTracking("dummy", &MEMORYDOMAIN_TRACKING_DATA(ReservedMemory)));
     FReadWriteCompressedRadixTrie radixTrie{
 #if USE_PPE_MEMORYDOMAINS
-        MEMORYDOMAIN_TRACKING_DATA(SizePtrie)
+        dummyTracking
 #endif
     };
 
     FRandomGenerator rng;
     VECTOR(Benchmark, TPair<uintptr_t COMMA uintptr_t>) blocks;
 
-    forrange(loop, 0, 100) {
+    forrange(loop, 0, 30) {
         {
             const size_t numBlocks = 2000;
             blocks.reserve(numBlocks);
@@ -385,15 +386,13 @@ static void Test_CompressedRadixTrie_() {
 void Test_Allocators() {
     PPE_DEBUG_NAMEDSCOPE("Test_Allocators");
 
-    Test_CompressedRadixTrie_();
-
     LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
 
     typedef u8 value_type;
 
     constexpr size_t BlockSizeMin = 16;
     constexpr size_t BlockSizeMid = 32768;
-    constexpr size_t BlockSizeLarge = 8*1024*1024;
+    constexpr size_t BlockSizeLarge = 2*1024*1024;
 
     size_t smallBlocksSizeInBytes = 0;
     size_t largeBlocksSizeInBytes = 0;
@@ -411,12 +410,13 @@ void Test_Allocators() {
         auto generator = [&rnd](blocksizes_t* blks, u32 minSize, u32 maxSize, size_t alignment, size_t totalSize) NOEXCEPT -> size_t {
             u32 currentSize = 0;
             for (;;) {
-                auto sz4 = rnd.UniformI(minSize, maxSize);
+                float4 f = rnd.UniformF(0.f, 1.f);
 
-                sz4.x = u32(Meta::RoundToNext(sz4.x, alignment));
-                sz4.y = u32(Meta::RoundToNext(sz4.y, alignment));
-                sz4.z = u32(Meta::RoundToNext(sz4.z, alignment));
-                sz4.w = u32(Meta::RoundToNext(sz4.w, alignment));
+                const u324 sz4{
+                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.x), alignment)),
+                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.y), alignment)),
+                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.z), alignment)),
+                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.w), alignment)) };
 
                 if (currentSize + sz4.x <= totalSize) { currentSize += sz4.x; blks->push_back(sz4.x); }
                 if (currentSize + sz4.y <= totalSize) { currentSize += sz4.y; blks->push_back(sz4.y); }
@@ -446,6 +446,10 @@ void Test_Allocators() {
     ReleaseMemoryInModules();
 
     Test_Allocator_(L"FStdMallocator", FStdMallocator{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+
+    ReleaseMemoryInModules();
+
+    Test_CompressedRadixTrie_();
 
     ReleaseMemoryInModules();
 }
