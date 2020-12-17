@@ -197,7 +197,7 @@ struct FBinnedFreeBlockList {
         PartialBundle.PushHead((FBinnedBundleNode*)ptr);
         return true;
     }
-     NODISCARD FORCE_INLINE bool CanPushToFront(u32 blockSize) const {
+    NODISCARD FORCE_INLINE bool CanPushToFront(u32 blockSize) const {
         return !((!!FullBundle.Head) &
             ((PartialBundle.Count >= FBinnedBundle::MaxCount) |
              (PartialBundle.Count * blockSize >= FBinnedBundle::MaxSizeInBytes)) );
