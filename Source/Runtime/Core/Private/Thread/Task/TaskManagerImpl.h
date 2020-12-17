@@ -5,6 +5,10 @@
 #include "Thread/Task/TaskFiberPool.h"
 #include "Thread/Task/TaskScheduler.h"
 
+#if USE_PPE_LOGGER
+#   include "Time/Timeline.h"
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -53,6 +57,10 @@ private:
 
     FTaskManager& _manager;
     VECTOR(Task, std::thread) _threads;
+
+#if USE_PPE_LOGGER
+    mutable FTimeline _dumpStatsCooldown;
+#endif
 
     static void WorkerLoop_();
     static FCompletionPort* StartPortIFN_(FCompletionPort* port, size_t n) NOEXCEPT;

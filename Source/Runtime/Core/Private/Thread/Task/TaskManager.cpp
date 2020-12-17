@@ -14,6 +14,9 @@
 #   include "IO/Format.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/TextWriter.h"
+//  call-of-duty:
+#   include "Maths/Units.h"
+#   include "Time/Timeline.h"
 #endif
 
 #include <algorithm>
@@ -289,9 +292,11 @@ public:
 FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 :   _scheduler(manager.WorkerCount())
 ,   _fibers(MakeFunction<&FTaskManagerImpl::WorkerLoop_>())
-,   _manager(manager)
-{
+,   _manager(manager) {
     _threads.reserve(_manager.WorkerCount());
+#if USE_PPE_LOGGER
+    _dumpStatsCooldown = FTimeline::StartNow();
+#endif
 }
 //----------------------------------------------------------------------------
 FTaskManagerImpl::~FTaskManagerImpl() {
@@ -333,10 +338,14 @@ void FTaskManagerImpl::Consume(size_t workerIndex, FTaskQueued* task) {
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::DumpStats() {
 #if !USE_PPE_FINAL_RELEASE && USE_PPE_LOGGER
+    FTimespan elapsed;
+    if (not _dumpStatsCooldown.Tick_Every(5.0_s, elapsed))
+        return;
+
     size_t reserved, used;
     _fibers.UsageStats(&reserved, &used);
 
-    LOG(Task, Debug, L"task manager <{0}> is using {1} fibers / {2} reserved with {3} worker threads ({4} reserved for stack)",
+    LOG(Task, Debug, L"task manager <{0}> is using {1} fibers / {2} reserved with {3} worker threads ({4}   reserved for stack)",
         _manager.Name(),
         Fmt::CountOfElements(used),
         Fmt::CountOfElements(reserved),
