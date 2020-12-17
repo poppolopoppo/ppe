@@ -1113,7 +1113,9 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 ,   _rvalue([this](Parser::FParseList& input, expr_t* value) -> Parser::FParseResult {
         RTTI::PTypeTraits traits; // cast with `<TYPENAME>:x`
         const Parser::FParseMatch* const start = input.Peek();
-        if (Unlikely(const Parser::FParseResult cast = ExpectTypenameRTTI().TryParse(input, &traits))) {
+        const Parser::FParseResult cast = ExpectTypenameRTTI().TryParse(input, &traits);
+
+        if (Unlikely(cast)) {
             match_p colon = nullptr;
             if (input.TryRead<symbol_t::Colon>(&colon)) {
                 expr_t expr;

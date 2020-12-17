@@ -35,7 +35,7 @@ inline auto FMipmapPage::MemoryStats(const FPaging& page) const NOEXCEPT -> FMem
     FMemoryStats mem{};
 
     forrange(blk, 0, NumBlocks) {
-        mem.TotalNumAllocations += FPlatformMaths::popcnt(Blocks[blk].Size.load(std::memory_order_relaxed));
+        mem.TotalNumAllocations += checked_cast<u32>(FPlatformMaths::popcnt(Blocks[blk].Size.load(std::memory_order_relaxed)));
         mem.TotalAvailableSize += AvailableMips(blk);
     }
 
@@ -467,16 +467,19 @@ void* TMipMapAllocator2<_Traits>::Allocate(size_t sizeInBytes, void** phint) {
         const FReadWriteLock::FScopeLockRead scopeRead(RWLock);
 
         // hint is generally the last pointer allocated
-        if (Likely(FMipmapPage* __restrict const page = AliasingMipMap(Pages, mipmapHint))) {
+        FMipmapPage* __restrict const page = AliasingMipMap(Pages, mipmapHint);
+        if (Likely(page)) {
             const u32 blockHint = checked_cast<u32>((uintptr_t(mipmapHint) - uintptr_t(page->vAddressSpace)) / BlockSize);
-            if (Likely(void* const ptr = page->Allocate(MakePaging(), &NumUnused, checked_cast<u32>(sizeInBytes), blockHint))) {
+            void* const ptr = page->Allocate(MakePaging(), &NumUnused, checked_cast<u32>(sizeInBytes), blockHint);
+            if (Likely(ptr)) {
                 *phint = ptr;
                 return ptr;
             }
         }
 
         // then look for a page with free space if the hint didn't work
-        if (Likely(void* const ptr = AllocateFromPages(Pages, NumUnused, checked_cast<u32>(sizeInBytes)))) {
+        void* const ptr = AllocateFromPages(Pages, NumUnused, checked_cast<u32>(sizeInBytes));
+        if (Likely(ptr)) {
             *phint = ptr;
             return ptr;
         }
@@ -570,9 +573,9 @@ template <typename _Traits>
 void TMipMapAllocator2<_Traits>::GarbageCollect() {
     if (Likely(RWLock.TryLockWrite())) {
         Assert_NoAssume(NumUnused > 0);
-        Assert_NoAssume(GCList != DummyPage);
+        Assert_NoAssume(GCList != GDummyPage);
 
-        for (FMipmapPage* page = GCList.load(std::memory_order_relaxed); page != DummyPage;) {
+        for (FMipmapPage* page = GCList.load(std::memory_order_relaxed); page != GDummyPage;) {
             FMipmapPage* const pnext = page->NextPage;
             page->NextPage = nullptr;
 
@@ -585,7 +588,7 @@ void TMipMapAllocator2<_Traits>::GarbageCollect() {
         }
 
         Assert_NoAssume(0 == NumUnused);
-        GCList.store(DummyPage, std::memory_order_release);
+        GCList.store(GDummyPage, std::memory_order_release);
 
         RWLock.UnlockWrite();
     }
@@ -607,7 +610,7 @@ void TMipMapAllocator2<_Traits>::ForceGarbageCollect() {
         return false;
     });
 
-    GCList.store(DummyPage, std::memory_order_release);
+    GCList.store(GDummyPage, std::memory_order_release);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>

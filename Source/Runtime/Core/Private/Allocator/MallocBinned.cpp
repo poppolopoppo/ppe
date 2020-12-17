@@ -1091,7 +1091,7 @@ static NO_INLINE void LargeFree_(void* const ptr) {
     }
 }
 //----------------------------------------------------------------------------
-static NODISCARD NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize, size_t oldSize) {
+NODISCARD static NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize, size_t oldSize) {
     Assert(oldp);
     Assert(newSize);
     Assert(oldSize);

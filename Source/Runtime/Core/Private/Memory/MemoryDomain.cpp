@@ -2,6 +2,8 @@
 
 #include "Memory/MemoryDomain.h"
 
+
+#include "Allocator/InitSegAllocator.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/MemoryView.h"
 
@@ -107,11 +109,18 @@ namespace MemoryDomain {
 namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
-class FTrackingDataRegistry_ {
+class FTrackingDataRegistry_ : Meta::FNonCopyableNorMovable {
 public:
     static FTrackingDataRegistry_& Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FTrackingDataRegistry_, GInstance);
         return GInstance;
+    }
+
+    FTrackingDataRegistry_() = default;
+
+    ~FTrackingDataRegistry_() {
+        Assert_NoAssume(_domains.empty());
+        _domains.Clear();
     }
 
     void Register(FMemoryTracking* pTrackingData) {
@@ -142,13 +151,7 @@ public:
 
 private:
     mutable FAtomicSpinLock _barrier;
-
     INTRUSIVELIST(&FMemoryTracking::Node) _domains;
-
-    FTrackingDataRegistry_() = default;
-
-    FTrackingDataRegistry_(const FTrackingDataRegistry_&) = delete;
-    FTrackingDataRegistry_& operator =(const FTrackingDataRegistry_&) = delete;
 };
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------

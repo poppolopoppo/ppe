@@ -15,7 +15,11 @@ MEMORYDOMAIN_IMPL(DeviceHeap,                           GpuMemory)
 //------------------------------------------------------------------------------
 // Reserved memory
 //------------------------------------------------------------------------------
-MEMORYDOMAIN_IMPL(Bookkeeping,                          ReservedMemory)
+MEMORYDOMAIN_GROUP_IMPL(Bookkeeping,                    ReservedMemory)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(BitmapCache,              Bookkeeping)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(MipmapCache,              Bookkeeping)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(SmallPoolInfo,            Bookkeeping)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(SizePTrie,                Bookkeeping)
 MEMORYDOMAIN_IMPL(Fibers,                               ReservedMemory)
 MEMORYDOMAIN_IMPL(LeakDetector,                         ReservedMemory)
 MEMORYDOMAIN_IMPL(LinearHeap,                           ReservedMemory)

@@ -24,9 +24,9 @@ public:
     using FHandleRef = const FHandle*;
 
     struct CACHELINE_ALIGNED FHandle {
-        size_t Index;
         mutable FFiber Fiber;
         mutable FCallback OnWakeUp;
+        u32 Index;
 
         FTaskFiberChunk* Chunk() const {
             return (FTaskFiberChunk*)(this - Index);

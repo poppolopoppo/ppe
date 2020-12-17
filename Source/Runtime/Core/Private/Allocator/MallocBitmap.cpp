@@ -4,7 +4,6 @@
 
 #include "Allocator/BitmapHeap.h"
 #include "Allocator/InitSegAllocator.h"
-#include "Allocator/MallocBinned.h"
 
 #include "Memory/MemoryDomain.h"
 
@@ -18,7 +17,7 @@
 #endif
 
 #define PPE_BITMAPHEAPS_MEDIUM_GRANULARITY  (size_t(64)*1024) // x 64 = 4Mb per chunk (div 2 for x86)
-#define PPE_BITMAPHEAPS_LARGE_GRANULARITY  (size_t(4)*1024*1024) // x 64 = 256Mb per chunk (div 2 for x86)
+#define PPE_BITMAPHEAPS_LARGE_GRANULARITY  (size_t(2)*1024*1024) // x 64 = 128Mb per chunk (div 2 for x86)
 
 #define PPE_BITMAPHEAPS_USE_HIERARCHICAL_MIPS (0)
 
@@ -117,6 +116,7 @@ static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBi
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+const size_t FMallocBitmap::Alignment = FBitmapHeapMedium_::MinAllocSize;
 const size_t FMallocBitmap::MediumMaxAllocSize = FBitmapHeapMedium_::MaxAllocSize;
 const size_t FMallocBitmap::LargeMaxAllocSize = FBitmapHeapLarge_::MaxAllocSize;
 const size_t FMallocBitmap::MaxAllocSize = FBitmapHeapLarge_::MaxAllocSize;
@@ -125,6 +125,7 @@ void* FMallocBitmap::MediumAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
     void* const newp = BitmapHeapMedium_().Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAligned(alignment, newp));
+    Assert_NoAssume(!newp || Meta::IsAligned(FBitmapHeapMedium_::Granularity, newp));
     return newp;
 }
 //----------------------------------------------------------------------------
@@ -135,7 +136,8 @@ void* FMallocBitmap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOE
     Assert_NoAssume(oldSize >= FBitmapHeapMedium_::MinAllocSize);
     Assert_NoAssume(BitmapHeapMedium_().AllocationSize(ptr) == oldSize);
 
-    if (Likely(void* const newp = BitmapHeapMedium_().Resize(ptr, newSize))) {
+    void* const newp = BitmapHeapMedium_().Resize(ptr, newSize);
+    if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(BitmapHeapMedium_().AllocationSize(newp) == newSize);
         UNUSED(oldSize);
@@ -171,6 +173,7 @@ void* FMallocBitmap::LargeAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
     void* const newp = BitmapHeapLarge_().Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAligned(alignment, newp));
+    Assert_NoAssume(!newp || Meta::IsAligned(FBitmapHeapLarge_::Granularity, newp));
     return newp;
 }
 //----------------------------------------------------------------------------
@@ -181,7 +184,8 @@ void* FMallocBitmap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEX
     Assert_NoAssume(oldSize >= FBitmapHeapLarge_::MinAllocSize);
     Assert_NoAssume(BitmapHeapLarge_().AllocationSize(ptr) == oldSize);
 
-    if (Likely(void* const newp = BitmapHeapLarge_().Resize(ptr, newSize))) {
+    void* const newp = BitmapHeapLarge_().Resize(ptr, newSize);
+    if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(BitmapHeapLarge_().AllocationSize(newp) == newSize);
         UNUSED(oldSize);
@@ -214,8 +218,6 @@ size_t FMallocBitmap::LargeRegionSize(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void* FMallocBitmap::HeapAlloc(size_t sz, size_t alignment) {
-    Assert_NoAssume(sz > FMallocBinned::MaxSmallBlockSize);
-
     if (Likely(sz <= FBitmapHeapMedium_::MaxAllocSize))
         return MediumAlloc(MediumSnapSize(sz), alignment);
     if (sz <= FBitmapHeapLarge_::MaxAllocSize)
@@ -229,15 +231,13 @@ void* FMallocBitmap::HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXC
     Assert(newSize);
     Assert(oldSize);
     Assert(newSize != oldSize);
-    Assert_NoAssume(newSize > FMallocBinned::MaxSmallBlockSize);
-    Assert_NoAssume(oldSize > FMallocBinned::MaxSmallBlockSize);
     Assert_NoAssume(AliasesToHeaps(ptr));
 
     if (Likely((newSize <= FBitmapHeapMedium_::MaxAllocSize) & (oldSize <= FBitmapHeapMedium_::MaxAllocSize)))
         return MediumResize(ptr, MediumSnapSize(newSize), MediumSnapSize(oldSize));
 
     if ((newSize <= FBitmapHeapLarge_::MaxAllocSize) & (oldSize <= FBitmapHeapLarge_::MaxAllocSize) &
-        (newSize > FBitmapHeapMedium_::MaxAllocSize) & (oldSize > FBitmapHeapMedium_::MaxAllocSize) )
+        (newSize >  FBitmapHeapMedium_::MaxAllocSize) & (oldSize >  FBitmapHeapMedium_::MaxAllocSize) )
         return LargeResize(ptr, LargeSnapSize(newSize), LargeSnapSize(oldSize));
 
     return nullptr; // can't resize without moving the data, but there might still be some space left
@@ -269,7 +269,8 @@ size_t FMallocBitmap::SnapSize(size_t sz) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 size_t FMallocBitmap::RegionSize(void* ptr) NOEXCEPT {
-    if (Likely(const FBitmapHeapMedium_::page_type* page = BitmapHeapMedium_().Aliases(ptr)))
+    const FBitmapHeapMedium_::page_type* page = BitmapHeapMedium_().Aliases(ptr);
+    if (Likely(page))
         return page->RegionSize(ptr);
     else {
         return BitmapHeapLarge_().AllocationSize(ptr);

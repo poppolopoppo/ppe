@@ -155,7 +155,7 @@ void DumpMipsFragmentation_(
         const u8* const vAddr = reinterpret_cast<const u8*>(page.vAddress);
 
         size_t tag = size_t(-1);
-        forrange(b, 0, 32) {
+        forrange(b, 0, size_t(32)) {
             if ((b % 4) == 0) {
                 oss << Eol << Fmt::Pointer(vAddr + b * info.BlockSize) << L"   ";
             }
@@ -199,7 +199,8 @@ void* FMallocMipMap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOE
     Assert_NoAssume(oldSize >= FMediumMipMaps_::MinAllocSize);
     Assert_NoAssume(MediumMips_().AllocationSize(ptr) == oldSize);
 
-    if (Likely(void* const newp = MediumMips_().Resize(ptr, newSize))) {
+    void* const newp = MediumMips_().Resize(ptr, newSize);
+    if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(MediumMips_().AllocationSize(newp) == newSize);
         UNUSED(oldSize);
@@ -245,7 +246,8 @@ void* FMallocMipMap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEX
     Assert_NoAssume(oldSize >= FLargeMipMaps_::MinAllocSize);
     Assert_NoAssume(LargeMips_().AllocationSize(ptr) == oldSize);
 
-    if (Likely(void* const newp = LargeMips_().Resize(ptr, newSize))) {
+    void* const newp = LargeMips_().Resize(ptr, newSize);
+    if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(LargeMips_().AllocationSize(newp) == newSize);
         UNUSED(oldSize);
@@ -333,7 +335,8 @@ size_t FMallocMipMap::SnapSize(size_t sz) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 size_t FMallocMipMap::RegionSize(void* ptr) NOEXCEPT {
-    if (Likely(const FMipmapPage* page = MediumMips_().AliasingMipMap(ptr)))
+    const FMipmapPage* page = MediumMips_().AliasingMipMap(ptr);
+    if (Likely(page))
         return page->AllocationSize(FMediumMipMaps_::MakePaging(), ptr);
     else {
         return LargeMips_().AllocationSize(ptr);

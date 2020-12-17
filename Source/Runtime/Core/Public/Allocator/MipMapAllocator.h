@@ -313,12 +313,12 @@ private:
     static void GargbageCollectPages(TMipMapAllocator2& alloc);
     static void ReleaseUnusedPage(FMipmapPage** pfreePages, std::atomic<i32>& numUnused, FMipmapPage* page);
 
-    static CONSTEXPR FMipmapPage* const DummyPage{ reinterpret_cast<FMipmapPage*>(1) };
+    static inline FMipmapPage* const GDummyPage{ reinterpret_cast<FMipmapPage*>(1) };
 
     FReadWriteLock RWLock;
     FCompressedRadixTrie Pages;
     std::atomic<i32> NumUnused{ 0 };
-    std::atomic<FMipmapPage*> GCList{ DummyPage };
+    std::atomic<FMipmapPage*> GCList{ GDummyPage };
     FMipmapPage* FreePage{ nullptr };
 };
 //----------------------------------------------------------------------------
