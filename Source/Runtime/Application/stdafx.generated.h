@@ -23,6 +23,8 @@
 #include <iterator>
 #include <mutex>
 #include <chrono>
+#include <cctype>
+#include <clocale>
 #include <thread>
 #include <array>
 #include <comdef.h>
@@ -34,7 +36,6 @@
 #include <smmintrin.h>
 #include <tmmintrin.h>
 #include <pmmintrin.h>
-#include <cctype>
 #include <cwctype>
 #include <locale>
 #include <optional>
@@ -84,7 +85,6 @@
 #ifdef BUILD_Win32_FastDebug
 // system includes
 #include <iostream>
-#include <clocale>
 #include <regex>
 #include <condition_variable>
 // project includes
@@ -169,7 +169,6 @@
 #ifdef BUILD_Win64_FastDebug
 // system includes
 #include <iostream>
-#include <clocale>
 #include <regex>
 #include <condition_variable>
 // project includes

@@ -23,6 +23,8 @@
 #include <iterator>
 #include <mutex>
 #include <chrono>
+#include <cctype>
+#include <clocale>
 #include <thread>
 #include <array>
 #include <comdef.h>
@@ -34,13 +36,11 @@
 #include <smmintrin.h>
 #include <tmmintrin.h>
 #include <pmmintrin.h>
-#include <cctype>
 #include <cwctype>
 #include <locale>
 #include <regex>
 #include <optional>
 #include <iostream>
-#include <clocale>
 #include <condition_variable>
 #include <numeric>
 // Global project includes
