@@ -85,5 +85,6 @@ module Build
         RbConfig::CONFIG["bindir"],
         RbConfig::CONFIG["RUBY_INSTALL_NAME"] +
         RbConfig::CONFIG["EXEEXT"] )).realpath.to_s
+    RUBY_INTERPRETER_OPTS = $DEBUG ? %w{ --debug } : [] #%w{ --jit-min-calls=4 }
 
 end #~ Build
