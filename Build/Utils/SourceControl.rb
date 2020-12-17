@@ -68,6 +68,7 @@ module Build
         def name() :Git end
         def initialize(path)
             super(path, *%w{ git status -s })
+            @revision, @staged_files, @branch, @timestamp = nil
         end
         def staged_files?()
             if @staged_files.nil?
