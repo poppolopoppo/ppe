@@ -219,7 +219,3 @@ module Build
     end #~ Assert
 
 end #~ Build
-
-if $DEBUG
-    Build::Log.verbosity(:debug)
-end
