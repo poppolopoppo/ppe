@@ -7,34 +7,38 @@
 ## Rendering
 
 - [ ] Vulkan integration, bootstrap new Runtime.RHI module :)
-    - RHI:
-        - add external with https://github.com/KhronosGroup/Vulkan-Headers
-        - https://github.com/SaschaWillems/Vulkan/ for great samples
-        - english/french tutorials: https://vulkan-tutorial.com/ (but using GFLW :/)
-        - hello vulkan, pure vulkan sample: https://github.com/GPUOpen-LibrariesAndSDKs/HelloVulkan/
-    - GPU Open:
-        - https://gpuopen.com/learn/understanding-vulkan-objects/
-        - https://gpuopen.com/learn/vulkan-device-memory/
-        - Barriers explained: https://gpuopen.com/learn/vulkan-barriers-explained/
-        - Memory management: https://gpuopen.com/learn/vulkan-device-memory/
-        - Render passes: https://gpuopen.com/learn/vulkan-renderpasses/
-        - Validation layers: https://gpuopen.com/learn/using-the-vulkan-validation-layers/
-        - Cheat-Sheet: https://www.khronos.org/files/vulkan11-reference-guide.pdf
-    - Best practices:
-        - Adreno Vulkan developer guide: https://developer.qualcomm.com/qfile/34706/80-nb295-7_a-adreno_vulkan_developer_guide.pdf
-        - Vulkan dos and don'ts by Nvidia: https://devblogs.nvidia.com/vulkan-dos-donts/
-        - Optimizing AAA for desktop: https://gpuopen.com/presentations/2019/Vulkanised2019_06_optimising_aaa_vulkan_title_on_desktop.pdf
-        - https://gpuopen.com/learn/concurrent-execution-asynchronous-queues/
-        - https://gpuopen.com/learn/reducing-vulkan-api-call-overhead/
-            - https://github.com/zeux/volk
-        - https://gpuopen.com/learn/optimizing-gpu-occupancy-resource-usage-large-thread-groups/
-        - https://www.fasterthan.life/blog/2017/7/12/i-am-graphics-and-so-can-you-part-3-breaking-ground
-    - RenderGraph:
-        - “Design Patterns for Low-Level Real-Time Rendering” https://www.youtube.com/watch?v=mdPeXJ0eiGc
-        - “Work Stealing" https://www.youtube.com/watch?v=iLHNF7SgVN4
-        - "Reducers and other Cilk++ HyperObjects" https://www.cse.wustl.edu/~angelee/cse539/papers/reducer.pdf
-        - http://themaister.net/blog/2017/08/15/render-graphs-and-vulkan-a-deep-dive/
-        - <3<3<3 vulkan abstraction layer that represent frame as a task graph: https://github.com/azhirnov/FrameGraph
+    - Vulkan:
+        - dynamic loader -> https://subscription.packtpub.com/book/game_development/9781786468154/1/ch01lvl1sec12/preparing-for-loading-vulkan-api-functions
+        - frame graph RHI, instead of pure device abstraction -> https://github.com/azhirnov/FrameGraph.git
+
+        - RHI:
+            - add external with https://github.com/KhronosGroup/Vulkan-Headers
+            - https://github.com/SaschaWillems/Vulkan/ for great samples
+            - english/french tutorials: https://vulkan-tutorial.com/ (but using GFLW :/)
+            - hello vulkan, pure vulkan sample: https://github.com/GPUOpen-LibrariesAndSDKs/HelloVulkan/
+        - GPU Open:
+            - https://gpuopen.com/learn/understanding-vulkan-objects/
+            - https://gpuopen.com/learn/vulkan-device-memory/
+            - Barriers explained: https://gpuopen.com/learn/vulkan-barriers-explained/
+            - Memory management: https://gpuopen.com/learn/vulkan-device-memory/
+            - Render passes: https://gpuopen.com/learn/vulkan-renderpasses/
+            - Validation layers: https://gpuopen.com/learn/using-the-vulkan-validation-layers/
+            - Cheat-Sheet: https://www.khronos.org/files/vulkan11-reference-guide.pdf
+        - Best practices:
+            - Adreno Vulkan developer guide: https://developer.qualcomm.com/qfile/34706/80-nb295-7_a-adreno_vulkan_developer_guide.pdf
+            - Vulkan dos and don'ts by Nvidia: https://devblogs.nvidia.com/vulkan-dos-donts/
+            - Optimizing AAA for desktop: https://gpuopen.com/presentations/2019/Vulkanised2019_06_optimising_aaa_vulkan_title_on_desktop.pdf
+            - https://gpuopen.com/learn/concurrent-execution-asynchronous-queues/
+            - https://gpuopen.com/learn/reducing-vulkan-api-call-overhead/
+                - https://github.com/zeux/volk
+            - https://gpuopen.com/learn/optimizing-gpu-occupancy-resource-usage-large-thread-groups/
+            - https://www.fasterthan.life/blog/2017/7/12/i-am-graphics-and-so-can-you-part-3-breaking-ground
+        - RenderGraph:
+            - “Design Patterns for Low-Level Real-Time Rendering” https://www.youtube.com/watch?v=mdPeXJ0eiGc
+            - “Work Stealing" https://www.youtube.com/watch?v=iLHNF7SgVN4
+            - "Reducers and other Cilk++ HyperObjects" https://www.cse.wustl.edu/~angelee/cse539/papers/reducer.pdf
+            - http://themaister.net/blog/2017/08/15/render-graphs-and-vulkan-a-deep-dive/
+            - <3<3<3 vulkan abstraction layer that represent frame as a task graph: https://github.com/azhirnov/FrameGraph
 
 - [ ] Volumetric clouds
     - https://gist.github.com/pxv8270/e3904c49cbd8ff52cb53d95ceda3980e
