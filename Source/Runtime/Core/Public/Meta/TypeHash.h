@@ -37,7 +37,7 @@ CONSTEXPR const char* type_name() {
 #if PPE_HAS_CXXRTTI
     return typeid(T).name();
 #else
-    return "unknown-typename-???"
+    return "unknown-typename-???";
 #endif
 }
 //----------------------------------------------------------------------------
