@@ -28,6 +28,8 @@
 #include <shellapi.h>
 #include <TlHelp32.h>
 
+#define USE_PPE_WINDOWS_VSPERF (USE_PPE_PLATFORM_PROFILER && 0)
+
 // #TODO put this in Core.Application/HAL
 // http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
 // The following line is to favor the high performance NVIDIA GPU if there are multiple GPUs
@@ -217,14 +219,14 @@ void FWindowsPlatformProcess::OnProcessStart(
 #if USE_PPE_VSTOOLS_WRAPPER
     FVSToolsWrapper::Create();
 #endif
-#if USE_PPE_PLATFORM_PROFILER
+#if USE_PPE_WINDOWS_VSPERF
     FVSPerfWrapper::Create();
 #endif
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::OnProcessShutdown() {
 
-#if USE_PPE_PLATFORM_PROFILER
+#if USE_PPE_WINDOWS_VSPERF
     FVSPerfWrapper::Destroy();
 #endif
 #if USE_PPE_VSTOOLS_WRAPPER
