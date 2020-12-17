@@ -132,12 +132,13 @@ module Build
                     name: m.abs_path,
                     type: 'cppvsdbg',
                     request: 'launch',
+                    #program: [ File.join($BinariesPath, "#{m.abs_path}-${command:cpptools.activeConfigName}") ],
                     program: [ File.join($BinariesPath, "#{m.abs_path}-${command:cpptools.activeConfigName}") ],
                     args: [],
                     stopAtEntry: false,
                     cwd: $BinariesPath,
                     environment: [],
-                    visualizeFile: NATVIS,
+                    #visualizeFile: NATVIS,
                     externalConsole: false
                 }
             end
