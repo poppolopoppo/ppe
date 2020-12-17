@@ -62,6 +62,13 @@ public:
     // used by linear heaps :
     void ReleaseAllUser() NOEXCEPT;
 
+    // shouldn't be called only *before* registration!
+    void Reparent(const char* newName, FMemoryTracking* parent) NOEXCEPT {
+        _name = newName;
+        _parent = parent;
+        _level = (parent ? parent->_level + 1 : 0);
+    }
+
     static FMemoryTracking& UsedMemory();
     static FMemoryTracking& ReservedMemory();
     static FMemoryTracking& PooledMemory();

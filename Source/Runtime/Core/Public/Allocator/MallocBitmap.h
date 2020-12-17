@@ -12,6 +12,7 @@ namespace PPE {
 class PPE_CORE_API FMallocBitmap {
 public:
     static const size_t Alignment;
+
     // 64k-2Mb
     static const size_t MediumMaxAllocSize;
 

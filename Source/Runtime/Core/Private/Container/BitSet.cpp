@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBitSet::FBitSet(word_t *storage, size_t size)
+FBitSet::FBitSet(word_t *storage, size_t size) NOEXCEPT
 :   _storage(storage)
 ,   _size(size) {
     Assert(_storage || 0 == _size);
@@ -110,6 +110,33 @@ void FBitSet::CopyTo(FBitSet* other) const {
     const size_t wordCount = WordCapacity(_size);
     forrange(i, 0, wordCount)
         other->_storage[i] = _storage[i];
+}
+//----------------------------------------------------------------------------
+auto FBitSet::FirstBitSet() const NOEXCEPT -> word_t  {
+    const size_t wordCount = WordCapacity(_size);
+    forrange(w, 0, wordCount) {
+        if (const mask_t m{ _storage[w] })
+            return (w * WordBitCount + m.FirstBitSet_AssumeNotEmpty());
+    }
+    return (_size);
+}
+//----------------------------------------------------------------------------
+auto FBitSet::LastBitSet() const NOEXCEPT -> word_t  {
+    const size_t wordCount = WordCapacity(_size);
+    reverseforrange(w, 0, wordCount) {
+        if (const mask_t m{ _storage[w] })
+            return (w * WordBitCount + m.LastBitSet_AssumeNotEmpty());
+    }
+    return (_size);
+}
+//----------------------------------------------------------------------------
+auto FBitSet::PopFront() NOEXCEPT -> word_t  {
+    const size_t wordCount = WordCapacity(_size);
+    forrange(w, 0, wordCount) {
+        if (mask_t m{ _storage[w] })
+            return (w * WordBitCount + m.PopFront_AssumeNotEmpty() + 1);
+    }
+    return (0);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -3,20 +3,21 @@
 #include "Core.h"
 
 #include "Allocator/Alloca.h"
+#include "Container/BitMask.h"
+
+#define STACKLOCAL_POD_BITSET(_NAME, _COUNT) \
+    MALLOCA(::PPE::FBitSet::word_t, CONCAT(CONCAT(_, _NAME), ANONYMIZE(_Alloca)), ::PPE::FBitSet::WordCapacity(_COUNT)); \
+    ::PPE::FBitSet _NAME(CONCAT(CONCAT(_, _NAME), ANONYMIZE(_Alloca)).RawData, _COUNT)
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define STACKLOCAL_POD_BITSET(_NAME, _COUNT) \
-    MALLOCA(::PPE::FBitSet::word_t, CONCAT(CONCAT(_, _NAME), ANONYMIZE(_Alloca)), ::PPE::FBitSet::WordCapacity(_COUNT)); \
-    ::PPE::FBitSet _NAME(CONCAT(CONCAT(_, _NAME), ANONYMIZE(_Alloca)).RawData, _COUNT)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 class FBitSet {
 public:
-    typedef size_t word_t;
+    using word_t = size_t;
+    using mask_t = TBitMask<word_t>;
+
 #if     defined(ARCH_64BIT)
     STATIC_CONST_INTEGRAL(word_t, WordBitCount, 64);
     STATIC_CONST_INTEGRAL(word_t, WordBitMask,  63);
@@ -29,7 +30,8 @@ public:
 #   error "unsupported architecture !"
 #endif
 
-    FBitSet(word_t *storage, size_t size);
+    FBitSet() = default;
+    FBitSet(word_t *storage, size_t size) NOEXCEPT;
 
     size_t size() const { return _size; }
 
@@ -41,6 +43,11 @@ public:
 
     bool operator [](size_t index) const { return Get(index); }
 
+    word_t Word(size_t w) const {
+        Assert(w < _size);
+        return _storage[w];
+    }
+
     bool AllTrue() const;
     bool AllFalse() const;
 
@@ -50,6 +57,10 @@ public:
     void ResetAll(bool value);
 
     void CopyTo(FBitSet* other) const;
+
+    word_t FirstBitSet() const NOEXCEPT; // return _size if empty
+    word_t LastBitSet() const NOEXCEPT; // return _size if empty
+    word_t PopFront() NOEXCEPT; // return 0 if empty or bit index + 1
 
     static size_t WordCapacity(size_t size) { return ((size + WordBitMask) >> WordBitShift); }
 

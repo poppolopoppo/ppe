@@ -25,11 +25,9 @@ FMemoryTracking& FMemoryTracking::ReservedMemory() {
 FMemoryTracking::FMemoryTracking(
     const char* optionalName /*= "unknown"*/,
     FMemoryTracking* optionalParent /*= nullptr*/)
-    : _name(optionalName)
-    , _level(optionalParent ? optionalParent->_level + 1 : 0)
-    , _parent(optionalParent)
-    , Node{ nullptr, nullptr }
-{}
+:   Node{ nullptr, nullptr } {
+    Reparent(optionalName, optionalParent);
+}
 //----------------------------------------------------------------------------
 bool FMemoryTracking::IsChildOf(const FMemoryTracking& other) const {
     if (&other == this)
@@ -81,6 +79,7 @@ void FMemoryTracking::DeallocateUser(size_t size) NOEXCEPT {
     Assert(size);
 
     _user.Deallocate(size);
+    Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
     if (_parent)
         _parent->DeallocateUser(size);

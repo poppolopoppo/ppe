@@ -3,6 +3,7 @@
 #include "Allocator/Malloc.h"
 #include "Allocator/Mallocator.h"
 #include "Allocator/MallocBinned.h"
+#include "Allocator/MallocBinned2.h"
 #include "Allocator/MallocMipMap.h"
 #include "Allocator/MallocStomp.h"
 
@@ -15,8 +16,16 @@
 // Lowest level to hook or replace default allocator
 
 #define PPE_MALLOC_ALLOCATOR_STD           0
-#define PPE_MALLOC_ALLOCATOR_BINNED        1
-#define PPE_MALLOC_ALLOCATOR_STOMP         2
+#define PPE_MALLOC_ALLOCATOR_STOMP         1
+#define PPE_MALLOC_ALLOCATOR_BINNED1       2
+#define PPE_MALLOC_ALLOCATOR_BINNED2       3
+
+#define PPE_MALLOC_FORCE_BINNED2           1 //%_NOCOMMIT%
+#if PPE_MALLOC_FORCE_BINNED2
+#define PPE_MALLOC_ALLOCATOR_BINNED        PPE_MALLOC_ALLOCATOR_BINNED2
+#else
+#define PPE_MALLOC_ALLOCATOR_BINNED        PPE_MALLOC_ALLOCATOR_BINNED1
+#endif
 
 #define PPE_MALLOC_FORCE_STD               0 //%_NOCOMMIT%
 #define PPE_MALLOC_FORCE_STOMP             (USE_PPE_MEMORY_DEBUGGING) //%_NOCOMMIT%
@@ -118,7 +127,7 @@ void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {/* #TODO */ }
 }
 #endif //!PPE_MALLOC_ALLOCATOR_STD
 //----------------------------------------------------------------------------
-#if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_BINNED)
+#if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_BINNED1)
 void* FMallocLowLevel::Malloc(size_t size) { return FMallocBinned::Malloc(size); }
 void  FMallocLowLevel::Free(void* ptr) { FMallocBinned::Free(ptr); }
 void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) {
@@ -156,7 +165,47 @@ void FMallocLowLevel::DumpMemoryInfo(FWTextWriter& oss) {
     FMallocBinned::DumpMemoryInfo(oss);
 }
 #endif
-#endif //!PPE_MALLOC_ALLOCATOR_BINNED
+#endif //!PPE_MALLOC_ALLOCATOR_BINNED1
+//----------------------------------------------------------------------------
+#if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_BINNED2)
+void* FMallocLowLevel::Malloc(size_t size) { return FMallocBinned2::Malloc(size); }
+void  FMallocLowLevel::Free(void* ptr) { FMallocBinned2::Free(ptr); }
+void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) {
+    void* const p = FMallocBinned2::Malloc(size * nmemb);
+    FPlatformMemory::Memzero(p, size * nmemb);
+    return p;
+}
+void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return FMallocBinned2::Realloc(ptr, size); }
+void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return FMallocBinned2::AlignedMalloc(size, alignment); }
+void  FMallocLowLevel::AlignedFree(void *ptr) { FMallocBinned2::AlignedFree(ptr); }
+void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
+    void* const p = FMallocBinned2::AlignedMalloc(size * nmemb, alignment);
+    FPlatformMemory::Memzero(p, size * nmemb);
+    return p;
+}
+void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
+    return FMallocBinned2::AlignedRealloc(ptr, size, alignment);
+}
+void  FMallocLowLevel::ReleaseCacheMemory() {
+    FMallocBinned2::ReleaseCacheMemory();
+}
+void  FMallocLowLevel::ReleasePendingBlocks() {
+    FMallocBinned2::ReleasePendingBlocks();
+}
+size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT {
+    return FMallocBinned2::SnapSize(size);
+}
+#if !USE_PPE_FINAL_RELEASE
+size_t FMallocLowLevel::RegionSize(void* ptr) {
+    return FMallocBinned2::RegionSize(ptr);
+}
+#endif
+#if !USE_PPE_FINAL_RELEASE
+void FMallocLowLevel::DumpMemoryInfo(FWTextWriter& oss) {
+    FMallocBinned2::DumpMemoryInfo(oss);
+}
+#endif
+#endif //!PPE_MALLOC_ALLOCATOR_BINNED1
 //----------------------------------------------------------------------------
 #if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_STOMP)
 void* FMallocLowLevel::Malloc(size_t size) { return FMallocStomp::Malloc(size); }
