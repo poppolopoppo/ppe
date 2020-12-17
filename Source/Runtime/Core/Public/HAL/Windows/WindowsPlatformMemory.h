@@ -53,6 +53,8 @@ public:
     //------------------------------------------------------------------------
     // memory block helpers
 
+    using FGenericPlatformMemory::Memaliases;
+    using FGenericPlatformMemory::Memoverlap;
     using FGenericPlatformMemory::Memcmp;
     using FGenericPlatformMemory::Memset;
     using FGenericPlatformMemory::Memzero;

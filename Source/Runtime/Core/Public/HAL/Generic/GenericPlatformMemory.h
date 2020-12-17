@@ -66,6 +66,11 @@ public: // must be defined for every platform
     //------------------------------------------------------------------------
     // memory block helpers
 
+    static bool Memaliases(const void* vspace, size_t sz, const void* ptr) {
+        return ((uintptr_t(ptr) >= uintptr_t(vspace)) &
+                (uintptr_t(ptr) < uintptr_t(vspace) + sz) );
+    }
+
     static bool Memoverlap(const void* lhs, size_t lhsSize, const void* rhs, size_t rhsSize) {
         return (Max(uintptr_t(lhs) + lhsSize, uintptr_t(rhs) + rhsSize) -
                 Min(uintptr_t(lhs), uintptr_t(rhs)) < (lhsSize + rhsSize) );
