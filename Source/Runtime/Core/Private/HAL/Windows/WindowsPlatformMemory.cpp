@@ -220,8 +220,8 @@ void FWindowsPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 void FWindowsPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes, bool release) {
     Assert(ptr);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(release ? ALLOCATION_GRANULARITY : PAGE_SIZE, ptr));
+    Assert(Meta::IsAligned(release ? ALLOCATION_GRANULARITY : PAGE_SIZE, sizeInBytes));
 
     ::DWORD dwFreeType;
     if (release) {
