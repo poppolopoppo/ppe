@@ -38,9 +38,9 @@ LOG_CATEGORY(, Test_Allocators)
 namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_DEBUG && !USE_PPE_FASTDEBUG
-static constexpr size_t GTotalAllocationSize_ = CODE3264( 64u, 128u) * 1024u * size_t(1024);
+static constexpr size_t GTotalAllocationSize_ = CODE3264( 32u,  64u) * 1024u * size_t(1024);
 #else
-static constexpr size_t GTotalAllocationSize_ = CODE3264(128u, 256u) * 1024u * size_t(1024);
+static constexpr size_t GTotalAllocationSize_ = CODE3264( 64u, 128u) * 1024u * size_t(1024);
 #endif
 #if USE_PPE_ASSERT
 static constexpr size_t GLoopCount_ = 10;
@@ -372,7 +372,7 @@ static void Test_CompressedRadixTrie_() {
         ParallelForEachRef(blocksToKeep.begin(), blocksToKeep.end(),
             [&radixTrie](const TPair<uintptr_t COMMA uintptr_t>& it) {
             VerifyRelease(radixTrie.Erase(it.first) == it.second);
-        },  ETaskPriority::Normal, &FGlobalThreadPool::Get() );
+        },  ETaskPriority::Normal, &FHighPriorityThreadPool::Get() );
 
         Assert(radixTrie.empty());
         blocks.clear();
