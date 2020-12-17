@@ -168,9 +168,10 @@ struct FVulkanProperties_ {
 #endif
 
         bool validated = true;
-        validated &= CheckNames_(
+        validated &= ValidateNames_(
             "vkEnumerateInstanceExtensionProperties",
-            Extensions.MakeConstView(),
+            Extensions,
+            EVulkanValidationMode::NonTolerant,
             &VkExtensionProperties::extensionName,
             [](u32* pNumExtensions, VkExtensionProperties* pExtensions) {
                 return vkEnumerateInstanceExtensionProperties(nullptr, pNumExtensions, pExtensions);
@@ -178,9 +179,10 @@ struct FVulkanProperties_ {
 
         SetupValidationLayers_(debug);
 
-        validated &= CheckNames_(
+        validated &= ValidateNames_(
             "vkEnumerateInstanceLayerProperties",
-            Layers.MakeConstView(),
+            Layers,
+            EVulkanValidationMode::Tolerant,
             &VkLayerProperties::layerName,
             [](u32* pNumLayers, VkLayerProperties* pLayers) {
                 return vkEnumerateInstanceLayerProperties(pNumLayers, pLayers);
@@ -197,9 +199,10 @@ struct FVulkanProperties_ {
 
         bool validated = true;
 
-        validated &= CheckNames_(
+        validated &= ValidateNames_(
             "vkEnumerateDeviceExtensionProperties",
-            Extensions.MakeConstView(),
+            Extensions,
+            EVulkanValidationMode::NonTolerant,
             &VkExtensionProperties::extensionName,
             [device](u32* pNumExtensions, VkExtensionProperties* pExtensions) {
                 return vkEnumerateDeviceExtensionProperties(device, nullptr, pNumExtensions, pExtensions);
@@ -207,9 +210,10 @@ struct FVulkanProperties_ {
 
         SetupValidationLayers_(debug);
 
-        validated &= CheckNames_(
+        validated &= ValidateNames_(
             "vkEnumerateDeviceLayerProperties",
-            Layers.MakeConstView(),
+            Layers,
+            EVulkanValidationMode::Tolerant,
             &VkLayerProperties::layerName,
             [device](u32* pNumLayers, VkLayerProperties* pLayers) {
                 return vkEnumerateDeviceLayerProperties(device, pNumLayers, pLayers);
@@ -234,10 +238,15 @@ private:
     }
 
     using FVulkanStaticName = char[VK_MAX_EXTENSION_NAME_SIZE];
-    template <typename T, typename _Enumerate>
-    NODISCARD static bool CheckNames_(
+    enum class EVulkanValidationMode {
+        Tolerant,
+        NonTolerant
+    };
+    template <typename T, typename _Allocator, typename _Enumerate>
+    NODISCARD static bool ValidateNames_(
         const char* name,
-        const TMemoryView<const char* const>& neededNames,
+        TVector<const char*, _Allocator>& neededNames,
+        EVulkanValidationMode mode,
         FVulkanStaticName T::* member,
         _Enumerate&& each ) {
         u32 numElements = 0;
@@ -262,19 +271,31 @@ private:
                 MakeCStringView(L", ")),
             elements.size() );
 
-        for (const char* needed : neededNames) {
+        for (size_t i = 0; i < neededNames.size(); ) {
             bool found = false;
             for (const T& elt : elements) {
-                if (FConstChar{ needed }.EqualsI(elt.*member)) {
+                if (FConstChar{ neededNames[i] }.EqualsI(elt.*member)) {
                     found = true;
                     break;
                 }
             }
 
-            if (not found) {
-                LOG(Vulkan, Error, L"{0}: failed to find <{1}> !",
-                    MakeCStringView(name), MakeCStringView(needed) );
-                return false;
+            if (Likely(found)) {
+                ++i;
+            }
+            else {
+                if (mode == EVulkanValidationMode::NonTolerant) {
+                    LOG(Vulkan, Error, L"{0}: failed to find <{1}> !",
+                        MakeCStringView(name), MakeCStringView(neededNames[i]) );
+                    return false;
+                }
+                else {
+                    Assert_NoAssume(EVulkanValidationMode::Tolerant == mode);
+                    LOG(Vulkan, Warning, L"{0}: failed to find <{1}> !",
+                        MakeCStringView(name), MakeCStringView(neededNames[i]) );
+
+                    neededNames.erase_DontPreserveOrder(neededNames.begin() + i);
+                }
             }
         }
 
