@@ -145,30 +145,49 @@ module Build
         end
     end
 
+    make_facet(:LLVM_Posix_RTTI_Disabled) do
+        defines.append('PPE_HAS_CXXRTTI=0')
+        linkerOptions.append('-fno-rtti')
+    end
+    make_facet(:LLVM_Posix_RTTI_Enabled) do
+        defines.append('PPE_HAS_CXXRTTI=1')
+        linkerOptions.append('-frtti')
+    end
+
     make_facet(:LLVM_Posix_Debug) do
         compilationFlag!('-O0')
-        linkerOptions.append('-fno-pie', '-frtti')
-        self << Build.LLVM_Posix_LTO_Disabled
+        linkerOptions.append('-fno-pie')
+        self <<
+            Build.LLVM_Posix_LTO_Disabled <<
+            Build.LLVM_Posix_RTTI_Enabled
     end
     make_facet(:LLVM_Posix_FastDebug) do
         compilationFlag!('-O1')
-        linkerOptions.append('-fno-pie', '-frtti')
-        self << Build.LLVM_Posix_LTO_Disabled
+        linkerOptions.append('-fno-pie')
+        self <<
+            Build.LLVM_Posix_LTO_Disabled <<
+            Build.LLVM_Posix_RTTI_Enabled
     end
     make_facet(:LLVM_Posix_Release) do
         compilationFlag!('-O2')
-        linkerOptions.append('-fno-pie', '-fno-rtti')
-        self << Build.LLVM_Posix_LTO_Enabled
+        linkerOptions.append('-fno-pie')
+        self <<
+            Build.LLVM_Posix_LTO_Enabled <<
+            Build.LLVM_Posix_RTTI_Disabled
     end
     make_facet(:LLVM_Posix_Profiling) do
         compilationFlag!('-O3')
-        linkerOptions.append('-fpie', '-fno-rtti')
-        self << Build.LLVM_Posix_LTO_Enabled
+        linkerOptions.append('-fpie')
+        self <<
+            Build.LLVM_Posix_LTO_Enabled <<
+            Build.LLVM_Posix_RTTI_Disabled
     end
     make_facet(:LLVM_Posix_Final) do
         compilationFlag!('-O3')
-        linkerOptions.append('-fpie', '-fno-rtti')
-        self << Build.LLVM_Posix_LTO_Enabled
+        linkerOptions.append('-fpie')
+        self <<
+            Build.LLVM_Posix_LTO_Enabled <<
+            Build.LLVM_Posix_RTTI_Disabled
     end
 
     def self.make_llvmposix_compiler(target, llvm_fileset)

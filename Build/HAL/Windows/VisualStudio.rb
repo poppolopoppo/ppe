@@ -436,42 +436,66 @@ module Build
             "_HAS_ITERATOR_DEBUGGING=1")    # https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
     end
 
+    make_facet(:VisualStudio_CXX_DisableRTTI) do
+        defines.append('PPE_HAS_CXXRTTI=0')
+        compilationFlag!('/GR-')
+    end
+    make_facet(:VisualStudio_CXX_EnableRTTI) do
+        defines.append('PPE_HAS_CXXRTTI=1')
+        compilationFlag!('/GR')
+    end
+
     make_facet(:VisualStudio_Debug) do
-        compilationFlag!('/Od', '/Oy-', '/Gw-', '/GR')
+        compilationFlag!('/Od', '/Oy-', '/Gw-')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
             # https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx
             compilationFlag!('/GS', '/sdl', '/RTC1')
         end
         linkerOptions.append('/DYNAMICBASE:NO')
-        self << Build.VisualStudio_LTO_Disabled << Build.VisualStudio_STL_EnableIteratorDebug
+        self <<
+            Build.VisualStudio_LTO_Disabled <<
+            Build.VisualStudio_STL_EnableIteratorDebug <<
+            Build.VisualStudio_CXX_EnableRTTI
     end
     make_facet(:VisualStudio_FastDebug) do
-        compilationFlag!('/Ob1', '/Oy-', '/Gw-', '/GR', '/Zo')
+        compilationFlag!('/Ob1', '/Oy-', '/Gw-', '/Zo')
         if Build.RuntimeChecks
             # https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
             compilationFlag!('/GS', '/sdl')
         end
         linkerOptions.append('/DYNAMICBASE:NO')
-        self << Build.VisualStudio_LTO_Disabled << Build.VisualStudio_STL_EnableIteratorDebug
+        self <<
+            Build.VisualStudio_LTO_Disabled <<
+            Build.VisualStudio_STL_EnableIteratorDebug <<
+            Build.VisualStudio_CXX_EnableRTTI
     end
     make_facet(:VisualStudio_Release) do
         defines << '_NO_DEBUG_HEAP=1'
-        compilationFlag!('/O2', '/Oy-', '/GS-', '/GA', '/GR-', '/Zo')
+        compilationFlag!('/O2', '/Oy-', '/GS-', '/GA', '/Zo')
         linkerOptions.append('/DYNAMICBASE:NO')
-        self << Build.VisualStudio_LTO_Enabled << Build.VisualStudio_STL_DisableIteratorDebug
+        self <<
+            Build.VisualStudio_LTO_Enabled <<
+            Build.VisualStudio_STL_DisableIteratorDebug <<
+            Build.VisualStudio_CXX_DisableRTTI
     end
     make_facet(:VisualStudio_Profiling) do
         defines << '_NO_DEBUG_HEAP=1'
-        compilationFlag!('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
+        compilationFlag!('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/PROFILE', '/OPT:REF')
-        self << Build.VisualStudio_LTO_Enabled << Build.VisualStudio_STL_DisableIteratorDebug
+        self <<
+            Build.VisualStudio_LTO_Enabled <<
+            Build.VisualStudio_STL_DisableIteratorDebug <<
+            Build.VisualStudio_CXX_DisableRTTI
     end
     make_facet(:VisualStudio_Final) do
         defines << '_NO_DEBUG_HEAP=1'
-        compilationFlag!('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/GR-', '/Zo')
+        compilationFlag!('/O2', '/Ob3', '/GS-', '/Gw', '/Gy', '/GL', '/GA', '/Zo')
         linkerOptions.append('/DYNAMICBASE', '/OPT:REF', '/OPT:ICF=3')
-        self << Build.VisualStudio_LTO_Enabled << Build.VisualStudio_STL_DisableIteratorDebug
+        self <<
+            Build.VisualStudio_LTO_Enabled <<
+            Build.VisualStudio_STL_DisableIteratorDebug <<
+            Build.VisualStudio_CXX_DisableRTTI
     end
 
     make_facet(:VisualStudio_Base_2019) do

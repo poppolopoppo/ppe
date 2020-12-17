@@ -32,6 +32,15 @@ PRAGMA_MSVC_WARNING_POP()
 template <typename T>
 CONSTEXPR hash_t type_id_v = type_id<T>::value;
 //----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR const char* type_name() {
+#if PPE_HAS_CXXRTTI
+    return typeid(T).name();
+#else
+    return "unknown-typename-???"
+#endif
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Meta

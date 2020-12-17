@@ -65,3 +65,6 @@
 #else
 #   define USE_PPE_FINAL_RELEASE 0
 #endif
+#ifndef PPE_HAS_CXXRTTI
+#   define PPE_HAS_CXXRTTI 0
+#endif
