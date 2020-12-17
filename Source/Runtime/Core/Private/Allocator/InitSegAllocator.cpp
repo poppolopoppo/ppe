@@ -10,11 +10,12 @@ PRAGMA_INITSEG_COMPILER
 // profit from this isolated TU to define our new/delete overloads
 #include "Allocator/New.h"
 #if PPE_OVERRIDE_NEW_ONCE
-//  when compiling statically without inlined new operators it must be defined once in a separate TU
+//  when compiling statically without inline new operators it must be defined once in a separate TU
 #   include "Allocator/New.Definitions-inl.h"
 #endif
 
 namespace PPE {
+LOG_CATEGORY(PPE_CORE_API, InitSeg)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
