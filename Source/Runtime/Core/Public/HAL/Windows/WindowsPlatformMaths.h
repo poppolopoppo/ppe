@@ -209,6 +209,24 @@ public:
     // tzcnt:   trailing zero count (LSB)
     // popcnt:  number of bits set to 1
 
+    static FORCE_INLINE u32 ctz(u32 u) NOEXCEPT {
+        if (u == 0) return 32;
+        unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 63
+        _BitScanForward(&bit, u);	// Scans from LSB to MSB
+        return bit;
+    }
+    static FORCE_INLINE u64 ctz(u64 u) NOEXCEPT {
+        if (u == 0) return 64;
+#ifdef ARCH_X64
+        unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 31
+        _BitScanForward64(&bit, u);	// Scans from LSB to MSB
+        return bit;
+#else
+        unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 63
+        return (u & 0xFFFFFFFFull ? _BitScanForward(&bit, u32(u & 0xFFFFFFFFull)) : 32 + _BitScanForward(&bit, u32(u >> 32)) );
+#endif
+    }
+
     static FORCE_INLINE u32 lzcnt(u32 u) NOEXCEPT { return ::__lzcnt(u); }
 #   ifdef __clang__
     static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return tzcnt_constexpr(u); } // #TODO : can't find __tzcnt_u32() will llvm windows
@@ -250,6 +268,19 @@ public:
             ? 32 + tzcnt(u32(u >> 32))
             : tzcnt(u32(u)) );
 #   endif
+    }
+
+    static u64 ctz(u128 u) NOEXCEPT {
+        return (u.lo ? ctz(u.lo) : 64 + ctz(u.hi));
+    }
+    static u64 lzcnt(u128 u) NOEXCEPT {
+        return (u.hi ? lzcnt(u.hi) : 64 + lzcnt(u.lo));
+    }
+    static u64 tzcnt(u128 u) NOEXCEPT {
+        return (u.lo ? tzcnt(u.lo) : 64 + tzcnt(u.hi));
+    }
+    static u64 popcnt(u128 u) NOEXCEPT {
+        return (popcnt(u.lo) + popcnt(u.hi));
     }
 
     //------------------------------------------------------------------------

@@ -144,6 +144,15 @@ public:
     // tzcnt:   trailing zero count (LSB)
     // popcnt:  number of bits set to 1
 
+    static FORCE_INLINE u32 ctz(u32 u) NOEXCEPT {
+        if (u == 0) return 32;
+        return (u32)__builtin_ctz(u);
+    }
+    static FORCE_INLINE u64 ctz(u64 u) NOEXCEPT {
+        if (u == 0) return 64;
+        return (u64)__builtin_ctzll(u);
+    }
+
     static FORCE_INLINE u32 lzcnt(u32 u) NOEXCEPT { return ::__lzcnt32(u); }
     static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return ::_mm_tzcnt_32(u); }
     static FORCE_INLINE u32 popcnt(u32 u) NOEXCEPT { return ::_popcnt32(u); }

@@ -338,6 +338,9 @@ public: // must be defined for every platform
         return (T)(v * ((T)~(T)0 / 255)) >> (sizeof(T) - 1) * CHAR_BIT;     // count
     }
 
+    static u32 ctz(u32 u) NOEXCEPT = delete;
+    static u64 ctz(u64 u) NOEXCEPT = delete;
+
     static u32 lzcnt(u32 u) NOEXCEPT = delete;
     static u32 tzcnt(u32 u) NOEXCEPT = delete;
     static u32 popcnt(u32 u) NOEXCEPT = delete;
@@ -348,6 +351,10 @@ public: // must be defined for every platform
     static u64 popcnt(u64 u) NOEXCEPT { return popcnt_constexpr(u); }
 
     static u64 tzcnt64(u64 u) NOEXCEPT = delete;
+
+    static u64 lzcnt(u128 u) NOEXCEPT = delete;
+    static u64 tzcnt(u128 u) NOEXCEPT = delete;
+    static u64 popcnt(u128 u) NOEXCEPT = delete;
 
     // number of bits set to one (support u64 on ARCH_X86)
     template <typename T>
