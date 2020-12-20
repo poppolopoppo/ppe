@@ -57,6 +57,19 @@ private:
             swap(*this, rvalue);
         }
 
+        FServiceHolder_& operator =(FServiceHolder_&& rvalue) NOEXCEPT {
+            if (_destructor)
+                _destructor(_service);
+
+            _service = nullptr;
+            _getter = nullptr;
+            _destructor = nullptr;
+
+            swap(*this, rvalue);
+
+            return (*this);
+        }
+
         ~FServiceHolder_() NOEXCEPT {
             if (_destructor)
                 _destructor(_service);

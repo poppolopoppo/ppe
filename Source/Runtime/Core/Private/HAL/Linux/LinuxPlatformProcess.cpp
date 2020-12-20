@@ -229,7 +229,7 @@ void FLinuxPlatformProcess::Sleep(float seconds) {
 //----------------------------------------------------------------------------
 // Hybrid spinning
 // https://probablydance.com/2019/12/30/measuring-mutexes-spinlocks-and-how-bad-the-linux-scheduler-really-is/
-void FLinuxPlatformProcess::SleepForSpinning(size_t& backoff) {
+void FLinuxPlatformProcess::SleepForSpinning(i32& backoff) {
     if (backoff < 16) {
         ++backoff;
         ::_mm_pause();

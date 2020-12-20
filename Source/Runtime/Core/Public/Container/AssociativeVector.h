@@ -200,6 +200,10 @@ public:
     }
 
 private:
+    STATIC_ASSERT(std::is_swappable_v<_Key>);
+    STATIC_ASSERT(std::is_swappable_v<_Value>);
+    STATIC_ASSERT(std::is_swappable_v<value_type>);
+
     struct FKeyEqual_ : key_equal {
         bool operator ()(const value_type& val, const key_type& key) const {
             return key_equal::operator ()(val.first, key);

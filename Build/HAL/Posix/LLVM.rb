@@ -65,7 +65,7 @@ module Build
         end
         def add_libraryPath(facet, dirpath)
             facet.linkerOptions << "-I#{dirpath}"
-            facet.librarianOptions << "-I#{dirpath}"
+            #facet.librarianOptions << "-I#{dirpath}"
         end
 
         def customize(facet, env, target)

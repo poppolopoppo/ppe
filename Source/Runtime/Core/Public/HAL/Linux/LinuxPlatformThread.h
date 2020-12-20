@@ -6,6 +6,8 @@
 
 #include "HAL/Linux/LinuxPlatformIncludes.h"
 
+#include <mutex>
+
 #if PPE_HAS_CXX14
 #   include <shared_mutex>
 #else
@@ -74,6 +76,32 @@ public:
 
     static void SwitchToFiber(FFiber fiber);
     static void DestroyFiber(FFiber fiber);
+
+
+    //------------------------------------------------------------------------
+    // critical section
+
+    using FCriticalSection = std::mutex;
+
+    static void CreateCriticalSection(FCriticalSection* ) {
+        // std::mutex doesn't require construction
+    }
+
+    static void Lock(FCriticalSection& cs) {
+        cs.lock();
+    }
+
+    static bool TryLock(FCriticalSection& cs) {
+        return cs.try_lock();
+    }
+
+    static void Unlock(FCriticalSection& cs) {
+        cs.unlock();
+    }
+
+    static void DestroyCriticalSection(FCriticalSection* ) {
+        // std::mutex doesn't require destrucion
+    }
 
     //------------------------------------------------------------------------
     // read-write lock

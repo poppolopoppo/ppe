@@ -52,11 +52,6 @@ public:
     :   _ptr(rvalue._ptr) {
         rvalue._ptr = nullptr;
     }
-
-    ~TUniquePtr() NOEXCEPT {
-        reset();
-    }
-
     template <typename U>
     TUniquePtr& operator =(TUniquePtr<U>&& rvalue) NOEXCEPT {
         reset();
@@ -65,6 +60,10 @@ public:
         rvalue._ptr = nullptr;
 
         return (*this);
+    }
+
+    ~TUniquePtr() NOEXCEPT {
+        reset();
     }
 
     CONSTEXPR T& operator *() const NOEXCEPT { Assert(_ptr); return (*_ptr); }
@@ -104,6 +103,27 @@ public:
         return hash_ptr(uniq.get());
     }
 
+    friend void swap(TUniquePtr& lhs, TUniquePtr& rhs) NOEXCEPT {
+        std::swap(lhs._ptr, rhs._ptr);
+    }
+
+    template <typename U>
+    friend bool operator ==(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+        return (lhs._ptr == rhs._ptr);
+    }
+    template <typename U>
+    friend bool operator !=(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+        return (lhs._ptr != rhs._ptr);
+    }
+    template <typename U>
+    friend bool operator < (const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+        return (lhs._ptr < rhs._ptr);
+    }
+    template <typename U>
+    friend bool operator >=(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+        return (lhs._ptr >= rhs._ptr);
+    }
+
 private:
     T* _ptr;
 };
@@ -111,29 +131,6 @@ private:
 template <typename T, typename... _Args>
 TUniquePtr<T> MakeUnique(_Args&&... args) {
     return { TUniquePtr<T>::New(std::forward<_Args>(args)...) };
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-CONSTEXPR bool operator ==(const TUniquePtr<_Lhs>& lhs, const TUniquePtr<_Rhs>& rhs) NOEXCEPT {
-    return (lhs.get() == rhs.get());
-}
-template <typename _Lhs, typename _Rhs>
-CONSTEXPR bool operator !=(const TUniquePtr<_Lhs>& lhs, const TUniquePtr<_Rhs>& rhs) NOEXCEPT {
-    return (not operator ==(lhs, rhs));
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-CONSTEXPR bool operator < (const TUniquePtr<_Lhs>& lhs, const TUniquePtr<_Rhs>& rhs) NOEXCEPT {
-    return (lhs.get() < rhs.get());
-}
-template <typename _Lhs, typename _Rhs>
-CONSTEXPR bool operator >=(const TUniquePtr<_Lhs>& lhs, const TUniquePtr<_Rhs>& rhs) NOEXCEPT {
-    return (not operator <(lhs, rhs));
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-void swap(TUniquePtr<_Lhs>& lhs, TUniquePtr<_Rhs>& rhs) NOEXCEPT {
-    lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

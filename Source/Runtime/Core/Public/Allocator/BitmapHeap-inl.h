@@ -717,7 +717,7 @@ TBitmapFixedSizeHeap<_ReservedSize, _Traits>::~TBitmapFixedSizeHeap() NOEXCEPT {
 
     const FReadWriteLock::FScopeLockWrite scopeWrite(RWLock);
 
-    AssertRelease(CommittedPages.Empty()); // are we leaking ?
+    AssertRelease(CommittedPages.Empty_ForAssert()); // are we leaking ?
     AssertRelease(ExhaustedPages.Full());
 
     const size_t szPageTable = Meta::RoundToNext(NumReservedPages * sizeof(page_type*), CACHELINE_SIZE);
@@ -792,7 +792,8 @@ void* TBitmapFixedSizeHeap<_ReservedSize, _Traits>::Allocate(size_t sizeInBytes)
         TRY_ALLOCATE:
             Assert(allocIndex < NumReservedPages);
             bool exhausted = false;
-            if (Likely(void* const result = PageTable[allocIndex].Allocate(checked_cast<u32>(sizeInBytes), exhausted))) {
+            void* const result = PageTable[allocIndex].Allocate(checked_cast<u32>(sizeInBytes), exhausted);
+            if (Likely(result)) {
                 if (Likely(not exhausted))
                     hint.Push(allocIndex);
                 else
@@ -835,7 +836,8 @@ void* TBitmapFixedSizeHeap<_ReservedSize, _Traits>::Allocate(size_t sizeInBytes)
         Assert_NoAssume(PageTable[allocIndex].LargestBlockAvailable() >= sizeInBytes);
 
         bool exhausted = false;
-        if (Likely(void* const result = PageTable[allocIndex].Allocate(sizeInBytes, exhausted))) {
+        void* const result = PageTable[allocIndex].Allocate(sizeInBytes, exhausted);
+        if (Likely(result)) {
             if (Likely(not exhausted))
                 hint.Push(allocIndex);
             else

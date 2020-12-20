@@ -167,6 +167,19 @@ public:
     static FORCE_INLINE u64 popcnt(u64 u) NOEXCEPT { return FGenericPlatformMaths::popcnt(u); }
 #   endif
 
+    static u64 ctz(u128 u) NOEXCEPT {
+        return (u.lo ? ctz(u.lo) : 64 + ctz(u.hi));
+    }
+    static u64 lzcnt(u128 u) NOEXCEPT {
+        return (u.hi ? lzcnt(u.hi) : 64 + lzcnt(u.lo));
+    }
+    static u64 tzcnt(u128 u) NOEXCEPT {
+        return (u.lo ? tzcnt(u.lo) : 64 + tzcnt(u.hi));
+    }
+    static u64 popcnt(u128 u) NOEXCEPT {
+        return (popcnt(u.lo) + popcnt(u.hi));
+    }
+
     // number of bits set to one (support u64 on ARCH_X86)
     template <typename T>
     static FORCE_INLINE u64 popcnt64(T v) NOEXCEPT {
