@@ -27,6 +27,7 @@ module Build
 
             Log.log 'Posix: found %s-%s in "%s" (%s)', @llvmVersion, target, @llvmPath, version
             self.facet.export!('LLVMVersion', @llvmVersion)
+            self.facet.export!('LLVMVersionFull', version)
 
             self.inherits!(Build.LLVM_Posix_Base)
             self.inherits!(Build.send("LLVM_Posix_Base_#{target}"))
@@ -107,13 +108,13 @@ module Build
         linkerOptions << '-o' << '%2' << '%1'
 
         systemPaths <<
-            File.join('$LLVMPath$', 'include', 'clang-c') <<
+            File.join('$LLVMPath$', 'include', 'llvm') <<
             File.join('$LLVMPath$', 'include', 'llvm-c') <<
-            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'include')
+            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersionFull$', 'include')
 
         libraryPaths <<
             File.join('$LLVMPath$', 'lib') <<
-            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersion$', 'lib', 'windows')
+            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersionFull$', 'lib', 'linux')
     end
 
     make_facet(:LLVM_Posix_Base_x86) do
