@@ -9,5 +9,5 @@ $Build.ppe_module!(:Core) do
         farmhash,
         lz4,
         xxHash ]})
-    runtime_deps!(*namespace[:External]{[ vstools ]})
+    runtime_deps!(*namespace[:External]{[ vstools ]}) if Build.os_windows?
 end

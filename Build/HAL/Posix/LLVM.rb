@@ -14,8 +14,8 @@ module Build
         attr_reader :llvmPath, :llvmVersion
         def initialize(
             prefix, version, target,
-            clang, ar, lld, *extra_files)
-            super("#{prefix}_#{version.tr('.', '_')}_#{target}", clang, ar, lld, *extra_files)
+            clang, ar, link, *extra_files)
+            super("#{prefix}_#{version.tr('.', '_')}_#{target}", clang, ar, link, *extra_files)
 
             @llvmPath = Pathname.new(File.join(File.dirname(clang), '..'))
             @llvmPath = @llvmPath.cleanpath
@@ -64,8 +64,10 @@ module Build
             facet.librarianOptions << filename
         end
         def add_libraryPath(facet, dirpath)
-            facet.linkerOptions << "-I#{dirpath}"
-            #facet.librarianOptions << "-I#{dirpath}"
+            add_compilationFlag(facet, "-L#{dirpath}")
+            add_compilationFlag(facet, "-Wno-unused-command-line-argument")
+            #facet.linkerOptions << "-I#{dirpath}" # *NOT* for llvm-link
+            #facet.librarianOptions << "-I#{dirpath}" # *NOT* for llvm-ar
         end
 
         def customize(facet, env, target)
@@ -83,7 +85,7 @@ module Build
                 need_fileset!(
                     File.join(dirpath, 'clang'),
                     File.join(dirpath, 'llvm-ar'),
-                    File.join(dirpath, 'lld-link') )
+                    File.join(dirpath, 'llvm-link') )
             end
         end
     end
@@ -119,15 +121,13 @@ module Build
 
     make_facet(:LLVM_Posix_Base_x86) do
         compilationFlag!('-m32')
-        linkerOptions.append('-m32')
     end
     make_facet(:LLVM_Posix_Base_x64) do
         compilationFlag!('-m64')
-        linkerOptions.append('-m64')
     end
 
     make_facet(:LLVM_Posix_LTO_Disabled) do
-        linkerOptions << '-fno-lto'
+        compilationFlag!('-fno-lto')
     end
     make_facet(:LLVM_Posix_LTO_Enabled) do
         if Build.LTO
@@ -148,44 +148,39 @@ module Build
 
     make_facet(:LLVM_Posix_RTTI_Disabled) do
         defines.append('PPE_HAS_CXXRTTI=0')
-        linkerOptions.append('-fno-rtti')
+        compilationFlag!('-fno-rtti')
     end
     make_facet(:LLVM_Posix_RTTI_Enabled) do
         defines.append('PPE_HAS_CXXRTTI=1')
-        linkerOptions.append('-frtti')
+        compilationFlag!('-frtti')
     end
 
     make_facet(:LLVM_Posix_Debug) do
-        compilationFlag!('-O0')
-        linkerOptions.append('-fno-pie')
+        compilationFlag!('-O0', '-fno-pie')
         self <<
             Build.LLVM_Posix_LTO_Disabled <<
             Build.LLVM_Posix_RTTI_Enabled
     end
     make_facet(:LLVM_Posix_FastDebug) do
-        compilationFlag!('-O1')
-        linkerOptions.append('-fno-pie')
+        compilationFlag!('-O1', '-fno-pie')
         self <<
             Build.LLVM_Posix_LTO_Disabled <<
             Build.LLVM_Posix_RTTI_Enabled
     end
     make_facet(:LLVM_Posix_Release) do
-        compilationFlag!('-O2')
-        linkerOptions.append('-fno-pie')
+        compilationFlag!('-O2', '-fno-pie')
         self <<
             Build.LLVM_Posix_LTO_Enabled <<
             Build.LLVM_Posix_RTTI_Disabled
     end
     make_facet(:LLVM_Posix_Profiling) do
-        compilationFlag!('-O3')
-        linkerOptions.append('-fpie')
+        compilationFlag!('-O3', '-fpie')
         self <<
             Build.LLVM_Posix_LTO_Enabled <<
             Build.LLVM_Posix_RTTI_Disabled
     end
     make_facet(:LLVM_Posix_Final) do
-        compilationFlag!('-O3')
-        linkerOptions.append('-fpie')
+        compilationFlag!('-O3', '-fpie')
         self <<
             Build.LLVM_Posix_LTO_Enabled <<
             Build.LLVM_Posix_RTTI_Disabled
@@ -194,7 +189,7 @@ module Build
     def self.make_llvmposix_compiler(target, llvm_fileset)
         Assert.expect(llvm_fileset, Array)
 
-        clang, ar, lld = *llvm_fileset
+        clang, ar, link = *llvm_fileset
 
         Log.debug 'Posix: found LLVM posix compiler in "%s"', clang
 
@@ -204,7 +199,7 @@ module Build
 
         return LLVMPosixCompiler.new(
             'LLVM_Posix', version, target,
-            clang, ar, lld, *fileset )
+            clang, ar, link, *fileset )
     end
 
     const_memoize(self, :LLVM_Posix_Hostx86) do
