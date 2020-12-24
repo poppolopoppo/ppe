@@ -10,6 +10,7 @@
     - Vulkan:
         - dynamic loader -> https://subscription.packtpub.com/book/game_development/9781786468154/1/ch01lvl1sec12/preparing-for-loading-vulkan-api-functions
         - frame graph RHI, instead of pure device abstraction -> https://github.com/azhirnov/FrameGraph.git
+        - diagrams -> https://github.com/David-DiGioia/vulkan-diagrams
 
         - RHI:
             - add external with https://github.com/KhronosGroup/Vulkan-Headers

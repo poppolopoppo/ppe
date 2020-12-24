@@ -5,6 +5,7 @@
 #ifdef RHI_VULKAN
 
 #include "HAL/Generic/GenericRHISurfaceFormat.h"
+#include "HAL/Vulkan/VulkanRHIFormat.h"
 
 namespace PPE {
 namespace RHI {
@@ -28,31 +29,47 @@ struct PPE_RHI_API FVulkanPixelInfo : FGenericPixelInfo {
     using FGenericPixelInfo::Texture3DSizeInBytes;
     using FGenericPixelInfo::TextureCubeSizeInBytes;
 
-    using FGenericPixelInfo::FromFormat;
+    static FVulkanPixelInfo FromFormat(EVulkanPixelFormat format) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
-struct PPE_RHI_API FVulkanSurfaceFormat : FGenericSurfaceFormat {
+struct PPE_RHI_API FVulkanSurfaceFormat {
     using EPixelFormat = EVulkanPixelFormat;
     using EColorSpace = EVulkanColorSpace;
     using FPixelInfo = FVulkanPixelInfo;
 
-    using FGenericSurfaceFormat::Format;
-    using FGenericSurfaceFormat::ColorSpace;
+    EPixelFormat Format;
+    EColorSpace ColorSpace;
 
-    FVulkanPixelInfo PixelInfo() const NOEXCEPT {
-        return FVulkanPixelInfo{ FGenericSurfaceFormat::PixelInfo() };
-    }
+    FVulkanPixelInfo PixelInfo() const { return FVulkanPixelInfo::FromFormat(Format); }
 
-    static size_t BestAvailable(const TMemoryView<const FVulkanSurfaceFormat>& surfaceFormats) NOEXCEPT {
-        return FGenericSurfaceFormat::BestAvailable(surfaceFormats.Cast<const FVulkanSurfaceFormat>());
+    static size_t BestAvailable(const TMemoryView<const FVulkanSurfaceFormat>& surfaceFormats) NOEXCEPT;
+
+    static FVulkanSurfaceFormat B8G8R8A8_sRGB_NonLinear() NOEXCEPT {
+        return FVulkanSurfaceFormat{
+            EPixelFormat::B8G8R8A8_SRGB,
+            EColorSpace::SRGB_NONLINEAR
+        };
     }
+	static FVulkanSurfaceFormat B10G11R11_Linear() NOEXCEPT {
+		return FVulkanSurfaceFormat{
+			EPixelFormat::B10G11R11_UFLOAT,
+			EColorSpace::EXTENDED_SRGB_LINEAR
+		};
+	}
 
     static FVulkanSurfaceFormat Default_NonHDR() NOEXCEPT {
-        return { FGenericSurfaceFormat::Default_NonHDR() };
+        return B8G8R8A8_sRGB_NonLinear();
     }
 	static FVulkanSurfaceFormat Default_Linear() NOEXCEPT {
-		return { FGenericSurfaceFormat::Default_Linear() };
+		return B10G11R11_Linear();
 	}
+
+    friend bool operator ==(const FVulkanSurfaceFormat& lhs, const FVulkanSurfaceFormat& rhs) NOEXCEPT {
+        return (lhs.Format == rhs.Format && lhs.ColorSpace == rhs.ColorSpace);
+    }
+    friend bool operator !=(const FVulkanSurfaceFormat& lhs, const FVulkanSurfaceFormat& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

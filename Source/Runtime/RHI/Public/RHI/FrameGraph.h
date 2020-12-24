@@ -90,8 +90,8 @@ struct FFramePassBuilder {
 //----------------------------------------------------------------------------
 struct FFramePass {
     FFixedFunctionState State;
-    VECTORINSITU(FrameGraph, FBufferDescription, 1) Buffers;
-    VECTORINSITU(FrameGraph, FRenderTargetDescription, 1) RenderTargets;
+    VECTORINSITU(RHIFrameGraph, FBufferDescription, 1) Buffers;
+    VECTORINSITU(RHIFrameGraph, FRenderTargetDescription, 1) RenderTargets;
 };
 //----------------------------------------------------------------------------
 class PPE_RHI_API FFrameGraph : public Meta::FNonCopyable {

@@ -6,6 +6,7 @@
 
 #include "HAL/Generic/GenericRHIDevice.h"
 
+#include "HAL/Vulkan/VulkanAPI.h"
 #include "HAL/Vulkan/VulkanDebug.h"
 #include "HAL/Vulkan/VulkanRHIMemoryAllocator.h"
 #include "HAL/Vulkan/VulkanRHISurfaceFormat.h"
@@ -13,32 +14,43 @@
 #include "Container/Vector.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/StronglyTyped.h"
-
-#include <mutex>
+#include "Thread/CriticalSection.h"
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHI_API FVulkanDevice : public FGenericDevice {
-public:
-    using FPresentModeList = VECTOR(RHIDevice, EVulkanPresentMode);
-    using FSurfaceFormatList = VECTOR(RHIDevice, FVulkanSurfaceFormat);
+enum class EVulkanPresentMode : u32 {
+    Immediate = VK_PRESENT_MODE_IMMEDIATE_KHR,
+    Fifo = VK_PRESENT_MODE_FIFO_KHR,
+    RelaxedFifo = VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+    Mailbox = VK_PRESENT_MODE_MAILBOX_KHR,
+};
+//----------------------------------------------------------------------------
+struct FVulkanDeviceQueueInfo {
+    u32 FamilyIndex{ UINT32_MAX };
+    u32 FamilyQueueIndex{ UINT32_MAX };
 
-protected:
-    friend struct FVulkanInstance;
+    bool IsInvalid() const { return ((UINT32_MAX == FamilyIndex) & (UINT32_MAX == FamilyQueueIndex)); }
+};
+//----------------------------------------------------------------------------
+class PPE_RHI_API FVulkanDevice : public FGenericDevice, public FVulkanDeviceFunctions {
+public:
+    friend class FVulkanInstance;
 
     FVulkanDevice(
-        FVulkanAllocationCallbacks allocator,
-        FVulkanPhysicalDevice physicalDevice,
-        VkDevice logicalDevice,
-        VkQueue graphicsQueue,
-        VkQueue presentQueue,
-        VkQueue asyncComputeQueue,
-        VkQueue transferQueue,
-        FPresentModeList&& presentModes,
-        FSurfaceFormatList&& surfaceFormats ) NOEXCEPT;
+        const FVulkanInstance& instance,
+        VkPhysicalDevice vkPhysicalDevice,
+        TArray<EVulkanPresentMode>&& presentModes,
+        TArray<FVulkanSurfaceFormat>&& surfaceFormats ) NOEXCEPT;
+
+    NODISCARD bool SetupDevice(
+        VkDevice vDevice,
+        FVulkanDeviceQueueInfo graphicsQueue,
+        FVulkanDeviceQueueInfo presentQueue,
+        FVulkanDeviceQueueInfo asyncComputeQueue,
+        FVulkanDeviceQueueInfo transferQueue );
 
 public: // must be implemented:
     ~FVulkanDevice();
@@ -64,15 +76,15 @@ public: // must be implemented:
     void DestroyPipelineLayout(VkPipelineLayout pipelineLayout);
 
 public: // vulkan specific:
-    VkPhysicalDevice PhysicalDevice() const { return _physicalDevice; }
-    VkDevice LogicalDevice() const { return _logicalDevice; }
+    VkDevice vkDevice() const { return _vkDevice; }
+    VkPhysicalDevice vkPhysicalDevice() const { return _vkPhysicalDevice; }
 
-    VkQueue GraphicsQueue() const { return _graphicsQueue; }
-    VkQueue PresentQueue() const { return _presentQueue; }
-    VkQueue AsyncComputeQueue() const { return _asyncComputeQueue; }
-    VkQueue TransferQueue() const { return _transferQueue; }
+    VkQueue vkGraphicsQueue() const { return _vkGraphicsQueue; }
+    VkQueue vkPresentQueue() const { return _vkPresentQueue; }
+    VkQueue vkAsyncComputeQueue() const { return _vkAsyncComputeQueue; }
+    VkQueue vkTransferQueue() const { return _vkTransferQueue; }
 
-    FVulkanAllocationCallbacks Allocator() const { return _allocator; }
+    const FVulkanInstance& Instance() const { return _instance;  }
 
     FVulkanMemoryAllocator& DeviceMemory() { return _deviceMemory; }
     const FVulkanMemoryAllocator& DeviceMemory() const { return _deviceMemory; }
@@ -81,25 +93,26 @@ public: // vulkan specific:
     const FVulkanDebug& Debug() const { return _debug; }
 #endif
 
+    const VkAllocationCallbacks* vkAllocator() const;
+
 private:
-    std::recursive_mutex _barrier;
+    FCriticalSection _barrier;
 
-    FVulkanAllocationCallbacks _allocator;
+    VkDevice _vkDevice;
+    VkPhysicalDevice _vkPhysicalDevice;
+    VkAllocationCallbacks _vkAllocator;
 
-    VkPhysicalDevice _physicalDevice;
-    VkDevice _logicalDevice;
+    VkQueue _vkGraphicsQueue;
+    VkQueue _vkPresentQueue;
+    VkQueue _vkAsyncComputeQueue;
+    VkQueue _vkTransferQueue;
 
+    const FVulkanInstance& _instance;
+    FVulkanMemoryAllocator _deviceMemory;
     TUniquePtr<FVulkanSwapChain> _swapChain;
 
-    VkQueue _graphicsQueue;
-    VkQueue _presentQueue;
-    VkQueue _asyncComputeQueue;
-    VkQueue _transferQueue;
-
-    const FPresentModeList _presentModes;
-    const FSurfaceFormatList _surfaceFormats;
-
-    FVulkanMemoryAllocator _deviceMemory;
+    const TArray<EVulkanPresentMode> _presentModes;
+    const TArray<FVulkanSurfaceFormat> _surfaceFormats;
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebug _debug;

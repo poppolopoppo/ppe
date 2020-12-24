@@ -20,23 +20,26 @@ enum class EGenericPhysicalDeviceFlags : u32 {
 };
 ENUM_FLAGS(EGenericPhysicalDeviceFlags);
 //----------------------------------------------------------------------------
-struct PPE_RHI_API FGenericInstance : Meta::FNonCopyableNorMovable {
+class PPE_RHI_API FGenericInstance : Meta::FNonCopyableNorMovable {
 public: // must be defined by every RHI:
-    static void Start() = delete;
-    static void Shutdown() = delete;
+
+    static bool Create(FGenericInstance* pInstance) = delete;
+    static void Destroy(FGenericInstance* pInstance) = delete;
 
     using FWindowHandle = FGenericWindowHandle;
     using FWindowSurface = FGenericWindowSurface;
 
-    static FWindowSurface CreateWindowSurface(FWindowHandle hwnd) = delete;
-    static void DestroyWindowSurface(FWindowSurface surface) = delete;
+    ETargetRHI TargetRHI() const = delete;
+
+    FWindowSurface CreateWindowSurface(FWindowHandle hwnd) = delete;
+    void DestroyWindowSurface(FWindowSurface surface) = delete;
 
     using EPhysicalDeviceFlags = EGenericPhysicalDeviceFlags;
 
-    static FGenericDevice* CreateLogicalDevice(
+    FGenericDevice* CreateLogicalDevice(
         EPhysicalDeviceFlags deviceFlags,
         FWindowSurface surfaceIFN ) = delete;
-    static void DestroyLogicalDevice(FGenericDevice* pLogicalDevice) = delete;
+    void DestroyLogicalDevice(FGenericDevice* pLogicalDevice) = delete;
 
 public: // shared by each instance
     static bool GHeadless;

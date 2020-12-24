@@ -7,6 +7,9 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+using EGenericPixelFormat = EGenericFormat;
+using EGenericVertexFormat = EGenericFormat;
+//----------------------------------------------------------------------------
 enum class EGenericColorSpace : u32 {
     PASS_THROUGH = 0,
     SRGB_NONLINEAR, // most common historically

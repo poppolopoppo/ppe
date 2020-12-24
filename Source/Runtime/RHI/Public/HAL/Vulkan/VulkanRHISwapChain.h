@@ -23,22 +23,19 @@ public: // must be implemented by each RHI:
 
 public: // vulkan specific:
     FVulkanSwapChain(
-        FVulkanAllocationCallbacks allocator,
-        VkSwapchainKHR swapChainHandle,
+        VkSwapchainKHR vkSwapChain,
         u322 extent,
         const FVulkanSurfaceFormat& surfaceFormat ) NOEXCEPT;
 
     ~FVulkanSwapChain();
 
-    VkSwapchainKHR Handle() const { return _handle; }
+    VkSwapchainKHR Handle() const { return _vkSwapChain; }
 
     TMemoryView<const VkImage> Images() const { return _images.MakeView(); }
     TMemoryView<const VkImageView> ImageViews() const { return _imageViews.MakeView(); }
 
 private:
-    FVulkanAllocationCallbacks _allocator;
-
-    VkSwapchainKHR _handle;
+    VkSwapchainKHR _vkSwapChain;
     u322 _extent;
     FVulkanSurfaceFormat _surfaceFormat;
 

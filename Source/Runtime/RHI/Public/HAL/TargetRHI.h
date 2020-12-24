@@ -6,6 +6,8 @@
 
 #include "Diagnostic/Logger_fwd.h"
 #include "IO/String_fwd.h"
+#include "IO/TextWriter_fwd.h"
+#include "Meta/Enum.h"
 
 namespace PPE {
 namespace RHI {
@@ -19,6 +21,8 @@ enum class ETargetRHI {
 
     Current         = TARGET_RHI,
 };
+PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, ETargetRHI rhi);
+PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, ETargetRHI rhi);
 //----------------------------------------------------------------------------
 enum class ERHIFeature {
     HighEndGraphics     = 1<<0,
@@ -29,6 +33,9 @@ enum class ERHIFeature {
     SamplerFeedback     = 1<<5,
     TextureSpaceShading = 1<<6,
 };
+ENUM_FLAGS(ERHIFeature);
+PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, ERHIFeature features);
+PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, ERHIFeature features);
 //----------------------------------------------------------------------------
 class PPE_RHI_API ITargetRHI : Meta::FNonCopyableNorMovable {
 public:

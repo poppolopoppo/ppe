@@ -5,10 +5,8 @@
 #ifdef RHI_VULKAN
 
 #include "HAL/Vulkan/VulkanError.h"
-#include "HAL/Vulkan/VulkanInterop.h"
-
-#include "HAL/Vulkan/VulkanRHIIncludes.h"
 #include "HAL/Vulkan/VulkanRHIDevice.h"
+#include "HAL/Vulkan/VulkanRHIIncludes.h"
 #include "HAL/Vulkan/VulkanRHIInstance.h"
 
 namespace PPE {
@@ -17,16 +15,13 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanSwapChain::FVulkanSwapChain(
-    FVulkanAllocationCallbacks allocator,
-    VkSwapchainKHR swapChainHandle,
+    VkSwapchainKHR vkSwapChain,
     u322 extent,
     const FVulkanSurfaceFormat& surfaceFormat ) NOEXCEPT
-:   _allocator(allocator)
-,   _handle(swapChainHandle)
+:   _vkSwapChain(vkSwapChain)
 ,   _extent(extent)
 ,   _surfaceFormat(surfaceFormat) {
-    Assert_NoAssume(_allocator);
-    Assert_NoAssume(_handle);
+    Assert_NoAssume(VK_NULL_HANDLE != _vkSwapChain);
     Assert_NoAssume(_extent.x > 0 && _extent.y > 0);
 }
 //----------------------------------------------------------------------------
@@ -36,16 +31,16 @@ FVulkanSwapChain::~FVulkanSwapChain() {
 }
 //----------------------------------------------------------------------------
 void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
-    Assert(VK_NULL_HANDLE != device.LogicalDevice());
+    Assert(VK_NULL_HANDLE != device.vkDevice());
     Assert_NoAssume(_images.empty());
     Assert_NoAssume(_imageViews.empty());
 
     // retrieve all images
     u32 numImagesInSwapChain;
-    PPE_VKDEVICE_CHECKED(vkGetSwapchainImagesKHR, device.LogicalDevice(), _handle, &numImagesInSwapChain, nullptr);
+    PPE_VKDEVICE_CHECKED(device.vkGetSwapchainImagesKHR, device.vkDevice(), _vkSwapChain, &numImagesInSwapChain, nullptr);
 
     _images.resize_Uninitialized(numImagesInSwapChain);
-    PPE_VKDEVICE_CHECKED(vkGetSwapchainImagesKHR, device.LogicalDevice(), _handle, &numImagesInSwapChain, &_images.front());
+    PPE_VKDEVICE_CHECKED(device.vkGetSwapchainImagesKHR, device.vkDevice(), _vkSwapChain, &numImagesInSwapChain, &_images.front());
 
     // create image views
     _imageViews.resize_Uninitialized(numImagesInSwapChain);
@@ -56,7 +51,7 @@ void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = _images[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = FVulkanInterop::Vk(_surfaceFormat.Format);
+        createInfo.format = static_cast<VkFormat>(_surfaceFormat.Format);
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -67,19 +62,19 @@ void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
         createInfo.subresourceRange.baseArrayLayer  = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        PPE_VKDEVICE_CHECKED(vkCreateImageView,
-            device.LogicalDevice(),
+        PPE_VKDEVICE_CHECKED(device.vkCreateImageView,
+            device.vkDevice(),
             &createInfo,
-            _allocator,
+            device.vkAllocator(),
             &_imageViews[i] );
     }
 }
 //----------------------------------------------------------------------------
 void FVulkanSwapChain::TearDownSwapChain(const FVulkanDevice& device) {
-    Assert(VK_NULL_HANDLE != device.LogicalDevice());
+    Assert(VK_NULL_HANDLE != device.vkDevice());
 
     for (VkImageView imageView : _imageViews)
-        vkDestroyImageView(device.LogicalDevice(), imageView, _allocator);
+        device.vkDestroyImageView(device.vkDevice(), imageView, device.vkAllocator());
 
     _images.clear();
     _imageViews.clear();

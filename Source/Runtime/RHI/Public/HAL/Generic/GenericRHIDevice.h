@@ -16,6 +16,10 @@ enum class EGenericPresentMode : u32 {
     Mailbox,
 };
 //----------------------------------------------------------------------------
+struct FGenericShaderModule {
+
+};
+//----------------------------------------------------------------------------
 class PPE_RHI_API FGenericDevice : Meta::FNonCopyable {
 public: // must be defined by every RHI:
     FGenericDevice() = default;
@@ -39,8 +43,6 @@ public: // must be defined by every RHI:
 
     FGenericPipelineLayoutHandle CreatePipelineLayout(const FGenericPipelineLayout& desc) = delete;
     void DestroyPipelineLayout(FGenericPipelineLayoutHandle pipelineLayout) = delete;
-
-
 
 public: // shared by each device
 

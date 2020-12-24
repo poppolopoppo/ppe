@@ -8,8 +8,8 @@
 
 #if !USE_PPE_RHIDEBUG
 
-#	define PPE_VKDEVICE_SETDEBUGNAME(_VkDevice, _VkElement, _Name) NOOP()
-#	define PPE_VKDEVICE_SETDEBUGARGS(_VkDevice, _VkElement, _Fmt, ...) NOOP()
+#	define PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _VkElement, _Name) NOOP()
+#	define PPE_VKDEVICE_SETDEBUGARGS(_RHIDevice, _VkElement, _Fmt, ...) NOOP()
 
 #else
 
@@ -22,7 +22,7 @@
 		(_RHIDevice).Debug().SetDebugName(_VkElement, _Name)
 #	define PPE_VKDEVICE_SETDEBUGARGS(_RHIDevice, _VkElement, _Fmt, ...) \
 		PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _VkElement, \
-			INLINE_FORMAT(256, _Fmt, __VA_ARGS__).data()/* should be null-terminated */ )
+			INLINE_FORMAT(256, _Fmt, __VA_ARGS__).data()/* should be null-terminated */)
 
 namespace PPE {
 namespace RHI {
@@ -33,10 +33,10 @@ class FVulkanDebug : Meta::FNonCopyableNorMovable {
 public:
 	using string_t = FConstChar;
 
-	explicit FVulkanDebug(VkDevice device);
+	explicit FVulkanDebug(const FVulkanDevice& device);
 
-	void SetObjectName(u64 object, VkDebugReportObjectTypeEXT type, string_t name) const;
-	void SetObjectTag(u64 object, VkDebugReportObjectTypeEXT type, u64 name, const FRawMemoryConst& tag) const;
+	void vkSetObjectName(u64 object, VkDebugReportObjectTypeEXT type, string_t name) const;
+	void vkSetObjectTag(u64 object, VkDebugReportObjectTypeEXT type, u64 name, const FRawMemoryConst& tag) const;
 
 	void BeginRegion(VkCommandBuffer cmdBuffer, string_t name, const FLinearColor& color) const;
 	void Marker(VkCommandBuffer cmdBuffer, string_t name, const FLinearColor& color) const;
@@ -60,20 +60,7 @@ public:
 	void SetDebugName(VkEvent _event, string_t name) const;
 
 private:
-	using callback_t =
-#if defined(ARCH_X86) && defined(PLATFORM_WINDOWS)
-    void (__stdcall  *)(void) ;
-#else
-	void (*)(void);
-#endif
-
-	VkDevice const _vkDevice;
-
-	callback_t _pfnDebugMarkerSetObjectTag;
-	callback_t _pfnDebugMarkerSetObjectName;
-	callback_t _pfnCmdDebugMarkerBegin;
-	callback_t _pfnCmdDebugMarkerEnd;
-	callback_t _pfnCmdDebugMarkerInsert;
+	const FVulkanDevice& _device;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

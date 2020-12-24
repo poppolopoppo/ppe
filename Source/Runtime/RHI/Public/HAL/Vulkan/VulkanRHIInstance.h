@@ -5,34 +5,39 @@
 #ifdef RHI_VULKAN
 
 #include "HAL/Generic/GenericRHIInstance.h"
+#include "HAL/Vulkan/VulkanAPI.h"
+#include "Misc/DynamicLibrary.h"
+#include "Thread/CriticalSection.h"
 
-#include "Meta/Optional.h"
+#define USE_PPE_VULKAN_DEBUGLAYER (USE_PPE_RHIDEBUG)
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_RHI_API FVulkanInstance : public FGenericInstance {
+class PPE_RHI_API FVulkanInstance : public FGenericInstance, public FVulkanInstanceFunctions {
 public: // must be defined by every RHI:
-    static void Start();
-    static void Shutdown();
+
+    FVulkanInstance() = default;
+
+    static bool Create(FVulkanInstance* pInstance);
+    static void Destroy(FVulkanInstance* pInstance);
 
     using FWindowHandle = FVulkanWindowHandle;
     using FWindowSurface = FVulkanWindowSurface;
 
-    static FWindowSurface CreateWindowSurface(FWindowHandle hwnd);
-    static void DestroyWindowSurface(FWindowSurface surface);
+    ETargetRHI TargetRHI() const NOEXCEPT;
+
+    FWindowSurface CreateWindowSurface(FWindowHandle hwnd);
+    void DestroyWindowSurface(FWindowSurface surface);
 
     using EPhysicalDeviceFlags = EVulkanPhysicalDeviceFlags;
 
-    static FVulkanDevice* CreateLogicalDevice(
+    FVulkanDevice* CreateLogicalDevice(
         EPhysicalDeviceFlags deviceFlags,
         FWindowSurface surfaceIFN );
-    static void DestroyLogicalDevice(FVulkanDevice* pLogicalDevice);
-
-public: // vulkan specific
-    static FVulkanAllocationCallbacks Allocator() NOEXCEPT;
+    void DestroyLogicalDevice(FVulkanDevice* pLogicalDevice);
 
 public: // shared by every RHI
     using FGenericInstance::GHeadless;
@@ -41,6 +46,21 @@ public: // shared by every RHI
     using FGenericInstance::GEnableDebug;
 #endif
 
+    using FGenericInstance::ParseOptions;
+
+public: // Vulkan specific
+    const VkAllocationCallbacks* vkAllocator() const { return &_vkAllocator; }
+
+private:
+    FCriticalSection _barrier;
+
+    VkInstance _vkInstance{ VK_NULL_HANDLE };
+    VkAllocationCallbacks _vkAllocator{};
+#if USE_PPE_VULKAN_DEBUGLAYER
+    VkDebugUtilsMessengerEXT _vkDebugMessenger{ VK_NULL_HANDLE };
+#endif
+
+    FDynamicLibrary _sharedLib;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -1,12 +1,12 @@
 ﻿#include "stdafx.h"
 
-#ifdef RHI_VULKAN
-
 #include "HAL/Vulkan/VulkanRHIMemoryAllocator.h"
 
+#ifdef RHI_VULKAN
+
 #include "HAL/Vulkan/VulkanError.h"
-#include "HAL/Vulkan/VulkanInterop.h"
 #include "HAL/Vulkan/VulkanRHIIncludes.h"
+#include "HAL/Vulkan/VulkanRHIInstance.h"
 #include "HAL/Vulkan/VulkanRHIDevice.h"
 
 #include "HAL/PlatformMaths.h"
@@ -56,21 +56,26 @@ FVulkanMemoryAllocator::FMemoryHeap::FMemoryHeap(
 #endif
 //----------------------------------------------------------------------------
 FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device) NOEXCEPT
-:   _vkDevice(device.LogicalDevice())
-,   _vkAllocator(device.Allocator()) {
+:   _device(device)
+{}
+//----------------------------------------------------------------------------
+FVulkanMemoryAllocator::~FVulkanMemoryAllocator()
+{}
+//----------------------------------------------------------------------------
+void FVulkanMemoryAllocator::CreateDeviceHeaps() {
     VkPhysicalDeviceMemoryProperties deviceMem;
-    vkGetPhysicalDeviceMemoryProperties(device.PhysicalDevice(), &deviceMem);
+    _device.Instance().vkGetPhysicalDeviceMemoryProperties(_device.vkPhysicalDevice(), &deviceMem);
 
     _memoryTypes.resize_Uninitialized(deviceMem.memoryTypeCount);
     _memoryHeaps.resize_Uninitialized(deviceMem.memoryHeapCount);
 
     forrange(i, 0, deviceMem.memoryHeapCount) {
         FMemoryHeap* const heap = INPLACE_NEW(&_memoryHeaps[i], FMemoryHeap) {
-        Min(checked_cast<u32>(deviceMem.memoryHeaps[i].size / 8), GVulkanMaxGranularity),
-            deviceMem.memoryHeaps[i].size
-    #if USE_PPE_MEMORYDOMAINS
-            , i, &MEMORYDOMAIN_TRACKING_DATA(DeviceHeap)
-    #endif
+            Min(checked_cast<u32>(deviceMem.memoryHeaps[i].size / 8), GVulkanMaxGranularity),
+                deviceMem.memoryHeaps[i].size
+#if USE_PPE_MEMORYDOMAINS
+                , i, & MEMORYDOMAIN_TRACKING_DATA(DeviceHeap)
+#endif
         };
 
         Assert_NoAssume(heap->Capacity > 1);
@@ -86,9 +91,9 @@ FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device) NOEX
     forrange(i, 0, deviceMem.memoryTypeCount) {
         FMemoryType* const mem = INPLACE_NEW(&_memoryTypes[i], FMemoryType) {
             deviceMem.memoryTypes[i].heapIndex,
-            FVulkanInterop::RHI(VkMemoryPropertyFlagBits(deviceMem.memoryTypes[i].propertyFlags))
+                static_cast<EVulkanMemoryTypeFlags>(deviceMem.memoryTypes[i].propertyFlags)
 #if USE_PPE_MEMORYDOMAINS
-            , i, &_memoryHeaps[deviceMem.memoryTypes[i].heapIndex].TrackingData
+                , i, & _memoryHeaps[deviceMem.memoryTypes[i].heapIndex].TrackingData
 #endif
         };
 
@@ -100,7 +105,7 @@ FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device) NOEX
     }
 }
 //----------------------------------------------------------------------------
-FVulkanMemoryAllocator::~FVulkanMemoryAllocator() {
+void FVulkanMemoryAllocator::DestroyDeviceHeaps() {
 #if USE_PPE_MEMORYDOMAINS
     for (FMemoryType& memType : _memoryTypes) {
         Assert_NoAssume(memType.TrackingData.empty());
@@ -111,6 +116,9 @@ FVulkanMemoryAllocator::~FVulkanMemoryAllocator() {
         UnregisterTrackingData(&memHeap.TrackingData);
     }
 #endif
+
+    _memoryTypes.clear();
+    _memoryHeaps.clear();
 }
 //----------------------------------------------------------------------------
 FVulkanMemoryBlock FVulkanMemoryAllocator::Allocate(
@@ -175,7 +183,7 @@ FVulkanMemoryBlock FVulkanMemoryAllocator::Allocate(
             b.Flags = _memoryTypes[memoryTypeIndex].Flags;
             b.Size = checked_cast<u32>(allocateInfo.allocationSize);
 
-            PPE_VKDEVICE_CHECKED(vkAllocateMemory, _vkDevice, &allocateInfo, _vkAllocator, &b.DeviceMemory); // #TODO: handle OOM
+            PPE_VKDEVICE_CHECKED(_device.vkAllocateMemory, _device.vkDevice(), &allocateInfo, _device.vkAllocator(), &b.DeviceMemory); // #TODO: handle OOM
 
             Assert_NoAssume(VK_NULL_HANDLE != b.DeviceMemory);
 
@@ -200,7 +208,7 @@ void FVulkanMemoryAllocator::Deallocate(const FVulkanMemoryBlock& block) NOEXCEP
     const FMemoryType& mem = _memoryTypes[block.MemoryType];
     const FMemoryHeap& heap = _memoryHeaps[mem.HeapIndex];
 
-    vkFreeMemory(_vkDevice, block.DeviceMemory, _vkAllocator);
+    _device.vkFreeMemory(_device.vkDevice(), block.DeviceMemory, _device.vkAllocator());
 
     Assert_NoAssume(Meta::IsAligned(heap.Granularity, block.Size));
     const u32 numBlocks = (block.Size / heap.Granularity);
@@ -220,7 +228,8 @@ FRawMemory FVulkanMemoryAllocator::MapMemory(const FVulkanMemoryBlock& block, u3
     const u32 mappedSize = (size ? size : block.Size);
 
     void* hostMemory = nullptr;
-    PPE_VKDEVICE_CHECKED(vkMapMemory, _vkDevice,
+    PPE_VKDEVICE_CHECKED(_device.vkMapMemory,
+        _device.vkDevice(),
         block.DeviceMemory,
         offset, mappedSize,
         0/* future use */,
@@ -234,7 +243,7 @@ void FVulkanMemoryAllocator::UnmapMemory(const FVulkanMemoryBlock& block) NOEXCE
     Assert(VK_NULL_HANDLE != block.DeviceMemory);
     Assert_NoAssume(EVulkanMemoryTypeFlags::HostVisible ^ block.Flags);
 
-    vkUnmapMemory(_vkDevice, block.DeviceMemory);
+    _device.vkUnmapMemory(_device.vkDevice(), block.DeviceMemory);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

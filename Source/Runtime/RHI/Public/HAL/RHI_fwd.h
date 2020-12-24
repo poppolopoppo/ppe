@@ -7,27 +7,13 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_RHI_MAKEALIAS_E(ColorSpace)
-PPE_RHI_MAKEALIAS_E(PixelFormat)
-PPE_RHI_MAKEALIAS_E(VertexFormat)
-//----------------------------------------------------------------------------
-PPE_RHI_MAKEALIAS_F(PixelInfo)
-PPE_RHI_MAKEALIAS_F(SurfaceFormat)
-//----------------------------------------------------------------------------
-PPE_RHI_MAKEALIAS_F(Instance)
-PPE_RHI_MAKEALIAS_E(PhysicalDeviceFlags)
-PPE_RHI_MAKEALIAS_F(WindowHandle)
-PPE_RHI_MAKEALIAS_F(WindowSurface)
+// RHIDevice.h
 //----------------------------------------------------------------------------
 PPE_RHI_MAKEALIAS_E(PresentMode)
-PPE_RHI_MAKEALIAS_F(SwapChain)
-//----------------------------------------------------------------------------
-PPE_RHI_MAKEALIAS_E(MemoryTypeFlags)
-PPE_RHI_MAKEALIAS_F(DeviceMemory)
-PPE_RHI_MAKEALIAS_F(MemoryBlock)
-PPE_RHI_MAKEALIAS_F(MemoryAllocator)
-//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_F(ShaderModule)
 PPE_RHI_MAKEALIAS_F(Device)
+//----------------------------------------------------------------------------
+// RHIFixedFunctionState.h
 //----------------------------------------------------------------------------
 PPE_RHI_MAKEALIAS_E(BlendFactor)
 PPE_RHI_MAKEALIAS_E(BlendOp)
@@ -40,6 +26,7 @@ PPE_RHI_MAKEALIAS_E(CompareOp)
 PPE_RHI_MAKEALIAS_E(StencilOp)
 PPE_RHI_MAKEALIAS_F(StencilOpState)
 PPE_RHI_MAKEALIAS_F(DepthStencilState)
+//----------------------------------------------------------------------------
 PPE_RHI_MAKEALIAS_F(MultisampleState)
 //----------------------------------------------------------------------------
 PPE_RHI_MAKEALIAS_E(CullMode)
@@ -51,28 +38,64 @@ PPE_RHI_MAKEALIAS_F(RasterizerState)
 PPE_RHI_MAKEALIAS_E(DynamicState)
 PPE_RHI_MAKEALIAS_F(FixedFunctionState)
 //----------------------------------------------------------------------------
+// RHIFormat.h
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_E(ColorSpace)
+PPE_RHI_MAKEALIAS_E(Format)
+PPE_RHI_MAKEALIAS_E(PixelFormat)
+PPE_RHI_MAKEALIAS_E(VertexFormat)
+//----------------------------------------------------------------------------
+// RHIInstance.h
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_F(WindowHandle)
+PPE_RHI_MAKEALIAS_F(WindowSurface)
+PPE_RHI_MAKEALIAS_E(PhysicalDeviceFlags)
+PPE_RHI_MAKEALIAS_F(Instance)
+//----------------------------------------------------------------------------
+// RHIInputAssembly.h
+//----------------------------------------------------------------------------
 PPE_RHI_MAKEALIAS_E(PrimitiveTopology)
 PPE_RHI_MAKEALIAS_E(VertexInputRate)
 PPE_RHI_MAKEALIAS_F(VertexBinding)
 PPE_RHI_MAKEALIAS_F(VertexAttribute)
 PPE_RHI_MAKEALIAS_F(InputAssembly)
 //----------------------------------------------------------------------------
+// RHIMemoryAllocator.h
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_F(DeviceMemory)
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_E(MemoryTypeFlags)
+PPE_RHI_MAKEALIAS_F(MemoryBlock)
+PPE_RHI_MAKEALIAS_F(MemoryAllocator)
+//----------------------------------------------------------------------------
+// RHIPipelineLayout.h
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_F(DescriptorSetLayoutHandle)
+PPE_RHI_MAKEALIAS_F(PipelineLayoutHandle)
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_F(PushConstantRange)
+PPE_RHI_MAKEALIAS_E(DescriptorFlags)
+PPE_RHI_MAKEALIAS_E(DescriptorType)
+PPE_RHI_MAKEALIAS_F(DescriptorBinding)
+PPE_RHI_MAKEALIAS_E(DescriptorSetFlags)
+PPE_RHI_MAKEALIAS_F(DescriptorSetLayout)
+PPE_RHI_MAKEALIAS_F(PipelineLayout)
+//----------------------------------------------------------------------------
+// RHIShaderStage.h
+//----------------------------------------------------------------------------
 PPE_RHI_MAKEALIAS_E(ShaderStageFlags)
 PPE_RHI_MAKEALIAS_E(ShaderStageCreateFlags)
 PPE_RHI_MAKEALIAS_F(ShaderSpecialization)
 PPE_RHI_MAKEALIAS_F(ShaderStage)
 //----------------------------------------------------------------------------
-PPE_RHI_MAKEALIAS_F(PushConstantRange)
-PPE_RHI_MAKEALIAS_F(DescriptorBinding)
-PPE_RHI_MAKEALIAS_F(DescriptorSetLayout)
-PPE_RHI_MAKEALIAS_F(PipelineLayout)
-PPE_RHI_MAKEALIAS_E(DescriptorFlags)
-PPE_RHI_MAKEALIAS_E(DescriptorType)
-PPE_RHI_MAKEALIAS_E(DescriptorSetFlags)
-PPE_RHI_MAKEALIAS_F(PushConstantRange)
-PPE_RHI_MAKEALIAS_F(DescriptorBinding)
-PPE_RHI_MAKEALIAS_F(DescriptorSetLayout)
-PPE_RHI_MAKEALIAS_F(PipelineLayout)
+// RHISurfaceFormat.h
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_F(PixelInfo)
+PPE_RHI_MAKEALIAS_F(SurfaceFormat)
+//----------------------------------------------------------------------------
+// RHISwapChain.h
+//----------------------------------------------------------------------------
+PPE_RHI_MAKEALIAS_F(SwapChain)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

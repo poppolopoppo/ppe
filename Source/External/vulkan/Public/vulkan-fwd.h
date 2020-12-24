@@ -10,12 +10,8 @@
 #    pragma GCC system_header
 #endif
 
-PRAGMA_MSVC_WARNING_PUSH()
-
 #if USE_PPE_VULKAN_MINIMALAPI
 #   include "vulkan-minimal.h"
 #else
-#   include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan.h"
+#   include "vulkan-external.h"
 #endif
-
-PRAGMA_MSVC_WARNING_POP()

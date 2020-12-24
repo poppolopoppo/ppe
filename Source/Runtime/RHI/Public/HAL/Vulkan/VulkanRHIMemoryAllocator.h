@@ -6,7 +6,6 @@
 
 #include "HAL/Generic/GenericRHIMemoryAllocator.h"
 
-#include "Allocator/MipMapAllocator.h"
 #include "Container/Array.h"
 
 #if USE_PPE_MEMORYDOMAINS
@@ -20,6 +19,15 @@ namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+enum class EVulkanMemoryTypeFlags : u32 {
+    None          = 0,
+    DeviceLocal   = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, // sit in GPU VRam, no CPU access
+    HostVisible   = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, // CPU needs to write GPU data
+    HostCoherent  = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // no need to flush CPU<->GPU to make visible
+    HostCached    = VK_MEMORY_PROPERTY_HOST_CACHED_BIT, // CPU needs to read-back GPU data
+};
+ENUM_FLAGS(EVulkanMemoryTypeFlags);
 //----------------------------------------------------------------------------
 struct FVulkanMemoryBlock {
     FVulkanDeviceMemory DeviceMemory;
@@ -45,6 +53,9 @@ public: // must be defined by every RHI:
 public: // vulkan specific:
     explicit FVulkanMemoryAllocator(const FVulkanDevice& device) NOEXCEPT;
     ~FVulkanMemoryAllocator();
+
+    void CreateDeviceHeaps();
+    void DestroyDeviceHeaps();
 
 private:
     struct FMemoryType {
@@ -79,8 +90,7 @@ private:
 #endif
     };
 
-    VkDevice _vkDevice;
-    FVulkanAllocationCallbacks _vkAllocator;
+    const FVulkanDevice& _device;
 
     ARRAYINSITU(RHIDevice, FMemoryType, 4) _memoryTypes;
     ARRAYINSITU(RHIDevice, FMemoryHeap, 4) _memoryHeaps;

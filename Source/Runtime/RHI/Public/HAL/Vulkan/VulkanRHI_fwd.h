@@ -8,72 +8,101 @@
 
 namespace PPE {
 namespace RHI {
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using EVulkanColorSpace = EGenericColorSpace;
-using EVulkanPixelFormat = EGenericPixelFormat;
-using EVulkanVertexFormat = EGenericVertexFormat;
-struct FVulkanPixelInfo;
-struct FVulkanSurfaceFormat;
+// VulkanRHIDevice.h
 //----------------------------------------------------------------------------
-struct FVulkanInstance;
-using FVulkanPhysicalDevice = VkPhysicalDevice;
-using EVulkanPhysicalDeviceFlags = EGenericPhysicalDeviceFlags;
+enum class EVulkanPresentMode : u32;
+using FVulkanShaderModule = VkShaderModule;
+class FVulkanDevice;
+//----------------------------------------------------------------------------
+// VulkanRHIFixedFunctionState.h
+//----------------------------------------------------------------------------
+enum class EVulkanBlendFactor : u32;
+enum class EVulkanBlendOp : u32;
+enum class EVulkanColorComponentMask : u32;
+enum class EVulkanLogicOp : u32;
+struct FVulkanBlendAttachmentState;
+struct FVulkanBlendState;
+//----------------------------------------------------------------------------
+enum class EVulkanCompareOp : u32;
+enum class EVulkanStencilOp : u32;
+struct FVulkanStencilOpState;
+struct FVulkanDepthStencilState;
+//----------------------------------------------------------------------------
+struct FVulkanMultisampleState;
+//----------------------------------------------------------------------------
+enum class EVulkanCullMode : u32;
+enum class EVulkanFrontFace : u32;
+enum class EVulkanPolygonMode : u32;
+enum class EVulkanConservativeRasterizationMode : u32;
+struct FVulkanRasterizerState;
+//----------------------------------------------------------------------------
+enum class EVulkanDynamicState : u32;
+struct FVulkanFixedFunctionState;
+//----------------------------------------------------------------------------
+// VulkanRHIFormat.h
+//----------------------------------------------------------------------------
+enum class EVulkanColorSpace : u32;
+enum class EVulkanFormat : u32;
+using EVulkanPixelFormat = EVulkanFormat;
+using EVulkanVertexFormat = EVulkanFormat;
+//----------------------------------------------------------------------------
+// VulkanRHIInstance.h
+//----------------------------------------------------------------------------
 using FVulkanWindowHandle = FGenericWindowHandle;
 using FVulkanWindowSurface = VkSurfaceKHR;
-using FVulkanAllocationCallbacks = const VkAllocationCallbacks*;
+class FVulkanInstance;
 //----------------------------------------------------------------------------
-using EVulkanMemoryTypeFlags = EGenericMemoryTypeFlags;
+using EVulkanPhysicalDeviceFlags = EGenericPhysicalDeviceFlags;
+class FVulkanInstance;
+//----------------------------------------------------------------------------
+// VulkanRHIInputAssembly.h
+//----------------------------------------------------------------------------
+enum class EVulkanPrimitiveTopology : u32;
+enum class EVulkanVertexInputRate : u32;
+struct FVulkanVertexBinding;
+struct FVulkanVertexAttribute;
+struct FVulkanInputAssembly;
+//----------------------------------------------------------------------------
+// VulkanRHIMemoryAllocator.h
+//----------------------------------------------------------------------------
 using FVulkanDeviceMemory = VkDeviceMemory;
+//----------------------------------------------------------------------------
+enum class EVulkanMemoryTypeFlags : u32;
 struct FVulkanMemoryBlock;
 class FVulkanMemoryAllocator;
 //----------------------------------------------------------------------------
-class FVulkanDevice;
-using EVulkanPresentMode = EGenericPresentMode;
+// VulkanRHIPipelineLayout.h
 //----------------------------------------------------------------------------
-class FVulkanSwapChain;
+using FVulkanDescriptorSetLayoutHandle = VkDescriptorSetLayout;
+using FVulkanPipelineLayoutHandle = VkPipelineLayout;
 //----------------------------------------------------------------------------
-using EVulkanBlendFactor = EGenericBlendFactor;
-using EVulkanBlendOp = EGenericBlendOp;
-using EVulkanColorComponentMask = EGenericColorComponentMask;
-using EVulkanLogicOp = EGenericLogicOp;
-using FVulkanBlendAttachmentState = FGenericBlendAttachmentState;
-using FVulkanBlendState = FGenericBlendState;
+struct FVulkanPushConstantRange;
+enum class EVulkanDescriptorFlags : u32;
+enum class EVulkanDescriptorType : u32;
+struct FVulkanDescriptorBinding;
+enum class EVulkanDescriptorSetFlags : u32;
+struct FVulkanDescriptorSetLayout;
+struct FVulkanPipelineLayout;
 //----------------------------------------------------------------------------
-using EVulkanCompareOp = EGenericCompareOp;
-using EVulkanStencilOp = EGenericStencilOp;
-using FVulkanStencilOpState = FGenericStencilOpState;
-using FVulkanDepthStencilState = FGenericDepthStencilState;
-using FVulkanMultisampleState = FGenericMultisampleState;
+// VulkanRHIShaderStage.h
 //----------------------------------------------------------------------------
-using EVulkanCullMode = EGenericCullMode;
-using EVulkanFrontFace = EGenericFrontFace;
-using EVulkanPolygonMode = EGenericPolygonMode;
-using EVulkanConservativeRasterizationMode = EGenericConservativeRasterizationMode;
-using FVulkanRasterizerState = FGenericRasterizerState;
-//----------------------------------------------------------------------------
-using EVulkanDynamicState = EGenericDynamicState;
-struct FVulkanFixedFunctionState;
-//----------------------------------------------------------------------------
-using EVulkanPrimitiveTopology = EGenericPrimitiveTopology;
-using EVulkanVertexInputRate = EGenericVertexInputRate;
-using FVulkanVertexBinding = FGenericVertexBinding;
-using FVulkanVertexAttribute = FGenericVertexAttribute;
-struct FVulkanInputAssembly;
-//----------------------------------------------------------------------------
-using EVulkanShaderStageFlags = EGenericShaderStageFlags;
-using EVulkanShaderStageCreateFlags = EGenericShaderStageCreateFlags;
+enum class EVulkanShaderStageFlags : u32;
+enum class EVulkanShaderStageCreateFlags : u32;
 using FVulkanShaderSpecialization = FGenericShaderSpecialization;
 struct FVulkanShaderStage;
 //----------------------------------------------------------------------------
-using EVulkanDescriptorFlags = EGenericDescriptorFlags;
-using EVulkanDescriptorType = EGenericDescriptorType;
-using EVulkanDescriptorSetFlags = EGenericDescriptorSetFlags;
-using FVulkanPushConstantRange = FGenericPushConstantRange;
-using FVulkanDescriptorBinding = FGenericDescriptorBinding;
-struct FVulkanDescriptorSetLayout;
-struct FVulkanPipelineLayout;
+// VulkanRHISurfaceFormat.h
+//----------------------------------------------------------------------------
+struct FVulkanPixelInfo;
+struct FVulkanSurfaceFormat;
+//----------------------------------------------------------------------------
+// VulkanRHISwapChain.h
+//----------------------------------------------------------------------------
+class FVulkanSwapChain;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

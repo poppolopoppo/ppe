@@ -9,30 +9,13 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EGenericColorSpace : u32;
-enum class EGenericFormat : u32;
-using EGenericPixelFormat = EGenericFormat;
-using EGenericVertexFormat = EGenericFormat;
-//----------------------------------------------------------------------------
-struct FGenericPixelInfo;
-struct FGenericSurfaceFormat;
-//----------------------------------------------------------------------------
-struct FGenericInstance;
-enum class EGenericPhysicalDeviceFlags : u32;
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowHandle);
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowSurface);
+// GenericRHIDevice.h
 //----------------------------------------------------------------------------
 enum class EGenericPresentMode : u32;
-class FGenericSwapChain;
-//----------------------------------------------------------------------------
-enum class EGenericMemoryTypeFlags : u32;
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericDeviceMemory);
-struct FGenericMemoryBlock;
-class FGenericMemoryAllocator;
-//----------------------------------------------------------------------------
+struct FGenericShaderModule;
 class FGenericDevice;
 //----------------------------------------------------------------------------
-struct FGenericShaderModule;
+// GenericRHIFixedFunctionState.h
 //----------------------------------------------------------------------------
 enum class EGenericBlendFactor : u32;
 enum class EGenericBlendOp : u32;
@@ -45,6 +28,7 @@ enum class EGenericCompareOp : u32;
 enum class EGenericStencilOp : u32;
 struct FGenericStencilOpState;
 struct FGenericDepthStencilState;
+//----------------------------------------------------------------------------
 struct FGenericMultisampleState;
 //----------------------------------------------------------------------------
 enum class EGenericCullMode : u32;
@@ -54,7 +38,24 @@ enum class EGenericConservativeRasterizationMode : u32;
 struct FGenericRasterizerState;
 //----------------------------------------------------------------------------
 enum class EGenericDynamicState : u32;
-struct FGenericFixedFunctionState;;
+struct FGenericFixedFunctionState;
+//----------------------------------------------------------------------------
+// GenericRHIFormat.h
+//----------------------------------------------------------------------------
+enum class EGenericColorSpace : u32;
+enum class EGenericFormat : u32;
+using EGenericPixelFormat = EGenericFormat;
+using EGenericVertexFormat = EGenericFormat;
+//----------------------------------------------------------------------------
+// GenericRHIInstance.h
+//----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowHandle);
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericWindowSurface);
+//----------------------------------------------------------------------------
+enum class EGenericPhysicalDeviceFlags : u32;
+class FGenericInstance;
+//----------------------------------------------------------------------------
+// GenericRHIInputAssembly.h
 //----------------------------------------------------------------------------
 enum class EGenericPrimitiveTopology : u32;
 enum class EGenericVertexInputRate : u32;
@@ -62,20 +63,42 @@ struct FGenericVertexBinding;
 struct FGenericVertexAttribute;
 struct FGenericInputAssembly;
 //----------------------------------------------------------------------------
+// GenericRHIMemoryAllocator.h
+//----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericDeviceMemory);
+//----------------------------------------------------------------------------
+enum class EGenericMemoryTypeFlags : u32;
+struct FGenericMemoryBlock;
+class FGenericMemoryAllocator;
+//----------------------------------------------------------------------------
+// GenericRHIPipelineLayout.h
+//----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericDescriptorSetLayoutHandle);
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericPipelineLayoutHandle);
+//----------------------------------------------------------------------------
+struct FGenericPushConstantRange;
+enum class EGenericDescriptorFlags : u32;
+enum class EGenericDescriptorType : u32;
+struct FGenericDescriptorBinding;
+enum class EGenericDescriptorSetFlags : u32;
+struct FGenericDescriptorSetLayout;
+struct FGenericPipelineLayout;
+//----------------------------------------------------------------------------
+// GenericRHIShaderStage.h
+//----------------------------------------------------------------------------
 enum class EGenericShaderStageFlags : u32;
 enum class EGenericShaderStageCreateFlags : u32;
 struct FGenericShaderSpecialization;
 struct FGenericShaderStage;
 //----------------------------------------------------------------------------
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericDescriptorSetLayoutHandle);
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FGenericPipelineLayoutHandle);
-enum class EGenericDescriptorFlags : u32;
-enum class EGenericDescriptorType : u32;
-enum class EGenericDescriptorSetFlags : u32;
-struct FGenericPushConstantRange;
-struct FGenericDescriptorBinding;
-struct FGenericDescriptorSetLayout;
-struct FGenericPipelineLayout;
+// GenericRHISurfaceFormat.h
+//----------------------------------------------------------------------------
+struct FGenericPixelInfo;
+struct FGenericSurfaceFormat;
+//----------------------------------------------------------------------------
+// GenericRHISwapChain.h
+//----------------------------------------------------------------------------
+class FGenericSwapChain;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

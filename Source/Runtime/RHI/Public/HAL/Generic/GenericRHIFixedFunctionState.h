@@ -89,7 +89,7 @@ struct FGenericBlendState {
     bool EnableLogicOp{ false };
 
     EGenericLogicOp LogicOp{ EGenericLogicOp::Copy };
-    float4 BlendConstants = float4::Zero;
+    float4 BlendConstants{ float4::Zero };
 
     VECTORINSITU(RHIState, FGenericBlendAttachmentState, 1) Attachments;
 };
