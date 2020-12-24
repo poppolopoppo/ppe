@@ -10,15 +10,29 @@ module Build
 
     class Generated
         attr_reader :path, :generator
-        def initialize(path, &generator)
+        def initialize(path, scope, &generator)
             @path = path
+            @scope = scope
             @generator = generator
         end
 
         ## generate a file in the output file for a target
         def generate(facet, env, target)
-            key = 'Generated.'+env.generated_key(target.abs_path, @path)
-            path = env.generated_path(target.expand_path(@path))
+            case @scope
+            when :generated
+                key = 'Generated.'+env.generated_key(target.abs_path, @path)
+                path = env.generated_path(target.expand_path(@path))
+            when :public
+                key = 'Public.'+File.join(target.abs_path, @path)
+                path = env.source_path(target.expand_path(File.join('Public', @path)))
+            when :private
+                key = 'Private.'+File.join(target.abs_path, @path)
+                path = env.source_path(target.expand_path(File.join('Private', @path)))
+            else
+                Log.fatal 'unsupported generated scope <%s>', @scope
+            end
+
+            Log.debug('generating "%s" for target <%s>', path, target)
 
             prereq = Build.fetch_persistent_opt(key)
             unless prereq

@@ -276,9 +276,9 @@ module Build
         def all_source_files() return (self.source_files + self.isolated_files) end
         def unity_excluded_files() return (self.isolated_files + self.excluded_files) end
 
-        def generate!(filename, &generator)
+        def generate!(filename, scope=:generated, &generator)
             Assert.check{ !@generateds.include?(filename) }
-            @generateds[filename] = Generated.new(filename, &generator)
+            @generateds[filename] = Generated.new(filename, scope, &generator)
             return self
         end
 
