@@ -82,7 +82,7 @@ module Build
                 Log.debug 'skip saving "%s" since it did not change', @filename
                 return false
             else
-                Log.verbose "invalidate '%s' since checksum did not match:\n\t- cfg: %s\n\t- new: %s", @filename, external_checksum.checksum, in_memory_checksum.checksum
+                Log.debug "invalidate '%s' since checksum did not match:\n\t- cfg: %s\n\t- new: %s", @filename, external_checksum.checksum, in_memory_checksum.checksum
                 content_write(data)
                 external_checksum.apply!(in_memory_checksum)
                 return true
