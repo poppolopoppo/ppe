@@ -70,7 +70,13 @@ module Build
         end
 
         Build.init_source_control(provider: provider)
-        Build.run_command(&namespace)
+
+        begin
+            Build.run_command(&namespace)
+        rescue RuntimeError => err
+            $stderr.puts("caught a runtime error: %s, aborting build" % [err.to_s, err.inspect])
+            exit(-42)
+        end
     end
 
 end #~ Build
