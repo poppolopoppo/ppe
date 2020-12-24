@@ -94,6 +94,11 @@ public:
     TVector(const TMemoryView<const value_type>& view, const allocator_type& alloc) : TVector(alloc) { assign(view.begin(), view.end()); }
     TVector& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
 
+    template <typename _It>
+    TVector(TIterable<_It> range) : TVector() { assign(range); }
+    template <typename _It>
+    TVector& operator=(TIterable<_It> range) { assign(range); return *this; }
+
     template <typename _OtherAllocator>
     TVector(const TVector<T, _OtherAllocator>& other) : TVector() { operator =(other); }
     template <typename _OtherAllocator>
