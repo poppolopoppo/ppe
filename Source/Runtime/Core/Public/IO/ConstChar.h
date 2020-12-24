@@ -52,7 +52,7 @@ struct TBasicConstChar {
         const _Char* b = other.Data;
 
         if (not (!!a & !!b))
-            return (!a & b);
+            return (!a & !!b);
 
         for (; *a & *b; ++a, ++b)
             if (*a >= *b)
@@ -66,7 +66,7 @@ struct TBasicConstChar {
         const _Char* b = other.Data;
 
         if (not (!!a & !!b))
-            return (!a & b);
+            return (!a & !!b);
 
         for (; *a & *b; ++a, ++b)
             if (ToLower(*a) >= ToLower(*b))
