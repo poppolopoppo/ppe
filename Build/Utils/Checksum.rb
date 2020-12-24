@@ -31,16 +31,21 @@ module Build
             return (match?(digest) and filesystem_check?(filename))
         end
         def filesystem_check?(filename)
-            st = File.stat(filename)
-            if st.mtime != @mtime
-                Log.warning '%s: invalidate due to mtime (%s <=> %s)', filename, @mtime, st.mtime
+            begin
+                st = File.stat(filename)
+                if st.mtime != @mtime
+                    Log.warning '%s: invalidate due to mtime (%s <=> %s)', filename, @mtime, st.mtime
+                    return false
+                end
+                if st.size != @size
+                    Log.warning '%s: invalidate due to size (%d <=> %d)', filename, @size, st.size
+                    return false
+                end
+                return true
+            rescue Errno::ENOENT
+                Log.error '%s: invalidate because file does not exist', filename
                 return false
             end
-            if st.size != @size
-                Log.warning '%s: invalidate due to size (%d <=> %d)', filename, @size, st.size
-                return false
-            end
-            return true
         end
         def to_s() "#{@digest}-#{@mtime.to_i}-#{@size}" end
         def self.from_file(filename)
