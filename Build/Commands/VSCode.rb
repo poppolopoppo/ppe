@@ -83,7 +83,7 @@ module Build
                 intelliSenseMode = 'clang-x64'
                 macFrameworkPath = []
             else
-                Log.fatal 'unsupported os <%s>', env.compiler.os
+                Log.fatal 'unsupported os <%s>', env.platform.os
             end
 
             return {
