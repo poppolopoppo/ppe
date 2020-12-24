@@ -60,7 +60,7 @@ public:
 public: // typed module interface
 
     template <typename _Module, class = Meta::TEnableIf<std::is_base_of_v<IModuleInterface, _Module>> >
-    _Module& ModuleChekced(const FStringView& name) const NOEXCEPT {
+    _Module& ModuleChecked(const FStringView& name) const NOEXCEPT {
         return (*checked_cast<_Module*>(&Module(name)));
     }
 

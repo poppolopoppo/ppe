@@ -4,6 +4,7 @@
 
 #include "HAL/PlatformApplicationMisc.h"
 
+#include "Modular/ModularDomain.h"
 #include "Modular/ModuleRegistration.h"
 
 #include "Diagnostic/Logger.h"
@@ -31,6 +32,10 @@ const FModuleInfo FApplicationModule::StaticInfo{
         BUILD_TARGET_ORDINAL,
         Generated::DependencyList )
 };
+//----------------------------------------------------------------------------
+FApplicationModule& FApplicationModule::Get(const FModularDomain& domain) {
+    return domain.ModuleChecked<FApplicationModule>(STRINGIZE(BUILD_TARGET_NAME));
+}
 //----------------------------------------------------------------------------
 FApplicationModule::FApplicationModule() NOEXCEPT
 :   IModuleInterface(StaticInfo)

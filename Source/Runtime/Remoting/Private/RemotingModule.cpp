@@ -46,7 +46,7 @@ void FRemotingModule::Start(FModularDomain& domain) {
     _srv->Add(MakeUnique<FRTTIEndpoint>());
     _srv->Start();
 
-    _tickHandle = domain.ModuleChekced<FApplicationModule>("Runtime/Application").OnApplicationTick().Add([this](Application::FApplicationBase&, FTimespan dt) {
+    _tickHandle = FApplicationModule::Get(domain).OnApplicationTick().Add([this](Application::FApplicationBase&, FTimespan dt) {
         _srv->Tick(dt);
     });
 }
@@ -56,7 +56,7 @@ void FRemotingModule::Shutdown(FModularDomain& domain) {
 
     using namespace Remoting;
 
-    domain.ModuleChekced<FApplicationModule>("Runtime/Application").OnApplicationTick().Remove(_tickHandle);
+    FApplicationModule::Get(domain).OnApplicationTick().Remove(_tickHandle);
 
     _srv->Shutdown();
     _srv.reset();

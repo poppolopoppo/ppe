@@ -101,23 +101,17 @@ static void TearDebugMenuInSystray_() {
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
-static FApplicationModule& ApplicationModule_(const FModularDomain& domain) NOEXCEPT {
-    return domain.ModuleChekced<FApplicationModule>("Runtime/Application");
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationBase::FApplicationBase(const FModularDomain& domain, FWString&& name)
 :   FPlatformApplication(domain, std::move(name))
-,   _module(ApplicationModule_(Domain()))  {
-
+,   _module(FApplicationModule::Get(domain))  {
     _module._OnApplicationCreate.Invoke(*this);
 }
 //----------------------------------------------------------------------------
 FApplicationBase::~FApplicationBase() NOEXCEPT {
-
     _module._OnApplicationDestroy.Invoke(*this);
 }
 //----------------------------------------------------------------------------
