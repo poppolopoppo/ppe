@@ -20,3 +20,7 @@ jobs:
         ruby-version: '2.6'
     - name: build
       run: ruby ppe.rb --bff --fbuild --Unity --no-Symbols -v Tools/UnitTest-Win64-Debug
+    - uses: actions/upload-artifact@v2
+      with:
+        name: UnitTest-Win64-Debug
+        path: Output/Binaries
