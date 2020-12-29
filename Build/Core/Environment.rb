@@ -70,12 +70,16 @@ module Build
             end
         end
 
+        def self.executable_path(relativePath, platform_config, ext)
+            return File.join($BinariesPath, relativePath.to_s.tr('/', '-')<<'-'<<
+                platform_config.to_s<<ext)
+        end
+
         def output_path(relativePath, output=:obj)
             relativePath = relativePath.to_s
             case output
             when :executable, :shared
-                outputPath = File.join($BinariesPath, relativePath.tr('/', '-')<<'-'<<
-                    @platform.name.to_s<<'-'<<@config.name.to_s<<@compiler.ext_for(output))
+                outputPath = Environment.executable_path(relativePath, @platform.name.to_s<<'-'<<@config.name.to_s, @compiler.ext_for(output))
             when :debug
                 Log.fatal 'you must use target_debug_path() instead'
             when :library, :obj, :pch

@@ -26,6 +26,8 @@ module Build
         environments = Build.fetch_environments
         targets = namespace[].all
 
+        compiler = environments.first.compiler
+
         JSONFile.serialize(File.join(vscode, VSCode::C_CPP_PROPERTIES), {
             version: VSCode::C_CPP_PROPERTIES_VERSION,
             configurations: environments.collect{|x| VSCode.c_cpp_properties(x, targets) }
@@ -38,7 +40,7 @@ module Build
 
         JSONFile.serialize(File.join(vscode, VSCode::LAUNCH), {
             version: VSCode::LAUNCH_VERSION,
-            configurations: VSCode.launch_configs(targets)
+            configurations: VSCode.launch_configs(compiler, targets)
         })
     end
 
@@ -125,15 +127,15 @@ module Build
             end
         end
 
-        def self.launch_configs(targets)
+        def self.launch_configs(compiler, targets)
+            extname = compiler.ext_for(:executable)
             executables = targets.select{|x| x.executable? }
             executables.collect! do |m|
                 {
                     name: m.abs_path,
                     type: 'cppvsdbg',
                     request: 'launch',
-                    #program: [ File.join($BinariesPath, "#{m.abs_path}-${command:cpptools.activeConfigName}") ],
-                    program: [ File.join($BinariesPath, "#{m.abs_path}-${command:cpptools.activeConfigName}") ],
+                    program: Environment.executable_path(m.abs_path, "${command:cpptools.activeConfigName}", extname),
                     args: [],
                     stopAtEntry: false,
                     cwd: $BinariesPath,
