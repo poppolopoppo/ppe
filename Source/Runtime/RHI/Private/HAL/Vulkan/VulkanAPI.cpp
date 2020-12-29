@@ -155,7 +155,14 @@ bool FVulkanInstanceFunctions::LoadSharedLib(FDynamicLibrary* pVulkanLib) {
 #       error "unknown platform"
 #endif
 
-    return pVulkanLib->AttachOrLoad(vkModulePath);
+    if (pVulkanLib->AttachOrLoad(vkModulePath)) {
+        LOG(Vulkan, Debug, L"successfuly attached or loaded '{0}'", MakeCStringView(vkModulePath));
+        return true;
+    }
+    else {
+        LOG(Vulkan, Fatal, L"failed to attach or load '{0}'", MakeCStringView(vkModulePath));
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 bool FVulkanInstanceFunctions::AttachGlobal(FVulkanInstanceFunctions* pInstanceFuncs, const FDynamicLibrary& vulkanLib) {
@@ -270,6 +277,8 @@ bool FVulkanInstanceFunctions::SetupExtensions(
         },  &VkExtensionProperties::extensionName );
 
     if (validated) {
+        LOG(Vulkan, Debug, L"use instance extensions: [{0}]",
+            Fmt::Join(pExtensions->MakeConstView().Map(&MakeCStringView<char>), L',') );
         return true;
     }
     else {
@@ -300,6 +309,8 @@ bool FVulkanInstanceFunctions::SetupLayers(
         },  &VkLayerProperties::layerName );
 
     if (validated) {
+        LOG(Vulkan, Debug, L"use instance layers: [{0}]",
+            Fmt::Join(pLayers->MakeConstView().Map(&MakeCStringView<char>), L',') );
         return true;
     }
     else {
@@ -597,6 +608,8 @@ bool FVulkanDeviceFunctions::SetupExtensions(
         },  &VkExtensionProperties::extensionName );
 
     if (validated) {
+        LOG(Vulkan, Debug, L"use device extensions: [{0}]",
+            Fmt::Join(pExtensions->MakeConstView().Map(&MakeCStringView<char>), L',') );
         return true;
     }
     else {
@@ -629,6 +642,8 @@ bool FVulkanDeviceFunctions::SetupLayers(
         },  &VkLayerProperties::layerName );
 
     if (validated) {
+        LOG(Vulkan, Debug, L"use layer extensions: [{0}]",
+            Fmt::Join(pLayers->MakeConstView().Map(&MakeCStringView<char>), L',') );
         return true;
     }
     else {
