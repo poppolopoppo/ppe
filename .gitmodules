@@ -25,6 +25,6 @@
     branch = HEAD
 #   shallow = true
     method = rebase
-[submodule ".\\Source\\External\\vulkan\\Vulkan-Header.git"]
-	path = .\\Source\\External\\vulkan\\Vulkan-Header.git
+[submodule "External/vulkan"]
+	path = Source/External/vulkan/Vulkan-Header.git
 	url = https://github.com/KhronosGroup/Vulkan-Headers.git
