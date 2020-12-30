@@ -95,6 +95,8 @@ public:
     }
 };
 //----------------------------------------------------------------------------
+static ILowLevelLogger* GLoggerImpl_ = nullptr;
+//----------------------------------------------------------------------------
 // Use a custom allocator for logger to diminish content, fragmentation and get re-entrancy
 class FLogAllocator : public Meta::TStaticSingleton<FLogAllocator> {
     friend Meta::TStaticSingleton<FLogAllocator>;
@@ -320,7 +322,7 @@ public: // ILowLevelLogger
             _userLogger->Flush(true);
         }
         else {
-            TaskManager_().Run([logger{ _userLogger }](ITaskContext&) {
+            TaskManager_().RunAndWaitFor([logger{ _userLogger }](ITaskContext&) {
                 logger->Flush(true); // flush synchronously in asynchronous task
             },  ETaskPriority::Low );
         }
@@ -400,8 +402,6 @@ PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static ILowLevelLogger* GLoggerImpl_ = nullptr;
-//----------------------------------------------------------------------------
 static void SetupLoggerImpl_(ILowLevelLogger* pimpl) {
     ONE_TIME_DEFAULT_INITIALIZE(FAtomicSpinLock, GBarrier);
 
@@ -468,7 +468,7 @@ public:
     }
 
     ~FAccumulatingLogger() {
-        FlushAccumulatedLogs();
+        FAccumulatingLogger::Flush(true);
     }
 
     void DeferLog(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
@@ -485,11 +485,11 @@ public:
         _logs.Emplace(&category, level, site, message);
     }
 
-    void FlushAccumulatedLogs() {
+    void FlushAccumulatedLogs(ILowLevelLogger& other) {
         const Meta::FUniqueLock scopeLock(_barrier);
 
         for (const FDeferredLog_& log : _logs)
-            FLogger::Log(*log.pCategory, log.Level, log.Site, log.Message);
+            other.Log(*log.pCategory, log.Level, log.Site, log.Message);
 
         _logs.Clear_ReleaseMemory();
         _heap.ReleaseAll();
@@ -511,7 +511,9 @@ public:
     }
 
     virtual void Flush(bool) override final {
-        FlushAccumulatedLogs();
+        ILowLevelLogger* const plogger = GLoggerImpl_;
+        if (plogger && this != plogger)
+            FlushAccumulatedLogs(*plogger);
     }
 
 private:
