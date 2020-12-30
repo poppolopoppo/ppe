@@ -882,21 +882,30 @@ static void BinnedFreeFallback_(void* ptr) {
     }
 }
 //------------------------------------------------------------------------------
-static void* BinnedReallocFallback_(void* ptr, size_t size) {
-    Assert(!!ptr | !!size);
+static void* BinnedReallocFallback_(void* ptr, size_t newSize) {
+    Assert(!!ptr | !!newSize);
 
-    if (!!ptr & !FBinnedPerThreadFreeBlockList::IsSmallBlock(ptr) & (size > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)) {
-        if (void* bitmapPtr = FMallocBitmap::HeapResize(ptr, size, FMallocBitmap::RegionSize(ptr)))
+    // treat large block reallocations separetely
+    if (!!ptr & !FBinnedPerThreadFreeBlockList::IsSmallBlock(ptr) & (newSize > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)) {
+        const size_t oldSize = FMallocBitmap::RegionSize(ptr);
+        if (FMallocBitmap::SnapSize(newSize) == oldSize)
+            return ptr;
+        if (void* bitmapPtr = FMallocBitmap::HeapResize(ptr, newSize, oldSize))
             return bitmapPtr;
     }
 
+    // trivial path: allocate a new block, copy data and release old block
     void* newPtr = nullptr;
-    if (size)
-        newPtr = BinnedMallocFallback_(size);
-    Assert_NoAssume(!!newPtr | !size);
+    if (newSize)
+        newPtr = BinnedMallocFallback_(newSize);
+    Assert_NoAssume(!!newPtr | !newSize);
 
-    if (!!newPtr & !!ptr)
-        FPlatformMemory::Memstream(newPtr, ptr, Min(size, FMallocBinned2::RegionSize(ptr)));
+    if (!!newPtr & !!ptr) {
+        Assert(newPtr != ptr);
+        const size_t oldSize = FMallocBinned2::RegionSize(ptr);
+        Assert(oldSize != newSize); // don't want to realloc into a block a same size apriori
+        FPlatformMemory::Memstream(newPtr, ptr, Min(newSize, oldSize));
+    }
 
     if (ptr)
         BinnedFreeFallback_(ptr);
