@@ -108,7 +108,7 @@ module Build
 
         def self.tasks(targets)
             targets.collect do |m|
-                args = Build.make_commandline('--fbuild', "#{m.abs_path}-${command:cpptools.activeConfigName}")
+                args = Build.make_commandline('-v', '--fbuild', "#{m.abs_path}-${command:cpptools.activeConfigName}")
                 {
                     label: m.abs_path,
                     command: args.shift,
