@@ -225,15 +225,21 @@ static void Test_HttpGet_() {
 
     forrange(i, 0, 3) {
         FHttpResponse response;
-        if (EHttpStatus::OK != HttpGet(&response, uri))
+        const EHttpStatus status = HttpGet(&response, uri);
+
+        if (EHttpStatus::ServiceUnavailable == status) {
+            LOG(Test_Network, Warning, L"service unavailable for {0}", uri);
+            return;
+        }
+
+        if (EHttpStatus::OK != status)
             AssertNotReached();
 
         LogResponse_(response);
 
-        if (response.Status() == Network::EHttpStatus::OK) {
+        if (response.Status() == EHttpStatus::OK) {
             Serialize::FJson json;
-            IBufferedStreamReader* reader = &response.Body();
-            if (not Serialize::FJson::Load(&json, MakeStringView(L"network.tmp"), reader))
+            if (not Serialize::FJson::Load(&json, MakeStringView(L"network.tmp"), &response.Body()))
                 LOG(Test_Network, Error, L"request failed for {0}", uri);
             else
                 LOG(Test_Network, Info, L"request result:\n{0}", json);
@@ -257,7 +263,14 @@ static void Test_HttpPost_() {
     };
 
     FHttpResponse response;
-    if (EHttpStatus::OK != HttpPost(&response, uri, post))
+    const EHttpStatus status = HttpPost(&response, uri, post);
+
+    if (EHttpStatus::ServiceUnavailable == status) {
+        LOG(Test_Network, Warning, L"service unavailable for {0}", uri);
+        return;
+    }
+
+    if (EHttpStatus::OK != status)
         AssertNotReached();
 
     LogResponse_(response);
