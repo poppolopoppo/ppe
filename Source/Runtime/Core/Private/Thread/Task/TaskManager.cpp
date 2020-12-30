@@ -230,7 +230,7 @@ public:
 
                 if (-1 == waitfor.NumPending)
                     waitfor.OnTaskFinished.notify_all();
-                else if (-waitfor.NumTotal == waitfor.NumPending)
+                if (-waitfor.NumTotal == waitfor.NumPending)
                     onTaskBroadcast.notify_one();
             }
         };
