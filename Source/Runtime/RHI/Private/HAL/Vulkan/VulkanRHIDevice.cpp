@@ -71,10 +71,8 @@ bool FVulkanDevice::SetupDevice(
     _vkDevice = vkDevice;
 
     // need to bind device functions before anything else
-    if (not FVulkanDeviceFunctions::AttachDevice(this, _instance, _vkDevice) ||
-        not FVulkanDeviceFunctions::AttachExtensions(this, _instance, _vkDevice)) {
+    if (not FVulkanDeviceFunctions::AttachDevice(this, _instance, _vkDevice))
         return false;
-    }
 
     if (not graphicsQueue.IsInvalid())
         vkGetDeviceQueue(_vkDevice, graphicsQueue.FamilyIndex, graphicsQueue.FamilyQueueIndex, &_vkGraphicsQueue);

@@ -91,7 +91,6 @@ protected:
     static bool SetupLayers(TArray<const char*>* pLayers, const FVulkanInstanceFunctions& instanceFuncs, VkPhysicalDevice vkPysicalDevice, bool debug);
 
     static bool AttachDevice(FVulkanDeviceFunctions* pDeviceFuncs, const FVulkanInstanceFunctions& instanceFuncs, VkDevice vkDevice);
-    static bool AttachExtensions(FVulkanDeviceFunctions* pDeviceFuncs, const FVulkanInstanceFunctions& instanceFuncs, VkDevice vkDevice);
 
     static void Detach(FVulkanDeviceFunctions* pDeviceFuncs);
 

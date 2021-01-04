@@ -75,6 +75,22 @@ NODISCARD static bool vkDeviceProc_(
     return true;
 }
 //----------------------------------------------------------------------------
+template <typename _PFN>
+NODISCARD static bool vkExtensionProc_(
+    FVulkanDeviceFunctions* pDeviceFuncs,
+    const char* name, _PFN FVulkanDeviceFunctions::* (pMember),
+    const FVulkanInstanceFunctions& instanceFuncs, VkDevice vkDevice) {
+    Assert(instanceFuncs.vkGetDeviceProcAddr);
+    _PFN const pfn = reinterpret_cast<_PFN>(instanceFuncs.vkGetDeviceProcAddr(vkDevice, name));
+
+    if (not pfn) {
+        LOG(Vulkan, Warning, L"failed to bind extension function <{0}> for vkDevice <{1}>, but continuing loader", MakeCStringView(name), vkDevice);
+    }
+
+    pDeviceFuncs->*pMember = pfn;
+    return true;
+}
+//----------------------------------------------------------------------------
 template <typename _vkEnumerateProperties, typename T, typename _Str>
 NODISCARD static bool vkValidateNames_(
     const char* funcName,
@@ -111,15 +127,18 @@ NODISCARD static bool vkValidateNames_(
                 }),
                 MakeCStringView(L", ")) );
 
-        for (auto it = pNeededNames->begin(); it != pNeededNames->end(); ++it) {
+        for (auto it = pNeededNames->begin(); it != pNeededNames->end(); ) {
             const auto jt = std::find_if(properties.begin(), properties.end(),
                 [pPropertyName, key{ FConstChar{ *it } }](const T& p) NOEXCEPT{
                     return key.EqualsI(p.*pPropertyName);
                 });
 
             if (properties.end() == jt) {
-                LOG(Vulkan, Error, L"{0}: failed to find required property <{1}>", MakeCStringView(funcName), MakeCStringView(*it));
-                return false;
+                LOG(Vulkan, Warning, L"{0}: failed to find required property <{1}>", MakeCStringView(funcName), MakeCStringView(*it));
+                it = pNeededNames->erase(it);
+            }
+            else {
+                ++it;
             }
         }
     }
@@ -522,35 +541,7 @@ bool FVulkanDeviceFunctions::AttachDevice(
     #define VK_INSTANCE_LEVEL_FUNCTION( name )
     #define VK_INSTANCE_LEVEL_FUNCTION_FROM_EXTENSION( name, extension )
     #define VK_DEVICE_LEVEL_FUNCTION( name ) avail &= vkDeviceProc_( pDeviceFuncs, STRINGIZE(name), &FVulkanDeviceFunctions::name, instanceFuncs, vkDevice );
-    #define VK_DEVICE_LEVEL_FUNCTION_FROM_EXTENSION( name, extension )
-
-    #include "vulkan-exports.inl"
-
-    #undef VK_EXPORTED_FUNCTION
-    #undef VK_GLOBAL_LEVEL_FUNCTION
-    #undef VK_INSTANCE_LEVEL_FUNCTION
-    #undef VK_INSTANCE_LEVEL_FUNCTION_FROM_EXTENSION
-    #undef VK_DEVICE_LEVEL_FUNCTION
-    #undef VK_DEVICE_LEVEL_FUNCTION_FROM_EXTENSION
-
-    return avail;
-}
-//----------------------------------------------------------------------------
-bool FVulkanDeviceFunctions::AttachExtensions(
-    FVulkanDeviceFunctions* pDeviceFuncs,
-    const FVulkanInstanceFunctions& instanceFuncs,
-    VkDevice vkDevice ) {
-    Assert(pDeviceFuncs);
-    Assert(vkDevice != VK_NULL_HANDLE);
-
-    bool avail = true;
-
-    #define VK_EXPORTED_FUNCTION( name )
-    #define VK_GLOBAL_LEVEL_FUNCTION( name )
-    #define VK_INSTANCE_LEVEL_FUNCTION( name )
-    #define VK_INSTANCE_LEVEL_FUNCTION_FROM_EXTENSION( name, extension )
-    #define VK_DEVICE_LEVEL_FUNCTION( name )
-    #define VK_DEVICE_LEVEL_FUNCTION_FROM_EXTENSION( name, extension ) avail &= vkDeviceProc_( pDeviceFuncs, STRINGIZE(name), &FVulkanDeviceFunctions::name, instanceFuncs, vkDevice );
+    #define VK_DEVICE_LEVEL_FUNCTION_FROM_EXTENSION( name, extension ) avail &= vkExtensionProc_( pDeviceFuncs, STRINGIZE(name), &FVulkanDeviceFunctions::name, instanceFuncs, vkDevice );
 
     #include "vulkan-exports.inl"
 
