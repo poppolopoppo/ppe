@@ -100,6 +100,28 @@ bool FVulkanDevice::SetupDevice(
     return true;
 }
 //----------------------------------------------------------------------------
+void FVulkanDevice::TearDownDevice() {
+    AssertRelease(VK_NULL_HANDLE != _vkDevice);
+
+    const FCriticalScope deviceLock(&_barrier); // not necessary, since we never shared the ptr ATM
+
+    Assert_NoAssume( // at least one queue should have been created !
+        VK_NULL_HANDLE != _vkGraphicsQueue ||
+        VK_NULL_HANDLE != _vkPresentQueue ||
+        VK_NULL_HANDLE != _vkAsyncComputeQueue ||
+        VK_NULL_HANDLE != _vkTransferQueue);
+    Assert_NoAssume(VK_NULL_HANDLE != _vkGraphicsQueue || VK_NULL_HANDLE != _vkPresentQueue);
+
+    _deviceMemory.DestroyDeviceHeaps();
+
+    _vkGraphicsQueue = VK_NULL_HANDLE;
+    _vkPresentQueue = VK_NULL_HANDLE;
+    _vkAsyncComputeQueue = VK_NULL_HANDLE;
+    _vkTransferQueue = VK_NULL_HANDLE;
+
+    _vkDevice = VK_NULL_HANDLE;
+}
+//----------------------------------------------------------------------------
 const VkAllocationCallbacks* FVulkanDevice::vkAllocator() const {
     return _instance.vkAllocator();
 }

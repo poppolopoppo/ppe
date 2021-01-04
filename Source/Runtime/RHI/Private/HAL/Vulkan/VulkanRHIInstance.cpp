@@ -276,7 +276,7 @@ ETargetRHI FVulkanInstance::TargetRHI() const NOEXCEPT { return ETargetRHI::Vulk
 //----------------------------------------------------------------------------
 bool FVulkanInstance::Create(FVulkanInstance* pInstance) {
     Assert(pInstance);
-    Assert_NoAssume(pInstance->_vkInstance == nullptr);
+    Assert_NoAssume(pInstance->_vkInstance == VK_NULL_HANDLE);
 
     const FCriticalScope scopeLock(&pInstance->_barrier);
 
@@ -336,7 +336,7 @@ void FVulkanInstance::Destroy(FVulkanInstance* pInstance) {
     Assert(pInstance);
 
     const FCriticalScope scopeLock(&pInstance->_barrier);
-    Assert_NoAssume(VK_NULL_HANDLE == pInstance->_vkInstance);
+    Assert_NoAssume(VK_NULL_HANDLE != pInstance->_vkInstance);
 
     RHIModule_().BroadcastInstancePreDestroy_(*pInstance);
 
@@ -531,23 +531,17 @@ void FVulkanInstance::DestroyLogicalDevice(FVulkanDevice* pLogicalDevice) {
     const FCriticalScope instanceLock(&_barrier);
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
 
-    const FCriticalScope deviceLock(&pLogicalDevice->_barrier);
-
-    pLogicalDevice->vkDeviceWaitIdle(pLogicalDevice->_vkDevice);
-
     RHIModule_().BroadcastDevicePreDestroy_(*pLogicalDevice);
 
-    pLogicalDevice->vkDestroyDevice(pLogicalDevice->_vkDevice, &_vkAllocator);
+    const VkDevice vkDevice = pLogicalDevice->_vkDevice;
+
+    pLogicalDevice->vkDeviceWaitIdle(vkDevice);
+
+    pLogicalDevice->TearDownDevice();
+
+    pLogicalDevice->vkDestroyDevice(vkDevice, &_vkAllocator);
 
     FVulkanDeviceFunctions::Detach(pLogicalDevice);
-
-#if USE_PPE_ASSERT // see ~FVulkanDevice
-    pLogicalDevice->_vkDevice = VK_NULL_HANDLE;
-    pLogicalDevice->_vkGraphicsQueue = VK_NULL_HANDLE;
-    pLogicalDevice->_vkPresentQueue = VK_NULL_HANDLE;
-    pLogicalDevice->_vkAsyncComputeQueue = VK_NULL_HANDLE;
-    pLogicalDevice->_vkTransferQueue = VK_NULL_HANDLE;
-#endif
 
     TRACKING_DELETE(RHIInstance, pLogicalDevice);
 

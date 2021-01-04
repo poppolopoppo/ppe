@@ -52,6 +52,8 @@ public:
         FVulkanDeviceQueueInfo asyncComputeQueue,
         FVulkanDeviceQueueInfo transferQueue );
 
+    void TearDownDevice();
+
 public: // must be implemented:
     ~FVulkanDevice();
 
@@ -89,11 +91,11 @@ public: // vulkan specific:
     FVulkanMemoryAllocator& DeviceMemory() { return _deviceMemory; }
     const FVulkanMemoryAllocator& DeviceMemory() const { return _deviceMemory; }
 
+    const VkAllocationCallbacks* vkAllocator() const;
+
 #if USE_PPE_RHIDEBUG
     const FVulkanDebug& Debug() const { return _debug; }
 #endif
-
-    const VkAllocationCallbacks* vkAllocator() const;
 
 private:
     FCriticalSection _barrier;
