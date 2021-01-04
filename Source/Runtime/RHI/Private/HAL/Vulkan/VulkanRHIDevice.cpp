@@ -90,10 +90,10 @@ bool FVulkanDevice::SetupDevice(
         VK_NULL_HANDLE != _vkTransferQueue);
     Assert_NoAssume(VK_NULL_HANDLE != _vkGraphicsQueue || VK_NULL_HANDLE != _vkPresentQueue);
 
-    PPE_VKDEVICE_SETDEBUGNAME(*this, _vkGraphicsQueue, "GraphicsQueue");
-    PPE_VKDEVICE_SETDEBUGNAME(*this, _vkPresentQueue, "PresentQueue");
-    PPE_VKDEVICE_SETDEBUGNAME(*this, _vkAsyncComputeQueue, "AsyncComputeQueue");
-    PPE_VKDEVICE_SETDEBUGNAME(*this, _vkTransferQueue, "TransferQueue");
+    PPE_VKDEVICE_SETDEBUGNAME(*this, VkQueue, _vkGraphicsQueue, "GraphicsQueue");
+    PPE_VKDEVICE_SETDEBUGNAME(*this, VkQueue, _vkPresentQueue, "PresentQueue");
+    PPE_VKDEVICE_SETDEBUGNAME(*this, VkQueue, _vkAsyncComputeQueue, "AsyncComputeQueue");
+    PPE_VKDEVICE_SETDEBUGNAME(*this, VkQueue, _vkTransferQueue, "TransferQueue");
 
     _deviceMemory.CreateDeviceHeaps();
 

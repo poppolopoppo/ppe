@@ -18,10 +18,10 @@
 #	include "IO/Format.h"
 #	include "IO/TextWriter.h"
 
-#	define PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _VkElement, _Name) \
-		(_RHIDevice).Debug().SetDebugName(_VkElement, _Name)
-#	define PPE_VKDEVICE_SETDEBUGARGS(_RHIDevice, _VkElement, _Fmt, ...) \
-		PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _VkElement, \
+#	define PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _vkType, _VkElement, _Name) \
+		( (_RHIDevice).Debug().ShouldEmitNames() ? (_RHIDevice).Debug().CONCAT(SetDebugName_, _vkType)(_VkElement, _Name) : void(0) )
+#	define PPE_VKDEVICE_SETDEBUGARGS(_RHIDevice, _vkType, _VkElement, _Fmt, ...) \
+		PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _vkType, _VkElement, \
 			INLINE_FORMAT(256, _Fmt, __VA_ARGS__).data()/* should be null-terminated */)
 
 namespace PPE {
@@ -35,6 +35,9 @@ public:
 
 	explicit FVulkanDebug(const FVulkanDevice& device);
 
+	bool ShouldEmitMarkers() const;
+	bool ShouldEmitNames() const;
+
 	void vkSetObjectName(u64 object, VkDebugReportObjectTypeEXT type, string_t name) const;
 	void vkSetObjectTag(u64 object, VkDebugReportObjectTypeEXT type, u64 name, const FRawMemoryConst& tag) const;
 
@@ -42,22 +45,22 @@ public:
 	void Marker(VkCommandBuffer cmdBuffer, string_t name, const FLinearColor& color) const;
 	void EndRegion(VkCommandBuffer cmdBuffer) const;
 
-	void SetDebugName(VkCommandBuffer cmdBuffer, string_t name) const;
-	void SetDebugName(VkQueue queue, string_t name) const;
-	void SetDebugName(VkImage image, string_t name) const;
-	void SetDebugName(VkSampler sampler, string_t name) const;
-	void SetDebugName(VkBuffer buffer, string_t name) const;
-	void SetDebugName(VkDeviceMemory memory, string_t name) const;
-	void SetDebugName(VkShaderModule shaderModule, string_t name) const;
-	void SetDebugName(VkPipeline pipeline, string_t name) const;
-	void SetDebugName(VkPipelineLayout pipelineLayout, string_t name) const;
-	void SetDebugName(VkRenderPass renderPass, string_t name) const;
-	void SetDebugName(VkFramebuffer frameBuffer, string_t name) const;
-	void SetDebugName(VkDescriptorSet descriptorSet, string_t name) const;
-	void SetDebugName(VkDescriptorSetLayout descriptorSetLayout, string_t name) const;
-	void SetDebugName(VkSemaphore semaphore, string_t name) const;
-	void SetDebugName(VkFence fence, string_t name) const;
-	void SetDebugName(VkEvent _event, string_t name) const;
+	void SetDebugName_VkCommandBuffer(VkCommandBuffer cmdBuffer, string_t name) const;
+	void SetDebugName_VkQueue(VkQueue queue, string_t name) const;
+	void SetDebugName_VkImage(VkImage image, string_t name) const;
+	void SetDebugName_VkSampler(VkSampler sampler, string_t name) const;
+	void SetDebugName_VkBuffer(VkBuffer buffer, string_t name) const;
+	void SetDebugName_VkDeviceMemory(VkDeviceMemory memory, string_t name) const;
+	void SetDebugName_VkShaderModule(VkShaderModule shaderModule, string_t name) const;
+	void SetDebugName_VkPipeline(VkPipeline pipeline, string_t name) const;
+	void SetDebugName_VkPipelineLayout(VkPipelineLayout pipelineLayout, string_t name) const;
+	void SetDebugName_VkRenderPass(VkRenderPass renderPass, string_t name) const;
+	void SetDebugName_VkFramebuffer(VkFramebuffer frameBuffer, string_t name) const;
+	void SetDebugName_VkDescriptorSet(VkDescriptorSet descriptorSet, string_t name) const;
+	void SetDebugName_VkDescriptorSetLayout(VkDescriptorSetLayout descriptorSetLayout, string_t name) const;
+	void SetDebugName_VkSemaphore(VkSemaphore semaphore, string_t name) const;
+	void SetDebugName_VkFence(VkFence fence, string_t name) const;
+	void SetDebugName_VkEvent(VkEvent _event, string_t name) const;
 
 private:
 	const FVulkanDevice& _device;

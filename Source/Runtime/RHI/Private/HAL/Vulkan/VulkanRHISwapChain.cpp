@@ -45,7 +45,7 @@ void FVulkanSwapChain::InitializeSwapChain(const FVulkanDevice& device) {
     // create image views
     _imageViews.resize_Uninitialized(numImagesInSwapChain);
     forrange(i, 0, numImagesInSwapChain) {
-        PPE_VKDEVICE_SETDEBUGARGS(device, _images[i], "SwapChain#{0}", i);
+        PPE_VKDEVICE_SETDEBUGARGS(device, VkImage, _images[i], "SwapChain#{0}", i);
 
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
