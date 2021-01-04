@@ -71,8 +71,6 @@ FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& 
 FApplicationWindow::~FApplicationWindow() = default;
 //----------------------------------------------------------------------------
 void FApplicationWindow::Start() {
-    FApplicationBase::Start();
-
     _window->SetMainWindow(_main.get());
 
     auto& services = Services();
@@ -91,9 +89,13 @@ void FApplicationWindow::Start() {
 
     VerifyRelease(_main->Show());
     VerifyRelease(_main->SetFocus());
+
+    FApplicationBase::Start();
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Shutdown() {
+    FApplicationBase::Shutdown();
+
     if (_main->Visible())
         VerifyRelease(_main->Close());
 
@@ -112,8 +114,6 @@ void FApplicationWindow::Shutdown() {
     services.CheckedRemove<IInputService>(_input.get());
 
     _window->SetMainWindow(nullptr);
-
-    FApplicationBase::Shutdown();
 }
 //----------------------------------------------------------------------------
 bool FApplicationWindow::PumpMessages() NOEXCEPT {

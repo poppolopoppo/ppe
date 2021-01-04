@@ -124,6 +124,8 @@ void FApplicationBase::Start() {
 #endif
 
     _module._OnApplicationStart.Invoke(*this);
+
+    ReportAllTrackingData();
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Tick(FTimespan dt) {
