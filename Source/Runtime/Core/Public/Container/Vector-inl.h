@@ -241,11 +241,11 @@ template <typename T, typename _Allocator>
 auto TVector<T, _Allocator>::erase(const_iterator pos) -> iterator {
     Assert_NoAssume(end() == pos || AliasesToContainer(pos));
 
-    const iterator& p = (const iterator&)(pos);
-    std::rotate(p, p + 1, end());
+    const u32 i = checked_cast<u32>(std::distance(cbegin(), pos));
+    std::rotate(begin() + i, begin() + (i + 1), end());
 
     pop_back();
-    return p;
+    return (begin() + i);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
