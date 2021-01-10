@@ -10,6 +10,16 @@ require_once '../../Common.rb'
 
 module Build
 
+    LLVM_DEBS = %w{
+        libncurses-dev
+        libvulkan1
+        libxcb1-dev
+    }
+
+    make_command(:deb, 'list needed deb packages') do |&namespace|
+        $stdout.puts LLVM_DEBS
+    end
+
     class LLVMPosixCompiler < Compiler
         attr_reader :llvmPath, :llvmVersion
         def initialize(
