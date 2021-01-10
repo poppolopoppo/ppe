@@ -81,7 +81,8 @@ module Build
         def branch?()
             if @branch.nil?
                 Dir.chdir(@path) do
-                    @branch = %x{ git branch --show-current }
+                    #@branch = %x{ git branch --show-current }
+                    @branch = %x{ git rev-parse --abbrev-ref HEAD }
                     @branch.chomp!
                     @branch.strip!
                 end
