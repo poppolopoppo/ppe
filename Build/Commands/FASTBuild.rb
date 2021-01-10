@@ -45,7 +45,7 @@ module Build
             cmd << '-nostoponerror' unless Build.StopOnError
             #cmd << '-fastcancel' # EXPERIMENTAL: crashing and PDB errors
 
-            if Build.Interactive
+            if Build.interactive
                 cmd << '-progress'
             else
                 cmd << '-noprogress'

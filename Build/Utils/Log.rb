@@ -6,13 +6,14 @@ require_once 'ANSIColor.rb'
 module Build
 
     @@_interactive_ = nil
-    def self.Interactive()
+    def self.interactive()
         if @@_interactive_.nil?
             @@_interactive_ = $stdout.isatty
             case ENV['TERM']
             when 'xterm','xterm-256'
                 @@_interactive_ = true
             end
+            @@_interactive_ = false unless $stdout.isatty
         end
         return @@_interactive_
     end
@@ -33,7 +34,7 @@ module Build
         VERBOSITY = [ :info, :display, :warning, :error, :fatal, :success ]
         MAXMSGLEN = 4096*4
 
-        ANSI = ANSI.colors(Build.Interactive)
+        ANSI = ANSI.colors(Build.interactive)
         STYLES = {
             debug: ANSI[:fg0_magenta],
             verbose: ANSI[:fg1_black],
@@ -64,7 +65,7 @@ module Build
             raise ArgumentError.new("unknown verbosity level: #{min}")
         end
 
-        if Build.Interactive
+        if Build.interactive
             $pinned_stream = $stderr
             $pinned_message = nil
             def self.pin(message)
@@ -125,21 +126,26 @@ module Build
                     message = message[0..MAXMSGLEN]
                 end
 
-                case verbosity
-                when :debug, :verbose, :log, :info, :display
-                    $stdout.puts(Log.ansi_style(verbosity, message))
-                    $stdout.flush
-                when :warning, :error
-                    $stderr.puts(Log.ansi_style(verbosity, message))
-                    $stdout.flush
-                when :fatal
-                    $stdout.flush
-                    $stderr.flush
-                    $stderr.puts(Log.ansi_style(verbosity, message))
-                    raise FatalError.new("fatal error")
-                else
-                    $stderr.flush
-                    raise ArgumentError.new("unsupported log verbosity: #{verbosity}")
+                begin
+                    case verbosity
+                    when :debug, :verbose, :log, :info, :display
+                        $stdout.puts(Log.ansi_style(verbosity, message))
+                        $stdout.flush
+                    when :warning, :error
+                        $stderr.puts(Log.ansi_style(verbosity, message))
+                        $stdout.flush
+                    when :fatal
+                        $stdout.flush
+                        $stderr.flush
+                        $stderr.puts(Log.ansi_style(verbosity, message))
+                        raise FatalError.new("fatal error")
+                    else
+                        $stderr.flush
+                        raise ArgumentError.new("unsupported log verbosity: #{verbosity}")
+                    end
+                rescue Errno::EPIPE => epipe
+                    # ignore pipe errors when non-interactive
+                    raise epipe if Build.interactive
                 end
 
             end if VERBOSITY.include?(verbosity) || verbosity == :fatal
@@ -174,7 +180,7 @@ module Build
         end
 
     private
-        if Build.Interactive
+        if Build.interactive
             def self.ansi_style(verbosity, message)
                 case verbosity
                 when :success
@@ -219,3 +225,7 @@ module Build
     end #~ Assert
 
 end #~ Build
+
+unless $stdout.isatty
+    Build::Log.verbosity(:warning)
+end
