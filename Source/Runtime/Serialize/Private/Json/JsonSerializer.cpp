@@ -439,13 +439,13 @@ public:
 
         const FJson::FValue* const klassName = jsonObj.GetIFP(Json_Class());
         if (nullptr == klassName || nullptr == klassName->TypedConstDataIFP<FJson::FText>()) {
-            LOG(Serialize, Error, L"missing meta class name");
+            LOG_DIRECT(Serialize, Error, L"missing meta class name");
             return false;
         }
 
         const FJson::FValue* const objName = jsonObj.GetIFP(Json_Name());
         if (nullptr == objName || nullptr == objName->TypedConstDataIFP<FJson::FText>()) {
-            LOG(Serialize, Error, L"missing meta object name");
+            LOG_DIRECT(Serialize, Error, L"missing meta object name");
             return false;
         }
 
@@ -454,7 +454,7 @@ public:
         if (objFlags) {
             const FJson::FInteger* const intFlags = objFlags->TypedConstDataIFP<FJson::FInteger>();
             if (nullptr == intFlags)
-                LOG(Serialize, Error, L"invalid meta object flags");
+                LOG_DIRECT(Serialize, Error, L"invalid meta object flags");
             else if (EJsonRTTI_(*intFlags) ^ EJsonRTTI_::TopObject)
                 topObject = true;
         }
@@ -480,7 +480,7 @@ public:
         if (objProperties) {
             const FJson::FObject* const jsonProperties = objProperties->TypedConstDataIFP<FJson::FObject>();
             if (nullptr == jsonProperties) {
-                LOG(Serialize, Error, L"invalid meta object properties");
+                LOG_DIRECT(Serialize, Error, L"invalid meta object properties");
                 return false;
             }
 
@@ -886,7 +886,7 @@ bool Json_to_RTTI(const FJson& src, FTransactionLinker* link) {
 
     const FJson::FArray* arrIFP = src.Root().TypedConstDataIFP<FJson::FArray>();
     if (nullptr == arrIFP) {
-        LOG(Serialize, Error, L"top json entry should be an array");
+        LOG_DIRECT(Serialize, Error, L"top json entry should be an array");
         return false;
     }
 
@@ -895,12 +895,12 @@ bool Json_to_RTTI(const FJson& src, FTransactionLinker* link) {
     forrange(i, 0, arrIFP->size()) {
         const FJson::FValue& item = arrIFP->at(i);
         if (not item.TypedConstDataIFP<FJson::FObject>()) {
-            LOG(Serialize, Error, L"all top entries should be json objects");
+            LOG_DIRECT(Serialize, Error, L"all top entries should be json objects");
             return false;
         }
 
         if (not toRTTI.Parse(item.FlatData<FJson::FObject>())) {
-            LOG(Serialize, Error, L"failed to parse json object");
+            LOG_DIRECT(Serialize, Error, L"failed to parse json object");
             return false;
         }
     }
