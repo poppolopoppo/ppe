@@ -93,7 +93,7 @@ using enable_if_constructible_helper_t = std::size_t;
 ///////////////////// Non greedy fields count search. Templates instantiation depth is log(sizeof(T)), templates instantiation count is log(sizeof(T)).
 
 // PPE BEGIN (POP) - This is not working for me, replacing with a simpler classical trait
-#if 0 // pfr :
+#ifdef __clang__ // pfr :
 template <class T, std::size_t N>
 constexpr std::size_t detect_fields_count(size_t_<N>, size_t_<N>, long) noexcept {
     return N;
