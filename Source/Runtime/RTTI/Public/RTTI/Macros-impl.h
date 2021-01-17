@@ -105,7 +105,7 @@
 //----------------------------------------------------------------------------
 #define RTTI_ENUM_BEGIN_EX(_Module, _Name, _Attributes) \
     static const CONCAT(RTTI_, _Name)::RTTI_FMetaEnumHandle CONCAT(GRTTI_MetaEnum_, _Name); \
-    auto _CONCAT(RTTI_, _Name)::metaenum_handle() NOEXCEPT -> const RTTI_FMetaEnumHandle& { \
+    auto CONCAT(RTTI_, _Name)::metaenum_handle() NOEXCEPT -> const RTTI_FMetaEnumHandle& { \
         return CONCAT(GRTTI_MetaEnum_, _Name); \
     } \
     \
