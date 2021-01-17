@@ -93,7 +93,7 @@ module Build
                 dirpath = File.dirname(fullpath.first)
                 Log.log 'LLVM: found binary path "%s"', dirpath
                 need_fileset!(
-                    File.join(dirpath, 'clang'),
+                    File.join(dirpath, 'clang++'),
                     File.join(dirpath, 'llvm-ar'),
                     File.join(dirpath, 'llvm-link') )
             end
