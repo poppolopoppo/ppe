@@ -17,29 +17,82 @@ struct TBasicStaticString {
     size_t Len{ 0 };
     _Char Data[_Capacity];
 
-    bool empty() const { return (0 == Len); }
-    size_t size() const { return Len; }
+    TBasicStaticString() = default;
+
+    TBasicStaticString(const TBasicStaticString&) = default;
+    TBasicStaticString& operator =(const TBasicStaticString&) = default;
+
+    CONSTEXPR TBasicStaticString(const TBasicStringView<_Char>& str) {
+        Assign(str);
+    }
+    CONSTEXPR TBasicStaticString& operator =(const TBasicStringView<_Char>& str) {
+        Assign(str);
+        return (*this);
+    }
+
+    CONSTEXPR bool empty() const { return (0 == Len); }
+    CONSTEXPR size_t size() const { return Len; }
     CONSTEXPR size_t capacity() const { return _Capacity; }
 
-    TMemoryView<_Char> Buf() { return MakeView(Data); }
-    auto Str() const { return TBasicStringView<_Char>(Data, Len); }
+    CONSTEXPR TMemoryView<_Char> Buf() { return MakeView(Data); }
+    CONSTEXPR auto Str() const { return TBasicStringView<_Char>(Data, Len); }
 
-    operator _Char* () { return NullTerminated(); }
-    operator const _Char* () const { return NullTerminated(); }
-    operator TBasicStringView<_Char> () const { return Str(); }
+    CONSTEXPR operator _Char* () { return NullTerminated(); }
+    CONSTEXPR operator const _Char* () const { return NullTerminated(); }
+    CONSTEXPR operator TBasicStringView<_Char> () const { return Str(); }
 
-    char* NullTerminated() {
+    CONSTEXPR char* NullTerminated() {
         Assert(capacity() >= Len + 1);
         Data[Len] = _Char(0);
         return Data;
     }
-    const char* NullTerminated() const {
+    CONSTEXPR const char* NullTerminated() const {
         Assert(capacity() >= Len + 1);
         Assert(Data[Len] == _Char(0));
         return Data;
     }
 
-    inline friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicStaticString& str) {
+    CONSTEXPR void Assign(const TBasicStringView<_Char>& str) {
+        Assert(str.size() < _Capacity);
+        Len = str.size();
+        for (size_t i = 0; i < Len; ++i)
+            Data[i] = str[i]; // constexpr
+        Data[Len] = _Char(0); // null-terminated
+    }
+
+    CONSTEXPR bool Equals(const TBasicStaticString& other) const {
+        if (Len != other.Len)
+            return false;
+
+        for (size_t i = 0; i < Len; ++i) {
+            if (Data[i] != other.Data[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    CONSTEXPR bool Less(const TBasicStaticString& other) const {
+        size_t i = 0;
+        for (const size_t e = Min(Len, other.Len); i != e; ++i) {
+            if (Data[i] != other.Data[i])
+                break;
+        }
+        return (Data[i] < other.Data[i]);
+    }
+
+    CONSTEXPR bool operator ==(const TBasicStaticString& other) const { return Equals(other); }
+    CONSTEXPR bool operator !=(const TBasicStaticString& other) const { return (not operator ==(other)); }
+
+    CONSTEXPR bool operator < (const TBasicStaticString& other) const { return Less(other); }
+    CONSTEXPR bool operator >=(const TBasicStaticString& other) const { return (not operator < (other)); }
+
+    CONSTEXPR bool operator > (const TBasicStaticString& other) const { return other.Less(*this); }
+    CONSTEXPR bool operator <=(const TBasicStaticString& other) const { return (not operator > (other)); }
+
+    CONSTEXPR friend hash_t hash_value(const TBasicStaticString& id) { return id.HashValue; }
+
+    friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicStaticString& str) {
         return oss << str.Str();
     }
 };
