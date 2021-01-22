@@ -6,7 +6,7 @@
 #include "Container/SparseArray.h"
 #include "Container/AssociativeVector.h"
 #include "Container/BurstTrie.h"
-#include "Container/FixedSizeHashSet.h"
+#include "Container/FixedSizeHashTable.h"
 #include "Container/FlatMap.h"
 #include "Container/FlatSet.h"
 #include "Container/HashTable.h"

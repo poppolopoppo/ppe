@@ -100,11 +100,18 @@ public:
     }
 
     CONSTEXPR TMemoryView<T> Eat(size_t n) {
-        Assert_NoAssume(n <= _size);
+        Assert(n <= _size);
         const TMemoryView<T> eaten{ _storage, n };
         _storage += n;
         _size -= n;
         return eaten;
+    }
+
+    template <typename U>
+    auto* Peek() const {
+        Assert(sizeof(U) <= _size);
+        using result_t = Meta::TConditional<std::is_const_v<T>, std::add_const_t<U>, U>;
+        return reinterpret_cast<result_t*>(_storage);
     }
 
     NODISCARD TMemoryView<T> Slice(size_t index, size_t stride) const;

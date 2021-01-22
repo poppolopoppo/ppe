@@ -88,6 +88,15 @@ public:
 
     bool Contains(const_reference item) const;
 
+    iterator Find(const value_type& elt) { return std::find(begin(), end(), elt); }
+    const_iterator Find(const value_type& elt) const { return std::find(begin(), end(), elt); }
+
+    void Erase(iterator it) {
+        Assert_NoAssume(AliasesToContainer(&*it));
+        std::rotate(it, it + 1, end());
+        Verify(Pop());
+    }
+
     pointer Peek() { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
     const_pointer Peek() const { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
 
@@ -103,6 +112,19 @@ public:
     bool AliasesToContainer(const_pointer p) const {
         return (p >= _storage && p < _storage + _size);
     }
+
+    void Assign(TMemoryView<const T> values) {
+        Assert(values.size() < _capacity);
+        clear();
+        std::copy(values.begin(), values.end(), MakeCheckedIterator(_storage, 0, _capacity));
+    }
+
+    bool Equals(const TStack& other) const {
+        return (_size == other._size && std::equal(begin(), end(), other.begin()));
+    }
+
+    bool operator ==(const TStack& other) const { return Equals(other); }
+    bool operator !=(const TStack& other) const { return (not operator ==(other)); }
 
 protected:
     size_type _size;
@@ -271,6 +293,52 @@ private:
     using parent_type::_capacity;
     using parent_type::_storage;
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+void Add_AssertUnique(TStack<T, _IsPod>& s, const T& elt) {
+    Assert_NoAssume(not s.Contains(elt));
+    s.Push(elt);
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+void Add_AssertUnique(TStack<T, _IsPod>& s, T&& relt) {
+    Assert_NoAssume(not s.Contains(relt));
+    s.Push(std::move(relt));
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+bool Add_Unique(TStack<T, _IsPod>& s, T&& relt) {
+    if (not s.Contains(relt)) {
+        s.Push(std::move(relt));
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod, typename... _Args>
+auto Emplace_Back(TStack<T, _IsPod>& s, _Args&&... args) -> typename TStack<T, _IsPod>::iterator {
+    s.Push(std::move(args)...);
+    return (s.end() - 1);
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+void Remove_AssertExists(TStack<T, _IsPod>& s, const T& elt) {
+    auto it = s.Find(elt);
+    Assert(s.end() != it);
+    s.Erase(it);
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+bool Remove_ReturnIfExists(TStack<T, _IsPod>& s, const T& elt) {
+    auto it = s.Find(elt);
+    if (s.end() != it) {
+        s.Erase(it);
+        return true;
+    }
+    return false;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

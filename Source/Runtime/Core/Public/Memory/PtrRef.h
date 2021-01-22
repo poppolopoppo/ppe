@@ -15,7 +15,7 @@ struct TPtrRef {
 
     CONSTEXPR TPtrRef() NOEXCEPT : Ptr(nullptr) {}
 
-    CONSTEXPR TPtrRef(T* ptr) NOEXCEPT : Ptr(ptr) {}
+    CONSTEXPR TPtrRef(T* ptr) NOEXCEPT : Ptr(ptr) { Assert(ptr); }
     CONSTEXPR TPtrRef(T& ref) NOEXCEPT : Ptr(&ref) {}
 
     CONSTEXPR TPtrRef(const TPtrRef&) NOEXCEPT = default;

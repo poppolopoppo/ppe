@@ -201,6 +201,22 @@ CONSTEXPR auto BitXor(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVec
     return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return (a ^ b); });
 }
 //----------------------------------------------------------------------------
+// Any/All()
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
+CONSTEXPR bool Any(const TScalarVector<T, _Dim>& mask) {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
+        return (Any(mask.template get<idx>()) | ...);
+    });
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
+CONSTEXPR bool All(const TScalarVector<T, _Dim>& mask) {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
+        return (Any(mask.template get<idx>()) & ...);
+    });
+}
+//----------------------------------------------------------------------------
 // Blend()
 //----------------------------------------------------------------------------
 template <typename _True, typename _False, typename _Mask>
@@ -295,6 +311,40 @@ CONSTEXPR auto EqualMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalar
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR auto NotEqualMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a != b); });
+}
+//----------------------------------------------------------------------------
+// Boolean operators
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+CONSTEXPR auto operator &(const TScalarVectorExpr<bool, _Dim>& lhs, const TScalarVectorExpr<bool, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a & b); });
+}
+template <typename _Lhs, typename _Rhs, size_t _Dim>
+CONSTEXPR auto operator |(const TScalarVectorExpr<bool, _Dim>& lhs, const TScalarVectorExpr<bool, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a | b); });
+}
+template <typename _Lhs, typename _Rhs, size_t _Dim>
+CONSTEXPR auto operator ^(const TScalarVectorExpr<bool, _Dim>& lhs, const TScalarVectorExpr<bool, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a ^ b); });
+}
+//----------------------------------------------------------------------------
+// Comparison operators
+//----------------------------------------------------------------------------
+template <typename _Lhs, typename _Rhs, size_t _Dim>
+CONSTEXPR auto operator >(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
+    return GreaterMask(lhs, rhs);
+}
+template <typename _Lhs, typename _Rhs, size_t _Dim>
+CONSTEXPR auto operator >=(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
+    return GreaterEqualMask(lhs, rhs);
+}
+template <typename _Lhs, typename _Rhs, size_t _Dim>
+CONSTEXPR auto operator <(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
+    return LessMask(lhs, rhs);
+}
+template <typename _Lhs, typename _Rhs, size_t _Dim>
+CONSTEXPR auto operator <=(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
+    return LessEqualMask(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 // Shuffle()

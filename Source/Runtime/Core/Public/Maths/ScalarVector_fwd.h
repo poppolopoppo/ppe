@@ -38,6 +38,10 @@ using uint2 = unsigned2;
 using uint3 = unsigned3;
 using uint4 = unsigned4;
 //----------------------------------------------------------------------------
+using bool2 = TScalarVector<bool, 2>;
+using bool3 = TScalarVector<bool, 3>;
+using bool4 = TScalarVector<bool, 4>;
+//----------------------------------------------------------------------------
 using mask2 = TScalarVector<u32, 2>;
 using mask3 = TScalarVector<u32, 3>;
 using mask4 = TScalarVector<u32, 4>;
@@ -46,6 +50,11 @@ using mask4 = TScalarVector<u32, 4>;
 #undef DECL_SCALARVECTOR_ALIAS
 //----------------------------------------------------------------------------
 using FPoint = float3;
+//----------------------------------------------------------------------------
+using FRgba32f = float4;
+using FRgba32u = u324;
+using FRgba32i = i324;
+using FRgba8u = ubyte4;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

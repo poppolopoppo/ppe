@@ -44,13 +44,14 @@ struct TNumeric {
     CONSTEXPR friend bool operator <=(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value <= rhs.Value; }
 
     friend void swap(TNumeric& lhs, TNumeric& rhs) { std::swap(lhs.Value, rhs.Value); }
-    friend inline hash_t hash_value(const TNumeric& value) { return hash_as_pod(value.Value); }
+    friend inline hash_t hash_value(const TNumeric& value) { return hash_value(value.Value); }
 
     CONSTEXPR static TNumeric MinusOne() { return TNumeric(T(-1)); }
     CONSTEXPR static TNumeric One() { return TNumeric(T(1)); }
     CONSTEXPR static TNumeric Zero() { return TNumeric(T(0)); }
     CONSTEXPR static TNumeric Null() { return TNumeric(T(0)); }
 };
+PPE_ASSUME_TEMPLATE_AS_POD(TNumeric<T COMMA _Tag>, typename T, typename _Tag);
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag, T _DefaultValue, typename = Meta::TEnableIf<std::is_integral_v<T>/* C++ forbid float as template arg */> >
 struct TNumericDefault : public TNumeric<T, TNumericDefault<T, _Tag, _DefaultValue> > {
@@ -65,6 +66,7 @@ struct TNumericDefault : public TNumeric<T, TNumericDefault<T, _Tag, _DefaultVal
     using parent_type::One;
     using parent_type::Zero;
 };
+PPE_ASSUME_TEMPLATE_AS_POD(TNumericDefault<T COMMA _Tag COMMA _DefaultValue>, typename T, typename _Tag, T _DefaultValue);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -89,6 +91,7 @@ struct FFakeBool {
     operator bool () const { return Value; }
     inline friend void swap(FFakeBool& lhs, FFakeBool& rhs) { std::swap(lhs.Value, rhs.Value); }
 };
+PPE_ASSERT_TYPE_IS_POD(FFakeBool);
 //----------------------------------------------------------------------------
 #define PPE_FAKEBOOL_OPERATOR_DECL() operator const void* () const NOEXCEPT
 //----------------------------------------------------------------------------

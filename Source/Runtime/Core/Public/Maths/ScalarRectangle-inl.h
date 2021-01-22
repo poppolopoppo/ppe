@@ -7,9 +7,6 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TScalarRectangle<T, _Dim>::TScalarRectangle() {}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
 TScalarRectangle<T, _Dim>::TScalarRectangle(T left, T top, T width, T height)
 :   aabb_type(  TScalarVector<T, 2>(left, top),
                 TScalarVector<T, 2>(left + width, top + height) ) {
@@ -24,8 +21,16 @@ TScalarRectangle<T, _Dim>::TScalarRectangle(T left, T top, T width, T height, T 
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+TScalarRectangle<T, _Dim>::TScalarRectangle(const vector_type& vmin, const vector_type& vmax)
+:   aabb_type(vmin, vmax) {}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 TScalarRectangle<T, _Dim>::TScalarRectangle(const aabb_type& aabb)
 :   aabb_type(aabb) {}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarRectangle<T, _Dim>::TScalarRectangle(const vector_type& extent)
+:   aabb_type(vector_type::Zero, extent) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarRectangle<T, _Dim>::~TScalarRectangle() = default;

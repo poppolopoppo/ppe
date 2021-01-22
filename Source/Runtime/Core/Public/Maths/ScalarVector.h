@@ -6,7 +6,6 @@
 
 #include "Container/Hash.h"
 #include "IO/TextWriter_fwd.h"
-#include "Memory/MemoryView.h"
 #include "Meta/NumericLimits.h"
 
 #include <algorithm>
@@ -612,6 +611,13 @@ struct TScalarVector<T, 3> : TScalarVectorAssignable<TScalarVector<T, 3>, T, 3> 
         : data{ _x,
                 _yz.template get<0>(),
                 _yz.template get<1>() }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 2>& _xy, component_type _z) NOEXCEPT
+        : data{ _xy.template get<0>(),
+                _xy.template get<1>(),
+                _z }
     {}
 
     union {

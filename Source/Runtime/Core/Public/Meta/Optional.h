@@ -72,8 +72,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T>
 hash_t hash_value(const Meta::TOptional<T>& optional) {
-    STATIC_ASSERT(Meta::is_pod_v<T>);
-    return hash_as_pod(*optional);
+    return (optional.has_value()
+        ? hash_value(*optional)
+        : hash_t{} );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -34,30 +34,32 @@ auto on_scope_exit(_Lambda&& trigger) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <size_t N>
 struct TStaticBitset {
-    CONSTEXPR static size_t NPos = size_t(-1);
+    CONSTEXPR static size_t NPos = UMax;
+    CONSTEXPR static size_t BitsPerByte = sizeof(u8) * 8;
+    CONSTEXPR static size_t NumBytes = (N + BitsPerByte - 1) / BitsPerByte;
 
-    bool Flags[N];
+    u8 Bytes[NumBytes];
 
-    CONSTEXPR TStaticBitset() NOEXCEPT
-        : Flags{ 0 }
-    {}
+    CONSTEXPR TStaticBitset() = default;
 
     CONSTEXPR TStaticBitset(const TStaticBitset& other) NOEXCEPT = default;
     CONSTEXPR TStaticBitset& operator =(const TStaticBitset& other) NOEXCEPT = default;
 
     CONSTEXPR void set(size_t i) NOEXCEPT {
-        Flags[i] = true;
+        Assert(i < N);
+        Bytes[i / BitsPerByte] |= (u8(1) << u8(i % BitsPerByte));
     }
 
     CONSTEXPR bool test(size_t i) const NOEXCEPT {
-        return Flags[i];
+        Assert(i < N);
+        return !!(Bytes[i / BitsPerByte] & (u8(1) << u8(i % BitsPerByte));
     }
 
     CONSTEXPR size_t first_free(size_t i = 0) const NOEXCEPT {
-        for (; i < N; ++i)
-            if (Flags[i] == false)
+        for (; i < N; ++i) {
+            if (not test(i))
                 return i;
-
+        }
         return NPos;
     }
 };

@@ -12,12 +12,15 @@ namespace PPE {
 template <typename T, size_t _Dim>
 class TScalarRectangle : public TScalarBoundingBox<T, _Dim> {
 public:
-    typedef TScalarBoundingBox<T, _Dim> aabb_type;
+    using aabb_type = TScalarBoundingBox<T, _Dim>;
+    using vector_type = typename aabb_type::vector_type;
 
-    TScalarRectangle();
+    TScalarRectangle() = default;
     TScalarRectangle(T left, T top, T width, T height);
     TScalarRectangle(T left, T top, T width, T height, T znear, T zfar);
+    TScalarRectangle(const vector_type& vmin, const vector_type& vmax);
     explicit TScalarRectangle(const aabb_type& aabb);
+    explicit TScalarRectangle(const vector_type& extent);
     ~TScalarRectangle();
 
     TScalarRectangle(const TScalarRectangle& other);

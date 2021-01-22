@@ -36,6 +36,15 @@ CONSTEXPR float F_SqrtHalf = F_Sqrt2OO;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+CONSTEXPR bool Any(bool value) { return value; }
+CONSTEXPR bool All(bool value) { return value; }
+//----------------------------------------------------------------------------
+template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
+CONSTEXPR bool Any(T value) { return (!!value); }
+//----------------------------------------------------------------------------
+template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+CONSTEXPR bool All(T value) { return (value == UMax); }
+//----------------------------------------------------------------------------
 inline CONSTEXPR i8 Abs(i8 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
 inline CONSTEXPR i16 Abs(i16 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
 inline CONSTEXPR i32 Abs(i32 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
@@ -48,6 +57,9 @@ CONSTEXPR T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline CONSTEXPR auto BiasScale(float x, float bias, float scale) NOEXCEPT { return ((x + bias) * scale); }
 inline CONSTEXPR auto BiasScale(double x, double bias, double scale) NOEXCEPT { return ((x + bias) * scale); }
+//----------------------------------------------------------------------------
+template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
+CONSTEXPR T Blend(T ifTrue, Meta::TDontDeduce<T> ifFalse, bool mask) { return (mask ? ifTrue : ifFalse); }
 //----------------------------------------------------------------------------
 inline float Exp(float value) NOEXCEPT { return FPlatformMaths::Exp(value); }
 inline float Exp2(float value) NOEXCEPT { return FPlatformMaths::Exp2(value); }

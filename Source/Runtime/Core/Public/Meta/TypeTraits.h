@@ -61,7 +61,7 @@ using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
 //----------------------------------------------------------------------------
 // Function overloading helpers to use dummy parameters for specialization :
 template <typename T>
-struct TType { using type = T; };
+struct TType final { using type = T; };
 template <typename T>
 CONSTEXPR const TType<T> Type{};
 //----------------------------------------------------------------------------
@@ -299,8 +299,8 @@ using optional_definition_t = decltype(details::optional_definition_<_Using, _Fa
 //----------------------------------------------------------------------------
 // Optional control for data initialization
 //----------------------------------------------------------------------------
-struct FNoInit {}; // ctor with that arg must *NOT* initialize the data
-struct FForceInit {}; // ctor with that arg must initialize the data
+struct FNoInit final {}; // ctor with that arg must *NOT* initialize the data
+struct FForceInit final {}; // ctor with that arg must initialize the data
 //----------------------------------------------------------------------------
 CONSTEXPR FNoInit NoInit{};
 CONSTEXPR FForceInit ForceInit{};
@@ -449,15 +449,62 @@ void Destroy(T* p) NOEXCEPT {
 #endif
 }
 //----------------------------------------------------------------------------
+struct FUnsignedMax final {
+    template <typename T>
+    CONSTEXPR operator const T () const {
+        STATIC_ASSERT( T(~T(0)) > T(0) );
+        return T(~T(0));
+    }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(T lhs, FUnsignedMax rhs) { return (T(rhs) == lhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(FUnsignedMax lhs, T rhs) { return (T(lhs) == rhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(T lhs, FUnsignedMax rhs) { return (not operator ==(lhs, rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(FUnsignedMax lhs, T rhs) { return (not operator ==(lhs, rhs)); }
+};
+CONSTEXPR FUnsignedMax UMax{};
+CONSTEXPR FUnsignedMax INDEX_NONE{};
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T>
+T default_value_(std::bool_constant<false>, int) { return T{}; }
+template <typename T, T _Unknown = T::Unknown>
+T default_value_(std::bool_constant<true>, int) { return _Unknown; }
+template <typename T>
+T default_value_(std::bool_constant<true>, ...) { return T(0); }
+} //!details
 template <typename T>
 CONSTEXPR T DefaultValue() NOEXCEPT {
-    return T{};
+    return details::default_value_<T>(std::bool_constant<
+        std::is_floating_point<T>::value ||
+        std::is_integral<T>::value ||
+        std::is_pointer<T>::value ||
+        std::is_enum<T>::value
+        >{}, 0 );
 }
+//----------------------------------------------------------------------------
+struct FDefaultValue final {
+    template <typename T>
+    CONSTEXPR operator const T () const {
+        return DefaultValue<T>();
+    }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(T lhs, FDefaultValue rhs) {
+        return (T(rhs) == lhs);
+    }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(T lhs, FDefaultValue rhs) {
+        return (not operator ==(lhs, rhs));
+    }
+};
+CONSTEXPR FDefaultValue Default{};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...) \
-    class _API _NAME : public __VA_ARGS__ { \
+    class _API _NAME final : public __VA_ARGS__ { \
         typedef __VA_ARGS__ parent_type; \
     public: \
         using parent_type::parent_type; \
@@ -488,6 +535,10 @@ CONSTEXPR T DefaultValue() NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Meta
+
+using Meta::INDEX_NONE;
+using Meta::Default;
+using Meta::UMax;
 
 PPE_ASSERT_TYPE_IS_POD(u128);
 PPE_ASSERT_TYPE_IS_POD(u256);
