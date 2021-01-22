@@ -2,18 +2,23 @@
 
 #include "RHI_fwd.h"
 
+#include "HAL/TargetRHI.h"
+
 #include "Modular/ModuleInterface.h"
 
+#include "Container/AssociativeVector.h"
+#include "Container/Vector.h"
 #include "Diagnostic/Logger_fwd.h"
-#include "Memory/UniquePtr.h"
 #include "Misc/Event.h"
 #include "Misc/Function.h"
+#include "RHI/FrameGraph.h"
+#include "Thread/CriticalSection.h"
 
 namespace PPE {
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI)
-using FRHIInstance = class CONCAT3(F, TARGET_RHI, Instance);
-using FRHIDevice = class CONCAT3(F, TARGET_RHI, Device);
+FWD_INTERFACE_REFPTR(FrameGraph);
+FWD_INTERFACE_REFPTR(PipelineCompiler);
 } //!namespace RHI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -23,6 +28,7 @@ public:
     static const FModuleInfo StaticInfo;
 
     FRHIModule() NOEXCEPT;
+    ~FRHIModule() NOEXCEPT;
 
     virtual void Start(FModularDomain& domain) override;
     virtual void Shutdown(FModularDomain& domain) override;
@@ -33,37 +39,71 @@ public:
 public:
     static FRHIModule& Get(const FModularDomain& domain);
 
-    using FRHIEvent = TFunction<void(RHI::ETargetRHI)>;
-    using FInstanceEvent = TFunction<void(RHI::FRHIInstance&)>;
-    using FDeviceEvent = TFunction<void(RHI::FRHIDevice&)>;
+    ERHIFeature SystemFlags() const { return _systemFlags; }
 
-    PUBLIC_EVENT(OnInstancePreCreate, FRHIEvent);
-    PUBLIC_EVENT(OnInstancePostCreate, FInstanceEvent);
+    void RegisterTarget(ETargetRHI rhi, const ITargetRHI* target);
+    void UnregisterTarget(ETargetRHI rhi);
 
-    PUBLIC_EVENT(OnInstancePreDestroy, FInstanceEvent);
-    PUBLIC_EVENT(OnInstancePostDestroy, FRHIEvent);
+    const ITargetRHI* Target(ETargetRHI rhi) const;
 
-    PUBLIC_EVENT(OnDevicePreCreate, FInstanceEvent);
-    PUBLIC_EVENT(OnDevicePostCreate, FDeviceEvent);
+    using FPipelineCompilerFactory = TFunction<bool(RHI::PPipelineCompiler* pcompiler)>;
 
-    PUBLIC_EVENT(OnDevicePreDestroy, FDeviceEvent);
-    PUBLIC_EVENT(OnDevicePostDestroy, FInstanceEvent);
+    void RegisterCompiler(ETargetRHI rhi, FPipelineCompilerFactory&& rfactory);
+    void UnregisterCompiler(ETargetRHI rhi);
+
+    RHI::PPipelineCompiler CreateCompiler();
+    RHI::PPipelineCompiler CreateCompiler(ETargetRHI rhi);
+
+    void DestroyCompiler(RHI::PPipelineCompiler& compiler);
+
+    using FFrameGraphFactory = TFunction<bool(RHI::PFrameGraph* pfg, ERHIFeature features, RHI::FWindowHandle mainWindow)>;
+
+    void RegisterFrameGraph(ETargetRHI rhi, FFrameGraphFactory&& rfactory);
+    void UnregisterFrameGraph(ETargetRHI rhi);
+
+    RHI::PFrameGraph CreateFrameGraph(ERHIFeature features = ERHIFeature::Default, RHI::FWindowHandle mainWindow = Default);
+    RHI::PFrameGraph CreateFrameGraph(ETargetRHI rhi, ERHIFeature features = ERHIFeature::Default, RHI::FWindowHandle mainWindow = Default);
+
+    void DestroyFrameGraph(RHI::PFrameGraph& fg);
+
+    using FRHIEvent = TFunction<void(ETargetRHI)>;
+    using FPipelineCompilerEvent = TFunction<void(RHI::IPipelineCompiler&)>;
+    using FFrameGraphEvent = TFunction<void(RHI::IFrameGraph&)>;
+
+    PUBLIC_EVENT(OnPipelineCompilerPreCreate, FRHIEvent);
+    PUBLIC_EVENT(OnPipelineCompilerPostCreate, FPipelineCompilerEvent);
+
+    PUBLIC_EVENT(OnPipelineCompilerPreDestroy, FPipelineCompilerEvent);
+    PUBLIC_EVENT(OnPipelineCompilerPostDestroy, FRHIEvent);
+
+    PUBLIC_EVENT(OnFrameGraphPreCreate, FRHIEvent);
+    PUBLIC_EVENT(OnFrameGraphPostCreate, FFrameGraphEvent);
+
+    PUBLIC_EVENT(OnFrameGraphPreDestroy, FFrameGraphEvent);
+    PUBLIC_EVENT(OnFrameGraphPostDestroy, FRHIEvent);
 
 private:
-    friend class RHI::CONCAT3(F, TARGET_RHI, Instance);
-    friend class RHI::CONCAT3(F, TARGET_RHI, Device);
+    FCriticalSection _barrier;
 
-    void BroadcastInstancePreCreate_(RHI::ETargetRHI rhi);
-    void BroadcastInstancePostCreate_(RHI::FRHIInstance& instance);
+    ERHIFeature _systemFlags{ Default };
 
-    void BroadcastInstancePreDestroy_(RHI::FRHIInstance& instance);
-    void BroadcastInstancePostDestroy_(RHI::ETargetRHI rhi);
+    ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, const ITargetRHI*, u32(ETargetRHI::_Count)) _targets;
+    ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, FPipelineCompilerFactory, u32(ETargetRHI::_Count)) _compilerFactories;
+    ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, FFrameGraphFactory, u32(ETargetRHI::_Count)) _frameGraphFactories;
 
-    void BroadcastDevicePreCreate_(RHI::FRHIInstance& instance);
-    void BroadcastDevicePostCreate_(RHI::FRHIDevice& device);
+    VECTORINSITU(RHIMisc, RHI::SPipelineCompiler, 2) _compilers;
+    VECTORINSITU(RHIMisc, RHI::SFrameGraph, 2) _frameGraphs;
 
-    void BroadcastDevicePreDestroy_(RHI::FRHIDevice& device);
-    void BroadcastDevicePostDestroy_(RHI::FRHIInstance& instance);
+    void OnPipelineCompilerPreCreate_(ETargetRHI rhi);
+    void OnPipelineCompilerPostCreate_(RHI::IPipelineCompiler& compiler);
+    void OnPipelineCompilerPreDestroy_(RHI::IPipelineCompiler& compiler);
+    void OnPipelineCompilerPostDestroy_(ETargetRHI rhi);
+
+    void OnFrameGraphPreCreate_(ETargetRHI rhi);
+    void OnFrameGraphPostCreate_(RHI::IFrameGraph& fg);
+    void OnFrameGraphPreDestroy_(RHI::IFrameGraph& fg);
+    void OnFrameGraphPostDestroy_(ETargetRHI rhi);
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

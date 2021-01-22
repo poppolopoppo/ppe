@@ -17,14 +17,14 @@ public:
     IRHIService() = default;
     virtual ~IRHIService() = default;
 
-    virtual RHI::FDevice* CreateMainDevice(FWindowRHI* window) = 0;
-    virtual void DestroyMainDevice(FWindowRHI* window, RHI::FDevice* device) = 0;
+    virtual RHI::PFrameGraph CreateMainFrameGraph(FWindowRHI* window) = 0;
+    virtual void DestroyMainFrameGraph(FWindowRHI* window, RHI::PFrameGraph& device) = 0;
 
-    virtual RHI::FDevice* CreateHeadlessDevice(bool computeOnly) = 0;
-    virtual void DestroyHeadlessDevice(RHI::FDevice* device) = 0;
+    virtual RHI::PFrameGraph CreateHeadlessFrameGraph(bool computeOnly) = 0;
+    virtual void DestroyHeadlessFrameGraph(RHI::PFrameGraph& device) = 0;
 
-    virtual RHI::FDevice* MainDevice() const NOEXCEPT = 0;
-    virtual void SetMainDevice(RHI::FDevice* device) = 0;
+    virtual RHI::PFrameGraph MainFrameGraph() const NOEXCEPT = 0;
+    virtual void SetMainFrameGraph(RHI::PFrameGraph& device) = 0;
 
 public:
     static PPE_APPLICATION_API void Make(URHIService* pRHI, RHI::ETargetRHI rhi);

@@ -14,7 +14,7 @@
 #include "MetaProperty.h"
 #include "MetaTransaction.h"
 
-#include "Container/FixedSizeHashSet.h"
+#include "Container/FixedSizeHashTable.h"
 #include "Container/Hash.h"
 #include "Container/Stack.h"
 #include "Container/Vector.h"

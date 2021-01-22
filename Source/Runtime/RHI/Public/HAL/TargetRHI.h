@@ -10,11 +10,10 @@
 #include "Meta/Enum.h"
 
 namespace PPE {
-namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ETargetRHI {
+enum class ETargetRHI : u32 {
     Vulkan         = 0,
 
     _Count,
@@ -24,14 +23,26 @@ enum class ETargetRHI {
 PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, ETargetRHI rhi);
 PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, ETargetRHI rhi);
 //----------------------------------------------------------------------------
-enum class ERHIFeature {
-    HighEndGraphics     = 1<<0,
-    Compute             = 1<<1,
-    AsyncCompute        = 1<<2,
-    Raytracing          = 1<<3,
-    Meshlet             = 1<<4,
-    SamplerFeedback     = 1<<5,
-    TextureSpaceShading = 1<<6,
+enum class ERHIFeature : u32 {
+    Headless            = 1<<0,
+    Discrete            = 1<<1,
+    Graphics            = 1<<2,
+    Compute             = 1<<3,
+    AsyncCompute        = 1<<4,
+    Raytracing          = 1<<5,
+    Meshlet             = 1<<6,
+    SamplerFeedback     = 1<<7,
+    TextureSpaceShading = 1<<8,
+    VariableShadingRate = 1<<9,
+    ConservativeDepth   = 1<<10,
+    HighDynamicRange    = 1<<11,
+
+    Debugging           = 1<<12,
+    Profiling           = 1<<13,
+
+    All = 0xFFFF,
+    Minimal = Graphics|Compute,
+    Default = Minimal|AsyncCompute|Discrete
 };
 ENUM_FLAGS(ERHIFeature);
 PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, ERHIFeature features);
@@ -52,9 +63,6 @@ public:
     virtual bool SupportsFeature(ERHIFeature feature) const = 0;
 };
 //----------------------------------------------------------------------------
-inline const ITargetRHI& CurrentRHI() { return TargetRHI(ETargetRHI::Current); }
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RHI
 } //!namespace PPE

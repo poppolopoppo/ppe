@@ -6,7 +6,6 @@
 #pragma once
 
 #include "RHI_fwd.h"
-#include "HAL/RHIIncludes.h"
 
 #if BUILD_PCH
 #   include "stdafx.generated.h"
