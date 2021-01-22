@@ -5,6 +5,7 @@ $Build.ppe_executable!(:WindowTest, :Tools) do
         Core(),
         VFS(),
         RHI(),
+        RHIVulkan(),
         RTTI(),
         Serialize(),
         Network(),

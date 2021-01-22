@@ -2,7 +2,7 @@
 
 #include "Application.h"
 
-#include "Container/FixedSizeHashSet.h"
+#include "Container/FixedSizeHashTable.h"
 #include "Memory/MemoryView.h"
 
 namespace PPE {
