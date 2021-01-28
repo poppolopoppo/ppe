@@ -59,6 +59,8 @@ struct TFixedSizeHashMapTraits {
     static CONSTEXPR const key_type& Key(const value_type& v) { return v.first; }
 
     static CONSTEXPR value_type EmptyValue() {
+        STATIC_ASSERT(Meta::is_pod_v<_Key>);
+        STATIC_ASSERT(Meta::is_pod_v<_Value>);
         return MakePair(empty_key::value, Meta::DefaultValue<_Value>());
     }
 };
@@ -430,6 +432,12 @@ void TFixedSizeHashTable<_Traits, _Capacity>::clear() {
         std::fill(std::begin(_values), std::end(_values),
             traits_type::EmptyValue() );
     }
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, size_t _Capacity>
+CONSTEXPR bool is_pod_type(TFixedSizeHashTable<_Traits, _Capacity>*) NOEXCEPT {
+    using value_type = typename TFixedSizeHashTable<_Traits, _Capacity>::value_type;
+    return Meta::is_pod_v<value_type>;
 }
 //----------------------------------------------------------------------------
 } //!namespace  details

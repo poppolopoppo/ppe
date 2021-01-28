@@ -20,16 +20,6 @@ FORCE_INLINE TPair< Meta::TRemoveReference<_First>, Meta::TRemoveReference<_Seco
         std::forward<_Second>(second) );
 }
 //----------------------------------------------------------------------------
-template <typename _First, typename _Second>
-FORCE_INLINE hash_t hash_value(const TPair<_First, _Second>& pair) {
-    return hash_tuple(pair.first, pair.second);
-}
-//----------------------------------------------------------------------------
-template <typename _First, typename _Second>
-CONSTEXPR bool is_pod(TPair<_First, _Second>*) NOEXCEPT {
-    return ( Meta::is_pod_v<_First> && Meta::is_pod_v<_Second> );
-}
-//----------------------------------------------------------------------------
 namespace Meta {
 template <typename _First, typename _Second>
 TPair<_First, _Second> NoInitType(TType< TPair<_First, _Second> >) {
@@ -68,3 +58,23 @@ FWTextWriter& operator <<(FWTextWriter& oss, const TPair<_First, _Second>& pair)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+namespace std {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _First, typename _Second>
+FORCE_INLINE PPE::hash_t hash_value(const std::pair<_First, _Second>& pair) {
+    using namespace PPE;
+    return hash_tuple(pair.first, pair.second);
+}
+//----------------------------------------------------------------------------
+template <typename _First, typename _Second>
+CONSTEXPR bool is_pod_type(std::pair<_First, _Second>*) NOEXCEPT {
+    using namespace PPE;
+    return ( Meta::is_pod_v<_First> && Meta::is_pod_v<_Second> );
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+}

@@ -24,6 +24,12 @@ struct TNumeric {
             std::is_same_v<T, const void*> );
     }
 
+    CONSTEXPR TNumeric(Meta::FUnsignedMax) : Value(~T(0u)) {
+        STATIC_ASSERT(
+            std::is_integral_v<T> &&
+            std::is_unsigned_v<T> );
+    }
+
     CONSTEXPR operator T () const { return Value; }
 
     CONSTEXPR T operator * () const { return Value; }
@@ -43,8 +49,8 @@ struct TNumeric {
     CONSTEXPR friend bool operator > (const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value >  rhs.Value; }
     CONSTEXPR friend bool operator <=(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value <= rhs.Value; }
 
-    friend void swap(TNumeric& lhs, TNumeric& rhs) { std::swap(lhs.Value, rhs.Value); }
-    friend inline hash_t hash_value(const TNumeric& value) { return hash_value(value.Value); }
+    friend void swap(TNumeric& lhs, TNumeric& rhs) NOEXCEPT { std::swap(lhs.Value, rhs.Value); }
+    friend inline hash_t hash_value(const TNumeric& value) NOEXCEPT { return hash_value(value.Value); }
 
     CONSTEXPR static TNumeric MinusOne() { return TNumeric(T(-1)); }
     CONSTEXPR static TNumeric One() { return TNumeric(T(1)); }
@@ -86,10 +92,10 @@ struct FFakeBool {
     FFakeBool() = default;
     FFakeBool(const FFakeBool& other) = default;
     FFakeBool& operator =(const FFakeBool& other) = default;
-    FFakeBool(bool value) : Value(value) {}
-    FFakeBool& operator =(bool value) { Value = value; return *this; }
-    operator bool () const { return Value; }
-    inline friend void swap(FFakeBool& lhs, FFakeBool& rhs) { std::swap(lhs.Value, rhs.Value); }
+    CONSTEXPR FFakeBool(bool value) : Value(value) {}
+    CONSTEXPR FFakeBool& operator =(bool value) { Value = value; return *this; }
+    CONSTEXPR operator bool () const NOEXCEPT { return Value; }
+    friend void swap(FFakeBool& lhs, FFakeBool& rhs) NOEXCEPT { std::swap(lhs.Value, rhs.Value); }
 };
 PPE_ASSERT_TYPE_IS_POD(FFakeBool);
 //----------------------------------------------------------------------------

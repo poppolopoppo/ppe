@@ -2,7 +2,8 @@
 
 #include "Core.h"
 
-#include "Allocator/Alloca.h"
+#include "Container/Hash.h"
+#include "Container/HashHelpers.h"
 #include "Memory/MemoryView.h"
 #include "Meta/AlignedStorage.h"
 
@@ -126,11 +127,20 @@ public:
     bool operator ==(const TStack& other) const { return Equals(other); }
     bool operator !=(const TStack& other) const { return (not operator ==(other)); }
 
+    friend hash_t hash_value(const TStack& stack) {
+        return hash_range(stack.begin(), stack.end());
+    }
+
 protected:
     size_type _size;
     size_type _capacity;
     pointer _storage;
 };
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+CONSTEXPR bool is_pod_type(TStack<T, _IsPod>*) NOEXCEPT {
+    return _IsPod;
+}
 //----------------------------------------------------------------------------
 template <typename T>
 using TPodStack = TStack<T, true>;
@@ -268,6 +278,10 @@ public:
     using typename parent_type::iterator_category;
 
     TFixedSizeStack() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
+
+    TFixedSizeStack(const TMemoryView<const T>& items) : TFixedSizeStack() {
+        parent_type::Assign(items);
+    }
 
     TFixedSizeStack(TFixedSizeStack&& ) = delete;
     TFixedSizeStack& operator =(TFixedSizeStack&& rvalue) = delete;
