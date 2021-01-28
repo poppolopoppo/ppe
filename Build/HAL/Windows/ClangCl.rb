@@ -34,6 +34,7 @@ module Build
             self.inherits!(Build.LLVM_Windows_Base)
             self.inherits!(Build.send "LLVM_Windows_Base_#{target}")
         end
+        def family() :'clang-cl' end
         def customize(facet, env, target)
             super(facet, env, target)
             facet.no_compilationFlag!('/WX')
