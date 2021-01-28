@@ -172,7 +172,7 @@ module Build
                 facet << Build.Compiler_PCHDisabled
             end
 
-            if Build.ASAN
+            if Build.ASAN && env.compiler.version < '14.28.29617'
                 # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
                 asan_type = 'asan' # ( facet.tag?(:debug) ? 'asan_dbg' : 'asan')
                 case env.platform.arch
