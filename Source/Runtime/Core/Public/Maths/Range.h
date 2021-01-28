@@ -69,8 +69,8 @@ struct TRange {
     CONSTEXPR bool operator ==(const TRange& other) const { return (All((First == other.First) & (Last == other.Last))); }
     CONSTEXPR bool operator !=(const TRange& other) const { return (not operator ==(other)); }
 
-    CONSTEXPR friend hash_t hash_value(const TRange& other) {
-        return hash_size_t_constexpr(First, Last);
+    CONSTEXPR friend hash_t hash_value(const TRange& range) {
+        return hash_size_t_constexpr(range.First, range.Last);
     }
 
     struct FIterator : Meta::TIterator<value_type, std::random_access_iterator_tag> {

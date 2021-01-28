@@ -26,7 +26,7 @@ bool IsNormalized(const TScalarVector<float, _Dim>& v, float epsilon/* = F_Epsil
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-bool NearlyEquals(const TScalarVector<float, _Dim>& a, const TScalarVector<float, _Dim>& b, float maxRelDiff/* = F_Epsilon */) NOEXCEPT {
+bool NearlyEquals(const TScalarVector<float, _Dim>& a, const Meta::TDontDeduce<TScalarVector<float, _Dim>>& b, float maxRelDiff/* = F_Epsilon */) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
         return (NearlyEquals(a.template get<idx>(), b.template get<idx>(), maxRelDiff) & ...);
     });
@@ -131,7 +131,7 @@ template <size_t _Dim>
 TScalarVector<float, _Dim> Float01_to_FloatM11(const TScalarVector<float, _Dim>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> TScalarVector<float, _Dim>{
         return { Float01_to_FloatM11(value.template get<idx>())... };
-        });
+    });
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>

@@ -210,7 +210,7 @@ TScalarVector<T, 3> TScalarMatrix<T, _Width, _Height>::Axis() const {
     STATIC_ASSERT(3 <= _Height);
     TScalarVector<T, 3> result;
     for (size_t j = 0; j < 3; ++j)
-        result._data[j] = at_(_Idx, j);
+        result.data[j] = at_(_Idx, j);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -220,7 +220,7 @@ void TScalarMatrix<T, _Width, _Height>::SetAxis(const TScalarVector<T, 3>& v) {
     STATIC_ASSERT(_Idx < _Width);
     STATIC_ASSERT(3 <= _Height);
     for (size_t j = 0; j < 3; ++j)
-        at_(_Idx, j) = v._data[j];
+        at_(_Idx, j) = v.data[j];
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>

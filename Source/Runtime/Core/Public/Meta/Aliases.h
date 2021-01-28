@@ -336,27 +336,6 @@ typedef u16 ushort;
 typedef i32 word;
 typedef u32 uword;
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = decltype(std::declval<_Lhs>() < std::declval<_Rhs>()) >
-CONSTEXPR auto Max(_Lhs a, _Rhs b) NOEXCEPT {
-    return (a < b) ? b : a;
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = decltype(std::declval<_Lhs>() < std::declval<_Rhs>()) >
-CONSTEXPR auto Min(_Lhs a, _Rhs b) NOEXCEPT {
-    return (a < b) ? a : b;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename U, class = decltype(std::declval<T>() < std::declval<U>()) >
-CONSTEXPR auto Clamp(T value, U vmin, U vmax) NOEXCEPT {
-    return Min(vmax, Max(vmin, value));
-}
-//----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C, class = decltype(std::declval<_A>() < std::declval<_B>()) >
-CONSTEXPR auto Max3(_A a, _B b, _C c) NOEXCEPT { return (a < b ? Max(b, c) : Max(a, c)); }
-//----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C, class = decltype(std::declval<_A>() < std::declval<_B>()) >
-CONSTEXPR auto Min3(_A a, _B b, _C c) NOEXCEPT { return (a < b ? Min(a, c) : Min(b, c)); }
-//----------------------------------------------------------------------------
 typedef struct uint128_t {
     u64 lo, hi;
 

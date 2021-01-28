@@ -58,8 +58,10 @@ CONSTEXPR T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT;
 inline CONSTEXPR auto BiasScale(float x, float bias, float scale) NOEXCEPT { return ((x + bias) * scale); }
 inline CONSTEXPR auto BiasScale(double x, double bias, double scale) NOEXCEPT { return ((x + bias) * scale); }
 //----------------------------------------------------------------------------
-template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-CONSTEXPR T Blend(T ifTrue, Meta::TDontDeduce<T> ifFalse, bool mask) { return (mask ? ifTrue : ifFalse); }
+template <typename U, typename V, typename  _Result = std::common_type_t<U, V> >
+CONSTEXPR auto Blend(const U& ifTrue, const V& ifFalse, bool mask) -> _Result {
+    return (mask ? ifTrue : ifFalse);
+}
 //----------------------------------------------------------------------------
 inline float Exp(float value) NOEXCEPT { return FPlatformMaths::Exp(value); }
 inline float Exp2(float value) NOEXCEPT { return FPlatformMaths::Exp2(value); }
@@ -154,8 +156,8 @@ CONSTEXPR float Degrees(float radians) NOEXCEPT;
 //----------------------------------------------------------------------------
 CONSTEXPR float Radians(float degrees) NOEXCEPT;
 //----------------------------------------------------------------------------
-CONSTEXPR float Float01_to_FloatM11(float v_01) NOEXCEPT { return (v_01 * 2.f - 1.f); }
-CONSTEXPR float FloatM11_to_Float01(float v_M11) NOEXCEPT { return (v_M11 * .5f + .5f); }
+CONSTEXPR float Float01_to_FloatM11(float v_01) NOEXCEPT { return Clamp(v_01 * 2.f - 1.f, -1.f, 1.f); }
+CONSTEXPR float FloatM11_to_Float01(float v_M11) NOEXCEPT { return Saturate(v_M11 * .5f + .5f); }
 //----------------------------------------------------------------------------
 void SinCos(float radians, float *fsin, float *fcos) NOEXCEPT;
 void SinCos(double radians, double *fsin, double *fcos) NOEXCEPT;

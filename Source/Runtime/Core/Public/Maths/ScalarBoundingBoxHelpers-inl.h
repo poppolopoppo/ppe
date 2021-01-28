@@ -69,9 +69,26 @@ TScalarVector<T, _Dim> Unquantize(const TScalarBoundingBox<T, _Dim>& aabb, const
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+TScalarBoundingBox<T, _Dim> MakeBoundingBox(const TMemoryView<TScalarVector<T, _Dim>>& points) {
+    return MakeBoundingBox(TMemoryView<const TScalarVector<T, _Dim>>(points));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 TScalarBoundingBox<T, _Dim> MakeBoundingBox(const TMemoryView<const TScalarVector<T, _Dim>>& points) {
     TScalarBoundingBox<T, _Dim> result;
     result.AddRange(points.begin(), points.end());
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarBoundingBox<T, _Dim> MakeBoundingBox(const TMemoryView<TScalarBoundingBox<T, _Dim>>& aabbs) {
+    return MakeBoundingBox(TMemoryView<const TScalarBoundingBox<T, _Dim>>(aabbs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarBoundingBox<T, _Dim> MakeBoundingBox(const TMemoryView<const TScalarBoundingBox<T, _Dim>>& aabbs) {
+    TScalarBoundingBox<T, _Dim> result;
+    result.AddRange(aabbs.begin(), aabbs.end());
     return result;
 }
 //----------------------------------------------------------------------------

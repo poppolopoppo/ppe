@@ -23,6 +23,7 @@ struct TNumericLimits {
     static constexpr T Inf() { return limits_type::infinity(); }
     static constexpr T MaxValue() { return limits_type::max(); }
     static constexpr T MinValue() { return limits_type::min(); }
+    static constexpr T Lowest() { return limits_type::lowest(); }
     static constexpr T Nan() { return limits_type::signaling_NaN(); }
     static constexpr T Zero() { return T(0); }
 };
@@ -79,6 +80,30 @@ template <typename T> struct TIntegral_<T,32> { typedef u256 type; };
 template <typename T>
 using TIntegral = typename details::TIntegral_<T>::type;
 } //!namespace Meta
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Meta {
+//----------------------------------------------------------------------------
+struct FUnsignedMax final {
+    template <typename T>
+    CONSTEXPR operator const T () const {
+        return TNumericLimits<T>::MaxValue();
+    }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(T lhs, FUnsignedMax rhs) { return (T(rhs) == lhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(FUnsignedMax lhs, T rhs) { return (T(lhs) == rhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(T lhs, FUnsignedMax rhs) { return (not operator ==(lhs, rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(FUnsignedMax lhs, T rhs) { return (not operator ==(lhs, rhs)); }
+};
+//----------------------------------------------------------------------------
+} //!namespace  Meta
+//----------------------------------------------------------------------------
+CONSTEXPR Meta::FUnsignedMax UMax{};
+CONSTEXPR Meta::FUnsignedMax INDEX_NONE{};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

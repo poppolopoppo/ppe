@@ -17,6 +17,7 @@
 
 #include "Meta/Aliases.h"
 #include "Meta/Alignment.h"
+#include "Meta/Arithmetic.h"
 #include "Meta/Assert.h"
 #include "Meta/Cast.h"
 #include "Meta/Delete.h"

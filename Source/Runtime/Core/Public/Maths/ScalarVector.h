@@ -12,6 +12,8 @@
 #include <limits>
 #include <type_traits>
 
+// https://godbolt.org/z/GgHzHn
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -127,7 +129,7 @@ using TScalarComponent = Meta::TEnableIf<
 //----------------------------------------------------------------------------
 template <typename T, int... _Values>
 struct TScalarVectorConstant : TScalarVectorExpr<TScalarVectorConstant<T, _Values...>, sizeof...(_Values)> {
-    static CONSTEXPR int values[] = { _Values... };
+    static CONSTEXPR int values[sizeof...(_Values)] = { _Values... };
     using component_type = T;
 
     template <size_t _Idx>
@@ -148,6 +150,8 @@ struct TScalarVectorLiteral : TScalarVectorExpr<TScalarVectorLiteral<T, _Dim>, _
 
     template <size_t>
     FORCE_INLINE CONSTEXPR component_type get() const NOEXCEPT { return value; }
+
+    CONSTEXPR operator TScalarVector<T, _Dim> () const NOEXCEPT { return PromoteScalarVectorExpr<T>(*this); }
 };
 //----------------------------------------------------------------------------
 // TScalarVectorBinaryOp<> : +, -, * & / used with another vector
@@ -268,36 +272,36 @@ CONSTEXPR auto VECTORCALL operator /(const TScalarVectorComponent<T, _Idx>& lhs,
 }
 //----------------------------------------------------------------------------
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x + rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x - rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x * rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x / rhs); });
 }
 //----------------------------------------------------------------------------
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator +(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator +(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs + x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator -(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs - x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator *(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator *(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs * x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator /(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator /(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs / x); });
 }
 //----------------------------------------------------------------------------
@@ -500,6 +504,7 @@ struct TScalarVector<T, 1> : TScalarVectorAssignable<TScalarVector<T, 1>, T, 1> 
 
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Lowest{ TNumericLimits<component_type>::Lowest() };
 };
 //----------------------------------------------------------------------------
 // TScalarVector<T, 2>
@@ -567,6 +572,7 @@ struct TScalarVector<T, 2> : TScalarVectorAssignable<TScalarVector<T, 2>, T, 2> 
 
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Lowest{ TNumericLimits<component_type>::Lowest() };
 
     static CONSTEXPR TScalarVectorConstant<component_type, 1, 0> X{};
     static CONSTEXPR TScalarVectorConstant<component_type, 0, 1> Y{};
@@ -664,6 +670,7 @@ struct TScalarVector<T, 3> : TScalarVectorAssignable<TScalarVector<T, 3>, T, 3> 
 
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Lowest{ TNumericLimits<component_type>::Lowest() };
 
     static CONSTEXPR TScalarVectorConstant<component_type, 1, 0, 0> X{};
     static CONSTEXPR TScalarVectorConstant<component_type, 0, 1, 0> Y{};
@@ -839,6 +846,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
 
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Lowest{ TNumericLimits<component_type>::Lowest() };
 
     static CONSTEXPR TScalarVectorConstant<component_type, 1, 0, 0, 0> X{};
     static CONSTEXPR TScalarVectorConstant<component_type, 0, 1, 0, 0> Y{};
@@ -904,6 +912,7 @@ struct TScalarVector : TScalarVectorAssignable<TScalarVector<T, _Dim>, T, _Dim> 
 
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
     static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Lowest{ TNumericLimits<component_type>::Lowest() };
 };
 //----------------------------------------------------------------------------
 // ExpandScalarVectorExpr() : convert an expression to a vector of deduced type

@@ -217,40 +217,6 @@ CONSTEXPR bool All(const TScalarVector<T, _Dim>& mask) {
     });
 }
 //----------------------------------------------------------------------------
-// Blend()
-//----------------------------------------------------------------------------
-template <typename _True, typename _False, typename _Mask>
-struct TScalarVectorBlend : TScalarVectorExpr<TScalarVectorBlend<_True, _False, _Mask>, _True::Dim> {
-    using TScalarVectorExpr<TScalarVectorBlend<_True, _False, _Mask>, _True::Dim>::Dim;
-    STATIC_ASSERT(_True::Dim == _False::Dim);
-    STATIC_ASSERT(_True::Dim == _Mask::Dim);
-
-    const _True& ifTrue;
-    const _False& ifFalse;
-    const _Mask& mask;
-
-    FORCE_INLINE CONSTEXPR TScalarVectorBlend(const _Mask& _mask, const _True& _ifTrue, const _False& _ifFalse) NOEXCEPT
-        : ifTrue(_ifTrue)
-        , ifFalse(_ifFalse)
-        , mask(_mask)
-    {}
-
-    template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
-        return (mask.template get<_Idx>() ? ifTrue.template get<_Idx>() : ifFalse.template get<_Idx>());
-    }
-};
-//----------------------------------------------------------------------------
-template <typename _True, size_t _Dim, typename _False>
-CONSTEXPR auto Blend(const TScalarVectorExpr<_True, _Dim>& ifTrue, const TScalarVectorExpr<_False, _Dim>& ifFalse, bool mask) NOEXCEPT {
-    return TScalarVectorBlend(ifTrue, ifFalse, TScalarVectorLiteral<bool, _Dim>(mask));
-}
-//----------------------------------------------------------------------------
-template <typename _True, size_t _Dim, typename _False, typename _Mask>
-CONSTEXPR auto Blend(const TScalarVectorExpr<_True, _Dim>& ifTrue, const TScalarVectorExpr<_False, _Dim>& ifFalse, const TScalarVectorExpr<_Mask, _Dim>& mask) NOEXCEPT {
-    return TScalarVectorBlend(ifTrue, ifFalse, mask);
-}
-//----------------------------------------------------------------------------
 // AllXXX()
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, size_t _Dim>
@@ -386,6 +352,11 @@ CONSTEXPR auto Shuffle(const TScalarVectorExpr<_Lhs, _Dim0>& lhs, const TScalarV
     return TScalarVectorShuffle<TScalarVectorExpr<_Lhs, _Dim0>, TScalarVectorExpr<_Rhs, _Dim1>, _Shuffle...>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
+template <size_t... _Shuffle, typename T, size_t _Dim>
+CONSTEXPR auto Shuffle(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
+    return TScalarVectorShuffle<TScalarVectorExpr<T, _Dim>, TScalarVectorExpr<T, _Dim>, _Shuffle...>(v, v);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Unary functions :
@@ -434,11 +405,11 @@ PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(FloatM11_to_Float01)
 //----------------------------------------------------------------------------
 #define PPE_SCALARVECTOR_BINARYFUNC_DEF(_NAME, _FUNC) \
     template <typename T, typename _Expr, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<_Expr, _Dim>, T> > \
-    CONSTEXPR auto _NAME(T a, const TScalarVectorExpr<_Expr, _Dim>& b) { \
+    CONSTEXPR auto _NAME(const T& a, const TScalarVectorExpr<_Expr, _Dim>& b) { \
         return TScalarVectorUnaryOp(b, [a](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, x); }); \
     } \
     template <typename _Expr, size_t _Dim, typename T, typename _Result = TScalarComponent<TScalarVectorExpr<_Expr, _Dim>, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_Expr, _Dim>& a, T b) { \
+    CONSTEXPR auto _NAME(const TScalarVectorExpr<_Expr, _Dim>& a, const T& b) { \
         return TScalarVectorUnaryOp(a, [b](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b); }); \
     } \
     template <typename _Lhs, size_t _Dim, typename _Rhs> \
@@ -465,27 +436,27 @@ PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(Step)
 //----------------------------------------------------------------------------
 #define PPE_SCALARVECTOR_TERNARYFUNC_DEF(_NAME, _FUNC) \
     template <typename T, typename _B, size_t _Dim, typename _C, typename _Result = TScalarComponent<TScalarVectorExpr<_B, _Dim>, T> > \
-    CONSTEXPR auto _NAME(T a, const TScalarVectorExpr<_B, _Dim>& b, const TScalarVectorExpr<_C, _Dim>& c) { \
+    CONSTEXPR auto _NAME(const T& a, const TScalarVectorExpr<_B, _Dim>& b, const TScalarVectorExpr<_C, _Dim>& c) { \
         return TScalarVectorBinaryOp(b, c, [a](auto y, auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, y, z); }); \
     } \
     template <typename _A, size_t _Dim, typename T, typename _C, typename _Result = TScalarComponent<TScalarVectorExpr<_A, _Dim>, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, T b, const TScalarVectorExpr<_C, _Dim>& c) { \
+    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const T& b, const TScalarVectorExpr<_C, _Dim>& c) { \
         return TScalarVectorBinaryOp(a, c, [b](auto x, auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b, z); }); \
     } \
     template <typename _A, size_t _Dim, typename _B, typename T, typename _Result = TScalarComponent<TScalarVectorExpr<_A, _Dim>, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const TScalarVectorExpr<_B, _Dim>& b, T c) { \
+    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const TScalarVectorExpr<_B, _Dim>& b, const T& c) { \
         return TScalarVectorBinaryOp(a, b, [c](auto x, auto y) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, y, c); }); \
     } \
     template <typename T, typename _C, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<_C, _Dim>, T> > \
-    CONSTEXPR auto _NAME(T a, T b, const TScalarVectorExpr<_C, _Dim>& c) { \
+    CONSTEXPR auto _NAME(const T& a, const T& b, const TScalarVectorExpr<_C, _Dim>& c) { \
         return TScalarVectorUnaryOp(c, [a, b](auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, b, z); }); \
     } \
     template <typename T, typename _B, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<_B, _Dim>, T> > \
-    CONSTEXPR auto _NAME(T a, const TScalarVectorExpr<_B, _Dim>& b, T c) { \
+    CONSTEXPR auto _NAME(const T& a, const TScalarVectorExpr<_B, _Dim>& b, const T& c) { \
         return TScalarVectorUnaryOp(b, [a, c](auto y) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, y, c); }); \
     } \
     template <typename _A, size_t _Dim, typename T, typename _Result = TScalarComponent<TScalarVectorExpr<_A, _Dim>, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, T b, T c) { \
+    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const T& b, const T& c) { \
         return TScalarVectorUnaryOp(a, [b, c](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b, c); }); \
     } \
     template <typename _A, size_t _Dim, typename _B, typename _C> \
@@ -527,12 +498,16 @@ struct TScalarVectorTernaryOp : TScalarVectorExpr<TScalarVectorTernaryOp<_A, _B,
 };
 
 PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(BiasScale)
+PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Blend)
 
 PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Clamp)
 
 PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Lerp)
 PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(LinearStep)
 PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(SLerp)
+
+PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Min3)
+PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Max3)
 
 PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Smoothstep)
 PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Smootherstep)
@@ -578,7 +553,7 @@ template <size_t _Dim>
 bool IsNormalized(const TScalarVector<float, _Dim>& v, float epsilon = F_Epsilon) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-bool NearlyEquals(const TScalarVector<float, _Dim>& a, const TScalarVector<float, _Dim>& b, float maxRelDiff = F_Epsilon) NOEXCEPT;
+bool NearlyEquals(const TScalarVector<float, _Dim>& a, const Meta::TDontDeduce<TScalarVector<float, _Dim>>& b, float maxRelDiff = F_Epsilon) NOEXCEPT;
 //----------------------------------------------------------------------------
 TScalarVector<float, 2> SinCos(float angle) NOEXCEPT;
 TScalarVector<double, 2> SinCos(double angle) NOEXCEPT;

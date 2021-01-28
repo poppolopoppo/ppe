@@ -99,19 +99,25 @@ public:
     template <typename U>
     TScalarBoundingBox<U, _Dim> Cast() const;
 
-    static TScalarBoundingBox<T, _Dim> MaxMinValue() { return TScalarBoundingBox(vector_type::MaxValue, vector_type::MinValue); }
-    static TScalarBoundingBox<T, _Dim> MinMaxValue() { return TScalarBoundingBox(vector_type::MinValue, vector_type::MaxValue); }
-    static TScalarBoundingBox<T, _Dim> MinusOneOneValue() { return TScalarBoundingBox(vector_type::MinusOne, vector_type::One); }
-    static TScalarBoundingBox<T, _Dim> ZeroOneValue() { return TScalarBoundingBox(vector_type::Zero(), vector_type::One); }
+    static auto EmptyValue() { return TScalarBoundingBox(vector_type::MaxValue, vector_type::Lowest); }
+    static auto MaxMinValue() { return TScalarBoundingBox(vector_type::MaxValue, vector_type::MinValue); }
+    static auto MinMaxValue() { return TScalarBoundingBox(vector_type::MinValue, vector_type::MaxValue); }
+    static auto MinusOneOneValue() { return TScalarBoundingBox(vector_type::MinusOne, vector_type::One); }
+    static auto ZeroOneValue() { return TScalarBoundingBox(vector_type::Zero(), vector_type::One); }
 
-    static TScalarBoundingBox<T, _Dim> DefaultValue() { return MaxMinValue(); }
+    static TScalarBoundingBox<T, _Dim> DefaultValue() { return EmptyValue(); }
 
-    template <size_t _0, size_t _1>
-    TScalarBoundingBox<T, 2> Shuffle2() const { return TScalarBoundingBox<T, 2>(_min.template Shuffle2<_0, _1>(), _max.template Shuffle2<_0, _1>()); }
-    template <size_t _0, size_t _1, size_t _2>
-    TScalarBoundingBox<T, 3> Shuffle3() const { return TScalarBoundingBox<T, 3>(_min.template Shuffle3<_0, _1, _2>(), _max.template Shuffle3<_0, _1, _2>()); }
-    template <size_t _0, size_t _1, size_t _2, size_t _3>
-    TScalarBoundingBox<T, 4> Shuffle4() const { return TScalarBoundingBox<T, 4>(_min.template Shuffle3<_0, _1, _2, _3>(), _max.template Shuffle3<_0, _1, _2, _3>()); }
+    template <size_t... _Indices>
+    auto Shuffle() const {
+        STATIC_CONST_INTEGRAL(size_t, ShuffleDim, sizeof...(_Indices));
+        return TScalarBoundingBox<T, ShuffleDim>(PPE::Shuffle<_Indices...>(_min), PPE::Shuffle<_Indices...>(_max));
+    }
+
+    TScalarBoundingBox& operator +=(const vector_type& v) { _min += v; _max += v; return (*this); }
+    TScalarBoundingBox& operator -=(const vector_type& v) { _min -= v; _max -= v; return (*this); }
+
+    TScalarBoundingBox operator +(const vector_type& v) const { return { _min + v, _max + v }; }
+    TScalarBoundingBox operator -(const vector_type& v) const { return { _min - v, _max - v }; }
 
 private:
     vector_type _min;
@@ -121,11 +127,11 @@ public:
     // All shuffle specializations :
 
 #define DEF_SCALARBOUNDINGBOX_SHUFFLE2(_Name, _0, _1) \
-    FORCE_INLINE TScalarBoundingBox<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
+    FORCE_INLINE TScalarBoundingBox<T, 2> _Name() const { return Shuffle<_0, _1>(); }
 #define DEF_SCALARBOUNDINGBOX_SHUFFLE3(_Name, _0, _1, _2) \
-    FORCE_INLINE TScalarBoundingBox<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
+    FORCE_INLINE TScalarBoundingBox<T, 3> _Name() const { return Shuffle<_0, _1, _2>(); }
 #define DEF_SCALARBOUNDINGBOX_SHUFFLE4(_Name, _0, _1, _2, _3) \
-    FORCE_INLINE TScalarBoundingBox<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
+    FORCE_INLINE TScalarBoundingBox<T, 4> _Name() const { return Shuffle<_0, _1, _2, _3>(); }
 
 #   include "Maths/ScalarBoundingBox.Shuffle-inl.h"
 

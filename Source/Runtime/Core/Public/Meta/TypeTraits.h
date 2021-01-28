@@ -449,24 +449,6 @@ void Destroy(T* p) NOEXCEPT {
 #endif
 }
 //----------------------------------------------------------------------------
-struct FUnsignedMax final {
-    template <typename T>
-    CONSTEXPR operator const T () const {
-        STATIC_ASSERT( T(~T(0)) > T(0) );
-        return T(~T(0));
-    }
-    template <typename T>
-    CONSTEXPR friend bool operator ==(T lhs, FUnsignedMax rhs) { return (T(rhs) == lhs); }
-    template <typename T>
-    CONSTEXPR friend bool operator ==(FUnsignedMax lhs, T rhs) { return (T(lhs) == rhs); }
-    template <typename T>
-    CONSTEXPR friend bool operator !=(T lhs, FUnsignedMax rhs) { return (not operator ==(lhs, rhs)); }
-    template <typename T>
-    CONSTEXPR friend bool operator !=(FUnsignedMax lhs, T rhs) { return (not operator ==(lhs, rhs)); }
-};
-CONSTEXPR FUnsignedMax UMax{};
-CONSTEXPR FUnsignedMax INDEX_NONE{};
-//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 T default_value_(std::bool_constant<false>, int) { return T{}; }
@@ -536,9 +518,7 @@ CONSTEXPR FDefaultValue Default{};
 //----------------------------------------------------------------------------
 } //!namespace Meta
 
-using Meta::INDEX_NONE;
 using Meta::Default;
-using Meta::UMax;
 
 PPE_ASSERT_TYPE_IS_POD(u128);
 PPE_ASSERT_TYPE_IS_POD(u256);
