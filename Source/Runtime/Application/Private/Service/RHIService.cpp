@@ -2,13 +2,14 @@
 
 #include "Service/RHIService.h"
 
-#include "Window/WindowBase.h"
-#include "Window/WindowRHI.h"
+#include "HAL/TargetRHI.h"
 
 #include "RHIModule.h"
-#include "HAL/RHIDevice.h"
-#include "HAL/RHIInstance.h"
-#include "HAL/TargetRHI.h"
+#include "RHI/FrameGraph.h"
+#include "RHI/SwapchainDesc.h"
+
+#include "Window/WindowBase.h"
+#include "Window/WindowRHI.h"
 
 #include "Modular/ModularDomain.h"
 
@@ -21,115 +22,102 @@ namespace {
 //----------------------------------------------------------------------------
 class FDefaultRHIService_ final : public IRHIService {
 public:
-    FDefaultRHIService_();
-    virtual ~FDefaultRHIService_();
+    explicit FDefaultRHIService_(ETargetRHI rhi) : _rhi(rhi) {}
 
-    RHI::FInstance& Instance() { return _instance; }
-    const RHI::FInstance& Instance() const { return _instance; }
+    virtual RHI::PFrameGraph CreateDefaultFrameGraph(FWindowRHI* window) override;
+    virtual void DestroyDefaultFrameGraph(FWindowRHI* window, RHI::PFrameGraph& frameGraph) override;
 
-    virtual RHI::FDevice* CreateMainDevice(FWindowRHI* window) override final;
-    virtual void DestroyMainDevice(FWindowRHI* window, RHI::FDevice* device) override final;
+    virtual RHI::PFrameGraph CreateHeadlessFrameGraph(bool computeOnly) override;
+    virtual void DestroyHeadlessFrameGraph(RHI::PFrameGraph& frameGraph) override;
 
-    virtual RHI::FDevice* CreateHeadlessDevice(bool computeOnly) override final;
-    virtual void DestroyHeadlessDevice(RHI::FDevice* device) override final;
-
-    virtual RHI::FDevice* MainDevice() const NOEXCEPT override final {
-        return _mainDevice;
-    }
-
-    virtual void SetMainDevice(RHI::FDevice* device) override final {
-        _mainDevice = device;
-    }
+    virtual RHI::PFrameGraph MainFrameGraph() const NOEXCEPT override { return _pfg; }
+    virtual void SetMainFrameGraph(RHI::PFrameGraph&& frameGraph) override { _pfg = std::move(frameGraph); }
 
 private:
-    RHI::FInstance _instance;
-    RHI::FDevice* _mainDevice{ nullptr };
+    const ETargetRHI _rhi;
+    RHI::PFrameGraph _pfg;
 };
 //----------------------------------------------------------------------------
-FDefaultRHIService_::FDefaultRHIService_() {
-    // #TODO : handle API attach failure properly (need indirect dynamic linking see IRHIService::Make)
-    VerifyRelease(RHI::FInstance::Create(&_instance));
-}
-//----------------------------------------------------------------------------
-FDefaultRHIService_::~FDefaultRHIService_() {
-    AssertRelease(nullptr == _mainDevice);
-    RHI::FInstance::Destroy(&_instance);
-}
-//----------------------------------------------------------------------------
-RHI::FDevice* FDefaultRHIService_::CreateMainDevice(FWindowRHI* window) {
+RHI::PFrameGraph FDefaultRHIService_::CreateDefaultFrameGraph(FWindowRHI* window) {
     Assert(window);
 
-    const RHI::FWindowHandle hwnd{ window->Handle() };
-    const RHI::FWindowSurface surface = _instance.CreateWindowSurface(hwnd);
+    FRHIModule& rhi = FRHIModule::Get(FModularDomain::Get());
 
-    RHI::FDevice* const device = _instance.CreateLogicalDevice(
-        RHI::EPhysicalDeviceFlags::Default, surface );
+    RHI::PFrameGraph pfg = rhi.CreateFrameGraph(_rhi, ERHIFeature::Default, window->Handle());
+    Assert(pfg);
 
-    const TMemoryView<const RHI::EPresentMode> presentModes = device->PresentModes();
-    Assert_NoAssume(Contains(presentModes, RHI::EPresentMode::Fifo));
+    RHI::FSwapchainDesc swapchainDesc;
+    swapchainDesc.SetWindow(window->Handle(), UMax);
 
-    RHI::EPresentMode const present = (
-        Contains(presentModes, RHI::EPresentMode::Mailbox)
-            ? RHI::EPresentMode::Mailbox
-            : (Contains(presentModes, RHI::EPresentMode::RelaxedFifo)
-                ? RHI::EPresentMode::RelaxedFifo
-                : RHI::EPresentMode::Fifo) );
+    RHI::FSwapchainID swapchainId = pfg->CreateSwapchain(swapchainDesc, Default, "main-window");
+    window->SetSwapchainRHI(std::move(swapchainId));
 
-    const TMemoryView<const RHI::FSurfaceFormat> surfaceFormats = device->SurfaceFormats();
-    const size_t bestFormat = RHI::FSurfaceFormat::BestAvailable(surfaceFormats);
-    Assert_NoAssume(INDEX_NONE != bestFormat);
-
-    device->CreateSwapChain(surface, present, surfaceFormats[bestFormat]);
-    window->SetSurfaceRHI(surface);
-
-    return device;
+    return pfg;
 }
 //----------------------------------------------------------------------------
-void FDefaultRHIService_::DestroyMainDevice(FWindowRHI* window, RHI::FDevice* device) {
+void FDefaultRHIService_::DestroyDefaultFrameGraph(FWindowRHI* window, RHI::PFrameGraph& frameGraph) {
     Assert(window);
-    Assert(device);
+    Assert(frameGraph);
 
-    const RHI::FWindowSurface surface = window->SurfaceRHI();
-    Assert_NoAssume(surface);
+    FRHIModule& rhi = FRHIModule::Get(FModularDomain::Get());
 
-    window->SetSurfaceRHI(RHI::FWindowSurface{0});
+    window->ReleaseSwapchainRHI();
 
-    device->DestroySwapChain();
-
-    _instance.DestroyLogicalDevice(device);
-    _instance.DestroyWindowSurface(surface);
+    rhi.DestroyFrameGraph(frameGraph);
 }
 //----------------------------------------------------------------------------
-RHI::FDevice* FDefaultRHIService_::CreateHeadlessDevice(bool computeOnly) {
-    auto deviceFlags{ RHI::EPhysicalDeviceFlags::Compute };
-    if (not computeOnly)
-        deviceFlags = deviceFlags | RHI::EPhysicalDeviceFlags::Graphics;
+RHI::PFrameGraph FDefaultRHIService_::CreateHeadlessFrameGraph(bool computeOnly) {
+    FRHIModule& rhi = FRHIModule::Get(FModularDomain::Get());
 
-    return _instance.CreateLogicalDevice(deviceFlags, RHI::FWindowSurface{0});
+    ERHIFeature features = ERHIFeature::Headless;
+    if (computeOnly)
+        features += ERHIFeature::Compute;
+    else
+        features += ERHIFeature::Minimal;
+
+    return rhi.CreateFrameGraph(_rhi, features);
 }
 //----------------------------------------------------------------------------
-void FDefaultRHIService_::DestroyHeadlessDevice(RHI::FDevice* device) {
-    Assert(device);
+void FDefaultRHIService_::DestroyHeadlessFrameGraph(RHI::PFrameGraph& frameGraph) {
+    Assert(frameGraph);
 
-    _instance.DestroyLogicalDevice(device);
+    FRHIModule& rhi = FRHIModule::Get(FModularDomain::Get());
+
+    rhi.DestroyFrameGraph(frameGraph);
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void IRHIService::Make(URHIService* pRHI, RHI::ETargetRHI rhi) {
+void IRHIService::CreateMainFrameGraph(FWindowRHI* window) {
+    RHI::PFrameGraph pfg = (!!window
+        ? CreateDefaultFrameGraph(window)
+        : CreateHeadlessFrameGraph(false) );
+
+    SetMainFrameGraph(std::move(pfg));
+}
+//----------------------------------------------------------------------------
+void IRHIService::DestroyMainFrameGraph(FWindowRHI* window) {
+    RHI::PFrameGraph pfg = MainFrameGraph();
+    Assert(pfg);
+
+    SetMainFrameGraph(RHI::PFrameGraph{});
+
+    if (window)
+        DestroyDefaultFrameGraph(window, pfg);
+    else
+        DestroyHeadlessFrameGraph(pfg);
+}
+//----------------------------------------------------------------------------
+void IRHIService::Make(URHIService* pRHI, ETargetRHI rhi) {
     Assert(pRHI);
 
-    // #TODO: separate RHI implementation in different modules, and use dynamic linking to support multiple API
-    // Note that is very low priority since Vulkan should be available one way or another
-    AssertRelease(RHI::ETargetRHI::Vulkan == rhi);
-
-    pRHI->reset<FDefaultRHIService_>();
+    pRHI->reset<FDefaultRHIService_>(rhi);
 }
 //----------------------------------------------------------------------------
 void IRHIService::MakeDefault(URHIService* pRHI) {
-    Make(pRHI, RHI::ETargetRHI::Vulkan);
+    Make(pRHI, ETargetRHI::Current);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

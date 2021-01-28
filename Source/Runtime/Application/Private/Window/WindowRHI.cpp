@@ -2,8 +2,6 @@
 
 #include "Window/WindowRHI.h"
 
-#include "HAL/RHIInstance.h"
-
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
@@ -13,8 +11,14 @@ FWindowRHI::FWindowRHI(FWString&& title, const FWindowDefinition& def)
 :   FWindowBase(std::move(title), def)
 {}
 //----------------------------------------------------------------------------
-void FWindowRHI::SetSurfaceRHI(RHI::FWindowSurface surfaceRHI) NOEXCEPT {
-    _surfaceRHI = surfaceRHI;
+void FWindowRHI::SetSwapchainRHI(RHI::FSwapchainID&& swapchainRHI) NOEXCEPT {
+    Assert(swapchainRHI);
+    _swapchainRHI = std::move(swapchainRHI);
+}
+//----------------------------------------------------------------------------
+void FWindowRHI::ReleaseSwapchainRHI() NOEXCEPT {
+    Assert(_swapchainRHI);
+    _swapchainRHI.Release();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -3,6 +3,7 @@
 #include "Application_fwd.h"
 
 #include "RHI_fwd.h"
+#include "RHI/ResourceId.h"
 
 #include "Window/WindowBase.h"
 
@@ -16,11 +17,12 @@ class PPE_APPLICATION_API FWindowRHI : public FWindowBase {
 public:
     FWindowRHI(FWString&& title, const FWindowDefinition& def);
 
-    RHI::FWindowSurface SurfaceRHI() const { return _surfaceRHI; }
-    void SetSurfaceRHI(RHI::FWindowSurface surfaceRHI) NOEXCEPT;
+    const RHI::FSwapchainID& SwapchainRHI() const { return _swapchainRHI; }
+    void SetSwapchainRHI(RHI::FSwapchainID&& surfaceRHI) NOEXCEPT;
+    void ReleaseSwapchainRHI() NOEXCEPT;
 
 private:
-    RHI::FWindowSurface _surfaceRHI;
+    RHI::FSwapchainID _swapchainRHI;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

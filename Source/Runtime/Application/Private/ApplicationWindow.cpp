@@ -80,11 +80,7 @@ void FApplicationWindow::Start() {
     if (_rhi) {
         services.Add<IRHIService>(_rhi.get());
 
-        FWindowRHI* const windowRHI = checked_cast<FWindowRHI*>(_main.get());
-        RHI::FDevice* const device = _rhi->CreateMainDevice(windowRHI);
-        Assert(device);
-
-        _rhi->SetMainDevice(device);
+        _rhi->CreateMainFrameGraph(checked_cast<FWindowRHI*>(_main.get()));
     }
 
     VerifyRelease(_main->Show());
@@ -102,10 +98,8 @@ void FApplicationWindow::Shutdown() {
     auto& services = Services();
     if (_rhi) {
         FWindowRHI* const windowRHI = checked_cast<FWindowRHI*>(_main.get());
-        RHI::FDevice* const device = _rhi->MainDevice();
 
-        _rhi->SetMainDevice(nullptr);
-        _rhi->DestroyMainDevice(windowRHI, device);
+        _rhi->DestroyMainFrameGraph(windowRHI);
 
         services.CheckedRemove<IRHIService>(_rhi.get());
     }
