@@ -75,6 +75,8 @@ struct TNamedId<_Uid, false> {
 
 };
 //----------------------------------------------------------------------------
+PPE_ASSUME_TEMPLATE_AS_POD(TNamedId<_Uid COMMA _KeepName>, u32 _Uid, bool _KeepName);
+//----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -115,6 +117,7 @@ struct TResourceId {
     CONSTEXPR friend hash_t hash_value(const TResourceId& id) { return hash_size_t_constexpr(id.Packed); }
 
 };
+PPE_ASSUME_TEMPLATE_AS_POD(TResourceId<_Uid>, u32 _Uid);
 //----------------------------------------------------------------------------
 template <typename T>
 struct TResourceWrappedId;

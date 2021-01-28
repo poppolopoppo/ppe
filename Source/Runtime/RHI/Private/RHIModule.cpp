@@ -139,10 +139,11 @@ RHI::PPipelineCompiler FRHIModule::CreateCompiler(ETargetRHI rhi) {
 
     if (const FPipelineCompilerFactory* const pfactory = _compilerFactories.GetIFP(rhi)) {
         RHI::PPipelineCompiler compiler;
-        if ((*pfactory)(&compiler))
+        if ((*pfactory)(&compiler)) {
             Add_AssertUnique(_compilers, MakeSafePtr(compiler));
             OnPipelineCompilerPostCreate_(*compiler);
             return compiler;
+        }
     }
 
     AssertNotImplemented();

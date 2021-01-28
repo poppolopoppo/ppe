@@ -14,13 +14,15 @@ enum class EPresentMode : u32 {
     Fifo,
     RelaxedFifo,
     Mailbox,
+
+    Unknown = ~0u,
 };
 //----------------------------------------------------------------------------
 struct FSwapchainDesc {
     FWindowHandle Window{ nullptr };
     EPixelFormat SurfaceFormat{ Default };
     EColorSpace ColorSpace{ Default };
-    EPresentMode PresentMode{ EPresentMode::Mailbox };
+    EPresentMode PresentMode{ Default };
     u32 ImageCount{ 0 };
 
     FSwapchainDesc() = default;

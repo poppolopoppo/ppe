@@ -24,11 +24,11 @@ struct FColorBufferState {
 
         TColorState() = default;
 
-        CONSTEXPR TColorState(T rgba) : Color(rgba), Alpha(rgba) {}
-        CONSTEXPR TColorState(T rgb, T a) : Color(rgb), Alpha(a) {}
+        TColorState(T rgba) : Color(rgba), Alpha(rgba) {}
+        TColorState(T rgb, T a) : Color(rgb), Alpha(a) {}
 
-        CONSTEXPR bool operator ==(const TColorState& other) const { return (Color == other.Color && Alpha == other.Alpha); }
-        CONSTEXPR bool operator !=(const TColorState& other) const { return (not operator ==(other)); }
+        bool operator ==(const TColorState& other) const { return (Color == other.Color && Alpha == other.Alpha); }
+        bool operator !=(const TColorState& other) const { return (not operator ==(other)); }
 
         friend hash_t hash_value(const TColorState& state) {
             return hash_tuple(state.Color, state.Alpha);
@@ -61,6 +61,7 @@ struct FColorBufferState {
             buffer.EnableAlphaBlending);
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FColorBufferState);
 //----------------------------------------------------------------------------
 // FBlendState
 //----------------------------------------------------------------------------
@@ -118,6 +119,10 @@ struct FInputAssemblyState {
 
     bool operator ==(const FInputAssemblyState& other) const { return (Topology == other.Topology && EnablePrimitiveRestart == other.EnablePrimitiveRestart); }
     bool operator !=(const FInputAssemblyState& other) const { return (not operator ==(other)); }
+
+    friend hash_t hash_value(const FInputAssemblyState& state) {
+        return hash_tuple(state.Topology, state.EnablePrimitiveRestart);
+    }
 };
 //----------------------------------------------------------------------------
 // FMultisampleState

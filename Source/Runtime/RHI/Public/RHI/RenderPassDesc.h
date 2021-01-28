@@ -51,7 +51,7 @@ struct FRenderPassDesc {
     };
 
     using FRenderTargets = TStaticArray<FRenderTarget, MaxColorBuffers + 1/* DepthStencil */>;
-    using FViewports = TFixedSizeStack<FViewport, MaxViewports>;
+    using FViewports = TFixedSizeStack<FRenderViewport, MaxViewports>;
 
     FBlendState Blend;
     FDepthBufferState Depth;
@@ -212,7 +212,7 @@ inline FRenderPassDesc& FRenderPassDesc::AddColorBuffer(ERenderTargetID id, ECol
 }
 //----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::AddColorBuffer(ERenderTargetID id, EBlendFactor srcBlendFactor, EBlendFactor dstBlendFactor, EBlendOp blendOp, EColorMask colorMask) {
-    return AddColorBuffer(id, srcBlendFactor, srcBlendFactor, dstBlendFactor, dstBlendFactor, blendOp, blendOp, colorMask);,
+    return AddColorBuffer(id, srcBlendFactor, srcBlendFactor, dstBlendFactor, dstBlendFactor, blendOp, blendOp, colorMask);
 }
 //----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::AddColorBuffer(ERenderTargetID id,
@@ -232,7 +232,7 @@ inline FRenderPassDesc& FRenderPassDesc::AddColorBuffer(ERenderTargetID id,
 inline FRenderPassDesc& FRenderPassDesc::AddResources(const FDescriptorSetID& id, const PPipelineResources& res) {
     Assert(id);
     Assert(res);
-    PerPassResources.Add_Overwrite(id, std::move(res));
+    PerPassResources.Add(id) = res;
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -251,9 +251,9 @@ inline FRenderPassDesc& FRenderPassDesc::SetShadingRateImage(FRawImageID image, 
     ShadingRate.Mipmap = level;
     return (*this);
 }
-
+//----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::SetMultiSamples(FMultiSamples value, TMemoryView<const u32> mask) {
-    Assert(mask.size() == ((*value + 31) / 32);
+    Assert(mask.size() == ((*value + 31) / 32));
     return SetMultiSamples(value).SetSampleMask(mask);
 }
 //----------------------------------------------------------------------------

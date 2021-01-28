@@ -42,7 +42,7 @@ struct FBufferViewDesc {
     ,   SizeInBytes(sizeInBytes)
     {}
 
-    bool Validate(const FBufferDesc& desc) {
+    void Validate(const FBufferDesc& desc) {
         Assert(Offset < desc.SizeInBytes );
         Assert(Format != Default );
 

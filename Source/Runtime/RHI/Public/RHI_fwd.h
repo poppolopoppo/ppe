@@ -181,7 +181,8 @@ struct FStencilBufferState;
 struct FRasterizationState;
 struct FRenderState;
 //----------------------------------------------------------------------------
-struct FDynamicStates;
+enum class EDrawDynamicState : u32;
+struct FDrawDynamicStates;
 struct FImageDataRange;
 struct FImageSubresourceRange;
 struct FPushConstantData;

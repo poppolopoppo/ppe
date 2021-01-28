@@ -329,7 +329,7 @@ enum class EColorSpace : u32 {
     EXTENDED_SRGB_NONLINEAR,
     DISPLAY_NATIVE_AMD,
 
-    Unknown = PASS_THROUGH,
+    Unknown = ~0u,
 };
 //----------------------------------------------------------------------------
 // Fragment output

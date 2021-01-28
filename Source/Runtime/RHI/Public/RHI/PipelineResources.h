@@ -9,8 +9,7 @@
 #include "RHI/ResourceId.h"
 #include "RHI/ResourceState.h"
 
-#include "Container/FixedSizeHashTable.h"
-#include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_android.h"
+#include "Container/AssociativeVector.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/Optional.h"
@@ -78,7 +77,7 @@ public:
         size_t Offset;
         size_t Size;
 
-        bool operator ==(const FBufferElement& other) const { return BufferId == other.BufferId && Offset == other.Offset && Size == other.Size); }
+        bool operator ==(const FBufferElement& other) const { return (BufferId == other.BufferId && Offset == other.Offset && Size == other.Size); }
         bool operator !=(const FBufferElement& other) const { return (not operator ==(other)); }
 
         friend hash_t hash_value(const FBufferElement& res) { return hash_tuple(res.BufferId, res.Offset, res.Size); }
@@ -248,9 +247,7 @@ public:
 
     TMemoryView<const u32> DynamicOffsets() const {
         READSCOPELOCK(_rwlock);
-        return (_dynamicData
-            ? _dynamicData->DynamicOffsets()
-            : TMemoryView<const u32>{} );
+        return _dynamicData.DynamicOffsets();
     }
 
     bool HasImage(const FUniformID& id) const;
@@ -317,10 +314,10 @@ private:
     bool HasResource_(const FUniformID& id) const;
 };
 //----------------------------------------------------------------------------
-using FPipelineResourceSet = TFixedSizeHashMap<
-    FDescriptorSetID,
-    PCPipelineResources,
-    MaxDescriptorSets >;
+using FPipelineResourceSet = ASSOCIATIVE_VECTORINSITU(
+    RHIPipeline,
+    FDescriptorSetID, PCPipelineResources,
+    MaxDescriptorSets );
 //----------------------------------------------------------------------------
 template <typename _Each>
 void FPipelineResources::FDynamicData::EachUniform(_Each&& each) {

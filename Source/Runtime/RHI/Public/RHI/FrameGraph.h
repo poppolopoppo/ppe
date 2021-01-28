@@ -62,10 +62,14 @@ struct FFrameGraphStatistics {
 //----------------------------------------------------------------------------
 class IFrameGraphTask : public FRefCountable {
 protected:
+    IFrameGraphTask() = default;
+public:
     virtual ~IFrameGraphTask() = default;
 };
 //----------------------------------------------------------------------------
 class PPE_RHI_API IFrameGraph : public FRefCountable {
+protected:
+    IFrameGraph() = default;
 public: // interface
     virtual ~IFrameGraph() = default;
 

@@ -51,9 +51,9 @@ struct FDebugColorScheme {
         WriteAfterReadBarrier{ FColor::LimeGreen() },
         ReadAfterWriteBarrier{ FColor::Red() };
 
-    static CONSTEXPR FDebugColorScheme Get() {
-        CONSTEXPR const FDebugColorScheme instance;
-        return instance;
+    static FDebugColorScheme Get() NOEXCEPT {
+        // #TODO
+        return FDebugColorScheme{};
     }
 };
 #endif

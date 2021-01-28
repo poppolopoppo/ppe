@@ -8,6 +8,7 @@
 #include "RHI/ResourceId.h"
 #include "RHI/ResourceState.h"
 #include "RHI/ShaderEnums.h"
+#include "RHI/VertexInputState.h"
 
 #include "Container/FixedSizeHashTable.h"
 #include "Container/HashMap.h"
@@ -97,8 +98,8 @@ struct FPipelineDesc {
     };
 
     struct FSampler {
-        bool operator ==(const FSampler& other) const { return true; }
-        bool operator !=(const FSampler& other) const { return (not operator ==(other)); }
+        CONSTEXPR bool operator ==(const FSampler&) const { return true; }
+        CONSTEXPR bool operator !=(const FSampler&) const { return false; }
     };
 
     struct FSubpassInput {

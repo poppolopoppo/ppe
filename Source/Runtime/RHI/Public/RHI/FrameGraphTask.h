@@ -75,11 +75,11 @@ struct FSubmitRenderPass : details::TFrameGraphTaskDesc<FSubmitRenderPass> {
     FImages Images;
     FBuffers Buffers;
 
-    explicit FSubmitRenderPass(FLogicalPassID renderPassId) :
+    explicit FSubmitRenderPass(FLogicalPassID&& renderPassId) :
 #if USE_PPE_RHIDEBUG
         TFrameGraphTaskDesc<FSubmitRenderPass>("SubmitRenderPass", FDebugColorScheme::Get().RenderPass),
 #endif
-        RenderPassId(renderPassId) {
+        RenderPassId(std::move(renderPassId)) {
         Assert(renderPassId);
     }
 
@@ -123,8 +123,8 @@ struct FDispatchCompute : details::TFrameGraphTaskDesc<FDispatchCompute> {
 
     FDispatchCompute& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
 
-    FDispatchCompute& SetLocalSize(const uint2& count) { return SetLocalSize(uint3(count, 1)); }
-    FDispatchCompute& SetLocalSize(u32 x, u32 y, u32 z) { return SetLocalSize(x, y, z); }
+    FDispatchCompute& SetLocalSize(const uint2& xy) { return SetLocalSize(uint3(xy, 1)); }
+    FDispatchCompute& SetLocalSize(u32 x, u32 y, u32 z) { return SetLocalSize(uint3(x, y, z)); }
     FDispatchCompute& SetLocalSize(const uint3& count) { LocalGroupSize = count; return (*this); }
 
     template <typename T>
@@ -134,7 +134,7 @@ struct FDispatchCompute : details::TFrameGraphTaskDesc<FDispatchCompute> {
     FDispatchCompute& AddResources(const FDescriptorSetID& id, const FPipelineResources* res) {
         Assert(id);
         Assert(res);
-        Resources.Add_Overwrite(id, res);
+        Resources.Add(id) = res;
         return (*this);
     }
 
@@ -187,8 +187,8 @@ struct FDispatchComputeIndirect final : details::TFrameGraphTaskDesc<FDispatchCo
 
     FDispatchComputeIndirect& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
 
-    FDispatchComputeIndirect& SetLocalSize(const uint2& count) { return SetLocalSize(uint3(count, 1)); }
-    FDispatchComputeIndirect& SetLocalSize(u32 x, u32 y, u32 z) { return SetLocalSize(x, y, z); }
+    FDispatchComputeIndirect& SetLocalSize(const uint2& xy) { return SetLocalSize(uint3(xy, 1)); }
+    FDispatchComputeIndirect& SetLocalSize(u32 x, u32 y, u32 z) { return SetLocalSize(uint3(x, y, z)); }
     FDispatchComputeIndirect& SetLocalSize(const uint3& count) { LocalGroupSize = count; return (*this); }
 
     FDispatchComputeIndirect& SetIndirectBuffer(FRawBufferID buffer) { Assert(buffer); IndirectBuffer = buffer; return (*this); }
@@ -202,7 +202,7 @@ struct FDispatchComputeIndirect final : details::TFrameGraphTaskDesc<FDispatchCo
     FDispatchComputeIndirect& AddResources(const FDescriptorSetID& id, const FPipelineResources* res) {
         Assert(id);
         Assert(res);
-        Resources.Add_Overwrite(id, res);
+        Resources.Add(id) = res;
         return (*this);
     }
 
@@ -441,7 +441,7 @@ struct FFillBuffer final : details::TFrameGraphTaskDesc<FFillBuffer> {
     FFillBuffer() : TFrameGraphTaskDesc<FFillBuffer>("FillBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
-    FFillBuffer& SetBuffer(FRawBufferID buffer) { return SetBuffer(DstBuffer, 0, UMax); }
+    FFillBuffer& SetBuffer(FRawBufferID buffer) { return SetBuffer(buffer, 0, UMax); }
     FFillBuffer& SetBuffer(FRawBufferID buffer, u32 offset, u32 size) {
         Assert(buffer);
         DstBuffer = buffer;
@@ -690,8 +690,8 @@ struct FPresent final : details::TFrameGraphTaskDesc<FPresent> {
     FPresent() = default;
 #endif
 
-    explicit FPresent(FRawSwapchainID swapchain, FReadImage image) : FPresent() {
-        SetSwapchain(swapchain);
+    explicit FPresent(FRawSwapchainID swapchain, FRawImageID image) : FPresent() {
+        SetSwapchain(swapchain).SetImage(image);
     }
 
     FPresent& SetSwapchain(FRawSwapchainID swapchain) {
@@ -700,7 +700,7 @@ struct FPresent final : details::TFrameGraphTaskDesc<FPresent> {
         return (*this);
     }
 
-    FPresent& SetImage(FRawImageID image, FImageLayer layer, FMipmapLevel mipmap = Default) {
+    FPresent& SetImage(FRawImageID image, FImageLayer layer = Default, FMipmapLevel mipmap = Default) {
         Assert(image);
         SrcImage = image;
         Layer = layer;

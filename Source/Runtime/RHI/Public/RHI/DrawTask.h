@@ -53,7 +53,7 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
     FPushConstantDatas PushConstants;
     FScissors Scissors;
     FColorBuffers ColorBuffers;
-    FDynamicStates DynamicStates;
+    FDrawDynamicStates DynamicStates;
 
 #if USE_PPE_RHIDEBUG
     using FDebugMode = FGraphicsShaderDebugMode;
@@ -83,8 +83,8 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
     _Task& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
     _Task& AddPushConstant(const FPushConstantID& id, const void* p, size_t size);
 
-#define DEF_DYNAMICSTATE_SET(TYPE, NAME, SUFF) \
-    _Task& CONCAT(Set, NAME)() { DynamicStates.CONCAT(Set, NAME)(); return static_cast<_Task&>(*this); }
+#define DEF_DYNAMICSTATE_SET(ID, TYPE, NAME, SUFF) \
+    _Task& CONCAT(Set, NAME)(TYPE value) { DynamicStates.CONCAT(Set, NAME)(value); return static_cast<_Task&>(*this); }
     PPE_RHI_EACH_DYNAMICSTATE(DEF_DYNAMICSTATE_SET)
 #undef DEF_DYNAMICSTATE_SET
 
@@ -192,7 +192,7 @@ struct FDrawIndexed : details::TDrawVerticesDesc<FDrawIndexed> {
         return (*this);
     }
 
-    FDrawIndexed& Draw(u32 indexCount, u32 instanceCount = 1, u32 firstIndex = 0, u32 vertexOffset = 0, u32 firstInstance = 0) {
+    FDrawIndexed& Draw(u32 indexCount, u32 instanceCount = 1, u32 firstIndex = 0, i32 vertexOffset = 0, u32 firstInstance = 0) {
         Assert(indexCount > 0);
         Emplace_Back(Commands, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
         return (*this);
@@ -318,7 +318,7 @@ struct FDrawMeshes final : details::TDrawCallDesc<FDrawMeshes> {
 // FDrawMeshesIndirect
 //----------------------------------------------------------------------------
 struct FDrawMeshesIndirect final : details::TDrawCallDesc<FDrawMeshesIndirect> {
-    using FDrawCommand = FDrawVerticesIndirect::FDrawCommands;
+    using FDrawCommand = FDrawVerticesIndirect::FDrawCommand;
     using FDrawCommands = TFixedSizeStack<FDrawCommand, MaxDrawCommands>;
 
     struct FIndirectCommand {

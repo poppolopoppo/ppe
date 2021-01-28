@@ -327,6 +327,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     case EColorSpace::ADOBERGB_NONLINEAR: return oss << STRING_LITERAL(_Char, "ADOBERGB_NONLINEAR");
     case EColorSpace::EXTENDED_SRGB_NONLINEAR: return oss << STRING_LITERAL(_Char, "EXTENDED_SRGB_NONLINEAR");
     case EColorSpace::DISPLAY_NATIVE_AMD: return oss << STRING_LITERAL(_Char, "DISPLAY_NATIVE_AMD");
+    case EColorSpace::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
     }
     return oss;
 }

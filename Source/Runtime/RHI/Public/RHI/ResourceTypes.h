@@ -11,19 +11,19 @@
 #include "Maths/ScalarRectangle.h"
 
 #define PPE_RHI_EACH_DYNAMICSTATE(EACH) \
-    EACH(EStencilOp, StencilFailOp, ) \
-    EACH(EStencilOp, StencilDepthFailOp, ) \
-    EACH(EStencilOp, StencilPassOp, ) \
-    EACH(FStencilValue, StencilReference, ) \
-    EACH(FStencilValue, StencilWriteMask, ) \
-    EACH(FStencilValue, StencilCompareMask, ) \
-    EACH(ECullMode, CullMode, ) \
-    EACH(ECompareOp, DepthCompareOp, ) \
-    EACH(bool, EnableDepthTest, : 1) \
-    EACH(bool, EnableDepthWrite, : 1) \
-    EACH(bool, EnableStencilTest, : 1) \
-    EACH(bool, EnableRasterizerDiscard, : 1) \
-    EACH(bool, EnableFrontFaceCCW, : 1)
+    EACH( 0, EStencilOp, StencilFailOp, ) \
+    EACH( 1, EStencilOp, StencilDepthFailOp, ) \
+    EACH( 2, EStencilOp, StencilPassOp, ) \
+    EACH( 3, FStencilValue, StencilReference, ) \
+    EACH( 4, FStencilValue, StencilWriteMask, ) \
+    EACH( 5, FStencilValue, StencilCompareMask, ) \
+    EACH( 6, ECullMode, CullMode, ) \
+    EACH( 7, ECompareOp, DepthCompareOp, ) \
+    EACH( 8, bool, EnableDepthTest, : 1) \
+    EACH (9, bool, EnableDepthWrite, : 1) \
+    EACH(10, bool, EnableStencilTest, : 1) \
+    EACH(11, bool, EnableRasterizerDiscard, : 1) \
+    EACH(12, bool, EnableFrontFaceCCW, : 1)
 
 namespace PPE {
 namespace RHI {
@@ -45,7 +45,7 @@ struct FImageDataRange {
         FImageLayer baseLayer, u32 layerCount,
         FMipmapLevel baseLevel, u32 levelCount )
     :   Layers(FSubRange(*baseLayer, *baseLayer + layerCount))
-    ,   Mipmaps(FSubRange(*baseLevel, *baseLevel + layerCount))
+    ,   Mipmaps(FSubRange(*baseLevel, *baseLevel + levelCount))
     {}
 
     bool Empty() const { return (Layers.Empty() || Mipmaps.Empty()); }
@@ -70,6 +70,7 @@ struct FImageDataRange {
     bool operator !=(const FImageDataRange& other) const { return (not operator ==(other)); }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FImageDataRange);
 //----------------------------------------------------------------------------
 struct FImageSubresourceRange {
     EImageAspect AspectMask{ EImageAspect::Auto };
@@ -89,6 +90,7 @@ struct FImageSubresourceRange {
     ,   LayerCount(layerCount)
     {}
 };
+PPE_ASSUME_TYPE_AS_POD(FImageSubresourceRange);
 //----------------------------------------------------------------------------
 struct FPushConstantData {
     FPushConstantID Id{ Default };
@@ -105,33 +107,47 @@ struct FPushConstantData {
         FPlatformMemory::Memcpy(Data, p, size);
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FPushConstantData);
 using FPushConstantDatas = TFixedSizeStack<FPushConstantData, MaxPushConstantsCount>;
 //----------------------------------------------------------------------------
 struct FVertexBuffer {
     FRawBufferID Id{ Default };
     u32 Offset{ UMax };
 };
+PPE_ASSUME_TYPE_AS_POD(FVertexBuffer);
 //----------------------------------------------------------------------------
-struct FDynamicStates {
-    FDynamicStates() = default;
+// Dynamic states
+//----------------------------------------------------------------------------
+enum class EDrawDynamicState : u32 {
+    Unknown = 0,
+#define DECL_DYNAMICSTATE_FLAG(ID, TYPE, NAME, SUFF) NAME = 1 << ID,
+    PPE_RHI_EACH_DYNAMICSTATE(DECL_DYNAMICSTATE_FLAG)
+#undef DECL_DYNAMICSTATE_FLAG
+};
+ENUM_FLAGS(EDrawDynamicState);
+//----------------------------------------------------------------------------
+struct FDrawDynamicStates {
+    FDrawDynamicStates() = default;
 
-#define DECL_DYNAMICSTATE_ACCESSOR(TYPE, NAME, SUFF) \
-    CONSTEXPR bool CONCAT(Has, NAME)() const { return CONCAT(_has, NAME); } \
-    CONSTEXPR TYPE CONCAT(NAME)() const { Assert(CONCAT(_has, NAME)); return CONCAT(_, NAME); } \
-    CONSTEXPR FDynamicStates& CONCAT(Set, NAME)(TYPE value) { \
+    CONSTEXPR bool Has(EDrawDynamicState flag) const NOEXCEPT { return (_states & flag); }
+
+#define DECL_DYNAMICSTATE_ACCESSOR(ID, TYPE, NAME, SUFF) \
+    CONSTEXPR bool CONCAT(Has, NAME)() const { return Has(EDrawDynamicState::NAME); } \
+    CONSTEXPR TYPE NAME() const { Assert_NoAssume(CONCAT(Has, NAME)()); return CONCAT(_, NAME); } \
+    CONSTEXPR FDrawDynamicStates& CONCAT(Set, NAME)(TYPE value) { \
         CONCAT(_, NAME) = value; \
-        CONCAT(_has, NAME) = true; \
+        _states += EDrawDynamicState::NAME; \
+        return (*this); \
     }
     PPE_RHI_EACH_DYNAMICSTATE(DECL_DYNAMICSTATE_ACCESSOR)
 #undef DECL_DYNAMICSTATE_ACCESSOR
 
 private:
-#define DECL_DYNAMICSTATE_FIELD(TYPE, NAME, SUFF) TYPE CONCAT(_, NAME) SUFF { Default };
+    EDrawDynamicState _states{ Default };
+
+#define DECL_DYNAMICSTATE_FIELD(ID, TYPE, NAME, SUFF) TYPE CONCAT(_, NAME) SUFF;
     PPE_RHI_EACH_DYNAMICSTATE(DECL_DYNAMICSTATE_FIELD)
 #undef DECL_DYNAMICSTATE_FIELD
-#define DECL_DYNAMICSTATE_BITFIELD(TYPE, NAME, SUFF) bool CONCAT(_has, NAME) : 1 { false };
-    PPE_RHI_EACH_DYNAMICSTATE(DECL_DYNAMICSTATE_BITFIELD)
-#undef DECL_DYNAMICSTATE_BITFIELD
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

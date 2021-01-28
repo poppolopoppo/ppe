@@ -1,11 +1,10 @@
 #pragma once
 
 #include "RHI_fwd.h"
-#include "VertexDesc.h"
-#include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_android.h"
 
 #include "RHI/Config.h"
 #include "RHI/ResourceId.h"
+#include "RHI/VertexDesc.h"
 #include "RHI/VertexEnums.h"
 #include "RHI/VertexInputState.h"
 
@@ -18,7 +17,7 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FVertexAttribute {
-    FVertexID Id{UMax};
+    FVertexID Id;
     u32 Index{UMax};
     EVertexFormat Format{Default};
 
@@ -56,6 +55,7 @@ struct FVertexInput {
     }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FVertexInput);
 //----------------------------------------------------------------------------
 struct FVertexBufferBinding {
     u32 Index{UMax};
@@ -75,6 +75,7 @@ struct FVertexBufferBinding {
     }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FVertexBufferBinding);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

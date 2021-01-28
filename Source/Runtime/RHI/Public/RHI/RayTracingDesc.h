@@ -91,7 +91,7 @@ struct FRayTracingGeometryDesc {
     explicit FRayTracingGeometryDesc(TMemoryView<const FTriangles> triangles) : Triangles(triangles) {}
     explicit FRayTracingGeometryDesc(TMemoryView<const FBoundingVolumes> aabbs) : Aabbs(aabbs) {}
 
-    FRayTracingGeometryDesc(TMemoryView<const FTriangles> triangles, TMemoryView<const FBoundingVolumes> aabbs) : Triangles(aabbs), Aabbs(aabbs) {}
+    FRayTracingGeometryDesc(TMemoryView<const FTriangles> triangles, TMemoryView<const FBoundingVolumes> aabbs) : Triangles(triangles), Aabbs(aabbs) {}
 
 };
 //----------------------------------------------------------------------------
