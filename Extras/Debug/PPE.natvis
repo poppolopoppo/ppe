@@ -221,6 +221,15 @@
     </Expand>
   </Type>
 
+  <Type Name="PPE::TScalarBoundingBox&lt;*, *&gt;">
+    <DisplayString>[{_min}, {_max}]</DisplayString>
+    <Expand>
+      <Item Name="[Min]">_min</Item>
+      <Item Name="[Max]">_max</Item>
+      <Item Name="[Extents]">_max - _min</Item>
+    </Expand>
+  </Type>
+
   <Type Name="PPE::TScalarMatrix&lt;*, *, *&gt;">
     <Expand>
       <ArrayItems>

@@ -27,6 +27,11 @@ CONSTEXPR auto Dot(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVector
     return Dot(lhs * rhs);
 }
 //----------------------------------------------------------------------------
+template <typename _Expr, size_t _Dim>
+CONSTEXPR auto Dot2(const TScalarVectorExpr<_Expr, _Dim>& v) NOEXCEPT {
+    return Dot(v, v);
+}
+//----------------------------------------------------------------------------
 // Det()
 //----------------------------------------------------------------------------
 template <typename _Expr>
@@ -84,12 +89,12 @@ CONSTEXPR auto DistanceSq(const TScalarVectorExpr<_Lhs, _Dim>& a, const TScalarV
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 CONSTEXPR auto Length(const TScalarVector<T, _Dim>& v) NOEXCEPT {
-    return Sqrt(Dot(v, v));
+    return Sqrt(Dot2(v));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 CONSTEXPR auto LengthSq(const TScalarVector<T, _Dim>& v) NOEXCEPT {
-    return Dot(v, v);
+    return Dot2(v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>

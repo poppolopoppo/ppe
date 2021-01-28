@@ -55,7 +55,7 @@ static void Test_Vector_() {
         AssertRelease(Any( m));
         AssertRelease(not All( m));
         int3 select = Blend(int3::MinusOne, int3::One, m);
-        int broadcast = Dot(select, int3::One);
+        int broadcast = Dot(select);
         AssertRelease(broadcast == 1);
     }
 
@@ -162,7 +162,6 @@ void Test_Maths() {
     Test_BoundingBox_();
     Test_Matrix_();
 }
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
