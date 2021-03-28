@@ -17,7 +17,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
 struct FRayTracingShaderDebugMode {
     EShaderDebugMode Mode{ Default };
     uint3 LaunchId{ ~0u };
@@ -227,7 +227,7 @@ struct FTraceRays final : details::TFrameTaskDesc<FTraceRays> {
     FPushConstantDatas PushConstants;
     FRawRTShaderTableID ShaderTable;
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
     using FDebugMode = FRayTracingShaderDebugMode;
     FDebugMode DebugMode;
 #endif

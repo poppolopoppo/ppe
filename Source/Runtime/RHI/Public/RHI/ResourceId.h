@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RHI_fwd.h"
+#include "Container/HashHelpers.h"
 
 #include "RHI/Config.h"
 

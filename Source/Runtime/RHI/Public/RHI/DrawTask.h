@@ -365,7 +365,7 @@ struct FCustomDraw final : details::TDrawTaskDesc<FCustomDraw> {
     FImages Images;
     FBuffers Buffers;
 
-#if USE_PPE_RHITASKNAME
+#if !USE_PPE_RHITASKNAME
     FCustomDraw() = default;
 #else
     FCustomDraw() : TDrawTaskDesc<FCustomDraw>{ "CustomDraw", FDebugColorScheme::Get().CustomDraw } {}

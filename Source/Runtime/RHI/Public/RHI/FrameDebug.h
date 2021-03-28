@@ -2,7 +2,7 @@
 
 #include "RHI_fwd.h"
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG || USE_PPE_RHITASKNAME
 #   include "Color/Color.h"
 #endif
 
@@ -75,7 +75,7 @@ struct FFrameStatistics {
 };
 #endif
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG || USE_PPE_RHITASKNAME
 struct FDebugColorScheme {
     FRgba8u
         RenderPass{ FColor::OrangeRed() },

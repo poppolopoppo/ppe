@@ -28,7 +28,7 @@ public: // debugger
     static void OutputDebug(const wchar_t* wtext) { ::OutputDebugStringW(wtext); }
 
 public: // memory
-    static void CheckMemory() { _CrtCheckMemory(); }
+    static bool CheckMemory() { return (!!_CrtCheckMemory()); }
     static void GuaranteeStackSizeForStackOverflowRecovery();
 
 public: // profiling

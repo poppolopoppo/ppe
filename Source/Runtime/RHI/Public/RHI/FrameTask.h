@@ -20,7 +20,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
 struct FComputeShaderDebugMode {
     EShaderDebugMode Mode{ Default };
     uint3 GlobalId{ ~0u };
@@ -49,7 +49,7 @@ struct TFrameTaskDesc {
         return static_cast<self_type&>(*this);
     }
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHITASKNAME
     FTaskName TaskName;
     FRgba8u DebugColor;
 

@@ -71,15 +71,15 @@ public: // non-virtual helpers
     FSizeAndFlags SizeAndFlags() const { return _type.SizeAndFlags; }
     FNamedTypeInfos NamedTypeInfos() const { return FNamedTypeInfos(TypeName(), _type); }
 
-    const IScalarTraits* AsScalar() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Scalar ? checked_cast<const IScalarTraits*>(this) : nullptr); }
-    const ITupleTraits* AsTuple() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Tuple ? checked_cast<const ITupleTraits*>(this) : nullptr); }
-    const IListTraits* AsList() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::List ? checked_cast<const IListTraits*>(this) : nullptr); }
-    const IDicoTraits* AsDico() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Dico ? checked_cast<const IDicoTraits*>(this) : nullptr); }
+    const IScalarTraits* AsScalar() const NOEXCEPT;
+    const ITupleTraits* AsTuple() const NOEXCEPT;
+    const IListTraits* AsList() const NOEXCEPT;
+    const IDicoTraits* AsDico() const NOEXCEPT;
 
-    const IScalarTraits& ToScalar() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Scalar); return (*checked_cast<const IScalarTraits*>(this)); }
-    const ITupleTraits& ToTuple() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Tuple); return (*checked_cast<const ITupleTraits*>(this)); }
-    const IListTraits& ToList() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::List); return (*checked_cast<const IListTraits*>(this)); }
-    const IDicoTraits& ToDico() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Dico); return (*checked_cast<const IDicoTraits*>(this)); }
+    const IScalarTraits& ToScalar() const;
+    const ITupleTraits& ToTuple() const;
+    const IListTraits& ToList() const;
+    const IDicoTraits& ToDico() const;
 
     friend bool operator ==(const ITypeTraits& lhs, const ITypeTraits& rhs) {
 #if 0
@@ -234,6 +234,18 @@ public: // IDicoTraits
     typedef TFunction<bool(const FAtom&, const FAtom&)> foreach_fun;
     virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT = 0;
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline const IScalarTraits* ITypeTraits::AsScalar() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Scalar ? checked_cast<const IScalarTraits*>(this) : nullptr); }
+inline const ITupleTraits* ITypeTraits::AsTuple() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Tuple ? checked_cast<const ITupleTraits*>(this) : nullptr); }
+inline const IListTraits* ITypeTraits::AsList() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::List ? checked_cast<const IListTraits*>(this) : nullptr); }
+inline const IDicoTraits* ITypeTraits::AsDico() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Dico ? checked_cast<const IDicoTraits*>(this) : nullptr); }
+//----------------------------------------------------------------------------
+inline const IScalarTraits& ITypeTraits::ToScalar() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Scalar); return (*checked_cast<const IScalarTraits*>(this)); }
+inline const ITupleTraits& ITypeTraits::ToTuple() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Tuple); return (*checked_cast<const ITupleTraits*>(this)); }
+inline const IListTraits& ITypeTraits::ToList() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::List); return (*checked_cast<const IListTraits*>(this)); }
+inline const IDicoTraits& ITypeTraits::ToDico() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Dico); return (*checked_cast<const IDicoTraits*>(this)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

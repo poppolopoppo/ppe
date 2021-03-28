@@ -417,6 +417,8 @@ struct FDummyForPool_ {
 };
 //----------------------------------------------------------------------------
 static void Test_MemoryPool_() {
+    LOG(Test_Allocators, Emphasis, L"testing TMemoryPool<>");
+
     using pool_type = TTypedMemoryPool<FDummyForPool_, 8, 512, true, ALLOCATOR(Container)>;
     using index_type = pool_type::index_type;
 
@@ -465,6 +467,8 @@ static void Test_MemoryPool_() {
 }
 //----------------------------------------------------------------------------
 static void Test_CachedMemoryPool_() {
+    LOG(Test_Allocators, Emphasis, L"testing TCachedMemoryPool<>");
+
     using pool_type = TCachedMemoryPool<FDummyForPool_, FDummyForPool_, 8, 512, ALLOCATOR(Container)>;
     using block_type = pool_type::block_type;
     using index_type = pool_type::index_type;

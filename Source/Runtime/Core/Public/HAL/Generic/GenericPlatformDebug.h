@@ -27,7 +27,7 @@ public: // debugger
     static void OutputDebug(const wchar_t* wtext) = delete;
 
 public: // memory
-    static void CheckMemory() = delete;
+    static bool CheckMemory() = delete;
     static void GuaranteeStackSizeForStackOverflowRecovery() = delete; // backup memory in current thread for stack overflow crash
 
 public: // profiling

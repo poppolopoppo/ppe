@@ -100,7 +100,7 @@ public:
     }
 
     CONSTEXPR TMemoryView<T> Eat(size_t n) {
-        Assert(n <= _size);
+        Assert_NoAssume(n <= _size);
         const TMemoryView<T> eaten{ _storage, n };
         _storage += n;
         _size -= n;
@@ -108,8 +108,8 @@ public:
     }
 
     template <typename U>
-    auto* Peek() const {
-        Assert(sizeof(U) <= _size);
+    auto Peek() const {
+        Assert_NoAssume(sizeof(U) <= _size);
         using result_t = Meta::TConditional<std::is_const_v<T>, std::add_const_t<U>, U>;
         return reinterpret_cast<result_t*>(_storage);
     }
