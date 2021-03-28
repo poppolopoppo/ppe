@@ -160,7 +160,7 @@ public:
     iterator begin() const { return (0 == _size ? end() : FIterator(*this, 0).Advance_(0)); }
     iterator end() const { return FIterator(*this, _Capacity); }
 
-    iterator find(key_type key) const;
+    iterator find(const key_type& key) const;
     TPair<iterator, bool> insert(value_type&& rvalue);
     bool erase(key_type key) { return Remove_ReturnIfExists(key); }
     void erase(const iterator& it);
@@ -257,7 +257,7 @@ auto TFixedSizeHashTable<_Traits, _Capacity>::operator =(const TFixedSizeHashTab
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
-auto TFixedSizeHashTable<_Traits, _Capacity>::find(key_type key) const -> iterator {
+auto TFixedSizeHashTable<_Traits, _Capacity>::find(const key_type& key) const -> iterator {
     Assert(empty_key::value != key);
 
     size_t bucket = InitIndex_(key);

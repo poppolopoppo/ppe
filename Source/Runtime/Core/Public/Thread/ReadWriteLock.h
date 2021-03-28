@@ -30,7 +30,7 @@ public:
     bool TryLockWrite() { return FPlatformThread::TryLockWrite(_rwLock); }
     void UnlockWrite() { FPlatformThread::UnlockWrite(_rwLock); }
 
-    struct FScopeLockRead {
+    struct FScopeLockRead : Meta::FNonCopyableNorMovable {
         const FReadWriteLock& RWLock;
         FScopeLockRead(const FReadWriteLock& rwlock) : RWLock(rwlock) { RWLock.LockRead(); }
         ~FScopeLockRead() { RWLock.UnlockRead(); }
@@ -38,7 +38,7 @@ public:
         FScopeLockRead& operator =(const FScopeLockRead&) = delete;
     };
 
-    struct FScopeLockWrite {
+    struct FScopeLockWrite : Meta::FNonCopyableNorMovable {
         FReadWriteLock& RWLock;
         FScopeLockWrite(FReadWriteLock& rwlock) : RWLock(rwlock) { RWLock.LockWrite(); }
         ~FScopeLockWrite() { RWLock.UnlockWrite(); }

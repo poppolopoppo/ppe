@@ -90,7 +90,7 @@ struct TBasicStaticString {
     CONSTEXPR bool operator > (const TBasicStaticString& other) const { return other.Less(*this); }
     CONSTEXPR bool operator <=(const TBasicStaticString& other) const { return (not operator > (other)); }
 
-    CONSTEXPR friend hash_t hash_value(const TBasicStaticString& id) { return id.HashValue; }
+    CONSTEXPR friend hash_t hash_value(const TBasicStaticString& value) { return hash_string(value.Str()); }
 
     friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicStaticString& str) {
         return oss << str.Str();

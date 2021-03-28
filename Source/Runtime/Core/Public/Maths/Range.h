@@ -15,7 +15,7 @@ struct TRange {
     STATIC_ASSERT(std::is_arithmetic_v<value_type>);
 
     STATIC_CONST_INTEGRAL(value_type, MaxValue, TNumericLimits<value_type>::MaxValue());
-    STATIC_CONST_INTEGRAL(value_type, MinValue, TNumericLimits<value_type>::MinValue());
+    STATIC_CONST_INTEGRAL(value_type, MinValue, TNumericLimits<value_type>::Lowest());
 
     value_type First{ MaxValue };
     value_type Last{ MinValue };

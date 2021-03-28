@@ -258,6 +258,9 @@ TScalarMatrix<T, _N + 1, _N + 1> MakeScalingMatrix(const TScalarVector<T, _N>& s
 template <typename T, size_t _N>
 TScalarMatrix<T, _N + 1, _N + 1> MakeTranslationMatrix(const TScalarVector<T, _N>& translate);
 //----------------------------------------------------------------------------
+template <typename T, size_t _N>
+TScalarMatrix<T, _N, _N - 1> PackHomogeneousMatrix(const TScalarMatrix<T, _N, _N>& m);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>

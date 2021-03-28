@@ -517,6 +517,10 @@ public:
     CONSTEXPR const iterator& begin() const NOEXCEPT { return _begin; }
     CONSTEXPR const iterator& end() const NOEXCEPT { return _end; }
 
+    auto Reverse() const {
+        return TIterable<std::reverse_iterator<_It>>{ std::make_reverse_iterator(_end), std::make_reverse_iterator(_begin) };
+    }
+
     template <typename _Pred = Meta::TEqualTo<value_type> >
     CONSTEXPR bool Equals(const TIterable& other, _Pred pred = _Pred{}) const NOEXCEPT {
         return std::equal(_begin, _end, other._begin, other._end, pred);

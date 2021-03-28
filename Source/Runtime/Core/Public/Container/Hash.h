@@ -2,9 +2,9 @@
 
 #include "Core_fwd.h"
 
+#include "Meta/Hash_fwd.h"
 #include "HAL/PlatformHash.h"
 #include "Memory/HashFunctions.h"
-#include "Meta/Hash_fwd.h"
 #include "Meta/TypeTraits.h"
 
 #include <type_traits>
@@ -62,6 +62,12 @@ CONSTEXPR hash_t hash_tuple(_Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _It>
 CONSTEXPR hash_t hash_range(_It first, _It last);
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR hash_t& operator <<(hash_t& seed, const T& value) {
+    hash_combine(seed, value);
+    return seed;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

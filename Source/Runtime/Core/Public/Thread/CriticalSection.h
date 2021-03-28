@@ -16,6 +16,9 @@ public:
     FCriticalSection(const FCriticalSection&) = delete;
     FCriticalSection& operator =(const FCriticalSection&) = delete;
 
+    FCriticalSection(FCriticalSection&& rvalue) = delete;
+    FCriticalSection& operator =(FCriticalSection&& rvalue) = delete;
+
     void Lock() const { FPlatformThread::Lock(_cs); }
     bool TryLock() const { return FPlatformThread::TryLock(_cs); }
     void Unlock() const { FPlatformThread::Unlock(_cs); }

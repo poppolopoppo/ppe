@@ -11,12 +11,14 @@ namespace PPE {
 //----------------------------------------------------------------------------
 struct hash_t { // see Hash.h, this is fwd declared here to avoid including Hash.h everywhere
 public:
-    size_t _value;
+    using value_type = std::size_t;
+
+    value_type _value;
 
     hash_t() = default;
 
-    CONSTEXPR hash_t(size_t value) NOEXCEPT : _value(value) {}
-    CONSTEXPR operator size_t () const { return _value; }
+    CONSTEXPR hash_t(value_type value) NOEXCEPT : _value(value) {}
+    CONSTEXPR operator value_type () const { return _value; }
 
     // hash_value(hash_t) = hash_t,
     // will prevent helpers like hash_combine() from hashing twice the value :
@@ -30,6 +32,9 @@ public:
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, hash_t h);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
+//----------------------------------------------------------------------------
+template <typename T>
+size_t hash_as_pod(const T& pod) NOEXCEPT; // See HashFunctions.h
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

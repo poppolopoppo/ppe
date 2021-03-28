@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Meta/Hash_fwd.h"
+
 #include <type_traits>
 
 namespace PPE {
@@ -24,7 +26,7 @@ struct TNumeric {
             std::is_same_v<T, const void*> );
     }
 
-    CONSTEXPR TNumeric(Meta::FUnsignedMax) : Value(~T(0u)) {
+    CONSTEXPR TNumeric(Meta::FUnsignedMax umax) : Value(umax) {
         STATIC_ASSERT(
             std::is_integral_v<T> &&
             std::is_unsigned_v<T> );
@@ -50,7 +52,7 @@ struct TNumeric {
     CONSTEXPR friend bool operator <=(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value <= rhs.Value; }
 
     friend void swap(TNumeric& lhs, TNumeric& rhs) NOEXCEPT { std::swap(lhs.Value, rhs.Value); }
-    friend inline hash_t hash_value(const TNumeric& value) NOEXCEPT { return hash_value(value.Value); }
+    friend inline hash_t hash_value(const TNumeric& value) NOEXCEPT { return hash_as_pod(value.Value); }
 
     CONSTEXPR static TNumeric MinusOne() { return TNumeric(T(-1)); }
     CONSTEXPR static TNumeric One() { return TNumeric(T(1)); }
@@ -100,6 +102,29 @@ struct FFakeBool {
 PPE_ASSERT_TYPE_IS_POD(FFakeBool);
 //----------------------------------------------------------------------------
 #define PPE_FAKEBOOL_OPERATOR_DECL() operator const void* () const NOEXCEPT
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(size_t, FSizeInBytes);
+//----------------------------------------------------------------------------
+CONSTEXPR FSizeInBytes operator "" _B (unsigned long long sizeInBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInBytes)); }
+CONSTEXPR FSizeInBytes operator "" _b (unsigned long long sizeInBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInBytes)); }
+//----------------------------------------------------------------------------
+CONSTEXPR FSizeInBytes OneKikiByte{ 1024u };
+CONSTEXPR FSizeInBytes OneMebiByte{ 1024u * OneKikiByte };
+CONSTEXPR FSizeInBytes OneGibiByte{ 1024u * OneMebiByte };
+//----------------------------------------------------------------------------
+CONSTEXPR FSizeInBytes operator "" _KiB (unsigned long long sizeInKikiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInKikiBytes * OneKikiByte)); }
+CONSTEXPR FSizeInBytes operator "" _MiB (unsigned long long sizeInMebiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInMebiBytes * OneMebiByte)); }
+CONSTEXPR FSizeInBytes operator "" _GiB (unsigned long long sizeInGibiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInGibiBytes * OneGibiByte)); }
+//----------------------------------------------------------------------------
+CONSTEXPR FSizeInBytes OneKiloByte{ 1000u };
+CONSTEXPR FSizeInBytes OneMegaByte{ 1000u * OneKiloByte };
+CONSTEXPR FSizeInBytes OneGigaByte{ 1000u * OneMegaByte };
+//----------------------------------------------------------------------------
+CONSTEXPR FSizeInBytes operator "" _kB (unsigned long long sizeInKiloBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInKiloBytes * OneKiloByte)); }
+CONSTEXPR FSizeInBytes operator "" _MB (unsigned long long sizeInMegaBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInMegaBytes * OneMegaByte)); }
+CONSTEXPR FSizeInBytes operator "" _GB (unsigned long long sizeInGigaBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInGigaBytes * OneGigaByte)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

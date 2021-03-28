@@ -157,6 +157,7 @@ typedef int64_t     i64;
 #   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
 #   define Assume(...) Likely(__VA_ARGS__)
 #   define AnalysisAssume(...) NOOP(!!(__VA_ARGS__))
+#   define PACKED_STRUCT(...) __VA_ARGS__  __attribute__((__packed__))
 #elif defined(CPP_VISUALSTUDIO)
 #   define Likely(...) __VA_ARGS__
 #   define Unlikely(...) __VA_ARGS__
@@ -170,6 +171,7 @@ typedef int64_t     i64;
 #           define AnalysisAssume(...) NOOP();
 #       endif
 #   endif
+#   define PACKED_STRUCT(...) __pragma(pack(push, 1)) __VA_ARGS__ __pragma(pack(pop))
 #else
 #   error "unsupported compiler"
 #endif
@@ -189,11 +191,14 @@ typedef int64_t     i64;
 #   define FOLD_EXPR(...) ((__VA_ARGS__), ...)
 //  https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 #   define MAYBE_UNUSED [[maybe_unused]]
+//  https://en.cppreference.com/w/cpp/language/attributes/fallthrough
+#   define FALLTHROUGH() [[fallthrough]]
 #else
 #   define IF_CONSTEXPR(...) if (__VA_ARGS__)
 //  Workaround from Jason Turner: https://youtu.be/nnY4e4faNp0?t=39m51s
 #   define FOLD_EXPR(...) (void)std::initializer_list<int>{ ((__VA_ARGS__), 0)... }
 #   define MAYBE_UNUSED
+#   define FALLTHROUGH() NOOP()
 #endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
@@ -367,12 +372,10 @@ typedef struct uint256_t {
 }   u256;
 //----------------------------------------------------------------------------
 // for hash functions :
-#pragma pack(push, 1)
-typedef struct uint96_t     { u64  lo; u32 hi; } u96;
-typedef struct uint160_t    { u128 lo; u32 hi; } u160;
-typedef struct uint192_t    { u128 lo; u64 hi; } u192;
-typedef struct uint224_t    { u128 lo; u96 hi; } u224;
-#pragma pack(pop)
+PACKED_STRUCT(typedef struct uint96_t  { u64  lo; u32 hi; } u96);
+PACKED_STRUCT(typedef struct uint160_t { u128 lo; u32 hi; } u160);
+PACKED_STRUCT(typedef struct uint192_t { u128 lo; u64 hi; } u192);
+PACKED_STRUCT(typedef struct uint224_t { u128 lo; u96 hi; } u224);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

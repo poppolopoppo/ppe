@@ -13,7 +13,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define VECTOR_LINEARHEAP(T) ::PPE::TVector<T, ::PPE::FLinearAllocator>
 //----------------------------------------------------------------------------
-#define SPARSEARRAY_LINEARHEAP(_DOMAIN, T, _ChunkSize) ::PPE::TAlignedSparseArray<T, _ChunkSize, ::PPE::FLinearAllocator>
+#define SPARSEARRAY_LINEARHEAP(T) ::PPE::TSparseArray<T, ::PPE::FLinearAllocator>
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR_LINEARHEAP(_KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_LINEARHEAP(::PPE::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------

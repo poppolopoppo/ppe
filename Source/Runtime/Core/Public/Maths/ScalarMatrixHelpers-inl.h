@@ -890,6 +890,13 @@ TScalarMatrix<T, _N + 1, _N + 1> MakeTranslationMatrix(const TScalarVector<T, _N
     return result;
 }
 //----------------------------------------------------------------------------
+template <typename T, size_t _N>
+TScalarMatrix<T, _N, _N - 1> PackHomogeneousMatrix(const TScalarMatrix<T, _N, _N>& m) {
+    return Meta::static_for<_N>([&](auto... idx) NOEXCEPT -> TScalarMatrix<T, _N, _N - 1> {
+        return { m.template Column<idx>().Shift()... };
+    });
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>

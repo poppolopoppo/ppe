@@ -36,6 +36,7 @@ CONSTEXPR NOALIAS Meta::TEnableIf<
     return static_cast<_Dst>(value);
 #endif
 }
+//----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
 NOALIAS Meta::TEnableIf<
     (std::is_pointer<_Dst>::value ^ std::is_pointer<_Src>::value) &&
@@ -50,6 +51,7 @@ NOALIAS Meta::TEnableIf<
     return reinterpret_cast<_Dst>(value);
 #endif
 }
+//----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
 #if !USE_PPE_CHECKEDCAST
     CONSTEXPR

@@ -114,6 +114,11 @@ struct TReservoirSampling {
         Count++;
     }
 
+    void Clear() {
+        Count = 0;
+        SampleMin = SampleMax = {};
+    }
+
     void Finalize() {
         Assert_NoAssume(Count >= Capacity);
         std::sort(std::begin(Samples), std::end(Samples));

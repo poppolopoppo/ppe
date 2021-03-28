@@ -88,8 +88,9 @@ namespace Meta {
 struct FUnsignedMax final {
     template <typename T>
     CONSTEXPR operator const T () const {
-        return TNumericLimits<T>::MaxValue();
+        return static_cast<T>(~T(0));
     }
+
     template <typename T>
     CONSTEXPR friend bool operator ==(T lhs, FUnsignedMax rhs) { return (T(rhs) == lhs); }
     template <typename T>
@@ -98,6 +99,24 @@ struct FUnsignedMax final {
     CONSTEXPR friend bool operator !=(T lhs, FUnsignedMax rhs) { return (not operator ==(lhs, rhs)); }
     template <typename T>
     CONSTEXPR friend bool operator !=(FUnsignedMax lhs, T rhs) { return (not operator ==(lhs, rhs)); }
+
+    template <typename T>
+    CONSTEXPR friend bool operator < (T lhs, FUnsignedMax rhs) { return (lhs < T(rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator < (FUnsignedMax lhs, T rhs) { return (T(lhs) < rhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator >=(T lhs, FUnsignedMax rhs) { return (not operator < (lhs, rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator >=(FUnsignedMax lhs, T rhs) { return (not operator < (lhs, rhs)); }
+
+    template <typename T>
+    CONSTEXPR friend bool operator > (T lhs, FUnsignedMax rhs) { return (lhs > T(rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator > (FUnsignedMax lhs, T rhs) { return (T(lhs) > rhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator <=(T lhs, FUnsignedMax rhs) { return (not operator > (lhs, rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator <=(FUnsignedMax lhs, T rhs) { return (not operator > (lhs, rhs)); }
 };
 //----------------------------------------------------------------------------
 } //!namespace  Meta
