@@ -238,7 +238,7 @@ FTaskFiberPool::FTaskFiberPool(FCallback&& callback) NOEXCEPT
 }
 //----------------------------------------------------------------------------
 FTaskFiberPool::~FTaskFiberPool() {
-    const Meta::FLockGuard scopeLock(_barrier);
+    const FCriticalSection::FScopeLock scopeLock(&_barrierCS);
 
     while (_chunks) // all fibers should be idle !
         VerifyRelease(FTaskFiberChunk::ReleaseChunk(&_chunks, _chunks));
@@ -330,7 +330,7 @@ void FTaskFiberPool::StartThread() {
 //----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseMemory() {
     if (Likely(_chunks)) {
-        const Meta::FLockGuard scopeLock(_barrier);
+        const FCriticalSection::FScopeLock scopeLock(&_barrierCS);
 
         for (FTaskFiberChunk* ch = _chunks; ch; ) {
             FTaskFiberChunk* const nxt = ch->_node.Next;
@@ -356,7 +356,7 @@ void FTaskFiberPool::UsageStats(size_t* reserved, size_t* inUse) {
     size_t r = 0;
     size_t u = 0;
     {
-        const Meta::FLockGuard scopeLock(_barrier);
+        const FCriticalSection::FScopeLock scopeLock(&_barrierCS);
 
         for (FTaskFiberChunk* ch = _chunks; ch; ch = ch->Node().Next) {
             r += FTaskFiberChunk::Capacity;
@@ -377,7 +377,7 @@ NO_INLINE FTaskFiberChunk* FTaskFiberPool::AcquireChunk_() {
     FTaskFiberChunk* const head = _chunks;
 
     // need to lock to avoid allocate more than one new chunk
-    const Meta::FLockGuard scopeLock(_barrier);
+    const FCriticalSection::FScopeLock scopeLock(&_barrierCS);
 
     // another thread might have already allocated a new chunk when we wake up :
     if (head != _chunks)

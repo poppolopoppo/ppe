@@ -100,7 +100,11 @@ public:
 
     static FORCE_INLINE void CreateCriticalSection(FCriticalSection* pcs) {
         Assert(pcs);
-        ::InitializeCriticalSection(pcs);
+        u32 flags = RTL_CRITICAL_SECTION_FLAG_DYNAMIC_SPIN;
+#if !USE_PPE_DEBUG
+        flags |= RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO;
+#endif
+        ::InitializeCriticalSectionEx(pcs, 4000/* MS undocumented default */, flags);
     }
 
     static FORCE_INLINE void Lock(FCriticalSection& cs) {

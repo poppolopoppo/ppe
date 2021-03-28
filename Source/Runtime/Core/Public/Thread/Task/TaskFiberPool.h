@@ -9,6 +9,8 @@
 
 #include <mutex>
 
+#include "Thread/CriticalSection.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -62,7 +64,7 @@ public:
 private:
     const FCallback _callback;
     FTaskFiberChunk* _chunks;
-    std::mutex _barrier;
+    FCriticalSection _barrierCS;
 
     FTaskFiberChunk* AcquireChunk_();
 };
