@@ -59,7 +59,7 @@ static constexpr size_t GSlidingWindow_ = 150;
 #endif
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_ST_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_ST_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
@@ -77,7 +77,7 @@ static void Test_Allocator_ST_(const FWStringView& category, const FWStringView&
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_MT_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_MT_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
@@ -96,7 +96,7 @@ static void Test_Allocator_MT_(const FWStringView& category, const FWStringView&
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_Sliding_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
+static NO_INLINE void Test_Allocator_Sliding_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
     UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
@@ -131,7 +131,7 @@ static void Test_Allocator_Sliding_(const FWStringView& category, const FWString
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_Trashing_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_Trashing_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
@@ -151,7 +151,7 @@ static void Test_Allocator_Trashing_(const FWStringView& category, const FWStrin
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_Dangling_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_Dangling_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     FTaskManager& threadPool = FHighPriorityThreadPool::Get();
 
     const size_t numWorkers = threadPool.WorkerCount();
@@ -212,7 +212,7 @@ static void Test_Allocator_Dangling_(const FWStringView& category, const FWStrin
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_Realloc_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_Realloc_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     UNUSED(category); UNUSED(name);
     BENCHMARK_SCOPE(category, name);
 
@@ -234,7 +234,7 @@ static void Test_Allocator_Realloc_(const FWStringView& category, const FWString
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_(
+static NO_INLINE void Test_Allocator_(
     const FWStringView& name, _Alloc&& allocator,
     const TMemoryView<const size_t>& smallBlocks,
     const TMemoryView<const size_t>& largeBlocks,
@@ -287,7 +287,7 @@ static void Test_Allocator_(
     }
 }
 //----------------------------------------------------------------------------
-static void Test_CompressedRadixTrie_() {
+static NO_INLINE void Test_CompressedRadixTrie_() {
     LOG(Test_Allocators, Emphasis, L"testing FCompressedRadixTrie");
 
     ONLY_IF_MEMORYDOMAINS(FMemoryTracking dummyTracking("dummy", &MEMORYDOMAIN_TRACKING_DATA(ReservedMemory)));
@@ -416,7 +416,7 @@ struct FDummyForPool_ {
     }
 };
 //----------------------------------------------------------------------------
-static void Test_MemoryPool_() {
+static NO_INLINE void Test_MemoryPool_() {
     LOG(Test_Allocators, Emphasis, L"testing TMemoryPool<>");
 
     using pool_type = TTypedMemoryPool<FDummyForPool_, 8, 512, true, ALLOCATOR(Container)>;
@@ -466,7 +466,7 @@ static void Test_MemoryPool_() {
     }
 }
 //----------------------------------------------------------------------------
-static void Test_CachedMemoryPool_() {
+static NO_INLINE void Test_CachedMemoryPool_() {
     LOG(Test_Allocators, Emphasis, L"testing TCachedMemoryPool<>");
 
     using pool_type = TCachedMemoryPool<FDummyForPool_, FDummyForPool_, 8, 512, ALLOCATOR(Container)>;

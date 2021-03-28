@@ -11,8 +11,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct NODISCARD FAllocatorBlock {
-    void* Data;
-    size_t SizeInBytes;
+    void* Data{ nullptr };
+    size_t SizeInBytes{ 0 };
 
     FAllocatorBlock() = default;
 

@@ -6,6 +6,7 @@
 
 #define USE_PPE_PLATFORM_DEBUG_CPU_MARKERS (USE_PPE_PLATFORM_DEBUG && 1) // %_NOCOMMIT%
 #define USE_PPE_PLATFORM_DEBUG_MEM_MARKERS (USE_PPE_PLATFORM_DEBUG && !USE_PPE_PROFILING && 1) // %_NOCOMMIT%
+#define USE_PPE_PLATFORM_DEBUG_MEM_POISONS (USE_PPE_SANITIZER && 1) // %_NOCOMMIT%
 
 #if USE_PPE_PLATFORM_DEBUG
 
@@ -57,6 +58,9 @@ public: // profiling
     static void ReallocateEvent(FHeapHandle heap, void* newp, size_t newsz, void* oldp) = delete;
     static void DeallocateEvent(FHeapHandle heap, void* ptr) = delete;
 
+    static void PoisonMemory(void* ptr, size_t sz) = delete;
+    static void UnpoisonMemory(void* ptr, size_t sz) = delete;
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -88,4 +92,12 @@ public: // profiling
 #   define PPE_DEBUG_ALLOCATEEVENT(_HEAP, _PTR, _SZ) NOOP()
 #   define PPE_DEBUG_REALLOCATEEVENT(_HEAP, _NEWP, _SZ, _OLDP) NOOP()
 #   define PPE_DEBUG_DEALLOCATEEVENT(_HEAP, _PTR) NOOP()
+#endif
+
+#if USE_PPE_PLATFORM_DEBUG_MEM_POISONS
+#   define PPE_DEBUG_POISONMEMORY(_PTR, _SZ) PPE::FPlatformDebug::PoisonMemory(_PTR, _SZ)
+#   define PPE_DEBUG_UNPOISONMEMORY(_PTR, _SZ) PPE::FPlatformDebug::UnpoisonMemory(_PTR, _SZ)
+#else
+#   define PPE_DEBUG_POISONMEMORY(_PTR, _SZ) NOOP()
+#   define PPE_DEBUG_UNPOISONMEMORY(_PTR, _SZ) NOOP()
 #endif

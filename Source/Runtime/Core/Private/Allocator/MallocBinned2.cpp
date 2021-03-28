@@ -137,8 +137,10 @@ struct FBinnedGlobalRecycler : Meta::FNonCopyableNorMovable {
         FBundleGarbage& p = Pools[pool];
         forrange(i, 0, MaxGarbage) {
             if (!p.FreeBundles[i]) {
-                if (not FPlatformAtomics::CompareExchangePtr<void>((volatile void**)&p.FreeBundles[i], bundle, nullptr))
+                if (not FPlatformAtomics::CompareExchangePtr<void>((volatile void**)&p.FreeBundles[i], bundle, nullptr)) {
+                    FPlatformAtomics::MemoryBarrier();
                     return true;
+                }
             }
         }
 
@@ -152,6 +154,7 @@ struct FBinnedGlobalRecycler : Meta::FNonCopyableNorMovable {
         forrange(i, 0, MaxGarbage) {
             if (FBinnedBundleNode* result = p.FreeBundles[i]) {
                 if (FPlatformAtomics::CompareExchangePtr<void>((volatile void**)&p.FreeBundles[i], nullptr, result) == result) {
+                    FPlatformAtomics::MemoryBarrier();
                     return result;
                 }
             }
@@ -167,8 +170,10 @@ struct FBinnedGlobalRecycler : Meta::FNonCopyableNorMovable {
         FBundleGarbage& p = Pools[pool];
         forrange(i, 0, MaxGarbage) {
             while (FBinnedBundleNode* result = p.FreeBundles[i]) {
-                if (FPlatformAtomics::CompareExchangePtr<void>((volatile void**)&p.FreeBundles[i], nullptr, result) == result)
+                if (FPlatformAtomics::CompareExchangePtr<void>((volatile void**)&p.FreeBundles[i], nullptr, result) == result) {
+                    FPlatformAtomics::MemoryBarrier();
                     gc->FreeBundles[n++] = result;
+                }
             }
         }
 

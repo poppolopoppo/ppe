@@ -70,6 +70,9 @@ public: // profiling
     static void AllocateEvent(FHeapHandle , void* , size_t ) {}
     static void ReallocateEvent(FHeapHandle , void* , size_t , void* ) {}
     static void DeallocateEvent(FHeapHandle , void* ) {}
+
+    static void PoisonMemory(void* , size_t ) {}
+    static void UnpoisonMemory(void* , size_t ) {}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

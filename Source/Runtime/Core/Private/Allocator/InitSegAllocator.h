@@ -43,10 +43,8 @@ public:
         template <typename... _Args>
         TAlloc(_Args&&... args) NOEXCEPT
         :   FAlloc(&Storage, [](void* p) NOEXCEPT {
-            LOG(InitSeg, Debug, L"Destroying staticvar for <{0}>", MakeCStringView(Meta::type_name<T>()));
             Meta::Destroy(reinterpret_cast<T*>(p));
         }) {
-            LOG(InitSeg, Debug, L"Creating staticvar for <{0}>", MakeCStringView(Meta::type_name<T>()));
             Meta::Construct(reinterpret_cast<T*>(&Storage), std::forward<_Args>(args)...);
             Get().Allocate(*this);
         }

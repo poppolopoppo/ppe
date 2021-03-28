@@ -55,6 +55,7 @@ module Build
             self.facet.defines << 'CPP_VISUALSTUDIO'
             self.facet.systemPaths <<
                 File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'include') <<
+                File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'crt', 'src') <<
                 File.join(@visualStudioPath, 'VC', 'Auxiliary', 'VS', 'include')
             self.facet.libraryPaths <<
                 File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'lib', '$PlatformArch$') <<
@@ -283,6 +284,9 @@ module Build
         pchOptions.append('/Fp"%2"', '/Fo"%3"')
         preprocessorOptions.append('/Fo"%2"')
 
+        stackSize = Build.StackSize
+        stackSize *= 2 if Build.ASAN
+
         compilationFlag!(
             '/Gm-',                     # minimal rebuild is handled by FASTBuild
             '/GF',                      # string pooling
@@ -304,7 +308,7 @@ module Build
             '/utf-8',                   # https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
             '/W4',                      # warning level 4 (verbose)
             '/TP',                      # compile as C++
-            "/F\"#{FBuild.StackSize}\"" )     # set default thread stack size
+            "/F\"#{stackSize}\"" )      # set default thread stack size
 
         if Build.Strict
             Log.log 'Windows: using strict warnings and warning as error'
@@ -343,7 +347,7 @@ module Build
             '/LARGEADDRESSAWARE',       # indicate support for VM > 2Gb (if 3Gb flag is toggled)
             '/VERBOSE:INCR',            # incremental linker diagnosis
             '/SUBSYSTEM:WINDOWS',       # ~Windows~ application type (vs Console)
-            "/STACK:#{Build.StackSize}",
+            "/STACK:#{stackSize}",
             '/fastfail',                # better error reporting
             'kernel32.lib',
             'User32.lib',               # TODO : slim that list down
@@ -359,7 +363,7 @@ module Build
         if Build.Diagnose
             Log.log 'Windows: using static analysis options'
 
-            analysisOptions.append('/analyze', '/analyze:stacksize', Build.StackSize)
+            analysisOptions.append('/analyze', '/analyze:stacksize', stackSize)
 
             Log.log 'Windows: using verbose output for the linker'
 

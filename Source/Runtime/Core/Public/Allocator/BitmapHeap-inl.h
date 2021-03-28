@@ -296,7 +296,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
             if (Likely((MRU.Revision == Revision) & (!!MRU.Page))) {
                 result = MRU.Page->Allocate(checked_cast<u32>(sizeInBytes));
                 if (Likely(result)) {
-                    ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+                    ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
                     return result;
                 }
             }
@@ -308,7 +308,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
             if (Likely((MRU.Revision == Revision) & (!!MRU.Page))) {
                 result = MRU.Page->Allocate(checked_cast<u32>(sizeInBytes));
                 if (Likely(result)) {
-                    ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+                    ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
                     return result;
                 }
             }
@@ -324,7 +324,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
         if (Likely(firstFit)) {
             result = firstFit->Allocate(checked_cast<u32>(sizeInBytes));
             if (Likely(result)) {
-                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
                 return result;
             }
         }
@@ -341,7 +341,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
             bool exhausted = false;
             result = firstFit->Allocate(checked_cast<u32>(sizeInBytes), exhausted);
             if (Likely(result)) {
-                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
                 return result;
             }
         }
@@ -360,7 +360,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
         if (Likely(bestFit)) {
             result = bestFit->Allocate(checked_cast<u32>(sizeInBytes));
             if (Likely(result)) {
-                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
                 return result;
             }
         }
@@ -374,7 +374,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
 
             if (Likely(result)) {
                 hint.Push(page, Revision);
-                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
                 return result;
             }
         }
@@ -447,7 +447,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
             AssertRelease(ptr);
 
             hint.Push(freePage, Revision);
-            ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+            ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(ptr, SnapSize(sizeInBytes)));
             return ptr;
         }
 
@@ -467,7 +467,7 @@ void TBitmapHeap<_Traits>::Free(void* ptr, page_type* page/* = nullptr */) {
             page = AliasingPage_AssumeLocked_(ptr);
         Assert(page);
 
-        ONLY_IF_MEMORYDOMAINS(traits_type::OnUserFree(page->RegionSize(ptr)));
+        ONLY_IF_MEMORYDOMAINS(traits_type::OnUserFree(ptr, page->RegionSize(ptr)));
 
         if (Unlikely(page->Free_ReturnIfUnused(ptr) && nullptr == page->NextPage))
             RegisterFreePage_Unlocked_(page);
@@ -495,8 +495,8 @@ void* TBitmapHeap<_Traits>::Resize(void* ptr, size_t sizeInBytes, page_type* pag
     void* const result = page->Resize(ptr, checked_cast<u32>(sizeInBytes), exhausted);
 
     if (result) {
-        ONLY_IF_MEMORYDOMAINS(traits_type::OnUserFree(prevSizeInBytes));
-        ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(sizeInBytes));
+        ONLY_IF_MEMORYDOMAINS(traits_type::OnUserFree(result, prevSizeInBytes));
+        ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, sizeInBytes));
     }
 
      return result;
@@ -800,7 +800,7 @@ void* TBitmapFixedSizeHeap<_ReservedSize, _Traits>::Allocate(size_t sizeInBytes)
                 else
                     ExhaustedPages.AllocateBit(allocIndex);
 
-                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+                ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
                 return result;
             }
         }
@@ -844,7 +844,7 @@ void* TBitmapFixedSizeHeap<_ReservedSize, _Traits>::Allocate(size_t sizeInBytes)
             else
                 ExhaustedPages.AllocateBit(allocIndex);
 
-            ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(SnapSize(sizeInBytes)));
+            ONLY_IF_MEMORYDOMAINS(traits_type::OnUserAlloc(result, SnapSize(sizeInBytes)));
             return result;
         }
 

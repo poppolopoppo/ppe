@@ -8,6 +8,10 @@
 #   include "HAL/Windows/TraceLogging.h"
 #   include "HAL/Windows/VSToolsWrapper.h"
 
+#if USE_PPE_PLATFORM_DEBUG_MEM_POISONS
+#   include <sanitizer/asan_interface.h>
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -172,6 +176,18 @@ void FWindowsPlatformDebug::ReallocateEvent(FHeapHandle , void* , size_t , void*
 void FWindowsPlatformDebug::DeallocateEvent(FHeapHandle , void* ) {}
 //---------------------------------------------------------------------------
 #endif //!USE_PPE_VSTOOLS_WRAPPER
+//----------------------------------------------------------------------------
+#if USE_PPE_PLATFORM_DEBUG_MEM_POISONS
+void FWindowsPlatformDebug::PoisonMemory(void* ptr, size_t sz) {
+    ASAN_POISON_MEMORY_REGION(ptr, sz);
+}
+void FWindowsPlatformDebug::UnpoisonMemory(void* ptr, size_t sz) {
+    ASAN_UNPOISON_MEMORY_REGION(ptr, sz);
+}
+#else
+static void FWindowsPlatformDebug::PoisonMemory(void*, size_t) {}
+static void FWindowsPlatformDebug::UnpoisonMemory(void*, size_t) {}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

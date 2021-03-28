@@ -5,6 +5,7 @@
 #include "Container/BitTree.h"
 #include "Container/CompressedRadixTrie.h"
 #include "HAL/PlatformAtomics.h"
+#include "HAL/PlatformDebug.h"
 #include "HAL/PlatformHash.h"
 #include "HAL/PlatformMaths.h"
 #include "HAL/PlatformMemory.h"
@@ -32,8 +33,8 @@ struct FBitmapGenericTraits {
     static void PageCommit(void* ptr, size_t sizeInBytes) = delete;
     static void PageDecommit(void* ptr, size_t sizeInBytes) = delete;
 #if USE_PPE_MEMORYDOMAINS
-    static void OnUserAlloc(size_t sizeInBytes) = delete;
-    static void OnUserFree(size_t sizeInBytes) = delete;
+    static void OnUserAlloc(void* ptr, size_t sizeInBytes) = delete;
+    static void OnUserFree(void* ptr, size_t sizeInBytes) = delete;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -49,10 +50,24 @@ struct TBitmapCpuTraits {
 #if USE_PPE_MEMORYDOMAINS
     using domain_tag = _MemoryDomainTag;
     static FMemoryTracking& TrackingData() NOEXCEPT { return domain_tag::TrackingData(); }
-    static void PageCommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageCommit(ptr, sizeInBytes, TrackingData()); }
-    static void PageDecommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageDecommit(ptr, sizeInBytes, TrackingData()); }
-    static void OnUserAlloc(size_t sizeInBytes) { TrackingData().AllocateUser(sizeInBytes); }
-    static void OnUserFree(size_t sizeInBytes) { TrackingData().DeallocateUser(sizeInBytes); }
+    static void PageCommit(void* ptr, size_t sizeInBytes) {
+        FVirtualMemory::PageCommit(ptr, sizeInBytes, TrackingData());
+        PPE_DEBUG_POISONMEMORY(ptr, sizeInBytes); // ASAN
+    }
+    static void PageDecommit(void* ptr, size_t sizeInBytes) {
+        PPE_DEBUG_UNPOISONMEMORY(ptr, sizeInBytes); // ASAN
+        FVirtualMemory::PageDecommit(ptr, sizeInBytes, TrackingData());
+    }
+    static void OnUserAlloc(void* ptr, size_t sizeInBytes) {
+        UNUSED(ptr);
+        PPE_DEBUG_UNPOISONMEMORY(ptr, sizeInBytes); // ASAN
+        TrackingData().AllocateUser(sizeInBytes);
+    }
+    static void OnUserFree(void* ptr, size_t sizeInBytes) {
+        UNUSED(ptr);
+        PPE_DEBUG_POISONMEMORY(ptr, sizeInBytes); // ASAN
+        TrackingData().DeallocateUser(sizeInBytes);
+    }
 #else
     static void PageCommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageCommit(ptr, sizeInBytes); }
     static void PageDecommit(void* ptr, size_t sizeInBytes) { FVirtualMemory::PageDecommit(ptr, sizeInBytes); }
