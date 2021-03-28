@@ -2,18 +2,20 @@
 
 #include "Core_fwd.h"
 
+#include "Meta/Hash_fwd.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Wraps a T& inside a T* to avoid copying T when using value semantics
+//----------------------------------------------------------------------------
 template <typename T>
 struct TPtrRef {
     T* Ptr;
 
+    TPtrRef() = default;
     TPtrRef(Meta::FNoInit) NOEXCEPT {}
-
-    CONSTEXPR TPtrRef() NOEXCEPT : Ptr(nullptr) {}
 
     CONSTEXPR TPtrRef(T* ptr) NOEXCEPT : Ptr(ptr) { Assert(ptr); }
     CONSTEXPR TPtrRef(T& ref) NOEXCEPT : Ptr(&ref) {}
@@ -29,18 +31,24 @@ struct TPtrRef {
     CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
     CONSTEXPR operator T& () const NOEXCEPT { return (*Ptr); }
 
-    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) NOEXCEPT {
-        return (lhs.Ptr == rhs.Ptr);
-    }
-    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) NOEXCEPT {
-        return (lhs.Ptr != rhs.Ptr);
+    friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
+    friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+
+    friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
+    friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
+
+    friend bool operator ==(const TPtrRef& lhs, const T& rhs) { return (*lhs == rhs); }
+    friend bool operator !=(const TPtrRef& lhs, const T& rhs) { return (not operator ==(lhs, rhs)); }
+
+    friend bool operator ==(const T& lhs, const TPtrRef& rhs) { return (lhs == *rhs); }
+    friend bool operator !=(const T& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+
+    friend void swap(TPtrRef& lhs, TPtrRef& rhs) {
+        std::swap(lhs.Ptr, rhs.Ptr);
     }
 
-    CONSTEXPR friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) NOEXCEPT {
-        return (lhs.Ptr <  rhs.Ptr);
-    }
-    CONSTEXPR friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) NOEXCEPT {
-        return (lhs.Ptr >= rhs.Ptr);
+    friend hash_t hash_value(const TPtrRef& ref) {
+        return hash_ptr(ref.Ptr);
     }
 };
 //----------------------------------------------------------------------------
