@@ -25,7 +25,7 @@ enum class ERayTracingInstanceFlags : u32 {
 };
 ENUM_FLAGS(ERayTracingInstanceFlags);
 //----------------------------------------------------------------------------
-enum class ERayTracingPolicyFlags : u32 {
+enum class ERayTracingBuildFlags : u32 {
     AllowUpdate                 = 1 << 0,
     AllowCompaction             = 1 << 1,
     PreferFastTrace             = 1 << 2,
@@ -34,7 +34,7 @@ enum class ERayTracingPolicyFlags : u32 {
     _Last,
     Unknown                     = 0,
 };
-ENUM_FLAGS(ERayTracingPolicyFlags);
+ENUM_FLAGS(ERayTracingBuildFlags);
 //----------------------------------------------------------------------------
 enum class ERayTracingGroupType {
     Unknown,

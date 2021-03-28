@@ -59,7 +59,7 @@ public:
     };
     template <EDescriptorType _TypeId, typename _Element, u32 _Capacity = 1>
     struct TResourceStateful : TResource<_TypeId, _Element, _Capacity> {
-        using base_type = TResourceStateful;
+        using base_type = TResource<_TypeId, _Element, _Capacity>;
 
         EResourceState State;
 
@@ -195,6 +195,12 @@ public:
         FDynamicDataStorage Storage;
 
         FDynamicData() = default;
+
+        FDynamicData(const FDynamicData&) = delete;
+        FDynamicData& operator =(const FDynamicData&) = delete;
+
+        FDynamicData(FDynamicData&&) = default;
+        FDynamicData& operator =(FDynamicData&&) = default;
 
         TMemoryView<FUniform> Uniforms() { return Storage.SubRange(UniformsOffset, UniformsCount * sizeof(FUniform)).Cast<FUniform>(); }
         TMemoryView<const FUniform> Uniforms() const { return const_cast<FDynamicData*>(this)->Uniforms(); }

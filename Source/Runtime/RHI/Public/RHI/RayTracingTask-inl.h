@@ -157,7 +157,7 @@ inline FUpdateRayTracingShaderTable& FUpdateRayTracingShaderTable::AddProcedural
 inline FTraceRays& FTraceRays::AddResources(const FDescriptorSetID& id, const FPipelineResources* res) {
     Assert(id);
     Assert(res);
-    Resources.Add_Overwrite(id, res);
+    Resources.insert(id, PCPipelineResources(res));
     return (*this);
 }
 //----------------------------------------------------------------------------

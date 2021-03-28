@@ -2,7 +2,7 @@
 
 #include "RHI_fwd.h"
 
-#include "RHI/FrameGraphTask.h"
+#include "RHI/FrameTask.h"
 
 #include "RHI/RayTracingEnums.h"
 #include "RHI/ResourceId.h"
@@ -26,7 +26,7 @@ struct FRayTracingShaderDebugMode {
 //----------------------------------------------------------------------------
 // FBuildRayTracingGeometry
 //----------------------------------------------------------------------------
-struct FBuildRayTracingGeometry final : details::TFrameGraphTaskDesc<FBuildRayTracingGeometry> {
+struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracingGeometry> {
 
     struct FTriangles {
         FGeometryID Geometry;
@@ -104,7 +104,7 @@ struct FBuildRayTracingGeometry final : details::TFrameGraphTaskDesc<FBuildRayTr
     TArray<FBoundingVolumes> Aabbs;
 
 #if USE_PPE_RHITASKNAME
-    FBuildRayTracingGeometry() : TFrameGraphTaskDesc<FBuildRayTracingGeometry>("BuildRayTracingGeometry", FDebugColorScheme::Get().BuildRayTracingStruct) {}
+    FBuildRayTracingGeometry() : TFrameTaskDesc<FBuildRayTracingGeometry>("BuildRayTracingGeometry", FDebugColorScheme::Get().BuildRayTracingStruct) {}
 #endif
 
     FBuildRayTracingGeometry& SetTarget(FRawRTGeometryID id) { Assert(id); Geometry = id; return (*this); }
@@ -114,7 +114,7 @@ struct FBuildRayTracingGeometry final : details::TFrameGraphTaskDesc<FBuildRayTr
 //----------------------------------------------------------------------------
 // FBuildRayTracingScene
 //----------------------------------------------------------------------------
-struct FBuildRayTracingScene final : details::TFrameGraphTaskDesc<FBuildRayTracingScene> {
+struct FBuildRayTracingScene final : details::TFrameTaskDesc<FBuildRayTracingScene> {
 
     using EFlags = ERayTracingInstanceFlags;
 
@@ -148,7 +148,7 @@ struct FBuildRayTracingScene final : details::TFrameGraphTaskDesc<FBuildRayTraci
 //----------------------------------------------------------------------------
 // FUpdateRayTracingShaderTable
 //----------------------------------------------------------------------------
-struct FUpdateRayTracingShaderTable final : details::TFrameGraphTaskDesc<FUpdateRayTracingShaderTable> {
+struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTracingShaderTable> {
 
     struct FRayGenShader {
         FRTShaderID Shader;
@@ -201,7 +201,7 @@ struct FUpdateRayTracingShaderTable final : details::TFrameGraphTaskDesc<FUpdate
     u32 MaxRecursionDepth{ 0 };
 
 #if USE_PPE_RHITASKNAME
-    FUpdateRayTracingShaderTable() : TFrameGraphTaskDesc<FUpdateRayTracingShaderTable>("UpdateRayTracingShaderTable", FDebugColorScheme::Get().HostToDeviceTransfer) {}
+    FUpdateRayTracingShaderTable() : TFrameTaskDesc<FUpdateRayTracingShaderTable>("UpdateRayTracingShaderTable", FDebugColorScheme::Get().HostToDeviceTransfer) {}
 #endif
 
     FUpdateRayTracingShaderTable& SetTarget(const FRawRTShaderTableID& value) { Assert(value); ShaderTable = value; return (*this); }
@@ -220,7 +220,7 @@ struct FUpdateRayTracingShaderTable final : details::TFrameGraphTaskDesc<FUpdate
 //----------------------------------------------------------------------------
 // FTraceRays
 //----------------------------------------------------------------------------
-struct FTraceRays final : details::TFrameGraphTaskDesc<FTraceRays> {
+struct FTraceRays final : details::TFrameTaskDesc<FTraceRays> {
 
     FPipelineResourceSet Resources;
     uint3 GroupCount{ 0 };
@@ -233,7 +233,7 @@ struct FTraceRays final : details::TFrameGraphTaskDesc<FTraceRays> {
 #endif
 
 #if USE_PPE_RHITASKNAME
-    FTraceRays() : TFrameGraphTaskDesc<FTraceRays>("TraceRays", FDebugColorScheme::Get().RayTracing) {}
+    FTraceRays() : TFrameTaskDesc<FTraceRays>("TraceRays", FDebugColorScheme::Get().RayTracing) {}
 #endif
 
     FTraceRays& AddResources(const FDescriptorSetID& id, const FPipelineResources* res);

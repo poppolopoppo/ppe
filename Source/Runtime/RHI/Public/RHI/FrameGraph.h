@@ -4,14 +4,14 @@
 
 #include "HAL/TargetRHI.h"
 
-#include "RHI/CommandBufferRef.h"
+#include "RHI/CommandBatch.h"
+#include "RHI/FrameDebug.h"
 #include "RHI/MemoryDesc.h"
 #include "RHI/ResourceEnums.h"
 #include "RHI/ResourceId.h"
 #include "RHI/ResourceState.h"
 
 #include "IO/String_fwd.h"
-#include "Maths/Units.h"
 #include "Memory/RefPtr.h"
 
 namespace PPE {
@@ -19,52 +19,11 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FFrameGraphStatistics {
-    struct FRendering {
-        u32 NumDescriptorBinds              = 0;
-        u32 NumPushConstants                = 0;
-        u32 NumPipelineBarriers             = 0;
-        u32 NumTransferOps                  = 0;
-
-        u32 NumIndexBufferBindings          = 0;
-        u32 NumVertexBufferBindings         = 0;
-        u32 NumDrawCalls                    = 0;
-        u64 NumVertexCount                  = 0;
-        u64 NumPrimitiveCount               = 0;
-        u32 NumGraphicsPipelineBindings     = 0;
-        u32 NumDynamicStateChanges          = 0;
-
-        u32 NumDispatchCalls                = 0;
-        u32 NumComputePipelineBindings      = 0;
-
-        u32 NumRayTracingPipelineBindings   = 0;
-        u32 NumTraceRaysCalls               = 0;
-        u32 NumBuildASCalls                 = 0;
-
-        FNanoseconds GpuTime{ 0 };
-        FNanoseconds CpuTime{ 0 };
-
-        FNanoseconds SubmittingTime{ 0 };
-        FNanoseconds WaitingTime{ 0 };
-    };
-
-    struct FResources {
-        u32 NumNewGraphicsPipeline          = 0;
-        u32 NumNewComputePipeline           = 0;
-        u32 NumNewRayTracingPipeline        = 0;
-    };
-
-    FRendering Renderer;
-    FResources Resources;
-
-    void Merge(const FFrameGraphStatistics& other);
-};
-//----------------------------------------------------------------------------
-class IFrameGraphTask : public FRefCountable {
+class IFrameTask {
 protected:
-    IFrameGraphTask() = default;
+    IFrameTask() = default;
 public:
-    virtual ~IFrameGraphTask() = default;
+    virtual ~IFrameTask() = default;
 };
 //----------------------------------------------------------------------------
 class PPE_RHI_API IFrameGraph : public FRefCountable {
@@ -177,13 +136,13 @@ public: // interface
     // Frame execution
 
     // Begin command buffer recording.
-    virtual FCommandBufferRef Begin(const FCommandBufferDesc&, TMemoryView<FCommandBufferRef> dependsOn = {}) = 0;
+    virtual FCommandBufferBatch Begin(const FCommandBufferDesc&, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
 
     // Compile framegraph for current command buffer and append it to the pending command buffer queue (that are waiting for submitting to GPU).
-    virtual bool Execute(FCommandBufferRef&) = 0;
+    virtual bool Execute(FCommandBufferBatch&) = 0;
 
     // Wait until all commands complete execution on the GPU or until time runs out.
-    virtual bool Wait(TMemoryView<FCommandBufferRef> commands, FNanoseconds timeout = FNanoseconds{3600'000'000'000}) = 0;
+    virtual bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout = FNanoseconds{3600'000'000'000}) = 0;
 
     // Submit all pending command buffers and present all pending swapchain images.
     virtual bool Flush(EQueueUsage queues = EQueueUsage::All) = 0;
@@ -192,7 +151,7 @@ public: // interface
     virtual bool WaitIdle() = 0;
 
     // Debugging
-    virtual bool DumpStatistics(FFrameGraphStatistics* pstats) const = 0;
+    virtual bool DumpStatistics(FFrameStatistics* pstats) const = 0;
 
 };
 //----------------------------------------------------------------------------

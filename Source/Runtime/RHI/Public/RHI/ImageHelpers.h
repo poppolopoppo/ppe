@@ -18,9 +18,9 @@ CONSTEXPR FImageLayer operator "" _layer (unsigned long long value) {
 // FImageSwizzle user-literal: "RGBA"_swizzle
 //----------------------------------------------------------------------------
 CONSTEXPR FImageSwizzle operator "" _swizzle (const char* str, size_t len) {
-    u32 value = 0;
+    u16 value = 0;
     forrange(i, 0, len) {
-        u32 channel = 0;
+        u16 channel = 0;
         switch (str[i]) {
         case 'r': case 'R': channel = 1; break;
         case 'g': case 'G': channel = 2; break;

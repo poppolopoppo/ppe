@@ -20,7 +20,7 @@
     EACH( 6, ECullMode, CullMode, ) \
     EACH( 7, ECompareOp, DepthCompareOp, ) \
     EACH( 8, bool, EnableDepthTest, : 1) \
-    EACH (9, bool, EnableDepthWrite, : 1) \
+    EACH( 9, bool, EnableDepthWrite, : 1) \
     EACH(10, bool, EnableStencilTest, : 1) \
     EACH(11, bool, EnableRasterizerDiscard, : 1) \
     EACH(12, bool, EnableFrontFaceCCW, : 1)
@@ -99,10 +99,10 @@ struct FPushConstantData {
 
     FPushConstantData() = default;
     FPushConstantData(const FPushConstantID& id, const void* p, size_t size)
-    :   Id(id), Size(size) {
-        Assert(id);
+    :   Id(id), Size(checked_cast<u16>(size)) {
+        Assert(Id);
         Assert(p);
-        Assert(size);
+        Assert(Size);
         Assert(size < MaxPushConstantsSize);
         FPlatformMemory::Memcpy(Data, p, size);
     }

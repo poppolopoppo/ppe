@@ -107,17 +107,17 @@ struct FRenderPassDesc {
     FRenderPassDesc& SetStencilFrontFaceDepthFailOp(EStencilOp value) { Stencil.Front.DepthFailOp = value; return (*this); }
     FRenderPassDesc& SetStencilFrontFacePassOp(EStencilOp value) { Stencil.Front.PassOp = value; return (*this); }
     FRenderPassDesc& SetStencilFrontFaceCompareOp(ECompareOp value) { Stencil.Front.CompareOp = value; return (*this); }
-    FRenderPassDesc& SetStencilFrontFaceReference(u32 value) { Stencil.Front.Reference = FStencilValue(value); return (*this); }
-    FRenderPassDesc& SetStencilFrontFaceWriteMask(u32 value) { Stencil.Front.WriteMask = FStencilValue(value); return (*this); }
-    FRenderPassDesc& SetStencilFrontFaceCompareMask(u32 value) { Stencil.Front.CompareMask = FStencilValue(value); return (*this); }
+    FRenderPassDesc& SetStencilFrontFaceReference(u8 value) { Stencil.Front.Reference = FStencilValue(value); return (*this); }
+    FRenderPassDesc& SetStencilFrontFaceWriteMask(u8 value) { Stencil.Front.WriteMask = FStencilValue(value); return (*this); }
+    FRenderPassDesc& SetStencilFrontFaceCompareMask(u8 value) { Stencil.Front.CompareMask = FStencilValue(value); return (*this); }
 
     FRenderPassDesc& SetStencilBackFaceFailOp(EStencilOp value) { Stencil.Back.FailOp = value; return (*this); }
     FRenderPassDesc& SetStencilBackFaceDepthFailOp(EStencilOp value) { Stencil.Back.DepthFailOp = value; return (*this); }
     FRenderPassDesc& SetStencilBackFacePassOp(EStencilOp value) { Stencil.Back.PassOp = value; return (*this); }
     FRenderPassDesc& SetStencilBackFaceCompareOp(ECompareOp value) { Stencil.Back.CompareOp = value; return (*this); }
-    FRenderPassDesc& SetStencilBackFaceReference(u32 value) { Stencil.Back.Reference = FStencilValue(value); return (*this); }
-    FRenderPassDesc& SetStencilBackFaceWriteMask(u32 value) { Stencil.Back.WriteMask = FStencilValue(value); return (*this); }
-    FRenderPassDesc& SetStencilBackFaceCompareMask(u32 value) { Stencil.Back.CompareMask = FStencilValue(value); return (*this); }
+    FRenderPassDesc& SetStencilBackFaceReference(u8 value) { Stencil.Back.Reference = FStencilValue(value); return (*this); }
+    FRenderPassDesc& SetStencilBackFaceWriteMask(u8 value) { Stencil.Back.WriteMask = FStencilValue(value); return (*this); }
+    FRenderPassDesc& SetStencilBackFaceCompareMask(u8 value) { Stencil.Back.CompareMask = FStencilValue(value); return (*this); }
 
     // Rasterization
     FRenderPassDesc& SetPolygonMode(EPolygonMode value) { Rasterization.PolygonMode = value; return (*this); }

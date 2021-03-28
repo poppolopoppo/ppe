@@ -2,46 +2,37 @@
 
 #include "RHI_fwd.h"
 
+#include "RHI/CommandBuffer.h"
+
+#include <atomic>
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EAddressMode : u32 {
-    Repeat,
-    MirrorRepeat,
-    ClampToEdge,
-    ClampToBorder,
-    MirrorClampToEdge,
-
-    Unknown	= ~0u,
+struct FCommandBufferBatch {
+    PCommandBuffer Buffer;
+    PCommandBatch Batch;
 };
 //----------------------------------------------------------------------------
-enum class EBorderColor : u32 {
-    FloatTransparentBlack,
-    FloatOpaqueBlack,
-    FloatOpaqueWhite,
+class PPE_RHI_API ICommandBatch : public FRefCountable {
+public:
+    virtual ~ICommandBatch() = default;
 
-    IntTransparentBlack,
-    IntOpaqueBlack,
-    IntOpaqueWhite,
+    virtual void TearDown() = 0;
 
-    Unknown	= ~0u,
-};
-//----------------------------------------------------------------------------
-enum class EMipmapFilter : u32 {
-    Nearest,
-    Linear,
+    friend void OnStrongRefCountReachZero(ICommandBatch* batch) {
+        Assert(batch);
+        Assert_NoAssume(0 == batch->RefCount());
+#if USE_PPE_SAFEPTR
+        Assert_Lightweight(0 == batch->SafeRefCount());
+#endif
 
-    Unknown	= ~0u,
-};
-//----------------------------------------------------------------------------
-enum class ETextureFilter : u32 {
-    Nearest,
-    Linear,
-    Cubic,
+        batch->TearDown();
 
-    Unknown	= ~0u,
+        checked_delete(batch);
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

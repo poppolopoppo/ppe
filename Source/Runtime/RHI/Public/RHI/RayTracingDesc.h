@@ -84,7 +84,7 @@ struct FRayTracingGeometryDesc {
 
     TMemoryView<const FTriangles> Triangles;
     TMemoryView<const FBoundingVolumes> Aabbs;
-    ERayTracingPolicyFlags Flags{Default};
+    ERayTracingBuildFlags Flags{Default};
 
     FRayTracingGeometryDesc() = default;
 
@@ -97,11 +97,11 @@ struct FRayTracingGeometryDesc {
 //----------------------------------------------------------------------------
 struct FRayTracingSceneDesc {
     u32 MaxInstanceCount{ 0 };
-    ERayTracingPolicyFlags Flags{ Default };
+    ERayTracingBuildFlags Flags{ Default };
 
     FRayTracingSceneDesc() = default;
 
-    explicit FRayTracingSceneDesc(u32 instanceCount, ERayTracingPolicyFlags flags = Default) : MaxInstanceCount(instanceCount), Flags(flags) {}
+    explicit FRayTracingSceneDesc(u32 instanceCount, ERayTracingBuildFlags flags = Default) : MaxInstanceCount(instanceCount), Flags(flags) {}
 
 };
 //----------------------------------------------------------------------------

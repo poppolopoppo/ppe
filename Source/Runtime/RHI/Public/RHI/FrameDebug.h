@@ -10,12 +10,69 @@
 #   include "IO/StaticString.h"
 #endif
 
+#include "IO/String.h"
+#include "Maths/Units.h"
+#include "Misc/Function.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #if USE_PPE_RHITASKNAME
 using FTaskName = TStaticString<64>;
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
+using FShaderDebugCallback = TFunction<void(
+    FStringView taskName,
+    FStringView shaderName,
+    EShaderStages stages,
+    TMemoryView<const FString> output )
+>;
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
+struct FFrameStatistics {
+    struct FRendering {
+        u32 NumDescriptorBinds              = 0;
+        u32 NumPushConstants                = 0;
+        u32 NumPipelineBarriers             = 0;
+        u32 NumTransferOps                  = 0;
+
+        u32 NumIndexBufferBindings          = 0;
+        u32 NumVertexBufferBindings         = 0;
+        u32 NumDrawCalls                    = 0;
+        u64 NumVertexCount                  = 0;
+        u64 NumPrimitiveCount               = 0;
+        u32 NumGraphicsPipelineBindings     = 0;
+        u32 NumDynamicStateChanges          = 0;
+
+        u32 NumDispatchCalls                = 0;
+        u32 NumComputePipelineBindings      = 0;
+
+        u32 NumRayTracingPipelineBindings   = 0;
+        u32 NumTraceRaysCalls               = 0;
+        u32 NumBuildASCalls                 = 0;
+
+        FNanoseconds GpuTime{ 0 };
+        FNanoseconds CpuTime{ 0 };
+
+        FNanoseconds SubmittingTime{ 0 };
+        FNanoseconds WaitingTime{ 0 };
+    };
+
+    struct FResources {
+        u32 NumNewGraphicsPipeline          = 0;
+        u32 NumNewComputePipeline           = 0;
+        u32 NumNewRayTracingPipeline        = 0;
+    };
+
+    FRendering Renderer;
+    FResources Resources;
+
+    void Merge(const FFrameStatistics& other);
+};
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG

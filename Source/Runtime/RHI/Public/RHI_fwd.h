@@ -15,8 +15,10 @@
 #define USE_PPE_RHITASKNAME (USE_PPE_RHIPROFILING)
 
 #if USE_PPE_RHIDEBUG
+#   define ARGS_IF_RHIDEBUG(...) COMMA __VA_ARGS__
 #   define ONLY_IF_RHIDEBUG(...) __VA_ARGS__
 #else
+#   define ARGS_IF_RHIDEBUG(...)
 #   define ONLY_IF_RHIDEBUG(...) NOOP()
 #endif
 
@@ -24,8 +26,10 @@
 #include "Container/Vector.h"
 #include "Diagnostic/Logger_fwd.h"
 #include "Maths/ScalarVector.h"
+#include "Memory/PtrRef.h"
 #include "Memory/RefPtr.h"
 #include "Meta/StronglyTyped.h"
+#include "Thread/ThreadSafe.h"
 
 namespace PPE {
 namespace RHI {
@@ -38,6 +42,8 @@ using FWindowHandle = void*;
 using FRawData = RAWSTORAGE(RHIRawData, u8);
 template <typename T>
 using TArray = VECTORINSITU(RHIMisc, T, 5);
+template <typename T>
+using TRHIThreadSafe = TThreadSafe<T, (!!USE_PPE_RHIDEBUG)>;
 //----------------------------------------------------------------------------
 enum class EQueueType : u32;
 enum class EQueueUsage : u32;
@@ -67,7 +73,7 @@ enum class EPipelineDynamicState : u8;
 //----------------------------------------------------------------------------
 enum class ERayTracingGeometryFlags : u32;
 enum class ERayTracingInstanceFlags : u32;
-enum class ERayTracingPolicyFlags : u32;
+enum class ERayTracingBuildFlags : u32;
 //----------------------------------------------------------------------------
 enum class EShaderType : u32;
 enum class EShaderStages : u32;
@@ -139,24 +145,21 @@ struct FDrawMeshesIndirect;
 struct FCustomDraw;
 //----------------------------------------------------------------------------
 struct FCommandBufferDesc;
-struct FStagingBlock;
-class ICommandBatch;
-struct FCommandBufferRef;
+struct FCommandBufferBatch;
+FWD_INTERFACE_REFPTR(CommandBatch);
 FWD_INTERFACE_REFPTR(CommandBuffer);
+struct FStagingBlock;
 //----------------------------------------------------------------------------
 FWD_INTERFACE_REFPTR(DrawContext);
 //----------------------------------------------------------------------------
 FWD_REFPTR(PipelineResources);
 //----------------------------------------------------------------------------
-struct FFrameGraphStatistics;
+struct FFrameStatistics;
 FWD_INTERFACE_REFPTR(FrameGraph);
-FWD_INTERFACE_REFPTR(FrameGraphTask);
+class IFrameTask;
+using PFrameTask = TPtrRef<IFrameTask>;
 //----------------------------------------------------------------------------
 struct FPipelineBaseUniform;
-template <typename T>
-class IPipelineShaderData;
-template <typename T>
-using PPipelineShaderData = TRefPtr< IPipelineShaderData<T> >;
 struct FPipelineDesc;
 struct FGraphicsPipelineDesc;
 struct FComputePipelineDesc;
@@ -194,7 +197,15 @@ struct FDepthStencilValue {
     FStencilValue Stencil;
 };
 //----------------------------------------------------------------------------
-FWD_INTERFACE_REFPTR(ShaderModule);
+template <typename T>
+class IShaderData;
+template <typename T>
+using PShaderData = TRefPtr< IShaderData<T> >;
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FShaderHandle);
+using PShaderModule = PShaderData< FShaderHandle >;
+//----------------------------------------------------------------------------
+template <typename T>
+class TResourceProxy;
 //----------------------------------------------------------------------------
 struct FVertexAttribute;
 struct FVertexInput;

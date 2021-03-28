@@ -562,17 +562,17 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     return oss;
 }
 //----------------------------------------------------------------------------
-template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingPolicyFlags value) {
-    STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingPolicyFlags>);
-    if (ERayTracingPolicyFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingBuildFlags value) {
+    STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingBuildFlags>);
+    if (ERayTracingBuildFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
 
-    if (ERayTracingPolicyFlags::AllowUpdate & value) return oss << sep << STRING_LITERAL(_Char, "AllowUpdate");
-    if (ERayTracingPolicyFlags::AllowCompaction & value) return oss << sep << STRING_LITERAL(_Char, "AllowCompaction");
-    if (ERayTracingPolicyFlags::PreferFastTrace & value) return oss << sep << STRING_LITERAL(_Char, "PreferFastTrace");
-    if (ERayTracingPolicyFlags::PreferFastBuild & value) return oss << sep << STRING_LITERAL(_Char, "PreferFastBuild");
-    if (ERayTracingPolicyFlags::LowMemory & value) return oss << sep << STRING_LITERAL(_Char, "LowMemory");
+    if (ERayTracingBuildFlags::AllowUpdate & value) return oss << sep << STRING_LITERAL(_Char, "AllowUpdate");
+    if (ERayTracingBuildFlags::AllowCompaction & value) return oss << sep << STRING_LITERAL(_Char, "AllowCompaction");
+    if (ERayTracingBuildFlags::PreferFastTrace & value) return oss << sep << STRING_LITERAL(_Char, "PreferFastTrace");
+    if (ERayTracingBuildFlags::PreferFastBuild & value) return oss << sep << STRING_LITERAL(_Char, "PreferFastBuild");
+    if (ERayTracingBuildFlags::LowMemory & value) return oss << sep << STRING_LITERAL(_Char, "LowMemory");
 
     return oss;
 }
@@ -697,7 +697,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     switch (value) {
     case ETextureFilter::Nearest: return oss << STRING_LITERAL(_Char, "Nearest");
     case ETextureFilter::Linear: return oss << STRING_LITERAL(_Char, "Linear");
-    case ETextureFilter::Anisotropic: return oss << STRING_LITERAL(_Char, "Anisotropic");
+    case ETextureFilter::Cubic: return oss << STRING_LITERAL(_Char, "Cubic");
     case ETextureFilter::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
     }
     return oss;
@@ -885,7 +885,7 @@ PPE_RHI_ENUMTOSTRING_DEF(ECullMode);
 PPE_RHI_ENUMTOSTRING_DEF(EPipelineDynamicState);
 PPE_RHI_ENUMTOSTRING_DEF(ERayTracingGeometryFlags);
 PPE_RHI_ENUMTOSTRING_DEF(ERayTracingInstanceFlags);
-PPE_RHI_ENUMTOSTRING_DEF(ERayTracingPolicyFlags);
+PPE_RHI_ENUMTOSTRING_DEF(ERayTracingBuildFlags);
 PPE_RHI_ENUMTOSTRING_DEF(EShaderType);
 PPE_RHI_ENUMTOSTRING_DEF(EShaderStages);
 PPE_RHI_ENUMTOSTRING_DEF(EShaderAccess);

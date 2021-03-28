@@ -1,8 +1,9 @@
 #pragma once
 
+#include "RayTracingTask.h"
 #include "RHI_fwd.h"
 
-#include "RHI/FrameGraphTask.h"
+#include "RHI/FrameTask.h"
 #include "RHI/RayTracingDesc.h"
 #include "RHI/RenderPassDesc.h"
 #include "RHI/ResourceId.h"
@@ -44,7 +45,7 @@ public: // interface
 
     // Add input dependency.
     // Current command buffer will be executed on the GPU only when input dependencies finished execution.
-    virtual bool DependsOn(const FCommandBufferRef&) = 0;
+    virtual bool DependsOn(const PCommandBatch& batch) = 0;
 
     // Allocate space in the staging buffer.
     virtual bool StagingAlloc(FStagingBlock* pstaging, size_t size, size_t align) = 0;

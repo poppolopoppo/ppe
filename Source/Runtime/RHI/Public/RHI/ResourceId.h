@@ -12,6 +12,31 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct FResourceHandle {
+    union {
+        struct {
+            u32 Uid;
+            u16 Index;
+            u16 Instance;
+        };
+        u64 Packed;
+    };
+
+    bool operator ==(const FResourceHandle& other) const { return (Packed == other.Packed); }
+    bool operator !=(const FResourceHandle& other) const { return (not operator ==(other)); }
+
+    friend hash_t hash_value(const FResourceHandle& handle) {
+        return hash_value(handle.Packed);
+    }
+
+    friend void swap(FResourceHandle& lhs, FResourceHandle& rhs) {
+        std::swap(lhs.Packed, rhs.Packed);
+    }
+};
+PPE_ASSUME_TYPE_AS_POD(FResourceHandle);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
 template <u32 _Uid, bool _KeepName>
@@ -139,20 +164,28 @@ struct TResourceWrappedId< TResourceId<_Uid> > {
 
     explicit CONSTEXPR TResourceWrappedId(id_t id) : Id(id) {}
 
+    CONSTEXPR bool Valid() const { return Id.Valid(); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
+
+    CONSTEXPR id_t Get() const { return Id; }
+    CONSTEXPR id_t operator *() const { return Id; }
+
+    CONSTEXPR FResourceHandle Pack() const { return { { _Uid, Id.Index, Id.Instance } }; }
+    static CONSTEXPR TResourceWrappedId Unpack(FResourceHandle packed) {
+        Assert_NoAssume(packed.Uid == _Uid);
+        return { TResourceId<_Uid>(packed.Index, packed.Instance) };
+    }
+
     CONSTEXPR id_t Release() {
         const id_t result{ Id };
         Id = Default;
         return result;
     }
 
-    CONSTEXPR bool Valid() const { return Id.Valid(); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
-
     CONSTEXPR bool operator ==(const TResourceWrappedId& other) const { return (Id == other.Id); }
     CONSTEXPR bool operator !=(const TResourceWrappedId& other) const { return (Id != other.Id); }
 
     CONSTEXPR friend hash_t hash_value(const TResourceWrappedId& wrapped) { return hash_value(wrapped.Id); }
-
 };
 //----------------------------------------------------------------------------
 } //!namespace details
