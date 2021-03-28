@@ -113,17 +113,22 @@ CONSTEXPR auto Normalize(const TScalarVector<T, _Dim>& v) NOEXCEPT {
 // MaxComponent()
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR T MaxComponent(const TScalarVectorExpr<T, 2>& v) NOEXCEPT {
+CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 1>& v) NOEXCEPT {
+    return v.template get<0>();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 2>& v) NOEXCEPT {
     return Max(v.template get<0>(), v.template get<1>());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR T MaxComponent(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
+CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
     return Max3(v.template get<0>(), v.template get<1>(), v.template get<2>());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR T MaxComponent(const TScalarVectorExpr<T, 4>& v) NOEXCEPT {
+CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 4>& v) NOEXCEPT {
     return Max( Max(v.template get<0>(), v.template get<1>()),
                 Max(v.template get<2>(), v.template get<3>()) );
 }
@@ -143,17 +148,22 @@ CONSTEXPR u32 MaxComponentIndex(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
 // MinComponent()
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR T MinComponent(const TScalarVectorExpr<T, 2>& v) NOEXCEPT {
+CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 1>& v) NOEXCEPT {
+    return v.template get<0>();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 2>& v) NOEXCEPT {
     return Min(v.template get<0>(), v.template get<1>());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR T MinComponent(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
+CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
     return Min3(v.template get<0>(), v.template get<1>(), v.template get<2>());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR T MinComponent(const TScalarVectorExpr<T, 4>& v) NOEXCEPT {
+CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 4>& v) NOEXCEPT {
     return Min( Min(v.template get<0>(), v.template get<1>()),
                 Min(v.template get<2>(), v.template get<3>()) );
 }
@@ -324,12 +334,12 @@ template <typename _Lhs, typename _Rhs, size_t... _Shuffle>
 struct TScalarVectorShuffle : TScalarVectorExpr<TScalarVectorShuffle<_Lhs, _Rhs, _Shuffle...>, sizeof...(_Shuffle)> {
     using TScalarVectorExpr<TScalarVectorShuffle<_Lhs, _Rhs, _Shuffle...>, sizeof...(_Shuffle)>::Dim;
 
-    const _Lhs& lhs;
-    const _Rhs& rhs;
+    const typename _Lhs::expr_type& lhs;
+    const typename _Rhs::expr_type& rhs;
 
     FORCE_INLINE CONSTEXPR TScalarVectorShuffle(const _Lhs& _lhs, const _Rhs& _rhs) NOEXCEPT
-        : lhs(_lhs)
-        , rhs(_rhs)
+        : lhs(_lhs.ref())
+        , rhs(_rhs.ref())
     {}
 
     static CONSTEXPR size_t indices[Dim] = { _Shuffle... };
@@ -477,15 +487,15 @@ struct TScalarVectorTernaryOp : TScalarVectorExpr<TScalarVectorTernaryOp<_A, _B,
     STATIC_ASSERT(_A::Dim == _B::Dim);
     STATIC_ASSERT(_A::Dim == _C::Dim);
 
-    const _A& a;
-    const _B& b;
-    const _C& c;
+    const typename _A::expr_type& a;
+    const typename _B::expr_type& b;
+    const typename _C::expr_type& c;
     _Op op;
 
     FORCE_INLINE CONSTEXPR TScalarVectorTernaryOp(const _A& _a, const _B& _b, const _C& _c, _Op&& _op) NOEXCEPT
-        : a(_a)
-        , b(_b)
-        , c(_c)
+        : a(_a.ref())
+        , b(_b.ref())
+        , c(_c.ref())
         , op(std::move(_op))
     {}
 

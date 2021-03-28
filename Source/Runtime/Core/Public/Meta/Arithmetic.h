@@ -32,17 +32,17 @@ CONSTEXPR auto Min(const _Lhs& a, const _Rhs& b) NOEXCEPT {
     return (a < b ? a : b);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U>
+template <typename T, typename U, class = std::enable_if_t<Meta::has_trivial_less_v<T, U>> >
 CONSTEXPR auto Clamp(const T& value, const U& vmin, const U& vmax) NOEXCEPT {
     return Min(vmax, Max(vmin, value));
 }
 //----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C>
+template <typename _A, typename _B, typename _C, class = std::enable_if_t<Meta::has_trivial_less_v<_A, _B> && Meta::has_trivial_less_v<_B, _C>> >
 CONSTEXPR auto Max3(const _A& a, const _B& b, const _C& c) NOEXCEPT {
     return Max(a, Max(b, c));
 }
 //----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C>
+template <typename _A, typename _B, typename _C, class = std::enable_if_t<Meta::has_trivial_less_v<_A, _B> && Meta::has_trivial_less_v<_B, _C>> >
 CONSTEXPR auto Min3(const _A& a, const _B& b, const _C& c) NOEXCEPT {
     return Min(a, Min(b, c));
 }

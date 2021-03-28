@@ -37,6 +37,18 @@ static void Test_Vector_() {
         float4 y = float4::Y;
         float4 z = float4::Z;
         float4 w = float4::W;
+        float4 a = Max(x, y);
+        AssertRelease(a == float4(1,1,0,0));
+        float4 b = Max(z, w);
+        AssertRelease(b == float4(0,0,1,1));
+        float4 c = Max(Max(x, y), Max(z, w));
+        AssertRelease(c == float4::One);
+        float4 d = Max3(x, y, z);
+        AssertRelease(d == float4(float3::One, 0));
+        float3 e = Max3(x.xyz, y.xyz, z.xyz);
+        AssertRelease(e == float3::One);
+        float4 f = Max3(Max(x, y), z, w);
+        AssertRelease(f == float4::One);
         float4 m = Max3(x, y, Max(z, w));
         AssertRelease(m == float4::One);
         ubyte4 n = Float01_to_UByte0255(m);
@@ -136,6 +148,8 @@ static void Test_Matrix_() {
         AssertRelease(p.AxisY() == float3::Y);
         AssertRelease(p.AxisZ() == float3::Z);
         AssertRelease(p.AxisT() == float3::One);
+        float4x3 q = PackHomogeneousMatrix(m);
+        AssertRelease(p == q);
         float4x4 id = float4x4::Identity();
         AssertRelease(id.Column_x() == float4::X);
         AssertRelease(id.Column_y() == float4::Y);

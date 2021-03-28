@@ -12,7 +12,7 @@
 #include <limits>
 #include <type_traits>
 
-// https://godbolt.org/z/GgHzHn
+// https://godbolt.org/z/3773ef
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -40,15 +40,28 @@ template <typename T, size_t _Dim>
 struct TScalarVectorExpr {
     STATIC_ASSERT(_Dim);
     static CONSTEXPR size_t Dim = _Dim;
+    using expr_type = T;
 
     template <typename U>
     CONSTEXPR auto Cast() const NOEXCEPT;
 
-    template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto get() NOEXCEPT { return static_cast<T&>(*this).template get<_Idx>(); }
+    FORCE_INLINE CONSTEXPR expr_type& ref() NOEXCEPT {
+        return static_cast<expr_type&>(*this);
+    }
+
+    FORCE_INLINE CONSTEXPR const expr_type& ref() const NOEXCEPT {
+        return static_cast<const expr_type&>(*this);
+    }
 
     template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT { return static_cast<const T&>(*this).template get<_Idx>(); }
+    FORCE_INLINE CONSTEXPR auto get() NOEXCEPT {
+        return ref().template get<_Idx>();
+    }
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
+        return ref().template get<_Idx>();
+    }
 
     // those functions should expand the expression before operating for performance reasons.
     // workaround for user-defined conversion not being considered when doing template argument deduction,
@@ -121,7 +134,8 @@ template <typename _Expr, typename T>
 using TScalarComponent = Meta::TEnableIf<
     std::is_arithmetic_v<T>,
     std::common_type_t<
-        decltype(std::declval<const _Expr&>().template get<0>()), T
+        T,
+        decltype(std::declval<_Expr>().template get<0>())
     >
 >;
 //----------------------------------------------------------------------------
@@ -161,13 +175,13 @@ struct TScalarVectorBinaryOp : TScalarVectorExpr<TScalarVectorBinaryOp<_Lhs, _Rh
     using TScalarVectorExpr<TScalarVectorBinaryOp<_Lhs, _Rhs, _Op>, _Lhs::Dim>::Dim;
     STATIC_ASSERT(_Lhs::Dim == _Rhs::Dim);
 
-    const _Lhs& lhs;
-    const _Rhs& rhs;
+    const typename _Lhs::expr_type& lhs;
+    const typename _Rhs::expr_type& rhs;
     _Op op;
 
     FORCE_INLINE CONSTEXPR TScalarVectorBinaryOp(const _Lhs& _lhs, const _Rhs& _rhs, _Op&& _op) NOEXCEPT
-        : lhs(_lhs)
-        , rhs(_rhs)
+        : lhs(_lhs.ref())
+        , rhs(_rhs.ref())
         , op(std::move(_op))
     {}
 
@@ -209,11 +223,11 @@ template <typename _Expr, typename _Op>
 struct TScalarVectorUnaryOp : TScalarVectorExpr<TScalarVectorUnaryOp<_Expr, _Op>, _Expr::Dim> {
     using TScalarVectorExpr<TScalarVectorUnaryOp<_Expr, _Op>, _Expr::Dim>::Dim;
 
-    const _Expr& v;
+    const typename _Expr::expr_type& v;
     _Op op;
 
     FORCE_INLINE CONSTEXPR TScalarVectorUnaryOp(const _Expr& _v, _Op&& _op) NOEXCEPT
-        : v(_v)
+        : v(_v.ref())
         , op(std::move(_op))
     {}
 
@@ -551,6 +565,7 @@ struct TScalarVector<T, 2> : TScalarVectorAssignable<TScalarVector<T, 2>, T, 2> 
     };
 
     CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = v; }
+    CONSTEXPR auto Shift() const NOEXCEPT { return  TScalarVector<T, 1>(x); }
 
 #if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
@@ -649,6 +664,7 @@ struct TScalarVector<T, 3> : TScalarVectorAssignable<TScalarVector<T, 3>, T, 3> 
     };
 
     CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = z = v; }
+    CONSTEXPR const auto& Shift() const NOEXCEPT { return xy; }
 
 #if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
@@ -825,6 +841,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
     };
 
     CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = z = w = v; }
+    CONSTEXPR const auto& Shift() const NOEXCEPT { return xyz; }
 
 #if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
@@ -889,6 +906,11 @@ struct TScalarVector : TScalarVectorAssignable<TScalarVector<T, _Dim>, T, _Dim> 
     CONSTEXPR void Broadcast(T v) NOEXCEPT {
         Meta::static_for<Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
             ((data[idx] = v), ...);
+        });
+    }
+    CONSTEXPR const auto& Shift() const NOEXCEPT {
+        return Meta::static_for<_Dim - 1>([this](auto... idx) NOEXCEPT {
+            return reinterpret_cast<const TScalarVectorSwizzle<T, idx...>&>(this);
         });
     }
 
