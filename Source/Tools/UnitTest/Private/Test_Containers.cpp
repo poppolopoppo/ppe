@@ -3,6 +3,7 @@
 #include "Allocator/LinearHeap.h"
 #include "Allocator/StlAllocator.h"
 
+#include "Container/Appendable.h"
 #include "Container/SparseArray.h"
 #include "Container/AssociativeVector.h"
 #include "Container/BurstTrie.h"
@@ -1806,6 +1807,15 @@ NO_INLINE void Test_SSEHashSet() {
     set2 = set;
 }
 //----------------------------------------------------------------------------
+NO_INLINE void Test_Appendable() {
+    TVector<int> vector;
+    MakeAppendable(vector).push_back(42);
+    TSparseArray<int> sparse;
+    MakeAppendable(sparse).emplace_back(69);
+    TFixedSizeStack<int, 8> fixed;
+    MakeAppendable(fixed) << 1 << 2 << 3;
+}
+//----------------------------------------------------------------------------
 void Test_Containers() {
     PPE_DEBUG_NAMEDSCOPE("Test_Containers");
 
@@ -1822,6 +1832,7 @@ void Test_Containers() {
     Test_StealFromDifferentAllocator_();
     Test_MinMaxHeap_();
     Test_SSEHashSet();
+    Test_Appendable();
 
 #if USE_PPE_BENCHMARK
     Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
