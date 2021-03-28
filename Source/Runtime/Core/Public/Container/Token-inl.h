@@ -26,6 +26,9 @@ bool IsValidToken(const TBasicStringView<_Char>& content) {
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
 auto TToken<_Tag, _Char, _Sensitive, _TokenTraits>::FindOrAdd_(const stringview_type& str) -> const handle_type* {
+    if (str.empty())
+        return nullptr;
+
     return FindOrAdd_(lazytoken_type{ str });
 }
 //----------------------------------------------------------------------------

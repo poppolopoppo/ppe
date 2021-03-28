@@ -36,10 +36,17 @@
 #endif
 
 //----------------------------------------------------------------------------
+// Global switch for using address sanitize, enable memory debugging with std malloc instead of stomp
+//----------------------------------------------------------------------------
+#ifndef USE_PPE_SANITIZER
+#   define USE_PPE_SANITIZER          0 //%_NOCOMMIT%
+#endif
+
+//----------------------------------------------------------------------------
 // Global switch for using stomp allocator, memory guards and turning special allocators off
 //----------------------------------------------------------------------------
 #ifndef USE_PPE_MEMORY_DEBUGGING
-#   define USE_PPE_MEMORY_DEBUGGING   0 //%_NOCOMMIT%
+#   define USE_PPE_MEMORY_DEBUGGING   (USE_PPE_SANITIZER) //%_NOCOMMIT%
 #endif
 
 //----------------------------------------------------------------------------

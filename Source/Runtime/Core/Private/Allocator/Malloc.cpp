@@ -27,7 +27,7 @@
 #   define PPE_MALLOC_ALLOCATOR_BINNED     PPE_MALLOC_ALLOCATOR_BINNED1
 #endif
 
-#define PPE_MALLOC_FORCE_STD               0 //%_NOCOMMIT%
+#define PPE_MALLOC_FORCE_STD               (USE_PPE_SANITIZER) //%_NOCOMMIT%
 #define PPE_MALLOC_FORCE_STOMP             (USE_PPE_MEMORY_DEBUGGING) //%_NOCOMMIT%
 
 #if PPE_MALLOC_FORCE_STD
@@ -43,7 +43,7 @@
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) // %_NOCOMMIT%
 #   define PPE_MALLOC_POISON_PROXY         1 // Erase all data from blocks when allocating and releasing them, helps to find necrophilia
-#elif not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING)
+#elif not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING || USE_PPE_SANITIZER)
 #   define PPE_MALLOC_DEBUG_PROXY          1
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // %_NOCOMMIT%
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) // %_NOCOMMIT%
@@ -120,11 +120,11 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 #   else
     return 0;
 #   endif
-#endif
-#if !USE_PPE_FINAL_RELEASE
-void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {/* #TODO */ }
-#endif
 }
+void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {
+    // #TODO
+}
+#endif
 #endif //!PPE_MALLOC_ALLOCATOR_STD
 //----------------------------------------------------------------------------
 #if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_BINNED1)
@@ -328,7 +328,7 @@ private:
         FMallocHistogram::Allocate(ptr, sizeInBytes);
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
-        FPlatformMemory::Memset(ptr, 0xCC, sizeInBytes);
+        FPlatformMemory::Memset(ptr, 0xCC, SnapSize(sizeInBytes));
 #   endif
         return ptr;
     }
@@ -366,7 +366,7 @@ private:
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
         if (nullptr == oldp)
-            FPlatformMemory::Memset(newp, 0xCC, sizeInBytes);
+            FPlatformMemory::Memset(newp, 0xCC, SnapSize(sizeInBytes));
 #   else
         UNUSED(oldp);
 #   endif

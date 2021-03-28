@@ -484,26 +484,26 @@ bool EndsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char
 //----------------------------------------------------------------------------
 void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
-
-    FPlatformString::ToLower(dst.data(), src.data(), src.size());
+    if (not dst.empty())
+        FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
-
-    FPlatformString::ToLower(dst.data(), src.data(), src.size());
+    if (not dst.empty())
+        FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
-
-    FPlatformString::ToUpper(dst.data(), src.data(), src.size());
+    if (not dst.empty())
+        FPlatformString::ToUpper(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
-
-    FPlatformString::ToUpper(dst.data(), src.data(), src.size());
+    if (not dst.empty())
+        FPlatformString::ToUpper(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
