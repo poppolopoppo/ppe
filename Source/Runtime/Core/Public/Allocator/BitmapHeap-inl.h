@@ -104,7 +104,8 @@ inline void* TBitmapPage<_PageSize>::Allocate(u32 sizeInBytes, bool& exhausted) 
                 const mask_t insert = (pages & ~(blk << off));
                 if (Pages.compare_exchange_weak(pages, insert, std::memory_order_release, std::memory_order_relaxed)) {
                     Assert(off + numPages - 1 < MaxPages);
-                    ONLY_IF_ASSERT(const mask_t backup = (Sizes |= (mask_t(1) << (off + numPages - 1))));
+                    const mask_t backup = (Sizes |= (mask_t(1) << (off + numPages - 1)));
+                    UNUSED(backup);
                     void* const result = (reinterpret_cast<u8*>(vAddressSpace) + PageSize * off);
                     Assert_NoAssume(backup & (mask_t(1) << (off + numPages - 1)));
                     Assert_NoAssume(RegionSize(result) == SnapSize(sizeInBytes));
