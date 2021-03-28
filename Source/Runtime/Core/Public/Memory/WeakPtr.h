@@ -172,14 +172,14 @@ public:
 #endif
 
 protected:
-    friend void AddRef(const FWeakRefCountable* ptr);
+    friend void AddRef(const FWeakRefCountable* ptr) NOEXCEPT;
     template <typename T>
-    friend void OnStrongRefCountReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
+    friend TEnableIfWeakRefCountable<T, void> OnStrongRefCountReachZero(T* ptr) NOEXCEPT;
 
     // manipulate if ref count, only if *already* ref-counted
-    friend void AddRefIFP(const FWeakRefCountable* ptr);
+    friend void AddRefIFP(const FWeakRefCountable* ptr) NOEXCEPT;
     template <typename T>
-    friend void AddRefIFP(TRefPtr<T>& pRefPtr, TEnableIfWeakRefCountable<T>* ptr);
+    friend void AddRefIFP(TRefPtr<T>& pRefPtr, TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
     template <typename T>
     friend void RemoveRefIFP(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT;
     template <typename T>

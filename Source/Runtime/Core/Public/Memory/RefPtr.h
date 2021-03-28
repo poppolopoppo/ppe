@@ -88,9 +88,9 @@ public: // override new/delete operators for memory tracking
 #endif
 
 protected:
-    friend void AddRef(const FRefCountable* ptr);
+    friend void AddRef(const FRefCountable* ptr) NOEXCEPT;
     template <typename T>
-    friend void OnStrongRefCountReachZero(TEnableIfRefCountable<T>* ptr) NOEXCEPT;
+    friend TEnableIfRefCountable<T, void> OnStrongRefCountReachZero(T* ptr) NOEXCEPT;
 
     template <typename T>
     friend void RemoveRef(T* ptr);
@@ -205,6 +205,11 @@ void swap(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
+template <typename _Dst, typename _Src>
+TRefPtr<_Dst> checked_cast(const TRefPtr<_Src>& refptr) NOEXCEPT {
+    return { refptr.template as<_Dst>() };
+}
+//----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
 bool operator ==(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
     return (lhs.get() == static_cast<const _Lhs*>(rhs.get()) );
@@ -311,6 +316,11 @@ hash_t hash_value(const TSafePtr<T>& TSafePtr) NOEXCEPT {
 template <typename _Lhs, typename _Rhs>
 void swap(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Dst, typename _Src>
+TSafePtr<_Dst> checked_cast(const TSafePtr<_Src>& safeptr) NOEXCEPT {
+    return { safeptr.template as<_Dst>() };
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
