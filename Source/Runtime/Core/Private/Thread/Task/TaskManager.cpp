@@ -234,6 +234,7 @@ public:
                     onTaskBroadcast.notify_one();
             }
         };
+        Assert_NoAssume(broadcast.FitInSitu());
 
         Meta::FUniqueLock scopeLock(waitfor.Barrier);
         forrange(n, 0, waitfor.NumTotal)
@@ -604,7 +605,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
     Assert(whileWaiting);
     Assert(nullptr != _pimpl);
 
-    const auto waitfor = [rtasks, &whileWaiting, priority](ITaskContext& ctx) {
+    auto waitfor = [rtasks, &whileWaiting, priority](ITaskContext& ctx) {
         FCompletionPort port;
         ctx.Run(&port, rtasks, priority);
 
@@ -616,21 +617,21 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
     if (FFiber::IsInFiber())
         waitfor(*_pimpl);
     else
-        FWaitForTask_::Wait(*_pimpl, waitfor, priority);
+        FWaitForTask_::Wait(*_pimpl, std::move(waitfor), priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not tasks.empty());
     Assert(nullptr != _pimpl);
 
-    const auto waitfor = [tasks, priority](ITaskContext& ctx) {
+    auto waitfor = [tasks, priority](ITaskContext& ctx) {
         ctx.RunAndWaitFor(tasks, priority);
     };
 
     if (FFiber::IsInFiber())
         waitfor(*_pimpl);
     else
-        FWaitForTask_::Wait(*_pimpl, waitfor, priority);
+        FWaitForTask_::Wait(*_pimpl, std::move(waitfor), priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::RunInWorker(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
@@ -714,6 +715,7 @@ void FTaskManager::ReleaseMemory() {
             FTaskFunc func([](ITaskContext&) {
                 FTaskFiberPool::CurrentHandleRef()->YieldFiber(nullptr, true);
             });
+            Assert_NoAssume(func.FitInSitu());
             if (not worker.SetPostTaskDelegate(std::move(func)))
                 AssertNotReached();
         },
@@ -768,6 +770,7 @@ void FInterruptedTask::Resume(const TMemoryView<FInterruptedTask>& tasks) {
 
     for (const FInterruptedTask& task : tasks) {
         FTaskFunc func{ ResumeTask(task) };
+        Assert_NoAssume(func.FitInSitu());
 
         // it's faster when using PostTaskDelegate versus spawning a new fiber,
         // but there's only one task that can benefit from this : we can't stole

@@ -367,7 +367,7 @@ struct TPayloadTraits< T, PFunctionPayload<T> > {
 enum class EFunctionFlags : u32 {
     None            = 0,
     FireAndForget   = 1<<0,
-    Unused          = 1<<1,
+    FitInSitu       = 1<<1,
 };
 ENUM_FLAGS(EFunctionFlags);
 //----------------------------------------------------------------------------
@@ -383,6 +383,9 @@ public:
 private:
     Meta::TPointerWFlags<const vtable_type> _vtable;
     embed_type _embed;
+
+    STATIC_ASSERT(u32(EFunctionFlags::FitInSitu) == 2);
+    void SetFitInSitu_(bool enabled) { _vtable.SetFlag1(enabled); }
 
 public:
     CONSTEXPR TFunction() NOEXCEPT : TFunction(&traits_type::dummy_vtable) {}
@@ -419,7 +422,13 @@ public:
     }
 
     EFunctionFlags Flags() const { return static_cast<EFunctionFlags>(_vtable.Flag01()); }
-    void SetFlags(EFunctionFlags flags) { _vtable.SetFlag01(static_cast<u32>(flags)); }
+
+    STATIC_ASSERT(u32(EFunctionFlags::FitInSitu) == 2);
+    bool FitInSitu() const { return _vtable.Flag1(); }
+
+    STATIC_ASSERT(u32(EFunctionFlags::FireAndForget) == 1);
+    bool FireAndForget() const { return _vtable.Flag0(); }
+    void SetFireAndForget(bool enabled) { _vtable.SetFlag0(enabled); }
 
     CONSTEXPR bool Valid() const NOEXCEPT {
         return (not _vtable->IsDummy());
@@ -481,6 +490,7 @@ public:
     template <typename _PayloadTraits, typename... _Extra>
     CONSTEXPR TFunction& SetPayloadLarge(_Extra&&... extra) {
         _PayloadTraits::Set(&_embed, std::forward<_Extra>(extra)...);
+        SetFitInSitu_(sizeof(typename _PayloadTraits::type) <= _InSitu);
         return (*this);
     }
 
