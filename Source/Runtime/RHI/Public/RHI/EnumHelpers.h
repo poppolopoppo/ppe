@@ -153,16 +153,16 @@ inline CONSTEXPR u32 EVertexFormat_SizeOf(EVertexFormat fmt) {
 
     switch (scalar) {
     case EVertexFormat::_Byte:
-    case EVertexFormat::_UByte: return sizeof(u8);
+    case EVertexFormat::_UByte: return sizeof(u8) * arity;
     case EVertexFormat::_Short:
-    case EVertexFormat::_UShort: return sizeof(u16);
+    case EVertexFormat::_UShort: return sizeof(u16) * arity;
     case EVertexFormat::_Int:
-    case EVertexFormat::_UInt: return sizeof(u32);
+    case EVertexFormat::_UInt: return sizeof(u32) * arity;
     case EVertexFormat::_Long:
-    case EVertexFormat::_ULong: return sizeof(u64);
-    case EVertexFormat::_Half: return sizeof(u16);
-    case EVertexFormat::_Float: return sizeof(float);
-    case EVertexFormat::_Double: return sizeof(double);
+    case EVertexFormat::_ULong: return sizeof(u64) * arity;
+    case EVertexFormat::_Half: return sizeof(u16) * arity;
+    case EVertexFormat::_Float: return sizeof(float) * arity;
+    case EVertexFormat::_Double: return sizeof(double) * arity;
     default: AssertNotImplemented();
     }
 }

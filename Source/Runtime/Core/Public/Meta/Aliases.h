@@ -157,7 +157,7 @@ typedef int64_t     i64;
 #   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
 #   define Assume(...) Likely(__VA_ARGS__)
 #   define AnalysisAssume(...) NOOP(!!(__VA_ARGS__))
-#   define PACKED_STRUCT(...) __VA_ARGS__  __attribute__((__packed__))
+#   define PACKED_STRUCT(_NAME, ...) struct __attribute__((__packed__)) _NAME __VA_ARGS__
 #elif defined(CPP_VISUALSTUDIO)
 #   define Likely(...) __VA_ARGS__
 #   define Unlikely(...) __VA_ARGS__
@@ -171,7 +171,7 @@ typedef int64_t     i64;
 #           define AnalysisAssume(...) NOOP();
 #       endif
 #   endif
-#   define PACKED_STRUCT(...) __pragma(pack(push, 1)) __VA_ARGS__ __pragma(pack(pop))
+#   define PACKED_STRUCT(_NAME, ...) __pragma(pack(push, 1)) struct _NAME __VA_ARGS__ __pragma(pack(pop))
 #else
 #   error "unsupported compiler"
 #endif
@@ -372,10 +372,14 @@ typedef struct uint256_t {
 }   u256;
 //----------------------------------------------------------------------------
 // for hash functions :
-PACKED_STRUCT(typedef struct uint96_t  { u64  lo; u32 hi; } u96);
-PACKED_STRUCT(typedef struct uint160_t { u128 lo; u32 hi; } u160);
-PACKED_STRUCT(typedef struct uint192_t { u128 lo; u64 hi; } u192);
-PACKED_STRUCT(typedef struct uint224_t { u128 lo; u96 hi; } u224);
+PACKED_STRUCT(uint96_t,  { u64  lo; u32 hi; });
+using u96 = uint96_t;
+PACKED_STRUCT(uint160_t, { u128 lo; u32 hi; });
+using u160 = uint160_t;
+PACKED_STRUCT(uint192_t, { u128 lo; u64 hi; });
+using u192 = uint192_t;
+PACKED_STRUCT(uint224_t, { u128 lo; u96 hi; });
+using u224 = uint224_t;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
