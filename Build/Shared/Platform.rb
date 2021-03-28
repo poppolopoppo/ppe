@@ -18,12 +18,12 @@ module Build
             super(expr) || Policy.match_expr?(@arch, expr) || Policy.match_expr?(@os, expr)
         end
         def intrinsics_supported() Log.error("%s: intrinsics_supported() is not implemented", @name); [] end
-        def customize(facet, env, target)
+        def decorate(facet, env)
             facet.defines <<
                 "TARGET_PLATFORM=#{@os}" <<
                 "TARGET_RHI=#{@rhi}" <<
                 "RHI_#{@rhi.to_s.upcase}"
-            super(facet, env, target)
+            super(facet, env)
         end
     end #~ Platform
 

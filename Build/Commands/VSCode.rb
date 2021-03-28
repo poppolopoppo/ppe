@@ -65,6 +65,11 @@ module Build
             globalIncludePaths = [ env.source_path('.') ]
             globalIncludePaths.concat(env.facet.any_includePaths)
 
+            globalDefinitions = []
+
+            facet = env.facet.clone
+            globalDefinitions.concat(facet.defines.data)
+
             targets.each do |m|
                 globalIncludePaths << env.source_path(m.source_path)
 
@@ -75,6 +80,7 @@ module Build
                 globalIncludePaths << private_path if Dir.exist?(private_path)
             end
 
+            globalDefinitions.uniq!
             globalIncludePaths.uniq!
 
             case env.platform.os
@@ -93,7 +99,7 @@ module Build
                 includePath: globalIncludePaths,
                 intelliSenseMode: intelliSenseMode,
                 macFrameworkPath: macFrameworkPath,
-                defines: env.facet.defines.data,
+                defines: globalDefinitions,
                 cStandard: C_STANDARD,
                 cppStandard: Build.CppStd,
                 compilerPath: env.compiler.executable,
