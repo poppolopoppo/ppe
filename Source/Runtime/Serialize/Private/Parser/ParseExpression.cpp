@@ -136,7 +136,7 @@ RTTI::FAtom FObjectDefinition::Eval(FParseContext* context) const {
         PPE_THROW_IT(FParserException("unknown metaclass", this));
 
     RTTI::PMetaObject obj;
-    Verify(metaclass->CreateInstance(obj));
+    Verify(metaclass->CreateInstance(obj, true));
     Assert(obj);
 
     const RTTI::PMetaObject parent = context->ScopeObject();

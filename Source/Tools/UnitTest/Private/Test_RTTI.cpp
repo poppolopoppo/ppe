@@ -323,7 +323,7 @@ private:
     }
 
     void Randomize_(RTTI::FName& name) {
-        const size_t count = NextRandomDim_();
+        const size_t count = 1 + NextRandomDim_();
         STACKLOCAL_POD_ARRAY(RTTI::FName::char_type, cstr, count);
         forrange(i, 0, count)
             cstr[i] = (char)(_rand.Next('a'+0, 'z'+1));

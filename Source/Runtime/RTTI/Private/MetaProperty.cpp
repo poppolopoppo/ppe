@@ -66,7 +66,7 @@ void FMetaProperty::MoveFrom(FMetaObject& obj, FAtom& src) const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FAtom FMetaProperty::ResetToDefaultValue(FMetaObject& obj) const NOEXCEPT {
-    CheckPropertyIFN(obj, true);
+    CheckPropertyIFN(obj, false/* reset is ignoring write access for CreateInstance() */);
     FAtom value = MakeAtom_(obj);
     value.ResetToDefaultValue();
     return value;
