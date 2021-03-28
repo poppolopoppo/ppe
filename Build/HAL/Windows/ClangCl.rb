@@ -91,6 +91,7 @@ module Build
         compilationFlag!("-fmsc-version=#{Visual::MSC_VER_2019}")
         compilationFlag!('-msse4.2', '-Xclang', "-std=#{Build.CppStd}")
         compilationFlag!(*%w{ -fms-compatibility -fms-extensions -fcolor-diagnostics })
+        compilationFlag!(*%w{ /clang:-fno-elide-type /clang:-fdiagnostics-show-template-tree })
 
         systemPaths <<
             File.join('$LLVMPath$', 'include', 'clang-c') <<
