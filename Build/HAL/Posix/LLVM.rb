@@ -50,6 +50,11 @@ module Build
         def ext_pch() '.pch' end
         def ext_shared() '.so' end
 
+        def dbg_env()
+            #TODO ?
+            return {}
+        end
+
         def add_linkType(facet, link)
             # nothing to do
         end

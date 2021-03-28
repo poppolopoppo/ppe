@@ -40,7 +40,7 @@ module Build
             @target = target
             @visualStudioPath = visualStudioPath
             @platformToolset = platformToolset
-            @visualStudioTools = File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'bin', "Host#{target}", @target)
+            @visualStudioTools = File.join(@visualStudioPath, 'VC', 'Tools', 'MSVC', @minor_version, 'bin', "Host#{@target}", @target)
 
             self.inherits!(Build.VisualStudio_Base)
             self.inherits!(Build.send "VisualStudio_Base_#{target}")
@@ -90,6 +90,13 @@ module Build
         def ext_pch() '.pch' end
         def ext_shared() '.dll' end
 
+        def dbg_env()
+            env = {}
+            env['PATH'] = "#{@visualStudioTools};%PATH%"
+            env['ASAN_OPTIONS'] = "windows_hook_rtl_allocators=true" if Build.ASAN
+            return env;
+        end
+
         def add_linkType(facet, link)
             case link
             when :static
@@ -126,7 +133,7 @@ module Build
             nopdb = !Build.PDB || target.headers? || facet.tag?(:nopdb)
             nosymbols = !Build.Symbols || facet.tag?(:nosymbols)
 
-            if nosymbols
+            if nosymbols && !Build.ASAN
                 Log.debug('VisualStudio: no debug symbols generated for target <%s-%s>', target.abs_path, env.family)
                 facet.linkerOptions << '/DEBUG:NONE'
             else
@@ -511,7 +518,7 @@ module Build
 
         if Build.ASAN
             # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
-            defines.append('USE_PPE_SANITIZER')
+            defines.append('USE_PPE_SANITIZER=1')
             compilationFlag!('/fsanitize=address')
         end
 

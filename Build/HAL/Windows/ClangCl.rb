@@ -41,6 +41,11 @@ module Build
             facet.librarianOptions >> '/SUBSYSTEM:WINDOWS' >> '/WX'
             facet.linkerOptions >> '/LTCG:INCREMENTAL' >> '/LTCG' >> '/LTCG:OFF' >> '/WX'
         end
+        def dbg_env()
+            env = super()
+            env['PATH'].prepend(File.join(@llvmPath, 'bin')<<';')
+            return env
+        end
         def add_includePath(facet, dirpath)
             super(facet, dirpath)
         end

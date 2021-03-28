@@ -74,6 +74,11 @@ module Build
                 set!('ForcedIncludes', expanded.includes.join(';'))
                 set!('IncludeSearchPath', expanded.any_includePaths.join(';'))
                 set!('PreprocessorDefinitions', expanded.defines.join(';'))
+
+                dbgEnv = expanded.compiler.dbg_env();
+                set!('LocalDebuggerEnvironment', (dbgEnv.collect do |key, value|
+                    "#{key}=#{value}"
+                end << '^$(LocalDebuggerEnvironment)').join("&#xA;")) unless dbgEnv.empty?
             end
             return target_alias
         end

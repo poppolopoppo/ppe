@@ -145,7 +145,7 @@ module Build
                     args: [],
                     stopAtEntry: false,
                     cwd: $BinariesPath,
-                    environment: [],
+                    environment: compiler.dbg_env(),
                     #visualizeFile: NATVIS,
                     externalConsole: false
                 }

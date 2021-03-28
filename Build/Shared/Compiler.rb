@@ -44,6 +44,8 @@ module Build
         def ext_pch() Assert.not_implemented end
         def ext_shared() Assert.not_implemented end
 
+        def dbg_env() Assert.not_implemented end
+
         def add_linkType(facet, link) Log.error("%s: add_linkType('%s') is not implemented", @name, link) end
         def add_define(facet, key, value=nil) Log.error("%s: add_define('%s', '%s') is not implemented", @name, key, value) end
         def add_forceInclude(facet, filename) Log.error("%s: add_forceInclude('%s') is not implemented", @name, filename) end
