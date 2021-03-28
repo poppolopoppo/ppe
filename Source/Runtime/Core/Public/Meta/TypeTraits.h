@@ -439,7 +439,7 @@ void Construct(T* p, _Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void Destroy(T* p) NOEXCEPT {
+Meta::TEnableIf<not std::is_const_v<T>> Destroy(T* p) NOEXCEPT {
     Assume(p);
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);

@@ -85,7 +85,7 @@ FOREACH_MIMETYPES(DEF_HTTPCONSTNAMES_STARTUP)
 //----------------------------------------------------------------------------
 void FHttpConstNames::Shutdown() {
 #define DEF_HTTPCONSTNAMES_SHUTDOWN(_Type, _Name, _Content) \
-    Meta::Destroy(reinterpret_cast<const FName*>(&CONCAT(G, CONCAT(_Type, _Name))));
+    Meta::Destroy(reinterpret_cast<FName*>(&CONCAT(G, CONCAT(_Type, _Name))));
 FOREACH_HTTPHEADERS(DEF_HTTPCONSTNAMES_SHUTDOWN)
 FOREACH_MIMETYPES(DEF_HTTPCONSTNAMES_SHUTDOWN)
 #undef DEF_HTTPCONSTNAMES_SHUTDOWN
