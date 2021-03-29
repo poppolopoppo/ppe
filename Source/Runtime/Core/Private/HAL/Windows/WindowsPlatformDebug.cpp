@@ -185,8 +185,8 @@ void FWindowsPlatformDebug::UnpoisonMemory(void* ptr, size_t sz) {
     ASAN_UNPOISON_MEMORY_REGION(ptr, sz);
 }
 #else
-static void FWindowsPlatformDebug::PoisonMemory(void*, size_t) {}
-static void FWindowsPlatformDebug::UnpoisonMemory(void*, size_t) {}
+void FWindowsPlatformDebug::PoisonMemory(void*, size_t) {}
+void FWindowsPlatformDebug::UnpoisonMemory(void*, size_t) {}
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
