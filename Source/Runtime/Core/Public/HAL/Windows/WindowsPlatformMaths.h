@@ -223,7 +223,14 @@ public:
         return bit;
 #else
         unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 63
-        return (u & 0xFFFFFFFFull ? _BitScanForward(&bit, u32(u & 0xFFFFFFFFull)) : 32 + _BitScanForward(&bit, u32(u >> 32)) );
+        if (u & UINT32_MAX) {
+            _BitScanForward(&bit, u32(u & UINT32_MAX));
+            return bit;
+        }
+        else {
+            _BitScanForward(&bit, u32((u >> 32) & UINT32_MAX));
+            return (32 + bit);
+        }
 #endif
     }
 
