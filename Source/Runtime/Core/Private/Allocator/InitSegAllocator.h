@@ -13,49 +13,61 @@ EXTERN_LOG_CATEGORY(PPE_CORE_API, InitSeg)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FInitSegAllocator : Meta::FNonCopyableNorMovable {
-public:
+    class FAlloc;
+    static FInitSegAllocator GInitSegAllocator_;
+
     FInitSegAllocator();
-    ~FInitSegAllocator();
 
-    using deleter_f = void(*)(void*) NOEXCEPT;
+    NO_INLINE static void Allocate(FAlloc& alloc) NOEXCEPT;
 
-    struct FAlloc {
-        void* Data;
-        FAlloc* Next;
-        deleter_f Deleter;
-        CONSTEXPR explicit FAlloc(void* data, deleter_f deleter) NOEXCEPT
-        :   Data(data)
-        ,   Next(nullptr)
-        ,   Deleter(deleter)
-        {}
+    using deleter_f = void(*)(FAlloc&) NOEXCEPT;
+
+    class FAlloc : FNonCopyableNorMovable {
+    public:
+        deleter_f const Deleter;
+        FAlloc* Next{ nullptr };
+
+        explicit FAlloc(deleter_f deleter) NOEXCEPT
+        :   Deleter(deleter) {
+            Assert_NoAssume(deleter);
+            Allocate(*this);
+        }
     };
 
+public:
+    ~FInitSegAllocator();
+
     template <typename T>
-    struct TAlloc : FAlloc {
-        POD_STORAGE(T) Storage;
-        operator T& () NOEXCEPT {
-            return (*reinterpret_cast<T*>(&Storage));
+    class TAlloc : FAlloc {
+        friend class FInitSegAllocator;
+        POD_STORAGE(T) _data;
+    public:
+
+        Meta::TRemoveConst<T>* get() NOEXCEPT {
+            return (Meta::TRemoveConst<T>*)(&_data);
         }
-        operator const T& () const NOEXCEPT {
-            return (*reinterpret_cast<const T*>(&Storage));
+        operator T& () NOEXCEPT {
+            return (*reinterpret_cast<T*>(&_data));
+        }
+        operator Meta::TAddConst<T>& () const NOEXCEPT {
+            return (*reinterpret_cast<Meta::TAddConst<T>*>(&_data));
+        }
+
+        static void Destroy(FAlloc& alloc) NOEXCEPT {
+            Meta::Destroy(static_cast<TAlloc<T>&>(alloc).get());
         }
 
         template <typename... _Args>
         TAlloc(_Args&&... args) NOEXCEPT
-        :   FAlloc(&Storage, [](void* p) NOEXCEPT {
-            Meta::Destroy(reinterpret_cast<T*>(p));
-        }) {
-            Meta::Construct(reinterpret_cast<T*>(&Storage), std::forward<_Args>(args)...);
-            Get().Allocate(*this);
+        :   FAlloc(&Destroy) {
+            Assert_NoAssume(Meta::IsAligned(alignof(T), get()));
+            Meta::Construct(get(), std::forward<_Args>(args)...);
         }
     };
 
-    NO_INLINE void Allocate(FAlloc& alloc) NOEXCEPT;
-
-    static FInitSegAllocator& Get() NOEXCEPT;
-
 private:
     FAtomicOrderedLock _barrier;
+
     FAlloc* _head{ nullptr };
     FAlloc* _tail{ nullptr };
 };

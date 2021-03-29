@@ -19,36 +19,29 @@ LOG_CATEGORY(PPE_CORE_API, InitSeg)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-// should be in compiler segment, so destroyed last hopefully
-static FInitSegAllocator GInitSegAllocator_ INITSEG_COMPILER_PRIORITY;
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 FInitSegAllocator::FInitSegAllocator() = default;
+// should be in compiler segment, so destroyed last hopefully
+FInitSegAllocator FInitSegAllocator::GInitSegAllocator_ INITSEG_COMPILER_PRIORITY;
 //----------------------------------------------------------------------------
 FInitSegAllocator::~FInitSegAllocator() {
     const FAtomicOrderedLock::FScope scopeLock(_barrier);
+
     for (; _head; _head = _head->Next)
-        _head->Deleter(_head->Data);
-}
-//----------------------------------------------------------------------------
-FInitSegAllocator& FInitSegAllocator::Get() NOEXCEPT {
-    return GInitSegAllocator_;
+        _head->Deleter(*_head);
 }
 //----------------------------------------------------------------------------
 void FInitSegAllocator::Allocate(FAlloc& alloc) NOEXCEPT {
     Assert(nullptr == alloc.Next);
-    const FAtomicOrderedLock::FScope scopeLock(_barrier);
-    if (Likely(_head)) {
-        _tail->Next = &alloc;
-        _tail = &alloc;
+
+    FInitSegAllocator& allocator = GInitSegAllocator_;
+    const FAtomicOrderedLock::FScope scopeLock(allocator._barrier);
+
+    if (Likely(allocator._head)) {
+        allocator._tail->Next = &alloc;
+        allocator._tail = &alloc;
     }
     else {
-        _head = _tail = &alloc;
+        allocator._head = allocator._tail = &alloc;
     }
 }
 //----------------------------------------------------------------------------
