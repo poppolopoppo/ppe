@@ -86,7 +86,9 @@ static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBi
         << L" (" << Fmt::CountOfElements(info.Pages.size()) << L" pages)"
         << Eol;
 
-    CONSTEXPR const FWStringView AllocationTags = L"●○◉○"; // L"◇◈";// L"►◄"; // L"▬▭";// L"▪▫";// L"▮▯"; // L"▼▲";// L"◉○";
+    CONSTEXPR const FWStringView AllocationTags = L"▒▓";
+        // L"❶❷❸❹❺❻❼❽❾";
+        // L"▬";// L"●◉"; // L"◇◈";// L"►◄"; // L"▪▫";// L"▮▯"; // L"▼▲";// L"◉○";
 
     forrange(p, 0, info.Pages.size()) {
         const FBitmapPageInfo& page = info.Pages[p];
@@ -102,7 +104,7 @@ static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBi
         size_t tag = size_t(0);
         forrange(b, 0, info.PagesPerBlock) {
             const u64 select = (u64(1) << b);
-            oss.Put(not (page.Pages & select) ? AllocationTags[tag] : L'▒');
+            oss.Put(not (page.Pages & select) ? AllocationTags[tag] : /*L'▒'*/L'░');
             tag = (tag + ((page.Sizes & select) ? 1 : 0)) % AllocationTags.size();
         }
 
