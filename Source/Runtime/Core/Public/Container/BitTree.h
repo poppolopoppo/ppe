@@ -117,7 +117,7 @@ struct TBitTree {
     u32 NextAllocateBit() const NOEXCEPT { // returns leaf index of UINT32_MAX if full
         Assert(Bits);
         if (Unlikely(Full()))
-            return UINT32_MAX;
+            return UMax;
 
         u32 bit = 0;
         u32 offset = 0;
@@ -131,6 +131,8 @@ struct TBitTree {
             offset = (offset * WordBitCount + 1 + jmp);
         }
 
+        Assert(bit < Capacity());
+        Assert_NoAssume(not IsAllocated(bit));
         return bit;
     }
 
@@ -144,6 +146,8 @@ struct TBitTree {
         u32 bit = after;
         u32 r = (bit % WordBitCount);
         u32 offset = (LeafsFirstWord + bit / WordBitCount);
+
+        Assert_NoAssume(bit < Capacity());
 
         mask_t m{ Word(offset) };
         if (not m.Get(r))
@@ -180,7 +184,7 @@ struct TBitTree {
             }
         } while (d);
 
-        return UINT32_MAX;
+        return UMax;
     }
 
     bool IsAllocated(u32 bit) const NOEXCEPT {
@@ -229,10 +233,10 @@ struct TBitTree {
         }
     }
 
-    u32 Allocate() NOEXCEPT { // returns leaf index of UINT32_MAX if full
+    u32 Allocate() NOEXCEPT { // returns leaf index of UMax if full
         Assert(Bits);
         if (Unlikely(Full()))
-            return UINT32_MAX;
+            return UMax;
 
         mask_t m;
         u32 d = 0;
