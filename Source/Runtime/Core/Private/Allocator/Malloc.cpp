@@ -27,7 +27,7 @@
 #   define PPE_MALLOC_ALLOCATOR_BINNED     PPE_MALLOC_ALLOCATOR_BINNED1
 #endif
 
-#define PPE_MALLOC_FORCE_STD               (USE_PPE_SANITIZER && 1) //%_NOCOMMIT%
+#define PPE_MALLOC_FORCE_STD               (USE_PPE_SANITIZER || CODE3264(1, 0)) //%_NOCOMMIT% FMallocBinned2 doesn't handle well address space limited to 32 bits
 #define PPE_MALLOC_FORCE_STOMP             (USE_PPE_MEMORY_DEBUGGING && !USE_PPE_SANITIZER && 1) //%_NOCOMMIT%
 
 #if PPE_MALLOC_FORCE_STD
@@ -96,10 +96,10 @@ struct FMallocLowLevel {
 };
 //----------------------------------------------------------------------------
 #if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_STD)
-void* FMallocLowLevel::Malloc(size_t size) { return std::malloc(size); }
-void  FMallocLowLevel::Free(void* ptr) { std::free(ptr); }
-void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) { return std::calloc(nmemb, size); }
-void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return std::realloc(ptr, size); }
+void* FMallocLowLevel::Malloc(size_t size) { return AlignedMalloc(size, ALLOCATION_BOUNDARY); }
+void  FMallocLowLevel::Free(void* ptr) { AlignedFree(ptr); }
+void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) { return AlignedCalloc(nmemb, size, ALLOCATION_BOUNDARY); }
+void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return AlignedRealloc(ptr, size, ALLOCATION_BOUNDARY); }
 void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return _aligned_malloc(size, alignment); }
 void  FMallocLowLevel::AlignedFree(void *ptr) { _aligned_free(ptr); }
 void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
@@ -115,11 +115,7 @@ void  FMallocLowLevel::ReleasePendingBlocks() {}
 size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT { return size; }
 #if !USE_PPE_FINAL_RELEASE
 size_t FMallocLowLevel::RegionSize(void* ptr) {
-#   ifdef PLATFORM_WINDOWS
-    return ::_msize(ptr);
-#   else
-    return 0;
-#   endif
+    return ::_aligned_msize(ptr, ALLOCATION_BOUNDARY, 0);
 }
 void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {
     // #TODO
