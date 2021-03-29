@@ -164,7 +164,9 @@ protected:
 template <typename _Char>
 class TBasicTextWriter : public FBaseTextWriter {
 public:
-    static constexpr _Char DefaultFillChar();
+    static constexpr _Char DefaultFillChar() {
+        return STRING_LITERAL(_Char, ' ');
+    }
 
     TBasicTextWriter(IBufferedStreamWriter* s) noexcept
         : FBaseTextWriter(s)
@@ -236,9 +238,6 @@ public:
 private:
     _Char _fillChar;
 };
-//----------------------------------------------------------------------------
-template <> constexpr char TBasicTextWriter<char>::DefaultFillChar() { return ' '; }
-template <> constexpr wchar_t TBasicTextWriter<wchar_t>::DefaultFillChar() { return L' '; }
 //----------------------------------------------------------------------------
 template <> PPE_CORE_API void TBasicTextWriter<char>::Put(char ch);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Put(wchar_t ch);
