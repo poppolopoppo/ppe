@@ -105,144 +105,86 @@ void Format(TBasicString<_Char>& result, const TBasicStringView<_Char>& format, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatManip(char ch) noexcept {
+namespace details {
+template <typename _Char>
+constexpr bool ValidateFormatManip_(_Char ch) noexcept {
     switch (ch) {
-    case '*':
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-    case 'a':
-    case 'A':
-    case 'b':
-    case 'B':
-    case 'd':
-    case 'D':
-    case 'x':
-    case 'X':
-    case 'o':
-    case 'O':
-    case 'f':
-    case 'F':
-    case 's':
-    case 'S':
-    case 'U':
-    case 'l':
-    case 'C':
-    case '-':
-    case '#':
-    case '@':
-    case '/':
+    case STRING_LITERAL(_Char, '*'):
+    case STRING_LITERAL(_Char, '0'):
+    case STRING_LITERAL(_Char, '1'):
+    case STRING_LITERAL(_Char, '2'):
+    case STRING_LITERAL(_Char, '3'):
+    case STRING_LITERAL(_Char, '4'):
+    case STRING_LITERAL(_Char, '5'):
+    case STRING_LITERAL(_Char, '6'):
+    case STRING_LITERAL(_Char, '7'):
+    case STRING_LITERAL(_Char, '8'):
+    case STRING_LITERAL(_Char, '9'):
+    case STRING_LITERAL(_Char, 'a'):case STRING_LITERAL(_Char, 'A'):
+    case STRING_LITERAL(_Char, 'b'):case STRING_LITERAL(_Char, 'B'):
+    case STRING_LITERAL(_Char, 'd'):case STRING_LITERAL(_Char, 'D'):
+    case STRING_LITERAL(_Char, 'x'):case STRING_LITERAL(_Char, 'X'):
+    case STRING_LITERAL(_Char, 'o'):case STRING_LITERAL(_Char, 'O'):
+    case STRING_LITERAL(_Char, 'f'):case STRING_LITERAL(_Char, 'F'):
+    case STRING_LITERAL(_Char, 's'):case STRING_LITERAL(_Char, 'S'):
+    case STRING_LITERAL(_Char, 'U'):
+    case STRING_LITERAL(_Char, 'l'):
+    case STRING_LITERAL(_Char, 'C'):
+    case STRING_LITERAL(_Char, '-'):
+    case STRING_LITERAL(_Char, '#'):
+    case STRING_LITERAL(_Char, '@'):
+    case STRING_LITERAL(_Char, '/'):
         return true;
     default:
         return false;
     }
+}
+template <typename _Char>
+constexpr bool ValidateFormatString_(const _Char* fmt, size_t len, size_t numArgs) noexcept {
+    size_t unusedArgs = ((size_t(1) << numArgs) - 1);
+    for (size_t i = 0; i < len - 2; ++i) {
+        if (fmt[i] == STRING_LITERAL(_Char, '\0')) return false;
+        if (fmt[i] == STRING_LITERAL(_Char, '{') && fmt[i + 1] >= STRING_LITERAL(_Char, '0') && fmt[i + 1] <= STRING_LITERAL(_Char, '9')) {
+            const size_t argIndex = (size_t(fmt[i + 1]) - STRING_LITERAL(_Char, '0'));
+            if (argIndex >= numArgs)
+                return false; // argument index out of bounds
+
+            switch (fmt[i + 2]) {
+            case STRING_LITERAL(_Char, '}'): // short format
+                i += 2;
+                break;
+            case STRING_LITERAL(_Char, ':'): // validate long format
+                i += 3;
+                while (i < len && fmt[i] != STRING_LITERAL(_Char, '}'))
+                    if (not ValidateFormatManip(fmt[i++]))
+                        return false;
+                break;
+            default: // invalid format (assuming 1 digit)
+                continue; // could be a user '{', ignoring
+            }
+
+            if (fmt[i] == STRING_LITERAL(_Char, '}')) // ignore unclosed/invalid format clauses
+                unusedArgs &= ~(size_t(1) << argIndex);
+        }
+    }
+    return (0 == unusedArgs); // each arg should be used at least once
+}
+} //!details
+//----------------------------------------------------------------------------
+constexpr bool ValidateFormatManip(char ch) noexcept {
+    return details::ValidateFormatManip_(ch);
 }
 //----------------------------------------------------------------------------
 constexpr bool ValidateFormatManip(wchar_t ch) noexcept {
-    switch (ch) {
-    case L'*':
-    case L'0':
-    case L'1':
-    case L'2':
-    case L'3':
-    case L'4':
-    case L'5':
-    case L'6':
-    case L'7':
-    case L'8':
-    case L'9':
-    case L'a':
-    case L'A':
-    case L'b':
-    case L'B':
-    case L'd':
-    case L'D':
-    case L'x':
-    case L'X':
-    case L'o':
-    case L'O':
-    case L'f':
-    case L'F':
-    case L's':
-    case L'S':
-    case L'U':
-    case L'l':
-    case L'C':
-    case L'-':
-    case L'#':
-    case L'@':
-    case L'/':
-        return true;
-    default:
-        return false;
-    }
+    return details::ValidateFormatManip_(ch);
 }
 //----------------------------------------------------------------------------
 constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs) noexcept {
-    size_t unusedArgs = ((size_t(1) << numArgs) - 1);
-    for (size_t i = 0; i < len - 2; ++i) {
-        if (fmt[i] == '\0') return false;
-        if (fmt[i] == '{' && fmt[i + 1] >= '0' && fmt[i + 1] <= '9') {
-            const size_t argIndex = (size_t(fmt[i + 1]) - '0');
-            if (argIndex >= numArgs)
-                return false; // argument index out of bounds
-
-            switch (fmt[i + 2]) {
-            case '}': // short format
-                i += 2;
-                break;
-            case ':': // validate long format
-                i += 3;
-                while (i < len && fmt[i] != '}')
-                    if (not ValidateFormatManip(fmt[i++]))
-                        return false;
-                break;
-            default: // invalid format (assuming 1 digit)
-                continue; // could be a user '{', ignoring
-            }
-
-            if (fmt[i] == '}') // ignore unclosed/invalid format clauses
-                unusedArgs &= ~(size_t(1) << argIndex);
-        }
-    }
-    return (0 == unusedArgs); // each arg should be used at least once
+    return details::ValidateFormatString_(fmt, len, numArgs);
 }
 //----------------------------------------------------------------------------
 constexpr bool ValidateFormatString(const wchar_t* fmt, size_t len, size_t numArgs) noexcept {
-    size_t unusedArgs = ((size_t(1) << numArgs) - 1);
-    for (size_t i = 0; i < len - 2; ++i) {
-        if (fmt[i] == L'\0') return false;
-        if (fmt[i] == L'{' && fmt[i + 1] >= L'0' && fmt[i + 1] <= L'9') {
-            const size_t argIndex = (size_t(fmt[i + 1]) - L'0');
-            if (argIndex >= numArgs)
-                return false; // argument index out of bounds
-
-            switch (fmt[i + 2]) {
-            case L'}': // short format
-                i += 2;
-                break;
-            case L':': // validate long format
-                i += 3;
-                while (i < len && fmt[i] != L'}')
-                    if (not ValidateFormatManip(fmt[i++]))
-                        return false;
-                break;
-            default: // invalid format (assuming 1 digit)
-                continue; // could be a user '{', ignoring
-            }
-
-            if (fmt[i] == L'}') // ignore unclosed/invalid format clauses
-                unusedArgs &= ~(size_t(1) << argIndex);
-        }
-    }
-    return (0 == unusedArgs); // each arg should be used at least once
+    return details::ValidateFormatString_(fmt, len, numArgs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

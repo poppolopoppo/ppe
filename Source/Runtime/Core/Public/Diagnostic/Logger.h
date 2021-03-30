@@ -136,17 +136,19 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
 
-#define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) do { \
+#define LOG_VALIDATEFORMAT(_FORMAT, ...) \
     static_assert( /* validate format strings statically */ \
         ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
-        "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) ); \
+        "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) );
+#define LOG(_CATEGORY, _LEVEL, ...) do { \
+    LOG_VALIDATEFORMAT(__VA_ARGS__) \
     ::PPE::FLogger::Log( \
         LOG_CATEGORY_GET(_CATEGORY), \
         ::PPE::FLogger::EVerbosity::_LEVEL, \
         ::PPE::FLogger::FSiteInfo::Make( \
             WIDESTRING(__FILE__), \
             __LINE__ ), \
-        _FORMAT, __VA_ARGS__ ); \
+        __VA_ARGS__ ); \
     } while (0)
 
 #define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
