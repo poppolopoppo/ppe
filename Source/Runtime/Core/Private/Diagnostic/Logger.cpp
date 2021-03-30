@@ -262,6 +262,12 @@ public:
 
 public: // ILowLevelLogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        // don't treat errors in background
+        if (level == EVerbosity::Error || level == EVerbosity::Fatal) {
+            _userLogger->Log(category, level, site, text);
+            return;
+        }
+
         FDeferredLog* log;
         { // don't lock both allocator & task manager to avoid dead locking
             const FLogAllocator::FScope scopeAlloc;
@@ -283,6 +289,12 @@ public: // ILowLevelLogger
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
+        // don't treat errors in background
+        if (level == EVerbosity::Error || level == EVerbosity::Fatal) {
+            _userLogger->LogArgs(category, level, site, format, args);
+            return;
+        }
+
         FDeferredLog* log;
         { // don't lock both allocator & task manager to avoid dead locking
             const FLogAllocator::FScope scopeAlloc;
