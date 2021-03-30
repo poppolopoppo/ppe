@@ -818,6 +818,8 @@ static NO_INLINE void Test_InteractiveConsole_() {
             FPlatformConsole::Write(L" ", FPlatformConsole::WHITE_ON_BLACK);
 
             const size_t length = FPlatformConsole::Read(buffer);
+            if (0 == length)
+                break;
 
             FStringView line{ buffer, length };
             line = Strip(Chomp(line));

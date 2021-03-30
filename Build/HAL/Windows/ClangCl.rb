@@ -43,7 +43,7 @@ module Build
         end
         def dbg_env()
             env = super()
-            env['PATH'].prepend(File.join(@llvmPath, 'bin')<<';')
+            env['PATH'] = File.join(@llvmPath, 'bin')<<';'<<env['PATH']
             return env
         end
         def add_includePath(facet, dirpath)
@@ -94,7 +94,7 @@ module Build
 
         compilationFlag!(*warningOptions)
         compilationFlag!("-fmsc-version=#{Visual::MSC_VER_2019}")
-        compilationFlag!('-msse4.2', '-Xclang', "-std=#{Build.CppStd}")
+        compilationFlag!('-msse4.2')
         compilationFlag!(*%w{ -fms-compatibility -fms-extensions -fcolor-diagnostics })
         compilationFlag!(*%w{ /clang:-fno-elide-type /clang:-fdiagnostics-show-template-tree })
 

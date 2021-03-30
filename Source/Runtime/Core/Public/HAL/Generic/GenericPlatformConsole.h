@@ -54,7 +54,7 @@ public: // must be defined for every platform
     };
     ENUM_FLAGS_FRIEND(EAttribute);
 
-    static void Open() = delete;
+    static bool Open() = delete;
     static void Close() = delete;
 
     static size_t Read(const TMemoryView<char>& buffer) = delete;
@@ -62,6 +62,8 @@ public: // must be defined for every platform
 
     static void Write(const FStringView& text, EAttribute attrs = Default) = delete;
     static void Write(const FWStringView& text, EAttribute attrs = Default) = delete;
+
+    static void Flush() = delete;
 
 };
 //----------------------------------------------------------------------------

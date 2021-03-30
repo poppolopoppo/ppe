@@ -759,10 +759,11 @@ private:
 };
 //----------------------------------------------------------------------------
 class FConsoleWriterLogger_ final : public ILogger {
+    const bool _available;
 public:
-    FConsoleWriterLogger_() {
-        FPlatformConsole::Open();
-    }
+    FConsoleWriterLogger_()
+    : _available(FPlatformConsole::Open())
+    {}
 
     ~FConsoleWriterLogger_() {
         FPlatformConsole::Close();
@@ -770,10 +771,13 @@ public:
 
 public: // ILogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        if (not _available)
+            return;
+
         FWStringBuilder oss(text.size());
         FLogFormat::Print(oss, category, level, site, text);
 
-        FPlatformConsole::EAttribute attrs;
+        FPlatformConsole::EAttribute attrs{};
 
         switch (level) {
         case ELoggerVerbosity::Info:
@@ -802,7 +806,10 @@ public: // ILogger
         FPlatformConsole::Write(oss.Written(), attrs);
     }
 
-    virtual void Flush(bool) override final {}
+    virtual void Flush(bool) override final {
+        if (_available)
+            FPlatformConsole::Flush();
+    }
 };
 //----------------------------------------------------------------------------
 class FFileHandleLogger_ final : public ILogger, IStreamWriter {
