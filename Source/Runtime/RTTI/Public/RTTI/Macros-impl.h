@@ -52,7 +52,7 @@
 //----------------------------------------------------------------------------
 // Internal helper
 #define _RTTI_FUNCTION_IMPL(_Name, _Flags, _Func, ...) \
-    RegisterFunction(::PPE::RTTI::TMakeFunction<decltype(_Func)>::Make<_Func>(::PPE::RTTI::FName(_Name), (_Flags), { PP_FOREACH_ARGS(STRINGIZE, __VA_ARGS__) }))
+    RegisterFunction(::PPE::RTTI::MakeFunction<_Func>(::PPE::RTTI::FName(_Name), { PP_FOREACH_ARGS(STRINGIZE, __VA_ARGS__) }, (_Flags) ))
 //----------------------------------------------------------------------------
 // Add a public function
 #define RTTI_FUNCTION(_Name, ...) \

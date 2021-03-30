@@ -33,8 +33,10 @@ FMetaParameter MakeParameter(TTypeTag< T >, const FStringView& name) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T> struct TMakeFunction {};
+namespace details {
 //----------------------------------------------------------------------------
+template <typename _Function>
+struct TMakeFunction;
 template <typename _Result, class _Class, typename... _Args>
 struct TMakeFunction<_Result (_Class::*)(_Args...)> {
 
@@ -80,7 +82,6 @@ private:
         }
     };
 };
-//----------------------------------------------------------------------------
 template <typename _Result, class _Class, typename... _Args>
 struct TMakeFunction<_Result (_Class::*)(_Args...) const> {
     template <_Result(_Class::* _Member)(_Args...) const>
@@ -125,6 +126,16 @@ private:
         }
     };
 };
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+template <auto _Function>
+FMetaFunction MakeFunction(
+    const FName& name,
+    std::initializer_list<FStringView> parametersName,
+    EFunctionFlags flags = EFunctionFlags::Public ) {
+    return details::TMakeFunction<decltype(_Function)>::template Make<_Function>(name, flags, parametersName);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
