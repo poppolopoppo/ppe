@@ -435,8 +435,37 @@ PTypeTraits FMetaDatabase::TraitsIFP(const FLazyName& name) const {
 void FMetaDatabase::InitializeNativeTypes_() {
 #define RegisterNativeType_(_NAME, _TYPE, _TYPEID) \
     RegisterTraits_(RTTI::FName(STRINGIZE(_NAME)), MakeTraits(ENativeType::_NAME));
+
     FOREACH_RTTI_NATIVETYPES(RegisterNativeType_)
+
 #undef RegisterNativeType_
+#define RegisterAliasedType_(_NAME, _TYPE) \
+    RegisterTraits_(RTTI::FName(STRINGIZE(_NAME)), MakeTraits<_TYPE>())
+
+    RegisterAliasedType_(Byte2, byte2);
+    RegisterAliasedType_(Byte4, byte4);
+    RegisterAliasedType_(UByte2, ubyte2);
+    RegisterAliasedType_(UByte4, ubyte4);
+    RegisterAliasedType_(Short2, short2);
+    RegisterAliasedType_(Short4, short4);
+    RegisterAliasedType_(UShort2, ushort2);
+    RegisterAliasedType_(UShort4, ushort4);
+    RegisterAliasedType_(Word2, word2);
+    RegisterAliasedType_(Word3, word3);
+    RegisterAliasedType_(Word4, word4);
+    RegisterAliasedType_(UWord2, uword2);
+    RegisterAliasedType_(UWord3, uword3);
+    RegisterAliasedType_(UWord4, uword4);
+    RegisterAliasedType_(Float2, float2);
+    RegisterAliasedType_(Float3, float3);
+    RegisterAliasedType_(Float4, float4);
+    RegisterAliasedType_(Float2x2, float2x2);
+    RegisterAliasedType_(Float3x3, float3x3);
+    RegisterAliasedType_(Float4x4, float4x4);
+
+    RegisterAliasedType_(PathName, FPathName);
+
+#undef RegisterAliasedType_
 }
 //----------------------------------------------------------------------------
 void FMetaDatabase::RegisterTraits_(const FName& name, const PTypeTraits& traits) {
