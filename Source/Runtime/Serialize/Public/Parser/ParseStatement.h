@@ -45,10 +45,10 @@ inline TRefPtr<FEvalExpr> MakeEvalExpr(const Parser::PCParseExpression& expr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FPropertyAssignment : public FParseStatement {
+class FPropertyDefinition : public FParseStatement {
 public:
-    FPropertyAssignment(const RTTI::FName& name, const Parser::PCParseExpression& value, const Lexer::FSpan& site);
-    virtual ~FPropertyAssignment();
+    FPropertyDefinition(const RTTI::FName& name, const Parser::PCParseExpression& value, const Lexer::FSpan& site);
+    virtual ~FPropertyDefinition();
 
     const RTTI::FName& Name() const { return _name; }
     const Parser::PCParseExpression& Value() const { return _value; }
@@ -61,11 +61,11 @@ private:
     Parser::PCParseExpression _value;
 };
 //----------------------------------------------------------------------------
-inline TRefPtr<FPropertyAssignment> MakePropertyAssignment(
+inline TRefPtr<FPropertyDefinition> MakePropertyDefinition(
     const RTTI::FName& name,
     const Parser::PCParseExpression& value,
     const Lexer::FSpan& site) {
-    return NEW_REF(Parser, FPropertyAssignment, name, value, site);
+    return NEW_REF(Parser, FPropertyDefinition, name, value, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -628,8 +628,6 @@ static Parser::TProduction<RTTI::PTypeTraits> ExpectTypenameRTTI() {
 class FGrammarImpl {
 public:
 
-#define USE_GRAMMAR_WORKAROUND_VS2019 1
-
     FGrammarImpl() NOEXCEPT;
     ~FGrammarImpl();
 
@@ -660,11 +658,8 @@ private:
 
     Parser::TProduction< expr_t > _literal;
 
-    Parser::TProduction< statement_t > _property;
-#if !USE_GRAMMAR_WORKAROUND_VS2019
-    Parser::TProduction< many_statement_t > _objectInner;
-#endif
-    Parser::TProduction< expr_t > _object;
+    Parser::TProduction< statement_t > _propertyDef;
+    Parser::TProduction< expr_t > _objectDef;
 
     Parser::TProduction< expr_t > _tuple;
     Parser::TProduction< expr_t > _array;
@@ -695,23 +690,6 @@ private:
 FGrammarImpl::FGrammarImpl() NOEXCEPT
 :   _lvalue(_ternary)
 
-#if !USE_GRAMMAR_WORKAROUND_VS2019
-,   _export(Parser::And(
-        Parser::Optional<symbol_t::Export>(),
-        Parser::Sequence<symbol_t::Identifier, symbol_t::Is>(),
-        _lvalue.Ref() )
-    .Select<expr_t>([](expr_t* dst, const site_t& site, const TTuple<match_p, TTuple<match_p, match_p>, expr_t>&& src) {
-        match_p const exportIFP = std::get<0>(src);
-        match_p const name = std::get<0>(std::get<1>(src));
-        const expr_t& value = std::get<2>(src);
-
-        const Parser::FVariableExport::EFlags scope = (exportIFP)
-            ? Parser::FVariableExport::Global
-            : Parser::FVariableExport::Public;
-
-        *dst = Parser::MakeVariableExport(RTTI::FName(name->Value()), value, scope, site);
-    }))
-#else
 ,   _export([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
         match_p export_ = nullptr, id_ = nullptr, is_ = nullptr;
         auto scope = Parser::FVariableExport::Public;
@@ -733,7 +711,6 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
         return Parser::FParseResult::Success(site);
     })
-#endif
 
 ,   _expr(Parser::Switch(
         _export,
@@ -747,37 +724,6 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         *dst = Parser::MakeEvalExpr(expr);
     }))
 
-#if !USE_GRAMMAR_WORKAROUND_VS2019
-,   _literal(Parser::Or(
-        Parser::Expect<symbol_t::Null, expr_t>([](match_p src) -> expr_t {
-            return Parser::MakeLiteral(FParseObject(), src->Site());
-        }),
-        Parser::Expect<symbol_t::True, expr_t>([](match_p src) -> expr_t {
-            return Parser::MakeLiteral(true, src->Site());
-        }),
-        Parser::Expect<symbol_t::False, expr_t>([](match_p src) -> expr_t {
-            return Parser::MakeLiteral(false, src->Site());
-        }),
-        Parser::Expect<symbol_t::Integer, expr_t>([](match_p src ) -> expr_t {
-            i64 i;
-            Verify(Atoi(&i, src->Value(), 10));
-            return Parser::MakeLiteral(i, src->Site());
-        }),
-        Parser::Expect<symbol_t::Unsigned, expr_t>([](match_p src) -> expr_t {
-            u64 u;
-            Verify(Atoi(&u, src->Value(), 10));
-            return Parser::MakeLiteral(u, src->Site());
-        }),
-        Parser::Expect<symbol_t::Float, expr_t>([](match_p src) -> expr_t {
-            double d;
-            Verify(Atod(&d, src->Value()));
-            return Parser::MakeLiteral(d, src->Site());
-        }),
-        Parser::Expect<symbol_t::String, expr_t>([](match_p src)  -> expr_t {
-            return Parser::MakeLiteral(FString(src->Value()), src->Site());
-        })
-    ))
-#else
 ,   _literal([](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
         match_p m = nullptr;
 
@@ -810,20 +756,8 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         Assert(*dst);
         return Parser::FParseResult::Success(m->Site());
     })
-#endif
 
-#if !USE_GRAMMAR_WORKAROUND_VS2019
-,   _property(Parser::And(
-        Parser::Sequence<symbol_t::Identifier, symbol_t::Assignment>(),
-        _expr.Ref() )
-    .Select<statement_t>([](statement_t* dst, const site_t& site, TTuple<TTuple<match_p, match_p>, expr_t>&& src) {
-        match_p name = std::get<0>(std::get<0>(src));
-        expr_t& value = std::get<1>(src);
-
-        *dst = Parser::MakePropertyAssignment(RTTI::FName(name->Value()), value, site);
-    }))
-#else
-,   _property([this](Parser::FParseList& input, statement_t* dst) -> Parser::FParseResult {
+,   _propertyDef([this](Parser::FParseList& input, statement_t* dst) -> Parser::FParseResult {
         match_p id_ = nullptr, assign_ = nullptr;
         if (not input.Expect<symbol_t::Identifier>(&id_))
             return Parser::FParseResult::Unexpected(symbol_t::Identifier, id_, input);
@@ -836,32 +770,12 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
             return result;
 
         const site_t site{ Lexer::FSpan::FromSite(id_->Site(), value->Site()) };
-        *dst = Parser::MakePropertyAssignment(RTTI::FName(id_->Value()), value, site);
+        *dst = Parser::MakePropertyDefinition(RTTI::FName(id_->Value()), value, site);
 
         return Parser::FParseResult::Success(site);
     })
-#endif
 
-#if !USE_GRAMMAR_WORKAROUND_VS2019
-,   _objectInner(_property.Many())
-,   _object(Parser::And(
-        Parser::Expect<symbol_t::Identifier>(),
-        Parser::Closure<
-            symbol_t::LBrace,
-            symbol_t::RBrace >(_objectInner) )
-    .Select<expr_t>([](
-        expr_t* dst,
-        const site_t& site,
-        TTuple<match_p, many_statement_t>&& src) {
-        match_p name = std::get<0>(src);
-        many_statement_t& statements = std::get<1>(src);
-        *dst = Parser::MakeObjectDefinition(
-            RTTI::FName(name->Value()), site,
-            MakeMoveIterator(statements.begin()),
-            MakeMoveIterator(statements.end()) );
-    }))
-#else
-,   _object([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+,   _objectDef([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
         match_p class_ = nullptr, brace_ = nullptr;
         if (not input.Expect<symbol_t::Identifier>(&class_))
             return Parser::FParseResult::Unexpected(symbol_t::Identifier, class_, input);
@@ -869,7 +783,7 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
             return Parser::FParseResult::Unexpected(symbol_t::LBrace, brace_, input);
 
         many_statement_t inner;
-        const Parser::FParseResult result = _property.Many()(input, &inner);
+        const Parser::FParseResult result = _propertyDef.Many()(input, &inner);
         if (not result)
             return result;
 
@@ -884,7 +798,6 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
         return Parser::FParseResult::Success(site);
     })
-#endif
 
 ,   _tuple(Parser::Closure<
         symbol_t::LParenthese,
@@ -903,12 +816,6 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         *dst = Parser::MakeArrayExpr(src.MakeView(), site);
     }))
 
-#if !USE_GRAMMAR_WORKAROUND_VS2019
-,   _dictionaryItem(Parser::And(
-        _expr.Ref(),
-        Parser::Expect<symbol_t::Comma>(),
-        _expr.Ref() ))
-#else
 ,   _dictionaryItem([this](Parser::FParseList& input, TTuple<expr_t, match_p, expr_t>* dst) -> Parser::FParseResult {
         expr_t key;
         Parser::FParseResult result = _expr(input, &key);
@@ -929,7 +836,6 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
         return Parser::FParseResult::Success(site);
     })
-#endif
 ,   _dictionaryInner(Parser::Closure<
         symbol_t::LParenthese,
         symbol_t::RParenthese >(_dictionaryItem)
@@ -947,48 +853,6 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         *dst = Parser::MakeDictionaryExpr(std::move(dico), site);
     }))
 
-#if !USE_GRAMMAR_WORKAROUND_VS2019
-,   _variable(Parser::Or(
-        Parser::Expect<symbol_t::Identifier>()
-            .Select<expr_t>([](expr_t* dst, const site_t& site, match_p&& src) {
-                RTTI::FPathName pathName;
-                pathName.Identifier = RTTI::FName(src->Value());
-
-                *dst = Parser::MakeVariableReference(pathName, site);
-            }),
-        Parser::Sequence<
-            symbol_t::Dollar,
-            symbol_t::Div,
-            symbol_t::Identifier,
-            symbol_t::Div,
-            symbol_t::Identifier >()
-        .Select<expr_t>([](
-            expr_t* dst,
-            const site_t& site,
-            TTuple<match_p, match_p, match_p, match_p, match_p>&& src) {
-            match_p transaction = std::get<2>(src);
-            match_p identifier = std::get<4>(src);
-
-            RTTI::FPathName pathName;
-            pathName.Transaction = RTTI::FName(transaction->Value());
-            pathName.Identifier = RTTI::FName(identifier->Value());
-
-            *dst = Parser::MakeVariableReference(pathName, site);
-        }),
-        Parser::Sequence<
-            symbol_t::Complement,
-            symbol_t::Div,
-            symbol_t::Identifier>()
-        .Select<expr_t>([](expr_t* dst, const site_t& site, TTuple<match_p, match_p, match_p>&& src) {
-            match_p identifier = std::get<2>(src);
-
-            RTTI::FPathName pathName;
-            pathName.Identifier = RTTI::FName(identifier->Value());
-
-            *dst = Parser::MakeVariableReference(pathName, site);
-        })
-    ))
-#else
 ,   _variable([](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
         site_t site;
         RTTI::FPathName pathName;
@@ -1031,14 +895,13 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
         return Parser::FParseResult::Success(site);
     })
-#endif
 
 ,   _reference(Parser::Switch(
         _literal,
         _tuple,
         _array,
         _dictionary,
-        _object,
+        _objectDef,
         _variable
     ))
 

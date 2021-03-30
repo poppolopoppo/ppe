@@ -46,7 +46,7 @@ void FEvalExpr::Execute(FParseContext *context) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FPropertyAssignment::FPropertyAssignment(
+FPropertyDefinition::FPropertyDefinition(
     const RTTI::FName& name,
     const Parser::PCParseExpression& value,
     const Lexer::FSpan& site)
@@ -57,9 +57,9 @@ FPropertyAssignment::FPropertyAssignment(
     Assert(value);
 }
 //----------------------------------------------------------------------------
-FPropertyAssignment::~FPropertyAssignment() = default;
+FPropertyDefinition::~FPropertyDefinition() = default;
 //----------------------------------------------------------------------------
-void FPropertyAssignment::Execute(FParseContext *context) const {
+void FPropertyDefinition::Execute(FParseContext *context) const {
     Assert(context);
 
     RTTI::FMetaObject *obj = context->ScopeObject();
@@ -82,7 +82,7 @@ void FPropertyAssignment::Execute(FParseContext *context) const {
         PPE_THROW_IT(FParserException("invalid property assignment", this));
 }
 //----------------------------------------------------------------------------
-FString FPropertyAssignment::ToString() const {
+FString FPropertyDefinition::ToString() const {
     return PPE::ToString(_name.MakeView());
 }
 //----------------------------------------------------------------------------
