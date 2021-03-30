@@ -118,6 +118,16 @@ public:
     bool RTTI_PropertyMoveFrom(const FName& propName, FAtom& src) NOEXCEPT;
     bool RTTI_PropertyMoveFrom(const FStringView& propName, FAtom& src) NOEXCEPT;
 
+    // Note: these functions are exported for every objects
+
+    bool RTTI_PropertySet(const FName& propName, const FAny& src);
+
+    bool RTTI_PropertyAdd(const FName& propName, const FAny& item);
+    bool RTTI_PropertyRemove(const FName& propName, const FAny& item);
+
+    bool RTTI_PropertyInsert(const FName& propName, const FAny& key, const FAny& value);
+    bool RTTI_PropertyErase(const FName& propName, const FAny& key);
+
     virtual void RTTI_Load(ILoadContext& context);
     virtual void RTTI_Unload(IUnloadContext& context);
 
