@@ -7,7 +7,7 @@ require_once 'Utils/Options.rb'
 module Build
     extend self
 
-    VERSION = '1.0.2'
+    VERSION = '1.1'
 
     persistent_switch(:Cache, 'Use compilation cache')
     persistent_switch(:Diagnose, 'Use compilation diagnostics')

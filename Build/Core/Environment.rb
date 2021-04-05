@@ -58,7 +58,7 @@ module Build
             case path
             when String
                 path = source_path(path)
-                return path.start_with?(root.to_s) ? Pathname.new(path).relative_path_from(root).to_s : path
+                return Pathname.new(path).relative_path_from(root).to_s # path.start_with?(root.to_s) ? Pathname.new(path).relative_path_from(root).to_s : path
             when Array
                 path.collect{|x| relative_path(root, x) }
             when Set

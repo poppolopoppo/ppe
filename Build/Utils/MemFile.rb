@@ -9,7 +9,7 @@ require 'fileutils' # mkdir_p
 module Build
 
     class MemFile
-        attr_reader :filename, :io
+        attr_reader :filename, :io, :tab
         attr_reader :line, :column
         def initialize(filename, tab: '  ')
             @filename = filename
