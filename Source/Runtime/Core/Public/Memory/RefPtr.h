@@ -137,6 +137,14 @@ private:
 #endif
 };
 //----------------------------------------------------------------------------
+// Create an intrusive ref counted wrapper for any T
+template <typename T>
+class TRefCountable final : public FRefCountable, public T {
+    STATIC_ASSERT(not std::is_base_of_v<FRefCountable, T>);
+public:
+    using T::T;
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
