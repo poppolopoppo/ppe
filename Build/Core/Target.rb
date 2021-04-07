@@ -67,7 +67,7 @@ module Build
 
         attr_reader :abs_path, :var_path
 
-        attr_accessor :source_path
+        #attr_accessor :source_path # customized bellow
         attr_accessor :unity_num_files
         attr_accessor :glob_patterns
         attr_accessor :excluded_patterns
@@ -163,6 +163,9 @@ module Build
                 addIncludePaths &= (visibility != :runtime || !env.target_dynamic_link?(dep)) # don't include runtime deps with dynamic link
                 if addIncludePaths
                     facet.includePaths << env.source_path(dep.public_path)
+                    if dep.generated_public_path?
+                        facet.includePaths << env.generated_path(dep.public_path)
+                    end
                 end
 
                 addIncludes = (visibility == :public)
@@ -185,10 +188,20 @@ module Build
             end
 
             unless @generateds.empty?
-                facet.includePaths << env.generated_path(target.abs_path)
+                written = 0
+                has_generated_public = false
+                has_generated_private = false
                 @generateds.each do |name, gen|
-                    gen.generate(facet, env, self)
+                    if gen.public?
+                        has_generated_public = true
+                    else
+                        has_generated_private = true
                 end
+                    written += 1 if gen.generate(facet, env, self)
+                end
+                facet.includePaths << env.generated_path(self.public_path) if has_generated_public
+                facet.includePaths << env.generated_path(self.private_path) if has_generated_private
+                Log.verbose 'invalidated %d / %d generated files for <%s>', written, @generateds.length, env.generated_key(self) if written > 0
             end
 
             if @unity_num_files.nil? && !headers? && !tag?(:nounity)
@@ -230,6 +243,17 @@ module Build
 
         def public_path() expand_path('Public') end
         def private_path() expand_path('Private') end
+
+        def source_path=(path)
+            @source_path = path
+        end
+        def source_path(env=nil, path=nil)
+            if env.nil?
+                return @source_path
+            else
+                return env.source_path(expand_path(path))
+            end
+        end
 
         def to_s() abs_path end
 
@@ -276,7 +300,14 @@ module Build
         def all_source_files() return (self.source_files + self.isolated_files) end
         def unity_excluded_files() return (self.isolated_files + self.excluded_files) end
 
-        def generate!(filename, scope=:generated, &generator)
+        def generated_public_path?()
+            @generateds.values.each do |generator|
+                return true if generator.public?
+            end
+            return false
+        end
+
+        def generate!(filename, scope=:private, &generator)
             Assert.check{ !@generateds.include?(filename) }
             @generateds[filename] = Generated.new(filename, scope, &generator)
             return self
@@ -286,16 +317,16 @@ module Build
         def find_source_fileset(env)
             fileset = Set.new
             @source_files.each do |fname|
-                fileset << env.source_path(expand_path(fname))
+                fileset << source_path(env, fname)
             end
             @isolated_files.each do |fname|
-                fileset << env.source_path(expand_path(fname))
+                fileset << source_path(env, fname)
             end
             @glob_patterns.each do |pattern|
-                fileset.merge(Dir["#{env.source_path(@source_path)}/**/#{pattern}"])
+                fileset.merge(DirCache[source_path(env, "**/#{pattern}")])
             end
             @excluded_files.each do |fname|
-                fileset.delete?(env.source_path(expand_path(fname)))
+                fileset.delete?(source_path(env, fname))
             end
             return fileset
         end
@@ -305,7 +336,7 @@ module Build
             fileset = find_source_fileset(env)
             fileset.merge(DirCache[source_path(env, '**/*.h')])
             @generateds.each do |name, gen|
-                fileset << env.generated_path(expand_path(gen.path))
+                fileset << gen.generated_path(env, self)
             end
             return fileset
         end

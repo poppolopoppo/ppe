@@ -9,28 +9,34 @@ require_once '../Utils/Prerequisite.rb'
 module Build
 
     class Generated
-        attr_reader :path, :generator
+        attr_reader :path, :scope, :generator
         def initialize(path, scope, &generator)
             @path = path
             @scope = scope
             @generator = generator
         end
 
-        ## generate a file in the output file for a target
-        def generate(facet, env, target)
+        def public?() return @scope == :public end
+
+        def scope_path()
             case @scope
-            when :generated
-                key = 'Generated.'+env.generated_key(target.abs_path, @path)
-                path = env.generated_path(target.expand_path(@path))
             when :public
-                key = 'Public.'+File.join(target.abs_path, @path)
-                path = env.source_path(target.expand_path(File.join('Public', @path)))
+                return 'Public'
             when :private
-                key = 'Private.'+File.join(target.abs_path, @path)
-                path = env.source_path(target.expand_path(File.join('Private', @path)))
+                return 'Private'
             else
                 Log.fatal 'unsupported generated scope <%s>', @scope
             end
+        end
+
+        def generated_path(env, target)
+            return env.generated_path(target.expand_path(self.scope_path))
+        end
+
+        ## generate a file in the output file for a target
+        def generate(facet, env, target)
+            key = "Generated."+env.generated_key(target.abs_path, self.scope_path, @path)
+            path = File.join(generated_path(env, target), @path)
 
             Log.debug('generating "%s" for target <%s>', path, target)
 

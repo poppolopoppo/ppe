@@ -455,19 +455,7 @@ $Build.ppe_external!(:vulkan) do
     source_files!(*%w{
         Private/vulkan.cpp
     })
-    generate!('vulkan-exports.generated.h', :generated) do |facet, env, io|
-        vk_path = expand_path('Vulkan-Header.git/include/vulkan')
-        vk_path = env.source_path(vk_path)
-
-        vk_headers = [ File.join(vk_path, 'vulkan_core.h') ]
-
-        case env.platform.os
-        when :Windows
-            vk_headers << File.join(vk_path, 'vulkan_win32.h')
-        when :Linux
-            vk_headers << File.join(vk_path, 'vulkan_xlib.h')
-        else
-            Log.fatal 'unsupported os <%s>', env.platform.os
+    generate!('vulkan-exports.generated.h', :public) do |facet, env, io|
         end
 
         exports_inl = expand_path('Public/vulkan-exports.inl')

@@ -78,6 +78,12 @@ module Build
 
                 private_path = env.source_path(m.private_path)
                 globalIncludePaths << private_path if DirCache.exist?(private_path)
+
+                gen_public_path = env.generated_path(m.public_path)
+                globalIncludePaths << gen_public_path if DirCache.exist?(gen_public_path)
+
+                gen_private_path = env.generated_path(m.private_path)
+                globalIncludePaths << gen_private_path if DirCache.exist?(gen_private_path)
             end
 
             globalDefinitions.uniq!
@@ -159,7 +165,7 @@ module Build
             if File.exist?(compdb)
                 Log.log 'VSCode: move compdb to "%s"', filename
                 dirname = File.dirname(filename)
-                FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
+                FileUtils.mkdir_p(dirname) unless DirCache.exist?(dirname)
                 FileUtils.mv(compdb, filename)
             else
                 Log.fatal 'VSCode: compdb "%s" not found, generation failed ?', compdb
