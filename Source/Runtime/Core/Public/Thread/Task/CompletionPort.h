@@ -7,7 +7,7 @@
 #include "Container/Vector.h"
 #include "Memory/WeakPtr.h"
 #include "Meta/PointerWFlags.h"
-#include "Thread/AtomicSpinLock.h"
+#include "Thread/CriticalSection.h"
 
 #include <atomic>
 
@@ -87,9 +87,9 @@ private:
     };
     std::atomic<int> _countDown{ CP_NotReady };
 
-    FAtomicSpinLock _barrier;
-    VECTORINSITU(Task, FInterruptedTask, 8) _queue;
-    VECTORINSITU(Task, FCompletionPort*, 8) _children;
+    FCriticalSection _barrier;
+    VECTORINSITU(Task, FInterruptedTask, 3) _queue;
+    VECTORINSITU(Task, FCompletionPort*, 3) _children;
 
     void ResetToNotReady_AssumeFinished_();
 
