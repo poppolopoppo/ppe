@@ -33,7 +33,7 @@ namespace {
 static FWindowsPlatformMisc::FCPUInfo FetchCPUInfo_() {
     FWindowsPlatformMisc::FCPUInfo result;
 
-    int args[4];
+    i32 args[4];
     ::__cpuid(args, 1);
 
     *((u32*)&result) = checked_cast<u32>(args[0]);
@@ -145,21 +145,20 @@ auto FWindowsPlatformMisc::CPUInfo() -> FCPUInfo {
 //----------------------------------------------------------------------------
 FString FWindowsPlatformMisc::CPUBrand() {
     // http://msdn.microsoft.com/en-us/library/vstudio/hskdteyh(v=vs.100).aspx
-    char brandString[0x40] = { 0 };
-    i32 CPUInfo[4] = { -1 };
-    const SIZE_T CPUInfoSize = sizeof(CPUInfo);
-
+    i32 CPUInfo[4];
     ::__cpuid(CPUInfo, 0x80000000);
-    const u32 maxExtIDs = CPUInfo[0];
 
-    if (maxExtIDs >= 0x80000004)
-    {
-        const u32 firstBrandString = 0x80000002;
-        const u32 numBrandStrings = 3;
-        for (u32 i = 0; i < numBrandStrings; i++) {
-            ::__cpuid(CPUInfo, firstBrandString + i);
-            FPlatformMemory::Memcpy(brandString + CPUInfoSize * i, CPUInfo, CPUInfoSize);
-        }
+    char brandString[0x40];
+    const u32 maxBrandId = CPUInfo[0];
+    forrange(reg, 0x80000000, maxBrandId) {
+        const SIZE_T CPUInfoSize = sizeof(CPUInfo);
+        ::__cpuid(CPUInfo, reg);
+        if (0x80000002 == reg)
+            FPlatformMemory::Memcpy(brandString, CPUInfo, CPUInfoSize);
+        else if (0x80000003 == reg)
+            FPlatformMemory::Memcpy(brandString + CPUInfoSize, CPUInfo, CPUInfoSize);
+        else if (0x80000004 == reg)
+            FPlatformMemory::Memcpy(brandString + CPUInfoSize * 2, CPUInfo, CPUInfoSize);
     }
 
     return FString(Strip(MakeCStringView(brandString)));
