@@ -5,7 +5,7 @@ BUILD_STARTED_AT = Time.now
 require 'pathname'
 
 # default path is current main script folder
-$ApplicationPath = Pathname.new(File.absolute_path(File.dirname($0)))
+$ApplicationPath = Pathname.new(File.absolute_path(File.join(File.dirname(__FILE__), '..')))
 Dir.chdir($ApplicationPath)
 
 def require_once(relpath)
