@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_once 'Utils/deep_dup.rb'
+require_once 'Utils/DirCache.rb'
 require_once 'Utils/Log.rb'
 require_once 'Utils/Options.rb'
 

@@ -49,7 +49,7 @@ module Build
             self.export!('VisualStudioVersion', @minor_version)
             self.export!('VisualStudioTools', @visualStudioTools)
 
-            Log.fatal 'invalid VisualStudio path "%s"', @visualStudioPath unless Dir.exist?(@visualStudioPath)
+            Log.fatal 'invalid VisualStudio path "%s"', @visualStudioPath unless DirCache.exist?(@visualStudioPath)
             Log.log 'Windows: new VisualStudio %s %s (toolset: %s)', @version, @minor_version, @platformToolset
 
             self.facet.defines << 'CPP_VISUALSTUDIO'

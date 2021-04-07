@@ -74,10 +74,10 @@ module Build
                 globalIncludePaths << env.source_path(m.source_path)
 
                 public_path = env.source_path(m.public_path)
-                globalIncludePaths << public_path if Dir.exist?(public_path)
+                globalIncludePaths << public_path if DirCache.exist?(public_path)
 
                 private_path = env.source_path(m.private_path)
-                globalIncludePaths << private_path if Dir.exist?(private_path)
+                globalIncludePaths << private_path if DirCache.exist?(private_path)
             end
 
             globalDefinitions.uniq!

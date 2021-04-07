@@ -155,7 +155,7 @@ module Build
                 env.source_path(self.public_path)
 
             private_path = env.source_path(self.private_path)
-            facet.includePaths << private_path if Dir.exist?(private_path)
+            facet.includePaths << private_path if DirCache.exist?(private_path)
 
             self.all_dependencies do |(dep, visibility)|
                 addIncludePaths = true
@@ -303,7 +303,7 @@ module Build
         ## list all header and source files with globing
         def find_all_fileset(env)
             fileset = find_source_fileset(env)
-            fileset.merge(Dir["#{env.source_path(@source_path)}/**/*.h"])
+            fileset.merge(DirCache[source_path(env, '**/*.h')])
             @generateds.each do |name, gen|
                 fileset << env.generated_path(expand_path(gen.path))
             end

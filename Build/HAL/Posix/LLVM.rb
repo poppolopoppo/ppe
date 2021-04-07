@@ -30,7 +30,7 @@ module Build
             @llvmPath = Pathname.new(File.join(File.dirname(clang), '..'))
             @llvmPath = @llvmPath.cleanpath
 
-            Log.fatal 'Posix: invalid LLVM  path "%s"', @llvmPath unless Dir.exist?(@llvmPath)
+            Log.fatal 'Posix: invalid LLVM  path "%s"', @llvmPath unless DirCache.exist?(@llvmPath)
             self.facet.export!('LLVMPath', @llvmPath)
 
             @llvmVersion = File.basename(@llvmPath)

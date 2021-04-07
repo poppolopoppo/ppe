@@ -21,7 +21,7 @@ module Build
             @llvmPath = Pathname.new(File.join(File.dirname(clang_cl), '..'))
             @llvmPath = @llvmPath.cleanpath
 
-            Log.fatal 'Windows: invalid LLVM  path "%s"', @llvmPath unless Dir.exist?(@llvmPath)
+            Log.fatal 'Windows: invalid LLVM  path "%s"', @llvmPath unless DirCache.exist?(@llvmPath)
             self.facet.export!('LLVMPath', @llvmPath)
 
             versions = Dir.entries(File.join(@llvmPath, 'lib', 'clang'))

@@ -35,7 +35,7 @@ module Build
         def self.run(*args, config: Build.bff_output.filename, quiet: false, wait: true)
             FBuild.prepare_for_build()
 
-            Log.log 'FBuild: launching "%s"', Build.FBuild_binary
+            Log.debug 'FBuild: launching "%s"', Build.FBuild_binary
 
             cmd = []
             cmd << Build.FBuild_binary.to_s
@@ -127,12 +127,12 @@ module Build
             unless @@_build_prepared
                 @@_build_prepared = true
                 verbose = Log.verbose?
-                FileUtils.mkdir_p($BinariesPath, verbose: verbose) unless Dir.exist?($BinariesPath)
-                FileUtils.mkdir_p($GeneratedPath, verbose: verbose) unless Dir.exist?($GeneratedPath)
-                FileUtils.mkdir_p($IntermediatePath, verbose: verbose) unless Dir.exist?($IntermediatePath)
-                FileUtils.mkdir_p($ProjectsPath, verbose: verbose) unless Dir.exist?($ProjectsPath)
-                FileUtils.mkdir_p($UnitiesPath, verbose: verbose) unless Dir.exist?($UnitiesPath)
-                FileUtils.mkdir_p($TemporaryPath, verbose: verbose) unless Dir.exist?($TemporaryPath)
+                FileUtils.mkdir_p($BinariesPath, verbose: verbose) unless DirCache.exist?($BinariesPath)
+                FileUtils.mkdir_p($GeneratedPath, verbose: verbose) unless DirCache.exist?($GeneratedPath)
+                FileUtils.mkdir_p($IntermediatePath, verbose: verbose) unless DirCache.exist?($IntermediatePath)
+                FileUtils.mkdir_p($ProjectsPath, verbose: verbose) unless DirCache.exist?($ProjectsPath)
+                FileUtils.mkdir_p($UnitiesPath, verbose: verbose) unless DirCache.exist?($UnitiesPath)
+                FileUtils.mkdir_p($TemporaryPath, verbose: verbose) unless DirCache.exist?($TemporaryPath)
             end
         end
 

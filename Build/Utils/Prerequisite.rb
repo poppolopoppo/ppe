@@ -48,7 +48,7 @@ module Build
             return filenames.length == 1 ? filenames.first : filenames
         end
         def need_folder!(path)
-            if Dir.exists?(path)
+            if DirCache.exists?(path)
                 Log.debug("found directory '%s'", path)
                 return path
             else
@@ -86,7 +86,7 @@ module Build
             self.validate!(&lambda do |x|
                 case x
                 when String
-                    return Dir.exist?(x)
+                    return DirCache.exist?(x)
                 when Array,Set
                     x.each do |y|
                         return false unless validator[y]

@@ -114,9 +114,9 @@ module Build
         def retrieve_status(fd)
             fd.readlines.each do |ln|
                 path = File.join(@path, ln.chomp[3..-1])
-                if Dir.exist?(path)
+                if DirCache.exist?(path)
                     Dir.chdir(path) do
-                        Dir.glob("**/*") do |p|
+                        DirCache["**/*"] do |p|
                             yield File.expand_path(p)
                         end
                     end
@@ -130,7 +130,7 @@ module Build
     $SourceControlProvider = DummySourceControl.new
 
     def self.init_source_control(provider: :git, path: $WorkspacePath)
-        unless Dir.exist?(path)
+        unless DirCache.exist?(path)
             Log.error "can't initialize source control, invalida path: '%s'", path
             return
         end
