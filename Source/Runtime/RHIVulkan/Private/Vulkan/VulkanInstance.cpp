@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-#ifdef RHI_VULKAN
-
 #include "Vulkan/VulkanInstance.h"
 
 #include "Vulkan/VulkanDebug.h"
@@ -542,5 +540,3 @@ void FVulkanInstance::DestroyLogicalDevice(FVulkanDevice* pLogicalDevice) {
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

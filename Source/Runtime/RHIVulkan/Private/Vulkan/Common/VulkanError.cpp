@@ -2,8 +2,6 @@
 
 #include "RHI_fwd.h"
 
-#ifdef RHI_VULKAN
-
 #include "Vulkan/VulkanError.h"
 
 #include "Diagnostic/Logger.h"
@@ -141,5 +139,3 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FVulkanError& error) {
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

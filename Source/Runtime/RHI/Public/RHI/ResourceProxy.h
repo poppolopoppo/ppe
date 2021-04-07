@@ -10,8 +10,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class CACHELINE_ALIGNED TResourceProxy final : Meta::FNonCopyableNorMovable {
+class FResourceBase : Meta::FNonCopyableNorMovable {
 public:
     enum class EState : u32 {
         Initial = 0,
@@ -19,13 +18,12 @@ public:
         Created,
     };
 
-    using FResource = T;
     using FInstanceID = FRawImageID::instance_t;
 
-    TResourceProxy() = default;
+    FResourceBase() = default;
 
 #if USE_PPE_DEBUG
-    ~TResourceProxy() {
+    ~FResourceBase() {
         Assert_NoAssume(IsDestroyed());
         Assert_NoAssume(RefCount() == 0);
     }
@@ -37,15 +35,32 @@ public:
     FInstanceID InstanceId() const { return {_instanceId.load(std::memory_order_relaxed)}; }
     int RefCount() const { return _refCounter.load(std::memory_order_relaxed); }
 
-    FResource& Data() { return _data; }
-    const FResource& Data() const { return _data; }
-
     void AddRef() const {
         _refCounter.fetch_add(1, std::memory_order_relaxed);
     }
     NODISCARD bool RemoveRef(int refCount) const {
         return (_refCounter.fetch_sub(refCount, std::memory_order_relaxed) == refCount);
     }
+
+protected:
+    EState State_() const { return _state.load(std::memory_order_relaxed); }
+
+    std::atomic<u32> _instanceId{ 0 };
+    std::atomic<EState> _state{ EState::Initial };
+
+    // reference counter may be used for cached resources like samples, pipeline layout and other
+    mutable std::atomic<int> _refCounter{ 0 };
+};
+//----------------------------------------------------------------------------
+template <typename T>
+class CACHELINE_ALIGNED TResourceProxy final : public FResourceBase {
+public:
+    using value_type = T;
+
+    TResourceProxy() = default;
+
+    value_type& Data() { return _data; }
+    const value_type& Data() const { return _data; }
 
     template <typename... _Args>
     bool Create(_Args&&... args);
@@ -62,15 +77,7 @@ public:
     }
 
 private:
-    EState State_() const { return _state.load(std::memory_order_relaxed); }
-
-    std::atomic<u32> _instanceId{ 0 };
-    std::atomic<EState> _state{ EState::Initial };
-
-    FResource _data;
-
-    // reference counter may be used for cached resources like samples, pipeline layout and other
-    mutable std::atomic<int> _refCounter{ 0 };
+    value_type _data;
 };
 //----------------------------------------------------------------------------
 template <typename T>

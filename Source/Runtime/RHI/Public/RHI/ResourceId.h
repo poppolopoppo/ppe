@@ -121,7 +121,7 @@ struct TResourceId {
     union {
         struct {
             index_t Index;
-            instance_t Instance;
+            instance_t InstanceID;
         };
         data_t Packed;
     };
@@ -132,7 +132,7 @@ struct TResourceId {
     TResourceId& operator =(const TResourceId&) = default;
 
     explicit CONSTEXPR TResourceId(data_t data) : Packed(data) {}
-    explicit CONSTEXPR TResourceId(index_t index, instance_t instance) : Index(index), Instance(instance) {}
+    explicit CONSTEXPR TResourceId(index_t index, instance_t instanceID) : Index(index), InstanceID(instanceID) {}
 
     CONSTEXPR bool Valid() const { return (Packed != UMax); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
@@ -171,7 +171,7 @@ struct TResourceWrappedId< TResourceId<_Uid> > {
     CONSTEXPR id_t Get() const { return Id; }
     CONSTEXPR id_t operator *() const { return Id; }
 
-    CONSTEXPR FResourceHandle Pack() const { return { { _Uid, Id.Index, Id.Instance } }; }
+    CONSTEXPR FResourceHandle Pack() const { return { { _Uid, Id.Index, Id.InstanceID } }; }
     static CONSTEXPR TResourceWrappedId Unpack(FResourceHandle packed) {
         Assert_NoAssume(packed.Uid == _Uid);
         return { TResourceId<_Uid>(packed.Index, packed.Instance) };

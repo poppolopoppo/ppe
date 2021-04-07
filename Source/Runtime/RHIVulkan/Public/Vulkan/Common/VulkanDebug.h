@@ -2,9 +2,7 @@
 
 #include "Vulkan/Vulkan_fwd.h"
 
-#ifndef RHI_VULKAN
-#    error "invalid RHI !"
-#endif
+#include "RHI/FrameDebug.h"
 
 #if !USE_PPE_RHIDEBUG
 
@@ -17,6 +15,7 @@
 #	include "IO/ConstChar.h"
 #	include "IO/Format.h"
 #	include "IO/TextWriter.h"
+#	include "IO/StaticString.h"
 
 #	define PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _vkType, _VkElement, _Name) \
 		( (_RHIDevice).Debug().ShouldEmitNames() ? (_RHIDevice).Debug().CONCAT(SetDebugName_, _vkType)(_VkElement, _Name) : void(0) )
@@ -28,6 +27,10 @@ namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+using FVulkanDebugName = FTaskName;
+//----------------------------------------------------------------------------
+enum class EShaderDebugIndex : u32 { Unknown = ~0u };
 //----------------------------------------------------------------------------
 class FVulkanDebug : Meta::FNonCopyableNorMovable {
 public:

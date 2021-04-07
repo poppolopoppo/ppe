@@ -53,23 +53,23 @@ public: // interface
 
     // Create resources: pipeline, image, buffer, etc.
     // See synchronization requirements on top of this file.
-    virtual FMPipelineID CreatePipeline(FMeshPipelineDesc& desc, FStringView dbgName = Default) = 0;
-    virtual FRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc, FStringView dbgName = Default) = 0;
-    virtual FGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc, FStringView dbgName = Default) = 0;
-    virtual FCPipelineID CreatePipeline(FComputePipelineDesc& desc, FStringView dbgName = Default) = 0;
-    virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem = Default, FStringView dbgName = Default) = 0;
-    virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EResourceState defaultState, FStringView dbgName = Default) = 0;
-    virtual FBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem = Default, FStringView dbgName = Default) = 0;
-    virtual FSamplerID CreateSampler(const FSamplerDesc& desc, FStringView dbgName = Default) = 0;
-    virtual FSwapchainID CreateSwapchain(const FSwapchainDesc&, FRawSwapchainID oldSwapchain = Default, FStringView dbgName = Default) = 0;
-    virtual FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem = Default, FStringView dbgName = Default) = 0;
-    virtual FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem = Default, FStringView dbgName = Default) = 0;
-    virtual FRTShaderTableID CreateRayTracingShaderTable(FStringView dbgName = Default) = 0;
+    virtual FMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
+    virtual FRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
+    virtual FGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
+    virtual FCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
+    virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
+    virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EResourceState defaultState ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
+    virtual FBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
+    virtual FSamplerID CreateSampler(const FSamplerDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
+    virtual FSwapchainID CreateSwapchain(const FSwapchainDesc&, FRawSwapchainID oldSwapchain = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
+    virtual FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
+    virtual FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
+    virtual FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name)) = 0;
 
-    virtual bool InitPipelineResources(FRawGPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& presources) const = 0;
-    virtual bool InitPipelineResources(FRawCPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& presources) const = 0;
-    virtual bool InitPipelineResources(FRawMPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& presources) const = 0;
-    virtual bool InitPipelineResources(FRawRTPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& presources) const = 0;
+    virtual bool InitPipelineResources(FRawGPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
+    virtual bool InitPipelineResources(FRawCPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
+    virtual bool InitPipelineResources(FRawMPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
+    virtual bool InitPipelineResources(FRawRTPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
 
     virtual bool IsSupported(FRawImageID image, const FImageViewDesc& desc) const = 0;
     virtual bool IsSupported(FRawBufferID buffer, const FBufferViewDesc& desc) const = 0;

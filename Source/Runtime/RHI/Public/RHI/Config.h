@@ -8,6 +8,7 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIMOBILE
+CONSTEXPR u32   MaxUniforms                                 =   8;
 CONSTEXPR u32   MaxVertexBuffers                            =   8;
 CONSTEXPR u32   MaxVertexAttribs                            =  16;
 CONSTEXPR u32   MaxColorBuffers                             =   4;
@@ -17,6 +18,7 @@ CONSTEXPR u32   MaxBufferDynamicOffsets                     =  12; // 8 UBO + 4 
 CONSTEXPR u32   MaxElementsInUnsizedDesc                    =   1; // if used extension GL_EXT_nonuniform_qualifier
 CONSTEXPR u32   GPUPageSizeInMb                             =  64;
 #else
+CONSTEXPR u32   MaxUniforms                                 =   8;
 CONSTEXPR u32   MaxVertexBuffers                            =   8;
 CONSTEXPR u32   MaxVertexAttribs                            =  16;
 CONSTEXPR u32   MaxColorBuffers                             =   8;

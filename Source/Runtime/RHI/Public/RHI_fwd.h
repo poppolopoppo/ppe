@@ -15,9 +15,11 @@
 #define USE_PPE_RHITASKNAME (USE_PPE_RHIPROFILING)
 
 #if USE_PPE_RHIDEBUG
+#   define ARG0_IF_RHIDEBUG(...) __VA_ARGS__
 #   define ARGS_IF_RHIDEBUG(...) COMMA __VA_ARGS__
 #   define ONLY_IF_RHIDEBUG(...) __VA_ARGS__
 #else
+#   define ARG0_IF_RHIDEBUG(...)
 #   define ARGS_IF_RHIDEBUG(...)
 #   define ONLY_IF_RHIDEBUG(...) NOOP()
 #endif
@@ -203,6 +205,8 @@ template <typename T>
 using PShaderData = TRefPtr< IShaderData<T> >;
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FShaderHandle);
 using PShaderModule = PShaderData< FShaderHandle >;
+struct FShaderSource;
+using PShaderSource = PShaderData< FShaderSource >;
 //----------------------------------------------------------------------------
 template <typename T>
 class TResourceProxy;
@@ -239,6 +243,7 @@ using FGeometryID               = details::TNamedId<   9, USE_PPE_RHIOPTIMIZEIDS
 using FInstanceID               = details::TNamedId<  10, USE_PPE_RHIOPTIMIZEIDS >;
 
 enum class ERenderTargetID : u32;
+PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FStagingBufferIndex);
 
 //----------------------------------------------------------------------------
 // Weak references

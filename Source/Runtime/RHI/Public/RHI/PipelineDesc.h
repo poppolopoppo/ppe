@@ -78,12 +78,26 @@ public:
 
     virtual const T& Data() const = 0;
     virtual FStringView Entry() const = 0;
-    virtual FStringView DebugName() const = 0;
     virtual hash_t HashValue() const = 0;
+
+#if USE_PPE_RHIDEBUG
+    virtual FStringView DebugName() const = 0;
+#endif
 
     friend hash_t hash_value(const IShaderData& data) {
         return data.HashValue();
     }
+};
+//----------------------------------------------------------------------------
+struct FShaderSource {
+    using union_type = std::variant<
+        FString,
+        FRawData,
+        PShaderModule
+    >;
+
+    union_type Data;
+    u128 Fingerprint;
 };
 //----------------------------------------------------------------------------
 struct FPipelineDesc {
@@ -184,8 +198,8 @@ struct FPipelineDesc {
         FRayTracingScene >;
 
     using FVariantUniform = details::TPipelineUniform<FVariantResource>;
-    using FUniformMap = HASHMAP(RHIPipeline, FUniformID, FVariantUniform);
-    using FSharedUniformMap = std::shared_ptr<FUniformMap>; // #TODO : replace std::shared_ptr by something else
+    using FUniformMap = TRefCountable<TFixedSizeHashMap<FUniformID, FVariantUniform, MaxUniforms>>;
+    using FSharedUniformMap = TRefPtr<FUniformMap>; // #TODO : replace std::shared_ptr by something else
 
     struct FDescriptorSet {
         FDescriptorSetID Id{ Default };
@@ -201,16 +215,18 @@ struct FPipelineDesc {
         FPushConstants PushConstants;
     };
 
-    using FShaderDataMap = HASHMAP(RHIPipeline, EShaderLangFormat, PShaderModule);
+    using FShaderSourceMap = TFixedSizeHashMap<EShaderLangFormat, PShaderData<FShaderSource>, 2>;
     using FSpecializationConstants = TFixedSizeHashMap<FSpecializationID, u32, MaxSpecializationConstants>;
 
     struct FShader {
-        FShaderDataMap Data;
+        FShaderSourceMap Sources;
         FSpecializationConstants Specializations;
 
         FShader() = default;
 
-        void Add(EShaderLangFormat fmt, FStringView entry, PShaderModule shader, FStringView debugName = Default);
+        void AddSource(EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
+        void AddSource(EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+        void AddSource(EShaderLangFormat fmt, const PShaderModule& module);
     };
 
     struct FFragmentOutput {
@@ -262,7 +278,9 @@ struct FGraphicsPipelineDesc final : FPipelineDesc {
 
     FGraphicsPipelineDesc() = default;
 
-    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, PShaderModule&& shader, FStringView debugName = Default);
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
 
     FGraphicsPipelineDesc& AddTopology(EPrimitiveTopology topology) { SupportedTopology.set(size_t(topology)); return (*this); }
 
@@ -298,7 +316,9 @@ struct FComputePipelineDesc final : FPipelineDesc {
 
     FComputePipelineDesc() = default;
 
-    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FStringView entry, PShaderModule shader, FStringView debugName = Default);
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
 
     FComputePipelineDesc& AddDescriptorSet(
         const FDescriptorSetID& id,
@@ -339,7 +359,9 @@ struct FMeshPipelineDesc final : FPipelineDesc {
 
     FMeshPipelineDesc() = default;
 
-    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, PShaderModule shader, FStringView debugName = Default);
+    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
 
     FMeshPipelineDesc& AddDescriptorSet(
         const FDescriptorSetID& id,
@@ -374,7 +396,11 @@ struct FRayTracingPipelineDesc final : FPipelineDesc {
 
     FRayTracingPipelineDesc() = default;
 
-    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, PShaderModule shader, FStringView debugName = Default);
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, PShaderModule shader ARGS_IF_RHIDEBUG(const FStringView& name));
+
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
 
     FRayTracingPipelineDesc& AddDescriptorSet(
         const FDescriptorSetID& id,

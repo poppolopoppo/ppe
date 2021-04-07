@@ -1,11 +1,9 @@
-#pragma once
+-#pragma once
 
 #include "Vulkan/Vulkan_fwd.h"
 
-#ifdef RHI_VULKAN
-
-#include "Vulkan/VulkanAPI.h"
-#include "Vulkan/VulkanDebug.h"
+#include "Vulkan/VulkanCommon.h"
+#include "Vulkan/Common/VulkanAPI.h"
 #include "Vulkan/VulkanMemoryAllocator.h"
 
 #include "Container/Vector.h"
@@ -28,7 +26,7 @@ struct FVulkanDeviceQueueInfo {
     u32 FamilyIndex{ UINT32_MAX };
     u32 FamilyQueueIndex{ UINT32_MAX };
 
-    bool IsInvalid() const { return ((UINT32_MAX == FamilyIndex) & (UINT32_MAX == FamilyQueueIndex)); }
+    bool Valid() const { return not ((UINT32_MAX == FamilyIndex) & (UINT32_MAX == FamilyQueueIndex)); }
 };
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanDevice : public FVulkanDeviceFunctions {
@@ -65,7 +63,7 @@ public:
     const FVulkanSwapchain* SwapChain() const { return _swapchain.get(); }
 
     void CreateSwapChain(
-        FVulkanWindowSurface surface,
+        VkSurfaceKHR surface,
         VkPresentModeKHR present,
         const VkSurfaceFormatKHR& surfaceFormat );
     void DestroySwapChain();
@@ -114,5 +112,3 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

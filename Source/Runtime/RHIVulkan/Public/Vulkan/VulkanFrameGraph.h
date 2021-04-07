@@ -11,37 +11,38 @@ namespace RHI {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanFrameGraph final : public IFrameGraph {
 public:
-    FVulkanFrameGraph(FVulkanDevice* pDevice, FVulkanWindowSurface mainWindow) NOEXCEPT;
+    FVulkanFrameGraph(FVulkanDevice* pDevice, VkSurfaceKHR mainWindow) NOEXCEPT;
     ~FVulkanFrameGraph() override;
 
+
     FVulkanDevice& Device() const { return (*_pDevice); }
-    FVulkanWindowSurface MainWindow() const { return (_mainWindow); }
+    VkSurfaceKHR MainWindow() const { return (_mainWindow); }
 
     static bool Create(PVulkanFrameGraph* pfg, FVulkanInstance& instance, ERHIFeature features, FWindowHandle mainWindow);
 
     // IFrameGraph
 
+    void TearDown() override;
+
     ETargetRHI TargetRHI() const override { return ETargetRHI::Vulkan; }
     void* ExternalDevice() const override;
-
-    void TearDown() override;
 
     bool AddPipelineCompiler(const PPipelineCompiler& pcompiler) override;
 
     EQueueUsage AvailableQueues() const override;
 
-    FMPipelineID CreatePipeline(FMeshPipelineDesc& desc, FStringView dbgName) override;
-    FRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc, FStringView dbgName) override;
-    FGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc, FStringView dbgName) override;
-    FCPipelineID CreatePipeline(FComputePipelineDesc& desc, FStringView dbgName) override;
-    FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, FStringView dbgName) override;
-    FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EResourceState defaultState, FStringView dbgName) override;
-    FBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem, FStringView dbgName) override;
-    FSamplerID CreateSampler(const FSamplerDesc& desc, FStringView dbgName) override;
-    FSwapchainID CreateSwapchain(const FSwapchainDesc&, FRawSwapchainID oldSwapchain, FStringView dbgName) override;
-    FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem, FStringView dbgName) override;
-    FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem, FStringView dbgName) override;
-    FRTShaderTableID CreateRayTracingShaderTable(FStringView dbgName) override;
+    FMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EResourceState defaultState ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FSamplerID CreateSampler(const FSamplerDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FSwapchainID CreateSwapchain(const FSwapchainDesc&, FRawSwapchainID oldSwapchain ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(const FStringView& name)) override;
+    FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name)) override;
 
     bool InitPipelineResources(FRawGPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& presources) const override;
     bool InitPipelineResources(FRawCPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& presources) const override;
@@ -99,17 +100,17 @@ public:
     bool UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) override;
     bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) override;
 
-    FCommandBufferRef Begin(const FCommandBufferDesc&, TMemoryView<FCommandBufferRef> dependsOn) override;
-    bool Execute(FCommandBufferRef&) override;
-    bool Wait(TMemoryView<FCommandBufferRef> commands, FNanoseconds timeout) override;
+    FCommandBufferBatch Begin(const FCommandBufferDesc&, TMemoryView<const FCommandBufferBatch> dependsOn) override;
+    bool Execute(FCommandBufferBatch&) override;
+    bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout) override;
     bool Flush(EQueueUsage queues) override;
     bool WaitIdle() override;
 
-    bool DumpStatistics(FFrameGraphStatistics* pstats) const override;
+    bool DumpStatistics(FFrameStatistics* pstats) const override;
 
 private:
     FVulkanDevice* _pDevice;
-    FVulkanWindowSurface _mainWindow;
+    VkSurfaceKHR _mainWindow;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

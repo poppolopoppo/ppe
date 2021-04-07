@@ -2,8 +2,6 @@
 
 #include "Vulkan/Vulkan_fwd.h"
 
-#ifdef RHI_VULKAN
-
 #include "HAL/TargetRHI.h"
 
 #include "Vulkan/VulkanAPI.h"
@@ -58,5 +56,3 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

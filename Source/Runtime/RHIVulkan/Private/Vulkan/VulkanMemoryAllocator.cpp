@@ -2,8 +2,6 @@
 
 #include "Vulkan/VulkanMemoryAllocator.h"
 
-#ifdef RHI_VULKAN
-
 #include "Vulkan/VulkanError.h"
 #include "Vulkan/VulkanIncludes.h"
 #include "Vulkan/VulkanInstance.h"
@@ -250,5 +248,3 @@ void FVulkanMemoryAllocator::UnmapMemory(const FVulkanMemoryBlock& block) NOEXCE
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

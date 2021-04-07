@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-#ifdef RHI_VULKAN
-
 #include "Vulkan/VulkanDevice.h"
 
 #include "Vulkan/VulkanIncludes.h"
@@ -33,11 +31,12 @@ FVulkanDevice::FVulkanDevice(
 ,   _vkTransferQueue(VK_NULL_HANDLE)
 ,   _instance(instance)
 ,   _deviceMemory(*this)
+,   _presentModes(std::move(presentModes))
+,   _surfaceFormats(std::move(surfaceFormats))
 #if USE_PPE_RHIDEBUG
 ,   _debug(*this)
-#endif
-,   _presentModes(std::move(presentModes))
-,   _surfaceFormats(std::move(surfaceFormats)) {
+#endif{
+{
     Assert_NoAssume(VK_NULL_HANDLE != _vkPhysicalDevice);
     Assert_NoAssume(not _presentModes.empty());
     Assert_NoAssume(not _surfaceFormats.empty());
@@ -220,5 +219,3 @@ void FVulkanDevice::DestroySwapChain() {
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

@@ -2,8 +2,6 @@
 
 #include "Vulkan/Vulkan_fwd.h"
 
-#ifdef RHI_VULKAN
-
 #include "Container/Vector.h"
 
 namespace PPE {
@@ -11,7 +9,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanSwapchain {
+class PPE_RHIVULKAN_API FVulkanSwapchain : public FRefCountable {
 public: // must be implemented by each RHI:
     const VkSurfaceFormatKHR& SurfaceFormat() const { return _surfaceFormat; }
     const u322& Extent() const { return _extent; }
@@ -47,5 +45,3 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

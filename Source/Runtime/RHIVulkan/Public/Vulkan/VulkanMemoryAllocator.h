@@ -2,8 +2,6 @@
 
 #include "Vulkan/Vulkan_fwd.h"
 
-#ifdef RHI_VULKAN
-
 #include "Container/Array.h"
 
 #if USE_PPE_MEMORYDOMAINS
@@ -98,5 +96,3 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

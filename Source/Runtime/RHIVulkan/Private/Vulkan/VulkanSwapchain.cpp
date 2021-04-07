@@ -1,8 +1,6 @@
 ﻿#include "stdafx.h"
 
-#include "Vulkan/VulkanSwapChain.h"
-
-#ifdef RHI_VULKAN
+#include "Vulkan/VulkanSwapchain.h"
 
 #include "Vulkan/VulkanError.h"
 #include "Vulkan/VulkanDevice.h"
@@ -84,5 +82,3 @@ void FVulkanSwapchain::TearDownSwapchain(const FVulkanDevice& device) {
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#endif //!RHI_VULKAN

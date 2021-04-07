@@ -30,7 +30,7 @@ bool FVulkanFrameGraph::Create(PVulkanFrameGraph* pfg, FVulkanInstance& instance
     if (mainWindow)
         vkSurface = instance.CreateWindowSurface(mainWindow);
 
-    FVulkanDevice* const pDevice = instance.CreateLogicalDevice(features, vkSurface);)
+    FVulkanDevice* const pDevice = instance.CreateLogicalDevice(features, vkSurface);
     if (not pDevice) {
         if (vkSurface)
             instance.DestroyWindowSurface(vkSurface);
@@ -62,7 +62,11 @@ void* FVulkanFrameGraph::ExternalDevice() const {
     return _pDevice->vkDevice();
 }
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::AddPipelineCompiler(const PPipelineCompiler& pcompiler) {}
+bool FVulkanFrameGraph::AddPipelineCompiler(const PPipelineCompiler& pcompiler) {
+    Assert(pcompiler);
+
+
+}
 //----------------------------------------------------------------------------
 EQueueUsage FVulkanFrameGraph::AvailableQueues() const {}
 //----------------------------------------------------------------------------
@@ -206,17 +210,17 @@ bool FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t& s
 //----------------------------------------------------------------------------
 // Commands
 //----------------------------------------------------------------------------
-FCommandBufferRef FVulkanFrameGraph::Begin(const FCommandBufferDesc&, TMemoryView<FCommandBufferRef> dependsOn) {}
+FCommandBatchRef FVulkanFrameGraph::Begin(const FCommandBufferDesc&, TMemoryView<FCommandBatchRef> dependsOn) {}
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::Execute(FCommandBufferRef&) {}
+bool FVulkanFrameGraph::Execute(FCommandBatchRef&) {}
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::Wait(TMemoryView<FCommandBufferRef> commands, FNanoseconds timeout) {}
+bool FVulkanFrameGraph::Wait(TMemoryView<FCommandBatchRef> commands, FNanoseconds timeout) {}
 //----------------------------------------------------------------------------
 bool FVulkanFrameGraph::Flush(EQueueUsage queues) {}
 //----------------------------------------------------------------------------
 bool FVulkanFrameGraph::WaitIdle() {}
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::DumpStatistics(FFrameGraphStatistics* pstats) const {}
+bool FVulkanFrameGraph::DumpStatistics(FFrameStatistics* pstats) const {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

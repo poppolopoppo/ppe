@@ -101,6 +101,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIPipeline,              RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIRawData,               RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIRayTracing,            RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIRenderPass,            RHI)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIResource,              RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIState,                 RHI)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Graphics,                       UsedMemory)

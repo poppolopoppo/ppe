@@ -2,8 +2,6 @@
 
 #include "RHI_fwd.h"
 
-#ifdef RHI_VULKAN
-
 #include "Vulkan/VulkanDebug.h"
 
 #	if USE_PPE_RHIDEBUG
@@ -189,5 +187,3 @@ void FVulkanDebug::SetDebugName_VkEvent(VkEvent _event, string_t name) const {
 } //!namespace PPE
 
 #	endif //!USE_PPE_RHIDEBUG
-
-#endif //!RHI_VULKAN
