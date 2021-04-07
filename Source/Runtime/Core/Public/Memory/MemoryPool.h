@@ -48,6 +48,7 @@ public:
     void Deallocate(index_type block);
 
     block_type* At(index_type block) const NOEXCEPT;
+    const block_type* operator [](index_type id) const NOEXCEPT;
 
     template <typename _ForEach>
     void Each(_ForEach&& pred);
@@ -147,8 +148,7 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::At(
-    index_type block) const NOEXCEPT -> block_type* {
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::At(index_type block) const NOEXCEPT -> block_type* {
     Assert(block < MaxSize);
     const index_type chk = (block / ChunkSize);
     const index_type id = (block - chk * ChunkSize);
@@ -163,6 +163,14 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     Assert_NoAssume(shared->_pools[chk].NumLiveBlocks.load(std::memory_order_relaxed) > 0);
 
     return (shared->_blocks[chk] + id);
+}
+//----------------------------------------------------------------------------
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
+const typename TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe, _Allocator>::block_type* TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe, _Allocator>::operator[](index_type block) const noexcept {
+    if (block >= MaxSize)
+        return nullptr;
+
+    return At(block);
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
@@ -399,10 +407,11 @@ class TTypedMemoryPool : public TMemoryPool<sizeof(T), alignof(T), _ChunkSize, _
 public:
     using typename parent_type::allocator_type;
     using typename parent_type::index_type;
+    using typename parent_type::block_type;
 
-    using block_type = T;
-    STATIC_ASSERT(sizeof(block_type) == sizeof(typename parent_type::block_type));
-    STATIC_ASSERT(alignof(block_type) == alignof(typename parent_type::block_type));
+    using value_type = T;
+    STATIC_ASSERT(sizeof(value_type) >= sizeof(typename parent_type::block_type));
+    STATIC_ASSERT(alignof(typename parent_type::block_type) % alignof(value_type) == 0);
 
     using parent_type::BlockSize;
     using parent_type::ChunkSize;
@@ -419,14 +428,17 @@ public:
     TTypedMemoryPool(const allocator_type& allocator) : parent_type(allocator) {}
     TTypedMemoryPool(allocator_type&& rallocator) : parent_type(std::move(rallocator)) {}
 
-    block_type* At(index_type block) const NOEXCEPT {
-        return reinterpret_cast<block_type*>(parent_type::At(block));
+    value_type* At(index_type block) const NOEXCEPT {
+        return reinterpret_cast<value_type*>(parent_type::At(block));
+    }
+    value_type* operator [](index_type id) const NOEXCEPT {
+        return reinterpret_cast<value_type*>(parent_type::operator[](id));
     }
 
     template <typename _ForEach>
     void Each(_ForEach&& pred) {
         parent_type::Each([&pred](typename parent_type::block_type* storage, index_type block) {
-            Meta::VariadicFunctor(pred, reinterpret_cast<block_type*>(storage), block);
+            Meta::VariadicFunctor(pred, reinterpret_cast<value_type*>(storage), block);
         });
     }
 
