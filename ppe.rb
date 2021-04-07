@@ -28,7 +28,7 @@ class Build::Namespace
             pch!('stdafx.h', 'stdafx.cpp')
             #source_files!('ModuleExport.cpp')
             #force_includes!(File.join(abs_path, 'Public', "#{name}Module.h"))
-            Namespace.ppe_common(self, &cfg)
+            Namespace.ppe_common_module(self, &cfg)
         end
     end
     def ppe_executable!(name, usage, &cfg)
@@ -55,7 +55,7 @@ class Build::Namespace
                     source_files!(rel_resource_rc)
                 end if File.exist?(abs_resource_rc)
             end
-            Namespace.ppe_common(self, &cfg)
+            Namespace.ppe_common_module(self, &cfg)
         end
     end
 private
@@ -63,7 +63,12 @@ private
         target.define!("EXPORT_PPE_#{target.var_path.upcase}")
         target.includePath!($SourcePath)
         target.instance_exec(&cfg) if cfg
-        return Namespace.ppe_generated(target)
+        return target
+    end
+    def self.ppe_common_module(target, &cfg)
+        Namespace.ppe_common(target, &cfg)
+        Namespace.ppe_generated(target)
+        return target
     end
     def self.ppe_target_module_name(target)
         return "#{target.name}Module"
