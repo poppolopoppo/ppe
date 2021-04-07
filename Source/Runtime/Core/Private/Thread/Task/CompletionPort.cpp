@@ -94,7 +94,7 @@ void FCompletionPort::OnJobComplete() {
 void FCompletionPort::ResetToNotReady_AssumeFinished_() {
     Assert_Lightweight(CP_Finished == _countDown);
 
-    ONLY_IF_ASSERT(const FAtomicSpinLock::FScope scopeLock(_barrier));
+    ONLY_IF_ASSERT(const FCriticalScope scopeLock(&_barrier));
 
     Assert_NoAssume(Finished());
     Assert_NoAssume(_queue.empty());
@@ -115,7 +115,7 @@ void FCompletionPort::OnCountDownReachedZero_(FCompletionPort* port) {
     decltype(_queue) localQueue;
     decltype(_children) localChildren;
     {
-        const FAtomicSpinLock::FScope scopeLock(port->_barrier);
+        const FCriticalScope scopeLock(&port->_barrier);
         Assert_NoAssume(port->_countDown >= 0);
 
         AddRefIFP<FCompletionPort>(keepAlive, port);
@@ -173,7 +173,7 @@ bool FAggregationPort::Attach(FCompletionPort* dep) {
     if (FCompletionPort::CP_Finished != dep->_countDown) {
 
         // needs locking to avoid releasing the lock before we finish attaching
-        const FAtomicSpinLock::FScope scopeLock(dep->_barrier);
+        const FCriticalScope scopeLock(&dep->_barrier);
 
         if (FCompletionPort::CP_Finished != dep->_countDown) {
             Assert_NoAssume(not Contains(_port._children, dep)); // *circular dependencies* !

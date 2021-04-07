@@ -89,7 +89,7 @@ private:
     STATIC_CONST_INTEGRAL(size_t, NumPriorities, 4);
 
     struct priority_group_t {
-        std::atomic<size_t> NumTasks{ 0 };
+        std::atomic<int> NumTasks{ 0 };
         std::atomic<size_t> Revision{ 0 };
     };
 
@@ -101,10 +101,11 @@ private:
 
     bool HasHigherPriorityTask_(const size_t highestPriority) const NOEXCEPT {
         STATIC_ASSERT(4 == NumPriorities);
-        return ((0 < highestPriority && !!_priorityGroups[0].NumTasks) |
-                (1 < highestPriority && !!_priorityGroups[1].NumTasks) |
-                (2 < highestPriority && !!_priorityGroups[2].NumTasks) |
-                (3 < highestPriority && !!_priorityGroups[3].NumTasks) );
+        std::atomic_thread_fence(std::memory_order_acquire);
+        return ((0 < highestPriority && !!_priorityGroups[0].NumTasks.load(std::memory_order_relaxed)) |
+                (1 < highestPriority && !!_priorityGroups[1].NumTasks.load(std::memory_order_relaxed)) |
+                (2 < highestPriority && !!_priorityGroups[2].NumTasks.load(std::memory_order_relaxed)) |
+                (3 < highestPriority && !!_priorityGroups[3].NumTasks.load(std::memory_order_relaxed)) );
     }
 
     static CONSTEXPR size_t PackPriorityWRevision_(ETaskPriority priority, size_t revision) {
@@ -142,23 +143,27 @@ inline FTaskScheduler::~FTaskScheduler() {
 }
 //----------------------------------------------------------------------------
 inline bool FTaskScheduler::HasPendingTask() const NOEXCEPT {
-    return ((!!_priorityGroups[size_t(ETaskPriority::High)].NumTasks |
-             !!_priorityGroups[size_t(ETaskPriority::Normal)].NumTasks) ||
-            (!!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks |
-             !!_priorityGroups[size_t(ETaskPriority::Internal)].NumTasks) );
+    std::atomic_thread_fence(std::memory_order_acquire);
+
+    return ((!!_priorityGroups[size_t(ETaskPriority::High)].NumTasks.load(std::memory_order_relaxed) |
+             !!_priorityGroups[size_t(ETaskPriority::Normal)].NumTasks.load(std::memory_order_relaxed)) ||
+            (!!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks.load(std::memory_order_relaxed) |
+             !!_priorityGroups[size_t(ETaskPriority::Internal)].NumTasks.load(std::memory_order_relaxed)) );
 }
 //----------------------------------------------------------------------------
 inline bool FTaskScheduler::HasPendingTask(ETaskPriority atleast) const NOEXCEPT {
+    std::atomic_thread_fence(std::memory_order_acquire);
+
     bool pending = false;
     switch (atleast) {
     case ETaskPriority::Internal:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::Internal)].NumTasks;
+        pending |= !!_priorityGroups[size_t(ETaskPriority::Internal)].NumTasks.load(std::memory_order_relaxed);
     case ETaskPriority::Low:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks;
+        pending |= !!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks.load(std::memory_order_relaxed);
     case ETaskPriority::Normal:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::Normal)].NumTasks;
+        pending |= !!_priorityGroups[size_t(ETaskPriority::Normal)].NumTasks.load(std::memory_order_relaxed);
     case ETaskPriority::High:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::High)].NumTasks;
+        pending |= !!_priorityGroups[size_t(ETaskPriority::High)].NumTasks.load(std::memory_order_relaxed);
         break;
     default:
         AssertNotImplemented();
@@ -195,7 +200,7 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
                 w.HighestPriority = UnpackPriorityFromRevision_(Min_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end())->Priority);
 
                 // used as hints for work stealing : worker will try to steal a job if a higher priority task is available
-                ++p.NumTasks;
+                p.NumTasks.fetch_add(std::memory_order_relaxed);
 
                 scopeLock.unlock();
                 _onTask.notify_one();
@@ -227,7 +232,7 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
                     return HasPendingTask();
                 });
 
-                if (not (w.PriorityHeap.empty() | HasHigherPriorityTask_(w.HighestPriority))) {
+                if (not (w.PriorityHeap.empty() || HasHigherPriorityTask_(w.HighestPriority))) {
                     PopMin_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end());
                     *pop = std::move(w.PriorityHeap.back());
                     w.PriorityHeap.pop_back();
@@ -237,7 +242,7 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
                         : UnpackPriorityFromRevision_(Min_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end())->Priority));
 
                     priority_group_t& p = _priorityGroups[UnpackPriorityFromRevision_(pop->Priority)];
-                    if (0 == --p.NumTasks)
+                    if (1 == p.NumTasks.fetch_sub(1, std::memory_order_relaxed))
                         p.Revision = 0;
 
                     return;
