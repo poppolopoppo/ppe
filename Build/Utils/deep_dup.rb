@@ -22,6 +22,25 @@ class Object
     end
 end
 
+module Kernel_deep_dup
+    def deep_dup()
+        return self.dup
+    end
+end
+
+class Integer
+    extend Kernel_deep_dup
+end
+class Float
+    extend Kernel_deep_dup
+end
+class String
+    extend Kernel_deep_dup
+end
+class Symbol
+    extend Kernel_deep_dup
+end
+
 class Array
     # Returns a deep copy of array.
     #
@@ -46,7 +65,7 @@ class Hash
     #   hash[:a][:c] # => nil
     #   dup[:a][:c]  # => "c"
     def deep_dup
-        hash = dup
+        hash = self.dup
         each_pair do |key, value|
             if key.frozen? && ::String === key
                 hash[key] = value.deep_dup

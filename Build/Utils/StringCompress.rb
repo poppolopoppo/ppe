@@ -73,10 +73,9 @@ module Build
         end
 
         def tokenize(str, sep, add_ref: 1, allow_create: true, min_length: 6)
-            seq = str.split(sep)
             mrg = []
-            seq.each do |sub|
-                Assert.check{!sub.nil?}
+            str.split(sep).each do |sub|
+                #Assert.check{!sub.nil?}
                 if mrg.empty? || mrg.last.length >= min_length
                     mrg << sub
                 else

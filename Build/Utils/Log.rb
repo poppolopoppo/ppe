@@ -210,17 +210,23 @@ module Build
 
     module Assert
 
+    if $DEBUG
         def self.check(&block)
-            if $DEBUG
-                Log.fatal 'assertion failed at %s', caller_locations(1,1)[0] unless block.call
-            end
+            Log.fatal 'assertion failed at %s', caller_locations(1,1)[0] unless block.call
         end
-
         def self.expect(x, klass) Log.fatal 'unexpected value: <%s> "%s", need <%s> at %s', x.class, x, klass, caller_locations(1,1)[0] unless x.is_a?(klass) end
         def self.expect?(x, klass) Log.fatal 'unexpected value: <%s> "%s", need <%s> at %s', x.class, x, klass, caller_locations(1,1)[0] unless x.nil? || x.is_a?(klass) end
         def self.unexpected(x) Log.fatal 'unexpected value: <%s> "%s" at %s', x.class, x, caller_locations(1,1)[0] end
         def self.unreached() Log.fatal 'unreachable state at %s', caller_locations(1,1)[0] end
         def self.not_implemented() Log.fatal 'not implemented at %s', caller_locations(1,1)[0] end
+    else
+        def self.check() end
+        def self.expect(x, klass) end
+        def self.expect?(x, klass) end
+        def self.unexpected(x) end
+        def self.unreached() end
+        def self.not_implemented() end
+    end
 
     end #~ Assert
 

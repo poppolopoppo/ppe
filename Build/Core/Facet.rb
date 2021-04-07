@@ -84,13 +84,17 @@ module Build
         end
         def expand!(vars={})
             Assert.check{ not frozen? }
+            return self if vars.empty?
             @data.collect! do |value|
                 case value
                 when String
-                    value = value.dup if value.frozen?
-                    vars.each do |key, subst|
-                        value.gsub!(key, subst)
+                    if value.include?('$')
+                        value = value.dup if value.frozen?
+                        vars.each do |key, subst|
+                            value.gsub!(key, subst)
+                        end
                     end
+                    value
                 end
                 value
             end
@@ -104,6 +108,9 @@ module Build
         def freeze()
             @data.freeze
             super()
+        end
+        def deep_dup()
+            ValueSet.new(@data.dup)
         end
     end #~ ValueSet
 
@@ -194,21 +201,17 @@ module Build
             return self
         end
         def compilationFlag!(*flags)
-            flags.each do |flag|
-                @analysisOptions << flag
-                @preprocessorOptions << flag
-                @compilerOptions << flag
-                @pchOptions << flag
-            end
+            @analysisOptions.push_back(*flags)
+            @preprocessorOptions.push_back(*flags)
+            @compilerOptions.push_back(*flags)
+            @pchOptions.push_back(*flags)
             return self
         end
         def no_compilationFlag!(*flags)
-            flags.each do |flag|
-                @analysisOptions >> flag
-                @preprocessorOptions >> flag
-                @compilerOptions >> flag
-                @pchOptions >> flag
-            end
+            @analysisOptions.remove(*flags)
+            @preprocessorOptions.remove(*flags)
+            @compilerOptions.remove(*flags)
+            @pchOptions.remove(*flags)
             return self
         end
         def preprocessor?() return !@preprocessor.nil? end
@@ -268,12 +271,12 @@ module Build
             end
             return true
         end
-        def to_s()
-            attrs = ATTRS.clone
-                .delete_if{|x| instance_variable_get(x).empty? }
-                .collect{|x| "\t#{x}: #{instance_variable_get(x)}" }
-            return attrs.empty? ? '{}' : "{\n#{attrs.join(",\n")}\n}"
-        end
+        # def to_s()
+        #     attrs = ATTRS.clone
+        #         .delete_if{|x| instance_variable_get(x).empty? }
+        #         .collect{|x| "\t#{x}: #{instance_variable_get(x)}" }
+        #     return attrs.empty? ? '{}' : "{\n#{attrs.join(",\n")}\n}"
+        # end
         def clear()
             @compiler = nil
             @preprocessor = nil

@@ -56,14 +56,15 @@ module Build
         end
         def heredoc!(str)
             @io.print(str)
-            str.each_char do |ch|
-                if ch == "\n"
+            off = 0
+            while off < str.length do
+                ret = str.index("\n", off)
+                break if ret.nil?
+                off = ret + 1
                     @column = 1
                     @line += 1
-                else
-                    @column += 1
                 end
-            end
+            @column += str.length - off
             return self
         end
         def scope!(instance=self, &block)
@@ -93,7 +94,7 @@ module Build
             return @io.string
         end
         def content_write(data)
-            Log.log 'writing memfile to disk: "%s"', @filename
+            Log.debug 'writing memfile to disk: "%s"', @filename
             dirname = File.dirname(@filename)
             FileUtils.mkdir_p(dirname, :verbose => Log.verbose?) unless DirCache.exist?(dirname)
             File.write(@filename, data, mode: 'wb')

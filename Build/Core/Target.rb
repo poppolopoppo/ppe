@@ -124,6 +124,7 @@ module Build
             @runtime_dependencies = []
 
             @_all_dependencies = nil
+            @_all_headers_fileset = nil
             @_ordinal = nil
 
             @config = config
@@ -196,7 +197,7 @@ module Build
                         has_generated_public = true
                     else
                         has_generated_private = true
-                end
+                    end
                     written += 1 if gen.generate(facet, env, self)
                 end
                 facet.includePaths << env.generated_path(self.public_path) if has_generated_public
@@ -211,7 +212,7 @@ module Build
                         sz = File.size(fname)
                         total_files += 1
                         total_size += sz
-                        Log.debug('%s: fileset << "%s"', target.abs_path, fname)
+                        #Log.debug('%s: fileset << "%s"', env.generated_key(self), fname)
                     end
                     num_files = (total_size.to_f / Build.UnitySize).ceil
                     Log.verbose("%s: found %d for a total of %.4fKiB -> use %d unity files",
