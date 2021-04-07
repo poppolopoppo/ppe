@@ -8,6 +8,8 @@
 #include <intrin.h>
 #include <xmmintrin.h>
 
+#define USE_PPE_WIN32MEMORY_SIMD (!USE_PPE_MEMORY_DEBUGGING)
+
 #ifdef __AVX2__
 #   include <immintrin.h>
 #endif
@@ -71,8 +73,9 @@ public:
         AssertRelease(Meta::IsAligned(16, src));
         AssertRelease(Meta::IsAligned(16, sizeInBytes));
         Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
-        STATIC_ASSERT(sizeof(::__m128i) == 16);
 
+#if USE_PPE_WIN32MEMORY_SIMD
+        STATIC_ASSERT(sizeof(::__m128i) == 16);
         // use SSE2 to minimize cache pollution
         const size_t nblks128 = (sizeInBytes / sizeof(::__m128i));
 		const ::__m128i* __restrict src128 = reinterpret_cast<const ::__m128i*>(src);
@@ -83,12 +86,14 @@ public:
         }
 
         ::_mm_sfence(); // synchronize stores before yielding
-
+#else
+        ::memcpy(dst, src, sizeInBytes);
+#endif
         return dst;
     }
 
 	static FORCE_INLINE void* MemstreamLarge(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
-#if __AVX2__
+#if USE_PPE_WIN32MEMORY_SIMD && __AVX2__
 		AssertRelease(Meta::IsAligned(32, dst)); // everything assumed to be aligned, no reminder
 		AssertRelease(Meta::IsAligned(32, src));
 		AssertRelease(Meta::IsAligned(32, sizeInBytes));
@@ -115,6 +120,8 @@ public:
         AssertRelease(Meta::IsAligned(16, dst)); // only need ptr aligned, not size
         AssertRelease(Meta::IsAligned(16, src));
         Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
+
+#if USE_PPE_WIN32MEMORY_SIMD
         STATIC_ASSERT(sizeof(::__m128i) == 16);
 
         // use SSE2 to minimize cache pollution
@@ -130,6 +137,9 @@ public:
         FGenericPlatformMemory::MemcpyLarge(pDst, pSrc, sizeInBytes - blks * sizeof(::__m128i));
 
         ::_mm_sfence(); // synchronize stores before yielding
+#else
+        ::memcpy(dst, src, sizeInBytes);
+#endif
 
         return dst;
     }
