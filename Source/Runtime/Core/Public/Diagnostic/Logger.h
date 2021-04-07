@@ -141,7 +141,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
         ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
         "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) );
 #define LOG(_CATEGORY, _LEVEL, ...) do { \
-    LOG_VALIDATEFORMAT(__VA_ARGS__) \
+    EXPAND( LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
     ::PPE::FLogger::Log( \
         LOG_CATEGORY_GET(_CATEGORY), \
         ::PPE::FLogger::EVerbosity::_LEVEL, \
@@ -183,7 +183,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define FLUSH_LOG() NOOP()
 
 #   if USE_PPE_FINAL_RELEASE
-#       define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
+#       define LOG(_CATEGORY, _LEVEL, ...) NOOP()
 #       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) NOOP()
 #       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) NOOP()
 #   else
@@ -194,7 +194,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #       define _LOG_Error() NOOP()
 #       define _LOG_Fatal() AssertReleaseFailed(L"log : fatal error")
 
-#       define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #   endif
@@ -202,15 +202,15 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #endif //!#if USE_PPE_LOGGER
 
 #if USE_PPE_FINAL_RELEASE
-#   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
+#   define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) NOOP()
 #else
 #   if !defined(_MSC_VER) || (defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL)
-#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) do { \
-        if (_CONDITION) LOG(_CATEGORY, _LEVEL, _FORMAT, __VA_ARGS__); \
+#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) do { \
+        if (_CONDITION) LOG(_CATEGORY, _LEVEL, __VA_ARGS__); \
     } while (0)
 #   else
-#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) do { \
-        if (_CONDITION) LOG(_CATEGORY, _LEVEL, _FORMAT, __VA_ARGS__); \
+#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) do { \
+        if (_CONDITION) LOG(_CATEGORY, _LEVEL, __VA_ARGS__); \
     } while (0)
 #   endif
 #endif
