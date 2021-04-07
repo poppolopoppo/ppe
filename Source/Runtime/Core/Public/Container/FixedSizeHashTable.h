@@ -466,6 +466,73 @@ template <
 using TFixedSizeHashMap = details::TFixedSizeHashTable<
     details::TFixedSizeHashMapTraits<_Key, _Value, _Hash, _EmptyKey, _EqualTo>,
     _Capacity >;
+
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+bool TryGetValue(const TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key, _Value *value) {
+    Assert(value);
+    const auto it = hashmap.find(key);
+    if (hashmap.end() == it) {
+        return false;
+    }
+    else {
+        *value = it->second;
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+bool Insert_ReturnIfExists(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key, const _Value& value) {
+    return hashmap.Add_KeepExisting(key, value);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+void Insert_AssertUnique(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key, const _Value& value) {
+    return hashmap.Add_AssertUnique(key, value);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+void Insert_AssertUnique(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, _Key&& rkey, _Value&& rvalue) {
+    return hashmap.Add_AssertUnique(std::move(rkey), std::move(rvalue));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+bool Remove_ReturnIfExists(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key) {
+    return hashmap.erase(key);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+void Remove_AssertExists(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key) {
+    VerifyRelease(hashmap.erase(key));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+_Value Remove_ReturnValue(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key) {
+    const auto it = hashmap.find(it);
+    AssertRelease_NoAssume(hashmap.end() != it);
+    auto value = it->second;
+    hashmap.erase(it);
+    return value;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+void Remove_AssertExistsAndSameValue(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key, const _Value& value) {
+#if USE_PPE_ASSERT
+    const auto it = hashmap.find(key);
+    if (hashmap.end() == it) {
+        AssertNotReached();
+    }
+    else {
+        Assert_NoAssume(it->second == value);
+        hashmap.erase(it);
+    }
+#else
+    UNUSED(value);
+    Remove_AssertExists(hashmap, key);
+#endif
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
