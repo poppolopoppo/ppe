@@ -20,6 +20,10 @@ module Build
         end
         def indent!()
             @indent += @tab
+            if block_given?
+                yield
+                unindent!()
+            end
             return self
         end
         def unindent!()
@@ -32,6 +36,11 @@ module Build
                 @io.print(@indent)
             end
             return self
+        end
+        def reset_indent(new_indent='')
+            old_indent = @indent
+            @indent = new_indent
+            return old_indent
         end
         def print!(fmt, *args)
             str = args.empty? ? fmt.to_s : (fmt.to_s % args)
@@ -61,9 +70,9 @@ module Build
                 ret = str.index("\n", off)
                 break if ret.nil?
                 off = ret + 1
-                    @column = 1
-                    @line += 1
-                end
+                @column = 1
+                @line += 1
+            end
             @column += str.length - off
             return self
         end
