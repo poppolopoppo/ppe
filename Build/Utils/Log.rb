@@ -38,9 +38,9 @@ module Build
         STYLES = {
             debug: ANSI[:fg0_magenta],
             verbose: ANSI[:fg1_black],
-            log: ANSI[:fg0_white],
-            info: ANSI[:fg1_white]+ANSI[:bold],
-            display: ANSI[:fg1_white]+ANSI[:bold],
+            log: ANSI[:fg0_white]+ANSI[:italic],
+            info: ANSI[:fg1_white]+ANSI[:bg0_black]+ANSI[:bold],
+            display: ANSI[:fg1_white],
             warning: ANSI[:fg0_yellow],
             error: ANSI[:fg1_red],
             fatal: ANSI[:fg1_white]+ANSI[:bg0_red]+ANSI[:bold],

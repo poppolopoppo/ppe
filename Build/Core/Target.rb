@@ -202,7 +202,7 @@ module Build
                 end
                 facet.includePaths << env.generated_path(self.public_path) if has_generated_public
                 facet.includePaths << env.generated_path(self.private_path) if has_generated_private
-                Log.verbose 'invalidated %d / %d generated files for <%s>', written, @generateds.length, env.generated_key(self) if written > 0
+                Log.debug 'invalidated %d / %d generated files for <%s>', written, @generateds.length, env.generated_key(self) if written > 0
             end
 
             if @unity_num_files.nil? && !headers? && !tag?(:nounity)

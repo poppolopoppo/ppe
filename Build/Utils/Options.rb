@@ -250,11 +250,11 @@ module Build
         opts.separator ''
 
         opts.on("--version", "Show build version") do
-            Log.log("Version: %s", Build::VERSION)
+            Log.display("Version: %s", Build::VERSION)
             exit
         end
         opts.on("-h", "--help", "Show this message") do
-            Log.raw opts, verbosity: :info
+            Log.raw opts, verbosity: :display
             exit
         end
     end

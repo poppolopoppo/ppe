@@ -6,6 +6,7 @@ require_once '../Utils/SourceControl.rb'
 
 require 'fileutils'
 require 'rubygems/package'
+require 'zlib'
 
 module Build
 
@@ -13,7 +14,7 @@ module Build
         archive = File.join($OutputPath, 'Backup', "#{Build::Project}-#{Build.branch?}-#{Build.revision?}-#{Time.now.to_i}.tar.gz")
         fileset = Build.staged_files?
 
-        Log.info('Backup: generating snapshot backup in "%s" with %d files', archive, fileset.length)
+        Log.log('Backup: generating snapshot backup in "%s" with %d files', archive, fileset.length)
         FileUtils.mkdir_p(File.dirname(archive), :verbose => Log.verbose?)
 
         rawSize = 0
@@ -24,8 +25,8 @@ module Build
                     fileset.each do |fname|
                         next unless File.exists?(fname)
                         content = IO.binread(File.join($WorkspacePath, fname))
-                        if Log.log?
-                            Log.log('Backup: append "%s" to archive (%d bytes)', fname, content.length)
+                        if Log.verbose?
+                            Log.verbose('Backup: append "%s" to archive (%d bytes)', fname, content.length)
                         else
                             Log.pin('Backup: append "%s" to archive (%d bytes)' % [fname, content.length])
                         end
@@ -40,7 +41,7 @@ module Build
         end
 
         Log.clear_pin
-        Log.info('Backup: saved "%s" archive with %d files weighting %.3fmb (%.3fmb uncompressed)',
+        Log.log('Backup: saved "%s" archive with %d files weighting %.3fmb (%.3fmb uncompressed)',
                 File.basename(archive), numFiles, File.size(archive) / (1024.0 * 1024), rawSize / (1024.0 * 1024))
     end
 
