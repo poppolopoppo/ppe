@@ -147,14 +147,18 @@ public:
     template <class... _Args>
     void Emplace_KeepOldIFN(_Key&& key, _Args&&... args);
     template <class... _Args>
+    bool Emplace_Overwrite(_Key&& key, _Args&&... args);
+    template <class... _Args>
     void Emplace_AssertUnique(_Key&& key, _Args&&... args);
 
     bool Insert_ReturnIfExists(_Key&& key, _Value&& rvalue);
     void Insert_KeepOldIFN(_Key&& key, _Value&& rvalue);
+    bool Insert_Overwrite(_Key&& key, _Value&& rvalue);    
     void Insert_AssertUnique(_Key&& key, _Value&& rvalue);
 
     bool Insert_ReturnIfExists(const _Key& key, const _Value& value);
     void Insert_KeepOldIFN(const _Key& key, const _Value& value);
+    bool Insert_Overwrite(const _Key& key, const _Value& value);
     void Insert_AssertUnique(const _Key& key, const _Value& value);
 
     _Value& Get(const _Key& key);

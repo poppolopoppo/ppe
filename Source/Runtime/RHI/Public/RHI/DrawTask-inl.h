@@ -15,7 +15,7 @@ template <typename _Task>
 _Task& TDrawCallDesc<_Task>::AddResources(const FDescriptorSetID& id, const FPipelineResources* res) {
     Assert(id);
     Assert(res);
-    Resources.Add_Overwrite(id, res);
+    Resources.Emplace_Overwrite(id, res);
     return static_cast<_Task&>(*this);
 }
 //----------------------------------------------------------------------------
@@ -36,7 +36,7 @@ template <typename _Task>
 _Task& TDrawCallDesc<_Task>::AddColorBuffer(ERenderTargetID id, EColorMask colorMask/* = EColorMask::All */) {
     FColorBufferState cb;
     cb.ColorMask = colorMask;
-    ColorBuffers.Add_Overwrite(id, cb);
+    ColorBuffers.Add_Overwrite(id, std::move(cb));
     return static_cast<_Task&>(*this);
 }
 //----------------------------------------------------------------------------
@@ -61,7 +61,7 @@ _Task& TDrawCallDesc<_Task>::AddColorBuffer(ERenderTargetID id,
     cb.DstBlendFactor =  { dstBlendColor, dstBlendAlpha };
     cb.BlendOp = { blendOpColor, blendOpAlpha };
     cb.ColorMask = colorMask;
-    ColorBuffers.Add_Overwrite(id, cb);
+    ColorBuffers.Add_Overwrite(id, std::move(cb));
     return static_cast<_Task&>(*this);
 }
 //----------------------------------------------------------------------------

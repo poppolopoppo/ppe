@@ -200,6 +200,20 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_KeepOldIFN(_Ke
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 template <class... _Args>
+bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_Overwrite(_Key&& key, _Args&&... args) {
+    auto it = Find(key);
+    if (end() == it) {
+        PPE::Emplace_Back(_vector, std::move(key), mapped_type(std::forward<_Args>(args)...));
+        return false;
+    }
+    else {
+        it->second = mapped_type(std::forward<_Args>(args)...);
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <class... _Args>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(_Key&& key, _Args&&... args) {
     Assert(end() == Find(key));
     PPE::Emplace_Back(_vector, std::move(key), mapped_type(std::forward<_Args>(args)...));
@@ -222,6 +236,19 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_KeepOldIFN(_Key
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_Overwrite(_Key&& key, _Value&& rvalue) {
+    auto it = Find(key);
+    if (end() == it) {
+        PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));
+        return false;
+    }
+    else {
+        it->second = std::move(rvalue);
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(_Key&& key, _Value&& rvalue) {
     Assert(end() == Find(key));
     PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));
@@ -241,6 +268,19 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_KeepOldIFN(const _Key& key, const _Value& value) {
     Insert_ReturnIfExists(key, value);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_Overwrite(const _Key& key, const _Value& value) {
+    auto it = Find(key);
+    if (end() == it) {
+        PPE::Emplace_Back(_vector, key, value);
+        return false;
+    }
+    else {
+        it->second = value;
+        return true;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -277,7 +317,7 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TryGet(const _Key& key
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 const _Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::At(const _Key& key) const {
     const const_iterator it = Find(key);
-    Assert(std::end(_vector) != it);
+    AssertRelease(std::end(_vector) != it);
     return it->second;
 }
 //----------------------------------------------------------------------------
