@@ -53,4 +53,8 @@ PRAGMA_MSVC_WARNING_DISABLE(6313) // Incorrect operator:  zero-valued flag canno
 
     PRAGMA_MSVC_WARNING_POP()
 
+#else
+
+#   pragma clang diagnostic ignored "-Wshadow"
+
 #endif //!EXPORT_PPE_EXTERNAL_FARMHASH
