@@ -514,7 +514,7 @@ extern "C" \{
                         #     dst.puts!("VULKAN_CHECKERROR(#{name}, res);")
                         #     dst.puts!('return res;')
                         else
-                            dst.puts!(funcall.prepend('return '))
+                            dst.puts!('return '+funcall)
                         end
                     end
                 else
@@ -541,7 +541,7 @@ extern "C" \{
                         #     dst.puts!("VULKAN_CHECKERROR(#{name}, res);")
                         #     dst.puts!('return res;')
                         else
-                            dst.puts!(funcall.prepend('return '))
+                            dst.puts!('return '+funcall)
                         end
                     end
                 else
