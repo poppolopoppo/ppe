@@ -146,8 +146,9 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FLinuxPlatformConsole::Open() {
-    NOOP();
+bool FLinuxPlatformConsole::Open() {
+    NOOP(); // always available on linux
+    return true;
 }
 //----------------------------------------------------------------------------d
 void FLinuxPlatformConsole::Close() {
@@ -188,6 +189,11 @@ void FLinuxPlatformConsole::Write(const FWStringView& text, EAttribute attrs/* =
     Assert(not text.empty());
     const FLinuxColorModifier::FWScope color(std::wcout, attrs);
     std::wcout.write(text.data(), text.size());
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformConsole::Flush() {
+    std::wcout.flush();
+    std::wcerr.flush();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
