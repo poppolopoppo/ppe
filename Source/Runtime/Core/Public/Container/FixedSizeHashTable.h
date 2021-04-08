@@ -510,7 +510,7 @@ void Remove_AssertExists(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _Empt
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
 _Value Remove_ReturnValue(TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& hashmap, const _Key& key) {
-    const auto it = hashmap.find(it);
+    const auto it = hashmap.find(key);
     AssertRelease_NoAssume(hashmap.end() != it);
     auto value = it->second;
     hashmap.erase(it);
