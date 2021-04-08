@@ -80,7 +80,6 @@ module Build
         end
         def add_libraryPath(facet, dirpath)
             add_compilationFlag(facet, "-L#{dirpath}")
-            add_compilationFlag(facet, "-Wno-unused-command-line-argument")
             #facet.linkerOptions << "-I#{dirpath}" # *NOT* for llvm-link
             #facet.librarianOptions << "-I#{dirpath}" # *NOT* for llvm-ar
         end
@@ -114,6 +113,7 @@ module Build
             "-std=#{Build.CppStd}",
             '-Wall', '-Wextra', '-Wshadow',
             '-Werror', '-Wfatal-errors',
+            '-Wno-unused-command-line-argument',
             '-mavx2','-msse4.2',
             '-mlzcnt','-mpopcnt',
             '-fcolor-diagnostics',
