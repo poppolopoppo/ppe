@@ -10,4 +10,5 @@ $Build.ppe_external!(:lz4) do
     source_files!(*%w{
         lz4.git/lib/lz4.c
         lz4.git/lib/lz4hc.c })
+    on_tag!(:linux, compilerOption: '-Wno-deprecated') # compiling C with C++ compiler
 end

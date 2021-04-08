@@ -13,6 +13,7 @@ module Build
     persistent_switch(:PDB, 'Generate a Program Debug Database', init: true)
 
     make_facet(:Windows_Base) do
+        tags << :windows
         defines <<
             'PLATFORM_PC' << 'PLATFORM_WINDOWS' <<
             'WIN32' << '__WINDOWS__'

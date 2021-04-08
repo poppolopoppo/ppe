@@ -6,6 +6,7 @@ require_once '../Posix/Posix.rb'
 module Build
 
     make_facet(:Linux_Base) do
+        tags << :linux << :posix
         defines <<
             'PLATFORM_LINUX' <<
             '__LINUX__'
