@@ -294,9 +294,7 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     Assert(nullptr == exclusive->_blocks[nextChunkToAlloc]);
 
     // nothing available, need to allocate a new chunk
-    using allocator_traits = TAllocatorTraits<_Allocator>;
     auto& allocator = static_cast<_Allocator&>(*this);
-
     block_type* const newChunk = allocator_traits::template AllocateT<block_type>(allocator, _ChunkSize).data();
 
     // initialize free list indices
@@ -367,9 +365,7 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     pool.FreeList.store(ChunkSize, std::memory_order_relaxed);
 
     // release the allocated chunk
-    using allocator_traits = TAllocatorTraits<_Allocator>;
     auto& allocator = static_cast<_Allocator&>(*this);
-
     allocator_traits::DeallocateT(allocator, pblocks, _ChunkSize);
 
     exclusive->_blocks[chk] = nullptr;
@@ -388,9 +384,7 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     }
 
     // release all blocks
-    using allocator_traits = TAllocatorTraits<_Allocator>;
     auto& allocator = static_cast<_Allocator&>(*this);
-
     for (block_type*& pblocks : state._blocks) {
         if (pblocks) {
             allocator_traits::DeallocateT(allocator, pblocks, _ChunkSize);
