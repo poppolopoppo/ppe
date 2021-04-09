@@ -55,6 +55,8 @@ PRAGMA_MSVC_WARNING_DISABLE(6313) // Incorrect operator:  zero-valued flag canno
 
 #else
 
+#ifdef CPP_CLANG
 #   pragma clang diagnostic ignored "-Wshadow"
+#endif
 
 #endif //!EXPORT_PPE_EXTERNAL_FARMHASH
