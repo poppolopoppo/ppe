@@ -6,7 +6,7 @@ require_once '../Posix/Posix.rb'
 module Build
 
     make_facet(:Linux_Base) do
-        tags << :linux << :posix
+        tags << :linux
         defines <<
             'PLATFORM_LINUX' <<
             '__LINUX__'
@@ -59,5 +59,15 @@ module Build
             LinuxConfigs )
 
     Build.append_environments(*LinuxEnvironment)
+
+    Build.make_command(:prereq, 'Setup Linux prerequisites') do
+        pkgs = %w{
+            build-essential
+            gcc-multilib
+            g++-multilib
+            clang
+        }
+        Process.start({}, 'sudo', 'apt-get', 'install', *pkgs)
+    end
 
 end #~ Build

@@ -10,6 +10,7 @@ module Build
         defines <<
             'PLATFORM_PC' << 'PLATFORM_POSIX' <<
             'POSIX' << '__POSIX__'
+        tags << :posix
     end
 
     const_memoize(self, :PosixPlatform_X86) do
