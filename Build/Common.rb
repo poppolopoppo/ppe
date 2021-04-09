@@ -4,6 +4,7 @@ require_once 'Utils/deep_dup.rb'
 require_once 'Utils/DirCache.rb'
 require_once 'Utils/Log.rb'
 require_once 'Utils/Options.rb'
+require_once 'Utils/Process.rb'
 
 module Build
     extend self

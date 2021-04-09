@@ -8,7 +8,6 @@ require_once '../Utils/Prerequisite.rb'
 require_once '../Commands/BFF.rb'
 
 require 'fileutils'
-require 'open3'
 
 module Build
 
@@ -77,35 +76,7 @@ module Build
                 'FASTBUILD_TEMP_PATH' => $TemporaryPath,
             }
 
-            Log.log 'FBuild: %s (env: %s)', cmd.join(' '), env
-
-            result = nil
-            Open3.popen3(env, *cmd, chdir: $WorkspacePath) do |io_in, io_out, io_err, wait_thr|
-                loop do
-                    if line = io_out.gets
-                        line = FBuild.trim_crlf(line)
-                        if block_given?
-                            yield line
-                        elsif not quiet and line
-                            if Log.log?
-                                Log.raw(line, verbosity: :log)
-                            else
-                                Log.pin(line)
-                            end
-                        end
-                    elsif line = io_err.gets
-                        line = FBuild.trim_crlf(line)
-                        if line
-                            Log.raw(line, verbosity: :error)
-                        end
-                    else
-                        break
-                    end
-                end
-                result = wait_thr.value
-            end
-
-            Log.clear_pin
+            result = Process.start(env, *cmd, chdir: $WorkspacePath, quiet: true)
 
             if result.success?
                 Log.debug 'FBuild: success'
@@ -114,12 +85,6 @@ module Build
             end
 
             return result.success?
-        end
-
-        def self.trim_crlf(str)
-            str.chomp!
-            str.rstrip!
-            str.empty? ? nil : str
         end
 
         @@_build_prepared = false
