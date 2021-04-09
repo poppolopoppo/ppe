@@ -15,7 +15,7 @@ module Build
         fileset = Build.staged_files?
 
         Log.log('Backup: generating snapshot backup in "%s" with %d files', archive, fileset.length)
-        FileUtils.mkdir_p(File.dirname(archive), :verbose => Log.verbose?)
+        FileUtils.mkdir_p(File.dirname(archive), :verbose => Log.debug?)
 
         rawSize = 0
         numFiles = 0

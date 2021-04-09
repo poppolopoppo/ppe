@@ -27,7 +27,7 @@ module Build
         if vcperf = Build.vcperf
             at_exit do |&ns|
                 tracePath = File.join($SavedPath, 'Insights')
-                FileUtils.mkdir_p(tracePath, :verbose => Log.verbose?)
+                FileUtils.mkdir_p(tracePath, :verbose => Log.debug?)
                 Insights.vcperf_stop File.join(tracePath, "#{Build::Project}_#{Time.now.to_i}.etl")
             end if Insights.vcperf_start.success?
         end

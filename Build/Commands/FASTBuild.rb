@@ -91,7 +91,7 @@ module Build
         def self.prepare_for_build()
             unless @@_build_prepared
                 @@_build_prepared = true
-                verbose = Log.verbose?
+                verbose = Log.debug?
                 FileUtils.mkdir_p($BinariesPath, verbose: verbose) unless DirCache.exist?($BinariesPath)
                 FileUtils.mkdir_p($GeneratedPath, verbose: verbose) unless DirCache.exist?($GeneratedPath)
                 FileUtils.mkdir_p($IntermediatePath, verbose: verbose) unless DirCache.exist?($IntermediatePath)

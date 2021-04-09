@@ -105,7 +105,7 @@ module Build
         def content_write(data)
             Log.debug 'writing memfile to disk: "%s"', @filename
             dirname = File.dirname(@filename)
-            FileUtils.mkdir_p(dirname, :verbose => Log.verbose?) unless DirCache.exist?(dirname)
+            FileUtils.mkdir_p(dirname, :verbose => Log.debug?) unless DirCache.exist?(dirname)
             File.write(@filename, data, mode: 'wb')
         end
     end #~ MemFile
