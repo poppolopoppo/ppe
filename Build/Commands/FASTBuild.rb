@@ -76,7 +76,7 @@ module Build
                 'FASTBUILD_TEMP_PATH' => $TemporaryPath,
             }
 
-            result = Process.start(env, *cmd, chdir: $WorkspacePath, quiet: true)
+            result = Process.start(env, *cmd, chdir: $WorkspacePath, quiet: quiet)
 
             if result.success?
                 Log.debug 'FBuild: success'

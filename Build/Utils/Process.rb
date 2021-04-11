@@ -10,12 +10,12 @@ module Process
     def self.trim_crlf(str)
         str.chomp!
         str.rstrip!
-        str.empty? ? nil : str
+        return str.empty? ? nil : str
     end
 
     def self.start(env, *cmd, chdir: $WorkspacePath, quiet: false)
         result = nil
-        Build::Log.log 'Process: %s (env: %s)', cmd.join(' '), env
+        Build::Log.log 'Process: %s (env: %s, quiet: %s)', cmd.join(' '), env, quiet
         Open3.popen3(env, *cmd, chdir: chdir) do |io_in, io_out, io_err, wait_thr|
             loop do
                 if line = io_out.gets
