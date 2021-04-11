@@ -6,8 +6,8 @@
 
 #if !USE_PPE_RHIDEBUG
 
-#	define PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _VkElement, _Name) NOOP()
-#	define PPE_VKDEVICE_SETDEBUGARGS(_RHIDevice, _VkElement, _Fmt, ...) NOOP()
+#	define PPE_VKDEVICE_SETDEBUGNAME(_RHIDevice, _vkType, _VkElement, _Name) NOOP()
+#	define PPE_VKDEVICE_SETDEBUGARGS(_RHIDevice, _vkType, _VkElement, _Fmt, ...) NOOP()
 
 #else
 
