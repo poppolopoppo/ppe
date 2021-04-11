@@ -24,6 +24,10 @@ module Build
             return str.gsub('"', '^"')
         end
 
+        def self.varname(str)
+            return str.gsub(/[^\w]+/, '_')
+        end
+
         class Source < MemFile
             attr_reader :source, :aliases, :minify
             def initialize(filename, minify: false)
@@ -35,6 +39,10 @@ module Build
                 @compress = minify ? StringCompress.new : nil
             end
 
+            def include!(path)
+                @source.puts!('#include "%s"' % path)
+                return self
+            end
             def once?(key, &block)
                 if @aliases.add?(key)
                     instance_exec(&block)

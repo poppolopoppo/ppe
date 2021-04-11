@@ -19,6 +19,123 @@ module Build
     PCH_MINREFNUM = 20 # # of sources include for a projec header -> PCH
     PCH_THRESHOLD = 98 / 100.0 # % of sources include for a project header -> PCH
 
+    make_command(:genpch2, 'Generate precompiled headers') do |&namespace|
+        environments = Build.fetch_environments
+        namespace = namespace[]
+
+        gen = GenPCH.new
+
+        namespace.all.each do |target|
+            if target.pch?
+
+                pch_header = File.join($SourcePath, target.pch_header)
+                pch_generated = Pathname.new(pch_header).sub_ext('.generated.h').to_s
+
+                puts pch_generated
+                next unless File.exist?(pch_generated)
+
+                Log.log 'PCH: clear generated file "%s"', pch_generated
+                File.write(pch_generated, '')
+
+                target.nopch!()
+
+                environments.each do |env|
+                    expanded = env.expand(target)
+                    gen.make_target(pch_generated, env, target, expanded)
+                end
+            end
+        end
+
+        gen.list_dependencies()
+        gen.parse_dependencies()
+
+        #FBuild.run('all', config: bff.filename)
+    end
+
+    class GenPCH
+
+        attr_reader :pch
+
+        def initialize()
+            @pch = {}
+            @bff = BFF::Source.new(File.join($OutputPath, 'GenPCH.bff'))
+           # @bff.include!(Build.bff_output.filename)
+            @bff.set!('SourcePattern', %w{ *.h })
+        end
+
+        def self.obj2dep(path)
+            return path + '.dep.txt'
+        end
+
+        def make_target(pch_generated, env, target, expanded)
+            Log.verbose('PCH: bff for %s with %s', pch_generated, env.family)
+
+            gen = @pch[pch_generated]
+            gen = @pch[pch_generated] = {} if gen.nil?
+
+            compiler_details = BFF.make_compiler_details(@bff, expanded.compiler)
+
+            @bff.set!('CompilerInputFilesRoot', env.source_path(target.source_path))
+            @bff.set!('CompilerOutputPath', env.intermediate_path(target.abs_path))
+
+            @bff.facet!(expanded, :@compilerOptions)
+            @bff.facet!(expanded, :@preprocessorOptions) if expanded.preprocessor?
+
+            deps = target.find_source_fileset(env).collect do |path|
+                src = env.relative_path($SourcePath, path)
+                obj = env.output_path(src, :obj)
+
+                obj_dep = GenPCH.obj2dep(obj)
+
+                @bff.func!('ObjectList', BFF.varname(obj)) do
+                    using!(compiler_details)
+                    set!('CompilerInputFiles', path)
+                end
+                @bff.func!('ListDependencies', BFF.varname(obj_dep)) do
+                    set!('Source', BFF.varname(obj))
+                    set!('Dest', obj_dep)
+                end
+
+                Log.debug('PCH: new dependency list %s', obj_dep)
+                obj
+            end
+
+            Assert.expect(deps, Array)
+            gen[env.family] = deps
+
+            @bff.func!('Alias', BFF.varname("#{pch_generated}-#{env.family}")) do
+                set!('Targets', gen[env.family].collect{|x| BFF.varname(GenPCH.obj2dep(x)) })
+                set!('PreBuildDependencies', gen[env.family].collect{|x| BFF.varname(x) })
+            end
+        end
+
+        def list_dependencies()
+            @pch.each do |pch_generated, configs|
+                @bff.func!('Alias', BFF.varname(pch_generated)) do
+                    set!('Targets', configs.keys.collect{|x| BFF.varname("#{pch_generated}-#{x}") })
+                end
+            end
+            pch = @pch
+            @bff.func!('Alias', 'All') do
+                set!('Targets', pch.keys.collect{|x| BFF.varname(x) })
+            end
+            @bff.write_to_disk
+            FBuild.run('-preprocess', 'All', config: @bff.filename)
+        end
+
+        def parse_dependencies()
+            ractors = @pch.collect do |pch_generated, configs|
+                Ractor.new(pch_generated, configs) do |pch_generated, configs|
+                    Log.verbose('PCH: parsing dependencies for %s (%d)', pch_generated)
+                    #TODO
+                    Assert.not_implemented()
+                end
+            end
+            ractors.map(&:take)
+        end
+
+    end #~ GenPCH
+
     make_command(:genpch, 'Generate precompiled headers') do |&namespace|
         environments = Build.fetch_environments
         targets = namespace[].select(*Build::Args)
@@ -111,7 +228,7 @@ module Build
 
             re_object = /Object\s(.*\.#{env.compiler.ext_obj[1..-1]})$/i
 
-            FBuild.run('-showdeps', target, wait: false) do |line|
+            FBuild.run('-showdeps', target, wait: false, quiet: false) do |line|
                 if m = line.match(RE_header)
                     deps.header(m[1])
                 elsif m = line.match(re_object)

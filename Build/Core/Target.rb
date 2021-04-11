@@ -73,7 +73,7 @@ module Build
         attr_accessor :excluded_patterns
         attr_reader :force_includes # not relative to source path
 
-        def self.relative_path(*names, klass: self)
+        def self.attr_relative_path(*names, klass: self)
             names.each do |name|
                 ivar = "@#{name}".to_sym
                 klass.define_method(name) do
@@ -85,10 +85,10 @@ module Build
             end
         end
 
-        relative_path :glob_path
-        relative_path :pch_header, :pch_source
-        relative_path :source_files, :isolated_files, :excluded_files
-        relative_path :extra_files
+        attr_relative_path :glob_path
+        attr_relative_path :pch_header, :pch_source
+        attr_relative_path :source_files, :isolated_files, :excluded_files
+        attr_relative_path :extra_files
 
         def initialize(name, namespace, type, link, &config)
             super(name)
@@ -289,6 +289,10 @@ module Build
         def pch!(header, source)
             @pch_header = header
             @pch_source = source
+            return self
+        end
+        def nopch!()
+            @pch_header = @pch_source = nil
             return self
         end
 
