@@ -2,9 +2,9 @@
 
 #include "Vulkan/VulkanMemoryAllocator.h"
 
-#include "Vulkan/VulkanError.h"
+#include "Vulkan/Common/VulkanError.h"
 #include "Vulkan/VulkanIncludes.h"
-#include "Vulkan/VulkanInstance.h"
+//#include "Vulkan/VulkanInstance.h"
 #include "Vulkan/VulkanDevice.h"
 
 #include "HAL/PlatformMaths.h"

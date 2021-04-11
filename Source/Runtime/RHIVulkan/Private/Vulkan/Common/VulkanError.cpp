@@ -2,7 +2,7 @@
 
 #include "RHI_fwd.h"
 
-#include "Vulkan/VulkanError.h"
+#include "Vulkan/Common/VulkanError.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/String.h"

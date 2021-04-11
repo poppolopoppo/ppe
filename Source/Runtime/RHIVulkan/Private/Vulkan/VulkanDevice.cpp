@@ -3,10 +3,10 @@
 #include "Vulkan/VulkanDevice.h"
 
 #include "Vulkan/VulkanIncludes.h"
-#include "Vulkan/VulkanInstance.h"
+//#include "Vulkan/VulkanInstance.h"
 #include "Vulkan/VulkanSwapchain.h"
 
-#include "Vulkan/VulkanError.h"
+#include "Vulkan/Common/VulkanError.h"
 
 #include "Diagnostic/Logger.h"
 
@@ -35,7 +35,7 @@ FVulkanDevice::FVulkanDevice(
 ,   _surfaceFormats(std::move(surfaceFormats))
 #if USE_PPE_RHIDEBUG
 ,   _debug(*this)
-#endif{
+#endif
 {
     Assert_NoAssume(VK_NULL_HANDLE != _vkPhysicalDevice);
     Assert_NoAssume(not _presentModes.empty());

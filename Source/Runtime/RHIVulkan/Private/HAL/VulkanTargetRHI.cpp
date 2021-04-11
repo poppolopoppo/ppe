@@ -2,7 +2,7 @@
 
 #include "HAL/VulkanTargetRHI.h"
 
-#include "Vulkan/VulkanAPI.h"
+#include "Vulkan/Common/VulkanAPI.h"
 
 #include "IO/String.h"
 

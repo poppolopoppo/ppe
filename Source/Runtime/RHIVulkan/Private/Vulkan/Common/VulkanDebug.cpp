@@ -2,7 +2,7 @@
 
 #include "RHI_fwd.h"
 
-#include "Vulkan/VulkanDebug.h"
+#include "Vulkan/Common/VulkanDebug.h"
 
 #	if USE_PPE_RHIDEBUG
 

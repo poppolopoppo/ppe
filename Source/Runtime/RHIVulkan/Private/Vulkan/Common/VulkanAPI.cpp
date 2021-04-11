@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "Vulkan/VulkanAPI.h"
+#include "Vulkan/Common/VulkanAPI.h"
 
 #include "HAL/PlatformMaths.h" // popcnt
-#include "Vulkan/VulkanError.h"
+#include "Vulkan/Common/VulkanError.h"
 
 #include "Allocator/Alloca.h"
 #include "Diagnostic/Logger.h"

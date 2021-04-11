@@ -4,7 +4,7 @@
 
 #include "HAL/TargetRHI.h"
 
-#include "Vulkan/VulkanAPI.h"
+#include "Vulkan/Common/VulkanAPI.h"
 #include "Misc/DynamicLibrary.h"
 #include "Thread/CriticalSection.h"
 

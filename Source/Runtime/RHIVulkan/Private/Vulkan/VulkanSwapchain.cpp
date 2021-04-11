@@ -2,10 +2,9 @@
 
 #include "Vulkan/VulkanSwapchain.h"
 
-#include "Vulkan/VulkanError.h"
+#include "Vulkan/Common/VulkanError.h"
 #include "Vulkan/VulkanDevice.h"
 #include "Vulkan/VulkanIncludes.h"
-#include "Vulkan/VulkanInstance.h"
 
 namespace PPE {
 namespace RHI {

@@ -2,8 +2,8 @@
 
 #include "Vulkan/VulkanInstance.h"
 
-#include "Vulkan/VulkanDebug.h"
-#include "Vulkan/VulkanError.h"
+#include "Vulkan/Common/VulkanDebug.h"
+#include "Vulkan/Common/VulkanError.h"
 #include "Vulkan/VulkanDevice.h"
 
 #include "Diagnostic/CurrentProcess.h"
