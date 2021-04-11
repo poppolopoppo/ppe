@@ -17,7 +17,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 class PPE_APPLICATION_API FLinuxWindow : public FGenericWindow {
 public: // must be defined for every platform
-    using FNativeHandle = ::HWND;
+    using FNativeHandle = void*;
     using FWindowDefinition = FGenericWindow::FWindowDefinition;
     using EWindowType = EGenericWindowType;
 
@@ -49,28 +49,6 @@ public: // must be defined for every platform
     static void HiddenWindowDefinition(FWindowDefinition* def);
     static bool CreateWindow(FLinuxWindow* window, FWString&& title, const FWindowDefinition& def);
 
-public: // platform specific
-    FNativeHandle HandleWin32() const {
-        return reinterpret_cast<FNativeHandle>(FGenericWindow::Handle());
-    }
-
-    void SetHandleWin32(::HWND hWnd) { SetNativeHandle(hWnd); }
-    bool WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lParam);
-
-    static void Start();
-    static void Shutdown();
-
-    friend struct FLinuxPlatformMessageHandler;
-    PUBLIC_EVENT(OnMessageWin32, FLinuxPlatformMessageHandler::FMessageHandler)
-
-private:
-    using parent_type = FGenericWindow;
-
-    virtual void UpdateClientRect() override final;
-
-    bool DispatchEventWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lParam);
-    void DragDropProcWin32(::WPARAM wParam);
-    void PaintProcWin32();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -1,26 +1,25 @@
-﻿#pragma once
+#include "stdafx.h"
 
-#include "HAL/Generic/GenericPlatformLaunch.h"
+#ifdef PLATFORM_LINUX
 
-#ifndef PLATFORM_LINUX
-#   error "invalid include for current platform"
-#endif
+#include "HAL/Linux/LinuxPlatformLaunch.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FLinuxPlatformLaunch : public FGenericPlatformLaunch {
-public:
-    using FGenericPlatformLaunch::RunApplication;
-
-    static PPE_APPLICATION_API void OnPlatformLaunch(
-        const wchar_t* filename, size_t argc, const wchar_t* const* argv);
-    static PPE_APPLICATION_API void OnPlatformShutdown();
-};
+void FLinuxPlatformLaunch::OnPlatformLaunch(const wchar_t* filename, size_t argc, const wchar_t* const* argv) {
+    FGenericPlatformLaunch::OnPlatformLaunch(nullptr, 0, filename, argc, argv);
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformLaunch::OnPlatformShutdown() {
+    FGenericPlatformLaunch::OnPlatformShutdown();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Application
 } //!namespace PPE
+
+#endif //!PLATFORM_LINUX

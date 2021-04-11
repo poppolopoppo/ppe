@@ -16,12 +16,14 @@ LOG_CATEGORY(, Test_Process)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#ifdef PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
 #   ifdef ARCH_X64
 #       define PPE_TESTPROCESS_IMAGENAME_ARGS L"c:\\Windows\\syswow64\\getmac.exe", {}
 #   else
 #       define PPE_TESTPROCESS_IMAGENAME_ARGS L"c:\\Windows\\system32\\getmac.exe", {}
 #   endif
+#elif defined(PLATFORM_LINUX)
+#   define PPE_TESTPROCESS_IMAGENAME_ARGS L"/bin/ls", {}
 #else
 #   error "unsupported OS"
 #endif

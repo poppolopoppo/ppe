@@ -14,28 +14,27 @@ class FLinuxWindow;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-setsystemcursor
-enum class ELinuxCursorType : ::DWORD {
-    AppStarting         = OCR_APPSTARTING,
-    Arrow               = OCR_NORMAL,
-    Cross               = OCR_CROSS,
-    Hand                = OCR_HAND,
-    Help                = /*OCR_HELP*/32651,
-    IBeam               = OCR_IBEAM,
-    Move                = OCR_SIZEALL,
-    No                  = OCR_NO,
-    Pen                 = /*OCR_PEN*/OCR_UP,
-    SizeAll             = OCR_SIZEALL,
-    SizeTop             = OCR_SIZENS,
-    SizeTopLeft         = OCR_SIZENWSE,
-    SizeTopRight        = OCR_SIZENESW,
-    SizeBottom          = OCR_SIZENS,
-    SizeBottomLeft      = OCR_SIZENESW,
-    SizeBottomRight     = OCR_SIZENWSE,
-    SizeLeft            = OCR_SIZEWE,
-    SizeRight           = OCR_SIZEWE,
-    WaitCursor          = OCR_WAIT,
-    Default             = Arrow,
+enum class ELinuxCursorType {
+    AppStarting,
+    Arrow,
+    Cross,
+    Hand,
+    Help,
+    IBeam,
+    Move,
+    No,
+    Pen,
+    SizeAll,
+    SizeTop,
+    SizeTopLeft,
+    SizeTopRight,
+    SizeBottom,
+    SizeBottomLeft,
+    SizeBottomRight,
+    SizeLeft,
+    SizeRight,
+    WaitCursor,
+    Default,
 };
 //----------------------------------------------------------------------------
 class PPE_APPLICATION_API FLinuxPlatformMouse : FGenericPlatformMouse {
