@@ -36,6 +36,7 @@ static FApplicationBase* GRunningApp_ = nullptr;
 //----------------------------------------------------------------------------
 template <typename _Functor>
 static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
+    UNUSED(step);
 #if USE_APPLICATION_EXCEPTION_TRAP
     PPE_TRY
 #endif

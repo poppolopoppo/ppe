@@ -52,8 +52,6 @@ bool TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_R
     Assert(pnode);
     Assert(false == keys.empty());
 
-    const size_type n = keys.size();
-
     node_type* parent = nullptr;
     node_type** it = &_root;
 

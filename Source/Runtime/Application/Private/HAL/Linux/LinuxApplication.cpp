@@ -9,8 +9,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FLinuxApplication::FLinuxApplication(FWString&& name)
-:   FGenericApplication(std::move(name))
+FLinuxApplication::FLinuxApplication(const FModularDomain& domain, FWString&& name)
+:   FGenericApplication(domain, std::move(name))
 {}
 //----------------------------------------------------------------------------
 FLinuxApplication::~FLinuxApplication()
@@ -20,8 +20,8 @@ void FLinuxApplication::Start() {
     parent_type::Start();
 }
 //----------------------------------------------------------------------------
-void FLinuxApplication::PumpMessages() {
-    parent_type::PumpMessages();
+bool FLinuxApplication::PumpMessages() NOEXCEPT {
+    return parent_type::PumpMessages();
 }
 //----------------------------------------------------------------------------
 void FLinuxApplication::Tick(FTimespan dt) {

@@ -35,14 +35,6 @@ public: // must be defined for every platform
 
     static void SetTaskbarState(ETaskbarState state);
     static void SetTaskbarProgress(size_t completed, size_t total);
-
-public: // platform specific
-    STATIC_CONST_INTEGRAL(::UINT, WM_SYSTRAY, WM_USER + 1);
-
-    static void SummonSystrayPopupMenuWin32(::HWND hWnd);
-
-    static void Start();
-    static void Shutdown();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

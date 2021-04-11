@@ -15,11 +15,11 @@ class PPE_APPLICATION_API FLinuxApplication : public FGenericApplication {
 public: // must be defined for every platform
     using parent_type = FGenericApplication;
 
-    explicit FLinuxApplication(FWString&& name);
+    explicit FLinuxApplication(const FModularDomain& domain, FWString&& name);
     virtual ~FLinuxApplication();
 
     virtual void Start() override;
-    virtual void PumpMessages() override;
+    virtual bool PumpMessages() NOEXCEPT override;
     virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
 
