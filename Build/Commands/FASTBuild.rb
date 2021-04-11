@@ -31,7 +31,7 @@ module Build
 
     module FBuild
 
-        def self.run(*args, config: Build.bff_output.filename, quiet: false, wait: true)
+        def self.run(*args, config: Build.bff_output.filename, quiet: false, wait: true, &block)
             FBuild.prepare_for_build()
 
             Log.debug 'FBuild: launching "%s"', Build.FBuild_binary
@@ -76,7 +76,7 @@ module Build
                 'FASTBUILD_TEMP_PATH' => $TemporaryPath,
             }
 
-            result = Process.start(env, *cmd, chdir: $WorkspacePath, quiet: quiet)
+            result = Process.start(env, *cmd, chdir: $WorkspacePath, quiet: quiet, &block)
 
             if result.success?
                 Log.debug 'FBuild: success'
