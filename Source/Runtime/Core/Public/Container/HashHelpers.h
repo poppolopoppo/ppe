@@ -59,7 +59,12 @@ struct TEmptyKey< u256, void > {
 template <typename T, typename _Hash = Meta::THash<T>, typename _Equal = Meta::TEqualTo<T> >
 class THashMemoizer {
 public:
-    CONSTEXPR THashMemoizer() = default;
+    THashMemoizer() = default;
+
+    CONSTEXPR THashMemoizer(Meta::FForceInit) NOEXCEPT
+        : _value(Meta::MakeForceInit<T>())
+        , _hash(Meta::ForceInit)
+    {}
 
     THashMemoizer(const THashMemoizer& other) = default;
     THashMemoizer& operator =(const THashMemoizer& other) = default;
@@ -108,6 +113,11 @@ private:
     T _value;
     hash_t _hash;
 };
+//----------------------------------------------------------------------------
+template <typename T, typename _Hash, typename _Equal>
+CONSTEXPR bool is_pod_type(THashMemoizer<T, _Hash, _Equal>*) NOEXCEPT {
+    return Meta::is_pod_v<T>;
+}
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 using TBasicStringViewHashMemoizer = THashMemoizer<

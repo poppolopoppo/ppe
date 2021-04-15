@@ -15,7 +15,8 @@ struct TPtrRef {
     T* Ptr;
 
     TPtrRef() = default;
-    TPtrRef(Meta::FNoInit) NOEXCEPT {}
+
+    CONSTEXPR TPtrRef(Meta::FForceInit) NOEXCEPT : Ptr(nullptr) {}
 
     CONSTEXPR TPtrRef(T* ptr) NOEXCEPT : Ptr(ptr) { Assert(ptr); }
     CONSTEXPR TPtrRef(T& ref) NOEXCEPT : Ptr(&ref) {}
@@ -31,17 +32,17 @@ struct TPtrRef {
     CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
     CONSTEXPR operator T& () const NOEXCEPT { return (*Ptr); }
 
-    friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
-    friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
+    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
 
-    friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
-    friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
+    CONSTEXPR friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
+    CONSTEXPR friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
 
-    friend bool operator ==(const TPtrRef& lhs, const T& rhs) { return (*lhs == rhs); }
-    friend bool operator !=(const TPtrRef& lhs, const T& rhs) { return (not operator ==(lhs, rhs)); }
+    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const T& rhs) { return (*lhs == rhs); }
+    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const T& rhs) { return (not operator ==(lhs, rhs)); }
 
-    friend bool operator ==(const T& lhs, const TPtrRef& rhs) { return (lhs == *rhs); }
-    friend bool operator !=(const T& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+    CONSTEXPR friend bool operator ==(const T& lhs, const TPtrRef& rhs) { return (lhs == *rhs); }
+    CONSTEXPR friend bool operator !=(const T& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
 
     friend void swap(TPtrRef& lhs, TPtrRef& rhs) {
         std::swap(lhs.Ptr, rhs.Ptr);
@@ -51,6 +52,7 @@ struct TPtrRef {
         return hash_ptr(ref.Ptr);
     }
 };
+PPE_ASSUME_TEMPLATE_AS_POD(TPtrRef<T>, typename T)
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR TPtrRef<T> MakePtrRef(T& ref) {

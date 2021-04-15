@@ -16,7 +16,7 @@ public:
     value_type _value;
 
     hash_t() = default;
-
+    CONSTEXPR hash_t(Meta::FForceInit) NOEXCEPT : _value(0) {}
     CONSTEXPR hash_t(value_type value) NOEXCEPT : _value(value) {}
     CONSTEXPR operator value_type () const { return _value; }
 
