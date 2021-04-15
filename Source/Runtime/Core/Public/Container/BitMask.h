@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core.h"
+#include "External/stb/stb.git/stb_c_lexer.h"
 
 #include "HAL/PlatformMaths.h"
 
@@ -13,16 +14,14 @@ struct TBitMask {
     STATIC_ASSERT(std::is_integral_v<T>);
     using word_t = T;
 
+    static CONSTEXPR u32 BitCount = (sizeof(word_t) << 3);
     static CONSTEXPR word_t One = word_t(1);
     static CONSTEXPR word_t AllMask = word_t(-1);
-    static CONSTEXPR word_t BitCount = (sizeof(word_t) << 3);
     static CONSTEXPR word_t BitMask = (BitCount - 1);
 
     word_t Data;
 
     CONSTEXPR operator word_t () const NOEXCEPT { return Data; }
-
-    u32 Count() const NOEXCEPT { return checked_cast<u32>(FPlatformMaths::popcnt(Data)); }
 
     template <u32 _Index>
     CONSTEXPR bool Get() const NOEXCEPT {
@@ -48,6 +47,8 @@ struct TBitMask {
     CONSTEXPR bool AnyTrue() const NOEXCEPT { return (Data != 0); }
     CONSTEXPR bool AnyFalse() const NOEXCEPT { return (Data != AllMask); }
 
+    CONSTEXPR void SetAllTrue() NOEXCEPT { Data = AllMask; }
+    CONSTEXPR void SetAllFalse() NOEXCEPT { Data = 0; }
     CONSTEXPR void ResetAll(bool value) NOEXCEPT { Data = (value ? AllMask : 0); }
 
     CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data }; }
@@ -58,6 +59,10 @@ struct TBitMask {
 
     CONSTEXPR TBitMask operator <<(word_t lshift) const NOEXCEPT { return TBitMask{ Data << lshift }; }
     CONSTEXPR TBitMask operator >>(word_t rshift) const NOEXCEPT { return TBitMask{ Data >> rshift }; }
+
+    u32 Count() const NOEXCEPT {
+        return checked_cast<u32>(FPlatformMaths::popcnt(Data));
+    }
 
     word_t CountTrailingZeros() const NOEXCEPT {
         return FPlatformMaths::ctz(Data);
@@ -158,7 +163,7 @@ struct TBitMask<u128> {
     static CONSTEXPR word_t One = u128{ 1, 0 };
     static CONSTEXPR word_t Zero = u128{ 0, 0 };
     static CONSTEXPR word_t AllMask = u128{ u64(-1), u64(-1) };
-    static CONSTEXPR size_t BitCount = (sizeof(u128) << 3);
+    static CONSTEXPR u32 BitCount = (sizeof(u128) << 3);
 
     word_t Data;
 
@@ -195,6 +200,8 @@ struct TBitMask<u128> {
     CONSTEXPR bool AnyTrue() const NOEXCEPT { return (Data != Zero); }
     CONSTEXPR bool AnyFalse() const NOEXCEPT { return (Data != AllMask); }
 
+    CONSTEXPR void SetAllTrue() NOEXCEPT { Data = AllMask; }
+    CONSTEXPR void SetAllFalse() NOEXCEPT { Data = Zero; }
     CONSTEXPR void ResetAll(bool value) NOEXCEPT { Data = (value ? AllMask : Zero); }
 
     CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ { ~Data.lo, ~Data.hi } }; }
@@ -219,6 +226,156 @@ struct TBitMask<u128> {
 };
 //----------------------------------------------------------------------------
 using FBitMask = TBitMask<>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <size_t N, typename T = size_t>
+struct TFixedSizeBitMask {
+    using word_t = T;
+    using bitmask_t = TBitMask<word_t>;
+    STATIC_CONST_INTEGRAL(u32, Capacity, N);
+    STATIC_CONST_INTEGRAL(u32, BitsPerWord, bitmask_t::BitCount);
+    STATIC_CONST_INTEGRAL(u32, NumWords, (Capacity + BitsPerWord - 1) / BitsPerWord);
+    STATIC_CONST_INTEGRAL(word_t, RemainerMask, Capacity % BitsPerWord ? ~((word_t(1) << (Capacity % BitsPerWord)) - 1) : 0);
+
+    bitmask_t Words[NumWords];
+
+    TFixedSizeBitMask() = default;
+
+    TFixedSizeBitMask(const TFixedSizeBitMask& ) = default;
+    TFixedSizeBitMask& operator =(const TFixedSizeBitMask& ) = default;
+
+    CONSTEXPR TFixedSizeBitMask(Meta::FForceInit) : Words{} {}
+    CONSTEXPR TFixedSizeBitMask(std::initializer_list<u32> trueBits) : Words{} {
+        for (auto bit : trueBits)
+            SetTrue(bit);
+    }
+    template <typename _It>
+    CONSTEXPR TFixedSizeBitMask(_It first, _It last) : Words{} {
+        for (; first != last; ++first)
+            SetTrue(*first);
+    }
+
+    CONSTEXPR bool Get(u32 index) const {
+        Assert_NoAssume(index < N);
+        return Words[index / BitsPerWord].Get(index % BitsPerWord);
+    }
+    CONSTEXPR void Set(u32 index, bool value) {
+        Assert_NoAssume(index < N);
+        Words[index / BitsPerWord].Set(index % BitsPerWord, value);
+    }
+    CONSTEXPR void SetTrue(u32 index) {
+        Assert_NoAssume(index < N);
+        Words[index / BitsPerWord].SetTrue(index % BitsPerWord);
+    }
+    CONSTEXPR void SetFalse(u32 index) {
+        Assert_NoAssume(index < N);
+        Words[index / BitsPerWord].SetFalse(index % BitsPerWord);
+    }
+
+    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
+
+    CONSTEXPR bool AllTrue() const NOEXCEPT {
+        forrange(i, 0, NumWords - 1)
+            if (not Words[i].AllTrue())
+                return false;
+        return (Words[NumWords - 1].Data | RemainerMask) == bitmask_t::AllMask;
+    }
+    CONSTEXPR bool AllFalse() const NOEXCEPT {
+        for (const bitmask_t& bm : Words)
+            if (not bm.AllFalse())
+                return false;
+        return true;
+    }
+
+    CONSTEXPR bool AnyTrue() const NOEXCEPT {
+        for (const bitmask_t& bm : Words)
+            if (bm.AnyTrue())
+                return true;
+        return false;
+    }
+    CONSTEXPR bool AnyFalse() const NOEXCEPT {
+        forrange(i, 0, NumWords - 1)
+            if (Words[i].AnyFalse())
+                return true;
+        return (Words[NumWords - 1].Data | RemainerMask) != bitmask_t::AllMask;
+    }
+
+    CONSTEXPR void SetAllTrue() NOEXCEPT {
+        forrange(i, 0, NumWords - 1)
+            Words[i].SetAllTrue();
+        Words[NumWords - 1].Data = ~RemainerMask;
+    }
+    CONSTEXPR void SetAllFalse() NOEXCEPT {
+        for (bitmask_t& bm : Words)
+            bm.SetAllFalse();
+    }
+    CONSTEXPR void ResetAll(bool value) NOEXCEPT {
+        if (value)
+            SetAllTrue();
+        else
+            SetAllFalse();
+    }
+
+    CONSTEXPR TFixedSizeBitMask Invert() const NOEXCEPT {
+        TFixedSizeBitMask result;
+        forrange(i, 0, NumWords - 1)
+            result.Words[i] = Words[i].Invert();
+        result.Words[NumWords - 1].Data = (Words[NumWords - 1].Invert().Data & ~RemainerMask);
+        return result;
+    }
+
+    CONSTEXPR bool operator ==(const TFixedSizeBitMask& other) const {
+        forrange(i, 0, NumWords)
+            if (Words[i].Data != other.Words[i].Data)
+                return false;
+        return true;
+    }
+    CONSTEXPR bool operator !=(const TFixedSizeBitMask& other) const {
+        return not operator ==(other);
+    }
+
+    CONSTEXPR TFixedSizeBitMask operator &(TFixedSizeBitMask other) const NOEXCEPT {
+        TFixedSizeBitMask result;
+        forrange(i, 0, NumWords)
+            result.Words[i] = Words[i] & other.Words[i];
+        return result;
+    }
+    CONSTEXPR TFixedSizeBitMask operator |(TFixedSizeBitMask other) const NOEXCEPT {
+        TFixedSizeBitMask result;
+        forrange(i, 0, NumWords)
+            result.Words[i] = Words[i] | other.Words[i];
+        return result;
+    }
+    CONSTEXPR TFixedSizeBitMask operator ^(TFixedSizeBitMask other) const NOEXCEPT {
+        TFixedSizeBitMask result;
+        forrange(i, 0, NumWords)
+            result.Words[i] = Words[i] ^ other.Words[i];
+        return result;
+    }
+
+    u32 Count() const NOEXCEPT {
+        u32 count = 0;
+        for (const bitmask_t& bm : Words)
+            count += bm.Count();
+        return count;
+    }
+
+    word_t FirstBitSet() const NOEXCEPT { // return 0 if empty or bit index + 1
+        forrange(i, 0, NumWords)
+            if (Words[i].Data)
+                return (i * BitsPerWord + Words[i].FirstBitSet_AssumeNotEmpty()) + 1;
+        return 0;
+    }
+
+    word_t PopFront(const word_t prev = 0) NOEXCEPT { // return 0 if empty or bit index + 1
+        forrange(i, static_cast<u32>(prev / BitsPerWord), NumWords)
+            if (Words[i].Data)
+                return (i * BitsPerWord + Words[i].PopFront_AssumeNotEmpty()) + 1;
+        return 0;
+    }
+
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

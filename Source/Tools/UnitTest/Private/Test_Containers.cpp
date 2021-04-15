@@ -1810,10 +1810,76 @@ NO_INLINE void Test_SSEHashSet() {
 NO_INLINE void Test_Appendable() {
     TVector<int> vector;
     MakeAppendable(vector).push_back(42);
+    AssertRelease(vector.back() == 42);
     TSparseArray<int> sparse;
     MakeAppendable(sparse).emplace_back(69);
+    AssertRelease(sparse.size() == 1);
     TFixedSizeStack<int, 8> fixed;
     MakeAppendable(fixed) << 1 << 2 << 3;
+    AssertRelease(fixed.size() == 3);
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim, typename T = size_t>
+static void Test_BitSetImpl_() {
+    u32 trueBits[16];
+    STATIC_ASSERT(lengthof(trueBits) <= _Dim);
+    FRandomGenerator rng;
+    forrange(loop, 0, 10) {
+        TFixedSizeBitMask<_Dim, T> bits0{ Meta::ForceInit };
+        AssertRelease(bits0.AllFalse());
+        for (u32& bit : trueBits) {
+            for (;;) {
+                bit = rng.NextU32(_Dim);
+                if (not bits0[bit])
+                    break;
+            }
+            bits0.SetTrue(bit);
+        }
+        AssertRelease(bits0.Count() == lengthof(trueBits));
+        std::sort(std::begin(trueBits), std::end(trueBits));
+        TFixedSizeBitMask<_Dim, T> bits{ std::begin(trueBits), std::end(trueBits) };
+        AssertRelease(bits.AnyTrue());
+        AssertRelease(bits.AnyFalse());
+        AssertRelease(bits == bits0);
+        TFixedSizeBitMask<_Dim, T> bits2 = bits.Invert();
+        for (auto bit : trueBits) {
+            AssertRelease(bits[bit]);
+            AssertRelease(not bits2[bit]);
+            bits.SetFalse(bit);
+            bits2.SetTrue(bit);
+        }
+        AssertRelease(bits.AllFalse());
+        AssertRelease(not bits.AnyTrue());
+        AssertRelease(bits.AnyFalse());
+        bits.SetTrue(_Dim - 1);
+        AssertRelease(bits.AnyTrue());
+        AssertRelease(not bits.AllFalse());
+        AssertRelease(bits2.AllTrue());
+        AssertRelease(not bits2.AnyFalse());
+        AssertRelease(bits2.AnyTrue());
+        bits2.SetFalse(_Dim - 1);
+        AssertRelease(not bits2.AllTrue());
+        AssertRelease(bits2.AnyFalse());
+        TFixedSizeBitMask<_Dim, T> bits3{ std::begin(trueBits), std::end(trueBits) };
+        T prev = 0;
+        forrange(i, 0, lengthof(trueBits)) {
+            auto in = bits3.PopFront(prev);
+            AssertRelease(in);
+            AssertRelease(bits3.Count() == lengthof(trueBits) - i - 1);
+            AssertRelease(trueBits[i] + 1 == in);
+            prev = in - 1;
+        }
+        AssertRelease(bits3.AllFalse());
+    }
+}
+NO_INLINE void Test_BitSet() {
+    STATIC_ASSERT(TFixedSizeBitMask<4>{ 0, 1, 2, 3 }.AllTrue());
+    Test_BitSetImpl_<31, u32>();
+    Test_BitSetImpl_<32, u32>();
+    Test_BitSetImpl_<67>();
+    Test_BitSetImpl_<64>();
+    Test_BitSetImpl_<113>();
+    Test_BitSetImpl_<471, u32>();
 }
 //----------------------------------------------------------------------------
 void Test_Containers() {
@@ -1833,6 +1899,7 @@ void Test_Containers() {
     Test_MinMaxHeap_();
     Test_SSEHashSet();
     Test_Appendable();
+    Test_BitSet();
 
 #if USE_PPE_BENCHMARK
     Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
