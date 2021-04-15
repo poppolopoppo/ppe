@@ -12,27 +12,30 @@ namespace PPE {
 //----------------------------------------------------------------------------
 // Atomic pool of fixed size using a bit mask
 //----------------------------------------------------------------------------
-template <typename T, typename _Index = size_t, size_t _Align = CACHELINE_SIZE >
+template <typename T, size_t _Chunks = 1, typename _Index = size_t, size_t _Align = CACHELINE_SIZE >
 class TAtomicPool : Meta::FNonCopyableNorMovable {
+    STATIC_ASSERT(_Chunks > 0);
     using mask_type = TAtomicBitMask<_Index>;
 
     struct CACHELINE_ALIGNED {
         mask_type Alloc{ UMax };
         mask_type Create{ 0 };
-    }   _set;
+    }   _sets[_Chunks];
 
     using block_type = std::aligned_storage_t<sizeof(T), _Align>;
-    block_type _storage[mask_type::Capacity];
+    block_type _storage[mask_type::Capacity * _Chunks];
 
 public:
     using index_type = typename mask_type::value_type;
-    STATIC_CONST_INTEGRAL(size_t, Capacity, mask_type::Capacity);
+    STATIC_CONST_INTEGRAL(size_t, Capacity, mask_type::Capacity * _Chunks);
 
     TAtomicPool() = default;
 #if USE_PPE_ASSERT
     ~TAtomicPool() {
-        Assert_NoAssume(_set.Alloc.AllTrue());
-        Assert_NoAssume(_set.Create.AllFalse()); // must call Clear_ReleaseMemory()
+        for (auto& set : _sets) {
+            Assert_NoAssume(set.Alloc.AllTrue());
+            Assert_NoAssume(set.Create.AllFalse()); // must call Clear_ReleaseMemory()
+        }
     }
 #endif
 
@@ -44,14 +47,17 @@ public:
     template <typename _Ctor>
     NODISCARD T* Allocate(const _Ctor& ctor) NOEXCEPT {
         index_type alloc{ UMax };
-        if (_set.Alloc.Assign(&alloc)) {
-            T* const p = reinterpret_cast<T*>(_storage + alloc);
-            Assert_NoAssume(Aliases(p));
+        forrange(ch, 0, _Chunks) {
+            auto& set = _sets[ch];
+            if (set.Alloc.Assign(&alloc)) {
+                T* const p = reinterpret_cast<T*>(_storage + ch * mask_type::Capacity + alloc);
+                Assert_NoAssume(Aliases(p));
 
-            if (_set.Create.Set(alloc))
-                ctor(p);
+                if (set.Create.Set(alloc))
+                    ctor(p);
 
-            return p;
+                return p;
+            }
         }
 
         return nullptr;
@@ -61,18 +67,25 @@ public:
         Assert(p);
         Assert_NoAssume(Aliases(p));
 
-        auto index = checked_cast<index_type>(reinterpret_cast<block_type*>(p) - _storage);
-        _set.Alloc.Release(index);
+        auto abs = checked_cast<index_type>(reinterpret_cast<block_type*>(p) - _storage);
+        auto ch = abs / mask_type::Capacity;
+        auto rel = abs - ch * mask_type::Capacity;
+        Assert(ch < _Chunks);
+
+        _sets[ch].Alloc.Release(rel);
     }
 
     template <typename _Dtor>
     void Clear_ReleaseMemory(const _Dtor& dtor) {
-        auto a = _set.Alloc.Fetch();
-        auto c = _set.Create.Fetch();
-        while (c) {
-            index_type alloc = c.PopFront_AssumeNotEmpty();
-            if (not a.Get(alloc))
-                dtor(reinterpret_cast<T*>(_storage + alloc));
+        forrange(ch, 0, _Chunks) {
+            auto& set = _sets[ch];
+            auto a = set.Alloc.Fetch();
+            auto c = set.Create.Fetch();
+            while (c) {
+                index_type alloc = c.PopFront_AssumeNotEmpty();
+                if (not a.Get(alloc))
+                    dtor(reinterpret_cast<T*>(_storage + ch * mask_type::Capacity + alloc));
+            }
         }
 
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(_storage, sizeof(_storage)));
