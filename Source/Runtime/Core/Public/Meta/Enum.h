@@ -38,7 +38,7 @@ CONSTEXPR _Enum EnumAdd(_Enum lhs, _Enum rhs) {
 }
 //----------------------------------------------------------------------------
 template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
-CONSTEXPR _Enum EnumSub(_Enum lhs, _Enum rhs) {
+CONSTEXPR _Enum EnumRemove(_Enum lhs, _Enum rhs) {
     return _Enum(EnumOrd(lhs) & ~EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
@@ -63,10 +63,10 @@ CONSTEXPR bool EnumLess(_Enum lhs, _Enum rhs) {
     MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE    BitOr(_ENUMTYPE lhs, _ENUMTYPE rhs)       { return ::PPE::Meta::EnumOr(lhs, rhs); } \
     MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE    operator |(_ENUMTYPE lhs, _ENUMTYPE rhs)  { return ::PPE::Meta::EnumOr(lhs, rhs); } \
     MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE    operator +(_ENUMTYPE lhs, _ENUMTYPE rhs)  { return ::PPE::Meta::EnumAdd(lhs, rhs); } \
-    MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE    operator -(_ENUMTYPE lhs, _ENUMTYPE rhs)  { return ::PPE::Meta::EnumSub(lhs, rhs); } \
+    MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE    operator -(_ENUMTYPE lhs, _ENUMTYPE rhs)  { return ::PPE::Meta::EnumRemove(lhs, rhs); } \
     MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE&   operator|=(_ENUMTYPE& lhs, _ENUMTYPE rhs) { lhs = ::PPE::Meta::EnumOr(lhs, rhs); return lhs; } \
     MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE&   operator+=(_ENUMTYPE& lhs, _ENUMTYPE rhs) { lhs = ::PPE::Meta::EnumAdd(lhs, rhs); return lhs; } \
-    MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE&   operator-=(_ENUMTYPE& lhs, _ENUMTYPE rhs) { lhs = ::PPE::Meta::EnumSub(lhs, rhs); return lhs; } \
+    MAYBE_UNUSED _PREFIX CONSTEXPR _ENUMTYPE&   operator-=(_ENUMTYPE& lhs, _ENUMTYPE rhs) { lhs = ::PPE::Meta::EnumRemove(lhs, rhs); return lhs; } \
     MAYBE_UNUSED _PREFIX CONSTEXPR bool         operator ^(_ENUMTYPE lhs, _ENUMTYPE rhs)  { return ::PPE::Meta::EnumXor(lhs, rhs); } \
     MAYBE_UNUSED _PREFIX CONSTEXPR bool         operator &(_ENUMTYPE lhs, _ENUMTYPE rhs)  { return ::PPE::Meta::EnumHas(lhs, rhs); } \
     MAYBE_UNUSED _PREFIX CONSTEXPR bool         operator <(_ENUMTYPE lhs, _ENUMTYPE rhs)  { return ::PPE::Meta::EnumLess(lhs, rhs); } \
