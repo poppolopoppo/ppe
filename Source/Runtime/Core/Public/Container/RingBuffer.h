@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Allocator/Alloca.h"
+#include "Allocator/Allocation.h"
 #include "Memory/MemoryView.h"
 #include "Meta/AlignedStorage.h"
 
@@ -11,6 +12,9 @@
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#define RINGBUFFER(_DOMAIN, T, _COUNT) \
+    PPE::TAllocatedRingBuffer<T, _COUNT, ALLOCATOR(_DOMAIN)>
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_RINGBUFFER(T, _NAME, _COUNT) \
     MALLOCA_POD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
@@ -269,6 +273,37 @@ public:
 private:
     // /!\ won't call any ctor or dtor, values are considered as undefined
     typename ALIGNED_STORAGE(sizeof(T) * _Capacity, _Alignment) _insitu;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _DefaultCapacity = 0, typename _Allocator = ALLOCATOR(Container) >
+class TAllocatedRingBuffer : _Allocator, public TRingBuffer<T>, Meta::FNonCopyableNorMovable {
+public:
+    typedef TRingBuffer<T> parent_type;
+    using allocator_type = _Allocator;
+    using allocator_traits = TAllocatorTraits<_Allocator>;
+
+    using typename parent_type::value_type;
+    using typename parent_type::pointer;
+    using typename parent_type::const_pointer;
+    using typename parent_type::reference;
+    using typename parent_type::const_reference;
+
+    using typename parent_type::size_type;
+    using typename parent_type::difference_type;
+
+    explicit TAllocatedRingBuffer(size_t capacity = _DefaultCapacity)
+    :   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity), capacity)
+    {}
+    TAllocatedRingBuffer(size_t capacity, allocator_type&& rallocator)
+    :   allocator_type(std::move(rallocator))
+    ,   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity), capacity)
+    {}
+
+    ~TAllocatedRingBuffer() {
+        allocator_traits::template DeallocateT<T>(static_cast<_Allocator&>(*this), parent_type::data(), parent_type::capacity());
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
