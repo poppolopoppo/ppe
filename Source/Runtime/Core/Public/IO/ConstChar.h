@@ -151,6 +151,11 @@ struct TConstCharHasher<_Char, ECase::Insensitive> {
     }
 };
 //----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicConstChar<_Char>& cstr) {
+    return oss << cstr.MakeView();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
