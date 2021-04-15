@@ -200,7 +200,7 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
                 w.HighestPriority = UnpackPriorityFromRevision_(Min_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end())->Priority);
 
                 // used as hints for work stealing : worker will try to steal a job if a higher priority task is available
-                p.NumTasks.fetch_add(std::memory_order_relaxed);
+                p.NumTasks.fetch_add(1, std::memory_order_release);
 
                 scopeLock.unlock();
                 _onTask.notify_one();
