@@ -155,7 +155,7 @@ typedef int64_t     i64;
 #if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 #   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
 #   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
-#   define Assume(...) Likely(__VA_ARGS__)
+#   define Assume(...) ((void)Likely(__VA_ARGS__))
 #   define AnalysisAssume(...) NOOP(!!(__VA_ARGS__))
 #   define PACKED_STRUCT(_NAME, ...) struct __attribute__((__packed__)) _NAME __VA_ARGS__
 #elif defined(CPP_VISUALSTUDIO)
