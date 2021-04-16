@@ -201,31 +201,36 @@ class VulkanFunctionsGenerator < HeaderParser
         global_level_function: HeaderParser.re(/^\s*VK_GLOBAL_LEVEL_FUNCTION\(\s*(vk\w+)\s*\)\s*$/) do |m|
             declare!(:global_level_function, m[0])
         end,
-        instance_level_function: HeaderParser.re(/^\s*VK_INSTANCE_LEVEL_FUNCTION\(\s*(vk\w+)\s*\)\s*$/) do |m|
-            declare!(:instance_level_function, m[0])
+        instance_level_function: HeaderParser.re(/^\s*VK_INSTANCE_LEVEL_FUNCTION\(\s*(vk\w+)\s*,\s*VK_API_VERSION_(\d)_(\d)\s*\)\s*$/) do |m|
+            vkver = "VK_API_VERSION_#{m[1]}_#{m[2]}"
+            declare!(:instance_level_function, m[0]).inner!(vkver)
         end,
-        instance_level_extension: HeaderParser.re(/^\s*VK_INSTANCE_LEVEL_EXTENSION\(\s*(VK\w+)\s*\)\s*$/) do |m|
-            declare!(:instance_level_extension, m[0])
+        instance_level_extension: HeaderParser.re(/^\s*VK_INSTANCE_LEVEL_EXTENSION\(\s*(VK.+?)\s*\)\s*$/) do |m|
+            reqs = m[0].split(/\s*,\s*/)
+            declare!(:instance_level_extension, reqs[0], reqs[1].nil? ? nil : reqs.drop(1))
         end,
         instance_level_function_from_extension: HeaderParser.re(/^\s*VK_INSTANCE_LEVEL_FUNCTION_FROM_EXTENSION\(\s*(vk\w+)\s*,\s*(VK_\w+)\s*\)\s*$/) do |m|
             declare!(:instance_level_function_from_extension, m[0], m[1])
         end,
-        device_level_function: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_FUNCTION\(\s*(vk\w+)\s*\)\s*$/) do |m|
-            declare!(:device_level_function, m[0])
+        device_level_function: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_FUNCTION\(\s*(vk\w+)\s*,\s*VK_API_VERSION_(\d)_(\d)\s*\)\s*$/) do |m|
+            vkver = "VK_API_VERSION_#{m[1]}_#{m[2]}"
+            declare!(:device_level_function, m[0]).inner!(vkver)
         end,
-        device_level_extension: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_EXTENSION\(\s*(VK\w+)\s*\)\s*$/) do |m|
-            declare!(:device_level_extension, m[0])
+        device_level_extension: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_EXTENSION\(\s*(VK.+?)\s*\)\s*$/) do |m|
+            reqs = m[0].split(/\s*,\s*/)
+            declare!(:device_level_extension, reqs[0], reqs[1].nil? ? nil : reqs.drop(1))
         end,
         device_level_function_from_extension: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_FUNCTION_FROM_EXTENSION\(\s*(vk\w+)\s*,\s*(VK_\w+)\s*\)\s*$/) do |m|
             declare!(:device_level_function_from_extension, m[0], m[1])
         end
     }
 
-    attr_reader :functions
+    attr_reader :functions, :versions
 
     def initialize()
         super(PARSER_RULES)
         @functions = {}
+        @versions = Set.new
         @lz_macro = nil
         @lz_queue = []
         PARSER_RULES.keys.each {|k| @functions[k] = [] }
@@ -238,6 +243,8 @@ class VulkanFunctionsGenerator < HeaderParser
             if PARSER_RULES.has_key?(sym.type)
                 Build::Log.debug('Vulkan function "%s" of type <%s>', sym.name, sym.type)
                 @functions[sym.type] << sym
+                vkver = sym.inner
+                @versions << vkver unless vkver.nil?
             end
         end
 
@@ -251,56 +258,78 @@ class VulkanFunctionsGenerator < HeaderParser
 
         # fwd_def(dst, api)
 
-        dst.puts!('namespace Vulkan {')
+        dst.puts!('namespace vk {')
 
-        struct_decl(dst, 'FExportedAPI') do
+        enum_decl(dst, 'api_version : uint32_t') do
+            vklast = nil
+            @versions.to_a.each do |vkver|
+                vklast = vkver
+                dst.puts!("#{verflag(vkver)} = #{vkver},")
+            end
+            dst.puts!("API_version_latest = #{verflag(vklast)},")
+        end
+
+        struct_decl(dst, 'exported_api') do
             pfnvar_decl(dst, :exported_function)
         end
 
-        struct_decl(dst, 'FGlobalAPI') do
-            memvar_decl(dst, 'pExportedAPI', 'const FExportedAPI*');
-            memfun_decl(dst, 'Attach_ReturnError', 'NODISCARD const char*', 'const FExportedAPI* api')
+        struct_decl(dst, 'global_api') do
+            memvar_decl(dst, 'g_dummy', 'static const global_api', '');
+            memvar_decl(dst, 'exported_api_', 'const exported_api*');
+            memfun_decl(dst, 'attach_return_error', 'NODISCARD const char*', 'const exported_api* api')
             pfnvar_decl(dst, :exported_function)
             pfnvar_decl(dst, :global_level_function)
         end
 
-        extenum_decl(dst, 'EInstanceEXT', :instance_level_extension)
-        struct_decl(dst, 'FInstanceAPI') do
-            memvar_decl(dst, 'pGlobalAPI', 'const FGlobalAPI*');
-            memfun_decl(dst, 'Attach_ReturnError', 'NODISCARD const char*', 'const FGlobalAPI* api, VkInstance vkInstance')
-            memvar_decl(dst, 'Extensions', 'EInstanceEXT', "{ EInstanceEXT::Unknown }")
+        extenum_decl(dst, 'instance_extension', :instance_level_extension)
+
+        struct_decl(dst, 'instance_api') do
+            memvar_decl(dst, 'g_dummy', 'static const instance_api', '');
+            memvar_decl(dst, 'version_', 'api_version', '{ API_version_latest }');
+            memvar_decl(dst, 'global_api_', 'const global_api*');
+            memvar_decl(dst, 'instance_extensions_', 'instance_extension_set', "{}")
+            memfun_decl(dst, 'attach_return_error', 'NODISCARD const char*', 'const global_api* api, VkInstance vkInstance, api_version version, const instance_extension_set& required, instance_extension_set optional = PPE::Default')
             pfnvar_decl(dst, :instance_level_function)
             pfnvar_decl(dst, :instance_level_function_from_extension)
         end
 
-        extenum_decl(dst, 'EDeviceEXT', :device_level_extension)
-        struct_decl(dst, 'FDeviceAPI') do
-            memvar_decl(dst, 'pInstanceAPI', 'const FInstanceAPI*');
-            memfun_decl(dst, 'Attach_ReturnError', 'NODISCARD const char*', 'const FInstanceAPI* api, VkDevice vkDevice')
-            memvar_decl(dst, 'Extensions', 'EDeviceEXT', "{ EDeviceEXT::Unknown }")
+        extenum_decl(dst, 'device_extension', :device_level_extension)
+
+        struct_decl(dst, 'device_api') do
+            memvar_decl(dst, 'g_dummy', 'static const device_api', '');
+            memvar_decl(dst, 'instance_api_', 'const instance_api*');
+            memvar_decl(dst, 'device_extensions_', 'device_extension_set', "{}")
+            memfun_decl(dst, 'attach_return_error', 'NODISCARD const char*', 'const class instance_fn& fn, VkDevice vkDevice, const device_extension_set& required, device_extension_set optional = PPE::Default')
+            memfun_decl(dst, 'attach_return_error', 'NODISCARD const char*', 'const instance_api* api, VkDevice vkDevice, const device_extension_set& required, device_extension_set optional = PPE::Default')
             pfnvar_decl(dst, :device_level_function)
             pfnvar_decl(dst, :device_level_function_from_extension)
         end
 
-        struct_decl(dst, 'FInstanceFunctions') do
-            memvar_decl(dst, '_pInstanceAPI', 'const FInstanceAPI*');
-            # memfun_decl(dst, 'InstanceEXT', 'NODISCARD EInstanceEXT', '', true) do
-            #     dst.puts!('return _pInstanceAPI->Extensions;')
-            # end
-            pfnfun_decl(dst, :instance_level_function, '_pInstanceAPI', api)
-            pfnfun_decl(dst, :instance_level_function_from_extension, '_pInstanceAPI', api)
+        class_decl(dst, 'instance_fn') do
+            dst.puts!('protected:')
+            dst.puts!('friend struct device_api;')
+            memvar_decl(dst, 'instance_api_', 'const instance_api*');
+            dst.puts!('public:')
+            dst.puts!('instance_fn() = default;')
+            dst.puts!('constexpr explicit instance_fn(const instance_api* api) : instance_api_(api) {}')
+            pfnfun_decl(dst, :global_level_function, 'instance_api_->global_api_', api)
+            pfnfun_decl(dst, :instance_level_function, 'instance_api_', api)
+            pfnfun_decl(dst, :instance_level_function_from_extension, 'instance_api_', api)
         end
 
-        struct_decl(dst, 'FDeviceFunctions') do
-            memvar_decl(dst, '_pDeviceAPI', 'const FDeviceAPI*');
-            # memfun_decl(dst, 'DeviceEXT', 'NODISCARD EDeviceEXT', '', true) do
-            #     dst.puts!('return _pDeviceAPI->Extensions;')
-            # end
-            pfnfun_decl(dst, :device_level_function, '_pDeviceAPI', api)
-            pfnfun_decl(dst, :device_level_function_from_extension, '_pDeviceAPI', api)
+        class_decl(dst, 'device_fn') do
+            dst.puts!('protected:')
+            memvar_decl(dst, 'device_api_', 'const device_api*');
+            dst.puts!('public:')
+            dst.puts!('device_fn() = default;')
+            dst.puts!('constexpr explicit device_fn(const device_api* api) : device_api_(api) {}')
+            pfnfun_decl(dst, :instance_level_function, 'device_api_->instance_api_', api)
+            pfnfun_decl(dst, :instance_level_function_from_extension, 'device_api_->instance_api_', api)
+            pfnfun_decl(dst, :device_level_function, 'device_api_', api)
+            pfnfun_decl(dst, :device_level_function_from_extension, 'device_api_', api)
         end
 
-        dst.puts!('} //!namespace Vulkan')
+        dst.puts!('} //!namespace vk')
 
         return self
     end
@@ -308,10 +337,18 @@ class VulkanFunctionsGenerator < HeaderParser
     def source(api, env, dst, src)
         parse_file!(src, api)
 
-        dst.puts!('namespace Vulkan {')
+        dst.puts!('namespace vk {')
 
-        memfun_def(dst, 'Attach_ReturnError', 'FGlobalAPI', 'const char*', 'const FExportedAPI* api') do
-            dst.puts!("pExportedAPI = api;")
+        dst.puts!("const global_api global_api::g_dummy{")
+            dst.scope!(self) do
+                dst.puts!("nullptr, // exported_api_")
+                pfnfun_dummy(dst, :exported_function, api)
+                pfnfun_dummy(dst, :global_level_function, api)
+            end
+        dst.puts!("};")
+
+        memfun_def(dst, 'attach_return_error', 'global_api', 'const char*', 'const exported_api* api') do
+            dst.puts!("exported_api_ = api;")
             each_func(:exported_function, api) do |name|
                 dst.puts!("if (nullptr == (#{name} = api->#{name}))")
                 dst.puts!("#{dst.tab}return \"#{name}\";")
@@ -323,51 +360,85 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!("return nullptr; // no error")
         end
 
-        memfun_def(dst, 'Attach_ReturnError', 'FInstanceAPI', 'const char*', 'const FGlobalAPI* api, VkInstance vkInstance') do
-            dst.puts!("pGlobalAPI = api;")
+        extenum_def(dst, 'instance_extension', :instance_level_extension)
+
+        dst.puts!("const instance_api instance_api::g_dummy{")
+            dst.scope!(self) do
+                dst.puts!("API_version_latest,")
+                dst.puts!("nullptr, // global_api_")
+                dst.puts!("{ PPE::Meta::ForceInit }, // instance_extensions_")
+                pfnfun_dummy(dst, :instance_level_function, api)
+                pfnfun_dummy(dst, :instance_level_function_from_extension, api)
+            end
+        dst.puts!("};")
+
+        memfun_def(dst, 'attach_return_error', 'instance_api', 'const char*', 'const global_api* api, VkInstance vkInstance, api_version version, const instance_extension_set& required, instance_extension_set optional') do
+            dst.puts!("version_ = version;")
+            dst.puts!("global_api_ = api;")
+            dst.puts!("instance_extensions_ = required | optional;")
             each_func(:instance_level_function, api) do |name, pfn|
-                dst.puts!("if (nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetInstanceProcAddr(vkInstance, \"#{name}\"))))")
+                vkver = pfn.inner
+                dst.puts!("if ((version_ >= #{verflag(vkver)}) &&")
+                dst.puts!("    (nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetInstanceProcAddr(vkInstance, \"#{name}\")))))")
                 dst.puts!("#{dst.tab}return \"#{name}\";")
             end
             each_func(:instance_level_function_from_extension, api) do |name, sym|
                 lazy_ifdef(dst, sym.expansion) do
-                    dst.puts!("if ((Extensions & EInstanceEXT::#{extflag(sym.expansion)}) &&")
-                    dst.puts!("    nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetInstanceProcAddr(vkInstance, \"#{name}\"))))")
-                    dst.puts!("#{dst.tab}return \"#{name}\";")
+                    dst.puts!("if ((instance_extensions_ & #{extflag(sym.expansion)}) &&")
+                    dst.puts!("    nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetInstanceProcAddr(vkInstance, \"#{name}\")))) {")
+                    dst.scope!(self) do
+                        dst.puts!("instance_extensions_ -= #{extflag(sym.expansion)};")
+                        dst.puts!("if (required & #{extflag(sym.expansion)}) return \"#{name}\";")
+                        dst.puts!("#{name} = g_dummy.#{name};")
+                    end
+                    dst.puts!("}")
                 end
             end
             flush_ifdef!(dst)
             dst.puts!("return nullptr; // no error")
         end
 
-        memfun_def(dst, 'Attach_ReturnError', 'FDeviceAPI', 'const char*', 'const FInstanceAPI* api, VkDevice vkDevice') do
-            dst.puts!("pInstanceAPI = api;")
-            each_func(:device_level_function, api) do |name|
-                dst.puts!("if (nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetDeviceProcAddr(vkDevice, \"#{name}\"))))")
+        extenum_def(dst, 'device_extension', :device_level_extension)
+
+        dst.puts!("const device_api device_api::g_dummy{")
+            dst.scope!(self) do
+                dst.puts!("nullptr, // instance_api_")
+                dst.puts!("{ PPE::Meta::ForceInit }, // device_extensions_")
+                pfnfun_dummy(dst, :device_level_function, api)
+                pfnfun_dummy(dst, :device_level_function_from_extension, api)
+            end
+        dst.puts!("};")
+
+        memfun_def(dst, 'attach_return_error', 'device_api', 'const char*', 'const instance_fn& fn, VkDevice vkDevice, const device_extension_set& required, device_extension_set optional') do
+            dst.puts!("return attach_return_error(fn.instance_api_, vkDevice, required, optional);")
+        end
+        memfun_def(dst, 'attach_return_error', 'device_api', 'const char*', 'const instance_api* api, VkDevice vkDevice, const device_extension_set& required, device_extension_set optional') do
+            dst.puts!("instance_api_ = api;")
+            dst.puts!("device_extensions_ = required | optional;")
+            each_func(:device_level_function, api) do |name, pfn|
+                vkver = pfn.inner
+                dst.puts!("if ((instance_api_->version_ >= #{verflag(vkver)}) &&")
+                dst.puts!("    (nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetDeviceProcAddr(vkDevice, \"#{name}\")))))")
                 dst.puts!("#{dst.tab}return \"#{name}\";")
             end
             each_func(:device_level_function_from_extension, api) do |name, sym|
                 lazy_ifdef(dst, sym.expansion) do
-                    dst.puts!("if ((Extensions & EDeviceEXT::#{extflag(sym.expansion)}) &&")
-                    dst.puts!("    nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetDeviceProcAddr(vkDevice, \"#{name}\"))))")
-                    dst.puts!("#{dst.tab}return \"#{name}\";")
+                    dst.puts!("if ((device_extensions_ & #{extflag(sym.expansion)}) &&")
+                    dst.puts!("    nullptr == (#{name} = reinterpret_cast<PFN_#{name}>(api->vkGetDeviceProcAddr(vkDevice, \"#{name}\")))) {")
+                    dst.scope!(self) do
+                        dst.puts!("device_extensions_ -= #{extflag(sym.expansion)};")
+                        dst.puts!("if (required & #{extflag(sym.expansion)}) return \"#{name}\";")
+                        dst.puts!("#{name} = g_dummy.#{name};")
+                    end
+                    dst.puts!("}")
+
                 end
             end
             flush_ifdef!(dst)
             dst.puts!("return nullptr; // no error")
         end
 
-        # # pfnfun_def(dst, :global_level_function, 'FInstanceFunctions', '_pInstanceAPI->pGlobalAPI', api)
-        # pfnfun_def(dst, :instance_level_function, 'FInstanceFunctions', '_pInstanceAPI', api)
-        # pfnfun_def(dst, :instance_level_function_from_extension, 'FInstanceFunctions', '_pInstanceAPI', api)
-
-        # # pfnfun_def(dst, :global_level_function, 'FDeviceFunctions', '_pDeviceAPI->_pInstanceAPI->pGlobalAPI', api)
-        # # pfnfun_def(dst, :instance_level_function, 'FDeviceFunctions', '_pDeviceAPI->_pInstanceAPI', api)
-        # # pfnfun_def(dst, :instance_level_function_from_extension, 'FDeviceFunctions', '_pDeviceAPI->_pInstanceAPI', api)
-        # pfnfun_def(dst, :device_level_function, 'FDeviceFunctions', '_pDeviceAPI', api)
-        # pfnfun_def(dst, :device_level_function_from_extension, 'FDeviceFunctions', '_pDeviceAPI', api)
-
-        dst.puts!('} //!namespace Vulkan')
+        dst.puts!('} //!namespace vk')
 
         return self
     end
@@ -379,8 +450,22 @@ private
             block.call(sym.name, sym)
         end
     end
+    def verflag(vkver)
+        flag = vkver.delete_prefix('VK_')
+        sep = flag.index('_')
+        flag = "#{flag[0..sep]}#{flag[(sep+1)..-1].downcase}"
+        return flag
+    end
     def extflag(extmacro)
-        extmacro.delete_suffix('_EXTENSION_NAME')
+        flag = extmacro.delete_suffix('_EXTENSION_NAME').delete_prefix('VK_')
+        sep = flag.index('_')
+        flag = "#{flag[0..sep]}#{flag[(sep+1)..-1].downcase}"
+        return flag
+    end
+    def exthref(extmacro)
+        flag = extflag(extmacro)
+        return flag
+        return "<a href=\"https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_#{flag}.html\">VK_#{flag}</a>"
     end
 
     def fwd_def(dst, api)
@@ -437,7 +522,7 @@ extern "C" \{
         dst.reset_indent(lvl)
         scope.call()
         dst.reset_indent()
-        dst.puts!("#endif //!#{macro}")
+        dst.puts!("#endif")
         dst.reset_indent(lvl)
     end
     def lazy_ifdef(dst, macro, &scope)
@@ -462,9 +547,10 @@ extern "C" \{
     def scope_decl(dst, type, name, &scope)
         dst.puts!("#{type} #{name} {")
         dst.indent!(&scope)
-        dst.puts!("}; //!#{name}")
+        dst.puts!("};")
     end
-    def enum_decl(dst, name, &scope) scope_decl(dst, 'enum class', name, &scope) end
+    def enum_decl(dst, name, &scope) scope_decl(dst, 'enum', name, &scope) end
+    def class_decl(dst, name, &scope) scope_decl(dst, 'class', name, &scope) end
     def struct_decl(dst, name, &scope) scope_decl(dst, 'struct', name, &scope) end
     def memfun_decl(dst, name, result, args, const=false)
         dst.puts!("#{result} #{name}(#{args})#{const ? ' const' : ''}#{block_given? ? ' {' : ';'}")
@@ -499,20 +585,30 @@ extern "C" \{
             pfn = api.symbols[sym.name]
             lazy_ifdef(dst, sym.expansion) do
                 unless pfn.nil?
+                    case type
+                    when :global_level_function
+                        #dst.puts! '/// Global function'
+                    when :instance_level_function
+                        #dst.puts! '/// Instance function'
+                    when :instance_level_function_from_extension
+                        dst.puts! "/// Imported from instance #{exthref(sym.expansion)}"
+                    when :device_level_function
+                        #dst.puts! '/// Device function'
+                    when :device_level_function_from_extension
+                        dst.puts! "/// Imported from device #{exthref(sym.expansion)}"
+                    end
                     result = pfn.front?
                     result = 'VKAPI_ATTR FORCE_INLINE '+result
-                    result = 'NODISCARD '+result if result != 'void'
+                    result = 'NODISCARD '+result if pfn.front? != 'void'
                     memfun_decl(dst, sym.name, result, pfn.inner, true) do |name, result, args|
                         prms = args.split(/\s*,\s*/).collect! do |arg|
-                            arg.split(/\s+/).last
+                            arg = arg.split(/\s+/).last
+                            arg.gsub!(/\[\d+\]/, '') # remove array type expression
+                            arg
                         end
                         funcall = "#{level}->#{name}(#{prms.join(', ')});"
-                        if result == 'void'
+                        if pfn.front? == 'void'
                             dst.puts!(funcall)
-                        # elsif result == 'VkResult'
-                        #     dst.puts!(funcall.prepend('const VkResult res = '))
-                        #     dst.puts!("VULKAN_CHECKERROR(#{name}, res);")
-                        #     dst.puts!('return res;')
                         else
                             dst.puts!('return '+funcall)
                         end
@@ -551,31 +647,94 @@ extern "C" \{
         end
         flush_ifdef!(dst)
     end
+    def pfnfun_dummy(dst, type, api)
+        @functions[type].each do |sym|
+            pfn = api.symbols[sym.name]
+            lazy_ifdef(dst, sym.expansion) do
+                unless pfn.nil?
+                    result = pfn.front?
+                    if result == 'void'
+                        dst.puts!('[](auto...) -> void {},')
+                    elsif result == 'VkResult'
+                        err = sym.expansion.nil? ? 'VK_NOT_READY' : 'VK_ERROR_EXTENSION_NOT_PRESENT'
+                        dst.puts!('[](auto...) -> VkResult { return %s; },' % err)
+                    else
+                        dst.puts!('[](auto...) -> %s { return VK_NULL_HANDLE; },' % result)
+                    end
+                else
+                    dst.puts!("// #{sym.name}()")
+                end
+            end
+        end
+        flush_ifdef!(dst)
+    end
 
     def extenum_decl(dst, name, type)
         exts = @functions[type]
-        enum_decl(dst, name) do
-            all = 0
+        enum_decl(dst, name+' : uint32_t') do
+            dst.puts!("unknown = 0,")
             exts.each_with_index do |ext, i|
                 ifdef(dst, ext.name) do
-                    dst.puts!("#{extflag(ext.name)} = 1u << #{i}u,")
+                    dst.puts!('/// Requires '+ext.expansion.collect{|x| exthref(x) }.join(', ')) unless ext.expansion.nil?
+                    dst.puts!("#{extflag(ext.name)},")
                 end
-                all |= (1 << i)
             end
-            dst.puts!("All = 0x#{all.to_s(16)}u,")
-            dst.puts!("Unknown = 0u,")
+            dst.puts!("_count,")
         end
-        dst.puts!("ENUM_FLAGS(#{name});")
-        dst.puts!("constexpr const char* #{name}_Name(#{name} ext) {")
+        dst.puts!("using #{name}_set = PPE::TFixedSizeBitMask<static_cast<uint32_t>(#{name}::_count)>;")
+        dst.puts!("const char* #{name}_name(#{name} ext);")
+        dst.puts!("#{name}_set #{name}s_available();")
+        dst.puts!("#{name}_set #{name}s_require(const #{name}_set& in);")
+        dst.puts!("CONSTEXPR bool operator & (const #{name}_set& bits, #{name} ext) { return bits.Get(static_cast<size_t>(ext)); }")
+        dst.puts!("CONSTEXPR #{name}_set& operator +=(#{name}_set& bits, #{name} ext) { return bits.SetTrue(static_cast<size_t>(ext)); }")
+        dst.puts!("CONSTEXPR #{name}_set& operator -=(#{name}_set& bits, #{name} ext) { return bits.SetFalse(static_cast<size_t>(ext)); }")
+    end
+    def extenum_def(dst, name, type)
+        exts = @functions[type]
+
+        dst.puts!("const char* #{name}_name(#{name} ext) {")
         dst.indent!
-            dst.puts!('switch(ext) {')
+            dst.puts!('switch(flags) {')
             exts.each do |ext|
                 ifdef(dst, ext.name) do
-                    dst.puts!("case #{name}::#{extflag(ext.name)}: return #{ext.name};")
+                    dst.puts!("case #{extflag(ext.name)}: return #{ext.name};")
                 end
             end
             dst.puts!('default: return nullptr;')
             dst.puts!('}')
+        dst.unindent!
+        dst.puts!('}')
+
+        dst.puts!("#{name}_set #{name}s_available() {")
+        dst.indent!
+            dst.puts!("#{name}_set avail{};")
+            exts.each do |ext|
+                requires = ext.expansion
+                ifdef(dst, ext.name) do
+                    dst.puts!("avail += #{extflag(ext.name)};")
+                end
+            end
+            dst.puts!('return avail;')
+        dst.unindent!
+        dst.puts!("}")
+
+        dst.puts!("#{name}_set #{name}s_require(const #{name}_set& in) {")
+        dst.indent!
+            dst.puts!("#{name}_set required{ in };")
+            exts.reverse_each do |ext| # assume that extensions are sorted by dependency
+                requires = ext.expansion
+                next if requires.nil?
+                ifdef(dst, ext.name) do
+                    dst.puts!("if (in & #{extflag(ext.name)}) {")
+                    dst.indent! do
+                        requires.each do |dep|
+                            dst.puts!("required += #{extflag(dep)};")
+                        end
+                    end
+                    dst.puts!("}")
+                end
+            end
+            dst.puts!('return required;')
         dst.unindent!
         dst.puts!("}")
     end
@@ -612,8 +771,7 @@ end
 def vk_generate_header(exports_inl, env, dst, *src)
     dst.puts!("// Vulkan header generated by #{Build::Script} v#{Build::VERSION}")
     dst.puts!("#pragma once")
-    dst.puts!('#include "Meta/Aliases.h"')
-    dst.puts!('#include "Meta/Enum.h"')
+    dst.puts!('#include "Container/BitMask.h"')
     src.each {|p| dst.puts!("#include \"#{p}\"") }
 
     api = VulkanAPIGenerator.new(true)
@@ -641,7 +799,6 @@ $Build.ppe_external!(:vulkan) do
         Public/vulkan-exports.h
         Public/vulkan-exports.inl
         Public/vulkan-external.h
-        Public/vulkan-minimal.h
         Public/vulkan-fwd.h
         Public/vulkan-platform.h
     })
