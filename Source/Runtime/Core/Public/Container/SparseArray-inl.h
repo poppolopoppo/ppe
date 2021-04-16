@@ -28,7 +28,7 @@ TBasicSparseArray<T>::TBasicSparseArray(TBasicSparseArray&& rvalue) NOEXCEPT
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto TBasicSparseArray<T>::operator =(TBasicSparseArray&& rvalue) -> TBasicSparseArray& {
+auto TBasicSparseArray<T>::operator =(TBasicSparseArray&& rvalue) NOEXCEPT -> TBasicSparseArray& {
     Assert(0 == _size);
     Assert(InvalidIndex == _freeIndex);
     AssertRelease(0 == _highestIndex); // can't move over a used container (restriction for pointer validity)
@@ -110,7 +110,7 @@ auto TBasicSparseArray<T>::Find(FDataId id) -> pointer {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void TBasicSparseArray<T>::Swap(TBasicSparseArray& other) {
+void TBasicSparseArray<T>::Swap(TBasicSparseArray& other) NOEXCEPT {
     Assert_NoAssume(CheckInvariants());
     Assert_NoAssume(other.CheckInvariants());
 #if 0
@@ -263,13 +263,13 @@ auto TSparseArray<T, _Allocator>::operator =(const TSparseArray& other) -> TSpar
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-TSparseArray<T, _Allocator>::TSparseArray(TSparseArray&& rvalue)
+TSparseArray<T, _Allocator>::TSparseArray(TSparseArray&& rvalue) NOEXCEPT
 :   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue))) {
     Assign(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto TSparseArray<T, _Allocator>::operator =(TSparseArray&& rvalue) -> TSparseArray& {
+auto TSparseArray<T, _Allocator>::operator =(TSparseArray&& rvalue) NOEXCEPT -> TSparseArray& {
     Assign(std::move(rvalue));
     return (*this);
 }
@@ -779,7 +779,7 @@ void Reserve(TSparseArray<T, _Allocator>& v, size_t capacity) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-hash_t hash_value(const TSparseArray<T, _Allocator>& v) {
+hash_t hash_value(const TSparseArray<T, _Allocator>& v) NOEXCEPT {
     return hash_range(v.begin(), v.end());
 }
 //----------------------------------------------------------------------------

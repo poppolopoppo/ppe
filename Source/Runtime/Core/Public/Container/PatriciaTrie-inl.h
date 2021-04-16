@@ -40,7 +40,7 @@ TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::~TPatriciaTri
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::TPatriciaTrie(TPatriciaTrie&& rvalue)
+TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::TPatriciaTrie(TPatriciaTrie&& rvalue) NOEXCEPT
     :   allocator_type(std::move(rvalue))
     ,   _root(nullptr), _size(0) {
     std::swap(rvalue._root, _root);

@@ -14,6 +14,8 @@
 
 #include <atomic>
 
+#include "BuildEnums.h"
+
 namespace PPE {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
@@ -23,8 +25,8 @@ RTTI_MODULE_DECL(PPE_BUILDGRAPH_API, BuildGraph);
 //----------------------------------------------------------------------------
 struct FBuildState : Meta::FNonCopyableNorMovable {
     FAtomicPhaseLock Phase;
-    EBuildResult Result;
     WWeakRefCountable Payload;
+    EBuildResult Result{ EBuildResult::Unbuilt };
 };
 //----------------------------------------------------------------------------
 class PPE_BUILDGRAPH_API FBuildNode : public RTTI::FMetaObject {

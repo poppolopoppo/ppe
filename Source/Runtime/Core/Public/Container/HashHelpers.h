@@ -94,13 +94,13 @@ public:
     T* operator ->() { return &_value; }
     const T* operator ->() const { return &_value; }
 
-    void Swap(THashMemoizer& other) {
+    void Swap(THashMemoizer& other) NOEXCEPT {
         std::swap(_value, other._value);
         std::swap(_hash, other._hash);
     }
 
-    friend hash_t hash_value(const THashMemoizer& value) { return value._hash;  }
-    friend void swap(THashMemoizer& lhs, THashMemoizer& rhs) { lhs.Swap(rhs); }
+    friend hash_t hash_value(const THashMemoizer& value) NOEXCEPT { return value._hash;  }
+    friend void swap(THashMemoizer& lhs, THashMemoizer& rhs) NOEXCEPT { lhs.Swap(rhs); }
 
     friend inline bool operator ==(const THashMemoizer& lhs, const THashMemoizer& rhs) {
         return (lhs._hash == rhs._hash && _Equal()(lhs._value, rhs._value));

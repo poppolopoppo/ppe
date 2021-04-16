@@ -32,11 +32,11 @@ public:
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FExtname)
 //----------------------------------------------------------------------------
-inline void swap(FExtname& lhs, FExtname& rhs) {
+inline void swap(FExtname& lhs, FExtname& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const FExtname& token) {
+inline hash_t hash_value(const FExtname& token) NOEXCEPT {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

@@ -117,11 +117,11 @@ inline bool operator >=(const FDirpath& lhs, const FDirpath& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline void swap(FDirpath& lhs, FDirpath& rhs) {
+inline void swap(FDirpath& lhs, FDirpath& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const FDirpath& dirpath) {
+inline hash_t hash_value(const FDirpath& dirpath) NOEXCEPT {
     return dirpath.HashValue();
 }
 //----------------------------------------------------------------------------

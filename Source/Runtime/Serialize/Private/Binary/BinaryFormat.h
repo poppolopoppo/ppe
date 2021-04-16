@@ -24,20 +24,20 @@ struct FBinaryFormat {
     static CONSTEXPR FFourCC FILE_VERSION   = "2.00";
 
     struct FContents {
-        u32 NumNames;
-        u32 NumClasses;
-        u32 NumProperties;
-        u32 NumImports;
-        u32 NumObjects;
-        u32 NumDirpaths;
-        u32 NumBasenameNoExts;
-        u32 NumExtnames;
+        u32 NumNames{ 0 };
+        u32 NumClasses{ 0 };
+        u32 NumProperties{ 0 };
+        u32 NumImports{ 0 };
+        u32 NumObjects{ 0 };
+        u32 NumDirpaths{ 0 };
+        u32 NumBasenameNoExts{ 0 };
+        u32 NumExtnames{ 0 };
     };
     STATIC_ASSERT(sizeof(FContents) == sizeof(u32) * 8);
 
     struct FRawData {
-        u32 Offset;
-        u32 Size;
+        u32 Offset{ 0 };
+        u32 Size{ 0 };
         u32 End() const { return (Offset + Size); }
     };
     STATIC_ASSERT(sizeof(FRawData) == sizeof(u32) * 2);

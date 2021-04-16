@@ -23,8 +23,8 @@ public:
     FSocketBuffered(const FSocketBuffered& ) = delete;
     FSocketBuffered& operator =(const FSocketBuffered& ) = delete;
 
-    FSocketBuffered(FSocketBuffered&& rvalue);
-    FSocketBuffered& operator =(FSocketBuffered&& rvalue);
+    FSocketBuffered(FSocketBuffered&& rvalue) NOEXCEPT;
+    FSocketBuffered& operator =(FSocketBuffered&& rvalue) NOEXCEPT;
 
     const FSocket& Socket() const { return _socket; }
 

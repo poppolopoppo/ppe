@@ -84,12 +84,12 @@ public:
     TAllocaBlock(const TAllocaBlock& ) = delete;
     TAllocaBlock& operator =(const TAllocaBlock& ) = delete;
 
-    TAllocaBlock(TAllocaBlock&& rvalue)
+    TAllocaBlock(TAllocaBlock&& rvalue) NOEXCEPT
     :   TAllocaBlock() {
         std::swap(*this, rvalue);
     }
 
-    TAllocaBlock& operator =(TAllocaBlock&& rvalue) {
+    TAllocaBlock& operator =(TAllocaBlock&& rvalue) NOEXCEPT {
         THIS_THREADRESOURCE_CHECKACCESS();
 
         if ((!UsingSysAlloca) & (!!RawData))

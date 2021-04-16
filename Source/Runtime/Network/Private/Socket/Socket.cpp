@@ -56,7 +56,7 @@ FSocket::~FSocket() {
     Assert(!IsConnected());
 }
 //----------------------------------------------------------------------------
-FSocket& FSocket::operator =(FSocket&& rvalue) {
+FSocket& FSocket::operator =(FSocket&& rvalue) NOEXCEPT {
     if (IsConnected())
         Disconnect();
 

@@ -127,7 +127,7 @@ public:
     bool operator ==(const TStack& other) const { return Equals(other); }
     bool operator !=(const TStack& other) const { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const TStack& stack) {
+    friend hash_t hash_value(const TStack& stack) NOEXCEPT {
         return hash_range(stack.begin(), stack.end());
     }
 
@@ -249,7 +249,7 @@ void TStack<T, _IsPod>::Swap(TStack& other) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void swap(TStack<T, _IsPod>& lhs, TStack<T, _IsPod>& rhs) {
+void swap(TStack<T, _IsPod>& lhs, TStack<T, _IsPod>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
@@ -307,6 +307,11 @@ private:
     using parent_type::_capacity;
     using parent_type::_storage;
 };
+//----------------------------------------------------------------------------
+template <typename T, size_t _Capacity, size_t _Alignment>
+CONSTEXPR bool is_pod_type(TFixedSizeStack<T, _Capacity, _Alignment>*) NOEXCEPT {
+    return Meta::is_pod_v<T>;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

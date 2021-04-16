@@ -66,7 +66,7 @@ public:
     TBasicSparseArray& operator =(const TBasicSparseArray&) = delete;
 
     TBasicSparseArray(TBasicSparseArray&& rvalue) NOEXCEPT; // but you can still move it
-    TBasicSparseArray& operator =(TBasicSparseArray&& rvalue);
+    TBasicSparseArray& operator =(TBasicSparseArray&& rvalue) NOEXCEPT;
 
     bool empty() const { return (0 == _size); }
     size_type size() const { return _size; }
@@ -107,7 +107,7 @@ public:
         return const_cast<TBasicSparseArray*>(this)->Find(id);
     }
 
-    void Swap(TBasicSparseArray& other);
+    void Swap(TBasicSparseArray& other) NOEXCEPT;
 
     bool CheckInvariants() const;
 
@@ -370,8 +370,8 @@ public:
     TSparseArray(const TSparseArray& other);
     TSparseArray& operator =(const TSparseArray& other);
 
-    TSparseArray(TSparseArray&& rvalue);
-    TSparseArray& operator =(TSparseArray&& rvalue);
+    TSparseArray(TSparseArray&& rvalue) NOEXCEPT;
+    TSparseArray& operator =(TSparseArray&& rvalue) NOEXCEPT;
 
     template <typename _OtherAllocator>
     explicit TSparseArray(const TSparseArray<T, _OtherAllocator>& other) : TSparseArray() { operator =(other); }

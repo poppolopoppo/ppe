@@ -57,8 +57,8 @@ public:
     explicit TFlatMap(size_type capacity);
     ~TFlatMap();
 
-    TFlatMap(TFlatMap&& rvalue);
-    TFlatMap& operator =(TFlatMap&& rvalue);
+    TFlatMap(TFlatMap&& rvalue) NOEXCEPT;
+    TFlatMap& operator =(TFlatMap&& rvalue) NOEXCEPT;
 
     TFlatMap(const TFlatMap& other);
     TFlatMap& operator =(const TFlatMap& other);
@@ -147,12 +147,12 @@ public:
 
     void shrink_to_fit() { _vector.shrink_to_fit(); }
 
-    size_t HashValue() const { return hash_value(_vector); }
+    size_t HashValue() const NOEXCEPT { return hash_value(_vector); }
 
     TMemoryView<value_type> MakeView() { return _vector.MakeView(); }
     TMemoryView<const value_type> MakeView() const { return _vector.MakeView(); }
 
-    friend void swap(TFlatMap& lhs, TFlatMap& rhs) {
+    friend void swap(TFlatMap& lhs, TFlatMap& rhs) NOEXCEPT {
         swap(lhs._vector, rhs._vector);
     }
 
@@ -173,7 +173,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-hash_t hash_value(const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap) {
+hash_t hash_value(const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap) NOEXCEPT {
     return flatMap.HashValue();
 }
 //----------------------------------------------------------------------------

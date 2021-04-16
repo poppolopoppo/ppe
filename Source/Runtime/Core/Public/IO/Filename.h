@@ -134,11 +134,11 @@ inline bool operator >=(const FFilename& lhs, const FFilename& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline void swap(FFilename& lhs, FFilename& rhs) {
+inline void swap(FFilename& lhs, FFilename& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const FFilename& filename) {
+inline hash_t hash_value(const FFilename& filename) NOEXCEPT {
     return filename.HashValue();
 }
 //----------------------------------------------------------------------------

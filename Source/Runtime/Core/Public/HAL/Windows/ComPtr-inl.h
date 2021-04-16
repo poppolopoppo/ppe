@@ -21,14 +21,14 @@ TComPtr<_ComInterface>::~TComPtr() {
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
-TComPtr<_ComInterface>::TComPtr(TComPtr&& rvalue) {
+TComPtr<_ComInterface>::TComPtr(TComPtr&& rvalue) NOEXCEPT {
     CheckThreadAccess();
     _comObject = rvalue._comObject;
     rvalue._comObject = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
-auto TComPtr<_ComInterface>::operator =(TComPtr&& rvalue) -> TComPtr& {
+auto TComPtr<_ComInterface>::operator =(TComPtr&& rvalue) NOEXCEPT -> TComPtr& {
     CheckThreadAccess();
     DecRefCountIFP();
     _comObject = rvalue._comObject;

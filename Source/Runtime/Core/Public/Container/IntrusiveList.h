@@ -50,13 +50,13 @@ public:
     TIntrusiveList(const TIntrusiveList&) = delete;
     TIntrusiveList& operator =(const TIntrusiveList&) = delete;
 
-    TIntrusiveList(TIntrusiveList&& rvalue)
+    TIntrusiveList(TIntrusiveList&& rvalue) NOEXCEPT
     :   _head(rvalue._head)
     ,   _tail(rvalue._tail) {
         rvalue._head = rvalue._tail = nullptr;
     }
 
-    TIntrusiveList& operator =(TIntrusiveList&& rvalue) {
+    TIntrusiveList& operator =(TIntrusiveList&& rvalue) NOEXCEPT {
         Assert(nullptr == _head);
         Assert(nullptr == _tail);
         std::swap(_head, rvalue._head);
@@ -116,12 +116,12 @@ public:
     TIntrusiveSingleList(const TIntrusiveSingleList&) = delete;
     TIntrusiveSingleList& operator =(const TIntrusiveSingleList&) = delete;
 
-    TIntrusiveSingleList(TIntrusiveSingleList&& rvalue)
+    TIntrusiveSingleList(TIntrusiveSingleList&& rvalue) NOEXCEPT
     :   _head(rvalue._head) {
         rvalue._head = nullptr;
     }
 
-    TIntrusiveSingleList& operator =(TIntrusiveSingleList&& rvalue) {
+    TIntrusiveSingleList& operator =(TIntrusiveSingleList&& rvalue) NOEXCEPT {
         Assert(nullptr == _head);
         std::swap(_head, rvalue._head);
         return (*this);

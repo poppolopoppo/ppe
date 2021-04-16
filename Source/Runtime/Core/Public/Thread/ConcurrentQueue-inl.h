@@ -210,7 +210,7 @@ bool TConcurrentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
     if (_queue.empty())
         _counter = 0;
 
-    scopeLock().unlock();     // unlock before notification to minimize mutex contention
+    scopeLock.unlock();     // unlock before notification to minimize mutex contention
     _overflow.notify_all(); // always notifies all producer threads
 
     return true;

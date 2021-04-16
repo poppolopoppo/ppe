@@ -32,11 +32,11 @@ PPE_ASSUME_TYPE_AS_POD(FBasenameNoExt)
 //----------------------------------------------------------------------------
 PPE_CORE_API FBasenameNoExt operator +(const FBasenameNoExt& lhs, const FileSystem::FStringView& rhs);
 //----------------------------------------------------------------------------
-inline void swap(FBasenameNoExt& lhs, FBasenameNoExt& rhs) {
+inline void swap(FBasenameNoExt& lhs, FBasenameNoExt& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const FBasenameNoExt& token) {
+inline hash_t hash_value(const FBasenameNoExt& token) NOEXCEPT {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

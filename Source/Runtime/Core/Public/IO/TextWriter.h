@@ -100,7 +100,7 @@ public:
     inline friend bool operator ==(const FTextFormat& lhs, const FTextFormat& rhs) { return lhs.Equals(rhs); }
     inline friend bool operator !=(const FTextFormat& lhs, const FTextFormat& rhs) { return not lhs.Equals(rhs); }
 
-    inline friend void swap(FTextFormat& lhs, FTextFormat& rhs) {
+    inline friend void swap(FTextFormat& lhs, FTextFormat& rhs) NOEXCEPT {
         std::swap(reinterpret_cast<u32&>(lhs), reinterpret_cast<u32&>(rhs));
     }
 
@@ -203,7 +203,7 @@ public:
     void Write(const _Char* v);
     void Write(const TBasicStringView<_Char>& v);
 
-    inline friend void swap(TBasicTextWriter& lhs, TBasicTextWriter& rhs) {
+    inline friend void swap(TBasicTextWriter& lhs, TBasicTextWriter& rhs) NOEXCEPT {
         using std::swap;
         swap(lhs._ostream, rhs._ostream);
         swap(lhs._format, rhs._format);

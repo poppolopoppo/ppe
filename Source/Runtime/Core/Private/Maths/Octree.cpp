@@ -81,7 +81,7 @@ static bool RayIntersectsOctree_(
     FOctreeCandidateWDist_ it{ FLT_MAX, halfDim, halfDim, halfDim, checked_cast<u16>(dimension), root };
 
     FBoundingBox bounds;
-    FBasicOctree::FHitResult hit;
+    FBasicOctree::FHitResult hit{ 0.0f, UMax };
     do {
         Assert(it.Extent > 1);
         const u16 halfExtent = (it.Extent / 2);

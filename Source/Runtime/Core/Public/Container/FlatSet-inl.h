@@ -23,11 +23,11 @@ template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 TFlatSet<_Key, _EqualTo, _Less, _Vector>::~TFlatSet() = default;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet(TFlatSet&& rvalue)
+TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet(TFlatSet&& rvalue) NOEXCEPT
 :   _vector(std::move(rvalue._vector)) {}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::operator =(TFlatSet&& rvalue) -> TFlatSet& {
+auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::operator =(TFlatSet&& rvalue) NOEXCEPT -> TFlatSet& {
     _vector = std::move(rvalue._vector);
     return *this;
 }

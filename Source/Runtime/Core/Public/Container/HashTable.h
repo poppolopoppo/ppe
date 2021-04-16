@@ -241,7 +241,7 @@ private:
 } //!details
 //----------------------------------------------------------------------------
 template <typename T>
-inline void swap(details::THashTableIterator_<T>& lhs, details::THashTableIterator_<T>& rhs) {
+inline void swap(details::THashTableIterator_<T>& lhs, details::THashTableIterator_<T>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
@@ -496,8 +496,8 @@ public:
     void reserve_Additional(size_type count) { reserve(size() + count); }
     void shrink_to_fit();
 
-    void swap(TBasicHashTable& other);
-    friend void swap(TBasicHashTable& lhs, TBasicHashTable& rhs) { lhs.swap(rhs); }
+    void swap(TBasicHashTable& other) NOEXCEPT;
+    friend void swap(TBasicHashTable& lhs, TBasicHashTable& rhs) NOEXCEPT { lhs.swap(rhs); }
 
     allocator_type get_allocator() const { return static_cast<const allocator_type&>(*this); }
 
@@ -615,7 +615,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-hash_t hash_value(const TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>& hashTable) {
+hash_t hash_value(const TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>& hashTable) NOEXCEPT {
     return hash_range(hashTable.begin(), hashTable.end());
 }
 //----------------------------------------------------------------------------

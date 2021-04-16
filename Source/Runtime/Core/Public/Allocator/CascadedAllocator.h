@@ -62,13 +62,13 @@ public:
     }
 
     // move will steal owned memory
-    TCascadedAllocator(TCascadedAllocator&& rvalue)
+    TCascadedAllocator(TCascadedAllocator&& rvalue) NOEXCEPT
     :   _Batch(batch_traits::SelectOnMove(std::move(rvalue)))
     ,   Cascades(rvalue.Cascades) {
         rvalue.Cascades = nullptr;
         batch_traits::Move(this, std::move(rvalue));
     }
-    TCascadedAllocator& operator =(TCascadedAllocator&& rvalue) {
+    TCascadedAllocator& operator =(TCascadedAllocator&& rvalue) NOEXCEPT {
         if (Cascades)
             ReleaseAllCascades();
         Cascades = rvalue.Cascades;

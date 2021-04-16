@@ -309,7 +309,7 @@ public:
     template <size_t _Dim>
     inline friend bool operator >=(const _Char(&lhs)[_Dim], const TBasicString& rhs) { return (Compare(MakeStringView(lhs), rhs.MakeView()) >= 0); }
 
-    inline friend void swap(TBasicString& lhs, TBasicString& rhs) { std::swap(lhs._large, rhs._large); }
+    inline friend void swap(TBasicString& lhs, TBasicString& rhs) NOEXCEPT { std::swap(lhs._large, rhs._large); }
 
     static TBasicString Concat(const TBasicString& lhs, const TBasicString& rhs);
     static TBasicString Concat(TBasicString&& lhs, TBasicString&& rhs);
@@ -379,7 +379,7 @@ public: // non stl
 
     bool CheckInvariants() const;
 
-    inline friend hash_t hash_value(const TBasicString& str) { return hash_string(str.MakeView()); }
+    inline friend hash_t hash_value(const TBasicString& str) NOEXCEPT { return hash_string(str.MakeView()); }
 
 private:
     bool is_large_() const { return (_large.IsLarge); }

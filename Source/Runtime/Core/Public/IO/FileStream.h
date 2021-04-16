@@ -28,8 +28,8 @@ public:
     FFileStream(const FFileStream&) = delete;
     FFileStream& operator =(const FFileStream&) = delete;
 
-    FFileStream(FFileStream&& rvalue);
-    FFileStream& operator =(FFileStream&& rvalue);
+    FFileStream(FFileStream&& rvalue) NOEXCEPT;
+    FFileStream& operator =(FFileStream&& rvalue) NOEXCEPT;
 
     FFileHandle Handle() const { return _handle; }
 

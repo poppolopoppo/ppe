@@ -24,11 +24,11 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typ
 TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::~TFlatMap() = default;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(TFlatMap&& rvalue)
+TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(TFlatMap&& rvalue) NOEXCEPT
 :   _vector(std::move(rvalue._vector)) {}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::operator =(TFlatMap&& rvalue) -> TFlatMap& {
+auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::operator =(TFlatMap&& rvalue) NOEXCEPT -> TFlatMap& {
     _vector = std::move(rvalue._vector);
     return *this;
 }

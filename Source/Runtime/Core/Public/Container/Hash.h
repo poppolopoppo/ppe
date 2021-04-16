@@ -46,25 +46,25 @@ FORCE_INLINE auto hash_value(T value) NOEXCEPT
 // Helpers for combining hash values:
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR void hash_combine(hash_t& seed, const T& value);
+CONSTEXPR void hash_combine(hash_t& seed, const T& value) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR void hash_range(hash_t& seed, const T *values, size_t count);
+CONSTEXPR void hash_range(hash_t& seed, const T *values, size_t count) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR hash_t hash_range(const T *values, size_t count);
+CONSTEXPR hash_t hash_range(const T *values, size_t count) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
-CONSTEXPR void hash_combine(hash_t& seed, const _Arg0& arg0, const _Args&... args);
+CONSTEXPR void hash_combine(hash_t& seed, const _Arg0& arg0, const _Args&... args) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
-CONSTEXPR hash_t hash_tuple(_Arg0&& arg0, _Args&&... args);
+CONSTEXPR hash_t hash_tuple(_Arg0&& arg0, _Args&&... args) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _It>
-CONSTEXPR hash_t hash_range(_It first, _It last);
+CONSTEXPR hash_t hash_range(_It first, _It last) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR hash_t& operator <<(hash_t& seed, const T& value) {
+CONSTEXPR hash_t& operator <<(hash_t& seed, const T& value) NOEXCEPT {
     hash_combine(seed, value);
     return seed;
 }

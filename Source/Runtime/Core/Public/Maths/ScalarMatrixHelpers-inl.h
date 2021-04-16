@@ -227,6 +227,8 @@ TScalarMatrix<T, 4, 4> Orthonormalize(const TScalarMatrix<T, 4, 4>& m) {
     result.SetRow_w(result.Row_w() - Dot4(result.Row_y(), result.Row_w()) * result.Row_y() );
     result.SetRow_w(result.Row_w() - Dot4(result.Row_z(), result.Row_w()) * result.Row_z() );
     result.SetRow_w(Normalize4(result.Row_w()));
+
+    return result;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

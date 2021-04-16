@@ -994,12 +994,12 @@ PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(4, 0,/* xyzw */0, 1, 2, 3)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-hash_t hash_value(const TScalarVector<T, _Dim>& v) {
+hash_t hash_value(const TScalarVector<T, _Dim>& v) NOEXCEPT {
     return hash_as_pod(v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) {
+void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) NOEXCEPT {
     return std::swap(lhs.data, rhs.data);
 }
 //----------------------------------------------------------------------------

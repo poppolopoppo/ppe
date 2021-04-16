@@ -135,7 +135,7 @@ public:
     TMemoryView<T> MakeView() { return PPE::MakeView(_data.raw); }
     TMemoryView<const T> MakeView() const { return PPE::MakeView(_data.raw); }
 
-    friend hash_t hash_value(const TScalarMatrix& m) { return hash_as_pod_array(m._data.raw); }
+    friend hash_t hash_value(const TScalarMatrix& m) NOEXCEPT { return hash_as_pod_array(m._data.raw); }
 
     template <typename U>
     TScalarMatrix<U, _Width, _Height> Cast() const;
@@ -246,7 +246,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Height>& rhs) {
+void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Height>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

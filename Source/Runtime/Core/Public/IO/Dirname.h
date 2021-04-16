@@ -37,11 +37,11 @@ public:
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FDirname)
 //----------------------------------------------------------------------------
-inline void swap(FDirname& lhs, FDirname& rhs) {
+inline void swap(FDirname& lhs, FDirname& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const FDirname& token) {
+inline hash_t hash_value(const FDirname& token) NOEXCEPT {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

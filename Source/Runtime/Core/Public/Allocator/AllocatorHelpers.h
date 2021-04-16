@@ -67,11 +67,11 @@ public:
         return (*this);
     }
 
-    TFallbackAllocator(TFallbackAllocator&& rvalue)
+    TFallbackAllocator(TFallbackAllocator&& rvalue) NOEXCEPT
     :   _Primary(primary_traits::SelectOnMove(std::move(rvalue)))
     ,   _Fallback(fallback_traits::SelectOnMove(std::move(rvalue)))
     {}
-    TFallbackAllocator& operator =(TFallbackAllocator&& rvalue) {
+    TFallbackAllocator& operator =(TFallbackAllocator&& rvalue) NOEXCEPT {
         primary_traits::Move(this, std::move(rvalue));
         fallback_traits::Move(this, std::move(rvalue));
         return (*this);
@@ -363,11 +363,11 @@ public:
         return (*this);
     }
 
-    TSegregatorAllocator(TSegregatorAllocator&& rvalue)
+    TSegregatorAllocator(TSegregatorAllocator&& rvalue) NOEXCEPT
     :   _Under(under_traits::SelectOnMove(std::move(rvalue)))
     ,   _Above(above_traits::SelectOnMove(std::move(rvalue)))
     {}
-    TSegregatorAllocator& operator =(TSegregatorAllocator&& rvalue) {
+    TSegregatorAllocator& operator =(TSegregatorAllocator&& rvalue) NOEXCEPT {
         under_traits::Move(this, std::move(rvalue));
         above_traits::Move(this, std::move(rvalue));
         return (*this);

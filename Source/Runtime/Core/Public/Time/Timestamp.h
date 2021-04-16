@@ -47,9 +47,9 @@ public:
 
     static FTimestamp Now();
 
-    friend hash_t hash_value(const FTimestamp& t) { return t.HashValue(); }
+    friend hash_t hash_value(const FTimestamp& t) NOEXCEPT { return t.HashValue(); }
 
-    friend void swap(FTimestamp& lhs, FTimestamp& rhs) { std::swap(lhs._value, rhs._value); }
+    friend void swap(FTimestamp& lhs, FTimestamp& rhs) NOEXCEPT { std::swap(lhs._value, rhs._value); }
 
     CONSTEXPR friend bool operator ==(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value == rhs._value; }
     CONSTEXPR friend bool operator !=(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value != rhs._value; }

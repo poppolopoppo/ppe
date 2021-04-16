@@ -519,7 +519,7 @@ public:
         using f = Meta::TDecay<_Lambda>;
         using payload_t = payload_traits_t<f>;
         return TFunction{ &traits_type::template lambda_t<f>::template bind_t<payload_t>::vtable }
-            .SetPayload<payload_t>(std::forward<_Lambda>(lambda));
+            .template SetPayload<payload_t>(std::forward<_Lambda>(lambda));
     }
 
     template <typename _Lambda>
@@ -527,7 +527,7 @@ public:
         using f = Meta::TDecay<_Lambda>;
         using payload_t = payload_traits_t<f>;
         return TFunction{ &traits_type::template lambda_t<f>::template bind_t<payload_t>::vtable }
-            .SetPayloadLarge<payload_t>(std::forward<_Lambda>(lambda));
+            .template SetPayloadLarge<payload_t>(std::forward<_Lambda>(lambda));
     }
 
     // lambdas have also implicit constructors :
@@ -566,7 +566,7 @@ public:
         using func_t = typename traits_type::template otherfunc_t<decltype(_OtherFunc)>;
         using payload_t = payload_traits_t< typename func_t::template extra_t<_Extra...>::type >;
         return TFunction{ &func_t::template bind_t<_OtherFunc, payload_t>::vtable }
-            .SetPayload<payload_t>(std::forward<_Extra>(extra)...);
+            .template SetPayload<payload_t>(std::forward<_Extra>(extra)...);
     }
 
     template <auto _OtherFunc, typename... _Extra>
@@ -574,7 +574,7 @@ public:
         using func_t = typename traits_type::template otherfunc_t<decltype(_OtherFunc)>;
         using payload_t = payload_traits_t< typename func_t::template extra_t<_Extra...>::type >;
         return TFunction{ &func_t::template bind_t<_OtherFunc, payload_t>::vtable }
-            .SetPayloadLarge<payload_t>(std::forward<_Extra>(extra)...);
+            .template SetPayloadLarge<payload_t>(std::forward<_Extra>(extra)...);
     }
 
 }; //!TFunction

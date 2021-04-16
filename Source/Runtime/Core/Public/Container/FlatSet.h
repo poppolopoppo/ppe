@@ -53,8 +53,8 @@ public:
     explicit TFlatSet(size_type capacity);
     ~TFlatSet();
 
-    TFlatSet(TFlatSet&& rvalue);
-    TFlatSet& operator =(TFlatSet&& rvalue);
+    TFlatSet(TFlatSet&& rvalue) NOEXCEPT;
+    TFlatSet& operator =(TFlatSet&& rvalue) NOEXCEPT;
 
     TFlatSet(const TFlatSet& other);
     TFlatSet& operator =(const TFlatSet& other);
@@ -130,7 +130,7 @@ public:
     TMemoryView<value_type> MakeView() { return _vector.MakeView(); }
     TMemoryView<const value_type> MakeView() const { return _vector.MakeView(); }
 
-    friend void swap(TFlatSet& lhs, TFlatSet& rhs) {
+    friend void swap(TFlatSet& lhs, TFlatSet& rhs) NOEXCEPT {
         swap(lhs._vector, rhs._vector);
     }
 private:
@@ -138,7 +138,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-hash_t hash_value(const TFlatSet<_Key, _EqualTo, _Less, _Vector>& flatSet) {
+hash_t hash_value(const TFlatSet<_Key, _EqualTo, _Less, _Vector>& flatSet) NOEXCEPT {
     return flatSet.HashValue();
 }
 //----------------------------------------------------------------------------

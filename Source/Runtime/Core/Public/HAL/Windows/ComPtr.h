@@ -30,8 +30,8 @@ public:
     TComPtr(_ComInterface* comObject);
     TComPtr& operator =(_ComInterface* comObject) = delete;
 
-    TComPtr(TComPtr&& rvalue);
-    TComPtr& operator =(TComPtr&& rvalue);
+    TComPtr(TComPtr&& rvalue) NOEXCEPT;
+    TComPtr& operator =(TComPtr&& rvalue) NOEXCEPT;
 
     TComPtr(const TComPtr& other);
     TComPtr& operator =(const TComPtr& other);

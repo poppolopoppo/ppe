@@ -61,10 +61,10 @@ public:
     }
 
     // move
-    TFreeListAllocator(TFreeListAllocator&& rvalue)
+    TFreeListAllocator(TFreeListAllocator&& rvalue) NOEXCEPT
     :   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue)))
     {}
-    TFreeListAllocator& operator =(TFreeListAllocator&& rvalue) {
+    TFreeListAllocator& operator =(TFreeListAllocator&& rvalue) NOEXCEPT {
         IF_CONSTEXPR(propagate_on_container_move_assignment::value) {
             ReleaseFreeList();
             allocator_traits::Copy(this, std::move(rvalue));

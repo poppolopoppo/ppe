@@ -44,11 +44,11 @@ struct TPtrRef {
     CONSTEXPR friend bool operator ==(const T& lhs, const TPtrRef& rhs) { return (lhs == *rhs); }
     CONSTEXPR friend bool operator !=(const T& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
 
-    friend void swap(TPtrRef& lhs, TPtrRef& rhs) {
+    friend void swap(TPtrRef& lhs, TPtrRef& rhs) NOEXCEPT {
         std::swap(lhs.Ptr, rhs.Ptr);
     }
 
-    friend hash_t hash_value(const TPtrRef& ref) {
+    friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
         return hash_ptr(ref.Ptr);
     }
 };

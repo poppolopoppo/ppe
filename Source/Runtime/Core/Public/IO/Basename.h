@@ -101,11 +101,11 @@ inline bool operator >=(const FBasename& lhs, const FBasename& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline void swap(FBasename& lhs, FBasename& rhs) {
+inline void swap(FBasename& lhs, FBasename& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const FBasename& token) {
+inline hash_t hash_value(const FBasename& token) NOEXCEPT {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

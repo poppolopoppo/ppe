@@ -69,8 +69,8 @@ public:
     FTransactionLinker(const FTransactionLinker& ) = delete;
     FTransactionLinker& operator =(const FTransactionLinker& ) = delete;
 
-    FTransactionLinker(FTransactionLinker&& rvalue);
-    FTransactionLinker& operator =(FTransactionLinker&& rvalue);
+    FTransactionLinker(FTransactionLinker&& rvalue) NOEXCEPT;
+    FTransactionLinker& operator =(FTransactionLinker&& rvalue) NOEXCEPT;
 
     const FFilename& Filename() const { return _filename; }
 

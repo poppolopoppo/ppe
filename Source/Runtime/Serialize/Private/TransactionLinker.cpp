@@ -66,11 +66,11 @@ FWTextWriter& FUnexpectedObjectClass::Description(FWTextWriter& oss) const {
 FTransactionLinker::FTransactionLinker()
 {}
 //----------------------------------------------------------------------------
-FTransactionLinker::FTransactionLinker(FTransactionLinker&& rvalue) {
+FTransactionLinker::FTransactionLinker(FTransactionLinker&& rvalue) NOEXCEPT {
     operator =(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
-FTransactionLinker& FTransactionLinker::operator =(FTransactionLinker&& rvalue) {
+FTransactionLinker& FTransactionLinker::operator =(FTransactionLinker&& rvalue) NOEXCEPT {
     _filename = std::move(rvalue._filename);
     _topObjects = std::move(rvalue._topObjects);
     _imports = std::move(rvalue._imports);

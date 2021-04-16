@@ -123,13 +123,13 @@ FBasicBIHTree::FBasicBIHTree()
     : _root(nullptr)
 {}
 //----------------------------------------------------------------------------
-FBasicBIHTree::FBasicBIHTree(FBasicBIHTree&& rvalue)
+FBasicBIHTree::FBasicBIHTree(FBasicBIHTree&& rvalue) NOEXCEPT
     : _root(nullptr) {
     std::swap(_root, rvalue._root);
     swap(_bounds, rvalue._bounds);
 }
 //----------------------------------------------------------------------------
-FBasicBIHTree& FBasicBIHTree::operator =(FBasicBIHTree&& rvalue) {
+FBasicBIHTree& FBasicBIHTree::operator =(FBasicBIHTree&& rvalue) NOEXCEPT {
     Clear();
     std::swap(_root, rvalue._root);
     swap(_bounds, rvalue._bounds);

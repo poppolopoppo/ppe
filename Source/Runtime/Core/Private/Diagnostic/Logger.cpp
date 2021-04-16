@@ -751,25 +751,6 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-class FFunctorLogger_ final : public ILogger {
-public:
-    typedef TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)> functor_type;
-
-    explicit FFunctorLogger_(functor_type&& func)
-        : _func(std::move(func))
-    {}
-
-public: // ILogger
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        _func(category, level, site, text);
-    }
-
-    virtual void Flush(bool) override final {} // always synced
-
-private:
-    functor_type _func;
-};
-//----------------------------------------------------------------------------
 class FConsoleWriterLogger_ final : public ILogger {
     const bool _available;
 public:

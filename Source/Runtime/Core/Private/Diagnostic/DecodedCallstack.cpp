@@ -24,7 +24,7 @@ FDecodedCallstack::FFrame::FFrame(void* address, FWString&& symbol, FWString&& f
 //----------------------------------------------------------------------------
 FDecodedCallstack::FFrame::~FFrame() = default;
 //----------------------------------------------------------------------------
-FDecodedCallstack::FFrame::FFrame(FFrame&& rvalue)
+FDecodedCallstack::FFrame::FFrame(FFrame&& rvalue) NOEXCEPT
 :   _address(rvalue._address)
 ,   _symbol(std::move(rvalue._symbol))
 ,   _filename(std::move(rvalue._filename))
@@ -33,7 +33,7 @@ FDecodedCallstack::FFrame::FFrame(FFrame&& rvalue)
     rvalue._line = 0;
 }
 //----------------------------------------------------------------------------
-FDecodedCallstack::FFrame& FDecodedCallstack::FFrame::operator =(FFrame&& rvalue) {
+FDecodedCallstack::FFrame& FDecodedCallstack::FFrame::operator =(FFrame&& rvalue) NOEXCEPT {
     _address = rvalue._address;
     _symbol = std::move(rvalue._symbol);
     _filename = std::move(rvalue._filename);
@@ -62,12 +62,12 @@ FDecodedCallstack::~FDecodedCallstack() {
         p->~FFrame();
 }
 //----------------------------------------------------------------------------
-FDecodedCallstack::FDecodedCallstack(FDecodedCallstack&& rvalue)
+FDecodedCallstack::FDecodedCallstack(FDecodedCallstack&& rvalue) NOEXCEPT
 : _hash(0), _depth(0) {
     operator =(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
-FDecodedCallstack& FDecodedCallstack::operator = (FDecodedCallstack&& rvalue) {
+FDecodedCallstack& FDecodedCallstack::operator = (FDecodedCallstack&& rvalue) NOEXCEPT {
     // manually call the destructor since it's a raw storage
     FFrame* p = reinterpret_cast<FFrame *>(&_frames);
     for (size_t i = 0; i < _depth; ++i, ++p)

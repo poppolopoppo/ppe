@@ -209,6 +209,15 @@ PPE_CORE_API FWStringView::reverse_iterator StrRChr(const FWStringView& wstr, wc
 PPE_CORE_API FStringView::iterator StrStr(const FStringView& str, const FStringView& firstOccurence);
 PPE_CORE_API FWStringView::iterator StrStr(const FWStringView& wstr, const FWStringView& firstOccurence);
 //----------------------------------------------------------------------------
+PPE_CORE_API FStringView::iterator StrStrI(const FStringView& str, const FStringView& firstOccurence);
+PPE_CORE_API FWStringView::iterator StrStrI(const FWStringView& wstr, const FWStringView& firstOccurence);
+//----------------------------------------------------------------------------
+inline bool HasSubString(const FStringView& str, const FStringView& substr) { return str.end() != StrStr(str, substr); }
+inline bool HasSubString(const FWStringView& str, const FWStringView& substr) { return str.end() != StrStr(str, substr); }
+//----------------------------------------------------------------------------
+inline bool HasSubStringI(const FStringView& str, const FStringView& substr) { return str.end() != StrStrI(str, substr); }
+inline bool HasSubStringI(const FWStringView& str, const FWStringView& substr) { return str.end() != StrStrI(str, substr); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Used LLVM to reverse the optimal ASM generated to C: https://godbolt.org/z/hanWdq

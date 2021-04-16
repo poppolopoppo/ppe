@@ -266,7 +266,7 @@ public:
         return MakeIterable(begin(), end());
     }
 
-    CONSTEXPR friend void swap(TMemoryView& lhs, TMemoryView& rhs) {
+    CONSTEXPR friend void swap(TMemoryView& lhs, TMemoryView& rhs) NOEXCEPT {
         std::swap(lhs._storage, rhs._storage);
         std::swap(lhs._size, rhs._size);
     }

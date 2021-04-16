@@ -417,8 +417,8 @@ public:
     CONSTEXPR reference operator*() const { return (_it->first); }
     CONSTEXPR pointer operator->() const { return (&_it->first); }
 
-    CONSTEXPR void swap(TKeyIterator& other) { std::swap(_it, other._it); }
-    CONSTEXPR inline friend void swap(TKeyIterator& lhs, TKeyIterator& rhs) { lhs.swap(rhs); }
+    CONSTEXPR void swap(TKeyIterator& other) NOEXCEPT { std::swap(_it, other._it); }
+    CONSTEXPR inline friend void swap(TKeyIterator& lhs, TKeyIterator& rhs) NOEXCEPT { lhs.swap(rhs); }
 
     template <typename U>
     CONSTEXPR bool operator ==(const TKeyIterator<U>& other) const { return (_it == other.inner()); }
@@ -469,8 +469,8 @@ public:
     CONSTEXPR reference operator*() const { return (_it->second); }
     CONSTEXPR pointer operator->() const { return (&_it->second); }
 
-    CONSTEXPR void swap(TValueIterator& other) { std::swap(_it, other._it); }
-    CONSTEXPR friend void swap(TValueIterator& lhs, TValueIterator& rhs) { lhs.swap(rhs); }
+    CONSTEXPR void swap(TValueIterator& other) NOEXCEPT { std::swap(_it, other._it); }
+    CONSTEXPR friend void swap(TValueIterator& lhs, TValueIterator& rhs) NOEXCEPT { lhs.swap(rhs); }
 
     template <typename U>
     CONSTEXPR bool operator ==(const TValueIterator<U>& other) const { return (_it == other.inner()); }

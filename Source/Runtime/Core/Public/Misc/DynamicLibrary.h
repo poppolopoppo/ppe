@@ -40,7 +40,7 @@ public:
     FWString ModuleName() const;
     void* FunctionAddr(const char* funcname) const;
 
-    friend inline void swap(FDynamicLibrary& lhs, FDynamicLibrary& rhs) {
+    friend inline void swap(FDynamicLibrary& lhs, FDynamicLibrary& rhs) NOEXCEPT {
         swap(lhs._handle, rhs._handle);
     }
 

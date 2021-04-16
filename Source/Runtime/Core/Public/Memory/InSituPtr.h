@@ -77,7 +77,7 @@ struct TInSituPtr {
     template <typename U, typename... _Args>
     CONSTEXPR static TInSituPtr Make(_Args&&... args) {
         TInSituPtr p(Meta::NoInit);
-        p.Create_AssumeNotValid<U>(std::forward<_Args>(args)...);
+        p.template Create_AssumeNotValid<U>(std::forward<_Args>(args)...);
         return p;
     }
 

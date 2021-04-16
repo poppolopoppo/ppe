@@ -29,11 +29,11 @@ FSocketBuffered::FSocketBuffered(FSocket&& socket, size_t capacity/* = DefaultBu
 //----------------------------------------------------------------------------
 FSocketBuffered::~FSocketBuffered() = default;
 //----------------------------------------------------------------------------
-FSocketBuffered::FSocketBuffered(FSocketBuffered&& rvalue) {
+FSocketBuffered::FSocketBuffered(FSocketBuffered&& rvalue) NOEXCEPT {
     operator =(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
-FSocketBuffered& FSocketBuffered::operator =(FSocketBuffered&& rvalue) {
+FSocketBuffered& FSocketBuffered::operator =(FSocketBuffered&& rvalue) NOEXCEPT {
     if (IsConnected())
         Disconnect(true);
 

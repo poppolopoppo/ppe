@@ -118,8 +118,8 @@ public:
         return _traits->Accept(visitor, _data);
     }
 
-    inline friend void swap(FAtom& lhs, FAtom& rhs) { lhs.Swap(rhs); }
-    inline friend hash_t hash_value(const FAtom& value) { return value.HashValue(); }
+    inline friend void swap(FAtom& lhs, FAtom& rhs) NOEXCEPT { lhs.Swap(rhs); }
+    inline friend hash_t hash_value(const FAtom& value) NOEXCEPT { return value.HashValue(); }
 
     PPE_RTTI_API static FAtom FromObj(const PMetaObject& obj);
 

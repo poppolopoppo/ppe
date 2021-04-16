@@ -25,8 +25,8 @@ public:
         FFrame(void* address, FWString&& symbol, FWString&& filename, size_t line);
         ~FFrame();
 
-        FFrame(FFrame&& rvalue);
-        FFrame& operator =(FFrame&& rvalue);
+        FFrame(FFrame&& rvalue) NOEXCEPT;
+        FFrame& operator =(FFrame&& rvalue) NOEXCEPT;
 
         FFrame(const FFrame& other) = delete;
         FFrame& operator =(const FFrame& other) = delete;
@@ -47,8 +47,8 @@ public:
     FDecodedCallstack(const FCallstack& callstack);
     ~FDecodedCallstack();
 
-    FDecodedCallstack(FDecodedCallstack&& rvalue);
-    FDecodedCallstack& operator =(FDecodedCallstack&& rvalue);
+    FDecodedCallstack(FDecodedCallstack&& rvalue) NOEXCEPT;
+    FDecodedCallstack& operator =(FDecodedCallstack&& rvalue) NOEXCEPT;
 
     FDecodedCallstack(const FDecodedCallstack& other) = delete;
     FDecodedCallstack& operator =(const FDecodedCallstack& other) = delete;

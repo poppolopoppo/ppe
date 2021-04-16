@@ -115,7 +115,7 @@ struct PTypeTraits {
         return (not operator ==(lhs, rhs));
     }
 
-    friend void swap(PTypeTraits& lhs, PTypeTraits& rhs) {
+    friend void swap(PTypeTraits& lhs, PTypeTraits& rhs) NOEXCEPT {
         std::swap(lhs.PTraits, rhs.PTraits);
     }
 

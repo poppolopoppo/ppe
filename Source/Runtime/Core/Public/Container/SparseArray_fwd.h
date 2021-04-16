@@ -67,7 +67,7 @@ template <typename T, typename _Allocator>
 void Reserve(TSparseArray<T, _Allocator>& v, size_t capacity);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-hash_t hash_value(const TSparseArray<T, _Allocator>& v);
+hash_t hash_value(const TSparseArray<T, _Allocator>& v) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

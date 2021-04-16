@@ -65,7 +65,7 @@ auto TBasicStringBuilder<_Char>::ToString() -> string_type {
 template <typename _Char>
 void TBasicStringBuilder<_Char>::ToString(string_type& output) {
     const TBasicStringView<_Char> str = stream_type::MakeView().template Cast<const _Char>();
-    if (not str.empty() and str.back() != _Char())
+    if (not str.empty() && str.back() != _Char())
         *this << Eos; // append '\0' terminator only to non empty strings
 
     output.assign(std::move(*this));

@@ -59,8 +59,8 @@ public:
     }
 
     // move checks that both src and dst allocators are empty (can't move insitu allocations)
-    TBitmapAllocator(TBitmapAllocator&& rvalue) { operator =(std::move(rvalue)); }
-    TBitmapAllocator& operator =(TBitmapAllocator&& rvalue) {
+    TBitmapAllocator(TBitmapAllocator&& rvalue) NOEXCEPT { operator =(std::move(rvalue)); }
+    TBitmapAllocator& operator =(TBitmapAllocator&& rvalue) NOEXCEPT {
         Assert(Mask == bitmask_t::AllMask);
         Assert(rvalue.Mask == bitmask_t::AllMask);
         return (*this);

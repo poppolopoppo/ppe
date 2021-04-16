@@ -398,12 +398,14 @@ template <typename T, size_t _Width, size_t _Height>
 auto TScalarMatrix<T, _Width, _Height>::operator +=(const TScalarMatrix& other) -> TScalarMatrix& {
     for (size_t i = 0; i < Dim; ++i)
         _data.raw[i] += other._data.raw[i];
+    return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 auto TScalarMatrix<T, _Width, _Height>::operator -=(const TScalarMatrix& other) -> TScalarMatrix& {
     for (size_t i = 0; i < Dim; ++i)
         _data.raw[i] -= other._data.raw[i];
+    return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>

@@ -30,7 +30,7 @@ TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::~TTernarySearchTr
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::TTernarySearchTree(TTernarySearchTree&& rvalue)
+TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::TTernarySearchTree(TTernarySearchTree&& rvalue) NOEXCEPT
     :   allocator_type(std::move(rvalue))
     ,   _root(nullptr), _size(0) {
     std::swap(rvalue._root, _root);

@@ -151,7 +151,7 @@ void DeepCopy(const FMetaObject& src, FMetaObject& dst) {
         const FAtom srcValue = prop->Get(src);
         const FAtom dstValue = prop->Get(dst);
 
-        srcValue.DeepCopy(dstValue);
+        Verify( srcValue.DeepCopy(dstValue) );
     }
 }
 //----------------------------------------------------------------------------
@@ -167,7 +167,7 @@ void DeepClone(const FMetaObject& src, PMetaObject& pdst) {
         const FAtom srcValue = prop->Get(src);
         const FAtom dstValue = prop->Get(dst);
 
-        srcValue.DeepCopy(dstValue);
+        Verify( srcValue.DeepCopy(dstValue) );
     }
 }
 //----------------------------------------------------------------------------

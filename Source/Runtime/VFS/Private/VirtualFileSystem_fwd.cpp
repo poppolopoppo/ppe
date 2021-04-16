@@ -109,7 +109,7 @@ UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy/* = E
         FFilename logroll = filename;
         logroll.AppendBasename(oss.Written());
 
-        vfs.MoveFile(filename, logroll);
+        Verify( vfs.MoveFile(filename, logroll) );
     }
 
     return vfs.OpenWritable(filename, policy);

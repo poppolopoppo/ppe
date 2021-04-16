@@ -235,7 +235,7 @@ void TRingBuffer<T, _IsPod>::Swap(TRingBuffer& other) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void swap(TRingBuffer<T>& lhs, TRingBuffer<T>& rhs) {
+void swap(TRingBuffer<T>& lhs, TRingBuffer<T>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

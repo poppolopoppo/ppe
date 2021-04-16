@@ -160,7 +160,7 @@ public:
     TPatriciaTrie(const TPatriciaTrie&) = delete;
     TPatriciaTrie& operator =(const TPatriciaTrie&) = delete;
 
-    TPatriciaTrie(TPatriciaTrie&& rvalue);
+    TPatriciaTrie(TPatriciaTrie&& rvalue) NOEXCEPT;
     TPatriciaTrie& operator =(TPatriciaTrie&& rvalue) = delete;
 
     size_type size() const { return _size; }
@@ -180,7 +180,7 @@ public:
     void Clear();
 
     void Swap(TPatriciaTrie& other);
-    friend void swap(TPatriciaTrie& lhs, TPatriciaTrie& rhs) { lhs.Swap(rhs); }
+    friend void swap(TPatriciaTrie& lhs, TPatriciaTrie& rhs) NOEXCEPT { lhs.Swap(rhs); }
 
 private:
     node_type* SplitNode_(node_type* parent, size_t index);

@@ -22,12 +22,12 @@ public:
 
     // hash_value(hash_t) = hash_t,
     // will prevent helpers like hash_combine() from hashing twice the value :
-    CONSTEXPR inline friend hash_t hash_value(hash_t value) { return value; }
+    CONSTEXPR inline friend hash_t hash_value(hash_t value) NOEXCEPT { return value; }
 
     CONSTEXPR friend bool operator ==(const hash_t& lhs, const hash_t& rhs) { return lhs._value == rhs._value; }
     CONSTEXPR friend bool operator !=(const hash_t& lhs, const hash_t& rhs) { return lhs._value != rhs._value; }
 
-    friend void swap(hash_t& lhs, hash_t& rhs) { std::swap(lhs._value, rhs._value); }
+    friend void swap(hash_t& lhs, hash_t& rhs) NOEXCEPT { std::swap(lhs._value, rhs._value); }
 };
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, hash_t h);

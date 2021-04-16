@@ -20,13 +20,13 @@ TBIHTree<T, _Traits>::TBIHTree(const TMemoryView<T>& items, const traits_type& t
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
-TBIHTree<T, _Traits>::TBIHTree(TBIHTree&& rvalue)
+TBIHTree<T, _Traits>::TBIHTree(TBIHTree&& rvalue) NOEXCEPT
     : _bih(std::move(rvalue._bih))
     , _items(std::move(rvalue._items))
 {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
-auto TBIHTree<T, _Traits>::operator =(TBIHTree&& rvalue) -> TBIHTree& {
+auto TBIHTree<T, _Traits>::operator =(TBIHTree&& rvalue) NOEXCEPT -> TBIHTree& {
     _bih.operator =(std::move(rvalue._bih));
     _items.operator =(std::move(rvalue._items));
     return (*this);

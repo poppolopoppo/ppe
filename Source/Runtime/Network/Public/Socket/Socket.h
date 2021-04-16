@@ -31,8 +31,8 @@ public:
     FSocket(const FSocket& ) = delete;
     FSocket& operator =(const FSocket& ) = delete;
 
-    FSocket(FSocket&& rvalue) : FSocket() { operator =(std::move(rvalue)); }
-    FSocket& operator =(FSocket&& rvalue);
+    FSocket(FSocket&& rvalue) NOEXCEPT : FSocket() { operator =(std::move(rvalue)); }
+    FSocket& operator =(FSocket&& rvalue) NOEXCEPT;
 
     intptr_t Handle() const { return _handle; }
 

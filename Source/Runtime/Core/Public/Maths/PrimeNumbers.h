@@ -50,7 +50,7 @@ public:
         return ((_value / parent._value) * parent._value == _value);
     }
 
-    inline friend void swap(TPrimeNumberProduct& lhs, TPrimeNumberProduct& rhs) {
+    inline friend void swap(TPrimeNumberProduct& lhs, TPrimeNumberProduct& rhs) NOEXCEPT {
         std::swap(lhs._value, rhs._value);
     }
 

@@ -53,8 +53,8 @@ public:
     FBasicBIHTree(const FBasicBIHTree&) = delete;
     FBasicBIHTree& operator =(const FBasicBIHTree&) = delete;
 
-    FBasicBIHTree(FBasicBIHTree&& rvalue);
-    FBasicBIHTree& operator =(FBasicBIHTree&& rvalue);
+    FBasicBIHTree(FBasicBIHTree&& rvalue) NOEXCEPT;
+    FBasicBIHTree& operator =(FBasicBIHTree&& rvalue) NOEXCEPT;
 
     const FBoundingBox& Bounds() const { return _bounds; }
 
@@ -120,8 +120,8 @@ public:
     TBIHTree(const TBIHTree&) = delete;
     TBIHTree& operator =(const TBIHTree&) = delete;
 
-    TBIHTree(TBIHTree&& rvalue);
-    TBIHTree& operator =(TBIHTree&& rvalue);
+    TBIHTree(TBIHTree&& rvalue) NOEXCEPT;
+    TBIHTree& operator =(TBIHTree&& rvalue) NOEXCEPT;
 
     const FBoundingBox& Bounds() const { return _bih.Bounds(); }
     TMemoryView<const T> Items() const { return _items; }

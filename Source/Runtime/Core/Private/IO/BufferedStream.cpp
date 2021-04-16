@@ -264,6 +264,7 @@ FBufferedStreamWriter::FBufferedStreamWriter()
 :   _nonBuffered(nullptr)
 ,   _buffer(nullptr)
 ,   _origin(0)
+,   _offset(0)
 ,   _bufferSize(GBufferedStreamDefaultBufferSize)
 {}
 //----------------------------------------------------------------------------

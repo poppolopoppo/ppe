@@ -22,7 +22,7 @@ FFileStream::~FFileStream() {
         VerifyRelease(FPlatformLowLevelIO::Close(_handle));
 }
 //----------------------------------------------------------------------------
-FFileStream::FFileStream(FFileStream&& rvalue)
+FFileStream::FFileStream(FFileStream&& rvalue) NOEXCEPT
     : _handle(rvalue._handle)
 #if WITH_PPE_FILESTREAM_FILENAMEDBG
     , _filenameForDebug(std::move(rvalue._filenameForDebug))
@@ -31,7 +31,7 @@ FFileStream::FFileStream(FFileStream&& rvalue)
     rvalue._handle = FPlatformLowLevelIO::InvalidHandle;
 }
 //----------------------------------------------------------------------------
-FFileStream& FFileStream::operator =(FFileStream&& rvalue) {
+FFileStream& FFileStream::operator =(FFileStream&& rvalue) NOEXCEPT {
     if (Good())
         VerifyRelease(FPlatformLowLevelIO::Close(_handle));
 

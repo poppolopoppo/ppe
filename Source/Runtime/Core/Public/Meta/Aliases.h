@@ -352,7 +352,7 @@ typedef struct uint128_t {
     CONSTEXPR friend bool operator < (const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
     CONSTEXPR friend bool operator >=(const uint128_t& lhs, const uint128_t& rhs) { return !operator < (lhs, rhs); }
 
-    friend void swap(uint128_t& lhs, uint128_t& rhs) { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
+    friend void swap(uint128_t& lhs, uint128_t& rhs) NOEXCEPT { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
 }   u128;
 //----------------------------------------------------------------------------
@@ -367,7 +367,7 @@ typedef struct uint256_t {
     CONSTEXPR friend bool operator < (const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
     CONSTEXPR friend bool operator >=(const uint256_t& lhs, const uint256_t& rhs) { return !operator < (lhs, rhs); }
 
-    friend void swap(uint256_t& lhs, uint256_t& rhs) { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
+    friend void swap(uint256_t& lhs, uint256_t& rhs) NOEXCEPT { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
 }   u256;
 //----------------------------------------------------------------------------

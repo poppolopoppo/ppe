@@ -128,7 +128,7 @@ void TBaseTupleTraits<_Args...>::DeepCopy(const void* src, void* dst) const {
         const FAtom s = At((void*)src, i);
         const FAtom d = At(dst, i);
 
-        s.DeepCopy(d);
+        Verify( s.DeepCopy(d) );
     }
 }
 //----------------------------------------------------------------------------

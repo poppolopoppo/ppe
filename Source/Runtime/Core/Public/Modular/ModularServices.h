@@ -79,7 +79,7 @@ private:
             return (_getter ? _getter(_service) : _service);
         }
 
-        friend void swap(FServiceHolder_& lhs, FServiceHolder_& rhs) {
+        friend void swap(FServiceHolder_& lhs, FServiceHolder_& rhs) NOEXCEPT {
             std::swap(lhs._service, rhs._service);
             std::swap(lhs._getter, rhs._getter);
             std::swap(lhs._destructor, rhs._destructor);

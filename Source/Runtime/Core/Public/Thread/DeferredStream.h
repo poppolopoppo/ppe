@@ -16,7 +16,7 @@ public:
 
     ETaskPriority Priority() const { return _priority; }
 
-    inline friend void swap(FDeferredStreamReader& lhs, FDeferredStreamReader& rhs) = delete;
+    inline friend void swap(FDeferredStreamReader& lhs, FDeferredStreamReader& rhs) NOEXCEPT = delete;
 
 public: // IStreamReader
     virtual bool Eof() const override final { return _nonBuffered->Eof(); }
@@ -43,7 +43,7 @@ public:
 
     ETaskPriority Priority() const { return _priority; }
 
-    inline friend void swap(FDeferredStreamWriter& lhs, FDeferredStreamWriter& rhs) = delete;
+    inline friend void swap(FDeferredStreamWriter& lhs, FDeferredStreamWriter& rhs) NOEXCEPT = delete;
 
 public: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const override final { return _nonBuffered->IsSeekableO(origin); }

@@ -74,8 +74,8 @@ public:
     static FDateTime FromLocalTime(const FTimestamp& t);
     static FDateTime FromTimeUTC(const FTimestamp& t);
 
-    friend hash_t hash_value(const FDateTime& d) { return hash_as_pod(d.Ord()); }
-    friend void swap(FDateTime& lhs, FDateTime& rhs) { std::swap(*reinterpret_cast<u64*>(&lhs), *reinterpret_cast<u64*>(&rhs)); }
+    friend hash_t hash_value(const FDateTime& d) NOEXCEPT { return hash_as_pod(d.Ord()); }
+    friend void swap(FDateTime& lhs, FDateTime& rhs) NOEXCEPT { std::swap(*reinterpret_cast<u64*>(&lhs), *reinterpret_cast<u64*>(&rhs)); }
 
     friend bool operator ==(const FDateTime& lhs, const FDateTime& rhs) { return lhs.Ord() == rhs.Ord(); }
     friend bool operator !=(const FDateTime& lhs, const FDateTime& rhs) { return lhs.Ord() != rhs.Ord(); }

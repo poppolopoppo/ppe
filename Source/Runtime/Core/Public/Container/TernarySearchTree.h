@@ -134,8 +134,8 @@ public:
     TTernarySearchTree(const TTernarySearchTree&) = delete;
     TTernarySearchTree& operator =(const TTernarySearchTree&) = delete;
 
-    TTernarySearchTree(TTernarySearchTree&& rvalue);
-    TTernarySearchTree& operator =(TTernarySearchTree&& rvalue) = delete;
+    TTernarySearchTree(TTernarySearchTree&& rvalue) NOEXCEPT;
+    TTernarySearchTree& operator =(TTernarySearchTree&& rvalue) NOEXCEPT = delete;
 
     size_type size() const { return _size; }
     size_type max_size() const { return std::numeric_limits<size_type>::max(); }
@@ -153,7 +153,7 @@ public:
     void Clear();
 
     void Swap(TTernarySearchTree& other);
-    friend void swap(TTernarySearchTree& lhs, TTernarySearchTree& rhs) { lhs.Swap(rhs); }
+    friend void swap(TTernarySearchTree& lhs, TTernarySearchTree& rhs) NOEXCEPT { lhs.Swap(rhs); }
 
 private:
     node_type* _root;

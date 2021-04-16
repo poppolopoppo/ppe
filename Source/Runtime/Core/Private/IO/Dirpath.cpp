@@ -187,7 +187,7 @@ void FDirpath::AssignTokens(const TMemoryView<const FFileSystemToken>& tokens) {
 void FDirpath::ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const {
     if (_path) {
         Assert(tokens.size() == _path->Depth());
-        FFileSystemTrie::Get().Expand(tokens, _path);
+        Verify( FFileSystemTrie::Get().Expand(tokens, _path) );
     }
     else {
         Assert(tokens.empty());
@@ -273,8 +273,6 @@ bool FDirpath::Less(const FDirpath& other) const {
 
 #else // slow method expanding the path :
     const auto& fsp = FFileSystemTrie::Get();
-
-    // #TODO bake sort order in path tree !
 
     STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, p0, _path->Depth() );
     const size_t k0 = fsp.Expand(p0, _path);

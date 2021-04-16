@@ -80,51 +80,22 @@ static bool SplitMulti_(TBasicStringView<_Char>& str, const TBasicStringView<_Ch
         return SplitIfR_<_Char>(str, slice, std::move(pred));
 }
 //----------------------------------------------------------------------------
-template <typename _Char> struct TAtoN_traits {};
-template <> struct TAtoN_traits<char> {
-    enum : char {
-        Pos = '+',
-        Neg = '-',
-        Dot = '.',
-        _0  = '0',
-        _9  = '9',
-        a   = 'a',
-        f   = 'f',
-        A   = 'A',
-        F   = 'F',
-        e   = 'e',
-        E   = 'E',
-    };
-};
-template <> struct TAtoN_traits<wchar_t> {
-    enum : wchar_t {
-        Pos = L'+',
-        Neg = L'-',
-        Dot = L'.',
-        _0  = L'0',
-        _9  = L'9',
-        a   = L'a',
-        f   = L'f',
-        A   = L'A',
-        F   = L'F',
-        e   = L'e',
-        E   = L'E',
-    };
-};
-//----------------------------------------------------------------------------
 template <typename T, typename _Char>
 static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
     static_assert(std::is_integral<T>::value, "T must be an integral type");
     Assert(1 < base && base <= 16);
-
-    typedef TAtoN_traits<_Char> traits;
 
     Assert(dst);
 
     if (str.empty())
         return false;
 
-    const bool neg = (traits::Neg == str[0]);
+#define STR(X) STRING_LITERAL(_Char, X)
+    STATIC_ASSERT(STR('9') - STR('0') == 9);
+    STATIC_ASSERT(STR('f') - STR('a') == 5);
+    STATIC_ASSERT(STR('F') - STR('A') == 5);
+
+    const bool neg = (STR('-') == str[0]);
     Assert(not neg || not std::is_unsigned_v<T>);
 
     i64 v = 0;
@@ -132,18 +103,20 @@ static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
         const _Char ch = str[i];
 
         int d;
-        if (ch >= traits::_0 && ch <= traits::_9)
-            d = ch - traits::_0;
-        else if (base > 10 && ch >= traits::a && ch <= traits::f)
-            d = ch - traits::a + 10;
-        else if (base > 10 && ch >= traits::A && ch <= traits::F)
-            d = ch - traits::A + 10;
+        if (ch >= STR('0') && ch <= STR('9'))
+            d = ch - STR('0');
+        else if (base > 10 && ch >= STR('a') && ch <= STR('f'))
+            d = ch - STR('a') + 10;
+        else if (base > 10 && ch >= STR('A') && ch <= STR('F'))
+            d = ch - STR('A') + 10;
         else
             return false;
 
         Assert(d < checked_cast<int>(base));
         v = T(v * base + d);
     }
+
+#undef STR
 
     *dst = checked_cast<T>(neg ? -v : v);
     return true;
@@ -264,21 +237,10 @@ static bool Atof_(double *dst, const TBasicStringView<_Char>& str) {
 
 #endif
 //----------------------------------------------------------------------------
-template <typename _Char>
-struct TWildChars_ {};
-template <>
-struct TWildChars_< char > {
-    enum : char { Dot = '.', Question = '?', Star = '*', };
-};
-template <>
-struct TWildChars_< wchar_t > {
-    enum : wchar_t { Dot = L'.', Question = L'?', Star = L'*', };
-};
 template <ECase _Sensitive, typename _Char>
 static bool WildMatch_(const TBasicStringView<_Char>& pat, const TBasicStringView<_Char>& str)
 {
     typedef TCharEqualTo<_Char, _Sensitive> equalto;
-    typedef TWildChars_<_Char> chars;
 
     // Wildcard matching algorithms
     // http://xoomer.virgilio.it/acantato/dev/wildcard/wildmatch.html#evolution
@@ -296,13 +258,13 @@ static bool WildMatch_(const TBasicStringView<_Char>& pat, const TBasicStringVie
 loopStart:
     for (s = sfirst, p = pfirst; s != send; ++s, ++p) {
         switch (*p) {
-        case chars::Question:
-            if (*s == chars::Dot) goto starCheck;
+        case STRING_LITERAL(_Char, '?'):
+            if (*s == STRING_LITERAL(_Char, '.')) goto starCheck;
             break;
-        case chars::Star:
+        case STRING_LITERAL(_Char, '*'):
             star = true;
             sfirst = s, pfirst = p;
-            do { ++pfirst; } while (*pfirst == chars::Star && pfirst != pend);
+            do { ++pfirst; } while (*pfirst == STRING_LITERAL(_Char, '*') && pfirst != pend);
             if (pfirst == pend) return true;
             goto loopStart;
         default:
@@ -311,7 +273,7 @@ loopStart:
             break;
         }
     }
-    while (*p == chars::Star && p != pend) ++p;
+    while (*p == STRING_LITERAL(_Char, '*') && p != pend) ++p;
     return (p == pend);
 
 starCheck:
@@ -377,10 +339,10 @@ static size_t LevenshteinDistance_(
     TMemoryView<u32> row1 = rows_alloc.SubRange(1 * (len2 + 1), len2 + 1);
     TMemoryView<u32> row2 = rows_alloc.SubRange(2 * (len2 + 1), len2 + 1);
 
-    forrange(j, 0, len2 + 1) row1[j] = u32(j) * a;
+    forrange(j, 0, u32(len2 + 1)) row1[j] = j * a;
 
-    forrange(i, 0, len1) {
-        row2[0] = (u32(i) + 1) * d;
+    forrange(i, 0, u32(len1)) {
+        row2[0] = (i + 1) * d;
 
         forrange(j, 0, len2) {
             /* substitution */
@@ -396,7 +358,7 @@ static size_t LevenshteinDistance_(
                 row2[j + 1] = row2[j] + a;
         }
 
-        auto dummy = row0;
+        const auto dummy = row0;
         row0 = row1;
         row1 = row2;
         row2 = dummy;
@@ -445,6 +407,7 @@ typename TBasicStringView<_Char>::reverse_iterator StrRChr_(const TBasicStringVi
 //----------------------------------------------------------------------------
 template <typename _Char>
 typename TBasicStringView<_Char>::iterator StrStr_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& firstOccurence) {
+    Assert(not firstOccurence.empty());
     return str.FindSubRange(firstOccurence);
 }
 //----------------------------------------------------------------------------
@@ -474,6 +437,18 @@ bool EndsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char
     Assert(str.size());
     Assert(suffix.size());
     return (str.size() >= suffix.size() && EqualsI(str.LastNElements(suffix.size()), suffix) );
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+typename TBasicStringView<_Char>::iterator StrStrI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& firstOccurence) {
+    Assert(not firstOccurence.empty());
+    if (firstOccurence.size() <= str.size()) {
+        forrange(i, 0, str.size() - firstOccurence.size() + 1) {
+            if (EqualsI(str.SubRange(i, firstOccurence.size()), firstOccurence))
+                return str.begin() + i;
+        }
+    }
+    return str.end();
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -516,6 +491,9 @@ FWStringView::reverse_iterator StrRChr(const FWStringView& wstr, wchar_t wch) { 
 //----------------------------------------------------------------------------
 FStringView::iterator StrStr(const FStringView& str, const FStringView& firstOccurence) { return StrStr_(str, firstOccurence); }
 FWStringView::iterator StrStr(const FWStringView& wstr, const FWStringView& firstOccurence) { return StrStr_(wstr, firstOccurence); }
+//----------------------------------------------------------------------------
+FStringView::iterator StrStrI(const FStringView& str, const FStringView& firstOccurence) { return StrStrI_(str, firstOccurence); }
+FWStringView::iterator StrStrI(const FWStringView& wstr, const FWStringView& firstOccurence) { return StrStrI_(wstr, firstOccurence); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

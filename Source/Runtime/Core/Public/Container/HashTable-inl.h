@@ -331,7 +331,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::shrink_to_fit() {
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::swap(TBasicHashTable& other) {
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::swap(TBasicHashTable& other) NOEXCEPT {
     typedef typename allocator_traits::propagate_on_container_swap propagate_type;
     if (this != &other)
         swap_(other, propagate_type());

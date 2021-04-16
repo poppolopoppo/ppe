@@ -51,7 +51,7 @@ public:
         std::swap(_id, other._id);
     }
 
-    inline friend void swap(FEventHandle& lhs, FEventHandle& rhs) {
+    inline friend void swap(FEventHandle& lhs, FEventHandle& rhs) NOEXCEPT {
         lhs.Swap(rhs);
     }
 

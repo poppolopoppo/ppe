@@ -32,7 +32,7 @@ public:
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FMountingPoint)
 //----------------------------------------------------------------------------
-inline void swap(FMountingPoint& lhs, FMountingPoint& rhs) {
+inline void swap(FMountingPoint& lhs, FMountingPoint& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

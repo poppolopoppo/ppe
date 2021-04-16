@@ -94,7 +94,7 @@ public:
 
     void Swap(TScalarBoundingBox& other);
 
-    friend hash_t hash_value(const TScalarBoundingBox& b) { return hash_tuple(b._min, b._max); }
+    friend hash_t hash_value(const TScalarBoundingBox& b) NOEXCEPT { return hash_tuple(b._min, b._max); }
 
     template <typename U>
     TScalarBoundingBox<U, _Dim> Cast() const;
@@ -188,7 +188,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void swap(TScalarBoundingBox<T, _Dim>& lhs, TScalarBoundingBox<T, _Dim>& rhs) {
+void swap(TScalarBoundingBox<T, _Dim>& lhs, TScalarBoundingBox<T, _Dim>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

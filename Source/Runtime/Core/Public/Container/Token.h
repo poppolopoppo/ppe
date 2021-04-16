@@ -329,7 +329,7 @@ public:
 
     hash_t HashValue() const { return _hash; }
 
-    void Swap(TLazyToken& other) {
+    void Swap(TLazyToken& other) NOEXCEPT {
         std::swap(_str, other._str);
         std::swap(_hash, other._hash);
     }
@@ -345,8 +345,8 @@ public:
     bool Equals(const stringview_type& str) const { return equalto_type{}(_str, str); }
     bool Less(const stringview_type& str) const { return less_type{}(_str, str); }
 
-    friend void swap(TLazyToken& lhs, TLazyToken& rhs) { lhs.Swap(rhs); }
-    friend hash_t hash_value(const TLazyToken& token) { return token.HashValue(); }
+    friend void swap(TLazyToken& lhs, TLazyToken& rhs) NOEXCEPT { lhs.Swap(rhs); }
+    friend hash_t hash_value(const TLazyToken& token) NOEXCEPT { return token.HashValue(); }
     friend stringview_type MakeStringView(const TLazyToken& token) { return token.MakeView(); }
 
     static bool IsValidToken(const stringview_type & str) {
