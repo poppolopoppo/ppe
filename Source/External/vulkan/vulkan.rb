@@ -269,6 +269,10 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!("API_version_latest = #{verflag(vklast)},")
         end
 
+        extenum_decl(dst, 'instance_extension', :instance_level_extension)
+        extenum_decl(dst, 'device_extension', :device_level_extension)
+        dst.puts!("instance_extension_set instance_extensions_require(const device_extension_set& in);")
+
         struct_decl(dst, 'exported_api') do
             pfnvar_decl(dst, :exported_function)
         end
@@ -281,8 +285,6 @@ class VulkanFunctionsGenerator < HeaderParser
             pfnvar_decl(dst, :global_level_function)
         end
 
-        extenum_decl(dst, 'instance_extension', :instance_level_extension)
-
         struct_decl(dst, 'instance_api') do
             memvar_decl(dst, 'g_dummy', 'static const instance_api', '');
             memvar_decl(dst, 'version_', 'api_version', '{ API_version_latest }');
@@ -292,8 +294,6 @@ class VulkanFunctionsGenerator < HeaderParser
             pfnvar_decl(dst, :instance_level_function)
             pfnvar_decl(dst, :instance_level_function_from_extension)
         end
-
-        extenum_decl(dst, 'device_extension', :device_level_extension)
 
         struct_decl(dst, 'device_api') do
             memvar_decl(dst, 'g_dummy', 'static const device_api', '');
@@ -312,6 +312,7 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!('public:')
             dst.puts!('instance_fn() = default;')
             dst.puts!('constexpr explicit instance_fn(const instance_api* api) : instance_api_(api) {}')
+            dst.puts!('const instance_extension_set& instance_extensions() const { return instance_api_->instance_extensions_; }')
             pfnfun_decl(dst, :global_level_function, 'instance_api_->global_api_', api)
             pfnfun_decl(dst, :instance_level_function, 'instance_api_', api)
             pfnfun_decl(dst, :instance_level_function_from_extension, 'instance_api_', api)
@@ -323,6 +324,7 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!('public:')
             dst.puts!('device_fn() = default;')
             dst.puts!('constexpr explicit device_fn(const device_api* api) : device_api_(api) {}')
+            dst.puts!('const device_extension_set& device_extensions() const { return device_api_->device_extensions_; }')
             pfnfun_decl(dst, :instance_level_function, 'device_api_->instance_api_', api)
             pfnfun_decl(dst, :instance_level_function_from_extension, 'device_api_->instance_api_', api)
             pfnfun_decl(dst, :device_level_function, 'device_api_', api)
@@ -361,6 +363,34 @@ class VulkanFunctionsGenerator < HeaderParser
         end
 
         extenum_def(dst, 'instance_extension', :instance_level_extension)
+        extenum_def(dst, 'device_extension', :device_level_extension)
+
+        # list dependencies from device to instance extensions
+        dst.puts!("instance_extension_set instance_extensions_require(const device_extension_set& in) {")
+        dst.indent!
+            exts = @functions[:device_level_extension]
+            dst.puts!("instance_extension_set required{ PPE::Meta::ForceInit };")
+            exts.reverse_each do |ext| # assume that extensions are sorted by dependency
+                requires = ext.expansion
+                next if requires.nil?
+                requires = requires.dup
+                requires.delete_if do |dep| # remove device extensions
+                    exts.find {|x| x.name == dep }
+                end
+                next if requires.empty?
+                ifdef(dst, ext.name) do
+                    dst.puts!("if (in & #{extflag(ext.name)}) {")
+                    dst.indent! do
+                        requires.each do |dep|
+                            dst.puts!("required += #{extflag(dep)};")
+                        end
+                    end
+                    dst.puts!("}")
+                end
+            end
+            dst.puts!('return instance_extensions_require(required);')
+        dst.unindent!
+        dst.puts!("}")
 
         dst.puts!("const instance_api instance_api::g_dummy{")
             dst.scope!(self) do
@@ -397,8 +427,6 @@ class VulkanFunctionsGenerator < HeaderParser
             flush_ifdef!(dst)
             dst.puts!("return nullptr; // no error")
         end
-
-        extenum_def(dst, 'device_extension', :device_level_extension)
 
         dst.puts!("const device_api device_api::g_dummy{")
             dst.scope!(self) do
@@ -672,29 +700,29 @@ extern "C" \{
     def extenum_decl(dst, name, type)
         exts = @functions[type]
         enum_decl(dst, name+' : uint32_t') do
-            dst.puts!("unknown = 0,")
+            dst.puts!("#{name}_unknown = 0,")
             exts.each_with_index do |ext, i|
                 ifdef(dst, ext.name) do
                     dst.puts!('/// Requires '+ext.expansion.collect{|x| exthref(x) }.join(', ')) unless ext.expansion.nil?
                     dst.puts!("#{extflag(ext.name)},")
                 end
             end
-            dst.puts!("_count,")
+            dst.puts!("#{name}_count,")
         end
-        dst.puts!("using #{name}_set = PPE::TFixedSizeBitMask<static_cast<uint32_t>(#{name}::_count)>;")
+        dst.puts!("using #{name}_set = PPE::TFixedSizeBitMask<static_cast<uint32_t>(#{name}_count)>;")
         dst.puts!("const char* #{name}_name(#{name} ext);")
         dst.puts!("#{name}_set #{name}s_available();")
         dst.puts!("#{name}_set #{name}s_require(const #{name}_set& in);")
         dst.puts!("CONSTEXPR bool operator & (const #{name}_set& bits, #{name} ext) { return bits.Get(static_cast<size_t>(ext)); }")
-        dst.puts!("CONSTEXPR #{name}_set& operator +=(#{name}_set& bits, #{name} ext) { return bits.SetTrue(static_cast<size_t>(ext)); }")
-        dst.puts!("CONSTEXPR #{name}_set& operator -=(#{name}_set& bits, #{name} ext) { return bits.SetFalse(static_cast<size_t>(ext)); }")
+        dst.puts!("CONSTEXPR #{name}_set& operator +=(#{name}_set& bits, #{name} ext) { bits.SetTrue(static_cast<size_t>(ext)); return bits; }")
+        dst.puts!("CONSTEXPR #{name}_set& operator -=(#{name}_set& bits, #{name} ext) { bits.SetFalse(static_cast<size_t>(ext)); return bits; }")
     end
     def extenum_def(dst, name, type)
         exts = @functions[type]
 
         dst.puts!("const char* #{name}_name(#{name} ext) {")
         dst.indent!
-            dst.puts!('switch(flags) {')
+            dst.puts!('switch(ext) {')
             exts.each do |ext|
                 ifdef(dst, ext.name) do
                     dst.puts!("case #{extflag(ext.name)}: return #{ext.name};")
@@ -724,6 +752,11 @@ extern "C" \{
             exts.reverse_each do |ext| # assume that extensions are sorted by dependency
                 requires = ext.expansion
                 next if requires.nil?
+                requires = requires.dup
+                requires.delete_if do |dep| # remove instance extensions
+                    not exts.find {|x| x.name == dep }
+                end
+                next if requires.empty?
                 ifdef(dst, ext.name) do
                     dst.puts!("if (in & #{extflag(ext.name)}) {")
                     dst.indent! do

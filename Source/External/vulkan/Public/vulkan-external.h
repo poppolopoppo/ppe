@@ -28,6 +28,4 @@ PRAGMA_MSVC_WARNING_PUSH()
 #   include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_wayland.h"
 #endif
 
-#elif
-
 PRAGMA_MSVC_WARNING_POP()
