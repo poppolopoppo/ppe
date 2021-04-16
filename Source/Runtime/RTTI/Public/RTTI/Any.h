@@ -85,8 +85,8 @@ public:
         return FlatData<T>();
     }
 
-    bool PromoteCopy(const FAtom& dst) const { return InnerAtom().PromoteCopy(dst); }
-    bool PromoteMove(const FAtom& dst) const { return InnerAtom().PromoteMove(dst); }
+    NODISCARD bool PromoteCopy(const FAtom& dst) const { return InnerAtom().PromoteCopy(dst); }
+    NODISCARD bool PromoteMove(const FAtom& dst) const { return InnerAtom().PromoteMove(dst); }
 
     template <typename T>
     T& FlatData() const { return InnerAtom().FlatData<T>(); }

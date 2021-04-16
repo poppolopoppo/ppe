@@ -62,11 +62,11 @@ public:
     PPE_RTTI_API void Copy(const FAtom& dst) const;
     PPE_RTTI_API void Move(const FAtom& dst);
 
-    PPE_RTTI_API bool DeepEquals(const FAtom& other) const;
-    PPE_RTTI_API bool DeepCopy(const FAtom& dst) const;
+    PPE_RTTI_API NODISCARD bool DeepEquals(const FAtom& other) const;
+    PPE_RTTI_API NODISCARD bool DeepCopy(const FAtom& dst) const;
 
-    bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(_data, dst); }
-    bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
+    NODISCARD bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(_data, dst); }
+    NODISCARD bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
 
     template <typename T>
     T& FlatData() const {
