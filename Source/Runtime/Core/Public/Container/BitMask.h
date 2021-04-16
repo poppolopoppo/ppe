@@ -23,6 +23,8 @@ struct TBitMask {
 
     CONSTEXPR operator word_t () const NOEXCEPT { return Data; }
 
+    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
+
     template <u32 _Index>
     CONSTEXPR bool Get() const NOEXCEPT {
         STATIC_ASSERT(_Index < BitCount);
@@ -39,8 +41,6 @@ struct TBitMask {
     CONSTEXPR void SetTrue(u32 index) { Assert(index < BitCount); Data |= One << index; }
     CONSTEXPR void SetFalse(u32 index) { Assert(index < BitCount); Data &= ~(One << index); }
 
-    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
-
     CONSTEXPR bool AllTrue() const NOEXCEPT { return ((Data & AllMask) == AllMask); }
     CONSTEXPR bool AllFalse() const NOEXCEPT { return ((Data & AllMask) == 0); }
 
@@ -53,9 +53,18 @@ struct TBitMask {
 
     CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data }; }
 
+    CONSTEXPR bool Contains(TBitMask other) const NOEXCEPT { return (Data & other.Data) == other.Data; }
+    CONSTEXPR bool Intersects(TBitMask other) const NOEXCEPT { return !!(Data & other.Data); }
+
+    CONSTEXPR TBitMask& operator &=(TBitMask other) NOEXCEPT { Data &= other.Data; return (*this); }
+    CONSTEXPR TBitMask& operator |=(TBitMask other) NOEXCEPT { Data |= other.Data; return (*this); }
+    CONSTEXPR TBitMask& operator ^=(TBitMask other) NOEXCEPT { Data ^= other.Data; return (*this); }
+    CONSTEXPR TBitMask& operator -=(TBitMask other) NOEXCEPT { Data &= ~other.Data; return (*this); }
+
     CONSTEXPR TBitMask operator &(TBitMask other) const NOEXCEPT { return TBitMask{ Data & other.Data }; }
     CONSTEXPR TBitMask operator |(TBitMask other) const NOEXCEPT { return TBitMask{ Data | other.Data }; }
     CONSTEXPR TBitMask operator ^(TBitMask other) const NOEXCEPT { return TBitMask{ Data ^ other.Data }; }
+    CONSTEXPR TBitMask operator -(TBitMask other) const NOEXCEPT { return TBitMask{ Data & ~other.Data }; }
 
     CONSTEXPR TBitMask operator <<(word_t lshift) const NOEXCEPT { return TBitMask{ Data << lshift }; }
     CONSTEXPR TBitMask operator >>(word_t rshift) const NOEXCEPT { return TBitMask{ Data >> rshift }; }
@@ -169,7 +178,7 @@ struct TBitMask<u128> {
 
     CONSTEXPR operator word_t () const NOEXCEPT { return Data; }
 
-    u32 Count() const NOEXCEPT { return checked_cast<u32>(FPlatformMaths::popcnt(Data)); }
+    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
 
     template <u32 _Index>
     CONSTEXPR bool Get() const NOEXCEPT {
@@ -192,8 +201,6 @@ struct TBitMask<u128> {
     CONSTEXPR void SetTrue(u32 index) { Assert(index < BitCount); (index < 64 ? Data.lo : Data.hi) |= (u64(1) << (index & 63)); }
     CONSTEXPR void SetFalse(u32 index) { Assert(index < BitCount); (index < 64 ? Data.lo : Data.hi) &= ~(u64(1) << (index & 63)); }
 
-    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
-
     CONSTEXPR bool AllTrue() const NOEXCEPT { return (Data == AllMask); }
     CONSTEXPR bool AllFalse() const NOEXCEPT { return (Data == Zero); }
 
@@ -205,6 +212,8 @@ struct TBitMask<u128> {
     CONSTEXPR void ResetAll(bool value) NOEXCEPT { Data = (value ? AllMask : Zero); }
 
     CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ { ~Data.lo, ~Data.hi } }; }
+
+    u32 Count() const NOEXCEPT { return checked_cast<u32>(FPlatformMaths::popcnt(Data)); }
 
     u64 CountTrailingZeros() const NOEXCEPT {
         return FPlatformMaths::ctz(Data);
@@ -256,6 +265,8 @@ struct TFixedSizeBitMask {
             SetTrue(*first);
     }
 
+    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
+
     CONSTEXPR bool Get(u32 index) const {
         Assert_NoAssume(index < N);
         return Words[index / BitsPerWord].Get(index % BitsPerWord);
@@ -272,8 +283,6 @@ struct TFixedSizeBitMask {
         Assert_NoAssume(index < N);
         Words[index / BitsPerWord].SetFalse(index % BitsPerWord);
     }
-
-    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
 
     CONSTEXPR bool AllTrue() const NOEXCEPT {
         forrange(i, 0, NumWords - 1)
@@ -325,6 +334,19 @@ struct TFixedSizeBitMask {
         return result;
     }
 
+    CONSTEXPR bool Contains(const TFixedSizeBitMask& other) const {
+        forrange(i, 0, NumWords)
+            if (not Words[i].Contains(other.Words[i]))
+                return false;
+        return true;
+    }
+    CONSTEXPR bool Intersects(const TFixedSizeBitMask& other) const {
+        forrange(i, 0, NumWords)
+            if (Words[i].Intersects(other.Words[i]))
+                return true;
+        return false;
+    }
+
     CONSTEXPR bool operator ==(const TFixedSizeBitMask& other) const {
         forrange(i, 0, NumWords)
             if (Words[i].Data != other.Words[i].Data)
@@ -335,23 +357,42 @@ struct TFixedSizeBitMask {
         return not operator ==(other);
     }
 
-    CONSTEXPR TFixedSizeBitMask operator &(TFixedSizeBitMask other) const NOEXCEPT {
-        TFixedSizeBitMask result;
+    CONSTEXPR TFixedSizeBitMask& operator &=(const TFixedSizeBitMask& other) NOEXCEPT {
         forrange(i, 0, NumWords)
-            result.Words[i] = Words[i] & other.Words[i];
-        return result;
+            Words[i] &= other.Words[i];
+        return (*this);
     }
-    CONSTEXPR TFixedSizeBitMask operator |(TFixedSizeBitMask other) const NOEXCEPT {
-        TFixedSizeBitMask result;
+    CONSTEXPR TFixedSizeBitMask& operator |=(const TFixedSizeBitMask& other) NOEXCEPT {
         forrange(i, 0, NumWords)
-            result.Words[i] = Words[i] | other.Words[i];
-        return result;
+            Words[i] |= other.Words[i];
+        return (*this);
     }
-    CONSTEXPR TFixedSizeBitMask operator ^(TFixedSizeBitMask other) const NOEXCEPT {
-        TFixedSizeBitMask result;
+    CONSTEXPR TFixedSizeBitMask& operator ^=(const TFixedSizeBitMask& other) NOEXCEPT {
         forrange(i, 0, NumWords)
-            result.Words[i] = Words[i] ^ other.Words[i];
-        return result;
+            Words[i] ^= other.Words[i];
+        return (*this);
+    }
+    CONSTEXPR TFixedSizeBitMask& operator -=(const TFixedSizeBitMask& other) NOEXCEPT {
+        forrange(i, 0, NumWords)
+            Words[i] -= other.Words[i];
+        return (*this);
+    }
+
+    CONSTEXPR TFixedSizeBitMask operator &(const TFixedSizeBitMask& other) const NOEXCEPT {
+        TFixedSizeBitMask result{ *this };
+        return (result &= other);
+    }
+    CONSTEXPR TFixedSizeBitMask operator |(const TFixedSizeBitMask& other) const NOEXCEPT {
+        TFixedSizeBitMask result{ *this };
+        return (result |= other);
+    }
+    CONSTEXPR TFixedSizeBitMask operator ^(const TFixedSizeBitMask& other) const NOEXCEPT {
+        TFixedSizeBitMask result{ *this };
+        return (result ^= other);
+    }
+    CONSTEXPR TFixedSizeBitMask operator -(const TFixedSizeBitMask& other) const NOEXCEPT {
+        TFixedSizeBitMask result{ *this };
+        return (result -= other);
     }
 
     u32 Count() const NOEXCEPT {
