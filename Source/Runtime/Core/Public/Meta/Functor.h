@@ -2,8 +2,6 @@
 
 #include "Meta/TypeTraits.h"
 
-#include <tuple>
-
 namespace PPE {
 namespace Meta {
 //----------------------------------------------------------------------------
@@ -14,28 +12,91 @@ template <typename T>
 struct TFunctorTraits_;
 template <typename _Ret, typename... _Args>
 struct TFunctorTraits_<_Ret(_Args...)> {
+    using func_type = _Ret(_Args...);
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
+    template <typename... _Unused>
+    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) {
+        return f(std::forward<_Args>(args)...);
+    }
+};
+template <typename _Ret, typename... _Args>
+struct TFunctorTraits_<_Ret(_Args...) noexcept> {
+    using func_type = _Ret(_Args...);
+    using return_type = _Ret;
+    static constexpr size_t arity = sizeof...(_Args);
+    template <typename... _Unused>
+    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) noexcept {
+        return f(std::forward<_Args>(args)...);
+    }
 };
 template <typename _Ret, typename... _Args>
 struct TFunctorTraits_<_Ret(*)(_Args...)> {
+    using func_type = _Ret(*)(_Args...);
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
+    template <typename... _Unused>
+    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) {
+        return f(std::forward<_Args>(args)...);
+    }
+};
+template <typename _Ret, typename... _Args>
+struct TFunctorTraits_<_Ret(*)(_Args...) noexcept> {
+    using func_type = _Ret(*)(_Args...);
+    using return_type = _Ret;
+    static constexpr size_t arity = sizeof...(_Args);
+    template <typename... _Unused>
+    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) noexcept {
+        return f(std::forward<_Args>(args)...);
+    }
 };
 template <typename _Ret, typename _Class, typename... _Args>
 struct TFunctorTraits_<_Ret(_Class::*)(_Args...)> {
+    using func_type = _Ret(_Class::*)(_Args...);
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
+    template <typename... _Unused>
+    static constexpr return_type varcall(func_type f, _Class* obj, _Args... args, _Unused...) {
+        return (obj->*f)(std::forward<_Args>(args)...);
+    }
 };
 template <typename _Ret, typename _Class, typename... _Args>
 struct TFunctorTraits_<_Ret(_Class::*)(_Args...) const> {
+    using func_type = _Ret(_Class::*)(_Args...) const;
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
+    template <typename... _Unused>
+    static constexpr return_type varcall(func_type f, const _Class* obj, _Args... args, _Unused...) {
+        return (obj->*f)(std::forward<_Args>(args)...);
+    }
+};
+template <typename _Ret, typename _Class, typename... _Args>
+struct TFunctorTraits_<_Ret(_Class::*)(_Args...) const noexcept> {
+    using func_type = _Ret(_Class::*)(_Args...) const noexcept;
+    using return_type = _Ret;
+    static constexpr size_t arity = sizeof...(_Args);
+    template <typename... _Unused>
+    static constexpr return_type varcall(func_type f, const _Class* obj, _Args... args, _Unused...) noexcept {
+        return (obj->*f)(std::forward<_Args>(args)...);
+    }
 };
 template <typename T>
 struct TFunctorTraits_ : TFunctorTraits_<decltype(&T::operator())> {
-    using typename TFunctorTraits_<decltype(&T::operator())>::return_type;
-    using TFunctorTraits_<decltype(&T::operator())>::arity;
+    using parent_type = TFunctorTraits_<decltype(&T::operator())>;
+    using typename parent_type::return_type;
+    using parent_type::arity;
+    template <typename... _Args>
+    static constexpr return_type varcall(T& obj, _Args... args) {
+        return parent_type::template varcall(&T::operator(), &obj, std::forward<_Args>(args)...);
+    }
+    template <typename... _Args>
+    static constexpr return_type varcall(T&& obj, _Args... args) {
+        return parent_type::template varcall(&T::operator(), &obj, std::forward<_Args>(args)...);
+    }
+    template <typename... _Args>
+    static constexpr return_type varcall(const T& obj, _Args... args) {
+        return parent_type::template varcall(&T::operator(), &obj, std::forward<_Args>(args)...);
+    }
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -47,20 +108,9 @@ constexpr size_t FunctorArity() {
     return details::TFunctorTraits_<T>::arity;
 }
 //----------------------------------------------------------------------------
-namespace details {
-template <typename _Functor, size_t... _Idx, typename... _Args>
-constexpr auto VariadicCall_(_Functor func, std::index_sequence<_Idx...>, std::tuple<_Args...>&& args) {
-    return func(std::get<_Idx>(args)...);
-}
-} //!details
-//----------------------------------------------------------------------------
 template <typename _Functor, typename... _Args>
 constexpr auto VariadicFunctor(_Functor func, _Args&&... args) {
-    constexpr size_t arity = FunctorArity<_Functor>();
-    return details::VariadicCall_(
-        std::forward<_Functor>(func),
-        std::make_index_sequence<arity>(),
-        std::make_tuple(std::forward<_Args>(args)...) );
+    return details::TFunctorTraits_<_Functor>::template varcall(std::forward<_Functor>(func), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
