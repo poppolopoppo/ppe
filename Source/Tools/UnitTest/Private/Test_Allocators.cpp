@@ -30,6 +30,7 @@
 #include "Memory/CachedMemoryPool.h"
 #include "Memory/MemoryPool.h"
 #include "Modular/ModularDomain.h"
+#include "Thread/AtomicPool.h"
 #include "Thread/CriticalSection.h"
 
 #define USE_TESTALLOCATOR_MEMSET 0
@@ -398,11 +399,15 @@ struct FDummyForPool_ {
     }
 
     ~FDummyForPool_() {
-        AssertRelease(0 == RefCount_);
+        AssertRelease(CheckInvariants());
+    }
+
+    bool CheckInvariants() const NOEXCEPT {
+        return (0 == RefCount_);
     }
 
     bool AddRef() const { return RefCount_.fetch_add(1, std::memory_order_relaxed) == 0; }
-    NODISCARD bool RemoveRef() const { return RefCount_.fetch_sub(1, std::memory_order_relaxed) == 1; }
+    bool RemoveRef() const { return RefCount_.fetch_sub(1, std::memory_order_relaxed) == 1; }
 
     bool operator ==(const FDummyForPool_& rhs) const {
         return (Data0 == rhs.Data0 && Data1 == rhs.Data1);
@@ -415,6 +420,56 @@ struct FDummyForPool_ {
         return hash_tuple(dummy.Data0, dummy.Data1);
     }
 };
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_AtomicPool_() {
+    LOG(Test_Allocators, Emphasis, L"testing TAtomicPool<>");
+
+    using pool_type = TAtomicPool<FDummyForPool_, 8>;
+    using index_type = pool_type::index_type;
+
+    STATIC_CONST_INTEGRAL(size_t, ToDeallocate, (pool_type::Capacity * 2) / 3);
+    FRandomGenerator rng;
+    TStaticArray<FDummyForPool_*, pool_type::Capacity> allocs;
+
+    pool_type pool;
+    forrange(loop, 0, 10) {
+        ParallelFor(0, pool_type::Capacity,
+            [&allocs, &pool](size_t i) {
+                allocs[i] = pool.Allocate();
+                AssertRelease(allocs[i]->CheckInvariants());
+                allocs[i]->AddRef();
+            });
+
+        rng.Shuffle(allocs.MakeView());
+
+        ParallelFor(0, ToDeallocate,
+            [&allocs, &pool](size_t i) {
+                allocs[i]->RemoveRef();
+                AssertRelease(allocs[i]->CheckInvariants());
+                pool.Release(allocs[i]);
+            });
+
+        pool.Clear_ReleaseMemory();
+
+        ParallelFor(0, ToDeallocate,
+            [&allocs, &pool](size_t i) {
+                allocs[i] = pool.Allocate();
+                AssertRelease(allocs[i]->CheckInvariants());
+                allocs[i]->AddRef();
+            });
+
+        rng.Shuffle(allocs.MakeView());
+
+        ParallelFor(0, pool_type::Capacity,
+            [&allocs, &pool](size_t i) {
+                allocs[i]->RemoveRef();
+                AssertRelease(allocs[i]->CheckInvariants());
+                pool.Release(allocs[i]);
+            });
+
+        pool.Clear_ReleaseMemory();
+    }
+}
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_MemoryPool_() {
     LOG(Test_Allocators, Emphasis, L"testing TMemoryPool<>");
@@ -555,6 +610,7 @@ void Test_Allocators() {
 
     LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
 
+    Test_AtomicPool_();
     Test_MemoryPool_();
     Test_CachedMemoryPool_();
 

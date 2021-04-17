@@ -449,6 +449,23 @@ Meta::TEnableIf<not std::is_const_v<T>> Destroy(T* p) NOEXCEPT {
 #endif
 }
 //----------------------------------------------------------------------------
+template <typename T>
+struct TDefaultConstructor {
+    void operator ()(T* p) const NOEXCEPT {
+        Meta::Construct(p, ForceInit);
+    }
+};
+template <typename T>
+constexpr TDefaultConstructor<T> DefaultConstructor;
+template <typename T>
+struct TDestructor {
+    void operator ()(T* p) const NOEXCEPT {
+        Meta::Destroy(p);
+    }
+};
+template <typename T>
+constexpr TDestructor<T> Destructor;
+//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 T default_value_(std::bool_constant<false>, int) { return T{}; }

@@ -18,7 +18,9 @@ public:
     using value_type = T;
     using mask_type = TBitMask<T>;
     STATIC_CONST_INTEGRAL(size_t, Capacity, mask_type::BitCount);
+    STATIC_CONST_INTEGRAL(value_type, AllMask, mask_type::AllMask);
 
+    TAtomicBitMask() = default;
     explicit TAtomicBitMask(T init = UMax) NOEXCEPT
         : _data(init)
     {}
@@ -39,9 +41,17 @@ public:
 
     bool Set(T index) NOEXCEPT {
         Assert(index < Capacity);
-        const T mask{ 1u << index };
+        const T mask{ T(1u) << index };
         return not (_data.fetch_or(mask, std::memory_order_relaxed) & mask);
     }
+    bool Unset(T index) NOEXCEPT {
+        Assert(index < Capacity);
+        const T mask{ T(1u) << index };
+        return !!(_data.fetch_and(~mask, std::memory_order_relaxed) & mask);
+    }
+
+    void SetAllTrue(std::memory_order order = std::memory_order_relaxed) NOEXCEPT { _data.store(AllMask, order); }
+    void SetAllFalse(std::memory_order order = std::memory_order_relaxed) NOEXCEPT { _data.store(0, order); }
 
     bool Assign(T* pindex) NOEXCEPT {
         Assert(pindex);

@@ -104,6 +104,8 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
                     Verify(pool.NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) < _ChunkSize);
                     ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(pblocks + id, sizeof(block_type)));
 
+                    ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).AllocateUser(sizeof(block_type)) );
+
                     return (chk * ChunkSize + id); // return global index in the pool (vs local chunk)
                 }
             }
@@ -138,6 +140,9 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
                                                     memorder_release_,
                                                     std::memory_order_relaxed)) {
                 releaseChunk = (pool.NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) == 1);
+
+                ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).DeallocateUser(sizeof(block_type)) );
+
                 break;
             }
         }
@@ -285,6 +290,8 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
             const index_type nextId = reinterpret_cast<const index_type&>(pblocks[freeBlock]);
             pool.FreeList.store(nextId, std::memory_order_relaxed);
 
+            ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).AllocateUser(sizeof(block_type)) );
+
             Verify(pool.NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) < ChunkSize);
             return static_cast<index_type>(chk * ChunkSize + freeBlock); // return global index in the pool (vs local chunk)
         }
@@ -296,6 +303,9 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     // nothing available, need to allocate a new chunk
     auto& allocator = static_cast<_Allocator&>(*this);
     block_type* const newChunk = allocator_traits::template AllocateT<block_type>(allocator, _ChunkSize).data();
+
+    ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).AllocateSystem(_ChunkSize * sizeof(block_type)) );
+    ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).AllocateUser(sizeof(block_type)) );
 
     // initialize free list indices
     forrange(blk, 0, ChunkSize)
@@ -361,6 +371,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     AssertRelease(ChunkSize == numFreeBlocks);
 #endif
 
+    ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).DeallocateSystem(_ChunkSize * sizeof(block_type)) );
+
     // reset free list in the pool
     pool.FreeList.store(ChunkSize, std::memory_order_relaxed);
 
@@ -387,6 +399,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     auto& allocator = static_cast<_Allocator&>(*this);
     for (block_type*& pblocks : state._blocks) {
         if (pblocks) {
+            ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).DeallocateSystem(_ChunkSize * sizeof(block_type)) );
+
             allocator_traits::DeallocateT(allocator, pblocks, _ChunkSize);
             pblocks = nullptr;
         }

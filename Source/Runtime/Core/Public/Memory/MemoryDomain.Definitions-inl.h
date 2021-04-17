@@ -146,6 +146,11 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Remoting,                 Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Survey,                   Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Window,                   Application)
 //------------------------------------------------------------------------------
+// Pooled memory
+//------------------------------------------------------------------------------
+MEMORYDOMAIN_COLLAPSABLE_IMPL(AtomicPool,               PooledMemory)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(MemoryPool,               PooledMemory)
+//------------------------------------------------------------------------------
 // External memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(External,                       UsedMemory)
