@@ -28,11 +28,7 @@ public:
     struct CACHELINE_ALIGNED FHandle {
         mutable FFiber Fiber;
         mutable FCallback OnWakeUp;
-        u32 Index;
-
-        FTaskFiberChunk* Chunk() const {
-            return (FTaskFiberChunk*)(this - Index);
-        }
+        FTaskFiberChunk* Chunk{ nullptr };
 
         void AttachWakeUpCallback(FCallback&& onWakeUp) const;
         void YieldFiber(FHandleRef to, bool release) const;
@@ -56,7 +52,7 @@ public:
 
     static size_t ReservedStackSize();
     static FHandleRef CurrentHandleRef() {
-        auto* h = (FHandleRef)FFiber::CurrentFiberData(); // @FHandle is passed down as each fiber data
+        auto* h = static_cast<FHandleRef>(FFiber::CurrentFiberData()); // @FHandle is passed down as each fiber data
         Assert(h);
         return h;
     }
@@ -86,7 +82,7 @@ public:
 
 private:
     FTaskFiberPool& _pool;
-    TFixedSizeStack<FHandleRef, 3> _freed;
+    TFixedSizeStack<FHandleRef, 2> _freed;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

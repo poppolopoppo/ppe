@@ -4,12 +4,12 @@
 
 #include "Allocator/Alloca.h" // for debug only
 #include "Allocator/TrackingMalloc.h"
-#include "Container/BitMask.h"
 #include "Container/IntrusiveList.h"
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
 #include "Meta/Utility.h"
 #include "Misc/Function_fwd.h"
+#include "Thread/AtomicPool.h"
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
@@ -20,6 +20,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class FTaskFiberPool;
 class FTaskFiberChunk : Meta::FNonCopyableNorMovable {
+    using atomic_pool_t = TAtomicPool<FTaskFiberPool::FHandle>;
 public:
 #if USE_PPE_ASSERT
     // debug programs often use far more stack without the optimizer :
@@ -27,21 +28,18 @@ public:
 #else
     STATIC_CONST_INTEGRAL(u32, StackSize, 2 * ALLOCATION_GRANULARITY); // 128 kb
 #endif
-    STATIC_CONST_INTEGRAL(u32, Capacity, 64); // <=> 64 * 128 kb = 8 mb (16 for debug),
-    STATIC_CONST_INTEGRAL(u64, BusyMask, UINT64_MAX); // all bits set <=> all fibers available
+    STATIC_CONST_INTEGRAL(u32, Capacity, atomic_pool_t::Capacity); // <=> 64 * 128 kb = 8 mb (16 for debug),
 
     using FCallback = FTaskFiberPool::FCallback;
     using FHandle = FTaskFiberPool::FHandle;
     using FHandleRef = FTaskFiberPool::FHandleRef;
 
-    using bit_mask = TBitMask<u64>;
-
     FTaskFiberChunk() NOEXCEPT;
     ~FTaskFiberChunk();
 
-    bool Idle() const { return (_free == BusyMask); }
-    bool Saturated() const { return (_free == 0); }
-    size_t NumAvailable() const { return bit_mask{ _free }.Count(); }
+    bool Idle() const { return (_free.NumFreeBlocks() == Capacity); }
+    bool Saturated() const { return (_free.NumFreeBlocks() == 0); }
+    size_t NumAvailable() const { return _free.NumCreatedAndFreeBlocks(); }
 
     const TIntrusiveListNode<FTaskFiberChunk>& Node() const { return _node; }
 
@@ -50,15 +48,14 @@ public:
 
     FHandleRef AcquireFiber();
     void ReleaseFiber(FHandleRef handle);
+    void ReleaseMemory();
 
     static bool ReleaseChunk(FTaskFiberChunk** head, FTaskFiberChunk* chunk);
 
 private:
     friend class FTaskFiberPool;
 
-    FHandle _handles[Capacity];
-
-    std::atomic<u64> _free; // one busy flag for each of 64 fibers
+    atomic_pool_t _free;
     FCallback _callback;
     FTaskFiberPool* _pool;
     TIntrusiveListNode<FTaskFiberChunk> _node;
@@ -88,7 +85,7 @@ static void ReleaseTaskFiberChunk_(FTaskFiberChunk* chunk) {
 //----------------------------------------------------------------------------
 void FTaskFiberPool::FHandle::AttachWakeUpCallback(FCallback&& onWakeUp) const {
     Assert(onWakeUp);
-    Assert_NoAssume(Chunk()->_pool);
+    Assert_NoAssume(Chunk->_pool);
     Assert_NoAssume(not OnWakeUp);
 
     OnWakeUp = std::move(onWakeUp);
@@ -97,45 +94,30 @@ void FTaskFiberPool::FHandle::AttachWakeUpCallback(FCallback&& onWakeUp) const {
 void FTaskFiberPool::FHandle::YieldFiber(FHandleRef to, bool release) const {
     Assert(to != this);
 
-    FTaskFiberChunk* const chunk = Chunk();
-    Assert_NoAssume(chunk->_pool);
-
-    chunk->_pool->YieldCurrentFiber(this, to, release);
+    Assert_NoAssume(Chunk->_pool);
+    Chunk->_pool->YieldCurrentFiber(this, to, release);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTaskFiberChunk::FTaskFiberChunk() NOEXCEPT
-:   _free{ BusyMask }
-,   _pool{ nullptr }
-,   _node{ nullptr, nullptr } {
-
-    forrange(i, 0, Capacity) {
-        FHandle& h = _handles[i];
-        h.Index = i;
-        h.Fiber.Create(&FiberEntryPoint_, &h, StackSize);
-    }
-}
+:   _pool{ nullptr }
+,   _node{ nullptr, nullptr }
+{}
 //----------------------------------------------------------------------------
 FTaskFiberChunk::~FTaskFiberChunk() {
     Assert_NoAssume(nullptr == _pool);
-    Assert_NoAssume(BusyMask == _free);
+    Assert_NoAssume(Idle());
 
-    forrange(i, 0, Capacity) {
-        FHandle& h = _handles[i];
-        Assert_NoAssume(i == h.Index);
-        Assert_NoAssume(not h.OnWakeUp);
-        h.Fiber.Destroy(StackSize);
-    }
+    ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 bool FTaskFiberChunk::AliasesToChunk(FHandleRef handle) const {
-    return (uintptr_t(handle) >= uintptr_t(this) &&
-            uintptr_t(handle) <= uintptr_t(&_handles[Capacity - 1]) );
+    return _free.Aliases(handle);
 }
 //----------------------------------------------------------------------------
 void FTaskFiberChunk::TakeOwnerShip(FTaskFiberPool* pool) {
-    Assert_NoAssume(BusyMask == _free);
+    Assert_NoAssume(Idle());
 
     // #TODO can't share the chunks across all pools because of _callback :
     // those fibers would trigger the callback actually once, and then loop forever inside of it for processing incoming work
@@ -154,52 +136,27 @@ void FTaskFiberChunk::TakeOwnerShip(FTaskFiberPool* pool) {
 }
 //----------------------------------------------------------------------------
 auto FTaskFiberChunk::AcquireFiber() -> FHandleRef {
-    for (;;) {
-        u64 expected = _free.load(std::memory_order_relaxed);
-
-        if (Likely(expected)) {
-            TBitMask<u64> m{ expected };
-
-            ONLY_IF_ASSERT(const size_t n0 = m.Count());
-            u64 w = m.PopFront_AssumeNotEmpty();
-            Assert_NoAssume(m.Count() + 1 == n0);
-
-            if (Likely(_free.compare_exchange_weak(expected, m.Data,
-                std::memory_order_release, std::memory_order_relaxed))) {
-                Assert(w < Capacity);
-                return (&_handles[w]);
-            }
-        }
-        else {
-            return nullptr; // this chunk is empty, break the loop and return nullptr
-        }
-    }
+    return _free.Allocate([this](FHandle* h) {
+        Meta::Construct(h);
+        h->Chunk = this;
+        h->Fiber.Create(&FiberEntryPoint_, h, StackSize);
+    });
 }
 //----------------------------------------------------------------------------
 void FTaskFiberChunk::ReleaseFiber(FHandleRef handle) {
     Assert(handle);
     Assert_NoAssume(AliasesToChunk(handle));
-    Assert_NoAssume(handle->Chunk() == this);
+    Assert_NoAssume(handle->Chunk == this);
     Assert_NoAssume(not handle->OnWakeUp);
 
-    for (;;) {
-        u64 expected = _free.load(std::memory_order_relaxed);
-
-        TBitMask<u64> m{ expected };
-
-        Assert_NoAssume(m.Data != FTaskFiberChunk::BusyMask); // at least one free fiber
-        Assert_NoAssume(handle->Index < Capacity);
-        Assert_NoAssume(not m.Get(handle->Index)); // check if it was correctly flagged as busy
-
-        ONLY_IF_ASSERT(const size_t n0 = m.Count());
-        m.SetTrue(handle->Index); // set fiber as available
-        Assert_NoAssume(m.Count() == n0 + 1);
-
-        if (Likely(_free.compare_exchange_weak(expected, m.Data,
-            std::memory_order_release, std::memory_order_relaxed))) {
-            return; // all done, this handle was released atomically
-        }
-    }
+    _free.Release(handle);
+}
+//----------------------------------------------------------------------------
+void FTaskFiberChunk::ReleaseMemory() {
+    _free.Clear_ReleaseMemory([this](FHandle* h) {
+        Assert_NoAssume(h->Chunk == this);
+        h->Fiber.Destroy(StackSize);
+    });
 }
 //----------------------------------------------------------------------------
 bool FTaskFiberChunk::ReleaseChunk(FTaskFiberChunk** head, FTaskFiberChunk* chunk) {
@@ -218,13 +175,13 @@ bool FTaskFiberChunk::ReleaseChunk(FTaskFiberChunk** head, FTaskFiberChunk* chun
 }
 //----------------------------------------------------------------------------
 void STDCALL FTaskFiberChunk::FiberEntryPoint_(void* arg) {
-    auto* h = (FHandleRef)arg;
+    auto* h = static_cast<FHandleRef>(arg);
     Assert_NoAssume(FTaskFiberPool::CurrentHandleRef() == h);
 
     if (h->OnWakeUp)
         h->OnWakeUp.FireAndForget();
 
-    h->Chunk()->_callback();
+    h->Chunk->_callback();
 
     AssertNotReached(); // a pooled fiber should never exit, or it won't be reusable !
 }
@@ -265,7 +222,7 @@ auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
 //----------------------------------------------------------------------------
 bool FTaskFiberPool::OwnsFiber(FHandleRef handle) const NOEXCEPT {
     Assert(handle);
-    return (handle->Chunk()->_pool == this);
+    return (handle->Chunk->_pool == this);
 }
 //----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
@@ -273,7 +230,7 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     Assert_NoAssume(OwnsFiber(handle));
     Assert_NoAssume(not handle->OnWakeUp);
 
-    FTaskFiberChunk* const chunk = handle->Chunk();
+    FTaskFiberChunk* const chunk = handle->Chunk;
 
 #if USE_PPE_MEMORYDOMAINS
     MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateUser(FTaskFiberChunk::StackSize);
@@ -337,6 +294,8 @@ void FTaskFiberPool::ReleaseMemory() {
 
             // release potentially idle chunks
             if (not FTaskFiberChunk::ReleaseChunk(&_chunks, ch)) {
+                // release unused fibers
+                ch->ReleaseMemory();
                 // keep the chunk with most available fibers at head
                 if ((ch != _chunks) & (ch->NumAvailable() >= _chunks->NumAvailable()))
                     // this will help concentrate future allocations on the first chunk
@@ -360,7 +319,7 @@ void FTaskFiberPool::UsageStats(size_t* reserved, size_t* inUse) {
 
         for (FTaskFiberChunk* ch = _chunks; ch; ch = ch->Node().Next) {
             r += FTaskFiberChunk::Capacity;
-            u += FTaskFiberChunk::Capacity - FTaskFiberChunk::bit_mask{ ch->_free.load() }.Count();
+            u += FTaskFiberChunk::Capacity - ch->_free.NumFreeBlocks();
         }
     }
 
