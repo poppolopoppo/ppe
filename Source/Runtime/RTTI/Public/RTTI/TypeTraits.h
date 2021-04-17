@@ -45,11 +45,11 @@ public:
 
     virtual void Swap(void* lhs, void* rhs) const NOEXCEPT = 0;
 
-    virtual NODISCARD bool DeepEquals(const void* lhs, const void* rhs) const = 0;
-    virtual NODISCARD void DeepCopy(const void* src, void* dst) const = 0;
+    NODISCARD virtual bool DeepEquals(const void* lhs, const void* rhs) const = 0;
+    NODISCARD virtual void DeepCopy(const void* src, void* dst) const = 0;
 
-    virtual NODISCARD bool PromoteCopy(const void* src, const FAtom& dst) const = 0;
-    virtual NODISCARD bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT = 0;
+    NODISCARD virtual bool PromoteCopy(const void* src, const FAtom& dst) const = 0;
+    NODISCARD virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT = 0;
 
     virtual void* Cast(void* data, const PTypeTraits& dst) const = 0;
 
@@ -57,7 +57,7 @@ public:
 
     virtual hash_t HashValue(const void* data) const NOEXCEPT = 0;
 
-    virtual NODISCARD bool Accept(IAtomVisitor* visitor, void* data) const = 0;
+    NODISCARD virtual bool Accept(IAtomVisitor* visitor, void* data) const = 0;
 
 public: // non-virtual helpers
     CONSTEXPR explicit ITypeTraits(FTypeInfos type)
