@@ -173,7 +173,7 @@ void ReportTrackingDatas_(
 
     CONSTEXPR size_t width = 175;
     CONSTEXPR wchar_t fmtTitle[] = L" {0:-30}";
-    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:7} {1:9} | {2:10} {3:10} | {4:11} {5:12}   ";
+    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:6} {1:8} | {2:9} {3:9} | {4:10} {5:11}   ";
 
     const auto hr = Fmt::Repeat(L'-', width);
 
@@ -213,7 +213,8 @@ void ReportTrackingDatas_(
         const FMemoryTracking::FSnapshot usr = data->User();
         const FMemoryTracking::FSnapshot sys = data->System();
 
-        if (sys.AccumulatedAllocs == 0)
+        if (usr.AccumulatedAllocs == 0 &&
+            sys.AccumulatedAllocs == 0 )
             continue; // skip domains that never allocated
 
         if (data->Parent() == nullptr)
