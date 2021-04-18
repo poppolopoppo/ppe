@@ -463,10 +463,41 @@ template <
     typename _EmptyKey = Meta::TEmptyKey<_Key>,
     typename _EqualTo = Meta::TEqualTo<_Key>
 >
-using TFixedSizeHashMap = details::TFixedSizeHashTable<
+class TFixedSizeHashMap : public details::TFixedSizeHashTable<
     details::TFixedSizeHashMapTraits<_Key, _Value, _Hash, _EmptyKey, _EqualTo>,
-    _Capacity >;
+    _Capacity > {
+    using parent_type = details::TFixedSizeHashTable<
+        details::TFixedSizeHashMapTraits<_Key, _Value, _Hash, _EmptyKey, _EqualTo>,
+        _Capacity >;
 
+public:
+    using typename parent_type::key_type;
+    using mapped_type = _Value;
+
+    using parent_type::parent_type;
+    using parent_type::operator=;
+
+    mapped_type& operator [](const key_type& key) NOEXCEPT { return Get(key); }
+    const mapped_type& operator [](const key_type& key) const NOEXCEPT { return Get(key); }
+
+    mapped_type& Get(const key_type& key) NOEXCEPT {
+        const auto it = parent_type::find(key);
+        AssertRelease(parent_type::end() != it);
+        return const_cast<mapped_type&>(it->second);
+    }
+    const mapped_type& Get(const key_type& key) const NOEXCEPT {
+        return const_cast<TFixedSizeHashMap&>(this);
+    }
+
+    Meta::TOptionalReference<mapped_type> GetIFP(const key_type& key) NOEXCEPT {
+        const auto it = parent_type::find(key);
+        return (parent_type::end() != it ? Meta::MakeOptionalRef(const_cast<mapped_type&>(it->second)) : Meta::NullRef<mapped_type>);
+    }
+    Meta::TOptionalReference<const mapped_type> GetIFP(const key_type& key) const NOEXCEPT {
+        const auto it = parent_type::find(key);
+        return (parent_type::end() != it ? Meta::MakeOptionalRef(it->second) : Meta::NullRef<const mapped_type>);
+    }
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

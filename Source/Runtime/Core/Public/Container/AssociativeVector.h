@@ -197,7 +197,7 @@ public:
     iterator find(const _Key& key) { return Find(key); }
     const_iterator find(const _Key& key) const { return Find(key); }
 
-    size_t HashValue() const { return hash_value(_vector); }
+    size_t HashValue() const NOEXCEPT { return hash_value(_vector); }
 
     friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) NOEXCEPT {
         swap(lhs._vector, rhs._vector);
@@ -218,7 +218,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-hash_t hash_value(const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
+hash_t hash_value(const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) NOEXCEPT {
     return associativeVector.HashValue();
 }
 //----------------------------------------------------------------------------

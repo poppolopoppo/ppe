@@ -153,6 +153,19 @@ using TReference = TAddReference< TRemoveConst< TDecay<T> > >;
 template <typename T>
 using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
+template <typename T>
+using TOptionalReference = TConditional<std::is_pointer_v<T>, T, TAddPointer<T> >;
+template <typename T>
+CONSTEXPR TOptionalReference<T> NullRef{ nullptr };
+template <typename T>
+CONSTEXPR T* MakeOptionalRef(T& ref) { return std::addressof(ref); }
+template <typename T>
+CONSTEXPR const T* MakeOptionalRef(const T& cref) { return std::addressof(cref); }
+template <typename T>
+CONSTEXPR T* MakeOptionalRef(T* ptr) { return ptr; }
+template <typename T>
+CONSTEXPR const T* MakeOptionalRef(const T* cptr) { return cptr; }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // is_pod_type(T*) can be overloaded for specific types, respects ADL
@@ -457,6 +470,7 @@ struct TDefaultConstructor {
 };
 template <typename T>
 constexpr TDefaultConstructor<T> DefaultConstructor;
+//----------------------------------------------------------------------------
 template <typename T>
 struct TDestructor {
     void operator ()(T* p) const NOEXCEPT {
