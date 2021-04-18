@@ -60,6 +60,10 @@
 - [ ] Wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
 - [ ] Destiny's Multithreaded Rendering Architecture: https://www.youtube.com/watch?v=0nTDFLMLX9k
 - [ ] Destiny's Shader System: http://advances.realtimerendering.com/destiny/gdc_2017/Destiny_shader_system_GDC_2017_v.4.0.pdf
+- [ ] Physics engine:
+    - https://www.youtube.com/watch?v=-_IspRG548E
+    - Physics for game programmer: https://www.youtube.com/watch?v=7_nKOET6zwI
+    - Liquid Crystal Demo: https://kotsoft.itch.io/liquid-crystal-pre-alpha
 
 ## ECS
 
