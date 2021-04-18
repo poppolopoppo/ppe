@@ -12,19 +12,19 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FBufferDesc {
-    size_t SizeInBytes{ 0 };
+    u32 SizeInBytes{ 0 };
     EBufferUsage Usage{ Default };
     EQueueUsage Queues{ Default };
     bool External{ false };
 
     FBufferDesc() = default;
-    FBufferDesc(size_t sizeInBytes, EBufferUsage usage, EQueueUsage queues = Default)
+    FBufferDesc(u32 sizeInBytes, EBufferUsage usage, EQueueUsage queues = Default)
     :   SizeInBytes(sizeInBytes)
     ,   Usage(usage)
     ,   Queues(queues)
     {}
 
-    FBufferDesc& SetSize(size_t sz) { SizeInBytes = sz; return (*this); }
+    FBufferDesc& SetSize(u32 sz) { SizeInBytes = sz; return (*this); }
     FBufferDesc& SetUsage(EBufferUsage usage) { Usage = usage; return (*this); }
     FBufferDesc& SetQueues(EQueueUsage queues) { Queues = queues; return (*this); }
 
@@ -32,11 +32,11 @@ struct FBufferDesc {
 //----------------------------------------------------------------------------
 struct FBufferViewDesc {
     EPixelFormat Format{ Default };
-    size_t Offset{ UMax };
-    size_t SizeInBytes{ UMax };
+    u32 Offset{ UMax };
+    u32 SizeInBytes{ UMax };
 
     FBufferViewDesc() = default;
-    FBufferViewDesc(EPixelFormat format, size_t offset, size_t sizeInBytes)
+    FBufferViewDesc(EPixelFormat format, u32 offset, u32 sizeInBytes)
     :   Format(format)
     ,   Offset(offset)
     ,   SizeInBytes(sizeInBytes)

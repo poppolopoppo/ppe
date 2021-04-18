@@ -4,6 +4,8 @@
 
 #include "RHI/ResourceEnums.h"
 
+#include "Container/Stack.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -18,26 +20,33 @@ enum class EPresentMode : u32 {
     Unknown = ~0u,
 };
 //----------------------------------------------------------------------------
-struct FSwapchainDesc {
-    FWindowHandle Window{ nullptr };
-    EPixelFormat SurfaceFormat{ Default };
+enum class ESurfaceTransform : u32 {
+    Identity = 0,
+    TransformRotate90,
+    TransformRotate180,
+    TransformRotate270,
+    HorizontalMirror,
+    HorizontalMirror_TransformRotate90,
+    HorizontalMirror_TransformRotate180,
+    HorizontalMirror_TransformRotate270,
+};
+//----------------------------------------------------------------------------
+struct FSurfaceFormat {
+    EPixelFormat Format{ Default };
     EColorSpace ColorSpace{ Default };
-    EPresentMode PresentMode{ Default };
-    u32 ImageCount{ 0 };
+};
+//----------------------------------------------------------------------------
+struct FSwapchainDesc {
+    using FRequiredSurfaceFormats = TFixedSizeStack<FSurfaceFormat, 4>;
+    using FRequiredPresentModes = TFixedSizeStack<EPresentMode, 4>;
 
-    FSwapchainDesc() = default;
-    FSwapchainDesc(FWindowHandle handle, u32 count) { SetWindow(handle, count); }
+    FWindowSurface Surface{ nullptr };
+    ESurfaceTransform PreTransform{ ESurfaceTransform::Identity };
+    u32 MinImageCount{ 2 };
 
-    FSwapchainDesc& SetWindow(FWindowHandle handle, u32 count) {
-        Assert(handle);
-        Assert(count > 0);
-        Window = handle;
-        ImageCount = count;
-        return (*this);
-    }
-
-    FSwapchainDesc& SetFormat(EPixelFormat fmt) { SurfaceFormat = fmt; return (*this); }
-    FSwapchainDesc& SetColorSpace(EColorSpace space) { ColorSpace = space; return (*this); }
+    // both from higher to lower priority:
+    FRequiredSurfaceFormats SurfaceFormats;
+    FRequiredPresentModes PresentModes;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

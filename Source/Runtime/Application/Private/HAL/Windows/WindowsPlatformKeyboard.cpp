@@ -321,7 +321,7 @@ static bool KeyboardMessageHandler_(FKeyboardState* keyboard, const FWindowsPlat
 //----------------------------------------------------------------------------
 FEventHandle FWindowsPlatformKeyboard::SetupMessageHandler(FWindowsWindow& window, FKeyboardState* keyboard) {
     Assert(keyboard);
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
 
     return window.OnMessageWin32().Add([keyboard](const FWindowsWindow&, FWindowsMessage* msg) {
         msg->Handled |= KeyboardMessageHandler_(keyboard, *msg);
@@ -329,7 +329,7 @@ FEventHandle FWindowsPlatformKeyboard::SetupMessageHandler(FWindowsWindow& windo
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformKeyboard::RemoveMessageHandler(FWindowsWindow& window, FEventHandle& handle) {
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
     Assert(handle);
 
     window.OnMessageWin32().Remove(handle);

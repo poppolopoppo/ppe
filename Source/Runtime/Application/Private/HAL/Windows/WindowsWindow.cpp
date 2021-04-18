@@ -202,7 +202,7 @@ bool FWindowsWindow::Center() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Maximize() {
-    Assert(Handle());
+    Assert(NativeHandle());
 
     if (::ShowWindow(HandleWin32(), SW_MAXIMIZE)) {
         return parent_type::Maximize();
@@ -214,7 +214,7 @@ bool FWindowsWindow::Maximize() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Minimize() {
-    Assert(Handle());
+    Assert(NativeHandle());
 
     if (::ShowWindow(HandleWin32(), SW_MINIMIZE)) {
         return parent_type::Maximize();
@@ -260,7 +260,7 @@ bool FWindowsWindow::Resize(size_t w, size_t h) {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::SetFocus() {
-    Assert(Handle());
+    Assert(NativeHandle());
 
     if (::SetActiveWindow(HandleWin32())) {
         return parent_type::SetFocus();
@@ -309,7 +309,7 @@ bool FWindowsWindow::SetFullscreen(bool value) {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::SetTitle(FWString&& title) {
-    Assert(Handle());
+    Assert(NativeHandle());
 
     if (::SetWindowTextW(HandleWin32(), title.data())) {
         return parent_type::SetTitle(std::move(title));
@@ -354,7 +354,7 @@ void FWindowsWindow::HiddenWindowDefinition(FWindowDefinition* def) {
 //----------------------------------------------------------------------------
 bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, const FWindowDefinition& def) {
     Assert(window);
-    Assert(not window->Handle());
+    Assert(not window->NativeHandle());
 
     Verify(parent_type::CreateWindow(window, FWString(title), def));
 

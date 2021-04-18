@@ -32,7 +32,7 @@ using FShaderDebugCallback = TFunction<void(
 >;
 #endif
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIPROFILING
 struct FFrameStatistics {
     struct FRendering {
         u32 NumDescriptorBinds              = 0;

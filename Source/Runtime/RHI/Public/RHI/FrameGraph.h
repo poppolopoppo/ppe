@@ -33,13 +33,16 @@ public: // interface
     virtual ~IFrameGraph() = default;
 
     // Returns api-specific device handle with which framegraph has been crated.
-    virtual ETargetRHI TargetRHI() const = 0;
-    virtual void* ExternalDevice() const = 0;
+    virtual ETargetRHI TargetRHI() const NOEXCEPT = 0;
+    virtual void* ExternalDevice() const NOEXCEPT = 0;
 
     // De-initialize instance systems.
     // Shared pointer may prevent object destruction in specified place,
     // so use this method to destroy all resources and release systems.
     virtual void TearDown() = 0;
+
+    // Release cached memory
+    virtual void ReleaseMemory() NOEXCEPT = 0;
 
     // Add pipeline compiler.
     // By default pipelines may be created from SPIRV binary and doesn't extract reflection.
@@ -47,9 +50,9 @@ public: // interface
     virtual bool AddPipelineCompiler(const PPipelineCompiler& pcompiler) = 0;
 
     // Returns bitmask for all available queues.
-    virtual EQueueUsage AvailableQueues() const = 0;
+    virtual EQueueUsage AvailableQueues() const NOEXCEPT = 0;
 
-    // Resource Manager
+    // --- Resource Manager ---
 
     // Create resources: pipeline, image, buffer, etc.
     // See synchronization requirements on top of this file.
@@ -71,10 +74,10 @@ public: // interface
     virtual bool InitPipelineResources(FRawMPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
     virtual bool InitPipelineResources(FRawRTPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
 
-    virtual bool IsSupported(FRawImageID image, const FImageViewDesc& desc) const = 0;
-    virtual bool IsSupported(FRawBufferID buffer, const FBufferViewDesc& desc) const = 0;
-    virtual bool IsSupported(const FImageDesc& desc, EMemoryType memType = EMemoryType::Default) const = 0;
-    virtual bool IsSupported(const FBufferDesc& desc, EMemoryType memType = EMemoryType::Default) const = 0;
+    virtual bool IsSupported(FRawImageID image, const FImageViewDesc& desc) const NOEXCEPT = 0;
+    virtual bool IsSupported(FRawBufferID buffer, const FBufferViewDesc& desc) const NOEXCEPT = 0;
+    virtual bool IsSupported(const FImageDesc& desc, EMemoryType memType = EMemoryType::Default) const NOEXCEPT = 0;
+    virtual bool IsSupported(const FBufferDesc& desc, EMemoryType memType = EMemoryType::Default) const NOEXCEPT = 0;
 
     // Creates internal descriptor set and release dynamically allocated memory in the 'resources'.
     // After that your can not modify the 'resources', but you still can use it in the tasks.
@@ -133,7 +136,7 @@ public: // interface
     // Returns pointer to host-visible memory.
     virtual bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) = 0;
 
-    // Frame execution
+    // --- Frame execution ---
 
     // Begin command buffer recording.
     virtual FCommandBufferBatch Begin(const FCommandBufferDesc&, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
@@ -151,7 +154,9 @@ public: // interface
     virtual bool WaitIdle() = 0;
 
     // Debugging
+#if USE_PPE_RHIPROFILING
     virtual bool DumpStatistics(FFrameStatistics* pstats) const = 0;
+#endif
 
 };
 //----------------------------------------------------------------------------

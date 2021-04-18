@@ -174,7 +174,7 @@ void FGenericWindow::HiddenWindowDefinition(FWindowDefinition* def) {
 //----------------------------------------------------------------------------
 bool FGenericWindow::CreateWindow(FGenericWindow* window, FWString&& title, const FWindowDefinition& def) {
     Assert(window);
-    Assert(not window->Handle());
+    Assert(not window->NativeHandle());
     Assert(not title.empty());
 
     window->_title = std::move(title);

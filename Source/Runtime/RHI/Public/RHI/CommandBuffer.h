@@ -37,11 +37,11 @@ class ICommandBuffer : public FRefCountable {
 public: // interface
     virtual ~ICommandBuffer() = default;
 
-    virtual SFrameGraph FrameGraph() = 0;
+    virtual SFrameGraph FrameGraph() const = 0;
 
     // Acquire next swapchain image. This image will be presented after command buffer execution.
     // Do not use this image in any other command buffers.
-    virtual FRawImageID GetSwapchainImage(FRawSwapchainID swapchainId, ESwapchainImage type = ESwapchainImage::Primary) = 0;
+    virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId, ESwapchainImage type = ESwapchainImage::Primary) = 0;
 
     // Add input dependency.
     // Current command buffer will be executed on the GPU only when input dependencies finished execution.
@@ -84,15 +84,6 @@ public: // interface
     virtual FTaskHandle Task(const FTraceRays&) = 0;
     virtual FTaskHandle Task(const FCustomTask&) = 0;
 
-    // Begin shader time measurement for all subsequent tasks.
-    // Draw tasks are not affected, but timemap enabled for render pass.
-    // Dimension should be same as in 'dstImage' argument in 'EndShaderTimeMap()', otherwise result will be scaled.
-    virtual bool BeginShaderTimeMap(const uint2& dim, EShaderStages stages = EShaderStages::All) = 0;
-
-    // Stop shader time measurement, result will be copied into specified image.
-    // Image must be RGBA UNorm/Float 2D image.
-    virtual FTaskHandle EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<FTaskHandle> dependsOn = Default) = 0;
-
     // Create render pass.
     virtual FLogicalPassID CreateRenderPass(const FRenderPassDesc&) = 0;
 
@@ -104,6 +95,17 @@ public: // interface
     virtual void Task(FLogicalPassID, const FDrawMeshes&) = 0;
     virtual void Task(FLogicalPassID, const FDrawMeshesIndirect&) = 0;
     virtual void Task(FLogicalPassID, const FCustomDraw&) = 0;
+
+#if USE_PPE_RHIPROFILING
+    // Begin shader time measurement for all subsequent tasks.
+    // Draw tasks are not affected, but timemap enabled for render pass.
+    // Dimension should be same as in 'dstImage' argument in 'EndShaderTimeMap()', otherwise result will be scaled.
+    virtual bool BeginShaderTimeMap(const uint2& dim, EShaderStages stages = EShaderStages::All) = 0;
+
+    // Stop shader time measurement, result will be copied into specified image.
+    // Image must be RGBA UNorm/Float 2D image.
+    virtual FTaskHandle EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<FTaskHandle> dependsOn = Default) = 0;
+#endif
 
 };
 //----------------------------------------------------------------------------

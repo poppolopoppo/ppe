@@ -1,26 +1,26 @@
 ﻿#include "stdafx.h"
 
-#include "Window/WindowBase.h"
+#include "Window/MainWindow.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWindowBase::FWindowBase(FWString&& title, const FWindowDefinition& def) {
+FMainWindow::FMainWindow(FWString&& title, const FWindowDefinition& def) {
     VerifyRelease(FPlatformWindow::CreateWindow(this, std::move(title), def));
 }
 //----------------------------------------------------------------------------
-FWindowBase::~FWindowBase() = default;
+FMainWindow::~FMainWindow() = default;
 //----------------------------------------------------------------------------
-FWindowDefinition FWindowBase::MainWindowDefinition() NOEXCEPT {
+FWindowDefinition FMainWindow::Definition() NOEXCEPT {
     FWindowDefinition def;
     FPlatformWindow::MainWindowDefinition(&def);
     def.Maximized = true;
     return def;
 }
 //----------------------------------------------------------------------------
-FWindowDefinition FWindowBase::MainWindowDefinition(size_t width, size_t height) NOEXCEPT {
+FWindowDefinition FMainWindow::Definition(size_t width, size_t height) NOEXCEPT {
     FWindowDefinition def;
     FPlatformWindow::MainWindowDefinition(&def);
     def.Width = width;
@@ -29,7 +29,7 @@ FWindowDefinition FWindowBase::MainWindowDefinition(size_t width, size_t height)
     return def;
 }
 //----------------------------------------------------------------------------
-FWindowDefinition FWindowBase::MainWindowDefinition(int left, int top, size_t width, size_t height) NOEXCEPT {
+FWindowDefinition FMainWindow::Definition(int left, int top, size_t width, size_t height) NOEXCEPT {
     FWindowDefinition def;
     FPlatformWindow::MainWindowDefinition(&def);
     def.Left = left;
@@ -38,12 +38,6 @@ FWindowDefinition FWindowBase::MainWindowDefinition(int left, int top, size_t wi
     def.Height = height;
     return def;
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FWindowBare::FWindowBare(FWString&& title, const FWindowDefinition& def)
-:   FWindowBase(std::move(title), def)
-{}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

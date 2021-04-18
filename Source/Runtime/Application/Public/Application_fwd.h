@@ -9,6 +9,7 @@
 #endif
 
 #include "Memory/RefPtr.h"
+#include "Memory/UniquePtr.h"
 
 namespace PPE {
 class FApplicationModule;
@@ -19,18 +20,19 @@ namespace Application {
 enum class EGamepadButton : u8;
 enum class EKeyboardKey : u8;
 enum class EMouseButton : u8;
-//----------------------------------------------------------------------------
 class FKeyboardState;
 class FGamepadState;
 class FMouseState;
+FWD_INTEFARCE_UNIQUEPTR(InputService);
+//----------------------------------------------------------------------------
+class FGenericWindow;
+FWD_REFPTR(MainWindow);
+FWD_INTEFARCE_UNIQUEPTR(WindowService);
 //----------------------------------------------------------------------------
 class FGenericApplication;
 class FApplicationBase;
-//----------------------------------------------------------------------------
-class FGenericWindow;
-FWD_REFPTR(WindowBase);
-FWD_REFPTR(WindowBare);
-FWD_REFPTR(WindowRHI);
+class FApplicationConsole;
+class FApplicationWindow;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

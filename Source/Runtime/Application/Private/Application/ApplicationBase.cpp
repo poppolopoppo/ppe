@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ApplicationBase.h"
+#include "Application/ApplicationBase.h"
 
 #include "ApplicationModule.h"
 
@@ -105,14 +105,13 @@ static void TearDebugMenuInSystray_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationBase::FApplicationBase(const FModularDomain& domain, FWString&& name)
-:   FPlatformApplication(domain, std::move(name))
-,   _module(FApplicationModule::Get(domain))  {
-    _module._OnApplicationCreate.Invoke(*this);
+FApplicationBase::FApplicationBase(const FModularDomain& domain, FString&& name)
+:   FPlatformApplication(domain, std::move(name)) {
+    FApplicationModule::Get(Domain())._OnApplicationCreate.Invoke(*this);
 }
 //----------------------------------------------------------------------------
 FApplicationBase::~FApplicationBase() NOEXCEPT {
-    _module._OnApplicationDestroy.Invoke(*this);
+    FApplicationModule::Get(Domain())._OnApplicationDestroy.Invoke(*this);
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Start() {
@@ -123,7 +122,7 @@ void FApplicationBase::Start() {
         SetupDebugMenuInSystray_();
 #endif
 
-    _module._OnApplicationStart.Invoke(*this);
+    FApplicationModule::Get(Domain())._OnApplicationStart.Invoke(*this);
 
     ReportAllTrackingData();
 }
@@ -131,7 +130,7 @@ void FApplicationBase::Start() {
 void FApplicationBase::Tick(FTimespan dt) {
     FPlatformApplication::Tick(dt);
 
-    _module._OnApplicationTick.Invoke(*this, dt);
+    FApplicationModule::Get(Domain())._OnApplicationTick.Invoke(*this, dt);
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Shutdown() {
@@ -140,7 +139,7 @@ void FApplicationBase::Shutdown() {
         TearDebugMenuInSystray_();
 #endif
 
-    _module._OnApplicationShutdown.Invoke(*this);
+    FApplicationModule::Get(Domain())._OnApplicationShutdown.Invoke(*this);
 
     FPlatformApplication::Shutdown();
 }

@@ -12,15 +12,15 @@ namespace Application {
 //----------------------------------------------------------------------------
 using FWindowDefinition = FPlatformWindow::FWindowDefinition;
 //----------------------------------------------------------------------------
-FWD_REFPTR(WindowBase);
-class PPE_APPLICATION_API FWindowBase
+class PPE_APPLICATION_API FMainWindow
 :   public FPlatformWindow
 ,   public FRefCountable {
 public:
-    virtual ~FWindowBase();
+    FMainWindow(FWString&& title, const FWindowDefinition& def);
+    virtual ~FMainWindow();
 
     using FPlatformWindow::Title;
-    using FPlatformWindow::Handle;
+    using FPlatformWindow::NativeHandle;
     using FPlatformWindow::Left;
     using FPlatformWindow::Top;
     using FPlatformWindow::Width;
@@ -51,13 +51,11 @@ public:
     using FPlatformWindow::SetCursorCapture;
     using FPlatformWindow::SetCursorOnWindowCenter;
 
-    static FWindowDefinition MainWindowDefinition() NOEXCEPT;
-    static FWindowDefinition MainWindowDefinition(size_t width, size_t height) NOEXCEPT;
-    static FWindowDefinition MainWindowDefinition(int left, int top, size_t width, size_t height) NOEXCEPT;
+    static FWindowDefinition Definition() NOEXCEPT;
+    static FWindowDefinition Definition(size_t width, size_t height) NOEXCEPT;
+    static FWindowDefinition Definition(int left, int top, size_t width, size_t height) NOEXCEPT;
 
 protected:
-    FWindowBase(FWString&& title, const FWindowDefinition& def);
-
     using FPlatformWindow::OnDragDropFile;
     using FPlatformWindow::OnFocusSet;
     using FPlatformWindow::OnFocusLose;
@@ -73,11 +71,6 @@ protected:
     using FPlatformWindow::OnWindowResize;
     using FPlatformWindow::OnWindowPaint;
 
-};
-//----------------------------------------------------------------------------
-class PPE_APPLICATION_API FWindowBare : public FWindowBase {
-public:
-    FWindowBare(FWString&& title, const FWindowDefinition& def);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

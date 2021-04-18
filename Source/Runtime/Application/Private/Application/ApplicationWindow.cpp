@@ -1,86 +1,72 @@
 #include "stdafx.h"
 
-#include "ApplicationWindow.h"
+#include "Application/ApplicationWindow.h"
 
-#include "Service/InputService.h"
-#include "Service/RHIService.h"
-#include "Service/WindowService.h"
+#include "Input/InputService.h"
+#include "Window/WindowService.h"
+#include "Window/MainWindow.h"
 
-#include "Window/WindowBase.h"
-#include "Window/WindowRHI.h"
+#include "RHIModule.h"
+#include "HAL/RHIService.h"
 
+#include "Diagnostic/Logger.h"
 #include "Thread/ThreadPool.h"
 
 namespace PPE {
 namespace Application {
+EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <typename... _Args>
-static void CreateApplicationWindow_(
-    UInputService* pInput,
-    URHIService* pRHI,
-    UWindowService* pWindow,
-    PWindowBase* pMain,
-    const FWString& name,
-    bool needRHI,
-    _Args&&... args) {
-
-    IInputService::MakeDefault(pInput);
-    IWindowService::MakeDefault(pWindow);
-
+TPtrRef<const ITargetRHI> RetrieveTargetRHI_(const FModularDomain& domain, bool needRHI) {
     if (needRHI) {
-        IRHIService::MakeDefault(pRHI);
-
-        PWindowRHI windowRHI;
-        (*pWindow)->CreateRHIWindow(&windowRHI, FWString(name), std::forward<_Args>(args)...);
-
-        *pMain = std::move(windowRHI);
+        const TPtrRef<const ITargetRHI> rhiTarget = FRHIModule::Get(domain).Target();
+        CLOG(nullptr == rhiTarget, Application, Error, L"could not find any RHI target available");
+        return rhiTarget;
     }
-    else {
-        PWindowBare windowBare;
-        (*pWindow)->CreateMainWindow(&windowBare, FWString(name), std::forward<_Args>(args)...);
-
-        *pMain = std::move(windowBare);
-    }
-
-    (*pInput)->SetupWindow(**pMain);
+    return nullptr;
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, bool needRHI)
-:   FApplicationBase(domain, std::move(name)) {
-    CreateApplicationWindow_(&_input, &_rhi, &_window, &_main, Name(), needRHI);
-}
-//----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, bool needRHI, size_t width, size_t height)
-:   FApplicationBase(domain, std::move(name)) {
-    CreateApplicationWindow_(&_input, &_rhi, &_window, &_main, Name(), needRHI, width, height);
-}
-//----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FWString&& name, bool needRHI, int left, int top, size_t width, size_t height)
-:   FApplicationBase(domain, std::move(name)) {
-    CreateApplicationWindow_(&_input, &_rhi, &_window, &_main, Name(), needRHI, left, top, width, height);
-}
+FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FString&& name, bool needRHI)
+:   FApplicationBase(domain, std::move(name))
+,   _targetRHI(RetrieveTargetRHI_(domain, needRHI))
+{}
 //----------------------------------------------------------------------------
 FApplicationWindow::~FApplicationWindow() = default;
 //----------------------------------------------------------------------------
 void FApplicationWindow::Start() {
+    IInputService::MakeDefault(&_input);
+    IWindowService::MakeDefault(&_window);
+
+    _window->CreateMainWindow(&_main, ToWString(Name()) );
     _window->SetMainWindow(_main.get());
 
-    auto& services = Services();
+    _input->SetupWindow(*_main);
+
+    FModularServices& services = Services();
     services.Add<IInputService>(_input.get());
     services.Add<IWindowService>(_window.get());
 
-    if (_rhi) {
-        services.Add<IRHIService>(_rhi.get());
+    if (_targetRHI) {
+        ERHIFeature features = _targetRHI->RecommendedFeatures();
 
-        _rhi->CreateMainFrameGraph(checked_cast<FWindowRHI*>(_main.get()));
+        const FRHIModule& rhiModule = FRHIModule::Get(Domain());
+        features = rhiModule.RecommendedFeatures(features);
+
+        if (not _targetRHI->CreateService(
+            &_rhi,
+            Domain(),
+            RHI::FWindowHandle{ _main->NativeHandle() },
+            features ))
+            LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort", Domain().Name(), Name());
+
+        services.Add<IRHIService>(_rhi.get());
     }
 
     VerifyRelease(_main->Show());
@@ -95,19 +81,19 @@ void FApplicationWindow::Shutdown() {
     if (_main->Visible())
         VerifyRelease(_main->Close());
 
+    _window->SetMainWindow(nullptr);
+
     auto& services = Services();
     if (_rhi) {
-        FWindowRHI* const windowRHI = checked_cast<FWindowRHI*>(_main.get());
-
-        _rhi->DestroyMainFrameGraph(windowRHI);
-
         services.CheckedRemove<IRHIService>(_rhi.get());
+        _rhi.reset();
     }
 
     services.CheckedRemove<IWindowService>(_window.get());
     services.CheckedRemove<IInputService>(_input.get());
 
-    _window->SetMainWindow(nullptr);
+    _input.reset();
+    _window.reset();
 }
 //----------------------------------------------------------------------------
 bool FApplicationWindow::PumpMessages() NOEXCEPT {

@@ -2,17 +2,18 @@
 
 #include "RHIModule.h"
 
+#include "RHI/EnumToString.h"
 #include "RHI/FrameGraph.h"
 #include "RHI/PipelineCompiler.h"
 
+#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
+#include "Memory/RefPtr.h"
 #include "Modular/ModularDomain.h"
 #include "Modular/ModuleRegistration.h"
 
 #include "BuildModules.generated.h"
-#include "Diagnostic/CurrentProcess.h"
-#include "Memory/RefPtr.h"
 
 namespace PPE {
 namespace RHI {
@@ -41,16 +42,27 @@ FRHIModule::FRHIModule() NOEXCEPT
 //----------------------------------------------------------------------------
 FRHIModule::~FRHIModule() NOEXCEPT {
     Assert(_targets.empty());
-    Assert(_compilerFactories.empty());
-    Assert(_frameGraphFactories.empty());
-    Assert(_frameGraphs.empty());
+    Assert(_compilers.empty());
 }
 //----------------------------------------------------------------------------
 void FRHIModule::Start(FModularDomain& domain) {
     IModuleInterface::Start(domain);
-
+}
+//----------------------------------------------------------------------------
+void FRHIModule::Shutdown(FModularDomain& domain) {
+    IModuleInterface::Shutdown(domain);
+}
+//----------------------------------------------------------------------------
+void FRHIModule::DutyCycle(FModularDomain& domain) {
+    IModuleInterface::DutyCycle(domain);
+}
+//----------------------------------------------------------------------------
+void FRHIModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
+    IModuleInterface::ReleaseMemory(domain);
+}
+//----------------------------------------------------------------------------
+ERHIFeature FRHIModule::RecommendedFeatures(ERHIFeature features) const NOEXCEPT {
     const auto& process = FCurrentProcess::Get();
-    ERHIFeature features = ERHIFeature::Default;
 
     if (process.HasArgument(L"-RHIHeadless"))
         features += ERHIFeature::Headless;
@@ -61,6 +73,11 @@ void FRHIModule::Start(FModularDomain& domain) {
         features += ERHIFeature::HighDynamicRange;
     if (process.HasArgument(L"-RHINoHdr"))
         features -= ERHIFeature::HighDynamicRange;
+
+    if (process.HasArgument(L"-RHIVSync"))
+        features += ERHIFeature::VSync;
+    if (process.HasArgument(L"-RHINoVSync"))
+        features -= ERHIFeature::VSync;
 
 #if USE_PPE_RHIDEBUG
     if (process.HasArgument(L"-RHIDebug"))
@@ -76,192 +93,94 @@ void FRHIModule::Start(FModularDomain& domain) {
         features -= ERHIFeature::Debugging;
 #endif
 
-    _systemFlags = features;
+    return features;
 }
 //----------------------------------------------------------------------------
-void FRHIModule::Shutdown(FModularDomain& domain) {
-    IModuleInterface::Shutdown(domain);
+void FRHIModule::RegisterTarget(ETargetRHI rhi, TPtrRef<const ITargetRHI>&& rtarget) {
+    Assert(rtarget);
 
-    _systemFlags = Default;
-}
-//----------------------------------------------------------------------------
-void FRHIModule::DutyCycle(FModularDomain& domain) {
-    IModuleInterface::DutyCycle(domain);
+    const FReadWriteLock::FScopeLockWrite slopeLock(_barrierRW);
 
-}
-//----------------------------------------------------------------------------
-void FRHIModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
-    IModuleInterface::ReleaseMemory(domain);
+    using namespace RHI;
+    LOG(RHI, Info, L"register target {0} for {1}", rtarget->DisplayName(), rhi);
 
-}
-//----------------------------------------------------------------------------
-void FRHIModule::RegisterTarget(ETargetRHI rhi, const ITargetRHI* target) {
-    Assert(target);
-    const FCriticalScope scope(&_barrier);
+    _OnRegisterTarget.Invoke(rhi, rtarget);
 
-    _targets.Add(rhi) = target;
+    _targets.Insert_AssertUnique(rhi, std::move(rtarget));
 }
 //----------------------------------------------------------------------------
 void FRHIModule::UnregisterTarget(ETargetRHI rhi) {
-    const FCriticalScope scope(&_barrier);
-
-    _targets.Remove_AssertExists(rhi);
-}
-//----------------------------------------------------------------------------
-const ITargetRHI* FRHIModule::Target(ETargetRHI rhi) const {
-    const FCriticalScope scope(&_barrier);
+    const FReadWriteLock::FScopeLockWrite slopeLock(_barrierRW);
 
     const auto it = _targets.find(rhi);
-    return (it == _targets.end() ? nullptr : it->second);
-}
-//----------------------------------------------------------------------------
-void FRHIModule::RegisterCompiler(ETargetRHI rhi, FPipelineCompilerFactory&& rfactory) {
-    Assert(rfactory);
-    const FCriticalScope scope(&_barrier);
+    AssertRelease(_targets.end() != it);
 
-    _compilerFactories.Add(rhi) = std::move(rfactory);
-}
-//----------------------------------------------------------------------------
-void FRHIModule::UnregisterCompiler(ETargetRHI rhi) {
-    const FCriticalScope scope(&_barrier);
-
-    _compilerFactories.Remove_AssertExists(rhi);
-}
-//----------------------------------------------------------------------------
-RHI::PPipelineCompiler FRHIModule::CreateCompiler() {
-    return CreateCompiler(ETargetRHI::Current);
-}
-//----------------------------------------------------------------------------
-RHI::PPipelineCompiler FRHIModule::CreateCompiler(ETargetRHI rhi) {
-    const FCriticalScope scope(&_barrier);
-
-    OnPipelineCompilerPreCreate_(rhi);
-
-    if (const FPipelineCompilerFactory* const pfactory = _compilerFactories.GetIFP(rhi)) {
-        RHI::PPipelineCompiler compiler;
-        if ((*pfactory)(&compiler)) {
-            Add_AssertUnique(_compilers, MakeSafePtr(compiler));
-            OnPipelineCompilerPostCreate_(*compiler);
-            return compiler;
-        }
-    }
-
-    AssertNotImplemented();
-}
-//----------------------------------------------------------------------------
-void FRHIModule::DestroyCompiler(RHI::PPipelineCompiler& compiler) {
-    Assert(compiler);
-    const FCriticalScope scope(&_barrier);
-
-    const ETargetRHI rhi = compiler->TargetRHI();
-    OnPipelineCompilerPreDestroy_(*compiler);
-
-    Remove_AssertExists(_compilers, MakeSafePtr(compiler));
-
-    RemoveRef_AssertReachZero(compiler);
-
-    OnPipelineCompilerPostDestroy_(rhi);
-}
-//----------------------------------------------------------------------------
-void FRHIModule::RegisterFrameGraph(ETargetRHI rhi, FFrameGraphFactory&& rfactory) {
-    Assert(rfactory);
-    const FCriticalScope scope(&_barrier);
-
-    _frameGraphFactories.Add(rhi) = std::move(rfactory);
-}
-//----------------------------------------------------------------------------
-void FRHIModule::UnregisterFrameGraph(ETargetRHI rhi) {
-    const FCriticalScope scope(&_barrier);
-
-    _frameGraphFactories.Remove_AssertExists(rhi);
-}
-//----------------------------------------------------------------------------
-RHI::PFrameGraph FRHIModule::CreateFrameGraph(ERHIFeature features, RHI::FWindowHandle mainWindow) {
-    return CreateFrameGraph(ETargetRHI::Current, features, mainWindow);
-}
-//----------------------------------------------------------------------------
-RHI::PFrameGraph FRHIModule::CreateFrameGraph(ETargetRHI rhi, ERHIFeature features, RHI::FWindowHandle mainWindow) {
-    Assert((!!mainWindow) || (features & ERHIFeature::Headless)); // sanity checks
-    Assert((!mainWindow) || !(features & ERHIFeature::Headless));
-
-    const FCriticalScope scope(&_barrier);
-
-    OnFrameGraphPreCreate_(rhi);
-
-    if (const FFrameGraphFactory* const pfactory = _frameGraphFactories.GetIFP(rhi)) {
-        RHI::PFrameGraph fg;
-        if ((*pfactory)(&fg, features, mainWindow)) {
-            Add_AssertUnique(_frameGraphs, MakeSafePtr(fg));
-            OnFrameGraphPostCreate_(*fg);
-            return fg;
-        }
-    }
-
-    AssertNotReached();
-}
-//----------------------------------------------------------------------------
-void FRHIModule::DestroyFrameGraph(RHI::PFrameGraph& fg) {
-    Assert(fg);
-    const FCriticalScope scope(&_barrier);
-
-    const ETargetRHI rhi = fg->TargetRHI();
-    OnFrameGraphPreDestroy_(*fg);
-
-    Remove_AssertExists(_frameGraphs, MakeSafePtr(fg));
-
-    fg->TearDown();
-
-    RemoveRef_AssertReachZero(fg);
-
-    OnFrameGraphPostDestroy_(rhi);
-}
-//----------------------------------------------------------------------------
-void FRHIModule::OnPipelineCompilerPreCreate_(ETargetRHI rhi) {
     using namespace RHI;
-    LOG(RHI, Info, L"broadcast pre-create pipeline compiler event for {0}RHI", rhi);
-    _OnPipelineCompilerPreCreate(rhi);
+    LOG(RHI, Info, L"unregister target {0} for {1}", it->second->DisplayName(), rhi);
+
+    _targets.Erase(it);
+
+    _OnUnregisterTarget.Invoke(rhi, it->second);
 }
 //----------------------------------------------------------------------------
-void FRHIModule::OnPipelineCompilerPostCreate_(RHI::IPipelineCompiler& compiler) {
-    using namespace RHI;
-    LOG(RHI, Info, L"broadcast post-create pipeline compiler event for {0}RHI <{1}>", compiler.TargetRHI(), Fmt::Pointer(&compiler));
-    _OnPipelineCompilerPostCreate(compiler);
+TPtrRef<const ITargetRHI> FRHIModule::Target() const NOEXCEPT {
+    const FReadWriteLock::FScopeLockRead slopeLock(_barrierRW);
+    return (_targets.empty() ? nullptr : _targets.Vector().back().second);
 }
 //----------------------------------------------------------------------------
-void FRHIModule::OnPipelineCompilerPreDestroy_(RHI::IPipelineCompiler& compiler) {
+TPtrRef<const ITargetRHI> FRHIModule::Target(ETargetRHI rhi) const NOEXCEPT {
+    const FReadWriteLock::FScopeLockRead slopeLock(_barrierRW);
+    const auto it = _targets.find(rhi);
+
+    if (_targets.end() != it)
+        return it->second;
+
     using namespace RHI;
-    LOG(RHI, Info, L"broadcast pre-destroy pipeline compiler event for {0}RHI <{1}>", compiler.TargetRHI(), Fmt::Pointer(&compiler));
-    _OnPipelineCompilerPreDestroy(compiler);
+    LOG(RHI, Error, L"could not find a target for {0}", rhi);
+    return nullptr;
 }
 //----------------------------------------------------------------------------
-void FRHIModule::OnPipelineCompilerPostDestroy_(ETargetRHI rhi) {
+void FRHIModule::RegisterCompiler(RHI::EShaderLangFormat lang, RHI::PPipelineCompiler&& rcompiler) {
+    Assert(rcompiler);
+
+    const FReadWriteLock::FScopeLockWrite slopeLock(_barrierRW);
+
     using namespace RHI;
-    LOG(RHI, Info, L"broadcast post-destroy pipeline compiler event for {0}RHI", rhi);
-    _OnPipelineCompilerPostDestroy(rhi);
+    LOG(RHI, Info, L"register pipeline compiler {0} for {1}", rcompiler->DisplayName(), lang);
+
+    _OnRegisterCompiler.Invoke(lang, rcompiler);
+
+    _compilers.Insert_AssertUnique(lang, std::move(rcompiler));
 }
 //----------------------------------------------------------------------------
-void FRHIModule::OnFrameGraphPreCreate_(ETargetRHI rhi) {
+void FRHIModule::UnregisterCompiler(RHI::EShaderLangFormat lang) {
+    const FReadWriteLock::FScopeLockWrite slopeLock(_barrierRW);
+
+    const auto it = _compilers.find(lang);
+    AssertRelease(_compilers.end() != it);
+
     using namespace RHI;
-    LOG(RHI, Info, L"broadcast pre-create framegraph event for {0}RHI", rhi);
-    _OnFrameGraphPreCreate(rhi);
+    LOG(RHI, Info, L"unregister pipeline compiler {0} for {1}", it->second->DisplayName(), lang);
+
+    _compilers.Erase(it);
+
+    _OnUnregisterCompiler.Invoke(lang, it->second);
 }
 //----------------------------------------------------------------------------
-void FRHIModule::OnFrameGraphPostCreate_(RHI::IFrameGraph& fg) {
+RHI::SPipelineCompiler FRHIModule::Compiler(RHI::EShaderLangFormat lang) const noexcept {
+    const FReadWriteLock::FScopeLockRead slopeLock(_barrierRW);
+
+    const auto view = _compilers.Vector().MakeConstView();
+    const auto it = view.FindIf([lang](const auto& pair) {
+        return (pair.first ^ lang);
+    });
+
+    if (view.end() != it)
+        return it->second;
+
     using namespace RHI;
-    LOG(RHI, Info, L"broadcast post-create framegraph event for {0}RHI <{1}>", fg.TargetRHI(), Fmt::Pointer(&fg));
-    _OnFrameGraphPostCreate(fg);
-}
-//----------------------------------------------------------------------------
-void FRHIModule::OnFrameGraphPreDestroy_(RHI::IFrameGraph& fg) {
-    using namespace RHI;
-    LOG(RHI, Info, L"broadcast pre-destroy framegraph event for {0}RHI <{1}>", fg.TargetRHI(), Fmt::Pointer(&fg));
-    _OnFrameGraphPreDestroy(fg);
-}
-//----------------------------------------------------------------------------
-void FRHIModule::OnFrameGraphPostDestroy_(ETargetRHI rhi) {
-    using namespace RHI;
-    LOG(RHI, Info, L"broadcast post-destroy framegraph event for {0}RHI", rhi);
-    _OnFrameGraphPostDestroy(rhi);
+    LOG(RHI, Error, L"could not find a compiler for {0}", lang);
+    return SPipelineCompiler{};
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

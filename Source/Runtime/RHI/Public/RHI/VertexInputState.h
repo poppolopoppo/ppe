@@ -90,23 +90,23 @@ struct FVertexInputState {
     FVertices Vertices;
 
     template <typename _Class, typename _Value>
-    FVertexInputState& Add(const FVertexID& vertexId, _Value* _Class::* pvertex, const FVertexBufferID& bufferId = Default) {
-        return Add(vertexId, VertexAttrib<_Value>(), reinterpret_cast<size_t>(&(static_cast<_Class*>(nullptr)->*pvertex)), bufferId);
+    FVertexInputState& Add(const FVertexID& vertexId, _Value* _Class::* member, const FVertexBufferID& bufferId = Default) {
+        return Add(vertexId, VertexAttrib<_Value>(), reinterpret_cast<size_t>(&(static_cast<_Class*>(nullptr)->*member)), bufferId);
     }
 
     template <typename _Class, typename _Value>
-    FVertexInputState& Add(const FVertexID& vertexId, _Value* _Class::* pvertex, bool normalized, const FVertexBufferID& bufferId = Default) {
+    FVertexInputState& Add(const FVertexID& vertexId, _Value* _Class::* member, bool normalized, const FVertexBufferID& bufferId = Default) {
         EVertexFormat attrib = VertexAttrib<_Value>();
         attrib = (normalized
             ? attrib + EVertexFormat::NormalizedFlag
             : attrib - EVertexFormat::NormalizedFlag );
-        return Add(vertexId, attrib, reinterpret_cast<size_t>(&(static_cast<_Class*>(nullptr)->*pvertex)), bufferId);
+        return Add(vertexId, attrib, reinterpret_cast<size_t>(&(static_cast<_Class*>(nullptr)->*member)), bufferId);
     }
 
-    PPE_RHI_API FVertexInputState& Add(const FVertexID& vertexId, EVertexFormat fmt, size_t offset, const FVertexBufferID& bufferId = Default);
+    PPE_RHI_API FVertexInputState& Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId = Default);
     PPE_RHI_API FVertexInputState& Bind(const FVertexBufferID& bufferId, u32 stride, u32 index = AutoBindingIndex, EVertexInputRate rate = EVertexInputRate::Vertex);
 
-    PPE_RHI_API bool Apply(const TMemoryView<const FVertexAttribute> attribs);
+    PPE_RHI_API NODISCARD bool CopyAttributes(const TMemoryView<const FVertexAttribute> attribs);
 
     void Clear() {
         Bindings.clear();

@@ -7,18 +7,14 @@
 #include "Modular/ModuleInterface.h"
 
 #include "Container/AssociativeVector.h"
-#include "Container/Vector.h"
 #include "Diagnostic/Logger_fwd.h"
 #include "Misc/Event.h"
 #include "Misc/Function.h"
-#include "RHI/FrameGraph.h"
-#include "Thread/CriticalSection.h"
+#include "Thread/ReadWriteLock.h"
 
 namespace PPE {
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI)
-FWD_INTERFACE_REFPTR(FrameGraph);
-FWD_INTERFACE_REFPTR(PipelineCompiler);
 } //!namespace RHI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -39,71 +35,37 @@ public:
 public:
     static FRHIModule& Get(const FModularDomain& domain);
 
-    ERHIFeature SystemFlags() const { return _systemFlags; }
+    ERHIFeature RecommendedFeatures(ERHIFeature) const NOEXCEPT;
 
-    void RegisterTarget(ETargetRHI rhi, const ITargetRHI* target);
+    // --- TargetRHI ---
+
+    using FTargetEvent = TFunction<void(ETargetRHI rhi, TPtrRef<const ITargetRHI>)>;
+
+    PUBLIC_EVENT(OnRegisterTarget, FTargetEvent);
+    PUBLIC_EVENT(OnUnregisterTarget, FTargetEvent);
+
+    TPtrRef<const ITargetRHI> Target() const NOEXCEPT; // pick first available
+    TPtrRef<const ITargetRHI> Target(ETargetRHI rhi) const NOEXCEPT;
+
+    void RegisterTarget(ETargetRHI rhi, TPtrRef<const ITargetRHI>&& rtarget);
     void UnregisterTarget(ETargetRHI rhi);
 
-    const ITargetRHI* Target(ETargetRHI rhi) const;
+    // --- PipelineCompiler --
 
-    using FPipelineCompilerFactory = TFunction<bool(RHI::PPipelineCompiler* pcompiler)>;
+    using FCompilerEvent = TFunction<void(RHI::EShaderLangFormat, const RHI::PPipelineCompiler&)>;
 
-    void RegisterCompiler(ETargetRHI rhi, FPipelineCompilerFactory&& rfactory);
-    void UnregisterCompiler(ETargetRHI rhi);
+    PUBLIC_EVENT(OnRegisterCompiler, FCompilerEvent);
+    PUBLIC_EVENT(OnUnregisterCompiler, FCompilerEvent);
 
-    RHI::PPipelineCompiler CreateCompiler();
-    RHI::PPipelineCompiler CreateCompiler(ETargetRHI rhi);
+    RHI::SPipelineCompiler Compiler(RHI::EShaderLangFormat lang) const NOEXCEPT;
 
-    void DestroyCompiler(RHI::PPipelineCompiler& compiler);
-
-    using FFrameGraphFactory = TFunction<bool(RHI::PFrameGraph* pfg, ERHIFeature features, RHI::FWindowHandle mainWindow)>;
-
-    void RegisterFrameGraph(ETargetRHI rhi, FFrameGraphFactory&& rfactory);
-    void UnregisterFrameGraph(ETargetRHI rhi);
-
-    RHI::PFrameGraph CreateFrameGraph(ERHIFeature features = ERHIFeature::Default, RHI::FWindowHandle mainWindow = Default);
-    RHI::PFrameGraph CreateFrameGraph(ETargetRHI rhi, ERHIFeature features = ERHIFeature::Default, RHI::FWindowHandle mainWindow = Default);
-
-    void DestroyFrameGraph(RHI::PFrameGraph& fg);
-
-    using FRHIEvent = TFunction<void(ETargetRHI)>;
-    using FPipelineCompilerEvent = TFunction<void(RHI::IPipelineCompiler&)>;
-    using FFrameGraphEvent = TFunction<void(RHI::IFrameGraph&)>;
-
-    PUBLIC_EVENT(OnPipelineCompilerPreCreate, FRHIEvent);
-    PUBLIC_EVENT(OnPipelineCompilerPostCreate, FPipelineCompilerEvent);
-
-    PUBLIC_EVENT(OnPipelineCompilerPreDestroy, FPipelineCompilerEvent);
-    PUBLIC_EVENT(OnPipelineCompilerPostDestroy, FRHIEvent);
-
-    PUBLIC_EVENT(OnFrameGraphPreCreate, FRHIEvent);
-    PUBLIC_EVENT(OnFrameGraphPostCreate, FFrameGraphEvent);
-
-    PUBLIC_EVENT(OnFrameGraphPreDestroy, FFrameGraphEvent);
-    PUBLIC_EVENT(OnFrameGraphPostDestroy, FRHIEvent);
+    void RegisterCompiler(RHI::EShaderLangFormat lang, RHI::PPipelineCompiler&& rcompiler);
+    void UnregisterCompiler(RHI::EShaderLangFormat lang);
 
 private:
-    FCriticalSection _barrier;
-
-    ERHIFeature _systemFlags{ Default };
-
-    ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, const ITargetRHI*, u32(ETargetRHI::_Count)) _targets;
-    ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, FPipelineCompilerFactory, u32(ETargetRHI::_Count)) _compilerFactories;
-    ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, FFrameGraphFactory, u32(ETargetRHI::_Count)) _frameGraphFactories;
-
-    VECTORINSITU(RHIMisc, RHI::SPipelineCompiler, 2) _compilers;
-    VECTORINSITU(RHIMisc, RHI::SFrameGraph, 2) _frameGraphs;
-
-    void OnPipelineCompilerPreCreate_(ETargetRHI rhi);
-    void OnPipelineCompilerPostCreate_(RHI::IPipelineCompiler& compiler);
-    void OnPipelineCompilerPreDestroy_(RHI::IPipelineCompiler& compiler);
-    void OnPipelineCompilerPostDestroy_(ETargetRHI rhi);
-
-    void OnFrameGraphPreCreate_(ETargetRHI rhi);
-    void OnFrameGraphPostCreate_(RHI::IFrameGraph& fg);
-    void OnFrameGraphPreDestroy_(RHI::IFrameGraph& fg);
-    void OnFrameGraphPostDestroy_(ETargetRHI rhi);
-
+    FReadWriteLock _barrierRW;
+    ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, TPtrRef<const ITargetRHI>, static_cast<u32>(ETargetRHI::_Count)) _targets;
+    ASSOCIATIVE_VECTORINSITU(RHIMisc, RHI::EShaderLangFormat, RHI::PPipelineCompiler, static_cast<u32>(ETargetRHI::_Count)) _compilers;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -8,6 +8,7 @@
 #include "RHI/ResourceEnums.h"
 #include "RHI/SamplerEnums.h"
 #include "RHI/ShaderEnums.h"
+#include "RHI/SwapchainDesc.h"
 #include "RHI/VertexEnums.h"
 
 #include "IO/FormatHelpers.h"
@@ -851,6 +852,33 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     }
 }
 //----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EPresentMode value) {
+    STATIC_ASSERT(not Meta::enum_is_flags_v<EPresentMode>);
+    switch (value) {
+    case EPresentMode::Immediate: return oss << STRING_LITERAL(_Char, "Immediate");
+    case EPresentMode::Fifo: return oss << STRING_LITERAL(_Char, "Fifo");
+    case EPresentMode::RelaxedFifo: return oss << STRING_LITERAL(_Char, "RelaxedFifo");
+    case EPresentMode::Mailbox: return oss << STRING_LITERAL(_Char, "Mailbox");
+    case EPresentMode::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    default: AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ESurfaceTransform value) {
+    STATIC_ASSERT(not Meta::enum_is_flags_v<ESurfaceTransform>);
+    switch (value) {
+    case ESurfaceTransform::Identity: return oss << STRING_LITERAL(_Char, "Identity");
+    case ESurfaceTransform::TransformRotate90: return oss << STRING_LITERAL(_Char, "TransformRotate90");
+    case ESurfaceTransform::TransformRotate180: return oss << STRING_LITERAL(_Char, "TransformRotate180");
+    case ESurfaceTransform::TransformRotate270: return oss << STRING_LITERAL(_Char, "TransformRotate270");
+    case ESurfaceTransform::HorizontalMirror: return oss << STRING_LITERAL(_Char, "HorizontalMirror");
+    case ESurfaceTransform::HorizontalMirror_TransformRotate90: return oss << STRING_LITERAL(_Char, "HorizontalMirror_TransformRotate90");
+    case ESurfaceTransform::HorizontalMirror_TransformRotate180: return oss << STRING_LITERAL(_Char, "HorizontalMirror_TransformRotate180");
+    case ESurfaceTransform::HorizontalMirror_TransformRotate270: return oss << STRING_LITERAL(_Char, "HorizontalMirror_TransformRotate270");
+    default: AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -898,6 +926,8 @@ PPE_RHI_ENUMTOSTRING_DEF(EBorderColor);
 PPE_RHI_ENUMTOSTRING_DEF(EIndexFormat);
 PPE_RHI_ENUMTOSTRING_DEF(EVertexFormat);
 PPE_RHI_ENUMTOSTRING_DEF(EPixelValueType);
+PPE_RHI_ENUMTOSTRING_DEF(EPresentMode);
+PPE_RHI_ENUMTOSTRING_DEF(ESurfaceTransform);
 //----------------------------------------------------------------------------
 #undef PPE_RHI_ENUMTOSTRING_DEF
 //----------------------------------------------------------------------------

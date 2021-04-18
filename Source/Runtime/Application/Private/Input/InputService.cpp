@@ -1,11 +1,12 @@
 #include "stdafx.h"
 
-#include "Service/InputService.h"
+#include "Input/InputService.h"
 
-#include "HAL/PlatformWindow.h"
 #include "Input/KeyboardInputHandler.h"
 #include "Input/GamepadInputHandler.h"
 #include "Input/MouseInputHandler.h"
+
+#include "HAL/PlatformWindow.h"
 #include "Thread/ReadWriteLock.h"
 
 namespace PPE {

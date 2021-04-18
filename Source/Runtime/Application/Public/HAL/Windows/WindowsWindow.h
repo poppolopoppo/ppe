@@ -51,7 +51,7 @@ public: // must be defined for every platform
 
 public: // platform specific
     FNativeHandle HandleWin32() const {
-        return reinterpret_cast<FNativeHandle>(FGenericWindow::Handle());
+        return reinterpret_cast<FNativeHandle>(FGenericWindow::NativeHandle());
     }
 
     void SetHandleWin32(::HWND hWnd) { SetNativeHandle(hWnd); }

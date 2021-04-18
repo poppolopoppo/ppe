@@ -27,7 +27,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& ExpandRHIFeature_(TBasicTextWriter<_Char>& oss, ERHIFeature feature) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERHIFeature>);
     if (ERHIFeature::All == feature) return oss << "All";
-    if (ERHIFeature::Default == feature) return oss << "Default";
+    if (ERHIFeature::Recommended == feature) return oss << "Recommended";
     if (ERHIFeature::Minimal == feature) return oss << "Minimal";
 
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, "|"));
@@ -37,12 +37,13 @@ TBasicTextWriter<_Char>& ExpandRHIFeature_(TBasicTextWriter<_Char>& oss, ERHIFea
     if (ERHIFeature::Compute & feature) oss << sep << STRING_LITERAL(_Char, "Compute");
     if (ERHIFeature::AsyncCompute & feature) oss << sep << STRING_LITERAL(_Char, "AsyncCompute");
     if (ERHIFeature::Raytracing & feature) oss << sep << STRING_LITERAL(_Char, "Raytracing");
-    if (ERHIFeature::Meshlet & feature) oss << sep << STRING_LITERAL(_Char, "Meshlet");
+    if (ERHIFeature::MeshDraw & feature) oss << sep << STRING_LITERAL(_Char, "MeshDraw");
     if (ERHIFeature::SamplerFeedback & feature) oss << sep << STRING_LITERAL(_Char, "SamplerFeedback");
     if (ERHIFeature::TextureSpaceShading & feature) oss << sep << STRING_LITERAL(_Char, "TextureSpaceShading");
     if (ERHIFeature::VariableShadingRate & feature) oss << sep << STRING_LITERAL(_Char, "VariableShadingRate");
     if (ERHIFeature::ConservativeDepth & feature) oss << sep << STRING_LITERAL(_Char, "ConservativeDepth");
     if (ERHIFeature::HighDynamicRange & feature) oss << sep << STRING_LITERAL(_Char, "HighDynamicRange");
+    if (ERHIFeature::VSync & feature) oss << sep << STRING_LITERAL(_Char, "VSync");
 
     if (ERHIFeature::Debugging & feature) oss << sep << STRING_LITERAL(_Char, "Debugging");
     if (ERHIFeature::Profiling & feature) oss << sep << STRING_LITERAL(_Char, "Profiling");

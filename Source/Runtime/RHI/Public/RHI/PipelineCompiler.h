@@ -12,6 +12,7 @@ class IPipelineCompiler : public FRefCountable {
 public:
     virtual ~IPipelineCompiler() = default;
 
+    virtual FString DisplayName() const = 0;;
     virtual ETargetRHI TargetRHI() const = 0;
 
     virtual bool IsSupported(const FMeshPipelineDesc& desc, EShaderLangFormat fmt) const = 0;

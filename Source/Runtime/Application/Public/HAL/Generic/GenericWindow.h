@@ -52,7 +52,7 @@ public: // must be defined for every platform
     FGenericWindow& operator =(const FGenericWindow&) = delete;
 
     const FWString& Title() const { return _title; }
-    FNativeHandle Handle() const { return _handle; }
+    FNativeHandle NativeHandle() const { return _handle; }
 
     int Left() const { return _left; }
     int Top() const { return _top; }

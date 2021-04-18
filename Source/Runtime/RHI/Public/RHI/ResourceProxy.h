@@ -63,7 +63,7 @@ public:
     const value_type& Data() const { return _data; }
 
     template <typename... _Args>
-    bool Create(_Args&&... args);
+    bool Construct(_Args&&... args);
     template <typename... _Args>
     void TearDown(_Args&&... args);
     template <typename... _Args>
@@ -82,11 +82,11 @@ private:
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename... _Args>
-bool TResourceProxy<T>::Create(_Args&&... args) {
+bool TResourceProxy<T>::Construct(_Args&&... args) {
     Assert_NoAssume(IsDestroyed());
     Assert_NoAssume(RefCount() == 0);
 
-    const bool result = _data.Create(std::forward<_Args>(args...));
+    const bool result = _data.Construct(std::forward<_Args>(args...));
 
     // read state and flush cache
     _state.store(result ? EState::Created : EState::Failed, std::memory_order_release);

@@ -6,12 +6,11 @@ require_once '../Core/Policy.rb'
 module Build
 
     class Platform < Policy
-        attr_reader :arch, :os, :rhi
-        def initialize(name, arch, os, rhi=:Vulkan)
+        attr_reader :arch, :os
+        def initialize(name, arch, os)
             super(name)
             @arch = arch
             @os = os
-            @rhi = rhi
             export!('PlatformArch', @arch)
         end
         def match?(expr)
@@ -19,10 +18,7 @@ module Build
         end
         def intrinsics_supported() Log.error("%s: intrinsics_supported() is not implemented", @name); [] end
         def decorate(facet, env)
-            facet.defines <<
-                "TARGET_PLATFORM=#{@os}" <<
-                "TARGET_RHI=#{@rhi}" <<
-                "RHI_#{@rhi.to_s.upcase}"
+            facet.defines << "TARGET_PLATFORM=#{@os}"
             super(facet, env)
         end
     end #~ Platform

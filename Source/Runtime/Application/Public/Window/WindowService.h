@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Application.h"
+#include "Application_fwd.h"
 
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
@@ -8,7 +8,6 @@
 
 namespace PPE {
 namespace Application {
-FWD_REFPTR(WindowBase);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -18,16 +17,12 @@ public:
     IWindowService() = default;
     virtual ~IWindowService() = default;
 
-    virtual void CreateMainWindow(PWindowBare* window, FWString&& title) = 0;
-    virtual void CreateMainWindow(PWindowBare* window, FWString&& title, size_t width, size_t height) = 0;
-    virtual void CreateMainWindow(PWindowBare* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
+    virtual void CreateMainWindow(PMainWindow* window, FWString&& title) = 0;
+    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, size_t width, size_t height) = 0;
+    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
 
-    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title) = 0;
-    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title, size_t width, size_t height) = 0;
-    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
-
-    virtual FWindowBase* MainWindow() const NOEXCEPT = 0;
-    virtual void SetMainWindow(FWindowBase* window) = 0;
+    virtual FMainWindow* MainWindow() const NOEXCEPT = 0;
+    virtual void SetMainWindow(FMainWindow* window) = 0;
 
     virtual void NotifySystrayNone(const FWStringView& title, const FWStringView& text) = 0;
     virtual void NotifySystrayInfo(const FWStringView& title, const FWStringView& text) = 0;

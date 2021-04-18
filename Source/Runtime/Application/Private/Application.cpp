@@ -2,7 +2,7 @@
 
 #include "Application.h"
 
-#include "ApplicationBase.h"
+#include "Application/ApplicationBase.h"
 
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"

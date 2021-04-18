@@ -257,7 +257,7 @@ bool FWindowsPlatformSurvey::MonitorFromCursor(FMonitorInfo* monitor) {
 //----------------------------------------------------------------------------
 bool FWindowsPlatformSurvey::MonitorFromWindow(const FWindowsWindow& window, FMonitorInfo* monitor) {
     Assert(monitor);
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
 
     ::HMONITOR const hMonitor = ::MonitorFromWindow(window.HandleWin32(), MONITOR_DEFAULTTONULL);
     if (NULL == hMonitor) {

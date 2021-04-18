@@ -109,6 +109,17 @@ CONSTEXPR EResourceState EResourceState_FromShaderAccess(EShaderAccess access) {
     }
 }
 //----------------------------------------------------------------------------
+// Queue
+//----------------------------------------------------------------------------
+CONSTEXPR EQueueUsage EQueueType_Usage(EQueueType queueType) {
+    switch (queueType) {
+    case EQueueType::Graphics: return EQueueUsage::Graphics;
+    case EQueueType::AsyncCompute: return EQueueUsage::AsyncCompute;
+    case EQueueType::AsyncTransfer: return EQueueUsage::AsyncTransfer;
+    default: AssertNotReached();
+    }
+}
+//----------------------------------------------------------------------------
 // Shaders
 //----------------------------------------------------------------------------
 inline CONSTEXPR EShaderStages EShaderStages_FromShader(EShaderType shader) {

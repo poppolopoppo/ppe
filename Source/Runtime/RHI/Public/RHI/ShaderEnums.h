@@ -131,8 +131,8 @@ enum class EShaderLangFormat : u32 {
     VKSL_110        = Vulkan_110 | HighLevel,
     VKSL_120        = Vulkan_120 | HighLevel,
     SPIRV_100       = Vulkan_100 | SPIRV,
-    SPIRV_110       = Vulkan_110 | SPIRV,			// SPIRV 1.3
-    SPIRV_120       = Vulkan_120 | SPIRV,			// SPIRV 1.4
+    SPIRV_110       = Vulkan_110 | SPIRV,           // SPIRV 1.3
+    SPIRV_120       = Vulkan_120 | SPIRV,           // SPIRV 1.4
     VkShader_100    = Vulkan_100 | ShaderModule,
     VkShader_110    = Vulkan_110 | ShaderModule,
     VkShader_120    = Vulkan_120 | ShaderModule,

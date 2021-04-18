@@ -26,11 +26,11 @@ struct FResourceHandle {
     bool operator ==(const FResourceHandle& other) const { return (Packed == other.Packed); }
     bool operator !=(const FResourceHandle& other) const { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FResourceHandle& handle) {
+    friend hash_t hash_value(const FResourceHandle& handle) NOEXCEPT {
         return hash_value(handle.Packed);
     }
 
-    friend void swap(FResourceHandle& lhs, FResourceHandle& rhs) {
+    friend void swap(FResourceHandle& lhs, FResourceHandle& rhs) NOEXCEPT {
         std::swap(lhs.Packed, rhs.Packed);
     }
 };

@@ -1,28 +1,28 @@
-﻿#pragma once
+#pragma once
 
 #include "Application_fwd.h"
 
-#include "RHI_fwd.h"
-#include "RHI/ResourceId.h"
-
-#include "Window/WindowBase.h"
+#include "HAL/PlatformApplication.h"
+#include "Misc/Event.h"
+#include "Modular/Modular_fwd.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(WindowRHI);
-class PPE_APPLICATION_API FWindowRHI : public FWindowBase {
+// Dummy wrapper for fwd declaration (FPlatformApplication is a using)
+class PPE_APPLICATION_API FApplicationBase : public FPlatformApplication {
 public:
-    FWindowRHI(FWString&& title, const FWindowDefinition& def);
+    explicit FApplicationBase(const FModularDomain& domain, FString&& name);
+    virtual ~FApplicationBase() NOEXCEPT;
 
-    const RHI::FSwapchainID& SwapchainRHI() const { return _swapchainRHI; }
-    void SetSwapchainRHI(RHI::FSwapchainID&& surfaceRHI) NOEXCEPT;
-    void ReleaseSwapchainRHI() NOEXCEPT;
+    virtual void Start() override;
+    virtual void Tick(FTimespan dt) override;
+    virtual void Shutdown() override;
 
-private:
-    RHI::FSwapchainID _swapchainRHI;
+    void ApplicationLoop();
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

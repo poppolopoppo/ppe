@@ -1,9 +1,8 @@
 ﻿#include "stdafx.h"
 
-#include "Service/WindowService.h"
+#include "Window/WindowService.h"
 
-#include "Window/WindowBase.h"
-#include "Window/WindowRHI.h"
+#include "Window/MainWindow.h"
 
 #include "HAL/PlatformWindow.h"
 #include "HAL/PlatformNotification.h"
@@ -21,16 +20,12 @@ public:
     FDefaultWindowService_() = default;
     virtual ~FDefaultWindowService_() = default;
 
-    virtual void CreateMainWindow(PWindowBare* window, FWString&& title) override final;
-    virtual void CreateMainWindow(PWindowBare* window, FWString&& title, size_t width, size_t height) override final;
-    virtual void CreateMainWindow(PWindowBare* window, FWString&& title, int left, int top, size_t width, size_t height) override final;
+    virtual void CreateMainWindow(PMainWindow* window, FWString&& title) override final;
+    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, size_t width, size_t height) override final;
+    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) override final;
 
-    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title) override final;
-    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title, size_t width, size_t height) override final;
-    virtual void CreateRHIWindow(PWindowRHI* window, FWString&& title, int left, int top, size_t width, size_t height) override final;
-
-    virtual FWindowBase* MainWindow() const NOEXCEPT override final;
-    virtual void SetMainWindow(FWindowBase* window) override final;
+    virtual FMainWindow* MainWindow() const NOEXCEPT override final;
+    virtual void SetMainWindow(FMainWindow* window) override final;
 
     virtual void NotifySystrayNone(const FWStringView& title, const FWStringView& text) override final;
     virtual void NotifySystrayInfo(const FWStringView& title, const FWStringView& text) override final;
@@ -53,44 +48,29 @@ public:
     virtual void EndTaskbarProgress() override final;
 
 private:
-    SWindowBase _mainWindow;
+    SMainWindow _mainWindow;
 };
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateMainWindow(PWindowBare* window, FWString&& title) {
+void FDefaultWindowService_::CreateMainWindow(PMainWindow* window, FWString&& title) {
     Assert(window);
-    *window = NEW_REF(Window, FWindowBare, std::move(title), FWindowBase::MainWindowDefinition());
+    *window = NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition());
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateMainWindow(PWindowBare* window, FWString&& title, size_t width, size_t height) {
+void FDefaultWindowService_::CreateMainWindow(PMainWindow* window, FWString&& title, size_t width, size_t height) {
     Assert(window);
-    *window = NEW_REF(Window, FWindowBare, std::move(title), FWindowBase::MainWindowDefinition(width, height));
+    *window = NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition(width, height));
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateMainWindow(PWindowBare* window, FWString&& title, int left, int top, size_t width, size_t height) {
+void FDefaultWindowService_::CreateMainWindow(PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) {
     Assert(window);
-    *window = NEW_REF(Window, FWindowBare, std::move(title), FWindowBase::MainWindowDefinition(left, top, width, height));
+    *window = NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition(left, top, width, height));
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateRHIWindow(PWindowRHI* window, FWString&& title) {
-    Assert(window);
-    *window = NEW_REF(Window, FWindowRHI, std::move(title), FWindowBase::MainWindowDefinition());
-}
-//----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateRHIWindow(PWindowRHI* window, FWString&& title, size_t width, size_t height) {
-    Assert(window);
-    *window = NEW_REF(Window, FWindowRHI, std::move(title), FWindowBase::MainWindowDefinition(width, height));
-}
-//----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateRHIWindow(PWindowRHI* window, FWString&& title, int left, int top, size_t width, size_t height) {
-    Assert(window);
-    *window = NEW_REF(Window, FWindowRHI, std::move(title), FWindowBase::MainWindowDefinition(left, top, width, height));
-}
-//----------------------------------------------------------------------------
-FWindowBase* FDefaultWindowService_::MainWindow() const NOEXCEPT {
+FMainWindow* FDefaultWindowService_::MainWindow() const NOEXCEPT {
     return _mainWindow.get();
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::SetMainWindow(FWindowBase* window) {
+void FDefaultWindowService_::SetMainWindow(FMainWindow* window) {
     _mainWindow.reset(window);
 }
 //----------------------------------------------------------------------------

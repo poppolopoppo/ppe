@@ -41,7 +41,7 @@ static void MouseSetPosition_(const FWindowsWindow& window, const FWindowsMessag
 //----------------------------------------------------------------------------
 static bool MouseMessageHandler_(const FWindowsWindow& window, const FWindowsMessage& msg, FMouseState* mouse) {
     Assert(mouse);
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
 
     switch (msg.Type) {
     case EWindowsMessageType::MouseMove:
@@ -143,13 +143,13 @@ void FWindowsPlatformMouse::ResetCapture() {
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformMouse::SetCapture(const FWindowsWindow& window) {
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
     ::SetCapture(window.HandleWin32());
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformMouse::ClientToScreen(const FWindowsWindow& window, int* x, int *y) {
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
     Assert(x);
     Assert(y);
 
@@ -165,7 +165,7 @@ bool FWindowsPlatformMouse::ClientToScreen(const FWindowsWindow& window, int* x,
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformMouse::ScreenToClient(const FWindowsWindow& window, int* x, int *y) {
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
     Assert(x);
     Assert(y);
 
@@ -181,7 +181,7 @@ bool FWindowsPlatformMouse::ScreenToClient(const FWindowsWindow& window, int* x,
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformMouse::CenterCursorOnWindow(const FWindowsWindow& window) {
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
 
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
 
@@ -193,7 +193,7 @@ void FWindowsPlatformMouse::CenterCursorOnWindow(const FWindowsWindow& window) {
 }
 //----------------------------------------------------------------------------
 FEventHandle FWindowsPlatformMouse::SetupMessageHandler(FWindowsWindow& window, FMouseState* mouse) {
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
     Assert(mouse);
 
     return window.OnMessageWin32().Add([mouse](const FWindowsWindow& w, FWindowsMessage* msg) {
@@ -202,7 +202,7 @@ FEventHandle FWindowsPlatformMouse::SetupMessageHandler(FWindowsWindow& window, 
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformMouse::RemoveMessageHandler(FWindowsWindow& window, FEventHandle& handle) {
-    Assert(window.Handle());
+    Assert(window.NativeHandle());
     Assert(handle);
 
     window.OnMessageWin32().Remove(handle);

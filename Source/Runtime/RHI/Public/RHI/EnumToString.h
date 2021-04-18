@@ -52,6 +52,8 @@ PPE_RHI_ENUMTOSTRING_DECL(EBorderColor);
 PPE_RHI_ENUMTOSTRING_DECL(EIndexFormat);
 PPE_RHI_ENUMTOSTRING_DECL(EVertexFormat);
 PPE_RHI_ENUMTOSTRING_DECL(EPixelValueType);
+PPE_RHI_ENUMTOSTRING_DECL(EPresentMode);
+PPE_RHI_ENUMTOSTRING_DECL(ESurfaceTransform);
 //----------------------------------------------------------------------------
 #undef PPE_RHI_ENUMTOSTRING_DECL
 //----------------------------------------------------------------------------

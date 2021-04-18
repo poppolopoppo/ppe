@@ -40,7 +40,8 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FRHIException;
-using FWindowHandle = void*;
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowHandle);
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowSurface);
 using FRawData = RAWSTORAGE(RHIRawData, u8);
 template <typename T>
 using TArray = VECTORINSITU(RHIMisc, T, 5);
@@ -92,6 +93,9 @@ enum class EIndexFormat : u32;
 enum class EVertexFormat : u32;
 //----------------------------------------------------------------------------
 enum class EPixelValueType : u32;
+//----------------------------------------------------------------------------
+enum class EPresentMode : u32;
+enum class ESurfaceTransform : u32;
 //----------------------------------------------------------------------------
 struct FBindingIndex;
 struct FBufferDesc;

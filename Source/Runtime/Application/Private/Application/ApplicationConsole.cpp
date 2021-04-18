@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ApplicationConsole.h"
+#include "Application/ApplicationConsole.h"
 
 #include "HAL/PlatformConsole.h"
 #include "HAL/PlatformProcess.h"
@@ -10,7 +10,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationConsole::FApplicationConsole(const FModularDomain& domain, FWString&& name)
+FApplicationConsole::FApplicationConsole(const FModularDomain& domain, FString&& name)
 :   FApplicationBase(domain, std::move(name)) {}
 //----------------------------------------------------------------------------
 FApplicationConsole::~FApplicationConsole() = default;

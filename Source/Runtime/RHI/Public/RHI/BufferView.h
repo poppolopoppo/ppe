@@ -53,7 +53,7 @@ public:
         }
 
         bool operator ==(const FIterator& other) const { return (_part == other._part && _index == other._index); }
-        bool operator !=(const FIterator& other) const { return (not operator ==(lhs, rhs)); }
+        bool operator !=(const FIterator& other) const { return (not operator ==(other)); }
 
     private:
         friend struct FBufferView;
