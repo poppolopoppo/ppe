@@ -255,11 +255,11 @@ public:
             std::move(init) );
     }
 
-	auto Sum() const {
+    auto Sum() const {
         return MapReduce(
             [](auto x) { return x; },
-			[](auto a, auto b) CONSTEXPR NOEXCEPT{ return a + b; } );
-	}
+            [](auto a, auto b) CONSTEXPR NOEXCEPT{ return a + b; } );
+    }
 
     // implicit cast to TIterable<>
     CONSTEXPR operator TIterable<iterator>() const {
