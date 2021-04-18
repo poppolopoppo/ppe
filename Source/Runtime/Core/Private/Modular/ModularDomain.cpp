@@ -52,7 +52,8 @@ FModularDomain::FModularDomain(const FStringView& name, EModuleUsage usage) NOEX
 :   _name(name)
 ,   _usage(usage)
 ,   _parent(nullptr)
-,   _phaseStatus(0) {
+,   _phaseStatus(0)
+,   _services(name) {
     Assert_NoAssume(not _name.empty());
 }
 //----------------------------------------------------------------------------
@@ -61,7 +62,7 @@ FModularDomain::FModularDomain(const FStringView& name, EModuleUsage usage, FMod
 ,   _usage(usage)
 ,   _parent(&parent)
 ,   _phaseStatus(0)
-,   _services(&parent._services) {
+,   _services(name, &parent._services) {
     Assert_NoAssume(not _name.empty());
 }
 //----------------------------------------------------------------------------
@@ -231,6 +232,8 @@ void FModularDomain::DutyCycle() {
 //----------------------------------------------------------------------------
 void FModularDomain::ReleaseMemory() NOEXCEPT {
     _OnPreReleaseMemory(*this);
+
+    _services.ReleaseMemory();
 
     reverseforeachitem(it, _modules)
         it->second->ReleaseMemory(*this);

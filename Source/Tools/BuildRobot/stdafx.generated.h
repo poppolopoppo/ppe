@@ -56,7 +56,7 @@
 #include "Runtime/Core/Public/IO/TextWriter_fwd.h"
 #include "Runtime/Core/Public/IO/String_fwd.h"
 #include "Runtime/Core/Public/Meta/Cast.h"
-#include "Runtime/Core/Public/Meta/TypeHash.h"
+#include "Runtime/Core/Public/Meta/TypeInfo.h"
 #include "Runtime/Core/Public/Meta/Hash_fwd.h"
 #include "Runtime/Core/Public/Meta/Warnings.h"
 #include "Runtime/Core/Public/Meta/Delete.h"

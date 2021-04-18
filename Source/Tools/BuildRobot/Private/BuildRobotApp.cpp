@@ -13,7 +13,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FBuildRobotApp::FBuildRobotApp(const FModularDomain& domain)
-:   parent_type(domain, L"BuildRobot") {
+:   parent_type(domain, "BuildRobot") {
 }
 //----------------------------------------------------------------------------
 FBuildRobotApp::~FBuildRobotApp() = default;

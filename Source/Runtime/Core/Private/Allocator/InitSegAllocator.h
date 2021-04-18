@@ -4,7 +4,6 @@
 
 #include "Diagnostic/Logger.h"
 #include "Meta/AlignedStorage.h"
-#include "Meta/TypeHash.h"
 #include "Thread/AtomicSpinLock.h"
 
 namespace PPE {
@@ -18,7 +17,7 @@ class FInitSegAllocator : Meta::FNonCopyableNorMovable {
 
     FInitSegAllocator();
 
-    NO_INLINE static void Allocate(FAlloc& alloc) NOEXCEPT;
+    static NO_INLINE void Allocate(FAlloc& alloc) NOEXCEPT;
 
     using deleter_f = void(*)(FAlloc&) NOEXCEPT;
 

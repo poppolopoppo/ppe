@@ -25,7 +25,7 @@ extern void Test_VFS();
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTestApp::FTestApp(const FModularDomain& domain)
-:   parent_type(domain, L"TestApp") {
+:   parent_type(domain, "TestApp") {
 }
 //----------------------------------------------------------------------------
 FTestApp::~FTestApp() = default;

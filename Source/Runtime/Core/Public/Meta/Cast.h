@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Meta/Assert.h"
-#include "Meta/TypeHash.h"
 #include "Meta/TypeTraits.h"
 
 #include <type_traits>

@@ -19,6 +19,7 @@
 #include "Modular/Modular_fwd.h"
 #include "Misc/Event.h"
 #include "Misc/Function.h"
+#include "Thread/AtomicSpinLock.h"
 #include "Time/Timestamp.h"
 #include "Time/TimedScope.h"
 

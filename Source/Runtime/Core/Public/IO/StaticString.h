@@ -53,10 +53,11 @@ struct TBasicStaticString {
     }
 
     CONSTEXPR void Assign(const TBasicStringView<_Char>& str) {
-        Assert(str.size() < _Capacity);
         Len = str.size();
+        if (Len >= _Capacity)
+            Len = _Capacity - 1;
         for (size_t i = 0; i < Len; ++i)
-            Data[i] = str[i]; // constexpr
+            Data[i] = str.data()[i]; // constexpr
         Data[Len] = _Char(0); // null-terminated
     }
 
@@ -90,7 +91,7 @@ struct TBasicStaticString {
     CONSTEXPR bool operator > (const TBasicStaticString& other) const { return other.Less(*this); }
     CONSTEXPR bool operator <=(const TBasicStaticString& other) const { return (not operator > (other)); }
 
-    CONSTEXPR friend hash_t hash_value(const TBasicStaticString& value) { return hash_string(value.Str()); }
+    friend hash_t hash_value(const TBasicStaticString& value) { return hash_string(value.Str()); }
 
     friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicStaticString& str) {
         return oss << str.Str();
