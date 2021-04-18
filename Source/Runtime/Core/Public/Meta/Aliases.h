@@ -40,13 +40,13 @@ typedef int64_t     i64;
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
 #   define PPE_HAS_CXX17 1
 #else
-#   define PPE_HAS_CXX17 0
+#   define PPE_HAS_CXX17 (PPE_HAS_CXX20)
 #endif
 //----------------------------------------------------------------------------
 #if (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
 #   define PPE_HAS_CXX14 1
 #else
-#   define PPE_HAS_CXX14 0
+#   define PPE_HAS_CXX14 (PPE_HAS_CXX20|PPE_HAS_CXX17)
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
