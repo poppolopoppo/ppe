@@ -19,7 +19,7 @@ public:
     ,   _traits(traits)
     {}
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return _data; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_data); }
 
     void* Data() const { return _data; }
     const PTypeTraits& Traits() const { return _traits; }

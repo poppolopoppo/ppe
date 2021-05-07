@@ -43,7 +43,7 @@ public:
 
     bool IsValid() const { return (nullptr != _comObject); }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return _comObject; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_comObject); }
 
     _ComInterface **GetAddressOf();
 

@@ -62,7 +62,7 @@ public:
         :   Barrier(barrier)
         ,   Locked(barrier.TryLock()) {
         }
-        PPE_FAKEBOOL_OPERATOR_DECL() { return (Locked ? this : nullptr); }
+        PPE_FAKEBOOL_OPERATOR_DECL() { return Locked; }
         void Unlock() NOEXCEPT {
             Assert_NoAssume(Locked);
             Barrier.Unlock();

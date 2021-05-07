@@ -69,7 +69,7 @@ public:
     CONSTEXPR T& operator *() const NOEXCEPT { Assert(_ptr); return (*_ptr); }
     CONSTEXPR T* operator ->() const NOEXCEPT { Assert(_ptr); return _ptr; }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return _ptr; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_ptr); }
     bool valid() const { return (!!_ptr); }
 
     CONSTEXPR T* get() const NOEXCEPT { return _ptr; }

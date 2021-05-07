@@ -28,7 +28,7 @@ public:
     bool IsValid() const { return _handle.Flag0(); }
     bool IsSharedResource() const { return _handle.Flag1(); }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return _handle.Get(); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_handle.Get()); }
 
     bool Attach(const wchar_t* path);
     bool Load(const wchar_t* path);

@@ -39,7 +39,7 @@ public:
     }
 #endif
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (_id ? this : nullptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_id); }
 
     FSparseDataId Forget() NOEXCEPT {
         const FSparseDataId result = _id;

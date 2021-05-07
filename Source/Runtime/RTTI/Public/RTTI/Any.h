@@ -51,7 +51,7 @@ public:
     operator FAtom () const { return InnerAtom(); }
 
     bool Valid() const { return _traits.Valid(); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (_traits); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_traits); }
 
     void* Data() { return (_traits ? Data_(_traits->SizeInBytes()) : nullptr); }
     const void* Data() const { return const_cast<FAny*>(this)->Data(); }

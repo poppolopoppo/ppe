@@ -103,7 +103,7 @@ struct PTypeTraits {
     CONSTEXPR explicit PTypeTraits(const ITypeTraits* cpy) NOEXCEPT : PTraits(cpy) {}
 
     bool Valid() const { return (!!PTraits); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return PTraits; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!PTraits); }
 
     CONSTEXPR const ITypeTraits& operator *() const { Assert_NoAssume(Valid()); return *PTraits; }
     CONSTEXPR const ITypeTraits* operator ->() const { Assert_NoAssume(Valid()); return PTraits; }

@@ -101,7 +101,7 @@ struct FFakeBool {
 };
 PPE_ASSERT_TYPE_IS_POD(FFakeBool);
 //----------------------------------------------------------------------------
-#define PPE_FAKEBOOL_OPERATOR_DECL() operator const void* () const NOEXCEPT
+#define PPE_FAKEBOOL_OPERATOR_DECL() explicit operator bool () const NOEXCEPT
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

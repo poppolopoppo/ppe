@@ -21,7 +21,7 @@ struct FParseResult {
     Lexer::FSpan Site;
     Lexer::FSymbol::ETypeId Expected;
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Error ? nullptr : this); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!Error); }
 
     bool Succeed() const { return (Error == nullptr); }
 

@@ -27,7 +27,7 @@ struct TInSituPtr {
     CONSTEXPR TInSituPtr() NOEXCEPT : VTable(NullMagick) {}
 
     CONSTEXPR bool Valid() const { return (VTable != NullMagick); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR T* get() {
         Assert(Valid());

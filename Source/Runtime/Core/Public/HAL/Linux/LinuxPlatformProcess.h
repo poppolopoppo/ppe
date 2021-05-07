@@ -64,7 +64,7 @@ struct FLinuxProcessHandle {
 
     ~FLinuxProcessHandle() { Assert(nullptr == Data.ProcInfo); }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     FLinuxProcessState* ProcInfo() const {
         return (HasPackedPid_(Data.PackedPid) ? nullptr : Data.ProcInfo);

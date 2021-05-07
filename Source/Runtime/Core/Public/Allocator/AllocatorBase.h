@@ -16,7 +16,7 @@ struct NODISCARD FAllocatorBlock {
 
     FAllocatorBlock() = default;
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return Data; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!Data); }
     FRawMemory MakeView() const { return FRawMemory((u8*)Data, SizeInBytes); }
 
     FAllocatorBlock Reset() {

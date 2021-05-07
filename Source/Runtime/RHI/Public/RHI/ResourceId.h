@@ -58,7 +58,7 @@ struct TNamedId {
     CONSTEXPR bool Valid() const { return !!HashValue; }
     CONSTEXPR FStringView MakeView() const { return Name.Str(); }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR friend hash_t hash_value(const TNamedId& id) { return id.HashValue; }
 
@@ -86,7 +86,7 @@ struct TNamedId<_Uid, false> {
     CONSTEXPR bool Valid() const { return !!HashValue; }
     CONSTEXPR FStringView MakeView() const { return FStringView{}; }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR friend hash_t hash_value(const TNamedId& id) { return id.HashValue; }
 
@@ -135,7 +135,7 @@ struct TResourceId {
     explicit CONSTEXPR TResourceId(index_t index, instance_t instanceID) : Index(index), InstanceID(instanceID) {}
 
     CONSTEXPR bool Valid() const { return (Packed != UMax); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR bool operator ==(const TResourceId& other) const { return (Packed == other.Packed); }
     CONSTEXPR bool operator !=(const TResourceId& other) const { return (Packed != other.Packed); }
@@ -166,7 +166,7 @@ struct TResourceWrappedId< TResourceId<_Uid> > {
     explicit CONSTEXPR TResourceWrappedId(id_t id) : Id(id) {}
 
     CONSTEXPR bool Valid() const { return Id.Valid(); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR id_t Get() const { return Id; }
     CONSTEXPR id_t operator *() const { return Id; }

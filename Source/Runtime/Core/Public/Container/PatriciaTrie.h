@@ -147,7 +147,7 @@ public:
     struct iterator {
         const node_type* Node;
         size_type Relative;
-        PPE_FAKEBOOL_OPERATOR_DECL() { return Node; }
+        PPE_FAKEBOOL_OPERATOR_DECL() { return (!!Node); }
         bool HasValue() const {
             return (nullptr != Node &&
                     Node->HasValue() &&

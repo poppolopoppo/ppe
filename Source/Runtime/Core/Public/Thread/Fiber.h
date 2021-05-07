@@ -34,7 +34,7 @@ public:
 
     void Swap(FFiber& other) { std::swap(_pimpl, other._pimpl); }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return _pimpl; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_pimpl); }
 
     bool operator ==(const FFiber& other) const { return _pimpl == other._pimpl; }
     bool operator !=(const FFiber& other) const { return !operator ==(other); }

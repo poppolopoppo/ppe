@@ -148,7 +148,7 @@ public:
 
     PPE_FAKEBOOL_OPERATOR_DECL() {
         const FScopeLock scopeLock(*this);
-        return (_delegates.empty() ? nullptr : this);
+        return _delegates.empty();
     }
 
     void operator ()(_Args... args) {

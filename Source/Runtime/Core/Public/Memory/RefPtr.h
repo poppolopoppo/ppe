@@ -185,7 +185,7 @@ public:
     T& operator *() const { Assert(_ptr); return *_ptr; }
     T* operator ->() const { Assert(_ptr); return _ptr; }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return _ptr; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_ptr); }
     bool valid() const { return (!!_ptr); }
 
     template <typename U>
