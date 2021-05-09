@@ -18,7 +18,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FLinearHeap : Meta::FNonCopyableNorMovable {
+class PPE_CORE_API FLinearHeap : Meta::FNonCopyable {
 #if USE_PPE_MEMORYDOMAINS
 protected:
     friend class FPooledLinearHeap;
@@ -28,6 +28,9 @@ public:
     FLinearHeap() NOEXCEPT;
 #endif
 public:
+
+    FLinearHeap(FLinearHeap&& rvalue) NOEXCEPT;
+    FLinearHeap& operator =(FLinearHeap&& rvalue) = delete;
 
     ~FLinearHeap();
 

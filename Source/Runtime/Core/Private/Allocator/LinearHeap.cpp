@@ -196,6 +196,13 @@ FLinearHeap::FLinearHeap() NOEXCEPT
 {}
 #endif
 //----------------------------------------------------------------------------
+FLinearHeap::FLinearHeap(FLinearHeap&& rvalue) NOEXCEPT
+:   FLinearHeap(*rvalue._trackingData.Parent()) {
+    std::swap(_offset, rvalue._offset);
+    std::swap(_blocks, rvalue._blocks);
+    // note: we don't move the tracking data on purpose
+}
+//----------------------------------------------------------------------------
 FLinearHeap::~FLinearHeap() {
     ReleaseAll();
 #if USE_PPE_MEMORYDOMAINS
