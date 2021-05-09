@@ -60,7 +60,7 @@ struct TFixedSizeHashMapTraits {
 
     static CONSTEXPR value_type EmptyValue() {
         STATIC_ASSERT(Meta::is_pod_v<_Key>);
-        STATIC_ASSERT(Meta::is_pod_v<_Value>);
+        STATIC_ASSERT(Meta::has_trivial_destructor<_Value>::value);
         return MakePair(empty_key::value, Meta::DefaultValue<_Value>());
     }
 };
@@ -73,6 +73,8 @@ public:
     using traits_type = _Traits;
     using key_type = typename traits_type::key_type;
     using value_type = typename traits_type::value_type;
+    STATIC_ASSERT(Meta::has_trivial_destructor<value_type>::value); // #TODO support for non POD ?
+
     using hasher = typename traits_type::hasher;
     using empty_key = typename traits_type::empty_key;
     using key_equal = typename traits_type::key_equal;
@@ -244,7 +246,6 @@ template <typename _Traits, size_t _Capacity>
 TFixedSizeHashTable<_Traits, _Capacity>::~TFixedSizeHashTable() NOEXCEPT {
     // trivial destructor thanks to PODs
     STATIC_ASSERT(_Capacity > 1); // trivial, but who knows...
-    STATIC_ASSERT(Meta::is_pod_v<value_type>); // #TODO support for non POD ?
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
@@ -497,6 +498,12 @@ public:
         const auto it = parent_type::find(key);
         return (parent_type::end() != it ? Meta::MakeOptionalRef(it->second) : Meta::NullRef<const mapped_type>);
     }
+
+    mapped_type& FindOrAdd(const key_type& key) {
+        const auto result = parent_type::insert({ key, Default });
+        return const_cast<mapped_type&>(result.first->second);
+    }
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
