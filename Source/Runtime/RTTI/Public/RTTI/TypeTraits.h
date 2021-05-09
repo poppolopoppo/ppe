@@ -46,7 +46,7 @@ public:
     virtual void Swap(void* lhs, void* rhs) const NOEXCEPT = 0;
 
     NODISCARD virtual bool DeepEquals(const void* lhs, const void* rhs) const = 0;
-    NODISCARD virtual void DeepCopy(const void* src, void* dst) const = 0;
+    virtual void DeepCopy(const void* src, void* dst) const = 0;
 
     NODISCARD virtual bool PromoteCopy(const void* src, const FAtom& dst) const = 0;
     NODISCARD virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT = 0;
