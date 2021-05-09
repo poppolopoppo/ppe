@@ -87,6 +87,13 @@ public: // override new/delete operators for memory tracking
     friend TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args);
 #endif
 
+    // still allows for placement new though
+    static void* operator new(std::size_t, void* p) { return p; }
+    static void operator delete(void*, void*) { }
+
+    static void* operator new[](std::size_t, void* p) { return p; }
+    static void operator delete[](void*, void*) {}
+
 protected:
     friend void AddRef(const FRefCountable* ptr) NOEXCEPT;
     template <typename T>
@@ -121,13 +128,6 @@ protected:
 
 private:
     mutable std::atomic<int> _refCount;
-
-    // still allows inplace new, but only for friends
-    static void* operator new(std::size_t, void* p) { return p; }
-    static void operator delete(void*, void*) { }
-
-    static void* operator new[](std::size_t, void* p) { return p; }
-    static void operator delete[](void*, void*) {}
 
 #if USE_PPE_SAFEPTR
     // for debugging purpose : assert if TSafePtr<> are still tracking that object
@@ -185,8 +185,8 @@ public:
     T& operator *() const { Assert(_ptr); return *_ptr; }
     T* operator ->() const { Assert(_ptr); return _ptr; }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_ptr); }
     bool valid() const { return (!!_ptr); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return valid(); }
 
     template <typename U>
     void Swap(TRefPtr<U>& other) NOEXCEPT;
@@ -204,12 +204,12 @@ template <typename T> struct IsRefPtr : public std::false_type {};
 template <typename T> struct IsRefPtr<TRefPtr<T>> : public std::true_type {};
 //----------------------------------------------------------------------------
 template <typename T>
-hash_t hash_value(const TRefPtr<T>& refPtr) {
+hash_t hash_value(const TRefPtr<T>& refPtr) NOEXCEPT {
     return hash_value(refPtr.get());
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-void swap(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
+void swap(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
@@ -218,22 +218,42 @@ TRefPtr<_Dst> checked_cast(const TRefPtr<_Src>& refptr) NOEXCEPT {
     return { refptr.template as<_Dst>() };
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-bool operator ==(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
-    return (lhs.get() == static_cast<const _Lhs*>(rhs.get()) );
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+bool operator ==(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
+    return (lhs.get() == rhs.get());
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-bool operator !=(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+bool operator !=(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+bool operator ==(const TRefPtr<_Lhs>& lhs, _Rhs* rhs) NOEXCEPT {
+    return (lhs.get() == rhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+bool operator !=(const TRefPtr<_Lhs>& lhs, _Rhs* rhs) NOEXCEPT {
+    return !operator ==(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+bool operator ==(_Lhs* lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
+    return (lhs == rhs.get());
+}
+//----------------------------------------------------------------------------
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+bool operator !=(_Lhs* lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
+    return !operator ==(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
 bool operator <(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
     return (lhs.get() < static_cast<const _Lhs*>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
+template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
 bool operator >=(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
     return !operator <(lhs, rhs);
 }
@@ -332,12 +352,12 @@ TSafePtr<_Dst> checked_cast(const TSafePtr<_Src>& safeptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-bool operator ==(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) {
+bool operator ==(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) NOEXCEPT {
     return (lhs.get() == reinterpret_cast<_Lhs*>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-bool operator !=(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) {
+bool operator !=(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) NOEXCEPT {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
