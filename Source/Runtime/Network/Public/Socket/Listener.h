@@ -54,7 +54,7 @@ public:
             if (Succeed)
                 Listener.Disconnect();
         }
-        operator bool() const {
+        explicit operator bool() const NOEXCEPT {
             return Succeed;
         }
     };

@@ -453,7 +453,7 @@ void FWindowsPlatformNotification::Start() {
     Verify(SUCCEEDED(::CoInitialize(NULL)));
 
     {
-        Assert(NULL == GWindowsTaskBar_);
+        Assert(not GWindowsTaskBar_);
 
         const FAtomicSpinLock::FScope scopeLock(WindowsTaskBarCS_());
 

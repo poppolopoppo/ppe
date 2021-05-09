@@ -213,11 +213,11 @@ void DeepCopyObject(const IScalarTraits& , const PMetaObject& src, PMetaObject& 
     if (src == dst) {
         return;
     }
-    else if (nullptr == src) {
+    else if (nullptr == src.get()) {
         dst = nullptr;
         return;
     }
-    else if (nullptr == dst) {
+    else if (nullptr == dst.get()) {
         Verify(src->RTTI_Class()->CreateInstance(dst, false/* don't reset since we deep copy */));
     }
 

@@ -213,7 +213,7 @@ bool FMetaFunction::PromoteInvoke_(
     bool succeed = true;
 
     if (resultPromotion) {
-        Assert(nativeResult != result);
+        Assert(nativeResult.Data() != result.Data());
 
         if (not nativeResult.PromoteMove(result)) {
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
@@ -229,7 +229,7 @@ bool FMetaFunction::PromoteInvoke_(
 
     forrange(i, 0, _parameters.size()) {
         FAtom& arg = nativeArgs[i];
-        if (arg != arguments[i]) {
+        if (arg.Data() != arguments[i].Data()) {
             if (not arg.PromoteMove(arguments[i])) {
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
                 LOG(RTTI, Warning, L"wrong type for argument #{1} {2} instead of {3} when calling {0}",

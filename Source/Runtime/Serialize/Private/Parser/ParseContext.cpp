@@ -48,7 +48,7 @@ const FParseContext* FParseContext::GlobalScope() const {
 }
 //----------------------------------------------------------------------------
 void FParseContext::SetScopeObject(RTTI::FMetaObject *object) {
-    Assert(object != _scopeObject);
+    Assert(_scopeObject.get() != object);
     _scopeObject = object;
 }
 //----------------------------------------------------------------------------
@@ -83,7 +83,7 @@ void FParseContext::RemoveLocal(const FParseExpression* expr, const RTTI::FName&
     if (_localScope.end() == it)
         PPE_THROW_IT(FParserException("failed to remove unknown local variable", expr));
 
-    if (it->second != value)
+    if (it->second.Data() != value.Data())
         PPE_THROW_IT(FParserException("failed to remove local variable with wrong value", expr));
 
     _localScope.erase(it);
@@ -111,7 +111,7 @@ void FParseContext::RemoveGlobal(const FParseExpression* expr, const RTTI::FName
     if (gbl->_localScope.end() == it)
         PPE_THROW_IT(FParserException("failed to remove unknown global variable", expr));
 
-    if (it->second != value)
+    if (it->second.Data() != value.Data())
         PPE_THROW_IT(FParserException("failed to remove global variable with wrong value", expr));
 
     gbl->_localScope.erase(it);

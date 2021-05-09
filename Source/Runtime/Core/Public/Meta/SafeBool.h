@@ -28,7 +28,7 @@ protected:
     ~TSafeBoolImpl() = default;
 
 public:
-    operator bool_type () const {
+    explicit operator bool_type () const {
         return static_cast<const T*>(this)->boolean_test()
             ? &FSafeBoolBase::this_type_does_not_support_comparisons
             : nullptr;
@@ -42,7 +42,7 @@ protected:
     virtual bool boolean_test() const=0;
 
 public:
-    operator bool_type () const {
+    explicit operator bool_type () const {
         return boolean_test()
             ? &FSafeBoolBase::this_type_does_not_support_comparisons
             : nullptr;

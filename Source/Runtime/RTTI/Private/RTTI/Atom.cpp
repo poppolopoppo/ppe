@@ -26,7 +26,7 @@ void* FAtom::Cast(const PTypeTraits& to) const {
 }
 //----------------------------------------------------------------------------
 bool FAtom::Equals(const FAtom& other) const {
-    return _traits->Equals(*this, other);
+    return _traits->Equals(Data(), other.Data());
 }
 //----------------------------------------------------------------------------
 void FAtom::Copy(const FAtom& dst) const {
@@ -50,7 +50,7 @@ bool FAtom::DeepCopy(const FAtom& dst) const {
         _traits->DeepCopy(_data, dst.Data());
         return true;
     }
-    return true;
+    return false;
 }
 //----------------------------------------------------------------------------
 FString FAtom::ToString() const {

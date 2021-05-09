@@ -255,7 +255,7 @@ bool TObjectTraits<T>::IsDefaultValue(const void* data) const NOEXCEPT {
     Assert(data);
 
     const PMetaObject& pobj = (*static_cast<const PMetaObject*>(data));
-    return(nullptr == pobj);
+    return(not pobj);
 }
 //----------------------------------------------------------------------------
 template <typename T>

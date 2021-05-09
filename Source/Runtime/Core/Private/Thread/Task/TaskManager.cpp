@@ -496,7 +496,7 @@ FTaskManager::FTaskManager(const FStringView& name, size_t threadTag, size_t wor
 }
 //----------------------------------------------------------------------------
 FTaskManager::~FTaskManager() {
-    Assert(nullptr == _pimpl);
+    Assert(not _pimpl);
 }
 //----------------------------------------------------------------------------
 bool FTaskManager::IsRunning() const NOEXCEPT {
@@ -510,7 +510,7 @@ void FTaskManager::Start() {
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Start(const TMemoryView<const u64>& threadAffinities) {
-    Assert(nullptr == _pimpl);
+    Assert(not _pimpl);
 
     LOG(Task, Info, L"start manager <{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
@@ -519,7 +519,7 @@ void FTaskManager::Start(const TMemoryView<const u64>& threadAffinities) {
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Shutdown() {
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     LOG(Task, Info, L"shutdown manager <#{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
@@ -529,28 +529,28 @@ void FTaskManager::Shutdown() {
 //----------------------------------------------------------------------------
 ITaskContext* FTaskManager::Context() const {
     Assert(FFiber::IsInFiber());
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     return _pimpl.get();
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert(rtask);
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     _pimpl->Run(nullptr, std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not rtasks.empty());
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     _pimpl->Run(nullptr, rtasks, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not tasks.empty());
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     _pimpl->Run(nullptr, tasks, priority);
 }
@@ -558,28 +558,28 @@ void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority 
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert(rtask);
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     _pimpl->Run(ap, std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FAggregationPort& ap, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not rtasks.empty());
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     _pimpl->Run(ap, rtasks, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FAggregationPort& ap, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not tasks.empty());
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     _pimpl->Run(ap, tasks, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(rtask);
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     if (FFiber::IsInFiber())
         _pimpl->RunAndWaitFor(std::move(rtask), priority);
@@ -589,7 +589,7 @@ void FTaskManager::RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority /* = 
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not rtasks.empty());
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     if (FFiber::IsInFiber())
         _pimpl->RunAndWaitFor(rtasks, priority);
@@ -603,7 +603,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
     Assert_NoAssume(not FFiber::IsInFiber());
     Assert_NoAssume(not rtasks.empty());
     Assert(whileWaiting);
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     auto waitfor = [rtasks, &whileWaiting, priority](ITaskContext& ctx) {
         FCompletionPort port;
@@ -622,7 +622,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not tasks.empty());
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     auto waitfor = [tasks, priority](ITaskContext& ctx) {
         ctx.RunAndWaitFor(tasks, priority);
@@ -643,7 +643,7 @@ void FTaskManager::RunInWorker(FTaskFunc&& rtask, ETaskPriority priority /* = ET
 //----------------------------------------------------------------------------
 void FTaskManager::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority/* = ETaskPriority::Normal */) const {
     Assert_NoAssume(rtask);
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     if (FFiber::IsInFiber())
         AssertNotImplemented(); // not easily done inside fibers because of mutex locking used atm
@@ -652,7 +652,7 @@ void FTaskManager::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority
 }
 //----------------------------------------------------------------------------
 void FTaskManager::WaitForAll() const {
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     if (FFiber::IsInFiber())
         AssertNotImplemented(); // not easily done inside fibers because of mutex locking used atm
@@ -661,7 +661,7 @@ void FTaskManager::WaitForAll() const {
 }
 //----------------------------------------------------------------------------
 bool FTaskManager::WaitForAll(int timeoutMS) const {
-    Assert(nullptr != _pimpl);
+    Assert(_pimpl);
 
     if (FFiber::IsInFiber())
         _pimpl->RunAndWaitFor(&FWaitForTask_::DoNothing, ETaskPriority::Internal);

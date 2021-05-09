@@ -33,7 +33,7 @@ struct TOptional {
     T operator *() const { Assert(_hasValue); return *data_(); }
     const T* operator ->() const { Assert(_hasValue); return data_(); }
 
-    operator bool() const { return _hasValue; }
+    explicit operator bool() const { return _hasValue; }
 
     bool has_value() const { return _hasValue; }
     void reset() { _hasValue = false; }
