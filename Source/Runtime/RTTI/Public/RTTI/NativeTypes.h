@@ -234,13 +234,13 @@ CONSTEXPR PTypeTraits MakeCommonType(const PTypeTraits& other) {
 
     switch (other->TypeId()) {
 #define DECL_NATIVETYPE_COMMONTYPE(_Name, _Other, _TypeId) \
-case _TypeId: \
-IF_CONSTEXPR( Meta::has_common_type_v<T, _Other> ) \
-return MakeTraits< typename std::common_type<T, _Other>::type >(); \
-break;
+    case _TypeId: \
+        IF_CONSTEXPR( Meta::has_common_type_v<T, _Other> ) \
+            return MakeTraits< typename std::common_type<T, _Other>::type >(); \
+        break;
         FOREACH_RTTI_NATIVETYPES(DECL_NATIVETYPE_COMMONTYPE)
     #undef DECL_NATIVETYPE_COMMONTYPE
-        }
+    }
 
     return PTypeTraits{};
 }
