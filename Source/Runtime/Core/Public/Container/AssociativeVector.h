@@ -125,6 +125,7 @@ public:
 
     _Value& Add(_Key&& rkey);
     _Value& Add(const _Key& key);
+    _Value& FindOrAdd(const _Key& key);
 
     iterator Find(const _Key& key);
     iterator FindOrAdd(const _Key& key, bool* pAdded);

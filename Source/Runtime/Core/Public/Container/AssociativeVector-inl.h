@@ -95,6 +95,13 @@ _Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Add(const _Key& key
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+_Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindOrAdd(const _Key& key) {
+    bool added;
+    const auto it = FindOrAdd(key, &added);
+    return it->second;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) -> iterator {
     return std::find_if(std::begin(_vector), std::end(_vector), [&key](const value_type& it) {
         return key_equal()(it.first, key);
