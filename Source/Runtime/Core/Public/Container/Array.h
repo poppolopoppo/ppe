@@ -78,7 +78,7 @@ struct TStaticArray {
     }
 
     CONSTEXPR inline friend hash_t hash_value(const TStaticArray& arr) {
-        return hash_fwdit_constexpr(arr.Data, arr.Data + _Dim);
+        return hash_mem_constexpr(arr.Data, _Dim);
     }
 };
 //----------------------------------------------------------------------------
