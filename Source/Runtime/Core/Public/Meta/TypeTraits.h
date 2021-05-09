@@ -35,10 +35,14 @@ struct FNonCopyable {
     FNonCopyable() NOEXCEPT = default;
     FNonCopyable(const FNonCopyable&) = delete;
     FNonCopyable& operator =(const FNonCopyable&) = delete;
+    FNonCopyable(FNonCopyable&&) = default;
+    FNonCopyable& operator =(FNonCopyable&&) = default;
 };
 //----------------------------------------------------------------------------
 struct FNonMovable {
     FNonMovable() NOEXCEPT = default;
+    FNonMovable(const FNonMovable&) = default;
+    FNonMovable& operator =(const FNonMovable&) = default;
     FNonMovable(FNonMovable&&) = delete;
     FNonMovable& operator =(FNonMovable&&) = delete;
 };
@@ -171,23 +175,23 @@ CONSTEXPR const T* MakeOptionalRef(const T* cptr) { return cptr; }
 // is_pod_type(T*) can be overloaded for specific types, respects ADL
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR bool is_pod_type(T*) NOEXCEPT { return std::is_pod_v<T>; }
+CONSTEXPR bool is_pod_type(T*) NOEXCEPT { return std::is_trivial_v<T> && std::is_standard_layout_v<T>; }
 template <typename T>
 CONSTEXPR bool is_pod_v{ is_pod_type(static_cast<T*>(nullptr)) };
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_constructor = std::bool_constant<is_pod_v<T> || std::is_trivially_constructible<T>::value >;
+using has_trivial_constructor = std::bool_constant<std::is_trivially_constructible<T>::value || is_pod_v<T> >;
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_destructor = std::bool_constant<is_pod_v<T> || std::is_trivially_destructible<T>::value >;
+using has_trivial_destructor = std::bool_constant<std::is_trivially_destructible<T>::value || is_pod_v<T> >;
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_copy = std::bool_constant<is_pod_v<T> || (
-    std::is_trivially_copy_constructible_v<T> && std::is_trivially_copy_assignable_v<T>)>;
+using has_trivial_copy = std::bool_constant<(std::is_trivially_copy_constructible_v<T> && std::is_trivially_copy_assignable_v<T>) ||
+    is_pod_v<T> >;
 //----------------------------------------------------------------------------
 template <typename T>
-using has_trivial_move = std::bool_constant<is_pod_v<T> || (
-    std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value)>;
+using has_trivial_move = std::bool_constant<(std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value) ||
+    is_pod_v<T> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -281,7 +285,7 @@ std::true_type has_defined_(int);
 template <template<class> class _Using, typename T>
 std::false_type has_defined_(...);
 template <typename T>
-using get_type_t_ = typename T::value_type;
+using get_type_t_ = typename T::type;
 } //!details
 //----------------------------------------------------------------------------
 template <template<class> class _Using, typename T>
