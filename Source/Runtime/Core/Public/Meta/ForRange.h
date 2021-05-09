@@ -115,14 +115,25 @@ constexpr auto static_for(F f) {
 * Example usage 2:
 *       PP_COUNT_ARGS() // expanded as 0
 */
-#if defined(_MSC_VER) && not defined(__clang__)
-#   if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
-#       define PP_NUM_ARGS(...) \
-    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA(unused, ##__VA_ARGS__), 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
-#   else // should work with every compiler supporting C++20 thanks to new __VA_OPT__()
-#       define PP_NUM_ARGS(...) \
+// https://stackoverflow.com/questions/48045470/portably-detect-va-opt-support
+// https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
+#if __cplusplus <= 201703 && defined __GNUC__ \
+    && !defined __clang__ && !defined __EDG__ // These compilers pretend to be GCC
+#   define PPE_VA_OPT_SUPPORTED false
+#elif defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
+#   define PPE_VA_OPT_SUPPORTED false
+#else
+#   define PPE_THIRD_ARG(a,b,c,...) c
+#   define PPE_VA_OPT_SUPPORTED_I(...) PPE_THIRD_ARG(__VA_OPT__(,),true,false,)
+#   define PPE_VA_OPT_SUPPORTED PPE_VA_OPT_SUPPORTED_I(?)
+#endif
+#if PPE_VA_OPT_SUPPORTED
+// should work with every compiler supporting C++20 thanks to new __VA_OPT__()
+#   define PP_NUM_ARGS(...) \
     EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0) )
-#   endif
+#elif defined(_MSC_VER) && not defined(__clang__)
+#   define PP_NUM_ARGS(...) \
+    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA(unused, ##__VA_ARGS__), 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
 #else
 #   define PP_NUM_ARGS(...) \
     EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0, error) )

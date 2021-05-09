@@ -8,8 +8,9 @@ require_once '../../Utils/Prerequisite.rb'
 module Build
 
     persistent_switch(:ASAN, 'Use VisualStudio Address Sanitizer (ASAN)', init: false)
-    persistent_switch(:StaticCRT, 'Use VisualStudio static CRT (/MT vs /MD)', init: false)
     persistent_switch(:PerfSDK, 'Use VisualStudio performance tools', init: true)
+    persistent_switch(:StaticCRT, 'Use VisualStudio static CRT (/MT vs /MD)', init: false)
+    persistent_switch(:TraditionalPP, 'Use VisualStudio traditional preprocessor (omit /Zc:preprocessor)', init: false)
 
     # https://developercommunity.visualstudio.com/content/problem/552999/fatal-error-c1090-pdb-api-call-failed-error-code-3.html
     # https://developercommunity.visualstudio.com/content/problem/48897/c1090-pdb-api-call-failed-error-code-23.html
@@ -527,8 +528,10 @@ module Build
         end
 
         # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
-        # TODO: disabled since there is no support for __VA_OPT__(x), and it's necessary to handle some funky macros
-        # compilationFlag!('/experimental:preprocessor')
+        # UPDATE: https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
+        unless Build.TraditionalPP
+            compilationFlag!('/Zc:preprocessor')
+        end
     end
 
 
