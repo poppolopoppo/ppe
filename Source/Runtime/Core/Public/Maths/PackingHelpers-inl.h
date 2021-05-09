@@ -79,6 +79,40 @@ u32 FloatM11_to_UWord(float value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <u32 _Bits>
+float ScaleUNorm(u32 value) {
+    STATIC_ASSERT(_Bits <= 32);
+    FP32 bits{ 0 };
+    bits.Exponent = (127 + _Bits);
+    return Clamp(static_cast<float>(value) / (bits.f - 1.0f), 0.0f, 1.0f);
+}
+//----------------------------------------------------------------------------
+template <u32 _Bits>
+float ScaleSNorm(i32 value) {
+    STATIC_ASSERT(_Bits <= 32);
+    FP32 bits{ 0 };
+    bits.Exponent = (126 + _Bits);
+    return Clamp(static_cast<float>(value) / (bits.f - 1.0f), -1.0f, 1.0f);
+}
+//----------------------------------------------------------------------------
+template <u32 _Bits>
+u32 UnscaleUNorm(float value) {
+    STATIC_ASSERT(_Bits <= 32);
+    FP32 bits{ 0 };
+    bits.Exponent = (127 + _Bits);
+    return static_cast<u32>(value * (bits.f - 1.0f));
+}
+//----------------------------------------------------------------------------
+template <u32 _Bits>
+i32 UnscaleSNorm(float value) {
+    STATIC_ASSERT(_Bits <= 32);
+    FP32 bits{ 0 };
+    bits.Exponent = (126 +_Bits);
+    return static_cast<i32>(value * (bits.f - 1.0f));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 void FHalfFloat::Pack(float value) {
     Assert(IsConvertible(value));
     _data = FP32_to_FP16(value);

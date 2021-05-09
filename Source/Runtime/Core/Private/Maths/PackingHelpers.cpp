@@ -9,29 +9,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-    // https://gist.github.com/rygorous/2156668
-
-    union FP32 {
-        u32 u;
-        float f;
-        struct ieee {
-            u32 Mantissa    : 23;
-            u32 Exponent    : 8;
-            u32 Sign        : 1;
-        };
-    };
-
-    union FP16 {
-        u16 u;
-        struct ieee {
-            u16 Mantissa    : 10;
-            u16 Exponent    : 5;
-            u16 Sign        : 1;
-        };
-    };
-} //!namespace
-//----------------------------------------------------------------------------
 float FP16_to_FP32(u16 value) {
     static constexpr FP32 magic = { 113 << 23 };
     static constexpr u32 shifted_exp = 0x7c00 << 13; // exponent mask after shift

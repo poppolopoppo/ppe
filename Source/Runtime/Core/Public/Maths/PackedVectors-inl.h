@@ -69,8 +69,6 @@ inline TScalarVector<float, 4> UX10Y10Z10W2N::Unpack() const {
     return TScalarVector<float, 4>(xyz, w/1.5f - 1.f);
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 inline UX10Y10Z10W2N BarycentricLerp(const UX10Y10Z10W2N& v0, const UX10Y10Z10W2N& v1, const UX10Y10Z10W2N& v2, float f0, float f1, float f2) {
     return BarycentricLerp(v0.Unpack(), v1.Unpack(), v2.Unpack(), f0, f1, f2);
 }
@@ -105,46 +103,138 @@ inline UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(float x, float y, float z, u8 w) 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<FHalfFloat, _Dim> HalfPack(const TScalarVector<float, _Dim>& value) {
-    TScalarVector<FHalfFloat, _Dim> result;
-    for (size_t i = 0; i < _Dim; ++i)
-        result._data[i].Pack(value._data[i]);
+inline void UX11Y11Z10::Pack(const float3& xyz) {
+    FP32 bits;
+
+    bits.f = xyz.x;
+    Assert(bits.f >= 0.0f);
+    _r_m = bits.Mantissa >> (23 - 6);
+    _r_e = bits.Exponent - (127 - 15);
+
+    bits.f = xyz.y;
+    Assert(bits.f >= 0.0f);
+    _g_m = bits.Mantissa >> (23 - 6);
+    _g_e = bits.Exponent - (127 - 15);
+
+    bits.f = xyz.z;
+    Assert(bits.f >= 0.0f);
+    _b_m = bits.Mantissa >> (23 - 5);
+    _b_e = bits.Exponent - (127 - 15);
+}
+//----------------------------------------------------------------------------
+inline float3 UX11Y11Z10::Unpack() const {
+    FP32 bits;
+    bits.Sign = 0;
+
+    float3 result;
+
+    bits.Mantissa = _r_m << (23 - 6);
+    bits.Exponent = _r_e + (127 - 15);
+    result.x = bits.f;
+
+    bits.Mantissa = _g_m << (23 - 6);
+    bits.Exponent = _g_e + (127 - 15);
+    result.y = bits.f;
+
+    bits.Mantissa = _b_m << (23 - 5);
+    bits.Exponent = _b_e + (127 - 15);
+    result.z = bits.f;
+
     return result;
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<float, _Dim> HalfUnpack(const TScalarVector<FHalfFloat, _Dim>& value) {
-    TScalarVector<float, _Dim> result;
-    for (size_t i = 0; i < _Dim; ++i)
-        result._data[i] = value._data[i].Unpack();
+inline UX11Y11Z10 BarycentricLerp(const UX11Y11Z10& v0, const UX11Y11Z10& v1, const UX11Y11Z10& v2, float f0, float f1, float f2) {
+    return Float_to_UX11Y11Z10(BarycentricLerp(
+        v0.Unpack(),
+        v1.Unpack(),
+        v2.Unpack(),
+        f0, f1, f2 ));
+}
+//----------------------------------------------------------------------------
+inline UX11Y11Z10 BarycentricLerp(const UX11Y11Z10& v0, const UX11Y11Z10& v1, const UX11Y11Z10& v2, const float3& uvw) {
+    return BarycentricLerp(v0, v1, v2, uvw.x, uvw.y, uvw.z);
+}
+//----------------------------------------------------------------------------
+inline UX11Y11Z10 Lerp(const UX11Y11Z10& v0, const UX11Y11Z10& v1, float f) {
+    return Float_to_UX11Y11Z10(Lerp(
+        v0.Unpack(),
+        v1.Unpack(),
+        f ));
+}
+//----------------------------------------------------------------------------
+inline UX11Y11Z10 Float_to_UX11Y11Z10(const float3& xyz) {
+    UX11Y11Z10 result;
+    result.Pack(xyz);
     return result;
+}
+//----------------------------------------------------------------------------
+inline UX11Y11Z10 Float_to_UX11Y11Z10(float x, float y, float z) {
+    return Float_to_UX11Y11Z10(float3{ x, y, z });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<u16, _Dim> FP32_to_FP16(const TScalarVector<float, _Dim>& value) {
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<u16, _Dim> {
+        return { FP32_to_FP16(value.template get<idx>())... };
+    });
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<float, _Dim> FP16_to_FP32(const TScalarVector<u16, _Dim>& value) {
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
+        return { FP16_to_FP32(value.template get<idx>())... };
+    });
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<FHalfFloat, _Dim> HalfPack(const TScalarVector<float, _Dim>& value) {
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<FHalfFloat, _Dim> {
+        return { FHalfFloat{ value.template get<idx>() }... };
+    });
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<float, _Dim> HalfUnpack(const TScalarVector<FHalfFloat, _Dim>& value) {
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
+        return { value.template get<idx>().Unpack()... };
+    });
+}
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<TUNorm<T>, _Dim> UNormPack(const TScalarVector<float, _Dim>& value) {
-    TScalarVector<TUNorm<T>, _Dim> result;
-    for (size_t i = 0; i < _Dim; ++i)
-        result._data[i].SetNormalized(value._data[i]);
-    return result;
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<TUNorm<T>, _Dim> {
+        return { TUNorm<T>{ value.template get<idx>() }... };
+    });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<TSNorm<T>, _Dim> SNormPack(const TScalarVector<float, _Dim>& value) {
-    TScalarVector<TSNorm<T>, _Dim> result;
-    for (size_t i = 0; i < _Dim; ++i)
-        result._data[i].SetNormalized(value._data[i]);
-    return result;
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<TSNorm<T>, _Dim> {
+        return { TSNorm<T>{ value.template get<idx>() }... };
+    });
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename T, size_t _Dim>
 TScalarVector<float, _Dim> NormUnpack(const TScalarVector<TBasicNorm<T, _Traits>, _Dim>& value) {
-    TScalarVector<float, _Dim> result;
-    for (size_t i = 0; i < _Dim; ++i)
-        result._data[i] = value._data[i].Normalized();
-    return result;
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
+        return { value.template get<idx>().Normalized()... };
+    });
+}
+//----------------------------------------------------------------------------
+template <u32 _Bits, typename T, size_t _Dim>
+TScalarVector<float, _Dim> ScaleUNorm(const TScalarVector<u32, _Dim>& value) {
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
+        return { ScaleUNorm<_Bits>(value.template get<idx>())... };
+    });
+}
+//----------------------------------------------------------------------------
+template <u32 _Bits, typename T, size_t _Dim>
+TScalarVector<float, _Dim> ScaleSNorm(const TScalarVector<i32, _Dim>& value) {
+    return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
+        return { ScaleSNorm<_Bits>(value.template get<idx>())... };
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
