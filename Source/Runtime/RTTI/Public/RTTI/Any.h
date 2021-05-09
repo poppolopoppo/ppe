@@ -104,7 +104,7 @@ public:
     inline friend bool operator !=(const FAny& lhs, const FAny& rhs) { return (not operator ==(lhs, rhs)); }
 
     hash_t HashValue() const;
-    inline friend hash_t hash_value(FAny& value) NOEXCEPT { return value.HashValue(); }
+    inline friend hash_t hash_value(const FAny& value) NOEXCEPT { return value.HashValue(); }
 
     void Swap(FAny& other);
     inline friend void swap(FAny& lhs, FAny& rhs) NOEXCEPT { lhs.Swap(rhs); }
