@@ -40,16 +40,18 @@ public:
     };
 
     TThreadSafe() = default;
-    ~TThreadSafe() {
 #if USE_PPE_ASSERT
+    ~TThreadSafe() {
         Verify(_barrierRW.TryLockWrite()); // has write lock(s) -> race condition !
-#endif
     }
+#endif
 
     explicit TThreadSafe(const T& value) : _value(value) {}
     explicit TThreadSafe(T&& rvalue) NOEXCEPT : _value(std::move(rvalue)) {}
 
-    TThreadSafe(TThreadSafe&& ) = default;
+    TThreadSafe(TThreadSafe&& rvalue) NOEXCEPT {
+        _value = std::move(rvalue.LockShared().Value());
+    }
     TThreadSafe& operator =(TThreadSafe&& ) = delete;
 
     FSharedLock LockShared() const { return FSharedLock(*this); }
