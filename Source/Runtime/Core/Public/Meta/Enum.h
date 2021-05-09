@@ -48,8 +48,13 @@ CONSTEXPR bool EnumXor(_Enum lhs, _Enum rhs) {
 }
 //----------------------------------------------------------------------------
 template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
+CONSTEXPR bool EnumHas(_Enum lhs, TEnumOrd<_Enum> rhs) {
+    return ((EnumOrd(lhs) & rhs) == rhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
 CONSTEXPR bool EnumHas(_Enum lhs, _Enum rhs) {
-    return ((EnumOrd(lhs) & EnumOrd(rhs)) == EnumOrd(rhs));
+    return EnumHas(lhs, EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
 template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
