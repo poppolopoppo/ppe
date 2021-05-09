@@ -54,6 +54,7 @@
     - override from the commande line  } could generate a RTTI dynamic object
     - override from the console        } with all properties
 - [ ] RTTI dynamic metaclass/metaobject ?
+    - https://godbolt.org/z/aTvhaevoG
     - long time goal, some limitations with current code
         - may not be possible to remove a field ? since we use static offsets
 - [ ] Fast dynamic dispatch by hacking VTable: https://medium.com/@calebleak/fast-virtual-functions-hacking-the-vtable-for-fun-and-profit-25c36409c5e0
@@ -64,6 +65,7 @@
     - https://www.youtube.com/watch?v=-_IspRG548E
     - Physics for game programmer: https://www.youtube.com/watch?v=7_nKOET6zwI
     - Liquid Crystal Demo: https://kotsoft.itch.io/liquid-crystal-pre-alpha
+    - https://www.shadertoy.com/view/XdGGWD
 
 ## ECS
 
@@ -74,6 +76,10 @@
     - https://bitsquid.blogspot.com/2014/10/building-data-oriented-entity-system_10.html
 - [ ] RustConf 2018: Using Rust for GameDev (with proposed ECS)
     - https://www.youtube.com/watch?v=aKLntZcp27M
+- [ ] EnTT : ECS with modern C++ (used by Mojang)
+    - https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system
+    - https://github.com/skypjack/entt/wiki/Crash-Course:-cooperative-scheduler
+    - https://github.com/skypjack/entt/wiki/Crash-Course:-runtime-reflection-system
 
 > Note that TSparseArray<> is already a generational index array :)
 
