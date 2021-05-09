@@ -43,52 +43,91 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    typedef typename std::random_access_iterator_tag iterator_category;
+    typedef typename std::forward_iterator_tag iterator_category;
 
-    TRingBuffer();
-    TRingBuffer(pointer storage, size_type capacity);
-    explicit TRingBuffer(const TMemoryView<T>& storage);
-    ~TRingBuffer() { clear(); }
+    class FIterator {
+        CONSTEXPR FIterator(const TRingBuffer& owner, size_type pos) : RingBuffer(&owner), Pos(pos) {}
+    public:
+        using value_type = value_type;
+        using pointer = pointer;
+        using reference = reference;
+        using iterator_category = iterator_category;
 
-    size_type capacity() const { return _capacity; }
-    size_type size() const { return _size; }
-    bool empty() const { return (0 == _size); }
-    pointer data() const { return _storage; }
+        const TRingBuffer* RingBuffer{ nullptr };
+        size_t Pos{ INDEX_NONE };
 
-    pointer push_back_Uninitialized();
+        FIterator() = default;
+        FIterator(const FIterator& ) = default;
+        FIterator& operator =(const FIterator& ) = default;
+        FIterator(FIterator&& ) = default;
+        FIterator& operator =(FIterator&& ) = default;
+
+        FIterator& operator++() /* prefix */ { Pos = (++Pos % RingBuffer->_capacity); return (*this); }
+        FIterator operator++(int) /* postfix */ {
+            FIterator tmp(*this);
+            ++(*this);
+            return tmp;
+        }
+
+        CONSTEXPR pointer operator->() const { return std::addressof(RingBuffer->at(Pos)); }
+        CONSTEXPR reference operator*() const { return RingBuffer->at(Pos); }
+
+        CONSTEXPR bool operator ==(const FIterator& other) const { Assert(RingBuffer == other.RingBuffer);  return (Pos == other.Pos); }
+        CONSTEXPR bool operator !=(const FIterator& other) const { return (not operator ==(other)); }
+
+    };
+
+    using iterator = FIterator;
+
+    CONSTEXPR TRingBuffer();
+    CONSTEXPR TRingBuffer(pointer storage, size_type capacity);
+    CONSTEXPR explicit TRingBuffer(const TMemoryView<T>& storage);
+    ~TRingBuffer() NOEXCEPT { clear(); }
+
+    CONSTEXPR size_type capacity() const { return _capacity; }
+    CONSTEXPR size_type size() const { return _size; }
+    CONSTEXPR bool empty() const { return (0 == _size); }
+    CONSTEXPR pointer data() const { return _storage; }
+
+    CONSTEXPR pointer push_back_Uninitialized();
     template <typename _Arg0, typename... _Args>
-    void push_back(_Arg0&& arg0, _Args&&... args);
+    CONSTEXPR void push_back(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
-    bool push_back_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args);
+    NODISCARD CONSTEXPR bool push_back_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args);
 
-    pointer push_front_Uninitialized();
+    CONSTEXPR pointer push_front_Uninitialized();
     template <typename _Arg0, typename... _Args>
-    void push_front(_Arg0&& arg0, _Args&&... args);
+    CONSTEXPR void push_front(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
-    bool push_front_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args);
+    NODISCARD CONSTEXPR bool push_front_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args);
 
-    bool pop_front(pointer pvalue);
-    bool pop_back(pointer pvalue);
+    NODISCARD CONSTEXPR bool pop_front(pointer pvalue);
+    CONSTEXPR void pop_front_AssumeNotEmpty(pointer pvalue);
+    NODISCARD CONSTEXPR bool pop_back(pointer pvalue);
+    CONSTEXPR void pop_back_AssumeNotEmpty(pointer pvalue);
 
     template <typename _Arg0, typename... _Args>
-    void Queue(_Arg0&& arg0, _Args&&... args) { push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...); }
+    CONSTEXPR void Queue(_Arg0&& arg0, _Args&&... args) { push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...); }
     template <typename _Arg0, typename... _Args>
-    bool Queue_OverflowIFN(_Arg0&& arg0, _Args&&... args) { return push_back_OverflowIFN(nullptr, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...); }
-    bool Dequeue(pointer pvalue) { return pop_front(pvalue); }
+    NODISCARD CONSTEXPR bool Queue_OverflowIFN(_Arg0&& arg0, _Args&&... args) { return push_back_OverflowIFN(nullptr, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...); }
+    NODISCARD CONSTEXPR bool Dequeue(pointer pvalue) { return pop_front(pvalue); }
 
-    reference front() { Assert(_size); return _storage[_begin]; }
-    reference back() { return at(_size - 1); }
+    CONSTEXPR FIterator begin() const { return FIterator(*this, _begin); }
+    CONSTEXPR FIterator end() const { return FIterator(*this, (_begin + _size) % _capacity); }
 
-    const_reference front() const { Assert(_size); return _storage[_begin]; }
-    const_reference back() const { return at(_size - 1); }
+    CONSTEXPR reference front() { Assert(_size); return _storage[_begin]; }
+    CONSTEXPR reference back() { return at(_size - 1); }
 
-    reference at(size_t index) { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
-    const_reference at(size_t index) const { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
+    CONSTEXPR const_reference front() const { Assert(_size); return _storage[_begin]; }
+    CONSTEXPR const_reference back() const { return at(_size - 1); }
 
-    reference operator [](size_t index) { return at(index); }
-    const_reference operator [](size_t index) const { return at(index); }
+    CONSTEXPR reference at(size_t index) { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
+    CONSTEXPR const_reference at(size_t index) const { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
 
-    void clear();
+    CONSTEXPR reference operator [](size_t index) { return at(index); }
+    CONSTEXPR const_reference operator [](size_t index) const { return at(index); }
+
+    CONSTEXPR void clear();
 
     void Swap(TRingBuffer& other);
 
@@ -101,21 +140,21 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-TRingBuffer<T, _IsPod>::TRingBuffer()
+CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer()
 :   _begin(0), _size(0), _capacity(0), _storage(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-TRingBuffer<T, _IsPod>::TRingBuffer(pointer storage, size_type capacity)
+CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer(pointer storage, size_type capacity)
 :   _begin(0), _size(0), _capacity(capacity), _storage(storage) {
     Assert(0 == _capacity || _storage);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-TRingBuffer<T, _IsPod>::TRingBuffer(const TMemoryView<T>& storage)
+CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer(const TMemoryView<T>& storage)
 :   TRingBuffer(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> pointer {
+CONSTEXPR auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> pointer {
     Assert(_storage);
     Assert(_size < _capacity);
 
@@ -124,13 +163,13 @@ auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> pointer {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
+CONSTEXPR void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
     Meta::Construct(push_back_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args) {
+CONSTEXPR bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
 
     const bool overflow = (_size == _capacity);
@@ -145,7 +184,7 @@ bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(pointer overflowIFN, _Arg0&& 
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> pointer {
+CONSTEXPR auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> pointer {
     Assert(_storage);
     Assert(_size < _capacity);
 
@@ -158,13 +197,13 @@ auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> pointer {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
+CONSTEXPR void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
     Meta::Construct(push_front_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args) {
+CONSTEXPR bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
 
     const bool overflow = (_size == _capacity);
@@ -179,10 +218,16 @@ bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(pointer overflowIFN, _Arg0&&
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
+CONSTEXPR bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
     if (0 == _size)
         return false;
 
+    pop_front_AssumeNotEmpty(pvalue);
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+CONSTEXPR void TRingBuffer<T, _IsPod>::pop_front_AssumeNotEmpty(pointer pvalue) {
     Assert(_storage);
     Assert(0 < _size);
     Assert(_begin < _capacity);
@@ -195,14 +240,19 @@ bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
 
     _begin = ++_begin % _capacity;
     _size--;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+CONSTEXPR bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
+    if (0 == _size)
+        return false;
+
+    pop_back_AssumeNotEmpty(pvalue);
     return true;
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
-    if (0 == _size)
-        return false;
-
+CONSTEXPR void TRingBuffer<T, _IsPod>::pop_back_AssumeNotEmpty(pointer pvalue) {
     Assert(_storage);
     Assert(0 < _size);
     Assert(_begin < _capacity);
@@ -214,11 +264,10 @@ bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
     Meta::Destroy(&elt);
 
     _size--;
-    return true;
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void TRingBuffer<T, _IsPod>::clear() {
+CONSTEXPR void TRingBuffer<T, _IsPod>::clear() {
     IF_CONSTEXPR(false == _IsPod) {
         forrange(i, 0, _size)
             Meta::Destroy(&_storage[(_begin + i) % _capacity]);
@@ -260,7 +309,7 @@ public:
     using typename parent_type::size_type;
     using typename parent_type::difference_type;
 
-    TFixedSizeRingBuffer() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
+    CONSTEXPR TFixedSizeRingBuffer() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
 
     TFixedSizeRingBuffer(TFixedSizeRingBuffer&& ) = delete;
     TFixedSizeRingBuffer& operator =(TFixedSizeRingBuffer&& rvalue) = delete;
