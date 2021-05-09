@@ -78,6 +78,9 @@ public:
     reference operator [](size_type index) { Assert(index < _size); return _storage[index]; }
     const_reference operator [](size_type index) const { Assert(index < _size); return _storage[index]; }
 
+    pointer data() { return _storage; }
+    const_pointer data() const { return _storage; }
+
     TMemoryView<T> MakeView() { return TMemoryView<T>(_storage, _size); }
     TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
     TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
@@ -115,9 +118,19 @@ public:
     }
 
     void Assign(TMemoryView<const T> values) {
-        Assert(values.size() < _capacity);
+        Assign(values.begin(), values.end());
+    }
+    template <typename _It>
+    void Assign(_It first, _It last) {
         clear();
-        std::copy(values.begin(), values.end(), MakeCheckedIterator(_storage, 0, _capacity));
+        Assign_AssumeEmpty(first, last);
+    }
+    template <typename _It>
+    void Assign_AssumeEmpty(_It first, _It last) {
+        Assert_NoAssume(empty());
+        const auto dst = MakeCheckedIterator(_storage, 0, _capacity);
+        auto it = std::uninitialized_copy(first, last, dst);
+        _size = std::distance(dst, it);
     }
 
     bool Equals(const TStack& other) const {
@@ -164,13 +177,15 @@ auto TStack<T, _IsPod>::Push_Uninitialized() -> pointer {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    return ((T*)&_storage[_size++]);
+    return static_cast<T*>(&_storage[_size++]);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
 void TStack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
-    Meta::Construct(Push_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    Meta::Construct(
+        Push_Uninitialized(),
+        std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -217,10 +232,8 @@ bool TStack<T, _IsPod>::DeallocateIFP(pointer p, size_type count) {
     if ((p + count) != (_storage + _size))
         return false;
 
-    if (false == _IsPod) {
-        for (size_t i = _size - count; i < _size; ++i)
-            Meta::Destroy(&_storage[i]);
-    }
+    if (false == _IsPod)
+        Meta::Destroy(MakeView().CutStartingAt(_size - count));
 
     _size -= count;
     return true;
@@ -234,10 +247,8 @@ void TStack<T, _IsPod>::Deallocate_AssertLIFO(pointer p, size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 void TStack<T, _IsPod>::clear() {
-    IF_CONSTEXPR(false == _IsPod) {
-        for (size_t i = 0; i < _size; ++i)
-            Meta::Destroy(&_storage[i]);
-    }
+    IF_CONSTEXPR(false == _IsPod)
+        Meta::Destroy(MakeView());
     _size = 0;
 }
 //----------------------------------------------------------------------------
@@ -280,11 +291,18 @@ public:
     TFixedSizeStack() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
 
     TFixedSizeStack(const TMemoryView<const T>& items) : TFixedSizeStack() {
-        parent_type::Assign(items);
+        parent_type::Assign_AssumeEmpty(items.begin(), items.end());
     }
 
-    TFixedSizeStack(TFixedSizeStack&& ) = delete;
-    TFixedSizeStack& operator =(TFixedSizeStack&& rvalue) = delete;
+    TFixedSizeStack(TFixedSizeStack&& rvalue) NOEXCEPT : TFixedSizeStack() {
+        parent_type::Assign_AssumeEmpty(MakeMoveIterator(rvalue.begin()), MakeMoveIterator(rvalue.end()));
+        rvalue.clear();
+    }
+    TFixedSizeStack& operator =(TFixedSizeStack&& rvalue) NOEXCEPT {
+        parent_type::Assign(MakeMoveIterator(rvalue.begin()), MakeMoveIterator(rvalue.end()));
+        rvalue.clear();
+        return (*this);
+    }
 
     TFixedSizeStack(const TFixedSizeStack& other) = delete;
     TFixedSizeStack& operator =(const TFixedSizeStack& other) = delete;
