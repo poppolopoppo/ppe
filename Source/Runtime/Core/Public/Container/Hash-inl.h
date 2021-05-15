@@ -24,10 +24,10 @@ CONSTEXPR void hash_combine(hash_t& seed, const T& value) NOEXCEPT {
     seed._value = FPlatformHash::HashCombine(seed, hash_value(value));
 }
 //----------------------------------------------------------------------------
-template <typename _Arg0, typename... _Args>
-CONSTEXPR void hash_combine(hash_t& seed, const _Arg0& arg0, const _Args&... args) NOEXCEPT {
-    hash_combine(seed, 1/* arg0 */+ sizeof...(args));
-    details::hash_combine_impl_(seed, arg0, args...);
+template <typename _Arg0, typename _Arg1, typename... _Args>
+CONSTEXPR void hash_combine(hash_t& seed, const _Arg0& arg0, const _Arg1& arg1, const _Args&... args) NOEXCEPT {
+    hash_combine(seed, 2/* arg0+arg1 */+ sizeof...(args));
+    details::hash_combine_impl_(seed, arg0, arg1, args...);
 }
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
