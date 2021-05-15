@@ -23,13 +23,29 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FTimedScope {
 public:
-    FTimedScope() : _startedAt(FTimepoint::Now()) {}
+    FTimedScope() NOEXCEPT : _startedAt(FTimepoint::Now()) {}
 
     const FTimepoint& StartedAt() const { return _startedAt; }
     FTimespan Elapsed() const { return FTimepoint::ElapsedSince(_startedAt); }
+    FTimepoint::value_type TotalTicks() const { return (FTimepoint::Now().Value() - _startedAt.Value()); }
 
 private:
     FTimepoint _startedAt;
+};
+//----------------------------------------------------------------------------
+class PPE_CORE_API FAtomicTimedScope {
+public:
+    explicit FAtomicTimedScope(std::atomic<u64>* pTicks) NOEXCEPT
+    :   _pTicks(pTicks)
+    {}
+
+    ~FAtomicTimedScope() NOEXCEPT {
+        _pTicks->fetch_add(_timer.TotalTicks(), std::memory_order_relaxed);
+    }
+
+private:
+    FTimedScope _timer;
+    std::atomic<u64>* _pTicks;
 };
 //----------------------------------------------------------------------------
 #if USE_PPE_BENCHMARK
