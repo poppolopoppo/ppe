@@ -56,21 +56,21 @@
 //----------------------------------------------------------------------------
 // Add a public function
 #define RTTI_FUNCTION(_Name, ...) \
-    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), ::PPE::RTTI::EFunctionFlags::Public, &object_type::_Name, __VA_ARGS__);
+    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), ::PPE::RTTI::EFunctionFlags::Public, &object_type::_Name, ## __VA_ARGS__);
 //----------------------------------------------------------------------------
 // Add a private function
 #define RTTI_FUNCTION_PRIVATE(_Name, ...) \
-    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), ::PPE::RTTI::EFunctionFlags::Private, &object_type::_Name, __VA_ARGS__);
+    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), ::PPE::RTTI::EFunctionFlags::Private, &object_type::_Name, ## __VA_ARGS__);
 //----------------------------------------------------------------------------
 // Add a deprecated function
 #define RTTI_FUNCTION_DEPRECATED(_Name, ...) \
-    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), ::PPE::RTTI::EFunctionFlags::Private + ::PPE::RTTI::EFunctionFlags::Deprecated, &object_type::_Name, __VA_ARGS__);
+    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), ::PPE::RTTI::EFunctionFlags::Private + ::PPE::RTTI::EFunctionFlags::Deprecated, &object_type::_Name, ## __VA_ARGS__);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Internal helper
 #define _RTTI_PROPERTY_IMPL(_Name, _Flags, ...) \
-    RegisterProperty(PPE::RTTI::MakeProperty(PPE::RTTI::FName(_Name), _Flags, __VA_ARGS__))
+    RegisterProperty(PPE::RTTI::MakeProperty(PPE::RTTI::FName(_Name), _Flags, ## __VA_ARGS__))
 //----------------------------------------------------------------------------
 // Add a public property "Alias" from a field "Any_name_"
 #define RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, _Flags) \

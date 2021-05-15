@@ -134,6 +134,10 @@ FMetaFunction MakeFunction(
     const FName& name,
     std::initializer_list<FStringView> parametersName,
     EFunctionFlags flags = EFunctionFlags::Public ) {
+#if !PPE_VA_OPT_SUPPORTED
+    if (parametersName.size() == 1 && parametersName.begin()->empty())
+        parametersName = {}; // #TODO: workaround an issue with preprocessor and __VA_ARGS__ (remove when __VA_OPT_ can be used)
+#endif
     return details::TMakeFunction<decltype(_Function)>::template Make<_Function>(name, flags, parametersName);
 }
 //----------------------------------------------------------------------------
