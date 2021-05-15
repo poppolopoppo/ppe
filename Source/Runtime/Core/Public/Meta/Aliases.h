@@ -145,10 +145,12 @@ typedef int64_t     i64;
 #else
 #   define FORCE_INLINE inline // don't want force inline when debugging
 #endif
-#if defined(CPP_CLANG) || defined(CPP_GCC)
-#   define NO_INLINE __attribute__((noinline))
-#else
+#if defined(_MSC_VER)
 #   define NO_INLINE __declspec(noinline)
+#elif defined(CPP_CLANG) || defined(CPP_GCC)
+#   define define NO_INLINE __attribute__((noinline))
+#else
+#   error "unsupported compiler"
 #endif
 #define SIMD_INLINE FORCE_INLINE VECTORCALL
 //----------------------------------------------------------------------------
