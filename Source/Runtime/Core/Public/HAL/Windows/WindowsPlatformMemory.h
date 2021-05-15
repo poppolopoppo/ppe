@@ -117,8 +117,6 @@ public:
 	}
 
     static FORCE_INLINE void* MemcpyLarge(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
-        AssertRelease(Meta::IsAligned(16, dst)); // only need ptr aligned, not size
-        AssertRelease(Meta::IsAligned(16, src));
         Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
 
 #if USE_PPE_WIN32MEMORY_SIMD
@@ -129,8 +127,8 @@ public:
         const ::__m128i* __restrict pSrc = reinterpret_cast<const ::__m128i*>(src);
         ::__m128i* __restrict pDst = reinterpret_cast<::__m128i*>(dst);
         for (size_t b = blks; b > 0; b--, pSrc++, pDst++) {
-            const ::__m128i loaded = ::_mm_stream_load_si128(pSrc);
-            ::_mm_stream_si128(pDst, loaded);
+            const ::__m128i loaded = ::_mm_loadu_si128(pSrc);
+            ::_mm_storeu_si128(pDst, loaded);
         }
 
         // use regular copy for unaligned reminder

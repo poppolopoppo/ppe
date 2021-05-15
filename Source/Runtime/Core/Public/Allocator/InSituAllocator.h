@@ -27,7 +27,7 @@ public:
     using has_acquire = std::false_type;
     using has_steal = std::false_type;
 
-    STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
+    STATIC_CONST_INTEGRAL(size_t, Alignment, alignof(void*));
     STATIC_CONST_INTEGRAL(size_t, SizeInBytes, _SizeInBytes);
 
     using insitu_t = ALIGNED_STORAGE(SizeInBytes, Alignment);
@@ -78,17 +78,17 @@ public:
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
 #if USE_PPE_ASSERT
-        if (b.Data == &InSitu) {
+        if (b.Data == std::addressof(InSitu)) {
             Assert(EState::Allocated == State);
             Assert(b.SizeInBytes == SizeInBytes);
             return true;
         }
         else {
-            Assert(not FPlatformMemory::Memoverlap(&InSitu, SizeInBytes, b.Data, b.SizeInBytes));
+            Assert(not FPlatformMemory::Memoverlap(std::addressof(InSitu), SizeInBytes, b.Data, b.SizeInBytes));
             return false;
         }
 #else
-        return (b.Data == &InSitu);
+        return (b.Data == std::addressof(InSitu));
 #endif
     }
 
@@ -97,19 +97,19 @@ public:
         Assert(s);
         Assert(s == SizeInBytes);
         Assert(EState::Freed == State);
-        Assert(Meta::IsAligned(Alignment, &InSitu));
+        Assert(Meta::IsAligned(Alignment, std::addressof(InSitu)));
 
         State = EState::Allocated;
 #else
         UNUSED(s);
 #endif
-        return FAllocatorBlock{ &InSitu, SizeInBytes };
+        return FAllocatorBlock{ std::addressof(InSitu), SizeInBytes };
     }
 
     void Deallocate(FAllocatorBlock b) NOEXCEPT {
 #if USE_PPE_ASSERT
         Assert(EState::Allocated == State);
-        Assert(b.Data == &InSitu);
+        Assert(b.Data == std::addressof(InSitu));
         Assert(b.SizeInBytes == SizeInBytes);
 
         State = EState::Freed;
@@ -186,15 +186,15 @@ public:
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
 #if USE_PPE_ASSERT
-        if (FPlatformMemory::Memoverlap(b.Data, b.SizeInBytes, &InSitu, _SizeInBytes)) {
-            Assert_NoAssume((u8*)b.Data - (u8*)&InSitu < ptrdiff_t(Offset));
+        if (FPlatformMemory::Memoverlap(b.Data, b.SizeInBytes, std::addressof(InSitu), _SizeInBytes)) {
+            Assert_NoAssume((u8*)b.Data - (u8*)std::addressof(InSitu) < ptrdiff_t(Offset));
             return true;
         }
         else {
             return false;
         }
 #else
-        return ((u8*)b.Data >= (u8*)&InSitu && (u8*)&InSitu + Offset >= (u8*)b.Data);
+        return ((u8*)b.Data >= (u8*)std::addressof(InSitu) && (u8*)std::addressof(InSitu) + Offset >= (u8*)b.Data);
 #endif
     }
 
@@ -203,7 +203,7 @@ public:
         b.SizeInBytes = Meta::RoundToNext(s, Alignment);
 
         if (Offset + b.SizeInBytes <= _SizeInBytes) {
-            b.Data = (u8*)&InSitu + Offset;
+            b.Data = (u8*)std::addressof(InSitu) + Offset;
             Offset += b.SizeInBytes;
         }
         else {
@@ -218,7 +218,7 @@ public:
         Assert_NoAssume(Owns(b));
 
         // can reclaim only the last block allocated !
-        const size_t off = checked_cast<size_t>((u8*)b.Data - (u8*)&InSitu);
+        const size_t off = checked_cast<size_t>((u8*)b.Data - (u8*)std::addressof(InSitu));
         if (off + b.SizeInBytes == Offset)
             Offset -= b.SizeInBytes;
 
