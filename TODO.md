@@ -74,6 +74,13 @@
     - Liquid Crystal Demo: https://kotsoft.itch.io/liquid-crystal-pre-alpha
     - https://www.shadertoy.com/view/XdGGWD
 
+## Algorithm
+
+- [ ] HyperLogLog
+    - https://blog.demofox.org/2015/03/09/hyperloglog-estimate-unique-value-counts-like-the-pros/
+- [ ] BloomFilter
+    - https://blog.demofox.org/2015/02/08/estimating-set-membership-with-a-bloom-filter/
+
 ## ECS
 
 - [ ] Nice series of articles about ECS + generational indices:
