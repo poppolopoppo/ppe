@@ -19,7 +19,8 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
         const K _key;
         V _value;
     public:
-        explicit TCacheItem_(const K& key) : _key(key) {}
+        STATIC_CONST_INTEGRAL(bool, has_separated_key, true);
+        explicit TCacheItem_(K&& rkey) : _key(std::move(rkey)) {}
         const K& key() const { return _key; }
         V& Value() { return _value; }
         const V& Value() const { return _value; }
@@ -30,7 +31,8 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
     class TCacheItem_<T, T> { // immutable when _Key == _Value
         const T _item;
     public:
-        explicit TCacheItem_(const T& item) : _item(item) {}
+        STATIC_CONST_INTEGRAL(bool, has_separated_key, false);
+        explicit TCacheItem_(T&& ritem) : _item(std::move(ritem)) {}
         const T& Key() const { return _item; }
         const T& Value() const { return _item; }
         T* MutableValue() const { return const_cast<T*>(&_item); }
@@ -57,22 +59,26 @@ public:
 
     TCachedMemoryPool() = default;
 
-    TCachedMemoryPool(_Allocator&& ralloc) : _pool(std::move(ralloc)) {}
-    TCachedMemoryPool(const _Allocator& alloc) : _pool(alloc) {}
+    explicit TCachedMemoryPool(_Allocator&& ralloc) : _pool(std::move(ralloc)) {}
+    explicit TCachedMemoryPool(const _Allocator& alloc) : _pool(alloc) {}
+
+    index_type NumFreeBlocks() const NOEXCEPT { return _pool.NumFreeBlocks(); }
+    index_type NumLiveBlocks() const NOEXCEPT { return _pool.NumLiveBlocks(); }
 
     const value_type* At(index_type id) const NOEXCEPT {
         return (&_pool->At(id)->Value());
     }
     auto* operator [](index_type id) const NOEXCEPT {
-        block_type* const pblock = _pool[id];
-        return (pblock ? &pblock->Value() : nullptr);
+        block_type* const pBlock = _pool[id];
+        return (pBlock ? pBlock->MutableValue() : nullptr);
     }
 
     const key_type& Key(index_type id) const NOEXCEPT { return _pool.At(id)->Key(); }
-    value_type& Value(index_type id) const NOEXCEPT { return _pool.At(id)->Value(); }
+    value_type& Value(index_type id) NOEXCEPT { return *_pool.At(id)->MutableValue(); }
+    const value_type& Value(index_type id) const NOEXCEPT { return _pool.At(id)->Value(); }
 
     template <typename _Ctor>
-    TPair<index_type, bool> FindOrAdd(const key_type& rkey, _Ctor&& ctor);
+    TPair<index_type, bool> FindOrAdd(key_type&& rkey, _Ctor&& ctor);
     template <typename _Dtor>
     bool RemoveIf(index_type id, _Dtor&& dtor);
     bool Remove(index_type id);
@@ -92,30 +98,36 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
 template <typename _Ctor>
-auto TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::FindOrAdd(const key_type& key, _Ctor&& ctor) -> TPair<index_type, bool> {
+auto TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::FindOrAdd(key_type&& rkey, _Ctor&& ctor) -> TPair<index_type, bool> {
     const FCriticalScope scopeLock(&_cacheCS);
 
-    const auto it = _cache.find(MakePtrRef(key));
+    const auto it = _cache.find(MakePtrRef(static_cast<const _Key&>(rkey)));
 
-    bool exist = true;
+    bool exist;
     index_type id;
     if (Likely(_cache.end() != it)) {
+        exist = true;
         id = it->second;
+
+        Meta::VariadicFunctor(ctor, _pool.At(id)->MutableValue(), id, true);
     }
     else {
         exist = false;
         id = _pool.Allocate();
 
-        block_type* const pblock = _pool.At(id);
-        INPLACE_NEW(pblock, block_type){ key };
+        block_type* const pBlock = _pool.At(id);
+        INPLACE_NEW(pBlock, block_type){ std::move(rkey) };
 
-        _cache.Add_AssertUnique(MakePtrRef(pblock->Key()), id);
+        if (not Meta::VariadicFunctor(ctor, pBlock->MutableValue(), id, false)) {
+            Assert_NoAssume(not exist); // #TODO: too restrictive ?
+            _pool.Deallocate(id);
+            return MakePair(UMax, false);
+        }
+
+        _cache.Add_AssertUnique(MakePtrRef(pBlock->Key()), id);
     }
 
     Assert(id < pool_type::MaxSize);
-    block_type* const pblock = _pool.At(id);
-    Meta::VariadicFunctor(ctor, &pblock->Value(), id, exist);
-
     return MakePair(id, exist);
 }
 //----------------------------------------------------------------------------
@@ -128,12 +140,18 @@ template <typename _Dtor>
 bool TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::RemoveIf(index_type id, _Dtor&& dtor) {
     const FCriticalScope scopeLock(&_cacheCS);
 
-    block_type* const pblock = _pool.At(id);
+    block_type* const pBlock = _pool.At(id);
 
-    if (Unlikely(Meta::VariadicFunctor(dtor, pblock->MutableValue(), pblock->Key(), id))) {
-        _cache.erase(MakePtrRef(pblock->Key()));
+    bool shouldRemove;
+    IF_CONSTEXPR(FCacheItem_::has_separated_key)
+        shouldRemove = Meta::VariadicFunctor(dtor, pBlock->MutableValue(), pBlock->Key(), id);
+    else
+        shouldRemove = Meta::VariadicFunctor(dtor, pBlock->MutableValue(), id);
 
-        Meta::Destroy(pblock);
+    if (Unlikely(shouldRemove)) {
+        _cache.erase(MakePtrRef(pBlock->Key()));
+
+        Meta::Destroy(pBlock);
 
         _pool.Deallocate(id);
 
@@ -157,6 +175,7 @@ template <typename _Key, typename _Value, size_t _ChunkSize, size_t _MaxChunks, 
 void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_IgnoreLeaks() {
     Clear_IgnoreLeaks([]() constexpr -> bool { return true; });
 }
+//----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
 template <typename _Dtor>
 void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_IgnoreLeaks(_Dtor&& dtor) {
@@ -164,9 +183,12 @@ void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_
 
     _cache.clear();
 
-    _pool.Each([&dtor](block_type* pblock, index_type id) {
-        Meta::VariadicFunctor(dtor, &pblock->value_for_detor(), pblock->Key(), id);
-        Meta::Destroy(pblock);
+    _pool.Each([&dtor](block_type* pBlock, index_type id) {
+        IF_CONSTEXPR(FCacheItem_::has_separated_key)
+            Meta::VariadicFunctor(dtor, pBlock->MutableValue(), pBlock->Key(), id);
+        else
+            Meta::VariadicFunctor(dtor, pBlock->MutableValue(), id);
+        Meta::Destroy(pBlock);
     });
 
     _pool.Clear_IgnoreLeaks_AssumePOD();
@@ -178,8 +200,8 @@ bool TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::CheckI
     FCriticalScope scopeLock(&_cacheCS);
 
     size_t cnt = 0;
-    const_cast<pool_type&>(_pool).Each([this, &cnt](const block_type* pblock, index_type id) {
-        auto it = _cache.find(MakePtrRef(pblock->Key()));
+    const_cast<pool_type&>(_pool).Each([this, &cnt](const block_type* pBlock, index_type id) {
+        auto it = _cache.find(MakePtrRef(pBlock->Key()));
         AssertRelease(_cache.end() != it);
         AssertRelease(it->second == id);
         ++cnt;

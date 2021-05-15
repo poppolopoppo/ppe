@@ -542,7 +542,7 @@ static NO_INLINE void Test_CachedMemoryPool_() {
         ParallelFor(0, ToAllocate,
             [&rng, &allocs, &pool](size_t) {
                 FDummyForPool_ key{ rng };
-                pool.FindOrAdd(key, [&allocs](const FDummyForPool_* pblock, index_type id, bool exist) {
+                pool.FindOrAdd(std::move(key), [&allocs](const FDummyForPool_* pblock, index_type id, bool exist) {
                     VerifyRelease(exist != pblock->AddRef());
                     allocs.Push(id);
                 });
@@ -570,7 +570,7 @@ static NO_INLINE void Test_CachedMemoryPool_() {
             [&pool, &rng](index_type& id) {
                 if (id == UMax) {
                     FDummyForPool_ key{ rng };
-                    pool.FindOrAdd(key, [&id](const FDummyForPool_* pblock, index_type newId, bool exist) {
+                    pool.FindOrAdd(std::move(key), [&id](const FDummyForPool_* pblock, index_type newId, bool exist) {
                         VerifyRelease(exist != pblock->AddRef());
                         id = newId;
                     });

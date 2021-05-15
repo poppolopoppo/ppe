@@ -13,6 +13,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 // Atomic pool of fixed size using a bit mask
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded due to alignement
 template <typename T, size_t _Chunks = 1, typename _Index = size_t, size_t _Align = alignof(T) >
 class TAtomicPool : Meta::FNonCopyableNorMovable {
     STATIC_ASSERT(_Chunks > 0);
@@ -72,17 +74,27 @@ public:
             && reinterpret_cast<const T*>(_storage + Capacity) > p;
     }
 
+    NODISCARD index_type BlockIndex(const T* p) const NOEXCEPT {
+        Assert_NoAssume(Aliases(p));
+        return checked_cast<index_type>(p - reinterpret_cast<const T*>(_storage));
+    }
+
+    NODISCARD T* BlockAddress(index_type block) const NOEXCEPT {
+        Assert_NoAssume(block < Capacity);
+        return const_cast<T*>(reinterpret_cast<const T*>(_storage + block));
+    }
+
     NODISCARD T* Allocate() NOEXCEPT {
         return Allocate(Meta::DefaultConstructor<T>);
     }
     template <typename _Ctor>
     NODISCARD T* Allocate(_Ctor&& ctor) NOEXCEPT {
         index_type alloc{ UMax };
-        forrange(ch, 0, _Chunks) {
+        forrange(ch, 0, checked_cast<u32>(_Chunks)) {
             auto& set = _sets[ch];
             if (set.Alloc.Assign(&alloc)) {
                 Assert_NoAssume(alloc < mask_type::Capacity);
-                const auto id = ch * mask_type::Capacity + alloc;
+                const index_type id = checked_cast<index_type>(ch * mask_type::Capacity + alloc);
                 T* const p = reinterpret_cast<T*>(_storage + id);
                 Assert_NoAssume(Aliases(p));
 
@@ -98,6 +110,9 @@ public:
         return nullptr;
     }
 
+    void ReleaseBlock(index_type block) NOEXCEPT {
+        Release(BlockAddress(block));
+    }
     void Release(const T* p) NOEXCEPT {
         Assert(p);
         Assert_NoAssume(Aliases(p));
@@ -117,24 +132,36 @@ public:
     }
     template <typename _Dtor>
     void Clear_ReleaseMemory(_Dtor&& dtor) {
-        forrange(ch, 0, _Chunks) {
-            auto& set = _sets[ch];
-            const auto a = set.Alloc.Fetch();
-            auto c = set.Create.Fetch();
-            Assert_NoAssume(c.Contains(a.Invert()));
-            c &= a; // release only free blocks
-            while (c) {
-                index_type alloc = c.PopFront_AssumeNotEmpty();
-                const auto id = ch * mask_type::Capacity + alloc;
-                Meta::VariadicFunctor(dtor, reinterpret_cast<T*>(_storage + id), id);
-                ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(_storage + id, sizeof(block_type)));
-                Verify(set.Create.Unset(alloc));
+        forrange(ch, 0, checked_cast<u32>(_Chunks)) {
+            for (auto & set = _sets[ch];;) {
+                // release only free blocks
+                auto c = set.Create.Fetch();
+                c &= set.Alloc.Fetch();
+                if (not c)
+                    break; // assume nothing to release
+
+                // first acquire the block that is already created, but not allocated
+                const index_type alloc = c.PopFront_AssumeNotEmpty();
+                if (not set.Alloc.AcquireIFP(alloc))
+                    continue; // retry if CAS failed
+
+                // then release the block while allocated, if still created
+                if (set.Create.Unset(alloc)) {
+                    const auto id = ch * mask_type::Capacity + alloc;
+                    Meta::VariadicFunctor(dtor, reinterpret_cast<T*>(_storage + id), id);
+                    ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(_storage + id, sizeof(block_type)));
+                }
+
+                // finally release the allocated block, but now it's destroyed
+                Assert_NoAssume(not set.Create.Get(alloc));
+                set.Alloc.Release(alloc);
             }
         }
         std::atomic_thread_fence(std::memory_order_release);
     }
 
 };
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

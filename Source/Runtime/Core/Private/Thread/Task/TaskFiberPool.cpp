@@ -153,7 +153,7 @@ void FTaskFiberChunk::ReleaseFiber(FHandleRef handle) {
 }
 //----------------------------------------------------------------------------
 void FTaskFiberChunk::ReleaseMemory() {
-    _free.Clear_ReleaseMemory([this](FHandle* h) {
+    _free.Clear_ReleaseMemory([ARG0_IF_ASSERT(this)](FHandle* h) {
         Assert_NoAssume(h->Chunk == this);
         h->Fiber.Destroy(StackSize);
     });

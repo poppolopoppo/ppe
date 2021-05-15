@@ -12,6 +12,8 @@ class FMemoryTracking;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded due to alignment
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
 class TMemoryPool : Meta::FNonCopyableNorMovable, _Allocator {
 public:
@@ -37,18 +39,23 @@ public:
         Broadcast(_state.Value_NotThreadSafe()._blocks.MakeView(), nullptr);
     }
 
-    TMemoryPool(const allocator_type& allocator) : allocator_type(allocator) {}
-    TMemoryPool(allocator_type&& rallocator) : allocator_type(std::move(rallocator)) {}
+    explicit TMemoryPool(const allocator_type& allocator) : allocator_type(allocator) {}
+    explicit TMemoryPool(allocator_type&& rallocator) : allocator_type(std::move(rallocator)) {}
 
     ~TMemoryPool() {
         Clear_AssertCompletelyEmpty();
     }
 
+    index_type NumFreeBlocks() const NOEXCEPT;
+    index_type NumLiveBlocks() const NOEXCEPT;
+
     NODISCARD index_type Allocate();
     void Deallocate(index_type block);
 
+    bool Valid(index_type block) const NOEXCEPT;
+
     block_type* At(index_type block) const NOEXCEPT;
-    const block_type* operator [](index_type id) const NOEXCEPT;
+    block_type* operator [](index_type block) const NOEXCEPT;
 
     template <typename _ForEach>
     void Each(_ForEach&& pred);
@@ -82,6 +89,33 @@ private:
     NO_INLINE void ReleaseFreeChunk_(index_type chk);
     FORCE_INLINE void Clear_ReleaseMemory_AssumeLocked_(FInternalState_& state);
 };
+PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe, _Allocator>::NumFreeBlocks() const NOEXCEPT -> index_type {
+    index_type numFreeBlocks = 0;
+
+    const auto shared(_state.LockShared());
+    forrange(chk, 0, MaxChunks) {
+        const FPool_& pool = shared->_pools[chk];
+        numFreeBlocks += (ChunkSize - pool.NumLiveBlocks);
+    }
+
+    return numFreeBlocks;
+}
+//----------------------------------------------------------------------------
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe, _Allocator>::NumLiveBlocks() const NOEXCEPT -> index_type {
+    index_type numLiveBlocks = 0;
+
+    const auto shared(_state.LockShared());
+    forrange(chk, 0, MaxChunks) {
+        const FPool_& pool = shared->_pools[chk];
+        numLiveBlocks += (ChunkSize - pool.NumLiveBlocks);
+    }
+
+    return numLiveBlocks;
+}
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
 auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::Allocate() -> index_type {
@@ -171,7 +205,7 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, bool _Safe, typename _Allocator>
-const typename TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe, _Allocator>::block_type* TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe, _Allocator>::operator[](index_type block) const noexcept {
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe, _Allocator>::operator[](index_type block) const NOEXCEPT -> block_type* {
     if (block >= MaxSize)
         return nullptr;
 
@@ -276,18 +310,17 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     // check if somebody allocated something meanwhile due to the exclusive barrier
     index_type nextChunkToAlloc = MaxChunks;
     forrange(chk, 0, MaxChunks) {
-        block_type* const pblocks = exclusive->_blocks[chk];
-        if (nullptr == pblocks) {
+        block_type* const pBlocks = exclusive->_blocks[chk];
+        if (nullptr == pBlocks) {
             nextChunkToAlloc = Min(chk, nextChunkToAlloc);
             continue;
         }
 
         FPool_& pool = exclusive->_pools[chk];
-        index_type freeBlock = pool.FreeList.load(std::memory_order_relaxed);
 
-        if (Unlikely(freeBlock < ChunkSize)) {
+        if (index_type freeBlock = pool.FreeList.load(std::memory_order_relaxed); Unlikely(freeBlock < ChunkSize)) {
             // found a free block, skip chunk allocation (lock contention)
-            const index_type nextId = reinterpret_cast<const index_type&>(pblocks[freeBlock]);
+            const index_type nextId = reinterpret_cast<const index_type&>(pBlocks[freeBlock]);
             pool.FreeList.store(nextId, std::memory_order_relaxed);
 
             ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).AllocateUser(sizeof(block_type)) );
@@ -352,8 +385,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
         return; // early-out, let other thread consume this chunk if needed
     }
 
-    block_type* const pblocks = exclusive->_blocks[chk];
-    AssertRelease(pblocks);
+    block_type* const pBlocks = exclusive->_blocks[chk];
+    AssertRelease(pBlocks);
 
     FPool_& pool = exclusive->_pools[chk];
     Assert_NoAssume(pool.NumLiveBlocks.load(std::memory_order_relaxed) == 0);
@@ -364,7 +397,7 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
     index_type numFreeBlocks = 0;
     index_type blk = pool.FreeList.load(std::memory_order_relaxed);
     while (blk < ChunkSize) {
-        blk = reinterpret_cast<const index_type&>(pblocks[blk]);
+        blk = reinterpret_cast<const index_type&>(pBlocks[blk]);
         ++numFreeBlocks;
     }
     AssertRelease(ChunkSize == blk);
@@ -378,7 +411,7 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
 
     // release the allocated chunk
     auto& allocator = static_cast<_Allocator&>(*this);
-    allocator_traits::DeallocateT(allocator, pblocks, _ChunkSize);
+    allocator_traits::DeallocateT(allocator, pBlocks, _ChunkSize);
 
     exclusive->_blocks[chk] = nullptr;
 }
@@ -397,12 +430,12 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Safe,_Allocator>::
 
     // release all blocks
     auto& allocator = static_cast<_Allocator&>(*this);
-    for (block_type*& pblocks : state._blocks) {
-        if (pblocks) {
+    for (block_type*& pBlocks : state._blocks) {
+        if (pBlocks) {
             ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).DeallocateSystem(_ChunkSize * sizeof(block_type)) );
 
-            allocator_traits::DeallocateT(allocator, pblocks, _ChunkSize);
-            pblocks = nullptr;
+            allocator_traits::DeallocateT(allocator, pBlocks, _ChunkSize);
+            pBlocks = nullptr;
         }
     }
 }
@@ -433,14 +466,14 @@ public:
 
     TTypedMemoryPool() = default;
 
-    TTypedMemoryPool(const allocator_type& allocator) : parent_type(allocator) {}
-    TTypedMemoryPool(allocator_type&& rallocator) : parent_type(std::move(rallocator)) {}
+    explicit TTypedMemoryPool(const allocator_type& allocator) : parent_type(allocator) {}
+    explicit TTypedMemoryPool(allocator_type&& rallocator) : parent_type(std::move(rallocator)) {}
 
     value_type* At(index_type block) const NOEXCEPT {
         return reinterpret_cast<value_type*>(parent_type::At(block));
     }
-    value_type* operator [](index_type id) const NOEXCEPT {
-        return reinterpret_cast<value_type*>(parent_type::operator[](id));
+    value_type* operator [](index_type block) const NOEXCEPT {
+        return reinterpret_cast<value_type*>(parent_type::operator[](block));
     }
 
     template <typename _ForEach>

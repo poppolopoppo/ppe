@@ -29,7 +29,6 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Heaps,                    Malloc)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MediumHeap,               Heaps)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(LargeHeap,                Heaps)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VeryLargeBlocks,          Malloc)
-MEMORYDOMAIN_IMPL(MemoryPool,                           ReservedMemory)
 //------------------------------------------------------------------------------
 // Used memory
 //------------------------------------------------------------------------------
