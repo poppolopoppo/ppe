@@ -58,6 +58,47 @@ struct TPtrRef {
         return hash_ptr(ref.Ptr);
     }
 };
+//----------------------------------------------------------------------------
+template <>
+struct TPtrRef<void> {
+    void* Ptr;
+
+    TPtrRef() = default;
+
+    CONSTEXPR TPtrRef(Meta::FForceInit) NOEXCEPT : Ptr(nullptr) {}
+
+    CONSTEXPR TPtrRef(void* ptr) NOEXCEPT : Ptr(ptr) { Assert(ptr); }
+
+    CONSTEXPR TPtrRef(const TPtrRef&) NOEXCEPT = default;
+    CONSTEXPR TPtrRef& operator =(const TPtrRef&) NOEXCEPT = default;
+
+    CONSTEXPR void* get() const NOEXCEPT { return Ptr; }
+
+    CONSTEXPR void* operator ->() const { Assert(Ptr); return Ptr; }
+
+    CONSTEXPR operator void* () const NOEXCEPT { return Ptr; }
+
+    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
+    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+
+    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, std::nullptr_t) { return (lhs.Ptr == nullptr); }
+    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, std::nullptr_t) { return (not operator ==(lhs, nullptr)); }
+
+    CONSTEXPR friend bool operator ==(std::nullptr_t, const TPtrRef& rhs) { return (rhs.Ptr == nullptr); }
+    CONSTEXPR friend bool operator !=(std::nullptr_t, const TPtrRef& rhs) { return (not operator ==(nullptr, rhs)); }
+
+    CONSTEXPR friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
+    CONSTEXPR friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
+
+    friend void swap(TPtrRef& lhs, TPtrRef& rhs) NOEXCEPT {
+        std::swap(lhs.Ptr, rhs.Ptr);
+    }
+
+    friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
+        return hash_ptr(ref.Ptr);
+    }
+};
+//----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(TPtrRef<T>, typename T)
 //----------------------------------------------------------------------------
 template <typename T>
