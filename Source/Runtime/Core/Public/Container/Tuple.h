@@ -30,6 +30,11 @@ CONSTEXPR TTuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) N
 }
 //----------------------------------------------------------------------------
 template <typename... _Args>
+CONSTEXPR auto ForwardAsTuple(_Args&&... args) NOEXCEPT {
+    return std::forward_as_tuple(std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename... _Args>
 CONSTEXPR bool is_pod_type(TTuple<_Args...>*) NOEXCEPT {
     return ( Meta::is_pod_v<_Args> && ... );
 }
@@ -74,15 +79,18 @@ CONSTEXPR void ForeachTuple(const TTuple<_Args...>& tuple, _Lambda foreach) {
 //----------------------------------------------------------------------------
 template <typename... _Args>
 FORCE_INLINE hash_t hash_value(const TTuple<_Args...>& tuple) {
-    hash_t h{ PPE_HASH_VALUE_SEED };
-    ForeachTuple(tuple, [&h](const auto& x) { hash_combine(h, x); });
-    return h;
+    return Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
+        hash_t h{ hash_value(sizeof...(_Args)) };
+        hash_combine(h, std::get<idx>(tuple)...);
+        return h;
+    });
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename... _Args>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple) {
-    ForeachTuple(tuple, [&oss](const auto& x) { oss << x; });
-    return oss;
+    return Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
+        return (oss << ... << std::get<idx>(tuple));
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

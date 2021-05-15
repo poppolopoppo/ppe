@@ -231,32 +231,20 @@ constexpr _Ret CallTupleEx(_Ret(_Class::*mc)(_Params...) const, const TTuple<TRe
 //----------------------------------------------------------------------------
 // Call a function on every member of tuple and return an array of results
 //----------------------------------------------------------------------------
-namespace details {
-template <typename T, typename _Lambda, typename... _Args, size_t... _Idx>
-CONSTEXPR TStaticArray<T, sizeof...(_Args)> MapTuple_(_Lambda map, const TTuple<_Args...>& tuple, std::index_sequence<_Idx...>) {
-    return { map(std::get<_Idx>(tuple))... };
-}
-} //!details
-//----------------------------------------------------------------------------
 template <typename T, typename... _Args, typename _Lambda>
 CONSTEXPR TStaticArray<T, sizeof...(_Args)> MapTuple(const TTuple<_Args...>& tuple, _Lambda map) {
-    return details::MapTuple_<T>(map, tuple, std::index_sequence_for<_Args...>{});
+    return Meta::static_for<sizeof...(_Args)>([&](auto... idx) -> TStaticArray<T, sizeof...(_Args)> {
+       return { map(std::get<idx>(tuple))... };
+    });
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Call a function on every member of tuple and return a tuple of results
 //----------------------------------------------------------------------------
-namespace details {
-template <typename _Lambda, typename... _Args, size_t... _Idx>
-CONSTEXPR auto ProjectTuple_(_Lambda projector, const TTuple<_Args...>& tuple, std::index_sequence<_Idx...>) {
-    return std::make_tuple(projector(std::get<_Idx>(tuple))... );
-}
-} //!details
-//----------------------------------------------------------------------------
 template <typename... _Args, typename _Lambda>
 CONSTEXPR auto ProjectTuple(const TTuple<_Args...>& tuple, _Lambda projector) {
-    return details::ProjectTuple_(projector, tuple, std::index_sequence_for<_Args...>{});
+    Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
+       return std::make_tuple(projector(std::get<idx>(tuple))...);
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
