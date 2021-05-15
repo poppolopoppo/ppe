@@ -110,7 +110,14 @@ constexpr size_t FunctorArity() {
 //----------------------------------------------------------------------------
 template <typename _Functor, typename... _Args>
 constexpr auto VariadicFunctor(_Functor func, _Args&&... args) {
-    return details::TFunctorTraits_<_Functor>::template varcall(std::forward<_Functor>(func), std::forward<_Args>(args)...);
+    using traits_t = details::TFunctorTraits_<_Functor>;
+    IF_CONSTEXPR(std::is_same_v<void, Meta::TDecay<typename traits_t::return_type>>) {
+        traits_t::template varcall(std::forward<_Functor>(func), std::forward<_Args>(args)...);
+        return true;
+    }
+    else {
+        return traits_t::template varcall(std::forward<_Functor>(func), std::forward<_Args>(args)...);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
