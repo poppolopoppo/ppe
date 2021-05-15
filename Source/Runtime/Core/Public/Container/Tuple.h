@@ -95,4 +95,16 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TTuple<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <size_t _Idx, typename... _Args>
+struct TTupleGet {
+    CONSTEXPR auto operator ()(TTuple<_Args...>& tuple) const NOEXCEPT {
+        return std::get<_Idx>(tuple);
+    }
+    CONSTEXPR auto operator ()(const TTuple<_Args...>& tuple) const NOEXCEPT {
+        return std::get<_Idx>(tuple);
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE

@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include "stdafx.h"
 
 #include "Allocator/LinearHeap.h"
@@ -14,6 +16,7 @@
 #include "Container/MinMaxHeap.h"
 #include "Container/StringHashSet.h"
 #include "Container/Vector.h"
+#include "Container/TupleVector.h"
 
 #include "Diagnostic/Benchmark.h"
 #include "Diagnostic/Logger.h"
@@ -39,8 +42,11 @@
 #include "Meta/Utility.h"
 #include "Time/TimedScope.h"
 
+#include <numeric>
 #include <random>
 #include <unordered_set>
+
+#include "Allocator/LinearAllocator.h"
 
 #define PPE_RUN_BENCHMARK_POOLSIZE          (512) // avoid cache coherency
 #define PPE_RUN_EXHAUSTIVE_BENCHMARKS       (0) // %_NOCOMMIT%
@@ -1872,6 +1878,7 @@ static void Test_BitSetImpl_() {
         AssertRelease(bits3.AllFalse());
     }
 }
+//----------------------------------------------------------------------------
 NO_INLINE void Test_BitSet() {
     STATIC_ASSERT(TFixedSizeBitMask<4>{ 0, 1, 2, 3 }.AllTrue());
     Test_BitSetImpl_<31, u32>();
@@ -1880,6 +1887,57 @@ NO_INLINE void Test_BitSet() {
     Test_BitSetImpl_<64>();
     Test_BitSetImpl_<113>();
     Test_BitSetImpl_<471, u32>();
+}
+//----------------------------------------------------------------------------
+NO_INLINE void Test_TupleVector() {
+    struct dummy_t_ {
+        int data;
+        bool operator ==(const dummy_t_& other) const NOEXCEPT { return data == other.data; }
+    };
+
+    TUPLEVECTOR_INSITU(Container, 8, int, dummy_t_, double) vec;
+
+    vec.resize(5, decltype(vec)::value_type{});
+    vec.emplace_back(1, dummy_t_{ 6 }, 2.1);
+    vec.emplace_back(2, dummy_t_{ 9 }, 3.2);
+
+    decltype(vec)::value_type value{ 3, dummy_t_{12}, 4.3 };
+    vec.insert(vec.begin() + 2, std::move(value));
+
+    const int intSum = std::accumulate(vec.MakeView<0>().begin(), vec.MakeView<0>().end(), 0);
+    VerifyRelease(6 == intSum);
+
+    const double dblSum = std::accumulate(vec.MakeView<2>().begin(), vec.MakeView<2>().end(), 0.0);
+    VerifyRelease(NearlyEquals(9.6, dblSum));
+
+    const decltype(vec) vec2{ vec };
+    forrange(i, 0, vec.size())
+        VerifyRelease(vec2.at(i) == vec.at(i));
+
+    int dummySum = 0;
+    for (const auto& jt : vec2)
+        dummySum += std::get<1>(jt).data;
+    VerifyRelease(27 == dummySum);
+
+    int intSum2 = 0;
+    int dummySum2 = 0;
+    for (const auto& jt : vec2.MakeIterable<1, 0>()) {
+        dummySum2 += std::get<0>(jt).data;
+        intSum2 += std::get<1>(jt);
+    }
+    VerifyRelease(intSum2 == intSum);
+    VerifyRelease(dummySum2 == dummySum);
+
+    TUPLEVECTOR(Container, int, dummy_t_, double) vec3{ vec };
+    AssertRelease(vec2.size() == vec3.size());
+    VerifyRelease(std::equal(vec.begin(), vec.end(), vec3.begin(), vec3.end() ));
+    VerifyRelease(vec.MakeIterable<2, 0, 1>().Equals(vec3.MakeIterable<2, 0, 1>()));
+
+    /*
+    LINEARHEAP_POOLED(Container) heap;
+    TUPLEVECTOR_LINEARHEAP(int, dummy_t_, double) vec4{ vec3, FLinearAllocator(heap) };
+    VerifyRelease(vec4.MakeIterable<2, 0, 1>().Equals(vec4.MakeIterable<2, 0, 1>()));
+    */
 }
 //----------------------------------------------------------------------------
 void Test_Containers() {
@@ -1900,6 +1958,7 @@ void Test_Containers() {
     Test_SSEHashSet();
     Test_Appendable();
     Test_BitSet();
+    Test_TupleVector();
 
 #if USE_PPE_BENCHMARK
     Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
