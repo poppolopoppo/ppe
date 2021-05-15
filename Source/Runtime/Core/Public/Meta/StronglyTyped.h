@@ -87,20 +87,6 @@ PPE_ASSUME_TEMPLATE_AS_POD(TNumericDefault<T COMMA _Tag COMMA _DefaultValue>, ty
 #define PPE_STRONGLYTYPED_NUMERIC_DEF(T, _Name) \
     PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, ::PPE::Meta::DefaultValue<T>())
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-struct FFakeBool {
-    bool Value;
-    FFakeBool() = default;
-    FFakeBool(const FFakeBool& other) = default;
-    FFakeBool& operator =(const FFakeBool& other) = default;
-    CONSTEXPR FFakeBool(bool value) : Value(value) {}
-    CONSTEXPR FFakeBool& operator =(bool value) { Value = value; return *this; }
-    CONSTEXPR operator bool () const NOEXCEPT { return Value; }
-    friend void swap(FFakeBool& lhs, FFakeBool& rhs) NOEXCEPT { std::swap(lhs.Value, rhs.Value); }
-};
-PPE_ASSERT_TYPE_IS_POD(FFakeBool);
-//----------------------------------------------------------------------------
 #define PPE_FAKEBOOL_OPERATOR_DECL() explicit operator bool () const NOEXCEPT
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

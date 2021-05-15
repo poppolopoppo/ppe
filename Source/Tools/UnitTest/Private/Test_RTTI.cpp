@@ -500,7 +500,7 @@ static NO_INLINE void Test_Any_() {
     const RTTI::IDicoTraits* dico2 = datom2.Traits()->AsDico();
     Assert(dico2);
     anyAny.Assign(toto);
-    RTTI::FAtom dico2_anyAny = dico2->Find(datom2, anyAny);
+    RTTI::FAtom dico2_anyAny = dico2->Find(datom2.Data(), anyAny);
     LOG(Test_RTTI, Debug, L"dico2_anyAny: {0}", dico2_anyAny.TypedConstData<float3>());
     AssertRelease(RTTI::MakeAny(float3(1, 2, 3)).InnerAtom().Equals(dico2_anyAny));
     //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); %TODO%
