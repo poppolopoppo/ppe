@@ -912,11 +912,11 @@ const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, const FWStringVie
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 hash_t hash_string(const FStringView& str) {
-    return hash_mem(str.data(), str.SizeInBytes());
+    return hash_mem(str.data(), str.SizeInBytes(), hash_value(str.size()));
 }
 //----------------------------------------------------------------------------
 hash_t hash_string(const FWStringView& wstr) {
-    return hash_mem(wstr.data(), wstr.SizeInBytes());
+    return hash_mem(wstr.data(), wstr.SizeInBytes(), hash_value(wstr.size()));
 }
 //----------------------------------------------------------------------------
 hash_t hash_stringI(const FStringView& str) {
@@ -929,7 +929,7 @@ hash_t hash_stringI(const FStringView& str) {
     const size_t sz = str.size();
     MALLOCA_POD(char, istr, sz);
     ToLower(istr.MakeView(), str);
-    return hash_mem(istr.data(), sz);
+    return hash_mem(istr.data(), sz, hash_value(sz));
 #endif
 }
 //----------------------------------------------------------------------------
@@ -943,7 +943,7 @@ hash_t hash_stringI(const FWStringView& wstr) {
     const size_t sz = wstr.size();
     MALLOCA_POD(wchar_t, iwstr, sz);
     ToLower(iwstr, wstr);
-    return hash_mem(iwstr.data(), iwstr.SizeInBytes());
+    return hash_mem(iwstr.data(), iwstr.SizeInBytes(), hash_value(sz));
 #endif
 }
 //----------------------------------------------------------------------------
