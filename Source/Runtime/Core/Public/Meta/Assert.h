@@ -179,8 +179,12 @@ inline CONSTEXPR void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 #define AssertNotImplemented() AssertReleaseFailed(L"not implemented")
 
 #if USE_PPE_ASSERT
+#   define ARG0_IF_ASSERT(...) __VA_ARGS__
+#   define ARGS_IF_ASSERT(...) COMMA __VA_ARGS__
 #   define ONLY_IF_ASSERT(_Code) _Code
 #else
+#   define ARG0_IF_ASSERT(...)
+#   define ARGS_IF_ASSERT(...)
 #   define ONLY_IF_ASSERT(_Code) NOOP()
 #endif
 
