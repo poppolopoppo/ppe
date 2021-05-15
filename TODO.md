@@ -53,6 +53,9 @@
     - https://blog.demofox.org/2020/06/14/casual-shadertoy-path-tracing-3-fresnel-rough-refraction-absorption-orbit-camera/
     - https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
 
+- [ ] Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting
+    - https://research.nvidia.com/publication/2020-07_Spatiotemporal-reservoir-resampling
+
 ## Architecture
 
 - [ ] Handle configuration/command line inside Core, seed from external configuration files, configuration cache
