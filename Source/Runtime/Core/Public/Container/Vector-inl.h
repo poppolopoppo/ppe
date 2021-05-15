@@ -67,7 +67,7 @@ void TVector<T, _Allocator>::assign(TVector&& rvalue) {
 template <typename T, typename _Allocator>
 template <typename _It>
 auto TVector<T, _Allocator>::assign(_It first, _It last)
-    -> typename std::enable_if<Meta::is_iterator<_It>::value>::type {
+    -> Meta::TEnableIf<Meta::is_iterator_v<_It>>  {
     Assert_NoAssume(first == last || not AliasesToContainer(*first));
 
     typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
@@ -285,7 +285,7 @@ void TVector<T, _Allocator>::erase_DontPreserveOrder(const_iterator pos) {
 template <typename T, typename _Allocator>
 template <typename _It>
 auto TVector<T, _Allocator>::insert(const_iterator pos, _It first, _It last)
-    -> typename std::enable_if<Meta::is_iterator<_It>::value, iterator>::type  {
+    -> Meta::TEnableIf<Meta::is_iterator_v<_It>, iterator> {
     typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
     const iterator it = insert_(pos, first, last, iterator_category{});
     Assert(CheckInvariants());

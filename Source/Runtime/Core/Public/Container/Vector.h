@@ -180,8 +180,7 @@ public:
     const_reference back() const { return at(_size - 1); }
 
     template <typename _It>
-    typename std::enable_if<Meta::is_iterator<_It>::value>::type
-        assign(_It first, _It last);
+    Meta::TEnableIf<Meta::is_iterator_v<_It>> assign(_It first, _It last);
     void assign(size_type count, const T& value);
     void assign(std::initializer_list<T> ilist) { assign(ilist.begin(), ilist.end()); }
     void assign(TVector&& rvalue);
@@ -212,8 +211,7 @@ public:
     void erase_DontPreserveOrder(const_iterator pos);
 
     template <typename _It>
-    typename std::enable_if<Meta::is_iterator<_It>::value, iterator>::type
-        insert(const_iterator pos, _It first, _It last);
+    Meta::TEnableIf<Meta::is_iterator_v<_It>, iterator> insert(const_iterator pos, _It first, _It last);
     iterator insert(const_iterator pos, const T& value) { return emplace(pos, value); }
     iterator insert(const_iterator pos, T&& rvalue) { return emplace(pos, std::move(rvalue)); }
     iterator insert(const_iterator pos, size_type count, const T& value);

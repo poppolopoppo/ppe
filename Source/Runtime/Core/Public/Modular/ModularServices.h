@@ -124,7 +124,9 @@ private:
                     static_cast<T*>(p)->ReleaseMemory();
                 };
             }
-            return nullptr;
+            else {
+                return nullptr;
+            }
         }
 
     private:

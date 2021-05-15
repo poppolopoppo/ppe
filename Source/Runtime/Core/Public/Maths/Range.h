@@ -126,6 +126,9 @@ struct TRange {
         bool operator < (const FIterator& other) const { Assert(_owner == other._owner); return All(_value <  other._value); }
         bool operator >=(const FIterator& other) const { return (not operator < (other)); }
 
+        bool operator <=(const FIterator& other) const { Assert(_owner == other._owner); return All(_value <= other._value); }
+        bool operator > (const FIterator& other) const { return (not operator < (other)); }
+
     private:
         const TRange* _owner;
         value_type _value;

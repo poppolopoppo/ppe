@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "HAL/PlatformString.h"
+#include "IO/ConstChar.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 
@@ -30,16 +31,26 @@ struct TBasicStaticString {
         return (*this);
     }
 
+    CONSTEXPR TBasicStaticString(const TBasicConstChar<_Char>& cstr) {
+        Assign(cstr.MakeView());
+    }
+    CONSTEXPR TBasicStaticString& operator =(const TBasicConstChar<_Char>& cstr) {
+        Assign(cstr.MakeView());
+        return (*this);
+    }
+
     CONSTEXPR bool empty() const { return (0 == Len); }
     CONSTEXPR size_t size() const { return Len; }
     CONSTEXPR size_t capacity() const { return _Capacity; }
 
     CONSTEXPR TMemoryView<_Char> Buf() { return MakeView(Data); }
     CONSTEXPR auto Str() const { return TBasicStringView<_Char>(Data, Len); }
+    CONSTEXPR auto c_str() const { return TBasicConstChar<_Char>{ NullTerminated() }; }
 
     CONSTEXPR operator _Char* () { return NullTerminated(); }
     CONSTEXPR operator const _Char* () const { return NullTerminated(); }
     CONSTEXPR operator TBasicStringView<_Char> () const { return Str(); }
+    CONSTEXPR operator TBasicConstChar<_Char> () const { return c_str(); }
 
     CONSTEXPR char* NullTerminated() {
         Assert(capacity() >= Len + 1);
@@ -80,6 +91,11 @@ struct TBasicStaticString {
                 break;
         }
         return (Data[i] < other.Data[i]);
+    }
+
+    CONSTEXPR void Clear() {
+        Len = 0;
+        Data[0] = '\0';
     }
 
     CONSTEXPR bool operator ==(const TBasicStaticString& other) const { return Equals(other); }

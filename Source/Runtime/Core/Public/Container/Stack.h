@@ -89,6 +89,8 @@ public:
     template <typename _Arg0, typename... _Args>
     void Push(_Arg0&& arg0, _Args&&... args);
     bool Pop(pointer pvalue = nullptr);
+    template <typename _Arg0, typename... _Args>
+    void Insert(size_type pos, _Arg0&& arg0, _Args&&... args);
 
     bool Contains(const_reference item) const;
 
@@ -205,6 +207,15 @@ bool TStack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
+template <typename _Arg0, typename ... _Args>
+void TStack<T, _IsPod>::Insert(size_type pos, _Arg0&& arg0, _Args&&... args) {
+    Assert_NoAssume(pos < _size);
+
+    Push(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    std::rotate(begin() + pos, begin() + (_size - 1), end());
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
 bool TStack<T, _IsPod>::Contains(const_reference item) const {
     return (end() != std::find(begin(), end(), item));
 }
@@ -304,8 +315,13 @@ public:
         return (*this);
     }
 
-    TFixedSizeStack(const TFixedSizeStack& other) = delete;
-    TFixedSizeStack& operator =(const TFixedSizeStack& other) = delete;
+    TFixedSizeStack(const TFixedSizeStack& other) : TFixedSizeStack() {
+        parent_type::Assign(other.begin(), other.end());
+    }
+    TFixedSizeStack& operator =(const TFixedSizeStack& other) {
+        parent_type::Assign(other.begin(), other.end());
+        return (*this);
+    }
 
     void Swap(TStack<T>& other) = delete;
 

@@ -45,6 +45,8 @@ struct TStaticArray {
 
     T Data[_Dim];
 
+    CONSTEXPR size_t size() const { return _Dim; }
+
     NODISCARD iterator begin() { return MakeCheckedIterator(Data, 0); }
     NODISCARD iterator end() { return MakeCheckedIterator(Data, _Dim); }
 

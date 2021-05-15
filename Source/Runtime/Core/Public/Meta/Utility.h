@@ -38,7 +38,7 @@ struct TStaticBitset {
     CONSTEXPR static size_t BitsPerByte = sizeof(u8) * 8;
     CONSTEXPR static size_t NumBytes = (N + BitsPerByte - 1) / BitsPerByte;
 
-    u8 Bytes[NumBytes];
+    u8 Bytes[NumBytes]{ 0 };
 
     CONSTEXPR TStaticBitset() = default;
 
