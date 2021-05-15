@@ -13,8 +13,9 @@ template <typename _Char>
 struct TBasicConstChar {
     const _Char* Data = nullptr;
 
+    TBasicConstChar() = default;
+
     CONSTEXPR TBasicConstChar(const _Char* data) NOEXCEPT : Data(data) {}
-    CONSTEXPR TBasicConstChar(const TBasicStringView<_Char>& str) NOEXCEPT : Data(str.c_str()) {}
 
     CONSTEXPR const _Char* c_str() const NOEXCEPT { return Data; }
     CONSTEXPR operator const _Char* () const NOEXCEPT { return Data; }
