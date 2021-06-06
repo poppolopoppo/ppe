@@ -46,6 +46,10 @@
     - https://github.com/AmanSachan1/Meteoros
     - https://www.guerrilla-games.com/read/nubis-authoring-real-time-volumetric-cloudscapes-with-the-decima-engine
 
+- [ ] Sum Area Table
+    - https://blog.demofox.org/2018/04/16/prefix-sums-and-summed-area-tables/
+    - http://32ipi028l5q82yhj72224m8j.wpengine.netdna-cdn.com/wp-content/uploads/2017/03/GDC2017-Cinematic-Depth-Of-Field.pdf
+
 - [ ] Path Tracing
     - https://blog.demofox.org/category/path-tracing/
     - https://blog.demofox.org/2020/05/25/casual-shadertoy-path-tracing-1-basic-camera-diffuse-emissive/
@@ -55,6 +59,10 @@
 
 - [ ] Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting
     - https://research.nvidia.com/publication/2020-07_Spatiotemporal-reservoir-resampling
+
+- [ ] The POP Buffer: Rapid Progressive Clustering by Geometry Quantization
+    - https://x3dom.org/pop/files/popbuffer2013.pdf
+    - https://0fps.net/2018/03/03/a-level-of-detail-method-for-blocky-voxels/
 
 ## Architecture
 
@@ -81,6 +89,7 @@
 
 - [ ] HyperLogLog
     - https://blog.demofox.org/2015/03/09/hyperloglog-estimate-unique-value-counts-like-the-pros/
+    - https://youtu.be/YA-nB2wjVcI?t=1759
 - [ ] BloomFilter
     - https://blog.demofox.org/2015/02/08/estimating-set-membership-with-a-bloom-filter/
 
