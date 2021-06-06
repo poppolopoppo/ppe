@@ -275,7 +275,7 @@ module Build
             if PersistentConfig[:hash] != serialized.hash
                 Log.verbose("save persistent options to '%s'", dst)
                 File.open(dst, 'w') do |fd|
-                    fd.write(serialized.to_yaml)
+                    fd.write(serialized.to_yaml(symbolize_names: true))
                 end
                 PersistentConfig[:data] = serialized
             else
@@ -290,7 +290,7 @@ module Build
     def self.load_options(src=PersistentConfig[:file])
         Log.verbose("load persistent options from '#{src}'")
         begin
-            serialized = YAML.load(File.read(src))
+            serialized = YAML.safe_load(File.read(src), symbolize_names: true, permitted_classes: [Build::FileChecksum, Build::Checksum, Time])
             PersistentConfig[:data] = serialized
             PersistentConfig[:hash] = serialized.hash
             PersistentConfig[:vars].each do |name, var|
