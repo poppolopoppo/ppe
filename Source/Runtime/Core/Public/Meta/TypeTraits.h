@@ -504,19 +504,31 @@ CONSTEXPR T DefaultValue() NOEXCEPT {
 //----------------------------------------------------------------------------
 struct FDefaultValue final {
     template <typename T>
-    CONSTEXPR operator const T () const {
-        return DefaultValue<T>();
-    }
+    CONSTEXPR operator const T () const { return DefaultValue<T>(); }
     template <typename T>
-    CONSTEXPR friend bool operator ==(T lhs, FDefaultValue rhs) {
-        return (T(rhs) == lhs);
-    }
+    CONSTEXPR friend bool operator ==(T lhs, FDefaultValue rhs) { return (T(rhs) == lhs); }
     template <typename T>
-    CONSTEXPR friend bool operator !=(T lhs, FDefaultValue rhs) {
-        return (not operator ==(lhs, rhs));
-    }
+    CONSTEXPR friend bool operator !=(T lhs, FDefaultValue rhs) { return (not operator ==(lhs, rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(FDefaultValue lhs, T rhs) { return (T(lhs) == rhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(FDefaultValue lhs, T rhs) { return (not operator ==(lhs, rhs)); }
 };
 CONSTEXPR FDefaultValue Default{};
+//----------------------------------------------------------------------------
+struct FZeroValue final {
+    template <typename T>
+    CONSTEXPR operator const T () const { return static_cast<T>(0); }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(T lhs, FZeroValue rhs) { return (T(rhs) == lhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(T lhs, FZeroValue rhs) { return (not operator ==(lhs, rhs)); }
+    template <typename T>
+    CONSTEXPR friend bool operator ==(FZeroValue lhs, T rhs) { return (T(lhs) == rhs); }
+    template <typename T>
+    CONSTEXPR friend bool operator !=(FZeroValue lhs, T rhs) { return (not operator ==(lhs, rhs)); }
+};
+CONSTEXPR FZeroValue Zero{};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -554,6 +566,7 @@ CONSTEXPR FDefaultValue Default{};
 } //!namespace Meta
 
 using Meta::Default;
+using Meta::Zero;
 
 PPE_ASSERT_TYPE_IS_POD(u128);
 PPE_ASSERT_TYPE_IS_POD(u256);
