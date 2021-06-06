@@ -256,8 +256,7 @@ struct TFixedSizeBitMask {
 
     CONSTEXPR TFixedSizeBitMask(Meta::FForceInit) : Words{} {}
     CONSTEXPR TFixedSizeBitMask(std::initializer_list<u32> trueBits) : Words{} {
-        for (auto bit : trueBits)
-            SetTrue(bit);
+        SetTrue(trueBits);
     }
     template <typename _It>
     CONSTEXPR TFixedSizeBitMask(_It first, _It last) : Words{} {
@@ -282,6 +281,31 @@ struct TFixedSizeBitMask {
     CONSTEXPR void SetFalse(u32 index) {
         Assert_NoAssume(index < N);
         Words[index / BitsPerWord].SetFalse(index % BitsPerWord);
+    }
+
+    CONSTEXPR void Set(std::initializer_list<u32> bits, bool value) {
+        if (value)
+            SetTrue(bits);
+        else
+            SetFalse(bits);
+    }
+    CONSTEXPR void Append(std::initializer_list<u32> bits) { SetTrue(bits); }
+    CONSTEXPR void SetTrue(std::initializer_list<u32> bits) {
+        for (auto bit : bits)
+            SetTrue(bit);
+    }
+    CONSTEXPR void SetFalse(std::initializer_list<u32> bits) {
+        for (auto bit : bits)
+            SetFalse(bit);
+    }
+
+    CONSTEXPR TFixedSizeBitMask& operator <<(u32 bit) {
+        SetTrue(bit);
+        return (*this);
+    }
+    CONSTEXPR TFixedSizeBitMask& operator <<(std::initializer_list<u32> bits) {
+        SetTrue(bits);
+        return (*this);
     }
 
     CONSTEXPR bool AllTrue() const NOEXCEPT {
