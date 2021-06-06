@@ -65,8 +65,8 @@ public:
     struct FSiteInfo {
         FTimepoint Timepoint;
         std::thread::id ThreadId;
-        const wchar_t* Filename;
-        size_t Line;
+        const wchar_t* Filename{ nullptr };
+        size_t Line{ 0 };
 
         static FSiteInfo Make(const wchar_t* filename, size_t line) {
             return FSiteInfo{ FTimepoint::Now(), std::this_thread::get_id(), filename, line };
@@ -214,3 +214,11 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
     } while (0)
 #   endif
 #endif
+
+#define LOG_CHECKEX( _CATEGORY, _RETURN, ... ) {\
+    if (Likely(!!( __VA_ARGS__ ))) {} \
+    else { \
+        LOG( _CATEGORY, Error, L"failed expr: ({0})", WSTRINGIZE(__VA_ARGS__) ); \
+        return (_RETURN); \
+    }}
+#define LOG_CHECK( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, ::PPE::Default, __VA_ARGS__ )

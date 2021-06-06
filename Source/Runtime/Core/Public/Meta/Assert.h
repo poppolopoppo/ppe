@@ -19,7 +19,7 @@
 #   error "there is someone messing with the project configuration"
 #endif
 
-// #TODO: this is a dirt hack, must define PPE_DEBUG_CRASH macro earlier
+// #TODO: this is a dirty hack, must define PPE_DEBUG_CRASH macro earlier
 #ifndef PPE_DEBUG_CRASH
 #   define PPE_ASSERT_LIGHTWEIHGT_CRASH() ::abort()
 #else
@@ -37,7 +37,7 @@ typedef bool (*FAssertHandler)(const wchar_t* msg, const wchar_t *file, unsigned
 class PPE_CORE_API FAssertException : public FException {
 public:
     FAssertException(const char *msg, const wchar_t *file, unsigned line);
-    virtual ~FAssertException();
+    ~FAssertException() override;
 
     const wchar_t *File() const { return _file; }
     unsigned Line() const { return _line; }
@@ -109,7 +109,7 @@ typedef bool (*FAssertReleaseHandler)(const wchar_t* msg, const wchar_t* file, u
 class PPE_CORE_API FAssertReleaseException : public FException {
 public:
     FAssertReleaseException(const char* msg, const wchar_t* file, unsigned line);
-    virtual ~FAssertReleaseException();
+    ~FAssertReleaseException() override;
 
     const wchar_t *File() const { return _file; }
     unsigned Line() const { return _line; }
