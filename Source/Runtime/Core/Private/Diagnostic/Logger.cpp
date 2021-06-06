@@ -4,8 +4,8 @@
 
 #if USE_PPE_LOGGER
 
-#   include "Allocator/LinearHeap.h"
-#   include "Allocator/LinearAllocator.h"
+#   include "Allocator/SlabHeap.h"
+#   include "Allocator/SlabAllocator.h"
 #   include "Allocator/TrackingMalloc.h"
 #   include "Container/SparseArray.h"
 #   include "Container/Vector.h"
@@ -62,6 +62,8 @@
 
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, LogDefault)
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -107,9 +109,9 @@ public:
     using singleton_type::Destroy;
     using singleton_type::Get;
 
-    struct FBucket {
+    struct CACHELINE_ALIGNED FBucket {
         std::recursive_mutex Barrier;
-        LINEARHEAP_POOLED(Logger) Heap;
+        SLABHEAP_POOLED(Logger) Heap;
         FBucket() = default;
         ~FBucket() {
             const Meta::FRecursiveLockGuard scopeLock(Barrier);
@@ -122,8 +124,8 @@ public:
         FBucket& Bucket;
         Meta::FRecursiveLockGuard Lock;
 
-        FPooledLinearHeap& Heap() const { return Bucket.Heap; }
-        operator FLinearAllocator () const NOEXCEPT { return { Bucket.Heap }; }
+        auto& Heap() const { return Bucket.Heap; }
+        operator FSlabAllocator () const NOEXCEPT { return { Bucket.Heap }; }
 
         FScope() : FScope(Get()) {}
 
@@ -143,7 +145,7 @@ public:
     void TrimCache() {
         forrange(i, 0, NumAllocationBuckets) {
             const Meta::FRecursiveLockGuard scopeLock(_buckets[i].Barrier);
-            _buckets[i].Heap.TrimPools();
+            _buckets[i].Heap.TrimMemory();
         }
     }
 
@@ -152,12 +154,10 @@ private:
     STATIC_CONST_INTEGRAL(size_t, MaskAllocationBuckets, NumAllocationBuckets - 1);
     STATIC_ASSERT(Meta::IsPow2(NumAllocationBuckets));
 
-    std::atomic<size_t> _revision;
     FBucket _buckets[NumAllocationBuckets];
+    std::atomic<size_t> _revision{ 0 };
 
-    FLogAllocator()
-        : _revision(0)
-    {}
+    FLogAllocator() = default;
 
     FBucket& OpenBucket_(size_t index) {
         Assert(index < NumAllocationBuckets);
@@ -212,7 +212,7 @@ public: // ILowLevelLogger
 
         const FLogAllocator::FScope scopeAlloc; // #TODO : could be a dead lock issue to keep the lock open while dispatching
 
-        MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc);
+        MEMORYSTREAM_SLAB() buf(scopeAlloc);
 
         FWTextWriter oss(&buf);
         FormatArgs(oss, format, args);
@@ -299,7 +299,7 @@ public: // ILowLevelLogger
         { // don't lock both allocator & task manager to avoid dead locking
             const FLogAllocator::FScope scopeAlloc;
 
-            MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc);
+            MEMORYSTREAM_SLAB() buf(scopeAlloc);
             buf.reserve(sizeof(FDeferredLog) + format.SizeInBytes());
             buf.resize(sizeof(FDeferredLog)); // reserve space for FDeferredLog entry
             buf.SeekO(0, ESeekOrigin::End); // seek at the end of the stream
@@ -313,7 +313,7 @@ public: // ILowLevelLogger
 
             size_t sizeInBytes = 0;
             const FAllocatorBlock stolen = buf.StealDataUnsafe(&sizeInBytes);
-            Assert_NoAssume(stolen.Data == (void*)log);
+            Assert_NoAssume(stolen.Data == static_cast<void*>(log));
             Verify(log->Acquire(stolen));
 
             log->LowLevelLogger = _userLogger;
@@ -330,7 +330,8 @@ public: // ILowLevelLogger
 
     virtual void Flush(bool synchronous) override final {
         if (synchronous && not GIsInLogger_) {
-            TaskManager_().WaitForAll(1000/* 1 second */); // wait for all potential logs before flushing
+            // wait for all potential logs before flushing
+            for (u32 loop = 0; loop < 5 && TaskManager_().WaitForAll(500/* 0.5 seconds */); ++loop){}
             _userLogger->Flush(true);
         }
         else {
@@ -358,26 +359,24 @@ private:
         return FBackgroundThreadPool::Get();
     }
 
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
-    class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public FLinearAllocator, Meta::FNonCopyableNorMovable {
+class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public FSlabAllocator, Meta::FNonCopyableNorMovable {
     public:
-        ILowLevelLogger* LowLevelLogger;
-        const FCategory* Category;
-        FSiteInfo Site;
-        EVerbosity Level;
+        ILowLevelLogger* LowLevelLogger{ nullptr };
+        const FCategory* Category{ nullptr };
+        FSiteInfo Site{};
+        EVerbosity Level{ EVerbosity::All };
 
-        u32 TextLength;
+        u32 TextLength{ 0 };
 
-        u32 Bucket;
-        u32 AllocSizeInBytes;
+        u32 Bucket{ UMax };
+        u32 AllocSizeInBytes{ 0 };
 
 #   if USE_PPE_ASSERT
         uintptr_t Canary = PPE_HASH_VALUE_SEED;
 #   endif
 
-        explicit FDeferredLog(FPooledLinearHeap& heap) NOEXCEPT
-            : FLinearAllocator(heap)
+        explicit FDeferredLog(FPoolingSlabHeap& heap) NOEXCEPT
+            : FSlabAllocator(heap)
         {}
 
         FWStringView Text() const { return { (const wchar_t *)(this + 1), TextLength }; }
@@ -388,7 +387,6 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
         }
     };
     STATIC_ASSERT(std::is_trivially_destructible_v<FDeferredLog>);
-PRAGMA_MSVC_WARNING_POP()
 
     // used for exception safety :
     struct FSuicideScope_ : FLogAllocator::FScope {
@@ -537,7 +535,7 @@ private:
     };
 
     std::mutex _barrier;
-    LINEARHEAP(Logger) _heap;
+    SLABHEAP(Logger) _heap;
     SPARSEARRAY_INSITU(Logger, FDeferredLog_) _logs;
 };
 //----------------------------------------------------------------------------
@@ -955,6 +953,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_POP()
 } //!namespace PPE
 
 #endif //!USE_PPE_LOGGER

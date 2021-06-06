@@ -2,7 +2,8 @@
 
 #include "stdafx.h"
 
-#include "Allocator/LinearHeap.h"
+#include "Allocator/SlabHeap.h"
+#include "Allocator/SlabAllocator.h"
 #include "Allocator/StlAllocator.h"
 
 #include "Container/Appendable.h"
@@ -45,8 +46,6 @@
 #include <numeric>
 #include <random>
 #include <unordered_set>
-
-#include "Allocator/LinearAllocator.h"
 
 #define PPE_RUN_BENCHMARK_POOLSIZE          (512) // avoid cache coherency
 #define PPE_RUN_EXHAUSTIVE_BENCHMARKS       (0) // %_NOCOMMIT%

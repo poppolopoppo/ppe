@@ -277,7 +277,7 @@ void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* link
 
     while (Parser::PCParseExpression expr = FGrammarStartup::ParseExpression(parseList)) {
         const RTTI::FAtom atom = expr->Eval(&parseContext);
-        const RTTI::PMetaObject* ppobj = atom.TypedConstDataIFP<RTTI::PMetaObject>();
+        const RTTI::PMetaObject* const ppobj = atom.TypedConstDataIFP<RTTI::PMetaObject>();
 
         if (ppobj && *ppobj)
             linker->AddTopObject(ppobj->get());

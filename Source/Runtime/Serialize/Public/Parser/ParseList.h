@@ -6,7 +6,7 @@
 #include "Lexer/Match.h"
 #include "Lexer/Symbol.h"
 
-#include "Allocator/LinearHeap.h"
+#include "Allocator/SlabHeap.h"
 
 namespace PPE {
 namespace Lexer {
@@ -84,7 +84,7 @@ private:
     Lexer::FSpan _site;
 
     INTRUSIVELIST(&FParseMatch::Node) _list;
-    LINEARHEAP(Lexer) _heap;
+    SLABHEAP(Lexer) _heap;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

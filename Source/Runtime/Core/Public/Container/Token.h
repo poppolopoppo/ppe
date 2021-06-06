@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#include "Allocator/LinearHeap.h"
+#include "Allocator/SlabHeap.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Meta/Singleton.h"
@@ -130,7 +130,7 @@ private:
     STATIC_CONST_INTEGRAL(size_t, NumBuckets, MaskBuckets + 1);
 
     FAtomicMaskLock _barrier;
-    LINEARHEAP(Token) _heap;
+    SLABHEAP(Token) _heap;
 
     FEntry* _bucketHeads[NumBuckets] = { 0 };
     FEntry* _bucketTails[NumBuckets] = { 0 };

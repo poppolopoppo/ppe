@@ -9,7 +9,7 @@
 #include "Parser/Parser.h"
 #include "Parser/ParseItem.h"
 
-#include "Allocator/LinearAllocator.h"
+#include "Allocator/SlabAllocator.h"
 #include "Container/AssociativeVector.h"
 #include "Container/Pair.h"
 #include "Container/Vector.h"

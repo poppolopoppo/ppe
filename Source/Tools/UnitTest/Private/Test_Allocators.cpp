@@ -601,6 +601,124 @@ static NO_INLINE void Test_CachedMemoryPool_() {
     }
 }
 //----------------------------------------------------------------------------
+NO_INLINE void Test_SlabHeap_() {
+    SLABHEAP(Container) heap;
+    heap.SetSlabSize(malloc_snap_size(20 * sizeof(hash_t))); // looking for troubles
+
+    auto make_canary = [](TMemoryView<hash_t> canary, hash_t seed) {
+        hash_t h{ PPE_HASH_VALUE_SEED };
+        for (hash_t& value : canary) {
+            hash_combine(h, seed);
+            value = h;
+        }
+    };
+    auto test_canary = [](TMemoryView<const hash_t> canary, hash_t seed) -> bool {
+        hash_t h{ PPE_HASH_VALUE_SEED };
+        for (const hash_t& value : canary) {
+            hash_combine(h, seed);
+            if (value != h)
+                return false;
+        }
+        return true;
+    };
+
+    const hash_t seed0 = hash_value("canary0");
+    const hash_t seed1 = hash_value("canary1");
+    const hash_t seed2 = hash_value("canary2");
+    const hash_t seed3 = hash_value("canary3");
+
+    const auto canary0 = heap.AllocateT<hash_t>(10);
+
+    make_canary(canary0, seed0);
+
+    const FSlabMarker marker0 = heap.Tell();
+    const auto canary1 = heap.AllocateT<hash_t>(13);
+    AssertRelease(test_canary(canary0, seed0));
+
+    make_canary(canary1, seed1);
+
+    const FSlabMarker marker1 = heap.Tell();
+    const auto canary2 = heap.AllocateT<hash_t>(16);
+    AssertRelease(test_canary(canary0, seed0));
+    AssertRelease(test_canary(canary1, seed1));
+
+    make_canary(canary2, seed2);
+
+    AssertRelease(test_canary(canary0, seed0));
+    AssertRelease(test_canary(canary1, seed1));
+    AssertRelease(test_canary(canary2, seed2));
+
+    heap.Rewind(marker1);
+
+    Assert(test_canary(canary0, seed0));
+    Assert(test_canary(canary1, seed1));
+    Assert(not test_canary(canary2, seed2));
+
+    const FSlabMarker marker2 = heap.Tell();
+    AssertRelease(marker1.Origin == marker2.Origin);
+    const auto canary3 = heap.AllocateT<hash_t>(16);
+    Assert(test_canary(canary0, seed0));
+    Assert(test_canary(canary1, seed1));
+
+    make_canary(canary3, seed3);
+
+    Assert(test_canary(canary3, seed3));
+
+    heap.Rewind(marker2);
+
+    Assert(test_canary(canary0, seed0));
+    Assert(test_canary(canary1, seed1));
+    Assert(not test_canary(canary2, seed2));
+    Assert(not test_canary(canary3, seed3));
+
+    heap.Rewind(marker0);
+
+    Assert(test_canary(canary0, seed0));
+    Assert(not test_canary(canary1, seed1));
+    Assert(not test_canary(canary2, seed2));
+    Assert(not test_canary(canary3, seed3));
+
+    const auto canary4 = heap.AllocateT<hash_t>(16);
+    make_canary(canary4, seed0);
+    Assert(test_canary(canary0, seed0));
+    Assert(test_canary(canary4, seed0));
+    const auto canary5 = heap.AllocateT<hash_t>(16);
+    make_canary(canary5, seed1);
+    Assert(test_canary(canary0, seed0));
+    Assert(test_canary(canary4, seed0));
+    Assert(test_canary(canary5, seed1));
+    const auto canary6 = heap.AllocateT<hash_t>(16);
+    make_canary(canary6, seed2);
+    Assert(test_canary(canary0, seed0));
+    Assert(test_canary(canary4, seed0));
+    Assert(test_canary(canary5, seed1));
+    Assert(test_canary(canary6, seed2));
+    const auto canary7 = heap.AllocateT<hash_t>(16);
+    make_canary(canary7, seed3);
+    Assert(test_canary(canary0, seed0));
+    Assert(test_canary(canary4, seed0));
+    Assert(test_canary(canary5, seed1));
+    Assert(test_canary(canary6, seed2));
+    Assert(test_canary(canary7, seed3));
+
+    heap.Rewind(marker0);
+
+    Assert(test_canary(canary0, seed0));
+    Assert(not test_canary(canary4, seed0));
+    Assert(not test_canary(canary5, seed1));
+    Assert(not test_canary(canary6, seed2));
+    Assert(not test_canary(canary7, seed3));
+
+    heap.DiscardAll();
+
+    Assert(not test_canary(canary0, seed0));
+    Assert(not test_canary(canary1, seed1));
+    Assert(not test_canary(canary2, seed2));
+    Assert(not test_canary(canary3, seed3));
+
+    PP_FOREACH_ARGS(UNUSED, canary0, canary1, canary2, canary3);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -613,6 +731,7 @@ void Test_Allocators() {
     Test_AtomicPool_();
     Test_MemoryPool_();
     Test_CachedMemoryPool_();
+    Test_SlabHeap_();
 
     typedef u8 value_type;
 

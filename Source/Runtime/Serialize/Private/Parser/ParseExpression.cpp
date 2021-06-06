@@ -266,7 +266,7 @@ FArrayExpr::~FArrayExpr() = default;
 RTTI::FAtom FArrayExpr::Eval(FParseContext* context) const {
     Assert(context);
 
-    using any_vector = VECTOR_LINEARHEAP(RTTI::FAny);
+    using any_vector = VECTOR_SLAB(RTTI::FAny);
 
     any_vector result{ context->CreateHeapContainer<any_vector>() };
     result.resize(_items.size());
@@ -306,7 +306,7 @@ FDictionaryExpr::~FDictionaryExpr() = default;
 RTTI::FAtom FDictionaryExpr::Eval(FParseContext* context) const {
     Assert(context);
 
-    using any_dico = ASSOCIATIVE_VECTOR_LINEARHEAP(RTTI::FAny, RTTI::FAny);
+    using any_dico = ASSOCIATIVE_VECTOR_SLAB(RTTI::FAny, RTTI::FAny);
 
     any_dico result{ context->CreateHeapContainer<any_dico>() };
     result.Vector().resize(_dico.size());
@@ -423,7 +423,7 @@ RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
         PPE_THROW_IT(FParserException("too much parameters given to function call", this));
     Assert(prms.size() == _args.size());
 
-    using atoms_t = VECTOR_LINEARHEAP(RTTI::FAtom);
+    using atoms_t = VECTOR_SLAB(RTTI::FAtom);
     atoms_t evalArgs{ context->CreateHeapContainer<atoms_t>() };
     evalArgs.reserve(_args.size());
 

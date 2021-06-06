@@ -2,7 +2,7 @@
 
 #include "Serialize.h"
 
-#include "Allocator/LinearAllocator.h"
+#include "Allocator/SlabAllocator.h"
 #include "Container/HashSet.h"
 #include "HAL/PlatformMemory.h"
 #include "IO/StringView.h"
@@ -106,7 +106,7 @@ public:
         }
     };
 
-    TTextHeap(FPooledLinearHeap& heap)
+    TTextHeap(FPoolingSlabHeap& heap)
         : _heap(heap) {
         STATIC_ASSERT(sizeof(typename FText::FLargeText_) == sizeof(typename FText::FSmallText_));
         STATIC_ASSERT(_Padded
@@ -141,7 +141,7 @@ public:
             const auto it = _texts.insert(txt);
 
             if (it.second) {
-                // hack the map by replacing registered string view with one pointing to linear heap storage
+                // hack the map by replacing registered string view with one pointing to the heap
                 const FStringView allocated = AllocateString_(str);
                 auto& registered = const_cast<FText&>(*it.first);
                 Assert(hash_value(FText::MakeLarge_(allocated)) == hash_value(registered));
@@ -163,7 +163,7 @@ public:
     }
 
 private:
-    FPooledLinearHeap& _heap;
+    FPoolingSlabHeap& _heap;
     HASHSET(Transient, FText) _texts;
 
     FStringView AllocateString_(const FStringView& str) {
@@ -173,7 +173,7 @@ private:
 
         void* const storage = _heap.Allocate(str.SizeInBytes());
         FPlatformMemory::Memcpy(storage, str.data(), str.SizeInBytes());
-        return FStringView((const char*)storage, str.size());
+        return FStringView(static_cast<const char*>(storage), str.size());
     }
 };
 //----------------------------------------------------------------------------

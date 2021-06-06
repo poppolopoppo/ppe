@@ -1,33 +1,34 @@
-#pragma once
+﻿#pragma once
 
 #include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
-#include "Allocator/LinearHeap.h"
+#include "Allocator/SlabHeap.h"
+#include "Memory/PtrRef.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define ARRAY_LINEARHEAP(T) ::PPE::TArray<T, ::PPE::FLinearAllocator>
+#define ARRAY_SLAB(T) ::PPE::TArray<T, ::PPE::FSlabAllocator>
 //----------------------------------------------------------------------------
-#define VECTOR_LINEARHEAP(T) ::PPE::TVector<T, ::PPE::FLinearAllocator>
+#define VECTOR_SLAB(T) ::PPE::TVector<T, ::PPE::FSlabAllocator>
 //----------------------------------------------------------------------------
-#define SPARSEARRAY_LINEARHEAP(T) ::PPE::TSparseArray<T, ::PPE::FLinearAllocator>
+#define SPARSEARRAY_SLAB(T) ::PPE::TSparseArray<T, ::PPE::FSlabAllocator>
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR_LINEARHEAP(_KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_LINEARHEAP(::PPE::TPair<_KEY COMMA _VALUE>)>
+#define ASSOCIATIVE_VECTOR_SLAB(_KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_SLAB(::PPE::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
-#define HASHSET_LINEARHEAP(T) ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, ::PPE::FLinearAllocator>
+#define HASHSET_SLAB(T) ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, ::PPE::FSlabAllocator>
 //----------------------------------------------------------------------------
-#define HASHMAP_LINEARHEAP(_KEY, _VALUE) ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::FLinearAllocator>
+#define HASHMAP_SLAB(_KEY, _VALUE) ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::FSlabAllocator>
 //----------------------------------------------------------------------------
-#define MEMORYSTREAM_LINEARHEAP() ::PPE::TMemoryStream<::PPE::FLinearAllocator>
+#define MEMORYSTREAM_SLAB() ::PPE::TMemoryStream<::PPE::FSlabAllocator>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Linear allocator have an handle to a FPooledLinearHeap
+// Slab allocator have an handle to a FPoolingSlabHeap
 //----------------------------------------------------------------------------
-class PPE_CORE_API FLinearAllocator : private FGenericAllocator {
+class PPE_CORE_API FSlabAllocator : private FGenericAllocator {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
@@ -35,7 +36,7 @@ public:
 
     using is_always_equal = std::false_type;
 
-    using has_maxsize = std::true_type;
+    using has_maxsize = std::false_type;
     using has_owns = std::false_type;
     using has_reallocate = std::true_type;
     using has_acquire = std::true_type;
@@ -43,21 +44,17 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
 
-    FPooledLinearHeap* Heap;
+    TPtrRef<FPoolingSlabHeap> Heap;
 
-    FLinearAllocator(FPooledLinearHeap& heap) NOEXCEPT
-    :   Heap(&heap)
+    FSlabAllocator(FPoolingSlabHeap& heap) NOEXCEPT
+    :   Heap(heap)
     {}
-    explicit FLinearAllocator(Meta::FForceInit) NOEXCEPT
+    explicit FSlabAllocator(Meta::FForceInit) NOEXCEPT
     :   Heap(nullptr)
     {}
 
-    static size_t MaxSize() NOEXCEPT {
-        return FLinearHeap::MaxBlockSize;
-    }
-
     static size_t SnapSize(size_t s) NOEXCEPT {
-        return FPooledLinearHeap::SnapSize(s);
+        return FPoolingSlabHeap::SnapSize(s);
     }
 
     FAllocatorBlock Allocate(size_t s) const {
@@ -85,11 +82,11 @@ public:
         return true;
     }
 
-    friend bool operator ==(const FLinearAllocator& lhs, const FLinearAllocator& rhs) {
+    friend bool operator ==(const FSlabAllocator& lhs, const FSlabAllocator& rhs) {
         return (lhs.Heap == rhs.Heap);
     }
 
-    friend bool operator !=(const FLinearAllocator& lhs, const FLinearAllocator& rhs) {
+    friend bool operator !=(const FSlabAllocator& lhs, const FSlabAllocator& rhs) {
         return (not operator ==(lhs, rhs));
     }
 };

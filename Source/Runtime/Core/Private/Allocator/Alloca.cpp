@@ -2,8 +2,8 @@
 
 #include "Allocator/Alloca.h"
 
-#include "Allocator/LinearHeap.h"
-#include "Allocator/LinearAllocator.h"
+#include "Allocator/SlabHeap.h"
+#include "Allocator/SlabAllocator.h"
 #include "Allocator/Malloc.h"
 
 #include "HAL/PlatformMemory.h"
@@ -12,7 +12,7 @@
 #include "Meta/Singleton.h"
 
 // skip linear heap when using memory debugging
-#define USE_PPE_ALLOCA_LINEARHEAP (!USE_PPE_MEMORY_DEBUGGING) // %_NOCOMMIT%
+#define USE_PPE_ALLOCA_SLABHEAP (!USE_PPE_MEMORY_DEBUGGING) // %_NOCOMMIT%
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -20,12 +20,13 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#if USE_PPE_ALLOCA_LINEARHEAP
-class FAllocaLinearHeapTLS_
-    : LINEARHEAP(Alloca)
-    , Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> {
-    typedef Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> parent_type;
+#if USE_PPE_ALLOCA_SLABHEAP
+class FAllocaSlabHeapTLS_
+    : SLABHEAP(Alloca)
+    , Meta::TThreadLocalSingleton<FAllocaSlabHeapTLS_> {
+    typedef Meta::TThreadLocalSingleton<FAllocaSlabHeapTLS_> parent_type;
 public:
+    using slab_type = SLABHEAP(Alloca);
     using parent_type::Get;
 #if USE_PPE_ASSERT
     using parent_type::HasInstance;
@@ -36,11 +37,11 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, 32 << 10); // 32 kb
 
-    using LINEARHEAP(Alloca)::Reallocate_AssumeLast;
-    using LINEARHEAP(Alloca)::SnapSize;
-
+    using slab_type::Deallocate_AssumeLast;
+    using slab_type::Reallocate_AssumeLast;
+    using slab_type::SnapSize;
 #if !USE_PPE_FINAL_RELEASE
-    using LINEARHEAP(Alloca)::AliasesToHeap;
+    using slab_type::AliasesToHeap;
 #endif
 
 
@@ -94,9 +95,9 @@ struct FAllocaFallback_ {
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 u32 AllocaDepth() {
-#if USE_PPE_ALLOCA_LINEARHEAP
+#if USE_PPE_ALLOCA_SLABHEAP
     // used for detecting live alloca TLS blocks in debug
-    return FAllocaLinearHeapTLS_::Get().Depth;
+    return FAllocaSlabHeapTLS_::Get().Depth;
 #else
     return 0;
 #endif
@@ -108,9 +109,9 @@ void* Alloca(size_t size) {
         return nullptr;
 
     void* p;
-#if USE_PPE_ALLOCA_LINEARHEAP
-    if (size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        p = FAllocaLinearHeapTLS_::Malloc(size);
+#if USE_PPE_ALLOCA_SLABHEAP
+    if (size <= FAllocaSlabHeapTLS_::MaxBlockSize)
+        p = FAllocaSlabHeapTLS_::Malloc(size);
     else
 #endif
         p = FAllocaFallback_::Malloc(size);
@@ -133,12 +134,12 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
     Assert(oldSize);
 
     void* result;
-#if USE_PPE_ALLOCA_LINEARHEAP
-    if (oldSize <= FAllocaLinearHeapTLS_::MaxBlockSize) {
-        auto& heap = FAllocaLinearHeapTLS_::Get();
+#if USE_PPE_ALLOCA_SLABHEAP
+    if (oldSize <= FAllocaSlabHeapTLS_::MaxBlockSize) {
+        auto& heap = FAllocaSlabHeapTLS_::Get();
         Assert_NoAssume(heap.AliasesToHeap(ptr));
 
-        if (newSize <= FAllocaLinearHeapTLS_::MaxBlockSize) {
+        if (newSize <= FAllocaSlabHeapTLS_::MaxBlockSize) {
             result = heap.Reallocate_AssumeLast(ptr, newSize, oldSize);
         }
         else {
@@ -155,8 +156,8 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
     UNUSED(keepData);
 #endif
     {
-#if USE_PPE_ALLOCA_LINEARHEAP
-        Assert_NoAssume(FAllocaLinearHeapTLS_::Get().AliasesToHeap(ptr) == false);
+#if USE_PPE_ALLOCA_SLABHEAP
+        Assert_NoAssume(FAllocaSlabHeapTLS_::Get().AliasesToHeap(ptr) == false);
 #endif
 
         result = FAllocaFallback_::Realloc(ptr, newSize);
@@ -175,14 +176,14 @@ void FreeAlloca(void* ptr, size_t size) {
     Assert(Meta::IsAligned(16, ptr));
     Assert(size);
 
-#if USE_PPE_ALLOCA_LINEARHEAP
-    if (size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        FAllocaLinearHeapTLS_::Get().Free(ptr, size);
+#if USE_PPE_ALLOCA_SLABHEAP
+    if (size <= FAllocaSlabHeapTLS_::MaxBlockSize)
+        FAllocaSlabHeapTLS_::Get().Free(ptr, size);
     else
 #endif
     {
-#if USE_PPE_ALLOCA_LINEARHEAP
-        Assert_NoAssume(FAllocaLinearHeapTLS_::Get().AliasesToHeap(ptr) == false);
+#if USE_PPE_ALLOCA_SLABHEAP
+        Assert_NoAssume(FAllocaSlabHeapTLS_::Get().AliasesToHeap(ptr) == false);
 #endif
 
         FAllocaFallback_::Free(ptr);
@@ -190,9 +191,9 @@ void FreeAlloca(void* ptr, size_t size) {
 }
 //----------------------------------------------------------------------------
 size_t AllocaSnapSize(size_t size) {
-#if USE_PPE_ALLOCA_LINEARHEAP
-    if (size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        return FAllocaLinearHeapTLS_::SnapSize(size);
+#if USE_PPE_ALLOCA_SLABHEAP
+    if (size <= FAllocaSlabHeapTLS_::MaxBlockSize)
+        return FAllocaSlabHeapTLS_::SnapSize(size);
     else
 #endif
         return FAllocaFallback_::SnapSize(size);
@@ -201,14 +202,14 @@ size_t AllocaSnapSize(size_t size) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FAllocaStartup::Start(bool/* mainThread */) {
-#if USE_PPE_ALLOCA_LINEARHEAP
-    FAllocaLinearHeapTLS_::Create();
+#if USE_PPE_ALLOCA_SLABHEAP
+    FAllocaSlabHeapTLS_::Create();
 #endif
 }
 //----------------------------------------------------------------------------
 void FAllocaStartup::Shutdown() {
-#if USE_PPE_ALLOCA_LINEARHEAP
-    FAllocaLinearHeapTLS_::Destroy();
+#if USE_PPE_ALLOCA_SLABHEAP
+    FAllocaSlabHeapTLS_::Destroy();
 #endif
 }
 //----------------------------------------------------------------------------

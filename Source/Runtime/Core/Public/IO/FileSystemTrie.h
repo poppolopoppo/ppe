@@ -4,7 +4,7 @@
 
 #include "IO/FileSystemToken.h"
 
-#include "Allocator/LinearHeap.h"
+#include "Allocator/SlabHeap.h"
 #include "Memory/MemoryView.h"
 #include "Memory/RefPtr.h"
 #include "Maths/PrimeNumbers.h"
@@ -105,7 +105,7 @@ private:
     FReadWriteLock _barrier;
     size_t _numNodes;
     FFileSystemNode _root;
-    LINEARHEAP(FileSystem) _heap;
+    SLABHEAP(FileSystem) _heap;
 
     FFileSystemTrie();
 

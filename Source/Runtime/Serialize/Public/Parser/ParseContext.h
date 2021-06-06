@@ -3,13 +3,13 @@
 #include "Serialize_fwd.h"
 
 #include "RTTI_fwd.h"
+#include "Allocator/SlabHeap.h"
 #include "RTTI/TypeTraits.h"
 
 #include "Container/HashMap.h"
 #include "Memory/RefPtr.h"
 
 namespace PPE {
-class FPooledLinearHeap;
 namespace Parser {
 FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ public:
 
     template <typename _Container>
     typename _Container::allocator_type CreateHeapContainer() {
-        return typename _Container::allocator_type(LinearHeap_());
+        return typename _Container::allocator_type(Heap_());
     }
 
 private:
@@ -65,7 +65,7 @@ private:
     RTTI::PMetaObject _scopeObject;
     local_scope_t _localScope;
 
-    FPooledLinearHeap& LinearHeap_() const;
+    FPoolingSlabHeap& Heap_() const;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

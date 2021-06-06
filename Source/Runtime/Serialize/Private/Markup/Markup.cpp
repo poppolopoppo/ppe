@@ -200,6 +200,7 @@ FMarkup::~FMarkup() {
     Assert(nullptr == _root._depth.Prev);
     Assert(nullptr == _root._breadth.Prev);
     Assert(nullptr == _root._breadth.Next);
+    _heap.ReleaseAll();
 }
 //----------------------------------------------------------------------------
 auto FMarkup::MakeString(const FStringView& str, bool mergeable/* = true */) -> FText {
@@ -210,7 +211,7 @@ auto FMarkup::MakeElement(const FText& name, FElement* parent) -> FElement* {
     Assert(not name.empty());
     Assert(parent);
 
-    FElement* pelt = INPLACE_NEW(_heap.Allocate(sizeof(FElement)), FElement)(*this);
+    FElement* const pelt = INPLACE_NEW(_heap.Allocate(sizeof(FElement)), FElement)(*this);
     pelt->_name = name;
     pelt->_depth.Prev = parent;
 

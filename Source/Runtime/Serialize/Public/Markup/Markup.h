@@ -6,7 +6,7 @@
 #include "Lexer/TextHeap.h"
 #include "SerializeExceptions.h"
 
-#include "Allocator/LinearAllocator.h"
+#include "Allocator/SlabAllocator.h"
 #include "Container/AssociativeVector.h"
 #include "Container/IntrusiveList.h"
 #include "Container/Vector.h"
@@ -51,7 +51,7 @@ public:
 
     class PPE_SERIALIZE_API FElement {
     public:
-        using attributes_type = ASSOCIATIVE_VECTOR_LINEARHEAP(FText, FText);
+        using attributes_type = ASSOCIATIVE_VECTOR_SLAB(FText, FText);
         using node_type = TIntrusiveListNode<FElement>;
 
         FElement(FMarkup& markup);
@@ -116,7 +116,7 @@ protected:
     virtual void WriteHeaders(FTextWriter& oss, bool minify) const = 0;
 
 private:
-    LINEARHEAP_POOLED(Markup) _heap;
+    SLABHEAP_POOLED(Markup) _heap;
     FElement _root;
     FTextHeap _textHeap;
 };

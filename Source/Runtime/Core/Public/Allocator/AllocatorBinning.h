@@ -58,9 +58,20 @@ struct FAllocatorBinning {
         Assert(poolIndex < NumBins);
         return BinSizes[poolIndex];
     }
+
     static u32 BoundSizeToBins(u32 sizeInBytes) NOEXCEPT {
         Assert(sizeInBytes <= MaxBinSize);
         return IndexToBlockSize(IndexFromSize(u16(sizeInBytes)));
+    }
+    static CONSTEXPR u32 LowestBoundIndex(size_t sizeInBytes) NOEXCEPT {
+        if (sizeInBytes <= MaxBinSize) {
+            u32 pool = IndexFromSize(sizeInBytes);
+            if (BinSizes[pool] > sizeInBytes)
+                --pool;
+            Assert_NoAssume(BinSizes[pool] <= sizeInBytes);
+            return pool;
+        }
+        return (NumBins - 1);
     }
 };
 //----------------------------------------------------------------------------

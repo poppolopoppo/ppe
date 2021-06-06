@@ -5,9 +5,8 @@
 #include "RTTI/Atom.h"
 #include "RTTI/NativeTypes.h"
 
-#include "Allocator/LinearHeap.h"
-#include "Allocator/LinearAllocator.h"
-#include "Container/Vector.h"
+#include "Allocator/SlabHeap.h"
+#include "Allocator/SlabAllocator.h"
 #include "Memory/RefPtr.h"
 #include "Meta/ThreadResource.h"
 
@@ -16,7 +15,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Use a FLinearHeap for transient FAtom allocation
+// Use a FSlabHeap for transient FAtom allocation
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FAtomHeap : public FRefCountable, Meta::FThreadResource {
 public:
@@ -26,7 +25,7 @@ public:
     FAtomHeap(const FAtomHeap&) = delete;
     FAtomHeap& operator =(const FAtomHeap&) = delete;
 
-    FPooledLinearHeap& Heap() { return _heap; }
+    FPoolingSlabHeap& Heap() { return _heap; }
 
     FAtom Allocate(ENativeType type) {
         return Allocate(MakeTraits(type));
@@ -60,13 +59,20 @@ public:
         return AllocateMove(MakeTraits<T>(), &rvalue);
     }
 
+    void DiscardAll();
     void ReleaseAll();
 
 private:
-    LINEARHEAP_POOLED(Atom) _heap;
-    VECTOR(Atom, FAtom) _destructibles; // #TODO switch TVector<> to TSparseArray<> and use the linear heap
+    struct ALIGN(ALLOCATION_BOUNDARY) FPendingDestroy_ {
+        PTypeTraits Traits;
+        FPendingDestroy_* pNext;
+    };
+
+    SLABHEAP_POOLED(Atom) _heap;
+    FPendingDestroy_* _destructibles{ nullptr };
 
     FAtom MakeAtomUinitialized_(const PTypeTraits& traits);
+    void ReleaseDestructibles_();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

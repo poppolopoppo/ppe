@@ -31,10 +31,12 @@
 #include "Time/Timestamp.h"
 
 // static type names:
-#include "Allocator/LinearHeap.h"
+#include "Allocator/SlabHeap.h"
 #include "HAL/PlatformMemory.h"
 #include "Meta/Singleton.h"
 #include <mutex>
+
+#include "Thread/CriticalSection.h"
 
 namespace PPE {
 namespace RTTI {
@@ -472,46 +474,59 @@ namespace {
 class FTypeNamesBuilder_ : public Meta::TStaticSingleton<FTypeNamesBuilder_> {
     using singleton_type = Meta::TStaticSingleton<FTypeNamesBuilder_>;
 
-    std::mutex _barrier;
-    LINEARHEAP(TypeNames) _heap;
+    FCriticalSection _barrierCS;
+    SLABHEAP(TypeNames) _heap;
 
 public:
     using singleton_type::Get;
-    using singleton_type::Destroy;
 
     static void Create() {
         singleton_type::Create();
     }
 
-    class FWritePort : Meta::FNonCopyableNorMovable {
+    static void Destroy() {
+        Get()._heap.ReleaseAll();
+        singleton_type::Destroy();
+    }
+
+    STATIC_CONST_INTEGRAL(size_t, DefaultReserve, 128);
+
+    class FWritePort : FCriticalScope {
     public:
         explicit FWritePort(FTypeNamesBuilder_& builder)
-        :   _builder(builder) {
-            _builder._barrier.lock();
+        :   FCriticalScope(&builder._barrierCS)
+        ,   _heap(builder._heap) {
+            _outp.Relocate(_heap.AllocateT<u8>(DefaultReserve));
         }
 
         ~FWritePort() {
-            _builder._barrier.unlock();
+            const FRawMemory oldM = _outp.Storage();
+            const FRawMemory newM = _heap.ReallocateT_AssumeLast(oldM, _outp.size()); // shrink to fit
+            Assert_NoAssume(oldM.data() == newM.data()); // should realloc inplace
+            UNUSED(newM);
         }
 
         void Append(const FStringView& str) {
-            const size_t oldSize = _buffer.size();
+            const size_t oldSize = _outp.Written().SizeInBytes();
             const size_t newSize = oldSize + str.size();
 
-            _buffer = FRawMemory{
-                (u8*)_builder._heap.Reallocate(_buffer.data(), newSize, oldSize),
-                newSize };
+            if (newSize > _outp.Storage().SizeInBytes()) {
+                const size_t newCapacity = FSlabHeap::SnapSize(Max(_outp.Storage().SizeInBytes() * 2, newSize));
+                const FRawMemory oldStorage = _outp.Storage();
+                _outp.Relocate(_heap.ReallocateT_AssumeLast(oldStorage, newCapacity));
+                Assert_NoAssume(_outp.Storage().data() == oldStorage.data()); // should realloc inplace
+            }
 
-            FPlatformMemory::Memcpy(_buffer.data() + oldSize, str.data(), str.size());
+            _outp.WriteView(str);
         }
 
         FStringView Written() const {
-            return _buffer.Cast<const char>();
+            return _outp.Written().Cast<const char>();
         }
 
     private:
-        FTypeNamesBuilder_& _builder;
-        FRawMemory _buffer;
+        FSlabHeap& _heap;
+        FMemoryViewWriter _outp;
     };
 
 };
