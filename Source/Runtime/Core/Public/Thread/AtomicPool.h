@@ -42,11 +42,12 @@ public:
 #if USE_PPE_ASSERT || USE_PPE_MEMORYDOMAINS
     ~TAtomicPool() {
         ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(AtomicPool).DeallocateSystem(Capacity * sizeof(block_type)) );
-
+#   if USE_PPE_ASSERT
         for (auto& set : _sets) {
             Assert_NoAssume(set.Alloc.AllTrue());
             Assert_NoAssume(set.Create.AllFalse()); // must call Clear_ReleaseMemory()
         }
+#   endif
     }
 #endif
 
@@ -100,8 +101,10 @@ public:
 
                 ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(AtomicPool).AllocateUser(sizeof(block_type)) );
 
-                if (set.Create.Set(alloc))
+                if (set.Create.Set(alloc)) {
+                    ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(p, sizeof(block_type)));
                     Meta::VariadicFunctor(ctor, p, id);
+                }
 
                 return p;
             }

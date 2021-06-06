@@ -36,7 +36,7 @@ public:
         for (i32 backoff = 0; !TryLock(); )
             FPlatformProcess::SleepForSpinning(backoff);
     }
-    bool TryLock() NOEXCEPT {
+    NODISCARD bool TryLock() NOEXCEPT {
         return (not _locked.load(std::memory_order_relaxed) &&
                 not _locked.exchange(true, std::memory_order_acquire) );
     }
@@ -215,7 +215,7 @@ public: // Writer
         }
     }
 
-    bool TryAcquireWriter() NOEXCEPT {
+    NODISCARD bool TryAcquireWriter() NOEXCEPT {
         unsigned r = Readers.load(std::memory_order_relaxed);
         return ((0 == r) && Readers.compare_exchange_weak(r, WRITER_LOCK,
             std::memory_order_release, std::memory_order_relaxed));
@@ -247,7 +247,7 @@ public:
 #endif
 
     template <typename _Functor>
-    bool Transition(const size_type nextPhase, _Functor&& onTransition) NOEXCEPT {
+    NODISCARD bool Transition(const size_type nextPhase, _Functor&& onTransition) NOEXCEPT {
         Assert_NoAssume(not (nextPhase & TransitionBit_));
 
         size_type expected = _phase.load(std::memory_order_relaxed);
@@ -317,7 +317,7 @@ public:
         }
     }
 
-    bool TryLock(size_type subset) NOEXCEPT {
+    NODISCARD bool TryLock(size_type subset) NOEXCEPT {
         Assert(subset);
         size_type msk = _mask.load(std::memory_order_relaxed);
         if ((msk & subset) == 0 && _mask.compare_exchange_weak(msk, msk | subset,
@@ -384,7 +384,7 @@ public: // Read
         FPlatformAtomics::Increment(reinterpret_cast<volatile i8*>(&Queue.s.Write));
     }
 
-    bool TryLockRead() NOEXCEPT {
+    NODISCARD bool TryLockRead() NOEXCEPT {
         const u32 me = Queue.s.Users;
         const u8 menew = static_cast<u8>(me + 1);
         const u32 write = Queue.s.Write;
@@ -427,7 +427,7 @@ public: // Write
         *reinterpret_cast<volatile u16*>(&Queue) = t.us;
     }
 
-    bool TryLockWrite() NOEXCEPT {
+    NODISCARD bool TryLockWrite() NOEXCEPT {
         const u32 me = Queue.s.Users;
         const u8 menew = static_cast<u8>(me + 1);
 

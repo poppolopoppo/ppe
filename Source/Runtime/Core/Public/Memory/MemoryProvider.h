@@ -123,6 +123,11 @@ public:
         _offsetO = _size = 0;
     }
 
+    FRawMemory Storage() const { return _rawData; }
+    void Relocate(FRawMemory storage) {
+        _rawData = storage;
+    }
+
 public: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 

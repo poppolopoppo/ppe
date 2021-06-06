@@ -41,7 +41,7 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
     using FCacheItem_ = TCacheItem_<_Key, _Value>;
     using FCacheKey_ = THashMemoizer<TPtrRef<const _Key>, Meta::THash<_Key>>; // memoize a ptr reference to the key in the block
 
-    using pool_type = TTypedMemoryPool<FCacheItem_, _ChunkSize, _MaxChunks, false/* got a global CS already */, _Allocator>;
+    using pool_type = TTypedMemoryPool<FCacheItem_, _ChunkSize, _MaxChunks, EThreadBarrier::None/* got a global CS already */, _Allocator>;
     using cache_type = TFixedSizeHashMap<
         FCacheKey_,
         typename pool_type::index_type, // index of the block

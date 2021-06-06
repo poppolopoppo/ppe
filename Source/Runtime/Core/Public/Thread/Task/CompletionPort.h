@@ -88,8 +88,13 @@ private:
     std::atomic<int> _countDown{ CP_NotReady };
 
     FCriticalSection _barrier;
+#if USE_PPE_ASSERT
     VECTORINSITU(Task, FInterruptedTask, 4) _queue;
     VECTORINSITU(Task, FCompletionPort*, 2) _children;
+#else
+    VECTORINSITU(Task, FInterruptedTask, 4) _queue;
+    VECTORINSITU(Task, FCompletionPort*, 3) _children;
+#endif
 
     void ResetToNotReady_AssumeFinished_();
 

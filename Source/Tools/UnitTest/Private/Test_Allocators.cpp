@@ -24,6 +24,7 @@
 #include <random>
 
 
+#include "Allocator/SlabHeap.h"
 #include "Container/CompressedRadixTrie.h"
 #include "Maths/RandomGenerator.h"
 #include "Maths/VarianceEstimator.h"
@@ -474,7 +475,7 @@ static NO_INLINE void Test_AtomicPool_() {
 static NO_INLINE void Test_MemoryPool_() {
     LOG(Test_Allocators, Emphasis, L"testing TMemoryPool<>");
 
-    using pool_type = TTypedMemoryPool<FDummyForPool_, 8, 512, true, ALLOCATOR(Container)>;
+    using pool_type = TTypedMemoryPool<FDummyForPool_, 8, 512, EThreadBarrier::RWLock, ALLOCATOR(Container)>;
     using index_type = pool_type::index_type;
 
     STATIC_CONST_INTEGRAL(size_t, ToDeallocate, (pool_type::MaxSize * 2) / 3);
@@ -752,7 +753,7 @@ void Test_Allocators() {
         FThreefy_4x32 rnd;
         rnd.RandomSeed();
 
-        auto generator = [&rnd](blocksizes_t* blks, u32 minSize, u32 maxSize, size_t alignment, size_t totalSize) NOEXCEPT -> size_t {
+        auto generator = [&rnd](blocksizes_t* blks, u32 minSize, u32 maxSize, u32 alignment, size_t totalSize) NOEXCEPT -> size_t {
             u32 currentSize = 0;
             for (;;) {
                 float4 f = rnd.UniformF(0.f, 1.f);
