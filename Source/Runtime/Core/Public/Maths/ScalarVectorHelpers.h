@@ -225,10 +225,24 @@ CONSTEXPR bool Any(const TScalarVector<T, _Dim>& mask) {
     });
 }
 //----------------------------------------------------------------------------
+template <typename _Expr, size_t _Dim>
+CONSTEXPR bool Any(const TScalarVectorExpr<_Expr, _Dim>& expr) {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
+        return (Any(expr.template get<idx>()) | ...);
+    });
+}
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
 CONSTEXPR bool All(const TScalarVector<T, _Dim>& mask) {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (Any(mask.template get<idx>()) & ...);
+        return (All(mask.template get<idx>()) & ...);
+    });
+}
+//----------------------------------------------------------------------------
+template <typename _Expr, size_t _Dim>
+CONSTEXPR bool All(const TScalarVectorExpr<_Expr, _Dim>& expr) {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
+        return (All(expr.template get<idx>()) & ...);
     });
 }
 //----------------------------------------------------------------------------

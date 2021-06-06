@@ -42,9 +42,6 @@ struct TScalarVectorExpr {
     static CONSTEXPR size_t Dim = _Dim;
     using expr_type = T;
 
-    template <typename U>
-    CONSTEXPR auto Cast() const NOEXCEPT;
-
     FORCE_INLINE CONSTEXPR expr_type& ref() NOEXCEPT {
         return static_cast<expr_type&>(*this);
     }
@@ -62,6 +59,13 @@ struct TScalarVectorExpr {
     FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
         return ref().template get<_Idx>();
     }
+
+    template <typename U>
+    auto BitCast() const NOEXCEPT;
+    template <typename U>
+    CONSTEXPR auto Cast() const NOEXCEPT;
+    template <typename U>
+    auto CastChecked() const NOEXCEPT;
 
     // those functions should expand the expression before operating for performance reasons.
     // workaround for user-defined conversion not being considered when doing template argument deduction,
@@ -287,36 +291,36 @@ CONSTEXPR auto VECTORCALL operator /(const TScalarVectorComponent<T, _Idx>& lhs,
 //----------------------------------------------------------------------------
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x + rhs); });
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x + rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x - rhs); });
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x - rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x * rhs); });
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x * rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x / rhs); });
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x / rhs); });
 }
 //----------------------------------------------------------------------------
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator +(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs + x); });
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs + x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator -(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs - x); });
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs - x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator *(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs * x); });
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs * x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
 CONSTEXPR auto VECTORCALL operator /(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs / x); });
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs / x); });
 }
 //----------------------------------------------------------------------------
 // TScalarVectorAssignable<> : =, +=, -=, *= & /=, both with vectors and scalars
@@ -453,8 +457,20 @@ CONSTEXPR bool operator !=(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScal
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
+auto TScalarVectorExpr<T, _Dim>::BitCast() const NOEXCEPT {
+    return TScalarVectorUnaryOp(*this, [](auto x) -> U { return bit_cast<U>(x); });
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+template <typename U>
 CONSTEXPR auto TScalarVectorExpr<T, _Dim>::Cast() const NOEXCEPT {
     return TScalarVectorUnaryOp(*this, [](auto x) -> U { return static_cast<U>(x); });
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+template <typename U>
+auto TScalarVectorExpr<T, _Dim>::CastChecked() const NOEXCEPT {
+    return TScalarVectorUnaryOp(*this, [](auto x) -> U { return checked_cast<U>(x); });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -939,7 +955,7 @@ struct TScalarVector : TScalarVectorAssignable<TScalarVector<T, _Dim>, T, _Dim> 
 //----------------------------------------------------------------------------
 // ExpandScalarVectorExpr() : convert an expression to a vector of deduced type
 //----------------------------------------------------------------------------
-template < typename T, size_t _Dim>
+template <typename T, size_t _Dim>
 CONSTEXPR auto ExpandScalarVectorExpr(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
     using component_type = std::decay_t<decltype(
         std::declval<const TScalarVectorExpr<T, _Dim>&>().template get<0>()
@@ -947,7 +963,7 @@ CONSTEXPR auto ExpandScalarVectorExpr(const TScalarVectorExpr<T, _Dim>& v) NOEXC
     return PromoteScalarVectorExpr<component_type>(v);
 }
 //----------------------------------------------------------------------------
-template < typename T, size_t _Dim>
+template <typename T, size_t _Dim>
 CONSTEXPR const TScalarVector<T, _Dim>& ExpandScalarVectorExpr(const TScalarVector<T, _Dim>& v) NOEXCEPT {
     return v; // specialize for TVector<> : skip copy with trivial projection
 }
@@ -993,6 +1009,9 @@ PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(4, 0,/* xyzw */0, 1, 2, 3)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// All scalar vectors are considered as pods
+PPE_ASSUME_TEMPLATE_AS_POD(TScalarVector<T COMMA _Dim>, typename T, size_t _Dim)
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 hash_t hash_value(const TScalarVector<T, _Dim>& v) NOEXCEPT {
     return hash_as_pod(v);
@@ -1005,21 +1024,12 @@ void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim >
-FTextWriter& operator <<(FTextWriter& oss, const TScalarVector<T, _Dim>& v) {
-    oss << '[' << v.data[0];
+template <typename _Char, typename T, size_t _Dim >
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalarVector<T, _Dim>& v) {
+    oss << STRING_LITERAL(_Char, '[') << v.data[0];
     forrange(i, 1, _Dim)
-        oss << ", " << v.data[i];
-    oss << ']';
-    return oss;
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim >
-FWTextWriter& operator <<(FWTextWriter& oss, const TScalarVector<T, _Dim>& v) {
-    oss << L'[' << v.data[0];
-    forrange(i, 1, _Dim)
-        oss << L", " << v.data[i];
-    oss << L']';
+        oss << STRING_LITERAL(_Char, ", ") << v.data[i];
+    oss << STRING_LITERAL(_Char, ']');
     return oss;
 }
 //----------------------------------------------------------------------------
@@ -1040,12 +1050,6 @@ struct TNumericLimits< TScalarVector<T, _Dim> > {
     static CONSTEXPR value_type Nan() NOEXCEPT { return value_type( scalar_type::Nan() ); }
     static CONSTEXPR value_type Zero() NOEXCEPT { return value_type( scalar_type::Zero() ); }
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// All scalar vectors are considered as pods
-//----------------------------------------------------------------------------
-PPE_ASSUME_TEMPLATE_AS_POD(TScalarVector<T COMMA _Dim>, typename T, size_t _Dim)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
