@@ -5,7 +5,8 @@
 #include "RHI/ImageDesc.h"
 #include "RHI/RenderState.h"
 
-#include "Allocator/LinearAllocator.h"
+#include "Allocator/SlabHeap.h"
+#include "Allocator/SlabAllocator.h"
 
 namespace PPE {
 namespace RHI {
@@ -65,8 +66,8 @@ public:
     FRawRenderPassID RenderPassId() const { return _renderPassId; }
     u32  SubpassIndex() const { return _subpassIndex; }
 
-    TMemoryView<const FViewport> Viewports() const { return _viewports.MakeConstView(); }
-    TMemoryView<const FRectangleI> Scissors() const { return _scissors.MakeConstView(); }
+    TMemoryView<const VkViewport> Viewports() const { return _viewports.MakeConstView(); }
+    TMemoryView<const VkRect2D> Scissors() const { return _scissors.MakeConstView(); }
 
     const FBlendState& BlendState() const { return _blendState; }
     const FDepthBufferState& DepthState() const { return _depthState; }
@@ -91,7 +92,7 @@ public:
         return ptask;
     }
 
-    bool Create(FVulkanCommandBuffer& commandBuffer, const FRenderPassDesc& desc);
+    NODISCARD bool Construct(FVulkanCommandBuffer& commandBuffer, const FRenderPassDesc& desc);
     void TearDown(const FVulkanResourceManager& resources);
 
     void SetRenderPass(FRawRenderPassID renderPass, u32 subpass, FRawFramebufferID framebuffer, u32 depthIndex);
@@ -110,8 +111,8 @@ private:
     FRawRenderPassID _renderPassId;
     u32 _subpassIndex{ 0 };
 
-    LINEARHEAP(RHIRenderPass) _localHeap;
-    VECTOR_LINEARHEAP(IVulkanDrawTask*) _drawTasks;
+    SLABHEAP_POOLED(RHIRenderPass) _localHeap;
+    VECTOR_SLAB(IVulkanDrawTask*) _drawTasks{ FSlabAllocator(_localHeap) };
 
     FColorTargets _colorTargets;
     FDepthStencilTarget _depthStencilTarget;

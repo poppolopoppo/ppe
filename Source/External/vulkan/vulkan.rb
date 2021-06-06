@@ -65,7 +65,9 @@ class HeaderParser
                 @symbols[fname] = @table
                 input = File.read(fname)
                 parser.call(input, @table)
+                @table.freeze
             else
+                Build::Assert.check{ @table.frozen? }
                 @symbols[fname] = @table
             end
             @table = nil
@@ -130,8 +132,15 @@ class HeaderParser
     end
 
     def alias!(name, sym)
-        #Build::Log.debug('Declare vulkan symbol "%s" of type <%s>: %s', name, type, expansion)
-        Build::Assert.check{ !@symbols.include?(name) }
+        #Build::Log.debug('Declare vulkan symbol "%s": %s', name, sym.expansion)
+        Build::Assert.check{
+            if @symbols.include?(name)
+                Build::Log.error('symbol registered twice <'+name+'>')
+                false
+            else
+                true
+            end
+        }
         @symbols[name] = sym
         return sym
     end
@@ -139,6 +148,8 @@ class HeaderParser
         sym = Symbol.new(type, name, expansion)
         return alias!(sym.name, sym)
     end
+
+    def inspect() return 'HeaderParser' end
 
 end #~ HeaderParser
 
@@ -162,6 +173,9 @@ class VulkanAPIGenerator < HeaderParser
         # end,
         # vk_typedef_struct: HeaderParser.re(/typedef\s+struct\s+(Vk\w+)\s+\{(.*?)\}\s+(Vk\w+)\s*;/m) do |m|
         #     declare!(:struct, m[2], @fwd ? 'struct %s;' % m[2] : 'typedef struct %s {%s} %s;' % m).inner!(m[1])
+        # end,
+        # vk_structure_type: HeaderParser.re(/^\s*(VK_STRUCTURE_TYPE_\w+)\s*=\s*(.*)\s*,\s*$/) do |m|
+        #     @symbols[m[0]] = declare!(:structure_type, m[0], m[1])
         # end,
         vk_typedef_pfn: HeaderParser.re(/typedef\s+(\w+\*?)\s+\(VKAPI_PTR\s+\*(PFN_\w+)\)\((.*?)\)\s*;/) do |m|
             @symbols[m[1].delete_prefix('PFN_')] = declare!(:pfn, m[1], 'typedef %s (VKAPI_PTR *%s)(%s);' % [m[0],m[1],m[2]]).
@@ -190,9 +204,18 @@ class VulkanAPIGenerator < HeaderParser
         return head
     end
 
+    def self.parse_stype(type)
+        stype = type.delete_prefix('Vk')
+        suff = ''; stype.gsub!(/([A-Z]+)$/){|m| suff += m.to_s; '' }
+        suff.insert(0, '_') unless suff.empty?
+        return "VK_STRUCTURE_TYPE_#{stype.split(/(?=[A-Z0-9]+)/).collect{|x| x.upcase }.join('_')}#{suff}"
+    end
+
 end #~ VulkanAPIGenerator
 
 class VulkanFunctionsGenerator < HeaderParser
+
+    VK_TYPE_RE = /(Vk\w+)/
 
     PARSER_RULES = {
         exported_function: HeaderParser.re(/^\s*VK_EXPORTED_FUNCTION\(\s*(vk\w+)\s*\)\s*$/) do |m|
@@ -212,6 +235,14 @@ class VulkanFunctionsGenerator < HeaderParser
         instance_level_function_from_extension: HeaderParser.re(/^\s*VK_INSTANCE_LEVEL_FUNCTION_FROM_EXTENSION\(\s*(vk\w+)\s*,\s*(VK_\w+)\s*\)\s*$/) do |m|
             declare!(:instance_level_function_from_extension, m[0], m[1])
         end,
+        instance_level_backward_compatibility: HeaderParser.re(/^\s*VK_INSTANCE_LEVEL_BACKWARD_COMPATIBILITY\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(vk\w+)\s*,\s*(vk\w+)\s*,\s*(VK_\w+)\s*\)\s*$/) do |m|
+            sym = declare!(:instance_level_backward_compatibility, "#{m[2]}-#{m[0]}_#{m[1]}", m[3])
+            sym.opaque!(:vk_version_major, m[0].to_i)
+            sym.opaque!(:vk_version_minor, m[1].to_i)
+            sym.opaque!(:vk_function_name, m[2])
+            sym.opaque!(:vk_extension_name, m[4])
+            sym
+        end,
         device_level_function: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_FUNCTION\(\s*(vk\w+)\s*,\s*VK_API_VERSION_(\d)_(\d)\s*\)\s*$/) do |m|
             vkver = "VK_API_VERSION_#{m[1]}_#{m[2]}"
             declare!(:device_level_function, m[0]).inner!(vkver)
@@ -222,14 +253,23 @@ class VulkanFunctionsGenerator < HeaderParser
         end,
         device_level_function_from_extension: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_FUNCTION_FROM_EXTENSION\(\s*(vk\w+)\s*,\s*(VK_\w+)\s*\)\s*$/) do |m|
             declare!(:device_level_function_from_extension, m[0], m[1])
-        end
+        end,
+        device_level_backward_compatibility: HeaderParser.re(/^\s*VK_DEVICE_LEVEL_BACKWARD_COMPATIBILITY\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(vk\w+)\s*,\s*(vk\w+)\s*,\s*(VK_\w+)\s*\)\s*$/) do |m|
+            sym = declare!(:device_level_backward_compatibility, "#{m[2]}-#{m[0]}_#{m[1]}", m[3])
+            sym.opaque!(:vk_version_major, m[0].to_i)
+            sym.opaque!(:vk_version_minor, m[1].to_i)
+            sym.opaque!(:vk_function_name, m[2])
+            sym.opaque!(:vk_extension_name, m[4])
+            sym
+        end,
     }
 
-    attr_reader :functions, :versions
+    attr_reader :functions, :versions, :types_by_ext
 
     def initialize()
         super(PARSER_RULES)
         @functions = {}
+        @types_by_ext = {}
         @versions = Set.new
         @lz_macro = nil
         @lz_queue = []
@@ -241,12 +281,43 @@ class VulkanFunctionsGenerator < HeaderParser
 
         @symbols.each_sym do |sym|
             if PARSER_RULES.has_key?(sym.type)
-                Build::Log.debug('Vulkan function "%s" of type <%s>', sym.name, sym.type)
-                @functions[sym.type] << sym
+                #Build::Log.debug('Vulkan function "%s" of type <%s>', sym.name, sym.type)
+                (@functions[sym.type] |= []) << sym
                 vkver = sym.inner
                 @versions << vkver unless vkver.nil?
             end
         end
+
+        # registerTypeByExt = lambda do |type, ext|
+        #     stype = VulkanAPIGenerator.parse_stype(type)
+        #     stype_decl = api.symbols[stype]
+        #     next if stype_decl.nil?
+        #     if ext.nil? || !@types_by_ext[nil].include?(type)
+        #         set = @types_by_ext[ext]
+        #         set = @types_by_ext[ext] = Set.new() if set.nil?
+        #         set << type
+        #     end
+        # end
+        # parseSignatureByExt = lambda do |sym, pfn, ext|
+        #     next if pfn.nil?
+        #     registerTypeByExt.call(pfn.front?, ext) if pfn.front? =~ VK_TYPE_RE
+        #     pfn.inner.scan(VK_TYPE_RE) do |m|
+        #         registerTypeByExt.call(m[0], ext)
+        #     end
+        # end
+
+        # each_func(:instance_level_function, api) do |name, sym|
+        #     parseSignatureByExt.call(sym, api.symbols[name], nil)
+        # end
+        # each_func(:device_level_function, api) do |name, sym|
+        #     parseSignatureByExt.call(sym, api.symbols[name], nil)
+        # end
+        # each_func(:instance_level_function_from_extension, api) do |name, sym|
+        #     parseSignatureByExt.call(sym, api.symbols[name], sym.expansion)
+        # end
+        # each_func(:device_level_function_from_extension, api) do |name, sym|
+        #     parseSignatureByExt.call(sym, api.symbols[name], sym.expansion)
+        # end
 
         #PARSER_RULES.keys.each {|k| @functions[k].sort!{|a,b| a.name <=> b.name } }
 
@@ -291,6 +362,7 @@ class VulkanFunctionsGenerator < HeaderParser
             memvar_decl(dst, 'global_api_', 'const global_api*');
             memvar_decl(dst, 'instance_extensions_', 'instance_extension_set', "{}")
             memfun_decl(dst, 'attach_return_error', 'NODISCARD const char*', 'const global_api* api, VkInstance vkInstance, api_version version, const instance_extension_set& required, instance_extension_set optional = PPE::Default')
+            memfun_decl(dst, 'setup_backward_compatibility', 'void', 'void')
             pfnvar_decl(dst, :instance_level_function)
             pfnvar_decl(dst, :instance_level_function_from_extension)
         end
@@ -301,6 +373,7 @@ class VulkanFunctionsGenerator < HeaderParser
             memvar_decl(dst, 'device_extensions_', 'device_extension_set', "{}")
             memfun_decl(dst, 'attach_return_error', 'NODISCARD const char*', 'const class instance_fn& fn, VkDevice vkDevice, const device_extension_set& required, device_extension_set optional = PPE::Default')
             memfun_decl(dst, 'attach_return_error', 'NODISCARD const char*', 'const instance_api* api, VkDevice vkDevice, const device_extension_set& required, device_extension_set optional = PPE::Default')
+            memfun_decl(dst, 'setup_backward_compatibility', 'void', 'void')
             pfnvar_decl(dst, :device_level_function)
             pfnvar_decl(dst, :device_level_function_from_extension)
         end
@@ -312,6 +385,7 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!('public:')
             dst.puts!('instance_fn() = default;')
             dst.puts!('constexpr explicit instance_fn(const instance_api* api) : instance_api_(api) {}')
+            dst.puts!('api_version version() const { return instance_api_->version_; }')
             dst.puts!('const instance_extension_set& instance_extensions() const { return instance_api_->instance_extensions_; }')
             pfnfun_decl(dst, :global_level_function, 'instance_api_->global_api_', api)
             pfnfun_decl(dst, :instance_level_function, 'instance_api_', api)
@@ -324,12 +398,24 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!('public:')
             dst.puts!('device_fn() = default;')
             dst.puts!('constexpr explicit device_fn(const device_api* api) : device_api_(api) {}')
+            dst.puts!('api_version version() const { return device_api_->instance_api_->version_; }')
             dst.puts!('const device_extension_set& device_extensions() const { return device_api_->device_extensions_; }')
             pfnfun_decl(dst, :instance_level_function, 'device_api_->instance_api_', api)
             pfnfun_decl(dst, :instance_level_function_from_extension, 'device_api_->instance_api_', api)
             pfnfun_decl(dst, :device_level_function, 'device_api_', api)
             pfnfun_decl(dst, :device_level_function_from_extension, 'device_api_', api)
         end
+
+        # dst.puts!("template <typename T> using type_t = PPE::Meta::TType<T>;")
+        # @types_by_ext.each do |ext, types|
+        #     lazy_ifdef(dst, ext) do
+        #         types.each do |type|
+        #             stype = VulkanAPIGenerator.parse_stype(type)
+        #             dst.puts!("CONSTEXPR VkStructureType structure_type(type_t<#{type}>) { return #{stype}; }")
+        #         end
+        #     end
+        #     flush_ifdef!(dst)
+        # end
 
         dst.puts!('} //!namespace vk')
 
@@ -428,6 +514,34 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!("return nullptr; // no error")
         end
 
+        memfun_def(dst, 'setup_backward_compatibility', 'instance_api', 'void', 'void') do
+            dst.puts!('const u32 vkVersion = static_cast<u32>(version_);')
+            dst.puts!('UNUSED(vkVersion);')
+            by_version = {}
+            each_func(:instance_level_backward_compatibility, api) do |name, sym|
+                version = [sym.opaque?(:vk_version_major), sym.opaque?(:vk_version_minor)]
+                funcs = by_version[version]
+                funcs = by_version[version] = [] if funcs.nil?
+                funcs << [sym.opaque?(:vk_function_name), sym]
+            end
+            by_version.each do |(major, minor), funcs|
+                ifdef(dst, "VK_VERSION_#{major}_#{minor}") do
+                    dst.puts!("if (VK_VERSION_MAJOR(vkVersion) == #{major} || (VK_VERSION_MAJOR(vkVersion) == #{major} && VK_VERSION_MINOR(vkVersion) >= #{minor}) {")
+                    dst.indent! do
+                        funcs.each do |(name, sym)|
+                            extensionName = sym.opaque?(:vk_extension_name)
+                            lazy_ifdef(dst, extensionName) do
+                                dst.puts!("Assert(#{sym.expansion})")
+                                dst.puts!("#{name} = #{sym.expansion};")
+                            end
+                        end
+                        flush_ifdef!(dst)
+                    end
+                    dst.puts!('}')
+                end
+            end
+        end
+
         dst.puts!("const device_api device_api::g_dummy{")
             dst.scope!(self) do
                 dst.puts!("nullptr, // instance_api_")
@@ -466,6 +580,34 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!("return nullptr; // no error")
         end
 
+        memfun_def(dst, 'setup_backward_compatibility', 'device_api', 'void', 'void') do
+            dst.puts!('const u32 vkVersion = static_cast<u32>(instance_api_->version_);')
+            dst.puts!('UNUSED(vkVersion);')
+            by_version = {}
+            each_func(:device_level_backward_compatibility, api) do |name, sym|
+                version = [sym.opaque?(:vk_version_major), sym.opaque?(:vk_version_minor)]
+                funcs = by_version[version]
+                funcs = by_version[version] = [] if funcs.nil?
+                funcs << [name, sym]
+            end
+            by_version.each do |(major, minor), funcs|
+                ifdef(dst, "VK_VERSION_#{major}_#{minor}") do
+                    dst.puts!("if (VK_VERSION_MAJOR(vkVersion) == #{major} || (VK_VERSION_MAJOR(vkVersion) == #{major} && VK_VERSION_MINOR(vkVersion) >= #{minor}) {")
+                    dst.indent! do
+                        funcs.each do |(name, sym)|
+                            extensionName = sym.opaque?(:vk_extension_name)
+                            lazy_ifdef(dst, extensionName) do
+                                dst.puts!("Assert(#{sym.expansion})")
+                                dst.puts!("#{name} = #{sym.expansion};")
+                            end
+                        end
+                        flush_ifdef!(dst)
+                    end
+                    dst.puts!('}')
+                end
+            end
+        end
+
         dst.puts!('} //!namespace vk')
 
         return self
@@ -474,7 +616,7 @@ class VulkanFunctionsGenerator < HeaderParser
 private
     def each_func(type, api, &block)
         @functions[type].each do |sym|
-            pfn = api.symbols[sym.name]
+            #pfn = api.symbols[sym.name]
             block.call(sym.name, sym)
         end
     end
@@ -493,7 +635,7 @@ private
     def exthref(extmacro)
         flag = extflag(extmacro)
         return flag
-        return "<a href=\"https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_#{flag}.html\">VK_#{flag}</a>"
+        #return "<a href=\"https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_#{flag}.html\">VK_#{flag}</a>"
     end
 
     def fwd_def(dst, api)
@@ -532,15 +674,15 @@ extern "C" \{
     end
     def fwd_decl(dst, type, api, fwd=Set.new)
         @functions[type].each do |fun|
-            sym = api.symbols[fun.name]
-            sym.dependencies.each do |dep|
+            pfn = api.symbols[fun.name]
+            pfn.dependencies.each do |dep|
                 if fwd.add?(dep)
                     dep = api.symbols[dep]
                     next if dep.nil?
                     dst.puts!(dep.expansion)
                 end
             end
-            dst.puts!(sym)
+            dst.puts!(pfn)
         end
     end
     def ifdef(dst, macro, &scope)
@@ -737,7 +879,6 @@ extern "C" \{
         dst.indent!
             dst.puts!("#{name}_set avail{};")
             exts.each do |ext|
-                requires = ext.expansion
                 ifdef(dst, ext.name) do
                     dst.puts!("avail += #{extflag(ext.name)};")
                 end

@@ -6,7 +6,7 @@
 
 #include "RHI/RayTracingTask.h"
 
-#include "Allocator/LinearAllocator.h"
+#include "Allocator/SlabAllocator.h"
 #include "Container/HashSet.h"
 
 namespace PPE {
@@ -23,9 +23,9 @@ public:
     using FShaderGroup = FUpdateRayTracingShaderTable::FShaderGroup;
 
     const FRawRTPipelineID Pipeline;
-    const FVulkanRayTracingLocalScene* const RTScene;
+    const FVulkanRayTracingLocalScene* RTScene;
 
-    FVulkanRayTracingShaderTable* const ShaderTable;
+    FVulkanRayTracingShaderTable* ShaderTable;
     const TMemoryView<const FShaderGroup> ShaderGroups;
 
     const FRayGenShader RayGenShader;
@@ -41,10 +41,10 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FBuildRayTracingGeometry> final : public IVulkanFrameTask {
 public:
-    using FUsableBuffers = HASHSET_LINEARHEAP(const FVulkanLocalBuffer*);
+    using FUsableBuffers = HASHSET_SLAB(const FVulkanLocalBuffer*);
 
-    const FVulkanRayTracingLocalGeometry* const RTGeometry;
-    const FVulkanLocalBuffer* const ScratchBuffer;
+    const FVulkanRayTracingLocalGeometry* RTGeometry;
+    const FVulkanLocalBuffer* ScratchBuffer;
     const TMemoryView<const VkAccelerationStructureGeometryKHR> Geometries;
 
     FUsableBuffers UsableBuffers;
@@ -65,24 +65,29 @@ public:
         u32 Index{ 0 };
     };
 
-    const FVulkanRayTracingLocalScene* const RTScene;
-    const FVulkanLocalBuffer* const ScratchBuffer;
+    const FVulkanRayTracingLocalScene* RTScene{ nullptr };
+    const FVulkanLocalBuffer* ScratchBuffer{ nullptr };
 
-    const FVulkanLocalBuffer* const InstanceStagingBuffer;
-    const VkDeviceSize InstanceStagingBufferOffset;
+    const FVulkanLocalBuffer* InstanceStagingBuffer;
+    VkDeviceSize InstanceStagingBufferOffset{ 0 };
 
-    const FVulkanLocalBuffer* const InstanceBuffer;
-    const VkDeviceSize InstanceBufferOffset;
+    const FVulkanLocalBuffer* InstanceBuffer{ nullptr };
+    VkDeviceSize InstanceBufferOffset{ 0 };
 
-    const TMemoryView<const FInstance> Instances;
-    const TMemoryView<const FVulkanRayTracingLocalGeometry* const> RTGeometries;
+    TMemoryView<const FInstance> Instances;
+    TMemoryView<const FVulkanRayTracingLocalGeometry*> RTGeometries;
 
+    u32 NumInstances{ 0 };
     u32 HitShadersPerInstance{ 0 };
     u32 MaxHitShaderCount{ 0 };
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingScene& desc, FProcessFunc process);
 
-    bool Valid() const { return (!!RTScene && !!ScratchBuffer && !!InstanceStagingBuffer && InstanceBuffer && not Instances.empty() && not RTGeometries.empty()); }
+    bool Valid() const {
+        Assert_NoAssume(Instances.size() == NumInstances);
+        Assert_NoAssume(RTGeometries.size() == NumInstances);
+        return (!!RTScene && !!ScratchBuffer && !!InstanceStagingBuffer && InstanceBuffer && not Instances.empty() && not RTGeometries.empty());
+    }
 };
 //----------------------------------------------------------------------------
 // FTraceRays:
@@ -90,7 +95,7 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FTraceRays> final : public IVulkanFrameTask {
 public:
-    const FVulkanRayTracingShaderTable* const ShaderTable;
+    const FVulkanRayTracingShaderTable* ShaderTable;
     const FPushConstantDatas PushConstants;
     const uint3 GroupCount;
 

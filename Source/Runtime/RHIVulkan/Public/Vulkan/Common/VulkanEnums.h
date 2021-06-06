@@ -1,24 +1,14 @@
 #pragma once
 
-#include "Vulkan/Vulkan_fwd.h"
+#include "Vulkan/VulkanCommon.h"
 
 #include "RHI/EnumHelpers.h"
-#include "RHI/ImageHelpers.h"
-#include "RHI/RayTracingEnums.h"
-#include "RHI/RenderStateEnums.h"
 #include "RHI/ResourceEnums.h"
-#include "RHI/SamplerEnums.h"
-#include "RHI/ShaderEnums.h"
+#include "RHI/ResourceState.h"
 #include "RHI/VertexEnums.h"
 
 #include "Meta/Enum.h"
-#include "RHI/PixelFormatInfo.h"
-#include "RHI/ResourceState.h"
 
-namespace PPE {
-namespace RHI {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Enum operators for Vk:
 //----------------------------------------------------------------------------
@@ -36,6 +26,9 @@ ENUM_FLAGS(VkSampleCountFlagBits);
 ENUM_FLAGS(VkGeometryFlagBitsNV);
 ENUM_FLAGS(VkGeometryInstanceFlagBitsNV);
 ENUM_FLAGS(VkBuildAccelerationStructureFlagBitsNV);
+
+namespace PPE {
+namespace RHI {
 //----------------------------------------------------------------------------
 // Memory types:
 //----------------------------------------------------------------------------
@@ -93,7 +86,7 @@ ENUM_FLAGS(EVulkanQueueFamilyMask);
 //----------------------------------------------------------------------------
 CONSTEXPR EVulkanQueueFamilyMask operator |(EVulkanQueueFamilyMask mask, EVulkanQueueFamily family) {
     return static_cast<EVulkanQueueFamilyMask>(
-        u32(mask) | (u32(1) << (u32(family) & u32(EVulkanQueueFamily::_Count)))
+        static_cast<u32>(mask) | (static_cast<u32>(1) << (static_cast<u32>(family) & static_cast<u32>(EVulkanQueueFamily::_Count)))
     );
 }
 //----------------------------------------------------------------------------
@@ -105,62 +98,62 @@ CONSTEXPR EVulkanQueueFamilyMask& operator |=(EVulkanQueueFamilyMask& mask, EVul
 //----------------------------------------------------------------------------
 // RHI to Vk:
 //----------------------------------------------------------------------------
-CONSTEXPR VkSampleCountFlagBits VkCast(FMultiSamples value) NOEXCEPT;
-CONSTEXPR VkLogicOp VkCast(ELogicOp value);
-CONSTEXPR VkBlendFactor VkCast(EBlendFactor factor);
-CONSTEXPR VkBlendOp VkCast(EBlendOp value);
-CONSTEXPR VkFormat VkCast(EVertexFormat value);
-CONSTEXPR VkVertexInputRate VkCast(EVertexInputRate value);
-CONSTEXPR VkShaderStageFlagBits VkCast(EShaderType value);
-CONSTEXPR VkShaderStageFlagBits VkEnumCast(EShaderStages values);
-CONSTEXPR VkDynamicState VkCast(EPipelineDynamicState value);
-CONSTEXPR VkAttachmentLoadOp VkCast(EAttachmentLoadOp value);
-CONSTEXPR VkAttachmentStoreOp VkCast(EAttachmentStoreOp value);
-CONSTEXPR VkCompareOp VkCast(ECompareOp value);
-CONSTEXPR VkStencilOp VkCast(EStencilOp value);
-CONSTEXPR VkPolygonMode VkCast(EPolygonMode value);
-CONSTEXPR VkCullModeFlagBits VkCast(ECullMode value);
-CONSTEXPR VkFilter VkCast(ETextureFilter value);
-CONSTEXPR VkSamplerMipmapMode VkCast(EMipmapFilter value);
-CONSTEXPR VkSamplerAddressMode VkCast(EAddressMode value);
-CONSTEXPR VkBorderColor VkCast(EBorderColor value);
-CONSTEXPR VkImageViewType VkCast(EImageType value);
-CONSTEXPR VkImageUsageFlagBits VkCast(EImageUsage values);
-CONSTEXPR VkImageAspectFlagBits VkCast(EImageAspect values);
-CONSTEXPR VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat format);
-CONSTEXPR VkBufferUsageFlagBits VkCast(EBufferUsage values);
-CONSTEXPR VkIndexType VkCast(EIndexFormat value);
-CONSTEXPR VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values);
-CONSTEXPR VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values);
-CONSTEXPR VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values);
+PPE_RHIVULKAN_API VkSampleCountFlagBits VkCast(FMultiSamples value) NOEXCEPT;
+PPE_RHIVULKAN_API VkLogicOp VkCast(ELogicOp value);
+PPE_RHIVULKAN_API VkBlendFactor VkCast(EBlendFactor factor);
+PPE_RHIVULKAN_API VkBlendOp VkCast(EBlendOp value);
+PPE_RHIVULKAN_API VkFormat VkCast(EVertexFormat value);
+PPE_RHIVULKAN_API VkVertexInputRate VkCast(EVertexInputRate value);
+PPE_RHIVULKAN_API VkShaderStageFlagBits VkCast(EShaderType value);
+PPE_RHIVULKAN_API VkShaderStageFlagBits VkCast(EShaderStages values);
+PPE_RHIVULKAN_API VkDynamicState VkCast(EPipelineDynamicState value);
+PPE_RHIVULKAN_API VkAttachmentLoadOp VkCast(EAttachmentLoadOp value);
+PPE_RHIVULKAN_API VkAttachmentStoreOp VkCast(EAttachmentStoreOp value);
+PPE_RHIVULKAN_API VkCompareOp VkCast(ECompareOp value);
+PPE_RHIVULKAN_API VkStencilOp VkCast(EStencilOp value);
+PPE_RHIVULKAN_API VkPolygonMode VkCast(EPolygonMode value);
+PPE_RHIVULKAN_API VkCullModeFlagBits VkCast(ECullMode value);
+PPE_RHIVULKAN_API VkFilter VkCast(ETextureFilter value);
+PPE_RHIVULKAN_API VkSamplerMipmapMode VkCast(EMipmapFilter value);
+PPE_RHIVULKAN_API VkSamplerAddressMode VkCast(EAddressMode value);
+PPE_RHIVULKAN_API VkBorderColor VkCast(EBorderColor value);
+PPE_RHIVULKAN_API VkImageType VkCast(EImageDim value);
+PPE_RHIVULKAN_API VkImageViewType VkCast(EImageView value);
+PPE_RHIVULKAN_API VkImageUsageFlagBits VkCast(EImageUsage values);
+PPE_RHIVULKAN_API VkImageAspectFlagBits VkCast(EImageAspect values);
+PPE_RHIVULKAN_API VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat format);
+PPE_RHIVULKAN_API VkBufferUsageFlagBits VkCast(EBufferUsage values);
+PPE_RHIVULKAN_API VkIndexType VkCast(EIndexFormat value);
+PPE_RHIVULKAN_API VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values);
+PPE_RHIVULKAN_API VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values);
+PPE_RHIVULKAN_API VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values);
 //----------------------------------------------------------------------------
 // Vk to RHI:
 //----------------------------------------------------------------------------
-CONSTEXPR EBufferUsage RHICast(VkBufferUsageFlagBits flags);
-CONSTEXPR EImageType RHICast(VkImageType type, VkImageCreateFlags flags, u32 arrayLayers, VkSampleCountFlagBits samples);
-CONSTEXPR EImageUsage RHICast(VkImageUsageFlagBits flags);
-CONSTEXPR FMultiSamples RHICast(VkSampleCountFlagBits flags);
-CONSTEXPR EImageAspect RHICast(VkImageAspectFlagBits flags);
+PPE_RHIVULKAN_API EBufferUsage RHICast(VkBufferUsageFlagBits flags);
+PPE_RHIVULKAN_API EImageDim RHICast(VkImageType value);
+PPE_RHIVULKAN_API EImageFlags RHICast(VkImageCreateFlags value);
+PPE_RHIVULKAN_API EImageUsage RHICast(VkImageUsageFlagBits flags);
+PPE_RHIVULKAN_API FMultiSamples RHICast(VkSampleCountFlagBits flags);
+PPE_RHIVULKAN_API EImageAspect RHICast(VkImageAspectFlagBits flags);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Resource state:
 //----------------------------------------------------------------------------
-CONSTEXPR VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value);
-CONSTEXPR VkAccessFlagBits EResourceState_ToAccess(EResourceState value);
-CONSTEXPR VkImageLayout EResourceState_ToImageLayout(EResourceState value, VkImageAspectFlags aspect);
-CONSTEXPR VkShadingRate VkCast(EShadingRatePalette value);
+PPE_RHIVULKAN_API VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value);
+PPE_RHIVULKAN_API VkAccessFlagBits EResourceState_ToAccess(EResourceState value);
+PPE_RHIVULKAN_API VkImageLayout EResourceState_ToImageLayout(EResourceState value, VkImageAspectFlags aspect);
+PPE_RHIVULKAN_API VkShadingRatePaletteEntryNV VkCast(EShadingRatePalette value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Pixel format:
 //----------------------------------------------------------------------------
-CONSTEXPR VkFormat VkCast(EPixelFormat value);
-CONSTEXPR EPixelFormat RHICast(VkFormat value);
+PPE_RHIVULKAN_API VkFormat VkCast(EPixelFormat value);
+PPE_RHIVULKAN_API EPixelFormat RHICast(VkFormat value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
-
-#include "Vulkan/Common/VulkanEnums-inl.h"

@@ -34,26 +34,26 @@ public:
     FVulkanRayTracingLocalGeometry() = default;
     ~FVulkanRayTracingLocalGeometry();
 
-    bool Create(const FVulkanRayTracingGeometry* geometryData);
+    NODISCARD bool Construct(const FVulkanRayTracingGeometry* geometryData);
     void TearDown();
 
     void AddPendingState(const FGeometryState& state) const;
     void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
-    const SCVulkanRayTracingGeometry& GlobalData() const { return _rtGeomtry; }
-    auto InternalData() const { return _rtGeomtry->Read(); }
+    const FVulkanRayTracingGeometry* GlobalData() const { return _rtGeometry; }
+    auto InternalData() const { return _rtGeometry->Read(); }
 
-    FVulkanBLASHandle BLAS() const { return _rtGeomtry->BLAS(); }
-    VkAccelerationStructureKHR Handle() const { return _rtGeomtry->Handle(); }
+    FVulkanBLASHandle BLAS() const { return _rtGeometry->BLAS(); }
+    VkAccelerationStructureKHR Handle() const { return _rtGeometry->Handle(); }
 
-    TMemoryView<const FAabbs> Aabbs() const { return _rtGeomtry->Aabbs(); }
-    TMemoryView<const FTriangles> Triangles() const { return _rtGeomtry->Triangles(); }
-    ERayTracingBuildFlags Flags() const { return _rtGeomtry->Flags(); }
+    TMemoryView<const FAabbs> Aabbs() const { return _rtGeometry->Aabbs(); }
+    TMemoryView<const FTriangles> Triangles() const { return _rtGeometry->Triangles(); }
+    ERayTracingBuildFlags Flags() const { return _rtGeometry->Flags(); }
     u32 MaxGeometryCount() const { return checked_cast<u32>(Triangles().size() + Aabbs().size()); }
 
 private:
-    SCVulkanRayTracingGeometry _rtGeomtry;
+    FVulkanRayTracingGeometry* _rtGeometry;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

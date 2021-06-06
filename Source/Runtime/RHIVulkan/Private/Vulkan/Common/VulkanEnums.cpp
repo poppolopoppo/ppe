@@ -1,19 +1,28 @@
-#pragma once
+
+#include "stdafx.h"
 
 #include "Vulkan/Common/VulkanEnums.h"
+
+#include "RHI/ImageHelpers.h"
+#include "RHI/PixelFormatHelpers.h"
+#include "RHI/RayTracingEnums.h"
+#include "RHI/RenderStateEnums.h"
+#include "RHI/ResourceEnums.h"
+#include "RHI/ResourceState.h"
+#include "RHI/SamplerEnums.h"
+#include "RHI/ShaderEnums.h"
+#include "RHI/VertexEnums.h"
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// RHI to Vk:
-//----------------------------------------------------------------------------
-CONSTEXPR VkSampleCountFlagBits VkCast(FMultiSamples value) NOEXCEPT {
-    return Clamp(VkSampleCountFlagBits(*value), VK_SAMPLE_COUNT_1_BIT, VK_SAMPLE_COUNT_64_BIT);
+VkSampleCountFlagBits VkCast(FMultiSamples value) NOEXCEPT {
+    return Clamp(static_cast<VkSampleCountFlagBits>(*value), VK_SAMPLE_COUNT_1_BIT, VK_SAMPLE_COUNT_64_BIT);
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkLogicOp VkCast(ELogicOp value) {
+VkLogicOp VkCast(ELogicOp value) {
     switch (value) {
     case ELogicOp::Clear: return VK_LOGIC_OP_CLEAR;
     case ELogicOp::Set: return VK_LOGIC_OP_SET;
@@ -38,7 +47,7 @@ CONSTEXPR VkLogicOp VkCast(ELogicOp value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkBlendFactor VkCast(EBlendFactor factor) {
+VkBlendFactor VkCast(EBlendFactor factor) {
     switch (factor) {
     case EBlendFactor::Zero: return VK_BLEND_FACTOR_ZERO;
     case EBlendFactor::One: return VK_BLEND_FACTOR_ONE;
@@ -65,7 +74,7 @@ CONSTEXPR VkBlendFactor VkCast(EBlendFactor factor) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkBlendOp VkCast(EBlendOp value) {
+VkBlendOp VkCast(EBlendOp value) {
     switch (value) {
     case EBlendOp::Add: return VK_BLEND_OP_ADD;
     case EBlendOp::Sub: return VK_BLEND_OP_SUBTRACT;
@@ -78,7 +87,7 @@ CONSTEXPR VkBlendOp VkCast(EBlendOp value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkFormat VkCast(EVertexFormat value) {
+VkFormat VkCast(EVertexFormat value) {
     switch (value) {
     case EVertexFormat::Byte: return VK_FORMAT_R8_SINT;
     case EVertexFormat::Byte2: return VK_FORMAT_R8G8_SINT;
@@ -163,7 +172,7 @@ CONSTEXPR VkFormat VkCast(EVertexFormat value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkVertexInputRate VkCast(EVertexInputRate value) {
+VkVertexInputRate VkCast(EVertexInputRate value) {
     switch (value) {
     case EVertexInputRate::Vertex: return VK_VERTEX_INPUT_RATE_VERTEX;
     case EVertexInputRate::Instance: return VK_VERTEX_INPUT_RATE_INSTANCE;
@@ -173,7 +182,7 @@ CONSTEXPR VkVertexInputRate VkCast(EVertexInputRate value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkShaderStageFlagBits VkCast(EShaderType value) {
+VkShaderStageFlagBits VkCast(EShaderType value) {
     switch (value) {
     case EShaderType::Vertex: return VK_SHADER_STAGE_VERTEX_BIT;
     case EShaderType::TessControl: return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
@@ -196,7 +205,7 @@ CONSTEXPR VkShaderStageFlagBits VkCast(EShaderType value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkShaderStageFlagBits VkEnumCast(EShaderStages values) {
+VkShaderStageFlagBits VkCast(EShaderStages values) {
     VkShaderStageFlagBits flags = VkShaderStageFlagBits(0);
     for (EShaderStages st = EShaderStages(1); st <= values; st = EShaderStages(u32(st) << 1u)) {
         if (not (values & st))
@@ -228,7 +237,7 @@ CONSTEXPR VkShaderStageFlagBits VkEnumCast(EShaderStages values) {
     return flags;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkDynamicState VkCast(EPipelineDynamicState value) {
+VkDynamicState VkCast(EPipelineDynamicState value) {
     switch (value) {
     case EPipelineDynamicState::Viewport: return VK_DYNAMIC_STATE_VIEWPORT;
     case EPipelineDynamicState::Scissor: return VK_DYNAMIC_STATE_SCISSOR;
@@ -245,7 +254,7 @@ CONSTEXPR VkDynamicState VkCast(EPipelineDynamicState value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkAttachmentLoadOp VkCast(EAttachmentLoadOp value) {
+VkAttachmentLoadOp VkCast(EAttachmentLoadOp value) {
     switch (value) {
     case EAttachmentLoadOp::Invalidate: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     case EAttachmentLoadOp::Load: return VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -256,7 +265,7 @@ CONSTEXPR VkAttachmentLoadOp VkCast(EAttachmentLoadOp value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkAttachmentStoreOp VkCast(EAttachmentStoreOp value) {
+VkAttachmentStoreOp VkCast(EAttachmentStoreOp value) {
     switch (value) {
     case EAttachmentStoreOp::Invalidate: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
     case EAttachmentStoreOp::Store: return VK_ATTACHMENT_STORE_OP_STORE;
@@ -266,7 +275,7 @@ CONSTEXPR VkAttachmentStoreOp VkCast(EAttachmentStoreOp value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkCompareOp VkCast(ECompareOp value) {
+VkCompareOp VkCast(ECompareOp value) {
     switch (value) {
     case ECompareOp::Never: return VK_COMPARE_OP_NEVER;
     case ECompareOp::Less: return VK_COMPARE_OP_LESS;
@@ -282,7 +291,7 @@ CONSTEXPR VkCompareOp VkCast(ECompareOp value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkStencilOp VkCast(EStencilOp value) {
+VkStencilOp VkCast(EStencilOp value) {
     switch (value) {
     case EStencilOp::Keep: return VK_STENCIL_OP_KEEP;
     case EStencilOp::Zero: return VK_STENCIL_OP_ZERO;
@@ -298,7 +307,7 @@ CONSTEXPR VkStencilOp VkCast(EStencilOp value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkPolygonMode VkCast(EPolygonMode value) {
+VkPolygonMode VkCast(EPolygonMode value) {
     switch (value) {
     case EPolygonMode::Point: return VK_POLYGON_MODE_POINT;
     case EPolygonMode::Line: return VK_POLYGON_MODE_LINE;
@@ -309,7 +318,7 @@ CONSTEXPR VkPolygonMode VkCast(EPolygonMode value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkCullModeFlagBits VkCast(ECullMode value) {
+VkCullModeFlagBits VkCast(ECullMode value) {
     switch (value) {
     case ECullMode::None: return VK_CULL_MODE_NONE;
     case ECullMode::Front: return VK_CULL_MODE_FRONT_BIT;
@@ -319,7 +328,7 @@ CONSTEXPR VkCullModeFlagBits VkCast(ECullMode value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkFilter VkCast(ETextureFilter value) {
+VkFilter VkCast(ETextureFilter value) {
     switch (value) {
     case ETextureFilter::Nearest: return VK_FILTER_NEAREST;
     case ETextureFilter::Linear: return VK_FILTER_LINEAR;
@@ -330,7 +339,7 @@ CONSTEXPR VkFilter VkCast(ETextureFilter value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkSamplerMipmapMode VkCast(EMipmapFilter value) {
+VkSamplerMipmapMode VkCast(EMipmapFilter value) {
     switch (value) {
     case EMipmapFilter::Nearest: return VK_SAMPLER_MIPMAP_MODE_NEAREST;
     case EMipmapFilter::Linear: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -340,7 +349,7 @@ CONSTEXPR VkSamplerMipmapMode VkCast(EMipmapFilter value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkSamplerAddressMode VkCast(EAddressMode value) {
+VkSamplerAddressMode VkCast(EAddressMode value) {
     switch (value) {
     case EAddressMode::Repeat: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
     case EAddressMode::MirrorRepeat: return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
@@ -353,7 +362,7 @@ CONSTEXPR VkSamplerAddressMode VkCast(EAddressMode value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkBorderColor VkCast(EBorderColor value) {
+VkBorderColor VkCast(EBorderColor value) {
     switch (value) {
     case EBorderColor::FloatTransparentBlack: return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
     case EBorderColor::FloatOpaqueBlack: return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
@@ -367,24 +376,22 @@ CONSTEXPR VkBorderColor VkCast(EBorderColor value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkImageViewType VkCast(EImageType value) {
+VkImageViewType VkCast(EImageView value) {
     switch (value) {
-    case EImageType::Tex1D: return VK_IMAGE_VIEW_TYPE_1D;
-    case EImageType::Tex1DArray: return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-    case EImageType::Tex2DMS:
-    case EImageType::Tex2D: return VK_IMAGE_VIEW_TYPE_2D;
-    case EImageType::Tex2DMSArray:
-    case EImageType::Tex2DArray: return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-    case EImageType::TexCube: return VK_IMAGE_VIEW_TYPE_CUBE;
-    case EImageType::TexCubeArray: return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
-    case EImageType::Tex3D: return VK_IMAGE_VIEW_TYPE_3D;
+    case EImageView::_1D: return VK_IMAGE_VIEW_TYPE_1D;
+    case EImageView::_1DArray: return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+    case EImageView::_2D: return VK_IMAGE_VIEW_TYPE_2D;
+    case EImageView::_2DArray: return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    case EImageView::_Cube: return VK_IMAGE_VIEW_TYPE_CUBE;
+    case EImageView::_CubeArray: return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+    case EImageView::_3D: return VK_IMAGE_VIEW_TYPE_3D;
 
-    case EImageType::Unknown: break;
+    case EImageView::Unknown: break;
     }
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkImageUsageFlagBits VkCast(EImageUsage values) {
+VkImageUsageFlagBits VkCast(EImageUsage values) {
     VkImageUsageFlagBits flags = VkImageUsageFlagBits(0);
     for (EImageUsage st = EImageUsage(1); st <= values; st = EImageUsage(u32(st) << 1u)) {
         if (not (values & st))
@@ -393,6 +400,7 @@ CONSTEXPR VkImageUsageFlagBits VkCast(EImageUsage values) {
         switch (st) {
         case EImageUsage::TransferSrc: flags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT; break;
         case EImageUsage::TransferDst: flags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT; break;
+        case EImageUsage::SampledMinMax:
         case EImageUsage::Sampled: flags |= VK_IMAGE_USAGE_SAMPLED_BIT; break;
         case EImageUsage::StorageAtomic:
         case EImageUsage::Storage: flags |= VK_IMAGE_USAGE_STORAGE_BIT; break;
@@ -402,7 +410,6 @@ CONSTEXPR VkImageUsageFlagBits VkCast(EImageUsage values) {
         case EImageUsage::TransientAttachment: flags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT; break;
         case EImageUsage::InputAttachment: flags |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT; break;
         case EImageUsage::ShadingRate: flags |= VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV; break;
-
 
         case EImageUsage::_Last:
         case EImageUsage::All:
@@ -414,13 +421,13 @@ CONSTEXPR VkImageUsageFlagBits VkCast(EImageUsage values) {
     return flags;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkImageAspectFlagBits VkCast(EImageAspect values) {
-    VkImageAspectFlagBits flags = VkImageAspectFlagBits(0);
-    for (EImageAspect st = EImageAspect(1); st <= values; st = EImageAspect(u32(st) << 1u)) {
-        if (not (values & st))
+VkImageAspectFlagBits VkCast(EImageAspect values) {
+    VkImageAspectFlagBits flags{static_cast<VkImageAspectFlagBits>(0)};
+    for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
+        if (not Meta::EnumHas(values, st))
             continue;
 
-        switch (st) {
+        switch (static_cast<EImageAspect>(st)) {
         case EImageAspect::Color: flags |= VK_IMAGE_ASPECT_COLOR_BIT; break;
         case EImageAspect::Depth: flags |= VK_IMAGE_ASPECT_DEPTH_BIT; break;
         case EImageAspect::Stencil: flags |= VK_IMAGE_ASPECT_STENCIL_BIT; break;
@@ -428,14 +435,14 @@ CONSTEXPR VkImageAspectFlagBits VkCast(EImageAspect values) {
 
         case EImageAspect::Auto:
         case EImageAspect::DepthStencil:
-        case EImageAspect::Unknown:
-            AssertNotImplemented();
+
+        default: AssertNotImplemented();
         }
     }
     return flags;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat format) {
+VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat format) {
     if (values == EImageAspect::Auto) {
         if (EPixelFormat_HasDepth(format))
             return VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -446,13 +453,13 @@ CONSTEXPR VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat format)
     return VkCast(values);
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkBufferUsageFlagBits VkCast(EBufferUsage values) {
-    VkBufferUsageFlagBits flags = VkBufferUsageFlagBits(0);
-    for (EBufferUsage st = EBufferUsage(1); st <= values; st = EBufferUsage(u32(st) << 1u)) {
-        if (not (values & st))
+VkBufferUsageFlagBits VkCast(EBufferUsage values) {
+    VkBufferUsageFlagBits flags{ static_cast<VkBufferUsageFlagBits>(0) };
+    for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
+        if (not Meta::EnumHas(values, st))
             continue;
 
-        switch (st) {
+        switch (static_cast<EBufferUsage>(st)) {
         case EBufferUsage::TransferSrc: flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT; break;
         case EBufferUsage::TransferDst: flags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT; break;
         case EBufferUsage::UniformTexel: flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT; break;
@@ -467,17 +474,13 @@ CONSTEXPR VkBufferUsageFlagBits VkCast(EBufferUsage values) {
         case EBufferUsage::Indirect: flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT; break;
         case EBufferUsage::RayTracing: flags |= VK_BUFFER_USAGE_RAY_TRACING_BIT_NV; break;
 
-        case EBufferUsage::_Last:
-        case EBufferUsage::All:
-        case EBufferUsage::Transfer:
-        case EBufferUsage::Unknown: AssertNotImplemented();
-        default: ;
+        default: AssertNotImplemented();
         }
     }
     return flags;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkIndexType VkCast(EIndexFormat value) {
+VkIndexType VkCast(EIndexFormat value) {
     switch (value) {
     case EIndexFormat::UShort: return VK_INDEX_TYPE_UINT16;
     case EIndexFormat::UInt: return VK_INDEX_TYPE_UINT32;
@@ -487,13 +490,13 @@ CONSTEXPR VkIndexType VkCast(EIndexFormat value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values) {
-    VkGeometryFlagBitsKHR flags = VkGeometryFlagBitsKHR(0);
-    for (ERayTracingGeometryFlags st = ERayTracingGeometryFlags(1); st <= values; st = ERayTracingGeometryFlags(u32(st) << 1u)) {
-        if (not (values & st))
+VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values) {
+    VkGeometryFlagBitsKHR flags{ static_cast<VkGeometryFlagBitsKHR>(0) };
+    for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
+        if (not Meta::EnumHas(values, st))
             continue;
 
-        switch (st) {
+        switch (static_cast<ERayTracingGeometryFlags>(st)) {
         case ERayTracingGeometryFlags::Opaque: flags |= VK_GEOMETRY_OPAQUE_BIT_KHR; break;
         case ERayTracingGeometryFlags::NoDuplicateAnyHitInvocation: flags |= VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR; break;
 
@@ -504,13 +507,13 @@ CONSTEXPR VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values) {
     return flags;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values) {
-    VkGeometryInstanceFlagBitsKHR flags = VkGeometryInstanceFlagBitsKHR(0);
-    for (ERayTracingInstanceFlags st = ERayTracingInstanceFlags(1); st <= values; st = ERayTracingInstanceFlags(u32(st) << 1u)) {
-        if (not (values & st))
+VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values) {
+    VkGeometryInstanceFlagBitsKHR flags{ static_cast<VkGeometryInstanceFlagBitsKHR>(0) };
+    for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
+        if (not Meta::EnumHas(values, st))
             continue;
 
-        switch (st) {
+        switch (static_cast<ERayTracingInstanceFlags>(st)) {
         case ERayTracingInstanceFlags::TriangleCullDisable: flags |= VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR; break;
         case ERayTracingInstanceFlags::TriangleFrontCCW: flags |= VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR; break;
         case ERayTracingInstanceFlags::ForceOpaque: flags |= VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR; break;
@@ -523,13 +526,13 @@ CONSTEXPR VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values) 
     return flags;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values) {
-    VkBuildAccelerationStructureFlagBitsKHR flags = VkBuildAccelerationStructureFlagBitsKHR(0);
-    for (ERayTracingBuildFlags st = ERayTracingBuildFlags(1); st <= values; st = ERayTracingBuildFlags(u32(st) << 1u)) {
-        if (not (values & st))
+VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values) {
+    VkBuildAccelerationStructureFlagBitsKHR flags{ static_cast<VkBuildAccelerationStructureFlagBitsKHR>(0) };
+    for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
+        if (not Meta::EnumHas(values, st))
             continue;
 
-        switch (st) {
+        switch (static_cast<ERayTracingBuildFlags>(st)) {
         case ERayTracingBuildFlags::AllowUpdate: flags |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR; break;
         case ERayTracingBuildFlags::AllowCompaction: flags |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR; break;
         case ERayTracingBuildFlags::PreferFastTrace: flags |= VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR; break;
@@ -545,13 +548,13 @@ CONSTEXPR VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags v
 //----------------------------------------------------------------------------
 // Vk to RHI:
 //----------------------------------------------------------------------------
-CONSTEXPR EBufferUsage RHICast(VkBufferUsageFlagBits flags) {
+EBufferUsage RHICast(VkBufferUsageFlagBits flags) {
     EBufferUsage result = Default;
     for (VkBufferUsageFlags st = 1; st < VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM; st <<= 1) {
         if (not (flags & st))
             continue;
 
-        switch (VkBufferUsageFlagBits(st)) {
+        switch (static_cast<VkBufferUsageFlagBits>(st)) {
         case VK_BUFFER_USAGE_TRANSFER_SRC_BIT: result |= EBufferUsage::TransferSrc; break;
         case VK_BUFFER_USAGE_TRANSFER_DST_BIT: result |= EBufferUsage::TransferDst; break;
         case VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT: result |= EBufferUsage::UniformTexel; break;
@@ -577,40 +580,53 @@ CONSTEXPR EBufferUsage RHICast(VkBufferUsageFlagBits flags) {
     return result;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR EImageType RHICast(VkImageType type, VkImageCreateFlags flags, u32 arrayLayers, VkSampleCountFlagBits samples) {
-    const bool isArray = (arrayLayers > 1);
-    const bool isMS = (samples > VK_SAMPLE_COUNT_1_BIT);
-    const bool isCube = (isArray && (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT));
-
+EImageDim RHICast(VkImageType type) {
     switch (type) {
-    case VK_IMAGE_TYPE_1D:
-        Assert(not isCube);
-        return (isArray ? EImageType::Tex1DArray : EImageType::Tex1D);
-
-    case VK_IMAGE_TYPE_2D:
-        if (isMS) {
-            Assert(not isCube);
-            return (isArray ? EImageType::Tex2DMSArray : EImageType::Tex2DMS);
-        }
-        else if (isCube) {
-            Assert(arrayLayers >= 6);
-            Assert(arrayLayers % 6 == 0);
-            return (arrayLayers > 6 ? EImageType::TexCubeArray : EImageType::TexCube);
-        }
-        else {
-            return (isArray ? EImageType::Tex2DArray : EImageType::Tex2D);
-        }
-
-    case VK_IMAGE_TYPE_3D:
-        Assert(1 == arrayLayers);
-        return EImageType::Tex3D;
+    case VK_IMAGE_TYPE_1D: return EImageDim_1D;
+    case VK_IMAGE_TYPE_2D: return EImageDim_2D;
+    case VK_IMAGE_TYPE_3D: return EImageDim_3D;
 
     case VK_IMAGE_TYPE_MAX_ENUM: break;
     }
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR EImageUsage RHICast(VkImageUsageFlagBits flags) {
+EImageFlags RHICast(VkImageCreateFlagBits flags) {
+    EImageFlags result = Default;
+    for (VkImageCreateFlags st = 1; st <= static_cast<VkImageCreateFlags>(flags); st <<= 1) {
+        if (not (flags & st))
+            continue;
+
+        switch (st) {
+        case VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT: result |= EImageFlags::CastToCube; break;
+        case VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT: result |= EImageFlags::CastToArray2D; break;
+        case VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT: result |= EImageFlags::MutableFormat; break;
+
+        case VK_IMAGE_CREATE_SPARSE_BINDING_BIT:
+        case VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT:
+        case VK_IMAGE_CREATE_SPARSE_ALIASED_BIT:
+        case VK_IMAGE_CREATE_ALIAS_BIT:
+        case VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT:
+        case VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT:
+        case VK_IMAGE_CREATE_EXTENDED_USAGE_BIT:
+        case VK_IMAGE_CREATE_PROTECTED_BIT:
+        case VK_IMAGE_CREATE_DISJOINT_BIT:
+        case VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT:
+        case VK_IMAGE_CREATE_FLAG_BITS_MAX_ENUM:
+#ifdef VK_NV_corner_sampled_image
+        case VK_IMAGE_CREATE_CORNER_SAMPLED_BIT_NV:
+#endif
+#ifdef VK_EXT_fragment_density_map
+        case VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT:
+#endif
+
+        default: AssertNotImplemented();
+        }
+    }
+    return result;
+}
+//----------------------------------------------------------------------------
+EImageUsage RHICast(VkImageUsageFlagBits flags) {
     EImageUsage result = Default;
     for (VkImageUsageFlags st = 1; st < VK_IMAGE_USAGE_FLAG_BITS_MAX_ENUM; st <<= 1) {
         if (not (flags & st))
@@ -628,13 +644,14 @@ CONSTEXPR EImageUsage RHICast(VkImageUsageFlagBits flags) {
 
         case VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV:
         case VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT:
-        case VK_IMAGE_USAGE_FLAG_BITS_MAX_ENUM: AssertNotImplemented();
+
+        default: AssertNotImplemented();
         }
     }
     return result;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR FMultiSamples RHICast(VkSampleCountFlagBits samples) {
+FMultiSamples RHICast(VkSampleCountFlagBits samples) {
     if (0 == samples)
         return 1_samples;
 
@@ -642,16 +659,16 @@ CONSTEXPR FMultiSamples RHICast(VkSampleCountFlagBits samples) {
     return FMultiSamples(u32(samples));
 }
 //----------------------------------------------------------------------------
-CONSTEXPR EImageAspect RHICast(VkImageAspectFlagBits flags) {
+EImageAspect RHICast(VkImageAspectFlagBits flags) {
     EImageAspect result = Default;
     for (VkImageAspectFlags st = 1; st < VK_IMAGE_ASPECT_METADATA_BIT; st <<= 1) {
         if (not (flags & st))
             continue;
 
         switch (st) {
-        case VK_IMAGE_ASPECT_DEPTH_BIT: result |= EImageAspect::Depth;		break;
-        case VK_IMAGE_ASPECT_STENCIL_BIT: result |= EImageAspect::Stencil;		break;
-        case VK_IMAGE_ASPECT_METADATA_BIT: result |= EImageAspect::Metadata;		break;
+        case VK_IMAGE_ASPECT_DEPTH_BIT: result |= EImageAspect::Depth; break;
+        case VK_IMAGE_ASPECT_STENCIL_BIT: result |= EImageAspect::Stencil; break;
+        case VK_IMAGE_ASPECT_METADATA_BIT: result |= EImageAspect::Metadata; break;
 
         case VK_IMAGE_ASPECT_PLANE_0_BIT:
         case VK_IMAGE_ASPECT_PLANE_1_BIT:
@@ -669,7 +686,7 @@ CONSTEXPR EImageAspect RHICast(VkImageAspectFlagBits flags) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value) {
+VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value) {
     switch (Meta::EnumAnd(value, EResourceState::_AccessMask)) {
     case EResourceState::Unknown: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
@@ -691,7 +708,7 @@ CONSTEXPR VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState
     case EResourceState::_Access_Uniform:
     case EResourceState::_Access_ShaderSample: {
         Assert(value ^ EResourceState::_ShaderMask);
-        VkPipelineStageFlagBits result = VkPipelineStageFlagBits(0);
+        VkPipelineStageFlagBits result = static_cast<VkPipelineStageFlagBits>(0);
         if (value & EResourceState::_VertexShader) result |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
         if (value & EResourceState::_TessControlShader) result |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
         if (value & EResourceState::_TessEvaluationShader) result |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
@@ -706,7 +723,7 @@ CONSTEXPR VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState
 
     case EResourceState::_Access_DepthStencilAttachment: {
         Assert(value ^ (EResourceState::EarlyFragmentTests | EResourceState::LateFragmentTests));
-        VkPipelineStageFlagBits result = VkPipelineStageFlagBits(0);
+        VkPipelineStageFlagBits result = static_cast<VkPipelineStageFlagBits>(0);
         if (value & EResourceState::EarlyFragmentTests) result |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         if (value & EResourceState::LateFragmentTests) result |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         return result;
@@ -717,9 +734,9 @@ CONSTEXPR VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkAccessFlagBits EResourceState_ToAccess(EResourceState value) {
+VkAccessFlagBits EResourceState_ToAccess(EResourceState value) {
     switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
-    case EResourceState::Unknown: return VkAccessFlagBits(0);
+    case EResourceState::Unknown: return static_cast<VkAccessFlagBits>(0);
     case EResourceState::UniformRead: return VK_ACCESS_UNIFORM_READ_BIT;
     case EResourceState::ShaderSample:
     case EResourceState::ShaderRead: return VK_ACCESS_SHADER_READ_BIT;
@@ -740,20 +757,20 @@ CONSTEXPR VkAccessFlagBits EResourceState_ToAccess(EResourceState value) {
     case EResourceState::IndirectBuffer: return VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
     case EResourceState::IndexBuffer: return VK_ACCESS_INDEX_READ_BIT;
     case EResourceState::VertexBuffer: return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-    case EResourceState::PresentImage: return VkAccessFlagBits(0);
+    case EResourceState::PresentImage: return static_cast<VkAccessFlagBits>(0);
     case EResourceState::BuildRayTracingStructRead: return VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
     case EResourceState::BuildRayTracingStructWrite: return VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
     case EResourceState::BuildRayTracingStructReadWrite: return (VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR);
     case EResourceState::RTASBuildingBufferRead: // cache invalidation is not needed for buffers
     case EResourceState::RTASBuildingBufferReadWrite:
-    case EResourceState::RayTracingShaderRead: return VkAccessFlagBits(0);
+    case EResourceState::RayTracingShaderRead: return static_cast<VkAccessFlagBits>(0);
     case EResourceState::ShadingRateImageRead: return VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV;
     default: break;
     }
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkImageLayout EResourceState_ToImageLayout(EResourceState value, VkImageAspectFlags aspect) {
+VkImageLayout EResourceState_ToImageLayout(EResourceState value, VkImageAspectFlags aspect) {
     switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
     case EResourceState::Unknown: return VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -777,7 +794,7 @@ CONSTEXPR VkImageLayout EResourceState_ToImageLayout(EResourceState value, VkIma
     case EResourceState::DepthStencilAttachmentRead: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
     case EResourceState::DepthStencilAttachmentWrite:
-    case EResourceState::DepthStencilAttachmentReadWrite: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL; // TODO: use another layouts too
+    case EResourceState::DepthStencilAttachmentReadWrite: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL; // TODO: use other layouts too
 
     case EResourceState::HostRead:
     case EResourceState::HostWrite:
@@ -790,7 +807,7 @@ CONSTEXPR VkImageLayout EResourceState_ToImageLayout(EResourceState value, VkIma
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR VkShadingRatePaletteEntryNV VkCast(EShadingRatePalette value) {
+VkShadingRatePaletteEntryNV VkCast(EShadingRatePalette value) {
     switch (value) {
     case EShadingRatePalette::NoInvocations: return VK_SHADING_RATE_PALETTE_ENTRY_NO_INVOCATIONS_NV;
     case EShadingRatePalette::Block_1x1_16: return VK_SHADING_RATE_PALETTE_ENTRY_16_INVOCATIONS_PER_PIXEL_NV;
@@ -934,7 +951,7 @@ CONSTEXPR VkShadingRatePaletteEntryNV VkCast(EShadingRatePalette value) {
     _EACH(EPixelFormat::ASTC_sRGB8_A8_12x10, VK_FORMAT_ASTC_12x10_SRGB_BLOCK) \
     _EACH(EPixelFormat::ASTC_sRGB8_A8_12x12, VK_FORMAT_ASTC_12x12_SRGB_BLOCK)
 //----------------------------------------------------------------------------
-CONSTEXPR VkFormat VkCast(EPixelFormat value) {
+VkFormat VkCast(EPixelFormat value) {
     switch (value) {
 #define PIXELFORMAT_TO_VK(_Rhi, _Vk) case _Rhi: return _Vk;
         PPE_RHIVULKAN_FOREACH_PIXELFORMAT(PIXELFORMAT_TO_VK)
@@ -946,7 +963,7 @@ CONSTEXPR VkFormat VkCast(EPixelFormat value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-CONSTEXPR EPixelFormat RHICast(VkFormat value) {
+EPixelFormat RHICast(VkFormat value) {
     switch (value) {
 #define VK_TO_PIXELFORMAT(_Rhi, _Vk) case _Vk: return _Rhi;
         PPE_RHIVULKAN_FOREACH_PIXELFORMAT(VK_TO_PIXELFORMAT)

@@ -2,10 +2,10 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "Container/Array.h"
 #include "Container/FixedSizeHashTable.h"
 #include "Container/Stack.h"
 #include "RHI/PipelineDesc.h"
-#include "Thread/ThreadSafe.h"
 
 namespace PPE {
 namespace RHI {
@@ -25,25 +25,26 @@ public:
         :   Id(id), Layout(layout), Index(index)
         {}
     };
-    PPE_ASSUME_FRIEND_AS_POD(FDescriptorLayout);
 
     using FDescriptorSets = TFixedSizeHashMap<FDescriptorSetID, FDescriptorLayout, MaxDescriptorSets>;
     using FDescriptorSetLayouts = TStaticArray<VkDescriptorSetLayout, MaxDescriptorSets>;
+    using FPushConstants = FPipelineDesc::FPushConstants;
     using FPushConstantRanges = TFixedSizeStack<VkPushConstantRange, MaxPushConstantsCount>;
-    using FDescriptorSetLayoutsView = TMemoryView<const TPair<FRawPipelineResourcesID, TResourceProxy<VkDescriptorSetLayout>*>>;
+    using FDescriptorSetLayoutsView = TMemoryView<const TPair<FRawDescriptorSetLayoutID, TResourceProxy<FVulkanDescriptorSetLayout>*>>;
 
     struct FInternalData {
         hash_t HashValue;
         VkPipelineLayout Layour{ VK_NULL_HANDLE };
         FDescriptorSets DescriptorSets;
-        FPushConstantDatas PushConstants;
+        FPushConstants PushConstants;
         u32 FirstDescriptorSet{ UMax };
     };
 
     FVulkanPipelineLayout() = default;
+    FVulkanPipelineLayout(const FPipelineDesc::FPipelineLayout& ppln, FDescriptorSetLayoutsView sets);
     ~FVulkanPipelineLayout();
 
-    FVulkanPipelineLayout(FVulkanPipelineLayout&& ) = default;
+    FVulkanPipelineLayout(FVulkanPipelineLayout&& rvalue) NOEXCEPT;
     FVulkanPipelineLayout& operator =(FVulkanPipelineLayout&& ) = delete;
 
     auto Read() const { return _data.LockShared(); }
@@ -51,13 +52,13 @@ public:
     hash_t HashValue() const { return Read()->HashValue; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
     bool AllResourcesAlive(const FVulkanResourceManager& manager) const;
-    bool DescriptorLayout(u32* pbinding, FRawDescriptorSetLayoutID* playout, const FDescriptorSetID& id) const;
+    NODISCARD bool DescriptorLayout(u32* pbinding, FRawDescriptorSetLayoutID* playout, const FDescriptorSetID& id) const;
 
-    bool Create(const FVulkanDevice& device, VkDescriptorSetLayout emptyLayout);
+    NODISCARD bool Construct(const FVulkanDevice& device, VkDescriptorSetLayout emptyLayout ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(const FVulkanResourceManager& resources);
 
     bool operator ==(const FVulkanPipelineLayout& other) const;

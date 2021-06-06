@@ -5,7 +5,6 @@
 #include "RHI/PipelineResources.h"
 
 #include "Thread/CriticalSection.h"
-#include "Thread/ThreadSafe.h"
 
 namespace PPE {
 namespace RHI {
@@ -19,7 +18,7 @@ struct FVulkanDescriptorSet {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanDescriptorSetLayout final : Meta::FNonCopyable {
 public:
-    using FBindings = VECTORINSITU(RHIDescriptor, VkDescriptorSetLayoutBinding, 3);
+    using FBindings = VECTORINSITU(RHIDescriptor, VkDescriptorSetLayoutBinding, 5);
     using FDescriptorSetCache = TFixedSizeStack<FVulkanDescriptorSet, 32>;
     using FDynamicData = FPipelineResources::FDynamicData;
     using FPoolSizeArray = TFixedSizeStack<VkDescriptorPoolSize, 10>;
@@ -41,18 +40,20 @@ public:
     FVulkanDescriptorSetLayout(FBindings* pbindings, const FSharedUniformMap& uniforms);
     ~FVulkanDescriptorSetLayout();
 
-    FVulkanDescriptorSetLayout(FVulkanDescriptorSetLayout&&) = default;
+    FVulkanDescriptorSetLayout(FVulkanDescriptorSetLayout&& rvalue) NOEXCEPT;
     FVulkanDescriptorSetLayout& operator =(FVulkanDescriptorSetLayout&&) = delete;
 
     auto Read() const { return _pool.LockShared(); }
 
+    VkDescriptorSetLayout Handle() const { return Read()->Layout; }
+
     hash_t HashValue() const { return Read()->HashValue; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool Create(const FVulkanDevice& device, FBindings&& rbindings);
+    NODISCARD bool Construct(const FVulkanDevice& device, FBindings&& rbindings ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     bool AllocateDescriptorSet(FVulkanDescriptorSet* pdescriptors, FVulkanResourceManager& resources) const;

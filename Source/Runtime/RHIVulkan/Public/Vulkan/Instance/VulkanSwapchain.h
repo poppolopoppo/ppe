@@ -2,29 +2,14 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "Container/Array.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FVulkanSwapchainDesc {
-    using FRequiredSurfaceFormats = TFixedSizeStack<VkSurfaceFormatKHR, 4>;
-    using FRequiredPresentModes = TFixedSizeStack<VkPresentModeKHR, 4>;
-
-    VkSurfaceKHR Surface{};
-    uint2 Dimension{ 0 };
-    u32 MinImageCount{ 2 };
-    VkSurfaceTransformFlagBitsKHR PreTransform{ VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR };
-    VkCompositeAlphaFlagBitsKHR CompositeAlpha{ VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR };
-    VkImageUsageFlags RequiredUsage{ VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT };
-    VkImageUsageFlags OptionalUsage{};
-
-    // both from higher to lower priority:
-    FRequiredSurfaceFormats SurfaceFormats;
-    FRequiredPresentModes PresentModes;
-};
-//----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanSwapchain final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanSwapchain final {
 public:
     STATIC_CONST_INTEGRAL(u32, MaxImages, 8);
     using FSwapchainImages = TFixedSizeStack<FImageID, MaxImages>;
@@ -32,25 +17,26 @@ public:
     FVulkanSwapchain();
     ~FVulkanSwapchain();
 
-    bool Create(FVulkanFrameGraph& fg, const FVulkanSwapchainDesc& desc ARGS_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool Construct(FVulkanFrameGraph& fg, const FSwapchainDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool ReConstruct(FVulkanFrameGraph& fg, const FSwapchainDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    bool Acquire(FRawImageID* pimageId, FVulkanCommandBuffer& cmd, ESwapchainImage type ARGS_IF_RHIDEBUG(bool debugSync = false)) const;
-    bool Present(const FVulkanDevice& device) const;
+    NODISCARD bool Acquire(FRawImageID* pimageId, FVulkanCommandBuffer& cmd, ESwapchainImage type ARGS_IF_RHIDEBUG(bool debugSync = false)) const;
+    NODISCARD bool Present(const FVulkanDevice& device) const;
 
     const PVulkanDeviceQueue& PresentQueue() const { return _presentQueue; }
 
 private:
-    bool CreateSwapchain_(FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool CreateSwapchain_(FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    bool CreateImages_(FVulkanResourceManager& resources);
-    bool TearDownImages_(FVulkanResourceManager& resources);
+    NODISCARD bool CreateImages_(FVulkanResourceManager& resources);
+    NODISCARD bool TearDownImages_(FVulkanResourceManager& resources);
 
-    bool CreateSemaphores_(const FVulkanDevice& device);
-    bool CreateFence_(const FVulkanDevice& device);
-    bool ChoosePresnetQueue_(const FVulkanFrameGraph& fg);
+    NODISCARD bool CreateSemaphores_(const FVulkanDevice& device);
+    NODISCARD bool CreateFence_(const FVulkanDevice& device);
+    NODISCARD bool ChoosePresentQueue_(const FVulkanFrameGraph& fg);
 
-    bool IsImageAcquired_() const;
+    NODISCARD bool IsImageAcquired_() const;
 
     PVulkanDeviceQueue _presentQueue;
     FSwapchainImages _imageIds;

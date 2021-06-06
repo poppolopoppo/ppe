@@ -4,21 +4,19 @@
 
 #include "RHI/BufferDesc.h"
 #include "RHI/BufferView.h"
+#include "RHI/FrameGraph.h"
 
 #include "Container/HashMap.h"
 #include "Misc/Function.h"
 #include "Thread/ReadWriteLock.h"
-#include "Thread/ThreadSafe.h"
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanBuffer final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanBuffer final {
 public:
-    using FReleaseCallback = TFunction<void(struct FInternalData&)>;
-
     struct FInternalData {
         VkBuffer vkBuffer{ VK_NULL_HANDLE };
         FBufferDesc Desc;
@@ -27,14 +25,13 @@ public:
         EVulkanQueueFamilyMask QueueFamilyMask{ Default };
         VkAccessFlagBits ReadAccessMask{ Default };
 
-        FReleaseCallback OnRelease;
+        FOnReleaseExternalBuffer OnRelease;
 
-        bool IsReadOnly() const;
-        bool IsExclusiveSharing() const { return (Default == QueueFamilyMask); }
+        bool IsExternal() const { return OnRelease.Valid(); }
+        bool IsReadOnly() const NOEXCEPT;
+        bool IsExclusiveSharing() const { return (QueueFamilyMask == Default); }
 
         u32 SizeInBytes() const { return Desc.SizeInBytes; }
-
-        bool MakeView(VkBufferView* pBufferView, const FVulkanDevice& device, const FBufferViewDesc& desc) const;
     };
 
     FVulkanBuffer() = default;
@@ -43,8 +40,8 @@ public:
     FVulkanBuffer(const FVulkanBuffer&) = delete;
     FVulkanBuffer& operator =(const FVulkanBuffer&) = delete;
 
-    FVulkanBuffer(FVulkanBuffer&&) NOEXCEPT;
-    FVulkanBuffer& operator =(FVulkanBuffer&&) NOEXCEPT;
+    FVulkanBuffer(FVulkanBuffer&&) = default;
+    FVulkanBuffer& operator =(FVulkanBuffer&&) = delete;
 
     auto Read() const { return _data.LockShared(); }
 
@@ -52,21 +49,24 @@ public:
     u32 SizeInBytes() const { return Read()->Desc.SizeInBytes; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
     VkBufferView MakeView(const FVulkanDevice& device, const FBufferViewDesc& desc) const;
 
-    static bool IsSupported(const FVulkanDevice& device, const FBufferDesc& desc, EMemoryType memoryType);
-    bool IsSupported(const FVulkanDevice& device, FBufferViewDesc& desc);
+    static bool IsSupported(const FVulkanDevice& device, const FBufferDesc& desc, EMemoryType memoryType) NOEXCEPT;
+    bool IsSupported(const FVulkanDevice& device, const FBufferViewDesc& desc) const NOEXCEPT;
 
-    bool Create(FVulkanResourceManager& resources,
-        const FBufferDesc& desc, FRawMemoryID memoryId, FVulkanMemoryObject& memoryObject, EVulkanQueueFamilyMask queueFamilyMask
-        ARGS_IF_RHIDEBUG(const FStringView& debugName) );
+    NODISCARD bool Construct(FVulkanResourceManager& resources,
+        const FBufferDesc& desc, FRawMemoryID memoryId, FVulkanMemoryObject& memoryObject,
+        EVulkanQueueFamilyMask queueFamilyMask
+        ARGS_IF_RHIDEBUG(FConstChar debugName) );
 
-    bool Create(FVulkanDevice& device,
-        const FBufferDesc& desc, FReleaseCallback&& onRelease
-        ARGS_IF_RHIDEBUG(const FStringView& debugName) );
+    NODISCARD bool Construct(const FVulkanDevice& device,
+        const FBufferDesc& desc,
+        FExternalBuffer externalBuffer, FOnReleaseExternalBuffer&& onRelease,
+        TMemoryView<const u32> queueFamilyIndices
+        ARGS_IF_RHIDEBUG(FConstChar debugName) );
 
     void TearDown(FVulkanResourceManager& resources);
 

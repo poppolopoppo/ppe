@@ -10,21 +10,26 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanTargetRHI final : public ITargetRHI {
 public:
-    static const FVulkanTargetRHI& Get();
+    FVulkanTargetRHI() = default;
 
-    virtual ETargetRHI RHI() const override {
+    virtual ETargetRHI RHI() const NOEXCEPT override {
         return ETargetRHI::Vulkan;
     }
 
-    virtual FString DisplayName() const override;
-    virtual FString FullName() const override;
-    virtual FString ShortName() const override;
+    virtual FString DisplayName() const NOEXCEPT override;
+    virtual FString FullName() const NOEXCEPT override;
+    virtual FString ShortName() const NOEXCEPT override;
 
-    virtual bool RequiresFeature(ERHIFeature feature) const override;
-    virtual bool SupportsFeature(ERHIFeature feature) const override;
+    virtual ERHIFeature RecommendedFeatures() const NOEXCEPT override;
+    virtual bool RequiresFeature(ERHIFeature feature) const NOEXCEPT override;
+    virtual bool SupportsFeature(ERHIFeature feature) const NOEXCEPT override;
 
-private:
-    FVulkanTargetRHI() = default;
+    virtual bool CreateService(
+        URHIService* pRHIService,
+        const FModularDomain& domain,
+        const FRHISurfaceCreateInfo* pOptionalWindow,
+        ERHIFeature features,
+        FStringView deviceName ) const override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

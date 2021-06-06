@@ -1,14 +1,16 @@
 #pragma once
 
+#include "VulkanCommandBuffer.h"
 #include "Vulkan/VulkanCommon.h"
 
 #include "Vulkan/Command/VulkanDrawTask.h"
 #include "Vulkan/Command/VulkanFrameTask.h"
 #include "Vulkan/Command/VulkanRaytracingTask.h"
 
-#include "Allocator/LinearAllocator.h"
+#include "Allocator/SlabAllocator.h"
 #include "Container/HashSet.h"
 #include "Container/SparseArray.h"
+#include "Memory/InSituPtr.h"
 
 namespace PPE {
 namespace RHI {
@@ -18,21 +20,20 @@ namespace RHI {
 template <typename _Visitor>
 class TVulkanTaskGraph {
 public:
-    using FSearchableNodse = HASHSET_LINEARHEAP(PVulkanFrameTask);
-    using FEntries = SPARSEARRAY_LINEARHEAP(PVulkanFrameTask);
+    using FSearchableNodes = HASHSET_SLAB(PVulkanFrameTask);
+    using FEntries = SPARSEARRAY_SLAB(PVulkanFrameTask);
 
-    explicit TVulkanTaskGraph(FLinearAllocator& allocator)
-    :   _nodes(allocator)
-    ,   _entries(allocator)
-    {}
+    TVulkanTaskGraph() = default;
 
-    u32 Count() const { return _nodes.size(); }
-    bool Empty() const { return _nodes.empty(); }
+    u32 Count() const { return _nodes->size(); }
+    bool Empty() const { return _nodes->empty(); }
+    const FEntries& Entries() const { return *_entries; }
 
-    const FEntries& Entries() const { return _entries; }
+    void Construct(const FSlabAllocator& allocator);
+    void TearDown();
 
     template <typename _Task>
-    TVulkanFrameTask<_Task>* AddTask(FVulkanCommandBuffer& cmd, const _Task& desc);
+    NODISCARD TVulkanFrameTask<_Task>* AddTask(FVulkanCommandBuffer& cmd, const _Task& desc);
 
 private:
     template <typename _Task>
@@ -40,8 +41,8 @@ private:
         static_cast<_Visitor*>(visitor)->Visit(*static_cast<TVulkanFrameTask<_Task> const*>(task));
     }
 
-    FSearchableNodse _nodes;
-    FEntries _entries;
+    TInSituPtr<FSearchableNodes> _nodes;
+    TInSituPtr<FEntries> _entries;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

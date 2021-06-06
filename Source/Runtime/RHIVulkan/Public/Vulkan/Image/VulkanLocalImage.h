@@ -42,6 +42,7 @@ public:
     };
 
     using FAccessRecords = VECTORINSITU(RHIImage, FImageAccess, 3);
+    using FImageRange = FVulkanImage::FImageRange;
     using FImageViewMap = FVulkanImage::FImageViewMap;
 
     FVulkanLocalImage() = default;
@@ -54,10 +55,10 @@ public:
 #endif
 
     VkImage Handle() const { return _imageData->Handle(); }
-    const SCVulkanImage& GlobalData() const { return _imageData; }
+    const FVulkanImage* GlobalData() const { return _imageData; }
     auto InternalData() const { return _imageData->Read(); }
 
-    bool Create(const FVulkanImage* imageData);
+    NODISCARD bool Construct(const FVulkanImage* imageData);
     void TearDown();
 
     void SetInitialState(bool immutable, bool invalidate);
@@ -70,7 +71,7 @@ public:
     }
 
 private:
-    SCVulkanImage _imageData;
+    const FVulkanImage* _imageData;
     VkImageLayout _finalLayout{ VK_IMAGE_LAYOUT_GENERAL };
 
     FAccessRecords _accessPending;

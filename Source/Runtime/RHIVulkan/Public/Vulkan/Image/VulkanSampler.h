@@ -4,8 +4,6 @@
 
 #include "RHI/SamplerDesc.h"
 
-#include "Thread/ThreadSafe.h"
-
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -23,7 +21,7 @@ public:
     FVulkanSampler(const FVulkanDevice& device, const FSamplerDesc& desc);
     ~FVulkanSampler();
 
-    FVulkanSampler(FVulkanSampler&&) = default;
+    FVulkanSampler(FVulkanSampler&& rvalue) NOEXCEPT;
     FVulkanSampler& operator =(FVulkanSampler&&) = delete;
 
     auto Read() const { return _data.LockShared(); }
@@ -31,10 +29,10 @@ public:
     hash_t HashValue() const { return Read()->HashValue; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool Create(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FStringView));
+    NODISCARD bool Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     bool operator ==(const FVulkanSampler& other) const;

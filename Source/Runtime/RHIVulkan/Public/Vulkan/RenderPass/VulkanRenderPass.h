@@ -41,7 +41,7 @@ public:
     explicit FVulkanRenderPass(TMemoryView<const FVulkanLogicalRenderPass*> logicalRenderPasses);
     ~FVulkanRenderPass();
 
-    FVulkanRenderPass(FVulkanRenderPass&& ) = default;
+    FVulkanRenderPass(FVulkanRenderPass&& rvalue) NOEXCEPT;
     FVulkanRenderPass& operator =(FVulkanRenderPass&& ) = delete;
 
     auto Read() const { return _pass.LockShared(); }
@@ -49,10 +49,10 @@ public:
     hash_t HashValue() const { return Read()->HashValue; }
 
 #if USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool Create(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     bool operator ==(const FVulkanRenderPass& other) const;

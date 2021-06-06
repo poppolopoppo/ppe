@@ -3,6 +3,7 @@
 #include "RHI_fwd.h"
 
 #include "RHI/Config.h"
+#include "RHI/ImageHelpers.h"
 #include "RHI/RenderStateEnums.h"
 
 #include "Container/Array.h"

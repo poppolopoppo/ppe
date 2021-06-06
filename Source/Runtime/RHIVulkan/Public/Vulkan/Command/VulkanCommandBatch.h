@@ -2,6 +2,8 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "Vulkan/Debugger/VulkanLocalDebugger.h"
+
 #include "RHI/CommandBatch.h"
 #include "RHI/CommandBuffer.h"
 #include "RHI/FrameGraph.h"
@@ -10,8 +12,8 @@
 #include "Container/Appendable.h"
 #include "Container/HashMap.h"
 #include "Container/Stack.h"
+#include "Container/TupleVector.h"
 #include "Misc/Function.h"
-#include "Thread/ThreadSafe.h"
 
 #include <atomic>
 
@@ -20,21 +22,21 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EStagingBufferIndex : u32 { Unknown = ~0u };
-//----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanCommandBatch final : public ICommandBatch {
+    friend class FVulkanCommandBuffer;
 public:
     STATIC_CONST_INTEGRAL(u32, MaxBatchItems, 8);
     STATIC_CONST_INTEGRAL(u32, MaxBufferParts, 3);
     STATIC_CONST_INTEGRAL(u32, MaxImageParts, 4);
     STATIC_CONST_INTEGRAL(u32, MaxDependencies, 16);
     STATIC_CONST_INTEGRAL(u32, MaxSwapchains, 8);
+    STATIC_CONST_INTEGRAL(u32, MaxRegions, 32);
 
-    using FCommandBuffers = TFixedSizeStack<TPair<VkCommandBuffer, SCVulkanCommandPool>, MaxBatchItems>;
-    using FDependencies = TFixedSizeStack<PVulkanCommandBatch, MaxDependencies>;
+    using FCommandBuffers = TUPLEVECTOR_INSITU(RHIBatch, MaxBatchItems, VkCommandBuffer, FVulkanCommandPool*);
+    using FDependencies = TFixedSizeStack<SVulkanCommandBatch, MaxDependencies>;
     using FSignalSemaphores = TFixedSizeStack<VkSemaphore, MaxBatchItems>;
-    using FSwapchains = TFixedSizeStack<PVulkanSwapchain, MaxSwapchains>;
-    using FWaitSemaphores = TFixedSizeStack<TPair<VkSemaphore, VkPipelineStageFlags>, MaxBatchItems>;
+    using FSwapchains = TFixedSizeStack<const FVulkanSwapchain*, MaxSwapchains>;
+    using FWaitSemaphores = TUPLEVECTOR_INSITU(RHIBatch, MaxBatchItems, VkSemaphore, VkPipelineStageFlags);
 
     using FResourceArray = VECTORINSITU(RHICommand, TPair<VkObjectType COMMA uintptr_t>, 3);
     using FResourceMap = HASHMAP(RHICommand, FResourceHandle, u32);
@@ -42,22 +44,14 @@ public:
     enum class EState : u32 {
         Initial,
         Recording,  // build command buffers
-        Backed,     // command buffers built, all data locked
+        Baked,     // command buffers built, all data locked
         Ready,      // all dependencies in 'Ready', 'Submitted' or 'Complete' states
         Submitted,  // commands was submitted to the GPU
         Complete,   // commands complete execution on the GPU
     };
 
-    struct FInternalData {
-        EQueueType QueueType{ Default };
-        FDependencies Dependencies;
-        bool SubmitImmediately{ false };
-        bool SupportsQuery{ false };
-        bool NeedQueueSync{ false };
-    };
-
     struct FStagingBuffer {
-        EStagingBufferIndex Index{ Default };
+        FStagingBufferIndex Index{ Default };
         FRawBufferID BufferId;
         FRawMemoryID MemoryId;
         u32 Capacity{ 0 };
@@ -65,11 +59,11 @@ public:
 
         VkDeviceMemory DeviceMemory{ VK_NULL_HANDLE };
         void* MappedPtr{ nullptr };
-        u32 MemoryOffset : 31;
-        u32 IsCoherent : 1;
+        u32 MemoryOffset{ 0 }; // can be used to flush memory ranges
+        bool IsCoherent{ false };
 
-        CONSTEXPR FStagingBuffer() : MemoryOffset(0), IsCoherent(0) {}
-        CONSTEXPR FStagingBuffer(EStagingBufferIndex index, FRawBufferID bufferId, FRawMemoryID memoryId, u32 capacity)
+        FStagingBuffer() = default;
+        CONSTEXPR FStagingBuffer(FStagingBufferIndex index, FRawBufferID bufferId, FRawMemoryID memoryId, u32 capacity)
         :   Index(index), BufferId(bufferId), MemoryId(memoryId), Capacity(capacity)
         {}
 
@@ -78,9 +72,13 @@ public:
     };
 
     struct FStagingDataRange {
-        FStagingBuffer const* Buffer;
-        u32 Offset;
-        u32 Size;
+        FStagingBuffer const* Buffer{ nullptr };
+        u32 Offset{ 0 };
+        u32 Size{ 0 };
+
+        FRawMemory MakeView() const NOEXCEPT {
+            return { static_cast<u8*>(Buffer->MappedPtr) + Offset, Size };
+        }
     };
 
     struct FOnBufferDataLoadedEvent {
@@ -95,6 +93,9 @@ public:
         FOnBufferDataLoadedEvent(FCallback&& rcallback, u32 size) NOEXCEPT
         :   Callback(std::move(rcallback)), TotalSize(size)
         {}
+        FOnBufferDataLoadedEvent(const FCallback& callback, u32 size) NOEXCEPT
+        :   Callback(callback), TotalSize(size)
+        {}
     };
 
     struct FOnImageDataLoadedEvent {
@@ -104,7 +105,7 @@ public:
         FCallback Callback;
         FDataParts Parts;
         u32 TotalSize{ 0 };
-        int3 ImageSize{ 0 };
+        uint3 ImageSize{ 0 };
         u32 RowPitch{ 0 };
         u32 SlicePitch{ 0 };
         EPixelFormat Format{ Default };
@@ -117,10 +118,16 @@ public:
         :   Callback(std::move(rcallback)), TotalSize(size), ImageSize(imageSize)
         ,   RowPitch(rowPitch), SlicePitch(slicePitch), Format(fmt), Aspect(aspect)
         {}
+        FOnImageDataLoadedEvent(
+            const FCallback& callback, u32 size, const uint3& imageSize,
+            u32 rowPitch, u32 slicePitch, EPixelFormat fmt, EImageAspect aspect ) NOEXCEPT
+        :   Callback(callback), TotalSize(size), ImageSize(imageSize)
+        ,   RowPitch(rowPitch), SlicePitch(slicePitch), Format(fmt), Aspect(aspect)
+        {}
     };
 
 #if USE_PPE_RHIDEBUG
-    using FShaderModules = TFixedSizeStack<PShaderModule, 8>;
+    using FShaderModules = TFixedSizeStack<PVulkanShaderModule, 8>;
     using FDebugBatchGraph = FVulkanLocalDebugger::FBatchGraph;
 
     struct FDebugStorageBuffer {
@@ -143,37 +150,68 @@ public:
         uint4 Payload{ 0 };
     };
 
-    using FDebugStorageBuffers = VECTOR(RHIDebug, FDebugStorageBuffer);
-    using FDebugModes = VECTOR(RHIDebug, FDebugMode);
-    using FDebugDescriptorKey = TPair<FRawBufferID, FRawDescriptorSetLayoutID>;;
-    using FDebugDescriptorCache = HASHMAP(RHIDebug, FDebugDescriptorKey, FVulkanDescriptorSets);
+    using FDebugStorageBuffers = VECTORINSITU(RHIDebug, FDebugStorageBuffer, 1);
+    using FDebugModes = VECTORINSITU(RHIDebug, FDebugMode, 1);
+    using FDebugDescriptorKey = TPair<FRawBufferID, FRawDescriptorSetLayoutID>;
+    using FDebugDescriptorCache = HASHMAP(RHIDebug, FDebugDescriptorKey, FVulkanDescriptorSet);
 #endif
 
-    FVulkanCommandBatch(FVulkanFrameGraph& fg, u32 indexInPool);
-    ~FVulkanCommandBatch();
+    using FStagingBuffers = TFixedSizeStack<FStagingBuffer, 8>;
+
+    struct FInternalData {
+        EQueueType QueueType{ Default };
+        FDependencies Dependencies;
+        bool SubmitImmediately{ false };
+        bool SupportsQuery{ false };
+        bool NeedQueueSync{ false };
+
+        // command batch
+        struct {
+            FCommandBuffers Commands;
+            FSignalSemaphores SignalSemaphores;
+            FWaitSemaphores WaitSemaphores;
+        }   Batch;
+
+        // staging buffer
+        struct {
+            FStagingBuffers HostToDevice;
+            FStagingBuffers DeviceToHost;
+            VECTORINSITU(RHICommand, FOnBufferDataLoadedEvent, 1) OnBufferLoadedEvents;
+            VECTORINSITU(RHICommand, FOnImageDataLoadedEvent, 1) OnImageLoadedEvents;
+        }   Staging;
+
+        // resources
+        FResourceArray ReadyToDelete;
+        FResourceMap ResourcesToRelease;
+        FSwapchains Swapchains;
+    };
+
+    FVulkanCommandBatch(const SVulkanFrameGraph& fg, u32 indexInPool);
+    virtual ~FVulkanCommandBatch() override;
 
     u32 IndexInPool() const { return _indexInPool; }
 
     EState State() const { return _state.load(std::memory_order_relaxed); }
     FVulkanSubmitted* Submitted() const { return _submitted.load(std::memory_order_relaxed); }
+    EQueueUsage QueueUsage() const NOEXCEPT;
 
     auto Read() const { return _data.LockShared(); }
 
-    void Create(EQueueType type, TMemoryView<const FCommandBufferBatch> dependsOn);
+    void Construct(EQueueType type, TMemoryView<const FCommandBufferBatch> dependsOn);
 
-    bool OnStart(const FCommandBufferDesc& desc);
+    bool OnBegin(const FCommandBufferDesc& desc);
     void OnBeforeRecording(VkCommandBuffer cmd);
     void OnAfterRecording(VkCommandBuffer cmd);
     bool OnBaked(FResourceMap& resources);
     bool OnReadyToSubmit();
-    bool OnBeforeSubmit(VkSubmitInfo* psubmit);
-    bool OnAfterSubmit(TAppendable<SCVulkanSwapchain> swapchains, FVulkanSubmitted* submitted);
-    bool OnComplete(FFrameStatistics* pstats, FVulkanDebugger& debugger, FShaderDebugCallback&& callback);
+    bool OnBeforeSubmit(VkSubmitInfo* pSubmit);
+    bool OnAfterSubmit(TAppendable<const FVulkanSwapchain*> swapchains, FVulkanSubmitted* submitted);
+    bool OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, FVulkanDebugger& debugger, FShaderDebugCallback&& callback));
 
-    void SignalSemaphore(VkSemaphore semaphore);
-    void WaitSemaphore(VkSemaphore semaphore, VkPipelineStageFlags stages);
-    void PushCommandToFront(VkCommandBuffer vkCmdBuffer, const FVulkanCommandPool* pool);
-    void PushCommandToBack(VkCommandBuffer vkCmdBuffer, const FVulkanCommandPool* pool);
+    void SignalSemaphore(VkSemaphore vkSemaphore);
+    void WaitSemaphore(VkSemaphore vkSemaphore, VkPipelineStageFlags stages);
+    void PushCommandToFront(FVulkanCommandPool* pPool, VkCommandBuffer vkCmdBuffer);
+    void PushCommandToBack(FVulkanCommandPool* pPool, VkCommandBuffer vkCmdBuffer);
     void DependsOn(FVulkanCommandBatch* other);
     void DestroyPostponed(VkObjectType type, uintptr_t handle);
 
@@ -183,24 +221,24 @@ public:
 
     // staging buffer
 
-    bool StageWrite(FRawBufferID* pDstBuffer, u32* pDstOffset, u32* pOutSize, void** pMappedPtr,
+    NODISCARD bool StageWrite(FRawBufferID* pDstBuffer, u32* pDstOffset, u32* pOutSize, void** pMappedPtr,
         const u32 srcRequiredSize, const u32 blockAlign, const u32 offsetAlign, const u32 dstMinSize );
 
-    bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize);
-    bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize, u32 srcPitch);
+    NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize);
+    NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize, u32 srcPitch);
 
-    bool AddDataLoadedEvent(FOnImageDataLoadedEvent&& revent);
-    bool AddDataLoadedEvent(FOnBufferDataLoadedEvent&& revent);
+    void AddDataLoadedEvent(FOnImageDataLoadedEvent&& revent);
+    void AddDataLoadedEvent(FOnBufferDataLoadedEvent&& revent);
 
 
 #if USE_PPE_RHIDEBUG
     // shader debugger
 
-    bool SetShaderModuleForDebug(EShaderDebugIndex id, PShaderModule&& rmodule);
+    void SetShaderModuleForDebug(EShaderDebugIndex id, const PVulkanShaderModule& module);
 
-    bool FindModeInfoForDebug(EShaderDebugMode* pmode, EShaderStages* pstages, EShaderDebugIndex id) const;
-    bool FindDescriptorSetForDebug(u32* pbinding, VkDescriptorSet* pset, uint2* pdim, EShaderDebugIndex id) const;
-    bool FindShaderStampForDebug(FRawBufferID* pbuf, u32* poffset, u32* psize, uint2* pdim, EShaderDebugIndex id) const;
+    bool FindModeInfoForDebug(EShaderDebugMode* pMode, EShaderStages* pStages, EShaderDebugIndex id) const;
+    bool FindDescriptorSetForDebug(u32* pBinding, VkDescriptorSet* pSet, u32* pDynamicOffset, EShaderDebugIndex id) const;
+    bool FindShaderTimemapForDebug(FRawBufferID* pBuf, u32* pOffset, u32* pSize, uint2* pDim, EShaderDebugIndex id) const;
 
     STATIC_CONST_INTEGRAL(u32, DebugBufferSize, 8 * 1024 * 1024);
 
@@ -208,21 +246,23 @@ public:
     EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FComputeShaderDebugMode& mode, u32 size = DebugBufferSize);
     EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FRayTracingShaderDebugMode& mode, u32 size = DebugBufferSize);
 
-    EShaderDebugIndex AppendTimemap(const uint2& dim, EShaderStages stages);
+    EShaderDebugIndex AppendTimemapForDebug(const uint2& dim, EShaderStages stages);
 
 #endif
 
 private:
     void SetState_(EState from, EState to);
-    void ReleaseResources_();
-    void ReleaseVulkanObjects_();
-    void FinalizeCommands_();
 
-    void AddPendingLoad_(FRawBufferID* pDstBuffer, FStagingDataRange* pRange,
-        u32 srcRequiredSize, u32 blockAlign, u32 offsetAlign, u32 dstMinSize );
+    static void ReleaseResources_(FVulkanResourceManager& resources, FInternalData& data);
+    static void ReleaseVulkanObjects_(const FVulkanDevice& device, FInternalData& data);
+    static void FinalizeCommands_(FInternalData& data);
 
-    bool MapMemory_(FStagingBuffer& staging) const;
-    void FinalizeStagingBuffers_(const FVulkanDevice& device);
+    FStagingBuffer* FindOrAddStagingBuffer_(
+        FStagingBuffers *pStagingBuffers, u32 stagingSize, EBufferUsage usage,
+        u32 srcRequiredSize, u32 blockAlign, u32 offsetAlign, u32 dstMinSize ) const;
+
+    static bool MapMemory_(FVulkanResourceManager& resources, FStagingBuffer& staging);
+    static void FinalizeStagingBuffers_(const FVulkanDevice& device, FVulkanResourceManager& resources, FInternalData& data);
 
     const SVulkanFrameGraph _frameGraph;
     const u32 _indexInPool;
@@ -232,25 +272,9 @@ private:
 
     TRHIThreadSafe<FInternalData> _data;
 
-    // command batch
-    struct {
-        FCommandBuffers Commands;
-        FSignalSemaphores SignalSemaphores;
-        FWaitSemaphores WaitSemaphores;
-    }   _batch;
-
-    // staging buffer
-    struct {
-        TFixedSizeStack<FStagingBuffer, 8> HostToDevice;
-        TFixedSizeStack<FStagingBuffer, 8> DeviceToHost;
-        VECTORINSITU(RHICommand, FOnBufferDataLoadedEvent, 1) OnBufferLoadedEvents;
-        VECTORINSITU(RHICommand, FOnImageDataLoadedEvent, 1) OnImageLoadedEvents;
-    }   _staging;
-
-    // resources
-    FResourceArray _readyToDelete;
-    FResourceMap _resourcesToRelease;
-    FSwapchains _swapchains;
+#if USE_PPE_RHIPROFILING
+    mutable FFrameStatistics _statistics;
+#endif
 
 #if USE_PPE_RHIDEBUG
 
@@ -267,17 +291,18 @@ private:
     struct {
         FString DebugDump;
         FDebugBatchGraph DebugGraph;
-        FFrameStatistics Statistics;
     }   _frameDebugger;
 
     void BeginShaderDebugger_(VkCommandBuffer cmd);
     void EndShaderDebugger_(VkCommandBuffer cmd);
 
-    bool AllocStorage_(FDebugMode& debugMode, u32 size);
-    bool AllocDescriptorSet_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, u32 size);
+    bool AllocStorageForDebug_(FDebugMode& debugMode, u32 size);
+    bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, u32 size, const FConstChar debugName);
 
-    void ParseDebugOutput_(const FShaderDebugCallback& debug);
-    bool ParseDebugOutput2_(TAppendable<FString> outp, const FShaderDebugCallback& debug, const FDebugMode& dbg) const;
+    using FDebugStrings = VECTORINSITU(RHIDebug, FString, 8);
+
+    void ParseDebugOutput_(const FShaderDebugCallback& callback);
+    bool ParseDebugOutput2_(FDebugStrings* pDump, const FShaderDebugCallback& callback, const FDebugMode& dbg) const;
 
 #endif
 };

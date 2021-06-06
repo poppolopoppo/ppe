@@ -18,8 +18,8 @@ public:
     u32 VisitorId() const { return _visitorId; }
     void SetVisitorId(u32 value) { _visitorId = value; }
 
-    EVulkanExecutionOrder ExecOrder() const { return _execOrder; }
-    void SetExecOrder(EVulkanExecutionOrder value) { _execOrder = value; }
+    EVulkanExecutionOrder ExecutionOrder() const { return _executionOrder; }
+    void SetExecutionOrder(EVulkanExecutionOrder value) { _executionOrder = value; }
 
     TMemoryView<const PVulkanFrameTask> Inputs() const { return _inputs.MakeView(); }
     TMemoryView<const PVulkanFrameTask> Outputs() const { return _outputs.MakeView(); }
@@ -59,7 +59,7 @@ protected:
     FProcessFunc _process{ nullptr };
 
     u32 _visitorId{ 0 };
-    EVulkanExecutionOrder _execOrder{ EVulkanExecutionOrder::Initial };
+    EVulkanExecutionOrder _executionOrder{ EVulkanExecutionOrder::Initial };
 
     FDependencies _inputs;
     FDependencies _outputs;
@@ -246,7 +246,7 @@ public:
     const u32 BaseLevel;
     const u32 LevelCount;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBlitImage& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process);
 
     bool Valid() const { return (!!Image && LevelCount > 0); }
 };
@@ -340,12 +340,31 @@ public:
     bool Valid() const { return (!!DstBuffer && not Regions.empty()); }
 };
 //----------------------------------------------------------------------------
+// FUpdateImage:
+//----------------------------------------------------------------------------
+template <>
+class PPE_RHIVULKAN_API TVulkanFrameTask<FUpdateImage> final : public IVulkanFrameTask {
+    public:
+    struct FRegion {
+        void* DataPtr{ nullptr };
+        VkDeviceSize DataSize{ 0 };
+        VkDeviceSize BufferOffset{ 0 };
+    };
+
+    const FVulkanLocalBuffer* const DstBuffer;
+    const TMemoryView<const FRegion> Regions;
+
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process);
+
+    bool Valid() const { return (!!DstBuffer && not Regions.empty()); }
+};
+//----------------------------------------------------------------------------
 // FPresent:
 //----------------------------------------------------------------------------
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FPresent> final : public IVulkanFrameTask {
 public:
-    const SCVulkanSwapchain Swapchain;
+    const FVulkanSwapchain* const Swapchain;
     const FVulkanLocalImage* const SrcImage;
     const FImageLayer Layer;
     const FMipmapLevel Mipmap;

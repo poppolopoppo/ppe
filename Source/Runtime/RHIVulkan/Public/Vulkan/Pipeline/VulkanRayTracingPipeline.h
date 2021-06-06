@@ -5,7 +5,6 @@
 #include "RHI/PipelineDesc.h"
 
 #include "Meta/Utility.h"
-#include "Thread/ThreadSafe.h"
 
 namespace PPE {
 namespace RHI {
@@ -55,10 +54,10 @@ public:
     auto Read() const { return _pipeline.LockShared(); }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool Create(const FRayTracingPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool Construct(const FRayTracingPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
 private:

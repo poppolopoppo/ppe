@@ -9,7 +9,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanRayTracingGeometry final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanRayTracingGeometry final {
 public:
     using EFlags = ERayTracingGeometryFlags;
 
@@ -19,7 +19,7 @@ public:
         u32 MaxVertexCount{ 0 };
         EVertexFormat VertexFormat{ Default };
         u32 MaxIndexCount{ 0 };
-        EIndexFormat IndexForamt{ Default };
+        EIndexFormat IndexFormat{ Default };
         u16 VertexSize{ 0 };
         u16 IndexSize{ 0 };
 
@@ -74,10 +74,15 @@ public:
     ERayTracingBuildFlags Flags() const { return Read()->Flags; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool Create(FVulkanMemoryObject* pobj, FVulkanResourceManager& resources, FRayTracingGeometryDesc& desc, FRawMemoryID memoryId ARGS_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool Construct(
+        FVulkanResourceManager& resources,
+        const FRayTracingGeometryDesc& desc,
+        FRawMemoryID memoryId,
+        FVulkanMemoryObject& pobj
+        ARGS_IF_RHIDEBUG(FConstChar debugName) );
     void TearDown(FVulkanResourceManager& resources);
 
     size_t GeometryIndex(FGeometryID* pgeometryId) const;

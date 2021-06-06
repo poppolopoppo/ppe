@@ -26,10 +26,10 @@ public:
     FRawBufferID Buffer() const { return _bufferId.Get(); }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool Create(
+    NODISCARD bool Construct(
 #if USE_PPE_RHIDEBUG
         FStringView debugName
 #endif

@@ -2,7 +2,7 @@
 
 #include "Vulkan/VulkanCommon.h"
 
-#include "Thread/ThreadSafe.h"
+#include "RHI/FrameDebug.h"
 
 namespace PPE {
 namespace RHI {
@@ -30,6 +30,7 @@ public:
     u32 IndexInPool() const { return _indexInPool; }
 
     auto Read() const { return _submit.LockShared(); }
+    auto Write() { return _submit.LockExclusive(); }
 
 private:
     friend class FVulkanFrameGraph;

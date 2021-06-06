@@ -2,7 +2,7 @@
 
 #include "Vulkan/Vulkan_fwd.h"
 
-#include "External/vulkan/Public/vulkan-fwd.h"
+#include "vulkan-fwd.h"
 
 namespace PPE {
 namespace RHI {

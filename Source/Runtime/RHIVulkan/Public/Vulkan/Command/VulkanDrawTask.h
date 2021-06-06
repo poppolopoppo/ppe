@@ -82,7 +82,7 @@ public:
     const TMemoryView<const FRectangleI>& Scissors() const { return _scissors; }
 
     TMemoryView<const FVulkanLocalBuffer* const> VertexBuffers() const { return _vertexBuffers.MakeConstView().CutBeforeConst(_vertexBufferCount); }
-    TMemoryView<const VkDevice> VertexOffsets() const { return _vertexOffsets.MakeConstView().CutBeforeConst(_vertexBufferCount); }
+    TMemoryView<const VkDeviceSize> VertexOffsets() const { return _vertexOffsets.MakeConstView().CutBeforeConst(_vertexBufferCount); }
     TMemoryView<const u32> VertexStrides() const { return _vertexStrides.MakeConstView().CutBeforeConst(_vertexBufferCount); }
 
 private:
@@ -105,7 +105,7 @@ public:
     const FDrawVertices::FDrawCommands Commands;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        FDrawVertices& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawVertices& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawIndexed:
@@ -120,7 +120,7 @@ public:
     const EIndexFormat IndexFormat;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        FDrawIndexed& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawIndexed& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawVerticesIndirect:
@@ -133,7 +133,7 @@ public:
     const FVulkanLocalBuffer* const IndirectBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        FDrawVerticesIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawVerticesIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawIndexedIndirect:
@@ -150,7 +150,39 @@ public:
     const EIndexFormat IndexFormat;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        FDrawIndexedIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawIndexedIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+// FDrawVerticesIndirectCount:
+//----------------------------------------------------------------------------
+template <>
+class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawVerticesIndirectCount> final : public details::FVulkanBaseDrawVerticesTask {
+    public:
+    const FDrawVerticesIndirectCount::FDrawCommands Commands;
+
+    const FVulkanLocalBuffer* const IndirectBuffer;
+    const FVulkanLocalBuffer* const CountBuffer;
+
+    TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
+        const FDrawVerticesIndirectCount& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+// FDrawIndexedIndirectCount:
+//----------------------------------------------------------------------------
+template <>
+class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawIndexedIndirectCount> final : public details::FVulkanBaseDrawVerticesTask {
+    public:
+    const FDrawIndexedIndirectCount::FDrawCommands Commands;
+
+    const FVulkanLocalBuffer* const IndirectBuffer;
+    const FVulkanLocalBuffer* const CountBuffer;
+
+    const FVulkanLocalBuffer* const IndexBuffer;
+    const u32 IndexBufferOffset;
+    const EIndexFormat IndexFormat;
+
+    TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
+        const FDrawIndexedIndirectCount& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -189,16 +221,18 @@ private:
 //----------------------------------------------------------------------------
 // FDrawMeshes:
 //----------------------------------------------------------------------------
+template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshes> final : public details::FVulkanBaseDrawMeshesTask {
 public:
     const FDrawMeshes::FDrawCommands Commands;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        FDrawMeshes& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawMeshes& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawMeshesIndirect:
 //----------------------------------------------------------------------------
+template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshesIndirect> final : public details::FVulkanBaseDrawMeshesTask {
 public:
     const FDrawMeshesIndirect::FDrawCommands Commands;
@@ -206,13 +240,28 @@ public:
     const FVulkanLocalBuffer* const IndirectBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        FDrawMeshesIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawMeshesIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+// FDrawMeshesIndirect:
+//----------------------------------------------------------------------------
+template <>
+class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshesIndirectCount> final : public details::FVulkanBaseDrawMeshesTask {
+    public:
+    const FDrawMeshesIndirectCount::FDrawCommands Commands;
+
+    const FVulkanLocalBuffer* const IndirectBuffer;
+    const FVulkanLocalBuffer* const CountBuffer;
+
+    TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
+        const FDrawMeshesIndirectCount& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // FCustomDraw:
 //----------------------------------------------------------------------------
+template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FCustomDraw> final : public IVulkanDrawTask {
 public:
     using FCallback = FCustomDraw::FCallback;
@@ -227,7 +276,7 @@ public:
     const FBuffers Buffers;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        FCustomDraw& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FCustomDraw& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
     bool Valid() const { return (!!Callback); }
 };

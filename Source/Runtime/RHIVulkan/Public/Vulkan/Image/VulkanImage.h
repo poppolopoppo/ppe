@@ -9,17 +9,17 @@
 #include "Container/HashHelpers.h"
 #include "Misc/Function.h"
 #include "Thread/ReadWriteLock.h"
-#include "Thread/ThreadSafe.h"
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanImage final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanImage final {
 public:
     using FImageViewDescMemoized = THashMemoizer<FImageViewDesc>;
-    using FReleaseCallback = TFunction<void(struct FInternalData&)>;
+    using FImageViewMap = HASHMAP_MEMOIZE(RHIImage, FImageViewDesc, VkImageView);
+    using FImageRange = FImageDataRange;
 
     struct FInternalData {
         VkImage vkImage{ VK_NULL_HANDLE };
@@ -31,10 +31,10 @@ public:
         EVulkanQueueFamilyMask QueueFamilyMask{ Default };
         VkAccessFlagBits ReadAccessMask{ Default };
 
-        FReleaseCallback OnRelease;
+        FOnReleaseExternalImage OnRelease;
 
         bool IsReadOnly() const;
-        bool IsExclusiveSharing() const { return (Default == QueueFamilyMask); }
+        bool IsExclusiveSharing() const { return (QueueFamilyMask == Default); }
 
         const uint3& Dimensions() const { return Desc.Dimensions; }
         u32 Width() const { return Desc.Dimensions.x; }
@@ -46,9 +46,9 @@ public:
         u32 Samples() const { return *Desc.Samples; }
 
         EPixelFormat PixelFormat() const { return Desc.Format; }
-        EImageType ImageType() const { return Desc.Type; }
 
-        bool MakeView(VkImageView* pImageView, const FVulkanDevice& device, const FImageViewDescMemoized& desc) const;
+        VkImageView ImageView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const;
+        VkImageView ImageView(const FVulkanDevice& device, bool isDefault, FImageViewDesc& desc) const;
     };
 
     FVulkanImage() = default;
@@ -65,29 +65,29 @@ public:
     VkImage Handle() const { return Read()->vkImage; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
     VkImageView MakeView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const;
     VkImageView MakeView(const FVulkanDevice& device, bool isDefault, FImageViewDesc& desc) const;
 
     static bool IsSupported(const FVulkanDevice& device, const FImageDesc& desc, EMemoryType memoryType);
-    bool IsSupported(const FVulkanDevice& device, FImageViewDesc& desc);
+    bool IsSupported(const FVulkanDevice& device, const FImageViewDesc& desc) const;
 
-    bool Create(FVulkanResourceManager& resources,
+    NODISCARD bool Construct(FVulkanResourceManager& resources,
         const FImageDesc& desc, FRawMemoryID memoryId, FVulkanMemoryObject& memoryObject,
         EVulkanQueueFamilyMask queueFamilyMask, EResourceState defaultState
-        ARGS_IF_RHIDEBUG(const FStringView& debugName) );
+        ARGS_IF_RHIDEBUG(FConstChar debugName) );
 
-    bool Create(FVulkanDevice& device,
-        const FImageDesc& desc, FReleaseCallback&& onRelease
-        ARGS_IF_RHIDEBUG(const FStringView& debugName) );
+    NODISCARD bool Construct(const FVulkanDevice& device,
+        const FImageDesc& desc,
+        FExternalImage externalImage, FOnReleaseExternalImage&& onRelease,
+        TMemoryView<const u32> queueFamilyIndices
+        ARGS_IF_RHIDEBUG(FConstChar debugName) );
 
     void TearDown(FVulkanResourceManager& resources);
 
 private:
-    using FImageViewMap = HASHMAP_MEMOIZE(RHIImage, FImageViewDesc, VkImageView);
-
     TRHIThreadSafe<FInternalData> _data;
 
     mutable FReadWriteLock _viewRWLock;

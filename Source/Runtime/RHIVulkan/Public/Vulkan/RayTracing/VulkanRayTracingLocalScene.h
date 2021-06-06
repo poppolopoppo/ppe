@@ -34,14 +34,14 @@ public:
     FVulkanRayTracingLocalScene() = default;
     ~FVulkanRayTracingLocalScene();
 
-    bool Create(const FVulkanRayTracingScene* sceneData);
+    NODISCARD bool Construct(const FVulkanRayTracingScene* sceneData);
     void TearDown();
 
     void AddPendingState(const FSceneState& state) const;
     void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
-    const SCVulkanRayTracingScene& GlobalData() const { return _rtScene; }
+    const FVulkanRayTracingScene* GlobalData() const { return _rtScene; }
     auto InternalData() const { return _rtScene->Read(); }
 
     VkAccelerationStructureKHR Handle() const { return _rtScene->Handle(); }
@@ -49,7 +49,7 @@ public:
     u32 MaxInstanceCount() const { return _rtScene->MaxInstancCount(); }
 
 private:
-    SCVulkanRayTracingScene _rtScene;
+    const FVulkanRayTracingScene* _rtScene;
 
     mutable FSceneAccess _pendingAccesses;
     mutable FSceneAccess _accessForReadWrite;

@@ -11,7 +11,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanMemoryManager final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanMemoryManager final {
 public:
     using FStorage = FVulkanMemoryObject::FStorage;
 
@@ -42,7 +42,7 @@ public:
     explicit FVulkanMemoryManager(const FVulkanDevice& device);
     ~FVulkanMemoryManager();
 
-    bool Create();
+    NODISCARD bool Construct();
     void TearDown();
 
     bool AllocateImage(FStorage* pdata, VkImage image, const FMemoryDesc& desc);

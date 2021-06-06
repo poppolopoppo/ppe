@@ -200,6 +200,11 @@ public:
     }
 
     template <typename T>
+    NODISCARD PPE_DECLSPEC_ALLOCATOR() TMemoryView<T> AllocateT(u32 count) {
+        return { static_cast<T*>(Allocate(sizeof(T) * count)), count };
+    }
+
+    template <typename T>
     void DeallocateT(T* ptr) {
         CONSTEXPR size_t pool = FAllocatorBinning::IndexFromSizeConst(sizeof(T));
         STATIC_ASSERT(pool < FAllocatorBinning::NumBins);

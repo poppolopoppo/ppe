@@ -52,14 +52,14 @@ public:
 #endif
 
     VkBuffer Handle() const { return _bufferData->Handle(); }
-    const SCVulkanBuffer& GlobalData() const { return _bufferData; }
+    const FVulkanBuffer* GlobalData() const { return _bufferData; }
     auto InternalData() const { return _bufferData->Read(); }
 
-    bool Create(const FVulkanBuffer* bufferData);
+    NODISCARD bool Construct(const FVulkanBuffer* bufferData);
     void TearDown();
 
     void SetInitialState(bool immutable);
-    void AddPendingState(FBufferState&& rstate);
+    void AddPendingState(const FBufferState& bufferState);
     void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
@@ -69,10 +69,10 @@ public:
 
 private:
     static FAccessRecords::iterator FindFirstAccess_(FAccessRecords& arr, const FBufferRange& range);
-    static void ReplaceAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator iter, const FBufferAccess& barrier);
-    static FAccessRecords::iterator EraseAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator iter, const FBufferRange& range);
+    static void ReplaceAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator it, const FBufferAccess& barrier);
+    static FAccessRecords::iterator EraseAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator it, const FBufferRange& range);
 
-    SCVulkanBuffer _bufferData;
+    const FVulkanBuffer* _bufferData;
 
     FAccessRecords _accessPending;
     FAccessRecords _accessForRead;

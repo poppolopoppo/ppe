@@ -25,11 +25,11 @@ public:
     using FVertexInputAttributes = TFixedSizeStack<VkVertexInputAttributeDescription, MaxVertexAttribs>;
     using FVertexInputBindings = TFixedSizeStack<VkVertexInputBindingDescription, MaxVertexBuffers>;
     using FColorAttachments = TFixedSizeStack<VkPipelineColorBlendAttachmentState, MaxColorBuffers>;
-    using FSpecializationInfos = VECTOR(RHIPipeline, VkSpecializationInfo, 1);
-    using FSpecializationEntries = VECTOR(RHIPipeline, VkSpecializationMapEntry, 1);
-    using FSpecializationDatas = VECTOR(RHIPipeline, u32, 1);
-    using FShaderStages = VECTOR(RHIPipeline, VkPipelineShaderStageCreateInfo, 3);
-    using FRTShaderGroups = VECTOR(RHIPipeline, VkRayTracingShaderGroupCreateInfoKHR, 3);
+    using FSpecializationInfos = VECTORINSITU(RHIPipeline, VkSpecializationInfo, 1);
+    using FSpecializationEntries = VECTORINSITU(RHIPipeline, VkSpecializationMapEntry, 1);
+    using FSpecializationDatas = VECTORINSITU(RHIPipeline, u32, 1);
+    using FShaderStages = VECTORINSITU(RHIPipeline, VkPipelineShaderStageCreateInfo, 3);
+    using FRTShaderGroups = VECTORINSITU(RHIPipeline, VkRayTracingShaderGroupCreateInfoKHR, 3);
 
     using EGroupType = FUpdateRayTracingShaderTable::EGroupType;
     using FRayGenShader = FUpdateRayTracingShaderTable::FRayGenShader;

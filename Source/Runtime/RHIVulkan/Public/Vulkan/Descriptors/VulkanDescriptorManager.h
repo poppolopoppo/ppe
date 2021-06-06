@@ -21,7 +21,7 @@ public:
     explicit FVulkanDescriptorManager(const FVulkanDevice& device) NOEXCEPT;
     ~FVulkanDescriptorManager();
 
-    void Create();
+    bool Construct();
     void TearDown();
 
     bool AllocateDescriptorSet(FVulkanDescriptorSet* pdescriptors, VkDescriptorSetLayout layout);

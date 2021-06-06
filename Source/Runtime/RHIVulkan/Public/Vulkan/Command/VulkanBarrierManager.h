@@ -7,16 +7,14 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanBarrierManager final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanBarrierManager final {
 public:
     using FImageMemoryBarriers = VECTORMINSIZE(RHICommand, VkImageMemoryBarrier, 32);
     using FBufferMemoryBarriers = VECTORMINSIZE(RHICommand, VkBufferMemoryBarrier, 64);
 
-    FVulkanBarrierManager() : _memoryBarrier{} {
-        _memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-    }
+    FVulkanBarrierManager() NOEXCEPT;
 
-    void Commit(const FVulkanDevice& device, VkCommandBuffer cmd)
+    void Commit(const FVulkanDevice& device, VkCommandBuffer cmd);
     void ForceCommit(const FVulkanDevice& device, VkCommandBuffer cmd, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
 
     void ClearBarriers();

@@ -2,8 +2,6 @@
 
 #include "RHIVulkan_fwd.h"
 
-#include "Vulkan/VulkanIncludes_fwd.h"
-
 #include "RHI/Config.h"
 
 namespace PPE {
@@ -11,17 +9,23 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Image:
+//----------------------------------------------------------------------------
+class FVulkanImage;
+class FVulkanLocalImage;
+class FVulkanSampler;
+//----------------------------------------------------------------------------
 // Buffer:
 //----------------------------------------------------------------------------
-FWD_REFPTR(VulkanBuffer);
+class FVulkanBuffer;
 class FVulkanLocalBuffer;
 //----------------------------------------------------------------------------
 // Command:
 //----------------------------------------------------------------------------
-FWD_REFPTR(VulkanBarrierManager);
+class FVulkanBarrierManager;
 FWD_REFPTR(VulkanCommandBatch);
 FWD_REFPTR(VulkanCommandBuffer);
-FWD_REFPTR(VulkanCommandPool);
+class FVulkanCommandPool;
 class FVulkanSubmitted;
 template <typename _VulkanTask>
 class TVulkanDrawTask;
@@ -29,7 +33,8 @@ class IVulkanDrawTask;
 template <typename _VulkanTask>
 class TVulkanFrameTask;
 class IVulkanFrameTask;
-using PVulkanFrameTask = TPtrRef<IVulkanDrawTask>;
+using PVulkanFrameTask = TPtrRef<IVulkanFrameTask>;
+class FVulkanTaskProcessor;
 //----------------------------------------------------------------------------
 // Descriptors:
 //----------------------------------------------------------------------------
@@ -42,21 +47,18 @@ class FVulkanPipelineResources;
 //----------------------------------------------------------------------------
 struct FVulkanDeviceQueueInfo;
 struct FVulkanDeviceQueue;
-using PVulkanDeviceQueue = TPtrRef<FVulkanDeviceQueue>;
+using PVulkanDeviceQueue = TPtrRef<const FVulkanDeviceQueue>;
+struct FVulkanDeviceInfo;
 class FVulkanDevice;
-FWD_REFPTR(VulkanResourceManager);
-struct FVulkanSwapchainDesc;
-FWD_REFPTR(VulkanSwapchain);
-//----------------------------------------------------------------------------
-// Image:
-//----------------------------------------------------------------------------
-FWD_REFPTR(VulkanImage);
-class FVulkanLocalImage;
-class FVulkanSampler;
+class FVulkanInstance;
+class FVulkanResourceManager;
+class FVulkanSwapchain;
+FWD_REFPTR(VulkanFrameGraph);
+using FVulkanWindowHandle = void*;
 //----------------------------------------------------------------------------
 // Memory:
 //----------------------------------------------------------------------------
-FWD_REFPTR(VulkanMemoryManager);
+class FVulkanMemoryManager;
 struct FVulkanMemoryInfo;
 class FVulkanMemoryObject;
 //----------------------------------------------------------------------------
@@ -71,11 +73,18 @@ class FVulkanPipelineLayout;
 //----------------------------------------------------------------------------
 // Raytracing:
 //----------------------------------------------------------------------------
-FWD_REFPTR(VulkanRayTracingGeometry);
+PPE_STRONGLYTYPED_NUMERIC_DEF(u64, FVulkanBLASHandle);
+struct FVulkanGeometryInstance;
+class FVulkanRayTracingGeometry;
 class FVulkanRayTracingLocalGeometry;
-FWD_REFPTR(VulkanRayTracingScene);
+class FVulkanRayTracingScene;
 class FVulkanRayTracingLocalScene;
 class FVulkanRayTracingShaderTable;
+using FVulkanRTGeometry = FVulkanRayTracingGeometry;
+using FVulkanRTLocalGeometry = FVulkanRayTracingLocalGeometry;
+using FVulkanRTScene = FVulkanRayTracingScene;
+using FVulkanRTLocalScene = FVulkanRayTracingLocalScene;
+using FVulkanRTShaderTable = FVulkanRayTracingShaderTable;
 //----------------------------------------------------------------------------
 // RenderPass:
 //----------------------------------------------------------------------------
@@ -85,13 +94,46 @@ class FVulkanRenderPass;
 //----------------------------------------------------------------------------
 // Debugging:
 //----------------------------------------------------------------------------
-FWD_REFPTR(VulkanDebugger); // #TODO %_NOCOMMIT%
-class FVulkanLocalDebugger; // #TODO %_NOCOMMIT%
+#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+class FVulkanDebugger;
+class FVulkanLocalDebugger;
+#endif
 //----------------------------------------------------------------------------
-// Framegraph:
+// Frame tasks:
 //----------------------------------------------------------------------------
-FWD_REFPTR(VulkanFrameGraph);
-using FVulkanWindowHandle = void*;
+using FVulkanSubmitRenderPassTask = TVulkanFrameTask<FSubmitRenderPass>;
+using FVulkanDispatchComputeTask = TVulkanFrameTask<FDispatchCompute>;
+using FVulkanDispatchComputeIndirectTask = TVulkanFrameTask<FDispatchComputeIndirect>;
+using FVulkanCopyBufferTask = TVulkanFrameTask<FCopyBuffer>;
+using FVulkanCopyImageTask = TVulkanFrameTask<FCopyImage>;
+using FVulkanCopyBufferToImageTask = TVulkanFrameTask<FCopyBufferToImage>;
+using FVulkanCopyImageToBufferTask = TVulkanFrameTask<FCopyImageToBuffer>;
+using FVulkanBlitImageTask = TVulkanFrameTask<FBlitImage>;
+using FVulkanResolveImageTask = TVulkanFrameTask<FResolveImage>;
+using FVulkanGenerateMipmapsTask = TVulkanFrameTask<FGenerateMipmaps>;
+using FVulkanFillBufferTask = TVulkanFrameTask<FFillBuffer>;
+using FVulkanClearColorImageTask = TVulkanFrameTask<FClearColorImage>;
+using FVulkanClearDepthStencilImageTask = TVulkanFrameTask<FClearDepthStencilImage>;
+using FVulkanUpdateBufferTask = TVulkanFrameTask<FUpdateBuffer>;
+using FVulkanUpdateImageTask = TVulkanFrameTask<FUpdateImage>;
+using FVulkanReadBufferTask = TVulkanFrameTask<FReadBuffer>;
+using FVulkanReadImageTask = TVulkanFrameTask<FReadImage>;
+using FVulkanPresentTask = TVulkanFrameTask<FPresent>;
+using FVulkanCustomTaskTask = TVulkanFrameTask<FCustomTask>;
+using FVulkanUpdateRayTracingShaderTableTask = TVulkanFrameTask<FUpdateRayTracingShaderTable>;
+using FVulkanBuildRayTracingGeometryTask = TVulkanFrameTask<FBuildRayTracingGeometry>;
+using FVulkanBuildRayTracingSceneTask = TVulkanFrameTask<FBuildRayTracingScene>;
+using FVulkanTraceRaysTask = TVulkanFrameTask<FTraceRays>;
+//----------------------------------------------------------------------------
+// Draw tasks:
+//----------------------------------------------------------------------------
+using FVulkanDrawVerticesTask = TVulkanDrawTask<FDrawVertices>;
+using FVulkanDrawIndexedTask = TVulkanDrawTask<FDrawIndexed>;
+using FVulkanDrawVerticesIndirectTask = TVulkanDrawTask<FDrawVerticesIndirect>;
+using FVulkanDrawIndexedIndirectTask = TVulkanDrawTask<FDrawIndexedIndirect>;
+using FVulkanDrawMeshesTask = TVulkanDrawTask<FDrawMeshes>;
+using FVulkanDrawMeshesIndirectTask = TVulkanDrawTask<FDrawMeshesIndirect>;
+using FVulkanCustomDrawTask = TVulkanDrawTask<FCustomDraw>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

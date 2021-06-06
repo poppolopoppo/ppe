@@ -1,10 +1,7 @@
 #pragma once
 
 #include "RHIVulkan_fwd.h"
-
-#include "HAL/TargetRHI_fwd.h"
-
-#include "Vulkan/Vulkan_fwd.h"
+#include "HAL/VulkanTargetRHI.h"
 
 #include "Modular/ModuleInterface.h"
 
@@ -27,14 +24,10 @@ public:
 public:
     static FRHIVulkanModule& Get(const FModularDomain& domain);
 
-    bool VulkanAvailable() const;
-    RHI::FVulkanInstance& VulkanInstance() const;
-
-    bool CreatePipelineCompiler(RHI::PPipelineCompiler* pcompiler) const;
-    bool CreateFrameGraph(RHI::PFrameGraph* pfg, ERHIFeature features, RHI::FWindowHandle windowSurface) const;
+    const FVulkanTargetRHI& TargetRHI() const { return (*_targetRHI); }
 
 private:
-    TUniquePtr<RHI::FVulkanInstance> _instance;
+    TUniquePtr<class FVulkanTargetRHI> _targetRHI;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

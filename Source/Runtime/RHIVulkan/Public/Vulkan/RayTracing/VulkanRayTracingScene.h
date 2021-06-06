@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Container/Tuple.h"
 #include "Thread/ReadWriteLock.h"
 #include "Vulkan/VulkanCommon.h"
 
@@ -8,7 +9,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanRayTracingScene final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanRayTracingScene final {
 public:
 
     struct FInstance {
@@ -54,10 +55,10 @@ public:
     ERayTracingBuildFlags Flags() const { return Read()->Flags; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool Create(FVulkanMemoryObject* pobj, FVulkanResourceManager& resources, const FRayTracingGeometryDesc& desc, FRawMemoryID memoryId ARGS_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool Construct(FVulkanResourceManager& resources, const FRayTracingSceneDesc& desc, FRawMemoryID memoryId, FVulkanMemoryObject& pobj ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     void SetGeometryInstances(

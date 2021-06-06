@@ -2,6 +2,8 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "RHI/ImageDesc.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -14,7 +16,7 @@ public:
     struct FInternalData {
         VkFramebuffer Framebuffer{ VK_NULL_HANDLE};
 
-        hash_t HashValue;
+        hash_t HashValue{ 0 };
         FRawRenderPassID RenderPassId; // strong ref
         uint2 Dimension{ 0 };
         FImageLayer Layers;
@@ -22,10 +24,13 @@ public:
     };
 
     FVulkanFramebuffer() = default;
-    explicit FVulkanFramebuffer(TMemoryView<const FVulkanLogicalRenderPass*> logicalRenderPasses);
+    FVulkanFramebuffer(
+        const TMemoryView<const TPair<FRawImageID, FImageViewDesc>>& attachments,
+        FRawRenderPassID renderPass,
+        const uint2& dim, u32 layers );
     ~FVulkanFramebuffer();
 
-    FVulkanFramebuffer(FVulkanFramebuffer&& ) = default;
+    FVulkanFramebuffer(FVulkanFramebuffer&& rvalue) NOEXCEPT;
     FVulkanFramebuffer& operator =(FVulkanFramebuffer&& ) = delete;
 
     auto Read() const { return _pass.LockShared(); }
@@ -33,12 +38,12 @@ public:
     hash_t HashValue() const { return Read()->HashValue; }
 
 #if USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
     bool AllResourcesAlive(const FVulkanResourceManager& manager) const;
 
-    bool Create(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool Construct(const FVulkanResourceManager& device ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     bool operator ==(const FVulkanFramebuffer& other) const;

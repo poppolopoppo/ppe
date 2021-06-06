@@ -2,23 +2,24 @@
 
 #include "Vulkan/VulkanCommon.h"
 
-#include "Thread/MPMCBoundedQueue.h"
+#include "Container/RingBuffer.h"
+#include "Thread/CriticalSection.h"
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanCommandPool final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanCommandPool final {
 public:
-    using FFreePool = TMPMCFixedSizeQueue<VkCommandBuffer, 32>;
+    using FFreePool = TFixedSizeRingBuffer<VkCommandBuffer, 32>;
 
     FVulkanCommandPool() = default;
     ~FVulkanCommandPool();
 
     bool Valid() const { return (!!_pool); }
 
-    bool Create(const FVulkanDevice& device, const PVulkanDeviceQueue& queue ARGS_IF_RHIDEBUG(FStringView dbgName = Default));
+    NODISCARD bool Construct(const FVulkanDevice& device, const PVulkanDeviceQueue& queue ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(const FVulkanDevice& device);
 
     VkCommandBuffer AllocPrimary(const FVulkanDevice& device);
@@ -29,20 +30,24 @@ public:
     void ResetAll(const FVulkanDevice& device, VkCommandPoolResetFlags flags);
     void TrimAll(const FVulkanDevice& device, VkCommandPoolTrimFlags flags);
 
-    void Reset(const FVulkanDevice& device, VkCommandBuffer cmd, VkCommandBufferResetFlags flags);
+    void ResetBuffer(const FVulkanDevice& device, VkCommandBuffer cmd, VkCommandBufferResetFlags flags);
 
-    void RecyclePrimary(VkCommandBuffer cmd) const;
-    void RecycleSecondary(VkCommandBuffer cmd) const;
+    void RecyclePrimary(VkCommandBuffer cmd);
+    void RecycleSecondary(VkCommandBuffer cmd);
 
 private:
-    std::atomic<VkCommandPool> _pool{ VK_NULL_HANDLE };
+    VkCommandBuffer AllocBuffer_(FFreePool* pPool, const FVulkanDevice& device, VkCommandBufferLevel level);
+
+    VkCommandPool _pool{ VK_NULL_HANDLE };
+
+    FCriticalSection _poolCS;
+    FFreePool _freePrimaries;
+    FFreePool _freeSecondaries;
 
 #if USE_PPE_RHIDEBUG
-    std::atomic<u32> _liveCount{ 0 };
+    FVulkanDebugName _debugName;
+    std::atomic<u32> _maxBuffersAllocated{ 0 };
 #endif
-
-    FFreePool _primaries;
-    FFreePool _secondaries;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

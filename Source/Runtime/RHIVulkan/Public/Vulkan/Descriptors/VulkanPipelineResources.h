@@ -6,8 +6,7 @@
 
 #include "RHI/PipelineResources.h"
 
-#include "Allocator/LinearAllocator.h"
-#include "Thread/ThreadSafe.h"
+#include "Allocator/SlabAllocator.h"
 
 #include <variant>
 
@@ -19,7 +18,7 @@ namespace RHI {
 class PPE_RHIVULKAN_API FVulkanPipelineResources final : Meta::FNonCopyable {
 public:
     struct FUpdateDescriptors {
-        FLinearAllocator Allocator;
+        FSlabAllocator Allocator;
         VkWriteDescriptorSet* Descriptors{ nullptr };
         u32 DescriptorIndex{ 0 };
     };
@@ -44,7 +43,7 @@ public:
     explicit FVulkanPipelineResources(const FPipelineResources& resources);
     ~FVulkanPipelineResources();
 
-    FVulkanPipelineResources(FVulkanPipelineResources&&) = default;
+    FVulkanPipelineResources(FVulkanPipelineResources&& rvalue) NOEXCEPT;
     FVulkanPipelineResources& operator =(FVulkanPipelineResources&&) = delete;
 
     auto Read() const { return _resources.LockShared(); }
@@ -52,12 +51,12 @@ public:
     hash_t HashValue() const { return Read()->HashValue; }
 
 #ifdef USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
     bool AllResourcesAlive(const FVulkanResourceManager& manager) const;
 
-    bool Create(FVulkanResourceManager& manager);
+    NODISCARD bool Construct(FVulkanResourceManager& manager);
     void TearDown(FVulkanResourceManager& manager);
 
     template <typename _Each>

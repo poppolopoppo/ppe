@@ -25,7 +25,7 @@ public:
     using FStorage = ALIGNED_STORAGE(sizeof(u64) * 4, alignof(u64));
 
     FVulkanMemoryObject() = default;
-    FVulkanMemoryObject(FVulkanMemoryObject&&) = default;
+    FVulkanMemoryObject(FVulkanMemoryObject&&) NOEXCEPT;
     ~FVulkanMemoryObject();
 
     EMemoryType MemoryType() const {
@@ -34,22 +34,22 @@ public:
     }
 
 #if USE_PPE_RHIDEBUG
-    FStringView DebugName() const { return _debugName; }
+    const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    void Create(const FMemoryDesc& desc ARGS_IF_RHIDEBUG(FStringView debugName));
-    void TearDown(FVulkanResourceManager resources);
+    bool Construct(const FMemoryDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    void TearDown(FVulkanResourceManager& resources);
 
-    bool AllocateImage(FVulkanMemoryManager& memory, VkImage image);
-    bool AllocateBuffer(FVulkanMemoryManager& memory, VkBuffer buffer);
-    bool AllocateAccelStruct(FVulkanMemoryManager& memory, VkAccelerationStructureKHR accelStruct);
+    NODISCARD bool AllocateImage(FVulkanMemoryManager& memory, VkImage image);
+    NODISCARD bool AllocateBuffer(FVulkanMemoryManager& memory, VkBuffer buffer);
+    NODISCARD bool AllocateAccelStruct(FVulkanMemoryManager& memory, VkAccelerationStructureKHR accelStruct);
 
-    bool MemoryInfo(FVulkanMemoryInfo* pinfo, FVulkanMemoryManager& memory) const;
+    NODISCARD bool MemoryInfo(FVulkanMemoryInfo* pinfo, FVulkanMemoryManager& memory) const;
 
 private:
+    FReadWriteLock _rwLock;
     FStorage _storage;
     FMemoryDesc _desc;
-    FReadWriteLock _rwLock;
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

@@ -104,9 +104,9 @@ inline FBuildRayTracingGeometry::FBoundingVolumes& FBuildRayTracingGeometry::FBo
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FBuildRayTracingScene::FInstance& FBuildRayTracingScene::FInstance::SetInstance(const FInstanceID& value) {
+inline FBuildRayTracingScene::FInstance& FBuildRayTracingScene::FInstance::SetInstanceId(const FInstanceID& value) {
     Assert(value);
-    Instance = value;
+    InstanceId = value;
     return (*this);
 }
 //----------------------------------------------------------------------------

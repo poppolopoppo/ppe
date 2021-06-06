@@ -3,8 +3,25 @@
 #include "Vulkan/Vulkan_fwd.h"
 
 #include "Vulkan/VulkanCommon.h"
+#include "Vulkan/Buffer/VulkanBuffer.h"
 #include "Vulkan/Descriptors/VulkanDescriptorManager.h"
+#include "Vulkan/Descriptors/VulkanDescriptorSetLayout.h"
+#include "Vulkan/Descriptors/VulkanPipelineResources.h"
+#include "Vulkan/Instance/VulkanSwapchain.h"
+#include "Vulkan/Image/VulkanImage.h"
+#include "Vulkan/Image/VulkanSampler.h"
 #include "Vulkan/Memory/VulkanMemoryManager.h"
+#include "Vulkan/Memory/VulkanMemoryObject.h"
+#include "Vulkan/Pipeline/VulkanComputePipeline.h"
+#include "Vulkan/Pipeline/VulkanGraphicsPipeline.h"
+#include "Vulkan/Pipeline/VulkanMeshPipeline.h"
+#include "Vulkan/Pipeline/VulkanPipelineLayout.h"
+#include "Vulkan/Pipeline/VulkanRayTracingPipeline.h"
+#include "Vulkan/RayTracing/VulkanRayTracingGeometry.h"
+#include "Vulkan/RayTracing/VulkanRayTracingScene.h"
+#include "Vulkan/RayTracing/VulkanRayTracingShaderTable.h"
+#include "Vulkan/RenderPass/VulkanFrameBuffer.h"
+#include "Vulkan/RenderPass/VulkanRenderPass.h"
 
 #include "RHI/ResourceId.h"
 
@@ -23,10 +40,10 @@ namespace RHI {
 //----------------------------------------------------------------------------
 class FVulkanResourceManager : Meta::FNonCopyable {
 public:
-    using FIndex = FRawImageID::index_t;
+    using FIndex = FRawImageID::FIndex;
 
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    using TPool = TTypedMemoryPool<T, _ChunkSize, _MaxChunks, true, ALLOCATOR(RHIResource)>;
+    using TPool = TTypedMemoryPool<T, _ChunkSize, _MaxChunks, EThreadBarrier::RWLock, ALLOCATOR(RHIResource)>;
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
     using TCache = TCachedMemoryPool<T, T, _ChunkSize, _MaxChunks, ALLOCATOR(RHIResource)>;
 
@@ -60,13 +77,13 @@ public:
 
     using FSwapchainPool        = TPool<    TResourceProxy<FVulkanSwapchain>,               64,             1   >;
 
-    using FStagingBufferPool    = TAtomicPool<FBufferID, u32>;
+    using FStagingBufferPool    = TAtomicPool<FBufferID, 2, u32>;
 
     using FPipelineCompilers    = HASHSET(RHIResource, PPipelineCompiler);
     using FVulkanShaderRefs     = VECTOR(RHIResource, PVulkanShaderModule);
     using FDSLayouts            = TFixedSizeStack<TPair<
         FRawDescriptorSetLayoutID,
-        TResourceProxy<FVulkanDescriptorSetLayout>
+        TResourceProxy<FVulkanDescriptorSetLayout>*
     >,  MaxDescriptorSets >;
 
 #if USE_PPE_RHIDEBUG
@@ -86,45 +103,64 @@ public:
     u32 HostWriteBufferSize() const { return _staging.WritePageSize; }
     u32 UniformBufferSize() const { return _staging.UniformPageSize; }
 
-
-    bool Create();
+    NODISCARD bool Construct();
     void TearDown();
 
+    void AddCompiler(const PPipelineCompiler& pCompiler);
+    void OnSubmit();
 
-    FRawMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& debugName));
-    FRawGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& debugName));
-    FRawCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& debugName));
-    FRawRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& debugName));
+    FRawMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues, EResourceState defaultState ARGS_IF_RHIDEBUG(const FStringView& name));
-    FRawBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues ARGS_IF_RHIDEBUG(const FStringView& name));
-    FRawSamplerID CreateSampler(const FSamplerDesc& desc  ARGS_IF_RHIDEBUG(const FStringView& name));
+    FRawImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues, EResourceState defaultState ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawRenderPassID CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass>& passes ARGS_IF_RHIDEBUG(const FStringView& name));
-    FRawFramebufferID CreateFramebuffer(const TMemoryView<const TPair<FRawImageID, FImageViewDesc>>& attachments, FRawRenderPassID pass, const uint2& dim, u32 layers ARGS_IF_RHIDEBUG(const FStringView& name));
+    NODISCARD FRawImageID CreateImage(
+        const FImageDesc& desc,
+        FExternalImage externalImage, FOnReleaseExternalImage&& onRelease,
+        TMemoryView<const u32> queueFamilyIndices
+        ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawBufferID CreateBuffer(
+        const FBufferDesc& desc,
+        FExternalBuffer externalBuffer, FOnReleaseExternalBuffer&& onRelease,
+        TMemoryView<const u32> queueFamilyIndices
+        ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    bool CacheDescriptorSet(FPipelineResources& desc);
-    const FVulkanPipelineResources* CreateDescriptorSet(const FPipelineResources& desc, FVulkanCommandBatch::FResourceMap& resources ARGS_IF_RHIDEBUG(const FStringView& name));
+    FRawSamplerID CreateSampler(const FSamplerDesc& desc  ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(const FStringView& name));
-    FRawRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(const FStringView& name));
-    FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name));
+    FRawRenderPassID CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass*>& passes ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawFramebufferID CreateFramebuffer(const TMemoryView<const TPair<FRawImageID, FImageViewDesc>>& attachments, FRawRenderPassID renderPass, const uint2& dim, u32 layers ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawDescriptorSetLayoutID CreateDescriptorSetLayout(const FPipelineDesc::FSharedUniformMap& uniforms);
+    NODISCARD bool CacheDescriptorSet(FPipelineResources& desc);
+    const FVulkanPipelineResources* CreateDescriptorSet(const FPipelineResources& desc, FVulkanCommandBatch::FResourceMap& resources);
 
-    FRawSwapchainID CreateSwapchain(const FVulkanSwapchainDesc& desc, FRawSwapchainID oldSwapchain, FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(const FStringView& name));
+    FRawRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FStringView debugName));
+
+    FRawDescriptorSetLayoutID CreateDescriptorSetLayout(const FPipelineDesc::FSharedUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
+
+    FRawSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain, FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
 
 
-    bool CreateStagingBuffer(FRawBufferID* pId, FStagingBufferIndex* pIndex, EBufferUsage usage);
+    NODISCARD bool CreateStagingBuffer(FRawBufferID* pId, FStagingBufferIndex* pIndex, EBufferUsage usage);
     void ReleaseStagingBuffer(FStagingBufferIndex index);
 
 
     template <u32 _Uid>
-    bool IsResourceAlive(details::TResourceId<_Uid> id) const;
+    NODISCARD bool IsResourceAlive(details::TResourceId<_Uid> id) const;
     template <u32 _Uid>
-    bool AcquireResource(details::TResourceId<_Uid> id);
+    NODISCARD bool AcquireResource(details::TResourceId<_Uid> id);
     template <u32 _Uid>
-    const auto* ResourceData(details::TResourceId<_Uid> id, bool incRef = false, bool tolerant = false) const;
+    const auto& ResourceData(details::TResourceId<_Uid> id, bool incRef = false) const;
+    template <u32 _Uid>
+    const auto& ResourceData(const details::TResourceWrappedId<details::TResourceId<_Uid>>& wrappedId, bool incRef = false) const { return ResourceData(wrappedId.Get(), incRef); }
+    template <u32 _Uid>
+    const auto* ResourceDataIFP(details::TResourceId<_Uid> id, bool incRef = false, bool tolerant = true) const;
+    template <u32 _Uid>
+    const auto* ResourceDataIFP(const details::TResourceWrappedId<details::TResourceId<_Uid>>& wrappedId, bool incRef = false, bool tolerant = true) const { return ResourceDataIFP(wrappedId.Get(), incRef, tolerant); }
     template <u32 _Uid>
     bool ReleaseResource(details::TResourceId<_Uid> id, u32 refCount = 1);
     void ReleaseResource(FPipelineResources& desc);
@@ -132,12 +168,12 @@ public:
     const FBufferDesc& ResourceDescription(FRawBufferID id) const;
     const FImageDesc& ResourceDescription(FRawImageID id) const;
 
-
     void RunValidation(u32 maxIteration);
-
+    void ReleaseMemory();
 
 #if USE_PPE_RHIDEBUG
-    void ShaderTimemapPipelines(Meta::TArray<FRawCPipelineID, 3>* pPpln);
+    using FShaderTimemapPipelines = Meta::TArray<FRawCPipelineID, 3>;
+    void ShaderTimemapPipelines(FShaderTimemapPipelines* pPpln);
 
     FRawPipelineLayoutID CreateDebugPipelineLayout(
         FRawPipelineLayoutID baseLayout,
@@ -146,82 +182,98 @@ public:
         const FDescriptorSetID& descriptorSet );
     FRawDescriptorSetLayoutID CreateDebugDescriptorSetLayout(
         EShaderDebugMode debugMode,
-        EShaderStages debuggableShaders );
+        EShaderStages debuggableShaders,
+        FConstChar debugName );
 
     static u32 DebugShaderStorageSize(EShaderStages stages, EShaderDebugMode mode);
 #endif
 
 private:
-    auto& ResourcePool_(FRawImageID) { return _imagePool; }
-    auto& ResourcePool_(FRawBufferID) { return _bufferPool; }
-    auto& ResourcePool_(FRawMemoryID) { return _memoryObjectPool; }
-    auto& ResourcePool_(FRawSamplerID) { return _samplerCache; }
-    auto& ResourcePool_(FRawGPipelineID) { return _gpipelinePool; }
-    auto& ResourcePool_(FRawCPipelineID) { return _cpipelinePool; }
-    auto& ResourcePool_(FRawMPipelineID) { return _mpipelinePool; }
-    auto& ResourcePool_(FRawRTPipelineID) { return _rpipelinePool; }
-    auto& ResourcePool_(FRawPipelineLayoutID) { return _pplnLayoutCache; }
-    auto& ResourcePool_(FRawDescriptorSetLayoutID) { return _dslayoutCache; }
-    auto& ResourcePool_(FRawPipelineResourcesID) { return _pplnResourcesCache; }
-    auto& ResourcePool_(FRawRTGeometryID) { return _rtgeometryPool; }
-    auto& ResourcePool_(FRawRTSceneID) { return _rtscenePool; }
-    auto& ResourcePool_(FRawRTShaderTableID) { return _rtshaderTablePool; }
-    auto& ResourcePool_(FRawRenderPassID) { return _renderPassCache; }
-    auto& ResourcePool_(FRawFramebufferID) { return _framebufferCache; }
-    auto& ResourcePool_(FRawSwapchainID) { return _swapchainPool; }
+    struct FResources_ {
+        FImagePool ImagePool;
+        FBufferPool BufferPool;
+        FMemoryObjectPool MemoryObjectPool;
+        FSamplerCache SamplerCache;
+        FGPipelinePool GPipelinePool;
+        FCPipelinePool CPipelinePool;
+        FMPipelinePool MPipelinePool;
+        FRPipelinePool RPipelinePool;
+        FPplnLayoutCache PplnLayoutCache;
+        FDSLayoutCache DslayoutCache;
+        FPplnResourcesCache PplnResourcesCache;
+        FRTGeometryPool RtGeometryPool;
+        FRTScenePool RtScenePool;
+        FRTShaderTablePool RtShaderTablePool;
+        FRenderPassCache RenderPassCache;
+        FFramebufferCache FramebufferCache;
+        FSwapchainPool SwapchainPool;
+
+        auto& Pool(FRawImageID) { return ImagePool; }
+        auto& Pool(FRawBufferID) { return BufferPool; }
+        auto& Pool(FRawMemoryID) { return MemoryObjectPool; }
+        auto& Pool(FRawSamplerID) { return SamplerCache; }
+        auto& Pool(FRawGPipelineID) { return GPipelinePool; }
+        auto& Pool(FRawCPipelineID) { return CPipelinePool; }
+        auto& Pool(FRawMPipelineID) { return MPipelinePool; }
+        auto& Pool(FRawRTPipelineID) { return RPipelinePool; }
+        auto& Pool(FRawPipelineLayoutID) { return PplnLayoutCache; }
+        auto& Pool(FRawDescriptorSetLayoutID) { return DslayoutCache; }
+        auto& Pool(FRawPipelineResourcesID) { return PplnResourcesCache; }
+        auto& Pool(FRawRTGeometryID) { return RtGeometryPool; }
+        auto& Pool(FRawRTSceneID) { return RtScenePool; }
+        auto& Pool(FRawRTShaderTableID) { return RtShaderTablePool; }
+        auto& Pool(FRawRenderPassID) { return RenderPassCache; }
+        auto& Pool(FRawFramebufferID) { return FramebufferCache; }
+        auto& Pool(FRawSwapchainID) { return SwapchainPool; }
+
+        template <u32 _Uid>
+        const auto& PoolConst(details::TResourceId<_Uid> id) const {
+            return const_cast<FResources_&>(*this).Pool(id);
+        }
+    };
 
     template <u32 _Uid>
-    const auto& ResourcePoolConst_(details::TResourceId<_Uid> id) const {
-        return const_cast<FVulkanResourceManager&>(*this).ResourcePool_(id);
-    }
+    using TPooledResource_ = typename Meta::TDecay< decltype(std::declval<FResources_>().Pool(std::declval<details::TResourceId<_Uid>>())) >::value_type;
+    template <u32 _Uid>
+    auto& ResourcePool_(details::TResourceId<_Uid> id) { return _resources.Pool(id); }
+    template <u32 _Uid>
+    const auto& ResourcePoolConst_(details::TResourceId<_Uid> id) const { return _resources.PoolConst(id); }
 
-    template <u32 _Uid, typename _OnInit, typename _OnCreate>
-    details::TResourceId<_Uid> CreateCachedResource_(FStringView errorMsg, _OnInit&& onInit, _OnCreate&& onCreate);
+    template <u32 _Uid, typename _Desc>
+    bool CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringView pipelineType, FConstChar debugName));
+
+    template <u32 _Uid, typename... _Args>
+    TPooledResource_<_Uid>* CreatePooledResource_(details::TResourceId<_Uid>* pId, _Args&&... args);
+    template <u32 _Uid, typename... _Args>
+    TPair<TPooledResource_<_Uid>*, bool> CreateCachedResource_(details::TResourceId<_Uid>* pId, TPooledResource_<_Uid>&& rkey, _Args&&... args);
+
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    bool ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, u32 index, u32 refCount);
+    NODISCARD bool ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount);
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, u32 index, u32 refCount);
+    bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount);
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
     void TearDownCache_(TCache<T, _ChunkSize, _MaxChunks>& cache);
 
+    NODISCARD bool CreateMemory_(FRawMemoryID* pId, TResourceProxy<FVulkanMemoryObject>** pMemory, const FMemoryDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, FPipelineDesc::FPipelineLayout&& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, const FPipelineDesc::FPipelineLayout& desc, const FDSLayouts& dsLayouts ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    bool CreateMemory_(FRawMemoryID* pId, TResourceProxy<FVulkanMemoryObject>** pMemRef, const FMemoryDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name));
-    bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pPplnLayoutRef, FPipelineDesc::FPipelineLayout&& desc);
-    bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pPplnLayoutRef, const FPipelineDesc::FPipelineLayout& desc, const FDSLayouts& dslayouts);
-
-    bool CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId);
-    bool CreateDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId, TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayoutRef, const FPipelineDesc::FSharedUniformMap& uniforms);
+    NODISCARD bool CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId);
+    NODISCARD bool CreateDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId, TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout, const FPipelineDesc::FSharedUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     template <typename _Desc>
-    bool CompileShaders_(_Desc& desc);
-    bool CompileShaders_(FComputePipelineDesc& desc);
-    bool CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const FShaderSource& source);
+    NODISCARD bool CompileShaders_(_Desc& desc);
+    NODISCARD bool CompileShaders_(FComputePipelineDesc& desc);
+    NODISCARD bool CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const PShaderSource& source);
 
-    bool CheckHostVisibleMemory_();
+    NODISCARD bool CheckHostVisibleMemory_();
     void TearDownStagingBuffers_();
-
 
     const FVulkanDevice& _device;
     FVulkanMemoryManager _memoryManager;
     FVulkanDescriptorManager _descriptorManager;
 
-    FImagePool _imagePool;
-    FBufferPool _bufferPool;
-    FMemoryObjectPool _memoryObjectPool;
-    FSamplerCache _samplerCache;
-    FGPipelinePool _gpipelinePool;
-    FCPipelinePool _cpipelinePool;
-    FMPipelinePool _mpipelinePool;
-    FRPipelinePool _rpipelinePool;
-    FPplnLayoutCache _pplnLayoutCache;
-    FDSLayoutCache _dslayoutCache;
-    FPplnResourcesCache _pplnResourcesCache;
-    FRTGeometryPool _rtgeometryPool;
-    FRTScenePool _rtscenePool;
-    FRTShaderTablePool _rtshaderTablePool;
-    FRenderPassCache _renderPassCache;
-    FFramebufferCache _framebufferCache;
-    FSwapchainPool _swapchainPool;
+    FResources_ _resources;
 
     std::atomic<u32> _submissionCounter;
 
@@ -243,6 +295,9 @@ private:
         u32 UniformPageSize{ 0 };
     }   _staging;
 
+    const FBufferDesc _dummyBufferDesc;
+    const FImageDesc _dummyImageDesc;
+
     struct {
         std::atomic_uint CreatedFramebuffers{ 0 };
         std::atomic_uint LastCheckedFramebuffer{ 0 };
@@ -250,21 +305,18 @@ private:
         std::atomic_uint LastCheckedPplnResource{ 0 };
     }   _validation;
 
-    const FBufferDesc _dummyBufferDesc;
-    const FImageDesc _dummyImageDesc;
-
 #if USE_PPE_RHIDEBUG
     using FDebugLayoutCache_ = HASHMAP(RHIResource, u32, FRawDescriptorSetLayoutID);
     struct {
         FDebugLayoutCache_ dsLayoutCaches;
         FCPipelineID PplnFindMaxValue1;
         FCPipelineID PplnFindMaxValue2;
-        FCPipelineID PplnRemap;
+        FCPipelineID PplnTimemapRemap;
     }   _shaderDebug;
 
-    bool CreateFindMaxValuePipeline1_();
-    bool CreateFindMaxValuePipeline2_();
-    bool CreateTimemapRemapPipeline_();
+    NODISCARD bool CreateFindMaxValuePipeline1_();
+    NODISCARD bool CreateFindMaxValuePipeline2_();
+    NODISCARD bool CreateTimemapRemapPipeline_();
 
     void TearDownShaderDebuggerResources_();
 
@@ -277,9 +329,8 @@ bool FVulkanResourceManager::IsResourceAlive(details::TResourceId<_Uid> id) cons
     Assert(id);
     auto& pool = ResourcePoolConst_(id);
 
-    if (const auto* const proxyPtr = pool[id.Index]) {
+    if (const auto* const proxyPtr = pool[id.Index])
         return (proxyPtr->IsCreated() && proxyPtr->InstanceID() == id.InstanceID);
-    }
 
     return false;
 }
@@ -300,27 +351,30 @@ bool FVulkanResourceManager::AcquireResource(details::TResourceId<_Uid> id) {
 }
 //----------------------------------------------------------------------------
 template <u32 _Uid>
-const auto* FVulkanResourceManager::ResourceData(details::TResourceId<_Uid> id, bool incRef, bool tolerant) const {
+const auto& FVulkanResourceManager::ResourceData(details::TResourceId<_Uid> id, bool incRef) const {
+    const auto *pData = ResourceDataIFP(id, incRef, false);
+    Assert(pData);
+    return (*pData);
+}
+//----------------------------------------------------------------------------
+template <u32 _Uid>
+const auto* FVulkanResourceManager::ResourceDataIFP(details::TResourceId<_Uid> id, bool incRef, bool tolerant) const {
     Assert(id);
     auto& pool = ResourcePoolConst_(id);
 
-    using pool_type = Meta::TDecay<decltype(pool)>;
-    using proxy_type = typename pool_type::value_type;
-    STATIC_ASSERT(std::is_base_of_v<FResourceBase, proxy_type>);
-    using resource_type = typename proxy_type::value_type;
+    using resource_type = typename TPooledResource_<_Uid>::value_type;
     using result_type = const resource_type*;
 
-    const proxy_type* const proxyPtr = pool[id.Index];
-    if (proxyPtr) {
-        if (proxyPtr->IsCreated() && proxyPtr->InstanceId() == id.InstanceID) {
+    if (const TPooledResource_<_Uid>* const pResource = pool[id.Index]) {
+        if (pResource->IsCreated() && pResource->InstanceID() == id.InstanceID) {
             if (incRef)
-                proxyPtr->AddRef();
+                pResource->AddRef();
 
-            return static_cast<result_type>(&proxyPtr->Data());
+            return static_cast<result_type>(&pResource->Data());
         }
 
-        Assert_NoAssume(tolerant || proxyPtr->IsCreated());
-        Assert_NoAssume(tolerant || proxyPtr->InstanceID() == id.InstanceID);
+        Assert_NoAssume(tolerant || pResource->IsCreated());
+        Assert_NoAssume(tolerant || pResource->InstanceID() == id.InstanceID);
     }
 
     AssertReleaseMessage_NoAssume(L"out-of-bounds", tolerant);
@@ -331,11 +385,11 @@ template <u32 _Uid>
 bool FVulkanResourceManager::ReleaseResource(details::TResourceId<_Uid> id, u32 refCount) {
     Assert(id);
     Assert(refCount);
-    auto& pool = ResourcePoolConst_(id);
+    auto& pool = ResourcePool_(id);
 
     using pool_type = Meta::TDecay<decltype(pool)>;
     using proxy_type = typename pool_type::value_type;
-    STATIC_ASSERT(std::is_base_of_v<FResourceBase, proxy_type>);
+    STATIC_ASSERT(std::is_base_of_v<FResourceBaseProxy, proxy_type>);
 
     if (const proxy_type* const proxyPtr = pool[id.Index]) {
         if (proxyPtr->IsCreated() && proxyPtr->InstanceID() == id.InstanceID)
@@ -345,13 +399,14 @@ bool FVulkanResourceManager::ReleaseResource(details::TResourceId<_Uid> id, u32 
     return false;
 }
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, u32 index, u32 refCount) {
+bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount) {
     Assert(pdata);
 
     if (pdata->RemoveRef(refCount)) {
         if (pdata->IsCreated())
             pdata->TearDown(*this);
 
+        Meta::Destroy(pdata);
         pool.Deallocate(index);
         return true;
     }
@@ -359,7 +414,7 @@ bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& 
     return false;
 }
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, u32 index, u32 refCount) {
+bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount) {
     Assert(pdata);
 
     return cache.RemoveIf(index, [this, pdata, refCount](T* inCache) {
@@ -369,10 +424,24 @@ bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>&
         if (inCache->RemoveRef(refCount)) {
             if (inCache->IsCreated())
                 inCache->TearDown(*this);
+
+            return true;
         }
 
         return false;
     });
+}
+//----------------------------------------------------------------------------
+inline const FBufferDesc& FVulkanResourceManager::ResourceDescription(FRawBufferID id) const {
+    Assert(id.Valid());
+    const FVulkanBuffer* const pBuffer = ResourceDataIFP(id);
+    return (pBuffer ? pBuffer->Read()->Desc : _dummyBufferDesc);
+}
+//----------------------------------------------------------------------------
+inline const FImageDesc& FVulkanResourceManager::ResourceDescription(FRawImageID id) const {
+    Assert(id.Valid());
+    const FVulkanImage* const pImage = ResourceDataIFP(id);
+    return (pImage ? pImage->Read()->Desc : _dummyImageDesc);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
