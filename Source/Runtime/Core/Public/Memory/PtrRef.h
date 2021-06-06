@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "Meta/Hash_fwd.h"
+#include "Memory/HashFunctions.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

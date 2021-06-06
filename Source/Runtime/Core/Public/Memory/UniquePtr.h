@@ -34,8 +34,8 @@ public:
     };
 
     template <typename U = T, typename... _Args>
-    static FPointer New(_Args&&... args) {
-        return FPointer{ TRACKING_NEW(Unique, U)(std::forward<_Args>(args)...) };
+    static Meta::TEnableIf<std::is_base_of_v<T, U>, U*> New(_Args&&... args) {
+        return TRACKING_NEW(Unique, U)(std::forward<_Args>(args)...);
     }
 
     CONSTEXPR TUniquePtr() NOEXCEPT
@@ -85,10 +85,14 @@ public:
     }
 
     template <typename U = T, typename... _Args>
-    void reset(_Args&&... args) {
+    Meta::TAddPointer<U> reset(_Args&&... args) {
         reset();
 
-        _ptr = New<U>(std::forward<_Args>(args)...);
+        const Meta::TAddPointer<U> result =
+            New<U>(std::forward<_Args>(args)...);
+
+        _ptr = result;
+        return result;
     }
 
     template <typename U>
@@ -130,7 +134,9 @@ private:
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 TUniquePtr<T> MakeUnique(_Args&&... args) {
-    return { TUniquePtr<T>::New(std::forward<_Args>(args)...) };
+    using FPointer = typename TUniquePtr<T>::FPointer;
+    const FPointer ptr{ TUniquePtr<T>::New(std::forward<_Args>(args)...) };
+    return TUniquePtr<T>(ptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
