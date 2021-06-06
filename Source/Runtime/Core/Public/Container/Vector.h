@@ -207,6 +207,7 @@ public:
     void emplace_back_AssumeNoGrow(T&& rvalue);
 
     iterator erase(const_iterator pos);
+    reverse_iterator erase(const_reverse_iterator pos) { return std::make_reverse_iterator(erase(pos.base() - 1)); }
     iterator erase(const_iterator first, const_iterator last);
     void erase_DontPreserveOrder(const_iterator pos);
 
@@ -257,6 +258,7 @@ public:
     bool AliasesToContainer(const_reference v) const { return ((&v >= _data) && (&v < _data + _size)); }
     bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it < end()); }
     bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }
+    bool AliasesToContainer(const const_reverse_iterator& it) const { return (it >= rbegin() && it < rend()); }
 
 private:
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
@@ -316,6 +318,9 @@ auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVecto
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Pred>
 size_t Remove_If(TVector<T, _Allocator>& v, _Pred&& pred);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _Pred>
+size_t Remove_If_DontPreserveOrder(TVector<T, _Allocator>& v, _Pred&& pred);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt);

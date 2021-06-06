@@ -709,6 +709,21 @@ bool Add_Unique(TVector<T, _Allocator>& v, T&& elt) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Pred>
 size_t Remove_If(TVector<T, _Allocator>& v, _Pred&& pred) {
+    size_t numDeleted = 0;
+    for (auto it = v.rbegin(); it != v.rend(); ) {
+        if (pred(*it)) {
+            numDeleted++;
+            it = v.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
+    return numDeleted;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _Pred>
+size_t Remove_If_DontPreserveOrder(TVector<T, _Allocator>& v, _Pred&& pred) {
     // avoid iterator checking
     size_t numDeleted = 0;
     for (size_t i = 0; i < v.size(); ) {
