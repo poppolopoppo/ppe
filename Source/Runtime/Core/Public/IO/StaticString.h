@@ -7,6 +7,8 @@
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 
+#include <algorithm>
+
 #define PPE_STATICSTRING_CAPACITY 512
 
 namespace PPE {
@@ -75,27 +77,28 @@ struct TBasicStaticString {
     CONSTEXPR bool Equals(const TBasicStaticString& other) const {
         if (Len != other.Len)
             return false;
-
-        for (size_t i = 0; i < Len; ++i) {
-            if (Data[i] != other.Data[i])
-                return false;
-        }
-
-        return true;
+        return std::equal(Data, Data + Len, other.Data, other.Data + other.Len);
     }
 
     CONSTEXPR bool Less(const TBasicStaticString& other) const {
-        size_t i = 0;
-        for (const size_t e = Min(Len, other.Len); i != e; ++i) {
+        forrange(i, 0, Min(Len, other.Len)) {
             if (Data[i] != other.Data[i])
-                break;
+                return (Data[i] < other.Data[i]);
         }
-        return (Data[i] < other.Data[i]);
+        return false;
     }
 
     CONSTEXPR void Clear() {
         Len = 0;
-        Data[0] = '\0';
+        Data[0] = _Char(0);
+    }
+
+    CONSTEXPR void Resize(size_t len, bool keepData = true) {
+        Assert(len < _Capacity);
+        Len = len;
+        if (not keepData)
+            std::fill(Data, Data + Len, _Char(0));
+        Data[Len] = _Char(0);
     }
 
     CONSTEXPR bool operator ==(const TBasicStaticString& other) const { return Equals(other); }

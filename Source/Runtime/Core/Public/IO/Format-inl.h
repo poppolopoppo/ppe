@@ -103,6 +103,17 @@ void Format(TBasicString<_Char>& result, const TBasicStringView<_Char>& format, 
     oss.ToString(result);
 }
 //----------------------------------------------------------------------------
+template <typename _Char, size_t _Capacity, typename _Arg0, typename... _Args>
+const _Char* Format(TBasicStaticString<_Char, _Capacity>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+    STATIC_ASSERT(_Capacity > 0);
+
+    TBasicFixedSizeTextWriter<_Char> oss(dst.Buf());
+    Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+
+    dst.Resize(oss.size(), true);
+    return dst.NullTerminated();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {

@@ -22,6 +22,9 @@ class TMemoryView;
 template <typename _Char>
 class TBasicStringView;
 //----------------------------------------------------------------------------
+template <typename _Char, size_t _Capacity>
+struct TBasicStaticString;
+//----------------------------------------------------------------------------
 using FStringView = TBasicStringView<char>;
 using FWStringView = TBasicStringView<wchar_t>;
 //----------------------------------------------------------------------------
