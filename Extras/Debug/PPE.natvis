@@ -2,6 +2,13 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- https://code.msdn.microsoft.com/windowsdesktop/Writing-type-visualizers-2eae77a2 -->
 
+  <Type Name="PPE::hash_t">
+    <DisplayString>{_value,x}</DisplayString>
+    <Expand>
+      <Item Name="[Value]">_value,x</Item>
+    </Expand>
+  </Type>
+
   <Type Name="PPE::FLastError">
     <DisplayString>{Code,hr}</DisplayString>
     <Expand>
