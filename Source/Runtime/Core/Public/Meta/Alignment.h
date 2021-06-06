@@ -29,29 +29,28 @@ inline CONSTEXPR bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
 inline CONSTEXPR bool IsAligned(const size_t alignment, const uintptr_t v) {
     return (0 == (v & (alignment - 1)));
 }
-//----------------------------------------------------------------------------
-// /!\ Assumes <alignment> is a power of 2
 template <typename T>
-inline CONSTEXPR bool IsAligned(const size_t alignment, const T* ptr) {
-    return (0 == (uintptr_t(ptr) & (alignment - 1)));
-}
-//----------------------------------------------------------------------------
-// /!\ Assumes <alignment> is a power of 2
-inline CONSTEXPR size_t RoundToNext(const size_t v, size_t alignment) {
-    return ((0 == v) ? 0 : (v + alignment - 1) & ~(alignment - 1));
-}
-template <typename T>
-T* RoundToNext(const T* p, size_t alignment) {
-    return (T*)RoundToNext(size_t(p), alignment);
+inline bool IsAligned(const size_t alignment, const T* ptr) NOEXCEPT {
+    return (0 == (reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)));
 }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
-inline CONSTEXPR size_t RoundToPrev(const size_t v, size_t alignment) {
-    return ((0 == v) ? 0 : v & ~(alignment - 1));
+template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+inline CONSTEXPR T RoundToNext(const T v, TDontDeduce<T> alignment) {
+    return ((0 == v) ? 0 : (v + alignment - static_cast<T>(1)) & ~(alignment - static_cast<T>(1)));
+}
+template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+inline CONSTEXPR T RoundToPrev(const T v, TDontDeduce<T> alignment) {
+    return ((0 == v) ? 0 : v & ~(alignment - static_cast<T>(1)));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T* RoundToNext(const T* p, size_t alignment) NOEXCEPT {
+    return reinterpret_cast<T*>(RoundToNext(reinterpret_cast<uintptr_t>(p), alignment));
 }
 template <typename T>
-T* RoundToPrev(const T* p, size_t alignment) {
-    return (T*)RoundToPrev(size_t(p), alignment);
+T* RoundToPrev(const T* p, size_t alignment) NOEXCEPT {
+    return reinterpret_cast<T*>(RoundToPrev(reinterpret_cast<uintptr_t>(p), alignment));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
