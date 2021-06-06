@@ -55,9 +55,12 @@ enum class EBufferUsage : u32 {
     Vertex              = 1 << 7,   // vertex buffer
     Indirect            = 1 << 8,   // indirect buffer for draw and dispatch
     RayTracing          = 1 << 9,   // for scratch buffer, instance data, shader binding table
-    VertexPplnStore     = 1 << 10,  // storage buffer store and atomic operations in vertex, geometry, tessellation shaders
-    FragmentPplnStore   = 1 << 11,  // storage buffer store and atomic operations in fragment shader
-    StorageTexelAtomic  = 1 << 12,  // atomic ops on imageBuffer
+    //ShaderAccess        = 1 << 10,  // shader device address // #TODO: not supported yet
+
+    // special flags for IsSupported() method
+    VertexPplnStore     = 1 << 11,  // same as 'Storage', storage buffer store and atomic operations in vertex, geometry, tessellation shaders
+    FragmentPplnStore   = 1 << 12,  // same as 'Storage', storage buffer store and atomic operations in fragment shader
+    StorageTexelAtomic  = 1 << 13,  // same as 'StorageTexel', atomic ops on imageBuffer
     _Last,
 
     All                 = ((_Last-1) << 1) - 1,
@@ -65,61 +68,6 @@ enum class EBufferUsage : u32 {
     Unknown             = 0,
 };
 ENUM_FLAGS(EBufferUsage);
-//----------------------------------------------------------------------------
-// Device Image
-//----------------------------------------------------------------------------
-enum class EImageType : u32 {
-    Tex1D               = 0,
-    Tex1DArray,
-    Tex2D,
-    Tex2DArray,
-    Tex2DMS,
-    Tex2DMSArray,
-    TexCube,
-    TexCubeArray,
-    Tex3D,
-    Unknown             = ~0u,
-};
-//----------------------------------------------------------------------------
-enum class EImageUsage : u32 {
-    TransferSrc             = 1 << 0,   // for all copy operations
-    TransferDst             = 1 << 1,   // for all copy operations
-    Sampled                 = 1 << 2,   // access in shader as texture
-    Storage                 = 1 << 3,   // access in shader as image
-    ColorAttachment         = 1 << 4,   // color or resolve attachment
-    ColorAttachmentBlend    = 1 << 5,   // same as 'ColorAttachment'
-    DepthStencilAttachment  = 1 << 6,   // depth/stencil attachment
-    TransientAttachment     = 1 << 7,   // color, resolve, depth/stencil, input attachment
-    InputAttachment         = 1 << 8,   // input attachment in shader
-    ShadingRate             = 1 << 9,
-    StorageAtomic           = 1 << 10,  // same as 'Storage'
-    _Last,
-
-    All                     = ((_Last-1) << 1) - 1,
-    Transfer                = TransferDst | TransferSrc,
-    Unknown                 = 0,
-};
-ENUM_FLAGS(EImageUsage);
-//----------------------------------------------------------------------------
-enum class EImageAspect : u32 {
-    Color               = 1 << 0,
-    Depth               = 1 << 1,
-    Stencil             = 1 << 2,
-    Metadata            = 1 << 3,
-
-    DepthStencil        = Depth | Stencil,
-    Auto                = ~0u,
-    Unknown             = 0,
-};
-ENUM_FLAGS(EImageAspect);
-//----------------------------------------------------------------------------
-enum class ESwapchainImage : u32 {
-    Primary,
-
-    // for VR:
-    LeftEye,
-    RightEye,
-};
 //----------------------------------------------------------------------------
 // Device attachment
 //----------------------------------------------------------------------------
@@ -331,37 +279,189 @@ enum class EColorSpace : u32 {
 
     Unknown = ~0u,
 };
+
+//----------------------------------------------------------------------------
+// Device Image
+//----------------------------------------------------------------------------
+enum class EImageDim : u8 {
+    _1D,
+    _2D,
+    _3D,
+
+    Unknown                 = 0xFFu,
+};
+static CONSTEXPR auto EImageDim_1D = EImageDim::_1D;
+static CONSTEXPR auto EImageDim_2D = EImageDim::_2D;
+static CONSTEXPR auto EImageDim_3D = EImageDim::_3D;
+//----------------------------------------------------------------------------
+enum class EImageView : u8 {
+    _1D,
+    _2D,
+    _3D,
+    _1DArray,
+    _2DArray,
+    _Cube,
+    _CubeArray,
+
+    Unknown                 = 0xFFu,
+};
+static CONSTEXPR auto EImageView_1D = EImageView::_1D;
+static CONSTEXPR auto EImageView_2D = EImageView::_2D;
+static CONSTEXPR auto EImageView_3D = EImageView::_3D;
+static CONSTEXPR auto EImageView_1DArray = EImageView::_1DArray;
+static CONSTEXPR auto EImageView_2DArray = EImageView::_2DArray;
+static CONSTEXPR auto EImageView_Cube = EImageView::_Cube;
+static CONSTEXPR auto EImageView_CubeArray = EImageView::_CubeArray;
+//----------------------------------------------------------------------------
+enum class EImageFlags : u8 {
+    MutableFormat           = 1 << 0,   // allows to change image format
+    CastToArray2D           = 1 << 1,   // allows to create 2D Array view from 3D image
+    CastToBlockTexelView    = 1 << 2,   // allows to create view with uncompressed format for compressed image
+    CastToCube              = 1 << 3,   // allows to create CubeMap and CubeMapArray from 2D Array
+    _Last,
+
+    Unknown                 = 0,
+};
+ENUM_FLAGS(EImageFlags);
+//----------------------------------------------------------------------------
+enum class EImageUsage : u32 {
+    TransferSrc             = 1 << 0,   // for all copy operations
+    TransferDst             = 1 << 1,   // for all copy operations
+    Sampled                 = 1 << 2,   // access in shader as texture
+    Storage                 = 1 << 3,   // access in shader as image
+    ColorAttachment         = 1 << 4,   // color or resolve attachment
+    DepthStencilAttachment  = 1 << 5,   // depth/stencil attachment
+    TransientAttachment     = 1 << 6,   // color, resolve, depth/stencil, input attachment
+    InputAttachment         = 1 << 7,   // input attachment in shader
+    ShadingRate             = 1 << 8,
+    //FragmentDensityMap    = 1 << 9,   // #TODO: not supported yet
+
+    // special flags for IsSupported() method
+    StorageAtomic           = 1 << 10,  // same as 'Storage', atomic operations on image
+    ColorAttachmentBlend    = 1 << 11,  // same as 'ColorAttachment', blend operations on render target
+    SampledMinMax           = 1 << 13,  // same as 'Sampled'
+    _Last,
+
+    All                     = ((_Last-1) << 1) - 1,
+    Transfer                = TransferDst | TransferSrc,
+    Unknown                 = 0,
+};
+ENUM_FLAGS(EImageUsage);
+//----------------------------------------------------------------------------
+enum class EImageAspect : u32 {
+    Color                   = 1 << 0,
+    Depth                   = 1 << 1,
+    Stencil                 = 1 << 2,
+    Metadata                = 1 << 3,
+
+    DepthStencil            = Depth | Stencil,
+    Auto                    = ~0u,
+    Unknown                 = 0,
+};
+ENUM_FLAGS(EImageAspect);
+//----------------------------------------------------------------------------
+enum class EImageSampler : u32 {
+    // dimension
+    _DimOffset              = FGenericPlatformMaths::FloorLog2(static_cast<u32>(EPixelFormat::_Count)) + 1,
+    _DimMask                = 0xF << _DimOffset,
+    _1D                     = 1 << _DimOffset,
+    _1DArray                = 2 << _DimOffset,
+    _2D                     = 3 << _DimOffset,
+    _2DArray                = 4 << _DimOffset,
+    _2DMS                   = 5 << _DimOffset,
+    _2DMSArray              = 6 << _DimOffset,
+    _Cube                   = 7 << _DimOffset,
+    _CubeArray              = 8 << _DimOffset,
+    _3D                     = 9 << _DimOffset,
+
+    // type
+    _TypeOffset             = _DimOffset + 4,
+    _TypeMask               = 0xF << _TypeOffset,
+    _Float                  = 1 << _TypeOffset,
+    _Int                    = 2 << _TypeOffset,
+    _Uint                   = 3 << _TypeOffset,
+
+    // flags
+    _FlagsOffset            = _TypeOffset + 4,
+    _FlagsMask              = 0xF << _FlagsOffset,
+    _Shadow                 = 1 << _FlagsOffset,
+
+    // format
+    _FormatMask             = (1u << _DimOffset) - 1,
+
+    // default
+    Float1D                 = _Float | _1D,
+    Float1DArray            = _Float | _1DArray,
+    Float2D                 = _Float | _2D,
+    Float2DArray            = _Float | _2DArray,
+    Float2DMS               = _Float | _2DMS,
+    Float2DMSArray          = _Float | _2DMSArray,
+    FloatCube               = _Float | _Cube,
+    FloatCubeArray          = _Float | _CubeArray,
+    Float3D                 = _Float | _3D,
+
+    Int1D                   = _Int | _1D,
+    Int1DArray              = _Int | _1DArray,
+    Int2D                   = _Int | _2D,
+    Int2DArray              = _Int | _2DArray,
+    Int2DMS                 = _Int | _2DMS,
+    Int2DMSArray            = _Int | _2DMSArray,
+    IntCube                 = _Int | _Cube,
+    IntCubeArray            = _Int | _CubeArray,
+    Int3D                   = _Int | _3D,
+
+    Uint1D                  = _Uint | _1D,
+    Uint1DArray             = _Uint | _1DArray,
+    Uint2D                  = _Uint | _2D,
+    Uint2DArray             = _Uint | _2DArray,
+    Uint2DMS                = _Uint | _2DMS,
+    Uint2DMSArray           = _Uint | _2DMSArray,
+    UintCube                = _Uint | _Cube,
+    UintCubeArray           = _Uint | _CubeArray,
+    Uint3D                  = _Uint | _3D,
+
+    Unknown                 = ~0u,
+};
+ENUM_FLAGS(EImageSampler);
+//----------------------------------------------------------------------------
+enum class ESwapchainImage : u32 {
+    Primary,
+
+    // for VR:
+    LeftEye,
+    RightEye,
+};
 //----------------------------------------------------------------------------
 // Fragment output
 //----------------------------------------------------------------------------
 enum class EFragmentOutput : u32 {
-    Unknown     = u32(EPixelFormat::Unknown),
-    Int4        = u32(EPixelFormat::RGBA32i),
-    UInt4       = u32(EPixelFormat::RGBA32u),
-    Float4      = u32(EPixelFormat::RGBA32f),
+    Unknown                 = static_cast<u32>(EPixelFormat::Unknown),
+    Int4                    = static_cast<u32>(EPixelFormat::RGBA32i),
+    UInt4                   = static_cast<u32>(EPixelFormat::RGBA32u),
+    Float4                  = static_cast<u32>(EPixelFormat::RGBA32f),
 };
 //----------------------------------------------------------------------------
 // Debugging
 //----------------------------------------------------------------------------
 enum class EDebugFlags : u32 {
-    LogTasks            = 1 << 0, //
-    LogBarriers         = 1 << 1, //
-    LogResourceUsage    = 1 << 2, //
+    LogTasks                = 1 << 0, //
+    LogBarriers             = 1 << 1, //
+    LogResourceUsage        = 1 << 2, //
 
-    VisTasks            = 1 << 10,
-    VisDrawTasks        = 1 << 11,
-    VisResources        = 1 << 12,
-    VisBarriers         = 1 << 13,
-    VisBarrierLabels    = 1 << 14,
-    VisTaskDependencies = 1 << 15,
+    VisTasks                = 1 << 10,
+    VisDrawTasks            = 1 << 11,
+    VisResources            = 1 << 12,
+    VisBarriers             = 1 << 13,
+    VisBarrierLabels        = 1 << 14,
+    VisTaskDependencies     = 1 << 15,
 
-    FullBarrier         = 1u << 30,	// use global memory barrier additionally to per-resource barriers
-    QueueSync           = 1u << 31,	// after each submit wait until queue complete execution
+    FullBarrier             = 1u << 30,	// use global memory barrier additionally to per-resource barriers
+    QueueSync               = 1u << 31,	// after each submit wait until queue complete execution
 
-    Unknown             = 0,
+    Unknown                 = 0,
 
-    Default             =   LogTasks | LogBarriers | LogResourceUsage |
-                            VisTasks | VisDrawTasks | VisResources | VisBarriers,
+    Default                 = LogTasks | LogBarriers | LogResourceUsage |
+                              VisTasks | VisDrawTasks | VisResources | VisBarriers,
 };
 ENUM_FLAGS(EDebugFlags);
 //----------------------------------------------------------------------------

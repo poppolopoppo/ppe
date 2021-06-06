@@ -69,6 +69,36 @@ CONSTEXPR FMipmapLevel operator "" _mipmap (unsigned long long value) {
 //----------------------------------------------------------------------------
 // FMultiSamples
 //----------------------------------------------------------------------------
+struct FMultiSamples {
+    u8 Pow2{ 0 };
+
+    FMultiSamples() = default;
+
+    CONSTEXPR explicit FMultiSamples(u32 samples)
+    :   Pow2(checked_cast<u8>(FPlatformMaths::FloorLog2(samples)))
+    {}
+
+    CONSTEXPR bool Enabled() const { return (Pow2 > 0); }
+
+    CONSTEXPR u32 Value() const { return (1u << Pow2); }
+    CONSTEXPR u32 operator *() const { return Value(); }
+
+    CONSTEXPR bool operator ==(const FMultiSamples& rhs) const { return (Pow2 == rhs.Pow2); }
+    CONSTEXPR bool operator !=(const FMultiSamples& rhs) const { return (Pow2 != rhs.Pow2); }
+
+    CONSTEXPR bool operator < (const FMultiSamples& rhs) const { return (Pow2 <  rhs.Pow2); }
+    CONSTEXPR bool operator >=(const FMultiSamples& rhs) const { return (Pow2 >= rhs.Pow2); }
+
+    CONSTEXPR bool operator <=(const FMultiSamples& rhs) const { return (Pow2 <= rhs.Pow2); }
+    CONSTEXPR bool operator > (const FMultiSamples& rhs) const { return (Pow2 >  rhs.Pow2); }
+
+    friend hash_t hash_value(FMultiSamples value) NOEXCEPT {
+        return hash_uint32(*value);
+    }
+
+};
+PPE_ASSUME_TYPE_AS_POD(FMultiSamples)
+//----------------------------------------------------------------------------
 CONSTEXPR FMultiSamples operator "" _samples (unsigned long long value) {
     return FMultiSamples(checked_cast<u32>(value));
 }

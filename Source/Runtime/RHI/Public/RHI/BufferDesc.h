@@ -15,7 +15,6 @@ struct FBufferDesc {
     u32 SizeInBytes{ 0 };
     EBufferUsage Usage{ Default };
     EQueueUsage Queues{ Default };
-    bool External{ false };
 
     FBufferDesc() = default;
     FBufferDesc(u32 sizeInBytes, EBufferUsage usage, EQueueUsage queues = Default)

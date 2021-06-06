@@ -24,7 +24,7 @@ public: // virtual
     virtual RHI::SFrameGraph FrameGraph() const NOEXCEPT = 0;
     virtual RHI::FWindowSurface BackBuffer() const NOEXCEPT = 0;
 
-    virtual void ResizeWindow(RHI::FWindowHandle hwnd, const uint2& dim, bool fullscreen) = 0;
+    virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) = 0;
     virtual void ReleaseMemory() NOEXCEPT = 0;
 
 public: // for all services

@@ -71,7 +71,7 @@ struct FSubmitRenderPass : details::TFrameTaskDesc<FSubmitRenderPass> {
     FImages Images;
     FBuffers Buffers;
 
-    explicit FSubmitRenderPass(FLogicalPassID&& renderPassId) :
+    explicit FSubmitRenderPass(FLogicalPassID&& renderPassId) NOEXCEPT :
 #if USE_PPE_RHIDEBUG
         TFrameTaskDesc<FSubmitRenderPass>("SubmitRenderPass", FDebugColorScheme::Get().RenderPass),
 #endif
@@ -114,7 +114,7 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
 #endif
 
 #if USE_PPE_RHITASKNAME
-    FDispatchCompute() : TFrameTaskDesc<FDispatchCompute>("DispatchCompute", FDebugColorScheme::Get().Compute) {}
+    FDispatchCompute() NOEXCEPT : TFrameTaskDesc<FDispatchCompute>("DispatchCompute", FDebugColorScheme::Get().Compute) {}
 #endif
 
     FDispatchCompute& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
@@ -178,7 +178,7 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 #endif
 
 #if USE_PPE_RHITASKNAME
-    FDispatchComputeIndirect() : TFrameTaskDesc<FDispatchComputeIndirect>("DispatchComputeIndirect", FDebugColorScheme::Get().Compute) {}
+    FDispatchComputeIndirect() NOEXCEPT : TFrameTaskDesc<FDispatchComputeIndirect>("DispatchComputeIndirect", FDebugColorScheme::Get().Compute) {}
 #endif
 
     FDispatchComputeIndirect& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
@@ -229,7 +229,7 @@ struct FCopyBuffer final : details::TFrameTaskDesc<FCopyBuffer> {
     FRegions Regions;
 
 #if USE_PPE_RHITASKNAME
-    FCopyBuffer() : TFrameTaskDesc<FCopyBuffer>("CopyBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FCopyBuffer() NOEXCEPT : TFrameTaskDesc<FCopyBuffer>("CopyBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FCopyBuffer& From(FRawBufferID buffer) { Assert(buffer); SrcBuffer = buffer; return (*this); }
@@ -260,7 +260,7 @@ struct FCopyImage final : details::TFrameTaskDesc<FCopyImage> {
     FRegions Regions;
 
 #if USE_PPE_RHITASKNAME
-    FCopyImage() : TFrameTaskDesc<FCopyImage>("CopyImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FCopyImage() NOEXCEPT : TFrameTaskDesc<FCopyImage>("CopyImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FCopyImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -302,7 +302,7 @@ struct FCopyBufferToImage final : details::TFrameTaskDesc<FCopyBufferToImage> {
     FRegions Regions;
 
 #if USE_PPE_RHITASKNAME
-    FCopyBufferToImage() : TFrameTaskDesc<FCopyBufferToImage>("CopyBufferToImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FCopyBufferToImage() NOEXCEPT : TFrameTaskDesc<FCopyBufferToImage>("CopyBufferToImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FCopyBufferToImage& From(FRawBufferID buffer) { Assert(buffer); SrcBuffer = buffer; return (*this); }
@@ -336,7 +336,7 @@ struct FCopyImageToBuffer final : details::TFrameTaskDesc<FCopyImageToBuffer> {
     FRegions Regions;
 
 #if USE_PPE_RHITASKNAME
-    FCopyImageToBuffer() : TFrameTaskDesc<FCopyImageToBuffer>("CopyImageToBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FCopyImageToBuffer() NOEXCEPT : TFrameTaskDesc<FCopyImageToBuffer>("CopyImageToBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FCopyImageToBuffer& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -377,7 +377,7 @@ struct FBlitImage final : details::TFrameTaskDesc<FBlitImage> {
     FRegions Regions;
 
 #if USE_PPE_RHITASKNAME
-    FBlitImage() : TFrameTaskDesc<FBlitImage>("BlitImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FBlitImage() NOEXCEPT : TFrameTaskDesc<FBlitImage>("BlitImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FBlitImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -411,7 +411,7 @@ struct FGenerateMipmaps : details::TFrameTaskDesc<FGenerateMipmaps> {
     u32 LevelCount{ 0 };
 
 #if USE_PPE_RHITASKNAME
-    FGenerateMipmaps() : TFrameTaskDesc<FGenerateMipmaps>("GenerateMipmaps", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FGenerateMipmaps() NOEXCEPT : TFrameTaskDesc<FGenerateMipmaps>("GenerateMipmaps", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FGenerateMipmaps& SetImage(FRawImageID image) { Assert(image); Image = image; return (*this); }
@@ -436,7 +436,7 @@ struct FResolveImage final : details::TFrameTaskDesc<FResolveImage> {
     FRegions Regions;
 
 #if USE_PPE_RHITASKNAME
-    FResolveImage() : TFrameTaskDesc<FResolveImage>("ResolveImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FResolveImage() NOEXCEPT : TFrameTaskDesc<FResolveImage>("ResolveImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FResolveImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -468,7 +468,7 @@ struct FFillBuffer final : details::TFrameTaskDesc<FFillBuffer> {
     u32 Pattern{ 0 };
 
 #if USE_PPE_RHITASKNAME
-    FFillBuffer() : TFrameTaskDesc<FFillBuffer>("FillBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FFillBuffer() NOEXCEPT : TFrameTaskDesc<FFillBuffer>("FillBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FFillBuffer& SetBuffer(FRawBufferID buffer) { return SetBuffer(buffer, 0, UMax); }
@@ -506,7 +506,7 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
     FRanges Ranges;
 
 #if USE_PPE_RHITASKNAME
-    FClearColorImage() : TFrameTaskDesc<FClearColorImage>("ClearColorImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FClearColorImage() NOEXCEPT : TFrameTaskDesc<FClearColorImage>("ClearColorImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FClearColorImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
@@ -535,7 +535,7 @@ struct FClearDepthStencilImage final : details::TFrameTaskDesc<FClearDepthStenci
     FRanges Ranges;
 
 #if USE_PPE_RHITASKNAME
-    FClearDepthStencilImage() : TFrameTaskDesc<FClearDepthStencilImage>("ClearDepthStencilImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+    FClearDepthStencilImage() NOEXCEPT : TFrameTaskDesc<FClearDepthStencilImage>("ClearDepthStencilImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FClearDepthStencilImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
@@ -564,7 +564,7 @@ struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
     FRegions Regions;
 
 #if USE_PPE_RHITASKNAME
-    FUpdateBuffer() : TFrameTaskDesc<FUpdateBuffer>("UpdateBuffer", FDebugColorScheme::Get().HostToDeviceTransfer) {}
+    FUpdateBuffer() NOEXCEPT : TFrameTaskDesc<FUpdateBuffer>("UpdateBuffer", FDebugColorScheme::Get().HostToDeviceTransfer) {}
 #endif
 
     FUpdateBuffer& SetBuffer(FRawBufferID buffer) { Assert(buffer); DstBuffer = buffer; return (*this); }
@@ -591,7 +591,7 @@ struct FReadBuffer final : details::TFrameTaskDesc<FReadBuffer> {
     FCallback Callback;
 
 #if USE_PPE_RHITASKNAME
-    FReadBuffer() : TFrameTaskDesc<FReadBuffer>("ReadBuffer", FDebugColorScheme::Get().DeviceToHostTransfer) {}
+    FReadBuffer() NOEXCEPT : TFrameTaskDesc<FReadBuffer>("ReadBuffer", FDebugColorScheme::Get().DeviceToHostTransfer) {}
 #endif
 
     FReadBuffer& SetBuffer(FRawBufferID buffer, u32 offset, u32 size) {
@@ -625,7 +625,7 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
     FRawMemoryConst Data;
 
 #if USE_PPE_RHITASKNAME
-    FUpdateImage() : TFrameTaskDesc<FUpdateImage>("UpdateImage", FDebugColorScheme::Get().HostToDeviceTransfer) {}
+    FUpdateImage() NOEXCEPT : TFrameTaskDesc<FUpdateImage>("UpdateImage", FDebugColorScheme::Get().HostToDeviceTransfer) {}
 #endif
 
     FUpdateImage& SetImage(FRawImageID image, const int2& offset, FMipmapLevel mipmap = Default) { return SetImage(image, int3(offset, 0), mipmap); }
@@ -676,7 +676,7 @@ struct FReadImage final : details::TFrameTaskDesc<FReadImage> {
     FCallback Callback;
 
 #if USE_PPE_RHITASKNAME
-    FReadImage() : TFrameTaskDesc<FReadImage>("ReadImage", FDebugColorScheme::Get().DeviceToHostTransfer) {}
+    FReadImage() NOEXCEPT : TFrameTaskDesc<FReadImage>("ReadImage", FDebugColorScheme::Get().DeviceToHostTransfer) {}
 #endif
 
     FReadImage& SetImage(FRawImageID image, const int2& offset, const uint2& size, FMipmapLevel mipmap = Default) { return SetImage(image, int3(offset, 0), uint3(size, 0), mipmap); }
@@ -715,7 +715,7 @@ struct FPresent final : details::TFrameTaskDesc<FPresent> {
     FMipmapLevel Mipmap;
 
 #if USE_PPE_RHITASKNAME
-    FPresent() : TFrameTaskDesc<FPresent>("Present", FDebugColorScheme::Get().Present) {}
+    FPresent() NOEXCEPT : TFrameTaskDesc<FPresent>("Present", FDebugColorScheme::Get().Present) {}
 #else
     FPresent() = default;
 #endif
@@ -753,7 +753,7 @@ struct FCustomTask final : details::TFrameTaskDesc<FCustomTask> {
     FBuffers Buffers;
 
 #if USE_PPE_RHITASKNAME
-    FCustomTask() : TFrameTaskDesc<FCustomTask>("CustomTask", FDebugColorScheme::Get().Debug) {}
+    FCustomTask() NOEXCEPT : TFrameTaskDesc<FCustomTask>("CustomTask", FDebugColorScheme::Get().Debug) {}
 #else
     FCustomTask() = default;
 #endif

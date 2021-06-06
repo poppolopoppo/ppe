@@ -11,6 +11,15 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class ECompositeAlpha : u32 {
+    Opaque = 0,
+    PreMultiplied,
+    PostMultiplied,
+    Inherit,
+
+    Unknown = ~0u,
+};
+//----------------------------------------------------------------------------
 enum class EPresentMode : u32 {
     Immediate = 0,
     Fifo,
@@ -22,9 +31,11 @@ enum class EPresentMode : u32 {
 //----------------------------------------------------------------------------
 enum class ESurfaceTransform : u32 {
     Identity = 0,
+
     TransformRotate90,
     TransformRotate180,
     TransformRotate270,
+
     HorizontalMirror,
     HorizontalMirror_TransformRotate90,
     HorizontalMirror_TransformRotate180,
@@ -41,6 +52,8 @@ struct FSwapchainDesc {
     using FRequiredPresentModes = TFixedSizeStack<EPresentMode, 4>;
 
     FWindowSurface Surface{ nullptr };
+    uint2 Dimensions{ 0 };
+    ECompositeAlpha CompositeAlpha{ ECompositeAlpha::Opaque };
     ESurfaceTransform PreTransform{ ESurfaceTransform::Identity };
     u32 MinImageCount{ 2 };
 

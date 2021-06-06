@@ -2,7 +2,7 @@
 
 #include "RHI/EnumToString.h"
 
-#include "RHI/PixelFormatInfo.h"
+#include "RHI/PixelFormatHelpers.h"
 #include "RHI/RayTracingEnums.h"
 #include "RHI/RenderStateEnums.h"
 #include "RHI/ResourceEnums.h"
@@ -64,6 +64,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EBufferUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EBufferUsage>);
     if (EBufferUsage::All == value) return oss << STRING_LITERAL(_Char, "All");
+    if (EBufferUsage::Transfer == value) return oss << STRING_LITERAL(_Char, "Transfer");
     if (EBufferUsage::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
@@ -78,34 +79,59 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EBufferUsage::Vertex & value) oss << sep << STRING_LITERAL(_Char, "Vertex");
     if (EBufferUsage::Indirect & value) oss << sep << STRING_LITERAL(_Char, "Indirect");
     if (EBufferUsage::RayTracing & value) oss << sep << STRING_LITERAL(_Char, "RayTracing");
+
+
     if (EBufferUsage::VertexPplnStore & value) oss << sep << STRING_LITERAL(_Char, "VertexPplnStore");
     if (EBufferUsage::FragmentPplnStore & value) oss << sep << STRING_LITERAL(_Char, "FragmentPplnStore");
     if (EBufferUsage::StorageTexelAtomic & value) oss << sep << STRING_LITERAL(_Char, "StorageTexelAtomic");
-    if (EBufferUsage::Transfer & value) oss << sep << STRING_LITERAL(_Char, "Transfer");
 
     return oss;
 }
 //----------------------------------------------------------------------------
-template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageType value) {
-    STATIC_ASSERT(not Meta::enum_is_flags_v<EImageType>);
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageDim value) {
+    STATIC_ASSERT(not Meta::enum_is_flags_v<EImageDim>);
     switch (value) {
-    case EImageType::Tex1D: return oss << STRING_LITERAL(_Char, "Tex1D");
-    case EImageType::Tex1DArray: return oss << STRING_LITERAL(_Char, "Tex1DArray");
-    case EImageType::Tex2D: return oss << STRING_LITERAL(_Char, "Tex2D");
-    case EImageType::Tex2DArray: return oss << STRING_LITERAL(_Char, "Tex2DArray");
-    case EImageType::Tex2DMS: return oss << STRING_LITERAL(_Char, "Tex2DMS");
-    case EImageType::Tex2DMSArray: return oss << STRING_LITERAL(_Char, "Tex2DMSArray");
-    case EImageType::TexCube: return oss << STRING_LITERAL(_Char, "TexCube");
-    case EImageType::TexCubeArray: return oss << STRING_LITERAL(_Char, "TexCubeArray");
-    case EImageType::Tex3D: return oss << STRING_LITERAL(_Char, "Tex3D");
-    case EImageType::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    case EImageDim::_1D: return oss << STRING_LITERAL(_Char, "1D");
+    case EImageDim::_2D: return oss << STRING_LITERAL(_Char, "2D");
+    case EImageDim::_3D: return oss << STRING_LITERAL(_Char, "3D");
+    case EImageDim::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
     default: AssertNotImplemented();
     }
+}
+//----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageView value) {
+    STATIC_ASSERT(not Meta::enum_is_flags_v<EImageView>);
+    switch (value) {
+    case EImageView::_1D: return oss << STRING_LITERAL(_Char, "1D");
+    case EImageView::_1DArray: return oss << STRING_LITERAL(_Char, "1DArray");
+    case EImageView::_2D: return oss << STRING_LITERAL(_Char, "2D");
+    case EImageView::_2DArray: return oss << STRING_LITERAL(_Char, "2DArray");
+    case EImageView::_Cube: return oss << STRING_LITERAL(_Char, "Cube");
+    case EImageView::_CubeArray: return oss << STRING_LITERAL(_Char, "CubeArray");
+    case EImageView::_3D: return oss << STRING_LITERAL(_Char, "3D");
+    case EImageView::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    default: AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageFlags value) {
+    STATIC_ASSERT(Meta::enum_is_flags_v<EImageFlags>);
+    if (EImageFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+
+    auto sep = Separator_<_Char>();
+
+    if (EImageFlags::MutableFormat == value) oss << sep << STRING_LITERAL(_Char, "MutableFormat");
+    if (EImageFlags::CastToCube == value) oss << sep << STRING_LITERAL(_Char, "CastToCube");
+    if (EImageFlags::CastToArray2D == value) oss << sep << STRING_LITERAL(_Char, "CastToArray2D");
+    if (EImageFlags::CastToBlockTexelView == value) oss << sep << STRING_LITERAL(_Char, "CastToBlockTexelView");
+
+    return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageUsage>);
     if (EImageUsage::All == value) return oss << STRING_LITERAL(_Char, "All");
+    if (EImageUsage::Transfer == value) return oss << STRING_LITERAL(_Char, "Transfer");
     if (EImageUsage::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
@@ -115,13 +141,14 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EImageUsage::Sampled & value) oss << sep << STRING_LITERAL(_Char, "Sampled");
     if (EImageUsage::Storage & value) oss << sep << STRING_LITERAL(_Char, "Storage");
     if (EImageUsage::ColorAttachment & value) oss << sep << STRING_LITERAL(_Char, "ColorAttachment");
-    if (EImageUsage::ColorAttachmentBlend & value) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
     if (EImageUsage::DepthStencilAttachment & value) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment");
     if (EImageUsage::TransientAttachment & value) oss << sep << STRING_LITERAL(_Char, "TransientAttachment");
     if (EImageUsage::InputAttachment & value) oss << sep << STRING_LITERAL(_Char, "InputAttachment");
     if (EImageUsage::ShadingRate & value) oss << sep << STRING_LITERAL(_Char, "ShadingRate");
+
     if (EImageUsage::StorageAtomic & value) oss << sep << STRING_LITERAL(_Char, "StorageAtomic");
-    if (EImageUsage::Transfer & value) oss << sep << STRING_LITERAL(_Char, "Transfer");
+    if (EImageUsage::ColorAttachmentBlend & value) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
+    if (EImageUsage::SampledMinMax & value) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
 
     return oss;
 }
@@ -140,6 +167,42 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EImageAspect::DepthStencil & value) oss << sep << STRING_LITERAL(_Char, "DepthStencil");
 
     return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageSampler value) {
+    STATIC_ASSERT(Meta::enum_is_flags_v<EImageSampler>); // still treat as a regular enum
+
+    switch (value) {
+    case EImageSampler::Float1D: return oss << STRING_LITERAL(_Char, "Float1D");
+    case EImageSampler::Float1DArray: return oss << STRING_LITERAL(_Char, "Float1DArray");
+    case EImageSampler::Float2D: return oss << STRING_LITERAL(_Char, "Float2D");
+    case EImageSampler::Float2DArray: return oss << STRING_LITERAL(_Char, "Float2DArray");
+    case EImageSampler::Float2DMS: return oss << STRING_LITERAL(_Char, "Float2DMS");
+    case EImageSampler::Float2DMSArray: return oss << STRING_LITERAL(_Char, "Float2DMSArray");
+    case EImageSampler::FloatCube: return oss << STRING_LITERAL(_Char, "FloatCube");
+    case EImageSampler::FloatCubeArray: return oss << STRING_LITERAL(_Char, "FloatCubeArray");
+    case EImageSampler::Float3D: return oss << STRING_LITERAL(_Char, "Float3D");
+    case EImageSampler::Int1D: return oss << STRING_LITERAL(_Char, "Int1D");
+    case EImageSampler::Int1DArray: return oss << STRING_LITERAL(_Char, "Int1DArray");
+    case EImageSampler::Int2D: return oss << STRING_LITERAL(_Char, "Int2D");
+    case EImageSampler::Int2DArray: return oss << STRING_LITERAL(_Char, "Int2DArray");
+    case EImageSampler::Int2DMS: return oss << STRING_LITERAL(_Char, "Int2DMS");
+    case EImageSampler::Int2DMSArray: return oss << STRING_LITERAL(_Char, "Int2DMSArray");
+    case EImageSampler::IntCube: return oss << STRING_LITERAL(_Char, "IntCube");
+    case EImageSampler::IntCubeArray: return oss << STRING_LITERAL(_Char, "IntCubeArray");
+    case EImageSampler::Int3D: return oss << STRING_LITERAL(_Char, "Int3D");
+    case EImageSampler::Uint1D: return oss << STRING_LITERAL(_Char, "Uint1D");
+    case EImageSampler::Uint1DArray: return oss << STRING_LITERAL(_Char, "Uint1DArray");
+    case EImageSampler::Uint2D: return oss << STRING_LITERAL(_Char, "Uint2D");
+    case EImageSampler::Uint2DArray: return oss << STRING_LITERAL(_Char, "Uint2DArray");
+    case EImageSampler::Uint2DMS: return oss << STRING_LITERAL(_Char, "Uint2DMS");
+    case EImageSampler::Uint2DMSArray: return oss << STRING_LITERAL(_Char, "Uint2DMSArray");
+    case EImageSampler::UintCube: return oss << STRING_LITERAL(_Char, "UintCube");
+    case EImageSampler::UintCubeArray: return oss << STRING_LITERAL(_Char, "UintCubeArray");
+    case EImageSampler::Uint3D: return oss << STRING_LITERAL(_Char, "Uint3D");
+    case EImageSampler::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    default: AssertNotImplemented();
+    }
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ESwapchainImage value) {
@@ -891,9 +954,12 @@ PPE_RHI_ENUMTOSTRING_DEF(EQueueType);
 PPE_RHI_ENUMTOSTRING_DEF(EQueueUsage);
 PPE_RHI_ENUMTOSTRING_DEF(EMemoryType);
 PPE_RHI_ENUMTOSTRING_DEF(EBufferUsage);
-PPE_RHI_ENUMTOSTRING_DEF(EImageType);
+PPE_RHI_ENUMTOSTRING_DEF(EImageDim);
+PPE_RHI_ENUMTOSTRING_DEF(EImageView);
+PPE_RHI_ENUMTOSTRING_DEF(EImageFlags);
 PPE_RHI_ENUMTOSTRING_DEF(EImageUsage);
 PPE_RHI_ENUMTOSTRING_DEF(EImageAspect);
+PPE_RHI_ENUMTOSTRING_DEF(EImageSampler);
 PPE_RHI_ENUMTOSTRING_DEF(ESwapchainImage);
 PPE_RHI_ENUMTOSTRING_DEF(EAttachmentStoreOp);
 PPE_RHI_ENUMTOSTRING_DEF(EShadingRatePalette);

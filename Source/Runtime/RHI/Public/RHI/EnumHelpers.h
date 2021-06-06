@@ -1,9 +1,10 @@
 #pragma once
 
-#include "ResourceEnums.h"
-#include "ResourceState.h"
 #include "RHI_fwd.h"
 
+#include "RHI/RenderStateEnums.h"
+#include "RHI/ResourceEnums.h"
+#include "RHI/ResourceState.h"
 #include "RHI/ShaderEnums.h"
 #include "RHI/VertexEnums.h"
 
@@ -22,26 +23,6 @@ inline CONSTEXPR u32 EIndexFormat_SizeOf(EIndexFormat fmt) {
     }
 }
 //----------------------------------------------------------------------------
-// Images
-//----------------------------------------------------------------------------
-CONSTEXPR bool EImageType_IsArray(EImageType value) {
-    switch (value) {
-    case EImageType::Tex1DArray:
-    case EImageType::Tex2DArray:
-    case EImageType::Tex2DMSArray:
-    case EImageType::TexCubeArray: return true;
-    default: return false;
-    }
-}
-//----------------------------------------------------------------------------
-CONSTEXPR bool EImageType_IsCube(EImageType value) {
-    return (value == EImageType::TexCube || value == EImageType::TexCubeArray);
-}
-//----------------------------------------------------------------------------
-CONSTEXPR bool EImageType_IsMultiSampled(EImageType value) {
-    return (value == EImageType::Tex2DMS || value == EImageType::Tex2DMSArray);
-}
-//----------------------------------------------------------------------------
 // Resources
 //----------------------------------------------------------------------------
 inline bool CONSTEXPR EResourceState_IsReadable(EResourceState value) {
@@ -55,11 +36,11 @@ inline bool CONSTEXPR EResourceState_IsWritable(EResourceState value) {
 inline EResourceState CONSTEXPR EResourceState_FromShaders(EShaderStages stages) {
     EResourceState result =  EResourceState::Unknown;
 
-    for (EShaderStages st = EShaderStages(1 << 0); st < EShaderStages::_Last; st = EShaderStages(u32(st) << 1u)) {
-        if (not (stages & st))
+    for (u32 st = 1; st < static_cast<u32>(EShaderStages::_Last); st <<= 1) {
+        if (not Meta::EnumHas(stages, st))
             continue;
 
-        switch (st) {
+        switch (static_cast<EShaderStages>(st)) {
         case EShaderStages::Vertex: result |= EResourceState::_VertexShader; break;
         case EShaderStages::TessControl: result |= EResourceState::_TessControlShader; break;
         case EShaderStages::TessEvaluation: result |= EResourceState::_TessEvaluationShader; break;
@@ -122,6 +103,78 @@ CONSTEXPR EQueueUsage EQueueType_Usage(EQueueType queueType) {
 //----------------------------------------------------------------------------
 // Shaders
 //----------------------------------------------------------------------------
+inline CONSTEXPR bool EShaderType_IsGraphicsShader(EShaderType shader) {
+    switch (shader) {
+    case EShaderType::Vertex:
+    case EShaderType::TessControl:
+    case EShaderType::TessEvaluation:
+    case EShaderType::Geometry:
+    case EShaderType::Fragment:
+        return true;
+
+    case EShaderType::Compute:
+    case EShaderType::MeshTask:
+    case EShaderType::Mesh:
+    case EShaderType::RayGen:
+    case EShaderType::RayAnyHit:
+    case EShaderType::RayClosestHit:
+    case EShaderType::RayMiss:
+    case EShaderType::RayIntersection:
+    case EShaderType::RayCallable:
+        return false;
+
+    default: AssertNotReached();
+    }
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR bool EShaderType_IsMeshProcessingShader(EShaderType shader) {
+    switch (shader) {
+    case EShaderType::MeshTask:
+    case EShaderType::Mesh:
+    case EShaderType::Fragment:
+        return true;
+
+    case EShaderType::Vertex:
+    case EShaderType::TessControl:
+    case EShaderType::TessEvaluation:
+    case EShaderType::Geometry:
+    case EShaderType::Compute:
+    case EShaderType::RayGen:
+    case EShaderType::RayAnyHit:
+    case EShaderType::RayClosestHit:
+    case EShaderType::RayMiss:
+    case EShaderType::RayIntersection:
+    case EShaderType::RayCallable:
+        return false;
+
+    default: AssertNotReached();
+    }
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR bool EShaderType_IsRayTracingShader(EShaderType shader) {
+    switch (shader) {
+    case EShaderType::RayGen:
+    case EShaderType::RayAnyHit:
+    case EShaderType::RayClosestHit:
+    case EShaderType::RayMiss:
+    case EShaderType::RayIntersection:
+    case EShaderType::RayCallable:
+        return true;
+
+    case EShaderType::Vertex:
+    case EShaderType::TessControl:
+    case EShaderType::TessEvaluation:
+    case EShaderType::Geometry:
+    case EShaderType::Fragment:
+    case EShaderType::Compute:
+    case EShaderType::MeshTask:
+    case EShaderType::Mesh:
+        return false;
+
+    default: AssertNotReached();
+    }
+}
+//----------------------------------------------------------------------------
 inline CONSTEXPR EShaderStages EShaderStages_FromShader(EShaderType shader) {
     switch (shader) {
     case EShaderType::Vertex: return EShaderStages::Vertex;
@@ -145,15 +198,36 @@ inline CONSTEXPR EShaderStages EShaderStages_FromShader(EShaderType shader) {
     }
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
 inline CONSTEXPR EShaderDebugMode EShaderDebugMode_From(EShaderLangFormat lang) {
-    const EShaderLangFormat debugMode = BitAnd(lang, EShaderLangFormat::_DebugModeMask);
-    switch (debugMode) {
+    switch (BitAnd(lang, EShaderLangFormat::_DebugModeMask)) {
     case EShaderLangFormat::Unknown: return EShaderDebugMode::None;
     case EShaderLangFormat::EnableProfiling: return EShaderDebugMode::Profiling;
     case EShaderLangFormat::EnableTimeMap: return EShaderDebugMode::Timemap;
     case EShaderLangFormat::EnableDebugTrace: return EShaderDebugMode::Trace;
     default: AssertNotImplemented();
     }
+}
+#endif
+//----------------------------------------------------------------------------
+// Topology
+//----------------------------------------------------------------------------
+inline CONSTEXPR u32 EPrimitiveTopology_PrimitiveCount(EPrimitiveTopology topology, u32 vertexCount, u32 patchSize) {
+    switch (topology) {
+    case EPrimitiveTopology::Point: return vertexCount;
+    case EPrimitiveTopology::LineList: Assert(Meta::IsAligned(2, vertexCount)); return vertexCount / 2;
+    case EPrimitiveTopology::LineStrip: Assert(vertexCount > 1); return vertexCount - 1; // inaccurate
+    case EPrimitiveTopology::LineListAdjacency: Assert(vertexCount >= 3); return vertexCount / 2 - 2;
+    case EPrimitiveTopology::LineStripAdjacency: Assert(vertexCount >= 3); return vertexCount - 3; // inaccurate
+    case EPrimitiveTopology::TriangleList: Assert(Meta::IsAligned(3, vertexCount)); return vertexCount / 3;
+    case EPrimitiveTopology::TriangleStrip: Assert(vertexCount > 2); return vertexCount - 2; // inaccurate
+    case EPrimitiveTopology::TriangleFan: Assert(vertexCount > 2); return vertexCount - 2; // inaccurate
+    case EPrimitiveTopology::TriangleListAdjacency: Assert(vertexCount >= 3); return vertexCount / 2 - 2;
+    case EPrimitiveTopology::TriangleStripAdjacency: Assert(vertexCount > 4); return vertexCount - 4; // inaccurate
+    case EPrimitiveTopology::Patch: Assert(Meta::IsAligned(patchSize, vertexCount)); return vertexCount / patchSize; // inaccurate
+    default: break;
+    }
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 // Vertices

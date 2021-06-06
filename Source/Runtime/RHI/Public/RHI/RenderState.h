@@ -138,7 +138,7 @@ struct FMultisampleState {
     bool operator ==(const FMultisampleState& other) const {
         return (SampleMask == other.SampleMask
             && Samples == other.Samples
-            && MinSampleShading == other.Samples
+            && MinSampleShading == other.MinSampleShading
             && EnableAlphaToCoverage == other.EnableAlphaToCoverage
             && EnableAlphaToOne == other.EnableAlphaToOne
             && EnableSampleShading == other.EnableSampleShading );

@@ -10,7 +10,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FResourceBase : Meta::FNonCopyableNorMovable {
+class FResourceBaseProxy : Meta::FNonCopyable {
 public:
     enum class EState : u32 {
         Initial = 0,
@@ -18,21 +18,25 @@ public:
         Created,
     };
 
-    using FInstanceID = FRawImageID::instance_t;
+    using FInstanceID = FRawImageID::FInstanceID;
 
-    FResourceBase() = default;
+    explicit FResourceBaseProxy(u16 instanceId)
+    :   _instanceId(instanceId) {
+        Assert_NoAssume(_instanceId); // 0 is considered invalid
+    }
 
 #if USE_PPE_DEBUG
-    ~FResourceBase() {
+    ~FResourceBaseProxy() {
         Assert_NoAssume(IsDestroyed());
         Assert_NoAssume(RefCount() == 0);
     }
 #endif
 
+    bool Valid() const { return IsCreated(); }
     bool IsCreated() const { return (State_() == EState::Created); }
     bool IsDestroyed() const { return (State_() <= EState::Failed); }
 
-    FInstanceID InstanceId() const { return {_instanceId.load(std::memory_order_relaxed)}; }
+    FInstanceID InstanceID() const { return _instanceId; }
     int RefCount() const { return _refCounter.load(std::memory_order_relaxed); }
 
     void AddRef() const {
@@ -45,25 +49,37 @@ public:
 protected:
     EState State_() const { return _state.load(std::memory_order_relaxed); }
 
-    std::atomic<u32> _instanceId{ 0 };
+
+    const u16 _instanceId;
     std::atomic<EState> _state{ EState::Initial };
 
     // reference counter may be used for cached resources like samples, pipeline layout and other
     mutable std::atomic<int> _refCounter{ 0 };
 };
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded due to alignment
 template <typename T>
-class CACHELINE_ALIGNED TResourceProxy final : public FResourceBase {
+class CACHELINE_ALIGNED TResourceProxy final : public FResourceBaseProxy {
 public:
     using value_type = T;
 
-    TResourceProxy() = default;
+    TResourceProxy() NOEXCEPT;
+
+    TResourceProxy(const TResourceProxy& ) = delete;
+    TResourceProxy(TResourceProxy&& rvalue) NOEXCEPT;
+    TResourceProxy& operator =(TResourceProxy&& rvalue) NOEXCEPT = delete;
+
+    explicit TResourceProxy(T&& rdata) NOEXCEPT;
+
+    template <typename... _Args>
+    explicit TResourceProxy(_Args&&... args);
 
     value_type& Data() { return _data; }
     const value_type& Data() const { return _data; }
 
     template <typename... _Args>
-    bool Construct(_Args&&... args);
+    NODISCARD bool Construct(_Args&&... args);
     template <typename... _Args>
     void TearDown(_Args&&... args);
     template <typename... _Args>
@@ -78,7 +94,42 @@ public:
 
 private:
     value_type _data;
+
+    static u16 NextInstanceID_() NOEXCEPT {
+        ONE_TIME_INITIALIZE(std::atomic<unsigned>, GInstanceID);
+        u16 instanceId;
+        do {
+            instanceId = static_cast<u16>(GInstanceID.fetch_add(1, std::memory_order_relaxed));
+        } while (0 == instanceId);
+        return instanceId;
+    }
 };
+PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
+template <typename T>
+TResourceProxy<T>::TResourceProxy() NOEXCEPT
+:   FResourceBaseProxy(NextInstanceID_())
+{}
+//----------------------------------------------------------------------------
+template <typename T>
+TResourceProxy<T>::TResourceProxy(TResourceProxy&& rvalue) NOEXCEPT
+:   FResourceBaseProxy(NextInstanceID_())
+,   _data(std::move(rvalue._data)) {
+    Assert_NoAssume(rvalue._refCounter.load(std::memory_order_relaxed) == 0);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TResourceProxy<T>::TResourceProxy(T&& rdata) NOEXCEPT
+:   FResourceBaseProxy(NextInstanceID_())
+,   _data(std::move(rdata))
+{}
+//----------------------------------------------------------------------------
+template <typename T>
+template <typename... _Args>
+TResourceProxy<T>::TResourceProxy(_Args&&... args)
+:   FResourceBaseProxy(NextInstanceID_())
+,   _data(std::forward<_Args>(args)...)
+{}
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename... _Args>
@@ -86,7 +137,7 @@ bool TResourceProxy<T>::Construct(_Args&&... args) {
     Assert_NoAssume(IsDestroyed());
     Assert_NoAssume(RefCount() == 0);
 
-    const bool result = _data.Construct(std::forward<_Args>(args...));
+    const bool result = _data.Construct(std::forward<_Args>(args)...);
 
     // read state and flush cache
     _state.store(result ? EState::Created : EState::Failed, std::memory_order_release);
@@ -106,12 +157,12 @@ template <typename... _Args>
 void TResourceProxy<T>::TearDown_Force(_Args&&... args) {
     Assert(not IsDestroyed());
 
-    _data.TearDown(std::forward<_Args>(args));
+    _data.TearDown(std::forward<_Args>(args)...);
 
     // update atomics and flush cache
     _refCounter.store( 0, std::memory_order_relaxed );
     _state.store( EState::Initial, std::memory_order_relaxed );
-    _instanceId.fetch_add( 1, std::memory_order_release );
+    ONLY_IF_ASSERT(const_cast<u16&>(_instanceId) = 0); // invalidate all references
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

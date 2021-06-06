@@ -35,7 +35,7 @@ struct FPixelFormatInfo {
     EPixelFormat Format{ Default };
     EImageAspect AspectMask{ Default };
     EPixelValueType ValueType{ Default };
-    uint2 BlockSize{ 1 };
+    uint2 BlockDim{ 1 };
     u32 BitsPerBlock0{ 0 }; // color / depth
     u32 BitsPerBlock1{ 0 }; // stencil
     u32 Channels{ 0 };
@@ -46,8 +46,8 @@ struct FPixelFormatInfo {
         : Format(fmt), AspectMask(aspect), ValueType(type), BitsPerBlock0(bpp), Channels(channels)
     {}
 
-    CONSTEXPR FPixelFormatInfo(EPixelFormat fmt, u32 bpp, const uint2& size, u32 channels, EPixelValueType type, EImageAspect aspect = EImageAspect::Color)
-        : Format(fmt), AspectMask(aspect), ValueType(type), BlockSize(size), BitsPerBlock0(bpp), Channels(channels)
+    CONSTEXPR FPixelFormatInfo(EPixelFormat fmt, u32 bpp, const uint2& dim, u32 channels, EPixelValueType type, EImageAspect aspect = EImageAspect::Color)
+        : Format(fmt), AspectMask(aspect), ValueType(type), BlockDim(dim), BitsPerBlock0(bpp), Channels(channels)
     {}
 
     CONSTEXPR FPixelFormatInfo(EPixelFormat fmt, const uint2& bppDepthStencil, EPixelValueType type = EPixelValueType::DepthStencil, EImageAspect aspect = EImageAspect::DepthStencil)
@@ -55,7 +55,7 @@ struct FPixelFormatInfo {
     {}
 };
 //----------------------------------------------------------------------------
-CONSTEXPR FPixelFormatInfo EPixelFormat_GetInfos(EPixelFormat fmt) {
+CONSTEXPR FPixelFormatInfo EPixelFormat_Infos(EPixelFormat fmt) {
     using EType = EPixelValueType;
     switch (fmt) {
     case EPixelFormat::RGBA16_SNorm:                return { fmt,16*4,  4, EType::SNorm };
@@ -184,15 +184,15 @@ CONSTEXPR FPixelFormatInfo EPixelFormat_GetInfos(EPixelFormat fmt) {
 }
 //----------------------------------------------------------------------------
 CONSTEXPR u32 EPixelFormat_BitsPerPixel(EPixelFormat fmt, EImageAspect aspect) {
-    const auto info = EPixelFormat_GetInfos(fmt);
+    const auto info = EPixelFormat_Infos(fmt);
     Assert(info.AspectMask ^ aspect);
     return (aspect != EImageAspect::Stencil
-        ? info.BitsPerBlock0 / (info.BlockSize.x * info.BlockSize.y)
-        : info.BitsPerBlock1 / (info.BlockSize.x * info.BlockSize.y) );
+        ? info.BitsPerBlock0 / (info.BlockDim.x * info.BlockDim.y)
+        : info.BitsPerBlock1 / (info.BlockDim.x * info.BlockDim.y) );
 }
 //----------------------------------------------------------------------------
 CONSTEXPR EImageAspect EPixelFormat_ToImageAspect(EPixelFormat fmt) {
-    const auto info = EPixelFormat_GetInfos(fmt);
+    const auto info = EPixelFormat_Infos(fmt);
     const EImageAspect color = (not (info.ValueType ^ EPixelValueType::DepthStencil) ? EImageAspect::Color : Default);
     const EImageAspect depth = (info.ValueType ^ EPixelValueType::Depth ? EImageAspect::Depth : Default);
     const EImageAspect stencil = (info.ValueType ^ EPixelValueType::Stencil ? EImageAspect::Stencil : Default);
@@ -202,34 +202,58 @@ CONSTEXPR EImageAspect EPixelFormat_ToImageAspect(EPixelFormat fmt) {
 // IsXXX
 //----------------------------------------------------------------------------
 CONSTEXPR bool EPixelFormat_IsDepth(EPixelFormat fmt) {
-    return (EPixelFormat_GetInfos(fmt).ValueType == EPixelValueType::Depth);
+    return (EPixelFormat_Infos(fmt).ValueType == EPixelValueType::Depth);
 }
 //----------------------------------------------------------------------------
 CONSTEXPR bool EPixelFormat_IsStencil(EPixelFormat fmt) {
-    return (EPixelFormat_GetInfos(fmt).ValueType == EPixelValueType::Stencil);
+    return (EPixelFormat_Infos(fmt).ValueType == EPixelValueType::Stencil);
 }
 //----------------------------------------------------------------------------
 CONSTEXPR bool EPixelFormat_IsDepthStencil(EPixelFormat fmt) {
-    return (EPixelFormat_GetInfos(fmt).ValueType == EPixelValueType::DepthStencil);
+    return (EPixelFormat_Infos(fmt).ValueType == EPixelValueType::DepthStencil);
 }
 //----------------------------------------------------------------------------
 CONSTEXPR bool EPixelFormat_IsColor(EPixelFormat fmt) {
-    return not (EPixelFormat_GetInfos(fmt).ValueType ^ EPixelValueType::DepthStencil);
+    return not (EPixelFormat_Infos(fmt).ValueType ^ EPixelValueType::DepthStencil);
 }
 //----------------------------------------------------------------------------
 // HasXXX
 //----------------------------------------------------------------------------
 CONSTEXPR bool EPixelFormat_HasDepth(EPixelFormat fmt) {
-    return (EPixelFormat_GetInfos(fmt).ValueType & EPixelValueType::Depth);
+    return (EPixelFormat_Infos(fmt).ValueType & EPixelValueType::Depth);
 }
 //----------------------------------------------------------------------------
 CONSTEXPR bool EPixelFormat_HasStencil(EPixelFormat fmt) {
-    return (EPixelFormat_GetInfos(fmt).ValueType & EPixelValueType::Stencil);
+    return (EPixelFormat_Infos(fmt).ValueType & EPixelValueType::Stencil);
 }
 //----------------------------------------------------------------------------
 CONSTEXPR bool EPixelFormat_HasDepthOrStencil(EPixelFormat fmt) {
-    return (EPixelFormat_GetInfos(fmt).ValueType ^ EPixelValueType::DepthStencil);
+    return (EPixelFormat_Infos(fmt).ValueType ^ EPixelValueType::DepthStencil);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+using FPixelDecodeRGBA32f = void (*)(FRgba32f* __restrict, FRawMemoryConst) NOEXCEPT;
+using FPixelDecodeRGBA32i = void (*)(FRgba32i* __restrict, FRawMemoryConst) NOEXCEPT;
+using FPixelDecodeRGBA32u = void (*)(FRgba32u* __restrict, FRawMemoryConst) NOEXCEPT;
+//----------------------------------------------------------------------------
+using FPixelEncodeRGBA32f = void (*)(FRawMemory, const FRgba32f&) NOEXCEPT;
+using FPixelEncodeRGBA32i = void (*)(FRawMemory, const FRgba32i&) NOEXCEPT;
+using FPixelEncodeRGBA32u = void (*)(FRawMemory, const FRgba32u&) NOEXCEPT;
+//----------------------------------------------------------------------------
+struct FPixelFormatEncoding {
+    u32 BitsPerPixel{ 0 };
+
+    FPixelDecodeRGBA32f DecodeRGBA32f{ nullptr };
+    FPixelDecodeRGBA32i DecodeRGBA32i{ nullptr };
+    FPixelDecodeRGBA32u DecodeRGBA32u{ nullptr };
+
+    FPixelEncodeRGBA32f EncodeRGBA32f{ nullptr };
+    FPixelEncodeRGBA32i EncodeRGBA32i{ nullptr };
+    FPixelEncodeRGBA32u EncodeRGBA32u{ nullptr };
+};
+//----------------------------------------------------------------------------
+PPE_RHI_API FPixelFormatEncoding EPixelFormat_Encoding(EPixelFormat format, EImageAspect aspect) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -52,27 +52,33 @@ public: // interface
     // Returns bitmask for all available queues.
     virtual EQueueUsage AvailableQueues() const NOEXCEPT = 0;
 
+#if USE_PPE_RHIDEBUG
+    // Callback will be called at end of the frame if debugging enabled by
+    // calling 'Task::EnableDebugTrace' and shader compiled with 'EShaderLangFormat::EnableDebugTrace' flag.
+    virtual bool SetShaderDebugCallback(FShaderDebugCallback&& rcallback) = 0;
+#endif
+
     // --- Resource Manager ---
 
     // Create resources: pipeline, image, buffer, etc.
     // See synchronization requirements on top of this file.
-    virtual FMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
-    virtual FRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
-    virtual FGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
-    virtual FCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
-    virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
-    virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EResourceState defaultState ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
-    virtual FBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
-    virtual FSamplerID CreateSampler(const FSamplerDesc& desc ARGS_IF_RHIDEBUG(const FStringView& name)) = 0;
-    virtual FSwapchainID CreateSwapchain(const FSwapchainDesc&, FRawSwapchainID oldSwapchain = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
-    virtual FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
-    virtual FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(const FStringView& name = Default)) = 0;
-    virtual FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name)) = 0;
+    NODISCARD virtual FMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
+    NODISCARD virtual FRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
+    NODISCARD virtual FGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
+    NODISCARD virtual FCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
+    NODISCARD virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
+    NODISCARD virtual FImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EResourceState defaultState ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
+    NODISCARD virtual FBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
+    NODISCARD virtual FSamplerID CreateSampler(const FSamplerDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
+    NODISCARD virtual FSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
+    NODISCARD virtual FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
+    NODISCARD virtual FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
+    NODISCARD virtual FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name)) = 0;
 
-    virtual bool InitPipelineResources(FRawGPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
-    virtual bool InitPipelineResources(FRawCPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
-    virtual bool InitPipelineResources(FRawMPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
-    virtual bool InitPipelineResources(FRawRTPipelineID pipeline, const FDescriptorSetID& id, const PPipelineResources& resources) const = 0;
+    NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawGPipelineID pipeline, const FDescriptorSetID& id) const = 0;
+    NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawCPipelineID pipeline, const FDescriptorSetID& id) const = 0;
+    NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawMPipelineID pipeline, const FDescriptorSetID& id) const = 0;
+    NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawRTPipelineID pipeline, const FDescriptorSetID& id) const = 0;
 
     virtual bool IsSupported(FRawImageID image, const FImageViewDesc& desc) const NOEXCEPT = 0;
     virtual bool IsSupported(FRawBufferID buffer, const FBufferViewDesc& desc) const NOEXCEPT = 0;
@@ -81,42 +87,55 @@ public: // interface
 
     // Creates internal descriptor set and release dynamically allocated memory in the 'resources'.
     // After that your can not modify the 'resources', but you still can use it in the tasks.
-    virtual bool CachePipelineResources(FPipelineResources& resources) = 0;
+    NODISCARD virtual bool CachePipelineResources(FPipelineResources& resources) = 0;
     virtual void ReleaseResource(FPipelineResources& resources) = 0;
 
     // Release reference to resource, Returns 'true' if resource has been deleted.
     // See synchronization requirements on top of this file.
-    virtual bool ReleaseResource(FGPipelineID& id) = 0;
-    virtual bool ReleaseResource(FCPipelineID& id) = 0;
-    virtual bool ReleaseResource(FMPipelineID& id) = 0;
-    virtual bool ReleaseResource(FRTPipelineID& id) = 0;
-    virtual bool ReleaseResource(FImageID& id) = 0;
-    virtual bool ReleaseResource(FBufferID& id) = 0;
-    virtual bool ReleaseResource(FSamplerID& id) = 0;
-    virtual bool ReleaseResource(FSwapchainID& id) = 0;
-    virtual bool ReleaseResource(FRTGeometryID& id) = 0;
-    virtual bool ReleaseResource(FRTSceneID& id) = 0;
-    virtual bool ReleaseResource(FRTShaderTableID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FGPipelineID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FCPipelineID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FMPipelineID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FRTPipelineID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FImageID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FBufferID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FSamplerID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FSwapchainID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FRTGeometryID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FRTSceneID& id) = 0;
+    NODISCARD virtual bool ReleaseResource(FRTShaderTableID& id) = 0;
 
     // Returns resource description.
-    virtual const FBufferDesc& Description(FRawBufferID id) const = 0;
     virtual const FImageDesc& Description(FRawImageID id) const = 0;
+    virtual const FBufferDesc& Description(FRawBufferID id) const = 0;
+
+    NODISCARD virtual FImageID CreateImage(
+        const FImageDesc& desc,
+        FExternalImage externalImage,
+        FOnReleaseExternalImage&& onRelease,
+        TMemoryView<const u32> queueFamilyIndices
+        ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
+    NODISCARD virtual FBufferID CreateBuffer(
+        const FBufferDesc& desc,
+        FExternalBuffer externalBuffer,
+        FOnReleaseExternalBuffer&& onRelease,
+        TMemoryView<const u32> queueFamilyIndices
+        ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
 
     // api-specific variant (#TODO)
-    virtual void* ExternalDescription(FRawBufferID id) const = 0;
-    virtual void* ExternalDescription(FRawImageID id) const = 0;
+    virtual const void* ExternalDescription(FRawBufferID id) const NOEXCEPT = 0;
+    virtual const void* ExternalDescription(FRawImageID id) const NOEXCEPT = 0;
 
     // Returns 'true' if resource is not deleted.
-    virtual bool IsResourceAlive(FRawGPipelineID id) const = 0;
-    virtual bool IsResourceAlive(FRawCPipelineID id) const = 0;
-    virtual bool IsResourceAlive(FRawMPipelineID id) const = 0;
-    virtual bool IsResourceAlive(FRawRTPipelineID id) const = 0;
-    virtual bool IsResourceAlive(FRawImageID id) const = 0;
-    virtual bool IsResourceAlive(FRawBufferID id) const = 0;
-    virtual bool IsResourceAlive(FRawSwapchainID id) const = 0;
-    virtual bool IsResourceAlive(FRawRTGeometryID id) const = 0;
-    virtual bool IsResourceAlive(FRawRTSceneID id) const = 0;
-    virtual bool IsResourceAlive(FRawRTShaderTableID id) const = 0;
+    virtual bool IsResourceAlive(FRawGPipelineID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawCPipelineID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawMPipelineID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawRTPipelineID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawImageID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawBufferID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawSwapchainID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawRTGeometryID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawRTSceneID id) const NOEXCEPT = 0;
+    virtual bool IsResourceAlive(FRawRTShaderTableID id) const NOEXCEPT = 0;
 
     // Returns strong reference to resource if it valid, otherwise returns invalid ID.
     virtual FGPipelineID AcquireResource(FRawGPipelineID id) = 0;
@@ -131,31 +150,31 @@ public: // interface
     virtual FRTShaderTableID AcquireResource(FRawRTShaderTableID id) = 0;
 
     // Copy data into host-visible memory.
-    virtual bool UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) = 0;
+    NODISCARD virtual bool UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) = 0;
 
     // Returns pointer to host-visible memory.
-    virtual bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) = 0;
+    NODISCARD virtual bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) = 0;
 
     // --- Frame execution ---
 
     // Begin command buffer recording.
-    virtual FCommandBufferBatch Begin(const FCommandBufferDesc&, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
+    virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
 
     // Compile framegraph for current command buffer and append it to the pending command buffer queue (that are waiting for submitting to GPU).
-    virtual bool Execute(FCommandBufferBatch&) = 0;
+    NODISCARD virtual bool Execute(FCommandBufferBatch& cmdBatch) = 0;
 
     // Wait until all commands complete execution on the GPU or until time runs out.
-    virtual bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout = FNanoseconds{3600'000'000'000}) = 0;
+    NODISCARD virtual bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout = FNanoseconds{3600'000'000'000}) = 0;
 
     // Submit all pending command buffers and present all pending swapchain images.
-    virtual bool Flush(EQueueUsage queues = EQueueUsage::All) = 0;
+    NODISCARD virtual bool Flush(EQueueUsage queues = EQueueUsage::All) = 0;
 
     // Wait until all commands will complete their work on GPU, trigger events for 'FReadImage' and 'FReadBuffer' tasks.
-    virtual bool WaitIdle() = 0;
+    NODISCARD virtual bool WaitIdle() = 0;
 
     // Debugging
 #if USE_PPE_RHIPROFILING
-    virtual bool DumpStatistics(FFrameStatistics* pstats) const = 0;
+    virtual bool DumpStatistics(FFrameStatistics* pStats) const = 0;
 #endif
 
 };

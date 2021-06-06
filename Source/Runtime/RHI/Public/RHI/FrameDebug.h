@@ -10,9 +10,25 @@
 #   include "IO/StaticString.h"
 #endif
 
+#if USE_PPE_RHIDEBUG
+#   include "Diagnostic/Logger.h"
+#   include "IO/FormatHelpers.h"
+#   define RHI_LOG(_LEVEL, ...) LOG(RHI, _LEVEL, __VA_ARGS__)
+#else
+#   define RHI_LOG(_LEVEL, ...) NOOP()
+#endif
+
 #include "IO/String.h"
 #include "Maths/Units.h"
 #include "Misc/Function.h"
+#include "Time/TimedScope.h"
+
+#if USE_PPE_RHIPROFILING
+#   define RHI_PROFILINGSCOPE(_NAME, _STAT) \
+        ::PPE::RHI::FFrameStatistics::FProfilingScope ANONYMIZE(rhiProfilingScope){ _STAT }
+#else
+#   define RHI_PROFILINGSCOPE(_NAME, _STAT) NOOP()
+#endif
 
 namespace PPE {
 namespace RHI {
@@ -60,18 +76,32 @@ struct FFrameStatistics {
 
         FNanoseconds SubmittingTime{ 0 };
         FNanoseconds WaitingTime{ 0 };
+
+        PPE_RHI_API FRendering& operator +=(const FRendering& other) NOEXCEPT;
     };
 
     struct FResources {
         u32 NumNewGraphicsPipeline          = 0;
         u32 NumNewComputePipeline           = 0;
         u32 NumNewRayTracingPipeline        = 0;
+
+        PPE_RHI_API FResources& operator +=(const FResources& other) NOEXCEPT;
     };
 
     FRendering Renderer;
     FResources Resources;
 
-    void Merge(const FFrameStatistics& other);
+    void Merge(const FFrameStatistics& other) NOEXCEPT {
+        Renderer += other.Renderer;
+        Resources += other.Resources;
+    }
+
+    struct FProfilingScope : PPE::FTimedScope {
+        FNanoseconds& Counter;
+        explicit FProfilingScope(FNanoseconds* pCounter) NOEXCEPT : Counter(*pCounter) {}
+        ~FProfilingScope() NOEXCEPT { Counter += Elapsed(); }
+    };
+
 };
 #endif
 //----------------------------------------------------------------------------

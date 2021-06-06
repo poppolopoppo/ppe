@@ -2,6 +2,8 @@
 
 #include "RHI_fwd.h"
 
+#include "RHI/RenderStateEnums.h"
+
 #include "Color/Color_fwd.h"
 
 namespace PPE {
@@ -72,13 +74,29 @@ public: // interface
         FRawBufferID indirectBuffer,
         size_t indirectBufferOffset,
         u32 drawCount,
-        size_t stride = 0) = 0;
+        size_t indirectBufferStride = 0) = 0;
 
     virtual void DrawIndexedIndirect(
         FRawBufferID indirectBuffer,
         size_t indirectBufferOffset,
         u32 drawCount,
-        size_t stride = 0) = 0;
+        size_t indirectBufferStride = 0) = 0;
+
+    virtual void DrawVerticesIndirectCount(
+        FRawBufferID indirectBuffer,
+        size_t indirectBufferOffset,
+        FRawBufferID countBuffer,
+        size_t countBufferOffset,
+        u32 maxDrawCount,
+        size_t indirectBufferStride = 0) = 0;
+
+    virtual void DrawIndexedIndirectCount(
+        FRawBufferID indirectBuffer,
+        size_t indirectBufferOffset,
+        FRawBufferID countBuffer,
+        size_t countBufferOffset,
+        u32 maxDrawCount,
+        size_t indirectBufferStride = 0) = 0;
 
     virtual void DrawMeshes(u32 taskCount, u32 firstTask = 0) = 0;
 
@@ -86,7 +104,15 @@ public: // interface
         FRawBufferID indirectBuffer,
         size_t indirectBufferOffset,
         u32 drawCount,
-        size_t stride = 0) = 0;
+        size_t indirectBufferStride = 0) = 0;
+
+    virtual void DrawMeshesIndirectCount(
+        FRawBufferID indirectBuffer,
+        size_t indirectBufferOffset,
+        FRawBufferID countBuffer,
+        size_t countBufferOffset,
+        u32 maxDrawCount,
+        size_t indirectBufferStride = 0) = 0;
 
 };
 //----------------------------------------------------------------------------

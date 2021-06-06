@@ -13,7 +13,9 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FImageDesc {
-    EImageType Type{ Default };
+    EImageDim Type{ Default };
+    EImageView View{ Default }; // optional
+    EImageFlags Flags{ Default };
     uint3 Dimensions{ 0 };
     EPixelFormat Format{ Default };
     EImageUsage Usage{ Default };
@@ -25,7 +27,7 @@ struct FImageDesc {
 
     FImageDesc() = default;
     FImageDesc(
-        EImageType type,
+        EImageDim type,
         const uint3& dimensions,
         EPixelFormat format,
         EImageUsage usage,
@@ -41,9 +43,12 @@ struct FImageDesc {
     ,   Queues(queues)
     {}
 
-    FImageDesc& SetImageType(EImageType value) { Type = value;  return *this; }
-    FImageDesc& SetDimension(const uint2 &value) { Dimensions = uint3{ value, 1 };  return *this; }
-    FImageDesc& SetDimension(const uint3 &value) { Dimensions = value;  return *this; }
+    FImageDesc& SetType(EImageDim value) { Type = value;  return *this; }
+    FImageDesc& SetView(EImageView value) NOEXCEPT;
+    FImageDesc& SetFlag(EImageFlags value) { Flags |= value; return *this; }
+    FImageDesc& SetDimension(u32 value) NOEXCEPT;
+    FImageDesc& SetDimension(const uint2& value) NOEXCEPT;
+    FImageDesc& SetDimension(const uint3& value) NOEXCEPT;
     FImageDesc& SetUsage(EImageUsage value) { Usage = value;  return *this; }
     FImageDesc& SetFormat(EPixelFormat value) { Format = value;  return *this; }
     FImageDesc& SetQueues(EQueueUsage value) { Queues = value;  return *this; }
@@ -55,12 +60,12 @@ struct FImageDesc {
     PPE_RHI_API void Validate();
 
     friend hash_t hash_value(const FImageDesc& it) {
-        return hash_tuple(it.Type, it.Dimensions, it.Format, it.Usage, it.ArrayLayers, it.MaxLevel, it.Queues);
+        return hash_tuple(it.Type, it.View, it.Flags, it.Dimensions, it.Format, it.Usage, it.ArrayLayers, it.MaxLevel, it.Queues);
     }
 };
 //----------------------------------------------------------------------------
 struct FImageViewDesc {
-    EImageType Type{ Default };
+    EImageView View{ Default };
     EPixelFormat Format{ Default };
     FMipmapLevel BaseLevel;
     u32 LevelCount{ 1 };
@@ -71,7 +76,7 @@ struct FImageViewDesc {
 
     FImageViewDesc() = default;
     FImageViewDesc(
-        EImageType type,
+        EImageView view,
         EPixelFormat format,
         FMipmapLevel baseLevel = Default,
         u32 numLevels = 1,
@@ -79,7 +84,7 @@ struct FImageViewDesc {
         u32 numLayers = 1,
         FImageSwizzle swizzle = Default,
         EImageAspect aspectMask = Default )
-    :   Type(type)
+    :   View(view)
     ,   Format(format)
     ,   BaseLevel(baseLevel)
     ,   LevelCount(numLevels)
@@ -91,7 +96,7 @@ struct FImageViewDesc {
 
     PPE_RHI_API explicit FImageViewDesc(const FImageDesc& desc);
 
-    FImageViewDesc& SetViewType(EImageType value) { Type = value;  return *this; }
+    FImageViewDesc& SetType(EImageView value) { View = value;  return *this; }
     FImageViewDesc& SetFormat(EPixelFormat value) { Format = value;  return *this; }
     FImageViewDesc& SetBaseLevel(u32 value) { BaseLevel = FMipmapLevel{value};  return *this; }
     FImageViewDesc& SetLevels(u32 base, u32 count) { BaseLevel = FMipmapLevel{base}; LevelCount = count;  return *this; }
@@ -104,7 +109,7 @@ struct FImageViewDesc {
 
     bool operator ==(const FImageViewDesc& other) const {
         return (
-            Type == other.Type &&
+            View == other.View &&
             Format == other.Format &&
             BaseLevel == other.BaseLevel &&
             LevelCount == other.LevelCount &&
@@ -118,7 +123,7 @@ struct FImageViewDesc {
     }
 
     friend hash_t hash_value(const FImageViewDesc& it) {
-        return hash_tuple(it.Type, it.Format, it.BaseLevel, it.LevelCount, it.BaseLayer, it.LayerCount, it.Swizzle, it.AspectMask);
+        return hash_tuple(it.View, it.Format, it.BaseLevel, it.LevelCount, it.BaseLayer, it.LayerCount, it.Swizzle, it.AspectMask);
     }
 };
 //----------------------------------------------------------------------------

@@ -33,71 +33,105 @@ public:
         RayTracingScene,
     };
 
-    template <EDescriptorType _TypeId, typename _Element, u32 _Capacity = 1>
-    struct TResource {
-        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, _TypeId);
-        STATIC_CONST_INTEGRAL(u32, Capacity, _Capacity);
-
-        using base_type = TResource;
-        using FElement = _Element;
-
+    struct FBaseResource {
         FBindingIndex Index;
-        //const u16 ElementCapacity;
+        const u16 ElementCapacity;
         u16 ElementCount;
-        FElement Elements[_Capacity];
+
+        FBaseResource(FBindingIndex index, u16 elementCapacity, u16 elementCount) NOEXCEPT
+        :   Index(index), ElementCapacity(elementCapacity), ElementCount(elementCount)
+        {}
+
+        bool operator ==(const FBaseResource& other) const NOEXCEPT {
+            return (Index == other.Index && ElementCapacity == other.ElementCapacity && ElementCount == other.ElementCount);
+        }
+        bool operator !=(const FBaseResource& other) const NOEXCEPT { return (not operator ==(other)); }
+
+        friend hash_t hash_value(const FBaseResource& res) {
+            return hash_tuple(res.Index, res.ElementCount);
+        }
+    };
+    struct FBaseResourceWithState : FBaseResource {
+        EResourceState State;
+
+        FBaseResourceWithState(FBindingIndex index, u16 elementCapacity, u16 elementCount, EResourceState state) NOEXCEPT
+        :   FBaseResource(index, elementCapacity, elementCount), State(state)
+        {}
+
+        bool operator ==(const FBaseResourceWithState& other) const NOEXCEPT {
+            return (static_cast<const FBaseResource&>(*this) == other && State == other.State);
+        }
+        bool operator !=(const FBaseResourceWithState& other) const NOEXCEPT { return (not operator ==(other)); }
+
+        friend hash_t hash_value(const FBaseResourceWithState& res) {
+            return hash_tuple(static_cast<const FBaseResource&>(res), res.State);
+        }
+    };
+    struct FBaseResourceWithDynamicOffsets : FBaseResourceWithState {
+        u32 DynamicOffsetIndex;
+        u32 StaticSize;
+        u32 ArrayStride;
+
+        FBaseResourceWithDynamicOffsets(FBindingIndex index, u16 elementCapacity, u16 elementCount, EResourceState state,
+            u32 dynamicOffsetIndex, u32 staticSize, u32 arrayStride ) NOEXCEPT
+        :   FBaseResourceWithState(index, elementCapacity, elementCount, state)
+        ,   DynamicOffsetIndex(dynamicOffsetIndex), StaticSize(staticSize), ArrayStride(arrayStride)
+        {}
+
+        bool operator ==(const FBaseResourceWithDynamicOffsets& other) const NOEXCEPT {
+            return (static_cast<const FBaseResourceWithState&>(*this) == other &&
+                DynamicOffsetIndex == other.DynamicOffsetIndex && StaticSize == other.StaticSize && ArrayStride == other.ArrayStride );
+        }
+        bool operator !=(const FBaseResourceWithDynamicOffsets& other) const NOEXCEPT { return (not operator ==(other)); }
+
+        friend hash_t hash_value(const FBaseResourceWithDynamicOffsets& res) {
+            return hash_tuple(static_cast<const FBaseResourceWithState&>(res), res.DynamicOffsetIndex, res.StaticSize, res.ArrayStride);
+        }
+    };
+
+    template <EDescriptorType _TypeId, typename _Element, class _BaseResource = FBaseResource >
+    struct TResource : _BaseResource {
+        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, _TypeId);
+
+        using base_type = _BaseResource;
+        using base_type::base_type;
+        using base_type::operator ==;
+        using base_type::operator !=;
+        using element_type = _Element;
+
+        element_type Elements[1];
 
         bool operator ==(const TResource& other) const {
-            if (Index != other.Index || ElementCount != other.ElementCount)
+            if (static_cast<const base_type&>(*this) != other)
                 return false;
-            return std::equal(std::begin(Elements), std::begin(Elements) + ElementCount, std::begin(other.Elements));
+            forrange(i, 0, u32(base_type::ElementCount))
+                if (Elements[i] != other.Elements[i])
+                    return false;
+            return true;
         }
         bool operator !=(const TResource& other) const { return (not operator ==(other)); }
 
         friend hash_t hash_value(const TResource& res) {
-            return hash_tuple(res.Index, res.ElementCount, hash_range(res.Elements, res.ElementCount));
+            hash_t hash{ hash_value(static_cast<const base_type&>(res)) };
+            hash_range(hash, res.Elements, res.ElementCount);
+            return hash;
         }
     };
-    template <EDescriptorType _TypeId, typename _Element, u32 _Capacity = 1>
-    struct TResourceStateful : TResource<_TypeId, _Element, _Capacity> {
-        using base_type = TResource<_TypeId, _Element, _Capacity>;
-
-        EResourceState State;
-
-        bool operator ==(const TResourceStateful& other) const { return (State == other.State && static_cast<const base_type&>(*this) == other); }
-        bool operator !=(const TResourceStateful& other) const { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const TResourceStateful& res) {
-            return hash_tuple(res.State, static_cast<const base_type&>(res));
-        }
-    };
+    template <EDescriptorType _TypeId, typename _Element>
+    using TResourceWithState = TResource<_TypeId, _Element, FBaseResourceWithState>;
 
     // FBuffer
     struct FBufferElement {
         FRawBufferID BufferId;
-        size_t Offset;
-        size_t Size;
+        u32 Offset;
+        u32 Size;
 
         bool operator ==(const FBufferElement& other) const { return (BufferId == other.BufferId && Offset == other.Offset && Size == other.Size); }
         bool operator !=(const FBufferElement& other) const { return (not operator ==(other)); }
 
         friend hash_t hash_value(const FBufferElement& res) { return hash_tuple(res.BufferId, res.Offset, res.Size); }
     };
-    struct FBuffer : TResourceStateful<EDescriptorType::Buffer, FBufferElement> {
-        u32 DynamicStateOffset;
-        size_t StaticSize;
-        size_t ArrayStride;
-
-        bool operator ==(const FBuffer& other) const {
-            if (DynamicStateOffset != other.DynamicStateOffset || StaticSize != other.StaticSize || ArrayStride != other.ArrayStride)
-                return false;
-            return (static_cast<const base_type&>(*this) == other);
-        }
-        bool operator !=(const FBuffer& other) const { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const FBuffer& res) {
-            return hash_tuple(res.DynamicStateOffset, res.StaticSize, res.ArrayStride, static_cast<const base_type&>(res));
-        }
-    };
+    using FBuffer = TResource<EDescriptorType::TexelBuffer, FBufferElement, FBaseResourceWithDynamicOffsets>;
 
     // FTexelBuffer
     struct FTexelBufferElement {
@@ -109,7 +143,7 @@ public:
 
         friend hash_t hash_value(const FTexelBufferElement& res) { return hash_tuple(res.BufferId, res.Desc); }
     };
-    using FTexelBuffer = TResourceStateful<EDescriptorType::TexelBuffer, FTexelBufferElement>;
+    using FTexelBuffer = TResourceWithState<EDescriptorType::TexelBuffer, FTexelBufferElement>;
 
     // FImage
     struct FImageElement {
@@ -121,7 +155,7 @@ public:
 
         friend hash_t hash_value(const FImageElement& res) { return hash_tuple(res.ImageId, res.Desc); }
     };
-    using FImage = TResourceStateful<EDescriptorType::Image, FImageElement>;
+    using FImage = TResourceWithState<EDescriptorType::Image, FImageElement>;
 
     // FTexture
     struct FTextureElement {
@@ -134,7 +168,7 @@ public:
 
         friend hash_t hash_value(const FTextureElement& res) { return hash_tuple(res.ImageId, res.SamplerId, res.Desc); }
     };
-    using FTexture = TResourceStateful<EDescriptorType::Texture, FTextureElement>;
+    using FTexture = TResourceWithState<EDescriptorType::Texture, FTextureElement>;
 
     // FSampler
     struct FSamplerElement {
@@ -167,7 +201,7 @@ public:
         template <typename T>
         T& Get(void* p) const {
             Assert(T::TypeId == Type);
-            return *reinterpret_cast<T*>(reinterpret_cast<u8*>(p) + Offset);
+            return *reinterpret_cast<T*>(static_cast<u8*>(p) + Offset);
         }
         template <typename T>
         const T& Get(const void* p) const {
@@ -179,9 +213,6 @@ public:
 
         bool operator < (const FUniformID& id) const { return (id <  Id); }
         bool operator >=(const FUniformID& id) const { return (id >= Id); }
-
-        bool operator <=(const FUniformID& id) const { return (id <= Id); }
-        bool operator > (const FUniformID& id) const { return (id >  Id); }
     };
 
     // FDynamicData
@@ -196,12 +227,6 @@ public:
 
         FDynamicData() = default;
 
-        FDynamicData(const FDynamicData&) = delete;
-        FDynamicData& operator =(const FDynamicData&) = delete;
-
-        FDynamicData(FDynamicData&&) = default;
-        FDynamicData& operator =(FDynamicData&&) = default;
-
         TMemoryView<FUniform> Uniforms() { return Storage.SubRange(UniformsOffset, UniformsCount * sizeof(FUniform)).Cast<FUniform>(); }
         TMemoryView<const FUniform> Uniforms() const { return const_cast<FDynamicData*>(this)->Uniforms(); }
 
@@ -210,51 +235,29 @@ public:
         template <typename _Each>
         void EachUniform(_Each&& each) const { const_cast<FDynamicData*>(this)->EachUniform(each); }
 
-        TMemoryView<u32> DynamicOffsets() { return { reinterpret_cast<u32*>((u8*)this + DynamicOffsetsOffset), DynamicOffsetsCount }; }
-        TMemoryView<const u32> DynamicOffsets() const { return { reinterpret_cast<const u32*>((const u8*)this + DynamicOffsetsOffset), DynamicOffsetsCount }; }
+        TMemoryView<u32> DynamicOffsets() { return { reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + DynamicOffsetsOffset), DynamicOffsetsCount }; }
+        TMemoryView<const u32> DynamicOffsets() const { return { reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(this) + DynamicOffsetsOffset), DynamicOffsetsCount }; }
 
-        bool Equals(const FDynamicData& other) const;
-        hash_t HashValue() const;
-
-        friend hash_t hash_value(const FDynamicData& data) { return data.HashValue(); }
-
-        bool operator ==(const FDynamicData& other) const { return Equals(other); }
+        bool operator ==(const FDynamicData& other) const { return CompareDynamicData(*this, other); }
         bool operator !=(const FDynamicData& other) const { return (not operator ==(other)); }
     };
 
-    FPipelineResources() { ResetCachedId_(); }
+    FPipelineResources() NOEXCEPT { ResetCachedId_(); }
     ~FPipelineResources();
 
     FPipelineResources(const FPipelineResources& other);
-    FPipelineResources& operator =(const FPipelineResources& other);
-
-    FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT : FPipelineResources() { operator =(std::move(rvalue)); }
-    FPipelineResources& operator =(FPipelineResources&& rvalue) NOEXCEPT {
-        _dynamicData = std::move(rvalue._dynamicData);
-        _allowEmptyResources = rvalue._allowEmptyResources;
+    FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT
+    :   _dynamicData(std::move(rvalue._dynamicData))
+    ,   _allowEmptyResources(rvalue._allowEmptyResources) {
         SetCachedId_(rvalue.CachedId_());
         rvalue.SetCachedId_(FRawPipelineResourcesID{0});
-        return (*this);
     }
 
-    FRawDescriptorSetLayoutID Layout() const {
-        READSCOPELOCK(_rwlock);
-        return (_dynamicData.LayoutId);
-    }
+    FRawDescriptorSetLayoutID Layout() const { READSCOPELOCK(_rwlock); return (_dynamicData.LayoutId); }
+    TMemoryView<const u32> DynamicOffsets() const { READSCOPELOCK(_rwlock); return _dynamicData.DynamicOffsets(); }
 
-    void AllowEmptyResources(bool value) {
-        WRITESCOPELOCK(_rwlock);
-        _allowEmptyResources = value;
-    }
-    bool AllowEmptyResources() const {
-        READSCOPELOCK(_rwlock);
-        return _allowEmptyResources;
-    }
-
-    TMemoryView<const u32> DynamicOffsets() const {
-        READSCOPELOCK(_rwlock);
-        return _dynamicData.DynamicOffsets();
-    }
+    bool AllowEmptyResources() const { READSCOPELOCK(_rwlock); return _allowEmptyResources; }
+    void SetAllowEmptyResources(bool value) { WRITESCOPELOCK(_rwlock); _allowEmptyResources = value; }
 
     bool HasImage(const FUniformID& id) const;
     bool HasSampler(const FUniformID& id) const;
@@ -287,21 +290,23 @@ public:
     FPipelineResources& BindTexelBuffer(const FUniformID& name, FRawBufferID buffer, const FBufferViewDesc& desc, u32 elementIndex = 0);
     FPipelineResources& BindRayTracingScene(const FUniformID& id, FRawRTSceneID scene, u32 elementIndex = 0);
 
-    void Reset(FUniformID uniform);
+    void Reset(const FUniformID& uniform);
     void ResetAll();
 
-    static FDynamicData CreateDynamicData(const FPipelineDesc::FUniformMap& uniforms,
+    static void Initialize(FPipelineResources* pResources, FRawDescriptorSetLayoutID layoutId, const FDynamicData& data);
+
+    static void CreateDynamicData(
+        FDynamicData* pDynamicData,
+        const FPipelineDesc::FUniformMap& uniforms,
         u32 resourceCount, u32 arrayElemCount, u32 bufferDynamicOffsetCount );
-    static FDynamicData CloneDynamicData(const FPipelineResources& res);
-    static FDynamicData RemoveDynamicData(FPipelineResources* pres);
+    static hash_t ComputeDynamicDataHash(const FDynamicData& dynamicData) NOEXCEPT;
+    static bool CompareDynamicData(const FDynamicData& lhs, const FDynamicData& rhs) NOEXCEPT;
 
-    static bool Initialize(FPipelineResources* pres, FRawDescriptorSetLayoutID layoutId, FDynamicData&& rdata);
-
-    static FRawPipelineResourcesID GetCached(const FPipelineResources& res) { return res.CachedId_(); }
-    static void SetCached(const FPipelineResources& res, FRawPipelineResourcesID id) { res.SetCachedId_(id); }
+    static FRawPipelineResourcesID Cached(const FPipelineResources& resource) { return resource.CachedId_(); }
+    static void SetCached(const FPipelineResources& resource, FRawPipelineResourcesID id) { resource.SetCachedId_(id); }
 
 private:
-    using FCachedID_ = std::atomic< FRawPipelineResourcesID::data_t >;
+    using FCachedID_ = std::atomic< FRawPipelineResourcesID::FPackedData >;
 
     FReadWriteLock _rwlock;
     mutable FCachedID_ _cachedId;
@@ -315,9 +320,9 @@ private:
     u32& DynamicOffset_(u32 i) { return _dynamicData.DynamicOffsets()[i]; }
 
     template <typename T>
-    T* Resource_(const FUniformID& id);
+    T& Resource_Unlocked_(const FUniformID& id);
     template <typename T>
-    bool HasResource_(const FUniformID& id) const;
+    bool HasResource_Unlocked_(const FUniformID& id) const;
 };
 //----------------------------------------------------------------------------
 using FPipelineResourceSet = ASSOCIATIVE_VECTORINSITU(

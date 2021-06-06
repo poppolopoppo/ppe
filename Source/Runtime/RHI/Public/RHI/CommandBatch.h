@@ -22,6 +22,7 @@ public:
 
     virtual void TearDown() = 0;
 
+    // call TearDown() when released, just before delete
     friend void OnStrongRefCountReachZero(ICommandBatch* batch) {
         Assert(batch);
         Assert_NoAssume(0 == batch->RefCount());

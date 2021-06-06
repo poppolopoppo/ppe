@@ -27,7 +27,7 @@ struct TDrawTaskDesc {
     FTaskName Name;
     FRgba8u DebugColor;
 
-    TDrawTaskDesc(FStringView name, FRgba8u color) : Name(name), DebugColor(color) {}
+    TDrawTaskDesc(FStringView name, FRgba8u color) NOEXCEPT : Name(name), DebugColor(color) {}
 
     self_type& SetName(FStringView value) { Name.Assign(value); return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(FRgba8u value) { DebugColor = value; return static_cast<self_type&>(*this); }
@@ -62,7 +62,7 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
 
     TDrawCallDesc() = default;
 #if USE_PPE_RHITASKNAME
-    TDrawCallDesc(FStringView name, FRgba8u color) : TDrawTaskDesc<_Task>(name, color) {}
+    TDrawCallDesc(FStringView name, FRgba8u color) NOEXCEPT : TDrawTaskDesc<_Task>(name, color) {}
 #endif
 
     _Task& AddResources(const FDescriptorSetID& id, const FPipelineResources* res);
@@ -119,7 +119,7 @@ struct TDrawVerticesDesc : TDrawCallDesc<_Task> {
 
     TDrawVerticesDesc() = default;
 #if USE_PPE_RHITASKNAME
-    TDrawVerticesDesc(FStringView name, FRgba8u color) : TDrawCallDesc<_Task>(name, color) {}
+    TDrawVerticesDesc(FStringView name, FRgba8u color) NOEXCEPT : TDrawCallDesc<_Task>(name, color) {}
 #endif
 
     _Task& SetTopology(EPrimitiveTopology value) { Topology = value; return static_cast<_Task&>(*this); }
@@ -152,7 +152,7 @@ struct FDrawVertices final : details::TDrawVerticesDesc<FDrawVertices> {
     FDrawCommands Commands;
 
 #if USE_PPE_RHITASKNAME
-    FDrawVertices() : TDrawVerticesDesc<FDrawVertices>{ "DrawVertices", FDebugColorScheme::Get().Draw } {}
+    FDrawVertices() NOEXCEPT : TDrawVerticesDesc<FDrawVertices>{ "DrawVertices", FDebugColorScheme::Get().Draw } {}
 #endif
 
     FDrawVertices& Draw(u32 vertexCount, u32 instanceCount = 1, u32 firstVertex = 0, u32 firstInstance = 0) {
@@ -181,7 +181,7 @@ struct FDrawIndexed : details::TDrawVerticesDesc<FDrawIndexed> {
     FDrawCommands Commands;
 
 #if USE_PPE_RHITASKNAME
-    FDrawIndexed() : TDrawVerticesDesc<FDrawIndexed>{ "DrawIndexed", FDebugColorScheme::Get().Draw } {}
+    FDrawIndexed() NOEXCEPT : TDrawVerticesDesc<FDrawIndexed>{ "DrawIndexed", FDebugColorScheme::Get().Draw } {}
 #endif
 
     FDrawIndexed& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
@@ -205,7 +205,7 @@ struct FDrawVerticesIndirect : details::TDrawVerticesDesc<FDrawVerticesIndirect>
     struct FDrawCommand {
         u32 IndirectBufferOffset{ 0 };
         u32 DrawCount{ 0 };
-        u32 Stride{ UMax };
+        u32 IndirectBufferStride{ UMax };
     };
 
     using FDrawCommands = TFixedSizeStack<FDrawCommand, MaxDrawCommands>;
@@ -222,7 +222,7 @@ struct FDrawVerticesIndirect : details::TDrawVerticesDesc<FDrawVerticesIndirect>
     FRawBufferID IndirectBuffer;
 
 #if USE_PPE_RHITASKNAME
-    FDrawVerticesIndirect() : TDrawVerticesDesc<FDrawVerticesIndirect>{ "DrawVerticesIndirect", FDebugColorScheme::Get().Draw } {}
+    FDrawVerticesIndirect() NOEXCEPT : TDrawVerticesDesc<FDrawVerticesIndirect>{ "DrawVerticesIndirect", FDebugColorScheme::Get().Draw } {}
 #endif
 
     FDrawVerticesIndirect& SetIndirectBuffer(FRawBufferID buffer) {
@@ -231,9 +231,9 @@ struct FDrawVerticesIndirect : details::TDrawVerticesDesc<FDrawVerticesIndirect>
         return (*this);
     }
 
-    FDrawVerticesIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 stride = sizeof(FIndirectCommand)) {
+    FDrawVerticesIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand)) {
         Assert(drawCount > 0);
-        Emplace_Back(Commands, indirectBufferOffset, drawCount, stride);
+        Emplace_Back(Commands, indirectBufferOffset, drawCount, indirectBufferStride);
         return (*this);
     }
 };
@@ -261,7 +261,7 @@ struct FDrawIndexedIndirect : details::TDrawVerticesDesc<FDrawIndexedIndirect> {
     FRawBufferID IndirectBuffer;
 
 #if USE_PPE_RHITASKNAME
-    FDrawIndexedIndirect() : TDrawVerticesDesc<FDrawIndexedIndirect>{ "DrawIndexedIndirect", FDebugColorScheme::Get().Draw } {}
+    FDrawIndexedIndirect() NOEXCEPT : TDrawVerticesDesc<FDrawIndexedIndirect>{ "DrawIndexedIndirect", FDebugColorScheme::Get().Draw } {}
 #endif
 
     FDrawIndexedIndirect& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
@@ -285,6 +285,92 @@ struct FDrawIndexedIndirect : details::TDrawVerticesDesc<FDrawIndexedIndirect> {
     }
 };
 //----------------------------------------------------------------------------
+// FDrawVerticesIndirectCount
+//----------------------------------------------------------------------------
+struct FDrawVerticesIndirectCount : details::TDrawVerticesDesc<FDrawVerticesIndirectCount> {
+    struct FDrawCommand {
+        u32 IndirectBufferOffset{ 0 };
+        u32 CountBufferOffset{ 0 };
+        u32 DrawCount{ 0 };
+        u32 IndirectBufferStride{ UMax };
+    };
+
+    using FDrawCommands = TFixedSizeStack<FDrawCommand, MaxDrawCommands>;
+    using FIndirectCommand = FDrawVerticesIndirect::FIndirectCommand;
+
+    FDrawCommands Commands;
+    FRawBufferID IndirectBuffer; // contains array of 'DrawIndirectCommand'
+    FRawBufferID CountBuffer; // contains single 'uint' value
+
+#if USE_PPE_RHITASKNAME
+    FDrawVerticesIndirectCount() NOEXCEPT : TDrawVerticesDesc<FDrawVerticesIndirectCount>{ "DrawVerticesIndirectCount", FDebugColorScheme::Get().Draw } {}
+#endif
+
+    FDrawVerticesIndirectCount& SetIndirectBuffer(FRawBufferID buffer) {
+        Assert(buffer);
+        IndirectBuffer = buffer;
+        return (*this);
+    }
+
+    FDrawVerticesIndirectCount& SetCountBuffer(FRawBufferID buffer) {
+        Assert(buffer);
+        CountBuffer = buffer;
+        return (*this);
+    }
+
+    FDrawVerticesIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand)) {
+        Assert(maxDrawCount > 0);
+        Emplace_Back(Commands, indirectBufferOffset, countBufferOffset, maxDrawCount, indirectBufferStride);
+        return (*this);
+    }
+};
+//----------------------------------------------------------------------------
+// FDrawIndexedIndirectCount
+//----------------------------------------------------------------------------
+struct FDrawIndexedIndirectCount : details::TDrawVerticesDesc<FDrawIndexedIndirectCount> {
+    using FDrawCommand = FDrawVerticesIndirectCount::FDrawCommand;
+    using FDrawCommands = FDrawVerticesIndirectCount::FDrawCommands;
+    using FIndirectCommand = FDrawIndexedIndirect::FIndirectCommand;
+
+    FRawBufferID IndexBuffer;
+    u32 IndexBufferOffset{ 0 };
+    EIndexFormat IndexFormat{ Default };
+
+    FDrawCommands Commands;
+    FRawBufferID IndirectBuffer; // contains array of 'DrawIndirectCommand'
+    FRawBufferID CountBuffer; // contains single 'uint' value
+
+#if USE_PPE_RHITASKNAME
+    FDrawIndexedIndirectCount() NOEXCEPT : TDrawVerticesDesc<FDrawIndexedIndirectCount>{ "DrawIndexedIndirectCount", FDebugColorScheme::Get().Draw } {}
+#endif
+
+    FDrawIndexedIndirectCount& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
+        Assert(buffer);
+        IndexBuffer = buffer;
+        IndexBufferOffset = offset;
+        IndexFormat = fmt;
+        return (*this);
+    }
+
+    FDrawIndexedIndirectCount& SetIndirectBuffer(FRawBufferID buffer) {
+        Assert(buffer);
+        IndirectBuffer = buffer;
+        return (*this);
+    }
+
+    FDrawIndexedIndirectCount& SetCountBuffer(FRawBufferID buffer) {
+        Assert(buffer);
+        CountBuffer = buffer;
+        return (*this);
+    }
+
+    FDrawIndexedIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand)) {
+        Assert(maxDrawCount > 0);
+        Emplace_Back(Commands, indirectBufferOffset, countBufferOffset, maxDrawCount, indirectBufferStride);
+        return (*this);
+    }
+};
+//----------------------------------------------------------------------------
 // FDrawMeshes
 //----------------------------------------------------------------------------
 struct FDrawMeshes final : details::TDrawCallDesc<FDrawMeshes> {
@@ -299,7 +385,7 @@ struct FDrawMeshes final : details::TDrawCallDesc<FDrawMeshes> {
     FDrawCommands Commands;
 
 #if USE_PPE_RHITASKNAME
-    FDrawMeshes() : TDrawCallDesc<FDrawMeshes>{ "DrawMeshes", FDebugColorScheme::Get().DrawMeshes } {}
+    FDrawMeshes() NOEXCEPT : TDrawCallDesc<FDrawMeshes>{ "DrawMeshes", FDebugColorScheme::Get().DrawMeshes } {}
 #endif
 
     FDrawMeshes& SetPipeline(FRawMPipelineID value) {
@@ -319,7 +405,7 @@ struct FDrawMeshes final : details::TDrawCallDesc<FDrawMeshes> {
 //----------------------------------------------------------------------------
 struct FDrawMeshesIndirect final : details::TDrawCallDesc<FDrawMeshesIndirect> {
     using FDrawCommand = FDrawVerticesIndirect::FDrawCommand;
-    using FDrawCommands = TFixedSizeStack<FDrawCommand, MaxDrawCommands>;
+    using FDrawCommands = FDrawVerticesIndirect::FDrawCommands;
 
     struct FIndirectCommand {
         u32 TaskCount{ 0 };
@@ -332,7 +418,7 @@ struct FDrawMeshesIndirect final : details::TDrawCallDesc<FDrawMeshesIndirect> {
     FRawBufferID IndirectBuffer;
 
 #if USE_PPE_RHITASKNAME
-    FDrawMeshesIndirect() : TDrawCallDesc<FDrawMeshesIndirect>{ "DrawMeshesIndirect", FDebugColorScheme::Get().DrawMeshes } {}
+    FDrawMeshesIndirect() NOEXCEPT : TDrawCallDesc<FDrawMeshesIndirect>{ "DrawMeshesIndirect", FDebugColorScheme::Get().DrawMeshes } {}
 #endif
 
     FDrawMeshesIndirect& SetPipeline(FRawMPipelineID value) {
@@ -354,6 +440,46 @@ struct FDrawMeshesIndirect final : details::TDrawCallDesc<FDrawMeshesIndirect> {
     }
 };
 //----------------------------------------------------------------------------
+// FDrawMeshesIndirectCount
+//----------------------------------------------------------------------------
+struct FDrawMeshesIndirectCount final : details::TDrawCallDesc<FDrawMeshesIndirectCount> {
+    using FDrawCommands = FDrawVerticesIndirectCount::FDrawCommands;
+    using FIndirectCommand =  FDrawMeshesIndirect::FIndirectCommand;
+
+    FRawMPipelineID Pipeline;
+    FDrawCommands Commands;
+    FRawBufferID IndirectBuffer; // contains array of 'DrawIndirectCommand'
+    FRawBufferID CountBuffer; // contains single 'uint' value
+
+#if USE_PPE_RHITASKNAME
+    FDrawMeshesIndirectCount() NOEXCEPT : TDrawCallDesc<FDrawMeshesIndirectCount>{ "DrawMeshesIndirectCount", FDebugColorScheme::Get().DrawMeshes } {}
+#endif
+
+    FDrawMeshesIndirectCount& SetPipeline(FRawMPipelineID value) {
+        Assert(value);
+        Pipeline = value;
+        return (*this);
+    }
+
+    FDrawMeshesIndirectCount& SetIndirectBuffer(FRawBufferID buffer) {
+        Assert(buffer);
+        IndirectBuffer = buffer;
+        return (*this);
+    }
+
+    FDrawMeshesIndirectCount& SetCountBuffer(FRawBufferID buffer) {
+        Assert(buffer);
+        CountBuffer = buffer;
+        return (*this);
+    }
+
+    FDrawMeshesIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indexBufferStride = sizeof(FIndirectCommand)) {
+        Assert(maxDrawCount > 0);
+        Emplace_Back(Commands, indirectBufferOffset, countBufferOffset, maxDrawCount, indexBufferStride);
+        return (*this);
+    }
+};
+//----------------------------------------------------------------------------
 // FCustomDraw
 //----------------------------------------------------------------------------
 struct FCustomDraw final : details::TDrawTaskDesc<FCustomDraw> {
@@ -368,7 +494,7 @@ struct FCustomDraw final : details::TDrawTaskDesc<FCustomDraw> {
 #if !USE_PPE_RHITASKNAME
     FCustomDraw() = default;
 #else
-    FCustomDraw() : TDrawTaskDesc<FCustomDraw>{ "CustomDraw", FDebugColorScheme::Get().CustomDraw } {}
+    FCustomDraw() NOEXCEPT : TDrawTaskDesc<FCustomDraw>{ "CustomDraw", FDebugColorScheme::Get().CustomDraw } {}
 #endif
 
     explicit FCustomDraw(FCallback&& rcallback) : FCustomDraw() {

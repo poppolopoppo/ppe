@@ -17,8 +17,8 @@ struct FMemoryDesc {
     u32 ExternalRequirements{ 0 };
 
     FMemoryDesc() = default;
-    FMemoryDesc(EMemoryType type) : Type(type) {}
-    FMemoryDesc(EMemoryType type, FMemPoolID pool) : Type(type), Pool(pool) {}
+    FMemoryDesc(EMemoryType type) NOEXCEPT : Type(type) {}
+    FMemoryDesc(EMemoryType type, FMemPoolID pool) NOEXCEPT : Type(type), Pool(pool) {}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

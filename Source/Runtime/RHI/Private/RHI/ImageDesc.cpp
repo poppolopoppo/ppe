@@ -4,7 +4,7 @@
 
 #include "RHI/EnumHelpers.h"
 #include "RHI/ImageHelpers.h"
-#include "RHI/PixelFormatInfo.h"
+#include "RHI/PixelFormatHelpers.h"
 
 namespace PPE {
 namespace RHI {
@@ -13,114 +13,149 @@ namespace RHI {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void ValidateDimension_(uint3* pdim, FImageLayer* players, const EImageType imageType) {
-    Assert(pdim);
-    Assert(players);
-
-    switch (imageType) {
-    case EImageType::Tex1D: {
-        Assert(0 < pdim->x);
-        Assert(1 >= pdim->y && 1 >= pdim->z && 1 >= players->Value);
-        *pdim = Max(uint3(pdim->x, 0, 0), 1u);
-        *players = 1_layer;
-        return;
-    }
-    case EImageType::Tex2D:
-    case EImageType::Tex2DMS: {
-        Assert(0 < pdim->x && 0 < pdim->y);
-        Assert(1 >= pdim->z && 1 >= players->Value);
-        *pdim = Max(uint3(pdim->xy, 0), 1u);
-        *players = 1_layer;
-        return;
-    }
-    case EImageType::TexCube: {
-        Assert(0 < pdim->x && 0 < pdim->y && 1 >= pdim->z);
-        Assert(pdim->x == pdim->y);
-        Assert(6 == players->Value);
-        *pdim = Max(uint3(pdim->xy, 1), 1u);
-        *players = 6_layer;
-        return;
-    }
-    case EImageType::Tex3D: {
-        Assert(0 < pdim->x && 0 < pdim->y && 0 < pdim->z);
-        Assert(1 >= players->Value);
-        *pdim = Max(*pdim, 1u);
-        *players = 1_layer;
-        return;
-    }
-
-    case EImageType::Tex1DArray: {
-        Assert(0 < pdim->x && 0 < players->Value);
-        FALLTHROUGH();
-    }
-    case EImageType::Tex2DArray:
-    case EImageType::Tex2DMSArray: {
-        Assert(0 < pdim->x && 0 < pdim->y && 0 < players->Value);
-        Assert(1 >= pdim->z);
-        *pdim = Max(uint3(pdim->xy, 0), 1u);
-        *players = Max(*players, 1_layer);
-        return;
-    }
-
-    case EImageType::TexCubeArray: {
-        Assert(0 < pdim->x && 0 < pdim->y && 1 >= pdim->z);
-        Assert(pdim->x == pdim->y);
-        Assert(players->Value > 0 && players->Value % 6 == 0);
-        *pdim = Max(uint3(pdim->xy, 0), 1u);
-        *players = Max(*players, 6_layer);
-        return;
-    }
-
-    case EImageType::Unknown: AssertNotReached();
-    }
-}
-//----------------------------------------------------------------------------
-static u32 NumMipmaps_(const EImageType imageType, const uint3& dim) {
-    switch (imageType) {
-    case EImageType::Tex2DMS:
-    case EImageType::Tex2DMSArray: return 1;
-
-    case EImageType::Tex1D:
-    case EImageType::Tex1DArray: return std::ilogb(dim.x.get()) + 1;
-
-    case EImageType::Tex2D:
-    case EImageType::Tex3D: return std::ilogb(MaxComponent(dim)) + 1;
-
-    case EImageType::TexCube:
-    case EImageType::TexCubeArray:
-    case EImageType::Tex2DArray: return std::ilogb(MaxComponent(dim.xy)) + 1;
-
-    case EImageType::Unknown: break;
-    }
-    AssertNotReached();
+static u32 NumMipmaps_(const uint3& dim) {
+    return (FPlatformMaths::FloorLog2(MaxComponent(dim)) + 1);
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FImageDesc& FImageDesc::SetView(EImageView value) NOEXCEPT {
+    View = value;
+
+    switch (View) {
+    case EImageView::_1D:
+    case EImageView::_1DArray:
+        Type = EImageDim_1D;
+        break;
+
+    case EImageView::_2D:
+    case EImageView::_2DArray:
+        Type = EImageDim_1D;
+        break;
+
+    case EImageView::_Cube:
+    case EImageView::_CubeArray:
+        Type = EImageDim::_2D;
+        Flags |= EImageFlags::CastToCube;
+        break;
+
+    case EImageView::_3D:
+        Type = EImageDim_3D;
+        Flags |= EImageFlags::CastToArray2D;
+        break;
+
+    case EImageView::Unknown:
+    default: AssertNotImplemented();
+    }
+
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FImageDesc& FImageDesc::SetDimension(u32 value) NOEXCEPT {
+    Dimensions = uint3(value, uint2::One);
+    Type = (Default == Type ? EImageDim_1D : Type);
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FImageDesc& FImageDesc::SetDimension(const uint2& value) NOEXCEPT {
+    Dimensions = uint3(value, 1);
+    Type = (Default == Type ? EImageDim_2D : Type);
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FImageDesc& FImageDesc::SetDimension(const uint3& value) NOEXCEPT {
+    Dimensions = value;
+    Type = (Default == Type ? EImageDim_3D : Type);
+    return (*this);
+}
+//----------------------------------------------------------------------------
 void FImageDesc::Validate() {
-    Assert(EImageType::Unknown != Type);
+    Assert(EImageDim::Unknown != Type);
     Assert(EPixelFormat::Unknown != Format);
 
-    ValidateDimension_(&Dimensions, &ArrayLayers, Type);
+    Dimensions = Max(Dimensions, uint3::One);
+    ArrayLayers = Max(ArrayLayers, 1_layer);
 
-    if (EImageType_IsMultiSampled(Type)) {
-        Assert(Samples > 1_samples);
+    switch (Type) {
+    case EImageDim::_1D:
+        Assert_NoAssume(not Samples.Enabled());
+        Assert_NoAssume(Dimensions.yz == uint2::One);
+        Assert_NoAssume(not (Flags & EImageFlags::CastToArray2D) &&
+                        not (Flags & EImageFlags::CastToCube)); // those flags are not supported for 1D
+
+        Flags -= (EImageFlags::CastToArray2D | EImageFlags::CastToCube);
+        Dimensions = uint3(Dimensions.x, uint2::One);
+        Samples = 1_samples;
+        break;
+
+    case EImageDim::_2D:
+        Assert_NoAssume(Dimensions.z == 1);
+        if ((Flags & EImageFlags::CastToCube) and not Meta::IsAligned(6, *ArrayLayers))
+            Flags -= EImageFlags::CastToCube;
+
+        Dimensions.z = 1;
+        break;
+
+    case EImageDim::_3D:
+        Assert_NoAssume(not Samples.Enabled());
+        Assert_NoAssume(ArrayLayers == 1_layer);
+        Assert_NoAssume(not (Flags & EImageFlags::CastToCube)); // this flag is not supported for 3D
+
+        Flags -= EImageFlags::CastToCube;
+        Samples = 1_samples;
+        ArrayLayers = 1_layer;
+        break;
+
+    case EImageDim::Unknown:
+    default: AssertNotImplemented();
+    }
+
+    // validate samples and mipmaps
+    if (Samples.Enabled()) {
         Assert(MaxLevel <= 1_mipmap);
         MaxLevel = 1_mipmap;
     }
     else {
-        Assert(Samples <= 1_samples);
         Samples = 1_samples;
-        MaxLevel = FMipmapLevel(Clamp(*MaxLevel, 1u, NumMipmaps_(Type, Dimensions)));
+        MaxLevel = FMipmapLevel(Clamp(*MaxLevel, 1u, NumMipmaps_(Dimensions)));
+    }
+
+    // set default view
+    if (View == Default) {
+        switch (Type) {
+        case EImageDim::_1D:
+            View = (ArrayLayers > 1_layer
+                ? EImageView_1DArray
+                : EImageView_1D );
+            break;
+
+        case EImageDim::_2D:
+            if (ArrayLayers > 6_layer && Flags & EImageFlags::CastToCube)
+                View = EImageView_CubeArray;
+            else if (ArrayLayers == 6_layer && Flags & EImageFlags::CastToCube)
+                View = EImageView_Cube;
+            else if (ArrayLayers > 1_layer)
+                View = EImageView_2DArray;
+            else
+                View = EImageView_2D;
+            break;
+
+        case EImageDim::_3D:
+            View = EImageView_3D;
+            break;
+
+        case EImageDim::Unknown:
+        default: AssertNotImplemented();
+        }
     }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FImageViewDesc::FImageViewDesc(const FImageDesc& desc)
-:   Type(desc.Type)
+:   View(desc.View)
 ,   Format(desc.Format)
 ,   BaseLevel(0)
 ,   LevelCount(*desc.MaxLevel)
@@ -131,59 +166,109 @@ FImageViewDesc::FImageViewDesc(const FImageDesc& desc)
 {}
 //----------------------------------------------------------------------------
 void FImageViewDesc::Validate(const FImageDesc& desc) {
-    if (Format == EPixelFormat::Unknown)
-        Format = desc.Format;
-
-    const u32 maxLayers = (EImageType::Tex3D == desc.Type ? 1 : *desc.ArrayLayers);
-    BaseLayer = FImageLayer(Clamp(*BaseLayer, 0u, maxLayers - 1));
-    LayerCount = Clamp(LayerCount, 1u, maxLayers - *BaseLayer);
-
-    BaseLevel = FMipmapLevel(Clamp(*BaseLevel, 0u, *desc.MaxLevel - 1));
+    BaseLevel = FMipmapLevel{ Clamp(*BaseLevel, 0u, *desc.MaxLevel - 1) };
     LevelCount = Clamp(LevelCount, 1u, *desc.MaxLevel - *BaseLevel);
 
+    // validate format
+    if (Format == Default) {
+        Format = desc.Format;
+    }
+    else if (Format != desc.Format && not (desc.Flags & EImageFlags::MutableFormat)) {
+        AssertMessage_NoAssume(L"can't change format for immutable image", false);
+        Format = desc.Format;
+    }
+
+    // validate aspect mask
     const EImageAspect mask = EPixelFormat_ToImageAspect(Format);
-    AspectMask = (AspectMask == Default ? mask : Meta::EnumAnd(AspectMask, mask));
-    Assert(AspectMask != Default);
+    AspectMask = (AspectMask == Default ? mask : BitAnd(AspectMask, mask));
+    Assert_NoAssume(AspectMask != Default);
 
-    if (EImageType::Unknown == Type) {
+
+    if (View == Default) {
+        // choose view type
         switch (desc.Type) {
-        case EImageType::TexCube:
-            if (6 == LayerCount)
-                Type = EImageType::TexCube;
-            else if (1 == LayerCount)
-                Type = EImageType::Tex2D;
+        case EImageDim::_1D:
+            View = (LayerCount > 1
+                ? EImageView_1DArray
+                : EImageView_1D );
+            break;
+
+        case EImageDim::_2D:
+            if (LayerCount > 6_layer && desc.Flags & EImageFlags::CastToCube)
+                View = EImageView_CubeArray;
+            else if (LayerCount == 6_layer && desc.Flags & EImageFlags::CastToCube)
+                View = EImageView_Cube;
+            else if (LayerCount > 1_layer)
+                View = EImageView_2DArray;
             else
-                Type = EImageType::Tex2DArray;
-            break;
-        case EImageType::TexCubeArray:
-            if (LayerCount % 6 == 0)
-                Type = EImageType::TexCubeArray;
-            else if (1 == LayerCount)
-                Type = EImageType::Tex2D;
-            else
-                Type = EImageType::Tex2DArray;
+                View = EImageView_2D;
             break;
 
-        case EImageType::Tex1DArray:
-            Type = (1 == LayerCount ? EImageType::Tex1D : EImageType::Tex1DArray);
-            break;
-        case EImageType::Tex2DArray:
-            Type = (1 == LayerCount ? EImageType::Tex2D : EImageType::Tex2DArray);
-            break;
-        case EImageType::Tex2DMSArray:
-            Type = (1 == LayerCount ? EImageType::Tex2DMS : EImageType::Tex2DMSArray);
+        case EImageDim::_3D:
+            View = EImageView_3D;
             break;
 
-        case EImageType::Tex1D:
-        case EImageType::Tex2D:
-        case EImageType::Tex2DMS:
-        case EImageType::Tex3D:
-            Type = desc.Type;
-            break;
-
-        case EImageType::Unknown: AssertNotImplemented();
+        case EImageDim::Unknown: break;
+        default: ;
         }
     }
+    else {
+        // validate view type
+        const u32 maxLayers = (desc.Type == EImageDim_3D && View != EImageView_3D
+            ? desc.Dimensions.z.get()
+            : *desc.ArrayLayers );
+
+        BaseLayer = FImageLayer{ Clamp(*BaseLayer, 0u, maxLayers - 1) };
+
+        switch (View) {
+        case EImageView::_1D:
+            Assert_NoAssume(desc.Type == EImageDim_1D);
+            Assert_NoAssume(LayerCount == UMax || LayerCount == 1);
+            LayerCount = 1;
+            break;
+        case EImageView::_1DArray:
+            Assert_NoAssume(desc.Type == EImageDim_1D);
+            LayerCount = Clamp(LayerCount, 1u, maxLayers - *BaseLayer);
+            break;
+
+        case EImageView::_2D:
+            Assert_NoAssume((desc.Type == EImageDim_2D) ||
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
+            Assert_NoAssume(LayerCount == UMax || LayerCount == 1);
+            LayerCount = 1;
+            break;
+        case EImageView::_2DArray:
+            Assert_NoAssume((desc.Type == EImageDim_2D) ||
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
+            LayerCount = Clamp(LayerCount, 1u, maxLayers - *BaseLayer);
+            break;
+
+        case EImageView::_Cube:
+            Assert_NoAssume((desc.Type == EImageDim_2D) ||
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
+            Assert_NoAssume(desc.Flags & EImageFlags::CastToCube);
+            Assert_NoAssume(UMax == LayerCount || Meta::IsAligned(6u, LayerCount));
+            LayerCount = 6;
+            break;
+        case EImageView::_CubeArray:
+            Assert_NoAssume((desc.Type == EImageDim_2D) ||
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
+            Assert_NoAssume(desc.Flags & EImageFlags::CastToCube);
+            Assert_NoAssume(UMax == LayerCount || Meta::IsAligned(6u, LayerCount));
+            LayerCount = Max(1u, (maxLayers - *BaseLayer) / 6) * 6;
+            break;
+
+        case EImageView::_3D:
+            Assert_NoAssume(desc.Type == EImageDim_3D);
+            Assert_NoAssume(LayerCount == UMax || LayerCount == 1);
+            LayerCount = 1;
+            break;
+
+        case EImageView::Unknown:
+        default: AssertNotImplemented();
+        }
+    }
+
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

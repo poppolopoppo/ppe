@@ -1,10 +1,12 @@
 #pragma once
 
 #include "RHI_fwd.h"
-#include "Maths/ScalarVectorHelpers.h"
 
 #include "RHI/BufferView.h"
+#include "RHI/PixelFormatHelpers.h"
 #include "RHI/ResourceEnums.h"
+
+#include "Maths/ScalarVectorHelpers.h"
 
 namespace PPE {
 namespace RHI {
@@ -16,18 +18,26 @@ struct FImageView {
     using subpart_type = FBufferView::subpart_type;
     using iterator = FBufferView::FIterator;
 
-    using FDecodeRGBA32f = void (*)(FRgba32f*, subpart_type);
-    using FDecodeRGBA32u = void (*)(FRgba32u*, subpart_type);
-    using FDecodeRGBA32i = void (*)(FRgba32i*, subpart_type);
-
     FImageView() = default;
-    PPE_RHI_API FImageView(
-        const TMemoryView<subpart_type>& parts,
+
+    FImageView(
+        const TMemoryView<const subpart_type>& parts,
         const uint3& dimensions,
-        size_t rowPitch,
-        size_t slicePitch,
+        u32 rowPitch,
+        u32 slicePitch,
         EPixelFormat format,
-        EImageAspect aspect );
+        EImageAspect aspect ) NOEXCEPT
+    :   _parts(parts)
+    ,   _dimensions(dimensions)
+    ,   _rowPitch(rowPitch)
+    ,   _slicePitch(slicePitch)
+    ,   _format(format) {
+        const auto encoding = EPixelFormat_Encoding(_format, aspect);
+        _bitsPerPixel = encoding.BitsPerPixel;
+        _loadRGBA32f = encoding.DecodeRGBA32f;
+        _loadRGBA32i = encoding.DecodeRGBA32i;
+        _loadRGBA32u = encoding.DecodeRGBA32u;
+    }
 
     bool empty() const { return _parts.empty(); }
     size_t size() const { return _parts.size(); }
@@ -36,17 +46,17 @@ struct FImageView {
     iterator begin() const { return _parts.begin(); }
     iterator end() const { return _parts.end(); }
 
-    const TMemoryView<subpart_type>& Parts() const { return _parts.Parts(); }
+    TMemoryView<const subpart_type> Parts() const { return _parts.Parts(); }
     const uint3& Dimensions() const { return _dimensions; }
-    size_t RowPitch() const { return _rowPitch; }
-    size_t SlicePitch() const { return _rowPitch; }
+    u32 RowPitch() const { return _rowPitch; }
+    u32 SlicePitch() const { return _rowPitch; }
     u32 BitsPerPixel() const { return _bitsPerPixel; }
     EPixelFormat Format() const { return _format; }
 
-    size_t RowSize() const { return (_dimensions.x * _bitsPerPixel) / 8; }
-    size_t SliceSize() const { return (_rowPitch * _dimensions.y); }
+    u32 RowSize() const { return (_dimensions.x * _bitsPerPixel) / 8; }
+    u32 SliceSize() const { return (_rowPitch * _dimensions.y); }
 
-    // implementation garanties that single row completely placed to solid memory block.
+    // implementation guaranties that single row completely placed to solid memory block.
     subpart_type Row(u32 y, u32 z = 0) const {
         Assert(y < _dimensions.y);
         Assert(z < _dimensions.z);
@@ -58,7 +68,7 @@ struct FImageView {
         return row;
     }
 
-    // implementation doesn't garanties that single slice compilete placed to solid memory block,
+    // implementation doesn't guaranties that single slice complete placed to solid memory block,
     // so check result size with 'SliceSize()'.
     subpart_type Slice(u32 z) const {
         Assert(z < _dimensions.z);
@@ -92,14 +102,14 @@ struct FImageView {
 private:
     FBufferView _parts;
     uint3 _dimensions{ 0 };
-    size_t _rowPitch{ 0 };
-    size_t _slicePitch{ 0 };
+    u32 _rowPitch{ 0 };
+    u32 _slicePitch{ 0 };
     u32 _bitsPerPixel{ 0 };
     EPixelFormat _format{ Default };
 
-    FDecodeRGBA32f _loadRGBA32f{ nullptr };
-    FDecodeRGBA32u _loadRGBA32u{ nullptr };
-    FDecodeRGBA32i _loadRGBA32i{ nullptr };
+    FPixelDecodeRGBA32f _loadRGBA32f{ nullptr };
+    FPixelDecodeRGBA32i _loadRGBA32i{ nullptr };
+    FPixelDecodeRGBA32u _loadRGBA32u{ nullptr };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

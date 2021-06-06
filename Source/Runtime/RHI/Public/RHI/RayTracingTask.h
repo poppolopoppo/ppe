@@ -51,7 +51,7 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
         u32 TransformOffset{ 0 };
 
         FTriangles() = default;
-        explicit FTriangles(const FGeometryID& geometry) {
+        explicit FTriangles(const FGeometryID& geometry) NOEXCEPT {
             SetGeometry(geometry);
         }
 
@@ -88,7 +88,7 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
         u32 AabbCount{ 0 };
 
         FBoundingVolumes() = default;
-        explicit FBoundingVolumes(const FGeometryID& geometry) {
+        explicit FBoundingVolumes(const FGeometryID& geometry) NOEXCEPT {
             SetGeometry(geometry);
         }
 
@@ -104,7 +104,7 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
     TArray<FBoundingVolumes> Aabbs;
 
 #if USE_PPE_RHITASKNAME
-    FBuildRayTracingGeometry() : TFrameTaskDesc<FBuildRayTracingGeometry>("BuildRayTracingGeometry", FDebugColorScheme::Get().BuildRayTracingStruct) {}
+    FBuildRayTracingGeometry() NOEXCEPT : TFrameTaskDesc<FBuildRayTracingGeometry>("BuildRayTracingGeometry", FDebugColorScheme::Get().BuildRayTracingStruct) {}
 #endif
 
     FBuildRayTracingGeometry& SetTarget(FRawRTGeometryID id) { Assert(id); Geometry = id; return (*this); }
@@ -127,7 +127,7 @@ struct FBuildRayTracingScene final : details::TFrameTaskDesc<FBuildRayTracingSce
         u8 Mask{ UMax };
 
         FInstance() = default;
-        explicit FInstance(const FInstanceID& id) { SetInstance(id); }
+        explicit FInstance(const FInstanceID& id) NOEXCEPT { SetInstance(id); }
 
         FInstance& SetInstance(const FInstanceID& value);
         FInstance& SetGeometry(const FRawRTGeometryID& value);
@@ -165,13 +165,13 @@ struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTr
         FRTShaderID AnyHitShader; // optional
         FRTShaderID IntersectionShader; // procedural geometry
 
-        FShaderGroup(const FRTShaderID& missShader, u32 missIndex)
+        FShaderGroup(const FRTShaderID& missShader, u32 missIndex) NOEXCEPT
         :   Type(ERayTracingGroupType::MissShader)
         ,   RecordOffset(missIndex)
         ,   MainShader(missShader)
         {}
 
-        FShaderGroup(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit)
+        FShaderGroup(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit) NOEXCEPT
         :   Type(ERayTracingGroupType::TriangleHitShader)
         ,   Instance(instance)
         ,   Geometry(geometry)
@@ -180,7 +180,7 @@ struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTr
         ,   AnyHitShader(anyHit)
         {}
 
-        FShaderGroup(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit, const FRTShaderID& intersection)
+        FShaderGroup(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit, const FRTShaderID& intersection) NOEXCEPT
         :   Type(ERayTracingGroupType::ProceduralHitShader)
         ,   Instance(instance)
         ,   Geometry(geometry)
@@ -201,7 +201,7 @@ struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTr
     u32 MaxRecursionDepth{ 0 };
 
 #if USE_PPE_RHITASKNAME
-    FUpdateRayTracingShaderTable() : TFrameTaskDesc<FUpdateRayTracingShaderTable>("UpdateRayTracingShaderTable", FDebugColorScheme::Get().HostToDeviceTransfer) {}
+    FUpdateRayTracingShaderTable() NOEXCEPT : TFrameTaskDesc<FUpdateRayTracingShaderTable>("UpdateRayTracingShaderTable", FDebugColorScheme::Get().HostToDeviceTransfer) {}
 #endif
 
     FUpdateRayTracingShaderTable& SetTarget(const FRawRTShaderTableID& value) { Assert(value); ShaderTable = value; return (*this); }
@@ -233,7 +233,7 @@ struct FTraceRays final : details::TFrameTaskDesc<FTraceRays> {
 #endif
 
 #if USE_PPE_RHITASKNAME
-    FTraceRays() : TFrameTaskDesc<FTraceRays>("TraceRays", FDebugColorScheme::Get().RayTracing) {}
+    FTraceRays() NOEXCEPT : TFrameTaskDesc<FTraceRays>("TraceRays", FDebugColorScheme::Get().RayTracing) {}
 #endif
 
     FTraceRays& AddResources(const FDescriptorSetID& id, const FPipelineResources* res);

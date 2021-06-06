@@ -9,10 +9,10 @@
 #endif
 
 #define USE_PPE_RHIMOBILE (0)
-#define USE_PPE_RHIDEBUG (USE_PPE_ASSERT || USE_PPE_MEMORY_DEBUGGING)
-#define USE_PPE_RHIOPTIMIZEIDS (!USE_PPE_RHIDEBUG)
+#define USE_PPE_RHIDEBUG (!!USE_PPE_ASSERT || !!USE_PPE_MEMORY_DEBUGGING)
+#define USE_PPE_RHITASKNAME (!!USE_PPE_RHIPROFILING)
+#define USE_PPE_RHIOPTIMIZEIDS (!USE_PPE_RHITASKNAME)
 #define USE_PPE_RHIPROFILING (!USE_PPE_FINAL_RELEASE)
-#define USE_PPE_RHITASKNAME (USE_PPE_RHIPROFILING)
 
 #if USE_PPE_RHIDEBUG
 #   define ARG0_IF_RHIDEBUG(...) __VA_ARGS__
@@ -31,7 +31,12 @@
 #include "Memory/PtrRef.h"
 #include "Memory/RefPtr.h"
 #include "Meta/StronglyTyped.h"
+#include "Misc/Function_fwd.h"
 #include "Thread/ThreadSafe.h"
+
+#if USE_PPE_RHIDEBUG
+#   include "IO/ConstChar.h" // for debug names
+#endif
 
 namespace PPE {
 namespace RHI {
@@ -40,28 +45,36 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FRHIException;
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowHandle);
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowSurface);
 using FRawData = RAWSTORAGE(RHIRawData, u8);
 template <typename T>
 using TArray = VECTORINSITU(RHIMisc, T, 5);
 template <typename T>
-using TRHIThreadSafe = TThreadSafe<T, (!!USE_PPE_RHIDEBUG)>;
+using TRHIThreadSafe = TThreadSafe<T, (!!USE_PPE_RHIDEBUG
+    ? EThreadBarrier::RWDataRaceCheck
+    : EThreadBarrier::None )>;
+//----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowHandle);
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowSurface);
 //----------------------------------------------------------------------------
 enum class EQueueType : u32;
 enum class EQueueUsage : u32;
 enum class EMemoryType : u32;
 enum class EBufferUsage : u32;
-enum class EImageType : u32;
+enum class EImageDim : u8;
+enum class EImageView : u8;
+enum class EImageFlags : u8;
 enum class EImageUsage : u32;
 enum class EImageAspect : u32;
+enum class EImageSampler : u32;
 enum class ESwapchainImage : u32;
 enum class EAttachmentStoreOp : u32;
 enum class EShadingRatePalette : u8;
 enum class EPixelFormat : u32;
 enum class EColorSpace : u32;
 enum class EFragmentOutput : u32;
+#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
 enum class EDebugFlags : u32;
+#endif
 //----------------------------------------------------------------------------
 enum class EBlendFactor : u32;
 enum class EBlendOp : u32;
@@ -108,7 +121,7 @@ struct FImageView;
 PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FImageLayer);
 PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(u16, FImageSwizzle, 0x4321); // 0 - unknown, 1 - R, 2 - G, 3 - B, 4 - A, 5 - O, 6 - 1, example: RGB0 - 0x1235
 PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FMipmapLevel);
-PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FMultiSamples);
+struct FMultiSamples;
 //----------------------------------------------------------------------------
 struct FMemoryDesc;
 //----------------------------------------------------------------------------
@@ -116,7 +129,6 @@ struct FSamplerDesc;
 //----------------------------------------------------------------------------
 struct FSwapchainDesc;
 //----------------------------------------------------------------------------
-struct FTaskHandle;
 struct FSubmitRenderPass;
 struct FDispatchCompute;
 struct FDispatchComputeIndirect;
@@ -146,8 +158,11 @@ struct FDrawVertices;
 struct FDrawIndexed;
 struct FDrawVerticesIndirect;
 struct FDrawIndexedIndirect;
+struct FDrawVerticesIndirectCount;
+struct FDrawIndexedIndirectCount;
 struct FDrawMeshes;
 struct FDrawMeshesIndirect;
+struct FDrawMeshesIndirectCount;
 struct FCustomDraw;
 //----------------------------------------------------------------------------
 struct FCommandBufferDesc;
@@ -165,7 +180,7 @@ FWD_INTERFACE_REFPTR(FrameGraph);
 class IFrameTask;
 using PFrameTask = TPtrRef<IFrameTask>;
 //----------------------------------------------------------------------------
-struct FPipelineBaseUniform;
+struct FPipelineDescUniform;
 struct FPipelineDesc;
 struct FGraphicsPipelineDesc;
 struct FComputePipelineDesc;
@@ -202,15 +217,18 @@ struct FDepthStencilValue {
     FDepthValue Depth;
     FStencilValue Stencil;
 };
-//----------------------------------------------------------------------------
+//---------------------------7-------------------------------------------------
 template <typename T>
 class IShaderData;
 template <typename T>
 using PShaderData = TRefPtr< IShaderData<T> >;
-PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FShaderHandle);
-using PShaderModule = PShaderData< FShaderHandle >;
-struct FShaderSource;
-using PShaderSource = PShaderData< FShaderSource >;
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FShaderModule);
+using PShaderModule = PShaderData< FShaderModule >;
+//----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FExternalBuffer);
+PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FExternalImage);
+using FOnReleaseExternalImage = TFunction<void(FExternalImage)>;
+using FOnReleaseExternalBuffer = TFunction<void(FExternalBuffer)>;
 //----------------------------------------------------------------------------
 template <typename T>
 class TResourceProxy;
@@ -265,7 +283,7 @@ using FRawRTSceneID             = details::TResourceId< 10 >;
 using FRawRTGeometryID          = details::TResourceId< 11 >;
 using FRawRTShaderTableID       = details::TResourceId< 12 >;
 using FRawSwapchainID           = details::TResourceId< 13 >;
-using FRawLogicalPassID         = details::TResourceId< 14 >;
+using FLogicalPassID            = details::TResourceId< 14 >;
 
 using FRawMemoryID              = details::TResourceId< 15 >;
 using FRawPipelineLayoutID      = details::TResourceId< 16 >;
@@ -286,7 +304,6 @@ using FRTSceneID                = details::TResourceWrappedId< FRawRTSceneID >;
 using FRTGeometryID             = details::TResourceWrappedId< FRawRTGeometryID >;
 using FRTShaderTableID          = details::TResourceWrappedId< FRawRTShaderTableID >;
 using FSwapchainID              = details::TResourceWrappedId< FRawSwapchainID >;
-using FLogicalPassID            = details::TResourceWrappedId< FRawLogicalPassID >;
 
 using FMemoryID                 = details::TResourceWrappedId< FRawMemoryID >;
 using FPipelineLayoutID         = details::TResourceWrappedId< FRawPipelineLayoutID >;

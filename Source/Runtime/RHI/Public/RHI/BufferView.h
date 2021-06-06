@@ -13,9 +13,9 @@ namespace RHI {
 struct FBufferView {
 public:
     using value_type = u8;
-    using subpart_type = TMemoryView<value_type>;
+    using subpart_type = TMemoryView<const value_type>;
 
-    class FIterator : public Meta::TIterator<value_type> {
+    class FIterator : public Meta::TIterator<const value_type> {
     public:
         FIterator(const FIterator&) = default;
         FIterator& operator =(const FIterator&) = default;
@@ -58,14 +58,14 @@ public:
     private:
         friend struct FBufferView;
         friend struct FImageView;
-        FIterator(TMemoryView<subpart_type>::iterator part, size_t index) NOEXCEPT : _part(part), _index(index) {}
+        FIterator(TMemoryView<const subpart_type>::iterator part, size_t index) NOEXCEPT : _part(part), _index(index) {}
 
-        TMemoryView<subpart_type>::iterator _part;
+        TMemoryView<const subpart_type>::iterator _part;
         size_t _index;
     };
 
     FBufferView() = default;
-    explicit FBufferView(TMemoryView<subpart_type> parts) NOEXCEPT : _parts(parts) {}
+    explicit FBufferView(TMemoryView<const subpart_type> parts) NOEXCEPT : _parts(parts) {}
 
     bool empty() const { return (size() == 0); }
     size_t size() const {
@@ -92,7 +92,7 @@ public:
         AssertNotReached(); // out-of-bounds
     }
 
-    TMemoryView<subpart_type> Parts() const { return _parts; }
+    TMemoryView<const subpart_type> Parts() const { return _parts; }
 
     subpart_type SubRange(size_t offset, size_t count) const {
         for (const subpart_type& sub : _parts) {
@@ -104,7 +104,7 @@ public:
     }
 
 private:
-    TMemoryView<subpart_type> _parts;
+    TMemoryView<const subpart_type> _parts;
 
 };
 //----------------------------------------------------------------------------

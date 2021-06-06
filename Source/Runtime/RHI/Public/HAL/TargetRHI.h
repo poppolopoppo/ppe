@@ -4,9 +4,7 @@
 
 #include "HAL/TargetRHI_fwd.h"
 
-#include "Diagnostic/Logger_fwd.h"
 #include "IO/String_fwd.h"
-#include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Modular/Modular_fwd.h"
 #include "Meta/Enum.h"
@@ -24,22 +22,22 @@ PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, ETargetRHI rhi);
 PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, ETargetRHI rhi);
 //----------------------------------------------------------------------------
 enum class ERHIFeature : u32 {
-    Headless            = 1<<0,
-    Discrete            = 1<<1,
-    Graphics            = 1<<2,
-    Compute             = 1<<3,
-    AsyncCompute        = 1<<4,
-    Raytracing          = 1<<5,
-    MeshDraw            = 1<<6,
-    SamplerFeedback     = 1<<7,
-    TextureSpaceShading = 1<<8,
-    VariableShadingRate = 1<<9,
-    ConservativeDepth   = 1<<10,
-    HighDynamicRange    = 1<<11,
-    VSync               = 1<<12,
+    Headless            = 1u<<0,
+    Discrete            = 1u<<1,
+    Graphics            = 1u<<2,
+    Compute             = 1u<<3,
+    AsyncCompute        = 1u<<4,
+    Raytracing          = 1u<<5,
+    MeshDraw            = 1u<<6,
+    SamplerFeedback     = 1u<<7,
+    TextureSpaceShading = 1u<<8,
+    VariableShadingRate = 1u<<9,
+    ConservativeDepth   = 1u<<10,
+    HighDynamicRange    = 1u<<11,
+    VSync               = 1u<<12,
 
-    Debugging           = 1<<13,
-    Profiling           = 1<<14,
+    Debugging           = 1u<<30,
+    Profiling           = 1u<<31,
 
     All = 0xFFFF,
     Minimal = Graphics|Compute,
@@ -48,6 +46,13 @@ enum class ERHIFeature : u32 {
 ENUM_FLAGS(ERHIFeature);
 PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, ERHIFeature features);
 PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, ERHIFeature features);
+//----------------------------------------------------------------------------
+struct FRHISurfaceCreateInfo {
+    RHI::FWindowHandle Hwnd{ nullptr };
+    uint2 Dimensions{ uint2::MaxValue };
+    bool EnableFullscreen{ false };
+    bool EnableVSync{ false };
+};
 //----------------------------------------------------------------------------
 class PPE_RHI_API ITargetRHI : Meta::FNonCopyableNorMovable {
 public:
@@ -67,7 +72,7 @@ public:
     NODISCARD virtual bool CreateService(
         URHIService* pRHIService,
         const FModularDomain& domain,
-        RHI::FWindowHandle optionalWindow = Default,
+        const FRHISurfaceCreateInfo* pOptionalWindow = nullptr,
         ERHIFeature features = ERHIFeature::Recommended,
         FStringView deviceName = Default ) const = 0;
 

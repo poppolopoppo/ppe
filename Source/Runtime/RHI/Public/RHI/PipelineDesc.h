@@ -10,6 +10,7 @@
 #include "RHI/ShaderEnums.h"
 #include "RHI/VertexInputState.h"
 
+#include "Container/AssociativeVector.h"
 #include "Container/FixedSizeHashTable.h"
 #include "Container/HashMap.h"
 #include "Container/Stack.h"
@@ -19,56 +20,70 @@
 #include <memory>
 #include <variant>
 
+#include "Container/Appendable.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FPipelineBaseUniform {
-    const FUniformID Id;
-    const FBindingIndex Index;
-    const u32 ArraySize;
-    const EShaderStages StageFlags;
+struct FPipelineDescUniform {
+    FUniformID Id;
+    FBindingIndex Index;
+    u32 ArraySize;
+    EShaderStages StageFlags;
 
-    FPipelineBaseUniform(
+    FPipelineDescUniform() = default;
+    FPipelineDescUniform(
         FUniformID id,
         FBindingIndex index,
         u32 arraySize,
-        EShaderStages stageFlags )
+        EShaderStages stageFlags ) NOEXCEPT
     :   Id(id)
     ,   Index(index)
     ,   ArraySize(arraySize)
     ,   StageFlags(stageFlags)
     {}
 };
+PPE_ASSUME_TYPE_AS_POD(FPipelineDescUniform);
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-struct TPipelineUniform : FPipelineBaseUniform {
+struct TPipelineDescUniform : FPipelineDescUniform {
+    STATIC_ASSERT(Meta::has_trivial_destructor<T>::value);
+    T Data;
 
-    const T Data;
+    TPipelineDescUniform() = default;
 
-    TPipelineUniform(
+    TPipelineDescUniform(
+        const FPipelineDescUniform& uniform,
+        const T& data ) NOEXCEPT
+    :   FPipelineDescUniform(uniform)
+    ,   Data(data)
+    {}
+
+    TPipelineDescUniform(
         FUniformID id,
         FBindingIndex index,
         u32 arraySize,
         EShaderStages stageFlags,
-        T&& rdata )
-    :   FPipelineBaseUniform(id, index, arraySize, stageFlags)
+        T&& rdata ) NOEXCEPT
+    :   FPipelineDescUniform(id, index, arraySize, stageFlags)
     ,   Data(std::move(rdata))
     {}
 
     template <typename... _Args>
-    TPipelineUniform(
+    TPipelineDescUniform(
         FUniformID id,
         FBindingIndex index,
         u32 arraySize,
         EShaderStages stageFlags,
-        _Args&&... rargs )
-    :   FPipelineBaseUniform(id, index, arraySize, stageFlags)
+        _Args&&... rargs ) NOEXCEPT
+    :   FPipelineDescUniform(id, index, arraySize, stageFlags)
     ,   Data(std::forward<_Args>(rargs)...)
     {}
 };
+PPE_ASSUME_TEMPLATE_AS_POD(TPipelineDescUniform<T>, typename T);
 } //!details
 //----------------------------------------------------------------------------
 template <typename T>
@@ -76,12 +91,15 @@ class IShaderData : public FRefCountable {
 public:
     virtual ~IShaderData() = default;
 
-    virtual const T& Data() const = 0;
-    virtual FStringView Entry() const = 0;
-    virtual hash_t HashValue() const = 0;
+    using FDataRef = Meta::TAddPointer<Meta::TAddConst<Meta::TRemovePointer<T>>>;
+
+    virtual FDataRef Data() const NOEXCEPT = 0;
+    virtual FStringView EntryPoint() const NOEXCEPT = 0;
+    virtual hash_t HashValue() const NOEXCEPT = 0;
 
 #if USE_PPE_RHIDEBUG
-    virtual FStringView DebugName() const = 0;
+    virtual FConstChar DebugName() const NOEXCEPT = 0;
+    virtual bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) = 0;
 #endif
 
     friend hash_t hash_value(const IShaderData& data) {
@@ -89,23 +107,22 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-struct FShaderSource {
-    using union_type = std::variant<
-        FString,
-        FRawData,
-        PShaderModule
-    >;
-
-    union_type Data;
-    u128 Fingerprint;
-};
+using FSharedShaderString = TRefCountable<FString>;
+using PSharedShaderString = TRefPtr<FSharedShaderString>;
+using FShaderSource = std::variant<
+    FString,
+    FRawData,
+    PSharedShaderString,
+    PShaderModule
+>;;
+using PShaderSource = PShaderData< FShaderSource >;
 //----------------------------------------------------------------------------
 struct FPipelineDesc {
     STATIC_CONST_INTEGRAL(u32, StaticOffset, UMax);
 
     struct FTexture {
         EResourceState State{ Default };
-        EImageType Type{ Default };
+        EImageSampler Type{ Default };
 
         bool operator ==(const FTexture& other) const { return (State == other.State && Type == other.Type); }
         bool operator !=(const FTexture& other) const { return (not operator ==(other)); }
@@ -127,7 +144,7 @@ struct FPipelineDesc {
 
     struct FImage {
         EResourceState State{ Default };
-        EImageType Type{ Default };
+        EImageSampler Type{ Default };
         EPixelFormat Format{ Default };
 
         bool operator ==(const FImage& other) const { return (State == other.State && Type == other.Type && Format == other.Format); }
@@ -137,7 +154,7 @@ struct FPipelineDesc {
     struct FUniformBuffer {
         EResourceState State{ Default };
         u32 DynamicOffsetIndex{ StaticOffset };
-        size_t Size{ UMax };
+        u32 Size{ UMax };
 
         bool operator ==(const FUniformBuffer& other) const { return (State == other.State && DynamicOffsetIndex == other.DynamicOffsetIndex && Size == other.Size); }
         bool operator !=(const FUniformBuffer& other) const { return (not operator ==(other)); }
@@ -146,8 +163,8 @@ struct FPipelineDesc {
     struct FStorageBuffer {
         EResourceState State{ Default };
         u32 DynamicOffsetIndex{ StaticOffset };
-        size_t StaticSize{ UMax };
-        size_t ArrayStride{ UMax };
+        u32 StaticSize{ UMax };
+        u32 ArrayStride{ UMax };
 
         bool operator ==(const FStorageBuffer& other) const { return (State == other.State && DynamicOffsetIndex == other.DynamicOffsetIndex && StaticSize == other.StaticSize && ArrayStride == other.ArrayStride); }
         bool operator !=(const FStorageBuffer& other) const { return (not operator ==(other)); }
@@ -160,13 +177,13 @@ struct FPipelineDesc {
         bool operator !=(const FRayTracingScene& other) const { return (not operator ==(other)); }
     };
 
-    using FTextureUniform = details::TPipelineUniform<FTexture>;
-    using FSamplerUniform = details::TPipelineUniform<FSampler>;
-    using FSubpassInputUniform = details::TPipelineUniform<FSubpassInput>;
-    using FImageUniform = details::TPipelineUniform<FImage>;
-    using FUniformBufferUniform = details::TPipelineUniform<FUniformBuffer>;
-    using FStorageBufferUniform = details::TPipelineUniform<FStorageBuffer>;
-    using FRayTracingSceneUniform = details::TPipelineUniform<FRayTracingScene>;
+    using FTextureUniform = details::TPipelineDescUniform<FTexture>;
+    using FSamplerUniform = details::TPipelineDescUniform<FSampler>;
+    using FSubpassInputUniform = details::TPipelineDescUniform<FSubpassInput>;
+    using FImageUniform = details::TPipelineDescUniform<FImage>;
+    using FUniformBufferUniform = details::TPipelineDescUniform<FUniformBuffer>;
+    using FStorageBufferUniform = details::TPipelineDescUniform<FStorageBuffer>;
+    using FRayTracingSceneUniform = details::TPipelineDescUniform<FRayTracingScene>;
 
     struct FPushConstant {
         FPushConstantID Id{ Default };
@@ -175,12 +192,13 @@ struct FPipelineDesc {
         u16 Size{ UMax };
 
         FPushConstant() = default;
-        FPushConstant(FPushConstantID id, EShaderStages stageFlags, size_t offset, size_t size)
+        FPushConstant(FPushConstantID id, EShaderStages stageFlags, u32 offset, u32 size) NOEXCEPT
         :   Id(id)
         ,   StageFlags(stageFlags)
         ,   Offset(checked_cast<u16>(offset))
-        ,   Size(checked_cast<u16>(size))
-        {}
+        ,   Size(checked_cast<u16>(size)) {
+            STATIC_ASSERT(Meta::is_pod_v<FPushConstantID>);
+        }
     };
 
     struct FSpecializationConstant {
@@ -196,8 +214,9 @@ struct FPipelineDesc {
         FUniformBuffer,
         FStorageBuffer,
         FRayTracingScene >;
+    PPE_ASSUME_FRIEND_AS_POD(FVariantResource)
 
-    using FVariantUniform = details::TPipelineUniform<FVariantResource>;
+    using FVariantUniform = details::TPipelineDescUniform<FVariantResource>;
     using FUniformMap = TRefCountable<TFixedSizeHashMap<FUniformID, FVariantUniform, MaxUniforms>>;
     using FSharedUniformMap = TRefPtr<FUniformMap>; // #TODO : replace std::shared_ptr by something else
 
@@ -211,11 +230,11 @@ struct FPipelineDesc {
     using FPushConstants = TFixedSizeHashMap<FPushConstantID, FPushConstant, MaxPushConstantsCount>;
 
     struct FPipelineLayout {
-        FDescriptorSet DescriptorSets;
+        FDescriptorSets DescriptorSets;
         FPushConstants PushConstants;
     };
 
-    using FShaderSourceMap = TFixedSizeHashMap<EShaderLangFormat, PShaderData<FShaderSource>, 2>;
+    using FShaderSourceMap = ASSOCIATIVE_VECTORINSITU(RHIPipeline, EShaderLangFormat, PShaderData<FShaderSource>, 2);
     using FSpecializationConstants = TFixedSizeHashMap<FSpecializationID, u32, MaxSpecializationConstants>;
 
     struct FShader {
@@ -224,9 +243,11 @@ struct FPipelineDesc {
 
         FShader() = default;
 
-        void AddSource(EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
-        void AddSource(EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
-        void AddSource(EShaderLangFormat fmt, const PShaderModule& module);
+        PPE_RHI_API void AddSource(EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+        PPE_RHI_API void AddSource(EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName));
+        PPE_RHI_API void AddSource(EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName));
+        PPE_RHI_API void AddSource(EShaderLangFormat fmt, const PShaderModule& module);
+        PPE_RHI_API void AddSource(EShaderLangFormat fmt, PShaderModule&& rmodule);
     };
 
     struct FFragmentOutput {
@@ -240,8 +261,8 @@ struct FPipelineDesc {
         bool operator !=(const FFragmentOutput& other) const { return (not operator ==(other)); }
     };
 
-    using FTopologyBits = Meta::TStaticBitset<size_t(EPrimitiveTopology::_Count)>;
-    using FShaders = TFixedSizeHashMap<EShaderType, FShader, size_t(EShaderType::_Count)>;
+    using FTopologyBits = TFixedSizeBitMask<size_t(EPrimitiveTopology::_Count)>;
+    using FShaders = ASSOCIATIVE_VECTORINSITU(RHIPipeline, EShaderType, FShader, size_t(EShaderType::_Count));
     using FVertexAttributes = TFixedSizeStack<FVertexAttribute, MaxVertexAttribs>;
     using FFragmentOutputs = TFixedSizeStack<FFragmentOutput, MaxColorBuffers>;
 
@@ -250,7 +271,7 @@ struct FPipelineDesc {
 protected:
     FPipelineDesc() = default;
 
-    void AddDescriptorSet_(
+    PPE_RHI_API void AddDescriptorSet_(
         const FDescriptorSetID& id,
         u32 index,
         TMemoryView<const FTextureUniform> textures,
@@ -261,7 +282,7 @@ protected:
         TMemoryView<const FStorageBufferUniform> storageBuffers,
         TMemoryView<const FRayTracingSceneUniform> rayTracingScenes );
 
-    void SetPushConstants_(TMemoryView<const FPushConstant> values);
+    PPE_RHI_API void SetPushConstants_(TMemoryView<const FPushConstant> values);
 
 };
 //----------------------------------------------------------------------------
@@ -278,11 +299,12 @@ struct FGraphicsPipelineDesc final : FPipelineDesc {
 
     FGraphicsPipelineDesc() = default;
 
-    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
-    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName));
     PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
 
-    FGraphicsPipelineDesc& AddTopology(EPrimitiveTopology topology) { SupportedTopology.set(size_t(topology)); return (*this); }
+    FGraphicsPipelineDesc& AddTopology(EPrimitiveTopology topology) { SupportedTopology.SetTrue(static_cast<u32>(topology)); return (*this); }
 
     FGraphicsPipelineDesc& AddDescriptorSet(
         const FDescriptorSetID& id,
@@ -298,9 +320,10 @@ struct FGraphicsPipelineDesc final : FPipelineDesc {
     }
 
     FGraphicsPipelineDesc& SetFragmentOutputs(TMemoryView<const FFragmentOutput> outputs) { FragmentOutputs.Assign(outputs); return (*this); }
-    FGraphicsPipelineDesc& SetVertexAttribytes(TMemoryView<const FVertexAttribute> attributes) { VertexAttributes.Assign(attributes); return (*this); }
+    FGraphicsPipelineDesc& SetVertexAttributes(TMemoryView<const FVertexAttribute> attributes) { VertexAttributes.Assign(attributes); return (*this); }
     FGraphicsPipelineDesc& SetEarlyFragmentTests(bool enabled) { EarlyFragmentTests = enabled; return (*this); }
-    PPE_RHI_API FGraphicsPipelineDesc& SetPushConstants(TMemoryView<const FPushConstant> values);
+    FGraphicsPipelineDesc& SetPushConstants(TMemoryView<const FPushConstant> values) { SetPushConstants_(values); return (*this); }
+    PPE_RHI_API FGraphicsPipelineDesc& SetSpecializationConstants(EShaderType type, TMemoryView<const FSpecializationConstant> values);
 
 };
 //----------------------------------------------------------------------------
@@ -312,13 +335,14 @@ struct FComputePipelineDesc final : FPipelineDesc {
 
     FShader Shader;
     uint3 DefaultLocalGroupSize{ 0 };
-    uint3 LocalSizeSpec{ 0 };
+    uint3 LocalSizeSpec{ UndefinedSpecialization };
 
     FComputePipelineDesc() = default;
 
-    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
-    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
-    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, const PShaderModule& module);
 
     FComputePipelineDesc& AddDescriptorSet(
         const FDescriptorSetID& id,
@@ -352,15 +376,16 @@ struct FMeshPipelineDesc final : FPipelineDesc {
     u32 MaxVertices{ 0 };
     u32 MaxIndices{ 0 };
     uint3 DefaultTaskGroupSize{ 0 };
-    uint3 TaskSizeSpec{ 0 };
+    uint3 TaskSizeSpec{ UndefinedSpecialization };
     uint3 DefaultMeshGroupSize{ 0 };
-    uint3 MeshSizeSpec{ 0 };
+    uint3 MeshSizeSpec{ UndefinedSpecialization };
     bool EarlyFragmentTests{ true };
 
     FMeshPipelineDesc() = default;
 
-    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
-    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName));
     PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
 
     FMeshPipelineDesc& AddDescriptorSet(
@@ -396,10 +421,9 @@ struct FRayTracingPipelineDesc final : FPipelineDesc {
 
     FRayTracingPipelineDesc() = default;
 
-    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, PShaderModule shader ARGS_IF_RHIDEBUG(const FStringView& name));
-
-    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(const FStringView& name));
-    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(const FStringView& name));
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName));
     PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
 
     FRayTracingPipelineDesc& AddDescriptorSet(

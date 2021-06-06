@@ -29,7 +29,7 @@ struct FCommandBufferDesc {
 //----------------------------------------------------------------------------
 struct FStagingBlock {
     FRawBufferID RawBufferID;
-    size_t Offset;
+    u32 Offset;
     void* Mapped;
 };
 //----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ public: // interface
 
     // Add input dependency.
     // Current command buffer will be executed on the GPU only when input dependencies finished execution.
-    virtual bool DependsOn(const PCommandBatch& batch) = 0;
+    virtual bool DependsOn(const FCommandBufferBatch& batch) = 0;
 
     // Allocate space in the staging buffer.
     virtual bool StagingAlloc(FStagingBlock* pstaging, size_t size, size_t align) = 0;
@@ -60,41 +60,44 @@ public: // interface
     virtual void AcquireBuffer(FRawBufferID id, bool makeMutable) = 0;
 
     // Tasks
-    virtual FTaskHandle Task(const FSubmitRenderPass&) = 0;
-    virtual FTaskHandle Task(const FDispatchCompute&) = 0;
-    virtual FTaskHandle Task(const FDispatchComputeIndirect&) = 0;
-    virtual FTaskHandle Task(const FCopyBuffer&) = 0;
-    virtual FTaskHandle Task(const FCopyImage&) = 0;
-    virtual FTaskHandle Task(const FCopyBufferToImage&) = 0;
-    virtual FTaskHandle Task(const FCopyImageToBuffer&) = 0;
-    virtual FTaskHandle Task(const FBlitImage&) = 0;
-    virtual FTaskHandle Task(const FResolveImage&) = 0;
-    virtual FTaskHandle Task(const FGenerateMipmaps&) = 0;
-    virtual FTaskHandle Task(const FFillBuffer&) = 0;
-    virtual FTaskHandle Task(const FClearColorImage&) = 0;
-    virtual FTaskHandle Task(const FClearDepthStencilImage&) = 0;
-    virtual FTaskHandle Task(const FUpdateBuffer&) = 0;
-    virtual FTaskHandle Task(const FUpdateImage&) = 0;
-    virtual FTaskHandle Task(const FReadBuffer&) = 0;
-    virtual FTaskHandle Task(const FReadImage&) = 0;
-    virtual FTaskHandle Task(const FPresent&) = 0;
-    virtual FTaskHandle Task(const FUpdateRayTracingShaderTable&) = 0;
-    virtual FTaskHandle Task(const FBuildRayTracingGeometry&) = 0;
-    virtual FTaskHandle Task(const FBuildRayTracingScene&) = 0;
-    virtual FTaskHandle Task(const FTraceRays&) = 0;
-    virtual FTaskHandle Task(const FCustomTask&) = 0;
+    virtual PFrameTask Task(const FSubmitRenderPass& task) = 0;
+    virtual PFrameTask Task(const FDispatchCompute& task) = 0;
+    virtual PFrameTask Task(const FDispatchComputeIndirect& task) = 0;
+    virtual PFrameTask Task(const FCopyBuffer& task) = 0;
+    virtual PFrameTask Task(const FCopyImage& task) = 0;
+    virtual PFrameTask Task(const FCopyBufferToImage& task) = 0;
+    virtual PFrameTask Task(const FCopyImageToBuffer& task) = 0;
+    virtual PFrameTask Task(const FBlitImage& task) = 0;
+    virtual PFrameTask Task(const FResolveImage& task) = 0;
+    virtual PFrameTask Task(const FGenerateMipmaps& task) = 0;
+    virtual PFrameTask Task(const FFillBuffer& task) = 0;
+    virtual PFrameTask Task(const FClearColorImage& task) = 0;
+    virtual PFrameTask Task(const FClearDepthStencilImage& task) = 0;
+    virtual PFrameTask Task(const FUpdateBuffer& task) = 0;
+    virtual PFrameTask Task(const FUpdateImage& task) = 0;
+    virtual PFrameTask Task(const FReadBuffer& task) = 0;
+    virtual PFrameTask Task(const FReadImage& task) = 0;
+    virtual PFrameTask Task(const FPresent& task) = 0;
+    virtual PFrameTask Task(const FUpdateRayTracingShaderTable& task) = 0;
+    virtual PFrameTask Task(const FBuildRayTracingGeometry& task) = 0;
+    virtual PFrameTask Task(const FBuildRayTracingScene& task) = 0;
+    virtual PFrameTask Task(const FTraceRays& task) = 0;
+    virtual PFrameTask Task(const FCustomTask& task) = 0;
 
     // Create render pass.
-    virtual FLogicalPassID CreateRenderPass(const FRenderPassDesc&) = 0;
+    virtual FLogicalPassID CreateRenderPass(const FRenderPassDesc& desc) = 0;
 
     // Add task to the render pass.
-    virtual void Task(FLogicalPassID, const FDrawVertices&) = 0;
-    virtual void Task(FLogicalPassID, const FDrawIndexed&) = 0;
-    virtual void Task(FLogicalPassID, const FDrawVerticesIndirect&) = 0;
-    virtual void Task(FLogicalPassID, const FDrawIndexedIndirect&) = 0;
-    virtual void Task(FLogicalPassID, const FDrawMeshes&) = 0;
-    virtual void Task(FLogicalPassID, const FDrawMeshesIndirect&) = 0;
-    virtual void Task(FLogicalPassID, const FCustomDraw&) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawVertices& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawIndexed& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawVerticesIndirect& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawIndexedIndirect& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawVerticesIndirectCount& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawIndexedIndirectCount& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawMeshes& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawMeshesIndirect& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FDrawMeshesIndirectCount& draw) = 0;
+    virtual void Task(FLogicalPassID renderPass, const FCustomDraw& draw) = 0;
 
 #if USE_PPE_RHIPROFILING
     // Begin shader time measurement for all subsequent tasks.
@@ -104,7 +107,7 @@ public: // interface
 
     // Stop shader time measurement, result will be copied into specified image.
     // Image must be RGBA UNorm/Float 2D image.
-    virtual FTaskHandle EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<FTaskHandle> dependsOn = Default) = 0;
+    virtual PFrameTask EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<PFrameTask> dependsOn = Default) = 0;
 #endif
 
 };

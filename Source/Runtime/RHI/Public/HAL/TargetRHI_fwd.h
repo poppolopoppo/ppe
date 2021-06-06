@@ -8,6 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 enum class ETargetRHI : u32;
 enum class ERHIFeature : u32;
+struct FRHISurfaceCreateInfo;
 class PPE_RHI_API ITargetRHI;
 FWD_INTEFARCE_UNIQUEPTR(RHIService);
 //----------------------------------------------------------------------------

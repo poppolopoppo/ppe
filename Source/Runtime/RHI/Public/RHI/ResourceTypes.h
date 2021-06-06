@@ -132,6 +132,7 @@ struct FDrawDynamicStates {
     CONSTEXPR bool Has(EDrawDynamicState flag) const NOEXCEPT { return (_states & flag); }
 
 #define DECL_DYNAMICSTATE_ACCESSOR(ID, TYPE, NAME, SUFF) \
+    using CONCAT(F, NAME) = TYPE; \
     CONSTEXPR bool CONCAT(Has, NAME)() const { return Has(EDrawDynamicState::NAME); } \
     CONSTEXPR TYPE NAME() const { Assert_NoAssume(CONCAT(Has, NAME)()); return CONCAT(_, NAME); } \
     CONSTEXPR FDrawDynamicStates& CONCAT(Set, NAME)(TYPE value) { \

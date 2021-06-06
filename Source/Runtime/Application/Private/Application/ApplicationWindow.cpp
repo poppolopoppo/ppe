@@ -86,6 +86,8 @@ void FApplicationWindow::Shutdown() {
     auto& services = Services();
     if (_rhi) {
         services.CheckedRemove<IRHIService>(_rhi.get());
+
+        _rhi->TearDown();
         _rhi.reset();
     }
 
