@@ -11,6 +11,8 @@
 #include <iterator>
 #include <type_traits>
 
+#include "PtrRef.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -197,6 +199,15 @@ public:
 
     bool Contains(const T& elem) const { return (end() != Find(elem)); }
 
+    auto MakeRef(iterator it) const { return (it != end() ? MakePtrRef(*it) : nullptr); }
+
+    template <typename _Pred>
+    auto Any(const _Pred& pred) const { return MakeRef(FindIf(pred)); }
+    template <typename _Pred>
+    auto Min(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) { return MakeRef(FindMin(pred)); }
+    template <typename _Pred>
+    auto Max(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) { return MakeRef(FindMax(pred)); }
+
     template <typename _Pred>
     iterator FindIf(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
     template <typename _Pred>
@@ -216,6 +227,11 @@ public:
     reverse_iterator FindIfNotR(const _Pred& pred) const { return std::find_if_not(rbegin(), rend(), pred); }
     template <typename _Pred>
     size_type FindLastNot(const _Pred& pred) const { return std::distance(rbegin(), FindIfNotR(pred)); }
+
+    template <typename _Pred>
+    iterator FindMin(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) const { return std::min_element(begin(), end(), pred); }
+    template <typename _Pred>
+    iterator FindMax(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) const { return std::max_element(begin(), end(), pred); }
 
     iterator FindSubRange(const TMemoryView<T>& subrange) const;
 
