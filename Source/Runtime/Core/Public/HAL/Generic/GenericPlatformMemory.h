@@ -152,6 +152,9 @@ public: // must be defined for every platform
                 return false;
         return true;
     }
+    static void Memuninitialized(void* dst, size_t sizeInBytes) {
+        Memset(dst, 0xCC, sizeInBytes);
+    }
     static void Memdeadbeef(void* dst, size_t sizeInBytes) {
         Memset(dst, 0xDD, sizeInBytes);
     }

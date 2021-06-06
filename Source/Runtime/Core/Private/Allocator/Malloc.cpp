@@ -324,7 +324,7 @@ private:
         FMallocHistogram::Allocate(ptr, sizeInBytes);
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
-        FPlatformMemory::Memset(ptr, 0xCC, SnapSize(sizeInBytes));
+        FPlatformMemory::Memuninitialized(ptr, SnapSize(sizeInBytes));
 #   endif
         return ptr;
     }
@@ -340,7 +340,7 @@ private:
         FLeakDetector::Get().Release(ptr);
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
-        FPlatformMemory::Memset(ptr, 0xDD, FMallocLowLevel::RegionSize(ptr));
+        FPlatformMemory::Memdeadbeef(ptr, FMallocLowLevel::RegionSize(ptr));
 #   endif
         return ptr;
     }
@@ -362,7 +362,7 @@ private:
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
         if (nullptr == oldp)
-            FPlatformMemory::Memset(newp, 0xCC, SnapSize(sizeInBytes));
+            FPlatformMemory::Memuninitialized(newp, SnapSize(sizeInBytes));
 #   else
         UNUSED(oldp);
 #   endif

@@ -15,8 +15,8 @@
 #   include "Memory/MemoryTracking.h"
 #endif
 
-#define PPE_BITMAPHEAPS_MEDIUM_GRANULARITY  (size_t(32)*1024) // x 64 = 2Mb per chunk (div 2 for x86)
-#define PPE_BITMAPHEAPS_LARGE_GRANULARITY  (size_t(1)*1024*1024) // x 64 = 64Mb per chunk (div 2 for x86)
+#define PPE_BITMAPHEAPS_MEDIUM_GRANULARITY  (32_KiB)    // x 64 = 2Mb per chunk (div 2 for x86)
+#define PPE_BITMAPHEAPS_LARGE_GRANULARITY   (1_MiB)     // x 64 = 64Mb per chunk (div 2 for x86)
 
 #define PPE_BITMAPHEAPS_USE_HIERARCHICAL_MIPS (0)
 

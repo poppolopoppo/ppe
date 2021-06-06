@@ -33,7 +33,7 @@
 #define PPE_MALLOCBINNED2_BOUNDARY (ALLOCATION_BOUNDARY)
 
 #define PPE_MALLOCBINNED2_BUNDLE_MAX_COUNT (64)
-#define PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE (8192)
+#define PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE (8_KiB)
 #define PPE_MALLOCBINNED2_BUNDLE_MAX_GARBAGE (8)
 
 #define PPE_MALLOCBINNED2_OS_PAGESIZE FPlatformMemory::PageSize
@@ -47,7 +47,7 @@
 #define PPE_MALLOCBINNED2_SMALLPOOL_COUNT (FMallocBinned2::NumSmallBlockSizes)
 #define PPE_MALLOCBINNED2_SMALLPOOL_MIN_SIZE (PPE_MALLOCBINNED2_BOUNDARY)
 #define PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE (FMallocBinned2::MaxSmallBlockSize)
-#define PPE_MALLOCBINNED2_SMALLPOOL_RESERVE size_t(CODE3264(16,512)*1024*size_t(1024))
+#define PPE_MALLOCBINNED2_SMALLPOOL_RESERVE (CODE3264(16_MiB,512_MiB))
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
@@ -113,7 +113,7 @@ struct FBinnedBundle {
 
 #if USE_PPE_ASSERT
         if (result) // poison pointers in debug
-            FPlatformMemory::Memdeadbeef(result, sizeof(*result));
+            FPlatformMemory::Memuninitialized(result, sizeof(*result));
 #endif
 
         return result;
@@ -670,8 +670,8 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
         AssertRelease(bestPagesPerChunk);
 
         pool.NumPagesPerChunk = checked_cast<u8>(bestPagesPerChunk);
-        pool.CommittedChunks.SetupMemoryRequirements(PPE_MALLOCBINNED2_SMALLPOOL_RESERVE / (osPageSize * pool.NumPagesPerChunk));
-        pool.ExhaustedChunks.SetupMemoryRequirements(PPE_MALLOCBINNED2_SMALLPOOL_RESERVE / (osPageSize * pool.NumPagesPerChunk));
+        pool.CommittedChunks.SetupMemoryRequirements( checked_cast<u32>(PPE_MALLOCBINNED2_SMALLPOOL_RESERVE / (osPageSize * pool.NumPagesPerChunk)));
+        pool.ExhaustedChunks.SetupMemoryRequirements(checked_cast<u32>(PPE_MALLOCBINNED2_SMALLPOOL_RESERVE / (osPageSize * pool.NumPagesPerChunk)));
 
         Meta.SizeInBytes += ROUND_TO_NEXT_CACHELINE(pool.CommittedChunks.AllocationSize());
         Meta.SizeInBytes += ROUND_TO_NEXT_CACHELINE(pool.ExhaustedChunks.AllocationSize());

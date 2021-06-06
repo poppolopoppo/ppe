@@ -128,7 +128,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         void* const p = AllocateNewBinnedChunk_();
         Assert(p);
         Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, p));
-        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(p, ChunkSizeInBytes));
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(p, ChunkSizeInBytes));
         return (FBinnedChunk_*)p;
     }
 
