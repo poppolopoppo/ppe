@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Container/Hash.h"
 #include "Container/HashHelpers.h"
@@ -32,6 +32,7 @@ struct TFixedSizeHashSetTraits {
     using hasher = _Hash;
     using empty_key = _EmptyKey;
     using key_equal = _EqualTo;
+    using public_type = Meta::TAddConst<value_type>;
 
     static CONSTEXPR key_type& Key(value_type& v) { return v; }
     static CONSTEXPR const key_type& Key(const value_type& v) { return v; }
@@ -54,6 +55,7 @@ struct TFixedSizeHashMapTraits {
     using hasher = _Hash;
     using empty_key = _EmptyKey;
     using key_equal = _EqualTo;
+    using public_type = TPair<Meta::TAddConst<_Key>, _Value>;
 
     static CONSTEXPR key_type& Key(value_type& v) { return v.first; }
     static CONSTEXPR const key_type& Key(const value_type& v) { return v.first; }
@@ -87,9 +89,14 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    class FIterator : public Meta::TIterator<value_type> {
+    template <bool _Const>
+    using TPublicType = Meta::TAddConstIFN<typename traits_type::public_type, _Const>;
+
+    template <bool _Const>
+    class TIterator : public Meta::TIterator<TPublicType<_Const>> {
     public:
-        using parent_type = Meta::TIterator<value_type>;
+        using parent_type = Meta::TIterator<TPublicType<_Const>>;
+        using owner_type = Meta::TAddConstIFN<TFixedSizeHashTable, _Const>;
 
         using typename parent_type::iterator_category;
         using typename parent_type::difference_type;
@@ -97,54 +104,64 @@ public:
         using typename parent_type::pointer;
         using typename parent_type::reference;
 
-        FIterator(const TFixedSizeHashTable& owner, size_t bucket)
-            : _owner(&owner)
-            , _bucket(bucket) {
-            Assert(_bucket <= _Capacity);
-        }
+        TIterator() = default;
 
-        FIterator(const FIterator&) = default;
-        FIterator& operator =(const FIterator&) = default;
+        TIterator(const TIterator&) = default;
+        TIterator& operator =(const TIterator&) = default;
 
-        FIterator& operator ++() { return Advance_(); }
-        FIterator operator ++(int) { const FIterator tmp(*this); Advance_(); return tmp; }
+        template <bool _OtherConst>
+        TIterator(const TIterator<_OtherConst>& other) NOEXCEPT : TIterator(other._owner, other._bucket) {}
+        template <bool _OtherConst>
+        TIterator& operator =(const TIterator<_OtherConst>& other) NOEXCEPT { return operator =(TIterator{ other._owner, other._bucket }); }
 
-        const value_type& operator *() const {
+        TIterator& operator ++() { return Advance_(); }
+        TIterator operator ++(int) { const TIterator tmp(*this); Advance_(); return tmp; }
+
+        reference operator *() const {
             Assert(_bucket < _Capacity);
-            return (_owner->_values[_bucket]);
+            return reinterpret_cast<reference>(_owner->_values[_bucket]);
         }
-        const value_type* operator ->() const { return &operator *(); }
+        pointer operator ->() const { return std::addressof(operator *()); }
 
-        friend bool operator ==(const FIterator& lhs, const FIterator& rhs) {
+        template <bool _OtherConst>
+        friend bool operator ==(const TIterator& lhs, const TIterator<_OtherConst>& rhs) NOEXCEPT {
             return (lhs._owner == rhs._owner && lhs._bucket == rhs._bucket);
         }
-        friend bool operator !=(const FIterator& lhs, const FIterator& rhs) {
+        template <bool _OtherConst>
+        friend bool operator !=(const TIterator& lhs, const TIterator<_OtherConst>& rhs) NOEXCEPT {
             return (not operator ==(lhs, rhs));
         }
 
-        void swap(FIterator& lhs, FIterator& rhs) {
+        void swap(TIterator& lhs, TIterator& rhs) NOEXCEPT {
             std::swap(lhs._owner, rhs._owner);
             std::swap(lhs._bucket, rhs._bucket);
         }
 
     private:
-        const TFixedSizeHashTable* _owner;
-        size_t _bucket;
-
         friend class TFixedSizeHashTable;
-        FIterator& Advance_(size_t amount = 1) {
+
+        TIterator(owner_type& owner, size_t bucket) NOEXCEPT
+        :   _owner(&owner)
+        ,   _bucket(bucket) {
+            Assert(_bucket <= _Capacity);
+        }
+
+        TIterator& Advance_(size_t amount = 1) NOEXCEPT {
             Assert(_bucket < _Capacity);
-            for(_bucket += amount;
+            for (_bucket += amount;
                 _bucket < _Capacity &&
                 traits_type::Key(_owner->_values[_bucket]) == empty_key::value;
-                ++_bucket );
+                ++_bucket) NOOP();
 
             return (*this);
         }
+
+        TPtrRef<owner_type> _owner{ nullptr };
+        size_t _bucket{ 0 };
     };
 
-    typedef FIterator iterator;
-    typedef FIterator const_iterator;
+    typedef TIterator<false> iterator;
+    typedef TIterator<true> const_iterator;
 
     TFixedSizeHashTable() NOEXCEPT;
     ~TFixedSizeHashTable() NOEXCEPT;
@@ -159,15 +176,25 @@ public:
     bool full() const NOEXCEPT { return (_Capacity == _size); }
     size_t size() const NOEXCEPT { return _size; }
 
-    iterator begin() const { return (0 == _size ? end() : FIterator(*this, 0).Advance_(0)); }
-    iterator end() const { return FIterator(*this, _Capacity); }
+    iterator begin() { return (0 == _size ? end() : iterator(*this, 0).Advance_(0)); }
+    iterator end() { return iterator(*this, _Capacity); }
 
-    iterator find(const key_type& key) const;
+    const_iterator cbegin() const { return (0 == _size ? end() : const_iterator(*this, 0).Advance_(0)); }
+    const_iterator cend() const { return const_iterator(*this, _Capacity); }
+
+    const_iterator begin() const { return cbegin(); }
+    const_iterator end() const { return cend(); }
+
+    iterator find(const key_type& key) NOEXCEPT;
+    const_iterator find(const key_type& key) const NOEXCEPT { return const_cast<TFixedSizeHashTable*>(this)->find(key); }
+
     TPair<iterator, bool> insert(value_type&& rvalue);
-    bool erase(key_type key) { return Remove_ReturnIfExists(key); }
-    void erase(const iterator& it);
-    void clear();
 
+    bool erase(key_type key) { return Remove_ReturnIfExists(key); }
+    void erase(const iterator& it) { erase(const_iterator{ it }); }
+    void erase(const const_iterator& it);
+
+    void clear();
     void reserve(size_t n) {
         UNUSED(n);
         Assert_NoAssume(n < _Capacity);
@@ -190,24 +217,24 @@ public:
     bool Remove_ReturnIfExists(key_type key);
 
     template <size_t _Dim>
-    friend bool operator ==(const TFixedSizeHashTable& lhs, const TFixedSizeHashTable<_Traits, _Dim>& rhs) {
+    friend bool operator ==(const TFixedSizeHashTable& lhs, const TFixedSizeHashTable<_Traits, _Dim>& rhs) NOEXCEPT {
         if (lhs.size() != rhs.size())
             return false;
 
         for (const value_type& it : lhs) {
             auto jt = rhs.find(traits_type::Key(it));
-            if (jt == rhs.end() || *jt != it)
+            if (jt == rhs.end() || jt->second != it.second)
                 return false;
         }
 
         return true;
     }
     template <size_t _Dim>
-    friend bool operator !=(const TFixedSizeHashTable& lhs, const TFixedSizeHashTable<_Traits, _Dim>& rhs) {
+    friend bool operator !=(const TFixedSizeHashTable& lhs, const TFixedSizeHashTable<_Traits, _Dim>& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
-    friend hash_t hash_value(const TFixedSizeHashTable& table) {
+    friend hash_t hash_value(const TFixedSizeHashTable& table) NOEXCEPT {
         return hash_range(table.begin(), table.end());
     }
 
@@ -258,14 +285,14 @@ auto TFixedSizeHashTable<_Traits, _Capacity>::operator =(const TFixedSizeHashTab
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
-auto TFixedSizeHashTable<_Traits, _Capacity>::find(const key_type& key) const -> iterator {
+auto TFixedSizeHashTable<_Traits, _Capacity>::find(const key_type& key) NOEXCEPT -> iterator {
     Assert(empty_key::value != key);
 
     size_t bucket = InitIndex_(key);
 
     forrange(i, 0, _Capacity) {
         if (key_equal()(traits_type::Key(_values[bucket]), key))
-            return FIterator(*this, bucket);
+            return iterator(*this, bucket);
 
         // early out if the probing distance is greater than stored key
         if (key_equal()(traits_type::Key(_values[bucket]), empty_key::value) ||
@@ -343,7 +370,7 @@ bool TFixedSizeHashTable<_Traits, _Capacity>::Add_Overwrite(value_type&& rvalue)
     }
 
     _values[bucket] = std::move(rvalue);
-    return true;
+    return existed;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
@@ -375,7 +402,7 @@ auto TFixedSizeHashTable<_Traits, _Capacity>::insert(value_type&& rvalue) -> TPa
     _size++;
     _values[bucket] = std::move(rvalue);
 
-    return MakePair(FIterator(*this, bucket), true);
+    return MakePair(iterator(*this, bucket), true);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
@@ -396,15 +423,15 @@ bool TFixedSizeHashTable<_Traits, _Capacity>::Remove_ReturnIfExists(key_type key
         bucket = NextIndex_(bucket);
     }
 
-    erase(FIterator(*this, bucket));
+    erase(iterator(*this, bucket));
 
     return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
-void TFixedSizeHashTable<_Traits, _Capacity>::erase(const iterator& it) {
+void TFixedSizeHashTable<_Traits, _Capacity>::erase(const const_iterator& it) {
     Assert(_size);
-    Assert(it._owner == this);
+    Assert(it._owner.get() == this);
     Assert(it._bucket < _Capacity);
 
     --_size;
