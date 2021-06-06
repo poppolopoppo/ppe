@@ -55,6 +55,12 @@ typedef int64_t     i64;
 #   ifndef not
 #       define not !
 #   endif
+#   ifndef and
+#       define and &&
+#   endif
+#   ifndef or
+#       define or ||
+#   endif
 #endif
 //----------------------------------------------------------------------------
 #define EXPAND(x) x
