@@ -49,7 +49,7 @@ class TSingleton : details::TSingletonStorage_<T, _Tag, _ThreadLocal> {
         IF_CONSTEXPR(_Shared)
             return (*static_cast<pod_type*>(_Tag::class_singleton_storage()));
         else
-        return (*static_cast<pod_type*>(storage_type::make_singleton_storage()));
+            return (*static_cast<pod_type*>(storage_type::make_singleton_storage()));
     }
 
 protected:
@@ -117,7 +117,8 @@ public:
 
     template <typename... _Args>
     static void Create(_Args&&... args) {
-        parent_type::Create(TUniquePtr<T>::New(std::forward<_Args>(args)...));
+        using FPointer = typename TUniquePtr<T>::FPointer;
+        parent_type::Create(FPointer{ TUniquePtr<T>::New(std::forward<_Args>(args)...) });
     }
 
     static void Destroy() {
