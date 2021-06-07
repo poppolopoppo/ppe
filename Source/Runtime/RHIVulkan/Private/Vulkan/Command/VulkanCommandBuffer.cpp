@@ -1107,7 +1107,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
         resources.BindImage(FUniformID{ "un_OutImage" }, dstImage, FImageViewDesc{}.SetType(EImageView_2D).SetArrayLayers(*layer, 1).SetBaseLevel(*level));
 
         FDispatchCompute cs;
-        cs.SetPipeline(ppln).SetLocalSize({ 8, 8, 1 }).Dispatch({ (desc.Dimensions.xy + 7) / 8 });
+        cs.SetPipeline(ppln).SetLocalSize({ 8, 8, 1 }).Dispatch({ (desc.Dimensions.xy + 7u) / 8u });
         cs.AddResources(descriptorSetId0, &resources);
         cs.DependsOn(pPreviousTask);
 
