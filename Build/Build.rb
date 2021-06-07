@@ -57,6 +57,7 @@ module Build
     end
 
     def self.main(provider: :git, &namespace)
+        Build::init_options()
         Build::load_options()
         Build::parse_options()
 

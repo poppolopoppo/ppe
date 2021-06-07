@@ -259,6 +259,12 @@ module Build
         end
     end
 
+    def self.init_options()
+        if $DEBUG
+            Log.verbosity(:debug)
+        end
+    end
+
     def self.parse_options(full=false)
         Args.replace(OptionParser.new do |opts|
             Build.make_pgm_options(opts, full)
@@ -294,8 +300,8 @@ module Build
             PersistentConfig[:data] = serialized
             PersistentConfig[:hash] = serialized.hash
             PersistentConfig[:vars].each do |name, var|
-                if serialized.key?(var.name)
-                    var.restore!(serialized[var.name])
+                unless (value = serialized[var.name.to_sym]).nil?
+                    var.restore!(value)
                 end
             end
             return true
@@ -306,8 +312,15 @@ module Build
     end
 
     Build.make_command(:print, 'Show config data') do
-        PersistentConfig[:vars].each do |name, var|
-            Log.display 'persitent[%s] = %s', name, var.value.to_s
+        if Build::Args.nil? || Build::Args.empty?
+            PersistentConfig[:vars].each do |name, var|
+                Log.display 'persitent[%s] = %s', name, var.value.to_s
+            end
+        else
+            Build::Args.each do |name|
+                var = PersistentConfig[:vars][name]
+                Log.display 'persitent[%s] = %s', name, var.value.to_s
+            end
         end
     end
 
