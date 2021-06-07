@@ -54,16 +54,18 @@ void FApplicationWindow::Start() {
     services.Add<IWindowService>(_window.get());
 
     if (_targetRHI) {
-        ERHIFeature features = _targetRHI->RecommendedFeatures();
-
         const FRHIModule& rhiModule = FRHIModule::Get(Domain());
+
+        ERHIFeature features = _targetRHI->RecommendedFeatures();
         features = rhiModule.RecommendedFeatures(features);
 
-        if (not _targetRHI->CreateService(
-            &_rhi,
-            Domain(),
-            RHI::FWindowHandle{ _main->NativeHandle() },
-            features ))
+        FRHISurfaceCreateInfo surfaceInfo;
+        surfaceInfo.Hwnd.Assign(_main->NativeHandle());
+        surfaceInfo.Dimensions = _main->Dimensions();
+        surfaceInfo.EnableFullscreen = _main->Fullscreen();
+        surfaceInfo.EnableVSync = (features & ERHIFeature::VSync);
+
+        if (not _targetRHI->CreateService(&_rhi, Domain(), &surfaceInfo, features) )
             LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort", Domain().Name(), Name());
 
         services.Add<IRHIService>(_rhi.get());

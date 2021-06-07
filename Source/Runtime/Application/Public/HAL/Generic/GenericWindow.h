@@ -3,7 +3,7 @@
 #include "Application_fwd.h"
 
 #include "IO/String.h"
-#include "Time/Timepoint.h"
+#include "Maths/ScalarVector_fwd.h"
 
 namespace PPE {
 namespace Application {
@@ -59,6 +59,8 @@ public: // must be defined for every platform
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
+
+    uint2 Dimensions() const NOEXCEPT;
 
     bool AllowDragDrop() const { return _allowDragDrop; }
     bool HasCloseButton() const { return _hasCloseButton; }
@@ -131,7 +133,7 @@ private:
     FNativeHandle _handle;
 
     int _left, _top;
-    size_t _width, _height;
+    u32 _width, _height;
 
     bool _allowDragDrop     : 1;
     bool _hasCloseButton    : 1;

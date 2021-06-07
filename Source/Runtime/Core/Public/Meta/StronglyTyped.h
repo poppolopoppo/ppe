@@ -41,6 +41,7 @@ struct TNumeric {
     CONSTEXPR TNumeric& operator =(const TNumeric& other) { Value =other.Value; return *this; }
 
     CONSTEXPR bool IsDefaultValue() const { return (DefaultValue() == Value); }
+    CONSTEXPR void Assign(T value) { Value = value; }
 
     CONSTEXPR friend bool operator ==(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value == rhs.Value; }
     CONSTEXPR friend bool operator !=(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value != rhs.Value; }

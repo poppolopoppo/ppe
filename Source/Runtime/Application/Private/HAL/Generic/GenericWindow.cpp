@@ -2,6 +2,8 @@
 
 #include "HAL/Generic/GenericWindow.h"
 
+#include "Maths/ScalarVector.h"
+
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
@@ -24,6 +26,10 @@ FGenericWindow::FGenericWindow()
 {}
 //----------------------------------------------------------------------------
 FGenericWindow::~FGenericWindow() = default;
+//----------------------------------------------------------------------------
+uint2 FGenericWindow::Dimensions() const noexcept {
+    return { _width, _height };
+}
 //----------------------------------------------------------------------------
 bool FGenericWindow::Show() {
     Assert(not _visible);
@@ -73,8 +79,8 @@ bool FGenericWindow::Resize(size_t w, size_t h) {
     Assert(w > 0);
     Assert(h > 0);
 
-    _width = w;
-    _height = h;
+    _width = checked_cast<u32>(w);
+    _height = checked_cast<u32>(h);
     return true;
 }
 //----------------------------------------------------------------------------
