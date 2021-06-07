@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_once '../Common.rb'
+
 require_once '../Core/Target.rb'
 require_once '../Shared/Compiler.rb'
 

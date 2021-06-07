@@ -1,5 +1,5 @@
 
-require_once '../Common.rb'
+
 
 require_once 'Log.rb'
 require_once 'MemFile.rb'

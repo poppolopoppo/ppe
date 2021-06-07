@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_once '../Common.rb'
+
 require_once '../Utils/Checksum.rb'
 require_once '../Utils/MemFile.rb'
 require_once '../Utils/Options.rb'

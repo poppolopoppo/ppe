@@ -17,8 +17,6 @@ end
 
 require_once 'Common.rb'
 
-require_once 'Utils/Options.rb'
-
 require_once 'Core/Facet.rb'
 require_once 'Core/Policy.rb'
 require_once 'Core/Target.rb'
