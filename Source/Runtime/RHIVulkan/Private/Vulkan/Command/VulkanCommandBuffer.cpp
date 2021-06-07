@@ -268,7 +268,7 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
 
             // wait for input
             const bool inputProcessed = pTask->Inputs().Any(
-                [visitorId](PVulkanFrameTask pInput) NOEXCEPT -> bool {
+                [](PVulkanFrameTask pInput) NOEXCEPT -> bool {
                     return (pInput->VisitorId() != visitorId);
                 });
             if (not inputProcessed) {
@@ -1369,13 +1369,14 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
         forrange(slice, 0, imageSize.z) {
             u32 yOffset = 0;
             const FRawMemoryConst sliceData = task.Data.SubRange(slice * slicePitch, slicePitch);
+            const u32 sliceSize = checked_cast<u32>(sliceData.SizeInBytes());
 
-            for (u32 srcOffset = 0; srcOffset < totalSizeInBytes;) {
+            for (u32 srcOffset = 0; srcOffset < sliceSize;) {
                 FRawBufferID srcBuffer;
                 u32 offset, size;
                 if (not StagingImageStore_(data,
                                            &srcBuffer, &offset, &size,
-                                           task.Data, srcOffset, rowPitch * blockDim.y, totalSizeInBytes)) {
+                                           sliceData, srcOffset, rowPitch * blockDim.y, totalSizeInBytes)) {
                     RHI_LOG(Error, L"failed to write image row to staging for '{0}' in '{1}'", task.TaskName,
                             data.DebugName);
                     return nullptr;

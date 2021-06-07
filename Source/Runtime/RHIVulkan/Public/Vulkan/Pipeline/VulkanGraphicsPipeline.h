@@ -70,7 +70,7 @@ public:
     FVulkanGraphicsPipeline() = default;
     ~FVulkanGraphicsPipeline();
 
-    FVulkanGraphicsPipeline(FVulkanGraphicsPipeline&& ) = default;
+    FVulkanGraphicsPipeline(FVulkanGraphicsPipeline&& rvalue) NOEXCEPT;
     FVulkanGraphicsPipeline& operator =(FVulkanGraphicsPipeline&& ) = delete;
 
     auto Read() const { return _pipeline.LockShared(); }

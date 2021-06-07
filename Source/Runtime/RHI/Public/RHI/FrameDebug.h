@@ -96,6 +96,11 @@ struct FFrameStatistics {
         Resources += other.Resources;
     }
 
+    void Reset() {
+        Renderer = FRendering{};
+        Resources = FResources{};
+    }
+
     struct FProfilingScope : PPE::FTimedScope {
         FNanoseconds& Counter;
         explicit FProfilingScope(FNanoseconds* pCounter) NOEXCEPT : Counter(*pCounter) {}

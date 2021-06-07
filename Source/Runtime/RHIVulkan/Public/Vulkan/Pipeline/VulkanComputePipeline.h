@@ -60,7 +60,7 @@ public:
     FVulkanComputePipeline() = default;
     ~FVulkanComputePipeline();
 
-    FVulkanComputePipeline(FVulkanComputePipeline&& ) = default;
+    FVulkanComputePipeline(FVulkanComputePipeline&& rvalue) NOEXCEPT;
     FVulkanComputePipeline& operator =(FVulkanComputePipeline&& ) = delete;
 
     auto Read() const { return _pipeline.LockShared(); }

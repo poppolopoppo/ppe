@@ -40,7 +40,7 @@ public:
     FVulkanBuffer(const FVulkanBuffer&) = delete;
     FVulkanBuffer& operator =(const FVulkanBuffer&) = delete;
 
-    FVulkanBuffer(FVulkanBuffer&&) = default;
+    FVulkanBuffer(FVulkanBuffer&& rvalue) NOEXCEPT;
     FVulkanBuffer& operator =(FVulkanBuffer&&) = delete;
 
     auto Read() const { return _data.LockShared(); }

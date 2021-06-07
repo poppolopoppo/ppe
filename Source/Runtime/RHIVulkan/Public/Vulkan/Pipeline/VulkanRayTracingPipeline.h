@@ -48,7 +48,7 @@ public:
     FVulkanRayTracingPipeline() = default;
     ~FVulkanRayTracingPipeline();
 
-    FVulkanRayTracingPipeline(FVulkanRayTracingPipeline&& ) = default;
+    FVulkanRayTracingPipeline(FVulkanRayTracingPipeline&& rvalue) NOEXCEPT;
     FVulkanRayTracingPipeline& operator =(FVulkanRayTracingPipeline&& ) = delete;
 
     auto Read() const { return _pipeline.LockShared(); }

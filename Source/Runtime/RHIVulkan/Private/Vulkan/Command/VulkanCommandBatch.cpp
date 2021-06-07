@@ -168,7 +168,7 @@ bool FVulkanCommandBatch::OnBegin(const FCommandBufferDesc& desc) {
     exclusiveData->NeedQueueSync = (desc.DebugFlags == EDebugFlags::QueueSync);
 #endif
 #if USE_PPE_RHIPROFILING
-    _statistics = Default;
+    _statistics.Reset();
 #endif
 
     return true;
@@ -434,8 +434,8 @@ bool FVulkanCommandBatch::MapMemory_(FVulkanResourceManager& resources, FStaging
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::ReleaseResources_(FVulkanResourceManager& resources, FInternalData& data) {
-    for (auto[res, count] : data.ResourcesToRelease) {
-        res.Visit([&resources, count](auto resourceId) {
+    for (const auto& it : data.ResourcesToRelease) {
+        it.first.Visit([&resources, count{ it.second }](auto resourceId) {
             Verify( resources.ReleaseResource(resourceId, count) );
         });
     }

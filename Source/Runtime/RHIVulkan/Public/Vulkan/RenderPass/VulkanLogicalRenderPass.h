@@ -50,7 +50,7 @@ public:
     FVulkanLogicalRenderPass() = default;
     ~FVulkanLogicalRenderPass();
 
-    FVulkanLogicalRenderPass(FVulkanLogicalRenderPass&& ) = default;
+    FVulkanLogicalRenderPass(FVulkanLogicalRenderPass&& rvalue) NOEXCEPT;
     FVulkanLogicalRenderPass& operator =(FVulkanLogicalRenderPass&& ) = delete;
 
     TMemoryView<IVulkanDrawTask* const> DrawTasks() const { return _drawTasks.MakeConstView(); }

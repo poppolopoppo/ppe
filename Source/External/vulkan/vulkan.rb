@@ -526,13 +526,13 @@ class VulkanFunctionsGenerator < HeaderParser
             end
             by_version.each do |(major, minor), funcs|
                 ifdef(dst, "VK_VERSION_#{major}_#{minor}") do
-                    dst.puts!("if (VK_VERSION_MAJOR(vkVersion) == #{major} || (VK_VERSION_MAJOR(vkVersion) == #{major} && VK_VERSION_MINOR(vkVersion) >= #{minor}) {")
+                    dst.puts!("if (VK_VERSION_MAJOR(vkVersion) == #{major} || (VK_VERSION_MAJOR(vkVersion) == #{major} && VK_VERSION_MINOR(vkVersion) >= #{minor})) {")
                     dst.indent! do
                         funcs.each do |(name, sym)|
                             extensionName = sym.opaque?(:vk_extension_name)
                             lazy_ifdef(dst, extensionName) do
-                                dst.puts!("Assert(#{sym.expansion})")
-                                dst.puts!("#{name} = #{sym.expansion};")
+                                dst.puts!("Assert(#{sym.expansion});")
+                                dst.puts!("#{sym.opaque?(:vk_function_name)} = #{sym.expansion};")
                             end
                         end
                         flush_ifdef!(dst)
@@ -592,13 +592,13 @@ class VulkanFunctionsGenerator < HeaderParser
             end
             by_version.each do |(major, minor), funcs|
                 ifdef(dst, "VK_VERSION_#{major}_#{minor}") do
-                    dst.puts!("if (VK_VERSION_MAJOR(vkVersion) == #{major} || (VK_VERSION_MAJOR(vkVersion) == #{major} && VK_VERSION_MINOR(vkVersion) >= #{minor}) {")
+                    dst.puts!("if (VK_VERSION_MAJOR(vkVersion) == #{major} || (VK_VERSION_MAJOR(vkVersion) == #{major} && VK_VERSION_MINOR(vkVersion) >= #{minor})) {")
                     dst.indent! do
                         funcs.each do |(name, sym)|
                             extensionName = sym.opaque?(:vk_extension_name)
                             lazy_ifdef(dst, extensionName) do
-                                dst.puts!("Assert(#{sym.expansion})")
-                                dst.puts!("#{name} = #{sym.expansion};")
+                                dst.puts!("Assert(#{sym.expansion});")
+                                dst.puts!("#{sym.opaque?(:vk_function_name)} = #{sym.expansion};")
                             end
                         end
                         flush_ifdef!(dst)
