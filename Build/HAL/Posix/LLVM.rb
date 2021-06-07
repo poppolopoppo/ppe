@@ -117,6 +117,7 @@ module Build
             '-mavx2','-msse4.2',
             '-mlzcnt','-mpopcnt',
             '-fcolor-diagnostics',
+            '-Xclang', '-fuse-ctor-homing',
             '-c', # compile
             '-g', # generate debug infos
             '-o', '%2', '%1' )
