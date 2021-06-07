@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "Memory/HashFunctions.h"
+#include "Meta/Hash_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ struct TPtrRef {
     }
 
     friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
-        return hash_ptr(ref.Ptr);
+        return hash_as_pod(ref.Ptr);
     }
 };
 //----------------------------------------------------------------------------
@@ -95,7 +95,7 @@ struct TPtrRef<void> {
     }
 
     friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
-        return hash_ptr(ref.Ptr);
+        return hash_as_pod(ref.Ptr);
     }
 };
 //----------------------------------------------------------------------------
