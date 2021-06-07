@@ -33,8 +33,8 @@ FSlabMarker FSlabHeap::Tell() const noexcept {
 #if USE_PPE_MEMORYDOMAINS
     // remember allocations for Rewind()
     const auto snapshot = _trackingData.User();
-    marker.Snapshot.NumAllocs = snapshot.NumAllocs;
-    marker.Snapshot.TotalSize = snapshot.TotalSize;
+    marker.Snapshot.NumAllocs = checked_cast<size_t>(snapshot.NumAllocs);
+    marker.Snapshot.TotalSize = checked_cast<size_t>(snapshot.TotalSize);
 #endif
     return marker;
 }
@@ -45,8 +45,8 @@ void FSlabHeap::Rewind(const FSlabMarker& marker) noexcept {
 #if USE_PPE_MEMORYDOMAINS
     const auto snapshot = _trackingData.User();
     _trackingData.ReleaseBatchUser(
-        snapshot.NumAllocs - marker.Snapshot.NumAllocs,
-        snapshot.TotalSize - marker.Snapshot.TotalSize );
+        checked_cast<size_t>(snapshot.NumAllocs - marker.Snapshot.NumAllocs),
+        checked_cast<size_t>(snapshot.TotalSize - marker.Snapshot.TotalSize) );
 #endif
 
     reverseforeachitem(it, _slabs) {

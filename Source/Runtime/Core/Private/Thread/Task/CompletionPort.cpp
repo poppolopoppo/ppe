@@ -17,7 +17,7 @@ STATIC_ASSERT(uintptr_t(ETaskPriority::Low) == 2);
 STATIC_ASSERT(uintptr_t(ETaskPriority::Internal) == 3);
 // Also checks FCompletionPort alignment for packing in FTaskQueued
 #if !USE_PPE_MEMORY_DEBUGGING
-STATIC_ASSERT(Meta::IsAligned(16, sizeof(FCompletionPort)));
+STATIC_ASSERT(Meta::TCheckSizeAligned<FCompletionPort, 16>::value);
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT

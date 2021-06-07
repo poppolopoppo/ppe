@@ -125,8 +125,8 @@ void FGenericWindow::OnWindowMove(int x, int y) {
     _top = y;
 }
 void FGenericWindow::OnWindowResize(size_t w, size_t h) {
-    _width = w;
-    _height = h;
+    _width =  checked_cast<u32>(w);
+    _height = checked_cast<u32>(h);
 }
 void FGenericWindow::OnWindowPaint() {}
 //----------------------------------------------------------------------------
@@ -187,8 +187,8 @@ bool FGenericWindow::CreateWindow(FGenericWindow* window, FWString&& title, cons
     window->_handle = nullptr;
     window->_left = def.Left;
     window->_top = def.Top;
-    window->_width = def.Width;
-    window->_height = def.Height;
+    window->_width = checked_cast<u32>(def.Width);
+    window->_height = checked_cast<u32>(def.Height);
     window->_allowDragDrop = def.AllowDragDrop;
     window->_hasCloseButton = def.HasCloseButton;
     window->_hasResizeButton = def.HasResizeButton;

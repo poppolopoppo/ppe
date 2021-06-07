@@ -15,6 +15,27 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static void MakeSwapchainDesc_(
+    RHI::FSwapchainDesc* pSwapchainDesc,
+    VkSurfaceKHR backBuffer, const FRHISurfaceCreateInfo& surfaceInfo ) NOEXCEPT {
+    Assert(pSwapchainDesc);
+    Assert(VK_NULL_HANDLE != backBuffer);
+
+    using namespace RHI;
+
+    pSwapchainDesc->Surface = FWindowSurface{ backBuffer };
+    pSwapchainDesc->Dimensions = surfaceInfo.Dimensions;
+    pSwapchainDesc->PresentModes.Push(surfaceInfo.EnableVSync
+        ? EPresentMode::RelaxedFifo
+        : EPresentMode::Mailbox );
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FVulkanRHIService::FVulkanRHIService(const FVulkanTargetRHI& vulkanRHI, ERHIFeature features)
 :   _vulkanRHI(vulkanRHI)
 ,   _features(features)
@@ -100,11 +121,7 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
         RHI_LOG(Verbose, L"creating vulkan swapchain for service");
 
         FSwapchainDesc swapchainDesc{};
-        swapchainDesc.Surface = FWindowSurface{ _backBuffer };
-        swapchainDesc.Dimensions = pOptionalWindow->Dimensions;
-        swapchainDesc.PresentModes.Push(pOptionalWindow->EnableVSync
-            ? EPresentMode::RelaxedFifo
-            : EPresentMode::Mailbox );
+        MakeSwapchainDesc_(&swapchainDesc, _backBuffer, *pOptionalWindow);
 
         _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, Default ARGS_IF_RHIDEBUG("BackBuffer"));
 
@@ -170,12 +187,8 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
     using namespace RHI;
     RHI_LOG(Info, L"resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
 
-    FSwapchainDesc swapchainDesc{};
-    swapchainDesc.Surface = FWindowSurface{ _backBuffer };
-    swapchainDesc.Dimensions = surfaceInfo.Dimensions;
-    swapchainDesc.PresentModes.Push(surfaceInfo.EnableVSync
-        ? EPresentMode::RelaxedFifo
-        : EPresentMode::Mailbox );
+    FSwapchainDesc swapchainDesc;
+    MakeSwapchainDesc_(&swapchainDesc, _backBuffer, surfaceInfo);
 
     _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, _swapchain.Release() ARGS_IF_RHIDEBUG("BackBuffer"));
 }
