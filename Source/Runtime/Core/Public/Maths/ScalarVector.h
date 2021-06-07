@@ -132,15 +132,17 @@ struct TScalarVectorComponent {
     }
 };
 //----------------------------------------------------------------------------
-// TScalarComponent<> : traits for selecting compatible scalar types
+// TScalarComponent<> : base component type for a scalar vector expr
+//----------------------------------------------------------------------------
+template <typename _Expr>
+using TScalarComponent = decltype(std::declval<_Expr>().template get<0>());
+//----------------------------------------------------------------------------
+// TScalarCommonType<> : traits for selecting compatible scalar types
 //----------------------------------------------------------------------------
 template <typename _Expr, typename T>
-using TScalarComponent = Meta::TEnableIf<
+using TScalarCommonType = std::enable_if_t<
     std::is_arithmetic_v<T>,
-    std::common_type_t<
-        T,
-        decltype(std::declval<_Expr>().template get<0>())
-    >
+    std::common_type_t<T, TScalarComponent<_Expr> >
 >;
 //----------------------------------------------------------------------------
 // TScalarVectorConstant<> : wraps a constant value
@@ -289,37 +291,37 @@ CONSTEXPR auto VECTORCALL operator /(const TScalarVectorComponent<T, _Idx>& lhs,
     return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs / x); });
 }
 //----------------------------------------------------------------------------
-template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x + rhs); });
 }
-template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x - rhs); });
 }
-template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x * rhs); });
 }
-template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, const V& rhs) NOEXCEPT {
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (x / rhs); });
 }
 //----------------------------------------------------------------------------
-template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator +(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator +(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs + x); });
 }
-template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator -(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator -(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs - x); });
 }
-template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator *(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator *(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs * x); });
 }
-template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto VECTORCALL operator /(const V& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarCommonType<U, V> >
+CONSTEXPR auto VECTORCALL operator /(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT -> _Result { return (lhs / x); });
 }
 //----------------------------------------------------------------------------
