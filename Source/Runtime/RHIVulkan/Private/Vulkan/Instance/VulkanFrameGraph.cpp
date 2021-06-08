@@ -23,7 +23,9 @@ FVulkanFrameGraph::FVulkanFrameGraph(const FVulkanDeviceInfo& deviceInfo)
 ,   _device(deviceInfo)
 ,   _queueUsage(Default)
 ,   _resourceManager(_device)
+#if USE_PPE_RHIDEBUG
 ,   _vkQueryPool(VK_NULL_HANDLE)
+#endif
 {}
 //----------------------------------------------------------------------------
 FVulkanFrameGraph::~FVulkanFrameGraph() {
@@ -54,7 +56,7 @@ bool FVulkanFrameGraph::Construct() {
         Assert_NoAssume(not _queueMap.empty());
     }
 
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     // create query pool
     {
         VkQueryPoolCreateInfo createInfo{};
@@ -99,7 +101,7 @@ void FVulkanFrameGraph::TearDown() {
 
     _resourceManager.TearDown();
 
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     if (VK_NULL_HANDLE != _vkQueryPool) {
         _device.vkDestroyQueryPool(_device.vkDevice(), _vkQueryPool, _device.vkAllocator());
         _vkQueryPool = VK_NULL_HANDLE;
@@ -837,7 +839,7 @@ bool FVulkanFrameGraph::WaitIdle() {
 //----------------------------------------------------------------------------
 // Debug
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIPROFILING || USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
 bool FVulkanFrameGraph::DumpStatistics(FFrameStatistics* pStats) const {
     ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));
 

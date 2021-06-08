@@ -20,7 +20,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 struct FComputeShaderDebugMode {
     EShaderDebugMode Mode{ Default };
     uint3 GlobalId{ ~0u };
@@ -144,7 +144,7 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
     FDispatchCompute& EnableShaderDebugTrace(const uint3& globalId);
 #endif
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     FDispatchCompute& EnableShaderProfiling() { return EnableShaderProfiling(uint3(~0u)); }
     FDispatchCompute& EnableShaderProfiling(const uint3& globalId);
 #endif
@@ -207,7 +207,7 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
     FDispatchComputeIndirect& EnableShaderDebugTrace(const uint3& globalId);
 #endif
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     FDispatchComputeIndirect& EnableShaderProfiling() { return EnableShaderProfiling(uint3(~0u)); }
     FDispatchComputeIndirect& EnableShaderProfiling(const uint3& globalId);
 #endif

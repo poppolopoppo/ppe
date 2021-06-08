@@ -175,7 +175,7 @@ inline FTraceRays& FTraceRays::EnableShaderDebugTrace(const uint3& launchId) {
 }
 #endif
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 inline FTraceRays& FTraceRays::EnableShaderProfiling(const uint3& launchId) {
     DebugMode.Mode = EShaderDebugMode::Profiling;
     DebugMode.LaunchId = launchId;

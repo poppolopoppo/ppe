@@ -198,7 +198,7 @@ inline CONSTEXPR EShaderStages EShaderStages_FromShader(EShaderType shader) {
     }
 }
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 inline CONSTEXPR EShaderDebugMode EShaderDebugMode_From(EShaderLangFormat lang) {
     switch (BitAnd(lang, EShaderLangFormat::_DebugModeMask)) {
     case EShaderLangFormat::Unknown: return EShaderDebugMode::None;

@@ -272,7 +272,7 @@ private:
 
     TRHIThreadSafe<FInternalData> _data;
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     mutable FFrameStatistics _statistics;
 #endif
 

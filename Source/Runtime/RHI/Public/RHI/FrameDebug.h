@@ -23,7 +23,7 @@
 #include "Misc/Function.h"
 #include "Time/TimedScope.h"
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 #   define RHI_PROFILINGSCOPE(_NAME, _STAT) \
         ::PPE::RHI::FFrameStatistics::FProfilingScope ANONYMIZE(rhiProfilingScope){ _STAT }
 #else
@@ -48,7 +48,7 @@ using FShaderDebugCallback = TFunction<void(
 >;
 #endif
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 struct FFrameStatistics {
     struct FRendering {
         u32 NumDescriptorBinds              = 0;

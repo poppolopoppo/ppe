@@ -173,7 +173,7 @@ public: // interface
     NODISCARD virtual bool WaitIdle() = 0;
 
     // Debugging
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     virtual bool DumpStatistics(FFrameStatistics* pStats) const = 0;
 #endif
 

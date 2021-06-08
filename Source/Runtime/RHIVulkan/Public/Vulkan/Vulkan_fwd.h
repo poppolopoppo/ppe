@@ -94,7 +94,7 @@ class FVulkanRenderPass;
 //----------------------------------------------------------------------------
 // Debugging:
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 class FVulkanDebugger;
 class FVulkanLocalDebugger;
 #endif

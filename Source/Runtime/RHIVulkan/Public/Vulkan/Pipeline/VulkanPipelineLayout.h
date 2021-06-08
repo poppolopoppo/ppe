@@ -51,7 +51,7 @@ public:
 
     hash_t HashValue() const { return Read()->HashValue; }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 

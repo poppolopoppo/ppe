@@ -34,7 +34,7 @@ public:
         _process(visitor, this);
     }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     FStringView TaskName() const { return _taskName; }
     const FRgba8u DebugColor() const { return _debugColor; }
 #endif
@@ -45,7 +45,7 @@ protected:
     template <typename T>
     IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProcessFunc process)
     :   _process(process)
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     ,   _taskName(desc.TaskName), _debugColor(desc.DebugColor)
 #endif
     {
@@ -64,7 +64,7 @@ protected:
     FDependencies _inputs;
     FDependencies _outputs;
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     FTaskName _taskName;
     FRgba8u _debugColor{ FRgba8u::One };
 #endif

@@ -73,7 +73,7 @@ public:
     TMemoryView<const FTriangles> Triangles() const { return Read()->Triangles.MakeConstView(); }
     ERayTracingBuildFlags Flags() const { return Read()->Flags; }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 

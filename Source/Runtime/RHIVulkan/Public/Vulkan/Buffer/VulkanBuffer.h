@@ -48,7 +48,7 @@ public:
     VkBuffer Handle() const { return Read()->vkBuffer; }
     u32 SizeInBytes() const { return Read()->Desc.SizeInBytes; }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 

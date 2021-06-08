@@ -99,7 +99,7 @@ public: // interface
     virtual void Task(FLogicalPassID renderPass, const FDrawMeshesIndirectCount& draw) = 0;
     virtual void Task(FLogicalPassID renderPass, const FCustomDraw& draw) = 0;
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     // Begin shader time measurement for all subsequent tasks.
     // Draw tasks are not affected, but timemap enabled for render pass.
     // Dimension should be same as in 'dstImage' argument in 'EndShaderTimeMap()', otherwise result will be scaled.

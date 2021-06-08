@@ -6,7 +6,7 @@
 
 #if USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING
 
-#   define VK_CALL(...) { (void)(__VA_ARGS__) }
+#   define VK_CALL(...) { (void)(__VA_ARGS__); }
 #   define VK_CHECK(...) { if ((__VA_ARGS__) != VK_SUCCESS) return ::PPE::Default; }
 
 #else

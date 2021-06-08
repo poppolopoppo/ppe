@@ -411,7 +411,7 @@ public:
 
     CONSTEXPR const _It& inner() const { return _it; }
 
-    CONSTEXPR TKeyIterator& operator++() /* prefix */ { _it.operator++(); return *this; }
+    CONSTEXPR TKeyIterator& operator++() /* prefix */ { ++_it; return *this; }
     CONSTEXPR TKeyIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TKeyIterator(jt); }
 
     CONSTEXPR reference operator*() const { return (_it->first); }

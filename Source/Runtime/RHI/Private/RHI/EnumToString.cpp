@@ -407,6 +407,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     return oss;
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EDebugFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EDebugFlags>);
     if (EDebugFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
@@ -428,6 +429,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     return oss;
 }
+#endif
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EBlendFactor value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<EBlendFactor>);
@@ -966,7 +968,9 @@ PPE_RHI_ENUMTOSTRING_DEF(EShadingRatePalette);
 PPE_RHI_ENUMTOSTRING_DEF(EPixelFormat);
 PPE_RHI_ENUMTOSTRING_DEF(EColorSpace);
 PPE_RHI_ENUMTOSTRING_DEF(EFragmentOutput);
+#if USE_PPE_RHIDEBUG
 PPE_RHI_ENUMTOSTRING_DEF(EDebugFlags);
+#endif
 PPE_RHI_ENUMTOSTRING_DEF(EBlendFactor);
 PPE_RHI_ENUMTOSTRING_DEF(EBlendOp);
 PPE_RHI_ENUMTOSTRING_DEF(ELogicOp);

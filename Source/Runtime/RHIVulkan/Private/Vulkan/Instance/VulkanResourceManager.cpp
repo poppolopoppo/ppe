@@ -557,8 +557,8 @@ FRawBufferID FVulkanResourceManager::CreateBuffer(
 FRawBufferID FVulkanResourceManager::CreateBuffer(
     const FBufferDesc& desc,
     FExternalBuffer externalBuffer, FOnReleaseExternalBuffer&& onRelease,
-    TMemoryView<const u32> queueFamilyIndices,
-    FConstChar debugName) {
+    TMemoryView<const u32> queueFamilyIndices
+    ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(externalBuffer);
     Assert(onRelease);
 

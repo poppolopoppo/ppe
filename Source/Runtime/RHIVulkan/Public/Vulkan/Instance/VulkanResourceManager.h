@@ -360,6 +360,7 @@ const auto& FVulkanResourceManager::ResourceData(details::TResourceId<_Uid> id, 
 template <u32 _Uid>
 const auto* FVulkanResourceManager::ResourceDataIFP(details::TResourceId<_Uid> id, bool incRef, bool tolerant) const {
     Assert(id);
+    UNUSED(tolerant);
     auto& pool = ResourcePoolConst_(id);
 
     using resource_type = typename TPooledResource_<_Uid>::value_type;

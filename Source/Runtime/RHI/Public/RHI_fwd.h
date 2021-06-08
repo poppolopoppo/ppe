@@ -10,9 +10,8 @@
 
 #define USE_PPE_RHIMOBILE (0)
 #define USE_PPE_RHIDEBUG (!!USE_PPE_ASSERT || !!USE_PPE_MEMORY_DEBUGGING)
-#define USE_PPE_RHITASKNAME (!!USE_PPE_RHIPROFILING)
+#define USE_PPE_RHITASKNAME (!!USE_PPE_RHIDEBUG)
 #define USE_PPE_RHIOPTIMIZEIDS (!USE_PPE_RHITASKNAME)
-#define USE_PPE_RHIPROFILING (!USE_PPE_FINAL_RELEASE)
 
 #if USE_PPE_RHIDEBUG
 #   define ARG0_IF_RHIDEBUG(...) __VA_ARGS__
@@ -72,7 +71,7 @@ enum class EShadingRatePalette : u8;
 enum class EPixelFormat : u32;
 enum class EColorSpace : u32;
 enum class EFragmentOutput : u32;
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 enum class EDebugFlags : u32;
 #endif
 //----------------------------------------------------------------------------

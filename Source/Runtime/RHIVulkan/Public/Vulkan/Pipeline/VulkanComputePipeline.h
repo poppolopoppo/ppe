@@ -65,7 +65,7 @@ public:
 
     auto Read() const { return _pipeline.LockShared(); }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 

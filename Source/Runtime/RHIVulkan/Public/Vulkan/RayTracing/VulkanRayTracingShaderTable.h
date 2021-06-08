@@ -25,7 +25,7 @@ public:
     FRawRTPipelineID Pipeline() const { return _pipelineId.Get(); }
     FRawBufferID Buffer() const { return _bufferId.Get(); }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
@@ -61,7 +61,7 @@ private:
     u16 _rayHitStride{ 0 };
     u16 _callableStride{ 0 };
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;
 #endif
 };

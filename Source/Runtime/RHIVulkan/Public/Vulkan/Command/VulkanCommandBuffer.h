@@ -197,7 +197,7 @@ public:
     virtual void Task(FLogicalPassID renderPass, const FDrawMeshesIndirectCount& draw) override;
     virtual void Task(FLogicalPassID renderPass, const FCustomDraw& draw) override;
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     virtual bool BeginShaderTimeMap(const uint2& dim, EShaderStages stages = EShaderStages::All) override;
     virtual PFrameTask EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<PFrameTask> dependsOn = Default) override;
 #endif

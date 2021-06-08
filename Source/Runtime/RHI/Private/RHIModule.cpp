@@ -86,7 +86,7 @@ ERHIFeature FRHIModule::RecommendedFeatures(ERHIFeature features) const NOEXCEPT
         features -= ERHIFeature::Debugging;
 #endif
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     if (process.HasArgument(L"-RHIProfiling"))
         features += ERHIFeature::Debugging;
     if (process.HasArgument(L"-RHINoProfiling"))

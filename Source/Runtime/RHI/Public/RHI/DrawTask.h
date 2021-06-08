@@ -35,7 +35,7 @@ struct TDrawTaskDesc {
 };
 } //!details
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 struct FGraphicsShaderDebugMode {
     EShaderDebugMode Mode{ Default };
     EShaderStages Stages{ Default };
@@ -55,7 +55,7 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
     FColorBuffers ColorBuffers;
     FDrawDynamicStates DynamicStates;
 
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     using FDebugMode = FGraphicsShaderDebugMode;
     FDebugMode DebugMode;
 #endif
@@ -93,7 +93,7 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
     _Task& EnableFragmentDebugTrace(int x, int y);
 #endif
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     _Task& EnableShaderProfiling(EShaderStages stages);
     _Task& EnableFragmentProfiling(int x, int y);
 #endif

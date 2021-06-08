@@ -161,14 +161,12 @@ EQueueUsage FVulkanCommandBatch::QueueUsage() const noexcept {
 bool FVulkanCommandBatch::OnBegin(const FCommandBufferDesc& desc) {
     SetState_(EState::Initial, EState::Recording);
 
-    const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // just for locking
-
 #if USE_PPE_RHIDEBUG
+    const auto exclusiveData = _data.LockExclusive();
     exclusiveData->NeedQueueSync = (desc.DebugFlags == EDebugFlags::QueueSync);
-#endif
-#if USE_PPE_RHIPROFILING
     _statistics.Reset();
+#else
+    UNUSED(desc);
 #endif
 
     return true;
@@ -178,9 +176,9 @@ void FVulkanCommandBatch::OnBeforeRecording(VkCommandBuffer cmd) {
     Assert_NoAssume(VK_NULL_HANDLE != cmd);
     Assert_NoAssume(State() == EState::Recording);
 
+#if USE_PPE_RHIDEBUG
     const auto exclusiveData = _data.LockExclusive();
 
-#if USE_PPE_RHIDEBUG
     if (exclusiveData->SupportsQuery) {
         const FVulkanDevice& device = _frameGraph->Device();
         const VkQueryPool queryPool = _frameGraph->QueryPool();
@@ -191,9 +189,8 @@ void FVulkanCommandBatch::OnBeforeRecording(VkCommandBuffer cmd) {
     }
 
     BeginShaderDebugger_(cmd);
-
 #else
-    UNUSED(exclusiveData); // just for locking
+    UNUSED(cmd);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -201,9 +198,9 @@ void FVulkanCommandBatch::OnAfterRecording(VkCommandBuffer cmd) {
     Assert_NoAssume(VK_NULL_HANDLE != cmd);
     Assert_NoAssume(State() == EState::Recording);
 
+#if USE_PPE_RHIDEBUG
     const auto exclusiveData = _data.LockExclusive();
 
-#if USE_PPE_RHIDEBUG
     EndShaderDebugger_(cmd);
 
     if (exclusiveData->SupportsQuery) {
@@ -215,7 +212,7 @@ void FVulkanCommandBatch::OnAfterRecording(VkCommandBuffer cmd) {
     }
 
 #else
-    UNUSED(exclusiveData);
+    UNUSED(cmd);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -331,7 +328,7 @@ bool FVulkanCommandBatch::OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, 
     }
 #endif
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     pStats->Merge(_statistics);
 #endif
 

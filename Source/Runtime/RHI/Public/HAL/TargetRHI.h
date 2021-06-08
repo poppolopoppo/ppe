@@ -4,7 +4,7 @@
 
 #include "HAL/TargetRHI_fwd.h"
 
-#include "IO/String_fwd.h"
+#include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Modular/Modular_fwd.h"
 #include "Meta/Enum.h"

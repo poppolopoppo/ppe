@@ -249,7 +249,7 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
 bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cmd) {
     FVulkanTaskProcessor processor{this, cmd};
 
-    CONSTEXPR u32 visitorId{1};
+    const u32 visitorId{ 1 };
     EVulkanExecutionOrder executionOrder{EVulkanExecutionOrder::First};
 
     FTransientTaskArray pending{data.MainAllocator};
@@ -268,7 +268,7 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
 
             // wait for input
             const bool inputProcessed = pTask->Inputs().Any(
-                [](PVulkanFrameTask pInput) NOEXCEPT -> bool {
+                [visitorId](PVulkanFrameTask pInput) NOEXCEPT -> bool {
                     return (pInput->VisitorId() != visitorId);
                 });
             if (not inputProcessed) {
@@ -1015,7 +1015,7 @@ FLogicalPassID FVulkanCommandBuffer::CreateRenderPass(const FRenderPassDesc& des
 //----------------------------------------------------------------------------
 // Shader time map
 //----------------------------------------------------------------------------
-#ifdef USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 bool FVulkanCommandBuffer::BeginShaderTimeMap(const uint2& dim, EShaderStages stages) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
@@ -1029,7 +1029,7 @@ bool FVulkanCommandBuffer::BeginShaderTimeMap(const uint2& dim, EShaderStages st
 }
 #endif
 //----------------------------------------------------------------------------
-#ifdef USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
     FRawImageID dstImage,
     FImageLayer layer,
@@ -1140,7 +1140,7 @@ void FVulkanCommandBuffer::FlushLocalResourceStates_(
     EVulkanExecutionOrder order,
     FVulkanBarrierManager& barriers
     ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* pDebugger)) {
-    auto resetStateAndDestroyLocalResources = [order, &barriers, pDebugger](auto& localResources) {
+    auto resetStateAndDestroyLocalResources = [order, &barriers ARGS_IF_RHIDEBUG(pDebugger)](auto& localResources) {
         forrange(i, 0, checked_cast<FResourceIndex>(localResources.MaxLocalIndex)) {
             auto* const pResource = localResources.Pool[i];
             Assert(pResource);

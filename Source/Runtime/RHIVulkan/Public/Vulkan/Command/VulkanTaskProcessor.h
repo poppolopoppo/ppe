@@ -46,7 +46,7 @@ public:
 
     using FStencilValue = FDrawDynamicStates::FStencilReference;
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     using FStatistics = FFrameStatistics::FRendering;
 #endif
 
@@ -137,7 +137,7 @@ private:
     void AddRTScene_(const FVulkanRayTracingLocalScene* scene, EResourceState state);
     void AddRTGeometry_(const FVulkanRayTracingLocalGeometry* geom, EResourceState state);
 
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     void CmdDebugMarker_(FStringView text) const;
     void CmdPushDebugGroup_(FStringView text) const;
     void CmdPopDebugGroup_() const;

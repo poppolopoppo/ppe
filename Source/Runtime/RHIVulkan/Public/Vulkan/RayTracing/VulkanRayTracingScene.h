@@ -54,7 +54,7 @@ public:
     FInstancesData& CurrentData() const { return Read()->InstancesData; }
     ERayTracingBuildFlags Flags() const { return Read()->Flags; }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 

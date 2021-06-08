@@ -47,7 +47,7 @@ public:
 
     bool Valid() const { return (!!_bufferData); }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     FStringView DebugName() const { return _bufferData->DebugName(); }
 #endif
 

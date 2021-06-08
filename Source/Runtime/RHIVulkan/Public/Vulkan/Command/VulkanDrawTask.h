@@ -25,7 +25,7 @@ public:
     void Process1(void* visitor);
     void Process2(void* visitor);
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     FStringView TaskName() const { return _taskName; }
     const FRgba8u DebugColor() const { return _debugColor; }
 
@@ -37,7 +37,7 @@ private:
     FProcessFunc _pass1{ nullptr };
     FProcessFunc _pass2{ nullptr };
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     FTaskName _taskName;
     FRgba8u _debugColor{ FRgba8u::One };
     EShaderDebugIndex _debugModeIndex{ Default };

@@ -62,7 +62,7 @@ public:
     const FVulkanDevice& Device() const { return _device; }
     FVulkanResourceManager& ResourceManager() { return _resourceManager; }
 
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     VkQueryPool QueryPool() const { return _vkQueryPool; }
 #endif
 
@@ -174,7 +174,7 @@ public:
     NODISCARD bool Flush(EQueueUsage queues) override;
     NODISCARD bool WaitIdle() override;
 
-#if USE_PPE_RHIPROFILING || USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     NODISCARD bool DumpStatistics(FFrameStatistics* pStats) const override;
 #endif
 
@@ -225,7 +225,7 @@ private:
 
     FVulkanResourceManager _resourceManager;
 
-#if USE_PPE_RHIDEBUG || USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
     FVulkanDebugger _debugger;
     VkQueryPool _vkQueryPool;
     FShaderDebugCallback _shaderDebugCallback;

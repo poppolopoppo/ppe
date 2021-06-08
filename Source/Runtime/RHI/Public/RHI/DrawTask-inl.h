@@ -90,7 +90,7 @@ _Task& TDrawCallDesc<_Task>::EnableFragmentDebugTrace(int x, int y) {
 }
 #endif
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 template <typename _Task>
 _Task& TDrawCallDesc<_Task>::EnableShaderProfiling(EShaderStages stages) {
     DebugMode.Mode = EShaderDebugMode::Profiling;
@@ -99,7 +99,7 @@ _Task& TDrawCallDesc<_Task>::EnableShaderProfiling(EShaderStages stages) {
 }
 #endif
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIPROFILING
+#if USE_PPE_RHIDEBUG
 template <typename _Task>
 _Task& TDrawCallDesc<_Task>::EnableFragmentProfiling(int x, int y) {
     DebugMode.Mode = EShaderDebugMode::Profiling;

@@ -50,7 +50,7 @@ public:
 
     bool Valid() const { return (!!_imageData); }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     FStringView DebugName() const { return _imageData->DebugName(); }
 #endif
 

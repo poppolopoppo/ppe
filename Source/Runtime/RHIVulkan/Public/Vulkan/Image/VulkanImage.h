@@ -64,7 +64,7 @@ public:
 
     VkImage Handle() const { return Read()->vkImage; }
 
-#ifdef USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
