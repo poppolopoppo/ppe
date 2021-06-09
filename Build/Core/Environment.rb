@@ -71,8 +71,9 @@ module Build
         end
 
         def self.executable_path(relativePath, platform_config, ext)
-            return File.join($BinariesPath, relativePath.to_s.tr('/', '-')<<'-'<<
-                platform_config.to_s<<ext)
+            path = relativePath.to_s.tr('/', '-')
+            path = path <<'-'<<platform_config.to_s unless platform_config.nil?
+            return File.join($BinariesPath, path << ext)
         end
 
         def output_path(relativePath, output=:obj)
@@ -351,6 +352,15 @@ module Build
     end
     def self.append_environments(*env)
         $BuildEnvironments.concat(env)
+    end
+    def self.environment_compiler()
+        $BuildEnvironments.each do |x|
+            env = Build.send(x)
+            comp = env.compiler
+            Assert.expect?(comp, Compiler)
+            return comp
+        end
+        return nil
     end
 
 end #~ Build
