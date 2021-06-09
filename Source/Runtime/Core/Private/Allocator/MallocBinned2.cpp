@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 #include "Allocator/MallocBinned2.h"
 
@@ -337,17 +337,16 @@ struct FBinnedSmallTable : Meta::FNonCopyableNorMovable {
         AssertNotReached();
     }
 
-    static inline byte* GSmallPoolVirtualMemory{ nullptr };
+    static inline byte* GSmallPoolVirtualMemory{ static_cast<byte*>(nullptr) };
 
     FORCE_INLINE static bool IsSmallBlock(const void* p) NOEXCEPT {
-        Assert(GSmallPoolVirtualMemory);
-        const uintptr_t delta = static_cast<uintptr_t>(static_cast<const byte*>(p) - GSmallPoolVirtualMemory);
-        return (delta < PPE_MALLOCBINNED2_SMALLPOOL_COUNT * PPE_MALLOCBINNED2_SMALLPOOL_RESERVE);
+        const size_t delta = static_cast<size_t>(static_cast<const byte*>(p) - GSmallPoolVirtualMemory);
+        return (!!GSmallPoolVirtualMemory &
+            (delta < PPE_MALLOCBINNED2_SMALLPOOL_COUNT * PPE_MALLOCBINNED2_SMALLPOOL_RESERVE) );
     }
 
     FORCE_INLINE static u32 SmallPoolIndexFromPtr(const void* p) NOEXCEPT {
         Assert(GSmallPoolVirtualMemory);
-
         const ptrdiff_t delta = (static_cast<const byte*>(p) - GSmallPoolVirtualMemory);
         Assert(delta >= 0);
 
@@ -715,15 +714,15 @@ FBinnedSmallTable::~FBinnedSmallTable() NOEXCEPT {
 #if USE_PPE_ASSERT
     for (const FSmallPoolInfo& pool : SmallPools) {
         const FCriticalScope scopeLock( &pool.Mutex );
-        Assert_NoAssume(pool.CommittedChunks.Empty_ForAssert());
-        Assert_NoAssume(pool.ExhaustedChunks.Full());
+        Assert_Lightweight(pool.CommittedChunks.Empty_ForAssert());
+        Assert_Lightweight(pool.ExhaustedChunks.Full());
     }
 #endif
 
     FVirtualMemory::PageRelease(VM.Data, VM.SizeInBytes);
     FVirtualMemory::InternalFree(Meta.Data, Meta.SizeInBytes TRACKINGDATA_PRM_IFP(SmallPoolInfo));
 
-    ONLY_IF_ASSERT(FBinnedSmallTable::GSmallPoolVirtualMemory = reinterpret_cast<byte*>(static_cast<intptr_t>(0xdeadbeef)));
+    ONLY_IF_ASSERT(FBinnedSmallTable::GSmallPoolVirtualMemory = nullptr);
 
 #if PPE_MALLOCBINNED2_USE_DETAILED_TRACKING
     ONLY_IF_MEMORYDOMAINS(BinnedTrackingDataShutdown_());
@@ -740,8 +739,9 @@ struct FBinnedPerThreadFreeBlockList : Meta::FNonCopyableNorMovable, Meta::FThre
     }
 
     FBinnedPerThreadFreeBlockList() = default;
-    ~FBinnedPerThreadFreeBlockList() NOEXCEPT {
+    NO_INLINE ~FBinnedPerThreadFreeBlockList() NOEXCEPT {
         ReleaseCacheMemory();
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(FreeLists, sizeof(FreeLists))); // poison to crash if used after destructor
     }
 
     void ReleaseCacheMemory() NOEXCEPT;
