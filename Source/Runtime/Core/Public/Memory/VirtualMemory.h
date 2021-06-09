@@ -21,7 +21,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FVirtualMemory {
 public:
-    static size_t   SizeInBytes(void* ptr);
+    FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
+        return Meta::RoundToNext(sizeInBytes, ALLOCATION_GRANULARITY);
+    }
+
+    static size_t   SizeInBytes(void* ptr) NOEXCEPT;
     static bool     Protect(void* ptr, size_t sizeInBytes, bool read, bool write);
 
 #if USE_PPE_MEMORYDOMAINS
