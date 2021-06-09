@@ -90,6 +90,7 @@ public:
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) = 0;
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) = 0;
     virtual void Flush(bool synchronous) = 0;
+    virtual void OnRelease() { Flush(true); }
 
     static FTimepoint StartedAt() {
         ONE_TIME_INITIALIZE(const FTimepoint, GStartedAt, FTimepoint::Now());
@@ -420,7 +421,7 @@ static void SetupLoggerImpl_(ILowLevelLogger* pimpl) {
     std::swap(pimpl, GLoggerImpl_);
 
     if (pimpl)
-        pimpl->Flush(true);
+        pimpl->OnRelease();
 }
 //----------------------------------------------------------------------------
 class FLogFormat {
@@ -470,11 +471,13 @@ public: // ILowLevelLogger
 };
 //----------------------------------------------------------------------------
 // Used before main when logger is not yet created
-class FAccumulatingLogger final : public ILowLevelLogger {
+class FAccumulatingLogger final : public ILowLevelLogger, Meta::TStaticSingleton<FAccumulatingLogger> {
+    friend Meta::TStaticSingleton<FAccumulatingLogger>;
 public:
-    static ILowLevelLogger* Get() {
-        ONE_TIME_DEFAULT_INITIALIZE(FAccumulatingLogger, GInstance);
-        return (&GInstance);
+    using singleton_type = Meta::TStaticSingleton<FAccumulatingLogger>;
+    using singleton_type::Get;
+    static void Create() {
+        singleton_type::Create();
     }
 
     ~FAccumulatingLogger() {
@@ -524,6 +527,11 @@ public:
         ILowLevelLogger* const plogger = GLoggerImpl_;
         if (plogger && this != plogger)
             FlushAccumulatedLogs(*plogger);
+    }
+
+    virtual void OnRelease() override final {
+        ILowLevelLogger::OnRelease();
+        singleton_type::Destroy(); // /!\ suicide this
     }
 
 private:
@@ -583,12 +591,12 @@ public: // ILowLevelLogger
 //----------------------------------------------------------------------------
 static ILowLevelLogger* LowLevelLogger_BeforeMain_() {
 #if USE_PPE_PLATFORM_DEBUG
-    return (FPlatformDebug::IsDebuggerPresent()
-        ? FDebuggingLogger::Get()
-        : FAccumulatingLogger::Get() );
-#else
-    return FAccumulatingLogger::Get();
+    if (FPlatformDebug::IsDebuggerPresent())
+        return FDebuggingLogger::Get();
 #endif
+
+    FAccumulatingLogger::Create();
+    return std::addressof(FAccumulatingLogger::Get());
 }
 //----------------------------------------------------------------------------
 static ILowLevelLogger* LowLevelLogger_AfterMain_() {
