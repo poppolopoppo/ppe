@@ -244,13 +244,16 @@ void* FMallocBitmap::HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXC
     return nullptr; // can't resize without moving the data, but there might still be some space left
 }
 //----------------------------------------------------------------------------
-void FMallocBitmap::HeapFree(void* ptr) {
-    if (Likely(AliasesToMediumHeap(ptr)))
-        MediumFree(ptr);
-    else {
-        Assert_NoAssume(AliasesToLargeHeap(ptr));
-        LargeFree(ptr);
-    }
+bool FMallocBitmap::HeapFree_ReturnIfAliases(void* ptr) {
+    auto& mediumHeap = BitmapHeapMedium_();
+    if (Likely(auto* page = mediumHeap.Aliases(ptr)))
+        return mediumHeap.Free(ptr, page), true;
+
+    auto& largeHeap = BitmapHeapLarge_();
+    if (Likely(auto* page = largeHeap.Aliases(ptr)))
+        return largeHeap.Free(ptr, page), true;
+
+    return false;
 }
 //----------------------------------------------------------------------------
 void FMallocBitmap::MemoryTrim() {
@@ -259,23 +262,30 @@ void FMallocBitmap::MemoryTrim() {
 }
 //----------------------------------------------------------------------------
 bool FMallocBitmap::AliasesToHeaps(void* ptr) NOEXCEPT {
+    Assert(ptr);
+
     return (AliasesToMediumHeap(ptr) || AliasesToLargeHeap(ptr));
 }
 //----------------------------------------------------------------------------
 size_t FMallocBitmap::SnapSize(size_t sz) NOEXCEPT {
+    Assert(sz);
+
     if (Likely(sz <= FBitmapHeapMedium_::MaxAllocSize))
         return FBitmapHeapMedium_::SnapSize(sz);
     else
         return FBitmapHeapLarge_::SnapSize(sz);
 }
 //----------------------------------------------------------------------------
-size_t FMallocBitmap::RegionSize(void* ptr) NOEXCEPT {
-    const FBitmapHeapMedium_::page_type* page = BitmapHeapMedium_().Aliases(ptr);
-    if (Likely(page))
-        return page->RegionSize(ptr);
-    else {
-        return BitmapHeapLarge_().AllocationSize(ptr);
-    }
+bool FMallocBitmap::RegionSize_ReturnIfAliases(size_t* pSizeInBytes, void* ptr) NOEXCEPT {
+    Assert(pSizeInBytes);
+
+    if (Likely(auto* page = BitmapHeapMedium_().Aliases(ptr)))
+        return *pSizeInBytes = page->RegionSize(ptr), true;
+
+    if (Likely(auto* page = BitmapHeapLarge_().Aliases(ptr)))
+        return *pSizeInBytes = page->RegionSize(ptr), true;
+
+    return false;
 }
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE

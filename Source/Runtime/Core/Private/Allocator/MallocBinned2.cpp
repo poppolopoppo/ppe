@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 
 #include "Allocator/MallocBinned2.h"
 
@@ -590,8 +590,9 @@ struct FBinnedSmallTable : Meta::FNonCopyableNorMovable {
 
     FSmallPoolInfo SmallPools[PPE_MALLOCBINNED2_SMALLPOOL_COUNT];
 
-    FBinnedSmallTable() NOEXCEPT;
-    ~FBinnedSmallTable() NOEXCEPT;
+    // don't inline ctor/dtor to help codegen size in allocation hotpath
+    NO_INLINE FBinnedSmallTable() NOEXCEPT;
+    NO_INLINE ~FBinnedSmallTable() NOEXCEPT;
 
     FORCE_INLINE FBinnedBundle AllocateBundle(u32 pool) {
         Assert(pool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
@@ -853,7 +854,13 @@ static void* BinnedMallocFallback_(size_t size) {
     }
     else {
         // external allocator for larger blocks
-        void* const result = FMallocBitmap::HeapAlloc(size, PPE_MALLOCBINNED2_BOUNDARY);
+        void* result;
+
+        if (Likely(size < FMallocBitmap::MaxAllocSize))
+            result = FMallocBitmap::HeapAlloc(size, PPE_MALLOCBINNED2_BOUNDARY);
+        else
+            result = FVirtualMemory::Alloc(size ARGS_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(VeryLargeBlocks)));
+
         Assert_NoAssume(not FBinnedSmallTable::IsSmallBlock(result));
         return result;
     }
@@ -879,7 +886,8 @@ static void BinnedFreeFallback_(void* ptr) {
     }
     else {
         // large blocks are handled externally
-        FMallocBitmap::HeapFree(ptr);
+        if (Unlikely(not FMallocBitmap::HeapFree_ReturnIfAliases(ptr)))
+            FVirtualMemory::Free(ptr, FVirtualMemory::SizeInBytes(ptr) ARGS_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(VeryLargeBlocks)) );
     }
 }
 //------------------------------------------------------------------------------
@@ -1016,17 +1024,26 @@ void FMallocBinned2::ReleasePendingBlocks() {
 size_t FMallocBinned2::SnapSize(size_t size) NOEXCEPT {
     Assert(size);
 
-    return (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)
-        ? BoundSizeToSmallPool(checked_cast<u32>(size))
-        : FMallocBitmap::SnapSize(size) );
+    if (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE))
+        return BoundSizeToSmallPool(checked_cast<u32>(size));
+
+    if (Likely(size <= FMallocBitmap::MaxAllocSize))
+        return FMallocBitmap::SnapSize(size);
+
+    return FVirtualMemory::SnapSize(size);
 }
 //------------------------------------------------------------------------------
 size_t FMallocBinned2::RegionSize(void* ptr) NOEXCEPT {
     Assert(ptr);
 
-    return (Likely(FBinnedSmallTable::IsSmallBlock(ptr))
-        ? SmallPoolIndexToBlockSize(FBinnedSmallTable::SmallPoolIndexFromPtr(ptr))
-        : FMallocBitmap::RegionSize(ptr) );
+    if (Likely(FBinnedSmallTable::IsSmallBlock(ptr)))
+        return SmallPoolIndexToBlockSize(FBinnedSmallTable::SmallPoolIndexFromPtr(ptr));
+
+    size_t sizeInBytes;
+    if (Likely(FMallocBitmap::RegionSize_ReturnIfAliases(&sizeInBytes, ptr)))
+        return sizeInBytes;
+
+    return FVirtualMemory::SizeInBytes(ptr);
 }
 //------------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE

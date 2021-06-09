@@ -44,13 +44,19 @@ public:
 
     static void* HeapAlloc(size_t sz, size_t alignment);
     static void* HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
-    static void HeapFree(void* ptr);
+    static NODISCARD bool HeapFree_ReturnIfAliases(void* ptr);
+    static void HeapFree(void* ptr) { Verify(HeapFree_ReturnIfAliases(ptr)); }
 
     static void MemoryTrim();
 
     static bool AliasesToHeaps(void* ptr) NOEXCEPT;
     static size_t SnapSize(size_t sz) NOEXCEPT;
-    static size_t RegionSize(void* ptr) NOEXCEPT;
+    static bool RegionSize_ReturnIfAliases(size_t* pSizeInBytes, void* ptr) NOEXCEPT;
+    static size_t RegionSize(void* ptr) NOEXCEPT {
+        size_t sizeInBytes;
+        Verify(RegionSize_ReturnIfAliases(&sizeInBytes, ptr));
+        return sizeInBytes;
+    }
 
 #if !USE_PPE_FINAL_RELEASE
     static void DumpMediumHeapInfo(FWTextWriter& oss) NOEXCEPT;
