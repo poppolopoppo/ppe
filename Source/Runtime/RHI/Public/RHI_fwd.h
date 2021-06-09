@@ -47,10 +47,13 @@ class FRHIException;
 using FRawData = RAWSTORAGE(RHIRawData, u8);
 template <typename T>
 using TArray = VECTORINSITU(RHIMisc, T, 5);
+#if USE_PPE_RHIDEBUG
 template <typename T>
-using TRHIThreadSafe = TThreadSafe<T, (!!USE_PPE_RHIDEBUG
-    ? EThreadBarrier::RWDataRaceCheck
-    : EThreadBarrier::None )>;
+using TRHIThreadSafe = TThreadSafe<T, EThreadBarrier::RWDataRaceCheck>;
+#else
+template <typename T>
+using TRHIThreadSafe = TThreadSafe<T, EThreadBarrier::None>;
+#endif
 //----------------------------------------------------------------------------
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowHandle);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowSurface);

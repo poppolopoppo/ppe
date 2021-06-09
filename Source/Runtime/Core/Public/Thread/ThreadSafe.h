@@ -20,7 +20,7 @@ enum class EThreadBarrier {
     AtomicSpinLock,
     AtomicReadWriteLock,
     AtomicTicketRWLock,
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_DEBUG || USE_PPE_FASTDEBUG
     // data race debugging
     DataRaceCheck,
     RWDataRaceCheck,
@@ -36,7 +36,7 @@ CONSTEXPR bool EThreadBarrier_Safe(EThreadBarrier barrier) NOEXCEPT {
     case EThreadBarrier::AtomicSpinLock:
     case EThreadBarrier::AtomicReadWriteLock:
     case EThreadBarrier::AtomicTicketRWLock:
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_DEBUG || USE_PPE_FASTDEBUG
     case EThreadBarrier::DataRaceCheck:
     case EThreadBarrier::RWDataRaceCheck:
 #endif
@@ -220,7 +220,7 @@ private:
 //----------------------------------------------------------------------------
 // DataRaceCheck
 //----------------------------------------------------------------------------
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_DEBUG || USE_PPE_FASTDEBUG
 template <typename T>
 class TThreadSafe<T, EThreadBarrier::DataRaceCheck> : public details::TThreadSafeCRTP_<T, TThreadSafe<T, EThreadBarrier::DataRaceCheck>> {
 public:
@@ -242,7 +242,7 @@ private:
 //----------------------------------------------------------------------------
 // DataRaceCheckRW
 //----------------------------------------------------------------------------
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_DEBUG || USE_PPE_FASTDEBUG
 template <typename T>
 class TThreadSafe<T, EThreadBarrier::RWDataRaceCheck> : public details::TThreadSafeCRTP_<T, TThreadSafe<T, EThreadBarrier::RWDataRaceCheck>> {
 public:
