@@ -175,7 +175,7 @@ CONSTEXPR bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(pointer overflowIFN
     const bool overflow = (_size == _capacity);
     if (overflow) {
         Assert(0 < _size);
-        pop_front(overflowIFN);
+        Verify(pop_front(overflowIFN));
     }
 
     push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
