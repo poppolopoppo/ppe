@@ -80,14 +80,14 @@ struct TCheckSameSize {
     };
     STATIC_CONST_INTEGRAL(bool, value, TTest<sizeof(A), sizeof(B)>::value);
 };
-template <typename A, size_t _Align>
+template <typename A, size_t _Align2>
 struct TCheckSizeAligned {
     template <size_t _Sz, size_t _Align>
     struct TTest {
         STATIC_CONST_INTEGRAL(bool, value, (_Sz % _Align) == 0);
         static_assert(value, "_Sz should be align on _Align !");
     };
-    STATIC_CONST_INTEGRAL(bool, value, TTest<sizeof(A), _Align>::value);
+    STATIC_CONST_INTEGRAL(bool, value, TTest<sizeof(A), _Align2>::value);
 };
 template <typename _Size, typename _Capacity>
 struct TCheckFitInSize {
