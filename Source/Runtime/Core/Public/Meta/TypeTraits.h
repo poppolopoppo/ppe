@@ -513,7 +513,7 @@ CONSTEXPR T DefaultValue() NOEXCEPT {
 //----------------------------------------------------------------------------
 struct FDefaultValue final {
     template <typename T>
-    CONSTEXPR operator const T () const { return DefaultValue<T>(); }
+    CONSTEXPR operator T () const { return DefaultValue<T>(); }
     template <typename T>
     CONSTEXPR friend bool operator ==(T lhs, FDefaultValue rhs) { return (T(rhs) == lhs); }
     template <typename T>
@@ -527,7 +527,7 @@ CONSTEXPR FDefaultValue Default{};
 //----------------------------------------------------------------------------
 struct FZeroValue final {
     template <typename T>
-    CONSTEXPR operator const T () const { return static_cast<T>(0); }
+    CONSTEXPR operator T () const { return static_cast<T>(0); }
     template <typename T>
     CONSTEXPR friend bool operator ==(T lhs, FZeroValue rhs) { return (T(rhs) == lhs); }
     template <typename T>
