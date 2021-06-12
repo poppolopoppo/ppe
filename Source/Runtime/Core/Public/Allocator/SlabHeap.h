@@ -205,6 +205,27 @@ public:
     }
 
     template <typename T>
+    NODISCARD PPE_DECLSPEC_ALLOCATOR() TMemoryView<T> AllocateCopyT(TMemoryView<T> src) {
+        TMemoryView<Meta::TRemoveConst<T>> dst;
+        if (not src.empty()) {
+            dst = AllocateT<Meta::TRemoveConst<T>>(src.size());
+            src.CopyTo(dst);
+        }
+        return dst;
+    }
+
+    template <typename T, typename _Map>
+    NODISCARD PPE_DECLSPEC_ALLOCATOR() auto AllocateCopyT(TMemoryView<T> src, _Map&& map) {
+        using map_type = decltype(std::declval<_Map>()(std::declval<T&>()));
+        TMemoryView<map_type> dst;
+        if (not src.empty()) {
+            dst = AllocateT<map_type>(src.size());
+            src.Map(std::forward<_Map>(map)).UnitializedCopyTo(dst.begin());
+        }
+        return dst;
+    }
+
+    template <typename T>
     void DeallocateT(T* ptr) {
         CONSTEXPR size_t pool = FAllocatorBinning::IndexFromSizeConst(sizeof(T));
         STATIC_ASSERT(pool < FAllocatorBinning::NumBins);
