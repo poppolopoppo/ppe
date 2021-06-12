@@ -123,6 +123,10 @@ public:
         Assign(values.begin(), values.end());
     }
     template <typename _It>
+    void Assign(TIterable<_It> iterable) {
+        Assign(iterable.begin(), iterable.end());
+    }
+    template <typename _It>
     void Assign(_It first, _It last) {
         clear();
         Assign_AssumeEmpty(first, last);
@@ -130,9 +134,39 @@ public:
     template <typename _It>
     void Assign_AssumeEmpty(_It first, _It last) {
         Assert_NoAssume(empty());
-        const auto dst = MakeCheckedIterator(_storage, 0, _capacity);
-        auto it = std::uninitialized_copy(first, last, dst);
+        const auto dst = MakeCheckedIterator(_storage, _capacity, 0);
+        const auto it = std::uninitialized_copy(first, last, dst);
         _size = std::distance(dst, it);
+        Assert_NoAssume(_size < _capacity);
+    }
+
+    void Append(TMemoryView<const T> values) {
+        Append(values.begin(), values.end());
+    }
+    template <typename _It>
+    void Append(TIterable<_It> iterable) {
+        Append(iterable.begin(), iterable.end());
+    }
+    template <typename _It>
+    void Append(_It first, _It last) {
+        const auto dst = MakeCheckedIterator(_storage, _capacity, _size);
+        const auto it = std::uninitialized_copy(first, last, dst);
+        _size += std::distance(it, dst);
+        Assert_NoAssume(_size < _capacity);
+    }
+
+    void Resize(size_t size) { Resize(size, Meta::MakeForceInit<T>()); }
+    void Resize(size_t size, const T& value) {
+        if (_size < size) {
+            Assert(size <= _capacity);
+            const auto dst = MakeCheckedIterator(_storage, _capacity, _size);
+            std::uninitialized_fill(dst, dst + (size - _size), value);
+        }
+        else {
+            const auto dst = MakeCheckedIterator(_storage, _capacity, size);
+            std::destroy(dst, dst + (_size - size));
+        }
+        _size = size;
     }
 
     bool Equals(const TStack& other) const {

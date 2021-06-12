@@ -189,13 +189,24 @@ hash_t hash_value(const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMa
     return flatMap.HashValue();
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 FTextWriter& operator <<(FTextWriter& oss, const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap);
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 FWTextWriter& operator <<(FWTextWriter& oss, const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <
+    typename _Key,
+    typename _Value,
+    size_t _Capacity,
+    typename _EqualTo = Meta::TEqualTo<_Key>,
+    typename _Less = Meta::TLess<_Key> >
+using TFixedSizeFlatMap = TFlatMap<
+    _Key, _Value,
+    _EqualTo, _Less,
+    TVector<TPair<_Key COMMA _Value>, STATIC_ALLOCATOR(TPair<_Key COMMA _Value>, _Capacity)> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -142,12 +142,21 @@ hash_t hash_value(const TFlatSet<_Key, _EqualTo, _Less, _Vector>& flatSet) NOEXC
     return flatSet.HashValue();
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _Char, typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TFlatSet<_Key, _EqualTo, _Less, _Vector>& flatSet) {
     return oss << flatSet.Vector();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <
+    typename _Key,
+    size_t _Capacity,
+    typename _EqualTo = Meta::TEqualTo<_Key>,
+    typename _Less = Meta::TLess<_Key> >
+using TFixedSizeFlatSet = TFlatSet<
+    _Key, _EqualTo, _Less,
+    TVector<_Key, STATIC_ALLOCATOR(_Key, _Capacity)> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
