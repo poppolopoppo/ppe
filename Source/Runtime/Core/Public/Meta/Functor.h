@@ -2,6 +2,8 @@
 
 #include "Meta/TypeTraits.h"
 
+#include <variant>
+
 namespace PPE {
 namespace Meta {
 //----------------------------------------------------------------------------
@@ -118,6 +120,21 @@ constexpr auto VariadicFunctor(_Functor func, _Args&&... args) {
     else {
         return traits_t::template varcall(std::forward<_Functor>(func), std::forward<_Args>(args)...);
     }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
+// https://en.cppreference.com/w/cpp/utility/variant/visit
+template<class... Ts> struct overloaded_ : Ts... { using Ts::operator()...; };
+template<class... Ts> overloaded_(Ts...) -> overloaded_<Ts...>;
+} //!details
+//----------------------------------------------------------------------------
+template <typename... _Variant, typename... _Visitor>
+auto Visit(const std::variant<_Variant...>& variant, _Visitor&&... visitor) {
+    return std::visit(
+        details::overloaded_{ std::forward<_Visitor>(visitor)... },
+        variant );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
