@@ -53,7 +53,7 @@ public:
 
     VkBuffer Handle() const { return _bufferData->Handle(); }
     const FVulkanBuffer* GlobalData() const { return _bufferData; }
-    auto InternalData() const { return _bufferData->Read(); }
+    auto Read() const { return _bufferData->Read(); }
 
     NODISCARD bool Construct(const FVulkanBuffer* bufferData);
     void TearDown();

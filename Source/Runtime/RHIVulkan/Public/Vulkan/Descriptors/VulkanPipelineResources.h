@@ -47,6 +47,7 @@ public:
     FVulkanPipelineResources& operator =(FVulkanPipelineResources&&) = delete;
 
     auto Read() const { return _resources.LockShared(); }
+    auto Write() { return _resources.LockExclusive(); }
 
     hash_t HashValue() const { return Read()->HashValue; }
 

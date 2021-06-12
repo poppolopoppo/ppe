@@ -97,7 +97,7 @@ public:
 
     void SetRenderPass(FRawRenderPassID renderPass, u32 subpass, FRawFramebufferID framebuffer, u32 depthIndex);
 
-    bool Submit(
+    NODISCARD bool Submit(
         FVulkanCommandBuffer& cmd,
         TMemoryView<const TPair<FRawImageID, EResourceState>> images,
         TMemoryView<const TPair<FRawBufferID, EResourceState>> buffers );

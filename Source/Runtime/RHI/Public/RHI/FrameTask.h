@@ -81,13 +81,13 @@ struct FSubmitRenderPass : details::TFrameTaskDesc<FSubmitRenderPass> {
 
     FSubmitRenderPass& AddImage(FRawImageID id, EResourceState state = EResourceState::ShaderSample) {
         Assert(id);
-        Images.Add_Overwrite(id, state);
+        Images.Push(id, state);
         return (*this);
     }
 
     FSubmitRenderPass& AddBuffer(FRawBufferID id, EResourceState state = EResourceState::UniformRead) {
         Assert(id);
-        Buffers.Add_Overwrite(id, state);
+        Buffers.Push(id, state);
         return (*this);
     }
 };
@@ -407,15 +407,18 @@ struct FBlitImage final : details::TFrameTaskDesc<FBlitImage> {
 //----------------------------------------------------------------------------
 struct FGenerateMipmaps : details::TFrameTaskDesc<FGenerateMipmaps> {
     FRawImageID Image;
-    FMipmapLevel BaseLevel;
+    FMipmapLevel BaseLevel; // 0 - src level, mipmap generation will start from baseMipLevel + 1
     u32 LevelCount{ 0 };
+    FImageLayer BaseLayer; // specify array layers that will be used
+    u32 LayerCount{ 0 };
 
 #if USE_PPE_RHITASKNAME
     FGenerateMipmaps() NOEXCEPT : TFrameTaskDesc<FGenerateMipmaps>("GenerateMipmaps", FDebugColorScheme::Get().DeviceLocalTransfer) {}
 #endif
 
     FGenerateMipmaps& SetImage(FRawImageID image) { Assert(image); Image = image; return (*this); }
-    FGenerateMipmaps& SetRange(FMipmapLevel base, u32 count) { BaseLevel = base; LevelCount = count; return (*this); }
+    FGenerateMipmaps& SetMipmaps(u32 base, u32 count) { BaseLevel = FMipmapLevel{ base }; LevelCount = count; return (*this); }
+    FGenerateMipmaps& SetArrayLayers(u32 base, u32 count) { BaseLayer = FImageLayer{ base }; LayerCount = count; return (*this); }
 };
 //----------------------------------------------------------------------------
 // FResolveImage
@@ -499,7 +502,8 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
     using FClearColor = std::variant<
         FRgba8u,
         FRgba32i,
-        FRgba32u >;
+        FRgba32u,
+        FRgba32f >;
 
     FRawImageID DstImage;
     FClearColor ClearColor;
@@ -745,8 +749,8 @@ struct FCustomTask final : details::TFrameTaskDesc<FCustomTask> {
 
     using FExternalContext = void*;
     using FCallback = TFunction<void(FExternalContext)>;
-    using FImages = TFixedSizeHashMap<FRawImageID, EResourceState, 8>;
-    using FBuffers = TFixedSizeHashMap<FRawBufferID, EResourceState, 8>;
+    using FImages = TFixedSizeStack<TPair<FRawImageID, EResourceState>, 8>;
+    using FBuffers = TFixedSizeStack<TPair<FRawBufferID, EResourceState>, 8>;
 
     FCallback Callback;
     FImages Images;
@@ -764,13 +768,13 @@ struct FCustomTask final : details::TFrameTaskDesc<FCustomTask> {
 
     FCustomTask& AddImage(FRawImageID image, EResourceState state) {
         Assert(image);
-        Images.Add_Overwrite(image, state);
+        Images.Push(image, state);
         return (*this);
     }
 
     FCustomTask& AddBuffer(FRawBufferID image, EResourceState state) {
         Assert(image);
-        Buffers.Add_Overwrite(image, state);
+        Buffers.Push(image, state);
         return (*this);
     }
 };

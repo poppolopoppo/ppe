@@ -130,7 +130,7 @@ void FVulkanFrameGraph::ReleaseMemory() noexcept {
         _cmdBatchPool.Clear_ReleaseMemory();
         _cmdBufferPool.Clear_ReleaseMemory();
         _submittedPool.Clear_ReleaseMemory([pDevice{ &_device }](FVulkanSubmitted* p) NOEXCEPT {
-            p->TearDown_(*pDevice);
+            p->TearDown(*pDevice);
         });
     }
 
@@ -683,7 +683,7 @@ bool FVulkanFrameGraph::FlushQueue_(EQueueType index, u32 maxIter) {
         if (complete) {
             {
                 ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));
-                submitted->Release_(_device ARGS_IF_RHIDEBUG(_debugger, _shaderDebugCallback, _lastFrameStats));
+                submitted->Release(_device ARGS_IF_RHIDEBUG(&_lastFrameStats, _debugger, _shaderDebugCallback));
             }
 
             it = q.Submitted.erase(it);
@@ -749,7 +749,7 @@ bool FVulkanFrameGraph::Wait(TMemoryView<const FCommandBufferBatch> commands, FN
         if (VK_SUCCESS == result) {
             ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));
             for (FVulkanSubmitted* submitted : transientSubmitted)
-                submitted->Release_(_device ARGS_IF_RHIDEBUG(_debugger, _shaderDebugCallback, _lastFrameStats));
+                submitted->Release(_device ARGS_IF_RHIDEBUG(&_lastFrameStats, _debugger, _shaderDebugCallback));
         }
         else {
             Assert_NoAssume(VK_TIMEOUT == result);
@@ -824,7 +824,7 @@ bool FVulkanFrameGraph::WaitIdle() {
 
         for (FQueueData& q : _queueMap) {
             for (FVulkanSubmitted* submitted : q.Submitted) {
-                submitted->Release_(_device ARGS_IF_RHIDEBUG(_debugger, _shaderDebugCallback, _lastFrameStats));
+                submitted->Release(_device ARGS_IF_RHIDEBUG(&_lastFrameStats, _debugger, _shaderDebugCallback));
                 _submittedPool.Release(submitted);
             }
 

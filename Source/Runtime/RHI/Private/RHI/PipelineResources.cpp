@@ -5,6 +5,7 @@
 #include "RHI/ResourceId.h"
 
 #include "Diagnostic/Logger.h"
+#include "Meta/Functor.h"
 
 namespace PPE {
 namespace RHI {
@@ -478,11 +479,6 @@ hash_t FPipelineResources::ComputeDynamicDataHash(const FDynamicData& dynamicDat
     return h;
 }
 //----------------------------------------------------------------------------
-namespace {
-// https://en.cppreference.com/w/cpp/utility/variant/visit
-template<class... Ts> struct overloaded_ : Ts... { using Ts::operator()...; };
-template<class... Ts> overloaded_(Ts...) -> overloaded_<Ts...>;
-}
 void FPipelineResources::CreateDynamicData(
     FDynamicData* pDynamicData,
     const FPipelineDesc::FUniformMap& uniforms,
@@ -524,7 +520,7 @@ void FPipelineResources::CreateDynamicData(
         FUniform& current = uniformData.Eat(1).front();
         current.Id = it.first;
 
-        std::visit(overloaded_{
+        Meta::Visit(it.second.Data,
             [&](const FPipelineDesc::FTexture& tex) {
                 current.Type = FTexture::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
@@ -609,8 +605,7 @@ void FPipelineResources::CreateDynamicData(
                     elementCapacity,
                     elementCount
                 };
-            }
-        },  it.second.Data );
+            });
     }
     Assert_NoAssume(uniformData.empty());
     AssertRelease(numDBO == bufferDynamicOffsetCount);

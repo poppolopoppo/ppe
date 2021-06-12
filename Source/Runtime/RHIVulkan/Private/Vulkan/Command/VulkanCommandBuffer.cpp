@@ -56,6 +56,11 @@ FVulkanCommandBuffer::~FVulkanCommandBuffer() {
 //----------------------------------------------------------------------------
 const FVulkanDevice& FVulkanCommandBuffer::Device() const NOEXCEPT {
     return _frameGraph->Device();
+
+}
+//----------------------------------------------------------------------------
+SFrameGraph FVulkanCommandBuffer::FrameGraph() const NOEXCEPT {
+    return _frameGraph;
 }
 //----------------------------------------------------------------------------
 FVulkanResourceManager& FVulkanCommandBuffer::ResourceManager() const NOEXCEPT {
@@ -249,7 +254,7 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
 bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cmd) {
     FVulkanTaskProcessor processor{this, cmd};
 
-    const u32 visitorId{ 1 };
+    STATIC_CONST_INTEGRAL(u32, visitorId, 1);
     EVulkanExecutionOrder executionOrder{EVulkanExecutionOrder::First};
 
     FTransientTaskArray pending{data.MainAllocator};
@@ -268,7 +273,7 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
 
             // wait for input
             const bool inputProcessed = pTask->Inputs().Any(
-                [visitorId](PVulkanFrameTask pInput) NOEXCEPT -> bool {
+                [](PVulkanFrameTask pInput) NOEXCEPT -> bool {
                     return (pInput->VisitorId() != visitorId);
                 });
             if (not inputProcessed) {
@@ -736,8 +741,8 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
         &pBuildTask->InstanceStagingBufferOffset,
         &pInstances,
         task.Instances.size() ));
-    Assert_NoAssume(pBuildTask->ScratchBuffer->InternalData()->Desc.Usage & EBufferUsage::RayTracing);
-    Assert_NoAssume(pBuildTask->InstanceBuffer->InternalData()->Desc.Usage & EBufferUsage::RayTracing);
+    Assert_NoAssume(pBuildTask->ScratchBuffer->Read()->Desc.Usage & EBufferUsage::RayTracing);
+    Assert_NoAssume(pBuildTask->InstanceBuffer->Read()->Desc.Usage & EBufferUsage::RayTracing);
 
     // sort instance by instance ID
     STACKLOCAL_POD_ARRAY(u32, sorted, task.Instances.size());

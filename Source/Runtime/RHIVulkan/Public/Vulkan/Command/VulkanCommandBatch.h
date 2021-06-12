@@ -206,7 +206,7 @@ public:
     bool OnReadyToSubmit();
     bool OnBeforeSubmit(VkSubmitInfo* pSubmit);
     bool OnAfterSubmit(TAppendable<const FVulkanSwapchain*> swapchains, FVulkanSubmitted* submitted);
-    bool OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, FVulkanDebugger& debugger, FShaderDebugCallback&& callback));
+    bool OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, FVulkanDebugger& debugger, const FShaderDebugCallback& callback));
 
     void SignalSemaphore(VkSemaphore vkSemaphore);
     void WaitSemaphore(VkSemaphore vkSemaphore, VkPipelineStageFlags stages);

@@ -37,7 +37,7 @@ class ICommandBuffer : public FRefCountable {
 public: // interface
     virtual ~ICommandBuffer() = default;
 
-    virtual SFrameGraph FrameGraph() const = 0;
+    virtual SFrameGraph FrameGraph() const NOEXCEPT = 0;
 
     // Acquire next swapchain image. This image will be presented after command buffer execution.
     // Do not use this image in any other command buffers.

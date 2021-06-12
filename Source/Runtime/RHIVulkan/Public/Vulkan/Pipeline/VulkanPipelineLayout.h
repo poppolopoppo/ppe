@@ -34,7 +34,7 @@ public:
 
     struct FInternalData {
         hash_t HashValue;
-        VkPipelineLayout Layour{ VK_NULL_HANDLE };
+        VkPipelineLayout Layout{ VK_NULL_HANDLE };
         FDescriptorSets DescriptorSets;
         FPushConstants PushConstants;
         u32 FirstDescriptorSet{ UMax };
@@ -55,20 +55,20 @@ public:
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    bool AllResourcesAlive(const FVulkanResourceManager& manager) const;
-    NODISCARD bool DescriptorLayout(u32* pbinding, FRawDescriptorSetLayoutID* playout, const FDescriptorSetID& id) const;
+    bool AllResourcesAlive(const FVulkanResourceManager& resources) const;
+    NODISCARD bool DescriptorLayout(u32* pBinding, FRawDescriptorSetLayoutID* pLayout, const FDescriptorSetID& id) const;
 
     NODISCARD bool Construct(const FVulkanDevice& device, VkDescriptorSetLayout emptyLayout ARGS_IF_RHIDEBUG(FConstChar debugName));
-    void TearDown(const FVulkanResourceManager& resources);
+    void TearDown(FVulkanResourceManager& resources);
 
-    bool operator ==(const FVulkanPipelineLayout& other) const;
+    bool operator ==(const FVulkanPipelineLayout& other) const NOEXCEPT;
     bool operator !=(const FVulkanPipelineLayout& other) const { return (not operator ==(other)); }
 
     friend hash_t hash_value(const FVulkanPipelineLayout& layout) { return layout.HashValue(); }
 
 private:
-    void AddDescriptorSets_(hash_t* phash, FDescriptorSets* psets, const FPipelineDesc::FPipelineLayout& ppln, FDescriptorSetLayoutsView sets) const;
-    void AddPushCosntants_(hash_t* phash, FPushConstantDatas* pconstants, const FPipelineDesc::FPipelineLayout& ppln) const;
+    static void AddDescriptorSets_(hash_t* pHash, FDescriptorSets* pSetsInfo, const FPipelineDesc::FPipelineLayout& ppln, FDescriptorSetLayoutsView sets);
+    static void AddPushConstants_(hash_t* pHash, FPushConstants* pConstants, const FPipelineDesc::FPipelineLayout& ppln);
 
     TRHIThreadSafe<FInternalData> _data;
 

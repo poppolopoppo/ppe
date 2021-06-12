@@ -152,7 +152,7 @@ public:
 
     // ICommandBuffer
 
-    virtual SFrameGraph FrameGraph() const override { return _frameGraph; }
+    virtual SFrameGraph FrameGraph() const NOEXCEPT override;
     virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId, ESwapchainImage type = ESwapchainImage::Primary) override;
     virtual bool DependsOn(const FCommandBufferBatch& cmd) override;
     virtual bool StagingAlloc(FStagingBlock* pStaging, size_t size, size_t align) override;

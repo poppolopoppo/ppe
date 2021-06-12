@@ -199,6 +199,10 @@ struct FPipelineDesc {
         ,   Size(checked_cast<u16>(size)) {
             STATIC_ASSERT(Meta::is_pod_v<FPushConstantID>);
         }
+
+        friend hash_t hash_value(const FPushConstant& value) NOEXCEPT {
+            return hash_tuple(value.Id, value.StageFlags, value.Offset, value.Size);
+        }
     };
 
     struct FSpecializationConstant {
@@ -335,7 +339,7 @@ struct FComputePipelineDesc final : FPipelineDesc {
 
     FShader Shader;
     uint3 DefaultLocalGroupSize{ 0 };
-    uint3 LocalSizeSpec{ UndefinedSpecialization };
+    uint3 LocalSizeSpecialization{ UndefinedSpecialization };
 
     FComputePipelineDesc() = default;
 
@@ -358,7 +362,7 @@ struct FComputePipelineDesc final : FPipelineDesc {
     }
 
     FComputePipelineDesc& SetLocalGroupSize(u32 x, u32 y, u32 z) { DefaultLocalGroupSize = {x,y,z}; return (*this); }
-    FComputePipelineDesc& SetLocalGroupSpecialization(u32 x = UndefinedSpecialization, u32 y = UndefinedSpecialization, u32 z = UndefinedSpecialization) { LocalSizeSpec = {x,y,z}; return (*this); }
+    FComputePipelineDesc& SetLocalGroupSpecialization(u32 x = UndefinedSpecialization, u32 y = UndefinedSpecialization, u32 z = UndefinedSpecialization) { LocalSizeSpecialization = {x,y,z}; return (*this); }
     FComputePipelineDesc& SetPushConstants(TMemoryView<const FPushConstant> values) { SetPushConstants_(values); return (*this); }
     PPE_RHI_API FComputePipelineDesc& SetSpecializationConstants(TMemoryView<const FSpecializationConstant> values);
 

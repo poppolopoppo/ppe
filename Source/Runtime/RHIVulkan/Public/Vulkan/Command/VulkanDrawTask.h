@@ -14,10 +14,10 @@ protected:
     using FProcessFunc = void (*)(void* visitor, void* data);
 
     template <typename _Task>
-    IVulkanDrawTask(const _Task& task, FProcessFunc pass1, FProcessFunc pass2) NOEXCEPT
+    IVulkanDrawTask(const _Task& desc, FProcessFunc pass1, FProcessFunc pass2) NOEXCEPT
     :   _pass1(pass1), _pass2(pass2)
 #if USE_PPE_RHIDEBUG
-    ,   _taskName(task.TaskName), _debugColor(task.DebugColor)
+    ,   _taskName(desc.Name), _debugColor(desc.DebugColor)
 #endif
     {}
 
@@ -56,7 +56,7 @@ protected:
     template <typename _Task>
     FVulkanBaseDrawVerticesTask(
         FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const _Task& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const _Task& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
 public:
     using FVertexBuffers = TStaticArray<const FVulkanLocalBuffer*, MaxVertexBuffers>;
@@ -105,7 +105,7 @@ public:
     const FDrawVertices::FDrawCommands Commands;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawVertices& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawVertices& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawIndexed:
@@ -120,7 +120,7 @@ public:
     const EIndexFormat IndexFormat;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawIndexed& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawIndexed& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawVerticesIndirect:
@@ -133,7 +133,7 @@ public:
     const FVulkanLocalBuffer* const IndirectBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawVerticesIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawVerticesIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawIndexedIndirect:
@@ -150,7 +150,7 @@ public:
     const EIndexFormat IndexFormat;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawIndexedIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawIndexedIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawVerticesIndirectCount:
@@ -164,7 +164,7 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawVerticesIndirectCount> final : publ
     const FVulkanLocalBuffer* const CountBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawVerticesIndirectCount& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawVerticesIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawIndexedIndirectCount:
@@ -182,10 +182,12 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawIndexedIndirectCount> final : publi
     const EIndexFormat IndexFormat;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawIndexedIndirectCount& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawIndexedIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#ifdef VK_NV_mesh_shader
 //----------------------------------------------------------------------------
 // Base draw meshes:
 //----------------------------------------------------------------------------
@@ -197,7 +199,7 @@ protected:
     template <typename _Task>
     FVulkanBaseDrawMeshesTask(
         FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const _Task& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const _Task& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
 public:
     SCVulkanMeshPipeline Pipeline;
@@ -227,7 +229,7 @@ public:
     const FDrawMeshes::FDrawCommands Commands;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawMeshes& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawMeshes& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawMeshesIndirect:
@@ -240,7 +242,7 @@ public:
     const FVulkanLocalBuffer* const IndirectBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawMeshesIndirect& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawMeshesIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FDrawMeshesIndirect:
@@ -254,8 +256,10 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshesIndirectCount> final : public
     const FVulkanLocalBuffer* const CountBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FDrawMeshesIndirectCount& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FDrawMeshesIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 };
+//----------------------------------------------------------------------------
+#endif //!VK_NV_mesh_shader
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -270,13 +274,13 @@ public:
     using FBuffers = TMemoryView<const TPair<const FVulkanLocalBuffer*, EResourceState>>;
 
     const FCallback Callback;
-    void* const CallbackParam;
+    void* const UserParam;
 
     const FImages Images;
     const FBuffers Buffers;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
-        const FCustomDraw& task, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+        const FCustomDraw& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
     bool Valid() const { return (!!Callback); }
 };

@@ -56,7 +56,7 @@ public:
 
     VkImage Handle() const { return _imageData->Handle(); }
     const FVulkanImage* GlobalData() const { return _imageData; }
-    auto InternalData() const { return _imageData->Read(); }
+    auto Read() const { return _imageData->Read(); }
 
     NODISCARD bool Construct(const FVulkanImage* imageData);
     void TearDown();

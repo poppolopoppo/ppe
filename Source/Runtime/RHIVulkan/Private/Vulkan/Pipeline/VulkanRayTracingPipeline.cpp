@@ -3,12 +3,66 @@
 
 #include "Vulkan/Pipeline/VulkanRayTracingPipeline.h"
 
+#include "Vulkan/Instance/VulkanResourceManager.h"
+#include "Vulkan/Pipeline/VulkanShaderModule.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FVulkanRayTracingPipeline::~FVulkanRayTracingPipeline() {
+    ONLY_IF_RHIDEBUG(Assert_NoAssume(not _pipeline.LockExclusive()->BaseLayoutId));
+}
+//----------------------------------------------------------------------------
+bool FVulkanRayTracingPipeline::Construct(const FRayTracingPipelineDesc& desc, FRawPipelineLayoutID layoutId, FConstChar debugName) {
+    Assert(layoutId);
 
+    const auto exclusive = _pipeline.LockExclusive();
+
+    exclusive->BaseLayoutId = FPipelineLayoutID{ layoutId };
+    ONLY_IF_RHIDEBUG(exclusive->DebugModeBits = Default);
+
+    ONLY_IF_RHIDEBUG(_debugName = debugName);
+
+    for (const auto& stage : desc.Shaders) {
+        const VkShaderStageFlagBits vkStage = VkCast(stage.second.Type);
+
+        for (const auto& src : stage.second.Sources) {
+            const PShaderModule& moduleRef = std::get<PShaderModule>(*src.second->Data());
+            Assert(moduleRef);
+
+            exclusive->Shaders.Push(
+                stage.first,
+                checked_cast<FVulkanShaderModule>(moduleRef),
+                vkStage,
+                stage.second.Specializations
+                ARGS_IF_RHIDEBUG(EShaderDebugMode_From(src.first)) );
+
+            ONLY_IF_RHIDEBUG(exclusive->DebugModeBits.set(static_cast<u32>(exclusive->Shaders.Peek()->DebugMode)));
+        }
+    }
+
+    std::sort(exclusive->Shaders.begin(), exclusive->Shaders.end(),
+        [](const FShaderModule& lhs, const FShaderModule& rhs) NOEXCEPT {
+            return (lhs.ShaderId < rhs.ShaderId);
+        });
+
+    return (not exclusive->Shaders.empty());
+}
+//----------------------------------------------------------------------------
+void FVulkanRayTracingPipeline::TearDown(FVulkanResourceManager& resources) {
+    const auto exclusive = _pipeline.LockExclusive();
+
+    if (exclusive->BaseLayoutId)
+        resources.ReleaseResource(exclusive->BaseLayoutId.Release());
+
+    exclusive->Shaders.clear();
+    ONLY_IF_RHIDEBUG(_debugName.Clear());
+
+    exclusive->BaseLayoutId = Default;
+    ONLY_IF_RHIDEBUG(exclusive->DebugModeBits = Default);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

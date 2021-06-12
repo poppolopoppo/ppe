@@ -484,10 +484,12 @@ struct FDrawMeshesIndirectCount final : details::TDrawCallDesc<FDrawMeshesIndire
 //----------------------------------------------------------------------------
 struct FCustomDraw final : details::TDrawTaskDesc<FCustomDraw> {
     using FCallback = TFunction<void(void*, IDrawContext&)>;
-    using FImages = TFixedSizeHashMap<FRawImageID, EResourceState, MaxResourceStates>;
-    using FBuffers = TFixedSizeHashMap<FRawBufferID, EResourceState, MaxResourceStates>;
+    using FImages = TFixedSizeStack<TPair<FRawImageID, EResourceState>, MaxResourceStates>;
+    using FBuffers = TFixedSizeStack<TPair<FRawBufferID, EResourceState>, MaxResourceStates>;
 
     FCallback Callback;
+    void* UserParam{ nullptr };
+
     FImages Images;
     FBuffers Buffers;
 
@@ -497,17 +499,18 @@ struct FCustomDraw final : details::TDrawTaskDesc<FCustomDraw> {
     FCustomDraw() NOEXCEPT : TDrawTaskDesc<FCustomDraw>{ "CustomDraw", FDebugColorScheme::Get().CustomDraw } {}
 #endif
 
-    explicit FCustomDraw(FCallback&& rcallback) : FCustomDraw() {
+    explicit FCustomDraw(FCallback&& rcallback, void* userParam = nullptr) : FCustomDraw() {
         Callback = std::move(rcallback);
+        UserParam = userParam;
     }
 
     FCustomDraw& AddImage(FRawImageID image, EResourceState state = EResourceState::ShaderSample) {
-        Images.Add_Overwrite(image, state);
+        Images.Push(image, state);
         return (*this);
     }
 
     FCustomDraw& AddBuffer(FRawBufferID buffer, EResourceState state = EResourceState::ShaderSample) {
-        Buffers.Add_Overwrite(buffer, state);
+        Buffers.Push(buffer, state);
         return (*this);
     }
 };

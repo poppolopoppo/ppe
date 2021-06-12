@@ -20,8 +20,8 @@ public:
     struct FInternalSubmit {
         FBatches Batches;
         FSemaphores Semaphores;
-        VkFence Fence;
-        EQueueType QueueType;
+        VkFence Fence{ VK_NULL_HANDLE };
+        EQueueType QueueType{ Default };
     };
 
     explicit FVulkanSubmitted(u32 indexInPool) NOEXCEPT;
@@ -32,12 +32,11 @@ public:
     auto Read() const { return _submit.LockShared(); }
     auto Write() { return _submit.LockExclusive(); }
 
-private:
-    friend class FVulkanFrameGraph;
-    void Create_(const FVulkanDevice& device, EQueueType queue, TMemoryView<const PVulkanCommandBatch> batches, TMemoryView<const VkSemaphore> semaphores);
-    void Release_(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FVulkanDebugger& debugger, const FShaderDebugCallback& callback, FFrameStatistics& stats));
-    void TearDown_(const FVulkanDevice& device);
+    void Construct(const FVulkanDevice& device, EQueueType queue, TMemoryView<const PVulkanCommandBatch> batches, TMemoryView<const VkSemaphore> semaphores);
+    void Release(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FFrameStatistics* pStats, FVulkanDebugger& debugger, const FShaderDebugCallback& callback));
+    void TearDown(const FVulkanDevice& device);
 
+private:
     const u32 _indexInPool;
 
     TRHIThreadSafe<FInternalSubmit> _submit;

@@ -325,10 +325,9 @@ private:
     bool HasResource_Unlocked_(const FUniformID& id) const;
 };
 //----------------------------------------------------------------------------
-using FPipelineResourceSet = ASSOCIATIVE_VECTORINSITU(
-    RHIPipeline,
+using FPipelineResourceSet = TFixedSizeAssociativeVector<
     FDescriptorSetID, PCPipelineResources,
-    MaxDescriptorSets );
+    MaxDescriptorSets >;
 //----------------------------------------------------------------------------
 template <typename _Each>
 void FPipelineResources::FDynamicData::EachUniform(_Each&& each) {

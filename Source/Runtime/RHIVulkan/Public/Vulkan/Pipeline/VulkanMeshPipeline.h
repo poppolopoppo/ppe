@@ -62,7 +62,7 @@ public:
     FVulkanMeshPipeline() = default;
     ~FVulkanMeshPipeline();
 
-    FVulkanMeshPipeline(FVulkanMeshPipeline&& rvalue) NOEXCEPT;
+    FVulkanMeshPipeline(FVulkanMeshPipeline&& rvalue) = delete;
     FVulkanMeshPipeline& operator =(FVulkanMeshPipeline&& ) = delete;
 
     auto Read() const { return _pipeline.LockShared(); }

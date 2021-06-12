@@ -43,8 +43,8 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FBuildRayTracingGeometry> final : publi
 public:
     using FUsableBuffers = HASHSET_SLAB(const FVulkanLocalBuffer*);
 
-    const FVulkanRayTracingLocalGeometry* RTGeometry;
-    const FVulkanLocalBuffer* ScratchBuffer;
+    const FVulkanRayTracingLocalGeometry* RTGeometry{ nullptr };
+    const FVulkanLocalBuffer* ScratchBuffer{ nullptr };
     const TMemoryView<const VkAccelerationStructureGeometryKHR> Geometries;
 
     FUsableBuffers UsableBuffers;
@@ -68,7 +68,7 @@ public:
     const FVulkanRayTracingLocalScene* RTScene{ nullptr };
     const FVulkanLocalBuffer* ScratchBuffer{ nullptr };
 
-    const FVulkanLocalBuffer* InstanceStagingBuffer;
+    const FVulkanLocalBuffer* InstanceStagingBuffer{ nullptr };
     VkDeviceSize InstanceStagingBufferOffset{ 0 };
 
     const FVulkanLocalBuffer* InstanceBuffer{ nullptr };

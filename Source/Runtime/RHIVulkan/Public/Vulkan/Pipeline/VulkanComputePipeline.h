@@ -18,7 +18,7 @@ class PPE_RHIVULKAN_API FVulkanComputePipeline final : public FRefCountable {
 public:
 
     struct FPipelineInstance {
-        hash_t HashValue;
+        hash_t HashValue{ 0 };
         FRawPipelineLayoutID LayoutId;
         uint3 LocalGroupSize{ 0 };
         VkPipelineCreateFlags Flags{ Default };
@@ -28,11 +28,10 @@ public:
 
         FPipelineInstance() = default;
 
-        void Invalidate(); // updates HashValue
+        void Invalidate() NOEXCEPT; // updates HashValue
 
         bool operator ==(const FPipelineInstance& other) const {
-            ONLY_IF_RHIDEBUG(if (DebugMode != other.DebugMode) return false);
-            return (LayoutId == other.LayoutId && LocalGroupSize == other.LocalGroupSize && Flags == other.Flags);
+            return (LayoutId == other.LayoutId && LocalGroupSize == other.LocalGroupSize && Flags == other.Flags ARG0_IF_RHIDEBUG(&& DebugMode != other.DebugMode));
         }
         bool operator !=(const FPipelineInstance& other) const { return (not operator ==(other)); }
 
@@ -60,7 +59,7 @@ public:
     FVulkanComputePipeline() = default;
     ~FVulkanComputePipeline();
 
-    FVulkanComputePipeline(FVulkanComputePipeline&& rvalue) NOEXCEPT;
+    FVulkanComputePipeline(FVulkanComputePipeline&& rvalue) = delete;
     FVulkanComputePipeline& operator =(FVulkanComputePipeline&& ) = delete;
 
     auto Read() const { return _pipeline.LockShared(); }

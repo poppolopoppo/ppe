@@ -60,9 +60,9 @@ using FVulkanDescriptorSets = TFixedSizeStack<VkDescriptorSet, MaxDescriptorSets
 struct FVulkanPipelineResourceSet {
     struct FResource {
         FDescriptorSetID DescriptorSetId;
-        const FVulkanPipelineResources* PipelineResources;
-        u32 OffsetIndex{ UMax };
-        u32 OffsetCount{ 0 };
+        const FVulkanPipelineResources* PipelineResources{ nullptr };
+        u32 DynamicOffsetIndex{ UMax };
+        u32 DynamicOffsetCount{ 0 };
     };
 
     TFixedSizeStack<FResource, MaxDescriptorSets> Resources;

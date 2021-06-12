@@ -292,7 +292,7 @@ bool FVulkanCommandBatch::OnAfterSubmit(TAppendable<const FVulkanSwapchain*> swa
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanCommandBatch::OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, FVulkanDebugger& debugger, FShaderDebugCallback&& callback)) {
+bool FVulkanCommandBatch::OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, FVulkanDebugger& debugger, const FShaderDebugCallback& callback)) {
     Assert(_submitted);
     SetState_(EState::Submitted, EState::Complete);
 

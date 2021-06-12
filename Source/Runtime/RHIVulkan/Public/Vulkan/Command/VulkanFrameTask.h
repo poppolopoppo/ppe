@@ -39,22 +39,17 @@ public:
     const FRgba8u DebugColor() const { return _debugColor; }
 #endif
 
+    static void CopyDescriptorSets(
+        FVulkanPipelineResourceSet* outResources,
+        FVulkanLogicalRenderPass* pRenderPass,
+        FVulkanCommandBuffer& cmd,
+        const FPipelineResourceSet& input );
+
 protected:
     IVulkanFrameTask() = default;
 
     template <typename T>
-    IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProcessFunc process)
-    :   _process(process)
-#if USE_PPE_RHIDEBUG
-    ,   _taskName(desc.TaskName), _debugColor(desc.DebugColor)
-#endif
-    {
-        Assert_NoAssume(_process);
-        for (const PFrameTask& dep : desc.Dependencies) {
-            Assert(dep);
-            Emplace_Back(_inputs, checked_cast<IVulkanFrameTask*>(dep.get()));
-        }
-    }
+    IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProcessFunc process) NOEXCEPT;
 
     FProcessFunc _process{ nullptr };
 
@@ -137,7 +132,7 @@ public:
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchComputeIndirect& desc, FProcessFunc process);
 
-    bool Valid() const { return (!!Pipeline); }
+    bool Valid() const { return (!!Pipeline && !!IndirectBuffer); }
 
     const FVulkanPipelineResourceSet& Resource() const { return _resources; }
 
@@ -245,6 +240,8 @@ public:
     const FVulkanLocalImage* const Image;
     const u32 BaseLevel;
     const u32 LevelCount;
+    const u32 BaseLayer;
+    const u32 LayerCount;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process);
 
@@ -326,25 +323,6 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FUpdateBuffer> final : public IVulkanFrameTask {
 public:
-    struct FRegion {
-        void* DataPtr{ nullptr };
-        VkDeviceSize DataSize{ 0 };
-        VkDeviceSize BufferOffset{ 0 };
-    };
-
-    const FVulkanLocalBuffer* const DstBuffer;
-    const TMemoryView<const FRegion> Regions;
-
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process);
-
-    bool Valid() const { return (!!DstBuffer && not Regions.empty()); }
-};
-//----------------------------------------------------------------------------
-// FUpdateImage:
-//----------------------------------------------------------------------------
-template <>
-class PPE_RHIVULKAN_API TVulkanFrameTask<FUpdateImage> final : public IVulkanFrameTask {
-    public:
     struct FRegion {
         void* DataPtr{ nullptr };
         VkDeviceSize DataSize{ 0 };
