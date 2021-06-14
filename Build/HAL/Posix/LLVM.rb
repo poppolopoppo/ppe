@@ -117,7 +117,7 @@ module Build
             '-mavx2','-msse4.2',
             '-mlzcnt','-mpopcnt',
             '-fcolor-diagnostics',
-            '-cc1', '-fuse-ctor-homing',
+            #'-cc1', '-fuse-ctor-homing', # TODO: enable when supported in main release of LLVM
             '-c', # compile
             '-g', # generate debug infos
             '-o', '%2', '%1' )
