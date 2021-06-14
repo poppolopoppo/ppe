@@ -10,7 +10,7 @@ require 'set'
 
 module Build
 
-    persistent_value(:UnitySize, 'Size limit for splitting unity files', init: 600*1024.0)
+    persistent_value(:UnitySize, 'Size limit for splitting unity files', init: 300*1024.0)
 
     class Target < Policy
 
