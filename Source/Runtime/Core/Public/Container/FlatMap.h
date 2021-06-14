@@ -206,7 +206,7 @@ template <
 using TFixedSizeFlatMap = TFlatMap<
     _Key, _Value,
     _EqualTo, _Less,
-    TVector<TPair<_Key COMMA _Value>, STATIC_ALLOCATOR(TPair<_Key COMMA _Value>, _Capacity)> >;
+    TVector<TPair<_Key COMMA _Value>, FIXEDSIZE_ALLOCATOR(TPair<_Key COMMA _Value>, _Capacity)> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -91,7 +91,7 @@ using TDefaultAllocatorMinSize = TMinSizeAllocator<
 // Uses only an in situ storage, no other fallback (can't grow)
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-using TStaticAllocator = TInSituAllocator<sizeof(T) * N>;
+using TFixedSizeAllocator = TInSituAllocator<sizeof(T) * N>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -116,8 +116,8 @@ using TStaticAllocator = TInSituAllocator<sizeof(T) * N>;
 #define STACKLOCAL_ALLOCATOR() \
     ::PPE::FStackLocalAllocator// don't decorate to avoid double logging with "Alloca" domain
 //----------------------------------------------------------------------------
-#define STATIC_ALLOCATOR(T, N) \
-    ::PPE::TStaticAllocator< T, N >
+#define FIXEDSIZE_ALLOCATOR(T, N) \
+    ::PPE::TFixedSizeAllocator< T, N >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

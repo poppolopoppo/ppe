@@ -156,7 +156,7 @@ template <
     typename _Less = Meta::TLess<_Key> >
 using TFixedSizeFlatSet = TFlatSet<
     _Key, _EqualTo, _Less,
-    TVector<_Key, STATIC_ALLOCATOR(_Key, _Capacity)> >;
+    TVector<_Key, FIXEDSIZE_ALLOCATOR(_Key, _Capacity)> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
