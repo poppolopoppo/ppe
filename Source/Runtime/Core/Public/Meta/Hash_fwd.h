@@ -85,13 +85,6 @@ CONSTEXPR u32 hash_u32_constexpr(u32 lhs, u32 rhs) {
 //----------------------------------------------------------------------------
 #endif //!PPE_HAS_CXX14
 //----------------------------------------------------------------------------
-// enums :
-template <typename _Enum>
-CONSTEXPR Meta::TEnableIf<std::is_enum_v<_Enum> && sizeof(std::underlying_type_t<_Enum>) <= sizeof(u32), u32>
-    hash_u32_constexpr(_Enum value) {
-    return hash_u32_constexpr(static_cast<u32>(value));
-}
-//----------------------------------------------------------------------------
 // recursion :
 template <typename... _Args>
 CONSTEXPR u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) NOEXCEPT {
@@ -148,13 +141,6 @@ CONSTEXPR u64 hash_u64_constexpr(u64 lhs, u64 rhs) {
 }
 //----------------------------------------------------------------------------
 #endif //!PPE_HAS_CXX14
-//----------------------------------------------------------------------------
-// enums :
-template <typename _Enum>
-CONSTEXPR Meta::TEnableIf<std::is_enum_v<_Enum> && sizeof(std::underlying_type_t<_Enum>) <= sizeof(u64), u64>
-    hash_u64_constexpr(_Enum value) {
-    return hash_u64_constexpr(static_cast<u64>(value));
-}
 //----------------------------------------------------------------------------
 template <typename... _Args>
 CONSTEXPR u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) NOEXCEPT {

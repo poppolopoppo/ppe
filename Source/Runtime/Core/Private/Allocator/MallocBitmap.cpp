@@ -246,11 +246,11 @@ void* FMallocBitmap::HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXC
 //----------------------------------------------------------------------------
 bool FMallocBitmap::HeapFree_ReturnIfAliases(void* ptr) {
     auto& mediumHeap = BitmapHeapMedium_();
-    if (Likely(auto* page = mediumHeap.Aliases(ptr)))
+    if (auto* page = mediumHeap.Aliases(ptr))
         return mediumHeap.Free(ptr, page), true;
 
     auto& largeHeap = BitmapHeapLarge_();
-    if (Likely(auto* page = largeHeap.Aliases(ptr)))
+    if (auto* page = largeHeap.Aliases(ptr))
         return largeHeap.Free(ptr, page), true;
 
     return false;
@@ -279,10 +279,10 @@ size_t FMallocBitmap::SnapSize(size_t sz) NOEXCEPT {
 bool FMallocBitmap::RegionSize_ReturnIfAliases(size_t* pSizeInBytes, void* ptr) NOEXCEPT {
     Assert(pSizeInBytes);
 
-    if (Likely(auto* page = BitmapHeapMedium_().Aliases(ptr)))
+    if (auto* page = BitmapHeapMedium_().Aliases(ptr))
         return *pSizeInBytes = page->RegionSize(ptr), true;
 
-    if (Likely(auto* page = BitmapHeapLarge_().Aliases(ptr)))
+    if (auto* page = BitmapHeapLarge_().Aliases(ptr))
         return *pSizeInBytes = page->RegionSize(ptr), true;
 
     return false;

@@ -44,7 +44,7 @@ public:
 
     static void* HeapAlloc(size_t sz, size_t alignment);
     static void* HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
-    static NODISCARD bool HeapFree_ReturnIfAliases(void* ptr);
+    NODISCARD static bool HeapFree_ReturnIfAliases(void* ptr);
     static void HeapFree(void* ptr) { Verify(HeapFree_ReturnIfAliases(ptr)); }
 
     static void MemoryTrim();

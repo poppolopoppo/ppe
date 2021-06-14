@@ -200,9 +200,6 @@ public:
 
     size_t HashValue() const NOEXCEPT { return hash_value(_vector); }
 
-    TMemoryView<value_type> MakeView() { return _vector.MakeView(); }
-    TMemoryView<const value_type> MakeView() const { return _vector.MakeView(); }
-
     friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) NOEXCEPT {
         swap(lhs._vector, rhs._vector);
     }
@@ -240,7 +237,7 @@ template <
     typename _EqualTo = Meta::TEqualTo<_Key> >
 using TFixedSizeAssociativeVector = TAssociativeVector<
     _Key, _Value, _EqualTo,
-    TVector<TPair<_Key COMMA _Value>, STATIC_ALLOCATOR(TPair<_Key COMMA _Value>, _Capacity)> >;
+    TVector<TPair<_Key COMMA _Value>, FIXEDSIZE_ALLOCATOR(TPair<_Key COMMA _Value>, _Capacity)> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

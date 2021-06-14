@@ -3,6 +3,7 @@
 #include "Meta/Assert.h"
 #include "Meta/TypeTraits.h"
 
+#include <cstring> // std::memcpy()
 #include <type_traits>
 
 #if USE_PPE_ASSERT
