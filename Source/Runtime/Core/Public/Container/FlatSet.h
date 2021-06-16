@@ -90,12 +90,22 @@ public:
     void clear();
     void clear_ReleaseMemory();
 
-    iterator Find(const _Key& key);
-    iterator FindOrAdd(const _Key& key, bool* pAdded);
-    const_iterator Find(const _Key& key) const;
+    template <typename _KeyLike>
+    const _Key& Get(const _KeyLike& key) const;
+    template <typename _KeyLike>
+    Meta::TOptionalReference<const _Key> GetIFP(const _KeyLike& key) const NOEXCEPT;
 
-    iterator FindAfter(const _Key& key, const iterator& previous);
-    const_iterator FindAfter(const _Key& key, const const_iterator& previous) const;
+    template <typename _KeyLike>
+    iterator Find(const _KeyLike& key);
+    template <typename _KeyLike>
+    const_iterator Find(const _KeyLike& key) const;
+
+    iterator FindOrAdd(const _Key& key, bool* pAdded);
+
+    template <typename _KeyLike>
+    iterator FindAfter(const _KeyLike& key, const iterator& previous);
+    template <typename _KeyLike>
+    const_iterator FindAfter(const _KeyLike& key, const const_iterator& previous) const;
 
     bool Insert_ReturnIfExists(_Key&& key);
     void Insert_KeepOldIFN(_Key&& key);

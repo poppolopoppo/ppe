@@ -45,9 +45,22 @@ struct TStaticBitset {
     CONSTEXPR TStaticBitset(const TStaticBitset& other) NOEXCEPT = default;
     CONSTEXPR TStaticBitset& operator =(const TStaticBitset& other) NOEXCEPT = default;
 
+    CONSTEXPR size_t size() const NOEXCEPT {
+        return N;
+    }
+
     CONSTEXPR void set(size_t i) NOEXCEPT {
         Assert(i < N);
         Bytes[i / BitsPerByte] |= (u8(1) << u8(i % BitsPerByte));
+    }
+
+    CONSTEXPR void reset(size_t i) NOEXCEPT {
+        Assert(i < N);
+        Bytes[i / BitsPerByte] &= ~(u8(1) << u8(i % BitsPerByte));
+    }
+
+    CONSTEXPR void set_if(size_t i, bool enabled) NOEXCEPT {
+        if (enabled) set(i); else reset(i);
     }
 
     CONSTEXPR bool test(size_t i) const NOEXCEPT {

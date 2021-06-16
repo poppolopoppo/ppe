@@ -339,6 +339,10 @@ public:
         parent_type::Assign_AssumeEmpty(items.begin(), items.end());
     }
 
+    TFixedSizeStack(std::initializer_list<T> items) : TFixedSizeStack() {
+        parent_type::Assign_AssumeEmpty(items.begin(), items.end());
+    }
+
     TFixedSizeStack(TFixedSizeStack&& rvalue) NOEXCEPT : TFixedSizeStack() {
         parent_type::Assign_AssumeEmpty(MakeMoveIterator(rvalue.begin()), MakeMoveIterator(rvalue.end()));
         rvalue.clear();

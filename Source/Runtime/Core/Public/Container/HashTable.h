@@ -398,6 +398,19 @@ public:
     mapped_reference FindOrAdd(const key_type& key);
     mapped_reference FindOrAdd(key_type&& rkey);
 
+
+    mapped_reference Get(const key_type& key) NOEXCEPT { return at(key); }
+    const mapped_type& Get(const key_type& key) const NOEXCEPT { return at(key); }
+
+    Meta::TOptionalReference<mapped_type> GetIFP(const key_type& key) NOEXCEPT {
+        const auto it = find(key);
+        return (end() != it ? Meta::MakeOptionalRef(const_cast<mapped_type&>(it->second)) : Meta::NullRef<mapped_type>);
+    }
+    Meta::TOptionalReference<const mapped_type> GetIFP(const key_type& key) const NOEXCEPT {
+        const auto it = find(key);
+        return (end() != it ? Meta::MakeOptionalRef(it->second) : Meta::NullRef<const mapped_type>);
+    }
+
     mapped_reference operator [](const key_type& key) { return table_traits::Value(*try_emplace(key).first); }
     mapped_reference operator [](key_type&& rkey) { return table_traits::Value(*try_emplace(std::move(rkey)).first); }
 

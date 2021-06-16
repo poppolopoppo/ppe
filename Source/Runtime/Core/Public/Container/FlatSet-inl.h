@@ -71,10 +71,34 @@ void TFlatSet<_Key, _EqualTo, _Less, _Vector>::clear_ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _Key& key) -> iterator {
+template <typename _KeyLike>
+const _Key& TFlatSet<_Key, _EqualTo, _Less, _Vector>::Get(const _KeyLike& key) const {
+    const auto it = Find(key);
+    AssertRelease(end() != it);
+    return (*it);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
+template <typename _KeyLike>
+Meta::TOptionalReference<const _Key> TFlatSet<_Key, _EqualTo, _Less, _Vector>::GetIFP(const _KeyLike& key) const NOEXCEPT {
+    const auto it = Find(key);
+    return (end() != it
+        ? Meta::MakeOptionalRef(*it)
+        : Meta::NullRef<const _Key> );
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
+template <typename _KeyLike>
+auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _KeyLike& key) -> iterator {
     const iterator end = _vector.end();
     const iterator it = std::lower_bound(_vector.begin(), end, key, value_less());
     return ((it != end && value_equal()(*it, key)) ? it : end);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
+template <typename _KeyLike>
+auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _KeyLike& key) const -> const_iterator {
+    return const_cast<TFlatSet*>(this)->Find(key);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
@@ -94,14 +118,8 @@ auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindOrAdd(const _Key& key, bool* 
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _Key& key) const -> const_iterator {
-    const const_iterator end = _vector.end();
-    const const_iterator it = std::lower_bound(_vector.begin(), end, key, value_less());
-    return ((it != end && value_equal()(*it, key)) ? it : end);
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const iterator& after) -> iterator {
+template <typename _KeyLike>
+auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _KeyLike& key, const iterator& after) -> iterator {
     const iterator end = _vector.end();
     const iterator first = (after == end ? end : after + 1);
     const iterator it = std::lower_bound(first, end, key, value_less());
@@ -109,11 +127,9 @@ auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const 
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const const_iterator& after) const -> const_iterator {
-    const const_iterator end = _vector.end();
-    const const_iterator first = (after == end ? end : after + 1);
-    const const_iterator it = std::lower_bound(first, end, key, value_less());
-    return ((it != end && value_equal()(*it, key)) ? it : end);
+template <typename _KeyLike>
+auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _KeyLike& key, const const_iterator& after) const -> const_iterator {
+    return const_cast<TFlatSet*>(this)->FindAfter(key, after);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
