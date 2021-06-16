@@ -98,6 +98,13 @@ enum class EShaderStages : u32;
 enum class EShaderAccess : u32;
 enum class EShaderLangFormat : u32;
 enum class EShaderDebugMode : u32;
+struct FPackedDebugMode {
+    EShaderStages Stages : 24;
+    EShaderDebugMode Mode : 8;
+    friend hash_t hash_value(FPackedDebugMode value) NOEXCEPT {
+        return hash_as_pod(value);
+    }
+};
 //----------------------------------------------------------------------------
 enum class ETextureFilter : u32;
 enum class EMipmapFilter : u32;

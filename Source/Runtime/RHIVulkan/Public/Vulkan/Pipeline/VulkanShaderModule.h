@@ -24,7 +24,7 @@ public:
     VkShaderModule vkShaderModule() const { return _vkShaderModule; }
 
     virtual FDataRef Data() const NOEXCEPT override { return reinterpret_cast<FDataRef>(&_vkShaderModule); }
-    virtual FStringView EntryPoint() const NOEXCEPT override { return _entryPoint.Str(); }
+    virtual FConstChar EntryPoint() const NOEXCEPT override { return _entryPoint.c_str(); }
     virtual hash_t HashValue() const NOEXCEPT override { return _hashValue; }
 
 #if USE_PPE_RHIDEBUG

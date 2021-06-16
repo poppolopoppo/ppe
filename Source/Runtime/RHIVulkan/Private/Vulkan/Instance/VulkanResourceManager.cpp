@@ -394,7 +394,7 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderM
     *pVkShaderModule = NEW_REF(RHIShader, FVulkanShaderModule,
         vkShaderModule,
         source->HashValue(),
-        source->EntryPoint()
+        source->EntryPoint().MakeView()
         ARGS_IF_RHIDEBUG(source->DebugName()) );
 
     const FCriticalScope shaderCacheLock{ &_shaderCacheCS };

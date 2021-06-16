@@ -82,6 +82,7 @@ struct FFrameStatistics {
 
     struct FResources {
         u32 NumNewGraphicsPipeline          = 0;
+        u32 NumNewMeshPipeline              = 0;
         u32 NumNewComputePipeline           = 0;
         u32 NumNewRayTracingPipeline        = 0;
 

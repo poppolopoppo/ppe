@@ -124,6 +124,7 @@ PPE_RHIVULKAN_API VkImageAspectFlagBits VkCast(EImageAspect values);
 PPE_RHIVULKAN_API VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat format);
 PPE_RHIVULKAN_API VkBufferUsageFlagBits VkCast(EBufferUsage values);
 PPE_RHIVULKAN_API VkIndexType VkCast(EIndexFormat value);
+PPE_RHIVULKAN_API VkPrimitiveTopology VkCast(EPrimitiveTopology value);
 PPE_RHIVULKAN_API VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values);
 PPE_RHIVULKAN_API VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values);
 PPE_RHIVULKAN_API VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values);

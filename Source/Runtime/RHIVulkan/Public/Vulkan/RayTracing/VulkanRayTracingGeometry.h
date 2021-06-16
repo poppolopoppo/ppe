@@ -85,7 +85,7 @@ public:
         ARGS_IF_RHIDEBUG(FConstChar debugName) );
     void TearDown(FVulkanResourceManager& resources);
 
-    size_t GeometryIndex(FGeometryID* pgeometryId) const;
+    NODISCARD size_t GeometryIndex(const FGeometryID& geometryId) const;
 
 private:
     TRHIThreadSafe<FInternalData> _data;

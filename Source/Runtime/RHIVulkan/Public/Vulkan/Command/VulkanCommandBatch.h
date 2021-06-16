@@ -23,7 +23,9 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanCommandBatch final : public ICommandBatch {
+
     friend class FVulkanCommandBuffer;
+
 public:
     STATIC_CONST_INTEGRAL(u32, MaxBatchItems, 8);
     STATIC_CONST_INTEGRAL(u32, MaxBufferParts, 3);
@@ -58,7 +60,7 @@ public:
         u32 Size{ 0 };
 
         VkDeviceMemory DeviceMemory{ VK_NULL_HANDLE };
-        void* MappedPtr{ nullptr };
+        ubyte* MappedPtr{ nullptr };
         u32 MemoryOffset{ 0 }; // can be used to flush memory ranges
         bool IsCoherent{ false };
 
@@ -221,7 +223,7 @@ public:
 
     // staging buffer
 
-    NODISCARD bool StageWrite(FRawBufferID* pDstBuffer, u32* pDstOffset, u32* pOutSize, void** pMappedPtr,
+    NODISCARD bool StageWrite(FStagingBlock* pStaging, u32* pOutSize,
         const u32 srcRequiredSize, const u32 blockAlign, const u32 offsetAlign, const u32 dstMinSize );
 
     NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize);

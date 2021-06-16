@@ -140,16 +140,25 @@ enum class EShaderLangFormat : u32 {
 ENUM_FLAGS(EShaderLangFormat);
 //----------------------------------------------------------------------------
 enum class EShaderDebugMode : u32 {
-    None	= 0,
+    None            = 0,
+#if USE_PPE_RHIDEBUG
     Trace,
     Profiling,
     Timemap,
     //Asserts,
     //View,
     //InstructionCounter,
+#endif
     _Count,
-    Unknown	= None,
+    Unknown	        = None,
 };
+//----------------------------------------------------------------------------
+inline CONSTEXPR bool operator ==(FPackedDebugMode lhs, FPackedDebugMode rhs) {
+    return (lhs.Stages == rhs.Stages && lhs.Mode == rhs.Mode);
+}
+inline CONSTEXPR bool operator !=(FPackedDebugMode lhs, FPackedDebugMode rhs) {
+    return (not operator ==(lhs, rhs));
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

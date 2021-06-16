@@ -449,7 +449,7 @@ bool FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t& s
                 Assert(info.Size >= offset);
 
                 size = Min(size, info.Size - offset);
-                *data = (static_cast<byte*>(info.MappedPtr) + offset);
+                *data = (info.MappedPtr + offset);
                 return true;
             }
         }

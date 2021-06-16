@@ -23,7 +23,7 @@ public:
         uint3 LocalGroupSize{ 0 };
         VkPipelineCreateFlags Flags{ Default };
 #if USE_PPE_RHIDEBUG
-        u32 DebugMode{ 0 };
+        FPackedDebugMode DebugMode{};
 #endif
 
         FPipelineInstance() = default;
@@ -74,8 +74,7 @@ public:
 private:
     TRHIThreadSafe<FInternalPipeline> _pipeline;
 
-    mutable FReadWriteLock _instanceRWLock;
-    mutable FInstanceMap _instanceMap;
+    mutable TThreadSafe<FInstanceMap, EThreadBarrier::RWLock> _sharedInstances; // used by pipeline cache
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

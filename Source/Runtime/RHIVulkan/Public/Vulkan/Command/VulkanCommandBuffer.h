@@ -125,6 +125,11 @@ public:
     EVulkanQueueFamily QueueFamily() const { return Read()->QueueIndex; }
 #if USE_PPE_RHIDEBUG
     FVulkanLocalDebugger* Debugger() const { return Read()->Debugger.get(); }
+
+    template <typename _Functor>
+    auto EditStatistics(_Functor&& stats) {
+        return stats(Write()->Batch->_statistics);
+    }
 #endif
 
     NODISCARD bool Begin(const FCommandBufferDesc& desc, const SVulkanCommandBatch& batch, const PVulkanDeviceQueue& queue);
@@ -154,8 +159,8 @@ public:
 
     virtual SFrameGraph FrameGraph() const NOEXCEPT override;
     virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId, ESwapchainImage type = ESwapchainImage::Primary) override;
-    virtual bool DependsOn(const FCommandBufferBatch& cmd) override;
-    virtual bool StagingAlloc(FStagingBlock* pStaging, size_t size, size_t align) override;
+    NODISCARD virtual bool DependsOn(const FCommandBufferBatch& cmd) override;
+    NODISCARD virtual bool StagingAlloc(FStagingBlock* pStaging, size_t size, size_t align) override;
 
     virtual void AcquireImage(FRawImageID id, bool makeMutable, bool invalidate) override;
     virtual void AcquireBuffer(FRawBufferID id, bool makeMutable) override;
@@ -198,8 +203,8 @@ public:
     virtual void Task(FLogicalPassID renderPass, const FCustomDraw& draw) override;
 
 #if USE_PPE_RHIDEBUG
-    virtual bool BeginShaderTimeMap(const uint2& dim, EShaderStages stages = EShaderStages::All) override;
-    virtual PFrameTask EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<PFrameTask> dependsOn = Default) override;
+    NODISCARD virtual bool BeginShaderTimeMap(const uint2& dim, EShaderStages stages = EShaderStages::All) override;
+    NODISCARD virtual PFrameTask EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<PFrameTask> dependsOn = Default) override;
 #endif
 
 private:
@@ -213,8 +218,8 @@ private:
     template <typename T>
     NODISCARD bool StagingAlloc_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, T** pData, size_t count);
     NODISCARD bool StagingStore_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, const void* srcData, u32 dataSize, u32 offsetAlign);
-    NODISCARD static bool StorePartialData_(FInternalData& data, FRawBufferID* pDstBuffer, u32* pDstOffset, u32* pOutSize, FRawMemoryConst srcData, u32 srcOffset);
-    NODISCARD static bool StagingImageStore_(FInternalData& data, FRawBufferID* pDstBuffer, u32* pDstOffset, u32* pOutSize, FRawMemoryConst srcData, u32 srcOffset, u32 srcPitch, u32 srcTotalSize);
+    NODISCARD static bool StorePartialData_(FInternalData& data, FStagingBlock* pDstStaging, u32* pOutSize, FRawMemoryConst srcData, u32 srcOffset);
+    NODISCARD static bool StagingImageStore_(FInternalData& data, FStagingBlock* pDstStaging, u32* pOutSize, FRawMemoryConst srcData, u32 srcOffset, u32 srcPitch, u32 srcTotalSize);
 
     NODISCARD PFrameTask MakeUpdateBufferTask_(FInternalData& data, const FUpdateBuffer& task);
     NODISCARD PFrameTask MakeUpdateImageTask_(FInternalData& data, const FUpdateImage& task);

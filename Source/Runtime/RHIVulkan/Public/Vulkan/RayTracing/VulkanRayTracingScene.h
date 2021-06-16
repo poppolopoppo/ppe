@@ -1,7 +1,7 @@
 #pragma once
 
+#include "Container/FlatSet.h"
 #include "Container/Tuple.h"
-#include "Thread/ReadWriteLock.h"
 #include "Vulkan/VulkanCommon.h"
 
 namespace PPE {
@@ -18,9 +18,15 @@ public:
         u32 IndexOffset{ UMax };
 
         FInstance() = default;
-        FInstance(const FInstanceID& instanceId, FRTGeometryID&& geometryId, u32 offset)
+        FInstance(const FInstanceID& instanceId, FRTGeometryID&& geometryId, u32 offset) NOEXCEPT
         :   InstanceId(instanceId), GeometryId(std::move(geometryId)), IndexOffset(offset)
         {}
+
+        bool operator ==(const FInstance& other) const { return operator ==(other.InstanceId); }
+        bool operator !=(const FInstance& other) const { return operator !=(other.InstanceId); }
+
+        bool operator < (const FInstance& other) const { return operator < (other.InstanceId); }
+        bool operator >=(const FInstance& other) const { return operator >=(other.InstanceId); }
 
         bool operator ==(const FInstanceID& other) const { return (InstanceId == other); }
         bool operator !=(const FInstanceID& other) const { return (not operator ==(other)); }
@@ -30,8 +36,7 @@ public:
     };
 
     struct FInstancesData {
-        FReadWriteLock RWLock;
-        VECTOR(RHIRayTracing, FInstance) GeometryInstances;
+        FLATSET(RHIRayTracing, FInstance) GeometryInstances;
         u32 HitShadersPerInstance{ 0 };
         u32 MaxHitShaderCount{ 0 };
     };
@@ -41,7 +46,6 @@ public:
         FMemoryID MemoryId;
         u32 MaxInstanceCount{ 0 };
         ERayTracingBuildFlags Flags{ Default };
-        mutable FInstancesData InstancesData;
     };
 
     FVulkanRayTracingScene() = default;
@@ -50,9 +54,11 @@ public:
     auto Read() const { return _data.LockShared(); }
 
     VkAccelerationStructureKHR Handle() const { return Read()->TopLevelAS; }
-    u32 MaxInstancCount() const { return Read()->MaxInstanceCount; }
-    FInstancesData& CurrentData() const { return Read()->InstancesData; }
+    u32 MaxInstanceCount() const { return Read()->MaxInstanceCount; }
     ERayTracingBuildFlags Flags() const { return Read()->Flags; }
+
+    auto CurrentData() { return _currentData.LockExclusive(); }
+    auto CurrentData() const { return _currentData.LockShared(); }
 
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
@@ -70,6 +76,8 @@ public:
 
 private:
     TRHIThreadSafe<FInternalData> _data;
+
+    TThreadSafe<FInstancesData, EThreadBarrier::RWLock> _currentData;
 
 #if USE_PPE_RHITASKNAME
     FVulkanDebugName _debugName;

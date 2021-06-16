@@ -49,6 +49,8 @@ public:
 
     auto Read() const { return _data.LockShared(); }
 
+    VkPipelineLayout Handle() const { return Read()->Layout; }
+
     hash_t HashValue() const { return Read()->HashValue; }
 
 #if USE_PPE_RHIDEBUG

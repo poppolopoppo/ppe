@@ -46,6 +46,8 @@ public:
 
     auto Read() const { return _pass.LockShared(); }
 
+    VkRenderPass Handle() const { return Read()->RenderPass; }
+
     hash_t HashValue() const { return Read()->HashValue; }
 
 #if USE_PPE_RHIDEBUG

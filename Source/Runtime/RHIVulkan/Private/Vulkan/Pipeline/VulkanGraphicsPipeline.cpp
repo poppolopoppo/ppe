@@ -26,8 +26,7 @@ void FVulkanGraphicsPipeline::FPipelineInstance::Invalidate() {
 //----------------------------------------------------------------------------
 FVulkanGraphicsPipeline::~FVulkanGraphicsPipeline() {
     ONLY_IF_RHIDEBUG(Assert_NoAssume(_pipeline.LockExclusive()->Shaders.empty()));
-    ONLY_IF_RHIDEBUG(FReadWriteLock::FScopeLockWrite scopeWrite{ _instanceRWLock });
-    ONLY_IF_RHIDEBUG(Assert_NoAssume(_instanceMap.empty()));
+    Assert_NoAssume(_sharedInstances.LockExclusive()->empty());
 }
 //----------------------------------------------------------------------------
 bool FVulkanGraphicsPipeline::Construct(const FGraphicsPipelineDesc& desc, FRawPipelineLayoutID layoutId, FConstChar debugName) {
@@ -66,14 +65,14 @@ void FVulkanGraphicsPipeline::TearDown(FVulkanResourceManager& resources) {
     const auto exclusive = _pipeline.LockExclusive();
 
     {
-        const FReadWriteLock::FScopeLockWrite lockInstanceW{ _instanceRWLock };
+        const auto exclusiveInstances = _sharedInstances.LockExclusive();
 
-        for (auto& ppln : _instanceMap) {
+        for (auto& ppln : *exclusiveInstances) {
             device.vkDestroyPipeline(device.vkDevice(), ppln.second, device.vkAllocator());
             resources.ReleaseResource(ppln.first.LayoutId);
         }
 
-        _instanceMap.clear();
+        exclusiveInstances->clear();
     }
 
     if (exclusive->BaseLayoutId)

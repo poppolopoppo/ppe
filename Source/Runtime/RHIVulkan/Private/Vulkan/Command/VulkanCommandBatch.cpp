@@ -527,12 +527,10 @@ FVulkanCommandBatch::FStagingBuffer* FVulkanCommandBatch::FindOrAddStagingBuffer
 }
 //----------------------------------------------------------------------------
 bool FVulkanCommandBatch::StageWrite(
-    FRawBufferID* pDstBuffer, u32* pDstOffset, u32* pOutSize, void** pMappedPtr,
+    FStagingBlock* pStaging, u32* pOutSize,
     const u32 srcRequiredSize, const u32 blockAlign, const u32 offsetAlign, const u32 dstMinSize ) {
-    Assert(pDstBuffer);
-    Assert(pDstOffset);
+    Assert(pStaging);
     Assert(pOutSize);
-    Assert(pMappedPtr);
 
     const auto exclusiveData = _data.LockExclusive();
 
@@ -545,12 +543,15 @@ bool FVulkanCommandBatch::StageWrite(
         return false;
 
     // write data to buffer
-    *pDstOffset = Meta::RoundToNext(pSuitable->Size, offsetAlign);
-    *pOutSize = Min( Meta::RoundToPrev(pSuitable->Capacity - *pDstOffset, blockAlign), srcRequiredSize );
-    *pDstBuffer = pSuitable->BufferId;
-    *pMappedPtr = (static_cast<u8*>(pSuitable->MappedPtr) + *pDstOffset);
+    pStaging->RawBufferID = pSuitable->BufferId;
+    pStaging->Offset = Meta::RoundToNext(pSuitable->Size, offsetAlign);
+    pStaging->Mapped = (pSuitable->MappedPtr + pStaging->Offset);
 
-    pSuitable->Size = (*pDstOffset + *pOutSize);
+    *pOutSize = Min(
+        Meta::RoundToPrev(pSuitable->Capacity - pStaging->Offset, blockAlign),
+        srcRequiredSize );
+
+    pSuitable->Size = (pStaging->Offset + *pOutSize);
     return true;
 }
 //----------------------------------------------------------------------------

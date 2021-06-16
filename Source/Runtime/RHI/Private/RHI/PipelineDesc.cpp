@@ -16,14 +16,14 @@ class TShaderDataImpl_ final : public IShaderData<T> {
 public:
     using typename IShaderData<T>::FDataRef;
 
-    TShaderDataImpl_(T&& rdata, FStringView entryPoint ARGS_IF_RHIDEBUG(FConstChar debugName)) NOEXCEPT
+    TShaderDataImpl_(T&& rdata, FConstChar entryPoint ARGS_IF_RHIDEBUG(FConstChar debugName)) NOEXCEPT
     :   _data(std::move(rdata))
     ,   _entryPoint(entryPoint)
     ARGS_IF_RHIDEBUG(_debugName(debugName))
     {}
 
     virtual FDataRef Data() const NOEXCEPT override { return std::addressof(_data); }
-    virtual FStringView EntryPoint() const NOEXCEPT override { return _entryPoint; }
+    virtual FConstChar EntryPoint() const NOEXCEPT override { return _entryPoint; }
     virtual hash_t HashValue() const NOEXCEPT override { AssertNotReached(); }
 
 #if USE_PPE_RHIDEBUG
@@ -35,7 +35,7 @@ public:
 
 private:
     T _data;
-    FStringView _entryPoint;
+    FConstChar _entryPoint;
 #if USE_PPE_DEBUG
     const FConstChar _debugName;
 #endif
@@ -58,7 +58,7 @@ void SetSpecializationConstants_(FPipelineDesc::FShaders* pShaderMap, EShaderTyp
 }
 //----------------------------------------------------------------------------
 void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
-    EShaderLangFormat lang, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+    EShaderLangFormat lang, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(pShaderMap);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
     Assert_NoAssume(shader.Sources.end() == shader.Sources.find(lang));
@@ -66,7 +66,7 @@ void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderTyp
 }
 //----------------------------------------------------------------------------
 void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
-    EShaderLangFormat lang, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+    EShaderLangFormat lang, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(pShaderMap);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
     Assert_NoAssume(shader.Sources.end() == shader.Sources.find(lang));
@@ -74,7 +74,7 @@ void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderTyp
 }
 //----------------------------------------------------------------------------
 void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
-    EShaderLangFormat lang, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+    EShaderLangFormat lang, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(pShaderMap);
     Assert(sharedSource);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
@@ -102,28 +102,28 @@ void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, const PShaderModul
 //----------------------------------------------------------------------------
 void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, PShaderModule&& rmodule) {
     Assert(rmodule);
-    const FStringView entryPoint = rmodule->EntryPoint();
+    const FConstChar entryPoint = rmodule->EntryPoint();
     ONLY_IF_RHIDEBUG(const FConstChar debugName = rmodule->DebugName());
     Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
         std::move(rmodule), entryPoint ARGS_IF_RHIDEBUG(debugName) );
 }
 //----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert(not entry.empty());
+void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+    Assert(entry);
     Assert(not rsource.empty());
     Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
         std::move(rsource), entry ARGS_IF_RHIDEBUG(debugName) );
 }
 //----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert(not entry.empty());
+void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+    Assert(entry);
     Assert(sharedSource);
     Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
         sharedSource, entry ARGS_IF_RHIDEBUG(debugName) );
 }
 //----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert(not entry.empty());
+void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+    Assert(entry);
     Assert(not rbinary.empty());
     Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
         std::move(rbinary), entry ARGS_IF_RHIDEBUG(debugName) );
@@ -191,19 +191,19 @@ FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShade
     return (*this);
 }
 //----------------------------------------------------------------------------
-FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
     AddShaderSource_(&Shaders, type, fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
     AddShaderSource_(&Shaders, type, fmt, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
     AddShaderSource_(&Shaders, type, fmt, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
     return (*this);
@@ -223,19 +223,19 @@ FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, con
     return (*this);
 }
 //----------------------------------------------------------------------------
-FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert_NoAssume(Shader.Sources.end() == Shader.Sources.find(fmt));
     Shader.AddSource(fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert_NoAssume(Shader.Sources.end() == Shader.Sources.find(fmt));
     Shader.AddSource(fmt, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert_NoAssume(Shader.Sources.end() == Shader.Sources.find(fmt));
     Shader.AddSource(fmt, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
     return (*this);
@@ -256,19 +256,19 @@ FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFor
     return (*this);
 }
 //----------------------------------------------------------------------------
-FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
     AddShaderSource_(&Shaders, type, fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
     AddShaderSource_(&Shaders, type, fmt, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
     AddShaderSource_(&Shaders, type, fmt, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
     return (*this);
@@ -293,7 +293,7 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& i
     return (*this);
 }
 //----------------------------------------------------------------------------
-FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(id.Valid());
     AssertRelease_NoAssume(EShaderType_IsRayTracingShader(type));
 
@@ -304,7 +304,7 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& i
     return (*this);
 }
 //----------------------------------------------------------------------------
-FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(id.Valid());
     AssertRelease_NoAssume(EShaderType_IsRayTracingShader(type));
 
@@ -315,7 +315,7 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& i
     return (*this);
 }
 //----------------------------------------------------------------------------
-FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FStringView entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(id.Valid());
     AssertRelease_NoAssume(EShaderType_IsRayTracingShader(type));
 

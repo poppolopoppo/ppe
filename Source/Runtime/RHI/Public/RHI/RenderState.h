@@ -162,7 +162,7 @@ struct FRasterizationState {
     ECullMode CullMode{ ECullMode::None };
     EPolygonMode PolygonMode{ EPolygonMode::Fill };
     float LineWidth{ 1.0f };
-    float DepthBiasConstFactor{ 0.0f };
+    float DepthBiasConstantFactor{ 0.0f };
     float DepthBiasClamp{ 0.0f };
     float DepthBiasSlopeFactor{ 0.0f };
     bool EnableDepthBias{ false };
@@ -171,7 +171,7 @@ struct FRasterizationState {
     bool EnableFrontFaceCCW{ false };
 
     FRasterizationState& SetDepthBias(float constFactor, float clamp, float slopeFactor) {
-        DepthBiasConstFactor = constFactor;
+        DepthBiasConstantFactor = constFactor;
         DepthBiasClamp = clamp;
         DepthBiasSlopeFactor = slopeFactor;
         return (*this);
@@ -181,7 +181,7 @@ struct FRasterizationState {
         return (CullMode == other.CullMode
             && PolygonMode == other.PolygonMode
             && LineWidth == other.LineWidth
-            && DepthBiasConstFactor == other.DepthBiasConstFactor
+            && DepthBiasConstantFactor == other.DepthBiasConstantFactor
             && DepthBiasClamp == other.DepthBiasClamp
             && DepthBiasSlopeFactor == other.DepthBiasSlopeFactor
             && EnableDepthBias == other.EnableDepthBias
@@ -196,7 +196,7 @@ struct FRasterizationState {
     friend hash_t hash_value(const FRasterizationState& state) {
         return hash_tuple(
             state.CullMode, state.PolygonMode, state.LineWidth,
-            state.DepthBiasConstFactor, state.DepthBiasClamp, state.DepthBiasSlopeFactor,
+            state.DepthBiasConstantFactor, state.DepthBiasClamp, state.DepthBiasSlopeFactor,
             state.EnableDepthBias, state.EnableDepthClamp, state.EnableDiscard, state.EnableFrontFaceCCW );
     }
 };
@@ -213,6 +213,15 @@ struct FStencilBufferState {
         FStencilValue Reference{ 0 };
         FStencilValue WriteMask{ UMax };
         FStencilValue CompareMask{ 0 };
+
+        bool ReadOnly() const {
+            if (CompareOp == ECompareOp::Never and FailOp == EStencilOp::Keep)
+                return true;
+
+            return (FailOp == EStencilOp::Keep and
+                    DepthFailOp == EStencilOp::Keep and
+                    PassOp == EStencilOp::Keep );
+        }
 
         bool operator ==(const FFaceState& other) const {
             return (FailOp == other.FailOp
@@ -238,6 +247,11 @@ struct FStencilBufferState {
     FFaceState Back;
     bool EnabledStencilTests{ false };
 
+    bool ReadOnly() const {
+        return (not EnabledStencilTests or (
+            Front.ReadOnly() and Back.ReadOnly() ));
+    }
+
     bool operator ==(const FStencilBufferState& other) const {
         return (Front == other.Front
             && Back == other.Back
@@ -258,14 +272,14 @@ struct FStencilBufferState {
 // FRenderState
 //----------------------------------------------------------------------------
 struct FRenderState {
-    FColorBufferState Color;
+    FBlendState Color;
     FDepthBufferState Depth;
     FStencilBufferState Stencil;
     FInputAssemblyState InputAssembly;
     FRasterizationState Rasterization;
     FMultisampleState Multisample;
 
-    bool operator ==(const FRenderState& other) const {
+    bool operator ==(const FRenderState& other) const NOEXCEPT {
         return (Color == other.Color
             && Depth == other.Depth
             && Stencil == other.Stencil
@@ -273,11 +287,11 @@ struct FRenderState {
             && Rasterization == other.Rasterization
             && Multisample == other.Multisample );
     }
-    bool operator !=(const FRenderState& other) const {
+    bool operator !=(const FRenderState& other) const NOEXCEPT {
         return (not operator ==(other));
     }
 
-    friend hash_t hash_value(const FRenderState& state) {
+    friend hash_t hash_value(const FRenderState& state) NOEXCEPT {
         return hash_tuple(state.Color, state.Depth, state.Stencil, state.InputAssembly, state.Rasterization, state.Multisample);
     }
 

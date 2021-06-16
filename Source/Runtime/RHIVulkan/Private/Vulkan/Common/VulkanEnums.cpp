@@ -490,6 +490,28 @@ VkIndexType VkCast(EIndexFormat value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
+VkPrimitiveTopology VkCast(EPrimitiveTopology value) {
+    switch ( value )
+    {
+    case EPrimitiveTopology::Point: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    case EPrimitiveTopology::LineList: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    case EPrimitiveTopology::LineStrip: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    case EPrimitiveTopology::LineListAdjacency: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
+    case EPrimitiveTopology::LineStripAdjacency: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
+    case EPrimitiveTopology::TriangleList: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    case EPrimitiveTopology::TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    case EPrimitiveTopology::TriangleFan: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+    case EPrimitiveTopology::TriangleListAdjacency: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
+    case EPrimitiveTopology::TriangleStripAdjacency: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
+    case EPrimitiveTopology::Patch: return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+
+    case EPrimitiveTopology::Unknown:
+    case EPrimitiveTopology::_Count: break;
+    }
+
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
 VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values) {
     VkGeometryFlagBitsKHR flags{ static_cast<VkGeometryFlagBitsKHR>(0) };
     for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Container/FlatSet.h"
 #include "Vulkan/VulkanCommon.h"
 
 #include "RHI/PipelineDesc.h"
@@ -16,7 +17,7 @@ class PPE_RHIVULKAN_API FVulkanRayTracingPipeline final : public FRefCountable {
 public:
     using FSpecializationConstants = FPipelineDesc::FSpecializationConstants;
 #if USE_PPE_RHIDEBUG
-    using FDebugModeBits = Meta::TStaticBitset<u32(EShaderDebugMode::_Count)>;
+    using FDebugModeBits = Meta::TStaticBitset<static_cast<u32>(EShaderDebugMode::_Count)>;
 #endif
 
     struct FShaderModule {
@@ -28,14 +29,20 @@ public:
         EShaderDebugMode DebugMode{ Default };
 #endif
 
-        bool operator ==(const FShaderModule& other) const { return (ShaderId == other.ShaderId); }
-        bool operator !=(const FShaderModule& other) const { return (not operator ==(other)); }
+        bool operator ==(const FShaderModule& other) const { return operator ==(other.ShaderId); }
+        bool operator !=(const FShaderModule& other) const { return operator !=(other.ShaderId); }
 
-        bool operator < (const FShaderModule& other) const { return (ShaderId < other.ShaderId); }
-        bool operator >=(const FShaderModule& other) const { return (not operator < (other)); }
+        bool operator < (const FShaderModule& other) const { return operator < (other.ShaderId); }
+        bool operator >=(const FShaderModule& other) const { return operator >=(other.ShaderId); }
+
+        bool operator ==(const FRTShaderID& other) const { return (ShaderId == other); }
+        bool operator !=(const FRTShaderID& other) const { return (not operator ==(other)); }
+
+        bool operator < (const FRTShaderID& other) const { return (ShaderId < other); }
+        bool operator >=(const FRTShaderID& other) const { return (not operator < (other)); }
     };
 
-    using FShaderModules = TFixedSizeStack<FShaderModule, 4>;
+    using FShaderModules = FLATSET_INSITU(RHIRayTracing, FShaderModule, 4);
 
     struct FInternalPipeline {
         FPipelineLayoutID BaseLayoutId;

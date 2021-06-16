@@ -19,29 +19,24 @@ namespace RHI {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanPipelineCache final : Meta::FNonCopyable {
 public:
-    using FDynamicStates = TFixedSizeStack<VkDynamicState, 32>;
+    STATIC_CONST_INTEGRAL(u32, MaxStages, 32);
+
+    using FDynamicStates = TFixedSizeStack<VkDynamicState, MaxStages>;
     using FViewports = TFixedSizeStack<VkViewport, MaxViewports>;
     using FScissors = TFixedSizeStack<VkRect2D, 16>;
     using FVertexInputAttributes = TFixedSizeStack<VkVertexInputAttributeDescription, MaxVertexAttribs>;
     using FVertexInputBindings = TFixedSizeStack<VkVertexInputBindingDescription, MaxVertexBuffers>;
     using FColorAttachments = TFixedSizeStack<VkPipelineColorBlendAttachmentState, MaxColorBuffers>;
-    using FSpecializationInfos = VECTORINSITU(RHIPipeline, VkSpecializationInfo, 1);
-    using FSpecializationEntries = VECTORINSITU(RHIPipeline, VkSpecializationMapEntry, 1);
-    using FSpecializationDatas = VECTORINSITU(RHIPipeline, u32, 1);
-    using FShaderStages = VECTORINSITU(RHIPipeline, VkPipelineShaderStageCreateInfo, 3);
-    using FRTShaderGroups = VECTORINSITU(RHIPipeline, VkRayTracingShaderGroupCreateInfoKHR, 3);
+    using FSpecializationInfos = VECTORMINSIZE(RHIPipeline, VkSpecializationInfo, MaxStages * MaxSpecializationConstants);
+    using FSpecializationEntries = VECTORMINSIZE(RHIPipeline, VkSpecializationMapEntry, MaxStages * MaxSpecializationConstants);
+    using FSpecializationDatas = VECTOR(RHIPipeline, u32);
+    using FShaderStages = VECTORMINSIZE(RHIPipeline, VkPipelineShaderStageCreateInfo, MaxStages);
+    using FRTShaderGroups = VECTORMINSIZE(RHIPipeline, VkRayTracingShaderGroupCreateInfoKHR, MaxStages);
 
     using EGroupType = FUpdateRayTracingShaderTable::EGroupType;
     using FRayGenShader = FUpdateRayTracingShaderTable::FRayGenShader;
     using FRTShaderGroup = FUpdateRayTracingShaderTable::FShaderGroup;
 
-    friend bool operator ==(const FRTShaderGroup& lhs, const FRTShaderGroup& rhs) {
-        return (lhs.Type == rhs.Type && lhs.MainShader == rhs.MainShader &&
-            lhs.AnyHitShader == rhs.AnyHitShader && lhs.IntersectionShader == rhs.IntersectionShader );
-    }
-    friend hash_t hash_value(const FRTShaderGroup& grp) {
-        return hash_tuple(grp.Type, grp.MainShader, grp.AnyHitShader, grp.IntersectionShader);
-    }
     using FRTShaderGroupMap = THashMap<TPtrRef<const FRTShaderGroup>, u32, Meta::THash<FRTShaderGroup>, Meta::TEqualTo<FRTShaderGroup>, ALLOCATOR(RHIPipeline)>;
 
     struct FRTShaderSpecialization {
@@ -62,148 +57,148 @@ public:
     FVulkanPipelineCache();
     ~FVulkanPipelineCache();
 
-    bool MergeWith(FVulkanPipelineCache& other);
+    NODISCARD bool MergeWith(FVulkanPipelineCache& other);
 
-    bool CreatePipelineCache(const FVulkanDevice& device);
+    NODISCARD bool Construct(const FVulkanDevice& device);
+    void TearDown(const FVulkanDevice& device);
 
-    bool CreatePipelineInstance(
-        VkPipeline* pppipeline,
-        FVulkanPipelineLayout const** playout,
-        FVulkanCommandBuffer& commandBuffer,
+    NODISCARD bool CreatePipelineInstance(
+        VkPipeline* pPipeline,
+        FVulkanPipelineLayout const** pLayout,
+        FVulkanCommandBuffer& workerCmd,
         const FVulkanLogicalRenderPass& logicalRenderPass,
-        const FVulkanGraphicsPipeline& pipeline,
+        const FVulkanGraphicsPipeline& gPipeline,
         const FVertexInputState& vertexInput,
         const FRenderState& renderState,
         EPipelineDynamicState dynamicStates
         ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex) );
 
-    bool CreatePipelineInstance(
-        VkPipeline* pppipeline,
-        FVulkanPipelineLayout const** playout,
-        FVulkanCommandBuffer& commandBuffer,
+    NODISCARD bool CreatePipelineInstance(
+        VkPipeline* pPipeline,
+        FVulkanPipelineLayout const** pLayout,
+        FVulkanCommandBuffer& workerCmd,
         const FVulkanLogicalRenderPass& logicalRenderPass,
-        const FVulkanMeshPipeline& pipeline,
+        const FVulkanMeshPipeline& mPipeline,
         const FRenderState& renderState,
         EPipelineDynamicState dynamicStates
         ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex) );
 
-    bool CreatePipelineInstance(
-        VkPipeline* pppipeline,
-        FVulkanPipelineLayout const** playout,
-        FVulkanCommandBuffer& commandBuffer,
+    NODISCARD bool CreatePipelineInstance(
+        VkPipeline* pPipeline,
+        FVulkanPipelineLayout const** pLayout,
+        FVulkanCommandBuffer& workerCmd,
         const FVulkanLogicalRenderPass& logicalRenderPass,
-        const FVulkanComputePipeline& pipeline,
+        const FVulkanComputePipeline& cPipeline,
         const Meta::TOptional<uint3>& localGroupSize,
-        VkPipelineCreateFlags createFlags,
-        EPipelineDynamicState dynamicStates
+        VkPipelineCreateFlags createFlags
         ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex) );
 
-    void CreateShaderTable(
-        FVulkanRayTracingShaderTable* pshaders,
-        FBufferCopyRegions* pregions,
-        FVulkanCommandBuffer& commandBuffer,
+    NODISCARD bool CreateShaderTable(
+        FVulkanRayTracingShaderTable* pShaderTable,
+        FBufferCopyRegions* pCopyRegions,
+        FVulkanCommandBuffer& workerCmd,
         FRawRTPipelineID pipelineId,
-        const FVulkanRayTracingPipeline& scene,
+        const FVulkanRayTracingScene& scene,
         const FRayGenShader& rayGenShader,
         TMemoryView<const FRTShaderGroup> shaderGroups,
         const u32 maxRecursionDepth );
 
-    void TearDown(const FVulkanDevice& device);
-
 private:
-    bool CreatePipelineCache_(const FVulkanDevice& device);
+    NODISCARD bool CreatePipelineCache_(const FVulkanDevice& device);
 
 #if USE_PPE_RHIDEBUG
     template <typename _Pipeline>
-    bool SetupShaderDebugging_(
-        EShaderDebugMode* pdebugMode, EShaderStages* pdebuggableShaders, FRawPipelineLayoutID* playoutId,
-        FVulkanCommandBuffer& commandBuffer,
+    NODISCARD bool SetupShaderDebugging_(
+        EShaderDebugMode* pDebugMode, EShaderStages* pDebuggableShaders, FRawPipelineLayoutID& layoutId,
+        FVulkanCommandBuffer& workerCmd,
         const _Pipeline& ppln,
         EShaderDebugIndex debugModeIndex );
 #endif
 
-    void ClearTemp_();
+    void ClearTransients_();
 
     void SetColorBlendState_(
-        VkPipelineColorBlendStateCreateInfo* pstate,
-        FColorAttachments* pattachments,
+        VkPipelineColorBlendStateCreateInfo* pInfo,
+        FColorAttachments* pAttachments,
         const FBlendState& blend,
         const FVulkanRenderPass& renderPass,
         const u32 subpassIndex ) const;
-    bool SetShaderStages_(
-        FShaderStages* pstages,
-        FSpecializationInfos* pinfos,
-        FSpecializationEntries* pentries,
+    NODISCARD bool SetShaderStages_(
+        FShaderStages* pStages,
+        FSpecializationInfos* pInfos,
+        FSpecializationEntries* pEntries,
         TMemoryView<const FShaderModule> shaders
         ARGS_IF_RHIDEBUG(EShaderDebugMode debugMode, EShaderStages debuggableShaders) ) const;
     void SetDynamicState_(
-        VkPipelineDynamicStateCreateInfo* pinfo,
-        FDynamicStates* pdynamicStates,
+        VkPipelineDynamicStateCreateInfo* pInfo,
+        FDynamicStates* pDynamicStates,
         const EPipelineDynamicState dynamicStates ) const;
     void SetMultisampleState_(
-        VkPipelineMultisampleStateCreateInfo* pinfo,
+        VkPipelineMultisampleStateCreateInfo* pInfo,
         const FMultisampleState& multisample ) const;
     void SetTessellationState_(
-        VkPipelineTessellationStateCreateInfo* pinfo, u32 patchSize) const;
+        VkPipelineTessellationStateCreateInfo* pInfo, u32 patchSize) const;
     void SetDepthStencilState_(
-        VkPipelineDepthStencilStateCreateInfo* pinfo,
+        VkPipelineDepthStencilStateCreateInfo* pInfo,
         const FDepthBufferState& depth,
         const FStencilBufferState& stencil) const;
     void SetRasterizationState_(
-        VkPipelineRasterizationStateCreateInfo* pstate,
+        VkPipelineRasterizationStateCreateInfo* pInfo,
         const FRasterizationState& rasterization ) const;
     void SetupPipelineInputAssemblyState_(
-        VkPipelineInputAssemblyStateCreateInfo* pstate,
+        VkPipelineInputAssemblyStateCreateInfo* pInfo,
         const FInputAssemblyState& inputAssembly ) const;
     void SetVertexInputState_(
-        VkPipelineVertexInputStateCreateInfo* pstate,
-        FVertexInputAttributes* pattributes,
-        FVertexInputBindings* pbindings,
+        VkPipelineVertexInputStateCreateInfo* pInfo,
+        FVertexInputAttributes* pAttributes,
+        FVertexInputBindings* pBindings,
         const FVertexInputState& vertexInput ) const;
     void SetViewportState_(
-        VkPipelineViewportStateCreateInfo* pstate,
-        FViewports* pviewports,
-        FScissors* pscissors,
+        VkPipelineViewportStateCreateInfo* pInfo,
+        FViewports* pViewports,
+        FScissors* pScissors,
         const uint2& viewportSize,
         const u32 viewportCount,
         const EPipelineDynamicState dynamicStates ) const;
     void AddLocalGroupSizeSpecialization_(
-        FSpecializationEntries* pentries,
-        FSpecializationDatas* pdatas,
+        FSpecializationEntries* pEntries,
+        FSpecializationDatas* pDatas,
         const uint3& localSizeSpec,
         const uint3& localGroupSize ) const;
 
-    bool CreateShaderStage_(
-        VkPipelineShaderStageCreateInfo* pstage,
-        const FVulkanRayTracingPipeline* pipeline, const FRTShaderID& id, EShaderDebugMode mode );
+    NODISCARD bool CreateShaderStage_(
+        VkPipelineShaderStageCreateInfo* pStage,
+        const FVulkanRayTracingPipeline::FInternalPipeline& pipeline, const FRTShaderID& id
+        ARGS_IF_RHIDEBUG(EShaderDebugMode mode) );
 
-    bool FindShaderGroup_(
-        VkRayTracingShaderGroupCreateInfoKHR* pinfo,
-        const FVulkanRayTracingPipeline* pipeline,
-        const FRTShaderGroup& shaderGroup,
-        const EShaderDebugMode mode );
+    NODISCARD bool FindShaderGroup_(
+        VkRayTracingShaderGroupCreateInfoKHR* pInfo,
+        const FVulkanRayTracingPipeline::FInternalPipeline& pipeline,
+        const FRTShaderGroup& shaderGroup
+        ARGS_IF_RHIDEBUG(EShaderDebugMode mode) );
 
     void ValidateRenderState_(
-        FRenderState* prender,
-        EPipelineDynamicState* pdynamicStates,
-        const FVulkanDevice& dev ) const;
+        FRenderState* pRender,
+        EPipelineDynamicState* pDynamicStates,
+        const FVulkanDevice& device,
+        const FVulkanLogicalRenderPass& logicalRenderPass ) const;
 
     VkPipelineCache _pipelineCache;
 
-    // temp containers:
-    FShaderStages _tempStages;
-    FDynamicStates _tempDynamicStates;
-    FViewports _tempViewports;
-    FScissors _tempScissors;
-    FVertexInputAttributes _tempVertexAttributes;
-    FVertexInputBindings _tempVertexBindings;
-    FColorAttachments _tempColorAttachments;
-    FSpecializationInfos _tempSpecializationInfos;
-    FSpecializationEntries _tempSpecializationEntries;
-    FSpecializationDatas _tempSpecializationDatas;
-    FRTShaderGroups _tempShaderGroups;
-    FRTShaderGroupMap _tempShaderGraph;
-    FRTShaderSpecializations _tempShaderSpecializations;
+    // transient containers:
+    FShaderStages _transientStages;
+    FDynamicStates _transientDynamicStates;
+    FViewports _transientViewports;
+    FScissors _transientScissors;
+    FVertexInputAttributes _transientVertexAttributes;
+    FVertexInputBindings _transientVertexBindings;
+    FColorAttachments _transientColorAttachments;
+    FSpecializationInfos _transientSpecializationInfos;
+    FSpecializationEntries _transientSpecializationEntries;
+    FSpecializationDatas _transientSpecializationDatas;
+    FRTShaderGroups _transientRTShaderGroups;
+    FRTShaderGroupMap _transientRTShaderGraph;
+    FRTShaderSpecializations _transientRTShaderSpecializations;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

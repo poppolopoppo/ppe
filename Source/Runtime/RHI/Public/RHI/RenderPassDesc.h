@@ -122,7 +122,7 @@ struct FRenderPassDesc {
     // Rasterization
     FRenderPassDesc& SetPolygonMode(EPolygonMode value) { Rasterization.PolygonMode = value; return (*this); }
     FRenderPassDesc& SetLineWidth(float value) { Rasterization.LineWidth = value; return (*this); }
-    FRenderPassDesc& SetDepthBiasConstFactor(float value) { Rasterization.DepthBiasConstFactor = value; return (*this); }
+    FRenderPassDesc& SetDepthBiasConstFactor(float value) { Rasterization.DepthBiasConstantFactor = value; return (*this); }
     FRenderPassDesc& SetDepthBiasClamp(float value) { Rasterization.DepthBiasClamp = value; return (*this); }
     FRenderPassDesc& SetDepthBiasSlopeFactor(float value) { Rasterization.DepthBiasSlopeFactor = value; return (*this); }
     FRenderPassDesc& SetDepthBias(float constFactor, float clamp, float slopeFactor) { Rasterization.SetDepthBias(constFactor, clamp, slopeFactor); return (*this); }

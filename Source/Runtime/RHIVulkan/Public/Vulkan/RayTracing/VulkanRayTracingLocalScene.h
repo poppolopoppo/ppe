@@ -46,7 +46,7 @@ public:
 
     VkAccelerationStructureKHR Handle() const { return _rtScene->Handle(); }
     ERayTracingBuildFlags Flags() const { return _rtScene->Flags(); }
-    u32 MaxInstanceCount() const { return _rtScene->MaxInstancCount(); }
+    u32 MaxInstanceCount() const { return _rtScene->MaxInstanceCount(); }
 
 private:
     const FVulkanRayTracingScene* _rtScene;

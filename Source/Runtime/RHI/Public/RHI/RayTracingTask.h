@@ -158,8 +158,8 @@ struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTr
 
     struct FShaderGroup {
         EGroupType Type{ Default };
-        FInstanceID Instance;
-        FGeometryID Geometry;
+        FInstanceID InstanceId;
+        FGeometryID GeometryId;
         u32 RecordOffset{ 0 }; // 'sbtRecordOffset'
         FRTShaderID MainShader; // miss or closest hit shader
         FRTShaderID AnyHitShader; // optional
@@ -173,8 +173,8 @@ struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTr
 
         FShaderGroup(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit) NOEXCEPT
         :   Type(ERayTracingGroupType::TriangleHitShader)
-        ,   Instance(instance)
-        ,   Geometry(geometry)
+        ,   InstanceId(instance)
+        ,   GeometryId(geometry)
         ,   RecordOffset(offset)
         ,   MainShader(closestHit)
         ,   AnyHitShader(anyHit)
@@ -182,13 +182,25 @@ struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTr
 
         FShaderGroup(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit, const FRTShaderID& intersection) NOEXCEPT
         :   Type(ERayTracingGroupType::ProceduralHitShader)
-        ,   Instance(instance)
-        ,   Geometry(geometry)
+        ,   InstanceId(instance)
+        ,   GeometryId(geometry)
         ,   RecordOffset(offset)
         ,   MainShader(closestHit)
         ,   AnyHitShader(anyHit)
         ,   IntersectionShader(intersection)
         {}
+
+        friend bool operator ==(const FShaderGroup& lhs, const FShaderGroup& rhs) NOEXCEPT {
+            return (lhs.Type == rhs.Type && lhs.MainShader == rhs.MainShader &&
+                lhs.AnyHitShader == rhs.AnyHitShader && lhs.IntersectionShader == rhs.IntersectionShader );
+        }
+        friend bool operator !=(const FShaderGroup& lhs, const FShaderGroup& rhs) NOEXCEPT {
+            return (not operator ==(lhs, rhs));
+        }
+
+        friend hash_t hash_value(const FShaderGroup& grp) NOEXCEPT  {
+            return hash_tuple(grp.Type, grp.MainShader, grp.AnyHitShader, grp.IntersectionShader);
+        }
     };
 
     using FShaderGroups = TArray<FShaderGroup>;

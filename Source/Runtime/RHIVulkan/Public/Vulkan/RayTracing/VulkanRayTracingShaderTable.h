@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Meta/Utility.h"
 #include "Thread/ReadWriteLock.h"
 #include "Vulkan/VulkanCommon.h"
 
@@ -9,6 +10,9 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanRayTracingShaderTable final : Meta::FNonCopyable {
+
+    friend class FVulkanPipelineCache;
+
 public:
     struct FShaderTable {
         VkPipeline Pipeline{ VK_NULL_HANDLE };
@@ -55,11 +59,13 @@ private:
     u32 _rayMissOffset{ 0 };
     u32 _rayHitOffset{ 0 };
     u32 _callableOffset{ 0 };
-    u32 _blockSIze{ 0 };
+    u32 _blockSize{ 0 };
 
     u16 _rayMissStride{ 0 };
     u16 _rayHitStride{ 0 };
     u16 _callableStride{ 0 };
+
+    Meta::TStaticBitset<3> _availableShaders{}; // ray miss, ray hit, callable
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

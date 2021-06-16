@@ -13,7 +13,7 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FVulkanMemoryInfo {
-    void* MappedPtr{ nullptr };
+    ubyte* MappedPtr{ nullptr };
     VkDeviceMemory Memory{ VK_NULL_HANDLE };
     VkMemoryPropertyFlags Flags{ Default };
     u32 Offset{ 0 };
