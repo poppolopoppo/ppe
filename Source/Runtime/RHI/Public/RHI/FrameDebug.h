@@ -59,6 +59,7 @@ struct FFrameStatistics {
         u32 NumIndexBufferBindings          = 0;
         u32 NumVertexBufferBindings         = 0;
         u32 NumDrawCalls                    = 0;
+        u32 NumIndirectDrawCalls            = 0;
         u64 NumVertexCount                  = 0;
         u64 NumPrimitiveCount               = 0;
         u32 NumGraphicsPipelineBindings     = 0;
@@ -113,36 +114,36 @@ struct FFrameStatistics {
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG || USE_PPE_RHITASKNAME
 struct FDebugColorScheme {
-    FRgba8u
-        RenderPass{ FColor::OrangeRed() },
-        Compute{ FColor::MediumBlue() },
-        DeviceLocalTransfer{ FColor::Green() },
-        HostToDeviceTransfer{ FColor::BlueViolet() },
-        DeviceToHostTransfer{ FColor::BlueViolet() },
-        Present{ FColor::Red() },
-        RayTracing{ FColor::Lime() },
-        BuildRayTracingStruct{ FColor::Lime() },
+    FLinearColor
+        RenderPass{ FLinearColor::OrangeRed() },
+        Compute{ FLinearColor::MediumBlue() },
+        DeviceLocalTransfer{ FLinearColor::Green() },
+        HostToDeviceTransfer{ FLinearColor::BlueViolet() },
+        DeviceToHostTransfer{ FLinearColor::BlueViolet() },
+        Present{ FLinearColor::Red() },
+        RayTracing{ FLinearColor::Lime() },
+        BuildRayTracingStruct{ FLinearColor::Lime() },
 
-        Draw{ FColor::Bisque() },
-        DrawMeshes{ FColor::Bisque() },
-        CustomDraw{ FColor::Bisque() },
+        Draw{ FLinearColor::Bisque() },
+        DrawMeshes{ FLinearColor::Bisque() },
+        CustomDraw{ FLinearColor::Bisque() },
 
-        CmdSubBatchBackground{ FColor::SlateBlue() },
-        CmdSubBatchLabel{ FColor::LightGray() },
-        CmbBatchBackground{ FColor::Aquamarine() },
-        CmdBatchLabel{ FColor::LightGray() },
-        TaskLabel{ FColor::White() },
-        ResourceBackground{ FColor::Silver() },
-        BarrierGroupBorder{ FColor::Olive() },
-        GroupBorder{ FColor::DarkGray() },
-        TaskDependency{ FColor::GhostWhite() },
+        CmdSubBatchBackground{ FLinearColor::SlateBlue() },
+        CmdSubBatchLabel{ FLinearColor::LightGray() },
+        CmbBatchBackground{ FLinearColor::Aquamarine() },
+        CmdBatchLabel{ FLinearColor::LightGray() },
+        TaskLabel{ FLinearColor::White() },
+        ResourceBackground{ FLinearColor::Silver() },
+        BarrierGroupBorder{ FLinearColor::Olive() },
+        GroupBorder{ FLinearColor::DarkGray() },
+        TaskDependency{ FLinearColor::GhostWhite() },
 
-        Debug{ FColor::Pink() },
+        Debug{ FLinearColor::Pink() },
 
-        LayoutBarrier{ FColor::Yellow() },
-        WriteAfterWriteBarrier{ FColor::DodgerBlue() },
-        WriteAfterReadBarrier{ FColor::LimeGreen() },
-        ReadAfterWriteBarrier{ FColor::Red() };
+        LayoutBarrier{ FLinearColor::Yellow() },
+        WriteAfterWriteBarrier{ FLinearColor::DodgerBlue() },
+        WriteAfterReadBarrier{ FLinearColor::LimeGreen() },
+        ReadAfterWriteBarrier{ FLinearColor::Red() };
 
     static FDebugColorScheme Get() NOEXCEPT {
         // #TODO

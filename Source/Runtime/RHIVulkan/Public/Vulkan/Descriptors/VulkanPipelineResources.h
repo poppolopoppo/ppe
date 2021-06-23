@@ -49,6 +49,8 @@ public:
     auto Read() const { return _resources.LockShared(); }
     auto Write() { return _resources.LockExclusive(); }
 
+    VkDescriptorSet Handle() const { return Read()->DescriptorSet.First; }
+
     hash_t HashValue() const { return Read()->HashValue; }
 
 #if USE_PPE_RHIDEBUG
@@ -75,12 +77,12 @@ public:
     static void CheckImageUsage(const class FVulkanImage&, EResourceState state);
 
 private:
-    bool AddResource_(FUpdateDescriptors* pupdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FBuffer&);
-    bool AddResource_(FUpdateDescriptors* pupdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FTexelBuffer&);
-    bool AddResource_(FUpdateDescriptors* pupdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FImage&);
-    bool AddResource_(FUpdateDescriptors* pupdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FTexture&);
-    bool AddResource_(FUpdateDescriptors* pupdate, FVulkanResourceManager&, const FUniformID&, const FPipelineResources::FSampler&);
-    bool AddResource_(FUpdateDescriptors* pupdate, FVulkanResourceManager&, const FUniformID&, const FPipelineResources::FRayTracingScene&);
+    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FBuffer&);
+    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FTexelBuffer&);
+    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FImage&);
+    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FTexture&);
+    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, const FPipelineResources::FSampler&);
+    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, const FPipelineResources::FRayTracingScene&);
 
     void LogUniform_(const FUniformID&, u32 idx) const;
 

@@ -97,7 +97,6 @@ public:
 
 #if USE_PPE_RHIDEBUG
         TUniquePtr<FVulkanLocalDebugger> Debugger;
-        FVulkanDebugName DebugName;
         bool DebugFullBarriers{ false };
         bool DebugQueueSync{ false };
 
@@ -124,6 +123,7 @@ public:
     SVulkanCommandBatch Batch() const { return Read()->Batch; }
     EVulkanQueueFamily QueueFamily() const { return Read()->QueueIndex; }
 #if USE_PPE_RHIDEBUG
+    const FVulkanDebugName& DebugName() const { return Read()->Batch->DebugName(); }
     FVulkanLocalDebugger* Debugger() const { return Read()->Debugger.get(); }
 
     template <typename _Functor>
@@ -158,7 +158,7 @@ public:
     // ICommandBuffer
 
     virtual SFrameGraph FrameGraph() const NOEXCEPT override;
-    virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId, ESwapchainImage type = ESwapchainImage::Primary) override;
+    virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId) override;
     NODISCARD virtual bool DependsOn(const FCommandBufferBatch& cmd) override;
     NODISCARD virtual bool StagingAlloc(FStagingBlock* pStaging, size_t size, size_t align) override;
 

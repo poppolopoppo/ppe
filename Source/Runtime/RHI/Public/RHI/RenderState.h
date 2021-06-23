@@ -67,7 +67,7 @@ PPE_ASSUME_TYPE_AS_POD(FColorBufferState);
 // FBlendState
 //----------------------------------------------------------------------------
 struct FBlendState {
-    using FColorBuffers = TFixedSizeStack<FColorBufferState, MaxColorBuffers>;
+    using FColorBuffers = TStaticArray<FColorBufferState, MaxColorBuffers>;
 
     FColorBuffers Buffers;
     FRgba32f BlendColor{ 1.0f };
@@ -272,7 +272,7 @@ struct FStencilBufferState {
 // FRenderState
 //----------------------------------------------------------------------------
 struct FRenderState {
-    FBlendState Color;
+    FBlendState Blend;
     FDepthBufferState Depth;
     FStencilBufferState Stencil;
     FInputAssemblyState InputAssembly;
@@ -280,7 +280,7 @@ struct FRenderState {
     FMultisampleState Multisample;
 
     bool operator ==(const FRenderState& other) const NOEXCEPT {
-        return (Color == other.Color
+        return (Blend == other.Blend
             && Depth == other.Depth
             && Stencil == other.Stencil
             && InputAssembly == other.InputAssembly
@@ -292,7 +292,7 @@ struct FRenderState {
     }
 
     friend hash_t hash_value(const FRenderState& state) NOEXCEPT {
-        return hash_tuple(state.Color, state.Depth, state.Stencil, state.InputAssembly, state.Rasterization, state.Multisample);
+        return hash_tuple(state.Blend, state.Depth, state.Stencil, state.InputAssembly, state.Rasterization, state.Multisample);
     }
 
 };

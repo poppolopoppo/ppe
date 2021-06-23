@@ -217,7 +217,7 @@ TVulkanFrameTask<FBlitImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const 
 TVulkanFrameTask<FGenerateMipmaps>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process)
 :   IVulkanFrameTask(desc, process)
 ,   Image(cmd.ToLocal(desc.Image))
-,   BaseLevel(*desc.BaseLevel)
+,   BaseMipLevel(*desc.BaseLevel)
 ,   LevelCount(desc.LevelCount)
 ,   BaseLayer(*desc.BaseLayer)
 ,   LayerCount(desc.LayerCount) {

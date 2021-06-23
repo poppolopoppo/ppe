@@ -12,7 +12,7 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FVulkanDescriptorSet {
-    VkDescriptorSet DescriptorSet{ VK_NULL_HANDLE };
+    VkDescriptorSet First{ VK_NULL_HANDLE };
     u8 IndexInPool{ UMax };
 };
 //----------------------------------------------------------------------------

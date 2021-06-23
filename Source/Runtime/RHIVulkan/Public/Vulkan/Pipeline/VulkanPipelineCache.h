@@ -87,7 +87,6 @@ public:
         VkPipeline* pPipeline,
         FVulkanPipelineLayout const** pLayout,
         FVulkanCommandBuffer& workerCmd,
-        const FVulkanLogicalRenderPass& logicalRenderPass,
         const FVulkanComputePipeline& cPipeline,
         const Meta::TOptional<uint3>& localGroupSize,
         VkPipelineCreateFlags createFlags

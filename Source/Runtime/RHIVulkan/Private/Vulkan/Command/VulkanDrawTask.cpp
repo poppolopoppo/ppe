@@ -33,8 +33,8 @@ FVulkanBaseDrawVerticesTask::FVulkanBaseDrawVerticesTask(
     IVulkanFrameTask::CopyDescriptorSets(&_resources, &renderPass, cmd, desc.Resources);
 
     for (const TPair<const FVertexBufferID, FVertexBuffer>& vb : desc.VertexBuffers) {
-        const auto it = VertexInput.Bindings.find(vb.first);
-        Assert(VertexInput.Bindings.end() != it);
+        const auto it = VertexInput.BufferBindings.find(vb.first);
+        Assert(VertexInput.BufferBindings.end() != it);
 
         FVulkanLocalBuffer* const pLocalBuffer = cmd.ToLocal(vb.second.Id);
         Assert(pLocalBuffer);

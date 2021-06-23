@@ -95,19 +95,20 @@ public:
 
         using base_type = _BaseResource;
         using base_type::base_type;
-        using base_type::operator ==;
-        using base_type::operator !=;
         using element_type = _Element;
 
         element_type Elements[1];
 
+        TMemoryView<element_type> MakeView() { return { Elements, base_type::ElementCount }; }
+        TMemoryView<const element_type> MakeView() const { return { Elements, base_type::ElementCount }; }
+
         bool operator ==(const TResource& other) const {
-            if (static_cast<const base_type&>(*this) != other)
+            if (static_cast<const base_type&>(*this) != other ||
+                other.ElementCount != this->ElementCount )
                 return false;
-            forrange(i, 0, u32(base_type::ElementCount))
-                if (Elements[i] != other.Elements[i])
-                    return false;
-            return true;
+            return std::equal(
+                Elements, Elements + this->ElementCount,
+                other.Elements, other.Elements + other.ElementCount );
         }
         bool operator !=(const TResource& other) const { return (not operator ==(other)); }
 

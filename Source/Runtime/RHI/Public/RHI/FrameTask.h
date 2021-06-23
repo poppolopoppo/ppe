@@ -51,12 +51,17 @@ struct TFrameTaskDesc {
 
 #if USE_PPE_RHITASKNAME
     FTaskName TaskName;
-    FRgba8u DebugColor;
+    FLinearColor DebugColor;
 
-    TFrameTaskDesc(FStringView name, FRgba8u color) : TaskName(name), DebugColor(color) {}
+    TFrameTaskDesc(FStringView name, const FLinearColor& color) NOEXCEPT
+    :   TaskName(name)
+    ,   DebugColor(color) {
+    }
 
     self_type& SetName(FStringView value) { TaskName.Assign(value); return static_cast<self_type&>(*this); }
-    self_type& SetDebugColor(FStringView value) { TaskName.Assign(value); return static_cast<self_type&>(*this); }
+    self_type& SetDebugColor(const FRgba8u& value) { DebugColor = FColor(value).ToLinear(); return static_cast<self_type&>(*this); }
+    self_type& SetDebugColor(const FColor& value) { DebugColor = value.ToLinear(); return static_cast<self_type&>(*this); }
+    self_type& SetDebugColor(const FLinearColor& value) { DebugColor = value; return static_cast<self_type&>(*this); }
 #endif
 };
 } //!details
@@ -363,11 +368,11 @@ struct FBlitImage final : details::TFrameTaskDesc<FBlitImage> {
 
     struct FRegion {
         FImageSubresourceRange SrcSubresource;
-        int3 SrcOffsetStart;
-        int3 SrcOffsetEnd;
+        int3 SrcOffset0;
+        int3 SrcOffset1;
         FImageSubresourceRange DstSubresource;
-        int3 DstOffsetStart;
-        int3 DstOffsetEnd;
+        int3 DstOffset0;
+        int3 DstOffset1;
     };
     using FRegions = TFixedSizeStack<FRegion, MaxCopyRegions>;
 

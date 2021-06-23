@@ -58,7 +58,7 @@ public:
 #endif
 
     bool AllResourcesAlive(const FVulkanResourceManager& resources) const;
-    NODISCARD bool DescriptorLayout(u32* pBinding, FRawDescriptorSetLayoutID* pLayout, const FDescriptorSetID& id) const;
+    NODISCARD bool DescriptorSetLayout(u32* pBinding, FRawDescriptorSetLayoutID* pLayout, const FDescriptorSetID& id) const;
 
     NODISCARD bool Construct(const FVulkanDevice& device, VkDescriptorSetLayout emptyLayout ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);

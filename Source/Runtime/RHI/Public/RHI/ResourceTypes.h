@@ -127,7 +127,12 @@ enum class EDrawDynamicState : u32 {
 ENUM_FLAGS(EDrawDynamicState);
 //----------------------------------------------------------------------------
 struct FDrawDynamicStates {
-    FDrawDynamicStates() = default;
+    FDrawDynamicStates() NOEXCEPT
+    :   _states{ Default }
+#define INIT_DYNAMICSTATE_FIELD(ID, TYPE, NAME, SUFF) , CONCAT(_, NAME){ Default }
+    PPE_RHI_EACH_DYNAMICSTATE(INIT_DYNAMICSTATE_FIELD)
+#undef INIT_DYNAMICSTATE_FIELD
+    {}
 
     CONSTEXPR bool Has(EDrawDynamicState flag) const NOEXCEPT { return (_states & flag); }
 

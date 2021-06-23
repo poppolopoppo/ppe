@@ -31,8 +31,8 @@ static CONSTEXPR EDebugFlags GCmdDebugFlags_ = EDebugFlags::FullBarrier | EDebug
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanCommandBuffer::FVulkanCommandBuffer(const SVulkanFrameGraph& fg, u32 indexInPool)
-    : _frameGraph(fg)
-      , _indexInPool(indexInPool) {
+:   _frameGraph(fg)
+,   _indexInPool(indexInPool) {
     Assert(_frameGraph);
 
     const auto exclusive = _data.LockExclusive();
@@ -56,7 +56,6 @@ FVulkanCommandBuffer::~FVulkanCommandBuffer() {
 //----------------------------------------------------------------------------
 const FVulkanDevice& FVulkanCommandBuffer::Device() const NOEXCEPT {
     return _frameGraph->Device();
-
 }
 //----------------------------------------------------------------------------
 SFrameGraph FVulkanCommandBuffer::FrameGraph() const NOEXCEPT {
@@ -78,9 +77,10 @@ bool FVulkanCommandBuffer::Begin(
     exclusive->State = EState::Recording;
     exclusive->QueueIndex = queue->FamilyIndex;
 #if USE_PPE_RHIDEBUG
-    exclusive->DebugName = desc.Name;
     exclusive->DebugFullBarriers = (desc.DebugFlags & EDebugFlags::FullBarrier);
     exclusive->DebugQueueSync = (desc.DebugFlags & EDebugFlags::QueueSync);
+
+    _debugName = desc.Name;
 #endif
 
     // create command pool
@@ -133,12 +133,12 @@ bool FVulkanCommandBuffer::Execute() {
         exclusive->Debugger->End(
             &exclusive->Batch->_frameDebugger.DebugDump,
             &exclusive->Batch->_frameDebugger.DebugGraph,
-            exclusive->DebugName, _indexInPool);
+            _debugName, _indexInPool);
     }
 #endif
 
     if (Unlikely(not exclusive->Batch->OnBaked(exclusive->RM.ResourceMap))) {
-        RHI_LOG(Error, L"failed to bake command batch for '{0}'", exclusive->DebugName);
+        RHI_LOG(Error, L"failed to bake command batch for '{0}'", _debugName);
         return false;
     }
 
@@ -215,7 +215,7 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
     data.BarrierManager.Commit(device, cmd);
 
     if (not ProcessTasks_(data, cmd)) {
-        RHI_LOG(Error, L"failed to process tasks for '{0}'", data.DebugName);
+        RHI_LOG(Error, L"failed to process tasks for '{0}'", _debugName);
         return false;
     }
 
@@ -314,7 +314,7 @@ void FVulkanCommandBuffer::WaitSemaphore(VkSemaphore semaphore, VkPipelineStageF
     exclusive->Batch->WaitSemaphore(semaphore, stage);
 }
 //----------------------------------------------------------------------------
-FRawImageID FVulkanCommandBuffer::SwapchainImage(FRawSwapchainID swapchainId, ESwapchainImage type) {
+FRawImageID FVulkanCommandBuffer::SwapchainImage(FRawSwapchainID swapchainId) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
 
@@ -322,7 +322,7 @@ FRawImageID FVulkanCommandBuffer::SwapchainImage(FRawSwapchainID swapchainId, ES
     Assert(pSwapchain);
 
     FRawImageID imageId;
-    VerifyRelease(pSwapchain->Acquire(&imageId, *this, type ARGS_IF_RHIDEBUG(exclusive->DebugQueueSync)));
+    VerifyRelease(pSwapchain->Acquire(&imageId, *this ARGS_IF_RHIDEBUG(exclusive->DebugQueueSync)));
     Assert_NoAssume(imageId);
 
     // transit to undefined layout
@@ -1197,7 +1197,7 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
     if (not pData->Construct(pResource)) {
         Meta::Destroy(pData);
         localResources.Pool.Deallocate(local);
-        ONLY_IF_RHIDEBUG(RHI_LOG(Error, L"{1}: {0}", debugMessage, _data.Value_NotThreadSafe().DebugName));
+        RHI_LOG(Error, L"{1}: {0}", debugMessage, _data.Value_NotThreadSafe().DebugName);
         return nullptr;
     }
 
@@ -1258,7 +1258,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateBufferTask_(FInternalData& data, cons
             FStagingBlock staging;
             u32 blockSize;
             if (not StorePartialData_(data, &staging, &blockSize, region.Data, srcOffset)) {
-                RHI_LOG(Error, L"failed to write partial staging data for '{0}' in '{1}'", task.TaskName, data.DebugName);
+                RHI_LOG(Error, L"failed to write partial staging data for '{0}' in '{1}'", task.TaskName, _debugName);
                 return nullptr;
             }
 
@@ -1305,7 +1305,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
     const u32 totalSizeInBytes = (imageSize.z > 1 ? slicePitch * imageSize.z : minSlicePitch);
 
     if (totalSizeInBytes != task.Data.SizeInBytes()) {
-        RHI_LOG(Error, L"invalid data supplied for image '{0}' update in '{1}'", pImage->DebugName(), data.DebugName);
+        RHI_LOG(Error, L"invalid data supplied for image '{0}' update in '{1}'", pImage->DebugName(), _debugName);
         return nullptr;
     }
 
@@ -1331,7 +1331,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
             FStagingBlock staging;
             u32 blockSize;
             if (not StagingImageStore_(data, &staging, &blockSize, task.Data, srcOffset, slicePitch, totalSizeInBytes)) {
-                RHI_LOG(Error, L"failed to write image slice to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
+                RHI_LOG(Error, L"failed to write image slice to staging for '{0}' in '{1}'", task.TaskName, _debugName);
                 return nullptr;
             }
 
@@ -1372,7 +1372,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                 FStagingBlock staging;
                 u32 blockSize;
                 if (not StagingImageStore_(data, &staging, &blockSize, sliceData, srcOffset, rowPitch * blockDim.y, totalSizeInBytes)) {
-                    RHI_LOG(Error, L"failed to write image row to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
+                    RHI_LOG(Error, L"failed to write image row to staging for '{0}' in '{1}'", task.TaskName, _debugName);
                     return nullptr;
                 }
 
@@ -1428,7 +1428,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadBufferTask_(FInternalData& data, const 
         FRawBufferID dstBuffer;
         FVulkanCommandBatch::FStagingDataRange range;
         if (not data.Batch->AddPendingLoad(&dstBuffer, &range, srcOffset, task.SrcSize)) {
-            RHI_LOG(Error, L"failed copy buffer to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
+            RHI_LOG(Error, L"failed copy buffer to staging of '{0}' in '{1}'", copy.TaskName, _debugName);
             return nullptr;
         }
 
@@ -1500,7 +1500,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
             if (not data.Batch->AddPendingLoad(
                 &dstBuffer, &range,
                 srcOffset, totalSizeInBytes, slicePitch)) {
-                RHI_LOG(Error, L"failed copy image row to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
+                RHI_LOG(Error, L"failed copy image row to staging of '{0}' in '{1}'", copy.TaskName, _debugName);
                 return nullptr;
             }
 
@@ -1540,7 +1540,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
                     &dstBuffer, &range,
                     srcOffset, totalSizeInBytes, rowPitch * blockDim.y)) {
                     RHI_LOG(Error, L"failed copy image slice to staging of '{0}' in '{1}'", copy.TaskName,
-                            data.DebugName);
+                            _debugName);
                     return nullptr;
                 }
 
@@ -1634,7 +1634,7 @@ bool FVulkanCommandBuffer::StagingAlloc_(FInternalData& data,
     if (not data.Batch->StageWrite(
         &stagingBlock, &blockSize,
         requiredSize, 1, 16, requiredSize)) {
-        RHI_LOG(Error, L"failed to write to staging alloc in {0}", data.DebugName);
+        RHI_LOG(Error, L"failed to write to staging alloc in {0}", _debugName);
         return false;
     }
 
@@ -1652,7 +1652,7 @@ bool FVulkanCommandBuffer::StagingStore_(FInternalData& data,
     if (not data.Batch->StageWrite(
         &stagingBlock, &blockSize,
         dataSize, 1, offsetAlign, dataSize)) {
-        RHI_LOG(Error, L"failed to store in staging at {0}", data.DebugName);
+        RHI_LOG(Error, L"failed to store in staging at {0}", _debugName);
         return false;
     }
 

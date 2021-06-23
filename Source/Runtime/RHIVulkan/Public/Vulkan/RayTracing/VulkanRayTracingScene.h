@@ -57,8 +57,8 @@ public:
     u32 MaxInstanceCount() const { return Read()->MaxInstanceCount; }
     ERayTracingBuildFlags Flags() const { return Read()->Flags; }
 
-    auto CurrentData() { return _currentData.LockExclusive(); }
-    auto CurrentData() const { return _currentData.LockShared(); }
+    auto ExclusiveData() { return _currentData.LockExclusive(); }
+    auto SharedData() const { return _currentData.LockShared(); }
 
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }

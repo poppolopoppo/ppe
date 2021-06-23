@@ -26,8 +26,8 @@ public:
     void Process2(void* visitor);
 
 #if USE_PPE_RHIDEBUG
-    FStringView TaskName() const { return _taskName; }
-    const FRgba8u DebugColor() const { return _debugColor; }
+    const FTaskName& TaskName() const { return _taskName; }
+    const FLinearColor& DebugColor() const { return _debugColor; }
 
     EShaderDebugIndex DebugModeIndex() const { return _debugModeIndex; }
     void SetDebugModeIndex(EShaderDebugIndex id) { _debugModeIndex = id; }
@@ -39,7 +39,7 @@ private:
 
 #if USE_PPE_RHIDEBUG
     FTaskName _taskName;
-    FRgba8u _debugColor{ FRgba8u::One };
+    FLinearColor _debugColor{ FLinearColor::PaperWhite };
     EShaderDebugIndex _debugModeIndex{ Default };
 #endif
 };
@@ -74,7 +74,7 @@ public:
     const EPrimitiveTopology Topology;
     const bool EnablePrimitiveRestart;
 
-    FVulkanDescriptorSets DescriptorSets;
+    mutable FVulkanDescriptorSets DescriptorSets;
 
     bool Valid() const { return (!!Pipeline); }
 
@@ -208,7 +208,7 @@ public:
     FColorBuffers ColorBuffers;
     FDrawDynamicStates DynamicStates;
 
-    FVulkanDescriptorSets DescriptorSets;
+    mutable FVulkanDescriptorSets DescriptorSets;
 
     bool Valid() const { return (!!Pipeline); }
 

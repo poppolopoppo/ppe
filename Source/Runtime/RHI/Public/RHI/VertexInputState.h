@@ -86,7 +86,7 @@ struct FVertexInputState {
     using FVertices = TFixedSizeHashMap<FVertexID, FVertexInput, MaxVertexAttribs>;
     using FBindings = TFixedSizeHashMap<FVertexBufferID, FVertexBufferBinding, MaxVertexBuffers>;
 
-    FBindings Bindings;
+    FBindings BufferBindings;
     FVertices Vertices;
 
     template <typename _Class, typename _Value>
@@ -109,15 +109,15 @@ struct FVertexInputState {
     PPE_RHI_API NODISCARD bool CopyAttributes(const TMemoryView<const FVertexAttribute> attribs);
 
     void Clear() {
-        Bindings.clear();
+        BufferBindings.clear();
         Vertices.clear();
     }
 
-    bool operator ==(const FVertexInputState& other) const { return (Bindings == other.Bindings && Vertices == other.Vertices); }
+    bool operator ==(const FVertexInputState& other) const { return (BufferBindings == other.BufferBindings && Vertices == other.Vertices); }
     bool operator !=(const FVertexInputState& other) const { return (not operator ==(other)); }
 
     friend hash_t hash_value(const FVertexInputState& state) {
-        return hash_tuple(state.Bindings, state.Vertices);
+        return hash_tuple(state.BufferBindings, state.Vertices);
     }
 
 };

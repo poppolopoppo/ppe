@@ -235,7 +235,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         ppln->Shaders.MakeView() ARGS_IF_RHIDEBUG(debugMode, debugStages)) );
 
     SetDynamicState_(&dynamicStateInfo, &_transientDynamicStates, inst.DynamicState);
-    SetColorBlendState_(&blendInfo, &_transientColorAttachments, inst.RenderState.Color, *pRenderPass, inst.SubpassIndex);
+    SetColorBlendState_(&blendInfo, &_transientColorAttachments, inst.RenderState.Blend, *pRenderPass, inst.SubpassIndex);
     SetMultisampleState_(&multisampleInfo, inst.RenderState.Multisample);
     SetTessellationState_(&tessellationInfo, ppln->PatchControlPoints);
     SetDepthStencilState_(&depthStencilInfo, inst.RenderState.Depth, inst.RenderState.Stencil);
@@ -378,7 +378,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         ppln->Shaders.MakeView() ARGS_IF_RHIDEBUG(debugMode, debugStages)) );
 
     SetDynamicState_(&dynamicStateInfo, &_transientDynamicStates, inst.DynamicState);
-    SetColorBlendState_(&blendInfo, &_transientColorAttachments, inst.RenderState.Color, *pRenderPass, inst.SubpassIndex);
+    SetColorBlendState_(&blendInfo, &_transientColorAttachments, inst.RenderState.Blend, *pRenderPass, inst.SubpassIndex);
     SetMultisampleState_(&multisampleInfo, inst.RenderState.Multisample);
     SetDepthStencilState_(&depthStencilInfo, inst.RenderState.Depth, inst.RenderState.Stencil);
     SetRasterizationState_(&rasterizationInfo, inst.RenderState.Rasterization);
@@ -452,21 +452,16 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     VkPipeline* pPipeline,
     FVulkanPipelineLayout const** pLayout,
     FVulkanCommandBuffer& workerCmd,
-    const FVulkanLogicalRenderPass& logicalRenderPass,
     const FVulkanComputePipeline& cPipeline,
     const Meta::TOptional<uint3>& localGroupSize,
     VkPipelineCreateFlags createFlags
     ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex) ) {
     Assert(pPipeline);
     Assert(pLayout);
-    Assert_NoAssume(logicalRenderPass.RenderPassId());
 
     const FVulkanDevice& device = workerCmd.Device();
 
     const auto ppln = cPipeline.Read();
-
-    const FVulkanRenderPass* const pRenderPass = workerCmd.AcquireTransient(logicalRenderPass.RenderPassId());
-    Assert(pRenderPass);
 
     FRawPipelineLayoutID layoutId{ *ppln->BaseLayoutId };
     Assert(layoutId);
@@ -596,7 +591,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
     Assert(pShaderTable);
     Assert(pCopyRegions);
 
-    const auto sharedData = scene.CurrentData();
+    const auto sharedData = scene.SharedData();
 
     const FVulkanDevice& device = workerCmd.Device();
     FVulkanResourceManager& resources = workerCmd.ResourceManager();
@@ -1274,7 +1269,7 @@ void FVulkanPipelineCache::SetVertexInputState_(
     Assert(pBindings);
     Assert_NoAssume(pAttributes->empty());
     Assert_NoAssume(pBindings->empty());
-    Assert_NoAssume(vertexInput.Vertices.empty() == vertexInput.Bindings.empty());
+    Assert_NoAssume(vertexInput.Vertices.empty() == vertexInput.BufferBindings.empty());
 
     pInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     pInfo->pNext = nullptr;
@@ -1292,7 +1287,7 @@ void FVulkanPipelineCache::SetVertexInputState_(
         pAttributes->Push(std::move(dst));
     }
 
-    for (const auto& src : vertexInput.Bindings) {
+    for (const auto& src : vertexInput.BufferBindings) {
         VkVertexInputBindingDescription dst{};
         dst.binding = src.second.Index;
         dst.stride = src.second.Stride;
@@ -1381,7 +1376,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
     Assert(pDynamicStates);
 
     if (pRender->Rasterization.EnableDiscard) {
-        pRender->Color = Default;
+        pRender->Blend = Default;
         pRender->Depth = Default;
         pRender->Stencil = Default;
 
@@ -1444,7 +1439,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
             return false;
         };
 
-        for (FColorBufferState& cb : pRender->Color.Buffers) {
+        for (FColorBufferState& cb : pRender->Blend.Buffers) {
             if (not cb.EnableAlphaBlending) {
                 cb.SrcBlendFactor = { EBlendFactor::One, EBlendFactor::One };
                 cb.DstBlendFactor = { EBlendFactor::Zero, EBlendFactor::Zero };

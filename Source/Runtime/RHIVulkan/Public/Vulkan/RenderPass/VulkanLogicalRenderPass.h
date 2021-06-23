@@ -18,7 +18,7 @@ public:
     struct FColorTarget {
         u32 Index{ Default };
         FRawImageID ImageId;
-        const FVulkanLocalImage* ImagePtr{ nullptr };
+        const FVulkanLocalImage* LocalImage{ nullptr };
         FImageViewDesc Desc;
         VkSampleCountFlagBits Samples{ VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM };
         VkAttachmentLoadOp LoadOp{ VK_ATTACHMENT_LOAD_OP_MAX_ENUM };

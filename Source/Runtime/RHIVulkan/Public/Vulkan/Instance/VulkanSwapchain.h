@@ -21,7 +21,7 @@ public:
     NODISCARD bool ReConstruct(FVulkanFrameGraph& fg, const FSwapchainDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    NODISCARD bool Acquire(FRawImageID* pimageId, FVulkanCommandBuffer& cmd, ESwapchainImage type ARGS_IF_RHIDEBUG(bool debugSync = false)) const;
+    NODISCARD bool Acquire(FRawImageID* pimageId, FVulkanCommandBuffer& cmd ARGS_IF_RHIDEBUG(bool debugSync = false)) const;
     NODISCARD bool Present(const FVulkanDevice& device) const;
 
     const PVulkanDeviceQueue& PresentQueue() const { return _presentQueue; }

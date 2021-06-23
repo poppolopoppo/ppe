@@ -206,7 +206,7 @@ bool FVulkanPipelineLayout::operator==(const FVulkanPipelineLayout& other) const
         });
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineLayout::DescriptorLayout(u32* pBinding, FRawDescriptorSetLayoutID* pLayout, const FDescriptorSetID& id) const {
+bool FVulkanPipelineLayout::DescriptorSetLayout(u32* pBinding, FRawDescriptorSetLayoutID* pLayout, const FDescriptorSetID& id) const {
     Assert(pBinding);
     Assert(pLayout);
     Assert(id);

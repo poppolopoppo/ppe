@@ -25,12 +25,12 @@ struct TDrawTaskDesc {
 
 #if USE_PPE_RHITASKNAME
     FTaskName Name;
-    FRgba8u DebugColor;
+    FLinearColor DebugColor;
 
-    TDrawTaskDesc(FStringView name, FRgba8u color) NOEXCEPT : Name(name), DebugColor(color) {}
+    TDrawTaskDesc(FConstChar name, FLinearColor color) NOEXCEPT : Name(name), DebugColor(color) {}
 
     self_type& SetName(FStringView value) { Name.Assign(value); return static_cast<self_type&>(*this); }
-    self_type& SetDebugColor(FRgba8u value) { DebugColor = value; return static_cast<self_type&>(*this); }
+    self_type& SetDebugColor(FLinearColor value) { DebugColor = value; return static_cast<self_type&>(*this); }
 #endif
 };
 } //!details
@@ -62,7 +62,7 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
 
     TDrawCallDesc() = default;
 #if USE_PPE_RHITASKNAME
-    TDrawCallDesc(FStringView name, FRgba8u color) NOEXCEPT : TDrawTaskDesc<_Task>(name, color) {}
+    TDrawCallDesc(FConstChar name, const FLinearColor& color) NOEXCEPT : TDrawTaskDesc<_Task>(name, color) {}
 #endif
 
     _Task& AddResources(const FDescriptorSetID& id, const FPipelineResources* res);
@@ -119,7 +119,7 @@ struct TDrawVerticesDesc : TDrawCallDesc<_Task> {
 
     TDrawVerticesDesc() = default;
 #if USE_PPE_RHITASKNAME
-    TDrawVerticesDesc(FStringView name, FRgba8u color) NOEXCEPT : TDrawCallDesc<_Task>(name, color) {}
+    TDrawVerticesDesc(FConstChar name, const FLinearColor& color) NOEXCEPT : TDrawCallDesc<_Task>(name, color) {}
 #endif
 
     _Task& SetTopology(EPrimitiveTopology value) { Topology = value; return static_cast<_Task&>(*this); }
@@ -291,7 +291,7 @@ struct FDrawVerticesIndirectCount : details::TDrawVerticesDesc<FDrawVerticesIndi
     struct FDrawCommand {
         u32 IndirectBufferOffset{ 0 };
         u32 CountBufferOffset{ 0 };
-        u32 DrawCount{ 0 };
+        u32 MaxDrawCount{ 0 };
         u32 IndirectBufferStride{ UMax };
     };
 
@@ -375,8 +375,8 @@ struct FDrawIndexedIndirectCount : details::TDrawVerticesDesc<FDrawIndexedIndire
 //----------------------------------------------------------------------------
 struct FDrawMeshes final : details::TDrawCallDesc<FDrawMeshes> {
     struct FDrawCommand {
-        u32 MeshCount{ 0 };
-        u32 FirstMesh{ 0 };
+        u32 TaskCount{ 0 };
+        u32 FirstTask{ 0 };
     };
 
     using FDrawCommands = TFixedSizeStack<FDrawCommand, MaxDrawCommands>;

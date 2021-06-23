@@ -68,7 +68,6 @@ enum class EImageFlags : u8;
 enum class EImageUsage : u32;
 enum class EImageAspect : u32;
 enum class EImageSampler : u32;
-enum class ESwapchainImage : u32;
 enum class EAttachmentStoreOp : u32;
 enum class EShadingRatePalette : u8;
 enum class EPixelFormat : u32;

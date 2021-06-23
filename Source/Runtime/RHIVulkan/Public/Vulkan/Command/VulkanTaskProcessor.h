@@ -46,54 +46,50 @@ public:
 
     using FStencilValue = FDrawDynamicStates::FStencilReference;
 
-#if USE_PPE_RHIDEBUG
-    using FStatistics = FFrameStatistics::FRendering;
-#endif
-
-    FVulkanTaskProcessor(const SVulkanCommandBuffer& fgThread, VkCommandBuffer vkCmdBuffer) NOEXCEPT;
+    FVulkanTaskProcessor(const SVulkanCommandBuffer& workerCmd, VkCommandBuffer vkCommandBuffer) NOEXCEPT;
     ~FVulkanTaskProcessor();
 
-    void Visit(const FVulkanSubmitRenderPassTask&);
-    void Visit(const FVulkanDispatchComputeTask&);
-    void Visit(const FVulkanDispatchComputeIndirectTask&);
-    void Visit(const FVulkanCopyBufferTask&);
-    void Visit(const FVulkanCopyImageTask&);
-    void Visit(const FVulkanCopyBufferToImageTask&);
-    void Visit(const FVulkanCopyImageToBufferTask&);
-    void Visit(const FVulkanBlitImageTask&);
-    void Visit(const FVulkanResolveImageTask&);
-    void Visit(const FVulkanGenerateMipmapsTask&);
-    void Visit(const FVulkanFillBufferTask&);
-    void Visit(const FVulkanClearColorImageTask&);
-    void Visit(const FVulkanClearDepthStencilImageTask&);
-    void Visit(const FVulkanUpdateBufferTask&);
-    void Visit(const FVulkanPresentTask&);
-    void Visit(const FVulkanUpdateRayTracingShaderTableTask&);
-    void Visit(const FVulkanBuildRayTracingGeometryTask&);
-    void Visit(const FVulkanBuildRayTracingSceneTask&);
-    void Visit(const FVulkanTraceRaysTask&);
-    void Visit(const FVulkanCustomTaskTask&);
+    void Visit(const FVulkanSubmitRenderPassTask& task);
+    void Visit(const FVulkanDispatchComputeTask& task);
+    void Visit(const FVulkanDispatchComputeIndirectTask& task);
+    void Visit(const FVulkanCopyBufferTask& task);
+    void Visit(const FVulkanCopyImageTask& task);
+    void Visit(const FVulkanCopyBufferToImageTask& task);
+    void Visit(const FVulkanCopyImageToBufferTask& task);
+    void Visit(const FVulkanBlitImageTask& task);
+    void Visit(const FVulkanResolveImageTask& task);
+    void Visit(const FVulkanGenerateMipmapsTask& task);
+    void Visit(const FVulkanFillBufferTask& task);
+    void Visit(const FVulkanClearColorImageTask& task);
+    void Visit(const FVulkanClearDepthStencilImageTask& task);
+    void Visit(const FVulkanUpdateBufferTask& task);
+    void Visit(const FVulkanPresentTask& task);
+    void Visit(const FVulkanUpdateRayTracingShaderTableTask& task);
+    void Visit(const FVulkanBuildRayTracingGeometryTask& task);
+    void Visit(const FVulkanBuildRayTracingSceneTask& task);
+    void Visit(const FVulkanTraceRaysTask& task);
+    void Visit(const FVulkanCustomTaskTask& task);
 
-    static void Visit1_DrawVertices(void *, void *);
-    static void Visit2_DrawVertices(void *, void *);
-    static void Visit1_DrawIndexed(void *, void *);
-    static void Visit2_DrawIndexed(void *, void *);
-    static void Visit1_DrawMeshes(void *, void *);
-    static void Visit2_DrawMeshes(void *, void *);
-    static void Visit1_DrawVerticesIndirect(void *, void *);
-    static void Visit2_DrawVerticesIndirect(void *, void *);
-    static void Visit1_DrawIndexedIndirect(void *, void *);
-    static void Visit2_DrawIndexedIndirect(void *, void *);
-    static void Visit1_DrawMeshesIndirect(void *, void *);
-    static void Visit2_DrawMeshesIndirect(void *, void *);
-    static void Visit1_DrawVerticesIndirectCount(void *, void *);
-    static void Visit2_DrawVerticesIndirectCount(void *, void *);
-    static void Visit1_DrawIndexedIndirectCount(void *, void *);
-    static void Visit2_DrawIndexedIndirectCount(void *, void *);
-    static void Visit1_DrawMeshesIndirectCount(void *, void *);
-    static void Visit2_DrawMeshesIndirectCount(void *, void *);
-    static void Visit1_CustomDraw(void *, void *);
-    static void Visit2_CustomDraw(void *, void *);
+    static void Visit1_DrawVertices(void* visitor, void* data);
+    static void Visit2_DrawVertices(void* visitor, void* data);
+    static void Visit1_DrawIndexed(void* visitor, void* data);
+    static void Visit2_DrawIndexed(void* visitor, void* data);
+    static void Visit1_DrawMeshes(void* visitor, void* data);
+    static void Visit2_DrawMeshes(void* visitor, void* data);
+    static void Visit1_DrawVerticesIndirect(void* visitor, void* data);
+    static void Visit2_DrawVerticesIndirect(void* visitor, void* data);
+    static void Visit1_DrawIndexedIndirect(void* visitor, void* data);
+    static void Visit2_DrawIndexedIndirect(void* visitor, void* data);
+    static void Visit1_DrawMeshesIndirect(void* visitor, void* data);
+    static void Visit2_DrawMeshesIndirect(void* visitor, void* data);
+    static void Visit1_DrawVerticesIndirectCount(void* visitor, void* data);
+    static void Visit2_DrawVerticesIndirectCount(void* visitor, void* data);
+    static void Visit1_DrawIndexedIndirectCount(void* visitor, void* data);
+    static void Visit2_DrawIndexedIndirectCount(void* visitor, void* data);
+    static void Visit1_DrawMeshesIndirectCount(void* visitor, void* data);
+    static void Visit2_DrawMeshesIndirectCount(void* visitor, void* data);
+    static void Visit1_CustomDraw(void* visitor, void* data);
+    static void Visit2_CustomDraw(void* visitor, void* data);
 
     void Run(const PVulkanFrameTask&);
 
@@ -106,19 +102,19 @@ private:
     void CommitBarriers_();
 
     void AddRenderTargetBarriers_(const FVulkanLogicalRenderPass& rp, const FDrawTaskBarriers& info);
-    void SetShadingRateImage_(VkImageView* pview, const FVulkanLogicalRenderPass& rp);
+    void SetShadingRateImage_(VkImageView* pView, const FVulkanLogicalRenderPass& rp);
     void BeginRenderPass_(const TVulkanFrameTask<FSubmitRenderPass>& task);
     void BeginSubpass_(const TVulkanFrameTask<FSubmitRenderPass>& task);
-    bool CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPass* const> passes);
+    NODISCARD bool CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPass* const> passes ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    void ExtractDescriptorSets_(FVulkanDescriptorSets* pdsets, const FVulkanPipelineLayout& layout, const FVulkanPipelineResourceSet& resourceSet);
+    void ExtractDescriptorSets_(FVulkanDescriptorSets* pDescriptorSets, const FVulkanPipelineLayout& layout, const FVulkanPipelineResourceSet& resourceSet);
     void BindPipelineResources_(const FVulkanPipelineLayout& layout, const FVulkanPipelineResourceSet& resourceSet, VkPipelineBindPoint bindPoint ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex));
-    bool BindPipeline_(FVulkanPipelineLayout* ppplnLayout, const FVulkanLogicalRenderPass& rp, const details::FVulkanBaseDrawVerticesTask& task);
-    bool BindPipeline_(FVulkanPipelineLayout* ppplnLayout, const FVulkanLogicalRenderPass& rp, const details::FVulkanBaseDrawMeshesTask& task);
-    bool BindPipeline_(FVulkanPipelineLayout* ppplnLayout, const FVulkanComputePipeline& compute, const Meta::TOptional<uint3>& localSize, VkPipelineCreateFlags flags ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex));
-    void BindPipeline2_(const FVulkanLogicalRenderPass& rp, VkPipeline vkPipeline);
+    NODISCARD bool BindPipeline_(FVulkanPipelineLayout const** pPplnLayout, const FVulkanLogicalRenderPass& rp, const details::FVulkanBaseDrawVerticesTask& task);
+    NODISCARD bool BindPipeline_(FVulkanPipelineLayout const** pPplnLayout, const FVulkanLogicalRenderPass& rp, const details::FVulkanBaseDrawMeshesTask& task);
+    NODISCARD bool BindPipeline_(FVulkanPipelineLayout const** pPplnLayout, const FVulkanComputePipeline& compute, const Meta::TOptional<uint3>& localSize, VkPipelineCreateFlags flags ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex));
+    void BindPipelinePerPassStates_(const FVulkanLogicalRenderPass& rp, VkPipeline vkPipeline);
 
-    void PushContants_(const FVulkanPipelineLayout& layout, const FPushConstantDatas& data);
+    void PushContants_(const FVulkanPipelineLayout& layout, const FPushConstantDatas& pushConstants);
     void SetScissor_(const FVulkanLogicalRenderPass& rp, const TMemoryView<const FRectangleI>& rects);
     void SetDynamicStates_(const FDrawDynamicStates& states);
     void BindIndexBuffer_(VkBuffer indexBuf, VkDeviceSize indexOffset, VkIndexType indexType);
@@ -138,20 +134,32 @@ private:
     void AddRTGeometry_(const FVulkanRayTracingLocalGeometry* geom, EResourceState state);
 
 #if USE_PPE_RHIDEBUG
-    void CmdDebugMarker_(FStringView text) const;
-    void CmdPushDebugGroup_(FStringView text) const;
-    void CmdPopDebugGroup_() const;
+    using FStatistics = FFrameStatistics::FRendering;
 
-    FStatistics& Stats() const;
+    FLinearColor _debugColor;
+
+    template <typename _Functor>
+    void EditStatistics_(_Functor&& rendering) const;
+
+    void CmdDebugMarker_(FConstChar text, const FLinearColor& color) const;
+    void CmdPushDebugGroup_(FConstChar text, const FLinearColor& color) const;
+    void CmdPopDebugGroup_() const;
 #endif
 
-    SVulkanCommandBuffer _fgThread;
-    const VkCommandBuffer _vkCmdBuffer;
+    SVulkanCommandBuffer _workerCmd;
+    const VkCommandBuffer _vkCommandBuffer;
 
     PVulkanFrameTask _currentTask{ nullptr };
-    bool _enableDebugUtils : 1;
-    bool _isDefaultScissor : 1;
-    bool _perPassStatesUpdated : 1;
+    bool _enableDebugUtils              : 1;
+    bool _isDefaultScissor              : 1;
+    bool _perPassStatesUpdated          : 1;
+    const bool _enableDispatchBase      : 1;
+    const bool _enableDrawIndirectCount : 1;
+    const bool _enableMeshShaderNV      : 1;
+    const bool _enableRayTracingKHR     : 1;
+
+    const u32 _maxDrawIndirectCount;
+    const u32 _maxDrawMeshTaskCount;
 
     FPendingResourceBarriers _pendingResourceBarriers;
 
@@ -164,10 +172,6 @@ private:
     VkIndexType _indexType{ VK_INDEX_TYPE_MAX_ENUM };
 
     VkImageView _shadingRateImage{ VK_NULL_HANDLE };
-
-#if USE_PPE_RHIDEBUG
-    static constexpr float DebugColor_[4] = {  1, 1, 1, 1 };
-#endif
 
 };
 //----------------------------------------------------------------------------

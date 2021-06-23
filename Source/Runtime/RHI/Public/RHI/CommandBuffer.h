@@ -41,7 +41,7 @@ public: // interface
 
     // Acquire next swapchain image. This image will be presented after command buffer execution.
     // Do not use this image in any other command buffers.
-    NODISCARD virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId, ESwapchainImage type = ESwapchainImage::Primary) = 0;
+    NODISCARD virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId) = 0;
 
     // Add input dependency.
     // Current command buffer will be executed on the GPU only when input dependencies finished execution.

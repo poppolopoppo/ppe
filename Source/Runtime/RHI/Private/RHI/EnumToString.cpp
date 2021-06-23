@@ -205,16 +205,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     }
 }
 //----------------------------------------------------------------------------
-template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ESwapchainImage value) {
-    STATIC_ASSERT(not Meta::enum_is_flags_v<ESwapchainImage>);
-    switch (value) {
-    case ESwapchainImage::Primary: return oss << STRING_LITERAL(_Char, "Primary");
-    case ESwapchainImage::LeftEye: return oss << STRING_LITERAL(_Char, "LeftEye");
-    case ESwapchainImage::RightEye: return oss << STRING_LITERAL(_Char, "RightEye");
-    }
-    return oss;
-}
-//----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EAttachmentStoreOp value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<EAttachmentStoreOp>);
     switch (value) {

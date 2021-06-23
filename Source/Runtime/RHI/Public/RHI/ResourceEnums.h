@@ -424,14 +424,6 @@ enum class EImageSampler : u32 {
 };
 ENUM_FLAGS(EImageSampler);
 //----------------------------------------------------------------------------
-enum class ESwapchainImage : u32 {
-    Primary,
-
-    // for VR:
-    LeftEye,
-    RightEye,
-};
-//----------------------------------------------------------------------------
 // Fragment output
 //----------------------------------------------------------------------------
 enum class EFragmentOutput : u32 {

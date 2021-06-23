@@ -163,7 +163,8 @@ bool FVulkanCommandBatch::OnBegin(const FCommandBufferDesc& desc) {
 
 #if USE_PPE_RHIDEBUG
     const auto exclusiveData = _data.LockExclusive();
-    exclusiveData->NeedQueueSync = (desc.DebugFlags == EDebugFlags::QueueSync);
+    exclusiveData->NeedQueueSync = (desc.DebugFlags & EDebugFlags::QueueSync);
+    _debugName = desc.Name;
     _statistics.Reset();
 #else
     UNUSED(desc);
@@ -975,15 +976,15 @@ bool FVulkanCommandBatch::AllocDescriptorSetForDebug_(
     // find descriptor set in cache
     const auto it = _shaderDebugger.DescriptorCache.find({ storageBuffer, layoutId });
     if (_shaderDebugger.DescriptorCache.end() != it) {
-        *pDescSet = it->second.DescriptorSet;
+        *pDescSet = it->second.First;
         return true; // cache hit
     }
 
     // allocate descriptor set
     FVulkanDescriptorSet ds;
     LOG_CHECK( RHI, resources.DescriptorManager().AllocateDescriptorSet(&ds, layout.Handle()) );
-    Assert_NoAssume(VK_NULL_HANDLE != ds.DescriptorSet);
-    *pDescSet = ds.DescriptorSet;
+    Assert_NoAssume(VK_NULL_HANDLE != ds.First);
+    *pDescSet = ds.First;
 
     // update descriptor set
     VkDescriptorBufferInfo bufferInfo{};

@@ -288,7 +288,7 @@ bool FVulkanFrameGraph::InitPipelineResources_(FPipelineResources* pResources, c
 
     u32 binding;
     FRawDescriptorSetLayoutID layoutId;
-    if (not pplnLayout.DescriptorLayout(&binding, &layoutId, dsId))
+    if (not pplnLayout.DescriptorSetLayout(&binding, &layoutId, dsId))
         return false;
 
     const FVulkanDescriptorSetLayout& dsLayout = _resourceManager.ResourceData(layoutId);

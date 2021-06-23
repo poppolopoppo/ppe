@@ -197,6 +197,10 @@ public:
     FVulkanSubmitted* Submitted() const { return _submitted.load(std::memory_order_relaxed); }
     EQueueUsage QueueUsage() const NOEXCEPT;
 
+#if USE_PPE_RHIDEBUG
+    const FVulkanDebugName& DebugName() const { return _debugName; }
+#endif
+
     auto Read() const { return _data.LockShared(); }
 
     void Construct(EQueueType type, TMemoryView<const FCommandBufferBatch> dependsOn);
@@ -238,9 +242,9 @@ public:
 
     void SetShaderModuleForDebug(EShaderDebugIndex id, const PVulkanShaderModule& module);
 
-    bool FindModeInfoForDebug(EShaderDebugMode* pMode, EShaderStages* pStages, EShaderDebugIndex id) const;
-    bool FindDescriptorSetForDebug(u32* pBinding, VkDescriptorSet* pSet, u32* pDynamicOffset, EShaderDebugIndex id) const;
-    bool FindShaderTimemapForDebug(FRawBufferID* pBuf, u32* pOffset, u32* pSize, uint2* pDim, EShaderDebugIndex id) const;
+    NODISCARD bool FindModeInfoForDebug(EShaderDebugMode* pMode, EShaderStages* pStages, EShaderDebugIndex id) const;
+    NODISCARD bool FindDescriptorSetForDebug(u32* pBinding, VkDescriptorSet* pSet, u32* pDynamicOffset, EShaderDebugIndex id) const;
+    NODISCARD bool FindShaderTimemapForDebug(FRawBufferID* pBuf, u32* pOffset, u32* pSize, uint2* pDim, EShaderDebugIndex id) const;
 
     STATIC_CONST_INTEGRAL(u32, DebugBufferSize, 8 * 1024 * 1024);
 
@@ -263,7 +267,7 @@ private:
         FStagingBuffers *pStagingBuffers, u32 stagingSize, EBufferUsage usage,
         u32 srcRequiredSize, u32 blockAlign, u32 offsetAlign, u32 dstMinSize ) const;
 
-    static bool MapMemory_(FVulkanResourceManager& resources, FStagingBuffer& staging);
+    NODISCARD static bool MapMemory_(FVulkanResourceManager& resources, FStagingBuffer& staging);
     static void FinalizeStagingBuffers_(const FVulkanDevice& device, FVulkanResourceManager& resources, FInternalData& data);
 
     const SVulkanFrameGraph _frameGraph;
@@ -275,10 +279,8 @@ private:
     TRHIThreadSafe<FInternalData> _data;
 
 #if USE_PPE_RHIDEBUG
+    FVulkanDebugName _debugName;
     mutable FFrameStatistics _statistics;
-#endif
-
-#if USE_PPE_RHIDEBUG
 
     // shader debugger
     struct {
@@ -298,13 +300,13 @@ private:
     void BeginShaderDebugger_(VkCommandBuffer cmd);
     void EndShaderDebugger_(VkCommandBuffer cmd);
 
-    bool AllocStorageForDebug_(FDebugMode& debugMode, u32 size);
-    bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, u32 size, const FConstChar debugName);
+    NODISCARD bool AllocStorageForDebug_(FDebugMode& debugMode, u32 size);
+    NODISCARD bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, u32 size, const FConstChar debugName);
 
     using FDebugStrings = VECTORINSITU(RHIDebug, FString, 8);
 
     void ParseDebugOutput_(const FShaderDebugCallback& callback);
-    bool ParseDebugOutput2_(FDebugStrings* pDump, const FShaderDebugCallback& callback, const FDebugMode& dbg) const;
+    NODISCARD bool ParseDebugOutput2_(FDebugStrings* pDump, const FShaderDebugCallback& callback, const FDebugMode& dbg) const;
 
 #endif
 };

@@ -35,8 +35,8 @@ public:
     }
 
 #if USE_PPE_RHIDEBUG
-    FStringView TaskName() const { return _taskName; }
-    const FRgba8u DebugColor() const { return _debugColor; }
+    const FTaskName& TaskName() const { return _taskName; }
+    const FLinearColor& DebugColor() const { return _debugColor; }
 #endif
 
     static void CopyDescriptorSets(
@@ -61,7 +61,7 @@ protected:
 
 #if USE_PPE_RHIDEBUG
     FTaskName _taskName;
-    FRgba8u _debugColor{ FRgba8u::One };
+    FLinearColor _debugColor{ FLinearColor::PaperWhite };
 #endif
 };
 //----------------------------------------------------------------------------
@@ -107,7 +107,7 @@ public:
 
     bool Valid() const { return (!!Pipeline); }
 
-    const FVulkanPipelineResourceSet& Resource() const { return _resources; }
+    const FVulkanPipelineResourceSet& Resources() const { return _resources; }
 
 private:
     FVulkanPipelineResourceSet _resources;
@@ -134,7 +134,7 @@ public:
 
     bool Valid() const { return (!!Pipeline && !!IndirectBuffer); }
 
-    const FVulkanPipelineResourceSet& Resource() const { return _resources; }
+    const FVulkanPipelineResourceSet& Resources() const { return _resources; }
 
     private:
     FVulkanPipelineResourceSet _resources;
@@ -238,7 +238,7 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FGenerateMipmaps> final : public IVulkanFrameTask {
 public:
     const FVulkanLocalImage* const Image;
-    const u32 BaseLevel;
+    const u32 BaseMipLevel;
     const u32 LevelCount;
     const u32 BaseLayer;
     const u32 LayerCount;

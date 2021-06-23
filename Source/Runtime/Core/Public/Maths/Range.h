@@ -10,6 +10,12 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+struct TRange;
+using FRange32i = TRange<i32>;
+using FRange32u = TRange<u32>;
+using FRange32f = TRange<float>;
+//----------------------------------------------------------------------------
+template <typename T>
 struct TRange {
     using value_type = T;
     STATIC_ASSERT(std::is_arithmetic_v<value_type>);
