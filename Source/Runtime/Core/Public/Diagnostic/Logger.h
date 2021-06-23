@@ -222,3 +222,4 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
         return (_RETURN); \
     }}
 #define LOG_CHECK( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, ::PPE::Default, __VA_ARGS__ )
+#define LOG_CHECKVOID( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, void(), __VA_ARGS__ )
