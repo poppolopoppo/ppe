@@ -457,25 +457,25 @@ typename TBasicStringView<_Char>::iterator StrStrI_(const TBasicStringView<_Char
 //----------------------------------------------------------------------------
 // 6x-8x faster with SIMD :
 //----------------------------------------------------------------------------
-void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT {
+void ToLower(const TMemoryView<char>& dst, const TBasicStringView<char>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
     if (not dst.empty())
         FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
-void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT {
+void ToLower(const TMemoryView<wchar_t>& dst, const TBasicStringView<wchar_t>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
     if (not dst.empty())
         FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
-void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT {
+void ToUpper(const TMemoryView<char>& dst, const TBasicStringView<char>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
     if (not dst.empty())
         FPlatformString::ToUpper(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
-void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT {
+void ToUpper(const TMemoryView<wchar_t>& dst, const TBasicStringView<wchar_t>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
     if (not dst.empty())
         FPlatformString::ToUpper(dst.data(), src.data(), src.size());

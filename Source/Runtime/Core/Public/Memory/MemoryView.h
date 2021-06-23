@@ -474,12 +474,12 @@ CONSTEXPR void Collect(const TMemoryView<T>& dst, _Lambda&& collect) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
-bool Contains(const TMemoryView<T>& v, const U& elt) {
+CONSTEXPR bool Contains(const TMemoryView<T>& v, const U& elt) {
     return (v.end() != std::find(v.begin(), v.end(), elt));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
-size_t IndexOf(const TMemoryView<T>& v, const U& elt) {
+CONSTEXPR size_t IndexOf(const TMemoryView<T>& v, const U& elt) {
     const auto it = std::find(v.begin(), v.end(), elt);
     return (v.end() == it ? std::distance(v.begin(), it) : INDEX_NONE);
 }

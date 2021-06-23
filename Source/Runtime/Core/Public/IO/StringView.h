@@ -31,11 +31,11 @@ inline wchar_t ToUpper(wchar_t wch) NOEXCEPT { return std::towupper(wch); }
 template <typename _Char> void InplaceToLower(_Char& ch) NOEXCEPT { ch = ToLower(ch); }
 template <typename _Char> void InplaceToUpper(_Char& ch) NOEXCEPT { ch = ToUpper(ch); }
 //----------------------------------------------------------------------------
-PPE_CORE_API void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT;
-PPE_CORE_API void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT;
+PPE_CORE_API void ToLower(const TMemoryView<char>& dst, const TBasicStringView<char>& src) NOEXCEPT;
+PPE_CORE_API void ToLower(const TMemoryView<wchar_t>& dst, const TBasicStringView<wchar_t>& src) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT;
-PPE_CORE_API void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT;
+PPE_CORE_API void ToUpper(const TMemoryView<char>& dst, const TBasicStringView<char>& src) NOEXCEPT;
+PPE_CORE_API void ToUpper(const TMemoryView<wchar_t>& dst, const TBasicStringView<wchar_t>& src) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) NOEXCEPT { ToLower(str, str); }
 template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) NOEXCEPT { ToUpper(str, str); }
@@ -51,6 +51,7 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::size_type;
     using typename parent_type::iterator;
+    using typename parent_type::reverse_iterator;
 
     CONSTEXPR TBasicStringView() = default;
 
@@ -75,7 +76,7 @@ public:
 
     template <size_t _Dim>
     CONSTEXPR TBasicStringView(const _Char(&staticChars)[_Dim]) NOEXCEPT
-        : parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
+    :   parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
         static_assert(_Dim, "invalid string");
     }
 

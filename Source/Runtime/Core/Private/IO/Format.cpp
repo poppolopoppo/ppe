@@ -309,7 +309,7 @@ NO_INLINE static void FormatArgsImpl_(
     TBasicTextWriter<_Char>& oss,
     const TBasicStringView<_Char>& format,
     const TMemoryView<const details::TBasicFormatFunctor_<_Char>>& args ) {
-    Assert(format.Pointer());
+    Assert(format.data());
 
     TBasicFormatProps_<_Char> props;
     TBasicStringView<_Char> formatIt = format;
