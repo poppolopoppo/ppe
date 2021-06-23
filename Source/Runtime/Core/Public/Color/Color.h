@@ -84,6 +84,8 @@ struct PPE_CORE_API FLinearColor {
     static FLinearColor FromHSV(const float3& hsv, float a = 1.0f);
     static FLinearColor FromHSV_smooth(const float3& hsv, float a = 1.0f);
     static FLinearColor FromYCoCg(const float3& yCoCg, float a = 1.0f);
+    static FLinearColor FromHash(hash_t h, float a = 1.0f);
+    static FLinearColor FromHeatmap(float x, float a = 1.0f);
     static FLinearColor FromTemperature(float kelvins, float a = 1.0f);
 
     CONSTEXPR inline friend bool operator ==(const FLinearColor& lhs, const FLinearColor& rhs) {

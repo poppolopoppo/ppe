@@ -143,6 +143,26 @@ FLinearColor FLinearColor::FromYCoCg(const float3& yCoCg, float a/* = 1.0f */) {
     return FLinearColor(YCoCg_to_RGB(yCoCg), a);
 }
 //----------------------------------------------------------------------------
+FLinearColor FLinearColor::FromHash(hash_t h, float a) {
+    // generate a float in [1,2] range using IEEE float representation
+    FP32 fp{ 0 };
+    fp.Exponent = 127;
+    fp.Mantissa = static_cast<u32>(h._value);
+    // convert to [0,1] range and use this to generate a pastel color
+    return FromPastel(fp.f - 1.0f, a);
+}
+//----------------------------------------------------------------------------
+FLinearColor FLinearColor::FromHeatmap(float x, float a) {
+    x = Saturate(x);
+    const float4 x1{ 1.0, x, x * x, x * x * x }; // 1 x x2 x3
+    const float4 x2{ x1 * x1.w * x }; // x4 x5 x6 x7
+    return FLinearColor(
+        Dot( x1.xyzw, float4( -0.027780558f, +1.228188385f, +0.278906882f, +3.892783760f ) ) + Dot( x2.xy, float2( -8.490712758f, +4.069046086f ) ),
+        Dot( x1.xyzw, float4( +0.014065206f, +0.015360518f, +1.605395918f, -4.821108251f ) ) + Dot( x2.xy, float2( +8.389314011f, -4.193858954f ) ),
+        Dot( x1.xyzw, float4( -0.019628385f, +3.122510347f, -5.893222355f, +2.798380308f ) ) + Dot( x2.xy, float2( -3.608884658f, +4.324996022f ) ),,
+        a );
+}
+//----------------------------------------------------------------------------
 FLinearColor FLinearColor::FromTemperature(float kelvins, float a/* = 1.0f */) {
     kelvins = Clamp(kelvins, 1000.0f, 15000.0f);
 
