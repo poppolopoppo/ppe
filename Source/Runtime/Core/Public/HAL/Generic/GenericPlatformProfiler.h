@@ -2,7 +2,11 @@
 
 #include "HAL/Generic/GenericPlatformProfiler.h"
 
+#if defined(_MSC_VER) && _MSC_VER >= 1920
+#define USE_PPE_PLATFORM_PROFILER (0) // #TODO: PerfSDK is deprecated, need to find an alternative
+#else
 #define USE_PPE_PLATFORM_PROFILER (!USE_PPE_FINAL_RELEASE)
+#endif
 
 #if USE_PPE_PLATFORM_PROFILER
 

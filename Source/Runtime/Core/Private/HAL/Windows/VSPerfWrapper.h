@@ -13,9 +13,9 @@
 
 #   include <atomic> // NextMarker()
 
-#   define VSPERF_NO_DEFAULT_LIB	// Don't use #pragma lib to import the library, we'll handle this stuff ourselves
-#   define PROFILERAPI				// We won't be statically importing anything (we're dynamically binding), so define PROFILERAPI to a empty value
-#   include "VSPerf.h"				// NOTE: This header is in <Visual Studio install directory>/Team Tools/Performance Tools/x64/PerfSDK
+#   define VSPERF_NO_DEFAULT_LIB    // Don't use #pragma lib to import the library, we'll handle this stuff ourselves
+#   define PROFILERAPI              // We won't be statically importing anything (we're dynamically binding), so define PROFILERAPI to a empty value
+#   include "VSPerf.h"              // NOTE: This header is in <Visual Studio install directory>/Team Tools/Performance Tools/x64/PerfSDK
 
 namespace PPE {
 //----------------------------------------------------------------------------

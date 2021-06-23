@@ -17,6 +17,7 @@ module Build
     Workaround_C1090_PDB_API_call_failed_error_code_3 = true
 
     module Visual
+        MSC_VER_2022 = 1930
         MSC_VER_2019 = 1920
         MSC_VER_2017 = 1910
         MSC_VER_2015 = 1900
@@ -542,7 +543,7 @@ module Build
         end.validate_FileExist!
     end
 
-    def self.make_fileset_vs2019(prereq, cl_exe)
+    def self.make_toolchain_fileset(prereq, cl_exe, version)
         return false unless cl_exe
         root_host = File.dirname(cl_exe)
         clui_dll = prereq.need_glob!('**/clui.dll', basepath: root_host)
@@ -581,7 +582,7 @@ module Build
             if fileset
                 fileset = fileset.collect{|x| File.expand_path(x) }
                 fileset.sort!{|a,b| b <=> a } # descending
-                Build.make_fileset_vs2019(self, fileset.first)
+                Build.make_toolchain_fileset(self, fileset.first, version)
             else
                 nil
             end
@@ -595,7 +596,7 @@ module Build
             if fileset
                 fileset = fileset.collect{|x| File.expand_path(x) }
                 fileset.sort!{|a,b| b <=> a } # descending
-                Build.make_fileset_vs2019(self, fileset.first)
+                Build.make_toolchain_fileset(self, fileset.first, version)
             else
                 nil
             end
@@ -603,6 +604,7 @@ module Build
     end
 
     import_visualstudio_fileset('2019', '-version', '[16.0,17.0)')
+    import_visualstudio_fileset('2022', '-version', '[17.0,18.0)', '-prerelease') # TODO: remove -prelease when shipped
     import_visualstudio_fileset('Insider', '-prerelease')
 
     def self.make_visualstudio_compiler(version, fileset)
@@ -629,6 +631,13 @@ module Build
     end
     const_memoize(self, :VisualStudio_2019_Hostx64) do
         Build.make_visualstudio_compiler('2019', Build.VsWhere_2019_Hostx64)
+    end
+
+    const_memoize(self, :VisualStudio_2022_Hostx86) do
+        Build.make_visualstudio_compiler('2022', Build.VsWhere_2022_Hostx86)
+    end
+    const_memoize(self, :VisualStudio_2022_Hostx64) do
+        Build.make_visualstudio_compiler('2022', Build.VsWhere_2022_Hostx64)
     end
 
     const_memoize(self, :VisualStudio_Insider_Hostx86) do

@@ -9,7 +9,7 @@ require_once '../../Core/Environment.rb'
 
 module Build
 
-    persistent_value(:Compiler, 'Select Windows C++ compiler', init: '2019', values: %w{ 2019 Insider LLVM })
+    persistent_value(:Compiler, 'Select Windows C++ compiler', init: '2019', values: %w{ 2019 2022 Insider LLVM })
     persistent_switch(:PDB, 'Generate a Program Debug Database', init: true)
 
     make_facet(:Windows_Base) do
@@ -51,6 +51,8 @@ module Build
         case Build.Compiler
         when '2019'
             compiler = Build.VisualStudio_2019_Hostx86
+        when '2022'
+            compiler = Build.VisualStudio_2022_Hostx86
         when 'Insider'
             compiler = Build.VisualStudio_Insider_Hostx86
         when 'LLVM'
@@ -68,6 +70,8 @@ module Build
         case Build.Compiler
         when '2019'
             compiler = Build.VisualStudio_2019_Hostx64
+        when '2022'
+            compiler = Build.VisualStudio_2022_Hostx64
         when 'Insider'
             compiler = Build.VisualStudio_Insider_Hostx64
         when 'LLVM'
