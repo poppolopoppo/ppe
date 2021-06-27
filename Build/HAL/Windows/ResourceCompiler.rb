@@ -43,7 +43,9 @@ module Build
     end #~ WindowsCompilerRC
 
     const_memoize(self, :WindowsResourceCompiler) do
-        WindowsCompilerRC.new('WindowsResourceCompiler', Build.WindowsSDK_RC_exe)
+        rc = Build.WindowsSDK_RC_exe
+        Log.log('Windows: using resource compiler found in \'%s\'', rc)
+        WindowsCompilerRC.new('WindowsResourceCompiler', rc)
     end
 
 end #~ Build

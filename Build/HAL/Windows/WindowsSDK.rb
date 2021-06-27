@@ -10,32 +10,39 @@ module Build
 
     const_memoize(self, :WindowsSDK_10_Info) do
         sdkLib = Build.WindowsSDK_10_Glob()
-        return if sdkLib.empty?
-        sdkLib = sdkLib.first
-        sdkVer = File.basename(sdkLib)
-        sdkPath = File.expand_path(File.join(sdkLib, '..', '..'))
-        Log.log('Windows: found WindowsSDK %s in \'%s\'', sdkVer, sdkPath)
-        [ sdkPath, sdkVer ]
+        if sdkLib and !sdkLib.empty?
+            sdkLib = sdkLib.first
+            sdkVer = File.basename(sdkLib)
+            sdkPath = File.expand_path(File.join(sdkLib, '..', '..'))
+            Log.log('Windows: found WindowsSDK %s in \'%s\'', sdkVer, sdkPath)
+            [ sdkPath, sdkVer ]
+        else
+            Log.fatal("failed to find windows SDK libraries")
+        end
     end
 
     make_facet(:WindowsSDK_10_Includes) do
         sdkPath, sdkVer = *Build.WindowsSDK_10_Info
-        export!('WindowsSDKPath', sdkPath)
-        externPaths <<
-            File.join(sdkPath, 'Include', sdkVer, 'ucrt') <<
-            File.join(sdkPath, 'Include', sdkVer, 'um') <<
-            File.join(sdkPath, 'Include', sdkVer, 'shared')
-        defines <<
-            "STRICT"                        << # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx
-            "NOMINMAX"                      << # https://support.microsoft.com/en-us/kb/143208
-            "VC_EXTRALEAN"                  << # https://support.microsoft.com/en-us/kb/166474
-            "WIN32_LEAN_AND_MEAN"           << # https://support.microsoft.com/en-us/kb/166474
-            "_NO_W32_PSEUDO_MODIFIERS"      << # Prevent windows from #defining IN or OUT (undocumented)
-            "DBGHELP_TRANSLATE_TCHAR"       << # https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
-            "_UNICODE"                      << # https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
-            "UNICODE"                       << #
-            "_HAS_EXCEPTIONS=0"             << # Disable STL exceptions
-            "OEMRESOURCE"                      # https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-setsystemcursor
+        if sdkPath and sdkVer
+            export!('WindowsSDKPath', sdkPath)
+            externPaths <<
+                File.join(sdkPath, 'Include', sdkVer, 'ucrt') <<
+                File.join(sdkPath, 'Include', sdkVer, 'um') <<
+                File.join(sdkPath, 'Include', sdkVer, 'shared')
+            defines <<
+                "STRICT"                        << # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx
+                "NOMINMAX"                      << # https://support.microsoft.com/en-us/kb/143208
+                "VC_EXTRALEAN"                  << # https://support.microsoft.com/en-us/kb/166474
+                "WIN32_LEAN_AND_MEAN"           << # https://support.microsoft.com/en-us/kb/166474
+                "_NO_W32_PSEUDO_MODIFIERS"      << # Prevent windows from #defining IN or OUT (undocumented)
+                "DBGHELP_TRANSLATE_TCHAR"       << # https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
+                "_UNICODE"                      << # https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
+                "UNICODE"                       << #
+                "_HAS_EXCEPTIONS=0"             << # Disable STL exceptions
+                "OEMRESOURCE"                      # https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-setsystemcursor
+        else
+            Log.fatal("failed to find windows SDK includes")
+        end
     end
     make_facet(:WindowsSDK_10_X86) do
         sdkPath, sdkVer = *Build.WindowsSDK_10_Info
@@ -55,7 +62,7 @@ module Build
     make_prerequisite(:WindowsSDK_10_RC_exe) do
         sdkPath, sdkVer = *Build.WindowsSDK_10_Info
         need_file!(File.join(sdkPath, 'Bin', sdkVer, 'x64', 'RC.exe'))
-    end
+    end.validate_FileExist!
 
     def WindowsSDK_X86() Build.WindowsSDK_10_X86 end
     def WindowsSDK_X64() Build.WindowsSDK_10_X64 end
