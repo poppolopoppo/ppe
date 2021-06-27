@@ -12,9 +12,20 @@ module Build
     persistent_switch(:StaticCRT, 'Use VisualStudio static CRT (/MT vs /MD)', init: false)
     persistent_switch(:TraditionalPP, 'Use VisualStudio traditional preprocessor (omit /Zc:preprocessor)', init: false)
 
-    # https://developercommunity.visualstudio.com/content/problem/552999/fatal-error-c1090-pdb-api-call-failed-error-code-3.html
-    # https://developercommunity.visualstudio.com/content/problem/48897/c1090-pdb-api-call-failed-error-code-23.html
-    Workaround_C1090_PDB_API_call_failed_error_code_3 = true
+    const_memoize(self, :Workaround_C1090_PDB_API_call_failed_error_code_3) do
+        compiler = Build.WindowsCompiler_X64
+        case compiler.version
+        when '2022'
+            # not reproducing with 2022 (or with updates/reinstall ?)
+            Log.log('Windows: don\'t use workaround for C1090 PDB API call failed error code 3')
+            false
+        else
+            # https://developercommunity.visualstudio.com/content/problem/552999/fatal-error-c1090-pdb-api-call-failed-error-code-3.html
+            # https://developercommunity.visualstudio.com/content/problem/48897/c1090-pdb-api-call-failed-error-code-23.html
+            Log.warning('Windows: use workaround for C1090 PDB API call failed error code 3')
+            true
+        end
+    end
 
     module Visual
         MSC_VER_2022 = 1930
@@ -146,7 +157,7 @@ module Build
                     facet.linkerOptions << '/DEBUG'
                 end
 
-                if nopdb || Build.Cache || (Workaround_C1090_PDB_API_call_failed_error_code_3 && !Build.ASAN)
+                if nopdb || Build.Cache || (Build.Workaround_C1090_PDB_API_call_failed_error_code_3 && !Build.ASAN)
                     # debug symbols inside .obj
                     facet.compilerOptions << '/Z7'
                     facet.pchOptions << '/Z7'
