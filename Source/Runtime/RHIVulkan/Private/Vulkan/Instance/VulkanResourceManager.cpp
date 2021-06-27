@@ -594,7 +594,7 @@ FRawSamplerID FVulkanResourceManager::CreateSampler(const FSamplerDesc& desc ARG
 //----------------------------------------------------------------------------
 // CreateRenderPass
 //----------------------------------------------------------------------------
-FRawRenderPassID FVulkanResourceManager::CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass*>& passes ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRawRenderPassID FVulkanResourceManager::CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass* const>& passes ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     TResourceProxy<FVulkanRenderPass> emptyKey{ passes };
 
     FRawRenderPassID renderPassId;

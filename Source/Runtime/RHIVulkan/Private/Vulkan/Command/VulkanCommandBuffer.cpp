@@ -77,10 +77,9 @@ bool FVulkanCommandBuffer::Begin(
     exclusive->State = EState::Recording;
     exclusive->QueueIndex = queue->FamilyIndex;
 #if USE_PPE_RHIDEBUG
+    exclusive->DebugName = desc.Name;
     exclusive->DebugFullBarriers = (desc.DebugFlags & EDebugFlags::FullBarrier);
     exclusive->DebugQueueSync = (desc.DebugFlags & EDebugFlags::QueueSync);
-
-    _debugName = desc.Name;
 #endif
 
     // create command pool
@@ -133,12 +132,12 @@ bool FVulkanCommandBuffer::Execute() {
         exclusive->Debugger->End(
             &exclusive->Batch->_frameDebugger.DebugDump,
             &exclusive->Batch->_frameDebugger.DebugGraph,
-            _debugName, _indexInPool);
+            exclusive->DebugName, _indexInPool);
     }
 #endif
 
     if (Unlikely(not exclusive->Batch->OnBaked(exclusive->RM.ResourceMap))) {
-        RHI_LOG(Error, L"failed to bake command batch for '{0}'", _debugName);
+        RHI_LOG(Error, L"failed to bake command batch for '{0}'", exclusive->DebugName);
         return false;
     }
 
@@ -215,7 +214,7 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
     data.BarrierManager.Commit(device, cmd);
 
     if (not ProcessTasks_(data, cmd)) {
-        RHI_LOG(Error, L"failed to process tasks for '{0}'", _debugName);
+        RHI_LOG(Error, L"failed to process tasks for '{0}'", Read()->DebugName);
         return false;
     }
 
@@ -712,7 +711,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     mem.Alignment = checked_cast<u32>(memReq2.memoryRequirements.alignment);
     mem.ExternalRequirements = checked_cast<u32>(memReq2.memoryRequirements.memoryTypeBits);
 
-    // #TODO: virtual buffer of buffer cache
+    // #TODO: virtual buffer or buffer cache
     FBufferID scratchBuf = _frameGraph->CreateBuffer(FBufferDesc{
         checked_cast<u32>(memReq2.memoryRequirements.size),
         EBufferUsage::RayTracing,
@@ -722,7 +721,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     pBuildTask->ScratchBuffer = ToLocal(*scratchBuf);
     ReleaseResource(scratchBuf.Release());
 
-    // #TODO: virtual buffer of buffer cache
+    // #TODO: virtual buffer or buffer cache
     FBufferID instanceBuf = _frameGraph->CreateBuffer(FBufferDesc{
         checked_cast<u32>(task.Instances.MakeView().SizeInBytes()),
         EBufferUsage::TransferDst + EBufferUsage::RayTracing
@@ -1258,7 +1257,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateBufferTask_(FInternalData& data, cons
             FStagingBlock staging;
             u32 blockSize;
             if (not StorePartialData_(data, &staging, &blockSize, region.Data, srcOffset)) {
-                RHI_LOG(Error, L"failed to write partial staging data for '{0}' in '{1}'", task.TaskName, _debugName);
+                RHI_LOG(Error, L"failed to write partial staging data for '{0}' in '{1}'", task.TaskName, data.DebugName);
                 return nullptr;
             }
 
@@ -1305,7 +1304,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
     const u32 totalSizeInBytes = (imageSize.z > 1 ? slicePitch * imageSize.z : minSlicePitch);
 
     if (totalSizeInBytes != task.Data.SizeInBytes()) {
-        RHI_LOG(Error, L"invalid data supplied for image '{0}' update in '{1}'", pImage->DebugName(), _debugName);
+        RHI_LOG(Error, L"invalid data supplied for image '{0}' update in '{1}'", pImage->DebugName(), data.DebugName);
         return nullptr;
     }
 
@@ -1331,7 +1330,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
             FStagingBlock staging;
             u32 blockSize;
             if (not StagingImageStore_(data, &staging, &blockSize, task.Data, srcOffset, slicePitch, totalSizeInBytes)) {
-                RHI_LOG(Error, L"failed to write image slice to staging for '{0}' in '{1}'", task.TaskName, _debugName);
+                RHI_LOG(Error, L"failed to write image slice to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
                 return nullptr;
             }
 
@@ -1372,7 +1371,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                 FStagingBlock staging;
                 u32 blockSize;
                 if (not StagingImageStore_(data, &staging, &blockSize, sliceData, srcOffset, rowPitch * blockDim.y, totalSizeInBytes)) {
-                    RHI_LOG(Error, L"failed to write image row to staging for '{0}' in '{1}'", task.TaskName, _debugName);
+                    RHI_LOG(Error, L"failed to write image row to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
                     return nullptr;
                 }
 
@@ -1428,7 +1427,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadBufferTask_(FInternalData& data, const 
         FRawBufferID dstBuffer;
         FVulkanCommandBatch::FStagingDataRange range;
         if (not data.Batch->AddPendingLoad(&dstBuffer, &range, srcOffset, task.SrcSize)) {
-            RHI_LOG(Error, L"failed copy buffer to staging of '{0}' in '{1}'", copy.TaskName, _debugName);
+            RHI_LOG(Error, L"failed copy buffer to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
             return nullptr;
         }
 
@@ -1500,7 +1499,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
             if (not data.Batch->AddPendingLoad(
                 &dstBuffer, &range,
                 srcOffset, totalSizeInBytes, slicePitch)) {
-                RHI_LOG(Error, L"failed copy image row to staging of '{0}' in '{1}'", copy.TaskName, _debugName);
+                RHI_LOG(Error, L"failed copy image row to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
                 return nullptr;
             }
 
@@ -1539,8 +1538,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
                 if (not data.Batch->AddPendingLoad(
                     &dstBuffer, &range,
                     srcOffset, totalSizeInBytes, rowPitch * blockDim.y)) {
-                    RHI_LOG(Error, L"failed copy image slice to staging of '{0}' in '{1}'", copy.TaskName,
-                            _debugName);
+                    RHI_LOG(Error, L"failed copy image slice to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
                     return nullptr;
                 }
 
@@ -1634,7 +1632,7 @@ bool FVulkanCommandBuffer::StagingAlloc_(FInternalData& data,
     if (not data.Batch->StageWrite(
         &stagingBlock, &blockSize,
         requiredSize, 1, 16, requiredSize)) {
-        RHI_LOG(Error, L"failed to write to staging alloc in {0}", _debugName);
+        RHI_LOG(Error, L"failed to write to staging alloc in {0}", data.DebugName);
         return false;
     }
 
@@ -1652,7 +1650,7 @@ bool FVulkanCommandBuffer::StagingStore_(FInternalData& data,
     if (not data.Batch->StageWrite(
         &stagingBlock, &blockSize,
         dataSize, 1, offsetAlign, dataSize)) {
-        RHI_LOG(Error, L"failed to store in staging at {0}", _debugName);
+        RHI_LOG(Error, L"failed to store in staging at {0}", data.DebugName);
         return false;
     }
 

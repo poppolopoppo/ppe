@@ -117,21 +117,21 @@ private:
     void PushContants_(const FVulkanPipelineLayout& layout, const FPushConstantDatas& pushConstants);
     void SetScissor_(const FVulkanLogicalRenderPass& rp, const TMemoryView<const FRectangleI>& rects);
     void SetDynamicStates_(const FDrawDynamicStates& states);
-    void BindIndexBuffer_(VkBuffer indexBuf, VkDeviceSize indexOffset, VkIndexType indexType);
+    void BindIndexBuffer_(VkBuffer indexBuffer, VkDeviceSize indexOffset, VkIndexType indexType);
     void BindShadingRateImage_(VkImageView view);
     void ResetDrawContext_();
 
-    void AddImage_(const FVulkanLocalImage* img, EResourceState state, VkImageLayout layout, const FImageViewDesc& desc);
-    void AddImage_(const FVulkanLocalImage* img, EResourceState state, VkImageLayout layout, const VkImageSubresourceLayers& subRes);
-    void AddImage_(const FVulkanLocalImage* img, EResourceState state, VkImageLayout layout, const VkImageSubresourceRange& subRes);
-    void AddImageState_(const FVulkanLocalImage* img, const FImageState& state);
+    void AddImage_(const FVulkanLocalImage* pLocalImage, EResourceState state, VkImageLayout layout, const FImageViewDesc& desc);
+    void AddImage_(const FVulkanLocalImage* pLocalImage, EResourceState state, VkImageLayout layout, const VkImageSubresourceLayers& subRes);
+    void AddImage_(const FVulkanLocalImage* pLocalImage, EResourceState state, VkImageLayout layout, const VkImageSubresourceRange& subRes);
+    void AddImageState_(const FVulkanLocalImage* pLocalImage, FImageState&& rstate);
 
-    void AddBuffer_(const FVulkanLocalBuffer* buf, EResourceState state, VkDeviceSize offset, VkDeviceSize size);
-    void AddBuffer_(const FVulkanLocalBuffer* buf, EResourceState state, const VkBufferImageCopy& region, const FVulkanLocalImage* img);
-    void AddBufferState_(const FVulkanLocalBuffer* buf, const FBufferState& state);
+    void AddBuffer_(const FVulkanLocalBuffer* pLocalBuffer, EResourceState state, VkDeviceSize offset, VkDeviceSize size);
+    void AddBuffer_(const FVulkanLocalBuffer* pLocalBuffer, EResourceState state, const VkBufferImageCopy& region, const FVulkanLocalImage* pLocalImage);
+    void AddBufferState_(const FVulkanLocalBuffer* pLocalBuffer, FBufferState&& rstate);
 
     void AddRTScene_(const FVulkanRayTracingLocalScene* scene, EResourceState state);
-    void AddRTGeometry_(const FVulkanRayTracingLocalGeometry* geom, EResourceState state);
+    void AddRTGeometry_(const FVulkanRayTracingLocalGeometry* pLocalGeom, EResourceState state);
 
 #if USE_PPE_RHIDEBUG
     using FStatistics = FFrameStatistics::FRendering;

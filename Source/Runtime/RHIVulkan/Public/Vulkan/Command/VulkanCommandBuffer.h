@@ -96,6 +96,7 @@ public:
         FPerQueuePool PerQueue; // #TODO: use global command pool manager to minimize memory usage
 
 #if USE_PPE_RHIDEBUG
+        FVulkanDebugName DebugName;
         TUniquePtr<FVulkanLocalDebugger> Debugger;
         bool DebugFullBarriers{ false };
         bool DebugQueueSync{ false };

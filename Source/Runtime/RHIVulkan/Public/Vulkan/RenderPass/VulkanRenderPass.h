@@ -38,7 +38,7 @@ public:
     };
 
     FVulkanRenderPass() = default;
-    explicit FVulkanRenderPass(TMemoryView<const FVulkanLogicalRenderPass*> logicalRenderPasses);
+    explicit FVulkanRenderPass(TMemoryView<const FVulkanLogicalRenderPass* const> logicalRenderPasses);
     ~FVulkanRenderPass();
 
     FVulkanRenderPass(FVulkanRenderPass&& rvalue) NOEXCEPT;
@@ -63,7 +63,7 @@ public:
     friend hash_t hash_value(const FVulkanRenderPass& renderPass) { return renderPass.HashValue(); }
 
 private:
-    void Invalidate_(TMemoryView<const FVulkanLogicalRenderPass*> logicalRenderPasses);
+    void Invalidate_(TMemoryView<const FVulkanLogicalRenderPass* const> logicalRenderPasses);
 
     TRHIThreadSafe<FInternalPass> _pass;
 

@@ -50,7 +50,7 @@ void FVulkanLocalBuffer::SetInitialState(bool immutable) {
     _isImmutable = immutable;
 }
 //----------------------------------------------------------------------------
-void FVulkanLocalBuffer::AddPendingState(const FBufferState& bufferState) {
+void FVulkanLocalBuffer::AddPendingState(const FBufferState& bufferState) const {
     Assert(bufferState.Task);
 
     if (_isImmutable)
@@ -96,7 +96,7 @@ void FVulkanLocalBuffer::AddPendingState(const FBufferState& bufferState) {
     }
 }
 //----------------------------------------------------------------------------
-void FVulkanLocalBuffer::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP)) {
+void FVulkanLocalBuffer::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP)) const {
     if (_isImmutable)
         return;
 

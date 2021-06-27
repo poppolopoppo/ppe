@@ -94,7 +94,8 @@ static void OverrideDepthStencilStates_(
 static void SetupExtensions_(EPipelineDynamicState* pPipelineDynamicStates, const FVulkanLogicalRenderPass& rp) {
     Assert(pPipelineDynamicStates);
 
-
+    if (rp.HasShadingRateImage())
+        *pPipelineDynamicStates |= EPipelineDynamicState::ShadingRatePalette;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -462,8 +463,8 @@ void FVulkanTaskProcessor::CmdPushDebugGroup_(FConstChar text, const FLinearColo
         VkDebugUtilsLabelEXT info{};
         info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
         info.pLabelName = text.c_str();
-        STATIC_ASSERT(sizeof(_debugColor) == sizeof(info.color));
-        FPlatformMemory::Memcpy(info.color, &_debugColor, sizeof(info.color));
+        STATIC_ASSERT(sizeof(color) == sizeof(info.color));
+        FPlatformMemory::Memcpy(info.color, &color, sizeof(info.color));
 
         this->vkCmdBeginDebugUtilsLabelEXT(_vkCommandBuffer, &info);
     }
@@ -566,6 +567,24 @@ void FVulkanTaskProcessor::AddRenderTargetBarriers_(const FVulkanLogicalRenderPa
     }
 }
 //----------------------------------------------------------------------------
+// Indices
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::BindIndexBuffer_(VkBuffer indexBuffer, VkDeviceSize indexOffset, VkIndexType indexType) {
+    if (_indexBuffer != indexBuffer or
+        _indexBufferOffset != indexOffset or
+        _indexType != indexType ) {
+        _indexBuffer = indexBuffer;
+        _indexBufferOffset = indexOffset;
+        _indexType = indexType;
+
+        vkCmdBindIndexBuffer(_vkCommandBuffer, _indexBuffer, _indexBufferOffset, _indexType);
+
+        ONLY_IF_RHIDEBUG(EditStatistics_([](FFrameStatistics::FRendering& rendering) {
+            rendering.NumIndexBufferBindings++;
+        }));
+    }
+}
+//----------------------------------------------------------------------------
 // Shading rate
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::SetShadingRateImage_(VkImageView* pView, const FVulkanLogicalRenderPass& rp) {
@@ -643,7 +662,7 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
 
     const FRawFramebufferID framebufferId = resources.CreateFramebuffer(
         renderTargets.MakeView(),
-        renderPassId, totalArea.Extents(), 1
+        renderPassId,  checked_cast<unsigned int>(totalArea.Extents()), 1
         ARGS_IF_RHIDEBUG(debugName) );
     LOG_CHECK(RHI, framebufferId.Valid());
 
@@ -759,7 +778,7 @@ void FVulkanTaskProcessor::ExtractDescriptorSets_(
             continue;
 
         FPipelineResourceBarriers barriers{ *this, resourceSet.DynamicOffsets.MakeView() };
-        res.PipelineResources->EachUniform(&barriers);
+        res.PipelineResources->EachUniform(barriers);
 
         Assert_NoAssume(binding >= firstDescriptorSet);
         Assert_NoAssume(res.PipelineResources->Read()->LayoutId == dsLayoutId);
@@ -971,6 +990,60 @@ bool FVulkanTaskProcessor::BindPipeline_(
     return true;
 }
 //----------------------------------------------------------------------------
+// Barriers
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::CommitBarriers_() {
+    const auto exclusiveWorker = _workerCmd->Write();
+    FVulkanBarrierManager& barriers = exclusiveWorker->BarrierManager;
+
+    for (auto& pending : _pendingResourceBarriers) {
+        pending.second(pending.first, barriers ARGS_IF_RHIDEBUG(exclusiveWorker->Debugger.get()));
+    }
+
+    _pendingResourceBarriers.clear();
+
+#if USE_PPE_RHIDEBUG && USE_PPE_DEBUG
+    if (exclusiveWorker->DebugFullBarriers) {
+        VkMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+        barrier.srcAccessMask =
+            VK_ACCESS_INDIRECT_COMMAND_READ_BIT |
+            VK_ACCESS_INDEX_READ_BIT |
+            VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+            VK_ACCESS_UNIFORM_READ_BIT |
+            VK_ACCESS_INPUT_ATTACHMENT_READ_BIT |
+            VK_ACCESS_SHADER_READ_BIT |
+            VK_ACCESS_SHADER_WRITE_BIT |
+            VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
+            VK_ACCESS_TRANSFER_READ_BIT |
+            VK_ACCESS_TRANSFER_WRITE_BIT |
+            VK_ACCESS_HOST_READ_BIT |
+            VK_ACCESS_HOST_WRITE_BIT;
+
+        const FVulkanDevice& device = _workerCmd->Device();
+        EQueueUsage queueUsage = exclusiveWorker->Batch->QueueUsage();
+        UNUSED(device);
+        UNUSED(queueUsage);
+
+        if ((queueUsage & EQueueUsage::Graphics) and device.Enabled().ShadingRateImageNV)
+            barrier.srcAccessMask |= VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV;
+
+        if ((queueUsage & (EQueueUsage::Graphics | EQueueUsage::AsyncCompute)) and device.Enabled().RayTracingKHR)
+            barrier.srcAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV;
+
+        barrier.dstAccessMask = barrier.srcAccessMask;
+
+        barriers.AddMemoryBarrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, barrier);
+    }
+#endif
+
+    barriers.Commit(_workerCmd->Device(), _vkCommandBuffer);
+}
+
+//----------------------------------------------------------------------------
 // PushConstants
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::PushContants_(const FVulkanPipelineLayout& layout, const FPushConstantDatas& pushConstants) {
@@ -1138,9 +1211,10 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferTask& task) {
         Assert(src.Size + src.SrcOffset <= srcBuffer->SizeInBytes());
         Assert(src.Size + src.DstOffset <= dstBuffer->SizeInBytes());
 
+        using range_t = TRange<VkDeviceSize>;
         Assert_NoAssume( (task.SrcBuffer != task.DstBuffer) ||
-            FRange32u(dst.srcOffset, dst.srcOffset + dst.size)
-                .Overlaps(FRange32u(dst.dstOffset, dst.dstOffset + dst.size )) );
+            range_t(dst.srcOffset, dst.srcOffset + dst.size)
+                .Overlaps(range_t(dst.dstOffset, dst.dstOffset + dst.size )) );
 
         AddBuffer_(task.SrcBuffer, EResourceState::TransferSrc, dst.srcOffset, dst.size);
         AddBuffer_(task.DstBuffer, EResourceState::TransferDst, dst.dstOffset, dst.size);
@@ -1425,8 +1499,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
     barrier.image = sharedImage->vkImage;
 
     forrange(i, 1, subresourceRange.levelCount) {
-        const uint3 srcSize = Max(1u, dimension / (1 << (i - 1)));
-        const uint3 dstSize = Max(1u, dimension / (1 << i));
+        const int3 srcSize = checked_cast<int>(Max(1u, dimension / (1 << (i - 1))));
+        const int3 dstSize = checked_cast<int>(Max(1u, dimension / (1 << i)));
 
         // transition from undefined to optimal layout
 
@@ -1712,6 +1786,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
 
     ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
 
+#if 0
     AddRTGeometry_(task.RTGeometry, EResourceState::BuildRayTracingStructWrite);
     AddBuffer_(
         task.ScratchBuffer,
@@ -1740,15 +1815,190 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
     STACKLOCAL_STACK(VkAccelerationStructureBuildRangeInfoKHR, rangeInfos, task.Geometries.size());
     forrange(i, 0, rangeInfos.size()) {
         rangeInfos[i] = VkAccelerationStructureBuildRangeInfoKHR{};
-        rangeInfos[i].primitiveCount = task..
+        //rangeInfos[i].primitiveCount = task. #TODO
     }
-
-
 
     vkCmdBuildAccelerationStructuresKHR(_vkCommandBuffer, 1, &buildInfo, &rangeInfo);
 
+#else
+    AssertNotImplemented(); // NV to KHR
+#endif
 }
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
+    UNUSED(task);
+    AssertNotImplemented(); // #TODO: NV to KHR
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
+    UNUSED(task);
+    AssertNotImplemented(); // #TODO: NV to KHR
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::Visit(const FVulkanCustomTaskTask& task) {
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
 
+    EResourceState stages = _workerCmd->Device().GraphicsShaderStages();
+
+    for (auto& it : task.Images) {
+        const auto sharedImg = it.first->Read();
+        const FImageViewDesc desc{ sharedImg->Desc };
+        AddImage_(it.first, (it.second | stages), EResourceState_ToImageLayout(it.second, sharedImg->AspectMask), desc);
+    }
+
+    for (auto& it : task.Buffers) {
+        AddBuffer_(it.first, it.second, 0, VK_WHOLE_SIZE);
+    }
+
+    CommitBarriers_();
+
+    task.Callback(_workerCmd.get(), _vkCommandBuffer);
+}
+//----------------------------------------------------------------------------
+// AddImage
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddImageState_(const FVulkanLocalImage* pLocalImage, FImageState&& rstate) {
+    Assert(pLocalImage);
+    Assert_NoAssume(not rstate.Range.Empty());
+
+    _pendingResourceBarriers.insert({ pLocalImage, &CommitResourceBarrier_<FVulkanLocalImage> });
+
+#if USE_PPE_RHIDEBUG
+    if (Unlikely(_workerCmd->Debugger()))
+        _workerCmd->Debugger()->AddUsage(pLocalImage->GlobalData(), rstate);
+#endif
+
+    pLocalImage->AddPendingState(std::move(rstate));
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddImage_(
+    const FVulkanLocalImage* pLocalImage,
+    EResourceState state,
+    VkImageLayout layout,
+    const FImageViewDesc& desc ) {
+    Assert(desc.LayerCount > 0);
+    Assert(desc.LevelCount > 0);
+
+    AddImageState_(pLocalImage, FImageState{
+        state, layout,
+        FImageRange{ desc.BaseLayer, desc.LayerCount, desc.BaseLevel, desc.LevelCount },
+        (EPixelFormat_HasDepth(desc.Format) ? VK_IMAGE_ASPECT_DEPTH_BIT :
+         EPixelFormat_HasStencil(desc.Format) ? VK_IMAGE_ASPECT_STENCIL_BIT :
+         VK_IMAGE_ASPECT_COLOR_BIT ),
+        _currentTask
+    });
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddImage_(
+    const FVulkanLocalImage* pLocalImage,
+    EResourceState state,
+    VkImageLayout layout,
+    const VkImageSubresourceLayers& subRes ) {
+    AddImageState_(pLocalImage, FImageState{
+        state, layout,
+        FImageRange{ FImageLayer(subRes.baseArrayLayer), subRes.layerCount, FMipmapLevel(subRes.mipLevel), 1 },
+        static_cast<VkImageAspectFlagBits>(subRes.aspectMask),
+        _currentTask
+    });
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddImage_(
+    const FVulkanLocalImage* pLocalImage,
+    EResourceState state,
+    VkImageLayout layout,
+    const VkImageSubresourceRange& subRes ) {
+    AddImageState_(pLocalImage, FImageState{
+        state, layout,
+        FImageRange{ FImageLayer(subRes.baseArrayLayer), subRes.layerCount, FMipmapLevel(subRes.baseMipLevel), subRes.levelCount },
+        static_cast<VkImageAspectFlagBits>(subRes.aspectMask),
+        _currentTask
+    });
+}
+//----------------------------------------------------------------------------
+// AddBuffer
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddBufferState_(const FVulkanLocalBuffer* pLocalBuffer, FBufferState&& rstate) {
+    Assert(pLocalBuffer);
+
+    _pendingResourceBarriers.insert({ pLocalBuffer, &CommitResourceBarrier_<FVulkanLocalBuffer> });
+
+#if USE_PPE_RHIDEBUG
+    if (Unlikely(_workerCmd->Debugger()))
+        _workerCmd->Debugger()->AddUsage(pLocalBuffer->GlobalData(), rstate);
+#endif
+
+    pLocalBuffer->AddPendingState(std::move(rstate));
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddBuffer_(
+    const FVulkanLocalBuffer* pLocalBuffer,
+    EResourceState state,
+    VkDeviceSize offset, VkDeviceSize size ) {
+    Assert(pLocalBuffer);
+    Assert(size > 0);
+
+    const VkDeviceSize bufferSize = static_cast<VkDeviceSize>(pLocalBuffer->Read()->SizeInBytes());
+
+    size = Min(bufferSize, (size == VK_WHOLE_SIZE ? bufferSize - offset : offset + size));
+
+    AddBufferState_(pLocalBuffer, FBufferState{ state, offset, size, _currentTask });
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddBuffer_(
+    const FVulkanLocalBuffer* pLocalBuffer,
+    EResourceState state,
+    const VkBufferImageCopy& region,
+    const FVulkanLocalImage* pLocalImage ) {
+    Assert(pLocalImage);
+
+    const auto sharedImg = pLocalImage->Read();
+
+    const u32 bpp = EPixelFormat_BitsPerPixel(
+        sharedImg->PixelFormat(),
+        RHICast(static_cast<VkImageAspectFlagBits>(region.imageSubresource.aspectMask)) );
+    const VkDeviceSize rowPitch = (region.bufferRowLength * bpp) / 8;
+    const VkDeviceSize slicePitch = region.bufferImageHeight * rowPitch;
+    const u32 dimZ = Max(region.imageSubresource.layerCount, region.imageExtent.depth);
+
+    // one big barrier
+
+    FBufferState wholeState{ state, 0, slicePitch * dimZ, _currentTask };
+    wholeState.Range += region.bufferOffset;
+
+    AddBufferState_(pLocalBuffer, std::move(wholeState));
+}
+//----------------------------------------------------------------------------
+// AddRayTracing
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddRTGeometry_(const FVulkanRTLocalGeometry* pLocalGeom, EResourceState state) {
+    Assert(pLocalGeom);
+
+    _pendingResourceBarriers.insert({ pLocalGeom, &CommitResourceBarrier_<FVulkanRTLocalGeometry> });
+
+    FRTGeometryState rtState{ state, PFrameTask(_currentTask.get()) };
+
+#if USE_PPE_RHIDEBUG
+    if (Unlikely(_workerCmd->Debugger()))
+        _workerCmd->Debugger()->AddUsage(pLocalGeom->GlobalData(), rtState);
+#endif
+
+    pLocalGeom->AddPendingState(std::move(rtState));
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AddRTScene_(const FVulkanRTLocalScene* pLocalScene, EResourceState state) {
+    Assert(pLocalScene);
+
+    _pendingResourceBarriers.insert({ pLocalScene, &CommitResourceBarrier_<FVulkanRTLocalScene> });
+
+    FRTSceneState rtState{ state, PFrameTask(_currentTask.get()) };
+
+#if USE_PPE_RHIDEBUG
+    if (Unlikely(_workerCmd->Debugger()))
+        _workerCmd->Debugger()->AddUsage(pLocalScene->GlobalData(), rtState);
+#endif
+
+    pLocalScene->AddPendingState(std::move(rtState));
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

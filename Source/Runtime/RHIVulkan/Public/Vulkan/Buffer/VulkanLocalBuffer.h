@@ -21,7 +21,10 @@ public:
         PVulkanFrameTask Task;
 
         FBufferState() = default;
-        FBufferState(EResourceState state, VkDeviceSize begin, VkDeviceSize end, PVulkanFrameTask&& rtask)
+        FBufferState(EResourceState state, VkDeviceSize begin, VkDeviceSize end, const PVulkanFrameTask& task)
+        :   FBufferState(state, begin, end, PVulkanFrameTask{ task })
+        {}
+        FBufferState(EResourceState state, VkDeviceSize begin, VkDeviceSize end, PVulkanFrameTask&& rtask) NOEXCEPT
         :   State(state), Range(begin, end), Task(std::move(rtask)) {
             Assert_NoAssume(Task);
         }
@@ -59,8 +62,8 @@ public:
     void TearDown();
 
     void SetInitialState(bool immutable);
-    void AddPendingState(const FBufferState& bufferState);
-    void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
+    void AddPendingState(const FBufferState& bufferState) const;
+    void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default)) const;
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
     VkBufferView MakeView(const FVulkanDevice& device, const FBufferViewDesc& desc) const {
@@ -74,9 +77,9 @@ private:
 
     const FVulkanBuffer* _bufferData;
 
-    FAccessRecords _accessPending;
-    FAccessRecords _accessForRead;
-    FAccessRecords _accessForWrite;
+    mutable FAccessRecords _accessPending;
+    mutable FAccessRecords _accessForRead;
+    mutable FAccessRecords _accessForWrite;
     bool _isImmutable{ false };
 };
 //----------------------------------------------------------------------------

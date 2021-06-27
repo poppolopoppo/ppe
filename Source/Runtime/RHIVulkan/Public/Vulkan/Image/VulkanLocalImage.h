@@ -21,7 +21,10 @@ public:
         PVulkanFrameTask Task;
 
         FImageState() = default;
-        FImageState(EResourceState state, VkImageLayout layout, const FImageDataRange& range, VkImageAspectFlagBits aspect, PVulkanFrameTask&& rtask)
+        FImageState(EResourceState state, VkImageLayout layout, const FImageDataRange& range, VkImageAspectFlagBits aspect, const PVulkanFrameTask& task)
+        :   FImageState(state, layout, range, aspect, PVulkanFrameTask{ task })
+        {}
+        FImageState(EResourceState state, VkImageLayout layout, const FImageDataRange& range, VkImageAspectFlagBits aspect, PVulkanFrameTask&& rtask) NOEXCEPT
         :   State(state), Layout(layout), Aspect(aspect), Range(range), Task(std::move(rtask)) {
             Assert_NoAssume(Task);
         }
@@ -62,8 +65,8 @@ public:
     void TearDown();
 
     void SetInitialState(bool immutable, bool invalidate);
-    void AddPendingState(FImageState&& rstate);
-    void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
+    void AddPendingState(FImageState&& rstate) const;
+    void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default)) const;
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
     VkImageView MakeView(const FVulkanDevice& device, bool isDefault, FImageViewDesc& desc) const {
@@ -74,8 +77,8 @@ private:
     const FVulkanImage* _imageData;
     VkImageLayout _finalLayout{ VK_IMAGE_LAYOUT_GENERAL };
 
-    FAccessRecords _accessPending;
-    FAccessRecords _accessForReadWrite;
+    mutable FAccessRecords _accessPending;
+    mutable FAccessRecords _accessForReadWrite;
     bool _isImmutable{ false };
 };
 //----------------------------------------------------------------------------

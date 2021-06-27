@@ -130,7 +130,7 @@ public:
 
     FRawSamplerID CreateSampler(const FSamplerDesc& desc  ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawRenderPassID CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass*>& passes ARGS_IF_RHIDEBUG(FConstChar debugName));
+    FRawRenderPassID CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass* const>& passes ARGS_IF_RHIDEBUG(FConstChar debugName));
     FRawFramebufferID CreateFramebuffer(const TMemoryView<const TPair<FRawImageID, FImageViewDesc>>& attachments, FRawRenderPassID renderPass, const uint2& dim, u32 layers ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD bool CacheDescriptorSet(FPipelineResources& desc);

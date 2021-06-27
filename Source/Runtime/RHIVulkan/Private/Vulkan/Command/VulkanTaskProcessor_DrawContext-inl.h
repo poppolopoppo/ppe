@@ -190,7 +190,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindVertexBuffer(const FVertexBu
         }));
     }
     else {
-        RHI_LOG(Warning, L"invalid vertex buffer binding: [{0}] -> {1} ({2})", id, buffer, _pipelineLayoutRef->DebugName();)
+        RHI_LOG(Warning, L"invalid vertex buffer binding: [{0}] -> {1} ({2})", id, buffer, _pipelineLayoutRef->DebugName());
     }
 }
 //----------------------------------------------------------------------------
@@ -201,7 +201,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindIndexBuffer(FRawBufferID buf
         _processor.BindIndexBuffer_(pBuffer->Handle(), checked_cast<VkDeviceSize>(offset), VkCast(fmt));
     }
     else {
-        RHI_LOG(Warning, L"invalid index buffer binding: {0} ({1})", buffer, _pipelineLayoutRef->DebugName();)
+        RHI_LOG(Warning, L"invalid index buffer binding: {0} ({1})", buffer, _pipelineLayoutRef->DebugName());
     }
 }
 //----------------------------------------------------------------------------

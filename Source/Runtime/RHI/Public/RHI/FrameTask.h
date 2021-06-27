@@ -753,7 +753,7 @@ struct FPresent final : details::TFrameTaskDesc<FPresent> {
 struct FCustomTask final : details::TFrameTaskDesc<FCustomTask> {
 
     using FExternalContext = void*;
-    using FCallback = TFunction<void(FExternalContext)>;
+    using FCallback = TFunction<void(ICommandBuffer* cmd, FExternalContext)>;
     using FImages = TFixedSizeStack<TPair<FRawImageID, EResourceState>, 8>;
     using FBuffers = TFixedSizeStack<TPair<FRawBufferID, EResourceState>, 8>;
 

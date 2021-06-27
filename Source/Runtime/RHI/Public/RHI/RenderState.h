@@ -81,7 +81,9 @@ struct FBlendState {
     }
 
     friend hash_t hash_value(const FBlendState& state) {
-        return hash_tuple(state.Buffers, state.BlendColor, state.LogicOp);
+        return hash_tuple(
+            hash_range(state.Buffers.data(), state.Buffers.size()),
+            state.BlendColor, state.LogicOp );
     }
 
 };

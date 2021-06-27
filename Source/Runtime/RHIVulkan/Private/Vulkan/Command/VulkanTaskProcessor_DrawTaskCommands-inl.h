@@ -37,8 +37,7 @@ inline FVulkanTaskProcessor::FDrawTaskCommands::FDrawTaskCommands(
 //----------------------------------------------------------------------------
 template <typename _Desc>
 void FVulkanTaskProcessor::FDrawTaskCommands::BindTaskPipeline_(const TVulkanDrawTask<_Desc>& task) {
-
-    ONLY_IF_RHIDEBUG(_processor.CmdDebugMarker_(task.TaskName, task.DebugColor));
+    ONLY_IF_RHIDEBUG( _processor.CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
 
     const FVulkanLogicalRenderPass& logicalRenderPass = *_submitRef->LogicalPass();
     const FVulkanPipelineLayout* pPplnLayout = nullptr;
