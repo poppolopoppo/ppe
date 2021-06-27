@@ -1025,7 +1025,7 @@ void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, size_t _Dim, typename _Src>
-TScalarVector<_Dst, _Dim> checked_cast(const TScalarVector<_Src, _Dim>& v) NOEXCEPT {
+TScalarVector<_Dst, _Dim> checked_cast(const TScalarVectorExpr<_Src, _Dim>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) -> TScalarVector<_Dst, _Dim> {
        return { checked_cast<_Dst>(v.template get<idx>())... };
     });
