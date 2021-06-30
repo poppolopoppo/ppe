@@ -251,7 +251,7 @@ public:
 //----------------------------------------------------------------------------
 template <EThreadBarrier _Barrier, typename T>
 TThreadSafe<T, _Barrier> MakeThreadSafe(T&& rvalue) NOEXCEPT {
-    return { std::forward<T>(rvalue) };
+    return TThreadSafe<T, _Barrier>( std::forward<T>(rvalue) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

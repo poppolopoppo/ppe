@@ -38,7 +38,7 @@ public:
         parent_type::Create();
     }
 
-    STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, DefaultSlabSize / 2);
+    STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, 48_KiB);
 };
 //----------------------------------------------------------------------------
 // Fall back on thread local heap when the block is too large :
