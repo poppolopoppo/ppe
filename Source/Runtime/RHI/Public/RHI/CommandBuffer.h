@@ -26,12 +26,14 @@ struct FCommandBufferDesc {
     FCommandBufferDesc() = default;
     explicit FCommandBufferDesc(EQueueType queueType) : QueueType(queueType) {}
 };
+PPE_ASSUME_TYPE_AS_POD(FCommandBufferDesc)
 //----------------------------------------------------------------------------
 struct FStagingBlock {
     FRawBufferID RawBufferID;
     u32 Offset;
     ubyte* Mapped;
 };
+PPE_ASSUME_TYPE_AS_POD(FStagingBlock)
 //----------------------------------------------------------------------------
 class ICommandBuffer : public FRefCountable {
 public: // interface

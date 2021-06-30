@@ -20,6 +20,7 @@ struct FMemoryDesc {
     FMemoryDesc(EMemoryType type) NOEXCEPT : Type(type) {}
     FMemoryDesc(EMemoryType type, FMemPoolID pool) NOEXCEPT : Type(type), Pool(pool) {}
 };
+PPE_ASSUME_TYPE_AS_POD(FMemoryDesc)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

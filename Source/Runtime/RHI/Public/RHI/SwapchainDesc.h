@@ -61,6 +61,7 @@ struct FSwapchainDesc {
     FRequiredSurfaceFormats SurfaceFormats;
     FRequiredPresentModes PresentModes;
 };
+PPE_ASSUME_TYPE_AS_POD(FSwapchainDesc);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

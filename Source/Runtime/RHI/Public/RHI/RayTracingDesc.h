@@ -94,6 +94,7 @@ struct FRayTracingGeometryDesc {
     FRayTracingGeometryDesc(TMemoryView<const FTriangles> triangles, TMemoryView<const FBoundingVolumes> aabbs) : Triangles(triangles), Aabbs(aabbs) {}
 
 };
+PPE_ASSUME_TYPE_AS_POD(FRayTracingGeometryDesc)
 //----------------------------------------------------------------------------
 struct FRayTracingSceneDesc {
     u32 MaxInstanceCount{ 0 };
@@ -104,6 +105,7 @@ struct FRayTracingSceneDesc {
     explicit FRayTracingSceneDesc(u32 instanceCount, ERayTracingBuildFlags flags = Default) : MaxInstanceCount(instanceCount), Flags(flags) {}
 
 };
+PPE_ASSUME_TYPE_AS_POD(FRayTracingSceneDesc)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

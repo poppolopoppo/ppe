@@ -63,6 +63,7 @@ struct FImageDesc {
         return hash_tuple(it.Type, it.View, it.Flags, it.Dimensions, it.Format, it.Usage, it.ArrayLayers, it.MaxLevel, it.Queues);
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FImageDesc)
 //----------------------------------------------------------------------------
 struct FImageViewDesc {
     EImageView View{ Default };
@@ -126,6 +127,7 @@ struct FImageViewDesc {
         return hash_tuple(it.View, it.Format, it.BaseLevel, it.LevelCount, it.BaseLayer, it.LayerCount, it.Swizzle, it.AspectMask);
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FImageViewDesc)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

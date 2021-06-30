@@ -88,7 +88,6 @@ struct TNamedId {
     CONSTEXPR bool operator <=(const TNamedId& other) const { return (not operator >(other)); }
 
 };
-
 //----------------------------------------------------------------------------
 template <u32 _Uid>
 struct TNamedId<_Uid, false> {

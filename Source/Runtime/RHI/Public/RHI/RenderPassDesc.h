@@ -40,6 +40,7 @@ struct FRenderViewport {
     float MaxDepth{ 1.0f };
     FShadingRatePalette ShadingRate;
 };
+PPE_ASSUME_TYPE_AS_POD(FRenderViewport)
 //----------------------------------------------------------------------------
 struct FRenderPassDesc {
 

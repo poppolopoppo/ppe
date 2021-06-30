@@ -28,6 +28,7 @@ struct FBufferDesc {
     FBufferDesc& SetQueues(EQueueUsage queues) { Queues = queues; return (*this); }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FBufferDesc)
 //----------------------------------------------------------------------------
 struct FBufferViewDesc {
     EPixelFormat Format{ Default };
@@ -60,6 +61,7 @@ struct FBufferViewDesc {
         return hash_tuple(it.Format, it.Offset, it.SizeInBytes);
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FBufferViewDesc)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

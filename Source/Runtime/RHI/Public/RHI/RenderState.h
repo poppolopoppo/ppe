@@ -87,6 +87,7 @@ struct FBlendState {
     }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FBlendState);
 //----------------------------------------------------------------------------
 // FDepthBufferState
 //----------------------------------------------------------------------------
@@ -113,6 +114,7 @@ struct FDepthBufferState {
     }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FDepthBufferState);
 //----------------------------------------------------------------------------
 // FInputAssemblyState
 //----------------------------------------------------------------------------
@@ -127,6 +129,7 @@ struct FInputAssemblyState {
         return hash_tuple(state.Topology, state.EnablePrimitiveRestart);
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FInputAssemblyState);
 //----------------------------------------------------------------------------
 // FMultisampleState
 //----------------------------------------------------------------------------
@@ -157,6 +160,7 @@ struct FMultisampleState {
     }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FMultisampleState);
 //----------------------------------------------------------------------------
 // FRasterizationState
 //----------------------------------------------------------------------------
@@ -202,6 +206,7 @@ struct FRasterizationState {
             state.EnableDepthBias, state.EnableDepthClamp, state.EnableDiscard, state.EnableFrontFaceCCW );
     }
 };
+PPE_ASSUME_TYPE_AS_POD(FRasterizationState);
 //----------------------------------------------------------------------------
 // FStencilBufferState
 //----------------------------------------------------------------------------
@@ -268,6 +273,7 @@ struct FStencilBufferState {
     }
 
 };
+PPE_ASSUME_TYPE_AS_POD(FStencilBufferState);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

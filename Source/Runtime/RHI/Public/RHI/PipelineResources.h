@@ -76,6 +76,7 @@ public:
             u32 Size;
 
             TIE_AS_TUPLE_STRUCT(FElement)
+            PPE_ASSUME_FRIEND_AS_POD(FElement)
         };
 
         FBindingIndex Index;
@@ -86,6 +87,7 @@ public:
         TElementArray<FElement> Elements;
 
         TIE_AS_TUPLE_STRUCT(FBuffer)
+        PPE_ASSUME_FRIEND_AS_POD(FBuffer)
     };
 
     struct FTexelBuffer {
@@ -96,6 +98,7 @@ public:
             FBufferViewDesc Desc;
 
             TIE_AS_TUPLE_STRUCT(FElement)
+            PPE_ASSUME_FRIEND_AS_POD(FElement)
         };
 
         FBindingIndex Index;
@@ -103,6 +106,7 @@ public:
         TElementArray<FElement> Elements;
 
         TIE_AS_TUPLE_STRUCT(FTexelBuffer)
+        PPE_ASSUME_FRIEND_AS_POD(FTexelBuffer)
     };
 
     struct FImage {
@@ -113,6 +117,7 @@ public:
             Meta::TOptional<FImageViewDesc> Desc;
 
             TIE_AS_TUPLE_STRUCT(FElement)
+            PPE_ASSUME_FRIEND_AS_POD(FElement)
         };
 
         FBindingIndex Index;
@@ -121,6 +126,7 @@ public:
         TElementArray<FElement> Elements;
 
         TIE_AS_TUPLE_STRUCT(FImage)
+        PPE_ASSUME_FRIEND_AS_POD(FImage)
     };
 
     struct FTexture {
@@ -132,6 +138,7 @@ public:
             Meta::TOptional<FImageViewDesc> Desc;
 
             TIE_AS_TUPLE_STRUCT(FElement)
+            PPE_ASSUME_FRIEND_AS_POD(FElement)
         };
 
         FBindingIndex Index;
@@ -140,6 +147,7 @@ public:
         TElementArray<FElement> Elements;
 
         TIE_AS_TUPLE_STRUCT(FTexture)
+        PPE_ASSUME_FRIEND_AS_POD(FTexture)
     };
 
     struct FSampler {
@@ -149,12 +157,14 @@ public:
             FRawSamplerID SamplerId;
 
             TIE_AS_TUPLE_STRUCT(FElement)
+            PPE_ASSUME_FRIEND_AS_POD(FElement)
         };
 
         FBindingIndex Index;
         TElementArray<FElement> Elements;
 
         TIE_AS_TUPLE_STRUCT(FSampler)
+        PPE_ASSUME_FRIEND_AS_POD(FSampler)
     };
 
     struct FRayTracingScene {
@@ -164,12 +174,14 @@ public:
             FRawRTSceneID SceneId;
 
             TIE_AS_TUPLE_STRUCT(FElement)
+            PPE_ASSUME_FRIEND_AS_POD(FElement)
         };
 
         FBindingIndex Index;
         TElementArray<FElement> Elements;
 
         TIE_AS_TUPLE_STRUCT(FRayTracingScene)
+        PPE_ASSUME_FRIEND_AS_POD(FRayTracingScene)
     };
 
     // FUniform
@@ -193,6 +205,8 @@ public:
 
         bool operator < (const FUniformID& id) const { return (id <  Id); }
         bool operator >=(const FUniformID& id) const { return (id >= Id); }
+
+        PPE_ASSUME_FRIEND_AS_POD(FUniform)
     };
 
     // FDynamicData
