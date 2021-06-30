@@ -44,6 +44,7 @@ require_once 'Commands/Insights.rb'
 require_once 'Commands/PCH.rb'
 require_once 'Commands/PS1.rb'
 require_once 'Commands/Run.rb'
+require_once 'Commands/Upx.rb'
 require_once 'Commands/VCXProj.rb'
 require_once 'Commands/VSCode.rb'
 

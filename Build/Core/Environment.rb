@@ -72,7 +72,7 @@ module Build
 
         def self.executable_path(relativePath, platform_config, ext)
             path = relativePath.to_s.tr('/', '-')
-            path = path <<'-'<<platform_config.to_s unless platform_config.nil?
+            path = path << '-' << platform_config.to_s unless platform_config.nil?
             return File.join($BinariesPath, path << ext)
         end
 
