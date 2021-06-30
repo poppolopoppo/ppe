@@ -2,6 +2,9 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "Vulkan/Pipeline/VulkanGraphicsPipeline.h"
+#include "Vulkan/Pipeline/VulkanMeshPipeline.h"
+
 #include "RHI/DrawTask.h"
 
 namespace PPE {

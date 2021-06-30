@@ -46,7 +46,9 @@ public:
     using FAccessRecords = VECTORINSITU(RHIBuffer, FBufferAccess, 3);
 
     FVulkanLocalBuffer() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanLocalBuffer();
+#endif
 
     bool Valid() const { return (!!_bufferData); }
 

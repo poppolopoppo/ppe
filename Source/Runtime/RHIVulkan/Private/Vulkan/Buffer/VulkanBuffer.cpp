@@ -64,13 +64,13 @@ bool FVulkanBuffer::FInternalData::IsReadOnly() const NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVulkanBuffer::~FVulkanBuffer() {
 #if USE_PPE_RHIDEBUG
+FVulkanBuffer::~FVulkanBuffer() {
     const auto& sharedData = _data.LockShared();
     Assert_NoAssume(VK_NULL_HANDLE == sharedData->vkBuffer);
     Assert_NoAssume(not sharedData->MemoryId);
-#endif
 }
+#endif
 //----------------------------------------------------------------------------
 bool FVulkanBuffer::Construct(
     FVulkanResourceManager& resources,

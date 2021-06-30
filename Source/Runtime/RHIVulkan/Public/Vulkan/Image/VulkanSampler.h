@@ -19,7 +19,9 @@ public:
 
     FVulkanSampler() = default;
     FVulkanSampler(const FVulkanDevice& device, const FSamplerDesc& desc);
+#if USE_PPE_RHIDEBUG
     ~FVulkanSampler();
+#endif
 
     FVulkanSampler(FVulkanSampler&& rvalue) NOEXCEPT;
     FVulkanSampler& operator =(FVulkanSampler&&) = delete;
@@ -36,10 +38,10 @@ public:
     NODISCARD bool Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    bool operator ==(const FVulkanSampler& other) const;
+    bool operator ==(const FVulkanSampler& other) const NOEXCEPT;
     bool operator !=(const FVulkanSampler& other) const { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FVulkanSampler& sampler) { return sampler.HashValue(); }
+    friend hash_t hash_value(const FVulkanSampler& sampler) NOEXCEPT { return sampler.HashValue(); }
 
 private:
     TRHIThreadSafe<FInternalData> _data;

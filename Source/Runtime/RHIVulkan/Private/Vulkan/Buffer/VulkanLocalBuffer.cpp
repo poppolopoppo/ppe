@@ -12,12 +12,14 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 FVulkanLocalBuffer::~FVulkanLocalBuffer() {
     Assert_NoAssume(nullptr == _bufferData); // must call TearDown() !
     Assert_NoAssume(_accessPending.empty());
     Assert_NoAssume(_accessForRead.empty());
     Assert_NoAssume(_accessForWrite.empty());
 }
+#endif
 //----------------------------------------------------------------------------
 bool FVulkanLocalBuffer::Construct(const FVulkanBuffer* bufferData) {
     Assert(bufferData);

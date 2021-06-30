@@ -13,6 +13,8 @@ namespace RHI {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanLocalImage final : Meta::FNonCopyableNorMovable {
 public:
+    using FSubRange = FImageDataRange::FSubRange;
+
     struct FImageState {
         EResourceState State{ Default };
         VkImageLayout Layout{ Default };
@@ -31,7 +33,7 @@ public:
     };
 
     struct FImageAccess {
-        FImageSubresourceRange Range;
+        FSubRange Range;
         VkImageLayout Layout{ Default };
         VkPipelineStageFlagBits Stages{ Default };
         VkAccessFlagBits Access{ Default };
@@ -49,7 +51,9 @@ public:
     using FImageViewMap = FVulkanImage::FImageViewMap;
 
     FVulkanLocalImage() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanLocalImage();
+#endif
 
     bool Valid() const { return (!!_imageData); }
 
@@ -61,11 +65,11 @@ public:
     const FVulkanImage* GlobalData() const { return _imageData; }
     auto Read() const { return _imageData->Read(); }
 
-    NODISCARD bool Construct(const FVulkanImage* imageData);
+    NODISCARD bool Construct(const FVulkanImage* pImageData);
     void TearDown();
 
     void SetInitialState(bool immutable, bool invalidate);
-    void AddPendingState(FImageState&& rstate) const;
+    void AddPendingState(const FImageState& st) const;
     void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default)) const;
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
@@ -79,6 +83,10 @@ public:
     }
 
 private:
+    NODISCARD bool CreateView_(VkImageView* pImageView, const FVulkanDevice& device, const FImageViewDescMemoized& desc);
+    NODISCARD static FAccessRecords::iterator FindFirstAccess_(FAccessRecords& arr, const FSubRange& range);
+    static void ReplaceAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator it, const FImageAccess& barrier);
+
     const FVulkanImage* _imageData;
     VkImageLayout _finalLayout{ VK_IMAGE_LAYOUT_GENERAL };
 

@@ -7,6 +7,8 @@
 
 #include "Container/Array.h"
 #include "Container/Hash.h"
+#include "Container/TupleTie.h"
+#include "Meta/Optional.h"
 
 namespace PPE {
 namespace RHI {
@@ -17,12 +19,12 @@ struct FSamplerDesc {
     using FAddressModes = TStaticArray<EAddressMode, 3>;
 
     EBorderColor BorderColor{ EBorderColor::FloatTransparentBlack };
-    ECompareOp CompareOp{ ECompareOp::Unknown };
     ETextureFilter MagFilter{ ETextureFilter::Nearest };
     ETextureFilter MinFilter{ ETextureFilter::Nearest };
     EMipmapFilter MipmapFilter{ EMipmapFilter::Nearest };
     FAddressModes AddressModes{ EAddressMode::Repeat, EAddressMode::Repeat, EAddressMode::Repeat };
-    float MaxAnisotropy{ 0.0f };
+    Meta::TOptional<ECompareOp> CompareOp;
+    Meta::TOptional<float> MaxAnisotropy;
     float MipLodBias{ 0.0f };
     float MinLod{ -FLT_MAX };
     float MaxLod{ FLT_MAX };
@@ -44,32 +46,7 @@ struct FSamplerDesc {
     FSamplerDesc& SetCompareOp(ECompareOp value) { CompareOp = value; return (*this); }
     FSamplerDesc& SetNormCoordinates(bool value) { EnableUnnormalizedCoords = value; return (*this); }
 
-    bool operator ==(const FSamplerDesc& other) const {
-        return (BorderColor == other.BorderColor
-            && CompareOp == other.CompareOp
-            && MagFilter == other.MagFilter
-            && MinFilter == other.MinFilter
-            && MipmapFilter == other.MipmapFilter
-            && AddressModes == other.AddressModes
-            && MaxAnisotropy == other.MaxAnisotropy
-            && MipLodBias == other.MipLodBias
-            && MinLod == other.MinLod
-            && MaxLod == other.MaxLod
-            && EnableUnnormalizedCoords == other.EnableUnnormalizedCoords );
-    }
-    bool operator !=(const FSamplerDesc& other) const {
-        return (not operator ==(other));
-    }
-
-    friend hash_t hash_value(const FSamplerDesc& desc) {
-        return hash_tuple(
-            desc.BorderColor, desc.CompareOp,
-            desc.MagFilter, desc.MinFilter, desc.MipmapFilter,
-            desc.AddressModes, desc.MaxAnisotropy,
-            desc.MipLodBias, desc.MinLod, desc.MaxLod,
-            desc.EnableUnnormalizedCoords );
-    }
-
+    TIE_AS_TUPLE_STRUCT(FSamplerDesc)
 };
 PPE_ASSUME_TYPE_AS_POD(FSamplerDesc);
 //----------------------------------------------------------------------------

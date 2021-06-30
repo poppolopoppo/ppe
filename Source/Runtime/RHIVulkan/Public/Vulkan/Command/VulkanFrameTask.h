@@ -2,6 +2,8 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "Vulkan/Pipeline/VulkanComputePipeline.h"
+
 #include "RHI/FrameGraph.h"
 #include "RHI/FrameTask.h"
 

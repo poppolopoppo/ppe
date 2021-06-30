@@ -35,7 +35,9 @@ public:
     };
 
     FVulkanBuffer() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanBuffer();
+#endif
 
     FVulkanBuffer(const FVulkanBuffer&) = delete;
     FVulkanBuffer& operator =(const FVulkanBuffer&) = delete;
