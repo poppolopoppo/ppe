@@ -12,7 +12,7 @@ namespace RHI {
 class PPE_RHIVULKAN_API FVulkanSampler final : Meta::FNonCopyable {
 public:
     struct FInternalData {
-        hash_t HashValue;
+        hash_t HashValue{ Meta::ForceInit };
         VkSampler Sampler{ VK_NULL_HANDLE };
         VkSamplerCreateInfo CreateInfo{};
     };
@@ -26,6 +26,7 @@ public:
 
     auto Read() const { return _data.LockShared(); }
 
+    VkSampler Handle() const { return Read()->Sampler; }
     hash_t HashValue() const { return Read()->HashValue; }
 
 #if USE_PPE_RHIDEBUG

@@ -44,6 +44,13 @@ struct FPipelineDescUniform {
     ,   ArraySize(arraySize)
     ,   StageFlags(stageFlags)
     {}
+
+    bool operator ==(const FPipelineDescUniform& other) const {
+        return (Id == other.Id && Index == other.Index && ArraySize == other.ArraySize && StageFlags == other.StageFlags);
+    }
+    bool operator !=(const FPipelineDescUniform& other) const {
+        return (not operator ==(other));
+    }
 };
 PPE_ASSUME_TYPE_AS_POD(FPipelineDescUniform);
 //----------------------------------------------------------------------------
@@ -82,6 +89,13 @@ struct TPipelineDescUniform : FPipelineDescUniform {
     :   FPipelineDescUniform(id, index, arraySize, stageFlags)
     ,   Data(std::forward<_Args>(rargs)...)
     {}
+
+    bool operator ==(const TPipelineDescUniform& other) const {
+        return (static_cast<const FPipelineDescUniform&>(*this) == other && Data == other.Data);
+    }
+    bool operator !=(const TPipelineDescUniform& other) const {
+        return (not operator ==(other));
+    }
 };
 PPE_ASSUME_TEMPLATE_AS_POD(TPipelineDescUniform<T>, typename T);
 } //!details

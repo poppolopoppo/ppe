@@ -33,13 +33,13 @@ public:
     bool operator ==(const FBindingIndex& other) const { return (_perResource == other._perResource && _unique == other._unique); }
     bool operator !=(const FBindingIndex& other) const { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FBindingIndex& it) {
+    friend hash_t hash_value(const FBindingIndex& it) NOEXCEPT {
         STATIC_ASSERT(sizeof(it) == 2 * sizeof(index_t));
         return hash_as_pod(it);
     }
 
 private:
-    index_t _perResource = INDEX_NONE; // resource dependend index, may be optimized to minimize resource switches between pipelines
+    index_t _perResource = INDEX_NONE; // resource dependent index, may be optimized to minimize resource switches between pipelines
     index_t _unique = INDEX_NONE; // resource unique index in current pipeline
 };
 //----------------------------------------------------------------------------

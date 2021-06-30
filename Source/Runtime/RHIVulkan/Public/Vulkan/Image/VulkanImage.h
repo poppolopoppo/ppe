@@ -7,6 +7,7 @@
 
 #include "Container/HashMap.h"
 #include "Container/HashHelpers.h"
+#include "Meta/Optional.h"
 #include "Misc/Function.h"
 #include "Thread/ReadWriteLock.h"
 
@@ -69,7 +70,7 @@ public:
 #endif
 
     VkImageView MakeView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const;
-    VkImageView MakeView(const FVulkanDevice& device, bool isDefault, FImageViewDesc& desc) const;
+    VkImageView MakeView(const FVulkanDevice& device, const Meta::TOptional<FImageViewDesc>& desc) const;
 
     static bool IsSupported(const FVulkanDevice& device, const FImageDesc& desc, EMemoryType memoryType);
     bool IsSupported(const FVulkanDevice& device, const FImageViewDesc& desc) const;

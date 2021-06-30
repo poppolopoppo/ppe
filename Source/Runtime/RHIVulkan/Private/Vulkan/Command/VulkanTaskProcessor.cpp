@@ -595,7 +595,7 @@ void FVulkanTaskProcessor::SetShadingRateImage_(VkImageView* pView, const FVulka
     if (not rp.ShadingRateImage(&pLocalImage, &desc))
         return;
 
-    *pView = pLocalImage->MakeView(_workerCmd->Device(), false, desc);
+    *pView = pLocalImage->MakeView(_workerCmd->Device(), Memoize(desc) );
 
     AddImage_(
         pLocalImage,

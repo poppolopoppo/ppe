@@ -18,7 +18,7 @@ class PPE_RHIVULKAN_API FVulkanGraphicsPipeline final : public FRefCountable {
 public:
 
     struct FPipelineInstance {
-        hash_t HashValue;
+        hash_t HashValue{ Meta::ForceInit };
         FRawPipelineLayoutID LayoutId;
         FRawRenderPassID RenderPassId;
         FRenderState RenderState;

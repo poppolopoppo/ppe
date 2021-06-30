@@ -25,9 +25,9 @@ public:
     using FSharedUniformMap = FPipelineDesc::FSharedUniformMap;
 
     struct FInternalPool {
-        hash_t HashValue;
+        hash_t HashValue{ Meta::ForceInit };
         VkDescriptorSetLayout Layout{ VK_NULL_HANDLE };
-        FDynamicData DynamicData;
+        FDynamicData ResourcesTemplate;
         FSharedUniformMap Uniforms;
 
         FPoolSizeArray PoolSizes;
@@ -37,7 +37,7 @@ public:
     };
 
     FVulkanDescriptorSetLayout() = default;
-    FVulkanDescriptorSetLayout(FBindings* pbindings, const FSharedUniformMap& uniforms);
+    FVulkanDescriptorSetLayout(FBindings* pBindings, const FVulkanDevice& device, const FSharedUniformMap& uniforms);
     ~FVulkanDescriptorSetLayout();
 
     FVulkanDescriptorSetLayout(FVulkanDescriptorSetLayout&& rvalue) NOEXCEPT;
@@ -46,39 +46,39 @@ public:
     auto Read() const { return _pool.LockShared(); }
 
     VkDescriptorSetLayout Handle() const { return Read()->Layout; }
-
+    const FDynamicData& Resources() const { return Read()->ResourcesTemplate; }
     hash_t HashValue() const { return Read()->HashValue; }
 
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    NODISCARD bool Construct(const FVulkanDevice& device, FBindings&& rbindings ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool Construct(const FVulkanDevice& device, TMemoryView<const VkDescriptorSetLayoutBinding> bindings ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    bool AllocateDescriptorSet(FVulkanDescriptorSet* pdescriptors, FVulkanResourceManager& resources) const;
+    NODISCARD bool AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, FVulkanResourceManager& resources) const;
     void DeallocateDescriptorSet(FVulkanResourceManager& resources, const FVulkanDescriptorSet& descriptors) const;
 
-    bool operator ==(const FVulkanDescriptorSetLayout& other) const;
+    bool operator ==(const FVulkanDescriptorSetLayout& other) const NOEXCEPT;
     bool operator !=(const FVulkanDescriptorSetLayout& other) const { return (not operator ==(other)); }
 
     friend hash_t hash_value(const FVulkanDescriptorSetLayout& layout) { return layout.HashValue(); }
 
 private:
-    void AddUniform_(FBindings* pbinding, const FPipelineDesc::FVariantUniform& var);
-    void AddImage_(FBindings* pbinding, const FPipelineDesc::FImage& img, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
-    void AddTexture_(FBindings* pbinding, const FPipelineDesc::FTexture& tex, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
-    void AddSampler_(FBindings* pbinding, const FPipelineDesc::FSampler& samp, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
-    void AddSubpassInput_(FBindings* pbinding, const FPipelineDesc::FSubpassInput& spi, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
-    void AddUniformBuffer_(FBindings* pbinding, const FPipelineDesc::FUniformBuffer& ub, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
-    void AddStorageBuffer_(FBindings* pbinding, const FPipelineDesc::FStorageBuffer& sb, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
-    void AddRayTracingScene_(FBindings* pbinding, const FPipelineDesc::FRayTracingScene& rts, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
-    void IncDescriptorCount_(VkDescriptorType type);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FVariantUniform& var);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FImage& img, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FTexture& tex, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FSampler& samp, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FSubpassInput& spi, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FUniformBuffer& ub, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FStorageBuffer& sb, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
+    static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FRayTracingScene& rts, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags);
+
+    static void BindDescriptor_(FBindings* pBinding, FInternalPool& pool, VkDescriptorType type, u32 bindingIndex, u32& arraySize, EShaderStages stageFlags);
 
     TRHIThreadSafe<FInternalPool> _pool;
 
-    mutable FCriticalSection _descriptorSetBarrier;
-    mutable FDescriptorSetCache _descriptorSetCache;
+    mutable TThreadSafe<FDescriptorSetCache, EThreadBarrier::CriticalSection> _descriptorSetCache;
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

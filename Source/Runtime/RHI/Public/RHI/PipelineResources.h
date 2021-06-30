@@ -10,10 +10,10 @@
 #include "RHI/ResourceState.h"
 
 #include "Container/AssociativeVector.h"
+#include "Container/TupleTie.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/Optional.h"
-#include "Thread/ReadWriteLock.h"
 
 namespace PPE {
 namespace RHI {
@@ -33,165 +33,144 @@ public:
         RayTracingScene,
     };
 
-    struct FBaseResource {
+    template <typename T>
+    struct TElementArray {
+        const u16 Capacity;
+        u16 Count;
+        T Data[1];
+
+        TMemoryView<T> MakeView() {
+            return { Data, Count };
+        }
+        TMemoryView<const T> MakeView() const {
+            return { Data, Count };
+        }
+
+        T& operator [](size_t index) {
+            return MakeView()[index];
+        }
+        const T& operator [](size_t index) const {
+            return MakeView()[index];
+        }
+
+        bool operator ==(const TElementArray& other) const {
+            const auto lhs = MakeView();
+            const auto rhs = other.MakeView();
+            return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+        }
+        bool operator !=(const TElementArray& other) const {
+            return (not operator ==(other));
+        }
+
+        friend hash_t hash_value(const TElementArray& arr) NOEXCEPT {
+            return hash_range(arr.Data, arr.Count);
+        }
+    };
+
+    struct FBuffer {
+        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Buffer);
+
+        struct FElement {
+            FRawBufferID BufferId;
+            u32 Offset;
+            u32 Size;
+
+            TIE_AS_TUPLE_STRUCT(FElement)
+        };
+
         FBindingIndex Index;
-        const u16 ElementCapacity;
-        u16 ElementCount;
-
-        FBaseResource(FBindingIndex index, u16 elementCapacity, u16 elementCount) NOEXCEPT
-        :   Index(index), ElementCapacity(elementCapacity), ElementCount(elementCount)
-        {}
-
-        bool operator ==(const FBaseResource& other) const NOEXCEPT {
-            return (Index == other.Index && ElementCapacity == other.ElementCapacity && ElementCount == other.ElementCount);
-        }
-        bool operator !=(const FBaseResource& other) const NOEXCEPT { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const FBaseResource& res) {
-            return hash_tuple(res.Index, res.ElementCount);
-        }
-    };
-    struct FBaseResourceWithState : FBaseResource {
         EResourceState State;
-
-        FBaseResourceWithState(FBindingIndex index, u16 elementCapacity, u16 elementCount, EResourceState state) NOEXCEPT
-        :   FBaseResource(index, elementCapacity, elementCount), State(state)
-        {}
-
-        bool operator ==(const FBaseResourceWithState& other) const NOEXCEPT {
-            return (static_cast<const FBaseResource&>(*this) == other && State == other.State);
-        }
-        bool operator !=(const FBaseResourceWithState& other) const NOEXCEPT { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const FBaseResourceWithState& res) {
-            return hash_tuple(static_cast<const FBaseResource&>(res), res.State);
-        }
-    };
-    struct FBaseResourceWithDynamicOffsets : FBaseResourceWithState {
         u32 DynamicOffsetIndex;
         u32 StaticSize;
         u32 ArrayStride;
+        TElementArray<FElement> Elements;
 
-        FBaseResourceWithDynamicOffsets(FBindingIndex index, u16 elementCapacity, u16 elementCount, EResourceState state,
-            u32 dynamicOffsetIndex, u32 staticSize, u32 arrayStride ) NOEXCEPT
-        :   FBaseResourceWithState(index, elementCapacity, elementCount, state)
-        ,   DynamicOffsetIndex(dynamicOffsetIndex), StaticSize(staticSize), ArrayStride(arrayStride)
-        {}
-
-        bool operator ==(const FBaseResourceWithDynamicOffsets& other) const NOEXCEPT {
-            return (static_cast<const FBaseResourceWithState&>(*this) == other &&
-                DynamicOffsetIndex == other.DynamicOffsetIndex && StaticSize == other.StaticSize && ArrayStride == other.ArrayStride );
-        }
-        bool operator !=(const FBaseResourceWithDynamicOffsets& other) const NOEXCEPT { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const FBaseResourceWithDynamicOffsets& res) {
-            return hash_tuple(static_cast<const FBaseResourceWithState&>(res), res.DynamicOffsetIndex, res.StaticSize, res.ArrayStride);
-        }
+        TIE_AS_TUPLE_STRUCT(FBuffer)
     };
 
-    template <EDescriptorType _TypeId, typename _Element, class _BaseResource = FBaseResource >
-    struct TResource : _BaseResource {
-        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, _TypeId);
+    struct FTexelBuffer {
+        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::TexelBuffer);
 
-        using base_type = _BaseResource;
-        using base_type::base_type;
-        using element_type = _Element;
+        struct FElement {
+            FRawBufferID BufferId;
+            FBufferViewDesc Desc;
 
-        element_type Elements[1];
+            TIE_AS_TUPLE_STRUCT(FElement)
+        };
 
-        TMemoryView<element_type> MakeView() { return { Elements, base_type::ElementCount }; }
-        TMemoryView<const element_type> MakeView() const { return { Elements, base_type::ElementCount }; }
+        FBindingIndex Index;
+        EResourceState State;
+        TElementArray<FElement> Elements;
 
-        bool operator ==(const TResource& other) const {
-            if (static_cast<const base_type&>(*this) != other ||
-                other.ElementCount != this->ElementCount )
-                return false;
-            return std::equal(
-                Elements, Elements + this->ElementCount,
-                other.Elements, other.Elements + other.ElementCount );
-        }
-        bool operator !=(const TResource& other) const { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const TResource& res) {
-            hash_t hash{ hash_value(static_cast<const base_type&>(res)) };
-            hash_range(hash, res.Elements, res.ElementCount);
-            return hash;
-        }
+        TIE_AS_TUPLE_STRUCT(FTexelBuffer)
     };
-    template <EDescriptorType _TypeId, typename _Element>
-    using TResourceWithState = TResource<_TypeId, _Element, FBaseResourceWithState>;
 
-    // FBuffer
-    struct FBufferElement {
-        FRawBufferID BufferId;
-        u32 Offset;
-        u32 Size;
+    struct FImage {
+        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Image);
 
-        bool operator ==(const FBufferElement& other) const { return (BufferId == other.BufferId && Offset == other.Offset && Size == other.Size); }
-        bool operator !=(const FBufferElement& other) const { return (not operator ==(other)); }
+        struct FElement {
+            FRawImageID ImageId;
+            Meta::TOptional<FImageViewDesc> Desc;
 
-        friend hash_t hash_value(const FBufferElement& res) { return hash_tuple(res.BufferId, res.Offset, res.Size); }
+            TIE_AS_TUPLE_STRUCT(FElement)
+        };
+
+        FBindingIndex Index;
+        EResourceState State;
+        EImageSampler ImageType;
+        TElementArray<FElement> Elements;
+
+        TIE_AS_TUPLE_STRUCT(FImage)
     };
-    using FBuffer = TResource<EDescriptorType::TexelBuffer, FBufferElement, FBaseResourceWithDynamicOffsets>;
 
-    // FTexelBuffer
-    struct FTexelBufferElement {
-        FRawBufferID BufferId;
-        FBufferViewDesc Desc;
+    struct FTexture {
+        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Texture);
 
-        bool operator ==(const FTexelBufferElement& other) const { return (BufferId == other.BufferId && Desc == other.Desc); }
-        bool operator !=(const FTexelBufferElement& other) const { return (not operator ==(other)); }
+        struct FElement {
+            FRawImageID ImageId;
+            FRawSamplerID SamplerId;
+            Meta::TOptional<FImageViewDesc> Desc;
 
-        friend hash_t hash_value(const FTexelBufferElement& res) { return hash_tuple(res.BufferId, res.Desc); }
+            TIE_AS_TUPLE_STRUCT(FElement)
+        };
+
+        FBindingIndex Index;
+        EResourceState State;
+        EImageSampler SamplerType;
+        TElementArray<FElement> Elements;
+
+        TIE_AS_TUPLE_STRUCT(FTexture)
     };
-    using FTexelBuffer = TResourceWithState<EDescriptorType::TexelBuffer, FTexelBufferElement>;
 
-    // FImage
-    struct FImageElement {
-        FRawImageID ImageId;
-        Meta::TOptional<FImageViewDesc> Desc;
+    struct FSampler {
+        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Sampler);
 
-        bool operator ==(const FImageElement& other) const { return (ImageId == other.ImageId && Desc == other.Desc); }
-        bool operator !=(const FImageElement& other) const { return (not operator ==(other)); }
+        struct FElement {
+            FRawSamplerID SamplerId;
 
-        friend hash_t hash_value(const FImageElement& res) { return hash_tuple(res.ImageId, res.Desc); }
+            TIE_AS_TUPLE_STRUCT(FElement)
+        };
+
+        FBindingIndex Index;
+        TElementArray<FElement> Elements;
+
+        TIE_AS_TUPLE_STRUCT(FSampler)
     };
-    using FImage = TResourceWithState<EDescriptorType::Image, FImageElement>;
 
-    // FTexture
-    struct FTextureElement {
-        FRawImageID ImageId;
-        FRawSamplerID SamplerId;
-        Meta::TOptional<FImageViewDesc> Desc;
+    struct FRayTracingScene {
+        STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::RayTracingScene);
 
-        bool operator ==(const FTextureElement& other) const { return (ImageId == other.ImageId && SamplerId == other.SamplerId && Desc == other.Desc); }
-        bool operator !=(const FTextureElement& other) const { return (not operator ==(other)); }
+        struct FElement {
+            FRawRTSceneID SceneId;
 
-        friend hash_t hash_value(const FTextureElement& res) { return hash_tuple(res.ImageId, res.SamplerId, res.Desc); }
+            TIE_AS_TUPLE_STRUCT(FElement)
+        };
+
+        FBindingIndex Index;
+        TElementArray<FElement> Elements;
+
+        TIE_AS_TUPLE_STRUCT(FRayTracingScene)
     };
-    using FTexture = TResourceWithState<EDescriptorType::Texture, FTextureElement>;
-
-    // FSampler
-    struct FSamplerElement {
-        FRawSamplerID SamplerId;
-
-        bool operator ==(const FSamplerElement& other) const { return (SamplerId == other.SamplerId); }
-        bool operator !=(const FSamplerElement& other) const { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const FSamplerElement& res) { return hash_value(res.SamplerId); }
-    };
-    using FSampler = TResource<EDescriptorType::Sampler, FSamplerElement>;
-
-    // FRayTracingScene
-    struct FRayTracingSceneElement {
-        FRawRTSceneID SceneId;
-
-        bool operator ==(const FRayTracingSceneElement& other) const { return (SceneId == other.SceneId); }
-        bool operator !=(const FRayTracingSceneElement& other) const { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const FRayTracingSceneElement& res) { return hash_value(res.SceneId); }
-    };
-    using FRayTracingScene = TResource<EDescriptorType::RayTracingScene, FRayTracingSceneElement>;
 
     // FUniform
     struct FUniform {
@@ -234,7 +213,12 @@ public:
         template <typename _Each>
         void EachUniform(_Each&& each);
         template <typename _Each>
-        void EachUniform(_Each&& each) const { const_cast<FDynamicData*>(this)->EachUniform(each); }
+        void EachUniform(_Each&& each) const { const_cast<FDynamicData*>(this)->EachUniform(std::forward<_Each>(each)); }
+
+        template <typename _Pred>
+        bool UniformByPred(_Pred&& pred);
+        template <typename _Pred>
+        bool UniformByPred(_Pred&& pred) const { return const_cast<FDynamicData*>(this)->UniformByPred(std::forward<_Pred>(pred)); }
 
         TMemoryView<u32> DynamicOffsets() { return { reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + DynamicOffsetsOffset), DynamicOffsetsCount }; }
         TMemoryView<const u32> DynamicOffsets() const { return { reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(this) + DynamicOffsetsOffset), DynamicOffsetsCount }; }
@@ -247,18 +231,13 @@ public:
     ~FPipelineResources();
 
     FPipelineResources(const FPipelineResources& other);
-    FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT
-    :   _dynamicData(std::move(rvalue._dynamicData))
-    ,   _allowEmptyResources(rvalue._allowEmptyResources) {
-        SetCachedId_(rvalue.CachedId_());
-        rvalue.SetCachedId_(FRawPipelineResourcesID{0});
-    }
+    FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT;
 
-    FRawDescriptorSetLayoutID Layout() const { READSCOPELOCK(_rwlock); return (_dynamicData.LayoutId); }
-    TMemoryView<const u32> DynamicOffsets() const { READSCOPELOCK(_rwlock); return _dynamicData.DynamicOffsets(); }
+    FRawDescriptorSetLayoutID Layout() const { return _dynamicData.LockShared()->LayoutId; }
+    TMemoryView<const u32> DynamicOffsets() const { return _dynamicData.LockShared()->DynamicOffsets(); }
 
-    bool AllowEmptyResources() const { READSCOPELOCK(_rwlock); return _allowEmptyResources; }
-    void SetAllowEmptyResources(bool value) { WRITESCOPELOCK(_rwlock); _allowEmptyResources = value; }
+    bool AllowEmptyResources() const { return _allowEmptyResources; }
+    void SetAllowEmptyResources(bool value) { _allowEmptyResources = value; }
 
     bool HasImage(const FUniformID& id) const;
     bool HasSampler(const FUniformID& id) const;
@@ -288,7 +267,7 @@ public:
 
     FPipelineResources& SetBufferBase(const FUniformID& id, u32 offset, u32 elementIndex = 0);
 
-    FPipelineResources& BindTexelBuffer(const FUniformID& name, FRawBufferID buffer, const FBufferViewDesc& desc, u32 elementIndex = 0);
+    FPipelineResources& BindTexelBuffer(const FUniformID& id, FRawBufferID buffer, const FBufferViewDesc& desc, u32 elementIndex = 0);
     FPipelineResources& BindRayTracingScene(const FUniformID& id, FRawRTSceneID scene, u32 elementIndex = 0);
 
     void Reset(const FUniformID& uniform);
@@ -303,22 +282,23 @@ public:
     static hash_t ComputeDynamicDataHash(const FDynamicData& dynamicData) NOEXCEPT;
     static bool CompareDynamicData(const FDynamicData& lhs, const FDynamicData& rhs) NOEXCEPT;
 
+    static FDynamicData CloneDynamicData(const FPipelineResources& desc);
+    static FDynamicData&& StealDynamicData(FPipelineResources& desc) NOEXCEPT;
+
     static FRawPipelineResourcesID Cached(const FPipelineResources& resource) { return resource.CachedId_(); }
     static void SetCached(const FPipelineResources& resource, FRawPipelineResourcesID id) { resource.SetCachedId_(id); }
 
 private:
     using FCachedID_ = std::atomic< FRawPipelineResourcesID::FPackedData >;
 
-    FReadWriteLock _rwlock;
+
     mutable FCachedID_ _cachedId;
-    FDynamicData _dynamicData;
+    TRHIThreadSafe<FDynamicData> _dynamicData;
     bool _allowEmptyResources{ false };
 
     FRawPipelineResourcesID CachedId_() const { return FRawPipelineResourcesID(_cachedId.load(std::memory_order_acquire)); }
     void SetCachedId_(FRawPipelineResourcesID id) const { _cachedId.store(id.Packed, std::memory_order_relaxed); }
     void ResetCachedId_() const { _cachedId.store(UMax, std::memory_order_relaxed); }
-
-    u32& DynamicOffset_(u32 i) { return _dynamicData.DynamicOffsets()[i]; }
 
     template <typename T>
     T& Resource_Unlocked_(const FUniformID& id);
@@ -347,6 +327,27 @@ void FPipelineResources::FDynamicData::EachUniform(_Each&& each) {
         default: AssertNotImplemented();
         }
     }
+}
+//----------------------------------------------------------------------------
+template <typename _Pred>
+bool FPipelineResources::FDynamicData::UniformByPred(_Pred&& pred) {
+    for (const FUniform& uni : Uniforms()) {
+        FRawMemory rawData = Storage.MakeView().CutStartingAt(uni.Offset);
+
+        switch (uni.Type) {
+        case EDescriptorType::Unknown: break;
+        case EDescriptorType::Buffer: if (pred(uni.Id, *rawData.Peek<FBuffer>())) return true; break;
+        case EDescriptorType::TexelBuffer: if (pred(uni.Id, *rawData.Peek<FTexelBuffer>())) return true; break;
+        case EDescriptorType::SubpassInput:
+        case EDescriptorType::Image: if (pred(uni.Id, *rawData.Peek<FImage>())) return true; break;
+        case EDescriptorType::Texture: if (pred(uni.Id, *rawData.Peek<FTexture>())) return true; break;
+        case EDescriptorType::Sampler: if (pred(uni.Id, *rawData.Peek<FSampler>())) return true; break;
+        case EDescriptorType::RayTracingScene: if (pred(uni.Id, *rawData.Peek<FRayTracingScene>())) return true; break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

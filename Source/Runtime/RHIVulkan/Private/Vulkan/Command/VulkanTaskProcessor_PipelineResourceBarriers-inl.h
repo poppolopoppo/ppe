@@ -17,7 +17,7 @@ inline FVulkanTaskProcessor::FPipelineResourceBarriers::FPipelineResourceBarrier
 {}
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FBuffer& buffer) {
-    for (const auto& elem : buffer.MakeView()) {
+    for (const auto& elem : buffer.Elements.MakeView()) {
         const FVulkanLocalBuffer* const pLocalBuffer = _processor.ToLocal_(elem.BufferId);
         if (not pLocalBuffer)
             continue;
@@ -60,7 +60,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FTexelBuffer& texelBuffer) {
-    for (const auto& elem : texelBuffer.MakeView()) {
+    for (const auto& elem : texelBuffer.Elements.MakeView()) {
         const FVulkanLocalBuffer* const pLocalBuffer = _processor.ToLocal_(elem.BufferId);
         if (not pLocalBuffer)
             continue;
@@ -78,7 +78,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FImage& image) {
-    for (const auto& elem : image.MakeView()) {
+    for (const auto& elem : image.Elements.MakeView()) {
         const FVulkanLocalImage* const pLocalImage = _processor.ToLocal_(elem.ImageId);
 
         if (pLocalImage) {
@@ -91,7 +91,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FTexture& texture) {
-    for (const auto& elem : texture.MakeView()) {
+    for (const auto& elem : texture.Elements.MakeView()) {
         const FVulkanLocalImage* const pLocalImage = _processor.ToLocal_(elem.ImageId);
 
         if (pLocalImage) {
@@ -103,7 +103,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FRayTracingScene& scene) {
-    for (const auto& elem : scene.MakeView()) {
+    for (const auto& elem : scene.Elements.MakeView()) {
         const FVulkanRTLocalScene* const pLocalScene = _processor.ToLocal_(elem.SceneId);
         if (not pLocalScene)
             continue;

@@ -119,6 +119,11 @@ CONSTEXPR bool is_pod_type(THashMemoizer<T, _Hash, _Equal>*) NOEXCEPT {
     return Meta::is_pod_v<T>;
 }
 //----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR THashMemoizer<T> Memoize(const T& value) {
+    return { value };
+}
+//----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 using TBasicStringViewHashMemoizer = THashMemoizer<
     TBasicStringView<_Char>,

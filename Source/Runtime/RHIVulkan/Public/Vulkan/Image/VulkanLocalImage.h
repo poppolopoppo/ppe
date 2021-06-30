@@ -69,8 +69,13 @@ public:
     void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default)) const;
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
-    VkImageView MakeView(const FVulkanDevice& device, bool isDefault, FImageViewDesc& desc) const {
-        return _imageData->MakeView(device, isDefault, desc);
+    using FImageViewDescMemoized = FVulkanImage::FImageViewDescMemoized;
+
+    VkImageView MakeView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const {
+        return _imageData->MakeView(device, desc);
+    }
+    VkImageView MakeView(const FVulkanDevice& device, const Meta::TOptional<FImageViewDesc>& desc) const {
+        return _imageData->MakeView(device, desc);
     }
 
 private:

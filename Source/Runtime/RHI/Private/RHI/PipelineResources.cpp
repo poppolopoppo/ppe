@@ -13,27 +13,39 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FPipelineResources::~FPipelineResources() {
-    WRITESCOPELOCK(_rwlock);
+    ONLY_IF_RHIDEBUG( _dynamicData.LockExclusive() );
 }
 //----------------------------------------------------------------------------
 FPipelineResources::FPipelineResources(const FPipelineResources& other)
-:   _dynamicData(other._dynamicData)
+:   _dynamicData(*other._dynamicData.LockShared())
 ,   _allowEmptyResources(other._allowEmptyResources) {
-    READSCOPELOCK(_rwlock);
     STATIC_ASSERT(FCachedID_::is_always_lock_free);
     SetCachedId_(other.CachedId_());
+}
+//----------------------------------------------------------------------------
+FPipelineResources::FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT
+:   _dynamicData(std::move(*rvalue._dynamicData.LockExclusive()))
+,   _allowEmptyResources(rvalue._allowEmptyResources) {
+    SetCachedId_(rvalue.CachedId_());
+    rvalue.SetCachedId_(FRawPipelineResourcesID{0});
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T& FPipelineResources::Resource_Unlocked_(const FUniformID& id) {
     Assert(id.Valid());
 
-    const auto uniforms = _dynamicData.Uniforms();
+    const auto exclusiveData = _dynamicData.LockExclusive();
+
+    const auto uniforms = exclusiveData->Uniforms();
     const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), id);
     if (uniforms.end() != it && *it == id) {
         Assert_NoAssume(it->Type == T::TypeId);
-        return *_dynamicData.Storage.MakeView().CutStartingAt(it->Offset).Peek<T>();
+        return *exclusiveData->Storage.MakeView().CutStartingAt(it->Offset).Peek<T>();
     }
 
     LOG(RHI, Fatal, L"failed to find uniform in pipeline resource with id: {0}", id);
@@ -44,7 +56,7 @@ template <typename T>
 bool FPipelineResources::HasResource_Unlocked_(const FUniformID& id) const {
     Assert(id.Valid());
 
-    const auto uniforms = _dynamicData.Uniforms();
+    const auto uniforms = _dynamicData.LockShared()->Uniforms();
     const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), id);
     if (uniforms.end() != it && *it == id)
         return (it->Type == T::TypeId);
@@ -53,60 +65,53 @@ bool FPipelineResources::HasResource_Unlocked_(const FUniformID& id) const {
 }
 //----------------------------------------------------------------------------
 bool FPipelineResources::HasImage(const FUniformID& id) const {
-    READSCOPELOCK(_rwlock);
     return HasResource_Unlocked_<FImage>(id);
 }
 bool FPipelineResources::HasSampler(const FUniformID& id) const {
-    READSCOPELOCK(_rwlock);
     return HasResource_Unlocked_<FSampler>(id);
 }
 bool FPipelineResources::HasTexture(const FUniformID& id) const {
-    READSCOPELOCK(_rwlock);
     return HasResource_Unlocked_<FTexture>(id);
 }
 bool FPipelineResources::HasBuffer(const FUniformID& id) const {
-    READSCOPELOCK(_rwlock);
     return HasResource_Unlocked_<FBuffer>(id);
 }
 bool FPipelineResources::HasTexelBuffer(const FUniformID& id) const {
-    READSCOPELOCK(_rwlock);
     return HasResource_Unlocked_<FTexelBuffer>(id);
 }
 bool FPipelineResources::HasRayTracingScene(const FUniformID& id) const {
-    READSCOPELOCK(_rwlock);
     return HasResource_Unlocked_<FRayTracingScene>(id);
 }
 //----------------------------------------------------------------------------
 void FPipelineResources::Reset(const FUniformID& uniform) {
     Assert(uniform.Valid());
-    WRITESCOPELOCK(_rwlock);
 
-    const auto uniforms = _dynamicData.Uniforms();
+    const auto exclusiveData = _dynamicData.LockExclusive();
+
+    const auto uniforms = exclusiveData->Uniforms();
     const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), uniform);
     Assert(uniforms.end() != it);
     Assert(*it == uniform);
 
-    const FRawMemory rawData{ _dynamicData.Storage.MakeView().CutStartingAt(it->Offset) };
+    const FRawMemory rawData{ exclusiveData->Storage.MakeView().CutStartingAt(it->Offset) };
 
     switch (it->Type) {
     case EDescriptorType::Unknown: break;
-    case EDescriptorType::Buffer: rawData.Peek<FBuffer>()->ElementCount = 0; break;
-    case EDescriptorType::TexelBuffer: rawData.Peek<FTexelBuffer>()->ElementCount = 0; break;
+    case EDescriptorType::Buffer: rawData.Peek<FBuffer>()->Elements.Count = 0; break;
+    case EDescriptorType::TexelBuffer: rawData.Peek<FTexelBuffer>()->Elements.Count = 0; break;
     case EDescriptorType::SubpassInput:
-    case EDescriptorType::Image: rawData.Peek<FImage>()->ElementCount = 0; break;
-    case EDescriptorType::Texture: rawData.Peek<FTexture>()->ElementCount = 0; break;
-    case EDescriptorType::Sampler: rawData.Peek<FSampler>()->ElementCount = 0; break;
-    case EDescriptorType::RayTracingScene: rawData.Peek<FRayTracingScene>()->ElementCount = 0; break;
+    case EDescriptorType::Image: rawData.Peek<FImage>()->Elements.Count = 0; break;
+    case EDescriptorType::Texture: rawData.Peek<FTexture>()->Elements.Count = 0; break;
+    case EDescriptorType::Sampler: rawData.Peek<FSampler>()->Elements.Count = 0; break;
+    case EDescriptorType::RayTracingScene: rawData.Peek<FRayTracingScene>()->Elements.Count = 0; break;
     }
 
     ResetCachedId_();
 }
 //----------------------------------------------------------------------------
 void FPipelineResources::ResetAll() {
-    WRITESCOPELOCK(_rwlock);
-
-    _dynamicData.EachUniform([](auto&, auto& resource) {
-        resource.ElementCount = 0;
+    _dynamicData.LockShared()->EachUniform([](auto&, auto& resource) {
+        resource.Elements.Count = 0;
     });
 
     ResetCachedId_();
@@ -117,16 +122,15 @@ void FPipelineResources::ResetAll() {
 FPipelineResources& FPipelineResources::BindImage(const FUniformID& id, FRawImageID image, u32 elementIndex) {
     Assert(id.Valid());
     Assert(image.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FImage>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
-    if (element.ImageId != image || element.Desc.has_value() || resource.ElementCount <= elementIndex )
+    if (element.ImageId != image || element.Desc.has_value() || resource.Elements.Count <= elementIndex )
         ResetCachedId_();
 
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
     element.ImageId = image;
     element.Desc.reset();
 
@@ -136,16 +140,15 @@ FPipelineResources& FPipelineResources::BindImage(const FUniformID& id, FRawImag
 FPipelineResources& FPipelineResources::BindImage(const FUniformID& id, FRawImageID image, const FImageViewDesc& desc, u32 elementIndex) {
     Assert(id.Valid());
     Assert(image.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FImage>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
-    if (element.ImageId != image || element.Desc != desc || resource.ElementCount <= elementIndex )
+    if (element.ImageId != image || element.Desc != desc || resource.Elements.Count <= elementIndex )
         ResetCachedId_();
 
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
     element.ImageId = image;
     element.Desc = desc;
 
@@ -159,18 +162,17 @@ FPipelineResources& FPipelineResources::BindImages(const FUniformID& id, TMemory
 //----------------------------------------------------------------------------
 FPipelineResources& FPipelineResources::BindImages(const FUniformID& id, TMemoryView<const FRawImageID> images) {
     Assert(id.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FImage>(id);
 
-    Assert(images.size() <= resource.ElementCapacity);
-    bool needUpdate = (images.size() != resource.ElementCount);
-    resource.ElementCount = checked_cast<u16>(images.size());
+    Assert(images.size() <= resource.Elements.Capacity);
+    bool needUpdate = (images.size() != resource.Elements.Count);
+    resource.Elements.Count = checked_cast<u16>(images.size());
 
     forrange(i, 0, images.size()) {
         Assert(images[i].Valid());
 
-        FImageElement& element = resource.Elements[i];
+        FImage::FElement& element = resource.Elements[i];
         needUpdate |= (element.ImageId != images[i] || element.Desc.has_value());
 
         element.ImageId = images[i];
@@ -189,16 +191,15 @@ FPipelineResources& FPipelineResources::BindTexture(const FUniformID& id, FRawIm
     Assert(id.Valid());
     Assert(image.Valid());
     Assert(sampler.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FTexture>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
-    if (element.ImageId != image || element.SamplerId != sampler || element.Desc.has_value() || resource.ElementCount <= elementIndex )
+    if (element.ImageId != image || element.SamplerId != sampler || element.Desc.has_value() || resource.Elements.Count <= elementIndex )
         ResetCachedId_();
 
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
     element.ImageId = image;
     element.SamplerId = sampler;
     element.Desc.reset();
@@ -210,16 +211,15 @@ FPipelineResources& FPipelineResources::BindTexture(const FUniformID& id, FRawIm
     Assert(id.Valid());
     Assert(image.Valid());
     Assert(sampler.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FTexture>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
-    if (element.ImageId != image || element.SamplerId != sampler || element.Desc != desc || resource.ElementCount <= elementIndex )
+    if (element.ImageId != image || element.SamplerId != sampler || element.Desc != desc || resource.Elements.Count <= elementIndex )
         ResetCachedId_();
 
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
     element.ImageId = image;
     element.SamplerId = sampler;
     element.Desc = desc;
@@ -235,13 +235,12 @@ FPipelineResources& FPipelineResources::BindTextures(const FUniformID& id, TMemo
 FPipelineResources& FPipelineResources::BindTextures(const FUniformID& id, TMemoryView<const FRawImageID> images, FRawSamplerID sampler) {
     Assert(id.Valid());
     Assert(sampler.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FTexture>(id);
 
-    Assert(images.size() <= resource.ElementCapacity);
-    bool needUpdate = (images.size() != resource.ElementCount);
-    resource.ElementCount = checked_cast<u16>(images.size());
+    Assert(images.size() <= resource.Elements.Capacity);
+    bool needUpdate = (images.size() != resource.Elements.Count);
+    resource.Elements.Count = checked_cast<u16>(images.size());
 
     forrange(i, 0, images.size()) {
         Assert(images[i].Valid());
@@ -265,16 +264,15 @@ FPipelineResources& FPipelineResources::BindTextures(const FUniformID& id, TMemo
 FPipelineResources& FPipelineResources::BindSampler(const FUniformID& id, FRawSamplerID sampler, u32 elementIndex) {
     Assert(id.Valid());
     Assert(sampler.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FSampler>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
-    if (element.SamplerId != sampler || resource.ElementCount <= elementIndex )
+    if (element.SamplerId != sampler || resource.Elements.Count <= elementIndex )
         ResetCachedId_();
 
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
     element.SamplerId = sampler;
 
     return (*this);
@@ -287,13 +285,12 @@ FPipelineResources& FPipelineResources::BindSamplers(const FUniformID& id, TMemo
 //----------------------------------------------------------------------------
 FPipelineResources& FPipelineResources::BindSamplers(const FUniformID& id, TMemoryView<const FRawSamplerID> samplers) {
     Assert(id.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FSampler>(id);
 
-    Assert(samplers.size() <= resource.ElementCapacity);
-    bool needUpdate = (samplers.size() != resource.ElementCount);
-    resource.ElementCount = checked_cast<u16>(samplers.size());
+    Assert(samplers.size() <= resource.Elements.Capacity);
+    bool needUpdate = (samplers.size() != resource.Elements.Count);
+    resource.Elements.Count = checked_cast<u16>(samplers.size());
 
     forrange(i, 0, samplers.size()) {
         Assert(samplers[i].Valid());
@@ -319,16 +316,15 @@ FPipelineResources& FPipelineResources::BindBuffer(const FUniformID& id, FRawBuf
 FPipelineResources& FPipelineResources::BindBuffer(const FUniformID& id, FRawBufferID buffer, u32 offset, u32 size, u32 elementIndex) {
     Assert(id.Valid());
     Assert(buffer.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FBuffer>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
     Assert_NoAssume( UMax == size || ( (size >= resource.StaticSize) &&
         (resource.ArrayStride == 0 || (size - resource.StaticSize) % resource.ArrayStride == 0)) );
 
-    bool needUpdate = (element.BufferId != buffer || element.Size != size || resource.ElementCount <= elementIndex);
+    bool needUpdate = (element.BufferId != buffer || element.Size != size || resource.Elements.Count <= elementIndex);
 
     if (resource.DynamicOffsetIndex == FPipelineDesc::StaticOffset) {
         needUpdate |= (element.Offset != offset);
@@ -336,13 +332,13 @@ FPipelineResources& FPipelineResources::BindBuffer(const FUniformID& id, FRawBuf
     }
     else {
         Assert_NoAssume( offset >= element.Offset && offset - element.Offset < UMax );
-        DynamicOffset_(resource.DynamicOffsetIndex + elementIndex) = checked_cast<u32>(offset - element.Offset);
+        _dynamicData.LockExclusive()->DynamicOffsets()[resource.DynamicOffsetIndex + elementIndex] = checked_cast<u32>(offset - element.Offset);
     }
 
     if (needUpdate)
         ResetCachedId_();
 
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
     element.BufferId = buffer;
     element.Size = size;
 
@@ -356,13 +352,12 @@ FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemor
 //----------------------------------------------------------------------------
 FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemoryView<const FRawBufferID> buffers) {
     Assert(id.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FBuffer>(id);
 
-    Assert(buffers.size() <= resource.ElementCapacity);
-    bool needUpdate = (buffers.size() != resource.ElementCount);
-    resource.ElementCount = checked_cast<u16>(buffers.size());
+    Assert(buffers.size() <= resource.Elements.Capacity);
+    bool needUpdate = (buffers.size() != resource.Elements.Count);
+    resource.Elements.Count = checked_cast<u16>(buffers.size());
 
     constexpr u32 offset = 0;
     constexpr u32 size = UMax;
@@ -378,7 +373,7 @@ FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemor
         }
         else {
             Assert_NoAssume( offset >= element.Offset && offset - element.Offset < UMax );
-            DynamicOffset_(resource.DynamicOffsetIndex + i) = checked_cast<u32>(offset - element.Offset);
+            _dynamicData.LockExclusive()->DynamicOffsets()[resource.DynamicOffsetIndex + i] = checked_cast<u32>(offset - element.Offset);
         }
 
         element.BufferId = buffers[i];
@@ -393,18 +388,17 @@ FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemor
 //----------------------------------------------------------------------------
 FPipelineResources& FPipelineResources::SetBufferBase(const FUniformID& id, u32 offset, u32 elementIndex) {
     Assert(id.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FBuffer>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
 
-    bool needUpdate = (resource.ElementCount <= elementIndex);
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    bool needUpdate = (resource.Elements.Count <= elementIndex);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
 
     auto& element = resource.Elements[elementIndex];
     if (resource.DynamicOffsetIndex != FPipelineDesc::StaticOffset) {
         needUpdate |= (element.Offset != offset);
-        u32& dynOffset = DynamicOffset_(resource.DynamicOffsetIndex + elementIndex);
+        u32& dynOffset = _dynamicData.LockExclusive()->DynamicOffsets()[resource.DynamicOffsetIndex + elementIndex];
         dynOffset = static_cast<u32>((dynOffset + element.Offset - offset) & 0xFFFFFFFFull);
         element.Offset = offset;
     }
@@ -415,16 +409,15 @@ FPipelineResources& FPipelineResources::SetBufferBase(const FUniformID& id, u32 
     return (*this);
 }
 //----------------------------------------------------------------------------
-FPipelineResources& FPipelineResources::BindTexelBuffer(const FUniformID& name, FRawBufferID buffer, const FBufferViewDesc& desc, u32 elementIndex) {
-    Assert(name.Valid());
+FPipelineResources& FPipelineResources::BindTexelBuffer(const FUniformID& id, FRawBufferID buffer, const FBufferViewDesc& desc, u32 elementIndex) {
+    Assert(id.Valid());
     Assert(buffer.Valid());
-    WRITESCOPELOCK(_rwlock);
 
-    auto& resource = Resource_Unlocked_<FTexelBuffer>(name);
-    Assert(elementIndex < resource.ElementCapacity);
+    auto& resource = Resource_Unlocked_<FTexelBuffer>(id);
+    Assert(elementIndex < resource.Elements.Capacity);
 
-    bool needUpdate = (resource.ElementCount <= elementIndex);
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    bool needUpdate = (resource.Elements.Count <= elementIndex);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
 
     auto& element = resource.Elements[elementIndex];
     needUpdate |= (element.BufferId != buffer || element.Desc != desc);
@@ -443,13 +436,12 @@ FPipelineResources& FPipelineResources::BindTexelBuffer(const FUniformID& name, 
 FPipelineResources& FPipelineResources::BindRayTracingScene(const FUniformID& id, FRawRTSceneID scene, u32 elementIndex) {
     Assert(id.Valid());
     Assert(scene.Valid());
-    WRITESCOPELOCK(_rwlock);
 
     auto& resource = Resource_Unlocked_<FRayTracingScene>(id);
-    Assert(elementIndex < resource.ElementCapacity);
+    Assert(elementIndex < resource.Elements.Capacity);
 
-    bool needUpdate = (resource.ElementCount <= elementIndex);
-    resource.ElementCount = Max(checked_cast<u16>(elementIndex + 1), resource.ElementCount);
+    bool needUpdate = (resource.Elements.Count <= elementIndex);
+    resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
 
     auto& element = resource.Elements[elementIndex];
     needUpdate |= (element.SceneId != scene);
@@ -466,16 +458,21 @@ void FPipelineResources::Initialize(FPipelineResources* pResources, FRawDescript
     Assert(pResources);
     Assert(layoutId.Valid());
 
+    const auto exclusiveData = pResources->_dynamicData.LockExclusive();
+
     pResources->ResetCachedId_();
-    pResources->_dynamicData = data;
-    pResources->_dynamicData.LayoutId = layoutId;
+
+    *exclusiveData = data;
+    exclusiveData->LayoutId = layoutId;
 }
 //----------------------------------------------------------------------------
 hash_t FPipelineResources::ComputeDynamicDataHash(const FDynamicData& dynamicData) NOEXCEPT {
     hash_t h{ hash_value(dynamicData.UniformsCount) };
+
     dynamicData.EachUniform([&h](const FUniformID& id, auto& res) {
         hash_combine(h, id, res);
     });
+
     return h;
 }
 //----------------------------------------------------------------------------
@@ -490,7 +487,7 @@ void FPipelineResources::CreateDynamicData(
         sizeof(self::FBuffer), sizeof(self::FImage), sizeof(self::FTexture), sizeof(self::FSampler), sizeof(self::FRayTracingScene)
     }));
     constexpr u32 sizeofElements = static_cast<u32>(std::max({
-        sizeof(self::FBufferElement), sizeof(self::FImageElement), sizeof(self::FTextureElement), sizeof(self::FSamplerElement), sizeof(self::FRayTracingSceneElement)
+        sizeof(self::FBuffer::FElement), sizeof(self::FImage::FElement), sizeof(self::FTexture::FElement), sizeof(self::FSampler::FElement), sizeof(self::FRayTracingScene::FElement)
     }));
 
     const size_t requestedSize{
@@ -524,58 +521,56 @@ void FPipelineResources::CreateDynamicData(
             [&](const FPipelineDesc::FTexture& tex) {
                 current.Type = FTexture::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
-                const auto block = rawData.Eat(sizeof(FTexture) + sizeof(FTextureElement) * (elementCapacity - 1));
+                const auto block = rawData.Eat(sizeof(FTexture) + sizeof(FTexture::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FTexture) {
                     it.second.Index,
-                    elementCapacity,
-                    elementCount,
-                    tex.State
+                    tex.State,
+                    tex.Type,
+                    { elementCapacity, elementCount }
                 };
             },
             [&](const FPipelineDesc::FSampler& ) {
                 current.Type = FSampler::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
-                const auto block = rawData.Eat(sizeof(FSampler) + sizeof(FSamplerElement) * (elementCapacity - 1));
+                const auto block = rawData.Eat(sizeof(FSampler) + sizeof(FSampler::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FSampler) {
                     it.second.Index,
-                    elementCapacity,
-                    elementCount
+                    { elementCapacity, elementCount }
                 };
             },
             [&](const FPipelineDesc::FSubpassInput& spi) {
                 current.Type = FImage::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
-                const auto block = rawData.Eat(sizeof(FImage) + sizeof(FImageElement) * (elementCapacity - 1));
+                const auto block = rawData.Eat(sizeof(FImage) + sizeof(FImage::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FImage) {
                     it.second.Index,
-                    elementCapacity,
-                    elementCount,
-                    spi.State
+                    spi.State,
+                    Default,
+                    { elementCapacity, elementCount }
                 };
             },
             [&](const FPipelineDesc::FImage& img) {
                 current.Type = FImage::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
-                const auto block = rawData.Eat(sizeof(FImage) + sizeof(FImageElement) * (elementCapacity - 1));
+                const auto block = rawData.Eat(sizeof(FImage) + sizeof(FImage::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FImage) {
                     it.second.Index,
-                    elementCapacity,
-                    elementCount,
-                    img.State
+                    img.State,
+                    img.Type,
+                    { elementCapacity, elementCount }
                 };
             },
             [&](const FPipelineDesc::FUniformBuffer& ubuf) {
                 current.Type = FBuffer::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
-                const auto block = rawData.Eat(sizeof(FBuffer) + sizeof(FBufferElement) * (elementCapacity - 1));
+                const auto block = rawData.Eat(sizeof(FBuffer) + sizeof(FBuffer::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FBuffer) {
                     it.second.Index,
-                    elementCapacity,
-                    elementCount,
                     ubuf.State,
                     ubuf.DynamicOffsetIndex,
                     ubuf.Size,
-                    0// ArrayStride
+                    0, // ArrayStride
+                    { elementCapacity, elementCount }
                 };
                 if (ubuf.DynamicOffsetIndex != FPipelineDesc::StaticOffset)
                     numDBO += elementCapacity;
@@ -583,15 +578,14 @@ void FPipelineResources::CreateDynamicData(
             [&](const FPipelineDesc::FStorageBuffer& sbuf) {
                 current.Type = FBuffer::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
-                const auto block = rawData.Eat(sizeof(FBuffer) + sizeof(FBufferElement) * (elementCapacity - 1));
+                const auto block = rawData.Eat(sizeof(FBuffer) + sizeof(FBuffer::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FBuffer) {
                     it.second.Index,
-                    elementCapacity,
-                    elementCount,
                     sbuf.State,
                     sbuf.DynamicOffsetIndex,
                     sbuf.StaticSize,
-                    sbuf.ArrayStride
+                    sbuf.ArrayStride,
+                    { elementCapacity, elementCount }
                 };
                 if (sbuf.DynamicOffsetIndex != FPipelineDesc::StaticOffset)
                     numDBO += elementCapacity;
@@ -599,11 +593,10 @@ void FPipelineResources::CreateDynamicData(
             [&](const FPipelineDesc::FRayTracingScene& ) {
                 current.Type = FRayTracingScene::TypeId;
                 current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
-                const auto block = rawData.Eat(sizeof(FRayTracingScene) + sizeof(FRayTracingSceneElement) * (elementCapacity - 1));
+                const auto block = rawData.Eat(sizeof(FRayTracingScene) + sizeof(FRayTracingScene::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FRayTracingScene) {
                     it.second.Index,
-                    elementCapacity,
-                    elementCount
+                    { elementCapacity, elementCount }
                 };
             });
     }
@@ -628,7 +621,7 @@ bool FPipelineResources::CompareDynamicData(const FDynamicData& lhs, const FDyna
             return false;
 
         const FRawMemoryConst lhsData{ lhs.Storage.MakeView().CutStartingAt(lhsUni.Offset) };
-        const FRawMemoryConst rhsData{ rhs.Storage.MakeView().CutStartingAt(lhsUni.Offset) };
+        const FRawMemoryConst rhsData{ rhs.Storage.MakeView().CutStartingAt(rhsUni.Offset) };
 
         bool equals = true;
         switch (lhsUni.Type) {
@@ -647,6 +640,14 @@ bool FPipelineResources::CompareDynamicData(const FDynamicData& lhs, const FDyna
     }
 
     return true;
+}
+//----------------------------------------------------------------------------
+auto FPipelineResources::CloneDynamicData(const FPipelineResources& desc) -> FDynamicData {
+    return FDynamicData{ *desc._dynamicData.LockShared() };
+}
+//----------------------------------------------------------------------------
+auto FPipelineResources::StealDynamicData(FPipelineResources& desc) NOEXCEPT -> FDynamicData&& {
+    return std::move( *desc._dynamicData.LockExclusive() );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

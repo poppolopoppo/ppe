@@ -23,8 +23,8 @@ public:
     struct FInternalPass {
         VkRenderPass RenderPass{ VK_NULL_HANDLE };
 
-        hash_t HashValue;
-        hash_t AttachmentHash;
+        hash_t HashValue{ Meta::ForceInit };
+        hash_t AttachmentHash{ Meta::ForceInit };
         FSubpassHashes SubpassHashes;
 
         VkRenderPassCreateInfo CreateInfo{};

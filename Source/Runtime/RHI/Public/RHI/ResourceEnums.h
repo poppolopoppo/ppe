@@ -379,7 +379,7 @@ enum class EImageSampler : u32 {
     _TypeMask               = 0xF << _TypeOffset,
     _Float                  = 1 << _TypeOffset,
     _Int                    = 2 << _TypeOffset,
-    _Uint                   = 3 << _TypeOffset,
+    _UInt                   = 3 << _TypeOffset,
 
     // flags
     _FlagsOffset            = _TypeOffset + 4,
@@ -410,15 +410,15 @@ enum class EImageSampler : u32 {
     IntCubeArray            = _Int | _CubeArray,
     Int3D                   = _Int | _3D,
 
-    Uint1D                  = _Uint | _1D,
-    Uint1DArray             = _Uint | _1DArray,
-    Uint2D                  = _Uint | _2D,
-    Uint2DArray             = _Uint | _2DArray,
-    Uint2DMS                = _Uint | _2DMS,
-    Uint2DMSArray           = _Uint | _2DMSArray,
-    UintCube                = _Uint | _Cube,
-    UintCubeArray           = _Uint | _CubeArray,
-    Uint3D                  = _Uint | _3D,
+    Uint1D                  = _UInt | _1D,
+    Uint1DArray             = _UInt | _1DArray,
+    Uint2D                  = _UInt | _2D,
+    Uint2DArray             = _UInt | _2DArray,
+    Uint2DMS                = _UInt | _2DMS,
+    Uint2DMSArray           = _UInt | _2DMSArray,
+    UintCube                = _UInt | _Cube,
+    UintCubeArray           = _UInt | _CubeArray,
+    Uint3D                  = _UInt | _3D,
 
     Unknown                 = ~0u,
 };

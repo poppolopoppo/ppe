@@ -18,9 +18,16 @@ namespace RHI {
 class PPE_RHIVULKAN_API FVulkanPipelineResources final : Meta::FNonCopyable {
 public:
     struct FUpdateDescriptors {
-        FSlabAllocator Allocator;
-        VkWriteDescriptorSet* Descriptors{ nullptr };
+        FSlabHeap::FStackMarker Allocator;
+        TMemoryView<VkWriteDescriptorSet> Descriptors;
         u32 DescriptorIndex{ 0 };
+
+        VkWriteDescriptorSet& NextWriteDescriptorSet() NOEXCEPT {
+            VkWriteDescriptorSet& wds = Descriptors[DescriptorIndex++];
+            wds = {};
+            wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            return wds;
+        }
     };
 
     using FInfoVariant = std::variant<
@@ -35,12 +42,13 @@ public:
         FRawDescriptorSetLayoutID LayoutId;
         FVulkanDescriptorSet DescriptorSet;
         FDynamicData DynamicData;
-        const bool AllowEmptyResources{ false };
+        bool AllowEmptyResources;
+
+        explicit FInternalResources(FDynamicData&& rdynamicData, FRawDescriptorSetLayoutID layoutId, bool allowEmptyResources) NOEXCEPT;
     };
 
-    FVulkanPipelineResources() = default;
-    explicit FVulkanPipelineResources(FPipelineResources& resources);
-    explicit FVulkanPipelineResources(const FPipelineResources& resources);
+    explicit FVulkanPipelineResources(FPipelineResources&& rdesc) NOEXCEPT;
+    explicit FVulkanPipelineResources(const FPipelineResources& desc);
     ~FVulkanPipelineResources();
 
     FVulkanPipelineResources(FVulkanPipelineResources&& rvalue) NOEXCEPT;
@@ -53,10 +61,6 @@ public:
 
     hash_t HashValue() const { return Read()->HashValue; }
 
-#if USE_PPE_RHIDEBUG
-    const FVulkanDebugName& DebugName() const { return _debugName; }
-#endif
-
     bool AllResourcesAlive(const FVulkanResourceManager& manager) const;
 
     NODISCARD bool Construct(FVulkanResourceManager& manager);
@@ -67,29 +71,30 @@ public:
         Read()->DynamicData.EachUniform(std::forward<_Each>(each));
     }
 
-    bool operator ==(const FVulkanPipelineResources& other) const;
-    bool operator !=(const FVulkanPipelineResources& other) const { return (not operator ==(other)); }
+    bool operator ==(const FVulkanPipelineResources& other) const NOEXCEPT;
+    bool operator !=(const FVulkanPipelineResources& other) const NOEXCEPT { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FVulkanPipelineResources& resources) { return resources.HashValue(); }
+    friend hash_t hash_value(const FVulkanPipelineResources& resources) NOEXCEPT { return resources.HashValue(); }
 
     static void CheckBufferUsage(const class FVulkanBuffer&, EResourceState state);
     static void CheckTexelBufferUsage(const class FVulkanBuffer&, EResourceState state);
     static void CheckImageUsage(const class FVulkanImage&, EResourceState state);
 
-private:
-    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FBuffer&);
-    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FTexelBuffer&);
-    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FImage&);
-    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, FPipelineResources::FTexture&);
-    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, const FPipelineResources::FSampler&);
-    bool AddResource_(FUpdateDescriptors* pUpdate, FVulkanResourceManager&, const FUniformID&, const FPipelineResources::FRayTracingScene&);
+    static void CheckImageType(const FUniformID& id, u32 index, const FVulkanImage& img, const FImageViewDesc& desc, EImageSampler shaderType);
+    static void CheckTextureType(const FUniformID& id, u32 index, const FVulkanImage& img, const FImageViewDesc& desc, EImageSampler shaderType);
 
-    void LogUniform_(const FUniformID&, u32 idx) const;
+private:
+    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value);
+    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value);
+    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value);
+    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value);
+    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value);
+    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value);
 
     TRHIThreadSafe<FInternalResources> _resources;
 
 #if USE_PPE_RHIDEBUG
-    FVulkanDebugName _debugName;
+    static void ValidateEmptyUniform_(const FInternalResources& data, const FUniformID&, u32 idx);
 #endif
 };
 //----------------------------------------------------------------------------

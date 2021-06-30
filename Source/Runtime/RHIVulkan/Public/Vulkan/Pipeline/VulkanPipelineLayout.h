@@ -33,7 +33,7 @@ public:
     using FDescriptorSetLayoutsView = TMemoryView<const TPair<FRawDescriptorSetLayoutID, TResourceProxy<FVulkanDescriptorSetLayout>*>>;
 
     struct FInternalData {
-        hash_t HashValue;
+        hash_t HashValue{ Meta::ForceInit };
         VkPipelineLayout Layout{ VK_NULL_HANDLE };
         FDescriptorSets DescriptorSets;
         FPushConstants PushConstants;

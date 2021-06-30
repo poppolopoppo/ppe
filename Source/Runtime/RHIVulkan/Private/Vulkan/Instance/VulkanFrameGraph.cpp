@@ -292,7 +292,7 @@ bool FVulkanFrameGraph::InitPipelineResources_(FPipelineResources* pResources, c
         return false;
 
     const FVulkanDescriptorSetLayout& dsLayout = _resourceManager.ResourceData(layoutId);
-    FPipelineResources::Initialize(pResources, layoutId, dsLayout.Read()->DynamicData);
+    FPipelineResources::Initialize(pResources, layoutId, dsLayout.Resources());
     return true;
 }
 //----------------------------------------------------------------------------

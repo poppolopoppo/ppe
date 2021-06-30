@@ -21,20 +21,19 @@ public:
     explicit FVulkanDescriptorManager(const FVulkanDevice& device) NOEXCEPT;
     ~FVulkanDescriptorManager();
 
-    bool Construct();
+    NODISCARD bool Construct();
     void TearDown();
 
-    bool AllocateDescriptorSet(FVulkanDescriptorSet* pdescriptors, VkDescriptorSetLayout layout);
+    NODISCARD bool AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, VkDescriptorSetLayout layout);
     void DeallocateDescriptorSet(const FVulkanDescriptorSet& descriptors);
     void DeallocateDescriptorSets(TMemoryView<const FVulkanDescriptorSet> many);
 
 private:
-    void CreateDescriptorPool_();
+    NODISCARD VkDescriptorPool CreateDescriptorPool_(FDescriptorPools& pools);
 
     const FVulkanDevice& _device;
 
-    FCriticalSection _barrier;
-    FDescriptorPools _descriptorPools;
+    TThreadSafe<FDescriptorPools, EThreadBarrier::CriticalSection> _descriptorPools;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

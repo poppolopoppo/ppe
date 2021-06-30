@@ -170,8 +170,8 @@ bool FVulkanResourceManager::CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLa
     FVulkanDescriptorSetLayout::FBindings bindings;
     FPipelineDesc::FSharedUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
 
-    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, uniforms };
-    if (Likely(CreateCachedResource_(pId, std::move(emptyKey), _device, std::move(bindings) ARGS_IF_RHIDEBUG("EmptyDSLayout")).first))
+    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, uniforms };
+    if (Likely(CreateCachedResource_(pId, std::move(emptyKey), _device, bindings.MakeConstView() ARGS_IF_RHIDEBUG("EmptyDSLayout")).first))
         return true;
 
     LOG(RHI, Error, L"failed to create an empty descriptor set layout");
@@ -250,7 +250,7 @@ bool FVulkanResourceManager::CreateDescriptorSetLayout_(
     Assert(uniforms);
 
     FVulkanDescriptorSetLayout::FBindings bindings;
-    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, uniforms };
+    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, uniforms };
 
     *pDSLayout = CreateCachedResource_(pId, std::move(emptyKey), _device, std::move(bindings) ARGS_IF_RHIDEBUG(debugName)).first;
     if (Likely(!!*pDSLayout))
