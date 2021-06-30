@@ -79,7 +79,7 @@ public:
     }
 
 protected:
-    TThreadSafe<FInvocationList, _ThreadSafe ? EThreadBarrier::RWLock : EThreadBarrier::None> _delegates;
+    TThreadSafe<FInvocationList, _ThreadSafe ? EThreadBarrier::RWLock : EThreadBarrier::ThreadLocal> _delegates;
 };
 //----------------------------------------------------------------------------
 template <typename _Delegate, bool _ThreadSafe, typename T, class = Meta::TEnableIf<_Delegate::template is_callable_v<T>> >
