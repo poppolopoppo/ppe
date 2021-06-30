@@ -130,10 +130,15 @@ template<class... Ts> struct overloaded_ : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded_(Ts...) -> overloaded_<Ts...>;
 } //!details
 //----------------------------------------------------------------------------
+template <typename... _Visitor>
+auto Overloaded(_Visitor&&... visitor) {
+    return details::overloaded_{ std::forward<_Visitor>(visitor)... };
+}
+//----------------------------------------------------------------------------
 template <typename... _Variant, typename... _Visitor>
 auto Visit(const std::variant<_Variant...>& variant, _Visitor&&... visitor) {
     return std::visit(
-        details::overloaded_{ std::forward<_Visitor>(visitor)... },
+        Overloaded( std::forward<_Visitor>(visitor)... ),
         variant );
 }
 //----------------------------------------------------------------------------
