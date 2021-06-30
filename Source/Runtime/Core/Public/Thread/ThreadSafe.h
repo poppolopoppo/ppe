@@ -2,6 +2,8 @@
 
 #include "Core_fwd.h"
 
+#include "Thread/ThreadSafe_fwd.h"
+
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/CriticalSection.h"
 #include "Thread/DataRaceCheck.h"
@@ -10,43 +12,6 @@
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-enum class EThreadBarrier {
-    None = 0,
-    // blocking mutexes
-    CriticalSection,
-    RWLock,
-    // atomic spin locking
-    AtomicSpinLock,
-    AtomicReadWriteLock,
-    AtomicTicketRWLock,
-#if USE_PPE_DEBUG || USE_PPE_FASTDEBUG
-    // data race debugging
-    DataRaceCheck,
-    RWDataRaceCheck,
-#endif
-};
-//----------------------------------------------------------------------------
-CONSTEXPR bool EThreadBarrier_Safe(EThreadBarrier barrier) NOEXCEPT {
-    switch (barrier) {
-    case EThreadBarrier::None:
-        return false;
-    case EThreadBarrier::CriticalSection:
-    case EThreadBarrier::RWLock:
-    case EThreadBarrier::AtomicSpinLock:
-    case EThreadBarrier::AtomicReadWriteLock:
-    case EThreadBarrier::AtomicTicketRWLock:
-#if USE_PPE_DEBUG || USE_PPE_FASTDEBUG
-    case EThreadBarrier::DataRaceCheck:
-    case EThreadBarrier::RWDataRaceCheck:
-#endif
-        return true;
-    }
-    AssertNotImplemented();
-}
-//----------------------------------------------------------------------------
-template <typename T, EThreadBarrier _Barrier>
-class TThreadSafe;
 //----------------------------------------------------------------------------
 // Use a CRTP helper to factorize the code bellow
 //----------------------------------------------------------------------------
@@ -63,9 +28,9 @@ public:
         ~FSharedLock() NOEXCEPT {
             reinterpret_cast<const _Impl*>(&_data)->ReleaseReader();
         }
-        const T& Value() const { return _data._value; }
-        const T& operator *() const NOEXCEPT { return _data._value; }
-        const T* operator ->() const NOEXCEPT { return (&_data._value); }
+        const auto& Value() const { return DerefPtr(_data._value); }
+        const auto& operator *() const NOEXCEPT { return DerefPtr(_data._value); }
+        const auto* operator ->() const NOEXCEPT { return std::addressof(DerefPtr(_data._value)); }
     };
 
     class FExclusiveLock : Meta::FNonCopyableNorMovable {
@@ -77,9 +42,9 @@ public:
         ~FExclusiveLock() NOEXCEPT {
             reinterpret_cast<_Impl*>(&_data)->ReleaseWriter();
         }
-        T& Value() const { return _data._value; }
-        T& operator *() const NOEXCEPT { return _data._value; }
-        T* operator ->() const NOEXCEPT { return (&_data._value); }
+        auto& Value() const { return DerefPtr(_data._value); }
+        auto& operator *() const NOEXCEPT { return DerefPtr(_data._value); }
+        auto* operator ->() const NOEXCEPT { return std::addressof(DerefPtr(_data._value)); }
     };
 
     TThreadSafeCRTP_() = default;
@@ -261,6 +226,33 @@ private:
     mutable FRWDataRaceCheck _dataRaceCheckRW;
 };
 #endif
+//----------------------------------------------------------------------------
+// ThreadLocal
+//----------------------------------------------------------------------------
+#if USE_PPE_DEBUG || USE_PPE_FASTDEBUG
+template <typename T>
+class TThreadSafe<T, EThreadBarrier::ThreadLocal> : public details::TThreadSafeCRTP_<T, TThreadSafe<T, EThreadBarrier::ThreadLocal>>,
+    Meta::FThreadResource {
+public:
+    using parent_type = details::TThreadSafeCRTP_<T, TThreadSafe<T, EThreadBarrier::ThreadLocal>>;
+
+    using parent_type::parent_type;
+    using parent_type::operator=;
+
+    void AcquireReader() const NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
+    void ReleaseReader() const NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
+
+    void AcquireWriter() NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
+    void ReleaseWriter() NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
+};
+#endif
+//----------------------------------------------------------------------------
+// Helper
+//----------------------------------------------------------------------------
+template <EThreadBarrier _Barrier, typename T>
+TThreadSafe<T, _Barrier> MakeThreadSafe(T&& rvalue) NOEXCEPT {
+    return { std::forward<T>(rvalue) };
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
