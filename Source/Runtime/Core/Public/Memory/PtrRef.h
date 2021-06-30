@@ -24,8 +24,8 @@ struct TPtrRef {
     CONSTEXPR TPtrRef(const TPtrRef&) NOEXCEPT = default;
     CONSTEXPR TPtrRef& operator =(const TPtrRef&) NOEXCEPT = default;
 
-    CONSTEXPR TPtrRef(TPtrRef&& rvalue) NOEXCEPT : TPtrRef() {
-        std::swap(Ptr, rvalue.Ptr);
+    CONSTEXPR TPtrRef(TPtrRef&& rvalue) NOEXCEPT : Ptr(rvalue.Ptr) {
+        rvalue.Ptr = nullptr;
     }
     CONSTEXPR TPtrRef& operator =(TPtrRef&& rvalue) NOEXCEPT {
         Ptr = rvalue.Ptr;

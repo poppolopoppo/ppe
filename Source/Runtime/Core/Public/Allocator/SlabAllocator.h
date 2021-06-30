@@ -49,8 +49,8 @@ public:
     FSlabAllocator(FPoolingSlabHeap& heap) NOEXCEPT
     :   Heap(heap)
     {}
-    explicit FSlabAllocator(Meta::FForceInit) NOEXCEPT
-    :   Heap(nullptr)
+    explicit FSlabAllocator(Meta::FForceInit forceInit) NOEXCEPT
+    :   Heap(forceInit)
     {}
 
     static size_t SnapSize(size_t s) NOEXCEPT {

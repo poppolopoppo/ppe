@@ -82,7 +82,7 @@ public:
     TVector(const TVector& other, const allocator_type& alloc) : TVector(alloc) { assign(other.begin(), other.end()); }
     TVector& operator=(const TVector& other);
 
-    TVector(TVector&& rvalue) NOEXCEPT : TVector(allocator_traits::SelectOnMove(std::move(rvalue))) { assign(std::move(rvalue)); }
+    TVector(TVector&& rvalue) NOEXCEPT : TVector(Meta::MakeForceInit<allocator_type>()/* handled by MoveAllocatorBlock() */) { assign(std::move(rvalue)); }
     TVector(TVector&& rvalue, const allocator_type& alloc) NOEXCEPT : TVector(alloc) { assign(std::move(rvalue)); }
     TVector& operator=(TVector&& rvalue) NOEXCEPT;
 
