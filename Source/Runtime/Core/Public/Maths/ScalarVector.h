@@ -86,6 +86,8 @@ struct TScalarVectorExpr {
 //----------------------------------------------------------------------------
 // TScalarVectorComponent<> : .x, .y, .z & .w
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4789)
 template <typename T, size_t _Idx>
 struct TScalarVectorComponent {
     using component_type = T;
@@ -131,6 +133,7 @@ struct TScalarVectorComponent {
         return (get() /= scalar);
     }
 };
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 // TScalarComponent<> : base component type for a scalar vector expr
 //----------------------------------------------------------------------------
