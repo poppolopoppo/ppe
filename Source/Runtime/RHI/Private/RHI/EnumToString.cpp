@@ -741,9 +741,11 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(not Meta::enum_is_flags_v<EShaderDebugMode>);
     switch (value) {
     case EShaderDebugMode::None: return oss << STRING_LITERAL(_Char, "None");
+#if USE_PPE_RHIDEBUG
     case EShaderDebugMode::Trace: return oss << STRING_LITERAL(_Char, "Trace");
     case EShaderDebugMode::Profiling: return oss << STRING_LITERAL(_Char, "Profiling");
     case EShaderDebugMode::Timemap: return oss << STRING_LITERAL(_Char, "Timemap");
+#endif
     default: AssertNotImplemented();
     }
 }
