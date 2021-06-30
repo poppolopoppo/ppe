@@ -5,6 +5,7 @@
 #include "Memory/MemoryView.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/ThreadResource.h"
+#include "Thread/ThreadSafe_fwd.h"
 
 #include <malloc.h> // for SYSALLOCA()
 
@@ -36,6 +37,8 @@ PPE_CORE_API void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, boo
 PPE_CORE_API void FreeAlloca(void* ptr, size_t size);
 //----------------------------------------------------------------------------
 PPE_CORE_API size_t AllocaSnapSize(size_t size);
+//----------------------------------------------------------------------------
+PPE_CORE_API TThreadSafe<TPtrRef<class FSlabHeap>, EThreadBarrier::ThreadLocal> AllocaHeap();
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE T* TypedAlloca(size_t count) {

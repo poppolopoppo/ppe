@@ -10,6 +10,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
+#include "Thread/ThreadSafe.h"
 
 // skip linear heap when using memory debugging
 #define USE_PPE_ALLOCA_SLABHEAP (!USE_PPE_MEMORY_DEBUGGING) // %_NOCOMMIT%
@@ -20,69 +21,36 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#if USE_PPE_ALLOCA_SLABHEAP
 class FAllocaSlabHeapTLS_
-    : SLABHEAP(Alloca)
-    , Meta::TThreadLocalSingleton<FAllocaSlabHeapTLS_> {
+:   public SLABHEAP(Alloca)
+,   Meta::TThreadLocalSingleton<FAllocaSlabHeapTLS_> {
     typedef Meta::TThreadLocalSingleton<FAllocaSlabHeapTLS_> parent_type;
 public:
     using slab_type = SLABHEAP(Alloca);
+
     using parent_type::Get;
 #if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
     using parent_type::Destroy;
 
-    static void Create() { parent_type::Create(); }
-
-    STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, 32 << 10); // 32 kb
-
-    using slab_type::Deallocate_AssumeLast;
-    using slab_type::Reallocate_AssumeLast;
-    using slab_type::SnapSize;
-#if !USE_PPE_FINAL_RELEASE
-    using slab_type::AliasesToHeap;
-#endif
-
-
-#if !USE_PPE_ASSERT
-    static void* Malloc(size_t sz) {
-        return Get().Allocate(sz);
+    static void Create() {
+        parent_type::Create();
     }
 
-    void Free(void* ptr, size_t sz) {
-        Deallocate_AssumeLast(ptr, sz);
-    }
-
-#else
-    u32 Depth{ 0 };
-
-    static void* Malloc(size_t sz) {
-        auto& heap = Get();
-        heap.Depth++;
-        return heap.Allocate(sz);
-    }
-
-    void Free(void* ptr, size_t sz) {
-        Assert(Depth);
-        Depth--;
-        Deallocate_AssumeLast(ptr, sz);
-    }
-
-#endif //!USE_PPE_ASSERT
+    STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, DefaultSlabSize / 2);
 };
-#endif //!USE_PPE_ALLOCA_LINEARHEAP
 //----------------------------------------------------------------------------
 // Fall back on thread local heap when the block is too large :
 struct FAllocaFallback_ {
     static void* Malloc(size_t size) {
-        return PPE::malloc(size);
+        return TRACKING_MALLOC(Alloca, size);
     }
     static void* Realloc(void* ptr, size_t size) {
-        return PPE::realloc(ptr, size);
+        return TRACKING_REALLOC(Alloca, ptr, size);
     }
     static void Free(void* ptr) {
-        PPE::free(ptr);
+        TRACKING_FREE(Alloca, ptr);
     }
     static size_t SnapSize(size_t size) {
         return PPE::malloc_snap_size(size);
@@ -97,7 +65,7 @@ struct FAllocaFallback_ {
 u32 AllocaDepth() {
 #if USE_PPE_ALLOCA_SLABHEAP
     // used for detecting live alloca TLS blocks in debug
-    return FAllocaSlabHeapTLS_::Get().Depth;
+    return (FAllocaSlabHeapTLS_::Get().Tell().Origin > 0);
 #else
     return 0;
 #endif
@@ -111,7 +79,7 @@ void* Alloca(size_t size) {
     void* p;
 #if USE_PPE_ALLOCA_SLABHEAP
     if (size <= FAllocaSlabHeapTLS_::MaxBlockSize)
-        p = FAllocaSlabHeapTLS_::Malloc(size);
+        p = FAllocaSlabHeapTLS_::Get().Allocate(size);
     else
 #endif
         p = FAllocaFallback_::Malloc(size);
@@ -125,7 +93,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
         Assert(0 == oldSize);
         return Alloca(newSize);
     }
-    else if (0 == newSize) {
+    if (0 == newSize) {
         FreeAlloca(ptr, oldSize);
         return nullptr;
     }
@@ -148,7 +116,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
             if (keepData)
                 FPlatformMemory::Memcpy(result, ptr, Min(oldSize, newSize));
 
-            heap.Free(ptr, oldSize);
+            heap.Deallocate_AssumeLast(ptr, oldSize);
         }
     }
     else
@@ -178,7 +146,7 @@ void FreeAlloca(void* ptr, size_t size) {
 
 #if USE_PPE_ALLOCA_SLABHEAP
     if (size <= FAllocaSlabHeapTLS_::MaxBlockSize)
-        FAllocaSlabHeapTLS_::Get().Free(ptr, size);
+        FAllocaSlabHeapTLS_::Get().Deallocate_AssumeLast(ptr, size);
     else
 #endif
     {
@@ -197,6 +165,11 @@ size_t AllocaSnapSize(size_t size) {
     else
 #endif
         return FAllocaFallback_::SnapSize(size);
+}
+//----------------------------------------------------------------------------
+TThreadSafe<TPtrRef<FSlabHeap>, EThreadBarrier::ThreadLocal> AllocaHeap() {
+    return MakeThreadSafe<EThreadBarrier::ThreadLocal>(
+        MakePtrRef(static_cast<FSlabHeap&>(FAllocaSlabHeapTLS_::Get())) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
