@@ -24,6 +24,17 @@ struct TPtrRef {
     CONSTEXPR TPtrRef(const TPtrRef&) NOEXCEPT = default;
     CONSTEXPR TPtrRef& operator =(const TPtrRef&) NOEXCEPT = default;
 
+    CONSTEXPR TPtrRef(TPtrRef&& rvalue) NOEXCEPT : TPtrRef() {
+        std::swap(Ptr, rvalue.Ptr);
+    }
+    CONSTEXPR TPtrRef& operator =(TPtrRef&& rvalue) NOEXCEPT {
+        Ptr = rvalue.Ptr;
+        rvalue.Ptr = nullptr;
+        return (*this);
+    }
+
+    CONSTEXPR bool valid() const { return (nullptr != Ptr); }
+
     CONSTEXPR T* get() const NOEXCEPT { return Ptr; }
     CONSTEXPR T** ref() NOEXCEPT { return std::addressof(Ptr); }
 
@@ -72,6 +83,17 @@ struct TPtrRef<void> {
 
     CONSTEXPR TPtrRef(const TPtrRef&) NOEXCEPT = default;
     CONSTEXPR TPtrRef& operator =(const TPtrRef&) NOEXCEPT = default;
+
+    CONSTEXPR TPtrRef(TPtrRef&& rvalue) NOEXCEPT : Ptr(rvalue.Ptr) {
+        rvalue.Ptr = nullptr;
+    }
+    CONSTEXPR TPtrRef& operator =(TPtrRef&& rvalue) NOEXCEPT {
+        Ptr = rvalue.Ptr;
+        rvalue.Ptr = nullptr;
+        return (*this);
+    }
+
+    CONSTEXPR bool valid() const { return (nullptr != Ptr); }
 
     CONSTEXPR void* get() const NOEXCEPT { return Ptr; }
 
