@@ -720,8 +720,8 @@ extern "C" \{
         dst.puts!("};")
     end
     def enum_decl(dst, name, &scope) scope_decl(dst, 'enum', name, &scope) end
-    def class_decl(dst, name, &scope) scope_decl(dst, 'class', name, &scope) end
-    def struct_decl(dst, name, &scope) scope_decl(dst, 'struct', name, &scope) end
+    def class_decl(dst, name, &scope) scope_decl(dst, 'class DLL_EXPORT', name, &scope) end
+    def struct_decl(dst, name, &scope) scope_decl(dst, 'struct DLL_EXPORT', name, &scope) end
     def memfun_decl(dst, name, result, args, const=false)
         dst.puts!("#{result} #{name}(#{args})#{const ? ' const' : ''}#{block_given? ? ' {' : ';'}")
         if block_given?
@@ -828,6 +828,10 @@ extern "C" \{
                     elsif result == 'VkResult'
                         err = sym.expansion.nil? ? 'VK_NOT_READY' : 'VK_ERROR_EXTENSION_NOT_PRESENT'
                         dst.puts!('[](auto...) -> VkResult { return %s; },' % err)
+                    elsif result == 'VkBool32'
+                        dst.puts!('[](auto...) -> VkBool32 { return VK_FALSE; }')
+                    elsif result == 'uint64_t' || result == 'uint32_t' || result == 'VkDeviceSize' || result == 'VkDeviceAddress' || result == 'VkFlags'
+                        dst.puts!('[](auto...) -> %s { return 0; },' % result)
                     else
                         dst.puts!('[](auto...) -> %s { return VK_NULL_HANDLE; },' % result)
                     end
