@@ -35,6 +35,25 @@ class PPE_CORE_API FSlabHeap : Meta::FNonCopyableNorMovable {
 public:
     static const u32 DefaultSlabSize;
 
+    class FStackMarker : Meta::FThreadResource {
+        TPtrRef<FSlabHeap> _heap;
+        FSlabMarker _origin;
+    public:
+        FStackMarker() = default;
+        explicit FStackMarker(FSlabHeap& heap) NOEXCEPT
+        :   _heap(heap), _origin(_heap->Tell())
+        {}
+        ~FStackMarker() NOEXCEPT {
+            if (_heap)
+                _heap->Rewind(_origin);
+        }
+        const FSlabMarker& Tell() const { return _origin; }
+        FSlabHeap* operator ->() const {
+            THIS_THREADRESOURCE_CHECKACCESS();
+            return std::addressof(DerefPtr(_heap));
+        }
+    };
+
     explicit FSlabHeap(ARG0_IF_MEMORYDOMAINS(FMemoryTracking* pParent)) NOEXCEPT;
     ~FSlabHeap();
 
@@ -43,6 +62,10 @@ public:
 
     FSlabMarker Tell() const NOEXCEPT;
     void Rewind(const FSlabMarker& marker) NOEXCEPT;
+
+    FStackMarker StackMarker() NOEXCEPT {
+        return FStackMarker( *this );
+    }
 
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* Allocate(size_t size) {
         Assert(size);
