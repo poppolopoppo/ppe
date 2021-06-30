@@ -47,10 +47,10 @@ public:
 
     TBucketAllocator() = default;
 
-    explicit TBucketAllocator(const _Allocator& alloc) {
+    explicit TBucketAllocator(const _Allocator& alloc)
     :   _Allocator(alloc)
     {}
-    explicit TBucketAllocator(_Allocator&& ralloc) {
+    explicit TBucketAllocator(_Allocator&& ralloc)
     :   _Allocator(std::move(ralloc))
     {}
 
@@ -64,10 +64,10 @@ public:
     }
 
     // move
-    TBucketAllocator(TBucketAllocator&& rvalue)
+    TBucketAllocator(TBucketAllocator&& rvalue) NOEXCEPT
     :   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue)))
     {}
-    TBucketAllocator& operator =(TBucketAllocator&& rvalue) {
+    TBucketAllocator& operator =(TBucketAllocator&& rvalue) NOEXCEPT {
         allocator_traits::Move(this, std::move(rvalue));
         return (*this);
     }

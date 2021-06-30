@@ -310,7 +310,6 @@ private:
     // those static helpers assumes barrier to be already locked (read of write)
     static FMipmapPage* AliasingMipMap(const FCompressedRadixTrie& pages, const void* ptr) NOEXCEPT;
     static void* AllocateFromPages(const FCompressedRadixTrie& pages, std::atomic<i32>& numUnused, u32 sizeInBytes) NOEXCEPT;
-    static void GargbageCollectPages(TMipMapAllocator2& alloc);
     static void ReleaseUnusedPage(FMipmapPage** pfreePages, std::atomic<i32>& numUnused, FMipmapPage* page);
 
     static inline FMipmapPage* const GDummyPage{ reinterpret_cast<FMipmapPage*>(1) };

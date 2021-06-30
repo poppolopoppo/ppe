@@ -44,8 +44,8 @@ public:
     explicit TFreeListAllocator(const _Allocator& alloc)
     :   _Allocator(alloc)
     {}
-    explicit TFreeListAllocator(_Allocator&& ralloc)
-    :   _Allocator(std::move(alloc))
+    explicit TFreeListAllocator(_Allocator&& ralloc) NOEXCEPT
+    :   _Allocator(std::move(ralloc))
     {}
 
     // copy
