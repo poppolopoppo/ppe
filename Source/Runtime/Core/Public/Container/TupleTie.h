@@ -7,6 +7,33 @@
 #include <utility>
 #include <type_traits>
 
+#if PPE_HAS_CXX20
+// C++20 is introducing default comparison operators: https://en.cppreference.com/w/cpp/language/default_comparisons
+#define __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, _OP, ...) \
+    __VA_ARGS__ bool operator _OP (const _NAME& , const _NAME& ) NOEXCEPT = default;
+#else
+#define __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, _OP, ...) \
+    __VA_ARGS__ bool operator _OP (const _NAME& lhs, const _NAME& rhs) NOEXCEPT { \
+        return (PPE::tie_as_tuple(lhs) _OP PPE::tie_as_tuple(rhs)); \
+    }
+#endif
+
+#define TIE_AS_TUPLE_EQUALS(_NAME, ...) \
+    __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, ==, __VA_ARGS__) \
+    __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, !=, __VA_ARGS__)
+#define TIE_AS_TUPLE_COMPARE(_NAME, ...) \
+    __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, < , __VA_ARGS__) \
+    __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, >=, __VA_ARGS__) \
+    __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, > , __VA_ARGS__) \
+    __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, <=, __VA_ARGS__)
+#define TIE_AS_TUPLE_HASH(_NAME, ...) \
+    __VA_ARGS__ PPE::hash_t hash_value(const _NAME& value) NOEXCEPT { \
+        return PPE::hash_value( PPE::tie_as_tuple(value) ); \
+    }
+#define TIE_AS_TUPLE_STRUCT(_NAME) \
+    TIE_AS_TUPLE_EQUALS(_NAME, friend) \
+    TIE_AS_TUPLE_HASH(_NAME, friend)
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -93,7 +120,7 @@ using enable_if_constructible_helper_t = std::size_t;
 ///////////////////// Non greedy fields count search. Templates instantiation depth is log(sizeof(T)), templates instantiation count is log(sizeof(T)).
 
 // PPE BEGIN (POP) - This is not working for me, replacing with a simpler classical trait
-#ifdef __clang__ // pfr :
+#ifndef _MSC_VER // pfr :
 template <class T, std::size_t N>
 constexpr std::size_t detect_fields_count(size_t_<N>, size_t_<N>, long) noexcept {
     return N;
@@ -289,15 +316,15 @@ constexpr auto tie_as_tuple(T& val, size_t_<0>) noexcept {
     return TTuple<>{};
 }
 template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<1>, Meta::TEnableIf< std::is_class_v< std::remove_cv_t<T> > >* = 0) noexcept {
-    auto& [a] = val;
-    return std::tie(a);
-}
-template <class T>
 constexpr auto tie_as_tuple(T& val, size_t_<1>, Meta::TEnableIf< not std::is_class_v< std::remove_cv_t<T> > >* = 0) noexcept {
     return std::tie(val);
 }
 */
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<1>, Meta::TEnableIf< std::is_class_v< std::remove_cv_t<T> > >* = 0) noexcept {
+    auto& [a] = val;
+    return std::tie(a);
+}
 template <class T>
 constexpr auto tie_as_tuple(T& val, size_t_<2>) noexcept {
     auto&[a, b] = val;
