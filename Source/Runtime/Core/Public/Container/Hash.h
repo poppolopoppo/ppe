@@ -35,12 +35,6 @@ FORCE_INLINE hash_t hash_value(const T *ptr) NOEXCEPT {
     return hash_ptr(ptr);
 }
 //----------------------------------------------------------------------------
-template <typename T>
-FORCE_INLINE auto hash_value(T value) NOEXCEPT
-    -> typename std::enable_if<std::is_enum<T>::value, hash_t>::type {
-    return hash_as_pod(value);
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Helpers for combining hash values:

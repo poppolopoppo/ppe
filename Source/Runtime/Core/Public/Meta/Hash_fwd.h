@@ -36,6 +36,11 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 template <typename T>
 size_t hash_as_pod(const T& pod) NOEXCEPT; // See HashFunctions.h
 //----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE auto hash_value(T value) NOEXCEPT -> typename std::enable_if_t<std::is_enum<T>::value, hash_t> {
+    return hash_as_pod(value);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX14

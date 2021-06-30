@@ -81,6 +81,7 @@ namespace std {
 template <typename T>
 PPE::hash_t hash_value(const std::optional<T>& optional) {
     using namespace PPE;
+    using PPE::hash_value;
     return (optional.has_value()
         ? hash_value(*optional)
         : hash_t{} );
