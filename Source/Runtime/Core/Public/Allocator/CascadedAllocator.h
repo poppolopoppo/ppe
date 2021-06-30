@@ -115,11 +115,10 @@ public:
         AssertNotReached();
     }
 
-    void Reallocate(FAllocatorBlock& b, size_t s) {
+    auto Reallocate(FAllocatorBlock& b, size_t s) {
         for (FCascade* c = Cascades; c; c = c->Node.Next) {
             if (cascade_traits::Owns(c->Alloc, b)) {
-                cascade_traits::Reallocate(c->Alloc, b, s);
-                return;
+                return cascade_traits::Reallocate(c->Alloc, b, s);
             }
         }
         AssertNotReached();

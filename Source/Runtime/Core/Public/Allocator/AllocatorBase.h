@@ -163,7 +163,7 @@ struct TAllocatorTraits {
         }
     }
 
-    static _Allocator SelectOnCopy(const _Allocator& other) {
+    NODISCARD static _Allocator SelectOnCopy(const _Allocator& other) {
         IF_CONSTEXPR(propagate_on_container_copy_assignment::value) {
             return _Allocator{ other };
         }
@@ -183,7 +183,7 @@ struct TAllocatorTraits {
         }
     }
 
-    static _Allocator SelectOnMove(_Allocator&& rvalue) {
+    NODISCARD static _Allocator SelectOnMove(_Allocator&& rvalue) {
         IF_CONSTEXPR(propagate_on_container_move_assignment::value) {
             return _Allocator{ std::move(rvalue) };
         }
@@ -204,7 +204,7 @@ struct TAllocatorTraits {
         }
     }
 
-    static bool Equals(const _Allocator& lhs, const _Allocator& rhs) NOEXCEPT {
+    NODISCARD static bool Equals(const _Allocator& lhs, const _Allocator& rhs) NOEXCEPT {
         IF_CONSTEXPR(is_always_equal::value) {
             UNUSED(lhs);
             UNUSED(rhs);
@@ -215,7 +215,7 @@ struct TAllocatorTraits {
     }
 
     template <typename _AllocatorOther>
-    static bool Equals(const _Allocator& lhs, const _AllocatorOther& rhs) NOEXCEPT {
+    NODISCARD static bool Equals(const _Allocator& lhs, const _AllocatorOther& rhs) NOEXCEPT {
         IF_CONSTEXPR(Meta::has_equals_v<_Allocator, _AllocatorOther>)
             return (lhs == rhs);
         else {
@@ -225,7 +225,7 @@ struct TAllocatorTraits {
         }
     }
 
-    static size_t MaxSize() NOEXCEPT {
+    NODISCARD static size_t MaxSize() NOEXCEPT {
         IF_CONSTEXPR(has_maxsize::value) {
             return _Allocator::MaxSize();
         }
@@ -234,7 +234,7 @@ struct TAllocatorTraits {
         }
     }
 
-    static size_t SnapSize(size_t size) NOEXCEPT {
+    NODISCARD static size_t SnapSize(size_t size) NOEXCEPT {
 #if USE_PPE_ASSERT
         const size_t snpd = _Allocator::SnapSize(size);
         Assert(snpd >= size);
@@ -246,11 +246,11 @@ struct TAllocatorTraits {
     }
 
     template <typename T>
-    static size_t SnapSizeT(size_t count) NOEXCEPT {
+    NODISCARD static size_t SnapSizeT(size_t count) NOEXCEPT {
         return (SnapSize(count * sizeof(T)) / sizeof(T));
     }
 
-    static bool Owns(const _Allocator& a, FAllocatorBlock b) NOEXCEPT {
+    NODISCARD static bool Owns(const _Allocator& a, FAllocatorBlock b) NOEXCEPT {
         IF_CONSTEXPR(has_owns::value) {
             return a.Owns(b);
         }
@@ -265,20 +265,20 @@ struct TAllocatorTraits {
         }
     }
 
-    static FAllocatorBlock Allocate(_Allocator& a, size_t s) {
+    NODISCARD static FAllocatorBlock Allocate(_Allocator& a, size_t s) {
         Assert_NoAssume(s <= MaxSize());
         return (s ? a.Allocate(s) : FAllocatorBlock::Null());
     }
 
     template <typename T>
-    static TMemoryView<T> AllocateT(_Allocator& a, size_t n) {
+    NODISCARD static TMemoryView<T> AllocateT(_Allocator& a, size_t n) {
         const FAllocatorBlock b{ Allocate(a, n * sizeof(T)) };
         Assert_NoAssume(n * sizeof(T) <= b.SizeInBytes);
         return b.MakeView().Cast<T>();
     }
 
     template <typename T>
-    static T* AllocateOneT(_Allocator& a) {
+    NODISCARD static T* AllocateOneT(_Allocator& a) {
         return static_cast<T*>(Allocate(a, sizeof(T)).Data);
     }
 
@@ -303,7 +303,7 @@ struct TAllocatorTraits {
         Deallocate(a, FAllocatorBlock{ p,  sizeof(T) });
     }
 
-    static auto Reallocate(_Allocator& a, FAllocatorBlock& b, size_t s) {
+    NODISCARD static auto Reallocate(_Allocator& a, FAllocatorBlock& b, size_t s) {
         Assert_NoAssume(b || s);
         Assert_NoAssume(b.SizeInBytes <= MaxSize());
         Assert_NoAssume(s <= MaxSize());
@@ -335,7 +335,7 @@ struct TAllocatorTraits {
 
     // specialized this method to avoid over-copying when !has_reallocate
     template <typename T>
-    static auto ReallocateT_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+    NODISCARD static auto ReallocateT_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
         Assert(oldSize >= items.size());
         Assert_NoAssume(oldSize * sizeof(T) <= MaxSize());
         Assert_NoAssume(newSize * sizeof(T) <= MaxSize());
@@ -375,7 +375,7 @@ struct TAllocatorTraits {
         items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
     }
 
-    static bool Acquire(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
+    NODISCARD static bool Acquire(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
         Assert(b);
         Assert_NoAssume(b.SizeInBytes <= MaxSize());
 
@@ -388,7 +388,7 @@ struct TAllocatorTraits {
         }
     }
 
-    static bool Steal(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
+    NODISCARD static bool Steal(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
         Assert(b);
         Assert_NoAssume(b.SizeInBytes <= MaxSize());
 
@@ -402,7 +402,7 @@ struct TAllocatorTraits {
     }
 
     template <typename _AllocatorDst>
-    static bool StealAndAcquire(_AllocatorDst* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
+    NODISCARD static bool StealAndAcquire(_AllocatorDst* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
         Assert(dst);
         Assert_NoAssume(b.SizeInBytes <= MaxSize());
 
@@ -426,7 +426,7 @@ struct TAllocatorTraits {
 // Propagate allocation on move, return false if the source block was copied
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
+NODISCARD bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
     Assert(dst);
 
     using traits_t = TAllocatorTraits<_Allocator>;
@@ -450,7 +450,7 @@ bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOE
 // Helpers for Reallocate()
 //----------------------------------------------------------------------------
 template <typename _Allocator, typename T>
-auto ReallocateAllocatorBlock_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+NODISCARD auto ReallocateAllocatorBlock_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
     return TAllocatorTraits<_Allocator>::ReallocateT_AssumePOD(a, items, oldSize, newSize);
 }
 //---------------------------------------------------------------------------
@@ -473,7 +473,7 @@ void ReallocateAllocatorBlock_NonPOD(_Allocator& a, TMemoryView<T>& items, size_
 }
 //---------------------------------------------------------------------------
 template <typename _Allocator, typename T>
-auto ReallocateAllocatorBlock(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+NODISCARD auto ReallocateAllocatorBlock(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
     IF_CONSTEXPR(Meta::has_trivial_move<T>::value)
         return ReallocateAllocatorBlock_AssumePOD(a, items, oldSize, newSize);
     else
@@ -487,7 +487,7 @@ auto ReallocateAllocatorBlock(_Allocator& a, TMemoryView<T>& items, size_t oldSi
 // It should be specialized for every wanted allocator combinations
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-bool StealAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
+NODISCARD bool StealAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
     using traits_t = TAllocatorTraits<_Allocator>;
     return traits_t::StealAndAcquire(dst, src, b);
 }
