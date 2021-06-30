@@ -53,13 +53,16 @@ public:
     };
 
     FVulkanImage() = default;
+
+#if USE_PPE_ASSERT
     ~FVulkanImage();
+#endif
 
     FVulkanImage(const FVulkanImage&) = delete;
     FVulkanImage& operator =(const FVulkanImage&) = delete;
 
-    FVulkanImage(FVulkanImage&&) NOEXCEPT;
-    FVulkanImage& operator =(FVulkanImage&&) NOEXCEPT;
+    FVulkanImage(FVulkanImage&& rvalue) NOEXCEPT;
+    FVulkanImage& operator =(FVulkanImage&&) = delete;
 
     auto Read() const { return _data.LockShared(); }
 
@@ -70,7 +73,7 @@ public:
 #endif
 
     VkImageView MakeView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const;
-    VkImageView MakeView(const FVulkanDevice& device, const Meta::TOptional<FImageViewDesc>& desc) const;
+    VkImageView MakeView(const FVulkanDevice& device, Meta::TOptional<FImageViewDesc>& desc) const;
 
     static bool IsSupported(const FVulkanDevice& device, const FImageDesc& desc, EMemoryType memoryType);
     bool IsSupported(const FVulkanDevice& device, const FImageViewDesc& desc) const;
@@ -83,16 +86,21 @@ public:
     NODISCARD bool Construct(const FVulkanDevice& device,
         const FImageDesc& desc,
         FExternalImage externalImage, FOnReleaseExternalImage&& onRelease,
-        TMemoryView<const u32> queueFamilyIndices
+        TMemoryView<const u32> queueFamilyIndices, EResourceState defaultState
         ARGS_IF_RHIDEBUG(FConstChar debugName) );
 
     void TearDown(FVulkanResourceManager& resources);
 
 private:
+    NODISCARD static bool CreateView_(
+        VkImageView* pImageView,
+        const FInternalData& data,
+        const FVulkanDevice& device,
+        const FImageViewDescMemoized& desc );
+
     TRHIThreadSafe<FInternalData> _data;
 
-    mutable FReadWriteLock _viewRWLock;
-    mutable FImageViewMap _viewMap;
+    mutable TThreadSafe<FImageViewMap, EThreadBarrier::RWLock> _viewMap;
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

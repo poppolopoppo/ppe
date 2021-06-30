@@ -118,6 +118,7 @@ PPE_RHIVULKAN_API VkSamplerMipmapMode VkCast(EMipmapFilter value);
 PPE_RHIVULKAN_API VkSamplerAddressMode VkCast(EAddressMode value);
 PPE_RHIVULKAN_API VkBorderColor VkCast(EBorderColor value);
 PPE_RHIVULKAN_API VkImageType VkCast(EImageDim value);
+PPE_RHIVULKAN_API VkImageCreateFlagBits VkCast(EImageFlags value);
 PPE_RHIVULKAN_API VkImageViewType VkCast(EImageView value);
 PPE_RHIVULKAN_API VkImageUsageFlagBits VkCast(EImageUsage values);
 PPE_RHIVULKAN_API VkImageAspectFlagBits VkCast(EImageAspect values);

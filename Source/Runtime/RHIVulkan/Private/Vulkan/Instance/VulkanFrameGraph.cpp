@@ -390,10 +390,11 @@ const FImageDesc& FVulkanFrameGraph::Description(FRawImageID id) const {
 NODISCARD FImageID FVulkanFrameGraph::CreateImage(
     const FImageDesc& desc,
     FExternalImage externalImage, FOnReleaseExternalImage&& onRelease,
-    TMemoryView<const u32> queueFamilyIndices
+    TMemoryView<const u32> queueFamilyIndices,
+    EResourceState defaultState
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert_NoAssume(IsInitialized_());
-    return FImageID{ _resourceManager.CreateImage(desc, externalImage, std::move(onRelease), queueFamilyIndices ARGS_IF_RHIDEBUG(debugName)) };
+    return FImageID{ _resourceManager.CreateImage(desc, externalImage, std::move(onRelease), queueFamilyIndices, defaultState ARGS_IF_RHIDEBUG(debugName)) };
 }
 //----------------------------------------------------------------------------
 NODISCARD FBufferID FVulkanFrameGraph::CreateBuffer(

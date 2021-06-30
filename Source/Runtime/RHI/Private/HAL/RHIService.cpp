@@ -1,19 +1,14 @@
+﻿#include "stdafx.h"
 
-#include "stdafx.h"
-
-#include "Vulkan/Memory/VulkanMemoryObject.h"
+#include "HAL/RHIService.h"
 
 namespace PPE {
-namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVulkanMemoryObject::FVulkanMemoryObject(FVulkanMemoryObject&& rvalue) NOEXCEPT
-:   _data(std::move(*rvalue._data.LockExclusive()))
-{
+IRHIService::IRHIService() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RHI
 } //!namespace PPE

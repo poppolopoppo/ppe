@@ -38,12 +38,12 @@ FImageDesc& FImageDesc::SetView(EImageView value) NOEXCEPT {
     case EImageView::_Cube:
     case EImageView::_CubeArray:
         Type = EImageDim::_2D;
-        Flags |= EImageFlags::CastToCube;
+        Flags |= EImageFlags::CubeCompatible;
         break;
 
     case EImageView::_3D:
         Type = EImageDim_3D;
-        Flags |= EImageFlags::CastToArray2D;
+        Flags |= EImageFlags::Array2DCompatible;
         break;
 
     case EImageView::Unknown:
@@ -82,18 +82,18 @@ void FImageDesc::Validate() {
     case EImageDim::_1D:
         Assert_NoAssume(not Samples.Enabled());
         Assert_NoAssume(Dimensions.yz == uint2::One);
-        Assert_NoAssume(not (Flags & EImageFlags::CastToArray2D) &&
-                        not (Flags & EImageFlags::CastToCube)); // those flags are not supported for 1D
+        Assert_NoAssume(not (Flags & EImageFlags::Array2DCompatible) &&
+                        not (Flags & EImageFlags::CubeCompatible)); // those flags are not supported for 1D
 
-        Flags -= (EImageFlags::CastToArray2D | EImageFlags::CastToCube);
+        Flags -= (EImageFlags::Array2DCompatible | EImageFlags::CubeCompatible);
         Dimensions = uint3(Dimensions.x, uint2::One);
         Samples = 1_samples;
         break;
 
     case EImageDim::_2D:
         Assert_NoAssume(Dimensions.z == 1);
-        if ((Flags & EImageFlags::CastToCube) and not Meta::IsAligned(6, *ArrayLayers))
-            Flags -= EImageFlags::CastToCube;
+        if ((Flags & EImageFlags::CubeCompatible) and not Meta::IsAligned(6, *ArrayLayers))
+            Flags -= EImageFlags::CubeCompatible;
 
         Dimensions.z = 1;
         break;
@@ -101,9 +101,9 @@ void FImageDesc::Validate() {
     case EImageDim::_3D:
         Assert_NoAssume(not Samples.Enabled());
         Assert_NoAssume(ArrayLayers == 1_layer);
-        Assert_NoAssume(not (Flags & EImageFlags::CastToCube)); // this flag is not supported for 3D
+        Assert_NoAssume(not (Flags & EImageFlags::CubeCompatible)); // this flag is not supported for 3D
 
-        Flags -= EImageFlags::CastToCube;
+        Flags -= EImageFlags::CubeCompatible;
         Samples = 1_samples;
         ArrayLayers = 1_layer;
         break;
@@ -132,9 +132,9 @@ void FImageDesc::Validate() {
             break;
 
         case EImageDim::_2D:
-            if (ArrayLayers > 6_layer && Flags & EImageFlags::CastToCube)
+            if (ArrayLayers > 6_layer && Flags & EImageFlags::CubeCompatible)
                 View = EImageView_CubeArray;
-            else if (ArrayLayers == 6_layer && Flags & EImageFlags::CastToCube)
+            else if (ArrayLayers == 6_layer && Flags & EImageFlags::CubeCompatible)
                 View = EImageView_Cube;
             else if (ArrayLayers > 1_layer)
                 View = EImageView_2DArray;
@@ -194,9 +194,9 @@ void FImageViewDesc::Validate(const FImageDesc& desc) {
             break;
 
         case EImageDim::_2D:
-            if (LayerCount > 6_layer && desc.Flags & EImageFlags::CastToCube)
+            if (LayerCount > 6_layer && desc.Flags & EImageFlags::CubeCompatible)
                 View = EImageView_CubeArray;
-            else if (LayerCount == 6_layer && desc.Flags & EImageFlags::CastToCube)
+            else if (LayerCount == 6_layer && desc.Flags & EImageFlags::CubeCompatible)
                 View = EImageView_Cube;
             else if (LayerCount > 1_layer)
                 View = EImageView_2DArray;
@@ -233,27 +233,27 @@ void FImageViewDesc::Validate(const FImageDesc& desc) {
 
         case EImageView::_2D:
             Assert_NoAssume((desc.Type == EImageDim_2D) ||
-                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::Array2DCompatible) );
             Assert_NoAssume(LayerCount == UMax || LayerCount == 1);
             LayerCount = 1;
             break;
         case EImageView::_2DArray:
             Assert_NoAssume((desc.Type == EImageDim_2D) ||
-                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::Array2DCompatible) );
             LayerCount = Clamp(LayerCount, 1u, maxLayers - *BaseLayer);
             break;
 
         case EImageView::_Cube:
             Assert_NoAssume((desc.Type == EImageDim_2D) ||
-                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
-            Assert_NoAssume(desc.Flags & EImageFlags::CastToCube);
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::Array2DCompatible) );
+            Assert_NoAssume(desc.Flags & EImageFlags::CubeCompatible);
             Assert_NoAssume(UMax == LayerCount || Meta::IsAligned(6u, LayerCount));
             LayerCount = 6;
             break;
         case EImageView::_CubeArray:
             Assert_NoAssume((desc.Type == EImageDim_2D) ||
-                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::CastToArray2D) );
-            Assert_NoAssume(desc.Flags & EImageFlags::CastToCube);
+                            (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::Array2DCompatible) );
+            Assert_NoAssume(desc.Flags & EImageFlags::CubeCompatible);
             Assert_NoAssume(UMax == LayerCount || Meta::IsAligned(6u, LayerCount));
             LayerCount = Max(1u, (maxLayers - *BaseLayer) / 6) * 6;
             break;

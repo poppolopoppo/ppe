@@ -9,7 +9,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanSwapchain final {
+class PPE_RHIVULKAN_API FVulkanSwapchain final : Meta::FNonCopyable {
 public:
     STATIC_CONST_INTEGRAL(u32, MaxImages, 8);
     using FSwapchainImages = TFixedSizeStack<FImageID, MaxImages>;

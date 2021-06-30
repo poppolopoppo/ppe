@@ -19,7 +19,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IFrameTask {
+class PPE_RHI_API IFrameTask {
 protected:
     IFrameTask() = default;
 public:
@@ -112,7 +112,8 @@ public: // interface
         const FImageDesc& desc,
         FExternalImage externalImage,
         FOnReleaseExternalImage&& onRelease,
-        TMemoryView<const u32> queueFamilyIndices
+        TMemoryView<const u32> queueFamilyIndices,
+        EResourceState defaultState
         ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
     NODISCARD virtual FBufferID CreateBuffer(
         const FBufferDesc& desc,

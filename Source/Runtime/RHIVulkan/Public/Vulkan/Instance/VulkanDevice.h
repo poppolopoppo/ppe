@@ -51,7 +51,7 @@ struct FVulkanDeviceInfo {
     const VkAllocationCallbacks* pAllocator{ nullptr };
 };
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanDevice final : public FVulkanDeviceFunctions {
+class PPE_RHIVULKAN_API FVulkanDevice final : public FVulkanDeviceFunctions, Meta::FNonCopyable {
 public:
     using FQueues = TFixedSizeStack<FVulkanDeviceQueue, 16>;
     using FInstanceLayers = VECTOR(RHIDevice, VkLayerProperties);

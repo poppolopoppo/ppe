@@ -2,6 +2,8 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "Vulkan/Pipeline/VulkanShaderModule.h"
+
 #include "RHI/PipelineDesc.h"
 
 #include "Container/HashMap.h"

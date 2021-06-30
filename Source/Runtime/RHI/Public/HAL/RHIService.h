@@ -9,9 +9,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IRHIService {
+class PPE_RHI_API IRHIService {
 protected:
-    IRHIService() = default;
+    IRHIService() NOEXCEPT;
 
 public: // virtual
     virtual ~IRHIService() = default;

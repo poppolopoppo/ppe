@@ -83,7 +83,7 @@ bool FVulkanBuffer::Construct(
     Assert_NoAssume(desc.Usage != Default);
 
     const FVulkanDevice& device = resources.Device();
-    AssertRelease(IsSupported(device, desc, memoryObject.MemoryType()));
+    AssertRelease( IsSupported(device, desc, static_cast<EMemoryType>(memoryObject.MemoryType())) );
 
     const auto exclusiveData = _data.LockExclusive();
     Assert_NoAssume(VK_NULL_HANDLE == exclusiveData->vkBuffer);

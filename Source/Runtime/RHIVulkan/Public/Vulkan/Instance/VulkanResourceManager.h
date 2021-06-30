@@ -120,7 +120,8 @@ public:
     NODISCARD FRawImageID CreateImage(
         const FImageDesc& desc,
         FExternalImage externalImage, FOnReleaseExternalImage&& onRelease,
-        TMemoryView<const u32> queueFamilyIndices
+        TMemoryView<const u32> queueFamilyIndices,
+        EResourceState defaultState
         ARGS_IF_RHIDEBUG(FConstChar debugName));
     NODISCARD FRawBufferID CreateBuffer(
         const FBufferDesc& desc,

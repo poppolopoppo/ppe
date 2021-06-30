@@ -315,9 +315,9 @@ static CONSTEXPR auto EImageView_CubeArray = EImageView::_CubeArray;
 //----------------------------------------------------------------------------
 enum class EImageFlags : u8 {
     MutableFormat           = 1 << 0,   // allows to change image format
-    CastToArray2D           = 1 << 1,   // allows to create 2D Array view from 3D image
-    CastToBlockTexelView    = 1 << 2,   // allows to create view with uncompressed format for compressed image
-    CastToCube              = 1 << 3,   // allows to create CubeMap and CubeMapArray from 2D Array
+    Array2DCompatible           = 1 << 1,   // allows to create 2D Array view from 3D image
+    BlockTexelViewCompatible    = 1 << 2,   // allows to create view with uncompressed format for compressed image
+    CubeCompatible              = 1 << 3,   // allows to create CubeMap and CubeMapArray from 2D Array
     _Last,
 
     Unknown                 = 0,

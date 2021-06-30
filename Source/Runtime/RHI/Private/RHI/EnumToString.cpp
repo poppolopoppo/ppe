@@ -121,9 +121,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     auto sep = Separator_<_Char>();
 
     if (EImageFlags::MutableFormat == value) oss << sep << STRING_LITERAL(_Char, "MutableFormat");
-    if (EImageFlags::CastToCube == value) oss << sep << STRING_LITERAL(_Char, "CastToCube");
-    if (EImageFlags::CastToArray2D == value) oss << sep << STRING_LITERAL(_Char, "CastToArray2D");
-    if (EImageFlags::CastToBlockTexelView == value) oss << sep << STRING_LITERAL(_Char, "CastToBlockTexelView");
+    if (EImageFlags::CubeCompatible == value) oss << sep << STRING_LITERAL(_Char, "CubeCompatible");
+    if (EImageFlags::Array2DCompatible == value) oss << sep << STRING_LITERAL(_Char, "Array2DCompatible");
+    if (EImageFlags::BlockTexelViewCompatible == value) oss << sep << STRING_LITERAL(_Char, "BlockTexelViewCompatible");
 
     return oss;
 }

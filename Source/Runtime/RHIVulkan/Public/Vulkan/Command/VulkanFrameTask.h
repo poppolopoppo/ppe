@@ -10,7 +10,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IVulkanFrameTask : public IFrameTask {
+class PPE_RHIVULKAN_API IVulkanFrameTask : public IFrameTask {
 public:
     using FDependencies = TFixedSizeStack<PVulkanFrameTask, MaxTaskDependencies>;
     using FProcessFunc = void (*)(void* visitor, const void* data);

@@ -1,17 +1,15 @@
+﻿#include "stdafx.h"
 
-#include "stdafx.h"
-
-#include "Vulkan/Memory/VulkanMemoryObject.h"
+#include "RHIException.h"
 
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVulkanMemoryObject::FVulkanMemoryObject(FVulkanMemoryObject&& rvalue) NOEXCEPT
-:   _data(std::move(*rvalue._data.LockExclusive()))
-{
-}
+FRHIException::FRHIException(const char* what)
+:   FException(what)
+{}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

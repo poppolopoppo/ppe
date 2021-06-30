@@ -35,7 +35,7 @@ struct FStagingBlock {
 };
 PPE_ASSUME_TYPE_AS_POD(FStagingBlock)
 //----------------------------------------------------------------------------
-class ICommandBuffer : public FRefCountable {
+class PPE_RHI_API ICommandBuffer : public FRefCountable {
 public: // interface
     virtual ~ICommandBuffer() = default;
 

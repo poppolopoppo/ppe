@@ -502,7 +502,8 @@ FRawImageID FVulkanResourceManager::CreateImage(
 FRawImageID FVulkanResourceManager::CreateImage(
     const FImageDesc& desc,
     FExternalImage externalImage, FOnReleaseExternalImage&& onRelease,
-    TMemoryView<const u32> queueFamilyIndices
+    TMemoryView<const u32> queueFamilyIndices,
+    EResourceState defaultState
     ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(externalImage);
     Assert(onRelease);
@@ -511,7 +512,7 @@ FRawImageID FVulkanResourceManager::CreateImage(
     TResourceProxy<FVulkanImage>* const pImage = CreatePooledResource_(&imageId);
     Assert(pImage);
 
-    if (Unlikely(not pImage->Construct(_device, desc, externalImage, std::move(onRelease), queueFamilyIndices ARGS_IF_RHIDEBUG(debugName)))) {
+    if (Unlikely(not pImage->Construct(_device, desc, externalImage, std::move(onRelease), queueFamilyIndices, defaultState ARGS_IF_RHIDEBUG(debugName)))) {
         RHI_LOG(Error, L"failed to construct image from external resource '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(imageId), pImage, imageId.Index, 0) );
         return Default;

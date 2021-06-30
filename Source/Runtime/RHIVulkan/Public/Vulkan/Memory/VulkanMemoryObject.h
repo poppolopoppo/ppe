@@ -24,14 +24,16 @@ class PPE_RHIVULKAN_API FVulkanMemoryObject final : Meta::FNonCopyable {
 public:
     using FStorage = ALIGNED_STORAGE(sizeof(u64) * 4, alignof(u64));
 
+    struct FInternalData {
+        FStorage Storage;
+        FMemoryDesc Desc;
+    };
+
     FVulkanMemoryObject() = default;
     FVulkanMemoryObject(FVulkanMemoryObject&&) NOEXCEPT;
     ~FVulkanMemoryObject();
 
-    EMemoryType MemoryType() const {
-        const FReadWriteLock::FScopeLockRead scopeLock(_rwLock);
-        return _desc.Type;
-    }
+    EVulkanMemoryType MemoryType() const { return static_cast<EVulkanMemoryType>(_data.LockShared()->Desc.Type); }
 
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
@@ -44,16 +46,15 @@ public:
     NODISCARD bool AllocateBuffer(FVulkanMemoryManager& memory, VkBuffer buffer);
     NODISCARD bool AllocateAccelStruct(FVulkanMemoryManager& memory, VkAccelerationStructureKHR accelStruct);
 
-    NODISCARD bool MemoryInfo(FVulkanMemoryInfo* pinfo, FVulkanMemoryManager& memory) const;
+    NODISCARD bool MemoryInfo(FVulkanMemoryInfo* pInfo, FVulkanMemoryManager& memory) const;
 
 private:
-    FReadWriteLock _rwLock;
-    FStorage _storage;
-    FMemoryDesc _desc;
+    TRHIThreadSafe<FInternalData> _data;
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;
 #endif
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

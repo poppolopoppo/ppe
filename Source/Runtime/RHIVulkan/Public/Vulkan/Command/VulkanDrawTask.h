@@ -49,7 +49,7 @@ private:
 // Base draw vertices:
 //----------------------------------------------------------------------------
 namespace details {
-class FVulkanBaseDrawVerticesTask : public IVulkanDrawTask {
+class PPE_RHIVULKAN_API FVulkanBaseDrawVerticesTask : public IVulkanDrawTask {
 protected:
     using IVulkanDrawTask::FProcessFunc;
 
@@ -192,7 +192,7 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawIndexedIndirectCount> final : publi
 // Base draw meshes:
 //----------------------------------------------------------------------------
 namespace details {
-class FVulkanBaseDrawMeshesTask : public IVulkanDrawTask {
+class PPE_RHIVULKAN_API FVulkanBaseDrawMeshesTask : public IVulkanDrawTask {
 protected:
     using IVulkanDrawTask::FProcessFunc;
 

@@ -376,6 +376,37 @@ VkBorderColor VkCast(EBorderColor value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
+VkImageType VkCast(EImageDim value) {
+    switch (value) {
+    case EImageDim::_1D: return VK_IMAGE_TYPE_1D;
+    case EImageDim::_2D: return VK_IMAGE_TYPE_2D;
+    case EImageDim::_3D: return VK_IMAGE_TYPE_3D;
+    case EImageDim::Unknown: break;
+    }
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+VkImageCreateFlagBits VkCast(EImageFlags value) {
+    VkImageCreateFlagBits result = Zero;
+
+    for (u8 t = 1; t <= static_cast<u8>(value); t <<= 1) {
+        if (not Meta::EnumHas(value, t))
+            continue;
+
+        switch (static_cast<EImageFlags>(t)) {
+        case EImageFlags::Array2DCompatible: result |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT; break;
+        case EImageFlags::BlockTexelViewCompatible: result |= VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT; break;
+        case EImageFlags::CubeCompatible: result |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; break;
+        case EImageFlags::MutableFormat: result |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT; break;
+
+        case EImageFlags::_Last:
+        case EImageFlags::Unknown: AssertNotReached();
+        }
+    }
+
+    return result;
+}
+//----------------------------------------------------------------------------
 VkImageViewType VkCast(EImageView value) {
     switch (value) {
     case EImageView::_1D: return VK_IMAGE_VIEW_TYPE_1D;
@@ -620,8 +651,8 @@ EImageFlags RHICast(VkImageCreateFlagBits flags) {
             continue;
 
         switch (st) {
-        case VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT: result |= EImageFlags::CastToCube; break;
-        case VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT: result |= EImageFlags::CastToArray2D; break;
+        case VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT: result |= EImageFlags::CubeCompatible; break;
+        case VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT: result |= EImageFlags::Array2DCompatible; break;
         case VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT: result |= EImageFlags::MutableFormat; break;
 
         case VK_IMAGE_CREATE_SPARSE_BINDING_BIT:
