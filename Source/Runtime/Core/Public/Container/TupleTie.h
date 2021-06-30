@@ -281,7 +281,7 @@ constexpr std::size_t struct_num_fields() noexcept {
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
 //----------------------------------------------------------------------------
-static constexpr size_t MaxArityForTieAsTuple = 8;
+static constexpr size_t MaxArityForTieAsTuple = 26;
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr bool has_tie_as_tuple() noexcept {
@@ -360,10 +360,100 @@ constexpr auto tie_as_tuple(T& val, size_t_<8>) noexcept {
     auto&[a, b, c, d, e, f, g, h] = val;
     return std::tie(a, b, c, d, e, f, g, h);
 }
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<9>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<10>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<11>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<12>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<13>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<14>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<15>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<16>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<17>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<18>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<19>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<20>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<21>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<22>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<23>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<24>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<25>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y);
+}
+template <class T>
+constexpr auto tie_as_tuple(T& val, size_t_<26>) noexcept {
+    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z] = val;
+    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z);
+}
 } //!details
 template <typename T, size_t _NumFields = struct_num_fields<T>() >
 constexpr auto tie_as_tuple(T& val) noexcept {
-    STATIC_ASSERT(MaxArityForTieAsTuple == 8); // add details::tie_as_tuple() overloads if this number was incremented
+    STATIC_ASSERT(MaxArityForTieAsTuple == 26); // add details::tie_as_tuple() overloads if this number was incremented
     return details::tie_as_tuple(val, details::size_t_<_NumFields>{});
 }
 //----------------------------------------------------------------------------
