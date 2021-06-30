@@ -25,38 +25,39 @@ public:
     public:
         virtual ~IMemoryAllocator() = default;
 
-        virtual bool IsSupported(EMemoryType memType) const = 0;
+        NODISCARD virtual bool IsSupported(EMemoryType memType) const = 0;
 
-        virtual bool AllocateImage(FStorage* pdata, VkImage image, const FMemoryDesc& desc) = 0;
-        virtual bool AllocateBuffer(FStorage* pdata, VkBuffer buffer, const FMemoryDesc& desc) = 0;
-        virtual bool AllocateAccelStruct(FStorage* pdata, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) = 0;
+        NODISCARD virtual bool AllocateImage(FStorage* pdata, VkImage image, const FMemoryDesc& desc) = 0;
+        NODISCARD virtual bool AllocateBuffer(FStorage* pdata, VkBuffer buffer, const FMemoryDesc& desc) = 0;
+        NODISCARD virtual bool AllocateAccelStruct(FStorage* pdata, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) = 0;
 
         virtual void Deallocate(FStorage& data) = 0;
 
-        virtual bool MemoryInfo(FVulkanMemoryInfo* pinfo, const FStorage& data) const  = 0;
+        NODISCARD virtual bool MemoryInfo(FVulkanMemoryInfo* pinfo, const FStorage& data) const  = 0;
     };
 
     using FMemoryAllocatorPtr = TUniquePtr<IMemoryAllocator>;
     using FMemoryAllocatorArray = TFixedSizeStack<FMemoryAllocatorPtr, 16>;
 
     explicit FVulkanMemoryManager(const FVulkanDevice& device);
+#if USE_PPE_RHIDEBUG
     ~FVulkanMemoryManager();
+#endif
 
     NODISCARD bool Construct();
     void TearDown();
 
-    bool AllocateImage(FStorage* pdata, VkImage image, const FMemoryDesc& desc);
-    bool AllocateBuffer(FStorage* pdata, VkBuffer buffer, const FMemoryDesc& desc);
-    bool AllocateAccelStruct(FStorage* pdata, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc);
+    NODISCARD bool AllocateImage(FStorage* pData, VkImage image, const FMemoryDesc& desc);
+    NODISCARD bool AllocateBuffer(FStorage* pData, VkBuffer buffer, const FMemoryDesc& desc);
+    NODISCARD bool AllocateAccelStruct(FStorage* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc);
 
     void Deallocate(FStorage& data);
 
-    bool MemoryInfo(FVulkanMemoryInfo* pinfo, const FStorage& data) const;
+    NODISCARD bool MemoryInfo(FVulkanMemoryInfo* pInfo, const FStorage& data) const;
 
 private:
-    FReadWriteLock _rwLock;
     const FVulkanDevice& _device;
-    FMemoryAllocatorArray _allocators;
+    TRHIThreadSafe<FMemoryAllocatorArray> _allocators;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

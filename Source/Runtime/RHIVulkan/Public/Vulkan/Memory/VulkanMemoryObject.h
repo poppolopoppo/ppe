@@ -31,7 +31,9 @@ public:
 
     FVulkanMemoryObject() = default;
     FVulkanMemoryObject(FVulkanMemoryObject&&) NOEXCEPT;
+#if USE_PPE_RHIDEBUG
     ~FVulkanMemoryObject();
+#endif
 
     EVulkanMemoryType MemoryType() const { return static_cast<EVulkanMemoryType>(_data.LockShared()->Desc.Type); }
 
