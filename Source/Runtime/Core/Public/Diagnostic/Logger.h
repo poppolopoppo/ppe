@@ -76,6 +76,9 @@ public:
     static PPE_CORE_API void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text);
     static PPE_CORE_API void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args);
 
+    static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format);
+    static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format, va_list args);
+
     template <typename _Arg0, typename... _Args>
     static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
         typedef details::TBasicFormatFunctor_<wchar_t> formatfunctor_t;
@@ -171,6 +174,16 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
         _MESSAGE ); \
     } while (0)
 
+#define LOG_PRINTF(_CATEGORY, _LEVEL, ...) do { \
+    ::PPE::FLogger::Printf( \
+        LOG_CATEGORY_GET(_CATEGORY), \
+        ::PPE::FLogger::EVerbosity::_LEVEL, \
+        ::PPE::FLogger::FSiteInfo::Make( \
+            WIDESTRING(__FILE__), \
+            __LINE__ ), \
+        __VA_ARGS__ ); \
+    } while (0)
+
 #define FLUSH_LOG() \
     ::PPE::FLogger::Flush()
 
@@ -186,6 +199,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #       define LOG(_CATEGORY, _LEVEL, ...) NOOP()
 #       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) NOOP()
 #       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) NOOP()
+#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
 #   else
 #       define _LOG_Debug() NOOP()
 #       define _LOG_Info() NOOP()
@@ -197,6 +211,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #       define LOG(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #   endif
 
 #endif //!#if USE_PPE_LOGGER

@@ -654,6 +654,27 @@ void FLogger::LogArgs(const FCategory& category, EVerbosity level, const FSiteIn
     HandleFatalLogIFN_(level);
 }
 //----------------------------------------------------------------------------
+void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format) {
+    Log(category, level, site, format.MakeView());
+}
+//----------------------------------------------------------------------------
+void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format, va_list args) {
+    const FIsInLoggerScope loggerScope;
+
+    if ((category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level)) {
+        MALLOCA_POD(wchar_t, message, 2048);
+        const int len = FPlatformString::Printf(message.data(), message.Count, format, args);
+
+        Assert_NoAssume(0 < len);
+        if (len > 0) {
+            CurrentLogger_().Log(category, level, site,
+                message.MakeView().CutBeforeConst(checked_cast<u32>(len)) );
+        }
+    }
+
+    HandleFatalLogIFN_(level);
+}
+//----------------------------------------------------------------------------
 void FLogger::Start() {
     FLogAllocator::Create();
 
