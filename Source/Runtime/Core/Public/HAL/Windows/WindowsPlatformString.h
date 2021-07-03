@@ -23,14 +23,22 @@ public:
     static int NCmpI(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
     static int NCmpI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
 
-    static size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length);
-    static size_t WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t capacity, const wchar_t* wcstr, size_t length);
-
     static void ToLower(char* dst, const char* src, size_t len) NOEXCEPT;
     static void ToLower(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT;
 
     static void ToUpper(char* dst, const char* src, size_t len) NOEXCEPT;
     static void ToUpper(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT;
+
+    static int Printf(char* dst, size_t capacity, const char* fmt, va_list args) {
+        return std::snprintf(dst, capacity, fmt, args);
+    }
+    static int Printf(wchar_t* dst, size_t capacity, const wchar_t* fmt, va_list args) {
+        return _snwprintf_s(dst, capacity, _TRUNCATE, fmt, args);
+    }
+
+    static size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length);
+    static size_t WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t capacity, const wchar_t* wcstr, size_t length);
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

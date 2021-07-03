@@ -28,14 +28,18 @@ public: // must be defined for every platform
     static int NCmpI(const char* lhs, const char* rhs, size_t len) NOEXCEPT = delete;
     static int NCmpI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT = delete;
 
-    static size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length) = delete;
-    static size_t WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t capacity, const wchar_t* wcstr, size_t length) = delete;
-
     static void ToLower(char* dst, const char* src, size_t len) NOEXCEPT = delete;
     static void ToLower(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT = delete;
 
     static void ToUpper(char* dst, const char* src, size_t len) NOEXCEPT = delete;
     static void ToUpper(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT = delete;
+
+    static int Printf(char* dst, size_t capacity, const char* fmt, va_list args) = delete;
+    static int Printf(wchar_t* dst, size_t capacity, const wchar_t* fmt, va_list args) = delete;
+
+    static size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length) = delete;
+    static size_t WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t capacity, const wchar_t* wcstr, size_t length) = delete;
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

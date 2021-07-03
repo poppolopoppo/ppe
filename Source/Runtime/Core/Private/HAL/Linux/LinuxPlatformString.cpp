@@ -219,64 +219,6 @@ int FLinuxPlatformString::NCmpI(const wchar_t* lhs, const wchar_t* rhs, size_t l
     return ::wcsncasecmp(lhs, rhs, len); // faster than SIMD
 }
 //----------------------------------------------------------------------------
-size_t FLinuxPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length) {
-    Assert(dst);
-    Assert(capacity);
-    Assert(capacity > length);
-
-    if (0 == length) {
-        dst[0] = L'\0';
-        return 0;
-    }
-
-    Assert(cstr);
-    UNUSED(capacity);
-    UNUSED(codePage);
-
-    const int written = ::mbtowc(dst, cstr, length);
-    CLOG(-1 == written, HAL, Fatal, L"mbtowc failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(cstr, length));
-
-    Assert(checked_cast<size_t>(written) >= length);
-    Assert(checked_cast<size_t>(written) < capacity);
-
-    dst[written] = L'\0'; // mbtowc() won't use a null terminator since we specified the length of input
-
-    return checked_cast<size_t>(written + 1);
-}
-//----------------------------------------------------------------------------
-size_t FLinuxPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t capacity, const wchar_t* wcstr, size_t length) {
-    Assert(dst);
-    Assert(capacity);
-    Assert(capacity > length);
-
-    // https://www.chilkatsoft.com/p/p_348.asp
-
-    if (0 == length) {
-        dst[0] = '\0';
-        return 0;
-    }
-
-    Assert(wcstr);
-    UNUSED(capacity);
-    UNUSED(codePage);
-
-    size_t doff = 0;
-    for (const wchar_t* const cend = wcstr + length; wcstr != cend; ++wcstr) {
-        if (capacity - doff < MB_LEN_MAX)
-            break;
-
-        const int n = ::wctomb(dst + doff, *wcstr);
-        CLOG(-1 == n, HAL, Fatal, L"wctomb({0}) failed with errno: {1}", *wcstr, FErrno{});
-
-        doff += n;
-    }
-
-    Assert(doff < capacity);
-    dst[doff] = L'\0';
-
-    return (doff + 1);
-}
-//----------------------------------------------------------------------------
 void FLinuxPlatformString::ToLower(char* dst, const char* src, size_t len) NOEXCEPT {
     Assert(dst);
     Assert(src);
@@ -427,6 +369,65 @@ void FLinuxPlatformString::ToUpper(wchar_t* dst, const wchar_t* src, size_t len)
 
     for (; sbegin != send; ++sbegin, ++dbegin)
         *dbegin = PPE::ToUpper(*sbegin);
+}
+
+//----------------------------------------------------------------------------
+size_t FLinuxPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length) {
+    Assert(dst);
+    Assert(capacity);
+    Assert(capacity > length);
+
+    if (0 == length) {
+        dst[0] = L'\0';
+        return 0;
+    }
+
+    Assert(cstr);
+    UNUSED(capacity);
+    UNUSED(codePage);
+
+    const int written = ::mbtowc(dst, cstr, length);
+    CLOG(-1 == written, HAL, Fatal, L"mbtowc failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(cstr, length));
+
+    Assert(checked_cast<size_t>(written) >= length);
+    Assert(checked_cast<size_t>(written) < capacity);
+
+    dst[written] = L'\0'; // mbtowc() won't use a null terminator since we specified the length of input
+
+    return checked_cast<size_t>(written + 1);
+}
+//----------------------------------------------------------------------------
+size_t FLinuxPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t capacity, const wchar_t* wcstr, size_t length) {
+    Assert(dst);
+    Assert(capacity);
+    Assert(capacity > length);
+
+    // https://www.chilkatsoft.com/p/p_348.asp
+
+    if (0 == length) {
+        dst[0] = '\0';
+        return 0;
+    }
+
+    Assert(wcstr);
+    UNUSED(capacity);
+    UNUSED(codePage);
+
+    size_t doff = 0;
+    for (const wchar_t* const cend = wcstr + length; wcstr != cend; ++wcstr) {
+        if (capacity - doff < MB_LEN_MAX)
+            break;
+
+        const int n = ::wctomb(dst + doff, *wcstr);
+        CLOG(-1 == n, HAL, Fatal, L"wctomb({0}) failed with errno: {1}", *wcstr, FErrno{});
+
+        doff += n;
+    }
+
+    Assert(doff < capacity);
+    dst[doff] = L'\0';
+
+    return (doff + 1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
