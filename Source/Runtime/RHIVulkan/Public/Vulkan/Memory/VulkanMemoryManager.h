@@ -13,27 +13,26 @@ namespace RHI {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanMemoryManager final {
 public:
-    using FStorage = FVulkanMemoryObject::FStorage;
+    using FBlock = FVulkanMemoryBlock;
 
-    class FDedicatedMemoryAllocator;
-    class FHostMemoryAllocator;
-    class FDeviceMemoryAllocator;
-    class FVirtualMemoryAllocator;
     class FVulkanMemoryAllocator;
 
     class IMemoryAllocator {
     public:
         virtual ~IMemoryAllocator() = default;
 
-        NODISCARD virtual bool IsSupported(EMemoryType memType) const = 0;
+        virtual void DutyCycle(u32 frameIndex) = 0;
+        virtual void DefragmentMemory(FVulkanResourceManager& resources) = 0;
 
-        NODISCARD virtual bool AllocateImage(FStorage* pdata, VkImage image, const FMemoryDesc& desc) = 0;
-        NODISCARD virtual bool AllocateBuffer(FStorage* pdata, VkBuffer buffer, const FMemoryDesc& desc) = 0;
-        NODISCARD virtual bool AllocateAccelStruct(FStorage* pdata, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) = 0;
+        NODISCARD virtual bool IsSupported(EMemoryType memType) const NOEXCEPT = 0;
 
-        virtual void Deallocate(FStorage& data) = 0;
+        NODISCARD virtual bool AllocateImage(FBlock* pData, VkImage image, const FMemoryDesc& desc) = 0;
+        NODISCARD virtual bool AllocateBuffer(FBlock* pData, VkBuffer buffer, const FMemoryDesc& desc) = 0;
+        NODISCARD virtual bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) = 0;
 
-        NODISCARD virtual bool MemoryInfo(FVulkanMemoryInfo* pinfo, const FStorage& data) const  = 0;
+        virtual void Deallocate(FBlock& data) = 0;
+
+        NODISCARD virtual bool MemoryInfo(FVulkanMemoryInfo* pInfo, const FBlock& data) const NOEXCEPT = 0;
     };
 
     using FMemoryAllocatorPtr = TUniquePtr<IMemoryAllocator>;
@@ -47,13 +46,16 @@ public:
     NODISCARD bool Construct();
     void TearDown();
 
-    NODISCARD bool AllocateImage(FStorage* pData, VkImage image, const FMemoryDesc& desc);
-    NODISCARD bool AllocateBuffer(FStorage* pData, VkBuffer buffer, const FMemoryDesc& desc);
-    NODISCARD bool AllocateAccelStruct(FStorage* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc);
+    void DutyCycle(u32 frameIndex);
+    void ReleaseMemory(FVulkanResourceManager& resources);
 
-    void Deallocate(FStorage& data);
+    NODISCARD bool AllocateImage(FBlock* pData, VkImage image, const FMemoryDesc& desc);
+    NODISCARD bool AllocateBuffer(FBlock* pData, VkBuffer buffer, const FMemoryDesc& desc);
+    NODISCARD bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc);
 
-    NODISCARD bool MemoryInfo(FVulkanMemoryInfo* pInfo, const FStorage& data) const;
+    void Deallocate(FBlock& data);
+
+    NODISCARD bool MemoryInfo(FVulkanMemoryInfo* pInfo, const FBlock& data) const;
 
 private:
     const FVulkanDevice& _device;

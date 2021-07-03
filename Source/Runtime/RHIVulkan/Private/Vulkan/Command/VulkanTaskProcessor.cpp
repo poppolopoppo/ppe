@@ -1827,12 +1827,12 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
     UNUSED(task);
-    AssertNotImplemented(); // #TODO: NV to KHR
+    AssertNotImplemented(); // #TODO: VK_KHR_ray_tracing_pipeline
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
     UNUSED(task);
-    AssertNotImplemented(); // #TODO: NV to KHR
+    AssertNotImplemented(); // #TODO: VK_KHR_ray_tracing_pipeline
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanCustomTaskTask& task) {

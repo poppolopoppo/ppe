@@ -896,6 +896,19 @@ void FVulkanResourceManager::ReleaseMemory() {
     TearDownCache_(_resources.PplnResourcesCache);
 }
 //----------------------------------------------------------------------------
+// Defragmentation
+//----------------------------------------------------------------------------
+void FVulkanResourceManager::DefragmentMemory(void* userData, FDefragmentFunc defragment) {
+    Assert(defragment);
+
+    STACKLOCAL_POD_STACK(FVulkanMemoryObject*, allocations, MaxMemoryObjs);
+    _resources.MemoryObjectPool.Each([userData, defragment]() {
+
+
+
+    });
+}
+//----------------------------------------------------------------------------
 // CreateStagingBuffer
 //----------------------------------------------------------------------------
 bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBufferIndex* pIndex, EBufferUsage usage) {

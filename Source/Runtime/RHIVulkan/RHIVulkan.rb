@@ -2,5 +2,5 @@
 
 $Build.ppe_module!(:RHIVulkan) do
     public_deps!(namespace.Core, namespace.RHI)
-    private_deps!(*namespace[:External]{[vulkan]})
+    private_deps!(*namespace[:External]{[vulkan, vma]})
 end

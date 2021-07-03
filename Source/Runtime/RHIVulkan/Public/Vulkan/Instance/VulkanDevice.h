@@ -77,6 +77,7 @@ public:
         bool Swapchain                  : 1;
         // extensions
         bool DebugUtils                 : 1;
+        bool MemoryBudget               : 1;
         bool MeshShaderNV               : 1;
         bool RayTracingNV               : 1;
         bool ShadingRateImageNV         : 1;
@@ -117,6 +118,9 @@ public:
     #ifdef VK_VERSION_1_2
         VkPhysicalDeviceVulkan11Properties Properties110;
         VkPhysicalDeviceVulkan12Properties Properties120;
+    #endif
+    #ifdef VK_EXT_memory_budget
+        VkPhysicalDeviceMemoryBudgetPropertiesEXT MemoryBudget;
     #endif
     #ifdef VK_EXT_robustness2
         VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;

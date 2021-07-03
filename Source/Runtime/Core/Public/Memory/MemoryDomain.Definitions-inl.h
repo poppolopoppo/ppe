@@ -157,4 +157,5 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(MemoryPool,               PooledMemory)
 MEMORYDOMAIN_GROUP_IMPL(External,                       UsedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(LZ4,                      External)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(STBImage,                 External)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(VMA,                      External)
 //------------------------------------------------------------------------------

@@ -20,12 +20,15 @@ struct FVulkanMemoryInfo {
     u32 Size{ 0 };
 };
 //----------------------------------------------------------------------------
+struct FVulkanMemoryBlock {
+    u32 AllocatorId{ UMax };
+    void* MemoryHandle{ nullptr };
+};
+//----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanMemoryObject final : Meta::FNonCopyable {
 public:
-    using FStorage = ALIGNED_STORAGE(sizeof(u64) * 4, alignof(u64));
-
     struct FInternalData {
-        FStorage Storage;
+        FVulkanMemoryBlock Block;
         FMemoryDesc Desc;
     };
 

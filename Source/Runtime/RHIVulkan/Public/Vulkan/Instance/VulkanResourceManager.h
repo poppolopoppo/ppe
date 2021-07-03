@@ -172,6 +172,9 @@ public:
     void RunValidation(u32 maxIteration);
     void ReleaseMemory();
 
+    using FDefragmentFunc = void(*)(void*, TMemoryView<FVulkanMemoryObject* const>);
+    void DefragmentMemory(void* userData, FDefragmentFunc defragment);
+
 #if USE_PPE_RHIDEBUG
     using FShaderTimemapPipelines = Meta::TArray<FRawCPipelineID, 3>;
     void ShaderTimemapPipelines(FShaderTimemapPipelines* pPpln);

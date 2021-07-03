@@ -28,7 +28,7 @@ public:
         ~FSharedLock() NOEXCEPT {
             reinterpret_cast<const _Impl*>(&_data)->ReleaseReader();
         }
-        const auto& Value() const { return DerefPtr(_data._value); }
+        const auto& Value() const { return _data._value; }
         const auto& operator *() const NOEXCEPT { return DerefPtr(_data._value); }
         const auto* operator ->() const NOEXCEPT { return std::addressof(DerefPtr(_data._value)); }
     };
@@ -42,7 +42,7 @@ public:
         ~FExclusiveLock() NOEXCEPT {
             reinterpret_cast<_Impl*>(&_data)->ReleaseWriter();
         }
-        auto& Value() const { return DerefPtr(_data._value); }
+        auto& Value() const { return _data._value; }
         auto& operator *() const NOEXCEPT { return DerefPtr(_data._value); }
         auto* operator ->() const NOEXCEPT { return std::addressof(DerefPtr(_data._value)); }
     };

@@ -278,13 +278,13 @@ bool TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
         const block_type* const pblocks = exclusive->_blocks[chk];
 
         if (pblocks)
-            totalLiveChunks++;
+            ++totalLiveChunks;
 
         index_type numFreeBlocks = 0;
         for (index_type id = pool.FreeList.load(std::memory_order_relaxed); id < ChunkSize;) {
             const index_type nextId = reinterpret_cast<const index_type&>(pblocks[id]);
             id = nextId;
-            numFreeBlocks++;
+            ++numFreeBlocks;
             Assert_NoAssume(numFreeBlocks <= ChunkSize); // detect loops
         }
 

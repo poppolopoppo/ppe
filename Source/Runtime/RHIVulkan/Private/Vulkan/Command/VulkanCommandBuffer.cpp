@@ -660,7 +660,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FUpdateRayTracingShaderTable& task) 
 PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
     Assert(task.Geometry);
 
-#if 0 // #TODO: porting NV to KHR
+#if 0 // #TODO: VK_KHR_ray_tracing_pipeline
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(Device().EnableRayTracingKHR());
@@ -704,7 +704,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     pBuildTask->RTScene = rtScene;
 
     VkMemoryRequirements2 memReq2{};
-    // #TODO: support for VK_KHR_acceleration_structure instead of VK_NV_ray_tracing
+    // #TODO: VK_KHR_ray_tracing_pipeline
 
     FMemoryDesc mem;
     mem.Type = EMemoryType::Default;

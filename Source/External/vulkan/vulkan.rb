@@ -399,6 +399,7 @@ class VulkanFunctionsGenerator < HeaderParser
             dst.puts!('device_fn() = default;')
             dst.puts!('constexpr explicit device_fn(const device_api* api) : device_api_(api) {}')
             dst.puts!('api_version version() const { return device_api_->instance_api_->version_; }')
+            dst.puts!('const device_api* api() const { return device_api_; }')
             dst.puts!('const device_extension_set& device_extensions() const { return device_api_->device_extensions_; }')
             pfnfun_decl(dst, :instance_level_function, 'device_api_->instance_api_', api)
             pfnfun_decl(dst, :instance_level_function_from_extension, 'device_api_->instance_api_', api)

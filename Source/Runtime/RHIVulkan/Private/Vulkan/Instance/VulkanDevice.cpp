@@ -143,6 +143,9 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #ifdef VK_KHR_depth_stencil_resolve
     _enabled.DepthStencilResolve = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_depth_stencil_resolve));
 #endif
+#ifdef VK_EXT_memory_budget
+    _enabled.MemoryBudget = HasExtension(EVulkanDeviceExtension::EXT_memory_budget);
+#endif
 #ifdef VK_EXT_robustness2
     _enabled.Robustness2 = HasExtension(EVulkanDeviceExtension::EXT_robustness_2);
 #endif
@@ -239,6 +242,10 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #ifdef VK_EXT_descriptor_indexing
         if (_enabled.DescriptorIndexing)
             enableProperties(&_caps.DescriptorIndexingProperties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES);
+#endif
+#ifdef VK_EXT_memory_budget
+        if (_enabled.MemoryBudget)
+            enableProperties(&_caps.MemoryBudget, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT);
 #endif
 #ifdef VK_EXT_robustness2
         if (_enabled.Robustness2)
