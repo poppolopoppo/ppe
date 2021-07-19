@@ -9,15 +9,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T = size_t>
+template <typename T = size_t, int SignifiantBits = sizeof(T) * 8>
 struct TBitMask {
     STATIC_ASSERT(std::is_integral_v<T>);
     using word_t = T;
 
     static CONSTEXPR u32 BitCount = (sizeof(word_t) << 3);
+    static CONSTEXPR word_t ExtraBits = (sizeof(T) * 8 - SignifiantBits);
     static CONSTEXPR word_t One = word_t(1);
-    static CONSTEXPR word_t AllMask = word_t(-1);
-    static CONSTEXPR word_t BitMask = (BitCount - 1);
+    static CONSTEXPR word_t AllMask = (word_t(-1) >> ExtraBits);
 
     word_t Data;
 
@@ -51,7 +51,7 @@ struct TBitMask {
     CONSTEXPR void SetAllFalse() NOEXCEPT { Data = 0; }
     CONSTEXPR void ResetAll(bool value) NOEXCEPT { Data = (value ? AllMask : 0); }
 
-    CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data }; }
+    CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data & AllMask }; }
 
     CONSTEXPR bool Contains(TBitMask other) const NOEXCEPT { return (Data & other.Data) == other.Data; }
     CONSTEXPR bool Intersects(TBitMask other) const NOEXCEPT { return !!(Data & other.Data); }
@@ -72,9 +72,14 @@ struct TBitMask {
     u32 Count() const NOEXCEPT {
         return checked_cast<u32>(FPlatformMaths::popcnt(Data));
     }
-
+    word_t LowestBitSet() const NOEXCEPT {
+        return FPlatformMaths::ctz(Data);
+    }
     word_t CountTrailingZeros() const NOEXCEPT {
         return FPlatformMaths::ctz(Data);
+    }
+    word_t CountLeadingZeros() const NOEXCEPT {
+        return FPlatformMaths::lzcnt(Data << ExtraBits);
     }
 
     word_t FirstBitSet_AssumeNotEmpty() const NOEXCEPT {
@@ -87,7 +92,7 @@ struct TBitMask {
 
     word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT {
         Assert(Data);
-        return FPlatformMaths::lzcnt(Data);
+        return FPlatformMaths::lzcnt(Data << ExtraBits);
     }
 
     word_t PopFront() NOEXCEPT { // return 0 if empty or bit index + 1
@@ -108,6 +113,18 @@ struct TBitMask {
         Data &= ~(One << front);
         return front;
     }
+
+    CONSTEXPR u32 operator *() const { return LowestBitSet(); }
+    CONSTEXPR TBitMask& operator ++() {
+        Data &= (Data - 1);
+        return (*this);
+    }
+
+    CONSTEXPR TBitMask begin() const { return (*this); }
+    CONSTEXPR TBitMask end() const { return TBitMask{ 0 }; }
+
+    friend CONSTEXPR bool operator ==(TBitMask lhs, TBitMask rhs) { return (lhs.Data == rhs.Data); }
+    friend CONSTEXPR bool operator !=(TBitMask lhs, TBitMask rhs) { return (lhs.Data != rhs.Data); }
 
     static CONSTEXPR TBitMask SetFirstN(word_t n) NOEXCEPT { return TBitMask{ AllMask >> (BitCount - n) }; }
     static CONSTEXPR TBitMask UnsetFirstN(word_t n) NOEXCEPT { return TBitMask{ AllMask << n }; }
