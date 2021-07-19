@@ -14,7 +14,7 @@ namespace PPE {
 // Atomic pool of fixed size using a bit mask
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded due to alignement
+PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded due to alignment
 template <typename T, size_t _Chunks = 1, typename _Index = size_t, size_t _Align = alignof(T) >
 class TAtomicPool : Meta::FNonCopyableNorMovable {
     STATIC_ASSERT(_Chunks > 0);

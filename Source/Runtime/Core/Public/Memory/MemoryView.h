@@ -203,10 +203,10 @@ public:
 
     template <typename _Pred>
     auto Any(const _Pred& pred) const { return MakeRef(FindIf(pred)); }
-    template <typename _Pred>
-    auto Min(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) { return MakeRef(FindMin(pred)); }
-    template <typename _Pred>
-    auto Max(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) { return MakeRef(FindMax(pred)); }
+    template <typename _Pred = Meta::TLess<Meta::TDecay<T>>>
+    auto Min(const _Pred& pred = _Pred{}) { return MakeRef(FindMin(pred)); }
+    template <typename _Pred = Meta::TLess<Meta::TDecay<T>>>
+    auto Max(const _Pred& pred = _Pred{}) { return MakeRef(FindMax(pred)); }
 
     template <typename _Pred>
     iterator FindIf(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
@@ -310,6 +310,11 @@ protected:
     pointer _storage;
     size_type _size;
 };
+//----------------------------------------------------------------------------
+#if PPE_HAS_CXX17
+template <typename T>
+TMemoryView(T* storage, size_t size) -> TMemoryView<T>;
+#endif
 //----------------------------------------------------------------------------
 // All memory views are considered as pods
 //----------------------------------------------------------------------------

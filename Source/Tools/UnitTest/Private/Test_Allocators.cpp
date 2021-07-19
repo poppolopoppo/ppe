@@ -1,8 +1,10 @@
 #include "stdafx.h"
 
 #include "Allocator/Mallocator.h"
+#include "Allocator/SlabHeap.h"
 #include "Allocator/StlAllocator.h"
-
+#include "Container/CompressedRadixTrie.h"
+#include "Container/HashSet.h"
 #include "Container/Pair.h"
 #include "Container/RingBuffer.h"
 #include "Container/Stack.h"
@@ -11,30 +13,31 @@
 #include "IO/FormatHelpers.h"
 #include "IO/StringView.h"
 #include "Maths/MathHelpers.h"
+#include "Maths/RandomGenerator.h"
 #include "Maths/ScalarVectorHelpers.h"
 #include "Maths/Threefy.h"
+#include "Maths/VarianceEstimator.h"
+#include "Memory/CachedMemoryPool.h"
+#include "Memory/CachedMemoryPool2.h"
+#include "Memory/CachedMemoryPool3.h"
 #include "Memory/MemoryPool.h"
+#include "Memory/MemoryPool.h"
+#include "Memory/MemoryPool2.h"
+#include "Memory/MemoryPool3.h"
+#include "Memory/MemoryPool4.h"
 #include "Memory/MemoryView.h"
 #include "Memory/UniqueView.h"
-#include "Time/TimedScope.h"
+#include "Modular/ModularDomain.h"
+#include "Thread/AtomicPool.h"
+#include "Thread/CriticalSection.h"
 #include "Thread/Task/TaskHelpers.h"
 #include "Thread/ThreadPool.h"
+#include "Time/TimedScope.h"
 
 #include <algorithm>
 #include <random>
 
-
-#include "Allocator/SlabHeap.h"
-#include "Container/CompressedRadixTrie.h"
-#include "Maths/RandomGenerator.h"
-#include "Maths/VarianceEstimator.h"
-#include "Memory/CachedMemoryPool.h"
-#include "Memory/MemoryPool.h"
-#include "Modular/ModularDomain.h"
-#include "Thread/AtomicPool.h"
-#include "Thread/CriticalSection.h"
-
-#define USE_TESTALLOCATOR_MEMSET 0
+#define USE_TESTALLOCATOR_MEMSET (0) // we don't want to benchmark memset() performance
 
 namespace PPE {
 namespace Test {
@@ -379,11 +382,70 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
         ParallelForEachRef(blocksToKeep.begin(), blocksToKeep.end(),
             [&radixTrie](const TPair<uintptr_t COMMA uintptr_t>& it) {
             VerifyRelease(radixTrie.Erase(it.first) == it.second);
-        },  ETaskPriority::Normal, &FHighPriorityThreadPool::Get() );
+        },  ETaskPriority::Normal, HighPriorityTaskContext() );
 
         Assert(radixTrie.empty());
         blocks.clear();
     }
+}
+//----------------------------------------------------------------------------
+template <typename _Word>
+static NO_INLINE void Test_BitTree_Impl_(FWStringView name, TMemoryView<const u32> sizes) {
+    TAllocaBlock<_Word> alloc;
+    TBitTree<_Word, false> tree;
+
+    FRandomGenerator rnd;
+
+    MALLOCA_POD(u32, tmpIds, sizes.Max());
+
+    for (u32 capacity : sizes) {
+        LOG(Test_Allocators, Emphasis, L"testing {0} with size {1}", name, capacity);
+
+        tree.SetupMemoryRequirements(capacity);
+        Assert_NoAssume(tree.DesiredSize == capacity);
+
+        if (tree.TotalNumWords() != alloc.Count)
+            alloc.Relocate(tree.TotalNumWords(), false);
+        Assert_NoAssume(alloc.SizeInBytes() == tree.AllocationSize());
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(alloc.data(), alloc.SizeInBytes()));
+
+        tree.Initialize(alloc.data(), false);
+
+        u32 available = 0;
+        for (;;) {
+            const u32 bit = tree.NextAllocateBit();
+            if (UMax == bit)
+                break;
+
+            tree.AllocateBit(bit);
+            ++available;
+        }
+
+        AssertRelease_NoAssume(available == capacity);
+        AssertRelease_NoAssume(tree.Full());
+        AssertRelease_NoAssume(tree.CountOnes(capacity) == capacity);
+
+        const auto ids = tmpIds.MakeView().CutBefore(capacity);
+        MakeInterval(capacity).CopyTo(ids.begin());
+        rnd.Shuffle(ids);
+
+        for (auto bit : ids) {
+            AssertRelease_NoAssume(tree.IsAllocated(bit));
+            tree.Deallocate(bit);
+        }
+
+        AssertRelease_NoAssume(not tree.Full());
+        AssertRelease_NoAssume(tree.CountOnes(capacity) == 0);
+    }
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_BitTrees_() {
+    constexpr const u32 sizes[] = {
+        32, 64, 256, 1024, 2048, 65536, // aligned
+        2, 5, 11, 23, 47, 97, 197, 397, 797, 1597, 3203, 4519, 6421, 12853, 25717, 51437 // unaligned
+    };
+    Test_BitTree_Impl_<u32>(L"TBitTree<u32>", sizes);
+    Test_BitTree_Impl_<u64>(L"TBitTree<u64>", sizes);
 }
 //----------------------------------------------------------------------------
 struct FDummyForPool_ {
@@ -392,8 +454,15 @@ struct FDummyForPool_ {
 
     mutable std::atomic<u32> RefCount_{ 0 };
 
+    u64 Canary = 0xdeadbeefdeadbeefULL;
+
     FDummyForPool_() = default;
-    FDummyForPool_(const FDummyForPool_& rhs) : Data0(rhs.Data0), Data1(rhs.Data1) {}
+    FDummyForPool_(const FDummyForPool_& rhs) NOEXCEPT { operator =(rhs); }
+    FDummyForPool_& operator =(const FDummyForPool_& rhs) NOEXCEPT {
+        Data0 = rhs.Data0;
+        Data1 = rhs.Data1;
+        return (*this);
+    }
     FDummyForPool_(FRandomGenerator& rng) {
         rng.Randomize(Data0);
         rng.Randomize(Data1);
@@ -403,8 +472,12 @@ struct FDummyForPool_ {
         AssertRelease(CheckInvariants());
     }
 
+    bool CheckCanary() const NOEXCEPT {
+        return (0xdeadbeefdeadbeefULL == Canary);
+    }
+
     bool CheckInvariants() const NOEXCEPT {
-        return (0 == RefCount_);
+        return (0 == RefCount_ && CheckCanary());
     }
 
     bool AddRef() const { return RefCount_.fetch_add(1, std::memory_order_relaxed) == 0; }
@@ -417,29 +490,42 @@ struct FDummyForPool_ {
         return (not operator ==(rhs));
     }
 
+    friend void swap(FDummyForPool_& lhs, FDummyForPool_& rhs) {
+        std::swap(lhs.Data0, rhs.Data0);
+        std::swap(lhs.Data1, rhs.Data1);
+    }
+
     friend hash_t hash_value(const FDummyForPool_& dummy) {
         return hash_tuple(dummy.Data0, dummy.Data1);
     }
 };
 //----------------------------------------------------------------------------
-static NO_INLINE void Test_AtomicPool_() {
+static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* context) {
     LOG(Test_Allocators, Emphasis, L"testing TAtomicPool<>");
 
-    using pool_type = TAtomicPool<FDummyForPool_, 8>;
+    BENCHMARK_SCOPE(L"Pool", L"TAtomicPool<>");
+
+    using pool_type = TAtomicPool<FDummyForPool_, 32>;
     using index_type = pool_type::index_type;
 
     STATIC_CONST_INTEGRAL(size_t, ToDeallocate, (pool_type::Capacity * 2) / 3);
     FRandomGenerator rng;
     TStaticArray<FDummyForPool_*, pool_type::Capacity> allocs;
 
+#if USE_PPE_DEBUG
+    constexpr int numLoops = 100;
+#else
+    constexpr int numLoops = 1000;
+#endif
+
     pool_type pool;
-    forrange(loop, 0, 10) {
+    forrange(loop, 0, numLoops) {
         ParallelFor(0, pool_type::Capacity,
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
                 AssertRelease(allocs[i]->CheckInvariants());
                 allocs[i]->AddRef();
-            });
+            }, priority, context);
 
         rng.Shuffle(allocs.MakeView());
 
@@ -448,7 +534,7 @@ static NO_INLINE void Test_AtomicPool_() {
                 allocs[i]->RemoveRef();
                 AssertRelease(allocs[i]->CheckInvariants());
                 pool.Release(allocs[i]);
-            });
+            }, priority, context);
 
         pool.Clear_ReleaseMemory();
 
@@ -457,7 +543,7 @@ static NO_INLINE void Test_AtomicPool_() {
                 allocs[i] = pool.Allocate();
                 AssertRelease(allocs[i]->CheckInvariants());
                 allocs[i]->AddRef();
-            });
+            }, priority, context);
 
         rng.Shuffle(allocs.MakeView());
 
@@ -466,30 +552,39 @@ static NO_INLINE void Test_AtomicPool_() {
                 allocs[i]->RemoveRef();
                 AssertRelease(allocs[i]->CheckInvariants());
                 pool.Release(allocs[i]);
-            });
+            }, priority, context);
 
         pool.Clear_ReleaseMemory();
     }
 }
 //----------------------------------------------------------------------------
-static NO_INLINE void Test_MemoryPool_() {
-    LOG(Test_Allocators, Emphasis, L"testing TMemoryPool<>");
+template <typename _MemoryPool>
+static NO_INLINE void Test_MemoryPool_Impl_(FWStringView name, ETaskPriority priority, ITaskContext* context) {
+    LOG(Test_Allocators, Emphasis, L"testing {0}", name);
 
-    using pool_type = TTypedMemoryPool<FDummyForPool_, 8, 512, EThreadBarrier::RWLock, ALLOCATOR(Container)>;
-    using index_type = pool_type::index_type;
+    BENCHMARK_SCOPE(L"Pool", name);
 
-    STATIC_CONST_INTEGRAL(size_t, ToDeallocate, (pool_type::MaxSize * 2) / 3);
+    using pool_type = _MemoryPool;
+    using index_type = typename pool_type::index_type;
+
+    STATIC_CONST_INTEGRAL(size_t, ToDeallocate, (static_cast<size_t>(pool_type::MaxSize) * 2) / 3);
     FRandomGenerator rng;
     TStaticArray<index_type, pool_type::MaxSize> allocs;
 
+#if USE_PPE_DEBUG
+    constexpr int numLoops = 100;
+#else
+    constexpr int numLoops = 1000;
+#endif
+
     pool_type pool;
-    forrange(loop, 0, 10) {
+    forrange(loop, 0, numLoops) {
         Assert_NoAssume(pool.CheckInvariants());
 
         ParallelFor(0, pool_type::MaxSize,
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
-            });
+            }, priority, context);
 
         Assert_NoAssume(pool.CheckInvariants());
 
@@ -498,14 +593,14 @@ static NO_INLINE void Test_MemoryPool_() {
         ParallelFor(0, ToDeallocate,
             [&allocs, &pool](size_t i) {
                 pool.Deallocate(allocs[i]);
-            });
+            }, priority, context);
 
         Assert_NoAssume(pool.CheckInvariants());
 
         ParallelFor(0, ToDeallocate,
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
-            });
+            }, priority, context);
 
         Assert_NoAssume(pool.CheckInvariants());
 
@@ -514,7 +609,7 @@ static NO_INLINE void Test_MemoryPool_() {
         ParallelFor(0, pool_type::MaxSize,
             [&allocs, &pool](size_t i) {
                 pool.Deallocate(allocs[i]);
-            });
+            }, priority, context);
 
         Assert_NoAssume(pool.CheckInvariants());
 
@@ -522,84 +617,205 @@ static NO_INLINE void Test_MemoryPool_() {
     }
 }
 //----------------------------------------------------------------------------
-static NO_INLINE void Test_CachedMemoryPool_() {
-    LOG(Test_Allocators, Emphasis, L"testing TCachedMemoryPool<>");
+static NO_INLINE void Test_MemoryPools_(ETaskPriority priority, ITaskContext* context) {
+    constexpr auto ChunkSize = CODE3264(64, 128);
+    constexpr auto MaxChunks = 32;
 
-    using pool_type = TCachedMemoryPool<FDummyForPool_, FDummyForPool_, 8, 512, ALLOCATOR(Container)>;
-    using block_type = pool_type::block_type;
-    using index_type = pool_type::index_type;
+    using FMemoryPool1 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, EThreadBarrier::RWLock, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool1>(L"TMemoryPool<>", priority, context);
 
-    STATIC_CONST_INTEGRAL(u32, ToAllocate, u32(pool_type::MaxSize));
+    using FMemoryPool3 = TTypedMemoryPool3<FDummyForPool_, ChunkSize, MaxChunks, EThreadBarrier::RWLock, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool3>(L"TMemoryPool3<>", priority, context);
+
+    using FMemoryPool4 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 4, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool4>(L"TMemoryPool4<>", priority, context);
+
+    using FMemoryPool4_2 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 2, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool4_2>(L"TMemoryPool4_2<>", priority, context);
+
+    using FMemoryPool4_8 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 8, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool4_8>(L"TMemoryPool4_8<>", priority, context);
+
+    using FMemoryPool4_32 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 32, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool4_32>(L"TMemoryPool4_32<>", priority, context);
+}
+//----------------------------------------------------------------------------
+template <typename _CachedMemoryPool>
+static NO_INLINE void Test_CachedMemoryPool_Impl_(
+    FWStringView name,
+    const FRandomGenerator& seed,
+    TMemoryView<const FDummyForPool_> uniq,
+    TMemoryView<const FDummyForPool_> shuf,
+    ETaskPriority priority, ITaskContext* context) {
+    LOG(Test_Allocators, Emphasis, L"testing {0}", name);
+
+#if USE_PPE_DEBUG
+    constexpr int numLoops = 100;
+#else
+    constexpr int numLoops = 1000;
+#endif
+
+    using pool_type = _CachedMemoryPool;
+    using block_type = typename pool_type::block_type;
+    using index_type = typename pool_type::index_type;
+
     STATIC_CONST_INTEGRAL(u32, ToDeallocate, u32((pool_type::MaxSize * 2) / 3));
+    AssertRelease(uniq.size() == pool_type::MaxSize);
+    AssertRelease(shuf.size() == pool_type::MaxSize);
+
+    STACKLOCAL_POD_ARRAY(index_type, uniqAllocs, pool_type::MaxSize);
+    STACKLOCAL_POD_ARRAY(index_type, shufAllocs, pool_type::MaxSize);
+
+    FRandomGenerator rng{ seed };
+    STACKLOCAL_POD_ARRAY(index_type, reorder, pool_type::MaxSize);
+    MakeInterval<index_type>(pool_type::MaxSize).CopyTo(reorder.begin());
 
     pool_type pool;
 
-    FRandomGenerator rng;
-    TFixedSizeStack<index_type, ToAllocate> allocs;
+    BENCHMARK_SCOPE(L"Pool", name);
 
-    forrange(loop, 0, 10) {
-        allocs.clear();
+    forrange(loop, 0, numLoops) {
+        AssertRelease(0 == pool.NumCachedBlocks());
 
-        ParallelFor(0, ToAllocate,
-            [&rng, &allocs, &pool](size_t) {
-                FDummyForPool_ key{ rng };
-                pool.FindOrAdd(std::move(key), [&allocs](const FDummyForPool_* pblock, index_type id, bool exist) {
-                    VerifyRelease(exist != pblock->AddRef());
-                    allocs.Push(id);
+        rng.Shuffle(reorder);
+
+        ParallelFor(0, uniq.size(),
+            [&](size_t i) {
+                pool.FindOrAdd(FDummyForPool_{ uniq[reorder[i]] }, [&](const FDummyForPool_* pblock, index_type id, bool exist) {
+                    AssertRelease(not exist);
+                    Assert(pblock->CheckCanary());
+                    Assert(uniq[reorder[i]] == *pblock);
+                    VerifyRelease(pblock->AddRef());
+                    uniqAllocs[i] = id;
                 });
-            });
+            }, priority, context);
 
+        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
         Assert_NoAssume(pool.CheckInvariants());
 
-        rng.Shuffle(allocs.MakeView());
+        ParallelFor(0, shuf.size(),
+            [&](size_t i) {
+                pool.FindOrAdd(FDummyForPool_{ shuf[reorder[i]] }, [&](const FDummyForPool_* pblock, index_type id, bool exist) {
+                    AssertRelease(exist);
+                    Assert(pblock->CheckCanary());
+                    Assert(shuf[reorder[i]] == *pblock);
+                    VerifyRelease(not pblock->AddRef());
+                    shufAllocs[i] = id;
+                });
+            }, priority, context);
 
-        auto toReallocate = allocs.MakeView().LastNElements(Min(allocs.size(), ToDeallocate));
-        ParallelForEachRef(toReallocate.begin(), toReallocate.end(),
-            [&pool](index_type& id) {
-                pool.RemoveIf(id, [&id](const FDummyForPool_* pblock) {
-                    if (pblock->RemoveRef()) {
-                        id = UMax;
-                        return true;
-                    }
+        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
+        Assert_NoAssume(pool.CheckInvariants());
+
+        ParallelFor(0, shuf.size(),
+            [&](size_t i) {
+                pool.RemoveIf(shufAllocs[i], [&](const FDummyForPool_* pblock) {
+                    Assert(pblock->CheckCanary());
+                    Assert(shuf[reorder[i]] == *pblock);
+                    VerifyRelease(not pblock->RemoveRef());
+                    shufAllocs[i] = UMax;
                     return false;
                 });
-            });
+            }, priority, context);
 
+        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
         Assert_NoAssume(pool.CheckInvariants());
 
-        ParallelForEachRef(toReallocate.begin(), toReallocate.end(),
-            [&pool, &rng](index_type& id) {
-                if (id == UMax) {
-                    FDummyForPool_ key{ rng };
-                    pool.FindOrAdd(std::move(key), [&id](const FDummyForPool_* pblock, index_type newId, bool exist) {
-                        VerifyRelease(exist != pblock->AddRef());
-                        id = newId;
-                    });
-                }
-            });
-
-        Assert_NoAssume(pool.CheckInvariants());
-
-        ParallelForEachRef(allocs.begin(), allocs.end(),
-            [&pool](index_type& id) {
-                pool.RemoveIf(id, [&id](FDummyForPool_* pblock) {
-                    if (pblock->RemoveRef()) {
-                        id = UMax;
-                        return true;
-                    }
-                    return false;
+        ParallelFor(0, ToDeallocate,
+            [&](size_t i) {
+                pool.RemoveIf(uniqAllocs[i], [&](const FDummyForPool_* pblock) {
+                    Assert(pblock->CheckCanary());
+                    Assert(uniq[reorder[i]] == *pblock);
+                    VerifyRelease(pblock->RemoveRef());
+                    uniqAllocs[i] = UMax;
+                    return true;
                 });
-            });
+            }, priority, context);
 
+        AssertRelease(pool_type::MaxSize - ToDeallocate == pool.NumCachedBlocks());
+        Assert_NoAssume(pool.CheckInvariants());
+
+        ParallelFor(0, ToDeallocate,
+            [&](size_t i) {
+                Assert_NoAssume(UMax == uniqAllocs[i]);
+                pool.FindOrAdd(FDummyForPool_{ uniq[reorder[i]] }, [&](const FDummyForPool_* pblock, index_type id, bool exist) {
+                    AssertRelease(not exist);
+                    Assert(pblock->CheckCanary());
+                    Assert(uniq[reorder[i]] == *pblock);
+                    VerifyRelease(pblock->AddRef());
+                    uniqAllocs[i] = id;
+                });
+            }, priority, context);
+
+        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
+        Assert_NoAssume(pool.CheckInvariants());
+
+        ParallelFor(0, uniq.size(),
+            [&](size_t i) {
+                pool.RemoveIf(uniqAllocs[i], [&](const FDummyForPool_* pblock) {
+                    Assert(pblock->CheckCanary());
+                    Assert(uniq[reorder[i]] == *pblock);
+                    VerifyRelease(pblock->RemoveRef());
+                    uniqAllocs[i] = UMax;
+                    return true;
+                });
+            }, priority, context);
+
+        AssertRelease(0 == pool.NumCachedBlocks());
         Assert_NoAssume(pool.CheckInvariants());
 
 #if USE_PPE_DEBUG
-        for (index_type id : allocs)
+        for (index_type id : uniqAllocs)
+            Assert_NoAssume(UMax == id);
+        for (index_type id : shufAllocs)
             Assert_NoAssume(UMax == id);
 #endif
 
         pool.Clear_AssertCompletelyEmpty();
     }
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_CachedMemoryPools_(ETaskPriority priority, ITaskContext* context) {
+    constexpr auto ChunkSize = CODE3264(64, 128);
+    constexpr auto MaxChunks = 32;
+    constexpr auto MaxSize = (MaxChunks * ChunkSize);
+
+    FRandomGenerator rng;
+
+    VECTOR(Container, FDummyForPool_) uniq;
+    {
+        HASHSET(Container, FDummyForPool_) tmp;
+        tmp.reserve(MaxSize);
+
+        while (tmp.size() < MaxSize) {
+            FDummyForPool_ key{ rng };
+            tmp.insert(key);
+        }
+
+        uniq.reserve(tmp.size());
+        uniq.assign(tmp.begin(), tmp.end());
+    }
+
+    VECTOR(Container, FDummyForPool_) shuffled( uniq );
+    rng.Shuffle(shuffled.MakeView());
+
+    using FCachedMemoryPool1 = TCachedMemoryPool<FDummyForPool_, FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
+    Test_CachedMemoryPool_Impl_<FCachedMemoryPool1>(L"TCachedMemoryPool<>", rng, uniq.MakeConstView(), shuffled.MakeConstView(), priority, context);
+
+    using FCachedMemoryPool2 = TCachedMemoryPool2<FDummyForPool_, FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
+    Test_CachedMemoryPool_Impl_<FCachedMemoryPool2>(L"TCachedMemoryPool2<>", rng, uniq.MakeConstView(), shuffled.MakeConstView(), priority, context);
+
+    using FCachedMemoryPool3 = TCachedMemoryPool3<FDummyForPool_, FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
+    Test_CachedMemoryPool_Impl_<FCachedMemoryPool3>(L"TCachedMemoryPool3<>", rng, uniq.MakeConstView(), shuffled.MakeConstView(), priority, context);
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_Pools_() {
+    const ETaskPriority priority = ETaskPriority::Normal;
+    ITaskContext* const context = HighPriorityTaskContext();
+
+    Test_AtomicPool_(priority, context);
+    Test_MemoryPools_(priority, context);
+    Test_CachedMemoryPools_(priority, context);
 }
 //----------------------------------------------------------------------------
 NO_INLINE void Test_SlabHeap_() {
@@ -727,12 +943,14 @@ NO_INLINE void Test_SlabHeap_() {
 void Test_Allocators() {
     PPE_DEBUG_NAMEDSCOPE("Test_Allocators");
 
-    LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
-
-    Test_AtomicPool_();
-    Test_MemoryPool_();
-    Test_CachedMemoryPool_();
+    Test_CompressedRadixTrie_();
+    Test_BitTrees_();
+    Test_Pools_();
     Test_SlabHeap_();
+
+    ReleaseMemoryInModules();
+
+    LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
 
     typedef u8 value_type;
 
@@ -792,10 +1010,6 @@ void Test_Allocators() {
     ReleaseMemoryInModules();
 
     Test_Allocator_(L"FStdMallocator", FStdMallocator{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
-
-    ReleaseMemoryInModules();
-
-    Test_CompressedRadixTrie_();
 
     ReleaseMemoryInModules();
 }

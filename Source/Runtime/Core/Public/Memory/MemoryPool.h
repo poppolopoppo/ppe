@@ -3,7 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Container/Array.h"
-#include "Container/FixedSizeHashTable.h"
+#include "Container/BitSet.h"
 #include "Meta/Functor.h"
 #include "Thread/ThreadSafe.h"
 
@@ -46,8 +46,10 @@ public:
         Clear_AssertCompletelyEmpty();
     }
 
-    index_type NumFreeBlocks() const NOEXCEPT;
-    index_type NumLiveBlocks() const NOEXCEPT;
+    allocator_type& Allocator() { return (*this); }
+    const allocator_type& Allocator() const { return (*this); }
+
+    index_type NumCommittedBlocks() const NOEXCEPT;
 
     NODISCARD index_type Allocate();
     void Deallocate(index_type block);
@@ -85,35 +87,22 @@ private:
     TThreadSafe<FInternalState_, _Barrier> _state;
 
     NO_INLINE index_type AllocateBlockFromNewChunk_();
-    NO_INLINE void ReleaseFreeChunk_(index_type chk);
+    NO_INLINE void ReleaseFreeChunk_(index_type ch);
     FORCE_INLINE void Clear_ReleaseMemory_AssumeLocked_(FInternalState_& state);
 };
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier, _Allocator>::NumFreeBlocks() const NOEXCEPT -> index_type {
-    index_type numFreeBlocks = 0;
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier, _Allocator>::NumCommittedBlocks() const NOEXCEPT -> index_type {
+    index_type numCommittedChunks = 0;
 
     const auto shared(_state.LockShared());
-    forrange(chk, 0, MaxChunks) {
-        const FPool_& pool = shared->_pools[chk];
-        numFreeBlocks += (ChunkSize - pool.NumLiveBlocks);
+    for (block_type* pBlocks : shared->_blocks) {
+        if (pBlocks)
+            ++numCommittedChunks;
     }
 
-    return numFreeBlocks;
-}
-//----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier, _Allocator>::NumLiveBlocks() const NOEXCEPT -> index_type {
-    index_type numLiveBlocks = 0;
-
-    const auto shared(_state.LockShared());
-    forrange(chk, 0, MaxChunks) {
-        const FPool_& pool = shared->_pools[chk];
-        numLiveBlocks += (ChunkSize - pool.NumLiveBlocks);
-    }
-
-    return numLiveBlocks;
+    return (numCommittedChunks * ChunkSize);
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
@@ -121,25 +110,25 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
     {
         const auto shared(_state.LockShared());
 
-        forrange(chk, 0, MaxChunks) {
-            FPool_& pool = shared->_pools[chk];
+        forrange(ch, 0, MaxChunks) {
+            FPool_& pool = shared->_pools[ch];
 
             index_type id = pool.FreeList.load(std::memory_order_relaxed);
             for (; id < ChunkSize; ) {
-                block_type* const pblocks = shared->_blocks[chk];
-                Assert(pblocks);
+                block_type* const pBlocks = shared->_blocks[ch];
+                Assert(pBlocks);
 
-                const index_type nextId = reinterpret_cast<const index_type&>(pblocks[id]);
+                const index_type nextId = reinterpret_cast<const index_type&>(pBlocks[id]);
                 if (pool.FreeList.compare_exchange_weak(id, nextId,
                                                         memorder_release_,
                                                         std::memory_order_relaxed)) {
 
                     Verify(pool.NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) < _ChunkSize);
-                    ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(pblocks + id, sizeof(block_type)));
+                    ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(pBlocks + id, sizeof(block_type)));
 
                     ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).AllocateUser(sizeof(block_type)) );
 
-                    return (chk * ChunkSize + id); // return global index in the pool (vs local chunk)
+                    return (ch * ChunkSize + id); // return global index in the pool (vs local chunk)
                 }
             }
         }
@@ -151,20 +140,20 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
 void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator>::Deallocate(index_type block) {
     Assert(block < MaxSize);
-    const index_type chk = (block / ChunkSize);
-    const index_type id = (block - chk * ChunkSize);
+    const index_type ch = (block / ChunkSize);
+    const index_type id = (block - ch * ChunkSize);
 
     bool releaseChunk;
     {
         const auto shared(_state.LockShared());
 
-        block_type* const pblocks = shared->_blocks[chk];
-        Assert(pblocks);
+        block_type* const pBlocks = shared->_blocks[ch];
+        Assert(pBlocks);
 
-        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(pblocks + id, sizeof(block_type)));
-        index_type& nextId = reinterpret_cast<index_type&>(pblocks[id]);
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(pBlocks + id, sizeof(block_type)));
+        index_type& nextId = reinterpret_cast<index_type&>(pBlocks[id]);
 
-        FPool_& pool = shared->_pools[chk];
+        FPool_& pool = shared->_pools[ch];
         nextId = pool.FreeList.load(std::memory_order_relaxed);
         for (;;) {
             Assert_NoAssume(nextId != id);
@@ -182,14 +171,14 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
     }
 
     if (Unlikely(releaseChunk))
-        ReleaseFreeChunk_(chk); // cold path
+        ReleaseFreeChunk_(ch); // cold path
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
 auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator>::At(index_type block) const NOEXCEPT -> block_type* {
     Assert(block < MaxSize);
-    const index_type chk = (block / ChunkSize);
-    const index_type id = (block - chk * ChunkSize);
+    const index_type ch = (block / ChunkSize);
+    const index_type id = (block - ch * ChunkSize);
 
 #if 0 // This should not be necessary due to pool lifetime guarantee
     const auto shared(_state.LockShared());
@@ -197,14 +186,15 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
     const FInternalState_* shared = &_state.Value_NotThreadSafe();
 #endif
 
-    Assert(shared->_blocks[chk]);
-    Assert_NoAssume(shared->_pools[chk].NumLiveBlocks.load(std::memory_order_relaxed) > 0);
+    Assert(shared->_blocks[ch]);
+    Assert_NoAssume(shared->_pools[ch].NumLiveBlocks.load(std::memory_order_relaxed) > 0);
 
-    return (shared->_blocks[chk] + id);
+    return (shared->_blocks[ch] + id);
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
 auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier, _Allocator>::operator[](index_type block) const NOEXCEPT -> block_type* {
+    Assert(block < MaxSize);
     if (block >= MaxSize)
         return nullptr;
 
@@ -217,28 +207,30 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
 
     const auto exclusive(_state.LockExclusive()); ; // exclusive access is needed for safety
 
-    TFixedSizeHashSet<index_type, _ChunkSize> freeBlocks;
+    STACKLOCAL_BITSET_INIT(freeBlocks, _ChunkSize, false);
 
-    forrange(chk, 0, MaxChunks) {
-        block_type* const pblocks = exclusive->_blocks[chk];
-        if (not pblocks)
+    forrange(ch, 0, MaxChunks) {
+        block_type* const pBlocks = exclusive->_blocks[ch];
+        if (nullptr == pBlocks)
             continue;
 
-        const FPool_& pool = exclusive->_pools[chk];
+        const FPool_& pool = exclusive->_pools[ch];
         if (0 == pool.NumLiveBlocks.load(std::memory_order_relaxed))
             continue;
 
-        freeBlocks.clear();
-
         for (   index_type id = pool.FreeList.load(std::memory_order_relaxed);
                 id < ChunkSize;
-                id = reinterpret_cast<const index_type&>(pblocks[id]) )
-            freeBlocks.Add_AssertUnique(id);
+                id = reinterpret_cast<const index_type&>(pBlocks[id]) ) {
+            Assert_NoAssume(not freeBlocks.Get(id));
+            freeBlocks.SetTrue(id);
+        }
 
         forrange(id, 0, ChunkSize) {
-            if (not freeBlocks.Contains(id))
-                Meta::VariadicFunctor(pred, pblocks + id, static_cast<index_type>(chk * ChunkSize + id));
+            if (not freeBlocks.Unset(id))
+                Meta::VariadicFunctor(pred, pBlocks + id, static_cast<index_type>(ch * ChunkSize + id));
         }
+
+        Assert_NoAssume(freeBlocks.AllFalse());
     }
 }
 //----------------------------------------------------------------------------
@@ -248,8 +240,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
     const auto exclusive(_state.LockExclusive()); ; // exclusive access is needed for safety
 
 #if USE_PPE_DEBUG
-    forrange(chk, 0, MaxChunks) {
-        const FPool_& pool = exclusive->_pools[chk];
+    forrange(ch, 0, MaxChunks) {
+        const FPool_& pool = exclusive->_pools[ch];
         Assert(pool.NumLiveBlocks.load(std::memory_order_relaxed) == 0);
     }
 #endif
@@ -273,23 +265,23 @@ bool TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
     index_type totalLiveChunks = 0;
     index_type totalLiveBlocks = 0;
     index_type totalFreeBlocks = 0;
-    forrange(chk, 0, _MaxChunks) {
-        const FPool_& pool = exclusive->_pools[chk];
-        const block_type* const pblocks = exclusive->_blocks[chk];
+    forrange(ch, 0, _MaxChunks) {
+        const FPool_& pool = exclusive->_pools[ch];
+        const block_type* const pBlocks = exclusive->_blocks[ch];
 
-        if (pblocks)
+        if (pBlocks)
             ++totalLiveChunks;
 
         index_type numFreeBlocks = 0;
         for (index_type id = pool.FreeList.load(std::memory_order_relaxed); id < ChunkSize;) {
-            const index_type nextId = reinterpret_cast<const index_type&>(pblocks[id]);
+            const index_type nextId = reinterpret_cast<const index_type&>(pBlocks[id]);
             id = nextId;
             ++numFreeBlocks;
             Assert_NoAssume(numFreeBlocks <= ChunkSize); // detect loops
         }
 
         const index_type numLiveBlocks = pool.NumLiveBlocks.load(std::memory_order_relaxed);
-        Assert_NoAssume(!pblocks || numLiveBlocks + numFreeBlocks == ChunkSize);
+        Assert_NoAssume(!pBlocks || numLiveBlocks + numFreeBlocks == ChunkSize);
 
         totalLiveBlocks += numLiveBlocks;
         totalFreeBlocks += numFreeBlocks;
@@ -308,14 +300,14 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
 
     // check if somebody allocated something meanwhile due to the exclusive barrier
     index_type nextChunkToAlloc = MaxChunks;
-    forrange(chk, 0, MaxChunks) {
-        block_type* const pBlocks = exclusive->_blocks[chk];
+    forrange(ch, 0, MaxChunks) {
+        block_type* const pBlocks = exclusive->_blocks[ch];
         if (nullptr == pBlocks) {
-            nextChunkToAlloc = Min(chk, nextChunkToAlloc);
+            nextChunkToAlloc = Min(ch, nextChunkToAlloc);
             continue;
         }
 
-        FPool_& pool = exclusive->_pools[chk];
+        FPool_& pool = exclusive->_pools[ch];
 
         if (index_type freeBlock = pool.FreeList.load(std::memory_order_relaxed); Unlikely(freeBlock < ChunkSize)) {
             // found a free block, skip chunk allocation (lock contention)
@@ -325,7 +317,7 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
             ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(MemoryPool).AllocateUser(sizeof(block_type)) );
 
             Verify(pool.NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) < ChunkSize);
-            return static_cast<index_type>(chk * ChunkSize + freeBlock); // return global index in the pool (vs local chunk)
+            return static_cast<index_type>(ch * ChunkSize + freeBlock); // return global index in the pool (vs local chunk)
         }
     }
 
@@ -357,12 +349,12 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator>::ReleaseFreeChunk_(index_type chk) {
-    Assert(chk < MaxChunks);
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator>::ReleaseFreeChunk_(index_type ch) {
+    Assert(ch < MaxChunks);
 
     const auto exclusive(_state.LockExclusive()); ; // exclusive access is needed for safety
 
-    if (nullptr == exclusive->_blocks[chk])
+    if (nullptr == exclusive->_blocks[ch])
         return;
 
     // check that spare chunk is still completely free
@@ -373,21 +365,21 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
 
     // hysteresis to always keep one spare chunk
     if (exclusive->_spareChunk < MaxChunks) {
-        if (exclusive->_spareChunk == chk)
+        if (exclusive->_spareChunk == ch)
             return;
 
-        if (chk > exclusive->_spareChunk)
-            std::swap(chk, exclusive->_spareChunk); // keep this chunk and remove old one
+        if (ch > exclusive->_spareChunk)
+            std::swap(ch, exclusive->_spareChunk); // keep this chunk and remove old one
     }
     else {
-        exclusive->_spareChunk = chk;
+        exclusive->_spareChunk = ch;
         return; // early-out, let other thread consume this chunk if needed
     }
 
-    block_type* const pBlocks = exclusive->_blocks[chk];
+    block_type* const pBlocks = exclusive->_blocks[ch];
     AssertRelease(pBlocks);
 
-    FPool_& pool = exclusive->_pools[chk];
+    FPool_& pool = exclusive->_pools[ch];
     Assert_NoAssume(pool.NumLiveBlocks.load(std::memory_order_relaxed) == 0);
     Assert_NoAssume(pool.FreeList.load(std::memory_order_relaxed) < _ChunkSize);
 
@@ -412,7 +404,7 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Barrier,_Allocator
     auto& allocator = static_cast<_Allocator&>(*this);
     allocator_traits::DeallocateT(allocator, pBlocks, _ChunkSize);
 
-    exclusive->_blocks[chk] = nullptr;
+    exclusive->_blocks[ch] = nullptr;
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, EThreadBarrier _Barrier, typename _Allocator>
@@ -446,6 +438,7 @@ class TTypedMemoryPool : public TMemoryPool<sizeof(T), alignof(T), _ChunkSize, _
     using parent_type = TMemoryPool<sizeof(T), alignof(T), _ChunkSize, _MaxChunks, _Barrier,_Allocator>;
 public:
     using typename parent_type::allocator_type;
+    using typename parent_type::allocator_traits;
     using typename parent_type::index_type;
     using typename parent_type::block_type;
 
@@ -457,6 +450,9 @@ public:
     using parent_type::ChunkSize;
     using parent_type::MaxChunks;
     using parent_type::MaxSize;
+
+    using parent_type::Allocator;
+    using parent_type::NumCommittedBlocks;
 
     using parent_type::Allocate;
     using parent_type::Deallocate;

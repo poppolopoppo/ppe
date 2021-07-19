@@ -39,13 +39,13 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
     };
 
     using FCacheItem_ = TCacheItem_<_Key, _Value>;
-    using FCacheKey_ = THashMemoizer<TPtrRef<const _Key>, Meta::THash<_Key>>; // memoize a ptr reference to the key in the block
+    using FCacheKey_ = THashMemoizer < TPtrRef<const _Key>, Meta::THash<_Key>, Meta::TDerefEqualTo<TPtrRef<const _Key>> > ; // memoize a ptr reference to the key in the block
 
     using pool_type = TTypedMemoryPool<FCacheItem_, _ChunkSize, _MaxChunks, EThreadBarrier::None/* got a global CS already */, _Allocator>;
     using cache_type = TFixedSizeHashMap<
         FCacheKey_,
         typename pool_type::index_type, // index of the block
-        pool_type::MaxSize
+        pool_type::MaxSize * 2
     >;
     STATIC_ASSERT(std::is_default_constructible_v<_Value>); // use ctor to initialize the object
 
@@ -62,11 +62,11 @@ public:
     explicit TCachedMemoryPool(_Allocator&& ralloc) : _pool(std::move(ralloc)) {}
     explicit TCachedMemoryPool(const _Allocator& alloc) : _pool(alloc) {}
 
-    index_type NumFreeBlocks() const NOEXCEPT { return _pool.NumFreeBlocks(); }
-    index_type NumLiveBlocks() const NOEXCEPT { return _pool.NumLiveBlocks(); }
+    index_type NumCachedBlocks() const NOEXCEPT { return checked_cast<index_type>(_cache.size()); }
+    index_type NumCommittedBlocks() const NOEXCEPT { return checked_cast<index_type>(_pool.NumCommittedBlocks()); }
 
     const value_type* At(index_type id) const NOEXCEPT {
-        return (&_pool->At(id)->Value());
+        return std::addressof(_pool.At(id)->Value());
     }
     auto* operator [](index_type id) const NOEXCEPT {
         block_type* const pBlock = _pool[id];
@@ -101,7 +101,8 @@ template <typename _Ctor>
 auto TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::FindOrAdd(key_type&& rkey, _Ctor&& ctor) -> TPair<index_type, bool> {
     const FCriticalScope scopeLock(&_cacheCS);
 
-    const auto it = _cache.find(MakePtrRef(static_cast<const _Key&>(rkey)));
+    const FCacheKey_ cacheKey{ MakePtrRef(static_cast<const _Key&>(rkey)) };
+    const auto it = _cache.find(cacheKey);
 
     bool exist;
     index_type id;
@@ -124,7 +125,9 @@ auto TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::FindOr
             return MakePair(UMax, false);
         }
 
-        _cache.Add_AssertUnique(MakePtrRef(pBlock->Key()), id);
+        _cache.Add_AssertUnique(
+            FCacheKey_{ MakePtrRef(pBlock->Key()), cacheKey.Hash() },
+            id );
     }
 
     Assert(id < pool_type::MaxSize);
