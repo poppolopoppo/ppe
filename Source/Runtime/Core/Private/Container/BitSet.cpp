@@ -12,6 +12,11 @@ FBitSet::FBitSet(word_t *storage, size_t size) NOEXCEPT
     Assert(_storage || 0 == _size);
 }
 //----------------------------------------------------------------------------
+FBitSet::FBitSet(word_t *storage, size_t size, bool allTrue) NOEXCEPT
+:   FBitSet(storage, size) {
+    ResetAll(allTrue);
+}
+//----------------------------------------------------------------------------
 bool FBitSet::AllTrue() const {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
@@ -64,7 +69,7 @@ bool FBitSet::AnyTrue() const {
         return (0 != (_storage[wordCount - 1] & lastWordMask));
     }
     else {
-        return (_storage[wordCount] != 0);
+        return (_storage[wordCount - 1] != 0);
     }
 }
 //----------------------------------------------------------------------------
@@ -133,8 +138,24 @@ auto FBitSet::LastBitSet() const NOEXCEPT -> word_t  {
 auto FBitSet::PopFront() NOEXCEPT -> word_t  {
     const size_t wordCount = WordCapacity(_size);
     forrange(w, 0, wordCount) {
-        if (mask_t m{ _storage[w] })
-            return (w * WordBitCount + m.PopFront_AssumeNotEmpty() + 1);
+        if (mask_t m{ _storage[w] }) {
+            const auto bit = m.PopFront_AssumeNotEmpty();
+            _storage[w] = m.Data;
+            return (w * WordBitCount + bit + 1);
+        }
+    }
+    return (0);
+}
+//----------------------------------------------------------------------------
+auto FBitSet::PopFront_After(size_t last) NOEXCEPT -> word_t  {
+    const size_t wordCount = WordCapacity(_size);
+    Assert(last < _size);
+    forrange(w, last / WordBitCount, wordCount) {
+        if (mask_t m{ _storage[w] }) {
+            const auto bit = m.PopFront_AssumeNotEmpty();
+            _storage[w] = m.Data;
+            return (w * WordBitCount + bit + 1);
+        }
     }
     return (0);
 }
