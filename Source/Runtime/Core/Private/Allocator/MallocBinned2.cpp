@@ -219,7 +219,7 @@ struct FBinnedFreeBlockList {
     void PushBundle(FBinnedBundle&& rbundle);
     NODISCARD FBinnedBundleNode* PopBundles();
     // tries to recycle the full bundle, if that fails, it is returned for freeing
-    NODISCARD FBinnedBundleNode* RecyleFull(u32 pool);
+    NODISCARD FBinnedBundleNode* RecycleFull(u32 pool);
 };
 //------------------------------------------------------------------------------
 bool FBinnedFreeBlockList::ObtainPartial(u32 pool) {
@@ -285,7 +285,7 @@ FBinnedBundleNode* FBinnedFreeBlockList::PopBundles() {
     return Result;
 }
 //------------------------------------------------------------------------------
-FBinnedBundleNode* FBinnedFreeBlockList::RecyleFull(u32 pool) {
+FBinnedBundleNode* FBinnedFreeBlockList::RecycleFull(u32 pool) {
     FBinnedBundleNode* result = nullptr;
     if (FullBundle.Head) {
         FullBundle.Head->Count = FullBundle.Count;
@@ -502,10 +502,10 @@ struct FBinnedSmallTable : Meta::FNonCopyableNorMovable {
 
         FORCE_INLINE FPoolChunk* FrontChunk() const {
             const u32 chunk = ExhaustedChunks.NextAllocateBit();
-            if (Unlikely(UMax == chunk))
-                return nullptr;
+            if (Likely(UMax != chunk))
+                return ChunkPtr(chunk);
 
-            return ChunkPtr(chunk);
+            return nullptr;
         }
 
         FPoolChunk* AllocateChunk() {
@@ -636,12 +636,12 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
     ONLY_IF_MEMORYDOMAINS(BinnedTrackingDataStart_());
 #endif
 
-    const u32 osPageSize = PPE_MALLOCBINNED2_OS_PAGESIZE;
-    const u32 osGranularity = PPE_MALLOCBINNED2_OS_GRANULARITY;
-    const u32 maxChunkSize = PPE_MALLOCBINNED2_CHUNK_MAXSIZE;
-    const u32 chunkOverheadSize = PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE;
-    const u32 minBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MINBLOCKS;
-    const u32 maxBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS;
+    constexpr u32 osPageSize = PPE_MALLOCBINNED2_OS_PAGESIZE;
+    constexpr u32 osGranularity = PPE_MALLOCBINNED2_OS_GRANULARITY;
+    constexpr u32 maxChunkSize = PPE_MALLOCBINNED2_CHUNK_MAXSIZE;
+    constexpr u32 chunkOverheadSize = PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE;
+    constexpr u32 minBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MINBLOCKS;
+    constexpr u32 maxBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS;
 
     for (u32 i = 0; i < PPE_MALLOCBINNED2_SMALLPOOL_COUNT; ++i) {
         FSmallPoolInfo& pool = SmallPools[i];
@@ -789,7 +789,7 @@ struct FBinnedPerThreadFreeBlockList : Meta::FNonCopyableNorMovable, Meta::FThre
     FBinnedBundleNode* RecycleFullBundle(u32 pool) {
         THIS_THREADRESOURCE_CHECKACCESS();
         Assert(pool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
-        return FreeLists[pool].RecyleFull(pool);
+        return FreeLists[pool].RecycleFull(pool);
     }
     // returns true if we have anything to pop
     bool ObtainRecycledPartial(u32 pool) {

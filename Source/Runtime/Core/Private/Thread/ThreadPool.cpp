@@ -117,7 +117,7 @@ void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPrior
     FHighPriorityThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
-void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+void AsyncBackground(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
     FBackgroundThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------

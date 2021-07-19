@@ -28,7 +28,7 @@ PPE_CORE_API FTaskManager& BackgroundThreadPool() NOEXCEPT;
 PPE_CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority);
 PPE_CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority);
 PPE_CORE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority);
-PPE_CORE_API void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority);
+PPE_CORE_API void AsyncBackground(FTaskFunc&& rtask, ETaskPriority priority);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

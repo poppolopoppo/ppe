@@ -55,7 +55,7 @@ void FGamepadInputHandler::Rumble(size_t index, float left, float right) {
         return;
 
     // non blocking rumble:
-    AsyncBackround([=](ITaskContext&) {
+    AsyncBackground([=](ITaskContext&) {
         FPlatformGamepad::Rumble(index, left, right);
     },  ETaskPriority::High);
 }

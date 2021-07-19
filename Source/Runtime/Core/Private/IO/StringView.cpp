@@ -211,7 +211,7 @@ auto StringToDoubleStr_(const wchar_t* wstr) {
     IF_CONSTEXPR(sizeof(wchar_t) == sizeof(u16))
         return reinterpret_cast<const u16*>(wstr);
     else
-        return WCHAR_TO_UTF_8<128>(wstr); // for platforms were wchart_t is 32 bits
+        return WCHAR_TO_UTF_8<128>(wstr); // for platforms were wchar_t is 32 bits
 }
 
 template <typename _Char>
@@ -994,7 +994,6 @@ void Escape(FTextWriter& oss, const FStringView& str, EEscape escape) {
                     break;
                 default:
                     AssertNotImplemented();
-                    break;
                 }
             }
         }
@@ -1069,7 +1068,6 @@ void Escape(FWTextWriter& oss, const FWStringView& wstr, EEscape escape) {
                     break;
                 default:
                     AssertNotImplemented();
-                    break;
                 }
             }
         }
@@ -1098,7 +1096,6 @@ void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape) {
             break;
         default:
             AssertNotImplemented();
-            break;
         }
     }
 
