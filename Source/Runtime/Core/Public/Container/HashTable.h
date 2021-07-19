@@ -21,6 +21,10 @@
 // Designing a Fast, Efficient, Cache-friendly Hash Table, Step by Step
 // https://www.youtube.com/watch?v=ncHmEUmJZf4
 
+// CppCon 2019: Matt Kulukundis
+// Abseil's Open Source Hashtables: 2 Years In
+// https://www.youtube.com/watch?v=JZE3_0qvrMg
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -68,39 +72,40 @@ struct THashSetTraits_ {
     template <typename... _Args> static value_type MakeValue(_Args&&... args) { return value_type(std::forward<_Args>(args)...); }
 };
 struct FHashTableData_ {
-    u32     Size;
-    u32     Capacity;
-    void*   StatesAndBuckets;
-
-    FHashTableData_()
-        : Size(0)
-        , Capacity(0)
-        , StatesAndBuckets(nullptr)
-    {}
+    u32     Size{ 0 };
+    u32     CapacityM1{ UINT32_MAX };
+    void*   StatesAndBuckets{ nullptr };
 
     typedef i8 state_t;
     enum EState : state_t {
-        kEmpty      = -1,
-        kSentinel   = -2, // for iterators
-        kDeleted    = -128,
+        kEmpty      = -128,
+        kDeleted    = -2,
+        kSentinel   = -1, // for iterators
     };
+
+    static CONSTEXPR bool IsEmpty(state_t c) { return c == kEmpty; }
+    static CONSTEXPR bool IsFull(state_t c) { return c >= 0; }
+    static CONSTEXPR bool IsDeleted(state_t c) { return c == kDeleted; }
+    static CONSTEXPR bool IsEmptyOrDeleted(state_t c) { return c < kSentinel; }
 
     typedef ::__m128i group_t;
     static constexpr size_t GGroupSize = 16;
 
+    using bitmask_t = TBitMask<u32, GGroupSize>;
+
     size_t NumBuckets() const {
-        return size_t(Capacity);
+        return static_cast<size_t>(CapacityM1 + 1);
     }
 
     size_t NumStates() const {
         // 15 last states are mirroring the 15th
         // allows to sample state across table boundary
-        return size_t(Capacity ? Capacity + GGroupSize/* sentinel */ : 0);
+        return (CapacityM1 + 1 ? CapacityM1 + 1 + GGroupSize/* sentinel */ : 0);
     }
 
     const state_t* State(size_t index) const {
-        Assert(index < Capacity);
-        return ((const state_t*)StatesAndBuckets + index);
+        Assert(index < CapacityM1 + 1);
+        return (static_cast<const state_t*>(StatesAndBuckets) + index);
     }
 
     PPE_CORE_API state_t SetState(size_t index, state_t state);
@@ -111,43 +116,36 @@ struct FHashTableData_ {
     PPE_CORE_API void ResetStates();
 
     group_t SIMD_INLINE GroupAt(size_t first) const {
-        return ::_mm_lddqu_si128((const ::__m128i*)State(first));
+        return ::_mm_lddqu_si128(reinterpret_cast<const ::__m128i*>(State(first)));
     }
 
-    group_t SIMD_INLINE GroupAt_StreamLoad(size_t first) const {
-        Assert(Meta::IsAligned(16, State(first)));
-        return ::_mm_stream_load_si128((const ::__m128i*)State(first));
+    static bitmask_t SIMD_INLINE Match(group_t group, group_t state) {
+        return bitmask_t{ static_cast<u32>(::_mm_movemask_epi8(::_mm_cmpeq_epi8(group, state))) };
     }
-
-    static FBitMask SIMD_INLINE Match(group_t group, group_t state) {
-        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(group, state))) };
+    static bitmask_t SIMD_INLINE MatchEmpty(group_t group) {
+        return bitmask_t{ static_cast<u32>(::_mm_movemask_epi8(::_mm_sign_epi8(group, group))) };
     }
-
-    static FBitMask SIMD_INLINE MatchEmpty(group_t group) {
-        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(group, ::_mm_set1_epi8(kEmpty)))) };
+    static bitmask_t SIMD_INLINE MatchEmptyOrDeleted(group_t group) {
+        return bitmask_t{ static_cast<u32>(::_mm_movemask_epi8(::_mm_cmpgt_epi8(::_mm_set1_epi8(kSentinel), group))) };
     }
-
-    static FBitMask SIMD_INLINE MatchNonEmpty(group_t group) {
-        return FBitMask{ (~size_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(group, ::_mm_set1_epi8(kEmpty))))) & 0xFFFFu };
-    }
-
-    static FBitMask SIMD_INLINE MatchFreeBucket(group_t group) {
-        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_and_si128(group, ::_mm_set1_epi8(kDeleted)))) };
-    }
-
-    static FBitMask SIMD_INLINE MatchFilledBucket(group_t group) {
-        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_andnot_si128(group, ::_mm_set1_epi8(kDeleted)))) };
+    static bitmask_t SIMD_INLINE MatchFilledBucket(group_t group) {
+        return MatchEmptyOrDeleted(group).Invert();
     }
 
     void Swap(FHashTableData_& other);
 
-    FORCE_INLINE static constexpr size_t H1(size_t hash) { return hash >> 7; }
-    FORCE_INLINE static constexpr state_t H2(size_t hash) { return state_t(hash & 0x7f); }
+    FORCE_INLINE size_t H1(const size_t h, std::false_type/* has_trivial_copy */) const {
+        return ((h >> 7) ^ (reinterpret_cast<uintptr_t>(StatesAndBuckets) >> CODE3264(6, 12)));
+    }
+    FORCE_INLINE size_t H1(const size_t h, std::true_type/* has_trivial_copy */) const {
+        return (h >> 7); // don't seed to allow for faster copy in assign(const THashTable&)
+    }
+    FORCE_INLINE static constexpr state_t H2(const size_t h) { return static_cast<state_t>(h & 0x7f); }
 
     size_t FirstFilledIndex() const {
         const size_t first = (Size
-            ? FirstFilledBucket_ReturnOffset((const state_t*)StatesAndBuckets)
-            : size_t(Capacity));
+            ? FirstFilledBucket_ReturnOffset(static_cast<const state_t*>(StatesAndBuckets))
+            : static_cast<size_t>(CapacityM1 + 1));
         return first;
     }
 
@@ -158,7 +156,7 @@ class THashTableIterator_ : public Meta::TIterator<T, std::forward_iterator_tag>
 public:
     typedef Meta::TIterator<T, std::forward_iterator_tag> parent_type;
 
-    using state_t = typename FHashTableData_::state_t;
+    using state_t = FHashTableData_::state_t;
 
     using typename parent_type::value_type;
     using typename parent_type::reference;
@@ -249,14 +247,15 @@ inline void swap(details::THashTableIterator_<T>& lhs, details::THashTableIterat
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 class EMPTY_BASES TBasicHashTable : _Hasher, _EqualTo, _Allocator {
-    using FHTD = typename details::FHashTableData_;
+    using FHTD = details::FHashTableData_;
 public:
     template <typename _Traits2, typename _Hasher2, typename _EqualTo2, typename _Allocator2>
     friend class TBasicHashTable;
 
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
-    typedef typename FHTD::state_t state_t;
+    typedef FHTD::state_t state_t;
+    typedef FHTD::bitmask_t bitmask_t;
 
     typedef _Traits table_traits;
 
@@ -298,8 +297,8 @@ public:
     explicit TBasicHashTable(size_type capacity) : TBasicHashTable() { reserve(capacity); }
     TBasicHashTable(size_type capacity, const allocator_type& alloc) : TBasicHashTable(alloc) { reserve(capacity); }
 
-    TBasicHashTable(const TBasicHashTable& other) : TBasicHashTable(allocator_traits::SelectOnCopy(other)) { assign(other.begin(), other.end()); }
-    TBasicHashTable(const TBasicHashTable& other, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(other.begin(), other.end()); }
+    TBasicHashTable(const TBasicHashTable& other) : TBasicHashTable(allocator_traits::SelectOnCopy(other)) { assign(other); }
+    TBasicHashTable(const TBasicHashTable& other, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(other); }
     TBasicHashTable& operator=(const TBasicHashTable& other);
 
     TBasicHashTable(TBasicHashTable&& rvalue) NOEXCEPT : TBasicHashTable(allocator_traits::SelectOnMove(std::move(rvalue))) { assign(std::move(rvalue)); }
@@ -330,12 +329,12 @@ public:
         return (*this);
     }
 
-    size_type capacity() const { return (_data.Capacity); }
+    size_type capacity() const { return (_data.CapacityM1 + 1); }
     bool empty() const { return (0 == _data.Size); }
     size_type size() const { return size_type(_data.Size); }
 
     size_type bucket_count() const { return capacity(); }
-    size_type max_bucket_count() const { return Min(size_type(1ull << 24) - 1, size_type(allocator_traits::MaxSize() / sizeof(value_type))); }
+    size_type max_bucket_count() const { return Min(static_cast<size_type>(1ull << 24) - 1, static_cast<size_type>(allocator_traits::MaxSize() / sizeof(value_type))); }
 
     float load_factor() const;
     size_type max_probe_dist() const;
@@ -356,6 +355,7 @@ public:
     auto Values() const { return MakeIterable(table_traits::MakeValueIterator(cbegin()), table_traits::MakeValueIterator(cend())); }
 
     void assign(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); }
+    void assign(const TBasicHashTable& other);
     void assign(TBasicHashTable&& rvalue);
     template <typename _It>
     typename std::enable_if<Meta::is_iterator<_It>::value>::type
@@ -529,7 +529,7 @@ public:
     bool operator !=(const TBasicHashTable& other) const { return (not operator ==(other)); }
 
 private:
-    STATIC_CONST_INTEGRAL(size_type, MaxLoadFactor, 80);
+    STATIC_CONST_INTEGRAL(size_type, MaxLoadFactor, 85);
     STATIC_CONST_INTEGRAL(size_type, SlackFactor, ((100 - MaxLoadFactor) * 128) / 100);
 
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
@@ -537,8 +537,8 @@ private:
 
     TMemoryView<value_type> allocated_block_() const {
         return TMemoryView<value_type>(
-            reinterpret_cast<value_type*>(_data.StatesAndBuckets),
-            OffsetOfBuckets_() + _data.Capacity );
+            static_cast<value_type*>(_data.StatesAndBuckets),
+            OffsetOfBuckets_() + _data.NumBuckets() );
     }
 
     void allocator_copy_(const allocator_type& other, std::true_type);
@@ -586,14 +586,14 @@ private:
     void RelocateRehash_(size_type newCapacity);
 
     size_t OffsetOfBuckets_() const {
-        return ((_data.NumStates() + (sizeof(value_type) - 1)) / sizeof(value_type));
+        return ((_data.NumStates() * sizeof(state_t) + (sizeof(value_type) - 1)) / sizeof(value_type));
     }
 
     pointer BucketAtUnsafe_(size_t index) const NOEXCEPT {
         return ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_() + index);
     }
     pointer BucketAt_(size_t index) const {
-        Assert(index < (_data.Capacity));
+        Assert(index <= _data.CapacityM1);
         return BucketAtUnsafe_(index);
     }
 
@@ -613,18 +613,9 @@ private:
             index );
     }
 
-    static FORCE_INLINE size_t SeedHash_(size_t h) {
-        return (h ^ PPE_HASH_VALUE_SEED/* don't want hash == 0 */);
-    }
-
     size_t HashKey_(const key_type& key) const {
-        return SeedHash_(HashKeyNoSeed_(key));
-    }
-
-    size_t HashKeyNoSeed_(const key_type& key) const {
         return static_cast<const _Hasher&>(*this)(key);
     }
-
     size_t HashValue_(const value_type& value) const {
         return HashKey_(table_traits::Key(value));
     }
