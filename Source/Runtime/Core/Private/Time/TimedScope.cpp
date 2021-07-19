@@ -38,7 +38,7 @@ FBenchmarkScope::~FBenchmarkScope() {
     if (_parentIFP)
         _parentIFP->_accumulated.SetValue(*_parentIFP->_accumulated + *elapsed);
 
-    LOG(Benchmark, Info, L"{0:28} | {1}{2} | {3:10f2} / {4:12f2}",
+    LOG(Benchmark, Profiling, L"{0:28} | {1}{2} | {3:10f2} / {4:12f2}",
         _category,
         Fmt::Repeat(L' ', _depth * 2),
         Fmt::PadRight(_message, 28 - _depth * 2, L' '),
@@ -58,7 +58,7 @@ FIOBenchmarkScope::FIOBenchmarkScope(const FWStringView& category, const FWStrin
 FIOBenchmarkScope::~FIOBenchmarkScope() {
     const FTimespan elapsed = Elapsed();
 
-    LOG(Benchmark, Info, L" {0:20} | {2:10f2} | {3:10f2} = {4:10f2} Mb/s | {1}",
+    LOG(Benchmark, Profiling, L" {0:20} | {2:10f2} | {3:10f2} = {4:10f2} Mb/s | {1}",
         _category,
         _message,
         Fmt::DurationInMs(elapsed),

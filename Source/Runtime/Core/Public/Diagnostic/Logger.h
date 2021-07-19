@@ -15,19 +15,20 @@ enum class ELoggerVerbosity {
     Debug       = 1<<0,
     Verbose     = 1<<1,
     Info        = 1<<2,
-    Emphasis    = 1<<3,
-    Warning     = 1<<4,
-    Error       = 1<<5,
-    Fatal       = 1<<6,
+    Profiling   = 1<<3,
+    Emphasis    = 1<<4,
+    Warning     = 1<<5,
+    Error       = 1<<6,
+    Fatal       = 1<<7,
 
     None        = 0,
-    NoDebug     = (Info|Emphasis|Warning|Error|Fatal),
-    NoDebugInfo = (Emphasis|Warning|Error|Fatal),
+    NoDebug     = (Info|Profiling|Emphasis|Warning|Error|Fatal),
+    NoDebugInfo = (Profiling|Emphasis|Warning|Error|Fatal),
 
 #if USE_PPE_PROFILING
     All         = NoDebugInfo
 #else
-    All         = (Debug|Verbose|Info|Emphasis|Warning|Error|Fatal)
+    All         = (Debug|Verbose|Info|Profiling|Emphasis|Warning|Error|Fatal)
 #endif
 };
 ENUM_FLAGS(ELoggerVerbosity);

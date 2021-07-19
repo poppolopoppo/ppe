@@ -803,6 +803,9 @@ public: // ILogger
         case ELoggerVerbosity::Info:
             attrs = FPlatformConsole::WHITE_ON_BLACK;
             break;
+        case ELoggerVerbosity::Profiling:
+            attrs = (FPlatformConsole::FG_MAGENTA | FPlatformConsole::BG_BLACK | FPlatformConsole::FG_INTENSITY);
+            break;
         case ELoggerVerbosity::Emphasis:
             attrs = (FPlatformConsole::FG_GREEN | FPlatformConsole::BG_BLUE | FPlatformConsole::FG_INTENSITY);
             break;
@@ -892,6 +895,7 @@ public:
             break;
 
         case ELoggerVerbosity::Info:
+        case ELoggerVerbosity::Profiling:
         case ELoggerVerbosity::Emphasis:
             FPlatformDebug::TraceInformation(category.Name, date.Value(), site.Filename, site.Line, text.data());
             break;
@@ -956,28 +960,32 @@ PLogger FLogger::MakeSystemTrace() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
-    auto sep = Fmt::NotFirstTime('|');
-    if (level & FLogger::EVerbosity::Debug)     oss << sep << "Debug";
-    if (level & FLogger::EVerbosity::Verbose)   oss << sep << "Verbose";
-    if (level & FLogger::EVerbosity::Info)      oss << sep << "Info";
-    if (level & FLogger::EVerbosity::Emphasis)  oss << sep << "Emphasis";
-    if (level & FLogger::EVerbosity::Warning)   oss << sep << "Warning";
-    if (level & FLogger::EVerbosity::Error)     oss << sep << "Error";
-    if (level & FLogger::EVerbosity::Fatal)     oss << sep << "Fatal";
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& ELoggerVerbosity_Oss_(TBasicTextWriter<_Char>& oss, ELoggerVerbosity level) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
+    if (level & FLogger::EVerbosity::Debug)     oss << sep << STRING_LITERAL(_Char, "Debug");
+    if (level & FLogger::EVerbosity::Verbose)   oss << sep << STRING_LITERAL(_Char, "Verbose");
+    if (level & FLogger::EVerbosity::Info)      oss << sep << STRING_LITERAL(_Char, "Info");
+    if (level & FLogger::EVerbosity::Profiling) oss << sep << STRING_LITERAL(_Char, "Profiling");
+    if (level & FLogger::EVerbosity::Emphasis)  oss << sep << STRING_LITERAL(_Char, "Emphasis");
+    if (level & FLogger::EVerbosity::Warning)   oss << sep << STRING_LITERAL(_Char, "Warning");
+    if (level & FLogger::EVerbosity::Error)     oss << sep << STRING_LITERAL(_Char, "Error");
+    if (level & FLogger::EVerbosity::Fatal)     oss << sep << STRING_LITERAL(_Char, "Fatal");
     return oss;
 }
 //----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
+    return ELoggerVerbosity_Oss_(oss, level);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level) {
-    auto sep = Fmt::NotFirstTime(L'|');
-    if (level & FLogger::EVerbosity::Debug)     oss << sep << L"Debug";
-    if (level & FLogger::EVerbosity::Verbose)   oss << sep << L"Verbose";
-    if (level & FLogger::EVerbosity::Info)      oss << sep << L"Info";
-    if (level & FLogger::EVerbosity::Emphasis)  oss << sep << L"Emphasis";
-    if (level & FLogger::EVerbosity::Warning)   oss << sep << L"Warning";
-    if (level & FLogger::EVerbosity::Error)     oss << sep << L"Error";
-    if (level & FLogger::EVerbosity::Fatal)     oss << sep << L"Fatal";
-    return oss;
+    return ELoggerVerbosity_Oss_(oss, level);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
