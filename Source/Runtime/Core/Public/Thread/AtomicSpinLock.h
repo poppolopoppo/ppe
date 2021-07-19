@@ -109,6 +109,18 @@ class CACHELINE_ALIGNED FAtomicOrderedLock : Meta::FNonCopyableNorMovable {
     std::atomic<unsigned> Out{ 0 };
 
 public:
+    unsigned Lock() NOEXCEPT {
+        const unsigned ticket{ In.fetch_add(1, std::memory_order_relaxed) };
+        for (i32 backoff = 0; Out.load(std::memory_order_acquire) != ticket; )
+            FPlatformProcess::SleepForSpinning(backoff);
+        return ticket;
+    }
+
+    void Unlock() NOEXCEPT {
+        // release the locks, the next waiting thread will stop spinning
+        Out.store(Out.load(std::memory_order_relaxed) + 1, std::memory_order_release );
+    }
+
     struct FScope : Meta::FNonCopyableNorMovable {
         FAtomicOrderedLock& Barrier;
 #if USE_PPE_ASSERT
@@ -118,21 +130,17 @@ public:
         explicit FScope(FAtomicOrderedLock& barrier) NOEXCEPT
         :   Barrier(barrier)
 #if USE_PPE_ASSERT
-        ,   Ticket(barrier.In.fetch_add(1, std::memory_order_relaxed))
+        ,   Ticket(Barrier.Lock())
         {
 #else
         {
-            const unsigned Ticket = barrier.In.fetch_add(1, std::memory_order_relaxed);
+            Barrier.Lock();
 #endif
-            for (i32 backoff = 0; Barrier.Out.load(std::memory_order_acquire) != Ticket;)
-                FPlatformProcess::SleepForSpinning(backoff);
         }
 
         ~FScope() NOEXCEPT {
             Assert_NoAssume(Barrier.Out == Ticket);
-            // release the locks, the next waiting thread will stop spinning
-            Barrier.Out.store(Barrier.Out.load(std::memory_order_relaxed) + 1,
-                std::memory_order_release );
+            Barrier.Unlock();
         }
     };
 };
