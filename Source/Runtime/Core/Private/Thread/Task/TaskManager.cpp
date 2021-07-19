@@ -359,6 +359,10 @@ size_t FTaskManagerImpl::ThreadTag() const NOEXCEPT {
     return _manager.ThreadTag();
 }
 //----------------------------------------------------------------------------
+size_t FTaskManagerImpl::WorkerCount() const NOEXCEPT {
+    return _manager.WorkerCount();
+}
+//----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority) {
     Assert_NoAssume(rtask);
 
@@ -419,26 +423,11 @@ void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, 
     WaitFor(handle, priority);
 }
 //----------------------------------------------------------------------------
-bool FTaskManagerImpl::Yield(ETaskPriority priority) {
-    if (not _scheduler.HasPendingTask(priority))
-        return false; // don't yield if there's no task with gte priority
-
-    FTaskFiberPool::FHandleRef const cur = FTaskFiberPool::CurrentHandleRef();
-    FTaskFiberPool::FHandleRef const nxt = _fibers.AcquireFiber();
-
-    FInterruptedTask waiting{ *this, cur, priority };
-
-    // The wakeup callback will be executed just after YieldFiber(), and will perform
-    // the actual FireAndForget(), so we can't try to resume current fiber before
-    // it's stalled.
-    nxt->AttachWakeUpCallback([waiting]() {
-       waiting.Context()->FireAndForget(FInterruptedTask::ResumeTask(waiting), waiting.Priority());
-    });
-
-    cur->YieldFiber(nxt, false/* keep current fiber alive */);
-    // Note: after previous we may have jumped to another thread !
-
-    return true;
+void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, FTaskFunc&& whileWaiting, ETaskPriority priority) {
+    FCompletionPort handle;
+    Run(&handle, rtasks, priority);
+    whileWaiting(*this);
+    WaitFor(handle, priority);
 }
 //----------------------------------------------------------------------------
 FCompletionPort* FTaskManagerImpl::StartPortIFN_(FCompletionPort* phandle, size_t n) NOEXCEPT {
@@ -486,6 +475,76 @@ void FTaskManagerImpl::WorkerLoop_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+class FGlobalTaskContext_ final : public ITaskContext {
+public:
+    explicit FGlobalTaskContext_(const FTaskManager& manager) : _manager(manager) {}
+    ~FGlobalTaskContext_() override = default;
+
+    size_t ThreadTag() const NOEXCEPT override { return _manager.ThreadTag(); }
+    size_t WorkerCount() const NOEXCEPT override { return _manager.WorkerCount(); }
+
+    void Run(FAggregationPort& ag, FTaskFunc&& rtask, ETaskPriority priority) override {
+        _manager.Run(ag, std::move(rtask), priority);
+    }
+    void Run(FAggregationPort& ag, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override {
+        _manager.Run(ag, rtasks, priority);
+    }
+    void Run(FAggregationPort& ag, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override {
+        _manager.Run(ag, tasks, priority);
+    }
+
+    void Run(FCompletionPort* cp, FTaskFunc&& rtask, ETaskPriority priority) override {
+        Assert_NoAssume(!cp || FFiber::IsInFiber());
+        _manager.Pimpl()->Run(cp, std::move(rtask), priority);
+    }
+    void Run(FCompletionPort* cp, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override {
+        Assert_NoAssume(!cp || FFiber::IsInFiber());
+        _manager.Pimpl()->Run(cp, rtasks, priority);
+    }
+    void Run(FCompletionPort* cp, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override {
+        Assert_NoAssume(!cp || FFiber::IsInFiber());
+        _manager.Pimpl()->Run(cp, tasks, priority);
+    }
+    void WaitFor(FCompletionPort& cp, ETaskPriority priority) override {
+        Assert_NoAssume(FFiber::IsInFiber());
+        _manager.Pimpl()->WaitFor(cp, priority);
+    }
+
+    void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override {
+        _manager.RunAndWaitFor(std::move(rtask), priority);
+    }
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override {
+        _manager.RunAndWaitFor(rtasks, priority);
+    }
+    void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override {
+        _manager.RunAndWaitFor(tasks, priority);
+    }
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, FTaskFunc&& whileWaiting, ETaskPriority priority) override {
+        auto waitfor = [rtasks, &whileWaiting, priority](ITaskContext& ctx) {
+            FCompletionPort port;
+            ctx.Run(&port, rtasks, priority);
+
+            whileWaiting(ctx);
+
+            ctx.WaitFor(port, priority);
+        };
+
+        if (FFiber::IsInFiber())
+            waitfor(*this);
+        else
+            FWaitForTask_::Wait(*_manager.Pimpl(), std::move(waitfor), priority);
+    }
+
+private:
+    const FTaskManager& _manager;
+};
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FTaskManager::FTaskManager(const FStringView& name, size_t threadTag, size_t workerCount, EThreadPriority priority)
 :   _name(name)
 ,   _threadTag(threadTag)
@@ -516,6 +575,8 @@ void FTaskManager::Start(const TMemoryView<const u64>& threadAffinities) {
 
     _pimpl.reset(*this);
     _pimpl->Start(threadAffinities);
+
+    _context.reset<FGlobalTaskContext_>(*this);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Shutdown() {
@@ -523,15 +584,10 @@ void FTaskManager::Shutdown() {
 
     LOG(Task, Info, L"shutdown manager <#{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
+    _context.reset();
+
     _pimpl->Shutdown();
     _pimpl.reset();
-}
-//----------------------------------------------------------------------------
-ITaskContext* FTaskManager::Context() const {
-    Assert(FFiber::IsInFiber());
-    Assert(_pimpl);
-
-    return _pimpl.get();
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
@@ -554,7 +610,6 @@ void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority 
 
     _pimpl->Run(nullptr, tasks, priority);
 }
-
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert(rtask);

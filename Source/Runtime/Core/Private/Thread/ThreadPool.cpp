@@ -7,6 +7,7 @@
 
 #include "HAL/PlatformThread.h"
 #include "Memory/MemoryTracking.h"
+#include "Thread/Task/CompletionPort.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -25,6 +26,67 @@ static void DestroyThreadPool_() {
     _Pool::Get().Shutdown();
     _Pool::Destroy();
 }
+//----------------------------------------------------------------------------
+class FImmediateTaskContext_ final : public ITaskContext {
+public:
+    static FImmediateTaskContext_& Get() NOEXCEPT {
+        ONE_TIME_DEFAULT_INITIALIZE(FImmediateTaskContext_, GInstance);
+        return GInstance;
+    }
+
+    ~FImmediateTaskContext_() override = default;
+
+    size_t ThreadTag() const NOEXCEPT override { return CurrentThreadContext().Tag(); }
+    size_t WorkerCount() const NOEXCEPT override { return 1; }
+
+    void Run(FAggregationPort& , FTaskFunc&& rtask, ETaskPriority ) override {
+        rtask(*this);
+    }
+    void Run(FAggregationPort& , const TMemoryView<FTaskFunc>& rtasks, ETaskPriority ) override {
+        for (auto& task : rtasks)
+            task(*this);
+    }
+    void Run(FAggregationPort& , const TMemoryView<const FTaskFunc>& tasks, ETaskPriority ) override {
+        for (const auto& task : tasks)
+            task(*this);
+    }
+
+    void Run(FCompletionPort* , FTaskFunc&& rtask, ETaskPriority ) override {
+        rtask(*this);
+    }
+    void Run(FCompletionPort* , const TMemoryView<FTaskFunc>& rtasks, ETaskPriority ) override {
+        for (auto& task : rtasks)
+            task(*this);
+    }
+    void Run(FCompletionPort* , const TMemoryView<const FTaskFunc>& tasks, ETaskPriority ) override {
+        for (auto& task : tasks)
+            task(*this);
+    }
+    void WaitFor(FCompletionPort& cp, ETaskPriority ) override {
+        cp.Start(1);
+        cp.OnJobComplete();
+        AssertRelease(cp.Finished());
+    }
+
+    void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority ) override {
+        rtask(*this);
+    }
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority ) override {
+        for (auto& task : rtasks)
+            task(*this);
+    }
+    void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority ) override {
+        for (auto& task : tasks)
+            task(*this);
+    }
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, FTaskFunc&& whileWaiting, ETaskPriority) override {
+        for (auto& task : rtasks)
+            task(*this);
+
+        whileWaiting(*this);
+    }
+
+};
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -55,7 +117,6 @@ void FIOThreadPool::Create() {
 void FIOThreadPool::Destroy() {
     DestroyThreadPool_<singleton_type>();
 }
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -101,6 +162,28 @@ FTaskManager& HighPriorityThreadPool() NOEXCEPT {
 //----------------------------------------------------------------------------
 FTaskManager& BackgroundThreadPool() NOEXCEPT {
     return FBackgroundThreadPool::Get();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+ITaskContext* ImmediateTaskContext() NOEXCEPT {
+    return std::addressof(FImmediateTaskContext_::Get());
+}
+//----------------------------------------------------------------------------
+ITaskContext* GlobalTaskContext() NOEXCEPT {
+    return FIOThreadPool::Get().GlobalContext();
+}
+//----------------------------------------------------------------------------
+ITaskContext* IOTaskContext() NOEXCEPT {
+    return FGlobalThreadPool::Get().GlobalContext();
+}
+//----------------------------------------------------------------------------
+ITaskContext* HighPriorityTaskContext() NOEXCEPT {
+    return FHighPriorityThreadPool::Get().GlobalContext();
+}
+//----------------------------------------------------------------------------
+ITaskContext* BackgroundTaskContext() NOEXCEPT {
+    return FBackgroundThreadPool::Get().GlobalContext();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

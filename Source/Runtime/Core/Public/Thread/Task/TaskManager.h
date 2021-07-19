@@ -28,13 +28,14 @@ public:
     size_t WorkerCount() const { return _workerCount; }
     EThreadPriority Priority() const { return _priority; }
 
+    ITaskContext* GlobalContext() const { return _context.get(); }
+    FTaskManagerImpl* Pimpl() const { return _pimpl.get(); }
+
     bool IsRunning() const NOEXCEPT;
 
     void Start();
     void Start(const TMemoryView<const u64>& threadAffinities);
     void Shutdown();
-
-    ITaskContext* Context() const;
 
     void Run(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
     void Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
@@ -61,9 +62,8 @@ public:
     void DutyCycle(); // release dangling blocks, but keep cache
     void ReleaseMemory(); // release potentially unused memory
 
-    FTaskManagerImpl* Pimpl() const { return _pimpl.get(); }
-
 private:
+    TUniquePtr<ITaskContext> _context;
     TUniquePtr<FTaskManagerImpl> _pimpl;
 
     const FStringView _name;

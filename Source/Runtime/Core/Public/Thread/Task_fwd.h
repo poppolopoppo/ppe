@@ -18,12 +18,16 @@ class PPE_CORE_API FCompletionPort;
 //----------------------------------------------------------------------------
 using FTaskFunc = TFunction<void(ITaskContext&)>;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 PPE_CORE_API FTaskManager& GlobalThreadPool() NOEXCEPT;
 PPE_CORE_API FTaskManager& IOThreadPool() NOEXCEPT;
 PPE_CORE_API FTaskManager& HighPriorityThreadPool() NOEXCEPT;
 PPE_CORE_API FTaskManager& BackgroundThreadPool() NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API ITaskContext* ImmediateTaskContext() NOEXCEPT;
+PPE_CORE_API ITaskContext* GlobalTaskContext() NOEXCEPT;
+PPE_CORE_API ITaskContext* IOTaskContext() NOEXCEPT;
+PPE_CORE_API ITaskContext* HighPriorityTaskContext() NOEXCEPT;
+PPE_CORE_API ITaskContext* BackgroundTaskContext() NOEXCEPT;
 //----------------------------------------------------------------------------
 PPE_CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority);
 PPE_CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority);

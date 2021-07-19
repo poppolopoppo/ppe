@@ -15,6 +15,7 @@ public:
     static ITaskContext& Get() NOEXCEPT; // get current thread task context
 
     virtual size_t ThreadTag() const NOEXCEPT = 0;
+    virtual size_t WorkerCount() const NOEXCEPT = 0;
 
     virtual void Run(FAggregationPort& ag, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void Run(FAggregationPort& ag, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
@@ -29,8 +30,7 @@ public:
     virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
-
-    virtual bool Yield(ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, FTaskFunc&& whileWaiting, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
 public: // helpers
     void FireAndForget(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) { Run(nullptr, std::move(rtask), priority); }

@@ -32,6 +32,7 @@ public:
 
 public: // ITaskContext
     virtual size_t ThreadTag() const NOEXCEPT override final;
+    virtual size_t WorkerCount() const NOEXCEPT override final;
 
     virtual void Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority) override final;
     virtual void Run(FAggregationPort& ap, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
@@ -46,8 +47,7 @@ public: // ITaskContext
     virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
-
-    virtual bool Yield(ETaskPriority priority) override final;
+    virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, FTaskFunc&& whileWaiting, ETaskPriority priority) override final;
 
 private:
     using FTaskQueued = FTaskScheduler::FTaskQueued;

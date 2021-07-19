@@ -2,6 +2,11 @@
 
 #include "Thread/Task/TaskHelpers.h"
 
+#include "Container/Stack.h"
+#include "HAL/PlatformMisc.h"
+#include "HAL/PlatformProcess.h"
+#include "Thread/Task/CompletionPort.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -32,22 +37,22 @@ T* TFuture<T>::ResultIFP() {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void TFuture<T>::Async(ETaskPriority priority, FTaskManager* manager) {
+void TFuture<T>::Async(ETaskPriority priority, ITaskContext* context) {
     AddSafeRef(this); // FTaskFunc only checks its kept alive, the client should handle lifetime
     PPE::Async([this](ITaskContext&) { // use a lambda to keep lifetime in check through TSafePtr<>
         _value = _func();
         RemoveSafeRef(this);
         _state = Ready; // set Ready *AFTER* releasing TSafePtr<>
-    },  priority, manager );
+    },  priority, context );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 PFuture<T> Future(
     TFunction<T()>&& func,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr *//* uses FGlobalThreadPool by default */) {
+    ITaskContext* context/* = nullptr *//* uses FGlobalThreadPool by default */) {
     PFuture<T> future{ NEW_REF(Task, TFuture<T>, std::move(func)) };
-    future->Async(priority, manager);
+    future->Async(priority, context);
     return future;
 }
 //----------------------------------------------------------------------------
@@ -59,7 +64,7 @@ static void ParallelForEach_(
     _It first, _It last,
     const TFunction<void(_Value)>& foreach,
     ETaskPriority priority,
-    FTaskManager* manager ) {
+    ITaskContext* context ) {
     STATIC_ASSERT(Meta::is_random_access_iterator<_It>::value);
 
     if (first == last) {
@@ -75,9 +80,9 @@ static void ParallelForEach_(
         return;
     }
 
-    // fall back to global thread pool by default
-    if (!manager)
-        manager = &HighPriorityThreadPool();
+    // fall back to high priority thread pool by default, since we're blocking the current thread
+    if (nullptr == context)
+        context = HighPriorityTaskContext();
 
     // less space needed to pass arguments to TFunction<> (debug iterators can be huge)
     const struct loop_t_ {
@@ -95,7 +100,7 @@ static void ParallelForEach_(
 
     // all iterations are dispatch by regular slices to worker threads (less overhead)
     const u32 range_dist = checked_cast<u32>(std::distance(first, last));
-    const u32 worker_count = Min(checked_cast<u32>(manager->WorkerCount()), range_dist);
+    const u32 worker_count = Min(checked_cast<u32>(context->WorkerCount()), range_dist);
     const u32 worker_tasks = range_dist / worker_count;
     const u32 tasks_remain = range_dist - worker_tasks * worker_count;
     Assert(tasks_remain < worker_count);
@@ -114,20 +119,20 @@ static void ParallelForEach_(
     }
 
     Assert(tasks_offset + worker_tasks == range_dist);
-    FTaskFunc last_task = FTaskFunc::Bind<&loop_t_::Task>(&loop, tasks_offset, worker_tasks);
+    FTaskFunc lastTask = FTaskFunc::Bind<&loop_t_::Task>(&loop, tasks_offset, worker_tasks);
 
     // decide if it's worth to process part of load on the current thread
     if (worker_count < FPlatformMisc::NumCoresWithSMT()) {
         // wait for end of the loop while processing the last slice
-        manager->RunAndWaitFor(tasks.MakeView(), last_task, priority);
+        context->RunAndWaitFor(tasks.MakeView(), std::move(lastTask), priority);
     }
     else {
         // push last slice since we don't busy wait
-        tasks.Push(std::move(last_task));
+        tasks.Push(std::move(lastTask));
 
         // blocking wait for end of the loop
         Assert(tasks.size() == tasks.capacity());
-        manager->RunAndWaitFor(tasks.MakeView(), priority);
+        context->RunAndWaitFor(tasks.MakeView(), priority);
     }
 }
 } //!details
@@ -137,8 +142,8 @@ void ParallelForEach(
     _It first, _It last,
     const TFunction<void(_It)>& foreach_it,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
-    details::ParallelForEach_(first, last, foreach_it, priority, manager);
+    ITaskContext* context/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    details::ParallelForEach_(first, last, foreach_it, priority, context);
 }
 //----------------------------------------------------------------------------
 template <typename _It>
@@ -146,8 +151,8 @@ void ParallelForEachValue(
     _It first, _It last,
     const TFunction<void(typename Meta::TIteratorTraits<_It>::value_type)>& foreach_value,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
-    details::ParallelForEach_(first, last, foreach_value, priority, manager);
+    ITaskContext* context/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    details::ParallelForEach_(first, last, foreach_value, priority, context);
 }
 //----------------------------------------------------------------------------
 template <typename _It>
@@ -155,8 +160,8 @@ void ParallelForEachRef(
     _It first, _It last,
     const TFunction<void(typename Meta::TIteratorTraits<_It>::reference)>& foreach_ref,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
-    details::ParallelForEach_(first, last, foreach_ref, priority, manager);
+    ITaskContext* context/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    details::ParallelForEach_(first, last, foreach_ref, priority, context);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

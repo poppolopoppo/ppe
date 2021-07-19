@@ -16,30 +16,30 @@ namespace PPE {
 void FireAndForget(
     FFireAndForget* task,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr */) {
+    ITaskContext* context/* = nullptr */) {
     Assert(task);
-    Async(FTaskFunc::Bind<&FFireAndForget::RunAndSuicide>(task), priority, manager);
+    Async(FTaskFunc::Bind<&FFireAndForget::RunAndSuicide>(task), priority, context);
 }
 //----------------------------------------------------------------------------
 void Async(
     FTaskFunc&& task,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr */) {
-    if (nullptr == manager)
-        manager = &FGlobalThreadPool::Get();
+    ITaskContext* context/* = nullptr */) {
+    if (nullptr == context)
+        context = GlobalTaskContext();
 
-    manager->Run(std::move(task), priority);
+    context->Run(nullptr, std::move(task), priority);
 }
 //----------------------------------------------------------------------------
 void ParallelFor(
     size_t first, size_t last,
     const TFunction<void(size_t)>& foreach,
     ETaskPriority priority /* = ETaskPriority::Normal */,
-    FTaskManager* manager /* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    ITaskContext* context /* = nullptr *//* uses FHighPriorityThreadPool by default */) {
     return ParallelForEachValue(
         MakeCountingIterator(first),
         MakeCountingIterator(last),
-        foreach, priority, manager);
+        foreach, priority, context );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
