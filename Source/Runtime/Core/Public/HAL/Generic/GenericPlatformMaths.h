@@ -338,6 +338,9 @@ public: // must be defined for every platform
         return (T)(v * ((T)~(T)0 / 255)) >> (sizeof(T) - 1) * CHAR_BIT;     // count
     }
 
+    static u32 clz(u32 u) NOEXCEPT = delete;
+    static u64 clz(u64 u) NOEXCEPT = delete;
+
     static u32 ctz(u32 u) NOEXCEPT = delete;
     static u64 ctz(u64 u) NOEXCEPT = delete;
 

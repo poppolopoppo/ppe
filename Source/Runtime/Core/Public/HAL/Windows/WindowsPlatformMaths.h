@@ -209,6 +209,31 @@ public:
     // tzcnt:   trailing zero count (LSB)
     // popcnt:  number of bits set to 1
 
+    static FORCE_INLINE u32 clz(u32 u) NOEXCEPT {
+        if (u == 0) return 32;
+        unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 63
+        _BitScanReverse(&bit, u);	// Scans from LSB to MSB
+        return bit;
+    }
+    static FORCE_INLINE u64 clz(u64 u) NOEXCEPT {
+        if (u == 0) return 64;
+#ifdef ARCH_X64
+        unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 31
+        _BitScanReverse64(&bit, u);	// Scans from LSB to MSB
+        return bit;
+#else
+        unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 63
+        if ((u >> 32) & UINT32_MAX) {
+            _BitScanReverse(&bit, u32((u >> 32) & UINT32_MAX));
+            return (32 + bit);
+        }
+        else {
+            _BitScanReverse(&bit, u32(u & UINT32_MAX));
+            return bit;
+        }
+#endif
+    }
+
     static FORCE_INLINE u32 ctz(u32 u) NOEXCEPT {
         if (u == 0) return 32;
         unsigned long bit;	// 0-based, where the LSB is 0 and MSB is 63

@@ -146,6 +146,14 @@ public:
 
     static FORCE_INLINE u32 ctz(u32 u) NOEXCEPT {
         if (u == 0) return 32;
+        return (u32)__builtin_clz(u);
+    }
+    static FORCE_INLINE u64 ctz(u64 u) NOEXCEPT {
+        if (u == 0) return 64;
+        return (u64)__builtin_clzll(u);
+    }
+    static FORCE_INLINE u32 ctz(u32 u) NOEXCEPT {
+        if (u == 0) return 32;
         return (u32)__builtin_ctz(u);
     }
     static FORCE_INLINE u64 ctz(u64 u) NOEXCEPT {
