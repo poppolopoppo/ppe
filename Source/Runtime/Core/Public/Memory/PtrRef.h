@@ -41,8 +41,8 @@ struct TPtrRef {
     CONSTEXPR T& operator * () const { Assert(Ptr); return (*Ptr); }
     CONSTEXPR T* operator ->() const { Assert(Ptr); return Ptr; }
 
+    CONSTEXPR operator T& () const NOEXCEPT { Assert(Ptr); return (*Ptr); }
     CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
-    CONSTEXPR operator T& () const NOEXCEPT { return (*Ptr); }
 
     CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
     CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
@@ -123,6 +123,7 @@ struct TPtrRef<void> {
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(TPtrRef<T>, typename T)
+PPE_ASSUME_TEMPLATE_AS_POINTER(TPtrRef<T>, typename T)
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR TPtrRef<T> MakePtrRef(T& ref) {
@@ -132,21 +133,6 @@ CONSTEXPR TPtrRef<T> MakePtrRef(T& ref) {
 template <typename T>
 CONSTEXPR TPtrRef<T> MakePtrRef(T* ptr) {
     return TPtrRef{ ptr };
-}
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR T& DerefPtr(T& ref) {
-    return ref;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR T& DerefPtr(T* ptr) {
-    return *ptr;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR T& DerefPtr(TPtrRef<T> ptrRef) {
-    return *ptrRef;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

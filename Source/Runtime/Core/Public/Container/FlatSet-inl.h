@@ -84,7 +84,7 @@ Meta::TOptionalReference<const _Key> TFlatSet<_Key, _EqualTo, _Less, _Vector>::G
     const auto it = Find(key);
     return (end() != it
         ? Meta::MakeOptionalRef(*it)
-        : Meta::NullRef<const _Key> );
+        : Default );
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>

@@ -371,6 +371,9 @@ bool operator >=(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
+PPE_ASSUME_TEMPLATE_AS_POINTER(TRefPtr<T>, typename T)
+PPE_ASSUME_TEMPLATE_AS_POINTER(TSafePtr<T>, typename T)
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

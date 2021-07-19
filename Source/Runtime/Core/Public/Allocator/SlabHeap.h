@@ -50,7 +50,7 @@ public:
         const FSlabMarker& Tell() const { return _origin; }
         FSlabHeap* operator ->() const {
             THIS_THREADRESOURCE_CHECKACCESS();
-            return std::addressof(DerefPtr(_heap));
+            return _heap.get();
         }
     };
 

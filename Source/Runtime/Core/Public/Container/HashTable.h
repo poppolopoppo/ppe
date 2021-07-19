@@ -404,11 +404,16 @@ public:
 
     Meta::TOptionalReference<mapped_type> GetIFP(const key_type& key) NOEXCEPT {
         const auto it = find(key);
-        return (end() != it ? Meta::MakeOptionalRef(const_cast<mapped_type&>(it->second)) : Meta::NullRef<mapped_type>);
+        return (end() != it ? Meta::MakeOptionalRef(const_cast<mapped_type&>(it->second)) : Default);
     }
     Meta::TOptionalReference<const mapped_type> GetIFP(const key_type& key) const NOEXCEPT {
         const auto it = find(key);
-        return (end() != it ? Meta::MakeOptionalRef(it->second) : Meta::NullRef<const mapped_type>);
+        return (end() != it ? Meta::MakeOptionalRef(it->second) : Default);
+    }
+
+    mapped_type GetCopy(const key_type& key, mapped_type&& ifNotFound) const NOEXCEPT {
+        const auto it = find(key);
+        return (end() != it ? it->second : std::move(ifNotFound));
     }
 
     mapped_reference operator [](const key_type& key) { return table_traits::Value(*try_emplace(key).first); }

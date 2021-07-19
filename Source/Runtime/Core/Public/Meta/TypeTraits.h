@@ -26,6 +26,18 @@
 #define PPE_ASSUME_TEMPLATE_FRIEND_AS_POD(T, ...) \
     template <__VA_ARGS__> PPE_ASSUME_FRIEND_AS_POD(T)
 
+// Can override POINTER detection in PPE codebase, respects ADL
+#define PPE_ASSERT_TYPE_IS_POINTER(T) \
+    static_assert(::PPE::Meta::is_pointer_v<T>, STRINGIZE(T) " is not a POINTER type");
+#define PPE_ASSUME_TYPE_AS_POINTER(...) \
+    CONSTEXPR bool is_pointer_type(__VA_ARGS__*) NOEXCEPT { return true; }
+#define PPE_ASSUME_FRIEND_AS_POINTER(...) \
+    friend PPE_ASSUME_TYPE_AS_POINTER(__VA_ARGS__)
+#define PPE_ASSUME_TEMPLATE_AS_POINTER(T, ...) \
+    template <__VA_ARGS__> PPE_ASSUME_TYPE_AS_POINTER(T)
+#define PPE_ASSUME_TEMPLATE_FRIEND_AS_POINTER(T, ...) \
+    template <__VA_ARGS__> PPE_ASSUME_FRIEND_AS_POINTER(T)
+
 namespace PPE {
 namespace Meta {
 //----------------------------------------------------------------------------
@@ -101,27 +113,6 @@ struct TCheckFitInSize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Unlike STL variants theses operators allow to compare _Lhs with a compatible _Rhs
-//----------------------------------------------------------------------------
-#define PPE_META_OPERATOR(_NAME, _OP) \
-    template <typename _Lhs> \
-    struct _NAME { \
-        template <typename _Rhs> \
-        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
-            return (lhs _OP rhs); \
-        } \
-    }
-//----------------------------------------------------------------------------
-PPE_META_OPERATOR(TGreater,        > );
-PPE_META_OPERATOR(TGreaterEqual,   >=);
-PPE_META_OPERATOR(TLess,           < );
-PPE_META_OPERATOR(TLessEqual,      <=);
-PPE_META_OPERATOR(TEqualTo,        ==);
-//----------------------------------------------------------------------------
-#undef PPE_META_OPERATOR
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename T>
 using TDecay = typename std::decay<T>::type;
 //----------------------------------------------------------------------------
@@ -166,19 +157,6 @@ using TReference = TAddReference< TRemoveConst< TDecay<T> > >;
 template <typename T>
 using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
-template <typename T>
-using TOptionalReference = TConditional<std::is_pointer_v<T>, T, TAddPointer<T> >;
-template <typename T>
-CONSTEXPR TOptionalReference<T> NullRef{ nullptr };
-template <typename T>
-CONSTEXPR T* MakeOptionalRef(T& ref) { return std::addressof(ref); }
-template <typename T>
-CONSTEXPR const T* MakeOptionalRef(const T& cref) { return std::addressof(cref); }
-template <typename T>
-CONSTEXPR T* MakeOptionalRef(T* ptr) { return ptr; }
-template <typename T>
-CONSTEXPR const T* MakeOptionalRef(const T* cptr) { return cptr; }
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // is_pod_type(T*) can be overloaded for specific types, respects ADL
@@ -201,6 +179,15 @@ using has_trivial_copy = std::bool_constant<(std::is_trivially_copy_constructibl
 template <typename T>
 using has_trivial_move = std::bool_constant<(std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value) ||
     is_pod_v<T> >;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// is_pointer_type(T*) can be overloaded for specific types, respects ADL
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR bool is_pointer_type(T*) NOEXCEPT { return std::is_pointer_v<T>; }
+template <typename T>
+CONSTEXPR bool is_pointer_v{ is_pointer_type(static_cast<T*>(nullptr)) };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -493,6 +480,8 @@ struct TDestructor {
 template <typename T>
 constexpr TDestructor<T> Destructor;
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 T default_value_(std::bool_constant<false>, int) { return T{}; }
@@ -538,6 +527,86 @@ struct FZeroValue final {
     CONSTEXPR friend bool operator !=(FZeroValue lhs, T rhs) { return (not operator ==(lhs, rhs)); }
 };
 CONSTEXPR FZeroValue Zero{};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+using TOptionalReference = TConditional<is_pointer_v<T>, T, TAddPointer<T> >;
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR T* MakeOptionalRef(T& ref) { return std::addressof(ref); }
+template <typename T>
+CONSTEXPR const T* MakeOptionalRef(const T& cref) { return std::addressof(cref); }
+template <typename T>
+CONSTEXPR T* MakeOptionalRef(T* ptr) { return ptr; }
+template <typename T>
+CONSTEXPR const T* MakeOptionalRef(const T* cptr) { return cptr; }
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR auto& DerefPtr(T& ref) {
+    IF_CONSTEXPR(is_pointer_v<T>) {
+        return *ref;
+    }
+    else {
+        return ref;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR T& DerefPtr(T* ptr) {
+    return *ptr;
+}
+
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Unlike STL variants theses operators allow to compare _Lhs with a compatible _Rhs
+//----------------------------------------------------------------------------
+#define PPE_META_OPERATOR(_NAME, _OP) \
+    template <typename _Lhs> \
+    struct _NAME { \
+        template <typename _Rhs> \
+        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
+            return (lhs _OP rhs); \
+        } \
+    }
+//----------------------------------------------------------------------------
+PPE_META_OPERATOR(TGreater, > );
+PPE_META_OPERATOR(TGreaterEqual, >= );
+PPE_META_OPERATOR(TLess, < );
+PPE_META_OPERATOR(TLessEqual, <= );
+PPE_META_OPERATOR(TEqualTo, == );
+//----------------------------------------------------------------------------
+namespace details {
+template <typename _Ptr, template <typename T> class _Op>
+struct TDerefOperator_ : _Op<decltype( *std::declval<const _Ptr&>() )> {
+    using value_type = decltype(*std::declval<_Ptr>());
+    using parent_type = _Op<value_type>;
+    STATIC_ASSERT(is_pointer_v<_Ptr>);
+    CONSTEXPR bool operator()(const _Ptr& lhs, const _Ptr& rhs) const NOEXCEPT {
+        return ( (lhs == rhs) || ((!!lhs & !!rhs) && parent_type::operator()(*lhs, *rhs)) );
+    }
+    CONSTEXPR bool operator()(const _Ptr& lhs, const value_type& rhs) const NOEXCEPT {
+        return (!!lhs && parent_type::operator()(*lhs, rhs));
+    }
+    CONSTEXPR bool operator()(const value_type& lhs, const _Ptr& rhs) const NOEXCEPT {
+        return (!!rhs && parent_type::operator()(lhs, *rhs));
+    }
+};
+} //!details
+//----------------------------------------------------------------------------
+template <typename _Ptr>
+using TDerefGreater = details::TDerefOperator_< _Ptr, TGreater >;
+template <typename _Ptr>
+using TDerefGreaterEqual = details::TDerefOperator_< _Ptr, TGreaterEqual >;
+template <typename _Ptr>
+using TDerefLess = details::TDerefOperator_< _Ptr, TLess >;
+template <typename _Ptr>
+using TDerefLessEqual = details::TDerefOperator_< _Ptr, TLessEqual >;
+template <typename _Ptr>
+using TDerefEqualTo = details::TDerefOperator_< _Ptr, TEqualTo >;
+//----------------------------------------------------------------------------
+#undef PPE_META_OPERATOR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
