@@ -29,8 +29,8 @@ public:
             reinterpret_cast<const _Impl*>(&_data)->ReleaseReader();
         }
         const auto& Value() const { return _data._value; }
-        const auto& operator *() const NOEXCEPT { return DerefPtr(_data._value); }
-        const auto* operator ->() const NOEXCEPT { return std::addressof(DerefPtr(_data._value)); }
+        const auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data._value); }
+        const auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };
 
     class FExclusiveLock : Meta::FNonCopyableNorMovable {
@@ -43,14 +43,17 @@ public:
             reinterpret_cast<_Impl*>(&_data)->ReleaseWriter();
         }
         auto& Value() const { return _data._value; }
-        auto& operator *() const NOEXCEPT { return DerefPtr(_data._value); }
-        auto* operator ->() const NOEXCEPT { return std::addressof(DerefPtr(_data._value)); }
+        auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data._value); }
+        auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };
 
     TThreadSafeCRTP_() = default;
 
     explicit TThreadSafeCRTP_(const T& value) : _value(value) {}
     explicit TThreadSafeCRTP_(T&& rvalue) NOEXCEPT : _value(std::move(rvalue)) {}
+
+    template <typename... _Args>
+    explicit TThreadSafeCRTP_(_Args&&... args) : _value(std::forward<_Args>(args)...) {}
 
     TThreadSafeCRTP_(TThreadSafeCRTP_&& ) = default;
     TThreadSafeCRTP_& operator =(TThreadSafeCRTP_&& ) = delete;
@@ -65,6 +68,23 @@ private:
     T _value;
 };
 } //!details
+//----------------------------------------------------------------------------
+// Dummy
+//----------------------------------------------------------------------------
+template <typename T, EThreadBarrier _Barrier> // only for code completion in templates
+class TThreadSafe : public details::TThreadSafeCRTP_<T, TThreadSafe<T, _Barrier>> {
+public:
+    using parent_type = details::TThreadSafeCRTP_<T, TThreadSafe<T, _Barrier>>;
+
+    using parent_type::parent_type;
+    using parent_type::operator=;
+
+    void AcquireReader() const NOEXCEPT = delete;
+    void ReleaseReader() const NOEXCEPT = delete;
+
+    void AcquireWriter() NOEXCEPT = delete;
+    void ReleaseWriter() NOEXCEPT = delete;
+};
 //----------------------------------------------------------------------------
 // None
 //----------------------------------------------------------------------------
