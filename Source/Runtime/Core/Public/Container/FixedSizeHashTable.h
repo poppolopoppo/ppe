@@ -216,6 +216,8 @@ public:
     FORCE_INLINE void Remove_AssertExists(key_type key) { Verify(Remove_ReturnIfExists(key)); }
     bool Remove_ReturnIfExists(key_type key);
 
+    const_iterator At(size_t bucket) const NOEXCEPT;
+
     template <size_t _Dim>
     friend bool operator ==(const TFixedSizeHashTable& lhs, const TFixedSizeHashTable<_Traits, _Dim>& rhs) NOEXCEPT {
         if (lhs.size() != rhs.size())
@@ -265,6 +267,7 @@ private:
 template <typename _Traits, size_t _Capacity>
 TFixedSizeHashTable<_Traits, _Capacity>::TFixedSizeHashTable() NOEXCEPT
 :   _size(0) {
+    Assert_NoAssume(key_equal()(empty_key::value, empty_key::value));
     // need to init table with empty keys
     std::uninitialized_fill(std::begin(_values), std::end(_values), traits_type::EmptyValue());
 }
@@ -331,7 +334,7 @@ bool TFixedSizeHashTable<_Traits, _Capacity>::Add_KeepExisting(value_type&& rval
         bucket = NextIndex_(bucket);
     }
 
-    _size++;
+    VerifyRelease( ++_size < _Capacity); // this container can't be full!
     _values[bucket] = std::move(rvalue);
 
     return true;
@@ -348,7 +351,7 @@ bool TFixedSizeHashTable<_Traits, _Capacity>::Add_Overwrite(value_type&& rvalue)
     size_t dist = 0;
     for (;;) {
         if (key_equal()(traits_type::Key(_values[bucket]), empty_key::value)) {
-            _size++;
+            VerifyRelease( ++_size < _Capacity); // this container can't be full!
             break;
         }
 
@@ -399,7 +402,7 @@ auto TFixedSizeHashTable<_Traits, _Capacity>::insert(value_type&& rvalue) -> TPa
         bucket = NextIndex_(bucket);
     }
 
-    _size++;
+    VerifyRelease( ++_size < _Capacity); // this container can't be full!
     _values[bucket] = std::move(rvalue);
 
     return MakePair(iterator(*this, bucket), true);
@@ -460,6 +463,14 @@ void TFixedSizeHashTable<_Traits, _Capacity>::clear() {
         std::fill(std::begin(_values), std::end(_values),
             traits_type::EmptyValue() );
     }
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, size_t _Capacity>
+auto TFixedSizeHashTable<_Traits, _Capacity>::At(size_t bucket) const NOEXCEPT -> const_iterator {
+    bucket = (bucket % _Capacity);
+    return (not key_equal()(traits_type::Key(_values[swap]), empty_key::value)
+        ? const_iterator{ *this, bucket }
+        : end() );
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
