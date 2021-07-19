@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IO/ConstChar.h"
 #include "IO/StaticString.h"
 #include "IO/StringView.h"
 #include "Meta/Hash_fwd.h"
@@ -41,7 +42,7 @@ struct type_info_ {
 //----------------------------------------------------------------------------
 struct type_info_t {
     hash_t hash_code;
-    FStringView name;
+    FConstChar name;
     constexpr bool operator ==(const type_info_t& other) const {
         return (hash_code == other.hash_code && name == other.name);
     }

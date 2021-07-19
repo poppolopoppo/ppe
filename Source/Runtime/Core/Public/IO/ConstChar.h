@@ -110,9 +110,6 @@ struct TBasicConstChar {
 
 };
 //----------------------------------------------------------------------------
-using FConstChar = TBasicConstChar<char>;
-using FConstWChar = TBasicConstChar<wchar_t>;
-//----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TConstCharEqualTo {
     CONSTEXPR bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const NOEXCEPT {

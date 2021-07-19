@@ -47,6 +47,14 @@ CONSTEXPR const FWStringView& MakeStringView(const FWStringView& view);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
+struct TBasicConstChar;
+//----------------------------------------------------------------------------
+using FConstChar = TBasicConstChar<char>;
+using FConstWChar = TBasicConstChar<wchar_t>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char>
 class TBasicStringBuilder;
 //----------------------------------------------------------------------------
 using FStringBuilder = TBasicStringBuilder<char>;
