@@ -25,6 +25,13 @@ namespace Meta {
 //----------------------------------------------------------------------------
 inline CONSTEXPR bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
 //----------------------------------------------------------------------------
+template <size_t _Pow>
+inline CONSTEXPR bool IsPowOf(size_t u) {
+    STATIC_ASSERT(IsPow2(_Pow) && _Pow > 2);
+    for (; u >= _Pow; u /= _Pow);
+    return (u == 1);
+}
+//----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
 inline CONSTEXPR bool IsAligned(const size_t alignment, const uintptr_t v) {
     return (0 == (v & (alignment - 1)));
