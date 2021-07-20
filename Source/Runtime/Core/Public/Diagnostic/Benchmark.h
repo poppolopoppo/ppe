@@ -504,7 +504,7 @@ public: // export table results
         WTxt(table, sb, detailed);
         FLogger::Log(
             LOG_CATEGORY_GET(Benchmark),
-            FLogger::EVerbosity::Info,
+            FLogger::EVerbosity::Profiling,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             sb.ToString() );
     }
