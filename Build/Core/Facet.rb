@@ -202,6 +202,9 @@ module Build
         end
         def compilationFlag!(*flags)
             @analysisOptions.push_back(*flags)
+            return compilationFlag_noAnalysis!(*flags)
+        end
+        def compilationFlag_noAnalysis!(*flags)
             @preprocessorOptions.push_back(*flags)
             @compilerOptions.push_back(*flags)
             @pchOptions.push_back(*flags)
