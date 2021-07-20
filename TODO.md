@@ -64,6 +64,9 @@
     - https://x3dom.org/pop/files/popbuffer2013.pdf
     - https://0fps.net/2018/03/03/a-level-of-detail-method-for-blocky-voxels/
 
+- [ ] Destiny's Multithreaded Rendering Architecture: https://www.youtube.com/watch?v=0nTDFLMLX9k
+- [ ] Destiny's Shader System: http://advances.realtimerendering.com/destiny/gdc_2017/Destiny_shader_system_GDC_2017_v.4.0.pdf
+
 ## Architecture
 
 - [ ] Handle configuration/command line inside Core, seed from external configuration files, configuration cache
@@ -77,8 +80,6 @@
         - may not be possible to remove a field ? since we use static offsets
 - [ ] Fast dynamic dispatch by hacking VTable: https://medium.com/@calebleak/fast-virtual-functions-hacking-the-vtable-for-fun-and-profit-25c36409c5e0
 - [ ] Wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
-- [ ] Destiny's Multithreaded Rendering Architecture: https://www.youtube.com/watch?v=0nTDFLMLX9k
-- [ ] Destiny's Shader System: http://advances.realtimerendering.com/destiny/gdc_2017/Destiny_shader_system_GDC_2017_v.4.0.pdf
 - [ ] Physics engine:
     - https://www.youtube.com/watch?v=-_IspRG548E
     - Physics for game programmer: https://www.youtube.com/watch?v=7_nKOET6zwI
@@ -87,6 +88,10 @@
 
 ## Algorithm
 
+- [ ] Concurrent Hopscotch hashing
+    - https://medium.com/@michelle.bao1/hopscotch-hashing-2045e7cc176b
+    - https://arxiv.org/pdf/1911.03028.pdf
+    - https://people.csail.mit.edu/shanir/publications/disc2008_submission_98.pdf
 - [ ] HyperLogLog
     - https://blog.demofox.org/2015/03/09/hyperloglog-estimate-unique-value-counts-like-the-pros/
     - https://youtu.be/YA-nB2wjVcI?t=1759
