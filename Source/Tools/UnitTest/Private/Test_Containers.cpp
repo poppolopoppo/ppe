@@ -2,12 +2,10 @@
 
 #include "stdafx.h"
 
-#include "Allocator/SlabHeap.h"
 #include "Allocator/SlabAllocator.h"
+#include "Allocator/SlabHeap.h"
 #include "Allocator/StlAllocator.h"
-
 #include "Container/Appendable.h"
-#include "Container/SparseArray.h"
 #include "Container/AssociativeVector.h"
 #include "Container/BurstTrie.h"
 #include "Container/FixedSizeHashTable.h"
@@ -15,15 +13,14 @@
 #include "Container/FlatSet.h"
 #include "Container/HashTable.h"
 #include "Container/MinMaxHeap.h"
+#include "Container/SparseArray.h"
 #include "Container/StringHashSet.h"
-#include "Container/Vector.h"
 #include "Container/TupleVector.h"
-
+#include "Container/Vector.h"
 #include "Diagnostic/Benchmark.h"
 #include "Diagnostic/Logger.h"
-
+#include "HAL/PlatformMaths.h"
 #include "HAL/PlatformProcess.h"
-
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Filename.h"
@@ -31,17 +28,16 @@
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
-#include "VirtualFileSystem.h"
-#include "HAL/PlatformMaths.h"
 #include "Maths/Maths.h"
 #include "Maths/PrimeNumbers.h"
 #include "Maths/RandomGenerator.h"
 #include "Maths/Threefy.h"
-#include "Modular/Modular_fwd.h"
 #include "Memory/MemoryStream.h"
 #include "Meta/PointerWFlags.h"
 #include "Meta/Utility.h"
+#include "Modular/Modular_fwd.h"
 #include "Time/TimedScope.h"
+#include "VirtualFileSystem.h"
 
 #include <numeric>
 #include <random>

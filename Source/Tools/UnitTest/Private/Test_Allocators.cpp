@@ -16,20 +16,12 @@
 #include "Maths/RandomGenerator.h"
 #include "Maths/ScalarVectorHelpers.h"
 #include "Maths/Threefy.h"
-#include "Maths/VarianceEstimator.h"
 #include "Memory/CachedMemoryPool.h"
-#include "Memory/CachedMemoryPool2.h"
-#include "Memory/CachedMemoryPool3.h"
 #include "Memory/MemoryPool.h"
-#include "Memory/MemoryPool.h"
-#include "Memory/MemoryPool2.h"
-#include "Memory/MemoryPool3.h"
-#include "Memory/MemoryPool4.h"
 #include "Memory/MemoryView.h"
 #include "Memory/UniqueView.h"
 #include "Modular/ModularDomain.h"
 #include "Thread/AtomicPool.h"
-#include "Thread/CriticalSection.h"
 #include "Thread/Task/TaskHelpers.h"
 #include "Thread/ThreadPool.h"
 #include "Time/TimedScope.h"
@@ -621,23 +613,17 @@ static NO_INLINE void Test_MemoryPools_(ETaskPriority priority, ITaskContext* co
     constexpr auto ChunkSize = CODE3264(64, 128);
     constexpr auto MaxChunks = 32;
 
-    using FMemoryPool1 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, EThreadBarrier::RWLock, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool1>(L"TMemoryPool<>", priority, context);
+    using FMemoryPool_4 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 4, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool_4>(L"TMemoryPool<4>", priority, context);
 
-    using FMemoryPool3 = TTypedMemoryPool3<FDummyForPool_, ChunkSize, MaxChunks, EThreadBarrier::RWLock, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool3>(L"TMemoryPool3<>", priority, context);
+    using FMemoryPool_2 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 2, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool_2>(L"TMemoryPool<2>", priority, context);
 
-    using FMemoryPool4 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 4, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool4>(L"TMemoryPool4<>", priority, context);
+    using FMemoryPool_8 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 8, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool_8>(L"TMemoryPool<8>", priority, context);
 
-    using FMemoryPool4_2 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 2, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool4_2>(L"TMemoryPool4_2<>", priority, context);
-
-    using FMemoryPool4_8 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 8, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool4_8>(L"TMemoryPool4_8<>", priority, context);
-
-    using FMemoryPool4_32 = TTypedMemoryPool4<FDummyForPool_, ChunkSize, MaxChunks, 32, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool4_32>(L"TMemoryPool4_32<>", priority, context);
+    using FMemoryPool_32 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 32, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool_32>(L"TMemoryPool<32>", priority, context);
 }
 //----------------------------------------------------------------------------
 template <typename _CachedMemoryPool>
@@ -799,14 +785,8 @@ static NO_INLINE void Test_CachedMemoryPools_(ETaskPriority priority, ITaskConte
     VECTOR(Container, FDummyForPool_) shuffled( uniq );
     rng.Shuffle(shuffled.MakeView());
 
-    using FCachedMemoryPool1 = TCachedMemoryPool<FDummyForPool_, FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
-    Test_CachedMemoryPool_Impl_<FCachedMemoryPool1>(L"TCachedMemoryPool<>", rng, uniq.MakeConstView(), shuffled.MakeConstView(), priority, context);
-
-    using FCachedMemoryPool2 = TCachedMemoryPool2<FDummyForPool_, FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
-    Test_CachedMemoryPool_Impl_<FCachedMemoryPool2>(L"TCachedMemoryPool2<>", rng, uniq.MakeConstView(), shuffled.MakeConstView(), priority, context);
-
-    using FCachedMemoryPool3 = TCachedMemoryPool3<FDummyForPool_, FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
-    Test_CachedMemoryPool_Impl_<FCachedMemoryPool3>(L"TCachedMemoryPool3<>", rng, uniq.MakeConstView(), shuffled.MakeConstView(), priority, context);
+    using FCachedMemoryPool = TCachedMemoryPool<FDummyForPool_, FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
+    Test_CachedMemoryPool_Impl_<FCachedMemoryPool>(L"TCachedMemoryPool<>", rng, uniq.MakeConstView(), shuffled.MakeConstView(), priority, context);
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Pools_() {

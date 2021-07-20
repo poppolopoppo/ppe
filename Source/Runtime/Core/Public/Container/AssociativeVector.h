@@ -5,6 +5,7 @@
 #include "Allocator/Allocation.h"
 #include "Container/Hash.h"
 #include "Container/Pair.h"
+#include "Container/SparseArray_fwd.h"
 #include "Container/Vector.h"
 #include "IO/TextWriter_fwd.h"
 
