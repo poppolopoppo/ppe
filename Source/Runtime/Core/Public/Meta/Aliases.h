@@ -4,15 +4,15 @@
 #include <stdint.h>
 #include <type_traits>
 
-typedef uint8_t     u8;
-typedef uint16_t    u16;
-typedef uint32_t    u32;
-typedef uint64_t    u64;
+using u8    = uint8_t;
+using u16   = uint16_t;
+using u32   = uint32_t;
+using u64   = uint64_t;
 
-typedef int8_t      i8;
-typedef int16_t     i16;
-typedef int32_t     i32;
-typedef int64_t     i64;
+using i8    = int8_t;
+using i16   = int16_t;
+using i32   = int32_t;
+using i64   = int64_t;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -340,16 +340,14 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef i8 byte;
-typedef u8 ubyte;
+using byte      = i8;
+using ubyte     = u8;
+//using short   = i16;
+using ushort    = u16;
+using word      = i32;
+using uword     = u32;
 //----------------------------------------------------------------------------
-//typedef i16 short;
-typedef u16 ushort;
-//----------------------------------------------------------------------------
-typedef i32 word;
-typedef u32 uword;
-//----------------------------------------------------------------------------
-typedef struct uint128_t {
+struct uint128_t {
     u64 lo, hi;
 
     CONSTEXPR static uint128_t Zero() { return uint128_t{ 0, 0 }; }
@@ -362,9 +360,10 @@ typedef struct uint128_t {
 
     friend void swap(uint128_t& lhs, uint128_t& rhs) NOEXCEPT { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
-}   u128;
+};
+using u128 = uint128_t;
 //----------------------------------------------------------------------------
-typedef struct uint256_t {
+struct uint256_t {
     uint128_t lo, hi;
 
     CONSTEXPR static uint256_t Zero() { return uint256_t{ uint128_t::Zero(), uint128_t::Zero() }; }
@@ -377,7 +376,8 @@ typedef struct uint256_t {
 
     friend void swap(uint256_t& lhs, uint256_t& rhs) NOEXCEPT { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
-}   u256;
+};
+using u256 = uint256_t;
 //----------------------------------------------------------------------------
 // for hash functions :
 PACKED_STRUCT(uint96_t,  { u64  lo; u32 hi; });
