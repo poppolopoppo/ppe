@@ -15,7 +15,7 @@ module Build
     persistent_switch(:Diagnose, 'Use compilation diagnostics')
     persistent_switch(:Dist, 'Use distributed compilation')
     persistent_switch(:Incremental, 'Use incremental linker')
-    persistent_switch(:LTO, 'Use link time optimization')
+    persistent_switch(:LTO, 'Use link time optimization', init: true)
     persistent_switch(:Minify, 'Use minified format for exported files', init: true)
     persistent_switch(:PCH, 'Use precompiled headers', init: true)
     persistent_switch(:RuntimeChecks, 'Use runtime checks')
