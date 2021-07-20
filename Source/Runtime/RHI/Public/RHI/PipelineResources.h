@@ -39,6 +39,12 @@ public:
         u16 Count;
         T Data[1];
 
+        TElementArray() = default;
+        TElementArray(u16 capacity, u16 count) NOEXCEPT
+        :   Capacity(capacity)
+        ,   Count(count)
+        {}
+
         TMemoryView<T> MakeView() {
             return { Data, Count };
         }
