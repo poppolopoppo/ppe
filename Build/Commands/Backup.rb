@@ -24,15 +24,19 @@ module Build
                 Gem::Package::TarWriter.new(gzip) do |tar|
                     fileset.each do |fname|
                         next unless File.exists?(fname)
+                        next if File.directory?(fname)
+
                         content = IO.binread(File.join($WorkspacePath, fname))
                         if Log.verbose?
                             Log.verbose('Backup: append "%s" to archive (%d bytes)', fname, content.length)
                         else
                             Log.pin('Backup: append "%s" to archive (%d bytes)' % [fname, content.length])
                         end
+
                         tar.add_file_simple(fname, 0644, content.length) do |io|
                             io.write(content)
                         end
+
                         numFiles += 1
                         rawSize += content.length
                     end
