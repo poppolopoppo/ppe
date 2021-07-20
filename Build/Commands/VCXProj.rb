@@ -47,6 +47,15 @@ module Build
             end
         end
 
+        def self.sanitize_toolset(toolset)
+            case toolset
+            when '143',143
+                return '142' # TODO: restore when Rider will be handling VS2022/PlatformToolset v143
+            else
+                return toolset
+            end
+        end
+
         def self.make_vcxconfig(bff, env, target, expanded)
             target_alias = "#{target.abs_path}-#{env.family}"
             bff.struct!("#{target.var_path}_#{env.varname}_VCXConfig") do
@@ -56,7 +65,7 @@ module Build
                 set!('Platform', VCXProj.solution_platform(env))
                 set!('Config', env.config.name.to_s)
 
-                set!('PlatformToolset', "v#{env.compiler.platformToolset}")
+                set!('PlatformToolset', "v#{VCXProj.sanitize_toolset(env.compiler.platformToolset)}")
 
                 set!('IntermediateDirectory', intermediate)
                 set!('BuildLogFile', File.join(intermediate, 'Build.log'))
@@ -127,7 +136,7 @@ module Build
                     ('.'+projectConfig).to_sym
                 end
 
-                set!('PlatformToolset', "v#{platformToolset}") if platformToolset
+                set!('PlatformToolset', "v#{VCXProj.sanitize_toolset(platformToolset)}") if platformToolset
                 set!('ProjectOutput', File.join($ProjectsPath, 'Build.vcxproj'))
                 set!('ProjectBasePath', $BuildPath)
                 set!('ProjectInputPaths', $BuildPath)
