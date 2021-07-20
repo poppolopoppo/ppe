@@ -383,6 +383,7 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
 //----------------------------------------------------------------------------
 template <typename _Word>
 static NO_INLINE void Test_BitTree_Impl_(FWStringView name, TMemoryView<const u32> sizes) {
+    UNUSED(name);
     TAllocaBlock<_Word> alloc;
     TBitTree<_Word, false> tree;
 
@@ -516,14 +517,14 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
                 AssertRelease(allocs[i]->CheckInvariants());
-                allocs[i]->AddRef();
+                Verify( allocs[i]->AddRef() );
             }, priority, context);
 
         rng.Shuffle(allocs.MakeView());
 
         ParallelFor(0, ToDeallocate,
             [&allocs, &pool](size_t i) {
-                allocs[i]->RemoveRef();
+                Verify( allocs[i]->RemoveRef() );
                 AssertRelease(allocs[i]->CheckInvariants());
                 pool.Release(allocs[i]);
             }, priority, context);
@@ -534,14 +535,14 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
                 AssertRelease(allocs[i]->CheckInvariants());
-                allocs[i]->AddRef();
+                Verify( allocs[i]->AddRef() );
             }, priority, context);
 
         rng.Shuffle(allocs.MakeView());
 
         ParallelFor(0, pool_type::Capacity,
             [&allocs, &pool](size_t i) {
-                allocs[i]->RemoveRef();
+                Verify( allocs[i]->RemoveRef() );
                 AssertRelease(allocs[i]->CheckInvariants());
                 pool.Release(allocs[i]);
             }, priority, context);
@@ -552,6 +553,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
 //----------------------------------------------------------------------------
 template <typename _MemoryPool>
 static NO_INLINE void Test_MemoryPool_Impl_(FWStringView name, ETaskPriority priority, ITaskContext* context) {
+    UNUSED(name);
     LOG(Test_Allocators, Emphasis, L"testing {0}", name);
 
     BENCHMARK_SCOPE(L"Pool", name);
@@ -633,6 +635,7 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
     TMemoryView<const FDummyForPool_> uniq,
     TMemoryView<const FDummyForPool_> shuf,
     ETaskPriority priority, ITaskContext* context) {
+    UNUSED(name);
     LOG(Test_Allocators, Emphasis, L"testing {0}", name);
 
 #if USE_PPE_DEBUG
