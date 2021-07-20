@@ -8,6 +8,7 @@ require_once '../../Utils/Prerequisite.rb'
 module Build
 
     persistent_switch(:ASAN, 'Use VisualStudio Address Sanitizer (ASAN)', init: false)
+    persistent_switch(:JMC, 'Use VisualStudio Just-My-Code', init: false)
     persistent_switch(:PerfSDK, 'Use VisualStudio performance tools', init: true)
     persistent_switch(:StaticCRT, 'Use VisualStudio static CRT (/MT vs /MD)', init: false)
     persistent_switch(:TraditionalPP, 'Use VisualStudio traditional preprocessor (omit /Zc:preprocessor)', init: false)
@@ -132,8 +133,10 @@ module Build
         def add_includePath(facet, dirpath)
             add_compilationFlag(facet, '/I', "\"#{dirpath}\"")
         end
-        alias add_externPath add_includePath
-        alias add_systemPath add_includePath
+        def add_externPath(facet, dirpath)
+            add_compilationFlag(facet, '/external:I', "\"#{dirpath}\"")
+        end
+        alias add_systemPath add_externPath
         def add_library(facet, filename)
             facet.linkerOptions << "\"#{filename}\""
             facet.librarianOptions << "\"#{filename}\""
@@ -399,6 +402,25 @@ module Build
             linkerOptions.append('/INCREMENTAL:NO') # disable incremental linker
         end
 
+        if Build.Strict
+            # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
+            compilationFlag!('/permissive-')
+        else
+            compilationFlag!('/permissive')
+        end
+
+        if Build.ASAN
+            # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
+            defines.append('USE_PPE_SANITIZER=1')
+            compilationFlag!('/fsanitize=address')
+        end
+
+        # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
+        # UPDATE: https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
+        unless Build.TraditionalPP
+            compilationFlag!('/Zc:preprocessor')
+        end
+
         self << Build.VisualStudio_Win10SlowDown_Workaround
         self << Build.VisualStudio_ShowTimings if Build.Timings
     end
@@ -525,24 +547,30 @@ module Build
     make_facet(:VisualStudio_Base_2019) do
         # https://blogs.msdn.microsoft.com/vcblog/2019/12/13/broken-warnings-theory/
         defines.append('USE_PPE_MSVC_PRAGMA_SYSTEMHEADER')
-
         compilationFlag!('/experimental:external', '/external:anglebrackets', '/external:W0')
 
-        if Build.Strict
-            # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
-            compilationFlag!('/permissive-')
+        # Just-My-Code
+        if Build.JMC
+            # https://docs.microsoft.com/fr-fr/cpp/build/reference/jmc?view=msvc-160
+            compilationFlag!('/JMC')
+        else
+            compilationFlag!('/JMC-')
         end
+    end
 
-        if Build.ASAN
-            # https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
-            defines.append('USE_PPE_SANITIZER=1')
-            compilationFlag!('/fsanitize=address')
-        end
+    make_facet(:VisualStudio_Base_2022) do
+        # External headers are now an official feature
+        # https://docs.microsoft.com/en-us/cpp/build/reference/external-external-headers-diagnostics?view=msvc-160
+        defines.append('USE_PPE_MSVC_PRAGMA_SYSTEMHEADER')
+        compilationFlag!('/external:templates-', '/external:W0')
+        #compilationFlag!('/external:anglebrackets') # TODO: broken with last preview, restore when fixed
 
-        # https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=vs-2019
-        # UPDATE: https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
-        unless Build.TraditionalPP
-            compilationFlag!('/Zc:preprocessor')
+        # Just-My-Code
+        if Build.JMC
+            # https://docs.microsoft.com/en-us/cpp/build/reference/jmc?view=msvc-160
+            compilationFlag!('/JMC')
+        else
+            compilationFlag!('/JMC-')
         end
     end
 
@@ -633,29 +661,28 @@ module Build
         return VisualStudioCompiler.new(
             'VisualStudio', version,
             *VisualStudioCompiler.infos_from(cl_exe),
-            cl_exe, lib_exe, link_exe, *fileset).
-            inherits!(Build.VisualStudio_Base_2019)
+            cl_exe, lib_exe, link_exe, *fileset)
     end
 
     const_memoize(self, :VisualStudio_2019_Hostx86) do
-        Build.make_visualstudio_compiler('2019', Build.VsWhere_2019_Hostx86)
+        Build.make_visualstudio_compiler('2019', Build.VsWhere_2019_Hostx86).inherits!(Build.VisualStudio_Base_2019)
     end
     const_memoize(self, :VisualStudio_2019_Hostx64) do
-        Build.make_visualstudio_compiler('2019', Build.VsWhere_2019_Hostx64)
+        Build.make_visualstudio_compiler('2019', Build.VsWhere_2019_Hostx64).inherits!(Build.VisualStudio_Base_2019)
     end
 
     const_memoize(self, :VisualStudio_2022_Hostx86) do
-        Build.make_visualstudio_compiler('2022', Build.VsWhere_2022_Hostx86)
+        Build.make_visualstudio_compiler('2022', Build.VsWhere_2022_Hostx86).inherits!(Build.VisualStudio_Base_2022)
     end
     const_memoize(self, :VisualStudio_2022_Hostx64) do
-        Build.make_visualstudio_compiler('2022', Build.VsWhere_2022_Hostx64)
+        Build.make_visualstudio_compiler('2022', Build.VsWhere_2022_Hostx64).inherits!(Build.VisualStudio_Base_2022)
     end
 
     const_memoize(self, :VisualStudio_Insider_Hostx86) do
-        Build.make_visualstudio_compiler('Insider', Build.VsWhere_Insider_Hostx86)
+        Build.make_visualstudio_compiler('Insider', Build.VsWhere_Insider_Hostx86).inherits!(Build.VisualStudio_Base_2019)
     end
     const_memoize(self, :VisualStudio_Insider_Hostx64) do
-        Build.make_visualstudio_compiler('Insider', Build.VsWhere_Insider_Hostx64)
+        Build.make_visualstudio_compiler('Insider', Build.VsWhere_Insider_Hostx64).inherits!(Build.VisualStudio_Base_2019)
     end
 
 end #~ Build
