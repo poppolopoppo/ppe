@@ -32,17 +32,17 @@
 
 #define PPE_MALLOCBINNED2_BOUNDARY (ALLOCATION_BOUNDARY)
 
-#define PPE_MALLOCBINNED2_BUNDLE_MAX_COUNT (64)
+#define PPE_MALLOCBINNED2_BUNDLE_MAX_COUNT (64u)
 #define PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE (8_KiB)
-#define PPE_MALLOCBINNED2_BUNDLE_MAX_GARBAGE (8)
+#define PPE_MALLOCBINNED2_BUNDLE_MAX_GARBAGE (8u)
 
 #define PPE_MALLOCBINNED2_OS_PAGESIZE FPlatformMemory::PageSize
 #define PPE_MALLOCBINNED2_OS_GRANULARITY FPlatformMemory::AllocationGranularity
 
-#define PPE_MALLOCBINNED2_CHUNK_MAXSIZE (2*PPE_MALLOCBINNED2_OS_GRANULARITY)
+#define PPE_MALLOCBINNED2_CHUNK_MAXSIZE (2u*PPE_MALLOCBINNED2_OS_GRANULARITY)
 #define PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE sizeof(FBinnedSmallTable::FPoolChunk)
-#define PPE_MALLOCBINNED2_CHUNK_MINBLOCKS 3
-#define PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS 1000
+#define PPE_MALLOCBINNED2_CHUNK_MINBLOCKS 3u
+#define PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS 1000u
 
 #define PPE_MALLOCBINNED2_SMALLPOOL_COUNT (FMallocBinned2::NumSmallBlockSizes)
 #define PPE_MALLOCBINNED2_SMALLPOOL_MIN_SIZE (PPE_MALLOCBINNED2_BOUNDARY)
@@ -649,7 +649,7 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
         pool.MaxChunksEverAllocated = 0;
         pool.MaxBlocksPerBundle = checked_cast<u8>(Min( // bundle size doesn't depend on chunk size
             PPE_MALLOCBINNED2_BUNDLE_MAX_COUNT,
-            (PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE + pool.BlockSize - 1) / pool.BlockSize ));
+            (PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE + pool.BlockSize - 1u) / pool.BlockSize ));
         Assert_NoAssume(pool.MaxBlocksPerBundle > 0);
 
         u32 bestWastedSize = UMax, bestPagesPerChunk = 0;
