@@ -47,7 +47,7 @@
 #include <random>
 #include <unordered_set>
 
-#define PPE_RUN_BENCHMARK_POOLSIZE          (512) // avoid cache coherency
+#define PPE_RUN_BENCHMARK_POOLSIZE          (2000) // avoid cache coherency
 #define PPE_RUN_EXHAUSTIVE_BENCHMARKS       (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHARMK_ALLTESTS          (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER     (0) // %_NOCOMMIT%
@@ -904,9 +904,9 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
 
     using namespace BenchmarkContainers;
 
-    // prepare PPE_RUN_BENCHMARK_POOLSIZE different samples with random distribution and 15% jitter
+    // prepare PPE_RUN_BENCHMARK_POOLSIZE different samples with random distribution and 2% jitter
 
-    const u32 jitter = checked_cast<u32>(dim * 15 / 100);
+    const u32 jitter = checked_cast<u32>((dim * 2) / 100);
 
     TSamplePool<T> pool;
     pool.Generate(PPE_RUN_BENCHMARK_POOLSIZE, dim, jitter, rand, generator);
