@@ -522,7 +522,7 @@ module Build
         compilationFlag!('/O2', '/Oy-', '/GS-', '/GA', '/Zo')
         linkerOptions.append('/DYNAMICBASE:NO')
         self <<
-            Build.VisualStudio_LTO_Enabled <<
+            Build.VisualStudio_LTO_Disabled <<
             Build.VisualStudio_STL_DisableIteratorDebug <<
             Build.VisualStudio_CXX_DisableRTTI
     end
