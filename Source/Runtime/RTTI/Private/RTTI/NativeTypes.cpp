@@ -439,18 +439,36 @@ FOREACH_RTTI_NATIVETYPES(DEF_RTTI_NATIVETYPE_TRAITS)
 // Use to create a tuple with arity only known at runtime (used by parsers)
 //----------------------------------------------------------------------------
 PTypeTraits MakeAnyTuple(size_t arity) NOEXCEPT {
-    STATIC_ASSERT(MaxArityForTieAsTuple == 8);
+    STATIC_ASSERT(MaxArityForTieAsTuple == 26);
     Assert(arity > 1); // tuple with arity < 2 aren't supported, should at least be a pair
     using a = FAny;
     switch (arity) {
 #define DEF_RTTI_MAKEANYTUPLE(N, ...) case N: return RTTI_Traits(TypeTag< TTuple<__VA_ARGS__> >)
-    DEF_RTTI_MAKEANYTUPLE(2, a, a);
-    DEF_RTTI_MAKEANYTUPLE(3, a, a, a);
-    DEF_RTTI_MAKEANYTUPLE(4, a, a, a, a);
-    DEF_RTTI_MAKEANYTUPLE(5, a, a, a, a, a);
-    DEF_RTTI_MAKEANYTUPLE(6, a, a, a, a, a, a);
-    DEF_RTTI_MAKEANYTUPLE(7, a, a, a, a, a, a, a);
-    DEF_RTTI_MAKEANYTUPLE(8, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 2, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 3, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 4, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 5, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 6, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 7, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 8, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE( 9, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(10, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(11, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(12, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(13, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(14, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(15, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(16, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(17, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(18, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(19, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(20, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(21, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(22, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(23, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(24, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(25, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(26, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
 #undef DEF_RTTI_MAKEANYTUPLE
     default:
         // If you really really want support for higher dimensions,
