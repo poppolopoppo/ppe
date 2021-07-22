@@ -241,6 +241,14 @@ public:
     bool EndsWith(const TMemoryView<T>& suffix) const;
     bool StartsWith(const TMemoryView<T>& prefix) const;
 
+    bool RangeEqual(TMemoryView<T> other) const {
+        return std::equal(begin(), end(), other.begin(), other.end());
+    }
+    template <typename U, typename _Pred = Meta::TEqualTo<T>>
+    bool RangeEqual(TMemoryView<U> other, _Pred pred = Default) const {
+        return std::equal(begin(), end(), other.begin(), other.end(), pred);
+    }
+
     NODISCARD TMemoryView Concat(const TMemoryView& other) const;
     NODISCARD TMemoryView Concat_AssumeNotEmpty(const TMemoryView& other) const;
 
