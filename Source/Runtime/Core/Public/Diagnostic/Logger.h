@@ -103,6 +103,10 @@ public:
     static PPE_CORE_API ELoggerVerbosity GlobalVerbosity();
     static PPE_CORE_API void SetGlobalVerbosity(ELoggerVerbosity verbosity);
 
+    static CONSTEXPR bool CompileMessage(ELoggerVerbosity verbosity) {
+        return (verbosity ^ ELoggerVerbosity::All);
+    }
+
 public:
     static PPE_CORE_API PLogger MakeStdout();
     static PPE_CORE_API PLogger MakeOutputDebug();
@@ -145,45 +149,49 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
         ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
         "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) );
 #define LOG(_CATEGORY, _LEVEL, ...) do { \
-    EXPAND( LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
-    ::PPE::FLogger::Log( \
-        LOG_CATEGORY_GET(_CATEGORY), \
-        ::PPE::FLogger::EVerbosity::_LEVEL, \
-        ::PPE::FLogger::FSiteInfo::Make( \
-            WIDESTRING(__FILE__), \
-            __LINE__ ), \
-        __VA_ARGS__ ); \
-    } while (0)
+    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+        EXPAND( LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
+        ::PPE::FLogger::Log( \
+            LOG_CATEGORY_GET(_CATEGORY), \
+            ::PPE::FLogger::EVerbosity::_LEVEL, \
+            ::PPE::FLogger::FSiteInfo::Make( \
+                WIDESTRING(__FILE__), \
+                __LINE__ ), \
+            __VA_ARGS__ ); \
+    } } while(0)
 
 #define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
-    ::PPE::FLogger::LogArgs( \
-        LOG_CATEGORY_GET(_CATEGORY), \
-        ::PPE::FLogger::EVerbosity::_LEVEL, \
-        ::PPE::FLogger::FSiteInfo::Make( \
-            WIDESTRING(__FILE__), \
-            __LINE__ ), \
-        _FORMAT, _FORMAT_ARG_LIST ); \
-    } while (0)
+    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+        ::PPE::FLogger::LogArgs( \
+            LOG_CATEGORY_GET(_CATEGORY), \
+            ::PPE::FLogger::EVerbosity::_LEVEL, \
+            ::PPE::FLogger::FSiteInfo::Make( \
+                WIDESTRING(__FILE__), \
+                __LINE__ ), \
+            _FORMAT, _FORMAT_ARG_LIST ); \
+    } } while(0)
 
 #define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) do { \
-    ::PPE::FLogger::Log( \
-        LOG_CATEGORY_GET(_CATEGORY), \
-        ::PPE::FLogger::EVerbosity::_LEVEL, \
-        ::PPE::FLogger::FSiteInfo::Make( \
-            WIDESTRING(__FILE__), \
-            __LINE__ ), \
-        _MESSAGE ); \
-    } while (0)
+    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+        ::PPE::FLogger::Log( \
+            LOG_CATEGORY_GET(_CATEGORY), \
+            ::PPE::FLogger::EVerbosity::_LEVEL, \
+            ::PPE::FLogger::FSiteInfo::Make( \
+                WIDESTRING(__FILE__), \
+                __LINE__ ), \
+            _MESSAGE ); \
+    } } while(0)
 
 #define LOG_PRINTF(_CATEGORY, _LEVEL, ...) do { \
-    ::PPE::FLogger::Printf( \
-        LOG_CATEGORY_GET(_CATEGORY), \
-        ::PPE::FLogger::EVerbosity::_LEVEL, \
-        ::PPE::FLogger::FSiteInfo::Make( \
-            WIDESTRING(__FILE__), \
-            __LINE__ ), \
-        __VA_ARGS__ ); \
-    } while (0)
+    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+        ::PPE::FLogger::Printf( \
+            LOG_CATEGORY_GET(_CATEGORY), \
+            ::PPE::FLogger::EVerbosity::_LEVEL, \
+            ::PPE::FLogger::FSiteInfo::Make( \
+                WIDESTRING(__FILE__), \
+                __LINE__ ), \
+            __VA_ARGS__ ); \
+    } } while(0)
 
 #define FLUSH_LOG() \
     ::PPE::FLogger::Flush()
