@@ -484,7 +484,7 @@ constexpr TDestructor<T> Destructor;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-T default_value_(std::bool_constant<false>, int) { return T{}; }
+T default_value_(std::bool_constant<false>, int) { return MakeForceInit<T>(); }
 template <typename T, T _Unknown = T::Unknown>
 T default_value_(std::bool_constant<true>, int) { return _Unknown; }
 template <typename T>
