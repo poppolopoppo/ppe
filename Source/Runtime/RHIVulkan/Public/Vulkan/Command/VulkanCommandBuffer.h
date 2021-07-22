@@ -56,7 +56,7 @@ public:
     using FResourceIndex = FVulkanResourceManager::FIndex;
 
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    using TPool = TTypedMemoryPool< TResourceProxy<T>, _ChunkSize, _MaxChunks, EThreadBarrier::None, ALLOCATOR(RHICommand) >;
+    using TPool = TTypedMemoryPool< TResourceProxy<T>, _ChunkSize, _MaxChunks, ALLOCATOR(RHICommand) >;
 
     using FLogicalRenderPasses = TPool<FVulkanLogicalRenderPass, 1u << 10, 16>;
 

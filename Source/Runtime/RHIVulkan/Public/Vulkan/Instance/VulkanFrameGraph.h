@@ -169,6 +169,7 @@ public:
     NODISCARD bool UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) override;
     NODISCARD bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) override;
 
+    void PrepareNewFrame() override;
     NODISCARD FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn) override;
     NODISCARD bool Execute(FCommandBufferBatch& cmdBatch) override;
     NODISCARD bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout) override;
@@ -212,8 +213,6 @@ private:
     NODISCARD FQueueData& QueueData_(EQueueType index);
     NODISCARD EVulkanQueueFamilyMask QueuesMask_(EQueueUsage types) const;
 
-    std::atomic<EState> _state;
-
     FVulkanDevice _device;
 
     FCriticalSection _queueCS;
@@ -225,6 +224,9 @@ private:
     FSubmittedPool _submittedPool;
 
     FVulkanResourceManager _resourceManager;
+
+    std::atomic<EState> _state;
+    std::atomic<u32> _frameIndex{ 0 };
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugger _debugger;

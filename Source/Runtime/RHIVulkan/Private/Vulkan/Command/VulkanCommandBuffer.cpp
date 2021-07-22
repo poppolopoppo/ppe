@@ -709,7 +709,10 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     FMemoryDesc mem;
     mem.Type = EMemoryType::Default;
     mem.Alignment = checked_cast<u32>(memReq2.memoryRequirements.alignment);
-    mem.ExternalRequirements = checked_cast<u32>(memReq2.memoryRequirements.memoryTypeBits);
+    mem.ExternalRequirements = FMemoryRequirements{
+        checked_cast<u32>(memReq2.memoryRequirements.memoryTypeBits),
+        checked_cast<u32>(memReq2.memoryRequirements.alignment)
+    };
 
     // #TODO: virtual buffer or buffer cache
     FBufferID scratchBuf = _frameGraph->CreateBuffer(FBufferDesc{

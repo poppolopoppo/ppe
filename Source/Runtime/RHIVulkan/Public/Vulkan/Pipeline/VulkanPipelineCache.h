@@ -23,7 +23,7 @@ public:
 
     using FDynamicStates = TFixedSizeStack<VkDynamicState, MaxStages>;
     using FViewports = TFixedSizeStack<VkViewport, MaxViewports>;
-    using FScissors = TFixedSizeStack<VkRect2D, 16>;
+    using FScissors = TFixedSizeStack<VkRect2D, MaxViewports>;
     using FVertexInputAttributes = TFixedSizeStack<VkVertexInputAttributeDescription, MaxVertexAttribs>;
     using FVertexInputBindings = TFixedSizeStack<VkVertexInputBindingDescription, MaxVertexBuffers>;
     using FColorAttachments = TFixedSizeStack<VkPipelineColorBlendAttachmentState, MaxColorBuffers>;

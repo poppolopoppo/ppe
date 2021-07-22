@@ -18,7 +18,8 @@ FVulkanSubmitted::FVulkanSubmitted(u32 indexInPool) NOEXCEPT
 //----------------------------------------------------------------------------
 FVulkanSubmitted::~FVulkanSubmitted() {
 #if USE_PPE_ASSERT
-    auto exclusive = _submit.LockExclusive();
+    const auto exclusive = _submit.LockExclusive();
+
     Assert_NoAssume(VK_NULL_HANDLE != exclusive->Fence);
     Assert_NoAssume(exclusive->Batches.empty());
     Assert_NoAssume(exclusive->Semaphores.empty());
@@ -32,7 +33,7 @@ void FVulkanSubmitted::Construct(
     TMemoryView<const VkSemaphore> semaphores ) {
     Assert_NoAssume(static_cast<u32>(queue) < static_cast<u32>(EQueueType::_Count));
 
-    auto exclusive = _submit.LockExclusive();
+    const auto exclusive = _submit.LockExclusive();
 
     if (not exclusive->Fence) {
         VkFenceCreateInfo info{};
@@ -53,7 +54,7 @@ void FVulkanSubmitted::Release(
     const FVulkanDevice& device
     ARGS_IF_RHIDEBUG(FFrameStatistics* pStats, FVulkanDebugger& debugger, const FShaderDebugCallback& callback) ) {
 
-    auto exclusive = _submit.LockExclusive();
+    const auto exclusive = _submit.LockExclusive();
 
     for (VkSemaphore semaphore : exclusive->Semaphores)
         device.vkDestroySemaphore(device.vkDevice(), semaphore, device.vkAllocator());
@@ -64,12 +65,10 @@ void FVulkanSubmitted::Release(
         pBatch->OnComplete(ARG0_IF_RHIDEBUG(pStats, debugger, std::move(callback)));
 
     exclusive->Batches.clear();
-
 }
 //----------------------------------------------------------------------------
 void FVulkanSubmitted::TearDown(const FVulkanDevice& device) {
-
-    auto exclusive = _submit.LockExclusive();
+    const auto exclusive = _submit.LockExclusive();
 
     device.vkDestroyFence(device.vkDevice(), exclusive->Fence, device.vkAllocator());
     exclusive->Fence = VK_NULL_HANDLE;

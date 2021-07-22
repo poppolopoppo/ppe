@@ -44,9 +44,8 @@ private:
     TThreadSafe<VmaAllocator, EThreadBarrier::RWLock> _allocator;
 };
 //----------------------------------------------------------------------------
-inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device, EVulkanMemoryType memoryType)
-:   _device(device)
-,   _allocator() {
+inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device, EVulkanMemoryType )
+:   _device(device) {
     const auto exclusiveAllocator = _allocator.LockExclusive();
 
     VmaVulkanFunctions funcs = {};
@@ -131,8 +130,26 @@ inline void FVulkanMemoryManager::FVulkanMemoryAllocator::DutyCycle(u32 frameInd
 }
 //----------------------------------------------------------------------------
 inline void FVulkanMemoryManager::FVulkanMemoryAllocator::DefragmentMemory(FVulkanResourceManager& resources) {
+    UNUSED(resources);
 
-    resources.
+    // #TODO: defragment CPU and GPU memory:
+    // https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/defragmentation.html
+
+    AssertNotImplemented();
+
+    //
+    // const auto exclusiveAllocator = _allocator.LockExclusive();
+    //
+    // VmaDefragmentationInfo2 info{};
+    //
+    // VmaDefragmentationStats stats{};
+    // VmaDefragmentationContext context{};
+    //
+    // VK_CALL( vmaDefragmentationBegin(
+    //     exclusiveAllocator.Value(),
+    //     &info, &stats, &context ));
+    //
+    // vmaDefragmentationEnd()
 }
 //----------------------------------------------------------------------------
 inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateImage(FBlock* pData, VkImage image, const FMemoryDesc& desc) {

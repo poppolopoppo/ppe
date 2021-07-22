@@ -43,7 +43,7 @@ public:
     using FIndex = FRawImageID::FIndex;
 
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    using TPool = TTypedMemoryPool<T, _ChunkSize, _MaxChunks, EThreadBarrier::RWLock, ALLOCATOR(RHIResource)>;
+    using TPool = TTypedMemoryPool<T, _ChunkSize, _MaxChunks, ALLOCATOR(RHIResource)>;
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
     using TCache = TCachedMemoryPool<T, T, _ChunkSize, _MaxChunks, ALLOCATOR(RHIResource)>;
 
@@ -171,9 +171,6 @@ public:
 
     void RunValidation(u32 maxIteration);
     void ReleaseMemory();
-
-    using FDefragmentFunc = void(*)(void*, TMemoryView<FVulkanMemoryObject* const>);
-    void DefragmentMemory(void* userData, FDefragmentFunc defragment);
 
 #if USE_PPE_RHIDEBUG
     using FShaderTimemapPipelines = Meta::TArray<FRawCPipelineID, 3>;
@@ -303,10 +300,8 @@ private:
     const FImageDesc _dummyImageDesc;
 
     struct {
-        std::atomic_uint CreatedFramebuffers{ 0 };
-        std::atomic_uint LastCheckedFramebuffer{ 0 };
-        std::atomic_uint CreatedPplnResources{ 0 };
-        std::atomic_uint LastCheckedPplnResource{ 0 };
+        FFramebufferCache::FGCHandle FrameBuffersGC;
+        FPplnResourcesCache::FGCHandle PplnResourcesGC;
     }   _validation;
 
 #if USE_PPE_RHIDEBUG

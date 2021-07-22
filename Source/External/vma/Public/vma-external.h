@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Diagnostic/Logger.h"
+#include "IO/ConstChar.h"
 
 # define VMA_IMPLEMENTATION                 1
 # define VMA_STATIC_VULKAN_FUNCTIONS        0
@@ -25,9 +26,11 @@
 # define VMA_DEBUG_DETECT_CORRUPTION        (USE_PPE_MEMORY_DEBUGGING)
 # define VMA_DEBUG_GLOBAL_MUTEX             0 // will be externally synchronized
 
-# define VMA_ASSERT(expr)                   Assert( expr )
+# define VMA_ASSERT(expr)                   Assert_NoAssume( expr )
 #if USE_PPE_MEMORY_DEBUGGING
-# define VMA_HEAVY_ASSERT(expr)             Assert( expr )
+# define VMA_HEAVY_ASSERT(expr)             Assert_NoAssume( expr )
+#else
+# define VMA_HEAVY_ASSERT(expr)             NOOP( expr )
 #endif
 
 # define VMA_SYSTEM_ALIGNED_MALLOC(size, alignment) \
@@ -37,7 +40,7 @@
 
 #if USE_PPE_LOGGER
 LOG_CATEGORY(, VMA)
-# define VMA_DEBUG_LOG(format, ...) LOG_PRINTF(VMA, Debug, WSTRINGIZE(format), __VA_ARGS__)
+# define VMA_DEBUG_LOG(format, ...) LOG_PRINTF(VMA, Debug, WSTRINGIZE(format), #__VA_ARGS__)
 #else
 # define VMA_DEBUG_LOG(format, ...)
 #endif
@@ -49,6 +52,8 @@ LOG_CATEGORY(, VMA)
 #endif
 #ifdef CPP_VISUALSTUDIO
 #	pragma warning (push, 0)
+#	pragma warning (disable: 4100)
+#	pragma warning (disable: 4296)
 #	pragma warning (disable: 4701)
 #	pragma warning (disable: 4703)
 #endif

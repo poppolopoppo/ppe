@@ -10,7 +10,7 @@
 #endif
 
 #define PPE_RHIVK__FLUSH_ITERATIONS (10u)
-#define PPE_RHIVK__VALIDATION_ITERATIONS (100)
+#define PPE_RHIVK__VALIDATION_ITERATIONS (PPE::RHI::FVulkanResourceManager::MaxCached >> 2)
 
 namespace PPE {
 namespace RHI {
@@ -19,13 +19,13 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanFrameGraph::FVulkanFrameGraph(const FVulkanDeviceInfo& deviceInfo)
-:   _state(EState::Initial)
-,   _device(deviceInfo)
+:   _device(deviceInfo)
 ,   _queueUsage(Default)
 ,   _resourceManager(_device)
 #if USE_PPE_RHIDEBUG
 ,   _vkQueryPool(VK_NULL_HANDLE)
 #endif
+,   _state(EState::Initial)
 {}
 //----------------------------------------------------------------------------
 FVulkanFrameGraph::~FVulkanFrameGraph() {
@@ -68,7 +68,12 @@ bool FVulkanFrameGraph::Construct() {
     }
 #endif
 
+    // reset state and frame index
+
     Verify(SetState_(EState::Initialization, EState::Idle));
+
+    _frameIndex.store(0, std::memory_order_release);
+
     return true;
 }
 //----------------------------------------------------------------------------
@@ -457,6 +462,14 @@ bool FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t& s
     }
 
     return false;
+}
+//----------------------------------------------------------------------------
+// PrepareNewFrame
+//----------------------------------------------------------------------------
+void FVulkanFrameGraph::PrepareNewFrame() {
+    const u32 currentFrame{ _frameIndex.fetch_add(1, std::memory_order_acquire) + 1 };
+
+    _resourceManager.MemoryManager().DutyCycle(currentFrame);
 }
 //----------------------------------------------------------------------------
 // Begin

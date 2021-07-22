@@ -625,7 +625,6 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
     const auto it = CreateCachedResource_(&framebufferId, std::move(emptyKey), *this ARGS_IF_RHIDEBUG(debugName));
     if (Likely(it.first)) {
         Assert_NoAssume(framebufferId.Valid());
-        _validation.CreatedFramebuffers.fetch_add(it.second ? 0 : 1, std::memory_order_relaxed);
         return framebufferId;
     }
 
@@ -662,10 +661,8 @@ const FVulkanPipelineResources* FVulkanResourceManager::CreateDescriptorSet(
 
     if (Likely(pResources)) {
         Assert_NoAssume(resourcesId.Valid());
-        if (Unlikely(not exist)) {
+        if (Unlikely(not exist))
             pDSLayout->AddRef();
-            _validation.CreatedPplnResources.fetch_add(1, std::memory_order_relaxed);
-        }
 
         FPipelineResources::SetCached(desc, resourcesId);
         if (resources.insert({ resourcesId.Pack(), 1 }).second)
@@ -835,57 +832,35 @@ FRawSwapchainID FVulkanResourceManager::CreateSwapchain(
 // RunValidation
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::RunValidation(u32 maxIteration) {
-    STATIC_CONST_INTEGRAL(u32, Scale, MaxCached / 16);
-
-    const auto updateCounter = [](std::atomic<u32>* pCounter, u32 maxValue) NOEXCEPT -> u32 {
-        if (0 == maxValue)
-            return 0;
-
-        u32 count = 0;
-        for (u32 expected = 0; not pCounter->compare_exchange_weak(expected, expected - count, std::memory_order_relaxed);)
-            count = Min(maxValue, expected * Scale);
-
-        return count;
-    };
-
-    const auto updateLastIndex = [](std::atomic<u32>* pLastIndex, u32 count, u32 size) NOEXCEPT -> u32 {
-        u32 expected = 0;
-        for (u32 newValue = count; not pLastIndex->compare_exchange_weak(expected, newValue, std::memory_order_relaxed);) {
-            newValue = expected + count;
-            newValue = (newValue >= size ? newValue - size : newValue);
-            Assert(newValue < size);
+    const auto garbageCollectIFP = [this](auto* pResource) {
+        Assert(pResource);
+        if (pResource->IsCreated() and not pResource->Data().AllResourcesAlive(*this)) {
+            Verify( pResource->RemoveRef(pResource->RefCount()) );
+            pResource->TearDown(*this);
+            return true; // release the cached item
         }
-
-        return expected;
+        return false; // keep alive
     };
 
-    const auto validateResources = [&, this, maxIteration](std::atomic<u32>* pCounter, std::atomic<u32>* pLastIndex, auto& pool) NOEXCEPT -> void {
-        if (const u32 newMaxIteration = updateCounter(pCounter, maxIteration)) {
-            const u32 maxCount = checked_cast<u32>(pool.NumLiveBlocks());
-            const u32 lastIndex = updateLastIndex(pLastIndex, newMaxIteration, maxCount);
+    _resources.FramebufferCache.GarbageCollect(
+        _validation.FrameBuffersGC,
+        maxIteration,
+        [&](TResourceProxy<FVulkanFramebuffer>* pResource) {
+            return garbageCollectIFP(pResource);
+        });
 
-            forrange(i, 0, newMaxIteration) {
-                u32 j = lastIndex + i;
-                j  = (j >= maxCount ? j - maxCount : j);
-
-                const FIndex index{ checked_cast<FIndex>(j) };
-                auto* const pResource = pool[index];
-                Assert(pResource);
-
-                if (pResource->IsCreated() && not pResource->Data().AllResourcesAlive(*this))
-                    ReleaseResource_(pool, pResource, index, pResource->RefCount());
-            }
-        }
-    };
-
-    validateResources(&_validation.CreatedPplnResources, &_validation.LastCheckedPplnResource, _resources.PplnResourcesCache);
-    validateResources(&_validation.CreatedFramebuffers, &_validation.LastCheckedFramebuffer, _resources.FramebufferCache);
+    _resources.PplnResourcesCache.GarbageCollect(
+        _validation.PplnResourcesGC,
+        maxIteration,
+        [&](TResourceProxy<FVulkanPipelineResources>* pResource) {
+            return garbageCollectIFP(pResource);
+        });
 }
 //----------------------------------------------------------------------------
 // ReleaseMemory
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::ReleaseMemory() {
-    // will reclaim memory from the various caches (pools are always shrink to fit)
+    // will reclaim memory from the various caches
     TearDownStagingBuffers_();
 
     TearDownCache_(_resources.SamplerCache);
@@ -894,19 +869,20 @@ void FVulkanResourceManager::ReleaseMemory() {
     TearDownCache_(_resources.RenderPassCache);
     TearDownCache_(_resources.FramebufferCache);
     TearDownCache_(_resources.PplnResourcesCache);
-}
-//----------------------------------------------------------------------------
-// Defragmentation
-//----------------------------------------------------------------------------
-void FVulkanResourceManager::DefragmentMemory(void* userData, FDefragmentFunc defragment) {
-    Assert(defragment);
 
-    STACKLOCAL_POD_STACK(FVulkanMemoryObject*, allocations, MaxMemoryObjs);
-    _resources.MemoryObjectPool.Each([userData, defragment]() {
+    // reclaims cached memory from all pools
 
-
-
-    });
+    _resources.ImagePool.ReleaseCacheMemory();
+    _resources.BufferPool.ReleaseCacheMemory();
+    _resources.MemoryObjectPool.ReleaseCacheMemory();
+    _resources.GPipelinePool.ReleaseCacheMemory();
+    _resources.CPipelinePool.ReleaseCacheMemory();
+    _resources.MPipelinePool.ReleaseCacheMemory();
+    _resources.RPipelinePool.ReleaseCacheMemory();
+    _resources.RtGeometryPool.ReleaseCacheMemory();
+    _resources.RtScenePool.ReleaseCacheMemory();
+    _resources.RtShaderTablePool.ReleaseCacheMemory();
+    _resources.SwapchainPool.ReleaseCacheMemory();
 }
 //----------------------------------------------------------------------------
 // CreateStagingBuffer

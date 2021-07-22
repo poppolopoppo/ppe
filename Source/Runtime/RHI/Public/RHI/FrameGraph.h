@@ -158,6 +158,9 @@ public: // interface
 
     // --- Frame execution ---
 
+    // Must be called before every frame for duty cycle
+    virtual void PrepareNewFrame() = 0;
+
     // Begin command buffer recording.
     virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
 
