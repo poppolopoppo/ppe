@@ -28,6 +28,9 @@ struct TStaticAllocator : TAllocatorTraits<_Allocator> {
     using typename allocator_traits::has_reallocate;
     using typename allocator_traits::has_acquire;
     using typename allocator_traits::has_steal;
+#if USE_PPE_MEMORYDOMAINS
+    using typename allocator_traits::has_memory_tracking;
+#endif
 
     using allocator_traits::Alignment;
 
@@ -103,6 +106,13 @@ struct TStaticAllocator : TAllocatorTraits<_Allocator> {
         allocator_type alloc;
         return allocator_traits::Steal(alloc, b);
     }
+
+#if USE_PPE_MEMORYDOMAINS
+    static FMemoryTracking& TrackingData() NOEXCEPT {
+        allocator_type alloc;
+        return allocator_traits::TrackingData(alloc);
+    }
+#endif
 
     using allocator_traits::StealAndAcquire;
 };

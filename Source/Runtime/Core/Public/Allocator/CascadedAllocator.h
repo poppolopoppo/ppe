@@ -35,6 +35,10 @@ public:
     CASCADED_USING_DEF(has_acquire);
     CASCADED_USING_DEF(has_steal);
 
+#if USE_PPE_MEMORYDOMAINS
+    CASCADED_USING_DEF(has_memory_tracking);
+#endif
+
 #undef CASCADED_USING_DEF
 
     STATIC_ASSERT(cascade_traits::has_owns::value); // needed for Deallocate()
@@ -139,6 +143,13 @@ public:
         }
         AssertNotReached();
     }
+
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        static_assert(not cascade_traits::has_memory_tracking::value, "#TODO: not supported");
+        return batch_traits::TrackingData(*this);
+    }
+#endif
 
     friend bool operator ==(const TCascadedAllocator& lhs, TCascadedAllocator& rhs) NOEXCEPT {
         return batch_traits::Equals(lhs, rhs);

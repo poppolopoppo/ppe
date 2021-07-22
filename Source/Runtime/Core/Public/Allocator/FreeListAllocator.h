@@ -27,6 +27,9 @@ public:
     using has_reallocate = typename allocator_traits::has_reallocate;
     using has_acquire = typename allocator_traits::has_acquire;
     using has_steal = typename allocator_traits::has_steal;
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = typename allocator_traits::has_memory_tracking;
+#endif
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, allocator_traits::Alignment);
 
@@ -125,6 +128,12 @@ public:
     bool Steal(FAllocatorBlock b) NOEXCEPT {
         return allocator_traits::Steal(*this, b);
     }
+
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return allocator_traits::TrackingData(*this);
+    }
+#endif
 
     friend bool operator ==(const TFreeListAllocator& lhs, TFreeListAllocator& rhs) NOEXCEPT {
         return allocator_traits::Equals(lhs, rhs);

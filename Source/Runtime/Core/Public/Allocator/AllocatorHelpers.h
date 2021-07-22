@@ -3,40 +3,8 @@
 #include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
-#include "Allocator/TrackingMalloc.h"
-#include "Container/IntrusiveList.h"
 
 namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Memory tracking from several allocators
-//----------------------------------------------------------------------------
-#if USE_PPE_MEMORYDOMAINS
-template <typename _Allocator>
-NODISCARD FMemoryTracking& AllocatorTrackingData(_Allocator& a) {
-    return TAllocatorTraits<_Allocator>::TrackingData(a);
-}
-template <typename _AllocatorA, typename _AllocatorB>
-NODISCARD FMemoryTracking& AllocatorTrackingData(_AllocatorA& a, _AllocatorB& b) {
-    using a_traits = TAllocatorTraits<_AllocatorA>;
-    using b_traits = TAllocatorTraits<_AllocatorB>;
-
-    IF_CONSTEXPR(a_traits::has_memory_tracking::value) {
-        IF_CONSTEXPR(b_traits::has_memory_tracking::value) {
-            FMemoryTracking& trackingA = a_traits::TrackingData(a);
-            Assert_NoAssume(&trackingA == &b_traits::TrackingData(b));
-            return trackingA;
-        }
-        else {
-            return a_traits::TrackingData(a);
-        }
-    }
-    else {
-        return b_traits::TrackingData(b);
-    }
-}
-#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
