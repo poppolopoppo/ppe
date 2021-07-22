@@ -658,12 +658,16 @@ void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInf
     Log(category, level, site, format.MakeView());
 }
 //----------------------------------------------------------------------------
-void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format, va_list args) {
+void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const wchar_t* format, ...) {
     const FIsInLoggerScope loggerScope;
 
     if ((category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level)) {
         MALLOCA_POD(wchar_t, message, 2048);
+
+        va_list args;
+        va_start(args, format);
         const int len = FPlatformString::Printf(message.data(), message.Count, format, args);
+        va_end(args);
 
         Assert_NoAssume(0 < len);
         if (len > 0) {

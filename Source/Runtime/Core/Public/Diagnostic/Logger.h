@@ -78,7 +78,7 @@ public:
     static PPE_CORE_API void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args);
 
     static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format);
-    static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format, va_list args);
+    static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const wchar_t* format, .../* va_list */);
 
     template <typename _Arg0, typename... _Args>
     static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
