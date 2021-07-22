@@ -615,17 +615,8 @@ static NO_INLINE void Test_MemoryPools_(ETaskPriority priority, ITaskContext* co
     constexpr auto ChunkSize = CODE3264(64, 128);
     constexpr auto MaxChunks = 32;
 
-    using FMemoryPool_4 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 4, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool_4>(L"TMemoryPool<4>", priority, context);
-
-    using FMemoryPool_2 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 2, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool_2>(L"TMemoryPool<2>", priority, context);
-
-    using FMemoryPool_8 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 8, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool_8>(L"TMemoryPool<8>", priority, context);
-
-    using FMemoryPool_32 = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, 32, ALLOCATOR(Container)>;
-    Test_MemoryPool_Impl_<FMemoryPool_32>(L"TMemoryPool<32>", priority, context);
+    using FMemoryPool = TTypedMemoryPool<FDummyForPool_, ChunkSize, MaxChunks, ALLOCATOR(Container)>;
+    Test_MemoryPool_Impl_<FMemoryPool>(L"TMemoryPool<>", priority, context);
 }
 //----------------------------------------------------------------------------
 template <typename _CachedMemoryPool>

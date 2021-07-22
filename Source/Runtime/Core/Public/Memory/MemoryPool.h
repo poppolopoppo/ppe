@@ -17,12 +17,14 @@ namespace PPE {
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded due to alignment
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
 class CACHELINE_ALIGNED TMemoryPool : Meta::FNonCopyableNorMovable {
 public:
     STATIC_ASSERT(Meta::IsPow2(_ChunkSize));
     STATIC_ASSERT(_BlockSize >= sizeof(intptr_t));
     STATIC_ASSERT(_MaxChunks > 0);
+
+    STATIC_CONST_INTEGRAL(size_t, ThreadGranularity, 4/* good trade-off from empirical benchmarks */);
 
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;
@@ -87,9 +89,10 @@ private:
     };
     STATIC_ASSERT(sizeof(FPoolNode_) <= BlockSize);
 
-    STATIC_CONST_INTEGRAL(index_type, BundleMaxCount, Min(ChunkSize, Min(ChunkSize / _Granularity, 2_KiB / BlockSize)));
-    STATIC_CONST_INTEGRAL(index_type, BundleCountPerChunk, (ChunkSize + BundleMaxCount - 1) / BundleMaxCount);
-    STATIC_CONST_INTEGRAL(index_type, BundleMaxGarbage, 8);
+    STATIC_CONST_INTEGRAL(index_type, BundleMaxSizeInBytes, 32_KiB);
+    STATIC_CONST_INTEGRAL(index_type, BundleMaxCount, Min(ChunkSize, Min(ChunkSize / ThreadGranularity, BundleMaxSizeInBytes / BlockSize)));
+    STATIC_CONST_INTEGRAL(index_type, BundleCountPerChunk, (ChunkSize + BundleMaxCount - 1u) / BundleMaxCount);
+    STATIC_CONST_INTEGRAL(index_type, BundleMaxGarbage, 8u);
 
     struct FPoolChunk_;
 
@@ -177,7 +180,7 @@ private:
 
             forrange(i, 0, BundleMaxGarbage) {
                 for(index_type head = FreeBundles[i].load(std::memory_order_relaxed); head != UMax; ) {
-                    if (FreeBundles[i].FreeBundles[i].compare_exchange_weak(head, UMax,
+                    if (FreeBundles[i].compare_exchange_weak(head, UMax,
                             std::memory_order_release, std::memory_order_relaxed)) {
                         Assert(n < BundleMaxGarbage);
                         freeBundles[n++] = head;
@@ -465,7 +468,7 @@ private:
 
     static u32 BucketIndexTLS_(hash_t seed = PPE_HASH_VALUE_SEED) {
         hash_combine(seed, std::hash<std::thread::id>{}( std::this_thread::get_id() ));
-        return static_cast<u32>(seed % _Granularity);
+        return static_cast<u32>(seed % ThreadGranularity);
     }
 
     void InitializeInternalPool_(FInternalPool_& pool);
@@ -477,12 +480,12 @@ private:
     {};
 
     CACHELINE_ALIGNED TThreadSafe<FInternalPool_, EThreadBarrier::CriticalSection> _pool;
-    TStaticArray<FPoolBucket_, _Granularity> _buckets;
+    TStaticArray<FPoolBucket_, ThreadGranularity> _buckets;
     CACHELINE_ALIGNED FBundleRecycler_ _recycler;
 };
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::~TMemoryPool() {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::~TMemoryPool() {
     const auto exclusivePool = _pool.LockExclusive();
 
     Assert_NoAssume(0 == exclusivePool->NumLiveBlocks); // some blocks are still alive!
@@ -507,8 +510,8 @@ TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator
 #endif
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::InitializeInternalPool_(FInternalPool_& pool) {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::InitializeInternalPool_(FInternalPool_& pool) {
     STATIC_ASSERT(std::atomic<index_type>::is_always_lock_free);
 
     Assert_NoAssume(nullptr == pool.CommittedChunks.Bits);
@@ -542,8 +545,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     std::atomic_thread_fence(std::memory_order_release);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::Allocate(u32 bucket) -> index_type {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Allocate(u32 bucket) -> index_type {
     const index_type freeBlock = _buckets[bucket].LockExclusive()->PopFromFront(_pool.Value_NotThreadSafe().pChunks);
 
     if (UMax != freeBlock) {
@@ -556,8 +559,8 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     return AllocateFromNewBundle_AssumeUnlocked_(bucket);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::Deallocate(index_type block, u32 bucket) {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Deallocate(index_type block, u32 bucket) {
     Assert(block < MaxSize);
 
     FPoolNode_* node;
@@ -575,8 +578,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     RecyclePartialBundle_AssumeUnlocked_(bucket, block, node);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::Clear_AssertCompletelyEmpty() {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Clear_AssertCompletelyEmpty() {
     const auto exclusivePool = _pool.LockExclusive();
 
     Assert_NoAssume(0 == exclusivePool->NumLiveBlocks); // some blocks are still alive!
@@ -584,13 +587,13 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     Clear_ReleaseMemory_AssumeLocked_(*exclusivePool);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::Clear_IgnoreLeaks() {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Clear_IgnoreLeaks() {
     Clear_ReleaseMemory_AssumeLocked_(*_pool.LockExclusive());
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::Clear_ReleaseMemory_AssumeLocked_(FInternalPool_& pool) {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Clear_ReleaseMemory_AssumeLocked_(FInternalPool_& pool) {
     ONLY_IF_ASSERT(pool.NumLiveBlocks.store(0, std::memory_order_relaxed));
 
     pool.ReleaseAllChunks_IgnoreLeaks();
@@ -606,15 +609,14 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
         _recycler.FreeBundles[i].store(UMax, std::memory_order_relaxed);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::ReleaseCacheMemory() {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::ReleaseCacheMemory() {
     const auto exclusivePool = _pool.LockExclusive();
 
     for(auto& bucket : _buckets) {
         const auto exclusiveBucket = bucket.LockExclusive();
 
-        const index_type freeBundles = exclusiveBucket->PopBundles();
-        while (UMax != freeBundles) {
+        for (index_type freeBundles = exclusiveBucket->PopBundles(exclusivePool->pChunks); UMax != freeBundles; ) {
             const index_type nextBundles = PoolNode_(exclusivePool->pChunks, freeBundles)->NextBundle;
             exclusivePool->ReleaseBundle(freeBundles);
             freeBundles = nextBundles;
@@ -623,16 +625,17 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
 
     index_type freeBundles[BundleMaxGarbage];
     const index_type numGCBBundles = _recycler.StealBundles(freeBundles);
+
     forrange(gc, 0, numGCBBundles)
-        exclusivePool->ReleaseBundle(freeBundles);
+        exclusivePool->ReleaseBundle(freeBundles[gc]);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::AllocateFromNewBundle_AssumeUnlocked_(u32 firstBucket) -> index_type {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::AllocateFromNewBundle_AssumeUnlocked_(u32 firstBucket) -> index_type {
     const auto exclusivePool = _pool.LockExclusive();
 
-    forrange(i, 0, _Granularity) {
-        const auto bucket = ((firstBucket + i) % _Granularity);
+    forrange(i, 0, ThreadGranularity) {
+        const auto bucket = ((firstBucket + i) % ThreadGranularity);
         const auto exclusiveBucket = _buckets[bucket].LockExclusive();
 
         if (exclusiveBucket->ObtainPartial(exclusivePool->pChunks, _recycler)) {
@@ -671,8 +674,8 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     AssertReleaseFailed(L"Out-of-memory: can't allocate a new chunk and all buckets are empty");
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::RecyclePartialBundle_AssumeUnlocked_(u32 bucket, index_type block, FPoolNode_* node) {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::RecyclePartialBundle_AssumeUnlocked_(u32 bucket, index_type block, FPoolNode_* node) {
     Assert(node);
 
     index_type needRecycling = UMax;
@@ -691,8 +694,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
         _pool.LockExclusive()->ReleaseBundle(needRecycling);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::FFreeBlockList_::PushBundle(FPoolBundle_&& rbundle) {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::FFreeBlockList_::PushBundle(FPoolBundle_&& rbundle) {
     Assert(not rbundle.Empty());
     Assert_NoAssume(PartialBundle.Empty());
     Assert_NoAssume(FullBundle.Empty());
@@ -700,8 +703,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     PartialBundle = std::move(rbundle);
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::FFreeBlockList_::PopBundles(FPoolChunk_** pChunks) -> index_type {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::FFreeBlockList_::PopBundles(FPoolChunk_** pChunks) -> index_type {
     const index_type partial = PartialBundle.Head;
     if (UMax != partial) {
         PartialBundle.Reset();
@@ -723,8 +726,8 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     return result;
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-bool TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::FFreeBlockList_::ObtainPartial(FPoolChunk_** pChunks, FBundleRecycler_& recycler) {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+bool TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::FFreeBlockList_::ObtainPartial(FPoolChunk_** pChunks, FBundleRecycler_& recycler) {
     if (PartialBundle.Empty()) {
         if (not FullBundle.Empty()) {
             PartialBundle = FullBundle;
@@ -755,8 +758,8 @@ bool TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     return true;
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::FFreeBlockList_::RecycleFull(FPoolChunk_** pChunks, FBundleRecycler_& recycler) -> index_type {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::FFreeBlockList_::RecycleFull(FPoolChunk_** pChunks, FBundleRecycler_& recycler) -> index_type {
     index_type needRecycling = UMax;
 
     if (not FullBundle.Empty()) {
@@ -774,8 +777,8 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allo
     return needRecycling;
 }
 //----------------------------------------------------------------------------
-template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-bool TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Granularity, _Allocator>::CheckInvariants() const {
+template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+bool TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::CheckInvariants() const {
 #if USE_PPE_DEBUG
 
     const auto exclusivePool = const_cast<TMemoryPool*>(this)->_pool.LockExclusive();
@@ -847,9 +850,9 @@ PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _ChunkSize, size_t _MaxChunks, size_t _Granularity, typename _Allocator>
-class TTypedMemoryPool : public TMemoryPool<sizeof(T), alignof(T), _ChunkSize, _MaxChunks, _Granularity, _Allocator> {
-    using parent_type = TMemoryPool<sizeof(T), alignof(T), _ChunkSize, _MaxChunks, _Granularity, _Allocator>;
+template <typename T, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
+class TTypedMemoryPool : public TMemoryPool<sizeof(T), alignof(T), _ChunkSize, _MaxChunks, _Allocator> {
+    using parent_type = TMemoryPool<sizeof(T), alignof(T), _ChunkSize, _MaxChunks, _Allocator>;
 public:
     using typename parent_type::allocator_type;
     using typename parent_type::index_type;

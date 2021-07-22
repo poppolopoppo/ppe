@@ -58,7 +58,7 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
     };
 
     using FCacheItem_ = TCacheItem_<_Key, _Value>;
-    using pool_type = TTypedMemoryPool<FCacheItem_, _ChunkSize, _MaxChunks, 4, _Allocator>;
+    using pool_type = TTypedMemoryPool<FCacheItem_, _ChunkSize, _MaxChunks, _Allocator>;
 
     using FHashSegment_ = FAtomicOrderedLock;
     using FHashBucket_ = FCacheItem_*;
