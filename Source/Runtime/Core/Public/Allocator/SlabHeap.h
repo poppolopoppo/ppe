@@ -115,6 +115,7 @@ public:
     bool AliasesToHeap(void* ptr) const NOEXCEPT;
 #endif
 #if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT { return _trackingData; }
     const FMemoryTracking& TrackingData() const NOEXCEPT { return _trackingData; }
 #endif
 
@@ -169,6 +170,7 @@ public:
     bool AliasesToHeap(void* ptr) const NOEXCEPT { return _heap.AliasesToHeap(ptr); }
 #endif
 #if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT { return _heap.TrackingData(); }
     const FMemoryTracking& TrackingData() const NOEXCEPT { return _heap.TrackingData(); }
 #endif
 

@@ -25,6 +25,10 @@ public:
     using has_acquire = std::true_type;
     using has_steal = std::true_type;
 
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = std::true_type;
+#endif
+
     STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
 
     FStackLocalAllocator() = default;
@@ -55,6 +59,12 @@ public:
         UNUSED(b); // nothing to do
         return true;
     }
+
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return MEMORYDOMAIN_TRACKING_DATA(Alloca);
+    }
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

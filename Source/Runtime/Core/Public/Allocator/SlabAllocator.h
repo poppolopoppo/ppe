@@ -41,6 +41,9 @@ public:
     using has_reallocate = std::true_type;
     using has_acquire = std::true_type;
     using has_steal = std::true_type;
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = std::true_type;
+#endif
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
 
@@ -81,6 +84,12 @@ public:
         UNUSED(b); // nothing to do
         return true;
     }
+
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return Heap->TrackingData();
+    }
+#endif
 
     friend bool operator ==(const FSlabAllocator& lhs, const FSlabAllocator& rhs) {
         return (lhs.Heap == rhs.Heap);

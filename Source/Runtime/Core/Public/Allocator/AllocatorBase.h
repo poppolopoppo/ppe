@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "HAL/PlatformMemory.h"
+#include "Memory/MemoryDomain.h"
 #include "Memory/MemoryView.h"
 #include "Meta/TypeTraits.h"
 
@@ -69,6 +70,12 @@ public:
     bool Acquire(FAllocatorBlock b) NOEXCEPT = delete;
     bool Steal(FAllocatorBlock b) NOEXCEPT = delete;
 
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = std::false_type;
+
+    FMemoryTracking& TrackingData() NOEXCEPT = delete;
+#endif
+
     friend bool operator ==(const FGenericAllocator& lhs, const FGenericAllocator& rhs) NOEXCEPT = delete;
     friend bool operator !=(const FGenericAllocator& lhs, const FGenericAllocator& rhs) NOEXCEPT = delete;
 };
@@ -117,6 +124,10 @@ using if_has_steal_ = typename _Allocator::has_steal;
 template <typename _Allocator>
 using if_reallocate_can_fail_ = decltype(std::declval<_Allocator&>().Reallocate(
     std::declval<FAllocatorBlock&>(), size_t(0) ));
+#if USE_PPE_MEMORYDOMAINS
+template <typename _Allocator>
+using if_has_memory_tracking_ = typename _Allocator::has_memory_tracking;
+#endif
 } //!details
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -419,6 +430,21 @@ struct TAllocatorTraits {
             return false;
         }
     }
+
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = Meta::optional_definition_t<
+        details::if_has_memory_tracking_, std::false_type, _Allocator >;
+
+    NODISCARD static FMemoryTracking& TrackingData(_Allocator& a) NOEXCEPT {
+        IF_CONSTEXPR(has_memory_tracking::value) {
+            return a.TrackingData();
+        }
+        else {
+            return MEMORYDOMAIN_TRACKING_DATA(Unknown);
+        }
+    }
+#endif
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

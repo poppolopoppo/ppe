@@ -52,7 +52,7 @@ template <typename _Tag, size_t _Sz>
 using TRawInlineAllocator = TDefaultAllocator<_Tag>;
 #else
 template <typename _Tag, size_t _Sz>
-using TRawInlineAllocator = TSegregatorAllocator<
+using TRawInlineAllocator = TSegregateAllocator<
     _Sz,
     TInSituAllocator<_Sz>,
     TDefaultAllocator<_Tag> >;

@@ -19,7 +19,7 @@ template <typename _Char>
 using TStringBuilderAllocator = FStringAllocator;
 #else
 template <typename _Char>
-using TStringBuilderAllocator = TSegregatorAllocator<
+using TStringBuilderAllocator = TSegregateAllocator<
     TBasicString<_Char>::GInSituSize * sizeof(_Char),
     TInSituAllocator<TBasicString<_Char>::GInSituSize * sizeof(_Char)>,
     FStringAllocator >;

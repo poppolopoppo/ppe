@@ -10,6 +10,36 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Memory tracking from several allocators
+//----------------------------------------------------------------------------
+#if USE_PPE_MEMORYDOMAINS
+template <typename _Allocator>
+NODISCARD FMemoryTracking& AllocatorTrackingData(_Allocator& a) {
+    return TAllocatorTraits<_Allocator>::TrackingData(a);
+}
+template <typename _AllocatorA, typename _AllocatorB>
+NODISCARD FMemoryTracking& AllocatorTrackingData(_AllocatorA& a, _AllocatorB& b) {
+    using a_traits = TAllocatorTraits<_AllocatorA>;
+    using b_traits = TAllocatorTraits<_AllocatorB>;
+
+    IF_CONSTEXPR(a_traits::has_memory_tracking::value) {
+        IF_CONSTEXPR(b_traits::has_memory_tracking::value) {
+            FMemoryTracking& trackingA = a_traits::TrackingData(a);
+            Assert_NoAssume(&trackingA == &b_traits::TrackingData(b));
+            return trackingA;
+        }
+        else {
+            return a_traits::TrackingData(a);
+        }
+    }
+    else {
+        return b_traits::TrackingData(b);
+    }
+}
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // Tries to allocate from _Primary, if failed use _Fallback instead
 //----------------------------------------------------------------------------
 template <typename _Primary, typename _Fallback>
@@ -39,6 +69,10 @@ public:
     FALLBACK_USING_DEF(has_reallocate, ||);
     FALLBACK_USING_DEF(has_acquire, ||);
     FALLBACK_USING_DEF(has_steal, ||);
+
+#if USE_PPE_MEMORYDOMAINS
+    FALLBACK_USING_DEF(has_memory_tracking, ||);
+#endif
 
 #undef FALLBACK_USING_DEF
 
@@ -128,6 +162,14 @@ public:
             return fallback_traits::Steal(*this, b);
     }
 
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return AllocatorTrackingData(
+            static_cast<_Primary&>(*this),
+            static_cast<_Fallback&>(*this) );
+    }
+#endif
+
     friend bool operator ==(const TFallbackAllocator& lhs, const TFallbackAllocator& rhs) NOEXCEPT {
         return (primary_traits::Equals(lhs, rhs) &&
                 fallback_traits::Equals(lhs, rhs));
@@ -164,6 +206,10 @@ public:
     PROXY_USING_DEF(has_reallocate);
     PROXY_USING_DEF(has_acquire);
     PROXY_USING_DEF(has_steal);
+
+#if USE_PPE_MEMORYDOMAINS
+    PROXY_USING_DEF(has_memory_tracking);
+#endif
 
 #undef PROXY_USING_DEF
 
@@ -212,6 +258,12 @@ public:
         return allocator_traits::Steal(*this, b);
     }
 
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return allocator_traits::TrackingData(*this);
+    }
+#endif
+
     friend bool operator ==(const TMinSizeAllocator& lhs, const TMinSizeAllocator& rhs) NOEXCEPT {
         return (allocator_traits::Equals(lhs, rhs));
     }
@@ -246,6 +298,10 @@ public:
     PROXY_USING_DEF(has_reallocate);
     PROXY_USING_DEF(has_acquire);
     PROXY_USING_DEF(has_steal);
+
+#if USE_PPE_MEMORYDOMAINS
+    PROXY_USING_DEF(has_memory_tracking);
+#endif
 
 #undef PROXY_USING_DEF
 
@@ -292,6 +348,12 @@ public:
         return allocator_traits::Steal(*AllocRef, b);
     }
 
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return allocator_traits::TrackingData(*this);
+    }
+#endif
+
     friend bool operator ==(const TProxyAllocator& lhs, const TProxyAllocator& rhs) NOEXCEPT {
         return (lhs.AllocRef == rhs.AllocRef);
     }
@@ -308,7 +370,7 @@ public:
 // Segregates allocations based on their size
 //----------------------------------------------------------------------------
 template <size_t _Threshold, typename _Under, typename _Above>
-class EMPTY_BASES TSegregatorAllocator
+class EMPTY_BASES TSegregateAllocator
 :   private _Under
 ,   private _Above {
 public:
@@ -334,6 +396,10 @@ public:
     SEGREGATOR_USING_DEF(has_acquire, ||);
     SEGREGATOR_USING_DEF(has_steal, ||);
 
+#if USE_PPE_MEMORYDOMAINS
+    SEGREGATOR_USING_DEF(has_memory_tracking, ||);
+#endif
+
 #undef SEGREGATOR_USING_DEF
 
     STATIC_CONST_INTEGRAL(size_t, Threshold, _Threshold);
@@ -342,32 +408,32 @@ public:
     STATIC_ASSERT(Meta::IsAligned(Alignment, under_traits::Alignment));
     STATIC_ASSERT(Meta::IsAligned(Alignment, above_traits::Alignment));
 
-    TSegregatorAllocator() = default;
+    TSegregateAllocator() = default;
 
-    TSegregatorAllocator(const _Under& under, const _Above& above)
+    TSegregateAllocator(const _Under& under, const _Above& above)
     :   _Under(under)
     ,   _Above(above)
     {}
-    TSegregatorAllocator(_Under&& runder, _Above&& rabove)
+    TSegregateAllocator(_Under&& runder, _Above&& rabove)
     :   _Under(std::move(runder))
     ,   _Above(std::move(rabove))
     {}
 
-    TSegregatorAllocator(const TSegregatorAllocator& other)
+    TSegregateAllocator(const TSegregateAllocator& other)
     :   _Under(under_traits::SelectOnCopy(other))
     ,   _Above(above_traits::SelectOnCopy(other))
     {}
-    TSegregatorAllocator& operator =(const TSegregatorAllocator& other) {
+    TSegregateAllocator& operator =(const TSegregateAllocator& other) {
         under_traits::Copy(this, other);
         above_traits::Copy(this, other);
         return (*this);
     }
 
-    TSegregatorAllocator(TSegregatorAllocator&& rvalue) NOEXCEPT
+    TSegregateAllocator(TSegregateAllocator&& rvalue) NOEXCEPT
     :   _Under(under_traits::SelectOnMove(std::move(rvalue)))
     ,   _Above(above_traits::SelectOnMove(std::move(rvalue)))
     {}
-    TSegregatorAllocator& operator =(TSegregatorAllocator&& rvalue) NOEXCEPT {
+    TSegregateAllocator& operator =(TSegregateAllocator&& rvalue) NOEXCEPT {
         under_traits::Move(this, std::move(rvalue));
         above_traits::Move(this, std::move(rvalue));
         return (*this);
@@ -432,23 +498,31 @@ public:
             return above_traits::Steal(*this, b);
     }
 
-    friend bool operator ==(const TSegregatorAllocator& lhs, const TSegregatorAllocator& rhs) NOEXCEPT {
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return AllocatorTrackingData(
+            static_cast<_Under&>(*this),
+            static_cast<_Above&>(*this) );
+    }
+#endif
+
+    friend bool operator ==(const TSegregateAllocator& lhs, const TSegregateAllocator& rhs) NOEXCEPT {
         return (under_traits::Equals(lhs, rhs) &&
                 above_traits::Equals(lhs, rhs) );
     }
 
-    friend bool operator !=(const TSegregatorAllocator& lhs, const TSegregatorAllocator& rhs) NOEXCEPT {
+    friend bool operator !=(const TSegregateAllocator& lhs, const TSegregateAllocator& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
-    friend void swap(TSegregatorAllocator& lhs, TSegregatorAllocator& rhs) NOEXCEPT {
+    friend void swap(TSegregateAllocator& lhs, TSegregateAllocator& rhs) NOEXCEPT {
         under_traits::Swap(lhs, rhs);
         above_traits::Swap(lhs, rhs);
     }
 
-private: // segregators are self-composable, use this helper to chain
+private: // segregate allocators are self-composable, use this helper to chain
     // Ex:
-    //      TSegregatorAllocator<64, FStacklocalAllocator, FMallocator>
+    //      TSegregateAllocator<64, FStacklocalAllocator, FMallocator>
     //          ::bellow_t<32, TFreeList<...> >
     //          ::bellow_t<16, TBitmapAllocator<> >
     //          [...]
@@ -457,7 +531,7 @@ private: // segregators are self-composable, use this helper to chain
     template <size_t _Bellow, typename _Other>
     struct make_bellow_t {
         STATIC_ASSERT(_Bellow < _Threshold);
-        using type = TSegregatorAllocator<_Bellow, _Other, TSegregatorAllocator>;
+        using type = TSegregateAllocator<_Bellow, _Other, TSegregateAllocator>;
     };
 
 public:

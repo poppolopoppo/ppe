@@ -75,6 +75,7 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) {
+        STATIC_ASSERT(not allocator_traits::has_memory_tracking::value); // double-tracking !
         const FAllocatorBlock r = allocator_traits::Allocate(*this, s);
         Tracking().Allocate(r.SizeInBytes, SnapSize(r.SizeInBytes));
         return r;
@@ -130,6 +131,8 @@ public:
     }
 
 public: // memory tracking
+    using has_memory_tracking = std::true_type;
+
     _Allocator& InnerAlloc() NOEXCEPT {
         return allocator_traits::Get(*this);
     }
@@ -140,6 +143,10 @@ public: // memory tracking
 
     static FMemoryTracking& Tracking() NOEXCEPT {
         return domain_tag::TrackingData();
+    }
+
+    FMemoryTracking& TrackingData() NOEXCEPT {
+        return Tracking(); // this overload can be used with TAllocatorTraits<>
     }
 };
 //----------------------------------------------------------------------------

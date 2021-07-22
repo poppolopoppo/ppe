@@ -21,6 +21,15 @@ STATIC_ASSERT(sizeof(u256) == sizeof(u128) * 2);
 //----------------------------------------------------------------------------
 STATIC_ASSERT(has_stealallocatorblock_v<FMallocator, FMallocator>);
 STATIC_ASSERT(has_stealallocatorblock_v<ALLOCATOR(Container), ALLOCATOR(Internal)>);
+#if USE_PPE_MEMORYDOMAINS
+STATIC_ASSERT(not TAllocatorTraits<FMallocator>::has_memory_tracking::value);
+STATIC_ASSERT(TAllocatorTraits<ALLOCATOR(Container)>::has_memory_tracking::value);
+STATIC_ASSERT(TAllocatorTraits<ALLOCATOR_MINSIZE(Container, size_t, 4)>::has_memory_tracking::value);
+STATIC_ASSERT(TAllocatorTraits<BATCH_ALLOCATOR(Container, size_t)>::has_memory_tracking::value);
+STATIC_ASSERT(TAllocatorTraits<INLINE_ALLOCATOR(Container, size_t, 4)>::has_memory_tracking::value);
+STATIC_ASSERT(TAllocatorTraits<INLINE_STACK_ALLOCATOR(Container, size_t, 4)>::has_memory_tracking::value);
+STATIC_ASSERT(TAllocatorTraits<STACKLOCAL_ALLOCATOR()>::has_memory_tracking::value);
+#endif
 //----------------------------------------------------------------------------
 STATIC_ASSERT(Meta::has_common_type_v<i32, i16>);
 STATIC_ASSERT(Meta::has_common_type_v<i64, i32>);
