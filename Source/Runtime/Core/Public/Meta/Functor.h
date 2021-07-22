@@ -83,7 +83,8 @@ struct TFunctorTraits_<_Ret(_Class::*)(_Args...) const noexcept> {
     }
 };
 template <typename T>
-struct TFunctorTraits_ : TFunctorTraits_<decltype(&T::operator())> {
+struct TFunctorTraits_ :
+    TFunctorTraits_<decltype(&T::operator())> {
     using parent_type = TFunctorTraits_<decltype(&T::operator())>;
     using typename parent_type::return_type;
     using parent_type::arity;
@@ -103,22 +104,22 @@ struct TFunctorTraits_ : TFunctorTraits_<decltype(&T::operator())> {
 } //!details
 //----------------------------------------------------------------------------
 template <typename T>
-using TFunctorReturn = typename details::TFunctorTraits_<T>::return_type;
+using TFunctorReturn = typename details::TFunctorTraits_< TDecay<T> >::return_type;
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr size_t FunctorArity() {
-    return details::TFunctorTraits_<T>::arity;
+    return details::TFunctorTraits_< TDecay<T> >::arity;
 }
 //----------------------------------------------------------------------------
 template <typename _Functor, typename... _Args>
-constexpr auto VariadicFunctor(_Functor func, _Args&&... args) {
-    using traits_t = details::TFunctorTraits_<_Functor>;
+constexpr auto VariadicFunctor(_Functor&& rfunc, _Args&&... args) {
+    using traits_t = details::TFunctorTraits_< TDecay<_Functor> >;
     IF_CONSTEXPR(std::is_same_v<void, Meta::TDecay<typename traits_t::return_type>>) {
-        traits_t::template varcall(std::forward<_Functor>(func), std::forward<_Args>(args)...);
+        traits_t::template varcall(std::forward<_Functor>(rfunc), std::forward<_Args>(args)...);
         return true;
     }
     else {
-        return traits_t::template varcall(std::forward<_Functor>(func), std::forward<_Args>(args)...);
+        return traits_t::template varcall(std::forward<_Functor>(rfunc), std::forward<_Args>(args)...);
     }
 }
 //----------------------------------------------------------------------------
