@@ -18,6 +18,8 @@ public:
     using allocator_traits = TAllocatorTraits<_Allocator>;
     using domain_tag = _Domain;
 
+    STATIC_ASSERT(not allocator_traits::has_memory_tracking::value); // double-tracking !
+
 #define TRACKING_USING_DEF(_NAME) \
     using _NAME = typename allocator_traits::_NAME
 
@@ -32,6 +34,8 @@ public:
     TRACKING_USING_DEF(has_reallocate);
     TRACKING_USING_DEF(has_acquire);
     TRACKING_USING_DEF(has_steal);
+
+    using has_memory_tracking = std::true_type;
 
 #undef TRACKING_USING_DEF
 
@@ -75,14 +79,13 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) {
-        STATIC_ASSERT(not allocator_traits::has_memory_tracking::value); // double-tracking !
         const FAllocatorBlock r = allocator_traits::Allocate(*this, s);
-        Tracking().Allocate(r.SizeInBytes, SnapSize(r.SizeInBytes));
+        StaticTracking().Allocate(r.SizeInBytes, SnapSize(r.SizeInBytes));
         return r;
     }
 
     void Deallocate(FAllocatorBlock b) {
-        Tracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+        StaticTracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
         allocator_traits::Deallocate(*this, b);
     }
 
@@ -91,28 +94,26 @@ public:
             const size_t oldSize = b.SizeInBytes;
             if (allocator_traits::Reallocate(*this, b, s)) {
                 if (oldSize)
-                    Tracking().Deallocate(oldSize, SnapSize(oldSize));
+                    StaticTracking().Deallocate(oldSize, SnapSize(oldSize));
                 if (b.SizeInBytes)
-                    Tracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+                    StaticTracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
                 return true;
             }
-            else {
-                return false;
-            }
+            return false;
         }
         else {
             if (b.SizeInBytes)
-                Tracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+                StaticTracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             allocator_traits::Reallocate(*this, b, s);
             if (b.SizeInBytes)
-                Tracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+                StaticTracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             return;
         }
     }
 
     bool Acquire(FAllocatorBlock b) NOEXCEPT {
         if (allocator_traits::Acquire(*this, b)) {
-            Tracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            StaticTracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             return true;
         }
         else {
@@ -122,32 +123,29 @@ public:
 
     bool Steal(FAllocatorBlock b) NOEXCEPT {
         if (allocator_traits::Steal(*this, b)) {
-            Tracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            StaticTracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             return true;
         }
-        else {
-            return false;
-        }
+        return false;
     }
 
 public: // memory tracking
-    using has_memory_tracking = std::true_type;
-
-    _Allocator& InnerAlloc() NOEXCEPT {
-        return allocator_traits::Get(*this);
+    FMemoryTracking* TrackingData() NOEXCEPT {
+        return std::addressof(StaticTracking()); // this overload can be used with TAllocatorTraits<>
     }
 
-    const _Allocator& InnerAlloc() const NOEXCEPT {
-        return allocator_traits::Get(*this);
+    _Allocator& AllocatorWithoutTracking() NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(*this);
     }
 
-    static FMemoryTracking& Tracking() NOEXCEPT {
+    const _Allocator& AllocatorWithoutTracking() const NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(*this);
+    }
+
+    static FMemoryTracking& StaticTracking() NOEXCEPT {
         return domain_tag::TrackingData();
     }
 
-    FMemoryTracking& TrackingData() NOEXCEPT {
-        return Tracking(); // this overload can be used with TAllocatorTraits<>
-    }
 };
 //----------------------------------------------------------------------------
 template <
@@ -156,7 +154,9 @@ template <
 bool operator ==(
     const TTrackingAllocator<_DomainLhs, _AllocatorLhs>& lhs,
     const TTrackingAllocator<_DomainRhs, _AllocatorRhs>& rhs ) NOEXCEPT {
-    return TAllocatorTraits<_AllocatorLhs>::Equals(lhs.InnerAlloc(), rhs.InnerAlloc());
+    return TAllocatorTraits<_AllocatorLhs>::Equals(
+        lhs.AllocatorWithoutTracking(),
+        rhs.AllocatorWithoutTracking() );
 }
 //----------------------------------------------------------------------------
 template <

@@ -22,8 +22,7 @@ struct NODISCARD FAllocatorBlock {
 
     FAllocatorBlock Reset() {
         const FAllocatorBlock cpy{ *this };
-        Data = nullptr;
-        SizeInBytes = 0;
+        *this = Null();
         return cpy;
     }
 
@@ -74,6 +73,8 @@ public:
     using has_memory_tracking = std::false_type;
 
     FMemoryTracking& TrackingData() NOEXCEPT = delete;
+    FGenericAllocator& AllocatorWithoutTracking() NOEXCEPT = delete;
+
 #endif
 
     friend bool operator ==(const FGenericAllocator& lhs, const FGenericAllocator& rhs) NOEXCEPT = delete;
@@ -247,10 +248,10 @@ struct TAllocatorTraits {
 
     NODISCARD static size_t SnapSize(size_t size) NOEXCEPT {
 #if USE_PPE_ASSERT
-        const size_t snpd = _Allocator::SnapSize(size);
-        Assert(snpd >= size);
-        Assert_NoAssume(_Allocator::SnapSize(snpd) == snpd);
-        return snpd;
+        const size_t snapped = _Allocator::SnapSize(size);
+        Assert(snapped >= size);
+        Assert_NoAssume(_Allocator::SnapSize(snapped) == snapped);
+        return snapped;
 #else
         return _Allocator::SnapSize(size);
 #endif
@@ -435,14 +436,30 @@ struct TAllocatorTraits {
     using has_memory_tracking = Meta::optional_definition_t<
         details::if_has_memory_tracking_, std::false_type, _Allocator >;
 
-    NODISCARD static FMemoryTracking& TrackingData(_Allocator& a) NOEXCEPT {
+    NODISCARD static FMemoryTracking* TrackingData(_Allocator& a) NOEXCEPT {
         IF_CONSTEXPR(has_memory_tracking::value) {
             return a.TrackingData();
         }
         else {
-            return MEMORYDOMAIN_TRACKING_DATA(Unknown);
+            return std::addressof(MEMORYDOMAIN_TRACKING_DATA(Unknown));
         }
     }
+
+    NODISCARD static auto& AllocatorWithoutTracking(_Allocator& a) NOEXCEPT {
+        IF_CONSTEXPR(has_memory_tracking::value) {
+            return a.AllocatorWithoutTracking();
+        }
+        else {
+            return a;
+        }
+    }
+
+#else
+
+    NODISCARD static auto& AllocatorWithoutTracking(_Allocator& a) NOEXCEPT {
+        return a;
+    }
+
 #endif
 
 };
@@ -540,18 +557,18 @@ CONSTEXPR bool has_stealallocatorblock_v = has_stealallocatorblock_t<_AllocatorD
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator>
-NODISCARD FMemoryTracking& AllocatorTrackingData(_Allocator& a) {
+NODISCARD FMemoryTracking* AllocatorTrackingData(_Allocator& a) {
     return TAllocatorTraits<_Allocator>::TrackingData(a);
 }
 template <typename _AllocatorA, typename _AllocatorB>
-NODISCARD FMemoryTracking& AllocatorTrackingData(_AllocatorA& a, _AllocatorB& b) {
+NODISCARD FMemoryTracking* AllocatorTrackingData(_AllocatorA& a, _AllocatorB& b) {
     using a_traits = TAllocatorTraits<_AllocatorA>;
     using b_traits = TAllocatorTraits<_AllocatorB>;
 
     IF_CONSTEXPR(a_traits::has_memory_tracking::value) {
         IF_CONSTEXPR(b_traits::has_memory_tracking::value) {
-            FMemoryTracking& trackingA = a_traits::TrackingData(a);
-            Assert_NoAssume(&trackingA == &b_traits::TrackingData(b));
+            FMemoryTracking* const trackingA = a_traits::TrackingData(a);
+            Assert_NoAssume(trackingA == b_traits::TrackingData(b));
             return trackingA;
         }
         else {
@@ -563,6 +580,11 @@ NODISCARD FMemoryTracking& AllocatorTrackingData(_AllocatorA& a, _AllocatorB& b)
     }
 }
 #endif
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+NODISCARD static auto& AllocatorWithoutTracking(_Allocator& a) NOEXCEPT {
+    return TAllocatorTraits<_Allocator>::AllocatorWithoutTracking(a);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
