@@ -25,7 +25,7 @@ struct FRenderTarget {
         FRgba32f, FRgba32u, FRgba32i,
         FDepthValue, FStencilValue, FDepthStencilValue >;
 
-    FRawImageID Image; // may be image module in initial state (created by CreateRenderTarget or other)
+    FRawImageID ImageId; // may be image module in initial state (created by CreateRenderTarget or other)
     Meta::TOptional<FImageViewDesc> Desc; // may be used to specialize level, layer, different format, layout, ...
     FClearValue ClearValue{ FRgba32u(0) }; // default is black color
     EAttachmentLoadOp LoadOp{ EAttachmentLoadOp::Load };
@@ -43,9 +43,10 @@ struct FRenderViewport {
 PPE_ASSUME_TYPE_AS_POD(FRenderViewport)
 //----------------------------------------------------------------------------
 struct FRenderPassDesc {
+    using FClearValue = FRenderTarget::FClearValue;
 
     struct FShadingRate {
-        FRawImageID Image;
+        FRawImageID ImageId;
         FImageLayer Layer;
         FMipmapLevel Mipmap;
         // #TODO: coarse sample order
@@ -73,9 +74,9 @@ struct FRenderPassDesc {
 
     FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image);
     FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, EAttachmentLoadOp loadOp, EAttachmentStoreOp storeOp);
-    FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, FRenderTarget::FClearValue&& clearValue, EAttachmentStoreOp storeOp);
+    FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, FClearValue&& clearValue, EAttachmentStoreOp storeOp);
     FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, const FImageViewDesc& desc, EAttachmentLoadOp loadOp, EAttachmentStoreOp storeOp);
-    FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, const FImageViewDesc& desc, FRenderTarget::FClearValue&& clearValue, EAttachmentStoreOp storeOp);
+    FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, const FImageViewDesc& desc, FClearValue&& clearValue, EAttachmentStoreOp storeOp);
 
     FRenderPassDesc& AddViewport(const float2& extent, float minDepth = 0.0f, float maxDepth = 1.0f, TMemoryView<const EShadingRatePalette> shadingRate = Default);
     FRenderPassDesc& AddViewport(const FRectangleF& rect, float minDepth = 0.0f, float maxDepth = 1.0f, TMemoryView<const EShadingRatePalette> shadingRate = Default);
@@ -153,17 +154,17 @@ inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImage
     Assert(image);
     Assert(loadOp != EAttachmentLoadOp::Clear);
     FRenderTarget rt;
-    rt.Image = image;
+    rt.ImageId = image;
     rt.LoadOp = loadOp;
     rt.StoreOp = storeOp;
     RenderTargets[u32(id)] = std::move(rt);
     return (*this);
 }
 //----------------------------------------------------------------------------
-inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImageID image, FRenderTarget::FClearValue&& clearValue, EAttachmentStoreOp storeOp) {
+inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImageID image, FClearValue&& clearValue, EAttachmentStoreOp storeOp) {
     Assert(image);
     FRenderTarget rt;
-    rt.Image = image;
+    rt.ImageId = image;
     rt.ClearValue = std::move(clearValue);
     rt.LoadOp = EAttachmentLoadOp::Clear;
     rt.StoreOp = storeOp;
@@ -175,7 +176,7 @@ inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImage
     Assert(image);
     Assert(loadOp != EAttachmentLoadOp::Clear);
     FRenderTarget rt;
-    rt.Image = image;
+    rt.ImageId = image;
     rt.Desc = desc;
     rt.LoadOp = loadOp;
     rt.StoreOp = storeOp;
@@ -183,10 +184,10 @@ inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImage
     return (*this);
 }
 //----------------------------------------------------------------------------
-inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImageID image, const FImageViewDesc& desc, FRenderTarget::FClearValue&& clearValue, EAttachmentStoreOp storeOp) {
+inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImageID image, const FImageViewDesc& desc, FClearValue&& clearValue, EAttachmentStoreOp storeOp) {
     Assert(image);
     FRenderTarget rt;
-    rt.Image = image;
+    rt.ImageId = image;
     rt.Desc = desc;
     rt.ClearValue = std::move(clearValue);
     rt.LoadOp = EAttachmentLoadOp::Clear;
@@ -247,7 +248,7 @@ inline FRenderPassDesc& FRenderPassDesc::SetSampleMask(TMemoryView<const u32> va
 //----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::SetShadingRateImage(FRawImageID image, FImageLayer layer, FMipmapLevel level) {
     Assert(image);
-    ShadingRate.Image = image;
+    ShadingRate.ImageId = image;
     ShadingRate.Layer = layer;
     ShadingRate.Mipmap = level;
     return (*this);

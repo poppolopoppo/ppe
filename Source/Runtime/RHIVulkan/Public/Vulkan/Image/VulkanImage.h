@@ -66,6 +66,7 @@ public:
 
     auto Read() const { return _data.LockShared(); }
 
+    const FImageDesc& Desc() const { return Read()->Desc; }
     VkImage Handle() const { return Read()->vkImage; }
 
 #if USE_PPE_RHIDEBUG

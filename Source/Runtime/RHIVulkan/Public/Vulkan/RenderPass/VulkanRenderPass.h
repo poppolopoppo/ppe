@@ -25,13 +25,13 @@ public:
 
         hash_t HashValue{ Meta::ForceInit };
         hash_t AttachmentHash{ Meta::ForceInit };
-        FSubpassHashes SubpassHashes;
+        FSubpassHashes SubpassesHash;
 
         VkRenderPassCreateInfo CreateInfo{};
-        FAttachmentDescs AttachmentDescs;
-        FAttachmentRefs1 InputRefs;
-        FAttachmentRefs1 AttachmentRefs1;
-        FAttachmentRefs2 AttachmentRefs2;
+        FAttachmentDescs Attachments;
+        FAttachmentRefs1 AttachmentsRef;
+        FAttachmentRefs1 InputAttachments;
+        FAttachmentRefs2 ResolveAttachments;
         FSubpassDescs Subpasses;
         FDependencies Dependencies;
         FPreserves Preserves;
@@ -39,7 +39,10 @@ public:
 
     FVulkanRenderPass() = default;
     explicit FVulkanRenderPass(TMemoryView<const FVulkanLogicalRenderPass* const> logicalRenderPasses);
+
+#if USE_PPE_RHIDEBUG
     ~FVulkanRenderPass();
+#endif
 
     FVulkanRenderPass(FVulkanRenderPass&& rvalue) NOEXCEPT;
     FVulkanRenderPass& operator =(FVulkanRenderPass&& ) = delete;
@@ -57,14 +60,12 @@ public:
     NODISCARD bool Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    bool operator ==(const FVulkanRenderPass& other) const;
-    bool operator !=(const FVulkanRenderPass& other) const { return (not operator ==(other)); }
+    bool operator ==(const FVulkanRenderPass& other) const NOEXCEPT ;
+    bool operator !=(const FVulkanRenderPass& other) const NOEXCEPT { return (not operator ==(other)); }
 
     friend hash_t hash_value(const FVulkanRenderPass& renderPass) { return renderPass.HashValue(); }
 
 private:
-    void Invalidate_(TMemoryView<const FVulkanLogicalRenderPass* const> logicalRenderPasses);
-
     TRHIThreadSafe<FInternalPass> _pass;
 
 #if USE_PPE_RHIDEBUG

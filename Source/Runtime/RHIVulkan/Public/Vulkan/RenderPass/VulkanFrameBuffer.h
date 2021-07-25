@@ -16,7 +16,7 @@ public:
     struct FInternalData {
         VkFramebuffer Framebuffer{ VK_NULL_HANDLE};
 
-        hash_t HashValue{ 0 };
+        hash_t HashValue{ Meta::ForceInit };
         FRawRenderPassID RenderPassId; // strong ref
         uint2 Dimension{ 0 };
         FImageLayer Layers;
@@ -28,12 +28,15 @@ public:
         const TMemoryView<const TPair<FRawImageID, FImageViewDesc>>& attachments,
         FRawRenderPassID renderPass,
         const uint2& dim, u32 layers );
+
+#if USE_PPE_ASSERT
     ~FVulkanFramebuffer();
+#endif
 
     FVulkanFramebuffer(FVulkanFramebuffer&& rvalue) NOEXCEPT;
     FVulkanFramebuffer& operator =(FVulkanFramebuffer&& ) = delete;
 
-    auto Read() const { return _pass.LockShared(); }
+    auto Read() const { return _fb.LockShared(); }
 
     hash_t HashValue() const { return Read()->HashValue; }
 
@@ -43,16 +46,16 @@ public:
 
     bool AllResourcesAlive(const FVulkanResourceManager& manager) const;
 
-    NODISCARD bool Construct(const FVulkanResourceManager& device ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool Construct(const FVulkanResourceManager& resources ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    bool operator ==(const FVulkanFramebuffer& other) const;
-    bool operator !=(const FVulkanFramebuffer& other) const { return (not operator ==(other)); }
+    bool operator ==(const FVulkanFramebuffer& other) const NOEXCEPT;
+    bool operator !=(const FVulkanFramebuffer& other) const NOEXCEPT { return (not operator ==(other)); }
 
     friend hash_t hash_value(const FVulkanFramebuffer& renderPass) { return renderPass.HashValue(); }
 
 private:
-    TRHIThreadSafe<FInternalData> _pass;
+    TRHIThreadSafe<FInternalData> _fb;
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

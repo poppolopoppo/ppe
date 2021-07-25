@@ -61,8 +61,10 @@ public:
     FStringView DebugName() const { return _imageData->DebugName(); }
 #endif
 
+    const FImageDesc& Desc() const { return _imageData->Desc(); }
     VkImage Handle() const { return _imageData->Handle(); }
     const FVulkanImage* GlobalData() const { return _imageData; }
+
     auto Read() const { return _imageData->Read(); }
 
     NODISCARD bool Construct(const FVulkanImage* pImageData);

@@ -48,9 +48,11 @@ public:
     using FMutableBuffers = TMemoryView<const TPair<const FVulkanLocalBuffer*, EResourceState>>;
 
     FVulkanLogicalRenderPass() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanLogicalRenderPass();
+#endif
 
-    FVulkanLogicalRenderPass(FVulkanLogicalRenderPass&& rvalue) NOEXCEPT;
+    FVulkanLogicalRenderPass(FVulkanLogicalRenderPass&& rvalue) = default;
     FVulkanLogicalRenderPass& operator =(FVulkanLogicalRenderPass&& ) = delete;
 
     TMemoryView<IVulkanDrawTask* const> DrawTasks() const { return _drawTasks.MakeConstView(); }
@@ -81,18 +83,18 @@ public:
     FMutableBuffers MutableBuffers() const { return _mutableBuffers; }
 
     bool HasShadingRateImage() const { return (!!_shadingRateImage); }
-    bool ShadingRateImage(const FVulkanLocalImage** pimage, FImageViewDesc* pdesc) const;
+    NODISCARD bool ShadingRateImage(const FVulkanLocalImage** pimage, FImageViewDesc* pdesc) const;
     TMemoryView<const VkShadingRatePaletteNV> ShadingRatePalette() const { return _shadingRatePalette.MakeConstView(); }
 
     template <typename _DrawTask, typename... _Args>
     _DrawTask* EmplaceTask(_Args&&... args) {
-        _DrawTask* const ptask = new (_localHeap) _DrawTask(*this, std::forward<_Args>(args)...);
+        _DrawTask* const ptask = new (_allocator) _DrawTask(*this, std::forward<_Args>(args)...);
         Assert(ptask);
         _drawTasks.push_back(ptask);
         return ptask;
     }
 
-    NODISCARD bool Construct(FVulkanCommandBuffer& commandBuffer, const FRenderPassDesc& desc);
+    NODISCARD bool Construct(FVulkanCommandBuffer& cmd, const FRenderPassDesc& desc);
     void TearDown(const FVulkanResourceManager& resources);
 
     void SetRenderPass(FRawRenderPassID renderPass, u32 subpass, FRawFramebufferID framebuffer, u32 depthIndex);
@@ -111,8 +113,8 @@ private:
     FRawRenderPassID _renderPassId;
     u32 _subpassIndex{ 0 };
 
-    SLABHEAP_POOLED(RHIRenderPass) _localHeap;
-    VECTOR_SLAB(IVulkanDrawTask*) _drawTasks{ FSlabAllocator(_localHeap) };
+    FSlabAllocator _allocator{ Meta::ForceInit };
+    VECTOR_SLAB(IVulkanDrawTask*) _drawTasks{ _allocator };
 
     FColorTargets _colorTargets;
     FDepthStencilTarget _depthStencilTarget;

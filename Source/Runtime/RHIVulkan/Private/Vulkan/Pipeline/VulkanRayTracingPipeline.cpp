@@ -15,14 +15,13 @@ FVulkanRayTracingPipeline::~FVulkanRayTracingPipeline() {
     ONLY_IF_RHIDEBUG(Assert_NoAssume(not _pipeline.LockExclusive()->BaseLayoutId));
 }
 //----------------------------------------------------------------------------
-bool FVulkanRayTracingPipeline::Construct(const FRayTracingPipelineDesc& desc, FRawPipelineLayoutID layoutId, FConstChar debugName) {
+bool FVulkanRayTracingPipeline::Construct(const FRayTracingPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(layoutId);
 
     const auto exclusive = _pipeline.LockExclusive();
 
     exclusive->BaseLayoutId = FPipelineLayoutID{ layoutId };
     ONLY_IF_RHIDEBUG(exclusive->DebugModeBits = Default);
-
     ONLY_IF_RHIDEBUG(_debugName = debugName);
 
     for (const auto& stage : desc.Shaders) {
