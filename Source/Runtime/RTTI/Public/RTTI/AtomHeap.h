@@ -25,7 +25,7 @@ public:
     FAtomHeap(const FAtomHeap&) = delete;
     FAtomHeap& operator =(const FAtomHeap&) = delete;
 
-    FPoolingSlabHeap& Heap() { return _heap; }
+    SLABHEAP_POOLED(Atom)& Heap() { return _heap; }
 
     FAtom Allocate(ENativeType type) {
         return Allocate(MakeTraits(type));

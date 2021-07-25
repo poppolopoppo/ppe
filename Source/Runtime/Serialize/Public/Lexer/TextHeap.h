@@ -15,10 +15,12 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <bool _Padded/* padding adds more insitu storage capacity */>
+template <bool _Padded/* padding adds more insitu storage capacity */, typename _Allocator>
 class TTextHeap {
 public:
     STATIC_CONST_INTEGRAL(size_t, GMaxSizeForMerge, 100);
+
+    using heap_type = TPoolingSlabHeap<_Allocator>;
 
     class FText {
     public:
@@ -106,8 +108,8 @@ public:
         }
     };
 
-    TTextHeap(FPoolingSlabHeap& heap)
-        : _heap(heap) {
+    TTextHeap(heap_type& heap)
+    :   _heap(heap) {
         STATIC_ASSERT(sizeof(typename FText::FLargeText_) == sizeof(typename FText::FSmallText_));
         STATIC_ASSERT(_Padded
             ? sizeof(typename FText::FLargeText_) == 2 * sizeof(size_t) + sizeof(u64)
@@ -163,7 +165,7 @@ public:
     }
 
 private:
-    FPoolingSlabHeap& _heap;
+    heap_type& _heap;
     HASHSET(Transient, FText) _texts;
 
     FStringView AllocateString_(const FStringView& str) {
@@ -186,8 +188,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, bool _Padded>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const typename Serialize::TTextHeap<_Padded>::FText& text) {
+template <typename _Char, bool _Padded, typename _Allocator>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const typename Serialize::TTextHeap<_Padded, _Allocator>::FText& text) {
     return oss << text.MakeView();
 }
 //----------------------------------------------------------------------------

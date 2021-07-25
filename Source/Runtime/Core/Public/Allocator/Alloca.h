@@ -2,6 +2,7 @@
 
 #include "Core_fwd.h"
 
+#include "Allocator/Allocation_fwd.h"
 #include "Memory/MemoryView.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/ThreadResource.h"
@@ -26,6 +27,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+using FAllocaHeap = TSlabHeap<ALLOCATOR(Alloca)>;
+PPE_CORE_API TThreadSafe<TPtrRef<FAllocaHeap>, EThreadBarrier::ThreadLocal> AllocaHeap();
+//----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 PPE_CORE_API u32 AllocaDepth(); // used for detecting live alloca TLS blocks in debug
 #endif
@@ -37,8 +41,6 @@ PPE_CORE_API void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, boo
 PPE_CORE_API void FreeAlloca(void* ptr, size_t size);
 //----------------------------------------------------------------------------
 PPE_CORE_API size_t AllocaSnapSize(size_t size);
-//----------------------------------------------------------------------------
-PPE_CORE_API TThreadSafe<TPtrRef<class FSlabHeap>, EThreadBarrier::ThreadLocal> AllocaHeap();
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE T* TypedAlloca(size_t count) {

@@ -46,12 +46,12 @@ private:
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FMarkup {
 public:
-    using FTextHeap = TTextHeap<false/* don't use padding to get smaller FElement */>;
+    using FTextHeap = TTextHeap<false/* don't use padding to get smaller FElement */, ALLOCATOR(Markup)>;
     using FText = FTextHeap::FText;
 
     class PPE_SERIALIZE_API FElement {
     public:
-        using attributes_type = ASSOCIATIVE_VECTOR_SLAB(FText, FText);
+        using attributes_type = ASSOCIATIVE_VECTOR_SLAB(Markup, FText, FText);
         using node_type = TIntrusiveListNode<FElement>;
 
         FElement(FMarkup& markup);

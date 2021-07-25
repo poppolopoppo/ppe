@@ -167,9 +167,9 @@ size_t AllocaSnapSize(size_t size) {
         return FAllocaFallback_::SnapSize(size);
 }
 //----------------------------------------------------------------------------
-TThreadSafe<TPtrRef<FSlabHeap>, EThreadBarrier::ThreadLocal> AllocaHeap() {
+TThreadSafe<TPtrRef<FAllocaHeap>, EThreadBarrier::ThreadLocal> AllocaHeap() {
     return MakeThreadSafe<EThreadBarrier::ThreadLocal>(
-        MakePtrRef(static_cast<FSlabHeap&>(FAllocaSlabHeapTLS_::Get())) );
+        MakePtrRef(static_cast<FAllocaHeap&>(FAllocaSlabHeapTLS_::Get())) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

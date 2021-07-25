@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "Allocator/AllocatorBase.h"
+#include "Allocator/Allocation.h"
 #include "Allocator/SlabHeap.h"
 #include "Memory/PtrRef.h"
 
@@ -10,25 +10,28 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define ARRAY_SLAB(T) ::PPE::TArray<T, ::PPE::FSlabAllocator>
+#define SLAB_ALLOCATOR(_DOMAIN) ::PPE::TSlabAllocator< ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
-#define VECTOR_SLAB(T) ::PPE::TVector<T, ::PPE::FSlabAllocator>
+#define ARRAY_SLAB(_DOMAIN, T) ::PPE::TArray<T, SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
-#define SPARSEARRAY_SLAB(T) ::PPE::TSparseArray<T, ::PPE::FSlabAllocator>
+#define VECTOR_SLAB(_DOMAIN, T) ::PPE::TVector<T, SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR_SLAB(_KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_SLAB(::PPE::TPair<_KEY COMMA _VALUE>)>
+#define SPARSEARRAY_SLAB(_DOMAIN, T) ::PPE::TSparseArray<T, SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
-#define HASHSET_SLAB(T) ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, ::PPE::FSlabAllocator>
+#define ASSOCIATIVE_VECTOR_SLAB(_DOMAIN, _KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_SLAB(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
-#define HASHMAP_SLAB(_KEY, _VALUE) ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::FSlabAllocator>
+#define HASHSET_SLAB(_DOMAIN, T) ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
-#define MEMORYSTREAM_SLAB() ::PPE::TMemoryStream<::PPE::FSlabAllocator>
+#define HASHMAP_SLAB(_DOMAIN, _KEY, _VALUE) ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, SLAB_ALLOCATOR(_DOMAIN) >
+//----------------------------------------------------------------------------
+#define MEMORYSTREAM_SLAB(_DOMAIN) ::PPE::TMemoryStream< SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Slab allocator have an handle to a FPoolingSlabHeap
 //----------------------------------------------------------------------------
-class PPE_CORE_API FSlabAllocator : private FGenericAllocator {
+template <typename _Allocator = ALLOCATOR(Unknown) >
+class PPE_CORE_API TSlabAllocator : private FGenericAllocator {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
@@ -47,17 +50,19 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
 
-    TPtrRef<FPoolingSlabHeap> Heap;
+    using heap_type = TPoolingSlabHeap<_Allocator>;
 
-    FSlabAllocator(FPoolingSlabHeap& heap) NOEXCEPT
+    TPtrRef<heap_type> Heap;
+
+    TSlabAllocator(heap_type& heap) NOEXCEPT
     :   Heap(heap)
     {}
-    explicit FSlabAllocator(Meta::FForceInit forceInit) NOEXCEPT
+    explicit TSlabAllocator(Meta::FForceInit forceInit) NOEXCEPT
     :   Heap(forceInit)
     {}
 
     static size_t SnapSize(size_t s) NOEXCEPT {
-        return FPoolingSlabHeap::SnapSize(s);
+        return heap_type::SnapSize(s);
     }
 
     FAllocatorBlock Allocate(size_t s) const {
@@ -91,14 +96,19 @@ public:
     }
 #endif
 
-    friend bool operator ==(const FSlabAllocator& lhs, const FSlabAllocator& rhs) {
+    friend bool operator ==(const TSlabAllocator& lhs, const TSlabAllocator& rhs) {
         return (lhs.Heap == rhs.Heap);
     }
 
-    friend bool operator !=(const FSlabAllocator& lhs, const FSlabAllocator& rhs) {
+    friend bool operator !=(const TSlabAllocator& lhs, const TSlabAllocator& rhs) {
         return (not operator ==(lhs, rhs));
     }
 };
+//----------------------------------------------------------------------------
+#if PPE_HAS_CXX17
+template <typename _Allocator>
+TSlabAllocator(TPoolingSlabHeap<_Allocator>&) -> TSlabAllocator<_Allocator>;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

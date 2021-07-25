@@ -6,7 +6,6 @@
 
 #   include "Allocator/SlabHeap.h"
 #   include "Allocator/SlabAllocator.h"
-#   include "Allocator/TrackingMalloc.h"
 #   include "Container/SparseArray.h"
 #   include "Container/Vector.h"
 #   include "Diagnostic/CurrentProcess.h"
@@ -14,11 +13,9 @@
 #   include "HAL/PlatformConsole.h"
 #   include "HAL/PlatformDebug.h"
 #   include "HAL/PlatformFile.h"
-#   include "HAL/PlatformMaths.h"
 #   include "HAL/PlatformMemory.h"
 
 #   include "IO/BufferedStream.h"
-#   include "IO/FileSystem.h"
 #   include "IO/FileStream.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/StreamProvider.h"
@@ -29,7 +26,6 @@
 
 #   include "Memory/InSituPtr.h"
 #   include "Memory/MemoryView.h"
-#   include "Memory/UniquePtr.h"
 
 #   include "Meta/Optional.h"
 #   include "Meta/Singleton.h"
@@ -38,11 +34,9 @@
 #   include "Thread/AtomicSpinLock.h"
 #   include "Thread/Task/TaskManager.h"
 #   include "Thread/Task/TaskHelpers.h"
-#   include "Thread/Fiber.h"
 #   include "Thread/ThreadContext.h"
 #   include "Thread/ThreadPool.h"
 
-#   include "Time/DateTime.h"
 #   include "Time/Timestamp.h"
 
 #   include <atomic>
@@ -110,9 +104,12 @@ public:
     using singleton_type::Destroy;
     using singleton_type::Get;
 
+    using heap_type = SLABHEAP_POOLED(Logger);
+    using allocator_type = SLAB_ALLOCATOR(Logger);
+
     struct CACHELINE_ALIGNED FBucket {
         std::recursive_mutex Barrier;
-        SLABHEAP_POOLED(Logger) Heap;
+        heap_type Heap;
         FBucket() = default;
         ~FBucket() {
             const Meta::FRecursiveLockGuard scopeLock(Barrier);
@@ -126,7 +123,7 @@ public:
         Meta::FRecursiveLockGuard Lock;
 
         auto& Heap() const { return Bucket.Heap; }
-        operator FSlabAllocator () const NOEXCEPT { return { Bucket.Heap }; }
+        operator allocator_type() const NOEXCEPT { return { Bucket.Heap }; }
 
         FScope() : FScope(Get()) {}
 
@@ -213,7 +210,7 @@ public: // ILowLevelLogger
 
         const FLogAllocator::FScope scopeAlloc; // #TODO : could be a dead lock issue to keep the lock open while dispatching
 
-        MEMORYSTREAM_SLAB() buf(scopeAlloc);
+        MEMORYSTREAM_SLAB(Logger) buf(scopeAlloc);
 
         FWTextWriter oss(&buf);
         FormatArgs(oss, format, args);
@@ -300,7 +297,7 @@ public: // ILowLevelLogger
         { // don't lock both allocator & task manager to avoid dead locking
             const FLogAllocator::FScope scopeAlloc;
 
-            MEMORYSTREAM_SLAB() buf(scopeAlloc);
+            MEMORYSTREAM_SLAB(Logger) buf(scopeAlloc);
             buf.reserve(sizeof(FDeferredLog) + format.SizeInBytes());
             buf.resize(sizeof(FDeferredLog)); // reserve space for FDeferredLog entry
             buf.SeekO(0, ESeekOrigin::End); // seek at the end of the stream
@@ -360,7 +357,7 @@ private:
         return FBackgroundThreadPool::Get();
     }
 
-class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public FSlabAllocator, Meta::FNonCopyableNorMovable {
+class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public SLAB_ALLOCATOR(Logger), Meta::FNonCopyableNorMovable {
     public:
         ILowLevelLogger* LowLevelLogger{ nullptr };
         const FCategory* Category{ nullptr };
@@ -376,8 +373,8 @@ class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public FSlabAllocator, Meta::FNo
         uintptr_t Canary = PPE_HASH_VALUE_SEED;
 #   endif
 
-        explicit FDeferredLog(FPoolingSlabHeap& heap) NOEXCEPT
-            : FSlabAllocator(heap)
+        explicit FDeferredLog(SLABHEAP_POOLED(Logger)& heap) NOEXCEPT
+        :   SLAB_ALLOCATOR(Logger){ heap }
         {}
 
         FWStringView Text() const { return { (const wchar_t *)(this + 1), TextLength }; }

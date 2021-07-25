@@ -2,6 +2,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
+#include "IO/ConstChar.h"
 #include "IO/FileStream.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
@@ -173,6 +174,10 @@ static void Test_StringEscaping_() {
     Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
+static void Test_LogPrintf_() {
+    LOG_PRINTF(Test_Format, Info, L"Printf testing %d", 42);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -185,6 +190,7 @@ void Test_Format() {
     Test_Format_();
     Test_TextWriter_();
     Test_StringEscaping_();
+    Test_LogPrintf_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

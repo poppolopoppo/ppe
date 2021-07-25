@@ -529,7 +529,7 @@ public:
             const size_t newSize = oldSize + str.size();
 
             if (newSize > _outp.Storage().SizeInBytes()) {
-                const size_t newCapacity = FSlabHeap::SnapSize(Max(_outp.Storage().SizeInBytes() * 2, newSize));
+                const size_t newCapacity = SLABHEAP(TypeNames)::SnapSize(Max(_outp.Storage().SizeInBytes() * 2, newSize));
                 const FRawMemory oldStorage = _outp.Storage();
                 _outp.Relocate(_heap.ReallocateT_AssumeLast(oldStorage, newCapacity));
                 Assert_NoAssume(_outp.Storage().data() == oldStorage.data()); // should realloc inplace
@@ -543,7 +543,7 @@ public:
         }
 
     private:
-        FSlabHeap& _heap;
+        SLABHEAP(TypeNames)& _heap;
         FMemoryViewWriter _outp;
     };
 

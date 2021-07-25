@@ -5,17 +5,11 @@
 #include "Allocator/AllocatorBinning.h"
 #include "Container/Array.h"
 #include "Container/Vector.h"
-#include "HAL/PlatformDebug.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 
-#if USE_PPE_MEMORYDOMAINS
-#   define SLABHEAP(_DOMAIN) ::PPE::TSlabHeap<MEMORYDOMAIN_TAG(_DOMAIN)>
-#   define SLABHEAP_POOLED(_DOMAIN) ::PPE::TPoolingSlabHeap<MEMORYDOMAIN_TAG(_DOMAIN)>
-#else
-#   define SLABHEAP(_DOMAIN) ::PPE::FSlabHeap
-#   define SLABHEAP_POOLED(_DOMAIN) ::PPE::FPoolingSlabHeap
-#endif
+#define SLABHEAP(_DOMAIN) ::PPE::TSlabHeap<ALLOCATOR(_DOMAIN)>
+#define SLABHEAP_POOLED(_DOMAIN) ::PPE::TPoolingSlabHeap<ALLOCATOR(_DOMAIN)>
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -31,16 +25,20 @@ struct FSlabMarker {
 #endif
 };
 //----------------------------------------------------------------------------
-class PPE_CORE_API FSlabHeap : Meta::FNonCopyableNorMovable {
+template <typename _Allocator = ALLOCATOR(Unknown)>
+class TSlabHeap : _Allocator, Meta::FNonCopyableNorMovable {
 public:
-    static const u32 DefaultSlabSize;
+    STATIC_CONST_INTEGRAL(u32, DefaultSlabSize, ALLOCATION_GRANULARITY);
+
+    using allocator_type = _Allocator;
+    using allocator_traits = TAllocatorTraits<_Allocator>;
 
     class FStackMarker : Meta::FThreadResource {
-        TPtrRef<FSlabHeap> _heap;
+        TPtrRef<TSlabHeap> _heap;
         FSlabMarker _origin;
     public:
         FStackMarker() = default;
-        explicit FStackMarker(FSlabHeap& heap) NOEXCEPT
+        explicit FStackMarker(TSlabHeap& heap) NOEXCEPT
         :   _heap(heap), _origin(_heap->Tell())
         {}
         ~FStackMarker() NOEXCEPT {
@@ -48,14 +46,30 @@ public:
                 _heap->Rewind(_origin);
         }
         const FSlabMarker& Tell() const { return _origin; }
-        FSlabHeap* operator ->() const {
+        TSlabHeap* operator ->() const {
             THIS_THREADRESOURCE_CHECKACCESS();
             return _heap.get();
         }
     };
 
-    explicit FSlabHeap(ARG0_IF_MEMORYDOMAINS(FMemoryTracking* pParent)) NOEXCEPT;
-    ~FSlabHeap();
+#if USE_PPE_MEMORYDOMAINS
+    TSlabHeap() NOEXCEPT;
+    explicit TSlabHeap(_Allocator&& ralloc) NOEXCEPT;
+    explicit TSlabHeap(const _Allocator& alloc) NOEXCEPT;
+#else
+    TSlabHeap() = default;
+    explicit TSlabHeap(_Allocator&& ralloc) NOEXCEPT : _Allocator(std::move(ralloc)) {}
+    explicit TSlabHeap(const _Allocator& alloc) NOEXCEPT : _Allocator(alloc) {}
+#endif
+
+    explicit TSlabHeap(Meta::FForceInit) NOEXCEPT
+    :   _Allocator(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
+    {}
+
+    ~TSlabHeap();
+
+    allocator_type& Allocator() { return allocator_traits::Get(*this); }
+    const allocator_type& Allocator() const { return allocator_traits::Get(*this); }
 
     u32 SlabSize() const { return _slabSize; }
     void SetSlabSize(size_t value) NOEXCEPT;
@@ -121,10 +135,10 @@ public:
 
 private:
     struct FSlabPtr {
+        std::streamoff Origin{ 0 };
         void* Ptr{nullptr};
         u32 Offset{0};
         u32 Size{0};
-        std::streamoff Origin{ 0 };
     };
 
     NO_INLINE void* Allocate_FromNewSlab_(FSlabPtr* pCurr, size_t size);
@@ -137,7 +151,7 @@ private:
         return nullptr;
     }
 
-    VECTORMINSIZE(Internal, FSlabPtr, 16) _slabs;
+    VECTORINSITU(Internal, FSlabPtr, 3) _slabs;
     u32 _slabSize{ DefaultSlabSize };
     std::streamoff _tell{ 0 };
 
@@ -146,19 +160,19 @@ private:
 #endif
 };
 //----------------------------------------------------------------------------
-#if USE_PPE_MEMORYDOMAINS
-template <typename _Domain = MEMORYDOMAIN_TAG(Container)>
-class TSlabHeap : public FSlabHeap {
-public:
-    TSlabHeap() NOEXCEPT : FSlabHeap(std::addressof(_Domain::TrackingData())) {}
-};
-#endif
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FPoolingSlabHeap {
+template <typename _Allocator = ALLOCATOR(Unknown)>
+class TPoolingSlabHeap {
 public:
-    explicit FPoolingSlabHeap(ARG0_IF_MEMORYDOMAINS(FMemoryTracking* pParent)) NOEXCEPT;
+    using heap_type = TSlabHeap<_Allocator>;
+    using allocator_type = typename heap_type::allocator_type;
+    using allocator_traits = typename heap_type::allocator_traits;
+
+    TPoolingSlabHeap() = default;
+
+    TPoolingSlabHeap(_Allocator&& ralloc) NOEXCEPT : _heap(std::move(ralloc)) {}
+    TPoolingSlabHeap(const _Allocator& alloc) NOEXCEPT : _heap(alloc) {}
 
     size_t SlabSize() const { return _heap.SlabSize(); }
     void SetSlabSize(size_t value) NOEXCEPT {
@@ -291,7 +305,7 @@ public:
     static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
         return (sizeInBytes <= FAllocatorBinning::MaxBinSize
             ? FAllocatorBinning::BoundSizeToBins(checked_cast<u32>(sizeInBytes))
-            : FSlabHeap::SnapSize(sizeInBytes) );
+            : heap_type::SnapSize(sizeInBytes) );
     }
 
 private:
@@ -304,43 +318,41 @@ private:
     NO_INLINE void* Allocate_SpareBlock_(size_t size);
     NO_INLINE void Deallocate_SpareBlock_(void* ptr, size_t size) NOEXCEPT;
 
-    FSlabHeap _heap;
+    TSlabHeap<_Allocator> _heap;
     FSpareBlock_* _spares{ nullptr };
-    TStaticArray<void*, FAllocatorBinning::NumBins> _pools;
+    TStaticArray<void*, FAllocatorBinning::NumBins> _pools{ nullptr };
 };
-//----------------------------------------------------------------------------
-#if USE_PPE_MEMORYDOMAINS
-template <typename _Domain = MEMORYDOMAIN_TAG(Container)>
-class TPoolingSlabHeap : public FPoolingSlabHeap {
-public:
-    TPoolingSlabHeap() NOEXCEPT : FPoolingSlabHeap(std::addressof(_Domain::TrackingData())) {}
-};
-#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
+#include "Allocator/SlabHeap-inl.h"
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Use FSlabHeap with allocation operators
+// Use TSlabHeap<> with allocation operators
 //----------------------------------------------------------------------------
-inline void* operator new(size_t sizeInBytes, PPE::FSlabHeap& heap) NOEXCEPT {
+template <typename _Allocator>
+inline void* operator new(size_t sizeInBytes, PPE::TSlabHeap<_Allocator>& heap) NOEXCEPT {
     return heap.Allocate(sizeInBytes);
 }
-inline void operator delete(void* ptr, PPE::FSlabHeap& heap) NOEXCEPT {
+template <typename _Allocator>
+inline void operator delete(void* ptr, PPE::TSlabHeap<_Allocator>& heap) NOEXCEPT {
     UNUSED(ptr);
     UNUSED(heap);
     AssertNotImplemented(); // not supported
 }
 //----------------------------------------------------------------------------
-// Use FPoolingSlabHeap with allocation operators
+// Use TPoolingSlabHeap<> with allocation operators
 //----------------------------------------------------------------------------
-inline void* operator new(size_t sizeInBytes, PPE::FPoolingSlabHeap& heap) NOEXCEPT {
+template <typename _Allocator>
+inline void* operator new(size_t sizeInBytes, PPE::TPoolingSlabHeap<_Allocator>& heap) NOEXCEPT {
     return heap.Allocate(sizeInBytes);
 }
-inline void operator delete(void* ptr, PPE::FPoolingSlabHeap& heap) NOEXCEPT {
+template <typename _Allocator>
+inline void operator delete(void* ptr, PPE::TPoolingSlabHeap<_Allocator>& heap) NOEXCEPT {
     UNUSED(ptr);
     UNUSED(heap);
     AssertNotImplemented(); // could be supported if block size was known
