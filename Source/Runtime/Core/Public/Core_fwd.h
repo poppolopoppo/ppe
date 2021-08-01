@@ -30,4 +30,5 @@
 #include "Meta/StronglyTyped.h"
 #include "Meta/ThreadResource.h"
 #include "Meta/TypeTraits.h"
-#include "Meta/Warnings.h"
+
+#include "HAL/PlatformMacros.h"

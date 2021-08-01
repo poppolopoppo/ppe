@@ -6,19 +6,6 @@
 
 #include "HAL/Linux/LinuxPlatformIncludes.h"
 
-#if __has_builtin(__builtin_debugtrap)
-#   define PPE_DEBUG_BREAK() __builtin_debugtrap()
-#else
-#   include <signal.h>
-#   if defined(SIGTRAP)
-#       define PPE_DEBUG_BREAK() raise(SIGTRAP)
-#   else
-#       define PPE_DEBUG_BREAK() __asm__ volatile("int $0x03")
-#   endif
-#endif
-
-#define PPE_DECLSPEC_ALLOCATOR() // not supported on Linux
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

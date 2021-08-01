@@ -8,21 +8,6 @@
 #include "IO/String_fwd.h"
 #include "Memory/MemoryView.h"
 
-#define PPE_HAL_MAKEINCLUDE(_BASENAME) \
-    STRINGIZE(HAL/TARGET_PLATFORM/CONCAT(TARGET_PLATFORM, _BASENAME).h)
-
-#define PPE_HAL_TARGETALIAS(_BASENAME) \
-    CONCAT3(F, TARGET_PLATFORM, _BASENAME)
-
-#define PPE_HAL_MAKEALIAS(_BASENAME) \
-    namespace PPE { \
-        using CONCAT(F, _BASENAME) = PPE_HAL_TARGETALIAS(_BASENAME); \
-    }
-#define PPE_HAL_MAKEALIAS_NAMESPACE(_NAMESPACE, _BASENAME) \
-    namespace PPE { namespace _NAMESPACE { \
-        using CONCAT(F, _BASENAME) = PPE_HAL_TARGETALIAS(_BASENAME); \
-    } }
-
 namespace PPE {
 EXTERN_LOG_CATEGORY(PPE_CORE_API, HAL)
 //----------------------------------------------------------------------------

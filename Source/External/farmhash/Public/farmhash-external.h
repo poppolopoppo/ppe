@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Meta/Warnings.h"
+#include "HAL/PlatformMacros.h"
 
 #ifndef EXPORT_PPE_EXTERNAL_FARMHASH
     PRAGMA_MSVC_WARNING_PUSH()

@@ -54,7 +54,7 @@
 #include "Runtime/Core/Public/Meta/Cast.h"
 #include "Runtime/Core/Public/Meta/TypeInfo.h"
 #include "Runtime/Core/Public/Meta/Hash_fwd.h"
-#include "Runtime/Core/Public/Meta/Warnings.h"
+#include "Runtime/Core/Public/HAL/PlatformMacros.h"
 #include "Runtime/Core/Public/Meta/Delete.h"
 #include "Runtime/Core/Public/Meta/Enum.h"
 #include "Runtime/Core/Public/Meta/ForRange.h"

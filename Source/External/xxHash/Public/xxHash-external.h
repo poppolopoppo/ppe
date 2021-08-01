@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Meta/Warnings.h"
+#include "HAL/PlatformMacros.h"
 
 #ifdef CPP_CLANG
 #    pragma clang system_header
@@ -51,5 +51,3 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to '
     PRAGMA_MSVC_WARNING_POP()
 
 #endif //!EXPORT_PPE_RUNTIME_EXTERNAL_XXHASH
-
-

@@ -2,8 +2,6 @@
 
 #include "HAL/TargetPlatform.h"
 
-#define USE_PPE_PLATFORM_DEBUG (!USE_PPE_FINAL_RELEASE || USE_PPE_MEMORY_DEBUGGING)
-
 #define USE_PPE_PLATFORM_DEBUG_CPU_MARKERS (USE_PPE_PLATFORM_DEBUG && 1) // %_NOCOMMIT%
 #define USE_PPE_PLATFORM_DEBUG_MEM_MARKERS (USE_PPE_PLATFORM_DEBUG && !USE_PPE_PROFILING && 1) // %_NOCOMMIT%
 #define USE_PPE_PLATFORM_DEBUG_MEM_POISONS (USE_PPE_SANITIZER && 1) // %_NOCOMMIT%
@@ -66,11 +64,6 @@ public: // profiling
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#else
-#   define PPE_DEBUG_BREAK() NOOP()
-#   define PPE_DEBUG_CRASH() NOOP()
-#   define PPE_DECLSPEC_ALLOCATOR()
 
 #endif //!USE_PLATFORM_DEBUG
 

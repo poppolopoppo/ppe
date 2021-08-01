@@ -2,7 +2,7 @@
 
 #include "Meta/Hash_fwd.h"
 #include "Meta/TypeTraits.h"
-#include "Meta/Warnings.h"
+#include "HAL/PlatformMacros.h"
 
 #include <iterator>
 

@@ -48,7 +48,7 @@
 // project includes
 #include "winnt_version.h"
 #include "Runtime/Core/Public/Meta/Aliases.h"
-#include "Runtime/Core/Public/Meta/Warnings.h"
+#include "Runtime/Core/Public/HAL/PlatformMacros.h"
 #endif // BUILD_Win32_FastDebug
 #ifdef BUILD_Win64_FastDebug
 // system includes
@@ -58,6 +58,6 @@
 // project includes
 #include "winnt_version.h"
 #include "Runtime/Core/Public/Meta/Aliases.h"
-#include "Runtime/Core/Public/Meta/Warnings.h"
+#include "Runtime/Core/Public/HAL/PlatformMacros.h"
 #endif // BUILD_Win64_FastDebug
 #endif //! PLATFORM_WINDOWS
