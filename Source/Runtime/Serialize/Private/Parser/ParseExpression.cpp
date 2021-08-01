@@ -362,9 +362,7 @@ RTTI::FAtom FCastExpr::Eval(FParseContext* context) const {
 
         return casted;
     }
-    else {
-        return atom;
-    }
+    return atom;
 }
 //----------------------------------------------------------------------------
 FString FCastExpr::ToString() const {
@@ -389,7 +387,7 @@ FFunctionCall::~FFunctionCall() = default;
 RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
     Assert(context);
 
-    RTTI::FAtom atom = _obj->Eval(context);
+    const RTTI::FAtom atom = _obj->Eval(context);
 
     if (not atom)
         PPE_THROW_IT(FParserException("void object reference in function call", _obj->Site(), this));
@@ -410,8 +408,7 @@ RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
     if (not funcIFP) {
         if (klass->FunctionIFP(_funcname, RTTI::EFunctionFlags::All))
             PPE_THROW_IT(FParserException("can't call non public function", this));
-        else
-            PPE_THROW_IT(FParserException("unknown function name", this));
+        PPE_THROW_IT(FParserException("unknown function name", this));
     }
 
     const TMemoryView<const RTTI::FMetaParameter> prms = funcIFP->Parameters();
@@ -419,7 +416,7 @@ RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
     // #TODO : handle optional parameters
     if (prms.size() > _args.size())
         PPE_THROW_IT(FParserException("not enough parameters given to function call", this));
-    else if (prms.size() < _args.size())
+    if (prms.size() < _args.size())
         PPE_THROW_IT(FParserException("too much parameters given to function call", this));
     Assert(prms.size() == _args.size());
 
@@ -470,9 +467,9 @@ FString FFunctionCall::ToString() const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FSubscriptOperator::FSubscriptOperator(PCParseExpression&& lvalue, PCParseExpression&& subscript, const Lexer::FSpan& site)
-:   FParseExpression(site)
-,   _lvalue(std::move(lvalue))
-,   _subscript(std::move(subscript)) {
+    :   FParseExpression(site)
+        ,   _lvalue(std::move(lvalue))
+        ,   _subscript(std::move(subscript)) {
     Assert_NoAssume(_lvalue);
     Assert_NoAssume(_subscript);
 }
@@ -539,15 +536,15 @@ RTTI::FAtom FSubscriptOperator::Subscript_Object_(RTTI::FAtom lvalue, RTTI::FAto
     const RTTI::FMetaClass* const klass = objref->RTTI_Class();
     Assert(klass);
 
-    const RTTI::FMetaProperty* prop = nullptr;
+    const RTTI::FMetaProperty* prop;
     switch (subscript.Traits()->TypeId()) {
-    case RTTI::FTypeId(RTTI::ENativeType::Name):
+    case static_cast<RTTI::FTypeId>(RTTI::ENativeType::Name):
         prop = klass->PropertyIFP(subscript.FlatData<RTTI::FName>());
         break;
-    case RTTI::FTypeId(RTTI::ENativeType::String):
+    case static_cast<RTTI::FTypeId>(RTTI::ENativeType::String):
         prop = klass->PropertyIFP(subscript.FlatData<FString>().MakeView());
         break;
-    case RTTI::FTypeId(RTTI::ENativeType::WString):
+    case static_cast<RTTI::FTypeId>(RTTI::ENativeType::WString):
         prop = klass->PropertyIFP(PPE::ToString(subscript.FlatData<FWString>()).MakeView());
         break;
     default:

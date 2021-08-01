@@ -32,10 +32,10 @@ FMemoryTracking::FMemoryTracking(
 bool FMemoryTracking::IsChildOf(const FMemoryTracking& other) const {
     if (&other == this)
         return true;
-    else if (_parent)
+    if (_parent)
         return _parent->IsChildOf(other);
-    else
-        return false;
+
+    return false;
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::Allocate(size_t userSize, size_t systemSize) NOEXCEPT {
@@ -167,43 +167,39 @@ void FMemoryTracking::FCounters_::Allocate(size_t s) {
     if (Unlikely(total > PeakSize))
         PeakSize = total;
 
-    const size_t n = ++NumAllocs;
+    const size_t n{ NumAllocs.fetch_add(1, std::memory_order_relaxed) + 1 };
 
     if (Unlikely(n > PeakAllocs))
         PeakAllocs = n;
 
-    ++AccumulatedAllocs;
-    AccumulatedSize += s;
+    AccumulatedAllocs.fetch_add(1, std::memory_order_relaxed);
+    AccumulatedSize.fetch_add(s, std::memory_order_relaxed);
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::FCounters_::Deallocate(size_t s) {
-    Assert(NumAllocs);
     Assert_NoAssume(MinSize <= s);
     Assert_NoAssume(MaxSize >= s);
-    Assert(TotalSize >= s);
 
-    --NumAllocs;
-    TotalSize -= s;
+    Verify(NumAllocs.fetch_sub(1, std::memory_order_relaxed) > 0);
+    Verify(TotalSize.fetch_sub(s, std::memory_order_relaxed) >= s);
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::FCounters_::ReleaseBatch(size_t n, size_t s) {
-    Assert(NumAllocs >= n);
-    Assert(TotalSize >= s);
-
-    NumAllocs -= n;
-    TotalSize -= s;
+    Verify(NumAllocs.fetch_sub(n, std::memory_order_relaxed) >= n);
+    Verify(TotalSize.fetch_sub(s, std::memory_order_relaxed) >= s);
 }
 //----------------------------------------------------------------------------
 auto FMemoryTracking::FCounters_::Snapshot() const -> FSnapshot {
+    std::atomic_thread_fence(std::memory_order_acquire);
     return FSnapshot{
-        checked_cast<i64>(NumAllocs),
-        checked_cast<i64>(MinSize <= MaxSize ? MinSize.load() : 0),
-        checked_cast<i64>(MaxSize),
-        checked_cast<i64>(TotalSize),
-        checked_cast<i64>(PeakAllocs),
-        checked_cast<i64>(PeakSize),
-        checked_cast<i64>(AccumulatedAllocs),
-        checked_cast<i64>(AccumulatedSize) };
+        checked_cast<i64>(NumAllocs.load(std::memory_order_relaxed)),
+        checked_cast<i64>(MinSize <= MaxSize ? MinSize.load(std::memory_order_relaxed) : 0),
+        checked_cast<i64>(MaxSize.load(std::memory_order_relaxed)),
+        checked_cast<i64>(TotalSize.load(std::memory_order_relaxed)),
+        checked_cast<i64>(PeakAllocs.load(std::memory_order_relaxed)),
+        checked_cast<i64>(PeakSize.load(std::memory_order_relaxed)),
+        checked_cast<i64>(AccumulatedAllocs.load(std::memory_order_relaxed)),
+        checked_cast<i64>(AccumulatedSize.load(std::memory_order_relaxed)) };
 }
 //----------------------------------------------------------------------------
 auto FMemoryTracking::FCounters_::Substract(const FCounters_& o) const -> FSnapshot {

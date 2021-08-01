@@ -326,7 +326,7 @@ auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _I
     const size_type p = std::distance<const_iterator>(begin(), pos);
     const u32 count = checked_cast<u32>(std::distance(first, last));
 
-    Assert(p <= count);
+    Assert(p <= _size);
     if (0 < count) {
         reserve_Additional(count);
 

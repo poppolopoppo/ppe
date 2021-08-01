@@ -15,16 +15,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FSlabMarker {
-    std::streamoff Origin{ 0 };
-#if USE_PPE_MEMORYDOMAINS
-    struct {
-        size_t NumAllocs{ 0 };
-        size_t TotalSize{ 0 };
-    }   Snapshot;
-#endif
-};
-//----------------------------------------------------------------------------
 template <typename _Allocator = ALLOCATOR(Unknown)>
 class TSlabHeap : _Allocator, Meta::FNonCopyableNorMovable {
 public:
@@ -33,37 +23,18 @@ public:
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;
 
-    class FStackMarker : Meta::FThreadResource {
-        TPtrRef<TSlabHeap> _heap;
-        FSlabMarker _origin;
-    public:
-        FStackMarker() = default;
-        explicit FStackMarker(TSlabHeap& heap) NOEXCEPT
-        :   _heap(heap), _origin(_heap->Tell())
-        {}
-        ~FStackMarker() NOEXCEPT {
-            if (_heap)
-                _heap->Rewind(_origin);
-        }
-        const FSlabMarker& Tell() const { return _origin; }
-        TSlabHeap* operator ->() const {
-            THIS_THREADRESOURCE_CHECKACCESS();
-            return _heap.get();
-        }
-    };
-
 #if USE_PPE_MEMORYDOMAINS
     TSlabHeap() NOEXCEPT;
-    explicit TSlabHeap(_Allocator&& ralloc) NOEXCEPT;
-    explicit TSlabHeap(const _Allocator& alloc) NOEXCEPT;
+    explicit TSlabHeap(allocator_type&& ralloc) NOEXCEPT;
+    explicit TSlabHeap(const allocator_type& alloc) NOEXCEPT;
 #else
     TSlabHeap() = default;
-    explicit TSlabHeap(_Allocator&& ralloc) NOEXCEPT : _Allocator(std::move(ralloc)) {}
-    explicit TSlabHeap(const _Allocator& alloc) NOEXCEPT : _Allocator(alloc) {}
+    explicit TSlabHeap(allocator_type&& ralloc) NOEXCEPT : allocator_type(allocator_traits::SelectOnMove(std::move(ralloc))) {}
+    explicit TSlabHeap(const allocator_type& alloc) NOEXCEPT : allocator_type(allocator_traits::SelectOnCopy(alloc)) {}
 #endif
 
     explicit TSlabHeap(Meta::FForceInit) NOEXCEPT
-    :   _Allocator(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
+    :   allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
     {}
 
     ~TSlabHeap();
@@ -71,36 +42,31 @@ public:
     allocator_type& Allocator() { return allocator_traits::Get(*this); }
     const allocator_type& Allocator() const { return allocator_traits::Get(*this); }
 
+#if USE_PPE_MEMORYDOMAINS
+    bool HasLiveBlocks() const NOEXCEPT { return (!!_trackingData.User().NumAllocs); }
+#endif
+
     u32 SlabSize() const { return _slabSize; }
     void SetSlabSize(size_t value) NOEXCEPT;
-
-    FSlabMarker Tell() const NOEXCEPT;
-    void Rewind(const FSlabMarker& marker) NOEXCEPT;
-
-    FStackMarker StackMarker() NOEXCEPT {
-        return FStackMarker( *this );
-    }
 
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* Allocate(size_t size) {
         Assert(size);
         size = Meta::RoundToNext(size, ALLOCATION_BOUNDARY);
 
-        FSlabPtr* const pSlab = SeekSlab_(_tell);
-        if (Likely(pSlab)) {
-            Assert_NoAssume(pSlab->Origin + pSlab->Offset == _tell);
-            if (pSlab->Offset + size <= pSlab->Size) {
-                void* const p = (static_cast<u8*>(pSlab->Ptr) + pSlab->Offset);
+        for (FSlabPtr& slab : _slabs) {
+            if (slab.Offset + size <= slab.Size) {
+                void* const p = (static_cast<u8*>(slab.Ptr) + slab.Offset);
 
-                _tell += size;
-                pSlab->Offset += checked_cast<u32>(size);
+                slab.Offset += checked_cast<u32>(size);
 
                 ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(p, size));
                 ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateUser(size));
+                ONLY_IF_ASSERT(++_numLiveBlocks);
                 return p;
             }
         }
 
-        return Allocate_FromNewSlab_(pSlab, size);
+        return Allocate_FromNewSlab_(size);
     }
 
     NODISCARD void* Reallocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize);
@@ -135,30 +101,35 @@ public:
 
 private:
     struct FSlabPtr {
-        std::streamoff Origin{ 0 };
-        void* Ptr{nullptr};
-        u32 Offset{0};
-        u32 Size{0};
+        void* Ptr;
+        u32 Offset;
+        u32 Size : 31;
+        u32 Standalone : 1;
     };
 
-    NO_INLINE void* Allocate_FromNewSlab_(FSlabPtr* pCurr, size_t size);
+    NO_INLINE void* Allocate_FromNewSlab_(size_t size);
 
-    FSlabPtr* SeekSlab_(std::streamsize off) NOEXCEPT {
-        reverseforeachitem(it, _slabs) {
-            if (it->Origin <= off)
-                return std::addressof(*it);
-        }
-        return nullptr;
-    }
+    template <typename _Allocator>
+    friend class TPoolingSlabHeap;
+    void ReclaimUserBlock_AssumeTracked_(void* ptr, size_t size);
 
-    VECTORINSITU(Internal, FSlabPtr, 3) _slabs;
+    VECTORINSITU(Internal, FSlabPtr, 4) _slabs;
     u32 _slabSize{ DefaultSlabSize };
-    std::streamoff _tell{ 0 };
 
+#if USE_PPE_ASSERT
+    u32 _numLiveBlocks{ 0 };
+#endif
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking _trackingData;
 #endif
 };
+//----------------------------------------------------------------------------
+#if PPE_HAS_CXX17
+template <typename _Allocator>
+TSlabHeap(_Allocator&&) -> TSlabHeap< Meta::TDecay<_Allocator> >;
+template <typename _Allocator>
+TSlabHeap(const _Allocator&) -> TSlabHeap< Meta::TDecay<_Allocator> >;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -171,13 +142,28 @@ public:
 
     TPoolingSlabHeap() = default;
 
-    TPoolingSlabHeap(_Allocator&& ralloc) NOEXCEPT : _heap(std::move(ralloc)) {}
-    TPoolingSlabHeap(const _Allocator& alloc) NOEXCEPT : _heap(alloc) {}
+    TPoolingSlabHeap(allocator_type&& ralloc) NOEXCEPT : _heap(std::move(ralloc)) {}
+    TPoolingSlabHeap(const allocator_type& alloc) NOEXCEPT : _heap(alloc) {}
+
+    ~TPoolingSlabHeap() {
+#if USE_PPE_ASSERT
+        TrimMemory(); // will trigger an error if a block is still allocated
+#else
+        ReleaseAll(); // discard all allocations
+#endif
+    }
+
+    allocator_type& Allocator() { return _heap.Allocator(); }
+    const allocator_type& Allocator() const { return _heap.Allocator(); }
+
+#if USE_PPE_ASSERT
+    bool HasLiveBlocks() const NOEXCEPT { return _heap.HasLiveBlocks(); }
+#endif
 
     size_t SlabSize() const { return _heap.SlabSize(); }
     void SetSlabSize(size_t value) NOEXCEPT {
-        AssertRelease_NoAssume(value >= FAllocatorBinning::MaxBinSize);
         _heap.SetSlabSize(value);
+        AssertRelease_NoAssume(_heap.SlabSize() >= MaxBinSize);
     }
 
 #if !USE_PPE_FINAL_RELEASE
@@ -189,43 +175,44 @@ public:
 #endif
 
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* Allocate(size_t size) {
-        if (size <= FAllocatorBinning::MaxBinSize) {
+        if (size <= MaxBinSize) {
             const u32 pool = FAllocatorBinning::IndexFromSize(size);
             Assert_NoAssume(FAllocatorBinning::BinSizes[pool] >= size);
             return PoolAlloc(pool);
         }
-        return Allocate_SpareBlock_(size);
+        return _heap.Allocate(size);
     }
 
     void Deallocate(void* ptr, size_t size) NOEXCEPT {
         // always try to resize the heap first
         if (not _heap.Deallocate_ReturnIfLast(ptr, size)) {
-            if (size <= FAllocatorBinning::MaxBinSize) {
+            if (size <= MaxBinSize) {
                 // put small block back in pools
                 const u32 pool = FAllocatorBinning::IndexFromSize(size);
                 Assert_NoAssume(FAllocatorBinning::BinSizes[pool] >= size);
                 PoolFree(pool, ptr);
             }
             else {
-                // larger blocks are split in pools
-                Deallocate_SpareBlock_(ptr, size);
+                _heap.ReclaimUserBlock_AssumeTracked_(ptr, size);
             }
         }
     }
 
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* PoolAlloc(u32 pool) {
-        Assert(pool < FAllocatorBinning::NumBins);
+        Assert(pool < NumBins);
         if (_pools[pool]) {
             void* const p = _pools[pool];
             _pools[pool] = *static_cast<void**>(p);
+            ONLY_IF_MEMORYDOMAINS(TrackingData().AllocateUser(FAllocatorBinning::BinSizes[pool]));
             ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(p, FAllocatorBinning::BinSizes[pool]));
             return p;
         }
-        return Allocate_SpareBlock_(FAllocatorBinning::BinSizes[pool]);
+        return _heap.Allocate(FAllocatorBinning::BinSizes[pool]);
     }
 
     void PoolFree(u32 pool, void* ptr) NOEXCEPT {
-        Assert(pool < FAllocatorBinning::NumBins);
+        Assert(pool < NumBins);
+        ONLY_IF_MEMORYDOMAINS(TrackingData().DeallocateUser(FAllocatorBinning::BinSizes[pool]));
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(ptr, FAllocatorBinning::BinSizes[pool]));
         *static_cast<void**>(ptr) = _pools[pool];
         _pools[pool] = ptr;
@@ -234,7 +221,7 @@ public:
     template <typename T>
     NODISCARD PPE_DECLSPEC_ALLOCATOR() T* AllocateT() {
         CONSTEXPR size_t pool = FAllocatorBinning::IndexFromSizeConst(sizeof(T));
-        STATIC_ASSERT(pool < FAllocatorBinning::NumBins);
+        STATIC_ASSERT(pool < NumBins);
         return static_cast<T*>(PoolAlloc(pool));
     }
 
@@ -267,61 +254,36 @@ public:
     template <typename T>
     void DeallocateT(T* ptr) {
         CONSTEXPR size_t pool = FAllocatorBinning::IndexFromSizeConst(sizeof(T));
-        STATIC_ASSERT(pool < FAllocatorBinning::NumBins);
+        STATIC_ASSERT(pool < NumBins);
         return PoolFree(pool, ptr);
     }
 
-    NODISCARD void* Reallocate(void* ptr, size_t newSize, size_t oldSize) {
-        if (!!oldSize && !!newSize) {
-            newSize = SnapSize(newSize);
-            oldSize = SnapSize(oldSize);
-
-            if (newSize != oldSize) {
-                // don't use PoolXXX() functions here: not guaranteed to fit in pool
-                void* const newp = Allocate(newSize);
-                FPlatformMemory::Memcpy(newp, ptr, Min(newSize, oldSize));
-                Deallocate(ptr, oldSize);
-                ptr = newp;
-            }
-
-            return ptr;
-        }
-        else if (oldSize) {
-            Assert_NoAssume(0 == newSize);
-            Deallocate(ptr, oldSize);
-            return nullptr;
-        }
-        else {
-            Assert(newSize);
-            Assert(nullptr == ptr);
-            return Allocate(newSize);
-        }
-    }
+    NODISCARD void* Reallocate(void* ptr, size_t newSize, size_t oldSize);
 
     void DiscardAll() NOEXCEPT;
     void ReleaseAll();
     void TrimMemory();
 
     static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
-        return (sizeInBytes <= FAllocatorBinning::MaxBinSize
+        return (sizeInBytes <= MaxBinSize
             ? FAllocatorBinning::BoundSizeToBins(checked_cast<u32>(sizeInBytes))
             : heap_type::SnapSize(sizeInBytes) );
     }
 
 private:
-    struct FSpareBlock_ {
-        size_t BlockSize;
-        FSpareBlock_* pNext;
-        void* EndPtr() const { return ((u8*)this + BlockSize); }
-    };
+    STATIC_CONST_INTEGRAL(size_t, NumBins, FAllocatorBinning::NumBins_4kPages);
+    STATIC_CONST_INTEGRAL(size_t, MaxBinSize, FAllocatorBinning::MaxBinSize_4kPages);
 
-    NO_INLINE void* Allocate_SpareBlock_(size_t size);
-    NO_INLINE void Deallocate_SpareBlock_(void* ptr, size_t size) NOEXCEPT;
-
-    TSlabHeap<_Allocator> _heap;
-    FSpareBlock_* _spares{ nullptr };
-    TStaticArray<void*, FAllocatorBinning::NumBins> _pools{ nullptr };
+    TSlabHeap<allocator_type> _heap;
+    TStaticArray<void*, NumBins> _pools{ 0 };
 };
+//----------------------------------------------------------------------------
+#if PPE_HAS_CXX17
+template <typename _Allocator>
+TPoolingSlabHeap(_Allocator&&) -> TPoolingSlabHeap< Meta::TDecay<_Allocator> >;
+template <typename _Allocator>
+TPoolingSlabHeap(const _Allocator&) -> TPoolingSlabHeap< Meta::TDecay<_Allocator> >;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

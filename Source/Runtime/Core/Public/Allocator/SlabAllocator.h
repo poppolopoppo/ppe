@@ -91,8 +91,11 @@ public:
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking& TrackingData() NOEXCEPT {
-        return Heap->TrackingData();
+    FMemoryTracking* TrackingData() NOEXCEPT {
+        return std::addressof(Heap->TrackingData());
+    }
+    auto& AllocatorWithoutTracking() NOEXCEPT {
+        return Heap->Allocator(); // can't remove tracking
     }
 #endif
 
@@ -107,7 +110,7 @@ public:
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
 template <typename _Allocator>
-TSlabAllocator(TPoolingSlabHeap<_Allocator>&) -> TSlabAllocator<_Allocator>;
+TSlabAllocator(TPoolingSlabHeap<_Allocator>&) -> TSlabAllocator< Meta::TDecay<_Allocator> >;
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -90,7 +90,7 @@ FWTextWriter& FAssertException::Description(FWTextWriter& oss) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
+NO_INLINE void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
     static THREAD_LOCAL bool GIsInAssertion = false;
     static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
     static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
@@ -172,7 +172,7 @@ FWTextWriter& FAssertReleaseException::Description(FWTextWriter& oss) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
+NO_INLINE void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
     static THREAD_LOCAL bool GIsInAssertion = false;
     static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
     static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);

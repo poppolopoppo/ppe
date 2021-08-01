@@ -65,7 +65,7 @@ struct FAllocaFallback_ {
 u32 AllocaDepth() {
 #if USE_PPE_ALLOCA_SLABHEAP
     // used for detecting live alloca TLS blocks in debug
-    return (FAllocaSlabHeapTLS_::Get().Tell().Origin > 0);
+    return static_cast<u32>(FAllocaSlabHeapTLS_::Get().HasLiveBlocks());
 #else
     return 0;
 #endif

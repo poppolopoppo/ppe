@@ -29,6 +29,9 @@
 #include <algorithm>
 #include <random>
 
+#include "Allocator/SlabAllocator.h"
+#include "Container/Map.h"
+
 #define USE_TESTALLOCATOR_MEMSET (0) // we don't want to benchmark memset() performance
 
 namespace PPE {
@@ -816,19 +819,16 @@ NO_INLINE void Test_SlabHeap_() {
     const hash_t seed0 = hash_value("canary0");
     const hash_t seed1 = hash_value("canary1");
     const hash_t seed2 = hash_value("canary2");
-    const hash_t seed3 = hash_value("canary3");
 
     const auto canary0 = heap.AllocateT<hash_t>(10);
 
     make_canary(canary0, seed0);
 
-    const FSlabMarker marker0 = heap.Tell();
     const auto canary1 = heap.AllocateT<hash_t>(13);
     AssertRelease(test_canary(canary0, seed0));
 
     make_canary(canary1, seed1);
 
-    const FSlabMarker marker1 = heap.Tell();
     const auto canary2 = heap.AllocateT<hash_t>(16);
     AssertRelease(test_canary(canary0, seed0));
     AssertRelease(test_canary(canary1, seed1));
@@ -839,75 +839,53 @@ NO_INLINE void Test_SlabHeap_() {
     AssertRelease(test_canary(canary1, seed1));
     AssertRelease(test_canary(canary2, seed2));
 
-    heap.Rewind(marker1);
-
-    Assert(test_canary(canary0, seed0));
-    Assert(test_canary(canary1, seed1));
-    Assert(not test_canary(canary2, seed2));
-
-    const FSlabMarker marker2 = heap.Tell();
-    AssertRelease(marker1.Origin == marker2.Origin);
-    const auto canary3 = heap.AllocateT<hash_t>(16);
-    Assert(test_canary(canary0, seed0));
-    Assert(test_canary(canary1, seed1));
-
-    make_canary(canary3, seed3);
-
-    Assert(test_canary(canary3, seed3));
-
-    heap.Rewind(marker2);
-
-    Assert(test_canary(canary0, seed0));
-    Assert(test_canary(canary1, seed1));
-    Assert(not test_canary(canary2, seed2));
-    Assert(not test_canary(canary3, seed3));
-
-    heap.Rewind(marker0);
-
-    Assert(test_canary(canary0, seed0));
-    Assert(not test_canary(canary1, seed1));
-    Assert(not test_canary(canary2, seed2));
-    Assert(not test_canary(canary3, seed3));
-
-    const auto canary4 = heap.AllocateT<hash_t>(16);
-    make_canary(canary4, seed0);
-    Assert(test_canary(canary0, seed0));
-    Assert(test_canary(canary4, seed0));
-    const auto canary5 = heap.AllocateT<hash_t>(16);
-    make_canary(canary5, seed1);
-    Assert(test_canary(canary0, seed0));
-    Assert(test_canary(canary4, seed0));
-    Assert(test_canary(canary5, seed1));
-    const auto canary6 = heap.AllocateT<hash_t>(16);
-    make_canary(canary6, seed2);
-    Assert(test_canary(canary0, seed0));
-    Assert(test_canary(canary4, seed0));
-    Assert(test_canary(canary5, seed1));
-    Assert(test_canary(canary6, seed2));
-    const auto canary7 = heap.AllocateT<hash_t>(16);
-    make_canary(canary7, seed3);
-    Assert(test_canary(canary0, seed0));
-    Assert(test_canary(canary4, seed0));
-    Assert(test_canary(canary5, seed1));
-    Assert(test_canary(canary6, seed2));
-    Assert(test_canary(canary7, seed3));
-
-    heap.Rewind(marker0);
-
-    Assert(test_canary(canary0, seed0));
-    Assert(not test_canary(canary4, seed0));
-    Assert(not test_canary(canary5, seed1));
-    Assert(not test_canary(canary6, seed2));
-    Assert(not test_canary(canary7, seed3));
+    PP_FOREACH_ARGS(UNUSED, canary0, canary1, canary2);
 
     heap.DiscardAll();
+}
+//----------------------------------------------------------------------------
+NO_INLINE void Test_SlabHeapPooled_() {
+    const hash_t seed0 = hash_value("canary0");
+    const hash_t seed1 = hash_value("canary1");
+    const hash_t seed2 = hash_value("canary2");
+    const hash_t seed3 = hash_value("canary3");
 
-    Assert(not test_canary(canary0, seed0));
-    Assert(not test_canary(canary1, seed1));
-    Assert(not test_canary(canary2, seed2));
-    Assert(not test_canary(canary3, seed3));
+    SLABHEAP_POOLED(Container) heap;
+    heap.SetSlabSize(16_KiB);
+    auto mainAllocator = TSlabAllocator{ heap };
 
-    PP_FOREACH_ARGS(UNUSED, canary0, canary1, canary2, canary3);
+    forrange(i, 0, 100) {
+        TPoolingSlabHeap subHeap{ mainAllocator };
+        subHeap.SetSlabSize(4_KiB);
+
+        auto subAllocator = TSlabAllocator{ subHeap };
+        using suballocator_type = Meta::TDecay<decltype(subAllocator)>;
+
+        TVector<i64, suballocator_type> ints{ subAllocator };
+        ints.insert(ints.end(), { 1, 2, 3 });
+        ints.insert(ints.end(), { 4, 5, 6 });
+        ints.insert(ints.end(), { 7, 8, 9 });
+
+        TMap<hash_t, double, Meta::TLess<hash_t>, suballocator_type> map{ TStlAllocator<TPair<const hash_t, double>, suballocator_type>(subAllocator) };
+        map.insert({ seed0, 0.0f });
+        map.insert({ seed1, 1.0f });
+        map.insert({ seed2, 2.0f });
+        map.insert({ seed3, 3.0f });
+
+        ints.insert(ints.end(), { 1, 2, 3 });
+        ints.insert(ints.end(), { 4, 5, 6 });
+        ints.insert(ints.end(), { 7, 8, 9 });
+
+        THashMap<hash_t, double, Meta::THash<hash_t>, Meta::TEqualTo<hash_t>, suballocator_type> table{ subAllocator };
+        table.insert({ seed0, 0.0f });
+        table.insert({ seed1, 1.0f });
+        table.insert({ seed2, 2.0f });
+        table.insert({ seed3, 3.0f });
+
+        ints.insert(ints.end(), { 1, 2, 3 });
+        ints.insert(ints.end(), { 4, 5, 6 });
+        ints.insert(ints.end(), { 7, 8, 9 });
+    }
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -921,6 +899,7 @@ void Test_Allocators() {
     Test_BitTrees_();
     Test_Pools_();
     Test_SlabHeap_();
+    Test_SlabHeapPooled_();
 
     ReleaseMemoryInModules();
 

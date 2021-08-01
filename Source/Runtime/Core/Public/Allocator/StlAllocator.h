@@ -37,14 +37,15 @@ public:
 
     TStlAllocator() = default;
 
-    explicit TStlAllocator(_Allocator&& alloc)
-    :   _Allocator(std::move(alloc))
-    {}
+    explicit TStlAllocator(_Allocator&& ralloc) NOEXCEPT
+        : _Allocator(TAllocatorTraits<_Allocator>::SelectOnMove(std::move(ralloc))) {}
+    explicit TStlAllocator(const _Allocator& alloc) NOEXCEPT
+        : _Allocator(TAllocatorTraits<_Allocator>::SelectOnCopy(alloc)) {}
 
     template <typename U>
     TStlAllocator(const TStlAllocator<U, _Allocator>& other)
-    :   _Allocator(ppe_traits::SelectOnCopy(other.InnerAlloc()))
-    {}
+        : _Allocator(ppe_traits::SelectOnCopy(other.InnerAlloc())) {}
+
     template <typename U>
     TStlAllocator& operator =(const TStlAllocator<U, _Allocator>& other) {
         ppe_traits::Copy(this, other.InnerAlloc());
@@ -53,8 +54,8 @@ public:
 
     template <typename U>
     TStlAllocator(TStlAllocator<U, _Allocator>&& rvalue) NOEXCEPT
-        : _Allocator(ppe_traits::SelectOnMove(std::move(rvalue.InnerAlloc())))
-    {}
+        : _Allocator(ppe_traits::SelectOnMove(std::move(rvalue.InnerAlloc()))) {}
+
     template <typename U>
     TStlAllocator& operator =(TStlAllocator<U, _Allocator>&& rvalue) NOEXCEPT {
         ppe_traits::Move(this, std::move(rvalue.InnerAlloc()));
@@ -79,12 +80,12 @@ public:
     }
 
     void deallocate(pointer p, size_type n) {
-        ppe_traits::Deallocate(*this, FAllocatorBlock{ p, n * sizeof(T) });
+        ppe_traits::Deallocate(*this, FAllocatorBlock{p, n * sizeof(T)});
     }
 
     // ** this one is *NOT* in STL, but can be still very useful **
     void reallocate(pointer p, size_type newn, size_t oldn) {
-        ppe_traits::Reallocate(*this, FAllocatorBlock{ p, oldn * sizeof(T) }, newn * sizeof(T));
+        ppe_traits::Reallocate(*this, FAllocatorBlock{p, oldn * sizeof(T)}, newn * sizeof(T));
     }
 
     size_type max_size() const NOEXCEPT {
@@ -112,7 +113,7 @@ public:
     TStlAllocator select_on_container_copy_construction() const {
         _Allocator alloc;
         ppe_traits::Copy(&alloc, *this);
-        return TStlAllocator{ std::move(alloc) };
+        return TStlAllocator{std::move(alloc)};
     }
 
     friend bool operator ==(const TStlAllocator& lhs, const TStlAllocator& rhs) NOEXCEPT {

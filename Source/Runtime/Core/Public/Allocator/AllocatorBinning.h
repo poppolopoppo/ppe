@@ -21,6 +21,9 @@ struct FAllocatorBinning {
     };
     static CONSTEXPR const u32 MaxBinSize = BinSizes[NumBins - 1];
 
+    static CONSTEXPR const u8 NumBins_4kPages = 32;
+    static CONSTEXPR const u32 MaxBinSize_4kPages = BinSizes[NumBins_4kPages - 1];
+
     static CONSTEXPR u32 IndexFromSizeConst(u16 blockSize) NOEXCEPT {
         u32 cnt = 0;
         for (u16 sz : BinSizes)

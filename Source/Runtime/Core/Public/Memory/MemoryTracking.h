@@ -41,7 +41,7 @@ public:
     FSnapshot System() const { return _system.Snapshot(); }
     FSnapshot Wasted() const { return _system.Substract(_user); }
 
-    bool empty() const { return (0 == _user.NumAllocs); }
+    bool empty() const { return (0 == _user.NumAllocs.load(std::memory_order_relaxed)); }
 
     bool IsChildOf(const FMemoryTracking& other) const;
 

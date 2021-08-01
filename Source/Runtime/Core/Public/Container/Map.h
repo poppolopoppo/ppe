@@ -23,7 +23,7 @@ using TMap = std::map<
     _Key,
     _Value,
     _Predicate,
-    TStlAllocator< std::pair<_Key, _Value>, _Allocator>
+    TStlAllocator< std::pair<const _Key, _Value>, _Allocator>
 >;
 //----------------------------------------------------------------------------
 #define MAP(_DOMAIN, _KEY, _VALUE) \

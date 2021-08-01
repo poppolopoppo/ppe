@@ -17,7 +17,7 @@ TSlabHeap<_Allocator>::TSlabHeap() NOEXCEPT
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
-:   _Allocator(std::move(ralloc))
+:   _Allocator(TAllocatorTraits<_Allocator>::SelectOnMove(std::move(ralloc)))
 ,   _trackingData("SlabHeap", allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }
@@ -26,7 +26,7 @@ TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(const _Allocator& alloc) NOEXCEPT
-:   _Allocator(alloc)
+:   _Allocator(TAllocatorTraits<_Allocator>::SelectOnCopy(alloc))
 ,   _trackingData("SlabHeap", allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }
@@ -45,78 +45,46 @@ void TSlabHeap<_Allocator>::SetSlabSize(size_t value) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-FSlabMarker TSlabHeap<_Allocator>::Tell() const noexcept {
-    FSlabMarker marker;
-    marker.Origin = _tell;
-#if USE_PPE_MEMORYDOMAINS
-    // remember allocations for Rewind()
-    const auto snapshot = _trackingData.User();
-    marker.Snapshot.NumAllocs = checked_cast<size_t>(snapshot.NumAllocs);
-    marker.Snapshot.TotalSize = checked_cast<size_t>(snapshot.TotalSize);
-#endif
-    return marker;
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-void TSlabHeap<_Allocator>::Rewind(const FSlabMarker& marker) noexcept {
-    Assert(marker.Origin <= _tell);
-
-#if USE_PPE_MEMORYDOMAINS
-    const auto snapshot = _trackingData.User();
-    _trackingData.ReleaseBatchUser(
-        checked_cast<size_t>(snapshot.NumAllocs - marker.Snapshot.NumAllocs),
-        checked_cast<size_t>(snapshot.TotalSize - marker.Snapshot.TotalSize) );
-#endif
-
-    reverseforeachitem(it, _slabs) {
-        if (it->Origin + it->Offset >= marker.Origin) {
-            ONLY_IF_ASSERT(const auto off = it->Offset);
-            it->Offset = checked_cast<u32>( marker.Origin >= it->Origin ? marker.Origin - it->Origin : 0);
-            ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(static_cast<u8*>(it->Ptr) + it->Offset, off - it->Offset));
-        }
-        else
-            break;
-    }
-
-    _tell = marker.Origin;
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
 void* TSlabHeap<_Allocator>::Reallocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize) {
-    Assert(oldSize);
-    newSize = SnapSize(newSize);
-    oldSize = SnapSize(oldSize);
-    Assert(newSize < _slabSize);
+    Assert(oldSize | newSize);
 
-    Assert(not _slabs.empty());
-    FSlabPtr* const pSlab = SeekSlab_(_tell);
-    Assert(pSlab);
+    FSlabPtr* pSlab = nullptr;
 
-    AssertRelease(static_cast<u8*>(pSlab->Ptr) + pSlab->Offset - oldSize == ptr);
-    Assert(pSlab->Offset >= oldSize);
-    Assert(_tell >= static_cast<std::streamsize>(oldSize));
-    Assert_NoAssume(pSlab->Origin + pSlab->Offset == _tell);
+    if (Likely(oldSize > 0)) {
+        oldSize = SnapSize(oldSize);
+        pSlab = _slabs.MakeView().Any([ptr](FSlabPtr& slab) -> bool {
+            return FPlatformMemory::Memaliases(slab.Ptr, slab.Size, ptr);
+        });
 
-    _tell -= oldSize;
-    pSlab->Offset -= checked_cast<u32>(oldSize);
-    ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateUser(oldSize));
+        AssertRelease(pSlab);
+        Assert_NoAssume(FPlatformMemory::Memaliases(pSlab->Ptr, pSlab->Size, static_cast<u8*>(ptr) + oldSize - 1));
+        Assert(static_cast<u8*>(pSlab->Ptr) + pSlab->Offset - oldSize == ptr);
+        Assert(pSlab->Offset >= oldSize);
 
-    if (Likely(pSlab->Offset + newSize <= pSlab->Size)) {
-        _tell += newSize;
-        pSlab->Offset += checked_cast<u32>(newSize);
-        ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateUser(newSize));
-
-        return ptr; // enough space to resize the slab
+        ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateUser(oldSize));
     }
 
-    // allocate a new block and copy old content
-    Assert(newSize > 0);
-    void* const newp = Allocate_FromNewSlab_(pSlab, newSize);
-    Assert(newp);
-    Assert_NoAssume(not FPlatformMemory::Memoverlap(ptr, oldSize, newp, newSize));
+    if (Likely(newSize > 0)) {
+        ONLY_IF_ASSERT(++_numLiveBlocks);
 
-    FPlatformMemory::Memcpy(newp, ptr, Min(newSize, oldSize));
-    return newp;
+        newSize = SnapSize(newSize);
+        if (pSlab && (pSlab->Offset - oldSize) + newSize <= pSlab->Size) {
+            ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateUser(newSize));
+            pSlab->Offset = checked_cast<u32>((pSlab->Offset - oldSize) + newSize);
+            return ptr;
+        }
+
+        void* const newP = Allocate(newSize);
+        FPlatformMemory::Memcpy(newP, ptr, Min(newSize, oldSize));
+
+        ONLY_IF_ASSERT(if (ptr) FPlatformMemory::Memdeadbeef(ptr, oldSize));
+        ptr = newP;
+    }
+
+    if (pSlab) {
+        pSlab->Offset -= checked_cast<u32>(oldSize);
+    }
+    return ptr;
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -131,20 +99,32 @@ bool TSlabHeap<_Allocator>::Deallocate_ReturnIfLast(void* ptr, size_t size) {
     size = SnapSize(size);
 
     Assert(not _slabs.empty());
-    FSlabPtr* const pSlab = SeekSlab_(_tell);
-    Assert(pSlab);
-    Assert_NoAssume(pSlab->Origin + pSlab->Offset == _tell);
 
-    if (Likely(static_cast<u8*>(pSlab->Ptr) + pSlab->Offset - size == ptr)) {
-        Assert(pSlab->Offset >= size);
-        Assert(_tell >= static_cast<std::streamsize>(size));
-        Assert_NoAssume(_tell >= pSlab->Origin);
+    foreachitem(it, _slabs) {
+        FSlabPtr& slab = *it;
+        if (FPlatformMemory::Memaliases(slab.Ptr, slab.Size, ptr)) {
+            Assert_NoAssume(FPlatformMemory::Memaliases(slab.Ptr, slab.Size, static_cast<u8*>(ptr) + size - 1));
+            if (Likely(static_cast<u8*>(slab.Ptr) + slab.Offset - size == ptr)) {
+                Assert(slab.Offset >= size);
+                slab.Offset -= checked_cast<u32>(size);
 
-        ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateUser(size));
+                ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(ptr, size));
+                ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateUser(size));
 
-        pSlab->Offset -= checked_cast<u32>(size);
-        _tell -= size;
-        return true;
+                // fold non-standalone empty slabs if possible
+                if (Unlikely(!slab.Standalone & !slab.Offset)) {
+                    ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateUser(slab.Size));
+                    if (Deallocate_ReturnIfLast(slab.Ptr, slab.Size)) {
+                        _slabs.erase_DontPreserveOrder(it);
+                    }
+                    else {
+                        ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateUser(slab.Size));
+                    }
+                }
+
+                return true;
+            }
+        }
     }
 
     return false;
@@ -154,12 +134,15 @@ template <typename _Allocator>
 void TSlabHeap<_Allocator>::DiscardAll() NOEXCEPT {
     ONLY_IF_MEMORYDOMAINS(_trackingData.ReleaseAllUser());
 
-    for (FSlabPtr& slab : _slabs) {
-        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(slab.Ptr, slab.Offset));
-        slab.Offset = 0;
-    }
+    Remove_If(_slabs, [](FSlabPtr& slab) -> bool {
+        if (Likely(slab.Standalone)) {
+            ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(slab.Ptr, slab.Offset));
 
-    _tell = 0;
+            slab.Offset = 0;
+            return false;
+        }
+        return true; // remove non-standalone slabs
+    });
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -170,12 +153,15 @@ void TSlabHeap<_Allocator>::ReleaseAll() {
     using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;
 
     for (FSlabPtr& slab : _slabs) {
-        const FAllocatorBlock blk{ slab.Ptr, slab.Size };
-        allocator_traits_without_tracking::Deallocate(allocator, blk);
+        if (Likely(slab.Standalone)) {
+            ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateSystem(slab.Size));
+
+            const FAllocatorBlock blk{ slab.Ptr, slab.Size };
+            allocator_traits_without_tracking::Deallocate(allocator, blk);
+        }
     }
 
     _slabs.clear_ReleaseMemory();
-    _tell = 0;
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -185,15 +171,24 @@ void TSlabHeap<_Allocator>::TrimMemory() {
 
     Remove_If(_slabs, [this](FSlabPtr& slab) -> bool {
         if (slab.Offset == 0) {
-            Assert_NoAssume(_tell <= slab.Origin);
-            ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateSystem(slab.Size));
+            if (Likely(slab.Standalone)) {
+                ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateSystem(slab.Size));
 
-            auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
-            using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;
+                auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
+                using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;
 
-            const FAllocatorBlock blk{ slab.Ptr, slab.Size };
-            allocator_traits_without_tracking::Deallocate(allocator, blk);
-            return true;
+                const FAllocatorBlock blk{ slab.Ptr, slab.Size };
+                allocator_traits_without_tracking::Deallocate(allocator, blk);
+                return true;
+            }
+            else { // this slab was reclaimed from a user allocation:
+                ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateUser(slab.Size));
+                if (Deallocate_ReturnIfLast(slab.Ptr, slab.Size)) {
+                    return true;
+                }
+                ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateUser(slab.Size));
+                return false;
+            }
         }
         return false;
     });
@@ -216,66 +211,86 @@ bool TSlabHeap<_Allocator>::AliasesToHeap(void* ptr) const NOEXCEPT {
 #endif
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-void* TSlabHeap<_Allocator>::Allocate_FromNewSlab_(FSlabPtr* pSlab, size_t size) {
-    Assert(size > 0 && size < _slabSize);
+void* TSlabHeap<_Allocator>::Allocate_FromNewSlab_(size_t size) {
+    Assert(size);
     Assert_NoAssume(SnapSize(size) == size);
 
-    if (pSlab) {
-        Assert(_slabs.AliasesToContainer(*pSlab));
-        Assert_NoAssume(_tell >= pSlab->Origin);
-        Assert_NoAssume(pSlab->Offset + size > pSlab->Size); // exhausted
+    auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
+    using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;
 
-        const size_t pos = checked_cast<size_t>(pSlab - _slabs.data());
-        _tell = pSlab->Origin + pSlab->Size;
-        pSlab = nullptr;
+    size_t thisSlabSize = allocator_traits::SnapSize(_slabSize * (1 + _slabs.size() / 2));
+    if (size * 2 < thisSlabSize)
+        thisSlabSize = allocator_traits::SnapSize(size * 2);
 
-        if (pos + 1 < _slabs.size()) {
-            pSlab = std::addressof(_slabs[pos + 1]);
-            Assert_NoAssume(_tell == pSlab->Origin);
-        }
-    }
+    const FAllocatorBlock blk = allocator_traits_without_tracking::Allocate(allocator, thisSlabSize);
 
-    if (nullptr == pSlab) {
-        auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
-        using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;
+    AssertRelease(blk.Data);
+    ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateSystem(blk.SizeInBytes));
 
-        const FAllocatorBlock blk = allocator_traits_without_tracking::Allocate(allocator, _slabSize);
-        AssertRelease(blk.Data);
-        ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateSystem(blk.SizeInBytes));
+    FSlabPtr slab{ blk.Data, 0u, checked_cast<u32>(blk.SizeInBytes), true/* need to deallocate */ };
+    AssertRelease(slab.Offset + size <= slab.Size);
 
-        _slabs.emplace_back(_tell, blk.Data, 0u, checked_cast<u32>(blk.SizeInBytes));
-        pSlab = std::addressof(_slabs.back());
-    }
-
-    AssertRelease(pSlab->Offset + size <= pSlab->Size);
-    Assert_NoAssume(_tell == pSlab->Origin + pSlab->Offset);
-
-    void* const result = static_cast<u8*>(pSlab->Ptr) + pSlab->Offset;
-    pSlab->Offset += checked_cast<u32>(size);
-    _tell += size;
-
+    void* const result = static_cast<u8*>(slab.Ptr) + slab.Offset;
+    slab.Offset += checked_cast<u32>(size);
     ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateUser(size));
+    ONLY_IF_ASSERT(++_numLiveBlocks);
+
+    _slabs.push_back(std::move(slab));
     return result;
+}
+//---------------------------------------------------------------------------
+template <typename _Allocator>
+void TSlabHeap<_Allocator>::ReclaimUserBlock_AssumeTracked_(void* ptr, size_t size) {
+    Assert(ptr);
+    Assert(size > 2 * sizeof(FSlabPtr)); // sanity check
+    Assert_NoAssume(AliasesToHeap(ptr));
+
+    ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateUser(size));
+    _slabs.push_back(FSlabPtr{ ptr, 0, checked_cast<u32>(size), false/* non-standalone */ });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Allocator>
+void* TPoolingSlabHeap<_Allocator>::Reallocate(void* ptr, size_t newSize, size_t oldSize) {
+    if (!!oldSize && !!newSize) {
+        newSize = SnapSize(newSize);
+        oldSize = SnapSize(oldSize);
+
+        if (newSize != oldSize) {
+            // don't use PoolXXX() functions here: not guaranteed to fit in pool
+            void* const newp = Allocate(newSize);
+            FPlatformMemory::Memcpy(newp, ptr, Min(newSize, oldSize));
+            Deallocate(ptr, oldSize);
+            ptr = newp;
+        }
+
+        return ptr;
+    }
+    else if (oldSize) {
+        Assert_NoAssume(0 == newSize);
+        Deallocate(ptr, oldSize);
+        return nullptr;
+    }
+    else {
+        Assert(newSize);
+        Assert(nullptr == ptr);
+        return Allocate(newSize);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
 void TPoolingSlabHeap<_Allocator>::DiscardAll() NOEXCEPT {
     _heap.DiscardAll();
 
-    _spares = nullptr;
-    for (void*& head : _pools)
-        head = nullptr;
+    Broadcast(_pools.MakeView(), nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TPoolingSlabHeap<_Allocator>::ReleaseAll() {
     _heap.ReleaseAll();
 
-    _spares = nullptr;
-    for (void*& head : _pools)
-        head = nullptr;
+    Broadcast(_pools.MakeView(), nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -284,10 +299,12 @@ void TPoolingSlabHeap<_Allocator>::TrimMemory() {
     for (bool reclaim = true; reclaim; ) {
         reclaim = false;
 
-        // first trim the pools
+        // trim the pools
         forrange(pool, 0, lengthof(_pools)) {
             for (void* it = _pools[pool], *prev = nullptr; it; ) {
                 void* const pNext = *static_cast<void**>(it);
+
+                ONLY_IF_MEMORYDOMAINS(_heap.TrackingData().AllocateUser(FAllocatorBinning::BinSizes[pool]));
 
                 if (_heap.Deallocate_ReturnIfLast(it, FAllocatorBinning::BinSizes[pool])) {
                     reclaim = true;
@@ -297,125 +314,16 @@ void TPoolingSlabHeap<_Allocator>::TrimMemory() {
                         _pools[pool] = pNext;
                 }
                 else {
+                    ONLY_IF_MEMORYDOMAINS(_heap.TrackingData().DeallocateUser(FAllocatorBinning::BinSizes[pool]));
                     prev = it;
                 }
 
                 it = pNext;
             }
         }
-
-        // trim spare blocks in second
-        for (FSpareBlock_* it = _spares, *prev = nullptr; it; it = it->pNext) {
-            FSpareBlock_* const pNext = it->pNext;
-
-            if (_heap.Deallocate_ReturnIfLast(it, it->BlockSize)) {
-                reclaim = true;
-                if (prev)
-                    prev->pNext = pNext;
-                else
-                    _spares = pNext;
-            }
-            else {
-                prev = it;
-            }
-        }
     }
 
     _heap.TrimMemory();
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-void* TPoolingSlabHeap<_Allocator>::Allocate_SpareBlock_(size_t size) {
-    Assert_NoAssume(size);
-    size = SnapSize(size);
-
-    // fall back on regular alloc if exceeds slab size
-    if (Unlikely(size >= _heap.SlabSize())) {
-        const FAllocatorBlock blk{ allocator_traits::Allocate(_heap.Allocator(), size) };
-        return blk.Data;
-    }
-
-    // test if we got larger blocks already available
-    for (FSpareBlock_* it = _spares, *prev = nullptr; it; it = it->pNext) {
-        // can't split smaller than sizeof(FSpareBlock_)
-        STATIC_ASSERT(sizeof(FSpareBlock_) <= ALLOCATION_BOUNDARY);
-
-        if (it->BlockSize == size || it->BlockSize >= size + sizeof(FSpareBlock_)) {
-            it->BlockSize -= size;
-            void* const ptr = it->EndPtr();
-
-            // remove spare block from list if exhausted
-            if (0 == it->BlockSize) {
-                if (prev)
-                    prev->pNext = it->pNext;
-                else
-                    _spares = it->pNext;
-            }
-
-            ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(ptr, size));
-            return ptr;
-        }
-
-        prev = it;
-    }
-
-    // fall back to inner slab heap
-    return _heap.Allocate(size);
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-void TPoolingSlabHeap<_Allocator>::Deallocate_SpareBlock_(void* ptr, size_t size) NOEXCEPT {
-    Assert(ptr);
-    Assert(size > FAllocatorBinning::MaxBinSize);
-    size = TSlabHeap<_Allocator>::SnapSize(size);
-
-    // fall back on regular free() if exceeds slab size
-    if (Unlikely(size >= _heap.SlabSize())) {
-        const FAllocatorBlock blk{ ptr, size };
-        allocator_traits::Deallocate(_heap.Allocator(), blk);
-        return;
-    }
-
-    ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(ptr, size));
-
-    FSpareBlock_* const pBlock = INPLACE_NEW(ptr, FSpareBlock_);
-    pBlock->BlockSize = size;
-    pBlock->pNext = nullptr;
-
-    FSpareBlock_* prev = nullptr;
-    for (FSpareBlock_ *it = _spares; it; it = it->pNext) {
-        if (it->EndPtr() == pBlock) {
-            it->BlockSize += pBlock->BlockSize;
-            Assert_NoAssume(it->EndPtr() == pBlock->EndPtr());
-            break;
-        }
-        if (pBlock->EndPtr() == it) {
-            pBlock->pNext = it->pNext;
-            pBlock->BlockSize += it->BlockSize;
-            Assert_NoAssume(pBlock->EndPtr() == it->EndPtr());
-            if (prev)
-                prev->pNext = pBlock;
-            else
-                _spares = pBlock;
-            break;
-        }
-        if (it > pBlock) {
-            pBlock->pNext = it;
-            if (prev)
-                prev->pNext = pBlock;
-            else
-                _spares = pBlock;
-            break;
-        }
-
-        Assert(it != pBlock);
-        prev = it;
-    }
-
-    if (prev)
-        prev->pNext = pBlock;
-    else
-        _spares = pBlock;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

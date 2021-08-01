@@ -163,7 +163,7 @@ private:
     }
 
     size_t NextBucketIndex_() {
-        return (_revision++ & MaskAllocationBuckets);
+        return (_revision.fetch_add(1, std::memory_order_relaxed) & MaskAllocationBuckets);
     }
 };
 //----------------------------------------------------------------------------
@@ -349,7 +349,7 @@ private:
         : _userLogger(&FUserLogger::Get())
     {}
 
-    ~FBackgroundLogger() {
+    ~FBackgroundLogger() override {
         TaskManager_().WaitForAll(); // blocking wait before destroying, avoid necrophilia
     }
 
@@ -377,7 +377,7 @@ class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public SLAB_ALLOCATOR(Logger), M
         :   SLAB_ALLOCATOR(Logger){ heap }
         {}
 
-        FWStringView Text() const { return { (const wchar_t *)(this + 1), TextLength }; }
+        FWStringView Text() const { return { reinterpret_cast<const wchar_t*>(this + 1), TextLength }; }
 
         void Log(ITaskContext&) {
             const FSuicideScope_ logScope(this);
@@ -390,11 +390,11 @@ class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public SLAB_ALLOCATOR(Logger), M
     struct FSuicideScope_ : FLogAllocator::FScope {
         FDeferredLog* Log;
         FSuicideScope_(FDeferredLog* log)
-            : FLogAllocator::FScope(log->Bucket)
+            : FScope(log->Bucket)
             , Log(log) {
             Assert(log);
             Assert_NoAssume(PPE_HASH_VALUE_SEED == Log->Canary);
-            ONLY_IF_ASSERT(Log->Canary = uintptr_t(this));
+            ONLY_IF_ASSERT(Log->Canary = reinterpret_cast<uintptr_t>(this));
         }
         ~FSuicideScope_() {
             Assert_NoAssume(uintptr_t(this) == Log->Canary);
@@ -477,7 +477,7 @@ public:
         singleton_type::Create();
     }
 
-    ~FAccumulatingLogger() {
+    ~FAccumulatingLogger() override {
         FAccumulatingLogger::Flush(true);
     }
 
