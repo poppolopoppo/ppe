@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Diagnostic/Exception.h"
+#include "HAL/PlatformMacros.h"
 
 #define USE_PPE_ASSERT (USE_PPE_ASSERTIONS && USE_PPE_DEBUG)
 #define USE_PPE_ASSERT_RELEASE (!USE_PPE_FINAL_RELEASE && !USE_PPE_PROFILING)
@@ -14,17 +15,26 @@
 #   define WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE (0)
 #endif
 
+#if (USE_PPE_ASSERT || USE_PPE_ASSERT_RELEASE) && (!defined(ARCH_ARM))
+    // We'll put all assert implementation code into a separate section in the linked
+    // executable. This code should never execute so using a separate section keeps
+    // it well off the hot path and hopefully out of the instruction cache. It also
+    // facilitates reasoning about the makeup of a compiled/linked binary.
+    #define PPE_DEBUG_SECTION PPE_DECLSPEC_CODE_SECTION(".ppedbg")
+#else
+    // On ARM we can't do this because the executable will require jumps larger
+    // than the branch instruction can handle. Clang will only generate
+    // the trampolines in the .text segment of the binary. If the ppedbg segment
+    // is present it will generate code that it cannot link.
+    #define PPE_DEBUG_SECTION
+#endif // USE_PPE_ASSERT || USE_PPE_ASSERT_RELEASE
+
 #if defined(NDEBUG) && USE_PPE_ASSERT
 #   undef WITH_PPE_ASSERT
 #   error "there is someone messing with the project configuration"
 #endif
 
-// #TODO: this is a dirty hack, must define PPE_DEBUG_CRASH macro earlier
-#ifndef PPE_DEBUG_CRASH
-#   define PPE_ASSERT_LIGHTWEIHGT_CRASH() ::abort()
-#else
-#   define PPE_ASSERT_LIGHTWEIHGT_CRASH() PPE_DEBUG_CRASH()
-#endif
+#define PPE_ASSERT_LIGHTWEIGHT_CRASH() PPE_DEBUG_CRASH()
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -34,7 +44,7 @@ typedef bool (*FAssertHandler)(const wchar_t* msg, const wchar_t *file, unsigned
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 //----------------------------------------------------------------------------
-class PPE_CORE_API FAssertException : public FException {
+class PPE_CORE_API PPE_DEBUG_SECTION FAssertException : public FException {
 public:
     FAssertException(const char *msg, const wchar_t *file, unsigned line);
     ~FAssertException() override;
@@ -51,7 +61,7 @@ private:
     unsigned _line;
 };
 
-PPE_CORE_API void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
+PPE_CORE_API void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
 PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 
 #if WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
@@ -60,9 +70,9 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 #   define AssertMessage_NoAssume(_Message, ...) NOOP()
 #else
 #   define AssertMessage(_Message, ...) \
-    ( Likely(!!(__VA_ARGS__)) ? void(0) : []{ ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
 #   define Assert_Lightweight(...) \
-    ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_ASSERT_LIGHTWEIHGT_CRASH() ) // when we need to break immediately
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_ASSERT_LIGHTWEIGHT_CRASH() ) // when we need to break immediately
 #   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 #endif
 
@@ -106,7 +116,7 @@ typedef bool (*FAssertReleaseHandler)(const wchar_t* msg, const wchar_t* file, u
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
-class PPE_CORE_API FAssertReleaseException : public FException {
+class PPE_CORE_API PPE_DEBUG_SECTION FAssertReleaseException : public FException {
 public:
     FAssertReleaseException(const char* msg, const wchar_t* file, unsigned line);
     ~FAssertReleaseException() override;
@@ -123,10 +133,10 @@ private:
     unsigned _line;
 };
 
-PPE_CORE_API void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
+PPE_CORE_API void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
 PPE_CORE_API void SetAssertionReleaseHandler(FAssertReleaseHandler handler);
 
-NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
+NORETURN inline void PPE_DEBUG_SECTION AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
     AssertionReleaseFailed(msg, file, line);
     abort();
 }
@@ -137,7 +147,7 @@ NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t* msg, const w
 #   define AssertReleaseMessage_NoAssume(_Message, ...) NOOP()
 #else
 #   define AssertReleaseMessage(_Message, ...) \
-    ( Likely(!!(__VA_ARGS__)) ? void(0) : []{ ::PPE::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
 #   define AssertReleaseFailed(_Message) \
     ::PPE::AssertionReleaseFailed_NoReturn(_Message, WIDESTRING(__FILE__), __LINE__)
 #   define AssertReleaseMessage_NoAssume(_Message, ...) AssertReleaseMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
@@ -197,23 +207,3 @@ inline CONSTEXPR void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 #define AssertFinalMessage(_Message, ...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : AssertReleaseFailed(_Message) )
 #define AssertFinal(...) AssertFinalMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
-
-namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-void Copy_AssertEquals(T *dst, const T& src, const T& old) {
-    Assert(dst && *dst == old);
-    *dst = src;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void Move_AssertEquals(T *dst, T&& src, const T& old) {
-    Assert(dst && *dst == old);
-    *dst = std::move(src);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace PPE
