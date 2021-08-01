@@ -40,8 +40,6 @@ void FModularServices::ReleaseMemory() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void* FModularServices::GetService_(const FServiceKey_& key) const NOEXCEPT {
-    Assert(key.hash_code);
-
     const auto it = _services.Find(key);
     if (_services.end() != it)
         return it->second.Get();
@@ -54,7 +52,6 @@ void* FModularServices::GetService_(const FServiceKey_& key) const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FModularServices::AddService_(const FServiceKey_& key, FServiceHolder_&& rholder) {
-    Assert(key.hash_code);
     Assert_NoAssume(not _parent || not _parent->GetService_(key));
 
     LOG(Modular, Verbose, L"add modular service <{0}> in '{1}'", key.name, _name);
@@ -63,7 +60,6 @@ void FModularServices::AddService_(const FServiceKey_& key, FServiceHolder_&& rh
 }
 //----------------------------------------------------------------------------
 void FModularServices::RemoveService_(const FServiceKey_& key) {
-    Assert(key.hash_code);
     Assert_NoAssume(not _parent || not _parent->GetService_(key));
 
     LOG(Modular, Verbose, L"remove modular service <{0}> from '{1}'", key.name, _name);

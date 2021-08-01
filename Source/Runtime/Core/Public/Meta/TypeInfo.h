@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Meta/Hash_fwd.h"
+#include "Meta/MD5.h"
 
 #include "IO/ConstChar.h"
 #include "IO/StaticString.h"
@@ -29,9 +31,8 @@ struct type_info_ {
         }
         return { str + off, len };
     }
-    static constexpr size_t type_hash() {
-        const FStringView name = type_name();
-        return hash_mem_constexpr(name.data(), name.size());
+    static constexpr FMd5sum type_uid() {
+        return md5sum(type_name());
     }
     static constexpr TStaticString<type_name().size()> static_name{
         type_name()// construct a static string to trim the static string in the final executable
@@ -40,32 +41,33 @@ struct type_info_ {
 } //!details
 //----------------------------------------------------------------------------
 struct type_info_t {
-    hash_t hash_code;
+    FMd5sum uid;
     FConstChar name;
     constexpr bool operator ==(const type_info_t& other) const {
-        return (hash_code == other.hash_code && name == other.name);
+        Assert_NoAssume(uid != other.uid || name == other.name); // check for collisions
+        return (uid == other.uid);
     }
     constexpr bool operator !=(const type_info_t& other) const {
-        return ! operator ==(other);
+        return (not operator ==(other));
     }
     constexpr bool operator < (const type_info_t& other) const {
-        return (hash_code < other.hash_code);
+        return (uid <  other.uid);
     }
     constexpr bool operator >=(const type_info_t& other) const {
-        return (hash_code >= other.hash_code);
+        return (not operator < (other));
     }
     constexpr friend hash_t hash_value(const type_info_t& ti) {
-        return ti.hash_code;
+        return hash_u32_constexpr(ti.uid[0], ti.uid[1], ti.uid[2], ti.uid[3]);
     }
     friend void swap(type_info_t& lhs, type_info_t& rhs) noexcept {
-        std::swap(lhs.hash_code, rhs.hash_code);
+        std::swap(lhs.uid, rhs.uid);
         std::swap(lhs.name, rhs.name);
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr type_info_t type_info{
-    details::type_info_<T>::type_hash(),
+    details::type_info_<T>::type_uid(),
     details::type_info_<T>::static_name
 };
 //----------------------------------------------------------------------------
