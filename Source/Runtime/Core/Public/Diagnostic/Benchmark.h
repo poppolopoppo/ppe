@@ -450,12 +450,12 @@ public: // export table results
         constexpr u32 stride = 12;
 
         oss << L'|'
-            << FTextFormat::Trunc(header, L' ')
+            << FTextFormat::Truncate
             << table.Name;
 
         table.ForeachHeader([&oss, stride](const auto& x) {
             oss << L'|'
-                << FTextFormat::Trunc(stride, L' ')
+                << FTextFormat::Truncate
                 << x.Name;
         });
 
@@ -465,17 +465,17 @@ public: // export table results
 
         if (detailed) {
             table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
-                oss << L'|' << FTextFormat::Trunc(header, L' ') << x.Name;
+                oss << L'|' << FTextFormat::Truncate << x.Name;
 
                 for (const auto& c : x.Row)
                     oss << L'|'
-                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Truncate
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Q1 << L'/'
-                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Truncate
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Median << L'/'
-                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Truncate
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Q3;
 
@@ -484,11 +484,11 @@ public: // export table results
         }
         else {
             table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
-                oss << L'|' << FTextFormat::Trunc(header, L' ') << x.Name;
+                oss << L'|' << FTextFormat::Truncate << x.Name;
 
                 for (const auto& c : x.Row)
                     oss << L'|'
-                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Truncate
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Median;
 

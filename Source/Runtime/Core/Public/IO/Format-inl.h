@@ -27,10 +27,7 @@ struct TBasicFormatFunctor_ {
     }
 
     template <typename T>
-    static typename std::enable_if<
-        not std::is_pointer<T>::value,
-        TBasicFormatFunctor_
-    >::type Make(const T& value) {
+    static Meta::TEnableIf<not std::is_pointer_v<T>, TBasicFormatFunctor_> Make(const T& value) {
         typedef Meta::TRemoveReference<T> value_type;
         return TBasicFormatFunctor_{ &FromValue<value_type>, &value };
     }

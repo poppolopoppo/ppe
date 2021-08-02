@@ -24,8 +24,9 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     IBufferedStreamWriter* ostream = w.Stream();
 
     // Fast path for trivial case :
-    if (fmt.Case() == FTextFormat::Original &&
-        (fmt.Padding() == FTextFormat::Padding_None || str.size() >= w.Format().Width()) ) {
+    if ((fmt.Case() == FTextFormat::Original) &&
+        (fmt.Padding() == FTextFormat::Padding_None || str.size() >= fmt.Width()) &&
+        (not (fmt.Misc() & FTextFormat::Truncate) || str.size() <= fmt.Width()) ) {
         ostream->WriteView(str);
 
         // Reset width padding each output to mimic std behavior
@@ -37,6 +38,9 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     const int sz = checked_cast<int>(str.size());
     const int width = checked_cast<int>(w.Format().Width());
     const _Char pad_ch = w.FillChar();
+
+    if ((fmt.Misc() & FTextFormat::Truncate) && str.size() > width)
+        str = str.CutBefore(width);
 
     int pad_left;
     int pad_right;
@@ -54,17 +58,6 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
         break;
     case PPE::FTextFormat::Padding_Right:
         pad_left = 0;
-        pad_right = Max(width - sz, 0);
-        break;
-    case PPE::FTextFormat::Padding_Truncate:
-        pad_left = 0;
-        if (sz > width) {
-            str = str.CutBefore(width); // truncate input string
-            pad_right = 0;
-        }
-        else {
-            pad_right = width - sz;
-        }
         pad_right = Max(width - sz, 0);
         break;
     default:
@@ -429,26 +422,6 @@ TBasicTextManipulator<_Char> TextFormat_Pad_(FTextFormat::EPadding padding, size
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextManipulator<_Char> TextFormat_PadCenter_(size_t width, _Char fill) {
-    return Pad(FTextFormat::Padding_Center, width, fill);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextManipulator<_Char> TextFormat_PadLeft_(size_t width, _Char fill) {
-    return Pad(FTextFormat::Padding_Left, width, fill);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextManipulator<_Char> TextFormat_PadRight_(size_t width, _Char fill) {
-    return Pad(FTextFormat::Padding_Right, width, fill);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextManipulator<_Char> TextFormat_Trunc_(size_t width, _Char fill) {
-    return Pad(FTextFormat::Padding_Truncate, width, fill);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
 TBasicTextManipulator<_Char> TextFormat_SetFill_(_Char ch) {
     return [ch](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char> & {
         s.SetFillChar(ch);
@@ -480,10 +453,6 @@ FTextManipulator FTextFormat::PadRight(size_t width, char fill) {
     return TextFormat_Pad_(Padding_Right, width, fill);
 }
 //----------------------------------------------------------------------------
-FTextManipulator FTextFormat::Trunc(size_t width, char fill) {
-    return TextFormat_Pad_(Padding_Truncate, width, fill);
-}
-//----------------------------------------------------------------------------
 FTextManipulator FTextFormat::SetFill(char ch) {
     return TextFormat_SetFill_(ch);
 }
@@ -508,10 +477,6 @@ FWTextManipulator FTextFormat::PadLeft(size_t width, wchar_t fill) {
 //----------------------------------------------------------------------------
 FWTextManipulator FTextFormat::PadRight(size_t width, wchar_t fill) {
     return TextFormat_Pad_(Padding_Right, width, fill);
-}
-//----------------------------------------------------------------------------
-FWTextManipulator FTextFormat::Trunc(size_t width, wchar_t fill) {
-    return TextFormat_Pad_(Padding_Truncate, width, fill);
 }
 //----------------------------------------------------------------------------
 FWTextManipulator FTextFormat::SetFill(wchar_t ch) {

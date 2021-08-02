@@ -172,7 +172,7 @@ void ReportTrackingDatas_(
     oss << L"  Reporting tracking data :" << Eol;
 
     CONSTEXPR size_t width = 175;
-    CONSTEXPR wchar_t fmtTitle[] = L" {0:-30}";
+    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-30}";
     CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:6} {1:8} | {2:9} {3:9} | {4:10} {5:11}   ";
 
     const auto hr = Fmt::Repeat(L'-', width);

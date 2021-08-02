@@ -211,6 +211,11 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                         props.FillChar = format_traits::zero;
                         format = format.ShiftFront();
                         continue;
+
+                    case format_traits::fmt_trunc:
+                        props.Format.SetMisc(FTextFormat::Truncate, true);
+                        format = format.ShiftFront();
+                        continue;
                     }
 
                     bool expect_fixed = false;
@@ -222,11 +227,6 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                     if (format_traits::fmt_center == format.front()) {
                         format = format.ShiftFront();
                         padding = FTextFormat::Padding_Center;
-                        expect_width = true;
-                    }
-                    else if (format_traits::fmt_trunc == format.front()) {
-                        format = format.ShiftFront();
-                        padding = FTextFormat::Padding_Truncate;
                         expect_width = true;
                     }
                     else if (format_traits::fmt_minus == format.front()) {

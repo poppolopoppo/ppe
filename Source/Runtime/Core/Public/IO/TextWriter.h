@@ -52,16 +52,14 @@ public:
         Padding_Center,
         Padding_Left,
         Padding_Right,
-        Padding_Truncate,
     };
     enum EMisc : u32 {
         BoolAlpha   = 1 << 0,
         Crlf        = 1 << 1,
-        //Reserved0 = 1 << 2,
+        Truncate    = 1 << 2,
         //Reserved1 = 1 << 3,
         //Reserved2 = 1 << 4,
         //Reserved3 = 1 << 5,
-        //Reserved4 = 1 << 6,
     };
     ENUM_FLAGS_FRIEND(EMisc);
 
@@ -109,7 +107,6 @@ public:
     static FTextManipulator PadCenter(size_t width = INDEX_NONE, char fill = char());
     static FTextManipulator PadLeft(size_t width = INDEX_NONE, char fill = char());
     static FTextManipulator PadRight(size_t width = INDEX_NONE, char fill = char());
-    static FTextManipulator Trunc(size_t width = INDEX_NONE, char fill = char());
     static FTextManipulator SetFill(char ch);
 
     static FWTextWriter& DontPad(FWTextWriter& s);
@@ -117,7 +114,6 @@ public:
     static FWTextManipulator PadCenter(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
     static FWTextManipulator PadLeft(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
     static FWTextManipulator PadRight(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
-    static FWTextManipulator Trunc(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
     static FWTextManipulator SetFill(wchar_t ch);
 
     struct FFloat {

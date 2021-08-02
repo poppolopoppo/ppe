@@ -77,6 +77,22 @@ static void Test_Format_() {
         "string = {0:10U} {0:-10U}, decimal = {1:8X} {1:#8x}, float = {2:f3} {2:10f4}", MakeStringView("test"), 0xBADCAFE, -0.123456f);
     TestFormat_("This a neg test 0042004200420042 = test aligned                   ( 1.23)",
         "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, MakeStringView("test aligned"), 1.23456f);
+    TestFormat_("000000000000test",
+        "{0:#16}", "test");
+    TestFormat_("test000000000000",
+        "{0:#-16}", "test");
+    TestFormat_("1",
+        "{0:/1}", "123456789");
+    TestFormat_("1234",
+        "{0:/4}", "123456789");
+    TestFormat_("1234567",
+        "{0:/7}", "123456789");
+    TestFormat_("123456789",
+        "{0:/9}", "123456789");
+    TestFormat_("                       123456789",
+        "{0:/32}", "123456789");
+    TestFormat_("123456789                       ",
+        "{0:/-32}", "123456789");
 }
 //----------------------------------------------------------------------------
 static void Test_TextWriter_Ansi_() {

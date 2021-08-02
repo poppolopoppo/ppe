@@ -19,8 +19,12 @@
 //ex2:
 //      FWString wstr = Format(L"num={0} alphabool={0:a}", true);
 //      ->  L"num=1 alphabool=true"
+//      Format(std::cout, "truncated = {0:/4}", "1234789");
+//      ->  "truncated = 1234"
 //
 //ex2:
+//      Format(std::cout, "trunc = {0:-9}", "1234");
+//      ->  "     1234"
 //      Format(std::cout, "string = {0:10} {0:-10U}, decimal = {1:8X} {1:#8x}, float = {2:f3} {2:10f4}\n", "test", 0xBADCAFE, -0.123456f);
 //      ->  "string =       TEST TEST      , decimal =  BADCAFE 0badcafe, float = -0.123    -0.1235\n"
 //
