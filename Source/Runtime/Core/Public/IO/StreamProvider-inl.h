@@ -79,6 +79,12 @@ void IStreamWriter::WriteArray(const T(&staticArray)[_Dim]) {
     VerifyRelease(Write(staticArray, sizeof(T)*_Dim));
 }
 //----------------------------------------------------------------------------
+template <typename T>
+void IStreamWriter::WritePOD(const T& pod) {
+    if (not Write(&pod, sizeof(T)))
+        AssertNotReached();
+}
+//----------------------------------------------------------------------------
 inline void IStreamWriter::WriteView(const FStringView& str) {
     VerifyRelease(str.empty() || Write(str.data(), str.SizeInBytes()));
 }
@@ -90,14 +96,6 @@ inline void IStreamWriter::WriteView(const FWStringView& wstr) {
 template <typename T>
 void IStreamWriter::WriteView(const TMemoryView<T>& data) {
     VerifyRelease(data.empty() || Write(data.data(), data.SizeInBytes()));
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-void IBufferedStreamWriter::WritePOD(const T& pod) {
-    if (not Write(&pod, sizeof(T)))
-        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

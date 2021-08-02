@@ -106,6 +106,9 @@ public: // helpers
     template <typename T, size_t _Dim>
     void WriteArray(const T(&staticArray)[_Dim]);
 
+    template <typename T>
+    void WritePOD(const T& pod);
+
     void WriteView(const FStringView& str);
     void WriteView(const FWStringView& wstr);
 
@@ -121,10 +124,6 @@ public:
     virtual size_t StreamCopy(const read_f& read, size_t blockSz) = 0;
 
     virtual void Flush() = 0;
-
-public: // helpers
-    template <typename T>
-    void WritePOD(const T& pod);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

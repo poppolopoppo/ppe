@@ -21,7 +21,7 @@ namespace {
 template <typename _Char>
 static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> str) {
     const FTextFormat& fmt = w.Format();
-    IBufferedStreamWriter* ostream = w.Stream();
+    IStreamWriter* const ostream = w.Stream();
 
     // Fast path for trivial case :
     if ((fmt.Case() == FTextFormat::Original) &&
@@ -34,14 +34,15 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
         return;
     }
 
-    // Handles padding & case :
     const int sz = checked_cast<int>(str.size());
     const int width = checked_cast<int>(w.Format().Width());
     const _Char pad_ch = w.FillChar();
 
-    if ((fmt.Misc() & FTextFormat::Truncate) && str.size() > width)
+    // Handles truncate :
+    if ((!!width) & (fmt.Misc() & FTextFormat::Truncate) & (str.size() > width))
         str = str.CutBefore(width);
 
+    // Handles padding & case :
     int pad_left;
     int pad_right;
     switch (fmt.Padding()) {
@@ -328,7 +329,7 @@ static void Write_(Meta::TType<wchar_t>, FWTextWriter& w, void* v) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBaseTextWriter::FBaseTextWriter(IBufferedStreamWriter* ostream)
+FBaseTextWriter::FBaseTextWriter(IStreamWriter* ostream)
 :   _ostream(ostream) {
     Assert(_ostream);
 }
@@ -348,7 +349,8 @@ FTextFormat FBaseTextWriter::ResetFormat() {
 }
 //----------------------------------------------------------------------------
 void FBaseTextWriter::Flush() {
-    _ostream->Flush();
+    if (IBufferedStreamWriter* const buffered = _ostream->ToBufferedO())
+        buffered->Flush();
 }
 //----------------------------------------------------------------------------
 void FBaseTextWriter::Reset() {

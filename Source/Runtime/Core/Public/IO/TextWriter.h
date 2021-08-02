@@ -138,10 +138,10 @@ STATIC_ASSERT(sizeof(FTextFormat) == sizeof(u32));
 //----------------------------------------------------------------------------
 class PPE_CORE_API FBaseTextWriter {
 public:
-    FBaseTextWriter(IBufferedStreamWriter* ostream);
+    FBaseTextWriter(IStreamWriter* ostream);
     ~FBaseTextWriter();
 
-    IBufferedStreamWriter* Stream() const { return _ostream; }
+    IStreamWriter* Stream() const { return _ostream; }
 
     FTextFormat& Format() { return _format; }
     const FTextFormat& Format() const { return _format; }
@@ -153,7 +153,7 @@ public:
     void Reset();
 
 protected:
-    IBufferedStreamWriter* _ostream;
+    IStreamWriter* _ostream;
     FTextFormat _format;
 };
 //----------------------------------------------------------------------------
@@ -164,7 +164,7 @@ public:
         return STRING_LITERAL(_Char, ' ');
     }
 
-    TBasicTextWriter(IBufferedStreamWriter* s) noexcept
+    TBasicTextWriter(IStreamWriter* s) noexcept
         : FBaseTextWriter(s)
         , _fillChar(DefaultFillChar())
     {}
