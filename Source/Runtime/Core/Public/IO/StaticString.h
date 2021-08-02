@@ -18,7 +18,7 @@ namespace PPE {
 template <typename _Char, size_t _Capacity = PPE_STATICSTRING_CAPACITY>
 struct TBasicStaticString {
     size_t Len{ 0 };
-    _Char Data[_Capacity]{ 0 };
+    _Char Data[_Capacity + 1]{ 0 };
 
     TBasicStaticString() = default;
 
@@ -99,6 +99,20 @@ struct TBasicStaticString {
         if (not keepData)
             std::fill(Data, Data + Len, _Char(0));
         Data[Len] = _Char(0);
+    }
+
+    CONSTEXPR size_t SubstringOffset(const TBasicStringView<_Char>& str) const {
+        size_t off = 0;
+        for (; off + str.size() <= Len; ++off) {
+            size_t subl = 0;
+            for (; subl < str.size(); ++subl) {
+                if (str[subl] == Data[off + subl])
+                    break;
+            }
+            if (subl == str.size())
+                return off;
+        }
+        return Len;
     }
 
     CONSTEXPR bool operator ==(const TBasicStaticString& other) const { return Equals(other); }

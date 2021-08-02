@@ -18,18 +18,31 @@ namespace Meta {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-struct type_info_ {
+struct type_info_parser_t {
     static constexpr FStringView type_name() {
-        const char (&str)[sizeof(PPE_PRETTY_FUNCTION)] = PPE_PRETTY_FUNCTION;
-        constexpr size_t dim = sizeof(str);
-        size_t off = 1;
-        for (; off <= dim && str[off - 1] != '<'; ++off);
-        size_t len = 0;
-        for (int balance = 1; off + len < sizeof(str) && balance; ++len) {
-            if (str[off + len] == '<') ++balance;
-            else if (str[off + len] == '>') --balance;
+        const char (&fun)[lengthof(PPE_PRETTY_FUNCTION)] = PPE_PRETTY_FUNCTION;
+        const char (&suf)[lengthof("type_info_parser_t<")] = "type_info_parser_t<";
+        // find suffix function name
+        size_t first = 0;
+        for (; first + lengthof(suf) - 1 <= lengthof(fun) - 1; ++first) {
+            size_t subl = 0;
+            for (; subl < lengthof(suf) - 1 && fun[first + subl] == suf[subl]; ++subl);
+            if (subl == lengthof(suf) - 1) {
+                first += subl;
+                break;
+            }
         }
-        return { str + off, len };
+        // select balanced
+        size_t last = first;
+        for (int balance = 1; last < lengthof(fun) - 1 && balance; ++last) {
+            if (fun[last] == '<') ++balance;
+            else if (fun[last] == '>') --balance;
+        }
+        // trim spaces
+        for (; last > first && fun[last - 1] == ' '; --last);
+        for (; first < last && fun[first] == ' '; ++first);
+        // return only the interesting part
+        return { fun + first, last - first - 1 };
     }
     static constexpr FMd5sum type_uid() {
         return md5sum(type_name());
@@ -67,8 +80,8 @@ struct type_info_t {
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr type_info_t type_info{
-    details::type_info_<T>::type_uid(),
-    details::type_info_<T>::static_name
+    details::type_info_parser_t<T>::type_uid(),
+    details::type_info_parser_t<T>::static_name
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
