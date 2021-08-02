@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Core_fwd.h"
+#include "Meta/Utility.h"
 
 #include "Time/TimedScope.h"
 
@@ -444,18 +445,24 @@ public: // TTable<>
 public: // export table results
     template <typename... _Benchmarks>
     static void WTxt(const TTable<_Benchmarks...>& table, FWTextWriter& oss, bool detailed = false) {
+        const auto originalFormat = oss .Format();
+        Meta::on_scope_exit([&]() {
+            oss.SetFormat(originalFormat);
+        });
+
+        oss << FTextFormat::Truncate;
         oss << L"Benchmark table <" << table.Name << L">, units = " << FCounter::Units() << L" :" << Eol;
 
         constexpr u32 header = 20;
         constexpr u32 stride = 12;
 
         oss << L'|'
-            << FTextFormat::Truncate
+            << FTextFormat::PadLeft(stride, L' ')
             << table.Name;
 
         table.ForeachHeader([&oss, stride](const auto& x) {
             oss << L'|'
-                << FTextFormat::Truncate
+                << FTextFormat::PadLeft(stride, L' ')
                 << x.Name;
         });
 
@@ -465,17 +472,17 @@ public: // export table results
 
         if (detailed) {
             table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
-                oss << L'|' << FTextFormat::Truncate << x.Name;
+                oss << L'|' << FTextFormat::PadLeft(stride, L' ') << x.Name;
 
                 for (const auto& c : x.Row)
                     oss << L'|'
-                        << FTextFormat::Truncate
+                        << FTextFormat::PadLeft(stride, L' ')
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Q1 << L'/'
-                        << FTextFormat::Truncate
+                        << FTextFormat::PadLeft(stride, L' ')
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Median << L'/'
-                        << FTextFormat::Truncate
+                        << FTextFormat::PadLeft(stride, L' ')
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Q3;
 
@@ -484,11 +491,11 @@ public: // export table results
         }
         else {
             table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
-                oss << L'|' << FTextFormat::Truncate << x.Name;
+                oss << L'|' << FTextFormat::PadLeft(stride, L' ') << x.Name;
 
                 for (const auto& c : x.Row)
                     oss << L'|'
-                        << FTextFormat::Truncate
+                        << FTextFormat::PadLeft(stride, L' ')
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Median;
 
