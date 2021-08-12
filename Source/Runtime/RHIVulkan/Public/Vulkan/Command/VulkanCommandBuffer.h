@@ -41,8 +41,8 @@ public:
         Compiling,
     };
 
-    using FAllocator = FPoolingSlabHeap;
-    using FTransientTaskArray = VECTOR_SLAB(PVulkanFrameTask);
+    using FAllocator = SLABHEAP_POOLED(RHICommand);
+    using FTransientTaskArray = VECTOR_SLAB(RHICommand, PVulkanFrameTask);
     using FTaskGraph = TVulkanTaskGraph<FVulkanTaskProcessor>;
 
     using FResourceMap = FVulkanCommandBatch::FResourceMap;
@@ -74,7 +74,7 @@ public:
     using FLocalRTGeometries = TLocalPool<FVulkanRayTracingLocalGeometry, FVulkanResourceManager::FRTGeometryPool>;
 
     struct FInternalData {
-        SLABHEAP_POOLED(RHICommand) MainAllocator;
+        FAllocator MainAllocator;
         FTaskGraph TaskGraph;
         SVulkanCommandBatch Batch;
         EState State{ EState::Initial };

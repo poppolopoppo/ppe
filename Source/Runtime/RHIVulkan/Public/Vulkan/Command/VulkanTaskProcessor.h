@@ -35,7 +35,7 @@ public:
     };
 
     using FCommitBarrierFunc = void (*)(const void*, FVulkanBarrierManager& ARGS_IF_RHIDEBUG(FVulkanLocalDebugger*));
-    using FPendingResourceBarriers = HASHMAP_SLAB(const void*, FCommitBarrierFunc);
+    using FPendingResourceBarriers = HASHMAP_SLAB(RHICommand, const void*, FCommitBarrierFunc);
 
     using FBufferCopyRegions = TFixedSizeStack<VkBufferCopy, MaxCopyRegions>;
     using FImageCopyRegions = TFixedSizeStack<VkImageCopy, MaxCopyRegions>;

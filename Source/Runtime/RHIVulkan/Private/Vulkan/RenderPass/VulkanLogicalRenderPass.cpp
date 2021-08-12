@@ -42,14 +42,15 @@ FVulkanLogicalRenderPass::~FVulkanLogicalRenderPass() {
 #endif
 //----------------------------------------------------------------------------
 bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRenderPassDesc& desc) {
-    Assert_NoAssume(not _allocator.Heap.valid());
+    Assert_NoAssume(not _allocator.Available);
     Assert_NoAssume(_drawTasks.empty());
 
     const bool enableShadingRateImage = desc.ShadingRate.ImageId.Valid();
 
-    _allocator = FSlabAllocator{ cmd.Read()->MainAllocator };
-    //_localHeap.Heap->SetSlabSize(4_KiB); // #TODO: move from heap to allocator
-    _drawTasks = VECTOR_SLAB(IVulkanDrawTask*){ _allocator };
+    _allocator.Construct(TSlabAllocator{ cmd.Write()->MainAllocator });
+    _allocator->SetSlabSize(4_KiB);
+
+    _drawTasks = FDrawTasks(TSlabAllocator{ *_allocator });
 
     _area = desc.Area;
     _blendState = desc.Blend;
@@ -189,7 +190,7 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
             palette.pShadingRatePaletteEntries = &GShadingRateDefaultEntry;
 
             if (not src.ShadingRate.empty()) {
-                const auto entries = _allocator.Heap->AllocateT<VkShadingRatePaletteEntryNV>(
+                const auto entries = _allocator->AllocateT<VkShadingRatePaletteEntryNV>(
                     checked_cast<u32>(src.ShadingRate.size()) );
 
                 forrange(i, 0, src.ShadingRate.size())
@@ -233,28 +234,84 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
     return true;
 }
 //----------------------------------------------------------------------------
-void FVulkanLogicalRenderPass::TearDown(const FVulkanResourceManager& resources) {
+void FVulkanLogicalRenderPass::TearDown(const FVulkanResourceManager& ) {
     AssertMessage(L"render pass was not submitted", _isSubmitted);
 
-    _drawTasks.clear();
+    _drawTasks = Meta::MakeForceInit<FDrawTasks>();
+    _allocator.Destroy();
 
+    _shadingRateImage = nullptr;
 }
 //----------------------------------------------------------------------------
 void FVulkanLogicalRenderPass::SetRenderPass(FRawRenderPassID renderPass, u32 subpass, FRawFramebufferID framebuffer, u32 depthIndex) {
+    Assert(renderPass);
+    Assert(framebuffer);
 
+    _framebufferId = framebuffer;
+    _renderPassId = renderPass;
+    _subpassIndex = subpass;
+
+    if (depthIndex < _clearValues.size()) {
+        _clearValues[depthIndex] = _clearValues[_depthStencilTarget.Index];
+        _depthStencilTarget.Index = depthIndex;
+    }
 }
 //----------------------------------------------------------------------------
-bool FVulkanLogicalRenderPass::ShadingRateImage(const FVulkanLocalImage** pimage, FImageViewDesc* pdesc) const {
+bool FVulkanLogicalRenderPass::ShadingRateImage(const FVulkanLocalImage** outImage, FImageViewDesc* outDesc) const {
+#ifdef VK_NV_shading_rate_image
+    if (not _shadingRateImage)
+        return false;
 
+    Assert(outImage);
+    Assert(outDesc);
+
+    *outImage = _shadingRateImage;
+
+    outDesc->View = EImageView_2D;
+    outDesc->Format = EPixelFormat::R8u;
+    outDesc->BaseLevel = _shadingRateImageLevel;
+    outDesc->BaseLayer = _shadingRateImageLayer;
+    outDesc->AspectMask = EImageAspect::Color;
+
+    return true;
+
+#else
+    PP_FOREACH_ARGS(UNUSED, pImage, pDesc);
+    return false;
+
+#endif
 }
 //----------------------------------------------------------------------------
-bool FVulkanLogicalRenderPass::Submit(FVulkanCommandBuffer& cmd, TMemoryView<const TPair<FRawImageID, EResourceState>> images, TMemoryView<const TPair<FRawBufferID, EResourceState>> buffers) {
+bool FVulkanLogicalRenderPass::Submit(
+    FVulkanCommandBuffer& cmd,
+    TMemoryView<const TPair<FRawImageID, EResourceState>> images,
+    TMemoryView<const TPair<FRawBufferID, EResourceState>> buffers ) {
+    LOG_CHECK(RHI, not _isSubmitted);
 
+    if (not images.empty()) {
+        Assert_NoAssume(_mutableImages.empty());
+        _mutableImages = _allocator->AllocateT<FMutableImages::value_type>(images.size());
+
+        forrange(i, 0, images.size())
+            Meta::Construct(&_mutableImages[i], cmd.ToLocal(images[i].first), images[i].second);
+    }
+
+    if (not buffers.empty()) {
+        Assert_NoAssume(_mutableBuffers.empty());
+        _mutableBuffers = _allocator->AllocateT<FMutableBuffers::value_type>(buffers.size());
+
+        forrange(i, 0, buffers.size())
+            Meta::Construct(&_mutableBuffers[i], cmd.ToLocal(buffers[i].first), buffers[i].second);
+    }
+
+    _isSubmitted = true;
+    return true;
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 void FVulkanLogicalRenderPass::SetShaderDebugIndex(EShaderDebugIndex id) {
-
+    for (IVulkanDrawTask* pTask : _drawTasks)
+        pTask->SetDebugModeIndex(id);
 }
 #endif
 //----------------------------------------------------------------------------

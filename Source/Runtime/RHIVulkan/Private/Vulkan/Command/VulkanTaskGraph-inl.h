@@ -9,7 +9,7 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Visitor>
-void TVulkanTaskGraph<_Visitor>::Construct(const FSlabAllocator& allocator) {
+void TVulkanTaskGraph<_Visitor>::Construct(const SLAB_ALLOCATOR(RHICommand)& allocator) {
     _nodes.Create_AssumeNotValid<FSearchableNodes>(allocator);
     _entries.Create_AssumeNotValid<FEntries>(allocator);
     _entries->Reserve(64);

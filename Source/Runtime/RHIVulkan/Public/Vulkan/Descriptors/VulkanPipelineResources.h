@@ -18,7 +18,7 @@ namespace RHI {
 class PPE_RHIVULKAN_API FVulkanPipelineResources final : Meta::FNonCopyable {
 public:
     struct FUpdateDescriptors {
-        FSlabHeap::FStackMarker Allocator;
+        SLABHEAP_POOLED(RHIDescriptor) Allocator;
         TMemoryView<VkWriteDescriptorSet> Descriptors;
         u32 DescriptorIndex{ 0 };
 

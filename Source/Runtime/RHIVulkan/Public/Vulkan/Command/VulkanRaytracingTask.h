@@ -41,7 +41,7 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FBuildRayTracingGeometry> final : public IVulkanFrameTask {
 public:
-    using FUsableBuffers = HASHSET_SLAB(const FVulkanLocalBuffer*);
+    using FUsableBuffers = HASHSET_SLAB(RHICommand, const FVulkanLocalBuffer*);
 
     const FVulkanRayTracingLocalGeometry* RTGeometry{ nullptr };
     const FVulkanLocalBuffer* ScratchBuffer{ nullptr };

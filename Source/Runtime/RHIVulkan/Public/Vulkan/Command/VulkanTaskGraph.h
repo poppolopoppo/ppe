@@ -20,8 +20,8 @@ namespace RHI {
 template <typename _Visitor>
 class TVulkanTaskGraph {
 public:
-    using FSearchableNodes = HASHSET_SLAB(PVulkanFrameTask);
-    using FEntries = SPARSEARRAY_SLAB(PVulkanFrameTask);
+    using FSearchableNodes = HASHSET_SLAB(RHICommand, PVulkanFrameTask);
+    using FEntries = SPARSEARRAY_SLAB(RHICommand, PVulkanFrameTask);
 
     TVulkanTaskGraph() = default;
 
@@ -29,7 +29,7 @@ public:
     bool Empty() const { return _nodes->empty(); }
     const FEntries& Entries() const { return *_entries; }
 
-    void Construct(const FSlabAllocator& allocator);
+    void Construct(const SLAB_ALLOCATOR(RHICommand)& allocator);
     void TearDown();
 
     template <typename _Task>

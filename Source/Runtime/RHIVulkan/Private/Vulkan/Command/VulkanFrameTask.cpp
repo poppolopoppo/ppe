@@ -279,7 +279,7 @@ TVulkanFrameTask<FClearDepthStencilImage>::TVulkanFrameTask(FVulkanCommandBuffer
 TVulkanFrameTask<FUpdateBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process)
 :   IVulkanFrameTask(desc, process)
 ,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
-,   Regions(cmd.Allocator().AllocateT<FRegion>(checked_cast<u32>(desc.Regions.size()))) {
+,   Regions(cmd.Allocator().AllocateT<FRegion>(desc.Regions.size())) {
     Assert_NoAssume(DstBuffer);
     Assert_NoAssume(DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 

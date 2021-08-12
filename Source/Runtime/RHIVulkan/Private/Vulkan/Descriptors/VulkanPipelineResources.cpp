@@ -61,6 +61,7 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
 
     const FVulkanDevice& device = manager.Device();
 
+#ifdef VK_EXT_robustness2
     // Without the nullDescriptor feature enabled, when updating a VkDescriptorSet, all the resources backing it must be non-null,
     // even if the descriptor is statically not used by the shader. This feature allows descriptors to be backed by null resources or views.
     // Loads from a null descriptor return zero values and stores and atomics to a null descriptor are discarded.
@@ -71,15 +72,17 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
     else {
         exclusiveRes->AllowEmptyResources = false;
     }
+#endif
 
     LOG_CHECK(RHI, pDsLayout->AllocateDescriptorSet(
         &exclusiveRes->DescriptorSet, manager ));
 
+    SLABHEAP_POOLED(RHIDescriptor) heap;
+    heap.SetSlabSize(16_KiB);
+
     FUpdateDescriptors update;
-    update.Allocator = AllocaHeap().LockExclusive()->StackMarker();
     update.DescriptorIndex = 0;
-    update.Descriptors = update.Allocator->AllocateT<VkWriteDescriptorSet>(
-        pDsLayout->Read()->MaxIndex + 1 );
+    update.Descriptors = update.Allocator.AllocateT<VkWriteDescriptorSet>(pDsLayout->Read()->MaxIndex + 1);
 
     LOG_CHECK(RHI, not exclusiveRes->DynamicData.UniformByPred([&](const FUniformID& id, auto& data) -> bool {
         Assert(id.Valid());
@@ -163,8 +166,7 @@ bool FVulkanPipelineResources::operator ==(const FVulkanPipelineResources& other
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value) {
-    const auto infos =
-        pList->Allocator->AllocateT<VkDescriptorBufferInfo>(value.Elements.Count);
+    const auto infos = pList->Allocator.AllocateT<VkDescriptorBufferInfo>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -199,8 +201,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value) {
-    const auto infos =
-        pList->Allocator->AllocateT<VkBufferView>(value.Elements.Count);
+    const auto infos = pList->Allocator.AllocateT<VkBufferView>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -237,8 +238,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value) {
-    const auto infos =
-        pList->Allocator->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -279,8 +279,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value) {
-    const auto infos =
-        pList->Allocator->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -318,8 +317,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value) {
-    const auto infos =
-        pList->Allocator->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -347,8 +345,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
-    const auto tlas =
-        pList->Allocator->AllocateT<VkAccelerationStructureKHR>(value.Elements.Count);
+    const auto tlas = pList->Allocator.AllocateT<VkAccelerationStructureKHR>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -362,18 +359,18 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
         tlas[i] = pRTScene->Handle();
     }
 
-    auto& top_as = pList->Allocator->AllocateT<VkWriteDescriptorSetAccelerationStructureKHR>()[0];
-    top_as = {};
-    top_as.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
-    top_as.accelerationStructureCount = value.Elements.Count;
-    top_as.pAccelerationStructures = tlas.data();
+    auto* const pTopAS = pList->Allocator.AllocateT<VkWriteDescriptorSetAccelerationStructureKHR>();
+    *pTopAS = {};
+    pTopAS->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+    pTopAS->accelerationStructureCount = value.Elements.Count;
+    pTopAS->pAccelerationStructures = tlas.data();
 
     VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
     wds.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
     wds.descriptorCount = value.Elements.Count;
     wds.dstBinding = value.Index.VKBinding();
     wds.dstSet = data.DescriptorSet.First;
-    wds.pNext = &top_as;
+    wds.pNext = pTopAS;
 
     return true;
 }

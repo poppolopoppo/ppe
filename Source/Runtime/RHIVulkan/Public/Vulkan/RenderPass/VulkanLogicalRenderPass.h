@@ -7,6 +7,7 @@
 
 #include "Allocator/SlabHeap.h"
 #include "Allocator/SlabAllocator.h"
+#include "Meta/InPlace.h"
 
 namespace PPE {
 namespace RHI {
@@ -44,8 +45,8 @@ public:
     using FScissors = TFixedSizeStack<VkRect2D, MaxViewports>;
     using FShadingRatePerViewport = TFixedSizeStack<VkShadingRatePaletteNV, MaxViewports>;
 
-    using FMutableImages = TMemoryView<const TPair<const FVulkanLocalImage*, EResourceState>>;
-    using FMutableBuffers = TMemoryView<const TPair<const FVulkanLocalBuffer*, EResourceState>>;
+    using FMutableImages = TMemoryView<TPair<const FVulkanLocalImage*, EResourceState>>;
+    using FMutableBuffers = TMemoryView<TPair<const FVulkanLocalBuffer*, EResourceState>>;
 
     FVulkanLogicalRenderPass() = default;
 #if USE_PPE_RHIDEBUG
@@ -66,7 +67,7 @@ public:
 
     FRawFramebufferID FramebufferId() const { return _framebufferId; }
     FRawRenderPassID RenderPassId() const { return _renderPassId; }
-    u32  SubpassIndex() const { return _subpassIndex; }
+    u32 SubpassIndex() const { return _subpassIndex; }
 
     TMemoryView<const VkViewport> Viewports() const { return _viewports.MakeConstView(); }
     TMemoryView<const VkRect2D> Scissors() const { return _scissors.MakeConstView(); }
@@ -83,15 +84,15 @@ public:
     FMutableBuffers MutableBuffers() const { return _mutableBuffers; }
 
     bool HasShadingRateImage() const { return (!!_shadingRateImage); }
-    NODISCARD bool ShadingRateImage(const FVulkanLocalImage** pimage, FImageViewDesc* pdesc) const;
+    NODISCARD bool ShadingRateImage(const FVulkanLocalImage** outImage, FImageViewDesc* outDesc) const;
     TMemoryView<const VkShadingRatePaletteNV> ShadingRatePalette() const { return _shadingRatePalette.MakeConstView(); }
 
     template <typename _DrawTask, typename... _Args>
     _DrawTask* EmplaceTask(_Args&&... args) {
-        _DrawTask* const ptask = new (_allocator) _DrawTask(*this, std::forward<_Args>(args)...);
-        Assert(ptask);
-        _drawTasks.push_back(ptask);
-        return ptask;
+        _DrawTask* const pTask = new (*_allocator) _DrawTask(*this, std::forward<_Args>(args)...);
+        Assert(pTask);
+        _drawTasks.push_back(pTask);
+        return pTask;
     }
 
     NODISCARD bool Construct(FVulkanCommandBuffer& cmd, const FRenderPassDesc& desc);
@@ -113,8 +114,11 @@ private:
     FRawRenderPassID _renderPassId;
     u32 _subpassIndex{ 0 };
 
-    FSlabAllocator _allocator{ Meta::ForceInit };
-    VECTOR_SLAB(IVulkanDrawTask*) _drawTasks{ _allocator };
+    using FAllocator = TPoolingSlabHeap<TSlabAllocator<ALLOCATOR(RHICommand)>>;
+    using FDrawTasks = TVector<IVulkanDrawTask*, TPoolingSlabAllocator<FAllocator>>;
+
+    Meta::TInPlace<FAllocator> _allocator;
+    FDrawTasks _drawTasks{ Meta::ForceInit };
 
     FColorTargets _colorTargets;
     FDepthStencilTarget _depthStencilTarget;
@@ -129,18 +133,18 @@ private:
     FRasterizationState _rasterizationState;
     FMultisampleState _multisampleState;
 
-    FRectangleI _area;
-    bool _isSubmitted{ false };
-
     FVulkanPipelineResourceSet _perPassResources;
+
+    FMutableImages _mutableImages;
+    FMutableBuffers _mutableBuffers;
 
     const FVulkanLocalImage* _shadingRateImage{ nullptr };
     FImageLayer _shadingRateImageLayer;
     FMipmapLevel _shadingRateImageLevel;
     FShadingRatePerViewport _shadingRatePalette;
 
-    FMutableImages _mutableImages;
-    FMutableBuffers _mutableBuffers;
+    FRectangleI _area;
+    bool _isSubmitted{ false };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
