@@ -80,11 +80,14 @@
         - may not be possible to remove a field ? since we use static offsets
 - [ ] Fast dynamic dispatch by hacking VTable: https://medium.com/@calebleak/fast-virtual-functions-hacking-the-vtable-for-fun-and-profit-25c36409c5e0
 - [ ] Wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
-- [ ] Physics engine:
-    - https://www.youtube.com/watch?v=-_IspRG548E
-    - Physics for game programmer: https://www.youtube.com/watch?v=7_nKOET6zwI
-    - Liquid Crystal Demo: https://kotsoft.itch.io/liquid-crystal-pre-alpha
-    - https://www.shadertoy.com/view/XdGGWD
+
+## Physics engine:
+- Detailed Rigid Body Simulation with Extended Position Based Dynamics: https://www.youtube.com/watch?v=zzy6u1z_l9A https://matthias-research.github.io/pages/publications/PBDBodies.pdf
+- CIS563, 2015, Position Based Dynamics: https://www.youtube.com/watch?v=fH3VW9SaQ_c
+- https://www.youtube.com/watch?v=-_IspRG548E
+- Physics for game programmer: https://www.youtube.com/watch?v=7_nKOET6zwI
+- Liquid Crystal Demo: https://kotsoft.itch.io/liquid-crystal-pre-alpha
+- https://www.shadertoy.com/view/XdGGWD
 
 ## Algorithm
 
