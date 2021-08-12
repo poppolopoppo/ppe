@@ -56,7 +56,7 @@ u64 hash_mem64(const TMemoryView<T>& src, u64 seed) NOEXCEPT { return hash_mem64
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FORCE_INLINE size_t hash_mem(const void *ptr, size_t sizeInBytes) { return CODE3264(hash_mem32, hash_mem64)(ptr, sizeInBytes); }
+FORCE_INLINE size_t hash_mem(const void *ptr, size_t sizeInBytes) NOEXCEPT { return CODE3264(hash_mem32, hash_mem64)(ptr, sizeInBytes); }
 template <typename T>
 size_t hash_mem(const TMemoryView<T>& src) NOEXCEPT { return hash_mem(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
@@ -104,15 +104,18 @@ FORCE_INLINE size_t hash_crc32(const void* key, size_t sizeInBytes, size_t crc32
     return FPlatformHash::CRC32(crc32, key, sizeInBytes);
 }
 //----------------------------------------------------------------------------
+PPE_CORE_API u128 hash_128(const void* key, const size_t len, u64 seed = 0) NOEXCEPT;
+PPE_CORE_API u128 hash_128(const void* key, const size_t len, FRawMemoryConst secret) NOEXCEPT;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API u128 Fingerprint128(const void *ptr, size_t sizeInBytes);
+PPE_CORE_API u128 Fingerprint128(const void *ptr, size_t sizeInBytes) NOEXCEPT;
 template <typename T> u128 Fingerprint128(const TMemoryView<T>& src) { return Fingerprint128(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
-PPE_CORE_API u64 Fingerprint64(const void *ptr, size_t sizeInBytes);
+PPE_CORE_API u64 Fingerprint64(const void *ptr, size_t sizeInBytes) NOEXCEPT;
 template <typename T> u64 Fingerprint64(const TMemoryView<T>& src) { return Fingerprint64(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
-PPE_CORE_API u32 Fingerprint32(const void *ptr, size_t sizeInBytes);
+PPE_CORE_API u32 Fingerprint32(const void *ptr, size_t sizeInBytes) NOEXCEPT;
 template <typename T> u32 Fingerprint32(const TMemoryView<T>& src) { return Fingerprint32(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

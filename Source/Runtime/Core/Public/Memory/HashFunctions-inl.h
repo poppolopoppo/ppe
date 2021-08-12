@@ -112,7 +112,7 @@ namespace details {
 template <typename T, size_t _Sz = sizeof(T)>
 struct TPODHash {
     static FORCE_INLINE size_t fn(const T& pod) {
-        return hash_mem((const void *)&pod, sizeof(T));
+        return hash_mem(static_cast<const void*>(std::addressof(pod)), sizeof(T));
     }
 };
 //----------------------------------------------------------------------------

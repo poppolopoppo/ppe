@@ -33,8 +33,11 @@ public:
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, hash_t h);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 //----------------------------------------------------------------------------
+// See HashFunctions.h for the definition of those functions:
 template <typename T>
-size_t hash_as_pod(const T& pod) NOEXCEPT; // See HashFunctions.h
+size_t hash_as_pod(const T& pod) NOEXCEPT;
+size_t hash_mem(const void *ptr, size_t sizeInBytes) NOEXCEPT;
+size_t hash_ptr(const void* ptr) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE auto hash_value(T value) NOEXCEPT -> typename std::enable_if_t<std::is_enum<T>::value, hash_t> {

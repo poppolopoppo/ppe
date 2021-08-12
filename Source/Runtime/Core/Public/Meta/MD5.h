@@ -19,6 +19,13 @@ namespace Meta {
 struct FMd5sum {
     u32 h[4];
 
+    constexpr operator u128 () const {
+        return {
+            h[0]|static_cast<u64>(h[1])<<32u,
+            h[2]|static_cast<u64>(h[3])<<32u
+        };
+    }
+
     constexpr u32& operator[](int i) { return h[i]; }
     constexpr u32 operator[](int i) const { return h[i]; }
 
