@@ -46,13 +46,7 @@
 #   define PPE_DUMP_THREAD_ID              1
 #   define PPE_DUMP_THREAD_NAME            0
 #   define PPE_DUMP_SITE_ON_LOG            0
-#   define PPE_DUMP_CALLSTACK_ON_WARNING   0
-#   define PPE_DUMP_CALLSTACK_ON_ERROR     0
-
-#   if (PPE_DUMP_CALLSTACK_ON_ERROR || PPE_DUMP_CALLSTACK_ON_WARNING)
-#       include "Diagnostic/Callstack.h"
-#       include "Diagnostic/DecodedCallstack.h"
-#   endif
+#   define PPE_DUMP_SITE_ON_ERROR          1
 
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, LogDefault)
@@ -427,18 +421,22 @@ public:
         const FSeconds elapsed = site.Timepoint.ElapsedSince(ILowLevelLogger::StartedAt());
 #if PPE_DUMP_THREAD_ID
 #   if PPE_DUMP_THREAD_NAME
-        Format(oss, L"[{0:#-10f4}][{1:20}][{3:-8}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{1:20}][{3:-9}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
 #   else // only thread hash :
-        Format(oss, L"[{0:#-10f4}][{1:#5}][{3:-8}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{1:#5}][{3:-9}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
 #   endif
 #else
-        Format(oss, L"[{0:#-10f4}][{2:-8}][{1:-15}] ", elapsed.Value(), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{2:-9}][{1:-15}] ", elapsed.Value(), MakeCStringView(category.Name), level);
 #endif
     }
 
     static void Footer(FWTextWriter& oss, const ILogger::FCategory&, ILogger::EVerbosity level, const ILogger::FSiteInfo& site) {
 #if PPE_DUMP_SITE_ON_LOG
         Format(oss, L"\n\tat {0}:{1}\n", site.Filename, site.Line);
+#elif PPE_DUMP_SITE_ON_ERROR
+        if (Unlikely(level & (ELoggerVerbosity::Error|ELoggerVerbosity::Fatal)))
+            Format(oss, L"\n\tat {0}:{1}", site.Filename, site.Line);
+        oss << Eol;
 #else
         UNUSED(level);
         UNUSED(site);
