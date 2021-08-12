@@ -27,8 +27,8 @@ namespace Parser {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-#if 0 // in situ storage is bloating the stack
-using TEnumerable = VECTORINSITU(Parser, T, 1);
+#if 1 // in situ storage is bloating the stack
+using TEnumerable = VECTORINSITU(Parser, T, 3);
 #else
 using TEnumerable = VECTOR(Parser, T);
 #endif
