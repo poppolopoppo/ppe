@@ -20,7 +20,10 @@ struct TPtrRef {
     CONSTEXPR TPtrRef(nullptr_t) NOEXCEPT : Ptr(nullptr) {}
 
     CONSTEXPR TPtrRef(T* ptr) NOEXCEPT : Ptr(ptr) { Assert(ptr); }
-    CONSTEXPR TPtrRef(T& ref) NOEXCEPT : Ptr(&ref) {}
+    CONSTEXPR TPtrRef& operator =(T* ptr) NOEXCEPT { Assert(ptr); Ptr = ptr; return (*this); }
+
+    CONSTEXPR TPtrRef(T& ref) NOEXCEPT : Ptr(std::addressof(ref)) {}
+    CONSTEXPR TPtrRef& operator =(T& ref) NOEXCEPT { Ptr = std::addressof(ref); return (*this); }
 
     CONSTEXPR TPtrRef(const TPtrRef&) NOEXCEPT = default;
     CONSTEXPR TPtrRef& operator =(const TPtrRef&) NOEXCEPT = default;
@@ -44,6 +47,44 @@ struct TPtrRef {
 
     CONSTEXPR operator T& () const NOEXCEPT { Assert(Ptr); return (*Ptr); }
     CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
+
+    CONSTEXPR TPtrRef& operator++() {
+        ++Ptr;
+        return (*this);
+    }
+    CONSTEXPR TPtrRef operator++(int) {
+        TPtrRef tmp(*this);
+        ++(*this);
+        return tmp;
+    }
+
+    CONSTEXPR TPtrRef& operator--() {
+        --Ptr;
+        return (*this);
+    }
+    CONSTEXPR TPtrRef operator--(int) {
+        TPtrRef tmp(*this);
+        --(*this);
+        return tmp;
+    }
+
+    CONSTEXPR TPtrRef& operator+=(ptrdiff_t offset) {
+        Ptr += offset;
+        return (*this);
+    }
+    CONSTEXPR TPtrRef operator+(ptrdiff_t offset) const {
+        TPtrRef tmp(*this);
+        return (tmp += offset);
+    }
+
+    CONSTEXPR TPtrRef& operator-=(ptrdiff_t offset) {
+        Ptr -= offset;
+        return (*this);
+    }
+    CONSTEXPR TPtrRef operator-(ptrdiff_t offset) const {
+        TPtrRef tmp(*this);
+        return (tmp -= offset);
+    }
 
     CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
     CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
