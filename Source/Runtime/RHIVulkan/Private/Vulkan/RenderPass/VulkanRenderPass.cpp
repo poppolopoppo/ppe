@@ -3,7 +3,6 @@
 
 #include "Vulkan/RenderPass/VulkanRenderPass.h"
 
-#include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_beta.h"
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Instance/VulkanResourceManager.h"
 #include "Vulkan/RenderPass/VulkanLogicalRenderPass.h"
@@ -14,6 +13,21 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+// Use a proxy template to make ADL work for the following free-functions:
+//----------------------------------------------------------------------------
+template <typename _Vk>
+struct TRHI_;
+template <typename _Vk>
+static TMemoryView<TRHI_<_Vk>> MakeRHIView_(_Vk* ptr, size_t count) NOEXCEPT {
+    return { static_cast<TRHI_<_Vk>*>(ptr), count };
+}
+template <typename _Vk>
+static TMemoryView<const TRHI_<_Vk>> MakeRHIView_(const _Vk* ptr, size_t count) NOEXCEPT {
+    return { static_cast<const TRHI_<_Vk>*>(ptr), count };
+}
+//----------------------------------------------------------------------------
+// VkAttachmentDescription
 //----------------------------------------------------------------------------
 static bool operator ==(const VkAttachmentDescription& lhs, const VkAttachmentDescription& rhs) NOEXCEPT {
     return (
@@ -41,6 +55,8 @@ static hash_t hash_value(const VkAttachmentDescription& desc) NOEXCEPT {
         desc.finalLayout );
 }
 //----------------------------------------------------------------------------
+// VkAttachmentReference
+//----------------------------------------------------------------------------
 static bool operator ==(const VkAttachmentReference& lhs, const VkAttachmentReference& rhs) NOEXCEPT {
     return (
         (lhs.attachment == rhs.attachment) &&
@@ -51,35 +67,38 @@ static hash_t hash_value(const VkAttachmentReference& ref) NOEXCEPT {
     return hash_tuple(ref.attachment, ref.layout);
 }
 //----------------------------------------------------------------------------
+// VkSubpassDescription
+//----------------------------------------------------------------------------
 static bool operator ==(const VkSubpassDescription& lhs, const VkSubpassDescription& rhs) NOEXCEPT {
 
-    const auto lhsResolve = (lhs.pResolveAttachments ? TMemoryView{ lhs.pResolveAttachments, lhs.colorAttachmentCount } : Default);
-    const auto rhsResolve = (rhs.pResolveAttachments ? TMemoryView{ rhs.pResolveAttachments, rhs.colorAttachmentCount } : Default);
+    const auto lhsResolve = (lhs.pResolveAttachments ? MakeRHIView_(lhs.pResolveAttachments, lhs.colorAttachmentCount) : Default);
+    const auto rhsResolve = (rhs.pResolveAttachments ? MakeRHIView_(rhs.pResolveAttachments, rhs.colorAttachmentCount) : Default);
 
     return (
         (lhs.flags == rhs.flags) &&
         (lhs.pipelineBindPoint == rhs.pipelineBindPoint) &&
-        (TMemoryView{ lhs.pInputAttachments, lhs.inputAttachmentCount }.RangeEqual({ rhs.pInputAttachments, rhs.inputAttachmentCount })) &&
-        (TMemoryView{ lhs.pColorAttachments, lhs.colorAttachmentCount }.RangeEqual({ rhs.pColorAttachments, rhs.colorAttachmentCount })) &&
+        (MakeRHIView_(lhs.pInputAttachments, lhs.inputAttachmentCount).RangeEqual(MakeRHIView_(rhs.pInputAttachments, rhs.inputAttachmentCount))) &&
+        (MakeRHIView_(lhs.pColorAttachments, lhs.colorAttachmentCount).RangeEqual(MakeRHIView_(rhs.pColorAttachments, rhs.colorAttachmentCount))) &&
         (lhsResolve.RangeEqual(rhsResolve)) &&
-        (!!lhs.pDepthStencilAttachment == !!rhs.pDepthStencilAttachment) &&
-        (not lhs.pDepthStencilAttachment or *lhs.pDepthStencilAttachment == *rhs.pDepthStencilAttachment) &&
-        (TMemoryView{ lhs.pPreserveAttachments, lhs.preserveAttachmentCount }).RangeEqual({ rhs.pPreserveAttachments, rhs.preserveAttachmentCount }) );
+        (MakeRHIView_(lhs.pDepthStencilAttachment, 1).RangeEqual(MakeRHIView_(rhs.pDepthStencilAttachment, 1))) &&
+        (TMemoryView(lhs.pPreserveAttachments, lhs.preserveAttachmentCount).RangeEqual(TMemoryView(rhs.pPreserveAttachments, rhs.preserveAttachmentCount))) );
 }
 //----------------------------------------------------------------------------
 static hash_t hash_value(const VkSubpassDescription& desc) NOEXCEPT {
     hash_t h = hash_tuple(desc.flags, desc.pipelineBindPoint);
 
-    hash_range(h, desc.pInputAttachments, desc.inputAttachmentCount);
-    hash_range(h, desc.pColorAttachments, desc.colorAttachmentCount);
-    hash_range(h, desc.pResolveAttachments, desc.colorAttachmentCount);
-    hash_range(h, desc.pPreserveAttachments, desc.preserveAttachmentCount);
+    hash_combine(h, hash_view(MakeRHIView_(desc.pInputAttachments, desc.inputAttachmentCount)));
+    hash_combine(h, hash_view(MakeRHIView_(desc.pColorAttachments, desc.colorAttachmentCount)));
+    hash_combine(h, hash_view(MakeRHIView_(desc.pResolveAttachments, desc.colorAttachmentCount)));
+    hash_combine(h, hash_view(TMemoryView(desc.pPreserveAttachments, desc.preserveAttachmentCount)));
 
     if (desc.pDepthStencilAttachment)
-        hash_combine(h, *desc.pDepthStencilAttachment);
+        hash_combine(h, hash_value(*desc.pDepthStencilAttachment));
 
     return h;
 }
+//----------------------------------------------------------------------------
+// VkSubpassDependency
 //----------------------------------------------------------------------------
 static bool operator ==(const VkSubpassDependency& lhs, const VkSubpassDependency& rhs) NOEXCEPT {
     return (
@@ -92,6 +111,26 @@ static bool operator ==(const VkSubpassDependency& lhs, const VkSubpassDependenc
         (lhs.dependencyFlags == rhs.dependencyFlags) );
 }
 //----------------------------------------------------------------------------
+static hash_t hash_value(const VkSubpassDependency& dep) NOEXCEPT {
+    return hash_tuple(
+        dep.srcSubpass, dep.dstSubpass,
+        dep.srcStageMask, dep.dstStageMask,
+        dep.srcAccessMask, dep.dstAccessMask,
+        dep.dependencyFlags );
+}
+//----------------------------------------------------------------------------
+// Template helpers for ADL (vk structures are in global namespace)
+//----------------------------------------------------------------------------
+template <typename _Vk>
+struct TRHI_ : _Vk {
+    friend bool operator ==(const TRHI_& lhs, const TRHI_& rhs) NOEXCEPT {
+        return (static_cast<const _Vk&>(lhs) == static_cast<const _Vk&>(rhs));
+    }
+    friend hash_t hash_value(const TRHI_<_Vk>& proxy) NOEXCEPT {
+        return hash_value(static_cast<const _Vk&>(proxy));
+    }
+};
+//----------------------------------------------------------------------------
 static void ComputeRenderPassHash_(
     hash_t* outMainHash,
     hash_t* outAttachmentHash,
@@ -102,7 +141,7 @@ static void ComputeRenderPassHash_(
     Assert(outSubpassesHash);
     Assert(nullptr == createInfo.pNext);
 
-    *outAttachmentHash = hash_range(createInfo.pAttachments, createInfo.attachmentCount);
+    *outAttachmentHash = hash_view(MakeRHIView_(createInfo.pAttachments, createInfo.attachmentCount));
 
     *outMainHash = hash_tuple(
         createInfo.flags,
@@ -110,13 +149,24 @@ static void ComputeRenderPassHash_(
         *outAttachmentHash );
 
     outSubpassesHash->Resize(createInfo.subpassCount);
+
+    const auto subpasses = MakeRHIView_(createInfo.pSubpasses, createInfo.subpassCount);
+
+#if 1
+    hash_combine(*outMainHash, subpasses.MapReduce(
+        [outp{outSubpassesHash->begin()}](const auto& x) mutable {
+            return (*outp++ = hash_value(x));
+        },
+        &hash_combine<hash_t> ));
+#else // #TODO:
     forrange(i, 0, createInfo.subpassCount) {
-        const hash_t subpassHash = hash_value(createInfo.pSubpasses[i]);
+        const hash_t subpassHash = hash_value(subpasses[i]);
         outSubpassesHash->at(i) = subpassHash;
         hash_combine(*outMainHash, subpassHash);
     }
+#endif
 
-    hash_range(*outMainHash, createInfo.pDependencies, createInfo.dependencyCount);
+    hash_combine(*outMainHash, hash_view(MakeRHIView_(createInfo.pDependencies, createInfo.dependencyCount)));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -275,9 +325,9 @@ bool FVulkanRenderPass::operator==(const FVulkanRenderPass& other) const NOEXCEP
         (lhs->AttachmentHash == rhs->AttachmentHash) &&
         (lhs->SubpassesHash.MakeView().RangeEqual(rhs->SubpassesHash.MakeView())) &&
         (lhs->CreateInfo.flags == rhs->CreateInfo.flags) &&
-        (TMemoryView{ lhs->CreateInfo.pAttachments, lhs->CreateInfo.attachmentCount }).RangeEqual({ rhs->CreateInfo.pAttachments, rhs->CreateInfo.attachmentCount }) &&
-        (TMemoryView{ lhs->CreateInfo.pSubpasses, lhs->CreateInfo.subpassCount }).RangeEqual({ rhs->CreateInfo.pSubpasses, rhs->CreateInfo.subpassCount }) &&
-        (TMemoryView{ lhs->CreateInfo.pDependencies, lhs->CreateInfo.dependencyCount }).RangeEqual({ rhs->CreateInfo.pDependencies, rhs->CreateInfo.dependencyCount }) );
+        (MakeRHIView_(lhs->CreateInfo.pAttachments, lhs->CreateInfo.attachmentCount).RangeEqual(MakeRHIView_(rhs->CreateInfo.pAttachments, rhs->CreateInfo.attachmentCount))) &&
+        (MakeRHIView_(lhs->CreateInfo.pSubpasses, lhs->CreateInfo.subpassCount).RangeEqual(MakeRHIView_(rhs->CreateInfo.pSubpasses, rhs->CreateInfo.subpassCount))) &&
+        (MakeRHIView_(lhs->CreateInfo.pDependencies, lhs->CreateInfo.dependencyCount).RangeEqual(MakeRHIView_(rhs->CreateInfo.pDependencies, rhs->CreateInfo.dependencyCount))) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
