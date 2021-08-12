@@ -280,8 +280,9 @@ public:
 
     template <typename U>
     friend void swap(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) {
-        std::swap(lhs._ptr, rhs._ptr);
-        std::swap(lhs._cnt, rhs._cnt);
+        using std::swap;
+        swap(lhs._ptr, rhs._ptr);
+        swap(lhs._cnt, rhs._cnt);
     }
 
 private:

@@ -601,9 +601,9 @@ struct TStringHasher : TStringViewHasher<_Char, _Sensitive> {
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#define EXTERN_TEMPLATE_STRING 1
+#define USE_PPE_EXTERN_TEMPLATE_STRING 1
 
-#if EXTERN_TEMPLATE_STRING
+#if USE_PPE_EXTERN_TEMPLATE_STRING
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TBasicString<char>;
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TBasicString<wchar_t>;
 #else

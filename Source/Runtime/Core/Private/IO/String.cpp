@@ -7,7 +7,7 @@
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 
-#if EXTERN_TEMPLATE_STRING
+#if USE_PPE_EXTERN_TEMPLATE_STRING
 #   include "IO/String-inl.h"
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TBasicString<char>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TBasicString<wchar_t>;

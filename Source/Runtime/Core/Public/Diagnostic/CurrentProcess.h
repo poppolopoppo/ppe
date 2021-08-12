@@ -64,6 +64,7 @@ public:
 
     bool HasArgument(const FWStringView& arg) const NOEXCEPT;
 
+public: // singleton API
     using singleton_type::Get;
 #if USE_PPE_ASSERT
     using singleton_type::HasInstance;

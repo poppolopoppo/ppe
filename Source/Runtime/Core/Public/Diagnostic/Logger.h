@@ -53,7 +53,7 @@ FWD_INTERFACE_REFPTR(Logger);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FLoggerCategory {
-    const wchar_t* Name;
+    const wchar_t* Name = nullptr;
     ELoggerVerbosity Verbosity = ELoggerVerbosity::All;
 };
 //----------------------------------------------------------------------------

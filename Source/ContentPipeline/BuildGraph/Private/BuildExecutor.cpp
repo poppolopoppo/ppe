@@ -130,7 +130,7 @@ private:
             FBuildState& st = node->State();
 
             auto launchBuild = [&]() {
-                PCompletionPort port = NEW_REF(Task, FCompletionPort);
+                const PCompletionPort port = NEW_REF(Task, FCompletionPort);
 
                 st.Result = EBuildResult::Unbuilt;
                 st.Payload.reset(port);

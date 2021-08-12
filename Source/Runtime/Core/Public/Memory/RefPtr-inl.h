@@ -264,7 +264,8 @@ void TRefPtr<T>::reset(T* ptr/* = nullptr */) NOEXCEPT {
 template <typename T>
 template <typename U>
 void TRefPtr<T>::Swap(TRefPtr<U>& other) NOEXCEPT {
-    std::swap(other._ptr, _ptr);
+    using std::swap;
+    swap(other._ptr, _ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>

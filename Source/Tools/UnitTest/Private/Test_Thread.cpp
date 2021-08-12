@@ -199,7 +199,7 @@ NO_INLINE void Test_ParallelFor_() {
         FPlatformProcess::Sleep(0);
     });
 
-    AssertRelease(MakeView(values).Sum() == parallel_sum);
+    AssertRelease(MakeIterable(values).Accumulate() == parallel_sum);
 
     LOG(Test_Thread, Info, L"ParallelFor stop");
 }

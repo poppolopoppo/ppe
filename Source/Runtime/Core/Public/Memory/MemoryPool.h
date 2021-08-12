@@ -24,8 +24,6 @@ public:
     STATIC_ASSERT(_BlockSize >= sizeof(intptr_t));
     STATIC_ASSERT(_MaxChunks > 0);
 
-    STATIC_CONST_INTEGRAL(size_t, ThreadGranularity, 4/* good trade-off from empirical benchmarks */);
-
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;
 
@@ -39,6 +37,7 @@ public:
     STATIC_CONST_INTEGRAL(index_type, BlockSize, static_cast<index_type>(_BlockSize));
     STATIC_CONST_INTEGRAL(index_type, ChunkSize, static_cast<index_type>(_ChunkSize));
     STATIC_CONST_INTEGRAL(index_type, MaxChunks, static_cast<index_type>(_MaxChunks));
+    STATIC_CONST_INTEGRAL(index_type, ThreadGranularity, 4/* good trade-off from empirical benchmarks */);
 
     TMemoryPool() {
         InitializeInternalPool_(*_pool.LockExclusive());
@@ -89,10 +88,10 @@ private:
     };
     STATIC_ASSERT(sizeof(FPoolNode_) <= BlockSize);
 
+    STATIC_CONST_INTEGRAL(index_type, BundleMaxGarbage, 8u);
     STATIC_CONST_INTEGRAL(index_type, BundleMaxSizeInBytes, 32_KiB);
     STATIC_CONST_INTEGRAL(index_type, BundleMaxCount, Min(ChunkSize, Min(ChunkSize / ThreadGranularity, BundleMaxSizeInBytes / BlockSize)));
     STATIC_CONST_INTEGRAL(index_type, BundleCountPerChunk, (ChunkSize + BundleMaxCount - 1u) / BundleMaxCount);
-    STATIC_CONST_INTEGRAL(index_type, BundleMaxGarbage, 8u);
 
     struct FPoolChunk_;
 

@@ -139,7 +139,7 @@ public: // memory tracking
     }
 
     const _Allocator& AllocatorWithoutTracking() const NOEXCEPT {
-        return allocator_traits::AllocatorWithoutTracking(*this);
+        return allocator_traits::AllocatorWithoutTracking(const_cast<TTrackingAllocator&>(*this));
     }
 
     static FMemoryTracking& StaticTracking() NOEXCEPT {

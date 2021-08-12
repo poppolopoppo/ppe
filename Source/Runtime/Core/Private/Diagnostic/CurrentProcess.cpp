@@ -60,7 +60,7 @@ FCurrentProcess::FCurrentProcess(
 
     _appHandle = appHandle;
     _nShowCmd = nShowCmd;
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_PLATFORM_DEBUG
     _startedWithDebugger = FPlatformDebug::IsDebuggerPresent();
     if (HasArgument(L"-IgnoreDebugger")) {
         _startedWithDebugger = false;
@@ -69,7 +69,7 @@ FCurrentProcess::FCurrentProcess(
     _startedWithDebugger = false;
 #endif
 
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_PLATFORM_DEBUG
     if (HasArgument(L"-WaitForDebugger")) {
         _startedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformDebug::IsDebuggerPresent());

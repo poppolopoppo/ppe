@@ -145,7 +145,7 @@ public:
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking& TrackingData() NOEXCEPT {
+    FMemoryTracking* TrackingData() NOEXCEPT {
         static_assert(not cascade_traits::has_memory_tracking::value, "#TODO: not supported");
         return batch_traits::TrackingData(*this);
     }

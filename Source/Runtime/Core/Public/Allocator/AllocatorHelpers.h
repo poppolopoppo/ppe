@@ -467,7 +467,7 @@ public:
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking& TrackingData() NOEXCEPT {
+    FMemoryTracking* TrackingData() NOEXCEPT {
         return AllocatorTrackingData(
             static_cast<_Under&>(*this),
             static_cast<_Above&>(*this) );

@@ -31,7 +31,7 @@ namespace PPE {
 // Slab allocator have an handle to a FPoolingSlabHeap
 //----------------------------------------------------------------------------
 template <typename _Allocator = ALLOCATOR(Unknown) >
-class PPE_CORE_API TSlabAllocator : private FGenericAllocator {
+class TSlabAllocator : private FGenericAllocator {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
