@@ -71,6 +71,11 @@ CONSTEXPR hash_t hash_range(const T* values, size_t count) NOEXCEPT {
     return seed;
 }
 //----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR hash_t hash_view(const TMemoryView<T>& view) NOEXCEPT {
+    return hash_range(view.data(), view.size());
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

@@ -5,6 +5,7 @@
 #include "HAL/PlatformMacros.h"
 
 #include <iterator>
+#include <numeric>
 
 namespace PPE {
 namespace Meta {
@@ -496,6 +497,8 @@ public:
     using value_type = typename std::iterator_traits<_It>::value_type;
     using pointer = typename std::iterator_traits<_It>::pointer;
     using reference = typename std::iterator_traits<_It>::reference;
+    using const_pointer = Meta::TAddPointer<Meta::TAddConst<value_type>>;
+    using const_reference = Meta::TAddReference<Meta::TAddConst<value_type>>;
     using iterator_category = typename std::iterator_traits<_It>::iterator_category;
 
     template <typename _Jt>
@@ -522,37 +525,70 @@ public:
     }
 
     template <typename _Outp>
-    CONSTEXPR auto CopyTo(_Outp dst) {
-        return std::copy(begin(), end(), dst);
+    CONSTEXPR const TIterable& CopyTo(_Outp dst) const {
+        std::copy(begin(), end(), dst);
+        return (*this);
     }
     template <typename _Outp>
-    CONSTEXPR auto UnitializedCopyTo(_Outp dst) {
-        return std::uninitialized_copy(begin(), end(), dst);
+    CONSTEXPR const TIterable& UninitializedCopyTo(_Outp dst) const {
+        std::uninitialized_copy(begin(), end(), dst);
+        return (*this);
     }
 
     template <typename _Pred = Meta::TEqualTo<value_type> >
     CONSTEXPR bool Equals(const TIterable& other, _Pred pred = _Pred{}) const NOEXCEPT {
         return std::equal(_begin, _end, other._begin, other._end, pred);
     }
-
     template <typename _Jt, typename _Pred = Meta::TEqualTo<value_type> >
     CONSTEXPR bool Equals(const TIterable<_Jt>& other, _Pred pred = _Pred{}) const NOEXCEPT {
         return std::equal(_begin, _end, other._begin, other._end, pred);
     }
 
-    CONSTEXPR hash_t HashValue() const NOEXCEPT {
-        return hash_fwdit_constexpr(_begin, _end);
+    template <typename _Transform>
+    CONSTEXPR auto Map(_Transform&& transform) const NOEXCEPT;
+    template <typename _Reduce>
+    CONSTEXPR value_type Reduce(_Reduce&& reduce, value_type init = Meta::MakeForceInit<value_type>()) const NOEXCEPT;
+    template <typename _Transform, typename _Reduce>
+    CONSTEXPR auto MapReduce(_Transform&& transform, _Reduce&& reduce) const NOEXCEPT {
+        return Map(std::forward<_Transform>(transform)).Reduce(std::forward<_Reduce>(reduce));
     }
 
-    CONSTEXPR friend hash_t hash_value(const TIterable& v) NOEXCEPT { return v.HashValue(); }
+    CONSTEXPR auto Accumulate(value_type init = Meta::MakeForceInit<value_type>()) const { return std::accumulate(begin(), end(), init); }
+
+    CONSTEXPR auto Count(const_reference value) const { return std::count(begin(), end(), value); }
+    template <typename _Pred>
+    CONSTEXPR auto CountIf(_Pred&& pred) const { return std::count_if(begin(), end(), std::forward<_Pred>(pred)); }
+
+    CONSTEXPR iterator Find(const_reference value) const { return std::find(begin(), end(), value); }
+    template <typename _Pred>
+    CONSTEXPR iterator FindIf(_Pred&& pred) const { return std::find_if(begin(), end(), std::forward<_Pred>(pred)); }
+
+    CONSTEXPR auto LowerBound(const_reference value) const { return std::lower_bound(begin(), end(), value); }
+    template <typename _Pred>
+    CONSTEXPR auto LowerBound(_Pred&& pred) const { return std::lower_bound(begin(), end(), std::forward<_Pred>(pred)); }
+
+    CONSTEXPR auto MaxElement() const { return std::max_element(begin(), end()); }
+    CONSTEXPR auto MinElement() const { return std::min_element(begin(), end()); }
+    CONSTEXPR auto MinMaxElement() const { return std::minmax_element(begin(), end()); }
 
     CONSTEXPR friend bool operator ==(const TIterable& a, const TIterable& b) NOEXCEPT { return (a.Equals(b)); }
     CONSTEXPR friend bool operator !=(const TIterable& a, const TIterable& b) NOEXCEPT { return (not operator ==(a, b)); }
+
+    friend void swap(TIterable& lhs, TIterable& rhs) NOEXCEPT {
+        using std::swap;
+        swap(lhs._begin, rhs._begin);
+        swap(lhs._end, rhs._end);
+    }
 
 private:
     _It _begin;
     _It _end;
 };
+//----------------------------------------------------------------------------
+#if PPE_HAS_CXX17
+template <typename _It>
+TIterable(_It first, _It last) -> TIterable<_It>;
+#endif
 //----------------------------------------------------------------------------
 template <typename _It>
 CONSTEXPR TIterable<_It> MakeIterable(_It first, _It last) NOEXCEPT {
@@ -592,6 +628,18 @@ CONSTEXPR TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int first, _Int
 template <typename _Int, _Int _Inc = _Int(1)>
 CONSTEXPR TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int count) NOEXCEPT {
     return MakeInterval(_Int(0), count);
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+template <typename _Transform>
+CONSTEXPR auto TIterable<_It>::Map(_Transform&& transform) const NOEXCEPT {
+    return MakeOutputIterable(_begin, _end, transform);
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+template <typename _Reduce>
+CONSTEXPR auto TIterable<_It>::Reduce(_Reduce&& reduce, value_type init) const NOEXCEPT -> value_type {
+    return std::reduce(begin(), end(), init, reduce);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

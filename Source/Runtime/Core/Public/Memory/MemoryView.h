@@ -179,8 +179,8 @@ public:
 
     template <typename U>
     bool IsSubRangeOf(const TMemoryView<U>& parent) const {
-        return ((void*)parent.data() <= (void*)_storage &&
-                (void*)(parent.data()+parent.size()) >= (void*)(_storage+_size));
+        return (static_cast<void*>(parent.data()) <= static_cast<void*>(_storage) &&
+                static_cast<void*>(parent.data() + parent.size()) >= static_cast<void*>(_storage + _size));
     }
 
     iterator Find(const T& elem) const { return std::find(begin(), end(), elem); }
@@ -265,51 +265,40 @@ public:
     NODISCARD TMemoryView<U> Cast() const;
     NODISCARD TMemoryView<const u8> RawView() const { return Cast<const u8>(); }
 
-    template <typename _Map>
-    auto Map(_Map&& map) const {
-        return MakeIterable(
-            MakeOutputIterator(begin(), map),
-            MakeOutputIterator(end(), map) );
-    }
-
-    template <typename _Map, typename _Reduce>
-    auto MapReduce(_Map&& map, _Reduce&& reduce,
-        Meta::TDecay<decltype(std::declval<_Map>()(std::declval<T>()))>&& init = {} ) const {
-        auto reduced{ std::move(init) };
-        for (T& elt : *this)
-            reduced = reduce(reduced, map(elt));
-        return reduced;
-    }
-
-    template <typename _Map>
-    auto Sum(_Map&& map,
-        Meta::TDecay<decltype(std::declval<_Map>()(std::declval<T>()))>&& init = {} ) const {
-        return MapReduce(std::move(map),
-            [](auto a, auto b) CONSTEXPR NOEXCEPT{ return a + b; },
-            std::move(init) );
-    }
-
-    auto Sum() const {
-        return MapReduce(
-            [](auto x) { return x; },
-            [](auto a, auto b) CONSTEXPR NOEXCEPT{ return a + b; } );
-    }
-
     // implicit cast to TIterable<>
     CONSTEXPR operator TIterable<iterator>() const {
+        return Iterable();
+    }
+    CONSTEXPR TIterable<iterator> Iterable() const {
         return MakeIterable(begin(), end());
+    }
+    template <typename _Transform>
+    CONSTEXPR auto Map(const _Transform& transform) const {
+        return Iterable().Map(transform);
+    }
+    template <typename _Transform, typename _Reduce>
+    CONSTEXPR auto MapReduce(const _Transform& transform, _Reduce&& reduce) const {
+        return Map(transform).Reduce(std::forward<_Reduce>(reduce));
+    }
+
+    CONSTEXPR iterator Rotate(iterator around) const {
+        return std::rotate(begin(), around, end());
+    }
+    template <typename _Pred>
+    CONSTEXPR iterator StablePartition(_Pred&& pred) const {
+        return std::stable_partition(begin(), end(), pred);
     }
 
     CONSTEXPR friend void swap(TMemoryView& lhs, TMemoryView& rhs) NOEXCEPT {
-        std::swap(lhs._storage, rhs._storage);
-        std::swap(lhs._size, rhs._size);
+        using std::swap;
+        swap(lhs._storage, rhs._storage);
+        swap(lhs._size, rhs._size);
     }
 
     CONSTEXPR friend bool operator ==(const TMemoryView& lhs, const TMemoryView& rhs) {
         return (lhs._storage == rhs._storage &&
                 lhs._size == rhs._size );
     }
-
     CONSTEXPR friend bool operator !=(const TMemoryView& lhs, const TMemoryView& rhs) {
         return (not operator ==(lhs, rhs));
     }

@@ -81,6 +81,8 @@ struct TType final { using type = T; };
 template <typename T>
 CONSTEXPR const TType<T> Type{};
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // This ugly piece of crap is just used in STATIC_ASSERT() to get to see the
 // actual size of the types when the assertion fails :
 template <typename A, typename B>
@@ -145,6 +147,8 @@ using TConditional = typename std::conditional< _Test, _True, _False >::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Type semantics
+//----------------------------------------------------------------------------
 template <typename T>
 using TPointer = TAddPointer< TRemoveConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
@@ -156,6 +160,22 @@ using TReference = TAddReference< TRemoveConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
 template <typename T>
 using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Functional operators
+//----------------------------------------------------------------------------
+template <typename T = void >
+using TPlus = std::plus<T>;
+//----------------------------------------------------------------------------
+template <typename T = void >
+using TMinus = std::minus<T>;
+//----------------------------------------------------------------------------
+template <typename T = void >
+using TMultiplies = std::multiplies<T>;
+//----------------------------------------------------------------------------
+template <typename T = void >
+using TDivides = std::divides<T>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -193,27 +213,11 @@ CONSTEXPR bool is_pointer_v{ is_pointer_type(static_cast<T*>(nullptr)) };
 //----------------------------------------------------------------------------
 // Uses SFINAE to determine if T has a compatible constructor
 //----------------------------------------------------------------------------
-#if 0
-namespace details {
-template<
-    class T,
-    typename... _Args,
-    class = decltype(T(std::declval<_Args>()...))
->   std::true_type  _has_constructor(T&&, _Args&&... args);
-    std::false_type _has_constructor(...);
-} //!details
-template <typename T, typename... _Args>
-struct has_constructor : decltype(
-    details::_has_constructor(
-        std::declval<T>(),
-        std::declval<_Args>()...
-    )) {};
-#else
+
 template <typename T, typename... _Args>
 using has_constructor = typename std::is_constructible<T, _Args...>::type;
 template <typename T>
 using has_default_constructor = typename std::is_constructible<T>::type;
-#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -462,8 +466,15 @@ Meta::TEnableIf<not std::is_const_v<T>> Destroy(T* p) NOEXCEPT {
 #endif
 }
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename T = void>
 struct TDefaultConstructor {
+    void operator ()(T* p) const NOEXCEPT {
+        Meta::Construct(p, ForceInit);
+    }
+};
+template <>
+struct TDefaultConstructor<void> {
+    template <typename T>
     void operator ()(T* p) const NOEXCEPT {
         Meta::Construct(p, ForceInit);
     }
@@ -471,8 +482,15 @@ struct TDefaultConstructor {
 template <typename T>
 constexpr TDefaultConstructor<T> DefaultConstructor;
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename T = void>
 struct TDestructor {
+    void operator ()(T* p) const NOEXCEPT {
+        Meta::Destroy(p);
+    }
+};
+template <>
+struct TDestructor<void> {
+    template <typename T>
     void operator ()(T* p) const NOEXCEPT {
         Meta::Destroy(p);
     }
@@ -563,9 +581,16 @@ CONSTEXPR T& DerefPtr(T* ptr) {
 // Unlike STL variants theses operators allow to compare _Lhs with a compatible _Rhs
 //----------------------------------------------------------------------------
 #define PPE_META_OPERATOR(_NAME, _OP) \
-    template <typename _Lhs> \
+    template <typename _Lhs = void> \
     struct _NAME { \
         template <typename _Rhs> \
+        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
+            return (lhs _OP rhs); \
+        } \
+    }; \
+    template <> \
+    struct _NAME<void> { \
+        template <typename _Lhs, typename _Rhs> \
         CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
             return (lhs _OP rhs); \
         } \
@@ -595,15 +620,15 @@ struct TDerefOperator_ : _Op<decltype( *std::declval<const _Ptr&>() )> {
 };
 } //!details
 //----------------------------------------------------------------------------
-template <typename _Ptr>
+template <typename _Ptr = void>
 using TDerefGreater = details::TDerefOperator_< _Ptr, TGreater >;
-template <typename _Ptr>
+template <typename _Ptr = void>
 using TDerefGreaterEqual = details::TDerefOperator_< _Ptr, TGreaterEqual >;
-template <typename _Ptr>
+template <typename _Ptr = void>
 using TDerefLess = details::TDerefOperator_< _Ptr, TLess >;
-template <typename _Ptr>
+template <typename _Ptr = void>
 using TDerefLessEqual = details::TDerefOperator_< _Ptr, TLessEqual >;
-template <typename _Ptr>
+template <typename _Ptr = void>
 using TDerefEqualTo = details::TDerefOperator_< _Ptr, TEqualTo >;
 //----------------------------------------------------------------------------
 #undef PPE_META_OPERATOR
@@ -644,6 +669,7 @@ using TDerefEqualTo = details::TDerefOperator_< _Ptr, TEqualTo >;
 } //!namespace Meta
 
 using Meta::Default;
+using Meta::ForceInit;
 using Meta::Zero;
 
 PPE_ASSERT_TYPE_IS_POD(u128);

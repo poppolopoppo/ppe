@@ -5,6 +5,7 @@
 #include "Meta/Hash_fwd.h"
 #include "HAL/PlatformHash.h"
 #include "Memory/HashFunctions.h"
+#include "Memory/MemoryView.h"
 #include "Meta/TypeTraits.h"
 
 #include <type_traits>
@@ -16,19 +17,19 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR hash_t hash_value(bool v)     NOEXCEPT { return hash_uint(size_t(v)); }
-CONSTEXPR hash_t hash_value(i8 v)       NOEXCEPT { return hash_uint(size_t(v)); }
-CONSTEXPR hash_t hash_value(u8 v)       NOEXCEPT { return hash_uint(size_t(v)); }
-CONSTEXPR hash_t hash_value(i16 v)      NOEXCEPT { return hash_uint(size_t(v)); }
-CONSTEXPR hash_t hash_value(u16 v)      NOEXCEPT { return hash_uint(size_t(v)); }
-CONSTEXPR hash_t hash_value(i32 v)      NOEXCEPT { return hash_uint(size_t(v)); }
-CONSTEXPR hash_t hash_value(u32 v)      NOEXCEPT { return hash_uint(size_t(v)); }
-CONSTEXPR hash_t hash_value(i64 v)      NOEXCEPT { return hash_uint(u64(v)); }
+CONSTEXPR hash_t hash_value(bool v)     NOEXCEPT { return hash_uint(static_cast<size_t>(v)); }
+CONSTEXPR hash_t hash_value(i8 v)       NOEXCEPT { return hash_uint(static_cast<size_t>(v)); }
+CONSTEXPR hash_t hash_value(u8 v)       NOEXCEPT { return hash_uint(static_cast<size_t>(v)); }
+CONSTEXPR hash_t hash_value(i16 v)      NOEXCEPT { return hash_uint(static_cast<size_t>(v)); }
+CONSTEXPR hash_t hash_value(u16 v)      NOEXCEPT { return hash_uint(static_cast<size_t>(v)); }
+CONSTEXPR hash_t hash_value(i32 v)      NOEXCEPT { return hash_uint(static_cast<size_t>(v)); }
+CONSTEXPR hash_t hash_value(u32 v)      NOEXCEPT { return hash_uint(static_cast<size_t>(v)); }
+CONSTEXPR hash_t hash_value(i64 v)      NOEXCEPT { return hash_uint(static_cast<u64>(v)); }
 CONSTEXPR hash_t hash_value(u64 v)      NOEXCEPT { return hash_uint(v); }
 CONSTEXPR hash_t hash_value(u128 v)     NOEXCEPT { return hash_uint(v); }
 FORCE_INLINE hash_t hash_value(u256 v)  NOEXCEPT { return hash_as_pod(v); }
-FORCE_INLINE hash_t hash_value(float v) NOEXCEPT { return hash_uint(*(u32*)&v); }
-FORCE_INLINE hash_t hash_value(double v)NOEXCEPT { return hash_uint(*(u64*)&v); }
+FORCE_INLINE hash_t hash_value(float v) NOEXCEPT { return hash_uint(*reinterpret_cast<u32*>(&v)); }
+FORCE_INLINE hash_t hash_value(double v)NOEXCEPT { return hash_uint(*reinterpret_cast<u64*>(&v)); }
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE hash_t hash_value(const T *ptr) NOEXCEPT {
@@ -58,6 +59,9 @@ template <typename _It>
 CONSTEXPR hash_t hash_range(_It first, _It last) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
+CONSTEXPR hash_t hash_view(const TMemoryView<T>& view) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T>
 CONSTEXPR hash_t& operator <<(hash_t& seed, const T& value) NOEXCEPT {
     hash_combine(seed, value);
     return seed;
@@ -66,17 +70,33 @@ CONSTEXPR hash_t& operator <<(hash_t& seed, const T& value) NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Meta {
-template <typename T>
+template <typename T = void>
 struct THash {
     CONSTEXPR hash_t operator ()(const T& value) const NOEXCEPT {
         using PPE::hash_value;
         return hash_value(value);
     }
 };
-template <typename T>
-struct TCRC32 {
+template <>
+struct THash<void> {
+    template <typename T>
     CONSTEXPR hash_t operator ()(const T& value) const NOEXCEPT {
         using PPE::hash_value;
+        return hash_value(value);
+    }
+};
+template <typename T = void>
+struct TCRC32 {
+    CONSTEXPR hash_t operator ()(const T& value) const NOEXCEPT {
+        using PPE::hash_as_crc32;
+        return hash_as_crc32(value);
+    }
+};
+template <>
+struct TCRC32<void> {
+    template <typename T>
+    CONSTEXPR hash_t operator ()(const T& value) const NOEXCEPT {
+        using PPE::hash_as_crc32;
         return hash_as_crc32(value);
     }
 };
