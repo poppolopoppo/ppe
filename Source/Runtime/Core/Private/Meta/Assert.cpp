@@ -5,6 +5,7 @@
 #if USE_PPE_ASSERT || USE_PPE_ASSERT_RELEASE
 
 #include "Diagnostic/Exception.h"
+#include "Diagnostic/IgnoreList.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformDebug.h"
 #include "HAL/PlatformDialog.h"
@@ -16,7 +17,7 @@ LOG_CATEGORY(PPE_CORE_API, Assertion)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static FPlatformDialog::EResult AssertAbortRetryIgnore_(
+static FPlatformDialog::EResult AssertIgnoreOnceAlwaysAbortRetry_(
     FPlatformDialog::EIcon icon,
     const FWStringView& title, const wchar_t* msg,
     const wchar_t *file, unsigned line ) {
@@ -26,7 +27,7 @@ static FPlatformDialog::EResult AssertAbortRetryIgnore_(
         << L"----------------------------------------------------------------" << Crlf
         << file << L'(' << line << L"): " << msg;
 
-    return FPlatformDialog::AbortRetryIgnore(oss.ToString(), title, icon);
+    return FPlatformDialog::IgnoreOnceAlwaysAbortRetry(oss.ToString(), title, icon);
 }
 //----------------------------------------------------------------------------
 static bool ReportAssertionForDebug_(
@@ -69,7 +70,42 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<FAssertHandler> GAssertionHandler = { nullptr };
+static bool PPE_DEBUG_SECTION DefaultDebugAssertHandler_(const wchar_t* msg, const wchar_t *file, unsigned line) {
+#if USE_PPE_IGNORELIST
+    FIgnoreList::FIgnoreKey ignoreKey;
+    ignoreKey << MakeStringView("AssertDebug")
+        << MakeCStringView(msg) << MakeCStringView(file) << MakeRawConstView(line);
+    if (FIgnoreList::HitIFP(ignoreKey) > 0)
+        return false;
+#endif
+
+    if (not ReportAssertionForDebug_(L"debug", msg, file, line)) {
+        LOG(Assertion, Error, L"debug assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
+        FLUSH_LOG(); // flush log before continuing to get eventual log messages
+
+        switch (AssertIgnoreOnceAlwaysAbortRetry_(FPlatformDialog::Warning, L"Assert debug failed !", msg, file, line)) {
+        case FPlatformDialog::Abort:
+            break;
+        case FPlatformDialog::Retry:
+            if (FPlatformDebug::IsDebuggerPresent())
+                FPlatformDebug::DebugBreak();
+            return false;
+        case FGenericPlatformDialog::Ignore:
+            return false;
+        case FGenericPlatformDialog::IgnoreAlways:
+#if USE_PPE_IGNORELIST
+            FIgnoreList::AddIFP(ignoreKey);
+#endif
+            return false;
+        default:
+            AssertNotReached();
+        }
+    }
+
+    return false; // debug assertions are ignored by default
+}
+//----------------------------------------------------------------------------
+static std::atomic<FAssertHandler> GAssertionHandler{ &DefaultDebugAssertHandler_ };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -91,9 +127,11 @@ FWTextWriter& FAssertException::Description(FWTextWriter& oss) const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 NO_INLINE void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
-    static THREAD_LOCAL bool GIsInAssertion = false;
-    static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
-    static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
+    // You can tweak those static variables when debugging:
+    static volatile THREAD_LOCAL bool GIsInAssertion = false;
+    static volatile THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
+    static volatile std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
+
     if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
@@ -103,31 +141,8 @@ NO_INLINE void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar
     GIsInAssertion = true;
 
     bool failure = false;
-
-    FAssertHandler const handler = GAssertionHandler.load();
-
-    if (handler) {
+    if (FAssertHandler const handler = GAssertionHandler.load())
         failure = (*handler)(msg, file, line);
-    }
-    else if (not ReportAssertionForDebug_(L"debug", msg, file, line)) {
-        LOG(Assertion, Error, L"debug assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
-        FLUSH_LOG(); // flush log before continuing to get eventual log messages
-
-        switch (AssertAbortRetryIgnore_(FPlatformDialog::Warning, L"Assert debug failed !", msg, file, line)) {
-        case FPlatformDialog::Abort:
-            failure = true;
-            break;
-        case FPlatformDialog::Retry:
-            if (FPlatformDebug::IsDebuggerPresent())
-                FPlatformDebug::DebugBreak();
-            break;
-        case FGenericPlatformDialog::Ignore:
-            failure = false;
-            break;
-        default:
-            AssertNotReached();
-        }
-    }
 
     GIsInAssertion = false;
 
@@ -151,7 +166,42 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<FAssertReleaseHandler> GAssertionReleaseHandler = { nullptr };
+static bool PPE_DEBUG_SECTION DefaultReleaseAssertHandler_(const wchar_t* msg, const wchar_t *file, unsigned line) {
+#if USE_PPE_IGNORELIST
+    FIgnoreList::FIgnoreKey ignoreKey;
+    ignoreKey << MakeStringView("AssertRelease")
+        << MakeCStringView(msg) << MakeCStringView(file) << MakeRawConstView(line);
+    if (FIgnoreList::HitIFP(ignoreKey) > 0)
+        return false;
+#endif
+
+    if (not ReportAssertionForDebug_(L"release", msg, file, line)) {
+        LOG(Assertion, Error, L"release assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
+        FLUSH_LOG(); // flush log before continuing to get eventual log messages
+
+        switch (AssertIgnoreOnceAlwaysAbortRetry_(FPlatformDialog::Error, L"Assert release failed !", msg, file, line)) {
+        case FPlatformDialog::Abort:
+            break;
+        case FPlatformDialog::Retry:
+            if (FPlatformDebug::IsDebuggerPresent())
+                FPlatformDebug::DebugBreak();
+            return false;
+        case FPlatformDialog::Ignore:
+            return false;
+        case FGenericPlatformDialog::IgnoreAlways:
+#if USE_PPE_IGNORELIST
+            FIgnoreList::AddIFP(ignoreKey);
+#endif
+            return false;
+        default:
+            AssertNotReached();
+        }
+    }
+
+    return true; // release assertions emit errors by default
+}
+//----------------------------------------------------------------------------
+static std::atomic<FAssertReleaseHandler> GAssertionReleaseHandler{ &DefaultReleaseAssertHandler_ };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -173,9 +223,11 @@ FWTextWriter& FAssertReleaseException::Description(FWTextWriter& oss) const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 NO_INLINE void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
+    // You can tweak those static variables when debugging:
     static THREAD_LOCAL bool GIsInAssertion = false;
     static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
     static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
+
     if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
@@ -185,31 +237,8 @@ NO_INLINE void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, cons
     GIsInAssertion = true;
 
     bool failure = true; // AssertRelease() fails by default
-
-    FAssertReleaseHandler const handler = GAssertionReleaseHandler.load();
-
-    if (handler) {
+    if (FAssertReleaseHandler const handler = GAssertionReleaseHandler.load())
         failure = (*handler)(msg, file, line);
-    }
-    else if (not ReportAssertionForDebug_(L"release", msg, file, line)) {
-        LOG(Assertion, Error, L"release assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
-        FLUSH_LOG(); // flush log before continuing to get eventual log messages
-
-        switch (AssertAbortRetryIgnore_(FPlatformDialog::Error, L"Assert release failed !", msg, file, line)) {
-        case FPlatformDialog::Abort:
-            failure = true;
-            break;
-        case FPlatformDialog::Retry:
-            if (FPlatformDebug::IsDebuggerPresent())
-                FPlatformDebug::DebugBreak();
-            break;
-        case FPlatformDialog::Ignore:
-            failure = false;
-            break;
-        default:
-            AssertNotReached();
-        }
-    }
 
     GIsInAssertion = false;
 

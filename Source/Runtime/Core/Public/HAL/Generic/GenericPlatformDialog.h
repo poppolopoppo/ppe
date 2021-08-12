@@ -24,7 +24,7 @@ public: // must be defined for every platform
         Information,
     };
 
-    enum EResult
+    enum EResult : size_t
     {
         None = 0,
         Ok = 1 << 0,
@@ -50,6 +50,7 @@ public: // must be defined for every platform
         kRetryCancel = size_t(EResult::Retry) | size_t(EResult::Cancel),
         kCancelTryContinue = size_t(EResult::Cancel) | size_t(EResult::TryAgain) | size_t(EResult::Continue),
         kIgnoreOnceAlwaysAbort = size_t(EResult::Ignore) | size_t(EResult::IgnoreAlways) | size_t(EResult::Abort),
+        kIgnoreOnceAlwaysAbortRetry = size_t(kIgnoreOnceAlwaysAbort) | size_t(EResult::Retry),
     };
 
     static EResult Show(const FWStringView &text, const FWStringView &caption, EType dialogType, EIcon iconType) = delete;
@@ -63,6 +64,7 @@ public: // generic helpers
     static EResult RetryCancel(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Exclamation);
     static EResult CancelTryContinue(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Exclamation);
     static EResult IgnoreOnceAlwaysAbort(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Error);
+    static EResult IgnoreOnceAlwaysAbortRetry(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Error);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

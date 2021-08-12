@@ -2,8 +2,8 @@
 
 #include "Diagnostic/Diagnostics.h"
 
-#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/DebugFunction.h"
+#include "Diagnostic/IgnoreList.h"
 
 #include "Memory/MemoryDomain.h"
 #include "HAL/PlatformProfiler.h"
@@ -22,9 +22,16 @@ void FDiagnosticsStartup::Start() {
 #if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::Name(FPlatformProfiler::GlobalLevel, ToString(FCurrentProcess::Get().FileName()).data());
 #endif
+
+#if USE_PPE_IGNORELIST
+    FIgnoreList::Create();
+#endif
 }
 //----------------------------------------------------------------------------
 void FDiagnosticsStartup::Shutdown() {
+#if USE_PPE_IGNORELIST
+    FIgnoreList::Destroy();
+#endif
 
     DEBUG_FUNCTION_SHUTDOWN();
 }

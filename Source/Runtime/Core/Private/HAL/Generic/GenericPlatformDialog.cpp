@@ -40,6 +40,10 @@ auto FGenericPlatformDialog::IgnoreOnceAlwaysAbort(const FWStringView& text, con
     return FPlatformDialog::Show(text, caption, kIgnoreOnceAlwaysAbort, iconType);
 }
 //----------------------------------------------------------------------------
+auto FGenericPlatformDialog::IgnoreOnceAlwaysAbortRetry(const FWStringView& text, const FWStringView& caption, EIcon iconType/* = EIcon::Error */) -> EResult {
+    return FPlatformDialog::Show(text, caption, kIgnoreOnceAlwaysAbortRetry, iconType);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

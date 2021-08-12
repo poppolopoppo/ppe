@@ -29,11 +29,11 @@ public: // memory
 
 public: // profiling
     struct FNamedScope {
-        FNamedScope(const char* name) {
-            BeginNamedEvent((u32)uintptr_t(this), name);
+        FNamedScope(const char* name) NOEXCEPT {
+            BeginNamedEvent(static_cast<u32>(hash_ptr(this)), name);
         }
-        ~FNamedScope() {
-            EndNamedEvent((u32)uintptr_t(this));
+        ~FNamedScope() NOEXCEPT {
+            EndNamedEvent(static_cast<u32>(hash_ptr(this)));
         }
     };
 
