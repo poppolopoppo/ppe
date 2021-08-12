@@ -4,6 +4,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "Meta/AlignedStorage.h"
+#include "Meta/InPlace.h"
 #include "Thread/AtomicSpinLock.h"
 
 namespace PPE {
@@ -18,6 +19,7 @@ class FInitSegAllocator : Meta::FNonCopyableNorMovable {
     FInitSegAllocator();
 
     static NO_INLINE void Allocate(FAlloc& alloc) NOEXCEPT;
+    static NO_INLINE void Deallocate(FAlloc& alloc) NOEXCEPT;
 
     using deleter_f = void(*)(FAlloc&) NOEXCEPT;
 
@@ -42,25 +44,21 @@ public:
         POD_STORAGE(T) _data;
     public:
 
-        Meta::TRemoveConst<T>* get() NOEXCEPT {
-            return (Meta::TRemoveConst<T>*)(&_data);
-        }
-        operator T& () NOEXCEPT {
-            return (*reinterpret_cast<T*>(&_data));
-        }
-        operator Meta::TAddConst<T>& () const NOEXCEPT {
-            return (*reinterpret_cast<Meta::TAddConst<T>*>(&_data));
+        Meta::TRemoveConst<T>* Get() NOEXCEPT {
+            return reinterpret_cast<Meta::TRemoveConst<T>*>(&_data);
         }
 
+        operator T& () NOEXCEPT { return (*Get()); }
+        operator Meta::TAddConst<T>& () const NOEXCEPT { return (*Get()); }
+
         static void Destroy(FAlloc& alloc) NOEXCEPT {
-            Meta::Destroy(static_cast<TAlloc<T>&>(alloc).get());
+            Meta::Destroy(static_cast<TAlloc<T>&>(alloc).Get());
         }
 
         template <typename... _Args>
         TAlloc(_Args&&... args) NOEXCEPT
         :   FAlloc(&Destroy) {
-            Assert_NoAssume(Meta::IsAligned(alignof(T), get()));
-            Meta::Construct(get(), std::forward<_Args>(args)...);
+            Meta::Construct(Get(), std::forward<_Args>(args)...);
         }
     };
 
