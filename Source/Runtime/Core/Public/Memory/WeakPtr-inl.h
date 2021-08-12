@@ -26,11 +26,7 @@ TRefPtr<T> FWeakRefCountable::NewRefImpl(void* p, deleter_func deleter, _Args&&.
 
     T* const x = new (p) T{ std::forward<_Args>(args)... };
 
-    static_cast<FWeakRefCountable*>(x)->_cnt = FWeakRefCounter::Allocate(
-#if USE_PPE_ASSERT
-        x,
-#endif
-        deleter );
+    static_cast<FWeakRefCountable*>(x)->_cnt = FWeakRefCounter::Allocate(deleter ARGS_IF_ASSERT(x));
 
     return { x };
 }
@@ -169,7 +165,7 @@ bool TWeakPtr<T>::TryLock(TRefPtr<U> *pLocked) const NOEXCEPT {
     Assert(pLocked);
 
     if (Likely(!!_ptr & !!_cnt)) {
-        Assert_NoAssume(_cnt->_holder == _ptr);
+        Assert_NoAssume(_cnt->_holderForDebug == _ptr);
         if (_cnt->TryLockForWeakPtr()) {
             Assert_NoAssume(_cnt == _ptr->_cnt);
             pLocked->reset(_ptr);

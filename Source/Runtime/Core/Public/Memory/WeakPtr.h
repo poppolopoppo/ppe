@@ -42,11 +42,7 @@ public:
     // custom deleter can be used with FWeakRefCountable (!= FRefCountable)
     typedef void (*deleter_func)(void*) NOEXCEPT;
 
-#if USE_PPE_ASSERT
-    static PPE_CORE_API PWeakRefCounter Allocate(FWeakRefCountable* holder, deleter_func deleter);
-#else
-    static PPE_CORE_API PWeakRefCounter Allocate(deleter_func deleter);
-#endif
+    static PPE_CORE_API PWeakRefCounter Allocate(deleter_func deleter ARGS_IF_ASSERT(FWeakRefCountable* holderForDebug));
 
 private:
     template <typename T>
@@ -61,22 +57,17 @@ private:
     friend TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args);
 #endif
 
+    explicit FWeakRefCounter(deleter_func deleter ARGS_IF_ASSERT(FWeakRefCountable* holderForDebug)) NOEXCEPT
+    :   _deleter(deleter)
 #if USE_PPE_ASSERT
-    explicit FWeakRefCounter(FWeakRefCountable* holder, deleter_func deleter) NOEXCEPT
-    :   _strongRefCount(0)
-    ,   _deleter(deleter)
-    ,   _holder(holder) {
-        Assert(_deleter);
-        Assert(_holder);
-    }
-#else
-    explicit FWeakRefCounter(deleter_func deleter) NOEXCEPT
-    :   _strongRefCount(0)
-    ,   _deleter(deleter)
-    {}
+    ,   _holderForDebug(holderForDebug)
 #endif
+    ,   _strongRefCount(0) {
+        Assert(_deleter);
+        Assert_NoAssume(_holderForDebug);
+    }
 
-    PPE_CORE_API bool TryLockForWeakPtr();
+    PPE_CORE_API bool TryLockForWeakPtr() NOEXCEPT;
 
     void Weak_IncWeakRefCount() const NOEXCEPT {
         FRefCountable::IncStrongRefCount();
@@ -102,13 +93,11 @@ private:
         }
     }
 
-    mutable std::atomic<int> _strongRefCount;
-
     deleter_func _deleter;
-
 #if USE_PPE_ASSERT
-    FWeakRefCountable* const _holder;
+    FWeakRefCountable* const _holderForDebug;
 #endif
+    mutable std::atomic<int> _strongRefCount;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -140,7 +129,7 @@ public:
 #endif
 
 private: // override new/delete operators for custom allocation schemes
-    using deleter_func = typename FWeakRefCounter::deleter_func;
+    using deleter_func = FWeakRefCounter::deleter_func;
 
     template <typename T, typename... _Args>
     static TRefPtr<T> NewRefImpl(void* p, deleter_func deleter, _Args&&... args) NOEXCEPT;
@@ -214,7 +203,7 @@ private:
     friend class TWeakPtr;
 
     deleter_func Deleter_Unsafe() const {
-        Assert_NoAssume(_cnt->_holder == this);
+        Assert_NoAssume(_cnt->_holderForDebug == this);
         return _cnt->_deleter;
     }
 
