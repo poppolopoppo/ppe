@@ -25,6 +25,28 @@ public:
         i64 PeakSize;
         i64 AccumulatedAllocs;
         i64 AccumulatedSize;
+        i64 SmallAllocs;
+    };
+
+    struct FCounters {
+        counter_t NumAllocs{ 0 };
+        counter_t MinSize{ CODE3264(UINT32_MAX, UINT64_MAX) };
+        counter_t MaxSize{ 0 };
+        counter_t TotalSize{ 0 };
+        counter_t PeakAllocs{ 0 };
+        counter_t PeakSize{ 0 };
+        counter_t AccumulatedAllocs{ 0 };
+        std::atomic<u64> AccumulatedSize{ 0 };
+        counter_t SmallAllocs{ 0 };
+
+        FCounters() = default;
+
+        void Allocate(size_t s);
+        void Deallocate(size_t s);
+        void ReleaseBatch(size_t n, size_t s);
+
+        FSnapshot Snapshot() const;
+        FSnapshot Difference(const FCounters& o) const;
     };
 
     explicit FMemoryTracking(
@@ -39,28 +61,28 @@ public:
 
     FSnapshot User() const { return _user.Snapshot(); }
     FSnapshot System() const { return _system.Snapshot(); }
-    FSnapshot Wasted() const { return _system.Substract(_user); }
+    FSnapshot Wasted() const { return _system.Difference(_user); }
 
     bool empty() const { return (0 == _user.NumAllocs.load(std::memory_order_relaxed)); }
 
     bool IsChildOf(const FMemoryTracking& other) const;
 
-    void Allocate(size_t userSize, size_t systemSize) NOEXCEPT;
-    void Deallocate(size_t userSize, size_t systemSize) NOEXCEPT;
+    void Allocate(size_t userSize, size_t systemSize, const FMemoryTracking* child = nullptr) NOEXCEPT;
+    void Deallocate(size_t userSize, size_t systemSize, const FMemoryTracking* child = nullptr) NOEXCEPT;
 
-    void AllocateUser(size_t size) NOEXCEPT;
-    void DeallocateUser(size_t size) NOEXCEPT;
+    void AllocateUser(size_t size, const FMemoryTracking* child = nullptr) NOEXCEPT;
+    void DeallocateUser(size_t size, const FMemoryTracking* child = nullptr) NOEXCEPT;
 
-    void AllocateSystem(size_t size) NOEXCEPT;
-    void DeallocateSystem(size_t size) NOEXCEPT;
+    void AllocateSystem(size_t size, const FMemoryTracking* child = nullptr) NOEXCEPT;
+    void DeallocateSystem(size_t size, const FMemoryTracking* child = nullptr) NOEXCEPT;
 
-    void ReleaseBatch(size_t numAllocs, size_t userTotal, size_t systemTotal) NOEXCEPT;
+    void ReleaseBatch(size_t numAllocs, size_t userTotal, size_t systemTotal, const FMemoryTracking* child = nullptr) NOEXCEPT;
 
-    void ReleaseBatchUser(size_t numAllocs, size_t totalSize) NOEXCEPT;
-    void ReleaseBatchSystem(size_t numAllocs, size_t totalSize) NOEXCEPT;
+    void ReleaseBatchUser(size_t numAllocs, size_t totalSize, const FMemoryTracking* child = nullptr) NOEXCEPT;
+    void ReleaseBatchSystem(size_t numAllocs, size_t totalSize, const FMemoryTracking* child = nullptr) NOEXCEPT;
 
     // used by linear heaps :
-    void ReleaseAllUser() NOEXCEPT;
+    void ReleaseAllUser(const FMemoryTracking* child = nullptr) NOEXCEPT;
 
     // shouldn't be called only *before* registration!
     void Reparent(const char* newName, FMemoryTracking* parent) NOEXCEPT {
@@ -74,28 +96,8 @@ public:
     static FMemoryTracking& PooledMemory();
 
 private:
-    struct FCounters_ {
-        counter_t NumAllocs{ 0 };
-        counter_t MinSize{ CODE3264(UINT32_MAX, UINT64_MAX) };
-        counter_t MaxSize{ 0 };
-        counter_t TotalSize{ 0 };
-        counter_t PeakAllocs{ 0 };
-        counter_t PeakSize{ 0 };
-        counter_t AccumulatedAllocs{ 0 };
-        std::atomic<u64> AccumulatedSize{ 0 };
-
-        FCounters_() = default;
-
-        void Allocate(size_t s);
-        void Deallocate(size_t s);
-        void ReleaseBatch(size_t n, size_t s);
-
-        FSnapshot Snapshot() const;
-        FSnapshot Substract(const FCounters_& o) const;
-    };
-
-    FCounters_ _user;
-    FCounters_ _system;
+    FCounters _user;
+    FCounters _system;
 
     const char* _name;
     size_t _level;

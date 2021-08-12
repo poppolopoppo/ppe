@@ -4,6 +4,17 @@
 
 #include "Memory/MemoryDomain.h"
 
+#define USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS (USE_PPE_PLATFORM_DEBUG)
+
+#if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
+#   include "Diagnostic/CurrentProcess.h"
+#   include "Diagnostic/IgnoreList.h"
+#   include "Diagnostic/Logger.h"
+#   include "HAL/PlatformDebug.h"
+#   include "IO/FormatHelpers.h"
+#   include "Thread/CriticalSection.h"
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,6 +30,52 @@ FMemoryTracking& FMemoryTracking::UsedMemory() {
 FMemoryTracking& FMemoryTracking::ReservedMemory() {
     return MEMORYDOMAIN_TRACKING_DATA(ReservedMemory);
 }
+//----------------------------------------------------------------------------
+#if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
+LOG_CATEGORY(, MemoryTracking)
+STATIC_CONST_INTEGRAL(size_t, SmallAllocationCountWarning, 2000);
+STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 5);
+STATIC_CONST_INTEGRAL(size_t, SmallAllocationSizeThreshold, CODE3264(16_b, 32_b));
+static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTracking& domain, const FMemoryTracking::FCounters& system) {
+    // #TODO: WeakRef is a special case and should be optimized, but right now we ignore the warnings from this domain:
+    if (&MEMORYDOMAIN_TRACKING_DATA(WeakRef) == &domain)
+        return;
+
+    const size_t totalAllocs = system.AccumulatedAllocs.load(std::memory_order_relaxed);
+    const size_t smallAllocs = system.SmallAllocs.load(std::memory_order_relaxed);
+
+    const float smallPercent = ((smallAllocs * 100.0f) / totalAllocs);
+    if (smallPercent < SmallAllocationPercentThreshold) // bail if less than N% of all allocations are small
+        return;
+
+    LOG(MemoryTracking, Warning,
+        L"Too many small allocations for memory domain <{0}> ({1} / {2} = {3})",
+        MakeCStringView(domain.Name()),
+        Fmt::CountOfElements(smallAllocs),
+        Fmt::CountOfElements(totalAllocs),
+        Fmt::Percentage(smallAllocs, totalAllocs) );
+
+    if (FCurrentProcess::Get().StartedWithDebugger()) {
+        static FCriticalSection GBarrier;
+        const FCriticalScope scopeLock(&GBarrier);
+
+#   if USE_PPE_IGNORELIST
+        FIgnoreList::FIgnoreKey ignoreKey;
+        ignoreKey << MakeStringView("SmallAllocsWarnings") << MakeCStringView(domain.Name());
+        if (FIgnoreList::HitIFP(ignoreKey) > 0)
+            return; // already ignored
+#   endif
+
+        FLUSH_LOG();
+        PPE_DEBUG_BREAK();
+
+#   if USE_PPE_IGNORELIST
+        if (volatile bool ignoreFurtherWarnings = false)
+            FIgnoreList::AddIFP(ignoreKey);
+#   endif
+    }
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -38,10 +95,12 @@ bool FMemoryTracking::IsChildOf(const FMemoryTracking& other) const {
     return false;
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::Allocate(size_t userSize, size_t systemSize) NOEXCEPT {
+void FMemoryTracking::Allocate(size_t userSize, size_t systemSize, const FMemoryTracking* child/* = nullptr */) NOEXCEPT {
     Assert(userSize);
     Assert(systemSize);
     Assert_NoAssume(userSize <= systemSize);
+    UNUSED(child);
+
 #if not USE_PPE_MEMORY_DEBUGGING // this is a performance consideration
     Assert_NoAssume(systemSize <= ALLOCATION_BOUNDARY || userSize * 2 > systemSize);
 #endif
@@ -49,11 +108,16 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize) NOEXCEPT {
     _user.Allocate(userSize);
     _system.Allocate(systemSize);
 
+#if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
+    if (Unlikely((!child) & (systemSize <= SmallAllocationSizeThreshold) & (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
+        WarnAboutSmallAllocs_(*this, _system);
+#endif
+
     if (_parent)
-        _parent->Allocate(userSize, systemSize);
+        _parent->Allocate(userSize, systemSize, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::Deallocate(size_t userSize, size_t systemSize) NOEXCEPT {
+void FMemoryTracking::Deallocate(size_t userSize, size_t systemSize, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     Assert(userSize);
     Assert(systemSize);
     Assert_NoAssume(userSize <= systemSize);
@@ -62,50 +126,56 @@ void FMemoryTracking::Deallocate(size_t userSize, size_t systemSize) NOEXCEPT {
     _system.Deallocate(systemSize);
 
     if (_parent)
-        _parent->Deallocate(userSize, systemSize);
+        _parent->Deallocate(userSize, systemSize, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::AllocateUser(size_t size) NOEXCEPT {
+void FMemoryTracking::AllocateUser(size_t size, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     Assert(size);
 
     _user.Allocate(size);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
     if (_parent)
-        _parent->AllocateUser(size);
+        _parent->AllocateUser(size, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::DeallocateUser(size_t size) NOEXCEPT {
+void FMemoryTracking::DeallocateUser(size_t size, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     Assert(size);
 
     _user.Deallocate(size);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
     if (_parent)
-        _parent->DeallocateUser(size);
+        _parent->DeallocateUser(size, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::AllocateSystem(size_t size) NOEXCEPT {
+void FMemoryTracking::AllocateSystem(size_t size, const FMemoryTracking* child/* = nullptr */) NOEXCEPT {
     Assert(size);
+    UNUSED(child);
 
     _system.Allocate(size);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
+#if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
+    if (Unlikely((!child) & (size <= SmallAllocationSizeThreshold) & (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
+        WarnAboutSmallAllocs_(*this, _system);
+#endif
+
     if (_parent)
-        _parent->AllocateSystem(size);
+        _parent->AllocateSystem(size, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::DeallocateSystem(size_t size) NOEXCEPT {
+void FMemoryTracking::DeallocateSystem(size_t size, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     Assert(size);
 
     _system.Deallocate(size);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
     if (_parent)
-        _parent->DeallocateSystem(size);
+        _parent->DeallocateSystem(size, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::ReleaseBatch(size_t numAllocs, size_t userTotal, size_t systemTotal) NOEXCEPT {
+void FMemoryTracking::ReleaseBatch(size_t numAllocs, size_t userTotal, size_t systemTotal, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     Assert(userTotal);
     Assert(systemTotal);
     Assert_NoAssume(userTotal <= systemTotal);
@@ -114,20 +184,20 @@ void FMemoryTracking::ReleaseBatch(size_t numAllocs, size_t userTotal, size_t sy
     _system.ReleaseBatch(numAllocs, systemTotal);
 
     if (_parent)
-        _parent->ReleaseBatch(numAllocs, userTotal, systemTotal);
+        _parent->ReleaseBatch(numAllocs, userTotal, systemTotal, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::ReleaseBatchUser(size_t numAllocs, size_t totalSize) NOEXCEPT {
+void FMemoryTracking::ReleaseBatchUser(size_t numAllocs, size_t totalSize, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     Assert(numAllocs);
     Assert(totalSize);
 
     _user.ReleaseBatch(numAllocs, totalSize);
 
     if (_parent)
-        _parent->ReleaseBatchUser(numAllocs, totalSize);
+        _parent->ReleaseBatchUser(numAllocs, totalSize, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::ReleaseBatchSystem(size_t numAllocs, size_t totalSize) NOEXCEPT {
+void FMemoryTracking::ReleaseBatchSystem(size_t numAllocs, size_t totalSize, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     Assert(numAllocs);
     Assert(totalSize);
 
@@ -135,10 +205,10 @@ void FMemoryTracking::ReleaseBatchSystem(size_t numAllocs, size_t totalSize) NOE
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
     if (_parent)
-        _parent->ReleaseBatchSystem(numAllocs, totalSize);
+        _parent->ReleaseBatchSystem(numAllocs, totalSize, this);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::ReleaseAllUser() NOEXCEPT {
+void FMemoryTracking::ReleaseAllUser(const FMemoryTracking*/* = nullptr */) NOEXCEPT {
     if (const size_t n = _user.NumAllocs) {
         const size_t sz = _user.TotalSize;
         Assert(sz);
@@ -148,7 +218,7 @@ void FMemoryTracking::ReleaseAllUser() NOEXCEPT {
 
         // DON'T call ReleaseAllUser() recursively since it would completely empty the parents !
         if (_parent)
-            _parent->ReleaseBatchUser(n, sz);
+            _parent->ReleaseBatchUser(n, sz, this);
     }
     else {
         Assert_NoAssume(0 == _user.TotalSize);
@@ -157,7 +227,9 @@ void FMemoryTracking::ReleaseAllUser() NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FMemoryTracking::FCounters_::Allocate(size_t s) {
+void FMemoryTracking::FCounters::Allocate(size_t s) {
+    std::atomic_thread_fence(std::memory_order_release);
+
     const size_t total = (TotalSize += s);
 
     if (Unlikely(MinSize > s))
@@ -174,23 +246,33 @@ void FMemoryTracking::FCounters_::Allocate(size_t s) {
 
     AccumulatedAllocs.fetch_add(1, std::memory_order_relaxed);
     AccumulatedSize.fetch_add(s, std::memory_order_relaxed);
+
+#if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
+    if (s <= SmallAllocationSizeThreshold)
+        SmallAllocs.fetch_add(1, std::memory_order_relaxed);
+#endif
+
+    std::atomic_thread_fence(std::memory_order_acquire);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::FCounters_::Deallocate(size_t s) {
-    Assert_NoAssume(MinSize <= s);
-    Assert_NoAssume(MaxSize >= s);
+void FMemoryTracking::FCounters::Deallocate(size_t s) {
+    Assert_NoAssume(MinSize.load(std::memory_order_relaxed) <= s);
+    Assert_NoAssume(MaxSize.load(std::memory_order_relaxed) >= s);
 
     Verify(NumAllocs.fetch_sub(1, std::memory_order_relaxed) > 0);
     Verify(TotalSize.fetch_sub(s, std::memory_order_relaxed) >= s);
+
+    std::atomic_thread_fence(std::memory_order_acquire);
 }
 //----------------------------------------------------------------------------
-void FMemoryTracking::FCounters_::ReleaseBatch(size_t n, size_t s) {
+void FMemoryTracking::FCounters::ReleaseBatch(size_t n, size_t s) {
     Verify(NumAllocs.fetch_sub(n, std::memory_order_relaxed) >= n);
     Verify(TotalSize.fetch_sub(s, std::memory_order_relaxed) >= s);
+
+    std::atomic_thread_fence(std::memory_order_acquire);
 }
 //----------------------------------------------------------------------------
-auto FMemoryTracking::FCounters_::Snapshot() const -> FSnapshot {
-    std::atomic_thread_fence(std::memory_order_acquire);
+auto FMemoryTracking::FCounters::Snapshot() const -> FSnapshot {
     return FSnapshot{
         checked_cast<i64>(NumAllocs.load(std::memory_order_relaxed)),
         checked_cast<i64>(MinSize <= MaxSize ? MinSize.load(std::memory_order_relaxed) : 0),
@@ -199,12 +281,17 @@ auto FMemoryTracking::FCounters_::Snapshot() const -> FSnapshot {
         checked_cast<i64>(PeakAllocs.load(std::memory_order_relaxed)),
         checked_cast<i64>(PeakSize.load(std::memory_order_relaxed)),
         checked_cast<i64>(AccumulatedAllocs.load(std::memory_order_relaxed)),
-        checked_cast<i64>(AccumulatedSize.load(std::memory_order_relaxed)) };
+        checked_cast<i64>(AccumulatedSize.load(std::memory_order_relaxed)),
+        checked_cast<i64>(SmallAllocs.load(std::memory_order_relaxed))
+    };
 }
 //----------------------------------------------------------------------------
-auto FMemoryTracking::FCounters_::Substract(const FCounters_& o) const -> FSnapshot {
+auto FMemoryTracking::FCounters::Difference(const FCounters& o) const -> FSnapshot {
     const FSnapshot lhs = Snapshot();
     const FSnapshot rhs = o.Snapshot();
+
+    std::atomic_thread_fence(std::memory_order_acquire);
+
     return FSnapshot{
         lhs.NumAllocs - rhs.NumAllocs,
         lhs.MinSize - rhs.MinSize,
@@ -213,7 +300,9 @@ auto FMemoryTracking::FCounters_::Substract(const FCounters_& o) const -> FSnaps
         lhs.PeakAllocs - rhs.PeakAllocs,
         lhs.PeakSize - rhs.PeakSize,
         lhs.AccumulatedAllocs - rhs.AccumulatedAllocs,
-        lhs.AccumulatedSize - rhs.AccumulatedSize };
+        lhs.AccumulatedSize - rhs.AccumulatedSize,
+        lhs.SmallAllocs - rhs.SmallAllocs
+    };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
