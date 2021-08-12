@@ -2,6 +2,8 @@
 
 #include "Allocator/SlabHeap.h"
 
+#include "Meta/TypeInfo.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -9,7 +11,7 @@ namespace PPE {
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap() NOEXCEPT
-:   _trackingData("SlabHeap", allocator_traits::TrackingData(*this)) {
+:   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }
 #endif
@@ -18,7 +20,7 @@ TSlabHeap<_Allocator>::TSlabHeap() NOEXCEPT
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
 :   _Allocator(TAllocatorTraits<_Allocator>::SelectOnMove(std::move(ralloc)))
-,   _trackingData("SlabHeap", allocator_traits::TrackingData(*this)) {
+,   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }
 #endif
@@ -27,7 +29,7 @@ TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(const _Allocator& alloc) NOEXCEPT
 :   _Allocator(TAllocatorTraits<_Allocator>::SelectOnCopy(alloc))
-,   _trackingData("SlabHeap", allocator_traits::TrackingData(*this)) {
+,   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }
 #endif

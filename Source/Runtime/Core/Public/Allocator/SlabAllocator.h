@@ -108,6 +108,15 @@ public:
     }
 };
 //----------------------------------------------------------------------------
+namespace details {
+template <typename T> struct TPoolingSlabAllocator_{};
+template <typename _Allocator> struct TPoolingSlabAllocator_<TPoolingSlabHeap<_Allocator>> {
+    using type = _Allocator;
+};
+}
+template <typename _PoolingSlabAllocator>
+using TPoolingSlabAllocator = TSlabAllocator<typename details::TPoolingSlabAllocator_<_PoolingSlabAllocator>::type>;
+//----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
 template <typename _Allocator>
 TSlabAllocator(TPoolingSlabHeap<_Allocator>&) -> TSlabAllocator< Meta::TDecay<_Allocator> >;

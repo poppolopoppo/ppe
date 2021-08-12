@@ -226,7 +226,7 @@ public:
     }
 
     template <typename T>
-    NODISCARD PPE_DECLSPEC_ALLOCATOR() TMemoryView<T> AllocateT(u32 count) {
+    NODISCARD PPE_DECLSPEC_ALLOCATOR() TMemoryView<T> AllocateT(size_t count) {
         return { static_cast<T*>(Allocate(sizeof(T) * count)), count };
     }
 
@@ -245,8 +245,8 @@ public:
         using map_type = decltype(std::declval<_Map>()(std::declval<T&>()));
         TMemoryView<map_type> dst;
         if (not src.empty()) {
-            dst = AllocateT<map_type>(checked_cast<u32>(src.size()));
-            src.Map(std::forward<_Map>(map)).UnitializedCopyTo(dst.begin());
+            dst = AllocateT<map_type>(src.size());
+            src.Map(std::forward<_Map>(map)).UninitializedCopyTo(dst.begin());
         }
         return dst;
     }
