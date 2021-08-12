@@ -8,7 +8,7 @@
 #include "Allocator/SlabHeap.h"
 #include "Allocator/SlabAllocator.h"
 #include "Memory/RefPtr.h"
-#include "Meta/ThreadResource.h"
+#include "Thread/DataRaceCheck.h"
 
 namespace PPE {
 namespace RTTI {
@@ -17,7 +17,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 // Use a FSlabHeap for transient FAtom allocation
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FAtomHeap : public FRefCountable, Meta::FThreadResource {
+class PPE_RTTI_API FAtomHeap : public FRefCountable, FDataRaceCheckResource {
 public:
     FAtomHeap();
     ~FAtomHeap();

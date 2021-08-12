@@ -214,10 +214,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { VerifyRelease(_dataRaceCheck.Lock()); }
+    void AcquireReader() const NOEXCEPT { VerifyRelease(not _dataRaceCheck.Lock()); }
     void ReleaseReader() const NOEXCEPT { _dataRaceCheck.Unlock(); }
 
-    void AcquireWriter() NOEXCEPT { VerifyRelease(_dataRaceCheck.Lock()); }
+    void AcquireWriter() NOEXCEPT { VerifyRelease(not _dataRaceCheck.Lock()); }
     void ReleaseWriter() NOEXCEPT { _dataRaceCheck.Unlock(); }
 
 private:
@@ -236,10 +236,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { VerifyRelease(_dataRaceCheckRW.LockShared()); }
+    void AcquireReader() const NOEXCEPT { VerifyRelease(not _dataRaceCheckRW.LockShared()); }
     void ReleaseReader() const NOEXCEPT { _dataRaceCheckRW.UnlockShared(); }
 
-    void AcquireWriter() NOEXCEPT { VerifyRelease(_dataRaceCheckRW.LockExclusive()); }
+    void AcquireWriter() NOEXCEPT { VerifyRelease(not _dataRaceCheckRW.LockExclusive()); }
     void ReleaseWriter() NOEXCEPT { _dataRaceCheckRW.UnlockExclusive(); }
 
 private:

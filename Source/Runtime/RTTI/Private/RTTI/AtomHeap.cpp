@@ -7,16 +7,17 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FAtomHeap::FAtomHeap()
-{}
+FAtomHeap::FAtomHeap() = default;
 //----------------------------------------------------------------------------
 FAtomHeap::~FAtomHeap() {
+    PPE_DATARACE_CHECK_SCOPE(this);
+
     ReleaseAll();
     Assert(nullptr == _destructibles);
 }
 //----------------------------------------------------------------------------
 NO_INLINE void FAtomHeap::DiscardAll() {
-    THIS_THREADRESOURCE_CHECKACCESS();
+    PPE_DATARACE_CHECK_SCOPE(this);
 
     ReleaseDestructibles_();
 
@@ -24,7 +25,7 @@ NO_INLINE void FAtomHeap::DiscardAll() {
 }
 //----------------------------------------------------------------------------
 NO_INLINE void FAtomHeap::ReleaseAll() {
-    THIS_THREADRESOURCE_CHECKACCESS();
+    PPE_DATARACE_CHECK_SCOPE(this);
 
     ReleaseDestructibles_();
 
@@ -32,7 +33,7 @@ NO_INLINE void FAtomHeap::ReleaseAll() {
 }
 //----------------------------------------------------------------------------
 FAtom FAtomHeap::MakeAtomUinitialized_(const PTypeTraits& traits) {
-    THIS_THREADRESOURCE_CHECKACCESS();
+    PPE_DATARACE_CHECK_SCOPE(this);
 
     const FTypeInfos typeInfos = traits->TypeInfos();
     Assert(typeInfos.SizeInBytes());
@@ -53,6 +54,8 @@ FAtom FAtomHeap::MakeAtomUinitialized_(const PTypeTraits& traits) {
 }
 //----------------------------------------------------------------------------
 void FAtomHeap::ReleaseDestructibles_() {
+    PPE_DATARACE_CHECK_SCOPE(this);
+
     // destroy non-trivial type instances :
     for (FPendingDestroy_* it = _destructibles; it; ) {
         FPendingDestroy_* const pNext = it->pNext;

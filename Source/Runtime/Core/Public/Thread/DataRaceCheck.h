@@ -2,7 +2,9 @@
 
 #include "Core_fwd.h"
 
-#if !USE_PPE_FINAL_RELEASE
+#define USE_PPE_DATARACE_CHECKS (!USE_PPE_FINAL_RELEASE)
+
+#if USE_PPE_DATARACE_CHECKS
 
 // Those helpers are for debugging purposes, don't use them as a regular lock!
 
@@ -42,6 +44,19 @@ public:
         Assert_NoAssume(Token() == _state);
         _state.store(0, std::memory_order_relaxed);
     }
+
+    struct FScopeLock : Meta::FNonCopyableNorMovable {
+        const FDataRaceCheck& Resource;
+        const bool WasLocked;
+        explicit FScopeLock(const FDataRaceCheck& resource) NOEXCEPT
+        :   Resource(resource)
+        ,   WasLocked(Resource.Lock())
+        {}
+        ~FScopeLock() NOEXCEPT {
+            if (not WasLocked)
+                Resource.Unlock();
+        }
+    };
 
 private:
     mutable std::atomic<size_t> _state{0};
@@ -100,6 +115,32 @@ public:
         _readCounter.fetch_sub(1, std::memory_order_relaxed);
     }
 
+    struct FScopeLockExclusive : Meta::FNonCopyableNorMovable {
+        FRWDataRaceCheck& Resource;
+        const bool WasLocked;
+        explicit FScopeLockExclusive(FRWDataRaceCheck& resource) NOEXCEPT
+        :   Resource(resource)
+        ,   WasLocked(Resource.LockExclusive())
+        {}
+        ~FScopeLockExclusive() NOEXCEPT {
+            if (not WasLocked)
+                Resource.UnlockExclusive();
+        }
+    };
+
+    struct FScopeLockShared : Meta::FNonCopyableNorMovable {
+        const FRWDataRaceCheck& Resource;
+        const bool WasLocked;
+        explicit FScopeLockShared(const FRWDataRaceCheck& resource) NOEXCEPT
+        :   Resource(resource)
+        ,   WasLocked(Resource.LockShared())
+        {}
+        ~FScopeLockShared() NOEXCEPT {
+            if (not WasLocked)
+                Resource.UnlockShared();
+        }
+    };
+
 private:
     mutable std::recursive_mutex _lockWrite;
     mutable std::atomic<int> _readCounter{ 0 };
@@ -109,5 +150,53 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
+#endif //!USE_PPE_DATARACE_CHECKS
 
-#endif //!USE_PPE_FINAL_RELEASE
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class PPE_CORE_API FDataRaceCheckResource {
+public:
+#if USE_PPE_DATARACE_CHECKS
+    struct FScopeLock : FDataRaceCheck::FScopeLock {
+        FScopeLock(const FDataRaceCheckResource& resource)
+        :   FDataRaceCheck::FScopeLock(resource._dataRaceCheck)
+        {}
+    };
+private:
+    FDataRaceCheck _dataRaceCheck;
+#endif
+};
+//----------------------------------------------------------------------------
+class PPE_CORE_API FRWDataRaceCheckResource {
+    public:
+#if USE_PPE_DATARACE_CHECKS
+    struct FScopeLockExclusive : FRWDataRaceCheck::FScopeLockExclusive {
+        FScopeLockExclusive(FRWDataRaceCheckResource& resource)
+        :   FRWDataRaceCheck::FScopeLockExclusive(resource._rwDataRaceCheck)
+        {}
+    };
+    struct FScopeLockShared : FRWDataRaceCheck::FScopeLockShared {
+        FScopeLockShared(const FRWDataRaceCheckResource& resource)
+        :   FRWDataRaceCheck::FScopeLockShared(resource._rwDataRaceCheck)
+        {}
+    };
+private:
+    FRWDataRaceCheck _rwDataRaceCheck;
+#endif
+};
+//----------------------------------------------------------------------------
+#if USE_PPE_DATARACE_CHECKS
+#   define PPE_DATARACE_CHECK_SCOPE(_pResource) PPE::FDataRaceCheckResource::FScopeLock ANONYMIZE(dataRaceCheck)(*_pResource)
+#   define PPE_DATARACE_EXCLUSIVE_SCOPE(_pResource) PPE::FRWDataRaceCheckResource::FScopeLockExclusive ANONYMIZE(dataRaceCheck)(*_pResource)
+#   define PPE_DATARACE_SHARED_SCOPE(_pResource) PPE::FRWDataRaceCheckResource::FScopeLockShared ANONYMIZE(dataRaceCheck)(*_pResource)
+#else
+#   define PPE_DATARACE_CHECK_SCOPE(_pResource) NOOP()
+#   define PPE_DATARACE_EXCLUSIVE_SCOPE(_pResource) NOOP()
+#   define PPE_DATARACE_SHARED_SCOPE(_pResource) NOOP()
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace PPE
