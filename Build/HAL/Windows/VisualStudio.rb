@@ -61,14 +61,14 @@ module Build
                 File.join(@visualStudioPath, 'VC', 'Auxiliary', 'VS', 'lib', '$PlatformArch$')
 
             case @version
-            when '2022'
+            when '2022', 'ClangCl_VS2019'
                 # not reproducing with 2022 (or with updates/reinstall ?)
-                Log.log('Windows: don\'t use workaround for C1090 PDB API call failed error code 3 (%s)', self)
+                Log.log('Windows: don\'t use workaround for C1090 PDB API call failed error code 3 (%s)', @version)
                 @workaround_C1090_PDB_API_call_failed_error_code_3 = false
             else
                 # https://developercommunity.visualstudio.com/content/problem/552999/fatal-error-c1090-pdb-api-call-failed-error-code-3.html
                 # https://developercommunity.visualstudio.com/content/problem/48897/c1090-pdb-api-call-failed-error-code-23.html
-                Log.warning('Windows: use workaround for C1090 PDB API call failed error code 3 (%s)', self)
+                Log.warning('Windows: use workaround for C1090 PDB API call failed error code 3 (%s)', @version)
                 @workaround_C1090_PDB_API_call_failed_error_code_3 = true
             end
         end
