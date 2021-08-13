@@ -667,7 +667,7 @@ public:
         FStringBuilder oss;
         RTTI::PrettyPrint(oss, any.InnerAtom(), RTTI::EPrettyPrintFlags::Full);
         oss << Endl;
-        SyntaxicHighlight(oss.Written());
+        FPlatformConsole::SyntaxicHighlight(oss.Written(), FPlatformConsole::WHITE_ON_BLACK);
     }
 
     int mul(int x, int m) const {
@@ -694,81 +694,6 @@ public:
 
         return sb.ToString();
     }
-
-    static void SyntaxicHighlight(const FStringView& str) {
-        constexpr auto defaultStyle = FPlatformConsole::WHITE_ON_BLACK;
-        constexpr auto stringStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_YELLOW;
-        constexpr auto literalStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_RED | FPlatformConsole::FG_BLUE | FPlatformConsole::FG_INTENSITY;
-
-        auto style = defaultStyle;
-
-        bool allnum = true;
-        size_t o = 0;
-        size_t s = 0;
-        forrange(i, 0, str.size()) {
-            const char ch = str[i];
-
-            if (s) {
-                if (ch != '"')
-                    continue;
-                FPlatformConsole::Write(str.SubRange(s - 1, 2 + i - s), style);
-                s = 0;
-                o = i + 1;
-                allnum = true;
-                continue;
-            }
-            else if (IsAlnum(ch) || ch == '_') {
-                allnum &= IsDigit(ch);
-                continue;
-            }
-            else if (ch == '"') {
-                allnum = false;
-                s = i + 1;
-                style = stringStyle;
-                continue;
-            }
-
-            if (o != i) {
-                FPlatformConsole::Write(str.SubRange(o, i - o), allnum ? literalStyle : style);
-                style = defaultStyle;
-                allnum = true;
-            }
-
-            o = i + 1;
-
-            switch (ch) {
-            case '$':
-            case '=':
-            case ':':
-                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_GREEN | FPlatformConsole::FG_INTENSITY; break;
-            case '+':
-            case '-':
-            case '*':
-            case '/':
-            case '<':
-            case '>':
-                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY; break;
-            case '(':
-            case ')':
-            case '{':
-            case '}':
-            case '[':
-            case ']':
-                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_CYAN | FPlatformConsole::FG_INTENSITY; break;
-            default:
-                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_WHITE | FPlatformConsole::FG_INTENSITY; break;
-            }
-
-            FPlatformConsole::Write(str.SubRange(i, 1), style);
-
-            style = defaultStyle;
-        }
-        Assert_NoAssume(0 == s);
-
-        if (o != str.size())
-            FPlatformConsole::Write(str.SubRange(o, str.size() - o), style);
-    }
-
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTIConsole_, Concrete)
 RTTI_PROPERTY_PUBLIC_FIELD(PID)

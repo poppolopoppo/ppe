@@ -65,6 +65,10 @@ public: // must be defined for every platform
 
     static void Flush() = delete;
 
+public: // generic helpers
+    static void SyntaxicHighlight(const FStringView& str, EAttribute base = Default);
+    static void SyntaxicHighlight(const FWStringView& str, EAttribute base = Default);
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

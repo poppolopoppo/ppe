@@ -825,7 +825,7 @@ public: // ILogger
             break;
         }
 
-        FPlatformConsole::Write(oss.Written(), attrs);
+        FPlatformConsole::SyntaxicHighlight(oss.Written(), attrs);
     }
 
     virtual void Flush(bool) override final {
