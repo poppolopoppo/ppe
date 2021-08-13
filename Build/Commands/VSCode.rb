@@ -153,7 +153,7 @@ module Build
                     cwd: $BinariesPath,
                     environment: compiler.dbg_env(),
                     #visualizeFile: NATVIS,
-                    externalConsole: false
+                    console: false
                 }
             end
         end
