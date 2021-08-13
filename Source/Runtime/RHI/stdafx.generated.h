@@ -11,6 +11,7 @@
 #include <new>
 #include <exception>
 #include <type_traits>
+#include <cstring>
 #include <utility>
 #include <atomic>
 #include <memory>
@@ -20,10 +21,9 @@
 #include <list>
 #include <stdexcept>
 #include <iterator>
+#include <numeric>
 #include <mutex>
 #include <chrono>
-#include <cctype>
-#include <clocale>
 #include <thread>
 #include <array>
 #include <comdef.h>
@@ -35,13 +35,16 @@
 #include <smmintrin.h>
 #include <tmmintrin.h>
 #include <pmmintrin.h>
+#include <cctype>
 #include <cwctype>
 #include <locale>
+#include <clocale>
 #include <variant>
 #include <optional>
 // Global project includes
 #ifdef BUILD_Win32_FastDebug
 // system includes
+#include <map>
 #include <iostream>
 #include <regex>
 #include <condition_variable>
@@ -57,13 +60,14 @@
 #include "Runtime/Core/Public/Diagnostic/Exception.h"
 #include "Runtime/Core/Public/IO/TextWriter_fwd.h"
 #include "Runtime/Core/Public/IO/String_fwd.h"
-#include "Runtime/Core/Public/Meta/Cast.h"
-#include "Runtime/Core/Public/Meta/TypeInfo.h"
-#include "Runtime/Core/Public/Meta/Hash_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
+#include "Runtime/Core/Public/Meta/Cast.h"
 #include "Runtime/Core/Public/Meta/Delete.h"
 #include "Runtime/Core/Public/Meta/Enum.h"
 #include "Runtime/Core/Public/Meta/ForRange.h"
+#include "Runtime/Core/Public/Meta/Hash_fwd.h"
 #include "Runtime/Core/Public/Meta/Iterator.h"
 #include "Runtime/Core/Public/Meta/NumericLimits.h"
 #include "Runtime/Core/Public/Meta/OneTimeInitialize.h"
@@ -72,6 +76,7 @@
 #endif // BUILD_Win32_FastDebug
 #ifdef BUILD_Win64_FastDebug
 // system includes
+#include <map>
 #include <iostream>
 #include <regex>
 #include <condition_variable>
@@ -87,13 +92,14 @@
 #include "Runtime/Core/Public/Diagnostic/Exception.h"
 #include "Runtime/Core/Public/IO/TextWriter_fwd.h"
 #include "Runtime/Core/Public/IO/String_fwd.h"
-#include "Runtime/Core/Public/Meta/Cast.h"
-#include "Runtime/Core/Public/Meta/TypeInfo.h"
-#include "Runtime/Core/Public/Meta/Hash_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
+#include "Runtime/Core/Public/Meta/Cast.h"
 #include "Runtime/Core/Public/Meta/Delete.h"
 #include "Runtime/Core/Public/Meta/Enum.h"
 #include "Runtime/Core/Public/Meta/ForRange.h"
+#include "Runtime/Core/Public/Meta/Hash_fwd.h"
 #include "Runtime/Core/Public/Meta/Iterator.h"
 #include "Runtime/Core/Public/Meta/NumericLimits.h"
 #include "Runtime/Core/Public/Meta/OneTimeInitialize.h"

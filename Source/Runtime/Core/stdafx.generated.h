@@ -11,6 +11,7 @@
 #include <new>
 #include <exception>
 #include <type_traits>
+#include <cstring>
 #include <utility>
 #include <atomic>
 #include <memory>
@@ -20,10 +21,9 @@
 #include <list>
 #include <stdexcept>
 #include <iterator>
+#include <numeric>
 #include <mutex>
 #include <chrono>
-#include <cctype>
-#include <clocale>
 #include <thread>
 #include <array>
 #include <comdef.h>
@@ -35,11 +35,14 @@
 #include <smmintrin.h>
 #include <tmmintrin.h>
 #include <pmmintrin.h>
+#include <cctype>
 #include <cwctype>
 #include <locale>
+#include <clocale>
 #include <iostream>
 #include <regex>
 #include <condition_variable>
+#include <variant>
 // Global project includes
 #include "winnt_version.h"
 #include "Runtime/Core/Public/Core_fwd.h"
@@ -52,13 +55,14 @@
 #include "Runtime/Core/Public/Diagnostic/Exception.h"
 #include "Runtime/Core/Public/IO/TextWriter_fwd.h"
 #include "Runtime/Core/Public/IO/String_fwd.h"
-#include "Runtime/Core/Public/Meta/Cast.h"
-#include "Runtime/Core/Public/Meta/TypeInfo.h"
-#include "Runtime/Core/Public/Meta/Hash_fwd.h"
 #include "Runtime/Core/Public/HAL/PlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
+#include "Runtime/Core/Public/Meta/Cast.h"
 #include "Runtime/Core/Public/Meta/Delete.h"
 #include "Runtime/Core/Public/Meta/Enum.h"
 #include "Runtime/Core/Public/Meta/ForRange.h"
+#include "Runtime/Core/Public/Meta/Hash_fwd.h"
 #include "Runtime/Core/Public/Meta/Iterator.h"
 #include "Runtime/Core/Public/Meta/NumericLimits.h"
 #include "Runtime/Core/Public/Meta/OneTimeInitialize.h"
@@ -66,6 +70,7 @@
 #include "Runtime/Core/Public/Meta/ThreadResource.h"
 #ifdef BUILD_Win32_Debug
 // system includes
+#include <map>
 #include <optional>
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
@@ -73,16 +78,19 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win32_Debug
 #ifdef BUILD_Win32_FastDebug
 // system includes
+#include <map>
 #include <optional>
 // project includes
 #endif // BUILD_Win32_FastDebug
 #ifdef BUILD_Win32_Release
 // system includes
+#include <map>
 #include <optional>
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
@@ -90,6 +98,7 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win32_Release
@@ -102,6 +111,7 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win32_Profiling
@@ -113,11 +123,13 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win32_Final
 #ifdef BUILD_Win64_Debug
 // system includes
+#include <map>
 #include <optional>
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
@@ -125,16 +137,19 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win64_Debug
 #ifdef BUILD_Win64_FastDebug
 // system includes
+#include <map>
 #include <optional>
 // project includes
 #endif // BUILD_Win64_FastDebug
 #ifdef BUILD_Win64_Release
 // system includes
+#include <map>
 #include <optional>
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
@@ -142,6 +157,7 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win64_Release
@@ -154,6 +170,7 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win64_Profiling
@@ -165,6 +182,7 @@
 #include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
 #include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
 #include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win64_Final
