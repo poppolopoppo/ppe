@@ -44,7 +44,7 @@ typedef bool (*FAssertHandler)(const wchar_t* msg, const wchar_t *file, unsigned
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 //----------------------------------------------------------------------------
-class PPE_CORE_API PPE_DEBUG_SECTION FAssertException : public FException {
+class PPE_CORE_API FAssertException : public FException {
 public:
     FAssertException(const char *msg, const wchar_t *file, unsigned line);
     ~FAssertException() override;
@@ -116,7 +116,7 @@ typedef bool (*FAssertReleaseHandler)(const wchar_t* msg, const wchar_t* file, u
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
-class PPE_CORE_API PPE_DEBUG_SECTION FAssertReleaseException : public FException {
+class PPE_CORE_API FAssertReleaseException : public FException {
 public:
     FAssertReleaseException(const char* msg, const wchar_t* file, unsigned line);
     ~FAssertReleaseException() override;

@@ -6,6 +6,7 @@
 
 #if USE_PPE_IGNORELIST
 
+#include "Container/Hash.h"
 #include "Container/Map.h"
 #include "Meta/Singleton.h"
 #include "Thread/ThreadSafe.h"

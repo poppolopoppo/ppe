@@ -109,7 +109,7 @@ private:
 
     NO_INLINE void* Allocate_FromNewSlab_(size_t size);
 
-    template <typename _Allocator>
+    template <typename _OtherAllocator>
     friend class TPoolingSlabHeap;
     void ReclaimUserBlock_AssumeTracked_(void* ptr, size_t size);
 

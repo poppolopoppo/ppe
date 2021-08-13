@@ -107,7 +107,7 @@ struct FVertexInputState {
     PPE_RHI_API FVertexInputState& Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId = Default);
     PPE_RHI_API FVertexInputState& Bind(const FVertexBufferID& bufferId, u32 stride, u32 index = AutoBindingIndex, EVertexInputRate rate = EVertexInputRate::Vertex);
 
-    PPE_RHI_API NODISCARD bool CopyAttributes(const TMemoryView<const FVertexAttribute> attribs);
+    NODISCARD PPE_RHI_API bool CopyAttributes(const TMemoryView<const FVertexAttribute> attribs);
 
     void Clear() {
         BufferBindings.clear();

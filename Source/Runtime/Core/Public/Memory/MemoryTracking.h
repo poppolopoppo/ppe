@@ -28,7 +28,7 @@ public:
         i64 SmallAllocs;
     };
 
-    struct FCounters {
+    struct PPE_CORE_API FCounters {
         counter_t NumAllocs{ 0 };
         counter_t MinSize{ CODE3264(UINT32_MAX, UINT64_MAX) };
         counter_t MaxSize{ 0 };

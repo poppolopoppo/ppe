@@ -6,6 +6,7 @@
 #include "Container/Hash.h"
 #include "Container/Pair.h"
 #include "HAL/PlatformMaths.h"
+#include "Meta/Algorithm.h"
 #include "Meta/Hash_fwd.h"
 #include "Meta/Utility.h"
 

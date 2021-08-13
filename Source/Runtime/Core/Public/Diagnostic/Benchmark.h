@@ -471,7 +471,7 @@ public: // export table results
         oss << Fmt::Repeat(L'=', (stride+1) * table.dim() + header) << Eol;
 
         if (detailed) {
-            table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
+            table.ForeachEntry([&oss, stride, table_dim{table.dim()}](const auto& x) {
                 oss << L'|' << FTextFormat::PadLeft(stride, L' ') << x.Name;
 
                 for (const auto& c : x.Row)
@@ -490,7 +490,7 @@ public: // export table results
             });
         }
         else {
-            table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
+            table.ForeachEntry([&oss, stride, table_dim{table.dim()}](const auto& x) {
                 oss << L'|' << FTextFormat::PadLeft(stride, L' ') << x.Name;
 
                 for (const auto& c : x.Row)

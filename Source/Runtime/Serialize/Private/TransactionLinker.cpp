@@ -6,6 +6,7 @@
 #include "MetaDatabase.h"
 #include "MetaObject.h"
 #include "MetaTransaction.h"
+#include "IO/TextWriter.h"
 #include "RTTI/TypeTraits.h"
 
 namespace PPE {
