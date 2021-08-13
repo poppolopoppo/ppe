@@ -136,8 +136,10 @@ public:
 
     void TrimCache() {
         forrange(i, 0, NumAllocationBuckets) {
-            const Meta::FRecursiveLockGuard scopeLock(_buckets[i].Barrier);
-            _buckets[i].Heap.TrimMemory();
+            if (_buckets[i].Barrier.try_lock()) {
+                _buckets[i].Heap.TrimMemory();
+                _buckets[i].Barrier.unlock();
+            }
         }
     }
 
@@ -374,7 +376,8 @@ class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public SLAB_ALLOCATOR(Logger), M
         FWStringView Text() const { return { reinterpret_cast<const wchar_t*>(this + 1), TextLength }; }
 
         void Log(ITaskContext&) {
-            const FSuicideScope_ logScope(this);
+            const FIsInLoggerScope reentrantScope;
+            const FSuicideScope_ allocationScope(this);
             LowLevelLogger->Log(*Category, Level, Site, Text());
         }
     };
@@ -384,8 +387,8 @@ class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public SLAB_ALLOCATOR(Logger), M
     struct FSuicideScope_ : FLogAllocator::FScope {
         FDeferredLog* Log;
         FSuicideScope_(FDeferredLog* log)
-            : FScope(log->Bucket)
-            , Log(log) {
+        :    FScope(log->Bucket)
+        ,   Log(log) {
             Assert(log);
             Assert_NoAssume(PPE_HASH_VALUE_SEED == Log->Canary);
             ONLY_IF_ASSERT(Log->Canary = reinterpret_cast<uintptr_t>(this));

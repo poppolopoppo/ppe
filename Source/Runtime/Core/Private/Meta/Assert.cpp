@@ -4,6 +4,7 @@
 
 #if USE_PPE_ASSERT || USE_PPE_ASSERT_RELEASE
 
+#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/IgnoreList.h"
 #include "Diagnostic/Logger.h"
@@ -34,7 +35,7 @@ static bool ReportAssertionForDebug_(
     const FWStringView& level,
     const wchar_t* msg, const wchar_t* file, unsigned line) {
 #if USE_PPE_PLATFORM_DEBUG
-    if (FPlatformDebug::IsDebuggerPresent()) {
+    if (FCurrentProcess::Get().StartedWithDebugger()) {
         wchar_t buf[1024];
         FWFixedSizeTextWriter oss(buf);
         oss << Eol
