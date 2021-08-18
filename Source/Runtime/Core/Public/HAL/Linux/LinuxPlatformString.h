@@ -4,6 +4,8 @@
 
 #ifdef PLATFORM_LINUX
 
+#include <wchar.h>
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -33,7 +35,7 @@ public:
         return std::snprintf(dst, capacity, fmt, args);
     }
     static int Printf(wchar_t* dst, size_t capacity, const wchar_t* fmt, va_list args) {
-        return _snwprintf_s(dst, capacity, _TRUNCATE, fmt, args);
+        return vswprintf(dst, capacity, fmt, args);
     }
 
     static size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length);
