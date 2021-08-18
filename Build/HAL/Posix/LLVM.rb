@@ -111,6 +111,7 @@ module Build
 
         compilationFlag!(
             "-std=#{Build.CppStd}",
+            '-stdlib=libc++',
             '-Wall', '-Wextra', '-Wshadow',
             '-Werror', '-Wfatal-errors',
             '-Wno-unused-command-line-argument',
@@ -125,14 +126,14 @@ module Build
         librarianOptions << 'rc' << '%2' << '%1'
         linkerOptions << '-o' << '%2' << '%1'
 
-        systemPaths <<
-            File.join('$LLVMPath$', 'include', 'llvm') <<
-            File.join('$LLVMPath$', 'include', 'llvm-c') <<
-            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersionFull$', 'include')
+        # systemPaths <<
+        #     File.join('$LLVMPath$', 'include', 'llvm') <<
+        #     File.join('$LLVMPath$', 'include', 'llvm-c') <<
+        #     File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersionFull$', 'include')
 
-        libraryPaths <<
-            File.join('$LLVMPath$', 'lib') <<
-            File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersionFull$', 'lib', 'linux')
+        # libraryPaths <<
+        #     File.join('$LLVMPath$', 'lib') <<
+        #     File.join('$LLVMPath$', 'lib', 'clang', '$LLVMVersionFull$', 'lib', 'linux')
     end
 
     make_facet(:LLVM_Posix_Base_x86) do
