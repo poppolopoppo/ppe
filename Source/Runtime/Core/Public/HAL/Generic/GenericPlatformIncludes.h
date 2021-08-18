@@ -1,5 +1,5 @@
 #pragma once
 
-#include "HAL/TargetPlatform.h"
+#include "HAL/PlatformMacros.h"
 
 // Add here files included for *EVERY* platform only !

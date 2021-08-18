@@ -2,7 +2,7 @@
 
 // simple wrapper for target platform
 
-#include "HAL/TargetPlatform.h"
+#include "HAL/PlatformMacros.h"
 #include PPE_HAL_MAKEINCLUDE(PlatformAtomics)
 
 namespace PPE {

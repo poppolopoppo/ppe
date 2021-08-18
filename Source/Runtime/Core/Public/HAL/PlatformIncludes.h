@@ -12,5 +12,5 @@
 #   pragma system_header
 #endif
 
-#include "HAL/TargetPlatform.h"
+#include "HAL/PlatformMacros.h"
 #include PPE_HAL_MAKEINCLUDE(PlatformIncludes)
