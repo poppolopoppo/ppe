@@ -154,7 +154,7 @@ using i64   = int64_t;
 #if defined(_MSC_VER)
 #   define NO_INLINE __declspec(noinline)
 #elif defined(CPP_CLANG) || defined(CPP_GCC)
-#   define define NO_INLINE __attribute__((noinline))
+#   define NO_INLINE __attribute__((noinline))
 #else
 #   error "unsupported compiler"
 #endif
