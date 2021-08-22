@@ -211,7 +211,7 @@ float LeastSquaresFittingQuadratic2(TScalarVector<float, 6>& coefficients, const
     return Abs(es.GetEigenvalue(0));
 }
 //----------------------------------------------------------------------------
-float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const TMemoryView<const float2>& points) {
+float LeastSquaresFittingQuadraticCircle2(float2& center, float& radius, const TMemoryView<const float2>& points) {
     Assert(points.size() > 1);
 
     float4x4 A(Meta::ForceInit);
@@ -405,7 +405,7 @@ float LeastSquaresFittingQuadratic3(TScalarVector<float, 10>& coefficients, cons
     return Abs(es.GetEigenvalue(0));
 }
 //----------------------------------------------------------------------------
-float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const TMemoryView<const float3>& points) {
+float LeastSquaresFittingQuadraticSphere3(float3& center, float& radius, const TMemoryView<const float3>& points) {
     Assert(points.size() > 1);
 
     TScalarMatrix<float, 5, 5> A(Meta::ForceInit);

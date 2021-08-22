@@ -13,9 +13,9 @@ bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, 
 bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, float3& axis2, float3& extents, const TMemoryView<const float3>& points);
 //----------------------------------------------------------------------------
 float LeastSquaresFittingQuadratic2(TScalarVector<float, 6>& coefficients, const TMemoryView<const float2>& points);
-float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const TMemoryView<const float2>& points);
+float LeastSquaresFittingQuadraticCircle2(float2& center, float& radius, const TMemoryView<const float2>& points);
 float LeastSquaresFittingQuadratic3(TScalarVector<float, 10>& coefficients, const TMemoryView<const float3>& points);
-float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const TMemoryView<const float3>& points);
+float LeastSquaresFittingQuadraticSphere3(float3& center, float& radius, const TMemoryView<const float3>& points);
 //----------------------------------------------------------------------------
 bool LeastSquaresFittingOrthogonalLine2(float2& origin, float2& direction, const TMemoryView<const float2>& points);
 bool LeastSquaresFittingOrthogonalLine3(float3& origin, float3& direction, const TMemoryView<const float3>& points);
