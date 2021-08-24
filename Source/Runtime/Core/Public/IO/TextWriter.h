@@ -323,6 +323,9 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, unsigned long v
 #else
 STATIC_ASSERT(std::is_same_v<long, i64>);
 STATIC_ASSERT(std::is_same_v<unsigned long, u64>);
+STATIC_ASSERT(!std::is_same_v<long long, i64> && sizeof(long long) == sizeof(i64));
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, long long v) { w.Write(checked_cast<i64>(v)); return w; }
 #endif
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim>

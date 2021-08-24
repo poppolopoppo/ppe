@@ -13,12 +13,14 @@
 
 #define USE_PPE_SAFEPTR (USE_PPE_DEBUG || USE_PPE_MEMORY_DEBUGGING)
 
-#define _FWD_REFPTR_IMPL(T, _PREFIX)                                    \
-    class CONCAT(_PREFIX, T);                                           \
+#define PPE_REFPTR_ALIASES(T, _PREFIX)                                       \
     typedef ::PPE::TRefPtr<CONCAT(_PREFIX, T)>           CONCAT(P,  T); \
     typedef ::PPE::TRefPtr<const CONCAT(_PREFIX, T)>     CONCAT(PC, T); \
     typedef ::PPE::TSafePtr<CONCAT(_PREFIX, T)>          CONCAT(S,  T); \
     typedef ::PPE::TSafePtr<const CONCAT(_PREFIX, T)>    CONCAT(SC, T)
+#define _FWD_REFPTR_IMPL(T, _PREFIX)                                    \
+    class CONCAT(_PREFIX, T);                                           \
+    PPE_REFPTR_ALIASES(T, _Prefix)
 
 #define FWD_REFPTR(T_WITHOUT_F)             _FWD_REFPTR_IMPL(T_WITHOUT_F, F)
 #define FWD_INTERFACE_REFPTR(T_WITHOUT_I)   _FWD_REFPTR_IMPL(T_WITHOUT_I, I)

@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-
 #define PPE_COMPILER_MESSAGE(_Message) \
     _Pragma(STRINGIZE(message(_Message)))
 
@@ -19,6 +18,10 @@
 #      else
 #          define PPE_DEBUG_BREAK() __asm__ volatile("int $0x03")
 #      endif
+#   endif
+
+#   if __has_builtin(__builtin_trap)
+#      define PPE_DEBUG_CRASH() __builtin_trap()
 #   endif
 
 #   define PPE_DECLSPEC_CODE_SECTION(_NAME) __attribute__((section(_NAME)))

@@ -159,7 +159,6 @@ static NO_INLINE void Test_Allocator_Dangling_(const FWStringView& category, con
     Assert(numWorkers * allocsPerWorker >= blockSizes.size());
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
-    using blocks_type = TUniqueArray<FAllocatorBlock>;
 
     TVector<FAllocatorBlock> blocks;
     blocks.reserve(blockSizes.size());
@@ -502,7 +501,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
     BENCHMARK_SCOPE(L"Pool", L"TAtomicPool<>");
 
     using pool_type = TAtomicPool<FDummyForPool_, 32>;
-    using index_type = pool_type::index_type;
+    //using index_type = pool_type::index_type;
 
     STATIC_CONST_INTEGRAL(size_t, ToDeallocate, (pool_type::Capacity * 2) / 3);
     FRandomGenerator rng;
@@ -639,7 +638,7 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
 #endif
 
     using pool_type = _CachedMemoryPool;
-    using block_type = typename pool_type::block_type;
+    //using block_type = typename pool_type::block_type;
     using index_type = typename pool_type::index_type;
 
     STATIC_CONST_INTEGRAL(u32, ToDeallocate, u32((pool_type::MaxSize * 2) / 3));
@@ -904,8 +903,6 @@ void Test_Allocators() {
     ReleaseMemoryInModules();
 
     LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
-
-    typedef u8 value_type;
 
     constexpr size_t BlockSizeMin = 16;
     constexpr size_t BlockSizeMid = 32768;

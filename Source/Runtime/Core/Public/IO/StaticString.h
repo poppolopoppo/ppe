@@ -54,12 +54,12 @@ struct TBasicStaticString {
     CONSTEXPR operator TBasicStringView<_Char> () const { return Str(); }
     CONSTEXPR operator TBasicConstChar<_Char> () const { return c_str(); }
 
-    CONSTEXPR char* NullTerminated() {
+    CONSTEXPR _Char* NullTerminated() {
         Assert(capacity() >= Len + 1);
         Data[Len] = _Char(0);
         return Data;
     }
-    CONSTEXPR const char* NullTerminated() const {
+    CONSTEXPR const _Char* NullTerminated() const {
         Assert(capacity() >= Len + 1);
         Assert(Data[Len] == _Char(0));
         return Data;

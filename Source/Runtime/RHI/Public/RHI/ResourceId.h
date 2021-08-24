@@ -63,7 +63,7 @@ struct TNamedId {
 
     CONSTEXPR TNamedId(const FStringView& name)
         : Name(name)
-          , HashValue(hash_mem_constexpr(name.data(), name.size())) {}
+        , HashValue(hash_mem_constexpr(name.data(), name.size())) {}
 
     CONSTEXPR bool Valid() const { return !!HashValue; }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }

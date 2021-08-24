@@ -22,8 +22,6 @@ public: // must be defined for every platform
         BG_RED          = 0x0040, // background color contains red.
         BG_INTENSITY    = 0x0080, // background color is intensified.
 
-        Default         = FG_BLUE | FG_GREEN | FG_RED, // gray on black
-
         FG_BLACK        = 0,
         FG_WHITE        = FG_RED | FG_GREEN | FG_BLUE,
         FG_YELLOW       = FG_RED | FG_GREEN,
@@ -50,6 +48,8 @@ public: // must be defined for every platform
 
         _FG_MASK        = FG_RED | FG_GREEN | FG_BLUE,
         _BG_MASK        = BG_RED | BG_GREEN | BG_BLUE,
+
+        Unknown         = FG_BLUE | FG_GREEN | FG_RED, // gray on black
 
     };
     ENUM_FLAGS_FRIEND(EAttribute);

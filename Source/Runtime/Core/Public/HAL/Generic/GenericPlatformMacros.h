@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <cstdlib>
+
 #ifndef PPE_COMPILER_MESSAGE
 #   define PPE_COMPILER_MESSAGE(_Message)
 #endif
@@ -22,7 +24,7 @@
 #   define PPE_DEBUG_BREAK() NOOP()
 #endif
 #ifndef PPE_DEBUG_CRASH
-#   define PPE_DEBUG_CRASH() ::abort()
+#   define PPE_DEBUG_CRASH() std::abort()
 #endif
 #ifndef PPE_DECLSPEC_ALLOCATOR
 #   define PPE_DECLSPEC_ALLOCATOR()

@@ -1,18 +1,20 @@
 #pragma once
 
+#include "Meta/Config.h"
+
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 #include <type_traits>
 
-using u8    = uint8_t;
-using u16   = uint16_t;
-using u32   = uint32_t;
-using u64   = uint64_t;
+using u8    = std::uint8_t;
+using u16   = std::uint16_t;
+using u32   = std::uint32_t;
+using u64   = std::uint64_t;
 
-using i8    = int8_t;
-using i16   = int16_t;
-using i32   = int32_t;
-using i64   = int64_t;
+using i8    = std::int8_t;
+using i16   = std::int16_t;
+using i32   = std::int32_t;
+using i64   = std::int64_t;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -231,8 +233,8 @@ using i64   = int64_t;
 #   define PPE_CATCH(_SPEC)           catch(_SPEC)
 #else
 #   define PPE_THROW()
-#   define PPE_THROW_IT(...)          PPE_ABORT(STRINGIZE(__VA_ARGS__))
-#   define PPE_THROW_VOID()           PPE_ABORT("throw")
+#   define PPE_THROW_IT(...)          PPE_DEBUG_CRASH()
+#   define PPE_THROW_VOID()           PPE_DEBUG_CRASH()
 #   define PPE_TRY                    if (true)
 #   define PPE_CATCH_BLOCK(...)
 #   define PPE_CATCH(spec)            if (false)
