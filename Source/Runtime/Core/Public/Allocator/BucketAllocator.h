@@ -75,15 +75,15 @@ public:
         return (*this);
     }
 
-    static size_t MaxSize() NOEXCEPT {
-        return Min(allocator_traits::MaxSize(), BlockMaxSize);
+    size_t MaxSize() const NOEXCEPT {
+        return Min(allocator_traits::MaxSize(*this), BlockMaxSize);
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
+    size_t SnapSize(size_t s) const NOEXCEPT {
         Assert(s >= BlockMinSize);
         Assert(s <= BlockMaxSize);
 
-        s = allocator_traits::SnapSize(s);
+        s = allocator_traits::SnapSize(*this, s);
         return ((s + BlockStep - 1 - BlockMinSize) / BlockStep) * BlockStep;
     }
 
@@ -118,6 +118,10 @@ public:
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking& TrackingData() NOEXCEPT {
         return allocator_traits::TrackingData(*this);
+    }
+
+    auto AllocatorWithoutTracking() NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(*this);
     }
 #endif
 

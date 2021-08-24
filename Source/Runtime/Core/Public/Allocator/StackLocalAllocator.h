@@ -33,7 +33,7 @@ public:
 
     FStackLocalAllocator() = default;
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
+    size_t SnapSize(size_t s) const NOEXCEPT {
         return AllocaSnapSize(s);
     }
 

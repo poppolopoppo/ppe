@@ -227,6 +227,30 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(_
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <class... _Args>
+bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_ReturnIfExists(const _Key& key, _Args&&... args) {
+    return Emplace_ReturnIfExists(_Key(key), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <class... _Args>
+void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_KeepOldIFN(const _Key& key, _Args&&... args) {
+    Emplace_ReturnIfExists(_Key(key), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <class... _Args>
+bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_Overwrite(const _Key& key, _Args&&... args) {
+    return Emplace_Overwrite(_Key(key), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <class... _Args>
+void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(const _Key& key, _Args&&... args) {
+    return Emplace_AssertUnique(_Key(key), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(_Key&& key, _Value&& rvalue) {
     if (end() == Find(key)) {
         PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));

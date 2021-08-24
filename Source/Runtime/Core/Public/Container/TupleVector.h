@@ -111,7 +111,7 @@ public:
         TElements<_Const, _Indices...> operator*() const { return _owner->Aggregate_(_pos, std::index_sequence<_Indices...>{}); }
         //pointer operator->() const { return &_owner->Aggregate(_pos); }
 
-        TElements<_Const, _Indices...> operator[](difference_type n) const { return _owner->Aggregate_(_pos, std::index_sequence<_Indices...>{}); }
+        TElements<_Const, _Indices...> operator[](difference_type n) const { return *(*this + n); }
 
         template <bool _Const2>
         difference_type operator-(const TBaseIterator<_Const2, _Indices...>& other) const { return (checked_cast<difference_type>(_pos) - other._pos); }

@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
+#include "Memory/PtrRef.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -79,13 +80,13 @@ public:
         return (*this);
     }
 
-    static size_t MaxSize() NOEXCEPT {
-        return Max(primary_traits::MaxSize(), fallback_traits::MaxSize());
+    size_t MaxSize() const NOEXCEPT {
+        return Max(primary_traits::MaxSize(*this), fallback_traits::MaxSize(*this));
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
-        s = primary_traits::SnapSize(s);
-        Assert_NoAssume(fallback_traits::SnapSize(s) == s);
+    size_t SnapSize(size_t s) const NOEXCEPT {
+        s = primary_traits::SnapSize(*this, s);
+        Assert_NoAssume(fallback_traits::SnapSize(*this, s) == s);
         return s;
     }
 
@@ -95,7 +96,7 @@ public:
 
     FAllocatorBlock Allocate(size_t s) {
         FAllocatorBlock b{ FAllocatorBlock::Null() };
-        if (Likely(s <= primary_traits::MaxSize()))
+        if (Likely(s <= primary_traits::MaxSize(*this)))
             b = primary_traits::Allocate(*this, s);
         if (Unlikely(not b))
             b = fallback_traits::Allocate(*this, s);
@@ -135,6 +136,10 @@ public:
         return AllocatorTrackingData(
             static_cast<_Primary&>(*this),
             static_cast<_Fallback&>(*this) );
+    }
+
+    NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
+        return primary_traits::AllocatorWithoutTracking(*this);
     }
 #endif
 
@@ -193,13 +198,13 @@ public:
 
     using _Allocator::_Allocator;
 
-    static size_t MaxSize() {
-        return allocator_traits::MaxSize();
+    size_t MaxSize() const {
+        return allocator_traits::MaxSize(*this);
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
+    size_t SnapSize(size_t s) const NOEXCEPT {
         STATIC_ASSERT(_MinSize > 0); // or it's useless
-        return allocator_traits::SnapSize(Max(s, _MinSize));
+        return allocator_traits::SnapSize(*this, Max(s, _MinSize));
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
@@ -229,6 +234,10 @@ public:
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking& TrackingData() NOEXCEPT {
         return allocator_traits::TrackingData(*this);
+    }
+
+    NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(*this);
     }
 #endif
 
@@ -275,21 +284,21 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, allocator_traits::Alignment);
 
-    _Allocator* AllocRef;
+    TPtrRef<_Allocator> AllocRef;
 
-    explicit TProxyAllocator(_Allocator* a) NOEXCEPT
+    TProxyAllocator(TPtrRef<_Allocator> a) NOEXCEPT
     :   AllocRef(a)
     {}
     explicit TProxyAllocator(Meta::FForceInit) NOEXCEPT
     :   AllocRef(nullptr)
     {}
 
-    static size_t MaxSize() {
-        return allocator_traits::MaxSize();
+    size_t MaxSize() const NOEXCEPT {
+        return allocator_traits::MaxSize(*AllocRef);
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
-        return allocator_traits::SnapSize(s);
+    size_t SnapSize(size_t s) const NOEXCEPT {
+        return allocator_traits::SnapSize(*AllocRef, s);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
@@ -320,6 +329,10 @@ public:
     FMemoryTracking& TrackingData() NOEXCEPT {
         return allocator_traits::TrackingData(*this);
     }
+
+    NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(*this);
+    }
 #endif
 
     friend bool operator ==(const TProxyAllocator& lhs, const TProxyAllocator& rhs) NOEXCEPT {
@@ -331,7 +344,7 @@ public:
     }
 
     friend void swap(TProxyAllocator& lhs, TProxyAllocator& rhs) NOEXCEPT {
-        std::swap(lhs.AllocRef, rhs.AllocRef);
+        swap(lhs.AllocRef, rhs.AllocRef);
     }
 };
 //----------------------------------------------------------------------------
@@ -407,15 +420,15 @@ public:
         return (*this);
     }
 
-    static size_t MaxSize() NOEXCEPT {
-        return above_traits::MaxSize();
+    size_t MaxSize() const NOEXCEPT {
+        return above_traits::MaxSize(*this);
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
+    size_t SnapSize(size_t s) const NOEXCEPT {
         if (Likely(s <= _Threshold))
-            return under_traits::SnapSize(s);
+            return under_traits::SnapSize(*this, s);
         else
-            return above_traits::SnapSize(s);
+            return above_traits::SnapSize(*this, s);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {

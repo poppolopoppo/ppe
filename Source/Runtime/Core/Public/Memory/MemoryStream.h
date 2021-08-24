@@ -164,7 +164,7 @@ void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) 
     }
     else if (count > _storage.size()) {
         // can only grow, except in shrink_to_fit() or clear_ReleaseMemory()
-        _storage.Resize_DiscardData(allocator_traits::SnapSize(count));
+        _storage.Resize_DiscardData(allocator_traits::SnapSize(_storage.get_allocator(), count));
     }
 
     _size = count;
@@ -180,7 +180,7 @@ void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) 
 template <typename _Allocator>
 void TMemoryStream<_Allocator>::reserve(size_t count) {
     if (count > _storage.size()) // can only grow, except in shrink_to_fit() or clear_ReleaseMemory()
-        _storage.Resize_KeepData(allocator_traits::SnapSize(count));
+        _storage.Resize_KeepData(allocator_traits::SnapSize(_storage.get_allocator(), count));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -192,7 +192,7 @@ template <typename _Allocator>
 void TMemoryStream<_Allocator>::shrink_to_fit() {
     if (_size != _storage.size()) {
         Assert(_storage.size() > _size); // capacity cannot be smaller than size
-        _storage.Resize_KeepData(allocator_traits::SnapSize(_size));
+        _storage.Resize_KeepData(allocator_traits::SnapSize(_storage.get_allocator(), _size));
     }
 }
 //----------------------------------------------------------------------------
@@ -206,7 +206,7 @@ FRawMemory TMemoryStream<_Allocator>::Append(size_t sizeInBytes) {
     _size = Max(sizeInBytes + _offsetO, _size);
 
     if (_size > _storage.size()) { // doubles the storage size if there is not enough space
-        const size_t newCapacity = allocator_traits::SnapSize(Max(_size, _storage.size() * 2));
+        const size_t newCapacity = allocator_traits::SnapSize(_storage.get_allocator(), Max(_size, _storage.size() * 2));
         Assert(newCapacity >= _size);
         _storage.Resize_KeepData(newCapacity);
     }

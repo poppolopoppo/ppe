@@ -43,7 +43,7 @@ TSlabHeap<_Allocator>::~TSlabHeap() {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TSlabHeap<_Allocator>::SetSlabSize(size_t value) NOEXCEPT {
-    _slabSize = checked_cast<u32>(allocator_traits::SnapSize(value));
+    _slabSize = checked_cast<u32>(allocator_traits::SnapSize(*this, value));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -220,9 +220,9 @@ void* TSlabHeap<_Allocator>::Allocate_FromNewSlab_(size_t size) {
     auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
     using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;
 
-    size_t thisSlabSize = allocator_traits::SnapSize(_slabSize * (1 + _slabs.size() / 2));
+    size_t thisSlabSize = allocator_traits::SnapSize(*this, _slabSize * (1 + _slabs.size() / 2));
     if (size * 2 < thisSlabSize)
-        thisSlabSize = allocator_traits::SnapSize(size * 2);
+        thisSlabSize = allocator_traits::SnapSize(*this, size * 2);
 
     const FAllocatorBlock blk = allocator_traits_without_tracking::Allocate(allocator, thisSlabSize);
 

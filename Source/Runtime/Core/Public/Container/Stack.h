@@ -103,8 +103,8 @@ public:
         Verify(Pop());
     }
 
-    pointer Peek() { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
-    const_pointer Peek() const { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
+    Meta::TOptionalReference<value_type> Peek() { return (!!_size ? Meta::MakeOptionalRef(_storage[_size - 1]) : Default); }
+    Meta::TOptionalReference<const value_type> Peek() const { return (!!_size ? Meta::MakeOptionalRef(_storage[_size - 1]) : Default); }
 
     void clear();
 

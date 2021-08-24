@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
+#include "Allocator/StaticAllocator.h"
 #include "Container/IntrusiveList.h"
 
 namespace PPE {
@@ -81,12 +82,12 @@ public:
         return (*this);
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
-        return cascade_traits::SnapSize(s);
+    size_t MaxSize() const NOEXCEPT {
+        return Min(batch_traits::MaxSize(*this), TStaticAllocator<_Cascade>::MaxSize());
     }
 
-    static size_t MaxSize() NOEXCEPT {
-        return Min(batch_traits::MaxSize(), cascade_traits::MaxSize());
+    size_t SnapSize(size_t s) const NOEXCEPT {
+        return TStaticAllocator<_Cascade>::SnapSize(s);;
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
@@ -149,6 +150,10 @@ public:
         static_assert(not cascade_traits::has_memory_tracking::value, "#TODO: not supported");
         return batch_traits::TrackingData(*this);
     }
+
+    NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
+        return batch_traits::AllocatorWithoutTracking(*this);
+    }
 #endif
 
     friend bool operator ==(const TCascadedAllocator& lhs, TCascadedAllocator& rhs) NOEXCEPT {
@@ -161,7 +166,8 @@ public:
 
     friend void swap(TCascadedAllocator& lhs, TCascadedAllocator& rhs) NOEXCEPT {
         IF_CONSTEXPR(propagate_on_container_swap::value) {
-            std::swap(lhs.Cascades, rhs.Cascades);
+            using std::swap;
+            swap(lhs.Cascades, rhs.Cascades);
             batch_traits::Swap(lhs, rhs);
         }
     }

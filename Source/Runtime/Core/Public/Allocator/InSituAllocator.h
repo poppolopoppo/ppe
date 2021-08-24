@@ -175,11 +175,11 @@ public:
         return (*this);
     }
 
-    static size_t MaxSize() NOEXCEPT {
+    size_t MaxSize() const NOEXCEPT {
         return SizeInBytes;
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
+    size_t SnapSize(size_t s) const NOEXCEPT {
         Assert(s <= SizeInBytes);
         return Meta::RoundToNext(s, Alignment);
     }

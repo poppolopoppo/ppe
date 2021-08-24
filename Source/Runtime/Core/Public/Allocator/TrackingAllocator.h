@@ -66,12 +66,12 @@ public:
         return (*this);
     }
 
-    static size_t MaxSize() NOEXCEPT {
-        return allocator_traits::MaxSize();
+    size_t MaxSize() const NOEXCEPT {
+        return allocator_traits::MaxSize(*this);
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
-        return allocator_traits::SnapSize(s);
+    size_t SnapSize(size_t s) const NOEXCEPT {
+        return allocator_traits::SnapSize(*this, s);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {

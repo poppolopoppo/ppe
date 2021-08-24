@@ -453,7 +453,7 @@ template <typename T, typename _Allocator>
 void TSparseArray<T, _Allocator>::Reserve(size_t n) {
     Assert(n);
 
-    n = allocator_traits::template SnapSizeT<T>(n);
+    n = allocator_traits::template SnapSizeT<T>(*this, n);
 
     const size_t cls = ckIndex_(n - 1);
     if (cls >= _numChunks) {

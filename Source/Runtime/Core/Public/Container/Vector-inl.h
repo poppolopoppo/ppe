@@ -419,7 +419,7 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
             Assert(0 < _capacity);
             allocator_traits::DeallocateT(*this, _data, _capacity);
         }
-        count = allocator_traits::template SnapSizeT<value_type>(count);
+        count = allocator_traits::template SnapSizeT<value_type>(*this, count);
         _data = allocator_traits::template AllocateT<value_type>(*this, count ).data();
         _capacity = checked_cast<u32>(count);
 
@@ -429,7 +429,7 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
-    count = allocator_traits::template SnapSizeT<value_type>(count);
+    count = allocator_traits::template SnapSizeT<value_type>(*this, count);
     if (_capacity != count) {
         Assert(count >= _size);
 
@@ -533,9 +533,10 @@ void TVector<T, _Allocator>::swap(TVector& other) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::swap_(TVector& other, std::true_type ) NOEXCEPT {
-    std::swap(_data, other._data);
-    std::swap(_size, other._size);
-    std::swap(_capacity, other._capacity);
+    using std::swap;
+    swap(_data, other._data);
+    swap(_size, other._size);
+    swap(_capacity, other._capacity);
     allocator_traits::Swap(*this, other);
 }
 //----------------------------------------------------------------------------

@@ -68,7 +68,7 @@ public:
     size_t length() const { return size(); } // stl compat
     size_t size() const { return (is_large_() ? _large.Size : _small.Size); }
     size_t capacity() const { return (is_large_() ? _large.Capacity : FSmallString_::GCapacity); }
-    size_t max_size() const { return allocator_traits::MaxSize(); }
+    size_t max_size() const { return (allocator_traits::MaxSize(*this) / sizeof(_Char)); }
 
     size_t SizeInBytes() const { return (size() * sizeof(_Char)); }
 

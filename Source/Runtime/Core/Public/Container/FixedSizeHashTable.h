@@ -525,7 +525,9 @@ public:
         return const_cast<mapped_type&>(it->second);
     }
     const mapped_type& Get(const key_type& key) const NOEXCEPT {
-        return const_cast<TFixedSizeHashMap&>(this);
+        const auto it = parent_type::find(key);
+        AssertRelease(parent_type::end() != it);
+        return it->second;
     }
 
     Meta::TOptionalReference<mapped_type> GetIFP(const key_type& key) NOEXCEPT {

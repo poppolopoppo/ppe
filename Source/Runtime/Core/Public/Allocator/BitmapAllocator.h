@@ -66,11 +66,11 @@ public:
         return (*this);
     }
 
-    static size_t MaxSize() NOEXCEPT {
+    size_t MaxSize() const NOEXCEPT {
         return CapacityInBytes;
     }
 
-    static size_t SnapSize(size_t s) NOEXCEPT {
+    size_t SnapSize(size_t s) const NOEXCEPT {
         return Meta::RoundToNext(s, BlockSize);
     }
 

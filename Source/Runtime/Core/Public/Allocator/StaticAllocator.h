@@ -36,81 +36,81 @@ struct TStaticAllocator : TAllocatorTraits<_Allocator> {
 
     using typename allocator_traits::reallocate_can_fail;
 
-    using allocator_traits::MaxSize;
-    using allocator_traits::SnapSize;
-    using allocator_traits::SnapSizeT;
-
-    static bool Owns(FAllocatorBlock b) NOEXCEPT {
-        allocator_type alloc;
-        return allocator_traits::Owns(alloc, b);
+    NODISCARD static size_t MaxSize() NOEXCEPT {
+        return allocator_traits::MaxSize(Default);
     }
 
-    static FAllocatorBlock Allocate(size_t s) {
-        allocator_type alloc;
-        return allocator_traits::Allocate(alloc, s);
+    NODISCARD static size_t SnapSize(size_t s) NOEXCEPT {
+        return allocator_traits::SnapSize(Default, s);
     }
 
     template <typename T>
-    static TMemoryView<T> AllocateT(size_t n) {
-        allocator_type alloc;
-        return allocator_traits::template AllocateT<T>(alloc, n);
+    NODISCARD static size_t SnapSizeT(size_t s) NOEXCEPT {
+        return allocator_traits::template SnapSizeT<T>(Default, s);
+    }
+
+    NODISCARD static bool Owns(FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Owns(Default, b);
+    }
+
+    NODISCARD static FAllocatorBlock Allocate(size_t s) {
+        return allocator_traits::Allocate(Default, s);
     }
 
     template <typename T>
-    static T* AllocateOneT() {
-        allocator_type alloc;
-        return allocator_traits::template AllocateOneT<T>(alloc);
+    NODISCARD static TMemoryView<T> AllocateT(size_t n) {
+        return allocator_traits::template AllocateT<T>(Default, n);
+    }
+
+    template <typename T>
+    NODISCARD static T* AllocateOneT() {
+        return allocator_traits::template AllocateOneT<T>(Default);
     }
 
     static void Deallocate(FAllocatorBlock b) {
-        allocator_type alloc;
-        return allocator_traits::Deallocate(alloc, b);
+        return allocator_traits::Deallocate(Default, b);
     }
 
     template <typename T>
     static void DeallocateT(TMemoryView<T> v) {
-        allocator_type alloc;
-        return allocator_traits::template DeallocateT<T>(alloc, v);
+        return allocator_traits::template DeallocateT<T>(Default, v);
     }
 
     template <typename T>
     static void DeallocateT(T* p, size_t n) {
-        allocator_type alloc;
-        return allocator_traits::template DeallocateT<T>(alloc, p, n);
+        return allocator_traits::template DeallocateT<T>(Default, p, n);
     }
 
     template <typename T>
     static void DeallocateOneT(T* p) {
-        allocator_type alloc;
-        return allocator_traits::template DeallocateOneT<T>(alloc, p);
+        return allocator_traits::template DeallocateOneT<T>(Default, p);
     }
 
-    static auto Reallocate(FAllocatorBlock& b, size_t s) {
-        allocator_type alloc;
-        return allocator_traits::Reallocate(alloc, b, s);
+    NODISCARD static auto Reallocate(FAllocatorBlock& b, size_t s) {
+        return allocator_traits::Reallocate(Default, b, s);
     }
 
     // specialized this method to avoid over-copying when !has_reallocate
     template <typename T>
-    static auto ReallocateT_AssumePOD(TMemoryView<T>& items, size_t oldSize, size_t newSize) {
-        allocator_type alloc;
-        return allocator_traits::template ReallocateT_AssumePOD<T>(alloc, items, oldSize, newSize);
+    NODISCARD static auto ReallocateT_AssumePOD(TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+        return allocator_traits::template ReallocateT_AssumePOD<T>(Default, items, oldSize, newSize);
     }
 
-    static bool Acquire(FAllocatorBlock b) NOEXCEPT {
-        allocator_type alloc;
-        return allocator_traits::Acquire(alloc, b);
+    NODISCARD static bool Acquire(FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Acquire(Default, b);
     }
 
-    static bool Steal(FAllocatorBlock b) NOEXCEPT {
-        allocator_type alloc;
-        return allocator_traits::Steal(alloc, b);
+    NODISCARD static bool Steal(FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Steal(Default, b);
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    static FMemoryTracking& TrackingData() NOEXCEPT {
-        allocator_type alloc;
-        return allocator_traits::TrackingData(alloc);
+    NODISCARD static FMemoryTracking& TrackingData() NOEXCEPT {
+        return allocator_traits::TrackingData(Default);
+    }
+
+    NODISCARD static auto& AllocatorWithoutTracking() NOEXCEPT {
+        return allocator_traits:: AllocatorWithoutTracking(Default);
     }
 #endif
 
