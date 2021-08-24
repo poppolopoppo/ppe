@@ -2,7 +2,7 @@
 
 // simple wrapper for target platform
 
-#include "HAL/TargetPlatform.h"
+#include "HAL/PlatformMacros.h"
 #include PPE_HAL_MAKEINCLUDE(Application)
 namespace PPE { namespace Application {
 using FPlatformApplication = CONCAT3(F, TARGET_PLATFORM, Application);

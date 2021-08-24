@@ -135,6 +135,7 @@ FWindowsWindow::FWindowsWindow()
 {}
 //----------------------------------------------------------------------------
 FWindowsWindow::~FWindowsWindow() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     ::HWND const hWnd = HandleWin32();
 
     if (hWnd && not ::DestroyWindow(hWnd))
@@ -142,6 +143,7 @@ FWindowsWindow::~FWindowsWindow() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Show() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     ::HWND const hWnd = HandleWin32();
     Assert(hWnd);
 
@@ -159,6 +161,7 @@ bool FWindowsWindow::Show() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Close() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     if (not parent_type::Close())
         return false;
 
@@ -171,11 +174,13 @@ bool FWindowsWindow::Close() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::PumpMessages() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     return (parent_type::PumpMessages() &&
         FPlatformMessageHandler::PumpMessages(*this));
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Center() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     ::HWND const hWnd = HandleWin32();
     Assert(hWnd);
 
@@ -202,6 +207,7 @@ bool FWindowsWindow::Center() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Maximize() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(NativeHandle());
 
     if (::ShowWindow(HandleWin32(), SW_MAXIMIZE)) {
@@ -214,6 +220,7 @@ bool FWindowsWindow::Maximize() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Minimize() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(NativeHandle());
 
     if (::ShowWindow(HandleWin32(), SW_MINIMIZE)) {
@@ -226,6 +233,7 @@ bool FWindowsWindow::Minimize() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Move(int x, int y) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     ::HWND const hWnd = HandleWin32();
     Assert(hWnd);
 
@@ -243,6 +251,7 @@ bool FWindowsWindow::Move(int x, int y) {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Resize(size_t w, size_t h) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     ::HWND const hWnd = HandleWin32();
     Assert(hWnd);
 
@@ -260,6 +269,7 @@ bool FWindowsWindow::Resize(size_t w, size_t h) {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::SetFocus() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(NativeHandle());
 
     if (::SetActiveWindow(HandleWin32())) {
@@ -272,6 +282,7 @@ bool FWindowsWindow::SetFocus() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::SetFullscreen(bool value) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     if (value) {
         ::HWND const hWnd = HandleWin32();
         Assert(hWnd);
@@ -309,6 +320,7 @@ bool FWindowsWindow::SetFullscreen(bool value) {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::SetTitle(FWString&& title) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(NativeHandle());
 
     if (::SetWindowTextW(HandleWin32(), title.data())) {
@@ -318,25 +330,6 @@ bool FWindowsWindow::SetTitle(FWString&& title) {
         LOG_LASTERROR(Window, L"SetWindowTextW");
         return false;
     }
-}
-//----------------------------------------------------------------------------
-void FWindowsWindow::ScreenToClient(int* screenX, int* screenY) const {
-    Verify(FPlatformMouse::ScreenToClient(*this, screenX, screenY));
-}
-//----------------------------------------------------------------------------
-void FWindowsWindow::ClientToScreen(int* clientX, int* clientY) const {
-    Verify(FPlatformMouse::ClientToScreen(*this, clientX, clientY));
-}
-//----------------------------------------------------------------------------
-void FWindowsWindow::SetCursorCapture(bool enabled) const {
-    if (enabled)
-        FPlatformMouse::SetCapture(*this);
-    else
-        FPlatformMouse::ResetCapture();
-}
-//----------------------------------------------------------------------------
-void FWindowsWindow::SetCursorOnWindowCenter() const {
-    FPlatformMouse::CenterCursorOnWindow(*this);
 }
 //----------------------------------------------------------------------------
 FWindowsWindow* FWindowsWindow::ActiveWindow() {
@@ -353,6 +346,7 @@ void FWindowsWindow::HiddenWindowDefinition(FWindowDefinition* def) {
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, const FWindowDefinition& def) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(window);
     Assert(window);
     Assert(not window->NativeHandle());
 

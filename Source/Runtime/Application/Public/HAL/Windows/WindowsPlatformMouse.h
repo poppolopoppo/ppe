@@ -35,7 +35,7 @@ enum class EWindowsCursorType : ::DWORD {
     SizeLeft            = OCR_SIZEWE,
     SizeRight           = OCR_SIZEWE,
     WaitCursor          = OCR_WAIT,
-    Default             = Arrow,
+    Unknown             = Arrow,
 };
 //----------------------------------------------------------------------------
 class PPE_APPLICATION_API FWindowsPlatformMouse : FGenericPlatformMouse {

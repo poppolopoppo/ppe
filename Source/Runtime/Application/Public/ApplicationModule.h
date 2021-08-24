@@ -31,7 +31,7 @@ public:
 public:
     friend class Application::FApplicationBase;
 
-    static FApplicationModule& Get(const FModularDomain& domain);
+    static FApplicationModule& Get(const FModularDomain& domain);   
 
     using FApplicationEvent = TFunction<void(Application::FApplicationBase&)>;
 

@@ -247,3 +247,9 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
     }}
 #define LOG_CHECK( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, ::PPE::Default, __VA_ARGS__ )
 #define LOG_CHECKVOID( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, void(), __VA_ARGS__ )
+
+#define LOG_UNSUPPORTED_FUNCTION( _CATEGORY ) \
+    LOG( _CATEGORY, Warning, L"unsupported: {0}, at {1}:{2}", \
+        WSTRINGIZE(EXPAND(PPE_PRETTY_FUNCTION)), \
+        WIDESTRING(__FILE__), \
+        __LINE__ )

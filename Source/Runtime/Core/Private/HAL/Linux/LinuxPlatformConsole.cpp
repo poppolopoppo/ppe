@@ -74,7 +74,7 @@ struct FLinuxColorModifier {
     }
 
     inline friend std::ostream& operator <<(std::ostream& oss, FLinuxColorModifier color) {
-        if (color.Code == FLinuxPlatformConsole::Default) {
+        if (color.Code == FLinuxPlatformConsole::Unknown) {
             return oss << "\e[0m";
         }
         else {
@@ -85,7 +85,7 @@ struct FLinuxColorModifier {
     }
 
     inline friend std::wostream& operator <<(std::wostream& woss, FLinuxColorModifier color) {
-        if (color.Code == FLinuxPlatformConsole::Default) {
+        if (color.Code == FLinuxPlatformConsole::Unknown) {
             return woss << L"\e[0m";
         }
         else {
@@ -107,13 +107,13 @@ struct FLinuxColorModifier {
 
         TScope(std::basic_ostream<_Char>& oss, EAttribute attrs)
         :   Oss(oss), Attrs(attrs) {
-            if (FLinuxPlatformConsole::Default != Attrs && HasColorSupport())
+            if (FLinuxPlatformConsole::Unknown != Attrs && HasColorSupport())
                 Oss << FLinuxColorModifier{ Attrs };
         }
 
         ~TScope() {
-            if (FLinuxPlatformConsole::Default != Attrs && HasColorSupport())
-                Oss << FLinuxColorModifier{ FLinuxPlatformConsole::Default };
+            if (FLinuxPlatformConsole::Unknown != Attrs && HasColorSupport())
+                Oss << FLinuxColorModifier{ FLinuxPlatformConsole::Unknown };
         }
     };
 

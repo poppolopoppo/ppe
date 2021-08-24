@@ -339,8 +339,8 @@ public:
     bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }
 
     friend hash_t hash_value(const TTupleVector& v) NOEXCEPT {
-        return Meta::static_for<Arity>([this](auto... idx) NOEXCEPT {
-            return hash_tuple(std::get<idx>(_vectors));
+        return Meta::static_for<Arity>([&v](auto... idx) NOEXCEPT {
+            return hash_tuple(std::get<idx>(v._vectors)...);
         });
     }
 
@@ -416,7 +416,6 @@ void TTupleVector<_Allocator, _Elts...>::assign(size_type count, const value_typ
 template <template <class> typename _Allocator, typename... _Elts>
 template <typename _It>
 Meta::TEnableIf<Meta::is_iterator_v<_It>> TTupleVector<_Allocator, _Elts...>::assign(_It first, _It last) {
-    using value_reference = decltype(*first);
     Meta::static_for<Arity>([this, first, last](auto... idx) {
         FOLD_EXPR( std::get<idx>(_vectors).assign(MakeOutputIterable(first, last, TTupleGet<idx, _Elts...>{})) );
     });

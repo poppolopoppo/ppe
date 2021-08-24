@@ -4,7 +4,7 @@
 
 #if PPE_OVERRIDE_NEW_OPERATORS
 
-#   ifdef PLATFORM_WINDOWS
+#   if defined(PLATFORM_WINDOWS) || defined(PLATFORM_LINUX)
 #       define PPE_ISOLATE_NEW_OPERATORS 1 // compiled in separate TU, no forward declaration
 #   else
 #       define PPE_ISOLATE_NEW_OPERATORS 0 // defined inline from this header

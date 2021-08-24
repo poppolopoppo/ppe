@@ -83,11 +83,11 @@ public:
     }
 
     size_t MaxSize() const NOEXCEPT {
-        return Min(batch_traits::MaxSize(*this), TStaticAllocator<_Cascade>::MaxSize());
+        return Min(batch_traits::MaxSize(*this), cascade_traits::MaxSize(Default));
     }
 
     size_t SnapSize(size_t s) const NOEXCEPT {
-        return TStaticAllocator<_Cascade>::SnapSize(s);;
+        return cascade_traits::SnapSize(Default, s);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {

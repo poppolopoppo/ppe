@@ -23,6 +23,7 @@
 #include "HAL/Linux/LinuxPlatformProcess.h"
 #include "HAL/Linux/LinuxPlatformThread.h"
 
+#include <clocale>
 #include <fstream>
 
 #include <cpuid.h>

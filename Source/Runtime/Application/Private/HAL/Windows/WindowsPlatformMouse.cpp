@@ -19,7 +19,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static EWindowsCursorType GWindowsCursorType = EWindowsCursorType::Default;
+static EWindowsCursorType GWindowsCursorType = EWindowsCursorType::Unknown;
 static FAtomicSpinLock& WindowsMouseCS_() {
     ONE_TIME_DEFAULT_INITIALIZE(FAtomicSpinLock, GInstance);
     return GInstance;
@@ -121,7 +121,7 @@ void FWindowsPlatformMouse::ResetCursorType() {
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
     // Reloads the system cursors. Set the uiParam parameter to zero and the pvParam parameter to NULL.
     ::SystemParametersInfo(SPI_SETCURSORS, 0, NULL, 0);
-    GWindowsCursorType = EWindowsCursorType::Default;
+    GWindowsCursorType = EWindowsCursorType::Unknown;
 }
 //----------------------------------------------------------------------------
 // https://docs.microsoft.com/fr-fr/windows/desktop/api/winuser/nf-winuser-getcursorinfo

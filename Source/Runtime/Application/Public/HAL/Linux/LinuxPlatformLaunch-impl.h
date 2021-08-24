@@ -1,9 +1,9 @@
 
 #include "HAL/Linux/LinuxPlatformLaunch.h"
-#include "HAL/Generic/GenericPlatformLaunch-impl.h"
+#include "HAL/GLFW/GLFWPlatformLaunch-impl.h"
 
-int main(int argc, const wchar_t** argv) {
-    const wchar_t* filename = argv[0];
+int main(int argc, const char** argv) {
+    const char* filename = argv[0];
     argv = &argv[1];
     argc--;
 

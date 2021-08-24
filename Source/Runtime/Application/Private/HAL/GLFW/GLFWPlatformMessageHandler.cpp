@@ -1,34 +1,31 @@
 #include "stdafx.h"
 
-#ifdef PLATFORM_LINUX
+#ifdef PLATFORM_GLFW
 
-#include "HAL/Linux/LinuxPlatformGamepad.h"
+#include "HAL/GLFW/GLFWPlatformMessageHandler.h"
 
-#include "Input/GamepadState.h"
-#include "Maths/PackingHelpers.h"
-
-// #TODO : use libsdl2
+#include "HAL/GLFW/GLFWPlatformIncludes.h"
+#include "HAL/GLFW/GLFWWindow.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FLinuxPlatformGamepad::Poll(FControllerStates* gamepads) {
-    UNUSED(gamepads);
-    return false;
+bool FGLFWPlatformMessageHandler::PumpGlobalMessages() {
+    glfwPollEvents();
+    return true;
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformGamepad::Poll(FControllerId index, FGamepadState* gamepad) {
-    UNUSED(index);
-    UNUSED(gamepad);
-    return false;
-}
-//----------------------------------------------------------------------------
-bool FLinuxPlatformGamepad::Rumble(FControllerId index, float left, float right) {
-    UNUSED(index);
-    UNUSED(left);
-    UNUSED(right);
+bool FGLFWPlatformMessageHandler::PumpMessages(FGLFWWindow& window) {
+    if (GLFWwindow* const glfwWindow = static_cast<GLFWwindow*>(window.NativeHandle())) {
+        if (glfwWindowShouldClose(glfwWindow))
+            return false;
+
+        glfwPollEvents();
+        return true;
+    }
+
     return false;
 }
 //----------------------------------------------------------------------------
@@ -37,4 +34,4 @@ bool FLinuxPlatformGamepad::Rumble(FControllerId index, float left, float right)
 } //!namespace Application
 } //!namespace PPE
 
-#endif //!PLATFORM_LINUX
+#endif //!PLATFORM_GLFW

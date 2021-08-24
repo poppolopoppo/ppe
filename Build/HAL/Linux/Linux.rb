@@ -9,6 +9,7 @@ module Build
         tags << :linux
         defines <<
             'PLATFORM_LINUX' <<
+            'PLATFORM_GLFW' <<
             '__LINUX__'
     end
 
@@ -66,8 +67,15 @@ module Build
             gcc-multilib
             g++-multilib
             clang
+            libncurses-dev
+            libvulkan1
+            libxcb1-dev
+            libstdc++-8-dev
+            libc++abi-14-dev
+            libunwind-dev
+            libglfw3-dev
         }
-        Process.start({}, 'sudo', 'apt-get', 'install', *pkgs)
+        Process.start({}, 'sudo', 'apt-get', '-y', 'install', *pkgs)
     end
 
 end #~ Build

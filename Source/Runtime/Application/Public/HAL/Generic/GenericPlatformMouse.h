@@ -28,7 +28,7 @@ enum class EGenericCursorType {
     SizeLeft,
     SizeRight,
     WaitCursor,
-    Default = Arrow,
+    Unknown = Arrow,
 };
 //----------------------------------------------------------------------------
 struct PPE_APPLICATION_API FGenericPlatformMouse {

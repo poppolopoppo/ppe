@@ -38,12 +38,6 @@ public: // must be defined for every platform
     virtual bool SetFullscreen(bool value) override final;
     virtual bool SetTitle(FWString&& title) override final;
 
-    virtual void ScreenToClient(int* screenX, int* screenY) const override final;
-    virtual void ClientToScreen(int* clientX, int* clientY) const override final;
-
-    virtual void SetCursorCapture(bool enabled) const override final;
-    virtual void SetCursorOnWindowCenter() const override final;
-
     static FWindowsWindow* ActiveWindow();
     static void MainWindowDefinition(FWindowDefinition* def);
     static void HiddenWindowDefinition(FWindowDefinition* def);

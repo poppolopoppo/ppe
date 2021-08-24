@@ -37,7 +37,7 @@ inline CONSTEXPR bool Lerp(bool v0, bool v1, float f) NOEXCEPT {
 template <typename T, class>
 CONSTEXPR float LinearStep(T value, Meta::TDontDeduce<T> vmin, Meta::TDontDeduce<T> vmax) NOEXCEPT {
     Assert(vmin < vmax);
-    return Saturate((value - vmin) / static_cast<float>(vmax - vmin));
+    return Saturate(static_cast<float>((value - vmin) / static_cast<float>(vmax - vmin)));
 }
 //----------------------------------------------------------------------------
 template <typename T, class>

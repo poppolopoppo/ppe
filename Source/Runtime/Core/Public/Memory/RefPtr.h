@@ -20,7 +20,7 @@
     typedef ::PPE::TSafePtr<const CONCAT(_PREFIX, T)>    CONCAT(SC, T)
 #define _FWD_REFPTR_IMPL(T, _PREFIX)                                    \
     class CONCAT(_PREFIX, T);                                           \
-    PPE_REFPTR_ALIASES(T, _Prefix)
+    PPE_REFPTR_ALIASES(T, _PREFIX)
 
 #define FWD_REFPTR(T_WITHOUT_F)             _FWD_REFPTR_IMPL(T_WITHOUT_F, F)
 #define FWD_INTERFACE_REFPTR(T_WITHOUT_I)   _FWD_REFPTR_IMPL(T_WITHOUT_I, I)

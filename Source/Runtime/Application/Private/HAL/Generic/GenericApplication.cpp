@@ -13,9 +13,9 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FGenericApplication::FGenericApplication(const FModularDomain& domain, FString&& name)
-:    _domain(domain)
-,    _name(std::move(name))
-,    _services(_name, &_domain.Services()) {
+:   _domain(domain)
+,   _name(std::move(name))
+,   _services(_name, &_domain.Services()) {
     Assert(not _name.empty());
 }
 //----------------------------------------------------------------------------

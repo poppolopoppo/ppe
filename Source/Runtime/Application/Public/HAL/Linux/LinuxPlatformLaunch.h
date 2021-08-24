@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "HAL/Generic/GenericPlatformLaunch.h"
+#include "HAL/GLFW/GLFWPlatformLaunch.h"
 
 #ifndef PLATFORM_LINUX
 #   error "invalid include for current platform"
@@ -11,12 +11,11 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FLinuxPlatformLaunch : public FGenericPlatformLaunch {
+class FLinuxPlatformLaunch : public FGLFWPlatformLaunch {
 public:
-    using FGenericPlatformLaunch::RunApplication;
+    using FGLFWPlatformLaunch::RunApplication;
 
-    static PPE_APPLICATION_API void OnPlatformLaunch(
-        const wchar_t* filename, size_t argc, const wchar_t* const* argv);
+    static PPE_APPLICATION_API void OnPlatformLaunch(const char* filename, size_t argc, const char** argv);
     static PPE_APPLICATION_API void OnPlatformShutdown();
 };
 //----------------------------------------------------------------------------

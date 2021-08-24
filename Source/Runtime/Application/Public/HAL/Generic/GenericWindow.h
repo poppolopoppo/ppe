@@ -4,6 +4,7 @@
 
 #include "IO/String.h"
 #include "Maths/ScalarVector_fwd.h"
+#include "Thread/DataRaceCheck.h"
 
 namespace PPE {
 namespace Application {
@@ -40,7 +41,7 @@ struct PPE_APPLICATION_API FGenericWindowDefinition {
     FGenericWindow* Parent;
 };
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API FGenericWindow {
+class PPE_APPLICATION_API FGenericWindow : public FRWDataRaceCheckResource {
 public: // must be defined for every platform
     using FNativeHandle = void*;
     using FWindowDefinition = FGenericWindowDefinition;
@@ -51,26 +52,26 @@ public: // must be defined for every platform
     FGenericWindow(const FGenericWindow&) = delete;
     FGenericWindow& operator =(const FGenericWindow&) = delete;
 
-    const FWString& Title() const { return _title; }
-    FNativeHandle NativeHandle() const { return _handle; }
+    const FWString& Title() const { PPE_DATARACE_SHARED_SCOPE(this); return _title; }
+    FNativeHandle NativeHandle() const { PPE_DATARACE_SHARED_SCOPE(this); return _handle; }
 
-    int Left() const { return _left; }
-    int Top() const { return _top; }
+    int Left() const { PPE_DATARACE_SHARED_SCOPE(this); return _left; }
+    int Top() const { PPE_DATARACE_SHARED_SCOPE(this); return _top; }
 
-    size_t Width() const { return _width; }
-    size_t Height() const { return _height; }
+    size_t Width() const { PPE_DATARACE_SHARED_SCOPE(this); return _width; }
+    size_t Height() const { PPE_DATARACE_SHARED_SCOPE(this); return _height; }
 
     uint2 Dimensions() const NOEXCEPT;
 
-    bool AllowDragDrop() const { return _allowDragDrop; }
-    bool HasCloseButton() const { return _hasCloseButton; }
-    bool HasResizeButton() const { return _hasResizeButton; }
-    bool HasSystemMenu() const { return _hasSystemMenu; }
+    bool AllowDragDrop() const { PPE_DATARACE_SHARED_SCOPE(this); return _allowDragDrop; }
+    bool HasCloseButton() const { PPE_DATARACE_SHARED_SCOPE(this); return _hasCloseButton; }
+    bool HasResizeButton() const { PPE_DATARACE_SHARED_SCOPE(this); return _hasResizeButton; }
+    bool HasSystemMenu() const { PPE_DATARACE_SHARED_SCOPE(this); return _hasSystemMenu; }
 
-    bool Fullscreen() const { return _fullscreen; }
-    bool HasFocus() const { return _hasFocus; }
-    bool Visible() const { return _visible; }
-    EWindowType Type() const { return _type; }
+    bool Fullscreen() const { PPE_DATARACE_SHARED_SCOPE(this); return _fullscreen; }
+    bool HasFocus() const { PPE_DATARACE_SHARED_SCOPE(this); return _hasFocus; }
+    bool Visible() const { PPE_DATARACE_SHARED_SCOPE(this); return _visible; }
+    EWindowType Type() const { PPE_DATARACE_SHARED_SCOPE(this); return _type; }
 
     virtual bool Show();
     virtual bool Close();
@@ -86,11 +87,11 @@ public: // must be defined for every platform
     virtual bool SetFullscreen(bool value);
     virtual bool SetTitle(FWString&& title);
 
-    virtual void ScreenToClient(int* screenX, int* screenY) const = 0;
-    virtual void ClientToScreen(int* clientX, int* clientY) const = 0;
+    virtual void ScreenToClient(int* screenX, int* screenY) const;
+    virtual void ClientToScreen(int* clientX, int* clientY) const;
 
-    virtual void SetCursorCapture(bool enabled) const = 0;
-    virtual void SetCursorOnWindowCenter() const = 0;
+    virtual void SetCursorCapture(bool enabled) const;
+    virtual void SetCursorOnWindowCenter() const;
 
     static FGenericWindow* ActiveWindow() = delete;
     static void MainWindowDefinition(FWindowDefinition* def);

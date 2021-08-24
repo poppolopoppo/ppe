@@ -1,15 +1,15 @@
 ﻿#include "stdafx.h"
 
-#ifdef PLATFORM_LINUX
+#ifdef PLATFORM_GLFW
 
-#include "HAL/Linux/LinuxPlatformApplicationMisc.h"
+#include "HAL/GLFW/GLFWPlatformApplicationMisc.h"
 
 #include "Color/Color.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformIncludes.h"
 #include "HAL/PlatformProcess.h"
-#include "HAL/Linux/LinuxPlatformNotification.h"
-#include "HAL/Linux/LinuxWindow.h"
+#include "HAL/GLFW/GLFWPlatformNotification.h"
+#include "HAL/GLFW/GLFWWindow.h"
 
 namespace PPE {
 namespace Application {
@@ -17,31 +17,31 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FLinuxPlatformApplicationMisc::Start() {
-    FLinuxPlatformNotification::Start();
+void FGLFWPlatformApplicationMisc::Start() {
+
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformApplicationMisc::Shutdown() {
-    FLinuxPlatformNotification::Shutdown();
+void FGLFWPlatformApplicationMisc::Shutdown() {
+
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformApplicationMisc::PickScreenColorAt(int x, int y, FColor* color) {
+bool FGLFWPlatformApplicationMisc::PickScreenColorAt(int x, int y, FColor* color) {
     UNUSED(x);
     UNUSED(y);
     UNUSED(color);
     return false;
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformApplicationMisc::PickScreenColorUnderMouse(FColor* color) {
+bool FGLFWPlatformApplicationMisc::PickScreenColorUnderMouse(FColor* color) {
     UNUSED(color);
     return false;
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformApplicationMisc::PreventScreenSaver() {
-    
+void FGLFWPlatformApplicationMisc::PreventScreenSaver() {
+
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformApplicationMisc::SetHighDPIAwareness() {
+bool FGLFWPlatformApplicationMisc::SetHighDPIAwareness() {
     return false;
 }
 //----------------------------------------------------------------------------
@@ -50,4 +50,4 @@ bool FLinuxPlatformApplicationMisc::SetHighDPIAwareness() {
 } //!namespace Application
 } //!namespace PPE
 
-#endif //!PLATFORM_LINUX
+#endif //!PLATFORM_GLFW

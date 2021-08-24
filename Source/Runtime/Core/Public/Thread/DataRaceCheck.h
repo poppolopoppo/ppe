@@ -170,7 +170,7 @@ private:
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FRWDataRaceCheckResource {
-    public:
+public:
 #if USE_PPE_DATARACE_CHECKS
     struct FScopeLockExclusive : FRWDataRaceCheck::FScopeLockExclusive {
         FScopeLockExclusive(FRWDataRaceCheckResource& resource)

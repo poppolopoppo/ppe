@@ -2,6 +2,9 @@
 
 #include "HAL/Generic/GenericWindow.h"
 
+#include "HAL/PlatformMouse.h"
+#include "HAL/PlatformWindow.h"
+
 #include "Maths/ScalarVector.h"
 
 namespace PPE {
@@ -25,13 +28,17 @@ FGenericWindow::FGenericWindow()
 ,   _type(EWindowType::Main)
 {}
 //----------------------------------------------------------------------------
-FGenericWindow::~FGenericWindow() = default;
+FGenericWindow::~FGenericWindow() {
+    Assert_NoAssume(nullptr == _handle);
+}
 //----------------------------------------------------------------------------
 uint2 FGenericWindow::Dimensions() const noexcept {
+    PPE_DATARACE_SHARED_SCOPE(this);
     return { _width, _height };
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::Show() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(not _visible);
 
     _visible = true;
@@ -39,6 +46,7 @@ bool FGenericWindow::Show() {
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::Close() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(_visible);
 
     _visible = false;
@@ -46,6 +54,7 @@ bool FGenericWindow::Close() {
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::SetFocus() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     if (not _visible)
         Show();
 
@@ -54,28 +63,34 @@ bool FGenericWindow::SetFocus() {
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::PumpMessages() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     return true;
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::Center() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     return true;
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::Maximize() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     return true;
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::Minimize() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     return true;
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::Move(int x, int y) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _left = x;
     _top = y;
     return true;
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::Resize(size_t w, size_t h) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(w > 0);
     Assert(h > 0);
 
@@ -85,6 +100,7 @@ bool FGenericWindow::Resize(size_t w, size_t h) {
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::SetFullscreen(bool value) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(_visible);
 
     _fullscreen = value;
@@ -92,6 +108,7 @@ bool FGenericWindow::SetFullscreen(bool value) {
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::SetTitle(FWString&& title) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(not title.empty());
 
     _title.assign(std::move(title));
@@ -99,36 +116,58 @@ bool FGenericWindow::SetTitle(FWString&& title) {
 }
 //----------------------------------------------------------------------------
 // stubs for derived classes :
-void FGenericWindow::OnDragDropFile(const FWStringView& ) {}
+void FGenericWindow::OnDragDropFile(const FWStringView& ) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
 void FGenericWindow::OnFocusSet() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(not _hasFocus);
     _hasFocus = true;
 }
 void FGenericWindow::OnFocusLose() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(_hasFocus);
     _hasFocus = false;
 }
-void FGenericWindow::OnMouseEnter() {}
-void FGenericWindow::OnMouseLeave() {}
-void FGenericWindow::OnMouseMove(int , int ) {}
-void FGenericWindow::OnMouseClick(int , int , EMouseButton ) {}
-void FGenericWindow::OnMouseDoubleClick(int , int , EMouseButton ) {}
-void FGenericWindow::OnMouseWheel(int , int , int ) {}
+void FGenericWindow::OnMouseEnter() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
+void FGenericWindow::OnMouseLeave() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
+void FGenericWindow::OnMouseMove(int , int ) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
+void FGenericWindow::OnMouseClick(int , int , EMouseButton ) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
+void FGenericWindow::OnMouseDoubleClick(int , int , EMouseButton ) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
+void FGenericWindow::OnMouseWheel(int , int , int ) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
 void FGenericWindow::OnWindowShow(bool visible) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _visible = visible;
 }
 void FGenericWindow::OnWindowClose() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _visible = false;
 }
 void FGenericWindow::OnWindowMove(int x, int y) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _left = x;
     _top = y;
 }
 void FGenericWindow::OnWindowResize(size_t w, size_t h) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _width =  checked_cast<u32>(w);
     _height = checked_cast<u32>(h);
 }
-void FGenericWindow::OnWindowPaint() {}
+void FGenericWindow::OnWindowPaint() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+}
 //----------------------------------------------------------------------------
 void FGenericWindow::MainWindowDefinition(FWindowDefinition* def) {
     Assert(def);
@@ -178,7 +217,31 @@ void FGenericWindow::HiddenWindowDefinition(FWindowDefinition* def) {
     def->Parent = nullptr;
 }
 //----------------------------------------------------------------------------
+void FGenericWindow::ScreenToClient(int* screenX, int* screenY) const {
+    PPE_DATARACE_SHARED_SCOPE(this);
+    Verify(FPlatformMouse::ScreenToClient(*checked_cast<const FPlatformWindow*>(this), screenX, screenY));
+}
+//----------------------------------------------------------------------------
+void FGenericWindow::ClientToScreen(int* clientX, int* clientY) const {
+    PPE_DATARACE_SHARED_SCOPE(this);
+    Verify(FPlatformMouse::ClientToScreen(*checked_cast<const FPlatformWindow*>(this), clientX, clientY));
+}
+//----------------------------------------------------------------------------
+void FGenericWindow::SetCursorCapture(bool enabled) const {
+    PPE_DATARACE_SHARED_SCOPE(this);
+    if (enabled)
+        FPlatformMouse::SetCapture(*checked_cast<const FPlatformWindow*>(this));
+    else
+        FPlatformMouse::ResetCapture();
+}
+//----------------------------------------------------------------------------
+void FGenericWindow::SetCursorOnWindowCenter() const {
+    PPE_DATARACE_SHARED_SCOPE(this);
+    FPlatformMouse::CenterCursorOnWindow(*checked_cast<const FPlatformWindow*>(this));
+}
+//----------------------------------------------------------------------------
 bool FGenericWindow::CreateWindow(FGenericWindow* window, FWString&& title, const FWindowDefinition& def) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(window);
     Assert(window);
     Assert(not window->NativeHandle());
     Assert(not title.empty());

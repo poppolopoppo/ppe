@@ -10,16 +10,6 @@ require_once '../../Common.rb'
 
 module Build
 
-    LLVM_DEBS = %w{
-        libncurses-dev
-        libvulkan1
-        libxcb1-dev
-    }
-
-    make_command(:deb, 'list needed deb packages') do |&namespace|
-        $stdout.puts LLVM_DEBS
-    end
-
     class LLVMPosixCompiler < Compiler
         attr_reader :llvmPath, :llvmVersion
         def initialize(
@@ -98,8 +88,7 @@ module Build
                 Log.log 'LLVM: found binary path "%s"', dirpath
                 need_fileset!(
                     File.join(dirpath, 'clang++'),
-                    File.join(dirpath, 'llvm-ar'),
-                    File.join(dirpath, 'llvm-link') )
+                    File.join(dirpath, 'llvm-ar') )
             end
         end
     end
@@ -109,22 +98,27 @@ module Build
     make_facet(:LLVM_Posix_Base) do
         defines << 'CPP_CLANG' << 'LLVM_FOR_POSIX'
 
-        compilationFlag!(
+        baseFlags = [
             "-std=#{Build.CppStd}",
             '-stdlib=libc++',
             '-Wall', '-Wextra', '-Wshadow',
             '-Werror', '-Wfatal-errors',
             '-Wno-unused-command-line-argument',
+            '-fcolor-diagnostics',
+        ]
+
+        compilationFlag!(
+            *baseFlags,
             '-mavx2','-msse4.2',
             '-mlzcnt','-mpopcnt',
-            '-fcolor-diagnostics',
             #'-cc1', '-fuse-ctor-homing', # TODO: enable when supported in main release of LLVM
             '-c', # compile
             '-g', # generate debug infos
             '-o', '%2', '%1' )
 
-        librarianOptions << 'rc' << '%2' << '%1'
-        linkerOptions << '-o' << '%2' << '%1'
+        librarianOptions << 'rcs' << '%2' << '%1'
+        linkerOptions.append(*baseFlags)
+        linkerOptions << '%1' << '-o' << '%2'
 
         # systemPaths <<
         #     File.join('$LLVMPath$', 'include', 'llvm') <<
@@ -206,7 +200,7 @@ module Build
     def self.make_llvmposix_compiler(target, llvm_fileset)
         Assert.expect(llvm_fileset, Array)
 
-        clang, ar, link = *llvm_fileset
+        clang, ar = *llvm_fileset
 
         Log.debug 'Posix: found LLVM posix compiler in "%s"', clang
 
@@ -216,7 +210,7 @@ module Build
 
         return LLVMPosixCompiler.new(
             'LLVM_Posix', version, target,
-            clang, ar, link, *fileset )
+            clang, ar, clang, *fileset )
     end
 
     const_memoize(self, :LLVM_Posix_Hostx86) do
