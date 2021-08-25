@@ -111,10 +111,7 @@ module Build
         end
 
         def self.make_library(bff, env, target, target_alias, expanded)
-            artifact = BFF.make_target_base(bff, env, target, target_alias, expanded)
-            bff.func!('Alias', target_alias) do
-                set!('Targets', artifact)
-            end
+            return BFF.make_target_base(bff, env, target, target_alias, expanded, false)
         end
 
         def self.make_executable(bff, env, target, target_alias, expanded)
@@ -126,7 +123,7 @@ module Build
 
         def self.make_deliverable(bff, env, target, target_alias, expanded, func)
             libraries = []
-            libraries << BFF.make_target_base(bff, env, target, target_alias, expanded)
+            libraries << BFF.make_target_base(bff, env, target, target_alias+'-Lib', expanded, true)
 
             target.expand_units(expanded, env) do |unit, facet|
                 libraries << BFF.make_target_unit(bff, env, target, target_alias, facet, unit)
@@ -139,10 +136,12 @@ module Build
                 target.all_dependencies do |(dep, visibility)|
                     next if dep.headers?
                     case visibility
-                    when :public, :private
+                    when :public
                         libraries << BFF.make_target_alias(env, dep)
                     when :runtime
                         (env.target_dynamic_link?(dep) ? prebuilds : libraries) << BFF.make_target_alias(env, dep)
+                    when :private
+                        # noop, already treated in make_target_base
                     else
                         Assert.unexpected(visibility)
                     end
@@ -180,7 +179,7 @@ module Build
             return artifactName
         end
 
-        def self.make_target_base(bff, env, target, target_alias, expanded)
+        def self.make_target_base(bff, env, target, target_alias, expanded, hidden)
             compiler_details = BFF.make_compiler_details(bff, expanded.compiler)
 
             if Build.PCH and target.pch?
@@ -232,22 +231,15 @@ module Build
 
             case env.config.link
             when :static
-                link_library_objects = target.executable?
+                link_library_objects = target.executable? || target.external?
             when :dynamic
                 link_library_objects = true
             else
                 Assert.not_implemented
             end
 
-            if link_library_objects
-                artifactFunc = 'ObjectList'
-                artifactName = target_alias+'-Obj'
-            else
-                artifactFunc = 'Library'
-                artifactName = target_alias+'-Lib'
-            end
-
-            bff.func!(artifactFunc, artifactName) do
+            artifactName = target_alias
+            bff.func!('Library', artifactName) do
                 using!(compiler_details)
                 using!(target_source)
 
@@ -255,18 +247,23 @@ module Build
                 facet!(expanded, :@compilerOptions)
                 facet!(expanded, :@preprocessorOptions) if expanded.preprocessor?
 
-                unless link_library_objects
-                    set!('LibrarianOutput', env.output_path(target.abs_path, :library))
-                    #set!('LibrarianAdditionalInputs', expanded.libraries)
-                    facet!(expanded, :@librarianOptions)
+                privateDeps = []
+                target.all_private_dependencies do |dep|
+                    next if dep.headers?
+                    privateDeps << BFF.make_target_alias(env, dep)
                 end
+                set!('LibrarianAdditionalInputs', privateDeps)
+
+                set!('LibrarianOutput', env.output_path(target.abs_path, :library))
+                #set!('LibrarianAdditionalInputs', expanded.libraries)
+                facet!(expanded, :@librarianOptions)
 
                 if target_pch_source
                     set!('PCHOutputFile', env.output_path(target_pch_source, :pch))
                     facet!(expanded, PCHOptions: :@pchOptions)
                 end
 
-                set!('Hidden', true)
+                set!('Hidden', hidden)
             end
 
             return artifactName

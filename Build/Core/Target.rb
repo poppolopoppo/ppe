@@ -456,19 +456,19 @@ module Build
             target.public_dependencies.each do |dep|
                 unless result.include?(dep)
                     result[dep] = [dep, :public]
-                    dep.all_dependencies do |it|
-                        next if result.include?(it.first)
-                        result[it.first] = it
+                    dep.all_public_dependencies do |rec|
+                        result[rec] = [rec, :public] unless result.include?(rec)
+                    end
+                    dep.all_runtime_dependencies do |rec|
+                        result[rec] = [rec, :runtime] unless result.include?(rec)
                     end
                 end
             end
             target.runtime_dependencies.each do |dep|
                 unless result.include?(dep)
                     result[dep] = [dep, :runtime]
-                    dep.all_dependencies do |it|
-                        next if it.last == :private
-                        next if result.include?(it.first)
-                        result[it.first] = it
+                    dep.all_runtime_dependencies do |rec|
+                        result[rec] = [rec, :runtime] unless result.include?(rec)
                     end
                 end
             end
