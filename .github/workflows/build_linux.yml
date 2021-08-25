@@ -14,10 +14,13 @@ jobs:
     steps:
     - uses: actions/checkout@master
       with:
+        fetch-depth: 1
         submodules: true
     - uses: actions/setup-ruby@v1
       with:
         ruby-version: '2.6'
+    - name: install GLFW 3
+      run: sudo apt-get install libglfw3-dev
     - name: build
       run: ruby ppe.rb --bff --fbuild --Unity --no-Symbols --x-fbuild showcmds -v Tools/UnitTest-Linux64-Debug
     - uses: actions/upload-artifact@v2
