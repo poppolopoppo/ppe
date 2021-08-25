@@ -10,4 +10,10 @@ $Build.ppe_module!(:Core) do
         lz4,
         xxHash ]})
     runtime_deps!(*namespace[:External]{[ vstools ]}) if Build.os_windows?
+    custom!() do |env, target|
+        case env.platform.os
+        when :Linux
+            compilationFlag!('-ldl', '-lncurses', '-lrt')
+        end
+    end
 end

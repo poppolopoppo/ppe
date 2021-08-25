@@ -45,6 +45,8 @@ module Build
         BFF.make_targets(source, Build.fetch_environments(), namespace)
 
         source.export_ifn?(bff_output)
+
+        Log.display("generated BFF: %s", bff_output)
     end
 
     make_persistent_file(:bff_output) do

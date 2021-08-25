@@ -8,7 +8,7 @@ $Build.ppe_module!(:Application) do
     custom!() do |env, target|
         case env.platform.os
         when :Linux
-            compilerOptions << '-lglfw3'
+            compilationFlag!('-lglfw3')
         end
     end
 end

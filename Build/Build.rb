@@ -74,9 +74,9 @@ module Build
 
         begin
             Build.run_command(&namespace)
-        rescue RuntimeError => err
-            $stderr.puts("caught a runtime error: %s, aborting build" % [err.to_s])
-            exit(-42)
+        # rescue RuntimeError => err
+        #     $stderr.puts("caught a runtime error: %s, aborting build" % [err.to_s])
+        #     exit(-42)
         end
     end
 

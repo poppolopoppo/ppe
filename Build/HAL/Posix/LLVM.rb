@@ -70,7 +70,7 @@ module Build
         end
         def add_libraryPath(facet, dirpath)
             add_compilationFlag(facet, "-L#{dirpath}")
-            #facet.linkerOptions << "-I#{dirpath}" # *NOT* for llvm-link
+            facet.linkerOptions << "-I#{dirpath}"
             #facet.librarianOptions << "-I#{dirpath}" # *NOT* for llvm-ar
         end
 
@@ -90,7 +90,7 @@ module Build
                     File.join(dirpath, 'clang++'),
                     File.join(dirpath, 'llvm-ar') )
             end
-        end
+        end.validate_FileExist!
     end
 
     import_llvm_posix(:LLVM_Posix_Fileset, 'clang++')
@@ -98,27 +98,23 @@ module Build
     make_facet(:LLVM_Posix_Base) do
         defines << 'CPP_CLANG' << 'LLVM_FOR_POSIX'
 
-        baseFlags = [
+        #baseFlags = ['-stdlib=libc++']
+
+        compilationFlag!(
             "-std=#{Build.CppStd}",
-            '-stdlib=libc++',
             '-Wall', '-Wextra', '-Wshadow',
             '-Werror', '-Wfatal-errors',
             '-Wno-unused-command-line-argument',
             '-fcolor-diagnostics',
-        ]
-
-        compilationFlag!(
-            *baseFlags,
             '-mavx2','-msse4.2',
             '-mlzcnt','-mpopcnt',
             #'-cc1', '-fuse-ctor-homing', # TODO: enable when supported in main release of LLVM
-            '-c', # compile
+            '-c', # compile only
             '-g', # generate debug infos
-            '-o', '%2', '%1' )
+            '-o "%2" "%1"' )
 
-        librarianOptions << 'rcs' << '%2' << '%1'
-        linkerOptions.append(*baseFlags)
-        linkerOptions << '%1' << '-o' << '%2'
+        librarianOptions << 'rcs "%2" "%1"'
+        linkerOptions << '"%1" -o "%2"'
 
         # systemPaths <<
         #     File.join('$LLVMPath$', 'include', 'llvm') <<

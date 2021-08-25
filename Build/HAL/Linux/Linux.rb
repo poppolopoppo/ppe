@@ -61,21 +61,4 @@ module Build
 
     Build.append_environments(*LinuxEnvironment)
 
-    Build.make_command(:prereq, 'Setup Linux prerequisites') do
-        pkgs = %w{
-            build-essential
-            gcc-multilib
-            g++-multilib
-            clang
-            libncurses-dev
-            libvulkan1
-            libxcb1-dev
-            libstdc++-8-dev
-            libc++abi-14-dev
-            libunwind-dev
-            libglfw3-dev
-        }
-        Process.start({}, 'sudo', 'apt-get', '-y', 'install', *pkgs)
-    end
-
 end #~ Build
