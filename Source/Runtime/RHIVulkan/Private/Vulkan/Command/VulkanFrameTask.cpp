@@ -17,11 +17,11 @@ static VkClearColorValue VKClearColorValue_(const FClearColorImage::FClearColor&
     VkClearColorValue dst{};
 
     Meta::Visit(clear,
-        [&dst](const FRgba8u& src) {
-            dst.uint32[0] = src.x;
-            dst.uint32[1] = src.y;
-            dst.uint32[2] = src.z;
-            dst.uint32[3] = src.w;
+        [&dst](const FColor& src) {
+            dst.uint32[0] = src.R;
+            dst.uint32[1] = src.G;
+            dst.uint32[2] = src.B;
+            dst.uint32[3] = src.A;
         },
         [&dst](const FRgba32u& src) {
             STATIC_ASSERT(sizeof(src) == sizeof(dst.uint32));
@@ -31,7 +31,13 @@ static VkClearColorValue VKClearColorValue_(const FClearColorImage::FClearColor&
             STATIC_ASSERT(sizeof(src) == sizeof(dst.int32));
             FPlatformMemory::Memcpy(dst.int32, &src, sizeof(src));
         },
-        [&dst](const FRgba32f& src) {
+        [&dst](const FColor& src) {
+            dst.uint32[0] = src.R;
+            dst.uint32[1] = src.G;
+            dst.uint32[2] = src.B;
+            dst.uint32[3] = src.A;
+        },
+        [&dst](const FLinearColor& src) {
             STATIC_ASSERT(sizeof(src) == sizeof(dst.float32));
             FPlatformMemory::Memcpy(dst.float32, &src, sizeof(src));
         });

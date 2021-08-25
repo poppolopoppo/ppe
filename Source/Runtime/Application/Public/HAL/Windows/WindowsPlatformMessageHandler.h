@@ -6,6 +6,8 @@
 #   error "invalid include for current platform"
 #endif
 
+#include "Misc/Function_fwd.h"
+
 namespace PPE {
 namespace Application {
 class FWindowsWindow;

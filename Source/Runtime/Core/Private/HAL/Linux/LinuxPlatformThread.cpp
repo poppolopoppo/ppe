@@ -181,6 +181,8 @@ struct CACHELINE_ALIGNED FLinuxFiber {
     static THREAD_LOCAL FLinuxFiber* Running;
 };
 STATIC_ASSERT(std::is_pod_v<FLinuxFiber>);
+THREAD_LOCAL FLinuxFiber FLinuxFiber::Main;
+THREAD_LOCAL FLinuxFiber* FLinuxFiber::Running{ nullptr };
 //----------------------------------------------------------------------------
 auto FLinuxPlatformThread::CurrentFiber() -> FFiber {
     return FLinuxFiber::Running;

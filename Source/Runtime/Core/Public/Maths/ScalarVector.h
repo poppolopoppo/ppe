@@ -148,6 +148,17 @@ using TScalarCommonType = std::enable_if_t<
     std::common_type_t<T, TScalarComponent<_Expr> >
 >;
 //----------------------------------------------------------------------------
+// TScalarCompatibleExpr<> : wraps a constant value
+//----------------------------------------------------------------------------
+template <typename _Expr, typename T>
+using TScalarValidateExpr = std::enable_if_t<
+    std::is_assignable_v<
+        Meta::TAddReference<T>,
+        TScalarCommonType<_Expr, T>
+    >,
+    T
+>;
+//----------------------------------------------------------------------------
 // TScalarVectorConstant<> : wraps a constant value
 //----------------------------------------------------------------------------
 template <typename T, int... _Values>
@@ -337,29 +348,29 @@ struct TScalarVectorAssignable : TScalarVectorExpr<_Expr, _Dim> {
 
     using component_type = T;
 
-    template <typename U>
+    template <typename U, class = TScalarValidateExpr<U, T> >
     CONSTEXPR auto VECTORCALL operator =(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst = src; });
     }
 
-    template <typename U>
+    template <typename U, class = TScalarValidateExpr<U, T> >
     CONSTEXPR auto VECTORCALL operator +=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst += src; });
     }
-    template <typename U>
+    template <typename U, class = TScalarValidateExpr<U, T> >
     CONSTEXPR auto VECTORCALL operator -=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst -= src; });
     }
-    template <typename U>
+    template <typename U, class = TScalarValidateExpr<U, T> >
     CONSTEXPR auto VECTORCALL operator *=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst *= src; });
     }
-    template <typename U>
+    template <typename U, class = TScalarValidateExpr<U, T> >
     CONSTEXPR auto VECTORCALL operator /=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst /= src; });
     }
 
-    template <typename U, typename _Op>
+    template <typename U, typename _Op, class = TScalarValidateExpr<U, T> >
     CONSTEXPR _Expr& VECTORCALL assign(const TScalarVectorExpr<U, Dim>& vec, _Op&& op) NOEXCEPT {
         Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
             ((op(static_cast<_Expr&>(*this).template get<idx>(), vec.template get<idx>())), ...);
@@ -506,7 +517,7 @@ struct TScalarVector<T, 1> : TScalarVectorAssignable<TScalarVector<T, 1>, T, 1> 
         : data{ broadcast }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 1>& e) NOEXCEPT
         : data{ e.template get<0>() }
     {}
@@ -565,7 +576,7 @@ struct TScalarVector<T, 2> : TScalarVectorAssignable<TScalarVector<T, 2>, T, 2> 
         : data{ broadcast, broadcast }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 2>& e) NOEXCEPT
         : data{ e.template get<0>(),
                 e.template get<1>() }
@@ -641,21 +652,21 @@ struct TScalarVector<T, 3> : TScalarVectorAssignable<TScalarVector<T, 3>, T, 3> 
         : data{ _x, _y, _z }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 3>& e) NOEXCEPT
         : data{ e.template get<0>(),
                 e.template get<1>(),
                 e.template get<2>() }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, const TScalarVectorExpr<_Expr, 2>& _yz) NOEXCEPT
         : data{ _x,
                 _yz.template get<0>(),
                 _yz.template get<1>() }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 2>& _xy, component_type _z) NOEXCEPT
         : data{ _xy.template get<0>(),
                 _xy.template get<1>(),
@@ -737,7 +748,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
         : data{ broadcast, broadcast, broadcast, broadcast }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 4>& e) NOEXCEPT
         : data{ e.template get<0>(),
                 e.template get<1>(),
@@ -749,7 +760,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
         : data{ _x, _y, _z, _w }
     {}
 
-    template <typename _Lo, typename _Hi>
+    template <typename _Lo, typename _Hi, class = TScalarValidateExpr<_Lo, T>, class = TScalarValidateExpr<_Hi, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Lo, 2>& _xy, const TScalarVectorExpr<_Hi, 2>& _zw) NOEXCEPT
         : data{ _xy.template get<0>(),
                 _xy.template get<1>(),
@@ -757,7 +768,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
                 _zw.template get<1>() }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 2>& _xy, component_type _z, component_type _w) NOEXCEPT
         : data{ _xy.template get<0>(),
                 _xy.template get<1>(),
@@ -765,7 +776,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
                 _w }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 3>& _xyz, component_type _w) NOEXCEPT
         : data{ _xyz.template get<0>(),
                 _xyz.template get<1>(),
@@ -773,7 +784,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
                 _w }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, const TScalarVectorExpr<_Expr, 3>& _yzw) NOEXCEPT
         : data{ _x,
                 _yzw.template get<0>(),
@@ -781,7 +792,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
                 _yzw.template get<2>() }
     {}
 
-    template <typename _Expr>
+    template <typename _Expr, class = TScalarValidateExpr<_Expr, T> >
     FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, component_type _y, const TScalarVectorExpr<_Expr, 2>& _zw) NOEXCEPT
         : data{ _x,
                 _y,

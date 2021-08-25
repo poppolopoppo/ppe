@@ -4,6 +4,7 @@
 
 #include "RHI/VertexEnums.h"
 
+#include "Color/Color_fwd.h"
 #include "Maths/Packing_fwd.h"
 
 namespace PPE {
@@ -70,6 +71,10 @@ template <>
 struct TVertexDesc<FRgba32u> : details::TVertexDescImpl<FRgba32u, EVertexFormat::UInt4> {};
 template <>
 struct TVertexDesc<FRgba8u> : details::TVertexDescImpl<FRgba8u, EVertexFormat::UByte4_Norm> {};
+template <>
+struct TVertexDesc<FLinearColor> : details::TVertexDescImpl<FRgba32f, EVertexFormat::Float4> {};
+template <>
+struct TVertexDesc<FColor> : details::TVertexDescImpl<FRgba8u, EVertexFormat::UByte4_Norm> {};
 //----------------------------------------------------------------------------
 // Vectors
 //----------------------------------------------------------------------------

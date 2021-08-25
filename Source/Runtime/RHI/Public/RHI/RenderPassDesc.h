@@ -8,6 +8,7 @@
 #include "RHI/ResourceEnums.h"
 #include "RHI/ResourceId.h"
 
+#include "Color/Color.h"
 #include "Container/Array.h"
 #include "Container/Stack.h"
 #include "Maths/ScalarRectangle.h"
@@ -22,7 +23,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 struct FRenderTarget {
     using FClearValue = std::variant<
-        FRgba32f, FRgba32u, FRgba32i,
+        FLinearColor, FRgba32u, FColor,
         FDepthValue, FStencilValue, FDepthStencilValue >;
 
     FRawImageID ImageId; // may be image module in initial state (created by CreateRenderTarget or other)

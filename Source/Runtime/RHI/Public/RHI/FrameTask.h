@@ -8,6 +8,7 @@
 #include "RHI/FrameDebug.h"
 #include "RHI/ResourceEnums.h"
 
+#include "Color/Color.h"
 #include "Container/Stack.h"
 #include "Maths/ScalarVectorHelpers.h"
 #include "Meta/Optional.h"
@@ -505,10 +506,10 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
     using FRanges = TFixedSizeStack<FRange, MaxClearRanges>;
 
     using FClearColor = std::variant<
-        FRgba8u,
+        FColor,
         FRgba32i,
         FRgba32u,
-        FRgba32f >;
+        FLinearColor >;
 
     FRawImageID DstImage;
     FClearColor ClearColor;
@@ -520,9 +521,10 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
 
     FClearColorImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
-    FClearColorImage& Clear(const FRgba8u& color) { ClearColor = color; return (*this); }
-    FClearColorImage& Clear(const FRgba32u& color) { ClearColor = color; return (*this); }
-    FClearColorImage& Clear(const FRgba32i& color) { ClearColor = color; return (*this); }
+    FClearColorImage& Clear(const FColor& color) { ClearColor.emplace<FColor>(color); return (*this); }
+    FClearColorImage& Clear(const FRgba32u& color) { ClearColor.emplace<FRgba32u>(color); return (*this); }
+    FClearColorImage& Clear(const FRgba32i& color) { ClearColor.emplace<FRgba32i>(color); return (*this); }
+    FClearColorImage& Clear(const FLinearColor& color) { ClearColor.emplace<FLinearColor>(color); return (*this); }
 
     FClearColorImage& AddRange(FMipmapLevel baseMipLevel, u32 levelCount, FImageLayer baseLayer, u32 layerCount) {
         Assert(levelCount > 0);

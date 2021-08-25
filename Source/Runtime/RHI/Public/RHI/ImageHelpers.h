@@ -75,7 +75,7 @@ struct FMultiSamples {
     FMultiSamples() = default;
 
     CONSTEXPR explicit FMultiSamples(u32 samples)
-    :   Pow2(checked_cast<u8>(FPlatformMaths::FloorLog2(samples)))
+    :   Pow2(checked_cast<u8>(FGenericPlatformMaths::FloorLog2(samples)/* use Generic for constexpr */))
     {}
 
     CONSTEXPR bool Enabled() const { return (Pow2 > 0); }

@@ -89,7 +89,7 @@ public:
     }
 
     size_type max_size() const NOEXCEPT {
-        return (ppe_traits::MaxSize() / sizeof(T));
+        return (ppe_traits::MaxSize(*this) / sizeof(T));
     }
 
     void construct(pointer p, const_reference val) {

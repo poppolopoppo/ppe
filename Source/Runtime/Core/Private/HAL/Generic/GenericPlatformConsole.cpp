@@ -22,7 +22,7 @@ static void SyntaxicHighlight_(const TBasicStringView<_Char>& str, FPlatformCons
     size_t o = 0;
     size_t s = 0;
     forrange(i, 0, str.size()) {
-        const char ch = str[i];
+        const _Char ch = str[i];
 
         if (s) {
             if (ch != STRING_LITERAL(_Char, '"'))

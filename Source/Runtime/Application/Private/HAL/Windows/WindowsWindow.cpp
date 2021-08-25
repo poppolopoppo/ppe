@@ -4,15 +4,17 @@
 
 #include "HAL/Windows/WindowsWindow.h"
 
-#include "Diagnostic/CurrentProcess.h"
-#include "Diagnostic/Logger.h"
 #include "HAL/PlatformIncludes.h"
 #include "HAL/PlatformMessageHandler.h"
 #include "HAL/PlatformMouse.h"
 #include "HAL/PlatformNotification.h"
 #include "HAL/PlatformSurvey.h"
 #include "HAL/Windows/LastError.h"
+
+#include "Diagnostic/CurrentProcess.h"
+#include "Diagnostic/Logger.h"
 #include "Input/MouseButton.h"
+#include "Misc/Function.h"
 
 #include <shellapi.h>
 #include <windowsx.h>

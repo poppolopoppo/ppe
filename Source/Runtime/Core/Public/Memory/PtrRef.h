@@ -17,7 +17,7 @@ struct TPtrRef {
     TPtrRef() = default;
 
     CONSTEXPR TPtrRef(Meta::FForceInit) NOEXCEPT : Ptr(nullptr) {}
-    CONSTEXPR TPtrRef(nullptr_t) NOEXCEPT : Ptr(nullptr) {}
+    CONSTEXPR TPtrRef(std::nullptr_t null) NOEXCEPT : Ptr(null) {}
 
     CONSTEXPR TPtrRef(T* ptr) NOEXCEPT : Ptr(ptr) { Assert(ptr); }
     CONSTEXPR TPtrRef& operator =(T* ptr) NOEXCEPT { Assert(ptr); Ptr = ptr; return (*this); }

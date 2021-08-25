@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+extern "C" char** environ; // provided by libc
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -680,8 +681,6 @@ auto FLinuxPlatformProcess::CreateProcess(
     // make spawned process have its own unique group ip so we can kill the entire group
     // without killing the parent
     spawnFlags |= POSIX_SPAWN_SETPGROUP;
-
-    extern char** environ; // provided by libc
 
     ::pid_t child = -1;
     int posixSpawnErrno = -1;

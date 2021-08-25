@@ -5,11 +5,12 @@
 #include "HAL/GLFW/GLFWPlatformGamepad.h"
 
 #include "HAL/GLFW/GLFWPlatformIncludes.h"
+#include "HAL/TargetPlatform.h"
 
+#include "Diagnostic/Logger.h"
 #include "Input/GamepadState.h"
 #include "Maths/PackingHelpers.h"
 
-// #TODO: need GLFW3.3 for gamepad support
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
@@ -31,11 +32,14 @@ bool FGLFWPlatformGamepad::Poll(FControllerId index, FGamepadState* gamepad) {
     Assert(gamepad);
 
     if (glfwJoystickPresent(index)) {
-        gamepad->SetStatus(index, true);
+        if (glfwJoystickIsGamepad(index)) {
+            gamepad->SetStatus(index, true);
 
-        //glfwJoystickIsGamepad();  #TODO: need GLFW-3.3
+            return true;
+        }
+        else {
 
-        return true;
+        }
     }
 
     gamepad->SetStatus(index, false);
