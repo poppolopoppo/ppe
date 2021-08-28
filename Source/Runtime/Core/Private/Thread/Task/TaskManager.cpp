@@ -168,9 +168,15 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
     Assert(pmanager);
 
 #if !USE_PPE_FINAL_RELEASE
+#   ifdef PLATFORM_LINUX
+    // debug name is limited to 16 characters with pthread
+    char workerName[16];
+    Format(workerName, "{0}#{1}", pmanager->Name(), workerIndex );
+#   else
     char workerName[128];
     Format(workerName, "{0}_Worker_{1}_of_{2}",
         pmanager->Name(), (workerIndex + 1), pmanager->WorkerCount() );
+#   endif
 #else
     const char* const workerName = "";
 #endif // !USE_PPE_FINAL_RELEASE
