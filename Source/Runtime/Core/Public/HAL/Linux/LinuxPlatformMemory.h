@@ -15,7 +15,7 @@ struct PPE_CORE_API FLinuxPlatformMemory : FGenericPlatformMemory {
 public:
     STATIC_CONST_INTEGRAL(size_t, PageSize, PAGE_SIZE);
     STATIC_CONST_INTEGRAL(size_t, CacheLineSize, CACHELINE_SIZE);
-    STATIC_CONST_INTEGRAL(size_t, AllocationGranularity, ALLOCATION_GRANULARITY);
+    static const size_t AllocationGranularity;
 
     //------------------------------------------------------------------------
     // platform memory infos

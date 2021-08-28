@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Meta/Aliases.h"
 #include "Meta/TypeTraits.h"
 
 #include <new>
@@ -62,18 +63,18 @@ T* RoundToPrev(const T* p, size_t alignment) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define PAGE_SIZE (4096)
+#define PAGE_SIZE (4096u)
 //----------------------------------------------------------------------------
-#define ALLOCATION_BOUNDARY (16)
+#define ALLOCATION_BOUNDARY (16u)
 //----------------------------------------------------------------------------
-#define ALLOCATION_GRANULARITY (65536)
+#define ALLOCATION_GRANULARITY (65536u)
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17 && !defined(PLATFORM_LINUX)
 //  https://en.cppreference.com/w/cpp/thread/hardware_destructive_interference_size
 #   define CACHELINE_SIZE (std::hardware_destructive_interference_size)
 #   define ROUND_TO_NEXT_CACHELINE(v) ::PPE::Meta::RoundToNext((v), CACHELINE_SIZE)
 #else
-#   define CACHELINE_SIZE (64)
+#   define CACHELINE_SIZE (64u)
 #   define ROUND_TO_NEXT_CACHELINE(v) ROUND_TO_NEXT_64(v)
 #endif
 //----------------------------------------------------------------------------

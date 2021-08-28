@@ -18,7 +18,7 @@ namespace PPE {
 template <typename _Allocator = ALLOCATOR(Unknown)>
 class TSlabHeap : _Allocator, Meta::FNonCopyableNorMovable {
 public:
-    STATIC_CONST_INTEGRAL(u32, DefaultSlabSize, ALLOCATION_GRANULARITY);
+    STATIC_CONST_INTEGRAL(u32, DefaultSlabSize, PAGE_SIZE);
 
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;

@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "HAL/PlatformAtomics.h"
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 
 #include <mutex>
@@ -22,7 +23,7 @@ namespace PPE {
 class PPE_CORE_API FVirtualMemory {
 public:
     FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
-        return Meta::RoundToNext(sizeInBytes, ALLOCATION_GRANULARITY);
+        return Meta::RoundToNext(sizeInBytes, FPlatformMemory::AllocationGranularity);
     }
 
     static size_t   SizeInBytes(void* ptr) NOEXCEPT;
@@ -38,7 +39,7 @@ public:
 #   define TRACKINGDATA_PRM_IFP(...)
 #endif
 
-    static void*    Alloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) { return Alloc(ALLOCATION_GRANULARITY, sizeInBytes TRACKINGDATA_FWD_IFP); }
+    static void*    Alloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) { return Alloc(FPlatformMemory::AllocationGranularity, sizeInBytes TRACKINGDATA_FWD_IFP); }
     static void*    Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
     static void     Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
 
@@ -115,210 +116,6 @@ public:
 private:
     FFreePageBlock _freePageBlocks[_CacheBlocksCapacity];
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-struct TVirtualMemoryPool {
-    STATIC_CONST_INTEGRAL(u32, PageSize, ALLOCATION_GRANULARITY);
-    STATIC_CONST_INTEGRAL(u32, BlockSize, sizeof(T));
-    STATIC_CONST_INTEGRAL(u32, NumBlocksPerPage, PageSize / BlockSize);
-    STATIC_ASSERT(NumBlocksPerPage* BlockSize == PageSize);
-
-    struct ALIGN(BlockSize) FBlock {
-        FBlock* NextBlock;
-    };
-    struct ALIGN(BlockSize) FPage {
-        FPage* NextPage;
-        FBlock* FreeBlocks;
-        u32 NumFreeBlocks;
-        FORCE_INLINE void ResetFreeBlocks() {
-            FreeBlocks = nullptr;
-            NumFreeBlocks = 1;
-        }
-    };
-
-    std::mutex Barrier;
-    FPage* Pages{ nullptr };
-    std::atomic<FBlock*> FreeList{ nullptr };
-#if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking& TrackingData;
-#endif
-
-#if USE_PPE_MEMORYDOMAINS
-    explicit TVirtualMemoryPool(FMemoryTracking& trackingData) NOEXCEPT
-    :   TrackingData(trackingData)
-    {}
-#endif
-
-    ~TVirtualMemoryPool() NOEXCEPT {
-        ReleaseCacheMemory(true); // release all pages, supposedly
-        AssertRelease(nullptr == FreeList); // leaking ?
-    }
-
-    void* Allocate() NOEXCEPT {
-        FBlock* blk = FreeList.load(std::memory_order_relaxed);
-        while (Likely(blk)) {
-            FBlock* nxt = blk->NextBlock;
-            if (FreeList.compare_exchange_weak(blk, nxt, std::memory_order_release, std::memory_order_relaxed)) {
-                ONLY_IF_MEMORYDOMAINS(TrackingData.AllocateUser(BlockSize));
-                return blk;
-            }
-
-            FPlatformAtomics::ShortSyncWait();
-        }
-
-        return AllocateExternal();
-    }
-
-    void Deallocate(void* ptr) NOEXCEPT {
-        Assert(ptr);
-
-        ONLY_IF_MEMORYDOMAINS(TrackingData.DeallocateUser(BlockSize));
-
-        FBlock* blk = reinterpret_cast<FBlock*>(ptr);
-        blk->NextBlock = FreeList.load(std::memory_order_relaxed);
-        for (;;) {
-            if (FreeList.compare_exchange_weak(blk->NextBlock, blk, std::memory_order_release, std::memory_order_relaxed))
-                return;
-
-            FPlatformAtomics::ShortSyncWait();
-        }
-    }
-
-    FORCE_INLINE static FPage* PageFromPtr(void* ptr) NOEXCEPT {
-        Assert(ptr);
-        return reinterpret_cast<FPage*>(Meta::RoundToPrev(ptr, PageSize));
-    }
-
-    void* AllocateExternal() NOEXCEPT;
-    void ReleaseCacheMemory(bool all) NOEXCEPT;
-
-};
-//----------------------------------------------------------------------------
-template <typename T>
-void* TVirtualMemoryPool<T>::AllocateExternal() NOEXCEPT {
-    Meta::FUniqueLock scopeLock(Barrier);
-
-    // test again once locked, another thread might have already allocated a new page
-    FBlock* blk = FreeList.load(std::memory_order_relaxed);
-    if (blk) {
-        FreeList = blk->NextBlock;
-        return blk;
-    }
-
-    // look for a recycled block list if page list
-    for (FPage* page = Pages; page; page = page->NextPage) {
-        if (page->FreeBlocks) {
-            Assert_NoAssume(nullptr == FreeList);
-            blk = page->FreeBlocks;
-            page->ResetFreeBlocks();
-            FreeList = blk->NextBlock;
-            return blk;
-        }
-    }
-
-    // finally allocate a new page if everything else failed
-    FPage* const page = reinterpret_cast<FPage*>(FVirtualMemory::InternalAlloc(PageSize
-#if USE_PPE_MEMORYDOMAINS
-        , TrackingData
-#endif
-    ));
-    AssertRelease(page);
-    Assert_NoAssume(Meta::IsAligned(PageSize, page));
-
-    page->ResetFreeBlocks();
-    page->NextPage = Pages;
-    Pages = page;
-
-    // prime all new blocks once while holding the lock
-    FBlock* Head = reinterpret_cast<FBlock*>(page + 1);
-    Assert_NoAssume(PageFromPtr(Head) == page);
-    forrange(i, 0, NumBlocksPerPage - 2)
-        Head[i].NextBlock = (Head + i + 1);
-
-    // take the first block and append the rest to free list
-    Head[NumBlocksPerPage - 2].NextBlock = FreeList.load(std::memory_order_relaxed);
-    FreeList = Head->NextBlock;
-
-    ONLY_IF_MEMORYDOMAINS(TrackingData.AllocateUser(BlockSize));
-
-    return Head;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void TVirtualMemoryPool<T>::ReleaseCacheMemory(bool all) NOEXCEPT {
-    const Meta::FLockGuard scopeLock(Barrier);
-
-    // first check if there's actually something to salvage
-    if (not Pages || (!all & !Pages->NextPage/* keep one page alive if !all */))
-        return;
-
-    // detach the free list (other thread can still pop blocks)
-    FBlock* freeList = FreeList.load(std::memory_order_relaxed);
-    while (freeList) {
-        if (FreeList.compare_exchange_weak(freeList, nullptr, std::memory_order_release, std::memory_order_relaxed))
-            break;
-
-        FPlatformAtomics::ShortSyncWait();
-    }
-
-    if (nullptr == freeList)
-        return; // *all* blocks are allocated
-
-    // dispatch every free block to belonging page
-    for (FBlock* blk = freeList; blk; ) {
-        FBlock* const nxt = blk->NextBlock;
-
-        FPage* const page = PageFromPtr(blk);
-        ++page->NumFreeBlocks;
-        Assert_NoAssume(page->NumFreeBlocks <= NumBlocksPerPage);
-        blk->NextBlock = page->FreeBlocks;
-        page->FreeBlocks = blk;
-
-        blk = nxt;
-    }
-
-    // then release pages that are completely free
-    FPage* remaining = nullptr;
-    for (FPage* page = Pages, *prev = nullptr; page; ) {
-        FPage* const nxt = page->NextPage;
-
-        if (page->NumFreeBlocks == NumBlocksPerPage) {
-            Assert(page->FreeBlocks);
-            if (prev) // remove from page list
-                prev->NextPage = nxt;
-            else {
-                Assert_NoAssume(page == Pages);
-                Pages = nxt;
-            }
-
-            // release the block to the system
-            FVirtualMemory::InternalFree(page, PageSize
-#if USE_PPE_MEMORYDOMAINS
-                , TrackingData
-#endif
-            );
-        }
-        else {
-            remaining = page; // keep track of the last page which wasn't freed
-            prev = page;
-        }
-
-        page = nxt;
-    }
-
-    // assign a new free list if any page remains
-    if (remaining) {
-        Assert(Pages);
-        Assert(remaining->FreeBlocks);
-        FreeList = remaining->FreeBlocks;
-        remaining->ResetFreeBlocks();
-    }
-    else {
-        FreeList = nullptr; // reset global free list head
-    }
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -2,9 +2,11 @@
 
 #include "Allocator/Alloca.h"
 
+#include "Allocator/Allocation.h"
 #include "Allocator/SlabHeap.h"
 #include "Allocator/SlabAllocator.h"
 #include "Allocator/Malloc.h"
+#include "Allocator/StaticAllocator.h"
 
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
@@ -42,20 +44,7 @@ public:
 };
 //----------------------------------------------------------------------------
 // Fall back on thread local heap when the block is too large :
-struct FAllocaFallback_ {
-    static void* Malloc(size_t size) {
-        return TRACKING_MALLOC(Alloca, size);
-    }
-    static void* Realloc(void* ptr, size_t size) {
-        return TRACKING_REALLOC(Alloca, ptr, size);
-    }
-    static void Free(void* ptr) {
-        TRACKING_FREE(Alloca, ptr);
-    }
-    static size_t SnapSize(size_t size) {
-        return PPE::malloc_snap_size(size);
-    }
-};
+using FAllocaFallback_ = TStaticAllocator<ALLOCATOR(Alloca)>;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -82,9 +71,9 @@ void* Alloca(size_t size) {
         p = FAllocaSlabHeapTLS_::Get().Allocate(size);
     else
 #endif
-        p = FAllocaFallback_::Malloc(size);
+        p = FAllocaFallback_::Allocate(size).Data;
 
-    Assert(Meta::IsAligned(16, p));
+    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
     return p;
 }
 //----------------------------------------------------------------------------
@@ -111,7 +100,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
             result = heap.Reallocate_AssumeLast(ptr, newSize, oldSize);
         }
         else {
-            result = FAllocaFallback_::Malloc(newSize);
+            result = FAllocaFallback_::Allocate(newSize).Data;
 
             if (keepData)
                 FPlatformMemory::Memcpy(result, ptr, Min(oldSize, newSize));
@@ -128,10 +117,12 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
         Assert_NoAssume(FAllocaSlabHeapTLS_::Get().AliasesToHeap(ptr) == false);
 #endif
 
-        result = FAllocaFallback_::Realloc(ptr, newSize);
+        FAllocatorBlock blk{ ptr, oldSize };
+        FAllocaFallback_::Reallocate(blk, newSize);
+        result = blk.Data;
     }
 
-    Assert(Meta::IsAligned(16, result));
+    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, result));
     return result;
 }
 //----------------------------------------------------------------------------
@@ -141,7 +132,7 @@ void FreeAlloca(void* ptr, size_t size) {
         return;
     }
 
-    Assert(Meta::IsAligned(16, ptr));
+    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, ptr));
     Assert(size);
 
 #if USE_PPE_ALLOCA_SLABHEAP
@@ -154,7 +145,7 @@ void FreeAlloca(void* ptr, size_t size) {
         Assert_NoAssume(FAllocaSlabHeapTLS_::Get().AliasesToHeap(ptr) == false);
 #endif
 
-        FAllocaFallback_::Free(ptr);
+        FAllocaFallback_::Deallocate({ ptr, size });
     }
 }
 //----------------------------------------------------------------------------

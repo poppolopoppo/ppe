@@ -37,16 +37,19 @@ struct TStaticAllocator : TAllocatorTraits<_Allocator> {
     using typename allocator_traits::reallocate_can_fail;
 
     NODISCARD static size_t MaxSize() NOEXCEPT {
-        return allocator_traits::MaxSize(Default);
+        allocator_type a = Default;
+        return allocator_traits::MaxSize(a);
     }
 
     NODISCARD static size_t SnapSize(size_t s) NOEXCEPT {
-        return allocator_traits::SnapSize(Default, s);
+        allocator_type a = Default;
+        return allocator_traits::SnapSize(a, s);
     }
 
     template <typename T>
     NODISCARD static size_t SnapSizeT(size_t s) NOEXCEPT {
-        return allocator_traits::template SnapSizeT<T>(Default, s);
+        allocator_type a = Default;
+        return allocator_traits::template SnapSizeT<T>(a, s);
     }
 
     NODISCARD static bool Owns(FAllocatorBlock b) NOEXCEPT {
@@ -54,63 +57,77 @@ struct TStaticAllocator : TAllocatorTraits<_Allocator> {
     }
 
     NODISCARD static FAllocatorBlock Allocate(size_t s) {
-        return allocator_traits::Allocate(Default, s);
+        allocator_type a = Default;
+        return allocator_traits::Allocate(a, s);
     }
 
     template <typename T>
     NODISCARD static TMemoryView<T> AllocateT(size_t n) {
-        return allocator_traits::template AllocateT<T>(Default, n);
+        allocator_type a = Default;
+        return allocator_traits::template AllocateT<T>(a, n);
     }
 
     template <typename T>
     NODISCARD static T* AllocateOneT() {
-        return allocator_traits::template AllocateOneT<T>(Default);
+        allocator_type a = Default;
+        return allocator_traits::template AllocateOneT<T>(a);
     }
 
     static void Deallocate(FAllocatorBlock b) {
-        return allocator_traits::Deallocate(Default, b);
+        allocator_type a = Default;
+        return allocator_traits::Deallocate(a, b);
     }
 
     template <typename T>
     static void DeallocateT(TMemoryView<T> v) {
-        return allocator_traits::template DeallocateT<T>(Default, v);
+        allocator_type a = Default;
+        return allocator_traits::template DeallocateT<T>(a, v);
     }
 
     template <typename T>
     static void DeallocateT(T* p, size_t n) {
-        return allocator_traits::template DeallocateT<T>(Default, p, n);
+        allocator_type a = Default;
+        return allocator_traits::template DeallocateT<T>(a, p, n);
     }
 
     template <typename T>
     static void DeallocateOneT(T* p) {
-        return allocator_traits::template DeallocateOneT<T>(Default, p);
+        allocator_type a = Default;
+        return allocator_traits::template DeallocateOneT<T>(a, p);
     }
 
     NODISCARD static auto Reallocate(FAllocatorBlock& b, size_t s) {
-        return allocator_traits::Reallocate(Default, b, s);
+        allocator_type a = Default;
+        return allocator_traits::Reallocate(a, b, s);
     }
 
     // specialized this method to avoid over-copying when !has_reallocate
     template <typename T>
     NODISCARD static auto ReallocateT_AssumePOD(TMemoryView<T>& items, size_t oldSize, size_t newSize) {
-        return allocator_traits::template ReallocateT_AssumePOD<T>(Default, items, oldSize, newSize);
+        allocator_type a = Default;
+        return allocator_traits::template ReallocateT_AssumePOD<T>(
+            a, items, oldSize, newSize );
     }
 
     NODISCARD static bool Acquire(FAllocatorBlock b) NOEXCEPT {
-        return allocator_traits::Acquire(Default, b);
+        allocator_type a = Default;
+        return allocator_traits::Acquire(a, b);
     }
 
     NODISCARD static bool Steal(FAllocatorBlock b) NOEXCEPT {
-        return allocator_traits::Steal(Default, b);
+        allocator_type a = Default;
+        return allocator_traits::Steal(a, b);
     }
 
 #if USE_PPE_MEMORYDOMAINS
     NODISCARD static FMemoryTracking& TrackingData() NOEXCEPT {
-        return allocator_traits::TrackingData(Default);
+        allocator_type a = Default;
+        return allocator_traits::TrackingData(a);
     }
 
     NODISCARD static auto& AllocatorWithoutTracking() NOEXCEPT {
-        return allocator_traits:: AllocatorWithoutTracking(Default);
+        allocator_type a = Default;
+        return allocator_traits:: AllocatorWithoutTracking(a);
     }
 #endif
 

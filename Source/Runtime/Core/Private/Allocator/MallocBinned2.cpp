@@ -36,13 +36,13 @@
 #define PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE (8_KiB)
 #define PPE_MALLOCBINNED2_BUNDLE_MAX_GARBAGE (8u)
 
-#define PPE_MALLOCBINNED2_OS_PAGESIZE FPlatformMemory::PageSize
-#define PPE_MALLOCBINNED2_OS_GRANULARITY FPlatformMemory::AllocationGranularity
+#define PPE_MALLOCBINNED2_OS_PAGESIZE (FPlatformMemory::PageSize)
+#define PPE_MALLOCBINNED2_OS_GRANULARITY (FPlatformMemory::AllocationGranularity)
 
 #define PPE_MALLOCBINNED2_CHUNK_MAXSIZE (2u*PPE_MALLOCBINNED2_OS_GRANULARITY)
 #define PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE sizeof(FBinnedSmallTable::FPoolChunk)
-#define PPE_MALLOCBINNED2_CHUNK_MINBLOCKS 3u
-#define PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS 1000u
+#define PPE_MALLOCBINNED2_CHUNK_MINBLOCKS (3u)
+#define PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS (1000u)
 
 #define PPE_MALLOCBINNED2_SMALLPOOL_COUNT (FMallocBinned2::NumSmallBlockSizes)
 #define PPE_MALLOCBINNED2_SMALLPOOL_MIN_SIZE (PPE_MALLOCBINNED2_BOUNDARY)
@@ -636,12 +636,12 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
     ONLY_IF_MEMORYDOMAINS(BinnedTrackingDataStart_());
 #endif
 
-    constexpr u32 osPageSize = PPE_MALLOCBINNED2_OS_PAGESIZE;
-    constexpr u32 osGranularity = PPE_MALLOCBINNED2_OS_GRANULARITY;
-    constexpr u32 maxChunkSize = PPE_MALLOCBINNED2_CHUNK_MAXSIZE;
-    constexpr u32 chunkOverheadSize = PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE;
-    constexpr u32 minBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MINBLOCKS;
-    constexpr u32 maxBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS;
+    const u32 osPageSize = PPE_MALLOCBINNED2_OS_PAGESIZE;
+    const u32 osGranularity = PPE_MALLOCBINNED2_OS_GRANULARITY;
+    const u32 maxChunkSize = PPE_MALLOCBINNED2_CHUNK_MAXSIZE;
+    const u32 chunkOverheadSize = PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE;
+    const u32 minBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MINBLOCKS;
+    const u32 maxBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS;
 
     for (u32 i = 0; i < PPE_MALLOCBINNED2_SMALLPOOL_COUNT; ++i) {
         FSmallPoolInfo& pool = SmallPools[i];
@@ -653,7 +653,7 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
         Assert_NoAssume(pool.MaxBlocksPerBundle > 0);
 
         u32 bestWastedSize = UMax, bestPagesPerChunk = 0;
-        for (u32 p = 1; p * osPageSize <= maxChunkSize; ++p) {
+        for (u32 p = 1; p < UINT8_MAX && p * osPageSize <= maxChunkSize; ++p) {
             const u32 chunkSize = (osPageSize * p);
             const u32 blocksPerChunk = (chunkSize - chunkOverheadSize) / pool.BlockSize;
             const u32 wastedSize = (chunkSize - chunkOverheadSize) - blocksPerChunk * pool.BlockSize;

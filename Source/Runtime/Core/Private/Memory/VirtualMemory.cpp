@@ -77,11 +77,11 @@ size_t FVirtualMemory::SizeInBytes(void* ptr) NOEXCEPT {
     if (nullptr == ptr)
         return 0;
 
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, ptr));
 
 #if USE_VMALLOC_SIZE_PTRIE
     const size_t regionSize = FVMAllocSizePTrie_::Get().Fetch(ptr);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, regionSize));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, regionSize));
 
     return regionSize;
 
@@ -101,8 +101,8 @@ bool FVirtualMemory::Protect(void* ptr, size_t sizeInBytes, bool read, bool writ
 // Keep allocations aligned to OS granularity
 void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, alignment));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, alignment));
     Assert(Meta::IsPow2(alignment));
 
     void* const p = FPlatformMemory::VirtualAlloc(alignment, sizeInBytes, true);
@@ -137,14 +137,14 @@ void FVirtualMemory::Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
 //----------------------------------------------------------------------------
 void* FVirtualMemory::PageReserve(size_t sizeInBytes) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
 
     return FPlatformMemory::VirtualAlloc(sizeInBytes, false);
 }
 //----------------------------------------------------------------------------
 void* FVirtualMemory::PageReserve(size_t alignment, size_t sizeInBytes) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
 
     return FPlatformMemory::VirtualAlloc(alignment, sizeInBytes, false);
 }
@@ -188,8 +188,8 @@ void FVirtualMemory::PageDecommit(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG
 void FVirtualMemory::PageRelease(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, ptr));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
 
     FPlatformMemory::VirtualFree(ptr, sizeInBytes, true);
 }
@@ -236,7 +236,7 @@ FVirtualMemoryCache::~FVirtualMemoryCache() {
 }
 //----------------------------------------------------------------------------
 void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP) {
-    constexpr size_t alignment = FPlatformMemory::AllocationGranularity;
+    const size_t alignment = FPlatformMemory::AllocationGranularity;
     Assert(Meta::IsAligned(alignment, sizeInBytes));
 
     if ((sizeInBytes <= maxCacheSizeInBytes / 4) && FreePageBlockCount) {

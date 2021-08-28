@@ -13,7 +13,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 using FBufferedStreamAllocator = ALLOCATOR(Stream);
 //----------------------------------------------------------------------------
-constexpr size_t GBufferedStreamDefaultBufferSize = (4 * ALLOCATION_GRANULARITY); // <=> 256kb
+constexpr size_t GBufferedStreamDefaultBufferSize = 256_KiB;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
 public:

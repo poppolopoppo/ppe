@@ -24,9 +24,9 @@ class FTaskFiberChunk : Meta::FNonCopyableNorMovable {
 public:
 #if USE_PPE_ASSERT
     // debug programs often use far more stack without the optimizer :
-    STATIC_CONST_INTEGRAL(u32, StackSize, 4 * ALLOCATION_GRANULARITY); // 256 kb
+    STATIC_CONST_INTEGRAL(u32, StackSize, 256_KiB);
 #else
-    STATIC_CONST_INTEGRAL(u32, StackSize, 2 * ALLOCATION_GRANULARITY); // 128 kb
+    STATIC_CONST_INTEGRAL(u32, StackSize, 128_KiB);
 #endif
     STATIC_CONST_INTEGRAL(u32, Capacity, atomic_pool_t::Capacity); // <=> 64 * 128 kb = 8 mb (16 for debug),
 

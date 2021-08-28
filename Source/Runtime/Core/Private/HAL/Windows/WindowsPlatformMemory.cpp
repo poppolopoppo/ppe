@@ -55,6 +55,10 @@ static FWindowsPlatformMemory::FConstants FetchConstants_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+const size_t FWindowsPlatformMemory::AllocationGranularity{
+    FWindowsPlatformMemory::Constants().AllocationGranularity
+};
+//----------------------------------------------------------------------------
 auto FWindowsPlatformMemory::Constants() -> const FConstants& {
     static const FConstants GConstants = FetchConstants_();
     return GConstants;
@@ -166,14 +170,14 @@ void FWindowsPlatformMemory::PageFree(void* ptr, size_t sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 void* FWindowsPlatformMemory::VirtualAlloc(size_t sizeInBytes, bool commit) {
-    return FWindowsPlatformMemory::VirtualAlloc(ALLOCATION_GRANULARITY, sizeInBytes, commit);
+    return FWindowsPlatformMemory::VirtualAlloc(FPlatformMemory::AllocationGranularity, sizeInBytes, commit);
 }
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(6001) // Using uninitialized memory 'p'. (no need to worry, we just use the virtual addr)
 void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
     const ::DWORD flAllocationType = (commit ? MEM_RESERVE | MEM_COMMIT : MEM_RESERVE);
@@ -189,7 +193,7 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
             ::VirtualAlloc(p, alignment - ((uintptr_t)p & (alignment - 1)), MEM_RESERVE, PAGE_NOACCESS);
 
         do {
-            p = ::VirtualAlloc(NULL, sizeInBytes + alignment - ALLOCATION_GRANULARITY, MEM_RESERVE, PAGE_NOACCESS);
+            p = ::VirtualAlloc(NULL, sizeInBytes + alignment - FPlatformMemory::AllocationGranularity, MEM_RESERVE, PAGE_NOACCESS);
             if (nullptr == p)// if OOM
                 return nullptr;
 
@@ -202,7 +206,7 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
         } while (nullptr == p);
     }
 
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, p));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, p));
     return p;
 }
 PRAGMA_MSVC_WARNING_POP()
@@ -220,8 +224,8 @@ void FWindowsPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 void FWindowsPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes, bool release) {
     Assert(ptr);
-    Assert(Meta::IsAligned(release ? ALLOCATION_GRANULARITY : PAGE_SIZE, ptr));
-    Assert(Meta::IsAligned(release ? ALLOCATION_GRANULARITY : PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAligned(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, ptr));
+    Assert(Meta::IsAligned(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, sizeInBytes));
 
     ::DWORD dwFreeType;
     if (release) {

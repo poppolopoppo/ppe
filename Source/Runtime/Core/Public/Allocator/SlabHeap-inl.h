@@ -221,7 +221,7 @@ void* TSlabHeap<_Allocator>::Allocate_FromNewSlab_(size_t size) {
     using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;
 
     size_t thisSlabSize = allocator_traits::SnapSize(*this, _slabSize * (1 + _slabs.size() / 2));
-    if (size * 2 < thisSlabSize)
+    if (size * 2 > thisSlabSize)
         thisSlabSize = allocator_traits::SnapSize(*this, size * 2);
 
     const FAllocatorBlock blk = allocator_traits_without_tracking::Allocate(allocator, thisSlabSize);

@@ -57,21 +57,23 @@ public:
         }
         else if (_newPageAllocated) {
             newNode = _newPageAllocated;
-            if (!((uintptr_t)++_newPageAllocated & (TriePageSize_ - 1)))
+            if (!((uintptr_t)++_newPageAllocated & (FPlatformMemory::AllocationGranularity - 1)))
                 _newPageAllocated = ((FNode**)_newPageAllocated)[-1];
         }
         else {
+            Assert(Meta::IsPow2(FPlatformMemory::AllocationGranularity));
+
             // !! this memory block will *NEVER* be released !!
 #if USE_PPE_MEMORYDOMAINS
-            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(TriePageSize_, *_trackingDataRef);
+            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(FPlatformMemory::AllocationGranularity, *_trackingDataRef);
 #else
-            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(TriePageSize_);
+            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(FPlatformMemory::AllocationGranularity);
 #endif
             AssertRelease(newPage);
 
             // in case if other thread also have just allocated a new page
-            Assert(((char**)((char*)newPage + TriePageSize_))[-1] == nullptr);
-            ((FNode**)((char*)newPage + TriePageSize_))[-1] = _newPageAllocated;
+            Assert(((char**)((char*)newPage + FPlatformMemory::AllocationGranularity))[-1] == nullptr);
+            ((FNode**)((char*)newPage + FPlatformMemory::AllocationGranularity))[-1] = _newPageAllocated;
 
             // eat first block and saves the rest for later insertions
             newNode = newPage;
@@ -192,7 +194,6 @@ public:
 
 private:
     STATIC_CONST_INTEGRAL(uintptr_t, NullSentinel_, 1);
-    STATIC_CONST_INTEGRAL(size_t, TriePageSize_, ALLOCATION_GRANULARITY);
 
     FNode* _root;
     FNode* _freeList;
