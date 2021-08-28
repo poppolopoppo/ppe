@@ -66,6 +66,8 @@ module Build
             else
                 cmd << '-cache' if Build.Cache  # compilation cache
                 cmd << '-dist'  if Build.Dist   # compilation distribution
+
+                cmd << "-j#{Build.WorkerCount}" if Build.WorkerCount.to_i > 0
             end
 
             cmd.concat(Build.send('x-fbuild').collect{|x| "-#{x}" })
