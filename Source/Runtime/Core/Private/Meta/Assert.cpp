@@ -37,7 +37,8 @@ static bool ReportAssertionForDebug_(
     if (FPlatformDebug::IsDebuggerPresent()) {
         wchar_t buf[1024];
         FWFixedSizeTextWriter oss(buf);
-        oss << L"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << Eol
+        oss << Eol
+            << L"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << Eol
             << L" !!! " << level << L" assertion failed !!!" << Eol
             << L"   text:  " << MakeCStringView(msg) << Eol
             << L"   file:  " << MakeCStringView(file) << L"(" << line << L")" << Eol
