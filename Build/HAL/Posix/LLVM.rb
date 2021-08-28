@@ -106,7 +106,7 @@ module Build
             '-Werror', '-Wfatal-errors',
             '-Wno-unused-command-line-argument',
             '-fcolor-diagnostics',
-            '-mavx2','-msse4.2',
+            '-mavx','-msse4.2',
             '-mlzcnt','-mpopcnt',
             #'-cc1', '-fuse-ctor-homing', # TODO: enable when supported in main release of LLVM
             '-c', # compile only

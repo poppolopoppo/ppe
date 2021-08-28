@@ -12,10 +12,13 @@
 #define FARMHASH_ASSUME_SSE42
 //#define FARMHASH_ASSUME_AESNI
 #define FARMHASH_ASSUME_AVX
-#define FARMHASH_ASSUME_AVX2
 #define FARMHASH_CAN_USE_CXX11
 #define FARMHASH_NO_CXX_STRING
 #define NAMESPACE_FOR_HASH_FUNCTIONS FarmHash
+
+#if defined(__AVX2__)
+#   define FARMHASH_ASSUME_AVX2
+#endif
 
 PRAGMA_MSVC_WARNING_DISABLE(4127) // conditional expression is constant
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
