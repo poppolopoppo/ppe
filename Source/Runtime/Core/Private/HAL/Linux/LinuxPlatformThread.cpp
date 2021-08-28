@@ -6,8 +6,11 @@
 
 #include "HAL/Linux/LinuxPlatformDebug.h"
 #include "HAL/Linux/LinuxPlatformMisc.h"
+#include "HAL/TargetPlatform.h"
 
-#include "Allocator/TrackingMalloc.h"
+#include "Allocator/Allocation.h"
+#include "Allocator/StaticAllocator.h"
+#include "Diagnostic/Logger.h"
 
 #include <pthread.h>
 #include <sched.h>
@@ -20,6 +23,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+using FLinuxFiberAllocator_ = TStaticAllocator< ALLOCATOR(Task) >;
 //----------------------------------------------------------------------------
 static FLinuxPlatformThread::FAffinityMask LogicalAffinityMask_(size_t coreMask) {
     const size_t numCores = FLinuxPlatformMisc::NumCores();
@@ -57,9 +62,9 @@ static EThreadPriority TranslateThreadPriority_(i32 process, i32 thread) {
     if (off <= -20) return EThreadPriority::Realtime;
     if (off <= -15) return EThreadPriority::Highest;
     if (off <= -10) return EThreadPriority::AboveNormal;
-    if (off <= 0) return EThreadPriority::Normal;
-    if (off <= 5) return EThreadPriority::BelowNormal;
-    if (off <= 10) return EThreadPriority::Lowest;
+    if (off <=   0) return EThreadPriority::Normal;
+    if (off <=   5) return EThreadPriority::BelowNormal;
+    if (off <=  10) return EThreadPriority::Lowest;
 
     return EThreadPriority::Idle;
 }
@@ -107,7 +112,7 @@ static i32 ThreadPriorityBaseLine_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 const FLinuxPlatformThread::FAffinityMask FLinuxPlatformThread::AllCoresAffinity{
-     FetchAllCoresAffinityMask_() };
+    FetchAllCoresAffinityMask_() };
 //----------------------------------------------------------------------------
 void FLinuxPlatformThread::OnThreadStart() {
 #if USE_PPE_PLATFORM_DEBUG
@@ -129,7 +134,7 @@ FLinuxPlatformThread::FAffinityMask FLinuxPlatformThread::SecondaryThreadAffinit
 //----------------------------------------------------------------------------
 auto FLinuxPlatformThread::AffinityMask() -> FAffinityMask {
     ::cpu_set_t cpu_set;
-    Verify(0 == ::pthread_getaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
+    LOG_CHECK(HAL, 0 == ::pthread_getaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
 
     FAffinityMask affinity{ 0 };
     forrange(i, 0, PPE_MAX_NUMCPUCORE)
@@ -149,13 +154,14 @@ void FLinuxPlatformThread::SetAffinityMask(FAffinityMask mask) {
         if (mask & (1 << i))
             CPU_SET(i, &cpu_set);
 
-    Verify(0 == ::pthread_setaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
+    LOG_CHECKVOID(HAL, 0 == ::pthread_setaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
 }
 //----------------------------------------------------------------------------
 EThreadPriority FLinuxPlatformThread::Priority() {
     int policy;
     struct ::sched_param sched_param;
-    Verify(0 == ::pthread_getschedparam(::pthread_self(), &policy, &sched_param));
+
+    LOG_CHECK(HAL, 0 == ::pthread_getschedparam(::pthread_self(), &policy, &sched_param));
 
     return TranslateThreadPriority_(ThreadPriorityBaseLine_(), sched_param.sched_priority);
 }
@@ -166,7 +172,12 @@ void FLinuxPlatformThread::SetPriority(EThreadPriority priority) {
     struct ::sched_param sched_param;
     sched_param.sched_priority = ThreadPriorityBaseLine_() + niceLevel;
 
-    Verify(0 == ::pthread_setschedparam(::pthread_self(), SCHED_OTHER, &sched_param));
+    static const int process_scheduler = ::sched_getscheduler(::getpid());
+
+    LOG_CHECKVOID(HAL, 0 == ::pthread_setschedparam(
+        ::pthread_self(),
+        process_scheduler,
+        &sched_param ));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -174,8 +185,13 @@ void FLinuxPlatformThread::SetPriority(EThreadPriority priority) {
 // Fibers emulation
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FLinuxFiber {
-    ucontext_t Context;
+    ::ucontext_t Context;
     void* FiberData;
+
+    size_t AllocationSize() const {
+        Assert_NoAssume(this + 1 == Context.uc_stack.ss_sp);
+        return (sizeof(FLinuxFiber) + Context.uc_stack.ss_size);
+    }
 
     static THREAD_LOCAL FLinuxFiber Main;
     static THREAD_LOCAL FLinuxFiber* Running;
@@ -192,12 +208,16 @@ void* FLinuxPlatformThread::FiberData() {
     return FLinuxFiber::Running->FiberData;
 }
 //----------------------------------------------------------------------------
+bool FLinuxPlatformThread::IsInFiber() NOEXCEPT {
+    return (!!FLinuxFiber::Running);
+}
+//----------------------------------------------------------------------------
 auto FLinuxPlatformThread::ConvertCurrentThreadToFiber() -> FFiber {
     Assert(nullptr == FLinuxFiber::Running);
 
     FFiber main = &FLinuxFiber::Main;
     main->FiberData = nullptr;
-    Verify(0 == ::getcontext(&main->Context));
+    LOG_CHECK(HAL, 0 == ::getcontext(&main->Context));
 
     FLinuxFiber::Running = main;
 
@@ -221,13 +241,13 @@ auto FLinuxPlatformThread::CreateFiber(
     Assert(stackReservedSize > stackCommitSize);
     UNUSED(stackCommitSize);
 
-    FFiber fiber = (FFiber)TRACKING_MALLOC(Task, sizeof(FLinuxFiber) + stackReservedSize);
+    FFiber fiber = (FFiber)FLinuxFiberAllocator_::Allocate(sizeof(FLinuxFiber) + stackReservedSize).Data;
 
-    Verify(0 == ::getcontext(&fiber->Context));
-    fiber->FiberData = fiberData;
+    LOG_CHECK(HAL, 0 == ::getcontext(&fiber->Context));
     fiber->Context.uc_link = nullptr;
     fiber->Context.uc_stack.ss_sp = (fiber + 1); // stack is after the context
     fiber->Context.uc_stack.ss_size = stackReservedSize;
+    fiber->FiberData = fiberData;
 
     /* Some notes:
     - If a CPU needs stronger alignment for the stack than malloc()
@@ -250,16 +270,19 @@ auto FLinuxPlatformThread::CreateFiber(
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformThread::SwitchToFiber(FFiber fiber) {
+    Assert(fiber);
     FFiber yielding = FLinuxFiber::Running;
+    Assert(yielding);
     FLinuxFiber::Running = fiber;
-    Verify(0 == ::swapcontext(&yielding->Context, &fiber->Context));
+    LOG_CHECKVOID(HAL, 0 == ::swapcontext(&yielding->Context, &fiber->Context));
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformThread::DestroyFiber(FFiber fiber) {
     Assert(fiber);
     Assert(FLinuxFiber::Running != fiber);
 
-    TRACKING_FREE(Task, fiber);
+    const FAllocatorBlock blk{ fiber, fiber->AllocationSize() };
+    FLinuxFiberAllocator_::Deallocate(blk);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

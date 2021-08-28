@@ -4,6 +4,7 @@
 
 #include "Diagnostic/Logger.h"
 
+#include "HAL/Linux/LinuxTargetPlatform.h"
 #include "HAL/Windows/WindowsTargetPlatform.h"
 
 namespace PPE {
@@ -15,7 +16,7 @@ namespace {
 //----------------------------------------------------------------------------
 static const ITargetPlaftorm* GAllPlatforms[] = {
     /* Windows  */&FWindowsTargetPlatform::Get(),
-    /* Linux    *///&FLinuxTargetPlatform::Get(), #TODO
+    /* Linux    */&FLinuxTargetPlatform::Get(),
     /* MacOS    *///&FMacOSTargetPlatform::Get(), #TODO
     // #TODO add future platforms here
 };
@@ -29,9 +30,10 @@ TMemoryView<const ITargetPlaftorm* const> AllTargetPlatforms() {
 }
 //----------------------------------------------------------------------------
 const ITargetPlaftorm& TargetPlatform(ETargetPlatform platform) {
-    AssertRelease(platform == ETargetPlatform::Windows); // #TODO
     STATIC_ASSERT(size_t(ETargetPlatform::Windows) == 0);
-    return (*GAllPlatforms[size_t(ETargetPlatform::Windows)]);
+    STATIC_ASSERT(size_t(ETargetPlatform::Linux) == 1);
+    Assert(static_cast<size_t>(platform) < lengthof(GAllPlatforms));
+    return (*GAllPlatforms[static_cast<size_t>(platform)]);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -4,6 +4,9 @@
 
 #if USE_PPE_PLATFORM_DEBUG && defined(PLATFORM_LINUX)
 
+#   include "HAL/TargetPlatform.h"
+
+#   include "Diagnostic/Logger.h"
 #   include "IO/StringBuilder.h"
 
 #   include <inttypes.h>
@@ -11,6 +14,7 @@
 #   include <pthread.h>
 #   include <sys/types.h>
 #   include <sys/ptrace.h>
+#   include <sys/wait.h>
 #   include <syslog.h>
 
 namespace PPE {
@@ -32,19 +36,53 @@ static void SyslogTrace_(int priority,
     ::syslog(priority, "%s (%d)", sb.c_str(), checked_cast<int>(line));
 }
 //----------------------------------------------------------------------------
+static int CheckIfGdbIsPresent_() {
+    int pid = ::fork();
+    int status;
+    int res;
+
+    if (pid == -1) {
+        ::perror("fork");
+        return -1;
+    }
+
+    if (pid == 0) {
+        int ppid = ::getppid();
+
+        /* Child */
+        if (::ptrace(PTRACE_ATTACH, ppid, NULL, NULL) == 0) {
+            /* Wait for the parent to stop and continue it */
+            ::waitpid(ppid, NULL, 0);
+            ::ptrace(PTRACE_CONT, ppid, NULL, NULL);
+
+            /* Detach */
+            ::ptrace(PTRACE_DETACH, ppid, NULL, NULL);
+
+            /* We were the tracers, so gdb is not present */
+            res = 0;
+        }
+        else {
+            /* Trace failed so gdb is present */
+            res = 1;
+        }
+
+        _Exit(res);
+    }
+    else {
+        ::waitpid(pid, &status, 0);
+        res = WEXITSTATUS(status);
+    }
+    return res;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FLinuxPlatformDebug::IsDebuggerPresent() {
     static int GIsDebuggerPresent = -1;
-     if (-1 == GIsDebuggerPresent)
-     {
-        if (::ptrace(PTRACE_TRACEME, 0, 1, 0) < 0)
-            GIsDebuggerPresent = 1;
-        else ::ptrace(PTRACE_DETACH, 0, 1, 0);
-            GIsDebuggerPresent = 0;
-    }
+    if (Unlikely(-1 == GIsDebuggerPresent))
+        GIsDebuggerPresent = CheckIfGdbIsPresent_();
     return (1 == GIsDebuggerPresent);
 }
 //----------------------------------------------------------------------------
@@ -69,9 +107,11 @@ void FLinuxPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery() {
 //----------------------------------------------------------------------------
 void FLinuxPlatformDebug::SetThreadDebugName(const char* name) {
     Assert(name);
-    Verify(0 == ::pthread_setname_np(
+    const int error = ::pthread_setname_np(
         ::pthread_self(), name
-    ));
+    );
+    CLOG(0 != error, HAL, Error, L"failed to set thread debug name: '{1}' ({0})", error, MakeCStringView(name));
+    UNUSED(error);
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformDebug::TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {

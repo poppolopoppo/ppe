@@ -43,7 +43,7 @@ size_t FLinuxPlatformCallstack::CaptureCallstack(const TMemoryView<FProgramCount
 
     UNUSED(backtrace);
     UNUSED(framesToSkip);
-    AssertNotImplemented(); // #TODO
+    LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return 0;
 }
@@ -54,7 +54,7 @@ bool FLinuxPlatformCallstack::ProgramCounterToModuleName(FWString* moduleName, F
 
     UNUSED(moduleName);
     UNUSED(pc);
-    AssertNotImplemented(); // #TODO
+    LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return false;
 }
@@ -65,7 +65,7 @@ bool FLinuxPlatformCallstack::ProgramCounterToSymbolInfo(FProgramCounterSymbolIn
 
     UNUSED(symbolInfo);
     UNUSED(pc);
-    AssertNotImplemented(); // #TODO
+    LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return false;
 }

@@ -386,15 +386,19 @@ size_t FLinuxPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, siz
     UNUSED(capacity);
     UNUSED(codePage);
 
-    const int written = ::mbtowc(dst, cstr, length);
-    CLOG(-1 == written, HAL, Fatal, L"mbtowc failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(cstr, length));
+    size_t od = 0;
+    for (size_t os = 0; os != length && od < capacity; ++od) {
+        const int written = ::mbtowc(dst + od, cstr + os, length - os);
+        CLOG(-1 == written, HAL, Fatal, L"mbtowc failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(cstr + os, length - os));
+        os += checked_cast<size_t>(written);
+    }
 
-    Assert(checked_cast<size_t>(written) >= length);
-    Assert(checked_cast<size_t>(written) < capacity);
+    Assert(od >= length);
+    Assert(od < capacity);
+    if (od < capacity)
+        dst[od] = L'\0';
 
-    dst[written] = L'\0'; // mbtowc() won't use a null terminator since we specified the length of input
-
-    return checked_cast<size_t>(written + 1);
+    return checked_cast<size_t>(od + 1);
 }
 //----------------------------------------------------------------------------
 size_t FLinuxPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t capacity, const wchar_t* wcstr, size_t length) {
@@ -402,32 +406,27 @@ size_t FLinuxPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t
     Assert(capacity);
     Assert(capacity > length);
 
-    // https://www.chilkatsoft.com/p/p_348.asp
-
     if (0 == length) {
         dst[0] = '\0';
         return 0;
     }
 
     Assert(wcstr);
-    UNUSED(capacity);
     UNUSED(codePage);
 
-    size_t doff = 0;
-    for (const wchar_t* const cend = wcstr + length; wcstr != cend; ++wcstr) {
-        if (capacity - doff < MB_LEN_MAX)
-            break;
-
-        const int n = ::wctomb(dst + doff, *wcstr);
-        CLOG(-1 == n, HAL, Fatal, L"wctomb({0}) failed with errno: {1}", *wcstr, FErrno{});
-
-        doff += n;
+    size_t od = 0;
+    for (size_t os = 0; os != length && od < capacity; ++os) {
+        const int written = ::wctomb(dst + od, wcstr[os]);
+        CLOG(-1 == written, HAL, Fatal, L"wctomb failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(wcstr + os, length - os));
+        od += checked_cast<size_t>(written);
     }
 
-    Assert(doff < capacity);
-    dst[doff] = L'\0';
+    Assert(od >= length);
+    Assert(od < capacity);
+    if (od < capacity)
+        dst[od] = '\0';
 
-    return (doff + 1);
+    return checked_cast<size_t>(od + 1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

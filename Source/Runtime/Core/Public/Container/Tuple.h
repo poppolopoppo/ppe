@@ -80,7 +80,7 @@ CONSTEXPR void ForeachTuple(const TTuple<_Args...>& tuple, _Lambda foreach) {
 template <typename... _Args>
 FORCE_INLINE hash_t hash_value(const TTuple<_Args...>& tuple) {
     return Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
-        hash_t h{ hash_value(sizeof...(_Args)) };
+        hash_t h{ hash_size_t_constexpr(sizeof...(_Args)) };
         hash_combine(h, std::get<idx>(tuple)...);
         return h;
     });

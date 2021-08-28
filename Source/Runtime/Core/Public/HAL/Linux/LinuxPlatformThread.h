@@ -60,7 +60,7 @@ public:
     typedef void (*FEntryPoint)(void *arg);
 
     // no difference between thread and fiber on linux
-    static bool IsInFiber() { return true; }
+    static bool IsInFiber() NOEXCEPT;
 
     static FFiber ConvertCurrentThreadToFiber();
     static void RevertCurrentFiberToThread(FFiber threadFiber);

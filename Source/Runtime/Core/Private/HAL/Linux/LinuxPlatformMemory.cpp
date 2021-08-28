@@ -105,12 +105,17 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
         cst.AllocationGranularity = cst.PageSize;
     }
 
+    Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, cst.AllocationGranularity));
+    cst.AllocationGranularity = Max(cst.AllocationGranularity, ALLOCATION_GRANULARITY);
     return cst;
 }
 //----------------------------------------------------------------------------
 static void* VMPageAlloc_(size_t sizeInBytes, bool commit) {
     int protectionMode = (commit ? PROT_WRITE | PROT_READ : PROT_NONE);
-    void* const ptr = ::mmap(nullptr, sizeInBytes, protectionMode, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    void* const ptr = ::mmap(nullptr, sizeInBytes,
+        protectionMode,
+        MAP_ANONYMOUS | MAP_PRIVATE,
+        -1, 0 );
 
     if (ptr != MAP_FAILED) {
         Assert(Meta::IsAligned(PAGE_SIZE, ptr));
@@ -123,7 +128,7 @@ static void* VMPageAlloc_(size_t sizeInBytes, bool commit) {
 }
 //----------------------------------------------------------------------------
 static bool VMPageProtect_(void* ptr, size_t sizeInBytes, bool read, bool write) {
-    int protectMode = (int(read) * PROT_READ) | (int(write) * PROT_READ);
+    int protectMode = (int(read) * PROT_READ) | (int(write) * PROT_WRITE);
     Assert((read|write)||(protectMode==PROT_NONE));
 
     if (0 != ::mprotect(ptr, sizeInBytes, protectMode) == 0) {
@@ -148,6 +153,10 @@ static void VMPageFree_(void* ptr, size_t sizeInBytes, bool release) {
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+const size_t FLinuxPlatformMemory::AllocationGranularity{
+    FLinuxPlatformMemory::Constants().AllocationGranularity
+};
 //----------------------------------------------------------------------------
 auto FLinuxPlatformMemory::Constants() -> const FConstants& {
     static const FConstants GConstants = FetchConstants_();
@@ -288,38 +297,36 @@ void FLinuxPlatformMemory::PageFree(void* ptr, size_t sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 void* FLinuxPlatformMemory::VirtualAlloc(size_t sizeInBytes, bool commit) {
-    return FLinuxPlatformMemory::VirtualAlloc(ALLOCATION_GRANULARITY, sizeInBytes, commit);
+    return FLinuxPlatformMemory::VirtualAlloc(AllocationGranularity, sizeInBytes, commit);
 }
 //----------------------------------------------------------------------------
 void* FLinuxPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(AllocationGranularity, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
     void* p = VMPageAlloc_(sizeInBytes, commit);//optimistically try mapping precisely the right amount before falling back to the slow method
 
-    if (not Meta::IsAligned(alignment, p)) {
-        VMPageFree_(p, sizeInBytes, true);
+	if (Unlikely(not Meta::IsAligned(alignment, p))) {
+        VMPageFree_(p, sizeInBytes, commit);
 
-        const FConstants cst = Constants();
-        p = VMPageAlloc_(sizeInBytes + alignment - cst.AllocationGranularity, commit);
+        p = VMPageAlloc_(sizeInBytes + alignment, commit);
+        if (Likely(p)) {
+            const uintptr_t ap = Meta::RoundToNext((uintptr_t)p, alignment);
+			uintptr_t diff = (ap - (uintptr_t)p);
+            if (diff > 0) {
+                VMPageFree_(p, diff, commit);
+            }
 
-        if (p) {
-            uintptr_t ap = ((uintptr_t)p + (alignment - 1)) & ~(alignment - 1);
-            uintptr_t diff = ap - (uintptr_t)p;
-            if (diff)
-                VMPageFree_(p, diff, true);
+            if (diff < alignment) {
+                void* const trim = (void*)(ap + sizeInBytes);
+                VMPageFree_(trim, alignment - diff, commit);
+            }
 
-            diff = alignment - cst.AllocationGranularity - diff;
-            Assert((intptr_t)diff >= 0);
-
-            if (diff)
-                VMPageFree_((void*)(ap + sizeInBytes), diff, true);
-
-            return (void*)ap;
+            p = (void*)ap;
+            Assert(Meta::IsAligned(alignment, p));
         }
-
-    }
+	}
 
     return p;
 }
@@ -337,8 +344,8 @@ void FLinuxPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 void FLinuxPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes, bool release) {
     Assert(ptr);
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, ptr));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
 
     VMPageFree_(ptr, sizeInBytes, release);
 }

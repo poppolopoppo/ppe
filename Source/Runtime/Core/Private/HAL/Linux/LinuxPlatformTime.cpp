@@ -66,7 +66,7 @@ u64 FLinuxPlatformTime::NetworkTime() NOEXCEPT {
 void FLinuxPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
     struct ::tm tp = {};
     time_t timer = timestamp;
-    if (::localtime_r(&timer, &tp)) {
+    if (::localtime_r(&timer, &tp) == nullptr) {
         LOG(HAL, Fatal, L"localtime_r() failed with errno: {0}", FErrno{});
         return;
     }

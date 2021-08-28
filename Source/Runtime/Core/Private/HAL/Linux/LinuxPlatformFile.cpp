@@ -158,6 +158,7 @@ FWString FLinuxPlatformFile::WorkingDirectory() {
 //----------------------------------------------------------------------------
 bool FLinuxPlatformFile::IsAllowedChar(char_type ch) {
     return (std::isalnum(ch) ||
+        ch == L':' || // for virtual mounting-points
         ch == L'_' ||
         ch == L'-' ||
         ch == L'.' );
