@@ -143,18 +143,20 @@ module Build
             extname = compiler.ext_for(:executable)
             executables = targets.select{|x| x.executable? }
             executables.collect! do |m|
-                {
+                cfg = {
                     name: m.abs_path,
-                    type: 'cppvsdbg',
+                    type: (os_windows? ? 'cppvsdbg' : 'cppdbg'),
                     request: 'launch',
                     program: Environment.executable_path(m.abs_path, "${command:cpptools.activeConfigName}", extname),
                     args: [],
                     stopAtEntry: false,
                     cwd: $BinariesPath,
-                    environment: compiler.dbg_env(),
                     #visualizeFile: NATVIS,
-                    console: false
+                    externalConsole: false
                 }
+                env = compiler.dbg_env()
+                cfg[:environment] = env unless env.nil? || env.empty?
+                cfg
             end
         end
 
