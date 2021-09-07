@@ -296,7 +296,12 @@ module Build
     def self.load_options(src=PersistentConfig[:file])
         Log.verbose("load persistent options from '#{src}'")
         begin
-            serialized = YAML.safe_load(File.read(src), symbolize_names: true, permitted_classes: [Build::FileChecksum, Build::Checksum, Time])
+            input = File.read(src)
+            serialized = YAML.safe_load(input, symbolize_names: true, permitted_classes: [Build::FileChecksum, Build::Checksum, Time])
+            if serialized.nil? || !serialized.is_a?(Hash)
+                Log.error("invalid serialized data, ignoring options saved in '%s'", src)
+                return false
+            end
             PersistentConfig[:data] = serialized
             PersistentConfig[:hash] = serialized.hash
             PersistentConfig[:vars].each do |name, var|
