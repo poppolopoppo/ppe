@@ -165,6 +165,7 @@ public:
     const_reverse_iterator crbegin() const { return const_reverse_iterator(end()); }
     const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
 
+    allocator_type& get_allocator() { return allocator_traits::Get(*this); }
     const allocator_type& get_allocator() const { return allocator_traits::Get(*this); }
 
     reference at(size_type pos) { Assert(pos < _size); return _data[pos]; }

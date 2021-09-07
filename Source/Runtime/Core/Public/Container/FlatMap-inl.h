@@ -202,9 +202,9 @@ _Value& TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Get(const _Key& key) {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-_Value* TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::GetIFP(const _Key& key) {
+Meta::TOptionalReference<_Value> TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::GetIFP(const _Key& key) {
     const iterator it = Find(key);
-    return (end() != it ? &it->second : nullptr);
+    return (end() != it ? Meta::MakeOptionalRef(it->second) : Default);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>

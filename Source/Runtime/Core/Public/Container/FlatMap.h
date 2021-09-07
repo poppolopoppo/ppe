@@ -37,6 +37,8 @@ public:
     typedef _Less key_less;
     typedef _Vector vector_type;
 
+    typedef typename vector_type::allocator_type allocator_type;
+
     typedef typename vector_type::pointer pointer;
     typedef typename vector_type::const_pointer const_pointer;
     typedef typename vector_type::reference reference;
@@ -56,6 +58,9 @@ public:
     TFlatMap();
     explicit TFlatMap(size_type capacity);
     ~TFlatMap();
+
+    TFlatMap(allocator_type&& ralloc) : _vector(std::move(ralloc)) {}
+    TFlatMap(const allocator_type& alloc) : _vector(alloc) {}
 
     TFlatMap(TFlatMap&& rvalue) NOEXCEPT;
     TFlatMap& operator =(TFlatMap&& rvalue) NOEXCEPT;
@@ -138,8 +143,9 @@ public:
     void Insert_AssertUnique(const _Key& key, const _Value& value);
 
     _Value& Get(const _Key& key);
-    _Value* GetIFP(const _Key& key);
-    const _Value* GetIFP(const _Key& key) const { return remove_const(this)->GetIFP(key); }
+    const _Value& Get(const _Key& key) const { return remove_const(this)->Get(key); }
+    Meta::TOptionalReference<_Value> GetIFP(const _Key& key);
+    Meta::TOptionalReference<const _Value> GetIFP(const _Key& key) const { return remove_const(this)->GetIFP(key); }
     bool TryGet(const _Key& key, _Value *value) const;
     const _Value& At(const _Key& key) const;
 
@@ -167,6 +173,9 @@ public:
     friend void swap(TFlatMap& lhs, TFlatMap& rhs) NOEXCEPT {
         swap(lhs._vector, rhs._vector);
     }
+
+    auto& get_allocator() { return _vector.get_allocator(); }
+    const auto& get_allocator() const { return _vector.get_allocator(); }
 
 private:
     struct FKeyEqual_ : key_equal {

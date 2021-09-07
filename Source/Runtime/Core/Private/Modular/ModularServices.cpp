@@ -27,45 +27,23 @@ FModularServices::~FModularServices() = default;
 void FModularServices::Clear() {
     LOG(Modular, Verbose, L"clearing '{0}' modular services ", _name);
 
-    _services.clear();
+    _services.Clear();
 }
 //----------------------------------------------------------------------------
 void FModularServices::ReleaseMemory() NOEXCEPT {
     LOG(Modular, Verbose, L"releasing memory in '{0}' modular services", _name);
 
-    for (const auto& it : _services) {
-        if (it.second.ReleaseMemoryIFP())
-            LOG(Modular, Verbose, L"released memory in <{0}> from '{1}' modular services", it.first.name, _name);
-    }
+    _services.Broadcast<FReleaseMemoryFunc_>();
 }
 //----------------------------------------------------------------------------
-void* FModularServices::GetService_(const FServiceKey_& key) const NOEXCEPT {
-    const auto it = _services.Find(key);
-    if (_services.end() != it)
-        return it->second.Get();
-
-    if (_parent)
-        return _parent->GetService_(key);
-
-    LOG(Modular, Error, L"can't find service <{0}> in '{1}' modular services", key.name, _name);
-    return nullptr;
+#if USE_PPE_LOGGER
+void FModularServices::LogServiceAdd_(FStringView base, FStringView derived) const NOEXCEPT {
+    LOG(Modular, Verbose, L"add modular service <{0}> in '{1}' implemented with <{2}>", base, _name, derived);
 }
-//----------------------------------------------------------------------------
-void FModularServices::AddService_(const FServiceKey_& key, FServiceHolder_&& rholder) {
-    Assert_NoAssume(not _parent || not _parent->GetService_(key));
-
-    LOG(Modular, Verbose, L"add modular service <{0}> in '{1}'", key.name, _name);
-
-    _services.Insert_AssertUnique(FServiceKey_{ key }, std::move(rholder));
+void FModularServices::LogServiceRemove_(FStringView base) const NOEXCEPT {
+    LOG(Modular, Verbose, L"remove modular service <{0}> from '{1}'", base, _name);
 }
-//----------------------------------------------------------------------------
-void FModularServices::RemoveService_(const FServiceKey_& key) {
-    Assert_NoAssume(not _parent || not _parent->GetService_(key));
-
-    LOG(Modular, Verbose, L"remove modular service <{0}> from '{1}'", key.name, _name);
-
-    _services.Remove_AssertExists(key);
-}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
