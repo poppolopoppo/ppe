@@ -320,16 +320,99 @@ CONSTEXPR TCountingIterator<_Int, _Inc> MakeCountingIterator(_Int it) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _It, typename _Filter>
+class EMPTY_BASES TFilterIterator :
+    public Meta::TIterator<
+        typename Meta::TIteratorTraits<_It>::value_type,
+        std::forward_iterator_tag
+    >
+{
+public:
+    typedef Meta::TIterator<
+        typename Meta::TIteratorTraits<_It>::value_type,
+        std::forward_iterator_tag
+    >   parent_type;
+
+    using filter_type = _Filter;
+
+    using typename parent_type::iterator_category;
+    using typename parent_type::difference_type;
+    using typename parent_type::value_type;
+    using typename parent_type::pointer;
+    using typename parent_type::reference;
+
+    CONSTEXPR TFilterIterator() NOEXCEPT {}
+
+    CONSTEXPR explicit TFilterIterator(_It first, _It last) : _first(first), _last(last) {}
+    CONSTEXPR explicit TFilterIterator(_It first, _It last, _Filter&& filter) : _filter(std::forward<_Filter>(filter)), _first(first), _last(last) {}
+
+    CONSTEXPR TFilterIterator(const TFilterIterator&) = default;
+    CONSTEXPR TFilterIterator& operator =(const TFilterIterator&) = default;
+
+    CONSTEXPR const _It& inner() const { return _first; }
+
+    CONSTEXPR TFilterIterator& operator++() /* prefix */ { Advance_(); return *this; }
+    CONSTEXPR TFilterIterator operator++(int) /* postfix */ { const auto tmp{ *this }; Advance_(); return tmp; }
+
+    CONSTEXPR reference operator*() const { return (_first->first); }
+    CONSTEXPR pointer operator->() const { return std::addressof(_first->first); }
+
+    CONSTEXPR void swap(TFilterIterator& other) NOEXCEPT {
+        using std::swap;
+        swap(static_cast<_Filter&>(*this), static_cast<_Filter&>(other));
+        swap(_first, other._first);
+        swap(_last, other._last);
+    }
+    CONSTEXPR inline friend void swap(TFilterIterator& lhs, TFilterIterator& rhs) NOEXCEPT {
+        lhs.swap(rhs);
+    }
+
+    CONSTEXPR bool operator ==(const TFilterIterator& other) const {
+        Assert(other._last == _last);
+        return (inner() == other.inner());
+    }
+    CONSTEXPR bool operator !=(const TFilterIterator& other) const {
+        return (not operator ==(other));
+    }
+
+private:
+    _Filter _filter;
+    _It _first;
+    _It _last;
+
+    void Advance_() NOEXCEPT {
+        Assert(_first != _last);
+        for (++_first; _first != _last; ++_first) {
+            if (_filter(*_first))
+                break;
+        }
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _It, typename _Filter>
+CONSTEXPR TFilterIterator<_It, _Filter> MakeFilterIterator(_It first, _It last, _Filter&& rfilter) {
+    return TFilterIterator<_It, _Filter>(
+        std::forward<_It>(first),
+        std::forward<_It>(last),
+        std::move(rfilter) );
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
-class TOutputIterator : public Meta::TIterator<
-    decltype(std::declval<_Transform>()(*std::declval<_It>())),
-    typename std::iterator_traits<_It>::iterator_category
-> {
+class EMPTY_BASES TOutputIterator :
+    public Meta::TIterator<
+        decltype(std::declval<_Transform>()(*std::declval<_It>())),
+        typename std::iterator_traits<_It>::iterator_category
+    >
+{
 public:
     typedef Meta::TIterator<
         decltype(std::declval<_Transform>()(*std::declval<_It>())),
         typename std::iterator_traits<_It>::iterator_category
     >   parent_type;
+
+    using transform_type = _Transform;
 
     using typename parent_type::iterator_category;
     using typename parent_type::difference_type;
@@ -340,7 +423,7 @@ public:
     TOutputIterator() = default;
 
     CONSTEXPR TOutputIterator(_It it) : _it(it) {}
-    CONSTEXPR TOutputIterator(_It it, _Transform transform) : _it(it), _transform(transform) {}
+    CONSTEXPR TOutputIterator(_It it, _Transform&& transform) : _transform(std::forward<_Transform>(transform)), _it(it) {}
 
     CONSTEXPR TOutputIterator(const TOutputIterator& ) = default;
     CONSTEXPR TOutputIterator& operator =(const TOutputIterator& ) = default;
@@ -374,8 +457,8 @@ public:
     CONSTEXPR bool operator>=(const TOutputIterator& other) const { return (_it >= other._it); }
 
 private:
-    _It _it;
     _Transform _transform;
+    _It _it;
 };
 //----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
@@ -549,9 +632,13 @@ public:
     template <typename _Reduce>
     CONSTEXPR value_type Reduce(_Reduce&& reduce, value_type init = Meta::MakeForceInit<value_type>()) const NOEXCEPT;
     template <typename _Transform, typename _Reduce>
-    CONSTEXPR auto MapReduce(_Transform&& transform, _Reduce&& reduce) const NOEXCEPT {
-        return Map(std::forward<_Transform>(transform)).Reduce(std::forward<_Reduce>(reduce));
-    }
+    CONSTEXPR auto MapReduce(_Transform&& transform, _Reduce&& reduce) const NOEXCEPT;
+
+    template <typename _Filter>
+    CONSTEXPR auto FilterBy(_Filter&& filter) const NOEXCEPT;
+
+    template <typename _Selector>
+    CONSTEXPR auto Select(_Selector&& selector) const NOEXCEPT;
 
     CONSTEXPR auto Accumulate(value_type init = Meta::MakeForceInit<value_type>()) const { return std::accumulate(begin(), end(), init); }
 
@@ -559,6 +646,8 @@ public:
     template <typename _Pred>
     CONSTEXPR auto CountIf(_Pred&& pred) const { return std::count_if(begin(), end(), std::forward<_Pred>(pred)); }
 
+    template <typename _Pred>
+    CONSTEXPR bool Any(_Pred&& pred) const { return std::find_if(begin(), end(), std::forward<_Pred>(pred)) != end(); }
     CONSTEXPR iterator Find(const_reference value) const { return std::find(begin(), end(), value); }
     template <typename _Pred>
     CONSTEXPR iterator FindIf(_Pred&& pred) const { return std::find_if(begin(), end(), std::forward<_Pred>(pred)); }
@@ -615,8 +704,15 @@ CONSTEXPR TIterable< decltype(std::declval<const T&>().begin()) > MakeConstItera
 template <typename _It, typename _Transform>
 CONSTEXPR TIterable<TOutputIterator<_It, _Transform>> MakeOutputIterable(_It first, _It last, _Transform&& transform) NOEXCEPT {
     return MakeIterable(
-        TOutputIterator<_It, _Transform>(first, transform),
-        TOutputIterator<_It, _Transform>(last, transform) );
+        TOutputIterator<_It, _Transform>(first, _Transform(transform)),
+        TOutputIterator<_It, _Transform>(last, std::move(transform)) );
+}
+//----------------------------------------------------------------------------
+template <typename _It, typename _Filter>
+CONSTEXPR TIterable<TFilterIterator<_It, _Filter>> MakeFilteredIterable(_It first, _It last, _Filter&& filter) NOEXCEPT {
+    return MakeIterable(
+        MakeFilterIterator(first, last, _Filter(filter)),
+        MakeFilterIterator(last, last, std::move(filter)) );
 }
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
@@ -640,6 +736,29 @@ template <typename _It>
 template <typename _Reduce>
 CONSTEXPR auto TIterable<_It>::Reduce(_Reduce&& reduce, value_type init) const NOEXCEPT -> value_type {
     return std::reduce(begin(), end(), init, reduce);
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+template <typename _Transform, typename _Reduce>
+constexpr auto TIterable<_It>::MapReduce(_Transform&& transform, _Reduce&& reduce) const NOEXCEPT {
+    return Map(std::forward<_Transform>(transform))
+        .Reduce(std::forward<_Reduce>(reduce));
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+template <typename _Filter>
+CONSTEXPR auto TIterable<_It>::FilterBy(_Filter&& filter) const NOEXCEPT {
+    return MakeFilteredIterable(_begin, _end, std::move(filter));
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+template <typename _Selector>
+CONSTEXPR auto TIterable<_It>::Select(_Selector&& select) const NOEXCEPT {
+    using optional_t = decltype(select(std::declval<reference>()));
+    using mapped_t = decltype(*std::declval<optional_t>());
+    return Map(std::move(select))
+        .FilterBy([](const optional_t& optional) NOEXCEPT -> bool { return (!!optional); })
+        .Map([](const optional_t& filtered) NOEXCEPT -> mapped_t { return (*filtered); });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
