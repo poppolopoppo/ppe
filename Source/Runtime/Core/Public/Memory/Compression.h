@@ -1,13 +1,12 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
+
+#include "Container/RawStorage_fwd.h"
+#include "IO/Stream_fwd.h"
+#include "Memory/MemoryView.h"
 
 namespace PPE {
-class IStreamWriter;
-template <typename T>
-class TMemoryView;
-template <typename T, typename _Allocator>
-class TRawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
