@@ -459,19 +459,19 @@ static NO_INLINE void TestRTTI_() {
                 AssertNotReached();
 
             {
-                auto prop = metaClass->Property(RTTI::FName("Dict"));
-                auto value = prop.Get(*titi);
+                const auto& prop = metaClass->Property(RTTI::FName("Dict"));
+                const auto value = prop.Get(*titi);
                 LOG(RTTI_UnitTest, Debug, L"{0} = {1}", prop.Name(), value);
             }
             {
-                auto func = metaClass->Function(RTTI::FName("OutConstReturn"));
+                const auto& func = metaClass->Function(RTTI::FName("OutConstReturn"));
                 STACKLOCAL_ATOM(result, func.Result());
                 FString string;
                 func.Invoke(*titi, result, { RTTI::InplaceAtom(42.0f), RTTI::MakeAtom(&string) });
                 LOG(RTTI_UnitTest, Debug, L"{0} : {1} = {2}", func.Name(), string, result);
             }
             {
-                auto func = metaClass->Function(RTTI::FName("IdDeprecated"));
+                const auto& func = metaClass->Function(RTTI::FName("IdDeprecated"));
                 STACKLOCAL_ATOM(result, func.Result());
                 func.Invoke(*titi, result, { RTTI::InplaceAtom(69.0f) });
                 LOG(RTTI_UnitTest, Debug, L"{0}({1}) = {2}", func.Name(), 69.0f, result);

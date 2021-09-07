@@ -5,10 +5,12 @@
 #include "RTTI/Module.h"
 #include "RTTI/Module-impl.h"
 #include "RTTI/NativeTypes.h"
+#include "RTTI/Service.h"
 
 #include "MetaDatabase.h"
 #include "MetaObject.h"
 
+#include "Modular/ModularDomain.h"
 #include "Modular/ModuleRegistration.h"
 
 #include "Diagnostic/Logger.h"
@@ -60,6 +62,11 @@ void FRTTIModule::Start(FModularDomain& domain) {
 
     RTTI_MODULE(RTTI).Start();
 
+    TUniquePtr<IRTTIService> rtti;
+    IRTTIService::MakeDefault(&rtti);
+    rtti->RegisterModule(this, RTTI_MODULE(RTTI));
+    domain.Services().Add<IRTTIService>(std::move(rtti));
+
 #if USE_PPE_RTTI_CHECKS
     RTTI_UnitTests();
 #endif
@@ -69,6 +76,9 @@ void FRTTIModule::Shutdown(FModularDomain& domain) {
     IModuleInterface::Shutdown(domain);
 
     using namespace RTTI;
+
+    domain.Services().Get<IRTTIService>().UnregisterModule(this, RTTI_MODULE(RTTI));
+    domain.Services().Remove<IRTTIService>();
 
     RTTI_MODULE(RTTI).Shutdown();
 

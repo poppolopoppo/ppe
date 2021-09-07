@@ -3,12 +3,13 @@
 #include "BuildGraphModule.h"
 
 #include "BuildGraph.h"
+#include "Diagnostic/Logger.h"
 #include "Memory/MemoryDomain.h"
 #include "RTTI/Module-impl.h"
+#include "RTTI/Service.h"
 
+#include "Modular/ModularDomain.h"
 #include "Modular/ModuleRegistration.h"
-
-#include "Diagnostic/Logger.h"
 
 #include "BuildModules.generated.h"
 
@@ -46,12 +47,16 @@ void FBuildGraphModule::Start(FModularDomain& domain) {
     using namespace ContentPipeline;
 
     RTTI_MODULE(BuildGraph).Start();
+
+    domain.Services().Get<IRTTIService>().RegisterModule(this, RTTI_MODULE(BuildGraph));
 }
 //----------------------------------------------------------------------------
 void FBuildGraphModule::Shutdown(FModularDomain& domain) {
     IModuleInterface::Shutdown(domain);
 
     using namespace ContentPipeline;
+
+    domain.Services().Get<IRTTIService>().UnregisterModule(this, RTTI_MODULE(BuildGraph));
 
     RTTI_MODULE(BuildGraph).Shutdown();
 }

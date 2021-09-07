@@ -23,7 +23,7 @@ public:
     const FMetaClass* Class() const { return _class; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override;
 #endif
 
 private:
@@ -38,7 +38,7 @@ class PPE_RTTI_API FFunctionException : public FRTTIException {
     const FMetaFunction* Function() const { return _function; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override;
 #endif
 
     private:
@@ -53,7 +53,7 @@ public:
     const FMetaObject* Object() const { return _object; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override;
 #endif
 
 private:
@@ -68,7 +68,7 @@ public:
     const FMetaProperty* Property() const { return _property; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override;
 #endif
 
 private:
