@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Container/Hash.h"
 #include "Container/Pair.h"
@@ -347,6 +347,18 @@ PPE_CORE_API FWStringView EatPrints(FWStringView& wstr);
 //----------------------------------------------------------------------------
 PPE_CORE_API FStringView EatSpaces(FStringView& str);
 PPE_CORE_API FWStringView EatSpaces(FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatWhile(FStringView& str, char ch);
+PPE_CORE_API FWStringView EatWhile(FWStringView& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatWhile(FStringView& str, const FStringView& multiple);
+PPE_CORE_API FWStringView EatWhile(FWStringView& wstr, const FWStringView& wmultiple);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatUntil(FStringView& str, char ch);
+PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatUntil(FStringView& str, const FStringView& multiple);
+PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
