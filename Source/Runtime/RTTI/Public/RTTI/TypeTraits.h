@@ -146,8 +146,22 @@ public:
         Assert_NoAssume(type.Flags() ^ ETypeFlags::Scalar);
     }
 
+    virtual int Compare(const void* lhs, const void* rhs) const NOEXCEPT = 0;
+
     virtual const FMetaEnum* EnumClass() const NOEXCEPT = 0;
     virtual const FMetaClass* ObjectClass() const NOEXCEPT = 0;
+
+public: // helpers
+    bool Less(const void* lhs, const void* rhs) const NOEXCEPT { return Compare(lhs, rhs) < 0; }
+    bool LessEqual(const void* lhs, const void* rhs) const NOEXCEPT { return Compare(lhs, rhs) <= 0; }
+    bool Greater(const void* lhs, const void* rhs) const NOEXCEPT { return Compare(lhs, rhs) > 0; }
+    bool GreaterEqual(const void* lhs, const void* rhs) const NOEXCEPT { return Compare(lhs, rhs) >= 0; }
+
+    void* Min(void* lhs, void* rhs) const NOEXCEPT { return (Less(lhs, rhs) ? lhs : rhs); }
+    void* Max(void* lhs, void* rhs) const NOEXCEPT { return (Greater(lhs, rhs) ? lhs : rhs); }
+
+    const void* Min(const void* lhs, const void* rhs) const NOEXCEPT { return (Less(lhs, rhs) ? lhs : rhs); }
+    const void* Max(const void* lhs, const void* rhs) const NOEXCEPT { return (Greater(lhs, rhs) ? lhs : rhs); }
 };
 //----------------------------------------------------------------------------
 class ITupleTraits : public ITypeTraits {

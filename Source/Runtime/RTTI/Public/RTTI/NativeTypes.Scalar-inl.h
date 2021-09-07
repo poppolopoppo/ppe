@@ -21,6 +21,9 @@ public: // ITypeTraits
     virtual PTypeTraits CommonType(const PTypeTraits& other) const NOEXCEPT override final;
 
     virtual hash_t HashValue(const void* data) const NOEXCEPT override final;
+
+public: // IScalarTraits
+    virtual int Compare(const void* lhs, const void* rhs) const NOEXCEPT override final;
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -28,7 +31,20 @@ bool TBaseScalarTraits<T>::Equals(const void* lhs, const void* rhs) const NOEXCE
     Assert(lhs);
     Assert(rhs);
 
-    return (*static_cast<const T*>(lhs) == *static_cast<const T*>(rhs));
+    return Meta::TEqualTo<T>{}(*static_cast<const T*>(lhs), *static_cast<const T*>(rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+int TBaseScalarTraits<T>::Compare(const void* lhs, const void* rhs) const NOEXCEPT {
+    Assert(lhs);
+    Assert(rhs);
+
+    IF_CONSTEXPR(Meta::has_trivial_less_v<T>)
+        return Meta::TCompareTo<T>{}(
+            *static_cast<const T*>(lhs),
+            *static_cast<const T*>(rhs) );
+    else
+        AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 template <typename T>
