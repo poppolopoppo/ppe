@@ -41,7 +41,7 @@ struct FMetaFunctionCallFormattor_ {
     {}
     template <typename _Char>
     friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const FMetaFunctionCallFormattor_& call) {
-        oss << L"function \"";
+        oss << L"function ";
 
         if (call.pFunc->Result())
             oss << call.pFunc->Result()->NamedTypeInfos();
