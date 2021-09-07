@@ -2,6 +2,9 @@
 
 #include "Core_fwd.h"
 
+#define STRING_LITERAL(_CHAR, _ASCII) \
+    ::PPE::string_literal< _CHAR >( _ASCII, WIDESTRING(_ASCII) )
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -76,6 +79,24 @@ template <typename _Char>
 using TBasicFormatArgList = TMemoryView< const TBasicFormatArg<_Char> >;
 using FFormatArgList = TBasicFormatArgList<char>;
 using FWFormatArgList = TBasicFormatArgList<wchar_t>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Macro to make string literal ASCII/WIDE agnostic:
+namespace details {
+template <typename _Ascii, typename _Wide>
+CONSTEXPR _Ascii select_string_literal_(char, _Ascii ascii, _Wide ) { return ascii; }
+template <typename _Ascii, typename _Wide>
+CONSTEXPR _Wide select_string_literal_(wchar_t, _Ascii , _Wide wide) { return wide; }
+} //!details
+template <typename _Char>
+CONSTEXPR auto string_literal(const char ascii, const wchar_t wide) {
+    return details::select_string_literal_(_Char{}, ascii, wide);
+}
+template <typename _Char>
+CONSTEXPR auto string_literal(const FStringView& ascii, const FWStringView& wide) {
+    return details::select_string_literal_(_Char{}, ascii, wide);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
