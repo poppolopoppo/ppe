@@ -1,14 +1,17 @@
 #include "stdafx.h"
 
+#include "Container/Tuple.h"
 #include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
 #include "IO/ConstChar.h"
 #include "IO/FileStream.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
+#include "IO/regexp.h"
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
+#include "IO/StringConversion.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 
@@ -194,6 +197,42 @@ static void Test_LogPrintf_() {
     LOG_PRINTF(Test_Format, Info, L"Printf testing %d", 42);
 }
 //----------------------------------------------------------------------------
+static void Test_Regexp_() {
+    FRegexp re;
+    re.Compile(R"(int:([+-]?\d+),\s+float:([+-]?[0-9]*[.]?[0-9]+),\s+word:(\w+)\s+end)", ECase::Sensitive);
+    FRegexp reI;
+    reI.Compile(R"(int:([+-]?\d+),\s+float:([+-]?[0-9]*[.]?[0-9]+),\s+word:(\w+)\s+end)", ECase::Insensitive);
+
+    FRegexp::FMatches matches;
+    VerifyRelease(re.Capture(&matches, "int:42, float:123.456, word:PoPpolLoPpOpo42 end"));
+
+    LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
+        FStringConversion(matches[1]).To<int>(),
+        FStringConversion(matches[2]).To<float>(),
+        FStringView(matches[3]) );
+
+    VerifyRelease(reI.Capture(&matches, "iNt:42, FLoat:123.456, WORD:PoPpolLoPpOpo42 End"));
+
+    LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
+        FStringConversion(matches[1]).To<int>(),
+        FStringConversion(matches[2]).To<float>(),
+        FStringView(matches[3]) );
+
+    int parseInt{};
+    float parseFloat{};
+    FStringView parseWord{};
+    VerifyRelease(not re.Capture("INT:-69,   floaT:-0.1,     Word:Tornado\tend",
+        &parseInt, &parseFloat, &parseWord) );
+    VerifyRelease(reI.Capture("INT:-69,   floaT:-0.1,     Word:Tornado\tend",
+        &parseInt, &parseFloat, &parseWord) );
+
+    TTuple<int, float, FStringView> parseArgs;
+    VerifyRelease(reI.Capture(&parseArgs, "INT:-69,   floaT:-0.1,     Word:Tornado\tend"));
+
+    LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
+        std::get<0>(parseArgs), std::get<1>(parseArgs), std::get<2>(parseArgs) );
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -203,8 +242,9 @@ void Test_Format() {
 
     LOG(Test_Format, Emphasis, L"starting format tests ...");
 
-    Test_Format_();
+    Test_Regexp_();
     Test_TextWriter_();
+    Test_Format_();
     Test_StringEscaping_();
     Test_LogPrintf_();
 }
