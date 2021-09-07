@@ -78,7 +78,7 @@ FMetaParameter::FMetaParameter() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FMetaParameter::FMetaParameter(const FName& name, const PTypeTraits& traits, EParameterFlags flags) NOEXCEPT
-    : _name(name) {
+:   _name(name) {
     Assert(not _name.empty());
     Assert(traits.Valid());
     STATIC_ASSERT(sizeof(PTypeTraits) == sizeof(void*));
@@ -90,15 +90,15 @@ FMetaParameter::FMetaParameter(const FName& name, const PTypeTraits& traits, EPa
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FMetaFunction::FMetaFunction() NOEXCEPT
-    : _invoke(nullptr)
-    , _flags(EFunctionFlags(0))
+:   _invoke(nullptr)
+,   _flags(EFunctionFlags(0))
 {}
 //----------------------------------------------------------------------------
 FMetaFunction::FMetaFunction(
     const FName& name,
     EFunctionFlags flags,
     const PTypeTraits& result,
-    std::initializer_list<FMetaParameter> parameters,
+    TRValueInitializerList<FMetaParameter> parameters,
     invoke_func invoke ) NOEXCEPT
     : _name(name)
     , _invoke(invoke)

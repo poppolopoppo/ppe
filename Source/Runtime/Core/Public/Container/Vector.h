@@ -8,6 +8,7 @@
 #include "HAL/PlatformMemory.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
+#include "Memory/RValuePtr.h"
 #include "Meta/Iterator.h"
 
 #include <algorithm>
@@ -78,24 +79,28 @@ public:
     TVector(size_type count, const allocator_type& alloc) : TVector(alloc) { resize_AssumeEmpty(count); }
     TVector(size_type count, const_reference value, const allocator_type& alloc) : TVector(alloc) { resize_AssumeEmpty(count, value); }
 
-    TVector(const TVector& other) : TVector(allocator_traits::SelectOnCopy(other)) { assign(other.begin(), other.end()); }
-    TVector(const TVector& other, const allocator_type& alloc) : TVector(alloc) { assign(other.begin(), other.end()); }
+    TVector(const TVector& other) : TVector(allocator_traits::SelectOnCopy(other)) { assign_AssumeEmpty(other.begin(), other.end()); }
+    TVector(const TVector& other, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(other.begin(), other.end()); }
     TVector& operator=(const TVector& other);
 
     TVector(TVector&& rvalue) NOEXCEPT : TVector(Meta::MakeForceInit<allocator_type>()/* handled by MoveAllocatorBlock() */) { assign(std::move(rvalue)); }
     TVector(TVector&& rvalue, const allocator_type& alloc) NOEXCEPT : TVector(alloc) { assign(std::move(rvalue)); }
     TVector& operator=(TVector&& rvalue) NOEXCEPT;
 
-    TVector(std::initializer_list<value_type> ilist) : TVector() { assign(ilist.begin(), ilist.end()); }
-    TVector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TVector(alloc) { assign(ilist.begin(), ilist.end()); }
+    TVector(std::initializer_list<value_type> ilist) : TVector() { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
+    TVector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
     TVector& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
-    TVector(const TMemoryView<const value_type>& view) : TVector() { assign(view.begin(), view.end()); }
-    TVector(const TMemoryView<const value_type>& view, const allocator_type& alloc) : TVector(alloc) { assign(view.begin(), view.end()); }
+    TVector(Meta::TDontDeduce<TRValueInitializerList<value_type>> ilist) : TVector() { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
+    TVector(Meta::TDontDeduce<TRValueInitializerList<value_type>> ilist, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
+    TVector& operator=(Meta::TDontDeduce<TRValueInitializerList<value_type>> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
+
+    TVector(const TMemoryView<const value_type>& view) : TVector() { assign_AssumeEmpty(view.begin(), view.end()); }
+    TVector(const TMemoryView<const value_type>& view, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(view.begin(), view.end()); }
     TVector& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
 
     template <typename _It>
-    TVector(TIterable<_It> range) : TVector() { assign(range); }
+    TVector(TIterable<_It> range) : TVector() { assign_AssumeEmpty(range.begin(), range.end()); }
     template <typename _It>
     TVector& operator=(TIterable<_It> range) { assign(range); return *this; }
 
@@ -182,6 +187,9 @@ public:
 
     template <typename _It>
     Meta::TEnableIf<Meta::is_iterator_v<_It>> assign(_It first, _It last);
+    template <typename _It>
+    Meta::TEnableIf<Meta::is_iterator_v<_It>> assign_AssumeEmpty(_It first, _It last);
+
     void assign(size_type count, const T& value);
     void assign(std::initializer_list<T> ilist) { assign(ilist.begin(), ilist.end()); }
     void assign(TVector&& rvalue);

@@ -36,6 +36,9 @@ public:
     FMetaParameter() NOEXCEPT;
     FMetaParameter(const FName& name, const PTypeTraits& traits, EParameterFlags flags) NOEXCEPT;
 
+    FMetaParameter(FMetaParameter&& ) = default;
+    FMetaParameter& operator =(FMetaParameter&& ) = default;
+
     const FName& Name() const { return _name; }
     PTypeTraits Traits() const { return union_cast_t{ _traitsAndFlags.Get() }.Traits; }
     EParameterFlags Flags() const { return EParameterFlags(_traitsAndFlags.Flag01()); }
@@ -87,7 +90,7 @@ public:
         const FName& name,
         EFunctionFlags flags,
         const PTypeTraits& result,
-        std::initializer_list<FMetaParameter> parameters,
+        TRValueInitializerList<FMetaParameter> parameters,
         invoke_func invoke ) NOEXCEPT;
     ~FMetaFunction();
 

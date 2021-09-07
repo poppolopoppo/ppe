@@ -132,6 +132,28 @@ void TVector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
 
     _size = checked_cast<u32>(count);
 }
+
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+template <typename _It>
+auto TVector<T, _Allocator>::assign_AssumeEmpty(_It first, _It last)
+    -> Meta::TEnableIf<Meta::is_iterator_v<_It>>  {
+    Assert_NoAssume(first == last || not AliasesToContainer(*first));
+
+    const size_type n = checked_cast<size_type>(std::distance(first, last));
+    reserve_AssumeEmpty(n);
+    Assert(n <= _capacity);
+
+    auto dest = MakeCheckedIterator(_data, _capacity, 0);
+    IF_CONSTEXPR(std::is_rvalue_reference_v<typename Meta::TIteratorTraits<_It>::reference>)
+        std::uninitialized_move(first, last, dest);
+    else
+        std::uninitialized_copy(first, last, dest);
+
+    _size = n;
+
+    Assert(CheckInvariants());
+}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::assign(size_type count, const_reference value) {
