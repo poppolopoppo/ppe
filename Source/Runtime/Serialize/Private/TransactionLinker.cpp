@@ -78,6 +78,9 @@ FTransactionLinker& FTransactionLinker::operator =(FTransactionLinker&& rvalue) 
     return (*this);
 }
 //----------------------------------------------------------------------------
+FTransactionLinker::FTransactionLinker(Meta::FForceInit) NOEXCEPT
+{} // used for transient serialization
+//----------------------------------------------------------------------------
 FTransactionLinker::FTransactionLinker(const FFilename& filename)
 :   _filename(filename) {
     Assert_NoAssume(not _filename.empty());

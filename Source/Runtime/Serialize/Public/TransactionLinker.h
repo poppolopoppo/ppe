@@ -61,6 +61,7 @@ private:
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FTransactionLinker {
 public:
+    explicit FTransactionLinker(Meta::FForceInit/* in memory */) NOEXCEPT;
     explicit FTransactionLinker(const FFilename& filename);
     ~FTransactionLinker();
 

@@ -44,7 +44,7 @@ public:
         const RTTI::FName& id,
         const RTTI::FName& namespace_,
         ETransactionFlags flags = ETransactionFlags::Default );
-    virtual ~FTransactionSerializer();
+    ~FTransactionSerializer() override;
 
     FTransactionSerializer(const FTransactionSerializer&) = delete;
     FTransactionSerializer& operator =(const FTransactionSerializer&) = delete;
@@ -108,7 +108,7 @@ public:
         FWString&& inputPattern,
         FInputPaths&& inputPaths,
         ETransactionFlags flags = ETransactionFlags::Default );
-    virtual ~FDirectoryTransaction();
+    ~FDirectoryTransaction() override;
 
     const FWString& InputPattern() const { return _inputPattern; }
     TMemoryView<const FDirpath> InputPaths() const { return _inputPaths; }

@@ -102,7 +102,7 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
 
         for (;;) {
             // using deferred IO to avoid blocking workers on IO
-            const UStreamReader reader{ VFS_OpenBinaryReadable(linker.Filename()) };
+            const auto reader{ VFS_OpenBinaryReadable(linker.Filename()) };
             const bool succeed = UsingDeferredStream(reader.get(), [&](IBufferedStreamReader* async) {
                 return ISerializer::InteractiveDeserialize(*serializer, *async, &linker);
             });
@@ -143,7 +143,7 @@ void FTransactionSerializer::SaveTransaction() {
         const size_t compressedSize = Compression::CompressMemory(compressed, raw.MakeView(), Compression::HighCompression);
         raw.clear_ReleaseMemory();
 
-        const UStreamWriter writer{ VFS_OpenBinaryWritable(fnameZ, EAccessPolicy::Truncate) };
+        const auto writer{ VFS_OpenBinaryWritable(fnameZ, EAccessPolicy::Truncate) };
         UsingDeferredStream(writer.get(), [&](IStreamWriter* async) {
             async->WriteView(compressed.MakeView().FirstNElements(compressedSize));
         });
@@ -152,7 +152,7 @@ void FTransactionSerializer::SaveTransaction() {
         LOG(Serialize, Emphasis, L"saving transaction '{0}' with namespace <{1}> in '{2}' ...",
             _id, _namespace, saver.Filename());
 
-        const UStreamWriter writer{ VFS_OpenBinaryWritable(saver.Filename(), EAccessPolicy::Truncate) };
+        const auto writer{ VFS_OpenBinaryWritable(saver.Filename(), EAccessPolicy::Truncate) };
         UsingDeferredStream(writer.get(), [&](IBufferedStreamWriter* async) {
             serializer->Serialize(saver, async);
         });
@@ -191,7 +191,7 @@ void FTransactionSerializer::LoadTransaction() {
         LOG(Serialize, Emphasis, L"loading transaction '{0}' with namespace <{1}> from '{2}' ...",
             _id, _namespace, linker.Filename());
 
-        const UStreamReader reader{ VFS_OpenBinaryReadable(linker.Filename()) };
+        const auto reader{ VFS_OpenBinaryReadable(linker.Filename()) };
         UsingDeferredStream(reader.get(), [&](IBufferedStreamReader* async) {
             serializer->Deserialize(*async, &linker);
         });
