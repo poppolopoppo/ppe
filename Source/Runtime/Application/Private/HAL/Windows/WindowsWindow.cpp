@@ -142,6 +142,8 @@ FWindowsWindow::~FWindowsWindow() {
 
     if (hWnd && not ::DestroyWindow(hWnd))
         LOG_LASTERROR(Window, L"DestroyWindow");
+
+    SetNativeHandle(nullptr);
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Show() {
