@@ -17,9 +17,22 @@
 #include "MetaProperty.h"
 
 #include "IO/StringView.h"
+#include "IO/StaticString.h"
 
 #include <type_traits>
 
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace PPE::RTTI::details {
+template <typename _Char, size_t _Capacity>
+CONSTEXPR auto PrivateFieldName_ToPublic_(const _Char (&name)[_Capacity]) {
+    TBasicStaticString<_Char, _Capacity> result;
+    result.Assign(MakeStringView(name).ShiftFront(/* _ */));
+    result[0] = ToUpper(result[0]);
+    return result;
+}
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -42,7 +55,7 @@
     } \
     \
     _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) NOEXCEPT \
-        : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
+    :   metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
             (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
             metaModule ) {
 //----------------------------------------------------------------------------
@@ -70,7 +83,7 @@
 //----------------------------------------------------------------------------
 // Internal helper
 #define _RTTI_PROPERTY_IMPL(_Name, _Flags, ...) \
-    RegisterProperty(PPE::RTTI::MakeProperty(PPE::RTTI::FName(_Name), _Flags, ## __VA_ARGS__))
+    RegisterProperty(::PPE::RTTI::MakeProperty(::PPE::RTTI::FName(_Name), _Flags, ## __VA_ARGS__))
 //----------------------------------------------------------------------------
 // Add a public property "Alias" from a field "Any_name_"
 #define RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, _Flags) \
@@ -81,15 +94,8 @@
 #define RTTI_PROPERTY_TRANSIENT_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, ::PPE::RTTI::EPropertyFlags::Public + ::PPE::RTTI::EPropertyFlags::Transient)
 //----------------------------------------------------------------------------
 // Add a private property "SomeName" from a private field "_someName"
-#define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags) do { \
-        char propName[] = STRINGIZE(_Name); \
-        STATIC_ASSERT(sizeof(propName) > 2 * sizeof(char)); \
-        Assert_NoAssume(propName[0] == '_'); \
-        Assert_NoAssume(IsAlpha(propName[1])); \
-        InplaceToUpper(propName[1]); \
-        const FStringView capitalizedWithoutUnderscore(&propName[1], lengthof(propName) - 2); \
-        _RTTI_PROPERTY_IMPL(capitalizedWithoutUnderscore, (_Flags), &object_type::_Name); \
-    } while (0)
+#define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags) \
+    _RTTI_PROPERTY_IMPL(::PPE::RTTI::details::PrivateFieldName_ToPublic_(STRINGIZE(_Name)), (_Flags), &object_type::_Name)
 #define RTTI_PROPERTY_PRIVATE_FIELD(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, ::PPE::RTTI::EPropertyFlags::Private);
 #define RTTI_PROPERTY_PRIVATE_DEPRECATED(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, ::PPE::RTTI::EPropertyFlags::Private + ::PPE::RTTI::EPropertyFlags::Deprecated);
 #define RTTI_PROPERTY_PRIVATE_READONLY(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, ::PPE::RTTI::EPropertyFlags::Private + ::PPE::RTTI::EPropertyFlags::ReadOnly);
@@ -118,7 +124,7 @@
     } \
     \
     CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) NOEXCEPT \
-        : metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
+    :   metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
         using enum_type = _Name;
 //----------------------------------------------------------------------------
 #define RTTI_ENUM_BEGIN(_Module, _Name) \
