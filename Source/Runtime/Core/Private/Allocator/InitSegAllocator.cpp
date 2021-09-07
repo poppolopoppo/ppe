@@ -14,8 +14,27 @@ PRAGMA_INITSEG_COMPILER
 #   include "Allocator/New.Definitions-inl.h"
 #endif
 
+#if USE_PPE_PLATFORM_DEBUG
+#   include "HAL/PlatformDebug.h"
+#   include "IO/TextWriter.h"
+#endif
+
 namespace PPE {
-LOG_CATEGORY(PPE_CORE_API, InitSeg)
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+#if USE_PPE_PLATFORM_DEBUG
+static void VeryLowLevelLog_(std::initializer_list<FConstChar> args) {
+    FPlatformDebug::OutputDebug("[InitSegAllocator] ");
+    for (FConstChar txt : args)
+        FPlatformDebug::OutputDebug(txt);
+    FPlatformDebug::OutputDebug("\n");
+}
+#endif //!USE_PPE_PLATFORM_DEBUG
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -26,8 +45,19 @@ FInitSegAllocator FInitSegAllocator::GInitSegAllocator_ INITSEG_COMPILER_PRIORIT
 FInitSegAllocator::~FInitSegAllocator() {
     const FAtomicOrderedLock::FScope scopeLock(_barrier);
 
-    for (; _head; _head = _head->Next)
+    for (; _head; _head = _head->Next) {
+#if USE_PPE_PLATFORM_DEBUG
+        {
+            Assert(_debugInitOrder > 0);
+            char id[10];
+            FFixedSizeTextWriter oss{ id };
+            oss << --_debugInitOrder << Eos;
+            VeryLowLevelLog_({ "#", id, ": call destructor for ", _head->DebugName });
+        }
+#endif
+
         _head->Deleter(*_head);
+    }
 }
 //----------------------------------------------------------------------------
 void FInitSegAllocator::Allocate(FAlloc& alloc) NOEXCEPT {
@@ -35,6 +65,15 @@ void FInitSegAllocator::Allocate(FAlloc& alloc) NOEXCEPT {
 
     FInitSegAllocator& allocator = GInitSegAllocator_;
     const FAtomicOrderedLock::FScope scopeLock(allocator._barrier);
+
+#if USE_PPE_PLATFORM_DEBUG
+    {
+        char id[10];
+        FFixedSizeTextWriter oss{ id };
+        oss << allocator._debugInitOrder++ << Eos;
+        VeryLowLevelLog_({ "#", id, ": call constructor for ", alloc.DebugName });
+    }
+#endif
 
     if (Likely(allocator._head)) {
         allocator._tail->Next = &alloc;

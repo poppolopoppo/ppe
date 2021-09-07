@@ -2,9 +2,9 @@
 
 #include "Core_fwd.h"
 
-#include "Diagnostic/Logger.h"
 #include "Meta/AlignedStorage.h"
-#include "Meta/InPlace.h"
+#include "Meta/Assert.h"
+#include "Meta/TypeInfo.h"
 #include "Thread/AtomicSpinLock.h"
 
 namespace PPE {
@@ -25,11 +25,17 @@ class FInitSegAllocator : Meta::FNonCopyableNorMovable {
 
     class FAlloc : FNonCopyableNorMovable {
     public:
-        deleter_f const Deleter;
+        const deleter_f Deleter;
         FAlloc* Next{ nullptr };
-
+#if USE_PPE_PLATFORM_DEBUG
+        const FConstChar DebugName;
+        FAlloc(deleter_f deleter, FConstChar debugName) NOEXCEPT
+        :   Deleter(deleter)
+        ,   DebugName(debugName) {
+#else
         explicit FAlloc(deleter_f deleter) NOEXCEPT
         :   Deleter(deleter) {
+#endif
             Assert_NoAssume(deleter);
             Allocate(*this);
         }
@@ -42,10 +48,10 @@ public:
     class TAlloc : FAlloc {
         friend class FInitSegAllocator;
         POD_STORAGE(T) _data;
-    public:
 
+    public:
         Meta::TRemoveConst<T>* Get() NOEXCEPT {
-            return reinterpret_cast<Meta::TRemoveConst<T>*>(&_data);
+            return reinterpret_cast<Meta::TRemoveConst<T>*>(std::addressof(_data));
         }
 
         operator T& () NOEXCEPT { return (*Get()); }
@@ -57,7 +63,11 @@ public:
 
         template <typename... _Args>
         TAlloc(_Args&&... args) NOEXCEPT
+#if USE_PPE_PLATFORM_DEBUG
+        :   FAlloc(&Destroy, Meta::type_info<Meta::TDecay<T>>.name) {
+#else
         :   FAlloc(&Destroy) {
+#endif
             Meta::Construct(Get(), std::forward<_Args>(args)...);
         }
     };
@@ -67,6 +77,10 @@ private:
 
     FAlloc* _head{ nullptr };
     FAlloc* _tail{ nullptr };
+
+#if USE_PPE_PLATFORM_DEBUG
+    size_t _debugInitOrder{ 0 };
+#endif
 };
 //----------------------------------------------------------------------------
 template <typename T>
