@@ -121,8 +121,27 @@ public:
         size_t Precision;
     };
 
-    static FFloat Float(EFloat flt, size_t precision) {
+    static CONSTEXPR FFloat Float(EFloat flt, size_t precision) {
         return FFloat{ flt, precision };
+    }
+
+    friend CONSTEXPR int EBase_ToInt(EBase base) {
+        switch (base) {
+        case Binary: return 2;
+        case Octal: return 8;
+        case Decimal: return 10;
+        case Hexadecimal: return 16;
+        }
+    }
+
+    friend CONSTEXPR EBase operator "" _base (unsigned long long value) {
+        switch (value) {
+        case 2: return Binary;
+        case 8: return Octal;
+        case 10: return Decimal;
+        case 16: return Hexadecimal;
+        default: AssertNotReached();
+        }
     }
 
 private:
