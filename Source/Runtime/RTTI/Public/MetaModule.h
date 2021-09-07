@@ -8,6 +8,7 @@
 #include "Container/IntrusiveList.h"
 #include "Memory/MemoryDomain.h"
 #include "Meta/ThreadResource.h"
+#include "RTTI/UserFacet.h"
 
 namespace PPE {
 namespace RTTI {
@@ -76,6 +77,9 @@ public:
         return _nameToken;
     }
 
+    FMetaModuleFacet& Facets() { return _facets; }
+    const FMetaModuleFacet& Facets() const { return _facets; }
+
     void Start();
     void Shutdown();
 
@@ -118,6 +122,8 @@ private:
 
     INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _classHandles;
     INTRUSIVESINGLELIST(&FMetaEnumHandle::_node) _enumHandles;
+
+    FMetaModuleFacet _facets;
 
 #if USE_PPE_MEMORYDOMAINS
     mutable FMemoryTracking _trackingData;

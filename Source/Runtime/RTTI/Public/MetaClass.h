@@ -7,11 +7,13 @@
 #include "MetaProperty.h"
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
+#include "RTTI/UserFacet.h"
 
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
-#include "Memory/MemoryDomain.h"
 #include "IO/TextWriter_fwd.h"
+#include "Memory/MemoryDomain.h"
+#include "Meta/Optional.h"
 
 namespace PPE {
 namespace RTTI {
@@ -49,13 +51,16 @@ public:
     FMetaClass(const FMetaClass& ) = delete;
     FMetaClass& operator =(const FMetaClass& ) = delete;
 
-    FMetaClass(FMetaClass&&) = delete;
-    FMetaClass& operator =(FMetaClass&&) = delete;
+    FMetaClass(FMetaClass&& ) = delete;
+    FMetaClass& operator =(FMetaClass&& ) = delete;
 
     FClassId Id() const { return _id; }
     const FName& Name() const { return _name; }
     EClassFlags Flags() const { return _flags; }
     const FMetaModule* Module() const { return _module; }
+
+    FMetaClassFacet& Facets() { return _facets; }
+    const FMetaClassFacet& Facets() const { return _facets; }
 
     // Status
 
@@ -89,6 +94,16 @@ public:
     const FMetaFunction* FunctionIFP(const FStringView& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
     const FMetaFunction* FunctionIFP(const FLazyName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
 
+    template <typename _Facet>
+    auto FunctionsByTag() const {
+        return AllFunctions().Select(
+            [](const FMetaFunction* func) -> Meta::TOptional<TPair<const FMetaFunction*, const _Facet*>> {
+                if (const _Facet* facet = UserFacetIFP<_Facet>(*func))
+                    return MakePair(func, facet);
+                return Default;
+            });
+    }
+
     virtual const FMetaFunction* OnMissingFunction(const FName& name, EFunctionFlags flags = EFunctionFlags::All) const;
 
     // Properties
@@ -107,6 +122,16 @@ public:
     const FMetaProperty* PropertyIFP(const FName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
     const FMetaProperty* PropertyIFP(const FStringView& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
     const FMetaProperty* PropertyIFP(const FLazyName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
+
+    template <typename _Facet>
+    auto PropertiesByTag() const {
+        return AllProperties().Select(
+            [](const FMetaProperty* prop) -> Meta::TOptional<TPair<const FMetaProperty*, const _Facet*>> {
+                if (const _Facet* facet = UserFacetIFP<_Facet>(*prop))
+                    return MakePair(prop, facet);
+                return Default;
+            });
+    }
 
     virtual const FMetaProperty* OnMissingProperty(const FName& name, EPropertyFlags flags = EPropertyFlags::All) const;
 
@@ -135,6 +160,8 @@ private:
 
     VECTORINSITU(MetaClass, FMetaProperty, 8) _propertiesSelf;
     VECTORINSITU(MetaClass, FMetaFunction, 4) _functionsSelf;
+
+    FMetaClassFacet _facets;
 
 #if USE_PPE_MEMORYDOMAINS
 public:

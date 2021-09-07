@@ -5,6 +5,7 @@
 #include "RTTI/Atom.h"
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
+#include "RTTI/UserFacet.h"
 
 #include "IO/TextWriter_fwd.h"
 
@@ -38,9 +39,15 @@ public:
     FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, ptrdiff_t memberOffset) NOEXCEPT;
     ~FMetaProperty();
 
+    FMetaProperty(FMetaProperty&& ) = default;
+    FMetaProperty& operator =(FMetaProperty&& ) = default;
+
     const FName& Name() const { return _name; }
     const PTypeTraits& Traits() const { return _traits; }
     EPropertyFlags Flags() const { return _flags; }
+
+    FMetaPropertyFacet& Facets() { return _facets; }
+    const FMetaPropertyFacet& Facets() const { return _facets; }
 
     bool IsPublic() const       { return (_flags ^ EPropertyFlags::Public       ); }
     bool IsProtected() const    { return (_flags ^ EPropertyFlags::Protected    ); }
@@ -67,6 +74,7 @@ private:
     PTypeTraits _traits;
     EPropertyFlags _flags;
     i32 _memberOffset;
+    FMetaPropertyFacet _facets;
 
     FORCE_INLINE FAtom MakeAtom_(const FMetaObject& obj) const NOEXCEPT {
         return FAtom(reinterpret_cast<const u8*>(&obj) + _memberOffset, _traits);

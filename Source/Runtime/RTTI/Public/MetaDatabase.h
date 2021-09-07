@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MetaModule.h"
 #include "RTTI_fwd.h"
 
 #include "RTTI/Typedefs.h"
@@ -7,6 +8,7 @@
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
 #include "IO/TextWriter_fwd.h"
+#include "Meta/Optional.h"
 #include "Meta/Singleton.h"
 #include "Thread/ReadWriteLock.h"
 
@@ -30,6 +32,15 @@ public:
 
     static void Create() { singleton_type::Create(); }
     using singleton_type::Destroy;
+
+    /* Traits */
+
+    const PTypeTraits& Traits(const FName& name) const;
+    PTypeTraits TraitsIFP(const FName& name) const;
+    PTypeTraits TraitsIFP(const FStringView& name) const;
+    PTypeTraits TraitsIFP(const FLazyName& name) const;
+
+    auto Traits() const { return _traits.Values(); }
 
     /* Objects */
 
@@ -66,7 +77,18 @@ public:
     const FMetaModule* ModuleIFP(const FName& name) const;
     const FMetaModule* ModuleIFP(const FStringView& name) const;
     const FMetaModule* ModuleIFP(const FLazyName& name) const;
-    const auto& Modules() const { return _modules; }
+
+    auto Modules() const { return _modules.MakeView().Iterable(); }
+
+    template <typename _Facet>
+    auto ModulesByFacet() const {
+        return Modules()
+            .Select([](const FMetaModule* module) -> Meta::TOptional<TPair<const FMetaModule*, const _Facet*>> {
+                if (const _Facet* facet = UserFacetIFP<_Facet>(*module))
+                    return MakePair(module, facet);
+                return Default;
+            });
+    }
 
     /* Classes */
 
@@ -74,7 +96,18 @@ public:
     const FMetaClass* ClassIFP(const FName& name) const;
     const FMetaClass* ClassIFP(const FStringView& name) const;
     const FMetaClass* ClassIFP(const FLazyName& name) const;
-    const auto& Classes() const { return _classes; }
+
+    auto Classes() const { return _classes.Values(); }
+
+    template <typename _Facet>
+    auto ClassesByFacet() const {
+        return Classes()
+            .Select([](const FMetaClass* class_) -> Meta::TOptional<TPair<const FMetaClass*, const _Facet*>> {
+                if (const _Facet* facet = UserFacetIFP<_Facet>(*class_))
+                    return MakePair(class_, facet);
+                return Default;
+            });
+    }
 
     /* Enums */
 
@@ -82,15 +115,18 @@ public:
     const FMetaEnum* EnumIFP(const FName& name) const;
     const FMetaEnum* EnumIFP(const FStringView& name) const;
     const FMetaEnum* EnumIFP(const FLazyName& name) const;
-    const auto& Enums() const { return _enums; }
 
-    /* Traits */
+    auto Enums() const { return _enums.Values(); }
 
-    const PTypeTraits& Traits(const FName& name) const;
-    PTypeTraits TraitsIFP(const FName& name) const;
-    PTypeTraits TraitsIFP(const FStringView& name) const;
-    PTypeTraits TraitsIFP(const FLazyName& name) const;
-    const auto& Traits() const { return _traits; }
+    template <typename _Facet>
+    auto EnumsByFacet() const {
+        return Classes()
+            .Select([](const FMetaEnum* enum_) -> Meta::TOptional<TPair<const FMetaEnum*, const _Facet*>> {
+                if (const _Facet* facet = UserFacetIFP<_Facet>(*enum_))
+                    return MakePair(enum_, facet);
+                return Default;
+            });
+    }
 
 private:
     friend class FMetaDatabaseReadable;

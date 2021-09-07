@@ -16,6 +16,7 @@
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 #include "RTTI/Any.h"
+#include "RTTI/UserFacetHelpers.h"
 
 namespace PPE {
 namespace RTTI {
@@ -214,7 +215,9 @@ bool FMetaObject::RTTI_PropertyCopyFrom(const FName& propName, const FAtom& src)
 
     const FMetaClass* const klass = RTTI_Class();
     if (const FMetaProperty* const prop = RTTI_Property_(klass, propName)) {
-        prop->CopyFrom(*this, src);
+        const FAtom dst = prop->Get(*this);
+        src.Copy(dst);
+        prop->Facets().Decorate(*prop, dst.Data());
         return true;
     }
 
@@ -228,7 +231,9 @@ bool FMetaObject::RTTI_PropertyCopyFrom(const FStringView& propName, const FAtom
 
     const FMetaClass* const klass = RTTI_Class();
     if (const FMetaProperty* const prop = RTTI_Property_(klass, propName)) {
-        prop->CopyFrom(*this, src);
+        const FAtom dst = prop->Get(*this);
+        src.Copy(dst);
+        prop->Facets().Decorate(*prop, dst.Data());
         return true;
     }
 
@@ -242,7 +247,9 @@ bool FMetaObject::RTTI_PropertyMoveFrom(const FName& propName, FAtom& src) NOEXC
 
     const FMetaClass* const klass = RTTI_Class();
     if (const FMetaProperty* const prop = RTTI_Property_(klass, propName)) {
-        prop->MoveFrom(*this, src);
+        const FAtom dst = prop->Get(*this);
+        src.Move(dst);
+        prop->Facets().Decorate(*prop, dst.Data());
         return true;
     }
 
@@ -271,8 +278,10 @@ bool FMetaObject::RTTI_PropertySet(const FName& propName, const FAny& src) {
     const FMetaClass* const klass = RTTI_Class();
     if (const FMetaProperty* const prop = RTTI_Property_(klass, propName)) {
         FAtom const dst = prop->Get(*this);
-        if (src.PromoteCopy(dst))
+        if (src.PromoteCopy(dst)) {
+            prop->Facets().Decorate(*prop, dst.Data());
             return true;
+        }
     }
 
     return false;
@@ -289,12 +298,14 @@ bool FMetaObject::RTTI_PropertyAdd(const FName& propName, const FAny& item) {
         if (const IListTraits* const plist = prop->Traits()->AsList()) {
             if (item.Traits() == plist->ValueTraits()) {
                 plist->AddCopy(dst.Data(), item.InnerAtom());
+                prop->Facets().Decorate(*prop, dst.Data());
                 return true;
             }
             else {
                 STACKLOCAL_ATOM(promoted, plist->ValueTraits());
                 if (item.PromoteCopy(promoted)) {
                     plist->AddMove(dst.Data(), promoted);
+                    prop->Facets().Decorate(*prop, dst.Data());
                     return true;
                 }
             }
@@ -315,12 +326,14 @@ bool FMetaObject::RTTI_PropertyRemove(const FName& propName, const FAny& item) {
         if (const IListTraits* const plist = prop->Traits()->AsList()) {
             if (item.Traits() == plist->ValueTraits()) {
                 plist->Remove(dst.Data(), item.InnerAtom());
+                prop->Facets().Decorate(*prop, dst.Data());
                 return true;
             }
             else {
                 STACKLOCAL_ATOM(promoted, plist->ValueTraits());
                 if (item.PromoteCopy(promoted)) {
                     plist->Remove(dst.Data(), promoted);
+                    prop->Facets().Decorate(*prop, dst.Data());
                     return true;
                 }
             }
@@ -343,6 +356,7 @@ bool FMetaObject::RTTI_PropertyInsert(const FName& propName, const FAny& key, co
             if (pdico->KeyTraits() == key.Traits() &&
                 pdico->ValueTraits() == value.Traits() ) {
                 pdico->AddCopy(dst.Data(), key.InnerAtom(), value.InnerAtom());
+                prop->Facets().Decorate(*prop, dst.Data());
                 return true;
             }
             else {
@@ -355,6 +369,7 @@ bool FMetaObject::RTTI_PropertyInsert(const FName& propName, const FAny& key, co
                     return false;
 
                 pdico->AddMove(dst.Data(), promotedKey, promotedValue);
+                prop->Facets().Decorate(*prop, dst.Data());
                 return true;
             }
         }
@@ -373,12 +388,17 @@ bool FMetaObject::RTTI_PropertyErase(const FName& propName, const FAny& key) {
         FAtom const dst = prop->Get(*this);
         if (const IDicoTraits* const pdico = prop->Traits()->AsDico()) {
             if (pdico->KeyTraits() == key.Traits()) {
-                return pdico->Remove(dst.Data(), key.InnerAtom());
+                if (pdico->Remove(dst.Data(), key.InnerAtom())) {
+                    prop->Facets().Decorate(*prop, dst.Data());
+                    return true;
+                }
+                return false;
             }
             else {
                 STACKLOCAL_ATOM(promotedKey, pdico->KeyTraits());
                 if (key.PromoteCopy(promotedKey)) {
                     pdico->Remove(dst.Data(), promotedKey);
+                    prop->Facets().Decorate(*prop, dst.Data());
                     return true;
                 }
             }
@@ -473,6 +493,15 @@ void FMetaObject::RTTI_VerifyPredicates() const PPE_THROW() {
     if (not (_flags ^ EObjectFlags::Verifying))
         PPE_THROW_IT(FClassException("missing call to RTTI_parent_type::RTTI_VerifyPredicates()", RTTI_Class()));
 
+    const FMetaClass* const metaClass = RTTI_Class();
+
+    // validate class facets
+    metaClass->Facets().Validate(*metaClass, this);
+
+    // validate property facets
+    for (const FMetaProperty* prop : metaClass->AllProperties())
+        prop->Facets().Decorate(*prop, prop->Get(*this).Data());
+
     _flags = _flags - EObjectFlags::Verifying;
 }
 #endif
@@ -481,16 +510,22 @@ void FMetaObject::RTTI_VerifyPredicates() const PPE_THROW() {
 //----------------------------------------------------------------------------
 FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaModule* module) NOEXCEPT
 :   FMetaClass(id, FName("FMetaObject"), EClassFlags::Abstract, module) {
+    // Register common user facets
+
+    Facets().Emplace<FDescriptionFacet>("base class of any object");
+
+    // Register common RTTI functions
+
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertySet>(
-        RTTI::FName("set"), { "propertyName", "value" }) );
+        RTTI::FName("_set"), { "propertyName", "value" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyAdd>(
-        RTTI::FName("add"), { "propertyName", "item" }) );
+        RTTI::FName("_add"), { "propertyName", "item" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyRemove>(
-        RTTI::FName("remove"), { "propertyName", "item" }) );
+        RTTI::FName("_remove"), { "propertyName", "item" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyInsert>(
-        RTTI::FName("insert"), { "propertyName", "key", "value" }) );
+        RTTI::FName("_insert"), { "propertyName", "key", "value" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyErase>(
-        RTTI::FName("erase"), { "propertyName", "key" }) );
+        RTTI::FName("_erase"), { "propertyName", "key" }) );
 }
 //----------------------------------------------------------------------------
 const FMetaClass* FMetaObject::RTTI_FMetaClass::Parent() const NOEXCEPT {

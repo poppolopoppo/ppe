@@ -2,10 +2,12 @@
 
 #include "RTTI_fwd.h"
 
-#include "Container/Vector.h"
-#include "IO/TextWriter_fwd.h"
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
+#include "RTTI/UserFacet.h"
+
+#include "Container/Vector.h"
+#include "IO/TextWriter_fwd.h"
 
 namespace PPE {
 namespace RTTI {
@@ -42,6 +44,9 @@ public:
 
     bool IsFlags() const        { return (_flags ^ EEnumFlags::Flags        ); }
     bool IsDeprecated() const   { return (_flags ^ EEnumFlags::Deprecated   ); }
+
+    FMetaEnumFacet& Facets() { return _facets; }
+    const FMetaEnumFacet& Facets() const { return _facets; }
 
     const FMetaEnumValue& DefaultValue() const { return (_values.front()/* always the first value as the default */); }
 
@@ -80,6 +85,7 @@ private:
     size_t _sizeInBytes;
     const FMetaModule* _module;
     VECTORINSITU(MetaEnum, FMetaEnumValue, 6) _values;
+    FMetaEnumFacet _facets;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

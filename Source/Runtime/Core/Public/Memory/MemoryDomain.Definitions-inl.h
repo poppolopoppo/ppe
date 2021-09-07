@@ -77,6 +77,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(NativeTypes,              RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(OpaqueData,               RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Script,                   RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(TypeNames,                RTTI)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(UserFacet,                RTTI)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Serialize,                      UsedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Binary,                   Serialize)

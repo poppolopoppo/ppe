@@ -5,6 +5,7 @@
 #include "RTTI/Atom.h"
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
+#include "RTTI/UserFacet.h"
 
 #include "Container/Vector.h"
 #include "IO/TextWriter_fwd.h"
@@ -39,6 +40,9 @@ public:
     PTypeTraits Traits() const { return union_cast_t{ _traitsAndFlags.Get() }.Traits; }
     EParameterFlags Flags() const { return EParameterFlags(_traitsAndFlags.Flag01()); }
 
+    FMetaParameterFacet& Facets() { return _facets; }
+    const FMetaParameterFacet& Facets() const { return _facets; }
+
     bool IsOutput() const       { return _traitsAndFlags.Flag0(); }
     bool IsOptional() const     { return _traitsAndFlags.Flag1(); }
 
@@ -52,6 +56,7 @@ private:
 
     FName _name;
     Meta::TPointerWFlags<void> _traitsAndFlags;
+    FMetaParameterFacet _facets;
 };
 PPE_ASSUME_TYPE_AS_POD(FMetaParameter);
 //----------------------------------------------------------------------------
@@ -86,10 +91,16 @@ public:
         invoke_func invoke ) NOEXCEPT;
     ~FMetaFunction();
 
+    FMetaFunction(FMetaFunction&& ) = default;
+    FMetaFunction& operator =(FMetaFunction&& ) = default;
+
     const FName& Name() const { return _name; }
     EFunctionFlags Flags() const { return _flags; }
     const PTypeTraits& Result() const { return _result; }
     TMemoryView<const FMetaParameter> Parameters() const { return _parameters.MakeConstView(); }
+
+    FMetaFunctionFacet& Facets() { return _facets; }
+    const FMetaFunctionFacet& Facets() const { return _facets; }
 
     bool IsConst() const        { return (_flags ^ EFunctionFlags::Const        ); }
     bool IsPublic() const       { return (_flags ^ EFunctionFlags::Public       ); }
@@ -128,6 +139,7 @@ private:
     EFunctionFlags _flags;
     PTypeTraits _result;
     VECTORINSITU(MetaFunction, FMetaParameter, 4) _parameters;
+    FMetaFunctionFacet _facets;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
