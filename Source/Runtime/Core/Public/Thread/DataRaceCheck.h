@@ -123,7 +123,7 @@ public:
         ,   WasLocked(Resource.LockExclusive())
         {}
         ~FScopeLockExclusive() NOEXCEPT {
-            if (not WasLocked)
+            if (WasLocked)
                 Resource.UnlockExclusive();
         }
     };
@@ -136,7 +136,7 @@ public:
         ,   WasLocked(Resource.LockShared())
         {}
         ~FScopeLockShared() NOEXCEPT {
-            if (not WasLocked)
+            if (WasLocked)
                 Resource.UnlockShared();
         }
     };
