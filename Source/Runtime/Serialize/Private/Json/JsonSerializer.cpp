@@ -258,7 +258,7 @@ struct TJson_RTTI_traits<TScalarMatrix<T, _W, _H>> {
     }
 };
 //----------------------------------------------------------------------------
-class FRTTI_to_Json_ : public RTTI::IAtomVisitor {
+class FRTTI_to_Json_ final : public RTTI::IAtomVisitor {
 public:
     FRTTI_to_Json_() = default;
 
