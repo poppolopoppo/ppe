@@ -42,7 +42,7 @@ public:
 
     EState State = EState::Freed;
 
-    ~TInSituAllocator() {
+    FORCE_INLINE ~TInSituAllocator() {
         Assert_NoAssume(EState::Freed == State);
     }
 #endif
@@ -92,7 +92,7 @@ public:
 #endif
     }
 
-    FAllocatorBlock Allocate(size_t s) NOEXCEPT {
+    FORCE_INLINE FAllocatorBlock Allocate(size_t s) NOEXCEPT {
 #if USE_PPE_ASSERT
         Assert(s);
         Assert(s == SizeInBytes);
@@ -106,7 +106,7 @@ public:
         return FAllocatorBlock{ std::addressof(InSitu), SizeInBytes };
     }
 
-    void Deallocate(FAllocatorBlock b) NOEXCEPT {
+    FORCE_INLINE void Deallocate(FAllocatorBlock b) NOEXCEPT {
 #if USE_PPE_ASSERT
         Assert(EState::Allocated == State);
         Assert(b.Data == std::addressof(InSitu));
@@ -237,3 +237,5 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TInSituAllocator<CODE3264(48,96)>;

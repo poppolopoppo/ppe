@@ -20,7 +20,7 @@ STATIC_ASSERT(sizeof(u224) == sizeof(u128) + sizeof(u96));
 STATIC_ASSERT(sizeof(u256) == sizeof(u128) * 2);
 //----------------------------------------------------------------------------
 STATIC_ASSERT(has_stealallocatorblock_v<FMallocator, FMallocator>);
-STATIC_ASSERT(has_stealallocatorblock_v<ALLOCATOR(Container), ALLOCATOR(Internal)>);
+STATIC_ASSERT(has_stealallocatorblock_v<ALLOCATOR(Container), ALLOCATOR(Diagnostic)>);
 #if USE_PPE_MEMORYDOMAINS
 STATIC_ASSERT(not TAllocatorTraits<FMallocator>::has_memory_tracking::value);
 STATIC_ASSERT(TAllocatorTraits<ALLOCATOR(Container)>::has_memory_tracking::value);

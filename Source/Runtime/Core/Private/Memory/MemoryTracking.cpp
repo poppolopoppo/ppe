@@ -19,16 +19,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMemoryTracking& FMemoryTracking::PooledMemory() {
-    return MEMORYDOMAIN_TRACKING_DATA(PooledMemory);
-}
+namespace {
 //----------------------------------------------------------------------------
-FMemoryTracking& FMemoryTracking::UsedMemory() {
-    return MEMORYDOMAIN_TRACKING_DATA(UsedMemory);
-}
-//----------------------------------------------------------------------------
-FMemoryTracking& FMemoryTracking::ReservedMemory() {
-    return MEMORYDOMAIN_TRACKING_DATA(ReservedMemory);
+static bool ShouldTrackRecursively_(const FMemoryTracking& trackingData) {
+    return (!!trackingData.Parent() & (FMemoryTracking::Recursive == trackingData.Mode()));
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
@@ -55,7 +49,7 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
         Fmt::CountOfElements(totalAllocs),
         Fmt::Percentage(smallAllocs, totalAllocs) );
 
-    if (FCurrentProcess::Get().StartedWithDebugger()) {
+    if (FCurrentProcess::StartedWithDebugger()) {
         static FCriticalSection GBarrier;
         const FCriticalScope scopeLock(&GBarrier);
 
@@ -77,19 +71,36 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
 }
 #endif
 //----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::PooledMemory() {
+    return MEMORYDOMAIN_TRACKING_DATA(PooledMemory);
+}
+//----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::UsedMemory() {
+    return MEMORYDOMAIN_TRACKING_DATA(UsedMemory);
+}
+//----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::ReservedMemory() {
+    return MEMORYDOMAIN_TRACKING_DATA(ReservedMemory);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FMemoryTracking::FMemoryTracking(
     const char* optionalName /*= "unknown"*/,
-    FMemoryTracking* optionalParent /*= nullptr*/)
+    FMemoryTracking* optionalParent /*= nullptr*/,
+    EMode mode/* = Recursive */) NOEXCEPT
 :   Node{ nullptr, nullptr } {
-    Reparent(optionalName, optionalParent);
+    Reparent(optionalName, optionalParent, mode);
 }
 //----------------------------------------------------------------------------
 bool FMemoryTracking::IsChildOf(const FMemoryTracking& other) const {
     if (&other == this)
         return true;
-    if (_parent)
+    if (_parent.Get())
         return _parent->IsChildOf(other);
 
     return false;
@@ -113,7 +124,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize, const FMemory
         WarnAboutSmallAllocs_(*this, _system);
 #endif
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->Allocate(userSize, systemSize, this);
 }
 //----------------------------------------------------------------------------
@@ -125,7 +136,7 @@ void FMemoryTracking::Deallocate(size_t userSize, size_t systemSize, const FMemo
     _user.Deallocate(userSize);
     _system.Deallocate(systemSize);
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->Deallocate(userSize, systemSize, this);
 }
 //----------------------------------------------------------------------------
@@ -135,7 +146,7 @@ void FMemoryTracking::AllocateUser(size_t size, const FMemoryTracking*/* = nullp
     _user.Allocate(size);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->AllocateUser(size, this);
 }
 //----------------------------------------------------------------------------
@@ -145,7 +156,7 @@ void FMemoryTracking::DeallocateUser(size_t size, const FMemoryTracking*/* = nul
     _user.Deallocate(size);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->DeallocateUser(size, this);
 }
 //----------------------------------------------------------------------------
@@ -161,7 +172,7 @@ void FMemoryTracking::AllocateSystem(size_t size, const FMemoryTracking* child/*
         WarnAboutSmallAllocs_(*this, _system);
 #endif
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->AllocateSystem(size, this);
 }
 //----------------------------------------------------------------------------
@@ -171,7 +182,7 @@ void FMemoryTracking::DeallocateSystem(size_t size, const FMemoryTracking*/* = n
     _system.Deallocate(size);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->DeallocateSystem(size, this);
 }
 //----------------------------------------------------------------------------
@@ -183,7 +194,7 @@ void FMemoryTracking::ReleaseBatch(size_t numAllocs, size_t userTotal, size_t sy
     _user.ReleaseBatch(numAllocs, userTotal);
     _system.ReleaseBatch(numAllocs, systemTotal);
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->ReleaseBatch(numAllocs, userTotal, systemTotal, this);
 }
 //----------------------------------------------------------------------------
@@ -193,7 +204,7 @@ void FMemoryTracking::ReleaseBatchUser(size_t numAllocs, size_t totalSize, const
 
     _user.ReleaseBatch(numAllocs, totalSize);
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->ReleaseBatchUser(numAllocs, totalSize, this);
 }
 //----------------------------------------------------------------------------
@@ -204,7 +215,7 @@ void FMemoryTracking::ReleaseBatchSystem(size_t numAllocs, size_t totalSize, con
     _system.ReleaseBatch(numAllocs, totalSize);
     Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
-    if (_parent)
+    if (ShouldTrackRecursively_(*this))
         _parent->ReleaseBatchSystem(numAllocs, totalSize, this);
 }
 //----------------------------------------------------------------------------
@@ -217,7 +228,7 @@ void FMemoryTracking::ReleaseAllUser(const FMemoryTracking*/* = nullptr */) NOEX
         Assert_NoAssume(_user.TotalSize <= _system.TotalSize);
 
         // DON'T call ReleaseAllUser() recursively since it would completely empty the parents !
-        if (_parent)
+        if (ShouldTrackRecursively_(*this))
             _parent->ReleaseBatchUser(n, sz, this);
     }
     else {

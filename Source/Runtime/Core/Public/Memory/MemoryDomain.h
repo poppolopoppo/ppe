@@ -70,12 +70,14 @@ struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_CORE_API FMemoryTracking& Trac
         using MEMORYDOMAIN_NAME(_Name) = MEMORYDOMAIN_NAME(_Parent); \
     }
 #   endif
+#   define MEMORYDOMAIN_DETAILLED_IMPL(_Name, _Parent) MEMORYDOMAIN_IMPL(_Name, _Parent)
 #endif
 
 #include "Memory/MemoryDomain.Definitions-inl.h"
 
 #undef MEMORYDOMAIN_COLLAPSABLE_IMPL
 #undef MEMORYDOMAIN_GROUP_IMPL
+#undef MEMORYDOMAIN_DETAILLED_IMPL
 #undef MEMORYDOMAIN_IMPL
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

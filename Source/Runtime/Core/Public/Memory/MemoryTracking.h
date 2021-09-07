@@ -4,6 +4,7 @@
 
 #include "Container/IntrusiveList.h"
 #include "IO/TextWriter_fwd.h"
+#include "Meta/PointerWFlags.h"
 #include "Meta/TypeTraits.h"
 
 namespace PPE {
@@ -15,6 +16,11 @@ class TMemoryView;
 class PPE_CORE_API FMemoryTracking {
 public:
     using counter_t = std::atomic<size_t>;
+
+    enum EMode {
+        Recursive   = 0, // will call _parent recursively for each alloc
+        Isolated    = 1, // will ignore _parent when allocating
+    };
 
     struct FSnapshot {
         i64 NumAllocs;
@@ -51,13 +57,16 @@ public:
 
     explicit FMemoryTracking(
         const char* optionalName = "unknown",
-        FMemoryTracking* parent = nullptr );
+        FMemoryTracking* parent = nullptr,
+        EMode mode = Recursive ) NOEXCEPT;
 
     const char* Name() const { return _name; }
     size_t Level() const { return _level; }
 
-    FMemoryTracking* Parent() { return _parent; }
-    const FMemoryTracking* Parent() const { return _parent; }
+    FMemoryTracking* Parent() { return _parent.Get(); }
+    const FMemoryTracking* Parent() const { return _parent.Get(); }
+
+    EMode Mode() const { return static_cast<EMode>(_parent.Flag01()); }
 
     FSnapshot User() const { return _user.Snapshot(); }
     FSnapshot System() const { return _system.Snapshot(); }
@@ -84,10 +93,10 @@ public:
     // used by linear heaps :
     void ReleaseAllUser(const FMemoryTracking* child = nullptr) NOEXCEPT;
 
-    // shouldn't be called only *before* registration!
-    void Reparent(const char* newName, FMemoryTracking* parent) NOEXCEPT {
+    // should be called only *before* registration!
+    void Reparent(const char* newName, FMemoryTracking* parent, EMode mode = Recursive) NOEXCEPT {
         _name = newName;
-        _parent = parent;
+        _parent.Reset(parent, static_cast<uintptr_t>(mode));
         _level = (parent ? parent->_level + 1 : 0);
     }
 
@@ -101,7 +110,7 @@ private:
 
     const char* _name;
     size_t _level;
-    FMemoryTracking* _parent;
+    Meta::TPointerWFlags<FMemoryTracking> _parent;
 
 public:
     TIntrusiveListNode<FMemoryTracking> Node;

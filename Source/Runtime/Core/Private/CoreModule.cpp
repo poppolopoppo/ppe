@@ -6,6 +6,7 @@
 #include "Modular/ModuleRegistration.h"
 
 #include "Allocator/Allocation.h"
+#include "Allocator/BitmapHeap.h"
 #include "Allocator/New.h"
 #include "Allocator/StlAllocator.h"
 #include "Diagnostic/CurrentProcess.h"
@@ -108,6 +109,9 @@ void FCoreModule::DutyCycle(FModularDomain& domain) {
 //----------------------------------------------------------------------------
 void FCoreModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
     IModuleInterface::ReleaseMemory(domain);
+
+    // release memory in cached bitmap heap pages
+    FBitmapBasicPage::ReleaseCacheMemory();
 
     // will release cached memory in every worker thread
     FThreadPoolStartup::ReleaseMemory();

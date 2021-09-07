@@ -3,8 +3,10 @@
 #include "Allocator/BitmapHeap.h"
 
 #include "Allocator/InitSegAllocator.h"
+#include "Allocator/SystemPageAllocator.h"
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
-#include "Memory/VirtualMemory.h"
+#include "Thread/CriticalSection.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -12,35 +14,180 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-using FBitmapPageGlobalCache_ = TVirtualMemoryPool<TBitmapPage<ALLOCATION_GRANULARITY>>;
-static FBitmapPageGlobalCache_& BitmapPageGlobalCache_() NOEXCEPT {
-    using wrapper_t = TInitSegAlloc<FBitmapPageGlobalCache_>;
+struct FBitmapPagePool_ : FSystemPageAllocator {
+    using allocator_traits = TAllocatorTraits<FSystemPageAllocator>;
+
+    STATIC_CONST_INTEGRAL(u32, BlockSize, sizeof(FBitmapBasicPage));
+    STATIC_CONST_INTEGRAL(u32, ChunkSize, FSystemPageAllocator::PageSize);
+    STATIC_CONST_INTEGRAL(u32, NumBlocksPerChunk, ChunkSize / BlockSize - 1/* first block stores a FChunk */);
+
+    struct FChunk {
+        FChunk* NextChunk{ nullptr };
+        void** FreePages{ nullptr };
+        u32 NumUsedPages{ 0 };
+        u32 HighestOffset{ BlockSize/* first block is used by (*this) */ };
+        byte* Data() { return reinterpret_cast<byte*>(this); }
+    };
+    STATIC_ASSERT(sizeof(FChunk) <= BlockSize);
+
+    FCriticalSection Barrier;
+    FChunk* UsedChunks{ nullptr };
+    u32 NumFreePages{ 0 };
+
+    static FBitmapPagePool_& Get() NOEXCEPT {
+        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBitmapPagePool_>, GInstance);
+        return GInstance;
+    }
+
 #if USE_PPE_MEMORYDOMAINS
-    ONE_TIME_INITIALIZE(wrapper_t, GInstance, MEMORYDOMAIN_TRACKING_DATA(BitmapCache) );
-#else
-    ONE_TIME_DEFAULT_INITIALIZE(wrapper_t, GInstance);
+    static FMemoryTracking& TrackingData() {
+        return MEMORYDOMAIN_TRACKING_DATA(BitmapHeap);
+    }
 #endif
-    return GInstance;
-}
+
+    FBitmapPagePool_() = default;
+
+    ~FBitmapPagePool_() {
+        const FCriticalScope scopeLock(&Barrier);
+        while (UsedChunks)
+            ReleaseUnusedChunk_(UsedChunks, nullptr);
+    }
+
+    FBitmapBasicPage* Allocate() {
+        const FCriticalScope scopeLock(&Barrier);
+
+        void* result;
+        if (UsedChunks && UsedChunks->HighestOffset + BlockSize <= ChunkSize) {
+            result = (UsedChunks->Data() + UsedChunks->HighestOffset);
+            UsedChunks->HighestOffset += BlockSize;
+            ++UsedChunks->NumUsedPages;
+        }
+        else {
+            result = nullptr;
+
+            for (FChunk* ch = UsedChunks; ch; ch = ch->NextChunk) {
+                if (ch->FreePages) {
+                    result = ch->FreePages;
+                    ch->FreePages = (void**)*ch->FreePages;
+                    ++ch->NumUsedPages;
+                    break;
+                }
+            }
+
+            if (Unlikely(nullptr == result))
+                result = AllocateFromNewChunk_();
+        }
+
+        Assert(NumFreePages > 0);
+        --NumFreePages;
+
+        Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, result));
+        ONLY_IF_MEMORYDOMAINS(TrackingData().AllocateUser(BlockSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(result, BlockSize));
+        return INPLACE_NEW(result, FBitmapBasicPage);
+    }
+
+    void Deallocate(FBitmapBasicPage* p) {
+        Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
+        const FCriticalScope scopeLock(&Barrier);
+
+        Assert(UsedChunks);
+        ONLY_IF_MEMORYDOMAINS(TrackingData().DeallocateUser(BlockSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(p, BlockSize));
+
+        ++NumFreePages;
+
+        FChunk* const ch = (FChunk*)Meta::RoundToPrev(reinterpret_cast<uintptr_t>(p), ChunkSize);
+        Assert(ch->NumUsedPages > 0);
+        if (Unlikely(--ch->NumUsedPages == 0 && NumFreePages > NumBlocksPerChunk))
+            ReleaseUnusedChunk_(ch);
+    }
+
+    void ReleaseCacheMemory() {
+        const FCriticalScope scopeLock(&Barrier);
+
+        for (FChunk* prv = nullptr, *ch = UsedChunks; ch; ) {
+            FChunk* const nxt = ch->NextChunk;
+            if (0 == ch->NumUsedPages) // release any unused chunk
+                ReleaseUnusedChunk_(ch, prv);
+            else
+                prv = ch;
+            ch = nxt;
+        }
+    }
+
+private:
+    NO_INLINE void* AllocateFromNewChunk_() {
+        FChunk* const ch = INPLACE_NEW(
+            allocator_traits::Allocate(*this, ChunkSize).Data,
+            FChunk );
+        Assert(Meta::IsAligned(ChunkSize, ch));
+        ch->NextChunk = UsedChunks;
+        UsedChunks = ch;
+
+        ONLY_IF_MEMORYDOMAINS(TrackingData().AllocateSystem(ChunkSize));
+
+        Assert(ch->HighestOffset + BlockSize < ChunkSize);
+        Assert(0 == ch->NumUsedPages);
+        void* const result = (ch->Data() + ch->HighestOffset);
+        ch->HighestOffset += BlockSize;
+        ch->NumUsedPages = 1;
+
+        NumFreePages += NumBlocksPerChunk; // will be decremented in callee
+        return result;
+    }
+
+    void ReleaseUnusedChunk_(FChunk* unused, FChunk* prev) {
+        Assert(0 == unused->NumUsedPages);
+        Assert(NumFreePages >= NumBlocksPerChunk);
+
+        ONLY_IF_MEMORYDOMAINS(TrackingData().DeallocateSystem(ChunkSize));
+
+        NumFreePages -= NumBlocksPerChunk;
+
+        if (prev) {
+            Assert(unused == prev->NextChunk);
+            prev->NextChunk = unused->NextChunk;
+        }
+        else {
+            Assert(UsedChunks == unused);
+            UsedChunks = unused->NextChunk;
+        }
+
+        Meta::Destroy(unused);
+        allocator_traits::Deallocate(*this, FAllocatorBlock{ unused, ChunkSize });
+    }
+
+    NO_INLINE void ReleaseUnusedChunk_(FChunk* unused) {
+        Assert(unused);
+
+        // need to look for chunk predecessor
+        for (FChunk* prv = nullptr, *ch = UsedChunks; ch; prv = ch, ch = ch->NextChunk) {
+            if (ch == unused) {
+                ReleaseUnusedChunk_(unused, prv);
+                return;
+            }
+        }
+
+        AssertNotReached(); // this chunk doesn't belong to this pool!?
+    }
+};
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FBitmapPageCache::ReleaseCacheMemory() NOEXCEPT {
-    BitmapPageGlobalCache_().ReleaseCacheMemory(false);
+FBitmapBasicPage* FBitmapBasicPage::Allocate() {
+    return FBitmapPagePool_::Get().Allocate();
 }
 //----------------------------------------------------------------------------
-void* FBitmapPageCache::GragPage_(size_t sz) NOEXCEPT {
-    Assert(FBitmapPageGlobalCache_::BlockSize == sz);
-    UNUSED(sz);
-    return BitmapPageGlobalCache_().Allocate();
+void FBitmapBasicPage::Deallocate(FBitmapBasicPage* p) NOEXCEPT {
+    Assert(p);
+    FBitmapPagePool_::Get().Deallocate(p);
 }
 //----------------------------------------------------------------------------
-void FBitmapPageCache::ReleasePage_(void* ptr, size_t sz) NOEXCEPT {
-    Assert(FBitmapPageGlobalCache_::BlockSize == sz);
-    UNUSED(sz);
-    BitmapPageGlobalCache_().Deallocate(ptr);
+void FBitmapBasicPage::ReleaseCacheMemory() NOEXCEPT {
+    FBitmapPagePool_::Get().ReleaseCacheMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

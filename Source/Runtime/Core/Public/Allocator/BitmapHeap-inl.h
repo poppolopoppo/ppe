@@ -226,7 +226,7 @@ inline void TBitmapPage<_PageSize>::DebugInfo(FBitmapPageInfo* pinfo) const NOEX
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Traits>
 TBitmapHeap<_Traits>::TBitmapHeap() NOEXCEPT
-:   Pages(MEMORYDOMAIN_TRACKING_DATA(BitmapCache))
+:   Pages(MEMORYDOMAIN_TRACKING_DATA(BitmapHeap))
 {}
 #endif
 //----------------------------------------------------------------------------
@@ -243,7 +243,7 @@ TBitmapHeap<_Traits>::~TBitmapHeap() {
         return true;
     });
 
-    FBitmapPageCache::ReleaseCacheMemory();
+    FBitmapBasicPage::ReleaseCacheMemory();
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>
@@ -424,7 +424,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
             Assert_NoAssume(mem.TotalSizeCommitted < 400*1024*1024);
 #endif
 
-            freePage = FBitmapPageCache::GrabPage<Granularity>();
+            freePage = static_cast<TBitmapPage<Granularity>*>(FBitmapBasicPage::Allocate());
             Assert(freePage);
 
             freePage->Reset(traits_type::PageReserve(BitmapSize, BitmapSize));
@@ -435,7 +435,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
                 Pages.Insert(freePage->vAddressSpace, freePage);
             }
             else {
-                FBitmapPageCache::ReleasePage(freePage);
+                FBitmapBasicPage::Deallocate(freePage);
                 freePage = nullptr; // OOM
             }
         }
@@ -506,7 +506,7 @@ template <typename _Traits>
 void TBitmapHeap<_Traits>::GarbageCollect() {
     if (Likely(RWLock.TryLockWrite())) {
         for (page_type* page = FreePage.load(std::memory_order_relaxed); page != GDummyPage;) {
-            page_type* const pnext = page->NextPage;
+            page_type* const pnext = static_cast<page_type*>(page->NextPage);
             Assert(pnext);
 
             if (page->Empty()) {
@@ -544,7 +544,7 @@ void TBitmapHeap<_Traits>::ForceGarbageCollect() {
         FreePage = GDummyPage;
     }
     { // trigger page cache cleanup
-        FBitmapPageCache::ReleaseCacheMemory();
+        FBitmapBasicPage::ReleaseCacheMemory();
     }
 }
 //----------------------------------------------------------------------------
@@ -621,7 +621,7 @@ auto TBitmapHeap<_Traits>::FindFreePage_AssumeLocked_(u32 sizeInBytes) NOEXCEPT 
     Assert_NoAssume(Meta::IsAligned(Granularity, sizeInBytes));
 
     page_type* freePage = FreePage.load(std::memory_order_relaxed);
-    for (; freePage != GDummyPage; freePage = freePage->NextPage) {
+    for (; freePage != GDummyPage; freePage = static_cast<page_type*>(freePage->NextPage)) {
         if (freePage->LargestBlockAvailable() >= sizeInBytes)
             return freePage;
     }
@@ -670,7 +670,7 @@ void TBitmapHeap<_Traits>::ReleaseUnusedPage_AssumeLocked_(page_type* page) NOEX
 
     ONLY_IF_ASSERT(page->vAddressSpace = nullptr);
 
-    FBitmapPageCache::ReleasePage(page);
+    FBitmapBasicPage::Deallocate(page);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/VirtualMemory.h"
+#include "Memory/VirtualMemoryCache.h"
 #include "Thread/AtomicSpinLock.h"
 
 #if USE_PPE_ASSERT

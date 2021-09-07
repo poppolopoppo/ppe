@@ -34,12 +34,12 @@ CONSTEXPR size_t MemoryDomainsMaxCount = 200;
 //----------------------------------------------------------------------------
 class FMemoryDomain : public FMemoryTracking {
 public:
-    FMemoryDomain(const char* name, FMemoryTracking* parent)
-    :   FMemoryTracking(name, parent) {
+    FMemoryDomain(const char* name, FMemoryTracking* parent, EMode mode) NOEXCEPT
+    :   FMemoryTracking(name, parent, mode) {
         RegisterTrackingData(this);
     }
 
-    ~FMemoryDomain() {
+    ~FMemoryDomain() NOEXCEPT {
         UnregisterTrackingData(this);
     }
 
@@ -51,19 +51,19 @@ public:
 //----------------------------------------------------------------------------
 namespace MemoryDomain {
     FMemoryTracking& MEMORYDOMAIN_NAME(GpuMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "GpuMemory", nullptr);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "GpuMemory", nullptr, FMemoryTracking::Recursive);
         return GInstance;
     }
     FMemoryTracking& MEMORYDOMAIN_NAME(PooledMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "PooledMemory", nullptr);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "PooledMemory", nullptr, FMemoryTracking::Recursive);
         return GInstance;
     }
     FMemoryTracking& MEMORYDOMAIN_NAME(ReservedMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "ReservedMemory", nullptr);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "ReservedMemory", nullptr, FMemoryTracking::Recursive);
         return GInstance;
     }
     FMemoryTracking& MEMORYDOMAIN_NAME(UsedMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr, FMemoryTracking::Recursive);
         return GInstance;
     }
 }
@@ -81,6 +81,7 @@ namespace MemoryDomain {
 #   include "Memory/MemoryDomain.Definitions-inl.h"
 #   undef MEMORYDOMAIN_COLLAPSABLE_IMPL
 #   undef MEMORYDOMAIN_GROUP_IMPL
+#   undef MEMORYDOMAIN_DETAILLED_IMPL
 #   undef MEMORYDOMAIN_IMPL
 #endif
 //----------------------------------------------------------------------------
@@ -89,7 +90,14 @@ namespace MemoryDomain {
 #   define MEMORYDOMAIN_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \
         FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
-            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &MEMORYDOMAIN_TRACKING_DATA(_Parent), FMemoryTracking::Recursive); \
+            return GInstance; \
+        } \
+    }
+#   define MEMORYDOMAIN_DETAILLED_IMPL(_Name, _Parent) \
+    namespace MemoryDomain { \
+        FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &MEMORYDOMAIN_TRACKING_DATA(_Parent), FMemoryTracking::Isolated); \
             return GInstance; \
         } \
     }
@@ -100,6 +108,7 @@ namespace MemoryDomain {
 #include "Memory/MemoryDomain.Definitions-inl.h"
 #undef MEMORYDOMAIN_COLLAPSABLE_IMPL
 #undef MEMORYDOMAIN_GROUP_IMPL
+#undef MEMORYDOMAIN_DETAILLED_IMPL
 #undef MEMORYDOMAIN_IMPL
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_MEMORYDOMAINS

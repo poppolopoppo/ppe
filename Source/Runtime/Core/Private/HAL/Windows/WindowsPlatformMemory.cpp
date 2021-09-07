@@ -46,7 +46,7 @@ static FWindowsPlatformMemory::FConstants FetchConstants_() {
 
     AssertRelease(FWindowsPlatformMemory::PageSize == result.PageSize);
     AssertRelease(FWindowsPlatformMemory::CacheLineSize == result.CacheLineSize);
-    AssertRelease(FWindowsPlatformMemory::AllocationGranularity == result.AllocationGranularity); // some code is dependent on this assumption
+    AssertRelease(ALLOCATION_GRANULARITY == result.AllocationGranularity); // some code is dependent on this assumption
 
     return result;
 }
@@ -56,7 +56,7 @@ static FWindowsPlatformMemory::FConstants FetchConstants_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 const size_t FWindowsPlatformMemory::AllocationGranularity{
-    FWindowsPlatformMemory::Constants().AllocationGranularity
+    checked_cast<size_t>(Constants().AllocationGranularity)
 };
 //----------------------------------------------------------------------------
 auto FWindowsPlatformMemory::Constants() -> const FConstants& {

@@ -636,12 +636,12 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
     ONLY_IF_MEMORYDOMAINS(BinnedTrackingDataStart_());
 #endif
 
-    const u32 osPageSize = PPE_MALLOCBINNED2_OS_PAGESIZE;
-    const u32 osGranularity = PPE_MALLOCBINNED2_OS_GRANULARITY;
-    const u32 maxChunkSize = PPE_MALLOCBINNED2_CHUNK_MAXSIZE;
-    const u32 chunkOverheadSize = PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE;
-    const u32 minBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MINBLOCKS;
-    const u32 maxBlocksPerChunk = PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS;
+    const u32 osPageSize = checked_cast<u32>(PPE_MALLOCBINNED2_OS_PAGESIZE);
+    const u32 osGranularity = checked_cast<u32>(PPE_MALLOCBINNED2_OS_GRANULARITY);
+    const u32 maxChunkSize = checked_cast<u32>(PPE_MALLOCBINNED2_CHUNK_MAXSIZE);
+    const u32 chunkOverheadSize = checked_cast<u32>(PPE_MALLOCBINNED2_CHUNK_OVERHEADSIZE);
+    const u32 minBlocksPerChunk = checked_cast<u32>(PPE_MALLOCBINNED2_CHUNK_MINBLOCKS);
+    const u32 maxBlocksPerChunk = checked_cast<u32>(PPE_MALLOCBINNED2_CHUNK_MAXBLOCKS);
 
     for (u32 i = 0; i < PPE_MALLOCBINNED2_SMALLPOOL_COUNT; ++i) {
         FSmallPoolInfo& pool = SmallPools[i];

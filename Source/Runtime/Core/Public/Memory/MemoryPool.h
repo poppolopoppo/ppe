@@ -76,6 +76,8 @@ public:
 
     bool CheckInvariants() const;
 
+    static CONSTEXPR size_t AllocationSize() { return ChunkAllocationSize; }
+
 private:
     using FBitTree_ = TBitTree<size_t, false>;
 
@@ -496,7 +498,8 @@ TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::~TMemoryPoo
     totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(exclusivePool->ExhaustedChunks.AllocationSize());
     totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(sizeof(FPoolChunk_*) * MaxChunks);
 
-    const FAllocatorBlock blk{ exclusivePool->CommittedChunks.Bits, totalSizeInBytes };
+    FAllocatorBlock blk{ exclusivePool->CommittedChunks.Bits, totalSizeInBytes };
+    blk.SizeInBytes = allocator_traits::SnapSize(*exclusivePool, totalSizeInBytes);
     allocator_traits::Deallocate(*exclusivePool, blk);
 
 #if USE_PPE_ASSERT
@@ -531,7 +534,8 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Initia
     const size_t chunksOffsetInPtrs = (totalSizeInBytes / sizeof(FPoolChunk_*));
     totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(sizeof(FPoolChunk_*) * MaxChunks);
 
-    const FAllocatorBlock blk = allocator_traits::Allocate(pool, totalSizeInBytes);
+    const FAllocatorBlock blk = allocator_traits::Allocate(pool,
+        allocator_traits::SnapSize(pool, totalSizeInBytes) );
     pool.CommittedChunks.Initialize(static_cast<FBitTree_::word_t*>(blk.Data) + committedChunksOffsetInWords, false);
     pool.ExhaustedChunks.Initialize(static_cast<FBitTree_::word_t*>(blk.Data) + exhaustedChunksOffsetInWords, true);
     pool.pChunks = (static_cast<FPoolChunk_**>(blk.Data) + chunksOffsetInPtrs);

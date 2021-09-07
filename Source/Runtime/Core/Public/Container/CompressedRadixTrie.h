@@ -2,10 +2,11 @@
 
 #include "Core_fwd.h"
 
+#include "Allocator/AllocatorBase.h"
+#include "Allocator/SystemPageAllocator.h"
 #include "HAL/PlatformMaths.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
-#include "Memory/VirtualMemory.h"
 #include "Thread/ReadWriteLock.h"
 
 namespace PPE {
@@ -16,32 +17,34 @@ namespace PPE {
 //  - Key must have 8 lower bits set to 0
 //  - Value must have first lower bit set to 0
 //  - Value can't be 0
-//  - Memory allocated will never be released
+//  - Memory allocated will only released when cleared/destroyed
 // You shouldn't be using as a regular container, as it's more intended for low level
 //
-class FCompressedRadixTrie {
+class FCompressedRadixTrie : FSystemPageAllocator {
 public:
+    using allocator_traits = TAllocatorTraits<FSystemPageAllocator>;
+
     struct ALIGN(16) FNode {
         uintptr_t Keys[2];
         FNode* Children[2];
     };
 
+    explicit FCompressedRadixTrie(ARG0_IF_MEMORYDOMAINS(FMemoryTracking& trackingData))
+    :   _root((FNode*)NullSentinel_)
+    ,   _freeList(nullptr)
+    ,   _newPageAllocated(nullptr)
+    ,   _allPages(nullptr)
 #if USE_PPE_MEMORYDOMAINS
-    FCompressedRadixTrie(FMemoryTracking& trackingData)
-        : _root((FNode*)NullSentinel_)
-        , _freeList(nullptr)
-        , _newPageAllocated(nullptr)
-        , _trackingDataRef(&trackingData)
-#else
-    FCompressedRadixTrie()
-        : _root((FNode*)NullSentinel_)
-        , _freeList(nullptr)
-        , _newPageAllocated(nullptr)
+    ,   _trackingDataRef(&trackingData)
 #endif
     {}
 
     FCompressedRadixTrie(const FCompressedRadixTrie&) = delete;
     FCompressedRadixTrie& operator =(const FCompressedRadixTrie&) = delete;
+
+    ~FCompressedRadixTrie() {
+        Clear_ReleaseMemory();
+    }
 
     bool empty() const { return (NullSentinel_ == uintptr_t(_root)); }
 
@@ -57,30 +60,42 @@ public:
         }
         else if (_newPageAllocated) {
             newNode = _newPageAllocated;
-            if (!((uintptr_t)++_newPageAllocated & (FPlatformMemory::AllocationGranularity - 1)))
-                _newPageAllocated = ((FNode**)_newPageAllocated)[-1];
+            STATIC_ASSERT(Meta::IsPow2(PageSize));
+            if (!((uintptr_t)(++_newPageAllocated + 1/* last block used for bookkeeping */) & (PageSize - 1)))
+                _newPageAllocated = nullptr; // will request for a new page on next alloc
         }
         else {
-            Assert(Meta::IsPow2(FPlatformMemory::AllocationGranularity));
+            Assert(Meta::IsPow2(PageSize));
 
-            // !! this memory block will *NEVER* be released !!
-#if USE_PPE_MEMORYDOMAINS
-            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(FPlatformMemory::AllocationGranularity, *_trackingDataRef);
-#else
-            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(FPlatformMemory::AllocationGranularity);
-#endif
+            FNode* const newPage = (FNode*)allocator_traits::Allocate(*this, PageSize).Data;
             AssertRelease(newPage);
+            ONLY_IF_MEMORYDOMAINS(_trackingDataRef->AllocateSystem(PageSize));
 
-            // in case if other thread also have just allocated a new page
-            Assert(((char**)((char*)newPage + FPlatformMemory::AllocationGranularity))[-1] == nullptr);
-            ((FNode**)((char*)newPage + FPlatformMemory::AllocationGranularity))[-1] = _newPageAllocated;
+            ((FNode**)((char*)newPage + PageSize))[-1] = _allPages;
+            _allPages = newPage;
 
-            // eat first block and saves the rest for later insertions
+            // eat first block for user request, and saves the rest for later insertions
             newNode = newPage;
-            _newPageAllocated = newPage + 1;
+            _newPageAllocated = (newPage + 1);
         }
 
         InsertAt_(key, value, newNode);
+    }
+
+    void Clear_ReleaseMemory() {
+        ONLY_IF_MEMORYDOMAINS(_trackingDataRef->ReleaseAllUser());
+
+        while (_allPages) {
+            FNode* const nextPage = ((FNode**)((char*)_allPages + PageSize))[-1];
+            ONLY_IF_MEMORYDOMAINS(_trackingDataRef->DeallocateSystem(PageSize));
+            allocator_traits::Deallocate(*this, { _allPages, PageSize });
+            _allPages = nextPage;
+        }
+
+        Assert(nullptr == _allPages);
+        _root = (FNode*)NullSentinel_;
+        _freeList = nullptr;
+        _newPageAllocated = nullptr;
     }
 
     void* Lookup(const void* pkey) const NOEXCEPT { return reinterpret_cast<void*>(Lookup(uintptr_t(pkey))); }
@@ -117,9 +132,8 @@ public:
             Assert_NoAssume(uintptr_t(node) != NullSentinel_ || *pvalue == 0);
             return (uintptr_t(node) != NullSentinel_);
         }
-        else {
-            return false;
-        }
+
+        return false;
     }
 
     void* Erase(const void* pkey) NOEXCEPT { return reinterpret_cast<void*>(Erase(uintptr_t(pkey))); }
@@ -198,6 +212,7 @@ private:
     FNode* _root;
     FNode* _freeList;
     FNode* _newPageAllocated;
+    FNode* _allPages;
 
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking* const _trackingDataRef;
@@ -207,9 +222,7 @@ private:
         uintptr_t xcmp = 0;
         uintptr_t nkey = (uintptr_t(_root) == NullSentinel_ ? 0 : _root->Keys[0]);
 
-#if USE_PPE_MEMORYDOMAINS
-        _trackingDataRef->AllocateUser(sizeof(FNode));
-#endif
+        ONLY_IF_MEMORYDOMAINS(_trackingDataRef->AllocateUser(sizeof(FNode)));
 
         FNode** parent = &_root;
         for (;;) {
@@ -284,9 +297,7 @@ private:
         *(FNode**)n = _freeList;
         _freeList = n;
 
-#if USE_PPE_MEMORYDOMAINS
-        _trackingDataRef->DeallocateUser(sizeof(FNode));
-#endif
+        ONLY_IF_MEMORYDOMAINS(_trackingDataRef->DeallocateUser(sizeof(FNode)));
 
         return ((uintptr_t)child & ~uintptr_t(1));
     }
@@ -330,13 +341,11 @@ private:
 //----------------------------------------------------------------------------
 class FReadWriteCompressedRadixTrie : private FCompressedRadixTrie {
 public:
+    explicit FReadWriteCompressedRadixTrie(ARG0_IF_MEMORYDOMAINS(FMemoryTracking& trackingData)) NOEXCEPT
 #if USE_PPE_MEMORYDOMAINS
-    FReadWriteCompressedRadixTrie(FMemoryTracking& trackingData) NOEXCEPT
     :   FCompressedRadixTrie(trackingData)
-    {}
-#else
-    FReadWriteCompressedRadixTrie() = default;
 #endif
+    {}
 
     using FCompressedRadixTrie::empty;
 

@@ -113,7 +113,7 @@ private:
     friend class TPoolingSlabHeap;
     void ReclaimUserBlock_AssumeTracked_(void* ptr, size_t size);
 
-    VECTORINSITU(Internal, FSlabPtr, 4) _slabs;
+    VECTORINSITU(SlabHeap, FSlabPtr, 4) _slabs;
     u32 _slabSize{ DefaultSlabSize };
 
 #if USE_PPE_ASSERT

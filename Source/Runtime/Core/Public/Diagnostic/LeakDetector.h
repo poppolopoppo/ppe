@@ -140,7 +140,7 @@ public:
         u32 MinSizeInBytes;
         u32 MaxSizeInBytes;
         u32 TotalSizeInBytes;
-        VECTOR(Internal, FCallstackBlocks) Callstacks;
+        VECTOR(LeakDetector, FCallstackBlocks) Callstacks;
 
         explicit FLeakReport(EReportMode mode)
             : Mode(mode)
@@ -241,7 +241,7 @@ public:
     void FindLeaks(FLeakReport* report) {
         const FWhiteListScope ignoreLeaksHere;
 
-        HASHMAP(Internal, u32, u32) callstackUIDtoIndex;
+        HASHMAP(LeakDetector, u32, u32) callstackUIDtoIndex;
         callstackUIDtoIndex.reserve(_callstacks.NumCallstacks);
         report->Callstacks.reserve(_callstacks.NumCallstacks);
 

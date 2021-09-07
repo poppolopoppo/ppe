@@ -1,6 +1,9 @@
 #ifndef MEMORYDOMAIN_IMPL
 #   define MEMORYDOMAIN_IMPL(_Name, _Parent)
 #endif
+#ifndef MEMORYDOMAIN_DETAILLED_IMPL
+#   define MEMORYDOMAIN_DETAILLED_IMPL(_Name, _Parent) MEMORYDOMAIN_IMPL(_Name, _Parent)
+#endif
 #ifndef MEMORYDOMAIN_GROUP_IMPL
 #   define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) MEMORYDOMAIN_IMPL(_Name, _Parent)
 #endif
@@ -16,10 +19,8 @@ MEMORYDOMAIN_IMPL(DeviceHeap,                           GpuMemory)
 // Reserved memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Bookkeeping,                    ReservedMemory)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(BitmapCache,              Bookkeeping)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MipmapCache,              Bookkeeping)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(SmallPoolInfo,            Bookkeeping)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(SizePTrie,                Bookkeeping)
 MEMORYDOMAIN_IMPL(Fibers,                               ReservedMemory)
 MEMORYDOMAIN_IMPL(LeakDetector,                         ReservedMemory)
 MEMORYDOMAIN_GROUP_IMPL(Malloc,                         ReservedMemory)
@@ -28,6 +29,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Heaps,                    Malloc)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MediumHeap,               Heaps)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(LargeHeap,                Heaps)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VeryLargeBlocks,          Malloc)
+MEMORYDOMAIN_IMPL(SystemPage,                           ReservedMemory)
 //------------------------------------------------------------------------------
 // Used memory
 //------------------------------------------------------------------------------
@@ -41,7 +43,10 @@ MEMORYDOMAIN_IMPL(Container,                            Core)
 MEMORYDOMAIN_IMPL(Diagnostic,                           Core)
 MEMORYDOMAIN_IMPL(Event,                                Core)
 MEMORYDOMAIN_IMPL(Function,                             Core)
-MEMORYDOMAIN_IMPL(Internal,                             Core)
+MEMORYDOMAIN_GROUP_IMPL(Internal,                       Core)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(BitmapHeap,               Internal)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(SizePTrie,                Internal)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(SlabHeap,                Internal)
 MEMORYDOMAIN_IMPL(FileSystem,                           Core)
 MEMORYDOMAIN_IMPL(Logger,                               Core)
 MEMORYDOMAIN_IMPL(Maths,                                Core)

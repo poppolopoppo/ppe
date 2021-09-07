@@ -104,19 +104,13 @@ struct FBitmapPageInfo {
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
-template <u32 _PageSize>
-struct CACHELINE_ALIGNED TBitmapPage {
-    STATIC_ASSERT(Meta::IsPow2(_PageSize));
-
+struct CACHELINE_ALIGNED FBitmapBasicPage {
     using mask_t = CODE3264(u32, u64);
-    STATIC_CONST_INTEGRAL(u32, MaxPages, sizeof(mask_t) << 3);
-    STATIC_CONST_INTEGRAL(u32, PageSize, _PageSize);
-    STATIC_CONST_INTEGRAL(u32, LargeBlockThreshold, 4/* pages */);
 
     std::atomic<mask_t> Pages;
     std::atomic<mask_t> Sizes;
     void* vAddressSpace;
-    TBitmapPage* NextPage;
+    FBitmapBasicPage* NextPage;
 
     void Reset(void* vaddr) {
         Pages = mask_t(-1);
@@ -124,6 +118,25 @@ struct CACHELINE_ALIGNED TBitmapPage {
         vAddressSpace = vaddr;
         NextPage = nullptr;
     }
+
+    static PPE_CORE_API void ReleaseCacheMemory() NOEXCEPT;
+
+private:
+    template <typename _Traits>
+    friend struct TBitmapHeap;
+
+    static PPE_CORE_API FBitmapBasicPage* Allocate();
+    static PPE_CORE_API void Deallocate(FBitmapBasicPage* p) NOEXCEPT;
+};
+PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
+template <u32 _PageSize>
+struct TBitmapPage : FBitmapBasicPage {
+    STATIC_ASSERT(Meta::IsPow2(_PageSize));
+
+    STATIC_CONST_INTEGRAL(u32, MaxPages, sizeof(mask_t) << 3);
+    STATIC_CONST_INTEGRAL(u32, PageSize, _PageSize);
+    STATIC_CONST_INTEGRAL(u32, LargeBlockThreshold, 4/* pages */);
 
     u32 Available() const NOEXCEPT;
     u32 Capacity() const NOEXCEPT;
@@ -148,26 +161,6 @@ struct CACHELINE_ALIGNED TBitmapPage {
         return (sizeInBytes > LargeBlockThreshold * PageSize);
     }
 
-};
-PRAGMA_MSVC_WARNING_POP()
-//----------------------------------------------------------------------------
-struct FBitmapPageCache {
-    template <u32 _PageSize>
-    static TBitmapPage<_PageSize>* GrabPage() {
-        return INPLACE_NEW(GragPage_(sizeof(TBitmapPage<_PageSize>)), TBitmapPage<_PageSize>);
-    }
-
-    template <u32 _PageSize>
-    static void ReleasePage(TBitmapPage<_PageSize>* page) {
-        Meta::Destroy(page);
-        ReleasePage_(page, sizeof(TBitmapPage<_PageSize>));
-    }
-
-    static void ReleaseCacheMemory() NOEXCEPT;
-
-private:
-    static void* GragPage_(size_t sz) NOEXCEPT;
-    static void ReleasePage_(void* page, size_t sz) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -267,7 +260,6 @@ private:
     std::atomic<page_type*> FreePage{ GDummyPage };
     FCompressedRadixTrie Pages;
 };
-
 //----------------------------------------------------------------------------
 template <size_t _ReservedSize, typename _Traits = FBitmapGenericTraits>
 struct TBitmapFixedSizeHeap : Meta::FNonCopyableNorMovable {
