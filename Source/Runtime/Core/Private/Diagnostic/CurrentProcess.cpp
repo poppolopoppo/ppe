@@ -23,6 +23,24 @@ LOG_CATEGORY(PPE_CORE_API, Process)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+#if USE_PPE_PLATFORM_DEBUG
+static bool GStartedWithDebugger{ FPlatformDebug::IsDebuggerPresent() };
+#endif
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool FCurrentProcess::StartedWithDebugger() {
+#if USE_PPE_PLATFORM_DEBUG
+    return GStartedWithDebugger;
+#else
+    return false;
+#endif
+}
+//----------------------------------------------------------------------------
 void* FCurrentProcess::class_singleton_storage() NOEXCEPT {
     return singleton_type::make_singleton_storage(); // for shared lib
 }
@@ -61,17 +79,15 @@ FCurrentProcess::FCurrentProcess(
     _appHandle = appHandle;
     _nShowCmd = nShowCmd;
 #if USE_PPE_PLATFORM_DEBUG
-    _startedWithDebugger = FPlatformDebug::IsDebuggerPresent();
-    if (HasArgument(L"-IgnoreDebugger")) {
-        _startedWithDebugger = false;
-    }
+    if (HasArgument(L"-IgnoreDebugger"))
+        GStartedWithDebugger = false;
 #else
     _startedWithDebugger = false;
 #endif
 
 #if USE_PPE_PLATFORM_DEBUG
     if (HasArgument(L"-WaitForDebugger")) {
-        _startedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
+        GStartedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformDebug::IsDebuggerPresent());
         volatile size_t loopCount = 0;
         while (bTurnThisOffWhenDebuggerIsAttached) {
@@ -224,7 +240,7 @@ void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
     {
         Format(oss, "host = {0} @ {1}", FPlatformMisc::UserName(), FPlatformMisc::MachineName()) << Eol;
         Format(oss, "os = {0}", FPlatformMisc::OSName()) << Eol;
-        Format(oss, "started with debugger = '{0:A}'", _startedWithDebugger) << Eol;
+        Format(oss, "started with debugger = '{0:A}'", StartedWithDebugger()) << Eol;
         Format(oss, "application handle = '{0}', nShowCmd = '{1}'", _appHandle, _nShowCmd) << Eol;
         Format(oss, "started '{0}' with {1} parameters", _fileName, _args.size()) << Eol;
         forrange(i, 0, _args.size())

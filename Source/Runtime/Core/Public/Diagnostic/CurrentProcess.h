@@ -38,8 +38,6 @@ public:
     size_t AppIcon() const { return _appIcon; }
     void SetAppIcon(size_t value) { _appIcon = value; }
 
-    bool StartedWithDebugger() const { return _startedWithDebugger; }
-
     void DumpPhysicalMemory(FTextWriter& oss) const;
     void DumpMemoryStats(FTextWriter& oss) const;
     void DumpProcessInfos(FTextWriter& oss) const;
@@ -63,6 +61,8 @@ public:
     const FTimepoint& StartTicks() const { return _startTicks; }
 
     bool HasArgument(const FWStringView& arg) const NOEXCEPT;
+
+    static bool StartedWithDebugger();
 
 public: // singleton API
     using singleton_type::Get;
@@ -98,7 +98,6 @@ private:
     std::atomic<int> _exitCode;
 
     size_t _appIcon;
-    bool _startedWithDebugger;
 
     const FTimestamp _startDate;
     const FTimepoint _startTicks;

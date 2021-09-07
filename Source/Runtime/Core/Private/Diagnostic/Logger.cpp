@@ -686,15 +686,17 @@ void FLogger::Start() {
     RegisterLogger(FLogger::MakeSystemTrace());
 
     // don't create a log file when running with an attached debugger
-    const auto& proc = FCurrentProcess::Get();
-    if (proc.StartedWithDebugger()) {
+    if (FCurrentProcess::StartedWithDebugger()) {
         RegisterLogger(MakeOutputDebug());
     }
     else {
+        const auto& proc = FCurrentProcess::Get();
+
         RegisterLogger(MakeStdout());
 
         const FWString logPath = FPlatformFile::JoinPath({
-        proc.SavedPath(), L"Log", MakeStringView(WSTRINGIZE(BUILD_FAMILY)) });
+            proc.SavedPath(), L"Log",
+            MakeStringView(WSTRINGIZE(BUILD_FAMILY)) });
 
         VerifyRelease(FPlatformFile::CreateDirectoryRecursively(*logPath, nullptr));
 

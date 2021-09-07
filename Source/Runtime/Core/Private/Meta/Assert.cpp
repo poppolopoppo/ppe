@@ -35,7 +35,7 @@ static bool ReportAssertionForDebug_(
     const FWStringView& level,
     const wchar_t* msg, const wchar_t* file, unsigned line) {
 #if USE_PPE_PLATFORM_DEBUG
-    if (FCurrentProcess::Get().StartedWithDebugger()) {
+    if (FCurrentProcess::StartedWithDebugger()) {
         wchar_t buf[1024];
         FWFixedSizeTextWriter oss(buf);
         oss << Eol

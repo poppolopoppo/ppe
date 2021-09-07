@@ -20,8 +20,7 @@ namespace {
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
 static bool ShouldUseDebugSystray_() {
-    ONE_TIME_INITIALIZE(bool, GEnabled, not FCurrentProcess::Get().StartedWithDebugger());
-    return GEnabled;
+    return FCurrentProcess::StartedWithDebugger();
 }
 #endif
 //----------------------------------------------------------------------------
