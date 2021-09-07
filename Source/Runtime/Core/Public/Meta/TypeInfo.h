@@ -24,7 +24,7 @@ struct type_info_parser_t {
         const char (&suf)[lengthof("type_info_parser_t<")] = "type_info_parser_t<";
         // find suffix function name
         size_t first = 0;
-        for (; first + lengthof(suf) - 1 <= lengthof(fun) - 1; ++first) {
+        for (; first + lengthof(suf) - 1 < lengthof(fun); ++first) {
             size_t subl = 0;
             for (; subl < lengthof(suf) - 1 && fun[first + subl] == suf[subl]; ++subl);
             if (subl == lengthof(suf) - 1) {
@@ -34,20 +34,21 @@ struct type_info_parser_t {
         }
         // select balanced
         size_t last = first;
-        for (int balance = 1; last < lengthof(fun) - 1 && balance; ++last) {
+        for (int balance = 1; last < lengthof(fun); ++last) {
             if (fun[last] == '<') ++balance;
             else if (fun[last] == '>') --balance;
+            if (0 == balance) break;
         }
         // trim spaces
-        for (; last > first && fun[last - 1] == ' '; --last);
-        for (; first < last && fun[first] == ' '; ++first);
+        for (; last > first && IsSpace(fun[last - 1]); --last);
+        for (; first < last && IsSpace(fun[first]); ++first);
         // return only the interesting part
-        return { fun + first, last - first - 1 };
+        return { fun + first, last - first };
     }
     static constexpr FMd5sum type_uid() {
         return md5sum(type_name());
     }
-    static constexpr TStaticString<type_name().size()> static_name{
+    static constexpr TStaticString<type_name().size() + 1/* nullchar */> static_name{
         type_name()// construct a static string to trim the static string in the final executable
     };
 };

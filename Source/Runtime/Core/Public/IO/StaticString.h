@@ -18,7 +18,7 @@ namespace PPE {
 template <typename _Char, size_t _Capacity = PPE_STATICSTRING_CAPACITY>
 struct TBasicStaticString {
     size_t Len{ 0 };
-    _Char Data[_Capacity + 1]{ 0 };
+    _Char Data[_Capacity]{ 0 };
 
     TBasicStaticString() = default;
 
