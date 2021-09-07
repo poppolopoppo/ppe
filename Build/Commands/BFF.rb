@@ -138,12 +138,11 @@ module Build
                 target.all_dependencies do |(dep, visibility)|
                     next if dep.headers?
                     case visibility
-                    when :public
+                    when :public, :private
+                        next if dep.headers?
                         libraries << BFF.make_target_alias(env, dep)
                     when :runtime
                         (env.target_dynamic_link?(dep) ? prebuilds : libraries) << BFF.make_target_alias(env, dep)
-                    when :private
-                        # noop, already treated in make_target_base
                     else
                         Assert.unexpected(visibility)
                     end
@@ -233,7 +232,7 @@ module Build
 
             case env.config.link
             when :static
-                link_library_objects = target.executable? || target.external?
+                link_library_objects = target.executable?
             when :dynamic
                 link_library_objects = true
             else
@@ -241,7 +240,7 @@ module Build
             end
 
             artifactName = target_alias
-            bff.func!('Library', artifactName) do
+            bff.func!(link_library_objects ? 'ObjectList' : 'Library', artifactName) do
                 using!(compiler_details)
                 using!(target_source)
 
@@ -249,20 +248,20 @@ module Build
                 facet!(expanded, :@compilerOptions)
                 facet!(expanded, :@preprocessorOptions) if expanded.preprocessor?
 
-                privateDeps = []
-                target.all_private_dependencies do |dep|
-                    next if dep.headers?
-                    privateDeps << BFF.make_target_alias(env, dep)
-                end
-                set!('LibrarianAdditionalInputs', privateDeps)
-
-                set!('LibrarianOutput', env.output_path(target.abs_path, :library))
-                #set!('LibrarianAdditionalInputs', expanded.libraries)
-                facet!(expanded, :@librarianOptions)
-
                 if target_pch_source
                     set!('PCHOutputFile', env.output_path(target_pch_source, :pch))
                     facet!(expanded, PCHOptions: :@pchOptions)
+                end
+
+                unless link_library_objects
+                    privateDeps = []
+                    target.all_private_dependencies do |dep|
+                        next if dep.headers?
+                        privateDeps << BFF.make_target_alias(env, dep)
+                    end
+                    set!('LibrarianAdditionalInputs', privateDeps)
+                    set!('LibrarianOutput', env.output_path(target.abs_path, :library))
+                    facet!(expanded, :@librarianOptions)
                 end
 
                 set!('Hidden', hidden)
