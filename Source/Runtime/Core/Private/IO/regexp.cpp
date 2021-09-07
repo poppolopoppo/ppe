@@ -2,269 +2,18 @@
 
 #include "IO/regexp.h"
 
-#include "Container/Pair.h"
-#include "Container/PerfectHashing.h"
 #include "Diagnostic/Logger.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
-#include "Meta/Iterator.h"
 
 namespace PPE {
 LOG_CATEGORY(, Regex)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-#if USE_PPE_REGEX_CUSTOMTRAITS
-CONSTEXPR auto MakeRegexClassnameLookup(char) {
-    CONSTEXPR const TPair<TIterable<const char*>, std::ctype_base::mask> ctypes[] = {
-        { MakeIterable("alnum"), std::ctype_base::alnum },
-        { MakeIterable("alpha"), std::ctype_base::alpha },
-        { MakeIterable("blank"), std::ctype_base::blank },
-        { MakeIterable("cntrl"), std::ctype_base::cntrl },
-        { MakeIterable("d"), std::ctype_base::digit },
-        { MakeIterable("digit"), std::ctype_base::digit },
-        { MakeIterable("graph"), std::ctype_base::graph },
-        { MakeIterable("lower"), std::ctype_base::lower },
-        { MakeIterable("print"), std::ctype_base::print },
-        { MakeIterable("punct"), std::ctype_base::punct },
-        { MakeIterable("s"), std::ctype_base::space },
-        { MakeIterable("space"), std::ctype_base::space },
-        { MakeIterable("upper"), std::ctype_base::upper },
-        { MakeIterable("w"), std::ctype_base::mask(-1) },
-        { MakeIterable("xdigit"), std::ctype_base::xdigit }
-    };
-    return MinimalPerfectHashMap<false>(ctypes);
-}
-CONSTEXPR auto MakeRegexClassnameLookup(wchar_t) {
-    CONSTEXPR const TPair<TIterable<const wchar_t*>, std::ctype_base::mask> wctypes[] = {
-        { MakeIterable(L"alnum"), std::ctype_base::alnum },
-        { MakeIterable(L"alpha"), std::ctype_base::alpha },
-        { MakeIterable(L"blank"), std::ctype_base::blank },
-        { MakeIterable(L"cntrl"), std::ctype_base::cntrl },
-        { MakeIterable(L"d"), std::ctype_base::digit },
-        { MakeIterable(L"digit"), std::ctype_base::digit },
-        { MakeIterable(L"graph"), std::ctype_base::graph },
-        { MakeIterable(L"lower"), std::ctype_base::lower },
-        { MakeIterable(L"print"), std::ctype_base::print },
-        { MakeIterable(L"punct"), std::ctype_base::punct },
-        { MakeIterable(L"s"), std::ctype_base::space },
-        { MakeIterable(L"space"), std::ctype_base::space },
-        { MakeIterable(L"upper"), std::ctype_base::upper },
-        { MakeIterable(L"w"), std::ctype_base::mask(-1) },
-        { MakeIterable(L"xdigit"), std::ctype_base::xdigit }
-    };
-    return MinimalPerfectHashMap<false>(wctypes);
-}
-#endif //!USE_PPE_REGEX_CUSTOMTRAITS
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#if USE_PPE_REGEX_CUSTOMTRAITS
-//----------------------------------------------------------------------------
-template <typename _Char>
-size_t TRegexTraits<_Char>::length(const char_type* s) {
-    return PPE::Length(s);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-auto TRegexTraits<_Char>::translate(char_type ch) const -> char_type {
-    return ch;
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-auto TRegexTraits<_Char>::translate_nocase(char_type ch) const -> char_type {
-    return PPE::ToLower(ch);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-template <typename _FwdIt>
-auto TRegexTraits<_Char>::transform(_FwdIt first, _FwdIt last) const -> string_type {
-    return string_type{ first, last };
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-template <typename _FwdIt>
-auto TRegexTraits<_Char>::transform_primary(_FwdIt first, _FwdIt last) const -> string_type {
-    auto it = MakeOutputIterable(first, last, [](char_type ch) NOEXCEPT {
-        return ToLower(ch);
-    });
-    return string_type{ it.begin(), it.end() };
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-template <typename _FwdIt>
-auto TRegexTraits<_Char>::lookup_collatename(_FwdIt first, _FwdIt last) const -> string_type {
-    return string_type{ first, last };
-}
-//----------------------------------------------------------------------------
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4307)
-template <typename _Char>
-template <typename _FwdIt>
-auto TRegexTraits<_Char>::lookup_classname(_FwdIt first, _FwdIt last,
-    bool insensitive/* = false */) const -> char_class_type {
-    using token_t = TIterable<const _Char*>;
-
-    static CONSTEXPR const auto MPH = MakeRegexClassnameLookup(_Char{});
-
-    char_class_type result{ 0 };
-
-    const size_t h = hash_fwdit_constexpr(first, last);
-    const char_class_type* const classname = MPH.Lookup(h, [&](const token_t& cname) NOEXCEPT {
-        return cname.Equals(MakeIterable(first, last));
-    });
-
-    if (classname)
-        result = *classname;
-
-    // from std::regex_traits<> :
-    if (insensitive && (result & (std::ctype_base::lower | std::ctype_base::upper)))
-        result |= std::ctype_base::lower | std::ctype_base::upper;
-
-    return result;
-}
-PRAGMA_MSVC_WARNING_POP()
-//----------------------------------------------------------------------------
-template <>
-bool TRegexTraits<char>::isctype(char ch, char_class_type classname) const {
-    if (classname == char_class_type(-1))
-        // from std::regex_traits<> :
-        return ((ch == '_') | std::isalnum(ch));
-    else
-        switch (classname) {
-        case std::ctype_base::alnum:
-            return std::isalnum(ch);
-        case std::ctype_base::alpha:
-            return std::isalpha(ch);
-        case std::ctype_base::cntrl:
-            return std::iscntrl(ch);
-        case std::ctype_base::digit:
-            return std::isdigit(ch);
-        case std::ctype_base::graph:
-            return std::isgraph(ch);
-        case std::ctype_base::lower:
-            return std::islower(ch);
-        case std::ctype_base::print:
-            return std::isprint(ch);
-        case std::ctype_base::punct:
-            return std::ispunct(ch);
-        //case std::ctype_base::blank:
-        case std::ctype_base::space:
-            return std::isspace(ch);
-        case std::ctype_base::upper:
-            return std::isupper(ch);
-        case std::ctype_base::xdigit:
-            return std::isxdigit(ch);
-
-        default:
-            AssertNotImplemented();
-        }
-}
-template <>
-bool TRegexTraits<wchar_t>::isctype(wchar_t ch, char_class_type classname) const {
-    if (classname == char_class_type(-1))
-        // from std::regex_traits<> :
-        return ((ch == L'_')/* assumes L'_' == '_' */ | std::iswalnum(ch));
-    else
-        switch (classname) {
-        case std::ctype_base::alnum:
-            return std::iswalnum(ch);
-        case std::ctype_base::alpha:
-            return std::iswalpha(ch);
-        case std::ctype_base::cntrl:
-            return std::iswcntrl(ch);
-        case std::ctype_base::digit:
-            return std::iswdigit(ch);
-        case std::ctype_base::graph:
-            return std::iswgraph(ch);
-        case std::ctype_base::lower:
-            return std::iswlower(ch);
-        case std::ctype_base::print:
-            return std::iswprint(ch);
-        case std::ctype_base::punct:
-            return std::iswpunct(ch);
-        //case std::ctype_base::blank:
-        case std::ctype_base::space:
-            return std::iswspace(ch);
-        case std::ctype_base::upper:
-            return std::iswupper(ch);
-        case std::ctype_base::xdigit:
-            return std::iswxdigit(ch);
-
-        default:
-            AssertNotImplemented();
-        }
-}
-//----------------------------------------------------------------------------
-template <>
-int TRegexTraits<char>::value(char ch, int base) const {
-    // from std::regex_traits<> :
-    if ((base != 8 && '0' <= ch && ch <= '9') || (base == 8 && '0' <= ch && ch <= '7'))
-        return ch - '0';
-
-    if (base != 16)
-        return -1;
-
-    if ('a' <= ch && ch <= 'f')
-        return ch - 'a' + 10;
-
-    if ('A' <= ch && ch <= 'F')
-        return ch - 'A' + 10;
-
-    return -1;
-}
-template <>
-int TRegexTraits<wchar_t>::value(wchar_t ch, int base) const {
-    // from std::regex_traits<> :
-    if ((base != 8 && L'0' <= ch && ch <= L'9') || (base == 8 && L'0' <= ch && ch <= L'7'))
-        return ch - L'0';
-
-    if (base != 16)
-        return -1;
-
-    if (L'a' <= ch && ch <= L'f')
-        return ch - L'a' + 10;
-
-    if (L'A' <= ch && ch <= L'F')
-        return ch - L'A' + 10;
-
-    return -1;
-}
-//----------------------------------------------------------------------------
-#endif //!USE_PPE_REGEX_CUSTOMTRAITS
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicRegexp<_Char>::TBasicRegexp() NOEXCEPT
-{}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicRegexp<_Char>::~TBasicRegexp() = default;
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicRegexp<_Char>::TBasicRegexp(regex_type&& re) NOEXCEPT
-:   _re(std::move(re))
-{}
-//----------------------------------------------------------------------------
 template <typename _Char>
 TBasicRegexp<_Char>::TBasicRegexp(const stringview_type& expr, ECase icase) {
     Compile(expr, icase);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicRegexp<_Char>::TBasicRegexp(TBasicRegexp&& rvalue) NOEXCEPT
-:   TBasicRegexp(std::move(rvalue._re))
-{}
-//----------------------------------------------------------------------------
-template <typename _Char>
-auto TBasicRegexp<_Char>::operator =(TBasicRegexp&& rvalue) NOEXCEPT -> TBasicRegexp& {
-    _re = std::move(rvalue._re);
-    return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -282,8 +31,46 @@ bool TBasicRegexp<_Char>::Match(const stringview_type& str) const {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
+bool TBasicRegexp<_Char>::Capture(FMatches* outMatch, const stringview_type& str) const {
+    Assert(outMatch);
+    return std::regex_search(str.begin(), str.end(), *outMatch, _re);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 void TBasicRegexp<_Char>::Swap(TBasicRegexp& other) NOEXCEPT {
     std::swap(_re, other._re);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+auto TBasicRegexp<_Char>::BuiltinFormat(EBuiltinRegexp fmt, ECase sensitive/* = ECase::Sensitive */) -> TBasicRegexp {
+    stringview_type pattern;
+
+    switch (fmt) {
+    case EBuiltinRegexp::Base64:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^([a-zA-Z0-9]+)$)regexp")); break;
+    case EBuiltinRegexp::Date:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]|(?:Jan|Mar|May|Jul|Aug|Oct|Dec)))\1|(?:(?:29|30)(\/|-|\.)(?:0?[1,3-9]|1[0-2]|(?:Jan|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)(?:0?2|(?:Feb))\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9]|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep))|(?:1[0-2]|(?:Oct|Nov|Dec)))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})$)regexp")); break;
+    case EBuiltinRegexp::DateTime:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^\d\d\d\d-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01]) (00|[0-9]|1[0-9]|2[0-3]):([0-9]|[0-5][0-9]):([0-9]|[0-5][0-9])$)regexp")); break;
+    case EBuiltinRegexp::Email:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^((?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\]))$)regexp")); break;
+    case EBuiltinRegexp::Guid:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^((?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$)regexp")); break;
+    case EBuiltinRegexp::Uuid:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12})$)regexp")); break;
+    case EBuiltinRegexp::Ipv4:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^(25[0–5]|2[0–4][0–9]|[01]?[0–9][0–9]?).(25[0–5]|2[0–4][0–9]|[01]?[0–9][0–9]?).(25[0–5]|2[0–4][0–9]|[01]?[0–9][0–9]?).(25[0–5]|2[0–4][0–9]|[01]?[0–9][0–9]?)$)regexp")); break;
+    case EBuiltinRegexp::Ipv6:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^((([0–9A-Fa-f]{1,4}:){7}[0–9A-Fa-f]{1,4})|(([0–9A-Fa-f]{1,4}:){6}:[0–9A-Fa-f]{1,4})|(([0–9A-Fa-f]{1,4}:){5}:([0–9A-Fa-f]{1,4}:)?[0–9A-Fa-f]{1,4})|(([0–9A-Fa-f]{1,4}:){4}:([0–9A-Fa-f]{1,4}:){0,2}[0–9A-Fa-f]{1,4})|(([0–9A-Fa-f]{1,4}:){3}:([0–9A-Fa-f]{1,4}:){0,3}[0–9A-Fa-f]{1,4})|(([0–9A-Fa-f]{1,4}:){2}:([0–9A-Fa-f]{1,4}:){0,4}[0–9A-Fa-f]{1,4})|(([0–9A-Fa-f]{1,4}:){6}((b((25[0–5])|(1d{2})|(2[0–4]d)|(d{1,2}))b).){3}(b((25[0–5])|(1d{2})|(2[0–4]d)|(d{1,2}))b))|(([0–9A-Fa-f]{1,4}:){0,5}:((b((25[0–5])|(1d{2})|(2[0–4]d)|(d{1,2}))b).){3}(b((25[0–5])|(1d{2})|(2[0–4]d)|(d{1,2}))b))|(::([0–9A-Fa-f]{1,4}:){0,5}((b((25[0–5])|(1d{2})|(2[0–4]d)|(d{1,2}))b).){3}(b((25[0–5])|(1d{2})|(2[0–4]d)|(d{1,2}))b))|([0–9A-Fa-f]{1,4}::([0–9A-Fa-f]{1,4}:){0,5}[0–9A-Fa-f]{1,4})|(::([0–9A-Fa-f]{1,4}:){0,6}[0–9A-Fa-f]{1,4})|(([0–9A-Fa-f]{1,4}:){1,7}:))$)regexp")); break;
+    case EBuiltinRegexp::Url:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^([a-z0-9+.-]+):(?://(?:((?:[a-z0-9-._~!$&'()*+,;=:]|%[0-9A-F]{2})*)@)?((?:[a-z0-9-._~!$&'()*+,;=]|%[0-9A-F]{2})*)(?::(\d*))?(/(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?|(/?(?:[a-z0-9-._~!$&'()*+,;=:@]|%[0-9A-F]{2})+(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?)(?:\?((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?(?:#((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?$)regexp")); break;
+    case EBuiltinRegexp::FloatingPoint:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$)regexp")); break;
+    case EBuiltinRegexp::ScientificFloat:
+        pattern = MakeStringView(STRING_LITERAL(_Char, R"regexp(^([+-]?(\d+([.]\d*)?([eE][+-]?\d+)?|[.]\d+([eE][+-]?\d+)?))$)regexp")); break;
+    }
+
+    return TBasicRegexp{ pattern, sensitive };
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -331,6 +118,36 @@ bool TBasicRegexp<_Char>::ValidateSyntax(const stringview_type& expr) NOEXCEPT {
 //----------------------------------------------------------------------------
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicRegexp<char>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicRegexp<wchar_t>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+template <typename _Char>
+static TBasicTextWriter<_Char>& EBuiltinRegexp_Print_(TBasicTextWriter<_Char>& oss, EBuiltinRegexp fmt) {
+    switch (fmt) {
+    case EBuiltinRegexp::Base64: return oss << STRING_LITERAL(_Char, "Base64");
+    case EBuiltinRegexp::Date: return oss << STRING_LITERAL(_Char, "Date");
+    case EBuiltinRegexp::DateTime: return oss << STRING_LITERAL(_Char, "DateTime");
+    case EBuiltinRegexp::Email: return oss << STRING_LITERAL(_Char, "Email");
+    case EBuiltinRegexp::Guid: return oss << STRING_LITERAL(_Char, "Guid");
+    case EBuiltinRegexp::Uuid: return oss << STRING_LITERAL(_Char, "Uuid");
+    case EBuiltinRegexp::Ipv4: return oss << STRING_LITERAL(_Char, "Ipv4");
+    case EBuiltinRegexp::Ipv6: return oss << STRING_LITERAL(_Char, "Ipv6");
+    case EBuiltinRegexp::Url: return oss << STRING_LITERAL(_Char, "Url");
+    case EBuiltinRegexp::FloatingPoint: return oss << STRING_LITERAL(_Char, "FloatingPoint");
+    case EBuiltinRegexp::ScientificFloat: return oss << STRING_LITERAL(_Char, "ScientificFloat");
+    }
+    AssertNotReached();
+}
+} //!namespace
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, EBuiltinRegexp fmt) {
+    return EBuiltinRegexp_Print_(oss, fmt);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, EBuiltinRegexp fmt) {
+    return EBuiltinRegexp_Print_(oss, fmt);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Container/Hash.h"
+#include "Container/Pair.h"
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
@@ -72,6 +73,7 @@ public:
 
     TBasicStringView(std::initializer_list<value_type> list) NOEXCEPT : parent_type(list) {}
     TBasicStringView(const iterator& first, const iterator& last) NOEXCEPT : parent_type(first, last) {}
+    TBasicStringView(const TPair<iterator, iterator>& span) NOEXCEPT : parent_type(span.first, span.second) {}
     CONSTEXPR TBasicStringView(pointer storage, size_type size) NOEXCEPT : parent_type(storage, size) {}
 
     template <size_t _Dim>
