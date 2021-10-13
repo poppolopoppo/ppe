@@ -2,9 +2,9 @@
 
 #include "Core_fwd.h"
 
+#include "IO/String_fwd.h"
 #include "Container/Hash.h"
 #include "Container/Pair.h"
-#include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
 
@@ -118,6 +118,14 @@ PPE_ASSUME_TYPE_AS_POD(FStringView)
 PPE_ASSUME_TYPE_AS_POD(FWStringView)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CONSTEXPR FStringView operator "" _view(const char* str, size_t len) {
+    return { str, len };
+}
+//----------------------------------------------------------------------------
+CONSTEXPR FWStringView operator "" _view(const wchar_t* wstr, size_t len) {
+    return { wstr, len };
+}
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str) {
