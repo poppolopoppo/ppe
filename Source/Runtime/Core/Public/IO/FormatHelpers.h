@@ -9,6 +9,8 @@
 #include "Misc/Function.h"
 #include "Meta/StronglyTyped.h"
 
+#include <initializer_list>
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -259,8 +261,13 @@ struct TJoin {
     _It Last;
     _Sep Separator;
     TJoin(_It first, _It last, _Sep separator) NOEXCEPT
-        : First(first), Last(last), Separator(separator) {}
+    :   First(first), Last(last), Separator(separator) {}
 };
+template <typename T, typename _Sep>
+auto Join(std::initializer_list<T> list, _Sep separator) NOEXCEPT {
+    using iterator = typename std::initializer_list<T>::iterator;
+    return TJoin<iterator, _Sep>(list.begin(), list.end(), separator);
+}
 template <typename _It, typename _Sep>
 auto Join(_It first, _It last, _Sep separator) NOEXCEPT {
     return TJoin<_It, _Sep>(first, last, separator);
@@ -272,6 +279,10 @@ auto Join(const TIterable<_It>& iterable, _Sep separator) NOEXCEPT {
 template <typename T, typename _Sep>
 auto Join(const TMemoryView<T>& view, _Sep separator) NOEXCEPT {
     return TJoin<typename TMemoryView<T>::iterator, _Sep>(view.begin(), view.end(), separator);
+}
+template <typename T>
+auto CommaSeparated(std::initializer_list<T> list) NOEXCEPT {
+    return Join(list.begin(), list.end(), MakeStringView(", "));
 }
 template <typename T>
 auto CommaSeparated(const TMemoryView<T>& data) NOEXCEPT {
@@ -314,6 +325,45 @@ FHexDump HexDump(T* data, size_t n) NOEXCEPT {
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+struct FBase64 {
+    TMemoryView<const u8> RawData;
+    explicit FBase64(const TMemoryView<const u8>& rawData) NOEXCEPT
+    :   RawData(rawData) {}
+};
+template <typename T>
+FBase64 Base64(const TMemoryView<T>& data) NOEXCEPT {
+    return FBase64(data.template Cast<const u8>());
+}
+template <typename T>
+FBase64 Base64(T* data, size_t n) NOEXCEPT {
+    return FBase64(TMemoryView<T>(data, n));
+}
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API size_t Base64EncodeSize(const FRawMemoryConst& src) NOEXCEPT;
+NODISCARD PPE_CORE_API size_t Base64EncodeSize(const FRawMemoryConst& src) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API void Base64Encode(const FRawMemoryConst& src, const TAppendable<char>& dst) NOEXCEPT;
+PPE_CORE_API void Base64Encode(const FRawMemoryConst& src, const TAppendable<wchar_t>& dst) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API void Base64Encode(const FRawMemoryConst& src, const TMemoryView<char>& dst) NOEXCEPT;
+PPE_CORE_API void Base64Encode(const FRawMemoryConst& src, const TMemoryView<wchar_t>& dst) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API size_t Base64DecodeSize(const FStringView& src) NOEXCEPT;
+NODISCARD PPE_CORE_API size_t Base64DecodeSize(const FWStringView& src) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API bool Base64Decode(const FStringView& src, const TAppendable<u8>& dst) NOEXCEPT;
+NODISCARD PPE_CORE_API bool Base64Decode(const FWStringView& src, const TAppendable<u8>& dst) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API bool Base64Decode(const FStringView& src, const TMemoryView<u8>& dst) NOEXCEPT;
+NODISCARD PPE_CORE_API bool Base64Decode(const FWStringView& src, const TMemoryView<u8>& dst) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FBase64& b64);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FBase64& b64);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

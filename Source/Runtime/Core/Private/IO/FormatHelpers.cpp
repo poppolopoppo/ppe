@@ -216,6 +216,198 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR TBasicStringView<_Char> Base64_lookup = STRING_LITERAL(_Char, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+template <typename _Char>
+CONSTEXPR _Char Base64_padding = STRING_LITERAL(_Char, '=');
+//----------------------------------------------------------------------------
+template <typename _Char>
+static void Base64Encode_(const FRawMemoryConst& src, const TAppendable<_Char>& dst) NOEXCEPT {
+    u32 tmp;
+    auto it = src.begin();
+    forrange(i, 0, src.size() / 3u) {
+        tmp  = (*it++) << 16u; // convert to big endian
+        tmp += (*it++) << 8u;
+        tmp += (*it++);
+
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00FC0000u) >> 18u]);
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0003F000u) >> 12u]);
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00000FC0u) >> 6u ]);
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0000003Fu)       ]);
+    }
+
+    switch (src.size() % 3u) {
+    case 1:
+        tmp  = (*it++) << 16u; // convert to big endian
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00FC0000u) >> 18u]);
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0003F000u) >> 12u]);
+        dst.push_back(Base64_padding<_Char>);
+        dst.push_back(Base64_padding<_Char>);
+        break;
+    case 2:
+        tmp  = (*it++) << 16u; // convert to big endian
+        tmp += (*it++) << 8u;
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00FC0000u) >> 18u]);
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0003F000u) >> 12u]);
+        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00000FC0u) >> 6u ]);
+        dst.push_back(Base64_padding<_Char>);
+        break;
+    default:
+        break;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+static bool Base64Decode_(const TBasicStringView<_Char>& src, const TAppendable<u8>& dst) NOEXCEPT {
+    if (src.size() % 4)
+        return false;
+
+    u32 tmp = 0; // holds decoded quanta
+    for (auto it = src.begin(); it != src.end(); ) {
+        forrange(quantum, 0, 4) {
+            tmp <<= 6u;
+
+            if       (*it >= STRING_LITERAL(_Char, 'A') && *it <= STRING_LITERAL(_Char, 'Z')) // This area will need tweaking if
+                tmp |= *it - STRING_LITERAL(_Char, 'A');                 // you are using an alternate alphabet
+            else if  (*it >= STRING_LITERAL(_Char, 'a') && *it <= STRING_LITERAL(_Char, 'z'))
+                tmp |= *it - STRING_LITERAL(_Char, 'G');
+            else if  (*it >= STRING_LITERAL(_Char, '0') && *it <= STRING_LITERAL(_Char, '9'))
+                tmp |= *it + 0x04u;
+            else if  (*it == STRING_LITERAL(_Char, '+'))
+                tmp |= 0x3Eu; // change to 0x2D for URL alphabet
+            else if  (*it == STRING_LITERAL(_Char, '/'))
+                tmp |= 0x3Fu; // change to 0x5F for URL alphabet
+            else if  (*it == Base64_padding<_Char>) {//pad
+                switch (src.end() - it) {
+                case 1: // one pad character
+                    dst.push_back(static_cast<u8>((tmp >> 16u) & 0x000000FFu));
+                    dst.push_back(static_cast<u8>((tmp >> 8u ) & 0x000000FFu));
+                    return true;
+                case 2: //Two pad characters
+                    dst.push_back(static_cast<u8>((tmp >> 10u) & 0x000000FFu));
+                    return true;
+                default:
+                    return false;
+                }
+            }  else
+                return false;
+
+            ++it;
+        }
+
+        dst.push_back(static_cast<u8>((tmp >> 16u) & 0x000000FFu));
+        dst.push_back(static_cast<u8>((tmp >> 8u ) & 0x000000FFu));
+        dst.push_back(static_cast<u8>((tmp       ) & 0x000000FFu));
+    }
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+static size_t Base64DecodeSize_(const TBasicStringView<_Char>& src) {
+    if (src.size() % 4u)
+        return 0;
+
+    size_t padding = 0u;
+    if (not src.empty()) {
+        if (src[src.size() - 1] == Base64_padding<_Char>)
+            padding++;
+        if (src[src.size() - 2] == Base64_padding<_Char>)
+            padding++;
+    }
+
+    return ((src.size() / 4u) * 3u - padding);
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+size_t Base64EncodeSize(const FRawMemoryConst& src) NOEXCEPT {
+    return (((src.size() / 3) + (src.size() % 3 > 0)) * 4);
+}
+//----------------------------------------------------------------------------
+void Base64Encode(const FRawMemoryConst& src, const TAppendable<char>& dst) NOEXCEPT {
+    Base64Encode_(src, dst);
+}
+//----------------------------------------------------------------------------
+void Base64Encode(const FRawMemoryConst& src, const TAppendable<wchar_t>& dst) NOEXCEPT {
+    Base64Encode_(src, dst);
+}
+//----------------------------------------------------------------------------
+void Base64Encode(const FRawMemoryConst& src, const TMemoryView<char>& dst) NOEXCEPT {
+    Assert(Base64EncodeSize(src) == dst.size());
+
+    char* it = dst.data();
+    Base64Encode_(src, TAppendable<char>{ &it, [](void* user, char&& ch) {
+        *(*static_cast<char**>(user))++ = ch;
+    } });
+    Assert_NoAssume(it == dst.data() + dst.size());
+}
+//----------------------------------------------------------------------------
+void Base64Encode(const FRawMemoryConst& src, const TMemoryView<wchar_t>& dst) NOEXCEPT {
+    Assert(Base64EncodeSize(src) == dst.size());
+
+    wchar_t* it = dst.data();
+    Base64Encode_(src, TAppendable<wchar_t>{ &it, [](void* user, wchar_t&& ch) {
+        *(*static_cast<wchar_t**>(user))++ = ch;
+    } });
+    Assert_NoAssume(it == dst.data() + dst.size());
+}
+//----------------------------------------------------------------------------
+size_t Base64DecodeSize(const FStringView& src) NOEXCEPT {
+    return Base64DecodeSize_(src);
+}
+//----------------------------------------------------------------------------
+size_t Base64DecodeSize(const FWStringView& src) NOEXCEPT {
+    return Base64DecodeSize_(src);
+}
+//----------------------------------------------------------------------------
+bool Base64Decode(const FStringView& src, const TAppendable<u8>& dst) NOEXCEPT {
+    return Base64Decode_(src, dst);
+}
+//----------------------------------------------------------------------------
+bool Base64Decode(const FWStringView& src, const TAppendable<u8>& dst) NOEXCEPT {
+    return Base64Decode_(src, dst);
+}
+//----------------------------------------------------------------------------
+bool Base64Decode(const FStringView& src, const TMemoryView<u8>& dst) NOEXCEPT {
+    Assert(Base64DecodeSize(src) == dst.size());
+
+    u8* it = dst.data();
+    const bool result = Base64Decode_(src, TAppendable<u8>{ &it, [](void* user, u8&& raw) {
+        *(*static_cast<u8**>(user))++ = raw;
+    } });
+    Assert_NoAssume(it == dst.data() + dst.size());
+    return result;
+}
+//----------------------------------------------------------------------------
+bool Base64Decode(const FWStringView& src, const TMemoryView<u8>& dst) NOEXCEPT {
+    Assert(Base64DecodeSize(src) == dst.size());
+
+    u8* it = dst.data();
+    const bool result = Base64Decode_(src, TAppendable<u8>{ &it, [](void* user, u8&& raw) {
+        *(*static_cast<u8**>(user))++ = raw;
+    } });
+    Assert_NoAssume(it == dst.data() + dst.size());
+    return result;
+}
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const Fmt::FBase64& b64) {
+    Base64Encode(b64.RawData, { &oss, [](void* user, char&& ch) {
+        static_cast<FTextWriter*>(user)->Put(ch);
+    }});
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FBase64& b64) {
+    Base64Encode(b64.RawData, { &oss, [](void* user, wchar_t&& wch) {
+        static_cast<FWTextWriter*>(user)->Put(wch);
+    }});
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const Fmt::TBasicIndent<char>& indent) {
     Assert(indent.Level >= 0);
     forrange(i, 0, indent.Level)
