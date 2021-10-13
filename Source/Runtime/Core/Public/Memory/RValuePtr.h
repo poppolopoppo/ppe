@@ -14,6 +14,10 @@ template <typename T>
 struct TRValuePtr {
     T* Ptr;
 
+    CONSTEXPR TRValuePtr(T* ptr) NOEXCEPT
+    :   Ptr(ptr)
+    {}
+
     CONSTEXPR TRValuePtr(T&& rvalue) NOEXCEPT
     :   Ptr(std::addressof(rvalue)) {
         STATIC_ASSERT(std::is_rvalue_reference_v<decltype(rvalue)>);

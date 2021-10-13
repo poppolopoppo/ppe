@@ -343,8 +343,18 @@ public:
 
     CONSTEXPR TFilterIterator() NOEXCEPT {}
 
-    CONSTEXPR explicit TFilterIterator(_It first, _It last) : _first(first), _last(last) {}
-    CONSTEXPR explicit TFilterIterator(_It first, _It last, _Filter&& filter) : _filter(std::forward<_Filter>(filter)), _first(first), _last(last) {}
+    CONSTEXPR explicit TFilterIterator(_It first, _It last)
+    :   _first(first)
+    ,   _last(last) {
+        NextFiltered_();
+    }
+
+    CONSTEXPR explicit TFilterIterator(_It first, _It last, _Filter&& filter)
+    :   _filter(std::forward<_Filter>(filter))
+    ,   _first(first)
+    ,   _last(last) {
+        NextFiltered_();
+    }
 
     CONSTEXPR TFilterIterator(const TFilterIterator&) = default;
     CONSTEXPR TFilterIterator& operator =(const TFilterIterator&) = default;
@@ -354,8 +364,8 @@ public:
     CONSTEXPR TFilterIterator& operator++() /* prefix */ { Advance_(); return *this; }
     CONSTEXPR TFilterIterator operator++(int) /* postfix */ { const auto tmp{ *this }; Advance_(); return tmp; }
 
-    CONSTEXPR reference operator*() const { return (_first->first); }
-    CONSTEXPR pointer operator->() const { return std::addressof(_first->first); }
+    CONSTEXPR auto operator*() const { return (*_first); }
+    CONSTEXPR auto operator->() const { return std::addressof(*_first); }
 
     CONSTEXPR void swap(TFilterIterator& other) NOEXCEPT {
         using std::swap;
@@ -382,7 +392,11 @@ private:
 
     void Advance_() NOEXCEPT {
         Assert(_first != _last);
-        for (++_first; _first != _last; ++_first) {
+        ++_first;
+        NextFiltered_();
+    }
+    void NextFiltered_() NOEXCEPT {
+        for (; _first != _last; ++_first) {
             if (_filter(*_first))
                 break;
         }
@@ -418,7 +432,7 @@ public:
     using typename parent_type::difference_type;
     using typename parent_type::value_type;
     using typename parent_type::pointer;
-    using typename parent_type::reference;
+    using reference = decltype(std::declval<_Transform>()(*std::declval<_It>()));
 
     TOutputIterator() = default;
 
@@ -440,10 +454,10 @@ public:
     CONSTEXPR TOutputIterator operator+(difference_type n) const { return TOutputIterator(_it + n); }
     CONSTEXPR TOutputIterator operator-(difference_type n) const { return TOutputIterator(_it - n); }
 
-    CONSTEXPR decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator*() const { return _transform(*_it); }
+    CONSTEXPR reference operator*() const { return _transform(*_it); }
     //pointer operator->() const { return _it.operator ->(); }
 
-    CONSTEXPR decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator[](difference_type n) const { return _transform(_it[n]); }
+    CONSTEXPR reference operator[](difference_type n) const { return _transform(_it[n]); }
 
     CONSTEXPR difference_type operator-(const TOutputIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
 
@@ -493,7 +507,7 @@ public:
     CONSTEXPR TKeyIterator(const TKeyIterator&) = default;
     CONSTEXPR TKeyIterator& operator =(const TKeyIterator&) = default;
 
-    CONSTEXPR const _It& inner() const { return _it; }
+    CONSTEXPR const _It& Inner() const { return _it; }
 
     CONSTEXPR TKeyIterator& operator++() /* prefix */ { ++_it; return *this; }
     CONSTEXPR TKeyIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TKeyIterator(jt); }
@@ -505,9 +519,9 @@ public:
     CONSTEXPR inline friend void swap(TKeyIterator& lhs, TKeyIterator& rhs) NOEXCEPT { lhs.swap(rhs); }
 
     template <typename U>
-    CONSTEXPR bool operator ==(const TKeyIterator<U>& other) const { return (_it == other.inner()); }
+    CONSTEXPR bool operator ==(const TKeyIterator<U>& other) const { return (_it == other.Inner()); }
     template <typename U>
-    CONSTEXPR bool operator !=(const TKeyIterator<U>& other) const { return (_it != other.inner()); }
+    CONSTEXPR bool operator !=(const TKeyIterator<U>& other) const { return (_it != other.Inner()); }
 
 private:
     _It _it;
@@ -545,7 +559,7 @@ public:
     CONSTEXPR TValueIterator(const TValueIterator&) = default;
     CONSTEXPR TValueIterator& operator =(const TValueIterator&) = default;
 
-    CONSTEXPR const _It& inner() const { return _it; }
+    CONSTEXPR const _It& Inner() const { return _it; }
 
     CONSTEXPR TValueIterator& operator++() /* prefix */ { _it.operator++(); return *this; }
     CONSTEXPR TValueIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TValueIterator(jt); }
@@ -557,9 +571,9 @@ public:
     CONSTEXPR friend void swap(TValueIterator& lhs, TValueIterator& rhs) NOEXCEPT { lhs.swap(rhs); }
 
     template <typename U>
-    CONSTEXPR bool operator ==(const TValueIterator<U>& other) const { return (_it == other.inner()); }
+    CONSTEXPR bool operator ==(const TValueIterator<U>& other) const { return (_it == other.Inner()); }
     template <typename U>
-    CONSTEXPR bool operator !=(const TValueIterator<U>& other) const { return (_it != other.inner()); }
+    CONSTEXPR bool operator !=(const TValueIterator<U>& other) const { return (_it != other.Inner()); }
 
 private:
     _It _it;
@@ -598,7 +612,7 @@ public:
     CONSTEXPR operator const void* () const { return (_begin != _end ? this : nullptr); }
 
     CONSTEXPR bool empty() const NOEXCEPT { return (_begin == _end); }
-    CONSTEXPR bool size() const NOEXCEPT { return std::distance(_begin, _end); }
+    CONSTEXPR size_t size() const NOEXCEPT { return std::distance(_begin, _end); }
 
     CONSTEXPR const iterator& begin() const NOEXCEPT { return _begin; }
     CONSTEXPR const iterator& end() const NOEXCEPT { return _end; }
@@ -652,6 +666,8 @@ public:
     template <typename _Pred>
     CONSTEXPR iterator FindIf(_Pred&& pred) const { return std::find_if(begin(), end(), std::forward<_Pred>(pred)); }
 
+    CONSTEXPR bool Contains(const_reference value) const { return Find(value) != end(); }
+
     CONSTEXPR auto LowerBound(const_reference value) const { return std::lower_bound(begin(), end(), value); }
     template <typename _Pred>
     CONSTEXPR auto LowerBound(_Pred&& pred) const { return std::lower_bound(begin(), end(), std::forward<_Pred>(pred)); }
@@ -662,6 +678,18 @@ public:
 
     CONSTEXPR friend bool operator ==(const TIterable& a, const TIterable& b) NOEXCEPT { return (a.Equals(b)); }
     CONSTEXPR friend bool operator !=(const TIterable& a, const TIterable& b) NOEXCEPT { return (not operator ==(a, b)); }
+
+    // see TEnumerable<T>
+    CONSTEXPR bool Consume(pointer* current) NOEXCEPT {
+        Assert(current);
+        if (Likely(_begin != _end)) {
+            *current = *_begin++;
+            return true;
+        }
+
+        *current = nullptr;
+        return false;
+    }
 
     friend void swap(TIterable& lhs, TIterable& rhs) NOEXCEPT {
         using std::swap;
@@ -684,12 +712,10 @@ CONSTEXPR TIterable<_It> MakeIterable(_It first, _It last) NOEXCEPT {
     return TIterable<_It>(first, last);
 }
 template <typename T, size_t N>
-CONSTEXPR TIterable<T*> MakeIterable(T (&arr)[N]) NOEXCEPT {
-    return TIterable<T*>(arr, arr + N);
-}
-template <typename T, size_t N>
-CONSTEXPR TIterable<const T*> MakeIterable(const T (&arr)[N]) NOEXCEPT {
-    return TIterable<const T*>(arr, arr + N);
+CONSTEXPR auto MakeIterable(T (&arr)[N]) NOEXCEPT {
+    return MakeIterable(
+        MakeCheckedIterator(arr, 0),
+        MakeCheckedIterator(arr, N) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -704,15 +730,15 @@ CONSTEXPR TIterable< decltype(std::declval<const T&>().begin()) > MakeConstItera
 template <typename _It, typename _Transform>
 CONSTEXPR TIterable<TOutputIterator<_It, _Transform>> MakeOutputIterable(_It first, _It last, _Transform&& transform) NOEXCEPT {
     return MakeIterable(
-        TOutputIterator<_It, _Transform>(first, _Transform(transform)),
-        TOutputIterator<_It, _Transform>(last, std::move(transform)) );
+        TOutputIterator<_It, _Transform>(first, std::forward<_Transform>(transform)),
+        TOutputIterator<_It, _Transform>(last, std::forward<_Transform>(transform)) );
 }
 //----------------------------------------------------------------------------
 template <typename _It, typename _Filter>
 CONSTEXPR TIterable<TFilterIterator<_It, _Filter>> MakeFilteredIterable(_It first, _It last, _Filter&& filter) NOEXCEPT {
     return MakeIterable(
-        MakeFilterIterator(first, last, _Filter(filter)),
-        MakeFilterIterator(last, last, std::move(filter)) );
+        TFilterIterator<_It, _Filter>(first, last, std::forward<_Filter>(filter)),
+        TFilterIterator<_It, _Filter>(last, last, std::forward<_Filter>(filter)) );
 }
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
@@ -729,7 +755,7 @@ CONSTEXPR TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int count) NOEX
 template <typename _It>
 template <typename _Transform>
 CONSTEXPR auto TIterable<_It>::Map(_Transform&& transform) const NOEXCEPT {
-    return MakeOutputIterable(_begin, _end, transform);
+    return MakeOutputIterable(_begin, _end, std::forward<_Transform>(transform));
 }
 //----------------------------------------------------------------------------
 template <typename _It>
@@ -748,17 +774,16 @@ constexpr auto TIterable<_It>::MapReduce(_Transform&& transform, _Reduce&& reduc
 template <typename _It>
 template <typename _Filter>
 CONSTEXPR auto TIterable<_It>::FilterBy(_Filter&& filter) const NOEXCEPT {
-    return MakeFilteredIterable(_begin, _end, std::move(filter));
+    return MakeFilteredIterable(_begin, _end, std::forward<_Filter>(filter));
 }
 //----------------------------------------------------------------------------
 template <typename _It>
 template <typename _Selector>
 CONSTEXPR auto TIterable<_It>::Select(_Selector&& select) const NOEXCEPT {
     using optional_t = decltype(select(std::declval<reference>()));
-    using mapped_t = decltype(*std::declval<optional_t>());
     return Map(std::move(select))
-        .FilterBy([](const optional_t& optional) NOEXCEPT -> bool { return (!!optional); })
-        .Map([](const optional_t& filtered) NOEXCEPT -> mapped_t { return (*filtered); });
+        .FilterBy([](const optional_t& optional) NOEXCEPT -> bool { return !!optional; })
+        .Map([](const optional_t& filtered) NOEXCEPT { return *filtered; });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

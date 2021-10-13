@@ -198,6 +198,11 @@ public:
     }
 
     bool Contains(const T& elem) const { return (end() != Find(elem)); }
+    bool ContainsRef(TPtrRef<const T> p) const {
+        return (end() != FindIf([p](const T& elem) {
+            return (MakePtrRef(elem) == p);
+        }));
+    }
 
     auto MakeRef(iterator it) const { return (it != end() ? MakePtrRef(*it) : nullptr); }
 
