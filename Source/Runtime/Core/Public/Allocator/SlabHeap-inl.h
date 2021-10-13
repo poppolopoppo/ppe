@@ -16,6 +16,14 @@ TSlabHeap<_Allocator>::TSlabHeap() NOEXCEPT
 }
 #endif
 //----------------------------------------------------------------------------
+template <typename _Allocator>
+TSlabHeap<_Allocator>::TSlabHeap(Meta::FForceInit) NOEXCEPT
+:   allocator_type(Meta::MakeForceInit<allocator_type>()) {// used for non default-constructible allocators
+#if USE_PPE_MEMORYDOMAINS
+    RegisterTrackingData(&_trackingData);
+#endif
+}
+//----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
@@ -36,6 +44,7 @@ TSlabHeap<_Allocator>::TSlabHeap(const _Allocator& alloc) NOEXCEPT
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 TSlabHeap<_Allocator>::~TSlabHeap() {
+    Assert_NoAssume(CheckCanary_());
     ONLY_IF_MEMORYDOMAINS(AssertRelease_NoAssume(_trackingData.User().NumAllocs == 0));
     ReleaseAll();
     ONLY_IF_MEMORYDOMAINS(UnregisterTrackingData(&_trackingData));
@@ -43,12 +52,14 @@ TSlabHeap<_Allocator>::~TSlabHeap() {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TSlabHeap<_Allocator>::SetSlabSize(size_t value) NOEXCEPT {
+    Assert_NoAssume(CheckCanary_());
     _slabSize = checked_cast<u32>(allocator_traits::SnapSize(*this, value));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void* TSlabHeap<_Allocator>::Reallocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize) {
     Assert(oldSize | newSize);
+    Assert_NoAssume(CheckCanary_());
 
     FSlabPtr* pSlab = nullptr;
 
@@ -98,6 +109,7 @@ template <typename _Allocator>
 bool TSlabHeap<_Allocator>::Deallocate_ReturnIfLast(void* ptr, size_t size) {
     Assert(ptr);
     Assert(size);
+    Assert_NoAssume(CheckCanary_());
     size = SnapSize(size);
 
     Assert(not _slabs.empty());
@@ -134,6 +146,7 @@ bool TSlabHeap<_Allocator>::Deallocate_ReturnIfLast(void* ptr, size_t size) {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TSlabHeap<_Allocator>::DiscardAll() NOEXCEPT {
+    Assert_NoAssume(CheckCanary_());
     ONLY_IF_MEMORYDOMAINS(_trackingData.ReleaseAllUser());
 
     Remove_If(_slabs, [](FSlabPtr& slab) -> bool {
@@ -149,6 +162,7 @@ void TSlabHeap<_Allocator>::DiscardAll() NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TSlabHeap<_Allocator>::ReleaseAll() {
+    Assert_NoAssume(CheckCanary_());
     ONLY_IF_MEMORYDOMAINS(_trackingData.ReleaseAllUser());
 
     auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
@@ -168,6 +182,7 @@ void TSlabHeap<_Allocator>::ReleaseAll() {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TSlabHeap<_Allocator>::TrimMemory() {
+    Assert_NoAssume(CheckCanary_());
     if (_slabs.size() < 2)
         return; // keep one slab here for hysteresis
 
@@ -202,6 +217,7 @@ void TSlabHeap<_Allocator>::TrimMemory() {
 template <typename _Allocator>
 bool TSlabHeap<_Allocator>::AliasesToHeap(void* ptr) const NOEXCEPT {
     Assert(ptr);
+    Assert_NoAssume(CheckCanary_());
 
     for (const FSlabPtr& slab : _slabs) {
         if (FPlatformMemory::Memaliases(slab.Ptr, slab.Size, ptr))
@@ -255,6 +271,7 @@ void TSlabHeap<_Allocator>::ReclaimUserBlock_AssumeTracked_(void* ptr, size_t si
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void* TPoolingSlabHeap<_Allocator>::Reallocate(void* ptr, size_t newSize, size_t oldSize) {
+    Assert_NoAssume(_heap.CheckCanary_());
     if (!!oldSize && !!newSize) {
         newSize = SnapSize(newSize);
         oldSize = SnapSize(oldSize);
@@ -297,6 +314,7 @@ void TPoolingSlabHeap<_Allocator>::ReleaseAll() {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TPoolingSlabHeap<_Allocator>::TrimMemory() {
+    Assert_NoAssume(_heap.CheckCanary_());
     // this is gonna be slow :/
     for (bool reclaim = true; reclaim; ) {
         reclaim = false;

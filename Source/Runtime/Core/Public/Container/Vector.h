@@ -67,15 +67,15 @@ public:
     }
 
     explicit TVector(Meta::FForceInit) NOEXCEPT
-        : allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
-        , _capacity(0), _size(0), _data(nullptr)
+    :   allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
+    ,   _capacity(0), _size(0), _data(nullptr)
     {}
 
     explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _capacity(0), _size(0), _data(nullptr) {}
     explicit TVector(const allocator_type& alloc) : allocator_type(alloc), _capacity(0), _size(0), _data(nullptr) {}
 
-    explicit TVector(size_type count) : TVector() { resize_AssumeEmpty(count); }
-    TVector(size_type count, const_reference value) : TVector() { resize_AssumeEmpty(count, value); }
+    explicit TVector(size_type count) : TVector(ForceInit) { resize_AssumeEmpty(count); }
+    TVector(size_type count, const_reference value) : TVector(ForceInit) { resize_AssumeEmpty(count, value); }
     TVector(size_type count, const allocator_type& alloc) : TVector(alloc) { resize_AssumeEmpty(count); }
     TVector(size_type count, const_reference value, const allocator_type& alloc) : TVector(alloc) { resize_AssumeEmpty(count, value); }
 
@@ -87,30 +87,34 @@ public:
     TVector(TVector&& rvalue, const allocator_type& alloc) NOEXCEPT : TVector(alloc) { assign(std::move(rvalue)); }
     TVector& operator=(TVector&& rvalue) NOEXCEPT;
 
-    TVector(std::initializer_list<value_type> ilist) : TVector() { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
+    TVector(std::initializer_list<value_type> ilist) : TVector(ForceInit) { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
     TVector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
     TVector& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
-    TVector(Meta::TDontDeduce<TRValueInitializerList<value_type>> ilist) : TVector() { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
+    TVector(Meta::TDontDeduce<TRValueInitializerList<value_type>> ilist) : TVector(ForceInit) { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
     TVector(Meta::TDontDeduce<TRValueInitializerList<value_type>> ilist, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(ilist.begin(), ilist.end()); }
     TVector& operator=(Meta::TDontDeduce<TRValueInitializerList<value_type>> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
-    TVector(const TMemoryView<const value_type>& view) : TVector() { assign_AssumeEmpty(view.begin(), view.end()); }
+    TVector(const TMemoryView<const value_type>& view) : TVector(ForceInit) { assign_AssumeEmpty(view.begin(), view.end()); }
     TVector(const TMemoryView<const value_type>& view, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(view.begin(), view.end()); }
     TVector& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
 
     template <typename _It>
-    TVector(TIterable<_It> range) : TVector() { assign_AssumeEmpty(range.begin(), range.end()); }
+    TVector(TIterable<_It> range) : TVector(ForceInit) { assign_AssumeEmpty(range.begin(), range.end()); }
+    template <typename _It>
+    TVector(TIterable<_It> range, allocator_type&& ralloc) : TVector(std::move(ralloc)) { assign_AssumeEmpty(range.begin(), range.end()); }
+    template <typename _It>
+    TVector(TIterable<_It> range, const allocator_type& alloc) : TVector(alloc) { assign_AssumeEmpty(range.begin(), range.end()); }
     template <typename _It>
     TVector& operator=(TIterable<_It> range) { assign(range); return *this; }
 
     template <typename _OtherAllocator>
-    TVector(const TVector<T, _OtherAllocator>& other) : TVector() { operator =(other); }
+    TVector(const TVector<T, _OtherAllocator>& other) : TVector(ForceInit) { operator =(other); }
     template <typename _OtherAllocator>
     TVector& operator =(const TVector<T, _OtherAllocator>& other) { assign(other.MakeView()); return (*this); }
 
     template <typename _OtherAllocator, typename = Meta::TEnableIf<has_stealallocatorblock_v<_Allocator, _OtherAllocator>> >
-    TVector(TVector<T, _OtherAllocator>&& rvalue) : TVector() { operator =(std::move(rvalue)); }
+    TVector(TVector<T, _OtherAllocator>&& rvalue) : TVector(ForceInit) { operator =(std::move(rvalue)); }
     template <typename _OtherAllocator, typename = Meta::TEnableIf<has_stealallocatorblock_v<_Allocator, _OtherAllocator>> >
     TVector& operator =(TVector<T, _OtherAllocator>&& rvalue) {
         if (_data)
@@ -133,14 +137,14 @@ public:
     }
 
     template <typename U>
-    explicit TVector(const TMemoryView<U>& view) : TVector() { assign(view); }
+    explicit TVector(const TMemoryView<U>& view) : TVector(ForceInit) { assign(view); }
     template <typename U>
     TVector(const TMemoryView<U>& view, const allocator_type& alloc) : TVector(alloc) { assign(view); }
     template <typename U>
     TVector& operator=(const TMemoryView<U>& view) { assign(view); return *this; }
 
     template <typename _It>
-    TVector(_It first, _It last) : TVector() { assign(first, last); }
+    TVector(_It first, _It last) : TVector(ForceInit) { assign(first, last); }
     template <typename _It>
     TVector(_It first, _It last, const allocator_type& alloc) : TVector(alloc) { assign(first, last); }
 
@@ -229,6 +233,8 @@ public:
 
     template <typename _It>
     auto insert(const_iterator pos, TIterable<_It> range) { return insert(pos, range.begin(), range.end()); }
+    template <typename _It>
+    auto append(TIterable<_It> range) { return insert(end(), range.begin(), range.end()); }
 
     void push_back(const T& value) { emplace_back(value); }
     void push_back(T&& rvalue) { emplace_back(std::move(rvalue)); }
@@ -308,19 +314,19 @@ template <typename T, typename _Allocator, typename U>
 size_t IndexOf(const TVector<T, _Allocator>& v, const U& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool FindElementIndexIFP(size_t *pIndex, const TVector<T, _Allocator>& v, const T& elt);
+bool FindElementIndexIFP(size_t *pIndex, const TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Pred>
 bool FindPredicateIndexIFP(size_t *pIndex, const TVector<T, _Allocator>& v, const _Pred& pred);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(TVector<T, _Allocator>& v, const T& elt);
+void Add_AssertUnique(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt);
+void Add_AssertUnique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Add_Unique(TVector<T, _Allocator>& v, T&& elt);
+bool Add_Unique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename... _Args>
 auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVector<T, _Allocator>::iterator;
@@ -332,18 +338,18 @@ template <typename T, typename _Allocator, typename _Pred>
 size_t Remove_If_DontPreserveOrder(TVector<T, _Allocator>& v, _Pred&& pred);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt);
+void Remove_AssertExists(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists(TVector<T, _Allocator>& v, const T& elt);
-//----------------------------------------------------------------------------
-// Fast erase : swap last elem with elem to erase and pop_back() the vector
-template <typename T, typename _Allocator>
-void Remove_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt);
+bool Remove_ReturnIfExists(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt);
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt);
+void Remove_DontPreserveOrder(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt);
+//----------------------------------------------------------------------------
+// Fast erase : swap last elem with elem to erase and pop_back() the vector
+template <typename T, typename _Allocator>
+bool Remove_ReturnIfExists_DontPreserveOrder(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt);
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>

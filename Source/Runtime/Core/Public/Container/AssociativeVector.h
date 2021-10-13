@@ -19,6 +19,12 @@ namespace PPE {
 #define ASSOCIATIVE_VECTORINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
     ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTORINSITU(_DOMAIN, ::PPE::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
+#define ASSOCIATIVE_SPARSEARRAY(_DOMAIN, _KEY, _VALUE) \
+    ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, SPARSEARRAY(_DOMAIN, ::PPE::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+//----------------------------------------------------------------------------
+#define ASSOCIATIVE_SPARSEARRAYINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
+    ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, SPARSEARRAY_INSITU(_DOMAIN, ::PPE::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
@@ -52,8 +58,9 @@ public:
 
     typedef typename std::random_access_iterator_tag iterator_category;
 
-    TAssociativeVector() = default;
-    ~TAssociativeVector() = default;
+    TAssociativeVector() NOEXCEPT
+    :   _vector(Meta::MakeForceInit<vector_type>())
+    {}
 
     explicit TAssociativeVector(allocator_type&& alloc);
     explicit TAssociativeVector(Meta::FForceInit);
@@ -191,13 +198,23 @@ public:
     const _Value& operator [](const _Key& key) const { return At(key); }
 
     template <typename _It>
-    void insert(_It&& begin, _It&& end) {
+    void insert(const TIterable<_It>& range) {
+        insert(range.begin(), range.end());
+    }
+    void insert(TRValueInitializerList<value_type> range) {
+        insert(MakeMoveIterable(range.begin(), range.end()).Map([](const TRValuePtr<value_type>& x) -> value_type&& {
+            return std::move(*x.Ptr);
+        }));
+    }
+    template <typename _It>
+    void insert(_It&& first, _It&& last) {
+        if (first == last) return;
 #if USE_PPE_DEBUG
-        reserve(std::distance(begin, end));
-        for (auto it = begin; end != it; ++it)
-            Insert_AssertUnique(it->first, it->second);
+        reserve(std::distance(first, last));
+        for (auto it = first; last != it; ++it)
+            Insert_AssertUnique((*it).first, (*it).second);
 #else
-        _vector.insert(_vector.end(), begin, end);
+        _vector.insert(_vector.end(), first, last);
 #endif
     }
 
@@ -212,14 +229,13 @@ public:
     size_t HashValue() const NOEXCEPT { return hash_value(_vector); }
 
     friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) NOEXCEPT {
+        STATIC_ASSERT(std::is_swappable_v<_Key>);
+        STATIC_ASSERT(std::is_swappable_v<_Value>);
+        STATIC_ASSERT(std::is_swappable_v<value_type>);
         swap(lhs._vector, rhs._vector);
     }
 
 private:
-    STATIC_ASSERT(std::is_swappable_v<_Key>);
-    STATIC_ASSERT(std::is_swappable_v<_Value>);
-    STATIC_ASSERT(std::is_swappable_v<value_type>);
-
     struct FKeyEqual_ : key_equal {
         bool operator ()(const value_type& val, const key_type& key) const {
             return key_equal::operator ()(val.first, key);

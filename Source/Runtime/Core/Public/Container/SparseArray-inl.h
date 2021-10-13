@@ -252,7 +252,7 @@ TSparseArray<T, _Allocator>::~TSparseArray() {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TSparseArray<T, _Allocator>::TSparseArray(const TSparseArray& other)
-:   TSparseArray(allocator_traits::SelectOnCopy(other)) {
+:   TSparseArray(ForceInit) {
     Assign(other);
 }
 //----------------------------------------------------------------------------
@@ -264,7 +264,7 @@ auto TSparseArray<T, _Allocator>::operator =(const TSparseArray& other) -> TSpar
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TSparseArray<T, _Allocator>::TSparseArray(TSparseArray&& rvalue) NOEXCEPT
-:   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue))) {
+:   TSparseArray(ForceInit) {
     Assign(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
@@ -451,7 +451,8 @@ void TSparseArray<T, _Allocator>::Clear_ReleaseMemory() {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TSparseArray<T, _Allocator>::Reserve(size_t n) {
-    Assert(n);
+    if (0 == n)
+        return;
 
     n = allocator_traits::template SnapSizeT<T>(*this, n);
 
@@ -637,7 +638,7 @@ void TSparseArray<T, _Allocator>::ClearReleaseMemory_LeaveDirty_() {
         Assert(nullptr == _chunks);
     }
     else if (1 == _numChunks) { // see GrabNewChunk_()
-        Assert(ckSize_(1) >= _highestIndex);
+        Assert(ckSize_(0) >= _highestIndex);
         Assert(_highestIndex >= _size);
         Assert(_chunks);
 

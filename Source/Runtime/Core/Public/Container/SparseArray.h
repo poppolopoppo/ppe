@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Allocator/Allocation.h"
-#include "Allocator/MallocBinned.h" // SnapSize()
 #include "Container/SparseArray_fwd.h"
 #include "Meta/Iterator.h"
 #include "Meta/PointerWFlags.h"
@@ -37,8 +36,8 @@ namespace PPE {
 template <typename T>
 class TBasicSparseArray {
 public:
-    STATIC_CONST_INTEGRAL(size_t, MinChunkSize,     8);
-    STATIC_CONST_INTEGRAL(size_t, MinChunkExp,      3); // first chunk is always 8 elements (2^3)
+    STATIC_CONST_INTEGRAL(size_t, MinChunkSize,     4);
+    STATIC_CONST_INTEGRAL(size_t, MinChunkExp,      2); // first chunk is always 4 elements (2^2)
 
     using FDataId = FSparseDataId;
     using FDataItem = TSparseArrayItem<T>;
@@ -215,8 +214,8 @@ public:
     using typename parent_type::reference;
 
     TSparseArrayIterator() NOEXCEPT
-        : _index(0)
-        , _owner(nullptr)
+    :   _index(0)
+    ,   _owner(nullptr)
     {}
 
     TSparseArrayIterator(const TSparseArrayIterator&) = default;
@@ -363,15 +362,22 @@ public:
     explicit TSparseArray(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
     explicit TSparseArray(const allocator_type& alloc) : allocator_type(alloc) {}
 
-    TSparseArray(std::initializer_list<value_type> ilist) : TSparseArray() { AddRange(ilist.begin(), ilist.end()); }
-    TSparseArray(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TSparseArray(alloc) { AddRange(ilist.begin(), ilist.end()); }
-    TSparseArray& operator =(std::initializer_list<value_type> ilist) { Assign(ilist.begin(), ilist.end()); return (*this); }
-
     TSparseArray(const TSparseArray& other);
     TSparseArray& operator =(const TSparseArray& other);
 
     TSparseArray(TSparseArray&& rvalue) NOEXCEPT;
     TSparseArray& operator =(TSparseArray&& rvalue) NOEXCEPT;
+
+    TSparseArray(std::initializer_list<value_type> ilist) : TSparseArray() { AddRange(ilist.begin(), ilist.end()); }
+    TSparseArray(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TSparseArray(alloc) { AddRange(ilist.begin(), ilist.end()); }
+    TSparseArray& operator =(std::initializer_list<value_type> ilist) { Assign(ilist.begin(), ilist.end()); return (*this); }
+
+    template <typename _It>
+    explicit TSparseArray(const TIterable<_It>& range) : TSparseArray() { AddRange(range.begin(), range.end()); }
+    template <typename _It>
+    TSparseArray(const TIterable<_It>& range, const allocator_type& alloc) : TSparseArray(alloc) { AddRange(range.begin(), range.end()); }
+    template <typename _It>
+    TSparseArray& operator =(const TIterable<_It>& range) { Assign(range.begin(), range.end()); return (*this); }
 
     template <typename _OtherAllocator>
     explicit TSparseArray(const TSparseArray<T, _OtherAllocator>& other) : TSparseArray() { operator =(other); }
@@ -403,6 +409,11 @@ public:
     template <typename _It>
     void AddRange(_It first, _It last);
 
+    template <typename _It>
+    void Append(_It first, _It last) { AddRange(first, last); }
+    template <typename _It>
+    void Append(const TIterable<_It>& range) { AddRange(range.begin(), range.end()); }
+
     template <typename... _Args>
     FDataId Emplace(_Args&&... args);
     template <typename... _Args>
@@ -415,6 +426,11 @@ public:
     void Assign(_It first, _It last) {
         Clear();
         AddRange(first, last);
+    }
+
+    template <typename _It>
+    void Assign(const TIterable<_It>& range) {
+        return Assign(range.begin(), range.end());
     }
 
     template <typename _OtherAllocator>
@@ -441,6 +457,9 @@ public:
     void Reserve(size_t n);
 
     bool Equals(const TSparseArray& other) const;
+
+    auto Iterable() { return MakeIterable(*this); }
+    auto Iterable() const { return MakeIterable(*this); }
 
     friend bool operator ==(const TSparseArray& lhs, const TSparseArray& rhs) {
         return (lhs.Equals(rhs));

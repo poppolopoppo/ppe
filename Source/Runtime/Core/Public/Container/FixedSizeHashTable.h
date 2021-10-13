@@ -207,11 +207,11 @@ public:
     bool Add_Overwrite(value_type&& rvalue);
 
     template <typename... _Args>
-    void Add_AssertUnique(_Args&&... args) { Add_AssertUnique(value_type(std::forward<_Args>(args)...)); }
+    void Emplace_AssertUnique(_Args&&... args) { Add_AssertUnique(value_type(std::forward<_Args>(args)...)); }
     template <typename... _Args>
-    bool Add_KeepExisting(_Args&&... args) { return Add_KeepExisting(value_type(std::forward<_Args>(args)...)); }
+    bool Emplace_KeepExisting(_Args&&... args) { return Add_KeepExisting(value_type(std::forward<_Args>(args)...)); }
     template <typename... _Args>
-    bool Add_Overwrite(_Args&&... args) { return Add_Overwrite(value_type(std::forward<_Args>(args)...)); }
+    bool Emplace_Overwrite(_Args&&... args) { return Add_Overwrite(value_type(std::forward<_Args>(args)...)); }
 
     FORCE_INLINE void Remove_AssertExists(key_type key) { Verify(Remove_ReturnIfExists(key)); }
     bool Remove_ReturnIfExists(key_type key);

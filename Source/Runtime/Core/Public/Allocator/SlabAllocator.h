@@ -20,6 +20,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR_SLAB(_DOMAIN, _KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_SLAB(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
+#define ASSOCIATIVE_SPARSEARRAY_SLAB(_DOMAIN, _KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, SPARSEARRAY_SLAB(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>)>
+//----------------------------------------------------------------------------
 #define HASHSET_SLAB(_DOMAIN, T) ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 #define HASHMAP_SLAB(_DOMAIN, _KEY, _VALUE) ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, SLAB_ALLOCATOR(_DOMAIN) >

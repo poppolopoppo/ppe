@@ -16,7 +16,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Allocator = ALLOCATOR(Unknown)>
-class TSlabHeap : _Allocator, Meta::FNonCopyableNorMovable {
+class TSlabHeap : _Allocator, Meta::FNonCopyable {
 public:
     STATIC_CONST_INTEGRAL(u32, DefaultSlabSize, PAGE_SIZE);
 
@@ -33,9 +33,27 @@ public:
     explicit TSlabHeap(const allocator_type& alloc) NOEXCEPT : allocator_type(allocator_traits::SelectOnCopy(alloc)) {}
 #endif
 
-    explicit TSlabHeap(Meta::FForceInit) NOEXCEPT
-    :   allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
-    {}
+    explicit TSlabHeap(Meta::FForceInit) NOEXCEPT;
+
+    TSlabHeap(TSlabHeap&& rvalue) NOEXCEPT
+    :   TSlabHeap(ForceInit) {
+        operator =(std::move(rvalue));
+    }
+    TSlabHeap& operator =(TSlabHeap&& rvalue) NOEXCEPT {
+        Assert_NoAssume(rvalue.CheckCanary_());
+        allocator_traits::Move(this, std::move(rvalue.Allocator()));
+        _slabs = std::move(rvalue._slabs);
+        _slabSize = rvalue._slabSize;
+        rvalue._slabSize = DefaultSlabSize;
+#if USE_PPE_ASSERT
+        _numLiveBlocks = rvalue._numLiveBlocks;
+        rvalue._numLiveBlocks = 0;
+#endif
+#if USE_PPE_MEMORYDOMAINS
+        rvalue._trackingData.MoveTo(&_trackingData);
+#endif
+        return (*this);
+    }
 
     ~TSlabHeap();
 
@@ -51,6 +69,7 @@ public:
 
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* Allocate(size_t size) {
         Assert(size);
+        Assert_NoAssume(CheckCanary_());
         size = Meta::RoundToNext(size, ALLOCATION_BOUNDARY);
 
         for (FSlabPtr& slab : _slabs) {
@@ -118,6 +137,8 @@ private:
 
 #if USE_PPE_ASSERT
     u32 _numLiveBlocks{ 0 };
+    u64 _canaryForDbg = PPE_HASH_VALUE_SEED_64;
+    bool CheckCanary_() const { return (PPE_HASH_VALUE_SEED_64 == _canaryForDbg); }
 #endif
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking _trackingData;
@@ -141,6 +162,23 @@ public:
     using allocator_traits = typename heap_type::allocator_traits;
 
     TPoolingSlabHeap() = default;
+
+    TPoolingSlabHeap(TPoolingSlabHeap&& rvalue) NOEXCEPT
+    :   _heap(std::move(rvalue._heap)) {
+        forrange(i, 0, NumBins) {
+            _pools[i] = rvalue._pools[i];
+            rvalue._pools[i] = nullptr;
+        }
+    }
+
+    TPoolingSlabHeap& operator =(TPoolingSlabHeap&& rvalue) NOEXCEPT {
+        _heap = std::move(rvalue._heap);
+        forrange(i, 0, NumBins) {
+            _pools[i] = rvalue._pools[i];
+            rvalue._pools[i] = nullptr;
+        }
+        return (*this);
+    }
 
     TPoolingSlabHeap(allocator_type&& ralloc) NOEXCEPT : _heap(std::move(ralloc)) {}
     TPoolingSlabHeap(const allocator_type& alloc) NOEXCEPT : _heap(alloc) {}
@@ -175,6 +213,7 @@ public:
 #endif
 
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* Allocate(size_t size) {
+        Assert_NoAssume(_heap.CheckCanary_());
         if (size <= MaxBinSize) {
             const u32 pool = FAllocatorBinning::IndexFromSize(size);
             Assert_NoAssume(FAllocatorBinning::BinSizes[pool] >= size);
@@ -184,6 +223,7 @@ public:
     }
 
     void Deallocate(void* ptr, size_t size) NOEXCEPT {
+        Assert_NoAssume(_heap.CheckCanary_());
         // always try to resize the heap first
         if (not _heap.Deallocate_ReturnIfLast(ptr, size)) {
             if (size <= MaxBinSize) {
@@ -199,6 +239,7 @@ public:
     }
 
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* PoolAlloc(u32 pool) {
+        Assert_NoAssume(_heap.CheckCanary_());
         Assert(pool < NumBins);
         if (_pools[pool]) {
             void* const p = _pools[pool];
@@ -211,6 +252,7 @@ public:
     }
 
     void PoolFree(u32 pool, void* ptr) NOEXCEPT {
+        Assert_NoAssume(_heap.CheckCanary_());
         Assert(pool < NumBins);
         ONLY_IF_MEMORYDOMAINS(TrackingData().DeallocateUser(FAllocatorBinning::BinSizes[pool]));
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(ptr, FAllocatorBinning::BinSizes[pool]));

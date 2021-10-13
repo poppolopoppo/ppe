@@ -68,7 +68,11 @@ template <typename T, typename _Allocator>
 template <typename _It>
 auto TVector<T, _Allocator>::assign(_It first, _It last)
     -> Meta::TEnableIf<Meta::is_iterator_v<_It>>  {
-    Assert_NoAssume(first == last || not AliasesToContainer(*first));
+#if USE_PPE_DEBUG
+    IF_CONSTEXPR(std::is_same_v<Meta::TDecay<_It>, iterator> || std::is_same_v<Meta::TDecay<_It>, const_iterator>) {
+        Assert_NoAssume(first == last || not AliasesToContainer(*first));
+    }
+#endif
 
     typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
     assign_(first, last, iterator_category{});
@@ -138,7 +142,11 @@ template <typename T, typename _Allocator>
 template <typename _It>
 auto TVector<T, _Allocator>::assign_AssumeEmpty(_It first, _It last)
     -> Meta::TEnableIf<Meta::is_iterator_v<_It>>  {
-    Assert_NoAssume(first == last || not AliasesToContainer(*first));
+#if USE_PPE_DEBUG
+    IF_CONSTEXPR(std::is_same_v<Meta::TDecay<_It>, iterator> || std::is_same_v<Meta::TDecay<_It>, const_iterator>) {
+        Assert_NoAssume(first == last || not AliasesToContainer(*first));
+    }
+#endif
 
     const size_type n = checked_cast<size_type>(std::distance(first, last));
     reserve_AssumeEmpty(n);
@@ -150,7 +158,7 @@ auto TVector<T, _Allocator>::assign_AssumeEmpty(_It first, _It last)
     else
         std::uninitialized_copy(first, last, dest);
 
-    _size = n;
+    _size = checked_cast<u32>(n);
 
     Assert(CheckInvariants());
 }
@@ -174,6 +182,7 @@ void TVector<T, _Allocator>::assign(size_type count, const_reference value) {
         std::fill_n(MakeCheckedIterator(_data, count, 0), _size, value);
         std::uninitialized_fill_n(MakeCheckedIterator(_data, count, _size), count - _size, value);
     }
+
     _size = checked_cast<u32>(count);
 }
 //----------------------------------------------------------------------------
@@ -676,7 +685,7 @@ size_t IndexOf(const TVector<T, _Allocator>& v, const U& elt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool FindElementIndexIFP(size_t *pIndex, TVector<T, _Allocator>& v, const T& elt) {
+bool FindElementIndexIFP(size_t *pIndex, TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt) {
     Assert(pIndex);
     const auto it = std::find(v.begin(), v.end(), elt);
     if (v.end() != it) {
@@ -702,13 +711,13 @@ bool FindPredicateIndexIFP(size_t *pIndex, TVector<T, _Allocator>& v, const _Pre
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(TVector<T, _Allocator>& v, const T& elt) {
+void Add_AssertUnique(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt) {
+void Add_AssertUnique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(std::move(elt));
 }
@@ -720,7 +729,7 @@ auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVecto
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Add_Unique(TVector<T, _Allocator>& v, T&& elt) {
+bool Add_Unique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt) {
     if (not Contains(v, elt)) {
         v.emplace_back(std::move(elt));
         return true;
@@ -761,14 +770,14 @@ size_t Remove_If_DontPreserveOrder(TVector<T, _Allocator>& v, _Pred&& pred) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt) {
+void Remove_AssertExists(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     Assert(it != v.end());
     v.erase(it);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists(TVector<T, _Allocator>& v, const T& elt) {
+bool Remove_ReturnIfExists(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     if (it == v.end())
         return false;
@@ -778,14 +787,14 @@ bool Remove_ReturnIfExists(TVector<T, _Allocator>& v, const T& elt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Remove_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt) {
+void Remove_DontPreserveOrder(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     Assert(v.end() != it);
     v.erase_DontPreserveOrder(it);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt) {
+bool Remove_ReturnIfExists_DontPreserveOrder(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     if (v.end() != it) {
         v.erase_DontPreserveOrder(it);
