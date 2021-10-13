@@ -34,6 +34,13 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
+enum class EFunctionFlags : u32 {
+    None            = 0,
+    FireAndForget   = 1<<0,
+    FitInSitu       = 1<<1,
+};
+ENUM_FLAGS(EFunctionFlags);
+//----------------------------------------------------------------------------
 // Detects if a type is a TFunction<>
 //----------------------------------------------------------------------------
 template <typename T>
@@ -43,6 +50,66 @@ struct TIsFunction< TFunction<T, _InSitu> > : std::true_type {};
 //----------------------------------------------------------------------------
 template <typename T>
 static CONSTEXPR bool is_function_v = TIsFunction<T>::value;
+//----------------------------------------------------------------------------
+// Deduce different types of functions pointers generically
+//----------------------------------------------------------------------------
+template <typename T>
+struct TInferFunction;
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args>
+struct TInferFunction<_Ret(_Args...)> {
+    using bind_type = TFunction<_Ret(_Args...)>;
+    using noexcept_type = _Ret(_Args...) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args>
+struct TInferFunction<_Ret(_Args...) NOEXCEPT> {
+    using bind_type = TFunction<_Ret(_Args...) NOEXCEPT>;
+    using noexcept_type = _Ret(_Args...) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args>
+struct TInferFunction<_Ret(*)(_Args...)> {
+    using bind_type = TFunction<_Ret(_Args...)>;
+    using noexcept_type = _Ret(*)(_Args...) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args>
+struct TInferFunction<_Ret(*)(_Args...) NOEXCEPT> {
+    using bind_type = TFunction<_Ret(_Args...) NOEXCEPT>;
+    using noexcept_type = _Ret(*)(_Args...) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename _Class, typename... _Args>
+struct TInferFunction<_Ret(_Class::*)(_Args...)> {
+    using bind_type = TFunction<_Ret(_Args...)>;
+    using noexcept_type = _Ret(_Class::*)(_Args...) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename _Class, typename... _Args>
+struct TInferFunction<_Ret(_Class::*)(_Args...) NOEXCEPT> {
+    using bind_type = TFunction<_Ret(_Args...) NOEXCEPT>;
+    using noexcept_type = _Ret(_Class::*)(_Args...) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename _Class, typename... _Args>
+struct TInferFunction<_Ret(_Class::*)(_Args...) const> {
+    using bind_type = TFunction<_Ret(_Args...)>;
+    using noexcept_type = _Ret(_Class::*)(_Args...) const NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename _Class, typename... _Args>
+struct TInferFunction<_Ret(_Class::*)(_Args...) const NOEXCEPT> {
+    using bind_type = TFunction<_Ret(_Args...) NOEXCEPT>;
+    using noexcept_type = _Ret(_Class::*)(_Args...) const NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+template <typename T, bool _NoExcept>
+struct TNoExceptFunction {
+    using type = Meta::TConditional<_NoExcept,
+        typename TInferFunction<T>::noexcept_type,
+        T >;
+};
 //----------------------------------------------------------------------------
 // TFunctionPayload<T> will hold an allocated payload when not fitting in situ
 //----------------------------------------------------------------------------
@@ -150,7 +217,7 @@ struct TFunctionVTable {
     template <typename T>
     static CONSTEXPR move_t make_move() NOEXCEPT {
         IF_CONSTEXPR(std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>)
-            return [](void* dst, void* src) CONSTEXPR NOEXCEPT{
+            return[](void* dst, void* src) CONSTEXPR NOEXCEPT{
                 INPLACE_NEW(dst, T){ std::move(*static_cast<T*>(src)) };
                 Meta::Destroy(static_cast<T*>(src)); // expected to destroy after move
             };
@@ -167,7 +234,7 @@ struct TFunctionVTable {
 
     template <typename T>
     static CONSTEXPR equals_t make_equals() NOEXCEPT {
-        IF_CONSTEXPR(Meta::has_equals_v<T>)
+        IF_CONSTEXPR(Meta::has_trivial_equal_v<T>)
             return [](const void* lhs, const void* rhs) CONSTEXPR NOEXCEPT{
                 return (*static_cast<const T*>(lhs) == *static_cast<const T*>(rhs));
             };
@@ -204,13 +271,11 @@ using TFunctionTuple = TTupleMake< typename TFunctionTupleArg<_Args>::type... >;
 //----------------------------------------------------------------------------
 // TFunctionTraits<> implements bindings outside of TFunction<> to be independent of _InSitu
 //----------------------------------------------------------------------------
-template <typename T>
-struct TFunctionTraits;
-//----------------------------------------------------------------------------
-template <typename _Ret, typename... _Args>
-struct TFunctionTraits<_Ret(_Args...)> {
-    using native_type = _Ret(_Args...);
-    using wrapper_type = _Ret(*)(const void*, _Args...);
+template <typename _Ret, bool _NoExcept, typename... _Args>
+struct TFunctionTraits {
+    STATIC_CONST_INTEGRAL(bool, NoExcept, _NoExcept);
+    using native_type = typename TNoExceptFunction<_Ret(_Args...), NoExcept>::type;
+    using wrapper_type = typename TNoExceptFunction<_Ret(*)(const void*, _Args...), NoExcept>::type;
     using vtable_type = TFunctionVTable<wrapper_type>;
 
     template <typename T, typename _R = decltype(std::declval<T>()(std::declval<_Args>()...)) >
@@ -226,7 +291,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
 
     template <native_type _FreeFunc>
     struct freefunc_t {
-        static CONSTEXPR _Ret invoke(const void*, _Args... args) {
+        static CONSTEXPR _Ret invoke(const void*, _Args... args) NOEXCEPT_IF(TFunctionTraits::NoExcept) {
             return _FreeFunc(std::forward<_Args>(args)...);
         }
         static CONSTEXPR vtable_type vtable = vtable_type::phony(&invoke);
@@ -237,7 +302,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
     struct lambda_t {
         template <typename _Payload>
         struct bind_t {
-            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) {
+            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) NOEXCEPT_IF(TFunctionTraits::NoExcept) {
                 return _Payload::Get(embed)(std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
@@ -249,14 +314,17 @@ struct TFunctionTraits<_Ret(_Args...)> {
     struct otherfunc_t;
 
     template <typename... _Extra>
-    struct otherfunc_t<_Ret(*)(_Args..., _Extra...)> {
+    using extra_func_t = _Ret(*)(_Args..., _Extra...) NOEXCEPT_IF(TFunctionTraits::NoExcept);
+
+    template <typename... _Extra>
+    struct otherfunc_t<extra_func_t<_Extra...>> {
         template <typename... _ExtraArgs>
         struct extra_t {
-            using type = details::TFunctionTuple<_ExtraArgs...>;
+            using type = TFunctionTuple<_ExtraArgs...>;
         };
-        template <_Ret(*_ExtraFunc)(_Args..., _Extra...), typename _Payload>
+        template <extra_func_t<_Extra...> _ExtraFunc, typename _Payload>
         struct bind_t {
-            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) {
+            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) NOEXCEPT_IF(TFunctionTraits::NoExcept) {
                 return CallTupleEx(_ExtraFunc, _Payload::Get(embed), std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
@@ -265,24 +333,27 @@ struct TFunctionTraits<_Ret(_Args...)> {
     };
 
     template <typename _Class, typename... _Extra>
-    struct otherfunc_t<_Ret(_Class::*)(_Args..., _Extra...)> {
+    using member_func_t = _Ret(_Class::*)(_Args..., _Extra...) NOEXCEPT_IF(TFunctionTraits::NoExcept);
+
+    template <typename _Class, typename... _Extra>
+    struct otherfunc_t<member_func_t<_Class, _Extra...>> {
         template <typename... _ExtraArgs>
         struct extra_t;
         template <typename... _ExtraArgs>
         struct extra_t<_Class*, _ExtraArgs...> {
-            using type = details::TFunctionTuple<_Class*, _ExtraArgs...>;
+            using type = TFunctionTuple<_Class*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
-            using type = details::TFunctionTuple<TSafePtr<_Class>, _ExtraArgs...>;
+            using type = TFunctionTuple<TSafePtr<_Class>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
-            using type = details::TFunctionTuple<TRefPtr<_Class>, _ExtraArgs...>;
+            using type = TFunctionTuple<TRefPtr<_Class>, _ExtraArgs...>;
         };
-        template <_Ret(_Class::*_MemFunc)(_Args..., _Extra...), typename _Payload>
+        template <member_func_t<_Class, _Extra...> _MemFunc, typename _Payload>
         struct bind_t {
-            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) {
+            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) NOEXCEPT_IF(TFunctionTraits::NoExcept) {
                 return CallTupleEx(_MemFunc, _Payload::Get(embed), std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
@@ -291,36 +362,39 @@ struct TFunctionTraits<_Ret(_Args...)> {
     };
 
     template <typename _Class, typename... _Extra>
-    struct otherfunc_t<_Ret(_Class::*)(_Args..., _Extra...) const> {
+    using member_func_const_t = _Ret(_Class::*)(_Args..., _Extra...) const NOEXCEPT_IF(TFunctionTraits::NoExcept);
+
+    template <typename _Class, typename... _Extra>
+    struct otherfunc_t<member_func_const_t<_Class, _Extra...>> {
         template <typename... _ExtraArgs>
         struct extra_t;
         template <typename... _ExtraArgs>
         struct extra_t<_Class*, _ExtraArgs...> {
-            using type = details::TFunctionTuple<const _Class*, _ExtraArgs...>;
+            using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
-            using type = details::TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+            using type = TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
-            using type = details::TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
+            using type = TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<const _Class*, _ExtraArgs...> {
-            using type = details::TFunctionTuple<const _Class*, _ExtraArgs...>;
+            using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<TSafePtr<const _Class>, _ExtraArgs...> {
-            using type = details::TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+            using type = TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<TRefPtr<const _Class>, _ExtraArgs...> {
-            using type = details::TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
+            using type = TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
         };
-        template <_Ret(_Class::*_MemFuncConst)(_Args..., _Extra...) const, typename _Payload>
+        template <member_func_const_t<_Class, _Extra...> _MemFuncConst, typename _Payload>
         struct bind_t {
-            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) {
+            static CONSTEXPR _Ret invoke(const void* embed, _Args... args) NOEXCEPT_IF(TFunctionTraits::NoExcept) {
                 return CallTupleEx(_MemFuncConst, _Payload::Get(embed), std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
@@ -364,21 +438,21 @@ struct TPayloadTraits< T, PFunctionPayload<T> > {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EFunctionFlags : u32 {
-    None            = 0,
-    FireAndForget   = 1<<0,
-    FitInSitu       = 1<<1,
-};
-ENUM_FLAGS(EFunctionFlags);
+namespace details {
 //----------------------------------------------------------------------------
-template <typename _Ret, typename... _Args, size_t _InSitu>
-class TFunction<_Ret(_Args...), _InSitu> {
+// Factor noexcept(true/false) variants with TBaseFunction<> CRTP
+//----------------------------------------------------------------------------
+template <typename _Impl, typename _Traits, size_t _InSitu>
+class TBaseFunction {
+    STATIC_ASSERT(is_function_v<_Impl>);
 public:
+    using traits_type = _Traits;
     using embed_type = std::aligned_storage_t<_InSitu>;
-    using traits_type = details::TFunctionTraits<_Ret(_Args...)>;
     using native_type = typename traits_type::native_type;
     using wrapper_type = typename traits_type::wrapper_type;
     using vtable_type = typename traits_type::vtable_type;
+
+    STATIC_CONST_INTEGRAL(bool, NoExcept, traits_type::NoExcept);
 
 private:
     Meta::TPointerWFlags<const vtable_type> _vtable;
@@ -387,48 +461,55 @@ private:
     STATIC_ASSERT(u32(EFunctionFlags::FitInSitu) == 2);
     void SetFitInSitu_(bool enabled) { _vtable.SetFlag1(enabled); }
 
+protected:
+    CONSTEXPR const vtable_type& VTable_() const NOEXCEPT { return *_vtable; }
+    CONSTEXPR embed_type* EmbedPtr_() NOEXCEPT { return std::addressof(_embed); }
+    CONSTEXPR const embed_type* EmbedPtr_() const NOEXCEPT { return std::addressof(_embed); }
+
 public:
-    CONSTEXPR TFunction() NOEXCEPT : TFunction(&traits_type::dummy_vtable) {}
-    CONSTEXPR explicit TFunction(const vtable_type* vtable) NOEXCEPT {
+    CONSTEXPR TBaseFunction() NOEXCEPT : TBaseFunction(&traits_type::dummy_vtable) {}
+    CONSTEXPR explicit TBaseFunction(const vtable_type* vtable) NOEXCEPT {
         _vtable.Reset(vtable);
     }
 
-    ~TFunction() NOEXCEPT {
+    ~TBaseFunction() NOEXCEPT {
         _vtable->Destroy(&_embed);
     }
 
-    CONSTEXPR TFunction(const TFunction& other) NOEXCEPT
+    CONSTEXPR TBaseFunction(const _Impl& other)
     :   _vtable(other._vtable) {
         _vtable->Copy(&_embed, &other._embed);
     }
-    CONSTEXPR TFunction& operator =(const TFunction& other) NOEXCEPT {
+    CONSTEXPR _Impl& operator =(const _Impl& other) {
         _vtable->Destroy(&_embed);
         _vtable = other._vtable;
         _vtable->Copy(&_embed, &other._embed);
-        return (*this);
+        return static_cast<_Impl&>(*this);
     }
 
-    CONSTEXPR TFunction(TFunction&& rvalue) NOEXCEPT
+    CONSTEXPR TBaseFunction(_Impl&& rvalue) NOEXCEPT
     :   _vtable(rvalue._vtable) {
         _vtable->Move(&_embed, &rvalue._embed);
         rvalue._vtable.Reset(&traits_type::dummy_vtable);
     }
-    CONSTEXPR TFunction& operator =(TFunction&& rvalue) NOEXCEPT {
+    CONSTEXPR _Impl& operator =(_Impl&& rvalue) NOEXCEPT {
         _vtable->Destroy(&_embed);
         _vtable = rvalue._vtable;
         _vtable->Move(&_embed, &rvalue._embed);
         rvalue._vtable.Reset(&traits_type::dummy_vtable);
-        return (*this);
+        return static_cast<_Impl&>(*this);
     }
 
-    EFunctionFlags Flags() const { return static_cast<EFunctionFlags>(_vtable.Flag01()); }
+    CONSTEXPR EFunctionFlags Flags() const {
+        return static_cast<EFunctionFlags>(_vtable.Flag01());
+    }
 
     STATIC_ASSERT(u32(EFunctionFlags::FitInSitu) == 2);
-    bool FitInSitu() const { return _vtable.Flag1(); }
+    CONSTEXPR bool FitInSitu() const { return _vtable.Flag1(); }
 
     STATIC_ASSERT(u32(EFunctionFlags::FireAndForget) == 1);
-    bool FireAndForget() const { return _vtable.Flag0(); }
-    void SetFireAndForget(bool enabled) { _vtable.SetFlag0(enabled); }
+    CONSTEXPR bool IsFireAndForget() const { return _vtable.Flag0(); }
+    CONSTEXPR void SetFireAndForget(bool enabled) { _vtable.SetFlag0(enabled); }
 
     CONSTEXPR bool Valid() const NOEXCEPT {
         return (not _vtable->IsDummy());
@@ -436,19 +517,6 @@ public:
 
     CONSTEXPR operator const void* () const NOEXCEPT {
         return (_vtable->IsDummy() ? nullptr : this);
-    }
-
-    CONSTEXPR _Ret operator()(_Args... args) const {
-        return _vtable->Invoke(&_embed, std::forward<_Args>(args)...);
-    }
-
-    CONSTEXPR _Ret Invoke(_Args... args) const {
-        return _vtable->Invoke(&_embed, std::forward<_Args>(args)...);
-    }
-
-    CONSTEXPR void FireAndForget(_Args... args) {
-        Invoke(std::forward<_Args>(args)...);
-        Reset();
     }
 
     CONSTEXPR void Reset() NOEXCEPT {
@@ -464,12 +532,14 @@ public:
         _vtable->Copy(&_embed, &other._embed);
     }
 
-    inline void swap(TFunction& lhs, TFunction& rhs) { std::swap(lhs, rhs); }
+    FORCE_INLINE void swap(_Impl& lhs, _Impl& rhs) {
+        std::swap(lhs, rhs);
+    }
 
-    inline friend CONSTEXPR bool operator ==(const TFunction& lhs, const TFunction& rhs) NOEXCEPT {
+    friend CONSTEXPR bool operator ==(const _Impl& lhs, const _Impl& rhs) NOEXCEPT {
         return (lhs._vtable == rhs._vtable && lhs._vtable->Equals(&lhs._embed, &rhs._embed));
     }
-    inline friend CONSTEXPR bool operator !=(const TFunction& lhs, const TFunction& rhs) NOEXCEPT {
+    FORCE_INLINE friend CONSTEXPR bool operator !=(const _Impl& lhs, const _Impl& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
@@ -478,24 +548,24 @@ public:
      ***********************************************************************/
 
     template <typename T>
-    using payload_traits_t = details::TPayloadTraits<
+    using payload_traits_t = TPayloadTraits<
         T,
         Meta::TConditional<
             (sizeof(T) <= _InSitu),
             T,
-            details::PFunctionPayload<T>
+            PFunctionPayload<T>
         >
     >;
 
     template <typename _PayloadTraits, typename... _Extra>
-    CONSTEXPR TFunction& SetPayloadLarge(_Extra&&... extra) {
+    CONSTEXPR _Impl& SetPayloadLarge(_Extra&&... extra) {
         _PayloadTraits::Set(&_embed, std::forward<_Extra>(extra)...);
         SetFitInSitu_(sizeof(typename _PayloadTraits::type) <= _InSitu);
-        return (*this);
+        return static_cast<_Impl&>(*this);
     }
 
     template <typename _PayloadTraits, typename... _Extra>
-    CONSTEXPR TFunction& SetPayload(_Extra&&... extra) NOEXCEPT {
+    CONSTEXPR _Impl& SetPayload(_Extra&&... extra) NOEXCEPT {
         using payload_t = typename _PayloadTraits::type;
         static_assert(sizeof(payload_t) <= _InSitu, "payload won't fit in situ");
         return SetPayloadLarge<_PayloadTraits>(std::forward<_Extra>(extra)...);
@@ -507,7 +577,7 @@ public:
 
     template <native_type _FreeFunc>
     static CONSTEXPR auto Bind() NOEXCEPT {
-        return TFunction{ &traits_type::template freefunc_t<_FreeFunc>::vtable };
+        return _Impl{ &traits_type::template freefunc_t<_FreeFunc>::vtable };
     }
 
     /***********************************************************************
@@ -518,7 +588,7 @@ public:
     static CONSTEXPR auto Bind(_Lambda&& lambda) NOEXCEPT {
         using f = Meta::TDecay<_Lambda>;
         using payload_t = payload_traits_t<f>;
-        return TFunction{ &traits_type::template lambda_t<f>::template bind_t<payload_t>::vtable }
+        return _Impl{ &traits_type::template lambda_t<f>::template bind_t<payload_t>::vtable }
             .template SetPayload<payload_t>(std::forward<_Lambda>(lambda));
     }
 
@@ -526,7 +596,7 @@ public:
     static CONSTEXPR auto BindLarge(_Lambda&& lambda) {
         using f = Meta::TDecay<_Lambda>;
         using payload_t = payload_traits_t<f>;
-        return TFunction{ &traits_type::template lambda_t<f>::template bind_t<payload_t>::vtable }
+        return _Impl{ &traits_type::template lambda_t<f>::template bind_t<payload_t>::vtable }
             .template SetPayloadLarge<payload_t>(std::forward<_Lambda>(lambda));
     }
 
@@ -538,8 +608,8 @@ public:
         (not details::is_function_v< Meta::TDecay<_Lambda> >) );
 
     template <typename _Lambda, class = Meta::TEnableIf<is_callable_lambda_v<_Lambda>> >
-    CONSTEXPR TFunction(_Lambda&& lambda) NOEXCEPT
-    :   TFunction( &traits_type
+    CONSTEXPR TBaseFunction(_Lambda&& lambda) NOEXCEPT
+    :   TBaseFunction( &traits_type
             ::template lambda_t< Meta::TDecay<_Lambda> >
             ::template bind_t< payload_traits_t< Meta::TDecay<_Lambda> > >
             ::vtable ) {
@@ -548,8 +618,8 @@ public:
     }
 
     template <typename _Lambda, class = Meta::TEnableIf<is_callable_lambda_v<_Lambda>> >
-    CONSTEXPR TFunction(Meta::FForceInit, _Lambda&& lambda)
-    :   TFunction( &traits_type
+    CONSTEXPR TBaseFunction(Meta::FForceInit, _Lambda&& lambda)
+    :   TBaseFunction( &traits_type
             ::template lambda_t< Meta::TDecay<_Lambda> >
             ::template bind_t< payload_traits_t< Meta::TDecay<_Lambda> > >
             ::vtable ) {
@@ -565,7 +635,7 @@ public:
     static CONSTEXPR auto Bind(_Extra... extra) NOEXCEPT {
         using func_t = typename traits_type::template otherfunc_t<decltype(_OtherFunc)>;
         using payload_t = payload_traits_t< typename func_t::template extra_t<_Extra...>::type >;
-        return TFunction{ &func_t::template bind_t<_OtherFunc, payload_t>::vtable }
+        return _Impl{ &func_t::template bind_t<_OtherFunc, payload_t>::vtable }
             .template SetPayload<payload_t>(std::forward<_Extra>(extra)...);
     }
 
@@ -573,46 +643,101 @@ public:
     static CONSTEXPR auto BindLarge(_Extra... extra) {
         using func_t = typename traits_type::template otherfunc_t<decltype(_OtherFunc)>;
         using payload_t = payload_traits_t< typename func_t::template extra_t<_Extra...>::type >;
-        return TFunction{ &func_t::template bind_t<_OtherFunc, payload_t>::vtable }
+        return _Impl{ &func_t::template bind_t<_OtherFunc, payload_t>::vtable }
             .template SetPayloadLarge<payload_t>(std::forward<_Extra>(extra)...);
     }
 
-}; //!TFunction
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// MakeFunction()
-//----------------------------------------------------------------------------
-namespace details {
-//----------------------------------------------------------------------------
-template <typename T>
-struct infer_function_t;
-//----------------------------------------------------------------------------
-template <typename _Ret, typename... _Args>
-struct infer_function_t<_Ret(_Args...)> {
-using type = TFunction<_Ret(_Args...)>;
-};
-//----------------------------------------------------------------------------
-template <typename _Ret, typename... _Args>
-struct infer_function_t<_Ret(*)(_Args...)> {
-using type = TFunction<_Ret(_Args...)>;
-};
-//----------------------------------------------------------------------------
-template <typename _Ret, typename _Class, typename... _Args>
-struct infer_function_t<_Ret(_Class::*)(_Args...)> {
-using type = TFunction<_Ret(_Args...)>;
-};
-//----------------------------------------------------------------------------
-template <typename _Ret, typename _Class, typename... _Args>
-struct infer_function_t<_Ret(_Class::*)(_Args...) const> {
-using type = TFunction<_Ret(_Args...)>;
-};
+}; //!TBaseFunction
 //----------------------------------------------------------------------------
 } //!details
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args, size_t _InSitu>
+class TFunction<_Ret(_Args...), _InSitu> : public details::TBaseFunction<
+    TFunction<_Ret(_Args...), _InSitu>,
+    details::TFunctionTraits<_Ret, false, _Args...>,
+    _InSitu
+> {
+    using parent_type = details::TBaseFunction<
+        TFunction<_Ret(_Args...), _InSitu>,
+        details::TFunctionTraits<_Ret, false, _Args...>,
+        _InSitu
+    >;
+public:
+    using parent_type::parent_type;
+    using parent_type::operator=;
+    using parent_type::NoExcept;
+    using parent_type::Bind;
+    using parent_type::BindLarge;
+
+    TFunction() = default;
+
+    CONSTEXPR TFunction(const TFunction& other) : parent_type(other) {}
+    CONSTEXPR TFunction& operator =(const TFunction& other) { return parent_type::operator =(other); }
+
+    CONSTEXPR TFunction(TFunction&& rvalue) NOEXCEPT : parent_type(std::move(rvalue)) {}
+    CONSTEXPR TFunction& operator =(TFunction&& rvalue) NOEXCEPT { return parent_type::operator =(std::move(rvalue)); }
+
+    CONSTEXPR _Ret operator()(_Args... args) const {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
+    }
+
+    FORCE_INLINE CONSTEXPR _Ret Invoke(_Args... args) const {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
+    }
+
+    CONSTEXPR void FireAndForget(_Args... args) {
+        Invoke(std::forward<_Args>(args)...);
+        parent_type::Reset();
+    }
+
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args, size_t _InSitu>
+class TFunction<_Ret(_Args...) NOEXCEPT, _InSitu> : public details::TBaseFunction<
+    TFunction<_Ret(_Args...) NOEXCEPT, _InSitu>,
+    details::TFunctionTraits<_Ret, true, _Args...>,
+    _InSitu
+> {
+    using parent_type = details::TBaseFunction<
+        TFunction<_Ret(_Args...) NOEXCEPT, _InSitu>,
+        details::TFunctionTraits<_Ret, true, _Args...>,
+        _InSitu
+    >;
+public:
+    using parent_type::parent_type;
+    using parent_type::operator=;
+    using parent_type::NoExcept;
+    using parent_type::Bind;
+    using parent_type::BindLarge;
+
+    TFunction() = default;
+
+    CONSTEXPR TFunction(const TFunction & other) : parent_type(other) {}
+    CONSTEXPR TFunction& operator =(const TFunction & other) { return parent_type::operator =(other); }
+
+    CONSTEXPR TFunction(TFunction && rvalue) NOEXCEPT : parent_type(std::move(rvalue)) {}
+    CONSTEXPR TFunction& operator =(TFunction && rvalue) NOEXCEPT { return parent_type::operator =(std::move(rvalue)); }
+
+    CONSTEXPR _Ret operator()(_Args... args) const NOEXCEPT {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
+    }
+
+    FORCE_INLINE CONSTEXPR _Ret Invoke(_Args... args) const NOEXCEPT {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
+    }
+
+    CONSTEXPR void FireAndForget(_Args... args) NOEXCEPT {
+        Invoke(std::forward<_Args>(args)...);
+        parent_type::Reset();
+    }
+
+};
+//----------------------------------------------------------------------------
 template <auto _Func, typename... _Extra>
 CONSTEXPR auto MakeFunction(_Extra&&... extra) NOEXCEPT {
-    using func_t = typename details::infer_function_t<decltype(_Func)>::type;
+    using func_t = typename details::TInferFunction<decltype(_Func)>::bind_type;
     return func_t::template Bind<_Func>(std::forward<_Extra>(extra)...);
 }
 //----------------------------------------------------------------------------

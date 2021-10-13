@@ -33,7 +33,7 @@ public:
 
     static FApplicationModule& Get(const FModularDomain& domain);   
 
-    using FApplicationEvent = TFunction<void(Application::FApplicationBase&)>;
+    using FApplicationEvent = TFunction<void(Application::FApplicationBase&) NOEXCEPT>;
 
     PUBLIC_EVENT(OnApplicationCreate, FApplicationEvent);
     PUBLIC_EVENT(OnApplicationDestroy, FApplicationEvent);
@@ -41,7 +41,7 @@ public:
     PUBLIC_EVENT(OnApplicationStart, FApplicationEvent);
     PUBLIC_EVENT(OnApplicationShutdown, FApplicationEvent);
 
-    using FApplicationTick = TFunction<void(Application::FApplicationBase&, FTimespan dt)>;
+    using FApplicationTick = TFunction<void(Application::FApplicationBase&, FTimespan dt) NOEXCEPT>;
 
     PUBLIC_EVENT(OnApplicationTick, FApplicationTick);
 };

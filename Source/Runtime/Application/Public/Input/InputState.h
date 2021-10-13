@@ -31,8 +31,8 @@ public:
     const_iterator end() const { return _events.end(); }
 
     bool Contains(const T value) const { return _events.Contains(value); }
-    bool Add_KeepExisting(T value) { return _events.Add_KeepExisting(value); }
-    void Add_AssertUnique(T value) { _events.Add_AssertUnique(value); }
+    bool Add_KeepExisting(T value) { return _events.Emplace_KeepExisting(value); }
+    void Add_AssertUnique(T value) { _events.Emplace_AssertUnique(value); }
     bool Remove_ReturnIfExists(T value) { return _events.Remove_ReturnIfExists(value); }
     void Remove_AssertExists(T value) { _events.Remove_AssertExists(value); }
     void Clear() { _events.clear(); }
