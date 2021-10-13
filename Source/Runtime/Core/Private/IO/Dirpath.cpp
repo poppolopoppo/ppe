@@ -29,7 +29,7 @@ namespace {
 //----------------------------------------------------------------------------
 STATIC_ASSERT(Meta::is_pod_v<FDirpath>);
 //----------------------------------------------------------------------------
-static bool NormalizePath_(size_t* plength, const TMemoryView<FDirname>& dirnames) {
+NODISCARD static bool NormalizePath_(size_t* plength, const TMemoryView<FDirname>& dirnames) {
     Assert(plength);
 
     const FDirname dotdot = FFSConstNames::DotDot();
@@ -50,7 +50,7 @@ static bool NormalizePath_(size_t* plength, const TMemoryView<FDirname>& dirname
     return true;
 }
 //----------------------------------------------------------------------------
-static const FFileSystemNode *ParseDirpath_(const FileSystem::FStringView& str) {
+NODISCARD static const FFileSystemNode *ParseDirpath_(const FileSystem::FStringView& str) {
     if (str.empty())
         return nullptr;
 
@@ -68,7 +68,7 @@ static const FFileSystemNode *ParseDirpath_(const FileSystem::FStringView& str) 
     return FFileSystemTrie::Get().GetOrCreate(path.MakeView());
 }
 //----------------------------------------------------------------------------
-static const FFileSystemNode *DirpathNode_(const FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path) {
+NODISCARD static const FFileSystemNode *DirpathNode_(const FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path) {
     size_t count = path.size();
     if (!mountingPoint.empty())
         ++count;
@@ -426,11 +426,21 @@ FWTextWriter& operator <<(FWTextWriter& oss, const PPE::FDirpath& dirpath) {
     const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
     if (not mountingPoint.empty())
-        oss << mountingPoint << wchar_t(FileSystem::NormalizedSeparator);
+        oss << mountingPoint << static_cast<wchar_t>(FileSystem::NormalizedSeparator);
     for (size_t i = 0; i < k; ++i)
-        oss << dirnames[i] << wchar_t(FileSystem::NormalizedSeparator);
+        oss << dirnames[i] << static_cast<wchar_t>(FileSystem::NormalizedSeparator);
 
     return oss;
+}
+//----------------------------------------------------------------------------
+bool operator >>(const FStringConversion& iss, FDirpath* dirpath) {
+    return (FWStringConversion(UTF_8_TO_WCHAR(iss.Input)) >> dirpath);
+}
+//----------------------------------------------------------------------------
+PPE_CORE_API bool operator >>(const FWStringConversion& iss, FDirpath* dirpath) {
+    const auto* const fsNode = ParseDirpath_(iss.Input);
+    *dirpath = FDirpath{ fsNode };
+    return (!!fsNode || iss.empty());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -35,6 +35,10 @@
         \
         using parent_type::parent_type; \
         using parent_type::operator =; \
+        using parent_type::operator ==; \
+        using parent_type::operator !=; \
+        using parent_type::operator < ; \
+        using parent_type::operator >=; \
         PPE_ASSUME_FRIEND_AS_POD(CONCAT(F, _NAME_WITHOUT_F)) \
     }; \
     class _API CONCAT(FLazy, _NAME_WITHOUT_F) : public PPE::TLazyToken< \
@@ -53,6 +57,10 @@
         \
         using parent_type::parent_type; \
         using parent_type::operator =; \
+        using parent_type::operator ==; \
+        using parent_type::operator !=; \
+        using parent_type::operator < ; \
+        using parent_type::operator >=; \
         PPE_ASSUME_FRIEND_AS_POD(CONCAT(FLazy, _NAME_WITHOUT_F)) \
     }
 
@@ -167,13 +175,22 @@ public:
 
     STATIC_CONST_INTEGRAL(ECase, Sensitiveness, _Sensitive);
 
-    TToken() : _handle{ nullptr } {}
+    TToken() = default;
 
     TToken(const TToken& other) = default;
     TToken& operator =(const TToken& other) = default;
 
+#if 1
     TToken(TToken&& rvalue) = default;
     TToken& operator =(TToken&& rvalue) = default;
+#else
+    TToken(TToken&& rvalue) NOEXCEPT { operator =(std::move(rvalue)); }
+    TToken& operator =(TToken&& rvalue) NOEXCEPT {
+        _handle = rvalue._handle;
+        rvalue._handle = nullptr;
+        return (*this);
+    }
+#endif
 
     explicit TToken(const lazytoken_type& lazy) : _handle(FindOrAdd_(lazy)) {}
     TToken& operator =(const lazytoken_type& lazy) { _handle = FindOrAdd_(lazy); return (*this); }
@@ -183,7 +200,8 @@ public:
 
     template <size_t _Dim>
     explicit TToken(const _Char(&content)[_Dim])
-        : TToken(MakeStringView(content)) {}
+    :   TToken(MakeStringView(content))
+    {}
     template <size_t _Dim>
     TToken& operator =(const _Char(&content)[_Dim]) {
         return operator =(MakeStringView(content));
@@ -192,12 +210,12 @@ public:
     size_t size() const { return (_handle ? _handle->Length : 0); }
     bool empty() const { return (_handle == nullptr); }
 
-    const _Char* c_str() const { return (const _Char*)(_handle ? _handle->Data() : nullptr); }
-    const _Char* data() const { return (const _Char*)(_handle ? _handle->Data() : nullptr); }
+    const _Char* c_str() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
+    const _Char* data() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
 
     stringview_type MakeView() const {
         return ((_handle)
-            ? stringview_type((const _Char*)_handle->Data(), _handle->Length)
+            ? stringview_type(reinterpret_cast<const _Char*>(_handle->Data()), _handle->Length)
             : stringview_type() );
     }
 
@@ -219,17 +237,19 @@ public:
     friend hash_t hash_value(const TToken& token) NOEXCEPT { return token.HashValue(); }
     friend stringview_type MakeStringView(const TToken& token) NOEXCEPT { return token.MakeView(); }
 
-    friend bool operator ==(const TToken& lhs, const TToken& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TToken& lhs, const TToken& rhs) { return !operator ==(lhs, rhs); }
+    bool operator ==(const TToken& other) const { return Equals(other); }
+    bool operator !=(const TToken& other) const { return !operator ==(other); }
 
-    friend bool operator < (const TToken& lhs, const TToken& rhs) { return lhs.Less(rhs); }
-    friend bool operator >=(const TToken& lhs, const TToken& rhs) { return !operator < (lhs, rhs); }
+    bool operator < (const TToken& other) const { return Less(other); }
+    bool operator >=(const TToken& other) const { return !operator < (other); }
 
     friend bool operator ==(const TToken& lhs, const stringview_type& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TToken& lhs, const stringview_type& rhs) { return !operator ==(lhs, rhs); }
+    friend bool operator !=(const TToken& lhs, const stringview_type& rhs) { return not (lhs == rhs); }
 
     friend bool operator ==(const stringview_type& lhs, const TToken& rhs) { return rhs.Equals(lhs); }
-    friend bool operator !=(const stringview_type& lhs, const TToken& rhs) { return !operator ==(lhs, rhs); }
+    friend bool operator !=(const stringview_type& lhs, const TToken& rhs) { return not (lhs == rhs); }
+
+    operator stringview_type () const NOEXCEPT { return MakeView(); }
 
     static void Start() { token_traits::CreateFactory(); }
     static void Shutdown() { token_traits::DestroyFactory(); }
@@ -245,7 +265,7 @@ public:
 private:
     typedef FTokenFactory::FEntry handle_type;
 
-    const handle_type* _handle;
+    const handle_type* _handle{ nullptr };
 
     static const handle_type* FindOrAdd_(const lazytoken_type& lazy);
     static const handle_type* FindOrAdd_(const stringview_type& str);
@@ -257,6 +277,18 @@ PPE_ASSUME_TEMPLATE_AS_POD(
     typename _Char,
     ECase    _Sensitive,
     typename _TokenTraits)
+//----------------------------------------------------------------------------
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
+bool operator >>(const TBasicStringConversion<_Char>& iss, TToken<_Tag, _Char, _Sensitive, _TokenTraits>* token) {
+    Assert(token);
+
+    if (TToken<_Tag, _Char, _Sensitive, _TokenTraits>::IsValidToken(iss.Input)) {
+        *token = iss.Input;
+        return true;
+    }
+
+    return false;
+}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
 FTextWriter& operator <<(FTextWriter& oss, const TToken<_Tag, _Char, _Sensitive, _TokenTraits>& token) {
@@ -295,7 +327,7 @@ public:
 
     STATIC_CONST_INTEGRAL(ECase, Sensitiveness, _Sensitive);
 
-    TLazyToken() : _hash(0) {}
+    TLazyToken() = default;
 
     TLazyToken(const TLazyToken& other) = default;
     TLazyToken& operator =(const TLazyToken& other) = default;
@@ -353,30 +385,29 @@ public:
         return PPE::IsValidToken<token_traits>(str);
     }
 
-    friend bool operator ==(const TLazyToken& lhs, const TLazyToken& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TLazyToken& lhs, const TLazyToken& rhs) { return !operator ==(lhs, rhs); }
+    bool operator ==(const TLazyToken& other) const { return Equals(other); }
+    bool operator !=(const TLazyToken& other) const { return !operator ==(other); }
+
+    bool operator < (const TLazyToken& other) const { return Less(other); }
+    bool operator >=(const TLazyToken& other) const { return !operator < (other); }
 
     friend bool operator ==(const TLazyToken& lhs, const token_type& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TLazyToken& lhs, const token_type& rhs) { return !operator ==(lhs, rhs); }
+    friend bool operator !=(const TLazyToken& lhs, const token_type& rhs) { return not (lhs == rhs); }
 
     friend bool operator ==(const token_type& lhs, const TLazyToken& rhs) { return rhs.Equals(lhs); }
-    friend bool operator !=(const token_type& lhs, const TLazyToken& rhs) { return !operator ==(lhs, rhs); }
+    friend bool operator !=(const token_type& lhs, const TLazyToken& rhs) { return not (lhs == rhs); }
 
     friend bool operator ==(const TLazyToken& lhs, const stringview_type & rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TLazyToken& lhs, const stringview_type & rhs) { return !operator ==(lhs, rhs); }
+    friend bool operator !=(const TLazyToken& lhs, const stringview_type & rhs) { return not (lhs == rhs); }
 
     friend bool operator ==(const stringview_type & lhs, const TLazyToken& rhs) { return rhs.Equals(lhs); }
-    friend bool operator !=(const stringview_type & lhs, const TLazyToken& rhs) { return !operator ==(lhs, rhs); }
-
-
-    friend bool operator < (const TLazyToken& lhs, const TLazyToken& rhs) { return lhs.Less(rhs); }
-    friend bool operator >=(const TLazyToken& lhs, const TLazyToken& rhs) { return !operator < (lhs, rhs); }
+    friend bool operator !=(const stringview_type & lhs, const TLazyToken& rhs) { return not (lhs == rhs); }
 
     friend bool operator < (const TLazyToken& lhs, const token_type& rhs) { return lhs.Less(rhs); }
-    friend bool operator >=(const TLazyToken& lhs, const token_type& rhs) { return !operator < (lhs, rhs); }
+    friend bool operator >=(const TLazyToken& lhs, const token_type& rhs) { return not (lhs < rhs); }
 
     friend bool operator < (const token_type& lhs, const TLazyToken& rhs) { return lhs.Less(rhs.MakeView()); }
-    friend bool operator >=(const token_type& lhs, const TLazyToken& rhs) { return !operator < (lhs, rhs); }
+    friend bool operator >=(const token_type& lhs, const TLazyToken& rhs) { return not (lhs < rhs); }
 
 private:
     stringview_type _str;
@@ -389,6 +420,18 @@ PPE_ASSUME_TEMPLATE_AS_POD(
     typename _Char,
     ECase    _Sensitive,
     typename _TokenTraits )
+//----------------------------------------------------------------------------
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
+bool operator >>(const TBasicStringConversion<_Char>& iss, TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>* token) {
+    Assert(token);
+
+    if (TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>::IsValidToken(iss.Input)) {
+        *token = iss.Input;
+        return true;
+    }
+
+    return false;
+}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
 FTextWriter& operator <<(FTextWriter& oss, const TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>& token) {

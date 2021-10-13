@@ -5,9 +5,9 @@
 #include "Container/Hash.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
+#include "IO/StringConversion.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
-#include "Memory/MemoryProvider.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -17,12 +17,12 @@ namespace {
 //----------------------------------------------------------------------------
 STATIC_ASSERT(Meta::is_pod_v<FBasename>);
 //----------------------------------------------------------------------------
-static bool ParseBasename_(const FileSystem::FStringView& str, FBasenameNoExt& basenameNoExt, FExtname& extname) {
+NODISCARD static bool ParseBasename_(const FileSystem::FStringView& str, FBasenameNoExt& basenameNoExt, FExtname& extname) {
     basenameNoExt = FBasenameNoExt();
     extname = FExtname();
 
     if (str.empty())
-        return false;
+        return true;
 
 #if USE_PPE_ASSERT
     const auto sep = str.FindIf([](FileSystem::char_type ch) {
@@ -63,12 +63,12 @@ FBasename& FBasename::operator =(const FileSystem::FString& content) {
 //----------------------------------------------------------------------------
 FBasename::FBasename(const FileSystem::FStringView& content) {
     Assert(not content.empty());
-    ParseBasename_(content, _basenameNoExt, _extname);
+    VerifyRelease( ParseBasename_(content, _basenameNoExt, _extname) );
 }
 //----------------------------------------------------------------------------
 FBasename& FBasename::operator =(const FileSystem::FStringView& content) {
     Assert(not content.empty());
-    ParseBasename_(content, _basenameNoExt, _extname);
+    VerifyRelease( ParseBasename_(content, _basenameNoExt, _extname) );
     return *this;
 }
 //----------------------------------------------------------------------------
@@ -117,6 +117,20 @@ FTextWriter& operator <<(FTextWriter& oss, const FBasename& basename) {
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FBasename& basename) {
     return oss << basename.BasenameNoExt() << basename.Extname();
+}
+//----------------------------------------------------------------------------
+bool operator >>(const FStringConversion& iss, FBasename* basename) {
+    return (FWStringConversion(UTF_8_TO_WCHAR(iss.Input)) >> basename);
+}
+//----------------------------------------------------------------------------
+PPE_CORE_API bool operator >>(const FWStringConversion& iss, FBasename* basename) {
+    FBasenameNoExt basenameNoExt;
+    FExtname extname;
+    if (ParseBasename_(iss.Input, basenameNoExt, extname)) {
+        *basename = { basenameNoExt, extname };
+        return true;
+    }
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

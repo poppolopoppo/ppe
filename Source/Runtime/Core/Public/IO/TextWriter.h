@@ -132,6 +132,7 @@ public:
         case Decimal: return 10;
         case Hexadecimal: return 16;
         }
+        AssertNotImplemented();
     }
 
     friend CONSTEXPR EBase operator "" _base (unsigned long long value) {

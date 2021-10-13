@@ -24,6 +24,7 @@ public:
     enum : size_t { MaxDepth = 16 };
 
     CONSTEXPR FDirpath() NOEXCEPT : _path(nullptr) {}
+    CONSTEXPR explicit FDirpath(const FFileSystemNode* path) NOEXCEPT : _path(path) {}
 
     FDirpath(const FDirpath& other) = default;
     FDirpath& operator =(const FDirpath& other) = default;
@@ -129,6 +130,9 @@ inline hash_t hash_value(const FDirpath& dirpath) NOEXCEPT {
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDirpath& dirpath);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDirpath& dirpath);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool operator >>(const FStringConversion& iss, FDirpath* dirpath);
+PPE_CORE_API bool operator >>(const FWStringConversion& iss, FDirpath* dirpath);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

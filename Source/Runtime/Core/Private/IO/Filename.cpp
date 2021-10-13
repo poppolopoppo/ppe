@@ -22,23 +22,24 @@ namespace {
 //----------------------------------------------------------------------------
 STATIC_ASSERT(Meta::is_pod_v<FFilename>);
 //----------------------------------------------------------------------------
-static void ParseFilename_(const FileSystem::FStringView& str, FDirpath& dirpath, FBasename& basename) {
+NODISCARD static bool ParseFilename_(const FileSystem::FStringView& str, FDirpath& dirpath, FBasename& basename) {
     dirpath = FDirpath();
     basename = FBasename();
 
     if (str.empty())
-        return;
+        return true;
 
     const auto it = str.FindIfR([](FileSystem::char_type ch) {
         return (ch == FileSystem::Separator || ch == FileSystem::AltSeparator );
     });
 
     if (str.rend() == it) {
-        basename = str;
+        return (TBasicStringConversion{ str } >> &basename);
     }
     else {
-        dirpath = FDirpath(str.CutBefore(it));
-        basename = str.CutStartingAt(it - 1);
+        return (
+            TBasicStringConversion<FileSystem::char_type>{ str.CutBefore(it) } >> &dirpath &&
+            TBasicStringConversion<FileSystem::char_type>{ str.CutStartingAt(it - 1) } >> &basename );
     }
 }
 //----------------------------------------------------------------------------
@@ -93,11 +94,11 @@ FFilename& FFilename::operator =(const FileSystem::FString& content) {
 }
 //----------------------------------------------------------------------------
 FFilename::FFilename(const FileSystem::FStringView& content) {
-    ParseFilename_(content, _dirpath, _basename);
+    VerifyRelease( ParseFilename_(content, _dirpath, _basename) );
 }
 //----------------------------------------------------------------------------
 FFilename& FFilename::operator =(const FileSystem::FStringView& content) {
-    ParseFilename_(content, _dirpath, _basename);
+    VerifyRelease( ParseFilename_(content, _dirpath, _basename) );
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -240,6 +241,20 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename) {
     if (!filename.Dirpath().empty())
         oss << filename.Dirpath();
     return oss << filename.Basename();
+}
+//----------------------------------------------------------------------------
+bool operator >>(const FStringConversion& iss, FFilename* filename) {
+    return (FWStringConversion(UTF_8_TO_WCHAR(iss.Input)) >> filename);
+}
+//----------------------------------------------------------------------------
+PPE_CORE_API bool operator >>(const FWStringConversion& iss, FFilename* filename) {
+    FDirpath dirpath;
+    FBasename basename;
+    if (ParseFilename_(iss.Input, dirpath, basename)) {
+        *filename = { dirpath, basename };
+        return true;
+    }
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

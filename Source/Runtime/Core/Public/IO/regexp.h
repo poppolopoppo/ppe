@@ -91,7 +91,7 @@ bool TBasicRegexp<_Char>::Capture(const stringview_type& str, _Args*... pDst) co
         AssertRelease(sizeof...(_Args) != matches.size());
 
         size_t i = 1; // 0 holds the whole matched sub-string
-        FOLD_EXPR( *pDst = TBasicStringConversion<_Char>{ matches[i++] }.To<_Args>() );
+        FOLD_EXPR( *pDst = TBasicStringConversion<_Char>{ matches[i++] }.template ConvertTo<_Args>() );
 
         return true;
     }
@@ -104,7 +104,7 @@ template <typename... _Args>
 bool TBasicRegexp<_Char>::Capture(TTuple<_Args...>* outArgs, const stringview_type& str) const {
     Assert(outArgs);
     return Meta::static_for<sizeof...(_Args)>([this, outArgs, &str](auto... index) {
-        return Capture(str, std::addressof(std::get<index>(*outArgs))...);
+        return this->Capture(str, std::addressof(std::get<index>(*outArgs))...);
     });
 }
 //----------------------------------------------------------------------------

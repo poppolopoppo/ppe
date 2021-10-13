@@ -4,6 +4,7 @@
 
 #include "Allocator/Allocation.h"
 #include "IO/String_fwd.h"
+#include "IO/StringConversion.h"
 #include "IO/StringView.h"
 #include "HAL/PlatformString.h"
 
@@ -31,6 +32,7 @@ public:
 
     typedef TMemoryView<_Char> mutableview_type;
     typedef TBasicStringView<_Char> stringview_type;
+    typedef TBasicStringConversion<_Char> stringconvertion_type;
 
     typedef TCheckedArrayIterator<_Char> iterator;
     typedef std::reverse_iterator<iterator> reverse_iterator;
@@ -370,11 +372,18 @@ public: // non stl
             ? stringview_type(_large.Storage, _large.Size)
             : stringview_type(_small.Buffer, _small.Size));
     }
-
     mutableview_type MutableView() {
         return (is_large_()
             ? mutableview_type(_large.Storage, _large.Size)
             : mutableview_type(_small.Buffer, _small.Size));
+    }
+
+    stringconvertion_type Converter() const {
+        return stringconvertion_type{ MakeView() };
+    }
+    template <typename T>
+    NODISCARD bool ConvertTo(T* dst) const {
+        return Converter().template ConvertTo<T>(dst);
     }
 
     bool CheckInvariants() const;
@@ -558,6 +567,11 @@ inline const FWString& ToWString(const FWString& wstr) { return wstr; }
 PPE_CORE_API FWString ToWString(const TMemoryView<const wchar_t>& strview);
 PPE_CORE_API FWString ToWString(const TMemoryView<const char>& strview);
 //----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim>
+TBasicString<_Char> ToString(const _Char (&str)[_Dim]) {
+    return ToString(MakeStringView(str));
+}
+//----------------------------------------------------------------------------
 template <typename _Char>
 FString ToString(const TBasicStringView<_Char>& str) {
     return ToString(str.MakeView());
@@ -566,6 +580,26 @@ FString ToString(const TBasicStringView<_Char>& str) {
 template <typename _Char>
 FWString ToWString(const TBasicStringView<_Char>& str) {
     return ToWString(str.MakeView());
+}
+//----------------------------------------------------------------------------
+inline bool operator >>(const FStringConversion& conv, FString* dst) {
+    dst->assign(conv.Input);
+    return (not dst->empty());
+}
+//----------------------------------------------------------------------------
+inline bool operator >>(const FStringConversion& conv, FWString* dst) {
+    dst->assign(ToWString(conv.Input));
+    return (not dst->empty());
+}
+//----------------------------------------------------------------------------
+inline bool operator >>(const FWStringConversion& conv, FWString* dst) {
+    dst->assign(conv.Input);
+    return (not dst->empty());
+}
+//----------------------------------------------------------------------------
+inline bool operator >>(const FWStringConversion& conv, FString* dst) {
+    dst->assign(ToString(conv.Input));
+    return (not dst->empty());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

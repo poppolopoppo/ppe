@@ -34,6 +34,8 @@ struct TBasicStringConversion {
     TBasicStringConversion(iterator first, iterator last) NOEXCEPT : Input(first, last) {}
     TBasicStringConversion(const TPair<iterator, iterator>& span) NOEXCEPT : Input(span) {}
 
+    bool empty() const { return Input.empty(); }
+
     bool operator >>(bool* dst) const NOEXCEPT {
         if (EqualsI(Input, STRING_LITERAL(_Char, "true")) ||
             EqualsI(Input, STRING_LITERAL(_Char, "1")) ) {
@@ -74,11 +76,17 @@ struct TBasicStringConversion {
         return false;
     }
 
-    template <typename _Numeric>
-    _Numeric To() const {
-        _Numeric result{ Default };
-        VerifyRelease( operator >>(&result) );
+    template <typename T>
+    T ConvertTo() const {
+        T result = Meta::MakeForceInit<T>();
+        VerifyRelease( ConvertTo(&result) );
         return result;
+    }
+
+    template <typename T>
+    bool ConvertTo(T* dst) const {
+        Assert(dst);
+        return (*this >> dst); // Can be expanded thanks to ADL
     }
 
 private:
@@ -92,6 +100,9 @@ private:
         return false;
     }
 };
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicStringConversion(TBasicStringView<_Char>) NOEXCEPT -> TBasicStringConversion<_Char>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

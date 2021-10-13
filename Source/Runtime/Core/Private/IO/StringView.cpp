@@ -573,16 +573,16 @@ FStringView EatSpaces(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str
 FWStringView EatSpaces(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsSpace); }
 //----------------------------------------------------------------------------
 FStringView EatWhile(FStringView& str, char ch) { return SplitInplaceIf_ReturnEaten_(str, [ch](char x) { return (x == ch); }); }
-FWStringView EatWhile(FWStringView& wstr, wchar_t wch) { return SplitInplaceIf_ReturnEaten_(wstr, [wch](char x) { return (x == wch); }); }
+FWStringView EatWhile(FWStringView& wstr, wchar_t wch) { return SplitInplaceIf_ReturnEaten_(wstr, [wch](wchar_t x) { return (x == wch); }); }
 //----------------------------------------------------------------------------
 FStringView EatWhile(FStringView& str, const FStringView& multiple) { return SplitInplaceIf_ReturnEaten_(str, [multiple](char x) { return (multiple.Contains(x)); }); }
-FWStringView EatWhile(FWStringView& wstr, const FWStringView& wmultiple) { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](char x) { return (wmultiple.Contains(x)); }); }
+FWStringView EatWhile(FWStringView& wstr, const FWStringView& wmultiple) { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](wchar_t x) { return (wmultiple.Contains(x)); }); }
 //----------------------------------------------------------------------------
 FStringView EatUntil(FStringView& str, char ch) { return SplitInplaceIf_ReturnEaten_(str, [ch](char x) { return (x != ch); }); }
-FWStringView EatUntil(FWStringView& wstr, wchar_t wch) { return SplitInplaceIf_ReturnEaten_(wstr, [wch](char x) { return (x != wch); }); }
+FWStringView EatUntil(FWStringView& wstr, wchar_t wch) { return SplitInplaceIf_ReturnEaten_(wstr, [wch](wchar_t x) { return (x != wch); }); }
 //----------------------------------------------------------------------------
 FStringView EatUntil(FStringView& str, const FStringView& multiple) { return SplitInplaceIf_ReturnEaten_(str, [multiple](char x) { return (not multiple.Contains(x)); }); }
-FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple) { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](char x) { return (not wmultiple.Contains(x)); }); }
+FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple) { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](wchar_t x) { return (not wmultiple.Contains(x)); }); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
