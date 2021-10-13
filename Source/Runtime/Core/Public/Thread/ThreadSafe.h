@@ -9,6 +9,8 @@
 #include "Thread/DataRaceCheck.h"
 #include "Thread/ReadWriteLock.h"
 
+#include "Meta/PointerWFlags.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,31 +21,37 @@ namespace details {
 template <typename T, typename _Impl>
 class TThreadSafeCRTP_ : Meta::FNonCopyable {
 public:
+    using value_type = T;
+
     class FSharedLock : Meta::FNonCopyableNorMovable {
-        const TThreadSafeCRTP_& _data;
+        Meta::TPointerWFlags<const TThreadSafeCRTP_> _data;
     public:
-        explicit FSharedLock(const TThreadSafeCRTP_& data) NOEXCEPT : _data(data) {
-            reinterpret_cast<const _Impl*>(&_data)->AcquireReader();
+        explicit FSharedLock(const TThreadSafeCRTP_& data) NOEXCEPT {
+            _data.Reset(std::addressof(data),
+                reinterpret_cast<const _Impl&>(data).AcquireReader() );
         }
         ~FSharedLock() NOEXCEPT {
-            reinterpret_cast<const _Impl*>(&_data)->ReleaseReader();
+            if (_data.Flag0()/* need to call Release ? */)
+                reinterpret_cast<const _Impl*>(_data.Get())->ReleaseReader();
         }
-        const auto& Value() const { return _data._value; }
-        const auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data._value); }
+        const auto& Value() const { return _data->_value; }
+        const auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data->_value); }
         const auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };
 
     class FExclusiveLock : Meta::FNonCopyableNorMovable {
-        TThreadSafeCRTP_& _data;
+        Meta::TPointerWFlags<TThreadSafeCRTP_> _data;
     public:
-        explicit FExclusiveLock(TThreadSafeCRTP_& data) NOEXCEPT : _data(data) {
-            reinterpret_cast<_Impl*>(&_data)->AcquireWriter();
+        explicit FExclusiveLock(TThreadSafeCRTP_& data) NOEXCEPT {
+            _data.Reset(std::addressof(data),
+                reinterpret_cast<_Impl&>(data).AcquireWriter() );
         }
         ~FExclusiveLock() NOEXCEPT {
-            reinterpret_cast<_Impl*>(&_data)->ReleaseWriter();
+            if (_data.Flag0()/* need to call Release ? */)
+                reinterpret_cast<_Impl*>(_data.Get())->ReleaseWriter();
         }
-        auto& Value() const { return _data._value; }
-        auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data._value); }
+        auto& Value() const { return _data->_value; }
+        auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data->_value); }
         auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };
 
@@ -79,10 +87,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT = delete;
+    NODISCARD bool AcquireReader() const NOEXCEPT = delete;
     void ReleaseReader() const NOEXCEPT = delete;
 
-    void AcquireWriter() NOEXCEPT = delete;
+    NODISCARD bool AcquireWriter() NOEXCEPT = delete;
     void ReleaseWriter() NOEXCEPT = delete;
 };
 //----------------------------------------------------------------------------
@@ -96,10 +104,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT {}
+    NODISCARD bool AcquireReader() const NOEXCEPT { return true; }
     void ReleaseReader() const NOEXCEPT {}
 
-    void AcquireWriter() NOEXCEPT {}
+    NODISCARD bool AcquireWriter() NOEXCEPT { return true; }
     void ReleaseWriter() NOEXCEPT {}
 };
 //----------------------------------------------------------------------------
@@ -113,10 +121,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { _barrierCS.Lock(); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { _barrierCS.Lock(); return true; }
     void ReleaseReader() const NOEXCEPT { _barrierCS.Unlock(); }
 
-    void AcquireWriter() NOEXCEPT { _barrierCS.Lock(); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { _barrierCS.Lock(); return true; }
     void ReleaseWriter() NOEXCEPT { _barrierCS.Unlock(); }
 
 private:
@@ -133,10 +141,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { _barrierRW.LockRead(); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { _barrierRW.LockRead(); return true; }
     void ReleaseReader() const NOEXCEPT { _barrierRW.UnlockRead(); }
 
-    void AcquireWriter() NOEXCEPT { _barrierRW.LockWrite(); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { _barrierRW.LockWrite(); return true; }
     void ReleaseWriter() NOEXCEPT { _barrierRW.UnlockWrite(); }
 
 private:
@@ -153,10 +161,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { _spinLock.Lock(); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { _spinLock.Lock(); return true; }
     void ReleaseReader() const NOEXCEPT { _spinLock.Unlock(); }
 
-    void AcquireWriter() NOEXCEPT { _spinLock.Lock(); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { _spinLock.Lock(); return true; }
     void ReleaseWriter() NOEXCEPT { _spinLock.Unlock(); }
 
 private:
@@ -173,10 +181,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { _spinLockRW.AcquireReader(); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { _spinLockRW.AcquireReader(); return true; }
     void ReleaseReader() const NOEXCEPT { _spinLockRW.ReleaseReader(); }
 
-    void AcquireWriter() NOEXCEPT { _spinLockRW.AcquireWriter(); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { _spinLockRW.AcquireWriter(); return true; }
     void ReleaseWriter() NOEXCEPT { _spinLockRW.ReleaseWriter(); }
 
 private:
@@ -193,10 +201,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { _spinLockRW.AcquireReader(); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { _spinLockRW.AcquireReader(); return true; }
     void ReleaseReader() const NOEXCEPT { _spinLockRW.ReleaseReader(); }
 
-    void AcquireWriter() NOEXCEPT { _spinLockRW.AcquireWriter(); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { _spinLockRW.AcquireWriter(); return true; }
     void ReleaseWriter() NOEXCEPT { _spinLockRW.ReleaseWriter(); }
 
 private:
@@ -214,10 +222,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { VerifyRelease(not _dataRaceCheck.Lock()); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { return _dataRaceCheck.Lock(); }
     void ReleaseReader() const NOEXCEPT { _dataRaceCheck.Unlock(); }
 
-    void AcquireWriter() NOEXCEPT { VerifyRelease(not _dataRaceCheck.Lock()); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { return _dataRaceCheck.Lock(); }
     void ReleaseWriter() NOEXCEPT { _dataRaceCheck.Unlock(); }
 
 private:
@@ -236,10 +244,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { VerifyRelease(not _dataRaceCheckRW.LockShared()); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { return _dataRaceCheckRW.LockShared(); }
     void ReleaseReader() const NOEXCEPT { _dataRaceCheckRW.UnlockShared(); }
 
-    void AcquireWriter() NOEXCEPT { VerifyRelease(not _dataRaceCheckRW.LockExclusive()); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { return _dataRaceCheckRW.LockExclusive(); }
     void ReleaseWriter() NOEXCEPT { _dataRaceCheckRW.UnlockExclusive(); }
 
 private:
@@ -259,10 +267,10 @@ public:
     using parent_type::parent_type;
     using parent_type::operator=;
 
-    void AcquireReader() const NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
+    NODISCARD bool AcquireReader() const NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); return true; }
     void ReleaseReader() const NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
 
-    void AcquireWriter() NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
+    NODISCARD bool AcquireWriter() NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); return true; }
     void ReleaseWriter() NOEXCEPT { THIS_THREADRESOURCE_CHECKACCESS(); }
 };
 #endif

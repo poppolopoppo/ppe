@@ -31,13 +31,14 @@ public:
 
         size_t owner = _state.load(std::memory_order_acquire);
         if (id == owner)
-            return true; // recursive-lock
+            return false; // recursive-lock, don't call Unlock()
 
         owner = 0;
         const bool locked = _state.compare_exchange_strong(owner, id, std::memory_order_relaxed);
-        AssertReleaseMessage_NoAssume(L"Race condition detected!", 0 == owner); // locked by another thread
+        AssertReleaseMessage_NoAssume(L"Race condition detected!", locked && 0 == owner); // locked by another thread
+        UNUSED(locked);
 
-        return locked;
+        return true;
     }
 
     void Unlock() const {
@@ -47,13 +48,13 @@ public:
 
     struct FScopeLock : Meta::FNonCopyableNorMovable {
         const FDataRaceCheck& Resource;
-        const bool WasLocked;
+        const bool NeedUnlock;
         explicit FScopeLock(const FDataRaceCheck& resource) NOEXCEPT
         :   Resource(resource)
-        ,   WasLocked(Resource.Lock())
+        ,   NeedUnlock(Resource.Lock())
         {}
         ~FScopeLock() NOEXCEPT {
-            if (not WasLocked)
+            if (NeedUnlock)
                 Resource.Unlock();
         }
     };
@@ -117,26 +118,26 @@ public:
 
     struct FScopeLockExclusive : Meta::FNonCopyableNorMovable {
         FRWDataRaceCheck& Resource;
-        const bool WasLocked;
+        const bool NeedUnlock;
         explicit FScopeLockExclusive(FRWDataRaceCheck& resource) NOEXCEPT
         :   Resource(resource)
-        ,   WasLocked(Resource.LockExclusive())
+        ,   NeedUnlock(Resource.LockExclusive())
         {}
         ~FScopeLockExclusive() NOEXCEPT {
-            if (WasLocked)
+            if (NeedUnlock)
                 Resource.UnlockExclusive();
         }
     };
 
     struct FScopeLockShared : Meta::FNonCopyableNorMovable {
         const FRWDataRaceCheck& Resource;
-        const bool WasLocked;
+        const bool NeedUnlock;
         explicit FScopeLockShared(const FRWDataRaceCheck& resource) NOEXCEPT
         :   Resource(resource)
-        ,   WasLocked(Resource.LockShared())
+        ,   NeedUnlock(Resource.LockShared())
         {}
         ~FScopeLockShared() NOEXCEPT {
-            if (WasLocked)
+            if (NeedUnlock)
                 Resource.UnlockShared();
         }
     };
