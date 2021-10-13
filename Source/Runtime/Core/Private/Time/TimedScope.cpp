@@ -56,6 +56,7 @@ FIOBenchmarkScope::FIOBenchmarkScope(const FWStringView& category, const FWStrin
 }
 //----------------------------------------------------------------------------
 FIOBenchmarkScope::~FIOBenchmarkScope() {
+#if USE_PPE_LOGGER
     const FTimespan elapsed = Elapsed();
 
     LOG(Benchmark, Profiling, L" {0:20} | {2:10f2} | {3:10f2} = {4:10f2} Mb/s | {1}",
@@ -64,6 +65,7 @@ FIOBenchmarkScope::~FIOBenchmarkScope() {
         Fmt::DurationInMs(elapsed),
         Fmt::SizeInBytes(checked_cast<size_t>(*_pSizeInBytes)),
         FMegabytes(FBytes((double)*_pSizeInBytes)).Value() / FSeconds(elapsed).Value() );
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

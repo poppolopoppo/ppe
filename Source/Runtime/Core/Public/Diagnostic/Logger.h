@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ELoggerVerbosity {
+enum class ELoggerVerbosity : u8 {
     Debug       = 1<<0,
     Verbose     = 1<<1,
     Info        = 1<<2,
@@ -82,8 +82,8 @@ public:
 
     template <typename _Arg0, typename... _Args>
     static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
-        typedef details::TBasicFormatFunctor_<wchar_t> formatfunctor_t;
-        const formatfunctor_t functors[] = {
+        typedef details::TBasicFormatFunctor_<wchar_t> format_functor_t;
+        const format_functor_t functors[] = {
             MakeFormatArg<wchar_t>(arg0),
             MakeFormatArg<wchar_t>(args)...
         };
@@ -103,8 +103,13 @@ public:
     static PPE_CORE_API ELoggerVerbosity GlobalVerbosity();
     static PPE_CORE_API void SetGlobalVerbosity(ELoggerVerbosity verbosity);
 
-    static CONSTEXPR bool CompileMessage(ELoggerVerbosity verbosity) {
+    static CONSTEXPR bool ShouldCompileMessage(ELoggerVerbosity verbosity) {
+#if 0
         return (verbosity ^ ELoggerVerbosity::All);
+#else
+        using underlying_type = Meta::TEnumOrd<ELoggerVerbosity>;
+        return !!(static_cast<underlying_type>(ELoggerVerbosity::All) & static_cast<underlying_type>(verbosity));
+#endif
     }
 
 public:
@@ -148,8 +153,18 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
     static_assert( /* validate format strings statically */ \
         ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
         "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) );
+
+// #TODO: remove this workaround when MSVC is fixed... (ShouldCompileMessage invalidly detected as not constexpr)
+#if defined(_MSC_VER) && !defined(__clang__) /* clang-cl works just fine */
+#define LOG_SHOULDCOMPILE(_LEVEL) \
+    (::PPE::FLogger::EVerbosity::_LEVEL ^ ::PPE::FLogger::EVerbosity::All)
+#else
+#define LOG_SHOULDCOMPILE(_LEVEL) \
+    (::PPE::FLogger::ShouldCompileMessage(::PPE::FLogger::EVerbosity::_LEVEL))
+#endif
+
 #define LOG(_CATEGORY, _LEVEL, ...) do { \
-    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
         EXPAND( LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
         ::PPE::FLogger::Log( \
             LOG_CATEGORY_GET(_CATEGORY), \
@@ -161,7 +176,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
     } } while(0)
 
 #define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
-    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
         ::PPE::FLogger::LogArgs( \
             LOG_CATEGORY_GET(_CATEGORY), \
             ::PPE::FLogger::EVerbosity::_LEVEL, \
@@ -172,7 +187,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
     } } while(0)
 
 #define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) do { \
-    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
         ::PPE::FLogger::Log( \
             LOG_CATEGORY_GET(_CATEGORY), \
             ::PPE::FLogger::EVerbosity::_LEVEL, \
@@ -183,7 +198,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
     } } while(0)
 
 #define LOG_PRINTF(_CATEGORY, _LEVEL, ...) do { \
-    IF_CONSTEXPR(::PPE::FLogger::CompileMessage(::PPE::FLogger::EVerbosity::_LEVEL)) { \
+    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
         ::PPE::FLogger::Printf( \
             LOG_CATEGORY_GET(_CATEGORY), \
             ::PPE::FLogger::EVerbosity::_LEVEL, \
@@ -211,16 +226,18 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
 #   else
 #       define _LOG_Debug() NOOP()
+#       define _LOG_Verbose() NOOP()
 #       define _LOG_Info() NOOP()
+#       define _LOG_Profiling() NOOP()
 #       define _LOG_Emphasis() NOOP()
 #       define _LOG_Warning() NOOP()
 #       define _LOG_Error() NOOP()
 #       define _LOG_Fatal() AssertReleaseFailed(L"log : fatal error")
 
-#       define LOG(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
 #   endif
 
 #endif //!#if USE_PPE_LOGGER

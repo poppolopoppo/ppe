@@ -2,9 +2,10 @@
 
 #include "Core_fwd.h"
 
+#include "Diagnostic/Logger_fwd.h"
 #include "Time/Timepoint.h"
 
-#define USE_PPE_BENCHMARK (!USE_PPE_FINAL_RELEASE)
+#define USE_PPE_BENCHMARK (!USE_PPE_FINAL_RELEASE && USE_PPE_LOGGER)
 
 #if USE_PPE_BENCHMARK
 #   include "IO/StringView.h"

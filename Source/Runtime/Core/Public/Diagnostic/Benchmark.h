@@ -506,6 +506,7 @@ public: // export table results
 
     template <typename... _Benchmarks>
     static void Log(const TTable<_Benchmarks...>& table) {
+#if USE_PPE_LOGGER
         FWStringBuilder sb;
         const bool detailed = (table.dim() < 5);
         WTxt(table, sb, detailed);
@@ -514,6 +515,9 @@ public: // export table results
             FLogger::EVerbosity::Profiling,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             sb.ToString() );
+#else
+        UNUSED(table);
+#endif
     }
 
     template <typename... _Benchmarks>

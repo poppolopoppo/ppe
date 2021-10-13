@@ -47,6 +47,7 @@ struct FCompressionBenchmark_ {
     const FTimepoint StartedAt;
     FCompressionBenchmark_() : StartedAt(FTimepoint::Now()) {}
     void Finished(const wchar_t* msg, size_t a, size_t b) {
+#if USE_PPE_LOGGER
         const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
         LOG(Compress, Info, L" {0:20} | {1:10f2} | {2:10f2} ==> {3:10f2} : {4:10f2}% = {5:10f2} Mb/s",
             msg,
@@ -55,6 +56,11 @@ struct FCompressionBenchmark_ {
             Fmt::SizeInBytes(b),
             b * 100.0 / a,
             FMegabytes(FBytes((double)Max(a, b))).Value() / FSeconds(elapsed).Value() );
+#else
+        UNUSED(msg);
+        UNUSED(a);
+        UNUSED(b);
+#endif
     }
 };
 #endif //!USE_PPE_BENCHMARK
