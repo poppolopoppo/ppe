@@ -186,7 +186,8 @@ auto NullTerminated(TBasicStaticString<_Char, _Capacity>&& src) {
 template <size_t _Capacity = PPE_STATICSTRING_CAPACITY>
 auto UTF_8_TO_WCHAR(const FStringView& src) {
     TWStaticString<_Capacity> wdst;
-    wdst.Len = FPlatformString::CHAR_to_WCHAR(ECodePage::UTF_8, wdst.Data, wdst.capacity(), src.data(), src.size());
+    wdst.Len = (FPlatformString::CHAR_to_WCHAR(ECodePage::UTF_8,
+        wdst.Data, wdst.capacity(), src.data(), src.size()) - 1 );
     return wdst;
 }
 //----------------------------------------------------------------------------
@@ -198,7 +199,8 @@ auto UTF_8_TO_WCHAR(const char* src) {
 template <size_t _Capacity = PPE_STATICSTRING_CAPACITY>
 auto WCHAR_TO_UTF_8(const FWStringView& wsrc) {
     TStaticString<_Capacity> dst;
-    dst.Len = FPlatformString::WCHAR_to_CHAR(ECodePage::ACP, dst.Data, dst.capacity(), wsrc.data(), wsrc.size());
+    dst.Len = (FPlatformString::WCHAR_to_CHAR(ECodePage::ACP,
+        dst.Data, dst.capacity(), wsrc.data(), wsrc.size()) - 1 );
     return dst;
 }
 //----------------------------------------------------------------------------
