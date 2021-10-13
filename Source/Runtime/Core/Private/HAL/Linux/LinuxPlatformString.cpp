@@ -379,7 +379,7 @@ size_t FLinuxPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, siz
 
     if (0 == length) {
         dst[0] = L'\0';
-        return 0;
+        return 1;
     }
 
     Assert(cstr);
@@ -408,7 +408,7 @@ size_t FLinuxPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t
 
     if (0 == length) {
         dst[0] = '\0';
-        return 0;
+        return 1;
     }
 
     Assert(wcstr);

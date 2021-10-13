@@ -270,7 +270,7 @@ size_t FWindowsPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, s
 
     if (0 == length) {
         dst[0] = L'\0';
-        return 0;
+        return 1;
     }
 
     Assert(cstr);
@@ -299,7 +299,7 @@ size_t FWindowsPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size
 
     if (0 == length) {
         dst[0] = '\0';
-        return 0;
+        return 1;
     }
 
     Assert(wcstr);
