@@ -37,8 +37,6 @@ public:
         std::declval<typename polymorphic_traits::type>() ));
 
     using FTypeKey = Meta::type_info_t;
-    template <typename T>
-    static CONSTEXPR FTypeKey TypeKey = Meta::type_info<T>;
 
     struct FOpaqueItem {
         void* Data;
@@ -89,12 +87,12 @@ public:
 
     template <typename T>
     T& Get() const NOEXCEPT {
-        return (*static_cast<T*>(_items.Get(TypeKey<T>).Data));
+        return (*static_cast<T*>(_items.Get(Meta::type_info<T>).Data));
     }
 
     template <typename T>
     Meta::TOptionalReference<T> GetIFP() const NOEXCEPT {
-        if (const FOpaqueItem* opaque = _items.GetIFP(TypeKey<T>))
+        if (const FOpaqueItem* opaque = _items.GetIFP(Meta::type_info<T>))
             return Meta::MakeOptionalRef(static_cast<T*>(opaque->Data));
         return Default;
     }
@@ -168,9 +166,14 @@ public:
         }
     }
 
+    template <typename... _Facets>
+    void Append(_Facets&&... facets) {
+        FOLD_EXPR( Add<Meta::TDecay<_Facets>>(std::forward<_Facets>(facets)) );
+    }
+
     template <typename T>
     void Remove() {
-        const auto it = _items.Find(TypeKey<T>);
+        const auto it = _items.Find(Meta::type_info<T>);
         AssertRelease(_items.end() != it);
         it->second.template Invoke<FDeleterFunc>(get_allocator());
         _items.Erase(it);
@@ -198,7 +201,7 @@ private:
     void Insert_AssertUnique_(_Derived* rawPtr, FDeleterFunc deleter = nullptr) {
         Assert(rawPtr);
         _items.Insert_AssertUnique(
-            FTypeKey{ TypeKey<T> },
+            FTypeKey{ Meta::type_info<T> },
             FOpaqueItem{
                 rawPtr,
                 std::tuple_cat(

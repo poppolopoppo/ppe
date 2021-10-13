@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Meta/BitCount.h"
+#include "Meta/Arithmetic.h"
 #include "Meta/Cast.h"
 
 #include <type_traits>
@@ -13,7 +13,7 @@ namespace Meta {
 template <typename T, size_t _Index, size_t _Count>
 struct TBitField {
     static_assert(_Count > 0, "_Count must be superior to 0");
-    static_assert(_Index + _Count <= TBitCount<T>::value, "overflow");
+    static_assert(_Index + _Count <= BitCount<T>, "overflow");
 
     enum : T {
         Index = _Index,
@@ -70,7 +70,7 @@ FORCE_INLINE T TBitField<T, _Index, _Count>::Inc(T flags, T value) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index>
 struct TBitField<T, _Index, 1> {
-    static_assert(_Index + 1 <= TBitCount<T>::value, "overflow");
+    static_assert(_Index + 1 <= BitCount<T>, "overflow");
 
     enum : T {
         Index = _Index,
@@ -110,15 +110,12 @@ FORCE_INLINE bool TBitField<T, _Index, 1>::Get(T flags) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using TBitCount = std::integral_constant<size_t, (sizeof(T)<<3)>;
-//----------------------------------------------------------------------------
-template <typename T>
 struct TBit {
-    enum { Capacity = TBitCount<T>::value };
+    enum { Capacity = BitCount<T> };
 
     template <size_t _Index, typename _Field>
     struct TField {
-        typedef TBitField<T, _Index, TBitCount<_Field>::value> type;
+        typedef TBitField<T, _Index, BitCount<_Field>> type;
     };
 
     template <size_t _Count>

@@ -228,7 +228,7 @@ struct TAllocatorTraits {
 
     template <typename _AllocatorOther>
     NODISCARD static bool Equals(const _Allocator& lhs, const _AllocatorOther& rhs) NOEXCEPT {
-        IF_CONSTEXPR(Meta::has_equals_v<_Allocator, _AllocatorOther>)
+        IF_CONSTEXPR(Meta::has_trivial_equal_v<_Allocator, _AllocatorOther>)
             return (lhs == rhs);
         else {
             UNUSED(lhs);
@@ -242,7 +242,7 @@ struct TAllocatorTraits {
             return a.MaxSize();
         }
         else {
-            return (size_t(0) - size_t(1));
+            return (static_cast<size_t>(0) - static_cast<size_t>(1));
         }
     }
 

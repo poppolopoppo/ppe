@@ -11,12 +11,12 @@ namespace Meta {
 //----------------------------------------------------------------------------
 namespace details {
 template <class F, size_t... Is>
-constexpr auto expand_indices_seq(F f, std::index_sequence<Is...>) {
+FORCE_INLINE constexpr auto expand_indices_seq(F f, std::index_sequence<Is...>) {
     return f(std::integral_constant<size_t, Is> {}...);
 }
 }//!details
 template <size_t N, class F>
-constexpr auto static_for(F f) {
+FORCE_INLINE constexpr auto static_for(F f) {
     return details::expand_indices_seq(f, std::make_index_sequence<N>{});
 }
 //----------------------------------------------------------------------------

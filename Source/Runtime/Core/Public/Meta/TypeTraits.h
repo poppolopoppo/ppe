@@ -67,8 +67,6 @@ struct FNonCopyableNorMovable {
     FNonCopyableNorMovable& operator =(FNonCopyableNorMovable&&) = delete;
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 using TArray = T[_Dim];
 //----------------------------------------------------------------------------
@@ -76,15 +74,22 @@ template <typename T, T _Value>
 using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
 //----------------------------------------------------------------------------
 // Function overloading helpers to use dummy parameters for specialization :
+//----------------------------------------------------------------------------
 template <typename T>
 struct TType final { using type = T; };
+//----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR const TType<T> Type{};
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+// Tricking the compiler to make implicit conversion with template argument deduction
+// https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
+//----------------------------------------------------------------------------
+template<class T>
+using TDontDeduce = typename TType<T>::type;
 //----------------------------------------------------------------------------
 // This ugly piece of crap is just used in STATIC_ASSERT() to get to see the
 // actual size of the types when the assertion fails :
+//----------------------------------------------------------------------------
 template <typename A, typename B>
 struct TCheckSameSize {
     template <size_t X, size_t Y>
@@ -112,8 +117,6 @@ struct TCheckFitInSize {
     };
     STATIC_CONST_INTEGRAL(bool, value, TTest<sizeof(_Size), sizeof(_Capacity)>::value);
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
 using TDecay = typename std::decay<T>::type;
@@ -145,8 +148,6 @@ using TEnableIf = typename std::enable_if< _Test, T >::type;
 template <bool _Test, typename _True, typename _False>
 using TConditional = typename std::conditional< _Test, _True, _False >::type;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // Type semantics
 //----------------------------------------------------------------------------
 template <typename T>
@@ -160,24 +161,6 @@ using TReference = TAddReference< TRemoveConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
 template <typename T>
 using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Functional operators
-//----------------------------------------------------------------------------
-template <typename T = void >
-using TPlus = std::plus<T>;
-//----------------------------------------------------------------------------
-template <typename T = void >
-using TMinus = std::minus<T>;
-//----------------------------------------------------------------------------
-template <typename T = void >
-using TMultiplies = std::multiplies<T>;
-//----------------------------------------------------------------------------
-template <typename T = void >
-using TDivides = std::divides<T>;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // is_pod_type(T*) can be overloaded for specific types, respects ADL
 //----------------------------------------------------------------------------
@@ -200,48 +183,19 @@ template <typename T>
 using has_trivial_move = std::bool_constant<(std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value) ||
     is_pod_v<T> >;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // is_pointer_type(T*) can be overloaded for specific types, respects ADL
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR bool is_pointer_type(T*) NOEXCEPT { return std::is_pointer_v<T>; }
 template <typename T>
-CONSTEXPR bool is_pointer_v{ is_pointer_type(static_cast<T*>(nullptr)) };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+CONSTEXPR bool is_pointer_v{ is_pointer_type(static_cast< Meta::TDecay<T> *>(nullptr)) };
 //----------------------------------------------------------------------------
 // Uses SFINAE to determine if T has a compatible constructor
 //----------------------------------------------------------------------------
-
 template <typename T, typename... _Args>
 using has_constructor = typename std::is_constructible<T, _Args...>::type;
 template <typename T>
 using has_default_constructor = typename std::is_constructible<T>::type;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// SFINAE for detecting if a type implements an operator ==
-//----------------------------------------------------------------------------
-namespace details {
-//----------------------------------------------------------------------------
-struct no_equals_t_ {};
-template <typename U, typename V>
-no_equals_t_ operator ==(const U&, const V&); // dummy for SFINAE
-template <typename U, typename V = U>
-using has_equals_ = std::bool_constant<
-    not std::is_same_v<
-        no_equals_t_,
-        decltype(std::declval<const U&>() == std::declval<const V&>())
-    >
->;
-//----------------------------------------------------------------------------
-} //!details
-//----------------------------------------------------------------------------
-template <typename U, typename V = U>
-CONSTEXPR bool has_equals_v = details::has_equals_<U, V>::value;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Very interesting, but did not work everywhere :'(
 // http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
@@ -272,8 +226,6 @@ struct has_destructor {
     static CONSTEXPR bool value = type::value; /* Which is it? */
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // Test is a class/struct is defining a using/function/typedef/value/enum ...
 // Ex:  // test for a using/typedef
 //      template <typename T> using_value_type_t = typename T::value_type;
@@ -300,8 +252,6 @@ CONSTEXPR bool has_type_v = has_defined_t<details::get_type_t_, T>::value;
 template <typename U, typename V>
 CONSTEXPR bool has_common_type_v = has_type_v<std::common_type<U, V>>;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 namespace details {
 template <template<class> class _Using, class _Fallback, typename T>
 _Using<T> optional_definition_(int);
@@ -311,8 +261,6 @@ _Fallback optional_definition_(...);
 //----------------------------------------------------------------------------
 template <template<class> class _Using, class _Fallback, typename T>
 using optional_definition_t = decltype(details::optional_definition_<_Using, _Fallback, T>(0));
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Optional control for data initialization
 //----------------------------------------------------------------------------
@@ -360,13 +308,6 @@ template <typename T>
 CONSTEXPR T MakeNoInit() NOEXCEPT {
     return NoInitType(Type<T>);
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Tricking the compiler to make implicit conversion with template argument deduction
-// https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
-template<class T>
-using TDontDeduce = typename TType<T>::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -482,11 +423,11 @@ constexpr TDestructor<T> Destructor;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-T default_value_(std::bool_constant<false>, int) { return MakeForceInit<T>(); }
+CONSTEXPR T default_value_(std::bool_constant<false>, int) { return MakeForceInit<T>(); }
 template <typename T, T _Unknown = T::Unknown>
-T default_value_(std::bool_constant<true>, int) { return _Unknown; }
+CONSTEXPR T default_value_(std::bool_constant<true>, int) { return _Unknown; }
 template <typename T>
-T default_value_(std::bool_constant<true>, ...) { return T(0); }
+CONSTEXPR T default_value_(std::bool_constant<true>, ...) { return T(0); }
 } //!details
 template <typename T>
 CONSTEXPR T DefaultValue() NOEXCEPT {
@@ -528,17 +469,22 @@ CONSTEXPR FZeroValue Zero{};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Avoid using T** when only needing T* for pointer semantics (GetIFP)
+//----------------------------------------------------------------------------
 template <typename T>
 using TOptionalReference = TConditional<is_pointer_v<T>, T, TAddPointer<T> >;
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR T* MakeOptionalRef(T& ref) { return std::addressof(ref); }
-template <typename T>
-CONSTEXPR const T* MakeOptionalRef(const T& cref) { return std::addressof(cref); }
-template <typename T>
 CONSTEXPR T* MakeOptionalRef(T* ptr) { return ptr; }
 template <typename T>
-CONSTEXPR const T* MakeOptionalRef(const T* cptr) { return cptr; }
+CONSTEXPR auto MakeOptionalRef(T& ref) {
+    IF_CONSTEXPR(not is_pointer_v<T>)
+        return std::addressof(ref);
+    else
+        return ref;
+}
+//----------------------------------------------------------------------------
+// Generic pointer dereference, overloaded by pointer-like classes
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR auto& DerefPtr(T& ref) {
@@ -557,67 +503,10 @@ CONSTEXPR T& DerefPtr(T* ptr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Unlike STL variants theses operators allow to compare _Lhs with a compatible _Rhs
-//----------------------------------------------------------------------------
-#define PPE_META_OPERATOR(_NAME, _OP) \
-    template <typename _Lhs = void> \
-    struct _NAME { \
-        template <typename _Rhs> \
-        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
-            return (lhs _OP rhs); \
-        } \
-    }; \
-    template <> \
-    struct _NAME<void> { \
-        template <typename _Lhs, typename _Rhs> \
-        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
-            return (lhs _OP rhs); \
-        } \
-    }
-//----------------------------------------------------------------------------
-PPE_META_OPERATOR(TGreater, > );
-PPE_META_OPERATOR(TGreaterEqual, >= );
-PPE_META_OPERATOR(TLess, < );
-PPE_META_OPERATOR(TLessEqual, <= );
-PPE_META_OPERATOR(TEqualTo, == );
-//----------------------------------------------------------------------------
-namespace details {
-template <typename _Ptr, template <typename T> class _Op>
-struct TDerefOperator_ : _Op<decltype( *std::declval<const _Ptr&>() )> {
-    using value_type = decltype(*std::declval<_Ptr>());
-    using parent_type = _Op<value_type>;
-    STATIC_ASSERT(is_pointer_v<_Ptr>);
-    CONSTEXPR bool operator()(const _Ptr& lhs, const _Ptr& rhs) const NOEXCEPT {
-        return ( (lhs == rhs) || ((!!lhs & !!rhs) && parent_type::operator()(*lhs, *rhs)) );
-    }
-    CONSTEXPR bool operator()(const _Ptr& lhs, const value_type& rhs) const NOEXCEPT {
-        return (!!lhs && parent_type::operator()(*lhs, rhs));
-    }
-    CONSTEXPR bool operator()(const value_type& lhs, const _Ptr& rhs) const NOEXCEPT {
-        return (!!rhs && parent_type::operator()(lhs, *rhs));
-    }
-};
-} //!details
-//----------------------------------------------------------------------------
-template <typename _Ptr = void>
-using TDerefGreater = details::TDerefOperator_< _Ptr, TGreater >;
-template <typename _Ptr = void>
-using TDerefGreaterEqual = details::TDerefOperator_< _Ptr, TGreaterEqual >;
-template <typename _Ptr = void>
-using TDerefLess = details::TDerefOperator_< _Ptr, TLess >;
-template <typename _Ptr = void>
-using TDerefLessEqual = details::TDerefOperator_< _Ptr, TLessEqual >;
-template <typename _Ptr = void>
-using TDerefEqualTo = details::TDerefOperator_< _Ptr, TEqualTo >;
-//----------------------------------------------------------------------------
-#undef PPE_META_OPERATOR
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 #define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...) \
     class _API _NAME final : public __VA_ARGS__ { \
-        typedef __VA_ARGS__ parent_type; \
     public: \
+        using parent_type = __VA_ARGS__; \
         using parent_type::parent_type; \
         using parent_type::operator=; \
         \
@@ -641,6 +530,9 @@ using TDerefEqualTo = details::TDerefOperator_< _Ptr, TEqualTo >;
             parent_type::operator =(std::forward<_Arg>(arg)); \
             return *this; \
         } \
+        \
+        parent_type& Inner() { return *this; } \
+        const parent_type& Inner() const { return *this; } \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

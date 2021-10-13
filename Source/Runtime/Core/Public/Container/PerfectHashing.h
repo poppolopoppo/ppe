@@ -87,7 +87,7 @@ public:
         }
 
         // 3 -- sort buckets by descending node count
-        Meta::StaticQuicksort(buckets, int(G),
+        Meta::Quicksort(buckets, int(G),
             [](const list_t& a, const list_t& b) CONSTEXPR NOEXCEPT {
                 return (a.Count > b.Count);
             });

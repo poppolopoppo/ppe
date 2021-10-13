@@ -7,10 +7,25 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Constexpr quicksort
+// Constexpr bubble-sort (works with forward iterators)
+//----------------------------------------------------------------------------
+template <typename _It, typename _Pred>
+CONSTEXPR void BubbleSort(_It first, _It last, _Pred&& pred) {
+    auto nth = last;
+    for (auto it = first; it != last; ++it) {
+        auto kt = first;
+        for (auto jt = kt++; kt != nth; jt = kt++) {
+            using std::swap;
+            if (pred(*kt, *jt))
+                swap(*kt, *jt);
+        }
+    }
+}
+//----------------------------------------------------------------------------
+// Constexpr quick-sort
 //----------------------------------------------------------------------------
 template <typename T, typename _Pred>
-CONSTEXPR void StaticQuicksort(T* p, int n, const _Pred& pred) NOEXCEPT {
+CONSTEXPR void Quicksort(T* p, int n, _Pred&& pred) NOEXCEPT {
     if (n > 0) {
         using std::swap;
 
@@ -23,9 +38,14 @@ CONSTEXPR void StaticQuicksort(T* p, int n, const _Pred& pred) NOEXCEPT {
 
         swap(p[0], p[m]);
 
-        StaticQuicksort(p, m, pred);
-        StaticQuicksort(p + m + 1, n - m - 1, pred);
+        Quicksort(p, m, pred);
+        Quicksort(p + m + 1, n - m - 1, pred);
     }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Pred>
+CONSTEXPR void Quicksort(T* p, int n) NOEXCEPT {
+    Quicksort(p, n, Meta::TLess<T>{});
 }
 //----------------------------------------------------------------------------
 // Constexpr lexicographical compare
