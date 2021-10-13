@@ -8,7 +8,11 @@ $Build.ppe_external!(:vstools) do
     custom!() do |env, target|
         case env.platform.os
         when :Windows
-            linkerOptions << '/IGNORE:4099'# << '/NODEFAULTLIB:MSVCRT.lib'
+            linkerOptions <<
+                '/LTCG:INCREMENTAL' <<
+                '/DEBUG:NONE' <<
+                '/IGNORE:4099' <<
+                '/WX:NO' # << '/NODEFAULTLIB:MSVCRT.lib'
         end
     end
 end

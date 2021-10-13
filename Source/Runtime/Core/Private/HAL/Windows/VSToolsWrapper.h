@@ -22,9 +22,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FVSToolsWrapper : Meta::TSingleton<FVSToolsWrapper> {
-    friend class Meta::TSingleton<FVSToolsWrapper>;
-    using singleton_type = Meta::TSingleton<FVSToolsWrapper>;
+class FVSToolsWrapper : Meta::TStaticSingleton< FVSToolsWrapper > {
+    friend Meta::TStaticSingleton< FVSToolsWrapper >;
+    using singleton_type = Meta::TStaticSingleton<FVSToolsWrapper>;
 public:
     using FHeapTracker = vstools_FHeapTracker;
 
