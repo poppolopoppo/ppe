@@ -11,6 +11,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4702) // strange warning in MakeReleaseFunc_()...
 class PPE_CORE_API FModularServices : Meta::FNonCopyableNorMovable {
 public:
     explicit FModularServices(const FStringView& name) NOEXCEPT;
@@ -19,6 +21,13 @@ public:
 
     bool empty() const { return _services.empty(); }
     size_t size() const { return _services.size(); }
+
+    NODISCARD void* GetIFP(const Meta::type_info_t& serviceKey) const NOEXCEPT {
+        if (auto* const pOpaqueItem = _services.GetIFP(serviceKey))
+            return pOpaqueItem->Data;
+
+        return (_parent ? _parent->GetIFP(serviceKey) : nullptr);
+    }
 
     template <typename _Interface>
     NODISCARD _Interface& Get() const NOEXCEPT {
@@ -51,6 +60,7 @@ public:
     }
 
     void Clear();
+
     void ReleaseMemory() NOEXCEPT;
 
 private:
@@ -87,6 +97,7 @@ private:
     void LogServiceRemove_(FStringView base) const NOEXCEPT;
 #endif
 };
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

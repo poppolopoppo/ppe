@@ -6,7 +6,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformMaths.h"
-
+#include "HAL/PlatformMemory.h"
 #include "HAL/Windows/LastError.h"
 #include "HAL/Windows/WindowsPlatformIncludes.h"
 

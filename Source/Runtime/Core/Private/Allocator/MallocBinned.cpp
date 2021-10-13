@@ -17,8 +17,12 @@
 #   include "Diagnostic/DecodedCallstack.h"
 #endif
 #if USE_PPE_LOGGER
-#   include "IO/FormatHelpers.h"
 #   include "Thread/ThreadContext.h"
+#endif
+#if USE_PPE_PLATFORM_DEBUG
+#   include "IO/Format.h"
+#   include "IO/FormatHelpers.h"
+#   include "IO/TextWriter.h"
 #endif
 
 #include "Allocator/InitSegAllocator.h"

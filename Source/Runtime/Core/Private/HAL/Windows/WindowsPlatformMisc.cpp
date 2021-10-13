@@ -225,12 +225,12 @@ FString FWindowsPlatformMisc::OSName() {
         osname = "Windows 10";
 
     const FStringView arch = (Is64bitOperatingSystem()
-        ? "64 bit"
-        : "32 bit" );
+        ? MakeStringView("64 bit")
+        : MakeStringView("32 bit") );
 
     const FStringView clientOrServer = (::IsWindowsServer()
-        ? "Server"
-        : "Client" );
+        ? MakeStringView("Server")
+        : MakeStringView("Client") );
 
     // build version number
     // https://docs.microsoft.com/fr-fr/windows/desktop/SysInfo/getting-the-system-version

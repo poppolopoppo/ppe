@@ -86,3 +86,4 @@ struct IUnknown;
 #undef RegisterClass
 #undef RemoveDirectory
 #undef Yield
+#undef small

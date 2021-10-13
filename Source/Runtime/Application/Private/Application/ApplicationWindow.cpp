@@ -63,7 +63,7 @@ void FApplicationWindow::Start() {
         surfaceInfo.Hwnd.Assign(_main->NativeHandle());
         surfaceInfo.Dimensions = _main->Dimensions();
         surfaceInfo.EnableFullscreen = _main->Fullscreen();
-        surfaceInfo.EnableVSync = (features & ERHIFeature::VSync);
+        surfaceInfo.EnableVSync = (features ^ ERHIFeature::VSync);
 
         if (not _targetRHI->CreateService(&_rhi, Domain(), &surfaceInfo, features) )
             LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort", Domain().Name(), Name());
@@ -87,14 +87,18 @@ void FApplicationWindow::Shutdown() {
 
     auto& services = Services();
     if (_rhi) {
-        services.CheckedRemove<IRHIService>(_rhi.get());
+        Assert(&services.Get<IRHIService>() == _rhi.get());
+        services.Remove<IRHIService>();
 
         _rhi->TearDown();
         _rhi.reset();
     }
 
-    services.CheckedRemove<IWindowService>(_window.get());
-    services.CheckedRemove<IInputService>(_input.get());
+    Assert(&services.Get<IWindowService>() == _window.get());
+    Assert(&services.Get<IInputService>() == _input.get());
+
+    services.Remove<IWindowService>();
+    services.Remove<IInputService>();
 
     _input.reset();
     _window.reset();

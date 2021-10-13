@@ -144,13 +144,13 @@ void FApplicationBase::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::ApplicationLoop() {
-	FTimespan dt;
-	FTimeline tick = FTimeline::StartNow();
+    FTimespan dt;
+    FTimeline tick = FTimeline::StartNow();
 
-	while (PumpMessages()) {
-		if (tick.Tick_Target60FPS(dt))
-			Tick(dt);
-	}
+    while (PumpMessages()) {
+        if (tick.Tick_Target60FPS(dt))
+            Tick(dt);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

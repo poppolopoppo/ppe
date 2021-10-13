@@ -7,13 +7,13 @@
 #include "Thread/Task/TaskManagerImpl.h"
 
 #include "Diagnostic/Logger.h"
+#include "IO/Format.h"
+#include "IO/TextWriter.h"
 #include "Memory/RefPtr.h"
 #include "Meta/ThreadResource.h"
 
 #if USE_PPE_LOGGER
-#   include "IO/Format.h"
 #   include "IO/FormatHelpers.h"
-#   include "IO/TextWriter.h"
 //  call-of-duty:
 #   include "Maths/Units.h"
 #   include "Time/Timeline.h"
