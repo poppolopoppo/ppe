@@ -97,7 +97,8 @@ module Build
         compilationFlag!('-msse4.2')
         compilationFlag!(*%w{ -fms-compatibility -fms-extensions -fcolor-diagnostics })
         compilationFlag!(*%w{ /clang:-fno-elide-type /clang:-fdiagnostics-show-template-tree })
-        compilationFlag!(*%w{ -Xclang -fuse-ctor-homing })
+        compilationFlag!(*%w{ /clang:-ftemplate-backtrace-limit=0 })
+        #compilationFlag!(*%w{ /clang:-fuse-ctor-homing }) TODO
 
         systemPaths <<
             File.join('$LLVMPath$', 'include', 'clang-c') <<
