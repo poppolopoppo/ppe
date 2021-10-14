@@ -259,6 +259,32 @@ FMetaTransaction::FMetaTransaction(const FName& namespace_, ETransactionFlags fl
 FMetaTransaction::~FMetaTransaction() {
     Assert_NoAssume(not IsLoaded());
     Assert_NoAssume(IsUnloaded());
+
+#if USE_PPE_ASSERT
+    // Check  that no ownerd object will survive the transaction
+    // Note: we already checked for circular references at this point
+    if (KeepIsolated()) {
+        FLinearizedTransaction linear;
+        LinearizeTransaction_(&linear, *this, _topObjects);
+
+        VECTORINSITU(MetaTransaction, PMetaObject, 4) refs {
+            linear.LoadedRefs.MakeView().Map([](const SMetaObject& o) {
+                Assert(o);
+                return PMetaObject{ o.get() };
+            }).Reverse()
+        };
+
+        linear.Reset();
+        _topObjects.clear_ReleaseMemory();
+
+        for (PMetaObject& obj : refs) {
+            // You must respect the order of loading/deloading !
+            // if this assert failed then you need to track where
+            // this object is still referenced
+            RemoveRef_AssertReachZero(obj);
+        }
+    }
+#endif
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Add(FMetaObject* object) {
@@ -361,6 +387,8 @@ void FMetaTransaction::Unload(IUnloadContext* unload/* = nullptr */) {
         // don't use RTTI_CallUnloadIFN() since we guarantee iteration order
         (*ref)->RTTI_Unload(unloadContext);
     }
+
+    _linearized.Reset();
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Reload() {
