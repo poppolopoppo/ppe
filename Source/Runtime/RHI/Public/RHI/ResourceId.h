@@ -4,6 +4,7 @@
 
 #include "RHI/Config.h"
 
+#include "Container/Hash.h"
 #include "IO/StaticString.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"

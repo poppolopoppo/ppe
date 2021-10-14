@@ -58,7 +58,7 @@ FVertexInputState& FVertexInputState::Add(const FVertexID& vertexId, EVertexForm
     Assert(bufferId.Valid());
 
     const FVertexBufferBinding& binding = BufferBindings.Get(bufferId);
-    Vertices.Add_Overwrite(vertexId, FVertexInput{ fmt, offset, binding.Index });
+    Vertices.Emplace_Overwrite(vertexId, FVertexInput{ fmt, offset, binding.Index });
 
     return (*this);
 }
@@ -69,7 +69,7 @@ FVertexInputState& FVertexInputState::Bind(const FVertexBufferID& bufferId, u32 
     if (AutoBindingIndex == index)
         index = checked_cast<u32>(BufferBindings.size());
 
-    BufferBindings.Add_Overwrite(bufferId, FVertexBufferBinding{ index, stride, rate });
+    BufferBindings.Emplace_Overwrite(bufferId, FVertexBufferBinding{ index, stride, rate });
 
     return (*this);
 }

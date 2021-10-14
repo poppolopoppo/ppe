@@ -45,7 +45,7 @@ void CopySpecializationConstants_(FPipelineDesc::FSpecializationConstants *pDst,
     Assert(pDst);
     for (const FPipelineDesc::FSpecializationConstant& it : src) {
         Assert_NoAssume(it.Id.Valid());
-        pDst->Add_Overwrite(it.Id, static_cast<u32>(it.Index));
+        pDst->Emplace_Overwrite(it.Id, static_cast<u32>(it.Index));
     }
 }
 //----------------------------------------------------------------------------
@@ -161,26 +161,26 @@ void FPipelineDesc::AddDescriptorSet_(
         rayTracingScenes.size() );
 
     for (const auto& it : textures)
-        uniforms.Add_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
+        uniforms.Emplace_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
     for (const auto& it : samplers)
-        uniforms.Add_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
+        uniforms.Emplace_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
     for (const auto& it : subpassInputs)
-        uniforms.Add_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
+        uniforms.Emplace_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
     for (const auto& it : images)
-        uniforms.Add_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
+        uniforms.Emplace_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
     for (const auto& it : uniformBuffers)
-        uniforms.Add_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
+        uniforms.Emplace_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
     for (const auto& it : storageBuffers)
-        uniforms.Add_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
+        uniforms.Emplace_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
     for (const auto& it : rayTracingScenes)
-        uniforms.Add_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
+        uniforms.Emplace_Overwrite(FUniformID{ it.Id }, FVariantUniform{ it, FVariantResource{ it.Data } });
 
     PipelineLayout.DescriptorSets.Push(id, index, NEW_REF(RHIPipeline, FUniformMap, std::move(uniforms)) );
 }
 //----------------------------------------------------------------------------
 void FPipelineDesc::SetPushConstants_(TMemoryView<const FPushConstant> values) {
     for (const FPushConstant& it : values)
-        PipelineLayout.PushConstants.Add_Overwrite(it.Id, it);
+        PipelineLayout.PushConstants.Emplace_Overwrite(it.Id, it);
 }
 //----------------------------------------------------------------------------
 // Graphics
