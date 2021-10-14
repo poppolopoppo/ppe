@@ -53,6 +53,7 @@ public:
 
         FSnapshot Snapshot() const;
         FSnapshot Difference(const FCounters& o) const;
+        void ResetAt(const FSnapshot& snapshot);
     };
 
     explicit FMemoryTracking(
@@ -99,6 +100,9 @@ public:
         _parent.Reset(parent, static_cast<uintptr_t>(mode));
         _level = (parent ? parent->_level + 1 : 0);
     }
+
+    void MoveTo(FMemoryTracking* dst) NOEXCEPT;
+    void Swap(FMemoryTracking& other) NOEXCEPT; // will swap statistics
 
     static FMemoryTracking& UsedMemory();
     static FMemoryTracking& ReservedMemory();

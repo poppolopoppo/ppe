@@ -2,575 +2,446 @@
 
 #include "Remoting/RTTIEndpoint.h"
 
-#include "RemotingServer.h"
+#include "Remoting/OpenAPI.h"
 
-#include "Network_Http.h"
-
+#include "MetaClass.h"
 #include "MetaDatabase.h"
+#include "MetaEnum.h"
 #include "MetaFunction.h"
-#include "MetaObject.h"
+#include "MetaModule.h"
+#include "MetaProperty.h"
 #include "MetaTransaction.h"
-#include "RTTI/Atom.h"
-#include "RTTI/Macros.h"
+#include "RTTI/Any.h"
+#include "RTTI/Exceptions.h"
 #include "RTTI/Macros-impl.h"
-#include "RTTI/Module.h"
-#include "RTTI/Module-impl.h"
-#include "RTTI/OpaqueData.h"
-#include "RTTI/Typedefs.h"
+#include "RTTI/TypeTraits.h"
 
-#include "Json/Json.h"
-
-#include "Allocator/Alloca.h"
-#include "Container/MinMaxHeap.h"
-#include "Container/PerfectHashing.h"
-#include "Container/Vector.h"
-#include "HAL/PlatformMemory.h"
-#include "IO/Format.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
-#include "Json/JsonSerializer.h"
-#include "RTTI/AtomHelpers.h"
-#include "Thread/ThreadContext.h"
 
 namespace PPE {
-RTTI_STRUCT_DECL(, FPlatformMemory::FConstants);
-RTTI_STRUCT_DEF(, FPlatformMemory::FConstants);
-RTTI_STRUCT_DECL(, FPlatformMemory::FStats);
-RTTI_STRUCT_DEF(, FPlatformMemory::FStats);
 namespace Remoting {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
+// Traits cache
 //----------------------------------------------------------------------------
-RTTI_MODULE_DECL(, Endpoint);
-RTTI_MODULE_DEF(, Endpoint, Remoting);
+template <typename _Wrapper, typename _Traits>
+static void WrapTraits_(PRTTITraits& cached, FRTTITraitsCache& cache, const _Traits& traits) {
+    auto concrete = NEW_RTTI(_Wrapper);
+    cached = concrete; // need 2 phase initialization here to avoid infinite recursion
+    concrete->Initialize(cache, traits);
+}
 //----------------------------------------------------------------------------
-class FRemotingObject : public RTTI::FMetaObject {
-    RTTI_CLASS_HEADER(, FRemotingObject, RTTI::FMetaObject);
-public:
-    explicit FRemotingObject(FRTTIEndpoint& rtti) NOEXCEPT
-    :    _rtti(rtti) {
-        UNUSED(_rtti);
+static PRTTITraits FindOrAddTraits_(FRTTITraitsCache& cache, const RTTI::PTypeTraits& traits) {
+    Assert(traits);
+
+    PRTTITraits& cached = cache.FindOrAdd(traits);
+
+    if (not cached) {
+        if (const RTTI::IScalarTraits* scalar = traits->AsScalar())
+            WrapTraits_<FRTTITraitsScalar>(cached, cache, *scalar);
+        else if (const RTTI::ITupleTraits* tuple = traits->AsTuple())
+            WrapTraits_<FRTTITraitsTuple>(cached, cache, *tuple);
+        else if (const RTTI::IListTraits* list = traits->AsList())
+            WrapTraits_<FRTTITraitsList>(cached, cache, *list);
+        else if (const RTTI::IDicoTraits* dico = traits->AsDico())
+            WrapTraits_<FRTTITraitsDico>(cached, cache, *dico);
+        else
+            AssertNotImplemented();
+
+        return cache[traits]; // cached& may be invalid here due to recursion
     }
 
-    FPlatformMemory::FConstants MemoryConstants() const { return FPlatformMemory::Constants(); }
-    FPlatformMemory::FStats MemoryStats() const { return FPlatformMemory::Stats(); }
+    return cached;
+}
+//----------------------------------------------------------------------------
+static PRTTIClass FindOrAddClass_(FRTTITraitsCache& cache, const RTTI::FMetaClass& class_) {
+    const PRTTITraits wrapped = FindOrAddTraits_(cache, class_.MakeTraits());
+    Assert(wrapped);
+    const PRTTIClass result = checked_cast<FRTTITraitsScalar>(wrapped)->ObjectClass;
+    Assert(result);
+    return result;
+}
+//----------------------------------------------------------------------------
+static PRTTIEnum FindOrAddEnum_(FRTTITraitsCache& cache, const RTTI::FMetaEnum& enum_) {
+    const PRTTITraits wrapped = FindOrAddTraits_(cache, enum_.MakeTraits());
+    Assert(wrapped);
+    const PRTTIEnum result = checked_cast<FRTTITraitsScalar>(wrapped)->EnumClass;
+    Assert(result);
+    return result;
+}
+//----------------------------------------------------------------------------
+// RTTI meta-data
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTIParameter, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Name)
+RTTI_PROPERTY_PUBLIC_FIELD(Flags)
+RTTI_PROPERTY_PUBLIC_FIELD(Traits)
+RTTI_CLASS_END()
+FRTTIParameter::FRTTIParameter(FRTTITraitsCache& cache, const RTTI::FMetaParameter& value) {
+    Name = value.Name();
+    Flags = value.Flags();
+    Traits = FindOrAddTraits_(cache, value.Traits());
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTIFunction, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Name)
+RTTI_PROPERTY_PUBLIC_FIELD(Flags)
+RTTI_PROPERTY_PUBLIC_FIELD(Result)
+RTTI_PROPERTY_PUBLIC_FIELD(Parameters)
+RTTI_CLASS_END()
+FRTTIFunction::FRTTIFunction(FRTTITraitsCache& cache, const RTTI::FMetaFunction& value) {
+    Name = value.Name();
+    Flags = value.Flags();
+    Parameters.assign(value.Parameters().Iterable().Map([&cache](const RTTI::FMetaParameter& prm) {
+        return NEW_RTTI(FRTTIParameter, cache, prm);
+    }));
 
-private:
-    FRTTIEndpoint& _rtti;
-};
-RTTI_CLASS_BEGIN(Endpoint, FRemotingObject, Concrete)
-RTTI_FUNCTION(MemoryConstants)
-RTTI_FUNCTION(MemoryStats)
+    if (value.HasReturnValue())
+        Result = FindOrAddTraits_(cache, value.Result());
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTIProperty, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Name)
+RTTI_PROPERTY_PUBLIC_FIELD(Flags)
+RTTI_PROPERTY_PUBLIC_FIELD(Traits)
+RTTI_CLASS_END()
+FRTTIProperty::FRTTIProperty(FRTTITraitsCache& cache, const RTTI::FMetaProperty& value) {
+    Name = value.Name();
+    Flags = value.Flags();
+    Traits = FindOrAddTraits_(cache, value.Traits());
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTIClass, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Name)
+RTTI_PROPERTY_PUBLIC_FIELD(Flags)
+RTTI_PROPERTY_PUBLIC_FIELD(Functions)
+RTTI_PROPERTY_PUBLIC_FIELD(Properties)
+RTTI_PROPERTY_PUBLIC_FIELD(Parent)
+RTTI_CLASS_END()
+FRTTIClass::FRTTIClass(FRTTITraitsCache& cache, const RTTI::FMetaClass& value) {
+    Name = value.Name();
+    Flags = value.Flags();
+    Functions.assign(value.SelfFunctions().Map([&cache](const RTTI::FMetaFunction& fn) {
+        return NEW_RTTI(FRTTIFunction, cache, fn);
+    }));
+    Properties.assign(value.SelfProperties().Map([&cache](const RTTI::FMetaProperty& prp) {
+        return NEW_RTTI(FRTTIProperty, cache, prp);
+    }));
+
+    if (const RTTI::FMetaClass* parent = value.Parent())
+        Parent = FindOrAddClass_(cache, *parent);
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTIEnum, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Name)
+RTTI_PROPERTY_PUBLIC_FIELD(Flags)
+RTTI_PROPERTY_PUBLIC_FIELD(Traits)
+RTTI_PROPERTY_PUBLIC_FIELD(Keys)
+RTTI_PROPERTY_PUBLIC_FIELD(Values)
+RTTI_CLASS_END()
+FRTTIEnum::FRTTIEnum(FRTTITraitsCache& cache, const RTTI::FMetaEnum& value) {
+    Name = value.Name();
+    Flags = value.Flags();
+    Traits = FindOrAddTraits_(cache, value.MakeTraits());
+    Keys.assign(value.Values().Map([](const RTTI::FMetaEnumValue& it) {
+        return it.Name;
+    }));
+    Values.assign(value.Values().Map([](const RTTI::FMetaEnumValue& it) {
+        return it.Ord;
+    }));
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTITraits, Abstract)
+RTTI_PROPERTY_PUBLIC_FIELD(Name)
+RTTI_PROPERTY_PUBLIC_FIELD(Flags)
+RTTI_PROPERTY_PUBLIC_FIELD(TypeId)
+RTTI_PROPERTY_PUBLIC_FIELD(Alignment)
+RTTI_PROPERTY_PUBLIC_FIELD(SizeInBytes)
+RTTI_CLASS_END()
+void FRTTITraits::Initialize(const RTTI::ITypeTraits& traits) {
+    Name = traits.TypeName();
+    Flags = traits.TypeFlags();
+    TypeId = traits.TypeId();
+    Alignment = checked_cast<u32>(traits.Alignment());
+    SizeInBytes = checked_cast<u32>(traits.SizeInBytes());
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTITraitsScalar, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(ObjectClass)
+RTTI_PROPERTY_PUBLIC_FIELD(EnumClass)
+RTTI_CLASS_END()
+void FRTTITraitsScalar::Initialize(FRTTITraitsCache& cache, const RTTI::IScalarTraits& traits) {
+    FRTTITraits::Initialize(traits);
+    if (const RTTI::FMetaClass* const class_ = traits.ObjectClass())
+        ObjectClass = NEW_RTTI(FRTTIClass, cache, *class_);
+    if (const RTTI::FMetaEnum* const enum_ = traits.EnumClass())
+        EnumClass = NEW_RTTI(FRTTIEnum, cache, *enum_);
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTITraitsTuple, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Tuple)
+RTTI_CLASS_END()
+void FRTTITraitsTuple::Initialize(FRTTITraitsCache& cache, const RTTI::ITupleTraits& traits) {
+    FRTTITraits::Initialize(traits);
+    Tuple.assign(traits.TupleTraits().Map([&cache](const RTTI::PTypeTraits& it) {
+        return FindOrAddTraits_(cache, it);
+    }));
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTITraitsList, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Item)
+RTTI_CLASS_END()
+void FRTTITraitsList::Initialize(FRTTITraitsCache& cache, const RTTI::IListTraits& traits) {
+    FRTTITraits::Initialize(traits);
+    Item = FindOrAddTraits_(cache, traits.ValueTraits());
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTITraitsDico, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Key)
+RTTI_PROPERTY_PUBLIC_FIELD(Value)
+RTTI_CLASS_END()
+void FRTTITraitsDico::Initialize(FRTTITraitsCache& cache, const RTTI::IDicoTraits& traits) {
+    FRTTITraits::Initialize(traits);
+    Key = FindOrAddTraits_(cache, traits.KeyTraits());
+    Value = FindOrAddTraits_(cache, traits.ValueTraits());
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTIModule, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Name)
+RTTI_PROPERTY_PUBLIC_FIELD(Classes)
+RTTI_PROPERTY_PUBLIC_FIELD(Enums)
+RTTI_CLASS_END()
+FRTTIModule::FRTTIModule(FRTTITraitsCache& cache, const RTTI::FMetaModule& module) {
+    Name = module.Name();
+    Classes.assign(module.Classes().Map(
+        [&cache](const RTTI::FMetaClass* class_) {
+            return FindOrAddClass_(cache, *class_);
+        }));
+    Enums.assign(module.Enums().Map(
+        [&cache](const RTTI::FMetaEnum* enum_) {
+            return FindOrAddEnum_(cache, *enum_);
+        }));
+}
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTITransaction, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(Namespace)
+RTTI_PROPERTY_PUBLIC_FIELD(Flags)
+RTTI_PROPERTY_PUBLIC_FIELD(State)
+RTTI_PROPERTY_PUBLIC_FIELD(TopObjects)
+RTTI_CLASS_END()
+FRTTITransaction::FRTTITransaction(const RTTI::FMetaTransaction& transaction) {
+    Namespace = transaction.Namespace();
+    Flags = transaction.Flags();
+    State = transaction.State();
+    TopObjects.assign(transaction.TopObjects().MakeView());
+}
+//----------------------------------------------------------------------------
+// FRTTIEndpoint
+//----------------------------------------------------------------------------
+RTTI_CLASS_BEGIN(Remoting, FRTTIEndpoint, Concrete)
+RTTI_FUNCTION_FACET(Traits, (), FOperationFacet::Get("traits", { }))
+RTTI_FUNCTION_FACET(Trait, (name), FOperationFacet::Get("trait", { "{name}" }))
+RTTI_FUNCTION_FACET(Objects, (), FOperationFacet::Get("objects", { }))
+RTTI_FUNCTION_FACET(Object, (path), FOperationFacet::Get("object", { "{path}" }))
+RTTI_FUNCTION_FACET(Object_Function, (path, function, args), FOperationFacet::Get("object/function", { "{path}", "{function}" }))
+RTTI_FUNCTION_FACET(Object_Property, (path, property), FOperationFacet::Get("object/property", { "{path}", "{property}" }))
+RTTI_FUNCTION_FACET(Namespaces, (), FOperationFacet::Get("namespaces", { }))
+RTTI_FUNCTION_FACET(Transactions, (namespace), FOperationFacet::Get("transactions", { "{namespace}" }))
+RTTI_FUNCTION_FACET(Modules, (), FOperationFacet::Get("modules", { }))
+RTTI_FUNCTION_FACET(Module, (name), FOperationFacet::Get("module", { "{name}" }))
+RTTI_FUNCTION_FACET(Classes, (), FOperationFacet::Get("classes", { }))
+RTTI_FUNCTION_FACET(Class, (name), FOperationFacet::Get("class", { "{name}" }))
+RTTI_FUNCTION_FACET(Enums, (), FOperationFacet::Get("enums", { }))
+RTTI_FUNCTION_FACET(Enum, (name), FOperationFacet::Get("enum", { "{name}" }))
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-template <typename _Query>
-static void Dispatch_JsonQuery_(const FRemotingContext& ctx, _Query&& query) {
-    Serialize::FJson json;
-
-    ctx.WaitForSync([&query, &json](const FRemotingServer&) {
-        AssertIsMainThread();
-        query(json);
-    });
-
-    if (json.Root().Valid()) {
-        FTextWriter oss(&ctx.pResponse->Body());
-        json.ToStream(oss, !USE_PPE_DEBUG);
-    }
-}
-//----------------------------------------------------------------------------
-static void Dispatch_Namespace_(const FRemotingContext& ctx, const RTTI::FLazyName& id) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    default:
-        ctx.BadRequest("Only GET http query is supported");
-        return;
-    }
-
-    if (id.empty())
-        // list all namespaces
-        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-
-            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
-
-            for (const RTTI::FName& namespaceName : db->Namespaces())
-                arr.emplace_back(ToString(namespaceName));
-        });
-    else
-        // search for a specific namespace
-        Dispatch_JsonQuery_(ctx, [id](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-            RTTI_to_Json(db->TransactionIFP(id), &json);
-        });
-}
-//----------------------------------------------------------------------------
-static void Dispatch_Object_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    case Network::EHttpMethod::Put: AssertNotImplemented(); // #TODO: call to property set, while reading the body
-    default:
-        ctx.BadRequest("Only GET or PUT http query is supported");
-        return;
-    }
-
-    Assert(not id.empty());
-
-    Dispatch_JsonQuery_(ctx, [&ctx, id](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-
-        if (const RTTI::PMetaObject pObj{ db->ObjectIFP(id) })
-            RTTI_to_Json(pObj, &json);
-        else
-            ctx.NotFound(ToString(id));
-    });
-}
-//----------------------------------------------------------------------------
-static void Dispatch_PropertyGet_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id, const RTTI::FLazyName& propName) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    case Network::EHttpMethod::Put: AssertNotImplemented(); // #TODO: call to property set, while reading the body
-    default:
-        ctx.BadRequest("Only GET or PUT http query is supported");
-        return;
-    }
-
-    Dispatch_JsonQuery_(ctx, [&](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-
-        if (const RTTI::PMetaObject pObj{ db->ObjectIFP(id) }) {
-            RTTI::FAtom value;
-
-            if (pObj->RTTI_Property(propName, &value))
-                RTTI_to_Json(value, &json);
-            else
-                ctx.NotFound(StringFormat("{0}::{1}",
-                    pObj->RTTI_Class()->Name(), propName ));
-        }
-        else
-            ctx.NotFound(ToString(id));
-    });
-}
-//----------------------------------------------------------------------------
-static void Dispatch_FunctionCall_(const FRemotingContext& ctx, const RTTI::FLazyPathName& id, const RTTI::FLazyName& funcName) {
-    // Parse function arguments asap, in the worker thread (less contention compared to sync)
-    Serialize::FJson args;
-
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get:
-    {
-        Network::FUriQueryMap get;
-        Network::FUri::Unpack(get, ctx.Request.Uri());
-
-        const auto it = get.FindLike(MakeStringView("json"));
-        if (get.end() != it) {
-            if (not Serialize::FJson::Load(&args, L"HttpGet", it->second.MakeView())) {
-                ctx.ExpectationFailed("invalid <json> data");
-                return;
-            }
-        }
-        else {
-            args.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FObject>();
-        }
-    }
-        break;
-    case Network::EHttpMethod::Post:
-    {
-        const FStringView bodyStr{ ctx.Request.Body().MakeView().Cast<const char>() };
-
-        if (not Serialize::FJson::Load(&args, L"HttpPost", bodyStr)) {
-            ctx.ExpectationFailed("invalid <json> data");
-        }
-    }
-        break;
-    default:
-        ctx.BadRequest("Only GET or POST http query are supported");
-        return;
-    }
-
-    Dispatch_JsonQuery_(ctx, [&](Serialize::FJson& json) {
-        const RTTI::FMetaDatabaseReadable db;
-
-        const RTTI::PMetaObject pObj{ db->ObjectIFP(id) };
-        if (Unlikely(not pObj)) {
-            ctx.NotFound(ToString(id));
-            return;
-        }
-
-        const RTTI::FMetaFunction* pFunc;
-        if (Unlikely(not pObj->RTTI_Function(funcName, &pFunc))) {
-            ctx.NotFound(StringFormat("{0}::{1}()",
-                pObj->RTTI_Class()->Name(), funcName ));
-            return;
-        }
-
-        STACKLOCAL_POD_ARRAY(RTTI::FAtom, call, pFunc->Parameters().size());
-        RTTI::FAtom* pArg = call.data();
-
-        const Serialize::FJson::FObject& input = args.Root().ToObject();
-        for (const RTTI::FMetaParameter& prm : pFunc->Parameters()) {
-            const auto it = input.FindLike(prm.Name());
-
-            if (Unlikely(it == input.end())) {
-                if (not prm.IsOptional()) {
-                    ctx.Failed(Network::EHttpStatus::NotAcceptable,
-                        StringFormat("Missing mandatory parameter <{0}> for {1}::{2}()",
-                        prm.Name(), pObj->RTTI_Class()->Name(), pFunc->Name() ));
-                    return;
-                }
-
-                AssertNotImplemented(); // #TODO: should fill <call> array with the default value ?
-                // but the default value isn't necessarily the optional value :'(
-            }
-            else {
-                *pArg = MakeAtom(it->second);
-            }
-
-            pArg++;
-        }
-
-        STACKLOCAL_ATOM(result, pFunc->Result());
-        if (pFunc->InvokeIFP(*pObj, result, call))
-            RTTI_to_Json(result, &json);
-        else
-            ctx.Failed(
-                Network::EHttpStatus::NotAcceptable,
-                StringFormat("Call to function {0}::{1}() on <{2}> failed",
-                pObj->RTTI_Class()->Name(), pFunc->Name(), pObj->RTTI_PathName() ));
-    });
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Class_(const FRemotingContext& ctx, const FStringView& args) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    default:
-        ctx.BadRequest("only HTTP Get is supported");
-        return;
-    }
-
-    if (args.empty())
-        // list all classes available
-        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-
-            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
-
-            for (const RTTI::FName& className : db->Classes().Keys())
-                arr.emplace_back(ToString(className));
-        });
-    else
-        // search for a particular class
-        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-            if (const RTTI::FMetaClass* const mclass = db->ClassIFP(args))
-                RTTI_to_Json(*mclass, &json);
-            else
-                ctx.NotFound(args);
-        });
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Enum_(const FRemotingContext& ctx, const FStringView& args) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    default:
-        ctx.BadRequest("only HTTP Get is supported");
-        return;
-    }
-
-    if (args.empty())
-        // list all enums available
-        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-
-            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
-
-            for (const RTTI::FName& enumName : db->Enums().Keys())
-                arr.emplace_back(ToString(enumName));
-        });
-    else
-        // search for a particular enum
-        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-            if (const RTTI::FMetaEnum* const menum = db->EnumIFP(args))
-                RTTI_to_Json(*menum, &json);
-            else
-                ctx.NotFound(args);
-        });
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Module_(const FRemotingContext& ctx, const FStringView& args) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    default:
-        ctx.BadRequest("only HTTP Get is supported");
-        return;
-    }
-
-    if (args.empty())
-        // list all modules available
-        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-
-            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
-
-            for (const RTTI::FMetaModule* mmodule : db->Modules())
-                arr.emplace_back(ToString(mmodule->Name()));
-        });
-    else
-        // search for a particular module
-        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-            if (const RTTI::FMetaModule* const mmodule = db->ModuleIFP(args))
-                RTTI_to_Json(*mmodule, &json);
-            else
-                ctx.NotFound(args);
-        });
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Traits_(const FRemotingContext& ctx, const FStringView& args) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    default:
-        ctx.BadRequest("only HTTP Get is supported");
-        return;
-    }
-
-    if (args.empty())
-        // list all traits available
-        Dispatch_JsonQuery_(ctx, [](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-
-            auto& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
-
-            Serialize::FJson traits;
-            for (RTTI::PTypeTraits it : db->Traits().Values()) {
-                RTTI_to_Json(it, &traits);
-                arr.emplace_back(std::move(traits.Root()));
-            }
-        });
-    else
-        // search for a particular traits
-        Dispatch_JsonQuery_(ctx, [&ctx, args](Serialize::FJson& json) {
-            const RTTI::FMetaDatabaseReadable db;
-            if (const RTTI::PTypeTraits mtraits = db->TraitsIFP(args))
-                RTTI_to_Json(mtraits, &json);
-            else
-                ctx.NotFound(args);
-        });
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Export_(const FRemotingContext& ctx, const FStringView& args) {
-    FStringView path, subpart;
-    const auto sep = args.FindR('.');
-    if (args.rend() == sep) {
-        path = args;
-    }
-    else {
-        path = args.CutBefore(sep);
-        subpart = args.CutStartingAt(sep - 1);
-    }
-
-    RTTI::FLazyPathName id;
-    if (subpart.empty()) {
-        // export all object or all namespace
-        if (RTTI::FLazyPathName::Parse(&id, path, false))
-            Dispatch_Object_(ctx, id);
-        else
-            Dispatch_Namespace_(ctx, RTTI::FLazyName{ args });
-    }
-    else {
-        // export a specific function/property for an object
-        if (not RTTI::FLazyPathName::Parse(&id, path, false)) {
-            ctx.ExpectationFailed("malformed RTTI pathname");
-            return;
-        }
-
-        if (subpart.EndsWith("()"))
-            Dispatch_FunctionCall_(ctx, id, RTTI::FLazyName{ subpart.ShiftBack(2) });
-        else
-            Dispatch_PropertyGet_(ctx, id, RTTI::FLazyName{ subpart });
-    }
-}
-//----------------------------------------------------------------------------
-struct FAutoCompleteResult {
-    FString Text;
-    float Score;
-
-    bool operator <(const FAutoCompleteResult& other) const NOEXCEPT {
-        return ((Score < other.Score) | (Score == other.Score &&
-            Text < other.Text ));
-    }
-
-    bool operator ==(const FAutoCompleteResult& other) const NOEXCEPT {
-        return (Score == other.Score && Text == other.Text);
-    }
-};
-//----------------------------------------------------------------------------
-template <typename _Source>
-static void Dispatch_AutoComplete_(const FRemotingContext& ctx, _Source source) {
-    Serialize::FJson json; // don't execute on game-thread for auto-complete (read-only and performance critical)
-
-    STACKLOCAL_HEAP(FAutoCompleteResult, Meta::TLess<FAutoCompleteResult>{}, results, 10);
-    source(results);
-
-    results.Sort(); // largest to smallest distance
-
-    Serialize::FJson::FArray& arr = json.Root().MakeDefault_AssumeNotValid<Serialize::FJson::FArray>();
-    arr.reserve(results.size());
-
-    reverseforeachitem(it, results) {
-        arr.emplace_back(std::move(it->Text));
-    }
-
-    if (json.Root().Valid()) {
-        FTextWriter oss(&ctx.pResponse->Body());
-        json.ToStream(oss, !USE_PPE_DEBUG);
-    }
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Complete_Export_(const FRemotingContext& ctx) {
-    FStringView term;
-    const RTTI::FMetaClass* mclass = nullptr;
-
-    Network::FUri::FQueryMap prms;
-    if (Network::FUri::Unpack(prms, ctx.Request.Uri())) {
-        auto it = prms.FindLike(MakeStringView("class"));
-        if (it != prms.end()) {
-            {
-                RTTI::FMetaDatabaseReadable db;
-                mclass = db->ClassIFP(it->second);
-            }
-            if (nullptr == mclass) {
-                ctx.ExpectationFailed(StringFormat("invalid parent metaclass: {0}", it->second));
-                return;
-            }
-        }
-        it = prms.FindLike(MakeStringView("term"));
-        if (it != prms.end()) {
-            term = it->second;
-        }
-    }
-
-    Dispatch_AutoComplete_(ctx, [term, mclass](TStackHeapAdapter<FAutoCompleteResult>& results) {
-        FStringBuilder sb;
-
-        RTTI::FMetaDatabaseReadable db;
-        for (const RTTI::SMetaObject& obj : db->Objects().Values()) {
-            Assert(obj);
-            if ((nullptr == mclass) || (obj->RTTI_InheritsFrom(*mclass))) {
-                sb << obj->RTTI_PathName().Namespace << '/' << obj->RTTI_PathName().Identifier;
-                const size_t dist = LevenshteinDistanceI(sb.Written(), term);
-                const float score = ( static_cast<float>(dist) / sb.Written().size() );
-                if (results.empty() || score < results.Max().Score)
-                    results.Roll(sb.ToString(), score);
-                else
-                    sb.clear();
-            }
-        }
-    });
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Complete_Traits_(const FRemotingContext& ctx) {
-    FStringView term;
-    RTTI::ETypeFlags typeFlags{ 0 };
-
-    Network::FUri::FQueryMap prms;
-    if (Network::FUri::Unpack(prms, ctx.Request.Uri())) {
-        auto it = prms.FindLike(MakeStringView("TypeFlags"));
-        if (it != prms.end()) {
-            if (not MetaEnumParse(it->second, &typeFlags)) {
-                ctx.ExpectationFailed(StringFormat("invalid type flags: {0}", it->second));
-                return;
-            }
-        }
-        it = prms.FindLike(MakeStringView("term"));
-        if (it != prms.end()) {
-            term = it->second;
-        }
-    }
-
-    Dispatch_AutoComplete_(ctx,  [term, typeFlags](TStackHeapAdapter<FAutoCompleteResult>& results) {
-        RTTI::FMetaDatabaseReadable db;
-        for (const RTTI::PTypeTraits& traits : db->Traits().Values()) {
-            if ((typeFlags == RTTI::ETypeFlags{ 0 }) || (typeFlags ^ traits->TypeFlags())) {
-                const size_t dist = LevenshteinDistanceI(traits->TypeName(), term);
-                const float score = ( static_cast<float>(dist) / traits->TypeName().size() );
-                if (results.empty() || score < results.Max().Score)
-                    results.Roll(ToString(traits->TypeName()), score);
-            }
-        }
-    });
-}
-//----------------------------------------------------------------------------
-static void RTTIEndpoint_Complete_(const FRemotingContext& ctx, const FStringView& args) {
-    switch (ctx.Request.Method()) {
-    case Network::EHttpMethod::Get: break;
-    default:
-        ctx.BadRequest("only HTTP Get is supported");
-        return;
-    }
-
-    if (EqualsI("export", args))
-        RTTIEndpoint_Complete_Export_(ctx);
-    else if (EqualsI("traits", args))
-        RTTIEndpoint_Complete_Traits_(ctx);
-    else
-        ctx.NotFound(args);
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 FRTTIEndpoint::FRTTIEndpoint() NOEXCEPT
-:   IRemotingEndpoint("/RTTI") {
-
-    _dispatch.reserve(6);
-    _dispatch.emplace_AssertUnique("class", &RTTIEndpoint_Class_);
-    _dispatch.emplace_AssertUnique("enum", &RTTIEndpoint_Enum_);
-    _dispatch.emplace_AssertUnique("module", &RTTIEndpoint_Module_);
-    _dispatch.emplace_AssertUnique("export", &RTTIEndpoint_Export_);
-    _dispatch.emplace_AssertUnique("traits", &RTTIEndpoint_Traits_);
-    _dispatch.emplace_AssertUnique("complete", &RTTIEndpoint_Complete_);
-
-    RTTI_MODULE(Endpoint).Start();
-
-    TRefPtr<FRemotingObject> o;
-    o = NEW_REF(Remoting, FRemotingObject, *this);
-    o->RTTI_Export(RTTI::FName{ "obj" });
-
-    _transaction = NEW_REF(Remoting, RTTI::FMetaTransaction, RTTI::FName{ "Remoting" });
-    _transaction->Add(std::move(o));
-    _transaction->LoadAndMount();
+:   FBaseEndpoint("/rtti")
+{}
+//----------------------------------------------------------------------------
+// Traits
+//----------------------------------------------------------------------------
+FRTTIEndpoint::TList<FString> FRTTIEndpoint::Traits() const NOEXCEPT {
+    const RTTI::FMetaDatabaseReadable db;
+    return { db->Traits().Map(
+        [](const auto& it) {
+            return ToString(it.first);
+        })
+    };
 }
 //----------------------------------------------------------------------------
-FRTTIEndpoint::~FRTTIEndpoint() NOEXCEPT {
-    _transaction->UnmountAndUnload();
-    _transaction.reset();
+PRTTITraits FRTTIEndpoint::Trait(const FString& name) const {
+    const RTTI::FMetaDatabaseReadable db;
+    if (const RTTI::PTypeTraits traits = db->TraitsIFP(RTTI::FLazyName{ name.MakeView() }))
+        return FindOrAddTraits_(*_cache.LockExclusive(), traits);
 
-    RTTI_MODULE(Endpoint).Shutdown();
+    PPE_THROW_IT(RTTI::FRTTIException("traits not found"));
 }
 //----------------------------------------------------------------------------
-void FRTTIEndpoint::ProcessImpl(const FRemotingContext& ctx, const FStringView& relativePath) {
-    const auto sep = relativePath.Find(Network::FUri::PathSeparator);
-    if (relativePath.end() == sep) {
-        ctx.BadRequest(relativePath);
-        return;
+// Objects
+//----------------------------------------------------------------------------
+FRTTIEndpoint::TList<FString> FRTTIEndpoint::Objects() const NOEXCEPT {
+    const RTTI::FMetaDatabaseReadable db;
+    return { db->Objects().Keys().Map(
+        [](const RTTI::FPathName& path) {
+            FStringBuilder sb;
+            sb << path;
+            return sb.ToString();
+        })
+    };
+}
+//----------------------------------------------------------------------------
+RTTI::PMetaObject FRTTIEndpoint::Object(const FString& path) const {
+    RTTI::FLazyPathName key;
+    if (RTTI::FLazyPathName::Parse(&key, path)) {
+        const RTTI::FMetaDatabaseReadable db;
+        return db->ObjectIFP(key);
     }
 
-    const FStringView method = relativePath.CutBefore(sep);
-    const FStringView args = relativePath.CutStartingAt(sep + 1);
+    PPE_THROW_IT(RTTI::FRTTIException("object not found"));
+}
+//----------------------------------------------------------------------------
+RTTI::FAny FRTTIEndpoint::Object_Function(const FString& path, const FString& function, const VECTOR(Remoting, RTTI::FAny)& args) const {
+    if (const RTTI::PMetaObject pObj = Object(path)) {
+        const RTTI::FMetaFunction* pFunc = nullptr;
+        if (pObj->RTTI_Function(function, &pFunc)) {
+            RTTI::FAny result;
+            RTTI::FAtom atomResult;
+            if (pFunc->HasReturnValue()) {
+                result.Reset(pFunc->Result());
+                atomResult = result.InnerAtom();
+            }
 
-    const auto it = _dispatch.find(method);
-    if (Likely(it != _dispatch.end())) {
-        // set JSON mime-type when succeeded
-        ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_json());
-        it->second(ctx, args);
+            STACKLOCAL_POD_ARRAY(RTTI::FAtom, prms, args.size());
+            args.MakeView().Map([](const RTTI::FAny& arg) NOEXCEPT {
+                return arg.InnerAtom();
+            }).CopyTo(prms.begin());
+
+            if (pFunc->InvokeCopy(*pObj, atomResult, prms))
+                return result;
+
+            PPE_THROW_IT(RTTI::FFunctionException("failed to invoke function", pFunc));
+        }
+
+        PPE_THROW_IT(RTTI::FObjectException("function not found", pObj.get()));
     }
-    else {
-        ctx.NotFound(method);
+
+    PPE_THROW_IT(RTTI::FRTTIException("object not found"));
+}
+//----------------------------------------------------------------------------
+RTTI::FAny FRTTIEndpoint::Object_Property(const FString& path, const FString& property) const {
+    if (const RTTI::PMetaObject pObj = Object(path)) {
+        const RTTI::FMetaProperty* pProp = nullptr;
+        if (pObj->RTTI_Property(property, &pProp)) {
+            RTTI::FAny result;
+            result.AssignCopy(pProp->Get(*pObj));
+            return result;
+        }
+
+        PPE_THROW_IT(RTTI::FObjectException("property not found", pObj.get()));
     }
+
+    PPE_THROW_IT(RTTI::FRTTIException("object not found"));
+}
+//----------------------------------------------------------------------------
+// Transaction
+//----------------------------------------------------------------------------
+FRTTIEndpoint::TList<FString> FRTTIEndpoint::Namespaces() const NOEXCEPT {
+    const RTTI::FMetaDatabaseReadable db;
+    return { db->Namespaces().Map(
+        [](const RTTI::FName& name) {
+            return ToString(name);
+        })
+    };
+}
+//----------------------------------------------------------------------------
+FRTTIEndpoint::TList<PRTTITransaction> FRTTIEndpoint::Transactions(const FString& namespace_) const {
+    if (RTTI::FName::IsValidToken(namespace_)) {
+        const RTTI::FMetaDatabaseReadable db;
+        TList<PRTTITransaction> result;
+        result.assign(db->TransactionIFP(namespace_)
+            .Map([](const RTTI::SCMetaTransaction& transaction) {
+                return NEW_RTTI(FRTTITransaction, *transaction);
+            }));
+        return result;
+    }
+
+    PPE_THROW_IT(RTTI::FRTTIException("namespace not found"));
+}
+//----------------------------------------------------------------------------
+// Modules
+//----------------------------------------------------------------------------
+FRTTIEndpoint::TList<FString> FRTTIEndpoint::Modules() const NOEXCEPT {
+    const RTTI::FMetaDatabaseReadable db;
+    return { db->Modules().Map(
+        [](const RTTI::FMetaModule* module_) {
+            return ToString(module_->Name());
+        })
+    };
+}
+//----------------------------------------------------------------------------
+PRTTIModule FRTTIEndpoint::Module(const FString& name) const {
+    if (RTTI::FName::IsValidToken(name)) {
+        if (const RTTI::FMetaModule* module = RTTI::FMetaDatabaseReadable{}->ModuleIFP(name)) {
+            PRTTIModule result;
+            result = NEW_RTTI(FRTTIModule, *_cache.LockExclusive(), *module);
+            return result;
+        }
+    }
+
+    PPE_THROW_IT(RTTI::FRTTIException("module not found"));
+}
+//----------------------------------------------------------------------------
+// Classes
+//----------------------------------------------------------------------------
+FRTTIEndpoint::TList<FString> FRTTIEndpoint::Classes() const NOEXCEPT {
+    const RTTI::FMetaDatabaseReadable db;
+    return { db->Classes().Keys().Map(
+        [](const RTTI::FName& name) {
+            return ToString(name);
+        })
+    };
+}
+//----------------------------------------------------------------------------
+PRTTIClass FRTTIEndpoint::Class(const FString& name) const {
+    if (RTTI::FName::IsValidToken(name)) {
+        if (const RTTI::FMetaClass* class_ = RTTI::FMetaDatabaseReadable{}->ClassIFP(name)) {
+            PRTTIClass result;
+            result = FindOrAddClass_(*_cache.LockExclusive(), *class_);
+            return result;
+        }
+
+        PPE_THROW_IT(RTTI::FRTTIException("invalid token"));
+    }
+
+    PPE_THROW_IT(RTTI::FRTTIException("class not found"));
+}
+//----------------------------------------------------------------------------
+// Enums
+//----------------------------------------------------------------------------
+FRTTIEndpoint::TList<FString> FRTTIEndpoint::Enums() const NOEXCEPT {
+    const RTTI::FMetaDatabaseReadable db;
+    return { db->Enums().Keys().Map(
+        [](const RTTI::FName& name) {
+            return ToString(name);
+        })
+    };
+}
+//----------------------------------------------------------------------------
+PRTTIEnum FRTTIEndpoint::Enum(const FString& name) const {
+    if (RTTI::FName::IsValidToken(name)) {
+        if (const RTTI::FMetaEnum* enum_ = RTTI::FMetaDatabaseReadable{}->EnumIFP(name)) {
+            PRTTIEnum result;
+            result = FindOrAddEnum_(*_cache.LockExclusive(), *enum_);
+            return result;
+        }
+
+        PPE_THROW_IT(RTTI::FRTTIException("invalid token"));
+    }
+
+    PPE_THROW_IT(RTTI::FRTTIException("enum not found"));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

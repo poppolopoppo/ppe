@@ -4,6 +4,7 @@
 #include "RemotingServer.h"
 
 #include "RemotingEndpoint.h"
+#include "Remoting/BaseEndpoint.h"
 
 #include "Http/Request.h"
 #include "Http/Response.h"
@@ -14,11 +15,11 @@
 #include "Thread/Task/TaskContext.h"
 #include "Thread/ThreadContext.h"
 
-#include "Container/HashMap.h"
 #include "Diagnostic/Logger.h"
+#include "Http/Method.h"
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
-#include "Thread/DeferredStream.h"
+#include "Meta/Functor.h"
 
 namespace PPE {
 namespace Remoting {
@@ -48,7 +49,7 @@ void FRemotingContext::NotFound(const FStringView& what) const {
 void FRemotingContext::WaitForSync(FRemotingCallback&& callback) const NOEXCEPT {
     FCompletionPort cp;
     cp.Start(1);
-    Sync.FireAndForget([&cp, &callback](const FRemotingServer& srv) {
+    Sync.FireAndForget([&cp, &callback](const FRemotingServer& srv) NOEXCEPT {
         callback(srv);
         cp.OnJobComplete(); // resume remoting job on worker thread
     });
@@ -58,7 +59,7 @@ void FRemotingContext::WaitForSync(FRemotingCallback&& callback) const NOEXCEPT 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FRemotingServer::FRemotingServer() NOEXCEPT
-:   Network::FHttpServer("Remoting", Network::FAddress::Localhost(1985))
+:   FHttpServer("Remoting", Network::FAddress::Localhost(1985))
 {}
 //----------------------------------------------------------------------------
 FRemotingServer::~FRemotingServer() NOEXCEPT {
@@ -68,9 +69,35 @@ FRemotingServer::~FRemotingServer() NOEXCEPT {
 void FRemotingServer::Add(URemotingEndpoint&& endpoint) {
     Assert(endpoint);
 
-    WRITESCOPELOCK(_barrierRW);
+    Network::FName prefix{ endpoint->EndpointPrefix() };
+    Assert(not prefix.empty());
 
-    _endpoints.Insert_AssertUnique(endpoint->Path(), std::move(endpoint));
+    _endpoints.LockExclusive()->Insert_AssertUnique(std::move(prefix), std::move(endpoint));
+}
+//----------------------------------------------------------------------------
+void FRemotingServer::Add(PBaseEndpoint&& endpoint) {
+    Assert(endpoint);
+
+    Network::FName prefix{ endpoint->EndpointPrefix() };
+    Assert(not prefix.empty());
+
+    if (not endpoint->RTTI_IsLoaded())
+        endpoint->RTTI_EndpointAutomaticBinding();
+
+    _endpoints.LockExclusive()->Insert_AssertUnique(std::move(prefix), std::move(endpoint));
+}
+//----------------------------------------------------------------------------
+void FRemotingServer::Remove(const PBaseEndpoint& endpoint) {
+    Assert(endpoint);
+
+    const Network::FName prefix{ endpoint->EndpointPrefix() };
+
+    const auto exclusiveEndpoints = _endpoints.LockExclusive();
+    const auto it = exclusiveEndpoints->Find(prefix);
+    AssertReleaseMessage(L"endpoint not registered", exclusiveEndpoints->end() != it);
+    Assert_NoAssume(std::get<PBaseEndpoint>(it->second) == endpoint);
+
+    exclusiveEndpoints->Erase(it);
 }
 //----------------------------------------------------------------------------
 void FRemotingServer::Start() {
@@ -88,11 +115,13 @@ void FRemotingServer::Tick(FTimespan) {
 void FRemotingServer::Shutdown() {
     AssertIsMainThread();
 
-    Network::FHttpServer::Stop();
+    Network::FHttpServer::Shutdown();
 }
 //----------------------------------------------------------------------------
 bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRequest& request) const {
     static constexpr auto PathSeparator = Network::FUri::PathSeparator;
+
+    const auto sharedEndpoints = _endpoints.LockShared(); // maintain a shared lock during a request
 
     IRemotingEndpoint* pEndpoint = nullptr;
 
@@ -102,10 +131,16 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
 
     const FStringView name = path.CutBefore(sep);
     if (not name.empty()) {
-        READSCOPELOCK(_barrierRW);
-        auto it = _endpoints.find(name);
-        if (_endpoints.end() != it) {
-            pEndpoint = it->second.get();
+        auto it = sharedEndpoints->Find(Network::FName{ name });
+        if (sharedEndpoints->end() != it) {
+            Meta::Visit(it->second,
+                [&pEndpoint](const URemotingEndpoint& uniq) NOEXCEPT {
+                    pEndpoint = uniq.get();
+                },
+                [&pEndpoint](const PBaseEndpoint& shared) NOEXCEPT {
+                    pEndpoint = shared.get();
+                });
+            Assert(pEndpoint);
         }
     }
 
@@ -114,7 +149,33 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
 
     if (Likely(pEndpoint)) {
         response.SetStatus(Network::EHttpStatus::OK);
-        pEndpoint->Process({ &response, request, _sync.Public() });
+
+        Network::FHttpHeader::FCookieMap cookie;
+        if (not Network::FHttpHeader::UnpackCookie(&cookie, request) )
+            cookie.clear_ReleaseMemory(); // no cookie present
+
+        Network::FHttpHeader::FPostMap post;
+        if (request.Method() == Network::EHttpMethod::Post &&
+            not Network::FHttpHeader::UnpackPost(&post, request) ) {
+            LOG(Remoting, Warning, L"failed to unpack post parameters from request: {0}", request.Uri());
+            post.clear_ReleaseMemory();
+        }
+
+        Network::FUriQueryMap query;
+        if (not Network::FUri::Unpack(query, request.Uri())) {
+            LOG(Remoting, Warning, L"failed to unpack query parameters from uri: {0}", request.Uri());
+            query.clear_ReleaseMemory();
+        }
+
+        pEndpoint->EndpointProcess(FRemotingContext{
+            &response,
+            Localhost(),
+            IterateOnEndpoints(*sharedEndpoints),
+            request,
+            cookie,
+            post,
+            query,
+            _sync.Public() });
     }
     else {
         response.SetStatus(Network::EHttpStatus::Forbidden);
@@ -123,6 +184,12 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
 
     return (FRemotingResponse::Write(&port.Socket(), response) &&
             request.AskToKeepAlive() );
+}
+//----------------------------------------------------------------------------
+const IRemotingEndpoint& FRemotingServer::EndpointVisit(const FRegisteredEndpoint& variant) NOEXCEPT {
+    return *Meta::Visit(variant, [](const auto& ptrLike) NOEXCEPT -> const IRemotingEndpoint* {
+        return ptrLike.get();
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

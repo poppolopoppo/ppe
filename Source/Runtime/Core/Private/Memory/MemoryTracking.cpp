@@ -236,6 +236,27 @@ void FMemoryTracking::ReleaseAllUser(const FMemoryTracking*/* = nullptr */) NOEX
     }
 }
 //----------------------------------------------------------------------------
+void FMemoryTracking::MoveTo(FMemoryTracking* dst) NOEXCEPT {
+    Assert(dst);
+
+    dst->_system.ResetAt(_system.Snapshot());
+    dst->_user.ResetAt(_user.Snapshot());
+
+    _system.ResetAt(Meta::MakeForceInit<FSnapshot>());
+    _user.ResetAt(Meta::MakeForceInit<FSnapshot>());
+}
+//----------------------------------------------------------------------------
+void FMemoryTracking::Swap(FMemoryTracking& other) NOEXCEPT {
+    const FSnapshot sys = _system.Snapshot();
+    const FSnapshot usr = _user.Snapshot();
+
+    _system.ResetAt(other._system.Snapshot());
+    _user.ResetAt(other._user.Snapshot());
+
+    other._system.ResetAt(sys);
+    other._user.ResetAt(usr);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FMemoryTracking::FCounters::Allocate(size_t s) {
@@ -314,6 +335,20 @@ auto FMemoryTracking::FCounters::Difference(const FCounters& o) const -> FSnapsh
         lhs.AccumulatedSize - rhs.AccumulatedSize,
         lhs.SmallAllocs - rhs.SmallAllocs
     };
+}
+//----------------------------------------------------------------------------
+void FMemoryTracking::FCounters::ResetAt(const FSnapshot& snapshot) {
+    NumAllocs.store(snapshot.NumAllocs, std::memory_order_relaxed);
+    MinSize.store(snapshot.MinSize, std::memory_order_relaxed);
+    MaxSize.store(snapshot.MaxSize, std::memory_order_relaxed);
+    TotalSize.store(snapshot.TotalSize, std::memory_order_relaxed);
+    PeakAllocs.store(snapshot.PeakAllocs, std::memory_order_relaxed);
+    PeakSize.store(snapshot.PeakSize, std::memory_order_relaxed);
+    AccumulatedAllocs.store(snapshot.AccumulatedAllocs, std::memory_order_relaxed);
+    AccumulatedSize.store(snapshot.AccumulatedSize, std::memory_order_relaxed);
+    SmallAllocs.store(snapshot.SmallAllocs, std::memory_order_relaxed);
+
+    std::atomic_thread_fence(std::memory_order_acquire);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

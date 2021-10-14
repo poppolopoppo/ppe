@@ -7,10 +7,12 @@
 #include "Diagnostic/Logger_fwd.h"
 #include "Memory/UniquePtr.h"
 #include "Misc/EventHandle.h"
+#include "RTTI/Module.h"
 
 namespace PPE {
 namespace Remoting {
 EXTERN_LOG_CATEGORY(PPE_REMOTING_API, Remoting)
+RTTI_MODULE_DECL(PPE_REMOTING_API, Remoting);
 } //!namespace Remoting
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -20,6 +22,9 @@ public:
     static const FModuleInfo StaticInfo;
 
     explicit FRemotingModule() NOEXCEPT;
+    ~FRemotingModule() override;
+
+    const IRemotingService& Service() const { return *_remotingService; }
 
     virtual void Start(FModularDomain& domain) override;
     virtual void Shutdown(FModularDomain& domain) override;
@@ -28,8 +33,7 @@ public:
     virtual void ReleaseMemory(FModularDomain& domain) NOEXCEPT override;
 
 private:
-    FEventHandle _tickHandle;
-    TUniquePtr<Remoting::FRemotingServer> _srv;
+    URemotingService _remotingService;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

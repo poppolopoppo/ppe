@@ -15,6 +15,7 @@
 #   include "Container/Stack.h"
 #   include "Diagnostic/CurrentProcess.h"
 #   include "Diagnostic/Logger.h"
+#   include "IO/Format.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #   include "IO/StringBuilder.h"
@@ -149,13 +150,12 @@ public:
     }
 
     using FMemoryDomainsList = TFixedSizeStack<const FMemoryTracking*, MemoryDomainsMaxCount>;
-    void FetchDatas(FMemoryDomainsList* plist) const {
-        Assert(plist);
 
+    void FetchDatas(const TAppendable<const FMemoryTracking*>& plist) const {
         const FAtomicSpinLock::FScope scopeLock(_barrier);
 
         for (FMemoryTracking* node = _domains.Head(); node; node = node->Node.Next)
-            plist->Push(node);
+            plist.push_back(node);
     }
 
 private:
@@ -258,7 +258,7 @@ void ReportTrackingDatas_(
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 void FetchAllTrackingDataSorted_(FTrackingDataRegistry_::FMemoryDomainsList* pDatas) {
-    FTrackingDataRegistry_::Get().FetchDatas(pDatas);
+    FTrackingDataRegistry_::Get().FetchDatas(MakeAppendable(*pDatas));
 
     std::stable_sort(std::begin(*pDatas), std::end(*pDatas),
         [](const FMemoryTracking* lhs, const FMemoryTracking* rhs) {
@@ -298,6 +298,13 @@ void DumpTrackingDataFullName_(TBasicTextWriter<_Char>& oss, const FMemoryTracki
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT {
+    Assert(each);
+    FTrackingDataRegistry_::FMemoryDomainsList datas;
+    FetchAllTrackingDataSorted_(&datas);
+    return each(user, datas.MakeView());
+}
 //----------------------------------------------------------------------------
 void RegisterTrackingData(FMemoryTracking *pTrackingData) {
 #if USE_PPE_MEMORYDOMAINS
@@ -390,13 +397,18 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 }
 //----------------------------------------------------------------------------
 void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
-#if USE_PPE_MEMORYDOMAINS && USE_PPE_LOGGER
+#if !USE_PPE_LOGGER
+    if (not optional)
+        return;
+#endif
+#if USE_PPE_MEMORYDOMAINS
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FetchAllTrackingDataSorted_(&datas);
 
     FWStringBuilder sb;
     FWTextWriter& oss = (optional ? *optional : sb);
 
+#if USE_PPE_LOGGER
     auto flushLogIFN = [optional, &sb]() {
         if (not optional) {
             FLogger::Log(
@@ -407,6 +419,9 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
             sb.clear();
         }
     };
+#else
+    CONSTEXPR auto flushLogIFN = []() CONSTEXPR {};
+#endif
 
     FCurrentProcess::Get().DumpPhysicalMemory(oss);
     flushLogIFN();

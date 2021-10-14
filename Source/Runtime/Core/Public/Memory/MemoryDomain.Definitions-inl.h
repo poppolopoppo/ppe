@@ -60,6 +60,7 @@ MEMORYDOMAIN_IMPL(Token,                                Core)
 MEMORYDOMAIN_IMPL(UnitTest,                             Core)
 MEMORYDOMAIN_IMPL(Unique,                               Core)
 MEMORYDOMAIN_IMPL(Unknown,                              Core)
+MEMORYDOMAIN_IMPL(UserLand,                             Core)
 MEMORYDOMAIN_IMPL(WeakRef,                              Core)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(RTTI,                           UsedMemory)

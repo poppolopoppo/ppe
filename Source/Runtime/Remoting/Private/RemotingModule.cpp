@@ -8,8 +8,11 @@
 #include "ApplicationModule.h"
 #include "Diagnostic/Logger.h"
 #include "Modular/ModuleRegistration.h"
+#include "RTTI/Module-impl.h"
+#include "RTTI/Service.h"
 
 #include "BuildModules.generated.h"
+#include "RemotingService.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -18,6 +21,8 @@ namespace PPE {
 namespace Remoting {
 //----------------------------------------------------------------------------
 LOG_CATEGORY(PPE_REMOTING_API, Remoting)
+//----------------------------------------------------------------------------
+RTTI_MODULE_DEF(PPE_REMOTING_API, Remoting, Remoting);
 //----------------------------------------------------------------------------
 } //!namespace Remoting
 //----------------------------------------------------------------------------
@@ -37,18 +42,23 @@ FRemotingModule::FRemotingModule() NOEXCEPT
 :   IModuleInterface(StaticInfo)
 {}
 //----------------------------------------------------------------------------
+FRemotingModule::~FRemotingModule() {
+    // IRemotingService isn't defined in the header
+}
+//----------------------------------------------------------------------------
 void FRemotingModule::Start(FModularDomain& domain) {
     IModuleInterface::Start(domain);
 
     using namespace Remoting;
 
-    _srv.reset<FRemotingServer>();
-    _srv->Add(MakeUnique<FRTTIEndpoint>());
-    _srv->Start();
+    RTTI_MODULE(Remoting).Start();
 
-    _tickHandle = FApplicationModule::Get(domain).OnApplicationTick().Add([this](Application::FApplicationBase&, FTimespan dt) {
-        _srv->Tick(dt);
-    });
+    auto& services = domain.Services();
+
+    services.Get<IRTTIService>().RegisterModule(this, RTTI_MODULE(Remoting));
+
+    IRemotingService::MakeDefault(&_remotingService, domain);
+    services.Add<IRemotingService>(_remotingService.get());
 }
 //----------------------------------------------------------------------------
 void FRemotingModule::Shutdown(FModularDomain& domain) {
@@ -56,10 +66,14 @@ void FRemotingModule::Shutdown(FModularDomain& domain) {
 
     using namespace Remoting;
 
-    FApplicationModule::Get(domain).OnApplicationTick().Remove(_tickHandle);
+    auto& services = domain.Services();
 
-    _srv->Shutdown();
-    _srv.reset();
+    services.Remove<IRemotingService>();
+    _remotingService.reset();
+
+    services.Get<IRTTIService>().UnregisterModule(this, RTTI_MODULE(Remoting));
+
+    RTTI_MODULE(Remoting).Shutdown();
 }
 //----------------------------------------------------------------------------
 void FRemotingModule::DutyCycle(FModularDomain& domain) {

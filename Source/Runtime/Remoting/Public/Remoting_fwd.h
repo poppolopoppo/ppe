@@ -8,14 +8,19 @@
 #   define PPE_REMOTING_API DLL_IMPORT
 #endif
 
-#include "Network_fwd.h"
+#include "Memory/RefPtr.h"
 #include "Misc/Function_fwd.h"
+#include "Network_fwd.h"
+#include "Memory/UniquePtr.h"
 #include "Thread/Task_fwd.h"
 
 namespace PPE {
+FWD_INTEFARCE_UNIQUEPTR(RemotingService);
 namespace Remoting {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+struct FOpenAPI;
 //----------------------------------------------------------------------------
 class FRemotingServer;
 //----------------------------------------------------------------------------
@@ -24,7 +29,9 @@ class IRemotingEndpoint;
 //----------------------------------------------------------------------------
 using FRemotingRequest = Network::FHttpRequest;
 using FRemotingResponse = Network::FHttpResponse;
-using FRemotingCallback = TFunction< void(const FRemotingServer&) >;
+using FRemotingCallback = TFunction< void(const FRemotingServer&) NOEXCEPT >;
+//----------------------------------------------------------------------------
+FWD_REFPTR(BaseEndpoint);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

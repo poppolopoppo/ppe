@@ -82,6 +82,8 @@ struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_CORE_API FMemoryTracking& Trac
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_CORE_API bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT;
+//----------------------------------------------------------------------------
 PPE_CORE_API void RegisterTrackingData(FMemoryTracking *pTrackingData);
 PPE_CORE_API void UnregisterTrackingData(FMemoryTracking *pTrackingData);
 //----------------------------------------------------------------------------
