@@ -58,6 +58,8 @@ PPE_RTTI_API const FMetaEnum* RTTI_Enum(EParameterFlags) NOEXCEPT;
 PPE_RTTI_API const FMetaEnum* RTTI_Enum(EPropertyFlags) NOEXCEPT;
 PPE_RTTI_API const FMetaEnum* RTTI_Enum(ETypeFlags) NOEXCEPT;
 PPE_RTTI_API const FMetaEnum* RTTI_Enum(EVisitorFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(ETransactionFlags) NOEXCEPT;
+PPE_RTTI_API const FMetaEnum* RTTI_Enum(ETransactionState) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

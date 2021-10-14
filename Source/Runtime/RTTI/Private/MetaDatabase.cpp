@@ -8,6 +8,7 @@
 #include "MetaObject.h"
 #include "MetaTransaction.h"
 #include "RTTI/NativeTypes.h"
+#include "RTTI/OpaqueData.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/TextWriter.h"
@@ -464,6 +465,9 @@ void FMetaDatabase::InitializeNativeTypes_() {
     RegisterAliasedType_(Float4x4, float4x4);
 
     RegisterAliasedType_(PathName, FPathName);
+
+    RegisterAliasedType_(OpaqueArray, FOpaqueArray);
+    RegisterAliasedType_(OpaqueData, FOpaqueData);
 
 #undef RegisterAliasedType_
 }

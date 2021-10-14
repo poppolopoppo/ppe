@@ -27,8 +27,9 @@ enum class ETransactionState : u32 {
 //----------------------------------------------------------------------------
 enum class ETransactionFlags : u32 {
     Default         = 0,
-    KeepDeprecated  = 1<<0,
-    KeepTransient   = 1<<1,
+    KeepIsolated    = 1<<0,
+    KeepDeprecated  = 1<<1,
+    KeepTransient   = 1<<2,
 };
 ENUM_FLAGS(ETransactionFlags);
 //----------------------------------------------------------------------------
@@ -60,6 +61,7 @@ public:
     ETransactionFlags Flags() const { return _flags; }
     ETransactionState State() const { return _state; }
 
+    bool KeepIsolated() const { return (_flags ^ ETransactionFlags::KeepIsolated); }
     bool KeepDeprecated() const { return (_flags ^ ETransactionFlags::KeepDeprecated); }
     bool KeepTransient() const { return (_flags ^ ETransactionFlags::KeepTransient); }
 

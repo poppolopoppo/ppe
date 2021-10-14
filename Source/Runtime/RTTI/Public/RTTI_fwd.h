@@ -62,6 +62,9 @@ class FMetaProperty;
 class FMetaClassHandle;
 class FMetaEnumHandle;
 class FMetaModule;
+//----------------------------------------------------------------------------
+enum class ETransactionState : u32;
+enum class ETransactionFlags : u32;
 FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 using FMetaEnumOrd = i64;
