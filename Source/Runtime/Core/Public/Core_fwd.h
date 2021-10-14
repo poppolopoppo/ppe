@@ -3,9 +3,17 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <atomic>
 #include <memory>
 #include <type_traits>
+
+#if defined(_MSC_VER) && !defined(__clang__) /* clang-cl works just fine */
+// #TODO: remove this workaround when MSVC is fixed...
+// include <optional> early to avoid this compiler/stl issue:
+// https://developercommunity.visualstudio.com/t/unexpected-error-c2131-expression-did-not-evaluate/1343697
+#	include <optional>
+#endif
 
 #ifdef EXPORT_PPE_RUNTIME_CORE
 #   define PPE_CORE_API DLL_EXPORT
