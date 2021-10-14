@@ -10,6 +10,7 @@
 #include "RTTI/Exceptions.h"
 
 #include "MetaClass.h"
+#include "MetaModule.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 #include "MetaTransaction.h"
@@ -385,7 +386,7 @@ protected:
                 size_t(0), ref };
             _chain.emplace_back(&markerObj);
 
-            if (not _visiteds.Add_KeepExisting(ref)) {
+            if (not _visiteds.Emplace_KeepExisting(ref)) {
                 OnCircularReference_(ref);
             }
             else {

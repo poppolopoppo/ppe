@@ -3,11 +3,11 @@
 #include "MetaModule.h"
 #include "RTTI_fwd.h"
 
+#include "RTTI/TypeTraits.h"
 #include "RTTI/Typedefs.h"
 
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
-#include "IO/TextWriter_fwd.h"
 #include "Meta/Optional.h"
 #include "Meta/Singleton.h"
 #include "Thread/ReadWriteLock.h"
@@ -40,7 +40,7 @@ public:
     PTypeTraits TraitsIFP(const FStringView& name) const;
     PTypeTraits TraitsIFP(const FLazyName& name) const;
 
-    auto Traits() const { return _traits.Values(); }
+    auto Traits() const { return MakeIterable(_traits); }
 
     /* Objects */
 
@@ -64,6 +64,7 @@ public:
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FName& namespace_) const;
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FStringView& namespace_) const;
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FLazyName& namespace_) const;
+
     const auto& Transactions() const { return _transactions; }
 
     auto Namespaces() const { return _transactions.Keys(); }
@@ -97,11 +98,11 @@ public:
     const FMetaClass* ClassIFP(const FStringView& name) const;
     const FMetaClass* ClassIFP(const FLazyName& name) const;
 
-    auto Classes() const { return _classes.Values(); }
+    const auto& Classes() const { return _classes; }
 
     template <typename _Facet>
     auto ClassesByFacet() const {
-        return Classes()
+        return _classes.Values()
             .Select([](const FMetaClass* class_) -> Meta::TOptional<TPair<const FMetaClass*, const _Facet*>> {
                 if (const _Facet* facet = UserFacetIFP<_Facet>(*class_))
                     return MakePair(class_, facet);
@@ -116,11 +117,11 @@ public:
     const FMetaEnum* EnumIFP(const FStringView& name) const;
     const FMetaEnum* EnumIFP(const FLazyName& name) const;
 
-    auto Enums() const { return _enums.Values(); }
+    const auto& Enums() const { return _enums; }
 
     template <typename _Facet>
     auto EnumsByFacet() const {
-        return Classes()
+        return _enums.Values()
             .Select([](const FMetaEnum* enum_) -> Meta::TOptional<TPair<const FMetaEnum*, const _Facet*>> {
                 if (const _Facet* facet = UserFacetIFP<_Facet>(*enum_))
                     return MakePair(enum_, facet);

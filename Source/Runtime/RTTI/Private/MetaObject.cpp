@@ -4,8 +4,9 @@
 
 #include "MetaClass.h"
 #include "MetaFunctionHelpers.h"
-#include "MetaProperty.h"
+#include "MetaModule.h"
 #include "MetaObjectHelpers.h"
+#include "MetaProperty.h"
 #include "MetaTransaction.h"
 
 #include "RTTI/Atom.h"
@@ -176,6 +177,26 @@ bool FMetaObject::RTTI_Function(const FLazyName& funcName, const FMetaFunction**
     *pFunc = RTTI_Function_(klass, funcName);
 
     return (!!*pFunc);
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Property(const FName& propName, const FMetaProperty** pProp) const NOEXCEPT {
+    Assert_NoAssume(not propName.empty());
+    Assert(pProp);
+
+    *pProp = RTTI_Property_(RTTI_Class(), propName);
+    return (!!*pProp);
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Property(const FStringView& propName, const FMetaProperty** pProp) const NOEXCEPT {
+    return RTTI_Property(FLazyName{ propName }, pProp);
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_Property(const FLazyName& propName, const FMetaProperty** pProp) const NOEXCEPT {
+    Assert_NoAssume(not propName.empty());
+    Assert(pProp);
+
+    *pProp = RTTI_Property_(RTTI_Class(), propName);
+    return (!!*pProp);
 }
 //----------------------------------------------------------------------------
 bool FMetaObject::RTTI_Property(const FName& propName, FAtom* pValue) const NOEXCEPT {
@@ -509,7 +530,7 @@ void FMetaObject::RTTI_VerifyPredicates() const PPE_THROW() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaModule* module) NOEXCEPT
-:   FMetaClass(id, FName("FMetaObject"), EClassFlags::Abstract, module) {
+:   FMetaClass(id, FName("MetaObject"), EClassFlags::Abstract, module) {
     // Register common user facets
 
     Facets().Emplace<FDescriptionFacet>("base class of any object");

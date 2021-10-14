@@ -13,6 +13,7 @@
 #include "IO/regexp.h"
 #include "IO/String.h"
 #include "IO/TextWriter.h"
+#include "Modular/ModularDomain.h"
 #include "RTTI/Exceptions.h"
 
 namespace PPE::RTTI {
@@ -23,6 +24,23 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 FDescriptionFacet::FDescriptionFacet(FConstChar text) NOEXCEPT
 :   Text(text) {
     Assert(text);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void FDependencyInjectionFacet::Decorate(const FMetaProperty& meta, void* data) const noexcept {
+    Assert_NoAssume(meta.Traits()->TypeInfos().IsObject());
+    Assert(data);
+
+    if (void* const opaqueService = FModularDomain::Get().Services().GetIFP(ServiceKey)) {
+        PMetaObject obj{ static_cast<FMetaObject*>(opaqueService) };
+        MakeAtom(&obj).Move(FAtom{ data, meta.Traits() });
+        Assert_NoAssume(not obj);
+    }
+    else {
+        LOG(RTTI, Error, L"failed to inject dependency on <{0}> in property '{1}'",
+            ServiceKey.name.MakeView(), meta.Name() );
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

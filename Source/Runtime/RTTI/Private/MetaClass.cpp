@@ -15,12 +15,12 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module) NOEXCEPT
-    : _id(id)
-    , _flags(flags)
-    , _name(name)
-    , _module(module)
+:   _id(id)
+,   _flags(flags)
+,   _name(name)
+,   _module(module)
 #if USE_PPE_MEMORYDOMAINS
-    , _trackingData(name.data(), _module
+,   _trackingData(name.data(), _module
         ? &_module->TrackingData()
         : &MEMORYDOMAIN_TRACKING_DATA(MetaObject) )
 {
@@ -63,7 +63,7 @@ bool FMetaClass::IsAssignableFrom(const FMetaClass& child) const {
 //----------------------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------------------
-void FMetaClass::RegisterFunction(FMetaFunction&& function) {
+FMetaFunction& FMetaClass::RegisterFunction(FMetaFunction&& function) {
     Assert(not IsRegistered());
     Assert(not function.Name().empty());
 #if USE_PPE_ASSERT
@@ -73,10 +73,17 @@ void FMetaClass::RegisterFunction(FMetaFunction&& function) {
 #endif
 
     _functionsSelf.emplace_back(std::move(function));
+    return _functionsSelf.back();
+}
+//----------------------------------------------------------------------------
+bool FMetaClass::HasFunction(const FMetaFunction& func, bool inherited) const NOEXCEPT {
+    return (inherited
+        ? _functionsAll.Values().Contains(std::addressof(func))
+        : _functionsSelf.MakeView().ContainsRef(func) );
 }
 //----------------------------------------------------------------------------
 const FMetaFunction& FMetaClass::Function(const FName& name, EFunctionFlags flags/* = EFunctionFlags::All */, bool inherited/* = true */) const {
-    const FMetaFunction* pfunction = FunctionIFP(name, flags, inherited);
+    const FMetaFunction* const pfunction = FunctionIFP(name, flags, inherited);
     return (*(pfunction ? pfunction : OnMissingFunction(name, flags)));
 }
 //----------------------------------------------------------------------------
@@ -145,9 +152,10 @@ const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionF
 //----------------------------------------------------------------------------
 // Properties
 //----------------------------------------------------------------------------
-void FMetaClass::RegisterProperty(FMetaProperty&& property) {
+FMetaProperty& FMetaClass::RegisterProperty(FMetaProperty&& property) {
     Assert(not IsRegistered());
     Assert(not property.Name().empty());
+
 #if USE_PPE_ASSERT
     // check that no property with the same name was already registered
     for (const FMetaProperty& p : _propertiesSelf)
@@ -155,10 +163,17 @@ void FMetaClass::RegisterProperty(FMetaProperty&& property) {
 #endif
 
     _propertiesSelf.emplace_back(std::move(property));
+    return _propertiesSelf.back();
+}
+//----------------------------------------------------------------------------
+bool FMetaClass::HasProperty(const FMetaProperty& property, bool inherited) const NOEXCEPT {
+    return (inherited
+         ? _propertiesAll.Values().Contains(std::addressof(property))
+         : _propertiesSelf.MakeView().ContainsRef(property) );
 }
 //----------------------------------------------------------------------------
 const FMetaProperty& FMetaClass::Property(const FName& name, EPropertyFlags flags/* = EPropertyFlags::All */, bool inherited/* = true */) const {
-    const FMetaProperty* pproperty = PropertyIFP(name, flags, inherited);
+    const FMetaProperty* const pproperty = PropertyIFP(name, flags, inherited);
     return (*(pproperty ? pproperty : OnMissingProperty(name, flags)));
 }
 //----------------------------------------------------------------------------
@@ -241,8 +256,7 @@ void FMetaClass::OnRegister() {
     _functionsSelf.shrink_to_fit();
     _propertiesSelf.shrink_to_fit();
 
-    const FMetaClass* parent = Parent();
-    if (parent) {
+    if (const FMetaClass* parent = Parent()) {
         if (parent->_module == _module)
             const_cast<FMetaClass*>(parent)->CallOnRegister_IFN();
         else
@@ -255,6 +269,8 @@ void FMetaClass::OnRegister() {
 
         _functionsAll.reserve(_functionsSelf.size() + parent->_functionsAll.size());
         _functionsAll.append(parent->_functionsAll);
+
+        Add_AssertUnique(parent->_children, this);
     }
     else {
         _propertiesAll.reserve(_propertiesSelf.size());
@@ -277,6 +293,9 @@ void FMetaClass::OnUnregister() {
 
     _propertiesAll.clear_ReleaseMemory();
     _functionsAll.clear_ReleaseMemory();
+
+    if (const FMetaClass* parent = Parent())
+        Remove_AssertExists(parent->_children, this);
 
     Assert(not IsRegistered());
 }

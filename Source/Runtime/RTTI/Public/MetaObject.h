@@ -108,6 +108,10 @@ public:
     bool RTTI_Function(const FStringView& funcName, const FMetaFunction** pFunc) const NOEXCEPT;
     bool RTTI_Function(const FLazyName& funcName, const FMetaFunction** pFunc) const NOEXCEPT;
 
+    bool RTTI_Property(const FName& propName, const FMetaProperty** pProp) const NOEXCEPT;
+    bool RTTI_Property(const FStringView& propName, const FMetaProperty** pProp) const NOEXCEPT;
+    bool RTTI_Property(const FLazyName& propName, const FMetaProperty** pProp) const NOEXCEPT;
+
     bool RTTI_Property(const FName& propName, FAtom* pValue) const NOEXCEPT;
     bool RTTI_Property(const FStringView& propName, FAtom* pValue) const NOEXCEPT;
     bool RTTI_Property(const FLazyName& propName, FAtom* pValue) const NOEXCEPT;
