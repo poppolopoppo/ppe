@@ -69,11 +69,13 @@ enum class EFunctionFlags : u32 {
     // /!\ Report changes to MetaEnumHelpers.cpp
 
     Const       = 1<<0,
-    Public      = 1<<1,
-    Protected   = 1<<2,
-    Private     = 1<<3,
-    Deprecated  = 1<<4,
+    NoExcept    = 1<<1,
+    Public      = 1<<2,
+    Protected   = 1<<3,
+    Private     = 1<<4,
+    Deprecated  = 1<<5,
 
+    Unknown     = 0,
     All         = UINT32_MAX
 };
 ENUM_FLAGS(EFunctionFlags);
@@ -106,6 +108,7 @@ public:
     const FMetaFunctionFacet& Facets() const { return _facets; }
 
     bool IsConst() const        { return (_flags ^ EFunctionFlags::Const        ); }
+    bool IsNoExcept() const     { return (_flags ^ EFunctionFlags::NoExcept     ); }
     bool IsPublic() const       { return (_flags ^ EFunctionFlags::Public       ); }
     bool IsProtected() const    { return (_flags ^ EFunctionFlags::Protected    ); }
     bool IsPrivate() const      { return (_flags ^ EFunctionFlags::Private      ); }
@@ -118,17 +121,32 @@ public:
         const FAtom& result,
         const TMemoryView<const FAtom>& arguments ) const;
 
-    bool InvokeIFP(
+    bool InvokeCopy(
         const FMetaObject& obj,
         const FAtom& result,
-        const TMemoryView<const FAtom>& arguments ) const;
+        const TMemoryView<const FAtom>& arguments) const {
+        return InvokeIFP_(obj, result, arguments, false);
+    }
+
+    bool InvokeMove(
+        const FMetaObject& obj,
+        const FAtom& result,
+        const TMemoryView<const FAtom>& arguments) const {
+        return InvokeIFP_(obj, result, arguments, true);
+    }
 
 private:
+    bool InvokeIFP_(
+        const FMetaObject& obj,
+        const FAtom& result,
+        const TMemoryView<const FAtom>& arguments,
+        bool preferMove ) const;
     bool PromoteInvoke_(
         const FMetaObject& obj,
         const FAtom& result,
         const TMemoryView<const FAtom>& arguments,
-        size_t strideInBytes ) const;
+        const size_t strideInBytes,
+        bool preferMove ) const;
 
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
     void CheckFunctionCall_(

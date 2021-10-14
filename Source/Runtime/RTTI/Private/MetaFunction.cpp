@@ -44,7 +44,7 @@ struct FMetaFunctionCallFormattor_ {
         oss << L"function ";
 
         if (call.pFunc->Result())
-            oss << call.pFunc->Result()->NamedTypeInfos();
+            oss << call.pFunc->Result()->TypeName();
         else
             oss << L"void";
 
@@ -135,7 +135,7 @@ void FMetaFunction::Invoke(
     _invoke(obj, result, arguments);
 }
 //----------------------------------------------------------------------------
-bool FMetaFunction::InvokeIFP(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) const {
+bool FMetaFunction::InvokeIFP_(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments, bool preferMove) const {
     Assert(_invoke);
 
     if (arguments.size() != _parameters.size()) {
@@ -147,7 +147,7 @@ bool FMetaFunction::InvokeIFP(const FMetaObject& obj, const FAtom& result, const
         return false;
     }
 
-    if (!!_result != !!result) {
+    if (_result.Valid() != result.Valid()) {
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
         LOG(RTTI, Warning, L"no result is returned by {0}",
             FMetaFunctionCallFormattor_(obj COMMA *this) );
@@ -159,8 +159,11 @@ bool FMetaFunction::InvokeIFP(const FMetaObject& obj, const FAtom& result, const
     forrange(i, 0, _parameters.size()) {
         Assert(arguments[i]);
 
-        if (_parameters[i].Traits() != arguments[i].Traits())
-            strideInBytes += _parameters[i].Traits()->SizeInBytes();
+        if (_parameters[i].Traits() != arguments[i].Traits()) {
+            const FSizeAndFlags sizeAndFlags = _parameters[i].Traits()->SizeAndFlags();
+            strideInBytes = Meta::RoundToNext(strideInBytes, sizeAndFlags.Alignment());
+            strideInBytes += sizeAndFlags.SizeInBytes;
+        }
     }
 
     if (Likely(0 == strideInBytes)) {
@@ -168,79 +171,97 @@ bool FMetaFunction::InvokeIFP(const FMetaObject& obj, const FAtom& result, const
         _invoke(obj, result, arguments);
         return true;
     }
-    else {
-        return PromoteInvoke_(obj, result, arguments, strideInBytes);
-    }
+
+    return PromoteInvoke_(obj, result, arguments, strideInBytes, preferMove);
 }
 //----------------------------------------------------------------------------
 bool FMetaFunction::PromoteInvoke_(
     const FMetaObject& obj,
     const FAtom& result,
     const TMemoryView<const FAtom>& arguments,
-    size_t strideInBytes ) const {
+    const size_t strideInBytes,
+    bool preferMove ) const {
     const bool resultPromotion = (_result && result.Traits() != _result);
 
-    strideInBytes += _parameters.size() * sizeof(FAtom);
-    STACKLOCAL_POD_ARRAY(u8, tmp, strideInBytes);
-    FRawMemory rawData = tmp;
-
-    const TMemoryView<FAtom> nativeArgs = rawData.CutStartingAt(_parameters.size() * sizeof(FAtom)).Cast<FAtom>();
+    STACKLOCAL_POD_ARRAY(u8, rawData, ROUND_TO_NEXT_16(strideInBytes) + _parameters.size() * sizeof(FAtom));
+    const TMemoryView<FAtom> nativeArgs = rawData.CutStartingAt(
+        ROUND_TO_NEXT_16(strideInBytes) ).Cast<FAtom>();
 
     FAtom nativeResult = result;
+
+    size_t offsetInBytes = 0;
     if (resultPromotion) {
-        nativeResult = FAtom{ rawData.data(), _result };
+        const FSizeAndFlags sizeAndFlags = _result->SizeAndFlags();
+        Assert(Meta::IsAligned(sizeAndFlags.Alignment(), offsetInBytes));
+
+        nativeResult = FAtom{ rawData.SubRange(offsetInBytes, offsetInBytes + sizeAndFlags.SizeInBytes).data(), _result };
+        Assert(Meta::IsAligned(sizeAndFlags.Alignment(), nativeResult.Data()));
         _result->Construct(nativeResult.Data());
-        rawData = rawData.CutStartingAt(_result->SizeInBytes());
+
+        offsetInBytes += sizeAndFlags.SizeInBytes;
     }
+
+    bool succeed = true;
 
     forrange(i, 0, _parameters.size()) {
         FAtom& nativeArg = nativeArgs[i];
-        if (_parameters[i].Traits() != arguments[i].Traits()) {
-            nativeArg = FAtom{ rawData.data(), _parameters[i].Traits() };
+        const PTypeTraits& traits = _parameters[i].Traits();
+        if (traits != arguments[i].Traits()) {
+            const FSizeAndFlags sizeAndFlags = traits->SizeAndFlags();
+            offsetInBytes = Meta::RoundToNext(sizeAndFlags.Alignment(), offsetInBytes);
+
+            nativeArg = FAtom{ rawData.SubRange(offsetInBytes, offsetInBytes + sizeAndFlags.SizeInBytes).data(), traits };
+            Assert(Meta::IsAligned(sizeAndFlags.Alignment(), nativeArg.Data()));
             nativeArg.Traits()->Construct(nativeArg.Data());
-            rawData = rawData.CutStartingAt(nativeArg.Traits()->SizeInBytes());
+
+            const bool promoted = (preferMove
+                ? arguments[i].PromoteMove(nativeArg)
+                : arguments[i].PromoteCopy(nativeArg) );
+
+            if (not promoted) {
+                succeed = false;
+#ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
+                LOG(RTTI, Error, L"wrong type for argument #{1} {2} instead of {3} when calling {0}, promote {4} failed",
+                    FMetaFunctionCallFormattor_(obj COMMA * this),
+                    i, arguments[i].Traits()->NamedTypeInfos(), traits->NamedTypeInfos(),
+                    preferMove ? L"move"_view : L"copy"_view );
+#endif
+            }
+
+            offsetInBytes += sizeAndFlags.SizeInBytes;
         }
         else {
             nativeArg = arguments[i];
         }
     }
 
-    Assert_NoAssume(rawData.empty());
-    CheckFunctionCallIFN(obj, nativeResult, nativeArgs);
+    Assert_NoAssume(offsetInBytes == strideInBytes);
 
-    _invoke(obj, nativeResult, nativeArgs);
+    if (succeed) {
+        CheckFunctionCallIFN(obj, nativeResult, nativeArgs);
 
-    bool succeed = true;
+        _invoke(obj, nativeResult, nativeArgs);
 
-    if (resultPromotion) {
-        Assert(nativeResult.Data() != result.Data());
+        if (resultPromotion) {
+            Assert(nativeResult.Data() != result.Data());
 
-        if (not nativeResult.PromoteMove(result)) {
+            if (not nativeResult.PromoteMove(result)) {
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
-            LOG(RTTI, Warning, L"wrong result type <{1}> when calling {0}",
-                FMetaFunctionCallFormattor_(obj COMMA *this),
-                result.Traits()->NamedTypeInfos() );
-#endif
-            succeed = false;
-        }
-
-        nativeResult.Traits()->Destroy(nativeResult.Data());
-    }
-
-    forrange(i, 0, _parameters.size()) {
-        FAtom& arg = nativeArgs[i];
-        if (arg.Data() != arguments[i].Data()) {
-            if (not arg.PromoteMove(arguments[i])) {
-#ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
-                LOG(RTTI, Warning, L"wrong type for argument #{1} {2} instead of {3} when calling {0}",
-                    FMetaFunctionCallFormattor_(obj COMMA *this),
-                    i, arguments[i].Traits()->NamedTypeInfos(), arg.Traits()->NamedTypeInfos() );
+                LOG(RTTI, Warning, L"wrong result type <{1}> when calling {0}",
+                    FMetaFunctionCallFormattor_(obj COMMA * this),
+                    result.Traits()->NamedTypeInfos());
 #endif
                 succeed = false;
             }
 
-            arg.Traits()->Destroy(arg.Data());
+            nativeResult.Traits()->Destroy(nativeResult.Data());
         }
+    }
+
+    forrange(i, 0, _parameters.size()) {
+        FAtom& arg = nativeArgs[i];
+        if (arg.Data() != arguments[i].Data())
+            arg.Traits()->Destroy(arg.Data());
     }
 
     return succeed;
@@ -252,19 +273,39 @@ void FMetaFunction::CheckFunctionCall_(
     const FAtom& result,
     const TMemoryView<const FAtom>& arguments ) const {
 
-    if (not IsConst() && obj.RTTI_IsFrozen())
-        LOG(RTTI, Fatal, L"can't use frozen object with non-const {0}",
-            FMetaFunctionCallFormattor_(obj COMMA *this) );
+    CLOG(not IsConst() && obj.RTTI_IsFrozen(),
+        RTTI, Fatal, L"can't use frozen object with non-const {0}",
+        FMetaFunctionCallFormattor_(obj COMMA *this) );
 
-    if (IsDeprecated())
-        LOG(RTTI, Warning, L"calling deprecated {0}",
-            FMetaFunctionCallFormattor_(obj COMMA *this) );
+    CLOG(IsDeprecated(),
+        RTTI, Warning, L"calling deprecated {0}",
+        FMetaFunctionCallFormattor_(obj COMMA *this) );
 
-    // still no support for optional parameters even if they're allowed in declaration ...
-    AssertRelease(_parameters.size() == arguments.size());
-    // check return value
-    AssertRelease((!!_result) == (!!result));
-    AssertRelease((not _result) || (_result->TypeId() == result.TypeId()));
+    CLOG(_parameters.size() != arguments.size(), // optional parameters must still be provided with their default value
+        RTTI, Fatal, L"invalid arguments count for {0}, expected {1} but given {2}",
+        FMetaFunctionCallFormattor_(obj COMMA * this), _parameters.size(), arguments.size());
+
+    forrange(i, 0, _parameters.size()) {
+        const PTypeTraits expected = _parameters[i].Traits();
+        const PTypeTraits given = arguments[i].Traits();
+        const PTypeTraits common = expected->CommonType(given);
+
+        CLOG(not common.Valid(),
+            RTTI, Fatal, L"invalid argument #{1} for {0}, expected {2} but given {3} (common type = {4})",
+            FMetaFunctionCallFormattor_(obj COMMA * this),
+            i, expected->NamedTypeInfos(), given->NamedTypeInfos(), common->NamedTypeInfos() );
+    }
+
+    if (_result)
+        CLOG(_result->TypeId() != result.TypeId(),
+            RTTI, Fatal, L"invalid return value for {0}, expected {1} but given {2}",
+            FMetaFunctionCallFormattor_(obj COMMA* this),
+            _result->NamedTypeInfos(), result.Traits()->NamedTypeInfos() );
+    else
+        CLOG(!!result,
+            RTTI, Fatal, L"function {0} has no return type, but given {1}",
+            FMetaFunctionCallFormattor_(obj COMMA* this),
+            result.Traits()->NamedTypeInfos() );
 }
 #endif //!WITH_PPE_RTTI_FUNCTION_CHECKS
 //----------------------------------------------------------------------------

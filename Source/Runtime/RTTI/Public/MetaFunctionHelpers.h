@@ -37,95 +37,47 @@ namespace details {
 //----------------------------------------------------------------------------
 template <typename _Function>
 struct TMakeFunction;
-template <typename _Result, class _Class, typename... _Args>
-struct TMakeFunction<_Result (_Class::*)(_Args...)> {
-
-    template <_Result (_Class::* _Member)(_Args...)>
-    static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
-        Assert(sizeof...(_Args) == parametersName.size());
-        auto nameIt = std::begin(parametersName);
-        UNUSED(nameIt);
-        return FMetaFunction(
-            name,
-            flags,
-            MakeFunctionResultTraits<_Result>(),
-            { MakeParameter(TypeTag< _Args >, *nameIt++)... },
-            &TMemberFunction_<_Member, typename std::is_void<_Result>::type>::Invoke
-        );
-    }
-
-private:
-    template <_Result (_Class::* _Member)(_Args...), typename T = std::false_type>
-    struct TMemberFunction_ {
-        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
-            const FAtom* parg = arguments.data();
-            UNUSED(parg);
-            result.TypedData<_Result>() = CallTuple(_Member,
-                const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
-                TTuple<Meta::TReference<_Args>...>{
-                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
-                });
-        }
+#define PPE_RTTI_MAKEFUNCTION_DEF(_CONST, _NOEXCEPT) \
+    template <typename _Result, class _Class, typename... _Args> \
+    struct TMakeFunction<_Result (_Class::*)(_Args...) _CONST _NOEXCEPT> { \
+        template <_Result (_Class::* _Member)(_Args...) _CONST _NOEXCEPT> \
+        static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) { \
+            Assert(sizeof...(_Args) == parametersName.size()); \
+            \
+            auto nameIt = std::begin(parametersName); \
+            UNUSED(nameIt); \
+            \
+            CONSTEXPR const EFunctionFlags opt_ = Default; \
+            CONSTEXPR const EFunctionFlags opt_const = EFunctionFlags::Const; \
+            CONSTEXPR const EFunctionFlags CONCAT(opt_, NOEXCEPT) = EFunctionFlags::NoExcept; \
+            UNUSED(opt_), UNUSED(opt_const), UNUSED(CONCAT(opt_, NOEXCEPT)); \
+            flags += CONCAT(opt_, _CONST) + CONCAT(opt_, _NOEXCEPT); \
+            \
+            return FMetaFunction( \
+                name, \
+                flags, \
+                MakeFunctionResultTraits<_Result>(), \
+                { MakeParameter(TypeTag< _Args >, *nameIt++)... }, \
+                [](const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) _NOEXCEPT { \
+                    _CONST _Class* const concrete = const_cast<_CONST _Class*>(RTTI::CastChecked<_Class>(&obj)); \
+                    \
+                    const FAtom* parg = arguments.data(); \
+                    TTuple<Meta::TReference<_Args>...> args{ (*parg++).TypedData<Meta::TDecay<_Args>>()... }; \
+                    UNUSED(parg); \
+                    \
+                    IF_CONSTEXPR(std::is_void_v<_Result>) \
+                        UNUSED(result), CallTuple(_Member, concrete, std::move(args)); \
+                    else \
+                        result.TypedData<_Result>() = CallTuple(_Member, concrete, std::move(args)); \
+                } \
+            ); \
+        } \
     };
-
-    template <_Result (_Class::* _Member)(_Args...)>
-    struct TMemberFunction_<_Member, std::true_type> {
-        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
-            Assert(not result);
-            const FAtom* parg = arguments.data();
-            UNUSED(parg);
-            CallTuple(_Member,
-                const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
-                TTuple<Meta::TReference<_Args>...>{
-                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
-                });
-        }
-    };
-};
-template <typename _Result, class _Class, typename... _Args>
-struct TMakeFunction<_Result (_Class::*)(_Args...) const> {
-    template <_Result(_Class::* _Member)(_Args...) const>
-    static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
-        Assert(sizeof...(_Args) == parametersName.size());
-        auto nameIt = std::begin(parametersName);
-        UNUSED(nameIt);
-        return FMetaFunction(
-            name,
-            flags,
-            MakeFunctionResultTraits<_Result>(),
-            { MakeParameter(TypeTag< _Args >, *nameIt++)... },
-            &TMemberFunction_<_Member>::Invoke
-        );
-    }
-
-private:
-    template <_Result(_Class::* _Member)(_Args...) const, bool = std::is_void<_Result>::value >
-    struct TMemberFunction_ {
-        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
-            const FAtom* parg = arguments.data();
-            UNUSED(parg);
-            result.TypedData<_Result>() = CallTuple(_Member,
-                RTTI::CastChecked<_Class>(&obj),
-                TTuple<Meta::TReference<_Args>...>{
-                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
-                });
-        }
-    };
-
-    template <_Result(_Class::* _Member)(_Args...) const>
-    struct TMemberFunction_<_Member, true> {
-        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
-            Assert(not result);
-            const FAtom* parg = arguments.data();
-            UNUSED(parg);
-            CallTuple(_Member,
-                RTTI::CastChecked<_Class>(&obj),
-                TTuple<Meta::TReference<_Args>...>{
-                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
-                });
-        }
-    };
-};
+PPE_RTTI_MAKEFUNCTION_DEF(const ,         )
+PPE_RTTI_MAKEFUNCTION_DEF(const , NOEXCEPT)
+PPE_RTTI_MAKEFUNCTION_DEF(      ,         )
+PPE_RTTI_MAKEFUNCTION_DEF(      , NOEXCEPT)
+#undef PPE_RTTI_MAKEFUNCTION_DEF
 //----------------------------------------------------------------------------
 } //!details
 //----------------------------------------------------------------------------
