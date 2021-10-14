@@ -18,26 +18,25 @@ struct TUserFacetTraits {
     using validate_f = void (*)(void*, const _Meta& meta, const void* data);
 
     template <typename T>
-    static CONSTEXPR decorate_f decorator_v = &T::Decorate;
+    using has_decorator_t = decltype(std::declval<T&>().Decorate(nullptr, std::declval<const _Meta&>(), std::declval<void*>()));
     template <typename T>
-    static CONSTEXPR validate_f validator_v = &T::Validator;
-
-    template <typename T>
-    using has_decorator_t = decltype(decorator_v<T>(std::declval<const _Meta&>(), std::declval<void*>()));
-    template <typename T>
-    using has_validator_t = decltype(validator_v<T>(std::declval<const _Meta&>(), std::declval<const void*>()));
+    using has_validator_t = decltype(std::declval<T&>().Validate(nullptr, std::declval<const _Meta&>(), std::declval<const void*>()));
 
     using meta = _Meta;
     using type = TTuple<decorate_f, validate_f>;
 
     template <typename T>
-    static type BindCallbacks(T* p) NOEXCEPT {
+    static type BindCallbacks(T*) NOEXCEPT {
         STATIC_ASSERT(is_user_facet<T>);
         type result{};
         IF_CONSTEXPR(Meta::has_defined_v<has_decorator_t, T>)
-            std::get<decorate_f>(result) = decorator_v<T>;
+            std::get<decorate_f>(result) = [](void* user, const _Meta& meta, void* data) NOEXCEPT {
+                static_cast<T*>(user)->Decorate(meta, data);
+            };
         IF_CONSTEXPR(Meta::has_defined_v<has_validator_t, T>)
-            std::get<validate_f>(result) = validator_v<T>;
+            std::get<validate_f>(result) = [](void* user, const _Meta& meta, const void* data) {
+                static_cast<T*>(user)->Validate(meta, data);
+            };
         return result;
     }
 };

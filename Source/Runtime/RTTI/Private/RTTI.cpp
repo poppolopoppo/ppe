@@ -201,17 +201,17 @@ RTTI_PROPERTY_PRIVATE_FIELD(_dict)
 RTTI_PROPERTY_PRIVATE_FIELD(_toto)
 RTTI_PROPERTY_PRIVATE_FIELD(_tutut)
 RTTI_PROPERTY_PRIVATE_FIELD(_positions)
-RTTI_FUNCTION(Id, f)
-RTTI_FUNCTION_DEPRECATED(IdDeprecated, f)
-RTTI_FUNCTION(Func, f)
-RTTI_FUNCTION(FuncConst, f)
-RTTI_FUNCTION(Proc, a, b, c)
-RTTI_FUNCTION(ProcConst, a, b, c)
-RTTI_FUNCTION(Getter)
-RTTI_FUNCTION(GetterConst)
-RTTI_FUNCTION(Out, f, str)
-RTTI_FUNCTION(OutConst, f, str)
-RTTI_FUNCTION(OutConstReturn, f, str)
+RTTI_FUNCTION(Id, (f))
+RTTI_FUNCTION_DEPRECATED(IdDeprecated, (f))
+RTTI_FUNCTION(Func, (f))
+RTTI_FUNCTION(FuncConst, (f))
+RTTI_FUNCTION(Proc, (a, b, c))
+RTTI_FUNCTION(ProcConst, (a, b, c))
+RTTI_FUNCTION(Getter, ())
+RTTI_FUNCTION(GetterConst, ())
+RTTI_FUNCTION(Out, (f, str))
+RTTI_FUNCTION(OutConst, (f, str))
+RTTI_FUNCTION(OutConstReturn, (f, str))
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 class FToto : public RTTI::FMetaObject {
@@ -268,6 +268,7 @@ RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 template <typename T>
 static void RTTIPrintType_() {
+#if USE_PPE_LOGGER
     const RTTI::PTypeTraits traits = RTTI::MakeTraits<T>();
     const RTTI::FNamedTypeInfos typeInfos = traits->NamedTypeInfos();
     STACKLOCAL_ATOM(defaultValue, traits);
@@ -276,10 +277,12 @@ static void RTTIPrintType_() {
         typeInfos.Name(),
         typeInfos.Flags(),
         defaultValue.MakeAtom() );
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
 static void RTTIPrintClass_() {
+#if USE_PPE_LOGGER
     TRefPtr<T> t(NEW_RTTI(T));
     const RTTI::FMetaClass *metaClass = t->RTTI_Class();
 
@@ -310,6 +313,7 @@ static void RTTIPrintClass_() {
             typeInfos.Id()
         );
     }
+#endif
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void TestRTTI_() {
@@ -354,12 +358,14 @@ static NO_INLINE void TestRTTI_() {
         const RTTI::FMetaEnum* metaEnum = RTTI::MetaEnum<ETutut>();
 
         const auto defaultValue = metaEnum->DefaultValue();
+        UNUSED(defaultValue);
+
         LOG(RTTI_UnitTest, Debug, L"Enum<{0}> : {1} = {2} ({3})",
             metaEnum->Name(),
             defaultValue.Name, defaultValue.Ord,
             metaEnum->Flags() );
 
-        for (const auto it : metaEnum->Values()) {
+        for (const auto& it : metaEnum->Values()) {
             LOG(RTTI_UnitTest, Debug, L"  -- '{0}' = {1}", it.Name, it.Ord);
 
             AssertRelease(metaEnum->NameToValue(it.Name).Ord == it.Ord);
@@ -411,7 +417,9 @@ static NO_INLINE void TestRTTI_() {
     }
 
     {
-        RTTI::FMetaTransaction transaction(RTTI::FName("test"));
+        RTTI::FMetaTransaction transaction(
+            RTTI::FName("test"),
+            RTTI::ETransactionFlags::KeepIsolated );
 
         PToto toto(NEW_RTTI(FToto));
         PToto2 toto2(NEW_RTTI(FToto2));
@@ -443,7 +451,9 @@ static NO_INLINE void TestRTTI_() {
         }
 
         {
-            RTTI::FMetaTransaction transaction2(RTTI::FName("test2"));
+            RTTI::FMetaTransaction transaction2(
+                RTTI::FName("test2"),
+                RTTI::ETransactionFlags::KeepIsolated );
 
             PTiti titi(NEW_RTTI(FTiti));
 
@@ -461,6 +471,8 @@ static NO_INLINE void TestRTTI_() {
             {
                 const auto& prop = metaClass->Property(RTTI::FName("Dict"));
                 const auto value = prop.Get(*titi);
+                UNUSED(value);
+
                 LOG(RTTI_UnitTest, Debug, L"{0} = {1}", prop.Name(), value);
             }
             {

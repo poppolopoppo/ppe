@@ -11,6 +11,7 @@
 #include "MetaFunction.h"
 #include "MetaProperty.h"
 #include "MetaObject.h"
+#include "MetaTransaction.h"
 
 namespace PPE {
 namespace RTTI {
@@ -62,7 +63,7 @@ RTTI_ENUM_VALUE(Deprecated)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_RTTI_API, EObjectFlags);
-RTTI_ENUM_BEGIN(RTTI, EObjectFlags)
+RTTI_ENUM_FLAGS_BEGIN(RTTI, EObjectFlags)
 RTTI_ENUM_VALUE(None)
 RTTI_ENUM_VALUE(Loaded)
 RTTI_ENUM_VALUE(Unloaded)
@@ -76,14 +77,14 @@ RTTI_ENUM_VALUE(Verifying)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_RTTI_API, EParameterFlags);
-RTTI_ENUM_BEGIN(RTTI, EParameterFlags)
+RTTI_ENUM_FLAGS_BEGIN(RTTI, EParameterFlags)
 RTTI_ENUM_VALUE(Default)
 RTTI_ENUM_VALUE(Output)
 RTTI_ENUM_VALUE(Optional)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_RTTI_API, EPropertyFlags);
-RTTI_ENUM_BEGIN(RTTI, EPropertyFlags)
+RTTI_ENUM_FLAGS_BEGIN(RTTI, EPropertyFlags)
 RTTI_ENUM_VALUE(Public)
 RTTI_ENUM_VALUE(Protected)
 RTTI_ENUM_VALUE(Private)
@@ -95,8 +96,8 @@ RTTI_ENUM_VALUE(Transient)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_RTTI_API, ETypeFlags);
-RTTI_ENUM_BEGIN(RTTI, ETypeFlags)
-RTTI_ENUM_VALUE(Default)
+RTTI_ENUM_FLAGS_BEGIN(RTTI, ETypeFlags)
+RTTI_ENUM_VALUE(None)
 RTTI_ENUM_VALUE(Scalar)
 RTTI_ENUM_VALUE(Tuple)
 RTTI_ENUM_VALUE(List)
@@ -112,6 +113,24 @@ RTTI_ENUM_VALUE(String)
 RTTI_ENUM_VALUE(UnsignedIntegral)
 RTTI_ENUM_VALUE(POD)
 RTTI_ENUM_VALUE(TriviallyDestructible)
+RTTI_ENUM_END()
+//----------------------------------------------------------------------------
+RTTI_ENUM_HEADER(PPE_RTTI_API, ETransactionFlags);
+RTTI_ENUM_FLAGS_BEGIN(RTTI, ETransactionFlags)
+RTTI_ENUM_VALUE(Default)
+RTTI_ENUM_VALUE(KeepDeprecated)
+RTTI_ENUM_VALUE(KeepTransient)
+RTTI_ENUM_END()
+//----------------------------------------------------------------------------
+RTTI_ENUM_HEADER(PPE_RTTI_API, ETransactionState);
+RTTI_ENUM_BEGIN(RTTI, ETransactionState)
+RTTI_ENUM_VALUE(Unloaded)
+RTTI_ENUM_VALUE(Loading)
+RTTI_ENUM_VALUE(Loaded)
+RTTI_ENUM_VALUE(Mounting)
+RTTI_ENUM_VALUE(Mounted)
+RTTI_ENUM_VALUE(Unmounting)
+RTTI_ENUM_VALUE(Unloading)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_RTTI_API, EVisitorFlags);

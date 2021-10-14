@@ -1,10 +1,13 @@
 ﻿#pragma once
 
+#include "MetaClass.h"
 #include "RTTI_fwd.h"
 
 #include "RTTI/Any.h"
 #include "RTTI/Exceptions.h"
 #include "RTTI/UserFacet.h"
+
+#include "Meta/TypeInfo.h"
 
 // #TODO: virtual facets manipulated through interfaces to use native code in Decorate/Validate() instead of RTTI layer? (#PERF)
 
@@ -42,6 +45,29 @@ struct PPE_RTTI_API FDescriptionFacet : FGenericUserFacet {
     FConstChar Text;
 
     FDescriptionFacet(FConstChar text) NOEXCEPT;
+
+    template <typename _Meta>
+    static FStringView GetIFP(const _Meta& meta) NOEXCEPT {
+        if (auto* const facet = meta.Facets().template GetIFP<FDescriptionFacet>())
+            return facet->Text.MakeView();
+        return Default;
+    }
+};
+//----------------------------------------------------------------------------
+struct PPE_RTTI_API FDependencyInjectionFacet : FGenericUserFacet {
+    Meta::type_info_t ServiceKey;
+
+    template <typename T>
+    CONSTEXPR FDependencyInjectionFacet(Meta::TType<T>)
+    :   FDependencyInjectionFacet(Meta::type_info<T>) {
+        STATIC_ASSERT(std::is_base_of_v<FMetaObject, T>);
+    }
+
+    CONSTEXPR explicit FDependencyInjectionFacet(Meta::type_info_t&& serviceKey)
+    :   ServiceKey(std::move(serviceKey))
+    {}
+
+    void Decorate(const FMetaProperty& meta, void* data) const NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 struct PPE_RTTI_API FEnumFacet : FGenericUserFacet {

@@ -3,7 +3,6 @@
 #include "RTTI_fwd.h"
 
 #include "MetaFunction.h"
-#include "MetaModule.h"
 #include "MetaProperty.h"
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
@@ -77,17 +76,21 @@ public:
     bool InheritsFrom(const FMetaClass& parent) const;
     bool IsAssignableFrom(const FMetaClass& child) const;
 
+    auto Children() const { return _children.MakeView(); }
+
     // Functions
 
     size_t NumFunctions(bool inherited = true) const {
         return (inherited ? _functionsAll.size() : _functionsSelf.size());
     }
 
-    void RegisterFunction(FMetaFunction&& function);
+    FMetaFunction& RegisterFunction(FMetaFunction&& function);
 
     auto AllFunctions() const { return _functionsAll.Values(); }
 
     TMemoryView<const FMetaFunction> SelfFunctions() const { return _functionsSelf.MakeConstView(); }
+
+    bool HasFunction(const FMetaFunction& func, bool inherited = true) const NOEXCEPT;
 
     const FMetaFunction& Function(const FName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
     const FMetaFunction* FunctionIFP(const FName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
@@ -100,7 +103,7 @@ public:
             [](const FMetaFunction* func) -> Meta::TOptional<TPair<const FMetaFunction*, const _Facet*>> {
                 if (const _Facet* facet = UserFacetIFP<_Facet>(*func))
                     return MakePair(func, facet);
-                return Default;
+                return {};
             });
     }
 
@@ -112,11 +115,13 @@ public:
         return (inherited ? _propertiesAll.size() : _propertiesSelf.size());
     }
 
-    void RegisterProperty(FMetaProperty&& property);
+    FMetaProperty& RegisterProperty(FMetaProperty&& property);
 
     auto AllProperties() const { return _propertiesAll.Values(); }
 
     TMemoryView<const FMetaProperty> SelfProperties() const { return _propertiesSelf.MakeConstView(); }
+
+    bool HasProperty(const FMetaProperty& property, bool inherited = true) const NOEXCEPT;
 
     const FMetaProperty& Property(const FName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
     const FMetaProperty* PropertyIFP(const FName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
@@ -129,7 +134,7 @@ public:
             [](const FMetaProperty* prop) -> Meta::TOptional<TPair<const FMetaProperty*, const _Facet*>> {
                 if (const _Facet* facet = UserFacetIFP<_Facet>(*prop))
                     return MakePair(prop, facet);
-                return Default;
+                return {};
             });
     }
 
@@ -160,6 +165,8 @@ private:
 
     VECTORINSITU(MetaClass, FMetaProperty, 8) _propertiesSelf;
     VECTORINSITU(MetaClass, FMetaFunction, 4) _functionsSelf;
+
+    mutable VECTORINSITU(MetaClass, const FMetaClass*, 1) _children;
 
     FMetaClassFacet _facets;
 

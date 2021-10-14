@@ -3,6 +3,7 @@
 #include "RTTI_fwd.h"
 
 #include "MetaClass.h"
+#include "MetaModule.h"
 #include "MetaObjectHelpers.h"
 
 #include "Allocator/TrackingMalloc.h"
