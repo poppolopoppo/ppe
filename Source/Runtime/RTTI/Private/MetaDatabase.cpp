@@ -472,7 +472,9 @@ void FMetaDatabase::RegisterTraits_(const FName& name, const PTypeTraits& traits
     Assert_NoAssume(not name.empty());
     Assert(traits);
 
-    Insert_AssertUnique(_traits, name, traits);
+    const auto result = _traits.insert(MakePair(name, traits));
+    if (not result.second)
+        Assert_NoAssume(result.first->second == traits);
 }
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterTraits_(const FName& name, const PTypeTraits& traits) {

@@ -171,12 +171,12 @@ private:
 // provide memory tracking for each RTTI meta-class
 #if USE_PPE_MEMORYDOMAINS
 template <typename T, typename... _Args>
-TRefPtr< TEnableIfMetaObject<FMetaObject> > NewRtti(const FMetaClass& metaClass, _Args&&... args) {
+TRefPtr< TEnableIfMetaObject<T> > NewRtti(const FMetaClass& metaClass, _Args&&... args) {
     return NewRef<T>(metaClass.TrackingData(), std::forward<_Args>(args)...);
 }
 #else
 template <typename T, typename... _Args>
-TRefPtr< TEnableIfMetaObject<FMetaObject> > NewRtti(_Args&&... args) {
+TRefPtr< TEnableIfMetaObject<T> > NewRtti(_Args&&... args) {
     return NewRef<T>(std::forward<_Args>(args)...);
 }
 #endif
