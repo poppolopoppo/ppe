@@ -67,6 +67,10 @@
 - [ ] Destiny's Multithreaded Rendering Architecture: https://www.youtube.com/watch?v=0nTDFLMLX9k
 - [ ] Destiny's Shader System: http://advances.realtimerendering.com/destiny/gdc_2017/Destiny_shader_system_GDC_2017_v.4.0.pdf
 
+- [ ] Nanite-like clustering for rendering large meshes
+    - "Multiresolution structures for interactive visualization of very large 3D datasets" by Federico Ponchio https://d-nb.info/997062789/34
+    - https://www.youtube.com/watch?v=7JEHPvSGaX8
+
 ## Architecture
 
 - [ ] Handle configuration/command line inside Core, seed from external configuration files, configuration cache
