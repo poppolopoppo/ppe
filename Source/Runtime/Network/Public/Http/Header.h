@@ -46,13 +46,13 @@ public:
 
     FStringView MakeView() const { return _body.MakeView().Cast<const char>(); }
 
-    static bool Read(FHttpHeader* pheader, FSocketBuffered& socket);
+    NODISCARD static bool Read(FHttpHeader* pheader, FSocketBuffered& socket);
 
-    static void PackCookie(FHttpHeader* pheader, const FCookieMap& cookie);
-    static bool UnpackCookie(FCookieMap* pcookie, const FHttpHeader& header);
+    NODISCARD static bool PackCookie(FHttpHeader* pheader, const FCookieMap& cookie);
+    NODISCARD static bool UnpackCookie(FCookieMap* pcookie, const FHttpHeader& header);
 
-    static void PackPost(FHttpHeader* pheader, const FPostMap& post);
-    static bool UnpackPost(FPostMap* ppost, const FHttpHeader& header);
+    NODISCARD static bool PackPost(FHttpHeader* pheader, const FPostMap& post);
+    NODISCARD static bool UnpackPost(FPostMap* ppost, const FHttpHeader& header);
 
     static FStringView ProtocolVersion();
 

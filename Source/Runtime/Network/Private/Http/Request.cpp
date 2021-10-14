@@ -79,6 +79,7 @@ bool FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
         if (not FUri::Parse(prequest->_uri, oss.Written()))
             PPE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse requested path"));
 
+        Assert_NoAssume(prequest->_uri.IsRelative());
         oss.Reset();
     }
 

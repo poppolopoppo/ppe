@@ -40,7 +40,7 @@ public:
     bool IsAbsolute() const { return (not IsRelative()); }
     bool IsRelative() const { return (_hostname.empty()); }
 
-    static bool Pack(
+    NODISCARD static bool Pack(
         FUri& dst,
         const FStringView& scheme,
         const FStringView& username,
@@ -50,16 +50,18 @@ public:
         const FQueryMap& query,
         const FStringView& anchor );
 
-    static bool Unpack(FQueryMap& dst, const FUri& src);
+    NODISCARD static bool Unpack(FQueryMap& dst, const FUri& src);
 
-    static bool Parse(FUri& dst, FString&& src);
-    static bool Parse(FUri& dst, const FStringView& strview);
+    NODISCARD static bool Parse(FUri& dst, FString&& src);
+    NODISCARD static bool Parse(FUri& dst, const FStringView& strview);
 
-    static bool Decode(FString& dst, const FStringView& src);
-    static bool Decode(FTextWriter& dst, const FStringView& src);
+    NODISCARD static bool Decode(FString& dst, const FStringView& src);
+    NODISCARD static bool Decode(FTextWriter& dst, const FStringView& src);
 
-    static bool Encode(FString& dst, const FStringView& src);
-    static bool Encode(FTextWriter& dst, const FStringView& src);
+    NODISCARD static bool Encode(FString& dst, const FStringView& src);
+    NODISCARD static bool Encode(FTextWriter& dst, const FStringView& src);
+
+    NODISCARD static bool Validate(const FStringView& uri);
 
 private:
     FStringView _scheme;
@@ -91,4 +93,3 @@ PPE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, const Network::FUri
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-

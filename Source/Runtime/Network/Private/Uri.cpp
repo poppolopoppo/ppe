@@ -5,6 +5,7 @@
 #include "IO/StreamProvider.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
+#include "Socket/Address.h"
 
 namespace PPE {
 namespace Network {
@@ -13,11 +14,11 @@ namespace Network {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool DontRequireURIEncoding_(char ch) {
+NODISCARD static bool DontRequireURIEncoding_(char ch) {
     return (IsAlnum(ch) || '-' == ch || '_' == ch || '.' == ch || '~' == ch);
 }
 //----------------------------------------------------------------------------
-static bool FromHex_(char& dst, char src) {
+NODISCARD static bool FromHex_(char& dst, char src) {
     if (IsDigit(src)) {
         dst = (src - '0');
         return true;
@@ -35,11 +36,11 @@ static bool FromHex_(char& dst, char src) {
     }
 }
 //----------------------------------------------------------------------------
-static char ToHex_(size_t x) {
+NODISCARD static char ToHex_(size_t x) {
     return char(x + (x > 9 ? 'A' - 10 : '0'));
 }
 //----------------------------------------------------------------------------
-static bool UriDecode_(FTextWriter& oss, const FStringView& str) {
+NODISCARD static bool UriDecode_(FTextWriter& oss, const FStringView& str) {
     forrange(i, 0, str.size()) {
         const char ch = str[i];
         if ('+' == ch) {
@@ -64,7 +65,7 @@ static bool UriDecode_(FTextWriter& oss, const FStringView& str) {
     return true;
 }
 //----------------------------------------------------------------------------
-static bool UriEncode_(FTextWriter& oss, const FStringView& str) {
+NODISCARD static bool UriEncode_(FTextWriter& oss, const FStringView& str) {
     for (char ch : str) {
         if (DontRequireURIEncoding_(ch)) {
             oss << ch;
@@ -212,7 +213,14 @@ bool FUri::Unpack(FQueryMap& dst, const FUri& src) {
         if (not validatedKey.Valid())
             return false;
 
-        dst.Insert_AssertUnique(FName{ validatedKey }, std::move(decodedValue));
+        FString& parsed = dst.FindOrAdd(FName{ validatedKey });
+        if (parsed.empty()) {
+            parsed = std::move(decodedValue);
+        }
+        else {
+            parsed.push_back('|');
+            parsed.append(decodedValue);
+        }
     }
 
     return true;
@@ -330,6 +338,11 @@ bool FUri::Decode(FTextWriter& dst, const FStringView& src) {
 //----------------------------------------------------------------------------
 bool FUri::Encode(FTextWriter& dst, const FStringView& src) {
     return UriEncode_(dst, src);
+}
+//----------------------------------------------------------------------------
+bool FUri::Validate(const FStringView& uri) {
+    FUri ignored;
+    return Parse(ignored, uri);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

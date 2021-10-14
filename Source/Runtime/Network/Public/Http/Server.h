@@ -35,7 +35,7 @@ public:
     bool IsRunning() const;
 
     void Start(size_t workerCount);
-    void Stop();
+    void Shutdown();
 
 protected:
     virtual void OnConnect(FServicingPort& port) const;

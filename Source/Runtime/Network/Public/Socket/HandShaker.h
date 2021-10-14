@@ -26,7 +26,7 @@ public:
         size_t workerCount,
         FListener&& rlistener,
         FServicingTask&& rdispatch,
-        FMilliseconds acceptTimeout = 0.3_s,
+        FMilliseconds acceptTimeout = 1.0_s,
         FMilliseconds keepAliveTimeout = 10.0_s );
 
     bool IsRunning() const NOEXCEPT { return _running; }

@@ -40,6 +40,7 @@ struct FMimeTypes {
     static PPE_NETWORK_API const FName& Application_pdf();
     static PPE_NETWORK_API const FName& Application_xhtml_xml();
     static PPE_NETWORK_API const FName& Application_xml();
+    static PPE_NETWORK_API const FName& Application_x_www_form_urlencoded();
     static PPE_NETWORK_API const FName& Application_zip();
     static PPE_NETWORK_API const FName& Audio_mpeg();
     static PPE_NETWORK_API const FName& Audio_wav();

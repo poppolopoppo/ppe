@@ -67,7 +67,7 @@ public:
     void SetPort(size_t value) { _port = value; }
 
     bool IsIPv4() const;
-    // TODO: bool IsIPv6() const;
+    // #TODO: bool IsIPv6() const;
 
     static bool IPv4(FAddress* paddr, const FStringView& hostname, size_t port);
     static bool Parse(FAddress* paddr, const FStringView& input);
@@ -75,7 +75,7 @@ public:
     static FAddress Localhost(size_t port);
 
     static bool ParseIPv4(u8 (&ipV4)[4], const FAddress& addr);
-    // TODO: static bool ParseIPv6(u8 (&ipV6)[4], const FAddress& addr);
+    // #TODO: static bool ParseIPv6(u8 (&ipV6)[4], const FAddress& addr);
 
     inline friend bool operator ==(const FAddress& lhs, const FAddress& rhs) {
         return (lhs.Port() == rhs.Port() && lhs.Host() == rhs.Host());
@@ -105,8 +105,6 @@ private:
     size_t _port;
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 PPE_NETWORK_API void FlushDNSCache();
 //----------------------------------------------------------------------------
 PPE_NETWORK_API bool LocalHostName(FString& hostname);
@@ -116,19 +114,11 @@ PPE_NETWORK_API bool HostnameToIPv4(FString& ip, const FStringView& hostname, ES
 //----------------------------------------------------------------------------
 PPE_NETWORK_API bool IPv4ToHostname(FString& hostname, const FStringView& ip);
 //----------------------------------------------------------------------------
+PPE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, const FAddress& addr );
+//----------------------------------------------------------------------------
+PPE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, const FAddress& addr );
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network
-} //!namespace PPE
-
-namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PPE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, const Network::FAddress& addr );
-//----------------------------------------------------------------------------
-PPE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, const Network::FAddress& addr );
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace PPE

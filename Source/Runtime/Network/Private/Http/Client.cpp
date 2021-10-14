@@ -44,7 +44,7 @@ static void HttpMakeRequest_(
     HttpTypicalRequestHeaders_(prequest);
 
     if (cookie.size())
-        FHttpRequest::PackCookie(prequest, cookie);
+        VerifyRelease( FHttpRequest::PackCookie(prequest, cookie) );
 }
 //----------------------------------------------------------------------------
 template <typename _Method>
@@ -108,7 +108,7 @@ void FHttpClient::Post(FHttpResponse* presponse, const FUri& uri, const FPostMap
     FHttpRequest request;
     HttpMakeRequest_(&request, EHttpMethod::Post, _address.Host(), uri, _cookie);
 
-    FHttpHeader::PackPost(&request, post);
+    VerifyRelease( FHttpHeader::PackPost(&request, post) );
 
     Process(presponse, request);
 }
@@ -120,19 +120,20 @@ void FHttpClient::Process(FHttpResponse* presponse, const FHttpRequest& request)
     FHttpRequest::Write(&_socket, request);
     FHttpResponse::Read(presponse, _socket, _maxContentLength);
 
-    FHttpHeader::UnpackCookie(&_cookie, *presponse);
+    if (not FHttpHeader::UnpackCookie(&_cookie, *presponse))
+        _cookie.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 EHttpStatus HttpGet(FHttpResponse* presponse, const FUri& uri) {
-    return SafeHttpClient_(uri, [=](const FUri& uri, FHttpClient& cli) {
+    return SafeHttpClient_(uri, [presponse](const FUri& uri, FHttpClient& cli) {
         cli.Get(presponse, uri);
     });
 }
 //----------------------------------------------------------------------------
 EHttpStatus HttpHead(FHttpResponse* presponse, const FUri& uri) {
-    return SafeHttpClient_(uri, [=](const FUri& uri, FHttpClient& cli) {
+    return SafeHttpClient_(uri, [presponse](const FUri& uri, FHttpClient& cli) {
         cli.Head(presponse, uri);
     });
 }

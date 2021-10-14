@@ -106,7 +106,7 @@ bool FHttpHeader::Read(FHttpHeader* pheader, FSocketBuffered& socket) {
     return true;
 }
 //----------------------------------------------------------------------------
-void FHttpHeader::PackCookie(FHttpHeader* pheader, const FCookieMap& cookie) {
+bool FHttpHeader::PackCookie(FHttpHeader* pheader, const FCookieMap& cookie) {
     Assert(pheader);
 
     FStringBuilder oss;
@@ -118,14 +118,19 @@ void FHttpHeader::PackCookie(FHttpHeader* pheader, const FCookieMap& cookie) {
             oss.Put(' ');
         }
 
-        FUri::Encode(oss, it.first.MakeView());
+        if (not FUri::Encode(oss, it.first.MakeView()))
+            return false;
+
         oss.Put('=');
-        FUri::Encode(oss, it.second.MakeView());
+
+        if (not FUri::Encode(oss, it.second.MakeView()))
+            return false;
 
         many = true;
     }
 
     pheader->Add(FHttpHeaders::Cookie(), oss.ToString());
+    return true;
 }
 //----------------------------------------------------------------------------
 bool FHttpHeader::UnpackCookie(FCookieMap* pcookie, const FHttpHeader& header) {
@@ -161,7 +166,7 @@ bool FHttpHeader::UnpackCookie(FCookieMap* pcookie, const FHttpHeader& header) {
     return true;
 }
 //----------------------------------------------------------------------------
-void FHttpHeader::PackPost(FHttpHeader* pheader, const FPostMap& post) {
+bool FHttpHeader::PackPost(FHttpHeader* pheader, const FPostMap& post) {
     Assert(pheader);
 
     pheader->_body.clear();
@@ -173,14 +178,18 @@ void FHttpHeader::PackPost(FHttpHeader* pheader, const FPostMap& post) {
         if (many)
             oss.Put('&');
 
-        FUri::Encode(oss, it.first.MakeView());
+        if (not FUri::Encode(oss, it.first.MakeView()))
+            return false;
+
         oss.Put('=');
-        FUri::Encode(oss, it.second.MakeView());
+        if (not FUri::Encode(oss, it.second.MakeView()))
+            return false;
 
         many = true;
     }
 
     pheader->Add(FHttpHeaders::ContentType(), FString("application/x-www-form-urlencoded"));
+    return true;
 }
 //----------------------------------------------------------------------------
 bool FHttpHeader::UnpackPost(FPostMap* ppost, const FHttpHeader& header) {

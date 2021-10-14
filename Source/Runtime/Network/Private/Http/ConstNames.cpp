@@ -5,47 +5,48 @@
 #include "Meta/AlignedStorage.h"
 
 #define FOREACH_HTTPHEADERS(_Macro) \
-    _Macro(FHttpHeaders,    Accept,                     "Accept") \
-    _Macro(FHttpHeaders,    AcceptCharset,              "Accept-Charset") \
-    _Macro(FHttpHeaders,    AcceptEncoding,             "Accept-Encoding") \
-    _Macro(FHttpHeaders,    AcceptLanguage,             "Accept-Language") \
-    _Macro(FHttpHeaders,    AccessControlAllowOrigin,   "Access-Control-Allow-Origin") \
-    _Macro(FHttpHeaders,    CacheControl,               "Cache-Control") \
-    _Macro(FHttpHeaders,    Connection,                 "Connection") \
-    _Macro(FHttpHeaders,    Cookie,                     "Cookie") \
-    _Macro(FHttpHeaders,    ContentLanguage,            "Content-Language") \
-    _Macro(FHttpHeaders,    ContentLength,              "Content-Length") \
-    _Macro(FHttpHeaders,    ContentType,                "Content-Type") \
-    _Macro(FHttpHeaders,    Date,                       "Date") \
-    _Macro(FHttpHeaders,    Host,                       "Host") \
-    _Macro(FHttpHeaders,    KeepAlive,                  "Keep-Alive") \
-    _Macro(FHttpHeaders,    Location,                   "Location") \
-    _Macro(FHttpHeaders,    Referer,                    "Referer") \
-    _Macro(FHttpHeaders,    RetryAfter,                 "RetryAfter") \
-    _Macro(FHttpHeaders,    Server,                     "Server") \
-    _Macro(FHttpHeaders,    Status,                     "Status") \
-    _Macro(FHttpHeaders,    UserAgent,                  "User-Agent")
+    _Macro(FHttpHeaders,    Accept,                                 "Accept") \
+    _Macro(FHttpHeaders,    AcceptCharset,                          "Accept-Charset") \
+    _Macro(FHttpHeaders,    AcceptEncoding,                         "Accept-Encoding") \
+    _Macro(FHttpHeaders,    AcceptLanguage,                         "Accept-Language") \
+    _Macro(FHttpHeaders,    AccessControlAllowOrigin,               "Access-Control-Allow-Origin") \
+    _Macro(FHttpHeaders,    CacheControl,                           "Cache-Control") \
+    _Macro(FHttpHeaders,    Connection,                             "Connection") \
+    _Macro(FHttpHeaders,    Cookie,                                 "Cookie") \
+    _Macro(FHttpHeaders,    ContentLanguage,                        "Content-Language") \
+    _Macro(FHttpHeaders,    ContentLength,                          "Content-Length") \
+    _Macro(FHttpHeaders,    ContentType,                            "Content-Type") \
+    _Macro(FHttpHeaders,    Date,                                   "Date") \
+    _Macro(FHttpHeaders,    Host,                                   "Host") \
+    _Macro(FHttpHeaders,    KeepAlive,                              "Keep-Alive") \
+    _Macro(FHttpHeaders,    Location,                               "Location") \
+    _Macro(FHttpHeaders,    Referer,                                "Referer") \
+    _Macro(FHttpHeaders,    RetryAfter,                             "RetryAfter") \
+    _Macro(FHttpHeaders,    Server,                                 "Server") \
+    _Macro(FHttpHeaders,    Status,                                 "Status") \
+    _Macro(FHttpHeaders,    UserAgent,                              "User-Agent")
 
 #define FOREACH_MIMETYPES(_Macro) \
-    _Macro(FMimeTypes,      Application_javascript,     "application/javascript") \
-    _Macro(FMimeTypes,      Application_json,           "application/json") \
-    _Macro(FMimeTypes,      Application_octet_stream,   "application/octet-stream") \
-    _Macro(FMimeTypes,      Application_ogg,            "application/ogg") \
-    _Macro(FMimeTypes,      Application_pdf,            "application/pdf") \
-    _Macro(FMimeTypes,      Application_xhtml_xml,      "application/xhtml+xml") \
-    _Macro(FMimeTypes,      Application_xml,            "application/xml") \
-    _Macro(FMimeTypes,      Application_zip,            "application/zip") \
-    _Macro(FMimeTypes,      Audio_mpeg,                 "audio/mpeg") \
-    _Macro(FMimeTypes,      Audio_wav,                  "audio/wav") \
-    _Macro(FMimeTypes,      Image_gif,                  "image/gif") \
-    _Macro(FMimeTypes,      Image_jpeg,                 "image/jpeg") \
-    _Macro(FMimeTypes,      Image_png,                  "image/png") \
-    _Macro(FMimeTypes,      Image_svg_xml,              "image/svg+xml") \
-    _Macro(FMimeTypes,      Image_tiff,                 "image/tiff") \
-    _Macro(FMimeTypes,      Text_css,                   "text/css") \
-    _Macro(FMimeTypes,      Text_csv,                   "text/csv") \
-    _Macro(FMimeTypes,      Text_html,                  "text/html") \
-    _Macro(FMimeTypes,      Text_javascript,            "text/javascript")
+    _Macro(FMimeTypes,      Application_javascript,                 "application/javascript") \
+    _Macro(FMimeTypes,      Application_json,                       "application/json") \
+    _Macro(FMimeTypes,      Application_octet_stream,               "application/octet-stream") \
+    _Macro(FMimeTypes,      Application_ogg,                        "application/ogg") \
+    _Macro(FMimeTypes,      Application_pdf,                        "application/pdf") \
+    _Macro(FMimeTypes,      Application_xhtml_xml,                  "application/xhtml+xml") \
+    _Macro(FMimeTypes,      Application_x_www_form_urlencoded,      "application/x-www-form-urlencoded") \
+    _Macro(FMimeTypes,      Application_xml,                        "application/xml") \
+    _Macro(FMimeTypes,      Application_zip,                        "application/zip") \
+    _Macro(FMimeTypes,      Audio_mpeg,                             "audio/mpeg") \
+    _Macro(FMimeTypes,      Audio_wav,                              "audio/wav") \
+    _Macro(FMimeTypes,      Image_gif,                              "image/gif") \
+    _Macro(FMimeTypes,      Image_jpeg,                             "image/jpeg") \
+    _Macro(FMimeTypes,      Image_png,                              "image/png") \
+    _Macro(FMimeTypes,      Image_svg_xml,                          "image/svg+xml") \
+    _Macro(FMimeTypes,      Image_tiff,                             "image/tiff") \
+    _Macro(FMimeTypes,      Text_css,                               "text/css") \
+    _Macro(FMimeTypes,      Text_csv,                               "text/csv") \
+    _Macro(FMimeTypes,      Text_html,                              "text/html") \
+    _Macro(FMimeTypes,      Text_javascript,                        "text/javascript")
 
 namespace PPE {
 namespace Network {

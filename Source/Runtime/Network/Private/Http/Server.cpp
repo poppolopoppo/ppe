@@ -81,7 +81,7 @@ void FHttpServer::OnDisconnect(FServicingPort& port) const {
         _name, port.Socket().Remote(), port.UID());
 }
 //----------------------------------------------------------------------------
-void FHttpServer::Stop() {
+void FHttpServer::Shutdown() {
     Assert(IsRunning());
 
     _service->Shutdown();

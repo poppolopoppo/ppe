@@ -25,18 +25,10 @@ enum class EHttpMethod {
 PPE_NETWORK_API FStringView HttpMethodToCStr(EHttpMethod method);
 PPE_NETWORK_API bool HttpMethodFromCStr(EHttpMethod* method, const FStringView& str);
 //----------------------------------------------------------------------------
+PPE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, EHttpMethod httpMethod);
+PPE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, EHttpMethod httpMethod);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network
-} //!namespace PPE
-
-namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PPE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, Network::EHttpMethod httpMethod);
-PPE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, Network::EHttpMethod httpMethod);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace PPE
