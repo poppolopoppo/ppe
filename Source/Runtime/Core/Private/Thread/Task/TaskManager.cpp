@@ -113,8 +113,8 @@ FTaskManagerImpl& FWorkerContext_::Consume(FTaskScheduler::FTaskQueued* task) {
 void FWorkerContext_::PostWork() {
     FWorkerContext_& ctx = Get();
 
-    // trigger cleaning duty cycle every 128 calls per thread
-    if ((++ctx._revision & 127) == 0)
+    // trigger cleaning duty cycle every 256 calls per thread
+    if ((++ctx._revision & 255) == 0)
         ctx.DutyCycle_();
 
     // special tasks can inject a postfix callback to avoid skipping the decref
