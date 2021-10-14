@@ -7,6 +7,7 @@
 #include "HAL/PlatformMemory.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
+#include "Memory/PtrRef.h"
 
 #define USE_PPE_SERIALIZE_TEXTHEAP_SSO (not USE_PPE_MEMORY_DEBUGGING)
 
@@ -16,7 +17,7 @@ namespace Serialize {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <bool _Padded/* padding adds more insitu storage capacity */, typename _Allocator>
-class TTextHeap {
+class TTextHeap : Meta::FNonCopyable {
 public:
     STATIC_CONST_INTEGRAL(size_t, GMaxSizeForMerge, 100);
 
@@ -24,22 +25,17 @@ public:
 
     class FText {
     public:
-        FText() {
-            _small.IsSmall = true;
-            _small.Size = 0;
-            ONLY_IF_ASSERT(FPlatformMemory::Memzero(_small.Data, sizeof(_small.Data)));
-        }
-        ~FText() = default;
+        CONSTEXPR FText() : _small{} { _small.IsSmall = true; }
 
-        FText(const FText& other) { operator =(other); }
-        FText& operator =(const FText& other) {
+        CONSTEXPR FText(const FText& other) { operator =(other); }
+        CONSTEXPR FText& operator =(const FText& other) {
             _large = other._large;
             Assert(_small.IsSmall == other._small.IsSmall);
             return (*this);
         }
 
-        bool empty() const { return (0 == size()); }
-        size_t size() const { return (_small.IsSmall ? _small.Size : _large.Size); }
+        CONSTEXPR bool empty() const { return (0 == size()); }
+        CONSTEXPR size_t size() const { return (_small.IsSmall ? _small.Size : _large.Size); }
 
         FStringView MakeView() const { return (_small.IsSmall ? _small.MakeView() : _large.MakeView()); }
         operator FStringView () const { return MakeView(); }
@@ -48,6 +44,9 @@ public:
 
         inline friend bool operator ==(const FText& lhs, const FText& rhs) { return Equals(lhs.MakeView(), rhs.MakeView()); }
         inline friend bool operator !=(const FText& lhs, const FText& rhs) { return (not operator ==(lhs, rhs)); }
+
+        inline friend bool operator < (const FText& lhs, const FText& rhs) { return Compare(lhs.MakeView(), rhs.MakeView()) < 0; }
+        inline friend bool operator >=(const FText& lhs, const FText& rhs) { return (not operator < (lhs, rhs)); }
 
     private:
         friend class TTextHeap;
@@ -96,19 +95,20 @@ public:
             return txt;
         }
 
-        static FText MakeLarge_(const FStringView& str) {
-            FText txt;
-            txt._large.IsSmall = false;
-            txt._large.Size = str.size();
-            txt._large.Data = str.data();
-            Assert(not txt._small.IsSmall);
-            Assert(not txt._large.IsSmall);
-            Assert(txt._large.Size == str.size());
-            return txt;
+        static CONSTEXPR FText MakeLarge_(const FStringView& str) {
+            FLargeText_ large{};
+            large.IsSmall = false;
+            large.Size = str.size();
+            large.Data = str.data();
+            return FText{ std::move(large) };
         }
+
+        CONSTEXPR explicit FText(FSmallText_&& small) : _small(std::move(small)) {}
+        CONSTEXPR explicit FText(FLargeText_&& large) : _large(std::move(large)) {}
+
     };
 
-    TTextHeap(heap_type& heap)
+    explicit TTextHeap(heap_type& heap) NOEXCEPT
     :   _heap(heap) {
         STATIC_ASSERT(sizeof(typename FText::FLargeText_) == sizeof(typename FText::FSmallText_));
         STATIC_ASSERT(_Padded
@@ -116,13 +116,25 @@ public:
             : sizeof(typename FText::FLargeText_) == 2 * sizeof(size_t) );
     }
 
+    TTextHeap(TTextHeap&&) = default;
+    TTextHeap& operator =(TTextHeap&&) = default;
+
     bool empty() const { return _texts.empty(); }
     size_t size() const { return _texts.size(); }
     void reserve(size_t capacity) { _texts.reserve(capacity); }
 
-    void Clear() {
+    void Clear_ForgetMemory() {
         _texts.clear_ReleaseMemory();
     }
+
+    // Can't deallocate unmergeable strings since there are not tracked : the cache is a lie
+    //void Clear_ReleaseMemory() {
+    //    for (const FText& it : _texts) {
+    //        if (not it._small.IsSmall)
+    //            DeallocateString(it.MakeView());
+    //    }
+    //    Clear_ForgetMemory();
+    //}
 
     FText MakeText(const FStringView& str, bool mergeable = true) {
         if (str.empty()) {
@@ -158,41 +170,39 @@ public:
         }
     }
 
-    static FText MakeStaticText(const FStringView& str) {
+    static CONSTEXPR FText MakeStaticText(const FStringView& str) {
         // the user is responsible for lifetime of str :
         // this class will consider str as a static literal string
         return FText::MakeLarge_(str);
     }
 
 private:
-    heap_type& _heap;
+    TPtrRef<heap_type> _heap;
     HASHSET(Transient, FText) _texts;
 
     FStringView AllocateString_(const FStringView& str) {
 #if USE_PPE_SERIALIZE_TEXTHEAP_SSO
         Assert(str.size() > FText::FSmallText_::GCapacity);
 #endif
-
-        void* const storage = _heap.Allocate(str.SizeInBytes());
+        void* const storage = _heap->Allocate(str.SizeInBytes());
         FPlatformMemory::Memcpy(storage, str.data(), str.SizeInBytes());
         return FStringView(static_cast<const char*>(storage), str.size());
     }
+
+    void DeallocateString(const FStringView& str) {
+#if USE_PPE_SERIALIZE_TEXTHEAP_SSO
+        Assert(str.size() > FText::FSmallText_::GCapacity);
+#endif
+        _heap->Deallocate(const_cast<char*>(str.data()), str.SizeInBytes());
+    }
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace Serialize
-} //!namespace PPE
-
-namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _Char, bool _Padded, typename _Allocator>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const typename Serialize::TTextHeap<_Padded, _Allocator>::FText& text) {
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const typename TTextHeap<_Padded, _Allocator>::FText& text) {
     return oss << text.MakeView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Serialize
 } //!namespace PPE

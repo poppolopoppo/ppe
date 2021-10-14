@@ -47,14 +47,8 @@ PPE_SERIALIZE_API void RTTI_to_Json(const FTransactionSaver& saved, class FJson*
 PPE_SERIALIZE_API void RTTI_to_Json(const TMemoryView<const RTTI::SMetaObject>& objs, class FJson* dst);
 PPE_SERIALIZE_API void RTTI_to_Json(const TMemoryView<const RTTI::SCMetaTransaction>& mnamespace, class FJson* dst);
 //----------------------------------------------------------------------------
-PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaClass& mclass, class FJson* dst);
-PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaEnum& menum, class FJson* dst);
-PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaFunction& func, class FJson* dst);
-PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaProperty& prop, class FJson* dst);
-PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::FMetaModule& mod, class FJson* dst);
-PPE_SERIALIZE_API void RTTI_to_Json(const RTTI::PTypeTraits& traits, class FJson* dst);
-//----------------------------------------------------------------------------
-PPE_SERIALIZE_API bool Json_to_RTTI(const class FJson& src, FTransactionLinker* link);
+NODISCARD PPE_SERIALIZE_API bool Json_to_RTTI(const class FJson& src, FTransactionLinker* link);
+NODISCARD PPE_SERIALIZE_API bool Json_to_RTTI(const RTTI::FAtom& dst, const class FJson& src, FTransactionLinker* link);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

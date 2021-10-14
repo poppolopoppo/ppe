@@ -293,8 +293,8 @@ bool FMarkup::Load(FMarkup* markup, const FFilename& filename, IBufferedStreamRe
     Lexer::FLexer lexer(*input, filenameStr.MakeView(), false);
 
     markup->_root = FElement(*markup);
-    markup->_textHeap.Clear();
-    markup->_heap.ReleaseAll();
+    markup->_textHeap.Clear_ForgetMemory();
+    markup->_heap.DiscardAll();
 
     if (not markup->ReadHeaders(lexer))
         return false;

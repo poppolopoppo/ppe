@@ -30,15 +30,31 @@
 #include "IO/StreamProvider.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
-#include "Maths/ScalarMatrix.h"
 #include "Maths/ScalarVector.h"
 
 #include "TransactionLinker.h"
 #include "TransactionSaver.h"
+#include "IO/FormatHelpers.h"
 
 namespace PPE {
 namespace Serialize {
 EXTERN_LOG_CATEGORY(PPE_SERIALIZE_API, Serialize)
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+struct FDiscardJson_ {
+    FJson::FAllocator alloc;
+    FJson json{ alloc };
+
+    FDiscardJson_() = default;
+    ~FDiscardJson_() {
+        json.Clear_ForgetMemory();
+    }
+};
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -51,26 +67,27 @@ FJsonSerializer::~FJsonSerializer() = default;
 void FJsonSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
-    FJson json;
+    FDiscardJson_ doc;
 
-    UsingBufferedStream(&input, [&json, linker](IBufferedStreamReader* buffered) {
-        if (not FJson::Load(&json, linker->Filename(), buffered))
+    UsingBufferedStream(&input, [&doc, linker](IBufferedStreamReader* buffered) {
+        if (not FJson::Load(&doc.json, linker->Filename(), buffered))
             PPE_THROW_IT(FJsonSerializerException("failed to parse Json document"));
     });
 
-    if (not Json_to_RTTI(json, linker))
+    if (not Json_to_RTTI(doc.json, linker))
         PPE_THROW_IT(FJsonSerializerException("failed to convert Json to RTTI"));
 }
 //----------------------------------------------------------------------------
 void FJsonSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* output) const {
     Assert(output);
 
-    FJson json;
-    RTTI_to_Json(saver, &json);
+    FDiscardJson_ doc;
 
-    UsingBufferedStream(output, [this, &json](IBufferedStreamWriter* buffered) {
+    RTTI_to_Json(saver, &doc.json);
+
+    UsingBufferedStream(output, [this, &doc](IBufferedStreamWriter* buffered) {
         FTextWriter oss(buffered);
-        json.ToStream(oss, Minify());
+        doc.json.ToStream(oss, Minify());
     });
 }
 //----------------------------------------------------------------------------
@@ -86,29 +103,11 @@ PSerializer FJsonSerializer::Get() {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-enum class EJsonRTTI_ : u32 {
-    None = 0,
-    TopObject = 1<<0,
-};
-ENUM_FLAGS(EJsonRTTI_);
-//----------------------------------------------------------------------------
-static RTTI::FName Json_Class()         { return RTTI::FName("Class"); }
-static RTTI::FName Json_Name()          { return RTTI::FName("Name"); }
-static RTTI::FName Json_Parent()        { return RTTI::FName("Parent"); }
-static RTTI::FName Json_Flags()         { return RTTI::FName("Flags"); }
-static RTTI::FName Json_Functions()     { return RTTI::FName("Functions"); }
-static RTTI::FName Json_Module()        { return RTTI::FName("Module"); }
-static RTTI::FName Json_Properties()    { return RTTI::FName("Properties"); }
-static RTTI::FName Json_SizeInBytes()   { return RTTI::FName("SizeInBytes"); }
-static RTTI::FName Json_Traits()        { return RTTI::FName("Traits"); }
-static RTTI::FName Json_TypeId()        { return RTTI::FName("TypeId"); }
-static RTTI::FName Json_Values()        { return RTTI::FName("Values"); }
-//----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TJson_RTTI_traits;
 template <typename T>
-void RTTI_to_Json_(FJson::FValue& dst, const T& src) {
-    TJson_RTTI_traits<T>::Json(dst, src);
+void RTTI_to_Json_(FJson::FValue& dst, FJson& doc, const T& src) {
+    TJson_RTTI_traits<T>::Json(dst, doc, src);
 }
 template <typename T>
 bool Json_to_RTTI_(T& dst, const FJson::FValue& src) {
@@ -117,11 +116,11 @@ bool Json_to_RTTI_(T& dst, const FJson::FValue& src) {
 //----------------------------------------------------------------------------
 template <>
 struct TJson_RTTI_traits<FJson::FBool> {
-    static void Json(FJson::FValue& dst, FJson::FBool src) {
+    static void Json(FJson::FValue& dst, FJson& , FJson::FBool src) {
         dst.Assign(src);
     }
     static bool RTTI(FJson::FBool& dst, const FJson::FValue& src) {
-        const FJson::FBool* boolIFP = src.TypedConstDataIFP<FJson::FBool>();
+        const FJson::FBool* boolIFP = src.GetIFP<FJson::FBool>();
         if (nullptr == boolIFP) return false;
         dst = *boolIFP;
         return true;
@@ -129,11 +128,11 @@ struct TJson_RTTI_traits<FJson::FBool> {
 };
 template <typename T>
 struct TJson_RTTI_traits<T, Meta::TEnableIf< std::is_integral<T>::value > > {
-    static void Json(FJson::FValue& dst, T src) {
+    static void Json(FJson::FValue& dst, FJson& , T src) {
         dst.Assign(checked_cast<FJson::FInteger>(src));
     }
     static bool RTTI(T& dst, const FJson::FValue& src) {
-        const FJson::FInteger* intIFP = src.TypedConstDataIFP<FJson::FInteger>();
+        const FJson::FInteger* intIFP = src.GetIFP<FJson::FInteger>();
         if (nullptr == intIFP) return false;
         dst = T(*intIFP);
         return true;
@@ -141,23 +140,23 @@ struct TJson_RTTI_traits<T, Meta::TEnableIf< std::is_integral<T>::value > > {
 };
 template <typename T>
 struct TJson_RTTI_traits<T, Meta::TEnableIf< std::is_floating_point<T>::value > > {
-    static void Json(FJson::FValue& dst, T src) {
+    static void Json(FJson::FValue& dst, FJson& , T src) {
         dst.Assign(checked_cast<FJson::FFloat>(src));
     }
     static bool RTTI(T& dst, const FJson::FValue& src) {
-        const FJson::FFloat* floatIFP = src.TypedConstDataIFP<FJson::FFloat>();
+        const FJson::FFloat* floatIFP = src.GetIFP<FJson::FFloat>();
         if (nullptr == floatIFP) return false;
         dst = T(*floatIFP);
         return true;
     }
 };
 template <>
-struct TJson_RTTI_traits<FJson::FText> {
-    static void Json(FJson::FValue& dst, const FJson::FText& src) {
-        dst.Assign(src);
+struct TJson_RTTI_traits<FString> {
+    static void Json(FJson::FValue& dst, FJson& doc, const FString& src) {
+        dst.Assign(doc.MakeText(src, false));
     }
     static bool RTTI(FString& dst, const FJson::FValue& src) {
-        const FJson::FText* strIFP = src.TypedConstDataIFP<FJson::FText>();
+        const FJson::FText* strIFP = src.GetIFP<FJson::FText>();
         if (nullptr == strIFP) return false;
         dst = *strIFP;
         return true;
@@ -165,11 +164,11 @@ struct TJson_RTTI_traits<FJson::FText> {
 };
 template <>
 struct TJson_RTTI_traits<FWString> {
-    static void Json(FJson::FValue& dst, const FWString& src) {
-        dst.Assign(ToString(src));
+    static void Json(FJson::FValue& dst, FJson& doc, const FWString& src) {
+        dst.Assign(doc.MakeText(WCHAR_TO_UTF_8(src), false));
     }
     static bool RTTI(FWString& dst, const FJson::FValue& src) {
-        const FJson::FText* strIFP = src.TypedConstDataIFP<FJson::FText>();
+        const FJson::FText* strIFP = src.GetIFP<FJson::FText>();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
@@ -177,11 +176,11 @@ struct TJson_RTTI_traits<FWString> {
 };
 template <>
 struct TJson_RTTI_traits<RTTI::FName> {
-    static void Json(FJson::FValue& dst, const RTTI::FName& src) {
-        dst.Assign(ToString(src.MakeView()));
+    static void Json(FJson::FValue& dst, FJson& , const RTTI::FName& src) {
+        dst.Assign(FJson::LiteralText(src.MakeView()));
     }
     static bool RTTI(RTTI::FName& dst, const FJson::FValue& src) {
-        const FJson::FText* strIFP = src.TypedConstDataIFP<FJson::FText>();
+        const FJson::FText* strIFP = src.GetIFP<FJson::FText>();
         if (nullptr == strIFP) return false;
         dst = RTTI::FName(*strIFP);
         return true;
@@ -189,11 +188,11 @@ struct TJson_RTTI_traits<RTTI::FName> {
 };
 template <>
 struct TJson_RTTI_traits<FDirpath> {
-    static void Json(FJson::FValue& dst, const FDirpath& src) {
-        dst.Assign(src.ToString());
+    static void Json(FJson::FValue& dst, FJson& doc, const FDirpath& src) {
+        dst.Assign(doc.MakeText(src.ToString()));
     }
     static bool RTTI(FDirpath& dst, const FJson::FValue& src) {
-        const FJson::FText* strIFP = src.TypedConstDataIFP<FJson::FText>();
+        const FJson::FText* strIFP = src.GetIFP<FJson::FText>();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
@@ -201,11 +200,11 @@ struct TJson_RTTI_traits<FDirpath> {
 };
 template <>
 struct TJson_RTTI_traits<FFilename> {
-    static void Json(FJson::FValue& dst, const FFilename& src) {
-        dst.Assign(src.ToString());
+    static void Json(FJson::FValue& dst, FJson& doc, const FFilename& src) {
+        dst.Assign(doc.MakeText(src.ToString()));
     }
     static bool RTTI(FFilename& dst, const FJson::FValue& src) {
-        const FJson::FText* strIFP = src.TypedConstDataIFP<FJson::FText>();
+        const FJson::FText* strIFP = src.GetIFP<FJson::FText>();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
@@ -213,54 +212,32 @@ struct TJson_RTTI_traits<FFilename> {
 };
 template <>
 struct TJson_RTTI_traits<RTTI::FBinaryData> {
-    static void Json(FJson::FValue& dst, const RTTI::FBinaryData& src) {
-        dst.Assign(ToString(src.MakeConstView().Cast<const char>()));
+    static void Json(FJson::FValue& dst, FJson& doc, const RTTI::FBinaryData& src) {
+        const size_t len = Base64EncodeSize(src.MakeView());
+        char* const data = static_cast<char*>(doc.Heap().Allocate(sizeof(char) * len));
+        Base64Encode(src.MakeView(), { data, len });
+        dst.Assign(FJson::LiteralText({ data, len }));
     }
     static bool RTTI(RTTI::FBinaryData& dst, const FJson::FValue& src) {
-        const FJson::FText* strIFP = src.TypedConstDataIFP<FJson::FText>();
+        const FJson::FText* strIFP = src.GetIFP<FJson::FText>();
         if (nullptr == strIFP) return false;
-        dst.CopyFrom(strIFP->MakeView().Cast<const u8>());
-        return true;
-    }
-};
-template <typename T, size_t _Dim>
-struct TJson_RTTI_traits<TScalarVector<T, _Dim>> {
-    static void Json(FJson::FValue& dst, const TScalarVector<T, _Dim>& src) {
-        FJson::FArray& arr = dst.MakeDefault_AssumeNotValid<FJson::FArray>();
-        arr.resize(_Dim);
-        forrange(i, 0, _Dim)
-            RTTI_to_Json_(arr[i], src._data[i]);
-    }
-    static bool RTTI(TScalarVector<T, _Dim>& dst, const FJson::FValue& src) {
-        const FJson::FArray* arrIFP = src.TypedConstDataIFP<FJson::FArray>();
-        if (nullptr == arrIFP || _Dim != arrIFP->size()) return false;
-        forrange(i, 0, _Dim)
-            if (not Json_to_RTTI_(dst._data[i], arrIFP->at(i)))
-                return false;
-        return true;
-    }
-};
-template <typename T, size_t _W, size_t _H>
-struct TJson_RTTI_traits<TScalarMatrix<T, _W, _H>> {
-    static void Json(FJson::FValue& dst, const TScalarMatrix<T, _W, _H>& src) {
-        FJson::FArray& arr = dst.MakeDefault_AssumeNotValid<FJson::FArray>();
-        arr.resize(_W);
-        forrange(i, 0, _W)
-            RTTI_to_Json_(arr[i], src.Column(i));
-    }
-    static bool RTTI(TScalarMatrix<T, _W, _H>& dst, const FJson::FValue& src) {
-        const FJson::FArray* arrIFP = src.TypedConstDataIFP<FJson::FArray>();
-        if (nullptr == arrIFP || _W != arrIFP->size()) return false;
-        forrange(i, 0, _W)
-            if (not Json_to_RTTI_(dst.Column(i), arrIFP->at(i)))
-                return false;
-        return true;
+        dst.Resize_DiscardData(Base64DecodeSize(strIFP->MakeView()));
+        return Base64Decode(strIFP->MakeView(), dst.MakeView());
     }
 };
 //----------------------------------------------------------------------------
-class FRTTI_to_Json_ final : public RTTI::IAtomVisitor {
+class FRTTI_to_Json_ final : public RTTI::IAtomVisitor, Meta::FNonCopyable {
 public:
-    FRTTI_to_Json_() = default;
+    enum EFlags : u32 {
+        Unknown     = 0,
+        Inlined     = 1<<0,
+    };
+
+    explicit FRTTI_to_Json_(FJson& doc) NOEXCEPT : FRTTI_to_Json_(doc, Unknown) {}
+    FRTTI_to_Json_(FJson& doc, EFlags flags) NOEXCEPT
+    :   _doc(doc)
+    ,   _flags(flags)
+    {}
 
     void reserve(size_t n) {
         _visiteds.reserve(n);
@@ -268,42 +245,45 @@ public:
     }
 
     void Append(const RTTI::FAtom& atom, FJson::FValue& value) {
-		Assert(atom);
-		Assert_NoAssume(_stack.empty());
+        Assert(atom);
+        Assert_NoAssume(_stack.empty());
 
         VerifyRelease(Recurse_(atom, &value));
     }
 
     void Append(const RTTI::FMetaObject* ref, FJson::FValue& value) {
         Assert(ref);
-        Assert_NoAssume(_stack.empty());
 
-        FString name;
+        const RTTI::FMetaClass* metaClass = ref->RTTI_Class();
+
+        FJson::FObject& jsonObject = value.Construct<FJson::FObject>(_doc.Heap());
+        jsonObject.reserve(1/* class */ + 1/* name */ + 1/* props */ + 1/* anchor */);
+
+        FJson::FText anchor;
         if (ref->RTTI_IsExported()) {
             Assert_NoAssume(not ref->RTTI_Name().empty());
 
-            name = ref->RTTI_Name().MakeView();
+            jsonObject.Add(FJson::Export).Assign(
+                FJson::LiteralText(ref->RTTI_Name().MakeView()));
+
+            anchor = _doc.MakeText(ref->RTTI_Name());
         }
         else { // generate temporary name (for internal references)
             Assert_NoAssume(ref->RTTI_Name().empty());
 
-            name = StringFormat("{0}_{1}", ref->RTTI_Class()->Name(), _visiteds.size());
+            anchor = _doc.MakeText(StringFormat("{0}_{1}",
+                ref->RTTI_Class()->Name(), _visiteds.size() ));
         }
 
-        Insert_AssertUnique(_visiteds, ref, name);
+        if (not anchor.empty()) {
+            jsonObject.Add(FJson::Id).Assign(anchor);
+            Insert_AssertUnique(_visiteds, ref, anchor);
+        }
 
-        const RTTI::FMetaClass* metaClass = ref->RTTI_Class();
-
-        FJson::FObject& jsonObject = value.MakeDefault_AssumeNotValid<FJson::FObject>();
-        jsonObject.reserve(1/* class */ + 1/* name */ + 1/* props */);
-
-        jsonObject.Add(Json_Class()).Assign(ToString(metaClass->Name().MakeView()));
-        jsonObject.Add(Json_Name()).Assign(std::move(name));
+        jsonObject.Add(FJson::Class).Assign(FJson::LiteralText(metaClass->Name()));
 
         if (ref->RTTI_IsTopObject())
-            jsonObject.Add(Json_Flags()).Assign(FJson::FInteger(EJsonRTTI_::TopObject));
-
-        FJson::FObject* jsonProperties = nullptr;
+            jsonObject.Add(FJson::TopObject).Assign(true);
 
         for (const RTTI::FMetaProperty* prop : metaClass->AllProperties()) {
             RTTI::FAtom atom = prop->Get(*ref);
@@ -311,55 +291,54 @@ public:
             if (atom.IsDefaultValue())
                 continue;
 
-            if (nullptr == jsonProperties)
-                jsonProperties = &jsonObject.Add(Json_Properties()).MakeDefault_AssumeNotValid<FJson::FObject>();
+            auto key = FJson::LiteralText(prop->Name());
+            Assert_NoAssume(not FJson::IsReservedKeyword(key));
 
-            VerifyRelease(Recurse_(atom, &jsonProperties->Add(prop->Name())));
+            VerifyRelease( Recurse_(atom, &jsonObject.Add(std::move(key))) );
         }
     }
 
     virtual bool Visit(const RTTI::ITupleTraits* tuple, void* data) override final {
+        FJson::FArray& arr = Head_().Construct<FJson::FArray>(_doc.Heap());
         const size_t n = tuple->Arity();
-
-        FJson::FArray& arr = Head_().MakeDefault_AssumeNotValid<FJson::FArray>();
-        arr.resize(n);
-
-        if (arr.empty())
+        if (not n)
             return true;
 
-        FJson::FValue* pvalue = (&arr[0]);
-        return tuple->ForEach(data, [this, &pvalue](const RTTI::FAtom& item) {
-            return Recurse_(item, pvalue++);
+        Reserve(arr, n);
+
+        return tuple->ForEach(data, [this, &arr](const RTTI::FAtom& item) {
+            const auto it = Emplace_Back(arr);
+            return Recurse_(item, std::addressof(*it));
         });
     }
 
     virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
-        FJson::FArray& arr = Head_().MakeDefault_AssumeNotValid<FJson::FArray>();
-        arr.resize(list->Count(data));
-
-        if (arr.empty())
+        FJson::FArray& arr = Head_().Construct<FJson::FArray>(_doc.Heap());
+        const size_t n = list->Count(data);
+        if (not n)
             return true;
 
-        FJson::FValue* pvalue = (&arr[0]);
-        return list->ForEach(data, [this, &pvalue](const RTTI::FAtom& item) {
-            return Recurse_(item, pvalue++);
+        Reserve(arr, n);
+
+        return list->ForEach(data, [this, &arr](const RTTI::FAtom& item) {
+            const auto it = Emplace_Back(arr);
+            return Recurse_(item, std::addressof(*it));
         });
     }
 
     virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override {
-        FJson::FArray& arr = Head_().MakeDefault_AssumeNotValid<FJson::FArray>();
-        arr.resize(dico->Count(data));
-
-        if (arr.empty())
+        FJson::FArray& arr = Head_().Construct<FJson::FArray>(_doc.Heap());
+        const size_t n = dico->Count(data);
+        if (not n)
             return true;
 
-        FJson::FValue* pvalue = (&arr[0]);
-        return dico->ForEach(data, [this, &pvalue](const RTTI::FAtom& key, const RTTI::FAtom& value) {
-            FJson::FArray& pair = pvalue->MakeDefault_AssumeNotValid<FJson::FArray>();
-            pair.resize_AssumeEmpty(2);
-            ++pvalue;
-            return (Recurse_(key, &pair.front()) &&
-                    Recurse_(value, &pair.back()) );
+        Reserve(arr, n);
+
+        return dico->ForEach(data, [this, &arr](const RTTI::FAtom& key, const RTTI::FAtom& value) {
+            FJson::FArray& pair = Emplace_Back(arr)->Construct<FJson::FArray>(_doc.Heap());
+            pair.Reserve(2);
+            return (Recurse_(key, std::addressof(*Emplace_Back(pair))) &&
+                    Recurse_(value, std::addressof(*Emplace_Back(pair))) );
         });
     }
 
@@ -372,99 +351,159 @@ public:
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 private:
-    HASHMAP(Json, const RTTI::FMetaObject*, FString) _visiteds;
+    HASHMAP(Json, const RTTI::FMetaObject*, FJson::FText) _visiteds;
     VECTORINSITU(Json, FJson::FValue*, 8) _stack;
+    FJson& _doc;
+    EFlags _flags;
 
     FJson::FValue& Head_() const { return (*_stack.back()); }
 
-    bool Recurse_(const RTTI::FAtom& src, FJson::FValue* pValue) NOEXCEPT {
+    NODISCARD bool Recurse_(const RTTI::FAtom& src, FJson::FValue* pValue) NOEXCEPT {
         Assert(pValue);
         _stack.push_back(pValue);
         const bool result = src.Accept(this);
         Assert(_stack.back() == pValue);
-        Assert(pValue->TypeId());
         _stack.pop_back();
         return result;
     }
 
     template <typename T>
     void ToJson_(const T& value) {
-        RTTI_to_Json_(Head_(), value);
+        RTTI_to_Json_(Head_(), _doc, value);
     }
 
     void ToJson_(const RTTI::FAny& any) {
         if (any) {
-            FJson::FArray& arr = Head_().MakeDefault_AssumeNotValid<FJson::FArray>();
-            arr.reserve(2);
+            FJson::FObject& obj = Head_().Construct<FJson::FObject>(_doc.Heap());
+            obj.reserve(2);
 
-            arr.emplace_back(FJson::FInteger(any.Traits()->TypeId()));
-            auto& wrapped = arr.push_back_Default();
+            obj.Add(FJson::TypeId).Assign(FJson::LiteralText(any.Traits()->TypeName()));
 
-            VerifyRelease(Recurse_(any.InnerAtom(), &wrapped));
+            FJson::FValue& inner = obj.Add(FJson::Inner);
+            VerifyRelease( Recurse_(any.InnerAtom(), std::addressof(inner)) );
         }
         else {
-            Head_().MakeDefault_AssumeNotValid<FJson::FNull>();
+            Head_().Construct<FJson::FNull>();
         }
     }
 
     void ToJson_(const RTTI::PMetaObject& obj) {
         if (obj) {
-            FJson::FText& jsonTxt = Head_().MakeDefault_AssumeNotValid<FJson::FText>();
-
+            FJson::FText link;
             const auto it = _visiteds.find(obj.get());
             if (_visiteds.end() == it) {
-                // import
-                const RTTI::FPathName path{ RTTI::FPathName::FromObject(*obj) };
-                jsonTxt = ToString(path);
+                if (!(_flags & Inlined) && obj->RTTI_IsExported()) {
+                    // import
+                    const RTTI::FPathName path{ RTTI::FPathName::FromObject(*obj) };
+                    link = _doc.Text().MakeText(ToString(path));
+                }
+                else {
+                    Append(obj.get(), Head_());
+                    return;
+                }
             }
             else {
                 // internal
-                jsonTxt = it->second;
+                link = it->second;
             }
+
+            FJson::FObject& jsonObj = Head_().Construct<FJson::FObject>(_doc.Heap());
+            jsonObj.Add(FJson::Ref).Assign(std::move(link));
         }
         else {
-            Head_().MakeDefault_AssumeNotValid<FJson::FNull>();
+            Head_().Construct<FJson::FNull>();
         }
     }
 };
 //----------------------------------------------------------------------------
 class FJson_to_RTTI_ : public RTTI::IAtomVisitor {
 public:
-    explicit FJson_to_RTTI_(FTransactionLinker& link)
-        : _link(link)
+    explicit FJson_to_RTTI_(FTransactionLinker& link) NOEXCEPT
+    :   _link(link)
     {}
 
-    bool Parse(const FJson::FObject& jsonObj) {
+    bool ParseAtom(const RTTI::FAtom& dst, const FJson::FValue& src) {
+        Assert(dst);
+        Assert(src.Valid());
+
+        if (const FJson::FObject* const pJsonObj = src.AsObject()) {
+            RTTI::PMetaObject rttiObj;
+            if (Unlikely(not ParseObject(&rttiObj, *pJsonObj))) {
+                LOG(Serialize, Error, L"failed to parse json object for <{0}>", dst.Traits()->NamedTypeInfos());
+                return false;
+            }
+
+            Assert(rttiObj);
+
+            if (not MakeAtom(&rttiObj).PromoteMove(dst)) {
+                LOG(Serialize, Error, L"incompatible object <{0}> parsed from json for <{1}>", rttiObj->RTTI_Class()->Name(), dst.Traits()->NamedTypeInfos());
+                return false;
+            }
+        }
+        else {
+            _values.push_back(std::addressof(src));
+
+            if (Unlikely(not dst.Accept(this))) {
+                LOG(Serialize, Error, L"failed to parse json value for <{0}>", dst.Traits()->NamedTypeInfos());
+                return false;
+            }
+
+            Verify(_values.pop_back_ReturnBack() == std::addressof(src));
+        }
+
+        return true;
+    }
+
+    bool ParseObject(RTTI::PMetaObject* outRttiObj, const FJson::FObject& jsonObj) {
         Assert_NoAssume(_values.empty());
 
-        const FJson::FValue* const klassName = jsonObj.GetIFP(Json_Class());
-        if (nullptr == klassName || nullptr == klassName->TypedConstDataIFP<FJson::FText>()) {
+        const FJson::FValue* const klassName = jsonObj.GetIFP(FJson::Class);
+        if (nullptr == klassName || nullptr == klassName->GetIFP<FJson::FText>()) {
             LOG_DIRECT(Serialize, Error, L"missing meta class name");
             return false;
         }
 
-        const FJson::FValue* const objName = jsonObj.GetIFP(Json_Name());
-        if (nullptr == objName || nullptr == objName->TypedConstDataIFP<FJson::FText>()) {
-            LOG_DIRECT(Serialize, Error, L"missing meta object name");
+        const FJson::FValue* const objAnchor = jsonObj.GetIFP(FJson::Id);
+        if (nullptr == objAnchor || nullptr == objAnchor->GetIFP<FJson::FText>()) {
+            LOG_DIRECT(Serialize, Error, L"missing meta object anchor");
             return false;
         }
 
+        bool exported = false;
+        const FJson::FText* objName = nullptr;
+        if (const FJson::FValue* const jsonExported = jsonObj.GetIFP(FJson::Export)) {
+            objName = jsonExported->GetIFP<FJson::FText>();
+            if (nullptr == objName) {
+                LOG_DIRECT(Serialize, Error, L"wrong type for meta object export");
+                return false;
+            }
+            if (objName->empty()) {
+                LOG_DIRECT(Serialize, Error, L"empty meta object export");
+                return false;
+            }
+            if (not RTTI::FName::IsValidToken(objName->MakeView())) {
+                LOG_DIRECT(Serialize, Error, L"invalid meta object export format");
+                return false;
+            }
+            exported = true;
+        }
+
         bool topObject = false;
-        const FJson::FValue* const objFlags = jsonObj.GetIFP(Json_Flags());
-        if (objFlags) {
-            const FJson::FInteger* const intFlags = objFlags->TypedConstDataIFP<FJson::FInteger>();
-            if (nullptr == intFlags)
-                LOG_DIRECT(Serialize, Error, L"invalid meta object flags");
-            else if (EJsonRTTI_(*intFlags) ^ EJsonRTTI_::TopObject)
-                topObject = true;
+        if (const FJson::FValue* const jsonTopObject = jsonObj.GetIFP(FJson::TopObject)) {
+            const FJson::FBool* const boolTopObject = jsonTopObject->GetIFP<FJson::FBool>();
+            if (nullptr == boolTopObject) {
+                LOG_DIRECT(Serialize, Error, L"invalid meta object top object flag");
+                return false;
+            }
+            topObject = *boolTopObject;
         }
 
         const RTTI::FMetaClass* const klass = _link.ResolveClass(
             RTTI::FMetaDatabaseReadable{},
-            RTTI::FName{ klassName->TypedConstData<FJson::FText>() });
+            RTTI::FName{ klassName->Get<FJson::FText>() });
 
         if (nullptr == klass) {
-            LOG(Serialize, Error, L"unknown meta class <{0}>", klassName->TypedConstDataIFP<FJson::FText>());
+            LOG(Serialize, Error, L"unknown meta class <{0}>", klassName->GetIFP<FJson::FText>());
             return false;
         }
 
@@ -474,43 +513,36 @@ public:
         if (topObject)
             _link.AddTopObject(rttiObj.get());
 
-        Insert_AssertUnique(_visiteds, objName->TypedConstData<FJson::FText>(), rttiObj);
+        Insert_AssertUnique(_visiteds, objAnchor->Get<FJson::FText>(), rttiObj);
 
-        const FJson::FValue* const objProperties = jsonObj.GetIFP(Json_Properties());
-        if (objProperties) {
-            const FJson::FObject* const jsonProperties = objProperties->TypedConstDataIFP<FJson::FObject>();
-            if (nullptr == jsonProperties) {
-                LOG_DIRECT(Serialize, Error, L"invalid meta object properties");
+        for (const RTTI::FMetaProperty* prop : klass->AllProperties()) {
+            const FJson::FText key = FJson::LiteralText(prop->Name());
+            const auto it = jsonObj.find(key);
+
+            Assert_NoAssume(_values.empty());
+            _values.push_back(&it->second);
+
+            const bool valid = prop->Get(*rttiObj).Accept(this);
+
+            Assert_NoAssume(1 == _values.size());
+            Assert_NoAssume(&it->second == _values.front());
+            Verify(_values.pop_back_ReturnBack() == &it->second);
+
+            if (not valid)
                 return false;
-            }
-
-            for (const auto& it : *jsonProperties) {
-                const RTTI::FMetaProperty* const prop = klass->PropertyIFP(it.first.MakeView());
-                if (nullptr == prop) {
-                    LOG(Serialize, Error, L"unknown meta property <{0}::{1}>",
-                        klassName->TypedConstDataIFP<FJson::FText>(), it.first.MakeView());
-                    return false;
-                }
-
-                Assert_NoAssume(_values.empty());
-                _values.push_back(&it.second);
-
-                const bool r = prop->Get(*rttiObj).Accept(this);
-
-                Assert_NoAssume(1 == _values.size());
-                Assert_NoAssume(&it.second == _values.front());
-                _values.pop_back();
-
-                if (not r)
-                    return false;
-            }
         }
+
+        if (exported)
+            rttiObj->RTTI_Export(RTTI::FName{ *objName });
+
+        if (outRttiObj)
+            *outRttiObj = std::move(rttiObj);
 
         return true;
     }
 
     virtual bool Visit(const RTTI::ITupleTraits* tuple, void* data) override final {
-        const FJson::FArray* arrIFP = Head_().TypedConstDataIFP<FJson::FArray>();
+        const FJson::FArray* const arrIFP = Head_().GetIFP<FJson::FArray>();
         if (nullptr == arrIFP)
             return false;
 
@@ -518,30 +550,32 @@ public:
         if (n != arrIFP->size())
             return false;
 
-        forrange(i, 0, n) {
-            _values.push_back(&(*arrIFP)[i]);
-            const bool result = tuple->At(data, i).Accept(this);
-            _values.pop_back();
+        size_t i = 0;
+        for (const FJson::FValue& item : *arrIFP) {
+            _values.push_back(std::addressof(item));
+            const bool result = tuple->At(data, i++).Accept(this);
+            Verify(_values.pop_back_ReturnBack() == std::addressof(item));
 
             if (not result)
                 return false;
         }
 
+        Assert_NoAssume(n == i);
         return true;
     }
 
     virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
-        const FJson::FArray* arrIFP = Head_().TypedConstDataIFP<FJson::FArray>();
+        const FJson::FArray* const arrIFP = Head_().GetIFP<FJson::FArray>();
         if (nullptr == arrIFP)
             return false;
 
         const size_t n = arrIFP->size();
         list->Reserve(data, n);
 
-        forrange(i, 0, n) {
-            _values.push_back(&(*arrIFP)[i]);
+        for (const FJson::FValue& item : *arrIFP) {
+            _values.push_back(std::addressof(item));
             const bool result = list->AddDefault(data).Accept(this);
-            _values.pop_back();
+            Verify(_values.pop_back_ReturnBack() == std::addressof(item));
 
             if (not result)
                 return false;
@@ -551,7 +585,7 @@ public:
     }
 
     virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override {
-        const FJson::FArray* arrIFP = Head_().TypedConstDataIFP<FJson::FArray>();
+        const FJson::FArray* const arrIFP = Head_().GetIFP<FJson::FArray>();
         if (nullptr == arrIFP)
             return false;
 
@@ -559,32 +593,34 @@ public:
         dico->Reserve(data, n);
 
         STACKLOCAL_ATOM(keyData, dico->KeyTraits());
-        RTTI::FAtom keyAtom = keyData.MakeAtom();
+        const RTTI::FAtom keyAtom = keyData.MakeAtom();
 
-        forrange(i, 0, n) {
-            const FJson::FValue& jsonIt = arrIFP->at(i);
-            const FJson::FArray* pairIFP = jsonIt.TypedConstDataIFP<FJson::FArray>();
+        for (const FJson::FValue& jsonIt : *arrIFP) {
+            const FJson::FArray* pairIFP = jsonIt.GetIFP<FJson::FArray>();
             if (nullptr == pairIFP || 2 != pairIFP->size())
                 return false;
 
+            auto pairIt = pairIFP->begin();
+
             bool r = true;
 
-            _values.push_back(&pairIFP->front());
+            _values.push_back(&*pairIt);
             r &= keyAtom.Accept(this);
-            _values.pop_back();
+            Verify(_values.pop_back_ReturnBack() == &*pairIt++);
 
             if (not r)
                 return false;
 
             RTTI::FAtom valueAtom = dico->AddDefaultMove(data, keyAtom);
 
-            _values.push_back(&pairIFP->back());
+            _values.push_back(&*pairIt);
             r &= valueAtom.Accept(this);
-            _values.pop_back();
+            Verify(_values.pop_back_ReturnBack() == &*pairIt++);
 
             if (not r)
                 return false;
 
+            Assert_NoAssume(pairIFP->end() == pairIt);
             keyAtom.ResetToDefaultValue();
         }
 
@@ -606,45 +642,71 @@ private:
     const FJson::FValue& Head_() const { return (*_values.back()); }
 
     template <typename T>
+    static const T* GetIFP_(const FJson::FObject& obj, const FJson::FText& name) NOEXCEPT {
+        if (const FJson::FValue* const valueIFP = obj.GetIFP(name))
+            return valueIFP->GetIFP<T>();
+        return nullptr;
+    }
+
+    template <typename T>
     bool ToRTTI_(const RTTI::IScalarTraits* , T& value) {
         return Json_to_RTTI_(value, Head_());
     }
 
     bool ToRTTI_(const RTTI::IScalarTraits* , RTTI::FAny& any) {
-        if (Head_().TypedConstDataIFP<FJson::FNull>())
+        if (Head_().GetIFP<FJson::FNull>())
             return true;
 
-        const FJson::FArray* arrIFP = Head_().TypedConstDataIFP<FJson::FArray>();
-        if (nullptr == arrIFP || 2 != arrIFP->size())
-            return false;
+        const FJson::FObject* objIFP = Head_().GetIFP<FJson::FObject>();
+        if (nullptr == objIFP || objIFP->size() < 2)
+            PPE_THROW_IT(FJsonSerializerException("expected a Json object"));
 
-        const FJson::FInteger* numIFP = arrIFP->front().TypedConstDataIFP<FJson::FInteger>();
-        if (nullptr == numIFP)
-            return false;
+        auto* pTypeId= GetIFP_<FJson::FText>(*objIFP, FJson::TypeId);
+        if (not pTypeId)
+            PPE_THROW_IT(FJsonSerializerException("Any value must have 'type_id' property"));
 
-        const RTTI::ENativeType typeId = RTTI::ENativeType(*numIFP);
-        const RTTI::FAtom anyAtom = any.Reset(RTTI::MakeTraits(typeId));
+        auto* pInnerValue= objIFP->GetIFP(FJson::Inner);
+        if (not pInnerValue)
+            PPE_THROW_IT(FJsonSerializerException("Any value must have 'inner' property"));
 
-        _values.push_back(&arrIFP->back());
-        bool r = anyAtom.Accept(this);
-        _values.pop_back();
+        {
+            RTTI::FMetaDatabaseReadable db;
+            if (const RTTI::PTypeTraits traits = db->TraitsIFP(pTypeId->MakeView()))
+                any.Reset(traits);
+            else
+                PPE_THROW_IT(FJsonSerializerException("unknown traits"));
+        }
 
-        return r;
+        _values.push_back(pInnerValue);
+        const bool result = any.InnerAtom().Accept(this);
+        Verify(_values.pop_back_ReturnBack() == pInnerValue);
+
+        return result;
     }
 
     bool ToRTTI_(const RTTI::IScalarTraits* scalar, RTTI::PMetaObject& obj) {
         Assert_NoAssume(not obj);
-        if (Head_().TypedConstDataIFP<FJson::FNull>())
+        if (Head_().GetIFP<FJson::FNull>())
             return true;
+
+        const FJson::FObject* const span = Head_().GetIFP<FJson::FObject>();
+        if (nullptr == span)
+            PPE_THROW_IT(FJsonSerializerException("expected a Json object"));
+        if (span->empty())
+            PPE_THROW_IT(FJsonSerializerException("expected a non empty Json object"));
+
+        const FJson::FValue* const ref = span->GetIFP(FJson::Ref);
+        if (nullptr == span)
+            PPE_THROW_IT(FJsonSerializerException("expected a Json $ref"));
 
         RTTI::FPathName path;
 
-        const FJson::FText* const name = Head_().TypedConstDataIFP<FJson::FText>();
+        const FJson::FText* const name = ref->GetIFP<FJson::FText>();
         if (nullptr == name)
             PPE_THROW_IT(FJsonSerializerException("expected a Json string"));
-        else if (name->empty())
+        if (name->empty())
             PPE_THROW_IT(FJsonSerializerException("expected a non empty Json string"));
-        else if (not RTTI::FPathName::Parse(&path, name->MakeView()))
+        if (not RTTI::FPathName::Parse(&path, name->MakeView()))
             PPE_THROW_IT(FJsonSerializerException("malformed RTTI path name"));
 
         const auto it = _visiteds.find(*name);
@@ -680,24 +742,24 @@ void RTTI_to_Json(const RTTI::FAny& any, FJson* dst) {
     Assert(dst);
 
     if (any) {
-        FRTTI_to_Json_ toJson;
+        FRTTI_to_Json_ toJson(*dst, FRTTI_to_Json_::Inlined);
         toJson.Append(any.InnerAtom(), dst->Root());
     }
     else
-        dst->Root().MakeDefault_AssumeNotValid<FJson::FNull>();
+        dst->Root().Construct<FJson::FNull>();
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const RTTI::FAtom& atom, FJson* dst) {
     Assert(dst);
 
-    FRTTI_to_Json_ toJson;
+    FRTTI_to_Json_ toJson(*dst, FRTTI_to_Json_::Inlined);
     toJson.Append(atom, dst->Root());
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const RTTI::FMetaObject& obj, FJson* dst) {
     Assert(dst);
 
-    FRTTI_to_Json_ toJson;
+    FRTTI_to_Json_ toJson(*dst, FRTTI_to_Json_::Inlined);
     toJson.Append(&obj, dst->Root());
 }
 //----------------------------------------------------------------------------
@@ -705,178 +767,49 @@ void RTTI_to_Json(const RTTI::PMetaObject& pobj, FJson* dst) {
     Assert(dst);
 
     if (pobj) {
-        FRTTI_to_Json_ toJson;
+        FRTTI_to_Json_ toJson(*dst, FRTTI_to_Json_::Inlined);
         RTTI_to_Json(*pobj, dst);
     }
     else
-        dst->Root().MakeDefault_AssumeNotValid<FJson::FNull>();
+        dst->Root().Construct<FJson::FNull>();
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const FTransactionSaver& saved, FJson* dst) {
-	RTTI_to_Json(saved.LoadedRefs(), dst);
+    RTTI_to_Json(saved.LoadedRefs(), dst);
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const TMemoryView<const RTTI::SMetaObject>& objs, class FJson* dst) {
-	Assert(dst);
+    Assert(dst);
 
-	FRTTI_to_Json_ toJson;
-	toJson.reserve(objs.size());
+    FRTTI_to_Json_ toJson(*dst);
+    toJson.reserve(objs.size());
 
-	FJson::FArray& arr = dst->Root().MakeDefault_AssumeNotValid<FJson::FArray>();
-	arr.reserve_AssumeEmpty(objs.size());
+    FJson::FArray& arr = dst->Root().Construct<FJson::FArray>(dst->Heap());
+    Reserve(arr, objs.size());
 
-	for (const RTTI::SMetaObject& ref : objs)
-		toJson.Append(ref.get(), arr.push_back_Default());
+    for (const RTTI::SMetaObject& ref : objs)
+        toJson.Append(ref.get(), *Emplace_Back(arr));
 }
 //----------------------------------------------------------------------------
 void RTTI_to_Json(const TMemoryView<const RTTI::SCMetaTransaction>& mnamespace, class FJson* dst) {
     Assert(dst);
 
     const size_t numObjs = mnamespace.MapReduce(
-        [](const RTTI::SCMetaTransaction& n) { return n->Linearized().LoadedRefs.size(); },
-        [](size_t a, size_t b) { return a + b; });
+        [](const RTTI::SCMetaTransaction& n) NOEXCEPT {
+            return n->Linearized().LoadedRefs.size();
+        },
+        Meta::TPlus<>{});
 
-	FRTTI_to_Json_ toJson;
-	toJson.reserve(numObjs);
+    FRTTI_to_Json_ toJson(*dst);
+    toJson.reserve(numObjs);
 
-	FJson::FArray& arr = dst->Root().MakeDefault_AssumeNotValid<FJson::FArray>();
-	arr.reserve_AssumeEmpty(numObjs);
+    FJson::FArray& arr = dst->Root().Construct<FJson::FArray>(dst->Heap());
+    Reserve(arr, numObjs);
 
     for (const RTTI::SCMetaTransaction& tr : mnamespace) {
         for (const RTTI::SMetaObject& ref : tr->Linearized().LoadedRefs)
-            toJson.Append(ref.get(), arr.push_back_Default());
+            toJson.Append(ref.get(), *Emplace_Back(arr));
     }
-}
-//----------------------------------------------------------------------------
-// Meta data reflection
-//----------------------------------------------------------------------------
-void RTTI_to_Json(const RTTI::FMetaClass& mclass, FJson* dst) {
-    Assert(dst);
-
-    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    obj[Json_Name()].Assign(ToString(mclass.Name()));
-    obj[Json_Flags()].Assign(ToString(mclass.Flags()));
-
-    if (mclass.Module())
-        obj[Json_Module()].Assign(ToString(mclass.Module()->Name()));
-
-    if (mclass.Parent())
-        obj[Json_Parent()].Assign(ToString(mclass.Parent()->Name()));
-
-    FJson traits;
-    RTTI_to_Json(mclass.MakeTraits(), &traits);
-    obj[Json_Traits()] = std::move(traits.Root());
-
-    FJson::FObject& funcs = obj[Json_Functions()].MakeDefault_AssumeNotValid<FJson::FObject>();
-    for (const auto& it : mclass.AllFunctions()) {
-        FJson prop;
-        RTTI_to_Json(*it, &prop);
-        funcs[it->Name()] = std::move(prop.Root());
-    }
-
-    FJson::FObject& props = obj[Json_Properties()].MakeDefault_AssumeNotValid<FJson::FObject>();
-    for (const auto& it : mclass.AllProperties()) {
-        FJson func;
-        RTTI_to_Json(*it, &func);
-        props[it->Name()] = std::move(func.Root());
-    }
-}
-//----------------------------------------------------------------------------
-void RTTI_to_Json(const RTTI::FMetaEnum& menum, FJson* dst) {
-	Assert(dst);
-
-	FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-	obj[Json_Name()].Assign(ToString(menum.Name()));
-	obj[Json_Flags()].Assign(ToString(menum.Flags()));
-
-	if (menum.Module())
-		obj[Json_Module()].Assign(ToString(menum.Module()->Name()));
-
-	FJson traits;
-	RTTI_to_Json(menum.MakeTraits(), &traits);
-	obj[Json_Traits()] = std::move(traits.Root());
-
-	FJson::FObject& values = obj[Json_Values()].MakeDefault_AssumeNotValid<FJson::FObject>();
-	for (const auto& it : menum.Values()) {
-		values[it.Name].Assign(it.Ord);
-	}
-}
-//----------------------------------------------------------------------------
-void RTTI_to_Json(const RTTI::FMetaFunction& func, FJson* dst) {
-    Assert(dst);
-
-    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    obj[Json_Name()].Assign(ToString(func.Name()));
-    obj[Json_Flags()].Assign(ToString(func.Flags()));
-
-    FJson traits;
-    if (func.Result()) {
-        RTTI_to_Json(func.Result(), &traits);
-        obj[RTTI::FName("Result")] = std::move(traits.Root());
-    }
-
-    FJson::FObject& prms = obj[RTTI::FName("Parameters")].MakeDefault_AssumeNotValid<FJson::FObject>();
-    for (const RTTI::FMetaParameter& it : func.Parameters()) {
-        FJson::FObject& prm = prms[it.Name()].MakeDefault_AssumeNotValid<FJson::FObject>();
-        prm[Json_Name()].Assign(ToString(it.Name()));
-        prm[Json_Flags()].Assign(ToString(it.Flags()));
-
-        RTTI_to_Json(it.Traits(), &traits);
-        prm[Json_Traits()] = std::move(traits.Root());
-    }
-}
-//----------------------------------------------------------------------------
-void RTTI_to_Json(const RTTI::FMetaProperty& prop, FJson* dst) {
-    Assert(dst);
-
-    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    obj[Json_Name()].Assign(ToString(prop.Name()));
-    obj[Json_Flags()].Assign(ToString(prop.Flags()));
-
-    FJson traits;
-    RTTI_to_Json(prop.Traits(), &traits);
-    obj[Json_Traits()] = std::move(traits.Root());
-}
-
-//----------------------------------------------------------------------------
-void RTTI_to_Json(const RTTI::FMetaModule& mod, FJson* dst) {
-    Assert(dst);
-
-    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    obj[Json_Name()].Assign(ToString(mod.Name()));
-
-    FJson traits;
-
-    FJson::FObject& classes = obj[RTTI::FName("Classes")].MakeDefault_AssumeNotValid<FJson::FObject>();
-    for (const RTTI::FMetaClass* it : mod.Classes()) {
-        FJson::FObject& mclass = classes[it->Name()].MakeDefault_AssumeNotValid<FJson::FObject>();
-        mclass[Json_Name()].Assign(ToString(it->Name()));
-        mclass[Json_Flags()].Assign(ToString(it->Flags()));
-
-        RTTI_to_Json(it->MakeTraits(), &traits);
-        mclass[Json_Traits()] = std::move(traits.Root());
-    }
-
-    FJson::FObject& enums = obj[RTTI::FName("Enums")].MakeDefault_AssumeNotValid<FJson::FObject>();
-    for (const RTTI::FMetaEnum* it : mod.Enums()) {
-        FJson::FObject& menum = enums[it->Name()].MakeDefault_AssumeNotValid<FJson::FObject>();
-        menum[Json_Name()].Assign(ToString(it->Name()));
-        menum[Json_Flags()].Assign(ToString(it->Flags()));
-
-        RTTI_to_Json(it->MakeTraits(), &traits);
-        menum[Json_Traits()] = std::move(traits.Root());
-    }
-}
-//----------------------------------------------------------------------------
-void RTTI_to_Json(const RTTI::PTypeTraits& traits, FJson* dst) {
-    Assert(dst);
-    Assert(traits);
-
-    FJson::FObject& obj = dst->Root().MakeDefault_AssumeNotValid<FJson::FObject>();
-    obj[Json_Name()].Assign(ToString(traits->TypeName())); // not relevant here
-    obj[Json_TypeId()].Assign(checked_cast<i64>(traits->TypeId()));
-    obj[Json_Flags()].Assign(ToString(traits->TypeFlags()));
-    obj[Json_SizeInBytes()].Assign(checked_cast<i64>(traits->SizeInBytes()));
 }
 //----------------------------------------------------------------------------
 // Json -> RTTI
@@ -884,7 +817,7 @@ void RTTI_to_Json(const RTTI::PTypeTraits& traits, FJson* dst) {
 bool Json_to_RTTI(const FJson& src, FTransactionLinker* link) {
     Assert(link);
 
-    const FJson::FArray* arrIFP = src.Root().TypedConstDataIFP<FJson::FArray>();
+    const FJson::FArray* arrIFP = src.Root().GetIFP<FJson::FArray>();
     if (nullptr == arrIFP) {
         LOG_DIRECT(Serialize, Error, L"top json entry should be an array");
         return false;
@@ -892,20 +825,26 @@ bool Json_to_RTTI(const FJson& src, FTransactionLinker* link) {
 
     FJson_to_RTTI_ toRTTI(*link);
 
-    forrange(i, 0, arrIFP->size()) {
-        const FJson::FValue& item = arrIFP->at(i);
-        if (not item.TypedConstDataIFP<FJson::FObject>()) {
+    for (const FJson::FValue& item : *arrIFP) {
+        if (not item.GetIFP<FJson::FObject>()) {
             LOG_DIRECT(Serialize, Error, L"all top entries should be json objects");
             return false;
         }
 
-        if (not toRTTI.Parse(item.FlatData<FJson::FObject>())) {
+        if (not toRTTI.ParseObject(nullptr, item.Get<FJson::FObject>())) {
             LOG_DIRECT(Serialize, Error, L"failed to parse json object");
             return false;
         }
     }
 
     return true;
+}
+//----------------------------------------------------------------------------
+bool Json_to_RTTI(const RTTI::FAtom& dst, const FJson& src, FTransactionLinker* link) {
+    Assert(link);
+
+    FJson_to_RTTI_ toRTTI(*link);
+    return toRTTI.ParseAtom(dst, src.Root());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -3,15 +3,18 @@
 #include "Serialize.h"
 
 #include "Lexer/Location.h"
+#include "Lexer/TextHeap.h"
 #include "SerializeExceptions.h"
 
 #include "RTTI_fwd.h"
-#include "RTTI/Any.h"
-#include "RTTI/OpaqueData.h"
+#include "RTTI/Atom.h"
 
 #include "Container/AssociativeVector.h"
-#include "IO/Filename.h"
+#include "Container/SparseArray.h"
+#include "IO/FileSystem_fwd.h"
 #include "IO/TextWriter_fwd.h"
+
+#include <variant>
 
 namespace PPE {
 class IBufferedStreamReader;
@@ -45,28 +48,32 @@ private:
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FJson {
 public:
-    class FValue;
+    struct FValue;
 
-    template <typename T, size_t N>
-    using TJsonInlineAllocator = TRawInlineAllocator<
-        MEMORYDOMAIN_TAG(Json),
-        sizeof(T) * N
-    >;
+    using FSlabHeap = SLABHEAP_POOLED(Json);
+    using FTextHeap = TTextHeap<false, ALLOCATOR(Json)>;
+
+    struct FAllocator {
+        FSlabHeap Heap;
+        FTextHeap Text{ Heap };
+
+        FAllocator() = default;
+        ~FAllocator();
+    };
+
+    using FHeapRef = TPtrRef<FAllocator>;
 
     using FNull = RTTI::PMetaObject;
     using FBool = bool;
     using FInteger = i64;
     using FFloat = double;
-    using FText = FString;
-    using FArray = TVector<FValue, TJsonInlineAllocator<RTTI::FAny, 3> >; //RTTI::FOpaqueArray;
-    using FObject = TAssociativeVector<
-        RTTI::FName, FValue,
-        Meta::TEqualTo<RTTI::FName>,
-        TVector<
-            TPair<RTTI::FName, FValue>,
-            TJsonInlineAllocator<TPair<RTTI::FName, RTTI::FAny>, 3>
-        >
-    > ; //RTTI::FOpaqueData;
+    using FText = FTextHeap::FText;
+    using FArray = SPARSEARRAY_SLAB(Json, FValue);
+    using FObject = ASSOCIATIVE_SPARSEARRAY_SLAB(Json, FText, FValue);
+
+    using FVariant = std::variant<
+        std::monostate,
+        FNull, FBool, FInteger, FFloat, FText, FArray, FObject >;
 
     enum EType {
         Null = 0,
@@ -89,8 +96,9 @@ public:
         std::is_same_v<T, FObject>
         };
 
-    class FValue : private RTTI::FAny {
-    public:
+    struct FValue {
+        FVariant Data;
+
         FValue() = default;
 
         FValue(const FValue&) = default;
@@ -99,119 +107,156 @@ public:
         FValue(FValue&&) = default;
         FValue& operator =(FValue&&) = default;
 
-        explicit FValue(EType type) NOEXCEPT;
+        explicit FValue(FJson& doc, EType type) { Construct(doc, type); }
 
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        FValue(T&& rvalue) NOEXCEPT : RTTI::FAny(std::move(rvalue)) {}
+        FValue(T&& rvalue) NOEXCEPT : Data(std::move(rvalue)) {}
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        FValue(const T& value) NOEXCEPT : RTTI::FAny(value) {}
+        FValue(const T& value) NOEXCEPT : Data(value) {}
 
-        RTTI::FTypeId TypeId() const { return RTTI::FAny::Traits()->TypeId(); }
+        //RTTI::FTypeId TypeId() const { return InnerAtom().TypeId(); }
 
-        void Reset() { RTTI::FAny::Reset(); }
-        bool Valid() const { return RTTI::FAny::Valid(); }
+        void Reset() NOEXCEPT;
+        bool Valid() const { return not std::holds_alternative<std::monostate>(Data); }
+
+        bool Equals(const FValue& other) const NOEXCEPT;
 
         friend bool operator ==(const FValue& lhs, const FValue& rhs) NOEXCEPT { return lhs.Equals(rhs); }
         friend bool operator !=(const FValue& lhs, const FValue& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
 
+        hash_t HashValue() const NOEXCEPT;
+
         friend hash_t hash_value(const FValue& v) NOEXCEPT { return v.HashValue(); }
 
-        friend RTTI::FAtom MakeAtom(const FJson::FValue& value) NOEXCEPT {
-            return value.InnerAtom();
+        //RTTI::FAtom InnerAtom() const NOEXCEPT;
+
+        //friend RTTI::FAtom MakeAtom(const FValue& v) NOEXCEPT { return v.InnerAtom(); }
+
+        template <typename T, typename... _Args>
+        Meta::TEnableIf<
+            IsKnownType<T> &&
+            Meta::has_constructor<T, _Args...>::value,
+            T& > Construct(_Args&&... args) {
+            Assign(T{ std::forward<_Args>(args)... });
+            return Get<T>();
         }
 
-        // restrict FAny to Json types
+        void Construct(FJson& doc, EType type);
 
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        void Assign(T&& rvalue) { RTTI::FAny::Assign(std::move(rvalue)); }
+        void Assign(T&& rvalue) { Data = std::move(rvalue); }
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        void Assign(const T& value) { RTTI::FAny::Assign(value); }
+        void Assign(const T& value) { Data = value; }
 
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        T& MakeDefault_AssumeNotValid() { return RTTI::FAny::MakeDefault_AssumeNotValid<T>();  }
+        T& Get() { return std::get<T>(Data); }
+        template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
+        const T& Get() const { return std::get<T>(Data); }
 
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        T& FlatData() { return RTTI::FAny::FlatData<T>(); }
+        T* GetIFP() { return std::get_if<T>(&Data); }
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        const T& FlatData() const { return RTTI::FAny::FlatData<T>(); }
+        const T* GetIFP() const { return std::get_if<T>(&Data); }
 
-        template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        T& TypedData() const { return RTTI::FAny::TypedData<T>(); }
-        template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        const T& TypedConstData() const { return RTTI::FAny::TypedConstData<T>(); }
-        template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        T* TypedDataIFP() const { return RTTI::FAny::TypedDataIFP<T>(); }
-        template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
-        const T* TypedConstDataIFP() const { return RTTI::FAny::TypedConstDataIFP<T>(); }
+        FNull& ToNull() { return Get<FNull>(); }
+        FBool& ToBool() { return Get<FBool>(); }
+        FInteger& ToInteger() { return Get<FInteger>(); }
+        FFloat& ToFloat() { return Get<FFloat>(); }
+        FText& ToString() { return Get<FText>(); }
+        FArray& ToArray() { return Get<FArray>(); }
+        FObject& ToObject() { return Get<FObject>(); }
 
-        FNull& ToNull() { return FlatData<FNull>(); }
-        FBool& ToBool() { return FlatData<FBool>(); }
-        FInteger& ToInteger() { return FlatData<FInteger>(); }
-        FFloat& ToFloat() { return FlatData<FFloat>(); }
-        FString& ToString() { return FlatData<FString>(); }
-        FArray& ToArray() { return FlatData<FArray>(); }
-        FObject& ToObject() { return FlatData<FObject>(); }
+        const FNull& ToNull() const { return Get<FNull>(); }
+        const FBool& ToBool() const { return Get<FBool>(); }
+        const FInteger& ToInteger() const { return Get<FInteger>(); }
+        const FFloat& ToFloat() const { return Get<FFloat>(); }
+        const FText& ToString() const { return Get<FText>(); }
+        const FArray& ToArray() const { return Get<FArray>(); }
+        const FObject& ToObject() const { return Get<FObject>(); }
 
-        const FNull& ToNull() const { return FlatData<FNull>(); }
-        const FBool& ToBool() const { return FlatData<FBool>(); }
-        const FInteger& ToInteger() const { return FlatData<FInteger>(); }
-        const FFloat& ToFloat() const { return FlatData<FFloat>(); }
-        const FString& ToString() const { return FlatData<FString>(); }
-        const FArray& ToArray() const { return FlatData<FArray>(); }
-        const FObject& ToObject() const { return FlatData<FObject>(); }
+        FNull* AsNull() { return GetIFP<FNull>(); }
+        FBool* AsBool() { return GetIFP<FBool>(); }
+        FInteger* AsInteger() { return GetIFP<FInteger>(); }
+        FFloat* AsFloat() { return GetIFP<FFloat>(); }
+        FText* AsString() { return GetIFP<FText>(); }
+        FArray* AsArray() { return GetIFP<FArray>(); }
+        FObject* AsObject() { return GetIFP<FObject>(); }
 
-        FNull* AsNull() { return TypedDataIFP<FNull>(); }
-        FBool* AsBool() { return TypedDataIFP<FBool>(); }
-        FInteger* AsInteger() { return TypedDataIFP<FInteger>(); }
-        FFloat* AsFloat() { return TypedDataIFP<FFloat>(); }
-        FString* AsString() { return TypedDataIFP<FString>(); }
-        FArray* AsArray() { return TypedDataIFP<FArray>(); }
-        FObject* AsObject() { return TypedDataIFP<FObject>(); }
-
-        const FNull* AsNull() const { return TypedConstDataIFP<FNull>(); }
-        const FBool* AsBool() const { return TypedConstDataIFP<FBool>(); }
-        const FInteger* AsInteger() const { return TypedConstDataIFP<FInteger>(); }
-        const FFloat* AsFloat() const { return TypedConstDataIFP<FFloat>(); }
-        const FString* AsString() const { return TypedConstDataIFP<FString>(); }
-        const FArray* AsArray() const { return TypedConstDataIFP<FArray>(); }
-        const FObject* AsObject() const { return TypedConstDataIFP<FObject>(); }
+        const FNull* AsNull() const { return GetIFP<FNull>(); }
+        const FBool* AsBool() const { return GetIFP<FBool>(); }
+        const FInteger* AsInteger() const { return GetIFP<FInteger>(); }
+        const FFloat* AsFloat() const { return GetIFP<FFloat>(); }
+        const FText* AsString() const { return GetIFP<FText>(); }
+        const FArray* AsArray() const { return GetIFP<FArray>(); }
+        const FObject* AsObject() const { return GetIFP<FObject>(); }
     };
 
-    // assumes FValue is a FAny, as far as RTTI will ever know
-    friend CONSTEXPR auto/* forward-declaration */ RTTI_TypeInfos(RTTI::TTypeTag< FValue >) {
-        return RTTI::MakeAliasTypeInfos<FValue, RTTI::FAny>;
-    }
-    friend RTTI::PTypeTraits RTTI_Traits(RTTI::TTypeTag< FValue >) NOEXCEPT {
-        return RTTI_Traits(RTTI::TypeTag< RTTI::FAny >);
+    FValue MakeValue(EType type) NOEXCEPT {
+        return FValue{ *this, type };
     }
 
-    static FValue MakeValue(EType type) NOEXCEPT {
-        return FValue{ type };
+    FText MakeText(const FStringView& str, bool mergeable = true) NOEXCEPT {
+        return Text().MakeText(str, mergeable);
     }
+
+    static CONSTEXPR FText LiteralText(const FStringView& str) NOEXCEPT {
+        return FTextHeap::MakeStaticText(str);
+    }
+
+    static const FText Id;
+    static const FText Ref;
+    static const FText Class;
+    static const FText Export;
+    static const FText Inner;
+    static const FText TopObject;
+    static const FText TypeId;
+
+    NODISCARD static bool IsReservedKeyword(const FJson::FText& str) NOEXCEPT;
 
 public:
-    FJson() = default;
+    explicit FJson(FHeapRef alloc) NOEXCEPT
+    :   _alloc(alloc) {
+        Assert_NoAssume(_alloc);
+    }
 
-    FJson(const FJson&) = delete;
-    FJson& operator =(const FJson&) = delete;
+    ~FJson();
 
-    FJson(FJson&&) = default;
-    FJson& operator =(FJson&&) = default;
+    FJson(FJson&& ) = default;
+    FJson& operator =(FJson&& ) = default;
 
     FValue& Root() { return _root; }
     const FValue& Root() const { return _root; }
 
+    FSlabHeap& Heap() { return _alloc->Heap; }
+    FTextHeap& Text() { return _alloc->Text; }
+
+    const FSlabHeap& Heap() const { return _alloc->Heap; }
+    const FTextHeap& Text() const { return _alloc->Text; }
+
+    void Clear_ForgetMemory();
+    void Clear_ReleaseMemory();
+
     void ToStream(FTextWriter& oss, bool minify = false) const;
     void ToStream(FWTextWriter& oss, bool minify = false) const;
 
-    static bool Load(FJson* json, const FFilename& filename);
-    static bool Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input);
-    static bool Load(FJson* json, const FWStringView& filename, IBufferedStreamReader* input);
-    static bool Load(FJson* json, const FWStringView& filename, const FStringView& content);
+    NODISCARD static bool Load(FJson* json, const FFilename& filename);
+    NODISCARD static bool Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input);
+    NODISCARD static bool Load(FJson* json, const FWStringView& filename, IBufferedStreamReader* input);
+    NODISCARD static bool Load(FJson* json, const FWStringView& filename, const FStringView& content);
+
+    NODISCARD static bool Append(FJson* json, const FWStringView& filename, IBufferedStreamReader* input);
+    NODISCARD static bool Append(FJson* json, const FWStringView& filename, const FStringView& content);
 
 private:
+    FHeapRef _alloc;
     FValue _root;
 };
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const FJson& json) {
+    json.ToStream(oss);
+    return oss;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -222,10 +267,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Serialize::FJson& json) {
-    json.ToStream(oss);
-    return oss;
+CONSTEXPR Serialize::FJson::FText operator "" _json (const char* str, size_t len) {
+    return Serialize::FJson::LiteralText( FStringView(str, len) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
