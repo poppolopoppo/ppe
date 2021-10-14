@@ -21,10 +21,14 @@ public:
     template <typename T>
     using TWrapable = Meta::TEnableIf<
         has_support_for_v<T> &&
-        not std::is_same_v<FAny, Meta::TDecay<T> > // forbid to wrap FAny in another FAny
+        not std::is_same_v<Meta::TDecay<T>, FAny>
     >;
 
+#if USE_PPE_ASSERT
     FAny() NOEXCEPT;
+#else
+    FAny() = default;
+#endif
     ~FAny();
 
     FAny(const FAny& other);
@@ -37,39 +41,52 @@ public:
     explicit FAny(const PTypeTraits& type);
 
     template <typename T, class = TWrapable<T> >
-    explicit FAny(T&& rvalue) NOEXCEPT : _traits(Meta::NoInit) {
-        const PTypeTraits traits = MakeTraits<T>();
-        AssignMove_AssumeNotInitialized_(&rvalue, *traits, traits->SizeInBytes());
+    explicit FAny(T&& rvalue) NOEXCEPT : FAny() {
+        AssignMove_AssumeNotInitialized_(&rvalue, *MakeTraits<T>());
     }
 
     template <typename T, class = TWrapable<T> >
-    explicit FAny(const T& value) : _traits(Meta::NoInit) {
-        const PTypeTraits traits = MakeTraits<T>();
-        AssignCopy_AssumeNotInitialized_(&value, *traits, traits->SizeInBytes());
+    explicit FAny(const T& value) : FAny() {
+        AssignCopy_AssumeNotInitialized_(&value, *MakeTraits<T>());
     }
 
     operator FAtom () const { return InnerAtom(); }
 
-    bool Valid() const { return _traits.Valid(); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_traits); }
+    bool Valid() const { return (!!_traitsWFlags.Get()); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
-    void* Data() { return (_traits ? Data_(_traits->SizeInBytes()) : nullptr); }
+    void* Data() {
+        if (not Valid())
+            return this;
+        if (Likely(IsFittingInSitu_()))
+            return std::addressof(_inSitu);
+        return _externalBlock.Ptr;
+    }
     const void* Data() const { return const_cast<FAny*>(this)->Data(); }
 
-    const PTypeTraits& Traits() const { return _traits; }
-    FAtom InnerAtom() const { return FAtom(Data(), _traits); }
+    PTypeTraits Traits() const {
+        const ITypeTraits* const pTraits = _traitsWFlags.Get();
+        if (Likely(pTraits))
+            return PTypeTraits{ _traitsWFlags.Get() };
+        return MakeTraits<FAny>();
+    }
 
-    void Reset() { if (_traits) Reset_AssumeInitialized_(_traits->SizeInBytes()); }
-    FAny& Reset(const PTypeTraits& traits);
+    FAtom InnerAtom() const { return FAtom(Data(), Traits()); }
+
+    void Reset() { if (Valid()) Reset_AssumeInitialized_(); }
+
+    FAny& Reset(ENativeType type);
+    FAny& Reset(const ITypeTraits& traits);
+    FAny& Reset(const PTypeTraits& traits) { return Reset(*traits); }
 
     void AssignCopy(const FAtom& atom) { AssignCopy(atom.Data(), *atom.Traits()); }
-    void AssignMove(const FAtom& atom) { AssignMove(atom.Data(), *atom.Traits()); }
+    void AssignMove(const FAtom& atom) NOEXCEPT { AssignMove(atom.Data(), *atom.Traits()); }
 
-    void AssignCopy(const void* src, const ITypeTraits& traits) { AssignCopy_(src, traits, traits.SizeInBytes()); }
-    void AssignMove(void* src, const ITypeTraits& traits) { AssignMove_(src, traits, traits.SizeInBytes()); }
+    void AssignCopy(const void* src, const ITypeTraits& traits) { AssignCopy_(src, traits); }
+    void AssignMove(void* src, const ITypeTraits& traits) NOEXCEPT { AssignMove_(src, traits); }
 
     template <typename T, class = TWrapable<T> >
-    void Assign(T&& rvalue) {
+    void Assign(T&& rvalue) NOEXCEPT {
         AssignMove(RTTI::MakeAtom(&rvalue));
     }
 
@@ -85,8 +102,17 @@ public:
         return FlatData<T>();
     }
 
+    template <typename T, class = TWrapable<T> >
+    T& MakeDefault_IFP() {
+        if (not Valid())
+            Assign(Meta::DefaultValue<T>());
+        return FlatData<T>();
+    }
+
+    NODISCARD bool IsDefaultValue() const { return InnerAtom().IsDefaultValue(); }
+
     NODISCARD bool PromoteCopy(const FAtom& dst) const { return InnerAtom().PromoteCopy(dst); }
-    NODISCARD bool PromoteMove(const FAtom& dst) const { return InnerAtom().PromoteMove(dst); }
+    NODISCARD bool PromoteMove(const FAtom& dst) const NOEXCEPT { return InnerAtom().PromoteMove(dst); }
 
     template <typename T>
     T& FlatData() const { return InnerAtom().FlatData<T>(); }
@@ -121,24 +147,27 @@ private:
     };
     STATIC_ASSERT(sizeof(FExternalData) <= GInSituSize);
 
-    PTypeTraits _traits;
+    Meta::TPointerWFlags<const ITypeTraits> _traitsWFlags{};
     union {
-        insitu_type _inSitu;
+        mutable insitu_type _inSitu;
         FExternalData _externalBlock;
     };
 
-    void* Data_(const size_t sizeInBytes) const;
+    bool IsFittingInSitu_() const { return _traitsWFlags.Flag0(); }
+    void SetFittingInSitu_(bool value) { _traitsWFlags.SetFlag0(value); }
 
-    void AssignCopy_(const void* src, const ITypeTraits& traits, const size_t sizeInBytes);
-    void AssignMove_(void* src, const ITypeTraits& traits, const size_t sizeInBytes);
-    void AssignMoveDestroy_(void* src, const ITypeTraits& traits, const size_t sizeInBytes);
+    void SetTraits_(const ITypeTraits& traits) NOEXCEPT;
 
-    void AssignCopy_AssumeNotInitialized_(const void* src, const ITypeTraits& traits, const size_t sizeInBytes);
-    void AssignMove_AssumeNotInitialized_(void* src, const ITypeTraits& traits, const size_t sizeInBytes);
-    void AssignMoveDestroy_AssumeNotInitialized_(void* src, const ITypeTraits& traits, const size_t sizeInBytes);
+    void AssignCopy_(const void* src, const ITypeTraits& traits);
+    void AssignMove_(void* src, const ITypeTraits& traits) NOEXCEPT;
+    void AssignMoveDestroy_(void* src, const ITypeTraits& traits) NOEXCEPT;
 
-    void* Allocate_AssumeNotInitialized_(const size_t sizeInBytes);
-    void Reset_AssumeInitialized_(const size_t sizeInBytes);
+    void AssignCopy_AssumeNotInitialized_(const void* src, const ITypeTraits& traits);
+    void AssignMove_AssumeNotInitialized_(void* src, const ITypeTraits& traits) NOEXCEPT;
+    void AssignMoveDestroy_AssumeNotInitialized_(void* src, const ITypeTraits& traits) NOEXCEPT;
+
+    void* Allocate_AssumeNotInitialized_(size_t sizeInBytes);
+    void Reset_AssumeInitialized_();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -169,22 +198,32 @@ T& CastChecked(const FAny& any) {
 //----------------------------------------------------------------------------
 // For fwd declarations
 PPE_RTTI_API void AssignCopy(FAny* dst, const void* src, const ITypeTraits& traits);
-PPE_RTTI_API void AssignMove(FAny* dst, void* src, const ITypeTraits& traits);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace RTTI
-} //!namespace PPE
-
-namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+PPE_RTTI_API void AssignMove(FAny* dst, void* src, const ITypeTraits& traits) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextWriter<_Char>& operator << (TBasicTextWriter<_Char>& oss, const RTTI::FAny& any) {
+TBasicTextWriter<_Char>& operator << (TBasicTextWriter<_Char>& oss, const FAny& any) {
     return oss << any.InnerAtom();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool operator >> (const TBasicStringConversion<_Char>& iss, FAny* any) {
+    Assert(any);
+
+    if (any->Valid()) {
+        FAtom atom = any->InnerAtom();
+        return (iss >> &atom);
+    }
+
+    TBasicString<_Char> str;
+    if (iss >> &str) {
+        any->Assign(std::move(str));
+        return true;
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RTTI
 } //!namespace PPE

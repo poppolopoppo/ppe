@@ -20,18 +20,18 @@ namespace RTTI {
 namespace {
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(FAny) == FAny::GInSituSize + sizeof(intptr_t)); // checks for padding
-constexpr size_t GNumSupportedTypes = size_t(0)
+constexpr size_t GNumSupportedTypes = static_cast<size_t>(0)
 #define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + size_t(1)
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)
 #undef DECL_RTTI_NATIVETYPE_SUPPORTED
     ;
-constexpr size_t GNumSupportedTypesFittingInSitu = size_t(0)
+constexpr size_t GNumSupportedTypesFittingInSitu = static_cast<size_t>(0)
 #define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + size_t(sizeof(T) <= FAny::GInSituSize ? 1 : 0)
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)
 #undef DECL_RTTI_NATIVETYPE_SUPPORTED
     ;
 // checks that all types can be wrapped in except for FAny
-STATIC_ASSERT(GNumSupportedTypesFittingInSitu == GNumSupportedTypes - size_t(1)/* FAny */);
+STATIC_ASSERT(GNumSupportedTypesFittingInSitu == GNumSupportedTypes - static_cast<size_t>(1)/* FAny */);
 STATIC_ASSERT(sizeof(FAny) > sizeof(FAny::GInSituSize));
 //----------------------------------------------------------------------------
 static FORCE_INLINE bool Any_FitInSitu_(size_t sizeInBytes) {
@@ -43,88 +43,73 @@ static FORCE_INLINE bool Any_FitInSitu_(size_t sizeInBytes) {
 #endif
 }
 //----------------------------------------------------------------------------
-static const ITypeTraits& Any_Traits_() {
-    ONE_TIME_INITIALIZE(const PTypeTraits, GInstance, MakeTraits<FAny>());
-    return (*GInstance);
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FAny::FAny(const FAny& other)
-:   _traits(Meta::NoInit) {
-
-    if (other._traits) {
-        const size_t sizeInBytes = other._traits->SizeInBytes();
-        AssignCopy_AssumeNotInitialized_(other.Data_(sizeInBytes), *other._traits, sizeInBytes);
-    }
-    else {
-        _traits = PTypeTraits();
-        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
-    }
+FAny::FAny(const FAny& other) : FAny() {
+    if (Likely(other.Valid()))
+        AssignCopy_AssumeNotInitialized_(other.Data(), *other.Traits());
+    else
+        Assert_NoAssume(not Valid());
 
     Assert(Equals(other));
 }
 //----------------------------------------------------------------------------
 FAny& FAny::operator =(const FAny& other) {
-    if (other._traits) {
-        const size_t sizeInBytes = other._traits->SizeInBytes();
-        AssignCopy_(other.Data_(sizeInBytes), *other._traits, sizeInBytes);
-    }
-    else if (_traits) {
-        Reset_AssumeInitialized_(_traits->SizeInBytes());
-    }
+    if (Likely(other.Valid()))
+        AssignCopy_(other.Data(), *other.Traits());
+    else if (Valid())
+        Reset_AssumeInitialized_();
 
     Assert(Equals(other));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FAny::FAny(FAny&& rvalue) NOEXCEPT
-:   _traits(Meta::NoInit) {
-
-    if (rvalue._traits) {
-        const size_t sizeInBytes = rvalue._traits->SizeInBytes();
-
-        if (Any_FitInSitu_(sizeInBytes)) {
-            AssignMoveDestroy_AssumeNotInitialized_(&rvalue._inSitu, *rvalue._traits, sizeInBytes);
+FAny::FAny(FAny&& rvalue) NOEXCEPT : FAny() {
+    if (Likely(rvalue.Valid())) {
+        if (rvalue.IsFittingInSitu_()) {
+            AssignMoveDestroy_AssumeNotInitialized_(rvalue.Data(), *rvalue.Traits());
+            rvalue._traitsWFlags = {};
         }
         else {
-            _traits = rvalue._traits;
-            _externalBlock = rvalue._externalBlock; // steel the allocation
+            using std::swap;
+            swap(_traitsWFlags, rvalue._traitsWFlags);
+            swap(_externalBlock, rvalue._externalBlock);
         }
 
-        rvalue._traits = PTypeTraits();
-        ONLY_IF_ASSERT(FPlatformMemory::Memset(&rvalue._inSitu, 0xDD, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(&rvalue._inSitu, GInSituSize));
 
-        Assert(_traits);
+        Assert_NoAssume(Valid());
+        Assert_NoAssume(not rvalue.Valid());
     }
     else {
-        _traits = PTypeTraits();
-        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
+        Assert_NoAssume(not Valid());
     }
 }
 //----------------------------------------------------------------------------
 FAny& FAny::operator =(FAny&& rvalue) NOEXCEPT {
-    if (rvalue._traits) {
-        const size_t sizeInBytes = rvalue._traits->SizeInBytes();
-
-        if (Any_FitInSitu_(sizeInBytes)) {
-            AssignMoveDestroy_(&rvalue._inSitu, *rvalue._traits, sizeInBytes);
+    if (Likely(rvalue.Valid())) {
+        if (Likely(rvalue.IsFittingInSitu_())) {
+            AssignMoveDestroy_(rvalue.Data(), *rvalue.Traits());
+            rvalue._traitsWFlags = {};
         }
         else {
-            if (_traits) // release our own allocation in necessary
-                Reset_AssumeInitialized_(_traits->SizeInBytes());
+            if (Valid())
+                Reset_AssumeInitialized_();
 
-            _traits = rvalue._traits;
-            _externalBlock = rvalue._externalBlock; // steel the allocation
+            using std::swap;
+            swap(_traitsWFlags, rvalue._traitsWFlags);
+            swap(_externalBlock, rvalue._externalBlock);
         }
 
-        rvalue._traits = PTypeTraits();
-        ONLY_IF_ASSERT(FPlatformMemory::Memset(&rvalue._inSitu, 0xDD, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(&rvalue._inSitu, GInSituSize));
+
+        Assert_NoAssume(Valid());
+        Assert_NoAssume(not rvalue.Valid());
     }
-    else if (_traits) {
-        Reset_AssumeInitialized_(_traits->SizeInBytes());
+    else if (Valid()) {
+        Reset_AssumeInitialized_();
     }
 
     return (*this);
@@ -134,289 +119,208 @@ FAny::FAny(ENativeType nativeType)
 :   FAny(MakeTraits(nativeType))
 {}
 //----------------------------------------------------------------------------
-FAny::FAny(const PTypeTraits& traits)
-:   _traits(Meta::NoInit) {
+FAny::FAny(const PTypeTraits& traits) : FAny() {
     Assert(traits);
-    Assert(Any_Traits_() != *traits);
 
-    const size_t sizeInBytes = traits->SizeInBytes();
-    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+    if (Likely(MakeTraits<FAny>() != traits)) {
+        SetTraits_(*traits.PTraits);
 
-    _traits = traits;
-    _traits->Construct(data);
+        const size_t sizeInBytes = traits->SizeInBytes();
+        void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
 
-    Assert(_traits->IsDefaultValue(data));
+        traits->Construct(data);
+        Assert(traits->IsDefaultValue(data));
+    }
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_ASSERT
 FAny::FAny() NOEXCEPT {
-    ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
+    FPlatformMemory::Memuninitialized(&_inSitu, GInSituSize);
 }
+#endif
 //----------------------------------------------------------------------------
 FAny::~FAny()  {
-    if (_traits)
-        Reset_AssumeInitialized_(_traits->SizeInBytes());
+    if (Likely(Valid()))
+        Reset_AssumeInitialized_();
 }
 //----------------------------------------------------------------------------
-FAny& FAny::Reset(const PTypeTraits& traits) {
-    Assert(traits);
-    Assert(Any_Traits_() != *traits);
-
-    if (_traits == traits) {
-        Assert(_traits);
-
-        _traits->ResetToDefaultValue(Data());
-
+FAny& FAny::Reset(ENativeType type) {
+    return Reset(MakeTraits(type));
+}
+//----------------------------------------------------------------------------
+FAny& FAny::Reset(const ITypeTraits& traits) {
+    // reset to default value if already holding the same traits
+    if (Traits().PTraits == &traits) {
+        traits.ResetToDefaultValue(Data());
         return (*this);
     }
 
-    const size_t newSize = traits->SizeInBytes();
-
-    if (_traits) {
-        const size_t oldSize = _traits->SizeInBytes();
-
-        if (not Any_FitInSitu_(newSize) &&
-            not Any_FitInSitu_(oldSize) &&
-            newSize <= _externalBlock.SizeInBytes ) {
-
-            _traits->Destroy(_externalBlock.Ptr);
-            _traits = traits;
-            _traits->Construct(_externalBlock.Ptr);
-
-            return (*this);
-        }
-        else {
-            Reset_AssumeInitialized_(oldSize);
-        }
+    // special case when asking for FAny: we don't wrap FAny in FAny, instead it wraps itself
+    if (Unlikely(MakeTraits<FAny>().PTraits == &traits)) {
+        Reset(); // see Data() / Traits()
+        return (*this);
     }
 
-    void* const data = Allocate_AssumeNotInitialized_(newSize);
+    const size_t newSize = traits.SizeInBytes();
 
-    _traits = traits;
-    _traits->Construct(data);
+    // check if we can reuse current external block, if any
+    if (Valid() &&
+        not IsFittingInSitu_() &&
+        not Any_FitInSitu_(newSize) &&
+        newSize <= _externalBlock.SizeInBytes) {
+        Assert(Meta::IsAligned(traits.Alignment(), _externalBlock.Ptr));
 
-    Assert(_traits->IsDefaultValue(data));
-    return (*this); // can be implicit casted as FAtom for convenience
+        Traits()->Destroy(_externalBlock.Ptr);
+    }
+
+    if (Valid())
+        Reset_AssumeInitialized_();
+
+    SetTraits_(traits);
+    void* const data = Allocate_AssumeNotInitialized_(traits.SizeInBytes());
+    traits.Construct(data);
+    return (*this);
 }
 //----------------------------------------------------------------------------
 bool FAny::Equals(const FAny& other) const {
-    if (_traits != other._traits)
+    const PTypeTraits traits = Traits();
+
+    if (traits != other.Traits())
         return false;
-    else if (not _traits)
-        return true;
-    else {
-        const size_t sizeInBytes = _traits->SizeInBytes();
-        return (Any_FitInSitu_(sizeInBytes)
-            ? _traits->Equals(&_inSitu, &other._inSitu)
-            : _traits->Equals(_externalBlock.Ptr, other._externalBlock.Ptr) );
-    }
+
+    if (Valid())
+        return traits->Equals(Data(), other.Data());
+
+    return (not other.Valid());
 }
 //----------------------------------------------------------------------------
 hash_t FAny::HashValue() const {
-    return (_traits
-        ? _traits->HashValue(Data())
-        : hash_t(size_t(-1)) );
+    return (Valid()
+        ? Traits()->HashValue(Data())
+        : hash_t(static_cast<size_t>(-1)) );
 }
 //----------------------------------------------------------------------------
 void FAny::Swap(FAny& other) {
-    if (_traits != other._traits) {
-        FAny tmp(std::move(*this));
-        *this = std::move(other);
-        other = std::move(tmp);
-    }
-    else if (_traits) {
-        const size_t sizeInBytes = _traits->SizeInBytes();
+    const PTypeTraits traits = Traits();
 
-        if (Any_FitInSitu_(sizeInBytes))
-            _traits->Swap(&_inSitu, &other._inSitu);
-        else
-            _traits->Swap(&_externalBlock, &other._externalBlock);
-    }
+    if (traits != other.Traits())
+        std::swap(*this, other);
+    else if (traits)
+        traits->Swap(Data(), other.Data());
 }
 //----------------------------------------------------------------------------
-void* FAny::Data_(const size_t sizeInBytes) const {
-    Assert(_traits);
-    Assert(_traits->SizeInBytes() == sizeInBytes);
-
-    return (void*)(Any_FitInSitu_(sizeInBytes) ? &_inSitu : _externalBlock.Ptr);
+void FAny::SetTraits_(const ITypeTraits& traits) NOEXCEPT {
+    _traitsWFlags.Reset(&traits);
 }
 //----------------------------------------------------------------------------
-void FAny::AssignCopy_(const void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+void FAny::AssignCopy_(const void* src, const ITypeTraits& traits) {
     Assert(src);
-    Assert(traits.SizeInBytes() == sizeInBytes);
 
-    if (Any_Traits_() == traits) { // avoid wrapping FAny in FAny
-
-        if (static_cast<const FAny*>(src)->Valid()) {
-            AssignCopy(static_cast<const FAny*>(src)->InnerAtom());
-        }
-        else if (_traits) {
-            Reset_AssumeInitialized_(_traits->SizeInBytes());
-        }
-
+    if (Traits().PTraits == &traits) {
+        traits.Copy(src, Data());
         return;
     }
-    else if (_traits) {
 
-        if (traits == *_traits) {
-            traits.Copy(src, Data_(sizeInBytes));
+    Reset(traits);
 
-            return;
-        }
+    traits.ConstructCopy(Data(), src);
+    Assert(traits.Equals(Data(), src));
+}
+//----------------------------------------------------------------------------
+void FAny::AssignMove_(void* src, const ITypeTraits& traits) NOEXCEPT {
+    Assert(src);
 
-        const size_t oldSize = _traits->SizeInBytes();
-
-        if (not Any_FitInSitu_(sizeInBytes) &&
-            not Any_FitInSitu_(oldSize) &&
-            sizeInBytes <= _externalBlock.SizeInBytes ) {
-
-            _traits->Destroy(_externalBlock.Ptr);
-            _traits.CreateRawCopy_AssumeNotInitialized(traits);
-            _traits->ConstructCopy(_externalBlock.Ptr, src);
-
-            return;
-        }
-
-        Reset_AssumeInitialized_(oldSize);
+    if (Traits().PTraits == &traits) {
+        traits.Move(src, Data());
+        return;
     }
-    Assert(not _traits);
 
-    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+    Reset(traits);
+    traits.ConstructMove(Data(), src);
+}
+//----------------------------------------------------------------------------
+void FAny::AssignMoveDestroy_(void* src, const ITypeTraits& traits) NOEXCEPT {
+    Assert(src);
 
-    _traits.CreateRawCopy_AssumeNotInitialized(traits);
-    _traits->ConstructCopy(data, src);
+    if (Traits().PTraits == &traits) {
+        traits.Move(src, Data());
+        traits.Destroy(src);
+        return;
+    }
 
+    Reset(traits);
+    traits.ConstructMoveDestroy(Data(), src);
+}
+//----------------------------------------------------------------------------
+void FAny::AssignCopy_AssumeNotInitialized_(const void* src, const ITypeTraits& traits) {
+    Assert(src);
+
+    SetTraits_(traits);
+
+    const size_t sz = traits.SizeInBytes();
+    void* const data = Allocate_AssumeNotInitialized_(sz);
+
+    traits.ConstructCopy(data, src);
     Assert(traits.Equals(data, src));
 }
 //----------------------------------------------------------------------------
-void FAny::AssignMove_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+void FAny::AssignMove_AssumeNotInitialized_(void* src, const ITypeTraits& traits) NOEXCEPT {
     Assert(src);
-    Assert(traits.SizeInBytes() == sizeInBytes);
 
-    if (Any_Traits_() == traits) { // avoid wrapping FAny in FAny
+    SetTraits_(traits);
 
-        if (static_cast<FAny*>(src)->Valid()) {
-            AssignMove(static_cast<FAny*>(src)->InnerAtom());
-        }
-        else if (_traits) {
-            Reset_AssumeInitialized_(_traits->SizeInBytes());
-        }
+    const size_t sz = traits.SizeInBytes();
+    void* const data = Allocate_AssumeNotInitialized_(sz);
 
-        return;
-    }
-    else if (_traits) {
-        if (traits == *_traits) {
-            traits.Move(src, Data_(sizeInBytes));
-
-            return;
-        }
-
-        Reset_AssumeInitialized_(_traits->SizeInBytes());
-    }
-    Assert(not _traits);
-
-    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
-
-    _traits.CreateRawCopy_AssumeNotInitialized(traits);
-    _traits->ConstructMove(data, src);
+    traits.ConstructMove(data, src);
 }
 //----------------------------------------------------------------------------
-void FAny::AssignMoveDestroy_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+void FAny::AssignMoveDestroy_AssumeNotInitialized_(void* src, const ITypeTraits& traits) NOEXCEPT {
     Assert(src);
-    Assert(traits.SizeInBytes() == sizeInBytes);
-    Assert(Any_Traits_() != traits);
 
-    if (_traits) {
-        if (traits == *_traits) {
-            traits.Move(src, Data_(sizeInBytes));
-            traits.Destroy(src);
+    SetTraits_(traits);
 
-            return;
-        }
+    const size_t sz = traits.SizeInBytes();
+    void* const data = Allocate_AssumeNotInitialized_(sz);
 
-        Reset_AssumeInitialized_(_traits->SizeInBytes());
-    }
-    Assert(not _traits);
-
-    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
-
-    _traits.CreateRawCopy_AssumeNotInitialized(traits);
-    _traits->ConstructMoveDestroy(data, src);
-}
-//----------------------------------------------------------------------------
-void FAny::AssignCopy_AssumeNotInitialized_(const void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
-    Assert(src);
-    Assert(traits.SizeInBytes() == sizeInBytes);
-    Assert(Any_Traits_() != traits);
-
-    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
-
-    _traits.CreateRawCopy_AssumeNotInitialized(traits);
-    _traits->ConstructCopy(data, src);
-
-    Assert(traits.Equals(data, src));
-}
-//----------------------------------------------------------------------------
-void FAny::AssignMove_AssumeNotInitialized_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
-    Assert(src);
-    Assert(traits.SizeInBytes() == sizeInBytes);
-    Assert(Any_Traits_() != traits);
-
-    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
-
-    _traits.CreateRawCopy_AssumeNotInitialized(traits);
-    _traits->ConstructMove(data, src);
-}
-//----------------------------------------------------------------------------
-void FAny::AssignMoveDestroy_AssumeNotInitialized_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
-    Assert(src);
-    Assert(traits.SizeInBytes() == sizeInBytes);
-    Assert(Any_Traits_() != traits);
-
-    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
-
-    _traits.CreateRawCopy_AssumeNotInitialized(traits);
-    _traits->ConstructMoveDestroy(data, src);
+    traits.ConstructMoveDestroy(data, src);
 }
 //----------------------------------------------------------------------------
 void* FAny::Allocate_AssumeNotInitialized_(const size_t sizeInBytes) {
     Assert(sizeInBytes);
 
-    if (Any_FitInSitu_(sizeInBytes)) {
+    if (Likely(Any_FitInSitu_(sizeInBytes))) {
+        SetFittingInSitu_(true);
         return (&_inSitu);
     }
-    else {
-        _externalBlock.SizeInBytes = malloc_snap_size(sizeInBytes);
-        _externalBlock.Ptr = PPE::malloc(_externalBlock.SizeInBytes);
 
-#if USE_PPE_MEMORYDOMAINS
-        MEMORYDOMAIN_TRACKING_DATA(Any).Allocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes);
-#endif
+    SetFittingInSitu_(false);
+    _externalBlock.SizeInBytes = malloc_snap_size(sizeInBytes);
+    _externalBlock.Ptr = PPE::malloc(_externalBlock.SizeInBytes);
 
-        return _externalBlock.Ptr;
-    }
+    ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Any)
+        .Allocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes));
+
+    return _externalBlock.Ptr;
 }
-//----------------------------------------------------------------------------FPlatformMemory::Memset
-void FAny::Reset_AssumeInitialized_(const size_t sizeInBytes) {
-    Assert(_traits);
-    Assert(_traits->SizeInBytes() == sizeInBytes);
+//----------------------------------------------------------------------------
+void FAny::Reset_AssumeInitialized_() {
+    Assert(Valid());
 
-    if (Any_FitInSitu_(sizeInBytes)) {
-        _traits->Destroy(&_inSitu);
-    }
-    else {
-        Assert(sizeInBytes <= _externalBlock.SizeInBytes);
+    Traits()->Destroy(Data());
 
-        _traits->Destroy(_externalBlock.Ptr);
+    if (not IsFittingInSitu_()) {
+        Assert_NoAssume(_externalBlock.Ptr);
 
-#if USE_PPE_MEMORYDOMAINS
-        MEMORYDOMAIN_TRACKING_DATA(Any).Deallocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes);
-#endif
+        ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Any)
+            .Deallocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes));
 
         PPE::free(_externalBlock.Ptr);
     }
 
-    _traits = PTypeTraits(); // don't want to call the dtor
-    ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
+    _traitsWFlags = {}; // don't want to call the dtor
+
+    ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(&_inSitu, GInSituSize));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -425,7 +329,7 @@ void AssignCopy(FAny* dst, const void* src, const ITypeTraits& traits) {
     dst->AssignCopy(src, traits);
 }
 //----------------------------------------------------------------------------
-void AssignMove(FAny* dst, void* src, const ITypeTraits& traits) {
+void AssignMove(FAny* dst, void* src, const ITypeTraits& traits) NOEXCEPT {
     dst->AssignMove(src, traits);
 }
 //----------------------------------------------------------------------------
@@ -433,4 +337,3 @@ void AssignMove(FAny* dst, void* src, const ITypeTraits& traits) {
 //----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE
-
