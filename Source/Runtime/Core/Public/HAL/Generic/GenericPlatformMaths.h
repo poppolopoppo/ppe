@@ -149,7 +149,28 @@ public: // must be defined for every platform
     static FORCE_INLINE float Pow(float a, float b) { return ::powf(a, b); }
 
     static FORCE_INLINE float RSqrt(float F) { return 1.0f / ::sqrtf(F); }
-    static FORCE_INLINE float RSqrt_Low(float F) { return 1.0f / ::sqrtf(F); }
+
+    // Heil to the king Carmack ;)
+    static FORCE_INLINE float RSqrt_Low(float F) {
+        long i;
+        float x2, y;
+        constexpr float threeHalfs = 1.5f;
+
+        x2 = F * 0.5f;
+        y  = F;
+        i  = *(long*)&y;
+        i  = 0x5f3759df - (i >> 1);
+        y  = *(float*)&i;
+        y  = y * (threeHalfs - (x2 * y * y)); // 1st iteration
+        //y  = y * (threeHalfs - (x2 * y * y)); // 2nd iteration (optional)
+
+        return y;
+    }
+    static FORCE_INLINE float RSqrt_SSE(float F) {
+        float result;
+        ::_mm_store_ps(&result, ::_mm_rsqrt_ss(::_mm_load_ss(&F)));
+        return result;
+    }
 
     static FORCE_INLINE float Exp(float f) { return ::expf(f); } // Returns e^f
     static FORCE_INLINE float Exp2(float f) { return ::powf(2.f, f); /*exp2f(f);*/ } // Returns 2^f
