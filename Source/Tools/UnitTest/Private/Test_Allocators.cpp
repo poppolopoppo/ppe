@@ -43,17 +43,17 @@ LOG_CATEGORY(, Test_Allocators)
 namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_DEBUG && !USE_PPE_FASTDEBUG
-static constexpr size_t GTotalAllocationSize_ = CODE3264( 32u,  64u) * 1024u * size_t(1024);
+static constexpr size_t GTotalAllocationSize_ = CODE3264( 16u,  32u) * 1024u * size_t(1024);
 #else
 static constexpr size_t GTotalAllocationSize_ = CODE3264( 64u, 128u) * 1024u * size_t(1024);
 #endif
 #if USE_PPE_ASSERT
-static constexpr size_t GLoopCount_ = 10;
+static constexpr size_t GLoopCount_ = 5;
 #else
 static constexpr size_t GLoopCount_ = 100;
 #endif
 #if USE_PPE_ASSERT
-static constexpr size_t GSlidingWindow_ = 50;
+static constexpr size_t GSlidingWindow_ = 30;
 #else
 static constexpr size_t GSlidingWindow_ = 150;
 #endif

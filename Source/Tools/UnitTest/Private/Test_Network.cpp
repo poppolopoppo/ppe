@@ -223,6 +223,8 @@ static void Test_HttpGet_() {
     if (not FUri::Parse(uri, MakeStringView("http://frostiebek.free.fr/datas/sample.json?fake=arg")))
         AssertNotReached();
 
+    Serialize::FJson::FAllocator alloc;
+
     forrange(i, 0, 3) {
         FHttpResponse response;
         const EHttpStatus status = HttpGet(&response, uri);
@@ -238,7 +240,7 @@ static void Test_HttpGet_() {
         LogResponse_(response);
 
         if (response.Status() == EHttpStatus::OK) {
-            Serialize::FJson json;
+            Serialize::FJson json{ alloc };
             if (not Serialize::FJson::Load(&json, MakeStringView(L"network.tmp"), &response.Body()))
                 LOG(Test_Network, Error, L"request failed for {0}", uri);
             else
@@ -327,7 +329,7 @@ static void Test_HttpServer_() {
     FTestHttpServer srv;
     srv.Start(2);
     std::this_thread::sleep_for(std::chrono::seconds(30));
-    srv.Stop();
+    srv.Shutdown();
 }
 #endif //!WITH_PPE_NETWORK_Test_HttpServer_
 //----------------------------------------------------------------------------

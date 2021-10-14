@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "VirtualFileSystem_fwd.h"
 
 #include "Container/Tuple.h"
 #include "Diagnostic/Logger.h"
@@ -14,6 +15,7 @@
 #include "IO/StringConversion.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
+#include "Maths/RandomGenerator.h"
 
 #include "Memory/MemoryStream.h"
 
@@ -195,6 +197,55 @@ static void Test_StringEscaping_() {
 //----------------------------------------------------------------------------
 static void Test_LogPrintf_() {
     LOG_PRINTF(Test_Format, Info, L"Printf testing %d", 42);
+    LOG_PRINTF(Test_Format, Info, L"Printf testing %s", "42");
+}
+//----------------------------------------------------------------------------
+static void Test_Base64_() {
+    FRandomGenerator rnd;
+    forrange(i, 0, 10) {
+        FRawStorage src;
+        src.Resize_DiscardData(rnd.Next(8, 100*(i+1)));
+        for (u8& raw : src)
+            rnd.Randomize(raw);
+
+        TRawStorage<char> dst;
+        dst.Resize_DiscardData(Base64EncodeSize(src.MakeView()));
+        Base64Encode(src.MakeView(), dst.MakeView());
+
+        FRawStorage chk;
+        chk.Resize_DiscardData(Base64DecodeSize(dst.MakeView()));
+        AssertRelease(chk.SizeInBytes() == src.SizeInBytes());
+        VerifyRelease(Base64Decode(dst.MakeView(), chk.MakeView()));
+
+        AssertRelease(0 == FPlatformMemory::Memcmp(src.data(), chk.data(), src.SizeInBytes()));
+    }
+}
+//----------------------------------------------------------------------------
+static void Test_Conversion_() {
+    bool b;
+    VerifyRelease( FStringConversion{ "true" } >> &b );
+    AssertRelease( b );
+    VerifyRelease( FStringConversion{ "1" } >> &b );
+    AssertRelease( b );
+    VerifyRelease( FStringConversion{ "false" } >> &b );
+    AssertRelease( not b );
+    VerifyRelease( FStringConversion{ "0" } >> &b );
+    AssertRelease( not b );
+    int i;
+    VerifyRelease( FStringConversion{ "123456" } >> &i );
+    AssertRelease( i == 123456 );
+    VerifyRelease( FStringConversion{ "-420314152" } >> &i );
+    AssertRelease( i == -420314152 );
+    float f;
+    VerifyRelease( FStringConversion{ "2.123456" } >> &f );
+    AssertRelease( f == 2.123456f );
+    VerifyRelease( FStringConversion{ "-120.3" } >> &f );
+    AssertRelease( f == -120.3f );
+    double d;
+    VerifyRelease( FStringConversion{ "2.123456789" } >> &d );
+    AssertRelease( d == 2.123456789 );
+    VerifyRelease( FStringConversion{ "-1420.314156" } >> &d );
+    AssertRelease( d == -1420.314156 );
 }
 //----------------------------------------------------------------------------
 static void Test_Regexp_() {
@@ -207,15 +258,15 @@ static void Test_Regexp_() {
     VerifyRelease(re.Capture(&matches, "int:42, float:123.456, word:PoPpolLoPpOpo42 end"));
 
     LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
-        FStringConversion(matches[1]).To<int>(),
-        FStringConversion(matches[2]).To<float>(),
+        FStringConversion(matches[1]).ConvertTo<int>(),
+        FStringConversion(matches[2]).ConvertTo<float>(),
         FStringView(matches[3]) );
 
     VerifyRelease(reI.Capture(&matches, "iNt:42, FLoat:123.456, WORD:PoPpolLoPpOpo42 End"));
 
     LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
-        FStringConversion(matches[1]).To<int>(),
-        FStringConversion(matches[2]).To<float>(),
+        FStringConversion(matches[1]).ConvertTo<int>(),
+        FStringConversion(matches[2]).ConvertTo<float>(),
         FStringView(matches[3]) );
 
     int parseInt{};
@@ -240,8 +291,8 @@ static void Test_Regexp_() {
 void Test_Format() {
     PPE_DEBUG_NAMEDSCOPE("Test_Format");
 
-    LOG(Test_Format, Emphasis, L"starting format tests ...");
-
+    Test_Base64_();
+    Test_Conversion_();
     Test_Regexp_();
     Test_TextWriter_();
     Test_Format_();

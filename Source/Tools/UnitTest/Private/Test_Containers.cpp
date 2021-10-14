@@ -24,6 +24,7 @@
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Filename.h"
+#include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"

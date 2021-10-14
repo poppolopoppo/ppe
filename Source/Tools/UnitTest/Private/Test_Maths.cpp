@@ -6,6 +6,7 @@
 #include "Maths/ScalarMatrixHelpers.h"
 
 #include "Diagnostic/Logger.h"
+#include "Meta/Optional.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 
@@ -17,7 +18,64 @@ LOG_CATEGORY(, Test_Maths)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void Test_Vector_() {
+static NO_INLINE void Test_Iterable_() {
+    constexpr auto is_odd = [](int x) constexpr -> bool { return !!(x & 1); };
+    constexpr auto is_even = [](int x) constexpr -> bool { return !(x & 1); };
+    constexpr auto sqr = [](int x) constexpr -> int { return x * x; };
+
+    static constexpr const int values[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+    auto range = MakeIterable(values);
+
+    using iterator_t = Meta::TIteratorTraits<decltype(range)::iterator>;
+    STATIC_ASSERT(std::is_same_v<iterator_t::value_type, int>);
+    STATIC_ASSERT(std::is_same_v<iterator_t::reference, const int&>);
+    STATIC_ASSERT(std::is_same_v<iterator_t::pointer, const int*>);
+
+    AssertRelease(lengthof(values) == std::distance(range.begin(), range.end()));
+
+    const size_t count_all = range.size();
+    const size_t count_odd = range.CountIf(is_odd);
+    const size_t count_even = range.CountIf(is_even);
+    AssertRelease(5 == count_odd);
+    AssertRelease(4 == count_even);
+    AssertRelease(count_all == count_even + count_odd);
+
+    const size_t count_odd2 = range.FilterBy(is_odd).size();
+    const size_t count_even2 = range.FilterBy(is_even).size();
+    AssertRelease(count_odd2 == count_odd);
+    AssertRelease(count_even2 == count_even);
+
+    const int sum_all = range.Accumulate();
+    const int sum_odd = range.FilterBy(is_odd).Accumulate();
+    const int sum_even = range.FilterBy(is_even).Accumulate();
+    AssertRelease(25 == sum_odd);
+    AssertRelease(20 == sum_even);
+    AssertRelease(sum_all == sum_odd + sum_even);
+
+    const int sqr_all = range.MapReduce(sqr, Meta::TPlus<>{});
+    const int sqr_odd = range.FilterBy(is_odd).MapReduce(sqr, Meta::TPlus<>{});
+    const int sqr_even = range.FilterBy(is_even).MapReduce(sqr, Meta::TPlus<>{});
+    AssertRelease(285 == sqr_all);
+    AssertRelease(165 == sqr_odd);
+    AssertRelease(120 == sqr_even);
+    AssertRelease(sqr_all == sqr_odd + sqr_even);
+
+    const int sqr_odd2 = range.Select([&](int x) NOEXCEPT {
+        Meta::TOptional<int> ret;
+        if (is_odd(x)) ret.emplace(sqr(x));
+        return ret;
+    }).Accumulate();
+    const int sqr_even2 = range.Select([&](const int& x) {
+        Meta::TOptional<int> ret;
+        if (is_even(x)) ret.emplace(sqr(x));
+        return ret;
+    }).Accumulate();
+    AssertRelease(165 == sqr_odd2);
+    AssertRelease(120 == sqr_even2);
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_Vector_() {
     {
         CONSTEXPR int2 x = int2::X;
         CONSTEXPR int2 y = int2::Y;
@@ -74,7 +132,7 @@ static void Test_Vector_() {
 }
 
 //----------------------------------------------------------------------------
-static void Test_BoundingBox_() {
+static NO_INLINE void Test_BoundingBox_() {
     {
         FAabb3f box;
         AssertRelease(not box.HasPositiveExtents());
@@ -125,7 +183,7 @@ static void Test_BoundingBox_() {
     }
 }
 //----------------------------------------------------------------------------
-static void Test_Matrix_() {
+static NO_INLINE void Test_Matrix_() {
     {
         int4x3 m = float4x3::Identity();
         int3x4 t = m.Transpose();
@@ -172,6 +230,7 @@ void Test_Maths() {
 
     LOG(Test_Maths, Emphasis, L"starting maths tests ...");
 
+    Test_Iterable_();
     Test_Vector_();
     Test_BoundingBox_();
     Test_Matrix_();

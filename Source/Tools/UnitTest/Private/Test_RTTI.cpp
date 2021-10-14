@@ -503,7 +503,25 @@ static NO_INLINE void Test_Any_() {
     RTTI::FAtom dico2_anyAny = dico2->Find(datom2.Data(), anyAny);
     LOG(Test_RTTI, Debug, L"dico2_anyAny: {0}", dico2_anyAny.TypedConstData<float3>());
     AssertRelease(RTTI::MakeAny(float3(1, 2, 3)).InnerAtom().Equals(dico2_anyAny));
-    //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); %TODO%
+    //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); #TODO
+
+    RTTI::FAny anyAny2{ RTTI::ENativeType::Any };
+    AssertRelease(not anyAny.IsDefaultValue());
+    AssertRelease(&anyAny2 == anyAny2.InnerAtom().Data());
+    VerifyRelease(anyAny.PromoteCopy(anyAny2.InnerAtom()));
+    AssertRelease(anyAny2.Equals(anyAny));
+    print_atom(anyAny2);
+
+    anyAny.Reset();
+    AssertRelease(not anyAny);
+    AssertRelease(anyAny.IsDefaultValue());
+    AssertRelease(not anyAny2.IsDefaultValue());
+    VerifyRelease(anyAny2.PromoteMove(anyAny.InnerAtom()));
+    print_atom(anyAny2);
+    print_atom(anyAny);
+    AssertRelease(anyAny2);
+    AssertRelease(not anyAny.IsDefaultValue());
+    AssertRelease(anyAny.Equals(anyAny2));
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_CircularReferences_() {
@@ -884,7 +902,7 @@ static NO_INLINE void Test_TransactionSerialization_() {
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_TransactionSerializer_() {
     Serialize::FDirectoryTransaction import(
-        RTTI::FName("Saved/RTTI/Robotapp"),
+        RTTI::FName("Robotapp"),
         RTTI::FName("UnitTest_Import"),
         L"UnitTest_Import_.*\\.txt",
         { L"Saved:/RTTI" } );
@@ -897,7 +915,7 @@ static NO_INLINE void Test_TransactionSerializer_() {
     import.MountToDB();
 
     Serialize::FDirectoryTransaction input(
-        RTTI::FName("Saved/RTTI/Robotapp"),
+        RTTI::FName("Robotapp"),
         RTTI::FName("UnitTest_Input"),
         L"UnitTest_Input_.*\\.txt",
         { L"Saved:/RTTI" });
@@ -919,8 +937,9 @@ static NO_INLINE void Test_TransactionSerializer_() {
 static NO_INLINE void Test_Serialize_() {
     {
         FStringBuilder serialized;
+        Serialize::FJson::FAllocator alloc;
 
-        Serialize::FJson in, out;
+        Serialize::FJson in{ alloc }, out{ alloc };
         {
             in.Root().Assign(165674.5454 / 0.666666);
             serialized << in;
@@ -938,7 +957,7 @@ static NO_INLINE void Test_Serialize_() {
             rand.Randomize(RTTI::MakeAtom(&binData));
 
             FStringView str = binData.MakeConstView().Cast<const char>();
-            in.Root().Assign(ToString(str));
+            in.Root().Assign(in.MakeText(str, false));
             serialized << in;
 
             if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))
@@ -946,6 +965,12 @@ static NO_INLINE void Test_Serialize_() {
 
             Assert(in.Root() == out.Root());
         }
+    }
+    {
+        const FStringView RTTITestSimple_{ FRTTITestSimple_::RTTI_FMetaClass::Get()->Name() };
+        const FStringView RTTITest_{ FRTTITest_::RTTI_FMetaClass::Get()->Name() };
+        AssertRelease(RTTITestSimple_ == "RTTITestSimple_");
+        AssertRelease(RTTITest_ == "RTTITest_");
     }
     {
         Test_TransactionSerialization_<FRTTITestSimple_>();
@@ -1020,14 +1045,16 @@ static void Test_Grammar_() {
     VerifyRelease(EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]"));
     VerifyRelease(EvalExpr_(&context, "(Int32:-1317311908, WString:'zee')"));
     VerifyRelease(EvalExpr_(&context, "ETest:'a'+ETest:1"));
-    VerifyRelease(EvalExpr_(&context, "FRTTITest_ {}"));
-    VerifyRelease(EvalExpr_(&context, "FRTTITest__xxx is FRTTITest_ {}"));
-    VerifyRelease(EvalExpr_(&context, "FRTTITest__yyy is FRTTITest_ { Int32Scalar = 69 }"));
-    VerifyRelease(EvalExpr_(&context, "FRTTITest__zzz is FRTTITest_ { AnyTPair = ('toto', 42) }"));
-    VerifyRelease(EvalExpr_(&context, "FRTTITest__www is FRTTITest_ { AnyTPair = (Int32:-1317311908, WString:'zee') }"));
+    VerifyRelease(EvalExpr_(&context, "RTTITest_ {}"));
+    VerifyRelease(EvalExpr_(&context, "RTTITest__xxx is RTTITest_ {}"));
+    VerifyRelease(EvalExpr_(&context, "RTTITest__yyy is RTTITest_ { Int32Scalar = 69 }"));
+    VerifyRelease(EvalExpr_(&context, "RTTITest__zzz is RTTITest_ { AnyTPair = ('toto', 42) }"));
+    VerifyRelease(EvalExpr_(&context, "RTTITest__www is RTTITest_ { AnyTPair = (Int32:-1317311908, WString:'zee') }"));
     VerifyRelease(EvalExpr_(&context, "Any:[{(1,[(Double:Int64:(1+(2+(3*(2*(4+1))))),Int32:1)])}]"));
     VerifyRelease(EvalExpr_(&context, "true ? 42.0 : 'toto'"));
     VerifyRelease(EvalExpr_(&context, "((1 >= 3) ? Float:42 : (1+2)*3)"));
+    VerifyRelease(EvalExpr_(&context, "Filename:\"c:/Windows/system32/notepad.exe\""));
+    VerifyRelease(EvalExpr_(&context, "BinaryData:Any:\"ucFFy1fT2feXC4Ft6VM/FyFxt6MxDwP3zf0Ld6N3P+2NbTPZq5MRTQ==\""));
 }
 //----------------------------------------------------------------------------
 } //!namespace
