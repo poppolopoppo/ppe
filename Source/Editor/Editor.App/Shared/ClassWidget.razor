@@ -1,0 +1,49 @@
+﻿@using Editor.Remoting
+
+<MudContainer>
+	<h3>@Class.Name</h3>
+	<span><u>@Class._class</u> - <small>@Class.Flags</small></span>
+	<hr/>
+	<MudContainer>
+		<MudExpansionPanels MultiExpansion="true">
+		@if (Class.Parent != null)
+		{
+			<MudExpansionPanel Text="@Class.Parent.Name" Icon="@Icons.Material.Filled.SupervisorAccount">
+				<ClassWidget Class="@Class.Parent" />
+			</MudExpansionPanel>
+		}
+		@foreach (var Property in EnumerateIFP(Class.Properties))
+		{
+			<MudExpansionPanel Text="@Property.Name" Icon="@Icons.Material.Filled.Label">
+				<TraitsWidget Traits="@Property.Traits" />
+			</MudExpansionPanel>
+		}
+		@foreach (var Function in EnumerateIFP(Class.Functions))
+		{
+			<MudExpansionPanel Text="@Function.Name" Icon="@Icons.Material.Filled.LabelImportant">
+				<MudExpansionPanels MultiExpansion="true">
+				@if (Function.Result != null)
+				{
+					<MudExpansionPanel Text="Result" Icon="@Icons.Material.Filled.Reply">
+						<TraitsWidget Traits="@Function.Result" />
+					</MudExpansionPanel>
+				}
+				@foreach (var Arg in EnumerateIFP(Function.Parameters))
+				{
+					<MudExpansionPanel Text="@Arg.Name" Icon="@Icons.Material.Filled.Send">
+						<TraitsWidget Traits="@Arg.Traits" />
+					</MudExpansionPanel>
+				}
+				</MudExpansionPanels>
+			</MudExpansionPanel>
+		}
+		</MudExpansionPanels>
+	</MudContainer>
+</MudContainer>
+
+@code {
+	[Parameter]
+	public RTTIClass Class { get; set; }
+
+	private IEnumerable<T> EnumerateIFP<T>(ICollection<T> c) => c ?? new List<T>();
+}
