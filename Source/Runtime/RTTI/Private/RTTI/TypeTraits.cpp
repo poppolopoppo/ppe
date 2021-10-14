@@ -10,6 +10,7 @@
 #include "RTTI/NativeTypes.h"
 #include "RTTI/Typedefs.h"
 
+#include "Diagnostic/DebugFunction.h"
 #include "HAL/PlatformHash.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
@@ -60,12 +61,12 @@ ETypeFlags MakeTupleTypeFlags(const TMemoryView<const PTypeTraits>& elements) {
     for (const PTypeTraits& it : elements) {
         const ETypeFlags elt_flags = it->TypeFlags();
 
-        if (elt_flags ^ ETypeFlags::Object)
+        if (is_object_v(elt_flags))
             flags = flags + ETypeFlags::Object;
 
-        if (not (elt_flags ^ ETypeFlags::POD))
+        if (not is_pod_v(elt_flags))
             flags = flags - ETypeFlags::POD;
-        if (not (elt_flags ^ ETypeFlags::TriviallyDestructible))
+        if (not is_trivially_destructible_v(elt_flags))
             flags = flags - ETypeFlags::TriviallyDestructible;
     }
 
@@ -75,7 +76,7 @@ ETypeFlags MakeTupleTypeFlags(const TMemoryView<const PTypeTraits>& elements) {
 ETypeFlags MakeListTypeFlags(const PTypeTraits& value) {
     ETypeFlags flags = ETypeFlags::List;
 
-    if (value->TypeFlags() ^ ETypeFlags::Object)
+    if (is_object_v(value->TypeFlags()))
         flags = flags + ETypeFlags::Object;
 
     return flags;
@@ -84,8 +85,7 @@ ETypeFlags MakeListTypeFlags(const PTypeTraits& value) {
 ETypeFlags MakeDicoTypeFlags(const PTypeTraits& key, const PTypeTraits& value) {
     ETypeFlags flags = ETypeFlags::Dico;
 
-    if ((key->TypeFlags() ^ ETypeFlags::Object) |
-        (value->TypeFlags() ^ ETypeFlags::Object) )
+    if (is_object_v(key->TypeFlags()) | is_object_v(value->TypeFlags()))
         flags = flags + ETypeFlags::Object;
 
     return flags;
@@ -119,32 +119,25 @@ PPE_RTTI_API PTypeTraits MakeTraitsFromTypename(const FStringView& typename_) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RTTI
-} //!namespace PPE
-
-namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
+FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {
     auto sep = Fmt::NotFirstTime('|');
 
-    if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << "Scalar";; }
-    if (flags & RTTI::ETypeFlags::Tuple)    { oss << sep << "Tuple"; ;}
-    if (flags & RTTI::ETypeFlags::List)     { oss << sep << "List"; }
-    if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << "Dico"; }
+    if (flags & RTTI::ETypeFlags::Scalar) { oss << sep << "Scalar";; }
+    if (flags & RTTI::ETypeFlags::Tuple) { oss << sep << "Tuple"; ; }
+    if (flags & RTTI::ETypeFlags::List) { oss << sep << "List"; }
+    if (flags & RTTI::ETypeFlags::Dico) { oss << sep << "Dico"; }
 
-    if (flags & RTTI::ETypeFlags::Arithmetic)  { oss << sep << "Arithmetic"; }
-    if (flags & RTTI::ETypeFlags::Boolean)     { oss << sep << "Boolean"; }
-    if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << "Enum"; }
-    if (flags & RTTI::ETypeFlags::FloatingPoint)  { oss << sep << "FloatingPoint"; }
-    if (flags & RTTI::ETypeFlags::Native)   { oss << sep << "Native"; }
-    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << "Object"; }
-    if (flags & RTTI::ETypeFlags::String)   { oss << sep << "String"; }
-    if (flags & RTTI::ETypeFlags::SignedIntegral)  { oss << sep << "SignedIntegral"; }
-    if (flags & RTTI::ETypeFlags::UnsignedIntegral)  { oss << sep << "UnsignedIntegral"; }
+    if (flags & RTTI::ETypeFlags::Arithmetic) { oss << sep << "Arithmetic"; }
+    if (flags & RTTI::ETypeFlags::Boolean) { oss << sep << "Boolean"; }
+    if (flags & RTTI::ETypeFlags::Enum) { oss << sep << "Enum"; }
+    if (flags & RTTI::ETypeFlags::FloatingPoint) { oss << sep << "FloatingPoint"; }
+    if (flags & RTTI::ETypeFlags::Native) { oss << sep << "Native"; }
+    if (flags & RTTI::ETypeFlags::Object) { oss << sep << "Object"; }
+    if (flags & RTTI::ETypeFlags::String) { oss << sep << "String"; }
+    if (flags & RTTI::ETypeFlags::SignedIntegral) { oss << sep << "SignedIntegral"; }
+    if (flags & RTTI::ETypeFlags::UnsignedIntegral) { oss << sep << "UnsignedIntegral"; }
 
-    if (flags & RTTI::ETypeFlags::POD)      { oss << sep << "POD"; }
+    if (flags & RTTI::ETypeFlags::POD) { oss << sep << "POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << "TriviallyDestructible"; }
 
     return oss;
@@ -153,22 +146,22 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags) {
     auto sep = Fmt::NotFirstTime(L'|');
 
-    if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << L"Scalar";; }
-    if (flags & RTTI::ETypeFlags::Tuple)    { oss << sep << L"Tuple"; ;}
-    if (flags & RTTI::ETypeFlags::List)     { oss << sep << L"List"; }
-    if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << L"Dico"; }
+    if (flags & RTTI::ETypeFlags::Scalar) { oss << sep << L"Scalar";; }
+    if (flags & RTTI::ETypeFlags::Tuple) { oss << sep << L"Tuple"; ; }
+    if (flags & RTTI::ETypeFlags::List) { oss << sep << L"List"; }
+    if (flags & RTTI::ETypeFlags::Dico) { oss << sep << L"Dico"; }
 
-    if (flags & RTTI::ETypeFlags::Arithmetic)  { oss << sep << L"Arithmetic"; }
-    if (flags & RTTI::ETypeFlags::Boolean)     { oss << sep << L"Boolean"; }
-    if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << L"Enum"; }
-    if (flags & RTTI::ETypeFlags::FloatingPoint)  { oss << sep << L"FloatingPoint"; }
-    if (flags & RTTI::ETypeFlags::Native)   { oss << sep << L"Native"; }
-    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << L"Object"; }
-    if (flags & RTTI::ETypeFlags::String)   { oss << sep << L"String"; }
-    if (flags & RTTI::ETypeFlags::SignedIntegral)  { oss << sep << L"SignedIntegral"; }
-    if (flags & RTTI::ETypeFlags::UnsignedIntegral)  { oss << sep << L"UnsignedIntegral"; }
+    if (flags & RTTI::ETypeFlags::Arithmetic) { oss << sep << L"Arithmetic"; }
+    if (flags & RTTI::ETypeFlags::Boolean) { oss << sep << L"Boolean"; }
+    if (flags & RTTI::ETypeFlags::Enum) { oss << sep << L"Enum"; }
+    if (flags & RTTI::ETypeFlags::FloatingPoint) { oss << sep << L"FloatingPoint"; }
+    if (flags & RTTI::ETypeFlags::Native) { oss << sep << L"Native"; }
+    if (flags & RTTI::ETypeFlags::Object) { oss << sep << L"Object"; }
+    if (flags & RTTI::ETypeFlags::String) { oss << sep << L"String"; }
+    if (flags & RTTI::ETypeFlags::SignedIntegral) { oss << sep << L"SignedIntegral"; }
+    if (flags & RTTI::ETypeFlags::UnsignedIntegral) { oss << sep << L"UnsignedIntegral"; }
 
-    if (flags & RTTI::ETypeFlags::POD)      { oss << sep << L"POD"; }
+    if (flags & RTTI::ETypeFlags::POD) { oss << sep << L"POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << L"TriviallyDestructible"; }
 
     return oss;
@@ -191,6 +184,23 @@ FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FNamedTypeInfos& typeIn
         << typeInfos.SizeInBytes() << L"] ("
         << typeInfos.Flags() << L')';
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace RTTI
+} //!namespace PPE
+
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+DEBUG_FUNCTION(PPE_RTTI_API, DebugTraitsTypeName, FStringView, (const RTTI::ITypeTraits& traits), {
+    return traits.TypeName();
+})
+//----------------------------------------------------------------------------
+DEBUG_FUNCTION(PPE_RTTI_API, DebugTraitsTypeInfos, RTTI::FTypeInfos, (const RTTI::ITypeTraits& traits), {
+    return traits.TypeInfos();
+})
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -26,6 +26,7 @@ static CONSTEXPR const PTypeInfos MakeAliasTypeInfos = []() CONSTEXPR NOEXCEPT -
     return FTypeInfos{
         infos.TypeId,
         FSizeAndFlags{
+            infos.Alignment(),
             infos.SizeInBytes(),
             infos.Flags() + ETypeFlags::Alias
         }};

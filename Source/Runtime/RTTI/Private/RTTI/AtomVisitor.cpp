@@ -6,6 +6,7 @@
 #include "RTTI/Atom.h"
 #include "RTTI/NativeTypes.h"
 #include "RTTI/TypeTraits.h"
+#include "RTTI/Typedefs.h"
 
 #include "MetaClass.h"
 #include "MetaEnum.h"
@@ -267,7 +268,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool IAtomVisitor::ShouldSkipTraits(IAtomVisitor* visitor, const ITypeTraits& traits) NOEXCEPT {
-    return ((!!visitor->OnlyObjects()) & (!(traits.TypeFlags() ^ ETypeFlags::Object)));
+    return ((!!visitor->OnlyObjects()) & (!is_object_v(traits.TypeFlags())));
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data) {

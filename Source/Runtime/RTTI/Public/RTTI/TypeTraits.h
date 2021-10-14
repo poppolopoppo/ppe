@@ -67,6 +67,7 @@ public: // non-virtual helpers
     FTypeId TypeId() const { return _type.TypeId; }
     ETypeFlags TypeFlags() const { return _type.Flags(); }
     FTypeInfos TypeInfos() const { return _type; }
+    size_t Alignment() const { return _type.Alignment(); }
     size_t SizeInBytes() const { return _type.SizeInBytes(); }
     FSizeAndFlags SizeAndFlags() const { return _type.SizeAndFlags; }
     FNamedTypeInfos NamedTypeInfos() const { return FNamedTypeInfos(TypeName(), _type); }
@@ -115,6 +116,10 @@ struct PTypeTraits {
         return (not operator ==(lhs, rhs));
     }
 
+    friend hash_t hash_value(const PTypeTraits& traits) NOEXCEPT {
+        return hash_ptr(traits.PTraits);
+    }
+
     friend void swap(PTypeTraits& lhs, PTypeTraits& rhs) NOEXCEPT {
         std::swap(lhs.PTraits, rhs.PTraits);
     }
@@ -143,15 +148,19 @@ class IScalarTraits : public ITypeTraits {
 public:
     CONSTEXPR explicit IScalarTraits(FTypeInfos type)
     :   ITypeTraits(type) {
-        Assert_NoAssume(type.Flags() ^ ETypeFlags::Scalar);
+        Assert_NoAssume(is_scalar_v(type.Flags()));
     }
 
     virtual int Compare(const void* lhs, const void* rhs) const NOEXCEPT = 0;
+
+    virtual bool FromString(void* dst, const FStringConversion& iss) const NOEXCEPT = 0;
 
     virtual const FMetaEnum* EnumClass() const NOEXCEPT = 0;
     virtual const FMetaClass* ObjectClass() const NOEXCEPT = 0;
 
 public: // helpers
+    ENativeType NativeType() const NOEXCEPT { return static_cast<ENativeType>(TypeId()); }
+
     bool Less(const void* lhs, const void* rhs) const NOEXCEPT { return Compare(lhs, rhs) < 0; }
     bool LessEqual(const void* lhs, const void* rhs) const NOEXCEPT { return Compare(lhs, rhs) <= 0; }
     bool Greater(const void* lhs, const void* rhs) const NOEXCEPT { return Compare(lhs, rhs) > 0; }
@@ -168,7 +177,7 @@ class ITupleTraits : public ITypeTraits {
 public: // ITypeTraits
     CONSTEXPR explicit ITupleTraits(FTypeInfos type)
     :   ITypeTraits(type) {
-        Assert_NoAssume(type.Flags() ^ ETypeFlags::Tuple);
+        Assert_NoAssume(is_tuple_v(type.Flags()));
     }
 
     PPE_RTTI_API virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
@@ -187,7 +196,7 @@ class IListTraits : public ITypeTraits {
 public: // ITypeTraits
     CONSTEXPR explicit IListTraits(FTypeInfos type)
     :   ITypeTraits(type) {
-        Assert_NoAssume(type.Flags() ^ ETypeFlags::List);
+        Assert_NoAssume(is_list_v(type.Flags()));
     }
 
     PPE_RTTI_API virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
@@ -220,7 +229,7 @@ class IDicoTraits : public ITypeTraits {
 public: // ITypeTraits
     CONSTEXPR explicit IDicoTraits(FTypeInfos type)
     :   ITypeTraits(type) {
-        Assert_NoAssume(type.Flags() ^ ETypeFlags::Dico);
+        Assert_NoAssume(is_dico_v(type.Flags()));
     }
 
     PPE_RTTI_API virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
@@ -251,15 +260,35 @@ public: // IDicoTraits
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline const IScalarTraits* ITypeTraits::AsScalar() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Scalar ? checked_cast<const IScalarTraits*>(this) : nullptr); }
-inline const ITupleTraits* ITypeTraits::AsTuple() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Tuple ? checked_cast<const ITupleTraits*>(this) : nullptr); }
-inline const IListTraits* ITypeTraits::AsList() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::List ? checked_cast<const IListTraits*>(this) : nullptr); }
-inline const IDicoTraits* ITypeTraits::AsDico() const NOEXCEPT { return (TypeFlags() ^ ETypeFlags::Dico ? checked_cast<const IDicoTraits*>(this) : nullptr); }
+inline const IScalarTraits* ITypeTraits::AsScalar() const NOEXCEPT {
+    return (is_scalar_v(TypeFlags()) ? checked_cast<const IScalarTraits*>(this) : nullptr);
+}
+inline const ITupleTraits* ITypeTraits::AsTuple() const NOEXCEPT {
+    return (is_tuple_v(TypeFlags()) ? checked_cast<const ITupleTraits*>(this) : nullptr);
+}
+inline const IListTraits* ITypeTraits::AsList() const NOEXCEPT {
+    return (is_list_v(TypeFlags()) ? checked_cast<const IListTraits*>(this) : nullptr);
+}
+inline const IDicoTraits* ITypeTraits::AsDico() const NOEXCEPT {
+    return (is_dico_v(TypeFlags()) ? checked_cast<const IDicoTraits*>(this) : nullptr);
+}
 //----------------------------------------------------------------------------
-inline const IScalarTraits& ITypeTraits::ToScalar() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Scalar); return (*checked_cast<const IScalarTraits*>(this)); }
-inline const ITupleTraits& ITypeTraits::ToTuple() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Tuple); return (*checked_cast<const ITupleTraits*>(this)); }
-inline const IListTraits& ITypeTraits::ToList() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::List); return (*checked_cast<const IListTraits*>(this)); }
-inline const IDicoTraits& ITypeTraits::ToDico() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Dico); return (*checked_cast<const IDicoTraits*>(this)); }
+inline const IScalarTraits& ITypeTraits::ToScalar() const {
+    Assert_NoAssume(is_scalar_v(TypeFlags()));
+    return (*checked_cast<const IScalarTraits*>(this));
+}
+inline const ITupleTraits& ITypeTraits::ToTuple() const {
+    Assert_NoAssume(is_tuple_v(TypeFlags()));
+    return (*checked_cast<const ITupleTraits*>(this));
+}
+inline const IListTraits& ITypeTraits::ToList() const {
+    Assert_NoAssume(is_list_v(TypeFlags()));
+    return (*checked_cast<const IListTraits*>(this));
+}
+inline const IDicoTraits& ITypeTraits::ToDico() const {
+    Assert_NoAssume(is_dico_v(TypeFlags()));
+    return (*checked_cast<const IDicoTraits*>(this));
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

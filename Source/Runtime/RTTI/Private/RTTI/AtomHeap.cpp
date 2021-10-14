@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "RTTI/AtomHeap.h"
+#include "RTTI/Typedefs.h"
 
 namespace PPE {
 namespace RTTI {

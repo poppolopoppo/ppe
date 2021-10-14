@@ -34,7 +34,7 @@ template <typename T, FTypeId _NativeType>
 static CONSTEXPR const PTypeInfos MakeStringTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::String + ETypeFlags::Native>;
 //----------------------------------------------------------------------------
 enum class ENativeType : FTypeId {
-    Invalid = 0,
+    Unknown = 0,
 #define DECL_RTTI_NATIVETYPE_ENUM(_Name, T, _TypeId) _Name = _TypeId,
     FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ENUM)
 #undef DECL_RTTI_NATIVETYPE_ENUM

@@ -89,8 +89,8 @@ void FLambdaReferenceCollector::Collect(const FMetaObject& root, FOnReference&& 
     Assert_NoAssume(not _prefix);
     Assert_NoAssume(not _postfix);
 
-    _prefix = prefix;
-    _postfix = postfix;
+    _prefix = std::move(prefix);
+    _postfix = std::move(postfix);
 
     FBaseReferenceCollector::Collect(root);
 
@@ -103,8 +103,8 @@ void FLambdaReferenceCollector::Collect(const TMemoryView<const PMetaObject>& ro
     Assert_NoAssume(not _prefix);
     Assert_NoAssume(not _postfix);
 
-    _prefix = prefix;
-    _postfix = postfix;
+    _prefix = std::move(prefix);
+    _postfix = std::move(postfix);
 
     FBaseReferenceCollector::Collect(roots);
 

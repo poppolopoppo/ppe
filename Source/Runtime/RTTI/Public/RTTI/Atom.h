@@ -49,6 +49,7 @@ public:
     bool IsIntegral() const { return _traits->TypeInfos().IsIntegral(); }
     bool IsSignedIntegral() const { return _traits->TypeInfos().IsSignedIntegral(); }
     bool IsUnsignedIntegral() const { return _traits->TypeInfos().IsUnsignedIntegral(); }
+    bool IsStructured() const { return _traits->TypeInfos().IsStructured(); }
 
     bool IsPOD() const { return _traits->TypeInfos().IsPOD(); }
     bool IsTriviallyDestructible() const { return _traits->TypeInfos().IsTriviallyDestructible(); }
