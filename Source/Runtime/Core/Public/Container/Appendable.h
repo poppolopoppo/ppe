@@ -15,6 +15,13 @@ class TVector;
 template <typename T>
 class TAppendable {
 public:
+    typedef T value_type;
+
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+
     using FPushBackFunc = void (*)(void*, T&&);
 
     TAppendable() = default;
