@@ -3,6 +3,8 @@
 #include "RTTI/NativeTypes.h"
 #include "RTTI/NativeTraits.h"
 
+#include "IO/StringConversion.h"
+
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -24,6 +26,8 @@ public: // ITypeTraits
 
 public: // IScalarTraits
     virtual int Compare(const void* lhs, const void* rhs) const NOEXCEPT override final;
+
+    virtual bool FromString(void* dst, const FStringConversion& iss) const NOEXCEPT override;
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -39,12 +43,27 @@ int TBaseScalarTraits<T>::Compare(const void* lhs, const void* rhs) const NOEXCE
     Assert(lhs);
     Assert(rhs);
 
-    IF_CONSTEXPR(Meta::has_trivial_less_v<T>)
+    STATIC_ASSERT(Meta::has_destructor<T>::value);
+    STATIC_ASSERT(Meta::has_trivial_equal_v<T>);
+
+    IF_CONSTEXPR(Meta::has_trivial_compare_v<T>) {
         return Meta::TCompareTo<T>{}(
             *static_cast<const T*>(lhs),
             *static_cast<const T*>(rhs) );
-    else
+    }
+    else {
+        STATIC_ASSERT(not Meta::has_trivial_less_v<T>);
         AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+template <>
+PPE_RTTI_API bool TBaseScalarTraits<PMetaObject>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT;
+template <typename T>
+bool TBaseScalarTraits<T>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
+    Assert(dst);
+
+    return (iss >> static_cast<T*>(dst));
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -72,13 +91,13 @@ template <typename T>
 class TEnumTraits final : public TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<TEnumOrd<T>> > {
     using base_traits = TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<TEnumOrd<T>> >;
 
-    public: // ITypeTraits
+public: // ITypeTraits
     using base_traits::base_traits;
 
     virtual const FMetaEnum* EnumClass() const NOEXCEPT override final { return RTTI::MetaEnum<T>(); }
     virtual const FMetaClass* ObjectClass() const NOEXCEPT override final { return nullptr; }
 
-    public: // ITypeTraits
+public: // ITypeTraits
     virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
@@ -93,6 +112,9 @@ class TEnumTraits final : public TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<
     virtual void* Cast(void* data, const PTypeTraits& dst) const override final;
 
     virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
+
+public: // IScalarTraits
+    virtual bool FromString(void* dst, const FStringConversion& iss) const NOEXCEPT override final;
 };
 //----------------------------------------------------------------------------
 template <typename _Enum, class = Meta::TEnableIf< std::is_enum_v<_Enum> > >
@@ -167,6 +189,19 @@ void TEnumTraits<T>::ResetToDefaultValue(void* data) const {
     *static_cast<TEnumOrd<T>*>(data) = defaultValue;
 }
 //----------------------------------------------------------------------------
+template <typename T>
+bool TEnumTraits<T>::FromString(void* dst, const FStringConversion& iss) const noexcept {
+    if (not base_traits::FromString(dst, iss)) {
+        FMetaEnumOrd ord;
+        if (EnumClass()->ParseValue(iss.Input, &ord)) {
+            *static_cast<TEnumOrd<T>*>(dst) = checked_cast<TEnumOrd<T>>(ord);
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // TObjectTraits<T>
@@ -181,11 +216,11 @@ template <typename T>
 class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
     using base_traits = TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>>;
 
-    public: // IScalarTraits
+public: // IScalarTraits
     virtual const FMetaEnum* EnumClass() const NOEXCEPT override final { return nullptr; }
     virtual const FMetaClass* ObjectClass() const NOEXCEPT override final { return RTTI::MetaClass<T>(); }
 
-    public: // ITypeTraits
+public: // ITypeTraits
     using base_traits::base_traits;
 
     virtual FStringView TypeName() const override final;
@@ -202,6 +237,7 @@ class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTrait
     virtual void* Cast(void* data, const PTypeTraits& dst) const override final;
 
     virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
+
 };
 //----------------------------------------------------------------------------
 template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >

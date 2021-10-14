@@ -5,15 +5,31 @@
 #include "MetaObject.h"
 #include "RTTI/AtomVisitor.h"
 #include "RTTI/NativeTypes.h"
+#include "RTTI/Typedefs.h"
 
 #include "IO/StringBuilder.h"
 
 namespace PPE {
 namespace RTTI {
+PPE_ASSERT_TYPE_IS_POD(FAtom);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_ASSERT_TYPE_IS_POD(FAtom);
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+static bool ParseAtom_(const TBasicStringConversion<_Char>& src, FAtom& dst) {
+    Assert(dst);
+
+    if (const IScalarTraits* const scalar = dst.Traits()->AsScalar())
+        return scalar->FromString(dst.Data(), src);
+
+    return false;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FAtom::IsAny() const {
     // used when ENativeType is only fwd declared
@@ -65,17 +81,17 @@ FWString FAtom::ToWString() const {
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
-FAtom FAtom::FromObj(const PMetaObject& obj) {
+FAtom FAtom::FromObj(const PMetaObject& obj) NOEXCEPT {
     Assert(obj);
     return FAtom{ &obj, obj->RTTI_Traits() };
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace RTTI
-} //!namespace PPE
-
-namespace PPE {
+bool FAtom::FromString(const FStringConversion& conv) const NOEXCEPT {
+    Assert(Valid());
+    if (const IScalarTraits* const pScalar = Traits()->AsScalar())
+        return pScalar->FromString(_data, conv);
+    return false;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -89,6 +105,17 @@ FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FAtom& atom) {
     return oss;
 }
 //----------------------------------------------------------------------------
+bool operator >>(const FStringConversion& iss, FAtom* atom) {
+    Assert(atom);
+    return ParseAtom_(iss, *atom);
+}
+//----------------------------------------------------------------------------
+bool operator >>(const FWStringConversion& iss, FAtom* atom) {
+    Assert(atom);
+    return ParseAtom_(FStringConversion{ WCHAR_TO_UTF_8(iss.Input) }, *atom);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RTTI
 } //!namespace PPE

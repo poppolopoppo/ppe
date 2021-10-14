@@ -13,6 +13,12 @@ class PPE_RTTI_API FRTTIException : public FException {
 public:
     explicit FRTTIException(const char* what)
         : FException(what) {}
+
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override {
+        return oss;
+    }
+#endif
 };
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FClassException : public FRTTIException {

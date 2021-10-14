@@ -15,11 +15,12 @@ class FAtom {
 public:
     CONSTEXPR FAtom() NOEXCEPT : _data(nullptr) {}
     CONSTEXPR FAtom(const void* data, const PTypeTraits& traits) NOEXCEPT
-    :   _data((void*)data)
+    :   _data(const_cast<void*>(data))
     ,   _traits(traits)
     {}
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_data); }
+    bool Valid() const { return (!!_data); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     void* Data() const { return _data; }
     const PTypeTraits& Traits() const { return _traits; }
@@ -122,7 +123,8 @@ public:
     inline friend void swap(FAtom& lhs, FAtom& rhs) NOEXCEPT { lhs.Swap(rhs); }
     inline friend hash_t hash_value(const FAtom& value) NOEXCEPT { return value.HashValue(); }
 
-    PPE_RTTI_API static FAtom FromObj(const PMetaObject& obj);
+    PPE_RTTI_API static FAtom FromObj(const PMetaObject& obj) NOEXCEPT;
+    PPE_RTTI_API bool FromString(const FStringConversion& conv) const NOEXCEPT;
 
 private:
     void* _data;
@@ -175,6 +177,14 @@ inline bool is_trivially_destructible_v(const FAtom& atom) { return (atom.IsTriv
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const FAtom& atom);
+PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const FAtom& atom);
+//----------------------------------------------------------------------------
+PPE_RTTI_API bool operator >>(const FStringConversion& iss, FAtom* atom);
+PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FAtom* atom);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE
 
@@ -182,16 +192,13 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FAtom& atom);
-PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FAtom& atom);
-//----------------------------------------------------------------------------
 template <typename T>
-T& checked_cast(RTTI::FAtom& atom) noexcept {
+T& checked_cast(RTTI::FAtom& atom) NOEXCEPT {
     return atom.TypedData<T>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-const T& checked_cast(const RTTI::FAtom& atom) noexcept {
+const T& checked_cast(const RTTI::FAtom& atom) NOEXCEPT {
     return atom.TypedConstData<T>();
 }
 //----------------------------------------------------------------------------

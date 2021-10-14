@@ -17,7 +17,7 @@ namespace RTTI {
 class FNameTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
-    bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.' || ch == '/'; }
+    bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.' || ch == '/' || ch == '$'; }
 };
 BASICTOKEN_CLASS_DECL(PPE_RTTI_API, Name, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
@@ -112,6 +112,28 @@ struct FPathName {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const FBinaryData& bindata);
+PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const FBinaryData& bindata);
+//----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const FLazyPathName& pathName);
+PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const FLazyPathName& pathName);
+//----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const FPathName& pathName);
+PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const FPathName& pathName);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_RTTI_API bool operator >>(const FStringConversion& iss, FBinaryData* bindata);
+PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FBinaryData* bindata);
+//----------------------------------------------------------------------------
+PPE_RTTI_API bool operator >>(const FStringConversion& iss, FLazyPathName* pathName);
+PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FLazyPathName* pathName);
+//----------------------------------------------------------------------------
+PPE_RTTI_API bool operator >>(const FStringConversion& iss, FPathName* pathName);
+PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FPathName* pathName);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE
 
@@ -119,14 +141,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FBinaryData& bindata);
-PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata);
-//----------------------------------------------------------------------------
-PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FLazyPathName& pathName);
-PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FLazyPathName& pathName);
-//----------------------------------------------------------------------------
-PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FPathName& pathName);
-PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FPathName& pathName);
+inline RTTI::FName operator "" _rtti (const char* str, size_t len) {
+    return RTTI::FName{ FStringView(str, len) };
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

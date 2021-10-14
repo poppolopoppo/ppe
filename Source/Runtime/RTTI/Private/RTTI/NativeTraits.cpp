@@ -3,6 +3,7 @@
 #include "RTTI/NativeTraits.h"
 
 #include "RTTI/NativeTypes.h"
+#include "RTTI/Typedefs.h"
 
 // for static assertions:
 #include "IO/String.h"

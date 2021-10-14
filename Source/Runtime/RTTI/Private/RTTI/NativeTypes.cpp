@@ -5,6 +5,7 @@
 #include "RTTI/Any.h"
 #include "RTTI/AtomVisitor.h" // needed for Accept() & PrettyPrint()
 #include "RTTI/TypeInfos.h"
+#include "RTTI/Typedefs.h"
 
 #include "MetaEnum.h" // cast from FName to enum
 #include "MetaObject.h" // needed for PMetaObject manipulation
@@ -36,6 +37,7 @@
 #include "Meta/Singleton.h"
 #include <mutex>
 
+#include "MetaDatabase.h"
 #include "Thread/CriticalSection.h"
 
 namespace PPE {
@@ -131,22 +133,15 @@ static bool PromoteValue_(double d, const FAtom& dst) NOEXCEPT {
 static bool PromoteValue_(const FString& str, const FAtom& dst) {
     switch (ENativeType(dst.TypeId())) {
 
-    case ENativeType::BinaryData:   dst.FlatData<FBinaryData>().CopyFrom(str.MakeView().Cast<const u8>()); return true;
-    case ENativeType::Dirpath:      dst.FlatData<FDirpath>() = ToWString(str); return true;
-    case ENativeType::Filename:     dst.FlatData<FFilename>() = ToWString(str); return true;
-    case ENativeType::Name:         dst.FlatData<FName>() = str; return true;;
+    case ENativeType::BinaryData:   return str.ConvertTo(&dst.FlatData<FBinaryData>());
+    case ENativeType::Dirpath:      return str.ConvertTo(&dst.FlatData<FDirpath>());
+    case ENativeType::Filename:     return str.ConvertTo(&dst.FlatData<FFilename>());
+    case ENativeType::Name:         return str.ConvertTo(&dst.FlatData<FName>());
     case ENativeType::WString:      dst.FlatData<FWString>() = ToWString(str); return true;
 
     default:
-        if (dst.TypeFlags() ^ ETypeFlags::Enum) {
-            const FMetaEnum* metaEnum = dst.Traits()->ToScalar().EnumClass();
-            Assert(metaEnum);
-
-            if (const FMetaEnumValue* v = metaEnum->NameToValueIFP(str.MakeView())) {
-                metaEnum->SetValue(dst, *v);
-                return true;
-            }
-        }
+        if (is_enum_v(dst.TypeFlags()))
+            return dst.Traits()->ToScalar().FromString(dst.Data(), str.Converter());
 
         return false;
     }
@@ -155,18 +150,22 @@ static bool PromoteValue_(const FString& str, const FAtom& dst) {
 static bool PromoteValue_(const FWString& wstr, const FAtom& dst) {
     switch (ENativeType(dst.TypeId())) {
 
-    case ENativeType::Dirpath:      dst.FlatData<FDirpath>() = wstr; return true;
-    case ENativeType::Filename:     dst.FlatData<FFilename>() = wstr; return true;
-    case ENativeType::Name:         dst.FlatData<FName>() = ToString(wstr); return true;;
+    case ENativeType::BinaryData:   return wstr.ConvertTo(&dst.FlatData<FBinaryData>());
+    case ENativeType::Dirpath:      return wstr.ConvertTo(&dst.FlatData<FDirpath>());
+    case ENativeType::Filename:     return wstr.ConvertTo(&dst.FlatData<FFilename>());
     case ENativeType::WString:      dst.FlatData<FWString>() = wstr; return true;
 
     default:
+        if (is_enum_v(dst.TypeFlags()))
+            return dst.Traits()->ToScalar().FromString(dst.Data(),
+                FStringConversion{ WCHAR_TO_UTF_8(wstr) });
+
         return false;
     }
 }
 //----------------------------------------------------------------------------
 static bool PromoteValue_(const FName& name, const FAtom& dst) {
-    if (dst.TypeFlags() ^ ETypeFlags::Enum) {
+    if (is_enum_v(dst.TypeFlags())) {
         const FMetaEnum* metaEnum = dst.Traits()->ToScalar().EnumClass();
         Assert(metaEnum);
 
@@ -265,6 +264,20 @@ void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits&
     return nullptr;
 }
 //----------------------------------------------------------------------------
+template <>
+bool TBaseScalarTraits<PMetaObject>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
+    Assert(dst);
+
+    FLazyPathName pathName;
+    if (iss >> &pathName) {
+        FMetaDatabaseReadable db;
+        *static_cast<PMetaObject*>(dst) = db->ObjectIFP(pathName);
+        return (!!*static_cast<PMetaObject*>(dst));
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
@@ -347,9 +360,11 @@ bool TNativeTypeTraits<FAny>::PromoteCopy(const void* src, const FAtom& dst) con
     Assert(src);
     Assert(dst);
 
-    return (not BasePromoteCopy(src, dst)
-        ? static_cast<const FAny*>(src)->InnerAtom().PromoteCopy(dst)
-        : true );
+    if (BasePromoteCopy(src, dst))
+        return true;
+
+    const FAny& any = *static_cast<const FAny*>(src);
+    return (any.Valid() && any.PromoteCopy(dst));
 }
 //----------------------------------------------------------------------------
 template <>
@@ -357,9 +372,11 @@ bool TNativeTypeTraits<FAny>::PromoteMove(void* src, const FAtom& dst) const NOE
     Assert(src);
     Assert(dst);
 
-    return (not BasePromoteMove(src, dst)
-        ? static_cast<FAny*>(src)->InnerAtom().PromoteMove(dst)
-        : true );
+    if (BasePromoteMove(src, dst))
+        return true;
+
+    FAny& any = *static_cast<FAny*>(src);
+    return (any.Valid() && any.PromoteMove(dst));
 }
 //----------------------------------------------------------------------------
 template <>
