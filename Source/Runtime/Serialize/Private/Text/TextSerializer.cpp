@@ -240,6 +240,10 @@ private:
         _oss << '\"' << name << '"';
     }
 
+    void Print_(const RTTI::FBinaryData& binaryData) {
+        _oss << '"' << binaryData << '"';
+    }
+
     template <typename T>
     void Print_(const T& value) {
         _oss << value;

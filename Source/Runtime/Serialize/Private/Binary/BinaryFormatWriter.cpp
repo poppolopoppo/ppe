@@ -256,12 +256,12 @@ void FBinaryFormatWriter::Visit_(const RTTI::FAny& any) {
         anyData.NativeType = traits->TypeId();
     }
     else {
-        anyData.NativeType = u32(RTTI::ENativeType::Invalid);
+        anyData.NativeType = u32(RTTI::ENativeType::Unknown);
     }
 
     _sections.Data.WritePOD(anyData);
 
-    if (RTTI::ENativeType(anyData.NativeType) != RTTI::ENativeType::Invalid)
+    if (RTTI::ENativeType(anyData.NativeType) != RTTI::ENativeType::Unknown)
         Verify(any.InnerAtom().Accept(this));
 }
 //----------------------------------------------------------------------------

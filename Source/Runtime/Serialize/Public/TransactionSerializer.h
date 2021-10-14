@@ -17,7 +17,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_SERIALIZE_API, ESerializeFormat);
 //----------------------------------------------------------------------------
-enum class ETransactionFlags : u32 {
+enum class ETransactionOptions : u32 {
     None                = 0,
 
     AutoBuild           = 1 << 0,
@@ -30,8 +30,8 @@ enum class ETransactionFlags : u32 {
     Automated           = AutoBuild | AutoMount | AutoImport,
     Default             = Automated | Compressed | Merged
 };
-ENUM_FLAGS(ETransactionFlags);
-RTTI_ENUM_HEADER(PPE_SERIALIZE_API, ETransactionFlags);
+ENUM_FLAGS(ETransactionOptions);
+RTTI_ENUM_HEADER(PPE_SERIALIZE_API, ETransactionOptions);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ public:
     FTransactionSerializer(
         const RTTI::FName& id,
         const RTTI::FName& namespace_,
-        ETransactionFlags flags = ETransactionFlags::Default );
+        ETransactionOptions options = ETransactionOptions::Default );
     ~FTransactionSerializer() override;
 
     FTransactionSerializer(const FTransactionSerializer&) = delete;
@@ -51,11 +51,11 @@ public:
 
     const RTTI::FName& Id() const { return _id; }
     const RTTI::FName& Namespace() const { return _namespace; }
-    ETransactionFlags Flags() const { return _flags; }
+    ETransactionOptions Options() const { return _options; }
 
-    bool HasAutoBuild() const { return (_flags ^ ETransactionFlags::AutoBuild); }
-    bool HasAutoMount() const { return (_flags ^ ETransactionFlags::AutoMount); }
-    bool HasAutoImport() const { return (_flags ^ ETransactionFlags::AutoImport); }
+    bool HasAutoBuild() const { return (_options ^ ETransactionOptions::AutoBuild); }
+    bool HasAutoMount() const { return (_options ^ ETransactionOptions::AutoMount); }
+    bool HasAutoImport() const { return (_options ^ ETransactionOptions::AutoImport); }
 
     const RTTI::PMetaTransaction& Transaction() const { return _transaction; }
 
@@ -90,7 +90,7 @@ public: // RTTI
 private:
     RTTI::FName _id;
     RTTI::FName _namespace;
-    ETransactionFlags _flags;
+    ETransactionOptions _options;
 
     RTTI::PMetaTransaction _transaction;
 };
@@ -107,7 +107,7 @@ public:
         const RTTI::FName& namespace_,
         FWString&& inputPattern,
         FInputPaths&& inputPaths,
-        ETransactionFlags flags = ETransactionFlags::Default );
+        ETransactionOptions flags = ETransactionOptions::Default );
     ~FDirectoryTransaction() override;
 
     const FWString& InputPattern() const { return _inputPattern; }

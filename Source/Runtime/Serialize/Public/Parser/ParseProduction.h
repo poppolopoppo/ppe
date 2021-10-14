@@ -45,15 +45,15 @@ private:
     lambda_type _lambda;
 
 public:
-    CONSTEXPR explicit TProduction(lambda_type&& lambda) NOEXCEPT
+    CONSTEXPR TProduction(lambda_type&& lambda) NOEXCEPT
     :   _lambda(std::move(lambda))
     {}
 
-    CONSTEXPR TProduction(const TProduction&) NOEXCEPT = default;
-    CONSTEXPR TProduction& operator =(const TProduction&) NOEXCEPT = default;
+    TProduction(const TProduction&) = default;
+    TProduction& operator =(const TProduction&) = default;
 
-    CONSTEXPR TProduction(TProduction&&) NOEXCEPT = default;
-    CONSTEXPR TProduction& operator =(TProduction&&) NOEXCEPT = default;
+    TProduction(TProduction&&) = default;
+    TProduction& operator =(TProduction&&) = default;
 
     FORCE_INLINE FParseResult operator ()(FParseList& input, T* result) const {
         return _lambda(input, result);

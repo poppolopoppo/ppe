@@ -32,7 +32,7 @@ EXTERN_LOG_CATEGORY(PPE_SERIALIZE_API, Serialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RTTI_ENUM_FLAGS_BEGIN(Serialize, ETransactionFlags)
+RTTI_ENUM_FLAGS_BEGIN(Serialize, ETransactionOptions)
 RTTI_ENUM_VALUE(None)
 RTTI_ENUM_VALUE(AutoBuild)
 RTTI_ENUM_VALUE(AutoMount)
@@ -51,7 +51,7 @@ RTTI_ENUM_END()
 RTTI_CLASS_BEGIN(Serialize, FTransactionSerializer, Public)
 RTTI_PROPERTY_PRIVATE_FIELD(_id)
 RTTI_PROPERTY_PRIVATE_FIELD(_namespace)
-RTTI_PROPERTY_PRIVATE_FIELD(_flags)
+RTTI_PROPERTY_PRIVATE_FIELD(_options)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 RTTI_CLASS_BEGIN(Serialize, FDirectoryTransaction, Public)
@@ -62,16 +62,16 @@ RTTI_CLASS_END()
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTransactionSerializer::FTransactionSerializer(RTTI::FConstructorTag)
-:   _flags(ETransactionFlags::Default)
+:   _options(ETransactionOptions::Default)
 {}
 //----------------------------------------------------------------------------
 FTransactionSerializer::FTransactionSerializer(
     const RTTI::FName& id,
     const RTTI::FName& namespace_,
-    ETransactionFlags flags /* = ETransactionFlags::Default */ )
+    ETransactionOptions options /* = ETransactionOptions::Default */ )
 :   _id(id)
 ,   _namespace(namespace_)
-,   _flags(flags) {
+,   _options(options) {
     Assert_NoAssume(not _id.empty());
     Assert_NoAssume(not _namespace.empty());
 }
@@ -129,7 +129,7 @@ void FTransactionSerializer::SaveTransaction() {
     FTransactionSaver saver(*_transaction, IdToTransaction(_id));
     const PSerializer serializer = ISerializer::FromExtname(saver.Filename().Extname());
 
-    if (_flags & ETransactionFlags::Compressed) {
+    if (_options & ETransactionOptions::Compressed) {
         FFilename fnameZ{ saver.Filename() };
         fnameZ.ReplaceExtension(FFSConstNames::Z());
 
@@ -165,7 +165,7 @@ void FTransactionSerializer::LoadTransaction() {
     FTransactionLinker linker(IdToTransaction(_id));
     const PSerializer serializer = ISerializer::FromExtname(linker.Filename().Extname());
 
-    if (_flags & ETransactionFlags::Compressed) {
+    if (_options & ETransactionOptions::Compressed) {
         FFilename fnameZ{ linker.Filename() };
         fnameZ.ReplaceExtension(FFSConstNames::Z());
 
@@ -239,7 +239,7 @@ void FTransactionSerializer::UnmountFromDB() {
 void FTransactionSerializer::RTTI_Load(RTTI::ILoadContext& context) {
     RTTI_parent_type::RTTI_Load(context);
 
-    if (_flags ^ ETransactionFlags::AutoBuild &&
+    if (_options ^ ETransactionOptions::AutoBuild &&
         not VFS_FileExists(IdToTransaction(_id))) {
         FSources sources;
         BuildTransaction(sources);
@@ -247,20 +247,20 @@ void FTransactionSerializer::RTTI_Load(RTTI::ILoadContext& context) {
         UnloadTransaction();
     }
 
-    if (_flags ^ ETransactionFlags::AutoImport |
-        _flags ^ ETransactionFlags::AutoMount )
+    if (_options ^ ETransactionOptions::AutoImport |
+        _options ^ ETransactionOptions::AutoMount )
         LoadTransaction();
 
-    if (_flags ^ ETransactionFlags::AutoMount)
+    if (_options ^ ETransactionOptions::AutoMount)
         MountToDB();
 }
 //----------------------------------------------------------------------------
 void FTransactionSerializer::RTTI_Unload(RTTI::IUnloadContext& context) {
-    if (_flags ^ ETransactionFlags::AutoMount)
+    if (_options ^ ETransactionOptions::AutoMount)
         UnmountFromDB();
 
-    if (_flags ^ ETransactionFlags::AutoImport |
-        _flags ^ ETransactionFlags::AutoMount)
+    if (_options ^ ETransactionOptions::AutoImport |
+        _options ^ ETransactionOptions::AutoMount)
         UnloadTransaction();
 
     RTTI_parent_type::RTTI_Unload(context);
@@ -319,7 +319,7 @@ FDirectoryTransaction::FDirectoryTransaction(
     const RTTI::FName& namespace_,
     FWString&& inputPattern,
     FInputPaths&& inputPaths,
-    ETransactionFlags flags /* = ETransactionFlags::Default */)
+    ETransactionOptions flags /* = ETransactionOptions::Default */)
 :   FTransactionSerializer(id, namespace_, flags)
 ,   _inputPattern(std::move(inputPattern))
 ,   _inputPaths(std::move(inputPaths))
