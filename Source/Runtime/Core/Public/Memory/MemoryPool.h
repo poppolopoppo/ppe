@@ -98,6 +98,7 @@ private:
     struct FPoolChunk_;
 
     FORCE_INLINE static FPoolNode_* PoolNode_(FPoolChunk_** const pChunks, const index_type id) {
+        Assert(pChunks);
         Assert(id < MaxSize);
         const index_type ch = (id / ChunkSize);
         Assert(ch < MaxChunks);
@@ -350,6 +351,7 @@ private:
             RegisterTrackingData(&TrackingData);
         }
         ~FInternalPool_() {
+            Assert_NoAssume(NumLiveBlocks == 0);
             UnregisterTrackingData(&TrackingData);
         }
 #else
@@ -363,6 +365,7 @@ private:
         }
 
         FPoolChunk_* FrontChunk() const {
+            Assert(pChunks);
             const auto ch = ExhaustedChunks.NextAllocateBit();
             if (UMax != ch) {
                 Assert(ch < MaxChunks);
@@ -374,6 +377,7 @@ private:
         }
 
         FPoolChunk_* AllocateChunk() {
+            Assert(pChunks);
             const u32 ch = CommittedChunks.NextAllocateBit();
             if (Likely(UMax != ch)) {
                 CommittedChunks.AllocateBit(ch);
@@ -391,6 +395,7 @@ private:
         }
 
         FORCE_INLINE FPoolBundle_ AllocateBundle() {
+            Assert(pChunks);
             FPoolChunk_* pChunk = FrontChunk();
             if (nullptr == pChunk) {
                 pChunk = AllocateChunk();
@@ -408,6 +413,7 @@ private:
         }
 
         FORCE_INLINE void ReleaseBundle(index_type bundle) {
+            Assert(pChunks);
             Assert(UMax != bundle);
 
             do {
@@ -430,6 +436,7 @@ private:
 
         void ReleaseChunk(index_type ch) {
             Assert(ch < MaxChunks);
+            Assert(pChunks);
             Assert(CommittedChunks.IsAllocated(ch));
             Assert_NoAssume(not ExhaustedChunks.IsAllocated(ch));
 
@@ -448,6 +455,7 @@ private:
         }
 
         void ReleaseAllChunks_IgnoreLeaks() {
+            Assert(pChunks);
             ONLY_IF_MEMORYDOMAINS( TrackingData.ReleaseAllUser() ); // ignore leaks here (checked before)
 
             CommittedChunks.Initialize(CommittedChunks.Bits, false);
@@ -494,9 +502,10 @@ TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::~TMemoryPoo
     exclusivePool->ReleaseAllChunks_IgnoreLeaks();
 
     size_t totalSizeInBytes = 0;
-    totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(exclusivePool->CommittedChunks.AllocationSize());
-    totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(exclusivePool->ExhaustedChunks.AllocationSize());
-    totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(sizeof(FPoolChunk_*) * MaxChunks);
+    totalSizeInBytes += exclusivePool->CommittedChunks.AllocationSize();
+    totalSizeInBytes += exclusivePool->ExhaustedChunks.AllocationSize();
+    totalSizeInBytes = ROUND_TO_NEXT_16(totalSizeInBytes);
+    totalSizeInBytes += sizeof(FPoolChunk_*) * MaxChunks;
 
     FAllocatorBlock blk{ exclusivePool->CommittedChunks.Bits, totalSizeInBytes };
     blk.SizeInBytes = allocator_traits::SnapSize(*exclusivePool, totalSizeInBytes);
@@ -526,13 +535,13 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Initia
 
     size_t totalSizeInBytes = 0;
     const size_t committedChunksOffsetInWords = 0;
-    totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(pool.CommittedChunks.AllocationSize());
+    totalSizeInBytes += pool.CommittedChunks.AllocationSize();
     Assert(Meta::IsAligned(sizeof(FBitTree_::word_t), totalSizeInBytes));
-    const size_t exhaustedChunksOffsetInWords = totalSizeInBytes;
-    totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(pool.ExhaustedChunks.AllocationSize());
+    const size_t exhaustedChunksOffsetInWords = (totalSizeInBytes / sizeof(FBitTree_::word_t));
+    totalSizeInBytes += ROUND_TO_NEXT_16(pool.ExhaustedChunks.AllocationSize());
     Assert(Meta::IsAligned(sizeof(FPoolChunk_*), totalSizeInBytes));
     const size_t chunksOffsetInPtrs = (totalSizeInBytes / sizeof(FPoolChunk_*));
-    totalSizeInBytes += ROUND_TO_NEXT_CACHELINE(sizeof(FPoolChunk_*) * MaxChunks);
+    totalSizeInBytes += sizeof(FPoolChunk_*) * MaxChunks;
 
     const FAllocatorBlock blk = allocator_traits::Allocate(pool,
         allocator_traits::SnapSize(pool, totalSizeInBytes) );
