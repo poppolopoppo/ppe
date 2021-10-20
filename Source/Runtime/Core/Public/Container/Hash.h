@@ -6,6 +6,7 @@
 #include "HAL/PlatformHash.h"
 #include "Memory/HashFunctions.h"
 #include "Memory/MemoryView.h"
+#include "Meta/Iterator.h"
 #include "Meta/TypeTraits.h"
 
 #include <type_traits>
@@ -49,14 +50,19 @@ CONSTEXPR void hash_range(hash_t& seed, const T *values, size_t count) NOEXCEPT;
 template <typename T>
 CONSTEXPR hash_t hash_range(const T *values, size_t count) NOEXCEPT;
 //----------------------------------------------------------------------------
+template <typename _It>
+CONSTEXPR hash_t hash_range(_It first, _It last) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename _It>
+CONSTEXPR hash_t hash_range(const TIterable<_It>& range) NOEXCEPT {
+    return hash_range(range.begin(), range.end());
+}
+//----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
 CONSTEXPR void hash_combine(hash_t& seed, const _Arg0& arg0, const _Args&... args) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
 CONSTEXPR hash_t hash_tuple(_Arg0&& arg0, _Args&&... args) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <typename _It>
-CONSTEXPR hash_t hash_range(_It first, _It last) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR hash_t hash_view(const TMemoryView<T>& view) NOEXCEPT;

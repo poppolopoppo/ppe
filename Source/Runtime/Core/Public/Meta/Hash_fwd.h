@@ -184,6 +184,20 @@ CONSTEXPR size_t hash_mem_constexpr(const T* data, size_t n) NOEXCEPT {
     return h;
 }
 //----------------------------------------------------------------------------
+template <typename T, size_t N>
+CONSTEXPR size_t hash_arr_constexpr(const T (&arr)[N]) NOEXCEPT {
+    return hash_mem_constexpr(arr, sizeof(T) * N);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR size_t hash_str_constexpr(const _Char* str) NOEXCEPT {
+    Assert(str);
+    size_t h = 0, n = 0;
+    for (; *str; ++str, ++n)
+        h = hash_size_t_constexpr(h, *str);
+    return hash_size_t_constexpr(h, n);
+}
+//----------------------------------------------------------------------------
 template <typename _FwdIt>
 CONSTEXPR size_t hash_fwdit_constexpr(_FwdIt first, _FwdIt last) NOEXCEPT {
     size_t h = hash_size_t_constexpr(*(first++));
