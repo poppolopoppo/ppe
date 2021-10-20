@@ -17,52 +17,58 @@ CONSTEXPR bool enum_is_flags_v = EnumIsFlags(_Enum{});
 template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
 using TEnumOrd = std::underlying_type_t<_Enum>;
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR auto EnumOrd(_Enum value) {
-    return TEnumOrd<_Enum>(value);
+    IF_CONSTEXPR(std::is_enum_v<_Enum>) {
+        return TEnumOrd<_Enum>(value);
+    }
+    else {
+        STATIC_ASSERT(std::is_integral_v<_Enum>);
+        return value;
+    }
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR _Enum EnumOneComplement(_Enum value) {
     return _Enum(~EnumOrd(value));
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR _Enum EnumAnd(_Enum lhs, _Enum rhs) {
     return _Enum(EnumOrd(lhs) & EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR _Enum EnumOr(_Enum lhs, _Enum rhs) {
     return _Enum(EnumOrd(lhs) | EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR _Enum EnumAdd(_Enum lhs, _Enum rhs) {
     return _Enum(EnumOrd(lhs) | EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR _Enum EnumRemove(_Enum lhs, _Enum rhs) {
     return _Enum(EnumOrd(lhs) & ~EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR bool EnumXor(_Enum lhs, _Enum rhs) {
     return !!(EnumOrd(lhs) & EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR bool EnumHas(_Enum lhs, TEnumOrd<_Enum> rhs) {
     return ((EnumOrd(lhs) & rhs) == rhs);
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<enum_is_flags_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR bool EnumHas(_Enum lhs, _Enum rhs) {
-    return EnumHas(lhs, EnumOrd(rhs));
+    return ((EnumOrd(lhs) & EnumOrd(rhs)) == EnumOrd(rhs));
 }
 //----------------------------------------------------------------------------
-template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
+template <typename _Enum>
 CONSTEXPR bool EnumLess(_Enum lhs, _Enum rhs) {
     return (EnumOrd(lhs) < EnumOrd(rhs));
 }
