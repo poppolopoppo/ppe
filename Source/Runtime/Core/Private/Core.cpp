@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Allocator/Allocation.h"
+#include "Meta/ForRange.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -37,6 +38,13 @@ STATIC_ASSERT(Meta::has_common_type_v<u64, i32>);
 STATIC_ASSERT(Meta::has_common_type_v<float, i32>);
 STATIC_ASSERT(Meta::has_common_type_v<float, double>);
 STATIC_ASSERT(Meta::has_common_type_v<FMallocator, double> == false);
+//----------------------------------------------------------------------------
+STATIC_ASSERT(PP_NUM_ARGS() == 0);
+STATIC_ASSERT(PP_NUM_ARGS(a) == 1);
+STATIC_ASSERT(PP_NUM_ARGS(a, b) == 2);
+STATIC_ASSERT(PP_NUM_ARGS(a, b, c, d, e, f, g, h) == 8);
+STATIC_ASSERT(PP_NUM_ARGS(a, b, c, d, e, f, g, h, i, j, k) == 11);
+STATIC_ASSERT(PP_NUM_ARGS(a, b, c, d, e, f, g, h, i, j, k, l, m, n) == 14);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
