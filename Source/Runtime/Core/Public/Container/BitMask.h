@@ -252,6 +252,7 @@ struct TBitMask<u128> {
 };
 //----------------------------------------------------------------------------
 using FBitMask = TBitMask<>;
+PPE_ASSUME_TEMPLATE_AS_POD(TBitMask<T>, typename T)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -264,7 +265,7 @@ struct TFixedSizeBitMask {
     STATIC_CONST_INTEGRAL(u32, NumWords, (Capacity + BitsPerWord - 1) / BitsPerWord);
     STATIC_CONST_INTEGRAL(word_t, RemainerMask, Capacity % BitsPerWord ? ~((word_t(1) << (Capacity % BitsPerWord)) - 1) : 0);
 
-    bitmask_t Words[NumWords];
+    bitmask_t Words[NumWords]{};
 
     TFixedSizeBitMask() = default;
 

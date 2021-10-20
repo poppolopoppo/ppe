@@ -66,6 +66,7 @@ void* tracking_aligned_malloc(size_t size, size_t alignment) {
     UNUSED(alignment); // assume always naturally aligned with target
     void* const p = (PPE::malloc)(size);
     Assert_NoAssume(Meta::IsAligned(alignment, p));
+    return p;
 #endif
 }
 //----------------------------------------------------------------------------

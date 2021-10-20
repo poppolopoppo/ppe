@@ -166,7 +166,7 @@ public:
     public_event_t& Public() NOEXCEPT { return *this; }
 
     PPE_FAKEBOOL_OPERATOR_DECL() {
-        return _delegates.LockShared()->empty();
+        return (not _delegates.LockShared()->empty());
     }
 
     void operator ()(_Args... args) NOEXCEPT {

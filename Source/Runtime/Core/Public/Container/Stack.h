@@ -81,6 +81,9 @@ public:
     pointer data() { return _storage; }
     const_pointer data() const { return _storage; }
 
+    operator TMemoryView<T> () { return MakeView(); }
+    operator TMemoryView<const T> () const { return MakeView(); }
+
     TMemoryView<T> MakeView() { return TMemoryView<T>(_storage, _size); }
     TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
     TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
@@ -97,6 +100,10 @@ public:
     iterator Find(const value_type& elt) { return std::find(begin(), end(), elt); }
     const_iterator Find(const value_type& elt) const { return std::find(begin(), end(), elt); }
 
+    void EraseAt(size_type index) {
+        Assert(index < _size);
+        Erase(begin() + index);
+    }
     void Erase(iterator it) {
         Assert_NoAssume(AliasesToContainer(&*it));
         std::rotate(it, it + 1, end());

@@ -269,7 +269,7 @@ void TArray<T, _Allocator>::resize(size_type count) {
     if (_size > count)
         Meta::Destroy(MakeView().CutStartingAt(count));
 
-    const size_type n = allocator_traits::template SnapSizeT<value_type>(count);
+    const size_type n = allocator_traits::template SnapSizeT<value_type>(allocator_(), count);
     FAllocatorBlock b{ _data, _capacity * sizeof(value_type) };
     allocator_traits::Reallocate(allocator_(), b, n * sizeof(value_type));
 
@@ -286,7 +286,7 @@ void TArray<T, _Allocator>::resize(size_type count, const_reference value) {
     if (_size > count)
         Meta::Destroy(MakeView().CutStartingAt(count));
 
-    const size_type n = allocator_traits::template SnapSizeT<value_type>(count);
+    const size_type n = allocator_traits::template SnapSizeT<value_type>(allocator_(), count);
     FAllocatorBlock b{ _data, _capacity * sizeof(value_type) };
     allocator_traits::Reallocate(allocator_(), b, n * sizeof(value_type));
 
@@ -303,7 +303,7 @@ void TArray<T, _Allocator>::resize_Uninitialized(size_type count) {
     if (_size > count)
         Meta::Destroy(MakeView().CutStartingAt(count));
 
-    const size_type n = allocator_traits::template SnapSizeT<value_type>(count);
+    const size_type n = allocator_traits::template SnapSizeT<value_type>(allocator_(), count);
     FAllocatorBlock b{ _data, _capacity * sizeof(value_type) };
     allocator_traits::Reallocate(allocator_(), b, n * sizeof(value_type));
 

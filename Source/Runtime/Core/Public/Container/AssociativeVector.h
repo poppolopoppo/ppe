@@ -214,7 +214,7 @@ public:
         for (auto it = first; last != it; ++it)
             Insert_AssertUnique((*it).first, (*it).second);
 #else
-        _vector.insert(_vector.end(), first, last);
+        Append(_vector, first, last);
 #endif
     }
 

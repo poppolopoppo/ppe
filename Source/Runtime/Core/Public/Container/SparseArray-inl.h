@@ -698,6 +698,11 @@ void Assign(TSparseArray<T, _Allocator>& v, _It first, _It last) {
     v.Assign(first, last);
 }
 //----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _It>
+void Append(TSparseArray<T, _Allocator>& v, _It first, _It last) {
+    v.AddRange(first, last);
+}
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Append(TSparseArray<T, _Allocator>& v, const TMemoryView<const T>& elts) {
     v.AddRange(elts.begin(), elts.end());

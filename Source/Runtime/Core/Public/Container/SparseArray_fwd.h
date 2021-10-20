@@ -31,6 +31,9 @@ template <typename T, typename _Allocator>
 void Append(TSparseArray<T, _Allocator>& v, const TMemoryView<const T>& elts);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _It>
+void Append(TSparseArray<T, _Allocator>& v, _It first, _It last);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _It>
 void Assign(TSparseArray<T, _Allocator>& v, _It first, _It last);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename U>

@@ -669,6 +669,11 @@ void Append(TVector<T, _Allocator>& v, const TMemoryView<const T>& elts) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _It>
+void Append(TVector<T, _Allocator>& v, _It first, _It last) {
+    v.insert(v.end(), first, last);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _It>
 void Assign(TVector<T, _Allocator>& v, _It first, _It last) {
     v.assign(first, last);
 }
@@ -808,13 +813,13 @@ bool Remove_ReturnIfExists_DontPreserveOrder(TVector<T, _Allocator>& v, const Me
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
 void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, size_t index) {
-    v.erase(v.begin() + index);
+    v.erase_DontPreserveOrder(v.begin() + index);
 }
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
 void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, const typename TVector<T, _Allocator>::const_iterator& it) {
-    v.erase(it);
+    v.erase_DontPreserveOrder(it);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

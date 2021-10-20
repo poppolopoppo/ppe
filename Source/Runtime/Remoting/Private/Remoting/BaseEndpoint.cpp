@@ -136,6 +136,7 @@ struct FMetaEndpointCall_ {
             (func.HasReturnValue() ? 1 : 0));
 
         const auto jsonParser = [this](Serialize::FJson* dst, const FStringView& src, const IRemotingEndpoint::FParameter& prm) NOEXCEPT -> bool {
+            UNUSED(prm);
             PPE_TRY {
                 if (Serialize::FJson::Append(dst, L"remoting:/arguments", src))
                     return true;

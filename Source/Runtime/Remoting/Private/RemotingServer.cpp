@@ -115,6 +115,8 @@ void FRemotingServer::Tick(FTimespan) {
 void FRemotingServer::Shutdown() {
     AssertIsMainThread();
 
+    _sync.FireAndForget(*this);
+
     Network::FHttpServer::Shutdown();
 }
 //----------------------------------------------------------------------------

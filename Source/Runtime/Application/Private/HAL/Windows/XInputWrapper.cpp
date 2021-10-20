@@ -21,7 +21,7 @@ DWORD WINAPI XInputGetState_Dummy_(
     _Out_::XINPUT_STATE*        pState        // Receives the current state
 ) {
     UNUSED(dwUserIndex);
-    pState = nullptr;
+    UNUSED(pState);
     return ERROR_DEVICE_NOT_CONNECTED;
 }
 //----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ DWORD WINAPI XInputGetCapabilities_Dummy_(
 ) {
     UNUSED(dwUserIndex);
     UNUSED(dwFlags);
-    pCapabilities = nullptr;
+    UNUSED(pCapabilities);
     return ERROR_DEVICE_NOT_CONNECTED;
 }
 //----------------------------------------------------------------------------

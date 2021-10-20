@@ -79,9 +79,9 @@ public:
 
     using iterator = FIterator;
 
-    CONSTEXPR TRingBuffer();
-    CONSTEXPR TRingBuffer(pointer storage, size_type capacity);
-    CONSTEXPR explicit TRingBuffer(const TMemoryView<T>& storage);
+    TRingBuffer() = default;
+    CONSTEXPR TRingBuffer(pointer storage, size_type capacity) NOEXCEPT;
+    CONSTEXPR explicit TRingBuffer(const TMemoryView<T>& storage) NOEXCEPT;
     ~TRingBuffer() NOEXCEPT { clear(); }
 
     CONSTEXPR size_type capacity() const { return _capacity; }
@@ -132,25 +132,21 @@ public:
     void Swap(TRingBuffer& other);
 
 private:
-    size_type _begin;
-    size_type _size;
-    size_type _capacity;
+    size_type _begin{ 0 };
+    size_type _size{ 0 };
+    size_type _capacity{ 0 };
 
-    pointer _storage;
+    pointer _storage{ nullptr };
 };
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer()
-:   _begin(0), _size(0), _capacity(0), _storage(nullptr) {}
-//----------------------------------------------------------------------------
-template <typename T, bool _IsPod>
-CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer(pointer storage, size_type capacity)
+CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer(pointer storage, size_type capacity) NOEXCEPT
 :   _begin(0), _size(0), _capacity(capacity), _storage(storage) {
     Assert(0 == _capacity || _storage);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer(const TMemoryView<T>& storage)
+CONSTEXPR TRingBuffer<T, _IsPod>::TRingBuffer(const TMemoryView<T>& storage) NOEXCEPT
 :   TRingBuffer(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -343,11 +339,11 @@ public:
     using typename parent_type::difference_type;
 
     explicit TAllocatedRingBuffer(size_t capacity = _DefaultCapacity)
-    :   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity), capacity)
+    :   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity))
     {}
     TAllocatedRingBuffer(size_t capacity, allocator_type&& rallocator)
     :   allocator_type(std::move(rallocator))
-    ,   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity), capacity)
+    ,   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity))
     {}
 
     ~TAllocatedRingBuffer() {

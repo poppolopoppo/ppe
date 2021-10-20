@@ -8,6 +8,7 @@
 
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
+#include "Meta/Iterator.h"
 #include "Meta/Optional.h"
 #include "Meta/Singleton.h"
 #include "Thread/ReadWriteLock.h"
@@ -40,7 +41,7 @@ public:
     PTypeTraits TraitsIFP(const FStringView& name) const;
     PTypeTraits TraitsIFP(const FLazyName& name) const;
 
-    auto Traits() const { return MakeIterable(_traits); }
+    auto Traits() const NOEXCEPT;
 
     /* Objects */
 
@@ -53,7 +54,8 @@ public:
     FMetaObject* ObjectIFP(const FStringView& namespace_, const FStringView& identifier) const;
     FMetaObject* ObjectIFP(const FLazyName& namespace_, const FLazyName& identifier) const;
     FMetaObject* ObjectIFP(const FLazyPathName& pathName) const;
-    const auto& Objects() const { return _objects; }
+
+    const auto& Objects() const NOEXCEPT;
 
     /* Transaction */
 
@@ -65,9 +67,8 @@ public:
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FStringView& namespace_) const;
     TMemoryView<const SCMetaTransaction> TransactionIFP(const FLazyName& namespace_) const;
 
-    const auto& Transactions() const { return _transactions; }
-
-    auto Namespaces() const { return _transactions.Keys(); }
+    const auto& Transactions() const NOEXCEPT;
+    auto Namespaces() const NOEXCEPT;
 
     /* Modules */
 
@@ -79,7 +80,7 @@ public:
     const FMetaModule* ModuleIFP(const FStringView& name) const;
     const FMetaModule* ModuleIFP(const FLazyName& name) const;
 
-    auto Modules() const { return _modules.MakeView().Iterable(); }
+    auto Modules() const NOEXCEPT;
 
     template <typename _Facet>
     auto ModulesByFacet() const {
@@ -98,7 +99,7 @@ public:
     const FMetaClass* ClassIFP(const FStringView& name) const;
     const FMetaClass* ClassIFP(const FLazyName& name) const;
 
-    const auto& Classes() const { return _classes; }
+    const auto& Classes() const NOEXCEPT;
 
     template <typename _Facet>
     auto ClassesByFacet() const {
@@ -117,7 +118,7 @@ public:
     const FMetaEnum* EnumIFP(const FStringView& name) const;
     const FMetaEnum* EnumIFP(const FLazyName& name) const;
 
-    const auto& Enums() const { return _enums; }
+    const auto& Enums() const NOEXCEPT;
 
     template <typename _Facet>
     auto EnumsByFacet() const {
@@ -157,6 +158,34 @@ private:
     VECTOR(MetaDatabase, const FMetaModule*) _modules;
 
 };
+//----------------------------------------------------------------------------
+FORCE_INLINE auto FMetaDatabase::Traits() const NOEXCEPT {
+    return MakeIterable(_traits);
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE const auto& FMetaDatabase::Objects() const NOEXCEPT {
+    return _objects;
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE const auto& FMetaDatabase::Transactions() const NOEXCEPT {
+    return _transactions;
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE auto FMetaDatabase::Namespaces() const NOEXCEPT {
+    return _transactions.Keys();
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE auto FMetaDatabase::Modules() const NOEXCEPT {
+    return _modules.MakeView().Iterable();
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE const auto& FMetaDatabase::Classes() const NOEXCEPT {
+    return _classes;
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE const auto& FMetaDatabase::Enums() const NOEXCEPT {
+    return _enums;
+}
 //----------------------------------------------------------------------------
 class FMetaDatabaseReadable : Meta::FNonCopyableNorMovable {
 public:

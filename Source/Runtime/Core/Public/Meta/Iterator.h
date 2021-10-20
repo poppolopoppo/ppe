@@ -561,7 +561,7 @@ public:
 
     CONSTEXPR const _It& Inner() const { return _it; }
 
-    CONSTEXPR TValueIterator& operator++() /* prefix */ { _it.operator++(); return *this; }
+    CONSTEXPR TValueIterator& operator++() /* prefix */ { ++_it; return *this; }
     CONSTEXPR TValueIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TValueIterator(jt); }
 
     CONSTEXPR reference operator*() const { return (_it->second); }
