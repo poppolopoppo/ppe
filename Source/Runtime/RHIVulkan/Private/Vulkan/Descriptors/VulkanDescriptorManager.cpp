@@ -5,6 +5,8 @@
 
 #include "Vulkan/Instance/VulkanDevice.h"
 
+#include "Diagnostic/Logger.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------

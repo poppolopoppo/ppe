@@ -1532,7 +1532,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
     }
 
 #else
-    UNUSED(logicalRenderPass)
+    UNUSED(logicalRenderPass);
 #endif
 
     // validate depth states

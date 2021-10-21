@@ -3,10 +3,12 @@
 
 #include "Vulkan/Descriptors/VulkanPipelineResources.h"
 
-#include "RHI/EnumToString.h"
-
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Instance/VulkanResourceManager.h"
+
+#include "RHI/EnumToString.h"
+
+#include "Diagnostic/Logger.h"
 
 namespace PPE {
 namespace RHI {
@@ -166,6 +168,7 @@ bool FVulkanPipelineResources::operator ==(const FVulkanPipelineResources& other
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value) {
+    UNUSED(id);
     const auto infos = pList->Allocator.AllocateT<VkDescriptorBufferInfo>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
@@ -201,6 +204,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value) {
+    UNUSED(id);
     const auto infos = pList->Allocator.AllocateT<VkBufferView>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
@@ -238,6 +242,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value) {
+    UNUSED(id);
     const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -279,6 +284,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value) {
+    UNUSED(id);
     const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -317,6 +323,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value) {
+    UNUSED(id);
     const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -345,6 +352,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
+    UNUSED(id);
     const auto tlas = pList->Allocator.AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -393,7 +401,7 @@ void FVulkanPipelineResources::CheckBufferUsage(const FVulkanBuffer& buffer, ERe
     }
 #else
     UNUSED(buffer);
-    UNUSED(state)
+    UNUSED(state);
 #endif
 }
 //----------------------------------------------------------------------------

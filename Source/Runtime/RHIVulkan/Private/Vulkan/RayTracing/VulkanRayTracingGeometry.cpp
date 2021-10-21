@@ -8,6 +8,8 @@
 #include "Vulkan/Instance/VulkanResourceManager.h"
 #include "Vulkan/Memory/VulkanMemoryObject.h"
 
+#include "Diagnostic/Logger.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------

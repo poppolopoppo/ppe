@@ -29,7 +29,6 @@ public:
 
     NODISCARD bool AllocateImage(FBlock* pData, VkImage image, const FMemoryDesc& desc) override;
     NODISCARD bool AllocateBuffer(FBlock* pData, VkBuffer buffer, const FMemoryDesc& desc) override;
-    NODISCARD bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) override;
     NODISCARD bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureNV accelStruct, const FMemoryDesc& desc) override;
 
     void Deallocate(FBlock& data) override;
@@ -269,18 +268,6 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateBuffer(FBlock*
 
     pData->MemoryHandle = allocation;
     return true;
-}
-//----------------------------------------------------------------------------
-inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FBlock* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) {
-    const auto exclusiveAllocator = _allocator.LockExclusive();
-
-    UNUSED(pData);
-    UNUSED(accelStruct);
-    UNUSED(desc);
-
-    // #TODO: VK_KHR_ray_tracing_pipeline
-
-    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FBlock* pData, VkAccelerationStructureNV accelStruct, const FMemoryDesc& desc) {

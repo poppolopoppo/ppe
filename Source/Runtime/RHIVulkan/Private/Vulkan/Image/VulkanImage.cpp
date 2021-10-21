@@ -6,6 +6,7 @@
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Instance/VulkanResourceManager.h"
 
+#include "Diagnostic/Logger.h"
 #include "Maths/ScalarVectorHelpers.h"
 
 namespace PPE {

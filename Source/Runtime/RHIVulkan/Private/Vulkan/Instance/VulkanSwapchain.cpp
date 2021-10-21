@@ -13,6 +13,8 @@
 #include "RHI/EnumToString.h"
 #include "RHI/SwapchainDesc.h"
 
+#include "Diagnostic/Logger.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -655,6 +657,7 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
     LOG_CHECK(RHI, CreateFence_(device));
     LOG_CHECK(RHI, ChoosePresentQueue_(fg));
 
+#if USE_PPE_RHIDEBUG
     LOG(RHI, Info,
         L"Created swapchain:\n"
         "\tName:            {0}\n"
@@ -677,6 +680,7 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
         ColorImageUsage,
         static_cast<u32>(PresentQueue->FamilyIndex),
         PresentQueue->DebugName );
+#endif
 
     return true;
 }

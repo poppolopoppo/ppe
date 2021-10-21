@@ -75,7 +75,7 @@ inline bool FVulkanTaskProcessor::FDrawContext::BindPipeline_(u32 mask) {
         if (_processor._workerCmd->Write()->PipelineCache.CreatePipelineInstance(
                 &vkPipeline, _pipelineLayoutRef.ref(),
                 *_processor._workerCmd, _logicalRenderPass, *_gPipelineRef,
-                _vertexInput, _renderState, _dynamicStates, Default )) {
+                _vertexInput, _renderState, _dynamicStates ARGS_IF_RHIDEBUG(Default) )) {
 
             _processor.BindPipelinePerPassStates_(_logicalRenderPass, vkPipeline);
             _processor.SetScissor_(_logicalRenderPass, Default);
@@ -93,7 +93,7 @@ inline bool FVulkanTaskProcessor::FDrawContext::BindPipeline_(u32 mask) {
         if (_processor._workerCmd->Write()->PipelineCache.CreatePipelineInstance(
                 &vkPipeline, _pipelineLayoutRef.ref(),
                 *_processor._workerCmd, _logicalRenderPass, *_mPipelineRef,
-                _renderState, _dynamicStates, Default )) {
+                _renderState, _dynamicStates ARGS_IF_RHIDEBUG(Default) )) {
 
             _processor.BindPipelinePerPassStates_(_logicalRenderPass, vkPipeline);
             _processor.SetScissor_(_logicalRenderPass, Default);

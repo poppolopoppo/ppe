@@ -3,9 +3,12 @@
 
 #include "Vulkan/RayTracing/VulkanRayTracingScene.h"
 
-#include "RHI/RayTracingDesc.h"
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Instance/VulkanResourceManager.h"
+
+#include "RHI/RayTracingDesc.h"
+
+#include "Diagnostic/Logger.h"
 
 namespace PPE {
 namespace RHI {

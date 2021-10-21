@@ -3,9 +3,12 @@
 
 #include "Vulkan/RenderPass/VulkanLogicalRenderPass.h"
 
-#include "Meta/Functor.h"
-#include "RHI/RenderPassDesc.h"
 #include "Vulkan/Command/VulkanCommandBuffer.h"
+
+#include "RHI/RenderPassDesc.h"
+
+#include "Diagnostic/Logger.h"
+#include "Meta/Functor.h"
 
 namespace PPE {
 namespace RHI {

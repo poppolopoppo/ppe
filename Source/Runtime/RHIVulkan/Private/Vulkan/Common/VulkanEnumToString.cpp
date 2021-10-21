@@ -2,6 +2,8 @@
 
 #include "Vulkan/Common/VulkanEnumToString.h"
 
+#include "IO/FormatHelpers.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------

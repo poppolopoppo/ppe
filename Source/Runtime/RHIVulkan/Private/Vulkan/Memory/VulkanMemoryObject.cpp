@@ -48,14 +48,6 @@ bool FVulkanMemoryObject::AllocateImage(FVulkanMemoryManager& memory, VkImage im
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanMemoryObject::AllocateAccelStruct(FVulkanMemoryManager& memory, VkAccelerationStructureKHR accelStruct) {
-    const auto exclusiveData = _data.LockExclusive();
-    Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
-
-    LOG_CHECK(RHI, memory.AllocateAccelStruct(&exclusiveData->Block, accelStruct, exclusiveData->Desc) );
-    return true;
-}
-//----------------------------------------------------------------------------
 bool FVulkanMemoryObject::AllocateAccelStruct(FVulkanMemoryManager& memory, VkAccelerationStructureNV accelStruct) {
     const auto exclusiveData = _data.LockExclusive();
     Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
