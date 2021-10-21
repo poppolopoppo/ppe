@@ -181,8 +181,8 @@ void ReportTrackingDatas_(
     oss << L"  Reporting tracking data :" << Eol;
 
     CONSTEXPR size_t width = 175;
-    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-30}";
-    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:6} {1:8} | {2:9} {3:9} | {4:10} {5:11}   ";
+    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-44}";
+    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:6} {1:8} | {2:9} {3:9} | {4:10} {5:10}   ";
 
     const auto hr = Fmt::Repeat(L'-', width);
 
@@ -214,7 +214,7 @@ void ReportTrackingDatas_(
 
     oss << Eol;
 
-    STACKLOCAL_WTEXTWRITER(tmp, 128);
+    STACKLOCAL_WTEXTWRITER(tmp, 256);
 
     for (const FMemoryTracking* data : datas) {
         Assert(data);
@@ -300,10 +300,16 @@ void DumpTrackingDataFullName_(TBasicTextWriter<_Char>& oss, const FMemoryTracki
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT {
+#if USE_PPE_MEMORYDOMAINS
     Assert(each);
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FetchAllTrackingDataSorted_(&datas);
     return each(user, datas.MakeView());
+#else
+    UNUSED(user);
+    UNUSED(each);
+    return false;
+#endif
 }
 //----------------------------------------------------------------------------
 void RegisterTrackingData(FMemoryTracking *pTrackingData) {
