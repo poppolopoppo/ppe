@@ -4,17 +4,22 @@
 #ifdef PLATFORM_WINDOWS
 // Global system includes
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdlib>
 #include <limits.h>
 #include <limits>
+#include <cstddef>
 #include <initializer_list>
 #include <new>
 #include <exception>
 #include <type_traits>
 #include <cstring>
 #include <utility>
+#include <comdef.h>
+#include <comutil.h>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <functional>
 #include <tuple>
 #include <cmath>
@@ -26,8 +31,6 @@
 #include <chrono>
 #include <thread>
 #include <array>
-#include <comdef.h>
-#include <comutil.h>
 #include <emmintrin.h>
 #include <xmmintrin.h>
 #include <intrin.h>
@@ -35,24 +38,27 @@
 #include <smmintrin.h>
 #include <tmmintrin.h>
 #include <pmmintrin.h>
-#include <locale>
 #include <cctype>
+#include <cwctype>
+#include <locale>
 #include <clocale>
 #include <regex>
-#include <cwctype>
+#include <ios>
 // Global project includes
 #ifdef BUILD_Win32_FastDebug
 // system includes
 #include <map>
-#include <optional>
 #include <iostream>
 #include <condition_variable>
 #include <variant>
 // project includes
 #include "winnt_version.h"
-#include "Runtime/Core/Public/Core_fwd.h"
-#include "Runtime/Core/Public/Meta/Config.h"
 #include "Runtime/Core/Public/Meta/Aliases.h"
+#include "Runtime/Core/Public/Meta/Config.h"
+#include "Runtime/Core/Public/HAL/PlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
+#include "Runtime/Core/Public/Core_fwd.h"
 #include "Runtime/Core/Public/Meta/Alignment.h"
 #include "Runtime/Core/Public/Meta/TypeTraits.h"
 #include "Runtime/Core/Public/Meta/Arithmetic.h"
@@ -60,9 +66,6 @@
 #include "Runtime/Core/Public/Diagnostic/Exception.h"
 #include "Runtime/Core/Public/IO/TextWriter_fwd.h"
 #include "Runtime/Core/Public/IO/String_fwd.h"
-#include "Runtime/Core/Public/HAL/PlatformMacros.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
 #include "Runtime/Core/Public/Meta/Cast.h"
 #include "Runtime/Core/Public/Meta/Delete.h"
 #include "Runtime/Core/Public/Meta/Enum.h"
@@ -77,15 +80,17 @@
 #ifdef BUILD_Win64_FastDebug
 // system includes
 #include <map>
-#include <optional>
 #include <iostream>
 #include <condition_variable>
 #include <variant>
 // project includes
 #include "winnt_version.h"
-#include "Runtime/Core/Public/Core_fwd.h"
-#include "Runtime/Core/Public/Meta/Config.h"
 #include "Runtime/Core/Public/Meta/Aliases.h"
+#include "Runtime/Core/Public/Meta/Config.h"
+#include "Runtime/Core/Public/HAL/PlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
+#include "Runtime/Core/Public/Core_fwd.h"
 #include "Runtime/Core/Public/Meta/Alignment.h"
 #include "Runtime/Core/Public/Meta/TypeTraits.h"
 #include "Runtime/Core/Public/Meta/Arithmetic.h"
@@ -93,9 +98,6 @@
 #include "Runtime/Core/Public/Diagnostic/Exception.h"
 #include "Runtime/Core/Public/IO/TextWriter_fwd.h"
 #include "Runtime/Core/Public/IO/String_fwd.h"
-#include "Runtime/Core/Public/HAL/PlatformMacros.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
 #include "Runtime/Core/Public/Meta/Cast.h"
 #include "Runtime/Core/Public/Meta/Delete.h"
 #include "Runtime/Core/Public/Meta/Enum.h"

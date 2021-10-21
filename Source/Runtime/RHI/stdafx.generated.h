@@ -4,9 +4,11 @@
 #ifdef PLATFORM_WINDOWS
 // Global system includes
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdlib>
 #include <limits.h>
 #include <limits>
+#include <cstddef>
 #include <initializer_list>
 #include <new>
 #include <exception>
@@ -15,6 +17,7 @@
 #include <utility>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <functional>
 #include <tuple>
 #include <cmath>
@@ -40,19 +43,19 @@
 #include <locale>
 #include <clocale>
 #include <variant>
-#include <optional>
 // Global project includes
 #ifdef BUILD_Win32_FastDebug
 // system includes
+#include <ios>
 #include <map>
 #include <iostream>
 #include <regex>
 #include <condition_variable>
 // project includes
 #include "winnt_version.h"
-#include "Runtime/Core/Public/Core_fwd.h"
-#include "Runtime/Core/Public/Meta/Config.h"
 #include "Runtime/Core/Public/Meta/Aliases.h"
+#include "Runtime/Core/Public/Meta/Config.h"
+#include "Runtime/Core/Public/Core_fwd.h"
 #include "Runtime/Core/Public/Meta/Alignment.h"
 #include "Runtime/Core/Public/Meta/TypeTraits.h"
 #include "Runtime/Core/Public/Meta/Arithmetic.h"
@@ -76,15 +79,16 @@
 #endif // BUILD_Win32_FastDebug
 #ifdef BUILD_Win64_FastDebug
 // system includes
+#include <ios>
 #include <map>
 #include <iostream>
 #include <regex>
 #include <condition_variable>
 // project includes
 #include "winnt_version.h"
-#include "Runtime/Core/Public/Core_fwd.h"
-#include "Runtime/Core/Public/Meta/Config.h"
 #include "Runtime/Core/Public/Meta/Aliases.h"
+#include "Runtime/Core/Public/Meta/Config.h"
+#include "Runtime/Core/Public/Core_fwd.h"
 #include "Runtime/Core/Public/Meta/Alignment.h"
 #include "Runtime/Core/Public/Meta/TypeTraits.h"
 #include "Runtime/Core/Public/Meta/Arithmetic.h"

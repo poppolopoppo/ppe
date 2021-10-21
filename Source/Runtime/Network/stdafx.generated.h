@@ -4,9 +4,11 @@
 #ifdef PLATFORM_WINDOWS
 // Global system includes
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdlib>
 #include <limits.h>
 #include <limits>
+#include <cstddef>
 #include <initializer_list>
 #include <new>
 #include <exception>
@@ -15,6 +17,7 @@
 #include <utility>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <functional>
 #include <tuple>
 #include <cmath>
@@ -39,7 +42,6 @@
 #include <cwctype>
 #include <locale>
 #include <clocale>
-#include <optional>
 // Global project includes
 #include "winnt_version.h"
 #include "Runtime/Core/Public/Core_fwd.h"
@@ -96,6 +98,7 @@
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryProvider.h"
 #include "Runtime/Core/Public/Allocator/Alloca.h"
 #include "Runtime/Core/Public/Allocator/Allocation_fwd.h"
@@ -118,12 +121,14 @@
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformMaths.h"
 #include "Runtime/Core/Public/Meta/AlignedStorage.h"
 #include "Runtime/Core/Public/Allocator/CascadedAllocator.h"
+#include "Runtime/Core/Public/Allocator/StaticAllocator.h"
 #include "Runtime/Core/Public/Container/IntrusiveList.h"
 #include "Runtime/Core/Public/Allocator/InSituAllocator.h"
 #include "Runtime/Core/Public/Allocator/Mallocator.h"
 #include "Runtime/Core/Public/Allocator/StackLocalAllocator.h"
 #include "Runtime/Core/Public/Allocator/TrackingAllocator.h"
 #include "Runtime/Core/Public/Memory/MemoryTracking.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/IO/Stream_fwd.h"
 #include "Runtime/Core/Public/IO/StreamPolicies.h"
 #include "Runtime/Core/Public/Misc/Function_fwd.h"
@@ -131,7 +136,6 @@
 #include "Runtime/Core/Public/Container/TupleHelpers.h"
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
-#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
@@ -139,6 +143,7 @@
 #endif // BUILD_Win32_Debug
 #ifdef BUILD_Win32_FastDebug
 // system includes
+#include <ios>
 #include <map>
 #include <iostream>
 #include <regex>
@@ -177,6 +182,7 @@
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryProvider.h"
 #include "Runtime/Core/Public/Allocator/Alloca.h"
 #include "Runtime/Core/Public/Allocator/Allocation_fwd.h"
@@ -199,12 +205,14 @@
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformMaths.h"
 #include "Runtime/Core/Public/Meta/AlignedStorage.h"
 #include "Runtime/Core/Public/Allocator/CascadedAllocator.h"
+#include "Runtime/Core/Public/Allocator/StaticAllocator.h"
 #include "Runtime/Core/Public/Container/IntrusiveList.h"
 #include "Runtime/Core/Public/Allocator/InSituAllocator.h"
 #include "Runtime/Core/Public/Allocator/Mallocator.h"
 #include "Runtime/Core/Public/Allocator/StackLocalAllocator.h"
 #include "Runtime/Core/Public/Allocator/TrackingAllocator.h"
 #include "Runtime/Core/Public/Memory/MemoryTracking.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/IO/Stream_fwd.h"
 #include "Runtime/Core/Public/IO/StreamPolicies.h"
 #include "Runtime/Core/Public/Misc/Function_fwd.h"
@@ -212,7 +220,6 @@
 #include "Runtime/Core/Public/Container/TupleHelpers.h"
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
-#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
@@ -248,6 +255,7 @@
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryProvider.h"
 #include "Runtime/Core/Public/Allocator/Alloca.h"
 #include "Runtime/Core/Public/Allocator/Allocation_fwd.h"
@@ -271,12 +279,14 @@
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformMaths.h"
 #include "Runtime/Core/Public/Meta/AlignedStorage.h"
 #include "Runtime/Core/Public/Allocator/CascadedAllocator.h"
+#include "Runtime/Core/Public/Allocator/StaticAllocator.h"
 #include "Runtime/Core/Public/Container/IntrusiveList.h"
 #include "Runtime/Core/Public/Allocator/InSituAllocator.h"
 #include "Runtime/Core/Public/Allocator/Mallocator.h"
 #include "Runtime/Core/Public/Allocator/StackLocalAllocator.h"
 #include "Runtime/Core/Public/Allocator/TrackingAllocator.h"
 #include "Runtime/Core/Public/Memory/MemoryTracking.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/IO/Stream_fwd.h"
 #include "Runtime/Core/Public/IO/StreamPolicies.h"
 #include "Runtime/Core/Public/Misc/Function_fwd.h"
@@ -284,7 +294,6 @@
 #include "Runtime/Core/Public/Container/TupleHelpers.h"
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
-#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
@@ -345,6 +354,7 @@
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryProvider.h"
 #include "Runtime/Core/Public/Allocator/Alloca.h"
 #include "Runtime/Core/Public/Allocator/Allocation_fwd.h"
@@ -367,12 +377,14 @@
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformMaths.h"
 #include "Runtime/Core/Public/Meta/AlignedStorage.h"
 #include "Runtime/Core/Public/Allocator/CascadedAllocator.h"
+#include "Runtime/Core/Public/Allocator/StaticAllocator.h"
 #include "Runtime/Core/Public/Container/IntrusiveList.h"
 #include "Runtime/Core/Public/Allocator/InSituAllocator.h"
 #include "Runtime/Core/Public/Allocator/Mallocator.h"
 #include "Runtime/Core/Public/Allocator/StackLocalAllocator.h"
 #include "Runtime/Core/Public/Allocator/TrackingAllocator.h"
 #include "Runtime/Core/Public/Memory/MemoryTracking.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/IO/Stream_fwd.h"
 #include "Runtime/Core/Public/IO/StreamPolicies.h"
 #include "Runtime/Core/Public/Misc/Function_fwd.h"
@@ -380,7 +392,6 @@
 #include "Runtime/Core/Public/Container/TupleHelpers.h"
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
-#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
@@ -388,6 +399,7 @@
 #endif // BUILD_Win64_Debug
 #ifdef BUILD_Win64_FastDebug
 // system includes
+#include <ios>
 #include <map>
 #include <iostream>
 #include <regex>
@@ -426,6 +438,7 @@
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryProvider.h"
 #include "Runtime/Core/Public/Allocator/Alloca.h"
 #include "Runtime/Core/Public/Allocator/Allocation_fwd.h"
@@ -448,12 +461,14 @@
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformMaths.h"
 #include "Runtime/Core/Public/Meta/AlignedStorage.h"
 #include "Runtime/Core/Public/Allocator/CascadedAllocator.h"
+#include "Runtime/Core/Public/Allocator/StaticAllocator.h"
 #include "Runtime/Core/Public/Container/IntrusiveList.h"
 #include "Runtime/Core/Public/Allocator/InSituAllocator.h"
 #include "Runtime/Core/Public/Allocator/Mallocator.h"
 #include "Runtime/Core/Public/Allocator/StackLocalAllocator.h"
 #include "Runtime/Core/Public/Allocator/TrackingAllocator.h"
 #include "Runtime/Core/Public/Memory/MemoryTracking.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/IO/Stream_fwd.h"
 #include "Runtime/Core/Public/IO/StreamPolicies.h"
 #include "Runtime/Core/Public/Misc/Function_fwd.h"
@@ -461,7 +476,6 @@
 #include "Runtime/Core/Public/Container/TupleHelpers.h"
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
-#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"
@@ -497,6 +511,7 @@
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryProvider.h"
 #include "Runtime/Core/Public/Allocator/Alloca.h"
 #include "Runtime/Core/Public/Allocator/Allocation_fwd.h"
@@ -520,12 +535,14 @@
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformMaths.h"
 #include "Runtime/Core/Public/Meta/AlignedStorage.h"
 #include "Runtime/Core/Public/Allocator/CascadedAllocator.h"
+#include "Runtime/Core/Public/Allocator/StaticAllocator.h"
 #include "Runtime/Core/Public/Container/IntrusiveList.h"
 #include "Runtime/Core/Public/Allocator/InSituAllocator.h"
 #include "Runtime/Core/Public/Allocator/Mallocator.h"
 #include "Runtime/Core/Public/Allocator/StackLocalAllocator.h"
 #include "Runtime/Core/Public/Allocator/TrackingAllocator.h"
 #include "Runtime/Core/Public/Memory/MemoryTracking.h"
+#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/IO/Stream_fwd.h"
 #include "Runtime/Core/Public/IO/StreamPolicies.h"
 #include "Runtime/Core/Public/Misc/Function_fwd.h"
@@ -533,7 +550,6 @@
 #include "Runtime/Core/Public/Container/TupleHelpers.h"
 #include "Runtime/Core/Public/Container/Array.h"
 #include "Runtime/Core/Public/Container/Tuple.h"
-#include "Runtime/Core/Public/Meta/PointerWFlags.h"
 #include "Runtime/Core/Public/Time/Timepoint.h"
 #include "Runtime/Core/Public/Maths/Units.h"
 #include "Runtime/Network/Public/Network.h"

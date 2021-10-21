@@ -4,17 +4,22 @@
 #ifdef PLATFORM_WINDOWS
 // Global system includes
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdlib>
 #include <limits.h>
 #include <limits>
+#include <cstddef>
 #include <initializer_list>
 #include <new>
 #include <exception>
 #include <type_traits>
 #include <cstring>
 #include <utility>
+#include <comdef.h>
+#include <comutil.h>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <functional>
 #include <tuple>
 #include <cmath>
@@ -26,8 +31,6 @@
 #include <chrono>
 #include <thread>
 #include <array>
-#include <comdef.h>
-#include <comutil.h>
 #include <intrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
@@ -39,11 +42,15 @@
 #include <cwctype>
 #include <locale>
 #include <clocale>
+#include <regex>
 // Global project includes
 #include "winnt_version.h"
-#include "Runtime/Core/Public/Core_fwd.h"
-#include "Runtime/Core/Public/Meta/Config.h"
+#include "Runtime/Core/Public/HAL/PlatformMacros.h"
 #include "Runtime/Core/Public/Meta/Aliases.h"
+#include "Runtime/Core/Public/Meta/Config.h"
+#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
+#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
+#include "Runtime/Core/Public/Core_fwd.h"
 #include "Runtime/Core/Public/Meta/Alignment.h"
 #include "Runtime/Core/Public/Meta/TypeTraits.h"
 #include "Runtime/Core/Public/Meta/Arithmetic.h"
@@ -51,9 +58,6 @@
 #include "Runtime/Core/Public/Diagnostic/Exception.h"
 #include "Runtime/Core/Public/IO/TextWriter_fwd.h"
 #include "Runtime/Core/Public/IO/String_fwd.h"
-#include "Runtime/Core/Public/HAL/PlatformMacros.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformMacros.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformMacros.h"
 #include "Runtime/Core/Public/Meta/Cast.h"
 #include "Runtime/Core/Public/Meta/Delete.h"
 #include "Runtime/Core/Public/Meta/Enum.h"
@@ -68,11 +72,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -82,7 +81,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -93,10 +98,9 @@
 #endif // BUILD_Win32_Debug
 #ifdef BUILD_Win32_FastDebug
 // system includes
+#include <ios>
 #include <map>
-#include <optional>
 #include <iostream>
-#include <regex>
 #include <condition_variable>
 #include <variant>
 // project includes
@@ -105,11 +109,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -119,7 +118,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -132,11 +137,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -146,7 +146,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"
@@ -158,11 +164,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -172,7 +173,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"
@@ -183,11 +190,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -197,7 +199,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -208,10 +216,9 @@
 #endif // BUILD_Win64_Debug
 #ifdef BUILD_Win64_FastDebug
 // system includes
+#include <ios>
 #include <map>
-#include <optional>
 #include <iostream>
-#include <regex>
 #include <condition_variable>
 #include <variant>
 // project includes
@@ -220,11 +227,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -234,7 +236,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/TrackingMalloc.h"
@@ -247,11 +255,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -261,7 +264,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"
@@ -273,11 +282,6 @@
 // system includes
 // project includes
 #include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #include "Runtime/RTTI/Public/RTTI_fwd.h"
@@ -287,7 +291,13 @@
 #include "Runtime/Core/Public/HAL/PlatformHash.h"
 #include "Runtime/Core/Public/HAL/Windows/WindowsPlatformHash.h"
 #include "Runtime/Core/Public/HAL/Generic/GenericPlatformHash.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform.h"
+#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
+#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
+#include "Runtime/Core/Public/Memory/MemoryView.h"
+#include "Runtime/Core/Public/Memory/PtrRef.h"
 #include "Runtime/Core/Public/Memory/HashFunctions.h"
+#include "Runtime/Core/Public/Container/Pair.h"
 #include "Runtime/Core/Public/Memory/MemoryDomain.h"
 #include "Runtime/Core/Public/Memory/RefPtr.h"
 #include "Runtime/Core/Public/Allocator/Malloc.h"

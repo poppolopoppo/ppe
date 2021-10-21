@@ -4,9 +4,11 @@
 #ifdef PLATFORM_WINDOWS
 // Global system includes
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdlib>
 #include <limits.h>
 #include <limits>
+#include <cstddef>
 #include <initializer_list>
 #include <new>
 #include <exception>
@@ -15,6 +17,7 @@
 #include <utility>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <functional>
 #include <tuple>
 #include <cmath>
@@ -25,20 +28,21 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
-#include <array>
-#include <comdef.h>
-#include <comutil.h>
-#include <emmintrin.h>
-#include <xmmintrin.h>
-#include <intrin.h>
+#include <locale>
+#include <cctype>
+#include <clocale>
 #include <immintrin.h>
 #include <smmintrin.h>
 #include <tmmintrin.h>
 #include <pmmintrin.h>
-#include <cctype>
+#include <emmintrin.h>
+#include <xmmintrin.h>
+#include <array>
+#include <comdef.h>
+#include <comutil.h>
+#include <intrin.h>
 #include <cwctype>
-#include <locale>
-#include <clocale>
+#include <ios>
 #include <iostream>
 #include <regex>
 #include <condition_variable>
@@ -71,119 +75,31 @@
 #ifdef BUILD_Win32_Debug
 // system includes
 #include <map>
-#include <optional>
 // project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win32_Debug
 #ifdef BUILD_Win32_FastDebug
 // system includes
 #include <map>
-#include <optional>
 // project includes
 #endif // BUILD_Win32_FastDebug
 #ifdef BUILD_Win32_Release
 // system includes
 #include <map>
-#include <optional>
 // project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win32_Release
-#ifdef BUILD_Win32_Profiling
-// system includes
-#include <optional>
-// project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
-#endif // BUILD_Win32_Profiling
-#ifdef BUILD_Win32_Final
-// system includes
-// project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
-#endif // BUILD_Win32_Final
 #ifdef BUILD_Win64_Debug
 // system includes
 #include <map>
-#include <optional>
 // project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win64_Debug
 #ifdef BUILD_Win64_FastDebug
 // system includes
 #include <map>
-#include <optional>
 // project includes
 #endif // BUILD_Win64_FastDebug
 #ifdef BUILD_Win64_Release
 // system includes
 #include <map>
-#include <optional>
 // project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
 #endif // BUILD_Win64_Release
-#ifdef BUILD_Win64_Profiling
-// system includes
-#include <optional>
-// project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
-#endif // BUILD_Win64_Profiling
-#ifdef BUILD_Win64_Final
-// system includes
-// project includes
-#include "Runtime/Core/Public/HAL/PlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform.h"
-#include "Runtime/Core/Public/HAL/TargetPlatform_fwd.h"
-#include "Runtime/Core/Public/Diagnostic/Logger_fwd.h"
-#include "Runtime/Core/Public/Memory/MemoryView.h"
-#include "Runtime/Core/Public/Memory/PtrRef.h"
-#include "Runtime/Core/Public/HAL/Windows/WindowsPlatformIncludes.h"
-#include "Runtime/Core/Public/HAL/Generic/GenericPlatformIncludes.h"
-#endif // BUILD_Win64_Final
 #endif //! PLATFORM_WINDOWS
