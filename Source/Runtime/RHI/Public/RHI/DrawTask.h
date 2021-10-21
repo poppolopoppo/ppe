@@ -130,7 +130,7 @@ struct TDrawVerticesDesc : TDrawCallDesc<_Task> {
 
     _Task& AddVertexBuffer(const FVertexBufferID& id, FRawBufferID buffer, u32 offset = 0) {
         Assert(buffer);
-        VertexBuffers.Add_Overwrite(id, FVertexBuffer{ buffer, offset });
+        VertexBuffers.Emplace_Overwrite(id, FVertexBuffer{ buffer, offset });
         return static_cast<_Task&>(*this);
     }
 

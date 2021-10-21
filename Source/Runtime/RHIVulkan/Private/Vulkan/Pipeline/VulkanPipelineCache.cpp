@@ -596,8 +596,8 @@ bool FVulkanPipelineCache::CreateShaderTable(
     const FVulkanDevice& device = workerCmd.Device();
     FVulkanResourceManager& resources = workerCmd.ResourceManager();
 
-    const u32 handleSize = checked_cast<u32>(device.Capabilities().RayTracingProperties.shaderGroupHandleSize);
-    const u32 baseAlignment = checked_cast<u32>(device.Capabilities().RayTracingProperties.shaderGroupBaseAlignment);
+    const u32 handleSize = checked_cast<u32>(device.Capabilities().RayTracingPropertiesNV.shaderGroupHandleSize);
+    const u32 baseAlignment = checked_cast<u32>(device.Capabilities().RayTracingPropertiesNV.shaderGroupBaseAlignment);
     const u32 geometryStride = sharedData->HitShadersPerInstance;
     const u32 maxHitShaders = sharedData->MaxHitShaderCount;
 
@@ -657,55 +657,56 @@ bool FVulkanPipelineCache::CreateShaderTable(
     // setup offsets
 
     u32 offset{ 0 };
-    pShaderTable->_rayGenOffset = offset;
-    pShaderTable->_rayMissOffset = offset = Meta::RoundToNext(offset + handleSize, baseAlignment);
-    pShaderTable->_rayHitOffset = offset = Meta::RoundToNext(offset + (handleSize * missShaderCount), baseAlignment);
-    pShaderTable->_callableOffset = offset = Meta::RoundToNext(offset + (handleSize * maxHitShaders), baseAlignment);
-    pShaderTable->_blockSize = offset = Meta::RoundToNext(offset + (handleSize * callableShaderCount), baseAlignment);
-    pShaderTable->_rayMissStride = checked_cast<u16>( handleSize );
-    pShaderTable->_rayHitStride = checked_cast<u16>( handleSize );
-    pShaderTable->_callableStride = checked_cast<u16>( handleSize );
+    const auto exclusiveTable = pShaderTable->_data.LockExclusive();
+    exclusiveTable->RayGenOffset = offset;
+    exclusiveTable->RayMissOffset = offset = Meta::RoundToNext(offset + handleSize, baseAlignment);
+    exclusiveTable->RayHitOffset = offset = Meta::RoundToNext(offset + (handleSize * missShaderCount), baseAlignment);
+    exclusiveTable->CallableOffset = offset = Meta::RoundToNext(offset + (handleSize * maxHitShaders), baseAlignment);
+    exclusiveTable->BlockSize = offset = Meta::RoundToNext(offset + (handleSize * callableShaderCount), baseAlignment);
+    exclusiveTable->RayMissStride = checked_cast<u16>( handleSize );
+    exclusiveTable->RayHitStride = checked_cast<u16>( handleSize );
+    exclusiveTable->CallableStride = checked_cast<u16>( handleSize );
 
-    pShaderTable->_availableShaders.set_if(0, missShaderCount > 0);
-    pShaderTable->_availableShaders.set_if(1, maxHitShaders > 0);
-    pShaderTable->_availableShaders.set_if(2, callableShaderCount > 0);
+    exclusiveTable->AvailableShaders.set_if(0, missShaderCount > 0);
+    exclusiveTable->AvailableShaders.set_if(1, maxHitShaders > 0);
+    exclusiveTable->AvailableShaders.set_if(2, callableShaderCount > 0);
 
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, pShaderTable->_rayGenOffset));
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, pShaderTable->_rayMissOffset));
-    Assert_NoAssume(Meta::IsAligned(pShaderTable->_rayMissStride, pShaderTable->_rayMissOffset));
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, pShaderTable->_rayHitOffset));
-    Assert_NoAssume(Meta::IsAligned(pShaderTable->_rayHitStride, pShaderTable->_rayHitOffset));
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, pShaderTable->_callableOffset));
-    Assert_NoAssume(Meta::IsAligned(pShaderTable->_callableStride, pShaderTable->_callableOffset));
+    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->RayGenOffset));
+    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->RayMissOffset));
+    Assert_NoAssume(Meta::IsAligned(exclusiveTable->RayMissStride, exclusiveTable->RayMissOffset));
+    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->RayHitOffset));
+    Assert_NoAssume(Meta::IsAligned(exclusiveTable->RayHitStride, exclusiveTable->RayHitOffset));
+    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->CallableOffset));
+    Assert_NoAssume(Meta::IsAligned(exclusiveTable->CallableStride, exclusiveTable->CallableOffset));
 
-    const u32 requiredSize = checked_cast<u32>(pShaderTable->_blockSize * debugModes.size());
+    const u32 requiredSize = checked_cast<u32>(exclusiveTable->BlockSize * debugModes.size());
 
     // recreate buffer
 
-    if (pShaderTable->_bufferId) {
-        if (resources.ResourceDescription(*pShaderTable->_bufferId).SizeInBytes < requiredSize)
-            workerCmd.ReleaseResource(pShaderTable->_bufferId.Release());
+    if (exclusiveTable->BufferId) {
+        if (resources.ResourceDescription(*exclusiveTable->BufferId).SizeInBytes < requiredSize)
+            workerCmd.ReleaseResource(exclusiveTable->BufferId.Release());
     }
 
-    if (not pShaderTable->_bufferId) {
-        pShaderTable->_bufferId = workerCmd.FrameGraph()->CreateBuffer(
+    if (not exclusiveTable->BufferId) {
+        exclusiveTable->BufferId = workerCmd.FrameGraph()->CreateBuffer(
             FBufferDesc{ requiredSize, EBufferUsage::TransferDst | EBufferUsage::RayTracing },
             Default ARGS_IF_RHIDEBUG(pShaderTable->DebugName()) );
 
-        LOG_CHECK(RHI, !!pShaderTable->_bufferId);
+        LOG_CHECK(RHI, !!exclusiveTable->BufferId);
     }
 
     // acquire buffer
 
-    if (pShaderTable->_pipelineId)
-        workerCmd.ReleaseResource(pShaderTable->_pipelineId.Release());
+    if (exclusiveTable->PipelineId)
+        workerCmd.ReleaseResource(exclusiveTable->PipelineId.Release());
 
     AssertRelease( resources.AcquireResource(pipelineId) );
-    pShaderTable->_pipelineId = FRTPipelineID{ pipelineId };
+    exclusiveTable->PipelineId = FRTPipelineID{ pipelineId };
 
     // destroy old pipelines
 
-    for (auto& table : pShaderTable->_tables) {
+    for (auto& table : exclusiveTable->Tables) {
         if (table.LayoutId)
             resources.ReleaseResource(table.LayoutId.Release());
 
@@ -713,7 +714,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             workerCmd.Batch()->DestroyPostponed(VK_OBJECT_TYPE_PIPELINE, reinterpret_cast<uintptr_t>(table.Pipeline));
     }
 
-    pShaderTable->_tables.clear();
+    exclusiveTable->Tables.clear();
 
     // create shader table for each debug mode
 
@@ -756,7 +757,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
         }
 #endif
 
-        FVulkanRTShaderTable::FShaderTable& table = (*pShaderTable->_tables.Push_Uninitialized());
+        FVulkanRTShaderTable::FShaderTable& table = (*exclusiveTable->Tables.Push_Uninitialized());
         table.BufferOffset = offset;
         table.Mode = mode;
         Assert_NoAssume(Meta::IsAligned(baseAlignment, table.BufferOffset));
@@ -792,7 +793,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
         // allocate staging buffer
 
-        const u32 stagingSize = pShaderTable->_blockSize;
+        const u32 stagingSize = exclusiveTable->BlockSize;
 
         FStagingBlock stagingBlock{};
         LOG_CHECK(RHI, workerCmd.StagingAlloc(&stagingBlock, stagingSize, baseAlignment) );
@@ -800,10 +801,10 @@ bool FVulkanPipelineCache::CreateShaderTable(
 #if USE_PPE_RHIDEBUG
         CONSTEXPR u8 UninitializedPattern_ = 0xAE;
         FPlatformMemory::Memset(stagingBlock.Mapped, 0, stagingSize);
-        FPlatformMemory::Memset(stagingBlock.Mapped + pShaderTable->_rayGenOffset, UninitializedPattern_, handleSize);
-        FPlatformMemory::Memset(stagingBlock.Mapped + pShaderTable->_rayMissOffset, UninitializedPattern_, handleSize * missShaderCount);
-        FPlatformMemory::Memset(stagingBlock.Mapped + pShaderTable->_rayHitOffset, UninitializedPattern_, handleSize * maxHitShaders);
-        FPlatformMemory::Memset(stagingBlock.Mapped + pShaderTable->_callableOffset, UninitializedPattern_, handleSize * callableShaderCount);
+        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayGenOffset, UninitializedPattern_, handleSize);
+        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayMissOffset, UninitializedPattern_, handleSize * missShaderCount);
+        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayHitOffset, UninitializedPattern_, handleSize * maxHitShaders);
+        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->CallableOffset, UninitializedPattern_, handleSize * callableShaderCount);
 #endif
 
         // ray-gen shader
@@ -812,7 +813,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             device.vkDevice(),
             table.Pipeline,
             0, 1, handleSize,
-            stagingBlock.Mapped + pShaderTable->_rayGenOffset ) );
+            stagingBlock.Mapped + exclusiveTable->RayGenOffset ) );
 
         u32 callableShaderIndex = 0;
         for (const FUpdateRayTracingShaderTable::FShaderGroup& sh : shaderGroups) {
@@ -821,7 +822,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             switch (sh.Type) {
 
             case EGroupType::MissShader: {
-                const u32 dstOffset = pShaderTable->_rayMissOffset + handleSize * sh.RecordOffset;
+                const u32 dstOffset = exclusiveTable->RayMissOffset + handleSize * sh.RecordOffset;
                 Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
                 VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
@@ -831,7 +832,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             }
 
             case EGroupType::CallableShader: {
-                const u32 dstOffset = pShaderTable->_callableOffset + handleSize * callableShaderIndex++;
+                const u32 dstOffset = exclusiveTable->CallableOffset + handleSize * callableShaderIndex++;
                 Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
                 VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
@@ -844,8 +845,12 @@ bool FVulkanPipelineCache::CreateShaderTable(
             case EGroupType::ProceduralHitShader: {
                 Assert_NoAssume(sh.RecordOffset < geometryStride);
 
-                const auto instance = sharedData->GeometryInstances.Find(sh.InstanceId);
+                const auto instance = std::lower_bound(
+                    sharedData->GeometryInstances.begin(),
+                    sharedData->GeometryInstances.end(),
+                    sh.InstanceId );
                 AssertRelease(sharedData->GeometryInstances.end() != instance);
+                AssertRelease(instance->InstanceId == sh.InstanceId);
 
                 const auto* const pRTGeometry = workerCmd.AcquireTransient(*instance->GeometryId);
                 Assert(pRTGeometry);
@@ -858,7 +863,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                         const u32 index = checked_cast<u32>(instance->IndexOffset + i * geometryStride + sh.RecordOffset);
                         AssertRelease(index < maxHitShaders);
 
-                        const u32 dstOffset = pShaderTable->_rayHitOffset + handleSize * index;
+                        const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
                         Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
                         VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
@@ -871,7 +876,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                         const u32 index = checked_cast<u32>(instance->IndexOffset + (triangles.size() + i) * geometryStride + sh.RecordOffset);
                         AssertRelease(index < maxHitShaders);
 
-                        const u32 dstOffset = pShaderTable->_rayHitOffset + handleSize * index;
+                        const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
                         Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
                         VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
@@ -887,7 +892,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                         sh.RecordOffset );
                     AssertRelease(index < maxHitShaders);
 
-                    const u32 dstOffset = pShaderTable->_rayHitOffset + handleSize * index;
+                    const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
                     Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
                     VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
@@ -920,11 +925,11 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
         pCopyRegions->Push(
             workerCmd.ToLocal(stagingBlock.RawBufferID),
-            workerCmd.ToLocal(*pShaderTable->_bufferId),
+            workerCmd.ToLocal(*exclusiveTable->BufferId),
             VkBufferCopy{
                 checked_cast<VkDeviceSize>(stagingBlock.Offset),
                 checked_cast<VkDeviceSize>(table.BufferOffset),
-                checked_cast<VkDeviceSize>(pShaderTable->_blockSize)
+                checked_cast<VkDeviceSize>(exclusiveTable->BlockSize)
             });
 
         // clear temporary arrays
@@ -936,7 +941,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
         // finally advance the offset to the next block
 
-        offset = Meta::RoundToNext(offset + pShaderTable->_blockSize, baseAlignment);
+        offset = Meta::RoundToNext(offset + exclusiveTable->BlockSize, baseAlignment);
     }
 
     return true;

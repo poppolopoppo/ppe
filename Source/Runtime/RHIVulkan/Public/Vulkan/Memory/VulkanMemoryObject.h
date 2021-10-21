@@ -50,6 +50,7 @@ public:
     NODISCARD bool AllocateImage(FVulkanMemoryManager& memory, VkImage image);
     NODISCARD bool AllocateBuffer(FVulkanMemoryManager& memory, VkBuffer buffer);
     NODISCARD bool AllocateAccelStruct(FVulkanMemoryManager& memory, VkAccelerationStructureKHR accelStruct);
+    NODISCARD bool AllocateAccelStruct(FVulkanMemoryManager& memory, VkAccelerationStructureNV accelStruct);
 
     NODISCARD bool MemoryInfo(FVulkanMemoryInfo* pInfo, FVulkanMemoryManager& memory) const;
 

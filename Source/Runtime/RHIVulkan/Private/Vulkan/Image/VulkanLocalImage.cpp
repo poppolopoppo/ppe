@@ -276,8 +276,6 @@ void FVulkanLocalImage::ResetState(EVulkanExecutionOrder index, FVulkanBarrierMa
 void FVulkanLocalImage::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP)) const {
     const auto sharedImg = _imageData->Read();
 
-    VkPipelineStageFlags dstStages = 0;
-
     for (const auto& pending : _accessPending) {
         const auto first = FindFirstAccess_(_accessForReadWrite, pending.Range);
 
@@ -314,7 +312,6 @@ void FVulkanLocalImage::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RH
                 Assert(barrier.subresourceRange.levelCount > 0);
                 Assert(barrier.subresourceRange.layerCount > 0);
 
-                dstStages |= pending.Stages;
                 barriers.AddImageBarrier(it->Stages, pending.Stages, 0, barrier);
 
 #if USE_PPE_RHIDEBUG

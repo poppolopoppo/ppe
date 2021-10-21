@@ -156,6 +156,7 @@ private:
     const bool _enableDispatchBase      : 1;
     const bool _enableDrawIndirectCount : 1;
     const bool _enableMeshShaderNV      : 1;
+    const bool _enableRayTracingNV      : 1;
     const bool _enableRayTracingKHR     : 1;
 
     const u32 _maxDrawIndirectCount;

@@ -47,9 +47,6 @@ public:
         u32 Samples() const { return *Desc.Samples; }
 
         EPixelFormat PixelFormat() const { return Desc.Format; }
-
-        VkImageView ImageView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const;
-        VkImageView ImageView(const FVulkanDevice& device, bool isDefault, FImageViewDesc& desc) const;
     };
 
     FVulkanImage() = default;
@@ -82,6 +79,11 @@ public:
     NODISCARD bool Construct(FVulkanResourceManager& resources,
         const FImageDesc& desc, FRawMemoryID memoryId, FVulkanMemoryObject& memoryObject,
         EVulkanQueueFamilyMask queueFamilyMask, EResourceState defaultState
+        ARGS_IF_RHIDEBUG(FConstChar debugName) );
+
+    NODISCARD bool Construct(const FVulkanDevice& device,
+        const FVulkanExternalImageDesc& desc,
+        FOnReleaseExternalImage&& onRelease
         ARGS_IF_RHIDEBUG(FConstChar debugName) );
 
     NODISCARD bool Construct(const FVulkanDevice& device,

@@ -125,7 +125,9 @@ VkDescriptorPool FVulkanDescriptorManager::CreateDescriptorPool_(FDescriptorPool
     poolSizes.Push(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, MaxDescriptorPoolSize);
     poolSizes.Push(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, MaxDescriptorPoolSize);
 
-    if (_device.Enabled().RayTracingKHR)
+    if (_device.Enabled().RayTracingNV)
+        poolSizes.Push(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, MaxDescriptorPoolSize);
+    else if (_device.Enabled().RayTracingKHR)
         poolSizes.Push(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, MaxDescriptorPoolSize);
 
     VkDescriptorPoolCreateInfo info{};

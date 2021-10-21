@@ -858,6 +858,7 @@ extern "C" \{
         end
         dst.puts!("using #{name}_set = PPE::TFixedSizeBitMask<static_cast<uint32_t>(#{name}_count)>;")
         dst.puts!("const char* #{name}_name(#{name} ext);")
+        dst.puts!("#{name} #{name}_from(const char* name);")
         dst.puts!("#{name}_set #{name}s_available();")
         dst.puts!("#{name}_set #{name}s_require(const #{name}_set& in);")
         dst.puts!("CONSTEXPR bool operator & (const #{name}_set& bits, #{name} ext) { return bits.Get(static_cast<size_t>(ext)); }")
@@ -876,6 +877,19 @@ extern "C" \{
                 end
             end
             dst.puts!('default: return nullptr;')
+            dst.puts!('}')
+        dst.unindent!
+        dst.puts!('}')
+
+        dst.puts!("#{name} #{name}_from(const char* name) {")
+        dst.indent!
+            dst.puts!('switch(PPE::hash_str_constexpr(name)) {')
+            exts.each do |ext|
+                ifdef(dst, ext.name) do
+                    dst.puts!("case PPE::hash_str_constexpr(#{ext.name}): return #{extflag(ext.name)};")
+                end
+            end
+            dst.puts!('default: AssertNotReached();')
             dst.puts!('}')
         dst.unindent!
         dst.puts!('}')

@@ -25,8 +25,15 @@ protected:
     {}
 
 public:
-    void Process1(void* visitor);
-    void Process2(void* visitor);
+    void Process1(void* visitor) {
+        Assert(_pass1);
+        _pass1(visitor, this);
+    }
+
+    void Process2(void* visitor) {
+        Assert(_pass2);
+        _pass2(visitor, this);
+    }
 
 #if USE_PPE_RHIDEBUG
     const FTaskName& TaskName() const { return _taskName; }

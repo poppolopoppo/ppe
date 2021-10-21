@@ -83,7 +83,7 @@ NODISCARD static VkAccessFlagBits AllImageAccessMasks_(VkImageUsageFlags usage) 
         case VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV: result |= VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV; break;
 #endif
 
-        case VK_IMAGE_USAGE_FLAG_BITS_MAX_ENUM: AssertNotReached();
+        default: AssertNotReached();
         }
     }
 
@@ -97,7 +97,7 @@ NODISCARD static VkAccessFlagBits AllImageAccessMasks_(VkImageUsageFlags usage) 
 #if USE_PPE_ASSERT
 FVulkanImage::~FVulkanImage() {
     const auto exclusiveData = _data.LockExclusive();
-    Assert_NoAssume(VK_NULL_HANDLE != exclusiveData->vkImage);
+    Assert_NoAssume(VK_NULL_HANDLE == exclusiveData->vkImage);
     Assert_NoAssume(not exclusiveData->MemoryId.Valid());
     Assert_NoAssume(_viewMap.LockExclusive()->empty());
 }
@@ -208,6 +208,49 @@ bool FVulkanImage::Construct(
 //----------------------------------------------------------------------------
 bool FVulkanImage::Construct(
     const FVulkanDevice& device,
+    const FVulkanExternalImageDesc& desc,
+    FOnReleaseExternalImage&& onRelease
+    ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
+    const auto exclusiveData = _data.LockExclusive();
+    Assert(VK_NULL_HANDLE == exclusiveData->vkImage);
+    Assert(VK_NULL_HANDLE != desc.Image);
+
+    exclusiveData->vkImage = desc.Image;
+    exclusiveData->Desc.Type = RHICast(desc.Type);
+    exclusiveData->Desc.Flags = RHICast(desc.Flags);
+    exclusiveData->Desc.Dimensions = desc.Dimensions;
+    exclusiveData->Desc.Format = RHICast(desc.Format);
+    exclusiveData->Desc.Usage = RHICast(desc.Usage);
+    exclusiveData->Desc.ArrayLayers = FImageLayer{ desc.ArrayLayers };
+    exclusiveData->Desc.MaxLevel = FMipmapLevel{ desc.MaxLevels };
+    exclusiveData->Desc.Samples = RHICast(desc.Samples);
+    exclusiveData->Desc.IsExternal = true;
+
+    LOG_CHECK(RHI, IsSupported(device, exclusiveData->Desc, EMemoryType::Default));
+
+#if USE_PPE_RHIDEBUG
+    if (debugName) {
+        _debugName = debugName;
+        device.SetObjectName(bit_cast<u64>(exclusiveData->vkImage), _debugName, VK_OBJECT_TYPE_IMAGE);
+    }
+#endif
+
+    LOG_CHECK(RHI, VK_QUEUE_FAMILY_IGNORED == desc.QueueFamily); // not supported
+    LOG_CHECK(RHI, desc.ConcurrentQueueFamilyIndices.empty() || desc.ConcurrentQueueFamilyIndices.size() >= 2);
+
+    exclusiveData->QueueFamilyMask = Default;
+    for (u32 index : desc.ConcurrentQueueFamilyIndices)
+        exclusiveData->QueueFamilyMask |= bit_cast<EVulkanQueueFamily>(index);
+
+    exclusiveData->AspectMask = ChooseAspect_(exclusiveData->Desc.Format);
+    exclusiveData->DefaultLayout = ChooseDefaultLayout_(exclusiveData->Desc.Usage, desc.DefaultLayout);
+    exclusiveData->OnRelease = std::move(onRelease);
+
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVulkanImage::Construct(
+    const FVulkanDevice& device,
     const FImageDesc& desc,
     FExternalImage externalImage,
     FOnReleaseExternalImage&& onRelease,
@@ -261,10 +304,11 @@ void FVulkanImage::TearDown(FVulkanResourceManager& resources) {
         exclusiveViewMap->clear();
     }
 
-    if (exclusiveData->Desc.IsExternal and exclusiveData->OnRelease)
-        exclusiveData->OnRelease(FExternalImage{ bit_cast<void*>(exclusiveData->vkImage) });
-
-    if (not exclusiveData->Desc.IsExternal)
+    if (exclusiveData->Desc.IsExternal) {
+        if (exclusiveData->OnRelease)
+            exclusiveData->OnRelease(FExternalImage{ bit_cast<void*>(exclusiveData->vkImage) });
+    }
+    else
         device.vkDestroyImage(device.vkDevice(), exclusiveData->vkImage, device.vkAllocator() );
 
     if (exclusiveData->MemoryId)
@@ -276,7 +320,7 @@ void FVulkanImage::TearDown(FVulkanResourceManager& resources) {
     exclusiveData->AspectMask = Zero;
     exclusiveData->DefaultLayout = Zero;
     exclusiveData->QueueFamilyMask = Default;
-    exclusiveData->OnRelease = {};
+    exclusiveData->OnRelease = NoFunction;
 
     ONLY_IF_RHIDEBUG(_debugName.Clear());
 }
@@ -299,8 +343,7 @@ VkImageView FVulkanImage::MakeView(const FVulkanDevice& device, const FImageView
 
     auto[it, inserted] = exclusiveViewMap->insert({ desc, VK_NULL_HANDLE });
     if (inserted) {
-        AssertRelease( IsSupported(device, desc) );
-
+        LOG_CHECK(RHI, IsSupported(device, desc) );
         LOG_CHECK(RHI, CreateView_(&it->second, *sharedData, device, desc) );
     }
 

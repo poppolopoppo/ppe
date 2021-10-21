@@ -506,7 +506,6 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
     using FRanges = TFixedSizeStack<FRange, MaxClearRanges>;
 
     using FClearColor = std::variant<
-        FColor,
         FRgba32i,
         FRgba32u,
         FLinearColor >;
@@ -521,7 +520,6 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
 
     FClearColorImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
-    FClearColorImage& Clear(const FColor& color) { ClearColor.emplace<FColor>(color); return (*this); }
     FClearColorImage& Clear(const FRgba32u& color) { ClearColor.emplace<FRgba32u>(color); return (*this); }
     FClearColorImage& Clear(const FRgba32i& color) { ClearColor.emplace<FRgba32i>(color); return (*this); }
     FClearColorImage& Clear(const FLinearColor& color) { ClearColor.emplace<FLinearColor>(color); return (*this); }

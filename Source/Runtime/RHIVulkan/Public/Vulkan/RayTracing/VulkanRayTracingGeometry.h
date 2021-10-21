@@ -53,7 +53,7 @@ public:
     };
 
     struct FInternalData {
-        VkAccelerationStructureKHR BottomLevelAS{ VK_NULL_HANDLE };
+        VkAccelerationStructureNV BottomLevelAS{ VK_NULL_HANDLE };
         FMemoryID MemoryId;
         FVulkanBLASHandle BLAS{ 0 };
         VECTOR(RHIRayTracing, FTriangles) Triangles;
@@ -62,12 +62,14 @@ public:
     };
 
     FVulkanRayTracingGeometry() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanRayTracingGeometry();
+#endif
 
     auto Read() const { return _data.LockShared(); }
 
     FVulkanBLASHandle BLAS() const { return Read()->BLAS; }
-    VkAccelerationStructureKHR Handle() const { return Read()->BottomLevelAS; }
+    VkAccelerationStructureNV Handle() const { return Read()->BottomLevelAS; }
 
     TMemoryView<const FAabbs> Aabbs() const { return Read()->Aabbs.MakeConstView(); }
     TMemoryView<const FTriangles> Triangles() const { return Read()->Triangles.MakeConstView(); }
@@ -81,7 +83,7 @@ public:
         FVulkanResourceManager& resources,
         const FRayTracingGeometryDesc& desc,
         FRawMemoryID memoryId,
-        FVulkanMemoryObject& pobj
+        FVulkanMemoryObject& memoryObj
         ARGS_IF_RHIDEBUG(FConstChar debugName) );
     void TearDown(FVulkanResourceManager& resources);
 

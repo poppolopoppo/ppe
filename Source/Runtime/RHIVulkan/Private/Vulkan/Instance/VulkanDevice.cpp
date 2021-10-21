@@ -34,8 +34,8 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
 ,   _vkDevice(info.vkDevice)
 ,   _vkVersion(EShaderLangFormat::Unknown)
 ,   _vkAllocator(*info.pAllocator)
-,   _instanceExtensions(info.InstanceExtensions)
-,   _deviceExtensions(info.DeviceExtensions) {
+,   _instanceExtensions(info.RequiredInstanceExtensions | info.OptionalInstanceExtensions)
+,   _deviceExtensions(info.RequiredDeviceExtensions | info.OptionalDeviceExtensions) {
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
 
     for (const FVulkanDeviceQueueInfo& q : info.Queues) {
@@ -67,6 +67,14 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
 //----------------------------------------------------------------------------
 FVulkanDevice::~FVulkanDevice() {
 
+}
+//----------------------------------------------------------------------------
+const FVulkanDeviceQueue& FVulkanDevice::DeviceQueue(EVulkanQueueFamily familyIndex) const NOEXCEPT {
+    const auto ptr = _vkQueues.MakeView().Any([familyIndex](const FVulkanDeviceQueue& q) NOEXCEPT {
+        return (q.FamilyIndex == familyIndex);
+    });
+    Assert(ptr);
+    return *ptr;
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_RHITASKNAME
@@ -184,11 +192,14 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #endif
 #ifdef VK_KHR_ray_tracing_pipeline
         if (_enabled.RayTracingKHR)
-            enableFeature(&_caps.RayTracingFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR);
+            enableFeature(&_caps.RayTracingFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR);
 #endif
 
         vkGetPhysicalDeviceFeatures2(_vkPhysicalDevice, &features2);
 
+#ifdef VK_NV_mesh_shader
+        _enabled.RayTracingNV &= (_caps.MeshShaderFeatures.meshShader or _caps.MeshShaderFeatures.taskShader);
+#endif
 #ifdef VK_NV_mesh_shader
         _enabled.MeshShaderNV &= (_caps.MeshShaderFeatures.meshShader or _caps.MeshShaderFeatures.taskShader);
 #endif
@@ -227,7 +238,7 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #endif
 #ifdef VK_KHR_ray_tracing_pipeline
         if (_enabled.RayTracingKHR)
-            enableProperties(&_caps.RayTracingProperties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR);
+            enableProperties(&_caps.RayTracingPropertiesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR);
 #endif
 #ifdef VK_KHR_depth_stencil_resolve
         if (_enabled.DepthStencilResolve)
@@ -242,10 +253,6 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #ifdef VK_EXT_descriptor_indexing
         if (_enabled.DescriptorIndexing)
             enableProperties(&_caps.DescriptorIndexingProperties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES);
-#endif
-#ifdef VK_EXT_memory_budget
-        if (_enabled.MemoryBudget)
-            enableProperties(&_caps.MemoryBudget, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT);
 #endif
 #ifdef VK_EXT_robustness2
         if (_enabled.Robustness2)

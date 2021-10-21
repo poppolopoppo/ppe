@@ -11,6 +11,7 @@
 #include "RHI/ResourceState.h"
 #include "RHI/SamplerEnums.h"
 #include "RHI/ShaderEnums.h"
+#include "RHI/SwapchainDesc.h"
 #include "RHI/VertexEnums.h"
 
 namespace PPE {
@@ -597,6 +598,69 @@ VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values) {
         }
     }
     return flags;
+}
+//----------------------------------------------------------------------------
+VkColorSpaceKHR VkCast(EColorSpace value) {
+    switch (value) {
+    case EColorSpace::PASS_THROUGH: return VK_COLOR_SPACE_PASS_THROUGH_EXT;
+    case EColorSpace::SRGB_NONLINEAR: return VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    case EColorSpace::DISPLAY_P3_NONLINEAR: return VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT;
+    case EColorSpace::EXTENDED_SRGB_LINEAR: return VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT;
+    case EColorSpace::DISPLAY_P3_LINEAR: return VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT;
+    case EColorSpace::DCI_P3_NONLINEAR: return VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT;
+    case EColorSpace::BT709_LINEAR: return VK_COLOR_SPACE_BT709_LINEAR_EXT;
+    case EColorSpace::BT709_NONLINEAR: return VK_COLOR_SPACE_BT709_NONLINEAR_EXT;
+    case EColorSpace::BT2020_LINEAR: return VK_COLOR_SPACE_BT2020_LINEAR_EXT;
+    case EColorSpace::HDR10_ST2084: return VK_COLOR_SPACE_HDR10_ST2084_EXT;
+    case EColorSpace::DOLBYVISION: return VK_COLOR_SPACE_DOLBYVISION_EXT;
+    case EColorSpace::HDR10_HLG: return VK_COLOR_SPACE_HDR10_HLG_EXT;
+    case EColorSpace::ADOBERGB_LINEAR: return VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT;
+    case EColorSpace::ADOBERGB_NONLINEAR: return VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT;
+    case EColorSpace::EXTENDED_SRGB_NONLINEAR: return VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT;
+    case EColorSpace::DISPLAY_NATIVE_AMD: return VK_COLOR_SPACE_DISPLAY_NATIVE_AMD;
+    case EColorSpace::Unknown: break;
+    }
+
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+VkCompositeAlphaFlagBitsKHR VkCast(ECompositeAlpha value) {
+    switch (value) {
+    case ECompositeAlpha::Opaque: return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    case ECompositeAlpha::PreMultiplied: return VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+    case ECompositeAlpha::PostMultiplied: return VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+    case ECompositeAlpha::Inherit: return VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+    case ECompositeAlpha::Unknown: break;
+    }
+
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+VkPresentModeKHR VkCast(EPresentMode value) {
+    switch (value) {
+    case EPresentMode::Immediate: return VK_PRESENT_MODE_IMMEDIATE_KHR;
+    case EPresentMode::Fifo: return VK_PRESENT_MODE_FIFO_KHR;
+    case EPresentMode::RelaxedFifo: return VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+    case EPresentMode::Mailbox: return VK_PRESENT_MODE_MAILBOX_KHR;
+    case EPresentMode::Unknown: break;
+    }
+
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+VkSurfaceTransformFlagBitsKHR VkCast(ESurfaceTransform value) {
+    switch (value) {
+    case ESurfaceTransform::Identity: return VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    case ESurfaceTransform::TransformRotate90: return VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR;
+    case ESurfaceTransform::TransformRotate180: return VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR;
+    case ESurfaceTransform::TransformRotate270: return VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR;
+    case ESurfaceTransform::HorizontalMirror: return VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR;
+    case ESurfaceTransform::HorizontalMirror_TransformRotate90: return VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR;
+    case ESurfaceTransform::HorizontalMirror_TransformRotate180: return VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR;
+    case ESurfaceTransform::HorizontalMirror_TransformRotate270: return VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR;
+    }
+
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 // Vk to RHI:

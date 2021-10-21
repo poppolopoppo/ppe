@@ -345,7 +345,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
-    const auto tlas = pList->Allocator.AllocateT<VkAccelerationStructureKHR>(value.Elements.Count);
+    const auto tlas = pList->Allocator.AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -359,9 +359,9 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
         tlas[i] = pRTScene->Handle();
     }
 
-    auto* const pTopAS = pList->Allocator.AllocateT<VkWriteDescriptorSetAccelerationStructureKHR>();
+    auto* const pTopAS = pList->Allocator.AllocateT<VkWriteDescriptorSetAccelerationStructureNV>();
     *pTopAS = {};
-    pTopAS->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+    pTopAS->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
     pTopAS->accelerationStructureCount = value.Elements.Count;
     pTopAS->pAccelerationStructures = tlas.data();
 

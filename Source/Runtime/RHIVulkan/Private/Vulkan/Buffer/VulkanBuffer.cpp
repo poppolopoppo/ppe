@@ -72,6 +72,11 @@ FVulkanBuffer::~FVulkanBuffer() {
 }
 #endif
 //----------------------------------------------------------------------------
+FVulkanBuffer::FVulkanBuffer(FVulkanBuffer&& rvalue) NOEXCEPT
+:   _data(std::move(*rvalue._data.LockExclusive()))
+,   _viewMap(std::move(*rvalue._viewMap.LockExclusive()))
+{}
+//----------------------------------------------------------------------------
 bool FVulkanBuffer::Construct(
     FVulkanResourceManager& resources,
     const FBufferDesc& desc,
@@ -92,6 +97,7 @@ bool FVulkanBuffer::Construct(
 
     exclusiveData->Desc = desc;
     exclusiveData->MemoryId = FMemoryID{ memoryId };
+    exclusiveData->IsExternal = false;
 
     // create buffer
     VkBufferCreateInfo info{};
@@ -134,16 +140,54 @@ bool FVulkanBuffer::Construct(
     }
 
 #if USE_PPE_RHIDEBUG
-    _debugName = debugName;
-#endif
-#if USE_PPE_RHITASKNAME
-    device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+    if (debugName) {
+        _debugName = debugName;
+        device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+    }
 #endif
 
     exclusiveData->ReadAccessMask = AllBufferReadAccessMasks_(info.usage);
     exclusiveData->QueueFamilyMask = queueFamilyMask;
 
-    Assert_NoAssume(not exclusiveData->IsExternal());
+    Assert_NoAssume(not exclusiveData->IsExternal);
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVulkanBuffer::Construct(
+    const FVulkanDevice& device,
+    const FVulkanExternalBufferDesc& desc,
+    FOnReleaseExternalBuffer&& onRelease
+    ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
+    Assert(desc.SizeInBytes > 0);
+    Assert(desc.Buffer);
+
+    const auto exclusiveData = _data.LockExclusive();
+    Assert_NoAssume(VK_NULL_HANDLE == exclusiveData->vkBuffer);
+    Assert_NoAssume(not exclusiveData->MemoryId);
+
+    exclusiveData->vkBuffer = desc.Buffer;
+    exclusiveData->Desc.SizeInBytes = desc.SizeInBytes;
+    exclusiveData->Desc.Usage = RHICast(desc.Usage);
+    exclusiveData->IsExternal = true;
+
+    LOG_CHECK(RHI, IsSupported(device, exclusiveData->Desc, EMemoryType::Default));
+
+#if USE_PPE_RHIDEBUG
+    if (debugName) {
+        _debugName = debugName;
+        device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+    }
+#endif
+
+    LOG_CHECK(RHI, VK_QUEUE_FAMILY_IGNORED == desc.QueueFamily); // not supported yet
+    LOG_CHECK(RHI, desc.ConcurrentQueueFamilyIndices.empty() || desc.ConcurrentQueueFamilyIndices.size() >= 2);
+
+    exclusiveData->QueueFamilyMask = Zero;
+    for (u32 index : desc.ConcurrentQueueFamilyIndices)
+        exclusiveData->QueueFamilyMask |= bit_cast<EVulkanQueueFamily>(index);
+
+    exclusiveData->OnRelease = std::move(onRelease);
+
     return true;
 }
 //----------------------------------------------------------------------------
@@ -166,6 +210,7 @@ bool FVulkanBuffer::Construct(
     exclusiveData->vkBuffer = static_cast<VkBuffer>(externalBuffer.Value);
     exclusiveData->Desc = desc;
     exclusiveData->OnRelease = std::move(onRelease);
+    exclusiveData->IsExternal = true;
     exclusiveData->ReadAccessMask = AllBufferReadAccessMasks_(static_cast<VkBufferUsageFlags>(desc.Usage));
 
     exclusiveData->QueueFamilyMask = Default;
@@ -173,13 +218,13 @@ bool FVulkanBuffer::Construct(
         exclusiveData->QueueFamilyMask |= static_cast<EVulkanQueueFamily>(id);
 
 #if USE_PPE_RHIDEBUG
-    _debugName = debugName;
-#endif
-#if USE_PPE_RHITASKNAME
-    device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+    if (debugName) {
+        _debugName = debugName;
+        device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+    }
 #endif
 
-    Assert_NoAssume(exclusiveData->IsExternal());
+    Assert_NoAssume(exclusiveData->IsExternal);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -190,14 +235,16 @@ void FVulkanBuffer::TearDown(FVulkanResourceManager& resources) {
     Assert_NoAssume(VK_NULL_HANDLE != exclusiveData->vkBuffer);
 
     { // release buffer views first
-        const FReadWriteLock::FScopeLockWrite viewLock{ _viewRWLock };
-        for (auto& view : _viewMap)
+        const auto exclusiveViewMap = _viewMap.LockExclusive();
+        for (auto& view : *exclusiveViewMap)
             device.vkDestroyBufferView(device.vkDevice(), view.second, device.vkAllocator());
-        _viewMap.clear_ReleaseMemory();
+        exclusiveViewMap->clear_ReleaseMemory();
     }
 
-    if (exclusiveData->IsExternal())
-        exclusiveData->OnRelease(FExternalBuffer{ exclusiveData->vkBuffer });
+    if (exclusiveData->IsExternal) {
+        if (exclusiveData->OnRelease)
+            exclusiveData->OnRelease(FExternalBuffer{ exclusiveData->vkBuffer });
+    }
     else
         device.vkDestroyBuffer(device.vkDevice(), exclusiveData->vkBuffer, device.vkAllocator());
 
@@ -217,32 +264,29 @@ VkBufferView FVulkanBuffer::MakeView(const FVulkanDevice& device, const FBufferV
     const auto sharedData = _data.LockShared();
 
     { // any created image view already created ?
-        const FReadWriteLock::FScopeLockRead viewLock{ _viewRWLock };
-        const auto it = _viewMap.find(desc);
-        if (_viewMap.end() != it) {
+        const auto sharedViewMap = _viewMap.LockShared();
+        const auto it = sharedViewMap->find(desc);
+        if (sharedViewMap->end() != it) {
             Assert_NoAssume(VK_NULL_HANDLE != it->second);
             return it->second; // cache hit
         }
     }
 
     // create a new view and register in the cache
-    const FReadWriteLock::FScopeLockWrite viewLock{ _viewRWLock };
+    const auto exclusiveViewMap = _viewMap.LockExclusive();
 
-    const auto[it, inserted] = _viewMap.insert({ desc, VK_NULL_HANDLE });
-    if (not inserted) { // another thread already created the view
-        Assert_NoAssume(it->second);
-        return it->second;
+    const auto[it, inserted] = exclusiveViewMap->insert({ desc, VK_NULL_HANDLE });
+    if (inserted) {
+        VkBufferViewCreateInfo info{};
+        info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+        info.flags = 0;
+        info.buffer = sharedData->vkBuffer;
+        info.format = VkCast(desc.Format);
+        info.offset = checked_cast<VkDeviceSize>(desc.Offset);
+        info.range = checked_cast<VkDeviceSize>(desc.SizeInBytes);
+
+        VK_CALL( device.vkCreateBufferView(device.vkDevice(), &info, device.vkAllocator(), &it->second) );
     }
-
-    VkBufferViewCreateInfo info{};
-    info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
-    info.flags = 0;
-    info.buffer = sharedData->vkBuffer;
-    info.format = VkCast(desc.Format);
-    info.offset = checked_cast<VkDeviceSize>(desc.Offset);
-    info.range = checked_cast<VkDeviceSize>(desc.SizeInBytes);
-
-    VK_CALL( device.vkCreateBufferView(device.vkDevice(), &info, device.vkAllocator(), &it->second) );
 
     Assert_NoAssume(VK_NULL_HANDLE != it->second);
     return it->second;
@@ -268,7 +312,7 @@ bool FVulkanBuffer::IsSupported(const FVulkanDevice& device, const FBufferDesc& 
         case EBufferUsage::Indirect: break;
 
         case EBufferUsage::RayTracing:
-            if (not device.Enabled().RayTracingKHR) return false;
+            if (not (device.Enabled().RayTracingKHR || device.Enabled().RayTracingNV)) return false;
             break;
         case EBufferUsage::VertexPplnStore:
             if (not device.Features().vertexPipelineStoresAndAtomics) return false;

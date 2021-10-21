@@ -19,7 +19,9 @@ namespace {
 //----------------------------------------------------------------------------
 static void MakeSwapchainDesc_(
     RHI::FSwapchainDesc* pSwapchainDesc,
-    VkSurfaceKHR backBuffer, const FRHISurfaceCreateInfo& surfaceInfo ) NOEXCEPT {
+    VkSurfaceKHR backBuffer,
+    const ERHIFeature features,
+    const FRHISurfaceCreateInfo& surfaceInfo ) NOEXCEPT {
     Assert(pSwapchainDesc);
     Assert(VK_NULL_HANDLE != backBuffer);
 
@@ -27,9 +29,19 @@ static void MakeSwapchainDesc_(
 
     pSwapchainDesc->Surface = FWindowSurface{ backBuffer };
     pSwapchainDesc->Dimensions = surfaceInfo.Dimensions;
-    pSwapchainDesc->PresentModes.Push(surfaceInfo.EnableVSync
-        ? EPresentMode::RelaxedFifo
-        : EPresentMode::Mailbox );
+
+    if (surfaceInfo.EnableVSync) {
+        pSwapchainDesc->PresentModes.Push(EPresentMode::RelaxedFifo);
+    }
+
+    if (features & ERHIFeature::HighDynamicRange) {
+        pSwapchainDesc->SurfaceFormats.Push(
+            EPixelFormat::RGB10_A2_UNorm,
+            EColorSpace::HDR10_ST2084 );
+        pSwapchainDesc->SurfaceFormats.Push(
+            EPixelFormat::RGB10_A2_UNorm,
+            EColorSpace::HDR10_HLG );
+    }
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -59,18 +71,21 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
 
     const EVulkanVersion version = EVulkanVersion::API_version_latest;
 
-    FVulkanDeviceExtensionSet deviceExtensions = FVulkanInstance::RecommendedDeviceExtensions(version);
-    FVulkanInstanceExtensionSet instanceExtensions = FVulkanInstance::RecommendedInstanceExtensions(version);
-    instanceExtensions |= FVulkanInstance::RequiredInstanceExtensions(version,
+    FVulkanDeviceExtensionSet requiredDeviceExtensions = FVulkanInstance::RequiredDeviceExtensions(version);
+    FVulkanDeviceExtensionSet optionalDeviceExtensions = FVulkanInstance::RecommendedDeviceExtensions(version);
+
+    FVulkanInstanceExtensionSet requiredInstanceExtensions = FVulkanInstance::RequiredInstanceExtensions(version);
+    FVulkanInstanceExtensionSet optionalInstanceExtensions = FVulkanInstance::RecommendedInstanceExtensions(version);
+    requiredInstanceExtensions |= FVulkanInstance::RequiredInstanceExtensions(version,
         pOptionalWindow ? pOptionalWindow->Hwnd : FWindowHandle{} );
 
     if (not _instance.Construct(
         *FString(applicationName),
         "PPE", version,
         FVulkanInstance::RecommendedInstanceLayers(version),
-        instanceExtensions,
-        deviceExtensions )) {
-        RHI_LOG(Error, L"failed to create vulkan instance, abort");
+        requiredInstanceExtensions, optionalInstanceExtensions,
+        requiredDeviceExtensions, optionalDeviceExtensions )) {
+        RHI_LOG(Error, L"failed to create vulkan instance, abort!");
         return false;
     }
 
@@ -85,7 +100,7 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
 
         AssertRelease(pOptionalWindow->Hwnd);
         if (not _instance.CreateSurface(&_backBuffer, pOptionalWindow->Hwnd)) {
-            RHI_LOG(Error, L"failed to create vulkan window surface, abort");
+            RHI_LOG(Error, L"failed to create vulkan window surface, abort!");
             return false;
         }
 
@@ -102,8 +117,12 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
     const TMemoryView<const FVulkanInstance::FQueueCreateInfo> deviceQueues =
         _instance.RecommendedDeviceQueues(version);
 
-    if (not _instance.CreateDevice(&_deviceInfo, _backBuffer, deviceExtensions, pPhysicalDevice, deviceQueues)) {
-        RHI_LOG(Error, L"failed to create vulkan device, abort");
+    if (not _instance.CreateDevice(
+        &_deviceInfo, _backBuffer,
+        requiredDeviceExtensions,
+        optionalDeviceExtensions,
+        pPhysicalDevice, deviceQueues )) {
+        RHI_LOG(Error, L"failed to create vulkan device, abort!");
         return false;
     }
 
@@ -111,7 +130,7 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
 
     _frameGraph = NEW_REF(RHIVulkan, FVulkanFrameGraph, _deviceInfo);
     if (not _frameGraph->Construct()) {
-        RHI_LOG(Error, L"failed to create vulkan framegraph, abort");
+        RHI_LOG(Error, L"failed to create vulkan framegraph, abort!");
         RemoveRef_AssertReachZero(_frameGraph);
         return false;
     }
@@ -121,12 +140,12 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
         RHI_LOG(Verbose, L"creating vulkan swapchain for service");
 
         FSwapchainDesc swapchainDesc{};
-        MakeSwapchainDesc_(&swapchainDesc, _backBuffer, *pOptionalWindow);
+        MakeSwapchainDesc_(&swapchainDesc, _backBuffer, _features, *pOptionalWindow);
 
         _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, Default ARGS_IF_RHIDEBUG("BackBuffer"));
 
         if (not _swapchain) {
-            RHI_LOG(Error, L"failed to create vulkan swapchain, abort");
+            RHI_LOG(Error, L"failed to create vulkan swapchain, abort!");
             return false;
         }
     }
@@ -174,6 +193,8 @@ void FVulkanRHIService::TearDown() {
     RHI_LOG(Verbose, L"destroying vulkan instance for rhi service");
 
     _instance.TearDown();
+
+    Assert_NoAssume(not _instance.Valid());
 }
 //----------------------------------------------------------------------------
 RHI::SFrameGraph FVulkanRHIService::FrameGraph() const NOEXCEPT {
@@ -188,7 +209,7 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
     RHI_LOG(Info, L"resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
 
     FSwapchainDesc swapchainDesc;
-    MakeSwapchainDesc_(&swapchainDesc, _backBuffer, surfaceInfo);
+    MakeSwapchainDesc_(&swapchainDesc, _backBuffer, _features, surfaceInfo);
 
     _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, _swapchain.Release() ARGS_IF_RHIDEBUG("BackBuffer"));
 }

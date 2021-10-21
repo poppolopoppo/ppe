@@ -5,10 +5,10 @@
 #include "Vulkan/Command/VulkanTaskGraph-inl.h"
 #include "Vulkan/Debugger/VulkanLocalDebugger.h"
 #include "Vulkan/Instance/VulkanFrameGraph.h"
+#include "Vulkan/RayTracing/VulkanRayTracingGeometryInstance.h"
 
 #include "Diagnostic/Logger.h"
 #include "Time/TimedScope.h"
-#include "Vulkan/RayTracing/VulkanGeometryInstance.h"
 
 namespace PPE {
 namespace RHI {
@@ -132,7 +132,9 @@ bool FVulkanCommandBuffer::Execute() {
         exclusive->Debugger->End(
             &exclusive->Batch->_frameDebugger.DebugDump,
             &exclusive->Batch->_frameDebugger.DebugGraph,
-            exclusive->DebugName, _indexInPool);
+            *exclusive->Batch->_frameGraph,
+            exclusive->DebugName, _indexInPool,
+            exclusive->Batch->Read()->Dependencies.MakeView() );
     }
 #endif
 
@@ -648,7 +650,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCustomTask& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FUpdateRayTracingShaderTable& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(Device().Enabled().RayTracingKHR);
+    Assert_NoAssume(Device().Enabled().RayTracingNV);
     Assert_NoAssume(exclusive->Batch->QueueUsage() & GRayTracingBit_);
 
     TVulkanFrameTask<FUpdateRayTracingShaderTable>* const pFrameTask =
@@ -663,7 +665,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
 #if 0 // #TODO: VK_KHR_ray_tracing_pipeline
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(Device().EnableRayTracingKHR());
+    Assert_NoAssume(Device().EnableRayTracingNV());
     Assert_NoAssume(exclusive->Batch->QueueUsage() & RayTracingBit_);
 
     FVulkanRTLocalGeometry* const rtGeometry = ToLocal(task.Geometry);
@@ -690,7 +692,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(Device().Enabled().RayTracingKHR);
+    Assert_NoAssume(Device().Enabled().RayTracingNV);
     Assert_NoAssume(exclusive->Batch->QueueUsage() & GRayTracingBit_);
 
     FVulkanRTLocalScene* const rtScene = ToLocal(task.Scene);
@@ -734,8 +736,8 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     pBuildTask->InstanceBuffer = ToLocal(*instanceBuf);
     ReleaseResource(instanceBuf.Release());
 
-    FVulkanGeometryInstance* pInstances = nullptr;
-    LOG_CHECK(RHI, StagingAlloc_<FVulkanGeometryInstance>(
+    FVulkanRayTracingGeometryInstance* pInstances = nullptr;
+    LOG_CHECK(RHI, StagingAlloc_<FVulkanRayTracingGeometryInstance >(
         *exclusive,
         &pBuildTask->InstanceStagingBuffer,
         &pBuildTask->InstanceStagingBufferOffset,
@@ -761,7 +763,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     forrange(i, 0, pBuildTask->NumInstances) {
         const u32 idx = sorted[i];
         const auto& src = task.Instances[i];
-        FVulkanGeometryInstance& dst = pInstances[idx];
+        FVulkanRayTracingGeometryInstance& dst = pInstances[idx];
         const FVulkanRayTracingLocalGeometry*& pLocalGeom = pBuildTask->RTGeometries[i];
         Assert_NoAssume(src.InstanceId.Valid());
         Assert_NoAssume(src.GeometryId.Valid());
@@ -794,7 +796,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FTraceRays& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(Device().Enabled().RayTracingKHR);
+    Assert_NoAssume(Device().Enabled().RayTracingNV);
     Assert_NoAssume(exclusive->Batch->QueueUsage() & GRayTracingBit_);
 
     TVulkanFrameTask<FTraceRays>* const pFrameTask =

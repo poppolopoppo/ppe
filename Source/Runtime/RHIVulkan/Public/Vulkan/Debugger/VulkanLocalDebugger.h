@@ -2,6 +2,8 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#if USE_PPE_RHIDEBUG
+
 #include "Vulkan/Buffer/VulkanLocalBuffer.h"
 #include "Vulkan/Image/VulkanLocalImage.h"
 #include "Vulkan/RayTracing/VulkanRayTracingLocalGeometry.h"
@@ -9,7 +11,6 @@
 
 #include "Container/HashMap.h"
 #include "Container/StringHashSet.h"
-#include "Container/SparseArray.h"
 #include "Container/Vector.h"
 
 #include <variant>
@@ -62,7 +63,7 @@ public:
         explicit FTaskInfo(PVulkanFrameTask task) : Task{ task } {}
     };
 
-    using FTaskMap = SPARSEARRAY(RHIDebug, FTaskInfo);
+    using FTaskMap = VECTOR(RHIDebug, FTaskInfo);
 
     struct FBatchGraph {
         FString Body;
@@ -73,7 +74,12 @@ public:
     FVulkanLocalDebugger();
 
     void Begin(EDebugFlags flags);
-    void End(FString* pdump, FBatchGraph* pgraph, FStringView name, u32 cmdBufferUID);
+    void End(
+        FStringBuilder* pdump,
+        FBatchGraph* pgraph,
+        const FVulkanFrameGraph& fg,
+        FStringView name, u32 cmdBufferUID,
+        TMemoryView<const SVulkanCommandBatch> dependencies );
 
     void AddBarrier(
         const FVulkanBuffer* buffer,
@@ -120,44 +126,12 @@ public:
 
 private:
     PVulkanFrameTask Task_(EVulkanExecutionOrder idx) const;
-    FStringView TaskName_(EVulkanExecutionOrder idx) const;
-    FStringView TaskName_(PVulkanFrameTask task) const;
+    FString TaskName_(EVulkanExecutionOrder idx) const;
+    FString TaskName_(const PVulkanFrameTask& task) const;
+    FStringView QueueName_(const FVulkanDevice& device, u32 queueFamilyIndex) const;
 
-    void DumpFrame_(FStringBuilder* pout, FStringView name) const;
-
-    void DumpImages_(FStringBuilder* pout) const;
-    void DumpImageInfo_(FStringBuilder* pout, const FVulkanImage* image, const FImageInfo& info) const;
-
-    void DumpBuffers_(FStringBuilder* pout) const;
-    void DumpBufferInfo_(FStringBuilder* pout, const FVulkanBuffer* buffer, const FBufferInfo& info) const;
-
-    void DumpQueue_(FStringBuilder* pout, const FTaskMap& tasks) const;
-    void DumpResourceUsage_(FStringBuilder* pout, const TMemoryView<const FResourceUsage>& usages) const;
-    void DumpTaskData_(FStringBuilder* pout, PVulkanFrameTask task) const;
-
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanSubmitRenderPassTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanDispatchComputeTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanDispatchComputeIndirectTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanCopyBufferTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanCopyImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanCopyBufferToImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanCopyImageToBufferTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanBlitImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanResolveImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanGenerateMipmapsTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanFillBufferTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanClearColorImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanClearDepthStencilImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanUpdateBufferTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanUpdateImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanReadBufferTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanReadImageTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanPresentTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanCustomTaskTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanUpdateRayTracingShaderTableTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanBuildRayTracingGeometryTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanBuildRayTracingSceneTask& task) const;
-    void DumpTaskInfo_(FStringBuilder* pout, const FVulkanTraceRaysTask& task) const;
+    struct FRawTextDump_;
+    struct FGraphVizDump_;
 
     FTaskMap _tasks;
     FImageResources _images;
@@ -175,3 +149,5 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
+
+#endif //!USE_PPE_RHIDEBUG

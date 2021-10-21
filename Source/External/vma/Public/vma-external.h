@@ -7,6 +7,7 @@
 
 # define VMA_IMPLEMENTATION                 1
 # define VMA_STATIC_VULKAN_FUNCTIONS        0
+# define VMA_DYNAMIC_VULKAN_FUNCTIONS       1
 
 # define VMA_RECORDING_ENABLED              0
 # define VMA_STATS_STRING_ENABLED           (!USE_PPE_FINAL_RELEASE)
@@ -40,7 +41,7 @@
 
 #if USE_PPE_LOGGER
 LOG_CATEGORY(, VMA)
-# define VMA_DEBUG_LOG(format, ...) LOG_PRINTF(VMA, Debug, WSTRINGIZE(format), #__VA_ARGS__)
+# define VMA_DEBUG_LOG(format, ...) LOG_PRINTF(VMA, Debug, WIDESTRING(format), #__VA_ARGS__)
 #else
 # define VMA_DEBUG_LOG(format, ...)
 #endif
@@ -51,17 +52,20 @@ LOG_CATEGORY(, VMA)
 #   pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 #ifdef CPP_VISUALSTUDIO
-#	pragma warning (push, 0)
-#	pragma warning (disable: 4100)
-#	pragma warning (disable: 4296)
-#	pragma warning (disable: 4701)
-#	pragma warning (disable: 4703)
+#   pragma warning (push, 0)
+#   pragma warning (disable: 4100)
+#   pragma warning (disable: 4296)
+#   pragma warning (disable: 4701)
+#   pragma warning (disable: 4703)
 #endif
 #ifdef CPP_CLANG
-#	pragma clang diagnostic push
-#	pragma clang diagnostic ignored "-Wmissing-field-initializers"
-#	pragma clang diagnostic ignored "-Wcast-align"
-#	pragma clang diagnostic ignored "-Wunused-variable"
+#   pragma clang diagnostic push
+#   pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#   pragma clang diagnostic ignored "-Wcast-align"
+#   pragma clang diagnostic ignored "-Wunused-parameter"
+#   pragma clang diagnostic ignored "-Wunused-variable"
+#   pragma clang diagnostic ignored "-Wunused-function"
+#   pragma clang diagnostic ignored "-Wnullability-completeness"
 #endif
 
 #include "External/vma/vma.git/include/vk_mem_alloc.h"
@@ -70,8 +74,8 @@ LOG_CATEGORY(, VMA)
 #   pragma GCC diagnostic pop
 #endif
 #ifdef CPP_VISUALSTUDIO
-#	pragma warning (pop)
+#   pragma warning (pop)
 #endif
 #ifdef CPP_CLANG
-#	pragma clang diagnostic pop
+#   pragma clang diagnostic pop
 #endif

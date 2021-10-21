@@ -23,49 +23,53 @@ public:
 
     using FTables = TFixedSizeStack<FShaderTable, u32(EShaderDebugMode::_Count)>;
 
-    FVulkanRayTracingShaderTable() = default;
-    ~FVulkanRayTracingShaderTable();
+    struct FInternalData {
+        FBufferID BufferId;
+        FRTPipelineID PipelineId;
+        FTables Tables;
 
-    FRawRTPipelineID Pipeline() const { return _pipelineId.Get(); }
-    FRawBufferID Buffer() const { return _bufferId.Get(); }
+        u32 RayGenOffset{ 0 };
+        u32 RayMissOffset{ 0 };
+        u32 RayHitOffset{ 0 };
+        u32 CallableOffset{ 0 };
+        u32 BlockSize{ 0 };
+
+        u16 RayMissStride{ 0 };
+        u16 RayHitStride{ 0 };
+        u16 CallableStride{ 0 };
+
+        Meta::TStaticBitset<3> AvailableShaders{}; // ray miss, ray hit, callable
+    };
+
+    FVulkanRayTracingShaderTable() = default;
+#if USE_PPE_RHIDEBUG
+    ~FVulkanRayTracingShaderTable();
+#endif
+
+    auto Read() const { return _data.LockShared(); }
+
+    FRawRTPipelineID Pipeline() const { return *Read()->PipelineId; }
+    FRawBufferID Buffer() const { return *Read()->BufferId; }
 
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    NODISCARD bool Construct(
-#if USE_PPE_RHIDEBUG
-        FStringView debugName
-#endif
-        );
+    NODISCARD bool Construct(ARG0_IF_RHIDEBUG(FStringView debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     bool BindingsFor(
-        FRawPipelineLayoutID* playout, VkPipeline* ppipeline,
-        VkDeviceSize* pblockSize, VkDeviceSize* prayGenOffset,
-        VkDeviceSize* prayMissOffset, VkDeviceSize*  prayMissStride,
-        VkDeviceSize* prayHitOffset, VkDeviceSize* prayHitStride,
-        VkDeviceSize* pcallableOffset, VkDeviceSize* pcallableStride,
+        FRawPipelineLayoutID* pLayout,
+        VkPipeline* pPipeline,
+        VkDeviceSize* pBlockSize,
+        VkDeviceSize* pRayGenOffset, VkDeviceSize* pRayMissOffset, VkDeviceSize* pRayMissStride,
+        VkDeviceSize* pRayHitOffset, VkDeviceSize* pRayHitStride,
+        VkDeviceSize* pCallableOffset, VkDeviceSize* pCallableStride,
+        Meta::TStaticBitset<3>* pAvailableShaders,
         EShaderDebugMode mode ) const;
 
 private:
-    mutable FReadWriteLock _rwLock;
-
-    FBufferID _bufferId;
-    FRTPipelineID _pipelineId;
-    FTables _tables;
-
-    u32 _rayGenOffset{ 0 };
-    u32 _rayMissOffset{ 0 };
-    u32 _rayHitOffset{ 0 };
-    u32 _callableOffset{ 0 };
-    u32 _blockSize{ 0 };
-
-    u16 _rayMissStride{ 0 };
-    u16 _rayHitStride{ 0 };
-    u16 _callableStride{ 0 };
-
-    Meta::TStaticBitset<3> _availableShaders{}; // ray miss, ray hit, callable
+    TThreadSafe<FInternalData, EThreadBarrier::RWLock> _data;
 
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

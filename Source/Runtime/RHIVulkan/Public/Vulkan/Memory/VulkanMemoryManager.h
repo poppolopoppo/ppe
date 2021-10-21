@@ -29,6 +29,7 @@ public:
         NODISCARD virtual bool AllocateImage(FBlock* pData, VkImage image, const FMemoryDesc& desc) = 0;
         NODISCARD virtual bool AllocateBuffer(FBlock* pData, VkBuffer buffer, const FMemoryDesc& desc) = 0;
         NODISCARD virtual bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) = 0;
+        NODISCARD virtual bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureNV accelStruct, const FMemoryDesc& desc) = 0;
 
         virtual void Deallocate(FBlock& data) = 0;
 
@@ -52,6 +53,7 @@ public:
     NODISCARD bool AllocateImage(FBlock* pData, VkImage image, const FMemoryDesc& desc);
     NODISCARD bool AllocateBuffer(FBlock* pData, VkBuffer buffer, const FMemoryDesc& desc);
     NODISCARD bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc);
+    NODISCARD bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureNV accelStruct, const FMemoryDesc& desc);
 
     void Deallocate(FBlock& data);
 

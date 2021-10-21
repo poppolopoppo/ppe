@@ -129,12 +129,16 @@ PPE_RHIVULKAN_API VkPrimitiveTopology VkCast(EPrimitiveTopology value);
 PPE_RHIVULKAN_API VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values);
 PPE_RHIVULKAN_API VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values);
 PPE_RHIVULKAN_API VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values);
+PPE_RHIVULKAN_API VkColorSpaceKHR VkCast(EColorSpace value);
+PPE_RHIVULKAN_API VkCompositeAlphaFlagBitsKHR VkCast(ECompositeAlpha value);
+PPE_RHIVULKAN_API VkPresentModeKHR VkCast(EPresentMode value);
+PPE_RHIVULKAN_API VkSurfaceTransformFlagBitsKHR VkCast(ESurfaceTransform value);
 //----------------------------------------------------------------------------
 // Vk to RHI:
 //----------------------------------------------------------------------------
 PPE_RHIVULKAN_API EBufferUsage RHICast(VkBufferUsageFlagBits flags);
 PPE_RHIVULKAN_API EImageDim RHICast(VkImageType value);
-PPE_RHIVULKAN_API EImageFlags RHICast(VkImageCreateFlags value);
+PPE_RHIVULKAN_API EImageFlags RHICast(VkImageCreateFlagBits value);
 PPE_RHIVULKAN_API EImageUsage RHICast(VkImageUsageFlagBits flags);
 PPE_RHIVULKAN_API FMultiSamples RHICast(VkSampleCountFlagBits flags);
 PPE_RHIVULKAN_API EImageAspect RHICast(VkImageAspectFlagBits flags);

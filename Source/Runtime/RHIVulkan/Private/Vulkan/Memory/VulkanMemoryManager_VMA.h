@@ -6,6 +6,10 @@
 
 #include "Vulkan/Instance/VulkanDevice.h"
 
+// Only for VMA:
+PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
+
 #include "vma-external.h"
 
 namespace PPE {
@@ -26,6 +30,7 @@ public:
     NODISCARD bool AllocateImage(FBlock* pData, VkImage image, const FMemoryDesc& desc) override;
     NODISCARD bool AllocateBuffer(FBlock* pData, VkBuffer buffer, const FMemoryDesc& desc) override;
     NODISCARD bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureKHR accelStruct, const FMemoryDesc& desc) override;
+    NODISCARD bool AllocateAccelStruct(FBlock* pData, VkAccelerationStructureNV accelStruct, const FMemoryDesc& desc) override;
 
     void Deallocate(FBlock& data) override;
 
@@ -47,6 +52,9 @@ private:
 inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(const FVulkanDevice& device, EVulkanMemoryType )
 :   _device(device) {
     const auto exclusiveAllocator = _allocator.LockExclusive();
+
+    vkGetInstanceProcAddr = device.api()->instance_api_->global_api_->vkGetInstanceProcAddr;
+    vkGetDeviceProcAddr = device.api()->instance_api_->vkGetDeviceProcAddr;
 
     VmaVulkanFunctions funcs = {};
     funcs.vkGetPhysicalDeviceProperties = device.api()->instance_api_->vkGetPhysicalDeviceProperties;
@@ -106,9 +114,20 @@ inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(cons
         flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
     }
 #endif
+    if (device.HasExtension(EVulkanDeviceExtension::KHR_buffer_device_address) ||
+        device.vkVersion() == EShaderLangFormat::Vulkan_120 ) {
+        flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+    }
+#if !defined(VMA_MEMORY_PRIORITY) || VMA_MEMORY_PRIORITY == 1
+    if (device.HasExtension(EVulkanDeviceExtension::EXT_memory_priority))
+    {
+        flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
+    }
+#endif
 
     VmaAllocatorCreateInfo info{};
     info.flags = flags;
+    info.instance = device.vkInstance();
     info.physicalDevice = device.vkPhysicalDevice();
     info.device = device.vkDevice();
     info.pAllocationCallbacks = device.vkAllocator();
@@ -262,6 +281,59 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
     // #TODO: VK_KHR_ray_tracing_pipeline
 
     AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FBlock* pData, VkAccelerationStructureNV accelStruct, const FMemoryDesc& desc) {
+    const auto exclusiveAllocator = _allocator.LockExclusive();
+
+    VkAccelerationStructureMemoryRequirementsInfoNV memoryInfo{};
+    memoryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+    memoryInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
+    memoryInfo.accelerationStructure = accelStruct;
+
+    VkMemoryRequirements2 memoryRequirements2{};
+    _device.vkGetAccelerationStructureMemoryRequirementsNV(
+        _device.vkDevice(),
+        &memoryInfo,
+        &memoryRequirements2 );
+
+    VmaAllocationCreateInfo vmaInfo{};
+    vmaInfo.flags = ConvertToMemoryFlags_(desc.Type);
+    vmaInfo.usage = ConvertToMemoryUsage_(desc.Type);
+    vmaInfo.requiredFlags = ConvertToMemoryProperties_(desc.Type);
+    vmaInfo.preferredFlags = 0;
+    vmaInfo.memoryTypeBits = 0;
+    vmaInfo.pool = VK_NULL_HANDLE;
+    vmaInfo.pUserData = nullptr;
+
+    // because used private api
+    VMA_DEBUG_GLOBAL_MUTEX_LOCK
+
+    VmaAllocation allocation = nullptr;
+    VK_CHECK(exclusiveAllocator->AllocateMemory(
+        memoryRequirements2.memoryRequirements,
+        false, false,
+        VK_NULL_HANDLE,
+        UINT32_MAX, // #TODO ?
+        VK_NULL_HANDLE,
+        vmaInfo,
+        VMA_SUBALLOCATION_TYPE_UNKNOWN,
+        1, &allocation ))
+
+    VmaAllocationInfo allocInfo{};
+    vmaGetAllocationInfo(exclusiveAllocator.Value(), allocation, &allocInfo);
+
+    VkBindAccelerationStructureMemoryInfoNV bindInfo{};
+    bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
+    bindInfo.accelerationStructure = accelStruct;
+    bindInfo.memory = allocInfo.deviceMemory;
+    bindInfo.memoryOffset = allocInfo.offset;
+
+    VK_CHECK(_device.vkBindAccelerationStructureMemoryNV(
+        _device.vkDevice(), 1, &bindInfo ));
+
+    pData->MemoryHandle = allocation;
+    return true;
 }
 //----------------------------------------------------------------------------
 inline void FVulkanMemoryManager::FVulkanMemoryAllocator::Deallocate(FBlock& data) {

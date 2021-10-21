@@ -13,7 +13,7 @@ class PPE_RHIVULKAN_API FVulkanRayTracingLocalScene final : Meta::FNonCopyableNo
 public:
     struct FSceneState {
         EResourceState State;
-        PFrameTask Task;
+        PVulkanFrameTask Task;
     };
 
     struct FSceneAccess {
@@ -44,9 +44,13 @@ public:
     const FVulkanRayTracingScene* GlobalData() const { return _rtScene; }
     auto InternalData() const { return _rtScene->Read(); }
 
-    VkAccelerationStructureKHR Handle() const { return _rtScene->Handle(); }
+    VkAccelerationStructureNV Handle() const { return _rtScene->Handle(); }
     ERayTracingBuildFlags Flags() const { return _rtScene->Flags(); }
     u32 MaxInstanceCount() const { return _rtScene->MaxInstanceCount(); }
+
+#if USE_PPE_RHIDEBUG
+    const FVulkanDebugName& DebugName() const { Assert(_rtScene); return _rtScene->DebugName(); }
+#endif
 
 private:
     const FVulkanRayTracingScene* _rtScene;

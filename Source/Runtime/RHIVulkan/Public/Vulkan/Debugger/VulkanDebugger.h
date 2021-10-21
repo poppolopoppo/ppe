@@ -2,8 +2,11 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#if USE_PPE_RHIDEBUG
+
 #include "Vulkan/Debugger/VulkanLocalDebugger.h"
 
+#include "Container/AssociativeVector.h"
 #include "Container/Vector.h"
 
 namespace PPE {
@@ -17,18 +20,24 @@ public:
 
     FVulkanDebugger();
 
-    void AddBatchDump(FString&& in);
-    bool FrameDump(FString* pout) const;
+    void AddBatchDump(const FStringView& name, FString&& dump);
+    bool FrameDump(FStringBuilder* pout);
 
     void AddBatchGraph(FBatchGraph&& in);
-    bool GraphDump(FString* pout) const;
+    bool GraphDump(FStringBuilder* pout);
 
 private:
-    mutable VECTOR(RHIDebug, FString) _fullDump;
-    mutable VECTOR(RHIDebug, FBatchGraph) _graphs;
+    struct FInternalData {
+        mutable ASSOCIATIVE_VECTOR(RHIDebug, FString, FString) FullDump;
+        mutable VECTOR(RHIDebug, FBatchGraph) Graphs;
+    };
+
+    TThreadSafe<FInternalData, EThreadBarrier::DataRaceCheck> _data;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
+
+#endif //!USE_PPE_RHIDEBUG

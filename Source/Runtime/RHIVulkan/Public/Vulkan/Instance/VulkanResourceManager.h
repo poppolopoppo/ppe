@@ -109,13 +109,16 @@ public:
     void AddCompiler(const PPipelineCompiler& pCompiler);
     void OnSubmit();
 
-    FRawMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
-    FRawGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
-    FRawCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
-    FRawRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawGPipelineID CreatePipeline(FGraphicsPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawCPipelineID CreatePipeline(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawRTPipelineID CreatePipeline(FRayTracingPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues, EResourceState defaultState ARGS_IF_RHIDEBUG(FConstChar debugName));
-    FRawBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawImageID CreateImage(const FImageDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues, EResourceState defaultState ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawBufferID CreateBuffer(const FBufferDesc& desc, const FMemoryDesc& mem, EVulkanQueueFamilyMask queues ARGS_IF_RHIDEBUG(FConstChar debugName));
+
+    NODISCARD FRawImageID CreateImage(const FVulkanExternalImageDesc& desc, FOnReleaseExternalImage&& onRelease ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawBufferID CreateBuffer(const FVulkanExternalBufferDesc& desc, FOnReleaseExternalBuffer&& onRelease ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD FRawImageID CreateImage(
         const FImageDesc& desc,
@@ -129,22 +132,21 @@ public:
         TMemoryView<const u32> queueFamilyIndices
         ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawSamplerID CreateSampler(const FSamplerDesc& desc  ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawSamplerID CreateSampler(const FSamplerDesc& desc  ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawRenderPassID CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass* const>& passes ARGS_IF_RHIDEBUG(FConstChar debugName));
-    FRawFramebufferID CreateFramebuffer(const TMemoryView<const TPair<FRawImageID, FImageViewDesc>>& attachments, FRawRenderPassID renderPass, const uint2& dim, u32 layers ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawRenderPassID CreateRenderPass(const TMemoryView<const FVulkanLogicalRenderPass* const>& passes ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawFramebufferID CreateFramebuffer(const TMemoryView<const TPair<FRawImageID, FImageViewDesc>>& attachments, FRawRenderPassID renderPass, const uint2& dim, u32 layers ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD bool CacheDescriptorSet(FPipelineResources& desc);
-    const FVulkanPipelineResources* CreateDescriptorSet(const FPipelineResources& desc, FVulkanCommandBatch::FResourceMap& resources);
+    NODISCARD const FVulkanPipelineResources* CreateDescriptorSet(const FPipelineResources& desc, FVulkanCommandBatch::FResourceMap& resources);
 
-    FRawRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
-    FRawRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
-    FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD FRawRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FStringView debugName));
 
-    FRawDescriptorSetLayoutID CreateDescriptorSetLayout(const FPipelineDesc::FSharedUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawDescriptorSetLayoutID CreateDescriptorSetLayout(const FPipelineDesc::FSharedUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    FRawSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain, FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
-
+    NODISCARD FRawSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain, FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD bool CreateStagingBuffer(FRawBufferID* pId, FStagingBufferIndex* pIndex, EBufferUsage usage);
     void ReleaseStagingBuffer(FStagingBufferIndex index);
@@ -176,12 +178,12 @@ public:
     using FShaderTimemapPipelines = Meta::TArray<FRawCPipelineID, 3>;
     void ShaderTimemapPipelines(FShaderTimemapPipelines* pPpln);
 
-    FRawPipelineLayoutID CreateDebugPipelineLayout(
+    NODISCARD FRawPipelineLayoutID CreateDebugPipelineLayout(
         FRawPipelineLayoutID baseLayout,
         EShaderDebugMode debugMode,
         EShaderStages debuggableShaders,
         const FDescriptorSetID& descriptorSet );
-    FRawDescriptorSetLayoutID CreateDebugDescriptorSetLayout(
+    NODISCARD FRawDescriptorSetLayoutID CreateDebugDescriptorSetLayout(
         EShaderDebugMode debugMode,
         EShaderStages debuggableShaders,
         FConstChar debugName );
@@ -241,17 +243,17 @@ private:
     const auto& ResourcePoolConst_(details::TResourceId<_Uid> id) const { return _resources.PoolConst(id); }
 
     template <u32 _Uid, typename _Desc>
-    bool CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringView pipelineType, FConstChar debugName));
+    NODISCARD bool CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringView pipelineType, FConstChar debugName));
 
     template <u32 _Uid, typename... _Args>
-    TPooledResource_<_Uid>* CreatePooledResource_(details::TResourceId<_Uid>* pId, _Args&&... args);
+    NODISCARD TPooledResource_<_Uid>* CreatePooledResource_(details::TResourceId<_Uid>* pId, _Args&&... args);
     template <u32 _Uid, typename... _Args>
-    TPair<TPooledResource_<_Uid>*, bool> CreateCachedResource_(details::TResourceId<_Uid>* pId, TPooledResource_<_Uid>&& rkey, _Args&&... args);
+    NODISCARD TPair<TPooledResource_<_Uid>*, bool> CreateCachedResource_(details::TResourceId<_Uid>* pId, TPooledResource_<_Uid>&& rkey, _Args&&... args);
 
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
     NODISCARD bool ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount);
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount);
+    NODISCARD bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount);
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
     void TearDownCache_(TCache<T, _ChunkSize, _MaxChunks>& cache);
 
@@ -398,6 +400,7 @@ bool FVulkanResourceManager::ReleaseResource(details::TResourceId<_Uid> id, u32 
 
     return false;
 }
+//----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
 bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount) {
     Assert(pdata);
@@ -413,6 +416,7 @@ bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& 
 
     return false;
 }
+//----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
 bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount) {
     Assert(pdata);

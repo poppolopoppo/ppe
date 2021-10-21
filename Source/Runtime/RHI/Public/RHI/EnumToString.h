@@ -58,6 +58,7 @@ PPE_RHI_ENUMTOSTRING_DECL(EVertexFormat);
 PPE_RHI_ENUMTOSTRING_DECL(EPixelValueType);
 PPE_RHI_ENUMTOSTRING_DECL(EPresentMode);
 PPE_RHI_ENUMTOSTRING_DECL(ESurfaceTransform);
+PPE_RHI_ENUMTOSTRING_DECL(EResourceState);
 //----------------------------------------------------------------------------
 #undef PPE_RHI_ENUMTOSTRING_DECL
 //----------------------------------------------------------------------------

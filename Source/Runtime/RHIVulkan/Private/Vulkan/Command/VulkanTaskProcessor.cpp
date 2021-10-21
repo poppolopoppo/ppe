@@ -112,7 +112,7 @@ public:
     void operator ()(const FUniformID& uni, const FPipelineResources::FTexelBuffer& texelBuffer);
     void operator ()(const FUniformID& uni, const FPipelineResources::FImage& image);
     void operator ()(const FUniformID& uni, const FPipelineResources::FTexture& texture);
-    void operator ()(const FUniformID& uni, const FPipelineResources::FSampler& sampler);
+    void operator ()(const FUniformID& , const FPipelineResources::FSampler& ) {}
     void operator ()(const FUniformID& uni, const FPipelineResources::FRayTracingScene& scene);
 
 private:
@@ -319,6 +319,7 @@ FVulkanTaskProcessor::FVulkanTaskProcessor(const SVulkanCommandBuffer& workerCmd
 ,   _enableDispatchBase(_workerCmd->Device().Enabled().DispatchBase)
 ,   _enableDrawIndirectCount(_workerCmd->Device().Enabled().DrawIndirectCount)
 ,   _enableMeshShaderNV(_workerCmd->Device().Enabled().MeshShaderNV)
+,   _enableRayTracingNV(_workerCmd->Device().Enabled().RayTracingNV)
 ,   _enableRayTracingKHR(_workerCmd->Device().Enabled().RayTracingKHR)
 ,   _maxDrawIndirectCount(_workerCmd->Device().Limits().maxDrawIndirectCount)
 ,   _maxDrawMeshTaskCount(_workerCmd->Device().Capabilities().MeshShaderProperties.maxDrawMeshTasksCount)
@@ -336,6 +337,20 @@ FVulkanTaskProcessor::FVulkanTaskProcessor(const SVulkanCommandBuffer& workerCmd
 //----------------------------------------------------------------------------
 FVulkanTaskProcessor::~FVulkanTaskProcessor() {
     ONLY_IF_RHIDEBUG( CmdPopDebugGroup_() );
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::Run(const PVulkanFrameTask& node) {
+    Assert(node);
+
+    // reset states
+    _currentTask = node;
+
+#if USE_PPE_RHIDEBUG
+    if (Unlikely(_workerCmd->Debugger()))
+        _workerCmd->Debugger()->AddTask(_currentTask);
+#endif
+
+    _currentTask->Process(this);
 }
 //----------------------------------------------------------------------------
 // DrawVertices
@@ -1031,7 +1046,7 @@ void FVulkanTaskProcessor::CommitBarriers_() {
         if ((queueUsage & EQueueUsage::Graphics) and device.Enabled().ShadingRateImageNV)
             barrier.srcAccessMask |= VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV;
 
-        if ((queueUsage & (EQueueUsage::Graphics | EQueueUsage::AsyncCompute)) and device.Enabled().RayTracingKHR)
+        if ((queueUsage & (EQueueUsage::Graphics | EQueueUsage::AsyncCompute)) and device.Enabled().RayTracingNV)
             barrier.srcAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV;
 
         barrier.dstAccessMask = barrier.srcAccessMask;
@@ -1715,7 +1730,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanPresentTask& task) {
         : VK_FILTER_LINEAR );
 
     VkImageBlit region;
-    region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, *task.Mipmap, *task.Layer };
+    region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, *task.Mipmap, *task.Layer, 1 };
     region.srcOffsets[0] = VkOffset3D{ 0, 0, 0 };
     region.srcOffsets[1] = VkOffset3D{ srcDim.x, srcDim.y, 1 };
 
@@ -1741,7 +1756,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanPresentTask& task) {
 // RayTracing
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanUpdateRayTracingShaderTableTask& task) {
-    if (not _enableRayTracingKHR)
+    if (not (_enableRayTracingKHR || _enableRayTracingNV))
         return;
 
     ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
@@ -1781,7 +1796,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanUpdateRayTracingShaderTableTask& t
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task) {
-    if (not _enableRayTracingKHR)
+    if (not (_enableRayTracingKHR || _enableRayTracingNV))
         return;
 
     ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
@@ -1821,7 +1836,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
     vkCmdBuildAccelerationStructuresKHR(_vkCommandBuffer, 1, &buildInfo, &rangeInfo);
 
 #else
-    AssertNotImplemented(); // NV to KHR
+    AssertNotImplemented(); // #TOOD: NV to KHR
 #endif
 }
 //----------------------------------------------------------------------------
@@ -1975,7 +1990,7 @@ void FVulkanTaskProcessor::AddRTGeometry_(const FVulkanRTLocalGeometry* pLocalGe
 
     _pendingResourceBarriers.insert({ pLocalGeom, &CommitResourceBarrier_<FVulkanRTLocalGeometry> });
 
-    FRTGeometryState rtState{ state, PFrameTask(_currentTask.get()) };
+    FRTGeometryState rtState{ state, _currentTask };
 
 #if USE_PPE_RHIDEBUG
     if (Unlikely(_workerCmd->Debugger()))
@@ -1990,7 +2005,7 @@ void FVulkanTaskProcessor::AddRTScene_(const FVulkanRTLocalScene* pLocalScene, E
 
     _pendingResourceBarriers.insert({ pLocalScene, &CommitResourceBarrier_<FVulkanRTLocalScene> });
 
-    FRTSceneState rtState{ state, PFrameTask(_currentTask.get()) };
+    FRTSceneState rtState{ state, _currentTask.get() };
 
 #if USE_PPE_RHIDEBUG
     if (Unlikely(_workerCmd->Debugger()))

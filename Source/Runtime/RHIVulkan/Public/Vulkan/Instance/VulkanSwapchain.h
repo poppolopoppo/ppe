@@ -15,51 +15,56 @@ public:
     using FSwapchainImages = TFixedSizeStack<FImageID, MaxImages>;
 
     FVulkanSwapchain();
+#if USE_PPE_RHIDEBUG
     ~FVulkanSwapchain();
+#endif
 
     NODISCARD bool Construct(FVulkanFrameGraph& fg, const FSwapchainDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
-    NODISCARD bool ReConstruct(FVulkanFrameGraph& fg, const FSwapchainDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    NODISCARD bool Acquire(FRawImageID* pimageId, FVulkanCommandBuffer& cmd ARGS_IF_RHIDEBUG(bool debugSync = false)) const;
+    NODISCARD bool Acquire(FRawImageID* pImageId, FVulkanCommandBuffer& cmd ARGS_IF_RHIDEBUG(bool debugSync = false)) const;
     NODISCARD bool Present(const FVulkanDevice& device) const;
 
-    const PVulkanDeviceQueue& PresentQueue() const { return _presentQueue; }
+    const PVulkanDeviceQueue& PresentQueue() const { return _data.LockShared()->PresentQueue; }
 
 private:
-    NODISCARD bool CreateSwapchain_(FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
+    struct FInternalData_ {
+        PVulkanDeviceQueue PresentQueue{};
+        FSwapchainImages ImageIds;
+        uint2 SurfaceSize;
 
-    NODISCARD bool CreateImages_(FVulkanResourceManager& resources);
-    NODISCARD bool TearDownImages_(FVulkanResourceManager& resources);
+        VkSwapchainKHR vkSwapchain{ VK_NULL_HANDLE };
+        VkSurfaceKHR vkSurface{ VK_NULL_HANDLE };
+        mutable u32 CurrentImageIndex{ UMax };
 
-    NODISCARD bool CreateSemaphores_(const FVulkanDevice& device);
-    NODISCARD bool CreateFence_(const FVulkanDevice& device);
-    NODISCARD bool ChoosePresentQueue_(const FVulkanFrameGraph& fg);
+        TStaticArray<VkSemaphore, 2> ImageAvailable;
+        TStaticArray<VkSemaphore, 2> RenderFinished;
+        VkFence vkFence{ VK_NULL_HANDLE };
+        mutable u32 SemaphoreId : 1;
 
-    NODISCARD bool IsImageAcquired_() const;
+        VkFormat ColorFormat{ VK_FORMAT_UNDEFINED };
+        VkColorSpaceKHR ColorSpace{ VK_COLOR_SPACE_MAX_ENUM_KHR };
+        u32 MinImageCount{ 2 };
+        VkSurfaceTransformFlagBitsKHR PreTransform{ VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR };
+        VkPresentModeKHR PresentMode{ VK_PRESENT_MODE_FIFO_KHR };
+        VkCompositeAlphaFlagBitsKHR CompositeAlpha{ VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR };
+        VkImageUsageFlagBits ColorImageUsage{ VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT };
 
-    PVulkanDeviceQueue _presentQueue;
-    FSwapchainImages _imageIds;
-    uint2 _surfaceSize;
+        EVulkanQueueFamilyMask QueueFamilyMask{ Default };
 
-    VkSwapchainKHR _vkSwapchain{ VK_NULL_HANDLE };
-    VkSurfaceKHR _vkSurface{ VK_NULL_HANDLE };
-    mutable u32 _currentImage{ UMax };
+        NODISCARD bool CreateSwapchain_(FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    TStaticArray<VkSemaphore, 2> _imageAvailable;
-    TStaticArray<VkSemaphore, 2> _renderFinished;
-    VkFence _vkFence{ VK_NULL_HANDLE };
-    mutable u32 _currentSemaphore : 1;
+        NODISCARD bool CreateImages_(FVulkanResourceManager& resources);
+        void TearDownImages_(FVulkanResourceManager& resources);
 
-    VkFormat _colorFormat{ VK_FORMAT_UNDEFINED };
-    VkColorSpaceKHR _colorSpace{ VK_COLOR_SPACE_MAX_ENUM_KHR };
-    u32 _minImageCount{ 2 };
-    VkSurfaceTransformFlagBitsKHR _preTransform{ VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR };
-    VkPresentModeKHR __presentMode{ VK_PRESENT_MODE_FIFO_KHR };
-    VkCompositeAlphaFlagBitsKHR _compositeAlpha{ VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR };
-    VkImageUsageFlags _colorImageUsage{ VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT };
+        NODISCARD bool CreateSemaphores_(const FVulkanDevice& device);
+        NODISCARD bool CreateFence_(const FVulkanDevice& device);
+        NODISCARD bool ChoosePresentQueue_(const FVulkanFrameGraph& fg) NOEXCEPT;
 
-    EVulkanQueueFamilyMask _queueFamilyMask{ Default };
+        NODISCARD bool IsImageAcquired_() const NOEXCEPT;
+    };
+
+    mutable TThreadSafe<FInternalData_, EThreadBarrier::RWDataRaceCheck> _data;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

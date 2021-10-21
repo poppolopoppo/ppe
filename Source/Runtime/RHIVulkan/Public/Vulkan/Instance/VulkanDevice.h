@@ -23,7 +23,7 @@ struct FVulkanDeviceQueueInfo {
     bool SupportsPresent{ false };
 
 #if USE_PPE_RHIDEBUG
-    FVulkanDebugName DebugName;
+    mutable FVulkanDebugName DebugName;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -46,8 +46,10 @@ struct FVulkanDeviceInfo {
     VkPhysicalDevice vkPhysicalDevice{ VK_NULL_HANDLE };
     VkDevice vkDevice{ VK_NULL_HANDLE };
     TFixedSizeStack<FVulkanDeviceQueueInfo, MaxQueueFamilies> Queues;
-    FVulkanInstanceExtensionSet InstanceExtensions{ Meta::ForceInit };
-    FVulkanDeviceExtensionSet DeviceExtensions{ Meta::ForceInit };
+    FVulkanInstanceExtensionSet RequiredInstanceExtensions{ Meta::ForceInit };
+    FVulkanInstanceExtensionSet OptionalInstanceExtensions{ Meta::ForceInit };
+    FVulkanDeviceExtensionSet RequiredDeviceExtensions{ Meta::ForceInit };
+    FVulkanDeviceExtensionSet OptionalDeviceExtensions{ Meta::ForceInit };
     const VkAllocationCallbacks* pAllocator{ nullptr };
 };
 //----------------------------------------------------------------------------
@@ -119,16 +121,16 @@ public:
         VkPhysicalDeviceVulkan11Properties Properties110;
         VkPhysicalDeviceVulkan12Properties Properties120;
     #endif
-    #ifdef VK_EXT_memory_budget
-        VkPhysicalDeviceMemoryBudgetPropertiesEXT MemoryBudget;
-    #endif
     #ifdef VK_EXT_robustness2
         VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
         VkPhysicalDeviceRobustness2PropertiesEXT Robustness2Properties;
     #endif
+    #ifdef VK_NV_ray_tracing
+        VkPhysicalDeviceRayTracingPropertiesNV RayTracingPropertiesNV;
+    #endif
     #ifdef VK_KHR_ray_tracing_pipeline
-        VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingFeatures;
-        VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingProperties;
+        VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingFeaturesKHR;
+        VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPropertiesKHR;
     #endif
     };
 
@@ -147,8 +149,8 @@ public:
 
     EVulkanQueueFamilyMask AvailableQueues() const { return _flags.AvailableQueues; }
     EResourceState GraphicsShaderStages() const { return _flags.GraphicsShaderStages; }
-    VkPipelineStageFlags AllWritableStages() const { return _flags.AllWritableStages; }
-    VkPipelineStageFlags AllReadableStages() const { return _flags.AllReadableStages; }
+    VkPipelineStageFlagBits AllWritableStages() const { return _flags.AllWritableStages; }
+    VkPipelineStageFlagBits AllReadableStages() const { return _flags.AllReadableStages; }
 
     bool HasExtension(EVulkanInstanceExtension ext) const NOEXCEPT { return (_instanceExtensions & ext); }
     bool HasExtension(EVulkanDeviceExtension ext) const NOEXCEPT { return (_deviceExtensions & ext); }
@@ -157,6 +159,11 @@ public:
     const VkPhysicalDeviceFeatures& Features() const { return _caps.Features; }
     const VkPhysicalDeviceLimits& Limits() const { return _caps.Properties.limits; }
     const VkPhysicalDeviceProperties& Properties() const { return _caps.Properties; }
+
+    const FVulkanDeviceQueue& DeviceQueue(EVulkanQueueFamily familyIndex) const NOEXCEPT;
+    const FVulkanDeviceQueue& DeviceQueue(u32 queueFamilyIndex) const NOEXCEPT {
+        return DeviceQueue(static_cast<EVulkanQueueFamily>(queueFamilyIndex));
+    }
 
 #if USE_PPE_RHITASKNAME
     bool SetObjectName(u64 id, FConstChar name, VkObjectType type) const;

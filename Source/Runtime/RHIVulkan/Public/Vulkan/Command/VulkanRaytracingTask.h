@@ -34,6 +34,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateRayTracingShaderTable& desc, FProcessFunc process);
 
     bool Valid() const { return (!!Pipeline && !!RTScene && !!ShaderTable); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FBuildRayTracingGeometry:
@@ -52,6 +56,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingGeometry& desc, FProcessFunc process);
 
     bool Valid() const { return (!!RTGeometry && !!ScratchBuffer && not Geometries.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FBuildRayTracingScene:
@@ -88,6 +96,10 @@ public:
         Assert_NoAssume(RTGeometries.size() == NumInstances);
         return (!!RTScene && !!ScratchBuffer && !!InstanceStagingBuffer && InstanceBuffer && not Instances.empty() && not RTGeometries.empty());
     }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FTraceRays:
@@ -108,6 +120,10 @@ public:
     bool Valid() const { return (!!ShaderTable && !!GroupCount.x && !!GroupCount.y && !!GroupCount.z); }
 
     const FVulkanPipelineResourceSet& Resources() const { return _resources; }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 
 private:
     FVulkanPipelineResourceSet _resources;

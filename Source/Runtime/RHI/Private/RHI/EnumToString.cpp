@@ -6,6 +6,7 @@
 #include "RHI/RayTracingEnums.h"
 #include "RHI/RenderStateEnums.h"
 #include "RHI/ResourceEnums.h"
+#include "RHI/ResourceState.h"
 #include "RHI/SamplerEnums.h"
 #include "RHI/ShaderEnums.h"
 #include "RHI/SwapchainDesc.h"
@@ -936,6 +937,44 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     }
 }
 //----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceState value) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, ", "));
+    if (value & EResourceState::_Access_ShaderStorage) oss << sep << STRING_LITERAL(_Char, "ShaderStorage");
+    if (value & EResourceState::_Access_Uniform) oss << sep << STRING_LITERAL(_Char, "Uniform");
+    if (value & EResourceState::_Access_ShaderSample) oss << sep << STRING_LITERAL(_Char, "ShaderSample");
+    if (value & EResourceState::_Access_InputAttachment) oss << sep << STRING_LITERAL(_Char, "InputAttachment");
+    if (value & EResourceState::_Access_Transfer) oss << sep << STRING_LITERAL(_Char, "Transfer");
+    if (value & EResourceState::_Access_ColorAttachment) oss << sep << STRING_LITERAL(_Char, "ColorAttachment");
+    if (value & EResourceState::_Access_DepthStencilAttachment) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment");
+    if (value & EResourceState::_Access_Host) oss << sep << STRING_LITERAL(_Char, "Host");
+    if (value & EResourceState::_Access_Present) oss << sep << STRING_LITERAL(_Char, "Present");
+    if (value & EResourceState::_Access_IndirectBuffer) oss << sep << STRING_LITERAL(_Char, "IndirectBuffer");
+    if (value & EResourceState::_Access_IndexBuffer) oss << sep << STRING_LITERAL(_Char, "IndexBuffer");
+    if (value & EResourceState::_Access_VertexBuffer) oss << sep << STRING_LITERAL(_Char, "VertexBuffer");
+    if (value & EResourceState::_Access_ConditionalRendering) oss << sep << STRING_LITERAL(_Char, "ConditionalRendering");
+    if (value & EResourceState::_Access_CommandProcess) oss << sep << STRING_LITERAL(_Char, "CommandProcess");
+    if (value & EResourceState::_Access_ShadingRateImage) oss << sep << STRING_LITERAL(_Char, "ShadingRateImage");
+    if (value & EResourceState::_Access_BuildRayTracingAS) oss << sep << STRING_LITERAL(_Char, "BuildRayTracingAS");
+    if (value & EResourceState::_Access_RTASBuildingBuffer) oss << sep << STRING_LITERAL(_Char, "RTASBuildingBuffer");
+    if (value & EResourceState::_VertexShader) oss << sep << STRING_LITERAL(_Char, "VertexShader");
+    if (value & EResourceState::_TessControlShader) oss << sep << STRING_LITERAL(_Char, "TessControlShader");
+    if (value & EResourceState::_TessEvaluationShader) oss << sep << STRING_LITERAL(_Char, "TessEvaluationShader");
+    if (value & EResourceState::_GeometryShader) oss << sep << STRING_LITERAL(_Char, "GeometryShader");
+    if (value & EResourceState::_FragmentShader) oss << sep << STRING_LITERAL(_Char, "FragmentShader");
+    if (value & EResourceState::_ComputeShader) oss << sep << STRING_LITERAL(_Char, "ComputeShader");
+    if (value & EResourceState::_MeshTaskShader) oss << sep << STRING_LITERAL(_Char, "MeshTaskShader");
+    if (value & EResourceState::_MeshShader) oss << sep << STRING_LITERAL(_Char, "MeshShader");
+    if (value & EResourceState::_RayTracingShader) oss << sep << STRING_LITERAL(_Char, "RayTracingShader");
+    if (value & EResourceState::_BufferDynamicOffset) oss << sep << STRING_LITERAL(_Char, "BufferDynamicOffset");
+    if (value & EResourceState::InvalidateBefore) oss << sep << STRING_LITERAL(_Char, "InvalidateBefore");
+    if (value & EResourceState::InvalidateAfter) oss << sep << STRING_LITERAL(_Char, "InvalidateAfter");
+    if (value & EResourceState::EarlyFragmentTests) oss << sep << STRING_LITERAL(_Char, "EarlyFragmentTests");
+    if (value & EResourceState::LateFragmentTests) oss << sep << STRING_LITERAL(_Char, "LateFragmentTests");
+    if (value & EResourceState::_Read) oss << sep << STRING_LITERAL(_Char, "Read");
+    if (value & EResourceState::_Write) oss << sep << STRING_LITERAL(_Char, "Write");
+    return oss;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -989,6 +1028,7 @@ PPE_RHI_ENUMTOSTRING_DEF(EVertexFormat);
 PPE_RHI_ENUMTOSTRING_DEF(EPixelValueType);
 PPE_RHI_ENUMTOSTRING_DEF(EPresentMode);
 PPE_RHI_ENUMTOSTRING_DEF(ESurfaceTransform);
+PPE_RHI_ENUMTOSTRING_DEF(EResourceState);
 //----------------------------------------------------------------------------
 #undef PPE_RHI_ENUMTOSTRING_DEF
 //----------------------------------------------------------------------------

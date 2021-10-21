@@ -73,6 +73,7 @@ enum class EShadingRatePalette : u8;
 enum class EPixelFormat : u32;
 enum class EColorSpace : u32;
 enum class EFragmentOutput : u32;
+enum class EResourceState : u32;
 #if USE_PPE_RHIDEBUG
 enum class EDebugFlags : u32;
 #endif
@@ -115,6 +116,7 @@ enum class EVertexFormat : u32;
 //----------------------------------------------------------------------------
 enum class EPixelValueType : u32;
 //----------------------------------------------------------------------------
+enum class ECompositeAlpha : u32;
 enum class EPresentMode : u32;
 enum class ESurfaceTransform : u32;
 //----------------------------------------------------------------------------

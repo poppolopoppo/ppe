@@ -22,10 +22,10 @@ FVulkanFrameGraph::FVulkanFrameGraph(const FVulkanDeviceInfo& deviceInfo)
 :   _device(deviceInfo)
 ,   _queueUsage(Default)
 ,   _resourceManager(_device)
+,   _state(EState::Initial)
 #if USE_PPE_RHIDEBUG
 ,   _vkQueryPool(VK_NULL_HANDLE)
 #endif
-,   _state(EState::Initial)
 {}
 //----------------------------------------------------------------------------
 FVulkanFrameGraph::~FVulkanFrameGraph() {
@@ -53,7 +53,18 @@ bool FVulkanFrameGraph::Construct() {
         if (not AddAsyncTransferQueue_())
             PPE_THROW_IT(FVulkanException("FVulkanFrameGraph::GraphicsQueue", VK_ERROR_UNKNOWN));
 
-        Assert_NoAssume(not _queueMap.empty());
+#if USE_PPE_RHIDEBUG
+        auto& gq = _queueMap[static_cast<u32>(EQueueType::Graphics)];
+        auto& cq = _queueMap[static_cast<u32>(EQueueType::AsyncCompute)];
+        auto& tq = _queueMap[static_cast<u32>(EQueueType::AsyncTransfer)];
+
+        if (gq.Ptr && gq.Ptr->DebugName.empty())
+            gq.Ptr->DebugName.Assign("Graphics");
+        if (cq.Ptr && cq.Ptr->DebugName.empty())
+            cq.Ptr->DebugName.Assign("Compute");
+        if (tq.Ptr && tq.Ptr->DebugName.empty())
+            tq.Ptr->DebugName.Assign("Transfer");
+#endif
     }
 
 #if USE_PPE_RHIDEBUG
@@ -78,13 +89,14 @@ bool FVulkanFrameGraph::Construct() {
 }
 //----------------------------------------------------------------------------
 void FVulkanFrameGraph::TearDown() {
-    Verify(SetState_(EState::Idle, EState::Destroyed));
+    Assert(IsInitialized_());
 
     LOG(RHI, Emphasis, L"tearing down vulkan frame graph");
 
-    VerifyRelease(WaitIdle());
-
+    WaitIdle();
     ReleaseMemory();
+
+    Verify(SetState_(EState::Idle, EState::Destroyed));
 
     // delete per queue data
     {
@@ -97,14 +109,13 @@ void FVulkanFrameGraph::TearDown() {
             q.CommandPool.TearDown(_device);
 
             for (auto& vkSemaphore : q.Semaphores) {
-                Assert_NoAssume(VK_NULL_HANDLE != vkSemaphore);
-                _device.vkDestroySemaphore(_device.vkDevice(), vkSemaphore, _device.vkAllocator());
-                vkSemaphore = VK_NULL_HANDLE;
+                if (VK_NULL_HANDLE != vkSemaphore) {
+                    _device.vkDestroySemaphore(_device.vkDevice(), vkSemaphore, _device.vkAllocator());
+                    vkSemaphore = VK_NULL_HANDLE;
+                }
             }
         }
     }
-
-    _resourceManager.TearDown();
 
 #if USE_PPE_RHIDEBUG
     if (VK_NULL_HANDLE != _vkQueryPool) {
@@ -112,8 +123,10 @@ void FVulkanFrameGraph::TearDown() {
         _vkQueryPool = VK_NULL_HANDLE;
     }
 
-    _shaderDebugCallback = {};
+    _shaderDebugCallback = NoFunction;
 #endif
+
+    _resourceManager.TearDown();
 }
 //----------------------------------------------------------------------------
 void FVulkanFrameGraph::RecycleBatch(FVulkanCommandBatch* batch) {
@@ -942,7 +955,6 @@ bool FVulkanFrameGraph::AddAsyncComputeQueue_() {
 
     return CreateQueue_(EQueueType::AsyncCompute, bestMatch);
 }
-
 //----------------------------------------------------------------------------
 bool FVulkanFrameGraph::AddAsyncTransferQueue_() {
     PVulkanDeviceQueue unique{ Meta::ForceInit };

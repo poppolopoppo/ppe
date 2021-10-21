@@ -12,6 +12,34 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
+using FVulkanFrameTaskRef = std::variant<
+    const FVulkanSubmitRenderPassTask*,
+    const FVulkanDispatchComputeTask*,
+    const FVulkanDispatchComputeIndirectTask*,
+    const FVulkanCopyBufferTask*,
+    const FVulkanCopyImageTask*,
+    const FVulkanCopyBufferToImageTask*,
+    const FVulkanCopyImageToBufferTask*,
+    const FVulkanBlitImageTask*,
+    const FVulkanResolveImageTask*,
+    const FVulkanGenerateMipmapsTask*,
+    const FVulkanFillBufferTask*,
+    const FVulkanClearColorImageTask*,
+    const FVulkanClearDepthStencilImageTask*,
+    const FVulkanUpdateBufferTask*,
+    // const FVulkanUpdateImageTask*,
+    // const FVulkanReadBufferTask*,
+    // const FVulkanReadImageTask*,
+    const FVulkanPresentTask*,
+    const FVulkanCustomTaskTask*,
+    const FVulkanUpdateRayTracingShaderTableTask*,
+    const FVulkanBuildRayTracingGeometryTask*,
+    const FVulkanBuildRayTracingSceneTask*,
+    const FVulkanTraceRaysTask*
+>;
+#endif
+//----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API IVulkanFrameTask : public IFrameTask {
 public:
     using FDependencies = TFixedSizeStack<PVulkanFrameTask, MaxTaskDependencies>;
@@ -39,6 +67,7 @@ public:
 #if USE_PPE_RHIDEBUG
     const FTaskName& TaskName() const { return _taskName; }
     const FLinearColor& DebugColor() const { return _debugColor; }
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT = 0;
 #endif
 
     static void CopyDescriptorSets(
@@ -84,6 +113,10 @@ public:
     TVulkanFrameTask* PrevSubpass() const { return _prevSubpass; }
     TVulkanFrameTask* NextSubpass() const { return _nextSubpass; }
 
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
+
 private:
     FVulkanLogicalRenderPass* _logicalPass;
     TVulkanFrameTask* _prevSubpass{ nullptr };
@@ -103,6 +136,7 @@ public:
 
 #if USE_PPE_RHIDEBUG
     EShaderDebugIndex DebugModeIndex{ Default };
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
 #endif
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchCompute& desc, FProcessFunc process);
@@ -130,6 +164,7 @@ public:
 
 #if USE_PPE_RHIDEBUG
     EShaderDebugIndex DebugModeIndex{ Default };
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
 #endif
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchComputeIndirect& desc, FProcessFunc process);
@@ -157,6 +192,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBuffer& desc, FProcessFunc process);
 
     bool Valid() const { return (!!SrcBuffer && !!DstBuffer && not Regions.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FCopyImage:
@@ -176,6 +215,10 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImage> final : public IVulkanFrame
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImage& desc, FProcessFunc process);
 
     bool Valid() const { return (!!SrcImage && !!DstImage && not Regions.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FCopyBufferToImage:
@@ -194,6 +237,10 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyBufferToImage> final : public IVul
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBufferToImage& desc, FProcessFunc process);
 
     bool Valid() const { return (!!SrcBuffer && !!DstImage && not Regions.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FCopyImageToBuffer:
@@ -212,6 +259,10 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImageToBuffer> final : public IVul
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImageToBuffer& desc, FProcessFunc process);
 
     bool Valid() const { return (!!SrcImage && !!DstBuffer && not Regions.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FBlitImage:
@@ -232,6 +283,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBlitImage& desc, FProcessFunc process);
 
     bool Valid() const { return (!!SrcImage && !!DstImage && not Regions.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FGenerateMipmaps:
@@ -248,6 +303,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process);
 
     bool Valid() const { return (!!Image && LevelCount > 0); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FResolveImage:
@@ -267,6 +326,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FResolveImage& desc, FProcessFunc process);
 
     bool Valid() const { return (!!SrcImage && !!DstImage && not Regions.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FFillBuffer:
@@ -282,6 +345,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FFillBuffer& desc, FProcessFunc process);
 
     bool Valid() const { return (!!DstBuffer && Size > 0); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FClearColorImage:
@@ -300,6 +367,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearColorImage& desc, FProcessFunc process);
 
     bool Valid() const { return (!!DstImage && not Ranges.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FClearDepthStencilImage:
@@ -318,6 +389,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearDepthStencilImage& desc, FProcessFunc process);
 
     bool Valid() const { return (!!DstImage && not Ranges.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FUpdateBuffer:
@@ -337,6 +412,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process);
 
     bool Valid() const { return (!!DstBuffer && not Regions.empty()); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FPresent:
@@ -352,6 +431,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FPresent& desc, FProcessFunc process);
 
     bool Valid() const { return (!!Swapchain && !!SrcImage); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 // FCustomTask:
@@ -370,6 +453,10 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCustomTask& desc, FProcessFunc process);
 
     bool Valid() const { return (!!Callback); }
+
+#if USE_PPE_RHIDEBUG
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

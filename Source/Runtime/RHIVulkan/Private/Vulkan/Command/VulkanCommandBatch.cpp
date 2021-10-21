@@ -310,7 +310,7 @@ bool FVulkanCommandBatch::OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, 
     ReleaseVulkanObjects_(device, *exclusiveData);
 
 #if USE_PPE_RHIDEBUG
-    debugger.AddBatchDump(std::move(_frameDebugger.DebugDump));
+    debugger.AddBatchDump(_debugName, _frameDebugger.DebugDump.ToString());
     debugger.AddBatchGraph(std::move(_frameDebugger.DebugGraph));
 
     if (exclusiveData->SupportsQuery) {

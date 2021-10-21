@@ -83,6 +83,9 @@ void FVulkanResourceManager::TearDown() {
     TearDownStagingBuffers_();
     ONLY_IF_RHIDEBUG(TearDownShaderDebuggerResources_());
 
+    // release empty descriptor layout
+    VerifyRelease( ReleaseResource(_emptyDSLayout) );
+
     // release all pools (should all be empty !)
 
     _resources.ImagePool.Clear_AssertCompletelyEmpty();
@@ -130,7 +133,6 @@ void FVulkanResourceManager::TearDown() {
     _descriptorManager.TearDown();
     _memoryManager.TearDown();
 }
-
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::AddCompiler(const PPipelineCompiler& pCompiler) {
     Assert(pCompiler);
@@ -139,12 +141,10 @@ void FVulkanResourceManager::AddCompiler(const PPipelineCompiler& pCompiler) {
 
     _compilers.insert(pCompiler);
 }
-
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::OnSubmit() {
     _submissionCounter.fetch_add(1, std::memory_order_relaxed);
 }
-
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
 void FVulkanResourceManager::TearDownCache_(TCache<T, _ChunkSize, _MaxChunks>& cache) {
@@ -523,6 +523,25 @@ FRawImageID FVulkanResourceManager::CreateImage(
     return imageId;
 }
 //----------------------------------------------------------------------------
+FRawImageID FVulkanResourceManager::CreateImage(
+    const FVulkanExternalImageDesc& desc,
+    FOnReleaseExternalImage&& onRelease
+    ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
+    FRawImageID imageId;
+    TResourceProxy<FVulkanImage>* const pImage = CreatePooledResource_(&imageId);
+    Assert(pImage);
+
+    if (Unlikely(not pImage->Construct(_device, desc, std::move(onRelease) ARGS_IF_RHIDEBUG(debugName)))) {
+        RHI_LOG(Error, L"failed to construct image from vulkan create info '{0}'", debugName);
+        Verify( ReleaseResource_(ResourcePool_(imageId), pImage, imageId.Index, 0) );
+        return Default;
+    }
+    Assert_NoAssume(imageId.Valid());
+
+    pImage->AddRef();
+    return imageId;
+}
+//----------------------------------------------------------------------------
 // CreateBuffer
 //----------------------------------------------------------------------------
 FRawBufferID FVulkanResourceManager::CreateBuffer(
@@ -568,6 +587,25 @@ FRawBufferID FVulkanResourceManager::CreateBuffer(
     Assert(pBuffer);
 
     if (Unlikely(not pBuffer->Construct(_device, desc, externalBuffer, std::move(onRelease), queueFamilyIndices ARGS_IF_RHIDEBUG(debugName)))) {
+        RHI_LOG(Error, L"failed to construct buffer '{0}'", debugName);
+        Verify( ReleaseResource_(ResourcePool_(bufferId), pBuffer, bufferId.Index, 0) );
+        return Default;
+    }
+    Assert_NoAssume(bufferId.Valid());
+
+    pBuffer->AddRef();
+    return bufferId;
+}
+//----------------------------------------------------------------------------
+FRawBufferID FVulkanResourceManager::CreateBuffer(
+    const FVulkanExternalBufferDesc& desc,
+    FOnReleaseExternalBuffer&& onRelease
+    ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
+    FRawBufferID bufferId;
+    TResourceProxy<FVulkanBuffer>* const pBuffer = CreatePooledResource_(&bufferId);
+    Assert(pBuffer);
+
+    if (Unlikely(not pBuffer->Construct(_device, desc, std::move(onRelease) ARGS_IF_RHIDEBUG(debugName)))) {
         RHI_LOG(Error, L"failed to construct buffer '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(bufferId), pBuffer, bufferId.Index, 0) );
         return Default;
@@ -724,7 +762,7 @@ FRawRTGeometryID FVulkanResourceManager::CreateRayTracingGeometry(
     const FRayTracingGeometryDesc& desc,
     const FMemoryDesc& mem
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
-    Assert_NoAssume(_device.Enabled().RayTracingKHR);
+    Assert_NoAssume(_device.Enabled().RayTracingNV);
 
     FRawMemoryID memoryId;
     TResourceProxy<FVulkanMemoryObject>* pMemory{ nullptr };
@@ -754,7 +792,7 @@ FRawRTGeometryID FVulkanResourceManager::CreateRayTracingGeometry(
 //----------------------------------------------------------------------------
 FRawRTSceneID FVulkanResourceManager::CreateRayTracingScene(
     const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert_NoAssume(_device.Enabled().RayTracingKHR);
+    Assert_NoAssume(_device.Enabled().RayTracingNV);
 
     FRawMemoryID memoryId;
     TResourceProxy<FVulkanMemoryObject>* pMemory{ nullptr };
@@ -802,11 +840,11 @@ FRawRTShaderTableID FVulkanResourceManager::CreateRayTracingShaderTable(ARG0_IF_
 //----------------------------------------------------------------------------
 FRawSwapchainID FVulkanResourceManager::CreateSwapchain(
     const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain, FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    const FVulkanSwapchain* swapchain = ResourceDataIFP(oldSwapchain, false, true);
+    const FVulkanSwapchain* swapchain = (oldSwapchain ? ResourceDataIFP(oldSwapchain, false, true) : nullptr);
     if (Likely(swapchain)) {
         Assert_NoAssume(oldSwapchain.Valid());
 
-        if (Unlikely(not const_cast<FVulkanSwapchain*>(swapchain)->ReConstruct(fg, desc ARGS_IF_RHIDEBUG(debugName)))) {
+        if (Unlikely(not const_cast<FVulkanSwapchain*>(swapchain)->Construct(fg, desc ARGS_IF_RHIDEBUG(debugName)))) {
             RHI_LOG(Error, L"failed to re-construct old swapchain for '{0}'", debugName);
             return Default;
         }
@@ -863,15 +901,7 @@ void FVulkanResourceManager::ReleaseMemory() {
     // will reclaim memory from the various caches
     TearDownStagingBuffers_();
 
-    TearDownCache_(_resources.SamplerCache);
-    TearDownCache_(_resources.PplnLayoutCache);
-    TearDownCache_(_resources.DslayoutCache);
-    TearDownCache_(_resources.RenderPassCache);
-    TearDownCache_(_resources.FramebufferCache);
-    TearDownCache_(_resources.PplnResourcesCache);
-
     // reclaims cached memory from all pools
-
     _resources.ImagePool.ReleaseCacheMemory();
     _resources.BufferPool.ReleaseCacheMemory();
     _resources.MemoryObjectPool.ReleaseCacheMemory();
@@ -944,10 +974,6 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
     ONLY_IF_ASSERT(LOG(RHI, Error, L"failed to allocate staging buffer for '{0}'", debugName));
     return false;
 }
-//----------------------------------------------------------------------------
-// ResourceDescription
-//----------------------------------------------------------------------------
-
 //----------------------------------------------------------------------------
 // ReleaseStagingBuffer
 //----------------------------------------------------------------------------
@@ -1151,7 +1177,7 @@ FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDebugDescriptorSetLayout
     sbUniform.Index = FBindingIndex{ UMax, 0 };
 
     FPipelineDesc::FSharedUniformMap uniforms;
-    uniforms->Add_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, sbUniform);
+    uniforms->Emplace_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, sbUniform);
 
     const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(uniforms, debugName);
     Assert_NoAssume(layout.Valid());

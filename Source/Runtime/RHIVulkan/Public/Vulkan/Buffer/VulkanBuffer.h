@@ -24,10 +24,10 @@ public:
         FMemoryID MemoryId;
         EVulkanQueueFamilyMask QueueFamilyMask{ Default };
         VkAccessFlagBits ReadAccessMask{ Default };
+        bool IsExternal : 1;
 
         FOnReleaseExternalBuffer OnRelease;
 
-        bool IsExternal() const { return OnRelease.Valid(); }
         bool IsReadOnly() const NOEXCEPT;
         bool IsExclusiveSharing() const { return (QueueFamilyMask == Default); }
 
@@ -47,6 +47,7 @@ public:
 
     auto Read() const { return _data.LockShared(); }
 
+    const FBufferDesc& Desc() const { return Read()->Desc; }
     VkBuffer Handle() const { return Read()->vkBuffer; }
     u32 SizeInBytes() const { return Read()->Desc.SizeInBytes; }
 
@@ -65,6 +66,11 @@ public:
         ARGS_IF_RHIDEBUG(FConstChar debugName) );
 
     NODISCARD bool Construct(const FVulkanDevice& device,
+        const FVulkanExternalBufferDesc& desc,
+        FOnReleaseExternalBuffer&& onRelease
+        ARGS_IF_RHIDEBUG(FConstChar debugName) );
+
+    NODISCARD bool Construct(const FVulkanDevice& device,
         const FBufferDesc& desc,
         FExternalBuffer externalBuffer, FOnReleaseExternalBuffer&& onRelease,
         TMemoryView<const u32> queueFamilyIndices
@@ -77,8 +83,7 @@ private:
 
     TRHIThreadSafe<FInternalData> _data;
 
-    mutable FReadWriteLock _viewRWLock;
-    mutable FBufferViewMap _viewMap;
+    mutable TThreadSafe<FBufferViewMap, EThreadBarrier::RWLock> _viewMap;
 
 #if USE_PPE_RHITASKNAME
     FVulkanDebugName _debugName;

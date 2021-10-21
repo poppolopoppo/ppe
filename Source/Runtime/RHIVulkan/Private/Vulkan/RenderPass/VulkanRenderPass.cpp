@@ -13,6 +13,14 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+static bool operator ==(const VkAttachmentDescription& lhs, const VkAttachmentDescription& rhs) NOEXCEPT;
+static hash_t hash_value(const VkAttachmentDescription& desc) NOEXCEPT;
+static bool operator ==(const VkAttachmentReference& lhs, const VkAttachmentReference& rhs) NOEXCEPT;
+static hash_t hash_value(const VkAttachmentReference& ref) NOEXCEPT;
+static bool operator ==(const VkSubpassDescription& lhs, const VkSubpassDescription& rhs) NOEXCEPT;
+static hash_t hash_value(const VkSubpassDescription& desc) NOEXCEPT;
+static bool operator ==(const VkSubpassDependency& lhs, const VkSubpassDependency& rhs) NOEXCEPT;
+static hash_t hash_value(const VkSubpassDependency& dep) NOEXCEPT;
 //----------------------------------------------------------------------------
 // Use a proxy template to make ADL work for the following free-functions:
 //----------------------------------------------------------------------------
@@ -26,6 +34,18 @@ template <typename _Vk>
 static TMemoryView<const TRHI_<_Vk>> MakeRHIView_(const _Vk* ptr, size_t count) NOEXCEPT {
     return { static_cast<const TRHI_<_Vk>*>(ptr), count };
 }
+//----------------------------------------------------------------------------
+// Template helpers for ADL (vk structures are in global namespace)
+//----------------------------------------------------------------------------
+template <typename _Vk>
+struct TRHI_ : _Vk {
+    friend bool operator ==(const TRHI_& lhs, const TRHI_& rhs) NOEXCEPT {
+        return (static_cast<const _Vk&>(lhs) == static_cast<const _Vk&>(rhs));
+    }
+    friend hash_t hash_value(const TRHI_<_Vk>& proxy) NOEXCEPT {
+        return hash_value(static_cast<const _Vk&>(proxy));
+    }
+};
 //----------------------------------------------------------------------------
 // VkAttachmentDescription
 //----------------------------------------------------------------------------
@@ -119,18 +139,6 @@ static hash_t hash_value(const VkSubpassDependency& dep) NOEXCEPT {
         dep.dependencyFlags );
 }
 //----------------------------------------------------------------------------
-// Template helpers for ADL (vk structures are in global namespace)
-//----------------------------------------------------------------------------
-template <typename _Vk>
-struct TRHI_ : _Vk {
-    friend bool operator ==(const TRHI_& lhs, const TRHI_& rhs) NOEXCEPT {
-        return (static_cast<const _Vk&>(lhs) == static_cast<const _Vk&>(rhs));
-    }
-    friend hash_t hash_value(const TRHI_<_Vk>& proxy) NOEXCEPT {
-        return hash_value(static_cast<const _Vk&>(proxy));
-    }
-};
-//----------------------------------------------------------------------------
 static void ComputeRenderPassHash_(
     hash_t* outMainHash,
     hash_t* outAttachmentHash,
@@ -151,20 +159,8 @@ static void ComputeRenderPassHash_(
     outSubpassesHash->Resize(createInfo.subpassCount);
 
     const auto subpasses = MakeRHIView_(createInfo.pSubpasses, createInfo.subpassCount);
-
-#if 1
-    hash_combine(*outMainHash, subpasses.MapReduce(
-        [outp{outSubpassesHash->begin()}](const auto& x) mutable {
-            return (*outp++ = hash_value(x));
-        },
-        &hash_combine<hash_t> ));
-#else // #TODO:
-    forrange(i, 0, createInfo.subpassCount) {
-        const hash_t subpassHash = hash_value(subpasses[i]);
-        outSubpassesHash->at(i) = subpassHash;
-        hash_combine(*outMainHash, subpassHash);
-    }
-#endif
+    subpasses.Map([](const auto& x) { return hash_value(x); }).CopyTo(outSubpassesHash->begin());
+    hash_combine(*outMainHash, hash_view(outSubpassesHash->MakeConstView()));
 
     hash_combine(*outMainHash, hash_view(MakeRHIView_(createInfo.pDependencies, createInfo.dependencyCount)));
 }

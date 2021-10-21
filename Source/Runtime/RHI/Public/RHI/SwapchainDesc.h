@@ -57,6 +57,9 @@ struct FSwapchainDesc {
     ESurfaceTransform PreTransform{ ESurfaceTransform::Identity };
     u32 MinImageCount{ 2 };
 
+    EImageUsage RequiredUsage{};
+    EImageUsage OptionalUsage{};
+
     // both from higher to lower priority:
     FRequiredSurfaceFormats SurfaceFormats;
     FRequiredPresentModes PresentModes;

@@ -13,6 +13,7 @@
 #include "Container/HashMap.h"
 #include "Container/Stack.h"
 #include "Container/TupleVector.h"
+#include "IO/StringBuilder.h"
 #include "Misc/Function.h"
 
 #include <atomic>
@@ -293,7 +294,7 @@ private:
 
     // frame debugger
     struct {
-        FString DebugDump;
+        FStringBuilder DebugDump;
         FDebugBatchGraph DebugGraph;
     }   _frameDebugger;
 

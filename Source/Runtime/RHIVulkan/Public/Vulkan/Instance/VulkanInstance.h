@@ -62,8 +62,10 @@ public:
         FConstChar engineName,
         EVulkanVersion version = EVulkanVersion::API_version_latest,
         const TMemoryView<const FConstChar>& instanceLayers = RecommendedInstanceLayers(EVulkanVersion::API_version_latest),
-        FVulkanInstanceExtensionSet instanceExtensions = RecommendedInstanceExtensions(EVulkanVersion::API_version_latest),
-        FVulkanDeviceExtensionSet deviceExtensions = Meta::ForceInit );
+        FVulkanInstanceExtensionSet requiredInstanceExtensions = RecommendedInstanceExtensions(EVulkanVersion::API_version_latest),
+        FVulkanInstanceExtensionSet optionalInstanceExtensions = RecommendedInstanceExtensions(EVulkanVersion::API_version_latest),
+        FVulkanDeviceExtensionSet requiredDeviceExtensions = RequiredDeviceExtensions(EVulkanVersion::API_version_latest),
+        FVulkanDeviceExtensionSet optionalDeviceExtensions = RecommendedDeviceExtensions(EVulkanVersion::API_version_latest) );
     void TearDown();
 
     NODISCARD bool CreateSurface(
@@ -77,21 +79,27 @@ public:
     NODISCARD bool CreateDevice( // back-buffer
         FVulkanDeviceInfo* pDevice,
         VkSurfaceKHR vkSurface,
-        FVulkanDeviceExtensionSet deviceExtensions,
+        const FVulkanDeviceExtensionSet& requiredDeviceExtensions,
+        const FVulkanDeviceExtensionSet& optionalDeviceExtensions,
         FPhysicalDeviceInfoRef physicalDevice = nullptr,
         const TMemoryView<const FQueueCreateInfo>& queues = Default ) const;
     NODISCARD bool CreateDevice( // headless
         FVulkanDeviceInfo* pDevice,
-        FVulkanDeviceExtensionSet deviceExtensions,
+        const FVulkanDeviceExtensionSet& requiredDeviceExtensions,
+        const FVulkanDeviceExtensionSet& optionalDeviceExtensions,
         FPhysicalDeviceInfoRef physicalDevice = nullptr,
         const TMemoryView<const FQueueCreateInfo>& queues = Default ) const;
     void DestroyDevice(FVulkanDeviceInfo* pDevice) const;
 
     static TMemoryView<const FConstChar> RecommendedInstanceLayers(EVulkanVersion version);
     static TMemoryView<const FQueueCreateInfo> RecommendedDeviceQueues(EVulkanVersion version);
+
     static FVulkanInstanceExtensionSet RecommendedInstanceExtensions(EVulkanVersion version);
+    static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version);
     static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version, FWindowHandle window);
+
     static FVulkanDeviceExtensionSet RecommendedDeviceExtensions(EVulkanVersion version);
+    static FVulkanDeviceExtensionSet RequiredDeviceExtensions(EVulkanVersion version);
 
 private:
     VkInstance _vkInstance{ VK_NULL_HANDLE };

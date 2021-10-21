@@ -74,7 +74,7 @@ class FVulkanPipelineLayout;
 // Raytracing:
 //----------------------------------------------------------------------------
 PPE_STRONGLYTYPED_NUMERIC_DEF(u64, FVulkanBLASHandle);
-struct FVulkanGeometryInstance;
+struct FVulkanRayTracingGeometryInstance;
 class FVulkanRayTracingGeometry;
 class FVulkanRayTracingLocalGeometry;
 class FVulkanRayTracingScene;
@@ -115,9 +115,9 @@ using FVulkanFillBufferTask = TVulkanFrameTask<FFillBuffer>;
 using FVulkanClearColorImageTask = TVulkanFrameTask<FClearColorImage>;
 using FVulkanClearDepthStencilImageTask = TVulkanFrameTask<FClearDepthStencilImage>;
 using FVulkanUpdateBufferTask = TVulkanFrameTask<FUpdateBuffer>;
-using FVulkanUpdateImageTask = TVulkanFrameTask<FUpdateImage>;
-using FVulkanReadBufferTask = TVulkanFrameTask<FReadBuffer>;
-using FVulkanReadImageTask = TVulkanFrameTask<FReadImage>;
+// using FVulkanUpdateImageTask = TVulkanFrameTask<FUpdateImage>;
+// using FVulkanReadBufferTask = TVulkanFrameTask<FReadBuffer>;
+// using FVulkanReadImageTask = TVulkanFrameTask<FReadImage>;
 using FVulkanPresentTask = TVulkanFrameTask<FPresent>;
 using FVulkanCustomTaskTask = TVulkanFrameTask<FCustomTask>;
 using FVulkanUpdateRayTracingShaderTableTask = TVulkanFrameTask<FUpdateRayTracingShaderTable>;

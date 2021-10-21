@@ -66,7 +66,7 @@ void FApplicationWindow::Start() {
         surfaceInfo.EnableVSync = (features ^ ERHIFeature::VSync);
 
         if (not _targetRHI->CreateService(&_rhi, Domain(), &surfaceInfo, features) )
-            LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort", Domain().Name(), Name());
+            LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort!", Domain().Name(), Name());
 
         services.Add<IRHIService>(_rhi.get());
     }

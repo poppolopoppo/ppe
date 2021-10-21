@@ -13,7 +13,7 @@ class PPE_RHIVULKAN_API FVulkanRayTracingLocalGeometry final : Meta::FNonCopyabl
 public:
     struct FGeometryState {
         EResourceState State{ Default };
-        PFrameTask Task;
+        PVulkanFrameTask Task;
     };
 
     using FAabbs = FVulkanRayTracingGeometry::FAabbs;
@@ -32,7 +32,9 @@ public:
     };
 
     FVulkanRayTracingLocalGeometry() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanRayTracingLocalGeometry();
+#endif
 
     NODISCARD bool Construct(const FVulkanRayTracingGeometry* geometryData);
     void TearDown();
@@ -45,15 +47,22 @@ public:
     auto InternalData() const { return _rtGeometry->Read(); }
 
     FVulkanBLASHandle BLAS() const { return _rtGeometry->BLAS(); }
-    VkAccelerationStructureKHR Handle() const { return _rtGeometry->Handle(); }
+    VkAccelerationStructureNV Handle() const { return _rtGeometry->Handle(); }
 
     TMemoryView<const FAabbs> Aabbs() const { return _rtGeometry->Aabbs(); }
     TMemoryView<const FTriangles> Triangles() const { return _rtGeometry->Triangles(); }
     ERayTracingBuildFlags Flags() const { return _rtGeometry->Flags(); }
     u32 MaxGeometryCount() const { return checked_cast<u32>(Triangles().size() + Aabbs().size()); }
 
+#if USE_PPE_RHIDEBUG
+    const FVulkanDebugName& DebugName() const { Assert(_rtGeometry); return _rtGeometry->DebugName(); }
+#endif
+
 private:
-    FVulkanRayTracingGeometry* _rtGeometry;
+    const FVulkanRayTracingGeometry* _rtGeometry;
+
+    mutable FGeometryAccess _pendingAccesses;
+    mutable FGeometryAccess _accessForReadWrite;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

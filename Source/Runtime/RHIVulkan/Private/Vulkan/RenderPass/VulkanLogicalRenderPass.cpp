@@ -21,8 +21,9 @@ static const VkShadingRatePaletteEntryNV GShadingRateDefaultEntry{
 #endif
 //----------------------------------------------------------------------------
 static void SetVulkanClearValue_(VkClearValue* pout, const FRenderPassDesc::FClearValue& in) {
+    STATIC_ASSERT(sizeof(float[4]) == sizeof(FLinearColor));
     Meta::Visit(in,
-        [=](const FRgba32f& value) { FPlatformMemory::Memcpy(pout->color.float32, value.data, sizeof(value.data)); },
+        [=](const FLinearColor& value) { FPlatformMemory::Memcpy(pout->color.float32, &value, sizeof(value)); },
         [=](const FRgba32u& value) { FPlatformMemory::Memcpy(pout->color.uint32, value.data, sizeof(value.data)); },
         [=](const FRgba32i& value) { FPlatformMemory::Memcpy(pout->color.int32, value.data, sizeof(value.data)); },
         [=](const FDepthValue& value) { pout->depthStencil = { value.Value, 0 }; },

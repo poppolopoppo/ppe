@@ -179,14 +179,28 @@ bool ValidateInstanceLayers_(VECTOR(RHIInstance, FConstChar)* pLayerNames, const
     return true;
 }
 //----------------------------------------------------------------------------
-bool ValidateInstanceExtensions_(VECTOR(RHIInstance, FConstChar)* pExtensionNames, const FVulkanGlobalAPI& api, FVulkanInstanceExtensionSet& instanceExts, const FVulkanDeviceExtensionSet& deviceExts) {
-    const FVulkanInstanceExtensionSet user{ instanceExts };
-    instanceExts = vk::instance_extensions_require(user); // expand requirements
-    instanceExts |= vk::instance_extensions_require(vk::device_extensions_require(deviceExts));
+bool ValidateInstanceExtensions_(
+    VECTOR(RHIInstance, FConstChar)* pExtensionNames,
+    const FVulkanGlobalAPI& api,
+    FVulkanInstanceExtensionSet& requiredInstanceExts,
+    FVulkanInstanceExtensionSet& optionalInstanceExts,
+    const FVulkanDeviceExtensionSet& requiredDeviceExts,
+    const FVulkanDeviceExtensionSet& optionalDeviceExts) {
+    const FVulkanInstanceExtensionSet userInstanceExts{ requiredInstanceExts };
 
-    pExtensionNames->reserve(instanceExts.Count());
+    // expand instance requirements:
+    requiredInstanceExts = vk::instance_extensions_require(requiredInstanceExts);
+    optionalInstanceExts = vk::instance_extensions_require(optionalInstanceExts);
 
-    FVulkanInstanceExtensionSet it{ instanceExts };
+    // expand device requirements:
+    requiredInstanceExts |= vk::instance_extensions_require(vk::device_extensions_require(requiredDeviceExts));
+    optionalInstanceExts |= vk::instance_extensions_require(vk::device_extensions_require(optionalDeviceExts));
+
+    pExtensionNames->reserve(
+        requiredInstanceExts.Count() +
+        optionalInstanceExts.Count() );
+
+    FVulkanInstanceExtensionSet it{ requiredInstanceExts | optionalInstanceExts };
     for (;;) {
         const auto bit = it.PopFront();
         if (not bit) break;
@@ -195,7 +209,7 @@ bool ValidateInstanceExtensions_(VECTOR(RHIInstance, FConstChar)* pExtensionName
         FConstChar name{ vk::instance_extension_name(ext) };
         AssertRelease(name);
 
-        CLOG(not (user & ext), RHI, Warning, L"add vulkan instance extension '{0}' required by user input", name.MakeView());
+        CLOG(not (userInstanceExts & ext), RHI, Warning, L"add vulkan instance extension '{0}' required by user input", name.MakeView());
 
         pExtensionNames->push_back_AssumeNoGrow(std::move(name));
     }
@@ -218,7 +232,15 @@ bool ValidateInstanceExtensions_(VECTOR(RHIInstance, FConstChar)* pExtensionName
         });
 
         if (extProperties.end() == found) {
-            LOG(RHI, Warning, L"vulkan instance extension '{0}' is not supported and will be removed", jt->MakeView());
+            const EVulkanInstanceExtension ext = vk::instance_extension_from(*jt);
+            if (userInstanceExts & ext) {
+                LOG(RHI, Error, L"required vulkan instance extension '{0}' is not supported and will be removed!", jt->MakeView());
+                requiredInstanceExts -= ext;
+            }
+            else {
+                LOG(RHI, Warning, L"optional vulkan instance extension '{0}' is not supported and will be removed", jt->MakeView());
+                optionalInstanceExts -= ext;
+            }
             jt = pExtensionNames->erase(jt);
         }
         else {
@@ -238,8 +260,10 @@ bool CreateVulkanInstance_(
     FConstChar engineName,
     EVulkanVersion& version,
     const TMemoryView<const FConstChar> layers,
-    FVulkanInstanceExtensionSet& instanceExtensions,
-    const FVulkanDeviceExtensionSet& deviceExtensions ) {
+    FVulkanInstanceExtensionSet& requiredInstanceExtensions,
+    FVulkanInstanceExtensionSet& optionalInstanceExtensions,
+    const FVulkanDeviceExtensionSet& requiredDeviceExtensions,
+    const FVulkanDeviceExtensionSet& optionalDeviceExtensions ) {
     STATIC_ASSERT(sizeof(FConstChar) == sizeof(const char*));
     Assert_NoAssume(VK_NULL_HANDLE == *pVkInstance);
 
@@ -253,7 +277,12 @@ bool CreateVulkanInstance_(
         return false;
 
     VECTOR(RHIInstance, FConstChar) extensionNames;
-    if (not ValidateInstanceExtensions_(&extensionNames, api, instanceExtensions, deviceExtensions))
+    if (not ValidateInstanceExtensions_(
+        &extensionNames, api,
+        requiredInstanceExtensions,
+        optionalInstanceExtensions,
+        requiredDeviceExtensions,
+        optionalDeviceExtensions ))
         return false;
 
     VkApplicationInfo appInfo{};
@@ -278,7 +307,6 @@ bool CreateVulkanInstance_(
 
     return true;
 }
-
 //----------------------------------------------------------------------------
 // Debug utils
 //----------------------------------------------------------------------------
@@ -314,7 +342,11 @@ static void CreateDebugUtilsMessengerIFP_(
             if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
                 oss << L"[PERFORMANCE] ";
         };
-        auto fmtCallbackData = [pCallbackData](FWTextWriter& oss) {
+
+        auto fmtCallbackData = [pCallbackData, level](FWTextWriter& oss) {
+            if (level <= ELoggerVerbosity::Verbose)
+                return;
+
             // QUEUES
             const TMemoryView<const VkDebugUtilsLabelEXT> queues{ pCallbackData->pQueueLabels, pCallbackData->queueLabelCount };
             for (const VkDebugUtilsLabelEXT& queue : queues) {
@@ -619,7 +651,7 @@ bool ChooseVulkanQueueIndex_(
             return true;
         }
 
-        if (((queueFlags & requiredFlags) == requiredFlags) &&
+        if ((Meta::EnumHas(queueFlags, static_cast<VkFlags>(requiredFlags))) &&
             (compatible.first == 0 || TBitMask<u32>{ compatible.first }.Count() > TBitMask<u32>{ queueFlags }.Count())) {
             compatible = MakePair(queueFlags, i);
         }
@@ -710,13 +742,23 @@ bool SetupVulkanQueues_(
 //----------------------------------------------------------------------------
 // Device creation
 //----------------------------------------------------------------------------
-bool ValidateDeviceExtensions_(VECTOR(RHIInstance, FConstChar)* pExtensionNames, VkPhysicalDevice vkPhysicalDevice, const FVulkanInstanceFunctions& api, FVulkanDeviceExtensionSet& deviceExts) {
-    const FVulkanDeviceExtensionSet user{ deviceExts };
-    deviceExts = vk::device_extensions_require(user); // expand requirements
+bool ValidateDeviceExtensions_(
+    VECTOR(RHIInstance, FConstChar)* pExtensionNames,
+    VkPhysicalDevice vkPhysicalDevice,
+    const FVulkanInstanceFunctions& api,
+    FVulkanDeviceExtensionSet& requiredDeviceExts,
+    FVulkanDeviceExtensionSet& optionalDeviceExts ) {
+    const FVulkanDeviceExtensionSet userDeviceExts{ requiredDeviceExts };
 
-    pExtensionNames->reserve(deviceExts.Count());
+    // expand requirements:
+    requiredDeviceExts = vk::device_extensions_require(requiredDeviceExts);
+    optionalDeviceExts = vk::device_extensions_require(optionalDeviceExts);
 
-    FVulkanDeviceExtensionSet it{ deviceExts };
+    pExtensionNames->reserve(
+        requiredDeviceExts.Count() +
+        optionalDeviceExts.Count() );
+
+    FVulkanDeviceExtensionSet it{ requiredDeviceExts | optionalDeviceExts };
     for (;;) {
         const auto bit = it.PopFront();
         if (not bit) break;
@@ -725,7 +767,7 @@ bool ValidateDeviceExtensions_(VECTOR(RHIInstance, FConstChar)* pExtensionNames,
         FConstChar name{ vk::device_extension_name(ext) };
         AssertRelease(name);
 
-        CLOG(not (user & ext), RHI, Warning, L"add vulkan device extension '{0}' required by user input", name.MakeView());
+        CLOG(not (userDeviceExts & ext), RHI, Warning, L"add vulkan device extension '{0}' required by user input", name.MakeView());
 
         // check for missing instance extensions required by this device extension
         FVulkanInstanceExtensionSet missingInstanceExts{
@@ -761,7 +803,15 @@ bool ValidateDeviceExtensions_(VECTOR(RHIInstance, FConstChar)* pExtensionNames,
         });
 
         if (extProperties.end() == found) {
-            LOG(RHI, Warning, L"vulkan device extension '{0}' is not supported and will be removed", jt->MakeView());
+            const EVulkanDeviceExtension ext = vk::device_extension_from(*jt);
+            if (userDeviceExts & ext) {
+                LOG(RHI, Error, L"required vulkan device extension '{0}' is not supported and will be removed!", jt->MakeView());
+                requiredDeviceExts -= ext;
+            }
+            else {
+                LOG(RHI, Warning, L"optional vulkan device extension '{0}' is not supported and will be removed", jt->MakeView());
+                optionalDeviceExts -= ext;
+            }
             jt = pExtensionNames->erase(jt);
         }
         else {
@@ -782,15 +832,16 @@ bool CreateVulkanDevice_(
     pDevice->vkPhysicalDevice = physicalDevice->vkPhysicalDevice;
     Assert(pDevice->vkPhysicalDevice);
 
-    LOG(RHI, Info, L"pick vulkan gpu: {0} {1} (vendor={2},driver={3}){4}",
+    LOG(RHI, Info, L"pick vulkan gpu: #{0} {1} (vendor={2},driver={3}){4}",
         physicalDevice->Properties.deviceID,
         MakeCStringView(physicalDevice->Properties.deviceName),
         static_cast<EVulkanVendor>(physicalDevice->Properties.vendorID),
         physicalDevice->Properties.driverVersion,
         Fmt::Formator<wchar_t>([&](FWTextWriter& oss) {
+            oss << Eol;
             u32 cnt = 0;
             for (auto& heap : MakeView(physicalDevice->Memory.memoryHeaps, physicalDevice->Memory.memoryHeaps + physicalDevice->Memory.memoryHeapCount))
-                oss << Tab << L"- HEAP" << cnt++ << L" " << Fmt::SizeInBytes(heap.size) << Endl;
+                oss << Tab << L"- HEAP" << cnt++ << L" " << Fmt::SizeInBytes(heap.size) << Eol;
         }));
 
     if (not SetupVulkanQueues_(&pDevice->Queues, pDevice->vkPhysicalDevice, vkSurface, api, queues)) {
@@ -806,7 +857,7 @@ bool CreateVulkanDevice_(
 
     // extensions
     VECTOR(RHIInstance, FConstChar) extensionNames;
-    if (not ValidateDeviceExtensions_(&extensionNames, pDevice->vkPhysicalDevice, api, pDevice->DeviceExtensions)) {
+    if (not ValidateDeviceExtensions_(&extensionNames, pDevice->vkPhysicalDevice, api, pDevice->RequiredDeviceExtensions, pDevice->OptionalDeviceExtensions)) {
         LOG(RHI, Error, L"failed to validate vulkan device extensions");
         return false;
     }
@@ -819,33 +870,45 @@ bool CreateVulkanDevice_(
     api.vkGetPhysicalDeviceQueueFamilyProperties(pDevice->vkPhysicalDevice, &maxQueueFamilies, nullptr);
     AssertRelease(maxQueueFamilies <= RHI::MaxQueueFamilies);
 
-    using queue_priorities_t = TFixedSizeStack<float, 4>;
-    STACKLOCAL_POD_ARRAY(queue_priorities_t, priorities, maxQueueFamilies);
-    Meta::Construct(priorities);
-    STACKLOCAL_POD_ARRAY(VkDeviceQueueCreateInfo, queueInfos, maxQueueFamilies);
+    using queue_priorities_t = TFixedSizeStack<float, 16>;
+    STACKLOCAL_POD_STACK(queue_priorities_t, priorities, maxQueueFamilies);
+    priorities.Resize(maxQueueFamilies);
+    STACKLOCAL_POD_STACK(VkDeviceQueueCreateInfo, queueInfos, maxQueueFamilies);
 
     forrange(i, 0, maxQueueFamilies) {
-        VkDeviceQueueCreateInfo& createInfo = queueInfos[i];
+        VkDeviceQueueCreateInfo& createInfo = *queueInfos.Push_Uninitialized();
         createInfo = VkDeviceQueueCreateInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         createInfo.pNext = nullptr;
         createInfo.queueFamilyIndex = i;
         createInfo.queueCount = 0;
-        createInfo.pQueuePriorities = priorities[i].MakeView().data();
+        createInfo.pQueuePriorities = priorities[i].data();
     }
 
     for (FVulkanDeviceQueueInfo& queue : pDevice->Queues) {
-        queue.QueueIndex = (queueInfos[static_cast<u32>(queue.FamilyIndex)].queueCount++);
-        priorities[static_cast<u32>(queue.FamilyIndex)].Push(queue.Priority);
+        const u32 q = static_cast<u32>(queue.FamilyIndex);
+        queue.QueueIndex = (queueInfos[q].queueCount++);
+        priorities[q].Push(queue.Priority);
     }
+
+    for (size_t q = 0; q != queueInfos.size(); ) {
+        if (0 == queueInfos[q].queueCount)
+            queueInfos.EraseAt(q);
+        else
+            ++q;
+    }
+    AssertReleaseMessage(L"no valid device queue", not queueInfos.empty());
 
     deviceInfo.queueCreateInfoCount = checked_cast<u32>(queueInfos.size());
     deviceInfo.pQueueCreateInfos = queueInfos.data();
 
+    const FVulkanDeviceExtensionSet allDeviceExtensions =
+        (pDevice->RequiredDeviceExtensions | pDevice->OptionalDeviceExtensions);
+
     // features
     FVulkanDeviceFeatures_ features;
     api.vkGetPhysicalDeviceFeatures(pDevice->vkPhysicalDevice, &features.Main);
-    SetupDeviceFeatures_(&features, nextExt, pDevice->vkPhysicalDevice, api, pDevice->DeviceExtensions);
+    SetupDeviceFeatures_(&features, nextExt, pDevice->vkPhysicalDevice, api, allDeviceExtensions);
 
     deviceInfo.pEnabledFeatures = &features.Main; // enable all features supported
 
@@ -854,14 +917,16 @@ bool CreateVulkanDevice_(
 
     LOG(RHI, Info, L"created vulkan device {3} with {0} queues and {1} extensions: {2}",
         pDevice->Queues.size(),
-        pDevice->DeviceExtensions.Count(),
-        pDevice->DeviceExtensions,
+        allDeviceExtensions.Count(),
+        allDeviceExtensions,
         Fmt::Pointer(pDevice->vkDevice) );
 
-    const char* apiError = pDevice->API.attach_return_error(api, pDevice->vkDevice, pDevice->DeviceExtensions);
+    const char* apiError = pDevice->API.attach_return_error(api, pDevice->vkDevice,
+        pDevice->RequiredDeviceExtensions, pDevice->OptionalDeviceExtensions );
     if (Unlikely(apiError)) {
         LOG(RHI, Error, L"failed to attach to vulkan device API: {0}", MakeCStringView(apiError));
         pDevice->API.vkDestroyDevice(pDevice->vkDevice, pDevice->pAllocator);
+        pDevice->vkDevice = VK_NULL_HANDLE;
         return false;
     }
 
@@ -895,21 +960,25 @@ bool FVulkanInstance::Construct(
     FConstChar engineName,
     EVulkanVersion version,
     const TMemoryView<const FConstChar>& instanceLayers,
-    FVulkanInstanceExtensionSet instanceExtensions,
-    FVulkanDeviceExtensionSet deviceExtensions ) {
+    FVulkanInstanceExtensionSet requiredInstanceExtensions,
+    FVulkanInstanceExtensionSet optionalInstanceExtensions,
+    FVulkanDeviceExtensionSet requiredDeviceExtensions,
+    FVulkanDeviceExtensionSet optionalDeviceExtensions ) {
     Assert(applicationName);
     Assert(engineName);
     Assert_NoAssume(VK_NULL_HANDLE == _vkInstance);
     Assert_NoAssume(not _vulkanLib.IsValid());
 
     if (LoadVulkanGlobalAPI_(&_vulkanLib, &_exportedAPI, &_globalAPI) &&
-        CreateVulkanInstance_(&_vkInstance, _globalAPI, _vkAllocationCallbacks, applicationName, engineName, version, instanceLayers, instanceExtensions, deviceExtensions) ) {
+        CreateVulkanInstance_(&_vkInstance, _globalAPI, _vkAllocationCallbacks, applicationName, engineName, version, instanceLayers,
+            requiredInstanceExtensions, optionalInstanceExtensions,
+            requiredDeviceExtensions, optionalDeviceExtensions )) {
         Assert(VK_NULL_HANDLE != _vkInstance);
 
         instance_api_ = &_instanceAPI;
 
-        if (const char* err = _instanceAPI.attach_return_error(&_globalAPI, _vkInstance, version, instanceExtensions)) {
-            LOG(RHI, Error, L"failed to attach vulkan instance API: {0}, abort", MakeCStringView(err));
+        if (const char* err = _instanceAPI.attach_return_error(&_globalAPI, _vkInstance, version, requiredInstanceExtensions, optionalInstanceExtensions)) {
+            LOG(RHI, Error, L"failed to attach vulkan instance API: {0}, abort!", MakeCStringView(err));
 
             vkDestroyInstance(_vkInstance, &_vkAllocationCallbacks);
             _vkInstance = VK_NULL_HANDLE;
@@ -920,8 +989,9 @@ bool FVulkanInstance::Construct(
             _instanceAPI.setup_backward_compatibility();
 
 #if USE_PPE_RHIDEBUG
-            if (HasExtension(EVulkanInstanceExtension::EXT_debug_utils))
+            if (HasExtension(EVulkanInstanceExtension::EXT_debug_utils)) {
                 CreateDebugUtilsMessengerIFP_(&_vkDebugUtilsMessenger, _vkInstance, _vkAllocationCallbacks, _instanceAPI.vkCreateDebugUtilsMessengerEXT);
+            }
 #endif
 
             // retrieve physical device infos once and for all
@@ -977,6 +1047,7 @@ void FVulkanInstance::TearDown() {
 #endif
 
     vkDestroyInstance(_vkInstance, &_vkAllocationCallbacks);
+    _vkInstance = VK_NULL_HANDLE;
 
     _vulkanLib.Unload();
 
@@ -1031,7 +1102,8 @@ void FVulkanInstance::DestroySurface(VkSurfaceKHR vkSurface) const {
 bool FVulkanInstance::CreateDevice(
     FVulkanDeviceInfo* pDevice,
     VkSurfaceKHR vkSurface,
-    FVulkanDeviceExtensionSet deviceExtensions,
+    const FVulkanDeviceExtensionSet& requiredDeviceExtensions,
+    const FVulkanDeviceExtensionSet& optionalDeviceExtensions,
     FPhysicalDeviceInfoRef physicalDevice,
     const TMemoryView<const FQueueCreateInfo>& queues ) const {
     Assert(pDevice);
@@ -1041,15 +1113,17 @@ bool FVulkanInstance::CreateDevice(
         physicalDevice = PickHighPerformanceDevice();
 
     pDevice->vkInstance = _vkInstance;
-    pDevice->InstanceExtensions = _instanceAPI.instance_extensions_;
-    pDevice->DeviceExtensions = deviceExtensions;
+    pDevice->RequiredInstanceExtensions = _instanceAPI.instance_extensions_;
+    pDevice->RequiredDeviceExtensions = requiredDeviceExtensions;
+    pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
     pDevice->pAllocator = &_vkAllocationCallbacks;
     return CreateVulkanDevice_(pDevice, *this, vkSurface, physicalDevice, queues);
 }
 //----------------------------------------------------------------------------
 bool FVulkanInstance::CreateDevice(
     FVulkanDeviceInfo* pDevice,
-    FVulkanDeviceExtensionSet deviceExtensions,
+    const FVulkanDeviceExtensionSet& requiredDeviceExtensions,
+    const FVulkanDeviceExtensionSet& optionalDeviceExtensions,
     FPhysicalDeviceInfoRef physicalDevice,
     const TMemoryView<const FQueueCreateInfo>& queues ) const {
     Assert(pDevice);
@@ -1059,8 +1133,9 @@ bool FVulkanInstance::CreateDevice(
         physicalDevice = PickHighPerformanceDevice();
 
     pDevice->vkInstance = _vkInstance;
-    pDevice->InstanceExtensions = _instanceAPI.instance_extensions_;
-    pDevice->DeviceExtensions = deviceExtensions;
+    pDevice->RequiredInstanceExtensions = _instanceAPI.instance_extensions_;
+    pDevice->RequiredDeviceExtensions = requiredDeviceExtensions;
+    pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
     pDevice->pAllocator = &_vkAllocationCallbacks;
     return CreateVulkanDevice_(pDevice, *this, VK_NULL_HANDLE, physicalDevice, queues);
 }
@@ -1148,7 +1223,7 @@ TMemoryView<const FVulkanInstance::FQueueCreateInfo> FVulkanInstance::Recommende
     return GCreateInfos;
 }
 //----------------------------------------------------------------------------
-FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulkanVersion version) {
+FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanVersion version) {
     if (EVulkanVersion::API_version_1_0 == version)
         return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_KHR_surface
@@ -1160,13 +1235,10 @@ FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulk
     #ifdef VK_KHR_get_surface_capabilities2
             EVulkanInstanceExtension::KHR_get_surface_capabilities_2,
     #endif
-    #ifdef VK_EXT_debug_utils
-            EVulkanInstanceExtension::EXT_debug_utils,
-    #endif
     #ifdef VK_KHR_device_group_creation
             EVulkanInstanceExtension::KHR_device_group_creation,
     #endif
-        });
+            });
     if (EVulkanVersion::API_version_1_1 == version)
         return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_KHR_surface
@@ -1175,10 +1247,7 @@ FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulk
     #ifdef VK_KHR_get_surface_capabilities2
             EVulkanInstanceExtension::KHR_get_surface_capabilities_2,
     #endif
-    #ifdef VK_EXT_debug_utils
-            EVulkanInstanceExtension::EXT_debug_utils,
-    #endif
-        });
+            });
     if (EVulkanVersion::API_version_1_2 == version)
         return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_KHR_surface
@@ -1187,6 +1256,25 @@ FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulk
     #ifdef VK_KHR_get_surface_capabilities2
             EVulkanInstanceExtension::KHR_get_surface_capabilities_2,
     #endif
+            });
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulkanVersion version) {
+    if (EVulkanVersion::API_version_1_0 == version)
+        return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
+    #ifdef VK_EXT_debug_utils
+            EVulkanInstanceExtension::EXT_debug_utils,
+    #endif
+        });
+    if (EVulkanVersion::API_version_1_1 == version)
+        return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
+    #ifdef VK_EXT_debug_utils
+            EVulkanInstanceExtension::EXT_debug_utils,
+    #endif
+        });
+    if (EVulkanVersion::API_version_1_2 == version)
+        return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_EXT_debug_utils
             EVulkanInstanceExtension::EXT_debug_utils,
     #endif
@@ -1205,7 +1293,8 @@ FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanV
     });
 }
 //----------------------------------------------------------------------------
-FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVersion version) {
+FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersion version) {
+    UNUSED(version);
     FVulkanDeviceExtensionSet result;
 
     // platform specific extensions
@@ -1218,11 +1307,18 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
 #   error "platform not supported (#TODO)"
 #endif
 
+#ifdef VK_KHR_swapchain
+    result += EVulkanDeviceExtension::KHR_swapchain;
+#endif
+
+    return vk::device_extensions_require(result);
+}
+//----------------------------------------------------------------------------
+FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVersion version) {
+    FVulkanDeviceExtensionSet result;
+
     if (EVulkanVersion::API_version_1_0 == version)
         result.Append({
-    #ifdef VK_KHR_swapchain
-        EVulkanDeviceExtension::KHR_swapchain,
-    #endif
     #ifdef VK_KHR_get_memory_requirements2
         EVulkanDeviceExtension::KHR_get_memory_requirements_2,
     #endif
@@ -1268,9 +1364,6 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
         });
     else if (EVulkanVersion::API_version_1_1 == version)
         result.Append({
-    #ifdef VK_KHR_swapchain
-        EVulkanDeviceExtension::KHR_swapchain,
-    #endif
     #ifdef VK_KHR_create_renderpass2
         EVulkanDeviceExtension::KHR_create_renderpass_2,
     #endif
@@ -1371,9 +1464,6 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
         });
     else if (EVulkanVersion::API_version_1_2 == version)
         result.Append({
-    #ifdef VK_KHR_swapchain
-        EVulkanDeviceExtension::KHR_swapchain,
-    #endif
     #ifdef VK_EXT_sample_locations
         EVulkanDeviceExtension::EXT_sample_locations,
     #endif
@@ -1411,7 +1501,7 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
         EVulkanDeviceExtension::EXT_shader_stencil_export,
     #endif
     #ifdef VK_KHR_ray_tracing_pipeline
-        EVulkanDeviceExtension::KHR_ray_tracing_pipeline,
+        //EVulkanDeviceExtension::KHR_ray_tracing_pipeline, #TODO: KHR to NV
     #endif
     // Vendor specific extensions
     #ifdef VK_NV_mesh_shader

@@ -81,6 +81,38 @@ enum class EShaderDebugIndex : u32 {
 };
 #endif
 //----------------------------------------------------------------------------
+struct FVulkanExternalImageDesc {
+    VkImage Image{};
+    VkImageType Type{};
+    VkImageCreateFlagBits Flags{};
+    VkImageUsageFlagBits Usage{};
+    VkFormat Format{};
+    VkImageLayout CurrentLayout{};
+    VkImageLayout DefaultLayout{};
+    VkSampleCountFlagBits Samples{};
+    uint3 Dimensions{};
+    u32 ArrayLayers{0};
+    u32 MaxLevels{0};
+    // queue family that owns image, you must specify this correctly
+    // if image created with exclusive sharing mode and you need to
+    // keep current content of the image, otherwise keep default value:
+    u32 QueueFamily{UMax};
+    // required if sharing mode is concurrent:
+    TMemoryView<const u32> ConcurrentQueueFamilyIndices{};
+};
+//----------------------------------------------------------------------------
+struct FVulkanExternalBufferDesc {
+    VkBuffer Buffer{};
+    VkBufferUsageFlagBits Usage{};
+    u32 SizeInBytes{0};
+    // queue family that owns buffer, you must specify this correctly
+    // if buffer created with exclusive sharing mode and you need to
+    // keep current content of the buffer, otherwise keep default value:
+    u32 QueueFamily{UMax};
+    // required if sharing mode is concurrent:
+    TMemoryView<const u32> ConcurrentQueueFamilyIndices{};
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RHI

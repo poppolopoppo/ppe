@@ -51,7 +51,7 @@ public:
     using FCommandBufferPool = TAtomicPool<FVulkanCommandBuffer, 4, u32>;
     using FCommandBatchPool = TAtomicPool<FVulkanCommandBatch, 16, u32>;
     using FSubmittedPool = TAtomicPool<FVulkanSubmitted, 8, u32>;
-    using FQueueMap = TFixedSizeStack<FQueueData, static_cast<u32>(EQueueType::_Count)>;
+    using FQueueMap = TStaticArray<FQueueData, static_cast<u32>(EQueueType::_Count)>;
     using FFences = VECTOR(RHIFrameGraph, VkFence);
     using FSemaphores = VECTOR(RHIFrameGraph, VkSemaphore);
 
@@ -173,8 +173,9 @@ public:
     NODISCARD FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn) override;
     NODISCARD bool Execute(FCommandBufferBatch& cmdBatch) override;
     NODISCARD bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout) override;
-    NODISCARD bool Flush(EQueueUsage queues) override;
-    NODISCARD bool WaitIdle() override;
+
+    bool Flush(EQueueUsage queues) override;
+    bool WaitIdle() override;
 
 #if USE_PPE_RHIDEBUG
     NODISCARD bool DumpStatistics(FFrameStatistics* pStats) const override;
