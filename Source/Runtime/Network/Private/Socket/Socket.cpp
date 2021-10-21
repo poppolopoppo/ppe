@@ -139,6 +139,7 @@ bool FSocket::Connect() {
 
     // connect the socket
     if (SOCKET_ERROR == ::connect(sockfd, reinterpret_cast<sockaddr*>(&foreign_sa), sizeof(sockaddr_in)) ) {
+        LOG_NETWORKERROR(L"connect()");
         if (0 != ::closesocket(sockfd))
             LOG_NETWORKERROR(L"closesocket()");
         return false;
