@@ -3,7 +3,6 @@
 // For more information see https://go.microsoft.com/fwlink/?linkid=865984
 #define BUILD_ENVIRONMENT
 #define BUILD_PLATFORM
-#define BUILD_COMPILER
 #define BUILD_FAMILY
 #define TARGET_PLATFORM
 #define PPE_MALLOCBINNED2_OS_PAGESIZE
@@ -31,6 +30,7 @@
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER)
 #define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent)
 #define MEMORYDOMAIN_IMPL(_Name, _Parent)
+#define MEMORYDOMAIN_DETAILLED_IMPL(_Name, _Parent)
 #define MEMORYDOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
 #define TRACKINGDATA_ARG_IFP
 #define TRACKINGDATA_ARG_FWD
@@ -101,6 +101,10 @@
 #define TERNARYSEARCHSET(_DOMAIN, _KEY)
 #define BASICTOKEN_CLASS_DECL(_API, _NAME_WITHOUT_F, _CHAR, _CASESENSITIVE, _TRAITS)
 #define BASICTOKEN_CLASS_DEF(_NAME)
+#define PPE_CALLTUPLE_IMPL_(_FUNCALL, _NOEXCEPT)
+#define PPE_CALLTUPLE_DEF(_CONST, _NOEXCEPT)
+#define PPE_CALLTUPLE_EX_IMPL_(_FUNCALL, _NOEXCEPT, _OFFSET)
+#define PPE_CALLTUPLE_EX_DEF_(_CONST, _NOEXCEPT)
 #define __TIE_AS_TUPLE_OPERATOR_IMPL(_NAME, _OP, ...)
 #define TIE_AS_TUPLE_HASH(_NAME, ...)
 #define TIE_AS_TUPLE_STRUCT(_NAME)
@@ -120,6 +124,7 @@
 #define LOG_PRINTF(_CATEGORY, _LEVEL, ...)
 #define LOG_CHECKEX( _CATEGORY, _RETURN, ... )
 #define LOG_CHECKVOID( _CATEGORY, ... )
+#define LOG_UNSUPPORTED_FUNCTION( _CATEGORY )
 #define EXTERN_LOG_CATEGORY(_API, _NAME)
 #define PPE_DEBUG_NAMEDSCOPE(_NAME)
 #define PPE_DEBUG_ALLOCATEEVENT(_HEAP, _PTR, _SZ)
@@ -144,6 +149,7 @@
 #define NORPC
 #define INLINE_FORMAT(_CAPACITY, _FORMAT, ...)
 #define INLINE_WFORMAT(_CAPACITY, _FORMAT, ...)
+#define STRING_LITERAL(_CHAR, _ASCII)
 #define STACKLOCAL_TEXTWRITER(_NAME, _COUNT)
 #define STACKLOCAL_WTEXTWRITER(_NAME, _COUNT)
 #define m128i_epi8_broadcast(v)
@@ -179,6 +185,7 @@
 #define UNITS_LITERAL_OP(SYMBOL, TYPE)
 #define MEMORYDOMAIN_TAG(_Name)
 #define MEMORYDOMAIN_TRACKING_DATA(_Name)
+#define PPE_REFPTR_ALIASES(T, _PREFIX)
 #define _FWD_REFPTR_IMPL(T, _PREFIX)
 #define _FWD_UNIQUEPTR_IMPL(T, _PREFIX)
 #define TRACKINGDATA_FWD_IFP
@@ -198,7 +205,6 @@
 #define NOEXCEPT
 #define FORCE_INLINE
 #define NO_INLINE
-#define define
 #define Likely(...)
 #define Unlikely(...)
 #define Assume(...)
@@ -233,6 +239,7 @@
 #define ROUND_TO_NEXT_64K(v)
 #define ALIGN(_BOUNDARY)
 #define CACHELINE_SIZE
+#define PPE_META_OPERATOR(_NAME, _OP)
 #define AssertNotReached()
 #define AssertFinalMessage(_Message, ...)
 #define AssertFinal(...)
@@ -275,8 +282,6 @@
 #define PPE_ASSUME_FRIEND_AS_POINTER(...)
 #define PPE_ASSUME_TEMPLATE_AS_POINTER(T, ...)
 #define PPE_ASSUME_TEMPLATE_FRIEND_AS_POINTER(T, ...)
-#define STRING_LITERAL(_CHAR, _ASCII)
-#define PPE_META_OPERATOR(_NAME, _OP)
 #define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...)
 #define ON_SCOPE_EXIT(...)
 #define PUBLIC_EVENT(_NAME, ...)
@@ -304,6 +309,7 @@
 #define PPE_RTTI_OPAQUEDATA_NATIVETYPE_DEF(_Name, _Type, _Uid)
 #define DECL_RTTI_NATIVETYPE_PRINT(_Name, T, _TypeId)
 #define WITH_PPE_RTTI_FUNCTION_CHECKS
+#define PPE_RTTI_MAKEFUNCTION_DEF(_CONST, _NOEXCEPT)
 #define WITH_RTTI_VERIFY_PREDICATES
 #define WITH_PPE_RTTI_PROPERTY_CHECKS
 #define STACKLOCAL_ATOM(_NAME, _PTYPE_TRAITS)
@@ -319,11 +325,10 @@
     } \
     \
     _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) NOEXCEPT \
-        : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
+    :   metaclass_type(id, ::PPE::RTTI::FName(::PPE::RTTI::details::NativeClassName_ToRTTI_(STRINGIZE(_Name))), \
             (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
             metaModule ) {
 #define RTTI_CLASS_END() }
-#define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags)
 #define RTTI_ENUM_BEGIN_EX(_Module, _Name, _Attributes) \
     static const CONCAT(RTTI_, _Name)::RTTI_FMetaEnumHandle CONCAT(GRTTI_MetaEnum_, _Name); \
     auto CONCAT(RTTI_, _Name)::metaenum_handle() NOEXCEPT -> const RTTI_FMetaEnumHandle& { \
@@ -339,7 +344,7 @@
     } \
     \
     CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) NOEXCEPT \
-        : metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
+    :   metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
         using enum_type = _Name;
 #define RTTI_ENUM_VALUE(_Name)
 #define RTTI_ENUM_END() }
@@ -376,11 +381,14 @@
 #define FOREACH_HTTP_STATUSCODE(_MACRO)
 #define SOCKET
 #define LOG_NETWORKERROR(_CONTEXT)
+#define PPE_GLFW_KEYBOARDKEY_DEF(GLFW, EKey)
 #define TEST_XINPUT_BTN(_GAMEPADBTN, _XINPUTBTN)
+#define GLFW_INCLUDE_NONE
 #define PPE_APPLICATIONLAUNCH_INCLUDED
 #define PIXELFORMAT_TO_VK(_Rhi, _Vk)
 #define VK_TO_PIXELFORMAT(_Rhi, _Vk)
 #define VK_CALL(...)
 #define VK_CHECK(...)
 #define VK_CHECK_EX(_RESULT, ...)
+#define PPE_REMOTING_NATIVE_SCHEMA_DEF(_Name, _Type, _Uid)
 #define PPE_TESTPROCESS_IMAGENAME_ARGS
