@@ -2,6 +2,7 @@
 
 #include "Core.h"
 
+#include "Container/Appendable.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 #include "Memory/MemoryView.h"
@@ -12,6 +13,21 @@
 #include <initializer_list>
 
 namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+struct FOffset {
+    u64 Value;
+};
+template <typename T>
+Meta::TEnableIf<std::is_integral_v<T>, FOffset> Offset(T i) NOEXCEPT {
+    return FOffset{ static_cast<u64>(i) };
+}
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FOffset off);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FOffset off);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -373,8 +389,8 @@ struct TBasicIndent {
     explicit TBasicIndent(const TBasicStringView<_Char>& tab) : Tab(tab) {}
     TBasicStringView<_Char> Tab;
     int Level = 0;
-    void Inc() { ++Level; }
-    void Dec() { Assert(Level > 0); --Level; }
+    TBasicIndent& Inc() { ++Level; return *this; }
+    TBasicIndent& Dec() { Assert(Level > 0); --Level; return *this; }
     struct FScope {
         TBasicIndent& Indent;
         FScope(TBasicIndent& indent) NOEXCEPT : Indent(indent) { Indent.Inc(); }
