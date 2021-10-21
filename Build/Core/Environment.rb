@@ -243,7 +243,7 @@ module Build
         return all
     end
 
-    def each_build_aliases(environments, targets, &each_alias)
+    def each_build_aliases(environments, targets, only_executables=false, &each_alias)
         Assert.expect(environments, Array)
         Assert.expect(targets, Array)
 
@@ -261,6 +261,14 @@ module Build
             platforms << env.platform
 
             target_aliases = []
+
+            if only_executables
+                targets = targets.dup
+                targets.delete_if do |target|
+                    not target.executable?
+                end
+            end
+
             targets.collect do |target|
                 Assert.expect(target, Target)
 
@@ -270,10 +278,15 @@ module Build
                 set << target
 
                 target_aliases << "#{target.abs_path}-#{env.family}"
-                each_alias.call target_aliases.last, []
+
+                unless only_executables
+                    each_alias.call target_aliases.last, []
+                end
             end
 
-            each_alias.call("#{env.family}", target_aliases)
+            unless only_executables
+                each_alias.call("#{env.family}", target_aliases)
+            end
 
             all_aliases.concat(target_aliases)
         end
@@ -291,8 +304,8 @@ module Build
                 end
             end
 
-            each_alias.call "#{namespace.path}", namespace_aliases
-        end
+            each_alias.call("#{namespace.path}", namespace_aliases)
+        end unless only_executables
 
         platforms.each do |platform|
             Assert.expect(platform, Platform)
@@ -311,7 +324,7 @@ module Build
                     "#{namespace.path}-#{platform.name}-#{config.name}"
                 end.to_a)
             end
-        end
+        end unless only_executables
 
         configs.each do |config|
             Assert.expect(config, Configuration)
@@ -322,6 +335,8 @@ module Build
                     "#{target.abs_path}-#{platform.name}-#{config.name}"
                 end.to_a)
             end
+
+            next if only_executables
 
             each_alias.call "#{config.name}", config_aliases
 
@@ -338,9 +353,9 @@ module Build
                 target_aliases << "#{target.abs_path}-#{env.family}"
             end
             each_alias.call target.abs_path, target_aliases
-        end
+        end unless only_executables
 
-        each_alias.call 'All', all_aliases # default target
+        each_alias.call('All', all_aliases) unless only_executables # default target
     end
 
     $BuildEnvironments = []

@@ -27,7 +27,7 @@ module Build
     opt_switch(:Rebuild, 'Clean build all specified targets', init: false)
     opt_switch(:Timings, 'Measure compilation timings')
 
-    persistent_value(:CppStd, 'Select C++ ISO standard', init: 'c++17', values: %w{ c++14 c++17 c++latest })
+    persistent_value(:CppStd, 'Select C++ ISO standard', init: 'c++17', values: %w{ c++14 c++17 c++20 c++latest })
     persistent_value(:StackSize, 'Define default thread stack size', init: 2000000)
     persistent_value(:WorkerCount, 'Number of parallel workers (0 is automatic)', init: 0)
 
