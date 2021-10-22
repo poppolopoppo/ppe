@@ -68,7 +68,7 @@ struct CACHELINE_ALIGNED FSystemPageCache_ {
         return GInstance;
     }
 
-    ~FSystemPageCache_() {
+    NO_INLINE ~FSystemPageCache_() {
         ReleaseAll();
     }
 
@@ -113,7 +113,7 @@ struct CACHELINE_ALIGNED FSystemPageCache_ {
 
     void ReleaseAll() {
         const FCriticalScope scopeLock{ &Barrier };
-        AssertReleaseMessage(L"still got system pages in flight!", 0 == NumUserPages);
+        AssertReleaseMessage_NoAssume(L"still got system pages in flight!", 0 == NumUserPages);
 
         while (UsedChunks) {
             FChunkArray* const pnext = UsedChunks->NextArray;

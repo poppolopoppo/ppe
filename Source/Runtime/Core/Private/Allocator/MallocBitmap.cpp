@@ -31,22 +31,23 @@ using FBitmapHeapMedium_ = TBitmapHeap< TBitmapCpuTraits<
     MEMORYDOMAIN_TAG(MediumHeap),
 #endif
     PPE_BITMAPHEAPS_MEDIUM_GRANULARITY
->>;
-static FBitmapHeapMedium_& BitmapHeapMedium_() NOEXCEPT {
-    ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBitmapHeapMedium_>, GInstance);
-    return GInstance;
-}
-//----------------------------------------------------------------------------
+    >>;
 using FBitmapHeapLarge_ = TBitmapHeap< TBitmapCpuTraits<
 #if USE_PPE_MEMORYDOMAINS
     MEMORYDOMAIN_TAG(LargeHeap),
 #endif
     PPE_BITMAPHEAPS_LARGE_GRANULARITY
->>;
-static FBitmapHeapLarge_& BitmapHeapLarge_() NOEXCEPT {
-    ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBitmapHeapLarge_>, GInstance);
-    return GInstance;
-}
+    >>;
+struct FBitmapHeaps_ {
+    // packed together to avoid destruction order issues due to FSystemPageAllocator dependency
+    FBitmapHeapMedium_ Medium;
+    FBitmapHeapLarge_ Large;
+
+    static FBitmapHeaps_& Get() NOEXCEPT {
+        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBitmapHeaps_>, GInstance);
+        return GInstance;
+    }
+};
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
 template <typename _Traits>
@@ -124,7 +125,7 @@ const size_t FMallocBitmap::MaxAllocSize = FBitmapHeapLarge_::MaxAllocSize;
 //----------------------------------------------------------------------------
 void* FMallocBitmap::MediumAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
-    void* const newp = BitmapHeapMedium_().Allocate(sz);
+    void* const newp = FBitmapHeaps_::Get().Medium.Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAligned(alignment, newp));
     Assert_NoAssume(!newp || Meta::IsAligned(FBitmapHeapMedium_::Granularity, newp));
     return newp;
@@ -135,12 +136,12 @@ void* FMallocBitmap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOE
     Assert_NoAssume(newSize <= FBitmapHeapMedium_::MaxAllocSize);
     Assert_NoAssume(oldSize <= FBitmapHeapMedium_::MaxAllocSize);
     Assert_NoAssume(oldSize >= FBitmapHeapMedium_::MinAllocSize);
-    Assert_NoAssume(BitmapHeapMedium_().AllocationSize(ptr) == oldSize);
+    Assert_NoAssume(FBitmapHeaps_::Get().Medium.AllocationSize(ptr) == oldSize);
 
-    void* const newp = BitmapHeapMedium_().Resize(ptr, newSize);
+    void* const newp = FBitmapHeaps_::Get().Medium.Resize(ptr, newSize);
     if (Likely(newp)) {
         Assert(newp == ptr);
-        Assert_NoAssume(BitmapHeapMedium_().AllocationSize(newp) == newSize);
+        Assert_NoAssume(FBitmapHeaps_::Get().Medium.AllocationSize(newp) == newSize);
         UNUSED(oldSize);
         return newp;
     }
@@ -150,15 +151,15 @@ void* FMallocBitmap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOE
 //----------------------------------------------------------------------------
 void FMallocBitmap::MediumFree(void* ptr) {
     Assert_NoAssume(AliasesToMediumHeap(ptr));
-    BitmapHeapMedium_().Free(ptr);
+    FBitmapHeaps_::Get().Medium.Free(ptr);
 }
 //----------------------------------------------------------------------------
 void FMallocBitmap::MediumTrim() {
-    BitmapHeapMedium_().ForceGarbageCollect();
+    FBitmapHeaps_::Get().Medium.ForceGarbageCollect();
 }
 //----------------------------------------------------------------------------
 bool FMallocBitmap::AliasesToMediumHeap(void* ptr) NOEXCEPT {
-    return (BitmapHeapMedium_().Aliases(ptr) != nullptr);
+    return (FBitmapHeaps_::Get().Medium.Aliases(ptr) != nullptr);
 }
 //----------------------------------------------------------------------------
 size_t FMallocBitmap::MediumSnapSize(size_t sz) NOEXCEPT {
@@ -167,12 +168,12 @@ size_t FMallocBitmap::MediumSnapSize(size_t sz) NOEXCEPT {
 //----------------------------------------------------------------------------
 size_t FMallocBitmap::MediumRegionSize(void* ptr) NOEXCEPT {
     Assert_NoAssume(AliasesToMediumHeap(ptr));
-    return BitmapHeapMedium_().AllocationSize(ptr);
+    return FBitmapHeaps_::Get().Medium.AllocationSize(ptr);
 }
 //----------------------------------------------------------------------------
 void* FMallocBitmap::LargeAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
-    void* const newp = BitmapHeapLarge_().Allocate(sz);
+    void* const newp = FBitmapHeaps_::Get().Large.Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAligned(alignment, newp));
     Assert_NoAssume(!newp || Meta::IsAligned(FBitmapHeapLarge_::Granularity, newp));
     return newp;
@@ -183,12 +184,12 @@ void* FMallocBitmap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEX
     Assert_NoAssume(newSize <= FBitmapHeapLarge_::MaxAllocSize);
     Assert_NoAssume(oldSize <= FBitmapHeapLarge_::MaxAllocSize);
     Assert_NoAssume(oldSize >= FBitmapHeapLarge_::MinAllocSize);
-    Assert_NoAssume(BitmapHeapLarge_().AllocationSize(ptr) == oldSize);
+    Assert_NoAssume(FBitmapHeaps_::Get().Large.AllocationSize(ptr) == oldSize);
 
-    void* const newp = BitmapHeapLarge_().Resize(ptr, newSize);
+    void* const newp = FBitmapHeaps_::Get().Large.Resize(ptr, newSize);
     if (Likely(newp)) {
         Assert(newp == ptr);
-        Assert_NoAssume(BitmapHeapLarge_().AllocationSize(newp) == newSize);
+        Assert_NoAssume(FBitmapHeaps_::Get().Large.AllocationSize(newp) == newSize);
         UNUSED(oldSize);
         return newp;
     }
@@ -198,15 +199,15 @@ void* FMallocBitmap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEX
 //----------------------------------------------------------------------------
 void FMallocBitmap::LargeFree(void* ptr) {
     Assert_NoAssume(AliasesToLargeHeap(ptr));
-    BitmapHeapLarge_().Free(ptr);
+    FBitmapHeaps_::Get().Large.Free(ptr);
 }
 //----------------------------------------------------------------------------
 void FMallocBitmap::LargeTrim() {
-    BitmapHeapLarge_().ForceGarbageCollect();
+    FBitmapHeaps_::Get().Large.ForceGarbageCollect();
 }
 //----------------------------------------------------------------------------
 bool FMallocBitmap::AliasesToLargeHeap(void* ptr) NOEXCEPT {
-    return (BitmapHeapLarge_().Aliases(ptr) != nullptr);
+    return (FBitmapHeaps_::Get().Large.Aliases(ptr) != nullptr);
 }
 //----------------------------------------------------------------------------
 size_t FMallocBitmap::LargeSnapSize(size_t sz) NOEXCEPT {
@@ -215,7 +216,7 @@ size_t FMallocBitmap::LargeSnapSize(size_t sz) NOEXCEPT {
 //----------------------------------------------------------------------------
 size_t FMallocBitmap::LargeRegionSize(void* ptr) NOEXCEPT {
     Assert_NoAssume(AliasesToLargeHeap(ptr));
-    return BitmapHeapLarge_().AllocationSize(ptr);
+    return FBitmapHeaps_::Get().Large.AllocationSize(ptr);
 }
 //----------------------------------------------------------------------------
 void* FMallocBitmap::HeapAlloc(size_t sz, size_t alignment) {
@@ -245,11 +246,11 @@ void* FMallocBitmap::HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXC
 }
 //----------------------------------------------------------------------------
 bool FMallocBitmap::HeapFree_ReturnIfAliases(void* ptr) {
-    auto& mediumHeap = BitmapHeapMedium_();
+    auto& mediumHeap = FBitmapHeaps_::Get().Medium;
     if (auto* page = mediumHeap.Aliases(ptr))
         return mediumHeap.Free(ptr, page), true;
 
-    auto& largeHeap = BitmapHeapLarge_();
+    auto& largeHeap = FBitmapHeaps_::Get().Large;
     if (auto* page = largeHeap.Aliases(ptr))
         return largeHeap.Free(ptr, page), true;
 
@@ -257,8 +258,8 @@ bool FMallocBitmap::HeapFree_ReturnIfAliases(void* ptr) {
 }
 //----------------------------------------------------------------------------
 void FMallocBitmap::MemoryTrim() {
-    BitmapHeapMedium_().ForceGarbageCollect();
-    BitmapHeapLarge_().ForceGarbageCollect();
+    FBitmapHeaps_::Get().Medium.ForceGarbageCollect();
+    FBitmapHeaps_::Get().Large.ForceGarbageCollect();
 }
 //----------------------------------------------------------------------------
 bool FMallocBitmap::AliasesToHeaps(void* ptr) NOEXCEPT {
@@ -279,10 +280,10 @@ size_t FMallocBitmap::SnapSize(size_t sz) NOEXCEPT {
 bool FMallocBitmap::RegionSize_ReturnIfAliases(size_t* pSizeInBytes, void* ptr) NOEXCEPT {
     Assert(pSizeInBytes);
 
-    if (auto* page = BitmapHeapMedium_().Aliases(ptr))
+    if (auto* page = FBitmapHeaps_::Get().Medium.Aliases(ptr))
         return *pSizeInBytes = page->RegionSize(ptr), true;
 
-    if (auto* page = BitmapHeapLarge_().Aliases(ptr))
+    if (auto* page = FBitmapHeaps_::Get().Large.Aliases(ptr))
         return *pSizeInBytes = page->RegionSize(ptr), true;
 
     return false;
@@ -290,10 +291,10 @@ bool FMallocBitmap::RegionSize_ReturnIfAliases(size_t* pSizeInBytes, void* ptr) 
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
 void FMallocBitmap::DumpMediumHeapInfo(FWTextWriter& oss) NOEXCEPT {
-    DumpHeapInfo_(oss, L"BitmapHeapMedium", BitmapHeapMedium_());
+    DumpHeapInfo_(oss, L"BitmapHeapMedium", FBitmapHeaps_::Get().Medium);
 }
 void FMallocBitmap::DumpLargeHeapInfo(FWTextWriter& oss) NOEXCEPT {
-    DumpHeapInfo_(oss, L"BitmapHeapLarge", BitmapHeapLarge_());
+    DumpHeapInfo_(oss, L"BitmapHeapLarge", FBitmapHeaps_::Get().Large);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
