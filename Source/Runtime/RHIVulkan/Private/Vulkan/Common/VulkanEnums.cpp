@@ -561,8 +561,8 @@ VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values) {
     return flags;
 }
 //----------------------------------------------------------------------------
-VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values) {
-    VkGeometryInstanceFlagBitsKHR flags{ static_cast<VkGeometryInstanceFlagBitsKHR>(0) };
+VkGeometryInstanceFlagBitsNV VkCast(ERayTracingInstanceFlags values) {
+    VkGeometryInstanceFlagBitsNV flags{ static_cast<VkGeometryInstanceFlagBitsNV>(0) };
     for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
         if (not Meta::EnumHas(values, st))
             continue;
@@ -580,8 +580,8 @@ VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values) {
     return flags;
 }
 //----------------------------------------------------------------------------
-VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values) {
-    VkBuildAccelerationStructureFlagBitsKHR flags{ static_cast<VkBuildAccelerationStructureFlagBitsKHR>(0) };
+VkBuildAccelerationStructureFlagBitsNV VkCast(ERayTracingBuildFlags values) {
+    VkBuildAccelerationStructureFlagBitsNV flags{ static_cast<VkBuildAccelerationStructureFlagBitsNV>(0) };
     for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
         if (not Meta::EnumHas(values, st))
             continue;

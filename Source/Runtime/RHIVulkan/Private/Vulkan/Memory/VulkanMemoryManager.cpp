@@ -80,6 +80,26 @@ bool FVulkanMemoryManager::AllocateImage(FBlock* pData, VkImage image, const FMe
     return false;
 }
 //----------------------------------------------------------------------------
+bool FVulkanMemoryManager::AllocateBuffer(FBlock* pData, VkBuffer buffer, const FMemoryDesc& desc) {
+    Assert(pData);
+
+    const auto sharedAllocators = _allocators.LockShared();
+    Assert(not sharedAllocators->empty());
+
+    forrange(i, 0, sharedAllocators->size()) {
+        const FMemoryAllocatorPtr& alloc = sharedAllocators->at(i);
+
+        if (alloc->IsSupported(desc.Type)) {
+            LOG_CHECK(RHI, alloc->AllocateBuffer(pData, buffer, desc));
+            pData->AllocatorId = checked_cast<u32>(i);
+            return true;
+        }
+    }
+
+    LOG(RHI, Error, L"unsupported memory type: {0}", desc.Type);
+    return false;
+}
+//----------------------------------------------------------------------------
 bool FVulkanMemoryManager::AllocateAccelStruct(FBlock* pData, VkAccelerationStructureNV accelStruct, const FMemoryDesc& desc) {
     Assert(pData);
 

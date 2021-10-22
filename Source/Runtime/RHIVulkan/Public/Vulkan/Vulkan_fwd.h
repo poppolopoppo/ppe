@@ -75,6 +75,7 @@ class FVulkanPipelineLayout;
 //----------------------------------------------------------------------------
 PPE_STRONGLYTYPED_NUMERIC_DEF(u64, FVulkanBLASHandle);
 struct FVulkanRayTracingGeometryInstance;
+struct FVulkanRayTracingSceneInstance;
 class FVulkanRayTracingGeometry;
 class FVulkanRayTracingLocalGeometry;
 class FVulkanRayTracingScene;

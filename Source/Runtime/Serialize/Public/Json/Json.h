@@ -58,7 +58,7 @@ public:
         FTextHeap Text{ Heap };
 
         FAllocator() = default;
-        ~FAllocator();
+        PPE_SERIALIZE_API ~FAllocator();
     };
 
     using FHeapRef = TPtrRef<FAllocator>;

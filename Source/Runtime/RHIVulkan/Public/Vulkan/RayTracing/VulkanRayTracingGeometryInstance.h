@@ -19,6 +19,24 @@ struct FVulkanRayTracingGeometryInstance {
     FVulkanBLASHandle BlasHandle;
 };
 //----------------------------------------------------------------------------
+struct FVulkanRayTracingSceneInstance {
+    FInstanceID InstanceId;
+    FRTGeometryID GeometryId;
+    u32 IndexOffset{ UMax };
+
+    bool operator ==(const FVulkanRayTracingSceneInstance& other) const { return operator ==(other.InstanceId); }
+    bool operator !=(const FVulkanRayTracingSceneInstance& other) const { return operator !=(other.InstanceId); }
+
+    bool operator < (const FVulkanRayTracingSceneInstance& other) const { return operator < (other.InstanceId); }
+    bool operator >=(const FVulkanRayTracingSceneInstance& other) const { return operator >=(other.InstanceId); }
+
+    bool operator ==(const FInstanceID& other) const { return (InstanceId == other); }
+    bool operator !=(const FInstanceID& other) const { return (not operator ==(other)); }
+
+    bool operator < (const FInstanceID& other) const { return (InstanceId < other); }
+    bool operator >=(const FInstanceID& other) const { return (not operator < (other)); }
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RHI

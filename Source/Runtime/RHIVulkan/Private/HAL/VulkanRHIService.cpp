@@ -205,13 +205,20 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
     Assert(surfaceInfo.Hwnd);
     Assert(_backBuffer);
 
+    if (surfaceInfo.Dimensions == uint2::Zero)
+        return;
+
     using namespace RHI;
     RHI_LOG(Info, L"resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
+
+    Verify( _frameGraph->WaitIdle() );
 
     FSwapchainDesc swapchainDesc;
     MakeSwapchainDesc_(&swapchainDesc, _backBuffer, _features, surfaceInfo);
 
     _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, _swapchain.Release() ARGS_IF_RHIDEBUG("BackBuffer"));
+
+    AssertReleaseMessage(L"failed to resize swapchain", !!_swapchain);
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::ReleaseMemory() NOEXCEPT {

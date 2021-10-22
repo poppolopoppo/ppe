@@ -25,14 +25,16 @@ public:
 
         FSceneAccess() NOEXCEPT : IsReadable(false), IsWritable(false) {}
 
-        bool Valid() const { return !!(IsReadable | IsWritable); }
+        bool Valid() const { return !!(IsReadable || IsWritable); }
     };
 
     using FAccessRecords = TFixedSizeStack<FSceneAccess, 16>;
     using FInstance = FVulkanRayTracingScene::FInstance;
 
     FVulkanRayTracingLocalScene() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanRayTracingLocalScene();
+#endif
 
     NODISCARD bool Construct(const FVulkanRayTracingScene* sceneData);
     void TearDown();

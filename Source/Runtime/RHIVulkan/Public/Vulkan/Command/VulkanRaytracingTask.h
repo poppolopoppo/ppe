@@ -3,6 +3,8 @@
 #include "Vulkan/VulkanCommon.h"
 
 #include "Vulkan/Command/VulkanFrameTask.h"
+#include "Vulkan/RayTracing/VulkanRayTracingGeometryInstance.h"
+#include "Vulkan/RayTracing/VulkanRayTracingScene.h"
 
 #include "RHI/RayTracingTask.h"
 
@@ -49,7 +51,7 @@ public:
 
     const FVulkanRayTracingLocalGeometry* RTGeometry{ nullptr };
     const FVulkanLocalBuffer* ScratchBuffer{ nullptr };
-    const TMemoryView<const VkAccelerationStructureGeometryKHR> Geometries;
+    const TMemoryView<const VkGeometryNV> Geometries;
 
     FUsableBuffers UsableBuffers;
 
@@ -67,11 +69,7 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FBuildRayTracingScene> final : public IVulkanFrameTask {
 public:
-    struct FInstance {
-        FInstanceID InstanceId;
-        FRTGeometryID GeometryId;
-        u32 Index{ 0 };
-    };
+    using FInstance = FVulkanRayTracingSceneInstance;
 
     const FVulkanRayTracingLocalScene* RTScene{ nullptr };
     const FVulkanLocalBuffer* ScratchBuffer{ nullptr };
@@ -82,7 +80,7 @@ public:
     const FVulkanLocalBuffer* InstanceBuffer{ nullptr };
     VkDeviceSize InstanceBufferOffset{ 0 };
 
-    TMemoryView<const FInstance> Instances;
+    TMemoryView<FInstance> Instances;
     TMemoryView<const FVulkanRayTracingLocalGeometry*> RTGeometries;
 
     u32 NumInstances{ 0 };
@@ -96,6 +94,10 @@ public:
         Assert_NoAssume(RTGeometries.size() == NumInstances);
         return (!!RTScene && !!ScratchBuffer && !!InstanceStagingBuffer && InstanceBuffer && not Instances.empty() && not RTGeometries.empty());
     }
+
+    VkDeviceSize InstanceBufferSizeInBytes() const { return NumInstances * sizeof(FVulkanRayTracingGeometryInstance); }
+    VkDeviceSize ScratchBufferOffset() const { return 0; }
+    VkDeviceSize ScratchBufferSizeInBytes() const { return VK_WHOLE_SIZE; }
 
 #if USE_PPE_RHIDEBUG
     virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }

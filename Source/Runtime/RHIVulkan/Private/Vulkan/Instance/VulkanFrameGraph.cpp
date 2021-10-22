@@ -885,7 +885,6 @@ bool FVulkanFrameGraph::DumpStatistics(FFrameStatistics* pStats) const {
 bool FVulkanFrameGraph::IsUniqueQueue_(const PVulkanDeviceQueue& queue) const {
     Assert(queue);
     const auto it = _queueMap.MakeView().FindIf([queue](const FQueueData& q) NOEXCEPT -> bool {
-        Assert_NoAssume(q.Ptr);
         return (q.Ptr == queue);
     });
     return (_queueMap.MakeView().end() == it);

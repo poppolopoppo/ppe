@@ -58,7 +58,7 @@ public:
     NODISCARD bool Construct(ARG0_IF_RHIDEBUG(FStringView debugName));
     void TearDown(FVulkanResourceManager& resources);
 
-    bool BindingsFor(
+    NODISCARD bool BindingsFor(
         FRawPipelineLayoutID* pLayout,
         VkPipeline* pPipeline,
         VkDeviceSize* pBlockSize,

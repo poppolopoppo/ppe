@@ -53,7 +53,7 @@ IVulkanFrameTask::IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProc
         return checked_cast<IVulkanFrameTask*>(dep.get());
     }));
 #else
-    _inputs.Append(desc.Dependencies.MakeView().template Cast<IVulkanFrameTask*>());
+    _inputs.Append(desc.Dependencies.MakeView().template Cast<const PVulkanFrameTask>());
 #endif
 }
 //----------------------------------------------------------------------------

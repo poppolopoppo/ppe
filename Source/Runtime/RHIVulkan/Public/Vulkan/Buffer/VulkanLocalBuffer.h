@@ -56,8 +56,10 @@ public:
     FStringView DebugName() const { return _bufferData->DebugName(); }
 #endif
 
+    const FBufferDesc& Desc() const { return _bufferData->Desc(); }
     VkBuffer Handle() const { return _bufferData->Handle(); }
     const FVulkanBuffer* GlobalData() const { return _bufferData; }
+
     auto Read() const { return _bufferData->Read(); }
 
     NODISCARD bool Construct(const FVulkanBuffer* bufferData);

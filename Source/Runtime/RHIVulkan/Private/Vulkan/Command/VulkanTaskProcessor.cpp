@@ -1801,53 +1801,174 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
 
     ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
 
-#if 0
     AddRTGeometry_(task.RTGeometry, EResourceState::BuildRayTracingStructWrite);
-    AddBuffer_(
-        task.ScratchBuffer,
-        EResourceState::RTASBuildingBufferReadWrite,
-        0, VK_WHOLE_SIZE );
+    AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, 0, VK_WHOLE_SIZE);
 
     for (const FVulkanLocalBuffer* pLocalBuffer : task.UsableBuffers) {
         Assert(pLocalBuffer);
-
         // resource state doesn't matter here
-
         AddBuffer_(pLocalBuffer, EResourceState::TransferSrc, 0, VK_WHOLE_SIZE);
     }
 
     CommitBarriers_();
 
-    VkAccelerationStructureBuildGeometryInfoKHR buildInfo{};
-    buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-    buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-    buildInfo.geometryCount = checked_cast<u32>(task.Geometries.size());
-    buildInfo.pGeometries = task.Geometries.data();
-    buildInfo.dstAccelerationStructure = task.RTGeometry->Handle();
-    buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
-    buildInfo.flags = VkCast(task.RTGeometry->Flags());
+    VkAccelerationStructureInfoNV info{};
+    info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+    info.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV;
+    info.geometryCount = checked_cast<u32>(task.Geometries.size());
+    info.pGeometries = task.Geometries.data();;
+    info.flags = VkCast(task.RTGeometry->Flags());
 
-    STACKLOCAL_STACK(VkAccelerationStructureBuildRangeInfoKHR, rangeInfos, task.Geometries.size());
-    forrange(i, 0, rangeInfos.size()) {
-        rangeInfos[i] = VkAccelerationStructureBuildRangeInfoKHR{};
-        //rangeInfos[i].primitiveCount = task. #TODO
-    }
-
-    vkCmdBuildAccelerationStructuresKHR(_vkCommandBuffer, 1, &buildInfo, &rangeInfo);
-
-#else
-    AssertNotImplemented(); // #TOOD: NV to KHR
-#endif
+    vkCmdBuildAccelerationStructureNV(
+        _vkCommandBuffer, &info,
+        VK_NULL_HANDLE, 0, VK_FALSE,
+        task.RTGeometry->Handle(),
+        VK_NULL_HANDLE,
+        task.ScratchBuffer->Handle(),
+        0 );
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
-    UNUSED(task);
-    AssertNotImplemented(); // #TODO: VK_KHR_ray_tracing_pipeline
+    if (not (_enableRayTracingKHR || _enableRayTracingNV))
+        return;
+
+    ONLY_IF_RHIDEBUG(CmdDebugMarker_(task.TaskName(), task.DebugColor()));
+
+    // copy instance data to GPU memory
+    AddBuffer_(task.InstanceStagingBuffer, EResourceState::TransferSrc, task.InstanceStagingBufferOffset, task.InstanceBufferSizeInBytes());
+    AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, task.ScratchBufferOffset(), task.ScratchBufferSizeInBytes());
+
+    CommitBarriers_();
+
+    VkBufferCopy region{};
+    region.srcOffset = task.InstanceStagingBufferOffset;
+    region.dstOffset = task.InstanceBufferOffset;
+    region.size = task.InstanceBufferSizeInBytes();
+
+    vkCmdCopyBuffer(_vkCommandBuffer, task.InstanceStagingBuffer->Handle(), task.InstanceBuffer->Handle(), 1, &region);
+
+    ONLY_IF_RHIDEBUG(EditStatistics_([&](FFrameStatistics::FRendering& rendering) {
+        ++rendering.NumTransferOps;
+    }));
+
+    // build TLAS
+    task.RTScene->GlobalData()->SetGeometryInstances(
+        _workerCmd->ResourceManager(),
+        task.Instances, task.NumInstances,
+        task.HitShadersPerInstance, task.MaxHitShaderCount );
+
+    AddRTScene_(task.RTScene, EResourceState::BuildRayTracingStructWrite);
+    AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, task.ScratchBufferOffset(), task.ScratchBufferSizeInBytes());
+    AddBuffer_(task.InstanceBuffer, EResourceState::RTASBuildingBufferRead, task.InstanceBufferOffset, task.InstanceBufferSizeInBytes());
+
+    for (const FVulkanRayTracingLocalGeometry* blas : task.RTGeometries)
+        AddRTGeometry_(blas, EResourceState::BuildRayTracingStructRead);
+
+    CommitBarriers_();
+
+    VkAccelerationStructureInfoNV info{};
+    info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+    info.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
+    info.flags = VkCast(task.RTScene->Flags());
+    info.instanceCount = task.NumInstances;
+
+    vkCmdBuildAccelerationStructureNV(
+        _vkCommandBuffer,
+        &info,
+        task.InstanceBuffer->Handle(),
+        task.InstanceBufferOffset,
+        VK_FALSE,
+        task.RTScene->Handle(),
+        VK_NULL_HANDLE,
+        task.ScratchBuffer->Handle(),
+        task.ScratchBufferOffset() );
+
+    ONLY_IF_RHIDEBUG(EditStatistics_([&](FFrameStatistics::FRendering& rendering) {
+        ++rendering.NumBuildASCalls;
+    }));
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
-    UNUSED(task);
-    AssertNotImplemented(); // #TODO: VK_KHR_ray_tracing_pipeline
+    if (not (_enableRayTracingKHR || _enableRayTracingNV))
+        return;
+
+    ONLY_IF_RHIDEBUG(CmdDebugMarker_(task.TaskName(), task.DebugColor()));
+
+    EShaderDebugMode debugMode = Default;
+
+#if USE_PPE_RHIDEBUG
+    const bool isDebuggable = (task.DebugModeIndex != Default);
+    EShaderStages debugStages = Default;
+
+    if (isDebuggable) {
+        auto& debugger = *_workerCmd->Batch();
+        const FVulkanRayTracingPipeline* const ppln = Resource_(task.ShaderTable->Pipeline());
+
+        LOG_CHECKVOID(RHI, !!ppln);
+        Verify( debugger.FindModeInfoForDebug(&debugMode, &debugStages, task.DebugModeIndex) );
+
+        for (const auto& shader : ppln->Read()->Shaders) {
+            if (shader.DebugMode == debugMode)
+                debugger.SetShaderModuleForDebug(task.DebugModeIndex, shader.Module);
+        }
+    }
+#endif
+
+    FRawPipelineLayoutID layoutId;
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    VkDeviceSize blockSize = 0;
+    VkDeviceSize raygenOffset = 0;
+    VkDeviceSize raymissOffset = 0;
+    VkDeviceSize raymissStride = 0;
+    VkDeviceSize rayhitOffset = 0;
+    VkDeviceSize rayhitStride = 0;
+    VkDeviceSize callableOffset = 0;
+    VkDeviceSize callableStride = 0;
+    Meta::TStaticBitset<3> availableShaders;
+    LOG_CHECKVOID(RHI, task.ShaderTable->BindingsFor(
+        &layoutId, &pipeline, &blockSize,
+        &raygenOffset,
+        &raymissOffset, &raymissStride,
+        &rayhitOffset, &rayhitStride,
+        &callableOffset, &callableStride,
+        &availableShaders,
+        debugMode ));
+
+    const FVulkanPipelineLayout* const pLayout = Resource_(layoutId);
+    Assert(pLayout);
+
+    const FVulkanLocalBuffer* const pShaderTableBuffer = ToLocal_(task.ShaderTable->Buffer());
+    Assert(pShaderTableBuffer);
+
+    if (_rayTracingPipeline.Pipeline != pipeline) {
+        _rayTracingPipeline.Pipeline = pipeline;
+        vkCmdBindPipeline(_vkCommandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipeline);
+
+        ONLY_IF_RHIDEBUG(EditStatistics_([&](FFrameStatistics::FRendering& rendering) {
+            ++rendering.NumRayTracingPipelineBindings;
+        }));
+    }
+
+    BindPipelineResources_(*pLayout, task.Resources(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV ARGS_IF_RHIDEBUG(task.DebugModeIndex) );
+    PushContants_(*pLayout, task.PushConstants);
+
+    Assert(pShaderTableBuffer->Desc().Usage & EBufferUsage::RayTracing);
+
+    AddBuffer_(pShaderTableBuffer, EResourceState::ShaderRead | EResourceState::_RayTracingShader, raygenOffset, blockSize);
+    CommitBarriers_();
+
+    vkCmdTraceRaysNV(
+        _vkCommandBuffer,
+        pShaderTableBuffer->Handle(),
+        raygenOffset,
+        availableShaders.test(0) ? pShaderTableBuffer->Handle() : VK_NULL_HANDLE, raymissOffset, raymissStride,
+        availableShaders.test(1) ? pShaderTableBuffer->Handle() : VK_NULL_HANDLE, rayhitOffset, rayhitStride,
+        availableShaders.test(2) ? pShaderTableBuffer->Handle() : VK_NULL_HANDLE, callableOffset, callableStride,
+        task.GroupCount.x, task.GroupCount.y, task.GroupCount.z );
+
+    ONLY_IF_RHIDEBUG(EditStatistics_([&](FFrameStatistics::FRendering& rendering) {
+        ++rendering.NumTraceRaysCalls;
+    }));
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanCustomTaskTask& task) {

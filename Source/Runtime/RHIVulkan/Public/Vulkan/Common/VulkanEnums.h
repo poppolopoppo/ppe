@@ -126,9 +126,9 @@ PPE_RHIVULKAN_API VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat
 PPE_RHIVULKAN_API VkBufferUsageFlagBits VkCast(EBufferUsage values);
 PPE_RHIVULKAN_API VkIndexType VkCast(EIndexFormat value);
 PPE_RHIVULKAN_API VkPrimitiveTopology VkCast(EPrimitiveTopology value);
-PPE_RHIVULKAN_API VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values);
-PPE_RHIVULKAN_API VkGeometryInstanceFlagBitsKHR VkCast(ERayTracingInstanceFlags values);
-PPE_RHIVULKAN_API VkBuildAccelerationStructureFlagBitsKHR VkCast(ERayTracingBuildFlags values);
+PPE_RHIVULKAN_API VkGeometryFlagBitsNV VkCast(ERayTracingGeometryFlags values);
+PPE_RHIVULKAN_API VkGeometryInstanceFlagBitsNV VkCast(ERayTracingInstanceFlags values);
+PPE_RHIVULKAN_API VkBuildAccelerationStructureFlagBitsNV VkCast(ERayTracingBuildFlags values);
 PPE_RHIVULKAN_API VkColorSpaceKHR VkCast(EColorSpace value);
 PPE_RHIVULKAN_API VkCompositeAlphaFlagBitsKHR VkCast(ECompositeAlpha value);
 PPE_RHIVULKAN_API VkPresentModeKHR VkCast(EPresentMode value);

@@ -29,7 +29,7 @@ FVulkanGraphicsPipeline::~FVulkanGraphicsPipeline() {
     Assert_NoAssume(_sharedInstances.LockExclusive()->empty());
 }
 //----------------------------------------------------------------------------
-bool FVulkanGraphicsPipeline::Construct(const FGraphicsPipelineDesc& desc, FRawPipelineLayoutID layoutId, FConstChar debugName) {
+bool FVulkanGraphicsPipeline::Construct(const FGraphicsPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(layoutId);
 
     const auto exclusive = _pipeline.LockExclusive();

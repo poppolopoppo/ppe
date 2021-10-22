@@ -28,7 +28,7 @@ FVulkanMeshPipeline::~FVulkanMeshPipeline() {
     Assert_NoAssume(_sharedInstances.LockExclusive()->empty());
 }
 //----------------------------------------------------------------------------
-bool FVulkanMeshPipeline::Construct(const FMeshPipelineDesc& desc, FRawPipelineLayoutID layoutId, FConstChar debugName) {
+bool FVulkanMeshPipeline::Construct(const FMeshPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(layoutId);
 
     const auto exclusive = _pipeline.LockExclusive();

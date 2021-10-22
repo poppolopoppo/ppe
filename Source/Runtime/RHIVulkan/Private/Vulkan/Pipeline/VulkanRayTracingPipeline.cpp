@@ -32,14 +32,14 @@ bool FVulkanRayTracingPipeline::Construct(const FRayTracingPipelineDesc& desc, F
             Assert(moduleRef);
 
             bool added = false;
-            auto it = exclusive->Shaders.FindOrAdd({
+            const auto it = exclusive->Shaders.FindOrAdd({
                 stage.first,
                 checked_cast<FVulkanShaderModule>(moduleRef),
                 vkStage,
                 stage.second.Specializations
                 ARGS_IF_RHIDEBUG(EShaderDebugMode_From(src.first)) }, &added);
             Assert_NoAssume(added);
-
+            UNUSED(it);
             ONLY_IF_RHIDEBUG(exclusive->DebugModeBits.set(static_cast<u32>(it->DebugMode)));
         }
     }

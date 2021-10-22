@@ -81,8 +81,6 @@ FCurrentProcess::FCurrentProcess(
 #if USE_PPE_PLATFORM_DEBUG
     if (HasArgument(L"-IgnoreDebugger"))
         GStartedWithDebugger = false;
-#else
-    _startedWithDebugger = false;
 #endif
 
 #if USE_PPE_PLATFORM_DEBUG

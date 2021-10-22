@@ -1,8 +1,11 @@
 #pragma once
 
+#include "Vulkan/VulkanCommon.h"
+
+#include "Vulkan/RayTracing/VulkanRayTracingGeometryInstance.h"
+
 #include "Container/FlatSet.h"
 #include "Container/Tuple.h"
-#include "Vulkan/VulkanCommon.h"
 
 namespace PPE {
 namespace RHI {
@@ -11,29 +14,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanRayTracingScene final {
 public:
-
-    struct FInstance {
-        FInstanceID InstanceId;
-        FRTGeometryID GeometryId;
-        u32 IndexOffset{ UMax };
-
-        FInstance() = default;
-        FInstance(const FInstanceID& instanceId, FRTGeometryID&& geometryId, u32 offset) NOEXCEPT
-        :   InstanceId(instanceId), GeometryId(std::move(geometryId)), IndexOffset(offset)
-        {}
-
-        bool operator ==(const FInstance& other) const { return operator ==(other.InstanceId); }
-        bool operator !=(const FInstance& other) const { return operator !=(other.InstanceId); }
-
-        bool operator < (const FInstance& other) const { return operator < (other.InstanceId); }
-        bool operator >=(const FInstance& other) const { return operator >=(other.InstanceId); }
-
-        bool operator ==(const FInstanceID& other) const { return (InstanceId == other); }
-        bool operator !=(const FInstanceID& other) const { return (not operator ==(other)); }
-
-        bool operator < (const FInstanceID& other) const { return (InstanceId < other); }
-        bool operator >=(const FInstanceID& other) const { return (not operator < (other)); }
-    };
+    using FInstance = FVulkanRayTracingSceneInstance;
 
     struct FInstancesData {
         VECTOR(RHIRayTracing, FInstance) GeometryInstances;
@@ -71,15 +52,15 @@ public:
 
     void SetGeometryInstances(
         FVulkanResourceManager& resources,
-        TMemoryView<TTuple<FInstanceID, FRTGeometryID, u32>> instances,
+        TMemoryView<FVulkanRayTracingSceneInstance> instances,
         u32 instanceCount,
         u32 hitShadersPerInstance,
-        u32 maxHitShaders );
+        u32 maxHitShaders ) const;
 
 private:
-    TRHIThreadSafe<FInternalData> _data;
+    mutable TRHIThreadSafe<FInternalData> _data;
 
-    TThreadSafe<FInstancesData, EThreadBarrier::RWLock> _currentData;
+    mutable TThreadSafe<FInstancesData, EThreadBarrier::RWLock> _currentData;
 
 #if USE_PPE_RHITASKNAME
     FVulkanDebugName _debugName;

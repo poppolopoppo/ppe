@@ -3,6 +3,8 @@
 
 #include "Vulkan/RayTracing/VulkanRayTracingScene.h"
 
+#include "Vulkan/RayTracing/VulkanRayTracingGeometryInstance.h"
+
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Instance/VulkanResourceManager.h"
 
@@ -99,8 +101,8 @@ void FVulkanRayTracingScene::TearDown(FVulkanResourceManager& resources) {
 // 'instances' is sorted by instance ID and contains the strong references for geometries
 void FVulkanRayTracingScene::SetGeometryInstances(
     FVulkanResourceManager& resources,
-    TMemoryView<TTuple<FInstanceID, FRTGeometryID, u32>> instances, u32 instanceCount,
-    u32 hitShadersPerInstance, u32 maxHitShaders ) {
+    TMemoryView<FVulkanRayTracingSceneInstance> instances, u32 instanceCount,
+    u32 hitShadersPerInstance, u32 maxHitShaders ) const {
     const auto exclusiveData = _data.LockExclusive();
 
     UNUSED(exclusiveData);
@@ -115,12 +117,9 @@ void FVulkanRayTracingScene::SetGeometryInstances(
     exclusiveInstances->GeometryInstances.clear();
     exclusiveInstances->GeometryInstances.reserve(instanceCount);
 
-    forrange(i, 0, instanceCount) {
-        VerifyRelease(resources.AcquireResource(std::get<1>(instances[i]).Get()));
-        exclusiveInstances->GeometryInstances.emplace_back(
-            std::get<0>(instances[i]),
-            std::move(std::get<1>(instances[i])),
-            std::get<2>(instances[i]) );
+    for (FVulkanRayTracingSceneInstance& it : instances.CutBefore(instanceCount)) {
+        VerifyRelease( resources.AcquireResource(*it.GeometryId) );
+        exclusiveInstances->GeometryInstances.emplace_back(std::move(it));
     }
 
     exclusiveInstances->HitShadersPerInstance = hitShadersPerInstance;
