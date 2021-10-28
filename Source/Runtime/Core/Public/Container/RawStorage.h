@@ -45,6 +45,8 @@ public:
 
     template <typename _It>
     TRawStorage(_It&& begin, _It&& end);
+    TRawStorage(std::initializer_list<T> list) : TRawStorage(list.begin(), list.end()) {}
+    TRawStorage(TMemoryView<const T> data) : TRawStorage(data.size()) { data.CopyTo(MakeView()); }
 
     TRawStorage(TRawStorage&& rvalue) NOEXCEPT;
     TRawStorage& operator =(TRawStorage&& rvalue) NOEXCEPT;
