@@ -3,7 +3,10 @@
 #include "Meta/Aliases.h"
 #include "Meta/TypeTraits.h"
 
+#include <cassert> // for early assertions
 #include <new>
+
+#include "Assert.h"
 
 namespace PPE {
 namespace Meta {
@@ -35,20 +38,24 @@ inline CONSTEXPR bool IsPowOf(size_t u) {
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
 inline CONSTEXPR bool IsAligned(const size_t alignment, const uintptr_t v) {
+    assert(Meta::IsPow2(alignment));
     return (0 == (v & (alignment - 1)));
 }
 template <typename T>
 inline bool IsAligned(const size_t alignment, const T* ptr) NOEXCEPT {
+    assert(Meta::IsPow2(alignment));
     return (0 == (reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)));
 }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
 inline CONSTEXPR T RoundToNext(const T v, TDontDeduce<T> alignment) {
+    assert(Meta::IsPow2(alignment));
     return ((0 == v) ? 0 : (v + alignment - static_cast<T>(1)) & ~(alignment - static_cast<T>(1)));
 }
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
 inline CONSTEXPR T RoundToPrev(const T v, TDontDeduce<T> alignment) {
+    assert(Meta::IsPow2(alignment));
     return ((0 == v) ? 0 : v & ~(alignment - static_cast<T>(1)));
 }
 //----------------------------------------------------------------------------
