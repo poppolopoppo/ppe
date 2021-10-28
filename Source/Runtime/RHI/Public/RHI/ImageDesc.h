@@ -46,9 +46,9 @@ struct FImageDesc {
     FImageDesc& SetType(EImageDim value) { Type = value;  return *this; }
     FImageDesc& SetView(EImageView value) NOEXCEPT;
     FImageDesc& SetFlag(EImageFlags value) { Flags |= value; return *this; }
-    FImageDesc& SetDimension(u32 value) NOEXCEPT;
-    FImageDesc& SetDimension(const uint2& value) NOEXCEPT;
-    FImageDesc& SetDimension(const uint3& value) NOEXCEPT;
+    PPE_RHI_API FImageDesc& SetDimension(u32 value) NOEXCEPT;
+    PPE_RHI_API FImageDesc& SetDimension(const uint2& value) NOEXCEPT;
+    PPE_RHI_API FImageDesc& SetDimension(const uint3& value) NOEXCEPT;
     FImageDesc& SetUsage(EImageUsage value) { Usage = value;  return *this; }
     FImageDesc& SetFormat(EPixelFormat value) { Format = value;  return *this; }
     FImageDesc& SetQueues(EQueueUsage value) { Queues = value;  return *this; }

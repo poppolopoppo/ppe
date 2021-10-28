@@ -129,9 +129,6 @@ public:
         return MakePair(it, added);
     }
 
-    iterator find(const _Key& key) { return Find(key); }
-    const_iterator find(const _Key& key) const { return Find(key); }
-
     bool erase(const _Key& key) { return Erase(key); }
     void erase(const const_iterator& it) { return Erase(it); }
 

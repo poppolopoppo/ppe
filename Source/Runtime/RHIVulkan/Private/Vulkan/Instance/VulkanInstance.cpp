@@ -6,10 +6,10 @@
 #include "Vulkan/Instance/VulkanDevice.h"
 
 #include "Diagnostic/CurrentProcess.h"
+#include "Diagnostic/Logger.h"
 #include "Meta/Utility.h"
 
 #if USE_PPE_LOGGER
-#   include "Diagnostic/Logger.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #endif

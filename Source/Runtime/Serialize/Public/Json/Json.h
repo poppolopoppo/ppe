@@ -116,15 +116,15 @@ public:
 
         //RTTI::FTypeId TypeId() const { return InnerAtom().TypeId(); }
 
-        void Reset() NOEXCEPT;
+        PPE_SERIALIZE_API void Reset() NOEXCEPT;
         bool Valid() const { return not std::holds_alternative<std::monostate>(Data); }
 
-        bool Equals(const FValue& other) const NOEXCEPT;
+        PPE_SERIALIZE_API bool Equals(const FValue& other) const NOEXCEPT;
 
         friend bool operator ==(const FValue& lhs, const FValue& rhs) NOEXCEPT { return lhs.Equals(rhs); }
         friend bool operator !=(const FValue& lhs, const FValue& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
 
-        hash_t HashValue() const NOEXCEPT;
+        PPE_SERIALIZE_API hash_t HashValue() const NOEXCEPT;
 
         friend hash_t hash_value(const FValue& v) NOEXCEPT { return v.HashValue(); }
 
@@ -141,7 +141,7 @@ public:
             return Get<T>();
         }
 
-        void Construct(FJson& doc, EType type);
+        PPE_SERIALIZE_API void Construct(FJson& doc, EType type);
 
         template <typename T, class = Meta::TEnableIf< IsKnownType<T> > >
         void Assign(T&& rvalue) { Data = std::move(rvalue); }
