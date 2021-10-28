@@ -1,10 +1,15 @@
 #pragma once
 
+#include "Meta/Aliases.h"
 #include "Meta/Assert.h"
 #include "Meta/TypeTraits.h"
 
 #include <cstring> // std::memcpy()
 #include <type_traits>
+
+#if PPE_HAS_CXX20
+#   include <bit> // std::bit_cast<>
+#endif
 
 #if USE_PPE_ASSERT
 #   define USE_PPE_CHECKEDCAST 1
@@ -75,6 +80,12 @@ NOALIAS Meta::TEnableIf<
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // https://en.cppreference.com/w/cpp/numeric/bit_cast
+#if PPE_HAS_CXX20
+template< class To, class From >
+constexpr To bit_cast( const From& from ) noexcept {
+    return std::bit_cast<To, From>(from);
+}
+#else
 template <class To, class From>
 Meta::TEnableIf<
     sizeof(To) == sizeof(From) &&
@@ -90,6 +101,7 @@ bit_cast(const From& src) noexcept {
     std::memcpy(&dst, &src, sizeof(To));
     return dst;
 }
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
