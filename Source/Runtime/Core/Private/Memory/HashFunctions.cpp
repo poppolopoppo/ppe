@@ -39,6 +39,12 @@ u128 Fingerprint128(const void *ptr, size_t sizeInBytes) NOEXCEPT {
     return *reinterpret_cast<const u128 *>(&h);
 }
 //----------------------------------------------------------------------------
+u128 Fingerprint128(const void *ptr, size_t sizeInBytes, u128 seed) NOEXCEPT {
+    FarmHash::uint128_t h;
+    h = FarmHash::Hash128WithSeed(reinterpret_cast<const char *>(ptr), sizeInBytes, { seed.lo, seed.hi });
+    return *reinterpret_cast<const u128 *>(&h);
+}
+//----------------------------------------------------------------------------
 u64 Fingerprint64(const void *ptr, size_t sizeInBytes) NOEXCEPT {
     return FarmHash::Fingerprint64(reinterpret_cast<const char *>(ptr), sizeInBytes);
 }

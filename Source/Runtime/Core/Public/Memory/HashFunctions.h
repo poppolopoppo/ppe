@@ -110,7 +110,9 @@ PPE_CORE_API u128 hash_128(const void* key, const size_t len, FRawMemoryConst se
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_CORE_API u128 Fingerprint128(const void *ptr, size_t sizeInBytes) NOEXCEPT;
+PPE_CORE_API u128 Fingerprint128(const void *ptr, size_t sizeInBytes, u128 seed) NOEXCEPT;
 template <typename T> u128 Fingerprint128(const TMemoryView<T>& src) { return Fingerprint128(src.Pointer(), src.SizeInBytes()); }
+template <typename T> u128 Fingerprint128(const TMemoryView<T>& src, u128 seed) { return Fingerprint128(src.Pointer(), src.SizeInBytes(), seed); }
 //----------------------------------------------------------------------------
 PPE_CORE_API u64 Fingerprint64(const void *ptr, size_t sizeInBytes) NOEXCEPT;
 template <typename T> u64 Fingerprint64(const TMemoryView<T>& src) { return Fingerprint64(src.Pointer(), src.SizeInBytes()); }
