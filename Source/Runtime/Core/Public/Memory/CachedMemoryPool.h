@@ -203,7 +203,7 @@ auto TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::FindOr
     _cache.Count.fetch_add(1, std::memory_order_relaxed);
 
     Assert(id < pool_type::MaxSize);
-    return MakePair(id, true);
+    return MakePair(id, false);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
