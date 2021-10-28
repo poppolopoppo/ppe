@@ -196,3 +196,29 @@ TScalarVector<float, _Dim> ScaleSNorm(const TScalarVector<i32, _Dim>& value);
 } //!namespace PPE
 
 #include "Maths/PackedVectors-inl.h"
+
+namespace PPE {
+namespace Meta {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct is_basic_norm<TScalarVector<T, _Dim>> : is_basic_norm<T> {};
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct is_snorm<TScalarVector<T, _Dim>> : is_snorm<T> {};
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct is_unorm<TScalarVector<T, _Dim>> : is_unorm<T> {};
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct is_packed_integral<TScalarVector<T, _Dim>> : is_packed_integral<T> {};
+template <>
+struct is_packed_integral<UX11Y11Z10> : std::bool_constant<true> {};
+template <>
+struct is_packed_integral<UX10Y10Z10W2N> : std::bool_constant<true> {};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Meta
+} //!namespace PPE

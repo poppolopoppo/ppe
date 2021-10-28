@@ -141,6 +141,7 @@ struct FHalfFloat {
     static FHalfFloat Epsilon() { return FHalfFloat(u16(0x0001)); }
     static FHalfFloat MaxValue() { return FHalfFloat(u16(0x7bff)); }
     static FHalfFloat MinValue() { return FHalfFloat(u16(0xfbff)); }
+    static FHalfFloat Lowest() { return MinValue(); }
     static FHalfFloat Nan() { return FHalfFloat(u16(0xfe00)); }
     static FHalfFloat NegativeInf() { return FHalfFloat(u16(0xfc00)); }
     static FHalfFloat PositiveInf() { return FHalfFloat(u16(0x7c00)); }
@@ -168,6 +169,7 @@ struct TNumericLimits< FHalfFloat > {
     static FHalfFloat Inf() { return FHalfFloat::PositiveInf(); }
     static FHalfFloat MaxValue() { return FHalfFloat::MaxValue(); }
     static FHalfFloat MinValue() { return FHalfFloat::MinValue(); }
+    static FHalfFloat Lowest() { return FHalfFloat::Lowest(); }
     static FHalfFloat Nan() { return FHalfFloat::Nan(); }
     static FHalfFloat Zero() { return FHalfFloat::Zero(); }
 };
@@ -226,23 +228,20 @@ struct TBasicNorm {
 
     T _data;
 
-    FORCE_INLINE TBasicNorm() {}
-    FORCE_INLINE explicit TBasicNorm(Meta::FForceInit) : _data(T(0)) {}
-    FORCE_INLINE ~TBasicNorm() = default;
+    TBasicNorm() = default;
 
-    FORCE_INLINE operator T() const { return _data; }
-    FORCE_INLINE TBasicNorm(T data) : _data(data) {}
-    FORCE_INLINE TBasicNorm& operator =(T data) { _data = data; return *this; }
+    CONSTEXPR operator T() const { return _data; }
+    CONSTEXPR TBasicNorm(T data) : _data(data) {}
+    CONSTEXPR TBasicNorm& operator =(T data) { _data = data; return *this; }
 
-    template <typename U>
-    FORCE_INLINE TBasicNorm(U data) : _data(checked_cast<T>(data)) {}
+    CONSTEXPR explicit TBasicNorm(int promote) : _data(static_cast<T>(promote)) {}
 
     operator float () const { return Normalized(); }
     TBasicNorm(float value) : _data(traits_type::Denormalize(value)) {}
     TBasicNorm& operator =(float value) { _data = traits_type::Denormalize(value); return *this; }
 
-    FORCE_INLINE TBasicNorm(const TBasicNorm& other) : _data(other._data) {}
-    FORCE_INLINE TBasicNorm& operator =(const TBasicNorm& other) { _data = other._data; return *this; }
+    CONSTEXPR TBasicNorm(const TBasicNorm& other) : _data(other._data) {}
+    CONSTEXPR TBasicNorm& operator =(const TBasicNorm& other) { _data = other._data; return *this; }
 
     template <typename U>
     TBasicNorm(const TBasicNorm<U>& other) : TBasicNorm(other.Normalized()) {}
@@ -252,16 +251,16 @@ struct TBasicNorm {
     float Normalized() const { return traits_type::Normalize(_data); }
     void SetNormalized(float value) { _data = traits_type::Denormalize(value); }
 
-    static TBasicNorm DefaultValue() { return TBasicNorm(T(0)); }
+    static CONSTEXPR TBasicNorm DefaultValue() { return TBasicNorm(T(0)); }
 
-    FORCE_INLINE bool operator ==(const TBasicNorm& other) const { return _data == other._data; }
-    FORCE_INLINE bool operator !=(const TBasicNorm& other) const { return !operator ==(other); }
+    CONSTEXPR bool operator ==(const TBasicNorm& other) const { return _data == other._data; }
+    CONSTEXPR bool operator !=(const TBasicNorm& other) const { return !operator ==(other); }
 
-    FORCE_INLINE bool operator <(const TBasicNorm& other) const { return _data < other._data; }
-    FORCE_INLINE bool operator >=(const TBasicNorm& other) const { return !operator <(other); }
+    CONSTEXPR bool operator <(const TBasicNorm& other) const { return _data < other._data; }
+    CONSTEXPR bool operator >=(const TBasicNorm& other) const { return !operator <(other); }
 
-    FORCE_INLINE bool operator >(const TBasicNorm& other) const { return _data > other._data; }
-    FORCE_INLINE bool operator <=(const TBasicNorm& other) const { return !operator >(other); }
+    CONSTEXPR bool operator >(const TBasicNorm& other) const { return _data > other._data; }
+    CONSTEXPR bool operator <=(const TBasicNorm& other) const { return !operator >(other); }
 
     inline friend hash_t hash_value(const TBasicNorm& n) { return hash_as_pod(n._data); }
 };
@@ -285,13 +284,14 @@ struct TNumericLimits< TBasicNorm<T, _Traits> > {
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
     STATIC_CONST_INTEGRAL(bool, is_signed,  scalar_type::is_signed);
 
-    static const value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
-    static const value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
-    static const value_type Inf() { return value_type{ scalar_type::Inf() }; }
-    static const value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
-    static const value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
-    static const value_type Nan() { return value_type{ scalar_type::Nan() }; }
-    static const value_type Zero() { return value_type{ scalar_type::Zero() }; }
+    static CONSTEXPR const value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
+    static CONSTEXPR const value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
+    static CONSTEXPR const value_type Inf() { return value_type{ scalar_type::Inf() }; }
+    static CONSTEXPR const value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
+    static CONSTEXPR const value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
+    static CONSTEXPR const value_type Lowest() { return value_type{ scalar_type::Lowest() }; }
+    static CONSTEXPR const value_type Nan() { return value_type{ scalar_type::Nan() }; }
+    static CONSTEXPR const value_type Zero() { return value_type{ scalar_type::Zero() }; }
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(TBasicNorm<T COMMA _Traits>, typename T, typename _Traits)
@@ -306,3 +306,41 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicN
 } //!namespace PPE
 
 #include "Maths/PackingHelpers-inl.h"
+
+namespace PPE {
+namespace Meta {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+struct is_basic_norm : std::bool_constant<false> {};
+template <typename T, typename _Traits>
+struct is_basic_norm<TBasicNorm<T, _Traits>> : std::bool_constant<true> {};
+template <typename T>
+constexpr bool is_basic_norm_v = is_basic_norm<T>::value;
+//----------------------------------------------------------------------------
+template <typename T>
+struct is_snorm : std::bool_constant<false> {};
+template <typename T>
+struct is_snorm<TSNorm<T>> : std::bool_constant<true> {};
+template <typename T>
+constexpr bool is_snorm_v = is_snorm<T>::value;
+//----------------------------------------------------------------------------
+template <typename T>
+struct is_unorm : std::bool_constant<false> {};
+template <typename T>
+struct is_unorm<TUNorm<T>> : std::bool_constant<true> {};
+template <typename T>
+constexpr bool is_unorm_v = is_unorm<T>::value;
+//----------------------------------------------------------------------------
+template <typename T>
+struct is_packed_integral : is_basic_norm<T> {};
+template <>
+struct is_packed_integral<FHalfFloat> : std::bool_constant<true> {};
+template <typename T>
+constexpr bool is_packed_integral_v = is_packed_integral<T>::value;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Meta
+} //!namespace PPE
