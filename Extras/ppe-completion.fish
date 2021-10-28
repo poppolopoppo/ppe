@@ -7,7 +7,7 @@ complete -c ppe.rb -f
 # All subcommands
 set -l commands --backup --bash.d --bff --cpphint --dist-clean --export --fbuild --genpch --genpch2 --insights --list-targets --print --ps1 --run --rundbg --upx --vcxproj --vscode
 
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--bff --fbuild --run --vcxproj --vscode --genpch"
+complete -c ppe.rb -a "--bff --fbuild --run --vcxproj --vscode --genpch"
 
 complete -c ppe.rb -n "__fish_seen_subcommand_from --fbuild"  -a "(ruby (pwd)/ppe.rb -q --list-targets | tr -d '\015' | sort)"
 complete -c ppe.rb -n "__fish_seen_subcommand_from --run"  -a "(ruby (pwd)/ppe.rb -q --list-executables | tr -d '\015' | sort)"
@@ -16,24 +16,24 @@ complete -c ppe.rb -n "__fish_seen_subcommand_from --rundbg"  -a "(ruby (pwd)/pp
 complete -c ppe.rb -n "__fish_seen_subcommand_from --Compiler"  -a "2019 2022 Insider LLVM"
 complete -c ppe.rb -n "__fish_seen_subcommand_from --CppStd"  -a "c++14 c++17 c++20 c++latest"
 
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--backup" -d "Generate a snapshot backup archive"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--bash.d" -d "Generate bash completion script"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--bff" -d "BFF generator"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--cpphint" -d "Generate cpp.hint for Intellisense"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--dist-clean" -d "Delete generated files"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--export" -d "Export expanded targets (JSON)"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--fbuild" -d "FASTBuild interop"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--genpch" -d "Generate precompiled headers"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--genpch2" -d "Generate precompiled headers"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--insights" -d "Capture compilation insights"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--list-targets" -d "Export all targets in plain text"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--print" -d "Show config data"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--ps1" -d "Generate powershell completion script"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--run" -d "Run specified target"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--rundbg" -d "Run and debug specified target"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--upx" -d "Compressed specified target executable"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--vcxproj" -d "Generate VisualStudio project files"
-complete -c ppe.rb -n "not __fish_seen_subcommand_from $commands" -a "--vscode" -d "Generate VisualStudio Code bindings"
+complete -c ppe.rb -a "--backup" -d "Generate a snapshot backup archive"
+complete -c ppe.rb -a "--bash.d" -d "Generate bash completion script"
+complete -c ppe.rb -a "--bff" -d "BFF generator"
+complete -c ppe.rb -a "--cpphint" -d "Generate cpp.hint for Intellisense"
+complete -c ppe.rb -a "--dist-clean" -d "Delete generated files"
+complete -c ppe.rb -a "--export" -d "Export expanded targets (JSON)"
+complete -c ppe.rb -a "--fbuild" -d "FASTBuild interop"
+complete -c ppe.rb -a "--genpch" -d "Generate precompiled headers"
+complete -c ppe.rb -a "--genpch2" -d "Generate precompiled headers"
+complete -c ppe.rb -a "--insights" -d "Capture compilation insights"
+complete -c ppe.rb -a "--list-targets" -d "Export all targets in plain text"
+complete -c ppe.rb -a "--print" -d "Show config data"
+complete -c ppe.rb -a "--ps1" -d "Generate powershell completion script"
+complete -c ppe.rb -a "--run" -d "Run specified target"
+complete -c ppe.rb -a "--rundbg" -d "Run and debug specified target"
+complete -c ppe.rb -a "--upx" -d "Compressed specified target executable"
+complete -c ppe.rb -a "--vcxproj" -d "Generate VisualStudio project files"
+complete -c ppe.rb -a "--vscode" -d "Generate VisualStudio Code bindings"
 
 # These are simple options that can be used everywhere.
 
