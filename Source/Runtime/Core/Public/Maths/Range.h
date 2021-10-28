@@ -40,7 +40,7 @@ struct TRange {
     CONSTEXPR bool Empty() const { return not Any(First < Last); }
     CONSTEXPR bool Whole() const { return All(Last == MaxValue); }
 
-    CONSTEXPR bool Overlaps(const TRange& other) const {
+    NODISCARD CONSTEXPR bool Overlaps(const TRange& other) const {
         return (not All((Last < other.First) | (other.Last < First)));
     }
 
@@ -50,27 +50,23 @@ struct TRange {
         return (*this);
     }
 
-    CONSTEXPR TRange operator +(T value) const { return (TRange(*this) += value); }
+    NODISCARD CONSTEXPR TRange operator +(T value) const { return (TRange(*this) += value); }
     CONSTEXPR TRange& operator +=(T value) { return Add(value); }
 
-    CONSTEXPR TRange& Union(const TRange& other) {
+    NODISCARD CONSTEXPR TRange Union(const TRange& other) const { return TRange(*this).SelfUnion(other); }
+    CONSTEXPR TRange& SelfUnion(const TRange& other) {
         Assert(Overlaps(other));
         First = Min(First, other.First);
         Last = Max(Last, other.Last);
         return (*this);
     }
 
-    CONSTEXPR TRange operator +(const TRange& other) const { return (TRange(*this) += other); }
-    CONSTEXPR TRange& operator +=(const TRange& other) { return Union(other); }
-
-    CONSTEXPR TRange& Intersect(const TRange& other) {
+    NODISCARD CONSTEXPR TRange Intersect(const TRange& other) const { return TRange(*this).SelfIntersect(other); }
+    CONSTEXPR TRange& SelfIntersect(const TRange& other) {
         First = Max(First, other.First);
-        Last = Min(First, other.First);
+        Last = Min(Last, other.Last);
         return (*this);
     }
-
-    CONSTEXPR TRange operator -(const TRange& other) const { return (TRange(*this) -= other); }
-    CONSTEXPR TRange& operator -=(const TRange& other) { return Intersect(other); }
 
     CONSTEXPR bool operator ==(const TRange& other) const { return (All((First == other.First) & (Last == other.Last))); }
     CONSTEXPR bool operator !=(const TRange& other) const { return (not operator ==(other)); }
