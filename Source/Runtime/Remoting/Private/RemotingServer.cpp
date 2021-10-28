@@ -93,7 +93,7 @@ void FRemotingServer::Remove(const PBaseEndpoint& endpoint) {
     const Network::FName prefix{ endpoint->EndpointPrefix() };
 
     const auto exclusiveEndpoints = _endpoints.LockExclusive();
-    const auto it = exclusiveEndpoints->Find(prefix);
+    const auto it = exclusiveEndpoints->find(prefix);
     AssertReleaseMessage(L"endpoint not registered", exclusiveEndpoints->end() != it);
     Assert_NoAssume(std::get<PBaseEndpoint>(it->second) == endpoint);
 
@@ -133,7 +133,7 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
 
     const FStringView name = path.CutBefore(sep);
     if (not name.empty()) {
-        auto it = sharedEndpoints->Find(Network::FName{ name });
+        auto it = sharedEndpoints->find(Network::FName{ name });
         if (sharedEndpoints->end() != it) {
             Meta::Visit(it->second,
                 [&pEndpoint](const URemotingEndpoint& uniq) NOEXCEPT {

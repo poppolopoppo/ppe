@@ -173,7 +173,7 @@ public:
 
     template <typename T>
     void Remove() {
-        const auto it = _items.Find(Meta::type_info<T>);
+        const auto it = _items.find(Meta::type_info<T>);
         AssertRelease(_items.end() != it);
         it->second.template Invoke<FDeleterFunc>(get_allocator());
         _items.Erase(it);
