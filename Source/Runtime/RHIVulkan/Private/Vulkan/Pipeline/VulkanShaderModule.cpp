@@ -11,7 +11,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 FVulkanShaderModule::FVulkanShaderModule(
     VkShaderModule vkShaderModule,
-    hash_t sourceFingerprint,
+    FFingerprint sourceFingerprint,
     FStringView entryPoint
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) NOEXCEPT
 :   _vkShaderModule(vkShaderModule)
@@ -20,9 +20,9 @@ FVulkanShaderModule::FVulkanShaderModule(
 ,   _debugName(debugName.MakeView())
 #endif
 {
-    // combine entry point with source fingerprint for hash value
-    _hashValue = hash_string(_entryPoint);
-    hash_combine(_hashValue, sourceFingerprint);
+    // combine entry point with source fingerprint for fingerprint
+    _fingerprint = Fingerprint128(_entryPoint.Str());
+    Fingerprint128(&sourceFingerprint, sizeof(FFingerprint), _fingerprint);
 }
 //----------------------------------------------------------------------------
 FVulkanShaderModule::~FVulkanShaderModule() NOEXCEPT {

@@ -47,19 +47,27 @@ struct TVertexDesc<double> : details::TVertexDescImpl<double, EVertexFormat::Dou
 template <>
 struct TVertexDesc<i8> : details::TVertexDescImpl<i8, EVertexFormat::Byte> {};
 template <>
-struct TVertexDesc<u8> : details::TVertexDescImpl<i8, EVertexFormat::UByte> {};
+struct TVertexDesc<u8> : details::TVertexDescImpl<u8, EVertexFormat::UByte> {};
 template <>
-struct TVertexDesc<i16> : details::TVertexDescImpl<i8, EVertexFormat::Short> {};
+struct TVertexDesc<i16> : details::TVertexDescImpl<i16, EVertexFormat::Short> {};
 template <>
-struct TVertexDesc<u16> : details::TVertexDescImpl<i8, EVertexFormat::UShort> {};
+struct TVertexDesc<u16> : details::TVertexDescImpl<u16, EVertexFormat::UShort> {};
 template <>
-struct TVertexDesc<i32> : details::TVertexDescImpl<i8, EVertexFormat::Int> {};
+struct TVertexDesc<i32> : details::TVertexDescImpl<i32, EVertexFormat::Int> {};
 template <>
-struct TVertexDesc<u32> : details::TVertexDescImpl<i8, EVertexFormat::UInt> {};
+struct TVertexDesc<u32> : details::TVertexDescImpl<u32, EVertexFormat::UInt> {};
 template <>
-struct TVertexDesc<i64> : details::TVertexDescImpl<i8, EVertexFormat::Long> {};
+struct TVertexDesc<i64> : details::TVertexDescImpl<i64, EVertexFormat::Long> {};
 template <>
-struct TVertexDesc<u64> : details::TVertexDescImpl<i8, EVertexFormat::ULong> {};
+struct TVertexDesc<u64> : details::TVertexDescImpl<u64, EVertexFormat::ULong> {};
+template <>
+struct TVertexDesc<byten> : details::TVertexDescImpl<byten, EVertexFormat::Byte_Norm> {};
+template <>
+struct TVertexDesc<shortn> : details::TVertexDescImpl<shortn, EVertexFormat::Short_Norm> {};
+template <>
+struct TVertexDesc<ubyten> : details::TVertexDescImpl<ubyten, EVertexFormat::UByte_Norm> {};
+template <>
+struct TVertexDesc<ushortn> : details::TVertexDescImpl<ushortn, EVertexFormat::UShort_Norm> {};
 //----------------------------------------------------------------------------
 // Colors
 //----------------------------------------------------------------------------
@@ -81,7 +89,7 @@ struct TVertexDesc<FColor> : details::TVertexDescImpl<FRgba8u, EVertexFormat::UB
 template <typename T, size_t _Dim>
 struct TVertexDesc< TScalarVector<T, _Dim> > : details::TVertexDescImpl<
     TScalarVector<T, _Dim>,
-    BitAnd(VertexAttrib<T>(), EVertexFormat::_TypeMask) |
+    BitAnd(VertexAttrib<T>(), EVertexFormat::_FlagsMask | EVertexFormat::_TypeMask) |
     EVertexFormat(_Dim << u32(EVertexFormat::_VecOffset))
 >   {};
 //----------------------------------------------------------------------------

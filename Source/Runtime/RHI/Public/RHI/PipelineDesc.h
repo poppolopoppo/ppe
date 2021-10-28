@@ -42,13 +42,14 @@ struct FPipelineDescUniform {
     :   Id(id)
     ,   Index(index)
     ,   ArraySize(arraySize)
-    ,   StageFlags(stageFlags)
-    {}
+    ,   StageFlags(stageFlags) {
+        Assert(id.Valid());
+    }
 
-    bool operator ==(const FPipelineDescUniform& other) const {
+    bool operator ==(const FPipelineDescUniform& other) const NOEXCEPT {
         return (Id == other.Id && Index == other.Index && ArraySize == other.ArraySize && StageFlags == other.StageFlags);
     }
-    bool operator !=(const FPipelineDescUniform& other) const {
+    bool operator !=(const FPipelineDescUniform& other) const NOEXCEPT {
         return (not operator ==(other));
     }
 };
@@ -90,15 +91,22 @@ struct TPipelineDescUniform : FPipelineDescUniform {
     ,   Data(std::forward<_Args>(rargs)...)
     {}
 
-    bool operator ==(const TPipelineDescUniform& other) const {
+    bool operator ==(const TPipelineDescUniform& other) const NOEXCEPT {
         return (static_cast<const FPipelineDescUniform&>(*this) == other && Data == other.Data);
     }
-    bool operator !=(const TPipelineDescUniform& other) const {
+    bool operator !=(const TPipelineDescUniform& other) const NOEXCEPT {
         return (not operator ==(other));
     }
 };
 PPE_ASSUME_TEMPLATE_AS_POD(TPipelineDescUniform<T>, typename T);
 } //!details
+struct FTextureUniform;
+struct FSamplerUniform;
+struct FSubpassInputUniform;
+struct FImageUniform;
+struct FUniformBufferUniform;
+struct FStorageBufferUniform;
+struct FRayTracingSceneUniform;
 //----------------------------------------------------------------------------
 template <typename T>
 class IShaderData : public FRefCountable {
@@ -106,22 +114,38 @@ public:
     virtual ~IShaderData() = default;
 
     using FDataRef = Meta::TAddPointer<Meta::TAddConst<Meta::TRemovePointer<T>>>;
+    using FFingerprint = u128;
 
     virtual FDataRef Data() const NOEXCEPT = 0;
     virtual FConstChar EntryPoint() const NOEXCEPT = 0;
-    virtual hash_t HashValue() const NOEXCEPT = 0;
+    virtual FFingerprint Fingerprint() const NOEXCEPT = 0;
 
 #if USE_PPE_RHIDEBUG
     virtual FConstChar DebugName() const NOEXCEPT = 0;
     virtual bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) = 0;
 #endif
 
-    friend hash_t hash_value(const IShaderData& data) {
-        return data.HashValue();
+    friend hash_t hash_value(const IShaderData& data) NOEXCEPT {
+        return hash_value(data.Fingerprint());
     }
 };
 //----------------------------------------------------------------------------
-using FSharedShaderString = TRefCountable<FString>;
+class FSharedShaderString : public FRefCountable {
+public:
+    FSharedShaderString(FString&& content, u128 fingerprint) NOEXCEPT
+    :   _content(std::move(content))
+    ,   _fingerprint(fingerprint)
+    {}
+
+    const FString& Content() const { return _content; }
+    const u128& Fingerprint() const { return _fingerprint; }
+
+    auto MakeView() const { return _content.MakeView(); }
+
+private:
+    const FString _content;
+    const u128 _fingerprint;
+};
 using PSharedShaderString = TRefPtr<FSharedShaderString>;
 using FShaderSource = std::variant<
     FString,
@@ -159,9 +183,8 @@ struct FPipelineDesc {
     struct FImage {
         EResourceState State{ Default };
         EImageSampler Type{ Default };
-        EPixelFormat Format{ Default };
 
-        bool operator ==(const FImage& other) const { return (State == other.State && Type == other.Type && Format == other.Format); }
+        bool operator ==(const FImage& other) const { return (State == other.State && Type == other.Type); }
         bool operator !=(const FImage& other) const { return (not operator ==(other)); }
     };
 
@@ -190,14 +213,6 @@ struct FPipelineDesc {
         bool operator ==(const FRayTracingScene& other) const { return (State == other.State); }
         bool operator !=(const FRayTracingScene& other) const { return (not operator ==(other)); }
     };
-
-    using FTextureUniform = details::TPipelineDescUniform<FTexture>;
-    using FSamplerUniform = details::TPipelineDescUniform<FSampler>;
-    using FSubpassInputUniform = details::TPipelineDescUniform<FSubpassInput>;
-    using FImageUniform = details::TPipelineDescUniform<FImage>;
-    using FUniformBufferUniform = details::TPipelineDescUniform<FUniformBuffer>;
-    using FStorageBufferUniform = details::TPipelineDescUniform<FStorageBuffer>;
-    using FRayTracingSceneUniform = details::TPipelineDescUniform<FRayTracingScene>;
 
     struct FPushConstant {
         FPushConstantID Id{ Default };
@@ -302,6 +317,64 @@ protected:
 
     PPE_RHI_API void SetPushConstants_(TMemoryView<const FPushConstant> values);
 
+};
+//----------------------------------------------------------------------------
+// Uniforms
+//----------------------------------------------------------------------------
+struct FTextureUniform : details::TPipelineDescUniform<FPipelineDesc::FTexture> {
+    using base_type = details::TPipelineDescUniform<FPipelineDesc::FTexture>;
+    using base_type::operator==;
+    using base_type::operator!=;
+
+    PPE_RHI_API FTextureUniform(const FUniformID& id, EImageSampler textureType, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+struct FSamplerUniform : details::TPipelineDescUniform<FPipelineDesc::FSampler> {
+    using base_type = details::TPipelineDescUniform<FPipelineDesc::FSampler>;
+    using base_type::operator==;
+    using base_type::operator!=;
+
+    PPE_RHI_API FSamplerUniform(const FUniformID& id, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+struct FSubpassInputUniform : details::TPipelineDescUniform<FPipelineDesc::FSubpassInput> {
+    using base_type = details::TPipelineDescUniform<FPipelineDesc::FSubpassInput>;
+    using base_type::operator==;
+    using base_type::operator!=;
+
+    PPE_RHI_API FSubpassInputUniform(const FUniformID& id, u32 attachmentIndex, bool isMultisample, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+struct FImageUniform : details::TPipelineDescUniform<FPipelineDesc::FImage> {
+    using base_type = details::TPipelineDescUniform<FPipelineDesc::FImage>;
+    using base_type::operator==;
+    using base_type::operator!=;
+
+    PPE_RHI_API FImageUniform(const FUniformID& id, EImageSampler imageType, EShaderAccess access, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+struct FUniformBufferUniform : details::TPipelineDescUniform<FPipelineDesc::FUniformBuffer> {
+    using base_type = details::TPipelineDescUniform<FPipelineDesc::FUniformBuffer>;
+    using base_type::operator==;
+    using base_type::operator!=;
+
+    PPE_RHI_API FUniformBufferUniform(const FUniformID& id, u32 size, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex = FPipelineDesc::StaticOffset) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+struct FStorageBufferUniform : details::TPipelineDescUniform<FPipelineDesc::FStorageBuffer> {
+    using base_type = details::TPipelineDescUniform<FPipelineDesc::FStorageBuffer>;
+    using base_type::operator==;
+    using base_type::operator!=;
+
+    PPE_RHI_API FStorageBufferUniform(const FUniformID& id, u32 staticSize, u32 arrayStride, EShaderAccess access, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex = FPipelineDesc::StaticOffset) NOEXCEPT;
+};
+//----------------------------------------------------------------------------
+struct FRayTracingSceneUniform : details::TPipelineDescUniform<FPipelineDesc::FRayTracingScene> {
+    using base_type = details::TPipelineDescUniform<FPipelineDesc::FRayTracingScene>;
+    using base_type::operator==;
+    using base_type::operator!=;
+
+    PPE_RHI_API FRayTracingSceneUniform(const FUniformID& id, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // Graphics

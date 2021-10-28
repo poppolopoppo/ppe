@@ -263,16 +263,16 @@ struct TResourceWrappedId;
 //----------------------------------------------------------------------------
 // Resources
 //----------------------------------------------------------------------------
-using FUniformID                = details::TNamedId<   1, USE_PPE_RHIOPTIMIZEIDS >;
-using FPushConstantID           = details::TNamedId<   2, USE_PPE_RHIOPTIMIZEIDS >;
-using FDescriptorSetID          = details::TNamedId<   3, USE_PPE_RHIOPTIMIZEIDS >;
-using FSpecializationID         = details::TNamedId<   4, USE_PPE_RHIOPTIMIZEIDS >;
-using FVertexID                 = details::TNamedId<   5, USE_PPE_RHIOPTIMIZEIDS >;
-using FVertexBufferID           = details::TNamedId<   6, USE_PPE_RHIOPTIMIZEIDS >;
-using FMemPoolID                = details::TNamedId<   7, USE_PPE_RHIOPTIMIZEIDS >;
-using FRTShaderID               = details::TNamedId<   8, USE_PPE_RHIOPTIMIZEIDS >;
-using FGeometryID               = details::TNamedId<   9, USE_PPE_RHIOPTIMIZEIDS >;
-using FInstanceID               = details::TNamedId<  10, USE_PPE_RHIOPTIMIZEIDS >;
+using FUniformID                = details::TNamedId<   1, !USE_PPE_RHIOPTIMIZEIDS >;
+using FPushConstantID           = details::TNamedId<   2, !USE_PPE_RHIOPTIMIZEIDS >;
+using FDescriptorSetID          = details::TNamedId<   3, !USE_PPE_RHIOPTIMIZEIDS >;
+using FSpecializationID         = details::TNamedId<   4, !USE_PPE_RHIOPTIMIZEIDS >;
+using FVertexID                 = details::TNamedId<   5, !USE_PPE_RHIOPTIMIZEIDS >;
+using FVertexBufferID           = details::TNamedId<   6, !USE_PPE_RHIOPTIMIZEIDS >;
+using FMemPoolID                = details::TNamedId<   7, !USE_PPE_RHIOPTIMIZEIDS >;
+using FRTShaderID               = details::TNamedId<   8, !USE_PPE_RHIOPTIMIZEIDS >;
+using FGeometryID               = details::TNamedId<   9, !USE_PPE_RHIOPTIMIZEIDS >;
+using FInstanceID               = details::TNamedId<  10, !USE_PPE_RHIOPTIMIZEIDS >;
 
 enum class ERenderTargetID : u32;
 PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FStagingBufferIndex);

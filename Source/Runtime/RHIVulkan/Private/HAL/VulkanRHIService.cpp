@@ -8,6 +8,13 @@
 #include "Meta/Utility.h"
 #include "RHI/SwapchainDesc.h"
 
+#if USE_PPE_RHIDEBUG
+namespace PPE::RHI {
+extern void UnitTest_LocalBuffer();
+extern void UnitTest_LocalImage();
+}
+#endif
+
 namespace PPE {
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
@@ -230,6 +237,15 @@ void FVulkanRHIService::ReleaseMemory() NOEXCEPT {
     if (_frameGraph)
         _frameGraph->ReleaseMemory();
 }
+//----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
+void FVulkanRHIService::UnitTest() NOEXCEPT {
+    IRHIService::UnitTest();
+
+    RHI::UnitTest_LocalBuffer();
+    RHI::UnitTest_LocalImage();
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

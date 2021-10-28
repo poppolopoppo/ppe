@@ -6,6 +6,8 @@
 #include "RHI/ImageHelpers.h"
 #include "RHI/PixelFormatHelpers.h"
 
+#include "Diagnostic/Logger.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -32,12 +34,12 @@ FImageDesc& FImageDesc::SetView(EImageView value) NOEXCEPT {
 
     case EImageView::_2D:
     case EImageView::_2DArray:
-        Type = EImageDim_1D;
+        Type = EImageDim_2D;
         break;
 
     case EImageView::_Cube:
     case EImageView::_CubeArray:
-        Type = EImageDim::_2D;
+        Type = EImageDim_2D;
         Flags |= EImageFlags::CubeCompatible;
         break;
 
@@ -92,7 +94,7 @@ void FImageDesc::Validate() {
 
     case EImageDim::_2D:
         Assert_NoAssume(Dimensions.z == 1);
-        if ((Flags & EImageFlags::CubeCompatible) and not Meta::IsAligned(6, *ArrayLayers))
+        if ((Flags & EImageFlags::CubeCompatible) and (*ArrayLayers % 6))
             Flags -= EImageFlags::CubeCompatible;
 
         Dimensions.z = 1;
@@ -114,7 +116,7 @@ void FImageDesc::Validate() {
 
     // validate samples and mipmaps
     if (Samples.Enabled()) {
-        Assert(MaxLevel <= 1_mipmap);
+        CLOG(MaxLevel > 1_mipmap, RHI, Warning, L"clamping max level to 1 due to multi-sampling");
         MaxLevel = 1_mipmap;
     }
     else {
@@ -185,6 +187,11 @@ void FImageViewDesc::Validate(const FImageDesc& desc) {
 
 
     if (View == Default) {
+        const u32 maxLayers = *desc.ArrayLayers;
+
+        BaseLayer = FImageLayer{ Clamp(*BaseLayer, 0u, maxLayers - 1) };
+        LayerCount = FImageLayer{ Clamp(LayerCount, 1u, maxLayers - *BaseLayer) };
+
         // choose view type
         switch (desc.Type) {
         case EImageDim::_1D:
@@ -247,14 +254,14 @@ void FImageViewDesc::Validate(const FImageDesc& desc) {
             Assert_NoAssume((desc.Type == EImageDim_2D) ||
                             (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::Array2DCompatible) );
             Assert_NoAssume(desc.Flags & EImageFlags::CubeCompatible);
-            Assert_NoAssume(UMax == LayerCount || Meta::IsAligned(6u, LayerCount));
+            Assert_NoAssume(UMax == LayerCount || 0 == (LayerCount % 6u));
             LayerCount = 6;
             break;
         case EImageView::_CubeArray:
             Assert_NoAssume((desc.Type == EImageDim_2D) ||
                             (desc.Type == EImageDim_3D && desc.Flags & EImageFlags::Array2DCompatible) );
             Assert_NoAssume(desc.Flags & EImageFlags::CubeCompatible);
-            Assert_NoAssume(UMax == LayerCount || Meta::IsAligned(6u, LayerCount));
+            Assert_NoAssume(UMax == LayerCount || 0 == (LayerCount % 6u));
             LayerCount = Max(1u, (maxLayers - *BaseLayer) / 6) * 6;
             break;
 
@@ -268,7 +275,6 @@ void FImageViewDesc::Validate(const FImageDesc& desc) {
         default: AssertNotImplemented();
         }
     }
-
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

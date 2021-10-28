@@ -957,7 +957,7 @@ bool FVulkanPipelineCache::CreateShaderStage_(
     // find suitable shader module
 
     auto bestMatch = pipeline.Shaders.end();
-    for (auto it = pipeline.Shaders.Find(id); it != pipeline.Shaders.end() && *it == id; ++it) {
+    for (auto it = pipeline.Shaders.find(id); it != pipeline.Shaders.end() && *it == id; ++it) {
 #if USE_PPE_RHIDEBUG
         if (it->DebugMode == mode) {
             bestMatch = it;

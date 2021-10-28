@@ -39,6 +39,7 @@ enum class EVertexFormat : u32 {
 
     // flags
     _FlagsOffset    = 16,
+    _FlagsMask      = 0xF << _FlagsOffset,
     NormalizedFlag  = 1 << _FlagsOffset, // convert integer to normalized float value (-1..+1)
     ScaledFlag      = 2 << _FlagsOffset, // convert integer to float value (min..max)
 

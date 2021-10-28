@@ -53,9 +53,8 @@ EVertexFormat FVertexInput::DestinationFormat() const {
     }
 }
 //----------------------------------------------------------------------------
-FVertexInputState& FVertexInputState::Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId) {
+FVertexInputState& FVertexInputState::Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId) NOEXCEPT {
     Assert(vertexId.Valid());
-    Assert(bufferId.Valid());
 
     const FVertexBufferBinding& binding = BufferBindings.Get(bufferId);
     Vertices.Emplace_Overwrite(vertexId, FVertexInput{ fmt, offset, binding.Index });
@@ -63,19 +62,16 @@ FVertexInputState& FVertexInputState::Add(const FVertexID& vertexId, EVertexForm
     return (*this);
 }
 //----------------------------------------------------------------------------
-FVertexInputState& FVertexInputState::Bind(const FVertexBufferID& bufferId, u32 stride, u32 index, EVertexInputRate rate) {
-    Assert(bufferId.Valid());
-
+FVertexInputState& FVertexInputState::Bind(const FVertexBufferID& bufferId, u32 stride, u32 index, EVertexInputRate rate) NOEXCEPT {
     if (AutoBindingIndex == index)
         index = checked_cast<u32>(BufferBindings.size());
 
-    BufferBindings.Emplace_Overwrite(bufferId, FVertexBufferBinding{ index, stride, rate });
-
+    BufferBindings.Emplace_AssertUnique(bufferId, FVertexBufferBinding{ index, stride, rate });
     return (*this);
 }
 //----------------------------------------------------------------------------
-bool FVertexInputState::CopyAttributes(const TMemoryView<const FVertexAttribute> attribs) {
-    Assert(attribs.size() == Vertices.size());
+bool FVertexInputState::CopyAttributes(const TMemoryView<const FVertexAttribute> attribs) NOEXCEPT {
+    AssertRelease(attribs.size() == Vertices.size());
 
     for (const FVertexAttribute& attr: attribs) {
         Assert(attr.Id.Valid());

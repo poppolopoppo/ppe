@@ -300,7 +300,7 @@ bool CreateVulkanInstance_(
     createInfo.enabledExtensionCount = checked_cast<u32>(extensionNames.size());
     createInfo.ppEnabledExtensionNames = reinterpret_cast<const char* const*>(extensionNames.data());
 
-    LOG(RHI, Debug, L"create vulkan instance version {0}\n\tLayers: {1}\n\tExtensions: {2}",
+    LOG(RHI, Debug, L"create vulkan instance version {0}\n\t- Layers: {1}\n\t- Extensions: {2}",
         version, Fmt::CommaSeparatedW(layerNames.MakeView()), Fmt::CommaSeparatedW(extensionNames.MakeView()) );
 
     VK_CHECK( api.vkCreateInstance(&createInfo, &allocator, pVkInstance) );
@@ -838,10 +838,9 @@ bool CreateVulkanDevice_(
         static_cast<EVulkanVendor>(physicalDevice->Properties.vendorID),
         physicalDevice->Properties.driverVersion,
         Fmt::Formator<wchar_t>([&](FWTextWriter& oss) {
-            oss << Eol;
             u32 cnt = 0;
             for (auto& heap : MakeView(physicalDevice->Memory.memoryHeaps, physicalDevice->Memory.memoryHeaps + physicalDevice->Memory.memoryHeapCount))
-                oss << Tab << L"- HEAP" << cnt++ << L" " << Fmt::SizeInBytes(heap.size) << Eol;
+                oss << Eol << Tab << L"- HEAP" << cnt++ << L" " << Fmt::SizeInBytes(heap.size);
         }));
 
     if (not SetupVulkanQueues_(&pDevice->Queues, pDevice->vkPhysicalDevice, vkSurface, api, queues)) {

@@ -18,6 +18,8 @@ CONSTEXPR FImageLayer operator "" _layer (unsigned long long value) {
 // FImageSwizzle user-literal: "RGBA"_swizzle
 //----------------------------------------------------------------------------
 CONSTEXPR FImageSwizzle operator "" _swizzle (const char* str, size_t len) {
+    Assert(len <= 4);
+
     u16 value = 0;
     forrange(i, 0, len) {
         u16 channel = 0;
@@ -31,7 +33,7 @@ CONSTEXPR FImageSwizzle operator "" _swizzle (const char* str, size_t len) {
         default: AssertNotReached(); // only accepts [R,G,B,A,0,1]
         }
 
-        value = (channel << (i*4));
+        value |= (channel << (3 - i) *4);
     }
 
     return FImageSwizzle(value);
@@ -40,18 +42,18 @@ CONSTEXPR FImageSwizzle operator "" _swizzle (const char* str, size_t len) {
 CONSTEXPR FImageSwizzle Swizzle(const uint4& v) {
     Assert(AllLess(v, uint4(7)));
     return FImageSwizzle{checked_cast<u16>(
-        (v.x <<  0u) |
-        (v.y <<  4u) |
-        (v.z <<  8u) |
-        (v.w << 12u) )};
+        ((v.x & 0xFu) << 12u) |
+        ((v.y & 0xFu) <<  8u) |
+        ((v.z & 0xFu) <<  4u) |
+        ((v.w & 0xFu) <<  0u) )};
 }
 //----------------------------------------------------------------------------
 CONSTEXPR uint4 Unswizzle(FImageSwizzle swizzle) {
     return uint4{
-        (swizzle.Value >>  0u) & 0xFu,
-        (swizzle.Value >>  4u) & 0xFu,
+        (swizzle.Value >> 12u) & 0xFu,
         (swizzle.Value >>  8u) & 0xFu,
-        (swizzle.Value >> 12u) & 0xFu
+        (swizzle.Value >>  4u) & 0xFu,
+        (swizzle.Value >> 0u) & 0xFu
     };
 }
 //----------------------------------------------------------------------------

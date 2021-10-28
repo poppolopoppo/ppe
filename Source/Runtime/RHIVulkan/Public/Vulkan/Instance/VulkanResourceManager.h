@@ -254,8 +254,6 @@ private:
     NODISCARD bool ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount);
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
     NODISCARD bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount);
-    template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    void TearDownCache_(TCache<T, _ChunkSize, _MaxChunks>& cache);
 
     NODISCARD bool CreateMemory_(FRawMemoryID* pId, TResourceProxy<FVulkanMemoryObject>** pMemory, const FMemoryDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
     NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, FPipelineDesc::FPipelineLayout&& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
@@ -280,11 +278,9 @@ private:
 
     std::atomic<u32> _submissionCounter;
 
-    FCriticalSection _shaderCacheCS;
-    FVulkanShaderRefs _shaderCache;
+    TThreadSafe<FVulkanShaderRefs, EThreadBarrier::CriticalSection> _shaderCache;
 
-    FReadWriteLock _compilersRW;
-    FPipelineCompilers _compilers;
+    TThreadSafe<FPipelineCompilers, EThreadBarrier::RWLock> _compilers;
 
     FRawDescriptorSetLayoutID _emptyDSLayout;
 

@@ -27,6 +27,10 @@ public: // virtual
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) = 0;
     virtual void ReleaseMemory() NOEXCEPT = 0;
 
+#if USE_PPE_RHIDEBUG
+    virtual void UnitTest() NOEXCEPT;
+#endif
+
 public: // for all services
     using FRHIEvent = TFunction<void(const IRHIService&)>;
 

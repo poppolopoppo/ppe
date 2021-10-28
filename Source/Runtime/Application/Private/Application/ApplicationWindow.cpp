@@ -68,6 +68,11 @@ void FApplicationWindow::Start() {
         if (not _targetRHI->CreateService(&_rhi, Domain(), &surfaceInfo, features) )
             LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort!", Domain().Name(), Name());
 
+#if USE_PPE_RHIDEBUG
+        _rhi->UnitTest();
+        _rhi->ReleaseMemory();
+#endif
+
         services.Add<IRHIService>(_rhi.get());
     }
 

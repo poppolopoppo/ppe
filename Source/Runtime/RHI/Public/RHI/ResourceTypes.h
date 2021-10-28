@@ -43,9 +43,14 @@ struct FImageDataRange {
     FImageDataRange() = default;
     FImageDataRange(
         FImageLayer baseLayer, u32 layerCount,
-        FMipmapLevel baseLevel, u32 levelCount )
-    :   Layers(FSubRange(*baseLayer, *baseLayer + layerCount))
-    ,   Mipmaps(FSubRange(*baseLevel, *baseLevel + levelCount))
+        FMipmapLevel baseLevel, u32 levelCount ) NOEXCEPT
+    :   FImageDataRange(
+            FSubRange(*baseLayer, *baseLayer + layerCount),
+            FSubRange(*baseLevel, *baseLevel + levelCount) )
+    {}
+    FImageDataRange(const FSubRange& layers, const FSubRange& mipmaps) NOEXCEPT
+    :   Layers(layers)
+    ,   Mipmaps(mipmaps)
     {}
 
     bool Empty() const { return (Layers.Empty() || Mipmaps.Empty()); }
@@ -58,12 +63,8 @@ struct FImageDataRange {
     }
 
     FImageDataRange Intersect(const FImageDataRange& other) const {
-        FImageDataRange result(*this);
-        result.Layers.Intersect(other.Layers);
-        if (result.Layers.Empty())
-            result.Layers = FSubRange();
-        result.Mipmaps.Intersect(other.Mipmaps);
-        return result;
+        const FSubRange layers = Layers.Intersect(other.Layers);
+        return { layers, layers.Empty() ? FSubRange{} : Mipmaps.Intersect(other.Mipmaps) };
     }
 
     bool operator ==(const FImageDataRange& other) const { return (Layers == other.Layers && Mipmaps == other.Mipmaps); }

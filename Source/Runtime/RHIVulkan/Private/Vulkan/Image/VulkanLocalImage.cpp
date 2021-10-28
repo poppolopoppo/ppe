@@ -38,7 +38,7 @@ bool FVulkanLocalImage::Construct(const FVulkanImage* pImageData) {
     pending.Index = EVulkanExecutionOrder::Initial;
     pending.Range = { 0, sharedImg->ArrayLayers() * sharedImg->MipmapLevels() };
 
-    _accessForReadWrite.push_back(std::move(pending));
+    _accessForReadWrite->push_back(std::move(pending));
 
     return true;
 }
@@ -50,116 +50,25 @@ void FVulkanLocalImage::TearDown() {
 
     // check of uncommitted barriers
 
-    Assert_NoAssume(_accessPending.empty());
-    Assert_NoAssume(_accessForReadWrite.empty());
+    Assert_NoAssume(_accessPending->empty());
+    Assert_NoAssume(_accessForReadWrite->empty());
 
-    _accessPending.clear();
-    _accessForReadWrite.clear();
-}
-//----------------------------------------------------------------------------
-auto FVulkanLocalImage::FindFirstAccess_(FAccessRecords& arr, const FSubRange& range) -> FAccessRecords::iterator {
-    Assert(range.First < range.Last);
-
-    size_t left = 0;
-
-    for (size_t right = arr.size(); left < right; ) {
-        const size_t mid = (left + right) >> 1;
-
-        if (arr[mid].Range.Last < range.First)
-            left = mid + 1;
-        else
-            right = mid;
-    }
-
-    if (left < arr.size() and arr[left].Range.Last >= range.First)
-        return (arr.begin() + left);
-
-    return arr.end();
-}
-//----------------------------------------------------------------------------
-void FVulkanLocalImage::ReplaceAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator it, const FImageAccess& barrier) {
-    Assert(arr.AliasesToContainer(it));
-    Assert(barrier.Range.First < barrier.Range.Last);
-
-    bool replaced = false;
-
-    for (; it != arr.end(); ) {
-        if ((it->Range.First < barrier.Range.First) and
-            (it->Range.Last <= barrier.Range.Last) ) {
-            //  |1111111|22222|
-            //     |bbbbb|          +
-            //  |11|....            =
-            it->Range.Last = barrier.Range.First;
-            ++it;
-            continue;
-        }
-
-        if ((it->Range.First < barrier.Range.First) and
-            (it->Range.Last > barrier.Range.Last) ) {
-            //  |111111111111111|
-            //      |bbbbb|         +
-            //  |111|bbbbb|11111|   =
-            const FImageAccess src = *it;
-            it->Range.Last = barrier.Range.First;
-
-            it = arr.insert(it + 1, barrier);
-            replaced = true;
-
-            it = arr.insert(it + 1, src);
-
-            it->Range.First = barrier.Range.Last;
-            break;
-        }
-
-        if ((it->Range.First >= barrier.Range.First) and
-            (it->Range.First < barrier.Range.Last) ) {
-
-            if (it->Range.Last > barrier.Range.Last) {
-                //  ...|22222222222|
-                //   |bbbbbbb|          +
-                //  ...bbbbbb|22222|    =
-                it->Range.First = barrier.Range.Last;
-
-                if (not replaced) {
-                    arr.insert(it, barrier);
-                    replaced = true;
-                }
-                break;
-            }
-
-            if (replaced) {
-                //  ...|22222|33333|
-                //   |bbbbbbbbbbb|      +
-                //  ...|bbbbbbbbb|...   =
-                it = arr.erase(it);
-            }
-            else {
-                *it = barrier;
-                ++it;
-                replaced = true;
-            }
-            continue;
-        }
-
-        break;
-    }
-
-    if (not replaced)
-        arr.insert(it, barrier);
+    _accessPending->clear();
+    _accessForReadWrite->clear();
 }
 //----------------------------------------------------------------------------
 void FVulkanLocalImage::SetInitialState(bool immutable, bool invalidate) {
     // image must be in initial state
 
-    Assert(_accessForReadWrite.size() == 1);
-    Assert(_accessForReadWrite.front().Stages == VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+    Assert(_accessForReadWrite->size() == 1);
+    Assert(_accessForReadWrite->front().Stages == VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 
     _isImmutable = immutable;
 
     if (invalidate) {
         AssertMessage(L"must be mutable to allow image layout transition", not _isImmutable);
 
-        _accessForReadWrite.front().Layout = VK_IMAGE_LAYOUT_UNDEFINED;
+        _accessForReadWrite->front().Layout = VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }
 //----------------------------------------------------------------------------
@@ -212,18 +121,18 @@ void FVulkanLocalImage::AddPendingState(const FImageState& st) const {
     // merge with pending
 
     for (FSubRange& range : subRanges) {
-        auto it = FindFirstAccess_(_accessPending, range);
+        auto it = _accessPending.FindFirstAccess(range);
 
-        if (it != _accessPending.end() and it->Range.First > range.First) {
+        if (it != _accessPending->end() and it->Range.First > range.First) {
             pending.Range = { range.First, it->Range.First };
 
-            it = _accessPending.insert(it, pending);
+            it = _accessPending->insert(it, pending);
             ++it;
 
             range.First = it->Range.First;
         }
 
-        for (; it != _accessPending.end() and it->Range.Overlaps(range); ++it) {
+        for (; it != _accessPending->end() and it->Range.Overlaps(range); ++it) {
             AssertMessage(L"something goes wrong - resource has uncommited state from another task", it->Index == pending.Index);
             AssertMessage(L"can't use different layouts inside single task", it->Layout == pending.Layout);
 
@@ -240,13 +149,13 @@ void FVulkanLocalImage::AddPendingState(const FImageState& st) const {
 
         if (not range.Empty()) {
             pending.Range = range;
-            _accessPending.insert(it, pending);
+            _accessPending->insert(it, pending);
         }
     }
 }
 //----------------------------------------------------------------------------
 void FVulkanLocalImage::ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP)) {
-    AssertMessage(L"you must commit all pending states before reseting", _accessPending.empty());
+    AssertMessage(L"you must commit all pending states before reseting", _accessPending->empty());
 
     // add full range barrier
     {
@@ -263,24 +172,23 @@ void FVulkanLocalImage::ResetState(EVulkanExecutionOrder index, FVulkanBarrierMa
         pending.Index = index;
         pending.Range = { 0u, sharedImg->ArrayLayers() * sharedImg->MipmapLevels() };
 
-        _accessPending.push_back(std::move(pending));
+        _accessPending->push_back(std::move(pending));
     }
 
     CommitBarrier(barriers ARGS_IF_RHIDEBUG(debuggerIFP));
 
     // flush
 
-    _accessForReadWrite.clear();
+    _accessForReadWrite->clear();
 }
 //----------------------------------------------------------------------------
 void FVulkanLocalImage::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP)) const {
     const auto sharedImg = _imageData->Read();
 
-    for (const auto& pending : _accessPending) {
-        const auto first = FindFirstAccess_(_accessForReadWrite, pending.Range);
+    for (const auto& pending : *_accessPending) {
+        const auto first = _accessForReadWrite.FindFirstAccess(pending.Range);
 
-
-        for (auto it = first; it != _accessForReadWrite.end() and it->Range.First < pending.Range.Last; ++it) {
+        for (auto it = first; it != _accessForReadWrite->end() and it->Range.First < pending.Range.Last; ++it) {
             const FSubRange range = it->Range.Intersect(pending.Range);
             const u32 arrLayers = sharedImg->ArrayLayers();
 
@@ -321,10 +229,10 @@ void FVulkanLocalImage::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RH
             }
         }
 
-        ReplaceAccessRecords_(_accessForReadWrite, first, pending);
+        _accessForReadWrite.ReplaceAccessRecords(first, pending);
     }
 
-    _accessPending.clear();
+    _accessPending->clear();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

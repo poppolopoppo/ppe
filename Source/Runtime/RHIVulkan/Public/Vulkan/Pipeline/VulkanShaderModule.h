@@ -12,10 +12,11 @@ namespace RHI {
 class PPE_RHIVULKAN_API FVulkanShaderModule final : public IShaderData<FShaderModule> {
 public:
     using IShaderData<FShaderModule>::FDataRef;
+    using IShaderData<FShaderModule>::FFingerprint;
 
     FVulkanShaderModule(
         VkShaderModule vkShaderModule,
-        hash_t sourceFingerprint,
+        FFingerprint sourceFingerprint,
         FStringView entryPoint
         ARGS_IF_RHIDEBUG(FConstChar debugName)) NOEXCEPT;
 
@@ -25,7 +26,7 @@ public:
 
     virtual FDataRef Data() const NOEXCEPT override { return reinterpret_cast<FDataRef>(&_vkShaderModule); }
     virtual FConstChar EntryPoint() const NOEXCEPT override { return _entryPoint.c_str(); }
-    virtual hash_t HashValue() const NOEXCEPT override { return _hashValue; }
+    virtual FFingerprint Fingerprint() const NOEXCEPT override { return _fingerprint; }
 
 #if USE_PPE_RHIDEBUG
     virtual FConstChar DebugName() const NOEXCEPT override { return _debugName; }
@@ -37,7 +38,7 @@ public:
 
 private:
     VkShaderModule _vkShaderModule;
-    hash_t _hashValue;
+    FFingerprint _fingerprint;
     TStaticString<64> _entryPoint;
 #if USE_PPE_RHIDEBUG
     FVulkanDebugName _debugName;

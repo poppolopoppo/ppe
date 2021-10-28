@@ -192,7 +192,7 @@ void FVulkanDescriptorSetLayout::AddUniform_(FBindings* pBinding, FInternalPool&
 //----------------------------------------------------------------------------
 void FVulkanDescriptorSetLayout::AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FImage& img, u32 bindingIndex, u32 arraySize, EShaderStages stageFlags) {
     pool.HashValue = hash_tuple(
-        img.Format,
+        img.Type,
         bindingIndex,
         stageFlags,
         img.State,

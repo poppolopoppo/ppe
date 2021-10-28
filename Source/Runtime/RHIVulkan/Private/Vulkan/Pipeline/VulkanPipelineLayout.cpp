@@ -107,8 +107,7 @@ bool FVulkanPipelineLayout::Construct(const FVulkanDevice& device, VkDescriptorS
     FDescriptorSetLayouts vkLayouts;
     FPushConstantRanges vkRanges;
 
-    for (VkDescriptorSetLayout& vkLayout : vkLayouts)
-        vkLayout = VK_NULL_HANDLE;
+    Broadcast(vkLayouts.MakeView(), emptyLayout);
 
     u32 minSet = checked_cast<u32>(vkLayouts.size());
     u32 maxSet = 0;

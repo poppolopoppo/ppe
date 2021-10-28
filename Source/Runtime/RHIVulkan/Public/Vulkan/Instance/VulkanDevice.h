@@ -42,14 +42,14 @@ struct FVulkanDeviceQueue : FVulkanDeviceQueueInfo {
 //----------------------------------------------------------------------------
 struct FVulkanDeviceInfo {
     FVulkanDeviceAPI API{};
-    VkInstance vkInstance{ VK_NULL_HANDLE };
-    VkPhysicalDevice vkPhysicalDevice{ VK_NULL_HANDLE };
-    VkDevice vkDevice{ VK_NULL_HANDLE };
     TFixedSizeStack<FVulkanDeviceQueueInfo, MaxQueueFamilies> Queues;
     FVulkanInstanceExtensionSet RequiredInstanceExtensions{ Meta::ForceInit };
     FVulkanInstanceExtensionSet OptionalInstanceExtensions{ Meta::ForceInit };
     FVulkanDeviceExtensionSet RequiredDeviceExtensions{ Meta::ForceInit };
     FVulkanDeviceExtensionSet OptionalDeviceExtensions{ Meta::ForceInit };
+    VkInstance vkInstance{ VK_NULL_HANDLE };
+    VkPhysicalDevice vkPhysicalDevice{ VK_NULL_HANDLE };
+    VkDevice vkDevice{ VK_NULL_HANDLE };
     const VkAllocationCallbacks* pAllocator{ nullptr };
 };
 //----------------------------------------------------------------------------
@@ -63,16 +63,26 @@ public:
         // vulkan 1.1 core
         bool BindMemory2                : 1;
         bool DedicatedAllocation        : 1;
+        bool DescriptorUpdateTemplate   : 1;
+        bool ImageViewUsage             : 1;
         bool CommandPoolTrim            : 1;
         bool DispatchBase               : 1;
         bool Array2DCompatible          : 1;
         bool BlockTexelView             : 1;
+        bool Maintenance3               : 1;
         // vulkan 1.2 core
         bool SamplerMirrorClamp         : 1;
+        bool ShaderAtomicInt64          : 1;
+        bool Float16Arithmetic          : 1;
+        bool Int8Arithmetic             : 1;
+        bool BufferAddress              : 1;
         bool DescriptorIndexing         : 1;
         bool RenderPass2                : 1;
         bool DepthStencilResolve        : 1;
         bool DrawIndirectCount          : 1;
+        bool Spirv14                    : 1;
+        bool MemoryModel                : 1;
+        bool SamplerFilterMinmax        : 1;
         // window extensions
         bool Surface                    : 1;
         bool SurfaceCaps2               : 1;
@@ -82,7 +92,14 @@ public:
         bool MemoryBudget               : 1;
         bool MeshShaderNV               : 1;
         bool RayTracingNV               : 1;
+        bool ImageFootprintNV           : 1;
         bool ShadingRateImageNV         : 1;
+        bool InlineUniformBlock         : 1;
+        bool ShaderClock                : 1;
+        bool TimelineSemaphore          : 1;
+        bool PushDescriptor             : 1;
+        bool ShaderStencilExport        : 1;
+        bool ExtendedDynamicState       : 1;
         bool Robustness2                : 1;
         bool RayTracingKHR              : 1;
     };
@@ -107,23 +124,46 @@ public:
         VkPhysicalDeviceShadingRateImageFeaturesNV ShadingRateImageFeatures;
         VkPhysicalDeviceShadingRateImagePropertiesNV ShadingRateImageProperties;
     #endif
+    #ifdef VK_NV_shader_image_footprint
+        VkPhysicalDeviceShaderImageFootprintFeaturesNV ShaderImageFootprintFeatures;
+    #endif
     #ifdef VK_NV_ray_tracing
         VkPhysicalDeviceRayTracingPropertiesNV RayTracingNVProperties;
     #endif
+    #ifdef VK_KHR_timeline_semaphore
+        VkPhysicalDeviceTimelineSemaphorePropertiesKHR TimelineSemaphoreProperties;
+    #endif
+    #ifdef VK_KHR_shader_clock
+        VkPhysicalDeviceShaderClockFeaturesKHR ShaderClockFeatures;
+    #endif
+    #ifdef VK_KHR_buffer_device_address
+        VkPhysicalDeviceBufferDeviceAddressFeaturesKHR BufferDeviceAddress;
+    #endif
+    #ifdef VK_KHR_shader_atomic_int64
+        VkPhysicalDeviceShaderAtomicInt64FeaturesKHR ShaderAtomicInt64;
+    #endif
+    #ifdef VK_KHR_vulkan_memory_model
+        VkPhysicalDeviceVulkanMemoryModelFeaturesKHR MemoryModel;
+    #endif
     #ifdef VK_KHR_depth_stencil_resolve
         VkPhysicalDeviceDepthStencilResolvePropertiesKHR DepthStencilResolve;
+    #endif
+    #ifdef VK_KHR_maintenance3
+        VkPhysicalDeviceMaintenance3Properties Maintenance3Properties;
     #endif
     #ifdef VK_EXT_descriptor_indexing
         VkPhysicalDeviceDescriptorIndexingFeaturesEXT DescriptorIndexingFeatures;
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT DescriptorIndexingProperties;
     #endif
-    #ifdef VK_VERSION_1_2
-        VkPhysicalDeviceVulkan11Properties Properties110;
-        VkPhysicalDeviceVulkan12Properties Properties120;
-    #endif
     #ifdef VK_EXT_robustness2
         VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
         VkPhysicalDeviceRobustness2PropertiesEXT Robustness2Properties;
+    #endif
+    #ifdef VK_EXT_extended_dynamic_state
+        VkPhysicalDeviceExtendedDynamicStateFeaturesEXT ExtendedDynamicStateFeatures;
+    #endif
+    #ifdef VK_EXT_sampler_filter_minmax
+        VkPhysicalDeviceSamplerFilterMinmaxPropertiesEXT SamplerFilerMinmaxProperties;
     #endif
     #ifdef VK_NV_ray_tracing
         VkPhysicalDeviceRayTracingPropertiesNV RayTracingPropertiesNV;
@@ -132,14 +172,24 @@ public:
         VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingFeaturesKHR;
         VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPropertiesKHR;
     #endif
+    #ifdef VK_VERSION_1_2
+            VkPhysicalDeviceVulkan11Properties Properties110;
+            VkPhysicalDeviceVulkan12Properties Properties120;
+    #endif
+    #ifdef VK_VERSION_1_1
+            VkPhysicalDeviceSubgroupProperties Subgroup;
+    #endif
     };
 
     explicit FVulkanDevice(const FVulkanDeviceInfo& info);
+#if USE_PPE_RHIDEBUG
     ~FVulkanDevice();
+#endif
 
     VkDevice vkDevice() const { return _vkDevice; }
     VkPhysicalDevice vkPhysicalDevice () const { return _vkPhysicalDevice; }
     VkInstance vkInstance() const { return _vkInstance; }
+    EVulkanVendor vkVendorId() const { return static_cast<EVulkanVendor>(_caps.Properties.vendorID); }
     EShaderLangFormat vkVersion() const { return _vkVersion; }
     TMemoryView<const FVulkanDeviceQueue> vkQueues() const { return _vkQueues.MakeConstView(); }
     const VkAllocationCallbacks* vkAllocator() const { return std::addressof(_vkAllocator); };

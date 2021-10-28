@@ -53,6 +53,7 @@ public:
 
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }
+    auto Write_ForDebug()  { return _data.LockExclusive(); }
 #endif
 
     VkBufferView MakeView(const FVulkanDevice& device, const FBufferViewDesc& desc) const;

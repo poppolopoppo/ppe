@@ -19,8 +19,8 @@ struct FImageDesc {
     uint3 Dimensions{ 0 };
     EPixelFormat Format{ Default };
     EImageUsage Usage{ Default };
-    FImageLayer ArrayLayers;
-    FMipmapLevel MaxLevel;
+    FImageLayer ArrayLayers{ 1_layer };
+    FMipmapLevel MaxLevel{ 1_mipmap };
     FMultiSamples Samples; // enable multisampling if > 1
     EQueueUsage Queues{ Default };
     bool IsExternal{ false };
@@ -69,11 +69,11 @@ struct FImageViewDesc {
     EImageView View{ Default };
     EPixelFormat Format{ Default };
     FMipmapLevel BaseLevel;
-    u32 LevelCount{ 1 };
+    u32 LevelCount{ UMax };
     FImageLayer BaseLayer;
-    u32 LayerCount{ 1 };
+    u32 LayerCount{ UMax };
     FImageSwizzle Swizzle;
-    EImageAspect AspectMask{ Default };
+    EImageAspect AspectMask{ EImageAspect::Auto };
 
     FImageViewDesc() = default;
     FImageViewDesc(

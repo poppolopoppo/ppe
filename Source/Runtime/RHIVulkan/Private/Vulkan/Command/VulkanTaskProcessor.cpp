@@ -2017,10 +2017,10 @@ void FVulkanTaskProcessor::AddImage_(
 
     AddImageState_(pLocalImage, FImageState{
         state, layout,
-        FImageRange{ desc.BaseLayer, desc.LayerCount, desc.BaseLevel, desc.LevelCount },
         (EPixelFormat_HasDepth(desc.Format) ? VK_IMAGE_ASPECT_DEPTH_BIT :
          EPixelFormat_HasStencil(desc.Format) ? VK_IMAGE_ASPECT_STENCIL_BIT :
          VK_IMAGE_ASPECT_COLOR_BIT ),
+        FImageRange{ desc.BaseLayer, desc.LayerCount, desc.BaseLevel, desc.LevelCount },
         _currentTask
     });
 }
@@ -2032,8 +2032,8 @@ void FVulkanTaskProcessor::AddImage_(
     const VkImageSubresourceLayers& subRes ) {
     AddImageState_(pLocalImage, FImageState{
         state, layout,
-        FImageRange{ FImageLayer(subRes.baseArrayLayer), subRes.layerCount, FMipmapLevel(subRes.mipLevel), 1 },
         static_cast<VkImageAspectFlagBits>(subRes.aspectMask),
+        FImageRange{ FImageLayer(subRes.baseArrayLayer), subRes.layerCount, FMipmapLevel(subRes.mipLevel), 1 },
         _currentTask
     });
 }
@@ -2045,8 +2045,8 @@ void FVulkanTaskProcessor::AddImage_(
     const VkImageSubresourceRange& subRes ) {
     AddImageState_(pLocalImage, FImageState{
         state, layout,
-        FImageRange{ FImageLayer(subRes.baseArrayLayer), subRes.layerCount, FMipmapLevel(subRes.baseMipLevel), subRes.levelCount },
         static_cast<VkImageAspectFlagBits>(subRes.aspectMask),
+        FImageRange{ FImageLayer(subRes.baseArrayLayer), subRes.layerCount, FMipmapLevel(subRes.baseMipLevel), subRes.levelCount },
         _currentTask
     });
 }
@@ -2077,7 +2077,7 @@ void FVulkanTaskProcessor::AddBuffer_(
 
     size = Min(bufferSize, (size == VK_WHOLE_SIZE ? bufferSize - offset : offset + size));
 
-    AddBufferState_(pLocalBuffer, FBufferState{ state, offset, size, _currentTask });
+    AddBufferState_(pLocalBuffer, FBufferState{ state, { offset, size }, _currentTask });
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::AddBuffer_(
@@ -2098,7 +2098,7 @@ void FVulkanTaskProcessor::AddBuffer_(
 
     // one big barrier
 
-    FBufferState wholeState{ state, 0, slicePitch * dimZ, _currentTask };
+    FBufferState wholeState{ state, { 0, slicePitch * dimZ }, _currentTask };
     wholeState.Range += region.bufferOffset;
 
     AddBufferState_(pLocalBuffer, std::move(wholeState));

@@ -660,16 +660,16 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
 #if USE_PPE_RHIDEBUG
     LOG(RHI, Info,
         L"Created swapchain:\n"
-        "\tName:            {0}\n"
-        "\tColor format:    {1}\n"
-        "\tColor space:     {2}\n"
-        "\tImage count:     {3}\n"
-        "\tPresent mode:    {4}\n"
-        "\tPre transform:   {5}\n"
-        "\tComposite alpha: {6}\n"
-        "\tImage usage:     {7}\n"
-        "\tQueue family:    {8}\n"
-        "\tQueue name:      {9}",
+        "\tName:                    {0}\n"
+        "\tColor format:            {1}\n"
+        "\tColor space:             {2}\n"
+        "\tImage count:             {3}\n"
+        "\tPresent mode:            {4}\n"
+        "\tPre transform:           {5}\n"
+        "\tComposite alpha:         {6}\n"
+        "\tImage usage:             {7}\n"
+        "\tQueue family:            {8}\n"
+        "\tQueue name:              {9}",
         debugName.MakeView(),
         RHICast(ColorFormat),
         ColorSpace,

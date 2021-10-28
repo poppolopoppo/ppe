@@ -62,6 +62,10 @@ enum class EVulkanExecutionOrder : u32 {
     Unknown         = ~0u,
 };
 //----------------------------------------------------------------------------
+CONSTEXPR EVulkanExecutionOrder operator "" _execution_order (unsigned long long value) {
+    return static_cast<EVulkanExecutionOrder>(static_cast<u32>(value));
+}
+//----------------------------------------------------------------------------
 CONSTEXPR EVulkanExecutionOrder& operator ++(EVulkanExecutionOrder& value) NOEXCEPT {
     return (value = static_cast<EVulkanExecutionOrder>(static_cast<u32>(value) + 1));
 }

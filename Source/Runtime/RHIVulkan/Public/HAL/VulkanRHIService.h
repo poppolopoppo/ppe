@@ -38,6 +38,10 @@ public: // IRHIService
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) override;
     virtual void ReleaseMemory() NOEXCEPT override;
 
+#if USE_PPE_RHIDEBUG
+    virtual void UnitTest() NOEXCEPT override;
+#endif
+
 private:
     const FVulkanTargetRHI& _vulkanRHI;
     const ERHIFeature _features;

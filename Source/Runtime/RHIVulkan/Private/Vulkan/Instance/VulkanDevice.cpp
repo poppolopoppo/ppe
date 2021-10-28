@@ -3,6 +3,13 @@
 
 #include "Vulkan/Instance/VulkanDevice.h"
 
+#include "Diagnostic/Logger.h"
+
+#if USE_PPE_LOGGER
+#   include "IO/FormatHelpers.h"
+#   include "IO/StringBuilder.h"
+#endif
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -54,6 +61,57 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
     SetupDeviceFeatures_();
     SetupDeviceFlags_();
 
+    LOG(RHI, Info, L"finished setup for new vulkan device:{0}",
+        Fmt::Formator<wchar_t>([this](FWTextWriter& log) {
+            log << Eol << FTextFormat::BoolAlpha
+            << Tab << L"VendorName:               " << vkVendorId() << Eol
+            << Tab << L"DeviceName:               " << MakeCStringView(Properties().deviceName) << Eol
+            << Tab << L"ApiVersion:               " << VK_VERSION_MAJOR( Properties().apiVersion ) << L'.'
+                                                    << VK_VERSION_MINOR( Properties().apiVersion ) << L'.'
+                                                    << VK_VERSION_PATCH( Properties().apiVersion ) << Eol
+            << Tab << L"DriverVersion:            " << VK_VERSION_MAJOR( Properties().driverVersion ) << L'.'
+                                                    << VK_VERSION_PATCH( Properties().driverVersion ) << Eol
+            << Tab << L">---------- 1.1 ----------" << Eol
+            << Tab << L"BindMemory2:              " << Enabled().BindMemory2 << Eol
+            << Tab << L"DedicatedAllocation:      " << Enabled().DedicatedAllocation << Eol
+            << Tab << L"DescriptorUpdateTemplate: " << Enabled().DescriptorUpdateTemplate << Eol
+            << Tab << L"ImageViewUsage:           " << Enabled().ImageViewUsage << Eol
+            << Tab << L"CommandPoolTrim:          " << Enabled().CommandPoolTrim << Eol
+            << Tab << L"DispatchBase:             " << Enabled().DispatchBase << Eol
+            << Tab << L"Array2DCompatible:        " << Enabled().Array2DCompatible << Eol
+            << Tab << L"BlockTexelView:           " << Enabled().BlockTexelView << Eol
+            << Tab << L"Maintenance3:             " << Enabled().Maintenance3 << Eol
+            << Tab << L">---------- 1.2 ----------" << Eol
+            << Tab << L"SamplerMirrorClamp:       " << Enabled().SamplerMirrorClamp << Eol
+            << Tab << L"ShaderAtomicInt64:        " << Enabled().ShaderAtomicInt64 << Eol
+            << Tab << L"Float16Arithmetic:        " << Enabled().Float16Arithmetic << Eol
+            << Tab << L"BufferAddress:            " << Enabled().BufferAddress << Eol
+            << Tab << L"DescriptorIndexing:       " << Enabled().DescriptorIndexing << Eol
+            << Tab << L"RenderPass2:              " << Enabled().RenderPass2 << Eol
+            << Tab << L"DepthStencilResolve:      " << Enabled().DepthStencilResolve << Eol
+            << Tab << L"DrawIndirectCount:        " << Enabled().DrawIndirectCount << Eol
+            << Tab << L"Spirv14:                  " << Enabled().Spirv14 << Eol
+            << Tab << L"MemoryModel:              " << Enabled().MemoryModel << Eol
+            << Tab << L"SamplerFilterMinmax       " << Enabled().SamplerFilterMinmax << Eol
+            << Tab << L">---------- Ext ----------" << Eol
+            << Tab << L"Surface:                  " << Enabled().Surface << Eol
+            << Tab << L"SurfaceCaps2:             " << Enabled().SurfaceCaps2 << Eol
+            << Tab << L"Swapchain:                " << Enabled().Swapchain << Eol
+            << Tab << L"Debug_utils:              " << Enabled().DebugUtils << Eol
+            << Tab << L"MeshShaderNV:             " << Enabled().MeshShaderNV << Eol
+            << Tab << L"RayTracingNV:             " << Enabled().RayTracingNV << Eol
+            << Tab << L"ShadingRateImageNV:       " << Enabled().ShadingRateImageNV << Eol
+            << Tab << L"InlineUniformBlock:       " << Enabled().InlineUniformBlock << Eol
+            << Tab << L"ShaderClock:              " << Enabled().ShaderClock << Eol
+            << Tab << L"TimelineSemaphore:        " << Enabled().TimelineSemaphore << Eol
+            << Tab << L"PushDescriptor:           " << Enabled().PushDescriptor << Eol
+            << Tab << L"Robustness2:              " << Enabled().Robustness2 << Eol
+            << Tab << L"ShaderStencilExport:      " << Enabled().ShaderStencilExport << Eol
+            << Tab << L"ExtendedDynamicState:     " << Enabled().ExtendedDynamicState << Eol
+            << Tab << L"RayTracingKHR:            " << Enabled().RayTracingKHR << Eol
+            << Tab << L"--------------------------";
+        }));
+
     // validate device limits
     AssertRelease(_caps.Properties.limits.maxPushConstantsSize >= MaxPushConstantsSize);
     AssertRelease(_caps.Properties.limits.maxVertexInputAttributes >= MaxVertexAttribs);
@@ -65,9 +123,11 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
                   _caps.Properties.limits.maxDescriptorSetStorageBuffersDynamic >= MaxBufferDynamicOffsets);
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 FVulkanDevice::~FVulkanDevice() {
-
+    LOG(RHI, Info, L"destroying vulkan device...");
 }
+#endif
 //----------------------------------------------------------------------------
 const FVulkanDeviceQueue& FVulkanDevice::DeviceQueue(EVulkanQueueFamily familyIndex) const NOEXCEPT {
     const auto ptr = _vkQueues.MakeView().Any([familyIndex](const FVulkanDeviceQueue& q) NOEXCEPT {
@@ -113,8 +173,14 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #ifdef VK_KHR_dedicated_allocation
     _enabled.DedicatedAllocation = (_vkVersion >= EShaderLangFormat::Vulkan_110 or HasExtension(EVulkanDeviceExtension::KHR_dedicated_allocation));
 #endif
+#ifdef VK_KHR_descriptor_update_template
+    _enabled.DescriptorUpdateTemplate = (_vkVersion >= EShaderLangFormat::Vulkan_110 or HasExtension(EVulkanDeviceExtension::KHR_descriptor_update_template));
+#endif
+#ifdef VK_KHR_maintenance3
+    _enabled.Maintenance3 = (_vkVersion >= EShaderLangFormat::Vulkan_110 or HasExtension(EVulkanDeviceExtension::KHR_maintenance3));
+#endif
 #ifdef VK_KHR_maintenance2
-    _enabled.BlockTexelView = (_vkVersion >= EShaderLangFormat::Vulkan_110 or HasExtension(EVulkanDeviceExtension::KHR_maintenance2));
+    _enabled.ImageViewUsage = _enabled.BlockTexelView = (_vkVersion >= EShaderLangFormat::Vulkan_110 or HasExtension(EVulkanDeviceExtension::KHR_maintenance2));
 #endif
 #ifdef VK_KHR_maintenance1
     const bool hasMaintenance1 = (_vkVersion >= EShaderLangFormat::Vulkan_110 or HasExtension(EVulkanDeviceExtension::KHR_maintenance1));
@@ -129,6 +195,24 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #endif
 #ifdef VK_KHR_sampler_mirror_clamp_to_edge
     _enabled.SamplerMirrorClamp = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_sampler_mirror_clamp_to_edge));
+#endif
+#ifdef VK_KHR_shader_atomic_int64
+    _enabled.ShaderAtomicInt64 = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_shader_atomic_int64));
+#endif
+#ifdef VK_KHR_shader_float16_int8
+    _enabled.Int8Arithmetic = _enabled.Float16Arithmetic = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_shader_float16_int8));
+#endif
+#ifdef VK_KHR_buffer_device_address
+    _enabled.BufferAddress = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_buffer_device_address));
+#endif
+#ifdef VK_KHR_spirv_1_4
+    _enabled.Spirv14 = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_spirv_1_4));
+#endif
+#ifdef VK_KHR_vulkan_memory_model
+    _enabled.MemoryModel = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_vulkan_memory_model));
+#endif
+#ifdef VK_EXT_sampler_filter_minmax
+    _enabled.SamplerFilterMinmax = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::EXT_sampler_filter_minmax));
 #endif
 #ifdef VK_KHR_draw_indirect_count
     _enabled.DrawIndirectCount = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_draw_indirect_count));
@@ -147,6 +231,30 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #endif
 #ifdef VK_NV_shading_rate_image
     _enabled.ShadingRateImageNV = HasExtension(EVulkanDeviceExtension::NV_shading_rate_image);
+#endif
+#ifdef VK_NV_shader_image_footprint
+    _enabled.ImageFootprintNV = HasExtension(EVulkanDeviceExtension::NV_shader_image_footprint);
+#endif
+#ifdef VK_EXT_inline_uniform_block
+    _enabled.InlineUniformBlock = HasExtension(EVulkanDeviceExtension::EXT_inline_uniform_block) ;
+#endif
+#ifdef VK_KHR_shader_clock
+    _enabled.ShaderClock = HasExtension(EVulkanDeviceExtension::KHR_shader_clock);
+#endif
+#ifdef VK_KHR_timeline_semaphore
+    _enabled.TimelineSemaphore = HasExtension(EVulkanDeviceExtension::KHR_timeline_semaphore);
+#endif
+#ifdef VK_KHR_push_descriptor
+    _enabled.PushDescriptor = HasExtension(EVulkanDeviceExtension::KHR_push_descriptor);
+#endif
+#ifdef VK_KHR_push_descriptor
+    _enabled.PushDescriptor = HasExtension(EVulkanDeviceExtension::KHR_push_descriptor);
+#endif
+#ifdef VK_EXT_shader_stencil_export
+    _enabled.ShaderStencilExport = HasExtension(EVulkanDeviceExtension::EXT_shader_stencil_export);
+#endif
+#ifdef VK_EXT_extended_dynamic_state
+    _enabled.ExtendedDynamicState = HasExtension(EVulkanDeviceExtension::EXT_extended_dynamic_state);
 #endif
 #ifdef VK_KHR_depth_stencil_resolve
     _enabled.DepthStencilResolve = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_depth_stencil_resolve));
@@ -182,6 +290,36 @@ void FVulkanDevice::SetupDeviceFeatures_() {
         if (_enabled.ShadingRateImageNV)
             enableFeature(&_caps.ShadingRateImageFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV);
 #endif
+#ifdef VK_NV_shader_image_footprint
+        if (_enabled.ImageFootprintNV)
+            enableFeature(&_caps.ShaderImageFootprintFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV);
+#endif
+#ifdef VK_KHR_shader_clock
+        if (_enabled.ShaderClock)
+            enableFeature(&_caps.ShaderClockFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR);
+#endif
+#ifdef VK_KHR_shader_float16_int8
+        VkPhysicalDeviceShaderFloat16Int8FeaturesKHR shader_float16_int8_feat = {};
+        if (_enabled.Float16Arithmetic or _enabled.Int8Arithmetic)
+            enableFeature(&shader_float16_int8_feat, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR);
+#endif
+#ifdef VK_KHR_timeline_semaphore
+        VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timeline_sem_feat = {};
+        if (_enabled.TimelineSemaphore)
+            enableFeature(&timeline_sem_feat, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR);
+#endif
+#ifdef VK_KHR_buffer_device_address
+        if (_enabled.BufferAddress)
+            enableFeature(&_caps.BufferDeviceAddress, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR);
+#endif
+#ifdef VK_KHR_shader_atomic_int64
+        if (_enabled.ShaderAtomicInt64)
+            enableFeature(&_caps.ShaderAtomicInt64, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR);
+#endif
+#ifdef VK_KHR_vulkan_memory_model
+        if (_enabled.MemoryModel)
+            enableFeature(&_caps.MemoryModel, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES_KHR);
+#endif
 #ifdef VK_EXT_descriptor_indexing
         if (_enabled.DescriptorIndexing)
             enableFeature(&_caps.DescriptorIndexingFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
@@ -190,6 +328,10 @@ void FVulkanDevice::SetupDeviceFeatures_() {
         if (_enabled.Robustness2)
             enableFeature(&_caps.Robustness2Features, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT);
 #endif
+#ifdef VK_EXT_extended_dynamic_state
+        if (_enabled.ExtendedDynamicState)
+            enableFeature(&_caps.ExtendedDynamicStateFeatures, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
+#endif
 #ifdef VK_KHR_ray_tracing_pipeline
         if (_enabled.RayTracingKHR)
             enableFeature(&_caps.RayTracingFeaturesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR);
@@ -197,17 +339,37 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 
         vkGetPhysicalDeviceFeatures2(_vkPhysicalDevice, &features2);
 
-#ifdef VK_NV_mesh_shader
-        _enabled.RayTracingNV &= (_caps.MeshShaderFeatures.meshShader or _caps.MeshShaderFeatures.taskShader);
-#endif
+
 #ifdef VK_NV_mesh_shader
         _enabled.MeshShaderNV &= (_caps.MeshShaderFeatures.meshShader or _caps.MeshShaderFeatures.taskShader);
 #endif
 #ifdef VK_NV_shading_rate_image
         _enabled.ShadingRateImageNV &= (_caps.ShadingRateImageFeatures.shadingRateImage == VK_TRUE);
 #endif
-#ifdef VK_EXT_robustness2
-        _enabled.Robustness2 &= (!!_caps.Robustness2Features.robustBufferAccess2 | !!_caps.Robustness2Features.nullDescriptor);
+#ifdef VK_NV_shader_image_footprint
+        _enabled.ImageFootprintNV &= (_caps.ShaderImageFootprintFeatures.imageFootprint == VK_TRUE);
+#endif
+#ifdef VK_KHR_shader_clock
+        _enabled.ShaderClock &= !!(_caps.ShaderClockFeatures.shaderDeviceClock | _caps.ShaderClockFeatures.shaderSubgroupClock);
+#endif
+#ifdef VK_KHR_shader_float16_int8
+        _enabled.Float16Arithmetic &= (shader_float16_int8_feat.shaderFloat16 == VK_TRUE);
+        _enabled.Int8Arithmetic &= (shader_float16_int8_feat.shaderInt8 == VK_TRUE);
+#endif
+#ifdef VK_KHR_timeline_semaphore
+        _enabled.TimelineSemaphore &= (timeline_sem_feat.timelineSemaphore == VK_TRUE);
+#endif
+#ifdef VK_KHR_buffer_device_address
+        _enabled.BufferAddress &= (_caps.BufferDeviceAddress.bufferDeviceAddress == VK_TRUE);
+#endif
+#ifdef VK_KHR_shader_atomic_int64
+        _enabled.ShaderAtomicInt64 &= (_caps.ShaderAtomicInt64.shaderBufferInt64Atomics == VK_TRUE);
+#endif
+#ifdef VK_KHR_vulkan_memory_model
+        _enabled.MemoryModel &= (_caps.MemoryModel.vulkanMemoryModel == VK_TRUE);
+#endif
+#ifdef VK_KHR_ray_tracing_pipeline
+        _enabled.RayTracingKHR &= (_caps.RayTracingFeaturesKHR.rayTracingPipeline == VK_TRUE);
 #endif
 
         // Properties
@@ -240,6 +402,10 @@ void FVulkanDevice::SetupDeviceFeatures_() {
         if (_enabled.RayTracingKHR)
             enableProperties(&_caps.RayTracingPropertiesKHR, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR);
 #endif
+#ifdef VK_KHR_timeline_semaphore
+        if (_enabled.TimelineSemaphore)
+            enableProperties(&_caps.TimelineSemaphoreProperties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES_KHR);
+#endif
 #ifdef VK_KHR_depth_stencil_resolve
         if (_enabled.DepthStencilResolve)
             enableProperties(&_caps.DepthStencilResolve, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES_KHR);
@@ -250,6 +416,10 @@ void FVulkanDevice::SetupDeviceFeatures_() {
         if (_vkVersion >= EShaderLangFormat::Vulkan_110)
             enableProperties(&_caps.Properties110, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
 #endif
+#ifdef VK_VERSION_1_1
+        if (_vkVersion >= EShaderLangFormat::Vulkan_110)
+            enableProperties(&_caps.Subgroup, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES);
+#endif
 #ifdef VK_EXT_descriptor_indexing
         if (_enabled.DescriptorIndexing)
             enableProperties(&_caps.DescriptorIndexingProperties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES);
@@ -257,6 +427,14 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #ifdef VK_EXT_robustness2
         if (_enabled.Robustness2)
             enableProperties(&_caps.Robustness2Properties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT);
+#endif
+#ifdef VK_KHR_maintenance3
+        if (_enabled.Maintenance3)
+            enableProperties(&_caps.Maintenance3Properties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES_KHR);
+#endif
+#ifdef VK_EXT_sampler_filter_minmax
+        if (_enabled.SamplerFilterMinmax)
+            enableProperties(&_caps.SamplerFilerMinmaxProperties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES_EXT);
 #endif
 
         vkGetPhysicalDeviceProperties2(_vkPhysicalDevice, &properties2);

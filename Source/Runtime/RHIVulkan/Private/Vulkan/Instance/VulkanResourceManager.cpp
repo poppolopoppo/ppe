@@ -100,34 +100,40 @@ void FVulkanResourceManager::TearDown() {
     _resources.RtShaderTablePool.Clear_AssertCompletelyEmpty();
     _resources.SwapchainPool.Clear_AssertCompletelyEmpty();
 
-    // release all cached resources
+    // release all cached resources (force tear down)
+    auto tearDownCache = [this](auto& cache) {
+        using resource_type = typename Meta::TDecay<decltype(cache)>::value_type;
+        cache.Clear_IgnoreLeaks([this](resource_type* pCached) {
+            Assert_NoAssume(pCached->RefCount() == 1);
+            pCached->TearDown_Force(*this);
+            return true;
+        });
+    };
 
-    TearDownCache_(_resources.SamplerCache);
-    TearDownCache_(_resources.PplnLayoutCache);
-    TearDownCache_(_resources.DslayoutCache);
-    TearDownCache_(_resources.RenderPassCache);
-    TearDownCache_(_resources.FramebufferCache);
-    TearDownCache_(_resources.PplnResourcesCache);
+    tearDownCache(_resources.SamplerCache);
+    tearDownCache(_resources.PplnLayoutCache);
+    tearDownCache(_resources.DslayoutCache);
+    tearDownCache(_resources.RenderPassCache);
+    tearDownCache(_resources.FramebufferCache);
+    tearDownCache(_resources.PplnResourcesCache);
 
     // release shader cache
     {
-        const FCriticalScope shaderCacheLock{&_shaderCacheCS};
+        const auto exclusiveShaderCache = _shaderCache.LockExclusive();
 
-        for (PVulkanShaderModule& sh : _shaderCache) {
+        for (PVulkanShaderModule& sh : *exclusiveShaderCache) {
             Assert(sh);
             Assert_NoAssume(sh->RefCount() == 1);
 
             checked_cast<FVulkanShaderModule>(sh)->TearDown(_device);
         }
 
-        _shaderCache.clear_ReleaseMemory();
+        exclusiveShaderCache->clear_ReleaseMemory();
     }
 
     // release pipeline compilers
     {
-        const FReadWriteLock::FScopeLockWrite compilerLockWrite{_compilersRW};
-
-        _compilers.clear_ReleaseMemory();
+        _compilers.LockExclusive()->clear_ReleaseMemory();
     }
 
     _descriptorManager.TearDown();
@@ -137,21 +143,11 @@ void FVulkanResourceManager::TearDown() {
 void FVulkanResourceManager::AddCompiler(const PPipelineCompiler& pCompiler) {
     Assert(pCompiler);
 
-    const FReadWriteLock::FScopeLockWrite compilerLockWrite{_compilersRW};
-
-    _compilers.insert(pCompiler);
+    _compilers.LockExclusive()->insert(pCompiler);
 }
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::OnSubmit() {
     _submissionCounter.fetch_add(1, std::memory_order_relaxed);
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-void FVulkanResourceManager::TearDownCache_(TCache<T, _ChunkSize, _MaxChunks>& cache) {
-    cache.Clear_IgnoreLeaks([this](T* pCached) {
-        pCached->TearDown(*this);
-        return true;
-    });
 }
 //----------------------------------------------------------------------------
 // CreateDescriptorSetLayout
@@ -212,12 +208,13 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
     TResourceProxy<FVulkanPipelineLayout> layout{ desc, dslayouts.MakeView() };
 
     auto& pool = ResourcePool_(*pId);
-    const auto it = pool.FindOrAdd(std::move(layout), [this ARGS_IF_RHIDEBUG(debugName)](TResourceProxy<FVulkanPipelineLayout>* pLayout, FIndex , bool exist) -> bool {
-        if (not exist && not pLayout->Construct(_device, ResourceData(_emptyDSLayout).Read()->Layout ARGS_IF_RHIDEBUG(debugName)))
-            return false;
-        pLayout->AddRef();
-        return true;
-    });
+    const auto it = pool.FindOrAdd(std::move(layout),
+        [this ARGS_IF_RHIDEBUG(debugName)](TResourceProxy<FVulkanPipelineLayout>* pLayout, FIndex , bool exist) -> bool {
+            if (not exist && not pLayout->Construct(_device, ResourceData(_emptyDSLayout).Read()->Layout ARGS_IF_RHIDEBUG(debugName)))
+                return false;
+            pLayout->AddRef();
+            return true;
+        });
 
     *pPplnLayoutRef = pool[it.first];
 
@@ -268,9 +265,7 @@ bool FVulkanResourceManager::CompileShaders_(_Desc& desc) {
 
     // try to use external compilers
     {
-        const FReadWriteLock::FScopeLockRead compilersLock{ _compilersRW };
-
-        for (const PPipelineCompiler& compiler : _compilers) {
+        for (const PPipelineCompiler& compiler : *_compilers.LockShared()) {
             if (compiler->IsSupported(desc, required))
                 return compiler->Compile(desc, required);
         }
@@ -325,9 +320,7 @@ bool FVulkanResourceManager::CompileShaders_(FComputePipelineDesc& desc) {
 
     // try to use external compilers
     {
-        const FReadWriteLock::FScopeLockRead compilersLock{ _compilersRW };
-
-        for (const PPipelineCompiler& compiler : _compilers) {
+        for (const PPipelineCompiler& compiler : *_compilers.LockShared()) {
             if (compiler->IsSupported(desc, required))
                 return compiler->Compile(desc, required);
         }
@@ -393,12 +386,11 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderM
 
     *pVkShaderModule = NEW_REF(RHIShader, FVulkanShaderModule,
         vkShaderModule,
-        source->HashValue(),
+        source->Fingerprint(),
         source->EntryPoint().MakeView()
         ARGS_IF_RHIDEBUG(source->DebugName()) );
 
-    const FCriticalScope shaderCacheLock{ &_shaderCacheCS };
-    _shaderCache.push_back(*pVkShaderModule);
+    _shaderCache.LockExclusive()->push_back(*pVkShaderModule);
 
     return true;
 }
@@ -898,9 +890,6 @@ void FVulkanResourceManager::RunValidation(u32 maxIteration) {
 // ReleaseMemory
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::ReleaseMemory() {
-    // will reclaim memory from the various caches
-    TearDownStagingBuffers_();
-
     // reclaims cached memory from all pools
     _resources.ImagePool.ReleaseCacheMemory();
     _resources.BufferPool.ReleaseCacheMemory();
@@ -913,6 +902,30 @@ void FVulkanResourceManager::ReleaseMemory() {
     _resources.RtScenePool.ReleaseCacheMemory();
     _resources.RtShaderTablePool.ReleaseCacheMemory();
     _resources.SwapchainPool.ReleaseCacheMemory();
+
+    // trim all unused cached resources
+    auto trimDownCache = [this](auto& cache, size_t maxIterations) {
+        using resource_type = typename Meta::TDecay<decltype(cache)>::value_type;
+        std::atomic<size_t> gc;
+        cache.GarbageCollect(gc, maxIterations, [this](resource_type* pResource) {
+            Assert(pResource);
+            if (pResource->IsCreated() and pResource->RefCount() == 1) {
+                Verify( pResource->RemoveRef(pResource->RefCount()) );
+                pResource->TearDown(*this);
+                return true; // release the cached item
+            }
+            return false; // keep alive
+        });
+    };
+
+    constexpr size_t maxIterationsForTrim = 500;
+    trimDownCache(_resources.PplnLayoutCache, maxIterationsForTrim); // else kept alive due to manual AddRef()
+
+    // trimDownCache(_resources.SamplerCache);
+    // trimDownCache(_resources.DslayoutCache);
+    // trimDownCache(_resources.RenderPassCache);
+    // trimDownCache(_resources.FramebufferCache);
+    // trimDownCache(_resources.PplnResourcesCache);
 }
 //----------------------------------------------------------------------------
 // CreateStagingBuffer

@@ -15,8 +15,8 @@ public:
 
     FBindingIndex() = default;
 
-    explicit FBindingIndex(size_t perResource, size_t unique) NOEXCEPT
-    :   _perResource(checked_cast<index_t>(perResource))
+    explicit FBindingIndex(index_t perResource, size_t unique) NOEXCEPT
+    :   _perResource(perResource)
     ,   _unique(checked_cast<index_t>(unique))
     {}
 

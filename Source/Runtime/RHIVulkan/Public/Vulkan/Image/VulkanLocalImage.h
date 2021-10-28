@@ -2,6 +2,7 @@
 
 #include "Vulkan/VulkanCommon.h"
 
+#include "Vulkan/Common/VulkanAccessRecords.h"
 #include "Vulkan/Image/VulkanImage.h"
 
 #include "Maths/Range.h"
@@ -23,13 +24,6 @@ public:
         PVulkanFrameTask Task;
 
         FImageState() = default;
-        FImageState(EResourceState state, VkImageLayout layout, const FImageDataRange& range, VkImageAspectFlagBits aspect, const PVulkanFrameTask& task)
-        :   FImageState(state, layout, range, aspect, PVulkanFrameTask{ task })
-        {}
-        FImageState(EResourceState state, VkImageLayout layout, const FImageDataRange& range, VkImageAspectFlagBits aspect, PVulkanFrameTask&& rtask) NOEXCEPT
-        :   State(state), Layout(layout), Aspect(aspect), Range(range), Task(std::move(rtask)) {
-            Assert_NoAssume(Task);
-        }
     };
 
     struct FImageAccess {
@@ -46,7 +40,7 @@ public:
         FImageAccess() : IsReadable(false), IsWritable(false), InvalidateBefore(false), InvalidateAfter(false) {}
     };
 
-    using FAccessRecords = VECTORINSITU(RHIImage, FImageAccess, 3);
+    using FAccessRecords = TVulkanAccessRecords<FImageAccess, FSubRange::value_type>;
     using FImageRange = FVulkanImage::FImageRange;
     using FImageViewMap = FVulkanImage::FImageViewMap;
 
@@ -59,6 +53,7 @@ public:
 
 #if USE_PPE_RHIDEBUG
     FStringView DebugName() const { return _imageData->DebugName(); }
+    TMemoryView<const FImageAccess> ReadWriteAccess_ForDebug() const { return *_accessForReadWrite; }
 #endif
 
     const FImageDesc& Desc() const { return _imageData->Desc(); }
@@ -77,6 +72,13 @@ public:
 
     using FImageViewDescMemoized = FVulkanImage::FImageViewDescMemoized;
 
+    void AddPendingState(EResourceState state, VkImageLayout layout, const FImageDataRange& range, VkImageAspectFlagBits aspect, const PVulkanFrameTask& task) const {
+        AddPendingState(state, layout, range, aspect, PVulkanFrameTask{ task });
+    }
+    void AddPendingState(EResourceState state, VkImageLayout layout, const FImageDataRange& range, VkImageAspectFlagBits aspect, PVulkanFrameTask&& rtask) const {
+        AddPendingState(FImageState{ state, layout, aspect, range, std::move(rtask) });
+    }
+
     VkImageView MakeView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const {
         return _imageData->MakeView(device, desc);
     }
@@ -85,10 +87,6 @@ public:
     }
 
 private:
-    NODISCARD bool CreateView_(VkImageView* pImageView, const FVulkanDevice& device, const FImageViewDescMemoized& desc);
-    NODISCARD static FAccessRecords::iterator FindFirstAccess_(FAccessRecords& arr, const FSubRange& range);
-    static void ReplaceAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator it, const FImageAccess& barrier);
-
     const FVulkanImage* _imageData;
     VkImageLayout _finalLayout{ VK_IMAGE_LAYOUT_GENERAL };
 
@@ -96,6 +94,8 @@ private:
     mutable FAccessRecords _accessForReadWrite;
     bool _isImmutable{ false };
 };
+//----------------------------------------------------------------------------
+using FImageState = FVulkanLocalImage::FImageState;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

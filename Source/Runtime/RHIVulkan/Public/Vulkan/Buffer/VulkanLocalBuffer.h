@@ -3,6 +3,7 @@
 #include "Vulkan/VulkanCommon.h"
 
 #include "Vulkan/Buffer/VulkanBuffer.h"
+#include "Vulkan/Common/VulkanAccessRecords.h"
 
 #include "Maths/Range.h"
 
@@ -21,13 +22,6 @@ public:
         PVulkanFrameTask Task;
 
         FBufferState() = default;
-        FBufferState(EResourceState state, VkDeviceSize begin, VkDeviceSize end, const PVulkanFrameTask& task)
-        :   FBufferState(state, begin, end, PVulkanFrameTask{ task })
-        {}
-        FBufferState(EResourceState state, VkDeviceSize begin, VkDeviceSize end, PVulkanFrameTask&& rtask) NOEXCEPT
-        :   State(state), Range(begin, end), Task(std::move(rtask)) {
-            Assert_NoAssume(Task);
-        }
     };
 
     struct FBufferAccess {
@@ -38,12 +32,12 @@ public:
         bool IsReadable : 1;
         bool IsWritable : 1;
 
-        FBufferAccess() : IsReadable(false), IsWritable(false) {}
+        FBufferAccess() NOEXCEPT : IsReadable(false), IsWritable(false) {}
 
         bool Valid() const { return (IsReadable | IsWritable); }
     };
 
-    using FAccessRecords = VECTORINSITU(RHIBuffer, FBufferAccess, 3);
+    using FAccessRecords = TVulkanAccessRecords<FBufferAccess, VkDeviceSize>;
 
     FVulkanLocalBuffer() = default;
 #if USE_PPE_RHIDEBUG
@@ -54,6 +48,8 @@ public:
 
 #if USE_PPE_RHIDEBUG
     FStringView DebugName() const { return _bufferData->DebugName(); }
+    TMemoryView<const FBufferAccess> ReadAccess_ForDebug() const { return *_accessForRead; }
+    TMemoryView<const FBufferAccess> WriteAccess_ForDebug() const { return *_accessForWrite; }
 #endif
 
     const FBufferDesc& Desc() const { return _bufferData->Desc(); }
@@ -70,20 +66,24 @@ public:
     void CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default)) const;
     void ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP = Default));
 
+    void AddPendingState(EResourceState state, VkDeviceSize begin, VkDeviceSize end, const PVulkanFrameTask& task) const {
+        AddPendingState(state, begin, end, PVulkanFrameTask{ task });
+    }
+    void AddPendingState(EResourceState state, VkDeviceSize begin, VkDeviceSize end, PVulkanFrameTask&& rtask) const {
+        AddPendingState(FBufferState{ state, { begin, end }, std::move(rtask) });
+    }
+
     VkBufferView MakeView(const FVulkanDevice& device, const FBufferViewDesc& desc) const {
         return _bufferData->MakeView(device, desc);
     }
 
 private:
-    static FAccessRecords::iterator FindFirstAccess_(FAccessRecords& arr, const FBufferRange& range);
-    static void ReplaceAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator it, const FBufferAccess& barrier);
-    static FAccessRecords::iterator EraseAccessRecords_(FAccessRecords& arr, FAccessRecords::iterator it, const FBufferRange& range);
-
-    const FVulkanBuffer* _bufferData;
+    const FVulkanBuffer* _bufferData{ nullptr };
 
     mutable FAccessRecords _accessPending;
     mutable FAccessRecords _accessForRead;
     mutable FAccessRecords _accessForWrite;
+
     bool _isImmutable{ false };
 };
 //----------------------------------------------------------------------------
