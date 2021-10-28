@@ -12,7 +12,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T>
 struct TPtrRef {
-    T* Ptr;
+    T* Ptr{ nullptr };
 
     TPtrRef() = default;
 
