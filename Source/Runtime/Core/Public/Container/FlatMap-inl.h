@@ -72,7 +72,7 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::clear_ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Find(const _Key& key) -> iterator {
+auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::find(const _Key& key) -> iterator {
     const iterator end = _vector.end();
     const iterator it = std::lower_bound(_vector.begin(), end, key, FKeyLess_());
     return ((it != end && FKeyEqual_()(*it, key)) ? it : end);
@@ -95,7 +95,7 @@ auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::FindOrAdd(const _Key& key
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Find(const _Key& key) const -> const_iterator {
+auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::find(const _Key& key) const -> const_iterator {
     const const_iterator end = _vector.end();
     const const_iterator it = std::lower_bound(_vector.begin(), end, key, FKeyLess_());
     return ((it != end && FKeyEqual_()(*it, key)) ? it : end);
@@ -119,7 +119,7 @@ auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Find(const _Key& key, _Value *pvalue) const {
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     if (end() == it)
         return false;
     Assert(pvalue);
@@ -152,6 +152,17 @@ template <class... _Args>
 void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Emplace_AssertUnique(_Key&& key, _Args&&... args) {
     if (Emplace_ReturnIfExists(std::move(key), std::forward<_Args>(args)...))
         AssertNotReached();
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
+template <class... _Args>
+void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Emplace_Overwrite(_Key&& key, _Args&&... args) {
+    const iterator end = _vector.end();
+    const iterator it = std::lower_bound(_vector.begin(), end, key, FKeyLess_());
+    if (it == end || not FKeyEqual_()(*it, key))
+        _vector.insert(it, value_type{ std::move(key), mapped_type(std::forward<_Args>(args)...) });
+    else
+        it->second = mapped_type(std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
@@ -196,14 +207,14 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Insert_AssertUnique(const
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 _Value& TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Get(const _Key& key) {
-    const iterator it = Find(key);
+    const iterator it = find(key);
     AssertRelease(end() != it);
     return it->second;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 Meta::TOptionalReference<_Value> TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::GetIFP(const _Key& key) {
-    const iterator it = Find(key);
+    const iterator it = find(key);
     return (end() != it ? Meta::MakeOptionalRef(it->second) : Default);
 }
 //----------------------------------------------------------------------------
@@ -211,7 +222,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typ
 bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TryGet(const _Key& key, _Value *value) const {
     Assert(value);
 
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     if (end() == it)
         return false;
 
@@ -221,14 +232,14 @@ bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TryGet(const _Key& key, _
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 const _Value& TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::At(const _Key& key) const {
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     Assert(_vector.end() != it);
     return it->second;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Erase(const _Key& key) {
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     if (end() == it)
         return false;
     Erase(it);
@@ -243,7 +254,7 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Erase(const const_iterato
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Remove_AssertExists(const _Key& key, const _Value& valueForDebug) {
     UNUSED(valueForDebug);
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     Assert(end() != it);
     Assert(valueForDebug == it->second);
     Erase(it);
@@ -251,7 +262,7 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Remove_AssertExists(const
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Remove_AssertExists(const _Key& key) {
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     Assert(end() != it);
     Erase(it);
 }

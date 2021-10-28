@@ -73,7 +73,7 @@ void TFlatSet<_Key, _EqualTo, _Less, _Vector>::clear_ReleaseMemory() {
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 template <typename _KeyLike>
 const _Key& TFlatSet<_Key, _EqualTo, _Less, _Vector>::Get(const _KeyLike& key) const {
-    const auto it = Find(key);
+    const auto it = find(key);
     AssertRelease(end() != it);
     return (*it);
 }
@@ -81,7 +81,7 @@ const _Key& TFlatSet<_Key, _EqualTo, _Less, _Vector>::Get(const _KeyLike& key) c
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 template <typename _KeyLike>
 Meta::TOptionalReference<const _Key> TFlatSet<_Key, _EqualTo, _Less, _Vector>::GetIFP(const _KeyLike& key) const NOEXCEPT {
-    const auto it = Find(key);
+    const auto it = find(key);
     return (end() != it
         ? Meta::MakeOptionalRef(*it)
         : Default );
@@ -89,7 +89,7 @@ Meta::TOptionalReference<const _Key> TFlatSet<_Key, _EqualTo, _Less, _Vector>::G
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 template <typename _KeyLike>
-auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _KeyLike& key) -> iterator {
+auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::find(const _KeyLike& key) -> iterator {
     const iterator end = _vector.end();
     const iterator it = std::lower_bound(_vector.begin(), end, key, value_less());
     return ((it != end && value_equal()(*it, key)) ? it : end);
@@ -97,8 +97,8 @@ auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _KeyLike& key) -> iter
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 template <typename _KeyLike>
-auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _KeyLike& key) const -> const_iterator {
-    return const_cast<TFlatSet*>(this)->Find(key);
+auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::find(const _KeyLike& key) const -> const_iterator {
+    return const_cast<TFlatSet*>(this)->find(key);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
@@ -182,7 +182,7 @@ void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Insert_AssertUnique(const _Key& k
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 bool TFlatSet<_Key, _EqualTo, _Less, _Vector>::Erase(const _Key& key) {
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     if (end() == it)
         return false;
     Erase(it);
@@ -196,7 +196,7 @@ void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Erase(const const_iterator& it) {
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Remove_AssertExists(const _Key& key) {
-    const const_iterator it = Find(key);
+    const const_iterator it = find(key);
     Assert(end() != it);
     Erase(it);
 }

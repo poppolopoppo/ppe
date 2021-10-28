@@ -28,7 +28,7 @@ bool FModuleStaticRegistration::Find(FModuleInfo* pinfo, const FStringView& name
 
     READSCOPELOCK(_rwlock);
 
-    const auto it = _modules.Find(name);
+    const auto it = _modules.find(name);
     if (Likely(_modules.end() != it)) {
         *pinfo = it->second; // thread-safe copy
         return true;
@@ -93,7 +93,7 @@ bool FModuleDynamicRegistration::Load(FModuleInfo* pinfo, const FStringView& nam
 
     const Meta::FLockGuard scopeLock(_barrier);
 
-    const auto it = _modules.Find(name);
+    const auto it = _modules.find(name);
     if (Unlikely(_modules.end() == it))
         return false;
 
@@ -132,7 +132,7 @@ bool FModuleDynamicRegistration::UnloadIFP(const FStringView& name) NOEXCEPT {
 
     const Meta::FLockGuard scopeLock(_barrier);
 
-    const auto it = _modules.Find(name);
+    const auto it = _modules.find(name);
     if (_modules.end() == it)
         return false;
 

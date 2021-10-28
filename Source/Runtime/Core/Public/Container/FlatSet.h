@@ -96,9 +96,9 @@ public:
     Meta::TOptionalReference<const _Key> GetIFP(const _KeyLike& key) const NOEXCEPT;
 
     template <typename _KeyLike>
-    iterator Find(const _KeyLike& key);
+    iterator find(const _KeyLike& key);
     template <typename _KeyLike>
-    const_iterator Find(const _KeyLike& key) const;
+    const_iterator find(const _KeyLike& key) const;
 
     iterator FindOrAdd(const _Key& key, bool* pAdded);
 

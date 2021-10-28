@@ -166,11 +166,11 @@ public:
     TFixedSizeHashTable() NOEXCEPT;
     ~TFixedSizeHashTable() NOEXCEPT;
 
-    FORCE_INLINE TFixedSizeHashTable(const TFixedSizeHashTable& other) : TFixedSizeHashTable() { operator =(other); }
-    TFixedSizeHashTable& operator =(const TFixedSizeHashTable&);
+    FORCE_INLINE TFixedSizeHashTable(const TFixedSizeHashTable& other) NOEXCEPT : TFixedSizeHashTable() { operator =(other); }
+    TFixedSizeHashTable& operator =(const TFixedSizeHashTable&) NOEXCEPT;
 
-    TFixedSizeHashTable(TFixedSizeHashTable&&) = delete;
-    TFixedSizeHashTable& operator =(TFixedSizeHashTable&&) = delete;
+    TFixedSizeHashTable(TFixedSizeHashTable&& rvalue) NOEXCEPT : TFixedSizeHashTable() { operator =(std::move(rvalue)); }
+    TFixedSizeHashTable& operator =(TFixedSizeHashTable&&) NOEXCEPT;
 
     bool empty() const NOEXCEPT { return (0 == _size); }
     bool full() const NOEXCEPT { return (_Capacity == _size); }
@@ -279,11 +279,20 @@ TFixedSizeHashTable<_Traits, _Capacity>::~TFixedSizeHashTable() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
-auto TFixedSizeHashTable<_Traits, _Capacity>::operator =(const TFixedSizeHashTable& other) -> TFixedSizeHashTable& {
-    // trivial destructor thanks to PODs
+auto TFixedSizeHashTable<_Traits, _Capacity>::operator =(const TFixedSizeHashTable& other) NOEXCEPT -> TFixedSizeHashTable& {
+    // trivial copy/destructor thanks to PODs
     _size = other._size;
     FPlatformMemory::Memcpy(_values, other._values, sizeof(_values));
 
+    return (*this);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, size_t _Capacity>
+auto TFixedSizeHashTable<_Traits, _Capacity>::operator =(TFixedSizeHashTable&& rvalue) NOEXCEPT -> TFixedSizeHashTable& {
+    // trivial move/destructor thanks to PODs
+    _size = rvalue._size;
+    FPlatformMemory::Memcpy(_values, rvalue._values, sizeof(_values));
+    rvalue.clear();
     return (*this);
 }
 //----------------------------------------------------------------------------
