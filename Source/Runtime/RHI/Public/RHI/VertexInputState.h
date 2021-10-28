@@ -9,7 +9,10 @@
 #include "RHI/VertexInputState.h"
 
 #include "Container/FixedSizeHashTable.h"
+#include "Container/FlatMap.h"
+#include "Container/FlatSet.h"
 #include "Container/Hash.h"
+#include "Maths/PackingHelpers.h"
 
 namespace PPE {
 namespace RHI {
@@ -85,29 +88,29 @@ struct FVertexInputState {
     STATIC_CONST_INTEGRAL(u32, UnknownVertexIndex, UMax);
 
     using FVertices = TFixedSizeHashMap<FVertexID, FVertexInput, MaxVertexAttribs>;
-    using FBindings = TFixedSizeHashMap<FVertexBufferID, FVertexBufferBinding, MaxVertexBuffers>;
+    using FBindings = TFixedSizeFlatMap<FVertexBufferID, FVertexBufferBinding, MaxVertexBuffers>;
 
     FBindings BufferBindings;
     FVertices Vertices;
 
     template <typename _Class, typename _Value>
-    FVertexInputState& Add(const FVertexID& vertexId, _Value* _Class::* member, const FVertexBufferID& bufferId = Default) {
-        return Add(vertexId, VertexAttrib<_Value>(), reinterpret_cast<size_t>(&(static_cast<_Class*>(nullptr)->*member)), bufferId);
+    FVertexInputState& Add(const FVertexID& vertexId, _Value _Class::* member, const FVertexBufferID& bufferId = Default) NOEXCEPT {
+        return Add(vertexId, VertexAttrib<_Value>(), checked_cast<u32>(Meta::StandardLayoutOffset(member)), bufferId);
     }
 
     template <typename _Class, typename _Value>
-    FVertexInputState& Add(const FVertexID& vertexId, _Value* _Class::* member, bool normalized, const FVertexBufferID& bufferId = Default) {
+    FVertexInputState& Add(const FVertexID& vertexId, _Value _Class::* member, bool normalized, const FVertexBufferID& bufferId = Default) NOEXCEPT {
         EVertexFormat attrib = VertexAttrib<_Value>();
         attrib = (normalized
             ? attrib + EVertexFormat::NormalizedFlag
             : attrib - EVertexFormat::NormalizedFlag );
-        return Add(vertexId, attrib, reinterpret_cast<size_t>(&(static_cast<_Class*>(nullptr)->*member)), bufferId);
+        return Add(vertexId, attrib, checked_cast<u32>(Meta::StandardLayoutOffset(member)), bufferId);
     }
 
-    PPE_RHI_API FVertexInputState& Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId = Default);
-    PPE_RHI_API FVertexInputState& Bind(const FVertexBufferID& bufferId, u32 stride, u32 index = AutoBindingIndex, EVertexInputRate rate = EVertexInputRate::Vertex);
+    PPE_RHI_API FVertexInputState& Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId = Default) NOEXCEPT;
+    PPE_RHI_API FVertexInputState& Bind(const FVertexBufferID& bufferId, u32 stride, u32 index = AutoBindingIndex, EVertexInputRate rate = EVertexInputRate::Vertex) NOEXCEPT;
 
-    NODISCARD PPE_RHI_API bool CopyAttributes(const TMemoryView<const FVertexAttribute> attribs);
+    NODISCARD PPE_RHI_API bool CopyAttributes(const TMemoryView<const FVertexAttribute> attribs) NOEXCEPT;
 
     void Clear() {
         BufferBindings.clear();

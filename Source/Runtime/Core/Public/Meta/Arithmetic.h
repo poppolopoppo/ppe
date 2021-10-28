@@ -165,6 +165,20 @@ CONSTEXPR std::common_type_t<T, U> Clamp(const T& value, const U& vmin, const U&
 template <typename T>
 CONSTEXPR size_t BitCount{ sizeof(T) << 3 };
 //----------------------------------------------------------------------------
+template <typename C, typename B, typename A>
+inline /*CONSTEXPR*/ size_t OffsetOf(B A::*member) {
+    constexpr std::aligned_storage_t<sizeof(C), alignof(C)> pod{};
+    const C* const c = reinterpret_cast<const C*>(&pod);
+    const A* const a = c;
+    return (reinterpret_cast<size_t>(&(a->*member)) - reinterpret_cast<size_t>(c));
+}
+//----------------------------------------------------------------------------
+template <typename B, typename A>
+inline /*CONSTEXPR*/ size_t StandardLayoutOffset(B A::*member) {
+    STATIC_ASSERT(std::is_standard_layout_v<A>);
+    return OffsetOf<A, B, A>(member);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Meta

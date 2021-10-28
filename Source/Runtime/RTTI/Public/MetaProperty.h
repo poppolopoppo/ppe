@@ -82,14 +82,14 @@ private:
 };
 PPE_ASSUME_TYPE_AS_POD(FMetaProperty);
 //----------------------------------------------------------------------------
-template <typename T, typename _Class>
+template <typename _Class, typename T, typename _Derived>
 Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaProperty>
-    MakeProperty(const FName& name, EPropertyFlags flags, T _Class::* member) {
+    MakeProperty(const FName& name, EPropertyFlags flags, T _Derived::* member) {
     return FMetaProperty(
         name,
         flags,
         MakeTraits<T>(),
-        reinterpret_cast<ptrdiff_t>(&(static_cast<_Class*>(nullptr)->*member))
+        Meta::OffsetOf<_Class, T, _Derived>(member)
     );
 }
 //----------------------------------------------------------------------------

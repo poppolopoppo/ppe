@@ -104,7 +104,7 @@ CONSTEXPR auto PrivateFieldName_ToPublic_(const _Char (&name)[_Capacity]) {
 //----------------------------------------------------------------------------
 // Internal helper
 #define _RTTI_PROPERTY_IMPL(_Name, _Flags, ...) \
-    RegisterProperty(::PPE::RTTI::MakeProperty(::PPE::RTTI::FName(_Name), _Flags, ## __VA_ARGS__))
+    RegisterProperty(::PPE::RTTI::MakeProperty<object_type>(::PPE::RTTI::FName(_Name), _Flags, ## __VA_ARGS__))
 //----------------------------------------------------------------------------
 // Add a public property "Alias" from a field "Any_name_"
 #define RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, _Flags) \
