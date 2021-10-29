@@ -84,6 +84,7 @@ module Build
             Log.info("downloading '%s'...", url)
             if download = URI.open(url)
                 local = File.join($TemporaryPath, url.to_s.split('/')[-1])
+                FileUtils.mkdir_p(File.dirname(local))
                 if IO.copy_stream(download, local)
                     Log.debug("downloaded '%s' to '%s'", url, local)
                     return local
