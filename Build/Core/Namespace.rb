@@ -32,14 +32,14 @@ module Build
 
         def root?() @parent.nil? end
 
-        def all() @all_targets end
-        def targets() @self_targets end
+        def all() @all_targets.map{|x| x.call } end
+        def targets() @self_targets.map{|x| x.call } end
 
         def to_s() @path end
 
         def select(*names)
-            return names.empty? ? @all_targets :
-                @all_targets.select do |target|
+            return names.empty? ? self.all :
+                self.all.select do |target|
                     target.abs_path.start_with?(*names)
                 end
         end
@@ -67,18 +67,19 @@ module Build
         end
         def /(name) return @children[name] end
 
-        def append!(target)
-            @all_targets << target
-            parent.append!(target) unless @parent.nil?
+        def append!(getter)
+            @all_targets << getter
+            parent.append!(getter) unless @parent.nil?
             return self
         end
         def make_target!(name, type, link, &config)
             target = Target.new(name, self, type, link, &config)
-            @self_targets << target
-            append!(target)
             safe_name = name.to_s.tr('/-', '_')
-            define_singleton_method(safe_name) { target }
-            target.configure!
+            define_singleton_method(safe_name) { target.configure! }
+            host = self
+            getter = lambda{ host.send(safe_name) }
+            @self_targets << getter
+            append!(getter)
             return self
         end
 
