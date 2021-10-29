@@ -155,6 +155,7 @@ module Build
 
     def self.make_persistent_opt(var)
         var.persistent = true
+        Log.debug("add new persistent opt <%s>" % var.name)
         PersistentConfig[:vars][var.name] = var
         if PersistentConfig[:data].include?(var.name)
             var.set!(PersistentConfig[:data][var.name])
@@ -307,6 +308,8 @@ module Build
             PersistentConfig[:vars].each do |name, var|
                 unless (value = serialized[var.name.to_sym]).nil?
                     var.restore!(value)
+                else
+                    Log.debug("no persistent config found for <%s>", var.name)
                 end
             end
             return true

@@ -31,7 +31,7 @@ module Build
         }
 
         LEVELS = ICONS.keys
-        VERBOSITY = [ :info, :display, :warning, :error, :fatal, :success ]
+        VERBOSITY = ($DEBUG ? [:debug, :verbose] : []) + [ :info, :display, :warning, :error, :fatal, :success ]
         MAXMSGLEN = 4096*4
 
         ANSI = ANSI.colors(Build.interactive)
