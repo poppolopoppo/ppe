@@ -63,7 +63,6 @@ module Build
             Assert.expect(namespace, Namespace)
 
             targets = namespace.all.dup
-            targets.delete_if{|target| target.headers? }
 
             environments.each do |env|
                 Assert.expect(env, Environment)
@@ -78,7 +77,7 @@ module Build
 
                         case env.target_artifact_type(target)
                         when :headers
-                            Assert.not_implemented
+                            BFF.make_headers(bff, env, target, target_alias, expanded)
                         when :executable
                             BFF.make_executable(bff, env, target, target_alias, expanded)
                         when :shared
@@ -110,6 +109,12 @@ module Build
 
         def self.make_target_alias(env, target)
             return "#{target.abs_path}-#{env.family}"
+        end
+
+        def self.make_headers(bff, env, target, target_alias, expanded)
+            bff.func!('Alias', target_alias) do
+                set!('Targets', env.source_path(target.extra_files) + env.source_path(target.libraries.data))
+            end
         end
 
         def self.make_library(bff, env, target, target_alias, expanded)
