@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 require_once '../Utils/Options.rb'
 require_once '../Utils/Log.rb'
 
@@ -81,6 +79,48 @@ module Build
                 return false
             end
         end
+        def need_wget!(url)
+            require 'open-uri'
+            Log.info("downloading '%s'...", url)
+            if download = URI.open(url)
+                local = File.join($TemporaryPath, url.to_s.split('/')[-1])
+                if IO.copy_stream(download, local)
+                    Log.debug("downloaded '%s' to '%s'", url, local)
+                    return local
+                end
+            end
+            Log.warning("failed to download '%s'", url)
+        end
+        def need_zip!(archive, destination, *globs)
+            require 'rubygems'
+            require 'zip'
+            if File.exists?(archive)
+                FileUtils.rm_rf(destination) if Dir.exists?(destination)
+                Log.verbose("extracting '%s' to '%s'...", archive, destination)
+                listing = []
+                Zip::File.open(archive) do |zfile|
+                    files_to_extract = []
+                    if globs.empty?
+                        files_to_extract.concat(zfile.glob('*'))
+                    else
+                        globs.each{|x| files_to_extract.concat(zfile.glob(x)) }
+                    end
+                    files_to_extract.each do |src|
+                        dst = File.join(destination, src.name)
+                        dir = File.dirname(dst)
+                        FileUtils.mkdir_p(dir) unless Dir.exists?(dir)
+                        Log.debug("extract zipped file to '%s'", dst)
+                        zfile.extract(src, dst)
+                        listing << dst if File.exists?(dst)
+                    end
+                end
+                Log.debug("downloaded %d files from '%s' to '%s'", listing.length, archive, destination)
+                return listing
+            else
+                Log.warning("archive '%s' does not exist", archive)
+                return false
+            end
+        end
     public
         def validate_DirExist!()
             self.validate!(&lambda do |x|
@@ -120,6 +160,7 @@ module Build
 
     def make_prerequisite(name, namespace: 'Prerequisite', default: nil, host: self.class, &getter)
         prereq = Prerequisite.new("#{namespace}.#{name}", default, getter)
+        Log.debug("define prerequisite method <%s::%s>", host, name)
         host.define_method(name) do
             return prereq.available?
         end
@@ -159,6 +200,13 @@ module Build
             results.sort!{|a, b| b <=> a } # descending
             results.empty? ? false : results
         end
+    end
+    def import_remote_archive(name, destination, url, *files)
+        make_prerequisite(name, namespace: 'Import') do
+            if archive = need_wget!(url)
+                need_zip!(archive, destination, *files)
+            end
+        end.validate_FileExist!
     end
 
 end #~ Build
