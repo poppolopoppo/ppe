@@ -68,12 +68,15 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 #   define AssertMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))
 #   define Assert_Lightweight(...) AnalysisAssume(!!(__VA_ARGS__))
 #   define AssertMessage_NoAssume(_Message, ...) NOOP()
+#   define Ensure(...) (__VA_ARGS__)
 #else
 #   define AssertMessage(_Message, ...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
 #   define Assert_Lightweight(...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_ASSERT_LIGHTWEIGHT_CRASH() ) // when we need to break immediately
 #   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
+#   define EnsureMessage(_Message, ...) \
+    ( Likely(!!(__VA_ARGS__)) ? true : ( []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }(), false ) )
 #endif
 
 #   define Verify(...) AssertMessage(WIDESTRING(#__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
@@ -96,6 +99,8 @@ inline CONSTEXPR void SetAssertionHandler(FAssertHandler ) {}
 
 #   define Assert_Lightweight(...) NOOP()
 
+#   define EnsureMessage(...) ( Assume(!!(__VA_ARGS__)), Likely(!!(__VA_ARGS__)) )
+
 #   define Verify(...) (void)(__VA_ARGS__)
 
 //----------------------------------------------------------------------------
@@ -107,6 +112,7 @@ inline CONSTEXPR void SetAssertionHandler(FAssertHandler ) {}
 
 #define Assert(...) AssertMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 #define Assert_NoAssume(...) AssertMessage_NoAssume(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#define Ensure(...) EnsureMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 namespace PPE {
 //----------------------------------------------------------------------------
