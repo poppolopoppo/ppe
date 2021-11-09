@@ -75,6 +75,10 @@ struct TRange {
         return hash_size_t_constexpr(range.First, range.Last);
     }
 
+    CONSTEXPR static bool Overlaps(T firstA, T lastA, T firstB, T lastB) {
+        return TRange{ firstA, lastA }.Overlaps({ firstB, lastB });
+    }
+
     struct FIterator : Meta::TIterator<value_type, std::random_access_iterator_tag> {
         using parent_type = Meta::TIterator<value_type, std::random_access_iterator_tag>;
 
