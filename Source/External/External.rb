@@ -10,6 +10,7 @@ $Build.namespace(:External) do
     include!('renderdoc/renderdoc.rb')
     include!('spirv-cross/spirv-cross.rb')
     include!('spirv-reflect/spirv-reflect.rb')
+    include!('spirv-tools/spirv-tools.rb')
     include!('stb/stb.rb')
     include!('vma/vma.rb')
     include!('vstools/vstools.rb')

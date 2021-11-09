@@ -1,38 +1,31 @@
 [submodule "External/double-conversion"]
     path = Source/External/double-conversion/double-conversion.git
     url = https://github.com/google/double-conversion.git
-#    shallow = true
     method = rebase
 [submodule "External/farmhash"]
     path = Source/External/farmhash/farmhash.git
     url = https://github.com/google/farmhash.git
-#    shallow = true
     method = rebase
 [submodule "External/lz4"]
     path = Source/External/lz4/lz4.git
     url = https://github.com/lz4/lz4.git
     branch = HEAD
-#    shallow = true
     method = rebase
 [submodule "External/stb"]
     path = Source/External/stb/stb.git
     url = https://github.com/nothings/stb.git
-#    shallow = true
     method = rebase
 [submodule "External/xxHash"]
     path = Source/External/xxHash/xxHash.git
     url = https://github.com/Cyan4973/xxHash.git
     branch = HEAD
-#    shallow = true
     method = rebase
 [submodule "External/vulkan"]
     path = Source/External/vulkan/Vulkan-Header.git
-#    shallow = true
     url = https://github.com/KhronosGroup/Vulkan-Headers.git
     method = rebase
 [submodule "External/vma"]
     path = Source/External/vma/vma.git
-#    shallow = true
     url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
     method = rebase
 [submodule "Source/External/spirv-cross/SPIRV-Cross.git"]
@@ -44,3 +37,6 @@
 [submodule "Source/External/spirv-reflect/SPIRV-Reflect.git"]
 	path = Source/External/spirv-reflect/SPIRV-Reflect.git
 	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
+[submodule "Source/External/spirv-headers/SPIRV-Headers.git"]
+	path = Source/External/spirv-headers/SPIRV-Headers.git
+	url = https://github.com/KhronosGroup/SPIRV-Headers.git

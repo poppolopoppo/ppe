@@ -15,15 +15,12 @@ PRAGMA_MSVC_WARNING_DISABLE(4706) // assignment within conditional expression
 PRAGMA_MSVC_WARNING_DISABLE(4996) // 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead.
 
 #ifdef CPP_CLANG
-#    pragma clang system_header
+#   pragma clang system_header
+#   pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
 #ifdef CPP_GCC
-#    pragma GCC system_header
-#endif
-
-#ifdef __clang__
-#   pragma clang diagnostic ignored "-Wunused-function"
+#   pragma GCC system_header
 #endif
 
 #ifndef EXPORT_PPE_EXTERNAL_SPIRV_CROSS

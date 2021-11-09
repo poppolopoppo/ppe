@@ -49,8 +49,9 @@ require_once 'Commands/Upx.rb'
 require_once 'Commands/VCXProj.rb'
 require_once 'Commands/VSCode.rb'
 
-require_once 'SDK/glslangSDK.rb'
 require_once 'SDK/VulkanSDK.rb'
+require_once 'SDK/glslangSDK.rb'
+require_once 'SDK/SPIRV-ToolsSDK.rb'
 
 module Build
 

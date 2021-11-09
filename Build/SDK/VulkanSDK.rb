@@ -390,6 +390,7 @@ module Build
                 dst.puts!('constexpr explicit instance_fn(const instance_api* api) : instance_api_(api) {}')
                 dst.puts!('api_version version() const { return instance_api_->version_; }')
                 dst.puts!('const instance_extension_set& instance_extensions() const { return instance_api_->instance_extensions_; }')
+                pfnfun_decl(dst, :exported_function, 'instance_api_->global_api_->exported_api_', api)
                 pfnfun_decl(dst, :global_level_function, 'instance_api_->global_api_', api)
                 pfnfun_decl(dst, :instance_level_function, 'instance_api_', api)
                 pfnfun_decl(dst, :instance_level_function_from_extension, 'instance_api_', api)

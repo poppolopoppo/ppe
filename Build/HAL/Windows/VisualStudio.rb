@@ -360,6 +360,7 @@ module Build
             '/nologo',                  # no copyright when compiling
             '/TLBID:1',                 # https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
             '/IGNORE:4001',             # https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
+            '/IGNORE:4099',             # don't have PDB for some externals
             '/NXCOMPAT:NO',             # disable Data Execution Prevention (DEP)
             '/LARGEADDRESSAWARE',       # indicate support for VM > 2Gb (if 3Gb flag is toggled)
             '/VERBOSE:INCR',            # incremental linker diagnosis

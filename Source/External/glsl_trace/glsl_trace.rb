@@ -3,7 +3,7 @@
 # TODO: port to internal library
 
 $Build.ppe_external!('glsl_trace') do
-    private_deps!(*namespace[:External]{[glslang]})
+    private_deps!(namespace.glslang)
     force_includes!(File.join(abs_path, 'Public', 'glsl_trace-external.h'))
     extra_files!(*%w{
         Public/glsl_trace-external.h
@@ -21,7 +21,9 @@ $Build.ppe_external!('glsl_trace') do
     custom!() do |env, target|
         case env.platform.os
         when :Windows
+            compilerOptions >> '/WX' >> '/permissive-'
             compilerOptions << '/WX-' << '/permissive'
+            #librarianOptions << '/IGNORE:4006'
         end
     end
 end

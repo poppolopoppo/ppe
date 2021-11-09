@@ -19,6 +19,8 @@
 #    pragma GCC system_header
 #endif
 
+#define ENABLE_OPT 1
+
 #include "glslang-headers.generated.h"
 
 #ifndef EXPORT_PPE_EXTERNAL_GLSLANG

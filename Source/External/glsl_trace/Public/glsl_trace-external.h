@@ -12,6 +12,7 @@
 PRAGMA_MSVC_WARNING_DISABLE(4061) // enumerator 'XXX' in switch of enum 'YYY' is not explicitly handled by a case label
 PRAGMA_MSVC_WARNING_DISABLE(4062) // enumerator 'XXX' in switch of enum 'YYY' is not handled
 PRAGMA_MSVC_WARNING_DISABLE(4063) // case 'XXX' is not a valid value for switch of enum 'YYY'
+PRAGMA_MSVC_WARNING_DISABLE(4189) // local variable is initialized but not referenced
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'XXX': conversion from 'YYY' to 'ZZZ', possible loss of data
 
 #ifdef CPP_CLANG
@@ -37,6 +38,9 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'XXX': conversion from 'YYY' to 'ZZZ', poss
     PRAGMA_MSVC_WARNING_POP()
 
 #else
+
+#	define BEGIN_ENUM_CHECKS()
+#	define END_ENUM_CHECKS()
 
 #   include "glslang-external.h"
 
