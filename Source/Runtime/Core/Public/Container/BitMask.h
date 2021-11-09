@@ -254,6 +254,11 @@ struct TBitMask<u128> {
 using FBitMask = TBitMask<>;
 PPE_ASSUME_TEMPLATE_AS_POD(TBitMask<T>, typename T)
 //----------------------------------------------------------------------------
+template <typename _Enum, class = Meta::TEnableIf<Meta::enum_is_flags_v<_Enum>> >
+CONSTEXPR TBitMask<Meta::TEnumOrd<_Enum>> MakeEnumBitMask(_Enum flags) {
+    return { Meta::EnumOrd(flags) };
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t N, typename T = size_t>
@@ -325,6 +330,24 @@ struct TFixedSizeBitMask {
         SetTrue(bits);
         return (*this);
     }
+
+    // enum interface, only valid when not using ENUM_FLAGS():
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR bool Get(_Enum index) const { return Get(Meta::EnumOrd(index)); }
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR void Set(_Enum index, bool value) { Set(Meta::EnumOrd(index), value); }
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR void SetTrue(_Enum index) { SetTrue(Meta::EnumOrd(index)); }
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR void SetFalse(_Enum index) { SetFalse(Meta::EnumOrd(index)); }
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR void Append(std::initializer_list<_Enum> indices) { SetTrue(indices); }
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR void Set(std::initializer_list<_Enum> indices, bool value) { value ? SetTrue(indices) : SetFalse(indices); }
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR void SetTrue(std::initializer_list<_Enum> indices) { for (auto x : indices) SetTrue(x); }
+    template <typename _Enum, class = Meta::TEnableIf<Meta::enum_no_flags_v<_Enum>> >
+    CONSTEXPR void SetFalse(std::initializer_list<_Enum> indices) { for (auto x : indices) SetFalse(x); }
 
     CONSTEXPR bool AllTrue() const NOEXCEPT {
         forrange(i, 0, NumWords - 1)
