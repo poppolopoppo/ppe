@@ -13,6 +13,8 @@ template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
 CONSTEXPR bool EnumIsFlags(_Enum) { return false; }
 template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
 CONSTEXPR bool enum_is_flags_v = EnumIsFlags(_Enum{});
+template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
+CONSTEXPR bool enum_no_flags_v = not EnumIsFlags(_Enum{});
 //----------------------------------------------------------------------------
 template <typename _Enum, class = TEnableIf<std::is_enum_v<_Enum>> >
 using TEnumOrd = std::underlying_type_t<_Enum>;
