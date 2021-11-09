@@ -340,7 +340,7 @@ template <size_t _Granularity, size_t _ReservedSize>
 struct TCPUMipMapVMemTraits {
 STATIC_CONST_INTEGRAL(size_t, Granularity, _Granularity);
 STATIC_CONST_INTEGRAL(size_t, ReservedSize, _ReservedSize);
-STATIC_ASSERT(Meta::IsAligned(Granularity, ReservedSize));
+STATIC_ASSERT(Meta::IsAlignedPow2(Granularity, ReservedSize));
 static void* PageReserve(size_t sizeInBytes) { return FVirtualMemory::PageReserve(sizeInBytes); }
 #if USE_PPE_MEMORYDOMAINS
 using domain_tag = _MemoryDomainTag;
@@ -633,7 +633,7 @@ template <typename _VMemTraits>
 TMipMapAllocator<_VMemTraits>::TMipMapAllocator()
 :   vmem_traits() {
     STATIC_ASSERT(ReservedSize > TopMipSize);
-    STATIC_ASSERT(Meta::IsAligned(TopMipSize, ReservedSize));
+    STATIC_ASSERT(Meta::IsAlignedPow2(TopMipSize, ReservedSize));
     STATIC_ASSERT(std::atomic<u64>::is_always_lock_free);
 
     VerifyRelease((_vSpace.pAddr = vmem_traits::PageReserve(ReservedSize)) != nullptr);
@@ -705,7 +705,7 @@ template <typename _VMemTraits>
 void* TMipMapAllocator<_VMemTraits>::AllocateWithHint_(size_t sizeInBytes, FMipHint& hint) {
     Assert(sizeInBytes);
     Assert_NoAssume(sizeInBytes <= TopMipSize);
-    Assert_NoAssume(Meta::IsAligned(BottomMipSize, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(BottomMipSize, sizeInBytes));
 
     const u32 lvl = MipLevel_(sizeInBytes);
     const u32 fst = MipOffset_(lvl);
@@ -798,7 +798,7 @@ void* TMipMapAllocator<_VMemTraits>::Resize(void* ptr, size_t sizeInBytes) NOEXC
     Assert(sizeInBytes);
     Assert_NoAssume(AliasesToMipMaps(ptr));
     Assert_NoAssume(sizeInBytes <= TopMipSize);
-    Assert_NoAssume(Meta::IsAligned(BottomMipSize, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(BottomMipSize, sizeInBytes));
 
     const intptr_t vptr = ((u8*)ptr - (u8*)_vSpace.pAddr);
     const u32 mipIndex = checked_cast<u32>(vptr / TopMipSize);

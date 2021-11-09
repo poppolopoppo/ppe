@@ -168,7 +168,7 @@ FAny& FAny::Reset(const ITypeTraits& traits) {
         not IsFittingInSitu_() &&
         not Any_FitInSitu_(newSize) &&
         newSize <= _externalBlock.SizeInBytes) {
-        Assert(Meta::IsAligned(traits.Alignment(), _externalBlock.Ptr));
+        Assert(Meta::IsAlignedPow2(traits.Alignment(), _externalBlock.Ptr));
 
         Traits()->Destroy(_externalBlock.Ptr);
     }

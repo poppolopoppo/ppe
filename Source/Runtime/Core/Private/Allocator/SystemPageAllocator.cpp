@@ -90,7 +90,7 @@ struct CACHELINE_ALIGNED FSystemPageCache_ {
             else if (not (UsedChunks && UsedChunks->Last().Allocate(&result)))
                 result = AllocateFromNewChunk_();
         }
-        Assert(Meta::IsAligned(PageSize, result));
+        Assert(Meta::IsAlignedPow2(PageSize, result));
         ONLY_IF_MEMORYDOMAINS(TrackingData().AllocateUser(PageSize));
         ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(result, PageSize));
         ONLY_IF_ASSERT_RELEASE(++NumUserPages);
@@ -98,7 +98,7 @@ struct CACHELINE_ALIGNED FSystemPageCache_ {
     }
 
     void Deallocate(FFreePage_* p) {
-        Assert(Meta::IsAligned(PageSize, p));
+        Assert(Meta::IsAlignedPow2(PageSize, p));
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(p, PageSize));
 
         const FCriticalScope scopeLock{ &Barrier };

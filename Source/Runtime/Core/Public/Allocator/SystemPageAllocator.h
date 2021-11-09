@@ -27,7 +27,7 @@ public:
     }
 
     size_t SnapSize(size_t s) const NOEXCEPT {
-        return Meta::RoundToNext(Alignment, s);
+        return Meta::RoundToNextPow2(Alignment, s);
     }
 
     FAllocatorBlock Allocate(size_t s);

@@ -86,7 +86,7 @@ void FHashTableData_::SetDeleted(size_t index) {
 //----------------------------------------------------------------------------
 void FHashTableData_::ResetStates() {
     Assert(StatesAndBuckets);
-    Assert(Meta::IsAligned(16, StatesAndBuckets));
+    Assert(Meta::IsAlignedPow2(16, StatesAndBuckets));
     STATIC_ASSERT(GGroupSize == 16);
 
     const size_t numStates = NumStates();

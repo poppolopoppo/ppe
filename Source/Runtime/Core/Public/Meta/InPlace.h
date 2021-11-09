@@ -26,7 +26,7 @@ struct TInPlace {
 
     T* Get() {
         Assert_NoAssume(Available);
-        Assert_NoAssume(Meta::IsAligned(alignof(T), data()));
+        Assert_NoAssume(Meta::IsAlignedPow2(alignof(T), data()));
         return static_cast<T*>(data());
     }
     const T* Get() const { return const_cast<TInPlace*>(this)->Get(); }

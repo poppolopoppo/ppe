@@ -80,11 +80,11 @@ public:
     TAlignedMallocator() = default;
 
     size_t SnapSize(size_t s) const NOEXCEPT {
-        return FMallocator::SnapSize(Meta::RoundToNext(s, _Alignment));
+        return FMallocator::SnapSize(Meta::RoundToNextPow2(s, _Alignment));
     }
 
     FAllocatorBlock Allocate(size_t s) const {
-        STATIC_ASSERT(Meta::IsAligned(ALLOCATION_BOUNDARY, Alignment));
+        STATIC_ASSERT(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, Alignment));
         return FAllocatorBlock{ PPE::malloc<_Alignment>(s), s };
     }
 

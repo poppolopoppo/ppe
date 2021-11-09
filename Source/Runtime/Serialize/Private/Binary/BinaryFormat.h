@@ -131,7 +131,7 @@ struct FBinaryFormat {
         FContents Contents;
         FSections Sections;
     };
-    STATIC_ASSERT(Meta::IsAligned(16, sizeof(FHeaders)));
+    STATIC_ASSERT(Meta::IsAlignedPow2(16, sizeof(FHeaders)));
     STATIC_ASSERT(sizeof(FHeaders) == sizeof(FFourCC) * 2 + sizeof(EHeaderFlags) + sizeof(u32) + sizeof(FContents) + sizeof(FSections));
 
     struct FSignature {

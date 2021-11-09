@@ -300,7 +300,7 @@ public:
         for (;;) {
             bk = (h0 & _bucketMask);
 
-            Assert(Meta::IsAligned(16, &_buckets[bk].States));
+            Assert(Meta::IsAlignedPow2(16, &_buckets[bk].States));
             st = m128i_epi8_load_aligned(&_buckets[bk].States);
 
             for (bitmask_t bm{ m128i_epi8_findeq(st, h1) }; bm.Data; ) {

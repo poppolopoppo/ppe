@@ -153,7 +153,7 @@ public:
     FStdMallocator() = default;
 
     static size_t SnapSize(size_t s) NOEXCEPT {
-        return Meta::RoundToNext(s, Alignment);
+        return Meta::RoundToNextPow2(s, Alignment);
     }
 
     FAllocatorBlock Allocate(size_t s) const {

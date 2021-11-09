@@ -135,7 +135,7 @@ struct FHeapPtrWCounter { // assumed aligned on 16
         Data = 0;
     }
     void Reset(const void* ptr, u32 n) NOEXCEPT {
-        Assert_NoAssume(Meta::IsAligned(16, ptr));
+        Assert_NoAssume(Meta::IsAlignedPow2(16, ptr));
         Data = (uintptr_t(ptr) | n);
         Assert_NoAssume(Ptr<const void>() == ptr);
         Assert_NoAssume(Counter() == n);
@@ -152,7 +152,7 @@ struct FHeapPtrWCounter { // assumed aligned on 16
     template <typename T>
     T* Ptr() const NOEXCEPT { return reinterpret_cast<T*>(Data & ~uintptr_t(0xF)); }
     void SetPtr(const void* ptr) NOEXCEPT {
-        Assert_NoAssume(Meta::IsAligned(16, ptr));
+        Assert_NoAssume(Meta::IsAlignedPow2(16, ptr));
         Data = ((Data & uintptr_t(0xF)) | uintptr_t(ptr));
         Assert_NoAssume(Ptr<const void>() == ptr);
     }

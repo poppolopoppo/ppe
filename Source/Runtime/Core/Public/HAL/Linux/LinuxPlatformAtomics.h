@@ -218,7 +218,7 @@ public:
 
 private: // private helpers
     static FORCE_INLINE bool IsAlignedForAtomics(void* p) {
-        return Meta::IsAligned(sizeof(void*), p);
+        return Meta::IsAlignedPow2(sizeof(void*), p);
     }
 };
 //----------------------------------------------------------------------------

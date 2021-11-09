@@ -19,16 +19,16 @@ public:
     static void*    Realloc(void* const ptr, size_t size);
 
     static void*    AlignedMalloc(size_t size, size_t alignment) {
-        void* const p = Malloc(Meta::RoundToNext(size, alignment));
-        Assert_NoAssume(Meta::IsAligned(alignment, p));
+        void* const p = Malloc(Meta::RoundToNextPow2(size, alignment));
+        Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
         return p;
     }
     static void     AlignedFree(void* const ptr) {
         return Free(ptr);
     }
     static void*    AlignedRealloc(void* const ptr, size_t size, size_t alignment) {
-        void* const p = Realloc(ptr, Meta::RoundToNext(size, alignment));
-        Assert_NoAssume(0 == size || Meta::IsAligned(alignment, p));
+        void* const p = Realloc(ptr, Meta::RoundToNextPow2(size, alignment));
+        Assert_NoAssume(0 == size || Meta::IsAlignedPow2(alignment, p));
         return p;
     }
 

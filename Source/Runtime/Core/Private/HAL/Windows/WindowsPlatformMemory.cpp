@@ -142,7 +142,7 @@ void* FWindowsPlatformMemory::AddressOfReturnAddress() {
 //----------------------------------------------------------------------------
 void* FWindowsPlatformMemory::PageAlloc(size_t sizeInBytes) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, sizeInBytes));
 
     // /!\ BEWARE /!\
     // #TODO : refactor this into a less wasteful page allocator
@@ -154,14 +154,14 @@ void* FWindowsPlatformMemory::PageAlloc(size_t sizeInBytes) {
     // it already has a massive memory overhead
     void* const ptr = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
-    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, ptr));
     return ptr;
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformMemory::PageFree(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
-    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
-    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, ptr));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, sizeInBytes));
 
     NOOP(sizeInBytes);
 
@@ -177,7 +177,7 @@ PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(6001) // Using uninitialized memory 'p'. (no need to worry, we just use the virtual addr)
 void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
     const ::DWORD flAllocationType = (commit ? MEM_RESERVE | MEM_COMMIT : MEM_RESERVE);
@@ -186,7 +186,7 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
     // Optimistically try mapping precisely the right amount before falling back to the slow method :
     void* p = ::VirtualAlloc(nullptr, sizeInBytes, flAllocationType, flProtect);
 
-    if (not Meta::IsAligned(alignment, p)) {
+    if (not Meta::IsAlignedPow2(alignment, p)) {
 
         // Fill "bubbles" (reserve unaligned regions) at the beginning of virtual address space, otherwise there will be always falling back to the slow method
         if ((uintptr_t)p < 16 * 1024 * 1024)
@@ -206,7 +206,7 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
         } while (nullptr == p);
     }
 
-    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, p));
+    Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, p));
     return p;
 }
 PRAGMA_MSVC_WARNING_POP()
@@ -214,8 +214,8 @@ PRAGMA_MSVC_WARNING_POP()
 void FWindowsPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
-    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, ptr));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, sizeInBytes));
 
     // Remember : memory must be reserved first with VirtualAlloc(sizeInBytes, false)
 
@@ -224,8 +224,8 @@ void FWindowsPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 void FWindowsPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes, bool release) {
     Assert(ptr);
-    Assert(Meta::IsAligned(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, ptr));
-    Assert(Meta::IsAligned(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, ptr));
+    Assert(Meta::IsAlignedPow2(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, sizeInBytes));
 
     ::DWORD dwFreeType;
     if (release) {

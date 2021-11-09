@@ -105,7 +105,7 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
         cst.AllocationGranularity = cst.PageSize;
     }
 
-    Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, cst.AllocationGranularity));
+    Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_GRANULARITY, cst.AllocationGranularity));
     cst.AllocationGranularity = Max(cst.AllocationGranularity, ALLOCATION_GRANULARITY);
     return cst;
 }
@@ -118,7 +118,7 @@ static void* VMPageAlloc_(size_t sizeInBytes, bool commit) {
         -1, 0 );
 
     if (ptr != MAP_FAILED) {
-        Assert(Meta::IsAligned(PAGE_SIZE, ptr));
+        Assert(Meta::IsAlignedPow2(PAGE_SIZE, ptr));
         return ptr;
     }
     else {
@@ -283,15 +283,15 @@ void* FLinuxPlatformMemory::AddressOfReturnAddress() {
 //----------------------------------------------------------------------------
 void* FLinuxPlatformMemory::PageAlloc(size_t sizeInBytes) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, sizeInBytes));
 
     return VMPageAlloc_(sizeInBytes, true);
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformMemory::PageFree(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
-    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
-    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, ptr));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, sizeInBytes));
 
     VMPageFree_(ptr, sizeInBytes, true);
 }
@@ -302,17 +302,17 @@ void* FLinuxPlatformMemory::VirtualAlloc(size_t sizeInBytes, bool commit) {
 //----------------------------------------------------------------------------
 void* FLinuxPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(AllocationGranularity, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
     void* p = VMPageAlloc_(sizeInBytes, commit);//optimistically try mapping precisely the right amount before falling back to the slow method
 
-	if (Unlikely(not Meta::IsAligned(alignment, p))) {
+	if (Unlikely(not Meta::IsAlignedPow2(alignment, p))) {
         VMPageFree_(p, sizeInBytes, commit);
 
         p = VMPageAlloc_(sizeInBytes + alignment, commit);
         if (Likely(p)) {
-            const uintptr_t ap = Meta::RoundToNext((uintptr_t)p, alignment);
+            const uintptr_t ap = Meta::RoundToNextPow2((uintptr_t)p, alignment);
 			uintptr_t diff = (ap - (uintptr_t)p);
             if (diff > 0) {
                 VMPageFree_(p, diff, commit);
@@ -324,7 +324,7 @@ void* FLinuxPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, b
             }
 
             p = (void*)ap;
-            Assert(Meta::IsAligned(alignment, p));
+            Assert(Meta::IsAlignedPow2(alignment, p));
         }
 	}
 
@@ -334,8 +334,8 @@ void* FLinuxPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, b
 void FLinuxPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
-    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, ptr));
+    Assert(Meta::IsAlignedPow2(PAGE_SIZE, sizeInBytes));
 
     // Remember : memory must be reserved first with VirtualAlloc(sizeInBytes, false)
 
@@ -344,8 +344,8 @@ void FLinuxPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 void FLinuxPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes, bool release) {
     Assert(ptr);
-    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, ptr));
-    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, ptr));
+    Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, sizeInBytes));
 
     VMPageFree_(ptr, sizeInBytes, release);
 }

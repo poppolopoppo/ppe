@@ -108,7 +108,7 @@ static void Template_AddItem_(
     size_t id, size_t style,
     EAtomClass_ klass ) {
     const auto eaten = writer.EatAligned(sizeof(::DLGITEMTEMPLATE), sizeof(DWORD));
-    Assert(Meta::IsAligned(sizeof(DWORD), eaten.Pointer()));
+    Assert(Meta::IsAlignedPow2(sizeof(DWORD), eaten.Pointer()));
     ::LPDLGITEMTEMPLATE const tpl = reinterpret_cast<::LPDLGITEMTEMPLATE>(eaten.Pointer());
 
     tpl->x = checked_cast<short>(x);
@@ -398,7 +398,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         FMemoryViewWriter writer(TMemoryView<u8>((u8*)::GlobalLock(hgbl), GAllocSize));
 
         const auto eaten = writer.Eat(sizeof(::DLGTEMPLATE));
-        Assert(Meta::IsAligned(sizeof(::DWORD), eaten.Pointer()));
+        Assert(Meta::IsAlignedPow2(sizeof(::DWORD), eaten.Pointer()));
         ::LPDLGTEMPLATE const tpl = reinterpret_cast<::LPDLGTEMPLATE>(eaten.Pointer());
 
         tpl->x = 10;

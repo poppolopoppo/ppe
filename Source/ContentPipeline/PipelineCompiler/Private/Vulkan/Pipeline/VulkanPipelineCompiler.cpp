@@ -213,8 +213,8 @@ NODISCARD static bool MergePipelineResources_(
         //  * size must be a multiple of 4
         // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VUID-vkCmdPushConstants-offset-00368
 
-        LOG_CHECK(PipelineCompiler, Meta::IsAligned(4, srcPc.second.Offset));
-        LOG_CHECK(PipelineCompiler, Meta::IsAligned(4, srcPc.second.Size));
+        LOG_CHECK(PipelineCompiler, Meta::IsAlignedPow2(4, srcPc.second.Offset));
+        LOG_CHECK(PipelineCompiler, Meta::IsAlignedPow2(4, srcPc.second.Size));
 
         const auto it = dst->PushConstants.find(srcPc.first);
         if (dst->PushConstants.end() == it) {

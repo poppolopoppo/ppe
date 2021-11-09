@@ -161,7 +161,7 @@ bool FMetaFunction::InvokeIFP_(const FMetaObject& obj, const FAtom& result, cons
 
         if (_parameters[i].Traits() != arguments[i].Traits()) {
             const FSizeAndFlags sizeAndFlags = _parameters[i].Traits()->SizeAndFlags();
-            strideInBytes = Meta::RoundToNext(strideInBytes, sizeAndFlags.Alignment());
+            strideInBytes = Meta::RoundToNextPow2(strideInBytes, sizeAndFlags.Alignment());
             strideInBytes += sizeAndFlags.SizeInBytes;
         }
     }
@@ -192,10 +192,10 @@ bool FMetaFunction::PromoteInvoke_(
     size_t offsetInBytes = 0;
     if (resultPromotion) {
         const FSizeAndFlags sizeAndFlags = _result->SizeAndFlags();
-        Assert(Meta::IsAligned(sizeAndFlags.Alignment(), offsetInBytes));
+        Assert(Meta::IsAlignedPow2(sizeAndFlags.Alignment(), offsetInBytes));
 
         nativeResult = FAtom{ rawData.SubRange(offsetInBytes, offsetInBytes + sizeAndFlags.SizeInBytes).data(), _result };
-        Assert(Meta::IsAligned(sizeAndFlags.Alignment(), nativeResult.Data()));
+        Assert(Meta::IsAlignedPow2(sizeAndFlags.Alignment(), nativeResult.Data()));
         _result->Construct(nativeResult.Data());
 
         offsetInBytes += sizeAndFlags.SizeInBytes;
@@ -208,10 +208,10 @@ bool FMetaFunction::PromoteInvoke_(
         const PTypeTraits& traits = _parameters[i].Traits();
         if (traits != arguments[i].Traits()) {
             const FSizeAndFlags sizeAndFlags = traits->SizeAndFlags();
-            offsetInBytes = Meta::RoundToNext(sizeAndFlags.Alignment(), offsetInBytes);
+            offsetInBytes = Meta::RoundToNextPow2(sizeAndFlags.Alignment(), offsetInBytes);
 
             nativeArg = FAtom{ rawData.SubRange(offsetInBytes, offsetInBytes + sizeAndFlags.SizeInBytes).data(), traits };
-            Assert(Meta::IsAligned(sizeAndFlags.Alignment(), nativeArg.Data()));
+            Assert(Meta::IsAlignedPow2(sizeAndFlags.Alignment(), nativeArg.Data()));
             nativeArg.Traits()->Construct(nativeArg.Data());
 
             const bool promoted = (preferMove

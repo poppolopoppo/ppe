@@ -34,7 +34,7 @@ static bool ReadTextSection_(
     const size_t numEntries,
     const FBinaryFormat::FRawData& section,
     TRawStorage<T, _Allocator>& contents ) {
-    Assert_NoAssume(0 == section.Size || Meta::IsAligned(sizeof(_Char), section.Size));
+    Assert_NoAssume(0 == section.Size || Meta::IsAlignedPow2(sizeof(_Char), section.Size));
     Assert_NoAssume(0 != numEntries || 0 == section.Size);
 
     contents.Resize_DiscardData(numEntries);

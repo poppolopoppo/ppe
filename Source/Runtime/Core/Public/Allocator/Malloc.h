@@ -54,14 +54,14 @@ template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
 void* (malloc)(size_t size, unaligned_alloc_t<_Alignment>* = 0) {
     void* const p = (PPE::malloc)(size);
-    Assert(Meta::IsAligned(_Alignment, p));
+    Assert(Meta::IsAlignedPow2(_Alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS
 void (free)(void *ptr, unaligned_alloc_t<_Alignment>* = 0) {
-    Assert(Meta::IsAligned(_Alignment, ptr));
+    Assert(Meta::IsAlignedPow2(_Alignment, ptr));
     (PPE::free)(ptr);
 }
 //----------------------------------------------------------------------------
@@ -69,7 +69,7 @@ template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
 void* (calloc)(size_t nmemb, size_t size, unaligned_alloc_t<_Alignment>* = 0) {
     void* const p = (PPE::calloc)(nmemb, size);
-    Assert(Meta::IsAligned(_Alignment, p));
+    Assert(Meta::IsAlignedPow2(_Alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
@@ -77,7 +77,7 @@ template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
 void* (realloc)(void *ptr, size_t size, unaligned_alloc_t<_Alignment>* = 0) {
     void* const p = (PPE::realloc)(ptr, size);
-    Assert(Meta::IsAligned(_Alignment, p));
+    Assert(Meta::IsAlignedPow2(_Alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------

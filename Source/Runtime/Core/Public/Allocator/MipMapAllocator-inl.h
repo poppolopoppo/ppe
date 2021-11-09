@@ -106,7 +106,7 @@ inline void* FMipmapPage::Allocate(const FPaging& page, std::atomic<i32>* pUnuse
     Assert(pUnusedPages);
     Assert(sizeInBytes);
     Assert_NoAssume(sizeInBytes <= NumMips * page.SizeInBytes);
-    AssertRelease_NoAssume(Meta::IsAligned(page.SizeInBytes, sizeInBytes));
+    AssertRelease_NoAssume(Meta::IsAlignedPow2(page.SizeInBytes, sizeInBytes));
 
     const u32 lvl = MipLevel(sizeInBytes, page.SizeInBytes);
     const u32 fst = MipOffset(lvl);
@@ -229,7 +229,7 @@ Assert(ptr);
     Assert(sizeInBytes);
     Assert_NoAssume(AliasesToMipMap(page, ptr));
     Assert_NoAssume(sizeInBytes <= NumMips * page.SizeInBytes);
-    Assert_NoAssume(Meta::IsAligned(page.SizeInBytes, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(page.SizeInBytes, sizeInBytes));
 
     const intptr_t rel = ((u8*)ptr - (u8*)vAddressSpace);
     const u32 blk = checked_cast<u32>(rel / (NumMips * page.SizeInBytes));
@@ -458,7 +458,7 @@ template <typename _Traits>
 void* TMipMapAllocator2<_Traits>::Allocate(size_t sizeInBytes, void** phint) {
     Assert(sizeInBytes);
     Assert(phint);
-    Assert_NoAssume(Meta::IsAligned(traits_type::Granularity, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(traits_type::Granularity, sizeInBytes));
 
     // first try to fetch from hint or from a page already allocated
     {
@@ -508,7 +508,7 @@ void* TMipMapAllocator2<_Traits>::Allocate(size_t sizeInBytes, void** phint) {
                 freePage->NumBlocks = freePage->NumUnused = freePage->LiveSet = 0;
                 freePage->vAddressSpace = traits_type::PageReserve(PageSize);
                 AssertRelease(freePage->vAddressSpace);
-                Assert_NoAssume(Meta::IsAligned(PageSize, freePage->vAddressSpace));
+                Assert_NoAssume(Meta::IsAlignedPow2(PageSize, freePage->vAddressSpace));
             }
 
             // at this point we should have a new page, without any older allocations
@@ -642,7 +642,7 @@ size_t TMipMapAllocator2<_Traits>::EachMipmapPage(_Each&& each) const NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _Traits>
 FMipmapPage* TMipMapAllocator2<_Traits>::AliasingMipMap(const FCompressedRadixTrie& pages, const void* ptr) NOEXCEPT {
-    const void* const vAddressSpace = Meta::RoundToPrev(ptr, PageSize);
+    const void* const vAddressSpace = Meta::RoundToPrevPow2(ptr, PageSize);
 
     FMipmapPage* page;
     if (pages.Find(reinterpret_cast<void**>(&page), vAddressSpace)) {

@@ -12,7 +12,7 @@ namespace PPE {
 class PPE_CORE_API FVirtualMemory {
 public:
     FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
-        return Meta::RoundToNext(sizeInBytes, FPlatformMemory::AllocationGranularity);
+        return Meta::RoundToNextPow2(sizeInBytes, FPlatformMemory::AllocationGranularity);
     }
 
     static size_t   SizeInBytes(void* ptr) NOEXCEPT;

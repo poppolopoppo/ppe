@@ -69,8 +69,8 @@ static void StompFillPadding_(const void* pbegin, const void* pend) {
     u8* const p0 = (u8*)pbegin;
     u8* const p3 = (u8*)pend;
 
-    u8* const p1 = Meta::RoundToNext(p0, word_size);
-    u8* const p2 = Meta::RoundToPrev(p3, word_size);
+    u8* const p1 = Meta::RoundToNextPow2(p0, word_size);
+    u8* const p2 = Meta::RoundToPrevPow2(p3, word_size);
 
     forrange(p, p0, p1)
         *p = 0xAA;
@@ -90,8 +90,8 @@ static void StompCheckPadding_(const void* pbegin, const void* pend) {
     const u8* const p0 = (u8*)pbegin;
     const u8* const p3 = (u8*)pend;
 
-    const u8* const p1 = Meta::RoundToNext(p0, word_size);
-    const u8* const p2 = Meta::RoundToPrev(p3, word_size);
+    const u8* const p1 = Meta::RoundToNextPow2(p0, word_size);
+    const u8* const p2 = Meta::RoundToPrevPow2(p3, word_size);
 
     bool succeed = true;
 
@@ -155,7 +155,7 @@ public:
 
     void Delete(void* ptr, size_t sizeInBytes) {
         Assert(ptr);
-        Assert(Meta::IsAligned(GStompPageSize, sizeInBytes));
+        Assert(Meta::IsAlignedPow2(GStompPageSize, sizeInBytes));
 
         // blocks too large are immediately freed to limit memory consumption
         if (sizeInBytes > MaxBlockSizeInBytes) {
@@ -260,8 +260,8 @@ void* FMallocStomp::AlignedMalloc(size_t size, size_t alignment) {
 
     Assert(Meta::IsPow2(alignment));
 
-    const size_t paddingSize = Meta::RoundToNext(size, alignment) - size;
-    const size_t pageAlignedSize = Meta::RoundToNext(size + paddingSize + sizeof(FStompPayload_), GStompPageSize);
+    const size_t paddingSize = Meta::RoundToNextPow2(size, alignment) - size;
+    const size_t pageAlignedSize = Meta::RoundToNextPow2(size + paddingSize + sizeof(FStompPayload_), GStompPageSize);
     const size_t allocationSize = (pageAlignedSize + GStompPageSize); // extra page that will be read/write protected
 
     u8* const allocationPtr = (u8*)FPlatformMemory::PageAlloc(allocationSize);
@@ -290,7 +290,7 @@ void* FMallocStomp::AlignedMalloc(size_t size, size_t alignment) {
     FPlatformMemory::PageProtect(protectedPtr, GStompPageSize, false, false);
 
     Assert(userPtr);
-    Assert(Meta::IsAligned(alignment, userPtr));
+    Assert(Meta::IsAlignedPow2(alignment, userPtr));
     return userPtr;
 }
 //----------------------------------------------------------------------------
@@ -317,18 +317,18 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
         return FMallocStomp::AlignedMalloc(size, alignment);
     }
 
-    Assert(Meta::IsAligned(alignment, ptr));
+    Assert(Meta::IsAlignedPow2(alignment, ptr));
 
 #if 1 // much faster path, alas less secure
     if (ptr) {
         const FStompPayload_* const payload = StompGetPayload_(ptr);
         u8* const allocationPtr = ((u8*)ptr - payload->UserOffset);
 
-        Assert(Meta::IsAligned(alignment, ptr));
+        Assert(Meta::IsAlignedPow2(alignment, ptr));
 
         const size_t oldUserSize = payload->UserSize;
-        const size_t paddingSize = Meta::RoundToNext(size, alignment) - size;
-        const size_t pageAlignedSize = Meta::RoundToNext(size + paddingSize + sizeof(FStompPayload_), GStompPageSize);
+        const size_t paddingSize = Meta::RoundToNextPow2(size, alignment) - size;
+        const size_t pageAlignedSize = Meta::RoundToNextPow2(size + paddingSize + sizeof(FStompPayload_), GStompPageSize);
         const size_t allocationSize = (pageAlignedSize + GStompPageSize); // extra page that will be read/write protected
 
         if (allocationSize == payload->AllocationSize) {
@@ -357,7 +357,7 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
             ONLY_IF_ASSERT(StompGetPayload_(userPtr));
 
             Assert(userPtr);
-            Assert(Meta::IsAligned(alignment, userPtr));
+            Assert(Meta::IsAlignedPow2(alignment, userPtr));
             return userPtr;
         }
     }

@@ -60,13 +60,13 @@ struct ALIGN(16) TSSEHashBucket5 {
         default:
             // first try to align on cache line size
             for (u32 c = 11; c <= 16; ++c) {
-                if (Meta::IsAligned(CACHELINE_SIZE, sizeof(states_t) + sizeof(storage_t) * c))
+                if (Meta::IsAlignedPow2(CACHELINE_SIZE, sizeof(states_t) + sizeof(storage_t) * c))
                     return c; // succeed, bail out
             }
 
             // then try to align on simd alignment requirement
             for (u32 c = 11; c <= 16; ++c)
-                if (Meta::IsAligned(16, sizeof(states_t) + sizeof(storage_t) * c))
+                if (Meta::IsAlignedPow2(16, sizeof(states_t) + sizeof(storage_t) * c))
                     return c; // succeed, bail out
 
             return 14; // default choice

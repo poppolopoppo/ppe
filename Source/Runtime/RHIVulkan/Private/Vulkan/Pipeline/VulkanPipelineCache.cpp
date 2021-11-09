@@ -602,7 +602,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
     const u32 maxHitShaders = sharedData->MaxHitShaderCount;
 
     Assert_NoAssume(baseAlignment >= handleSize);
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, handleSize));
+    Assert_NoAssume(Meta::IsAlignedPow2(baseAlignment, handleSize));
 
     auto* rtPipeline = workerCmd.AcquireTransient(pipelineId);
     LOG_CHECK(RHI, !!rtPipeline);
@@ -659,10 +659,10 @@ bool FVulkanPipelineCache::CreateShaderTable(
     u32 offset{ 0 };
     const auto exclusiveTable = pShaderTable->_data.LockExclusive();
     exclusiveTable->RayGenOffset = offset;
-    exclusiveTable->RayMissOffset = offset = Meta::RoundToNext(offset + handleSize, baseAlignment);
-    exclusiveTable->RayHitOffset = offset = Meta::RoundToNext(offset + (handleSize * missShaderCount), baseAlignment);
-    exclusiveTable->CallableOffset = offset = Meta::RoundToNext(offset + (handleSize * maxHitShaders), baseAlignment);
-    exclusiveTable->BlockSize = offset = Meta::RoundToNext(offset + (handleSize * callableShaderCount), baseAlignment);
+    exclusiveTable->RayMissOffset = offset = Meta::RoundToNextPow2(offset + handleSize, baseAlignment);
+    exclusiveTable->RayHitOffset = offset = Meta::RoundToNextPow2(offset + (handleSize * missShaderCount), baseAlignment);
+    exclusiveTable->CallableOffset = offset = Meta::RoundToNextPow2(offset + (handleSize * maxHitShaders), baseAlignment);
+    exclusiveTable->BlockSize = offset = Meta::RoundToNextPow2(offset + (handleSize * callableShaderCount), baseAlignment);
     exclusiveTable->RayMissStride = checked_cast<u16>( handleSize );
     exclusiveTable->RayHitStride = checked_cast<u16>( handleSize );
     exclusiveTable->CallableStride = checked_cast<u16>( handleSize );
@@ -671,13 +671,13 @@ bool FVulkanPipelineCache::CreateShaderTable(
     exclusiveTable->AvailableShaders.set_if(1, maxHitShaders > 0);
     exclusiveTable->AvailableShaders.set_if(2, callableShaderCount > 0);
 
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->RayGenOffset));
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->RayMissOffset));
-    Assert_NoAssume(Meta::IsAligned(exclusiveTable->RayMissStride, exclusiveTable->RayMissOffset));
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->RayHitOffset));
-    Assert_NoAssume(Meta::IsAligned(exclusiveTable->RayHitStride, exclusiveTable->RayHitOffset));
-    Assert_NoAssume(Meta::IsAligned(baseAlignment, exclusiveTable->CallableOffset));
-    Assert_NoAssume(Meta::IsAligned(exclusiveTable->CallableStride, exclusiveTable->CallableOffset));
+    Assert_NoAssume(Meta::IsAlignedPow2(baseAlignment, exclusiveTable->RayGenOffset));
+    Assert_NoAssume(Meta::IsAlignedPow2(baseAlignment, exclusiveTable->RayMissOffset));
+    Assert_NoAssume(Meta::IsAlignedPow2(exclusiveTable->RayMissStride, exclusiveTable->RayMissOffset));
+    Assert_NoAssume(Meta::IsAlignedPow2(baseAlignment, exclusiveTable->RayHitOffset));
+    Assert_NoAssume(Meta::IsAlignedPow2(exclusiveTable->RayHitStride, exclusiveTable->RayHitOffset));
+    Assert_NoAssume(Meta::IsAlignedPow2(baseAlignment, exclusiveTable->CallableOffset));
+    Assert_NoAssume(Meta::IsAlignedPow2(exclusiveTable->CallableStride, exclusiveTable->CallableOffset));
 
     const u32 requiredSize = checked_cast<u32>(exclusiveTable->BlockSize * debugModes.size());
 
@@ -760,7 +760,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
         FVulkanRTShaderTable::FShaderTable& table = (*exclusiveTable->Tables.Push_Uninitialized());
         table.BufferOffset = offset;
         table.Mode = mode;
-        Assert_NoAssume(Meta::IsAligned(baseAlignment, table.BufferOffset));
+        Assert_NoAssume(Meta::IsAlignedPow2(baseAlignment, table.BufferOffset));
 
         // create pipeline
 
@@ -941,7 +941,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
         // finally advance the offset to the next block
 
-        offset = Meta::RoundToNext(offset + exclusiveTable->BlockSize, baseAlignment);
+        offset = Meta::RoundToNextPow2(offset + exclusiveTable->BlockSize, baseAlignment);
     }
 
     return true;

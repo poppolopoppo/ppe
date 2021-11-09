@@ -70,7 +70,7 @@ public:
     NODISCARD PPE_DECLSPEC_ALLOCATOR() void* Allocate(size_t size) {
         Assert(size);
         Assert_NoAssume(CheckCanary_());
-        size = Meta::RoundToNext(size, ALLOCATION_BOUNDARY);
+        size = Meta::RoundToNextPow2(size, ALLOCATION_BOUNDARY);
 
         for (FSlabPtr& slab : _slabs) {
             if (slab.Offset + size <= slab.Size) {
@@ -107,7 +107,7 @@ public:
     void TrimMemory(); // release unused slabs
 
     static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
-        return Meta::RoundToNext(sizeInBytes, ALLOCATION_BOUNDARY);
+        return Meta::RoundToNextPow2(sizeInBytes, ALLOCATION_BOUNDARY);
     }
 
 #if !USE_PPE_FINAL_RELEASE

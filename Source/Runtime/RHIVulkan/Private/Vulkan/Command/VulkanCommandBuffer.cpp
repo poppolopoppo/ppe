@@ -1066,7 +1066,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
     const u32 ssbAlign = checked_cast<u32>(_frameGraph->Device().Limits().minStorageBufferOffsetAlignment);
     const u32 ssbMaxValuesSize = ssbDim.y * sizeof(u64);
     ssbTimemapSize -= ssbMaxValuesSize + ssbAlign;
-    const u32 ssbMaxValuesOffset = Meta::RoundToNext(ssbTimemapOffset + ssbTimemapSize, ssbAlign);
+    const u32 ssbMaxValuesOffset = Meta::RoundToNextPow2(ssbTimemapOffset + ssbTimemapSize, ssbAlign);
 
     FPipelineResources resources;
     CONSTEXPR const FDescriptorSetID descriptorSetId0{ "0" };
@@ -1325,8 +1325,8 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
     copy.DebugColor = task.DebugColor;
 #endif
 
-    Assert_NoAssume(Meta::IsAligned(blockDim.x, task.ImageOffset.x));
-    Assert_NoAssume(Meta::IsAligned(blockDim.y, task.ImageOffset.y));
+    Assert_NoAssume(Meta::IsAlignedPow2(blockDim.x, task.ImageOffset.x));
+    Assert_NoAssume(Meta::IsAlignedPow2(blockDim.y, task.ImageOffset.y));
 
     // copy to staging buffer slice by slice
     if (totalSizeInBytes < minSizeInBytes) {
@@ -1349,8 +1349,8 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
             }
 
             const u32 zSize = checked_cast<u32>(blockSize / slicePitch);
-            Assert_NoAssume(Meta::IsAligned(blockDim.x, imageSize.x));
-            Assert_NoAssume(Meta::IsAligned(blockDim.y, imageSize.y));
+            Assert_NoAssume(Meta::IsAlignedPow2(blockDim.x, imageSize.x));
+            Assert_NoAssume(Meta::IsAlignedPow2(blockDim.y, imageSize.y));
 
             copy.AddRegion(
                 staging.Offset, rowLength, imageHeight,
@@ -1390,9 +1390,9 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                 }
 
                 const u32 ySize = checked_cast<u32>((blockSize * blockDim.y) / rowPitch);
-                Assert_NoAssume(Meta::IsAligned(blockDim.x, imageSize.x));
-                Assert_NoAssume(Meta::IsAligned(blockDim.y, ySize));
-                Assert_NoAssume(Meta::IsAligned(blockDim.y, task.ImageOffset.y + yOffset));
+                Assert_NoAssume(Meta::IsAlignedPow2(blockDim.x, imageSize.x));
+                Assert_NoAssume(Meta::IsAlignedPow2(blockDim.y, ySize));
+                Assert_NoAssume(Meta::IsAlignedPow2(blockDim.y, task.ImageOffset.y + yOffset));
 
                 copy.AddRegion(
                     staging.Offset, rowLength, ySize,

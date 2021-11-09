@@ -73,7 +73,7 @@ void* Alloca(size_t size) {
 #endif
         p = FAllocaFallback_::Allocate(size).Data;
 
-    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
+    Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, p));
     return p;
 }
 //----------------------------------------------------------------------------
@@ -122,7 +122,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
         result = blk.Data;
     }
 
-    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, result));
+    Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, result));
     return result;
 }
 //----------------------------------------------------------------------------
@@ -132,7 +132,7 @@ void FreeAlloca(void* ptr, size_t size) {
         return;
     }
 
-    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, ptr));
+    Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, ptr));
     Assert(size);
 
 #if USE_PPE_ALLOCA_SLABHEAP

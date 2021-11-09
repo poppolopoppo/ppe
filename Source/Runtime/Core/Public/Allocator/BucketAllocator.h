@@ -43,8 +43,8 @@ public:
     STATIC_CONST_INTEGRAL(size_t, BlockStep, _BlockStep);
 
     STATIC_ASSERT(BlockMinSize < BlockMaxSize);
-    STATIC_ASSERT(Meta::IsAligned(BlockStep, BlockMinSize));
-    STATIC_ASSERT(Meta::IsAligned(BlockStep, BlockMaxSize));
+    STATIC_ASSERT(Meta::IsAlignedPow2(BlockStep, BlockMinSize));
+    STATIC_ASSERT(Meta::IsAlignedPow2(BlockStep, BlockMaxSize));
 
     STATIC_CONST_INTEGRAL(size_t, NumBuckets, (BlockMaxSize - BlockMinSize) / BlockStep);
 

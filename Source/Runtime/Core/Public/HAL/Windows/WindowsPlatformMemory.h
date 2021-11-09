@@ -69,9 +69,9 @@ public:
 #endif
 
     static FORCE_INLINE void* Memstream(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
-        AssertRelease(Meta::IsAligned(16, dst)); // everything assumed to be aligned, no reminder
-        AssertRelease(Meta::IsAligned(16, src));
-        AssertRelease(Meta::IsAligned(16, sizeInBytes));
+        AssertRelease(Meta::IsAlignedPow2(16, dst)); // everything assumed to be aligned, no reminder
+        AssertRelease(Meta::IsAlignedPow2(16, src));
+        AssertRelease(Meta::IsAlignedPow2(16, sizeInBytes));
         Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
 
 #if USE_PPE_WIN32MEMORY_SIMD
@@ -94,9 +94,9 @@ public:
 
 	static FORCE_INLINE void* MemstreamLarge(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
 #if USE_PPE_WIN32MEMORY_SIMD && __AVX2__
-		AssertRelease(Meta::IsAligned(32, dst)); // everything assumed to be aligned, no reminder
-		AssertRelease(Meta::IsAligned(32, src));
-		AssertRelease(Meta::IsAligned(32, sizeInBytes));
+		AssertRelease(Meta::IsAlignedPow2(32, dst)); // everything assumed to be aligned, no reminder
+		AssertRelease(Meta::IsAlignedPow2(32, src));
+		AssertRelease(Meta::IsAlignedPow2(32, sizeInBytes));
 		Assert_NoAssume(not FGenericPlatformMemory::Memoverlap(dst, sizeInBytes, src, sizeInBytes));
 		STATIC_ASSERT(sizeof(::__m256i) == 32);
 

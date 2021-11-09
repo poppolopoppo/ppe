@@ -79,7 +79,7 @@ template <u32 _PageSize>
 inline void* TBitmapPage<_PageSize>::Allocate(u32 sizeInBytes, bool& exhausted) NOEXCEPT {
     Assert(sizeInBytes);
     Assert_NoAssume(sizeInBytes < Capacity());
-    Assert_NoAssume(Meta::IsAligned(PageSize, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(PageSize, sizeInBytes));
 
     const bool ate = Segregate(sizeInBytes); // reverse search order for larger blocks
     const u32 numPages = ((sizeInBytes + PageSize - 1) / PageSize);
@@ -157,7 +157,7 @@ inline void* TBitmapPage<_PageSize>::Resize(void* ptr, u32 sizeInBytes, bool& ex
     Assert(sizeInBytes);
     Assert_NoAssume(Aliases(ptr));
     Assert_NoAssume(sizeInBytes < Capacity());
-    Assert_NoAssume(Meta::IsAligned(PageSize, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(PageSize, sizeInBytes));
 
     const u32 off = checked_cast<u32>(((u8*)ptr - (u8*)vAddressSpace) / PageSize);
     Assert(off < MaxPages);
@@ -280,7 +280,7 @@ template <typename _Traits>
 void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
     Assert(sizeInBytes >= MinAllocSize);
     Assert(sizeInBytes <= MaxAllocSize);
-    Assert_NoAssume(Meta::IsAligned(Granularity, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(Granularity, sizeInBytes));
 
     FStackMRU& hint = FStackMRU::Tls();
 
@@ -430,7 +430,7 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
             freePage->Reset(traits_type::PageReserve(BitmapSize, BitmapSize));
 
             if (Likely(freePage->vAddressSpace)) {
-                Assert_NoAssume(Meta::IsAligned(BitmapSize, freePage->vAddressSpace));
+                Assert_NoAssume(Meta::IsAlignedPow2(BitmapSize, freePage->vAddressSpace));
                 traits_type::PageCommit(freePage->vAddressSpace, BitmapSize);
                 Pages.Insert(freePage->vAddressSpace, freePage);
             }
@@ -594,7 +594,7 @@ size_t TBitmapHeap<_Traits>::DebugInfo(FBitmapHeapInfo* pinfo) const NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _Traits>
 auto TBitmapHeap<_Traits>::AliasingPage_AssumeLocked_(const void* ptr) const NOEXCEPT -> page_type* {
-    const void* const vAddressSpace = Meta::RoundToPrev(ptr, BitmapSize);
+    const void* const vAddressSpace = Meta::RoundToPrevPow2(ptr, BitmapSize);
 
     FStackMRU& hint = FStackMRU::Tls();
     for (const auto& MRU : hint.MRU) {
@@ -618,7 +618,7 @@ auto TBitmapHeap<_Traits>::AliasingPage_AssumeLocked_(const void* ptr) const NOE
 template <typename _Traits>
 auto TBitmapHeap<_Traits>::FindFreePage_AssumeLocked_(u32 sizeInBytes) NOEXCEPT -> page_type* {
     Assert(sizeInBytes);
-    Assert_NoAssume(Meta::IsAligned(Granularity, sizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(Granularity, sizeInBytes));
 
     page_type* freePage = FreePage.load(std::memory_order_relaxed);
     for (; freePage != GDummyPage; freePage = static_cast<page_type*>(freePage->NextPage)) {
@@ -683,7 +683,7 @@ struct FBitmapMetadata {
 template <size_t _ReservedSize, typename _Traits>
 TBitmapFixedSizeHeap<_ReservedSize, _Traits>::TBitmapFixedSizeHeap() NOEXCEPT
 :   NumExhaustedPages(0) {
-    STATIC_ASSERT(Meta::IsAligned(BitmapSize, _ReservedSize));
+    STATIC_ASSERT(Meta::IsAlignedPow2(BitmapSize, _ReservedSize));
 
     const FReadWriteLock::FScopeLockWrite scopeWrite(RWLock);
 
@@ -693,9 +693,9 @@ TBitmapFixedSizeHeap<_ReservedSize, _Traits>::TBitmapFixedSizeHeap() NOEXCEPT
     CommittedPages.SetupMemoryRequirements(NumReservedPages);
     ExhaustedPages.SetupMemoryRequirements(NumReservedPages);
 
-    const size_t szPageTable = Meta::RoundToNext(NumReservedPages * sizeof(page_type*), CACHELINE_SIZE);
-    const size_t szCommitted = Meta::RoundToNext(CommittedPages.AllocationSize(), CACHELINE_SIZE);
-    const size_t szExhausted = Meta::RoundToNext(ExhaustedPages.AllocationSize(), CACHELINE_SIZE);
+    const size_t szPageTable = Meta::RoundToNextPow2(NumReservedPages * sizeof(page_type*), CACHELINE_SIZE);
+    const size_t szCommitted = Meta::RoundToNextPow2(CommittedPages.AllocationSize(), CACHELINE_SIZE);
+    const size_t szExhausted = Meta::RoundToNextPow2(ExhaustedPages.AllocationSize(), CACHELINE_SIZE);
 
     u8* Metadata = reinterpret_cast<u8*>(FBitmapMetadata::Allocate(szPageTable + szCommitted + szExhausted));
 
@@ -721,9 +721,9 @@ TBitmapFixedSizeHeap<_ReservedSize, _Traits>::~TBitmapFixedSizeHeap() NOEXCEPT {
     AssertRelease(CommittedPages.Empty_ForAssert()); // are we leaking ?
     AssertRelease(ExhaustedPages.Full());
 
-    const size_t szPageTable = Meta::RoundToNext(NumReservedPages * sizeof(page_type*), CACHELINE_SIZE);
-    const size_t szCommitted = Meta::RoundToNext(CommittedPages.AllocationSize(), CACHELINE_SIZE);
-    const size_t szExhausted = Meta::RoundToNext(ExhaustedPages.AllocationSize(), CACHELINE_SIZE);
+    const size_t szPageTable = Meta::RoundToNextPow2(NumReservedPages * sizeof(page_type*), CACHELINE_SIZE);
+    const size_t szCommitted = Meta::RoundToNextPow2(CommittedPages.AllocationSize(), CACHELINE_SIZE);
+    const size_t szExhausted = Meta::RoundToNextPow2(ExhaustedPages.AllocationSize(), CACHELINE_SIZE);
 
     void* const Metadata = PageTable;
     FBitmapMetadata::Free(Metadata, szPageTable + szCommitted + szExhausted);
@@ -757,7 +757,7 @@ size_t TBitmapFixedSizeHeap<_ReservedSize, _Traits>::AllocationSize(const void* 
 template <size_t _ReservedSize, typename _Traits>
 void* TBitmapFixedSizeHeap<_ReservedSize, _Traits>::Allocate(size_t sizeInBytes) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(page_type::PageSize, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(page_type::PageSize, sizeInBytes));
 
     auto& hint = FStackMRU::Tls();
 

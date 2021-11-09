@@ -927,10 +927,10 @@ void Test_Allocators() {
                 float4 f = rnd.UniformF(0.f, 1.f);
 
                 const u324 sz4{
-                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.x), alignment)),
-                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.y), alignment)),
-                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.z), alignment)),
-                    u32(Meta::RoundToNext(u32(minSize + (maxSize - minSize) * f.w), alignment)) };
+                    u32(Meta::RoundToNextPow2(u32(minSize + (maxSize - minSize) * f.x), alignment)),
+                    u32(Meta::RoundToNextPow2(u32(minSize + (maxSize - minSize) * f.y), alignment)),
+                    u32(Meta::RoundToNextPow2(u32(minSize + (maxSize - minSize) * f.z), alignment)),
+                    u32(Meta::RoundToNextPow2(u32(minSize + (maxSize - minSize) * f.w), alignment)) };
 
                 if (currentSize + sz4.x <= totalSize) { currentSize += sz4.x; blks->push_back(sz4.x); }
                 if (currentSize + sz4.y <= totalSize) { currentSize += sz4.y; blks->push_back(sz4.y); }

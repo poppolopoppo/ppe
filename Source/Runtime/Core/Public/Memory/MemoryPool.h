@@ -536,10 +536,10 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Initia
     size_t totalSizeInBytes = 0;
     const size_t committedChunksOffsetInWords = 0;
     totalSizeInBytes += pool.CommittedChunks.AllocationSize();
-    Assert(Meta::IsAligned(sizeof(FBitTree_::word_t), totalSizeInBytes));
+    Assert(Meta::IsAlignedPow2(sizeof(FBitTree_::word_t), totalSizeInBytes));
     const size_t exhaustedChunksOffsetInWords = (totalSizeInBytes / sizeof(FBitTree_::word_t));
     totalSizeInBytes += ROUND_TO_NEXT_16(pool.ExhaustedChunks.AllocationSize());
-    Assert(Meta::IsAligned(sizeof(FPoolChunk_*), totalSizeInBytes));
+    Assert(Meta::IsAlignedPow2(sizeof(FPoolChunk_*), totalSizeInBytes));
     const size_t chunksOffsetInPtrs = (totalSizeInBytes / sizeof(FPoolChunk_*));
     totalSizeInBytes += sizeof(FPoolChunk_*) * MaxChunks;
 

@@ -60,7 +60,7 @@ template <size_t _CacheBlocksCapacity, size_t _MaxCacheSizeInBytes>
 #endif
 class TVirtualMemoryCache : private FVirtualMemoryCache {
 public:
-    TVirtualMemoryCache() { STATIC_ASSERT(_MaxCacheSizeInBytes > 0 && Meta::IsAligned(64 * 1024, _MaxCacheSizeInBytes)); }
+    TVirtualMemoryCache() { STATIC_ASSERT(_MaxCacheSizeInBytes > 0 && Meta::IsAlignedPow2(64 * 1024, _MaxCacheSizeInBytes)); }
     ~TVirtualMemoryCache() { ReleaseAll(); }
 
 #if USE_PPE_MEMORYDOMAINS

@@ -61,13 +61,13 @@ struct ALIGN(16) TSSEHashBucket6 {
         default:
             // first try to align on cache line size
             for (u32 c = 11; c <= 16; ++c) {
-                if (Meta::IsAligned(CACHELINE_SIZE, sizeof(states_t) + sizeof(storage_t) * c))
+                if (Meta::IsAlignedPow2(CACHELINE_SIZE, sizeof(states_t) + sizeof(storage_t) * c))
                     return c; // succeed, bail out
             }
 
             // then try to align on simd alignment requirement
             for (u32 c = 11; c <= 16; ++c)
-                if (Meta::IsAligned(16, sizeof(states_t) + sizeof(storage_t) * c))
+                if (Meta::IsAlignedPow2(16, sizeof(states_t) + sizeof(storage_t) * c))
                     return c; // succeed, bail out
 
             return 14; // default choice
@@ -88,7 +88,7 @@ struct ALIGN(16) TSSEHashBucket6 {
         STATIC_ASSERT(Capacity > 10);
         STATIC_ASSERT(Capacity <= 16);
 
-        Assert(Meta::IsAligned(16, this));
+        Assert(Meta::IsAlignedPow2(16, this));
         STATIC_ASSERT(sizeof(states_t) == sizeof(m128i_t));
         STATIC_ASSERT(sizeof(storage_t) == sizeof(T));
         m128i_epi8_store_aligned(States, m128i_epi8_set_zero());

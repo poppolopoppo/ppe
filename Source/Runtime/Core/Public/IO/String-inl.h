@@ -365,7 +365,7 @@ bool TBasicString<_Char>::AcquireDataUnsafe(FAllocatorBlock b, size_t sz) NOEXCE
         return false;
 #endif
 
-    Assert_NoAssume(Meta::IsAligned(sizeof(_Char), b.SizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(sizeof(_Char), b.SizeInBytes));
 
     if (allocator_traits::Acquire(*this, b)) {
         clear_ReleaseMemory();

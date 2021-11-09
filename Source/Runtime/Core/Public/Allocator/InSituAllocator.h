@@ -97,7 +97,7 @@ public:
         Assert(s);
         Assert(s == SizeInBytes);
         Assert(EState::Freed == State);
-        Assert(Meta::IsAligned(Alignment, std::addressof(InSitu)));
+        Assert(Meta::IsAlignedPow2(Alignment, std::addressof(InSitu)));
 
         State = EState::Allocated;
 #else
@@ -181,7 +181,7 @@ public:
 
     size_t SnapSize(size_t s) const NOEXCEPT {
         Assert(s <= SizeInBytes);
-        return Meta::RoundToNext(s, Alignment);
+        return Meta::RoundToNextPow2(s, Alignment);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
@@ -200,7 +200,7 @@ public:
 
     FAllocatorBlock Allocate(size_t s) NOEXCEPT {
         FAllocatorBlock b;
-        b.SizeInBytes = Meta::RoundToNext(s, Alignment);
+        b.SizeInBytes = Meta::RoundToNextPow2(s, Alignment);
 
         if (Offset + b.SizeInBytes <= _SizeInBytes) {
             b.Data = (u8*)std::addressof(InSitu) + Offset;

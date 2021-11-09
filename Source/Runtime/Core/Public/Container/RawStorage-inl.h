@@ -178,7 +178,7 @@ bool TRawStorage<T, _Allocator>::Equals(const TRawStorage& other) const {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool TRawStorage<T, _Allocator>::AcquireDataUnsafe(FAllocatorBlock b) NOEXCEPT {
-    Assert_NoAssume(Meta::IsAligned(sizeof(value_type), b.SizeInBytes));
+    Assert_NoAssume(Meta::IsAlignedPow2(sizeof(value_type), b.SizeInBytes));
 
     if (allocator_traits::Acquire(*this, b)) {
         clear_ReleaseMemory();

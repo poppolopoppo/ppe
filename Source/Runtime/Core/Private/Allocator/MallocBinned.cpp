@@ -92,10 +92,10 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     STATIC_CONST_INTEGRAL(size_t, ChunkSizeMask, ~(ChunkSizeInBytes - 1));
     STATIC_CONST_INTEGRAL(size_t, ChunkAvailableSizeInBytes, ChunkSizeInBytes - CACHELINE_SIZE);
 
-    STATIC_ASSERT(Meta::IsAligned(Alignment, MinSizeInBytes));
-    STATIC_ASSERT(Meta::IsAligned(Alignment, MaxSizeInBytes));
-    STATIC_ASSERT(Meta::IsAligned(Alignment, ChunkSizeInBytes));
-    STATIC_ASSERT(Meta::IsAligned(Alignment, ChunkAvailableSizeInBytes));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, MinSizeInBytes));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, MaxSizeInBytes));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, ChunkSizeInBytes));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, ChunkAvailableSizeInBytes));
 
     FBinnedThreadCache_* ThreadCache;
     FAtomicSpinLock ThreadBarrier;
@@ -104,7 +104,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     STATIC_CONST_INTEGRAL(u32, DefaultCanary, 0x4110c470ul);
     u32 _Canary;
     bool CheckCanary() const {
-        Assert_NoAssume(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, this));
+        Assert_NoAssume(Meta::IsAlignedPow2(FBinnedChunk_::ChunkSizeInBytes, this));
         return (DefaultCanary == _Canary);
     }
     static constexpr size_t NumBlocksTotalInChunk(size_t sizeClass) {
@@ -132,14 +132,14 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     static FBinnedChunk_* Allocate() {
         void* const p = AllocateNewBinnedChunk_();
         Assert(p);
-        Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, p));
+        Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_GRANULARITY, p));
         ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(p, ChunkSizeInBytes));
         return (FBinnedChunk_*)p;
     }
 
     static void Release(FBinnedChunk_* p) {
         Assert(p);
-        Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, p));
+        Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_GRANULARITY, p));
 #if USE_PPE_DEBUG
         Assert_NoAssume(p->CheckCanary());
         Assert_NoAssume(p->SizeClass < FMallocBinned::NumSizeClasses);
@@ -249,7 +249,7 @@ struct CACHELINE_ALIGNED FBinnedLargeBlocks_ : Meta::FNonCopyableNorMovable {
     }
 
     void* LargeAlloc(const size_t sizeInBytes) {
-        Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+        Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_GRANULARITY, sizeInBytes));
 
         void* const newp = VM.Allocate(sizeInBytes);
         AssertRelease(newp);
@@ -262,7 +262,7 @@ struct CACHELINE_ALIGNED FBinnedLargeBlocks_ : Meta::FNonCopyableNorMovable {
     }
 
     void LargeFree(void* p, size_t sizeInBytes = 0) {
-        Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+        Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_GRANULARITY, sizeInBytes));
 
 #if USE_PPE_MEMORYDOMAINS
         if (0 == sizeInBytes)
@@ -444,7 +444,7 @@ static void PokeChunkToFront_(FBinnedBucket_& bk, FBinnedChunk_* const ch) {
 
 //----------------------------------------------------------------------------
 static size_t NonSmallBlockRegionSize_(void* const ptr) {
-    Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
+    Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_GRANULARITY, ptr));
 
 #if USE_MALLOCBINNED_BITMAPS
     if (FMallocBitmap::AliasesToMediumHeap(ptr))
@@ -636,13 +636,13 @@ static void InitializeChunk_(FBinnedChunk_* const ch, const size_t sizeClass) {
     Assert_NoAssume(0 == ch->NumBlocksInUse);
 
     const size_t blockSize = FMallocBinned::SizeClasses[sizeClass];
-    Assert_NoAssume(Meta::IsAligned(16, blockSize));
+    Assert_NoAssume(Meta::IsAlignedPow2(16, blockSize));
 
     ch->SizeClass = u32(sizeClass);;
     ch->NumBlocksTotal = u32(FBinnedChunk_::ChunkAvailableSizeInBytes / blockSize);
     ch->HighestIndex = checked_cast<u16>(ch->NumBlocksTotal - 1);
     ch->FreeBlocks = FBinnedChunk_::BlockFromIndex(ch, ch->NumBlocksTotal, blockSize);
-    Assert_NoAssume(Meta::IsAligned(ALLOCATION_BOUNDARY, ch->FreeBlocks));
+    Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, ch->FreeBlocks));
 
     // FreeBlocks linked list is lazily initialized thanks to HighestIndex
     // It avoids traversing all the chunk to set all Next fields, and thus avoid trashing
@@ -833,7 +833,7 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
             p = FBinnedLargeBlocks_::Get().LargeAlloc(ROUND_TO_NEXT_64K(size));
         }
 
-        Assert_NoAssume(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p));
+        Assert_NoAssume(Meta::IsAlignedPow2(FBinnedChunk_::ChunkSizeInBytes, p));
         return p;
     }
 }
@@ -1410,8 +1410,8 @@ void* FMallocBinned::Realloc(void* const ptr, size_t size) {
 }
 //----------------------------------------------------------------------------
 void* FMallocBinned::AlignedMalloc(size_t size, size_t alignment) {
-    void* const p = FMallocBinned::Malloc(Meta::RoundToNext(size, alignment));
-    Assert_NoAssume(Meta::IsAligned(alignment, p));
+    void* const p = FMallocBinned::Malloc(Meta::RoundToNextPow2(size, alignment));
+    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
@@ -1420,8 +1420,8 @@ void FMallocBinned::AlignedFree(void* const ptr) {
 }
 //----------------------------------------------------------------------------
 void* FMallocBinned::AlignedRealloc(void* const ptr, size_t size, size_t alignment) {
-    void* const p = FMallocBinned::Realloc(ptr, Meta::RoundToNext(size, alignment));
-    Assert_NoAssume(0 == size || Meta::IsAligned(alignment, p));
+    void* const p = FMallocBinned::Realloc(ptr, Meta::RoundToNextPow2(size, alignment));
+    Assert_NoAssume(0 == size || Meta::IsAlignedPow2(alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
@@ -1461,7 +1461,7 @@ size_t FMallocBinned::SnapSize(size_t size) NOEXCEPT {
 size_t FMallocBinned::RegionSize(void* ptr) {
     Assert(ptr);
 
-    return (Likely(not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, ptr))
+    return (Likely(not Meta::IsAlignedPow2(FBinnedChunk_::ChunkSizeInBytes, ptr))
         ? FMallocBinned::SizeClasses[ChunkFromBlock_((FBinnedBlock_*)ptr)->SizeClass]
         : NonSmallBlockRegionSize_(ptr) );
 }

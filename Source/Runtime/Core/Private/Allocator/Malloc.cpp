@@ -312,7 +312,7 @@ private:
     static void* AllocateBlock(void* ptr, size_t sizeInBytes, size_t alignment = 16) {
         Assert(Meta::IsPow2(alignment));
         if (nullptr == ptr) return nullptr;
-        Assert(Meta::IsAligned(alignment, ptr));
+        Assert(Meta::IsAlignedPow2(alignment, ptr));
         Assert_NoAssume(FMallocLowLevel::RegionSize(ptr) == SnapSize(sizeInBytes));
 #   if PPE_MALLOC_DEBUG_PROXY
         PPE_DEBUG_ALLOCATEEVENT(Malloc, ptr, sizeInBytes);
@@ -331,7 +331,7 @@ private:
 
     static void* ReleaseBlock(void* ptr, size_t alignment = 16) {
         Assert(Meta::IsPow2(alignment));
-        Assert(Meta::IsAligned(alignment, ptr));
+        Assert(Meta::IsAlignedPow2(alignment, ptr));
         if (nullptr == ptr) return nullptr;
 #   if PPE_MALLOC_DEBUG_PROXY
         PPE_DEBUG_DEALLOCATEEVENT(Malloc, ptr);
@@ -349,7 +349,7 @@ private:
         Assert(Meta::IsPow2(alignment));
         Assert_NoAssume(newp || 0 == sizeInBytes);
         if (nullptr == newp) return nullptr;
-        Assert(Meta::IsAligned(alignment, newp));
+        Assert(Meta::IsAlignedPow2(alignment, newp));
         Assert_NoAssume(FMallocLowLevel::RegionSize(newp) == SnapSize(sizeInBytes));
 #   if PPE_MALLOC_DEBUG_PROXY
         PPE_DEBUG_REALLOCATEEVENT(Malloc, newp, sizeInBytes, oldp);
@@ -371,7 +371,7 @@ private:
 
     static void* ReallocReleaseBlock(void* ptr, size_t alignment = 16) {
         Assert(Meta::IsPow2(alignment));
-        Assert(Meta::IsAligned(alignment, ptr));
+        Assert(Meta::IsAlignedPow2(alignment, ptr));
         if (nullptr == ptr) return nullptr;
 #   if PPE_MALLOC_DEBUG_PROXY
         PPE_DEBUG_DEALLOCATEEVENT(Malloc, ptr);

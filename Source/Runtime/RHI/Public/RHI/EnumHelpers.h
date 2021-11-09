@@ -215,16 +215,16 @@ inline CONSTEXPR EShaderDebugMode EShaderDebugMode_From(EShaderLangFormat lang) 
 inline CONSTEXPR u32 EPrimitiveTopology_PrimitiveCount(EPrimitiveTopology topology, u32 vertexCount, u32 patchSize) {
     switch (topology) {
     case EPrimitiveTopology::Point: return vertexCount;
-    case EPrimitiveTopology::LineList: Assert(Meta::IsAligned(2, vertexCount)); return vertexCount / 2;
+    case EPrimitiveTopology::LineList: Assert(Meta::IsAlignedPow2(2, vertexCount)); return vertexCount / 2;
     case EPrimitiveTopology::LineStrip: Assert(vertexCount > 1); return vertexCount - 1; // inaccurate
     case EPrimitiveTopology::LineListAdjacency: Assert(vertexCount >= 3); return vertexCount / 2 - 2;
     case EPrimitiveTopology::LineStripAdjacency: Assert(vertexCount >= 3); return vertexCount - 3; // inaccurate
-    case EPrimitiveTopology::TriangleList: Assert(Meta::IsAligned(3, vertexCount)); return vertexCount / 3;
+    case EPrimitiveTopology::TriangleList: Assert(Meta::IsAlignedPow2(3, vertexCount)); return vertexCount / 3;
     case EPrimitiveTopology::TriangleStrip: Assert(vertexCount > 2); return vertexCount - 2; // inaccurate
     case EPrimitiveTopology::TriangleFan: Assert(vertexCount > 2); return vertexCount - 2; // inaccurate
     case EPrimitiveTopology::TriangleListAdjacency: Assert(vertexCount >= 3); return vertexCount / 2 - 2;
     case EPrimitiveTopology::TriangleStripAdjacency: Assert(vertexCount > 4); return vertexCount - 4; // inaccurate
-    case EPrimitiveTopology::Patch: Assert(Meta::IsAligned(patchSize, vertexCount)); return vertexCount / patchSize; // inaccurate
+    case EPrimitiveTopology::Patch: Assert(Meta::IsAlignedPow2(patchSize, vertexCount)); return vertexCount / patchSize; // inaccurate
     default: break;
     }
     AssertNotImplemented();

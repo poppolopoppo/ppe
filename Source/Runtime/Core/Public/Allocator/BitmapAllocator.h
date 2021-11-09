@@ -15,7 +15,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <size_t _BlockSize>
 class TBitmapAllocator : private FGenericAllocator {
-    STATIC_ASSERT(Meta::IsAligned(sizeof(intptr_t), _BlockSize));
+    STATIC_ASSERT(Meta::IsAlignedPow2(sizeof(intptr_t), _BlockSize));
 public:
     using propagate_on_container_copy_assignment = std::false_type;
     using propagate_on_container_move_assignment = std::false_type;
@@ -43,7 +43,7 @@ public:
 
 #if USE_PPE_ASSERT
     ~TBitmapAllocator() {
-        STATIC_ASSERT(Meta::IsAligned(Alignment, _BlockSize));
+        STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, _BlockSize));
         Assert_NoAssume(bitmask_t::AllMask == Mask);
     }
 #endif
@@ -71,7 +71,7 @@ public:
     }
 
     size_t SnapSize(size_t s) const NOEXCEPT {
-        return Meta::RoundToNext(s, BlockSize);
+        return Meta::RoundToNextPow2(s, BlockSize);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {

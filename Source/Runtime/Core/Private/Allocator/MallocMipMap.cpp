@@ -188,7 +188,7 @@ const size_t FMallocMipMap::MipMaxAllocSize = FLargeMipMaps_::MaxAllocSize;
 void* FMallocMipMap::MediumAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
     void* const newp = MediumMips_().Allocate(sz);
-    Assert_NoAssume(!newp || Meta::IsAligned(alignment, newp));
+    Assert_NoAssume(!newp || Meta::IsAlignedPow2(alignment, newp));
     return newp;
 }
 //----------------------------------------------------------------------------
@@ -235,7 +235,7 @@ size_t FMallocMipMap::MediumRegionSize(void* ptr) NOEXCEPT {
 void* FMallocMipMap::LargeAlloc(size_t sz, size_t alignment) {
     UNUSED(alignment);
     void* const newp = LargeMips_().Allocate(sz);
-    Assert_NoAssume(!newp || Meta::IsAligned(alignment, newp));
+    Assert_NoAssume(!newp || Meta::IsAlignedPow2(alignment, newp));
     return newp;
 }
 //----------------------------------------------------------------------------

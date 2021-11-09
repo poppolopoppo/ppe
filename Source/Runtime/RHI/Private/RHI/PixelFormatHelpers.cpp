@@ -49,7 +49,7 @@ i32 DecodeIntScalar_(const TStaticArray<u32, 4>& data) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
 void DecodeUIntVector_(FRgba32u* __restrict outv, FRawMemoryConst in) NOEXCEPT {
-    STATIC_ASSERT(Meta::IsAligned(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
+    STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
     TStaticArray<u32, 4> bits;
     Verify(in.EatRaw(&bits, (_R + _G + _B + _A) / 8).empty());
@@ -62,7 +62,7 @@ void DecodeUIntVector_(FRgba32u* __restrict outv, FRawMemoryConst in) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
 void DecodeIntVector_(FRgba32i* __restrict outv, FRawMemoryConst in) NOEXCEPT {
-    STATIC_ASSERT(Meta::IsAligned(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
+    STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
     TStaticArray<u32, 4> bits;
     Verify(in.EatRaw(&bits, (_R + _G + _B + _A) / 8).empty());
@@ -98,7 +98,7 @@ void DecodeSNormVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
 template <u32 _R, u32 _G, u32 _B, u32 _A>
 void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT {
     IF_CONSTEXPR( _R == 16 ) {
-        STATIC_ASSERT(Meta::IsAligned(16, _R + _G + _B + _A));
+        STATIC_ASSERT(Meta::IsAlignedPow2(16, _R + _G + _B + _A));
 
         TStaticArray<ushort, 4> bits;
         Verify(in.EatRaw(&bits, (_R + _G + _B + _A) / 8).empty());
@@ -109,7 +109,7 @@ void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
         outv->w = FP16_to_FP32(bits[(_R + _G + _B) / 16]);
     }
     else IF_CONSTEXPR ( _R == 32 ) {
-        STATIC_ASSERT(Meta::IsAligned(32, _R + _G + _B + _A));
+        STATIC_ASSERT(Meta::IsAlignedPow2(32, _R + _G + _B + _A));
 
         in.Cast<const float>().CopyTo(MakeView(outv->data));
     }
@@ -172,7 +172,7 @@ void EncodeIntScalar_(TStaticArray<u32, 4>* outp, i32 value) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
 void EncodeUIntVector_(FRawMemory outp, const FRgba32u& value) NOEXCEPT {
-    STATIC_ASSERT(Meta::IsAligned(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
+    STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
     TStaticArray<u32, 4> bits;
     EncodeUIntScalar_<_R, 0>(&bits, value.x);
@@ -185,7 +185,7 @@ void EncodeUIntVector_(FRawMemory outp, const FRgba32u& value) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
 void EncodeIntVector_(FRawMemory outp, const FRgba32i& value) NOEXCEPT {
-    STATIC_ASSERT(Meta::IsAligned(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
+    STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
     TStaticArray<u32, 4> bits;
     EncodeIntScalar_<_R, 0>(&bits, value.x);
@@ -223,7 +223,7 @@ void EncodeSNormVector_(FRawMemory outp, const FRgba32f& value) NOEXCEPT {
 template <u32 _R, u32 _G, u32 _B, u32 _A>
 void EncodeFloatVector_(FRawMemory outp, const FRgba32f& value) NOEXCEPT {
     IF_CONSTEXPR( _R == 16 ) {
-        STATIC_ASSERT(Meta::IsAligned(16, _R + _G + _B + _A));
+        STATIC_ASSERT(Meta::IsAlignedPow2(16, _R + _G + _B + _A));
 
         TStaticArray<ushort, 4> bits{};
         bits[0] = FP32_to_FP16(value.x);
@@ -234,7 +234,7 @@ void EncodeFloatVector_(FRawMemory outp, const FRgba32f& value) NOEXCEPT {
         MakeRawConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
     }
     else IF_CONSTEXPR ( _R == 32 ) {
-        STATIC_ASSERT(Meta::IsAligned(32, _R + _G + _B + _A));
+        STATIC_ASSERT(Meta::IsAlignedPow2(32, _R + _G + _B + _A));
 
         TStaticArray<float, 4> bits{};
         bits[0] = value.x;

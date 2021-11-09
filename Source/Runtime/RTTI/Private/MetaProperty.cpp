@@ -35,7 +35,7 @@ FMetaProperty::FMetaProperty(const FName& name, EPropertyFlags flags, const PTyp
     Assert_NoAssume(not _name.empty());
     Assert_NoAssume(_traits.Valid());
     Assert_NoAssume(0 != u32(_flags));
-    Assert_NoAssume(Meta::IsAligned(sizeof(u32), memberOffset) || static_cast<size_t>(memberOffset & 3) == traits->SizeInBytes());
+    Assert_NoAssume(Meta::IsAlignedPow2(sizeof(u32), memberOffset) || static_cast<size_t>(memberOffset & 3) == traits->SizeInBytes());
 }
 //----------------------------------------------------------------------------
 FMetaProperty::~FMetaProperty() = default;

@@ -72,7 +72,7 @@ public:
     }
 
     static FORCE_INLINE size_t CRC32(size_t crc32, const void* p, size_t size) NOEXCEPT {
-        Assert_NoAssume(Meta::IsAligned(sizeof(intptr_t), p));
+        Assert_NoAssume(Meta::IsAlignedPow2(sizeof(intptr_t), p));
 
         const u32 fast = u32(size / sizeof(intptr_t));
         u32 offset = fast * sizeof(intptr_t);

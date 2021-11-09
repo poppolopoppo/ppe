@@ -81,14 +81,14 @@ struct FBitmapPagePool_ : FSystemPageAllocator {
         Assert(NumFreePages > 0);
         --NumFreePages;
 
-        Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, result));
+        Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, result));
         ONLY_IF_MEMORYDOMAINS(TrackingData().AllocateUser(BlockSize));
         ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(result, BlockSize));
         return INPLACE_NEW(result, FBitmapBasicPage);
     }
 
     void Deallocate(FBitmapBasicPage* p) {
-        Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
+        Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, p));
         const FCriticalScope scopeLock(&Barrier);
 
         Assert(UsedChunks);
@@ -97,7 +97,7 @@ struct FBitmapPagePool_ : FSystemPageAllocator {
 
         ++NumFreePages;
 
-        FChunk* const ch = (FChunk*)Meta::RoundToPrev(reinterpret_cast<uintptr_t>(p), ChunkSize);
+        FChunk* const ch = (FChunk*)Meta::RoundToPrevPow2(reinterpret_cast<uintptr_t>(p), ChunkSize);
         Assert(ch->NumUsedPages > 0);
         if (Unlikely(--ch->NumUsedPages == 0 && NumFreePages > NumBlocksPerChunk))
             ReleaseUnusedChunk_(ch);
@@ -121,7 +121,7 @@ private:
         FChunk* const ch = INPLACE_NEW(
             allocator_traits::Allocate(*this, ChunkSize).Data,
             FChunk );
-        Assert(Meta::IsAligned(ChunkSize, ch));
+        Assert(Meta::IsAlignedPow2(ChunkSize, ch));
         ch->NextChunk = UsedChunks;
         UsedChunks = ch;
 

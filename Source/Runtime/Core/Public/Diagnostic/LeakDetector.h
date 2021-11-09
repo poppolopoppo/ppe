@@ -356,7 +356,7 @@ private:
 
         FBlockCompressedRadixTrie& PtrToBucket(void* ptr, uintptr_t* key) {
             Assert(ptr);
-            Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, ptr));
+            Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, ptr));
             *key = (uintptr_t(ptr) & ~uintptr_t(0xFF));
             const size_t b = ((uintptr_t(ptr) & 0xFF) / ALLOCATION_BOUNDARY);
             Assert(b < NumBuckets);
@@ -407,7 +407,7 @@ private:
 
         FBlockTracker& PtrToTracker(void* ptr) {
             Assert(ptr);
-            Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, ptr));
+            Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, ptr));
             return Trackers[hash_ptr(ptr) % NumTrackers];
         }
 

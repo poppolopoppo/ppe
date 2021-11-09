@@ -417,7 +417,7 @@ private:
         _Char* Storage;
     };
     STATIC_ASSERT(sizeof(FLargeString_) == sizeof(size_t) * 3);
-    STATIC_ASSERT(Meta::IsAligned(sizeof(_Char), sizeof(FLargeString_)));
+    STATIC_ASSERT(Meta::IsAlignedPow2(sizeof(_Char), sizeof(FLargeString_)));
 
     struct FSmallString_ {
         STATIC_CONST_INTEGRAL(size_t, GCapacity, (sizeof(FLargeString_) - sizeof(_Char)) / sizeof(_Char));

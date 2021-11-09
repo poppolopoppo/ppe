@@ -679,7 +679,7 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
         VM.SizeInBytes += PPE_MALLOCBINNED2_SMALLPOOL_RESERVE;
     }
 
-    Meta.SizeInBytes = Meta::RoundToNext(Meta.SizeInBytes, osGranularity);
+    Meta.SizeInBytes = Meta::RoundToNextPow2(Meta.SizeInBytes, osGranularity);
     Meta.Data = FVirtualMemory::InternalAlloc(Meta.SizeInBytes TRACKINGDATA_PRM_IFP(SmallPoolInfo));
     AssertRelease(Meta.Data);
 

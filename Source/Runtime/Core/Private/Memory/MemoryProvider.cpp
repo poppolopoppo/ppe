@@ -156,7 +156,7 @@ bool FMemoryViewWriter::WriteAlignmentPadding(size_t boundary, u8 padvalue /* = 
         _offsetO = offset;
     }
 
-    Assert(Meta::IsAligned(boundary, _rawData.Pointer() + _offsetO));
+    Assert(Meta::IsAlignedPow2(boundary, _rawData.Pointer() + _offsetO));
     return true;
 }
 //----------------------------------------------------------------------------

@@ -37,34 +37,60 @@ inline CONSTEXPR bool IsPowOf(size_t u) {
 }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
-inline CONSTEXPR bool IsAligned(const size_t alignment, const uintptr_t v) {
+inline CONSTEXPR bool IsAlignedPow2(const size_t alignment, const uintptr_t v) {
     assert(Meta::IsPow2(alignment));
     return (0 == (v & (alignment - 1)));
 }
 template <typename T>
-inline bool IsAligned(const size_t alignment, const T* ptr) NOEXCEPT {
+inline bool IsAlignedPow2(const size_t alignment, const T* ptr) NOEXCEPT {
     assert(Meta::IsPow2(alignment));
     return (0 == (reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)));
 }
-//----------------------------------------------------------------------------
-// /!\ Assumes <alignment> is a power of 2
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-inline CONSTEXPR T RoundToNext(const T v, TDontDeduce<T> alignment) {
+inline CONSTEXPR T RoundToNextPow2(const T v, TDontDeduce<T> alignment) {
     assert(Meta::IsPow2(alignment));
     return ((0 == v) ? 0 : (v + alignment - static_cast<T>(1)) & ~(alignment - static_cast<T>(1)));
 }
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-inline CONSTEXPR T RoundToPrev(const T v, TDontDeduce<T> alignment) {
+inline CONSTEXPR T RoundToPrevPow2(const T v, TDontDeduce<T> alignment) {
     assert(Meta::IsPow2(alignment));
     return ((0 == v) ? 0 : v & ~(alignment - static_cast<T>(1)));
 }
-//----------------------------------------------------------------------------
 template <typename T>
-T* RoundToNext(const T* p, size_t alignment) NOEXCEPT {
+inline T* RoundToNextPow2(const T* p, size_t alignment) NOEXCEPT {
+    return reinterpret_cast<T*>(RoundToNextPow2(reinterpret_cast<uintptr_t>(p), alignment));
+}
+template <typename T>
+inline T* RoundToPrevPow2(const T* p, size_t alignment) NOEXCEPT {
+    return reinterpret_cast<T*>(RoundToPrevPow2(reinterpret_cast<uintptr_t>(p), alignment));
+}
+//----------------------------------------------------------------------------
+// works for every alignment value
+inline CONSTEXPR bool IsAligned(size_t alignment, uintptr_t value) {
+    Assume(alignment > 0);
+    return (value % alignment == 0);
+}
+template <typename T>
+inline bool IsAligned(size_t alignment, T* ptr) NOEXCEPT {
+    return IsAligned(alignment, reinterpret_cast<uintptr_t>(ptr));
+}
+template <typename T>
+inline CONSTEXPR T RoundToNext(T integral, Meta::TEnableIf<std::is_integral_v<T>, T> alignment) {
+    Assume(alignment > 0);
+    Assume(integral >= 0);
+    return (((integral + alignment - 1) / alignment) * alignment);
+}
+template <typename T>
+inline CONSTEXPR T RoundToPrev(T integral, Meta::TEnableIf<std::is_integral_v<T>, T> alignment) {
+    Assume(alignment > 0);
+    return ((integral / alignment) * alignment);
+}
+template <typename T>
+inline T* RoundToNext(const T* p, size_t alignment) NOEXCEPT {
     return reinterpret_cast<T*>(RoundToNext(reinterpret_cast<uintptr_t>(p), alignment));
 }
 template <typename T>
-T* RoundToPrev(const T* p, size_t alignment) NOEXCEPT {
+inline T* RoundToPrev(const T* p, size_t alignment) NOEXCEPT {
     return reinterpret_cast<T*>(RoundToPrev(reinterpret_cast<uintptr_t>(p), alignment));
 }
 //----------------------------------------------------------------------------
@@ -79,7 +105,7 @@ T* RoundToPrev(const T* p, size_t alignment) NOEXCEPT {
 #if PPE_HAS_CXX17 && !defined(PLATFORM_LINUX)
 //  https://en.cppreference.com/w/cpp/thread/hardware_destructive_interference_size
 #   define CACHELINE_SIZE (std::hardware_destructive_interference_size)
-#   define ROUND_TO_NEXT_CACHELINE(v) ::PPE::Meta::RoundToNext((v), CACHELINE_SIZE)
+#   define ROUND_TO_NEXT_CACHELINE(v) ::PPE::Meta::RoundToNextPow2((v), CACHELINE_SIZE)
 #else
 #   define CACHELINE_SIZE (64u)
 #   define ROUND_TO_NEXT_CACHELINE(v) ROUND_TO_NEXT_64(v)
@@ -95,7 +121,7 @@ T* RoundToPrev(const T* p, size_t alignment) NOEXCEPT {
 template <size_t _Alignment>
 struct need_alignment_t {
     STATIC_ASSERT(IsPow2(_Alignment));
-    STATIC_ASSERT(IsAligned(ALLOCATION_BOUNDARY, _Alignment));
+    STATIC_ASSERT(IsAlignedPow2(ALLOCATION_BOUNDARY, _Alignment));
     STATIC_CONST_INTEGRAL(bool, value, _Alignment > ALLOCATION_BOUNDARY);
 };
 //----------------------------------------------------------------------------

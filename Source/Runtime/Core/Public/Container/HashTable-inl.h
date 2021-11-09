@@ -49,7 +49,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::operator=(TBasicHa
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 float TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::load_factor() const {
     const size_type n = capacity();
-    Assert(Meta::IsAligned(FHTD::GGroupSize, n));
+    Assert(Meta::IsAlignedPow2(FHTD::GGroupSize, n));
 
     size_type emptyBlocks = 0;
     for (size_type i = 0; i < n; i += FHTD::GGroupSize) {
@@ -708,7 +708,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
     _data.StatesAndBuckets = allocator_traits::Allocate(*this, (OffsetOfBuckets_() + newCapacity) * sizeof(value_type)).Data;
     _data.ResetStates();
 
-    Assert(Meta::IsAligned(FHTD::GGroupSize, capacity()));
+    Assert(Meta::IsAlignedPow2(FHTD::GGroupSize, capacity()));
 
     if (0 == _data.Size) {
         Assert(nullptr == oldData.StatesAndBuckets);

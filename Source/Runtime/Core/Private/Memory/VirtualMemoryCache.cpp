@@ -26,7 +26,7 @@ FVirtualMemoryCache::~FVirtualMemoryCache() {
 //----------------------------------------------------------------------------
 void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP) {
     const size_t alignment = FPlatformMemory::AllocationGranularity;
-    Assert(Meta::IsAligned(alignment, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(alignment, sizeInBytes));
 
     if ((sizeInBytes <= maxCacheSizeInBytes / 4) && FreePageBlockCount) {
         Meta::FUniqueLock scopeLock(Barrier);
@@ -70,7 +70,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
                 if (cachedBlock + 1 != last)
                     FPlatformMemory::Memmove(cachedBlock, cachedBlock + 1, sizeof(FFreePageBlock) * (last - cachedBlock - 1));
 
-                Assert_NoAssume(Meta::IsAligned(alignment, result));
+                Assert_NoAssume(Meta::IsAlignedPow2(alignment, result));
 
 #if USE_VMCACHE_PAGE_PROTECT
                 // Restore read+write access to pages, so it won't crash in the client
@@ -84,7 +84,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
             scopeLock.unlock();
 
             if (void* result = FVirtualMemory::Alloc(alignment, sizeInBytes TRACKINGDATA_ARG_FWD)) {
-                Assert(Meta::IsAligned(alignment, result));
+                Assert(Meta::IsAlignedPow2(alignment, result));
                 return result;
             }
 
@@ -96,7 +96,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
     // allocate new blocks outside the barrier to diminish thread contention
 
     void* result = FVirtualMemory::Alloc(alignment, sizeInBytes TRACKINGDATA_ARG_FWD);
-    Assert_NoAssume(Meta::IsAligned(alignment, result));
+    Assert_NoAssume(Meta::IsAlignedPow2(alignment, result));
 
     ONLY_IF_ASSERT(FPlatformMemory::Memset(result, 0xCC, sizeInBytes)); // initialize the memory block before yielding
 
@@ -110,7 +110,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
     if (0 == sizeInBytes)
         sizeInBytes = FVirtualMemory::SizeInBytes(ptr);
 
-    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, sizeInBytes));
 
     // free the block without locking to diminish thread contention
     if (sizeInBytes > maxCacheSizeInBytes / 4 ||
@@ -157,7 +157,7 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP)
     for (   FFreePageBlock* const last = (first + FreePageBlockCount);
             first != last;
             ++first ) {
-        Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, first->Ptr));
+        Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, first->Ptr));
 
         FVirtualMemory::Free(first->Ptr, first->SizeInBytes TRACKINGDATA_ARG_FWD);
 

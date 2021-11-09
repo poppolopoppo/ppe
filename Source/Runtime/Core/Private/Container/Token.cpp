@@ -52,7 +52,7 @@ const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size
     const size_t sizeInBytes = (sizeof(FEntry) + (len + 1/* null terminate the string */) * stride);
 
     result = INPLACE_NEW(_heap.Allocate(sizeInBytes), FEntry)(len, hash);
-    Assert(Meta::IsAligned(std::alignment_of_v<FEntry>, result));
+    Assert(Meta::IsAlignedPow2(std::alignment_of_v<FEntry>, result));
 
     FPlatformMemory::Memcpy(result->Data(), src, len * stride);
     FPlatformMemory::Memzero(result->Data() + len * stride, stride); // null terminate

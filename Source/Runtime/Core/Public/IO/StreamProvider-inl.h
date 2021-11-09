@@ -38,7 +38,7 @@ bool IStreamReader::ReadAt(TRawStorage<T, _Allocator>& dst, std::streamoff absol
     if (0 == sizeInBytes)
         return true;
 
-    Assert_NoAssume(Meta::IsAligned(sizeof(T), size_t(sizeInBytes)));
+    Assert_NoAssume(Meta::IsAlignedPow2(sizeof(T), size_t(sizeInBytes)));
     dst.Resize_DiscardData(checked_cast<size_t>(sizeInBytes / sizeof(T)));
     Assert_NoAssume(dst.SizeInBytes() == size_t(sizeInBytes));
 

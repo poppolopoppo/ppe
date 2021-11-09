@@ -49,7 +49,7 @@ static VkAllocationCallbacks MakeVulkanAllocator_() {
         UNUSED(allocationScope);
         Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
         void* const p = PPE::malloc(size);
-        Assert_NoAssume(Meta::IsAligned(alignment, p));
+        Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
         return p;
 #endif
     };
@@ -62,7 +62,7 @@ static VkAllocationCallbacks MakeVulkanAllocator_() {
         UNUSED(allocationScope);
         Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
         void* const p = PPE::realloc(pOriginal, size);
-        Assert_NoAssume(Meta::IsAligned(alignment, p));
+        Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
         return p;
 #endif
     };

@@ -46,8 +46,8 @@ public:
 #undef FALLBACK_USING_DEF
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, Min(primary_traits::Alignment, fallback_traits::Alignment));
-    STATIC_ASSERT(Meta::IsAligned(Alignment, primary_traits::Alignment));
-    STATIC_ASSERT(Meta::IsAligned(Alignment, fallback_traits::Alignment));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, primary_traits::Alignment));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, fallback_traits::Alignment));
 
     TFallbackAllocator() = default;
 
@@ -386,8 +386,8 @@ public:
     STATIC_CONST_INTEGRAL(size_t, Threshold, _Threshold);
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, Min(under_traits::Alignment, above_traits::Alignment));
-    STATIC_ASSERT(Meta::IsAligned(Alignment, under_traits::Alignment));
-    STATIC_ASSERT(Meta::IsAligned(Alignment, above_traits::Alignment));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, under_traits::Alignment));
+    STATIC_ASSERT(Meta::IsAlignedPow2(Alignment, above_traits::Alignment));
 
     TSegregateAllocator() = default;
 

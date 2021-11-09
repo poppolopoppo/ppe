@@ -394,7 +394,7 @@ template <typename T, typename _Allocator>
 inline void* operator new(size_t sizeInBytes, PPE::TVector<T, _Allocator>& vector) {
     Assert(sizeInBytes == sizeof(T));
     void* const p = vector.push_back_Uninitialized();
-    Assert(Meta::IsAligned(std::alignment_of_v<T>, p));
+    Assert(Meta::IsAlignedPow2(std::alignment_of_v<T>, p));
     return p;
 }
 template <typename T, typename _Allocator>

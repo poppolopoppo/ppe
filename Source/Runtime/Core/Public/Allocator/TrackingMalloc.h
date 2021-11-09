@@ -32,14 +32,14 @@ PPE_CORE_API void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, 
 inline void* (tracking_aligned_malloc)(FMemoryTracking& trackingData, size_t size, size_t alignment) {
     UNUSED(alignment);
     void* const p = (tracking_malloc)(trackingData, size);
-    Assert_NoAssume(Meta::IsAligned(alignment, p));
+    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
 inline void* (tracking_aligned_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t alignment) {
     UNUSED(alignment);
     void* const p = (tracking_realloc)(trackingData, ptr, size);
-    Assert_NoAssume(Meta::IsAligned(alignment, p));
+    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ void* tracking_aligned_malloc(size_t size, size_t alignment) {
 #else
     UNUSED(alignment); // assume always naturally aligned with target
     void* const p = (PPE::malloc)(size);
-    Assert_NoAssume(Meta::IsAligned(alignment, p));
+    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
     return p;
 #endif
 }
