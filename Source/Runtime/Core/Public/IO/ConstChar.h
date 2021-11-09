@@ -20,6 +20,8 @@ struct TBasicConstChar {
     CONSTEXPR const _Char* c_str() const NOEXCEPT { return Data; }
     CONSTEXPR operator const _Char* () const NOEXCEPT { return Data; }
 
+    size_t length() const { return Length(Data); }
+
     CONSTEXPR bool Equals(const TBasicConstChar& other) const NOEXCEPT {
         const _Char* a = Data;
         const _Char* b = other.Data;
