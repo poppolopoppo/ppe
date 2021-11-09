@@ -137,18 +137,22 @@ CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
 inline float CeilToFloat(float f) NOEXCEPT { return FPlatformMaths::CeilToFloat(f); }
 inline double CeilToFloat(double d) NOEXCEPT { return FPlatformMaths::CeilToDouble(d); }
 inline int CeilToInt(float f) NOEXCEPT { return FPlatformMaths::CeilToInt(f); }
+inline unsigned CeilToUnsigned(float f) NOEXCEPT { return FPlatformMaths::CeilToUnsigned(f); }
 //----------------------------------------------------------------------------
 inline float FloorToFloat(float f) NOEXCEPT { return FPlatformMaths::FloorToFloat(f); }
 inline double FloorToFloat(double d) NOEXCEPT { return FPlatformMaths::FloorToDouble(d); }
 inline int FloorToInt(float f) NOEXCEPT { return FPlatformMaths::FloorToInt(f); }
+inline unsigned FloorToUnsigned(float f) NOEXCEPT { return FPlatformMaths::FloorToUnsigned(f); }
 //----------------------------------------------------------------------------
 inline float RoundToFloat(float f) NOEXCEPT { return FPlatformMaths::RoundToFloat(f); }
 inline double RoundToFloat(double d) NOEXCEPT { return FPlatformMaths::RoundToDouble(d); }
 inline int RoundToInt(float f) NOEXCEPT { return FPlatformMaths::RoundToInt(f); }
+inline unsigned RoundToUnsigned(float f) NOEXCEPT { return FPlatformMaths::RoundToUnsigned(f); }
 //----------------------------------------------------------------------------
 inline float TruncToFloat(float f) NOEXCEPT { return FPlatformMaths::TruncToFloat(f); }
 inline double TruncToFloat(double d) NOEXCEPT { return FPlatformMaths::TruncToDouble(d); }
 inline int TruncToInt(float f) NOEXCEPT { return FPlatformMaths::TruncToInt(f); }
+inline unsigned TruncToUnsigned(float f) NOEXCEPT { return FPlatformMaths::TruncToUnsigned(f); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

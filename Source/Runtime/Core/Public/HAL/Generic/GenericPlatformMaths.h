@@ -62,6 +62,22 @@ public: // must be defined for every platform
         return ::truncf(f);
     }
 
+    static FORCE_INLINE u32 CeilToUnsigned(float f) {
+        return static_cast<u32>(::ceilf(f));
+    }
+
+    static FORCE_INLINE u32 FloorToUnsigned(float f) {
+        return static_cast<u32>(::floorf(f));
+    }
+
+    static FORCE_INLINE u32 RoundToUnsigned(float f) {
+        return static_cast<u32>(::roundf(f));
+    }
+
+    static FORCE_INLINE u32 TruncToUnsigned(float f) {
+        return static_cast<u32>(::truncf(f));
+    }
+
     static FORCE_INLINE float Fractional(float f) NOEXCEPT {
         return (f - TruncToFloat(f)); // ]0,1] or [-1,0[ according to sign of f
     }

@@ -91,6 +91,22 @@ public:
         return (x - i);
     }
 
+    static FORCE_INLINE u32 CeilToUnsigned(float f) {
+        return static_cast<u32>(CeilToInt(f));
+    }
+
+    static FORCE_INLINE u32 FloorToUnsigned(float f) {
+        return static_cast<u32>(FloorToInt(f));
+    }
+
+    static FORCE_INLINE u32 RoundToUnsigned(float f) {
+        return static_cast<u32>(RoundToInt(f));
+    }
+
+    static FORCE_INLINE u32 TruncToUnsigned(float f) {
+        return static_cast<u32>(TruncToInt(f));
+    }
+
     //------------------------------------------------------------------------
     // Double helpers
 
