@@ -42,6 +42,10 @@ struct TPtrRef {
     CONSTEXPR T* get() const NOEXCEPT { return Ptr; }
     CONSTEXPR T** ref() NOEXCEPT { return std::addressof(Ptr); }
 
+    CONSTEXPR void reset() NOEXCEPT {
+        Ptr = nullptr;
+    }
+
     CONSTEXPR T& operator * () const { Assert(Ptr); return (*Ptr); }
     CONSTEXPR T* operator ->() const { Assert(Ptr); return Ptr; }
 
