@@ -350,6 +350,8 @@
 		<DisplayString Condition="_ptr == nullptr">nullptr</DisplayString>
 		<Expand>
 			<Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
+			<Item Name="[Value]" Condition="_ptr != nullptr">*_ptr</Item>
+			<Item Name="[Raw]" Condition="_ptr != nullptr">*_ptr,!</Item>
 			<ExpandedItem>_ptr</ExpandedItem>
 		</Expand>
 	</Type>
@@ -359,6 +361,8 @@
 		<Expand>
 			<Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
 			<Item Name="[SafeCount]" Condition="_ptr != nullptr">_ptr-&gt;_safeRefCount</Item>
+			<Item Name="[Value]" Condition="_ptr != nullptr">*_ptr</Item>
+			<Item Name="[Raw]" Condition="_ptr != nullptr">*_ptr,!</Item>
 			<ExpandedItem>_ptr</ExpandedItem>
 		</Expand>
 	</Type>
@@ -367,6 +371,8 @@
 		<DisplayString Condition="_ptr == nullptr">nullptr</DisplayString>
 		<Expand>
 			<Item Name="[Counter]">_cnt</Item>
+			<Item Name="[Value]" Condition="_ptr != nullptr">*_ptr</Item>
+			<Item Name="[Raw]" Condition="_ptr != nullptr">*_ptr,!</Item>
 			<ExpandedItem>_ptr</ExpandedItem>
 		</Expand>
 	</Type>
