@@ -20,13 +20,13 @@ FWString FGuid::ToWString() const {
     return StringFormat(L"{0}", *this);
 }
 //----------------------------------------------------------------------------
-FGuid FGuid::Generate() {
+FGuid FGuid::Generate() NOEXCEPT {
     FGuid result;
     FPlatformMisc::CreateGuid(result);
     return result;
 }
 //----------------------------------------------------------------------------
-bool FGuid::TryParse(const FStringView& str, FGuid *guid) {
+bool FGuid::TryParse(const FStringView& str, FGuid *guid) NOEXCEPT {
     Assert(guid);
 
     // Format: {88888888-4444-4444-4444-444488888888}
