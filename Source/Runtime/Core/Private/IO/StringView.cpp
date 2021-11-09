@@ -80,6 +80,22 @@ static bool SplitMulti_(TBasicStringView<_Char>& str, const TBasicStringView<_Ch
         return SplitIfR_<_Char>(str, slice, std::move(pred));
 }
 //----------------------------------------------------------------------------
+template <typename _Char, bool _FindFirst, typename _Separator>
+static bool SplitNth_(TBasicStringView<_Char>& str, _Separator separator, TBasicStringView<_Char>& slice, size_t nth) {
+    for (++nth; nth; --nth) {
+        IF_CONSTEXPR(_FindFirst) {
+            if (not Split(str, separator, slice))
+                return false;
+        }
+        else {
+            if (not SplitR(str, separator, slice))
+                return false;
+        }
+    }
+    Assert(0 == nth);
+    return true;
+}
+//----------------------------------------------------------------------------
 template <typename T, typename _Char>
 static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
     static_assert(std::is_integral<T>::value, "T must be an integral type");
@@ -224,6 +240,7 @@ static bool Atof_(float *dst, const TBasicStringView<_Char>& str) {
 
     return (checked_cast<size_t>(len) == str.size());
 }
+
 template <typename _Char>
 static bool Atof_(double *dst, const TBasicStringView<_Char>& str) {
     int len;
@@ -563,6 +580,9 @@ FWStringView EatDigits(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(
 FStringView EatXDigits(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsXDigit); }
 FWStringView EatXDigits(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsXDigit); }
 //----------------------------------------------------------------------------
+FStringView EatIdentifier(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsIdentifier); }
+FWStringView EatIdentifier(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsIdentifier); }
+//----------------------------------------------------------------------------
 FStringView EatOctals(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsOctal); }
 FWStringView EatOctals(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsOctal); }
 //----------------------------------------------------------------------------
@@ -815,6 +835,22 @@ bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice)
 //----------------------------------------------------------------------------
 bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) {
     return SplitMulti_<wchar_t, false>(wstr, separators, slice);
+}
+//----------------------------------------------------------------------------
+bool SplitNth(FStringView& str, char separator, FStringView& slice, size_t nth) {
+    return SplitNth_<char, true>(str, separator, slice, nth);
+}
+//----------------------------------------------------------------------------
+bool SplitNth(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth) {
+    return SplitNth_<wchar_t, true>(wstr, separator, slice, nth);
+}
+//----------------------------------------------------------------------------
+bool SplitNth(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth) {
+    return SplitNth_<char, false>(str, separators, slice, nth);
+}
+//----------------------------------------------------------------------------
+bool SplitNth(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth) {
+    return SplitNth_<wchar_t, false>(wstr, separators, slice, nth);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

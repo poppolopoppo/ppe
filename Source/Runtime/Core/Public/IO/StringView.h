@@ -347,6 +347,9 @@ PPE_CORE_API FWStringView EatDigits(FWStringView& wstr);
 PPE_CORE_API FStringView EatXDigits(FStringView& str);
 PPE_CORE_API FWStringView EatXDigits(FWStringView& wstr);
 //----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatIdentifier(FStringView& str);
+PPE_CORE_API FWStringView EatIdentifier(FWStringView& wstr);
+//----------------------------------------------------------------------------
 PPE_CORE_API FStringView EatOctals(FStringView& str);
 PPE_CORE_API FWStringView EatOctals(FWStringView& wstr);
 //----------------------------------------------------------------------------
@@ -449,6 +452,18 @@ PPE_CORE_API bool SplitR(FWStringView& wstr, wchar_t separator, FWStringView& sl
 //----------------------------------------------------------------------------
 PPE_CORE_API bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice);
 PPE_CORE_API bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNth(FStringView& str, char separator, FStringView& slice, size_t nth);
+PPE_CORE_API bool SplitNth(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNth(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth);
+PPE_CORE_API bool SplitNth(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNthR(FStringView& str, char separator, FStringView& slice, size_t nth);
+PPE_CORE_API bool SplitNthR(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNthR(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth);
+PPE_CORE_API bool SplitNthR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth);
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringView<_Char> Slice(const TBasicStringView<_Char>& str, size_t offset, size_t count) {
