@@ -109,6 +109,14 @@ public:
         return eaten;
     }
 
+    bool Eat(const TMemoryView<T>& other) {
+        if (StartsWith(other)) {
+            Eat(other.size());
+            return true;
+        }
+        return false;
+    }
+
     template <typename _Pod>
     TMemoryView& EatRaw(_Pod* pDst, size_t n = sizeof(_Pod)) {
         Assert(pDst);
