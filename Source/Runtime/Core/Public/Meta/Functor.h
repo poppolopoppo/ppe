@@ -137,6 +137,13 @@ auto Overloaded(_Visitor&&... visitor) {
 }
 //----------------------------------------------------------------------------
 template <typename... _Variant, typename... _Visitor>
+auto Visit(std::variant<_Variant...>& variant, _Visitor&&... visitor) {
+    return std::visit(
+        Overloaded( std::forward<_Visitor>(visitor)... ),
+        variant );
+}
+//----------------------------------------------------------------------------
+template <typename... _Variant, typename... _Visitor>
 auto Visit(const std::variant<_Variant...>& variant, _Visitor&&... visitor) {
     return std::visit(
         Overloaded( std::forward<_Visitor>(visitor)... ),
