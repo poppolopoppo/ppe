@@ -121,7 +121,7 @@ T* RemoveRef_KeepAlive(TRefPtr<T>& refptr) {
     T* const result = refptr.get();
     result->IncStrongRefCount();
     refptr.reset();
-    result->DecStrongRefCount_ReturnIfReachZero();
+    (void)result->DecStrongRefCount_ReturnIfReachZero();
     return result;
 }
 //----------------------------------------------------------------------------

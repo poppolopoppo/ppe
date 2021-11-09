@@ -83,6 +83,7 @@ public: // override new/delete operators for memory tracking
 
     // provide memory tracking, don't support custom allocator (see FWeakRefCountable for that)
     template <typename T, typename... _Args>
+    NODISCARD
 #if USE_PPE_MEMORYDOMAINS
     friend TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args);
 #else
@@ -112,10 +113,10 @@ protected:
     template <typename T>
     friend void RemoveRef_AssertReachZero(TRefPtr<T>& refptr);
     template <typename T>
-    friend T* RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& refptr);
+    NODISCARD friend T* RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& refptr);
 
     void IncStrongRefCount() const NOEXCEPT;
-    bool DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT;
+    NODISCARD bool DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT;
 
 #if USE_PPE_SAFEPTR
     void IncSafeRefCount() const NOEXCEPT;
@@ -182,7 +183,7 @@ public:
     void reset(T* ptr = nullptr) NOEXCEPT;
 
     template <typename U>
-    U *as() const { return checked_cast<U*>(_ptr); }
+    NODISCARD U *as() const { return checked_cast<U*>(_ptr); }
 
     T& operator *() const { Assert(_ptr); return *_ptr; }
     T* operator ->() const { Assert(_ptr); return _ptr; }

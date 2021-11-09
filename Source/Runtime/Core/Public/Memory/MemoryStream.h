@@ -73,7 +73,7 @@ public:
     void clear_ReleaseMemory();
     void clear_StealMemory(storage_type& storage);
 
-    bool AcquireDataUnsafe(FAllocatorBlock b, size_t sz = 0) NOEXCEPT {
+    NODISCARD bool AcquireDataUnsafe(FAllocatorBlock b, size_t sz = 0) NOEXCEPT {
         if (_storage.AcquireDataUnsafe(b)) {
             _size = sz;
             _offsetI = _offsetO = 0;
@@ -84,7 +84,7 @@ public:
         }
     }
 
-    FAllocatorBlock StealDataUnsafe(size_t* sz = nullptr) NOEXCEPT {
+    NODISCARD FAllocatorBlock StealDataUnsafe(size_t* sz = nullptr) NOEXCEPT {
         const FAllocatorBlock b = _storage.StealDataUnsafe();
         if (b) {
             if (sz) *sz = _size;

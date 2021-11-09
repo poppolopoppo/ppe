@@ -99,8 +99,8 @@ public:
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
 
-    bool AcquireDataUnsafe(FAllocatorBlock b) NOEXCEPT;
-    FAllocatorBlock StealDataUnsafe() NOEXCEPT;
+    NODISCARD bool AcquireDataUnsafe(FAllocatorBlock b) NOEXCEPT;
+    NODISCARD FAllocatorBlock StealDataUnsafe() NOEXCEPT;
 
     template <typename _It>
     void insert(iterator after, _It&& begin, _It&& end);

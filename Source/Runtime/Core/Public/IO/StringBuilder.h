@@ -70,11 +70,11 @@ public:
         return stream_type::Append(n * sizeof(_Char)).template Cast<_Char>();
     }
 
-    bool AcquireDataUnsafe(FAllocatorBlock b, size_t len = 0) NOEXCEPT {
+    NODISCARD bool AcquireDataUnsafe(FAllocatorBlock b, size_t len = 0) NOEXCEPT {
         return stream_type::AcquireDataUnsafe(b, len * sizeof(_Char));
     }
 
-    FAllocatorBlock StealDataUnsafe(size_t* len = nullptr) NOEXCEPT {
+    NODISCARD FAllocatorBlock StealDataUnsafe(size_t* len = nullptr) NOEXCEPT {
         const FAllocatorBlock b = stream_type::StealDataUnsafe(len);
         if (len) *len /= sizeof(_Char);
         return b;
