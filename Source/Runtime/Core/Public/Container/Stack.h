@@ -88,7 +88,8 @@ public:
     TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
     TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
 
-    pointer Push_Uninitialized();
+    pointer Push_Default() NOEXCEPT;
+    pointer Push_Uninitialized() NOEXCEPT;
     template <typename _Arg0, typename... _Args>
     void Push(_Arg0&& arg0, _Args&&... args);
     bool Pop(pointer pvalue = nullptr);
@@ -216,7 +217,12 @@ TStack<T, _IsPod>::TStack(const TMemoryView<T>& storage)
 :   TStack(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto TStack<T, _IsPod>::Push_Uninitialized() -> pointer {
+auto TStack<T, _IsPod>::Push_Default() NOEXCEPT -> pointer {
+    return INPLACE_NEW(Push_Uninitialized(), T);
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+auto TStack<T, _IsPod>::Push_Uninitialized() NOEXCEPT -> pointer {
     Assert(_storage);
     Assert(_size < _capacity);
 
