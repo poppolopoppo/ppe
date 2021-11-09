@@ -150,7 +150,7 @@ constexpr bool ValidateFormatManip_(_Char ch) noexcept {
 template <typename _Char>
 constexpr bool ValidateFormatString_(const _Char* fmt, size_t len, size_t numArgs) noexcept {
     size_t unusedArgs = ((size_t(1) << numArgs) - 1);
-    for (size_t i = 0; i < len - 2; ++i) {
+    for (size_t i = 0; i <= len - 2; ++i) {
         if (fmt[i] == STRING_LITERAL(_Char, '\0')) return false;
         if (fmt[i] == STRING_LITERAL(_Char, '{') && fmt[i + 1] >= STRING_LITERAL(_Char, '0') && fmt[i + 1] <= STRING_LITERAL(_Char, '9')) {
             const size_t argIndex = (size_t(fmt[i + 1]) - STRING_LITERAL(_Char, '0'));
