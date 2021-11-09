@@ -11,6 +11,7 @@ module Build
             super(name)
             @link = link
         end
+        def debug?() defines.data.include?('_DEBUG') end
         def customize(facet, env, target)
             artifact_type = env.target_artifact_type(target)
             case artifact_type
