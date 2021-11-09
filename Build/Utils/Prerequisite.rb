@@ -79,18 +79,31 @@ module Build
                 return false
             end
         end
-        def need_wget!(url)
+        def need_wget!(url, destination: nil)
             require 'open-uri'
             Log.info("downloading '%s'...", url)
             if download = URI.open(url)
-                local = File.join($TemporaryPath, url.to_s.split('/')[-1])
+                destination = url.to_s.split('/')[-1] if destination.nil?
+                local = File.join($TemporaryPath, destination)
                 FileUtils.mkdir_p(File.dirname(local))
                 if IO.copy_stream(download, local)
                     Log.debug("downloaded '%s' to '%s'", url, local)
+                    download.close
                     return local
                 end
             end
-            Log.warning("failed to download '%s'", url)
+            Log.fatal("failed to download '%s'", url)
+        end
+        def need_wget_redirect!(url, destination: nil)
+            require 'open-uri'
+            if download = URI.open(url)
+                meta_refresh_re = /<meta.*http-equiv="refresh".*content=".*url=(.*)".*\/>/i
+                if groups = meta_refresh_re.match(download.read)
+                    download.close
+                    return need_wget!(groups[1], destination: destination)
+                end
+            end
+            Log.fatal("failed to download '%s'", url)
         end
         def need_zip!(archive, destination, *globs)
             require 'rubygems'
@@ -104,7 +117,19 @@ module Build
                     if globs.empty?
                         files_to_extract.concat(zfile.glob('*'))
                     else
-                        globs.each{|x| files_to_extract.concat(zfile.glob(x)) }
+                        globs.each do |pattern|
+                            negate = false
+                            if pattern[0] == '!'
+                                negate = true
+                                pattern = pattern[1..-1]
+                            end
+                            files = zfile.glob(pattern)
+                            unless negate
+                                files_to_extract.concat(files)
+                            else
+                                files.each{|x| files_to_extract.delete(x) }
+                            end
+                        end
                     end
                     files_to_extract.each do |src|
                         dst = File.join(destination, src.name)
@@ -202,9 +227,11 @@ module Build
             results.empty? ? false : results
         end
     end
-    def import_remote_archive(name, destination, url, *files)
+    def import_remote_archive(name, destination, url, *files, redirect: false)
         make_prerequisite(name, namespace: 'Import') do
-            if archive = need_wget!(url)
+            if archive = redirect ?
+                need_wget_redirect!(url, destination: name+'.zip') :
+                need_wget!(url, destination: name+'.zip')
                 need_zip!(archive, destination, *files)
             end
         end.validate_FileExist!
