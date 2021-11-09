@@ -3,6 +3,7 @@
 #include "Application.h"
 
 #include "ApplicationBase.h"
+#include "Window/WindowListener.h"
 
 #include "RHI_fwd.h"
 #include "HAL/TargetRHI.h"
@@ -16,7 +17,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API FApplicationWindow : public FApplicationBase {
+class PPE_APPLICATION_API FApplicationWindow : public FApplicationBase, private IWindowListener {
 public:
     FApplicationWindow(const FModularDomain& domain, FString&& name, bool needRHI);
     virtual ~FApplicationWindow();
@@ -31,6 +32,11 @@ public:
 
     virtual bool PumpMessages() NOEXCEPT override;
     virtual void Tick(FTimespan dt) override;
+
+protected:
+    virtual void OnWindowFocus(bool enabled) override;
+    virtual void OnWindowPaint() override;
+    virtual void OnWindowResize(const uint2& size) override;
 
 private:
     const TPtrRef<const ITargetRHI> _targetRHI;

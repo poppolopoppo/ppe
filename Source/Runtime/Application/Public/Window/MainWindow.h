@@ -17,7 +17,7 @@ class PPE_APPLICATION_API FMainWindow
 ,   public FRefCountable {
 public:
     FMainWindow(FWString&& title, const FWindowDefinition& def);
-    virtual ~FMainWindow();
+    virtual ~FMainWindow() override;
 
     using FPlatformWindow::Title;
     using FPlatformWindow::NativeHandle;

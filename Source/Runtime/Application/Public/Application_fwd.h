@@ -26,6 +26,7 @@ class FMouseState;
 FWD_INTEFARCE_UNIQUEPTR(InputService);
 //----------------------------------------------------------------------------
 class FGenericWindow;
+class IWindowListener;
 FWD_REFPTR(MainWindow);
 FWD_INTEFARCE_UNIQUEPTR(WindowService);
 //----------------------------------------------------------------------------

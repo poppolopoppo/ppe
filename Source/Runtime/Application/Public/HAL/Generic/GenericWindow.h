@@ -2,8 +2,10 @@
 
 #include "Application_fwd.h"
 
+#include "Container/Vector.h"
 #include "IO/String.h"
 #include "Maths/ScalarVector_fwd.h"
+#include "Misc/Event.h"
 #include "Thread/DataRaceCheck.h"
 
 namespace PPE {
@@ -72,6 +74,9 @@ public: // must be defined for every platform
     bool HasFocus() const { PPE_DATARACE_SHARED_SCOPE(this); return _hasFocus; }
     bool Visible() const { PPE_DATARACE_SHARED_SCOPE(this); return _visible; }
     EWindowType Type() const { PPE_DATARACE_SHARED_SCOPE(this); return _type; }
+
+    void AddListener(TPtrRef<IWindowListener>&& listener);
+    void RemoveListener(const TPtrRef<IWindowListener>& listener);
 
     virtual bool Show();
     virtual bool Close();
@@ -146,6 +151,8 @@ private:
     bool _visible           : 1;
 
     EWindowType _type;
+
+    TThreadSafe<VECTORINSITU(Window, TPtrRef<IWindowListener>, 1), EThreadBarrier::RWDataRaceCheck> _listeners;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

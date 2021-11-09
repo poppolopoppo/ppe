@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Application.h"
+#include "Application_fwd.h"
 
 #include "IO/StringView.h"
 

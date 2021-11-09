@@ -6,6 +6,7 @@
 #include "HAL/PlatformWindow.h"
 
 #include "Maths/ScalarVector.h"
+#include "Window/WindowListener.h"
 
 namespace PPE {
 namespace Application {
@@ -123,11 +124,17 @@ void FGenericWindow::OnFocusSet() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(not _hasFocus);
     _hasFocus = true;
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowFocus(_hasFocus);
 }
 void FGenericWindow::OnFocusLose() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     Assert(_hasFocus);
     _hasFocus = false;
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowFocus(_hasFocus);
 }
 void FGenericWindow::OnMouseEnter() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
@@ -164,9 +171,15 @@ void FGenericWindow::OnWindowResize(size_t w, size_t h) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _width =  checked_cast<u32>(w);
     _height = checked_cast<u32>(h);
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowResize({ _width, _height });
 }
 void FGenericWindow::OnWindowPaint() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowPaint();
 }
 //----------------------------------------------------------------------------
 void FGenericWindow::MainWindowDefinition(FWindowDefinition* def) {
@@ -262,6 +275,16 @@ bool FGenericWindow::CreateWindow(FGenericWindow* window, FWString&& title, cons
     window->_type = def.Type;
 
     return true;
+}
+//----------------------------------------------------------------------------
+void FGenericWindow::AddListener(TPtrRef<IWindowListener>&& listener) {
+    Assert(listener);
+    Add_Unique(*_listeners.LockExclusive(), std::move(listener));
+}
+//----------------------------------------------------------------------------
+void FGenericWindow::RemoveListener(const TPtrRef<IWindowListener>& listener) {
+    Assert(listener);
+    Remove_AssertExists(*_listeners.LockExclusive(), std::move(listener));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

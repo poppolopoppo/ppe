@@ -28,15 +28,31 @@ TPtrRef<const ITargetRHI> RetrieveTargetRHI_(const FModularDomain& domain, bool 
     }
     return nullptr;
 }
+
+//----------------------------------------------------------------------------
+void CreateSurfaceInfoRHI_(
+    ERHIFeature* outFeatures, FRHISurfaceCreateInfo* outSurfaceInfo,
+    const FModularDomain& domain, const ITargetRHI& targetRHI, const FMainWindow& window ) {
+    const FRHIModule& rhiModule = FRHIModule::Get(domain);
+
+    *outFeatures = targetRHI.RecommendedFeatures();
+    *outFeatures = rhiModule.RecommendedFeatures(*outFeatures);
+
+    *outSurfaceInfo = FRHISurfaceCreateInfo{};
+    outSurfaceInfo->Hwnd.Assign(window.NativeHandle());
+    outSurfaceInfo->Dimensions = window.Dimensions();
+    outSurfaceInfo->EnableFullscreen = window.Fullscreen();
+    outSurfaceInfo->EnableVSync = (*outFeatures & ERHIFeature::VSync);
+}
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FString&& name, bool needRHI)
-:   FApplicationBase(domain, std::move(name))
-,   _targetRHI(RetrieveTargetRHI_(domain, needRHI))
-{}
+    : FApplicationBase(domain, std::move(name))
+      , _targetRHI(RetrieveTargetRHI_(domain, needRHI)) {}
+
 //----------------------------------------------------------------------------
 FApplicationWindow::~FApplicationWindow() = default;
 //----------------------------------------------------------------------------
@@ -44,9 +60,10 @@ void FApplicationWindow::Start() {
     IInputService::MakeDefault(&_input);
     IWindowService::MakeDefault(&_window);
 
-    _window->CreateMainWindow(&_main, ToWString(Name()) );
+    _window->CreateMainWindow(&_main, ToWString(Name()));
     _window->SetMainWindow(_main.get());
 
+    _main->AddListener(*this);
     _input->SetupWindow(*_main);
 
     FModularServices& services = Services();
@@ -54,18 +71,11 @@ void FApplicationWindow::Start() {
     services.Add<IWindowService>(_window.get());
 
     if (_targetRHI) {
-        const FRHIModule& rhiModule = FRHIModule::Get(Domain());
-
-        ERHIFeature features = _targetRHI->RecommendedFeatures();
-        features = rhiModule.RecommendedFeatures(features);
-
+        ERHIFeature features;
         FRHISurfaceCreateInfo surfaceInfo;
-        surfaceInfo.Hwnd.Assign(_main->NativeHandle());
-        surfaceInfo.Dimensions = _main->Dimensions();
-        surfaceInfo.EnableFullscreen = _main->Fullscreen();
-        surfaceInfo.EnableVSync = (features ^ ERHIFeature::VSync);
+        CreateSurfaceInfoRHI_(&features, &surfaceInfo, Domain(), *_targetRHI, *_main);
 
-        if (not _targetRHI->CreateService(&_rhi, Domain(), &surfaceInfo, features) )
+        if (not _targetRHI->CreateService(&_rhi, Domain(), &surfaceInfo, features))
             LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort!", Domain().Name(), Name());
 
 #if USE_PPE_RHIDEBUG
@@ -88,6 +98,7 @@ void FApplicationWindow::Shutdown() {
     if (_main->Visible())
         VerifyRelease(_main->Close());
 
+    _main->RemoveListener(*this);
     _window->SetMainWindow(nullptr);
 
     auto& services = Services();
@@ -111,7 +122,7 @@ void FApplicationWindow::Shutdown() {
 //----------------------------------------------------------------------------
 bool FApplicationWindow::PumpMessages() NOEXCEPT {
     if (FApplicationBase::PumpMessages() &&
-        _main->PumpMessages() ) {
+        _main->PumpMessages()) {
         _input->Poll();
         return true;
     }
@@ -123,6 +134,25 @@ void FApplicationWindow::Tick(FTimespan dt) {
     FApplicationBase::Tick(dt);
 
     _input->Update(dt);
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::OnWindowFocus(bool enabled) {
+    SetFocus(enabled);
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::OnWindowPaint() {
+
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::OnWindowResize(const uint2& size) {
+    ERHIFeature features;
+    FRHISurfaceCreateInfo surfaceInfo;
+    CreateSurfaceInfoRHI_(&features, &surfaceInfo, Domain(), *_targetRHI, *_main);
+
+    UNUSED(size);
+    Assert_NoAssume(size == surfaceInfo.Dimensions);
+
+    _rhi->ResizeWindow(surfaceInfo);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

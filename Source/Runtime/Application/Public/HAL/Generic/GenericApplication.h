@@ -27,17 +27,21 @@ public: // generic
     const FString& Name() const { return _name; }
     const FModularServices& Services() const { return _services; }
     const FSeconds& Elapsed() const { return _elapsed; }
+    const bool HasFocus() const { return _hasFocus; }
 
 protected:
     explicit FGenericApplication(const FModularDomain& domain, FString&& name);
 
     FModularServices& Services() { return _services; }
 
+    void SetFocus(bool value) { _hasFocus = value; }
+
 private:
     const FModularDomain& _domain;
     FString _name;
     FModularServices _services;
     FSeconds _elapsed;
+    bool _hasFocus{ true };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
