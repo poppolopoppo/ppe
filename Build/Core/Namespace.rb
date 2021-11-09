@@ -32,8 +32,8 @@ module Build
 
         def root?() @parent.nil? end
 
-        def all() @all_targets.map{|x| x.call } end
-        def targets() @self_targets.map{|x| x.call } end
+        def all() @all_targets.map{|x| x.call }.sort end
+        def targets() @self_targets.map{|x| x.call }.sort end
 
         def to_s() @path end
 

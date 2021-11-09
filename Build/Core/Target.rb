@@ -403,9 +403,9 @@ module Build
 
         def all_dependencies(scope=nil)
             if @_all_dependencies.nil?
-                visiteds = Hash.new
-                dependency_visitor_(visiteds, self)
-                @_all_dependencies = visiteds.values
+                visited = Hash.new
+                dependency_visitor_(visited, self)
+                @_all_dependencies = visited.values
                 @_all_dependencies.sort!{|a, b| a.first.ordinal <=> b.first.ordinal }
             end
             if block_given?
@@ -448,27 +448,56 @@ module Build
             return @_ordinal
         end
 
+        def <=>(other)
+            self.ordinal <=> other.ordinal
+        end
+
     private
+        def dependency_level_ord_(level)
+            case level
+            when :private
+                return 0
+            when :public
+                return 1
+            when :runtime
+                return 2
+            else
+                Assert.unexpected(level)
+            end
+        end
+        def dependency_add_(result, dep, level)
+            ord = dependency_level_ord_(level)
+            edge = result[dep]
+            if edge.nil? || dependency_level_ord_(edge.last) < ord
+                result[dep] = [dep, level]
+            end
+        end
         def dependency_visitor_(result, target, depth: 0)
             target.private_dependencies.each do |dep|
-                result[dep] = [dep, :private]
+                dependency_add_(result, dep, :private)
+                dep.all_public_dependencies do |rec|
+                    dependency_add_(result, rec, :private)
+                end
+                dep.all_runtime_dependencies do |rec|
+                    dependency_add_(result, rec, :runtime)
+                end
             end if 0 == depth
             target.public_dependencies.each do |dep|
+                dependency_add_(result, dep, :public)
                 unless result.include?(dep)
-                    result[dep] = [dep, :public]
                     dep.all_public_dependencies do |rec|
-                        result[rec] = [rec, :public] unless result.include?(rec)
+                        dependency_add_(result, rec, :public)
                     end
                     dep.all_runtime_dependencies do |rec|
-                        result[rec] = [rec, :runtime] unless result.include?(rec)
+                        dependency_add_(result, rec, :runtime)
                     end
                 end
             end
             target.runtime_dependencies.each do |dep|
+                dependency_add_(result, dep, :runtime)
                 unless result.include?(dep)
-                    result[dep] = [dep, :runtime]
                     dep.all_runtime_dependencies do |rec|
-                        result[rec] = [rec, :runtime] unless result.include?(rec)
+                        dependency_add_(result, rec, :runtime)
                     end
                 end
             end
