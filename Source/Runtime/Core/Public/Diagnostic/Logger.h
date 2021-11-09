@@ -259,7 +259,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define LOG_CHECKEX( _CATEGORY, _RETURN, ... ) {\
     if (Likely(!!( __VA_ARGS__ ))) {} \
     else { \
-        LOG( _CATEGORY, Error, L"failed expr: ({0})", WSTRINGIZE(__VA_ARGS__) ); \
+        LOG( _CATEGORY, Error, L"failed expr: '{0}', at: {1}:{2}", WSTRINGIZE(__VA_ARGS__), WIDESTRING(__FILE__), WSTRINGIZE(__LINE__) ); \
         return (_RETURN); \
     }}
 #define LOG_CHECK( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, ::PPE::Default, __VA_ARGS__ )

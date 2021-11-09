@@ -424,12 +424,12 @@ public:
         const FSeconds elapsed = site.Timepoint.ElapsedSince(ILowLevelLogger::StartedAt());
 #if PPE_DUMP_THREAD_ID
 #   if PPE_DUMP_THREAD_NAME
-        Format(oss, L"[{0:#-10f4}][{1:20}][{3:-9}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{1:20}][{3:-9}][{2}] ", elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
 #   else // only thread hash :
-        Format(oss, L"[{0:#-10f4}][{1:#5}][{3:-9}][{2:-15}] ", elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{1:#5}][{3:-9}][{2}] ", elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
 #   endif
 #else
-        Format(oss, L"[{0:#-10f4}][{2:-9}][{1:-15}] ", elapsed.Value(), MakeCStringView(category.Name), level);
+        Format(oss, L"[{0:#-10f4}][{2:-9}][{1}] ", elapsed.Value(), MakeCStringView(category.Name), level);
 #endif
     }
 
