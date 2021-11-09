@@ -44,8 +44,8 @@ public:
     CONSTEXPR void push_back(const T& value) const { _pushBack(_userData, T(value)); }
     CONSTEXPR void push_back(T& rvalue) const { _pushBack(_userData, std::move(rvalue)); }
 
-    template <typename... _Args>
-    CONSTEXPR void emplace_back(_Args&&... args) const { push_back({ std::forward<_Args>(args)... }); }
+    template <typename... _Args, class = Meta::TEnableIf<std::is_constructible_v<T, _Args&&...>> >
+    CONSTEXPR void emplace_back(_Args&&... args) const { push_back(T{ std::forward<_Args>(args)... }); }
 
     friend CONSTEXPR const TAppendable& operator <<(const TAppendable& appendable, const T& value) {
         appendable.push_back(value);
