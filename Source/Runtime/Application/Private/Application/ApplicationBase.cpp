@@ -148,7 +148,12 @@ void FApplicationBase::ApplicationLoop() {
     FTimeline tick = FTimeline::StartNow();
 
     while (PumpMessages()) {
-        if (tick.Tick_Target60FPS(dt))
+        FTimespan tickRate{ Timespan_120hz() };
+
+        if (Unlikely(not HasFocus()))
+            tickRate = Timespan_15hz();
+
+        if (tick.Tick_Every(tickRate, dt))
             Tick(dt);
     }
 }
