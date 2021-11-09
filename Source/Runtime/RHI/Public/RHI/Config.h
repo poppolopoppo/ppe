@@ -46,7 +46,9 @@ CONSTEXPR u32   MaxBlitRegions                              =   8;
 CONSTEXPR u32   MaxResolveRegions                           =   8;
 //----------------------------------------------------------------------------
 CONSTEXPR bool  EnableShaderDebugging                       = USE_PPE_RHIDEBUG;
+#if USE_PPE_RHIDEBUG
 CONSTEXPR u32   DebugDescriptorSet                          = MaxDescriptorSets - 1;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

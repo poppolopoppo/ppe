@@ -12,5 +12,6 @@ $Build.ppe_executable!(:WindowTest, :Tools) do
         Application(),
         Remoting() ]})
     runtime_deps!(*namespace[:ContentPipeline]{[
-        BuildGraph() ]})
+        BuildGraph(),
+        PipelineCompiler() ]})
 end

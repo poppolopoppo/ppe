@@ -80,7 +80,6 @@ public:
 
     void ReleaseMemory() NOEXCEPT override;
 
-    bool AddPipelineCompiler(const PPipelineCompiler& pcompiler) override;
     EQueueUsage AvailableQueues() const NOEXCEPT override { return _queueUsage; }
 #if USE_PPE_RHIDEBUG
     bool SetShaderDebugCallback(FShaderDebugCallback&& rcallback) override;

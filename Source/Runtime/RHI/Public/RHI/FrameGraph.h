@@ -44,11 +44,6 @@ public: // interface
     // Release cached memory
     virtual void ReleaseMemory() NOEXCEPT = 0;
 
-    // Add pipeline compiler.
-    // By default pipelines may be created from SPIRV binary and doesn't extract reflection.
-    // External compilers can build SPIRV binary from source and extract reflection.
-    virtual bool AddPipelineCompiler(const PPipelineCompiler& pcompiler) = 0;
-
     // Returns bitmask for all available queues.
     virtual EQueueUsage AvailableQueues() const NOEXCEPT = 0;
 
@@ -80,10 +75,10 @@ public: // interface
     NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawMPipelineID pipeline, const FDescriptorSetID& id) const = 0;
     NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawRTPipelineID pipeline, const FDescriptorSetID& id) const = 0;
 
-    virtual bool IsSupported(FRawImageID image, const FImageViewDesc& desc) const NOEXCEPT = 0;
-    virtual bool IsSupported(FRawBufferID buffer, const FBufferViewDesc& desc) const NOEXCEPT = 0;
-    virtual bool IsSupported(const FImageDesc& desc, EMemoryType memType = EMemoryType::Default) const NOEXCEPT = 0;
-    virtual bool IsSupported(const FBufferDesc& desc, EMemoryType memType = EMemoryType::Default) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(FRawImageID image, const FImageViewDesc& desc) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(FRawBufferID buffer, const FBufferViewDesc& desc) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(const FImageDesc& desc, EMemoryType memType = EMemoryType::Default) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(const FBufferDesc& desc, EMemoryType memType = EMemoryType::Default) const NOEXCEPT = 0;
 
     // Creates internal descriptor set and release dynamically allocated memory in the 'resources'.
     // After that your can not modify the 'resources', but you still can use it in the tasks.
@@ -105,8 +100,8 @@ public: // interface
     NODISCARD virtual bool ReleaseResource(FRTShaderTableID& id) = 0;
 
     // Returns resource description.
-    virtual const FImageDesc& Description(FRawImageID id) const = 0;
-    virtual const FBufferDesc& Description(FRawBufferID id) const = 0;
+    NODISCARD virtual const FImageDesc& Description(FRawImageID id) const = 0;
+    NODISCARD virtual const FBufferDesc& Description(FRawBufferID id) const = 0;
 
     NODISCARD virtual FImageID CreateImage(
         const FImageDesc& desc,
@@ -123,20 +118,20 @@ public: // interface
         ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
 
     // api-specific variant (#TODO)
-    virtual const void* ExternalDescription(FRawBufferID id) const NOEXCEPT = 0;
-    virtual const void* ExternalDescription(FRawImageID id) const NOEXCEPT = 0;
+    NODISCARD virtual const void* ExternalDescription(FRawBufferID id) const NOEXCEPT = 0;
+    NODISCARD virtual const void* ExternalDescription(FRawImageID id) const NOEXCEPT = 0;
 
     // Returns 'true' if resource is not deleted.
-    virtual bool IsResourceAlive(FRawGPipelineID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawCPipelineID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawMPipelineID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawRTPipelineID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawImageID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawBufferID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawSwapchainID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawRTGeometryID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawRTSceneID id) const NOEXCEPT = 0;
-    virtual bool IsResourceAlive(FRawRTShaderTableID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawGPipelineID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawCPipelineID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawMPipelineID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawRTPipelineID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawImageID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawBufferID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawSwapchainID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawRTGeometryID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawRTSceneID id) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsResourceAlive(FRawRTShaderTableID id) const NOEXCEPT = 0;
 
     // Returns strong reference to resource if it valid, otherwise returns invalid ID.
     virtual FGPipelineID AcquireResource(FRawGPipelineID id) = 0;
@@ -162,7 +157,7 @@ public: // interface
     virtual void PrepareNewFrame() = 0;
 
     // Begin command buffer recording.
-    virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
+    NODISCARD virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
 
     // Compile framegraph for current command buffer and append it to the pending command buffer queue (that are waiting for submitting to GPU).
     NODISCARD virtual bool Execute(FCommandBufferBatch& cmdBatch) = 0;
@@ -181,6 +176,14 @@ public: // interface
     virtual bool DumpStatistics(FFrameStatistics* pStats) const = 0;
 #endif
 
+public: // helpers
+    template <typename _Id0, typename... _Ids>
+    void ReleaseResources(_Id0& resource0, _Ids&... resources) {
+        VerifyRelease(ReleaseResource(resource0));
+        IF_CONSTEXPR(sizeof...(_Ids) > 0) {
+            ReleaseResources(std::forward<_Ids&>(resources)...);
+        }
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

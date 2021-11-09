@@ -423,6 +423,10 @@ enum class EImageSampler : u32 {
 };
 ENUM_FLAGS(EImageSampler);
 //----------------------------------------------------------------------------
+CONSTEXPR EImageSampler EImageSampler_FromPixelFormat(EPixelFormat fmt) {
+    return static_cast<EImageSampler>(Meta::EnumOrd(fmt));
+}
+//----------------------------------------------------------------------------
 // Fragment output
 //----------------------------------------------------------------------------
 enum class EFragmentOutput : u32 {

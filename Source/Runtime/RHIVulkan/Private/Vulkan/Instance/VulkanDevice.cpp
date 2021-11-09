@@ -4,6 +4,7 @@
 #include "Vulkan/Instance/VulkanDevice.h"
 
 #include "Diagnostic/Logger.h"
+#include "Modular/ModularDomain.h"
 
 #if USE_PPE_LOGGER
 #   include "IO/FormatHelpers.h"
@@ -273,6 +274,8 @@ void FVulkanDevice::SetupDeviceFeatures_() {
         VkPhysicalDeviceFeatures2 features2{};
         features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
+        features2.features.samplerAnisotropy = VK_TRUE;
+
         void** pNextFeature = &features2.pNext;
         UNUSED(pNextFeature);
 
@@ -338,7 +341,6 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #endif
 
         vkGetPhysicalDeviceFeatures2(_vkPhysicalDevice, &features2);
-
 
 #ifdef VK_NV_mesh_shader
         _enabled.MeshShaderNV &= (_caps.MeshShaderFeatures.meshShader or _caps.MeshShaderFeatures.taskShader);

@@ -9,6 +9,7 @@
 #include "Modular/ModuleRegistration.h"
 
 #include "BuildModules.generated.h"
+#include "Vulkan/Instance/VulkanDevice.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -61,6 +62,22 @@ void FRHIVulkanModule::DutyCycle(FModularDomain& domain) {
 void FRHIVulkanModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
     IModuleInterface::ReleaseMemory(domain);
 
+}
+//----------------------------------------------------------------------------
+void FRHIVulkanModule::DeviceCreated(RHI::FVulkanDeviceInfo& device) {
+    Assert(device.vkInstance);
+    Assert(device.vkPhysicalDevice);
+    Assert(device.vkDevice);
+
+    _OnDeviceCreated.Invoke(device);
+}
+//----------------------------------------------------------------------------
+void FRHIVulkanModule::DeviceTearDown(RHI::FVulkanDeviceInfo& device) {
+    Assert(device.vkInstance);
+    Assert(device.vkPhysicalDevice);
+    Assert(device.vkDevice);
+
+    _OnDeviceTearDown.Invoke(device);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

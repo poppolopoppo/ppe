@@ -42,8 +42,8 @@ bool FVulkanMeshPipeline::Construct(const FMeshPipelineDesc& desc, FRawPipelineL
     for (const auto& stage : desc.Shaders) {
         const VkShaderStageFlagBits vkStage = VkCast(stage.first);
 
-        for (const auto& src : stage.second.Sources) {
-            const PShaderModule& moduleRef = std::get<PShaderModule>(*src.second->Data());
+        for (const auto& src : stage.second.Data) {
+            const PShaderModule& moduleRef = std::get<PShaderModule>(src.second);
             Assert(moduleRef);
 
             exclusive->Shaders.Push(

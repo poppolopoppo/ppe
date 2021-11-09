@@ -2,12 +2,14 @@
 
 #include "Vulkan/Instance/VulkanInstance.h"
 
+#include "RHIVulkanModule.h"
 #include "Vulkan/VulkanIncludes.h"
 #include "Vulkan/Instance/VulkanDevice.h"
 
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
 #include "Meta/Utility.h"
+#include "Modular/ModularDomain.h"
 
 #if USE_PPE_LOGGER
 #   include "IO/FormatHelpers.h"
@@ -465,6 +467,7 @@ struct FVulkanDeviceFeatures_ {
     }
 
     VkPhysicalDeviceFeatures Main;
+    VkPhysicalDeviceFeatures2 Main2;
     //VkDeviceGeneratedCommandsFeaturesNVX GeneratedCommands;
     VkPhysicalDeviceMultiviewFeatures Multiview;
     //VkPhysicalDeviceShaderAtomicInt64FeaturesKHR ShaderAtomicI64;
@@ -524,18 +527,23 @@ struct FVulkanDeviceFeatures_ {
     #ifdef VK_KHR_ray_tracing_pipeline
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracing;
     #endif
+    #ifdef VK_AMD_device_coherent_memory
+    VkPhysicalDeviceCoherentMemoryFeaturesAMD DeviceCoherentMemory;
+    #endif
+    #ifdef VK_EXT_memory_priority
+    VkPhysicalDeviceMemoryPriorityFeaturesEXT MemoryPriority;
+    #endif
 };
 //----------------------------------------------------------------------------
 void SetupDeviceFeatures_(FVulkanDeviceFeatures_* pFeatures, void** nextExt, VkPhysicalDevice vkPhysicalDevice, const FVulkanInstanceFunctions& api, const FVulkanDeviceExtensionSet& extensions) {
-    VkPhysicalDeviceFeatures2 features2{};
-    features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    void** nextFeatures = &features2.pNext;
-
+    void** nextFeatures = &pFeatures->Main2.pNext;
     const auto enableFeature = [&](auto* pFeature, VkStructureType sType) NOEXCEPT {
         pFeature->sType = sType;
-        *nextFeatures = *nextExt = pFeature;
+        *nextFeatures = pFeature;
         nextFeatures = &pFeature->pNext;
     };
+
+    *nextExt = &pFeatures->Main2;
 
 #ifdef VK_KHR_multiview
     if (extensions & EVulkanDeviceExtension::KHR_multiview)
@@ -622,10 +630,21 @@ void SetupDeviceFeatures_(FVulkanDeviceFeatures_* pFeatures, void** nextExt, VkP
     if (extensions & EVulkanDeviceExtension::KHR_ray_tracing_pipeline)
         enableFeature(&pFeatures->RayTracing, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR);
 #endif
+#ifdef VK_AMD_device_coherent_memory
+    if (extensions & EVulkanDeviceExtension::AMD_device_coherent_memory) {
+        pFeatures->DeviceCoherentMemory.deviceCoherentMemory = VK_TRUE;
+        enableFeature(&pFeatures->DeviceCoherentMemory, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COHERENT_MEMORY_FEATURES_AMD);
+    }
+#endif
+#ifdef VK_EXT_memory_priority
+    if (extensions & EVulkanDeviceExtension::EXT_memory_priority)
+        enableFeature(&pFeatures->MemoryPriority, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT);
+#endif
 
+    enableFeature(&pFeatures->ConditionalRendering, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
     enableFeature(&pFeatures->ShaderDrawParameters, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES);
 
-    api.vkGetPhysicalDeviceFeatures2( vkPhysicalDevice, &features2 );
+    api.vkGetPhysicalDeviceFeatures2( vkPhysicalDevice, &pFeatures->Main2 );
 }
 //----------------------------------------------------------------------------
 // Device queues
@@ -906,7 +925,11 @@ bool CreateVulkanDevice_(
 
     // features
     FVulkanDeviceFeatures_ features;
+    features.Main = {};
     api.vkGetPhysicalDeviceFeatures(pDevice->vkPhysicalDevice, &features.Main);
+    features.Main2 = {};
+    features.Main2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    api.vkGetPhysicalDeviceFeatures2(pDevice->vkPhysicalDevice, &features.Main2);
     SetupDeviceFeatures_(&features, nextExt, pDevice->vkPhysicalDevice, api, allDeviceExtensions);
 
     deviceInfo.pEnabledFeatures = &features.Main; // enable all features supported
@@ -935,6 +958,7 @@ bool CreateVulkanDevice_(
     for (FVulkanDeviceQueueInfo& queue : pDevice->Queues)
         deviceFn.vkGetDeviceQueue(pDevice->vkDevice, static_cast<u32>(queue.FamilyIndex), queue.QueueIndex, &queue.Handle);
 
+    FRHIVulkanModule::Get(FModularDomain::Get()).DeviceCreated(*pDevice);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -1116,6 +1140,7 @@ bool FVulkanInstance::CreateDevice(
     pDevice->RequiredDeviceExtensions = requiredDeviceExtensions;
     pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
     pDevice->pAllocator = &_vkAllocationCallbacks;
+
     return CreateVulkanDevice_(pDevice, *this, vkSurface, physicalDevice, queues);
 }
 //----------------------------------------------------------------------------
@@ -1136,6 +1161,7 @@ bool FVulkanInstance::CreateDevice(
     pDevice->RequiredDeviceExtensions = requiredDeviceExtensions;
     pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
     pDevice->pAllocator = &_vkAllocationCallbacks;
+
     return CreateVulkanDevice_(pDevice, *this, VK_NULL_HANDLE, physicalDevice, queues);
 }
 //----------------------------------------------------------------------------
@@ -1146,6 +1172,8 @@ void FVulkanInstance::DestroyDevice(FVulkanDeviceInfo* pDevice) const {
     Assert_NoAssume(&_vkAllocationCallbacks == pDevice->pAllocator);
 
     LOG(RHI, Debug, L"destroying vulkan device {0}", Fmt::Pointer(pDevice->vkDevice));
+
+    FRHIVulkanModule::Get(FModularDomain::Get()).DeviceTearDown(*pDevice);
 
     pDevice->API.vkDestroyDevice(pDevice->vkDevice, pDevice->pAllocator);
 
@@ -1480,6 +1508,9 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
     #endif
     #ifdef VK_EXT_memory_budget
         EVulkanDeviceExtension::EXT_memory_budget,
+    #endif
+    #ifdef VK_KHR_buffer_device_address
+        EVulkanDeviceExtension::KHR_buffer_device_address,
     #endif
     #ifdef VK_KHR_shader_clock
         EVulkanDeviceExtension::KHR_shader_clock,

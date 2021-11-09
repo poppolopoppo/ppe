@@ -3,6 +3,7 @@
 #include "RHIVulkan_fwd.h"
 #include "HAL/VulkanTargetRHI.h"
 
+#include "Misc/Event.h"
 #include "Modular/ModuleInterface.h"
 
 namespace PPE {
@@ -25,6 +26,16 @@ public:
     static FRHIVulkanModule& Get(const FModularDomain& domain);
 
     const FVulkanTargetRHI& TargetRHI() const { return (*_targetRHI); }
+
+    // --- FVulkanDevice ---
+
+    using FVulkanDeviceEvent = TFunction<void(const RHI::FVulkanDeviceInfo&)>;
+
+    THREADSAFE_EVENT(OnDeviceCreated, FVulkanDeviceEvent);
+    THREADSAFE_EVENT(OnDeviceTearDown, FVulkanDeviceEvent);
+
+    void DeviceCreated(RHI::FVulkanDeviceInfo& device);
+    void DeviceTearDown(RHI::FVulkanDeviceInfo& device);
 
 private:
     TUniquePtr<class FVulkanTargetRHI> _targetRHI;

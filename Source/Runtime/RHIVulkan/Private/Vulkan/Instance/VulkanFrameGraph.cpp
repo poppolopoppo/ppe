@@ -156,14 +156,6 @@ void FVulkanFrameGraph::ReleaseMemory() noexcept {
     _resourceManager.ReleaseMemory();
 }
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::AddPipelineCompiler(const PPipelineCompiler& pcompiler) {
-    Assert(pcompiler);
-    Assert_NoAssume(IsInitialized_());
-
-    _resourceManager.AddCompiler(pcompiler);
-    return true;
-}
-//----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 bool FVulkanFrameGraph::SetShaderDebugCallback(FShaderDebugCallback&& rcallback) {
     Assert_NoAssume(IsInitialized_());
@@ -488,7 +480,7 @@ void FVulkanFrameGraph::PrepareNewFrame() {
 // Begin
 //----------------------------------------------------------------------------
 FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn) {
-    Assert(static_cast<u32>(desc.QueueType) == _queueMap.size());
+    Assert(static_cast<u32>(desc.QueueType) < _queueMap.size());
     Assert_NoAssume(IsInitialized_());
 
     PVulkanCommandBuffer cmd = _cmdBufferPool.Allocate([this](FVulkanCommandBuffer* pCmd, u32 id) {

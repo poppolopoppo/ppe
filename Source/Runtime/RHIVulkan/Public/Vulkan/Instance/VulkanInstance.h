@@ -49,7 +49,11 @@ public:
 
     bool Valid() const { return (VK_NULL_HANDLE != _vkInstance); }
 
+    VkInstance vkInstance() const { return _vkInstance; }
+    const VkAllocationCallbacks* vkAllocationCallbacks() const { return &_vkAllocationCallbacks; }
+
     EVulkanVersion Version() const { return _instanceAPI.version_; }
+    const FVulkanInstanceFunctions& Fn() const { return *this; }
     const FVulkanInstanceExtensionSet& Extensions() const { return _instanceAPI.instance_extensions_; }
     TMemoryView<const FPhysicalDeviceInfo> PhysicalDevices() const { return _physicalDevices.MakeView(); }
 

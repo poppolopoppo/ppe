@@ -55,84 +55,72 @@ void CopySpecializationConstants_(FPipelineDesc::FSpecializationConstants *pDst,
 void SetSpecializationConstants_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType, TMemoryView<const FPipelineDesc::FSpecializationConstant> values) {
     Assert(pShaderMap);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
-    Assert_NoAssume(not shader.Sources.empty());
+    Assert_NoAssume(not shader.Data.empty());
     Assert_NoAssume(shader.Specializations.empty());
     CopySpecializationConstants_(&shader.Specializations, values);
 }
 //----------------------------------------------------------------------------
-void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
+void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
     EShaderLangFormat lang, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(pShaderMap);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
-    Assert_NoAssume(shader.Sources.end() == shader.Sources.find(lang));
-    shader.AddSource(lang, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
+    Assert_NoAssume(shader.Data.end() == shader.Data.find(lang));
+    shader.AddShader(lang, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
 }
 //----------------------------------------------------------------------------
-void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
-    EShaderLangFormat lang, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
+    EShaderLangFormat lang, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(pShaderMap);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
-    Assert_NoAssume(shader.Sources.end() == shader.Sources.find(lang));
-    shader.AddSource(lang, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
+    Assert_NoAssume(shader.Data.end() == shader.Data.find(lang));
+    shader.AddShader(lang, entry, std::move(rbinary), fingerprint ARGS_IF_RHIDEBUG(debugName));
 }
 //----------------------------------------------------------------------------
-void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
-    EShaderLangFormat lang, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert(pShaderMap);
-    Assert(sharedSource);
-    FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
-    Assert_NoAssume(shader.Sources.end() == shader.Sources.find(lang));
-    shader.AddSource(lang, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
-}
-//----------------------------------------------------------------------------
-void AddShaderSource_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
+void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
     EShaderLangFormat lang, const PShaderModule& module ) {
     Assert(pShaderMap);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
-    Assert_NoAssume(shader.Sources.end() == shader.Sources.find(lang));
-    shader.AddSource(lang, module);
+    Assert_NoAssume(shader.Data.end() == shader.Data.find(lang));
+    shader.AddShader(lang, module);
+}
+//----------------------------------------------------------------------------
+void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
+    EShaderLangFormat lang, FShaderDataVariant&& rdata ) {
+    Assert(pShaderMap);
+    FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
+    Assert_NoAssume(shader.Data.end() == shader.Data.find(lang));
+    shader.AddShader(lang, std::move(rdata));
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, const PShaderModule& module) {
-    Assert(module);
-    Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
-        module, module->EntryPoint(), module->Fingerprint() ARGS_IF_RHIDEBUG(module->DebugName()) );
-}
-//----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, PShaderModule&& rmodule) {
-    Assert(rmodule);
-    const FConstChar entryPoint = rmodule->EntryPoint();
-    const auto fingerprint = rmodule->Fingerprint();
-    ONLY_IF_RHIDEBUG(const FConstChar debugName = rmodule->DebugName());
-    Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
-        std::move(rmodule), entryPoint, fingerprint ARGS_IF_RHIDEBUG(debugName) );
-}
-//----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(entry);
     Assert(not rsource.empty());
     const auto fingerprint = Fingerprint128(rsource.MakeView());
-    Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
+    PShaderSource shader = NEW_REF(RHIPipeline, TShaderDataImpl_<FString>,
         std::move(rsource), entry, fingerprint ARGS_IF_RHIDEBUG(debugName) );
+    Data.GetOrAdd(fmt) = std::move(shader);
 }
 //----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert(entry);
-    Assert(sharedSource);
-    Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
-        sharedSource, entry, sharedSource->Fingerprint() ARGS_IF_RHIDEBUG(debugName) );
-}
-//----------------------------------------------------------------------------
-void FPipelineDesc::FShader::AddSource(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(entry);
     Assert(not rbinary.empty());
-    const auto fingerprint = Fingerprint128(rbinary.MakeView());
-    Sources.GetOrAdd(fmt) = NEW_REF(RHIPipeline, TShaderDataImpl_<FShaderSource>,
+    PShaderBinaryData shader = NEW_REF(RHIPipeline, TShaderDataImpl_<FRawData>,
         std::move(rbinary), entry, fingerprint ARGS_IF_RHIDEBUG(debugName) );
+    Data.GetOrAdd(fmt) = std::move(shader);
+}
+//----------------------------------------------------------------------------
+void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, PShaderModule&& rmodule) {
+    Assert(rmodule);
+    Data.GetOrAdd(fmt) = std::move(rmodule);
+}
+//----------------------------------------------------------------------------
+void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FShaderDataVariant&& rdata) {
+    Assert(not std::holds_alternative<std::monostate>(rdata));
+    Data.GetOrAdd(fmt) = std::move(rdata);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -193,25 +181,25 @@ void FPipelineDesc::SetPushConstants_(TMemoryView<const FPushConstant> values) {
 //----------------------------------------------------------------------------
 FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
-    AddShaderSource_(&Shaders, type, fmt, module);
+    AddShaderData_(&Shaders, type, fmt, module);
     return (*this);
 }
 //----------------------------------------------------------------------------
 FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
-    AddShaderSource_(&Shaders, type, fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
+    AddShaderData_(&Shaders, type, fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
-    AddShaderSource_(&Shaders, type, fmt, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
+    AddShaderData_(&Shaders, type, fmt, entry, std::move(rbinary), fingerprint ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FShaderDataVariant&& rdata) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
-    AddShaderSource_(&Shaders, type, fmt, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
+    AddShaderData_(&Shaders, type, fmt, std::move(rdata));
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -224,31 +212,31 @@ FGraphicsPipelineDesc& FGraphicsPipelineDesc::SetSpecializationConstants(EShader
 // Compute
 //----------------------------------------------------------------------------
 FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, const PShaderModule& module) {
-    Assert_NoAssume(Shader.Sources.end() == Shader.Sources.find(fmt));
-    Shader.AddSource(fmt, module);
+    Assert_NoAssume(Shader.Data.end() == Shader.Data.find(fmt));
+    Shader.AddShader(fmt, module);
     return (*this);
 }
 //----------------------------------------------------------------------------
 FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert_NoAssume(Shader.Sources.end() == Shader.Sources.find(fmt));
-    Shader.AddSource(fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
+    Assert_NoAssume(Shader.Data.end() == Shader.Data.find(fmt));
+    Shader.AddShader(fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert_NoAssume(Shader.Sources.end() == Shader.Sources.find(fmt));
-    Shader.AddSource(fmt, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
+FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+    Assert_NoAssume(Shader.Data.end() == Shader.Data.find(fmt));
+    Shader.AddShader(fmt, entry, std::move(rbinary), fingerprint ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    Assert_NoAssume(Shader.Sources.end() == Shader.Sources.find(fmt));
-    Shader.AddSource(fmt, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
+FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FShaderDataVariant&& rdata) {
+    Assert_NoAssume(Shader.Data.end() == Shader.Data.find(fmt));
+    Shader.AddShader(fmt, std::move(rdata));
     return (*this);
 }
 //----------------------------------------------------------------------------
 FComputePipelineDesc& FComputePipelineDesc::SetSpecializationConstants(TMemoryView<const FSpecializationConstant> values) {
-    Assert_NoAssume(not Shader.Sources.empty());
+    Assert_NoAssume(not Shader.Data.empty());
     Assert_NoAssume(Shader.Specializations.empty());
     CopySpecializationConstants_(&Shader.Specializations, values);
     return (*this);
@@ -258,25 +246,25 @@ FComputePipelineDesc& FComputePipelineDesc::SetSpecializationConstants(TMemoryVi
 //----------------------------------------------------------------------------
 FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
-    AddShaderSource_(&Shaders, type, fmt, module);
+    AddShaderData_(&Shaders, type, fmt, module);
     return (*this);
 }
 //----------------------------------------------------------------------------
 FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
-    AddShaderSource_(&Shaders, type, fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
+    AddShaderData_(&Shaders, type, fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
-    AddShaderSource_(&Shaders, type, fmt, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
+    AddShaderData_(&Shaders, type, fmt, entry, std::move(rbinary), fingerprint ARGS_IF_RHIDEBUG(debugName));
     return (*this);
 }
 //----------------------------------------------------------------------------
-FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FShaderDataVariant&& rdata) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
-    AddShaderSource_(&Shaders, type, fmt, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
+    AddShaderData_(&Shaders, type, fmt, std::move(rdata));
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -294,7 +282,7 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& i
 
     FRTShader& rtShader = Shaders.FindOrAdd(id);
     rtShader.Type = type;
-    rtShader.AddSource(fmt, module);
+    rtShader.AddShader(fmt, module);
 
     return (*this);
 }
@@ -305,29 +293,29 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& i
 
     FRTShader& rtShader = Shaders.FindOrAdd(id);
     rtShader.Type = type;
-    rtShader.AddSource(fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
+    rtShader.AddShader(fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
 
     return (*this);
 }
 //----------------------------------------------------------------------------
-FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(id.Valid());
     AssertRelease_NoAssume(EShaderType_IsRayTracingShader(type));
 
     FRTShader& rtShader = Shaders.FindOrAdd(id);
     rtShader.Type = type;
-    rtShader.AddSource(fmt, entry, std::move(rbinary) ARGS_IF_RHIDEBUG(debugName));
+    rtShader.AddShader(fmt, entry, std::move(rbinary), fingerprint ARGS_IF_RHIDEBUG(debugName));
 
     return (*this);
 }
 //----------------------------------------------------------------------------
-FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, const PSharedShaderString& sharedSource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FShaderDataVariant&& rdata) {
     Assert(id.Valid());
     AssertRelease_NoAssume(EShaderType_IsRayTracingShader(type));
 
     FRTShader& rtShader = Shaders.FindOrAdd(id);
     rtShader.Type = type;
-    rtShader.AddSource(fmt, entry, sharedSource ARGS_IF_RHIDEBUG(debugName));
+    rtShader.AddShader(fmt, std::move(rdata));
 
     return (*this);
 }
@@ -336,7 +324,7 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::SetSpecializationConstants(con
     Assert(id.Valid());
 
     FRTShader& rtShader = Shaders.FindOrAdd(id);
-    Assert_NoAssume(not rtShader.Sources.empty());
+    Assert_NoAssume(not rtShader.Data.empty());
     Assert_NoAssume(not rtShader.Specializations.empty());
     CopySpecializationConstants_(&rtShader.Specializations, values);
 

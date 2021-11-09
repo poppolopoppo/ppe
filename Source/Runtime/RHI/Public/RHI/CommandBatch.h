@@ -14,6 +14,28 @@ namespace RHI {
 struct FCommandBufferBatch {
     PCommandBuffer Buffer;
     PCommandBatch Batch;
+
+    FCommandBufferBatch() = default;
+    FCommandBufferBatch(std::nullptr_t) NOEXCEPT {}
+
+    FCommandBufferBatch(PCommandBuffer&& rbuffer, PCommandBatch&& rbatch) NOEXCEPT
+    :   Buffer(std::move(rbuffer))
+    ,   Batch(std::move(rbatch))
+    {}
+
+    FCommandBufferBatch(const FCommandBufferBatch&) = default;
+    FCommandBufferBatch& operator =(const FCommandBufferBatch&) = default;
+
+    FCommandBufferBatch(FCommandBufferBatch&&) = default;
+    FCommandBufferBatch& operator =(FCommandBufferBatch&&) = default;
+
+    bool Valid() const { return (!!Buffer); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
+
+    ICommandBuffer* operator ->() const NOEXCEPT {
+        Assert(Buffer);
+        return Buffer.get();
+    }
 };
 //----------------------------------------------------------------------------
 class PPE_RHI_API ICommandBatch : public FRefCountable {

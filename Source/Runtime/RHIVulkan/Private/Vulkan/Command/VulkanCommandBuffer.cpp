@@ -408,7 +408,7 @@ void FVulkanCommandBuffer::AcquireBuffer(FRawBufferID id, bool makeMutable) {
 PFrameTask FVulkanCommandBuffer::Task(const FSubmitRenderPass& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GGraphicsBit_);
+    Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FSubmitRenderPass>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -429,7 +429,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FDispatchCompute& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GComputeBit_);
+    Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FDispatchCompute>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -450,7 +450,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FDispatchComputeIndirect& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GComputeBit_);
+    Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FDispatchComputeIndirect>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -471,7 +471,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyBuffer& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyBuffer>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -484,7 +484,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyImage& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -497,7 +497,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyBufferToImage& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyBufferToImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -510,7 +510,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyImageToBuffer& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyImageToBuffer>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -523,7 +523,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBlitImage& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GGraphicsBit_);
+    Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FBlitImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -536,7 +536,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FResolveImage& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GGraphicsBit_);
+    Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FResolveImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -547,7 +547,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FResolveImage& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FGenerateMipmaps& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GGraphicsBit_);
+    Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FGenerateMipmaps>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -568,7 +568,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FFillBuffer& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FClearColorImage& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GComputeBit_);
+    Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FClearColorImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -579,7 +579,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FClearColorImage& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FClearDepthStencilImage& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GComputeBit_);
+    Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FClearDepthStencilImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
     Assert(pFrameTask);
@@ -592,7 +592,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FUpdateBuffer& task) {
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     return MakeUpdateBufferTask_(*exclusive, task);
 }
@@ -600,7 +600,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FUpdateBuffer& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FUpdateImage& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     return MakeUpdateImageTask_(*exclusive, task);
 }
@@ -608,7 +608,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FUpdateImage& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FReadBuffer& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     return MakeReadBufferTask_(*exclusive, task);
 }
@@ -616,7 +616,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FReadBuffer& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FReadImage& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GTransferBit_);
+    Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     return MakeReadImageTask_(*exclusive, task);
 }
@@ -651,7 +651,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FUpdateRayTracingShaderTable& task) 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(Device().Enabled().RayTracingNV);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GRayTracingBit_);
+    Assert_NoAssume(GRayTracingBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FUpdateRayTracingShaderTable>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
@@ -693,7 +693,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(Device().Enabled().RayTracingNV);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GRayTracingBit_);
+    Assert_NoAssume(GRayTracingBit_ & exclusive->Batch->QueueUsage());
 
     FVulkanRTLocalScene* const rtScene = ToLocal(task.Scene);
     Assert(rtScene);
@@ -797,7 +797,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FTraceRays& task) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(Device().Enabled().RayTracingNV);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GRayTracingBit_);
+    Assert_NoAssume(GRayTracingBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FTraceRays>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
@@ -994,7 +994,7 @@ void FVulkanCommandBuffer::Task(FLogicalPassID renderPass, const FCustomDraw& dr
 FLogicalPassID FVulkanCommandBuffer::CreateRenderPass(const FRenderPassDesc& desc) {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GGraphicsBit_);
+    Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     FLogicalRenderPasses& pool = exclusive->RM.LogicalRenderPasses;
     const FResourceIndex index{pool.Allocate()};
@@ -1027,7 +1027,7 @@ bool FVulkanCommandBuffer::BeginShaderTimeMap(const uint2& dim, EShaderStages st
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(exclusive->ShaderDbg.TimemapIndex == Default); // already started
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GComputeBit_);
+    Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     exclusive->ShaderDbg.TimemapStages = stages;
     exclusive->ShaderDbg.TimemapIndex = exclusive->Batch->AppendTimemapForDebug(dim, stages);
@@ -1045,7 +1045,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(exclusive->ShaderDbg.TimemapIndex != Default); // need to call BeginShaderTimeMap()
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & GComputeBit_);
+    Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     FVulkanResourceManager& rm = ResourceManager();
     const FImageDesc desc = rm.ResourceDescription(dstImage);

@@ -87,7 +87,7 @@ public:
     }
 
 private:
-    const FVulkanImage* _imageData;
+    const FVulkanImage* _imageData{ nullptr };
     VkImageLayout _finalLayout{ VK_IMAGE_LAYOUT_GENERAL };
 
     mutable FAccessRecords _accessPending;

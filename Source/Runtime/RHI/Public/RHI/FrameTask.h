@@ -77,7 +77,7 @@ struct FSubmitRenderPass : details::TFrameTaskDesc<FSubmitRenderPass> {
     FImages Images;
     FBuffers Buffers;
 
-    explicit FSubmitRenderPass(FLogicalPassID&& renderPassId) NOEXCEPT :
+    explicit FSubmitRenderPass(FLogicalPassID renderPassId) NOEXCEPT :
 #if USE_PPE_RHIDEBUG
         TFrameTaskDesc<FSubmitRenderPass>("SubmitRenderPass", FDebugColorScheme::Get().RenderPass),
 #endif

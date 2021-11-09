@@ -34,7 +34,7 @@ public: // virtual
 public: // for all services
     using FRHIEvent = TFunction<void(const IRHIService&)>;
 
-    PUBLIC_EVENT(OnDeviceLost, FRHIEvent);
+    THREADSAFE_EVENT(OnDeviceLost, FRHIEvent);
 
 };
 //----------------------------------------------------------------------------

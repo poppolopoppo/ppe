@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Core.h"
+
+#include "Container/Hash.h"
 #include "IO/TextWriter_fwd.h"
 
 #include <utility>

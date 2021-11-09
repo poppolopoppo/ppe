@@ -22,7 +22,7 @@ public:
     using FDescriptorSetCache = TFixedSizeStack<FVulkanDescriptorSet, 32>;
     using FDynamicData = FPipelineResources::FDynamicData;
     using FPoolSizeArray = TFixedSizeStack<VkDescriptorPoolSize, 10>;
-    using FSharedUniformMap = FPipelineDesc::FSharedUniformMap;
+    using FSharedUniformMap = FPipelineDesc::PUniformMap;
 
     struct FInternalPool {
         hash_t HashValue{ Meta::ForceInit };

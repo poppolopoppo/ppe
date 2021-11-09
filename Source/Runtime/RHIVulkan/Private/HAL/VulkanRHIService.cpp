@@ -218,7 +218,7 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
     using namespace RHI;
     RHI_LOG(Info, L"resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
 
-    Verify( _frameGraph->WaitIdle() );
+    _frameGraph->WaitIdle();
 
     FSwapchainDesc swapchainDesc;
     MakeSwapchainDesc_(&swapchainDesc, _backBuffer, _features, surfaceInfo);

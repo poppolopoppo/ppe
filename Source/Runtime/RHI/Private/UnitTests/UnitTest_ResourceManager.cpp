@@ -86,7 +86,11 @@ NO_INLINE static void Test_PipelineResources_(IFrameGraph& fg) {
         0x0007004F, 0x0000000F, 0x00000037, 0x00000036, 0x00000036, 0x00000000, 0x00000001, 0x0004007C, 0x00000038, 0x00000039, 0x00000037, 0x0004003D,
         0x0000001D, 0x0000003A, 0x0000001F, 0x00040063, 0x00000035, 0x00000039, 0x0000003A, 0x000100FD, 0x00010038 };
 
-    desc.AddShader(EShaderLangFormat::SPIRV_100, "main", FRawData(rawShader.Cast<const u8>()) ARGS_IF_RHIDEBUG("Test_PipelineResources"));
+    desc.AddShader(
+        EShaderLangFormat::SPIRV_100, "main",
+        FRawData(rawShader.Cast<const u8>()),
+        Fingerprint128(rawShader)
+        ARGS_IF_RHIDEBUG("Test_PipelineResources") );
 
     FCPipelineID ppln = fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_PipelineResources"));
     AssertRelease(ppln.Valid());

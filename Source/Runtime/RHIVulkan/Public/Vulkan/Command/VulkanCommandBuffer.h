@@ -65,7 +65,7 @@ public:
         TPool<T, _GlobalPool::MaxSize / _MaxChunks,  _MaxChunks> Pool;
         TStaticArray<FResourceIndex, _GlobalPool::MaxSize> ToLocal;
         u32 MaxLocalIndex{ 0 };
-        u32 MaxGlobalIndex{ 0 };
+        u32 MaxGlobalIndex{ TPool<T, _GlobalPool::MaxSize / _MaxChunks,  _MaxChunks>::MaxSize };
     };
 
     using FLocalImages = TLocalPool<FVulkanLocalImage, FVulkanResourceManager::FImagePool>;

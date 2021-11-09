@@ -106,7 +106,6 @@ public:
     NODISCARD bool Construct();
     void TearDown();
 
-    void AddCompiler(const PPipelineCompiler& pCompiler);
     void OnSubmit();
 
     NODISCARD FRawMPipelineID CreatePipeline(FMeshPipelineDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
@@ -144,7 +143,7 @@ public:
     NODISCARD FRawRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
     NODISCARD FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FStringView debugName));
 
-    NODISCARD FRawDescriptorSetLayoutID CreateDescriptorSetLayout(const FPipelineDesc::FSharedUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawDescriptorSetLayoutID CreateDescriptorSetLayout(const FPipelineDesc::PUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD FRawSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain, FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
 
@@ -260,12 +259,12 @@ private:
     NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, const FPipelineDesc::FPipelineLayout& desc, const FDSLayouts& dsLayouts ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD bool CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId);
-    NODISCARD bool CreateDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId, TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout, const FPipelineDesc::FSharedUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool CreateDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId, TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout, const FPipelineDesc::PUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     template <typename _Desc>
     NODISCARD bool CompileShaders_(_Desc& desc);
     NODISCARD bool CompileShaders_(FComputePipelineDesc& desc);
-    NODISCARD bool CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const PShaderSource& source);
+    NODISCARD bool CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const FShaderDataVariant& spirv);
 
     NODISCARD bool CheckHostVisibleMemory_();
     void TearDownStagingBuffers_();
@@ -279,8 +278,6 @@ private:
     std::atomic<u32> _submissionCounter;
 
     TThreadSafe<FVulkanShaderRefs, EThreadBarrier::CriticalSection> _shaderCache;
-
-    TThreadSafe<FPipelineCompilers, EThreadBarrier::RWLock> _compilers;
 
     FRawDescriptorSetLayoutID _emptyDSLayout;
 

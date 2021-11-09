@@ -5,12 +5,12 @@
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Pipeline/VulkanShaderModule.h"
 
+#include "RHIModule.h"
 #include "RHI/EnumToString.h"
 #include "RHI/PipelineCompiler.h"
 
 #include "Diagnostic/Logger.h"
-#include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_android.h"
-#include "IO/FormatHelpers.h"
+#include "Modular/ModularDomain.h"
 
 namespace PPE {
 namespace RHI {
@@ -43,20 +43,20 @@ static TFixedSizeStack<EShaderLangFormat, 16> BuiltinFormats_(const FVulkanDevic
 
     return results;
 }
-
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanResourceManager::FVulkanResourceManager(const FVulkanDevice& device)
-    : _device(device)
-      , _memoryManager(device)
-      , _descriptorManager(device)
-      , _submissionCounter(0) { }
-
+:   _device(device)
+,   _memoryManager(device)
+,   _descriptorManager(device)
+,   _submissionCounter(0)
+{}
 //----------------------------------------------------------------------------
-FVulkanResourceManager::~FVulkanResourceManager() { }
+FVulkanResourceManager::~FVulkanResourceManager()
+{}
 //----------------------------------------------------------------------------
 bool FVulkanResourceManager::Construct() {
     if (not _memoryManager.Construct()) {
@@ -125,25 +125,17 @@ void FVulkanResourceManager::TearDown() {
             Assert(sh);
             Assert_NoAssume(sh->RefCount() == 1);
 
-            checked_cast<FVulkanShaderModule>(sh)->TearDown(_device);
+            sh->TearDown(
+                _device.vkDevice(),
+                _device.api()->vkDestroyShaderModule,
+                _device.vkAllocator() );
         }
 
         exclusiveShaderCache->clear_ReleaseMemory();
     }
 
-    // release pipeline compilers
-    {
-        _compilers.LockExclusive()->clear_ReleaseMemory();
-    }
-
     _descriptorManager.TearDown();
     _memoryManager.TearDown();
-}
-//----------------------------------------------------------------------------
-void FVulkanResourceManager::AddCompiler(const PPipelineCompiler& pCompiler) {
-    Assert(pCompiler);
-
-    _compilers.LockExclusive()->insert(pCompiler);
 }
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::OnSubmit() {
@@ -152,7 +144,7 @@ void FVulkanResourceManager::OnSubmit() {
 //----------------------------------------------------------------------------
 // CreateDescriptorSetLayout
 //----------------------------------------------------------------------------
-FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDescriptorSetLayout(const FPipelineDesc::FSharedUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDescriptorSetLayout(const FPipelineDesc::PUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     FRawDescriptorSetLayoutID result;
     TResourceProxy<FVulkanDescriptorSetLayout>* setLayout{ nullptr };
     VerifyRelease( CreateDescriptorSetLayout_(&result, &setLayout, uniforms ARGS_IF_RHIDEBUG(debugName)) );
@@ -164,7 +156,7 @@ bool FVulkanResourceManager::CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLa
     Assert(pId);
 
     FVulkanDescriptorSetLayout::FBindings bindings;
-    FPipelineDesc::FSharedUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
+    FPipelineDesc::PUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
 
     TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, uniforms };
     if (Likely(CreateCachedResource_(pId, std::move(emptyKey), _device, bindings.MakeConstView() ARGS_IF_RHIDEBUG("EmptyDSLayout")).first))
@@ -240,7 +232,7 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
 bool FVulkanResourceManager::CreateDescriptorSetLayout_(
     FRawDescriptorSetLayoutID* pId,
     TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout,
-    const FPipelineDesc::FSharedUniformMap& uniforms
+    const FPipelineDesc::PUniformMap& uniforms
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(pId);
     Assert(pDSLayout);
@@ -261,34 +253,60 @@ bool FVulkanResourceManager::CreateDescriptorSetLayout_(
 //----------------------------------------------------------------------------
 template <typename _Desc>
 bool FVulkanResourceManager::CompileShaders_(_Desc& desc) {
-    const EShaderLangFormat required = (_device.vkVersion() | EShaderLangFormat::ShaderModule);
+    const EShaderLangFormat fmtShaderModule = (_device.vkVersion() | EShaderLangFormat::ShaderModule);
+    const EShaderLangFormat fmtSPIRV = (_device.vkVersion() | EShaderLangFormat::SPIRV);
 
     // try to use external compilers
     {
-        for (const PPipelineCompiler& compiler : *_compilers.LockShared()) {
-            if (compiler->IsSupported(desc, required))
-                return compiler->Compile(desc, required);
+        TFixedSizeStack<SPipelineCompiler, 3> compilers;
+        FRHIModule::Get(FModularDomain::Get()).ListCompilers(MakeAppendable(compilers));
+
+        for (const SPipelineCompiler& compiler : compilers) {
+            if (compiler->IsSupported(desc, fmtShaderModule))
+                return compiler->Compile(desc, fmtShaderModule);
+
+            if (compiler->IsSupported(desc, fmtSPIRV)) {
+                if (not compiler->Compile(desc, fmtSPIRV))
+                    return false;
+
+                for (auto& sh : desc.Shaders) {
+                    if (sh.second.Data.empty())
+                        continue;
+
+                    const auto it = sh.second.Data.find(fmtSPIRV);
+                    LOG_CHECK(RHI, it != sh.second.Data.end());
+
+                    PVulkanShaderModule module;
+                    LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
+
+                    sh.second.Data.clear();
+                    sh.second.Data.insert({ fmtSPIRV, PShaderModule(std::move(module)) });
+                }
+
+                return true;
+            }
         }
     }
 
     // check if shaders supported by default compiler
     const auto formats = BuiltinFormats_(_device);
-
     bool isSupported = true;
+
     for (auto& sh : desc.Shaders) {
-        if (sh.second.Sources.empty())
+        if (sh.second.Data.empty())
             continue;
 
         bool found = false;
         for (EShaderLangFormat fmt : formats) {
-            const auto it = sh.second.Sources.find(fmt);
-            if (sh.second.Sources.end() == it)
+            const auto it = sh.second.Data.find(fmt);
+            if (sh.second.Data.end() == it)
                 continue;
 
             if (fmt & EShaderLangFormat::ShaderModule) {
-                PShaderSource source = it->second;
-                sh.second.Sources.clear();
-                sh.second.Sources.insert({ fmt, std::move(source) });
+                auto shaderData = it->second;
+
+                sh.second.Data.clear();
+                sh.second.Data.insert({ fmt, std::move(shaderData) });
 
                 found = true;
                 break;
@@ -296,33 +314,52 @@ bool FVulkanResourceManager::CompileShaders_(_Desc& desc) {
 
             if (fmt & EShaderLangFormat::SPIRV) {
                 PVulkanShaderModule module;
-                if (not CompileShaderSPIRV_(&module, it->second))
-                    return false;
-
+                LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
                 Assert(module);
-                sh.second.Sources.clear();
-                sh.second.AddSource(fmt, module);
+
+                sh.second.Data.clear();
+                sh.second.Data.insert({ fmt, PShaderModule(std::move(module)) });
 
                 found = true;
                 break;
             }
         }
 
-        CLOG(not found, RHI, Warning, L"unsupported shader format: {0}", sh.first);
         isSupported &= found;
     }
 
+    CLOG(not isSupported, RHI, Error, L"unsupported shader format");
     return isSupported;
 }
 //----------------------------------------------------------------------------
 bool FVulkanResourceManager::CompileShaders_(FComputePipelineDesc& desc) {
-    const EShaderLangFormat required = (_device.vkVersion() | EShaderLangFormat::ShaderModule);
+    const EShaderLangFormat fmtShaderModule = (_device.vkVersion() | EShaderLangFormat::ShaderModule);
+    const EShaderLangFormat fmtSPIRV = (_device.vkVersion() | EShaderLangFormat::SPIRV);
 
     // try to use external compilers
     {
-        for (const PPipelineCompiler& compiler : *_compilers.LockShared()) {
-            if (compiler->IsSupported(desc, required))
-                return compiler->Compile(desc, required);
+        TFixedSizeStack<SPipelineCompiler, 3> compilers;
+        FRHIModule::Get(FModularDomain::Get()).ListCompilers(MakeAppendable(compilers));
+
+        for (const SPipelineCompiler& compiler : compilers) {
+            if (compiler->IsSupported(desc, fmtShaderModule))
+                return compiler->Compile(desc, fmtShaderModule);
+
+            if (compiler->IsSupported(desc, fmtSPIRV)) {
+                if (not compiler->Compile(desc, fmtSPIRV))
+                    return false;
+
+                const auto it = desc.Shader.Data.find(fmtSPIRV);
+                LOG_CHECK(RHI, desc.Shader.Data.end() != it);
+
+                PVulkanShaderModule module;
+                LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
+
+                desc.Shader.Data.clear();
+                desc.Shader.Data.insert({ fmtSPIRV, PShaderModule(std::move(module)) });
+
+                return true;
+            }
         }
     }
 
@@ -330,14 +367,16 @@ bool FVulkanResourceManager::CompileShaders_(FComputePipelineDesc& desc) {
     const auto formats = BuiltinFormats_(_device);
 
     for (EShaderLangFormat fmt : formats) {
-        const auto it = desc.Shader.Sources.find(fmt);
-        if (desc.Shader.Sources.end() == it)
+        const auto it = desc.Shader.Data.find(fmt);
+        if (desc.Shader.Data.end() == it)
             continue;
 
         if (fmt & EShaderLangFormat::ShaderModule) {
-            PShaderData<FShaderSource> source = it->second;
-            desc.Shader.Sources.clear();
-            desc.Shader.Sources.insert({ fmt, std::move(source) });
+            auto shaderData = it->second;
+
+            desc.Shader.Data.clear();
+            desc.Shader.Data.insert({ fmt, std::move(shaderData) });
+
             return true;
         }
 
@@ -347,27 +386,29 @@ bool FVulkanResourceManager::CompileShaders_(FComputePipelineDesc& desc) {
                 return false;
 
             Assert(module);
-            desc.Shader.Sources.clear();
-            desc.Shader.AddSource(fmt, module);
+            desc.Shader.Data.clear();
+            desc.Shader.Data.insert({ fmt, PShaderModule(std::move(module)) });
             return true;
         }
     }
 
-    LOG(RHI, Error, L"unsupported shader formats: {0}", Fmt::Join(desc.Shader.Sources.Keys(), L", "));
+    LOG(RHI, Error, L"unsupported shader format");
     return false;
 }
 //----------------------------------------------------------------------------
-bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const PShaderSource& source) {
-    const FRawData* const pRawData =  std::get_if<FRawData>(source->Data());
-    if (not pRawData || pRawData->empty()) {
-        LOG(RHI, Error, L"invalid shader data format");
+bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const FShaderDataVariant& spirv) {
+    const auto* const shaderData = std::get_if<PShaderBinaryData>(&spirv);
+    if (not shaderData || not *shaderData || not (*shaderData)->Data()) {
+        LOG(RHI, Error, L"expected valid binary shader data (SPIRV)");
         return false;
     }
 
+    const IShaderData<FRawData>& rawSpirv = *(*shaderData);
+
     VkShaderModuleCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    info.codeSize = pRawData->SizeInBytes();
-    info.pCode = reinterpret_cast<const uint32_t*>(pRawData->data());
+    info.codeSize = rawSpirv.Data()->SizeInBytes();
+    info.pCode = reinterpret_cast<const uint32_t*>(rawSpirv.Data()->Pointer());
 
     VkShaderModule vkShaderModule = VK_NULL_HANDLE;
     VK_CHECK( _device.vkCreateShaderModule(
@@ -380,15 +421,15 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderM
 #if USE_PPE_RHITASKNAME
     _device.SetObjectName(
         reinterpret_cast<u64>(vkShaderModule),
-        source->DebugName(),
+        rawSpirv.DebugName(),
         VK_OBJECT_TYPE_SHADER_MODULE );
 #endif
 
     *pVkShaderModule = NEW_REF(RHIShader, FVulkanShaderModule,
         vkShaderModule,
-        source->Fingerprint(),
-        source->EntryPoint().MakeView()
-        ARGS_IF_RHIDEBUG(source->DebugName()) );
+        rawSpirv.Fingerprint(),
+        rawSpirv.EntryPoint().MakeView()
+        ARGS_IF_RHIDEBUG(rawSpirv.DebugName().MakeView()) );
 
     _shaderCache.LockExclusive()->push_back(*pVkShaderModule);
 
@@ -1189,7 +1230,7 @@ FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDebugDescriptorSetLayout
     sbUniform.StageFlags = debuggableShaders;
     sbUniform.Index = FBindingIndex{ UMax, 0 };
 
-    FPipelineDesc::FSharedUniformMap uniforms;
+    FPipelineDesc::PUniformMap uniforms;
     uniforms->Emplace_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, sbUniform);
 
     const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(uniforms, debugName);

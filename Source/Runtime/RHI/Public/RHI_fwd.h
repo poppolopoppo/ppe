@@ -37,6 +37,8 @@
 #   include "IO/ConstChar.h" // for debug names
 #endif
 
+#include <variant>
+
 namespace PPE {
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
@@ -227,13 +229,21 @@ struct FDepthStencilValue {
     FDepthValue Depth;
     FStencilValue Stencil;
 };
-//---------------------------7-------------------------------------------------
+//----------------------------------------------------------------------------
 template <typename T>
 class IShaderData;
+using FShaderDataFingerprint = u128;
 template <typename T>
 using PShaderData = TRefPtr< IShaderData<T> >;
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FShaderModule);
+using PShaderSource = PShaderData< FString >;
+using PShaderBinaryData = PShaderData< FRawData >;
 using PShaderModule = PShaderData< FShaderModule >;
+using FShaderDataVariant = std::variant<
+    std::monostate,
+    PShaderSource,
+    PShaderBinaryData,
+    PShaderModule >;
 //----------------------------------------------------------------------------
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FExternalBuffer);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FExternalImage);

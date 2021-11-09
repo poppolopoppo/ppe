@@ -46,8 +46,8 @@ bool FVulkanComputePipeline::Construct(const FComputePipelineDesc& desc, FRawPip
     exclusive->DefaultLocalGroupSize = desc.DefaultLocalGroupSize;
     exclusive->LocalSizeSpecialization = desc.LocalSizeSpecialization;
 
-    for (auto& src : desc.Shader.Sources) {
-        const PShaderModule& moduleRef = std::get<PShaderModule>(*src.second->Data());
+    for (auto& src : desc.Shader.Data) {
+        const PShaderModule& moduleRef = std::get<PShaderModule>(src.second);
         Assert(moduleRef);
 
         exclusive->Shaders.Push(

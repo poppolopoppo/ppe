@@ -59,6 +59,12 @@ void FRHIModule::DutyCycle(FModularDomain& domain) {
 //----------------------------------------------------------------------------
 void FRHIModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
     IModuleInterface::ReleaseMemory(domain);
+
+    const FReadWriteLock::FScopeLockWrite slopeLock(_barrierRW);
+
+    for (const auto& it : _compilers) {
+        it.second->ReleaseUnusedMemory();
+    }
 }
 //----------------------------------------------------------------------------
 ERHIFeature FRHIModule::RecommendedFeatures(ERHIFeature features) const NOEXCEPT {
@@ -181,6 +187,13 @@ RHI::SPipelineCompiler FRHIModule::Compiler(RHI::EShaderLangFormat lang) const n
     using namespace RHI;
     LOG(RHI, Error, L"could not find a compiler for {0}", lang);
     return SPipelineCompiler{};
+}
+//----------------------------------------------------------------------------
+void FRHIModule::ListCompilers(TAppendable<RHI::SPipelineCompiler>&& compilers) const NOEXCEPT {
+    const FReadWriteLock::FScopeLockRead slopeLock(_barrierRW);
+
+    for (const auto& it : _compilers)
+        compilers.push_back(it.second);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

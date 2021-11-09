@@ -139,6 +139,10 @@ enum class EShaderLangFormat : u32 {
 };
 ENUM_FLAGS(EShaderLangFormat);
 //----------------------------------------------------------------------------
+inline CONSTEXPR u32 EShaderLangFormat_Version(EShaderLangFormat fmt) {
+    return (Meta::EnumOrd(Meta::EnumAnd(fmt, EShaderLangFormat::_VersionMask)) >> Meta::EnumOrd(EShaderLangFormat::_VersionOffset));
+}
+//----------------------------------------------------------------------------
 enum class EShaderDebugMode : u32 {
     None            = 0,
 #if USE_PPE_RHIDEBUG

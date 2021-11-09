@@ -6,6 +6,7 @@
 
 #include "Modular/ModuleInterface.h"
 
+#include "Container/Appendable.h"
 #include "Container/AssociativeVector.h"
 #include "Diagnostic/Logger_fwd.h"
 #include "Misc/Event.h"
@@ -58,6 +59,7 @@ public:
     PUBLIC_EVENT(OnUnregisterCompiler, FCompilerEvent);
 
     RHI::SPipelineCompiler Compiler(RHI::EShaderLangFormat lang) const NOEXCEPT;
+    void ListCompilers(TAppendable<RHI::SPipelineCompiler>&& compilers) const NOEXCEPT;
 
     void RegisterCompiler(RHI::EShaderLangFormat lang, RHI::PPipelineCompiler&& rcompiler);
     void UnregisterCompiler(RHI::EShaderLangFormat lang);
