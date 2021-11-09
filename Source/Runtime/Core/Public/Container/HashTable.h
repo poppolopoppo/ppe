@@ -486,6 +486,7 @@ public:
     TPair<iterator, bool> try_emplace(key_type&& rkey, _Args&&... args);
 
     void erase(const const_iterator& it);
+    iterator erase_ReturnNext(const iterator& it);
 
     bool erase(const key_type& key, value_type* pValueIFP);
     bool erase(const key_type& key) { return erase(key, nullptr); }

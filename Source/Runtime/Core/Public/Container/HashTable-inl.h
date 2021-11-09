@@ -305,6 +305,12 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const const_
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase_ReturnNext(const iterator& it) -> iterator {
+    erase(it);
+    return ++iterator(it);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const key_type& key, value_type* pValueIFP) {
     if (Unlikely(0 == _data.Size))
         return false;
