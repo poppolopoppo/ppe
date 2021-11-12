@@ -72,11 +72,11 @@ inline void FRefCountable::operator delete(void* p) {
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 #if USE_PPE_MEMORYDOMAINS
-TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
+NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
     return TRefPtr<T>{ new (tracking_malloc(trackingData, sizeof(T))) T{ std::forward<_Args>(args)... } };
 }
 #else
-TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args) {
+NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args) {
     return TRefPtr<T>{ new (PPE::malloc(sizeof(T))) T{ std::forward<_Args>(args)... } };
 }
 #endif
@@ -142,7 +142,7 @@ void RemoveRef_AssertReachZero(TRefPtr<T>& refptr) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T* RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& refptr) {
+NODISCARD T* RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& refptr) {
     Assert(refptr);
     Assert(1 == refptr->RefCount());
     T* const result = refptr.get();

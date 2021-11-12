@@ -41,10 +41,10 @@ struct ALIGN(16) FGuid {
 
     CONSTEXPR bool empty() const { return (Data.as_u64[0] == 0 && Data.as_u64[1] == 0); }
 
-    CONSTEXPR static FGuid Zero() { return {{0, 0, 0, 0 }}; }
+    CONSTEXPR static FGuid Zero() { return { {{0, 0, 0, 0 }} }; }
 
     CONSTEXPR static FGuid Binary(u32 a, u32 b, u32 c, u32 d) {
-        return {{ a, b, c, d }};
+        return { {{ a, b, c, d }} };
     }
 
     PPE_CORE_API static FGuid Generate() NOEXCEPT;

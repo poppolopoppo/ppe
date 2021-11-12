@@ -43,12 +43,12 @@ T& FPipelineResources::Resource_Unlocked_(const FUniformID& id) {
 
     const auto uniforms = exclusiveData->Uniforms();
     const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), id);
-    if (uniforms.end() != it && *it == id) {
+    if (Likely(uniforms.end() != it && *it == id)) {
         Assert_NoAssume(it->Type == T::TypeId);
         return *exclusiveData->Storage.MakeView().CutStartingAt(it->Offset).Peek<T>();
     }
 
-    LOG(RHI, Fatal, L"failed to find uniform in pipeline resource with id: {0}", id);
+    LOG(RHI, Error, L"failed to find uniform in pipeline resource with id: {0}", id);
     AssertNotReached();
 }
 //----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ bool FPipelineResources::HasResource_Unlocked_(const FUniformID& id) const {
 
     const auto uniforms = _dynamicData.LockShared()->Uniforms();
     const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), id);
-    if (uniforms.end() != it && *it == id)
+    if (Likely(uniforms.end() != it && *it == id))
         return (it->Type == T::TypeId);
 
     return false;

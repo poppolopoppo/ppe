@@ -491,8 +491,8 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EColorMask>);
     if (EColorMask::RGBA == value) return oss << STRING_LITERAL(_Char, "RGBA");
     if (EColorMask::All == value) return oss << STRING_LITERAL(_Char, "All");
-    if (EColorMask::Default == value) return oss << STRING_LITERAL(_Char, "Default");
-    if (EColorMask::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+
+    Assert(value != Zero);
 
     if (EColorMask::R & value) oss << STRING_LITERAL(_Char, "R");
     if (EColorMask::G & value) oss << STRING_LITERAL(_Char, "G");
