@@ -2,6 +2,10 @@
 
 #include "Allocator/BitmapHeap.h"
 
+#if USE_PPE_MEMORYDOMAINS
+#   include "Meta/TypeInfo.h"
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -226,8 +230,10 @@ inline void TBitmapPage<_PageSize>::DebugInfo(FBitmapPageInfo* pinfo) const NOEX
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Traits>
 TBitmapHeap<_Traits>::TBitmapHeap() NOEXCEPT
-:   Pages(MEMORYDOMAIN_TRACKING_DATA(BitmapHeap))
-{}
+:   TrackingData(Meta::type_info<TBitmapHeap>.name, &MEMORYDOMAIN_TRACKING_DATA(BitmapHeap))
+,   Pages(TrackingData) {
+    RegisterTrackingData(&TrackingData);
+}
 #endif
 //----------------------------------------------------------------------------
 template <typename _Traits>
@@ -244,6 +250,10 @@ TBitmapHeap<_Traits>::~TBitmapHeap() {
     });
 
     FBitmapBasicPage::ReleaseCacheMemory();
+
+#if USE_PPE_MEMORYDOMAINS
+    UnregisterTrackingData(&TrackingData);
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>

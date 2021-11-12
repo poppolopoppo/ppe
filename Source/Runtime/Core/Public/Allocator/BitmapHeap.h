@@ -255,6 +255,10 @@ private:
 
     static inline page_type* const GDummyPage{ (page_type*)1 }; // avoid double registration
 
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking TrackingData;
+#endif
+
     FReadWriteLock RWLock;
     size_t Revision{ 0 };
     std::atomic<page_type*> FreePage{ GDummyPage };
