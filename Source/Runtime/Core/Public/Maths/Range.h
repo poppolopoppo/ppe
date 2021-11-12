@@ -45,8 +45,8 @@ struct TRange {
     }
 
     CONSTEXPR TRange& Add(value_type value) {
-        First = Blend(First + value, MaxValue, First < First + value);
-        Last = Blend(Last + value, MaxValue, Last < Last + value);
+        First = Blend(First + value, MaxValue, not value or First < First + value);
+        Last = Blend(Last + value, MaxValue, not value or Last < Last + value);
         return (*this);
     }
 
