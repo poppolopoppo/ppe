@@ -295,7 +295,9 @@ void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_
             segment = s;
         }
 
-        for (FCacheItem_* p = _cache.pBuckets[b]; p; p = p->NextItem) {
+        for (FCacheItem_* p = _cache.pBuckets[b]; p; ) {
+            FCacheItem_* const pNext = p->NextItem;
+
             const index_type id = p->PoolIndex();
             Assert_NoAssume((p->HashValue() & FHashTable_::BucketMask) == b);
 
@@ -308,6 +310,7 @@ void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_
             _pool.Deallocate(id);
 
             Verify( _cache.Count.fetch_sub(1, std::memory_order_release) > 0 );
+            p = pNext;
         }
 
         _cache.pBuckets[b] = nullptr;
