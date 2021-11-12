@@ -64,6 +64,10 @@ public:
     TPolymorphicTuple(const TPolymorphicTuple& ) = delete;
     TPolymorphicTuple& operator =(const TPolymorphicTuple& ) = delete;
 
+    ~TPolymorphicTuple() {
+        Clear();
+    }
+
     bool empty() const { return _items.empty(); }
     size_t size() const { return _items.size(); }
 
