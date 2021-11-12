@@ -34,7 +34,7 @@
 #   error "there is someone messing with the project configuration"
 #endif
 
-#define PPE_ASSERT_LIGHTWEIGHT_CRASH() PPE_DEBUG_CRASH()
+#define PPE_ASSERT_LIGHTWEIGHT_CRASH() (PPE_DEBUG_BREAK(), PPE_DEBUG_CRASH())
 
 namespace PPE {
 //----------------------------------------------------------------------------
