@@ -44,9 +44,11 @@ CONSTEXPR hash_t hash_range(_It first, _It last) NOEXCEPT {
     hash_t seed(PPE_HASH_VALUE_SEED);
     IF_CONSTEXPR(Meta::is_random_access_iterator_v<_It>) {
         Assert(first <= last);
-        const size_t count = std::distance(first, last);
-        Assert_NoAssume(checked_cast<size_t>(std::addressof(last[-1]) - std::addressof(*first)) == count);
-        hash_range(seed, std::addressof(*first), count);
+        if (Likely(first != last)) {
+            const size_t count = std::distance(first, last);
+            Assert_NoAssume(count && (std::addressof(last[-1]) - std::addressof(*first)) == static_cast<ptrdiff_t>(count) - 1);
+            hash_range(seed, std::addressof(*first), count);
+        }
     }
     else {
         size_t count = 0;
