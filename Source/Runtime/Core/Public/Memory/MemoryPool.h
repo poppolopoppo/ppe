@@ -506,9 +506,9 @@ TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::~TMemoryPoo
     totalSizeInBytes += exclusivePool->ExhaustedChunks.AllocationSize();
     totalSizeInBytes = ROUND_TO_NEXT_16(totalSizeInBytes);
     totalSizeInBytes += sizeof(FPoolChunk_*) * MaxChunks;
+    totalSizeInBytes = allocator_traits::SnapSize(*exclusivePool, totalSizeInBytes);
 
     FAllocatorBlock blk{ exclusivePool->CommittedChunks.Bits, totalSizeInBytes };
-    blk.SizeInBytes = allocator_traits::SnapSize(*exclusivePool, totalSizeInBytes);
     allocator_traits::Deallocate(*exclusivePool, blk);
 
 #if USE_PPE_ASSERT
@@ -538,13 +538,15 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Initia
     totalSizeInBytes += pool.CommittedChunks.AllocationSize();
     Assert(Meta::IsAlignedPow2(sizeof(FBitTree_::word_t), totalSizeInBytes));
     const size_t exhaustedChunksOffsetInWords = (totalSizeInBytes / sizeof(FBitTree_::word_t));
-    totalSizeInBytes += ROUND_TO_NEXT_16(pool.ExhaustedChunks.AllocationSize());
+    totalSizeInBytes += pool.ExhaustedChunks.AllocationSize();
+    totalSizeInBytes = ROUND_TO_NEXT_16(totalSizeInBytes);
     Assert(Meta::IsAlignedPow2(sizeof(FPoolChunk_*), totalSizeInBytes));
     const size_t chunksOffsetInPtrs = (totalSizeInBytes / sizeof(FPoolChunk_*));
     totalSizeInBytes += sizeof(FPoolChunk_*) * MaxChunks;
+    totalSizeInBytes = allocator_traits::SnapSize(pool, totalSizeInBytes);
 
-    const FAllocatorBlock blk = allocator_traits::Allocate(pool,
-        allocator_traits::SnapSize(pool, totalSizeInBytes) );
+    const FAllocatorBlock blk = allocator_traits::Allocate(pool, totalSizeInBytes);
+    Assert_NoAssume(blk.SizeInBytes == totalSizeInBytes);
     pool.CommittedChunks.Initialize(static_cast<FBitTree_::word_t*>(blk.Data) + committedChunksOffsetInWords, false);
     pool.ExhaustedChunks.Initialize(static_cast<FBitTree_::word_t*>(blk.Data) + exhaustedChunksOffsetInWords, true);
     pool.pChunks = (static_cast<FPoolChunk_**>(blk.Data) + chunksOffsetInPtrs);
