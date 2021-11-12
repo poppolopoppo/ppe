@@ -138,8 +138,8 @@ public:
     iterator begin() { return MakeCheckedIterator(_data, _size, 0); }
     iterator end() { return MakeCheckedIterator(_data, _size, _size); }
 
-    const_iterator begin() const { return MakeCheckedIterator((const_pointer)_data, _size, 0); }
-    const_iterator end() const { return MakeCheckedIterator((const_pointer)_data, _size, _size); }
+    const_iterator begin() const { return MakeCheckedIterator(static_cast<const_pointer>(_data), _size, 0); }
+    const_iterator end() const { return MakeCheckedIterator(static_cast<const_pointer>(_data), _size, _size); }
 
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end; }
@@ -266,36 +266,20 @@ void TArray<T, _Allocator>::clear() {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TArray<T, _Allocator>::resize(size_type count) {
-    if (_size > count)
-        Meta::Destroy(MakeView().CutStartingAt(count));
+    const size_type s = _size;
+    resize_Uninitialized(count);
 
-    const size_type n = allocator_traits::template SnapSizeT<value_type>(allocator_(), count);
-    FAllocatorBlock b{ _data, _capacity * sizeof(value_type) };
-    allocator_traits::Reallocate(allocator_(), b, n * sizeof(value_type));
-
-    if (_size < count)
-        Meta::Construct(MakeView().CutStartingAt(_size));
-
-    _data = static_cast<pointer>(b.Data);
-    _size = count;
-    _capacity = n;
+    if (s < count)
+        Meta::Construct(MakeView().CutStartingAt(s));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TArray<T, _Allocator>::resize(size_type count, const_reference value) {
-    if (_size > count)
-        Meta::Destroy(MakeView().CutStartingAt(count));
+    const size_type s = _size;
+    resize_Uninitialized(count);
 
-    const size_type n = allocator_traits::template SnapSizeT<value_type>(allocator_(), count);
-    FAllocatorBlock b{ _data, _capacity * sizeof(value_type) };
-    allocator_traits::Reallocate(allocator_(), b, n * sizeof(value_type));
-
-    if (_size < count)
-        Meta::Construct(MakeView().CutStartingAt(_size), value);
-
-    _data = static_cast<pointer>(b.Data);
-    _size = count;
-    _capacity = n;
+    if (s < count)
+        Meta::Construct(MakeView().CutStartingAt(s), value);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -304,12 +288,15 @@ void TArray<T, _Allocator>::resize_Uninitialized(size_type count) {
         Meta::Destroy(MakeView().CutStartingAt(count));
 
     const size_type n = allocator_traits::template SnapSizeT<value_type>(allocator_(), count);
-    FAllocatorBlock b{ _data, _capacity * sizeof(value_type) };
-    allocator_traits::Reallocate(allocator_(), b, n * sizeof(value_type));
+    if (n != _capacity) {
+        FAllocatorBlock b{ _data, _capacity * sizeof(value_type) };
+        allocator_traits::Reallocate(allocator_(), b, n * sizeof(value_type));
 
-    _data = static_cast<pointer>(b.Data);
+        _capacity = n;
+        _data = static_cast<pointer>(b.Data);
+    }
+
     _size = count;
-    _capacity = n;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
