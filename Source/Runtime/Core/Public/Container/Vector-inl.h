@@ -42,12 +42,12 @@ template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::assign(TVector&& rvalue) {
     Assert(&rvalue != this);
 
+    clear_ReleaseMemory();
+
     const FAllocatorBlock b{ rvalue._data, rvalue._capacity * sizeof(value_type) };
     const bool moved = MoveAllocatorBlock(&allocator_traits::Get(*this), allocator_traits::Get(rvalue), b);
 
     if (moved) {
-        clear_ReleaseMemory();
-
         _data = rvalue._data;
         _size = rvalue._size;
         _capacity = rvalue._capacity;
