@@ -159,7 +159,7 @@ public:
     void Append(_It first, _It last) {
         const auto dst = MakeCheckedIterator(_storage, _capacity, _size);
         const auto it = std::uninitialized_copy(first, last, dst);
-        _size += std::distance(it, dst);
+        _size += std::distance(dst, it);
         Assert_NoAssume(_size < _capacity);
     }
 
@@ -346,7 +346,7 @@ public:
 
     using typename parent_type::iterator_category;
 
-    TFixedSizeStack() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
+    TFixedSizeStack() NOEXCEPT : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
 
     TFixedSizeStack(const TMemoryView<const T>& items) : TFixedSizeStack() {
         parent_type::Assign_AssumeEmpty(items.begin(), items.end());
