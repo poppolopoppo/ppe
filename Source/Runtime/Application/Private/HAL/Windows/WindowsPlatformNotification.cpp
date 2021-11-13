@@ -286,8 +286,10 @@ private:
             process.AppIcon());
 
         const FPlatformApplication& app = RunningApp();
-        Assert(app.Name().size() < ARRAYSIZE(nid.szTip));
-        ::memcpy(&nid.szTip, app.Name().data(), app.Name().size() * sizeof(wchar_t));
+        STATIC_ASSERT(std::is_same_v<wchar_t, Meta::TDecay<decltype(nid.szTip[0])>>);
+        FPlatformString::CHAR_to_WCHAR(ECodePage::UTF_8,
+            nid.szTip, lengthof(nid.szTip),
+            app.Name().data(), app.Name().size() );
 
         if (not ::Shell_NotifyIconW(NIM_ADD, &nid))
             PPE_THROW_IT(FLastErrorException("Shell_NotifyIconW(NIM_ADD)"));
