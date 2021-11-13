@@ -41,7 +41,7 @@ using FMediumMipMaps_ = TMipMapAllocator2 < TMipmapCpuTraits<
     PPE_MIPMAPS_MEDIUM_GRANULARITY
 >>;
 static FMediumMipMaps_& MediumMips_() NOEXCEPT {
-    ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FMediumMipMaps_>, GInstance);
+    ONE_TIME_INITIALIZE(TInitSegAlloc<FMediumMipMaps_>, GInstance, 3000);
     return GInstance;
 }
 //----------------------------------------------------------------------------
@@ -52,7 +52,7 @@ using FLargeMipMaps_ = TMipMapAllocator2 < TMipmapCpuTraits<
     PPE_MIPMAPS_LARGE_GRANULARITY
 >>;
 static FLargeMipMaps_& LargeMips_() NOEXCEPT {
-    ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FLargeMipMaps_>, GInstance);
+    ONE_TIME_INITIALIZE(TInitSegAlloc<FLargeMipMaps_>, GInstance, 3000);
     return GInstance;
 }
 //----------------------------------------------------------------------------

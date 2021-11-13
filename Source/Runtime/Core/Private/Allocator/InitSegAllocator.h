@@ -25,18 +25,21 @@ class FInitSegAllocator : Meta::FNonCopyableNorMovable {
 
     class FAlloc : FNonCopyableNorMovable {
     public:
+        const size_t Priority;
         const deleter_f Deleter;
         FAlloc* Next{ nullptr };
 #if USE_PPE_PLATFORM_DEBUG
         const FConstChar DebugName;
-        FAlloc(deleter_f deleter, FConstChar debugName) NOEXCEPT
-        :   Deleter(deleter)
+        FAlloc(const size_t priority, deleter_f deleter, FConstChar debugName) NOEXCEPT
+        :   Priority(priority)
+        ,   Deleter(deleter)
         ,   DebugName(debugName) {
 #else
         explicit FAlloc(deleter_f deleter) NOEXCEPT
         :   Deleter(deleter) {
 #endif
-            Assert_NoAssume(deleter);
+            Assert_NoAssume(Priority);
+            Assert_NoAssume(Deleter);
             Allocate(*this);
         }
     };
@@ -62,11 +65,11 @@ public:
         }
 
         template <typename... _Args>
-        TAlloc(_Args&&... args) NOEXCEPT
+        TAlloc(size_t priority, _Args&&... args) NOEXCEPT
 #if USE_PPE_PLATFORM_DEBUG
-        :   FAlloc(&Destroy, Meta::type_info<Meta::TDecay<T>>.name) {
+        :   FAlloc(priority, &Destroy, Meta::type_info<Meta::TDecay<T>>.name) {
 #else
-        :   FAlloc(&Destroy) {
+        :   FAlloc(priority, &Destroy) {
 #endif
             Meta::Construct(Get(), std::forward<_Args>(args)...);
         }
@@ -76,7 +79,6 @@ private:
     FAtomicOrderedLock _barrier;
 
     FAlloc* _head{ nullptr };
-    FAlloc* _tail{ nullptr };
 
 #if USE_PPE_PLATFORM_DEBUG
     size_t _debugInitOrder{ 0 };

@@ -64,7 +64,7 @@ struct CACHELINE_ALIGNED FSystemPageCache_ {
 #endif
 
     static FSystemPageCache_& Get() {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FSystemPageCache_>, GInstance);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FSystemPageCache_>, GInstance, 200);
         return GInstance;
     }
 

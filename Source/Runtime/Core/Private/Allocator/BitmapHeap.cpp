@@ -35,13 +35,13 @@ struct FBitmapPagePool_ : FSystemPageAllocator {
     u32 NumFreePages{ 0 };
 
     static FBitmapPagePool_& Get() NOEXCEPT {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBitmapPagePool_>, GInstance);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FBitmapPagePool_>, GInstance, 1000);
         return GInstance;
     }
 
 #if USE_PPE_MEMORYDOMAINS
     static FMemoryTracking& TrackingData() {
-        return MEMORYDOMAIN_TRACKING_DATA(BitmapHeap);
+        return MEMORYDOMAIN_TRACKING_DATA(BitmapPage);
     }
 #endif
 

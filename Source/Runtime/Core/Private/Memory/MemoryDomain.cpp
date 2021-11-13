@@ -11,6 +11,7 @@
 #include "Meta/OneTimeInitialize.h"
 
 #if !USE_PPE_FINAL_RELEASE
+#   include "Allocator/InitSegAllocator.h"
 #   include "Container/IntrusiveList.h"
 #   include "Container/Stack.h"
 #   include "Diagnostic/CurrentProcess.h"
@@ -28,7 +29,7 @@
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, MemoryDomain)
 #if USE_PPE_MEMORYDOMAINS
-CONSTEXPR size_t MemoryDomainsMaxCount = 200;
+CONSTEXPR size_t MemoryDomainsMaxCount = 300;
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -122,7 +123,7 @@ namespace {
 class FTrackingDataRegistry_ : Meta::FNonCopyableNorMovable {
 public:
     static FTrackingDataRegistry_& Get() {
-        ONE_TIME_DEFAULT_INITIALIZE(FTrackingDataRegistry_, GInstance);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FTrackingDataRegistry_>, GInstance, 10/* very late */);
         return GInstance;
     }
 

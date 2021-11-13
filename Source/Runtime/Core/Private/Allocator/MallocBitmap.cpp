@@ -44,7 +44,7 @@ struct FBitmapHeaps_ {
     FBitmapHeapLarge_ Large;
 
     static FBitmapHeaps_& Get() NOEXCEPT {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBitmapHeaps_>, GInstance);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FBitmapHeaps_>, GInstance, 3000);
         return GInstance;
     }
 };

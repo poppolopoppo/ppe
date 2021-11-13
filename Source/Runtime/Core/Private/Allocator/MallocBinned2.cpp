@@ -623,7 +623,7 @@ struct FBinnedSmallTable : Meta::FNonCopyableNorMovable {
     }
 
     FORCE_INLINE static FBinnedSmallTable& Get() NOEXCEPT {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBinnedSmallTable>, GInstance);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FBinnedSmallTable>, GInstance, 5000);
         return GInstance;
     }
 

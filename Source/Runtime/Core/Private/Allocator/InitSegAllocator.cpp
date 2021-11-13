@@ -16,25 +16,11 @@ PRAGMA_INITSEG_COMPILER
 
 #if USE_PPE_PLATFORM_DEBUG
 #   include "HAL/PlatformDebug.h"
+#   include "IO/Format.h"
 #   include "IO/TextWriter.h"
 #endif
 
 namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-#if USE_PPE_PLATFORM_DEBUG
-static void VeryLowLevelLog_(std::initializer_list<FConstChar> args) {
-    FPlatformDebug::OutputDebug("[InitSegAllocator] ");
-    for (FConstChar txt : args)
-        FPlatformDebug::OutputDebug(txt);
-    FPlatformDebug::OutputDebug("\n");
-}
-#endif //!USE_PPE_PLATFORM_DEBUG
-//----------------------------------------------------------------------------
-} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -49,10 +35,12 @@ FInitSegAllocator::~FInitSegAllocator() {
 #if USE_PPE_PLATFORM_DEBUG
         {
             Assert(_debugInitOrder > 0);
-            char id[10];
-            FFixedSizeTextWriter oss{ id };
-            oss << --_debugInitOrder << Eos;
-            VeryLowLevelLog_({ "#", id, ": call destructor for ", _head->DebugName });
+            --_debugInitOrder;
+
+            char mesg[200];
+            Format(mesg, "[InitSegAllocator][#{0:#2}] -- {1:#8} -- call destructor for {2}\n",
+                _debugInitOrder, _head->Priority, _head->DebugName );
+            FPlatformDebug::OutputDebug(mesg);
         }
 #endif
 
@@ -68,19 +56,26 @@ void FInitSegAllocator::Allocate(FAlloc& alloc) NOEXCEPT {
 
 #if USE_PPE_PLATFORM_DEBUG
     {
-        char id[10];
-        FFixedSizeTextWriter oss{ id };
-        oss << allocator._debugInitOrder++ << Eos;
-        VeryLowLevelLog_({ "#", id, ": call constructor for ", alloc.DebugName });
+        char mesg[200];
+        Format(mesg, "[InitSegAllocator][#{0:#2}] -- {1:#8} -- call constructor for {2}\n",
+            allocator._debugInitOrder, alloc.Priority, alloc.DebugName );
+        ++allocator._debugInitOrder;
+        FPlatformDebug::OutputDebug(mesg);
     }
 #endif
 
-    if (Likely(allocator._head)) {
-        allocator._tail->Next = &alloc;
-        allocator._tail = &alloc;
+    FAlloc* lower_bound = nullptr;
+    for (FAlloc* p = allocator._head; p && p->Priority >= alloc.Priority; p = p->Next)
+        lower_bound = p;
+
+    if (lower_bound) {
+        Assert(allocator._head);
+        alloc.Next = lower_bound->Next;
+        lower_bound->Next = &alloc;
     }
     else {
-        allocator._head = allocator._tail = &alloc;
+        alloc.Next = allocator._head;
+        allocator._head = &alloc;
     }
 }
 //----------------------------------------------------------------------------

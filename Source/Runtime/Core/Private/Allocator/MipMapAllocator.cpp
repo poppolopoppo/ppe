@@ -99,7 +99,7 @@ struct FMipmapGlobalCache {
     TIntrusiveList<FMipmapPool, &FMipmapPool::Node> Pools;
 
     static FMipmapGlobalCache& Get() NOEXCEPT {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FMipmapGlobalCache>, GlobalCache);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FMipmapGlobalCache>, GlobalCache, 2500);
         return GlobalCache;
     }
 

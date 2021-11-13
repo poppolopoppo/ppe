@@ -197,7 +197,7 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ : Meta::FNonCopyableNorMovable {
     ~FBinnedGlobalCache_();
 
     static FBinnedGlobalCache_& Get() NOEXCEPT {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBinnedGlobalCache_>, GInstance);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FBinnedGlobalCache_>, GInstance, 5000);
         return GInstance;
     }
 };
@@ -329,7 +329,7 @@ struct FBinnedStats_ {
     std::atomic<i64> SizeInBytes;
 
     static FBinnedStats_& Get() NOEXCEPT {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FBinnedStats_>, GStats);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FBinnedStats_>, GStats, 1000);
         return GStats;
     }
 
