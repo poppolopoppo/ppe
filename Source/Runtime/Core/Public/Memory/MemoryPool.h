@@ -132,6 +132,15 @@ private:
             ++Count;
         }
 
+        FORCE_INLINE void PushTail(FPoolNode_* tail, index_type id, FPoolNode_* node) {
+            Assert(tail);
+            Assert_NoAssume(UMax != Head);
+            tail->NextNode = id;
+            node->NextNode = UMax;
+            node->NextBundle = UMax;
+            ++Count;
+        }
+
         FORCE_INLINE index_type PopHead(FPoolChunk_** pChunks) {
             Assert(UMax != Head);
             Assert(Count > 0);
@@ -270,11 +279,15 @@ private:
             NumBlocksTaken += numBlocks;
             Assert_NoAssume(NumBlocksTaken <= ChunkSize);
 
-            FPoolBundle_ bundle;
-            forrange(b, first, checked_cast<index_type>(first + numBlocks)) {
-                bundle.PushHead(
-                    ChunkIndex * ChunkSize + b,
-                    reinterpret_cast<FPoolNode_*>(BundleData() + b) );
+            FPoolBundle_ bundle{};
+            FPoolNode_* tail = reinterpret_cast<FPoolNode_*>(BundleData() + first);
+            bundle.PushHead(ChunkIndex * ChunkSize + first, tail);
+
+            // keep the blocks in the same order as memory layout
+            forrange(b, first + 1, checked_cast<index_type>(first + numBlocks)) {
+                FPoolNode_* const node = reinterpret_cast<FPoolNode_*>(BundleData() + b);
+                bundle.PushTail(tail, ChunkIndex * ChunkSize + b, node);
+                tail = node;
             }
 
             return bundle;
