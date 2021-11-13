@@ -630,6 +630,20 @@ static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
     }
 }
 //----------------------------------------------------------------------------
+NODISCARD static bool NotifyLoggerMessage_(
+    const FLoggerCategory& category,
+    const ELoggerVerbosity level,
+    const FLogger::FSiteInfo& site ) NOEXCEPT {
+    UNUSED(site);
+#if USE_PPE_ASSERT
+    if (Unlikely(category.Flags & FLoggerCategory::BreakOnError && level == ELoggerVerbosity::Error))
+        PPE_DEBUG_BREAK();
+    if (Unlikely(category.Flags & FLoggerCategory::BreakOnWarning && level == ELoggerVerbosity::Warning))
+        PPE_DEBUG_BREAK();
+#endif
+    return (category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -637,7 +651,7 @@ static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
 void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
     const FIsInLoggerScope loggerScope;
 
-    if ((category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level))
+    if (NotifyLoggerMessage_(category, level, site))
         CurrentLogger_().Log(category, level, site, text);
 
     HandleFatalLogIFN_(level);
@@ -646,7 +660,7 @@ void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& 
 void FLogger::LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) {
     const FIsInLoggerScope loggerScope;
 
-    if ((category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level))
+    if (NotifyLoggerMessage_(category, level, site))
         CurrentLogger_().LogArgs(category, level, site, format, args);
 
     HandleFatalLogIFN_(level);
@@ -659,7 +673,7 @@ void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInf
 void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const wchar_t* format, ...) {
     const FIsInLoggerScope loggerScope;
 
-    if ((category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level)) {
+    if (NotifyLoggerMessage_(category, level, site)) {
         MALLOCA_POD(wchar_t, message, 2048);
 
         va_list args;

@@ -53,8 +53,18 @@ FWD_INTERFACE_REFPTR(Logger);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FLoggerCategory {
+    enum EFlags : u32 {
+        Unknown         = 0,
+#if USE_PPE_ASSERT
+        BreakOnError    = 1<<0,
+        BreakOnWarning  = 1<<1,
+#endif
+    };
+    ENUM_FLAGS_FRIEND(EFlags);
+
     const wchar_t* Name = nullptr;
-    ELoggerVerbosity Verbosity = ELoggerVerbosity::All;
+    ELoggerVerbosity Verbosity{ ELoggerVerbosity::All };
+    EFlags Flags{ Default };
 };
 //----------------------------------------------------------------------------
 class FLogger {
@@ -143,7 +153,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
     _API ::PPE::FLoggerCategory& LOG_CATEGORY_GET(_NAME) { \
         ONE_TIME_INITIALIZE(::PPE::FLoggerCategory, GLogCategory, \
-            WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY ); \
+            WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY, ::PPE::Meta::Default ); \
         return GLogCategory; \
     }
 #define LOG_CATEGORY(_API, _NAME) \
