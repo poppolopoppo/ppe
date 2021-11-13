@@ -81,16 +81,8 @@ public:
     const FMetaModule* ModuleIFP(const FLazyName& name) const;
 
     auto Modules() const NOEXCEPT;
-
     template <typename _Facet>
-    auto ModulesByFacet() const {
-        return Modules()
-            .Select([](const FMetaModule* module) -> Meta::TOptional<TPair<const FMetaModule*, const _Facet*>> {
-                if (const _Facet* facet = UserFacetIFP<_Facet>(*module))
-                    return MakePair(module, facet);
-                return Default;
-            });
-    }
+    auto ModulesByFacet() const NOEXCEPT;
 
     /* Classes */
 
@@ -177,6 +169,16 @@ FORCE_INLINE auto FMetaDatabase::Namespaces() const NOEXCEPT {
 //----------------------------------------------------------------------------
 FORCE_INLINE auto FMetaDatabase::Modules() const NOEXCEPT {
     return _modules.MakeView().Iterable();
+}
+//----------------------------------------------------------------------------
+template <typename _Facet>
+auto FMetaDatabase::ModulesByFacet() const NOEXCEPT {
+    return Modules()
+        .Select([](const FMetaModule* module) -> Meta::TOptional<TPair<const FMetaModule*, const _Facet*>> {
+        if (const _Facet* facet = UserFacetIFP<_Facet>(*module))
+            return MakePair(module, facet);
+        return Default;
+            });
 }
 //----------------------------------------------------------------------------
 FORCE_INLINE const auto& FMetaDatabase::Classes() const NOEXCEPT {

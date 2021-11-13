@@ -27,7 +27,7 @@ public: // generic
     const FString& Name() const { return _name; }
     const FModularServices& Services() const { return _services; }
     const FSeconds& Elapsed() const { return _elapsed; }
-    const bool HasFocus() const { return _hasFocus; }
+    bool HasFocus() const { return _hasFocus; }
 
 protected:
     explicit FGenericApplication(const FModularDomain& domain, FString&& name);

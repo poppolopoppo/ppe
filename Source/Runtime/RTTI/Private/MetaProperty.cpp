@@ -93,7 +93,7 @@ void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
     }
 
     if (write && obj.RTTI_IsFrozen()) {
-        LOG(RTTI, Fatal, L"can't modify property \"{0}::{1}\" on frozen \"{2}\" ({3})",
+        LOG(RTTI, Error, L"can't modify property \"{0}::{1}\" on frozen \"{2}\" ({3})",
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),
