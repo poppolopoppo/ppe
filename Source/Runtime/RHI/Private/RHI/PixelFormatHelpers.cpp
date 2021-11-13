@@ -52,7 +52,8 @@ void DecodeUIntVector_(FRgba32u* __restrict outv, FRawMemoryConst in) NOEXCEPT {
     STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
     TStaticArray<u32, 4> bits;
-    Verify(in.EatRaw(&bits, (_R + _G + _B + _A) / 8).empty());
+    Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(u32));
+    FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8));
 
     outv->x = DecodeUIntScalar_<_R, 0>(bits);
     outv->y = DecodeUIntScalar_<_G, _R>(bits);
@@ -65,7 +66,8 @@ void DecodeIntVector_(FRgba32i* __restrict outv, FRawMemoryConst in) NOEXCEPT {
     STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
     TStaticArray<u32, 4> bits;
-    Verify(in.EatRaw(&bits, (_R + _G + _B + _A) / 8).empty());
+    Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(u32));
+    FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8));
 
     outv->x = DecodeIntScalar_<_R, 0>(bits);
     outv->y = DecodeIntScalar_<_G, _R>(bits);
@@ -101,7 +103,8 @@ void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
         STATIC_ASSERT(Meta::IsAlignedPow2(16, _R + _G + _B + _A));
 
         TStaticArray<ushort, 4> bits;
-        Verify(in.EatRaw(&bits, (_R + _G + _B + _A) / 8).empty());
+        Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(ushort));
+        FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8));
 
         outv->x = FP16_to_FP32(bits[0]);
         outv->y = FP16_to_FP32(bits[(_R) / 16]);
@@ -117,7 +120,7 @@ void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
         STATIC_ASSERT(sizeof(UX10Y10Z10W2N) == sizeof(u32));
 
         UX10Y10Z10W2N bits;
-        Verify(in.EatRaw(&bits, sizeof(UX10Y10Z10W2N)).empty());
+        FPlatformMemory::Memcpy(&bits, in.data(), sizeof(bits));
 
         *outv = bits.Unpack();
     }
@@ -125,7 +128,7 @@ void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
         STATIC_ASSERT(sizeof(UX11Y11Z10) == sizeof(u32));
 
         UX11Y11Z10 bits;
-        Verify(in.EatRaw(&bits, sizeof(UX11Y11Z10)).empty());
+        FPlatformMemory::Memcpy(&bits, in.data(), sizeof(bits));
 
         *outv = float4(bits.Unpack(), 0);
     }

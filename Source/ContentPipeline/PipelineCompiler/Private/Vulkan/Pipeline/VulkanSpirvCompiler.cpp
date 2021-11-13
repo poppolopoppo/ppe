@@ -45,12 +45,12 @@ namespace RHI {
 namespace {
 //----------------------------------------------------------------------------
 // Used as seed for every shader fingerprint: invalidating it will recompile all shaders
-static const FGuid GVulkanSpirvFingerprint{{
+static const FGuid GVulkanSpirvFingerprint{ {{
     0X3550B8BAull,
     0xA0674724ull,
     0xAAA5336Cull,
     0xB554D506ull,
-}};
+}}};
 //----------------------------------------------------------------------------
 NODISCARD u32 GLSLangArraySize_(const glslang::TType& type) {
     const glslang::TArraySizes* const sizes = type.getArraySizes();
@@ -794,6 +794,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                 isUniform = true;
                 EatSpaces(it);
                 isUniformImage = it.Eat("image"); // optional
+                UNUSED(isUniformImage);
             }
 
             EatSpaces(it);
@@ -805,7 +806,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             if (not it.Eat("{"))
                 continue;
 
-            if (isBuffer | isUniform) {
+            if ((isBuffer | isUniform)) {
                 const FUniformID id{ name };
 
                 const TPtrRef<FPipelineDesc::FDescriptorSet> descriptorSetRef =

@@ -60,8 +60,9 @@ void FVulkanMemoryObject::TearDown(FVulkanResourceManager& resources) {
     const auto exclusiveData = _data.LockExclusive();
 
     if (exclusiveData->Block.MemoryHandle)
-        resources.MemoryManager().Deallocate(exclusiveData->Block);Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
+        resources.MemoryManager().Deallocate(exclusiveData->Block);
 
+    Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
     Assert_NoAssume(UMax == exclusiveData->Block.AllocatorId);
     Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
 

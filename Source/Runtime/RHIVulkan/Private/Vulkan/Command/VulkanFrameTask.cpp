@@ -183,7 +183,8 @@ TVulkanFrameTask<FCopyImageToBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd
 :   IVulkanFrameTask(desc, process)
 ,   SrcImage(cmd.ToLocal(desc.SrcImage))
 ,   SrcLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-,   DstBuffer(cmd.ToLocal(desc.DstBuffer)) {
+,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
+,   Regions(desc.Regions) {
     Assert_NoAssume(SrcImage);
     Assert_NoAssume(SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
     Assert_NoAssume(DstBuffer);

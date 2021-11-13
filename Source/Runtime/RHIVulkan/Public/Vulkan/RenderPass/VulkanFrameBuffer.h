@@ -37,6 +37,7 @@ public:
     FVulkanFramebuffer& operator =(FVulkanFramebuffer&& ) = delete;
 
     auto Read() const { return _fb.LockShared(); }
+    VkFramebuffer Handle() const { return Read()->Framebuffer; }
 
     hash_t HashValue() const { return Read()->HashValue; }
 

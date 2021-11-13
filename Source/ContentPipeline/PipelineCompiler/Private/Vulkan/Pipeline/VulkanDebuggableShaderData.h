@@ -55,7 +55,7 @@ public:
     {}
 #endif
 
-    FDataRef Data() const NOEXCEPT override { return { std::addressof(_data) }; }
+    FDataRef Data() const NOEXCEPT override { return FDataRef{ std::addressof(_data) }; }
     FConstChar EntryPoint() const NOEXCEPT override { return _entryPoint.c_str(); }
     FFingerprint Fingerprint() const NOEXCEPT override { return _fingerprint; }
 

@@ -385,6 +385,9 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 void FVulkanPipelineResources::ValidateEmptyUniform_(const FInternalResources& data, const FUniformID& id, u32 idx) {
+    UNUSED(data);
+    UNUSED(id);
+    UNUSED(idx);
     if (not data.AllowEmptyResources)
         RHI_LOG(Error, L"uniform '{0}' [{1}] contains invalid resource(s)!", id.MakeView(), idx);
 }
@@ -464,6 +467,8 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
 #if USE_PPE_RHIDEBUG
     Assert(id.Valid());
     Assert(not (shaderType ^ EImageSampler::_FormatMask));
+    UNUSED(img);
+    UNUSED(index);
 
     EImageSampler imageType = static_cast<EImageSampler>(0);
 

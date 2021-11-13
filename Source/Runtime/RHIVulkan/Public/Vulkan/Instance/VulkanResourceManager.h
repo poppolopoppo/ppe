@@ -167,8 +167,8 @@ public:
     bool ReleaseResource(details::TResourceId<_Uid> id, u32 refCount = 1);
     void ReleaseResource(FPipelineResources& desc);
 
-    const FBufferDesc& ResourceDescription(FRawBufferID id) const;
-    const FImageDesc& ResourceDescription(FRawImageID id) const;
+    NODISCARD const FBufferDesc& ResourceDescription(FRawBufferID id) const;
+    NODISCARD const FImageDesc& ResourceDescription(FRawImageID id) const;
 
     void RunValidation(u32 maxIteration);
     void ReleaseMemory();
@@ -379,7 +379,7 @@ const auto* FVulkanResourceManager::ResourceDataIFP(details::TResourceId<_Uid> i
 template <u32 _Uid>
 bool FVulkanResourceManager::ReleaseResource(details::TResourceId<_Uid> id, u32 refCount) {
     Assert(id);
-    Assert(refCount);
+    Assert(refCount > 0);
     auto& pool = ResourcePool_(id);
 
     using pool_type = Meta::TDecay<decltype(pool)>;
@@ -397,6 +397,7 @@ bool FVulkanResourceManager::ReleaseResource(details::TResourceId<_Uid> id, u32 
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
 bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount) {
     Assert(pdata);
+    Assert(refCount > 0);
 
     if (pdata->RemoveRef(refCount)) {
         if (pdata->IsCreated())
@@ -413,6 +414,7 @@ bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& 
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
 bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount) {
     Assert(pdata);
+    Assert(refCount > 0);
 
     return cache.RemoveIf(index, [this, pdata, refCount](T* inCache) {
         UNUSED(pdata);

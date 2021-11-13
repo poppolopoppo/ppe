@@ -563,7 +563,7 @@ bool FVulkanSwapchain::Acquire(
 //----------------------------------------------------------------------------
 bool FVulkanSwapchain::Present(const FVulkanDevice& device) const {
     const auto exclusiveData = _data.LockExclusive();
-    LOG_CHECK(RHI, not exclusiveData->IsImageAcquired_());
+    LOG_CHECK(RHI, exclusiveData->IsImageAcquired_());
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -715,6 +715,7 @@ bool FVulkanSwapchain::FInternalData_::CreateImages_(FVulkanResourceManager& res
     desc.CurrentLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     desc.DefaultLayout = desc.CurrentLayout;
     desc.Samples = VK_SAMPLE_COUNT_1_BIT;
+    desc.Dimensions = uint3(SurfaceSize, 0);
     desc.ArrayLayers = 1;
     desc.MaxLevels = 1;
     desc.QueueFamily = VK_QUEUE_FAMILY_IGNORED;

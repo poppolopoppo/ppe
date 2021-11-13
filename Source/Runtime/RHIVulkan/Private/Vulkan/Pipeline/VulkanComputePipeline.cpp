@@ -30,10 +30,12 @@ void FVulkanComputePipeline::FPipelineInstance::Invalidate() NOEXCEPT {
 #endif
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 FVulkanComputePipeline::~FVulkanComputePipeline() {
     ONLY_IF_RHIDEBUG(Assert_NoAssume(_pipeline.LockExclusive()->Shaders.empty()));
     Assert_NoAssume(_sharedInstances.LockExclusive()->empty());
 }
+#endif
 //----------------------------------------------------------------------------
 bool FVulkanComputePipeline::Construct(const FComputePipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(layoutId);

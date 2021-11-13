@@ -11,9 +11,11 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 FVulkanRayTracingPipeline::~FVulkanRayTracingPipeline() {
     ONLY_IF_RHIDEBUG(Assert_NoAssume(not _pipeline.LockExclusive()->BaseLayoutId));
 }
+#endif
 //----------------------------------------------------------------------------
 bool FVulkanRayTracingPipeline::Construct(const FRayTracingPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(layoutId);

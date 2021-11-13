@@ -14,11 +14,11 @@ using if_has_PushConstants_ = decltype(std::declval<const T&>().PushConstants);
 template <typename T>
 using if_has_DynamicStates_ = decltype(std::declval<const T&>().DynamicStates);
 template <typename T>
-using if_has_Scissors_ = decltype(std::declval<const T&>().Scissors());
+using if_has_Scissors_ = decltype(std::declval<const T&>().Scissors);
 template <typename T>
 using if_has_IndexBuffer_ = decltype(std::declval<const T&>().IndexBuffer);
 template <typename T>
-using if_has_VertexBuffers_ = decltype(std::declval<const T&>().VertexBuffers());
+using if_has_VertexBuffers_ = decltype(std::declval<const T&>().VertexBuffers);
 //----------------------------------------------------------------------------
 } //!details
 //----------------------------------------------------------------------------

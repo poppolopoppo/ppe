@@ -60,7 +60,9 @@ public:
     };
 
     FVulkanMeshPipeline() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanMeshPipeline();
+#endif
 
     FVulkanMeshPipeline(FVulkanMeshPipeline&& rvalue) = delete;
     FVulkanMeshPipeline& operator =(FVulkanMeshPipeline&& ) = delete;

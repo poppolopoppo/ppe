@@ -49,6 +49,14 @@ struct TInPlace {
         Meta::Destroy(static_cast<T*>(data()));
     }
 
+    void Discard() {
+#if USE_PPE_ASSERT
+        Assert_NoAssume(Available);
+        Available = false;
+        FPlatformMemory::Memdeadbeef(&Storage, sizeof(Storage));
+#endif
+    }
+
     T* operator ->() { return Get(); }
     const T* operator ->() const { return Get(); }
 

@@ -24,7 +24,6 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanCommandBatch final : public ICommandBatch {
-
     friend class FVulkanCommandBuffer;
 
 public:
@@ -224,7 +223,7 @@ public:
 
     // ICommandBatch
 
-    virtual void TearDown() override;
+    virtual void ReleaseForRecycling() NOEXCEPT override;
 
     // staging buffer
 
@@ -236,7 +235,6 @@ public:
 
     void AddDataLoadedEvent(FOnImageDataLoadedEvent&& revent);
     void AddDataLoadedEvent(FOnBufferDataLoadedEvent&& revent);
-
 
 #if USE_PPE_RHIDEBUG
     // shader debugger

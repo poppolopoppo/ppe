@@ -17,19 +17,22 @@ namespace RHI {
 //----------------------------------------------------------------------------
 struct FResourceHandle {
     union {
+        u64 Packed{ 0 };
+
         struct {
             u32 Uid;
             u16 Index;
             u16 InstanceID;
         };
-
-        u64 Packed;
     };
 
     FResourceHandle() = default;
 
-    CONSTEXPR FResourceHandle(u32 uid, u16 index, u16 instanceID) NOEXCEPT
-        : Uid(uid), Index(index), InstanceID(instanceID) {}
+    CONSTEXPR FResourceHandle(u32 uid, u16 index, u16 instanceID) NOEXCEPT {
+        Uid = uid;
+        Index = index;
+        InstanceID = instanceID;
+    }
 
     CONSTEXPR bool operator ==(const FResourceHandle& other) const { return (Packed == other.Packed); }
     CONSTEXPR bool operator !=(const FResourceHandle& other) const { return (not operator ==(other)); }

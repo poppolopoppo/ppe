@@ -169,7 +169,7 @@ void FVulkanCommandBuffer::AfterCompilation_(FInternalData& data) {
         TResourceProxy<FVulkanLogicalRenderPass>* const pPass = data.RM.LogicalRenderPasses[i];
         Assert(pPass);
 
-        if (pPass->Valid()) {
+        if (not pPass->IsDestroyed()) {
             pPass->TearDown(resources);
             Meta::Destroy(pPass);
             data.RM.LogicalRenderPasses.Deallocate(i);
@@ -188,6 +188,10 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
         FVulkanCommandPool& pool = data.PerQueue[static_cast<u32>(data.QueueIndex)];
         cmd = pool.AllocPrimary(device);
         Assert(VK_NULL_HANDLE != cmd);
+
+#if USE_PPE_RHIDEBUG
+        device.SetObjectName(bit_cast<u64>(cmd), data.DebugName.c_str(), VK_OBJECT_TYPE_COMMAND_BUFFER);
+#endif
 
         data.Batch->PushCommandToBack(&pool, cmd);
     }
@@ -273,7 +277,7 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
             }
 
             // wait for input
-            const bool inputProcessed = pTask->Inputs().Any(
+            const bool inputProcessed = not pTask->Inputs().Any(
                 [](PVulkanFrameTask pInput) NOEXCEPT -> bool {
                     return (pInput->VisitorId() != visitorId);
                 });
@@ -1129,9 +1133,11 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
 //----------------------------------------------------------------------------
 void FVulkanCommandBuffer::ResetLocalRemapping_(FInternalData& data) {
     auto resetLocalResources = [](auto& resources) {
-        FPlatformMemory::Memset(resources.ToLocal.data(), UMax,
-            sizeof(*resources.ToLocal.data()) * resources.MaxGlobalIndex);
-        resources.MaxGlobalIndex = 0;
+        FPlatformMemory::Memset(
+            resources.ToLocal.data() + resources.GlobalIndexRange.First,
+            UMax,
+            sizeof(*resources.ToLocal.data()) * resources.GlobalIndexRange.Extent());
+        resources.GlobalIndexRange = { 0, 0 };
     };
 
     resetLocalResources(data.RM.Images);
@@ -1148,7 +1154,7 @@ void FVulkanCommandBuffer::FlushLocalResourceStates_(
     FVulkanBarrierManager& barriers
     ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* pDebugger)) {
     auto resetStateAndDestroyLocalResources = [order, &barriers ARGS_IF_RHIDEBUG(pDebugger)](auto& localResources) {
-        forrange(i, 0, checked_cast<FResourceIndex>(localResources.MaxLocalIndex)) {
+        forrange(i, checked_cast<FResourceIndex>(localResources.LocalIndexRange.First), checked_cast<FResourceIndex>(localResources.LocalIndexRange.Last)) {
             auto* const pResource = localResources.Pool[i];
             Assert(pResource);
 
@@ -1158,7 +1164,7 @@ void FVulkanCommandBuffer::FlushLocalResourceStates_(
                 localResources.Pool.Deallocate(i);
             }
         }
-        localResources.MaxLocalIndex = 0;
+        localResources.LocalIndexRange = { 0, 0 };
     };
 
     resetStateAndDestroyLocalResources(data.RM.Images);
@@ -1201,12 +1207,13 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
     if (not pData->Construct(pResource)) {
         Meta::Destroy(pData);
         localResources.Pool.Deallocate(local);
+        ONLY_IF_RHIDEBUG(UNUSED(debugMessage));
         RHI_LOG(Error, L"{1}: {0}", debugMessage, _data.Value_NotThreadSafe().DebugName);
         return nullptr;
     }
 
-    localResources.MaxLocalIndex = Max(checked_cast<u32>(local) + 1, localResources.MaxLocalIndex);
-    localResources.MaxGlobalIndex = Max(checked_cast<u32>(id.Index) + 1, localResources.MaxGlobalIndex);
+    localResources.LocalIndexRange.SelfUnion(TRange<u32>{ checked_cast<u32>(local), checked_cast<u32>(local) + 1 });
+    localResources.GlobalIndexRange.SelfUnion(TRange<u32>{ checked_cast<u32>(id.Index), checked_cast<u32>(id.Index) + 1 });
 
     return std::addressof(pData->Data());
 }

@@ -59,7 +59,9 @@ public:
     };
 
     FVulkanComputePipeline() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanComputePipeline();
+#endif
 
     FVulkanComputePipeline(FVulkanComputePipeline&& rvalue) = delete;
     FVulkanComputePipeline& operator =(FVulkanComputePipeline&& ) = delete;

@@ -256,7 +256,7 @@ inline void FVulkanLocalDebugger::FRawTextDump_::DumpQueue(const FTaskMap& tasks
                 << "]" << Eol;
 
             DumpResourceUsage(info.Resources);
-            DumpTaskData(info.Task);
+            //DumpTaskData(info.Task); // #TODO: see FVulkanCommandBuffer::FlushLocalResourceStates_(), which already deleted all tasks used by this graph
         }
         Out << Indent << "}" << sep << Eol;
     }

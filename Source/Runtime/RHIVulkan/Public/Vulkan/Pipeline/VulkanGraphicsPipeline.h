@@ -68,7 +68,9 @@ public:
     };
 
     FVulkanGraphicsPipeline() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanGraphicsPipeline();
+#endif
 
     FVulkanGraphicsPipeline(FVulkanGraphicsPipeline&& rvalue) = delete;
     FVulkanGraphicsPipeline& operator =(FVulkanGraphicsPipeline&& ) = delete;

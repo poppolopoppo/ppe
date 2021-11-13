@@ -25,10 +25,7 @@ FVulkanMemoryManager::~FVulkanMemoryManager() {
 #endif
 //----------------------------------------------------------------------------
 void FVulkanMemoryManager::DutyCycle(u32 frameIndex) {
-    const auto exclusiveAllocators = _allocators.LockExclusive();
-    Assert(exclusiveAllocators->empty());
-
-    for (auto& pAllocator : *exclusiveAllocators)
+    for (auto& pAllocator : *_allocators.LockExclusive())
         pAllocator->DutyCycle(frameIndex);
 }
 //----------------------------------------------------------------------------
@@ -128,8 +125,6 @@ void FVulkanMemoryManager::Deallocate(FBlock& data) {
     Assert_NoAssume(nullptr == data.MemoryHandle);
 
     data.AllocatorId = UMax;
-
-    ONLY_IF_RHIDEBUG(FPlatformMemory::Memdeadbeef(&data, sizeof(data)));
 }
 //----------------------------------------------------------------------------
 bool FVulkanMemoryManager::MemoryInfo(FVulkanMemoryInfo* pInfo, const FBlock& data) const {

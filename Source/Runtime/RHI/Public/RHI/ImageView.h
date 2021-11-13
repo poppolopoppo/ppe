@@ -68,7 +68,7 @@ struct FImageView {
         return row;
     }
 
-    // implementation doesn't guaranties that single slice complete placed to solid memory block,
+    // implementation doesn't guarantee that a whole slice will fit in a single memory block,
     // so check result size with 'SliceSize()'.
     subpart_type Slice(u32 z) const {
         Assert(z < _dimensions.z);
@@ -80,7 +80,16 @@ struct FImageView {
     subpart_type Pixel(const uint3& point) const {
         Assert(AllLess(point, _dimensions));
 
-        return Row(point.x, point.y).SubRange((_bitsPerPixel * point.x) / 8, (_bitsPerPixel + 7) / 8);
+        return Row(point.y, point.z).SubRange((_bitsPerPixel * point.x) / 8, (_bitsPerPixel + 7) / 8);
+    }
+
+    subpart_type Texel(const float3& clip) const {
+        Assert(AllLessEqual(clip, float3(1.f)));
+        Assert(AllGreaterEqual(clip, float3(-1.f)));
+
+        const uint3 point = TruncToUnsigned(
+            (clip + 1.0f) * 0.5f * Dimensions().Cast<float>() + (0.5f - F_Epsilon) );
+        return Pixel(point);
     }
 
     void Load(FRgba32f* pcol, const uint3& point) const {
@@ -97,6 +106,22 @@ struct FImageView {
         Assert(pcol);
         Assert(_loadRGBA32i);
         return _loadRGBA32i(pcol, Pixel(point));
+    }
+
+    void Load(FRgba32f* pcol, const float3& uvw) const {
+        Assert(pcol);
+        Assert(_loadRGBA32f);
+        return _loadRGBA32f(pcol, Texel(uvw));
+    }
+    void Load(FRgba32u* pcol, const float3& uvw) const {
+        Assert(pcol);
+        Assert(_loadRGBA32u);
+        return _loadRGBA32u(pcol, Texel(uvw));
+    }
+    void Load(FRgba32i* pcol, const float3& uvw) const {
+        Assert(pcol);
+        Assert(_loadRGBA32i);
+        return _loadRGBA32i(pcol, Texel(uvw));
     }
 
 private:

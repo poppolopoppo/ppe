@@ -783,6 +783,7 @@ EImageAspect RHICast(VkImageAspectFlagBits flags) {
             continue;
 
         switch (st) {
+        case VK_IMAGE_ASPECT_COLOR_BIT: result |= EImageAspect::Color; break;
         case VK_IMAGE_ASPECT_DEPTH_BIT: result |= EImageAspect::Depth; break;
         case VK_IMAGE_ASPECT_STENCIL_BIT: result |= EImageAspect::Stencil; break;
         case VK_IMAGE_ASPECT_METADATA_BIT: result |= EImageAspect::Metadata; break;
@@ -790,10 +791,13 @@ EImageAspect RHICast(VkImageAspectFlagBits flags) {
         case VK_IMAGE_ASPECT_PLANE_0_BIT:
         case VK_IMAGE_ASPECT_PLANE_1_BIT:
         case VK_IMAGE_ASPECT_PLANE_2_BIT:
+
+#ifdef VK_EXT_image_drm_format_modifier
         case VK_IMAGE_ASPECT_MEMORY_PLANE_0_BIT_EXT:
         case VK_IMAGE_ASPECT_MEMORY_PLANE_1_BIT_EXT:
         case VK_IMAGE_ASPECT_MEMORY_PLANE_2_BIT_EXT:
         case VK_IMAGE_ASPECT_MEMORY_PLANE_3_BIT_EXT:
+#endif
         case VK_IMAGE_ASPECT_FLAG_BITS_MAX_ENUM:
         default: AssertNotImplemented();
         }

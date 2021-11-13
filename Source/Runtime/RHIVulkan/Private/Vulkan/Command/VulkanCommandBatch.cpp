@@ -64,13 +64,14 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const FCommandB
     }
 }
 //----------------------------------------------------------------------------
-void FVulkanCommandBatch::TearDown() {
+void FVulkanCommandBatch::ReleaseForRecycling() NOEXCEPT {
     Assert_NoAssume(RefCount() == 0);
     Assert_NoAssume(State() == EState::Complete);
 
     const auto exclusiveData = _data.LockExclusive();
     UNUSED(exclusiveData); // just for locking
 
+    _state.store(EState::Initial, std::memory_order_relaxed);
     _frameGraph->RecycleBatch(this);
 }
 //----------------------------------------------------------------------------
@@ -223,7 +224,8 @@ bool FVulkanCommandBatch::OnBaked(FResourceMap& resources) {
     const auto exclusiveData = _data.LockExclusive();
     UNUSED(exclusiveData); // just for locking
 
-    std::swap(exclusiveData->ResourcesToRelease, resources);
+    Assert_NoAssume(exclusiveData->ResourcesToRelease.empty());
+    exclusiveData->ResourcesToRelease = std::move(resources);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -434,7 +436,7 @@ bool FVulkanCommandBatch::MapMemory_(FVulkanResourceManager& resources, FStaging
 void FVulkanCommandBatch::ReleaseResources_(FVulkanResourceManager& resources, FInternalData& data) {
     for (const auto& it : data.ResourcesToRelease) {
         it.first.Visit([&resources, count{ it.second }](auto resourceId) {
-            Verify( resources.ReleaseResource(resourceId, count) );
+            resources.ReleaseResource(resourceId, count);
         });
     }
     data.ResourcesToRelease.clear();

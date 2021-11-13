@@ -24,10 +24,12 @@ void FVulkanGraphicsPipeline::FPipelineInstance::Invalidate() {
         ARGS_IF_RHIDEBUG(DebugMode) );
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 FVulkanGraphicsPipeline::~FVulkanGraphicsPipeline() {
     ONLY_IF_RHIDEBUG(Assert_NoAssume(_pipeline.LockExclusive()->Shaders.empty()));
     Assert_NoAssume(_sharedInstances.LockExclusive()->empty());
 }
+#endif
 //----------------------------------------------------------------------------
 bool FVulkanGraphicsPipeline::Construct(const FGraphicsPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(layoutId);

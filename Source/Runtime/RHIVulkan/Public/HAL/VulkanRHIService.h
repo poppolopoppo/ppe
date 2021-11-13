@@ -19,8 +19,6 @@ public:
         ERHIFeature features );
     virtual ~FVulkanRHIService();
 
-    const RHI::FSwapchainID& Swapchain() const { return _swapchain; }
-
     NODISCARD bool Construct(
         const FStringView& applicationName,
         const FRHISurfaceCreateInfo* pOptionalWindow = nullptr,
@@ -34,6 +32,7 @@ public: // IRHIService
 
     virtual RHI::SFrameGraph FrameGraph() const NOEXCEPT override;
     virtual RHI::FWindowSurface BackBuffer() const NOEXCEPT override { return RHI::FWindowSurface{ _backBuffer }; }
+    virtual const RHI::FSwapchainID& Swapchain() const NOEXCEPT override { return _swapchain; }
 
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) override;
     virtual void ReleaseMemory() NOEXCEPT override;

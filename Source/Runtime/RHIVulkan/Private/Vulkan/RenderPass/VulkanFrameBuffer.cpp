@@ -44,9 +44,7 @@ FVulkanFramebuffer::FVulkanFramebuffer(FVulkanFramebuffer&& rvalue) NOEXCEPT
 #if USE_PPE_ASSERT
 FVulkanFramebuffer::~FVulkanFramebuffer() {
     const auto exclusiveFB = _fb.LockExclusive();
-
     Assert_NoAssume(VK_NULL_HANDLE == exclusiveFB->Framebuffer);
-    Assert_NoAssume(not exclusiveFB->RenderPassId.Valid());
 }
 #endif
 //----------------------------------------------------------------------------
@@ -106,8 +104,6 @@ bool FVulkanFramebuffer::Construct(const FVulkanResourceManager& resources ARGS_
 //----------------------------------------------------------------------------
 void FVulkanFramebuffer::TearDown(FVulkanResourceManager& resources) {
     const auto exclusiveFB = _fb.LockExclusive();
-    Assert_NoAssume(VK_NULL_HANDLE == exclusiveFB->Framebuffer);
-    Assert_NoAssume(exclusiveFB->RenderPassId);
 
     if (VK_NULL_HANDLE != exclusiveFB->Framebuffer) {
         const FVulkanDevice& device = resources.Device();

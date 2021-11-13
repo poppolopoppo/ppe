@@ -284,8 +284,6 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
             sizeof(u32) );
     }
 
-
-
     MergePipeline(task.DynamicStates, *task.Pipeline->Read());
 }
 //----------------------------------------------------------------------------
@@ -324,15 +322,14 @@ void FVulkanTaskProcessor::FDrawTaskBarriers::MergePipeline(const FDrawDynamicSt
         std::is_same_v<_Pipeline, FVulkanGraphicsPipeline::FInternalPipeline> or
         std::is_same_v<_Pipeline, FVulkanMeshPipeline::FInternalPipeline> );
 
-
     if (pipeline.EarlyFragmentTests)
         _enableEarlyFragmentTests = true;
     else
         _enableLateFragmentTests = false;
 
-    _enableDepthWrite |= (ds.HasEnableDepthWrite() & ds.EnableDepthWrite());
+    _enableDepthWrite |= (ds.HasEnableDepthWrite() && ds.EnableDepthWrite());
 
-    _enableStencilWrite |= ((ds.HasEnableStencilTest() & _logicalRenderPass.StencilState().EnabledStencilTests)
+    _enableStencilWrite |= ((ds.HasEnableStencilTest() && _logicalRenderPass.StencilState().EnabledStencilTests)
         ?  ((ds.HasStencilPassOp() && (ds.StencilPassOp() != EStencilOp::Keep)) |
             (ds.HasStencilFailOp() && (ds.StencilFailOp() != EStencilOp::Keep)) |
             (ds.HasStencilDepthFailOp() && (ds.StencilDepthFailOp() != EStencilOp::Keep)) )

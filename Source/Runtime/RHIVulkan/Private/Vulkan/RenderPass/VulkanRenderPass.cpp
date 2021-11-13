@@ -109,7 +109,7 @@ static hash_t hash_value(const VkSubpassDescription& desc) NOEXCEPT {
 
     hash_combine(h, hash_view(MakeRHIView_(desc.pInputAttachments, desc.inputAttachmentCount)));
     hash_combine(h, hash_view(MakeRHIView_(desc.pColorAttachments, desc.colorAttachmentCount)));
-    hash_combine(h, hash_view(MakeRHIView_(desc.pResolveAttachments, desc.colorAttachmentCount)));
+    hash_combine(h, hash_view(MakeRHIView_(desc.pResolveAttachments, desc.pResolveAttachments ? desc.colorAttachmentCount : 0)));
     hash_combine(h, hash_view(TMemoryView(desc.pPreserveAttachments, desc.preserveAttachmentCount)));
 
     if (desc.pDepthStencilAttachment)
@@ -264,7 +264,9 @@ FVulkanRenderPass::FVulkanRenderPass(FVulkanRenderPass&& rvalue) NOEXCEPT
 ,   _debugName(std::move(rvalue._debugName))
 #endif
 {
-
+    const auto exclusivePass = _pass.LockExclusive();
+    exclusivePass->CreateInfo.pAttachments = exclusivePass->Attachments.data();
+    exclusivePass->CreateInfo.pSubpasses = exclusivePass->Subpasses.data();
 }
 //----------------------------------------------------------------------------
 bool FVulkanRenderPass::Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FConstChar debugName)) {
@@ -278,6 +280,7 @@ bool FVulkanRenderPass::Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(F
         &exclusivePass->RenderPass ));
 
     ONLY_IF_RHIDEBUG(_debugName = debugName);
+    Assert_NoAssume(VK_NULL_HANDLE != exclusivePass->RenderPass);
     return true;
 }
 //----------------------------------------------------------------------------

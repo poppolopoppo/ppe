@@ -177,13 +177,16 @@ public:
     bool WaitIdle() override;
 
 #if USE_PPE_RHIDEBUG
+    void LogFrame() const override;
+    NODISCARD bool DumpFrame(FStringBuilder* log) const override;
+    NODISCARD bool DumpGraph(FStringBuilder* log) const override;
     NODISCARD bool DumpStatistics(FFrameStatistics* pStats) const override;
 #endif
 
 private:
     using FCommandBatches = FVulkanSubmitted::FBatches;
     using FPendingSwapchains = TFixedSizeStack<const FVulkanSwapchain*, 16>;
-    using FSubmitInfos = TFixedSizeStack<VkSubmitInfo, FVulkanSubmitted::MaxBatches>;
+    using FSubmitInfos = TStaticArray<VkSubmitInfo, FVulkanSubmitted::MaxBatches>;
     using FTransientFences = TFixedSizeStack<VkFence, 32>;
     using FTransientSemaphores = FVulkanSubmitted::FSemaphores;
     using FTransientSubmitted = TFixedSizeStack<FVulkanSubmitted*, FVulkanSubmitted::MaxBatches>;
@@ -201,7 +204,7 @@ private:
     NODISCARD bool SetState_(EState expected, EState newState) { return _state.compare_exchange_strong(expected, newState,
         std::memory_order_release, std::memory_order_relaxed); }
 
-    NODISCARD bool FlushAll_(EQueueUsage queues, u32 maxIter);
+    void FlushAll_(EQueueUsage queues, u32 maxIter);
     NODISCARD bool FlushQueue_(EQueueType index, u32 maxIter);
 
     NODISCARD bool CreateQueue_(EQueueType index, const PVulkanDeviceQueue& queue);
@@ -229,7 +232,7 @@ private:
     std::atomic<u32> _frameIndex{ 0 };
 
 #if USE_PPE_RHIDEBUG
-    FVulkanDebugger _debugger;
+    mutable FVulkanDebugger _debugger;
     VkQueryPool _vkQueryPool;
     FShaderDebugCallback _shaderDebugCallback;
 

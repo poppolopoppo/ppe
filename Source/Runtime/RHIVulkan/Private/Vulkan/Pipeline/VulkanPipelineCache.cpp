@@ -300,9 +300,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         return true;
     }
 
-    if (Unlikely(not workerCmd.ResourceManager().AcquireResource(layoutId)) )
-        AssertNotReached();
-
+    LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -442,9 +440,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         return true;
     }
 
-    if (Unlikely(not workerCmd.ResourceManager().AcquireResource(layoutId)) )
-        AssertNotReached();
-
+    LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -573,9 +569,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         return true;
     }
 
-    if (Unlikely(not workerCmd.ResourceManager().AcquireResource(layoutId)) )
-        AssertNotReached();
-
+    LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
     return true;
 }
 //----------------------------------------------------------------------------

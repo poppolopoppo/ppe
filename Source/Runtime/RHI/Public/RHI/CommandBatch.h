@@ -29,6 +29,12 @@ struct FCommandBufferBatch {
     FCommandBufferBatch(FCommandBufferBatch&&) = default;
     FCommandBufferBatch& operator =(FCommandBufferBatch&&) = default;
 
+#if USE_PPE_RHIDEBUG
+    ~FCommandBufferBatch() {
+        AssertMessage(L"command buffer batch was not executed", not Buffer);
+    }
+#endif
+
     bool Valid() const { return (!!Buffer); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
@@ -42,7 +48,7 @@ class PPE_RHI_API ICommandBatch : public FRefCountable {
 public:
     virtual ~ICommandBatch() = default;
 
-    virtual void TearDown() = 0;
+    virtual void ReleaseForRecycling() NOEXCEPT = 0;
 
     // call TearDown() when released, just before delete
     friend void OnStrongRefCountReachZero(ICommandBatch* batch) {
@@ -52,9 +58,7 @@ public:
         Assert_Lightweight(0 == batch->SafeRefCount());
 #endif
 
-        batch->TearDown();
-
-        checked_delete(batch);
+        batch->ReleaseForRecycling();
     }
 };
 //----------------------------------------------------------------------------

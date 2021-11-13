@@ -26,7 +26,7 @@ public:
         VkAttachmentStoreOp StoreOp{ VK_ATTACHMENT_STORE_OP_MAX_ENUM };
         EResourceState State{ Default };
 
-        hash_t ImageHash;
+        hash_t ImageHash{};
         mutable VkImageLayout Layout{ VK_IMAGE_LAYOUT_UNDEFINED }; // *not* hashed
 
         FColorTarget() = default;
@@ -56,7 +56,7 @@ public:
     FVulkanLogicalRenderPass(FVulkanLogicalRenderPass&& rvalue) = default;
     FVulkanLogicalRenderPass& operator =(FVulkanLogicalRenderPass&& ) = delete;
 
-    TMemoryView<IVulkanDrawTask* const> DrawTasks() const { return _drawTasks.MakeConstView(); }
+    TMemoryView<IVulkanDrawTask* const> DrawTasks() const { return _drawTasks->MakeConstView(); }
 
     const FColorTargets& ColorTargets() const { return _colorTargets; }
     const FDepthStencilTarget& DepthStencilTarget() const { return _depthStencilTarget; }
@@ -91,7 +91,7 @@ public:
     _DrawTask* EmplaceTask(_Args&&... args) {
         _DrawTask* const pTask = new (*_allocator) _DrawTask(*this, std::forward<_Args>(args)...);
         Assert(pTask);
-        _drawTasks.push_back(pTask);
+        _drawTasks->push_back(pTask);
         return pTask;
     }
 
@@ -118,7 +118,7 @@ private:
     using FDrawTasks = TVector<IVulkanDrawTask*, TPoolingSlabAllocator<FAllocator>>;
 
     Meta::TInPlace<FAllocator> _allocator;
-    FDrawTasks _drawTasks{ Meta::ForceInit };
+    Meta::TInPlace<FDrawTasks> _drawTasks;
 
     FColorTargets _colorTargets;
     FDepthStencilTarget _depthStencilTarget;

@@ -26,6 +26,8 @@ public:
     void AddBatchGraph(FBatchGraph&& in);
     bool GraphDump(FStringBuilder* pout);
 
+    void LogDump();
+
 private:
     struct FInternalData {
         mutable ASSOCIATIVE_VECTOR(RHIDebug, FString, FString) FullDump;

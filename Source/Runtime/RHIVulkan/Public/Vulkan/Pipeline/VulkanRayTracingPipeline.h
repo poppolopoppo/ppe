@@ -53,7 +53,9 @@ public:
     };
 
     FVulkanRayTracingPipeline() = default;
+#if USE_PPE_RHIDEBUG
     ~FVulkanRayTracingPipeline();
+#endif
 
     FVulkanRayTracingPipeline(FVulkanRayTracingPipeline&& rvalue) = delete;
     FVulkanRayTracingPipeline& operator =(FVulkanRayTracingPipeline&& ) = delete;

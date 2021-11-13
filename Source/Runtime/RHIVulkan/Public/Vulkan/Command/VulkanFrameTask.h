@@ -128,7 +128,7 @@ private:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FDispatchCompute> final : public IVulkanFrameTask {
 public:
-    const SCVulkanComputePipeline Pipeline;
+    const TPtrRef<const FVulkanComputePipeline> Pipeline;
     const FPushConstantDatas PushConstants;
 
     const FDispatchCompute::FComputeCommands Commands;
@@ -154,7 +154,7 @@ private:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FDispatchComputeIndirect> final : public IVulkanFrameTask {
 public:
-    const SCVulkanComputePipeline Pipeline;
+    const TPtrRef<const FVulkanComputePipeline> Pipeline;
     const FPushConstantDatas PushConstants;
 
     const FDispatchComputeIndirect::FComputeCommands Commands;

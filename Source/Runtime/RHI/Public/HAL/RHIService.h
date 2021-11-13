@@ -23,6 +23,7 @@ public: // virtual
 
     virtual RHI::SFrameGraph FrameGraph() const NOEXCEPT = 0;
     virtual RHI::FWindowSurface BackBuffer() const NOEXCEPT = 0;
+    virtual const RHI::FSwapchainID& Swapchain() const NOEXCEPT = 0;
 
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) = 0;
     virtual void ReleaseMemory() NOEXCEPT = 0;

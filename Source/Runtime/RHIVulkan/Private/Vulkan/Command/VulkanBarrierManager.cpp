@@ -19,6 +19,9 @@ void FVulkanBarrierManager::Commit(const FVulkanDevice& device, VkCommandBuffer 
     const u32 memCount = !!(_memoryBarrier.srcAccessMask | _memoryBarrier.dstAccessMask);
 
     if (memCount || not _bufferBarriers.empty() || not _imageBarriers.empty()) {
+        Assert(_srcStages != Zero);
+        Assert(_dstStages != Zero);
+
         device.vkCmdPipelineBarrier(cmd, _srcStages, _dstStages, _dependencies,
             memCount, &_memoryBarrier,
             static_cast<u32>(_bufferBarriers.size()), _bufferBarriers.data(),
@@ -52,7 +55,7 @@ void FVulkanBarrierManager::ClearBarriers() {
     _imageBarriers.clear();
     _bufferBarriers.clear();
 
-    _memoryBarrier.srcAccessMask = _memoryBarrier.dstAccessMask;
+    _memoryBarrier.srcAccessMask = _memoryBarrier.dstAccessMask = 0;
 
     _srcStages = _dstStages = 0;
     _dependencies = 0;

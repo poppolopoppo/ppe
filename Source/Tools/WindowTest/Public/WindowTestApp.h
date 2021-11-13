@@ -14,9 +14,6 @@ public:
 
     virtual void Start() override;
     virtual void Shutdown() override;
-
-private:
-    bool Test_Draw1_(RHI::IFrameGraph& fg);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

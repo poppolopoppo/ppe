@@ -497,8 +497,12 @@ FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMe
     });
     AssertReleaseMessage(L"command batch pool overflow !", batch);
 
-    if (not cmd->Begin(desc, batch, queue.Ptr))
-        PPE_THROW_IT(FVulkanException("FVulkanCommandBuffer::Begin", VK_ERROR_UNKNOWN));
+    if (not cmd->Begin(desc, batch, queue.Ptr)) {
+        LOG(RHI, Error, L"failed to begin command buffer recording");
+        _cmdBufferPool.Release(RemoveRef_AssertReachZero_KeepAlive(cmd));
+        _cmdBatchPool.Release(RemoveRef_AssertReachZero_KeepAlive(batch));
+        return Default;
+    }
 
     return FCommandBufferBatch{ std::move(cmd), std::move(batch) };
 }
@@ -511,25 +515,28 @@ bool FVulkanFrameGraph::Execute(FCommandBufferBatch& cmdBatch) {
     Assert_NoAssume(IsInitialized_());
 
     PVulkanCommandBuffer cmd{ checked_cast<FVulkanCommandBuffer>(cmdBatch.Buffer) };
-
-    // execute and release the command buffer
-    if (not cmd->Execute())
-        return false;
-
     PVulkanCommandBatch batch{ cmd->Batch() };
     Assert_NoAssume(batch == cmdBatch.Batch);
+
+    // execute and release the command buffer
+    const bool success = cmd->Execute();
+    CLOG(not success, RHI, Error, L"failed to execute command buffer <{0}>", cmd->DebugName());
 
     RemoveRef_AssertAlive(cmdBatch.Buffer); // release client ref first
     _cmdBufferPool.Release(RemoveRef_AssertReachZero_KeepAlive(cmd)); //  then release tmp ref
 
-    // add batch to the submission queue
-    const u32 queueIndex = static_cast<u32>(batch->Read()->QueueType);
-    Assert(queueIndex < _queueMap.size());
+    if (success) {
+        // add batch to the submission queue
+        const u32 queueIndex = static_cast<u32>(batch->Read()->QueueType);
+        Assert(queueIndex < _queueMap.size());
 
-    const FCriticalScope queueLock{ &_queueCS };
-    _queueMap[queueIndex].Pending.push_back(std::move(batch));
+        const FCriticalScope queueLock{ &_queueCS };
+        _queueMap[queueIndex].Pending.push_back(std::move(batch));
 
-    return true;
+        return true;
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 // Flush
@@ -563,20 +570,20 @@ bool FVulkanFrameGraph::FlushQueue_(EQueueType index, u32 maxIter) {
     FPendingSwapchains swapchains;
 
     // find batches that can be submitted
-    forrange(b, 0, Min(maxIter, checked_cast<u32>(q.Pending.size()))) {
+    const u32 m = Min(maxIter, checked_cast<u32>(q.Pending.size()));
+    forrange(b, 0, m) {
         bool changed = false;
 
-        forrange(a, 0, checked_cast<u32>(q.Pending.size())) {
+        const u32 n = checked_cast<u32>(q.Pending.size());
+        forrange(a, 0, n) {
             PVulkanCommandBatch pBatch;
             q.Pending.pop_front_AssumeNotEmpty(&pBatch);
             Assert(pBatch);
             Assert_NoAssume(pBatch->State() == EBatchState::Baked);
 
-            const auto& batchReadable = pBatch->Read();
-
-            bool ready = false;
+            bool ready = true;
             EQueueUsage mask = Default;
-            for (const SVulkanCommandBatch& dep : batchReadable->Dependencies) {
+            for (const SVulkanCommandBatch& dep : pBatch->Read()->Dependencies) {
                 const auto& depReadable = dep->Read();
                 const auto minState = (depReadable->QueueType == index ? EBatchState::Ready : EBatchState::Submitted);
                 mask |= EQueueType_Usage(depReadable->QueueType);
@@ -587,7 +594,7 @@ bool FVulkanFrameGraph::FlushQueue_(EQueueType index, u32 maxIter) {
                 if (pending.size() == pending.capacity())
                     break; // break when pending queue is full
 
-                waitIdle |= batchReadable->NeedQueueSync;
+                waitIdle |= pBatch->Read()->NeedQueueSync;
                 pBatch->OnReadyToSubmit();
                 pending.Push(std::move(pBatch));
 
@@ -634,6 +641,7 @@ bool FVulkanFrameGraph::FlushQueue_(EQueueType index, u32 maxIter) {
         INPLACE_NEW(s, FVulkanSubmitted){ id };
     });
     AssertReleaseMessage(L"submitted pool overflow !", pSubmit);
+    pSubmit->Construct(_device, static_cast<EQueueType>(qi), pending, releaseSemaphores);
 
     // add image layout transitions
     if (not q.ImageBarriers.empty()) {
@@ -719,8 +727,7 @@ bool FVulkanFrameGraph::FlushQueue_(EQueueType index, u32 maxIter) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::FlushAll_(EQueueUsage queues, u32 maxIter) {
-    bool flushed = false;
+void FVulkanFrameGraph::FlushAll_(EQueueUsage queues, u32 maxIter) {
     forrange(a, 0, Min(maxIter, checked_cast<u32>(_queueMap.size()))) {
         bool changed = false;
 
@@ -729,22 +736,18 @@ bool FVulkanFrameGraph::FlushAll_(EQueueUsage queues, u32 maxIter) {
                 changed |= FlushQueue_(static_cast<EQueueType>(qi), PPE_RHIVK__FLUSH_ITERATIONS);
         }
 
-        flushed |= changed;
         if (not changed)
             break;
     }
-    return flushed;
 }
 //----------------------------------------------------------------------------
 bool FVulkanFrameGraph::Flush(EQueueUsage queues) {
-    bool result;
     {
         const FCriticalScope queueLock{ &_queueCS };
-        result = FlushAll_(queues, PPE_RHIVK__FLUSH_ITERATIONS);
+        FlushAll_(queues, PPE_RHIVK__FLUSH_ITERATIONS);
     }
-
     _resourceManager.RunValidation(PPE_RHIVK__VALIDATION_ITERATIONS);
-    return result;
+    return true;
 }
 //----------------------------------------------------------------------------
 // Wait
@@ -820,8 +823,7 @@ bool FVulkanFrameGraph::WaitIdle() {
 
         const FCriticalScope queueLock(&_queueCS);
 
-        if (not FlushAll_(EQueueUsage::All, PPE_RHIVK__FLUSH_ITERATIONS))
-            return false;
+        FlushAll_(EQueueUsage::All, PPE_RHIVK__FLUSH_ITERATIONS);
 
         for (FQueueData& q : _queueMap) {
             Assert_NoAssume(q.Pending.empty());
@@ -859,7 +861,29 @@ bool FVulkanFrameGraph::WaitIdle() {
 // Debug
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
+void FVulkanFrameGraph::LogFrame() const {
+    Assert(IsInitialized_());
+    _debugger.LogDump();
+}
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
+bool FVulkanFrameGraph::DumpFrame(FStringBuilder* log) const {
+    Assert(IsInitialized_());
+    return _debugger.FrameDump(log);
+}
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
+bool FVulkanFrameGraph::DumpGraph(FStringBuilder* log) const {
+    Assert(IsInitialized_());
+    return _debugger.GraphDump(log);
+}
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 bool FVulkanFrameGraph::DumpStatistics(FFrameStatistics* pStats) const {
+    Assert(IsInitialized_());
     ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));
 
     *pStats = _lastFrameStats;

@@ -23,10 +23,12 @@ void FVulkanMeshPipeline::FPipelineInstance::Invalidate() {
         ARGS_IF_RHIDEBUG(DebugMode) );
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
 FVulkanMeshPipeline::~FVulkanMeshPipeline() {
     ONLY_IF_RHIDEBUG(Assert_NoAssume(_pipeline.LockExclusive()->Shaders.empty()));
     Assert_NoAssume(_sharedInstances.LockExclusive()->empty());
 }
+#endif
 //----------------------------------------------------------------------------
 bool FVulkanMeshPipeline::Construct(const FMeshPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(layoutId);

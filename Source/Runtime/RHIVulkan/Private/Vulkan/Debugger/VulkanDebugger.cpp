@@ -5,6 +5,7 @@
 
 #if USE_PPE_RHIDEBUG
 
+#include "Diagnostic/Logger.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 
@@ -20,7 +21,7 @@ FVulkanDebugger::FVulkanDebugger() {
 }
 //----------------------------------------------------------------------------
 void FVulkanDebugger::AddBatchDump(const FStringView& name, FString&& dump) {
-    Assert(not name.empty());
+    AssertRelease(not name.empty());
 
     if (not dump.empty()) {
         const auto exclusiveData = _data.LockExclusive();
@@ -82,6 +83,30 @@ bool FVulkanDebugger::GraphDump(FStringBuilder* pout) {
 
     *pout << "}" << Eol;
     return true;
+}
+//----------------------------------------------------------------------------
+void FVulkanDebugger::LogDump() {
+    const auto exclusiveData = _data.LockExclusive();
+    if (exclusiveData->FullDump.empty())
+        return;
+
+#if USE_PPE_LOGGER
+    std::sort(
+        exclusiveData->FullDump.begin(),
+        exclusiveData->FullDump.end(),
+        [](const auto& lhs, const auto& rhs) NOEXCEPT{
+            return Meta::TLess<>{}(lhs.first, rhs.first);
+        });
+
+    for (auto& [name, dump] : exclusiveData->FullDump) {
+        FWStringBuilder wchar;
+        wchar << L"--- frame dump <" << name << L"> ---" << Eol;
+        wchar << dump;
+        LOG_DIRECT(RHI, Debug, wchar.Written());
+    }
+#endif
+
+    exclusiveData->FullDump.clear();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

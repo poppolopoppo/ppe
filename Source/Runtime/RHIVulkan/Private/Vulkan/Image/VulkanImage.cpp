@@ -227,6 +227,8 @@ bool FVulkanImage::Construct(
     exclusiveData->Desc.Samples = RHICast(desc.Samples);
     exclusiveData->Desc.IsExternal = true;
 
+    exclusiveData->Desc.Validate();
+
     LOG_CHECK(RHI, IsSupported(device, exclusiveData->Desc, EMemoryType::Default));
 
 #if USE_PPE_RHIDEBUG

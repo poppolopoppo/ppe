@@ -202,9 +202,13 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
     auto& pool = ResourcePool_(*pId);
     const auto it = pool.FindOrAdd(std::move(layout),
         [this ARGS_IF_RHIDEBUG(debugName)](TResourceProxy<FVulkanPipelineLayout>* pLayout, FIndex , bool exist) -> bool {
-            if (not exist && not pLayout->Construct(_device, ResourceData(_emptyDSLayout).Read()->Layout ARGS_IF_RHIDEBUG(debugName)))
-                return false;
-            pLayout->AddRef();
+            if (not exist) {
+                LOG_CHECK(RHI, pLayout->Construct(
+                    _device,
+                    ResourceData(_emptyDSLayout).Read()->Layout
+                    ARGS_IF_RHIDEBUG(debugName)) );
+                pLayout->AddRef(); // maintain lifetime in cache artificially
+            }
             return true;
         });
 
@@ -441,6 +445,7 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderM
 template <u32 _Uid, typename _Desc>
 bool FVulkanResourceManager::CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringView pipelineType, FConstChar debugName)) {
     if (not CompileShaders_(desc)) {
+        ONLY_IF_RHIDEBUG(UNUSED(pipelineType));
         RHI_LOG(Error, L"failed to compile shaders for {1} pipeline '{0}'", debugName, pipelineType);
         return false;
     }
@@ -694,6 +699,7 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
 
     FRawFramebufferID framebufferId;
     const auto it = CreateCachedResource_(&framebufferId, std::move(emptyKey), *this ARGS_IF_RHIDEBUG(debugName));
+
     if (Likely(it.first)) {
         Assert_NoAssume(framebufferId.Valid());
         return framebufferId;

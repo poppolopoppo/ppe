@@ -7,6 +7,7 @@
 #include "Vulkan/Pipeline/VulkanSpirvCompiler.h"
 
 #include "Meta/Functor.h"
+#include "IO/Format.h"
 
 namespace PPE {
 namespace RHI {
@@ -503,7 +504,7 @@ void FVulkanPipelineCompiler::ReleaseUnusedShaders() {
     const auto exclusiveData = _data.LockExclusive();
 
     for (auto it = exclusiveData->ShaderCache.begin(); it != exclusiveData->ShaderCache.end(); ) {
-        if (not it->second->RefCount() == 1) {
+        if (it->second->RefCount() > 1) {
             ++it;
             continue;
         }

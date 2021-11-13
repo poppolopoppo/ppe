@@ -8,6 +8,11 @@
 
 #include "RHI/DrawContext.h"
 
+#if USE_PPE_RHIDEBUG
+#   include "Diagnostic/Logger.h"
+#   include "IO/Format.h"
+#endif
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -88,7 +93,6 @@ static void OverrideDepthStencilStates_(
         pRasterizationState->EnableDiscard = overrides.EnableRasterizerDiscard();
     if (overrides.HasEnableFrontFaceCCW())
         pRasterizationState->EnableFrontFaceCCW = overrides.EnableFrontFaceCCW();
-
 }
 //----------------------------------------------------------------------------
 static void SetupExtensions_(EPipelineDynamicState* pPipelineDynamicStates, const FVulkanLogicalRenderPass& rp) {
@@ -263,8 +267,8 @@ private:
     FVulkanTaskProcessor& _processor;
     const FVulkanLogicalRenderPass& _logicalRenderPass;
 
-    TPtrRef<const FVulkanGraphicsPipeline> _gPipelineRef{ nullptr };
-    TPtrRef<const FVulkanMeshPipeline> _mPipelineRef{ nullptr };
+    SCVulkanGraphicsPipeline _gPipelineRef{ nullptr };
+    SCVulkanMeshPipeline _mPipelineRef{ nullptr };
     TPtrRef<const FVulkanPipelineLayout> _pipelineLayoutRef{ nullptr };
 
     FRenderState _renderState;
@@ -620,9 +624,8 @@ void FVulkanTaskProcessor::SetShadingRateImage_(VkImageView* pView, const FVulka
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::BindShadingRateImage_(VkImageView view) {
-    Assert(VK_NULL_HANDLE != view);
-
     if (_shadingRateImage != view) {
+        Assert(VK_NULL_HANDLE != view);
         _shadingRateImage = view;
 
         vkCmdBindShadingRateImageNV(
@@ -648,6 +651,8 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
 
     FRectangleI totalArea;
     FAttachments renderTargets;
+    renderTargets.Resize(renderPass.Read()->CreateInfo.attachmentCount);
+
     for (const FVulkanLogicalRenderPass* pLogicalRenderPass : passes) {
         Assert(pLogicalRenderPass);
 
@@ -686,6 +691,8 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
         pLogicalRenderPass->SetRenderPass(
             renderPassId, subpass++, framebufferId, depthAttachmentIndex );
     }
+
+    _workerCmd->ReleaseResource(framebufferId);
 
     return true;
 }
@@ -742,6 +749,7 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     const FVulkanRenderPass* const pRenderPass = Resource_(task.LogicalPass()->RenderPassId());
     Assert(pRenderPass);
     const auto sharedRp = pRenderPass->Read();
+    Assert(VK_NULL_HANDLE != sharedRp->RenderPass);
     Assert_NoAssume(checked_cast<u32>(task.LogicalPass()->ClearValues().size()) >= sharedRp->CreateInfo.attachmentCount);
 
     VkRenderPassBeginInfo info{};
@@ -753,6 +761,7 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     info.renderArea.extent.height = area.Height();
     info.clearValueCount = sharedRp->CreateInfo.attachmentCount;
     info.pClearValues = task.LogicalPass()->ClearValues().data();
+    info.framebuffer = pFramebuffer->Handle();
 
     vkCmdBeginRenderPass(_vkCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
 

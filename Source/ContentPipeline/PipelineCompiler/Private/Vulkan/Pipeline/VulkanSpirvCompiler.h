@@ -136,19 +136,19 @@ private: // GLSL deserializer
 
     void MergeWithGeometryInputPrimitive_(FShaderReflection::FTopologyBits* inoutTopology, glslang::TLayoutGeometry geometryType) const;
 
-    static NODISCARD FBindingIndex ToBindingIndex_(const FCompilationContext& ctx, u32 index);
-    static NODISCARD FPipelineDesc::FDescriptorSet& ToDescriptorSet_(const FCompilationContext& ctx, u32 index);
+    NODISCARD static FBindingIndex ToBindingIndex_(const FCompilationContext& ctx, u32 index);
+    NODISCARD static FPipelineDesc::FDescriptorSet& ToDescriptorSet_(const FCompilationContext& ctx, u32 index);
 
-    static NODISCARD FStringView ExtractNodeName_(const TIntermNode* node);
-    static NODISCARD FUniformID ExtractUniformID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
-    static NODISCARD FVertexID ExtractVertexID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
-    static NODISCARD FSpecializationID ExtractSpecializationID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
+    NODISCARD static FStringView ExtractNodeName_(const TIntermNode* node);
+    NODISCARD static FUniformID ExtractUniformID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
+    NODISCARD static FVertexID ExtractVertexID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
+    NODISCARD static FSpecializationID ExtractSpecializationID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
 
-    static NODISCARD FUniformID ExtractBufferUniformID_(const glslang::TType& type);
-    static NODISCARD EImageSampler ExtractImageSampler_(const glslang::TType& type);
-    static NODISCARD EVertexFormat ExtractVertexFormat_(const glslang::TType& type);
-    static NODISCARD EFragmentOutput ExtractFragmentOutput_(const glslang::TType& type);
-    static NODISCARD EResourceState ExtractShaderAccessType_(const glslang::TQualifier& q);
+    NODISCARD static FUniformID ExtractBufferUniformID_(const glslang::TType& type);
+    NODISCARD static EImageSampler ExtractImageSampler_(const glslang::TType& type);
+    NODISCARD static EVertexFormat ExtractVertexFormat_(const glslang::TType& type);
+    NODISCARD static EFragmentOutput ExtractFragmentOutput_(const glslang::TType& type);
+    NODISCARD static EResourceState ExtractShaderAccessType_(const glslang::TQualifier& q);
 
 private:
     const FDirectories& _directories;

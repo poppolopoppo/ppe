@@ -71,7 +71,7 @@ struct FBlendState {
 
     FColorBuffers Buffers;
     FRgba32f BlendColor{ 1.0f };
-    ELogicOp LogicOp{ Default };
+    ELogicOp LogicOp{ ELogicOp::None };
 
     bool operator ==(const FBlendState& other) const {
         return (Buffers == other.Buffers && BlendColor == other.BlendColor && LogicOp == other.LogicOp);
@@ -302,7 +302,6 @@ struct FRenderState {
     friend hash_t hash_value(const FRenderState& state) NOEXCEPT {
         return hash_tuple(state.Blend, state.Depth, state.Stencil, state.InputAssembly, state.Rasterization, state.Multisample);
     }
-
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,13 @@
 
 #include <atomic>
 
+#define USE_PPE_RHI_RESOURCEREFS (0) //%_NOCOMMIT%
+#if USE_PPE_RHI_RESOURCEREFS
+#   include "HAL/PlatformDebug.h"
+#   include "IO/Format.h"
+#   include "Meta/TypeInfo.h"
+#endif
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -39,16 +46,17 @@ public:
     FInstanceID InstanceID() const { return _instanceId; }
     int RefCount() const { return _refCounter.load(std::memory_order_relaxed); }
 
-    void AddRef() const {
+#if !USE_PPE_RHI_RESOURCEREFS
+    FORCE_INLINE void AddRef() const {
         _refCounter.fetch_add(1, std::memory_order_relaxed);
     }
-    NODISCARD bool RemoveRef(int refCount) const {
+    NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const {
         return (_refCounter.fetch_sub(refCount, std::memory_order_relaxed) == refCount);
     }
+#endif
 
 protected:
     EState State_() const { return _state.load(std::memory_order_relaxed); }
-
 
     const u16 _instanceId;
     std::atomic<EState> _state{ EState::Initial };
@@ -91,6 +99,30 @@ public:
     friend hash_t hash_value(const TResourceProxy& proxy) {
         return hash_value(proxy._data);
     }
+
+#if USE_PPE_RHI_RESOURCEREFS
+    FORCE_INLINE void AddRef() const {
+        auto x = _refCounter.fetch_add(1, std::memory_order_relaxed);
+        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
+        {
+            char debug[200];
+            Format(debug, " ++ AddRef(1) -> {1}   {0}\n", Meta::type_info<T>.name, x);
+            FPlatformDebug::OutputDebug(debug);
+            PPE_DEBUG_BREAK();
+        }
+    }
+    NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const {
+        auto x = _refCounter.fetch_sub(refCount, std::memory_order_relaxed);
+        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
+        {
+            char debug[200];
+            Format(debug, " -- RemoveRef({2}) -> {1}   {0}\n", Meta::type_info<T>.name, x, refCount);
+            FPlatformDebug::OutputDebug(debug);
+            PPE_DEBUG_BREAK();
+        }
+        return (x == refCount);
+    }
+#endif
 
 private:
     value_type _data;

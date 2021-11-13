@@ -173,13 +173,16 @@ public: // interface
 
     // Debugging
 #if USE_PPE_RHIDEBUG
+    virtual void LogFrame() const = 0;
+    NODISCARD virtual bool DumpFrame(FStringBuilder* log) const = 0;
+    NODISCARD virtual bool DumpGraph(FStringBuilder* log) const = 0;
     virtual bool DumpStatistics(FFrameStatistics* pStats) const = 0;
 #endif
 
 public: // helpers
     template <typename _Id0, typename... _Ids>
     void ReleaseResources(_Id0& resource0, _Ids&... resources) {
-        VerifyRelease(ReleaseResource(resource0));
+        (void)ReleaseResource(resource0);
         IF_CONSTEXPR(sizeof...(_Ids) > 0) {
             ReleaseResources(std::forward<_Ids&>(resources)...);
         }

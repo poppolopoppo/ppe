@@ -77,8 +77,7 @@ enum class EColorMask : u8 {
     A                   = 1<<3,
     RGBA                = R|G|B|A,
     All                 = RGBA,
-    Default             = All,
-    Unknown             = 0,
+    Unknown             = All,
 };
 ENUM_FLAGS(EColorMask);
 //----------------------------------------------------------------------------

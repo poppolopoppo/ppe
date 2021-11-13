@@ -41,20 +41,20 @@ static void SetVulkanClearValue_(VkClearValue* pout, const FRenderPassDesc::FCle
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 FVulkanLogicalRenderPass::~FVulkanLogicalRenderPass() {
-    Assert_NoAssume(_drawTasks.empty());
+    Assert_NoAssume(not _drawTasks.Available);
 }
 #endif
 //----------------------------------------------------------------------------
 bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRenderPassDesc& desc) {
     Assert_NoAssume(not _allocator.Available);
-    Assert_NoAssume(_drawTasks.empty());
+    Assert_NoAssume(not _drawTasks.Available);
 
     const bool enableShadingRateImage = desc.ShadingRate.ImageId.Valid();
 
     _allocator.Construct(TSlabAllocator{ cmd.Write()->MainAllocator });
     _allocator->SetSlabSize(4_KiB);
 
-    _drawTasks = FDrawTasks(TSlabAllocator{ *_allocator });
+    _drawTasks.Construct(TSlabAllocator{ *_allocator });
 
     _area = desc.Area;
     _blendState = desc.Blend;
@@ -241,7 +241,12 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 void FVulkanLogicalRenderPass::TearDown(const FVulkanResourceManager& ) {
     AssertMessage(L"render pass was not submitted", _isSubmitted);
 
-    _drawTasks = Meta::MakeForceInit<FDrawTasks>();
+    Assert_NoAssume(_allocator.Available);
+    Assert_NoAssume(_drawTasks.Available);
+
+    // skip destruction and forget about allocated memory: everything will be discarded with the next line
+    _drawTasks.Discard();
+    _allocator->DiscardAll();
     _allocator.Destroy();
 
     _shadingRateImage = nullptr;
@@ -314,7 +319,7 @@ bool FVulkanLogicalRenderPass::Submit(
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 void FVulkanLogicalRenderPass::SetShaderDebugIndex(EShaderDebugIndex id) {
-    for (IVulkanDrawTask* pTask : _drawTasks)
+    for (IVulkanDrawTask* pTask : *_drawTasks)
         pTask->SetDebugModeIndex(id);
 }
 #endif

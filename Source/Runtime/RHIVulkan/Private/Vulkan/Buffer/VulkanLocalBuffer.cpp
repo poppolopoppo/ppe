@@ -55,12 +55,12 @@ void FVulkanLocalBuffer::SetInitialState(bool immutable) {
 }
 //----------------------------------------------------------------------------
 void FVulkanLocalBuffer::AddPendingState(const FBufferState& bufferState) const {
+    Assert(bufferState.Range.First < _bufferData->Read()->SizeInBytes());
+    Assert(bufferState.Range.Last <= _bufferData->Read()->SizeInBytes());
     Assert(bufferState.Task);
 
     if (_isImmutable)
         return;
-
-    Assert(bufferState.Range.First < _bufferData->Read()->SizeInBytes());
 
     FBufferAccess pending;
     pending.Range = bufferState.Range;
@@ -69,6 +69,7 @@ void FVulkanLocalBuffer::AddPendingState(const FBufferState& bufferState) const 
     pending.Access = EResourceState_ToAccess(bufferState.State);
     pending.IsReadable = EResourceState_IsReadable(bufferState.State);
     pending.IsWritable = EResourceState_IsWritable(bufferState.State);
+    Assert(pending.Stages != Zero);
 
     // merge with pending
     FBufferRange range = pending.Range;
@@ -83,6 +84,7 @@ void FVulkanLocalBuffer::AddPendingState(const FBufferState& bufferState) const 
     }
 
     for (; it != _accessPending->end() && it->Range.Overlaps(range); ++it) {
+        Assert(it->Stages != Zero);
         Assert_NoAssume(it->Index == pending.Index);
 
         it->Range.First = Min(it->Range.First, range.First);
@@ -184,7 +186,7 @@ void FVulkanLocalBuffer::ResetState(EVulkanExecutionOrder index, FVulkanBarrierM
     {
         FBufferAccess pending;
         pending.Range = FBufferRange{ 0 , static_cast<VkDeviceSize>(_bufferData->Read()->SizeInBytes()) };
-        pending.Stages = static_cast<VkPipelineStageFlagBits>(0);
+        pending.Stages = Zero;
         pending.Access = sharedBuf->ReadAccessMask;
         pending.IsReadable = true;
         pending.IsWritable = false;

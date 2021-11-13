@@ -72,7 +72,7 @@ public:
     using FVertexOffsets = TStaticArray<VkDeviceSize, MaxVertexBuffers>;
     using FVertexStrides = TStaticArray<u32, MaxVertexBuffers>;
 
-    SCVulkanGraphicsPipeline Pipeline;
+    const TPtrRef<const FVulkanGraphicsPipeline> Pipeline;
     FPushConstantDatas PushConstants;
 
     FVertexInputState VertexInput;
@@ -211,7 +211,7 @@ protected:
         const _Task& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
 public:
-    SCVulkanMeshPipeline Pipeline;
+    const TPtrRef<const FVulkanMeshPipeline> Pipeline;
     FPushConstantDatas PushConstants;
 
     FColorBuffers ColorBuffers;
