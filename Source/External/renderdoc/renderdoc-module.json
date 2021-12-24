@@ -1,0 +1,7 @@
+{
+	"Type": "Headers",
+	"ExtraFiles": [
+		"Public/renderdoc-external.h",
+		"Public/renderdoc_app.h"
+	]
+}

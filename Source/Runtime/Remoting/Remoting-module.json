@@ -1,0 +1,9 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/RTTI",
+		"Runtime/Serialize",
+		"Runtime/Network",
+		"Runtime/Application"
+	]
+}

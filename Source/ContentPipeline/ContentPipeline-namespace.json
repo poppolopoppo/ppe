@@ -1,0 +1,10 @@
+{
+	"Archtypes": [
+		"PPE/Module"
+	],
+	"Modules": [
+		"BuildGraph",
+		"PipelineCompiler",
+		"PipelineReflection"
+	]
+}

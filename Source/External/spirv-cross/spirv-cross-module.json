@@ -1,0 +1,44 @@
+{
+	"ForceIncludes": [
+		"Public/spirv-cross-external.h"
+	],
+	"ExtraFiles": [
+		"Public/spirv-cross-external.h",
+		"SPIRV-Cross.git/GLSL.std.450.h",
+		"SPIRV-Cross.git/include/spirv_cross/barrier.hpp",
+		"SPIRV-Cross.git/include/spirv_cross/external_interface.h",
+		"SPIRV-Cross.git/include/spirv_cross/image.hpp",
+		"SPIRV-Cross.git/include/spirv_cross/internal_interface.hpp",
+		"SPIRV-Cross.git/include/spirv_cross/sampler.hpp",
+		"SPIRV-Cross.git/include/spirv_cross/thread_group.hpp",
+		"SPIRV-Cross.git/spirv.h",
+		"SPIRV-Cross.git/spirv.hpp",
+		"SPIRV-Cross.git/spirv_cfg.hpp",
+		"SPIRV-Cross.git/spirv_common.hpp",
+		"SPIRV-Cross.git/spirv_cpp.hpp",
+		"SPIRV-Cross.git/spirv_cross.hpp",
+		"SPIRV-Cross.git/spirv_cross_c.h",
+		"SPIRV-Cross.git/spirv_cross_containers.hpp",
+		"SPIRV-Cross.git/spirv_cross_error_handling.hpp",
+		"SPIRV-Cross.git/spirv_cross_parsed_ir.hpp",
+		"SPIRV-Cross.git/spirv_cross_util.hpp",
+		"SPIRV-Cross.git/spirv_glsl.hpp",
+		"SPIRV-Cross.git/spirv_hlsl.hpp",
+		"SPIRV-Cross.git/spirv_msl.hpp",
+		"SPIRV-Cross.git/spirv_parser.hpp",
+		"SPIRV-Cross.git/spirv_reflect.hpp"
+	],
+	"SourceFiles": [
+		"SPIRV-Cross.git/spirv_cfg.cpp",
+		"SPIRV-Cross.git/spirv_cpp.cpp",
+		"SPIRV-Cross.git/spirv_cross.cpp",
+		"SPIRV-Cross.git/spirv_cross_c.cpp",
+		"SPIRV-Cross.git/spirv_cross_parsed_ir.cpp",
+		"SPIRV-Cross.git/spirv_cross_util.cpp",
+		"SPIRV-Cross.git/spirv_glsl.cpp",
+		"SPIRV-Cross.git/spirv_hlsl.cpp",
+		"SPIRV-Cross.git/spirv_msl.cpp",
+		"SPIRV-Cross.git/spirv_parser.cpp",
+		"SPIRV-Cross.git/spirv_reflect.cpp"
+	]
+}

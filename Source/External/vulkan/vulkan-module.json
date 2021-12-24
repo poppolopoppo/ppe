@@ -1,0 +1,15 @@
+{
+	"Archtypes": [
+		"SDK/Vulkan"
+	],
+	"ExtraFiles": [
+		"Public/vulkan-exports.h",
+		"Public/vulkan-exports.inl",
+		"Public/vulkan-external.h",
+		"Public/vulkan-fwd.h",
+		"Public/vulkan-platform.h"
+	],
+	"SourceFiles": [
+		"Private/vulkan.cpp"
+	]
+}

@@ -1,0 +1,12 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RTTI",
+		"Runtime/Serialize",
+		"Runtime/Network",
+		"Runtime/Remoting",
+		"Runtime/Application",
+		"ContentPipeline/BuildGraph"
+	]
+}

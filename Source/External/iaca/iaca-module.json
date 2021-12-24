@@ -1,0 +1,9 @@
+{
+	"ExtraFiles": [
+		"Public/Intel_IACA.h",
+		"Private/iacaMarks.h"
+	],
+	"SourceFiles": [
+		"Private/iaca-dummy.cpp"
+	]
+}

@@ -57,6 +57,31 @@
     - https://blog.demofox.org/2020/06/14/casual-shadertoy-path-tracing-3-fresnel-rough-refraction-absorption-orbit-camera/
     - https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
 
+- [ ] Improved Shader and Texture Level of Details using Ray Cones
+    - https://www.jcgt.org/published/0010/01/01/
+    - https://www.jcgt.org/published/0010/01/01/paper.pdf
+
+- [ ] A Hitchhiker's Guide to Multiple Scattering
+    - http://www.eugenedeon.com/project/hitchhikers/
+
+- [ ] Bindless rendering in Vulkan, DX12 and OpenGL
+    - https://www.youtube.com/watch?v=SVm0HanVTRw
+
+- [ ] Surfels Global Illumination
+    - https://www.youtube.com/watch?v=Uea9Wq1XdA4
+- [ ] Hybrid Rendering for Real-Time Ray Tracing
+    - https://media.contentapi.ea.com/content/dam/ea/seed/presentations/2019-ray-tracing-gems-chapter-25-barre-brisebois-et-al.pdf
+- [ ] Multi scale mean variance estimator
+    - https://github.com/Apress/ray-tracing-gems/blob/master/Ch_25_Hybrid_Rendering_for_Real-Time_Ray_Tracing/MultiscaleMeanEstimator.hlsl
+
+- [ ] Raycast pre-calculation for efficient rendering of grass and fur
+    - https://gamedev.ru/code/articles/grass_raycast
+
+- [ ] Survey of Efficient Representations for Independent Unit Vectors
+    - https://jcgt.org/published/0003/02/01/
+    - https://jcgt.org/published/0003/02/01/paper.pdf
+    - https://jcgt.org/published/0003/02/01/supplemental.zip
+
 - [ ] Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting
     - https://research.nvidia.com/publication/2020-07_Spatiotemporal-reservoir-resampling
 
@@ -64,12 +89,22 @@
     - https://x3dom.org/pop/files/popbuffer2013.pdf
     - https://0fps.net/2018/03/03/a-level-of-detail-method-for-blocky-voxels/
 
+- [ ] Voxel rendering
+    - Efficient Sparse Voxel Octrees – Analysis, Extensions, and Implementation
+      https://research.nvidia.com/sites/default/files/pubs/2010-02_Efficient-Sparse-Voxel/laine2010tr1_paper.pdf
+    - GigaVoxels: Ray-Guided Streaming for Efficient and Detailed Voxel Rendering
+      https://maverick.inria.fr/Publications/2009/CNLE09/CNLE09.pdf
+    - Volume-Surface Trees
+      https://hal.inria.fr/inria-00187194/document
+
 - [ ] Destiny's Multithreaded Rendering Architecture: https://www.youtube.com/watch?v=0nTDFLMLX9k
 - [ ] Destiny's Shader System: http://advances.realtimerendering.com/destiny/gdc_2017/Destiny_shader_system_GDC_2017_v.4.0.pdf
 
 - [ ] Nanite-like clustering for rendering large meshes
     - "Multiresolution structures for interactive visualization of very large 3D datasets" by Federico Ponchio https://d-nb.info/997062789/34
     - https://www.youtube.com/watch?v=7JEHPvSGaX8
+
+- [ ] Nice bloom rendering : https://www.shadertoy.com/view/lsBfRc
 
 ## Architecture
 

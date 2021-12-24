@@ -1,0 +1,26 @@
+{
+	"IsolatedFiles": [
+		"Private/Allocator/InitSegAllocator.cpp",
+		"Private/Diagnostic/Benchmark.cpp"
+	],
+	"PrivateDependencies": [
+		"External/double-conversion",
+		"External/farmhash",
+		"External/lz4",
+		"External/xxHash"
+	],
+	"HAL": {
+		"Windows": {
+			"RuntimeDependencies": [
+				"External/vstools"
+			]
+		},
+		"Linux": {
+			"CompilerOptions": [
+				"-ldl",
+				"-lncurses",
+				"-lrt"
+			]
+		}
+	}
+}

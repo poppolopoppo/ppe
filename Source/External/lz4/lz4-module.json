@@ -1,0 +1,22 @@
+{
+	"ForceIncludes": [
+		"Public/lz4-external.h"
+	],
+	"ExtraFiles": [
+		"Public/lz4-external.h",
+		"lz4.git/lib/lz4.h",
+		"lz4.git/lib/lz4hc.h",
+		"lz4.git/lib/lz4opt.h"
+	],
+	"SourceFiles": [
+		"lz4.git/lib/lz4.c",
+		"lz4.git/lib/lz4hc.c"
+	],
+	"HAL": {
+		"Linux": {
+			"CompilerOptions": [
+				"-Wno-deprecated"
+			]
+		}
+	}
+}

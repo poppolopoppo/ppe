@@ -1,0 +1,18 @@
+{
+	"Debug": "Disabled",
+	"Link": "Dynamic",
+	"ExtraFiles": [
+		"Public/vstools.h"
+	],
+	"SourceFiles": [
+		"Private/vstools.cpp"
+	],
+	"HAL": {
+		"Windows": {
+			"LinkerOptions": [
+				"/LTCG:INCREMENTAL",
+				"/DEBUG:NONE"
+			]
+		}
+	}
+}

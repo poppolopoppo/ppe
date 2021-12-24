@@ -1,0 +1,10 @@
+{
+	"Archtypes": [
+		"PPE/Program"
+	],
+	"Modules": [
+		"BuildRobot",
+		"UnitTest",
+		"WindowTest"
+	]
+}

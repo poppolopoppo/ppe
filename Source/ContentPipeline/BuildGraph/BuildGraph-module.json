@@ -1,0 +1,11 @@
+{
+	"PrivateDependencies": [
+		"Runtime/Serialize"
+	],
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RTTI",
+		"Runtime/Application"
+	]
+}

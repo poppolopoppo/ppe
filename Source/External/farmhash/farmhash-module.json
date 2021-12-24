@@ -1,0 +1,12 @@
+{
+	"ForceIncludes": [
+		"Public/farmhash-external.h"
+	],
+	"ExtraFiles": [
+		"Public/farmhash-external.h",
+		"farmhash.git/src/farmhash.h"
+	],
+	"SourceFiles": [
+		"farmhash.git/src/farmhash.cc"
+	]
+}

@@ -1,0 +1,16 @@
+{
+	"Archtypes": [
+		"PPE/Module"
+	],
+	"Modules": [
+		"Core",
+		"VFS",
+		"RTTI",
+		"Serialize",
+		"RHI",
+		"RHIVulkan",
+		"Network",
+		"Remoting",
+		"Application"
+	]
+}

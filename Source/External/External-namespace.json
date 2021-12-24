@@ -1,0 +1,23 @@
+{
+	"Archtypes": [
+		"PPE/External"
+	],
+	"Modules": [
+		"double-conversion",
+		"farmhash",
+		"glslang",
+		"glsl_trace",
+		"iaca",
+		"lz4",
+		"renderdoc",
+		"spirv-cross",
+		"spirv-headers",
+		"spirv-reflect",
+		"spirv-tools",
+		"stb",
+		"vma",
+		"vstools",
+		"vulkan",
+		"xxHash"
+	]
+}

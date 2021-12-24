@@ -1,0 +1,20 @@
+{
+	"PrivateDependencies": [
+		"External/iaca"
+	],
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RTTI",
+		"Runtime/Serialize",
+		"Runtime/Network",
+		"Runtime/Application"
+	],
+	"RuntimeDependencies": [
+		"ContentPipeline/BuildGraph"
+	],
+	"ExcludedFiles": [
+		"Private/Test_Pixmap.cpp",
+		"Private/Test_Lattice.cpp"
+	]
+}

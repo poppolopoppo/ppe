@@ -1,0 +1,9 @@
+{
+	"Type": "Headers",
+	"SourceDirs": [
+		"SPIRV-Headers.git"
+	],
+	"SourceGlobs": [
+		"*.h"
+	]
+}

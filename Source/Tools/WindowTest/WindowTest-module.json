@@ -1,0 +1,16 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RTTI",
+		"Runtime/Serialize",
+		"Runtime/Network",
+		"Runtime/RHI",
+		"Runtime/RHIVulkan",
+		"Runtime/Application"
+	],
+	"RuntimeDependencies": [
+		"ContentPipeline/BuildGraph",
+		"ContentPipeline/PipelineCompiler"
+	]
+}

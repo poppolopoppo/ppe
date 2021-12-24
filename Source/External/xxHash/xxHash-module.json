@@ -1,0 +1,12 @@
+{
+	"ForceIncludes": [
+		"Public/xxHash-external.h"
+	],
+	"ExtraFiles": [
+		"Public/xxHash-external.h",
+		"xxHash.git/xxhash.h"
+	],
+	"SourceFiles": [
+		"Private/xxHash-dummy.cpp"
+	]
+}

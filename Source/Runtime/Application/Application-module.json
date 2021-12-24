@@ -1,0 +1,18 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/RHI"
+	],
+	"HAL": {
+		"Windows": {
+			"ExtraFiles": [
+				"Public/HAL/Windows/resource.rc"
+			]
+		},
+		"Linux": {
+			"CompilerOptions": [
+				"-lglfw3"
+			]
+		}
+	}
+}

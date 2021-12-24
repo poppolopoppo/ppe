@@ -1,0 +1,21 @@
+{
+	"ForceIncludes": [
+		"Public/glsl_trace-external.h"
+	],
+	"ExtraFiles": [
+		"Public/glsl_trace-external.h",
+		"glsl_trace.git/shader_trace/include/ShaderTrace.h",
+		"glsl_trace.git/shader_trace/source/Common.h"
+	],
+	"SourceFiles": [
+		"glsl_trace.git/shader_trace/source/InsertFunctionProfiler.cpp",
+		"glsl_trace.git/shader_trace/source/InsertShaderClockHeatmap.cpp",
+		"glsl_trace.git/shader_trace/source/InsertTraceRecording.cpp",
+		"glsl_trace.git/shader_trace/source/ParseShaderTrace.cpp",
+		"glsl_trace.git/shader_trace/source/ShaderTrace.cpp",
+		"glsl_trace.git/shader_trace/source/Utils.cpp"
+	],
+	"PrivateDependencies": [
+		"External/glslang"
+	]
+}

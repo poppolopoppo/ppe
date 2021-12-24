@@ -1,0 +1,9 @@
+{
+	"Type": "Headers",
+	"ExtraFiles": [
+		"stb.git/stb_dxt.h",
+		"stb.git/stb_image.h",
+		"stb.git/stb_image_resize.h",
+		"stb.git/stb_image_write.h"
+	]
+}

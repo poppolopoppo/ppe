@@ -1,0 +1,10 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RTTI"
+	],
+	"ExcludedFiles": [
+		"Private/Markup/MarkupSerializer.cpp"
+	]
+}

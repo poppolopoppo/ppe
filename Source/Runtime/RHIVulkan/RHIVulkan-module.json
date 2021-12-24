@@ -1,0 +1,10 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/RHI"
+	],
+	"PrivateDependencies": [
+		"External/vulkan",
+		"External/vma"
+	]
+}

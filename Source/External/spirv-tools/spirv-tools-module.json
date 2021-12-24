@@ -1,0 +1,14 @@
+{
+	"Archtypes": [
+		"SDK/GLSLANG"
+	],
+	"ForceIncludes": [
+		"Public/spirv-tools-external.h"
+	],
+	"ExtraFiles": [
+		"Public/spirv-tools-external.h"
+	],
+	"SourceFiles": [
+		"Private/spirv-tools.cpp"
+	]
+}

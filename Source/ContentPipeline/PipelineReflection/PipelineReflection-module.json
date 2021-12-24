@@ -1,0 +1,12 @@
+{
+	"PrivateDependencies": [
+		"External/spirv-cross",
+		"External/spirv-reflect",
+		"Runtime/RHIVulkan"
+	],
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RHI"
+	]
+}

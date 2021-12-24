@@ -1,0 +1,24 @@
+{
+	"PrivateDependencies": [
+		"External/vulkan",
+		"External/glslang",
+		"External/spirv-tools",
+		"External/glsl_trace",
+		"Runtime/RHIVulkan"
+	],
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RHI"
+	],
+	"HAL": {
+		"Windows": {
+			"LibrarianOptions": [
+				"/IGNORE:4006"
+			],
+			"LinkerOptions": [
+				"/IGNORE:4042"
+			]
+		}
+	}
+}

@@ -1,0 +1,8 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core"
+	],
+	"IsolatedFiles": [
+		"Private/Network_extern.cpp"
+	]
+}

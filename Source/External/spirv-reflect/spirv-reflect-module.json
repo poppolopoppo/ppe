@@ -1,0 +1,12 @@
+ {
+	"ForceIncludes": [
+		"Public/spirv-reflect-external.h"
+	],
+	"ExtraFiles": [
+		"Public/spirv-reflect-external.h",
+		"SPIRV-Reflect.git/spirv_reflect.h"
+	],
+	"SourceFiles": [
+		"SPIRV-Reflect.git/spirv_reflect.c"
+	]
+}
