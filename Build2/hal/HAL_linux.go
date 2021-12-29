@@ -3,25 +3,37 @@
 package hal
 
 import (
+	"build/hal/generic"
+	"build/hal/linux"
 	utils "build/utils"
+	"os"
 	"strings"
 	"syscall"
 )
 
-var currentPlatform *PlatformType
-
 var FBUILD_BIN = utils.UFS.Build.Folder("hal", "linux", "bin").File("fbuild")
 
-func InitHAL(env *utils.CommandEnv) {
+func InitHAL() {
 	var uname syscall.Utsname
 	if err := syscall.Uname(&uname); err != nil {
-		utis.LogFatal("Uname: %s", err)
+		utils.LogFatal("Uname: %s", err)
 	}
 	utils.SetCurrentHost(&utils.HostPlatform{
-		Id:   HOST_LINUX,
+		Id:   utils.HOST_LINUX,
 		Name: arrayToString(uname.Version),
 	})
-	env.HAL = currentPlatform.Id
+	utils.SetEnableInteractiveShell(isInteractiveShell())
+	generic.InitGeneric()
+	linux.InitLinux()
+}
+
+func isInteractiveShell() bool {
+	switch os.Getenv("TERM") {
+	case "xterm", "xterm-256", "xterm-256color":
+		return true
+	default:
+		return false
+	}
 }
 
 func arrayToString(x [65]int8) string {
