@@ -101,7 +101,7 @@ func (git GitSourceControl) GetStatus() (SourceControlStatus, error) {
 		log := strings.SplitN(line, ",", 4)
 		status.Revision = strings.TrimSpace(log[0])
 		timestamp := strings.TrimSpace(log[1])
-		status.Branch = strings.TrimSpace(log[3])
+		status.Branch = strings.TrimSpace(log[len(log)-1])
 		if unitT, err := strconv.ParseInt(timestamp, 10, 64); err == nil {
 			status.Timestamp = time.Unix(unitT, 0)
 			return status, nil
