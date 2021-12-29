@@ -152,7 +152,7 @@ func (x *SourceControlModifiedFilesT) Build(bc BuildContext) (BuildStamp, error)
 
 var SourceControlModifiedFiles = MakeBuildable(func(bi BuildInit) *SourceControlModifiedFilesT {
 	builder := &SourceControlModifiedFilesT{
-		Output: UFS.Saved.File("modified_files_list.txt"),
+		Output: UFS.Saved.File(".modified_files_list.txt"),
 	}
 	bi.NeedFile(builder.Output)
 	return builder

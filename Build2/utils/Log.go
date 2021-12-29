@@ -52,15 +52,6 @@ func (x LogLevel) String() string {
 	return ""
 }
 
-func isInteractiveShell() bool {
-	switch os.Getenv("TERM") {
-	case "xterm", "xterm-256":
-		return true
-	default:
-		return false
-	}
-}
-
 var enableInteractiveShell bool = false
 
 func EnableInteractiveShell() bool {

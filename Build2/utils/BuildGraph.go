@@ -9,6 +9,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -40,6 +41,7 @@ type BuildNode interface {
 }
 type BuildGraph interface {
 	Aliases() []BuildAlias
+	Dirty() bool
 	Node(BuildAliasable) BuildNode
 	Create(Buildable, ...BuildAlias) BuildNode
 	Build(BuildAliasable) (BuildNode, Future[BuildStamp])
@@ -157,20 +159,28 @@ func (ctx buildExecuteContext) NeedBuilder(factory func(BuildGraph) Buildable) (
 }
 
 type buildGraph struct {
-	barrier sync.Mutex
-	nodes   *SharedMapT[BuildAlias, *buildNode]
-	futures *SharedMapT[BuildAlias, Future[BuildStamp]]
+	barrier  sync.Mutex
+	nodes    *SharedMapT[BuildAlias, *buildNode]
+	futures  *SharedMapT[BuildAlias, Future[BuildStamp]]
+	revision int32
 }
 type buildGraphData map[BuildAlias]*buildNode
 
 func NewBuildGraph() BuildGraph {
 	return &buildGraph{
-		nodes:   NewSharedMapT[BuildAlias, *buildNode](),
-		futures: NewSharedMapT[BuildAlias, Future[BuildStamp]](),
+		nodes:    NewSharedMapT[BuildAlias, *buildNode](),
+		futures:  NewSharedMapT[BuildAlias, Future[BuildStamp]](),
+		revision: 0,
 	}
+}
+func (g *buildGraph) makeDirty() {
+	atomic.AddInt32(&g.revision, 1)
 }
 func (g *buildGraph) Aliases() []BuildAlias {
 	return g.nodes.Keys()
+}
+func (g *buildGraph) Dirty() bool {
+	return atomic.LoadInt32(&g.revision) > 0
 }
 func (g *buildGraph) Node(a BuildAliasable) BuildNode {
 	if node, ok := g.nodes.Get(a.Alias()); ok {
@@ -181,14 +191,21 @@ func (g *buildGraph) Node(a BuildAliasable) BuildNode {
 	}
 }
 func (g *buildGraph) Create(b Buildable, static ...BuildAlias) BuildNode {
-	node, _ := g.nodes.FindOrAdd(b.Alias(), newBuildNode(b))
+	node, loaded := g.nodes.FindOrAdd(b.Alias(), newBuildNode(b))
 	AssertSameType(node.Buildable, b)
 	deps := BuildDependencies{}
-	for _, x := range static {
-		a := x.Alias()
-		deps[a] = node.Static[a]
+	dirty := !loaded || len(static) != len(node.Static)
+	for _, a := range static {
+		old, hit := node.Static[a]
+		deps[a] = old
+		if !hit {
+			dirty = true
+		}
 	}
 	node.Static = deps
+	if dirty {
+		g.makeDirty()
+	}
 	return node
 }
 func (g *buildGraph) Build(it BuildAliasable) (BuildNode, Future[BuildStamp]) {
@@ -208,6 +225,7 @@ func (g *buildGraph) Serialize(dst io.Writer) error {
 	g.barrier.Lock()
 	defer g.barrier.Unlock()
 
+	g.revision = 0
 	exported := g.nodes.Values()
 
 	enc := gob.NewEncoder(dst)
@@ -223,6 +241,7 @@ func (g *buildGraph) Deserialize(src io.Reader) error {
 		return err
 	}
 
+	g.revision = 0
 	g.nodes.Clear()
 	for _, node := range imported {
 		g.nodes.Add(node.Alias(), node)
@@ -231,17 +250,15 @@ func (g *buildGraph) Deserialize(src io.Reader) error {
 }
 
 func (deps BuildDependencies) needToBuild(g *buildGraph) (bool, error) {
-	futures := make([]Future[BuildStamp], len(deps))
-	i := 0
+	futures := make(map[BuildAlias]Future[BuildStamp], len(deps))
 	for a := range deps {
 		_, fut := g.Build(a)
-		futures[i] = fut
+		futures[a] = fut
 	}
-	i = 0
 	var errs []error
 	rebuild := false
 	for a, oldStamp := range deps {
-		fut := futures[i].Join()
+		fut := futures[a].Join()
 		if err := fut.Failure(); err == nil {
 			if newStamp := fut.Success(); newStamp != oldStamp {
 				LogVeryVerbose("need to rebuild <%v>:\n\tnew: %v\n\told: %v", a, newStamp, oldStamp)
@@ -282,26 +299,33 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias) Future[BuildStam
 
 	if fut, ok := g.futures.Get(a); !ok {
 		fut = MakeFuture(func() (BuildStamp, error) {
-			LogInfo("check <%v>", a)
-			// benchmark := LogBenchmark(a.String())
-			// defer benchmark.Close()
+			//LogVeryVerbose("check '%v'", a)
+			benchmark := LogBenchmark(a.String())
+			defer benchmark.Close()
 
 			var err error
 			var rebuild bool
 			if rebuild, err = node.needToBuild(g); rebuild && err == nil {
-				LogWarning("need to build <%v>", a)
+				LogVeryVerbose("need to build '%v'", a)
 				var stamp BuildStamp
 				ctx := buildExecuteContext{g, node}
 				if stamp, err = node.Build(ctx); err == nil {
-					node.Stamp = stamp
+					if node.Stamp != stamp {
+						LogInfo("updated '%v'", a)
+						node.Stamp = stamp
+						g.makeDirty()
+					} else {
+						LogVerbose("up-to-date '%v'", a)
+					}
+
 					return node.Stamp, nil
 				} else {
 					panic(err)
 				}
 			} else if err != nil {
-				LogError("can't build <%v>: %v", a, err)
+				LogError("can't build '%v': %v", a, err)
 			} else {
-				LogVeryVerbose("up-to-date <%v>", a)
+				LogVerbose("up-to-date '%v'", a)
 			}
 			return node.Stamp, err
 		})
@@ -318,9 +342,8 @@ func (f BuilderFactory[T]) Create(g BuildGraph) T {
 	return f(g)
 }
 func (f BuilderFactory[T]) Prepare(g BuildGraph) (T, Future[BuildStamp]) {
-	builder := f.Create(g)
-	_, future := g.Build(builder)
-	return builder, future
+	node, future := g.Build(f.Create(g))
+	return node.GetBuildable().(T), future
 }
 func (f BuilderFactory[T]) Build(g BuildGraph) T {
 	builder, future := f.Prepare(g)
@@ -402,7 +425,6 @@ func MakeTimedBuildStamp(modTime time.Time, content ...interface{}) (BuildStamp,
 		ModTime: modTime,
 		Content: MakeDigest(RawBytes(buf.Bytes())),
 	}
-	LogVeryVerbose("make stamp %v", stamp)
 	return stamp, nil
 }
 

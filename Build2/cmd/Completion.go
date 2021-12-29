@@ -24,7 +24,8 @@ var ListArtifacts = utils.MakeCommand(
 			return string(aliases[i]) < string(aliases[j])
 		})
 		for _, a := range aliases {
-			fmt.Printf("%v --> %v\n", env.BuildGraph().Node(a).GetBuildStamp(), a)
+			node := env.BuildGraph().Node(a)
+			fmt.Printf("%v --> %v (%T)\n", node.GetBuildStamp(), a, node.GetBuildable())
 		}
 		return nil
 	},
@@ -83,7 +84,8 @@ var ListModules = utils.MakeCommand(
 	"list all available modules",
 	nil,
 	func(env *utils.CommandEnvT, _ *CompletionArgs) error {
-		for name, _ := range compile.BuildModules.Build(env.BuildGraph()).Modules {
+		build := compile.BuildModules.Build(env.BuildGraph())
+		for _, name := range build.ModuleKeys() {
 			fmt.Println(name)
 		}
 		return nil
@@ -95,7 +97,8 @@ var ListNamespaces = utils.MakeCommand(
 	"list all available namespaces",
 	nil,
 	func(env *utils.CommandEnvT, _ *CompletionArgs) error {
-		for name, _ := range compile.BuildModules.Build(env.BuildGraph()).Namespaces {
+		build := compile.BuildModules.Build(env.BuildGraph())
+		for _, name := range build.NamespaceKeys() {
 			fmt.Println(name)
 		}
 		return nil
@@ -104,7 +107,7 @@ var ListNamespaces = utils.MakeCommand(
 
 var ListPersistentData = utils.MakeCommand(
 	"list-persistent-data",
-	"list persistent data",
+	"list all persistent data",
 	nil,
 	func(env *utils.CommandEnvT, _ *CompletionArgs) error {
 		for k, v := range env.Persistent().Data {
@@ -116,7 +119,7 @@ var ListPersistentData = utils.MakeCommand(
 
 var ListPersistentVars = utils.MakeCommand(
 	"list-persistent-vars",
-	"list persistent variables",
+	"list all persistent variables",
 	nil,
 	func(env *utils.CommandEnvT, _ *CompletionArgs) error {
 		for k, v := range env.Persistent().Vars {

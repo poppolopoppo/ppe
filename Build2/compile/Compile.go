@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -43,6 +44,7 @@ type CompileFlagsT struct {
 	CppRtti       CppRttiType
 	CppStd        CppStdType
 	DebugSymbols  DebugType
+	Exceptions    ExceptionType
 	Link          LinkType
 	PCH           PrecompiledHeaderType
 	Sanitizer     SanitizerType
@@ -62,6 +64,7 @@ func newCompileFlags() *CompileFlagsT {
 		CppRtti:       CPPRTTI_INHERIT,
 		CppStd:        CPPSTD_INHERIT,
 		DebugSymbols:  DEBUG_INHERIT,
+		Exceptions:    EXCEPTION_INHERIT,
 		Link:          LINK_INHERIT,
 		PCH:           PCH_INHERIT,
 		Sanitizer:     SANITIZER_NONE,
@@ -77,6 +80,7 @@ func (flags *CompileFlagsT) InitFlags(cfg *utils.PersistentMap) {
 	cfg.Persistent(&flags.CppRtti, "CppRtti", "override C++ rtti support ["+utils.Join(",", CppRttiTypes()...)+"]")
 	cfg.Persistent(&flags.CppStd, "CppStd", "override C++ standard ["+utils.Join(",", CppStdTypes()...)+"]")
 	cfg.Persistent(&flags.DebugSymbols, "DebugSymbols", "override debug symbols mode ["+utils.Join(",", DebugTypes()...)+"]")
+	cfg.Persistent(&flags.Exceptions, "Exceptions", "override exceptions mode ["+utils.Join(",", ExceptionTypes()...)+"]")
 	cfg.Persistent(&flags.Link, "Link", "override link type ["+utils.Join(",", LinkTypes()...)+"]")
 	cfg.Persistent(&flags.PCH, "PCH", "override size limit for splitting unity files ["+utils.Join(",", PrecompiledHeaderTypes()...)+"]")
 	cfg.Persistent(&flags.Sanitizer, "Sanitizer", "override sanitizer mode ["+utils.Join(",", SanitizerTypes()...)+"]")
@@ -207,6 +211,15 @@ func (env *CompileEnv) GetDebugType(module Module) (result DebugType) {
 		return env.GetConfig().Debug
 	}
 }
+func (env *CompileEnv) GetExceptionType(module Module) (result ExceptionType) {
+	if result = env.CompileFlagsT.Exceptions; EXCEPTION_INHERIT != result {
+		return result
+	} else if result = module.GetModule().Exceptions; EXCEPTION_INHERIT != result {
+		return result
+	} else {
+		return env.GetConfig().Exceptions
+	}
+}
 func (env *CompileEnv) GetPCHType(module Module) (result PrecompiledHeaderType) {
 	if result = env.PCH; PCH_INHERIT != result {
 		return result
@@ -320,9 +333,11 @@ func (env *CompileEnv) Compile(module Module) {
 
 	unit := &Unit{
 		Target:          env.ModuleAlias(module),
+		Ordinal:         env.ModuleGraph.Get(module).Ordinal,
 		CppRtti:         env.GetCppRtti(module),
 		CppStd:          env.GetCppStd(module),
 		Debug:           env.GetDebugType(module),
+		Exceptions:      env.GetExceptionType(module),
 		PCH:             env.GetPCHType(module),
 		Link:            env.GetLinkType(module),
 		Sanitizer:       env.GetSanitizerType(module),
@@ -358,7 +373,7 @@ func (env *CompileEnv) Compile(module Module) {
 	unit.Compiler = env.Compiler
 	unit.Defines.Append(
 		"BUILD_TARGET_NAME="+moduleRules.String(),
-		fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", env.ModuleGraph.Get(module).Ordinal))
+		fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", unit.Ordinal))
 	unit.Facet.Append(
 		moduleRules,
 		env)
@@ -425,6 +440,10 @@ func (env *CompileEnv) Link() (result []*Unit, err error) {
 		// for _, gen := range m.GetModule().Generateds {
 		// 	gen.Generate(env.Artifacts(), unit) // #TODO: refactor generated files
 		// }
+	})
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Ordinal < result[j].Ordinal
 	})
 
 	return result, nil

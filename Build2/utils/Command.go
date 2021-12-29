@@ -13,7 +13,10 @@ func NewCommandList() CommandList {
 }
 
 type CommandFactory func() Command
-type CommandFunc func(*CommandEnvT) error
+type CommandFunc struct {
+	Info  CommandInfo
+	Event func(*CommandEnvT) error
+}
 type CommandList []CommandFunc
 
 func (list *CommandList) Pop(barrier *sync.Mutex) CommandFunc {
@@ -24,14 +27,14 @@ func (list *CommandList) Pop(barrier *sync.Mutex) CommandFunc {
 		*list = (*list)[1:]
 		return result
 	} else {
-		return nil
+		return CommandFunc{}
 	}
 }
 func (list *CommandList) Run(env *CommandEnvT) error {
 	for {
-		if run := list.Pop(&env.barrier); run != nil {
-			if err := run(env); err != nil {
-				LogError("%v: %v", run, err)
+		if run := list.Pop(&env.barrier); run.Event != nil {
+			if err := run.Event(env); err != nil {
+				LogError("%v: %v", run.Info.Name, err)
 				return err
 			}
 		} else {
@@ -172,9 +175,10 @@ func (env *CommandEnvT) Init(args []string) {
 		}
 		env.persistent.Parse(args[1:], (*env.Flags).Values()...)
 		LogClaim("running command <%v>", cmd.Info().Name)
-		env.immediate = append(env.immediate, cmd.Run)
-		env.deferred = append(env.deferred, cmd.Clean)
+		env.immediate = append(env.immediate, CommandFunc{cmd.Info(), cmd.Run})
+		env.deferred = append(env.deferred, CommandFunc{cmd.Info(), cmd.Clean})
 	} else {
+		CommandFlags.Get(env.Flags).InitFlags(env.persistent)
 		env.Persistent().Usage()
 		LogFatal("invalid command '%v', available names: %v", args[0], strings.Join(AllCommands.Keys(), ", "))
 	}
@@ -192,16 +196,25 @@ func (env *CommandEnvT) Run() error {
 }
 
 func (env *CommandEnvT) Load() {
+	benchmark := LogBenchmark("load from disk")
+	defer benchmark.Close()
+
 	LogTrace("loading config from '%v'...", env.configPath)
 	UFS.Open(env.configPath, env.persistent.Deserialize)
 	LogTrace("loading build graph from '%v'...", env.databasePath)
 	UFS.Open(env.databasePath, env.buildGraph.Deserialize)
 }
 func (env *CommandEnvT) Save() {
+	benchmark := LogBenchmark("save to disk")
+	defer benchmark.Close()
+
 	LogTrace("saving config to '%v'...", env.configPath)
 	UFS.Create(env.configPath, env.persistent.Serialize)
-	LogTrace("saving build graph to '%v'...", env.databasePath)
-	UFS.Create(env.databasePath, env.buildGraph.Serialize)
+
+	if env.buildGraph.Dirty() {
+		LogTrace("saving build graph to '%v'...", env.databasePath)
+		UFS.Create(env.databasePath, env.buildGraph.Serialize)
+	}
 }
 func (env *CommandEnvT) ReadVar(name string) (PersistentVar, bool) {
 	if x, ok := env.persistent.Vars[name]; ok {

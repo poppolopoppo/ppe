@@ -76,13 +76,14 @@ type ModuleRules struct {
 	ModuleDir  utils.Directory
 	ModuleType ModuleType
 
-	CppRtti   CppRttiType
-	CppStd    CppStdType
-	Debug     DebugType
-	PCH       PrecompiledHeaderType
-	Link      LinkType
-	Sanitizer SanitizerType
-	Unity     UnityType
+	CppRtti    CppRttiType
+	CppStd     CppStdType
+	Debug      DebugType
+	Exceptions ExceptionType
+	PCH        PrecompiledHeaderType
+	Link       LinkType
+	Sanitizer  SanitizerType
+	Unity      UnityType
 
 	PrecompiledHeader *utils.Filename
 	PrecompiledSource *utils.Filename
@@ -176,6 +177,7 @@ func (rules *ModuleRules) GetDigestable(o *bytes.Buffer) {
 	rules.CppRtti.GetDigestable(o)
 	rules.CppStd.GetDigestable(o)
 	rules.Debug.GetDigestable(o)
+	rules.Exceptions.GetDigestable(o)
 	rules.PCH.GetDigestable(o)
 	rules.Link.GetDigestable(o)
 	rules.Sanitizer.GetDigestable(o)

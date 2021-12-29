@@ -3,6 +3,7 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"sort"
 )
 
 var AllConfigurations utils.SharedMapT[string, Configuration]
@@ -11,12 +12,13 @@ type ConfigRules struct {
 	ConfigName string
 	ConfigType ConfigType
 
-	CppRtti   CppRttiType
-	Debug     DebugType
-	PCH       PrecompiledHeaderType
-	Link      LinkType
-	Sanitizer SanitizerType
-	Unity     UnityType
+	CppRtti    CppRttiType
+	Debug      DebugType
+	Exceptions ExceptionType
+	PCH        PrecompiledHeaderType
+	Link       LinkType
+	Sanitizer  SanitizerType
+	Unity      UnityType
 	Facet
 }
 
@@ -47,6 +49,7 @@ func (rules *ConfigRules) GetDigestable(o *bytes.Buffer) {
 	rules.ConfigType.GetDigestable(o)
 	rules.CppRtti.GetDigestable(o)
 	rules.Debug.GetDigestable(o)
+	rules.Exceptions.GetDigestable(o)
 	rules.PCH.GetDigestable(o)
 	rules.Link.GetDigestable(o)
 	rules.Sanitizer.GetDigestable(o)
@@ -74,6 +77,7 @@ var Configuration_Debug = &ConfigRules{
 	ConfigType: CONFIG_DEBUG,
 	CppRtti:    CPPRTTI_ENABLED,
 	Debug:      DEBUG_SYMBOLS,
+	Exceptions: EXCEPTION_ENABLED,
 	Link:       LINK_STATIC,
 	PCH:        PCH_MONOLITHIC,
 	Sanitizer:  SANITIZER_NONE,
@@ -88,6 +92,7 @@ var Configuration_FastDebug = &ConfigRules{
 	ConfigType: CONFIG_FASTDEBUG,
 	CppRtti:    CPPRTTI_ENABLED,
 	Debug:      DEBUG_SYMBOLS,
+	Exceptions: EXCEPTION_ENABLED,
 	Link:       LINK_DYNAMIC,
 	PCH:        PCH_MONOLITHIC,
 	Sanitizer:  SANITIZER_NONE,
@@ -102,6 +107,7 @@ var Configuration_Devel = &ConfigRules{
 	ConfigType: CONFIG_DEVEL,
 	CppRtti:    CPPRTTI_DISABLED,
 	Debug:      DEBUG_SYMBOLS,
+	Exceptions: EXCEPTION_ENABLED,
 	Link:       LINK_STATIC,
 	PCH:        PCH_MONOLITHIC,
 	Sanitizer:  SANITIZER_NONE,
@@ -116,6 +122,7 @@ var Configuration_Test = &ConfigRules{
 	ConfigType: CONFIG_TEST,
 	CppRtti:    CPPRTTI_DISABLED,
 	Debug:      DEBUG_SYMBOLS,
+	Exceptions: EXCEPTION_ENABLED,
 	Link:       LINK_STATIC,
 	PCH:        PCH_MONOLITHIC,
 	Sanitizer:  SANITIZER_NONE,
@@ -130,6 +137,7 @@ var Configuration_Shipping = &ConfigRules{
 	ConfigType: CONFIG_SHIPPING,
 	CppRtti:    CPPRTTI_DISABLED,
 	Debug:      DEBUG_SYMBOLS,
+	Exceptions: EXCEPTION_ENABLED,
 	Link:       LINK_STATIC,
 	PCH:        PCH_MONOLITHIC,
 	Sanitizer:  SANITIZER_NONE,
@@ -148,14 +156,19 @@ func (x *BuildConfigsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Data", "BuildConfigs")
 }
 func (x *BuildConfigsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	digester := utils.MakeDigester()
 	off := 0
 	x.Values = make([]Configuration, AllConfigurations.Len())
 	AllConfigurations.Range(func(_ string, rules Configuration) {
-		digester.Append(rules)
 		x.Values[off] = rules
 		off += 1
 	})
+	sort.Slice(x.Values, func(i, j int) bool {
+		return x.Values[i].Alias() < x.Values[j].Alias()
+	})
+	digester := utils.MakeDigester()
+	for _, config := range x.Values {
+		digester.Append(config)
+	}
 	return utils.BuildStamp{
 		Content: digester.Finalize(),
 	}, nil

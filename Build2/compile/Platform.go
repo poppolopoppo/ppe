@@ -3,6 +3,7 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"sort"
 )
 
 var AllPlatforms utils.SharedMapT[string, Platform]
@@ -79,14 +80,19 @@ func (x *BuildPlatformsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Data", "BuildPlatforms")
 }
 func (x *BuildPlatformsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	digester := utils.MakeDigester()
 	off := 0
 	x.Values = make([]Platform, AllPlatforms.Len())
 	AllPlatforms.Range(func(_ string, rules Platform) {
-		digester.Append(rules)
 		x.Values[off] = rules
 		off += 1
 	})
+	sort.Slice(x.Values, func(i, j int) bool {
+		return x.Values[i].Alias() < x.Values[j].Alias()
+	})
+	digester := utils.MakeDigester()
+	for _, platform := range x.Values {
+		digester.Append(platform)
+	}
 	return utils.BuildStamp{
 		Content: digester.Finalize(),
 	}, nil

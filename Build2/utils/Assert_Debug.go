@@ -59,6 +59,9 @@ func AssertNotInStrings[T fmt.Stringer](elt T, values ...T) {
 	}
 }
 
+func NotImplemented(m string, a ...interface{}) {
+	LogWarning("not implemented: "+m, a...)
+}
 func UnreachableCode() {
 	panic(fmt.Errorf("unreachable code"))
 }

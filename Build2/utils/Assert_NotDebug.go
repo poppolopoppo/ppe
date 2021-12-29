@@ -25,6 +25,7 @@ func AssertNotIn[T comparable](T, ...T)          {}
 func AssertInStrings[T fmt.Stringer](T, ...T)    {}
 func AssertNotInStrings[T fmt.Stringer](T, ...T) {}
 
+func NotImplemented(string, ...interface{})                   {}
 func UnreachableCode()                                        {}
 func UnexpectedValue(x interface{})                           {}
 func UnexpectedType(expected reflect.Type, given interface{}) {}

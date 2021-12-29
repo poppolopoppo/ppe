@@ -310,6 +310,17 @@ type BuildModulesT struct {
 	Root       Namespace
 }
 
+func (x *BuildModulesT) ModuleKeys() []string {
+	result := utils.Keys(x.Modules)
+	sort.Strings(result)
+	return result
+}
+func (x *BuildModulesT) NamespaceKeys() []string {
+	result := utils.Keys(x.Namespaces)
+	sort.Strings(result)
+	return result
+}
+
 func (x *BuildModulesT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Data", "BuildModules")
 }

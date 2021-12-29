@@ -320,6 +320,61 @@ func (x *DebugType) UnmarshalJSON(data []byte) error {
 }
 
 /***************************************
+ * Exceptions
+ ***************************************/
+
+type ExceptionType int32
+
+const (
+	EXCEPTION_INHERIT ExceptionType = iota
+	EXCEPTION_DISABLED
+	EXCEPTION_ENABLED
+)
+
+func ExceptionTypes() []ExceptionType {
+	return []ExceptionType{
+		EXCEPTION_INHERIT,
+		EXCEPTION_DISABLED,
+		EXCEPTION_ENABLED,
+	}
+}
+func (x ExceptionType) String() string {
+	switch x {
+	case EXCEPTION_INHERIT:
+		return "INHERIT"
+	case EXCEPTION_DISABLED:
+		return "DISABLED"
+	case EXCEPTION_ENABLED:
+		return "ENABLED"
+	default:
+		utils.UnexpectedValue(x)
+		return ""
+	}
+}
+func (x *ExceptionType) Set(in string) error {
+	switch strings.ToUpper(in) {
+	case EXCEPTION_INHERIT.String():
+		*x = EXCEPTION_INHERIT
+	case EXCEPTION_DISABLED.String():
+		*x = EXCEPTION_DISABLED
+	case EXCEPTION_ENABLED.String():
+		*x = EXCEPTION_ENABLED
+	default:
+		utils.UnexpectedValue(in)
+	}
+	return nil
+}
+func (x ExceptionType) GetDigestable(o *bytes.Buffer) {
+	o.WriteString(x.String())
+}
+func (x ExceptionType) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(x)
+}
+func (x *ExceptionType) UnmarshalJSON(data []byte) error {
+	return utils.UnmarshalJSON(x, data)
+}
+
+/***************************************
  * LinkType
  ***************************************/
 

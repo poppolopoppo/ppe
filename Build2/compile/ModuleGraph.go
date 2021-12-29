@@ -190,7 +190,7 @@ var GetModuleGraph = utils.MemoizeArg(func(targets *BuildModulesT) *ModuleGraph 
 			node.Private(func(Module) {}),
 			node.Public(func(Module) {}),
 			node.Runtime(func(Module) {}),
-			module.GetModule().Alias())
+			module.GetModule().String())
 	}
 
 	return result

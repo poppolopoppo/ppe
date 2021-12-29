@@ -9,6 +9,16 @@ import (
 	"sync"
 )
 
+func Keys[K comparable, V any](it map[K]V) []K {
+	off := 0
+	result := make([]K, len(it))
+	for key := range it {
+		result[off] = key
+		off += 1
+	}
+	return result
+}
+
 /***************************************
  * Containers
  ***************************************/

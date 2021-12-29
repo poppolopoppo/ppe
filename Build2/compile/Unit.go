@@ -48,16 +48,18 @@ func (x UnitList) GetDigestable(o *bytes.Buffer) {
 }
 
 type Unit struct {
-	Target TargetAlias
+	Target  TargetAlias
+	Ordinal int
 
-	CppRtti   CppRttiType
-	CppStd    CppStdType
-	Debug     DebugType
-	PCH       PrecompiledHeaderType
-	Link      LinkType
-	Sanitizer SanitizerType
-	Unity     UnityType
-	Payload   PayloadType
+	CppRtti    CppRttiType
+	CppStd     CppStdType
+	Debug      DebugType
+	Exceptions ExceptionType
+	PCH        PrecompiledHeaderType
+	Link       LinkType
+	Sanitizer  SanitizerType
+	Unity      UnityType
+	Payload    PayloadType
 
 	OutputFile utils.Filename
 
@@ -115,9 +117,11 @@ func (unit *Unit) Decorate(env *CompileEnv, decorator ...UnitDecorator) {
 func (unit *Unit) GetDigestable(o *bytes.Buffer) {
 	o.WriteString("Unit")
 	unit.Target.GetDigestable(o)
+	o.WriteString(fmt.Sprint(unit.Ordinal))
 	unit.CppRtti.GetDigestable(o)
 	unit.CppStd.GetDigestable(o)
 	unit.Debug.GetDigestable(o)
+	unit.Exceptions.GetDigestable(o)
 	unit.PCH.GetDigestable(o)
 	unit.Link.GetDigestable(o)
 	unit.Sanitizer.GetDigestable(o)

@@ -46,7 +46,7 @@ func (d Directory) AbsoluteFolder(rel ...string) (result Directory) {
 	return append(d, rel...)
 }
 func (d Directory) AbsoluteFile(rel ...string) (result Filename) {
-	return MakeFilename(path.Join(append([]string{d.String()}, rel...)...))
+	return MakeFilename(filepath.Join(append([]string{d.String()}, rel...)...))
 }
 func (d Directory) Relative(to Directory) string {
 	if path, err := filepath.Rel(to.String(), d.String()); err == nil {
@@ -94,7 +94,15 @@ func (d Directory) GetDigestable(o *bytes.Buffer) {
 	}
 }
 func (d Directory) String() string {
-	return path.Join(d...)
+	//return filepath.Join(d...)
+	sb := strings.Builder{}
+	for i, x := range d {
+		if i > 0 {
+			sb.WriteString("/")
+		}
+		sb.WriteString(x)
+	}
+	return sb.String()
 }
 
 /***************************************
@@ -108,8 +116,8 @@ type Filename struct {
 
 func MakeFilename(str string) Filename {
 	var x string
-	str = path.Clean(str)
-	str, x = path.Split(str)
+	str = filepath.Clean(str)
+	str, x = filepath.Split(str)
 	return Filename{
 		Basename: x,
 		Dirname:  MakeDirectory(str),
@@ -159,7 +167,7 @@ func (f Filename) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(f.Basename)
 }
 func (f Filename) String() string {
-	return path.Join(f.Dirname.String(), f.Basename)
+	return filepath.Join(f.Dirname.String(), f.Basename)
 }
 
 /***************************************
