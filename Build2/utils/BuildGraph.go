@@ -299,14 +299,14 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias) Future[BuildStam
 
 	if fut, ok := g.futures.Get(a); !ok {
 		fut = MakeFuture(func() (BuildStamp, error) {
-			//LogVeryVerbose("check '%v'", a)
-			benchmark := LogBenchmark(a.String())
-			defer benchmark.Close()
+			LogVeryVerbose("check '%v'", a)
+			// benchmark := LogBenchmark(a.String())
+			// defer benchmark.Close()
 
 			var err error
 			var rebuild bool
 			if rebuild, err = node.needToBuild(g); rebuild && err == nil {
-				LogVeryVerbose("need to build '%v'", a)
+				// LogVeryVerbose("need to build '%v'", a)
 				var stamp BuildStamp
 				ctx := buildExecuteContext{g, node}
 				if stamp, err = node.Build(ctx); err == nil {
