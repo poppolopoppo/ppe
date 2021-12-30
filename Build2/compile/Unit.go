@@ -83,14 +83,8 @@ type Unit struct {
 	Facet
 }
 
-func (unit *Unit) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Unit", unit.String())
-}
 func (unit *Unit) String() string {
 	return unit.Target.String()
-}
-func (unit *Unit) Build(utils.BuildContext) (utils.BuildStamp, error) {
-	return utils.MakeBuildStamp(unit)
 }
 
 func (unit *Unit) GetCompiler() *CompilerRules {

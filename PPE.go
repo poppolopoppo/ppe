@@ -139,7 +139,7 @@ func makePPE_Program(rules *ModuleRules) {
 	rules.ModuleType = MODULE_PROGRAM
 	rules.Link = LINK_STATIC
 	rules.Unity = UNITY_DISABLED
-	rules.Defines.Append("PPE_TARGET_NAME=" + rules.Alias().String())
+	rules.Defines.Append("PPE_TARGET_NAME=" + rules.String())
 }
 
 func main() {

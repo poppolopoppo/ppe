@@ -3,9 +3,15 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"fmt"
 )
 
-type GeneratorFunc func(u Unit, rules GeneratedRules, dst utils.Filename) error
+type GeneratedFile struct {
+	Output utils.Filename
+	Target TargetAlias
+}
+
+type GeneratorFactory func(utils.BuildContext, *GeneratedFile) (GeneratedFile, error)
 
 type GeneratedRules struct {
 	GeneratedName string
@@ -14,8 +20,8 @@ type GeneratedRules struct {
 
 type Generated interface {
 	GetGenerated() *GeneratedRules
-	utils.Buildable
 	utils.Digestable
+	fmt.Stringer
 }
 
 func (rules *GeneratedRules) String() string {

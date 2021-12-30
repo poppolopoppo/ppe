@@ -29,7 +29,7 @@ func InitHAL() {
 
 func isInteractiveShell() bool {
 	switch os.Getenv("TERM") {
-	case "xterm", "xterm-256", "xterm-256color":
+	case "xterm", "xterm-256", "xterm-256color", "alacritty":
 		return true
 	default:
 		return false

@@ -149,7 +149,7 @@ func (pmp *PersistentMap) Usage() {
 }
 func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) {
 	for _, x := range parsables {
-		LogTrace("parse <%v>", x)
+		//LogTrace("parse <%v>", x)
 		x.InitFlags(pmp)
 	}
 	for k, v := range pmp.Vars {
@@ -159,7 +159,7 @@ func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) {
 		LogPanic("command: %v", err)
 	}
 	for _, x := range parsables {
-		LogTrace("apply vars <%v>", PrettyPrint(x))
+		//LogTrace("apply vars <%v>", PrettyPrint(x))
 		x.ApplyVars(pmp)
 	}
 	for k, v := range pmp.Vars {
@@ -167,7 +167,7 @@ func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) {
 	}
 }
 func (pmp *PersistentMap) Persistent(value PersistentVar, name, usage string) {
-	LogDebug("new persistent <%s> = %v", name, value)
+	//LogDebug("new persistent <%s> = %v", name, value)
 	pmp.Var(value, name, usage)
 	pmp.Vars[name] = value
 }
@@ -182,7 +182,7 @@ func (pmp *PersistentMap) IntVar(value *int, name, usage string) {
 }
 func (pmp *PersistentMap) LoadData(key string, dst PersistentVar) error {
 	if str, ok := pmp.Data[key]; ok {
-		LogDebug("load persistent <%s> = %v", key, str)
+		//LogDebug("load persistent <%s> = %v", key, str)
 		return dst.Set(str)
 	} else {
 		err := fmt.Errorf("key '%s' not found", key)
@@ -191,7 +191,7 @@ func (pmp *PersistentMap) LoadData(key string, dst PersistentVar) error {
 	}
 }
 func (pmp *PersistentMap) StoreData(key string, dst interface{}) {
-	LogDebug("store persistent <%s> = %v", key, dst)
+	// LogDebug("store persistent <%s> = %v", key, dst)
 	pmp.Data[key] = fmt.Sprint(dst)
 }
 func (pmp *PersistentMap) Serialize(dst io.Writer) error {

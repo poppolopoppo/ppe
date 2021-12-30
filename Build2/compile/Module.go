@@ -3,6 +3,7 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"fmt"
 	"path"
 )
 
@@ -10,7 +11,7 @@ type ModuleList []Module
 
 func (list ModuleList) Len() int { return len(list) }
 func (list ModuleList) Less(i, j int) bool {
-	return list[i].GetModule().Alias() < list[j].GetModule().Alias()
+	return list[i].GetModule().String() < list[j].GetModule().String()
 }
 func (list ModuleList) Swap(i, j int) { list[i], list[j] = list[j], list[i] }
 
@@ -101,18 +102,12 @@ type ModuleRules struct {
 type Module interface {
 	GetModule() *ModuleRules
 	GetNamespace() *NamespaceRules
-	utils.Buildable
 	utils.Digestable
+	fmt.Stringer
 }
 
-func (rules *ModuleRules) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Module", rules.String())
-}
 func (rules *ModuleRules) String() string {
 	return path.Join(rules.Path()...)
-}
-func (rules *ModuleRules) Build(utils.BuildContext) (utils.BuildStamp, error) {
-	return utils.MakeBuildStamp(rules)
 }
 
 func (rules *ModuleRules) Path() []string {
@@ -171,7 +166,7 @@ func (rules *ModuleRules) Decorate(env *CompileEnv, unit *Unit) {
 
 func (rules *ModuleRules) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(rules.ModuleName)
-	o.WriteString(rules.GetNamespace().Alias().String())
+	o.WriteString(rules.GetNamespace().String())
 	rules.ModuleDir.GetDigestable(o)
 	rules.ModuleType.GetDigestable(o)
 	rules.CppRtti.GetDigestable(o)
@@ -199,3 +194,10 @@ func (rules *ModuleRules) GetDigestable(o *bytes.Buffer) {
 	rules.Facet.GetDigestable(o)
 	rules.Source.GetDigestable(o)
 }
+
+// func (rules *ModuleRules) Generate(vis VisibilityType, name string, gen GeneratorFunc) {
+// 	rules.Generateds.Append(&GeneratedRules{
+// 		GeneratedName: name,
+// 		Visibility:    vis,
+// 	})
+// }

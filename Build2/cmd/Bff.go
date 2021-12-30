@@ -77,7 +77,7 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Assign("UnityInputIsolateListFile", sourceControlModifiedFiles.Output)
 
 		for _, unit := range translatedUnits.Units {
-			bff.Comment("Target %v", unit.Alias)
+			bff.Comment("Target %v", unit.Target)
 			switch unit.Payload {
 			case PAYLOAD_EXECUTABLE:
 				bff.Executable(unit)

@@ -29,9 +29,9 @@ const (
 func (x LogLevel) String() string {
 	switch x {
 	case LOG_DEBUG:
-		return fmt.Sprint(ANSI_FG0_MAGENTA, ANSI_ITALIC, " ~ ", " ")
+		return fmt.Sprint(ANSI_FG0_MAGENTA, ANSI_ITALIC, ANSI_FAINT, " ~ ", " ")
 	case LOG_VERYVERBOSE:
-		return fmt.Sprint(ANSI_FG1_BLACK, ANSI_ITALIC, "   ", " ")
+		return fmt.Sprint(ANSI_FG0_WHITE, ANSI_ITALIC, ANSI_FAINT, "   ", " ")
 	case LOG_TRACE:
 		return fmt.Sprint(ANSI_FG0_BLUE, ANSI_ITALIC, "   ", " ")
 	case LOG_VERBOSE:

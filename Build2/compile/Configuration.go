@@ -3,6 +3,7 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"fmt"
 	"sort"
 )
 
@@ -24,18 +25,12 @@ type ConfigRules struct {
 
 type Configuration interface {
 	GetConfig() *ConfigRules
-	utils.Buildable
 	utils.Digestable
+	fmt.Stringer
 }
 
-func (rules *ConfigRules) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Config", rules.String())
-}
 func (rules *ConfigRules) String() string {
 	return rules.ConfigName
-}
-func (rules *ConfigRules) Build(utils.BuildContext) (utils.BuildStamp, error) {
-	return utils.MakeBuildStamp(rules)
 }
 
 func (rules *ConfigRules) GetFacet() *Facet {
@@ -156,19 +151,16 @@ func (x *BuildConfigsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Data", "BuildConfigs")
 }
 func (x *BuildConfigsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	off := 0
-	x.Values = make([]Configuration, AllConfigurations.Len())
-	AllConfigurations.Range(func(_ string, rules Configuration) {
-		x.Values[off] = rules
-		off += 1
-	})
+	x.Values = AllConfigurations.Values()
 	sort.Slice(x.Values, func(i, j int) bool {
-		return x.Values[i].Alias() < x.Values[j].Alias()
+		return x.Values[i].String() < x.Values[j].String()
 	})
+
 	digester := utils.MakeDigester()
 	for _, config := range x.Values {
 		digester.Append(config)
 	}
+
 	return utils.BuildStamp{
 		Content: digester.Finalize(),
 	}, nil

@@ -3,6 +3,7 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"fmt"
 	"path"
 )
 
@@ -19,18 +20,12 @@ type NamespaceRules struct {
 
 type Namespace interface {
 	GetNamespace() *NamespaceRules
-	utils.Buildable
 	utils.Digestable
+	fmt.Stringer
 }
 
-func (rules *NamespaceRules) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Namespace", rules.String())
-}
 func (rules *NamespaceRules) String() string {
 	return path.Join(rules.Path()...)
-}
-func (rules *NamespaceRules) Build(utils.BuildContext) (utils.BuildStamp, error) {
-	return utils.MakeBuildStamp(rules)
 }
 
 func (rules *NamespaceRules) Path() []string {

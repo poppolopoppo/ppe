@@ -265,7 +265,7 @@ func loadNamespaceDesc(
 			desc.ExtendDesc(&parent.ExtensionDesc)
 		}
 
-		utils.LogVerbose("parsed new namespace: '%v'", desc.rules.Alias())
+		utils.LogVerbose("parsed new namespace: '%v'", desc.rules.String())
 
 		for _, x := range desc.Modules {
 			f := desc.rules.NamespaceDir.Folder(x).File(x + MODULEDESC_EXT)
@@ -348,13 +348,13 @@ func (x *BuildModulesT) Build(ctx utils.BuildContext) (utils.BuildStamp, error) 
 	for _, module := range moduleRules {
 		rules := module.GetModule()
 		if err := validateModuleDep(x, rules.PrivateDependencies); err != nil {
-			return utils.BuildStamp{}, fmt.Errorf("private dep for '%v': %v", rules.Alias(), err)
+			return utils.BuildStamp{}, fmt.Errorf("private dep for '%v': %v", rules.String(), err)
 		}
 		if err := validateModuleDep(x, rules.PublicDependencies); err != nil {
-			return utils.BuildStamp{}, fmt.Errorf("public dep for '%v': %v", rules.Alias(), err)
+			return utils.BuildStamp{}, fmt.Errorf("public dep for '%v': %v", rules.String(), err)
 		}
 		if err := validateModuleDep(x, rules.RuntimeDependencies); err != nil {
-			return utils.BuildStamp{}, fmt.Errorf("runtime dep for '%v': %v", rules.Alias(), err)
+			return utils.BuildStamp{}, fmt.Errorf("runtime dep for '%v': %v", rules.String(), err)
 		}
 	}
 

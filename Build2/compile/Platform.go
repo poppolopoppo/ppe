@@ -3,6 +3,7 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"fmt"
 	"sort"
 )
 
@@ -19,18 +20,12 @@ type PlatformRules struct {
 
 type Platform interface {
 	GetPlatform() *PlatformRules
-	utils.Buildable
 	utils.Digestable
+	fmt.Stringer
 }
 
-func (rules *PlatformRules) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Platform", rules.String())
-}
 func (rules *PlatformRules) String() string {
 	return rules.PlatformName
-}
-func (rules *PlatformRules) Build(utils.BuildContext) (utils.BuildStamp, error) {
-	return utils.MakeBuildStamp(rules)
 }
 
 func (rules *PlatformRules) GetFacet() *Facet {
@@ -80,19 +75,16 @@ func (x *BuildPlatformsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Data", "BuildPlatforms")
 }
 func (x *BuildPlatformsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	off := 0
-	x.Values = make([]Platform, AllPlatforms.Len())
-	AllPlatforms.Range(func(_ string, rules Platform) {
-		x.Values[off] = rules
-		off += 1
-	})
+	x.Values = AllPlatforms.Values()
 	sort.Slice(x.Values, func(i, j int) bool {
-		return x.Values[i].Alias() < x.Values[j].Alias()
+		return x.Values[i].String() < x.Values[j].String()
 	})
+
 	digester := utils.MakeDigester()
 	for _, platform := range x.Values {
 		digester.Append(platform)
 	}
+
 	return utils.BuildStamp{
 		Content: digester.Finalize(),
 	}, nil
