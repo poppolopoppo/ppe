@@ -9,6 +9,70 @@ import (
 	"sync"
 )
 
+func Where[T any](pred func(T) bool, values ...T) (result T) {
+	if i, ok := IndexIf(pred, values...); ok {
+		result = values[i]
+	}
+	return result
+}
+
+func IndexOf[T comparable](match T, values ...T) (int, bool) {
+	for i, x := range values {
+		if x == match {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+func IndexIf[T any](pred func(T) bool, values ...T) (int, bool) {
+	for i, x := range values {
+		if pred(x) {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+func Contains[T comparable](arr []T, values ...T) bool {
+	for _, x := range values {
+		if _, ok := IndexOf(x, arr...); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func AppendUniq[T comparable](src []T, elts ...T) (result []T) {
+	result = src
+	for _, x := range elts {
+		if _, ok := IndexOf(x, result...); !ok {
+			result = append(result, x)
+		}
+	}
+	return result
+}
+
+func Remove[T comparable](src []T, elts ...T) (result []T) {
+	result = src
+	for _, x := range elts {
+		if i, ok := IndexOf(x, result...); !ok {
+			result = append(result[:i], result[i+1:]...)
+		}
+	}
+	return result
+}
+
+func RemoveIf[T any](pred func(T) bool, src ...T) (result []T) {
+	result = src
+	for i, x := range src {
+		if pred(x) {
+			result = append(result[:i], result[i+1:]...)
+		}
+	}
+	return result
+}
+
 func Keys[K comparable, V any](it map[K]V) []K {
 	off := 0
 	result := make([]K, len(it))

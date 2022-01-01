@@ -36,7 +36,9 @@ var ListCommands = utils.MakeCommand(
 	"list all available commands",
 	nil,
 	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
-		for _, name := range utils.AllCommands.Keys() {
+		names := utils.AllCommands.Keys()
+		sort.Strings(names)
+		for _, name := range names {
 			fmt.Println(name)
 		}
 		return nil
@@ -48,7 +50,9 @@ var ListPlatforms = utils.MakeCommand(
 	"list all available platforms",
 	nil,
 	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
-		for _, name := range sort.StringSlice(compile.AllPlatforms.Keys()) {
+		names := compile.AllPlatforms.Keys()
+		sort.Strings(names)
+		for _, name := range names {
 			fmt.Println(name)
 		}
 		return nil
@@ -60,7 +64,9 @@ var ListConfigs = utils.MakeCommand(
 	"list all available configurations",
 	nil,
 	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
-		for _, name := range sort.StringSlice(compile.AllConfigurations.Keys()) {
+		names := compile.AllConfigurations.Keys()
+		sort.Strings(names)
+		for _, name := range names {
 			fmt.Println(name)
 		}
 		return nil
@@ -72,7 +78,9 @@ var ListCompilers = utils.MakeCommand(
 	"list all available compilers",
 	nil,
 	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
-		for _, name := range sort.StringSlice(compile.AllCompilers.Keys()) {
+		names := compile.AllCompilers.Keys()
+		sort.Strings(names)
+		for _, name := range names {
 			fmt.Println(name)
 		}
 		return nil

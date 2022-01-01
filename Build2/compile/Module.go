@@ -195,9 +195,10 @@ func (rules *ModuleRules) GetDigestable(o *bytes.Buffer) {
 	rules.Source.GetDigestable(o)
 }
 
-// func (rules *ModuleRules) Generate(vis VisibilityType, name string, gen GeneratorFunc) {
-// 	rules.Generateds.Append(&GeneratedRules{
-// 		GeneratedName: name,
-// 		Visibility:    vis,
-// 	})
-// }
+func (rules *ModuleRules) Generate(vis VisibilityType, name string, gen Generator) {
+	rules.Generateds.Append(&GeneratedRules{
+		GeneratedName: name,
+		Visibility:    vis,
+		Generator:     gen,
+	})
+}

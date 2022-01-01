@@ -48,7 +48,8 @@ func (x UnitList) GetDigestable(o *bytes.Buffer) {
 }
 
 type Unit struct {
-	Target  TargetAlias
+	Target TargetAlias
+
 	Ordinal int
 
 	CppRtti    CppRttiType
@@ -83,6 +84,14 @@ type Unit struct {
 	Facet
 }
 
+func (unit *Unit) Alias() utils.BuildAlias {
+	return utils.MakeBuildAlias("Build", unit.Target.String())
+}
+func (unit *Unit) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
+	buildModules := BuildModules.Need(bc)
+	module := buildModules.Modules[unit.Target.ModuleName]
+	sdlfsdklfjsdlkfjsdlkfjsdlkfdsjf
+}
 func (unit *Unit) String() string {
 	return unit.Target.String()
 }

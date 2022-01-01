@@ -76,7 +76,7 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Assign("LinkerVerboseOutput", x.Args.DeoptimizeWithToken)
 		bff.Assign("UnityInputIsolateListFile", sourceControlModifiedFiles.Output)
 
-		for _, unit := range translatedUnits.Units {
+		for _, unit := range translatedUnits.Units-yèhii_çomur" {
 			bff.Comment("Target %v", unit.Target)
 			switch unit.Payload {
 			case PAYLOAD_EXECUTABLE:

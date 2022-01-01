@@ -122,27 +122,21 @@ type CompileEnv struct {
 	Platform
 	Configuration
 	Compiler
-	*ModuleGraph
 	*CompileFlagsT
 	Facet
-
-	translatedUnits *utils.SharedMapT[Module, *Unit]
 }
 
 func NewCompileEnv(
 	platform Platform,
 	config Configuration,
 	compiler Compiler,
-	moduleGraph *ModuleGraph,
 	compileFlags *CompileFlagsT) (result *CompileEnv) {
 	result = &CompileEnv{
-		Platform:        platform,
-		Configuration:   config,
-		Compiler:        compiler,
-		ModuleGraph:     moduleGraph,
-		CompileFlagsT:   compileFlags,
-		Facet:           NewFacet(),
-		translatedUnits: utils.NewSharedMapT[Module, *Unit](),
+		Platform:      platform,
+		Configuration: config,
+		Compiler:      compiler,
+		CompileFlagsT: compileFlags,
+		Facet:         NewFacet(),
 	}
 
 	result.Facet.Defines.Append(
@@ -170,6 +164,13 @@ func (env *CompileEnv) Family() []string {
 }
 func (env *CompileEnv) String() string {
 	return strings.Join(append([]string{env.GetCompiler().CompilerName}, env.Family()...), "_")
+}
+func (env *CompileEnv) GetDigestable(o *bytes.Buffer) {
+	env.Platform.GetDigestable(o)
+	env.Configuration.GetDigestable(o)
+	env.Compiler.GetDigestable(o)
+	env.CompileFlagsT.GetDigestable(o)
+	env.Facet.GetDigestable(o)
 }
 
 func (env *CompileEnv) GetPlatform() *PlatformRules { return env.Platform.GetPlatform() }
@@ -327,13 +328,12 @@ func (env *CompileEnv) ModuleAlias(module Module) TargetAlias {
 		ConfigName:    env.GetConfig().ConfigName,
 	}
 }
-func (env *CompileEnv) Compile(module Module) {
+func (env *CompileEnv) Compile(module Module) *Unit {
 	moduleRules := module.GetModule()
 	rootDir := moduleRules.ModuleDir
 
 	unit := &Unit{
 		Target:          env.ModuleAlias(module),
-		Ordinal:         env.ModuleGraph.Get(module).Ordinal,
 		CppRtti:         env.GetCppRtti(module),
 		CppStd:          env.GetCppStd(module),
 		Debug:           env.GetDebugType(module),
@@ -384,12 +384,11 @@ func (env *CompileEnv) Compile(module Module) {
 		env.GetPlatform(),
 		env.GetConfig())
 
-	env.translatedUnits.Add(module, unit)
+	return unit
 }
-func (env *CompileEnv) Link() (result []*Unit, err error) {
+func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, units []*Unit) error {
 	env.translatedUnits.Range(func(m Module, unit *Unit) {
-		moduleNode := env.ModuleGraph.Get(m)
-
+		moduleNode := moduleGraph.Get(m)
 		moduleNode.Range(func(dep Module, vis VisibilityType) {
 			if other, ok := env.translatedUnits.Get(dep); ok {
 				switch dep.GetModule().ModuleType {
@@ -409,8 +408,9 @@ func (env *CompileEnv) Link() (result []*Unit, err error) {
 			}
 		}, VIS_EVERYTHING)
 
+		unit.Ordinal = moduleNode.Ordinal
 		unit.IncludeDependencies.Range(func(target TargetAlias) {
-			dep := env.ModuleGraph.Module(target.ModuleAlias())
+			dep := moduleGraph.Module(target.ModuleAlias())
 			if other, ok := env.translatedUnits.Get(dep); ok {
 				unit.Facet.Append(&other.Transitive)
 			} else {
@@ -419,7 +419,7 @@ func (env *CompileEnv) Link() (result []*Unit, err error) {
 		})
 
 		unit.StaticDependencies.Range(func(target TargetAlias) {
-			dep := env.ModuleGraph.Module(target.ModuleAlias())
+			dep := moduleGraph.Module(target.ModuleAlias())
 			if other, ok := env.translatedUnits.Get(dep); ok {
 				unit.IncludePaths.Append(other.Transitive.IncludePaths...)
 				unit.ForceIncludes.Append(other.Transitive.ForceIncludes...)
@@ -449,79 +449,97 @@ func (env *CompileEnv) Link() (result []*Unit, err error) {
 	return result, nil
 }
 
+type BuildEnvironmentsT struct {
+	utils.SetT[*CompileEnv]
+}
+
+func (b *BuildEnvironmentsT) Alias() utils.BuildAlias {
+	return utils.MakeBuildAlias("Build", "Environments")
+}
+func (b *BuildEnvironmentsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
+	b.Clear()
+
+	compileFlags := CompileFlags.Get(utils.CommandEnv.Flags)
+	allPlatforms := BuildPlatforms.Need(bc).Values
+	allConfigs := BuildConfigs.Need(bc).Values
+
+	count := len(allPlatforms) * len(allConfigs)
+
+	pbar := utils.LogProgress(0, count, b.Alias().String())
+	defer pbar.Close()
+
+	digester := utils.MakeDigester()
+	for _, platform := range allPlatforms {
+		for _, config := range allConfigs {
+			compiler := GetBuildCompiler(bc, platform.GetPlatform().Arch)
+			env := NewCompileEnv(platform, config, compiler, compileFlags)
+
+			utils.LogVerbose("new compile env: %v", env)
+			pbar.Inc()
+
+			b.Append(env)
+			digester.Append(env)
+		}
+	}
+
+	return utils.MakeBuildStamp(digester.Finalize())
+}
+
+var BuildEnvironments = utils.MakeBuildable(func(bi utils.BuildInit) *BuildEnvironmentsT {
+	result := &BuildEnvironmentsT{}
+	bi.DependsOn(CompileFlags.Get(utils.CommandEnv.Flags))
+	return result
+})
+
 type BuildTranslatedUnitsT struct {
-	Units []*Unit
+	utils.SetT[*Unit]
 }
 
 func (b *BuildTranslatedUnitsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Build", "TranslatedUnits")
 }
-func (b *BuildTranslatedUnitsT) Build(ctx utils.BuildContext) (utils.BuildStamp, error) {
-	pbarUnits := utils.LogProgress(0, 0, "BuildTranslatedUnits")
-	defer pbarUnits.Close()
+func (b *BuildTranslatedUnitsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
+	pbar := utils.LogProgress(0, 0, b.Alias().String())
+	defer pbar.Close()
 
-	allPlatforms := BuildPlatforms.Need(ctx).Values
-	allConfigs := BuildConfigs.Need(ctx).Values
-	allModules := BuildModules.Need(ctx)
+	compileEnvs := BuildEnvironments.Need(bc)
 
+	allModules := BuildModules.Need(bc)
 	moduleGraph := GetModuleGraph(allModules)
 
-	count := len(allPlatforms) * len(allConfigs)
-	compileEnvs := make(chan *CompileEnv, count)
-
-	go func() {
-		defer close(compileEnvs)
-
-		compileFlags := CompileFlags.Get(utils.CommandEnv.Flags)
-
-		pbarCompileEnvs := utils.LogProgress(0, count, "BuildEnvironments")
-		defer pbarCompileEnvs.Close()
-
-		for _, platform := range allPlatforms {
-			for _, config := range allConfigs {
-				compiler := GetBuildCompiler(ctx, platform.GetPlatform().Arch)
-				env := NewCompileEnv(platform, config, compiler, moduleGraph, compileFlags)
-
-				utils.LogVerbose("new compile env: %v", env)
-				pbarCompileEnvs.Inc()
-
-				compileEnvs <- env
-			}
-		}
-	}()
-
 	var pendingCompile []utils.Future[[]*Unit]
-	for x := range compileEnvs {
+	for _, x := range compileEnvs.Slice() {
 		compileEnv := x
 		pendingCompile = append(pendingCompile, utils.MakeFuture(func() ([]*Unit, error) {
+			n := len(moduleGraph.Keys())
+			units := make([]*Unit, n)
 			wg := sync.WaitGroup{}
-			n := len(compileEnv.ModuleGraph.Keys())
 			wg.Add(n)
-			pbarUnits.Add(n)
-			for _, module := range compileEnv.ModuleGraph.Keys() {
+			pbar.Add(n)
+			for i, module := range moduleGraph.Keys() {
 				go func(compileEnv *CompileEnv, module Module) {
-					compileEnv.Compile(module)
-					pbarUnits.Inc()
+					units[i] = compileEnv.Compile(module)
+					pbar.Inc()
 					wg.Done()
 				}(compileEnv, module)
 			}
 			wg.Wait()
-			return compileEnv.Link()
+			return units, compileEnv.Link(bc, moduleGraph, units)
 		}))
 	}
 
 	for _, x := range pendingCompile {
 		units := x.Join().Success()
-		b.Units = append(b.Units, units...)
+		b.Append(units...)
 		for _, u := range units {
-			ctx.DependsOn(u.Compiler)
+			bc.DependsOn(u.Compiler)
 		}
 	}
 
 	o := bytes.Buffer{}
-	digest := utils.MapDigest(len(b.Units), func(i int) []byte {
+	digest := utils.MapDigest(b.Len(), func(i int) []byte {
 		o.Reset()
-		b.Units[i].GetDigestable(&o)
+		b.At(i).GetDigestable(&o)
 		return o.Bytes()
 	})
 
@@ -529,7 +547,5 @@ func (b *BuildTranslatedUnitsT) Build(ctx utils.BuildContext) (utils.BuildStamp,
 }
 
 var BuildTranslatedUnits = utils.MakeBuildable(func(bi utils.BuildInit) *BuildTranslatedUnitsT {
-	result := &BuildTranslatedUnitsT{}
-	bi.DependsOn(CompileFlags.Get(utils.CommandEnv.Flags))
-	return result
+	return &BuildTranslatedUnitsT{}
 })
