@@ -8,7 +8,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IPipelineCompiler : public FRefCountable {
+class PPE_RHI_API IPipelineCompiler : public FRefCountable {
 public:
     virtual ~IPipelineCompiler() = default;
 

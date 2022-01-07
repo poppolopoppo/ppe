@@ -344,15 +344,15 @@ auto FMemoryTracking::FCounters::Difference(const FCounters& o) const -> FSnapsh
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::FCounters::ResetAt(const FSnapshot& snapshot) {
-    NumAllocs.store(snapshot.NumAllocs, std::memory_order_relaxed);
-    MinSize.store(snapshot.MinSize, std::memory_order_relaxed);
-    MaxSize.store(snapshot.MaxSize, std::memory_order_relaxed);
-    TotalSize.store(snapshot.TotalSize, std::memory_order_relaxed);
-    PeakAllocs.store(snapshot.PeakAllocs, std::memory_order_relaxed);
-    PeakSize.store(snapshot.PeakSize, std::memory_order_relaxed);
-    AccumulatedAllocs.store(snapshot.AccumulatedAllocs, std::memory_order_relaxed);
-    AccumulatedSize.store(snapshot.AccumulatedSize, std::memory_order_relaxed);
-    SmallAllocs.store(snapshot.SmallAllocs, std::memory_order_relaxed);
+    NumAllocs.store(checked_cast<size_t>(snapshot.NumAllocs), std::memory_order_relaxed);
+    MinSize.store(checked_cast<size_t>(snapshot.MinSize), std::memory_order_relaxed);
+    MaxSize.store(checked_cast<size_t>(snapshot.MaxSize), std::memory_order_relaxed);
+    TotalSize.store(checked_cast<size_t>(snapshot.TotalSize), std::memory_order_relaxed);
+    PeakAllocs.store(checked_cast<size_t>(snapshot.PeakAllocs), std::memory_order_relaxed);
+    PeakSize.store(checked_cast<size_t>(snapshot.PeakSize), std::memory_order_relaxed);
+    AccumulatedAllocs.store(checked_cast<size_t>(snapshot.AccumulatedAllocs), std::memory_order_relaxed);
+    AccumulatedSize.store(checked_cast<size_t>(snapshot.AccumulatedSize), std::memory_order_relaxed);
+    SmallAllocs.store(checked_cast<size_t>(snapshot.SmallAllocs), std::memory_order_relaxed);
 
     std::atomic_thread_fence(std::memory_order_acquire);
 }
