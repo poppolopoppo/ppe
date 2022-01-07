@@ -121,6 +121,7 @@
 - [ ] Wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
 
 ## Physics engine:
+- Impulse-based Dynamic Simulation of Rigid Body Systems: https://people.eecs.berkeley.edu/~jfc/mirtich/thesis/mirtichThesis.pdf
 - Detailed Rigid Body Simulation with Extended Position Based Dynamics: https://www.youtube.com/watch?v=zzy6u1z_l9A https://matthias-research.github.io/pages/publications/PBDBodies.pdf
 - CIS563, 2015, Position Based Dynamics: https://www.youtube.com/watch?v=fH3VW9SaQ_c
 - https://www.youtube.com/watch?v=-_IspRG548E
