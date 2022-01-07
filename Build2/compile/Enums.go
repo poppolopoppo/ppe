@@ -4,6 +4,7 @@ import (
 	utils "build/utils"
 	"bytes"
 	"fmt"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -18,13 +19,31 @@ const (
 	ARCH_X86 ArchType = iota
 	ARCH_X64
 	ARCH_ARM
+	ARCH_ARM64
 )
+
+var CurrentArch = utils.Memoize(func() ArchType {
+	switch runtime.GOARCH {
+	case "386":
+		return ARCH_X86
+	case "amd64":
+		return ARCH_X64
+	case "arm":
+		return ARCH_ARM
+	case "arm64":
+		return ARCH_ARM64
+	default:
+		utils.UnexpectedValue(runtime.GOARCH)
+		return ARCH_ARM
+	}
+})
 
 func ArchTypes() []ArchType {
 	return []ArchType{
 		ARCH_X86,
 		ARCH_X64,
 		ARCH_ARM,
+		ARCH_ARM64,
 	}
 }
 func (x ArchType) String() string {
@@ -35,6 +54,8 @@ func (x ArchType) String() string {
 		return "x64"
 	case ARCH_ARM:
 		return "ARM"
+	case ARCH_ARM64:
+		return "ARM64"
 	default:
 		utils.UnexpectedValue(x)
 		return ""
@@ -48,6 +69,8 @@ func (x *ArchType) Set(in string) error {
 		*x = ARCH_X64
 	case ARCH_ARM.String():
 		*x = ARCH_ARM
+	case ARCH_ARM64.String():
+		*x = ARCH_ARM64
 	default:
 		utils.UnexpectedValue(in)
 	}
@@ -564,7 +587,6 @@ const (
 	PAYLOAD_SHAREDLIB
 	PAYLOAD_PRECOMPILEDHEADER
 	PAYLOAD_HEADERS
-	PAYLOAD_DEBUG
 )
 
 func PayloadTypes() []PayloadType {
@@ -575,7 +597,6 @@ func PayloadTypes() []PayloadType {
 		PAYLOAD_SHAREDLIB,
 		PAYLOAD_PRECOMPILEDHEADER,
 		PAYLOAD_HEADERS,
-		PAYLOAD_DEBUG,
 	}
 }
 func (x PayloadType) String() string {
@@ -592,8 +613,6 @@ func (x PayloadType) String() string {
 		return "PRECOMPILEDHEADER"
 	case PAYLOAD_HEADERS:
 		return "HEADERS"
-	case PAYLOAD_DEBUG:
-		return "DEBUG"
 	default:
 		utils.UnexpectedValue(x)
 		return ""
@@ -613,8 +632,6 @@ func (x *PayloadType) Set(in string) error {
 		*x = PAYLOAD_PRECOMPILEDHEADER
 	case PAYLOAD_HEADERS.String():
 		*x = PAYLOAD_HEADERS
-	case PAYLOAD_DEBUG.String():
-		*x = PAYLOAD_DEBUG
 	default:
 		utils.UnexpectedValue(in)
 	}

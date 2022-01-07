@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/gob"
 	"fmt"
+	"reflect"
 	"regexp"
 	"sync"
 )
@@ -17,12 +18,6 @@ func InitUtils() {
 	gob.Register(&SourceControlStatus{})
 }
 
-var re_nonAlphaNumeric = regexp.MustCompile(`[^a-zA-Z0-9]+`)
-
-func SanitizeIdentifier(in string) string {
-	return re_nonAlphaNumeric.ReplaceAllString(in, "_")
-}
-
 /***************************************
  * Higher order programming
  ***************************************/
@@ -33,6 +28,12 @@ type Closable interface {
 
 type Equatable[T any] interface {
 	Equals(other T) bool
+}
+
+var re_nonAlphaNumeric = regexp.MustCompile(`[^\w\d]+`)
+
+func SanitizeIdentifier(in string) string {
+	return re_nonAlphaNumeric.ReplaceAllString(in, "_")
 }
 
 func Join[T fmt.Stringer](delim string, it ...T) (result string) {
@@ -95,4 +96,20 @@ func Range[T any](transform func(int) T, n int) (dst []T) {
 		dst[i] = transform(i)
 	}
 	return dst
+}
+
+func Inspect[T any](it ...T) []string {
+	result := make([]string, len(it))
+	for i, x := range it {
+		result[i] = fmt.Sprint(reflect.TypeOf(x), "->", reflect.ValueOf(x))
+	}
+	return result
+}
+
+func Stringize[T fmt.Stringer](it ...T) []string {
+	result := make([]string, len(it))
+	for i, x := range it {
+		result[i] = x.String()
+	}
+	return result
 }

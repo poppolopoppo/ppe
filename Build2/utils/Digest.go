@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"hash"
+	"hash/fnv"
 	"runtime"
 	"runtime/debug"
 
@@ -156,4 +157,10 @@ func GetDigestable(o *bytes.Buffer, elts ...Digestable) {
 	MapDigestable(o, len(elts), func(i int) Digestable {
 		return elts[i]
 	})
+}
+
+func FNV32a(in string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(in))
+	return h.Sum32()
 }

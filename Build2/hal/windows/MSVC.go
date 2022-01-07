@@ -49,6 +49,14 @@ func (msvc *MsvcCompiler) GetDigestable(o *bytes.Buffer) {
 	msvc.ProductInstall.GetDigestable(o)
 }
 
+func (msvc *MsvcCompiler) EnvPath() DirSet {
+	return NewDirSet(
+		msvc.WorkingDir(),
+		msvc.WindowsSDK.ResourceCompiler.Dirname)
+}
+func (msvc *MsvcCompiler) WorkingDir() Directory {
+	return msvc.ProductInstall.VcToolsHostPath()
+}
 func (msvc *MsvcCompiler) Extname(x PayloadType) string {
 	switch x {
 	case PAYLOAD_EXECUTABLE:
@@ -63,8 +71,6 @@ func (msvc *MsvcCompiler) Extname(x PayloadType) string {
 		return ".pch"
 	case PAYLOAD_HEADERS:
 		return ".h"
-	case PAYLOAD_DEBUG:
-		return ".pdb"
 	default:
 		UnexpectedValue(x)
 		return ""
@@ -107,15 +113,14 @@ func (msvc *MsvcCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename)
 	case DEBUG_DISABLED:
 		f.LinkerOptions.Append("/DEBUG:NONE")
 		return
+	case DEBUG_SYMBOLS:
+		pdbPath := output.ReplaceExt(".pdb").String()
+		f.CompilerOptions.Append("/Z7")
+		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+pdbPath+"\"")
+		return
 	case DEBUG_EMBEDDED:
 		f.CompilerOptions.Append("/Z7")
 		f.LinkerOptions.Append("/DEBUG")
-		return
-	case DEBUG_SYMBOLS:
-		pdbPath := output.ReplaceExt(".pdb").String()
-		f.CompilerOptions.Append("/Zi", "/FS", "/Fd\""+pdbPath+"\"")
-		f.PrecompiledHeaderOptions.Append("/Zi", "/Fd\""+pdbPath+"\"")
-		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+pdbPath+"\"")
 		return
 	default:
 		UnexpectedValue(sym)
@@ -216,8 +221,8 @@ func makeMsvcCompiler(
 	librarian Filename,
 	linker Filename,
 	extraFiles ...Filename) {
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
-	windowsFlags := WindowsFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
+	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
 
 	bc.DependsOn(compileFlags)
 	bc.DependsOn(windowsFlags)
@@ -313,7 +318,7 @@ func makeMsvcCompiler(
 
 	// configure linker
 	facet.LinkerOptions.Append(
-		"/nolgo",             // no copyright when compiling
+		"/nologo",            // no copyright when compiling
 		"/TLBID:1",           //# https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
 		"/IGNORE:4001",       //# https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
 		"/IGNORE:4099",       //# don't have PDB for some externals
@@ -323,14 +328,10 @@ func makeMsvcCompiler(
 		"/SUBSYSTEM:WINDOWS", //# ~Windows~ application type (vs Console)
 		"/fastfail",          //# better error reporting
 		"kernel32.lib",
-		//# TODO : slim that list down
-		"User32.lib",
 		"Shell32.lib",
 		"Gdi32.lib",
 		"Shlwapi.lib",
-		"userenv.lib",
-		"advapi32.lib",
-		"version.lib",
+		"Version.lib",
 		"/OUT:\"%2\"",
 		"\"%1\"",
 	)
@@ -378,7 +379,7 @@ func makeMsvcCompiler(
 	if windowsFlags.JustMyCode && msc_ver >= MSC_VER_2019 {
 		LogVeryVerbose("MSVC: using just-my-code")
 		facet.AddCompilationFlag_NoAnalysis("/JMC")
-	} else {
+	} else if msc_ver >= MSC_VER_2019 {
 		facet.AddCompilationFlag_NoAnalysis("/JMC-")
 	}
 
@@ -401,8 +402,8 @@ func makeMsvcCompiler(
 }
 
 func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
-	windowsFlags := WindowsFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
+	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
 
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
@@ -452,9 +453,10 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 		u.AnalysisOptions.Append(
 			"/analyze",
-			"/analyse:stacksize",
-			fmt.Sprint(stackSize),
+			fmt.Sprint("/analyse:stacksize", stackSize),
+			fmt.Sprintf("/analyze:plugin\"%v\"", msvc.ProductInstall.VcToolsHostPath().File("EspXEngine.dll")),
 		)
+		u.Defines.Append("ANALYZE")
 		u.LinkerOptions.Append(
 			"/VERBOSE",
 			// "/VERBOSE:LIB",
@@ -465,23 +467,23 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	}
 
 	// set dependent linker options
-	if compileFlags.Incremental && u.Sanitizer == SANITIZER_NONE {
-		LogVeryVerbose("MSVC: using incremental linker with fastlink")
-		u.LinkerOptions.Append("/INCREMENTAL")
-	} else {
-		LogVeryVerbose("MSVC: using non-incremental linker")
-		u.LinkerOptions.Append("/INCREMENTAL:NO")
+
+	if u.Sanitizer != SANITIZER_NONE && u.CompilerOptions.Contains("/LTCG") {
+		LogVeryVerbose("MSVC: disable LTCG due to %v", u.Sanitizer)
+		u.LinkerOptions.Remove("/LTCG")
 	}
 
-	if u.Facet.CompilerOptions.Contains("/LTCG") {
-		if u.Sanitizer == SANITIZER_NONE {
-			if compileFlags.Incremental {
-				LogVeryVerbose("MSVC: using link-time code generation with incremental linker")
-				u.Facet.LinkerOptions.Append("/LTCG:INCREMENTAL")
-			}
-		} else {
-			u.Facet.CompilerOptions.Remove("/LTCG")
+	if compileFlags.Incremental && u.Sanitizer == SANITIZER_NONE {
+		LogVeryVerbose("MSVC: using incremental linker with fastlink")
+		if u.LinkerOptions.Contains("/LTCG") {
+			u.LinkerOptions.Remove("/LTCG")
+			u.LinkerOptions.Append("/LTCG:INCREMENTAL")
+		} else if !u.LinkerOptions.Contains("/LTCG:INCREMENTAL") {
+			u.LinkerOptions.Append("/INCREMENTAL")
 		}
+	} else if !u.LinkerOptions.Contains("/INCREMENTAL") {
+		LogVeryVerbose("MSVC: using non-incremental linker")
+		u.LinkerOptions.Append("/INCREMENTAL:NO")
 	}
 
 	// enable perfSDK if necessary
@@ -509,14 +511,33 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
  * Compiler options per configuration
  ***************************************/
 
-func mscv_CXX_linkTimeCodeGeneration(f *Facet, enabled bool) {
-	if enabled {
-		f.LinkerOptions.Append("/LTCG")
+func msvc_CXX_runtimeLibrary(f *Facet, staticCrt bool, debug bool) {
+	var runtimeFlag string
+	var suffix string
+	if debug {
+		suffix = "d"
+	}
+	if staticCrt {
+		runtimeFlag = "/MT"
+		f.AddCompilationFlag(
+			"LIBCMT"+suffix+".LIB",
+			"libvcruntime"+suffix+".lib",
+			"libucrt"+suffix+".lib")
 	} else {
-		f.LinkerOptions.Append("/LTCG:OFF")
+		runtimeFlag = "/MD"
+	}
+	f.AddCompilationFlag(runtimeFlag + suffix)
+}
+func msvc_CXX_linkTimeCodeGeneration(f *Facet, enabled bool) {
+	if !f.LinkerOptions.Any("/LTCG", "/LTCG:OFF", "/LTCG:INCREMENTAL") {
+		if enabled {
+			f.LinkerOptions.Append("/LTCG")
+		} else {
+			f.LinkerOptions.Append("/LTCG:OFF")
+		}
 	}
 }
-func mscv_CXX_runtimeChecks(f *Facet, enabled bool, rtc1 bool) {
+func msvc_CXX_runtimeChecks(f *Facet, enabled bool, rtc1 bool) {
 	if enabled {
 		// https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
 		f.AddCompilationFlag("/GS", "/sdl")
@@ -524,8 +545,10 @@ func mscv_CXX_runtimeChecks(f *Facet, enabled bool, rtc1 bool) {
 			// https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx
 			f.AddCompilationFlag("/RTC1")
 		}
+		f.LinkerOptions.Append("/GUARD:CF")
 	} else {
-		f.AddCompilationFlag("/GS-")
+		f.AddCompilationFlag("/GS-", "/sdl-")
+		f.LinkerOptions.Append("/GUARD:NO")
 	}
 }
 func msvc_STL_debugHeap(f *Facet, enabled bool) {
@@ -549,43 +572,48 @@ func msvc_STL_iteratorDebug(f *Facet, enabled bool) {
 
 func decorateMsvcConfig_Debug(f *Facet) {
 	f.AddCompilationFlag("/Od", "/Oy-", "/Gw-")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO")
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
-	mscv_CXX_linkTimeCodeGeneration(f, false)
-	mscv_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), true)
+	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
+	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
+	msvc_CXX_linkTimeCodeGeneration(f, false)
+	msvc_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), true)
 	msvc_STL_debugHeap(f, true)
 	msvc_STL_iteratorDebug(f, true)
 }
 func decorateMsvcConfig_FastDebug(f *Facet) {
 	f.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Zo")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO")
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
-	mscv_CXX_linkTimeCodeGeneration(f, true)
-	mscv_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), false)
+	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
+	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
+	msvc_CXX_linkTimeCodeGeneration(f, true)
+	msvc_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), false)
 	msvc_STL_debugHeap(f, true)
 	msvc_STL_iteratorDebug(f, true)
 }
 func decorateMsvcConfig_Devel(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Zo")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO")
-	mscv_CXX_linkTimeCodeGeneration(f, true)
-	mscv_CXX_runtimeChecks(f, false, false)
+	f.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Zo", "/GL")
+	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
+	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(f, true)
+	msvc_CXX_runtimeChecks(f, false, false)
 	msvc_STL_debugHeap(f, false)
 	msvc_STL_iteratorDebug(f, false)
 }
 func decorateMsvcConfig_Test(f *Facet) {
 	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gy", "/GL", "/GA", "/Zo")
 	f.LinkerOptions.Append("/DYNAMICBASE", "/PROFILE", "/OPT:REF")
-	mscv_CXX_linkTimeCodeGeneration(f, true)
-	mscv_CXX_runtimeChecks(f, false, false)
+	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(f, true)
+	msvc_CXX_runtimeChecks(f, false, false)
 	msvc_STL_debugHeap(f, false)
 	msvc_STL_iteratorDebug(f, false)
 }
 func decorateMsvcConfig_Shipping(f *Facet) {
 	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gy", "/GL", "/GA", "/Zo")
 	f.LinkerOptions.Append("/DYNAMICBASE", "/OPT:REF", "/OPT:ICF=3")
-	mscv_CXX_linkTimeCodeGeneration(f, true)
-	mscv_CXX_runtimeChecks(f, false, false)
+	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(f, true)
+	msvc_CXX_runtimeChecks(f, false, false)
 	msvc_STL_debugHeap(f, false)
 	msvc_STL_iteratorDebug(f, false)
 }
@@ -632,6 +660,10 @@ type MsvcProductInstall struct {
 	Cl_exe         Filename
 	Lib_exe        Filename
 	Link_exe       Filename
+}
+
+func (x *MsvcProductInstall) VcToolsHostPath() Directory {
+	return x.VcToolsPath.Folder("bin", "Host"+x.HostArch, x.Arch)
 }
 
 func (x *MsvcProductInstall) Alias() BuildAlias {
@@ -698,6 +730,7 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 	LogTrace(strings.Join(append([]string{MSVC_VSWHERE_EXE.String()}, args...), " "))
 
 	cmd := exec.Command(MSVC_VSWHERE_EXE.String(), args...)
+	bc.NeedFile(MSVC_VSWHERE_EXE)
 
 	var entries []VsWhereEntry
 	if outp, err := cmd.Output(); err != nil {
@@ -735,27 +768,32 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 	x.VcToolsPath = x.VsInstallPath.Folder("VC", "Tools", "MSVC", vcToolsVersion)
 	bc.NeedFolder(x.VcToolsPath)
 
-	vcToolsHostPath := x.VcToolsPath.Folder("bin", "Host"+x.HostArch, x.Arch)
+	vcToolsHostPath := x.VcToolsHostPath()
 
 	x.VcToolsFileSet = FileSet{}
-	if cluiDll, err := vcToolsHostPath.FindFileRec(MakeGlobRegexp("clui.dll")); err == nil {
-		x.VcToolsFileSet.Append(cluiDll)
-	} else {
-		return BuildStamp{}, err
-	}
-
 	x.VcToolsFileSet.Append(
 		vcToolsHostPath.File("c1.dll"),
 		vcToolsHostPath.File("c1xx.dll"),
 		vcToolsHostPath.File("c2.dll"),
-		vcToolsHostPath.File("vcruntime140_1.dll"),
 		vcToolsHostPath.File("msobj140.dll"),
 		vcToolsHostPath.File("mspdb140.dll"),
 		vcToolsHostPath.File("mspdbcore.dll"),
+		vcToolsHostPath.File("mspdbsrv.exe"),
 		vcToolsHostPath.File("mspft140.dll"),
-		vcToolsHostPath.File("msvcp140_1.dll"),
-		vcToolsHostPath.File("msvcp140_2.dll"),
-		vcToolsHostPath.File("vcruntime140.dll"))
+		vcToolsHostPath.File("msvcp140.dll"),
+		vcToolsHostPath.File("msvcp140_atomic_wait.dll"), // Required circa 16.8.3 (14.28.29333)
+		vcToolsHostPath.File("tbbmalloc.dll"),            // Required as of 16.2 (14.22.27905)
+		vcToolsHostPath.File("vcruntime140.dll"),
+		vcToolsHostPath.File("vcruntime140_1.dll")) // Required as of 16.5.1 (14.25.28610)
+
+	if cluiDll, err := vcToolsHostPath.FindFileRec(MakeGlobRegexp("clui.dll")); err == nil {
+		x.VcToolsFileSet.Append(
+			cluiDll,
+			cluiDll.Dirname.File("mspft140ui.dll")) // Localized messages for static analysis
+	} else {
+		return BuildStamp{}, err
+	}
+
 	bc.NeedFile(x.VcToolsFileSet...)
 
 	x.Cl_exe = vcToolsHostPath.File("cl.exe")
@@ -790,7 +828,7 @@ func (msvc *MsvcCompiler) Build(bc BuildContext) (BuildStamp, error) {
 }
 
 func GetMsvcProductInstall(bc BuildContext, arch ArchType) *MsvcProductInstall {
-	windowsFlags := WindowsFlags.Get(CommandEnv.Flags)
+	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
 	bc.DependsOn(windowsFlags)
 
 	msc_ver := windowsFlags.MscVer
@@ -804,8 +842,7 @@ func GetMsvcProductInstall(bc BuildContext, arch ArchType) *MsvcProductInstall {
 		Insider:   windowsFlags.Insider.Get(),
 	}
 	actual, err := bc.NeedBuilder(func(bg BuildGraph) Buildable {
-		vswhere := bg.Create(MSVC_VSWHERE_EXE)
-		return bg.Create(builder, vswhere.Alias()).GetBuildable()
+		return bg.Create(builder).GetBuildable()
 	})
 	if err != nil {
 		panic(err)

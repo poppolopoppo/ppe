@@ -168,11 +168,19 @@ func (set SetT[T]) Sort(less func(a, b T) bool) {
 	})
 }
 
-var stringInterner SharedMapT[string, string]
+const STRING_INTERNER_BUCKETS uint32 = 16
+const STRING_INTERNER_MINLEN int = 12
+
+var stringInterner [STRING_INTERNER_BUCKETS]SharedMapT[string, string]
 
 func InternString(in string) string {
-	if out, ok := stringInterner.Get(in); !ok {
-		stringInterner.Add(in, in)
+	if len(in) < STRING_INTERNER_MINLEN {
+		return in
+	}
+	h := FNV32a(in) % STRING_INTERNER_BUCKETS
+	interner := &stringInterner[h]
+	if out, ok := interner.Get(in); !ok {
+		interner.Add(in, in)
 		return in
 	} else {
 		return out
@@ -211,6 +219,14 @@ func (set StringSet) IndexOf(it string) (int, bool) {
 	return len(set), false
 }
 
+func (set StringSet) Any(it ...string) bool {
+	for _, x := range it {
+		if _, ok := set.IndexOf(x); ok {
+			return true
+		}
+	}
+	return false
+}
 func (set StringSet) Contains(it ...string) bool {
 	for _, x := range it {
 		if _, ok := set.IndexOf(x); !ok {
@@ -336,11 +352,11 @@ func (set FutureSet[T]) Join(log string, args ...interface{}) []T {
 	return result
 }
 
-type SharedMapT[K, V any] struct {
+type SharedMapT[K comparable, V any] struct {
 	intern sync.Map
 }
 
-func NewSharedMapT[K, V any]() *SharedMapT[K, V] {
+func NewSharedMapT[K comparable, V any]() *SharedMapT[K, V] {
 	return &SharedMapT[K, V]{sync.Map{}}
 }
 func (shared *SharedMapT[K, V]) Len() (count int) {
@@ -387,6 +403,13 @@ func (shared *SharedMapT[K, V]) Get(key K) (result V, ok bool) {
 		return result, false
 	}
 }
+func (shared *SharedMapT[K, V]) Pin() map[K]V {
+	result := make(map[K]V, shared.Len())
+	shared.Range(func(k K, v V) {
+		result[k] = v
+	})
+	return result
+}
 func (shared *SharedMapT[K, V]) Make(fn func() (K, V)) V {
 	k, v := fn()
 	shared.Add(k, v)
@@ -396,14 +419,16 @@ func (shared *SharedMapT[K, V]) Clear() {
 	shared.intern = sync.Map{}
 }
 
-type ServiceLocator[V any] *SharedMapT[string, V]
+type ServiceLocator[V any] struct {
+	*SharedMapT[string, V]
+}
 type ServiceAccessor[T, V any] struct {
 	key     string
 	factory func() *T
 }
 
 func NewServiceLocator[V any]() ServiceLocator[V] {
-	return ServiceLocator[V](NewSharedMapT[string, V]())
+	return ServiceLocator[V]{NewSharedMapT[string, V]()}
 }
 
 func MakeServiceAccessor[V, T any](factory func() *T) ServiceAccessor[T, V] {
@@ -415,19 +440,36 @@ func MakeServiceAccessor[V, T any](factory func() *T) ServiceAccessor[T, V] {
 	}
 }
 
-func (acc ServiceAccessor[T, V]) Get(services ServiceLocator[V]) *T {
-	if anon, ok := (*services).Get(acc.key); ok {
+func (acc ServiceAccessor[T, V]) Get(services ServiceLocator[V]) (*T, error) {
+	if anon, ok := services.Get(acc.key); ok {
 		var x interface{} = anon
-		return x.(*T)
+		return x.(*T), nil
 	} else {
-		return nil
+		return nil, fmt.Errorf("service unavailable: '%v'", acc.key)
 	}
 }
-
-func (acc ServiceAccessor[T, V]) Add(services ServiceLocator[V]) {
+func (acc ServiceAccessor[T, V]) Need(services ServiceLocator[V]) *T {
+	if x, err := acc.Get(services); err == nil {
+		return x
+	} else {
+		panic(err)
+	}
+}
+func (acc ServiceAccessor[T, V]) Create(services ServiceLocator[V]) *T {
 	concrete := acc.factory()
 	var x interface{} = concrete
-	(*services).Add(acc.key, x.(V))
+	services.Add(acc.key, x.(V))
+	return concrete
+}
+func (acc ServiceAccessor[T, V]) Add(services ServiceLocator[V]) {
+	acc.Create(services)
+}
+func (acc ServiceAccessor[T, V]) FindOrAdd(services ServiceLocator[V]) *T {
+	if x, err := acc.Get(services); err == nil {
+		return x
+	} else {
+		return acc.Create(services)
+	}
 }
 
 type ServiceEvent[V any] struct {

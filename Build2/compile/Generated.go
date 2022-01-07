@@ -7,41 +7,9 @@ import (
 	"io"
 )
 
-type GeneratedFile struct {
-	Output utils.Filename
-	Target TargetAlias
-	Generated
-}
-
-func (x *GeneratedFile) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias(x.Target.String(), x.GetGenerated().GeneratedName)
-}
-func (x *GeneratedFile) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	unit := utils.Where(func(u *Unit) bool {
-		return u.Target == x.Target
-	}, BuildTranslatedUnits.Need(bc).Slice()...)
-
-	var fingerprint utils.Digest
-	err := utils.UFS.Create(x.Output, func(dst io.Writer) error {
-		tmp := bytes.Buffer{}
-		if err := x.GetGenerated().Generator.Generate(bc, x, unit, &tmp); err != nil {
-			return err
-		}
-		buf := utils.RawBytes(tmp.Bytes())
-		fingerprint = utils.MakeDigest(buf)
-		_, err := dst.Write(buf)
-		return err
-	})
-	if err != nil {
-		return utils.BuildStamp{}, err
-	}
-
-	bc.DependsOn(x.Output)
-	return utils.MakeBuildStamp(fingerprint)
-}
-
 type Generator interface {
-	Generate(utils.BuildContext, *GeneratedFile, *Unit, io.Writer) error
+	Generate(utils.BuildContext, *CompileEnv, *Unit, io.Writer) error
+	utils.Digestable
 }
 
 type GeneratedRules struct {
@@ -65,6 +33,7 @@ func (rules *GeneratedRules) GetGenerated() *GeneratedRules {
 func (rules *GeneratedRules) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(rules.GeneratedName)
 	rules.Visibility.GetDigestable(o)
+	rules.Generator.GetDigestable(o)
 }
 func (rules *GeneratedRules) GetGenerateDir(unit *Unit) utils.Directory {
 	result := unit.GeneratedDir
@@ -80,6 +49,19 @@ func (rules *GeneratedRules) GetGenerateDir(unit *Unit) utils.Directory {
 }
 func (rules *GeneratedRules) GetGenerateFile(unit *Unit) utils.Filename {
 	return rules.GetGenerateDir(unit).AbsoluteFile(rules.GeneratedName)
+}
+
+func (rules *GeneratedRules) Generate(bc utils.BuildContext, env *CompileEnv, unit *Unit) error {
+	outputFile := rules.GetGenerateFile(unit)
+	err := utils.UFS.LazyCreate(outputFile, func(w io.Writer) error {
+		return rules.Generator.Generate(bc, env, unit, w)
+	})
+	if err == nil {
+		bc.OutputFile(outputFile)
+		unit.GeneratedFiles.Append(outputFile)
+		return nil
+	}
+	return err
 }
 
 type GeneratedList []Generated

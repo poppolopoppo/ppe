@@ -31,7 +31,7 @@ func (x LogLevel) String() string {
 	case LOG_DEBUG:
 		return fmt.Sprint(ANSI_FG0_MAGENTA, ANSI_ITALIC, ANSI_FAINT, " ~ ", " ")
 	case LOG_VERYVERBOSE:
-		return fmt.Sprint(ANSI_FG0_WHITE, ANSI_ITALIC, ANSI_FAINT, "   ", " ")
+		return fmt.Sprint(ANSI_FG1_BLACK, ANSI_ITALIC, ANSI_FAINT, "   ", " ")
 	case LOG_TRACE:
 		return fmt.Sprint(ANSI_FG0_BLUE, ANSI_ITALIC, "   ", " ")
 	case LOG_VERBOSE:
@@ -164,9 +164,9 @@ func LogVerbose(msg string, args ...interface{}) {
 func LogInfo(msg string, args ...interface{}) {
 	Log(LOG_INFO, msg, args...)
 }
-func LogForward(msg string, args ...interface{}) {
+func LogForward(msg string) {
 	pinnedLog.without(func() {
-		log.Printf(msg, args...)
+		log.Print(msg)
 	})
 }
 func LogClaim(msg string, args ...interface{}) {
@@ -325,7 +325,11 @@ func (log *pinnedLogScope) Log(msg string, args ...interface{}) {
 }
 func (log *pinnedLogScope) String() string {
 	if log.subText != "" {
-		return fmt.Sprintf("%20s -> %s", log.mainText, log.subText)
+		off := len(log.mainText) - 30
+		if off < 0 {
+			off = 0
+		}
+		return fmt.Sprintf("%30s -> %s", log.mainText[off:], log.subText)
 	} else {
 		return log.mainText
 	}
@@ -409,9 +413,13 @@ func (pg *pinnedLogProgress) String() (result string) {
 
 		result += "]" + strings.Repeat("-", width-i)
 		result += fmt.Sprintf(" %6.2f  ", f*100)
+
+		eltPerSec := float32(pg.progress-pg.first) / float32(totalSecs.Seconds())
+		result += fmt.Sprintf(" %.3f/s", eltPerSec)
 	} else {
 		if true {
-			i := pg.progress % (2*width - 2)
+			t := int(totalSecs.Milliseconds() / 20)
+			i := t % (2*width - 2)
 			if i > width {
 				i = width*2 - i
 			}
@@ -426,10 +434,9 @@ func (pg *pinnedLogProgress) String() (result string) {
 			}
 			result += "]"
 		}
-	}
 
-	eltPerSec := float32(pg.progress-pg.first) / float32(totalSecs.Seconds())
-	result += fmt.Sprintf(" %.3f/s", eltPerSec)
+		result += fmt.Sprintf(" %v", totalSecs)
+	}
 
 	if pg.progress == pg.last {
 		result += " DONE"

@@ -8,6 +8,7 @@ import (
 	"io"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 type ParsableFlags interface {
@@ -147,7 +148,8 @@ func NewPersistentMap(name string) (result *PersistentMap) {
 func (pmp *PersistentMap) Usage() {
 	pmp.FlagSet.Usage()
 }
-func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) {
+func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) []string {
+	LogTrace("parsing flags: %v", Inspect(parsables...))
 	for _, x := range parsables {
 		//LogTrace("parse <%v>", x)
 		x.InitFlags(pmp)
@@ -155,8 +157,15 @@ func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) {
 	for k, v := range pmp.Vars {
 		pmp.LoadData(k, v)
 	}
+	var unparsedArgs []string
 	if err := pmp.FlagSet.Parse(args); err != nil {
 		LogPanic("command: %v", err)
+	} else if pmp.FlagSet.NArg() > 0 {
+		unparsedArgs = make([]string, pmp.FlagSet.NArg())
+		for i, x := range args[len(args)-pmp.FlagSet.NArg():] {
+			unparsedArgs[i] = x
+		}
+		LogTrace("provided arguments: %v", strings.Join(args, ", "))
 	}
 	for _, x := range parsables {
 		//LogTrace("apply vars <%v>", PrettyPrint(x))
@@ -165,9 +174,10 @@ func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) {
 	for k, v := range pmp.Vars {
 		pmp.StoreData(k, v)
 	}
+	return unparsedArgs
 }
 func (pmp *PersistentMap) Persistent(value PersistentVar, name, usage string) {
-	//LogDebug("new persistent <%s> = %v", name, value)
+	LogDebug("new persistent <%s> = %v", name, value)
 	pmp.Var(value, name, usage)
 	pmp.Vars[name] = value
 }
@@ -182,21 +192,21 @@ func (pmp *PersistentMap) IntVar(value *int, name, usage string) {
 }
 func (pmp *PersistentMap) LoadData(key string, dst PersistentVar) error {
 	if str, ok := pmp.Data[key]; ok {
-		//LogDebug("load persistent <%s> = %v", key, str)
+		LogDebug("load persistent <%s> = %v", key, str)
 		return dst.Set(str)
 	} else {
 		err := fmt.Errorf("key '%s' not found", key)
-		LogError("load(%v): %v", key, err)
+		LogWarning("load(%v): %v", key, err)
 		return err
 	}
 }
 func (pmp *PersistentMap) StoreData(key string, dst interface{}) {
-	// LogDebug("store persistent <%s> = %v", key, dst)
+	LogDebug("store persistent <%s> = %v", key, dst)
 	pmp.Data[key] = fmt.Sprint(dst)
 }
 func (pmp *PersistentMap) Serialize(dst io.Writer) error {
 	if err := JsonSerialize(&pmp.Data, dst); err == nil {
-		LogVerbose("saved %d persistent vars from config to disk", len(pmp.Data))
+		LogDebug("saved %d persistent vars from config to disk", len(pmp.Data))
 		return nil
 	} else {
 		return fmt.Errorf("failed to serialize config: %v", err)

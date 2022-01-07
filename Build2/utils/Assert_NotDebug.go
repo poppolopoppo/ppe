@@ -45,8 +45,7 @@ func PrependEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T)
 }
 
 func MakeFuture[T any](f func() (T, error)) Future[T] {
-	//return make_async_future(f) %NOCOMMIT%
-	return make_sync_future(f)
+	return make_async_future(f)
 }
 
 func make_logQueue() logQueue {

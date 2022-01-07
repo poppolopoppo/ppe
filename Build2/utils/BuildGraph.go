@@ -45,6 +45,7 @@ type BuildGraph interface {
 	Node(BuildAliasable) BuildNode
 	Create(Buildable, ...BuildAlias) BuildNode
 	Build(BuildAliasable) (BuildNode, Future[BuildStamp])
+	ForceBuild(Buildable) (BuildNode, Future[BuildStamp])
 	Serialize(io.Writer) error
 	Deserialize(io.Reader) error
 }
@@ -59,6 +60,7 @@ type BuildContext interface {
 	NeedFile(...Filename)
 	NeedFolder(...Directory)
 	NeedBuilder(func(BuildGraph) Buildable) (Buildable, error)
+	OutputFile(...Filename)
 }
 
 type BuildAliasable interface {
@@ -77,6 +79,7 @@ type buildNode struct {
 	Stamp   BuildStamp
 	Static  BuildDependencies
 	Dynamic BuildDependencies
+	Output  BuildDependencies
 	Buildable
 }
 
@@ -85,6 +88,7 @@ func newBuildNode(builder Buildable) *buildNode {
 		Buildable: builder,
 		Static:    BuildDependencies{},
 		Dynamic:   BuildDependencies{},
+		Output:    BuildDependencies{},
 	}
 }
 func (node *buildNode) Alias() BuildAlias         { return node.Buildable.Alias() }
@@ -103,6 +107,15 @@ func (node *buildNode) AddDynamic(g BuildGraph, a BuildAlias) (Buildable, error)
 	dep, fut := g.Build(a)
 	if ret := fut.Join(); ret.Failure() == nil {
 		node.Dynamic[a] = ret.Success()
+		return dep.GetBuildable(), nil
+	} else {
+		return nil, ret.Failure()
+	}
+}
+func (node *buildNode) AddOutput(g BuildGraph, f Filename) (Buildable, error) {
+	dep, fut := g.ForceBuild(g.Create(f).GetBuildable())
+	if ret := fut.Join(); ret.Failure() == nil {
+		node.Output[f.Alias()] = ret.Success()
 		return dep.GetBuildable(), nil
 	} else {
 		return nil, ret.Failure()
@@ -132,42 +145,56 @@ func (ctx buildInitContext) NeedFolder(folders ...Directory) {
 }
 
 type buildExecuteContext struct {
+	sync.Mutex
 	*buildGraph
 	*buildNode
 }
 
-func (ctx buildExecuteContext) DependsOn(a BuildAliasable) Buildable {
+func (ctx *buildExecuteContext) DependsOn(a BuildAliasable) Buildable {
+	ctx.Mutex.Lock()
+	defer ctx.Mutex.Unlock()
 	if builder, err := ctx.AddDynamic(ctx.buildGraph, a.Alias()); err == nil {
 		return builder
 	} else {
 		panic(err)
 	}
 }
-func (ctx buildExecuteContext) NeedFile(files ...Filename) {
+func (ctx *buildExecuteContext) NeedFile(files ...Filename) {
 	for _, f := range files {
 		ctx.DependsOn(ctx.Create(f))
 	}
 }
-func (ctx buildExecuteContext) NeedFolder(folders ...Directory) {
+func (ctx *buildExecuteContext) NeedFolder(folders ...Directory) {
 	for _, d := range folders {
 		ctx.DependsOn(ctx.Create(d))
 	}
 }
-func (ctx buildExecuteContext) NeedBuilder(factory func(BuildGraph) Buildable) (Buildable, error) {
+func (ctx *buildExecuteContext) NeedBuilder(factory func(BuildGraph) Buildable) (Buildable, error) {
 	builder := factory(ctx.buildGraph)
+	ctx.Mutex.Lock()
+	defer ctx.Mutex.Unlock()
 	return ctx.AddDynamic(ctx.buildGraph, builder.Alias())
+}
+func (ctx *buildExecuteContext) OutputFile(files ...Filename) {
+	ctx.Mutex.Lock()
+	defer ctx.Mutex.Unlock()
+	for _, f := range files {
+		ctx.AddOutput(ctx.buildGraph, f)
+	}
 }
 
 type buildGraph struct {
 	barrier  sync.Mutex
+	flags    *CommandFlagsT
 	nodes    *SharedMapT[BuildAlias, *buildNode]
 	futures  *SharedMapT[BuildAlias, Future[BuildStamp]]
 	revision int32
 }
 type buildGraphData map[BuildAlias]*buildNode
 
-func NewBuildGraph() BuildGraph {
+func NewBuildGraph(flags *CommandFlagsT) BuildGraph {
 	return &buildGraph{
+		flags:    flags,
 		nodes:    NewSharedMapT[BuildAlias, *buildNode](),
 		futures:  NewSharedMapT[BuildAlias, Future[BuildStamp]](),
 		revision: 0,
@@ -214,10 +241,18 @@ func (g *buildGraph) Build(it BuildAliasable) (BuildNode, Future[BuildStamp]) {
 		if fut, ok := g.futures.Get(a); ok {
 			return node, fut
 		} else {
-			return node, g.launchBuild(node, a)
+			return node, g.launchBuild(node, a, g.flags.Force)
 		}
 	} else {
 		return nil, MakeFutureError[BuildStamp](fmt.Errorf("build: unknown node <%v>", a))
+	}
+}
+func (g *buildGraph) ForceBuild(it Buildable) (BuildNode, Future[BuildStamp]) {
+	a := it.Alias()
+	if node, ok := g.nodes.Get(a); ok {
+		return node, g.launchBuild(node, a, true)
+	} else {
+		return g.Build(g.Create(it))
 	}
 }
 
@@ -249,7 +284,7 @@ func (g *buildGraph) Deserialize(src io.Reader) error {
 	return nil
 }
 
-func (deps BuildDependencies) needToBuild(g *buildGraph) (bool, error) {
+func (deps BuildDependencies) needToBuild(g *buildGraph, pbar PinnedProgress) (bool, error) {
 	futures := make(map[BuildAlias]Future[BuildStamp], len(deps))
 	for a := range deps {
 		_, fut := g.Build(a)
@@ -259,13 +294,16 @@ func (deps BuildDependencies) needToBuild(g *buildGraph) (bool, error) {
 	rebuild := false
 	for a, oldStamp := range deps {
 		fut := futures[a].Join()
+		if pbar != nil {
+			pbar.Inc()
+		}
 		if err := fut.Failure(); err == nil {
 			if newStamp := fut.Success(); newStamp != oldStamp {
 				LogVeryVerbose("need to rebuild <%v>:\n\tnew: %v\n\told: %v", a, newStamp, oldStamp)
+				deps[a] = newStamp
 				rebuild = true
 			}
 		} else {
-			LogError("build of <%v> failed with: %v", a, err)
 			errs = append(errs, err)
 		}
 	}
@@ -273,31 +311,37 @@ func (deps BuildDependencies) needToBuild(g *buildGraph) (bool, error) {
 	if len(errs) > 0 {
 		text := strings.Builder{}
 		for _, x := range errs {
-			fmt.Fprintln(&text, x)
+			fmt.Fprint(&text, x)
 		}
 		err = errors.New(text.String())
 	}
 	return rebuild, err
 }
 func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
-	n := len(node.Static) + len(node.Dynamic)
+	n := len(node.Static) + len(node.Dynamic) + len(node.Output)
 	if n > 0 {
-		if rebuild, err := node.Static.needToBuild(g); rebuild || err != nil {
+		pbar := LogProgress(0, n, node.Alias().String())
+		defer pbar.Close()
+		if rebuild, err := node.Static.needToBuild(g, pbar); rebuild || err != nil {
 			return rebuild, err
 		}
-		if rebuild, err := node.Dynamic.needToBuild(g); rebuild || err != nil {
+		if rebuild, err := node.Dynamic.needToBuild(g, pbar); rebuild || err != nil {
 			return rebuild, err
+		}
+		if rebuild, err := node.Output.needToBuild(g, pbar); rebuild || err != nil {
+			LogWarning("%v: %v", node.Alias(), err)
+			return true, nil
 		}
 		return false, nil
 	} else {
 		return true, nil // always build nodes with empty dependencies
 	}
 }
-func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias) Future[BuildStamp] {
+func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias, force bool) Future[BuildStamp] {
 	g.barrier.Lock()
 	defer g.barrier.Unlock()
 
-	if fut, ok := g.futures.Get(a); !ok {
+	if fut, ok := g.futures.Get(a); !ok || force {
 		fut = MakeFuture(func() (BuildStamp, error) {
 			LogVeryVerbose("check '%v'", a)
 			// benchmark := LogBenchmark(a.String())
@@ -305,11 +349,17 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias) Future[BuildStam
 
 			var err error
 			var rebuild bool
-			if rebuild, err = node.needToBuild(g); rebuild && err == nil {
+			if rebuild, err = node.needToBuild(g); (rebuild || g.flags.Force) && err == nil {
 				// LogVeryVerbose("need to build '%v'", a)
+
+				node.Dynamic = BuildDependencies{}
+				node.Output = BuildDependencies{}
+				// node.Static.needToBuild(g, nil)
+
+				ctx := buildExecuteContext{sync.Mutex{}, g, node}
+
 				var stamp BuildStamp
-				ctx := buildExecuteContext{g, node}
-				if stamp, err = node.Build(ctx); err == nil {
+				if stamp, err = node.Build(&ctx); err == nil {
 					if node.Stamp != stamp {
 						LogInfo("updated '%v'", a)
 						node.Stamp = stamp
@@ -320,7 +370,7 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias) Future[BuildStam
 
 					return node.Stamp, nil
 				} else {
-					panic(err)
+					return node.Stamp, err
 				}
 			} else if err != nil {
 				LogError("can't build '%v': %v", a, err)
@@ -377,7 +427,7 @@ func GetBuildable[T Buildable](g BuildGraph, a BuildAliasable) T {
 func MakeBuildable[T Buildable](factory func(BuildInit) T) BuilderFactory[T] {
 	return MemoizeArg(func(g BuildGraph) T {
 		ctx := buildInitContext{BuildGraph: g}
-		builder := factory(ctx)
+		builder := factory(&ctx)
 		g.Create(builder, ctx.BuildAliases.Slice()...)
 		return builder
 	})

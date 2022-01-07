@@ -15,7 +15,13 @@ type ModuleDependency struct {
 	Module
 	Visibility VisibilityType
 }
+
+func (x ModuleDependency) String() string {
+	return fmt.Sprintf("%v:%v", x.Visibility, x.Module)
+}
+
 type ModuleNode struct {
+	Level   int
 	Ordinal int // Module deterministic sort order
 
 	Dependencies []ModuleDependency
@@ -74,7 +80,7 @@ func (x *ModuleNode) append(module Module, vis VisibilityType) bool {
 	})
 	return true
 }
-func (x *ModuleNode) SortDependencies(graph *ModuleGraph) {
+func (x *ModuleNode) sortDependencies(graph *ModuleGraph) {
 	sort.Slice(x.Dependencies, func(i, j int) bool {
 		lhs := x.Dependencies[i].Module
 		rhs := x.Dependencies[j].Module
@@ -125,8 +131,27 @@ func (graph *ModuleGraph) expandModule(module Module) *ModuleNode {
 		public := graph.expandDependencies(rules.PublicDependencies...)
 		runtime := graph.expandDependencies(rules.RuntimeDependencies...)
 
+		level := -1
+		for _, x := range private {
+			if x.Level > level {
+				level = x.Level
+			}
+		}
+		for _, x := range public {
+			if x.Level > level {
+				level = x.Level
+			}
+		}
+		for _, x := range runtime {
+			if x.Level > level {
+				level = x.Level
+			}
+		}
+		level += 1
+
 		node = &ModuleNode{
-			Ordinal:      len(graph.nodes), // only works if the node is created *after* its dependencies
+			Level:        level,
+			Ordinal:      -1,
 			Dependencies: []ModuleDependency{},
 			Files:        utils.Memoize(rules.Source.GetFileSet),
 			TotalSize: utils.Memoize(func() uint32 {
@@ -142,7 +167,6 @@ func (graph *ModuleGraph) expandModule(module Module) *ModuleNode {
 		}
 
 		// keys keep track of insertion order
-		graph.keys = append(graph.keys, module)
 		graph.nodes[module] = node
 
 		// public and runtime dependencies are viral
@@ -158,19 +182,15 @@ func (graph *ModuleGraph) expandModule(module Module) *ModuleNode {
 		}
 		for i, dep := range runtime {
 			node.addRuntime(graph.modules[rules.RuntimeDependencies[i]])
-			dep.Public(node.addRuntime)
 			dep.Runtime(node.addRuntime)
 		}
 
-		// keep all dependencies in deterministic order using freshly computed Ordinal
-		node.SortDependencies(graph)
 		return node
 	}
 }
 
 var GetModuleGraph = utils.MemoizeArg(func(targets *BuildModulesT) *ModuleGraph {
 	result := &ModuleGraph{
-		keys:    []Module{},
 		modules: make(map[string]Module, len(targets.Modules)),
 		nodes:   make(map[Module]*ModuleNode, len(targets.Modules)),
 	}
@@ -183,14 +203,32 @@ var GetModuleGraph = utils.MemoizeArg(func(targets *BuildModulesT) *ModuleGraph 
 		result.expandModule(module)
 	}
 
-	for _, module := range result.keys {
+	result.keys = utils.Keys(result.nodes)
+	sort.SliceStable(result.keys, func(i, j int) bool {
+		a := result.nodes[result.keys[i]]
+		b := result.nodes[result.keys[j]]
+		if a.Level != b.Level {
+			return a.Level < b.Level
+		} else {
+			return result.keys[i].String() < result.keys[j].String()
+		}
+	})
+
+	for ord, module := range result.keys {
 		node, _ := result.nodes[module]
-		utils.LogTrace("module #%02d\t|%2d |%2d |%2d |\t%v",
+		node.Ordinal = ord // record the enumeration order in the node
+		utils.LogTrace("module %02d#%02d\t|%2d |%2d |%2d |\t%v",
+			node.Level,
 			node.Ordinal,
 			node.Private(func(Module) {}),
 			node.Public(func(Module) {}),
 			node.Runtime(func(Module) {}),
 			module.GetModule().String())
+	}
+
+	for _, node := range result.nodes {
+		// sort all dependencies with the new ordinal value
+		node.sortDependencies(result)
 	}
 
 	return result

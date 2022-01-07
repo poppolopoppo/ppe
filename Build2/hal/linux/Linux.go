@@ -15,10 +15,10 @@ type LinuxFlagsT struct {
 var LinuxFlags = MakeServiceAccessor[ParsableFlags](newLinuxFlags)
 
 func newLinuxFlags() *LinuxFlagsT {
-	return &LinuxFlagsT{
+	return CommandEnv.BuildGraph().Create(&LinuxFlagsT{
 		Compiler:  COMPILER_CLANG,
 		StackSize: 2000000,
-	}
+	}).GetBuildable().(*LinuxFlagsT)
 }
 func (flags *LinuxFlagsT) InitFlags(cfg *PersistentMap) {
 	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+Join(",", CompilerTypes()...)+"]")

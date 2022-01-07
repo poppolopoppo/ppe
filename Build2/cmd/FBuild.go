@@ -76,6 +76,7 @@ type FBuildArgs struct {
 	NoUnity       BoolVar
 	Report        BoolVar
 	ShowCmds      BoolVar
+	ShowCmdOutput BoolVar
 	Threads       IntVar
 }
 
@@ -88,22 +89,10 @@ func (flags *FBuildArgs) InitFlags(cfg *PersistentMap) {
 	cfg.Var(&flags.NoUnity, "NoUnity", "enable/disable use of generated unity source files")
 	cfg.Var(&flags.Report, "Report", "enable/disable FASTBuild compilation report generation")
 	cfg.Var(&flags.ShowCmds, "ShowCmds", "display all command-lines executed by FASTBuild")
+	cfg.Var(&flags.ShowCmdOutput, "ShowCmdOutput", "display full output of external processes regardless of outcome.")
 	cfg.Persistent(&flags.Threads, "Threads", "set count of worker thread spawned by FASTBuild")
 }
 func (flags *FBuildArgs) ApplyVars(cfg *PersistentMap) {
-}
-
-type FBuildCommandArgs struct {
-	Target StringSet
-	FBuildArgs
-}
-
-func (flags *FBuildCommandArgs) InitFlags(cfg *PersistentMap) {
-	flags.FBuildArgs.InitFlags(cfg)
-	cfg.Var(&flags.Target, "Target", "specify the list of targets to be build by FASTBuild, empty means everything")
-}
-func (flags *FBuildCommandArgs) ApplyVars(cfg *PersistentMap) {
-	flags.FBuildArgs.ApplyVars(cfg)
 }
 
 /***************************************
@@ -153,10 +142,16 @@ func MakeFBuildExecutor(
 		if flags.Threads > 0 {
 			result = append(result, "-j"+flags.Threads.String())
 		}
+		if flags.ShowCmds {
+			result = append(result, "-showcmds")
+		}
+		if flags.ShowCmdOutput {
+			result = append(result, "-showcmdoutput")
+		}
 	}
 
 	if IsLogLevelActive(LOG_DEBUG) {
-		result = append(result, "-j1")
+		result = append(result, "-j1", "-why")
 	}
 	if IsLogLevelActive(LOG_VERYVERBOSE) {
 		if enableCache {
@@ -264,12 +259,10 @@ func (x *FBuildExecutor) Run() (err error) {
 			stderr.Close()
 			return err
 		default:
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(30 * time.Millisecond)
 		}
 		pbar.Inc()
 	}
-
-	return nil
 }
 func (x *FBuildExecutor) String() string {
 	return strings.Join(*x, " ")
@@ -282,25 +275,25 @@ func (x *FBuildExecutor) String() string {
 var FBuild = MakeCommand(
 	"fbuild",
 	"launch FASTBuild compilation process",
-	func(cmd *CommandEnvT) *FBuildCommandArgs {
+	func(cmd *CommandEnvT) *FBuildArgs {
 		SourceControlModifiedFiles.Prepare(cmd.BuildGraph())
-		return &FBuildCommandArgs{
-			FBuildArgs: FBuildArgs{
-				Cache:         FBUILD_CACHE_DISABLED,
-				Clean:         false,
-				Dist:          false,
-				BffFile:       BFFFILE_DEFAULT,
-				NoUnity:       false,
-				NoStopOnError: false,
-				Report:        false,
-				ShowCmds:      false,
-				Threads:       0,
-			},
+		args := &FBuildArgs{
+			Cache:         FBUILD_CACHE_DISABLED,
+			Clean:         false,
+			Dist:          false,
+			BffFile:       BFFFILE_DEFAULT,
+			NoUnity:       false,
+			NoStopOnError: false,
+			Report:        false,
+			ShowCmds:      false,
+			Threads:       0,
 		}
+		cmd.Flags.Add("fbuild", args)
+		return args
 	},
-	func(cmd *CommandEnvT, args *FBuildCommandArgs) (err error) {
+	func(cmd *CommandEnvT, args *FBuildArgs) (err error) {
 		_, scm := SourceControlModifiedFiles.Prepare(cmd.BuildGraph())
-		fbuild := MakeFBuildExecutor(&args.FBuildArgs, args.Target...)
+		fbuild := MakeFBuildExecutor(args, cmd.ConsumeArgs(-1)...)
 		scm.Join().Success()
 		return fbuild.Run()
 	},

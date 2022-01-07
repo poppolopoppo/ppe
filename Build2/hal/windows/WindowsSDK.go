@@ -84,14 +84,22 @@ func (x *WindowsSDKBuilder) Alias() utils.BuildAlias {
 }
 func (x *WindowsSDKBuilder) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
 	var dirs utils.DirSet
-	err := x.SearchDir.MatchDirectories(func(d utils.Directory) error {
-		dirs.Append(d)
-		return nil
-	}, regexp.MustCompile(x.SearchGlob))
+	var err error
+	if x.MajorVer != "User" {
+		err = x.SearchDir.MatchDirectories(func(d utils.Directory) error {
+			dirs.Append(d)
+			return nil
+		}, regexp.MustCompile(x.SearchGlob))
+	} else {
+		windowsFlags := WindowsFlags.Need(utils.CommandEnv.Flags)
+		dirs.Append(windowsFlags.WindowsSDK)
+		_, err = windowsFlags.WindowsSDK.Info()
+	}
 	if err == nil && len(dirs) > 0 {
 		sort.Sort(dirs)
 		lib := dirs[len(dirs)-1]
 		bc.NeedFolder(lib)
+		utils.LogDebug("found WindowsSDK@%v in '%v'", x.MajorVer, lib)
 		ver := lib[len(lib)-1]
 		x.WindowsSDK = newWindowsSDK(lib.Parent().Parent(), ver)
 		bc.NeedFile(x.WindowsSDK.ResourceCompiler)
@@ -119,12 +127,29 @@ var windowsSDK_8_1 = utils.MakeBuildable(func(bi utils.BuildInit) (result *Windo
 	bi.NeedFolder(result.SearchDir)
 	return result
 })
+var windowsSDK_User = utils.MakeBuildable(func(_ utils.BuildInit) (result *WindowsSDKBuilder) {
+	result = &WindowsSDKBuilder{
+		MajorVer: "User",
+	}
+	return result
+})
 
 var GetWindowsSDK = utils.MemoizeArg(func(bc utils.BuildContext) *WindowsSDKBuilder {
+	windowsFlags := WindowsFlags.Need(utils.CommandEnv.Flags)
+	if len(windowsFlags.WindowsSDK) > 0 {
+		utils.LogVeryVerbose("using user override '%v' for Windows SDK", windowsFlags.WindowsSDK)
+		if winUser, err := windowsSDK_User.Get(bc); err == nil {
+			return winUser
+		} else {
+			panic(err)
+		}
+	}
 	if win10, err := windowsSDK_10.Get(bc); err == nil {
+		utils.LogVeryVerbose("using Windows SDK 10")
 		return win10
 	}
 	if win81, err := windowsSDK_8_1.Get(bc); err == nil {
+		utils.LogVeryVerbose("using Windows SDK 8.1")
 		return win81
 	}
 	utils.UnreachableCode()

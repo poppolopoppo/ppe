@@ -2,7 +2,6 @@ package windows
 
 import (
 	. "build/compile"
-	"build/utils"
 	. "build/utils"
 	"bytes"
 	"fmt"
@@ -13,6 +12,8 @@ type ResCompiler struct {
 }
 
 func (res *ResCompiler) GetCompiler() *CompilerRules { return &res.CompilerRules }
+func (res *ResCompiler) EnvPath() DirSet             { return NewDirSet(res.WorkingDir()) }
+func (res *ResCompiler) WorkingDir() Directory       { return res.CompilerRules.Executable.Dirname }
 func (res *ResCompiler) Extname(PayloadType) string  { return ".res" }
 
 func (res *ResCompiler) CppRtti(*Facet, bool)                     {}
@@ -45,22 +46,22 @@ func (res *ResCompiler) Library(*Facet, ...Filename)      {}
 func (res *ResCompiler) LibraryPath(*Facet, ...Directory) {}
 func (res *ResCompiler) Decorate(*CompileEnv, *Unit)      {}
 
-func (res *ResCompiler) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("HAL", "WindowsResourcCompiler")
+func (res *ResCompiler) Alias() BuildAlias {
+	return MakeBuildAlias("HAL", "WindowsResourcCompiler")
 }
-func (res *ResCompiler) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
+func (res *ResCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	windowsSDK := GetWindowsSDK(bc)
 	bc.DependsOn(windowsSDK)
 	res.CompilerRules.CompilerName = "RC_" + windowsSDK.Version
 	res.CompilerRules.CompilerFamily = "custom"
 	res.CompilerRules.Executable = windowsSDK.ResourceCompiler
 	bc.NeedFile(res.CompilerRules.Executable)
-	return utils.MakeBuildStamp(res.CompilerRules)
+	return MakeBuildStamp(res.CompilerRules)
 }
 func (res *ResCompiler) GetDigestable(o *bytes.Buffer) {
 	res.CompilerRules.GetDigestable(o)
 }
 
-var WindowsResourceCompiler = utils.MakeBuildable(func(bi utils.BuildInit) *ResCompiler {
+var WindowsResourceCompiler = MakeBuildable(func(bi BuildInit) *ResCompiler {
 	return &ResCompiler{}
 })

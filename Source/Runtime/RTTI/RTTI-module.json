@@ -1,4 +1,5 @@
 {
+	"Unity": "3",
 	"PublicDependencies": [
 		"Runtime/Core"
 	]

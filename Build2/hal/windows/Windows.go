@@ -18,12 +18,13 @@ type WindowsFlagsT struct {
 	Permissive BoolVar
 	StackSize  IntVar
 	StaticCRT  BoolVar
+	WindowsSDK Directory
 }
 
 var WindowsFlags = MakeServiceAccessor[ParsableFlags](newWindowsFlags)
 
 func newWindowsFlags() *WindowsFlagsT {
-	return &WindowsFlagsT{
+	return CommandEnv.BuildGraph().Create(&WindowsFlagsT{
 		Compiler:   COMPILER_MSVC,
 		Analyze:    false,
 		Insider:    false,
@@ -33,7 +34,8 @@ func newWindowsFlags() *WindowsFlagsT {
 		Permissive: false,
 		StackSize:  2000000,
 		StaticCRT:  false,
-	}
+		WindowsSDK: Directory{},
+	}).GetBuildable().(*WindowsFlagsT)
 }
 func (flags *WindowsFlagsT) InitFlags(cfg *PersistentMap) {
 	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+Join(",", CompilerTypes()...)+"]")
@@ -45,6 +47,7 @@ func (flags *WindowsFlagsT) InitFlags(cfg *PersistentMap) {
 	cfg.Persistent(&flags.Permissive, "Permissive", "enable/disable MSCV permissive")
 	cfg.Persistent(&flags.StackSize, "StackSize", "set default thread stack size in bytes")
 	cfg.Persistent(&flags.StaticCRT, "StaticCRT", "use static CRT libraries instead of dynamic (/MT vs /MD)")
+	cfg.Persistent(&flags.WindowsSDK, "WindowsSDK", "override Windows SDK install path (use latest otherwise)")
 }
 func (flags *WindowsFlagsT) ApplyVars(cfg *PersistentMap) {
 }
@@ -66,6 +69,7 @@ func (flags *WindowsFlagsT) GetDigestable(o *bytes.Buffer) {
 	flags.Permissive.GetDigestable(o)
 	flags.StackSize.GetDigestable(o)
 	flags.StaticCRT.GetDigestable(o)
+	flags.WindowsSDK.GetDigestable(o)
 }
 
 func makeWindowsPlatform(p *PlatformRules) {
@@ -84,7 +88,7 @@ func getWindowsPlatform_X86() Platform {
 	p.Facet.Append(Platform_X86)
 	makeWindowsPlatform(p)
 	p.PlatformName = "Win32"
-	p.Defines.Append("_WIN32")
+	p.Defines.Append("_WIN32", "__X86__")
 	p.Exports.Add("Windows/Platform", "x86")
 	return p
 }
@@ -95,7 +99,7 @@ func getWindowsPlatform_X64() Platform {
 	p.Facet.Append(Platform_X64)
 	makeWindowsPlatform(p)
 	p.PlatformName = "Win64"
-	p.Defines.Append("_WIN64")
+	p.Defines.Append("_WIN64", "__X64__")
 	p.Exports.Add("Windows/Platform", "x64")
 	return p
 }

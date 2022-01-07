@@ -80,7 +80,7 @@ func AppendComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) {
 		if !Contains(src, x) {
 			result = append(result, x)
 		} else {
-			panic(fmt.Errorf("element already in set: %v", x))
+			panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
 		}
 	}
 	return result
@@ -91,7 +91,7 @@ func PrependComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) 
 		if !Contains(src, x) {
 			result = append([]T{x}, result...)
 		} else {
-			panic(fmt.Errorf("element already in set: %v", x))
+			panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
 		}
 	}
 	return result
@@ -102,7 +102,7 @@ func AppendEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T) 
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				panic(fmt.Errorf("element already in set: %v", x))
+				panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
 			}
 		}
 		result = append(result, x)
@@ -114,7 +114,7 @@ func PrependEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T)
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				panic(fmt.Errorf("element already in set: %v", x))
+				panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
 			}
 		}
 		result = append([]T{x}, result...)
@@ -123,11 +123,7 @@ func PrependEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T)
 }
 
 func MakeFuture[T any](f func() (T, error)) Future[T] {
-	if enableDiagnostics == false {
-		return make_async_future(f)
-	} else {
-		return make_sync_future(f)
-	}
+	return make_sync_future(f)
 }
 
 func make_logQueue() logQueue {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -136,7 +137,7 @@ func (x *SourceControlModifiedFilesT) Build(bc BuildContext) (BuildStamp, error)
 	err := UFS.Create(x.Output, func(w io.Writer) error {
 		if modifiedFiles, err := GetSourceControlProvider().GetModifiedFiles(); err == nil {
 			for _, file := range modifiedFiles {
-				fmt.Fprintln(w, file)
+				fmt.Fprintln(w, filepath.Clean(file.String()))
 			}
 			return nil
 		} else {

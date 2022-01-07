@@ -1,6 +1,6 @@
 {
 	"Archtypes": [
-		"PPE/Program"
+		"PPE/Program/Tools"
 	],
 	"Modules": [
 		"BuildRobot",

@@ -14,6 +14,14 @@ type TargetAlias struct {
 	ConfigName    string
 }
 
+func NewTargetAlias(module Module, platform Platform, config Configuration) TargetAlias {
+	return TargetAlias{
+		NamespaceName: module.GetNamespace().String(),
+		ModuleName:    module.GetModule().ModuleName,
+		PlatformName:  platform.GetPlatform().PlatformName,
+		ConfigName:    config.GetConfig().ConfigName,
+	}
+}
 func (x TargetAlias) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.NamespaceName)
 	o.WriteString(x.ModuleName)
@@ -37,16 +45,6 @@ type UnitDecorator interface {
 	Decorate(env *CompileEnv, unit *Unit)
 }
 
-type UnitList struct {
-	utils.SetT[*Unit]
-}
-
-func (x UnitList) GetDigestable(o *bytes.Buffer) {
-	for _, x := range x.Slice() {
-		x.GetDigestable(o)
-	}
-}
-
 type Unit struct {
 	Target TargetAlias
 
@@ -68,30 +66,24 @@ type Unit struct {
 	GeneratedDir    utils.Directory
 	IntermediateDir utils.Directory
 
+	GeneratedFiles utils.FileSet
+
 	PrecompiledHeader utils.Filename
 	PrecompiledSource utils.Filename
 	PrecompiledObject utils.Filename
 
-	IncludeDependencies utils.SetT[TargetAlias]
-	StaticDependencies  utils.SetT[TargetAlias]
-	DynamicDependencies utils.SetT[TargetAlias]
+	CompileDependencies utils.SetT[TargetAlias]
+	LinkDependencies    utils.SetT[TargetAlias]
+	RuntimeDependencies utils.SetT[TargetAlias]
 
 	Compiler     Compiler
 	Preprocessor Compiler
 
-	Source     ModuleSource
-	Transitive Facet // append in case of public dependency
+	Source          ModuleSource
+	TransitiveFacet Facet // append in case of public dependency
 	Facet
 }
 
-func (unit *Unit) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Build", unit.Target.String())
-}
-func (unit *Unit) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	buildModules := BuildModules.Need(bc)
-	module := buildModules.Modules[unit.Target.ModuleName]
-	sdlfsdklfjsdlkfjsdlkfjsdlkfdsjf
-}
 func (unit *Unit) String() string {
 	return unit.Target.String()
 }
@@ -134,12 +126,13 @@ func (unit *Unit) GetDigestable(o *bytes.Buffer) {
 	unit.ModuleDir.GetDigestable(o)
 	unit.GeneratedDir.GetDigestable(o)
 	unit.IntermediateDir.GetDigestable(o)
+	utils.MakeDigestable(o, unit.GeneratedFiles...)
 	unit.PrecompiledHeader.GetDigestable(o)
 	unit.PrecompiledSource.GetDigestable(o)
 	unit.PrecompiledObject.GetDigestable(o)
-	utils.MakeDigestable(o, unit.IncludeDependencies.Slice()...)
-	utils.MakeDigestable(o, unit.StaticDependencies.Slice()...)
-	utils.MakeDigestable(o, unit.DynamicDependencies.Slice()...)
+	utils.MakeDigestable(o, unit.CompileDependencies.Slice()...)
+	utils.MakeDigestable(o, unit.LinkDependencies.Slice()...)
+	utils.MakeDigestable(o, unit.RuntimeDependencies.Slice()...)
 	unit.Compiler.GetDigestable(o)
 	if unit.Preprocessor != nil {
 		unit.Preprocessor.GetDigestable(o)
@@ -147,6 +140,6 @@ func (unit *Unit) GetDigestable(o *bytes.Buffer) {
 		o.WriteString("%no-preprocessor%")
 	}
 	unit.Source.GetDigestable(o)
-	unit.Transitive.GetDigestable(o)
+	unit.TransitiveFacet.GetDigestable(o)
 	unit.Facet.GetDigestable(o)
 }

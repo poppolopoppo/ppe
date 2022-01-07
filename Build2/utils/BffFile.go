@@ -115,6 +115,12 @@ func (bff *BffFile) Comment(text string, a ...interface{}) *BffFile {
 	}
 	return bff
 }
+func (bff *BffFile) Import(varname ...string) *BffFile {
+	for _, x := range varname {
+		fmt.Fprintln(bff, "#import "+x)
+	}
+	return bff
+}
 func (bff *BffFile) SetVar(name string, value interface{}, operator BffOp, scope BffScope) *BffFile {
 	if !bffIsDefaultValue(value) {
 		fmt.Fprint(bff, scope.String()+name+operator.String())
@@ -156,10 +162,10 @@ func (bff *BffFile) Value(x interface{}) *BffFile {
 	case StringSetable:
 		bff.Value(MakeBffArray(x.(StringSetable).StringSet()...))
 	case BffArray:
-		fmt.Fprint(bff, "{")
+		fmt.Fprintln(bff, "{")
 		for i, x := range x.(BffArray) {
 			if i > 0 {
-				fmt.Fprint(bff, ",")
+				fmt.Fprintln(bff, ",")
 			}
 			bff.Value(x)
 		}

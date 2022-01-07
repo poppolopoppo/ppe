@@ -27,6 +27,9 @@ type CompilerRules struct {
 type Compiler interface {
 	GetCompiler() *CompilerRules
 
+	EnvPath() utils.DirSet
+	WorkingDir() utils.Directory
+
 	Extname(PayloadType) string
 
 	Define(*Facet, ...string)
@@ -96,8 +99,8 @@ func (rules *CompilerRules) Decorate(env *CompileEnv, unit *Unit) {
 }
 
 var getMemoizedCompiler = utils.MemoizeArg(func(arch ArchType) Compiler {
-	if vname, ok := utils.CommandEnv.ReadVar("Compiler"); ok {
-		if factory, ok := AllCompilers.Get(vname.String()); ok {
+	if vname, ok := utils.CommandEnv.ReadData("Compiler"); ok {
+		if factory, ok := AllCompilers.Get(vname); ok {
 			if compiler := factory(arch); compiler != nil {
 				return compiler
 			}

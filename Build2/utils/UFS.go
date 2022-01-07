@@ -167,7 +167,7 @@ func (f Filename) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(f.Basename)
 }
 func (f Filename) String() string {
-	return filepath.Join(f.Dirname.String(), f.Basename)
+	return f.Dirname.String() + "/" + f.Basename
 }
 
 /***************************************
@@ -175,18 +175,26 @@ func (f Filename) String() string {
  ***************************************/
 
 func (d *Directory) Set(str string) error {
-	if !filepath.IsAbs(str) {
-		str = filepath.Join(UFS.Working.String(), str)
+	if str != "" {
+		if !filepath.IsAbs(str) {
+			str = filepath.Join(UFS.Working.String(), str)
+		}
+		*d = MakeDirectory(str)
+	} else {
+		*d = Directory{}
 	}
-	*d = MakeDirectory(str)
 	return nil
 }
 
 func (f *Filename) Set(str string) error {
-	if !filepath.IsAbs(str) {
-		str = filepath.Join(UFS.Working.String(), str)
+	if str != "" {
+		if !filepath.IsAbs(str) {
+			str = filepath.Join(UFS.Working.String(), str)
+		}
+		*f = MakeFilename(str)
+	} else {
+		*f = Filename{}
 	}
-	*f = MakeFilename(str)
 	return nil
 }
 
@@ -657,10 +665,11 @@ func (ufs *UFSFrontEnd) CreateWriter(dst Filename) (*os.File, error) {
 	return os.Create(dst.String())
 }
 func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error {
-	var err error
-	var outp *os.File
-	if outp, err = ufs.CreateWriter(dst); err == nil {
+	outp, err := ufs.CreateWriter(dst)
+	if outp != nil {
 		defer outp.Close()
+	}
+	if err == nil {
 		if err = write(outp); err == nil {
 			return nil
 		}
@@ -668,12 +677,47 @@ func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error 
 	LogWarning("UFS.Create: %v", err)
 	return err
 }
+func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) error {
+	buf := bytes.Buffer{}
+	err := write(&buf)
+	if err == nil {
+		return ufs.Create(dst, func(w io.Writer) error {
+			_, err := w.Write(buf.Bytes())
+			return err
+		})
+	}
+	LogWarning("UFS.Create: %v", err)
+	return err
+}
+func (ufs *UFSFrontEnd) LazyCreate(dst Filename, write func(io.Writer) error) error {
+	buf := bytes.Buffer{}
+	err := write(&buf)
+	if err == nil {
+		if dst.Exists() {
+			if old, err := os.ReadFile(dst.String()); err == nil {
+				a := MakeDigest(RawBytes(old))
+				b := MakeDigest(RawBytes(buf.Bytes()))
+				if a == b {
+					LogTrace("content of '%v' didn't change, skipping write", dst)
+					return nil // skip generation when content is identical
+				}
+			}
+		}
+		return ufs.Create(dst, func(w io.Writer) error {
+			_, err := w.Write(buf.Bytes())
+			return err
+		})
+	}
+	LogWarning("UFS.Create: %v", err)
+	return err
+}
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
-	var err error
-	var input *os.File
-	LogTrace("ufs: open '%v'", src)
-	if input, err = os.Open(src.String()); err == nil {
+	input, err := os.Open(src.String())
+	if input != nil {
 		defer input.Close()
+	}
+	LogTrace("ufs: open '%v'", src)
+	if err == nil {
 		if err = read(input); err == nil {
 			return nil
 		}

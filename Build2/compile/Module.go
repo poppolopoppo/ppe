@@ -137,14 +137,14 @@ func (rules *ModuleRules) GetNamespace() *NamespaceRules {
 func (rules *ModuleRules) Decorate(env *CompileEnv, unit *Unit) {
 	rules.Namespace.GetNamespace().Decorate(env, unit)
 
-	unit.Transitive.ForceIncludes.Append(rules.ForceIncludes...)
-	unit.Transitive.Libraries.Append(rules.Libraries...)
-	unit.Transitive.LibraryPaths.Append(rules.LibraryPaths...)
+	unit.TransitiveFacet.ForceIncludes.Append(rules.ForceIncludes...)
+	unit.TransitiveFacet.Libraries.Append(rules.Libraries...)
+	unit.TransitiveFacet.LibraryPaths.Append(rules.LibraryPaths...)
 
 	unit.IncludePaths.Append(rules.ModuleDir)
 	if publicDir := rules.PublicDir(); publicDir.Exists() {
 		unit.IncludePaths.Append(publicDir)
-		unit.Transitive.IncludePaths.Append(publicDir)
+		unit.TransitiveFacet.IncludePaths.Append(publicDir)
 	}
 	if privateDir := rules.PrivateDir(); privateDir.Exists() {
 		unit.IncludePaths.Append(privateDir)
@@ -157,7 +157,7 @@ func (rules *ModuleRules) Decorate(env *CompileEnv, unit *Unit) {
 	if generatedVis.Has(PUBLIC) {
 		generatedPublicDir := unit.GeneratedDir.Folder("Public")
 		unit.IncludePaths.Append(generatedPublicDir)
-		unit.Transitive.IncludePaths.Append(generatedPublicDir)
+		unit.TransitiveFacet.IncludePaths.Append(generatedPublicDir)
 	}
 	if generatedVis.Has(PRIVATE) {
 		unit.IncludePaths.Append(unit.GeneratedDir.Folder("Private"))

@@ -27,6 +27,12 @@ func (llvm *LlvmCompiler) GetDigestable(o *bytes.Buffer) {
 	llvm.ProductInstall.GetDigestable(o)
 }
 
+func (llvm *LlvmCompiler) EnvPath() DirSet {
+	return NewDirSet()
+}
+func (llvm *LlvmCompiler) WorkingDir() Directory {
+	return llvm.CompilerRules.Executable.Dirname
+}
 func (llvm *LlvmCompiler) Extname(x PayloadType) string {
 	switch x {
 	case PAYLOAD_EXECUTABLE:
@@ -41,8 +47,6 @@ func (llvm *LlvmCompiler) Extname(x PayloadType) string {
 		return ".pch"
 	case PAYLOAD_HEADERS:
 		return ".h"
-	case PAYLOAD_DEBUG:
-		return ".dSYM"
 	default:
 		UnexpectedValue(x)
 		return ""
@@ -172,8 +176,8 @@ func makeLlvmCompiler(
 	librarian Filename,
 	linker Filename,
 	extraFiles ...Filename) {
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
-	linuxFlags := LinuxFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
+	linuxFlags := LinuxFlags.FindOrAdd(CommandEnv.Flags)
 
 	bc.DependsOn(compileFlags)
 	bc.DependsOn(linuxFlags)
@@ -200,6 +204,7 @@ func makeLlvmCompiler(
 		"-Wshadow",
 		"-Wno-unused-command-line-argument", // #TODO: unsilence this warning
 		"-fcolor-diagnostics",
+		"-march=native",
 		"-mavx", "-msse4.2",
 		"-mlzcnt", "-mpopcnt",
 		"-c",               // compile only
@@ -214,7 +219,7 @@ func makeLlvmCompiler(
 }
 
 func (llvm *LlvmCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
 
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
@@ -281,31 +286,31 @@ func llvm_CXX_runtimeChecks(f *Facet, enabled bool, rtc1 bool) {
 
 func decorateLlvmConfig_Debug(f *Facet) {
 	f.AddCompilationFlag("-O0", "-fno-pie")
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	llvm_CXX_linkTimeCodeGeneration(f, false, compileFlags.Incremental.Get())
 	llvm_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), true)
 }
 func decorateLlvmConfig_FastDebug(f *Facet) {
 	f.AddCompilationFlag("-O1", "-fno-pie")
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	llvm_CXX_linkTimeCodeGeneration(f, true, compileFlags.Incremental.Get())
 	llvm_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), false)
 }
 func decorateLlvmConfig_Devel(f *Facet) {
 	f.AddCompilationFlag("-O2", "-fno-pie")
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	llvm_CXX_linkTimeCodeGeneration(f, true, compileFlags.Incremental.Get())
 	llvm_CXX_runtimeChecks(f, false, false)
 }
 func decorateLlvmConfig_Test(f *Facet) {
 	f.AddCompilationFlag("-O3", "-fpie")
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	llvm_CXX_linkTimeCodeGeneration(f, true, compileFlags.Incremental.Get())
 	llvm_CXX_runtimeChecks(f, false, false)
 }
 func decorateLlvmConfig_Shipping(f *Facet) {
 	f.AddCompilationFlag("-O3", "-fpie")
-	compileFlags := CompileFlags.Get(CommandEnv.Flags)
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	llvm_CXX_linkTimeCodeGeneration(f, true, compileFlags.Incremental.Get())
 	llvm_CXX_runtimeChecks(f, false, false)
 }

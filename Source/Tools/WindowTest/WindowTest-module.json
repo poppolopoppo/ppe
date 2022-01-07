@@ -9,7 +9,7 @@
 		"Runtime/RHIVulkan",
 		"Runtime/Application"
 	],
-	"RuntimeDependencies": [
+	"PrivateDependencies": [
 		"ContentPipeline/BuildGraph",
 		"ContentPipeline/PipelineCompiler"
 	]

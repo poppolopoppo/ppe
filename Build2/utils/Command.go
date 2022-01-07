@@ -56,6 +56,7 @@ type Command interface {
 }
 
 type CommandFlagsT struct {
+	Force       bool
 	Quiet       bool
 	Verbose     bool
 	Trace       bool
@@ -70,6 +71,7 @@ var CommandFlags = MakeServiceAccessor[ParsableFlags](newCommandFlags)
 
 func newCommandFlags() *CommandFlagsT {
 	return &CommandFlagsT{
+		Force:       false,
 		Quiet:       false,
 		Verbose:     false,
 		Trace:       false,
@@ -80,6 +82,7 @@ func newCommandFlags() *CommandFlagsT {
 	}
 }
 func (flags *CommandFlagsT) InitFlags(cfg *PersistentMap) {
+	cfg.BoolVar(&flags.Force, "f", "force build even if up-to-date")
 	cfg.BoolVar(&flags.Quiet, "q", "disable all messages")
 	cfg.BoolVar(&flags.Verbose, "v", "turn on verbose mode")
 	cfg.BoolVar(&flags.Trace, "t", "print more informations about progress")
@@ -119,6 +122,10 @@ func (flags *CommandFlagsT) ApplyVars(persistent *PersistentMap) {
 		enableAssertions = false
 	}
 	SetLogTimestamp(flags.Timestamp)
+
+	if flags.Force {
+		LogTrace("build will be forced due to '-f' command-line option")
+	}
 }
 
 type CommandEnvT struct {
@@ -134,6 +141,8 @@ type CommandEnvT struct {
 
 	configPath   Filename
 	databasePath Filename
+
+	unparsedArgs []string
 }
 
 var CommandEnv *CommandEnvT
@@ -141,7 +150,6 @@ var CommandEnv *CommandEnvT
 func InitCommandEnv(prefix string, rootFile Filename) *CommandEnvT {
 	CommandEnv = &CommandEnvT{
 		Flags:        NewServiceLocator[ParsableFlags](),
-		buildGraph:   NewBuildGraph(),
 		persistent:   NewPersistentMap(prefix),
 		rootFile:     rootFile,
 		barrier:      sync.Mutex{},
@@ -150,7 +158,7 @@ func InitCommandEnv(prefix string, rootFile Filename) *CommandEnvT {
 		configPath:   MAIN_MODULEPATH.Dirname.File(fmt.Sprint(".", prefix, "-config.json")),
 		databasePath: MAIN_MODULEPATH.Dirname.File(fmt.Sprint(".", prefix, "-cache.db")),
 	}
-	CommandFlags.Add(CommandEnv.Flags)
+	CommandEnv.buildGraph = NewBuildGraph(CommandFlags.Create(CommandEnv.Flags))
 	return CommandEnv
 }
 func (env *CommandEnvT) BuildGraph() BuildGraph     { return env.buildGraph }
@@ -167,20 +175,31 @@ func (env *CommandEnvT) Init(args []string) {
 		cmd := factory()
 		env.instanced = append(env.instanced, cmd)
 		cmd.Init(env)
-		for _, flags := range (*env.Flags).Values() {
+		env.unparsedArgs = env.persistent.Parse(args[1:], env.Flags.Values()...)
+		for _, flags := range env.Flags.Values() {
 			switch flags.(type) {
 			case Buildable:
-				env.BuildGraph().Create(flags.(Buildable))
+				env.BuildGraph().ForceBuild(flags.(Buildable))
 			}
 		}
-		env.persistent.Parse(args[1:], (*env.Flags).Values()...)
 		LogClaim("running command <%v>", cmd.Info().Name)
 		env.immediate = append(env.immediate, CommandFunc{cmd.Info(), cmd.Run})
 		env.deferred = append(env.deferred, CommandFunc{cmd.Info(), cmd.Clean})
 	} else {
-		CommandFlags.Get(env.Flags).InitFlags(env.persistent)
+		CommandFlags.FindOrAdd(env.Flags).InitFlags(env.persistent)
 		env.Persistent().Usage()
 		LogFatal("invalid command '%v', available names: %v", args[0], strings.Join(AllCommands.Keys(), ", "))
+	}
+}
+func (env *CommandEnvT) ConsumeArgs(n int) []string {
+	if n > 0 {
+		result := env.unparsedArgs[:n]
+		env.unparsedArgs = env.unparsedArgs[n+1:]
+		return result
+	} else {
+		result := env.unparsedArgs
+		env.unparsedArgs = []string{}
+		return result
 	}
 }
 func (env *CommandEnvT) Run() error {
@@ -191,6 +210,9 @@ func (env *CommandEnvT) Run() error {
 	LogTrace("running deferred tasks (%v elts)", len(env.immediate))
 	if err := env.deferred.Run(env); err != nil {
 		return err
+	}
+	if len(env.unparsedArgs) > 0 {
+		LogWarning("unused arguments: %v", strings.Join(env.unparsedArgs, ", "))
 	}
 	return nil
 }
@@ -214,6 +236,15 @@ func (env *CommandEnvT) Save() {
 	if env.buildGraph.Dirty() {
 		LogTrace("saving build graph to '%v'...", env.databasePath)
 		UFS.Create(env.databasePath, env.buildGraph.Serialize)
+	} else {
+		LogTrace("skipped saving unmodified build graph")
+	}
+}
+func (env *CommandEnvT) ReadData(name string) (string, bool) {
+	if x, ok := env.persistent.Data[name]; ok {
+		return x, true
+	} else {
+		return "", false
 	}
 }
 func (env *CommandEnvT) ReadVar(name string) (PersistentVar, bool) {
@@ -267,12 +298,10 @@ func MakeCommand[T ParsableFlags](
 			init: func(env *CommandEnvT) (args T) {
 				if init != nil {
 					args = init(env)
-					args.InitFlags(env.Persistent())
 				}
 				return args
 			},
 			run: func(env *CommandEnvT, args T) error {
-				args.ApplyVars(env.Persistent())
 				return run(env, args)
 			},
 			clean: nil,

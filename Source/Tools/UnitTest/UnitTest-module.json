@@ -1,6 +1,7 @@
 {
 	"PrivateDependencies": [
-		"External/iaca"
+		"External/iaca",
+		"ContentPipeline/BuildGraph"
 	],
 	"PublicDependencies": [
 		"Runtime/Core",
@@ -9,9 +10,6 @@
 		"Runtime/Serialize",
 		"Runtime/Network",
 		"Runtime/Application"
-	],
-	"RuntimeDependencies": [
-		"ContentPipeline/BuildGraph"
 	],
 	"ExcludedFiles": [
 		"Private/Test_Pixmap.cpp",
