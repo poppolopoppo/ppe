@@ -30,6 +30,9 @@ type BoolVar bool
 
 func (v BoolVar) IsBoolFlag() bool { return true }
 func (v BoolVar) Get() bool        { return bool(v) }
+func (v BoolVar) Equals(o BoolVar) bool {
+	return (v == o)
+}
 func (v BoolVar) String() string {
 	return fmt.Sprint(v.Get())
 }
@@ -51,7 +54,8 @@ func (v BoolVar) GetDigestable(o *bytes.Buffer) {
 
 type IntVar int
 
-func (v IntVar) Get() int { return int(v) }
+func (v IntVar) Get() int             { return int(v) }
+func (v IntVar) Equals(o IntVar) bool { return (v == o) }
 func (v IntVar) String() string {
 	return fmt.Sprint(v.Get())
 }
@@ -86,7 +90,7 @@ func NewPersistentMap(name string) (result *PersistentMap) {
 		fmt.Printf("%v%X%v\n", ANSI_FG1_BLACK, Seed, ANSI_RESET)
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println(" ", ANSI_FG0_YELLOW, MAIN_MODULEPATH.Basename, ANSI_FG1_GREEN, "< COMMAND >", ANSI_FG1_BLUE, "OPTIONS...", ANSI_RESET)
+		fmt.Println(" ", ANSI_FG0_YELLOW, MAIN_MODULEPATH.Basename, ANSI_FG1_GREEN, "< COMMAND >", ANSI_FG1_BLUE, "[OPTIONS]*", ANSI_FG0_WHITE, "[ARGS]*", ANSI_RESET)
 		fmt.Println()
 		fmt.Println("Available commands:")
 

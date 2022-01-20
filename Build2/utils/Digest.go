@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"io"
 	"runtime"
 	"runtime/debug"
 
@@ -100,6 +102,7 @@ func make_digester(seed []byte) (result digester) {
 		buf:    &bytes.Buffer{},
 		cnt:    0,
 	}
+	result.buf.Grow(1024)
 	result.Write(seed)
 	return result
 }
@@ -163,4 +166,39 @@ func FNV32a(in string) uint32 {
 	h := fnv.New32a()
 	h.Write([]byte(in))
 	return h.Sum32()
+}
+
+func FileDigest(src Filename) Future[Digest] {
+	return MakeFuture(func() (Digest, error) {
+		digester := MakeDigester()
+		err := UFS.Open(src, func(rd io.Reader) error {
+			const capacity = 64 << 20
+			scanner := bufio.NewScanner(rd)
+			scanner.Buffer(make([]byte, capacity), capacity)
+			for scanner.Scan() {
+				digester.Append(RawBytes(scanner.Bytes()))
+			}
+			return scanner.Err()
+		})
+		return digester.Finalize(), err
+	})
+}
+
+type DigestWriter struct {
+	digester Digester
+	wrapped  io.Writer
+}
+
+func NewDigestWriter(dst io.Writer) *DigestWriter {
+	return &DigestWriter{
+		digester: MakeDigester(),
+		wrapped:  dst,
+	}
+}
+func (dw *DigestWriter) Write(data []byte) (int, error) {
+	dw.digester.Write(data)
+	return dw.wrapped.Write(data)
+}
+func (dw *DigestWriter) Finalize() Digest {
+	return dw.digester.Finalize()
 }

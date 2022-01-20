@@ -265,7 +265,7 @@ func loadNamespaceDesc(
 			desc.ExtendDesc(&parent.ExtensionDesc)
 		}
 
-		utils.LogVerbose("parsed new namespace: '%v'", desc.rules.String())
+		utils.LogVerbose("parsed new namespace: '%v'", desc.rules)
 
 		for _, x := range desc.Modules {
 			f := desc.rules.NamespaceDir.Folder(x).File(x + MODULEDESC_EXT)

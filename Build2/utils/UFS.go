@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -20,11 +22,14 @@ import (
 
 var re_pathSeparator = regexp.MustCompile(`[\\\/]+`)
 
+func SplitPath(in string) []string {
+	return re_pathSeparator.Split(in, -1)
+}
+
 type Directory []string
 
 func MakeDirectory(str string) Directory {
-	clean := filepath.Clean(str)
-	return re_pathSeparator.Split(clean, -1)
+	return SplitPath(filepath.Clean(str))
 }
 func (d Directory) Basename() string {
 	if len(d) > 0 {
@@ -39,11 +44,14 @@ func (d Directory) Parent() Directory {
 func (d Directory) Folder(name ...string) Directory {
 	return append(append([]string(nil), d...), name...)
 }
-func (d Directory) File(name string) Filename {
-	return Filename{Dirname: d, Basename: name}
+func (d Directory) File(name ...string) Filename {
+	return Filename{Dirname: append(d, name[:len(name)-1]...), Basename: name[len(name)-1]}
 }
 func (d Directory) AbsoluteFolder(rel ...string) (result Directory) {
-	return append(d, rel...)
+	for _, x := range rel {
+		result = append(d, SplitPath(x)...)
+	}
+	return result
 }
 func (d Directory) AbsoluteFile(rel ...string) (result Filename) {
 	return MakeFilename(filepath.Join(append([]string{d.String()}, rel...)...))
@@ -516,8 +524,13 @@ func (list *DirSet) Clear() {
 	*list = []Directory{}
 }
 func (list DirSet) Concat(it ...Directory) (result DirSet) {
-	result = append(result, list...)
-	result = append(result, it...)
+	result = make(DirSet, len(list)+len(it))
+	for i, x := range list {
+		result[i] = x
+	}
+	for i, x := range it {
+		result[len(list)+i] = x
+	}
 	return result
 }
 func (list DirSet) GetDigestable(o *bytes.Buffer) {
@@ -527,6 +540,9 @@ func (list DirSet) GetDigestable(o *bytes.Buffer) {
 }
 func (list DirSet) StringSet() StringSet {
 	return MakeStringerSet(list...)
+}
+func (list DirSet) Join(delim string) string {
+	return JoinString(delim, list...)
 }
 
 type FileSet []Filename
@@ -569,8 +585,20 @@ func (list *FileSet) Clear() {
 	*list = []Filename{}
 }
 func (list FileSet) Concat(it ...Filename) (result FileSet) {
-	result = append(result, list...)
-	result = append(result, it...)
+	result = make(FileSet, len(list)+len(it))
+	for i, x := range list {
+		result[i] = x
+	}
+	for i, x := range it {
+		result[len(list)+i] = x
+	}
+	return result
+}
+func (list FileSet) ConcatUniq(it ...Filename) (result FileSet) {
+	result = NewFileSet(list...)
+	for _, x := range it {
+		result.AppendUniq(x)
+	}
 	return result
 }
 func (list FileSet) TotalSize() (result int64) {
@@ -591,6 +619,9 @@ func (list FileSet) GetDigestable(o *bytes.Buffer) {
 }
 func (list FileSet) StringSet() StringSet {
 	return MakeStringerSet(list...)
+}
+func (list FileSet) Join(delim string) string {
+	return JoinString(delim, list...)
 }
 
 /***************************************
@@ -678,52 +709,109 @@ func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error 
 	return err
 }
 func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) error {
-	buf := bytes.Buffer{}
-	err := write(&buf)
-	if err == nil {
-		return ufs.Create(dst, func(w io.Writer) error {
-			_, err := w.Write(buf.Bytes())
-			return err
-		})
+	ufs.Mkdir(dst.Dirname)
+
+	file, err := ioutil.TempFile(
+		dst.Dirname.Relative(UFS.Root),
+		dst.ReplaceExt("-*"+dst.Ext()).Relative(dst.Dirname))
+	if err != nil {
+		return err
 	}
-	LogWarning("UFS.Create: %v", err)
+	defer os.Remove(file.Name())
+
+	buf := bufio.NewWriter(file)
+	if err = write(buf); err == nil {
+		if err = buf.Flush(); err == nil {
+			if err = file.Close(); err == nil {
+				//LogVeryVerbose("moving temporary file '%v' to final destination '%v'", file.Name(), dst)
+				invalidate_file_info(dst)
+				return os.Rename(file.Name(), dst.String())
+			}
+		}
+	}
+
+	LogWarning("UFS.SafeCreate: %v", err)
+	file.Close()
 	return err
 }
 func (ufs *UFSFrontEnd) LazyCreate(dst Filename, write func(io.Writer) error) error {
-	buf := bytes.Buffer{}
-	err := write(&buf)
-	if err == nil {
-		if dst.Exists() {
-			if old, err := os.ReadFile(dst.String()); err == nil {
-				a := MakeDigest(RawBytes(old))
-				b := MakeDigest(RawBytes(buf.Bytes()))
-				if a == b {
+	return ufs.SafeCreate(dst, write)
+}
+func (ufs *UFSFrontEnd) LazyCreate_Enabled(dst Filename, write func(io.Writer) error) error {
+	asyncOld := FileDigest(dst)
+
+	file, err := ioutil.TempFile(
+		dst.Dirname.Relative(UFS.Root),
+		dst.ReplaceExt("-*"+dst.Ext()).Relative(dst.Dirname))
+	if err != nil {
+		return err
+	}
+	defer os.Remove(file.Name())
+
+	digester := NewDigestWriter(file)
+	buf := bufio.NewWriter(digester)
+
+	if err = write(buf); err == nil {
+		if err = buf.Flush(); err == nil {
+			if err = file.Close(); err != nil {
+				new := digester.Finalize()
+				old := asyncOld.Join()
+
+				if old.Failure() != nil || old.Success() != new {
+					invalidate_file_info(dst)
+					return os.Rename(file.Name(), dst.String())
+				} else {
 					LogTrace("content of '%v' didn't change, skipping write", dst)
-					return nil // skip generation when content is identical
+					return nil
 				}
 			}
 		}
-		return ufs.Create(dst, func(w io.Writer) error {
-			_, err := w.Write(buf.Bytes())
-			return err
-		})
 	}
-	LogWarning("UFS.Create: %v", err)
+
+	LogWarning("UFS.SafeCreate: %v", err)
+	file.Close()
 	return err
 }
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
 	input, err := os.Open(src.String())
+	LogTrace("ufs: open '%v'", src)
+
 	if input != nil {
 		defer input.Close()
 	}
-	LogTrace("ufs: open '%v'", src)
+
 	if err == nil {
 		if err = read(input); err == nil {
 			return nil
 		}
 	}
+
 	LogWarning("UFS.Open: %v", err)
 	return err
+}
+func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]string) error) error {
+	const capacity = 64 << 20
+
+	return ufs.Open(src, func(rd io.Reader) error {
+		buf := make([]byte, capacity*2)
+
+		scanner := bufio.NewScanner(rd)
+		scanner.Buffer(buf, capacity)
+		scanner.Split(SplitRegex(re, capacity))
+
+		for scanner.Scan() {
+			if err := scanner.Err(); err == nil {
+				txt := scanner.Text()
+				m := re.FindStringSubmatch(txt)
+				if err := match(m[1:]); err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func make_ufs_frontend() (ufs UFSFrontEnd) {
@@ -750,7 +838,7 @@ func make_ufs_frontend() (ufs UFSFrontEnd) {
 
 	ufs.Root = ufs.Dir(caller)
 
-	ufs.Build = ufs.Root.Folder("Build2") // #TODO
+	ufs.Build = ufs.Root.Folder("Build2") // #TODO: remove suffix when definitly switched to new build system
 	ufs.Extras = ufs.Root.Folder("Extras")
 	ufs.Source = ufs.Root.Folder("Source")
 	ufs.Output = ufs.Root.Folder("Output")

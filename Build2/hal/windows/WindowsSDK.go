@@ -92,6 +92,7 @@ func (x *WindowsSDKBuilder) Build(bc utils.BuildContext) (utils.BuildStamp, erro
 		}, regexp.MustCompile(x.SearchGlob))
 	} else {
 		windowsFlags := WindowsFlags.Need(utils.CommandEnv.Flags)
+		bc.DependsOn(windowsFlags)
 		dirs.Append(windowsFlags.WindowsSDK)
 		_, err = windowsFlags.WindowsSDK.Info()
 	}
@@ -134,21 +135,21 @@ var windowsSDK_User = utils.MakeBuildable(func(_ utils.BuildInit) (result *Windo
 	return result
 })
 
-var GetWindowsSDK = utils.MemoizeArg(func(bc utils.BuildContext) *WindowsSDKBuilder {
-	windowsFlags := WindowsFlags.Need(utils.CommandEnv.Flags)
-	if len(windowsFlags.WindowsSDK) > 0 {
-		utils.LogVeryVerbose("using user override '%v' for Windows SDK", windowsFlags.WindowsSDK)
-		if winUser, err := windowsSDK_User.Get(bc); err == nil {
+var GetWindowsSDKInstall = utils.MemoizeArg(func(overrideDir utils.Directory) *WindowsSDKBuilder {
+	bg := utils.CommandEnv.BuildGraph()
+	if len(overrideDir) > 0 {
+		utils.LogVeryVerbose("using user override '%v' for Windows SDK", overrideDir)
+		if winUser, err := windowsSDK_User.Build(bg); err == nil {
 			return winUser
 		} else {
 			panic(err)
 		}
 	}
-	if win10, err := windowsSDK_10.Get(bc); err == nil {
+	if win10, err := windowsSDK_10.Build(bg); err == nil {
 		utils.LogVeryVerbose("using Windows SDK 10")
 		return win10
 	}
-	if win81, err := windowsSDK_8_1.Get(bc); err == nil {
+	if win81, err := windowsSDK_8_1.Build(bg); err == nil {
 		utils.LogVeryVerbose("using Windows SDK 8.1")
 		return win81
 	}

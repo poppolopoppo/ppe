@@ -7,8 +7,15 @@ import (
 	"io"
 )
 
+type GeneratorContext struct {
+	Env   *CompileEnv
+	Rules *GeneratedRules
+	Unit  *Unit
+	utils.BuildContext
+}
+
 type Generator interface {
-	Generate(utils.BuildContext, *CompileEnv, *Unit, io.Writer) error
+	Generate(GeneratorContext, io.Writer) error
 	utils.Digestable
 }
 
@@ -54,7 +61,12 @@ func (rules *GeneratedRules) GetGenerateFile(unit *Unit) utils.Filename {
 func (rules *GeneratedRules) Generate(bc utils.BuildContext, env *CompileEnv, unit *Unit) error {
 	outputFile := rules.GetGenerateFile(unit)
 	err := utils.UFS.LazyCreate(outputFile, func(w io.Writer) error {
-		return rules.Generator.Generate(bc, env, unit, w)
+		return rules.Generator.Generate(GeneratorContext{
+			BuildContext: bc,
+			Env:          env,
+			Rules:        rules,
+			Unit:         unit,
+		}, w)
 	})
 	if err == nil {
 		bc.OutputFile(outputFile)

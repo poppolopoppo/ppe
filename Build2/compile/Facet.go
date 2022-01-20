@@ -190,12 +190,19 @@ func (facet *Facet) String() string {
 }
 
 func (vars *VariableSubstitutions) Add(key, value string) {
-	(*vars)[fmt.Sprintf("[[:%s:]]", key)] = value
+	(*vars)[key] = value
+}
+func (vars *VariableSubstitutions) Get(key string) string {
+	if x, ok := (*vars)[key]; ok {
+		return x
+	} else {
+		panic(fmt.Errorf("unknown variable substitution: '%s'", key))
+	}
 }
 func (vars *VariableSubstitutions) ExpandString(it string) string {
-	if strings.ContainsAny(it, "[[:") {
+	if len(*vars) > 0 && strings.ContainsAny(it, "[[:") {
 		for old, new := range *vars {
-			it = strings.ReplaceAll(it, old, new)
+			it = strings.ReplaceAll(it, "[[:"+old+":]]", new)
 		}
 	}
 	return it

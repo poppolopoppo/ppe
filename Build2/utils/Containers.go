@@ -89,6 +89,10 @@ func Keys[K comparable, V any](it map[K]V) []K {
 
 type SetT[T comparable] []T
 
+func NewSet[T comparable](it ...T) SetT[T] {
+	return SetT[T](it)
+}
+
 func (set SetT[T]) Empty() bool {
 	return len(set) == 0
 }

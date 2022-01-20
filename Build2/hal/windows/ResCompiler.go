@@ -50,12 +50,15 @@ func (res *ResCompiler) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "WindowsResourcCompiler")
 }
 func (res *ResCompiler) Build(bc BuildContext) (BuildStamp, error) {
-	windowsSDK := GetWindowsSDK(bc)
-	bc.DependsOn(windowsSDK)
-	res.CompilerRules.CompilerName = "RC_" + windowsSDK.Version
+	windowsFlags := WindowsFlags.Need(CommandEnv.Flags)
+	windowsSDKInstall := GetWindowsSDKInstall(windowsFlags.WindowsSDK)
+	bc.DependsOn(windowsFlags, windowsSDKInstall)
+
+	res.CompilerRules.CompilerName = "RC_" + windowsSDKInstall.Version
 	res.CompilerRules.CompilerFamily = "custom"
-	res.CompilerRules.Executable = windowsSDK.ResourceCompiler
+	res.CompilerRules.Executable = windowsSDKInstall.ResourceCompiler
 	bc.NeedFile(res.CompilerRules.Executable)
+
 	return MakeBuildStamp(res.CompilerRules)
 }
 func (res *ResCompiler) GetDigestable(o *bytes.Buffer) {

@@ -64,6 +64,7 @@ func SetEnableInteractiveShell(enabled bool) {
 
 type logEvent func()
 type logQueue interface {
+	Flush()
 	Queue(logEvent)
 }
 
@@ -72,6 +73,7 @@ type logQueue_immediate struct{}
 func make_logQueue_immediate() logQueue {
 	return logQueue_immediate{}
 }
+func (x logQueue_immediate) Flush()           {}
 func (x logQueue_immediate) Queue(e logEvent) { e() }
 
 type logQueue_deferred struct {
@@ -91,6 +93,14 @@ func make_logQueue_deferred() logQueue {
 		}
 	}()
 	return &logQueue_deferred{queue}
+}
+func (x *logQueue_deferred) Flush() {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	x.Queue(func() {
+		wg.Done()
+	})
+	wg.Wait()
 }
 func (x *logQueue_deferred) Queue(e logEvent) {
 	x.queue <- e
@@ -134,11 +144,17 @@ func SetLogLevel(level LogLevel) {
 func IsLogLevelActive(level LogLevel) bool {
 	return logger.Level <= level
 }
+func FlushLog() {
+	logger.Flush()
+}
 func Log(level LogLevel, msg string, args ...interface{}) {
 	if IsLogLevelActive(level) {
 		logger.Queue(func() {
 			pinnedLog.without(func() {
 				log.Printf(level.String()+msg+ANSI_RESET.String()+"\n", args...)
+				if level >= LOG_WARNING {
+					log_callstack()
+				}
 			})
 		})
 	}
@@ -237,26 +253,36 @@ func attachPinUnsafe(pin *pinnedLogManager) {
 
 		// format messages in local buffer
 		buf := strings.Builder{}
-		for _, x := range pin.messages.Slice() {
-			fmt.Fprint(&buf,
+		fmt.Println(&buf)
+		for _, x := range pin.messages {
+			fmt.Fprintln(&buf,
 				"\r", ANSI_KILL_LINE,
-				ANSI_FG1_GREEN,
-				x.String(),
-				ANSI_RESET, "\n")
+				ANSI_FG1_YELLOW,
+				x,
+				ANSI_RESET)
 		}
 
 		// flush with one call
 		fmt.Fprintf(pin.stream, buf.String())
 	}
 }
-func detachPinUnsafe(pin *pinnedLogManager) {
+func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 	if pin.inflight > 0 {
-		buf := strings.Builder{}
-
 		// format messages in local buffer
-		for i := 0; i < pin.inflight; i += 1 {
-			fmt.Fprint(&buf, ANSI_CURSOR_UP, ANSI_KILL_LINE)
+		buf := strings.Builder{}
+		if false && len(pin.messages) == pin.inflight && !clear {
+			// one clear line: ghosting
+			for i := 0; i < pin.inflight+1; i += 1 {
+				fmt.Fprint(&buf, ANSI_CURSOR_UP)
+			}
+			fmt.Fprint(&buf, ANSI_KILL_LINE)
+		} else {
+			// multiple clear lines: flicker
+			for i := 0; i < pin.inflight+1; i += 1 {
+				fmt.Fprint(&buf, ANSI_CURSOR_UP, ANSI_KILL_LINE)
+			}
 		}
+
 		pin.inflight = 0
 
 		// flush with one call
@@ -264,7 +290,7 @@ func detachPinUnsafe(pin *pinnedLogManager) {
 	}
 }
 func refreshPinUnsafe(pin *pinnedLogManager) {
-	detachPinUnsafe(pin)
+	detachPinUnsafe(pin, false)
 	attachPinUnsafe(pin)
 }
 
@@ -274,42 +300,52 @@ func (pin *pinnedLogManager) push(msg string, args ...interface{}) PinnedLog {
 			mainText: fmt.Sprintf(msg, args...),
 		}
 
-		pin.barrier.Lock()
-		defer pin.barrier.Unlock()
+		logger.Queue(func() {
+			pin.barrier.Lock()
+			defer pin.barrier.Unlock()
 
-		pin.messages.Append(log)
-		refreshPinUnsafe(pin)
+			pin.messages.Append(log)
+			refreshPinUnsafe(pin)
+		})
 		return log
 	}
 	return pinnedFake
 }
 func (pin *pinnedLogManager) pop(log PinnedLog) {
 	if log != nil && enableInteractiveShell {
-		pin.barrier.Lock()
-		defer pin.barrier.Unlock()
+		logger.Queue(func() {
+			pin.barrier.Lock()
+			defer pin.barrier.Unlock()
 
-		pin.messages.Remove(log)
-		refreshPinUnsafe(pin)
+			pin.messages.Remove(log)
+			refreshPinUnsafe(pin)
+		})
 	}
 }
 func (pin *pinnedLogManager) refresh() {
-	if atomic.AddInt32(&pin.cooldown, 1) == 1 {
-		pin.barrier.Lock()
-		defer pin.barrier.Unlock()
-		refreshPinUnsafe(pin)
-		atomic.StoreInt32(&pin.cooldown, 0)
+	if enableInteractiveShell && atomic.AddInt32(&pin.cooldown, 1) == 1 {
+		logger.Queue(func() {
+			pin.barrier.Lock()
+			defer pin.barrier.Unlock()
+			refreshPinUnsafe(pin)
+			atomic.StoreInt32(&pin.cooldown, 0)
+		})
 	}
 }
 func (pin *pinnedLogManager) without(block func()) {
 	if true {
 		pin.barrier.Lock()
 		defer pin.barrier.Unlock()
-		detachPinUnsafe(pin)
+		detachPinUnsafe(pin, false)
 		block()
 		attachPinUnsafe(pin)
 	} else {
 		block()
 	}
+}
+func (pin *pinnedLogManager) forceClose() {
+	pin.barrier.Lock()
+	detachPinUnsafe(pin, true)
 }
 
 func (log *pinnedLogScope) Close() {
@@ -325,11 +361,12 @@ func (log *pinnedLogScope) Log(msg string, args ...interface{}) {
 }
 func (log *pinnedLogScope) String() string {
 	if log.subText != "" {
-		off := len(log.mainText) - 30
+		const maxLen = 30
+		off := len(log.mainText) - maxLen
 		if off < 0 {
 			off = 0
 		}
-		return fmt.Sprintf("%30s -> %s", log.mainText[off:], log.subText)
+		return fmt.Sprintf("%30s %s", log.mainText[off:], log.subText)
 	} else {
 		return log.mainText
 	}
@@ -337,6 +374,11 @@ func (log *pinnedLogScope) String() string {
 
 func LogPin(msg string, args ...interface{}) PinnedLog {
 	return pinnedLog.push(msg, args...)
+}
+
+func PurgePinnedLogs() {
+	logger.Flush()
+	pinnedLog.forceClose()
 }
 
 type PinnedProgress interface {
@@ -372,16 +414,50 @@ func (pg *pinnedLogProgress) Set(x int) {
 	pg.progress = x
 	pg.log.Log(pg.String())
 }
-func (pg *pinnedLogProgress) String() (result string) {
-	const width = 50
-	const spinner = "qpbd"
 
-	spin := pg.tick % len(spinner)
+var spinner = []string{
+	// "bo",
+	// "do",
+	// "ob",
+	// "od",
+	// "oq",
+	// "op",
+	// "qo",
+	// "po",
+	"q", "p", "b", "d",
+	//".", "o", "O", "@", "*",
+}
+
+func (pg *pinnedLogProgress) String() (result string) {
+	const width = 60
+
+	//spin := pg.tick % len(spinner)
 	totalSecs := time.Now().Sub(pg.startedat)
 
-	result += " ["
+	result += ANSI_FG1_CYAN.String() + " ["
+
+	fillPattern := func(off, w int, pattern string, swing bool) {
+		n := len(pattern)
+		m := len(ANSI_COLORS)
+		for i := 0; i < w; i += 1 {
+			c := (off + i) % n
+			if swing {
+				off += i/2 + 1
+			}
+			if i%20 == 0 && i > 1 && i+1 != w {
+				result += string(ANSI_FG1_WHITE) + "|"
+			} else if i%10 == 0 && i > 1 && i+1 != w {
+				result += string(ANSI_FG1_CYAN) + "-"
+			} else {
+				result += make_ansi_color("fg1", ANSI_COLORS[(i)%m]).String()
+				result += pattern[c : c+1]
+			}
+		}
+		result += string(ANSI_RESET)
+	}
 
 	if pg.first < pg.last {
+		result += ANSI_FG1_WHITE.String()
 		f := float32(pg.progress-pg.first) / float32(pg.last-pg.first)
 		if f < 0 {
 			f = 0
@@ -391,51 +467,39 @@ func (pg *pinnedLogProgress) String() (result string) {
 		}
 		i := int(f * width)
 
-		if true {
-			pos := 0
-			if i > 0 {
-				pos = pg.tick % width
-				if pos > i {
-					pos = 0
-					pg.tick = 0
-				} else if pg.progress == pg.last {
-					pos = i
-				}
-			}
-			result += strings.Repeat("=", pos) + ">" + strings.Repeat("=", i-pos)
-		} else {
-			pattern := "---=>->->-=>---"
-			for j := 0; j < i; j += 1 {
-				t := (pg.tick - j) % len(pattern)
-				result += pattern[t : t+1]
+		pos := 0
+		if i > 0 {
+			pos = pg.tick % width
+			if pos > i {
+				pos = 0
+				pg.tick = 0
+			} else if pg.progress == pg.last {
+				pos = i
 			}
 		}
-
-		result += "]" + strings.Repeat("-", width-i)
+		result += strings.Repeat("=", pos)
+		result += string(ANSI_FG1_YELLOW) + string(ANSI_BLINK0)
+		result += ">"
+		result += string(ANSI_RESET) + ANSI_FG1_WHITE.String()
+		result += strings.Repeat("=", i-pos)
+		result += ANSI_FG1_CYAN.String()
+		result += "]"
+		result += ANSI_FG1_BLACK.String()
+		result += strings.Repeat("-", width-i)
+		result += ANSI_FG1_GREEN.String()
 		result += fmt.Sprintf(" %6.2f  ", f*100)
 
 		eltPerSec := float32(pg.progress-pg.first) / float32(totalSecs.Seconds())
+		result += ANSI_FG1_YELLOW.String()
 		result += fmt.Sprintf(" %.3f/s", eltPerSec)
 	} else {
-		if true {
-			t := int(totalSecs.Milliseconds() / 20)
-			i := t % (2*width - 2)
-			if i > width {
-				i = width*2 - i
-			}
-
-			result += strings.Repeat("-", i) + spinner[spin:spin+1] + strings.Repeat("-", width-i)
-			result += fmt.Sprintf("] %6.2fs ", totalSecs.Seconds())
-		} else {
-			pattern := "-WAIT!" + spinner[spin:spin+1]
-			for j := 0; j <= width; j += 1 {
-				t := (pg.tick + j) % len(pattern)
-				result += pattern[t : t+1]
-			}
-			result += "]"
-		}
-
-		result += fmt.Sprintf(" %v", totalSecs)
+		result += ANSI_FG0_CYAN.String()
+		t := int((totalSecs.Milliseconds() / 30))
+		fillPattern(t, width+1, "``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='", false)
+		result += ANSI_FG1_CYAN.String()
+		result += "]"
+		result += ANSI_FG0_GREEN.String()
+		result += fmt.Sprintf(" %6.2fs ", totalSecs.Seconds())
 	}
 
 	if pg.progress == pg.last {
@@ -475,4 +539,13 @@ func LogBenchmark(msg string, args ...interface{}) Closable {
 		message:   formatted,
 		startedAt: time.Now(),
 	}
+}
+
+type lambdaStringer func() string
+
+func (x lambdaStringer) String() string {
+	return x()
+}
+func MakeStringer(fn func() string) fmt.Stringer {
+	return lambdaStringer(fn)
 }

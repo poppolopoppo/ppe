@@ -98,10 +98,11 @@ func (rules *CompilerRules) Decorate(env *CompileEnv, unit *Unit) {
 	compiler.Library(&unit.Facet, unit.Facet.Libraries...)
 }
 
-var getMemoizedCompiler = utils.MemoizeArg(func(arch ArchType) Compiler {
+var GetBuildCompiler = utils.MemoizeArg(func(arch ArchType) Compiler {
 	if vname, ok := utils.CommandEnv.ReadData("Compiler"); ok {
 		if factory, ok := AllCompilers.Get(vname); ok {
 			if compiler := factory(arch); compiler != nil {
+				utils.LogTrace("selected <%v> compiler for arch <%v>", vname, arch)
 				return compiler
 			}
 		}
@@ -110,8 +111,3 @@ var getMemoizedCompiler = utils.MemoizeArg(func(arch ArchType) Compiler {
 		panic(errors.New("missing persistent variable <Compiler>"))
 	}
 })
-
-func GetBuildCompiler(bc utils.BuildContext, arch ArchType) Compiler {
-	compiler := getMemoizedCompiler(arch)
-	return bc.DependsOn(compiler).(Compiler)
-}

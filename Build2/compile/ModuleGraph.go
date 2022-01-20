@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 )
 
 /***************************************
@@ -157,7 +158,7 @@ func (graph *ModuleGraph) expandModule(module Module) *ModuleNode {
 			TotalSize: utils.Memoize(func() uint32 {
 				return uint32(node.Files().TotalSize())
 			}),
-			Unity: utils.MemoizeArg(func(sizePerUnity int) UnityType {
+			Unity: utils.MemoizePod(func(sizePerUnity int) UnityType {
 				totalSize := float64(node.TotalSize())
 				numUnityFiles := totalSize / float64(sizePerUnity)
 				result := UnityType(int32(math.Ceil(numUnityFiles)))
@@ -189,7 +190,7 @@ func (graph *ModuleGraph) expandModule(module Module) *ModuleNode {
 	}
 }
 
-var GetModuleGraph = utils.MemoizeArg(func(targets *BuildModulesT) *ModuleGraph {
+var GetModuleGraph = utils.MemoizePod(func(targets *BuildModulesT) *ModuleGraph {
 	result := &ModuleGraph{
 		modules: make(map[string]Module, len(targets.Modules)),
 		nodes:   make(map[Module]*ModuleNode, len(targets.Modules)),
@@ -220,9 +221,15 @@ var GetModuleGraph = utils.MemoizeArg(func(targets *BuildModulesT) *ModuleGraph 
 		utils.LogTrace("module %02d#%02d\t|%2d |%2d |%2d |\t%v",
 			node.Level,
 			node.Ordinal,
-			node.Private(func(Module) {}),
-			node.Public(func(Module) {}),
-			node.Runtime(func(Module) {}),
+			utils.MakeStringer(func() string {
+				return strconv.FormatInt(int64(node.Private(func(Module) {})), 10)
+			}),
+			utils.MakeStringer(func() string {
+				return strconv.FormatInt(int64(node.Public(func(Module) {})), 10)
+			}),
+			utils.MakeStringer(func() string {
+				return strconv.FormatInt(int64(node.Runtime(func(Module) {})), 10)
+			}),
 			module.GetModule().String())
 	}
 

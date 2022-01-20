@@ -5,7 +5,9 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"reflect"
+	"runtime/debug"
 )
 
 var enableDiagnostics bool = true
@@ -128,4 +130,8 @@ func MakeFuture[T any](f func() (T, error)) Future[T] {
 
 func make_logQueue() logQueue {
 	return make_logQueue_immediate()
+}
+
+func log_callstack() {
+	log.Println(string(debug.Stack()))
 }

@@ -116,10 +116,12 @@ func (msvc *MsvcCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename)
 	case DEBUG_SYMBOLS:
 		pdbPath := output.ReplaceExt(".pdb").String()
 		f.CompilerOptions.Append("/Z7")
+		f.PrecompiledHeaderOptions.Append("/Z7")
 		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+pdbPath+"\"")
 		return
 	case DEBUG_EMBEDDED:
 		f.CompilerOptions.Append("/Z7")
+		f.PrecompiledHeaderOptions.Append("/Z7")
 		f.LinkerOptions.Append("/DEBUG")
 		return
 	default:
@@ -223,9 +225,8 @@ func makeMsvcCompiler(
 	extraFiles ...Filename) {
 	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
 	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
-
-	bc.DependsOn(compileFlags)
-	bc.DependsOn(windowsFlags)
+	windowsSDKInstall := GetWindowsSDKInstall(windowsFlags.WindowsSDK)
+	bc.DependsOn(compileFlags, windowsFlags, windowsSDKInstall)
 
 	platformToolset := fmt.Sprintf("%s%s%s", minorVer[0:1], minorVer[1:2], minorVer[3:4])
 
@@ -237,7 +238,7 @@ func makeMsvcCompiler(
 	result.VSInstallName = vsInstallName
 	result.VSInstallPath = vsInstallPath
 	result.VCToolsPath = vcToolsPath
-	result.WindowsSDK = GetWindowsSDK(bc).WindowsSDK
+	result.WindowsSDK = windowsSDKInstall.WindowsSDK
 
 	result.CompilerRules.CompilerName = fmt.Sprintf("Msvc_%v_%v", msc_ver, target)
 	result.CompilerRules.CompilerFamily = "msvc"
@@ -258,6 +259,7 @@ func makeMsvcCompiler(
 	)
 
 	facet.Exports.Add("VisualStudio/Path", result.VSInstallPath.String())
+	facet.Exports.Add("VisualStudio/PlatformToolset", result.PlatformToolset)
 	facet.Exports.Add("VisualStudio/Tools", result.VCToolsPath.String())
 	facet.Exports.Add("VisualStudio/Version", result.MinorVer)
 
@@ -267,8 +269,8 @@ func makeMsvcCompiler(
 		vsInstallPath.Folder("VC", "Tools", "MSVC", result.MinorVer, "include"))
 
 	compilationArgs := []string{
-		"/nologo",      // no copyright when compiling
-		"/c", "\"%1\"", // input file injection
+		"/nologo",   // no copyright when compiling
+		"/c \"%1\"", // input file injection
 	}
 	facet.CompilerOptions.Append(compilationArgs...)
 	facet.PrecompiledHeaderOptions.Append(compilationArgs...)
@@ -309,31 +311,31 @@ func makeMsvcCompiler(
 
 	// configure librarian
 	facet.LibrarianOptions.Append(
-		"/nologo",
-		"/SUBSYSTEM:Windows",
-		"/IGNORE:4221",
 		"/OUT:\"%2\"",
 		"\"%1\"",
+		"/nologo",
+		"/SUBSYSTEM:WINDOWS",
+		"/IGNORE:4221",
 	)
 
 	// configure linker
 	facet.LinkerOptions.Append(
-		"/nologo",            // no copyright when compiling
-		"/TLBID:1",           //# https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
-		"/IGNORE:4001",       //# https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
-		"/IGNORE:4099",       //# don't have PDB for some externals
-		"/NXCOMPAT:NO",       //# disable Data Execution Prevention (DEP)
-		"/LARGEADDRESSAWARE", //# indicate support for VM > 2Gb (if 3Gb flag is toggled)
-		"/VERBOSE:INCR",      //# incremental linker diagnosis
-		"/SUBSYSTEM:WINDOWS", //# ~Windows~ application type (vs Console)
-		"/fastfail",          //# better error reporting
+		"/OUT:\"%2\"",
+		"\"%1\"",
 		"kernel32.lib",
 		"Shell32.lib",
 		"Gdi32.lib",
 		"Shlwapi.lib",
 		"Version.lib",
-		"/OUT:\"%2\"",
-		"\"%1\"",
+		"/nologo",            // no copyright when compiling
+		"/TLBID:1",           // https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
+		"/IGNORE:4001",       // https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
+		"/IGNORE:4099",       // don't have PDB for some externals
+		"/NXCOMPAT:NO",       // disable Data Execution Prevention (DEP)
+		"/LARGEADDRESSAWARE", // indicate support for VM > 2Gb (if 3Gb flag is toggled)
+		"/VERBOSE:INCR",      // incremental linker diagnosis
+		"/SUBSYSTEM:WINDOWS", // ~Windows~ application type (vs Console)
+		"/fastfail",          // better error reporting
 	)
 
 	// strict vs permissive
@@ -341,7 +343,7 @@ func makeMsvcCompiler(
 		LogVeryVerbose("MSVC: using permissive compilation options")
 
 		facet.AddCompilationFlag("/permissive", "/WX-")
-		facet.LinkerOptions.Append("/WX-")
+		//facet.LinkerOptions.Append("/WX-")
 		facet.LibrarianOptions.Append("/WX-")
 	} else {
 		LogVeryVerbose("MSVC: using strict warnings and warings as error")
@@ -366,8 +368,8 @@ func makeMsvcCompiler(
 		)
 
 		// warning as errors also for librarian and linker
-		facet.LinkerOptions.Append("/WX")
 		facet.LibrarianOptions.Append("/WX")
+		//facet.LinkerOptions.Append("/WX") // #TODO: **DON'T**, will freeze link.exe ¯\_(ツ)_/¯
 	}
 
 	if compileFlags.Benchmark {
@@ -407,14 +409,14 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
-		u.CompilerOptions.Append("/favor:blend", "/arch:AVX2")
+		u.AddCompilationFlag("/favor:blend", "/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x86")
 		u.LinkerOptions.Append("/MACHINE:x86", "/SAFESEH")
 		u.LibraryPaths.Append(
 			msvc.VSInstallPath.Folder("VC", "Tools", "MSVC", msvc.MinorVer, "lib", "x86"),
 			msvc.VSInstallPath.Folder("VC", "Auxiliary", "VS", "lib", "x86"))
 	case ARCH_X64:
-		u.CompilerOptions.Append("/favor:AMD64", "/arch:AVX2")
+		u.AddCompilationFlag("/favor:AMD64", "/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x64")
 		u.LinkerOptions.Append("/MACHINE:x64")
 		u.LibraryPaths.Append(
@@ -585,14 +587,14 @@ func decorateMsvcConfig_FastDebug(f *Facet) {
 	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
 	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
-	msvc_CXX_linkTimeCodeGeneration(f, true)
+	msvc_CXX_linkTimeCodeGeneration(f, false)
 	msvc_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), false)
 	msvc_STL_debugHeap(f, true)
 	msvc_STL_iteratorDebug(f, true)
 }
 func decorateMsvcConfig_Devel(f *Facet) {
 	f.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Zo", "/GL")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
+	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOICF")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
 	msvc_CXX_runtimeChecks(f, false, false)
@@ -730,7 +732,6 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 	LogTrace(strings.Join(append([]string{MSVC_VSWHERE_EXE.String()}, args...), " "))
 
 	cmd := exec.Command(MSVC_VSWHERE_EXE.String(), args...)
-	bc.NeedFile(MSVC_VSWHERE_EXE)
 
 	var entries []VsWhereEntry
 	if outp, err := cmd.Output(); err != nil {
@@ -750,7 +751,6 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 	if _, err := x.VsInstallPath.Info(); err != nil {
 		return BuildStamp{}, err
 	}
-	bc.NeedFolder(x.VsInstallPath)
 
 	if err := x.ActualVer.Set(x.Selected.Catalog.ProductLineVersion); err != nil {
 		return BuildStamp{}, err
@@ -763,10 +763,8 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 	} else {
 		return BuildStamp{}, err
 	}
-	bc.NeedFile(vcToolsVersionFile)
 
 	x.VcToolsPath = x.VsInstallPath.Folder("VC", "Tools", "MSVC", vcToolsVersion)
-	bc.NeedFolder(x.VcToolsPath)
 
 	vcToolsHostPath := x.VcToolsHostPath()
 
@@ -794,12 +792,12 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 		return BuildStamp{}, err
 	}
 
-	bc.NeedFile(x.VcToolsFileSet...)
-
 	x.Cl_exe = vcToolsHostPath.File("cl.exe")
 	x.Lib_exe = vcToolsHostPath.File("lib.exe")
 	x.Link_exe = vcToolsHostPath.File("link.exe")
-	bc.NeedFile(x.Cl_exe, x.Lib_exe, x.Link_exe)
+	bc.NeedFile(MSVC_VSWHERE_EXE, vcToolsVersionFile, x.Cl_exe, x.Lib_exe, x.Link_exe)
+	bc.NeedFile(x.VcToolsFileSet...)
+	bc.NeedFolder(x.VcToolsPath, x.VsInstallPath)
 
 	return MakeBuildStamp(x)
 }
@@ -809,7 +807,11 @@ func (msvc *MsvcCompiler) Alias() BuildAlias {
 }
 func (msvc *MsvcCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	*msvc = MsvcCompiler{Arch: msvc.Arch}
-	msvc.ProductInstall = GetMsvcProductInstall(bc, msvc.Arch)
+
+	windowsFlags := WindowsFlags.Need(CommandEnv.Flags)
+	msvc.ProductInstall = GetMsvcProductInstall(msvc.Arch, windowsFlags.MscVer, windowsFlags.Insider)
+	bc.DependsOn(windowsFlags, msvc.ProductInstall)
+
 	makeMsvcCompiler(
 		msvc,
 		bc,
@@ -827,11 +829,7 @@ func (msvc *MsvcCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	return MakeTimedBuildStamp(time.Now())
 }
 
-func GetMsvcProductInstall(bc BuildContext, arch ArchType) *MsvcProductInstall {
-	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
-	bc.DependsOn(windowsFlags)
-
-	msc_ver := windowsFlags.MscVer
+var GetMsvcProductInstall = MemoizeArgs3(func(arch ArchType, msc_ver MsvcVersion, insider BoolVar) *MsvcProductInstall {
 	if msc_ver == MSC_VER_LATEST {
 		msc_ver = msc_ver_any
 	}
@@ -839,23 +837,17 @@ func GetMsvcProductInstall(bc BuildContext, arch ArchType) *MsvcProductInstall {
 	builder := &MsvcProductInstall{
 		WantedVer: msc_ver,
 		Arch:      arch.String(),
-		Insider:   windowsFlags.Insider.Get(),
-	}
-	actual, err := bc.NeedBuilder(func(bg BuildGraph) Buildable {
-		return bg.Create(builder).GetBuildable()
-	})
-	if err != nil {
-		panic(err)
+		Insider:   insider.Get(),
 	}
 
-	return actual.(*MsvcProductInstall)
-}
+	return CommandEnv.BuildGraph().Create(builder).GetBuildable().(*MsvcProductInstall)
+})
 
-func GetMsvcCompiler(arch ArchType) *MsvcCompiler {
+var GetMsvcCompiler = MemoizeArg(func(arch ArchType) *MsvcCompiler {
 	result := &MsvcCompiler{
 		Arch: arch,
 	}
 	return CommandEnv.BuildGraph().
 		Create(result).
 		GetBuildable().(*MsvcCompiler)
-}
+})

@@ -21,7 +21,7 @@ func newLinuxFlags() *LinuxFlagsT {
 	}).GetBuildable().(*LinuxFlagsT)
 }
 func (flags *LinuxFlagsT) InitFlags(cfg *PersistentMap) {
-	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+Join(",", CompilerTypes()...)+"]")
+	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]")
 	cfg.Persistent(&flags.StackSize, "StackSize", "set default thread stack size in bytes")
 }
 func (flags *LinuxFlagsT) ApplyVars(cfg *PersistentMap) {

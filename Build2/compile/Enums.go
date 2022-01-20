@@ -46,6 +46,9 @@ func ArchTypes() []ArchType {
 		ARCH_ARM64,
 	}
 }
+func (x ArchType) Equals(o ArchType) bool {
+	return (x == o)
+}
 func (x ArchType) String() string {
 	switch x {
 	case ARCH_X86:
@@ -645,6 +648,17 @@ func (x PayloadType) MarshalJSON() ([]byte, error) {
 }
 func (x *PayloadType) UnmarshalJSON(data []byte) error {
 	return utils.UnmarshalJSON(x, data)
+}
+func (x PayloadType) HasOutput() bool {
+	switch x {
+	case PAYLOAD_EXECUTABLE, PAYLOAD_OBJECTLIST, PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
+		return true
+	case PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER:
+		return false
+	default:
+		utils.UnexpectedValue(x)
+		return false
+	}
 }
 
 /***************************************

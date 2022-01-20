@@ -7,26 +7,42 @@ import (
 	"path"
 )
 
+type EnvironmentAlias struct {
+	PlatformName string
+	ConfigName   string
+}
+
+func (x EnvironmentAlias) CompileEnvAlias() utils.BuildAlias {
+	return utils.BuildAlias(fmt.Sprintf("%v-%v", x.PlatformName, x.ConfigName))
+}
+func (x EnvironmentAlias) GetDigestable(o *bytes.Buffer) {
+	o.WriteString(x.PlatformName)
+	o.WriteString(x.ConfigName)
+}
+func (x EnvironmentAlias) String() string {
+	return x.CompileEnvAlias().String()
+}
+
 type TargetAlias struct {
 	NamespaceName string
 	ModuleName    string
-	PlatformName  string
-	ConfigName    string
+	EnvironmentAlias
 }
 
 func NewTargetAlias(module Module, platform Platform, config Configuration) TargetAlias {
 	return TargetAlias{
 		NamespaceName: module.GetNamespace().String(),
 		ModuleName:    module.GetModule().ModuleName,
-		PlatformName:  platform.GetPlatform().PlatformName,
-		ConfigName:    config.GetConfig().ConfigName,
+		EnvironmentAlias: EnvironmentAlias{
+			PlatformName: platform.GetPlatform().PlatformName,
+			ConfigName:   config.GetConfig().ConfigName,
+		},
 	}
 }
 func (x TargetAlias) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.NamespaceName)
 	o.WriteString(x.ModuleName)
-	o.WriteString(x.PlatformName)
-	o.WriteString(x.ConfigName)
+	x.EnvironmentAlias.GetDigestable(o)
 }
 func (x TargetAlias) UnitAlias() utils.BuildAlias {
 	return utils.BuildAlias(fmt.Sprintf("%v-%v-%v", x.ModuleAlias(), x.PlatformName, x.ConfigName))
@@ -43,6 +59,7 @@ func (x TargetAlias) String() string {
 
 type UnitDecorator interface {
 	Decorate(env *CompileEnv, unit *Unit)
+	fmt.Stringer
 }
 
 type Unit struct {
@@ -103,8 +120,8 @@ func (unit *Unit) DebugString() string {
 	return utils.PrettyPrint(unit)
 }
 func (unit *Unit) Decorate(env *CompileEnv, decorator ...UnitDecorator) {
+	utils.LogVeryVerbose("unit %v: decorate with [%v]", unit.Target, utils.Join(",", decorator...))
 	for _, x := range decorator {
-		utils.LogVeryVerbose("unit %v: decorate with %v", unit.Target, x)
 		x.Decorate(env, unit)
 	}
 }

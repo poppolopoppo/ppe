@@ -77,14 +77,14 @@ func newCompileFlags() *CompileFlagsT {
 	}).GetBuildable().(*CompileFlagsT)
 }
 func (flags *CompileFlagsT) InitFlags(cfg *utils.PersistentMap) {
-	cfg.Persistent(&flags.CppRtti, "CppRtti", "override C++ rtti support ["+utils.Join(",", CppRttiTypes()...)+"]")
-	cfg.Persistent(&flags.CppStd, "CppStd", "override C++ standard ["+utils.Join(",", CppStdTypes()...)+"]")
-	cfg.Persistent(&flags.DebugSymbols, "DebugSymbols", "override debug symbols mode ["+utils.Join(",", DebugTypes()...)+"]")
-	cfg.Persistent(&flags.Exceptions, "Exceptions", "override exceptions mode ["+utils.Join(",", ExceptionTypes()...)+"]")
-	cfg.Persistent(&flags.Link, "Link", "override link type ["+utils.Join(",", LinkTypes()...)+"]")
-	cfg.Persistent(&flags.PCH, "PCH", "override size limit for splitting unity files ["+utils.Join(",", PrecompiledHeaderTypes()...)+"]")
-	cfg.Persistent(&flags.Sanitizer, "Sanitizer", "override sanitizer mode ["+utils.Join(",", SanitizerTypes()...)+"]")
-	cfg.Persistent(&flags.Unity, "Unity", "override unity build mode ["+utils.Join(",", UnityTypes()...)+"]")
+	cfg.Persistent(&flags.CppRtti, "CppRtti", "override C++ rtti support ["+utils.JoinString(",", CppRttiTypes()...)+"]")
+	cfg.Persistent(&flags.CppStd, "CppStd", "override C++ standard ["+utils.JoinString(",", CppStdTypes()...)+"]")
+	cfg.Persistent(&flags.DebugSymbols, "DebugSymbols", "override debug symbols mode ["+utils.JoinString(",", DebugTypes()...)+"]")
+	cfg.Persistent(&flags.Exceptions, "Exceptions", "override exceptions mode ["+utils.JoinString(",", ExceptionTypes()...)+"]")
+	cfg.Persistent(&flags.Link, "Link", "override link type ["+utils.JoinString(",", LinkTypes()...)+"]")
+	cfg.Persistent(&flags.PCH, "PCH", "override size limit for splitting unity files ["+utils.JoinString(",", PrecompiledHeaderTypes()...)+"]")
+	cfg.Persistent(&flags.Sanitizer, "Sanitizer", "override sanitizer mode ["+utils.JoinString(",", SanitizerTypes()...)+"]")
+	cfg.Persistent(&flags.Unity, "Unity", "override unity build mode ["+utils.JoinString(",", UnityTypes()...)+"]")
 	cfg.Persistent(&flags.SizePerUnity, "SizePerUnity", "size limit for splitting unity files")
 	cfg.Persistent(&flags.AdaptiveUnity, "AdaptiveUnity", "enable/disable adaptive unity using source control")
 	cfg.Persistent(&flags.Benchmark, "Benchmark", "enable/disable compilation benchmarks")
@@ -170,6 +170,7 @@ func (b *BuildTargetsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
 		return o.Bytes()
 	})
 
+	utils.LogTrace("translated %d compilation units", b.Len())
 	return utils.MakeBuildStamp(digest)
 }
 

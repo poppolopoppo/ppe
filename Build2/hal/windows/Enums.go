@@ -77,6 +77,9 @@ func MsvcVersions() []MsvcVersion {
 		MSC_VER_2013,
 	}
 }
+func (v MsvcVersion) Equals(o MsvcVersion) bool {
+	return (v == o)
+}
 func (v MsvcVersion) String() string {
 	switch v {
 	case msc_ver_any:

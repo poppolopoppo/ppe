@@ -38,11 +38,11 @@ func newWindowsFlags() *WindowsFlagsT {
 	}).GetBuildable().(*WindowsFlagsT)
 }
 func (flags *WindowsFlagsT) InitFlags(cfg *PersistentMap) {
-	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+Join(",", CompilerTypes()...)+"]")
+	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]")
 	cfg.Persistent(&flags.Analyze, "Analyze", "enable/disable MSCV analysis")
 	cfg.Persistent(&flags.Insider, "Insider", "enable/disable support for pre-release toolchain")
 	cfg.Persistent(&flags.JustMyCode, "JustMyCode", "enable/disable MSCV just-my-code")
-	cfg.Persistent(&flags.MscVer, "MscVer", "select MSVC toolchain version ["+Join(",", MsvcVersions()...)+"]")
+	cfg.Persistent(&flags.MscVer, "MscVer", "select MSVC toolchain version ["+JoinString(",", MsvcVersions()...)+"]")
 	cfg.Persistent(&flags.PerfSDK, "PerfSDK", "enable/disable Visual Studio Performance SDK")
 	cfg.Persistent(&flags.Permissive, "Permissive", "enable/disable MSCV permissive")
 	cfg.Persistent(&flags.StackSize, "StackSize", "set default thread stack size in bytes")
@@ -123,6 +123,8 @@ func InitWindows() {
 	gob.Register(&MsvcProductInstall{})
 	gob.Register(&WindowsSDKBuilder{})
 	gob.Register(&WindowsSDK{})
+	gob.Register(&ClangCompiler{})
+	gob.Register(&LlvmProductInstall{})
 
 	AllCompilationFlags.Append(WindowsFlags.Add)
 
@@ -137,8 +139,8 @@ func InitWindows() {
 				return GetMsvcCompiler(arch)
 			}
 		case COMPILER_CLANGCL:
-			factory = func(ArchType) Compiler {
-				return nil
+			factory = func(arch ArchType) Compiler {
+				return GetClangCompiler(arch)
 			}
 		}
 		AllCompilers.Add(x.String(), factory)

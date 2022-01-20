@@ -11,5 +11,9 @@
 	],
 	"SourceFiles": [
 		"Private/vulkan.cpp"
-	]
+	],
+	"Exports": {
+		"Vulkan/Bindings": "Public/vulkan-exports.inl",
+		"Vulkan/Path": "Vulkan-Header.git/include/vulkan"
+	}
 }

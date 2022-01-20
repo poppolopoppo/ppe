@@ -11,8 +11,6 @@ import (
 	"syscall"
 )
 
-var FBUILD_BIN = utils.UFS.Build.Folder("hal", "linux", "bin").File("fbuild")
-
 func InitHAL() {
 	var uname syscall.Utsname
 	if err := syscall.Uname(&uname); err != nil {
@@ -22,6 +20,7 @@ func InitHAL() {
 		Id:   utils.HOST_LINUX,
 		Name: arrayToString(uname.Version),
 	})
+	utils.FBUILD_BIN = utils.UFS.Build.Folder("hal", "linux", "bin").File("fbuild")
 	utils.SetEnableInteractiveShell(isInteractiveShell())
 	generic.InitGeneric()
 	linux.InitLinux()

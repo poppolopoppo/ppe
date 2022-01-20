@@ -179,8 +179,7 @@ func makeLlvmCompiler(
 	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
 	linuxFlags := LinuxFlags.FindOrAdd(CommandEnv.Flags)
 
-	bc.DependsOn(compileFlags)
-	bc.DependsOn(linuxFlags)
+	bc.DependsOn(compileFlags, linuxFlags)
 
 	result.CompilerRules.CompilerName = fmt.Sprintf("Llvm_%v_%v",
 		SanitizeIdentifier(result.ProductInstall.Version), result.ProductInstall.Arch)
@@ -372,9 +371,7 @@ func (x *LlvmProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 	}
 
 	bc.NeedFolder(x.InstallDir)
-	bc.NeedFile(x.Ar)
-	bc.NeedFile(x.Clang)
-	bc.NeedFile(x.ClangPlusPlus)
+	bc.NeedFile(x.Ar, x.Clang, x.ClangPlusPlus)
 	return MakeBuildStamp(x)
 }
 
@@ -383,35 +380,32 @@ func (llvm *LlvmCompiler) Alias() BuildAlias {
 }
 func (llvm *LlvmCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	*llvm = LlvmCompiler{Arch: llvm.Arch}
-	llvm.ProductInstall = GetLlvmProductInstall(bc, llvm.Arch)
+
+	llvm.ProductInstall = GetLlvmProductInstall(llvm.Arch)
+	bc.DependsOn(llvm.ProductInstall)
+
 	makeLlvmCompiler(
 		llvm,
 		bc,
 		llvm.ProductInstall.ClangPlusPlus,
 		llvm.ProductInstall.Ar,
 		llvm.ProductInstall.Clang)
+
 	return MakeTimedBuildStamp(time.Now())
 }
 
-func GetLlvmProductInstall(bc BuildContext, arch ArchType) *LlvmProductInstall {
+var GetLlvmProductInstall = MemoizeArg(func(arch ArchType) *LlvmProductInstall {
 	builder := &LlvmProductInstall{
 		Arch: arch.String(),
 	}
-	actual, err := bc.NeedBuilder(func(bg BuildGraph) Buildable {
-		return bg.Create(builder).GetBuildable()
-	})
-	if err != nil {
-		panic(err)
-	}
+	return CommandEnv.BuildGraph().Create(builder).GetBuildable().(*LlvmProductInstall)
+})
 
-	return actual.(*LlvmProductInstall)
-}
-
-func GetLlvmCompiler(arch ArchType) *LlvmCompiler {
+var GetLlvmCompiler = MemoizeArg(func(arch ArchType) *LlvmCompiler {
 	result := &LlvmCompiler{
 		Arch: arch,
 	}
 	return CommandEnv.BuildGraph().
 		Create(result).
 		GetBuildable().(*LlvmCompiler)
-}
+})

@@ -83,6 +83,7 @@ func setupCloseHandler() {
 	go func() {
 		<-c
 		LogWarning("\r- Ctrl+C pressed in Terminal")
+		PurgePinnedLogs()
 		os.Exit(0)
 	}()
 }

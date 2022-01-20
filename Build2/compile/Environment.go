@@ -150,7 +150,16 @@ func (env *CompileEnv) GetSanitizerType(module Module) (result SanitizerType) {
 func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result PayloadType) {
 	switch module.GetModule().ModuleType {
 	case MODULE_EXTERNAL:
-		fallthrough
+		switch module.GetModule().Link {
+		case LINK_INHERIT:
+			fallthrough
+		case LINK_STATIC:
+			return PAYLOAD_STATICLIB
+		case LINK_DYNAMIC:
+			return PAYLOAD_SHAREDLIB
+		default:
+			utils.UnexpectedValue(link)
+		}
 	case MODULE_LIBRARY:
 		switch link {
 		case LINK_INHERIT:
@@ -162,7 +171,6 @@ func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result Payl
 		default:
 			utils.UnexpectedValue(link)
 		}
-		break
 	case MODULE_PROGRAM:
 		switch link {
 		case LINK_INHERIT:
@@ -174,7 +182,6 @@ func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result Payl
 		default:
 			utils.UnexpectedValue(link)
 		}
-		break
 	case MODULE_HEADERS:
 		return PAYLOAD_HEADERS
 	default:
@@ -275,9 +282,10 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 	return unit
 }
 func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, translated map[Module]*Unit) (utils.SetT[*Unit], error) {
-	result := utils.SetT[*Unit]{}
+	pbar := utils.LogProgress(0, len(translated), "link %v", env)
+	defer pbar.Close()
 
-	for _, m := range moduleGraph.keys {
+	linked, err := utils.ParallelMap(func(m Module) (*Unit, error) {
 		unit := translated[m]
 		moduleNode := moduleGraph.Get(m)
 
@@ -359,20 +367,24 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 		unit.Decorate(env, unit.GetCompiler())
 		unit.Facet.PerformSubstitutions()
 
-		for _, gen := range m.GetModule().Generateds {
-			if err := gen.GetGenerated().Generate(bc, env, unit); err != nil {
-				return result, err
-			}
-		}
+		err := utils.ParallelRange(func(x Generated) error {
+			return x.GetGenerated().Generate(bc, env, unit)
+		}, m.GetModule().Generateds...)
 
-		result.Append(unit)
+		pbar.Inc()
+		return unit, err
+	}, moduleGraph.keys...)
+
+	if err == nil {
+		result := utils.NewSet(linked...)
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Ordinal < result[j].Ordinal
+		})
+
+		return result, nil
+	} else {
+		return nil, err
 	}
-
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Ordinal < result[j].Ordinal
-	})
-
-	return result, nil
 }
 
 type BuildEnvironmentsT struct {
@@ -397,7 +409,9 @@ func (b *BuildEnvironmentsT) Build(bc utils.BuildContext) (utils.BuildStamp, err
 	digester := utils.MakeDigester()
 	for _, platform := range allPlatforms {
 		for _, config := range allConfigs {
-			compiler := GetBuildCompiler(bc, platform.GetPlatform().Arch)
+			compiler := GetBuildCompiler(platform.GetPlatform().Arch)
+			bc.DependsOn(compiler)
+
 			env := NewCompileEnv(platform, config, compiler, compileFlags)
 
 			utils.LogVerbose("new compile env: %v", env)
@@ -408,6 +422,8 @@ func (b *BuildEnvironmentsT) Build(bc utils.BuildContext) (utils.BuildStamp, err
 		}
 	}
 
+	utils.LogTrace("prepared %d compilation environments from %d platforms and %d configs",
+		b.Len(), len(allPlatforms), len(allConfigs))
 	return utils.MakeBuildStamp(digester.Finalize())
 }
 

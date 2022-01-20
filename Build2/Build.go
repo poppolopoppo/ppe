@@ -17,7 +17,7 @@ func initInternals() {
 }
 
 func test(id int) <-chan *int {
-	split := 200 + rand.Intn(300)
+	split := 200 + rand.Intn(800)
 	channel := make(chan *int)
 	go func() {
 		defer close(channel)
@@ -32,7 +32,7 @@ func test(id int) <-chan *int {
 
 		for i := 0; i < split; i += 1 {
 			pin.Inc()
-			time.Sleep((time.Second * time.Duration(rand.Intn(10))) / time.Duration(2000))
+			time.Sleep((time.Second * time.Duration(rand.Intn(30))) / time.Duration(2000))
 		}
 
 		x := 32
@@ -43,6 +43,7 @@ func test(id int) <-chan *int {
 
 func LaunchCommand(prefix string, rootFile utils.Filename, args []string) {
 	defer utils.StartProfiling()()
+	defer utils.FlushLog()
 
 	env := utils.InitCommandEnv(prefix, rootFile)
 	initInternals()
@@ -84,5 +85,4 @@ func LaunchCommand(prefix string, rootFile utils.Filename, args []string) {
 	// 		break
 	// 	}
 	// }
-
 }

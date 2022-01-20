@@ -51,3 +51,5 @@ func MakeFuture[T any](f func() (T, error)) Future[T] {
 func make_logQueue() logQueue {
 	return make_logQueue_deferred()
 }
+
+func log_callstack() {}

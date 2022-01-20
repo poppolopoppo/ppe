@@ -11,8 +11,6 @@ import (
 	"syscall"
 )
 
-var FBUILD_BIN = utils.UFS.Build.Folder("hal", "windows", "bin").File("FBuild.exe")
-
 func osVersion() string {
 	v, err := syscall.GetVersion()
 	if err != nil {
@@ -47,6 +45,7 @@ func InitHAL() {
 		Id:   utils.HOST_WINDOWS,
 		Name: "Windows " + osVersion(),
 	})
+	utils.FBUILD_BIN = utils.UFS.Build.Folder("hal", "windows", "bin").File("FBuild.exe")
 	utils.SetEnableInteractiveShell(setConsoleMode())
 	generic.InitGeneric()
 	windows.InitWindows()

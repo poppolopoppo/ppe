@@ -101,8 +101,11 @@ var ListModules = utils.MakeCommand(
 	"list all available modules",
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		build := compile.BuildModules.Build(cmd.BuildGraph())
-		printCompletion(cmd, build.ModuleKeys())
+		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
+			printCompletion(cmd, build.ModuleKeys())
+		} else {
+			panic(err)
+		}
 		return nil
 	},
 )
@@ -112,8 +115,11 @@ var ListNamespaces = utils.MakeCommand(
 	"list all available namespaces",
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		build := compile.BuildModules.Build(cmd.BuildGraph())
-		printCompletion(cmd, build.NamespaceKeys())
+		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
+			printCompletion(cmd, build.NamespaceKeys())
+		} else {
+			panic(err)
+		}
 		return nil
 	},
 )
@@ -123,8 +129,11 @@ var ListEnvironments = utils.MakeCommand(
 	"list all compilation environments",
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		build := compile.BuildEnvironments.Build(cmd.BuildGraph())
-		printCompletion(cmd, utils.Stringize(build.Slice()...))
+		if build, err := compile.BuildEnvironments.Build(cmd.BuildGraph()); err == nil {
+			printCompletion(cmd, utils.Stringize(build.Slice()...))
+		} else {
+			panic(err)
+		}
 		return nil
 	},
 )
@@ -134,8 +143,11 @@ var ListTargets = utils.MakeCommand(
 	"list all translated targets",
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		build := compile.BuildTargets.Build(cmd.BuildGraph())
-		printCompletion(cmd, utils.Stringize(build.Slice()...))
+		if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
+			printCompletion(cmd, utils.Stringize(build.Slice()...))
+		} else {
+			panic(err)
+		}
 		return nil
 	},
 )
@@ -145,14 +157,17 @@ var ExportUnit = utils.MakeCommand(
 	"export translated unit to json",
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		build := compile.BuildTargets.Build(cmd.BuildGraph())
-		units := make(map[string]*compile.Unit, build.Len())
-		for _, unit := range build.Slice() {
-			units[unit.String()] = unit
+		if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
+			units := make(map[string]*compile.Unit, build.Len())
+			for _, unit := range build.Slice() {
+				units[unit.String()] = unit
+			}
+			mapCompletion(cmd, func(s string) {
+				fmt.Println(utils.PrettyPrint(units[s]))
+			}, units)
+		} else {
+			panic(err)
 		}
-		mapCompletion(cmd, func(s string) {
-			fmt.Println(utils.PrettyPrint(units[s]))
-		}, units)
 		return nil
 	},
 )

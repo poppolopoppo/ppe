@@ -109,6 +109,9 @@ var (
 	}
 )
 
+func make_ansi_color(prefix string, color string) AnsiCode {
+	return ANSI_CODES[prefix+"_"+color]
+}
 func make_random_color(prefix string) AnsiCode {
-	return ANSI_CODES[prefix+"_"+ANSI_COLORS[rand.Intn(len(ANSI_COLORS))]]
+	return make_ansi_color(prefix, ANSI_COLORS[rand.Intn(len(ANSI_COLORS))])
 }

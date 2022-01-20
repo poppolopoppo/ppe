@@ -139,6 +139,7 @@ func (x *SourceControlModifiedFilesT) Build(bc BuildContext) (BuildStamp, error)
 			for _, file := range modifiedFiles {
 				fmt.Fprintln(w, filepath.Clean(file.String()))
 			}
+			bc.OutputFile(x.Output)
 			return nil
 		} else {
 			return err
@@ -155,6 +156,5 @@ var SourceControlModifiedFiles = MakeBuildable(func(bi BuildInit) *SourceControl
 	builder := &SourceControlModifiedFilesT{
 		Output: UFS.Saved.File(".modified_files_list.txt"),
 	}
-	bi.NeedFile(builder.Output)
 	return builder
 })

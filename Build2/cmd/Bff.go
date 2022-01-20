@@ -56,6 +56,30 @@ func newBffArgs() *BffArgsT {
 	}).GetBuildable().(*BffArgsT)
 }
 
+var Bff = MakeCommand(
+	"bff",
+	"generate FASTBuild config file",
+	func(cmd *CommandEnvT) *BffArgsT {
+		AllCompilationFlags.Needed(cmd.Flags)
+		return BffArgs.Create(cmd.Flags)
+	},
+	func(cmd *CommandEnvT, args *BffArgsT) error {
+		LogClaim("generating BFF config in '%v'", args.BffFile)
+
+		bg := cmd.BuildGraph()
+		builder := bg.Create(&BffBuilder{
+			Output: args.BffFile,
+		}, args.Alias())
+
+		_, result := bg.Build(builder)
+		return result.Join().Failure()
+	},
+)
+
+/***************************************
+ * FASTBuild config generation
+ ***************************************/
+
 type BffBuilder struct {
 	Output Filename
 }
@@ -76,8 +100,10 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			bff.Assign("RootPath", UFS.Root)
 			bff.Assign("CachePath", UFS.Cache)
 			if CurrentHost().Id == HOST_WINDOWS {
-				compiler := GetBuildCompiler(bc, CurrentArch())
-				path := Join(";", compiler.EnvPath()...)
+				compiler := GetBuildCompiler(CurrentArch())
+				bc.DependsOn(compiler)
+
+				path := JoinString(";", compiler.EnvPath()...)
 				bff.Import("TMP")
 				bff.Assign("Environment", BffArray{
 					"PATH=" + path,
@@ -122,26 +148,6 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	}
 }
 
-var Bff = MakeCommand(
-	"bff",
-	"generate FASTBuild config file",
-	func(cmd *CommandEnvT) *BffArgsT {
-		AllCompilationFlags.Needed(cmd.Flags)
-		return BffArgs.Create(cmd.Flags)
-	},
-	func(cmd *CommandEnvT, args *BffArgsT) error {
-		LogClaim("generating BFF config in '%v'", args.BffFile)
-
-		bg := cmd.BuildGraph()
-		builder := bg.Create(&BffBuilder{
-			Output: args.BffFile,
-		}, args.Alias())
-
-		_, result := bg.Build(builder)
-		return result.Join().Failure()
-	},
-)
-
 type bffGenerator struct {
 	*BffArgsT
 	*BffFile
@@ -150,10 +156,7 @@ type bffGenerator struct {
 func newBffGenerator(dst io.Writer, args *BffArgsT) (result bffGenerator) {
 	result = bffGenerator{
 		BffArgsT: args,
-		BffFile:  NewBffFile(dst),
-	}
-	if args.Minify {
-		result.BffFile.Flags |= BFF_MINIFY
+		BffFile:  NewBffFile(dst, args.Minify.Get()),
 	}
 	return result
 }
@@ -179,7 +182,8 @@ func (gen bffGenerator) StaticLib(unit *Unit) {
 	gen.BaseModule(unit, "", false)
 }
 func (gen bffGenerator) BaseDeliverable(unit *Unit, executable bool) {
-	libraries := []string{gen.BaseModule(unit, "-Lib", true)}
+	libraries := []string{gen.BaseModule(unit, "-Obj", true)}
+	libraries = append(libraries, Stringize(unit.CompileDependencies.Slice()...)...)
 	libraries = append(libraries, Stringize(unit.LinkDependencies.Slice()...)...)
 	compilerDetails := gen.Compiler(unit.Compiler)
 
@@ -277,9 +281,7 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 
 		compileDepAliases := Stringize(unit.CompileDependencies.Slice()...)
 
-		if linkLibraryObjects {
-			gen.Assign("CompilerForceUsing", compileDepAliases)
-		} else {
+		if !linkLibraryObjects {
 			gen.Assign("LibrarianAdditionalInputs", compileDepAliases)
 			gen.Assign("LibrarianOptions", unit.LibrarianOptions.Join(" "))
 			gen.Assign("LibrarianOutput", unit.OutputFile)

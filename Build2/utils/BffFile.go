@@ -6,13 +6,6 @@ import (
 	"strings"
 )
 
-type BffFlags int32
-
-const (
-	BFF_NONE   BffFlags = 0
-	BFF_MINIFY BffFlags = 1 << 0
-)
-
 type BffOp string
 
 func (x BffOp) String() string { return string(x) }
@@ -83,21 +76,16 @@ func bffIsDefaultValue(x interface{}) bool {
 }
 
 type BffFile struct {
-	Flags   BffFlags
 	aliases StringSet
-	io.Writer
+	*StructuredFile
 }
 
-func NewBffFile(dst io.Writer) *BffFile {
+func NewBffFile(dst io.Writer, minify bool) *BffFile {
 	return &BffFile{
-		Flags:  BFF_NONE,
-		Writer: dst,
+		StructuredFile: NewStructuredFile(dst, STRUCTUREDFILE_DEFAULT_TAB, minify),
 	}
 }
 
-func (bff BffFile) Minify() bool {
-	return (bff.Flags & BFF_MINIFY) == BFF_MINIFY
-}
 func (bff *BffFile) Once(key BffVar, closure func()) *BffFile {
 	if !bff.aliases.Contains(key.String()) {
 		bff.aliases.Append(key.String())
@@ -106,26 +94,30 @@ func (bff *BffFile) Once(key BffVar, closure func()) *BffFile {
 	return bff
 }
 func (bff *BffFile) Include(path Filename) *BffFile {
-	fmt.Fprintf(bff, "#include \"%s\"\n", path)
+	bff.Println(`#include "%s"`, path)
 	return bff
 }
 func (bff *BffFile) Comment(text string, a ...interface{}) *BffFile {
 	if !bff.Minify() {
-		fmt.Fprintf(bff, "// "+text+"\n", a...)
+		bff.Println("// "+text, a...)
 	}
 	return bff
 }
 func (bff *BffFile) Import(varname ...string) *BffFile {
 	for _, x := range varname {
-		fmt.Fprintln(bff, "#import "+x)
+		bff.Println("#import " + x)
 	}
 	return bff
 }
 func (bff *BffFile) SetVar(name string, value interface{}, operator BffOp, scope BffScope) *BffFile {
 	if !bffIsDefaultValue(value) {
-		fmt.Fprint(bff, scope.String()+name+operator.String())
+		if bff.Minify() {
+			bff.Print(scope.String() + name + operator.String())
+		} else {
+			bff.Print(scope.String() + name + " " + operator.String() + " ")
+		}
 		bff.Value(value)
-		fmt.Fprintln(bff)
+		bff.LineBreak()
 	}
 	return bff
 }
@@ -142,40 +134,48 @@ func (bff *BffFile) Value(x interface{}) *BffFile {
 	case IntVar:
 		bff.Value(x.(IntVar).Get())
 	case BffVar:
-		fmt.Fprint(bff, "."+x.(BffVar))
+		bff.Print("." + x.(BffVar).String())
 	case string:
-		fmt.Fprintf(bff, "\"%s\"", strings.ReplaceAll(x.(string), "\"", "^\""))
+		bff.Print(`"%s"`, strings.ReplaceAll(x.(string), "\"", "^\""))
 	case bool:
 		if x.(bool) {
-			fmt.Fprint(bff, "true")
+			bff.Print("true")
 		} else {
-			fmt.Fprint(bff, "false")
+			bff.Print("false")
 		}
 	case int8, int16, int32, int64:
-		fmt.Fprintf(bff, "%d", x)
+		bff.Print("%d", x)
 	case uint8, uint16, uint32, uint64:
-		fmt.Fprintf(bff, "%u", x)
+		bff.Print("%u", x)
 	case float32, float64:
-		fmt.Fprintf(bff, "%f", x)
+		bff.Print("%f", x)
 	case []string:
 		bff.Value(MakeBffArray(x.([]string)...))
 	case StringSetable:
 		bff.Value(MakeBffArray(x.(StringSetable).StringSet()...))
 	case BffArray:
-		fmt.Fprintln(bff, "{")
-		for i, x := range x.(BffArray) {
-			if i > 0 {
-				fmt.Fprintln(bff, ",")
+		bff.Print("{")
+		bff.ScopeIndent(func() {
+			for i, x := range x.(BffArray) {
+				if i > 0 {
+					if bff.Minify() {
+						bff.Print(",")
+					} else {
+						bff.Println(",")
+					}
+				}
+				bff.Value(x)
 			}
-			bff.Value(x)
-		}
-		fmt.Fprint(bff, "}")
+		})
+		bff.Println("}")
 	case BffMap:
-		fmt.Fprintln(bff, "[")
-		for k, v := range x.(BffMap) {
-			bff.Assign(k, v)
-		}
-		fmt.Fprint(bff, "]")
+		bff.Print("[")
+		bff.ScopeIndent(func() {
+			for k, v := range x.(BffMap) {
+				bff.Assign(k, v)
+			}
+		})
+		bff.Println("]")
 	case fmt.Stringer:
 		bff.Value(x.(fmt.Stringer).String())
 	default:
@@ -184,29 +184,47 @@ func (bff *BffFile) Value(x interface{}) *BffFile {
 	return bff
 }
 func (bff *BffFile) Func(name string, closure func(), args ...string) *BffFile {
-	fmt.Fprint(bff, name)
+	bff.Print(name)
 	if len(args) > 0 {
-		fmt.Fprint(bff, "(")
+		bff.Print("(")
+		if !bff.Minify() {
+			bff.Print(" ")
+		}
 		for i, x := range args {
 			if i > 0 {
-				fmt.Fprint(bff, " ")
+				bff.Print(" ")
 			}
 			bff.Value(x)
 		}
-		fmt.Fprint(bff, ")")
+		if !bff.Minify() {
+			bff.Print(" ")
+		}
+		bff.Print(")")
 	}
-	fmt.Fprintln(bff, "{")
-	closure()
-	fmt.Fprintln(bff, "}")
+	if bff.Minify() {
+		bff.Print("{")
+	} else {
+		bff.Print(" {")
+	}
+	bff.ScopeIndent(closure)
+	bff.Println("}")
 	return bff
 }
 func (bff *BffFile) Using(name BffVar) *BffFile {
-	fmt.Fprintf(bff, "Using(.%s)\n", name)
+	if bff.Minify() {
+		bff.Println("Using(.%s)", name)
+	} else {
+		bff.Println("Using( .%s )", name)
+	}
 	return bff
 }
 func (bff *BffFile) Struct(name BffVar, closure func()) *BffFile {
-	fmt.Fprintf(bff, ".%s=[\n", name)
-	closure()
-	fmt.Fprintln(bff, "]")
+	if bff.Minify() {
+		bff.Print(".%s=[", name)
+	} else {
+		bff.Print(".%s = [", name)
+	}
+	bff.ScopeIndent(closure)
+	bff.Println("]")
 	return bff
 }

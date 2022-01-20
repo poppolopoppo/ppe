@@ -1,5 +1,11 @@
 package generic
 
-func InitGeneric() {
+import "encoding/gob"
 
+func InitGeneric() {
+	gob.Register(&VulkanHeadersT{})
+	gob.Register(&VulkanBindingsT{})
+	gob.Register(&VulkanInterfaceT{})
+	gob.Register(VulkanGeneratedHeader{})
+	gob.Register(VulkanGeneratedSource{})
 }

@@ -198,6 +198,14 @@ CONSTEXPR size_t hash_str_constexpr(const _Char* str) NOEXCEPT {
     return hash_size_t_constexpr(h, n);
 }
 //----------------------------------------------------------------------------
+CONSTEXPR size_t hash_strI_constexpr(const char* str) NOEXCEPT {
+    Assert(str);
+    size_t h = 0, n = 0;
+    for (; *str; ++str, ++n)
+        h = hash_size_t_constexpr(h, ((*str >= 'A') && (*str <= 'Z')) ? 'a' + (*str - 'A') : *str);
+    return hash_size_t_constexpr(h, n);
+}
+//----------------------------------------------------------------------------
 template <typename _FwdIt>
 CONSTEXPR size_t hash_fwdit_constexpr(_FwdIt first, _FwdIt last) NOEXCEPT {
     size_t h = hash_size_t_constexpr(*(first++));

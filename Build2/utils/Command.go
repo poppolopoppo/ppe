@@ -130,6 +130,7 @@ func (flags *CommandFlagsT) ApplyVars(persistent *PersistentMap) {
 
 type CommandEnvT struct {
 	Flags      ServiceLocator[ParsableFlags]
+	prefix     string
 	buildGraph BuildGraph
 	persistent *PersistentMap
 	rootFile   Filename
@@ -150,6 +151,7 @@ var CommandEnv *CommandEnvT
 func InitCommandEnv(prefix string, rootFile Filename) *CommandEnvT {
 	CommandEnv = &CommandEnvT{
 		Flags:        NewServiceLocator[ParsableFlags](),
+		prefix:       prefix,
 		persistent:   NewPersistentMap(prefix),
 		rootFile:     rootFile,
 		barrier:      sync.Mutex{},
@@ -161,8 +163,11 @@ func InitCommandEnv(prefix string, rootFile Filename) *CommandEnvT {
 	CommandEnv.buildGraph = NewBuildGraph(CommandFlags.Create(CommandEnv.Flags))
 	return CommandEnv
 }
+func (env *CommandEnvT) Prefix() string             { return env.prefix }
 func (env *CommandEnvT) BuildGraph() BuildGraph     { return env.buildGraph }
 func (env *CommandEnvT) Persistent() *PersistentMap { return env.persistent }
+func (env *CommandEnvT) ConfigPath() Filename       { return env.configPath }
+func (env *CommandEnvT) DatabasePath() Filename     { return env.databasePath }
 func (env *CommandEnvT) RootFile() Filename         { return env.rootFile }
 
 func (env *CommandEnvT) Init(args []string) {
