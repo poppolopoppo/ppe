@@ -118,7 +118,7 @@
     - long time goal, some limitations with current code
         - may not be possible to remove a field ? since we use static offsets
 - [ ] Fast dynamic dispatch by hacking VTable: https://medium.com/@calebleak/fast-virtual-functions-hacking-the-vtable-for-fun-and-profit-25c36409c5e0
-- [ ] Wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
+- [X] Wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
 
 ## Physics engine:
 - Impulse-based Dynamic Simulation of Rigid Body Systems: https://people.eecs.berkeley.edu/~jfc/mirtich/thesis/mirtichThesis.pdf
@@ -140,6 +140,8 @@
     - https://youtu.be/YA-nB2wjVcI?t=1759
 - [ ] BloomFilter
     - https://blog.demofox.org/2015/02/08/estimating-set-membership-with-a-bloom-filter/
+- [ ] Discrete Differential Geometry (full course +20h)
+    - https://www.youtube.com/watch?v=8JCR6z3GLVI&list=PL9_jI1bdZmz0hIrNCMQW1YmZysAiIYSSS&index=2
 
 ## ECS
 
