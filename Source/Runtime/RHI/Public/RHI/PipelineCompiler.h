@@ -12,7 +12,7 @@ class PPE_RHI_API IPipelineCompiler : public FRefCountable {
 public:
     virtual ~IPipelineCompiler() = default;
 
-    virtual FString DisplayName() const NOEXCEPT = 0;;
+    virtual FString DisplayName() const NOEXCEPT = 0;
     virtual ETargetRHI TargetRHI() const NOEXCEPT = 0;
 
     virtual bool IsSupported(const FMeshPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
