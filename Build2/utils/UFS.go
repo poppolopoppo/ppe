@@ -512,6 +512,13 @@ func (list *DirSet) Contains(it ...Directory) bool {
 func (list *DirSet) Append(it ...Directory) {
 	*list = AppendEquatable_CheckUniq(*list, it...)
 }
+func (list *DirSet) AppendUniq(it ...Directory) {
+	for _, x := range it {
+		if !list.Contains(x) {
+			list.Append(x)
+		}
+	}
+}
 func (list *DirSet) Prepend(it ...Directory) {
 	*list = PrependEquatable_CheckUniq(it, *list...)
 }
@@ -674,11 +681,12 @@ func (ufs *UFSFrontEnd) Dir(str string) Directory {
 }
 func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
 	invalidate_directory_info(dst)
+	LogDebug("ufs: mkdir %v", dst)
 	path := dst.String()
 	if st, err := os.Stat(path); st != nil && err != nil {
 		if os.IsExist(err) {
 			if !st.IsDir() {
-				LogPanic("UFS.Mkdir: '%v' already exist, but is not a directory", dst)
+				LogPanic("ufs: '%v' already exist, but is not a directory", dst)
 			}
 			return
 		}
@@ -692,7 +700,7 @@ func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
 func (ufs *UFSFrontEnd) CreateWriter(dst Filename) (*os.File, error) {
 	invalidate_file_info(dst)
 	ufs.Mkdir(dst.Dirname)
-	LogTrace("ufs: create '%v'", dst)
+	LogDebug("ufs: create '%v'", dst)
 	return os.Create(dst.String())
 }
 func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error {
@@ -705,7 +713,7 @@ func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error 
 			return nil
 		}
 	}
-	LogWarning("UFS.Create: %v", err)
+	LogWarning("ufs: %v", err)
 	return err
 }
 func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) error {
@@ -774,7 +782,7 @@ func (ufs *UFSFrontEnd) LazyCreate_Enabled(dst Filename, write func(io.Writer) e
 }
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
 	input, err := os.Open(src.String())
-	LogTrace("ufs: open '%v'", src)
+	LogDebug("ufs: open '%v'", src)
 
 	if input != nil {
 		defer input.Close()
@@ -795,6 +803,8 @@ func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]strin
 	return ufs.Open(src, func(rd io.Reader) error {
 		buf := make([]byte, capacity*2)
 
+		LogDebug("ufs: scan '%v' with regexp %v", src, re)
+
 		scanner := bufio.NewScanner(rd)
 		scanner.Buffer(buf, capacity)
 		scanner.Split(SplitRegex(re, capacity))
@@ -812,6 +822,13 @@ func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]strin
 		}
 		return nil
 	})
+}
+func (ufs *UFSFrontEnd) Rename(src Filename, dst Filename) error {
+	ufs.Mkdir(dst.Dirname)
+	invalidate_file_info(src)
+	invalidate_file_info(dst)
+	LogDebug("ufs: rename '%v' to '%v'", src, dst)
+	return os.Rename(src.String(), dst.String())
 }
 
 func make_ufs_frontend() (ufs UFSFrontEnd) {

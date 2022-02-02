@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -91,11 +90,13 @@ func newBuildNode(builder Buildable) *buildNode {
 	}
 }
 func (node *buildNode) Alias() BuildAlias         { return node.Buildable.Alias() }
+func (node *buildNode) String() string            { return node.Alias().String() }
 func (node *buildNode) GetBuildStamp() BuildStamp { return node.Stamp }
 func (node *buildNode) GetBuildable() Buildable   { return node.Buildable }
 func (node *buildNode) AddStatic(g BuildGraph, a BuildAlias) (Buildable, error) {
 	dep, fut := g.Build(a)
 	if ret := fut.Join(); ret.Failure() == nil {
+		LogDebug("buildgraph: <%v> has static dependency on '%v'", node, a)
 		node.Static[a] = ret.Success()
 		return dep.GetBuildable(), nil
 	} else {
@@ -106,6 +107,7 @@ func (node *buildNode) AddDynamic(g BuildGraph, it ...BuildAliasable) error {
 	var futures = make(map[BuildAlias]Future[BuildStamp], len(it))
 	for _, x := range it {
 		a := x.Alias()
+		LogDebug("buildgraph: <%v> has dynamic dependency on '%v'", node, a)
 		_, fut := g.Build(a)
 		futures[a] = fut
 	}
@@ -119,6 +121,7 @@ func (node *buildNode) AddDynamic(g BuildGraph, it ...BuildAliasable) error {
 	return nil
 }
 func (node *buildNode) AddOutput(g BuildGraph, f Filename) (Buildable, error) {
+	LogDebug("buildgraph: <%v> outputs file '%v'", node, f)
 	dep, fut := g.ForceBuild(g.Create(f).GetBuildable())
 	if ret := fut.Join(); ret.Failure() == nil {
 		node.Output[f.Alias()] = ret.Success()
@@ -287,8 +290,10 @@ func (deps BuildDependencies) needToBuild(g *buildGraph, pbar PinnedProgress) (b
 		_, fut := g.Build(a)
 		futures[a] = fut
 	}
-	var errs []error
+
+	failed := false
 	rebuild := false
+
 	for a, oldStamp := range deps {
 		fut := futures[a].Join()
 		if pbar != nil {
@@ -301,18 +306,14 @@ func (deps BuildDependencies) needToBuild(g *buildGraph, pbar PinnedProgress) (b
 				rebuild = true
 			}
 		} else {
-			errs = append(errs, err)
+			failed = true
 		}
 	}
-	var err error
-	if len(errs) > 0 {
-		text := strings.Builder{}
-		for _, x := range errs {
-			fmt.Fprint(&text, x)
-		}
-		err = errors.New(text.String())
+	if !failed {
+		return rebuild, nil
+	} else {
+		return rebuild, errors.New("failed to build dependencies")
 	}
-	return rebuild, err
 }
 func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
 	n := len(node.Static) + len(node.Dynamic) + len(node.Output)
@@ -323,11 +324,14 @@ func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
 			return rebuild, err
 		}
 		if rebuild, err := node.Dynamic.needToBuild(g, pbar); rebuild || err != nil {
-			return rebuild, err
+			if err != nil {
+				LogWarning("%v: dynamic dependency failed with %v", node.Alias(), err)
+			}
+			return true, nil
 		}
 		if rebuild, err := node.Output.needToBuild(g, pbar); rebuild || err != nil {
 			if err != nil {
-				LogWarning("%v: %v", node.Alias(), err)
+				LogWarning("%v: output failed with %v", node.Alias(), err)
 			}
 			return true, nil
 		}
@@ -372,10 +376,9 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias, needUpdate bool)
 					}
 
 					return node.Stamp, nil
-				} else {
-					return node.Stamp, err
 				}
-			} else if err != nil {
+			}
+			if err != nil {
 				LogError("can't build '%v': %v", a, err)
 			} else {
 				LogVerbose("up-to-date '%v'", a)

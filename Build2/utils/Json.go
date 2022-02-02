@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+type JsonMap map[string]interface{}
+
 /***************************************
  * JSON
  ***************************************/

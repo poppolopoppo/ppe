@@ -138,6 +138,8 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			}
 		}
 
+		bff.MakeAliases(translatedUnits.Slice())
+
 		return nil
 	})
 
@@ -185,6 +187,7 @@ func (gen bffGenerator) BaseDeliverable(unit *Unit, executable bool) {
 	libraries := []string{gen.BaseModule(unit, "-Obj", true)}
 	libraries = append(libraries, Stringize(unit.CompileDependencies.Slice()...)...)
 	libraries = append(libraries, Stringize(unit.LinkDependencies.Slice()...)...)
+
 	compilerDetails := gen.Compiler(unit.Compiler)
 
 	funcName := "DLL"
@@ -309,4 +312,35 @@ func (gen bffGenerator) Compiler(compiler Compiler) BffVar {
 		})
 	})
 	return details
+}
+func (gen bffGenerator) MakeAliases(units []*Unit) {
+	environments := make(map[BuildAlias]*[]TargetAlias, len(units))
+	namespaces := make(map[BuildAlias]*[]TargetAlias, len(units))
+
+	for _, u := range units {
+		target := u.Target
+
+		if list, ok := environments[u.Target.CompileEnvAlias()]; !ok {
+			environments[u.Target.CompileEnvAlias()] = &[]TargetAlias{target}
+		} else {
+			*list = append(*list, target)
+		}
+
+		if list, ok := namespaces[u.Target.NamespaceAlias()]; !ok {
+			namespaces[u.Target.NamespaceAlias()] = &[]TargetAlias{target}
+		} else {
+			*list = append(*list, target)
+		}
+	}
+
+	for alias, list := range environments {
+		gen.Func("Alias", func() {
+			gen.Assign("Targets", Stringize(*list...))
+		}, alias.String())
+	}
+	for alias, list := range namespaces {
+		gen.Func("Alias", func() {
+			gen.Assign("Targets", Stringize(*list...))
+		}, alias.String())
+	}
 }

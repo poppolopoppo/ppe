@@ -64,13 +64,15 @@ func Remove[T comparable](src []T, elts ...T) (result []T) {
 }
 
 func RemoveIf[T any](pred func(T) bool, src ...T) (result []T) {
-	result = src
+	off := 0
+	result = make([]T, len(src))
 	for i, x := range src {
 		if pred(x) {
-			result = append(result[:i], result[i+1:]...)
+			result[off] = src[i]
+			off += 1
 		}
 	}
-	return result
+	return result[:off]
 }
 
 func Keys[K comparable, V any](it map[K]V) []K {
@@ -153,6 +155,9 @@ func (set *SetT[T]) Remove(it ...T) *SetT[T] {
 		}
 	}
 	return set
+}
+func (set *SetT[T]) RemoveIf(pred func(T) bool) (result SetT[T]) {
+	return SetT[T](RemoveIf(pred, set.Slice()...))
 }
 func (set *SetT[T]) Delete(i int) *SetT[T] {
 	*set = append((*set)[:i], (*set)[i+1:]...)

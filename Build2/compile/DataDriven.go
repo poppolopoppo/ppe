@@ -361,7 +361,7 @@ func (x *BuildModulesT) Build(ctx utils.BuildContext) (utils.BuildStamp, error) 
 	return utils.MakeBuildStamp(moduleRules)
 }
 
-var BuildModules = utils.MakeBuildable(func(bi utils.BuildInit) *BuildModulesT {
+var BuildModules = utils.MakeBuildable(func(utils.BuildInit) *BuildModulesT {
 	result := &BuildModulesT{
 		Source:     utils.CommandEnv.RootFile(),
 		Modules:    map[string]Module{},

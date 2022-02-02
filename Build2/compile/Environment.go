@@ -87,11 +87,13 @@ func (env *CompileEnv) GetCppRtti(module Module) (result CppRttiType) {
 func (env *CompileEnv) GetCppStd(module Module) (result CppStdType) {
 	if result = env.CompileFlagsT.CppStd; CPPSTD_INHERIT != result {
 		return result
-	} else if result = module.GetModule().CppStd; CPPSTD_INHERIT != result {
-		return result
-	} else {
-		return env.GetCompiler().CppStd
 	}
+	if module != nil {
+		if result = module.GetModule().CppStd; CPPSTD_INHERIT != result {
+			return result
+		}
+	}
+	return env.GetCompiler().CppStd
 }
 func (env *CompileEnv) GetDebugType(module Module) (result DebugType) {
 	if result = env.CompileFlagsT.DebugSymbols; DEBUG_INHERIT != result {
@@ -223,6 +225,9 @@ func (env *CompileEnv) GetPayloadOutput(src utils.Filename, payload PayloadType)
 	return src
 }
 
+func (env *CompileEnv) EnvironmentAlias() EnvironmentAlias {
+	return NewEnvironmentAlias(env.Platform, env.Configuration)
+}
 func (env *CompileEnv) ModuleAlias(module Module) TargetAlias {
 	return NewTargetAlias(module, env.Platform, env.Configuration)
 }

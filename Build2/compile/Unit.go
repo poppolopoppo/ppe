@@ -12,6 +12,12 @@ type EnvironmentAlias struct {
 	ConfigName   string
 }
 
+func NewEnvironmentAlias(platform Platform, config Configuration) EnvironmentAlias {
+	return EnvironmentAlias{
+		PlatformName: platform.GetPlatform().PlatformName,
+		ConfigName:   config.GetConfig().ConfigName,
+	}
+}
 func (x EnvironmentAlias) CompileEnvAlias() utils.BuildAlias {
 	return utils.BuildAlias(fmt.Sprintf("%v-%v", x.PlatformName, x.ConfigName))
 }
@@ -31,12 +37,9 @@ type TargetAlias struct {
 
 func NewTargetAlias(module Module, platform Platform, config Configuration) TargetAlias {
 	return TargetAlias{
-		NamespaceName: module.GetNamespace().String(),
-		ModuleName:    module.GetModule().ModuleName,
-		EnvironmentAlias: EnvironmentAlias{
-			PlatformName: platform.GetPlatform().PlatformName,
-			ConfigName:   config.GetConfig().ConfigName,
-		},
+		NamespaceName:    module.GetNamespace().String(),
+		ModuleName:       module.GetModule().ModuleName,
+		EnvironmentAlias: NewEnvironmentAlias(platform, config),
 	}
 }
 func (x TargetAlias) GetDigestable(o *bytes.Buffer) {

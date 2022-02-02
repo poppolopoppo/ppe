@@ -41,7 +41,7 @@ var Vcxproj = MakeCommand(
 		LogClaim("generating VCXProj config in '%v'", output)
 
 		bg := cmd.BuildGraph()
-		builder := bg.Create(&VcxProjBuilder{
+		builder := bg.Create(&VcxprojBuilder{
 			Output: output,
 		}, args.Alias())
 
@@ -62,14 +62,14 @@ var Vcxproj = MakeCommand(
  * VCXProj/SLN generation
  ***************************************/
 
-type VcxProjBuilder struct {
+type VcxprojBuilder struct {
 	Output Filename
 }
 
-func (vcx *VcxProjBuilder) Alias() BuildAlias {
+func (vcx *VcxprojBuilder) Alias() BuildAlias {
 	return vcx.Output.Alias()
 }
-func (vcx *VcxProjBuilder) Build(bc BuildContext) (BuildStamp, error) {
+func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	args := VcxprojArgs.Need(CommandEnv.Flags)
 	modules := BuildModules.Need(bc)
 	targets := BuildTargets.Need(bc)
@@ -191,7 +191,7 @@ func (vcx *VcxProjBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	}
 }
 
-func (x *VcxProjBuilder) solutionPlatform(platformName string) string {
+func (x *VcxprojBuilder) solutionPlatform(platformName string) string {
 	switch platformName {
 	case "Win32":
 		return "Win32"
@@ -202,7 +202,7 @@ func (x *VcxProjBuilder) solutionPlatform(platformName string) string {
 		return ""
 	}
 }
-func (x *VcxProjBuilder) vcxconfig(bff *BffFile, u *Unit) BffVar {
+func (x *VcxprojBuilder) vcxconfig(bff *BffFile, u *Unit) BffVar {
 	configVar := MakeBffVar(u.String())
 	bff.Struct(configVar, func() {
 		bff.Assign("Platform", x.solutionPlatform(u.Target.PlatformName))

@@ -8,5 +8,8 @@ func InitCmd() {
 	gob.Register(&BffBuilder{})
 	// VCXPROJ
 	gob.Register(&VcxprojArgsT{})
-	gob.Register(&VcxProjBuilder{})
+	gob.Register(&VcxprojBuilder{})
+	// VSCODE
+	gob.Register(&VscodeArgsT{})
+	gob.Register(&VscodeBuilder{})
 }
