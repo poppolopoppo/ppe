@@ -6,10 +6,6 @@
 
 #include "Vulkan/Instance/VulkanDevice.h"
 
-// Only for VMA:
-PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
-PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
-
 #include "vma-external.h"
 
 namespace PPE {
@@ -52,10 +48,13 @@ inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(cons
 :   _device(device) {
     const auto exclusiveAllocator = _allocator.LockExclusive();
 
-    vkGetInstanceProcAddr = device.api()->instance_api_->global_api_->vkGetInstanceProcAddr;
-    vkGetDeviceProcAddr = device.api()->instance_api_->vkGetDeviceProcAddr;
-
     VmaVulkanFunctions funcs = {};
+
+    // mandatory
+    funcs.vkGetInstanceProcAddr = device.api()->instance_api_->global_api_->vkGetInstanceProcAddr;
+    funcs.vkGetDeviceProcAddr = device.api()->instance_api_->vkGetDeviceProcAddr;
+
+    // provide custom function for error detection / fallback / potential hook
     funcs.vkGetPhysicalDeviceProperties = device.api()->instance_api_->vkGetPhysicalDeviceProperties;
     funcs.vkGetPhysicalDeviceMemoryProperties = device.api()->instance_api_->vkGetPhysicalDeviceMemoryProperties;
     funcs.vkAllocateMemory = device.api()->vkAllocateMemory;
@@ -203,8 +202,9 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateImage(FBlock* 
             requireDedicatedAllocation,
             prefersDedicatedAllocation,
             VK_NULL_HANDLE,
-            UINT32_MAX,
-            image, info,
+            image,
+            UINT32_MAX, // #TODO ?
+            info,
             VMA_SUBALLOCATION_TYPE_IMAGE_UNKNOWN,
             1, &allocation ));
     }
@@ -253,8 +253,9 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateBuffer(FBlock*
             requireDedicatedAllocation,
             prefersDedicatedAllocation,
             buffer,
+            VK_NULL_HANDLE,
             UINT32_MAX, // #TODO ?
-            VK_NULL_HANDLE, info,
+            info,
             VMA_SUBALLOCATION_TYPE_BUFFER,
             1, &allocation ));
     }
@@ -301,8 +302,8 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
         memoryRequirements2.memoryRequirements,
         false, false,
         VK_NULL_HANDLE,
-        UINT32_MAX, // #TODO ?
         VK_NULL_HANDLE,
+        UINT32_MAX, // #TODO ?
         vmaInfo,
         VMA_SUBALLOCATION_TYPE_UNKNOWN,
         1, &allocation ))
