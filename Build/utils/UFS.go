@@ -837,7 +837,7 @@ func make_ufs_frontend() (ufs UFSFrontEnd) {
 		UnreachableCode()
 	}
 	caller = caller[:len(caller)-1]
-	if caller, x = filepath.Split(caller); x != "Build2" { // #TODO
+	if caller, x = filepath.Split(caller); x != "Build" {
 		UnreachableCode()
 	}
 
@@ -849,7 +849,7 @@ func make_ufs_frontend() (ufs UFSFrontEnd) {
 
 	ufs.Root = ufs.Dir(caller)
 
-	ufs.Build = ufs.Root.Folder("Build2") // #TODO: remove suffix when definitly switched to new build system
+	ufs.Build = ufs.Root.Folder("Build")
 	ufs.Extras = ufs.Root.Folder("Extras")
 	ufs.Source = ufs.Root.Folder("Source")
 	ufs.Output = ufs.Root.Folder("Output")

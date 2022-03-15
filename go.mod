@@ -2,7 +2,7 @@ module ppe
 
 go 1.18
 
-replace build => ./Build2
+replace build => ./Build
 
 require build v0.0.0-00010101000000-000000000000
 
