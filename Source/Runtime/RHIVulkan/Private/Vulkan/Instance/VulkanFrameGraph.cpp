@@ -2,6 +2,7 @@
 
 #include "Vulkan/Instance/VulkanFrameGraph.h"
 
+#include "RHI_fwd.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformTime.h"
 
@@ -520,7 +521,7 @@ bool FVulkanFrameGraph::Execute(FCommandBufferBatch& cmdBatch) {
 
     // execute and release the command buffer
     const bool success = cmd->Execute();
-    CLOG(not success, RHI, Error, L"failed to execute command buffer <{0}>", cmd->DebugName());
+    ONLY_IF_RHIDEBUG(CLOG(not success, RHI, Error, L"failed to execute command buffer <{0}>", cmd->DebugName()));
 
     RemoveRef_AssertAlive(cmdBatch.Buffer); // release client ref first
     _cmdBufferPool.Release(RemoveRef_AssertReachZero_KeepAlive(cmd)); //  then release tmp ref

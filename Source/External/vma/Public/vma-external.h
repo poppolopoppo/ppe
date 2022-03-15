@@ -55,17 +55,20 @@ LOG_CATEGORY(, VMA)
 #   pragma warning (push, 0)
 #   pragma warning (disable: 4100)
 #   pragma warning (disable: 4296)
+#   pragma warning (disable: 4062)
 #   pragma warning (disable: 4701)
 #   pragma warning (disable: 4703)
 #endif
 #ifdef CPP_CLANG
 #   pragma clang diagnostic push
-#   pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #   pragma clang diagnostic ignored "-Wcast-align"
+#   pragma clang diagnostic ignored "-Wignored-qualifiers"
+#   pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#   pragma clang diagnostic ignored "-Wnullability-completeness"
+#   pragma clang diagnostic ignored "-Wswitch"
 #   pragma clang diagnostic ignored "-Wunused-parameter"
 #   pragma clang diagnostic ignored "-Wunused-variable"
 #   pragma clang diagnostic ignored "-Wunused-function"
-#   pragma clang diagnostic ignored "-Wnullability-completeness"
 #endif
 
 #include "External/vma/vma.git/include/vk_mem_alloc.h"

@@ -4,10 +4,12 @@
 
 #include "RTTI_fwd.h"
 #include "Allocator/SlabHeap.h"
+#include "RTTI/Atom.h"
 #include "RTTI/TypeTraits.h"
 
 #include "Container/HashMap.h"
 #include "Memory/RefPtr.h"
+#include "IO/StringBuilder.h"
 
 namespace PPE {
 namespace Parser {

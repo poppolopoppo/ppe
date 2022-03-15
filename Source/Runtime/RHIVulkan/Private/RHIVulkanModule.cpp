@@ -4,6 +4,8 @@
 
 #include "HAL/VulkanTargetRHI.h"
 
+#include "RHIModule.h"
+
 #include "Diagnostic/Logger.h"
 #include "Modular/ModularDomain.h"
 #include "Modular/ModuleRegistration.h"

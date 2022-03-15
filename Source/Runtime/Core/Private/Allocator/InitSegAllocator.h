@@ -18,8 +18,7 @@ class FInitSegAllocator : Meta::FNonCopyableNorMovable {
 
     FInitSegAllocator();
 
-    static NO_INLINE void Allocate(FAlloc& alloc) NOEXCEPT;
-    static NO_INLINE void Deallocate(FAlloc& alloc) NOEXCEPT;
+    static PPE_CORE_API NO_INLINE void Allocate(FAlloc& alloc) NOEXCEPT;
 
     using deleter_f = void(*)(FAlloc&) NOEXCEPT;
 
@@ -35,8 +34,9 @@ class FInitSegAllocator : Meta::FNonCopyableNorMovable {
         ,   Deleter(deleter)
         ,   DebugName(debugName) {
 #else
-        explicit FAlloc(deleter_f deleter) NOEXCEPT
-        :   Deleter(deleter) {
+        FAlloc(const size_t priority, deleter_f deleter) NOEXCEPT
+        :   Priority(priority)
+        ,   Deleter(deleter) {
 #endif
             Assert_NoAssume(Priority);
             Assert_NoAssume(Deleter);

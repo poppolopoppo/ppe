@@ -43,7 +43,7 @@ void FWindowTestApp::Start() {
         RHI::IFrameGraph& fg = *RHI().FrameGraph();
         fg.PrepareNewFrame();
         if (Likely(test(*this))) {
-            fg.LogFrame();
+            ONLY_IF_RHIDEBUG(fg.LogFrame());
             LOG(WindowTest, Info, L"frame graph test <{0}> [PASSED]", name);
             return true;
         }

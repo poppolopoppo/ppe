@@ -7,6 +7,8 @@
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Pipeline/VulkanShaderModule.h"
 
+#include "Diagnostic/Logger.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -1424,19 +1426,6 @@ void FVulkanPipelineCache::ValidateRenderState_(
     // validate color buffer states
     {
         const bool dualSrcBlend = device.Features().dualSrcBlend;
-        const auto hasDualSrcBlendFactor = [](EBlendFactor value) NOEXCEPT -> bool {
-            switch (value) {
-            case EBlendFactor::Src1Color:
-            case EBlendFactor::OneMinusSrc1Color:
-            case EBlendFactor::Src1Alpha:
-            case EBlendFactor::OneMinusSrc1Alpha:
-                return true;
-
-            default: break;
-            }
-
-            return false;
-        };
 
         for (FColorBufferState& cb : pRender->Blend.Buffers) {
             if (not cb.EnableAlphaBlending) {
@@ -1445,10 +1434,10 @@ void FVulkanPipelineCache::ValidateRenderState_(
                 cb.BlendOp = { EBlendOp::Add, EBlendOp::Add };
             }
             else if (not dualSrcBlend) {
-                Assert_NoAssume(not hasDualSrcBlendFactor(cb.SrcBlendFactor.Color));
-                Assert_NoAssume(not hasDualSrcBlendFactor(cb.SrcBlendFactor.Alpha));
-                Assert_NoAssume(not hasDualSrcBlendFactor(cb.DstBlendFactor.Color));
-                Assert_NoAssume(not hasDualSrcBlendFactor(cb.DstBlendFactor.Alpha));
+                Assert_NoAssume(not HasDualSrcBlendFactor(cb.SrcBlendFactor.Color));
+                Assert_NoAssume(not HasDualSrcBlendFactor(cb.SrcBlendFactor.Alpha));
+                Assert_NoAssume(not HasDualSrcBlendFactor(cb.DstBlendFactor.Color));
+                Assert_NoAssume(not HasDualSrcBlendFactor(cb.DstBlendFactor.Alpha));
             }
         }
     }

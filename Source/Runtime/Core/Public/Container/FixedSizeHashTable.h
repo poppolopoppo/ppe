@@ -172,9 +172,9 @@ public:
     TFixedSizeHashTable(TFixedSizeHashTable&& rvalue) NOEXCEPT : TFixedSizeHashTable() { operator =(std::move(rvalue)); }
     TFixedSizeHashTable& operator =(TFixedSizeHashTable&&) NOEXCEPT;
 
-    bool empty() const NOEXCEPT { return (0 == _size); }
-    bool full() const NOEXCEPT { return (_Capacity == _size); }
-    size_t size() const NOEXCEPT { return _size; }
+    CONSTF bool empty() const NOEXCEPT { return (0 == _size); }
+    CONSTF bool full() const NOEXCEPT { return (_Capacity == _size); }
+    CONSTF size_t size() const NOEXCEPT { return _size; }
 
     iterator begin() { return (0 == _size ? end() : iterator(*this, 0).Advance_(0)); }
     iterator end() { return iterator(*this, _Capacity); }

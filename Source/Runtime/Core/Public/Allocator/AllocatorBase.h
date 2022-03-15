@@ -267,13 +267,9 @@ struct TAllocatorTraits {
             return a.Owns(b);
         }
         else {
-#if defined(BUILD_LINK_DYNAMIC) || defined(__clang__)
             UNUSED(a);
             UNUSED(b);
             AssertNotImplemented();
-#else
-            static_assert(false, "given allocator doesn't implement Owns() method");
-#endif
         }
     }
 

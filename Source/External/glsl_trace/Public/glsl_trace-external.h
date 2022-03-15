@@ -12,12 +12,14 @@
 PRAGMA_MSVC_WARNING_DISABLE(4061) // enumerator 'XXX' in switch of enum 'YYY' is not explicitly handled by a case label
 PRAGMA_MSVC_WARNING_DISABLE(4062) // enumerator 'XXX' in switch of enum 'YYY' is not handled
 PRAGMA_MSVC_WARNING_DISABLE(4063) // case 'XXX' is not a valid value for switch of enum 'YYY'
+PRAGMA_MSVC_WARNING_DISABLE(4100) // 'XXX': unreferenced formal parameter
 PRAGMA_MSVC_WARNING_DISABLE(4189) // local variable is initialized but not referenced
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'XXX': conversion from 'YYY' to 'ZZZ', possible loss of data
 
 #ifdef CPP_CLANG
 #   pragma clang system_header
 #   pragma clang diagnostic ignored "-Wunused-function"
+#   pragma clang diagnostic ignored "-Wunused-parameter"
 #   pragma clang diagnostic ignored "-Wunused-variable"
 #   pragma clang diagnostic ignored "-Wswitch"
 #   pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"

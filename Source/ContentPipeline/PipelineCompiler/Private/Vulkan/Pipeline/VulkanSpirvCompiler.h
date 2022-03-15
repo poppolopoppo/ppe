@@ -11,8 +11,9 @@
 #include "IO/Dirpath.h"
 #include "IO/StringBuilder.h"
 
-#include "glslang-external.h"
 #include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_core.h"
+
+#include "glslang-external.h"
 #include "glslang/Include/ResourceLimits.h"
 #include "glslang/MachineIndependent/localintermediate.h"
 
