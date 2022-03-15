@@ -99,7 +99,7 @@ inline CONSTEXPR void SetAssertionHandler(FAssertHandler ) {}
 
 #   define Assert_Lightweight(...) NOOP()
 
-#   define EnsureMessage(...) ( Assume(!!(__VA_ARGS__)), Likely(!!(__VA_ARGS__)) )
+#   define EnsureMessage(_Message, ...) ( Assume(!!(__VA_ARGS__)), Likely(!!(__VA_ARGS__)) )
 
 #   define Verify(...) (void)(__VA_ARGS__)
 
