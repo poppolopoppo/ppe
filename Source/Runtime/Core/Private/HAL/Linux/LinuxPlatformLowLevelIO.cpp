@@ -31,7 +31,7 @@ static int OpenPolicyToPMode_(EOpenPolicy openMode) {
 }
 //----------------------------------------------------------------------------
 static int AccessPolicyToOFlag_(EAccessPolicy accessFlags) {
-    int oflag = O_DIRECT;
+    int oflag = O_DIRECT | O_SYNC;
 
     Assert(FPlatformMaths::popcnt(size_t(oflag)) <= 1); // non overlapping options !
 
