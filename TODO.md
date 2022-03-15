@@ -96,6 +96,21 @@
       https://maverick.inria.fr/Publications/2009/CNLE09/CNLE09.pdf
     - Volume-Surface Trees
       https://hal.inria.fr/inria-00187194/document
+    - https://www.youtube.com/watch?v=YWNKGXVBsjY
+        Features
+        - GPU voxelization[M. Takeshige]
+        - SVO to DAGs compression[V. Kampe et al]
+        - ray traversal in SV-DAGs[S. Laine, T. Karras]
+
+        Future works
+        - Higher resolution as descrived in [V. Kampe et al]
+        - occlusion test for shadows
+        - ambient occlusion
+
+        References:
+        [M. Takeshige] The Basics of GPU Voxelization, https://developer.nvidia.com/content/basics-gpu-voxelization
+        [S. Laine, T. Karras] Efficient Sparse Voxel Octrees
+        [V. Kampe et al] High Resolution Sparse Voxel DAGs
 
 - [ ] Destiny's Multithreaded Rendering Architecture: https://www.youtube.com/watch?v=0nTDFLMLX9k
 - [ ] Destiny's Shader System: http://advances.realtimerendering.com/destiny/gdc_2017/Destiny_shader_system_GDC_2017_v.4.0.pdf
