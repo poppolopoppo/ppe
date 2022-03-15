@@ -1,5 +1,6 @@
 {
 	"Archtypes": [
+		"PPE/External",
 		"SDK/Vulkan"
 	],
 	"ExtraFiles": [
@@ -8,6 +9,9 @@
 		"Public/vulkan-external.h",
 		"Public/vulkan-fwd.h",
 		"Public/vulkan-platform.h"
+	],
+	"ExtraDirs": [
+		"Vulkan-Header.git"
 	],
 	"SourceFiles": [
 		"Private/vulkan.cpp"

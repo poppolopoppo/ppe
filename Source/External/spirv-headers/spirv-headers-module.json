@@ -1,5 +1,7 @@
 {
-	"Type": "Headers",
+	"Archtypes": [
+		"PPE/Headers"
+	],
 	"SourceDirs": [
 		"SPIRV-Headers.git"
 	],

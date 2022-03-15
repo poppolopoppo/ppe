@@ -1,5 +1,7 @@
 {
-	"Type": "Headers",
+	"Archtypes": [
+		"PPE/Headers"
+	],
 	"ExtraFiles": [
 		"stb.git/stb_dxt.h",
 		"stb.git/stb_image.h",

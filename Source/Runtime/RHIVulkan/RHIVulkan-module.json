@@ -4,7 +4,7 @@
 		"Runtime/RHI"
 	],
 	"PrivateDependencies": [
-		"External/vulkan",
-		"External/vma"
+		"External/vma",
+		"External/vulkan"
 	]
 }

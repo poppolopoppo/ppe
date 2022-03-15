@@ -1,5 +1,7 @@
 {
-	"Type": "Headers",
+	"Archtypes": [
+		"PPE/Headers"
+	],
 	"ExtraFiles": [
 		"Public/vma-external.h",
 		"vma.git/include/vk_mem_alloc.h"

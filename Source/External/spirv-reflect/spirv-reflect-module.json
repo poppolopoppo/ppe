@@ -1,4 +1,7 @@
- {
+{
+	"Archtypes": [
+		"PPE/External"
+	],
 	"ForceIncludes": [
 		"Public/spirv-reflect-external.h"
 	],

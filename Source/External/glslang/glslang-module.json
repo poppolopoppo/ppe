@@ -1,14 +1,18 @@
 {
 	"Archtypes": [
+		"PPE/External",
 		"SDK/GLSLANG"
-	],
-	"ForceIncludes": [
-		"Public/glslang-external.h"
 	],
 	"ExtraFiles": [
 		"Public/glslang-external.h"
 	],
+	"ExtraDirs": [
+		"glslang.zip"
+	],
 	"SourceFiles": [
 		"Private/glslang.cpp"
-	]
+	],
+	"Exports": {
+		"Glslang/Path": "glslang.zip"
+	}
 }

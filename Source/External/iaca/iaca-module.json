@@ -1,4 +1,7 @@
 {
+	"Archtypes": [
+		"PPE/External"
+	],
 	"ExtraFiles": [
 		"Public/Intel_IACA.h",
 		"Private/iacaMarks.h"

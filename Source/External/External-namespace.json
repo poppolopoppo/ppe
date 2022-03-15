@@ -1,7 +1,4 @@
 {
-	"Archtypes": [
-		"PPE/External"
-	],
 	"Modules": [
 		"double-conversion",
 		"farmhash",
@@ -11,7 +8,6 @@
 		"lz4",
 		"renderdoc",
 		"spirv-cross",
-		"spirv-headers",
 		"spirv-reflect",
 		"spirv-tools",
 		"stb",

@@ -1,14 +1,18 @@
 {
 	"Archtypes": [
-		"SDK/GLSLANG"
-	],
-	"ForceIncludes": [
-		"Public/spirv-tools-external.h"
+		"PPE/External",
+		"SDK/SPIRV-TOOLS"
 	],
 	"ExtraFiles": [
 		"Public/spirv-tools-external.h"
 	],
+	"ExtraDirs": [
+		"SPIRV-Tools.zip"
+	],
 	"SourceFiles": [
 		"Private/spirv-tools.cpp"
-	]
+	],
+	"Exports": {
+		"SpirvTools/Path": "SPIRV-Tools.zip"
+	}
 }

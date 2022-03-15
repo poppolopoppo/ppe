@@ -1,17 +1,23 @@
 {
-	"Debug": "Disabled",
-	"Link": "Dynamic",
+	"Archtypes": [
+		"PPE/External"
+	],
 	"ExtraFiles": [
 		"Public/vstools.h"
 	],
 	"SourceFiles": [
 		"Private/vstools.cpp"
 	],
+	"Debug": "Disabled",
+	"Link": "Dynamic",
 	"HAL": {
 		"Windows": {
+			"CompilerOptions": [
+				"/MD"
+			],
 			"LinkerOptions": [
-				"/LTCG:INCREMENTAL",
-				"/DEBUG:NONE"
+				"Advapi32.lib",
+				"/LTCG"
 			]
 		}
 	}
