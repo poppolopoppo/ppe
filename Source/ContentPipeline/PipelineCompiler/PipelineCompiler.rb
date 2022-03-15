@@ -13,6 +13,8 @@ $Build.ppe_module!(:PipelineCompiler) do
         when :Windows
             # warning LNK4006: "class TCompiler * __cdecl ConstructCompiler(enum EShLanguage,int)" (?ConstructCompiler@@YAPEAVTCompiler@@W4EShLanguage@@H@Z) already defined in glslang.lib(CodeGen.obj); second definition ignored
             librarianOptions << '/IGNORE:4006'
+            # warning LNK4042: object specified more than once; extras ignored
+            linkerOptions << '/IGNORE:4042'
         end
     end
 end

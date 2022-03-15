@@ -235,14 +235,7 @@ module Build
                 end
             end
 
-            case env.config.link
-            when :static
-                link_library_objects = target.executable?
-            when :dynamic
-                link_library_objects = true
-            else
-                Assert.not_implemented
-            end
+            link_library_objects = env.config.dynamic?
 
             artifactName = target_alias
             bff.func!(link_library_objects ? 'ObjectList' : 'Library', artifactName) do
@@ -258,13 +251,19 @@ module Build
                     facet!(expanded, PCHOptions: :@pchOptions)
                 end
 
-                unless link_library_objects
-                    privateDeps = []
-                    target.all_private_dependencies do |dep|
-                        next if dep.headers?
-                        privateDeps << BFF.make_target_alias(env, dep)
+                if link_library_objects
+                    libraries = []
+                    target.private_dependencies.each do |dep|
+                        libraries.concat(env.expand(dep).libraries.data)
                     end
-                    set!('LibrarianAdditionalInputs', privateDeps)
+                    set!('CompilerForceUsing', libraries)
+                else
+                    targetDeps = []
+                    target.all_dependencies do |dep, vis|
+                        next if dep.headers?
+                        targetDeps << BFF.make_target_alias(env, dep)
+                    end
+                    set!('LibrarianAdditionalInputs', targetDeps)
                     set!('LibrarianOutput', env.output_path(target.abs_path, :library))
                     facet!(expanded, :@librarianOptions)
                 end

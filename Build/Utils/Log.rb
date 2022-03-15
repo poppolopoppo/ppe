@@ -11,7 +11,7 @@ module Build
             @@_interactive_ = $stdout.isatty
             case ENV['TERM']
             when 'xterm','xterm-256'
-                @@_interactive_ = true
+                @@_interactive_ &= true
             end
             @@_interactive_ = false unless $stdout.isatty
         end
@@ -39,7 +39,7 @@ module Build
             debug: ANSI[:fg0_magenta],
             verbose: ANSI[:fg1_black],
             log: ANSI[:fg0_white]+ANSI[:italic],
-            info: ANSI[:fg1_white]+ANSI[:bg0_black]+ANSI[:bold],
+            info: ANSI[:fg0_white]+ANSI[:bg0_black]+ANSI[:bold],
             display: ANSI[:fg1_white],
             warning: ANSI[:fg0_yellow],
             error: ANSI[:fg1_red],
