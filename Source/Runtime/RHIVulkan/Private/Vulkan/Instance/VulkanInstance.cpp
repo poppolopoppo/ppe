@@ -190,13 +190,13 @@ bool ValidateInstanceExtensions_(
     const FVulkanDeviceExtensionSet& optionalDeviceExts) {
     const FVulkanInstanceExtensionSet userInstanceExts{ requiredInstanceExts };
 
-    // expand instance requirements:
-    requiredInstanceExts = vk::instance_extensions_require(requiredInstanceExts);
-    optionalInstanceExts = vk::instance_extensions_require(optionalInstanceExts);
-
     // expand device requirements:
     requiredInstanceExts |= vk::instance_extensions_require(vk::device_extensions_require(requiredDeviceExts));
     optionalInstanceExts |= vk::instance_extensions_require(vk::device_extensions_require(optionalDeviceExts));
+
+    // expand instance requirements:
+    requiredInstanceExts = vk::instance_extensions_require(requiredInstanceExts);
+    optionalInstanceExts = vk::instance_extensions_require(optionalInstanceExts);
 
     pExtensionNames->reserve(
         requiredInstanceExts.Count() +
