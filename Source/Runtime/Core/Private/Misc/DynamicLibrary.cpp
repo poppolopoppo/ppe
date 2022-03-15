@@ -28,7 +28,7 @@ FDynamicLibrary::FDynamicLibrary(FDynamicLibrary&& rvalue) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FDynamicLibrary& FDynamicLibrary::operator =(FDynamicLibrary&& rvalue) NOEXCEPT {
-    AssertRelease(not IsValid());
+    AssertRelease_NoAssume(not IsValid());
     swap(_handle, rvalue._handle);
 
     return (*this);
@@ -50,7 +50,7 @@ bool FDynamicLibrary::UnloadIFP() {
 }
 //----------------------------------------------------------------------------
 bool FDynamicLibrary::Attach(const wchar_t* path) {
-    AssertRelease(not IsValid());
+    AssertRelease_NoAssume(not IsValid());
 
     if (auto* const hModule = FPlatformProcess::AttachToDynamicLibrary(path)) {
         _handle.Reset(hModule, true, true);
@@ -65,7 +65,7 @@ bool FDynamicLibrary::Attach(const wchar_t* path) {
 }
 //----------------------------------------------------------------------------
 bool FDynamicLibrary::Load(const wchar_t* path) {
-    AssertRelease(not IsValid());
+    AssertRelease_NoAssume(not IsValid());
 
     if (auto* const hModule = FPlatformProcess::OpenDynamicLibrary(path)) {
         _handle.Reset(hModule, true, false);
@@ -80,7 +80,7 @@ bool FDynamicLibrary::Load(const wchar_t* path) {
 }
 //----------------------------------------------------------------------------
 void FDynamicLibrary::Unload() {
-    AssertRelease(IsValid());
+    AssertRelease_NoAssume(IsValid());
 
     auto* const hModule = (FPlatformProcess::FDynamicLibraryHandle)_handle.Get();
 
@@ -99,7 +99,7 @@ void FDynamicLibrary::Unload() {
 }
 //----------------------------------------------------------------------------
 void* FDynamicLibrary::FunctionAddr(const char* funcname) const {
-    Assert(IsValid());
+    Assert_NoAssume(IsValid());
 
     auto* const hModule = (FPlatformProcess::FDynamicLibraryHandle)_handle.Get();
 
@@ -107,7 +107,7 @@ void* FDynamicLibrary::FunctionAddr(const char* funcname) const {
 }
 //----------------------------------------------------------------------------
 FWString FDynamicLibrary::ModuleName() const {
-    Assert(IsValid());
+    Assert_NoAssume(IsValid());
 
     auto* const hModule = (FPlatformProcess::FDynamicLibraryHandle)_handle.Get();
 

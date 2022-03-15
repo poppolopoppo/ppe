@@ -54,12 +54,12 @@ public:
     TRawStorage(const TRawStorage& other);
     TRawStorage& operator =(const TRawStorage& other);
 
-    pointer Pointer() const { return _storage; }
-    size_t SizeInBytes() const { return _sizeInBytes; }
+    CONSTF pointer Pointer() const { return _storage; }
+    CONSTF size_t SizeInBytes() const { return _sizeInBytes; }
 
-    pointer data() const { return _storage; }
-    size_type size() const { return _sizeInBytes / sizeof(value_type); }
-    bool empty() const { return 0 == _sizeInBytes; }
+    CONSTF pointer data() const { return _storage; }
+    CONSTF size_type size() const { return _sizeInBytes / sizeof(value_type); }
+    CONSTF bool empty() const { return 0 == _sizeInBytes; }
 
     allocator_type& get_allocator() { return allocator_traits::Get(*this); }
     const allocator_type& get_allocator() const { return allocator_traits::Get(*this); }

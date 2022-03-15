@@ -120,13 +120,13 @@ PRAGMA_MSVC_WARNING_POP()
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FHalfFloat::Pack(float value) {
-    Assert(IsConvertible(value));
+    Assert_NoAssume(IsConvertible(value));
     _data = FP32_to_FP16(value);
 }
 //----------------------------------------------------------------------------
 float FHalfFloat::Unpack() const {
     const float f = FP16_to_FP32(_data);
-    Assert(std::isfinite(f));
+    Assert_NoAssume(std::isfinite(f));
     return f;
 }
 //----------------------------------------------------------------------------

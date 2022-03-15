@@ -350,21 +350,18 @@ public:
         return operator =(MakeStringView(content));
     }
 
-    size_t size() const { return _str.size(); }
-    bool empty() const { return _str.empty(); }
-
-    const _Char* data() const { return _str.data(); }
-
-    stringview_type MakeView() const { return _str; }
-
-    hash_t HashValue() const { return _hash; }
+    CONSTF size_t size() const { return _str.size(); }
+    CONSTF bool empty() const { return _str.empty(); }
+    CONSTF const _Char* data() const { return _str.data(); }
+    CONSTF stringview_type MakeView() const { return _str; }
+    CONSTF hash_t HashValue() const { return _hash; }
 
     void Swap(TLazyToken& other) NOEXCEPT {
         std::swap(_str, other._str);
         std::swap(_hash, other._hash);
     }
 
-    bool Valid() const { return IsValidToken(_str); }
+    CONSTF bool Valid() const { return IsValidToken(_str); }
 
     bool Equals(const TLazyToken& other) const { return (_hash == other._hash && equalto_type{}(_str, other._str)); }
     bool Less(const TLazyToken& other) const { return (less_type{}(_str, other._str)); }
@@ -379,7 +376,7 @@ public:
     friend hash_t hash_value(const TLazyToken& token) NOEXCEPT { return token.HashValue(); }
     friend stringview_type MakeStringView(const TLazyToken& token) { return token.MakeView(); }
 
-    static bool IsValidToken(const stringview_type & str) {
+    static CONSTF bool IsValidToken(const stringview_type & str) {
         return PPE::IsValidToken<token_traits>(str);
     }
 

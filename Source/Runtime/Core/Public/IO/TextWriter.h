@@ -75,13 +75,13 @@ public:
         _precision = GFloatDefaultPrecision;
     }
 
-    EBase Base() const { return _base; }
-    ECase Case() const { return _case; }
-    EFloat Float() const { return _float; }
-    EPadding Padding() const { return _padding; }
-    EMisc Misc() const { return _misc; }
-    size_t Width() const { return _width; }
-    size_t Precision() const { return _precision; }
+    CONSTF EBase Base() const { return _base; }
+    CONSTF ECase Case() const { return _case; }
+    CONSTF EFloat Float() const { return _float; }
+    CONSTF EPadding Padding() const { return _padding; }
+    CONSTF EMisc Misc() const { return _misc; }
+    CONSTF size_t Width() const { return _width; }
+    CONSTF size_t Precision() const { return _precision; }
 
     void SetBase(EBase v) { _base = v; Assert(v == _base); }
     void SetCase(ECase v) { _case = v; Assert(v == _case); }
@@ -163,8 +163,8 @@ public:
 
     IStreamWriter* Stream() const { return _ostream; }
 
-    FTextFormat& Format() { return _format; }
-    const FTextFormat& Format() const { return _format; }
+    CONSTF FTextFormat& Format() { return _format; }
+    CONSTF const FTextFormat& Format() const { return _format; }
 
     FTextFormat SetFormat(const FTextFormat& fmt);
     FTextFormat ResetFormat();
@@ -191,7 +191,7 @@ public:
 
     ~TBasicTextWriter() = default;
 
-    _Char FillChar() const { return _fillChar; }
+    CONSTF _Char FillChar() const { return _fillChar; }
     _Char SetFillChar(_Char ch) {
         Assert(_Char() != ch);
         _Char old = _fillChar;

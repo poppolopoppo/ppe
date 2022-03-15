@@ -148,13 +148,13 @@ public:
     template <typename _It>
     TVector(_It first, _It last, const allocator_type& alloc) : TVector(alloc) { assign(first, last); }
 
-    size_type size() const { return _size; }
-    size_type capacity() const { return _capacity; }
-    size_type max_size() const { return std::numeric_limits<size_type>::max(); }
-    bool empty() const { return (0 == _size); }
+    CONSTF size_type size() const { return _size; }
+    CONSTF size_type capacity() const { return _capacity; }
+    CONSTF size_type max_size() const { return std::numeric_limits<size_type>::max(); }
+    CONSTF bool empty() const { return (0 == _size); }
 
-    pointer data() { return _data; }
-    const_pointer data() const { return _data; }
+    CONSTF pointer data() { return _data; }
+    CONSTF const_pointer data() const { return _data; }
 
     iterator begin() { return MakeCheckedIterator(_data, _size, 0); }
     iterator end() { return MakeCheckedIterator(_data, _size, _size); }

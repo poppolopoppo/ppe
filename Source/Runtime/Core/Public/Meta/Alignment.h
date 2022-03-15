@@ -27,22 +27,22 @@ namespace Meta {
 #   define ALIGN(_BOUNDARY) alignas(_BOUNDARY)
 #endif
 //----------------------------------------------------------------------------
-inline CONSTEXPR bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
+inline CONSTEXPR CONSTF bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
 //----------------------------------------------------------------------------
 template <size_t _Pow>
-inline CONSTEXPR bool IsPowOf(size_t u) {
+inline CONSTEXPR CONSTF bool IsPowOf(size_t u) {
     STATIC_ASSERT(IsPow2(_Pow) && _Pow > 2);
     for (; u >= _Pow; u /= _Pow);
     return (u == 1);
 }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
-inline CONSTEXPR bool IsAlignedPow2(const size_t alignment, const uintptr_t v) {
+inline CONSTEXPR CONSTF bool IsAlignedPow2(const size_t alignment, const uintptr_t v) {
     assert(Meta::IsPow2(alignment));
     return (0 == (v & (alignment - 1)));
 }
 template <typename T>
-inline bool IsAlignedPow2(const size_t alignment, const T* ptr) NOEXCEPT {
+inline CONSTF bool IsAlignedPow2(const size_t alignment, const T* ptr) NOEXCEPT {
     assert(Meta::IsPow2(alignment));
     return (0 == (reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)));
 }
@@ -66,12 +66,12 @@ inline T* RoundToPrevPow2(const T* p, size_t alignment) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 // works for every alignment value
-inline CONSTEXPR bool IsAligned(size_t alignment, uintptr_t value) {
+inline CONSTEXPR CONSTF bool IsAligned(size_t alignment, uintptr_t value) {
     Assume(alignment > 0);
     return (value % alignment == 0);
 }
 template <typename T>
-inline bool IsAligned(size_t alignment, T* ptr) NOEXCEPT {
+inline CONSTF bool IsAligned(size_t alignment, T* ptr) NOEXCEPT {
     return IsAligned(alignment, reinterpret_cast<uintptr_t>(ptr));
 }
 template <typename T>

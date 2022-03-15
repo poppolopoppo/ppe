@@ -53,7 +53,7 @@ public:
     static bool IsInFiber() { return ::IsThreadAFiber(); }
 
     static FFiber ConvertCurrentThreadToFiber() {
-        Assert(not ::IsThreadAFiber());
+        Assert_NoAssume(not ::IsThreadAFiber());
 
         const ::HANDLE fiber = ::ConvertThreadToFiberEx(nullptr, FiberFlags);
 
@@ -63,7 +63,7 @@ public:
 
     static void RevertCurrentFiberToThread(FFiber threadFiber) {
         Assert(threadFiber && threadFiber != INVALID_HANDLE_VALUE);
-        Assert(::GetCurrentFiber() == threadFiber);
+        Assert_NoAssume(::GetCurrentFiber() == threadFiber);
         UNUSED(threadFiber);
 
         ::ConvertFiberToThread();

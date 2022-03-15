@@ -88,7 +88,7 @@ PPE_ASSUME_TEMPLATE_AS_POD(TNumericDefault<T COMMA _Tag COMMA _DefaultValue>, ty
 #define PPE_STRONGLYTYPED_NUMERIC_DEF(T, _Name) \
     PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, ::PPE::Meta::DefaultValue<T>())
 //----------------------------------------------------------------------------
-#define PPE_FAKEBOOL_OPERATOR_DECL() explicit operator bool () const NOEXCEPT
+#define PPE_FAKEBOOL_OPERATOR_DECL() explicit CONSTF operator bool () const NOEXCEPT
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

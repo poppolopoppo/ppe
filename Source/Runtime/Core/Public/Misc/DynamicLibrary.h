@@ -21,7 +21,7 @@ public:
     FDynamicLibrary& operator =(FDynamicLibrary&& rvalue) NOEXCEPT;
 
     void* Handle() const {
-        Assert(IsValid());
+        Assert_NoAssume(IsValid());
         return _handle.Get();
     }
 

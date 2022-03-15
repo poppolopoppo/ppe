@@ -42,9 +42,9 @@ public:
     TBasicStringBuilder(const TBasicStringBuilder&) = delete;
     TBasicStringBuilder& operator =(const TBasicStringBuilder&) = delete;
 
-    size_t size() const { return (stream_type::size() / sizeof(_Char)); }
-    size_t capacity() const { return (stream_type::capacity() / sizeof(_Char)); }
-    bool empty() const { return stream_type::empty(); }
+    CONSTF size_t size() const { return (stream_type::size() / sizeof(_Char)); }
+    CONSTF size_t capacity() const { return (stream_type::capacity() / sizeof(_Char)); }
+    CONSTF bool empty() const { return stream_type::empty(); }
 
     void reserve(size_t count);
 

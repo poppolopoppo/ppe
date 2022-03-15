@@ -14,7 +14,7 @@ inline FRefCountable::FRefCountable() NOEXCEPT
 {}
 //----------------------------------------------------------------------------
 inline FRefCountable::~FRefCountable() {
-    Assert(0 == _refCount);
+    Assert_NoAssume(0 == _refCount);
 #if USE_PPE_SAFEPTR
     // check if a TSafePtr<> is still holding a reference to this object
     Assert_Lightweight(0 == _safeRefCount);
@@ -44,12 +44,12 @@ inline FRefCountable& FRefCountable::operator =(const FRefCountable& ) NOEXCEPT 
 }
 //----------------------------------------------------------------------------
 inline void FRefCountable::IncStrongRefCount() const NOEXCEPT {
-    Assert(_refCount >= 0);
+    Assert_NoAssume(_refCount >= 0);
     _refCount.fetch_add(1, std::memory_order_relaxed);
 }
 //----------------------------------------------------------------------------
 inline bool FRefCountable::DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT {
-    Assert(_refCount > 0);
+    Assert_NoAssume(_refCount > 0);
     const int n = atomic_fetch_sub_explicit(&_refCount, 1, std::memory_order_release);
     if (1 == n) {
         std::atomic_thread_fence(std::memory_order_acquire);

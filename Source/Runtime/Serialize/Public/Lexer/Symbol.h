@@ -96,12 +96,12 @@ public:
     FSymbol() : _type(Invalid), _ord(0) {}
     FSymbol(ETypeId type, const FStringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
 
-    bool IsValid() const { return (FPlatformMaths::popcnt64(u64(_type)) == 1); }
-    bool IsPrefix() const { return (_type ^ Prefix); }
+    CONSTF bool IsValid() const { return (FPlatformMaths::popcnt64(u64(_type)) == 1); }
+    CONSTF bool IsPrefix() const { return (_type ^ Prefix); }
 
-    ETypeId Type() const { return _type; }
-    const FStringView& CStr() const { return _cstr; }
-    u64 Ord() const { return _ord; }
+    CONSTF ETypeId Type() const { return _type; }
+    CONSTF const FStringView& CStr() const { return _cstr; }
+    CONSTF u64 Ord() const { return _ord; }
 
 private:
     ETypeId _type;
@@ -109,11 +109,11 @@ private:
     u64 _ord;
 };
 //----------------------------------------------------------------------------
-inline bool operator ==(const FSymbol& lhs, const FSymbol& rhs) {
+inline CONSTF bool operator ==(const FSymbol& lhs, const FSymbol& rhs) {
     return lhs.Type() == rhs.Type();
 }
 //----------------------------------------------------------------------------
-inline bool operator !=(const FSymbol& lhs, const FSymbol& rhs) {
+inline CONSTF bool operator !=(const FSymbol& lhs, const FSymbol& rhs) {
     return not operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------

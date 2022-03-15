@@ -107,10 +107,12 @@ using i64   = std::int64_t;
 #   define NOEXCEPT     noexcept
 #   define NOOP(...)    (void)0
 #   define NORETURN     [[noreturn]]
+#   define CONSTF       __attribute__((const))
+#   define PUREF        __attribute__((pure))
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #   if defined(_MSC_VER)
-#       define EMPTY_BASES __declspec(empty_bases)
+#       define EMPTY_BASES  __declspec(empty_bases)
 #       define RESTRICT     __declspec(restrict)
 #       define STDCALL      __stdcall
 #       define VECTORCALL   __vectorcall
@@ -128,6 +130,8 @@ using i64   = std::int64_t;
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define VECTORCALL   __vectorcall
+#   define CONSTF
+#   define PUREF
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #   define EMPTY_BASES  __declspec(empty_bases)
@@ -139,6 +143,8 @@ using i64   = std::int64_t;
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define VECTORCALL   __vectorcall
+#   define CONSTF
+#   define PUREF
 #   define THREAD_LOCAL __declspec(thread)
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) enum : _TYPE { _NAME = (_TYPE)(__VA_ARGS__) }
 #   define EMPTY_BASES
@@ -163,13 +169,7 @@ using i64   = std::int64_t;
 #endif
 #define SIMD_INLINE FORCE_INLINE VECTORCALL
 //----------------------------------------------------------------------------
-#if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
-#   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
-#   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
-#   define Assume(...) ((void)Likely(__VA_ARGS__))
-#   define AnalysisAssume(...) NOOP(!!(__VA_ARGS__))
-#   define PACKED_STRUCT(_NAME, ...) struct __attribute__((__packed__)) _NAME __VA_ARGS__
-#elif defined(CPP_VISUALSTUDIO)
+#if defined(CPP_VISUALSTUDIO)
 #   define Likely(...) __VA_ARGS__
 #   define Unlikely(...) __VA_ARGS__
 #   define Assume(...) __assume(__VA_ARGS__)
@@ -183,6 +183,12 @@ using i64   = std::int64_t;
 #       endif
 #   endif
 #   define PACKED_STRUCT(_NAME, ...) __pragma(pack(push, 1)) struct _NAME __VA_ARGS__ __pragma(pack(pop))
+#elif ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
+#   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
+#   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
+#   define Assume(...) ((void)Likely(__VA_ARGS__))
+#   define AnalysisAssume(...) NOOP(!!(__VA_ARGS__))
+#   define PACKED_STRUCT(_NAME, ...) struct __attribute__((__packed__)) _NAME __VA_ARGS__
 #else
 #   error "unsupported compiler"
 #endif
@@ -355,11 +361,11 @@ struct uint128_t {
 
     CONSTEXPR static uint128_t Zero() { return uint128_t{ 0, 0 }; }
 
-    CONSTEXPR friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return ((lhs.hi == rhs.hi) & (lhs.lo == rhs.lo)); }
-    CONSTEXPR friend bool operator !=(const uint128_t& lhs, const uint128_t& rhs) { return !operator ==(lhs, rhs); }
+    CONSTEXPR friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return ((lhs.hi == rhs.hi) && (lhs.lo == rhs.lo)); }
+    CONSTEXPR friend bool operator !=(const uint128_t& lhs, const uint128_t& rhs) { return not operator ==(lhs, rhs); }
 
     CONSTEXPR friend bool operator < (const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
-    CONSTEXPR friend bool operator >=(const uint128_t& lhs, const uint128_t& rhs) { return !operator < (lhs, rhs); }
+    CONSTEXPR friend bool operator >=(const uint128_t& lhs, const uint128_t& rhs) { return not operator < (lhs, rhs); }
 
     friend void swap(uint128_t& lhs, uint128_t& rhs) NOEXCEPT { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
@@ -371,13 +377,13 @@ struct uint256_t {
 
     CONSTEXPR static uint256_t Zero() { return uint256_t{ uint128_t::Zero(), uint128_t::Zero() }; }
 
-    CONSTEXPR friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return ((lhs.hi == rhs.hi) & (lhs.lo == rhs.lo)); }
-    CONSTEXPR friend bool operator !=(const uint256_t& lhs, const uint256_t& rhs) { return !operator ==(lhs, rhs); }
+    CONSTEXPR friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return ((lhs.hi == rhs.hi) && (lhs.lo == rhs.lo)); }
+    CONSTEXPR friend bool operator !=(const uint256_t& lhs, const uint256_t& rhs) { return not operator ==(lhs, rhs); }
 
     CONSTEXPR friend bool operator < (const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
-    CONSTEXPR friend bool operator >=(const uint256_t& lhs, const uint256_t& rhs) { return !operator < (lhs, rhs); }
+    CONSTEXPR friend bool operator >=(const uint256_t& lhs, const uint256_t& rhs) { return not operator < (lhs, rhs); }
 
-    friend void swap(uint256_t& lhs, uint256_t& rhs) NOEXCEPT { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
+    friend void swap(uint256_t& lhs, uint256_t& rhs) NOEXCEPT { swap(lhs.lo, rhs.lo); swap(lhs.hi, rhs.hi); }
 
 };
 using u256 = uint256_t;

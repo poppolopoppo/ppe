@@ -26,7 +26,7 @@ namespace Meta {
     void *RawPointer() const { return (void*)(_packed._ptr << 2); } \
     void SetRawPointer(const void *ptr) { \
         _packed._ptr = ((uintptr_t)ptr >> 2); \
-        Assert(RawPointer() == ptr); \
+        Assert_NoAssume(RawPointer() == ptr); \
     } \
     \
     void Reset() { \

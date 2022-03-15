@@ -70,13 +70,13 @@ public:
     template <typename U>
     CONSTEXPR TMemoryView& operator =(const TMemoryView<U>& other) NOEXCEPT;
 
-    CONSTEXPR pointer Pointer() const { return _storage; }
-    CONSTEXPR size_t SizeInBytes() const { return _size * sizeof(T); }
-    CONSTEXPR size_t StrideInBytes() const { return sizeof(T); }
+    CONSTEXPR CONSTF pointer Pointer() const { return _storage; }
+    CONSTEXPR CONSTF size_t SizeInBytes() const { return _size * sizeof(T); }
+    CONSTEXPR CONSTF size_t StrideInBytes() const { return sizeof(T); }
 
-    CONSTEXPR pointer data() const { return _storage; }
-    CONSTEXPR size_type size() const { return _size; }
-    CONSTEXPR bool empty() const { return 0 == _size; }
+    CONSTEXPR CONSTF pointer data() const { return _storage; }
+    CONSTEXPR CONSTF size_type size() const { return _size; }
+    CONSTEXPR CONSTF bool empty() const { return 0 == _size; }
 
     iterator begin() const { return MakeCheckedIterator(_storage, _size, 0); }
     iterator end() const { return MakeCheckedIterator(_storage, _size, _size); }

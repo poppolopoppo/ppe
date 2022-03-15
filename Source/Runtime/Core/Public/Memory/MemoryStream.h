@@ -35,17 +35,17 @@ public:
     explicit TMemoryStream(storage_type&& storage);
     TMemoryStream(storage_type&& storage, std::streamsize size);
 
-    u8* data() { return _storage.data(); }
-    const u8* data() const { return _storage.data(); }
+    CONSTF u8* data() { return _storage.data(); }
+    CONSTF const u8* data() const { return _storage.data(); }
 
-    u8* Pointer() { return _storage.Pointer(); }
-    const u8* Pointer() const { return _storage.Pointer(); }
+    CONSTF u8* Pointer() { return _storage.Pointer(); }
+    CONSTF const u8* Pointer() const { return _storage.Pointer(); }
 
     const storage_type& Storage() const { return _storage; }
 
-    size_t size() const { return _size; }
-    size_t capacity() const { return _storage.size(); }
-    bool empty() const { return 0 == _size; }
+    CONSTF size_t size() const { return _size; }
+    CONSTF size_t capacity() const { return _storage.size(); }
+    CONSTF bool empty() const { return 0 == _size; }
 
     void resize(size_t count, bool keepData = true);
     void reserve(size_t count);

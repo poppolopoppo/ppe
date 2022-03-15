@@ -381,12 +381,12 @@ void FVulkanCommandBatch::FinalizeStagingBuffers_(const FVulkanDevice& device, F
     // trigger buffer events
     for (FOnBufferDataLoadedEvent& evt : data.Staging.OnBufferLoadedEvents) {
         TFixedSizeStack<TMemoryView<const T>, MaxBufferParts> dataParts;
-        u32 totalSize = 0;
+        ONLY_IF_ASSERT(u32 totalSize = 0);
 
         for (const FStagingDataRange& part : evt.Parts) {
             const auto view = part.MakeView().Cast<T>();
             dataParts.Push(view);
-            totalSize += part.Size;
+            ONLY_IF_ASSERT(totalSize += part.Size);
         }
 
         Assert_NoAssume(totalSize == evt.TotalSize);
@@ -397,12 +397,12 @@ void FVulkanCommandBatch::FinalizeStagingBuffers_(const FVulkanDevice& device, F
     // trigger image events
     for (FOnImageDataLoadedEvent& evt : data.Staging.OnImageLoadedEvents) {
         TFixedSizeStack<TMemoryView<const T>, MaxImageParts> dataParts;
-        u32 totalSize = 0;
+        ONLY_IF_ASSERT(u32 totalSize = 0);
 
         for (const FStagingDataRange& part : evt.Parts) {
             const auto view = part.MakeView().Cast<T>();
             dataParts.Push(view);
-            totalSize += part.Size;
+            ONLY_IF_ASSERT(totalSize += part.Size);
         }
 
         Assert_NoAssume(totalSize == evt.TotalSize);
