@@ -19,7 +19,13 @@ func (list *ModuleList) Append(it ...Module) {
 	*list = append(*list, it...)
 }
 func (list *ModuleList) AppendUniq(it ...Module) {
-	*list = utils.AppendUniq(*list, it...)
+	for _, x := range it {
+		if _, found := utils.IndexIf(func(m Module) bool {
+			return x.GetModule() == m.GetModule()
+		}, *list...); !found {
+			list.Append(x)
+		}
+	}
 }
 func (list ModuleList) Range(each func(Module)) {
 	for _, x := range list {
@@ -38,6 +44,7 @@ type ModuleSource struct {
 	ExcludedFiles utils.FileSet
 	IsolatedFiles utils.FileSet
 	ExtraFiles    utils.FileSet
+	ExtraDirs     utils.DirSet
 }
 
 func (x *ModuleSource) GetDigestable(o *bytes.Buffer) {
@@ -48,6 +55,7 @@ func (x *ModuleSource) GetDigestable(o *bytes.Buffer) {
 	x.ExcludedFiles.GetDigestable(o)
 	x.IsolatedFiles.GetDigestable(o)
 	x.ExtraFiles.GetDigestable(o)
+	x.ExtraDirs.GetDigestable(o)
 }
 func (x *ModuleSource) GetFileSet() (result utils.FileSet) {
 	includeRE := utils.MakeGlobRegexp(x.SourceGlobs...)
@@ -67,6 +75,8 @@ func (x *ModuleSource) GetFileSet() (result utils.FileSet) {
 	result.AppendUniq(x.SourceFiles...)
 	result.AppendUniq(x.IsolatedFiles...)
 	result.Remove(x.ExcludedFiles...)
+
+	// voluntary ignore ExtraDirs/ExtraFiles here
 	return result
 }
 
@@ -93,6 +103,7 @@ type ModuleRules struct {
 	PrivateDependencies utils.StringSet
 	RuntimeDependencies utils.StringSet
 
+	Customs    CustomList
 	Generateds GeneratedList
 
 	Facet

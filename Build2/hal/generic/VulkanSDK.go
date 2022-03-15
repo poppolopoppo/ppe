@@ -34,6 +34,8 @@ var Vulkan = RegisterArchtype("SDK/VULKAN", func(rules *ModuleRules) {
  * Vulkan generated header
  ***************************************/
 
+var re_vkIdentifier = regexp.MustCompile(`^\w+`)
+
 type VulkanGeneratedHeader struct {
 	BindingsFile Filename
 	IncludeDir   Directory
@@ -41,6 +43,8 @@ type VulkanGeneratedHeader struct {
 
 func (g VulkanGeneratedHeader) GetDigestable(o *bytes.Buffer) {
 	o.WriteString("VulkanGeneratedHeader-1.0.0")
+	g.BindingsFile.GetDigestable(o)
+	g.IncludeDir.GetDigestable(o)
 }
 func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) error {
 	vk := GetVulkanInterface(g.IncludeDir, g.BindingsFile)
@@ -51,7 +55,7 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 	cpp.Pragma("once")
 	cpp.Include("Container/BitMask.h")
 	for _, x := range vk.Headers {
-		cpp.Include(x.Relative(UFS.Source))
+		cpp.Include(strings.ReplaceAll(x.Relative(UFS.Source), "\\", "/"))
 	}
 
 	makeExtensionEnumDecl := func(name string, exts []VkExtension) {
@@ -107,7 +111,7 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 						funcRes = "NODISCARD " + funcRes
 					}
 					cpp.Func(x.Name, funcRes, Stringize(x.Args...), "const", func() {
-						argNames := Map(func(a VkFunctionArg) string { return a.Name }, x.Args...)
+						argNames := Map(func(a VkFunctionArg) string { return re_vkIdentifier.FindString(a.Name) }, x.Args...)
 						funCall := fmt.Sprintf("%s->%s(%s)", ptr, x.Name, strings.Join(argNames, ", "))
 						if x.HasReturn() {
 							cpp.Statement("return " + funCall)
@@ -126,11 +130,14 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 			for _, x := range vk.Versions {
 				cpp.Println("API_version_%s = %s,", x[len(x)-3:], x)
 			}
-			cpp.Println("API_version_latest = %v,", vk.Versions[len(vk.Versions)-1])
+			if len(vk.Versions) > 0 {
+				cpp.Println("API_version_latest = %v,", vk.Versions[len(vk.Versions)-1])
+			}
 		})
 		// extensions
 		makeExtensionEnumDecl("instance_extension", vk.InstanceExts)
 		makeExtensionEnumDecl("device_extension", vk.DeviceExts)
+		cpp.Statement(`instance_extension_set instance_extensions_require(const device_extension_set& in)`)
 		// exported_api
 		cpp.Struct("DLL_EXPORT exported_api", func() {
 			makePfnDecl(vk.ExportedFuncs)
@@ -140,14 +147,15 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 			cpp.Statement("static const global_api g_dummy")
 			cpp.Statement("const exported_api* exported_api_{ nullptr }")
 			cpp.Func("attach_return_error", "NODISCARD const char*", []string{"const exported_api* api"}, "", nil)
+			makePfnDecl(vk.ExportedFuncs)
 			makePfnDecl(vk.GlobalFuncs)
 		})
 		// instance_api
 		cpp.Struct("DLL_EXPORT instance_api", func() {
 			cpp.Statement("static const instance_api g_dummy")
+			cpp.Statement("api_version version_{ API_version_latest }")
 			cpp.Statement("const global_api* global_api_{ nullptr }")
 			cpp.Statement("instance_extension_set instance_extensions_{}")
-			cpp.Statement("api_version version_{ API_version_latest }")
 			cpp.Func("attach_return_error", "NODISCARD const char*", []string{
 				"const global_api* api",
 				"VkInstance vkInstance",
@@ -159,18 +167,23 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 		})
 		// instance_fn
 		cpp.Struct("DLL_EXPORT instance_fn", func() {
-			cpp.Println("protected:")
+			cpp.Println_NoIndent("protected:")
 			cpp.Statement("friend struct device_api")
 			cpp.Statement("const instance_api* instance_api_{ nullptr }")
-			cpp.Println("public:")
+			cpp.Println_NoIndent("public:")
 			cpp.Statement("instance_fn() = default")
-			cpp.Println("CONSTEXPR instance_fn(const instance_api* api) : _instance_api(api) {}")
+			cpp.Println("CONSTEXPR instance_fn(const instance_api* api) : instance_api_(api) {}")
+			cpp.Func("api", "const instance_api*", []string{}, "const", func() {
+				cpp.Statement("return instance_api_")
+			})
 			cpp.Func("version", "api_version", []string{}, "const", func() {
 				cpp.Statement("return instance_api_->version_")
 			})
 			cpp.Func("instance_extensions", "const instance_extension_set&", []string{}, "const", func() {
 				cpp.Statement("return instance_api_->instance_extensions_")
 			})
+			makePfnWrapper("instance_api_->global_api_->exported_api_", vk.ExportedFuncs)
+			makePfnWrapper("instance_api_->global_api_", vk.GlobalFuncs)
 			makePfnWrapper("instance_api_", vk.InstanceFuncs)
 		})
 		// device_api
@@ -193,11 +206,14 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 		})
 		// device_fn
 		cpp.Struct("DLL_EXPORT device_fn", func() {
-			cpp.Println("protected:")
+			cpp.Println_NoIndent("protected:")
 			cpp.Statement("const device_api* device_api_{ nullptr }")
-			cpp.Println("public:")
+			cpp.Println_NoIndent("public:")
 			cpp.Statement("device_fn() = default")
-			cpp.Println("CONSTEXPR device_fn(const device_api* api) : _device_api(api) {}")
+			cpp.Println("CONSTEXPR device_fn(const device_api* api) : device_api_(api) {}")
+			cpp.Func("api", "const device_api*", []string{}, "const", func() {
+				cpp.Statement("return device_api_")
+			})
 			cpp.Func("version", "api_version", []string{}, "const", func() {
 				cpp.Statement("return device_api_->instance_api_->version_")
 			})
@@ -233,7 +249,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 	cpp.Comment("Vulkan source generated by %v/%v", MAIN_SIGNATURE, ctx.Unit.Target)
 	cpp.Pragma("once")
 	cpp.Include(g.GeneratedHeader)
-	cpp.Include("HAL/PlatformString.h")
+	cpp.Include("IO/StringView.h")
 
 	makeExtensionEnumDef := func(name string, exts []VkExtension) {
 		cpp.Comment(name)
@@ -248,12 +264,13 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 			})
 		})
 		cpp.Func(name+"_from", name, []string{"const char* name"}, "", func() {
-			cpp.Switch("PPE::hash_strI_constexpr(name)", func() {
+			cpp.Statement("using namespace PPE")
+			cpp.Switch("hash_strI_constexpr(name)", func() {
 				for _, x := range exts {
 					cpp.IfDef(x.Name, func() {
-						cpp.Println(`case PPE::hash_strI_constexpr(%s):`, x.Name)
+						cpp.Println(`case hash_strI_constexpr(%s):`, x.Name)
 						cpp.ScopeIndent(func() {
-							cpp.Statement(`return (FPlatformString::EqualsI(name, %s) ? %s : %s_unknown)`,
+							cpp.Statement(`return (EqualsI(MakeCStringView(name), %s) ? %s : %s_unknown)`,
 								x.Name, getVkExtensionFlag(x.Name), name)
 						})
 					})
@@ -294,6 +311,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 		for i, x := range funcs {
 			cpp.LazyIfDef(x.Requires, func() {
 				if x.VkFunctionPointer != nil {
+					cpp.Print("/* %s */", x.Name)
 					switch strings.ToUpper(x.Return) {
 					case "VOID":
 						cpp.Println("[](auto...) -> void {},")
@@ -320,27 +338,30 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 	cpp.Namespace("vk", func() {
 		// helpers
 		cpp.Println("template <typename _PFN>")
-		cpp.Func("attach_pfn_", "NODISCARD static bool", []string{
+		cpp.Func("attach_pfn_", "NODISCARD FORCE_INLINE static bool", []string{
 			"_PFN* outPFN",
 			"const global_api& api",
 			"const char* name"}, "", func() {
-			cpp.Statement(`return !!(*outPFN = reinterpret_cast<_PFN>(api.vkGetInstanceProcAddr(VK_NULL_HANDLE, name)))`)
+			cpp.Statement(`*outPFN = reinterpret_cast<_PFN>(api.exported_api_->vkGetInstanceProcAddr(VK_NULL_HANDLE, name))`)
+			cpp.Statement(`return (!!*outPFN)`)
 		})
 		cpp.Println("template <typename _PFN>")
-		cpp.Func("attach_pfn_", "NODISCARD static bool", []string{
+		cpp.Func("attach_pfn_", "NODISCARD FORCE_INLINE static bool", []string{
 			"_PFN* outPFN",
 			"const instance_api& api",
 			"VkInstance vkInstance",
 			"const char* name"}, "", func() {
-			cpp.Statement(`return !!(*outPFN = reinterpret_cast<_PFN>(api.vkGetInstanceProcAddr(vkInstance, name)))`)
+			cpp.Statement(`*outPFN = reinterpret_cast<_PFN>(api.global_api_->exported_api_->vkGetInstanceProcAddr(vkInstance, name))`)
+			cpp.Statement(`return (!!*outPFN)`)
 		})
 		cpp.Println("template <typename _PFN>")
-		cpp.Func("attach_pfn_", "NODISCARD static bool", []string{
+		cpp.Func("attach_pfn_", "NODISCARD FORCE_INLINE static bool", []string{
 			"_PFN* outPFN",
 			"const device_api& api",
 			"VkDevice vkDevice",
 			"const char* name"}, "", func() {
-			cpp.Statement(`return !!(*outPFN = reinterpret_cast<_PFN>(api.vkGetDeviceProcAddr(vkDevice, name)))`)
+			cpp.Statement(`*outPFN = reinterpret_cast<_PFN>(api.instance_api_->vkGetDeviceProcAddr(vkDevice, name))`)
+			cpp.Statement(`return (!!*outPFN)`)
 		})
 		// extensions
 		makeExtensionEnumDef("instance_extension", vk.InstanceExts)
@@ -365,7 +386,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 		})
 		// global_api
 		cpp.Declare("global_api::g_dummy", "const global_api", func() {
-			cpp.Println("null/* exported_api_ */,")
+			cpp.Println("nullptr/* exported_api_ */,")
 			makePfnDummy(vk.ExportedFuncs)
 			makePfnDummy(vk.GlobalFuncs)
 		})
@@ -384,8 +405,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 			for i, x := range vk.GlobalFuncs {
 				cpp.LazyIfDef(x.Requires, func() {
 					if x.VkFunctionPointer != nil {
-						//available := fmt.Sprintf(`nullptr == (%v = reinterpret_cast<PFN_%v>(api->vkGetInstanceProcAddr(VK_NULL_HANDLE, "%v"))`, x.Name, x.Name, x.Name)
-						available := fmt.Sprintf(`!attach_pfn_(&%s, *api, "%s")`, x.Name, x.Name)
+						available := fmt.Sprintf(`!attach_pfn_(&%s, *this, "%s")`, x.Name, x.Name)
 						cpp.If(available, func() {
 							cpp.Statement(`return "%v"`, x.Name)
 						})
@@ -397,7 +417,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 		// instance_api
 		cpp.Declare("instance_api::g_dummy", "const instance_api", func() {
 			cpp.Println("API_version_latest,")
-			cpp.Println("null/* global_api_ */,")
+			cpp.Println("nullptr/* global_api_ */,")
 			cpp.Println("{ PPE::Meta::ForceInit }/* instance_extensions_ */,")
 			makePfnDummy(vk.InstanceFuncs)
 		})
@@ -409,15 +429,15 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 			"instance_extension_set optional"}, "", func() {
 			cpp.Statement("version_ = version")
 			cpp.Statement("global_api_ = api")
-			cpp.Statement("const instance_extension_set userExts = required | optional")
-			cpp.Statement("instance_extensions_ = exts")
+			cpp.Statement("const instance_extension_set user = required | optional")
+			cpp.Statement("instance_extensions_ = user")
 			for i, x := range vk.InstanceFuncs {
 				cpp.LazyIfDef(x.Requires, func() {
 					if x.VkFunctionPointer != nil {
 						if x.Requires == "" {
 							available := fmt.Sprintf(
 								`(version_ >= %s) && `+
-									`!attach_pfn_(&%s, *api, vkInstance, "%s")`,
+									`!attach_pfn_(&%s, *this, vkInstance, "%s")`,
 								getVkExtensionFlag(x.Version), x.Name, x.Name)
 							cpp.If(available, func() {
 								cpp.Statement(`return "%v"`, x.Name)
@@ -425,8 +445,8 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 						} else {
 							flag := getVkExtensionFlag(x.Requires)
 							available := fmt.Sprintf(
-								`(userExts & %s) && `+
-									`!attach_pfn_(&%s, *api, vkInstance, "%s")`,
+								`(user & %s) && `+
+									`!attach_pfn_(&%s, *this, vkInstance, "%s")`,
 								flag, x.Name, x.Name)
 							cpp.If(available, func() {
 								cpp.Statement("instance_extensions_ -= %v", flag)
@@ -440,7 +460,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 			cpp.Statement("return nullptr/* no error */")
 		})
 		cpp.Func("instance_api::setup_backward_compatibility", "void", []string{}, "", func() {
-			cpp.Statement("const u32 vkVersion = static_cast<u32>(version_)")
+			cpp.Statement("const uint32_t vkVersion = static_cast<uint32_t>(version_)")
 			cpp.Statement("UNUSED(vkVersion)")
 			for i, x := range vk.InstanceBwds {
 				from := vk.InstanceFuncs[x.From]
@@ -457,7 +477,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 		})
 		// device_api
 		cpp.Declare("device_api::g_dummy", "const device_api", func() {
-			cpp.Println("null/* instance_api_ */,")
+			cpp.Println("nullptr/* instance_api_ */,")
 			cpp.Println("{ PPE::Meta::ForceInit }/* device_extensions_ */,")
 			makePfnDummy(vk.DeviceFuncs)
 		})
@@ -467,15 +487,15 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 			"const device_extension_set& required",
 			"device_extension_set optional"}, "", func() {
 			cpp.Statement("instance_api_ = api")
-			cpp.Statement("const device_extension_set userExts = required | optional")
-			cpp.Statement("device_extensions_ = exts")
+			cpp.Statement("const device_extension_set user = required | optional")
+			cpp.Statement("device_extensions_ = user")
 			for i, x := range vk.DeviceFuncs {
 				cpp.LazyIfDef(x.Requires, func() {
 					if x.VkFunctionPointer != nil {
 						if x.Requires == "" {
 							available := fmt.Sprintf(
 								`(instance_api_->version_ >= %s) && `+
-									`!attach_pfn_(&%s, *api, vkDevice, "%s")`,
+									`!attach_pfn_(&%s, *this, vkDevice, "%s")`,
 								getVkExtensionFlag(x.Version), x.Name, x.Name)
 							cpp.If(available, func() {
 								cpp.Statement(`return "%v"`, x.Name)
@@ -483,8 +503,8 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 						} else {
 							flag := getVkExtensionFlag(x.Requires)
 							available := fmt.Sprintf(
-								`(userExts & %s) && `+
-									`!attach_pfn_(&%s, *api, vkDevice, "%s")`,
+								`(user & %s) && `+
+									`!attach_pfn_(&%s, *this, vkDevice, "%s")`,
 								flag, x.Name, x.Name)
 							cpp.If(available, func() {
 								cpp.Statement("device_extensions_ -= %v", flag)
@@ -505,7 +525,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 			cpp.Statement("return attach_return_error(fn.instance_api_, vkDevice, required, optional)")
 		})
 		cpp.Func("device_api::setup_backward_compatibility", "void", []string{}, "", func() {
-			cpp.Statement("const u32 vkVersion = static_cast<u32>(version_)")
+			cpp.Statement("const uint32_t vkVersion = static_cast<uint32_t>(instance_api_->version_)")
 			cpp.Statement("UNUSED(vkVersion)")
 			for i, x := range vk.DeviceBwds {
 				from := vk.DeviceFuncs[x.From]
@@ -537,7 +557,7 @@ func getVkExtensionFlag(macro string) (flag string) {
 }
 
 func getVkVersionFlag(macro string) (flag string) {
-	flag = strings.TrimPrefix(flag, "VK_")
+	flag = strings.TrimPrefix(macro, "VK_")
 	sep := strings.Index(flag, "_")
 	return flag[:sep] + "_" + strings.ToLower(flag[sep+1:])
 }
@@ -924,7 +944,7 @@ func (vk *VulkanInterfaceT) Build(bc BuildContext) (BuildStamp, error) {
 		if i, ok := funcPointerByName[name]; ok {
 			return &vkHeaders.Functions[i]
 		} else {
-			LogVerbose("vulkan function not found: %s", name)
+			LogVerbose("vulkan: function not found: %s", name)
 			return nil
 		}
 	}
@@ -945,7 +965,7 @@ func (vk *VulkanInterfaceT) Build(bc BuildContext) (BuildStamp, error) {
 		if i, ok := deviceExtByName[name]; ok {
 			return &vk.DeviceExts[i]
 		} else {
-			LogVerbose("vulkan device extension not found: %s", name)
+			LogVerbose("vulkan: device extension not found: %s", name)
 			return nil
 		}
 	}

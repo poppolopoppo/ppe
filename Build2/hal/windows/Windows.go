@@ -56,7 +56,6 @@ func (flags *WindowsFlagsT) Alias() BuildAlias {
 	return MakeBuildAlias("Flags", "WindowsFlags")
 }
 func (flags *WindowsFlagsT) Build(BuildContext) (BuildStamp, error) {
-	// flags.InitFlags(CommandEnv.Persistent())
 	return MakeBuildStamp(flags)
 }
 func (flags *WindowsFlagsT) GetDigestable(o *bytes.Buffer) {
@@ -72,6 +71,27 @@ func (flags *WindowsFlagsT) GetDigestable(o *bytes.Buffer) {
 	flags.WindowsSDK.GetDigestable(o)
 }
 
+type WindowsPlatform struct {
+	PlatformRules
+}
+
+func (win *WindowsPlatform) GetCompiler(bc BuildContext) (result Compiler) {
+	flags := WindowsFlags.Need(CommandEnv.Flags)
+	bc.DependsOn(flags)
+
+	switch flags.Compiler {
+	case COMPILER_MSVC:
+		result = GetMsvcCompiler(win.Arch)
+	case COMPILER_CLANGCL:
+		result = GetClangCompiler(win.Arch)
+	default:
+		UnexpectedValue(flags.Compiler)
+	}
+
+	bc.DependsOn(result)
+	return result
+}
+
 func makeWindowsPlatform(p *PlatformRules) {
 	p.Os = "Windows"
 	p.Defines.Append(
@@ -82,27 +102,28 @@ func makeWindowsPlatform(p *PlatformRules) {
 	p.ForceIncludes.Append(UFS.Source.File("winnt_version.h"))
 }
 func getWindowsPlatform_X86() Platform {
-	p := &PlatformRules{}
+	p := &WindowsPlatform{}
 	p.Arch = Platform_X86.Arch
 	p.Facet = NewFacet()
 	p.Facet.Append(Platform_X86)
-	makeWindowsPlatform(p)
+	makeWindowsPlatform(&p.PlatformRules)
 	p.PlatformName = "Win32"
 	p.Defines.Append("_WIN32", "__X86__")
 	p.Exports.Add("Windows/Platform", "x86")
 	return p
 }
 func getWindowsPlatform_X64() Platform {
-	p := &PlatformRules{}
+	p := &WindowsPlatform{}
 	p.Arch = Platform_X64.Arch
 	p.Facet = NewFacet()
 	p.Facet.Append(Platform_X64)
-	makeWindowsPlatform(p)
+	makeWindowsPlatform(&p.PlatformRules)
 	p.PlatformName = "Win64"
 	p.Defines.Append("_WIN64", "__X64__")
 	p.Exports.Add("Windows/Platform", "x64")
 	return p
 }
+
 func getWindowsHostPlatform() string {
 	switch strconv.IntSize {
 	case 32:
@@ -119,8 +140,10 @@ func InitWindows() {
 	LogTrace("build/hal/window.Init()")
 
 	gob.Register(&WindowsFlagsT{})
+	gob.Register(&WindowsPlatform{})
 	gob.Register(&MsvcCompiler{})
 	gob.Register(&MsvcProductInstall{})
+	gob.Register(&ResourceCompiler{})
 	gob.Register(&WindowsSDKBuilder{})
 	gob.Register(&WindowsSDK{})
 	gob.Register(&ClangCompiler{})
@@ -131,18 +154,7 @@ func InitWindows() {
 	AllPlatforms.Add("Win32", getWindowsPlatform_X86())
 	AllPlatforms.Add("Win64", getWindowsPlatform_X64())
 
-	for _, x := range CompilerTypes() {
-		var factory CompilerFactory
-		switch x {
-		case COMPILER_MSVC:
-			factory = func(arch ArchType) Compiler {
-				return GetMsvcCompiler(arch)
-			}
-		case COMPILER_CLANGCL:
-			factory = func(arch ArchType) Compiler {
-				return GetClangCompiler(arch)
-			}
-		}
-		AllCompilers.Add(x.String(), factory)
-	}
+	AllCompilers.Append(
+		COMPILER_CLANGCL.String(),
+		COMPILER_MSVC.String())
 }

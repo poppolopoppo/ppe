@@ -4,8 +4,9 @@ import (
 	"build/utils"
 	"bytes"
 	"fmt"
-	"sort"
 	"strings"
+	"sync"
+	"time"
 )
 
 type CompileEnv struct {
@@ -35,7 +36,7 @@ func NewCompileEnv(
 		"BUILD_CONFIG="+result.GetConfig().ConfigName,
 		"BUILD_COMPILER="+result.GetCompiler().CompilerName,
 		"BUILD_FAMILY="+strings.Join(result.Family(), "-"),
-		"BUILD_"+result.String())
+		"BUILD_"+strings.Join(result.Family(), "_"))
 
 	result.Facet.IncludePaths.Append(utils.UFS.Source)
 
@@ -156,7 +157,7 @@ func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result Payl
 		case LINK_INHERIT:
 			fallthrough
 		case LINK_STATIC:
-			return PAYLOAD_STATICLIB
+			return PAYLOAD_OBJECTLIST
 		case LINK_DYNAMIC:
 			return PAYLOAD_SHAREDLIB
 		default:
@@ -286,60 +287,96 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 
 	return unit
 }
-func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, translated map[Module]*Unit) (utils.SetT[*Unit], error) {
-	pbar := utils.LogProgress(0, len(translated), "link %v", env)
+func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, translated map[*ModuleRules]*Unit) (utils.SetT[*Unit], error) {
+	pbar := utils.LogProgress(0, len(translated), "%v/Link", env)
 	defer pbar.Close()
 
-	linked, err := utils.ParallelMap(func(m Module) (*Unit, error) {
-		unit := translated[m]
-		moduleNode := moduleGraph.Get(m)
+	linked := utils.NewSet[*Unit]()
 
-		unit.Ordinal = moduleNode.Ordinal
-		unit.Defines.Append(
-			"BUILD_TARGET_NAME="+unit.Target.ModuleAlias().String(),
-			fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", unit.Ordinal))
+	wg := sync.WaitGroup{}
+	wg.Add(len(translated))
 
-		moduleNode.Range(func(dep Module, vis VisibilityType) {
-			moduleType := dep.GetModule().ModuleType
-			if other, ok := translated[dep]; ok {
-				switch other.Payload {
-				case PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER:
-					unit.CompileDependencies.Append(other.Target)
-				case PAYLOAD_OBJECTLIST:
-					unit.CompileDependencies.Append(other.Target)
-					fallthrough
-				case PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
-					switch vis {
-					case PUBLIC, PRIVATE:
-						if moduleType != MODULE_EXTERNAL {
-							unit.LinkDependencies.AppendUniq(other.Target)
-						} else {
-							unit.CompileDependencies.AppendUniq(other.Target)
+	for keyModule, valueUnit := range translated {
+		go func(module *ModuleRules, unit *Unit) {
+			defer pbar.Inc()
+			defer wg.Done()
+			moduleNode := moduleGraph.Get(module)
+
+			unit.Ordinal = moduleNode.Ordinal
+			unit.Defines.Append(
+				"BUILD_TARGET_NAME="+unit.Target.ModuleAlias().String(),
+				fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", unit.Ordinal))
+
+			moduleNode.Range(func(dep Module, vis VisibilityType) {
+				moduleType := dep.GetModule().ModuleType
+				if other, ok := translated[dep.GetModule()]; ok {
+					switch other.Payload {
+					case PAYLOAD_HEADERS:
+						unit.IncludeDependencies.Append(other.Target)
+					case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER:
+						unit.CompileDependencies.Append(other.Target)
+					case PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
+						switch vis {
+						case PUBLIC, PRIVATE:
+							if moduleType != MODULE_EXTERNAL {
+								unit.LinkDependencies.AppendUniq(other.Target)
+							} else {
+								unit.CompileDependencies.AppendUniq(other.Target)
+							}
+						case RUNTIME:
+							if other.Payload == PAYLOAD_SHAREDLIB {
+								unit.RuntimeDependencies.AppendUniq(other.Target)
+							} else {
+								utils.LogPanic("%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
+									unit.Payload, unit, other.Payload, other, vis,
+									moduleNode.Dependencies)
+							}
+						default:
+							utils.UnexpectedValue(vis)
 						}
-					case RUNTIME:
-						if other.Payload == PAYLOAD_SHAREDLIB {
-							unit.RuntimeDependencies.AppendUniq(other.Target)
-						} else {
-							utils.LogPanic("%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
-								unit.Payload, unit, other.Payload, other, vis,
-								moduleNode.Dependencies)
-						}
+					case PAYLOAD_EXECUTABLE:
+						fallthrough // can't depend on an executable
 					default:
-						utils.UnexpectedValue(vis)
+						utils.UnexpectedValue(unit.Payload)
 					}
-				case PAYLOAD_EXECUTABLE:
-					fallthrough
-				default:
-					utils.UnexpectedValue(unit.Payload)
+				} else {
+					utils.UnreachableCode()
 				}
+			}, VIS_EVERYTHING)
+
+			if unit.Unity == UNITY_AUTOMATIC {
+				unit.Unity = moduleNode.Unity(env.SizePerUnity.Get())
+			}
+
+			for _, x := range module.Generateds {
+				if err := x.GetGenerated().Generate(bc, env, unit); err != nil {
+					panic(err)
+				}
+			}
+		}(keyModule, valueUnit)
+	}
+
+	wg.Wait()
+	pbar.Set(0)
+
+	for _, m := range moduleGraph.keys {
+		defer pbar.Inc()
+		unit := translated[m.GetModule()]
+
+		unit.IncludeDependencies.Range(func(target TargetAlias) {
+			dep := moduleGraph.Module(target.ModuleAlias())
+			if other, ok := translated[dep.GetModule()]; ok {
+				utils.LogDebug("[%v] include dep -> %v", unit.Target, target)
+				unit.Facet.Append(&other.TransitiveFacet)
 			} else {
 				utils.UnreachableCode()
 			}
-		}, VIS_EVERYTHING)
+		})
 
 		unit.CompileDependencies.Range(func(target TargetAlias) {
 			dep := moduleGraph.Module(target.ModuleAlias())
-			if other, ok := translated[dep]; ok {
+			if other, ok := translated[dep.GetModule()]; ok {
+				utils.LogDebug("[%v] compile dep -> %v", unit.Target, target)
 				unit.Facet.Append(&other.TransitiveFacet)
 			} else {
 				utils.UnreachableCode()
@@ -348,7 +385,8 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 
 		unit.LinkDependencies.Range(func(target TargetAlias) {
 			dep := moduleGraph.Module(target.ModuleAlias())
-			if other, ok := translated[dep]; ok {
+			if other, ok := translated[dep.GetModule()]; ok {
+				utils.LogDebug("[%v] link dep -> %v", unit.Target, target)
 				unit.Facet.Append(&other.TransitiveFacet)
 			} else {
 				utils.UnreachableCode()
@@ -357,7 +395,8 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 
 		unit.RuntimeDependencies.Range(func(target TargetAlias) {
 			dep := moduleGraph.Module(target.ModuleAlias())
-			if other, ok := translated[dep]; ok {
+			if other, ok := translated[dep.GetModule()]; ok {
+				utils.LogDebug("[%v] runtime dep -> %v", unit.Target, target)
 				unit.IncludePaths.Append(other.TransitiveFacet.IncludePaths...)
 				unit.ForceIncludes.Append(other.TransitiveFacet.ForceIncludes...)
 			} else {
@@ -365,31 +404,13 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 			}
 		})
 
-		if unit.Unity == UNITY_AUTOMATIC {
-			unit.Unity = moduleNode.Unity(env.SizePerUnity.Get())
-		}
-
 		unit.Decorate(env, unit.GetCompiler())
 		unit.Facet.PerformSubstitutions()
 
-		err := utils.ParallelRange(func(x Generated) error {
-			return x.GetGenerated().Generate(bc, env, unit)
-		}, m.GetModule().Generateds...)
-
-		pbar.Inc()
-		return unit, err
-	}, moduleGraph.keys...)
-
-	if err == nil {
-		result := utils.NewSet(linked...)
-		sort.Slice(result, func(i, j int) bool {
-			return result[i].Ordinal < result[j].Ordinal
-		})
-
-		return result, nil
-	} else {
-		return nil, err
+		linked.Append(unit)
 	}
+
+	return linked, nil
 }
 
 type BuildEnvironmentsT struct {
@@ -403,6 +424,8 @@ func (b *BuildEnvironmentsT) Build(bc utils.BuildContext) (utils.BuildStamp, err
 	b.Clear()
 
 	compileFlags := CompileFlags.FindOrAdd(utils.CommandEnv.Flags)
+	bc.DependsOn(compileFlags)
+
 	allPlatforms := BuildPlatforms.Need(bc).Values
 	allConfigs := BuildConfigs.Need(bc).Values
 
@@ -413,13 +436,12 @@ func (b *BuildEnvironmentsT) Build(bc utils.BuildContext) (utils.BuildStamp, err
 
 	digester := utils.MakeDigester()
 	for _, platform := range allPlatforms {
-		for _, config := range allConfigs {
-			compiler := GetBuildCompiler(platform.GetPlatform().Arch)
-			bc.DependsOn(compiler)
+		compiler := platform.GetCompiler(bc)
 
+		for _, config := range allConfigs {
 			env := NewCompileEnv(platform, config, compiler, compileFlags)
 
-			utils.LogVerbose("new compile env: %v", env)
+			utils.LogVerbose("build: new compile environment %v", env)
 			pbar.Inc()
 
 			b.Append(env)
@@ -429,7 +451,15 @@ func (b *BuildEnvironmentsT) Build(bc utils.BuildContext) (utils.BuildStamp, err
 
 	utils.LogTrace("prepared %d compilation environments from %d platforms and %d configs",
 		b.Len(), len(allPlatforms), len(allConfigs))
-	return utils.MakeBuildStamp(digester.Finalize())
+	return utils.MakeTimedBuildStamp(time.Now(), digester.Finalize())
+}
+func (b *BuildEnvironmentsT) GetEnvironment(alias EnvironmentAlias) *CompileEnv {
+	for _, env := range b.SetT {
+		if env.EnvironmentAlias() == alias {
+			return env
+		}
+	}
+	panic(fmt.Errorf("unknown compile environment <%v>", alias))
 }
 
 var BuildEnvironments = utils.MakeBuildable(func(bi utils.BuildInit) *BuildEnvironmentsT {

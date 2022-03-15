@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -39,7 +38,6 @@ func (r *result[S]) String() string {
 
 type Future[T any] interface {
 	Join() Result[T]
-	Cancel()
 }
 
 type sync_future[T any] struct {
@@ -57,47 +55,33 @@ func make_sync_future[T any](f func() (T, error)) Future[T] {
 		}),
 	}
 }
-func (future *sync_future[T]) Cancel() {}
 func (future *sync_future[T]) Join() Result[T] {
 	return future.memoized()
 }
 
 type async_future[T any] struct {
-	result    *result[T]
-	completed bool
-	wait      chan bool
-	ctx       context.Context
-	cancel    func()
+	result *result[T]
+	wait   <-chan bool
 }
 
 func make_async_future[T any](f func() (T, error)) Future[T] {
-	future := &async_future[T]{
-		wait: make(chan bool),
-	}
-	future.ctx, future.cancel = context.WithCancel(context.Background())
+	wait := make(chan bool)
+	future := &async_future[T]{wait: wait}
 	go func() {
-		defer close(future.wait)
+		defer close(wait)
 		success, failure := f()
 		future.result = &result[T]{success, failure}
-		future.completed = true
-		future.wait <- true
+		wait <- true
 	}()
 	return future
 }
-func (future *async_future[T]) Cancel() {
-	future.cancel()
-}
 func (future *async_future[T]) Join() Result[T] {
-	if future.completed {
+	if future.result != nil {
 		return future.result
 	} else {
 		select {
 		case <-future.wait:
 			return future.result
-		case <-future.ctx.Done():
-			return &result[T]{
-				failure: future.ctx.Err(),
-			}
 		}
 	}
 }
@@ -106,7 +90,6 @@ type futureLiteral[T any] struct {
 	immediate result[T]
 }
 
-func (x futureLiteral[T]) Cancel() {}
 func (x futureLiteral[T]) Join() Result[T] {
 	return &x.immediate
 }

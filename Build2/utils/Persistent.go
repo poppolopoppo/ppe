@@ -172,7 +172,6 @@ func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) []str
 		LogTrace("provided arguments: %v", strings.Join(args, ", "))
 	}
 	for _, x := range parsables {
-		//LogTrace("apply vars <%v>", PrettyPrint(x))
 		x.ApplyVars(pmp)
 	}
 	for k, v := range pmp.Vars {
@@ -218,7 +217,7 @@ func (pmp *PersistentMap) Serialize(dst io.Writer) error {
 }
 func (pmp *PersistentMap) Deserialize(src io.Reader) error {
 	if err := JsonDeserialize(&pmp.Data, src); err == nil {
-		LogVerbose("loaded %d persistent vars from disk to config", len(pmp.Data))
+		LogVerbose("persistent: loaded %d vars from disk to config", len(pmp.Data))
 		return nil
 	} else {
 		return fmt.Errorf("failed to deserialize config: %v", err)

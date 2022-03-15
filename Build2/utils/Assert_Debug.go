@@ -21,6 +21,12 @@ func SetEnableDiagnostics(enabled bool) {
 
 var enableAssertions bool = true
 
+func Assert(pred func() bool) {
+	if !pred() {
+		panic("failed assertion")
+	}
+}
+
 func AssertSameType[T any](a T, b T) {
 	ta := reflect.TypeOf(a)
 	tb := reflect.TypeOf(b)

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"regexp"
 	"sort"
-	"time"
 )
 
 type WindowsSDK struct {
@@ -104,10 +103,16 @@ func (x *WindowsSDKBuilder) Build(bc utils.BuildContext) (utils.BuildStamp, erro
 		ver := lib[len(lib)-1]
 		x.WindowsSDK = newWindowsSDK(lib.Parent().Parent(), ver)
 		bc.NeedFile(x.WindowsSDK.ResourceCompiler)
-		return utils.MakeTimedBuildStamp(time.Now(), x.WindowsSDK)
+		return utils.MakeBuildStamp(x)
 	} else {
 		return utils.BuildStamp{}, err
 	}
+}
+func (x *WindowsSDKBuilder) GetDigestable(o *bytes.Buffer) {
+	o.WriteString(x.MajorVer)
+	x.SearchDir.GetDigestable(o)
+	o.WriteString(x.SearchGlob)
+	x.WindowsSDK.GetDigestable(o)
 }
 
 var windowsSDK_10 = utils.MakeBuildable(func(bi utils.BuildInit) (result *WindowsSDKBuilder) {

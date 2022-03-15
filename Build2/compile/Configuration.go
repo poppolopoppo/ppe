@@ -54,11 +54,8 @@ func (rules *ConfigRules) GetDigestable(o *bytes.Buffer) {
 
 func (rules *ConfigRules) Decorate(_ *CompileEnv, unit *Unit) {
 	switch unit.Payload {
-	case PAYLOAD_EXECUTABLE:
-		fallthrough
-	case PAYLOAD_STATICLIB:
-		fallthrough
 	case PAYLOAD_HEADERS:
+	case PAYLOAD_EXECUTABLE, PAYLOAD_OBJECTLIST, PAYLOAD_STATICLIB:
 		unit.Facet.Defines.Append("BUILD_LINK_STATIC")
 	case PAYLOAD_SHAREDLIB:
 		unit.Facet.Defines.Append("BUILD_LINK_DYNAMIC")

@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 /***************************************
@@ -30,7 +29,8 @@ type MsvcCompiler struct {
 
 	CompilerRules
 	*WindowsSDK
-	ProductInstall *MsvcProductInstall
+	ProductInstall   *MsvcProductInstall
+	ResourceCompiler *ResourceCompiler
 }
 
 func (msvc *MsvcCompiler) GetCompiler() *CompilerRules { return &msvc.CompilerRules }
@@ -47,8 +47,12 @@ func (msvc *MsvcCompiler) GetDigestable(o *bytes.Buffer) {
 	msvc.CompilerRules.GetDigestable(o)
 	msvc.WindowsSDK.GetDigestable(o)
 	msvc.ProductInstall.GetDigestable(o)
+	msvc.ResourceCompiler.GetDigestable(o)
 }
 
+func (msvc *MsvcCompiler) FriendlyName() string {
+	return "msvc"
+}
 func (msvc *MsvcCompiler) EnvPath() DirSet {
 	return NewDirSet(
 		msvc.WorkingDir(),
@@ -105,7 +109,7 @@ func (msvc *MsvcCompiler) CppStd(f *Facet, std CppStdType) {
 }
 func (msvc *MsvcCompiler) Define(f *Facet, def ...string) {
 	for _, x := range def {
-		f.AddCompilationFlag("/D" + x)
+		f.AddCompilationFlag_NoAnalysis("/D" + x)
 	}
 }
 func (msvc *MsvcCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename) {
@@ -160,35 +164,25 @@ func (msvc *MsvcCompiler) Sanitizer(f *Facet, sanitizer SanitizerType) {
 	case SANITIZER_ADDRESS:
 		// https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
 		f.Defines.Append("USE_PPE_SANITIZER=1")
-		f.AddCompilationFlag("/fsanitize=address")
+		f.AddCompilationFlag_NoAnalysis("/fsanitize=address")
 	default:
 		UnexpectedValue(sanitizer)
 	}
 }
 
-func (msvc *MsvcCompiler) CompilationFlag(f *Facet, flag ...string) {
-	f.AnalysisOptions.Append(flag...)
-	f.CompilerOptions.Append(flag...)
-	f.PreprocessorOptions.Append(flag...)
-	f.PrecompiledHeaderOptions.Append(flag...)
-}
 func (msvc *MsvcCompiler) ForceInclude(f *Facet, inc ...Filename) {
 	for _, x := range inc {
-		f.AddCompilationFlag("/FI\"" + x.String() + "\"")
+		f.AddCompilationFlag_NoAnalysis("/FI\"" + x.String() + "\"")
 	}
 }
 func (msvc *MsvcCompiler) IncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag("/I\"" + x.String() + "\"")
+		f.AddCompilationFlag_NoAnalysis("/I\"" + x.String() + "\"")
 	}
 }
 func (msvc *MsvcCompiler) ExternIncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AnalysisOptions.Append("/I\"" + x.String() + "\"")
-		externalInc := "/external:I\"" + x.String() + "\""
-		f.CompilerOptions.Append(externalInc)
-		f.PrecompiledHeaderOptions.Append(externalInc)
-		f.PreprocessorOptions.Append(externalInc)
+		f.AddCompilationFlag_NoAnalysis("/external:I\"" + x.String() + "\"")
 	}
 }
 func (msvc *MsvcCompiler) SystemIncludePath(facet *Facet, dirs ...Directory) {
@@ -268,13 +262,10 @@ func makeMsvcCompiler(
 		vsInstallPath.Folder("VC", "Tools", "MSVC", result.MinorVer, "crt", "src"),
 		vsInstallPath.Folder("VC", "Tools", "MSVC", result.MinorVer, "include"))
 
-	compilationArgs := []string{
+	facet.AddCompilationFlag_NoAnalysis(
 		"/nologo",   // no copyright when compiling
 		"/c \"%1\"", // input file injection
-	}
-	facet.CompilerOptions.Append(compilationArgs...)
-	facet.PrecompiledHeaderOptions.Append(compilationArgs...)
-	facet.PreprocessorOptions.Append(compilationArgs...)
+	)
 
 	facet.CompilerOptions.Append("/Fo\"%2\"")
 	facet.PrecompiledHeaderOptions.Append("/Fp\"%2\"", "/Fo\"%3\"")
@@ -325,6 +316,7 @@ func makeMsvcCompiler(
 		"kernel32.lib",
 		"Shell32.lib",
 		"Gdi32.lib",
+		"Advapi32.lib",
 		"Shlwapi.lib",
 		"Version.lib",
 		"/nologo",            // no copyright when compiling
@@ -403,20 +395,54 @@ func makeMsvcCompiler(
 	)
 }
 
+func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filename) {
+	resources := &CustomUnit{
+		Unit: Unit{
+			Compiler:        msvc.ResourceCompiler,
+			Target:          u.Target,
+			IntermediateDir: u.IntermediateDir,
+			Payload:         u.Payload,
+			PCH:             PCH_DISABLED,
+			Unity:           UNITY_DISABLED,
+			Facet:           u.Facet,
+		},
+	}
+
+	resources.Target.ModuleName += "-RC"
+	resources.Source.SourceFiles.Append(rc)
+	resources.AnalysisOptions.Clear()
+	resources.CompilerOptions.Clear()
+	resources.PreprocessorOptions.Clear()
+	resources.LibrarianOptions.Clear()
+	resources.LinkerOptions.Clear()
+
+	resources.Decorate(compileEnv, resources.GetCompiler())
+	resources.Append(resources.GetCompiler()) // compiler options need to be at the end of command-line
+
+	u.CustomUnits.Append(resources)
+}
+
 func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
 	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
 
+	if u.Payload == PAYLOAD_EXECUTABLE || u.Payload == PAYLOAD_SHAREDLIB {
+		resource_rc := u.ModuleDir.File("resource.rc")
+		if resource_rc.Exists() {
+			msvc.AddResources(compileEnv, u, resource_rc)
+		}
+	}
+
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
-		u.AddCompilationFlag("/favor:blend", "/arch:AVX2")
+		u.AddCompilationFlag_NoAnalysis("/favor:blend", "/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x86")
 		u.LinkerOptions.Append("/MACHINE:x86", "/SAFESEH")
 		u.LibraryPaths.Append(
 			msvc.VSInstallPath.Folder("VC", "Tools", "MSVC", msvc.MinorVer, "lib", "x86"),
 			msvc.VSInstallPath.Folder("VC", "Auxiliary", "VS", "lib", "x86"))
 	case ARCH_X64:
-		u.AddCompilationFlag("/favor:AMD64", "/arch:AVX2")
+		u.AddCompilationFlag_NoAnalysis("/favor:AMD64", "/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x64")
 		u.LinkerOptions.Append("/MACHINE:x64")
 		u.LibraryPaths.Append(
@@ -480,8 +506,11 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 		if u.LinkerOptions.Contains("/LTCG") {
 			u.LinkerOptions.Remove("/LTCG")
 			u.LinkerOptions.Append("/LTCG:INCREMENTAL")
+			u.LinkerOptions.Remove("/OPT:NOREF")
 		} else if !u.LinkerOptions.Contains("/LTCG:INCREMENTAL") {
 			u.LinkerOptions.Append("/INCREMENTAL")
+		} else {
+			u.LinkerOptions.Remove("/OPT:NOREF")
 		}
 	} else if !u.LinkerOptions.Contains("/INCREMENTAL") {
 		LogVeryVerbose("MSVC: using non-incremental linker")
@@ -514,6 +543,11 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
  ***************************************/
 
 func msvc_CXX_runtimeLibrary(f *Facet, staticCrt bool, debug bool) {
+	if f.CompilerOptions.Any("/MD", "/MDd", "/MT", "/MTd") {
+		// don't override user configuration
+		return
+	}
+
 	var runtimeFlag string
 	var suffix string
 	if debug {
@@ -527,6 +561,7 @@ func msvc_CXX_runtimeLibrary(f *Facet, staticCrt bool, debug bool) {
 			"libucrt"+suffix+".lib")
 	} else {
 		runtimeFlag = "/MD"
+		f.Defines.Append("_DLL")
 	}
 	f.AddCompilationFlag(runtimeFlag + suffix)
 }
@@ -811,6 +846,7 @@ func (msvc *MsvcCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	windowsFlags := WindowsFlags.Need(CommandEnv.Flags)
 	msvc.ProductInstall = GetMsvcProductInstall(msvc.Arch, windowsFlags.MscVer, windowsFlags.Insider)
 	bc.DependsOn(windowsFlags, msvc.ProductInstall)
+	msvc.ResourceCompiler = WindowsResourceCompiler.Need(bc)
 
 	makeMsvcCompiler(
 		msvc,
@@ -826,7 +862,8 @@ func (msvc *MsvcCompiler) Build(bc BuildContext) (BuildStamp, error) {
 		msvc.ProductInstall.Lib_exe,
 		msvc.ProductInstall.Link_exe,
 		msvc.ProductInstall.VcToolsFileSet...)
-	return MakeTimedBuildStamp(time.Now())
+
+	return MakeBuildStamp(msvc)
 }
 
 var GetMsvcProductInstall = MemoizeArgs3(func(arch ArchType, msc_ver MsvcVersion, insider BoolVar) *MsvcProductInstall {

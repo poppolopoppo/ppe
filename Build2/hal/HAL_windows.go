@@ -36,7 +36,7 @@ func setConsoleMode() bool {
 		return true
 	}
 
-	utils.LogVerbose("failed to set console mode: %v", err)
+	utils.LogVerbose("hal: failed to set console mode with %v", err)
 	return false
 }
 

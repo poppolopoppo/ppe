@@ -89,7 +89,7 @@ func (x *BffBuilder) Alias() BuildAlias {
 }
 func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	sourceControlModifiedFiles := SourceControlModifiedFiles.Need(bc)
-	translatedUnits := BuildTargets.Need(bc)
+	targets := BuildTargets.Need(bc)
 
 	err := UFS.SafeCreate(x.Output, func(dst io.Writer) error {
 		args := BffArgs.Need(CommandEnv.Flags)
@@ -100,8 +100,8 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			bff.Assign("RootPath", UFS.Root)
 			bff.Assign("CachePath", UFS.Cache)
 			if CurrentHost().Id == HOST_WINDOWS {
-				compiler := GetBuildCompiler(CurrentArch())
-				bc.DependsOn(compiler)
+				platform := BuildPlatforms.Need(bc).Current()
+				compiler := platform.GetCompiler(bc)
 
 				path := JoinString(";", compiler.EnvPath()...)
 				bff.Import("TMP")
@@ -119,6 +119,7 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Assign("LinkerVerboseOutput", true)
 		bff.Assign("UnityInputIsolateListFile", sourceControlModifiedFiles.Output)
 
+		translatedUnits := targets.TranslatedUnits()
 		for _, unit := range translatedUnits.Slice() {
 			bff.Comment("Target %v", unit.Target)
 			switch unit.Payload {
@@ -187,6 +188,7 @@ func (gen bffGenerator) BaseDeliverable(unit *Unit, executable bool) {
 	libraries := []string{gen.BaseModule(unit, "-Obj", true)}
 	libraries = append(libraries, Stringize(unit.CompileDependencies.Slice()...)...)
 	libraries = append(libraries, Stringize(unit.LinkDependencies.Slice()...)...)
+	libraries = append(libraries, gen.CustomUnits(unit)...)
 
 	compilerDetails := gen.Compiler(unit.Compiler)
 
@@ -200,6 +202,7 @@ func (gen bffGenerator) BaseDeliverable(unit *Unit, executable bool) {
 		gen.Assign("Libraries", MakeBffArray(libraries...))
 		gen.Assign("LinkerOptions", unit.LinkerOptions.Join(" "))
 		gen.Assign("LinkerOutput", unit.OutputFile)
+		gen.Assign("PreBuildDependencies", Stringize(unit.RuntimeDependencies.Slice()...))
 	}, unit.Target.String())
 }
 func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects bool) string {
@@ -241,10 +244,12 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 			if moduleUnity != "" {
 				gen.Assign("CompilerInputUnity", moduleUnity)
 			} else {
-				gen.Assign("CompilerInputPathRecurse", true)
 				gen.Assign("CompilerInputFiles", unit.Source.SourceFiles.Concat(unit.Source.IsolatedFiles...))
-				gen.Assign("CompilerInputPath", unit.Source.SourceDirs)
-				gen.Assign("CompilerInputPattern", unit.Source.SourceGlobs)
+				if unit.Source.SourceDirs.Len() > 0 {
+					gen.Assign("CompilerInputPattern", unit.Source.SourceGlobs)
+					gen.Assign("CompilerInputPath", unit.Source.SourceDirs)
+					gen.Assign("CompilerInputPathRecurse", true)
+				}
 				gen.Assign("CompilerInputExcludedFiles", unit.Source.ExcludedFiles)
 				gen.Assign("CompilerInputExcludePattern", unit.Source.ExcludedGlobs)
 			}
@@ -282,13 +287,18 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 			gen.Assign("PreprocessorOptions", unit.PreprocessorOptions.Join(" "))
 		}
 
-		compileDepAliases := Stringize(unit.CompileDependencies.Slice()...)
-
 		if !linkLibraryObjects {
+			compileDepAliases := Stringize(unit.CompileDependencies.Slice()...)
+			compileDepAliases = append(compileDepAliases, gen.CustomUnits(unit)...)
+
 			gen.Assign("LibrarianAdditionalInputs", compileDepAliases)
 			gen.Assign("LibrarianOptions", unit.LibrarianOptions.Join(" "))
 			gen.Assign("LibrarianOutput", unit.OutputFile)
 		}
+
+		includeDepAliases := Stringize(unit.IncludeDependencies.Slice()...)
+		gen.Assign("PreBuildDependencies", includeDepAliases)
+
 	}, artifactId)
 
 	return artifactId
@@ -312,6 +322,11 @@ func (gen bffGenerator) Compiler(compiler Compiler) BffVar {
 		})
 	})
 	return details
+}
+func (gen bffGenerator) CustomUnits(unit *Unit) []string {
+	return Map(func(custom *CustomUnit) string {
+		return gen.BaseModule(&custom.Unit, "", true)
+	}, unit.CustomUnits...)
 }
 func (gen bffGenerator) MakeAliases(units []*Unit) {
 	environments := make(map[BuildAlias]*[]TargetAlias, len(units))

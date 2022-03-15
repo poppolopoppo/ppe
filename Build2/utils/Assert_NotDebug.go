@@ -5,6 +5,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 )
 
@@ -19,16 +20,17 @@ func SetEnableDiagnostics(enabled bool) {
 
 var enableAssertions bool = false
 
-func AssertSameType[T any](a T, b T)             {}
+func Assert(pred func() bool)                    {}
+func AssertSameType[T any](T, T)                 {}
 func AssertIn[T comparable](T, ...T)             {}
 func AssertNotIn[T comparable](T, ...T)          {}
 func AssertInStrings[T fmt.Stringer](T, ...T)    {}
 func AssertNotInStrings[T fmt.Stringer](T, ...T) {}
 
-func NotImplemented(string, ...interface{})                   {}
-func UnreachableCode()                                        {}
-func UnexpectedValue(x interface{})                           {}
-func UnexpectedType(expected reflect.Type, given interface{}) {}
+func NotImplemented(string, ...interface{})    { log.Panic("not implemented") }
+func UnreachableCode()                         { log.Panic("unreachable code") }
+func UnexpectedValue(interface{})              { log.Panic("unexpected value") }
+func UnexpectedType(reflect.Type, interface{}) { log.Panic("unexpected type") }
 
 func AppendComparable_CheckUniq[T comparable](src []T, elts ...T) []T {
 	return append(src, elts...)

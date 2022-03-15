@@ -60,3 +60,11 @@ func PrettyPrint(x interface{}) string {
 	}
 	return fmt.Sprint(err)
 }
+
+type PrettyPrinter struct {
+	Ref interface{}
+}
+
+func (x PrettyPrinter) String() string {
+	return PrettyPrint(x.Ref)
+}

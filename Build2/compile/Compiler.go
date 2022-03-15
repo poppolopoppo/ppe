@@ -3,12 +3,9 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
-	"errors"
 )
 
-type CompilerFactory func(ArchType) Compiler
-
-var AllCompilers utils.SharedMapT[string, CompilerFactory]
+var AllCompilers = utils.NewStringSet()
 
 type CompilerRules struct {
 	CompilerName   string
@@ -27,6 +24,8 @@ type CompilerRules struct {
 type Compiler interface {
 	GetCompiler() *CompilerRules
 
+	FriendlyName() string
+
 	EnvPath() utils.DirSet
 	WorkingDir() utils.Directory
 
@@ -40,7 +39,6 @@ type Compiler interface {
 	PrecompiledHeader(*Facet, PrecompiledHeaderType, utils.Filename, utils.Filename, utils.Filename)
 	Sanitizer(*Facet, SanitizerType)
 
-	CompilationFlag(*Facet, ...string)
 	ForceInclude(*Facet, ...utils.Filename)
 	IncludePath(*Facet, ...utils.Directory)
 	ExternIncludePath(*Facet, ...utils.Directory)
@@ -94,20 +92,7 @@ func (rules *CompilerRules) Decorate(env *CompileEnv, unit *Unit) {
 	compiler.ExternIncludePath(&unit.Facet, unit.Facet.ExternIncludePaths...)
 	compiler.IncludePath(&unit.Facet, unit.Facet.IncludePaths...)
 	compiler.ForceInclude(&unit.Facet, unit.Facet.ForceIncludes...)
+
 	compiler.LibraryPath(&unit.Facet, unit.Facet.LibraryPaths...)
 	compiler.Library(&unit.Facet, unit.Facet.Libraries...)
 }
-
-var GetBuildCompiler = utils.MemoizeArg(func(arch ArchType) Compiler {
-	if vname, ok := utils.CommandEnv.ReadData("Compiler"); ok {
-		if factory, ok := AllCompilers.Get(vname); ok {
-			if compiler := factory(arch); compiler != nil {
-				utils.LogTrace("selected <%v> compiler for arch <%v>", vname, arch)
-				return compiler
-			}
-		}
-		panic(errors.New("compiler is not available"))
-	} else {
-		panic(errors.New("missing persistent variable <Compiler>"))
-	}
-})

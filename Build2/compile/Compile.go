@@ -4,6 +4,7 @@ import (
 	"build/utils"
 	"bytes"
 	"encoding/gob"
+	"sort"
 	"sync"
 )
 
@@ -15,6 +16,7 @@ func InitCompile() {
 	// register type for serialization
 	gob.Register(Facet{})
 	gob.Register(&Unit{})
+	gob.Register(CustomUnit{})
 
 	gob.Register(&CompilerRules{})
 	gob.Register(&ConfigRules{})
@@ -29,6 +31,7 @@ func InitCompile() {
 	gob.Register(&BuildPlatformsT{})
 	gob.Register(&BuildModulesT{})
 	gob.Register(&BuildEnvironmentsT{})
+	gob.Register(&EnvironmentTargetsT{})
 	gob.Register(&BuildTargetsT{})
 
 	AllCompilationFlags.Append(CompileFlags.Add)
@@ -69,7 +72,7 @@ func newCompileFlags() *CompileFlagsT {
 		PCH:           PCH_INHERIT,
 		Sanitizer:     SANITIZER_NONE,
 		Unity:         UNITY_INHERIT,
-		SizePerUnity:  300 * 1024.0, // 300 KiB
+		SizePerUnity:  150 * 1024.0, // 150 KiB
 		AdaptiveUnity: true,
 		LTO:           true,
 		Incremental:   true,
@@ -99,7 +102,6 @@ func (flags *CompileFlagsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Flags", "CompileFlags")
 }
 func (flags *CompileFlagsT) Build(utils.BuildContext) (utils.BuildStamp, error) {
-	//flags.InitFlags(utils.CommandEnv.Persistent())
 	return utils.MakeBuildStamp(flags)
 }
 func (flags *CompileFlagsT) GetDigestable(o *bytes.Buffer) {
@@ -118,60 +120,98 @@ func (flags *CompileFlagsT) GetDigestable(o *bytes.Buffer) {
 	flags.RuntimeChecks.GetDigestable(o)
 }
 
-type BuildTargetsT struct {
+type EnvironmentTargetsT struct {
+	Environment EnvironmentAlias
 	utils.SetT[*Unit]
+}
+
+func (e *EnvironmentTargetsT) Alias() utils.BuildAlias {
+	return utils.MakeBuildAlias("Targets", e.Environment.String())
+}
+func (e *EnvironmentTargetsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
+	pbar := utils.LogProgress(0, 0, "%v/Compile", e.Environment.String())
+
+	e.SetT.Clear()
+
+	allModules := BuildModules.Need(bc)
+	moduleGraph := GetModuleGraph(allModules)
+	compileEnv := BuildEnvironments.Need(bc).GetEnvironment(e.Environment)
+
+	translated := utils.NewSharedMapT[*ModuleRules, *Unit]()
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(moduleGraph.Keys()))
+
+	for _, m := range moduleGraph.Keys() {
+		go func(module Module) {
+			defer pbar.Inc()
+			defer wg.Done()
+			translated.Add(module.GetModule(), compileEnv.Compile(module))
+		}(m)
+	}
+
+	wg.Wait()
+	pbar.Close()
+
+	if units, err := compileEnv.Link(bc, moduleGraph, translated.Pin()); err == nil {
+		e.SetT = units
+		return utils.MakeBuildStamp(e)
+	} else {
+		return utils.BuildStamp{}, err
+	}
+}
+func (e *EnvironmentTargetsT) GetDigestable(o *bytes.Buffer) {
+	e.Environment.GetDigestable(o)
+	for _, unit := range e.SetT {
+		unit.GetDigestable(o)
+	}
+}
+
+func getEnvironmentTargets(environment EnvironmentAlias) *EnvironmentTargetsT {
+	result := &EnvironmentTargetsT{
+		Environment: environment,
+	}
+	return utils.CommandEnv.BuildGraph().
+		Create(result).
+		GetBuildable().(*EnvironmentTargetsT)
+}
+
+type BuildTargetsT struct {
+	Aliases utils.SetT[EnvironmentAlias]
 }
 
 func (b *BuildTargetsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Build", "TranslatedUnits")
 }
 func (b *BuildTargetsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	pbar := utils.LogProgress(0, 0, b.Alias().String())
-	defer pbar.Close()
-
-	b.Clear()
-
 	compileEnvs := BuildEnvironments.Need(bc)
-	allModules := BuildModules.Need(bc)
-	moduleGraph := GetModuleGraph(allModules)
 
-	var pendingCompile []utils.Future[[]*Unit]
-	for _, x := range compileEnvs.Slice() {
-		compileEnv := x
-		pbar.Add(len(moduleGraph.Keys()))
-		pendingCompile = append(pendingCompile, utils.MakeFuture(func() ([]*Unit, error) {
-			units := utils.NewSharedMapT[Module, *Unit]()
-			wg := sync.WaitGroup{}
-			wg.Add(len(moduleGraph.Keys()))
-			for _, module := range moduleGraph.Keys() {
-				go func(compileEnv *CompileEnv, module Module) {
-					units.Add(module, compileEnv.Compile(module))
-					wg.Done()
-					pbar.Inc()
-				}(compileEnv, module)
-			}
-			wg.Wait()
-			return compileEnv.Link(bc, moduleGraph, units.Pin())
-		}))
-	}
+	b.Aliases.Clear()
+	targets := utils.Map(func(compileEnv *CompileEnv) utils.BuildAliasable {
+		it := getEnvironmentTargets(compileEnv.EnvironmentAlias())
+		b.Aliases.Append(it.Environment)
+		return it
+	}, compileEnvs.Slice()...)
 
-	for _, x := range pendingCompile {
-		units := x.Join().Success()
-		b.Append(units...)
-		for _, u := range units {
-			bc.DependsOn(u.Compiler)
-		}
-	}
+	bc.DependsOn(targets...)
 
-	o := bytes.Buffer{}
-	digest := utils.MapDigest(b.Len(), func(i int) []byte {
-		o.Reset()
-		b.At(i).GetDigestable(&o)
-		return o.Bytes()
+	sort.Slice(b.Aliases, func(i, j int) bool {
+		return b.Aliases[i].String() < b.Aliases[j].String()
 	})
 
-	utils.LogTrace("translated %d compilation units", b.Len())
-	return utils.MakeBuildStamp(digest)
+	return utils.MakeBuildStamp(b)
+}
+func (b *BuildTargetsT) GetDigestable(o *bytes.Buffer) {
+	for _, a := range b.TranslatedUnits().Slice() {
+		a.GetDigestable(o)
+	}
+}
+func (b *BuildTargetsT) TranslatedUnits() utils.SetT[*Unit] {
+	units := utils.NewSet[*Unit]()
+	for _, a := range b.Aliases {
+		units.Append(getEnvironmentTargets(a).Slice()...)
+	}
+	return units
 }
 
 var BuildTargets = utils.MakeBuildable(func(bi utils.BuildInit) *BuildTargetsT {

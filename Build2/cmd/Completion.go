@@ -91,7 +91,7 @@ var ListCompilers = utils.MakeCommand(
 	"list all available compilers",
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		printCompletion(cmd, compile.AllCompilers.Keys())
+		printCompletion(cmd, compile.AllCompilers.Slice())
 		return nil
 	},
 )
@@ -144,7 +144,7 @@ var ListTargets = utils.MakeCommand(
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
 		if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
-			printCompletion(cmd, utils.Stringize(build.Slice()...))
+			printCompletion(cmd, utils.Stringize(build.TranslatedUnits()...))
 		} else {
 			panic(err)
 		}
@@ -158,13 +158,14 @@ var ExportUnit = utils.MakeCommand(
 	nil,
 	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
 		if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
-			units := make(map[string]*compile.Unit, build.Len())
-			for _, unit := range build.Slice() {
-				units[unit.String()] = unit
+			targets := build.TranslatedUnits()
+			exportedUnits := make(map[string]*compile.Unit, targets.Len())
+			for _, unit := range targets.Slice() {
+				exportedUnits[unit.String()] = unit
 			}
 			mapCompletion(cmd, func(s string) {
-				fmt.Println(utils.PrettyPrint(units[s]))
-			}, units)
+				fmt.Println(utils.PrettyPrint(exportedUnits[s]))
+			}, exportedUnits)
 		} else {
 			panic(err)
 		}

@@ -84,7 +84,7 @@ func (cpp *CppFile) Statement(format string, args ...interface{}) {
 	cpp.Println(format+";", args...)
 }
 
-func (cpp *CppFile) Closure(inner func()) {
+func (cpp *CppFile) Closure(inner func(), suff ...string) {
 	if inner != nil {
 		if cpp.Minify() {
 			cpp.Print("{")
@@ -95,7 +95,7 @@ func (cpp *CppFile) Closure(inner func()) {
 		if !cpp.Minify() {
 			cpp.LineBreak()
 		}
-		cpp.Println("}")
+		cpp.Println(strings.Join(append([]string{"}"}, suff...), ""))
 	} else {
 		cpp.Println(";")
 	}
@@ -121,18 +121,18 @@ func (cpp *CppFile) Namespace(name string, inner func()) {
 }
 func (cpp *CppFile) EnumC99(name string, underlying string, inner func()) {
 	cpp.Print("enum %s : %s", name, underlying)
-	cpp.Closure(inner)
+	cpp.Closure(inner, ";")
 }
 func (cpp *CppFile) EnumClass(name string, underlying string, inner func()) {
 	cpp.EnumC99("class "+name, underlying, inner)
 }
 func (cpp *CppFile) Class(name string, inner func()) {
 	cpp.Print("class " + name)
-	cpp.Closure(inner)
+	cpp.Closure(inner, ";")
 }
 func (cpp *CppFile) Struct(name string, inner func()) {
 	cpp.Print("struct " + name)
-	cpp.Closure(inner)
+	cpp.Closure(inner, ";")
 }
 
 func (cpp *CppFile) Func(name, result string, args []string, suffix string, inner func()) {

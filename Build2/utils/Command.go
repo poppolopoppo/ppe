@@ -57,6 +57,7 @@ type Command interface {
 
 type CommandFlagsT struct {
 	Force       bool
+	Purge       bool
 	Quiet       bool
 	Verbose     bool
 	Trace       bool
@@ -83,6 +84,7 @@ func newCommandFlags() *CommandFlagsT {
 }
 func (flags *CommandFlagsT) InitFlags(cfg *PersistentMap) {
 	cfg.BoolVar(&flags.Force, "f", "force build even if up-to-date")
+	cfg.BoolVar(&flags.Purge, "F", "force build and ignore cache")
 	cfg.BoolVar(&flags.Quiet, "q", "disable all messages")
 	cfg.BoolVar(&flags.Verbose, "v", "turn on verbose mode")
 	cfg.BoolVar(&flags.Trace, "t", "print more informations about progress")
@@ -123,6 +125,10 @@ func (flags *CommandFlagsT) ApplyVars(persistent *PersistentMap) {
 	}
 	SetLogTimestamp(flags.Timestamp)
 
+	if flags.Purge {
+		LogTrace("build will be forced due to '-F' command-line option")
+		flags.Force = true
+	}
 	if flags.Force {
 		LogTrace("build will be forced due to '-f' command-line option")
 	}
@@ -181,6 +187,7 @@ func (env *CommandEnvT) Init(args []string) {
 		env.instanced = append(env.instanced, cmd)
 		cmd.Init(env)
 		env.unparsedArgs = env.persistent.Parse(args[1:], env.Flags.Values()...)
+		env.buildGraph.PostLoad()
 		for _, flags := range env.Flags.Values() {
 			switch flags.(type) {
 			case Buildable:

@@ -103,6 +103,7 @@ type ModuleDesc struct {
 	ForceIncludes utils.StringSet
 	IsolatedFiles utils.StringSet
 	ExtraFiles    utils.StringSet
+	ExtraDirs     utils.StringSet
 
 	PrecompiledHeader *string
 	PrecompiledSource *string
@@ -148,6 +149,7 @@ func (x *ModuleDesc) Append(other *ModuleDesc) {
 	x.ForceIncludes.Append(other.ForceIncludes...)
 	x.IsolatedFiles.Append(other.IsolatedFiles...)
 	x.ExtraFiles.Append(other.ExtraFiles...)
+	x.ExtraDirs.Append(other.ExtraDirs...)
 
 	if x.PrecompiledHeader == nil {
 		x.PrecompiledHeader = other.PrecompiledHeader
@@ -207,6 +209,7 @@ func loadModuleDesc(src utils.Filename, namespace *NamespaceDesc) (result *Modul
 				ExcludedFiles: result.ExcludedFiles.ToFileSet(rootDir),
 				IsolatedFiles: result.IsolatedFiles.ToFileSet(rootDir),
 				ExtraFiles:    result.ExtraFiles.ToFileSet(rootDir),
+				ExtraDirs:     result.ExtraDirs.ToDirSet(rootDir),
 			},
 			PrivateDependencies: result.PrivateDependencies,
 			PublicDependencies:  result.PublicDependencies,
@@ -310,6 +313,9 @@ type BuildModulesT struct {
 	Root       Namespace
 }
 
+func (x *BuildModulesT) Get(moduleAlias utils.BuildAlias) Module {
+	return x.Modules[moduleAlias.String()]
+}
 func (x *BuildModulesT) ModuleKeys() []string {
 	result := utils.Keys(x.Modules)
 	sort.Strings(result)
@@ -325,6 +331,9 @@ func (x *BuildModulesT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Data", "BuildModules")
 }
 func (x *BuildModulesT) Build(ctx utils.BuildContext) (utils.BuildStamp, error) {
+	x.Namespaces = map[string]Namespace{}
+	x.Modules = map[string]Module{}
+	x.Root = nil
 	ctx.NeedFile(x.Source)
 
 	var moduleDescs []*ModuleDesc

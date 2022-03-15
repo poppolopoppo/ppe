@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -63,7 +64,7 @@ func Remove[T comparable](src []T, elts ...T) (result []T) {
 	return result
 }
 
-func RemoveIf[T any](pred func(T) bool, src ...T) (result []T) {
+func RemoveUnless[T any](pred func(T) bool, src ...T) (result []T) {
 	off := 0
 	result = make([]T, len(src))
 	for i, x := range src {
@@ -148,7 +149,15 @@ func (set *SetT[T]) AppendUniq(it ...T) *SetT[T] {
 	}
 	return set
 }
-func (set *SetT[T]) Remove(it ...T) *SetT[T] {
+func (set *SetT[T]) Remove(x T) *SetT[T] {
+	if i, ok := set.IndexOf(x); ok {
+		set.Delete(i)
+	} else {
+		panic(errors.New("could not find item in set"))
+	}
+	return set
+}
+func (set *SetT[T]) RemoveAll(it ...T) *SetT[T] {
 	for _, x := range it {
 		if i, ok := set.IndexOf(x); ok {
 			set.Delete(i)
@@ -156,8 +165,8 @@ func (set *SetT[T]) Remove(it ...T) *SetT[T] {
 	}
 	return set
 }
-func (set *SetT[T]) RemoveIf(pred func(T) bool) (result SetT[T]) {
-	return SetT[T](RemoveIf(pred, set.Slice()...))
+func (set *SetT[T]) RemoveUnless(pred func(T) bool) (result SetT[T]) {
+	return SetT[T](RemoveUnless(pred, set.Slice()...))
 }
 func (set *SetT[T]) Delete(i int) *SetT[T] {
 	*set = append((*set)[:i], (*set)[i+1:]...)
@@ -243,6 +252,9 @@ func (set StringSet) Contains(it ...string) bool {
 		}
 	}
 	return true
+}
+func (set *StringSet) Concat(other StringSet) StringSet {
+	return NewStringSet(append(set.Slice(), other.Slice()...)...)
 }
 func (set *StringSet) Append(it ...string) *StringSet {
 	for _, x := range it {
@@ -340,27 +352,6 @@ func (set StringSet) ToFileSet(root Directory) (result FileSet) {
 	}, set.Slice()...)
 }
 
-type FutureSet[T any] struct {
-	SetT[Future[T]]
-}
-
-func (set FutureSet[T]) Join(log string, args ...interface{}) []T {
-	pbar := LogProgress(0, set.Len(), log, args...)
-	defer pbar.Close()
-
-	result := make([]T, set.Len())
-	for i, x := range set.Slice() {
-		r := x.Join()
-		if err := r.Failure(); err != nil {
-			panic(err)
-		}
-		result[i] = x.Join().Success()
-		pbar.Inc()
-	}
-
-	return result
-}
-
 type SharedMapT[K comparable, V any] struct {
 	intern sync.Map
 }
@@ -369,7 +360,7 @@ func NewSharedMapT[K comparable, V any]() *SharedMapT[K, V] {
 	return &SharedMapT[K, V]{sync.Map{}}
 }
 func (shared *SharedMapT[K, V]) Len() (count int) {
-	shared.intern.Range(func(k, v interface{}) bool {
+	shared.intern.Range(func(_, _ interface{}) bool {
 		count += 1
 		return true
 	})
@@ -377,7 +368,7 @@ func (shared *SharedMapT[K, V]) Len() (count int) {
 }
 func (shared *SharedMapT[K, V]) Keys() (result []K) {
 	result = []K{}
-	shared.intern.Range(func(k, v interface{}) bool {
+	shared.intern.Range(func(k, _ interface{}) bool {
 		result = append(result, k.(K))
 		return true
 	})
@@ -385,7 +376,7 @@ func (shared *SharedMapT[K, V]) Keys() (result []K) {
 }
 func (shared *SharedMapT[K, V]) Values() (result []V) {
 	result = []V{}
-	shared.intern.Range(func(k, v interface{}) bool {
+	shared.intern.Range(func(_, v interface{}) bool {
 		result = append(result, v.(V))
 		return true
 	})

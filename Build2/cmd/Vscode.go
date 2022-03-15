@@ -4,6 +4,7 @@ import (
 	. "build/compile"
 	. "build/utils"
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -70,6 +71,8 @@ func (vsc *VscodeBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	environments := BuildEnvironments.Need(bc)
 	modules := BuildModules.Need(bc)
 	targets := BuildTargets.Need(bc)
+	platform := BuildPlatforms.Need(bc).Current()
+	compiler := platform.GetCompiler(bc)
 
 	CommandEnv.ConsumeArgs(-1) // eat args so FBuildExecutor won't use them
 
@@ -89,7 +92,7 @@ func (vsc *VscodeBuilder) Build(bc BuildContext) (BuildStamp, error) {
 
 	launch_json := vsc.OutputDir.File("launch.json")
 	LogTrace("generating vscode launch configuratiosn in '%v'", launch_json)
-	if err := vsc.launch_configs(modules, launch_json); err != nil {
+	if err := vsc.launch_configs(modules, compiler, launch_json); err != nil {
 		return BuildStamp{}, err
 	}
 	bc.OutputFile(launch_json)
@@ -106,9 +109,9 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 		var intelliSenseMode string
 		switch env.GetPlatform().Os {
 		case "Linux":
-			intelliSenseMode = "clang-x64"
+			intelliSenseMode = fmt.Sprintf("linux-%s-x64", env.Compiler.FriendlyName())
 		case "Windows":
-			intelliSenseMode = "msvc-x64"
+			intelliSenseMode = fmt.Sprintf("windows-%s-x64", env.Compiler.FriendlyName())
 		default:
 			UnexpectedValue(env.GetPlatform().Os)
 		}
@@ -118,12 +121,13 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 			return err
 		}
 
-		envTargets := targets.RemoveIf(func(u *Unit) bool {
+		translatedUnits := targets.TranslatedUnits()
+		translatedUnits = translatedUnits.RemoveUnless(func(u *Unit) bool {
 			return u.Target.EnvironmentAlias == environmentAlias
 		})
 
 		includePaths := DirSet{}
-		for _, u := range envTargets {
+		for _, u := range translatedUnits {
 			includePaths.AppendUniq(u.IncludePaths...)
 		}
 
@@ -199,7 +203,7 @@ func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) err
 		}, w)
 	})
 }
-func (vsc *VscodeBuilder) launch_configs(modules *BuildModulesT, outputFile Filename) error {
+func (vsc *VscodeBuilder) launch_configs(modules *BuildModulesT, compiler Compiler, outputFile Filename) error {
 	var debuggerType string
 	switch CurrentHost().Id {
 	case HOST_LINUX, HOST_DARWIN:
@@ -210,9 +214,7 @@ func (vsc *VscodeBuilder) launch_configs(modules *BuildModulesT, outputFile File
 		UnexpectedValue(CurrentHost().Id)
 	}
 
-	compiler := GetBuildCompiler(CurrentArch())
-
-	executableNames := RemoveIf(func(moduleName string) bool {
+	executableNames := RemoveUnless(func(moduleName string) bool {
 		rules := modules.Modules[moduleName].GetModule()
 		return rules.ModuleType == MODULE_PROGRAM
 	}, modules.ModuleKeys()...)
@@ -250,7 +252,10 @@ func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) 
 	fbuildArgs := FBuildArgs{
 		BffFile: BFFFILE_DEFAULT,
 	}
+
 	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.String())
+	fbuildExec.Capture = false
+
 	if err := fbuildExec.Run(); err != nil {
 		return err
 	}

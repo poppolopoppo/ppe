@@ -204,7 +204,11 @@ var GetModuleGraph = utils.MemoizePod(func(targets *BuildModulesT) *ModuleGraph 
 		result.expandModule(module)
 	}
 
-	result.keys = utils.Keys(result.nodes)
+	result.keys = []Module{}
+	for key := range result.nodes {
+		result.keys = append(result.keys, key)
+	}
+
 	sort.SliceStable(result.keys, func(i, j int) bool {
 		a := result.nodes[result.keys[i]]
 		b := result.nodes[result.keys[j]]

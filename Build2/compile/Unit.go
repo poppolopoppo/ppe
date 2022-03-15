@@ -86,12 +86,14 @@ type Unit struct {
 	GeneratedDir    utils.Directory
 	IntermediateDir utils.Directory
 
+	CustomUnits    CustomUnitList
 	GeneratedFiles utils.FileSet
 
 	PrecompiledHeader utils.Filename
 	PrecompiledSource utils.Filename
 	PrecompiledObject utils.Filename
 
+	IncludeDependencies utils.SetT[TargetAlias]
 	CompileDependencies utils.SetT[TargetAlias]
 	LinkDependencies    utils.SetT[TargetAlias]
 	RuntimeDependencies utils.SetT[TargetAlias]
@@ -107,7 +109,6 @@ type Unit struct {
 func (unit *Unit) String() string {
 	return unit.Target.String()
 }
-
 func (unit *Unit) GetCompiler() *CompilerRules {
 	if unit.Compiler != nil {
 		return unit.Compiler.GetCompiler()
@@ -118,7 +119,6 @@ func (unit *Unit) GetCompiler() *CompilerRules {
 func (unit *Unit) GetFacet() *Facet {
 	return &unit.Facet
 }
-
 func (unit *Unit) DebugString() string {
 	return utils.PrettyPrint(unit)
 }
@@ -146,10 +146,12 @@ func (unit *Unit) GetDigestable(o *bytes.Buffer) {
 	unit.ModuleDir.GetDigestable(o)
 	unit.GeneratedDir.GetDigestable(o)
 	unit.IntermediateDir.GetDigestable(o)
+	unit.CustomUnits.GetDigestable(o)
 	utils.MakeDigestable(o, unit.GeneratedFiles...)
 	unit.PrecompiledHeader.GetDigestable(o)
 	unit.PrecompiledSource.GetDigestable(o)
 	unit.PrecompiledObject.GetDigestable(o)
+	utils.MakeDigestable(o, unit.IncludeDependencies.Slice()...)
 	utils.MakeDigestable(o, unit.CompileDependencies.Slice()...)
 	utils.MakeDigestable(o, unit.LinkDependencies.Slice()...)
 	utils.MakeDigestable(o, unit.RuntimeDependencies.Slice()...)

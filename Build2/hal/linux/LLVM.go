@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 /***************************************
@@ -23,10 +22,14 @@ type LlvmCompiler struct {
 func (llvm *LlvmCompiler) GetCompiler() *CompilerRules { return &llvm.CompilerRules }
 
 func (llvm *LlvmCompiler) GetDigestable(o *bytes.Buffer) {
+	llvm.Arch.GetDigestable(o)
 	llvm.CompilerRules.GetDigestable(o)
 	llvm.ProductInstall.GetDigestable(o)
 }
 
+func (llvm *LlvmCompiler) FriendlyName() string {
+	return "clang"
+}
 func (llvm *LlvmCompiler) EnvPath() DirSet {
 	return NewDirSet()
 }
@@ -73,7 +76,6 @@ func (llvm *LlvmCompiler) CppStd(f *Facet, std CppStdType) {
 	case CPPSTD_11:
 		f.AddCompilationFlag("-std=c++11")
 	}
-
 }
 func (llvm *LlvmCompiler) Define(f *Facet, def ...string) {
 	for _, x := range def {
@@ -122,36 +124,30 @@ func (llvm *LlvmCompiler) Sanitizer(f *Facet, sanitizer SanitizerType) {
 	case SANITIZER_ADDRESS:
 		// https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-llvm/
 		f.Defines.Append("USE_PPE_SANITIZER=1")
-		f.AddCompilationFlag("-fsanitize=address")
+		f.AddCompilationFlag_NoAnalysis("-fsanitize=address")
 	default:
 		UnexpectedValue(sanitizer)
 	}
 }
 
-func (llvm *LlvmCompiler) CompilationFlag(f *Facet, flag ...string) {
-	f.AnalysisOptions.Append(flag...)
-	f.CompilerOptions.Append(flag...)
-	f.PreprocessorOptions.Append(flag...)
-	f.PrecompiledHeaderOptions.Append(flag...)
-}
 func (llvm *LlvmCompiler) ForceInclude(f *Facet, inc ...Filename) {
 	for _, x := range inc {
-		f.AddCompilationFlag("-include" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-include" + x.String())
 	}
 }
 func (llvm *LlvmCompiler) IncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag("-I" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-I" + x.String())
 	}
 }
 func (llvm *LlvmCompiler) ExternIncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag("-iframework" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-iframework" + x.String())
 	}
 }
 func (llvm *LlvmCompiler) SystemIncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag("-isystem" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-isystem" + x.String())
 	}
 }
 func (llvm *LlvmCompiler) Library(f *Facet, lib ...Filename) {
@@ -164,7 +160,7 @@ func (llvm *LlvmCompiler) Library(f *Facet, lib ...Filename) {
 func (llvm *LlvmCompiler) LibraryPath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
 		s := x.String()
-		llvm.AddCompilationFlag("-L" + s)
+		llvm.AddCompilationFlag_NoAnalysis("-L" + s)
 		f.LinkerOptions.Append("-I" + s)
 	}
 }
@@ -198,7 +194,7 @@ func makeLlvmCompiler(
 		"LLVM_FOR_POSIX",
 	)
 
-	compilationArgs := []string{
+	facet.AddCompilationFlag_NoAnalysis(
 		"-Wall", "-Wextra", "-Werror", "-Wfatal-errors",
 		"-Wshadow",
 		"-Wno-unused-command-line-argument", // #TODO: unsilence this warning
@@ -206,12 +202,10 @@ func makeLlvmCompiler(
 		"-march=native",
 		"-mavx", "-msse4.2",
 		"-mlzcnt", "-mpopcnt",
+		"-cc1", "-fuse-ctor-homing",
 		"-c",               // compile only
 		"-o \"%2\" \"%1\"", // input file injection
-	}
-	facet.CompilerOptions.Append(compilationArgs...)
-	facet.PrecompiledHeaderOptions.Append(compilationArgs...)
-	facet.PreprocessorOptions.Append(compilationArgs...)
+	)
 
 	facet.LibrarianOptions.Append("rcs \"%2\" \"%1\"")
 	facet.LinkerOptions.Append("\"%1\" -o \"%2\"")
@@ -222,9 +216,9 @@ func (llvm *LlvmCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
-		u.AddCompilationFlag("-m32")
+		u.AddCompilationFlag_NoAnalysis("-m32")
 	case ARCH_X64:
-		u.AddCompilationFlag("-m64")
+		u.AddCompilationFlag_NoAnalysis("-m64")
 	default:
 		UnexpectedValue(compileEnv.GetPlatform().Arch)
 	}
@@ -246,11 +240,11 @@ func (llvm *LlvmCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 	switch u.Sanitizer {
 	case SANITIZER_ADDRESS:
-		u.AddCompilationFlag("-fsanitize=address")
+		u.AddCompilationFlag_NoAnalysis("-fsanitize=address")
 	case SANITIZER_THREAD:
-		u.AddCompilationFlag("-fsanitize=thread")
+		u.AddCompilationFlag_NoAnalysis("-fsanitize=thread")
 	case SANITIZER_UNDEFINED_BEHAVIOR:
-		u.AddCompilationFlag("-fsanitize=ub")
+		u.AddCompilationFlag_NoAnalysis("-fsanitize=ub")
 	case SANITIZER_NONE:
 	}
 
@@ -279,7 +273,7 @@ func llvm_CXX_linkTimeCodeGeneration(f *Facet, enabled bool, incremental bool) {
 		f.LinkerOptions.Append("-fno-lto")
 	}
 }
-func llvm_CXX_runtimeChecks(f *Facet, enabled bool, rtc1 bool) {
+func llvm_CXX_runtimeChecks(facet *Facet, enabled bool, rtc1 bool) {
 	NotImplemented("runtime checks")
 }
 
@@ -391,7 +385,7 @@ func (llvm *LlvmCompiler) Build(bc BuildContext) (BuildStamp, error) {
 		llvm.ProductInstall.Ar,
 		llvm.ProductInstall.Clang)
 
-	return MakeTimedBuildStamp(time.Now())
+	return MakeBuildStamp(llvm)
 }
 
 var GetLlvmProductInstall = MemoizeArg(func(arch ArchType) *LlvmProductInstall {

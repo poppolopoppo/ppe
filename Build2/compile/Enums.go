@@ -188,6 +188,11 @@ func (x CppRttiType) String() string {
 		return ""
 	}
 }
+func (x *CppRttiType) Inherit(in CppRttiType) {
+	if *x == CPPRTTI_INHERIT {
+		*x = in
+	}
+}
 func (x *CppRttiType) Set(in string) error {
 	switch strings.ToUpper(in) {
 	case CPPRTTI_INHERIT.String():
@@ -274,6 +279,11 @@ func (x *CppStdType) Set(in string) error {
 	}
 	return nil
 }
+func (x *CppStdType) Inherit(in CppStdType) {
+	if *x == CPPSTD_INHERIT {
+		*x = in
+	}
+}
 func (x CppStdType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
@@ -318,6 +328,11 @@ func (x DebugType) String() string {
 	default:
 		utils.UnexpectedValue(x)
 		return ""
+	}
+}
+func (x *DebugType) Inherit(in DebugType) {
+	if *x == DEBUG_INHERIT {
+		*x = in
 	}
 }
 func (x *DebugType) Set(in string) error {
@@ -377,6 +392,11 @@ func (x ExceptionType) String() string {
 		return ""
 	}
 }
+func (x *ExceptionType) Inherit(in ExceptionType) {
+	if *x == EXCEPTION_INHERIT {
+		*x = in
+	}
+}
 func (x *ExceptionType) Set(in string) error {
 	switch strings.ToUpper(in) {
 	case EXCEPTION_INHERIT.String():
@@ -430,6 +450,11 @@ func (x LinkType) String() string {
 	default:
 		utils.UnexpectedValue(x)
 		return ""
+	}
+}
+func (x *LinkType) Inherit(in LinkType) {
+	if *x == LINK_INHERIT {
+		*x = in
 	}
 }
 func (x *LinkType) Set(in string) error {
@@ -550,6 +575,11 @@ func (x PrecompiledHeaderType) String() string {
 	default:
 		utils.UnexpectedValue(x)
 		return ""
+	}
+}
+func (x *PrecompiledHeaderType) Inherit(in PrecompiledHeaderType) {
+	if *x == PCH_INHERIT {
+		*x = in
 	}
 }
 func (x *PrecompiledHeaderType) Set(in string) error {
@@ -701,6 +731,11 @@ func (x SanitizerType) String() string {
 		return ""
 	}
 }
+func (x *SanitizerType) Inherit(in SanitizerType) {
+	if *x == SANITIZER_INHERIT {
+		*x = in
+	}
+}
 func (x *SanitizerType) Set(in string) error {
 	switch strings.ToUpper(in) {
 	case SANITIZER_INHERIT.String():
@@ -842,6 +877,11 @@ func (x UnityType) String() string {
 			utils.LogPanic("invalid unity type: %v", x)
 		}
 		return fmt.Sprint(string(x))
+	}
+}
+func (x *UnityType) Inherit(in UnityType) {
+	if *x == UNITY_INHERIT {
+		*x = in
 	}
 }
 func (x *UnityType) Set(in string) error {

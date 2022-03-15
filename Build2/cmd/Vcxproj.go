@@ -53,7 +53,10 @@ var Vcxproj = MakeCommand(
 		fbuildArgs := FBuildArgs{
 			BffFile: output,
 		}
+
 		fbuildExec := MakeFBuildExecutor(&fbuildArgs)
+		fbuildExec.Capture = false
+
 		return fbuildExec.Run()
 	},
 )
@@ -75,6 +78,8 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	targets := BuildTargets.Need(bc)
 	bc.DependsOn(args, modules, targets)
 
+	translatedUnits := targets.TranslatedUnits()
+
 	moduleGraph := GetModuleGraph(modules)
 	moduleGraph.Keys()
 
@@ -92,8 +97,8 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Assign("BaseProjectCleanCommand", selfExecutable+" distclean -v ")
 
 		compileEnvs := NewSet[EnvironmentAlias]()
-		moduleUnits := make(map[Module]*BffArray, targets.Len())
-		for _, x := range targets.Slice() {
+		moduleUnits := make(map[Module]*BffArray, translatedUnits.Len())
+		for _, x := range translatedUnits.Slice() {
 			configVar := vcx.vcxconfig(bff, x)
 			module := moduleGraph.Module(x.Target.ModuleAlias())
 
@@ -108,7 +113,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		}
 
 		buildProjects := NewStringSet()
-		solutionFolders := make(map[string]*StringSet, targets.Len())
+		solutionFolders := make(map[string]*StringSet, translatedUnits.Len())
 		for module, configVars := range moduleUnits {
 			moduleRules := module.GetModule()
 			relativePath := moduleRules.ModuleDir.Relative(UFS.Source)
@@ -118,20 +123,29 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 
 			moduleVcxprojet := moduleId + "-vcxproject"
 			bff.Func("VCXProject", func() {
+				inputPaths := moduleRules.Source.SourceDirs.Concat(moduleRules.Source.ExtraDirs...)
+				if moduleRules.PublicDir().Exists() {
+					inputPaths.Append(moduleRules.PublicDir())
+				}
+
+				sourceFiles := moduleRules.Source.ExtraFiles.
+					ConcatUniq(moduleRules.ForceIncludes...).
+					ConcatUniq(moduleRules.Source.IsolatedFiles...).
+					ConcatUniq(moduleRules.Source.SourceFiles...)
+				if moduleRules.PrecompiledHeader != nil {
+					sourceFiles.AppendUniq(*moduleRules.PrecompiledHeader)
+				}
+				if moduleRules.PrecompiledSource != nil {
+					sourceFiles.AppendUniq(*moduleRules.PrecompiledSource)
+				}
+
 				bff.Assign("ProjectBasePath", moduleRules.ModuleDir)
 				bff.Assign("ProjectOutput", outputDir.String()+".vcxproj")
 				bff.Assign("ProjectConfigs", *configVars)
-				bff.Assign("ProjectInputPaths", moduleRules.Source.SourceDirs)
+				bff.Assign("ProjectInputPaths", inputPaths)
 				bff.Assign("ProjectAllowedFileExtensions",
 					NewStringSet(append(moduleRules.Source.SourceGlobs, "*.h", "*.rc")...))
-				bff.Assign("ProjectFiles",
-					moduleRules.Source.ExtraFiles.ConcatUniq(
-						moduleRules.ForceIncludes...,
-					).ConcatUniq(
-						moduleRules.Source.IsolatedFiles...,
-					).ConcatUniq(
-						moduleRules.Source.SourceFiles...,
-					))
+				bff.Assign("ProjectFiles", sourceFiles)
 				bff.Assign("ProjectFilesToExclude", moduleRules.Source.ExcludedFiles)
 			}, moduleVcxprojet)
 
@@ -150,7 +164,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Func("VSSolution", func() {
 			bff.Assign("SolutionVisualStudioVersion", "16")
 			bff.Assign("SolutionOutput", UFS.Output.File(CommandEnv.Prefix()+".sln"))
-			bff.Assign("SolutionBuildProjects", buildProjects)
+			bff.Assign("SolutionBuildProject", buildProjects)
 			bff.Assign("SolutionConfigs", MakeBffArray(Map(func(a EnvironmentAlias) interface{} {
 				result := BffVar(SanitizeIdentifier(a.CompileEnvAlias().String()))
 				bff.Struct(result, func() {

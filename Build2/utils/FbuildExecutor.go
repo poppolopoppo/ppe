@@ -99,171 +99,144 @@ func (flags *FBuildArgs) ApplyVars(cfg *PersistentMap) {
 
 var FBUILD_BIN Filename
 
-type FBuildExecutor []string
+type FBuildExecutor struct {
+	Args    SetT[string]
+	Capture bool
+}
 
-func MakeFBuildExecutor(
-	flags *FBuildArgs,
-	args ...string) (result FBuildExecutor) {
+func MakeFBuildExecutor(flags *FBuildArgs, args ...string) (result FBuildExecutor) {
+	result.Capture = true
 
 	enableCache := false
 	enableDist := false
 
 	if flags != nil {
-		result = append(result, "-config", flags.BffFile.String())
+		result.Args.Append("-config", flags.BffFile.String())
 
 		switch flags.Cache {
 		case FBUILD_CACHE_READ:
 			enableCache = true
-			result = append(result, "-cache", "read")
+			result.Args.Append("-cache", "read")
 		case FBUILD_CACHE_WRITE:
 			enableCache = true
-			result = append(result, "-cache", "write")
+			result.Args.Append("-cache", "write")
 		case FBUILD_CACHE_DISABLED:
 		}
 
 		if flags.Clean.Get() {
-			result = append(result, "-clean")
+			result.Args.Append("-clean")
 		}
 		if flags.Dist {
 			enableDist = true
-			result = append(result, "-dist")
+			result.Args.Append("-dist")
 		}
 		if flags.NoUnity.Get() {
-			result = append(result, "-nounity")
+			result.Args.Append("-nounity")
 		}
 		if flags.NoStopOnError.Get() {
-			result = append(result, "-nostoponerror")
+			result.Args.Append("-nostoponerror")
 		} else {
-			result = append(result, "-nosummaryonerror")
+			result.Args.Append("-nosummaryonerror")
 		}
 		if flags.Report.Get() {
-			result = append(result, "-report")
+			result.Args.Append("-report")
 		}
 		if flags.Threads > 0 {
-			result = append(result, "-j"+flags.Threads.String())
+			result.Args.Append("-j" + flags.Threads.String())
 		}
 		if flags.ShowCmds {
-			result = append(result, "-showcmds")
+			result.Args.Append("-showcmds")
 		}
 		if flags.ShowCmdOutput {
-			result = append(result, "-showcmdoutput")
+			result.Args.Append("-showcmdoutput")
 		}
 	}
 
 	if IsLogLevelActive(LOG_DEBUG) {
-		result = append(result, "-j1", "-why")
+		result.Args.Append("-j1", "-why")
 	}
 	if IsLogLevelActive(LOG_VERYVERBOSE) {
 		if enableCache {
-			result = append(result, "-cacheverbose")
+			result.Args.Append("-cacheverbose")
 		}
 		if enableDist {
-			result = append(result, "-distverbose")
+			result.Args.Append("-distverbose")
 		}
 	}
 	if IsLogLevelActive(LOG_TRACE) {
-		result = append(result, "-verbose")
+		result.Args.Append("-verbose")
 	}
 	if IsLogLevelActive(LOG_VERBOSE) {
-		result = append(result, "-summary")
+		result.Args.Append("-summary")
 	}
 	if !IsLogLevelActive(LOG_INFO) {
-		result = append(result, "-quiet")
+		result.Args.Append("-quiet")
 	}
 
-	result = append(result, "-noprogress")
-
-	result = append(result, args...)
+	result.Args.Append("-noprogress")
+	result.Args.Append(args...)
 	return result
 }
 func (x *FBuildExecutor) Run() (err error) {
-	LogVerbose("running FASTBuild with: %v", x)
+	LogVerbose("fbuild: running with '%v'", x)
 
-	pbar := LogSpinner("FBuild")
-	defer pbar.Close()
-
-	cmd := exec.Command(FBUILD_BIN.String(), (*x)...)
+	cmd := exec.Command(FBUILD_BIN.String(), x.Args.Slice()...)
 	cmd.Dir = UFS.Root.String()
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "FASTBUILD_CACHE_PATH="+UFS.Cache.String())
-	cmd.Env = append(cmd.Env, "FASTBUILD_TEMP_PATH="+UFS.Transient.String())
+	cmd.Env = append(os.Environ(),
+		"FASTBUILD_CACHE_PATH="+UFS.Cache.String(),
+		"FASTBUILD_TEMP_PATH="+UFS.Transient.String())
 
-	var stdout io.ReadCloser
-	var stderr io.ReadCloser
+	if x.Capture {
+		pbar := LogSpinner("FBuild")
+		defer pbar.Close()
 
-	if stdout, err = cmd.StdoutPipe(); err != nil {
-		return err
-	}
-	if stderr, err = cmd.StderrPipe(); err != nil {
-		return err
-	}
+		cmd.Stderr = cmd.Stdout
 
-	reader := func(src io.ReadCloser) <-chan string {
-		result := make(chan string)
+		var stdout io.ReadCloser
+		if stdout, err = cmd.StdoutPipe(); err != nil {
+			return err
+		}
+		defer stdout.Close()
+
+		if err = cmd.Start(); err != nil {
+			return err
+		}
+
+		scanner := bufio.NewScanner(stdout)
+		// const MAX_LINESIZE int = 512 * 1024
+		// scanner.Buffer(make([]byte, MAX_LINESIZE), MAX_LINESIZE)
+
+		done := make(chan struct{})
 		go func() {
-			defer close(result)
-
-			const MAX_LINESIZE int = 512 * 1024
-			scanner := bufio.NewScanner(src)
-			scanner.Buffer(make([]byte, MAX_LINESIZE), MAX_LINESIZE)
+			defer close(done)
 
 			for scanner.Scan() {
 				line := scanner.Text()
 				line = strings.TrimSpace(line)
 				if len(line) > 0 {
-					result <- line
+					LogForward(line)
 				}
 			}
+
+			done <- struct{}{}
 		}()
-		return result
-	}
 
-	stdoutReader := reader(stdout)
-	stderrReader := reader(stderr)
-
-	if err = cmd.Start(); err != nil {
-		return err
-	}
-
-	processExit := make(chan error)
-	go func() {
-		defer close(processExit)
-		processExit <- cmd.Wait()
-	}()
-
-	for {
-		select {
-		case line := <-stdoutReader:
-			if line = strings.TrimSpace(line); len(line) > 0 {
-				LogForward(line)
+		for {
+			select {
+			case <-done:
+				return cmd.Wait()
+			default:
+				pbar.Inc()
+				time.Sleep(10 * time.Millisecond)
 			}
-		case line := <-stderrReader:
-			if line = strings.TrimSpace(line); len(line) > 0 {
-				LogError("FBuild: %v", line)
-			}
-		case err = <-processExit:
-			for {
-				if line, ok := <-stdoutReader; ok {
-					if line = strings.TrimSpace(line); len(line) > 0 {
-						LogForward(line)
-					}
-				} else if line, ok := <-stderrReader; ok {
-					if line = strings.TrimSpace(line); len(line) > 0 {
-						LogError("FBuild: %v", line)
-					}
-				} else {
-					break
-				}
-			}
-			stdout.Close()
-			stderr.Close()
-			return err
-		default:
-			time.Sleep(10 * time.Millisecond)
 		}
-		pbar.Inc()
+
+	} else {
+		cmd.Stderr = nil
+		cmd.Stdout = nil
+		return cmd.Run()
 	}
 }
 func (x *FBuildExecutor) String() string {
-	return strings.Join(*x, " ")
+	return strings.Join(x.Args.Slice(), " ")
 }

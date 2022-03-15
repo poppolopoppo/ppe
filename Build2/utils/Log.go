@@ -82,6 +82,7 @@ type logQueue_deferred struct {
 
 func make_logQueue_deferred() logQueue {
 	queue := make(chan logEvent)
+	x := &logQueue_deferred{queue}
 	// start logging goroutine
 	go func() {
 		for {
@@ -92,13 +93,13 @@ func make_logQueue_deferred() logQueue {
 			}
 		}
 	}()
-	return &logQueue_deferred{queue}
+	return x
 }
 func (x *logQueue_deferred) Flush() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	x.Queue(func() {
-		wg.Done()
+		defer wg.Done()
 	})
 	wg.Wait()
 }
@@ -235,7 +236,7 @@ type pinnedLogScope struct {
 type pinnedLogManager struct {
 	stream   io.Writer
 	barrier  sync.RWMutex
-	messages SetT[PinnedLog]
+	messages SetT[*pinnedLogScope]
 	inflight int
 
 	cooldown int32
@@ -311,8 +312,8 @@ func (pin *pinnedLogManager) push(msg string, args ...interface{}) PinnedLog {
 	}
 	return pinnedFake
 }
-func (pin *pinnedLogManager) pop(log PinnedLog) {
-	if log != nil && enableInteractiveShell {
+func (pin *pinnedLogManager) pop(log *pinnedLogScope) {
+	if log != nil {
 		logger.Queue(func() {
 			pin.barrier.Lock()
 			defer pin.barrier.Unlock()
@@ -327,13 +328,14 @@ func (pin *pinnedLogManager) refresh() {
 		logger.Queue(func() {
 			pin.barrier.Lock()
 			defer pin.barrier.Unlock()
+
 			refreshPinUnsafe(pin)
 			atomic.StoreInt32(&pin.cooldown, 0)
 		})
 	}
 }
 func (pin *pinnedLogManager) without(block func()) {
-	if true {
+	if enableInteractiveShell {
 		pin.barrier.Lock()
 		defer pin.barrier.Unlock()
 		detachPinUnsafe(pin, false)
@@ -344,7 +346,7 @@ func (pin *pinnedLogManager) without(block func()) {
 	}
 }
 func (pin *pinnedLogManager) forceClose() {
-	pin.barrier.Lock()
+	pin.barrier.Lock() // can't use pinned log after calling this
 	detachPinUnsafe(pin, true)
 }
 
@@ -388,6 +390,13 @@ type PinnedProgress interface {
 	Set(int)
 }
 
+type noopLogProgress struct{}
+
+func (x noopLogProgress) Close()  {}
+func (x noopLogProgress) Add(int) {}
+func (x noopLogProgress) Inc()    {}
+func (x noopLogProgress) Set(int) {}
+
 type pinnedLogProgress struct {
 	first, last int
 	progress    int
@@ -415,23 +424,9 @@ func (pg *pinnedLogProgress) Set(x int) {
 	pg.log.Log(pg.String())
 }
 
-var spinner = []string{
-	// "bo",
-	// "do",
-	// "ob",
-	// "od",
-	// "oq",
-	// "op",
-	// "qo",
-	// "po",
-	"q", "p", "b", "d",
-	//".", "o", "O", "@", "*",
-}
-
 func (pg *pinnedLogProgress) String() (result string) {
 	const width = 60
 
-	//spin := pg.tick % len(spinner)
 	totalSecs := time.Now().Sub(pg.startedat)
 
 	result += ANSI_FG1_CYAN.String() + " ["
@@ -509,18 +504,26 @@ func (pg *pinnedLogProgress) String() (result string) {
 }
 
 func LogProgress(first, last int, msg string, args ...interface{}) PinnedProgress {
-	return &pinnedLogProgress{
-		first:     first,
-		last:      last,
-		progress:  first,
-		startedat: time.Now(),
-		log:       LogPin(msg, args...),
+	if enableInteractiveShell {
+		return &pinnedLogProgress{
+			first:     first,
+			last:      last,
+			progress:  first,
+			startedat: time.Now(),
+			log:       LogPin(msg, args...),
+		}
+	} else {
+		return noopLogProgress{}
 	}
 }
 func LogSpinner(msg string, args ...interface{}) PinnedProgress {
-	return &pinnedLogProgress{
-		startedat: time.Now(),
-		log:       LogPin(msg, args...),
+	if enableInteractiveShell {
+		return &pinnedLogProgress{
+			startedat: time.Now(),
+			log:       LogPin(msg, args...),
+		}
+	} else {
+		return noopLogProgress{}
 	}
 }
 

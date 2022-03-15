@@ -23,8 +23,8 @@ func (x *SourceControlStatus) Alias() BuildAlias {
 	return MakeBuildAlias("SourceControl", "Status")
 }
 func (x *SourceControlStatus) Build(BuildContext) (BuildStamp, error) {
-	if status, err := GetSourceControlProvider().GetStatus(); err == nil {
-		return MakeTimedBuildStamp(status.Timestamp, status.Branch, status.Revision)
+	if err := GetSourceControlProvider().GetStatus(x); err == nil {
+		return MakeTimedBuildStamp(x.Timestamp, x)
 	} else {
 		return BuildStamp{}, err
 	}
@@ -38,7 +38,7 @@ func (x *SourceControlStatus) GetDigestable(o *bytes.Buffer) {
 
 type SourceControlProvider interface {
 	GetModifiedFiles() (FileSet, error)
-	GetStatus() (SourceControlStatus, error)
+	GetStatus(*SourceControlStatus) error
 }
 
 type DummySourceControl struct{}
@@ -46,11 +46,11 @@ type DummySourceControl struct{}
 func (x DummySourceControl) GetModifiedFiles() (FileSet, error) {
 	return NewFileSet(), nil
 }
-func (x DummySourceControl) GetStatus() (SourceControlStatus, error) {
-	return SourceControlStatus{
-		Branch:   "Dummy",
-		Revision: "Unknown",
-	}, nil
+func (x DummySourceControl) GetStatus(status *SourceControlStatus) error {
+	status.Branch = "Dummy"
+	status.Revision = "Unknown"
+	status.Timestamp = time.Now()
+	return nil
 }
 
 type GitSourceControl struct {
@@ -93,24 +93,24 @@ func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 		return fileset, nil
 	}
 }
-func (git GitSourceControl) GetStatus() (SourceControlStatus, error) {
-	var status SourceControlStatus
+func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
 	if outp, err := git.Command("log", "-1", "--format=\"%H, %ct, %D\""); err == nil {
 		line := strings.TrimSpace(string(outp))
 		line = strings.TrimPrefix(line, "\"")
 		line = strings.TrimSuffix(line, "\"")
 		log := strings.SplitN(line, ",", 4)
 		status.Revision = strings.TrimSpace(log[0])
+		branchInfo := strings.Split(log[len(log)-1], "->")
+		status.Branch = strings.TrimSpace(branchInfo[len(branchInfo)-1])
 		timestamp := strings.TrimSpace(log[1])
-		status.Branch = strings.TrimSpace(log[len(log)-1])
 		if unitT, err := strconv.ParseInt(timestamp, 10, 64); err == nil {
 			status.Timestamp = time.Unix(unitT, 0)
-			return status, nil
+			return nil
 		} else {
-			return status, err
+			return err
 		}
 	} else {
-		return status, err
+		return err
 	}
 }
 
@@ -152,7 +152,7 @@ func (x *SourceControlModifiedFilesT) Build(bc BuildContext) (BuildStamp, error)
 	}
 }
 
-var SourceControlModifiedFiles = MakeBuildable(func(bi BuildInit) *SourceControlModifiedFilesT {
+var SourceControlModifiedFiles = MakeBuildable(func(_ BuildInit) *SourceControlModifiedFilesT {
 	builder := &SourceControlModifiedFilesT{
 		Output: UFS.Saved.File(".modified_files_list.txt"),
 	}

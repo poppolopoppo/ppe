@@ -34,10 +34,12 @@ var DistClean = MakeCommand(
 			distCleanFile(CommandEnv.DatabasePath())
 
 		} else {
-			translatedUnits, err := BuildTargets.Build(cmd.BuildGraph())
+			targets, err := BuildTargets.Build(cmd.BuildGraph())
 			if err != nil {
 				panic(err)
 			}
+
+			translatedUnits := targets.TranslatedUnits()
 
 			re := MakeGlobRegexp(args...)
 			LogClaim("matching %d translated units with /%v/", translatedUnits.Len(), re)

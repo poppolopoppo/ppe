@@ -11,20 +11,8 @@ type Facetable interface {
 	GetFacet() *Facet
 }
 
-type FacetPolicy func(*Unit)
 type FacetDecorator interface {
 	Decorate(*CompileEnv, *Unit)
-}
-type FacetPolicies []FacetPolicy
-
-func (policies *FacetPolicies) Append(policy ...FacetPolicy) {
-	*policies = append(*policies, policy...)
-}
-func (policies *FacetPolicies) Prepend(policy ...FacetPolicy) {
-	*policies = append(policy, *policies...)
-}
-func (policies *FacetPolicies) Clear() {
-	*policies = FacetPolicies{}
 }
 
 type VariableSubstitutions map[string]string
@@ -70,7 +58,7 @@ func (facet *Facet) GetDigestable(o *bytes.Buffer) {
 	digest.Append(facet.LibraryPaths)
 	digest.Append(facet.LibrarianOptions)
 	digest.Append(facet.LinkerOptions)
-	//digest.Append(facet.Exports)
+	// digest.Append(facet.Exports)
 	result := digest.Finalize()
 	o.Write(result[:])
 	utils.MakeDigestable(o, facet.Tags...)
@@ -120,7 +108,31 @@ func (facet *Facet) Append(others ...Facetable) {
 		facet.LibraryPaths.Append(x.LibraryPaths...)
 		facet.LibrarianOptions.Append(x.LibrarianOptions...)
 		facet.LinkerOptions.Append(x.LinkerOptions...)
-		facet.Tags = append(facet.Tags, x.Tags...)
+		facet.Tags.Append(x.Tags...)
+		for k, v := range x.Exports {
+			if _, ok := facet.Exports[k]; !ok {
+				facet.Exports[k] = v
+			}
+		}
+	}
+}
+func (facet *Facet) AppendUniq(others ...Facetable) {
+	for _, o := range others {
+		x := o.GetFacet()
+		facet.Defines.AppendUniq(x.Defines...)
+		facet.ForceIncludes.AppendUniq(x.ForceIncludes...)
+		facet.IncludePaths.AppendUniq(x.IncludePaths...)
+		facet.ExternIncludePaths.AppendUniq(x.ExternIncludePaths...)
+		facet.SystemIncludePaths.AppendUniq(x.SystemIncludePaths...)
+		facet.AnalysisOptions.AppendUniq(x.AnalysisOptions...)
+		facet.PreprocessorOptions.AppendUniq(x.PreprocessorOptions...)
+		facet.CompilerOptions.AppendUniq(x.CompilerOptions...)
+		facet.PrecompiledHeaderOptions.AppendUniq(x.PrecompiledHeaderOptions...)
+		facet.Libraries.AppendUniq(x.Libraries...)
+		facet.LibraryPaths.AppendUniq(x.LibraryPaths...)
+		facet.LibrarianOptions.AppendUniq(x.LibrarianOptions...)
+		facet.LinkerOptions.AppendUniq(x.LinkerOptions...)
+		facet.Tags.AppendUniq(x.Tags...)
 		for k, v := range x.Exports {
 			if _, ok := facet.Exports[k]; !ok {
 				facet.Exports[k] = v
@@ -144,7 +156,7 @@ func (facet *Facet) Prepend(others ...Facetable) {
 		facet.LibraryPaths.Prepend(x.LibraryPaths...)
 		facet.LibrarianOptions.Prepend(x.LibrarianOptions...)
 		facet.LinkerOptions.Prepend(x.LinkerOptions...)
-		facet.Tags = append(x.Tags, facet.Tags...)
+		facet.Tags.Prepend(facet.Tags...)
 		for k, v := range x.Exports {
 			facet.Exports[k] = v
 		}
@@ -196,7 +208,7 @@ func (vars *VariableSubstitutions) Get(key string) string {
 	if x, ok := (*vars)[key]; ok {
 		return x
 	} else {
-		panic(fmt.Errorf("unknown variable substitution: '%s'", key))
+		panic(fmt.Errorf("unknown variable substitution: '%s' (got [%v])", key, strings.Join(utils.Keys((*vars)), ",")))
 	}
 }
 func (vars *VariableSubstitutions) ExpandString(it string) string {

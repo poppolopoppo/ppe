@@ -19,6 +19,7 @@ type PlatformRules struct {
 }
 
 type Platform interface {
+	GetCompiler(utils.BuildContext) Compiler
 	GetPlatform() *PlatformRules
 	utils.Digestable
 	fmt.Stringer
@@ -27,7 +28,6 @@ type Platform interface {
 func (rules *PlatformRules) String() string {
 	return rules.PlatformName
 }
-
 func (rules *PlatformRules) GetFacet() *Facet {
 	return rules.Facet.GetFacet()
 }
@@ -80,14 +80,22 @@ func (x *BuildPlatformsT) Build(bc utils.BuildContext) (utils.BuildStamp, error)
 		return x.Values[i].String() < x.Values[j].String()
 	})
 
-	digester := utils.MakeDigester()
+	return utils.MakeBuildStamp(x)
+}
+func (x *BuildPlatformsT) Current() Platform {
+	arch := CurrentArch()
 	for _, platform := range x.Values {
-		digester.Append(platform)
+		if platform.GetPlatform().Arch == arch {
+			return platform
+		}
 	}
-
-	return utils.BuildStamp{
-		Content: digester.Finalize(),
-	}, nil
+	utils.UnreachableCode()
+	return nil
+}
+func (x *BuildPlatformsT) GetDigestable(o *bytes.Buffer) {
+	for _, platform := range x.Values {
+		platform.GetDigestable(o)
+	}
 }
 
 var BuildPlatforms = utils.MakeBuildable(func(utils.BuildInit) *BuildPlatformsT {

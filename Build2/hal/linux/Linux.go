@@ -31,12 +31,32 @@ func (flags *LinuxFlagsT) Alias() BuildAlias {
 	return MakeBuildAlias("Flags", "LinuxFlags")
 }
 func (flags *LinuxFlagsT) Build(BuildContext) (BuildStamp, error) {
-	// flags.InitFlags(CommandEnv.Persistent())
 	return MakeBuildStamp(flags)
 }
 func (flags *LinuxFlagsT) GetDigestable(o *bytes.Buffer) {
 	flags.Compiler.GetDigestable(o)
 	flags.StackSize.GetDigestable(o)
+}
+
+type LinuxPlatform struct {
+	PlatformRules
+}
+
+func (linux *LinuxPlatform) GetCompiler(bc BuildContext) (result Compiler) {
+	flags := LinuxFlags.Need(CommandEnv.Flags)
+	bc.DependsOn(flags)
+
+	switch flags.Compiler {
+	case COMPILER_CLANG:
+		result = GetLlvmCompiler(linux.Arch)
+	case COMPILER_GCC:
+		NotImplemented("need to implement GCC support")
+	default:
+		UnexpectedValue(flags.Compiler)
+	}
+
+	bc.DependsOn(result)
+	return result
 }
 
 func makeLinuxPlatform(p *PlatformRules) {
@@ -50,21 +70,21 @@ func makeLinuxPlatform(p *PlatformRules) {
 	)
 }
 func getLinuxPlatform_X86() Platform {
-	p := &PlatformRules{}
+	p := &LinuxPlatform{}
 	p.Arch = Platform_X86.Arch
 	p.Facet = NewFacet()
 	p.Facet.Append(Platform_X86)
-	makeLinuxPlatform(p)
+	makeLinuxPlatform(&p.PlatformRules)
 	p.PlatformName = "Linux32"
 	p.Defines.Append("_LINUX32", "_POSIX32", "__X86__")
 	return p
 }
 func getLinuxPlatform_X64() Platform {
-	p := &PlatformRules{}
+	p := &LinuxPlatform{}
 	p.Arch = Platform_X64.Arch
 	p.Facet = NewFacet()
 	p.Facet.Append(Platform_X64)
-	makeLinuxPlatform(p)
+	makeLinuxPlatform(&p.PlatformRules)
 	p.PlatformName = "Linux64"
 	p.Defines.Append("_LINUX64", "_POSIX64", "__X64__")
 	return p
@@ -82,18 +102,7 @@ func InitLinux() {
 	AllPlatforms.Add("Linux32", getLinuxPlatform_X86())
 	AllPlatforms.Add("Linux64", getLinuxPlatform_X64())
 
-	for _, x := range CompilerTypes() {
-		var factory CompilerFactory
-		switch x {
-		case COMPILER_CLANG:
-			factory = func(arch ArchType) Compiler {
-				return GetLlvmCompiler(arch)
-			}
-		case COMPILER_GCC:
-			factory = func(ArchType) Compiler {
-				return nil
-			}
-		}
-		AllCompilers.Add(x.String(), factory)
-	}
+	AllCompilers.Append(
+		COMPILER_CLANG.String(),
+		COMPILER_GCC.String())
 }

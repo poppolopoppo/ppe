@@ -86,6 +86,15 @@ type digester struct {
 	cnt    int
 }
 
+func (digest Digest) Valid() bool {
+	valid := false
+	for _, x := range digest.Slice() {
+		if x != 0 {
+			valid = true
+		}
+	}
+	return valid
+}
 func (digest Digest) Slice() []byte {
 	return digest[:]
 }

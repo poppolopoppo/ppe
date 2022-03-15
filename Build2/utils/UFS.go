@@ -96,13 +96,12 @@ func (d Directory) Compare(o Directory) int {
 	}
 }
 func (d Directory) GetDigestable(o *bytes.Buffer) {
-	for i, x := range d {
-		o.WriteByte(byte(i))
+	o.WriteByte(byte(len(d)))
+	for _, x := range d {
 		o.WriteString(x)
 	}
 }
 func (d Directory) String() string {
-	//return filepath.Join(d...)
 	sb := strings.Builder{}
 	for i, x := range d {
 		if i > 0 {
@@ -167,15 +166,15 @@ func (f Filename) Compare(o Filename) int {
 	}
 }
 func (f Filename) GetDigestable(o *bytes.Buffer) {
-	for i, x := range f.Dirname {
-		o.WriteByte(byte(i))
-		o.WriteString(x)
-	}
-	o.WriteByte(byte(len(f.Dirname)))
+	f.Dirname.GetDigestable(o)
 	o.WriteString(f.Basename)
 }
 func (f Filename) String() string {
-	return f.Dirname.String() + "/" + f.Basename
+	if len(f.Dirname) > 0 {
+		return f.Dirname.String() + "/" + f.Basename
+	} else {
+		return f.Basename
+	}
 }
 
 /***************************************
@@ -223,37 +222,55 @@ type DirectoryInfo struct {
 	barrier sync.Mutex
 }
 
-type UFSCache struct {
+type UFSCacheBin struct {
 	barrier        sync.RWMutex
 	FileCache      map[string]*FileInfo
 	DirectoryCache map[string]*DirectoryInfo
 }
 
-var ufsCache UFSCache = UFSCache{
-	barrier:        sync.RWMutex{},
-	FileCache:      map[string]*FileInfo{},
-	DirectoryCache: map[string]*DirectoryInfo{},
+type UFSCache struct {
+	bins [256]UFSCacheBin
 }
 
+func newUFSCache() *UFSCache {
+	result := &UFSCache{}
+	for i := range result.bins {
+		result.bins[i] = UFSCacheBin{
+			barrier:        sync.RWMutex{},
+			FileCache:      map[string]*FileInfo{},
+			DirectoryCache: map[string]*DirectoryInfo{},
+		}
+	}
+	return result
+}
+func (cache *UFSCache) getBin(x Digestable) *UFSCacheBin {
+	h := MakeDigest(x)
+	return &cache.bins[h[0]]
+}
+
+var ufsCache = newUFSCache()
+
 func invalidate_file_info(f Filename) {
-	ufsCache.barrier.Lock()
-	defer ufsCache.barrier.Unlock()
-	delete(ufsCache.FileCache, f.String())
+	cacheBin := ufsCache.getBin(f)
+	cacheBin.barrier.Lock()
+	defer cacheBin.barrier.Unlock()
+	delete(cacheBin.FileCache, f.String())
 }
 func make_file_info(f Filename, optionalStat *os.FileInfo) (*FileInfo, error) {
 	path := f.String()
 
-	ufsCache.barrier.RLock()
-	if cached, ok := ufsCache.FileCache[path]; ok {
-		ufsCache.barrier.RUnlock()
+	cacheBin := ufsCache.getBin(f)
+	cacheBin.barrier.RLock()
+	if cached, ok := cacheBin.FileCache[path]; ok {
+		cacheBin.barrier.RUnlock()
 		return cached, nil
 	}
-	ufsCache.barrier.RUnlock()
+	cacheBin.barrier.RUnlock()
 
-	ufsCache.barrier.Lock()
-	defer ufsCache.barrier.Unlock()
+	cacheBin.barrier.Lock()
+	defer cacheBin.barrier.Unlock()
 
-	if cached, ok := ufsCache.FileCache[path]; !ok {
+	if cached, ok := cacheBin.FileCache[path]; !ok {
 		cached = nil
 		var err error
 		var stat os.FileInfo
@@ -269,10 +286,10 @@ func make_file_info(f Filename, optionalStat *os.FileInfo) (*FileInfo, error) {
 					FileInfo:     stat,
 				}
 			} else {
-				err = errors.New("path does not point to a directory")
+				err = errors.New("path does not point to a file")
 			}
 		}
-		ufsCache.FileCache[path] = cached
+		cacheBin.FileCache[path] = cached
 		return cached, err
 	} else {
 		return cached, nil
@@ -280,24 +297,26 @@ func make_file_info(f Filename, optionalStat *os.FileInfo) (*FileInfo, error) {
 }
 
 func invalidate_directory_info(d Directory) {
-	ufsCache.barrier.Lock()
-	defer ufsCache.barrier.Unlock()
-	delete(ufsCache.DirectoryCache, d.String())
+	cacheBin := ufsCache.getBin(d)
+	cacheBin.barrier.Lock()
+	defer cacheBin.barrier.Unlock()
+	delete(cacheBin.DirectoryCache, d.String())
 }
 func make_directory_info(d Directory, optionalStat *os.FileInfo) (*DirectoryInfo, error) {
 	path := d.String()
 
-	ufsCache.barrier.RLock()
-	if cached, ok := ufsCache.DirectoryCache[path]; ok {
-		ufsCache.barrier.RUnlock()
+	cacheBin := ufsCache.getBin(d)
+	cacheBin.barrier.RLock()
+	if cached, ok := cacheBin.DirectoryCache[path]; ok {
+		cacheBin.barrier.RUnlock()
 		return cached, nil
 	}
-	ufsCache.barrier.RUnlock()
+	cacheBin.barrier.RUnlock()
 
-	ufsCache.barrier.Lock()
-	defer ufsCache.barrier.Unlock()
+	cacheBin.barrier.Lock()
+	defer cacheBin.barrier.Unlock()
 
-	if cached, ok := ufsCache.DirectoryCache[path]; !ok {
+	if cached, ok := cacheBin.DirectoryCache[path]; !ok {
 		var stat os.FileInfo
 		var cached *DirectoryInfo
 		var err error
@@ -322,7 +341,7 @@ func make_directory_info(d Directory, optionalStat *os.FileInfo) (*DirectoryInfo
 				err = errors.New("path does not point to a directory")
 			}
 		}
-		ufsCache.DirectoryCache[path] = cached
+		cacheBin.DirectoryCache[path] = cached
 		return cached, err
 	} else {
 		return cached, nil
@@ -524,7 +543,7 @@ func (list *DirSet) Prepend(it ...Directory) {
 }
 func (list *DirSet) Remove(it ...Directory) {
 	for _, x := range it {
-		*list = RemoveIf(x.Equals, *list...)
+		*list = RemoveUnless(x.Equals, *list...)
 	}
 }
 func (list *DirSet) Clear() {
@@ -585,7 +604,7 @@ func (list *FileSet) Prepend(it ...Filename) {
 }
 func (list *FileSet) Remove(it ...Filename) {
 	for _, x := range it {
-		*list = RemoveIf(x.Equals, *list...)
+		*list = RemoveUnless(x.Equals, *list...)
 	}
 }
 func (list *FileSet) Clear() {
@@ -680,7 +699,6 @@ func (ufs *UFSFrontEnd) Dir(str string) Directory {
 	return MakeDirectory(str)
 }
 func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
-	invalidate_directory_info(dst)
 	LogDebug("ufs: mkdir %v", dst)
 	path := dst.String()
 	if st, err := os.Stat(path); st != nil && err != nil {
@@ -688,14 +706,13 @@ func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
 			if !st.IsDir() {
 				LogPanic("ufs: '%v' already exist, but is not a directory", dst)
 			}
-			return
 		}
 	} else {
+		invalidate_directory_info(dst)
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			LogPanic("%v: '%v'", dst, err)
 		}
 	}
-
 }
 func (ufs *UFSFrontEnd) CreateWriter(dst Filename) (*os.File, error) {
 	invalidate_file_info(dst)
@@ -717,6 +734,7 @@ func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error 
 	return err
 }
 func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) error {
+	os.Remove(dst.String())
 	ufs.Mkdir(dst.Dirname)
 
 	file, err := ioutil.TempFile(
@@ -725,7 +743,6 @@ func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) er
 	if err != nil {
 		return err
 	}
-	defer os.Remove(file.Name())
 
 	buf := bufio.NewWriter(file)
 	if err = write(buf); err == nil {
@@ -738,47 +755,13 @@ func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) er
 		}
 	}
 
-	LogWarning("UFS.SafeCreate: %v", err)
+	defer os.Remove(file.Name())
 	file.Close()
+	LogWarning("UFS.SafeCreate: %v", err)
 	return err
 }
 func (ufs *UFSFrontEnd) LazyCreate(dst Filename, write func(io.Writer) error) error {
 	return ufs.SafeCreate(dst, write)
-}
-func (ufs *UFSFrontEnd) LazyCreate_Enabled(dst Filename, write func(io.Writer) error) error {
-	asyncOld := FileDigest(dst)
-
-	file, err := ioutil.TempFile(
-		dst.Dirname.Relative(UFS.Root),
-		dst.ReplaceExt("-*"+dst.Ext()).Relative(dst.Dirname))
-	if err != nil {
-		return err
-	}
-	defer os.Remove(file.Name())
-
-	digester := NewDigestWriter(file)
-	buf := bufio.NewWriter(digester)
-
-	if err = write(buf); err == nil {
-		if err = buf.Flush(); err == nil {
-			if err = file.Close(); err != nil {
-				new := digester.Finalize()
-				old := asyncOld.Join()
-
-				if old.Failure() != nil || old.Success() != new {
-					invalidate_file_info(dst)
-					return os.Rename(file.Name(), dst.String())
-				} else {
-					LogTrace("content of '%v' didn't change, skipping write", dst)
-					return nil
-				}
-			}
-		}
-	}
-
-	LogWarning("UFS.SafeCreate: %v", err)
-	file.Close()
-	return err
 }
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
 	input, err := os.Open(src.String())
@@ -823,12 +806,23 @@ func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]strin
 		return nil
 	})
 }
-func (ufs *UFSFrontEnd) Rename(src Filename, dst Filename) error {
+func (ufs *UFSFrontEnd) Rename(src, dst Filename) error {
 	ufs.Mkdir(dst.Dirname)
 	invalidate_file_info(src)
 	invalidate_file_info(dst)
-	LogDebug("ufs: rename '%v' to '%v'", src, dst)
+	LogDebug("ufs: rename file '%v' to '%v'", src, dst)
 	return os.Rename(src.String(), dst.String())
+}
+func (ufs *UFSFrontEnd) Copy(src, dst Filename) error {
+	ufs.Mkdir(dst.Dirname)
+	invalidate_file_info(dst)
+	LogDebug("ufs: copy file '%v' to '%v'", src, dst)
+	return ufs.Open(src, func(r io.Reader) error {
+		return ufs.SafeCreate(dst, func(w io.Writer) error {
+			_, err := io.Copy(w, r)
+			return err
+		})
+	})
 }
 
 func make_ufs_frontend() (ufs UFSFrontEnd) {
@@ -880,6 +874,7 @@ func MakeGlobRegexp(glob ...string) *regexp.Regexp {
 		x = regexp.QuoteMeta(x)
 		x = strings.ReplaceAll(x, "\\?", ".")
 		x = strings.ReplaceAll(x, "\\*", ".*?")
+		x = strings.ReplaceAll(x, "/", "[\\\\/]")
 		x = "(" + x + ")"
 		if i == 0 {
 			expr += x
