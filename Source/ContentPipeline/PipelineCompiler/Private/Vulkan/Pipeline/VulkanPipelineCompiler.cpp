@@ -16,7 +16,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-NODISCARD static bool IsSrcFormatSupported_(EShaderLangFormat src) {
+NODISCARD CONSTEXPR bool IsSrcFormatSupported_(EShaderLangFormat src) {
     switch (Meta::EnumOrd(Meta::EnumAnd(src, EShaderLangFormat::_ApiStorageFormatMask))) {
     case Meta::EnumOrd(EShaderLangFormat::OpenGL | EShaderLangFormat::HighLevel):
     case Meta::EnumOrd(EShaderLangFormat::Vulkan | EShaderLangFormat::HighLevel):
@@ -26,7 +26,7 @@ NODISCARD static bool IsSrcFormatSupported_(EShaderLangFormat src) {
     }
 }
 //----------------------------------------------------------------------------
-NODISCARD static bool IsDstFormatSupported_(EShaderLangFormat dst, bool hasDevice) {
+NODISCARD CONSTEXPR bool IsDstFormatSupported_(EShaderLangFormat dst, bool hasDevice) {
     switch (Meta::EnumOrd(Meta::EnumAnd(dst, EShaderLangFormat::_ApiStorageFormatMask))) {
     case Meta::EnumOrd(EShaderLangFormat::Vulkan | EShaderLangFormat::SPIRV): return true;
     case Meta::EnumOrd(EShaderLangFormat::Vulkan | EShaderLangFormat::ShaderModule): return hasDevice;
@@ -46,14 +46,14 @@ NODISCARD static bool IsSupported_(const FVulkanPipelineCompiler::FshaderDataMap
     return false;
 }
 //----------------------------------------------------------------------------
-static void MergeShaderAccess_(EResourceState* dstAccess, const EResourceState& srcAccess) {
+CONSTEXPR void MergeShaderAccess_(EResourceState* dstAccess, const EResourceState& srcAccess) {
     if (*dstAccess == srcAccess)
         return;
 
     *dstAccess |= srcAccess;
 
-    if (*dstAccess & EResourceState::InvalidateBefore and
-        *dstAccess & EResourceState::ShaderRead ) {
+    if ((*dstAccess & EResourceState::InvalidateBefore) and
+        (*dstAccess & EResourceState::ShaderRead)) {
         *dstAccess -= EResourceState::InvalidateBefore;
     }
 }

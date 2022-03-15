@@ -22,7 +22,7 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 static bool ShouldTrackRecursively_(const FMemoryTracking& trackingData) {
-    return (!!trackingData.Parent() & (FMemoryTracking::Recursive == trackingData.Mode()));
+    return (!!trackingData.Parent() && (FMemoryTracking::Recursive == trackingData.Mode()));
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS

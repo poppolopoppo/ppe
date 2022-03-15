@@ -34,7 +34,7 @@ static void FormatParameters_(
         if (not outp.Written().empty())
             outp << Fmt::Space;
 
-        if (prm.empty() | HasSpace(prm))
+        if (prm.empty() || HasSpace(prm))
             outp << Fmt::Quoted(prm, Fmt::DoubleQuote);
         else
             outp << prm;

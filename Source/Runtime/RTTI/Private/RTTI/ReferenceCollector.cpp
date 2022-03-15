@@ -85,7 +85,7 @@ bool FDirectReferenceCollector::Visit(const IScalarTraits* scalar, PMetaObject& 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FLambdaReferenceCollector::Collect(const FMetaObject& root, FOnReference&& prefix, FOnReference&& postfix /* = NoFunction */) {
-    Assert((!!prefix) | (!!postfix));
+    Assert((!!prefix) || (!!postfix));
     Assert_NoAssume(not _prefix);
     Assert_NoAssume(not _postfix);
 
@@ -99,7 +99,7 @@ void FLambdaReferenceCollector::Collect(const FMetaObject& root, FOnReference&& 
 }
 //----------------------------------------------------------------------------
 void FLambdaReferenceCollector::Collect(const TMemoryView<const PMetaObject>& roots, FOnReference&& prefix, FOnReference&& postfix /* = NoFunction */) {
-    Assert((!!prefix) | (!!postfix));
+    Assert((!!prefix) || (!!postfix));
     Assert_NoAssume(not _prefix);
     Assert_NoAssume(not _postfix);
 

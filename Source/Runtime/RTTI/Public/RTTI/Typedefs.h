@@ -48,7 +48,7 @@ struct FLazyPathName {
     static PPE_RTTI_API bool Parse(FLazyPathName* pathName, const FStringView& text, bool withPrefix = true);
 
     friend bool operator ==(const FLazyPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
-        return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));
+        return ((lhs.Identifier == rhs.Identifier) && (lhs.Namespace == rhs.Namespace));
     }
     friend bool operator !=(const FLazyPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
@@ -78,7 +78,7 @@ struct FPathName {
     static PPE_RTTI_API bool Parse(FPathName* pathName, const FStringView& text);
 
     friend bool operator ==(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
-        return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));
+        return ((lhs.Identifier == rhs.Identifier) && (lhs.Namespace == rhs.Namespace));
     }
     friend bool operator !=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
@@ -92,7 +92,7 @@ struct FPathName {
     }
 
     friend bool operator ==(const FPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
-        return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));
+        return ((lhs.Identifier == rhs.Identifier) && (lhs.Namespace == rhs.Namespace));
     }
     friend bool operator !=(const FPathName& lhs, const FLazyPathName& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));

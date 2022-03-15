@@ -247,7 +247,7 @@ void FTransactionSerializer::RTTI_Load(RTTI::ILoadContext& context) {
         UnloadTransaction();
     }
 
-    if (_options ^ ETransactionOptions::AutoImport |
+    if (_options ^ ETransactionOptions::AutoImport ||
         _options ^ ETransactionOptions::AutoMount )
         LoadTransaction();
 
@@ -259,7 +259,7 @@ void FTransactionSerializer::RTTI_Unload(RTTI::IUnloadContext& context) {
     if (_options ^ ETransactionOptions::AutoMount)
         UnmountFromDB();
 
-    if (_options ^ ETransactionOptions::AutoImport |
+    if (_options ^ ETransactionOptions::AutoImport ||
         _options ^ ETransactionOptions::AutoMount)
         UnloadTransaction();
 

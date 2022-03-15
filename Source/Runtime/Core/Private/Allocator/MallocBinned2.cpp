@@ -90,6 +90,10 @@ struct FBinnedBundle {
         Reset();
     }
 
+    FORCE_INLINE bool Full(u32 blockSize) const {
+        return (Count >= FBinnedBundle::MaxCount || Count * blockSize >= FBinnedBundle::MaxSizeInBytes);
+    }
+
     FORCE_INLINE void Reset() {
         Head = nullptr;
         Count = 0;
@@ -191,7 +195,7 @@ struct FBinnedFreeBlockList {
     NODISCARD FORCE_INLINE bool PushToFront(void* ptr, u32 blockSize) {
         Assert(ptr);
         AssertRelease_NoAssume(blockSize >= sizeof(FBinnedBundleNode));
-        if ((PartialBundle.Count >= FBinnedBundle::MaxCount) | (PartialBundle.Count * blockSize >= FBinnedBundle::MaxSizeInBytes)) {
+        if (PartialBundle.Full(blockSize)) {
             if (FullBundle.Head)
                 return false;
 
@@ -202,9 +206,7 @@ struct FBinnedFreeBlockList {
         return true;
     }
     NODISCARD FORCE_INLINE bool CanPushToFront(u32 blockSize) const {
-        return !((!!FullBundle.Head) &
-            ((PartialBundle.Count >= FBinnedBundle::MaxCount) |
-             (PartialBundle.Count * blockSize >= FBinnedBundle::MaxSizeInBytes)) );
+        return !(!!FullBundle.Head && PartialBundle.Full(blockSize));
     }
     FORCE_INLINE void* PopFromFront() {
         if (Unlikely((!PartialBundle.Head) & (!!FullBundle.Head))) {
@@ -341,7 +343,7 @@ struct FBinnedSmallTable : Meta::FNonCopyableNorMovable {
 
     FORCE_INLINE static bool IsSmallBlock(const void* p) NOEXCEPT {
         const size_t delta = static_cast<size_t>(static_cast<const byte*>(p) - GSmallPoolVirtualMemory);
-        return (!!GSmallPoolVirtualMemory &
+        return (!!GSmallPoolVirtualMemory &&
             (delta < PPE_MALLOCBINNED2_SMALLPOOL_COUNT * PPE_MALLOCBINNED2_SMALLPOOL_RESERVE) );
     }
 
@@ -895,7 +897,7 @@ static void* BinnedReallocFallback_(void* ptr, size_t newSize) {
     Assert(!!ptr | !!newSize);
 
     // treat large block reallocations separetely
-    if (!!ptr & !FBinnedSmallTable::IsSmallBlock(ptr) & (newSize > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)) {
+    if (!!ptr && !FBinnedSmallTable::IsSmallBlock(ptr) && newSize > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE) {
         const size_t oldSize = FMallocBitmap::RegionSize(ptr);
         if (FMallocBitmap::SnapSize(newSize) == oldSize)
             return ptr;
@@ -909,7 +911,7 @@ static void* BinnedReallocFallback_(void* ptr, size_t newSize) {
         newPtr = BinnedMallocFallback_(newSize);
     Assert_NoAssume(!!newPtr | !newSize);
 
-    if (!!newPtr & !!ptr) {
+    if (!!newPtr && !!ptr) {
         Assert(newPtr != ptr);
         const size_t oldSize = FMallocBinned2::RegionSize(ptr);
         Assert(oldSize != newSize); // don't want to realloc into a block a same size apriori
@@ -965,7 +967,7 @@ void* FMallocBinned2::Realloc(void* const ptr, size_t size) {
     AssertRelease(ptr || size);
 
     if (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)) {
-        if ((!ptr) | FBinnedSmallTable::IsSmallBlock(ptr) ) {
+        if (!ptr || FBinnedSmallTable::IsSmallBlock(ptr) ) {
             auto& freeBlocks = FBinnedPerThreadFreeBlockList::Get();
 
             u32 oldPool = UMax, oldBlockSize = 0;
@@ -974,7 +976,7 @@ void* FMallocBinned2::Realloc(void* const ptr, size_t size) {
                 oldPool = FBinnedSmallTable::SmallPoolIndexFromPtr(ptr);
                 oldBlockSize = SmallPoolIndexToBlockSize(oldPool);
 
-                if ((!!size) & (oldPool == SmallPoolIndex(checked_cast<u16>(size))))
+                if (!!size && oldPool == SmallPoolIndex(checked_cast<u16>(size)))
                     return ptr; // no need to resize the block
 
                 canFree = freeBlocks.CanFree(oldPool, oldBlockSize);
@@ -985,8 +987,8 @@ void* FMallocBinned2::Realloc(void* const ptr, size_t size) {
                 const u32 newBlockSize = SmallPoolIndexToBlockSize(newPool);
                 void* const newPtr = (size ? freeBlocks.Malloc(newPool) : nullptr);
 
-                if (!!newPtr | !size) {
-                    if (!!newPtr & !!ptr) {
+                if (!!newPtr || !size) {
+                    if (!!newPtr && !!ptr) {
                         Assert(oldPool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
                         // copy previous data to new block without polluting caches
                         FPlatformMemory::Memstream(newPtr, ptr, Min(oldBlockSize, newBlockSize));

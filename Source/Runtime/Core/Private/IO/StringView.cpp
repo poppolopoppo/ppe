@@ -1193,7 +1193,7 @@ template <typename _DstChar, typename _SrcChar>
 static void Unescape_(TBasicTextWriter<_DstChar>& oss, const TBasicStringView<_SrcChar>& str) {
 #define STR(X) STRING_LITERAL(_DstChar, X)
     for (size_t i = 0; i < str.size(); ++i) {
-        if ((str[i] == STR('\\')) & (i + 1 < str.size())) {
+        if ((str[i] == STR('\\')) && (i + 1 < str.size())) {
             size_t eaten = 1;
             switch (str[i + 1]) {
             // special characters

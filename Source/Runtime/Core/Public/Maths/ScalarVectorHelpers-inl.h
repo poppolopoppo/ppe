@@ -28,7 +28,7 @@ bool IsNormalized(const TScalarVector<float, _Dim>& v, float epsilon/* = F_Epsil
 template <size_t _Dim>
 bool NearlyEquals(const TScalarVector<float, _Dim>& a, const Meta::TDontDeduce<TScalarVector<float, _Dim>>& b, float maxRelDiff/* = F_Epsilon */) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (NearlyEquals(a.template get<idx>(), b.template get<idx>(), maxRelDiff) & ...);
+        return (NearlyEquals(a.template get<idx>(), b.template get<idx>(), maxRelDiff) && ...);
     });
 }
 //----------------------------------------------------------------------------
@@ -49,21 +49,21 @@ inline TScalarVector<double, 2> SinCos(double angle) NOEXCEPT {
 template <typename T, size_t _Dim>
 bool IsINF(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (IsINF(v.template get<idx>()) | ...);
+        return (IsINF(v.template get<idx>()) || ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool IsNAN(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (IsNAN(v.template get<idx>()) | ...);
+        return (IsNAN(v.template get<idx>()) || ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool IsNANorINF(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (IsNANorINF(v.template get<idx>()) | ...);
+        return (IsNANorINF(v.template get<idx>()) || ...);
     });
 }
 //----------------------------------------------------------------------------

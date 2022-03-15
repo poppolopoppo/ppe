@@ -39,7 +39,7 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     const _Char pad_ch = w.FillChar();
 
     // Handles truncate :
-    if ((!!width) & (fmt.Misc() & FTextFormat::Truncate) & (str.size() > static_cast<size_t>(width)))
+    if ((!!width) && (fmt.Misc() & FTextFormat::Truncate) && (str.size() > static_cast<size_t>(width)))
         str = str.CutBefore(width);
 
     // Handles padding & case :

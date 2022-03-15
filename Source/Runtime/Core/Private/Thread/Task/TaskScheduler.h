@@ -102,9 +102,9 @@ private:
     bool HasHigherPriorityTask_(const size_t highestPriority) const NOEXCEPT {
         STATIC_ASSERT(4 == NumPriorities);
         std::atomic_thread_fence(std::memory_order_acquire);
-        return ((0 < highestPriority && !!_priorityGroups[0].NumTasks.load(std::memory_order_relaxed)) |
-                (1 < highestPriority && !!_priorityGroups[1].NumTasks.load(std::memory_order_relaxed)) |
-                (2 < highestPriority && !!_priorityGroups[2].NumTasks.load(std::memory_order_relaxed)) |
+        return ((0 < highestPriority && !!_priorityGroups[0].NumTasks.load(std::memory_order_relaxed)) ||
+                (1 < highestPriority && !!_priorityGroups[1].NumTasks.load(std::memory_order_relaxed)) ||
+                (2 < highestPriority && !!_priorityGroups[2].NumTasks.load(std::memory_order_relaxed)) ||
                 (3 < highestPriority && !!_priorityGroups[3].NumTasks.load(std::memory_order_relaxed)) );
     }
 
@@ -145,9 +145,9 @@ inline FTaskScheduler::~FTaskScheduler() {
 inline bool FTaskScheduler::HasPendingTask() const NOEXCEPT {
     std::atomic_thread_fence(std::memory_order_acquire);
 
-    return ((!!_priorityGroups[size_t(ETaskPriority::High)].NumTasks.load(std::memory_order_relaxed) |
+    return ((!!_priorityGroups[size_t(ETaskPriority::High)].NumTasks.load(std::memory_order_relaxed) ||
              !!_priorityGroups[size_t(ETaskPriority::Normal)].NumTasks.load(std::memory_order_relaxed)) ||
-            (!!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks.load(std::memory_order_relaxed) |
+            (!!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks.load(std::memory_order_relaxed) ||
              !!_priorityGroups[size_t(ETaskPriority::Internal)].NumTasks.load(std::memory_order_relaxed)) );
 }
 //----------------------------------------------------------------------------

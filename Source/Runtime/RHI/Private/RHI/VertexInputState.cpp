@@ -23,7 +23,9 @@ EVertexFormat FVertexInput::DestinationFormat() const {
     const EVertexFormat scalarType = BitAnd(Format, EVertexFormat::_TypeMask);
     const EVertexFormat vectorSize = BitAnd(Format, EVertexFormat::_VecMask);
 
-    const bool isFloatingPoint =  (Format & EVertexFormat::NormalizedFlag)|(Format & EVertexFormat::ScaledFlag);
+    const bool isFloatingPoint = (
+        (Format & EVertexFormat::NormalizedFlag)||
+        (Format & EVertexFormat::ScaledFlag));
     const EVertexFormat floatType = BitOr(EVertexFormat::_Float, vectorSize);
 
     switch (scalarType) {

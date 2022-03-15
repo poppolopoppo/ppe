@@ -85,7 +85,7 @@ ETypeFlags MakeListTypeFlags(const PTypeTraits& value) {
 ETypeFlags MakeDicoTypeFlags(const PTypeTraits& key, const PTypeTraits& value) {
     ETypeFlags flags = ETypeFlags::Dico;
 
-    if (is_object_v(key->TypeFlags()) | is_object_v(value->TypeFlags()))
+    if (is_object_v(key->TypeFlags()) || is_object_v(value->TypeFlags()))
         flags = flags + ETypeFlags::Object;
 
     return flags;

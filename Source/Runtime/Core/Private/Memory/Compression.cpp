@@ -159,7 +159,7 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
         return false;
 
     const auto& header = *reinterpret_cast<const FFileHeader_*>(src.Pointer());
-    if ((FILE_MAGIC_ != header.Magic) | (FILE_VERSION_ != header.Version))
+    if ((FILE_MAGIC_ != header.Magic) || (FILE_VERSION_ != header.Version))
         return false;
 
     AssertRelease(header.SizeInBytes <= dst.SizeInBytes());

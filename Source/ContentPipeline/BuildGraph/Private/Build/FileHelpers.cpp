@@ -33,9 +33,9 @@ static bool FindFilesRec_(
             Emplace_Back(files, f);
     }
 
-    return (result | (recurse && (
-        FindFilesRec_(n.StaticDeps(), files, visited) |
-        FindFilesRec_(n.RuntimeDeps(), files, visited) |
+    return (result || (recurse && (
+        FindFilesRec_(n.StaticDeps(), files, visited) ||
+        FindFilesRec_(n.RuntimeDeps(), files, visited) ||
         FindFilesRec_(n.DynamicDeps(), files, visited) )) );
 }
 //----------------------------------------------------------------------------

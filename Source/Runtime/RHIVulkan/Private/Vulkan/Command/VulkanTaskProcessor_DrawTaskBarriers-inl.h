@@ -330,8 +330,8 @@ void FVulkanTaskProcessor::FDrawTaskBarriers::MergePipeline(const FDrawDynamicSt
     _enableDepthWrite |= (ds.HasEnableDepthWrite() && ds.EnableDepthWrite());
 
     _enableStencilWrite |= ((ds.HasEnableStencilTest() && _logicalRenderPass.StencilState().EnabledStencilTests)
-        ?  ((ds.HasStencilPassOp() && (ds.StencilPassOp() != EStencilOp::Keep)) |
-            (ds.HasStencilFailOp() && (ds.StencilFailOp() != EStencilOp::Keep)) |
+        ?  ((ds.HasStencilPassOp() && (ds.StencilPassOp() != EStencilOp::Keep)) ||
+            (ds.HasStencilFailOp() && (ds.StencilFailOp() != EStencilOp::Keep)) ||
             (ds.HasStencilDepthFailOp() && (ds.StencilDepthFailOp() != EStencilOp::Keep)) )
         : false );
 

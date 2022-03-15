@@ -460,7 +460,7 @@ struct TScalarVectorSwizzle : TScalarVectorAssignable<TScalarVectorSwizzle<T, _S
 template <typename _Lhs, size_t _Dim, typename _Rhs>
 CONSTEXPR bool operator ==(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return ((lhs.template get<idx>() == rhs.template get<idx>()) & ...); // use '&' instead '&&' to remove branches
+        return ((lhs.template get<idx>() == rhs.template get<idx>()) && ...); // use '&' instead '&&' to remove branches
     });
 }
 //----------------------------------------------------------------------------

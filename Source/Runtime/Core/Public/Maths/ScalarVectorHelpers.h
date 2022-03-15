@@ -228,21 +228,21 @@ CONSTEXPR bool Any(const TScalarVector<T, _Dim>& mask) {
 template <typename _Expr, size_t _Dim>
 CONSTEXPR bool Any(const TScalarVectorExpr<_Expr, _Dim>& expr) {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (Any(expr.template get<idx>()) | ...);
+        return (Any(expr.template get<idx>()) || ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
 CONSTEXPR bool All(const TScalarVector<T, _Dim>& mask) {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (All(mask.template get<idx>()) & ...);
+        return (All(mask.template get<idx>()) && ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Expr, size_t _Dim>
 CONSTEXPR bool All(const TScalarVectorExpr<_Expr, _Dim>& expr) {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (All(expr.template get<idx>()) & ...);
+        return (All(expr.template get<idx>()) && ...);
     });
 }
 //----------------------------------------------------------------------------
@@ -251,28 +251,28 @@ CONSTEXPR bool All(const TScalarVectorExpr<_Expr, _Dim>& expr) {
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllGreater(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return ((lhs.template get<idx>() > rhs.template get<idx>()) & ...);
+        return ((lhs.template get<idx>() > rhs.template get<idx>()) && ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllGreaterEqual(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() >= rhs.template get<idx>()) & ...);
+        return ((lhs.template get<idx>() >= rhs.template get<idx>()) && ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllLess(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() < rhs.template get<idx>()) & ...);
+        return ((lhs.template get<idx>() < rhs.template get<idx>()) && ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllLessEqual(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() <= rhs.template get<idx>()) & ...);
+        return ((lhs.template get<idx>() <= rhs.template get<idx>()) && ...);
     });
 }
 //----------------------------------------------------------------------------

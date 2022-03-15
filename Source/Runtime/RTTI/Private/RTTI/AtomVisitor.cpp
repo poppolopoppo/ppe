@@ -268,7 +268,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool IAtomVisitor::ShouldSkipTraits(IAtomVisitor* visitor, const ITypeTraits& traits) NOEXCEPT {
-    return ((!!visitor->OnlyObjects()) & (!is_object_v(traits.TypeFlags())));
+    return ((!!visitor->OnlyObjects()) && (not is_object_v(traits.TypeFlags())));
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data) {
@@ -312,15 +312,15 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObj
     if (pobj) {
         FMetaObject& obj = (*pobj);
 
-        if (visitor->NoRecursion() | ((!visitor->KeepTransient()) & obj.RTTI_IsTransient()) )
+        if (visitor->NoRecursion() || ((not visitor->KeepTransient()) && obj.RTTI_IsTransient()) )
             return true;
 
         const FMetaClass* const metaClass = obj.RTTI_Class();
         Assert(metaClass);
 
         for (const FMetaProperty* prop : metaClass->AllProperties()) {
-            if ((visitor->KeepDeprecated() | (!prop->IsDeprecated())) &
-                (visitor->KeepTransient() | (!prop->IsTransient())) &
+            if ((visitor->KeepDeprecated() || (not prop->IsDeprecated())) &&
+                (visitor->KeepTransient() || (not prop->IsTransient())) &&
                 (not ShouldSkipTraits(visitor, *prop->Traits())) ) {
                 if (not prop->Get(obj).Accept(visitor))
                     return false;
