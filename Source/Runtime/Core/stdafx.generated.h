@@ -28,7 +28,6 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
-#include <locale>
 #include <cctype>
 #include <clocale>
 #include <immintrin.h>

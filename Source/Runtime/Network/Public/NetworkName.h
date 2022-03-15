@@ -11,7 +11,6 @@ namespace Network {
 //----------------------------------------------------------------------------
 class FNameTokenTraits {
 public:
-    const std::locale& Locale() const { return std::locale::classic(); }
     PPE_NETWORK_API bool IsAllowedChar(char ch) const;
 };
 //----------------------------------------------------------------------------

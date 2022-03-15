@@ -40,7 +40,6 @@
 #include <comutil.h>
 #include <cctype>
 #include <cwctype>
-#include <locale>
 #include <clocale>
 #include <variant>
 #include <shared_mutex>

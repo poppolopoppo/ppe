@@ -2,8 +2,6 @@
 
 #include "NetworkName.h"
 
-#include <locale>
-
 namespace PPE {
 namespace Network {
 BASICTOKEN_CLASS_DEF(FName);

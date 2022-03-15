@@ -13,7 +13,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class FFileSystemTokenTraits {
 public:
-    const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(FileSystem::char_type ch) const { return FPlatformFile::IsAllowedChar(ch); }
 };
 //----------------------------------------------------------------------------

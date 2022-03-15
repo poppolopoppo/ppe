@@ -13,7 +13,6 @@
 #define BASICTOKEN_CLASS_DECL(_API, _NAME_WITHOUT_F, _CHAR, _CASESENSITIVE, _TRAITS) \
     class CONCAT(CONCAT(F, _NAME_WITHOUT_F), ActualTokenTraits) : public _TRAITS { \
     public: \
-        using _TRAITS::Locale; \
         using _TRAITS::IsAllowedChar; \
         _API static void CreateFactory(); \
         _API static ::PPE::FTokenFactory& Factory() NOEXCEPT; \
@@ -83,8 +82,7 @@ namespace PPE {
 template <typename _Tag, typename _Char>
 class TTokenTraits {
 public:
-    const std::locale& Locale() const {  return std::locale::classic(); }
-    bool IsAllowedChar(_Char ch) const { return std::isprint(ch, Locale()); }
+    bool IsAllowedChar(_Char ch) const { return isprint(ch); }
 
     static void CreateFactory() = delete;
     static class FTokenFactory& Factory() = delete;

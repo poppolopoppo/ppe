@@ -40,7 +40,6 @@
 #include <pmmintrin.h>
 #include <cctype>
 #include <cwctype>
-#include <locale>
 #include <clocale>
 #include <variant>
 // Global project includes

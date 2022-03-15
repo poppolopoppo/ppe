@@ -2,8 +2,6 @@
 
 #include "Name.h"
 
-#include <locale>
-
 namespace PPE {
 namespace Graphics {
 //----------------------------------------------------------------------------

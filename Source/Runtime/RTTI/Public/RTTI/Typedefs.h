@@ -16,7 +16,6 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 class FNameTokenTraits {
 public:
-    const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.' || ch == '/' || ch == '$'; }
 };
 BASICTOKEN_CLASS_DECL(PPE_RTTI_API, Name, char, ECase::Insensitive, FNameTokenTraits);

@@ -12,7 +12,6 @@
 #include "IO/TextWriter.h"
 
 #include <algorithm>
-#include <locale>
 
 namespace PPE {
 namespace Lexer {
@@ -166,14 +165,14 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             Assert('0' == ch);
 
             ch = reader.Read();
-            Assert('x' == ToLower(ch));
+            Assert_NoAssume('x' == ToLower(ch));
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
                 PPE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Integer, value.ToString(), origin, reader.SourceSite())));
 
             if ('u' == ToLower(reader.Peek())) {
                 ch = reader.Read();
-                Assert('u' == ToLower(ch));
+                Assert_NoAssume('u' == ToLower(ch));
 
                 uint64_t u;
                 if (!Atoi(&u, value.Written(), 16)) {
@@ -210,7 +209,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
 
             if ('u' == ToLower(reader.Peek())) {
                 ch = reader.Read();
-                Assert('u' == ToLower(ch));
+                Assert_NoAssume('u' == ToLower(ch));
 
                 uint64_t u;
                 if (!Atoi(&u, value.Written(), 8)) {
@@ -255,7 +254,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
 
         if ('u' == ToLower(reader.Peek())) {
             ch = reader.Read();
-            Assert('u' == ToLower(ch));
+            Assert_NoAssume('u' == ToLower(ch));
 
             if (is_float)
                 PPE_THROW_IT(FLexerException("float can't be unsigned", FMatch(FSymbols::Float, value.ToString(), origin, reader.SourceSite())));

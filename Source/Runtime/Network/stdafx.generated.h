@@ -40,7 +40,6 @@
 #include <xmmintrin.h>
 #include <cctype>
 #include <cwctype>
-#include <locale>
 #include <clocale>
 // Global project includes
 #include "winnt_version.h"

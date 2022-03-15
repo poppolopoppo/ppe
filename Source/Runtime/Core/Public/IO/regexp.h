@@ -11,7 +11,6 @@
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 
-#include <locale>
 #include <regex>
 
 namespace PPE {

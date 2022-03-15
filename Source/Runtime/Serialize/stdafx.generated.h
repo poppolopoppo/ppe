@@ -40,7 +40,6 @@
 #include <xmmintrin.h>
 #include <cctype>
 #include <cwctype>
-#include <locale>
 #include <clocale>
 #include <regex>
 #include <variant>

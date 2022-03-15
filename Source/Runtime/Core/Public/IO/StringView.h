@@ -10,7 +10,6 @@
 
 #include <cctype>
 #include <cwctype>
-#include <locale>
 #include <string.h>
 #include <wchar.h>
 
@@ -193,9 +192,7 @@ inline size_t Length(const wchar_t* string) { return ::wcslen(string); }
 //----------------------------------------------------------------------------
 template <typename _Char>
 FORCE_INLINE TBasicStringView<_Char> MakeCStringView(const _Char* cstr) {
-    return (nullptr != cstr)
-        ? TBasicStringView<_Char>(cstr, Length(cstr))
-        : TBasicStringView<_Char>();
+    return TBasicStringView<_Char>(cstr, cstr ? Length(cstr) : 0);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

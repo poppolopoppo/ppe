@@ -21,7 +21,6 @@ namespace Engine {
 //----------------------------------------------------------------------------
 class FMaterialTokenTraits {
 public:
-    const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const;
 };
 //----------------------------------------------------------------------------
