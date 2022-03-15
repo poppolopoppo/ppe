@@ -36,6 +36,19 @@ enum class EBlendFactor : u32 {
 
     Unknown	= ~0u,
 };
+CONSTEXPR bool HasDualSrcBlendFactor(EBlendFactor value) NOEXCEPT {
+    switch (value) {
+    case EBlendFactor::Src1Color:
+    case EBlendFactor::OneMinusSrc1Color:
+    case EBlendFactor::Src1Alpha:
+    case EBlendFactor::OneMinusSrc1Alpha:
+        return true;
+
+    default: break;
+    }
+
+    return false;
+}
 //----------------------------------------------------------------------------
 enum class EBlendOp : u32 {
     // src - from shader

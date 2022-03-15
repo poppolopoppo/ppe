@@ -57,8 +57,6 @@ int TBaseScalarTraits<T>::Compare(const void* lhs, const void* rhs) const NOEXCE
     }
 }
 //----------------------------------------------------------------------------
-template <>
-PPE_RTTI_API bool TBaseScalarTraits<PMetaObject>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT;
 template <typename T>
 bool TBaseScalarTraits<T>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
     Assert(dst);
@@ -206,11 +204,12 @@ bool TEnumTraits<T>::FromString(void* dst, const FStringConversion& iss) const n
 //----------------------------------------------------------------------------
 // TObjectTraits<T>
 //----------------------------------------------------------------------------
+PPE_RTTI_API void* CastObject(const IScalarTraits& self, PMetaObject& data, const PTypeTraits& dst) NOEXCEPT;
 PPE_RTTI_API bool DeepEqualsObject(const PMetaObject& lhs, const PMetaObject& rhs);
 PPE_RTTI_API void DeepCopyObject(const IScalarTraits& self, const PMetaObject& src, PMetaObject& dst);
+PPE_RTTI_API bool ObjectFromString(const IScalarTraits& self, PMetaObject* dst, const FStringConversion& iss) NOEXCEPT;
 PPE_RTTI_API bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const FAtom& dst);
 PPE_RTTI_API bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst) NOEXCEPT;
-PPE_RTTI_API void* CastObject(const IScalarTraits& self, PMetaObject& data, const PTypeTraits& dst) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
 class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
@@ -248,6 +247,11 @@ CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TRefPtr<_Class> >) {
 template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >
 CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TRefPtr<_Class> >) {
     return MakeStaticType< TObjectTraits<Meta::TDecay<_Class>>, TRefPtr<_Class> >();
+}
+//----------------------------------------------------------------------------
+template <>
+inline bool TBaseScalarTraits<PMetaObject>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
+    return ObjectFromString(*this, static_cast<PMetaObject*>(dst), iss);
 }
 //----------------------------------------------------------------------------
 template <typename T>

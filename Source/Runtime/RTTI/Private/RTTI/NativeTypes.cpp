@@ -201,6 +201,17 @@ bool PromoteEnum(const IScalarTraits& traits, FMetaEnumOrd src, const FAtom& dst
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits& dst) NOEXCEPT {
+    if (self == *dst) {
+        return &obj;
+    }
+    else if (dst->TypeId() == FTypeId(ENativeType::MetaObject)) {
+        if (IsAssignableObject_(self, *dst, obj))
+            return &obj;
+    }
+    return nullptr;
+}
+//----------------------------------------------------------------------------
 bool DeepEqualsObject(const PMetaObject& lhs, const PMetaObject& rhs) {
     if (lhs == rhs)
         return true;
@@ -223,6 +234,21 @@ void DeepCopyObject(const IScalarTraits& , const PMetaObject& src, PMetaObject& 
     }
 
     RTTI::DeepCopy(*src, *dst);
+}
+//----------------------------------------------------------------------------
+bool ObjectFromString(const IScalarTraits& self, PMetaObject* dst, const FStringConversion& iss) NOEXCEPT {
+    Assert(dst);
+
+    FLazyPathName pathName;
+    if (iss >> &pathName) {
+        FMetaDatabaseReadable db;
+        *dst = db->ObjectIFP(pathName);
+        if (!!*dst) {
+            return ((*dst)->RTTI_Traits().PTraits == &self);
+        }
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const FAtom& dst) {
@@ -248,31 +274,6 @@ bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom&
             (*static_cast<PMetaObject*>(dst.Data())) = std::move(src);
             return true;
         }
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits& dst) NOEXCEPT {
-    if (self == *dst) {
-        return &obj;
-    }
-    else if (dst->TypeId() == FTypeId(ENativeType::MetaObject)) {
-        if (IsAssignableObject_(self, *dst, obj))
-            return &obj;
-    }
-    return nullptr;
-}
-//----------------------------------------------------------------------------
-template <>
-bool TBaseScalarTraits<PMetaObject>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
-    Assert(dst);
-
-    FLazyPathName pathName;
-    if (iss >> &pathName) {
-        FMetaDatabaseReadable db;
-        *static_cast<PMetaObject*>(dst) = db->ObjectIFP(pathName);
-        return (!!*static_cast<PMetaObject*>(dst));
     }
 
     return false;

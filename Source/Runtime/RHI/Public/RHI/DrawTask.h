@@ -153,6 +153,8 @@ struct FDrawVertices final : details::TDrawVerticesDesc<FDrawVertices> {
 
 #if USE_PPE_RHITASKNAME
     FDrawVertices() NOEXCEPT : TDrawVerticesDesc<FDrawVertices>{ "DrawVertices", FDebugColorScheme::Get().Draw } {}
+#else
+    FDrawVertices() = default;
 #endif
 
     FDrawVertices& Draw(u32 vertexCount, u32 instanceCount = 1, u32 firstVertex = 0, u32 firstInstance = 0) {
@@ -182,6 +184,8 @@ struct FDrawIndexed : details::TDrawVerticesDesc<FDrawIndexed> {
 
 #if USE_PPE_RHITASKNAME
     FDrawIndexed() NOEXCEPT : TDrawVerticesDesc<FDrawIndexed>{ "DrawIndexed", FDebugColorScheme::Get().Draw } {}
+#else
+    FDrawIndexed() = default;
 #endif
 
     FDrawIndexed& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
@@ -223,6 +227,8 @@ struct FDrawVerticesIndirect : details::TDrawVerticesDesc<FDrawVerticesIndirect>
 
 #if USE_PPE_RHITASKNAME
     FDrawVerticesIndirect() NOEXCEPT : TDrawVerticesDesc<FDrawVerticesIndirect>{ "DrawVerticesIndirect", FDebugColorScheme::Get().Draw } {}
+#else
+    FDrawVerticesIndirect() = default;
 #endif
 
     FDrawVerticesIndirect& SetIndirectBuffer(FRawBufferID buffer) {
@@ -262,6 +268,8 @@ struct FDrawIndexedIndirect : details::TDrawVerticesDesc<FDrawIndexedIndirect> {
 
 #if USE_PPE_RHITASKNAME
     FDrawIndexedIndirect() NOEXCEPT : TDrawVerticesDesc<FDrawIndexedIndirect>{ "DrawIndexedIndirect", FDebugColorScheme::Get().Draw } {}
+#else
+    FDrawIndexedIndirect() = default;
 #endif
 
     FDrawIndexedIndirect& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
@@ -304,6 +312,8 @@ struct FDrawVerticesIndirectCount : details::TDrawVerticesDesc<FDrawVerticesIndi
 
 #if USE_PPE_RHITASKNAME
     FDrawVerticesIndirectCount() NOEXCEPT : TDrawVerticesDesc<FDrawVerticesIndirectCount>{ "DrawVerticesIndirectCount", FDebugColorScheme::Get().Draw } {}
+#else
+    FDrawVerticesIndirectCount() = default;
 #endif
 
     FDrawVerticesIndirectCount& SetIndirectBuffer(FRawBufferID buffer) {
@@ -342,6 +352,8 @@ struct FDrawIndexedIndirectCount : details::TDrawVerticesDesc<FDrawIndexedIndire
 
 #if USE_PPE_RHITASKNAME
     FDrawIndexedIndirectCount() NOEXCEPT : TDrawVerticesDesc<FDrawIndexedIndirectCount>{ "DrawIndexedIndirectCount", FDebugColorScheme::Get().Draw } {}
+#else
+    FDrawIndexedIndirectCount() = default;
 #endif
 
     FDrawIndexedIndirectCount& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
@@ -386,6 +398,8 @@ struct FDrawMeshes final : details::TDrawCallDesc<FDrawMeshes> {
 
 #if USE_PPE_RHITASKNAME
     FDrawMeshes() NOEXCEPT : TDrawCallDesc<FDrawMeshes>{ "DrawMeshes", FDebugColorScheme::Get().DrawMeshes } {}
+#else
+    FDrawMeshes() = default;
 #endif
 
     FDrawMeshes& SetPipeline(FRawMPipelineID value) {
@@ -419,6 +433,8 @@ struct FDrawMeshesIndirect final : details::TDrawCallDesc<FDrawMeshesIndirect> {
 
 #if USE_PPE_RHITASKNAME
     FDrawMeshesIndirect() NOEXCEPT : TDrawCallDesc<FDrawMeshesIndirect>{ "DrawMeshesIndirect", FDebugColorScheme::Get().DrawMeshes } {}
+#else
+    FDrawMeshesIndirect() = default;
 #endif
 
     FDrawMeshesIndirect& SetPipeline(FRawMPipelineID value) {
@@ -453,6 +469,8 @@ struct FDrawMeshesIndirectCount final : details::TDrawCallDesc<FDrawMeshesIndire
 
 #if USE_PPE_RHITASKNAME
     FDrawMeshesIndirectCount() NOEXCEPT : TDrawCallDesc<FDrawMeshesIndirectCount>{ "DrawMeshesIndirectCount", FDebugColorScheme::Get().DrawMeshes } {}
+#else
+    FDrawMeshesIndirectCount() = default;
 #endif
 
     FDrawMeshesIndirectCount& SetPipeline(FRawMPipelineID value) {

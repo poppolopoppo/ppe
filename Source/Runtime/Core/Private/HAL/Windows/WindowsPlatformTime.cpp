@@ -25,13 +25,13 @@ i64 FWindowsPlatformTime::Timestamp() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 u64 FWindowsPlatformTime::NetworkTime() NOEXCEPT {
-    ::FILETIME ft;
+    ::FILETIME ft{};
     ::GetSystemTimePreciseAsFileTime(&ft);
     return *((const u64*)& ft);
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
-    struct ::tm lc;
+    struct ::tm lc {};
     Verify(0 == ::_localtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&timestamp)));
 
     year = 1900 + checked_cast<u32>(lc.tm_year);
@@ -45,7 +45,7 @@ void FWindowsPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& 
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformTime::UtcTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
-    struct ::tm lc;
+    struct ::tm lc{};
     Verify(0 == ::_gmtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&timestamp)));
 
     year = 1900 + checked_cast<u32>(lc.tm_year);

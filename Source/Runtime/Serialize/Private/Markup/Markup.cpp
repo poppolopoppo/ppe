@@ -112,11 +112,11 @@ static void ParseInnerText_(Lexer::FLexer& lexer, FMarkup& markup, FMarkup::FEle
     elt.SetText(markup.MakeString(text.Value(), false));
 }
 //----------------------------------------------------------------------------
-static void EscapeString_(FTextWriter& oss, const FMarkup::FText& str) {
+static void EscapeMarkup_(FTextWriter& oss, const FMarkup::FText& str) {
     Escape(oss, str, EEscape::Hexadecimal);
 }
 //----------------------------------------------------------------------------
-static void EscapeString_(FWTextWriter& oss, const FMarkup::FText& str) {
+static void EscapeMarkup_(FWTextWriter& oss, const FMarkup::FText& str) {
     Escape(oss, ToWCStr(INLINE_MALLOCA(wchar_t, str.size() + 1), str), EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
@@ -132,7 +132,7 @@ static void ToStream_(const FMarkup::FElement& elt, TBasicTextWriter<_Char>& oss
         const FIndentScope_ indentScope(indent);
         for (const auto& it : elt.Attributes()) {
             oss << Fmt::Space << it.first << Fmt::Assignment << Fmt::DoubleQuote;
-            EscapeString_(oss, it.second);
+            EscapeMarkup_(oss, it.second);
             oss << Fmt::DoubleQuote;
         }
     }

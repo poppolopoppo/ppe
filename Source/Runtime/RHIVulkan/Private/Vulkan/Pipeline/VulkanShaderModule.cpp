@@ -22,7 +22,7 @@ FVulkanShaderModule::FVulkanShaderModule(
 {
     // combine entry point with source fingerprint for fingerprint
     _fingerprint = Fingerprint128(_entryPoint.Str());
-    Fingerprint128(&sourceFingerprint, sizeof(FFingerprint), _fingerprint);
+    _fingerprint = Fingerprint128(&sourceFingerprint, sizeof(FFingerprint), _fingerprint);
 }
 //----------------------------------------------------------------------------
 FVulkanShaderModule::~FVulkanShaderModule() NOEXCEPT {

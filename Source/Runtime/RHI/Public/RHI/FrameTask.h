@@ -121,6 +121,8 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
 
 #if USE_PPE_RHITASKNAME
     FDispatchCompute() NOEXCEPT : TFrameTaskDesc<FDispatchCompute>("DispatchCompute", FDebugColorScheme::Get().Compute) {}
+#else
+    FDispatchCompute() = default;
 #endif
 
     FDispatchCompute& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
@@ -185,6 +187,8 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 
 #if USE_PPE_RHITASKNAME
     FDispatchComputeIndirect() NOEXCEPT : TFrameTaskDesc<FDispatchComputeIndirect>("DispatchComputeIndirect", FDebugColorScheme::Get().Compute) {}
+#else
+    FDispatchComputeIndirect() = default;
 #endif
 
     FDispatchComputeIndirect& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
@@ -236,6 +240,8 @@ struct FCopyBuffer final : details::TFrameTaskDesc<FCopyBuffer> {
 
 #if USE_PPE_RHITASKNAME
     FCopyBuffer() NOEXCEPT : TFrameTaskDesc<FCopyBuffer>("CopyBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FCopyBuffer() = default;
 #endif
 
     FCopyBuffer& From(FRawBufferID buffer) { Assert(buffer); SrcBuffer = buffer; return (*this); }
@@ -267,6 +273,8 @@ struct FCopyImage final : details::TFrameTaskDesc<FCopyImage> {
 
 #if USE_PPE_RHITASKNAME
     FCopyImage() NOEXCEPT : TFrameTaskDesc<FCopyImage>("CopyImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FCopyImage() = default;
 #endif
 
     FCopyImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -309,6 +317,8 @@ struct FCopyBufferToImage final : details::TFrameTaskDesc<FCopyBufferToImage> {
 
 #if USE_PPE_RHITASKNAME
     FCopyBufferToImage() NOEXCEPT : TFrameTaskDesc<FCopyBufferToImage>("CopyBufferToImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FCopyBufferToImage() = default;
 #endif
 
     FCopyBufferToImage& From(FRawBufferID buffer) { Assert(buffer); SrcBuffer = buffer; return (*this); }
@@ -343,6 +353,8 @@ struct FCopyImageToBuffer final : details::TFrameTaskDesc<FCopyImageToBuffer> {
 
 #if USE_PPE_RHITASKNAME
     FCopyImageToBuffer() NOEXCEPT : TFrameTaskDesc<FCopyImageToBuffer>("CopyImageToBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FCopyImageToBuffer() = default;
 #endif
 
     FCopyImageToBuffer& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -384,6 +396,8 @@ struct FBlitImage final : details::TFrameTaskDesc<FBlitImage> {
 
 #if USE_PPE_RHITASKNAME
     FBlitImage() NOEXCEPT : TFrameTaskDesc<FBlitImage>("BlitImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FBlitImage() = default;
 #endif
 
     FBlitImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -420,6 +434,8 @@ struct FGenerateMipmaps : details::TFrameTaskDesc<FGenerateMipmaps> {
 
 #if USE_PPE_RHITASKNAME
     FGenerateMipmaps() NOEXCEPT : TFrameTaskDesc<FGenerateMipmaps>("GenerateMipmaps", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FGenerateMipmaps() = default;
 #endif
 
     FGenerateMipmaps& SetImage(FRawImageID image) { Assert(image); Image = image; return (*this); }
@@ -446,6 +462,8 @@ struct FResolveImage final : details::TFrameTaskDesc<FResolveImage> {
 
 #if USE_PPE_RHITASKNAME
     FResolveImage() NOEXCEPT : TFrameTaskDesc<FResolveImage>("ResolveImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FResolveImage() = default;
 #endif
 
     FResolveImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
@@ -478,6 +496,8 @@ struct FFillBuffer final : details::TFrameTaskDesc<FFillBuffer> {
 
 #if USE_PPE_RHITASKNAME
     FFillBuffer() NOEXCEPT : TFrameTaskDesc<FFillBuffer>("FillBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FFillBuffer() = default;
 #endif
 
     FFillBuffer& SetBuffer(FRawBufferID buffer) { return SetBuffer(buffer, 0, UMax); }
@@ -516,6 +536,8 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
 
 #if USE_PPE_RHITASKNAME
     FClearColorImage() NOEXCEPT : TFrameTaskDesc<FClearColorImage>("ClearColorImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FClearColorImage() = default;
 #endif
 
     FClearColorImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
@@ -545,6 +567,8 @@ struct FClearDepthStencilImage final : details::TFrameTaskDesc<FClearDepthStenci
 
 #if USE_PPE_RHITASKNAME
     FClearDepthStencilImage() NOEXCEPT : TFrameTaskDesc<FClearDepthStencilImage>("ClearDepthStencilImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
+#else
+    FClearDepthStencilImage() = default;
 #endif
 
     FClearDepthStencilImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
@@ -574,6 +598,8 @@ struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
 
 #if USE_PPE_RHITASKNAME
     FUpdateBuffer() NOEXCEPT : TFrameTaskDesc<FUpdateBuffer>("UpdateBuffer", FDebugColorScheme::Get().HostToDeviceTransfer) {}
+#else
+    FUpdateBuffer() = default;
 #endif
 
     FUpdateBuffer& SetBuffer(FRawBufferID buffer) { Assert(buffer); DstBuffer = buffer; return (*this); }
@@ -601,6 +627,8 @@ struct FReadBuffer final : details::TFrameTaskDesc<FReadBuffer> {
 
 #if USE_PPE_RHITASKNAME
     FReadBuffer() NOEXCEPT : TFrameTaskDesc<FReadBuffer>("ReadBuffer", FDebugColorScheme::Get().DeviceToHostTransfer) {}
+#else
+    FReadBuffer() = default;
 #endif
 
     FReadBuffer& SetBuffer(FRawBufferID buffer, u32 offset, u32 size) {
@@ -635,6 +663,8 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
 
 #if USE_PPE_RHITASKNAME
     FUpdateImage() NOEXCEPT : TFrameTaskDesc<FUpdateImage>("UpdateImage", FDebugColorScheme::Get().HostToDeviceTransfer) {}
+#else
+    FUpdateImage() = default;
 #endif
 
     FUpdateImage& SetImage(FRawImageID image, const int2& offset, FMipmapLevel mipmap = Default) { return SetImage(image, int3(offset, 0), mipmap); }
@@ -686,6 +716,8 @@ struct FReadImage final : details::TFrameTaskDesc<FReadImage> {
 
 #if USE_PPE_RHITASKNAME
     FReadImage() NOEXCEPT : TFrameTaskDesc<FReadImage>("ReadImage", FDebugColorScheme::Get().DeviceToHostTransfer) {}
+#else
+    FReadImage() = default;
 #endif
 
     FReadImage& SetImage(FRawImageID image, const int2& offset, const uint2& size, FMipmapLevel mipmap = Default) { return SetImage(image, int3(offset, 0), uint3(size, 0), mipmap); }

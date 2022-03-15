@@ -43,19 +43,20 @@ struct FImageDesc {
     ,   Queues(queues)
     {}
 
-    FImageDesc& SetType(EImageDim value) { Type = value;  return *this; }
-    FImageDesc& SetView(EImageView value) NOEXCEPT;
+    FImageDesc& SetType(EImageDim value) { Type = value; return *this; }
     FImageDesc& SetFlag(EImageFlags value) { Flags |= value; return *this; }
+    FImageDesc& SetUsage(EImageUsage value) { Usage = value; return *this; }
+    FImageDesc& SetFormat(EPixelFormat value) { Format = value; return *this; }
+    FImageDesc& SetQueues(EQueueUsage value) { Queues = value; return *this; }
+    FImageDesc& SetArrayLayers(u32 value) { ArrayLayers = FImageLayer{value}; return *this; }
+    FImageDesc& SetMaxMipmaps(u32 value) { MaxLevel = FMipmapLevel{value}; return *this; }
+    FImageDesc& SetAllMipmaps() { MaxLevel = FMipmapLevel{~0u}; return *this; }
+    FImageDesc& SetSamples(u32 value) { Samples = FMultiSamples{value}; return *this; }
+
+    PPE_RHI_API FImageDesc& SetView(EImageView value) NOEXCEPT;
     PPE_RHI_API FImageDesc& SetDimension(u32 value) NOEXCEPT;
     PPE_RHI_API FImageDesc& SetDimension(const uint2& value) NOEXCEPT;
     PPE_RHI_API FImageDesc& SetDimension(const uint3& value) NOEXCEPT;
-    FImageDesc& SetUsage(EImageUsage value) { Usage = value;  return *this; }
-    FImageDesc& SetFormat(EPixelFormat value) { Format = value;  return *this; }
-    FImageDesc& SetQueues(EQueueUsage value) { Queues = value;  return *this; }
-    FImageDesc& SetArrayLayers(u32 value) { ArrayLayers = FImageLayer{value};  return *this; }
-    FImageDesc& SetMaxMipmaps(u32 value) { MaxLevel = FMipmapLevel{value};  return *this; }
-    FImageDesc& SetAllMipmaps() { MaxLevel = FMipmapLevel{~0u};  return *this; }
-    FImageDesc& SetSamples(u32 value) { Samples = FMultiSamples{value};  return *this; }
 
     PPE_RHI_API void Validate();
 
@@ -97,14 +98,14 @@ struct FImageViewDesc {
 
     PPE_RHI_API explicit FImageViewDesc(const FImageDesc& desc);
 
-    FImageViewDesc& SetType(EImageView value) { View = value;  return *this; }
-    FImageViewDesc& SetFormat(EPixelFormat value) { Format = value;  return *this; }
-    FImageViewDesc& SetBaseLevel(u32 value) { BaseLevel = FMipmapLevel{value};  return *this; }
-    FImageViewDesc& SetLevels(u32 base, u32 count) { BaseLevel = FMipmapLevel{base}; LevelCount = count;  return *this; }
-    FImageViewDesc& SetBaseLayer(u32 value) { BaseLayer = FImageLayer{value};  return *this; }
-    FImageViewDesc& SetArrayLayers(u32 base, u32 count) { BaseLayer = FImageLayer(base); LayerCount = count;  return *this; }
-    FImageViewDesc& SetSwizzle(FImageSwizzle value) { Swizzle = value;  return *this; }
-    FImageViewDesc& SetAspect(EImageAspect value) { AspectMask = value;  return *this; }
+    FImageViewDesc& SetType(EImageView value) { View = value; return *this; }
+    FImageViewDesc& SetFormat(EPixelFormat value) { Format = value; return *this; }
+    FImageViewDesc& SetBaseLevel(u32 value) { BaseLevel = FMipmapLevel{value}; return *this; }
+    FImageViewDesc& SetLevels(u32 base, u32 count) { BaseLevel = FMipmapLevel{base}; LevelCount = count; return *this; }
+    FImageViewDesc& SetBaseLayer(u32 value) { BaseLayer = FImageLayer{value}; return *this; }
+    FImageViewDesc& SetArrayLayers(u32 base, u32 count) { BaseLayer = FImageLayer(base); LayerCount = count; return *this; }
+    FImageViewDesc& SetSwizzle(FImageSwizzle value) { Swizzle = value; return *this; }
+    FImageViewDesc& SetAspect(EImageAspect value) { AspectMask = value; return *this; }
 
     PPE_RHI_API void Validate(const FImageDesc& desc);
 

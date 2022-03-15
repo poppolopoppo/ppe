@@ -28,11 +28,11 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void EscapeString_(FTextWriter& oss, const FJson::FText& str) {
+static void EscapeJson_(FTextWriter& oss, const FJson::FText& str) {
     Escape(oss, str.MakeView(), EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
-static void EscapeString_(FWTextWriter& oss, const FJson::FText& str) {
+static void EscapeJson_(FWTextWriter& oss, const FJson::FText& str) {
     Escape(oss, ToWCStr(INLINE_MALLOCA(wchar_t, str.size() + 1), str), EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, 
         },
         [&oss](const FJson::FText& value) {
             oss << Fmt::DoubleQuote;
-            EscapeString_(oss, value);
+            EscapeJson_(oss, value);
             oss << Fmt::DoubleQuote;
         },
         [&oss, &indent, minify](const FJson::FArray& value) {
@@ -205,7 +205,7 @@ static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, 
                     size_t n = value.size();
                     for (const auto& member : value) {
                         oss << indent << Fmt::DoubleQuote;
-                        EscapeString_(oss, member.first);
+                        EscapeJson_(oss, member.first);
                         oss << Fmt::DoubleQuote << Fmt::Colon;
                         if (not minify)
                             oss << Fmt::Space;
