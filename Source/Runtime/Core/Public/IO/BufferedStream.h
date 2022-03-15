@@ -13,7 +13,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 using FBufferedStreamAllocator = ALLOCATOR(Stream);
 //----------------------------------------------------------------------------
-constexpr size_t GBufferedStreamDefaultBufferSize = 256_KiB;
+// https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-2000-server/cc938632(v=technet.10)?redirectedfrom=MSDN
+constexpr size_t GBufferedStreamDefaultBufferSize = 64_KiB;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
 public:
