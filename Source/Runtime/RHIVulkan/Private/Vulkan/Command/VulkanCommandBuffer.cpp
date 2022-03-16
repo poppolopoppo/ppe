@@ -17,11 +17,12 @@ namespace RHI {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#if USE_PPE_ASSERT
 static CONSTEXPR EQueueUsage GGraphicsBit_ = EQueueUsage::Graphics;
 static CONSTEXPR EQueueUsage GComputeBit_ = EQueueUsage::Graphics | EQueueUsage::AsyncCompute;
 static CONSTEXPR EQueueUsage GRayTracingBit_ = EQueueUsage::Graphics | EQueueUsage::AsyncCompute;
-static CONSTEXPR EQueueUsage GTransferBit_ = EQueueUsage::Graphics | EQueueUsage::AsyncCompute |
-    EQueueUsage::AsyncTransfer;
+static CONSTEXPR EQueueUsage GTransferBit_ = EQueueUsage::Graphics | EQueueUsage::AsyncCompute | EQueueUsage::AsyncTransfer;
+#endif
 #if USE_PPE_RHIDEBUG
 static CONSTEXPR EDebugFlags GCmdDebugFlags_ = EDebugFlags::FullBarrier | EDebugFlags::QueueSync;
 #endif
