@@ -19,7 +19,8 @@ struct TNumeric {
 
     T Value;
 
-    CONSTEXPR explicit TNumeric(T value = DefaultValue()) : Value(value) {
+    CONSTEXPR TNumeric() : Value(DefaultValue()) {}
+    CONSTEXPR explicit TNumeric(T value) : Value(value) {
         STATIC_ASSERT(
             std::is_arithmetic_v<T> ||
             std::is_same_v<T, void*> ||
