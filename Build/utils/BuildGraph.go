@@ -354,7 +354,8 @@ func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
 	if rebuildStatic, errStatic := node.Static.joinBuild(node, "static", futures, pbar); rebuildStatic || errStatic != nil {
 		rebuild = rebuild || rebuildStatic
 		if errStatic != nil {
-			LogPanic("%v: %v", node.Alias(), errStatic)
+			LogWarning("%v: %v", node.Alias(), errStatic)
+			rebuild = true
 		}
 	}
 	if rebuildDynamic, errDynamic := node.Dynamic.joinBuild(node, "dynamic", futures, pbar); rebuildDynamic || errDynamic != nil {
@@ -388,7 +389,7 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias, needUpdate bool)
 	node.state.launch.Lock()
 	defer node.state.launch.Unlock()
 	if node.state.future == nil || needUpdate {
-		if needUpdate && node.state.future != nil {
+		if node.state.future != nil {
 			node.state.future.Join()
 		}
 		node.state.future = MakeFuture(func() (BuildStamp, error) {
@@ -426,12 +427,18 @@ type BuilderFactory[T Buildable] func(BuildGraph) T
 func (f BuilderFactory[T]) Create(g BuildGraph) T {
 	return f(g)
 }
-func (f BuilderFactory[T]) Prepare(g BuildGraph) (T, Future[BuildStamp]) {
-	node, future := g.Build(f.Create(g))
+func (f BuilderFactory[T]) Prepare(g BuildGraph, force bool) (T, Future[BuildStamp]) {
+	var node BuildNode
+	var future Future[BuildStamp]
+	if force {
+		node, future = g.ForceBuild(f.Create(g))
+	} else {
+		node, future = g.Build(f.Create(g))
+	}
 	return node.GetBuildable().(T), future
 }
 func (f BuilderFactory[T]) Build(g BuildGraph) (T, error) {
-	builder, future := f.Prepare(g)
+	builder, future := f.Prepare(g, false)
 	_, err := future.Join().Get()
 	return builder, err
 }
