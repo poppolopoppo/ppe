@@ -28,7 +28,11 @@
 // used for tracking memory allocated by instances derived from FRefCountable
 #if USE_PPE_MEMORYDOMAINS
 #   include "Allocator/TrackingMalloc.h"
-#   define NEW_REF(_DOMAIN, T, ...) PPE::NewRef< T >( MEMORYDOMAIN_TRACKING_DATA(_DOMAIN) ,## __VA_ARGS__ )
+#   if PPE_VA_OPT_SUPPORTED
+#       define NEW_REF(_DOMAIN, T, ...) PPE::NewRef< T >( MEMORYDOMAIN_TRACKING_DATA(_DOMAIN) __VA_OPT__(,) __VA_ARGS__ )
+#   else
+#       define NEW_REF(_DOMAIN, T, ...) PPE::NewRef< T >( MEMORYDOMAIN_TRACKING_DATA(_DOMAIN) ,## __VA_ARGS__ )
+#   endif
 #else
 #   include "Allocator/Malloc.h"
 #   define NEW_REF(_DOMAIN, T, ...) PPE::NewRef< T >( __VA_ARGS__ )

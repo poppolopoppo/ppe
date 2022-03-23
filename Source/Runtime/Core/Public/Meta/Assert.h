@@ -68,7 +68,7 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 #   define AssertMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))
 #   define Assert_Lightweight(...) AnalysisAssume(!!(__VA_ARGS__))
 #   define AssertMessage_NoAssume(_Message, ...) NOOP()
-#   define Ensure(...) (__VA_ARGS__)
+#   define EnsureMessage(_Message, ...) (__VA_ARGS__)
 #else
 #   define AssertMessage(_Message, ...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )

@@ -84,7 +84,7 @@ template <typename T, typename _Allocator>
 template <typename _It>
 void TVector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_tag ) {
     size_type count = 0;
-    for (; (count < _size) & (first != last); ++count, ++first)
+    for (; (count < _size) && (first != last); ++count, ++first)
         _data[count] = *first;
 
     Assert((first == last) || (count == _size));
@@ -272,11 +272,14 @@ template <typename T, typename _Allocator>
 auto TVector<T, _Allocator>::erase(const_iterator pos) -> iterator {
     Assert_NoAssume(end() == pos || AliasesToContainer(pos));
 
-    const u32 i = checked_cast<u32>(std::distance(cbegin(), pos));
-    std::rotate(begin() + i, begin() + (i + 1), end());
+    const size_t index = std::distance(cbegin(), pos);
+    {
+        const iterator it = begin() + index;
+        std::rotate(it, it + 1, end());
+    }
 
     pop_back();
-    return (begin() + i);
+    return (begin() + index);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

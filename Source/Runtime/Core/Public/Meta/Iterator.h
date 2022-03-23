@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Meta/Algorithm.h"
 #include "Meta/Hash_fwd.h"
 #include "Meta/TypeTraits.h"
 #include "HAL/PlatformMacros.h"
@@ -349,7 +350,7 @@ public:
         NextFiltered_();
     }
 
-    CONSTEXPR explicit TFilterIterator(_It first, _It last, _Filter&& filter)
+    CONSTEXPR explicit TFilterIterator(_It first, _It last, _Filter filter)
     :   _filter(std::forward<_Filter>(filter))
     ,   _first(first)
     ,   _last(last) {
@@ -437,7 +438,7 @@ public:
     TOutputIterator() = default;
 
     CONSTEXPR TOutputIterator(_It it) : _it(it) {}
-    CONSTEXPR TOutputIterator(_It it, _Transform&& transform) : _transform(std::forward<_Transform>(transform)), _it(it) {}
+    CONSTEXPR TOutputIterator(_It it, _Transform transform) : _transform(std::forward<_Transform>(transform)), _it(it) {}
 
     CONSTEXPR TOutputIterator(const TOutputIterator& ) = default;
     CONSTEXPR TOutputIterator& operator =(const TOutputIterator& ) = default;
@@ -668,9 +669,9 @@ public:
 
     CONSTEXPR bool Contains(const_reference value) const { return Find(value) != end(); }
 
-    CONSTEXPR auto LowerBound(const_reference value) const { return std::lower_bound(begin(), end(), value); }
+    CONSTEXPR auto LowerBound(const_reference value) const { return Meta::LowerBound(begin(), end(), value); }
     template <typename _Pred>
-    CONSTEXPR auto LowerBound(_Pred&& pred) const { return std::lower_bound(begin(), end(), std::forward<_Pred>(pred)); }
+    CONSTEXPR auto LowerBound(_Pred&& pred) const { return Meta::LowerBound(begin(), end(), std::forward<_Pred>(pred)); }
 
     CONSTEXPR auto MaxElement() const { return std::max_element(begin(), end()); }
     CONSTEXPR auto MinElement() const { return std::min_element(begin(), end()); }
@@ -728,17 +729,17 @@ CONSTEXPR TIterable< decltype(std::declval<const T&>().begin()) > MakeConstItera
 }
 //----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
-CONSTEXPR TIterable<TOutputIterator<_It, _Transform>> MakeOutputIterable(_It first, _It last, _Transform&& transform) NOEXCEPT {
+CONSTEXPR TIterable<TOutputIterator<_It, _Transform>> MakeOutputIterable(_It first, _It last, _Transform transform) NOEXCEPT {
     return MakeIterable(
-        TOutputIterator<_It, _Transform>(first, std::forward<_Transform>(transform)),
-        TOutputIterator<_It, _Transform>(last, std::forward<_Transform>(transform)) );
+        TOutputIterator<_It, _Transform>(first, transform),
+        TOutputIterator<_It, _Transform>(last, transform) );
 }
 //----------------------------------------------------------------------------
 template <typename _It, typename _Filter>
-CONSTEXPR TIterable<TFilterIterator<_It, _Filter>> MakeFilteredIterable(_It first, _It last, _Filter&& filter) NOEXCEPT {
+CONSTEXPR TIterable<TFilterIterator<_It, _Filter>> MakeFilteredIterable(_It first, _It last, _Filter filter) NOEXCEPT {
     return MakeIterable(
-        TFilterIterator<_It, _Filter>(first, last, std::forward<_Filter>(filter)),
-        TFilterIterator<_It, _Filter>(last, last, std::forward<_Filter>(filter)) );
+        TFilterIterator<_It, _Filter>(first, last, filter),
+        TFilterIterator<_It, _Filter>(last, last, filter) );
 }
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
