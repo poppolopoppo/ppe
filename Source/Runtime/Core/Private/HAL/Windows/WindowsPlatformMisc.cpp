@@ -597,7 +597,8 @@ bool FWindowsPlatformMisc::QueryRegKey(const ::HKEY key, const wchar_t* subKey, 
                 ::DWORD writtenInBytes = checked_cast<::DWORD>(buffer.SizeInBytes());
                 if (::RegQueryValueExW(k, name, NULL, NULL, (::LPBYTE)buffer.data(), &writtenInBytes) == ERROR_SUCCESS) {
                     succeed = true;
-                    pValue->assign(buffer.CutBeforeConst(checked_cast<size_t>(writtenInBytes/sizeof(wchar_t))));
+                    FWStringView value = MakeCStringView(buffer.data());
+                    pValue->assign(Strip(value));
                 }
                 else {
                     LOG_LASTERROR(HAL, L"RegQueryValueExW()");
