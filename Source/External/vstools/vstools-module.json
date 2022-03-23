@@ -16,7 +16,6 @@
 				"/MD"
 			],
 			"LinkerOptions": [
-				"Advapi32.lib",
 				"/LTCG"
 			]
 		}
