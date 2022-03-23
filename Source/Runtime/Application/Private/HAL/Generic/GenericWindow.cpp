@@ -284,7 +284,7 @@ void FGenericWindow::AddListener(TPtrRef<IWindowListener>&& listener) {
 //----------------------------------------------------------------------------
 void FGenericWindow::RemoveListener(const TPtrRef<IWindowListener>& listener) {
     Assert(listener);
-    Remove_AssertExists(*_listeners.LockExclusive(), std::move(listener));
+    Remove_AssertExists(*_listeners.LockExclusive(), listener);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

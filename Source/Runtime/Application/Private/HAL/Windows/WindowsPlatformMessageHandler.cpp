@@ -36,14 +36,15 @@ bool FWindowsPlatformMessageHandler::PumpMessages(FWindowsWindow& window) {
     bool alive = true;
 
     ::HWND const hWnd = window.HandleWin32();
-    Assert(hWnd);
 
     ::MSG msg;
     while (::PeekMessageW(&msg, hWnd, 0, 0, PM_REMOVE)) {
         switch (LOWORD(msg.message)) {
         case WM_QUIT:
+            // see FWindowsWindow::WindowProcWin32()#WM_DESTROY
             alive = false;
             break;
+
         default:
             ::TranslateMessage(&msg);
             ::DispatchMessageW(&msg);

@@ -136,7 +136,7 @@ protected:
 
 private:
     FWString _title;
-    FNativeHandle _handle;
+    FNativeHandle _handle{ nullptr };
 
     int _left, _top;
     u32 _width, _height;

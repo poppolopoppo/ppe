@@ -516,22 +516,25 @@ bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lPara
         break;
 
     // Window events :
-    case WM_SHOWWINDOW:
-        OnWindowShow(TRUE == wParam);
-        break;
-    case WM_CLOSE:
-        OnWindowClose();
-        break;
     case WM_MOVE:
         OnWindowMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
     case WM_SIZE:
         OnWindowResize(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
-    case WM_DESTROY:
+    case WM_SHOWWINDOW:
+        OnWindowShow(TRUE == wParam);
+        break;
+    case WM_CLOSE:
         OnWindowClose();
+        break;
+    case WM_DESTROY:
         if (Type() == EWindowType::Main)
             ::PostQuitMessage(0);
+        break;
+
+    case WM_NCDESTROY:
+        SetHandleWin32(nullptr);
         return true;
 
     case FWindowsPlatformNotification::WM_SYSTRAY:
