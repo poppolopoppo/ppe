@@ -27,7 +27,12 @@ namespace Meta {
 #   define ALIGN(_BOUNDARY) alignas(_BOUNDARY)
 #endif
 //----------------------------------------------------------------------------
-inline CONSTEXPR CONSTF bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
+inline CONSTEXPR CONSTF bool IsPow2OrZero(size_t u) {
+    return ((u & (u - 1)) == 0);
+}
+inline CONSTEXPR CONSTF bool IsPow2(size_t u) {
+    return ((u & (u - 1)) == 0 && u);
+}
 //----------------------------------------------------------------------------
 template <size_t _Pow>
 inline CONSTEXPR CONSTF bool IsPowOf(size_t u) {
