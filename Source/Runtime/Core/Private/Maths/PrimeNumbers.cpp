@@ -11,7 +11,7 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 static size_t ClosestPrimeIndexFloor_(const T (&primes)[_Dim], T v) {
-    const auto it = std::lower_bound(std::begin(primes), std::end(primes), v);
+    const auto it = Meta::LowerBound(std::begin(primes), std::end(primes), v);
     Assert(it != std::end(primes));
     return std::distance(std::begin(primes), it);
 }

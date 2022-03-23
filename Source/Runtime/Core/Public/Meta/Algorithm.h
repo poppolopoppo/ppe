@@ -48,13 +48,25 @@ CONSTEXPR void Quicksort(T* p, int n) NOEXCEPT {
     Quicksort(p, n, Meta::TLess<T>{});
 }
 //----------------------------------------------------------------------------
+// Binary-search
+//----------------------------------------------------------------------------
+template <typename _It, typename _Value, typename _Pred>
+CONSTEXPR CONSTF _It LowerBound(_It first, _It last, const _Value& value, _Pred pred) NOEXCEPT {
+    return std::lower_bound(first, last, value, pred);
+}
+//----------------------------------------------------------------------------
+template <typename _It, typename _Value>
+CONSTEXPR CONSTF _It LowerBound(_It first, _It last, const _Value& value) NOEXCEPT {
+    return std::lower_bound(first, last, value, Meta::TLess{});
+}
+//----------------------------------------------------------------------------
 // Constexpr lexicographical compare
 //----------------------------------------------------------------------------
 template <typename _It, typename _Jt, typename _Less>
-constexpr bool LexicographicalCompare(
+CONSTEXPR CONSTF bool LexicographicalCompare(
     _It first1, _It last1,
     _Jt first2, _Jt last2,
-    _Less compare ) {
+    _Less compare ) NOEXCEPT {
     for (; first2 != last2; ++first1, (void)++first2) {
         if (first1 == last1 || compare(*first1, *first2))
             return true;
@@ -67,7 +79,7 @@ constexpr bool LexicographicalCompare(
 }
 //----------------------------------------------------------------------------
 template <typename _It, typename _Jt>
-constexpr bool LexicographicalCompare(_It first1, _It last1, _Jt first2, _Jt last2) {
+CONSTEXPR CONSTF bool LexicographicalCompare(_It first1, _It last1, _Jt first2, _Jt last2) NOEXCEPT {
     return LexicographicalCompare(first1, last1, first2, last2,
         TLess<typename std::iterator_traits<_It>::value_type>{} );
 }
