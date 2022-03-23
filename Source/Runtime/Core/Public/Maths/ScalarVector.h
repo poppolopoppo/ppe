@@ -989,7 +989,7 @@ CONSTEXPR const TScalarVector<T, _Dim>& ExpandScalarVectorExpr(const TScalarVect
 template <typename U, typename T, size_t _Dim>
 CONSTEXPR TScalarVector<U, _Dim> PromoteScalarVectorExpr(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> TScalarVector<U, _Dim> {
-        return { v.template get<idx>()... };
+        return TScalarVector<U, _Dim>{ v.template get<idx>()... };
     });
 }
 //----------------------------------------------------------------------------

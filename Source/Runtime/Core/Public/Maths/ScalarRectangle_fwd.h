@@ -11,6 +11,8 @@ class TScalarRectangle;
 //----------------------------------------------------------------------------
 typedef TScalarRectangle<i32, 2> FRectangleI;
 //----------------------------------------------------------------------------
+typedef TScalarRectangle<u32, 2> FRectangleU;
+//----------------------------------------------------------------------------
 typedef TScalarRectangle<float, 2> FRectangleF;
 //----------------------------------------------------------------------------
 typedef TScalarRectangle<float, 3> FViewport;
