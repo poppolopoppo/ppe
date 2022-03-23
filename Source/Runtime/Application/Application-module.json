@@ -3,6 +3,9 @@
 		"Runtime/Core",
 		"Runtime/RHI"
 	],
+	"PrivateDependencies": [
+		"Runtime/VFS"
+	],
 	"HAL": {
 		"Windows": {
 			"ExtraFiles": [

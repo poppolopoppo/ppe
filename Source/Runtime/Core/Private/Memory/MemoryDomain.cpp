@@ -181,9 +181,10 @@ void ReportTrackingDatas_(
 
     oss << L"  Reporting tracking data :" << Eol;
 
-    CONSTEXPR size_t width = 175;
-    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-44}";
+    CONSTEXPR size_t width = 194;
+    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-35}";
     CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:6} {1:8} | {2:9} {3:9} | {4:10} {5:10}   ";
+    CONSTEXPR wchar_t fmtFooter[] = L"|| {0:10} {1:10}   ";
 
     const auto hr = Fmt::Repeat(L'-', width);
 
@@ -210,6 +211,10 @@ void ReportTrackingDatas_(
         Fmt::AlignCenter(MakeStringView(L"Max")),
 
         Fmt::AlignCenter(MakeStringView(L"Size")),
+        Fmt::AlignCenter(MakeStringView(L"Peak"))
+        );
+    Format(oss, fmtFooter,
+        Fmt::AlignCenter(MakeStringView(L"Wasted")),
         Fmt::AlignCenter(MakeStringView(L"Peak"))
         );
 
@@ -241,14 +246,20 @@ void ReportTrackingDatas_(
             Fmt::SizeInBytes(usr.MinSize),
             Fmt::SizeInBytes(usr.MaxSize),
             Fmt::SizeInBytes(usr.TotalSize),
-            Fmt::SizeInBytes(usr.PeakSize) );
+            Fmt::SizeInBytes(usr.PeakSize)
+            );
         Format(oss, fmtSnapshot,
             Fmt::CountOfElements(sys.NumAllocs),
             Fmt::CountOfElements(sys.PeakAllocs),
             Fmt::SizeInBytes(sys.MinSize),
             Fmt::SizeInBytes(sys.MaxSize),
             Fmt::SizeInBytes(sys.TotalSize),
-            Fmt::SizeInBytes(sys.PeakSize) );
+            Fmt::SizeInBytes(sys.PeakSize)
+            );
+        Format(oss, fmtFooter,
+            Fmt::SizeInBytes(sys.TotalSize - usr.TotalSize),
+            Fmt::SizeInBytes(sys.PeakSize - usr.PeakSize)
+            );
 
         oss << Eol;
     }
@@ -268,7 +279,7 @@ void FetchAllTrackingDataSorted_(FTrackingDataRegistry_::FMemoryDomainsList* pDa
             while (lhs->Level() > rhs->Level()) lhs = lhs->Parent();
             while (rhs->Level() > lhs->Level()) rhs = rhs->Parent();
 
-            for (; !!lhs & !!rhs; lhs = lhs->Parent(), rhs = rhs->Parent()) {
+            for (; !!lhs && !!rhs; lhs = lhs->Parent(), rhs = rhs->Parent()) {
                 const int cmp = Compare(
                     MakeCStringView(lhs->Name()),
                     MakeCStringView(rhs->Name()) );
@@ -357,7 +368,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     }
 
     const auto distribution = [](i64 sz) -> float {
-        return (std::log((float)sz + 1.f) - std::log(1.f));
+        return (std::log(std::powf(static_cast<float>(sz), 2.0) + 1.f) - std::log(1.f));
     };
 
     const float distributionScale = distribution(maxCount);
@@ -458,34 +469,36 @@ void ReportCsvTrackingData(FTextWriter* optional/* = nullptr */) {
     FStringBuilder sb;
     FTextWriter& oss = (optional ? *optional : sb);
 
-    oss << "Name;Segment;NumAllocs;MinSize;MaxSize;TotalSize;PeakAllocs;PeakSize;AccumulatedAllocs;AccumulatedSize" << Eol;
+    oss << "sep=;" << Eol; // for Excel
+    oss << "Level;Name;Segment;NumAllocs;MinSize;MaxSize;TotalSize;PeakAllocs;PeakSize;AccumulatedAllocs;AccumulatedSize" << Eol;
 
     for (const FMemoryTracking* data : datas) {
-        const FMemoryTracking::FSnapshot usr = data->User();
-        const FMemoryTracking::FSnapshot sys = data->System();
-
+        oss << data->Level() << Fmt::SemiColon;
         DumpTrackingDataFullName_(oss, *data);
 
+        const FMemoryTracking::FSnapshot usr = data->User();
         oss << ";USR;"
-            << usr.NumAllocs << Fmt::Colon
-            << usr.MinSize << Fmt::Colon
-            << usr.MaxSize << Fmt::Colon
-            << usr.TotalSize << Fmt::Colon
-            << usr.PeakAllocs << Fmt::Colon
-            << usr.PeakSize << Fmt::Colon
-            << usr.AccumulatedAllocs << Fmt::Colon
+            << usr.NumAllocs << Fmt::SemiColon
+            << usr.MinSize << Fmt::SemiColon
+            << usr.MaxSize << Fmt::SemiColon
+            << usr.TotalSize << Fmt::SemiColon
+            << usr.PeakAllocs << Fmt::SemiColon
+            << usr.PeakSize << Fmt::SemiColon
+            << usr.AccumulatedAllocs << Fmt::SemiColon
             << usr.AccumulatedSize << Eol;
 
+        oss << data->Level() << Fmt::SemiColon;
         DumpTrackingDataFullName_(oss, *data);
 
+        const FMemoryTracking::FSnapshot sys = data->System();
         oss << ";SYS;"
-            << sys.NumAllocs << Fmt::Colon
-            << sys.MinSize << Fmt::Colon
-            << sys.MaxSize << Fmt::Colon
-            << sys.TotalSize << Fmt::Colon
-            << sys.PeakAllocs << Fmt::Colon
-            << sys.PeakSize << Fmt::Colon
-            << sys.AccumulatedAllocs << Fmt::Colon
+            << sys.NumAllocs << Fmt::SemiColon
+            << sys.MinSize << Fmt::SemiColon
+            << sys.MaxSize << Fmt::SemiColon
+            << sys.TotalSize << Fmt::SemiColon
+            << sys.PeakAllocs << Fmt::SemiColon
+            << sys.PeakSize << Fmt::SemiColon
+            << sys.AccumulatedAllocs << Fmt::SemiColon
             << sys.AccumulatedSize << Eol;
     }
 

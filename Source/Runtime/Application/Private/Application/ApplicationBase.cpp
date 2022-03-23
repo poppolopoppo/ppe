@@ -11,6 +11,17 @@
 #include "Modular/ModularDomain.h"
 #include "Time/Timeline.h"
 
+#include "Application.h"
+#include "Diagnostic/BuildVersion.h"
+#include "Diagnostic/Logger.h"
+#include "IO/BufferedStream.h"
+#include "IO/ConstNames.h"
+#include "IO/Filename.h"
+#include "IO/Format.h"
+#include "IO/String.h"
+#include "IO/StringBuilder.h"
+#include "VirtualFileSystem_fwd.h"
+
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
@@ -20,7 +31,7 @@ namespace {
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
 static bool ShouldUseDebugSystray_() {
-    return FCurrentProcess::StartedWithDebugger();
+    return true;//FCurrentProcess::StartedWithDebugger();
 }
 #endif
 //----------------------------------------------------------------------------
@@ -69,6 +80,32 @@ static void SetupDebugMenuInSystray_() {
         L"Report all tracking data",
         []() {
         ReportAllTrackingData();
+    });
+    FAppNotify::AddSystrayCommand(
+        L"Memory",
+        L"Report tracking data to CSV",
+    []() {
+        const FDirpath savePath(FFSConstNames::SavedDir(), {
+            FDirname{ L"TrackingData" } });
+
+        if (VFS_CreateDirectory(savePath)) {
+            const FFilename saveFilename{
+                savePath,
+                FBasename{
+                    StringFormat(L"{0}_{1}", RunningApp().Name(), CurrentBuildVersion().Family),
+                    FFSConstNames::Csv() }};
+
+            const UStreamWriter saveWriter{
+                VFS_RollFile(saveFilename, EAccessPolicy::Binary) };
+
+            if (saveWriter) {
+                LOG(Application, Info, L"writing CSV tracking data to file: {0}", saveFilename);
+                UsingBufferedStream(saveWriter.get(), [](IBufferedStreamWriter* buffered) {
+                    FTextWriter oss{ buffered };
+                    ReportCsvTrackingData(&oss);
+                });
+            }
+        }
     });
 
     FAppNotify::AddSystrayCommand(

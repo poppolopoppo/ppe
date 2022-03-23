@@ -12,6 +12,7 @@
     _Macro(FExtname,         Z,              L".z") \
     \
     _Macro(FExtname,         Bnx,            L".bnx") \
+    _Macro(FExtname,         Csv,            L".csv") \
     _Macro(FExtname,         Json,           L".json") \
     _Macro(FExtname,         Txt,            L".txt") \
     _Macro(FExtname,         Xml,            L".xml") \
