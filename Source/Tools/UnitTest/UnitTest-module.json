@@ -11,6 +11,18 @@
 		"Runtime/Network",
 		"Runtime/Application"
 	],
+	"IsolatedFiles": [
+		"Private/Test_Allocators.cpp",
+		"Private/Test_Containers.cpp",
+		"Private/Test_Format.cpp",
+		"Private/Test_Maths.cpp",
+		"Private/Test_Network.cpp",
+		"Private/Test_Process.cpp",
+		"Private/Test_RTTI.cpp",
+		"Private/Test_Thread.cpp",
+		"Private/Test_VFS.cpp",
+		"Private/Test_XML.cpp"
+	],
 	"ExcludedFiles": [
 		"Private/Test_Pixmap.cpp",
 		"Private/Test_Lattice.cpp"
