@@ -88,7 +88,7 @@ public:
     bool Valid() const { return (!!Pipeline); }
 
     const FVulkanPipelineResourceSet& Resources() const { return _resources; }
-    const TMemoryView<const FRectangleI>& Scissors() const { return _scissors; }
+    const TMemoryView<const FRectangleU>& Scissors() const { return _scissors; }
 
     TMemoryView<const FVulkanLocalBuffer* const> VertexBuffers() const { return _vertexBuffers.MakeConstView().CutBeforeConst(_vertexBufferCount); }
     TMemoryView<const VkDeviceSize> VertexOffsets() const { return _vertexOffsets.MakeConstView().CutBeforeConst(_vertexBufferCount); }
@@ -102,7 +102,7 @@ private:
     FVertexStrides _vertexStrides;
     u32 _vertexBufferCount{ 0 };
 
-    TMemoryView<const FRectangleI> _scissors;
+    TMemoryView<const FRectangleU> _scissors;
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -222,11 +222,11 @@ public:
     bool Valid() const { return (!!Pipeline); }
 
     const FVulkanPipelineResourceSet& Resources() const { return _resources; }
-    const TMemoryView<const FRectangleI>& Scissors() const { return _scissors; }
+    const TMemoryView<const FRectangleU>& Scissors() const { return _scissors; }
 
 private:
     FVulkanPipelineResourceSet _resources;
-    TMemoryView<const FRectangleI> _scissors;
+    TMemoryView<const FRectangleU> _scissors;
 };
 } //!details
 //----------------------------------------------------------------------------

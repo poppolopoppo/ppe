@@ -65,13 +65,13 @@ struct FRenderPassDesc {
     FShadingRate ShadingRate;
     FRenderTargets RenderTargets;
     FViewports Viewports;
-    FRectangleI Area;
+    FRectangleU Area;
 
     FPipelineResourceSet PerPassResources;
 
     FRenderPassDesc() = default;
-    explicit FRenderPassDesc(const FRectangleI& area) : Area(area) { Assert(Area.HasPositiveExtentsStrict()); }
-    explicit FRenderPassDesc(const uint2& extent) : FRenderPassDesc(FRectangleI{ extent.CastChecked<int>() }) {}
+    explicit FRenderPassDesc(const FRectangleU& area) : Area(area) { Assert(Area.HasPositiveExtentsStrict()); }
+    explicit FRenderPassDesc(const uint2& extent) : FRenderPassDesc(FRectangleU{ extent }) {}
 
     FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image);
     FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, EAttachmentLoadOp loadOp, EAttachmentStoreOp storeOp);

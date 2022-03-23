@@ -28,7 +28,8 @@ static EShaderLangFormat VulkanApiToVersion_(u32 apiVersion) {
         if (2 == minor) return EShaderLangFormat::Vulkan_120;
     }
 
-    AssertNotImplemented();
+    LOG(RHI, Warning, L"vulkan: missing support for API v{0}.{1}, fallback to v1.2", major, minor);
+    return EShaderLangFormat::Vulkan_120;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -243,7 +244,7 @@ void FVulkanDevice::SetupDeviceFeatures_() {
     _enabled.ShaderClock = HasExtension(EVulkanDeviceExtension::KHR_shader_clock);
 #endif
 #ifdef VK_KHR_timeline_semaphore
-    _enabled.TimelineSemaphore = HasExtension(EVulkanDeviceExtension::KHR_timeline_semaphore);
+    _enabled.TimelineSemaphore = (_vkVersion >= EShaderLangFormat::Vulkan_120 or HasExtension(EVulkanDeviceExtension::KHR_timeline_semaphore));
 #endif
 #ifdef VK_KHR_push_descriptor
     _enabled.PushDescriptor = HasExtension(EVulkanDeviceExtension::KHR_push_descriptor);
@@ -303,20 +304,20 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #endif
 #ifdef VK_KHR_shader_float16_int8
         VkPhysicalDeviceShaderFloat16Int8FeaturesKHR shader_float16_int8_feat = {};
-        if (_enabled.Float16Arithmetic or _enabled.Int8Arithmetic)
+        if (_enabled.Float16Arithmetic or _enabled.Int8Arithmetic or _vkVersion >= EShaderLangFormat::Vulkan_120)
             enableFeature(&shader_float16_int8_feat, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR);
 #endif
 #ifdef VK_KHR_timeline_semaphore
         VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timeline_sem_feat = {};
-        if (_enabled.TimelineSemaphore)
+        if (_enabled.TimelineSemaphore or _vkVersion >= EShaderLangFormat::Vulkan_120)
             enableFeature(&timeline_sem_feat, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR);
 #endif
 #ifdef VK_KHR_buffer_device_address
-        if (_enabled.BufferAddress)
+        if (_enabled.BufferAddress or _vkVersion >= EShaderLangFormat::Vulkan_120)
             enableFeature(&_caps.BufferDeviceAddress, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR);
 #endif
 #ifdef VK_KHR_shader_atomic_int64
-        if (_enabled.ShaderAtomicInt64)
+        if (_enabled.ShaderAtomicInt64 or _vkVersion >= EShaderLangFormat::Vulkan_120)
             enableFeature(&_caps.ShaderAtomicInt64, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR);
 #endif
 #ifdef VK_KHR_vulkan_memory_model

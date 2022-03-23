@@ -16,6 +16,7 @@ enum class EPixelValueType : u32 {
     UFloat          = 1 << 1,
     UNorm           = 1 << 2,
     SNorm           = 1 << 3,
+    AnyFloat        = SFloat|UFloat|UNorm|SNorm,
     Int             = 1 << 4,
     UInt            = 1 << 5,
     Depth           = 1 << 6,

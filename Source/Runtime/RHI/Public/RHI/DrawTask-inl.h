@@ -12,7 +12,7 @@ namespace RHI {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename _Task>
-_Task& TDrawCallDesc<_Task>::AddResources(const FDescriptorSetID& id, const FPipelineResources* res) {
+_Task& TDrawCallDesc<_Task>::AddResources(const FDescriptorSetID& id, const PCPipelineResources& res) {
     Assert(id);
     Assert(res);
     Resources.Emplace_Overwrite(id, res);
@@ -20,7 +20,7 @@ _Task& TDrawCallDesc<_Task>::AddResources(const FDescriptorSetID& id, const FPip
 }
 //----------------------------------------------------------------------------
 template <typename _Task>
-_Task& TDrawCallDesc<_Task>::AddScissor(const FRectangleI& clip) {
+_Task& TDrawCallDesc<_Task>::AddScissor(const FRectangleU& clip) {
     Assert(clip.HasPositiveExtents());
     Emplace_Back(Scissors, clip);
     return static_cast<_Task&>(*this);

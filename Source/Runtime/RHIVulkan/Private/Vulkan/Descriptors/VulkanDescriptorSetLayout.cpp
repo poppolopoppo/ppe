@@ -163,7 +163,7 @@ void FVulkanDescriptorSetLayout::BindDescriptor_(FBindings* pBinding, FInternalP
     pool.ElementCount += arraySize;
 
     VkDescriptorSetLayoutBinding bind{};
-    bind.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    bind.descriptorType = type;
     bind.stageFlags = VkCast(stageFlags);
     bind.binding = bindingIndex;
     bind.descriptorCount = arraySize;

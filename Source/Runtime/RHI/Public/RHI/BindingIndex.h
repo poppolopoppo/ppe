@@ -20,7 +20,7 @@ public:
     ,   _unique(checked_cast<index_t>(unique))
     {}
 
-    index_t PerResource() const { return _unique; }
+    index_t PerResource() const { return _perResource; }
     index_t Unique() const { return _unique; }
 
     index_t GLBinding() const { return _perResource; }

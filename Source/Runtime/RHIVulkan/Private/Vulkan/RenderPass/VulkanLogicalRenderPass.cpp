@@ -122,8 +122,8 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 
         // add resource state flags
 
-        if (desc.Area.Left() == 0 and desc.Area.Width() == checked_cast<i32>(sharedImg->Width()) and
-            desc.Area.Top() == 0 and desc.Area.Height() == checked_cast<i32>(sharedImg->Height()) ) {
+        if (desc.Area.Left() == 0 and desc.Area.Width() == sharedImg->Width() and
+            desc.Area.Top() == 0 and desc.Area.Height() == sharedImg->Height() ) {
 
             if (src.LoadOp == EAttachmentLoadOp::Clear or
                 src.LoadOp == EAttachmentLoadOp::Invalidate )

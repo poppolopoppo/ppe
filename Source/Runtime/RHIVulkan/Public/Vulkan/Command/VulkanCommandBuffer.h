@@ -64,7 +64,7 @@ public:
     struct TLocalPool {
         TPool<T, _GlobalPool::MaxSize / _MaxChunks,  _MaxChunks> Pool;
         TStaticArray<FResourceIndex, _GlobalPool::MaxSize> ToLocal;
-        TRange<u32> LocalIndexRange{ 0, 0 };
+        TRange<u32> LocalIndexRange{};
         TRange<u32> GlobalIndexRange{ 0, TPool<T, _GlobalPool::MaxSize / _MaxChunks,  _MaxChunks>::MaxSize };
     };
 

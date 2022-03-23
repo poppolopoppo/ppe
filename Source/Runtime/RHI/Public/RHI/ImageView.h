@@ -62,7 +62,8 @@ struct FImageView {
         Assert(z < _dimensions.z);
 
         const size_t rowSize = RowSize() / sizeof(value_type);
-        auto row = _parts.SubRange(_slicePitch * z + _rowPitch * y, rowSize);
+        const size_t rowOffset = static_cast<size_t>(_slicePitch) * z + static_cast<size_t>(_rowPitch) * y;
+        auto row = _parts.SubRange(rowOffset, rowSize);
 
         Assert_NoAssume(row.size() == rowSize);
         return row;

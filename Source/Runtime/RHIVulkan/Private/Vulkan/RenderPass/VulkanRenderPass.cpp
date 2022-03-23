@@ -90,18 +90,27 @@ static hash_t hash_value(const VkAttachmentReference& ref) NOEXCEPT {
 // VkSubpassDescription
 //----------------------------------------------------------------------------
 static bool operator ==(const VkSubpassDescription& lhs, const VkSubpassDescription& rhs) NOEXCEPT {
+    if (not (lhs.flags == rhs.flags && lhs.pipelineBindPoint == rhs.pipelineBindPoint))
+        return false;
+
+    if (not (MakeRHIView_(lhs.pInputAttachments, lhs.inputAttachmentCount).RangeEqual(MakeRHIView_(rhs.pInputAttachments, rhs.inputAttachmentCount))) &&
+            (MakeRHIView_(lhs.pColorAttachments, lhs.colorAttachmentCount).RangeEqual(MakeRHIView_(rhs.pColorAttachments, rhs.colorAttachmentCount))))
+        return false;
 
     const auto lhsResolve = (lhs.pResolveAttachments ? MakeRHIView_(lhs.pResolveAttachments, lhs.colorAttachmentCount) : Default);
     const auto rhsResolve = (rhs.pResolveAttachments ? MakeRHIView_(rhs.pResolveAttachments, rhs.colorAttachmentCount) : Default);
+    if (not (lhsResolve.RangeEqual(rhsResolve)))
+        return false;
 
-    return (
-        (lhs.flags == rhs.flags) &&
-        (lhs.pipelineBindPoint == rhs.pipelineBindPoint) &&
-        (MakeRHIView_(lhs.pInputAttachments, lhs.inputAttachmentCount).RangeEqual(MakeRHIView_(rhs.pInputAttachments, rhs.inputAttachmentCount))) &&
-        (MakeRHIView_(lhs.pColorAttachments, lhs.colorAttachmentCount).RangeEqual(MakeRHIView_(rhs.pColorAttachments, rhs.colorAttachmentCount))) &&
-        (lhsResolve.RangeEqual(rhsResolve)) &&
-        (MakeRHIView_(lhs.pDepthStencilAttachment, 1).RangeEqual(MakeRHIView_(rhs.pDepthStencilAttachment, 1))) &&
-        (TMemoryView(lhs.pPreserveAttachments, lhs.preserveAttachmentCount).RangeEqual(TMemoryView(rhs.pPreserveAttachments, rhs.preserveAttachmentCount))) );
+    const auto lhsDepth = (lhs.pDepthStencilAttachment ? MakeRHIView_(lhs.pDepthStencilAttachment, 1) : Default);
+    const auto rhsDepth = (rhs.pDepthStencilAttachment ? MakeRHIView_(rhs.pDepthStencilAttachment, 1) : Default);
+    if (not (lhsDepth.RangeEqual(rhsDepth)))
+        return false;
+
+    if (not (TMemoryView(lhs.pPreserveAttachments, lhs.preserveAttachmentCount).RangeEqual(TMemoryView(rhs.pPreserveAttachments, rhs.preserveAttachmentCount))))
+        return false;
+
+    return true;
 }
 //----------------------------------------------------------------------------
 static hash_t hash_value(const VkSubpassDescription& desc) NOEXCEPT {

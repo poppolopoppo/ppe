@@ -115,7 +115,7 @@ private:
     void BindPipelinePerPassStates_(const FVulkanLogicalRenderPass& rp, VkPipeline vkPipeline);
 
     void PushContants_(const FVulkanPipelineLayout& layout, const FPushConstantDatas& pushConstants);
-    void SetScissor_(const FVulkanLogicalRenderPass& rp, const TMemoryView<const FRectangleI>& rects);
+    void SetScissor_(const FVulkanLogicalRenderPass& rp, const TMemoryView<const FRectangleU>& rects);
     void SetDynamicStates_(const FDrawDynamicStates& states);
     void BindIndexBuffer_(VkBuffer indexBuffer, VkDeviceSize indexOffset, VkIndexType indexType);
     void BindShadingRateImage_(VkImageView view);

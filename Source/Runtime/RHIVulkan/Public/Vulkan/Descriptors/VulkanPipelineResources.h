@@ -18,9 +18,14 @@ namespace RHI {
 class PPE_RHIVULKAN_API FVulkanPipelineResources final : Meta::FNonCopyable {
 public:
     struct FUpdateDescriptors {
-        SLABHEAP_POOLED(RHIDescriptor) Allocator;
+        SLAB_ALLOCATOR(RHIDescriptor) Allocator;
         TMemoryView<VkWriteDescriptorSet> Descriptors;
         u32 DescriptorIndex{ 0 };
+
+        template <typename T>
+        TMemoryView<T> AllocateT(size_t n) NOEXCEPT {
+            return TAllocatorTraits<Meta::TDecay<decltype(Allocator)>>::template AllocateT<T>(Allocator, n);
+        }
 
         VkWriteDescriptorSet& NextWriteDescriptorSet() NOEXCEPT {
             VkWriteDescriptorSet& wds = Descriptors[DescriptorIndex++];
@@ -84,12 +89,12 @@ public:
     static void CheckTextureType(const FUniformID& id, u32 index, const FVulkanImage& img, const FImageViewDesc& desc, EImageSampler shaderType);
 
 private:
-    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value);
-    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value);
-    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value);
-    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value);
-    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value);
-    NODISCARD static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value);
+    static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value);
+    static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value);
+    static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value);
+    static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value);
+    static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value);
+    static bool AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value);
 
     TRHIThreadSafe<FInternalResources> _resources;
 

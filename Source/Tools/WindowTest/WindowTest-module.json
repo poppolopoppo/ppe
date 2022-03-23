@@ -9,8 +9,13 @@
 		"Runtime/RHIVulkan",
 		"Runtime/Application"
 	],
+	"IsolatedFiles": [
+		"Private/Drawing/Test_Draw1.cpp",
+		"Private/Drawing/Test_Draw2.cpp"
+	],
 	"PrivateDependencies": [
 		"ContentPipeline/BuildGraph",
-		"ContentPipeline/PipelineCompiler"
+		"ContentPipeline/PipelineCompiler",
+		"Runtime/Remoting"
 	]
 }

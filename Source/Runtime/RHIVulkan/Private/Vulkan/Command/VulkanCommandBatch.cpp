@@ -379,7 +379,7 @@ void FVulkanCommandBatch::FinalizeStagingBuffers_(const FVulkanDevice& device, F
         VK_CALL( device.vkInvalidateMappedMemoryRanges(device.vkDevice(), checked_cast<u32>(regions.size()), regions.data()) );
 
     // trigger buffer events
-    for (FOnBufferDataLoadedEvent& evt : data.Staging.OnBufferLoadedEvents) {
+    for (const FOnBufferDataLoadedEvent& evt : data.Staging.OnBufferLoadedEvents) {
         TFixedSizeStack<TMemoryView<const T>, MaxBufferParts> dataParts;
         ONLY_IF_ASSERT(u32 totalSize = 0);
 
@@ -395,7 +395,7 @@ void FVulkanCommandBatch::FinalizeStagingBuffers_(const FVulkanDevice& device, F
     data.Staging.OnBufferLoadedEvents.clear();
 
     // trigger image events
-    for (FOnImageDataLoadedEvent& evt : data.Staging.OnImageLoadedEvents) {
+    for (const FOnImageDataLoadedEvent& evt : data.Staging.OnImageLoadedEvents) {
         TFixedSizeStack<TMemoryView<const T>, MaxImageParts> dataParts;
         ONLY_IF_ASSERT(u32 totalSize = 0);
 
@@ -793,7 +793,7 @@ bool FVulkanCommandBatch::FindShaderTimemapForDebug(FRawBufferID* pBuf, u32* pOf
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FRectangleI>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, u32 size) {
+EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FRectangleU>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, u32 size) {
     Assert_NoAssume(EnableShaderDebugging);
     Assert_NoAssume(not name.empty());
 

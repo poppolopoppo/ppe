@@ -927,12 +927,24 @@ bool CreateVulkanDevice_(
     FVulkanDeviceFeatures_ features;
     features.Main = {};
     api.vkGetPhysicalDeviceFeatures(pDevice->vkPhysicalDevice, &features.Main);
+
     features.Main2 = {};
-    features.Main2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    api.vkGetPhysicalDeviceFeatures2(pDevice->vkPhysicalDevice, &features.Main2);
+    if (api.version() >= vk::API_version_1_1) {
+        features.Main2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        api.vkGetPhysicalDeviceFeatures2(pDevice->vkPhysicalDevice, &features.Main2);
+    }
+
     SetupDeviceFeatures_(&features, nextExt, pDevice->vkPhysicalDevice, api, allDeviceExtensions);
 
-    deviceInfo.pEnabledFeatures = &features.Main; // enable all features supported
+    if (features.Main2.sType != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2) {
+        deviceInfo.pEnabledFeatures = &features.Main; // enable all features supported
+    }
+    else {
+        // VkDeviceCreateInfo->pNext includes a VkPhysicalDeviceFeatures2KHR struct when pCreateInfo->pEnabledFeatures is non-NULL.
+        // The Vulkan spec states: If the pNext chain includes a VkPhysicalDeviceFeatures2 structure, then pEnabledFeatures must be NULL.
+        // (https://vulkan.lunarg.com/doc/view/1.2.148.0/windows/1.2-extensions/vkspec.html#VUID-VkDeviceCreateInfo-pNext-00373)
+        deviceInfo.pEnabledFeatures = nullptr;
+    }
 
     // finally try to create the device
     VK_CHECK( api.vkCreateDevice(pDevice->vkPhysicalDevice, &deviceInfo, pDevice->pAllocator, &pDevice->vkDevice) );
@@ -1141,7 +1153,7 @@ bool FVulkanInstance::CreateDevice(
     pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
     pDevice->pAllocator = &_vkAllocationCallbacks;
 
-    return CreateVulkanDevice_(pDevice, *this, vkSurface, physicalDevice, queues);
+    return CreateVulkanDevice_(pDevice, Fn(), vkSurface, physicalDevice, queues);
 }
 //----------------------------------------------------------------------------
 bool FVulkanInstance::CreateDevice(
@@ -1162,7 +1174,7 @@ bool FVulkanInstance::CreateDevice(
     pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
     pDevice->pAllocator = &_vkAllocationCallbacks;
 
-    return CreateVulkanDevice_(pDevice, *this, VK_NULL_HANDLE, physicalDevice, queues);
+    return CreateVulkanDevice_(pDevice, Fn(), VK_NULL_HANDLE, physicalDevice, queues);
 }
 //----------------------------------------------------------------------------
 void FVulkanInstance::DestroyDevice(FVulkanDeviceInfo* pDevice) const {

@@ -199,14 +199,16 @@ size_t FVulkanRayTracingGeometry::GeometryIndex(const FGeometryID& geometryId) c
     const auto it = std::lower_bound(
         sharedData->Triangles.begin(),
         sharedData->Triangles.end(),
-        geometryId );
+        geometryId,
+        Meta::TLess{} );
     if (sharedData->Triangles.end() != it && it->GeometryId == geometryId)
         return std::distance(sharedData->Triangles.begin(), it);
 
     const auto jt = std::lower_bound(
         sharedData->Aabbs.begin(),
         sharedData->Aabbs.end(),
-        geometryId );
+        geometryId,
+        Meta::TLess{} );
     if (sharedData->Aabbs.end() != jt && jt->GeometryId == geometryId)
         return (sharedData->Triangles.size() +
             std::distance(sharedData->Aabbs.begin(), jt) );

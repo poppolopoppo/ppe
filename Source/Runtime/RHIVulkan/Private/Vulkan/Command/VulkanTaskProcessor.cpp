@@ -500,16 +500,16 @@ void FVulkanTaskProcessor::CmdPopDebugGroup_() const {
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::SetScissor_(
     const FVulkanLogicalRenderPass& rp,
-    const TMemoryView<const FRectangleI>& rects ) {
+    const TMemoryView<const FRectangleU>& rects ) {
     if (not rects.empty()) {
         TFixedSizeStack<VkRect2D, MaxViewports> vkScissors;
 
-        for (const FRectangleI& src : rects) {
+        for (const FRectangleU& src : rects) {
             VkRect2D dst{};
             dst.offset.x = src.Left();
             dst.offset.x = src.Top();
             dst.extent.width = src.Width();
-            dst.extent.width = src.Height();
+            dst.extent.height = src.Height();
 
             vkScissors.Push(dst);
         }
@@ -649,7 +649,7 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
     const u32 depthAttachmentIndex = (renderPass.Read()->CreateInfo.attachmentCount - 1);
     Assert(depthAttachmentIndex < MaxColorBuffers);
 
-    FRectangleI totalArea;
+    FRectangleU totalArea;
     FAttachments renderTargets;
     renderTargets.Resize(renderPass.Read()->CreateInfo.attachmentCount);
 
@@ -693,6 +693,7 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
     }
 
     _workerCmd->ReleaseResource(framebufferId);
+    _workerCmd->ReleaseResource(renderPassId);
 
     return true;
 }
@@ -742,7 +743,7 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     VerifyRelease( CreateRenderPass_(logicalRenderPasses.MakeView() ARGS_IF_RHIDEBUG(task.TaskName())) );
 
     // begin render pass
-    const FRectangleI& area = task.LogicalPass()->Area();
+    const FRectangleU& area = task.LogicalPass()->Area();
     Assert(area.HasPositiveExtentsStrict());
     const FVulkanFramebuffer* const pFramebuffer = Resource_(task.LogicalPass()->FramebufferId());
     Assert(pFramebuffer);

@@ -78,8 +78,8 @@ public:
 
         struct FElement {
             FRawBufferID BufferId;
-            u32 Offset;
-            u32 Size;
+            size_t Offset;
+            size_t Size;
 
             TIE_AS_TUPLE_STRUCT(FElement)
             PPE_ASSUME_FRIEND_AS_POD(FElement)
@@ -88,8 +88,8 @@ public:
         FBindingIndex Index;
         EResourceState State;
         u32 DynamicOffsetIndex;
-        u32 StaticSize;
-        u32 ArrayStride;
+        size_t StaticSize;
+        size_t ArrayStride;
         TElementArray<FElement> Elements;
 
         TIE_AS_TUPLE_STRUCT(FBuffer)
@@ -209,8 +209,8 @@ public:
         bool operator ==(const FUniformID& id) const { return (id == Id); }
         bool operator !=(const FUniformID& id) const { return (id != Id); }
 
-        bool operator < (const FUniformID& id) const { return (id <  Id); }
-        bool operator >=(const FUniformID& id) const { return (id >= Id); }
+        bool operator < (const FUniformID& id) const { return (Id <  id); }
+        bool operator >=(const FUniformID& id) const { return (Id >= id); }
 
         PPE_ASSUME_FRIEND_AS_POD(FUniform)
     };
@@ -281,7 +281,7 @@ public:
     FPipelineResources& BindSamplers(const FUniformID& id, TMemoryView<const FRawSamplerID> samplers);
 
     FPipelineResources& BindBuffer(const FUniformID& id, FRawBufferID buffer, u32 elementIndex = 0);
-    FPipelineResources& BindBuffer(const FUniformID& id, FRawBufferID buffer, u32 offset, u32 size, u32 elementIndex = 0);
+    FPipelineResources& BindBuffer(const FUniformID& id, FRawBufferID buffer, size_t offset, size_t size, u32 elementIndex = 0);
     FPipelineResources& BindBuffers(const FUniformID& id, TMemoryView<const FBufferID> buffers);
     FPipelineResources& BindBuffers(const FUniformID& id, TMemoryView<const FRawBufferID> buffers);
 
@@ -321,9 +321,9 @@ private:
     void ResetCachedId_() const { _cachedId.store(UMax, std::memory_order_relaxed); }
 
     template <typename T>
-    T& Resource_Unlocked_(const FUniformID& id);
+    T& Resource_(const FUniformID& id);
     template <typename T>
-    bool HasResource_Unlocked_(const FUniformID& id) const;
+    bool HasResource_(const FUniformID& id) const;
 };
 //----------------------------------------------------------------------------
 using FPipelineResourceSet = TFixedSizeAssociativeVector<

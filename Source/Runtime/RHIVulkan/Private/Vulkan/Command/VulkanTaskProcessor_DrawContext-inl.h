@@ -52,6 +52,8 @@ inline void FVulkanTaskProcessor::FDrawContext::BindPipeline(FRawGPipelineID id,
     _mPipelineRef = nullptr;
     _dynamicStates = dynamicState;
     _changed |= ALL_BITS;
+
+    Assert(!!_gPipelineRef);
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawContext::BindPipeline(FRawMPipelineID id, EPipelineDynamicState dynamicState) {
@@ -61,6 +63,8 @@ inline void FVulkanTaskProcessor::FDrawContext::BindPipeline(FRawMPipelineID id,
     _mPipelineRef = _processor.Resource_(id);
     _dynamicStates = dynamicState;
     _changed |= ALL_BITS;
+
+    Assert(!!_mPipelineRef);
 }
 //----------------------------------------------------------------------------
 inline bool FVulkanTaskProcessor::FDrawContext::BindPipeline_(u32 mask) {

@@ -36,13 +36,13 @@ FPipelineResources::FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T& FPipelineResources::Resource_Unlocked_(const FUniformID& id) {
+T& FPipelineResources::Resource_(const FUniformID& id) {
     Assert(id.Valid());
 
     const auto exclusiveData = _dynamicData.LockExclusive();
 
     const auto uniforms = exclusiveData->Uniforms();
-    const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), id);
+    const auto it = Meta::LowerBound(uniforms.begin(), uniforms.end(), id);
     if (Likely(uniforms.end() != it && *it == id)) {
         Assert_NoAssume(it->Type == T::TypeId);
         return *exclusiveData->Storage.MakeView().CutStartingAt(it->Offset).Peek<T>();
@@ -53,11 +53,11 @@ T& FPipelineResources::Resource_Unlocked_(const FUniformID& id) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool FPipelineResources::HasResource_Unlocked_(const FUniformID& id) const {
+bool FPipelineResources::HasResource_(const FUniformID& id) const {
     Assert(id.Valid());
 
     const auto uniforms = _dynamicData.LockShared()->Uniforms();
-    const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), id);
+    const auto it = Meta::LowerBound(uniforms.begin(), uniforms.end(), id);
     if (Likely(uniforms.end() != it && *it == id))
         return (it->Type == T::TypeId);
 
@@ -65,22 +65,22 @@ bool FPipelineResources::HasResource_Unlocked_(const FUniformID& id) const {
 }
 //----------------------------------------------------------------------------
 bool FPipelineResources::HasImage(const FUniformID& id) const {
-    return HasResource_Unlocked_<FImage>(id);
+    return HasResource_<FImage>(id);
 }
 bool FPipelineResources::HasSampler(const FUniformID& id) const {
-    return HasResource_Unlocked_<FSampler>(id);
+    return HasResource_<FSampler>(id);
 }
 bool FPipelineResources::HasTexture(const FUniformID& id) const {
-    return HasResource_Unlocked_<FTexture>(id);
+    return HasResource_<FTexture>(id);
 }
 bool FPipelineResources::HasBuffer(const FUniformID& id) const {
-    return HasResource_Unlocked_<FBuffer>(id);
+    return HasResource_<FBuffer>(id);
 }
 bool FPipelineResources::HasTexelBuffer(const FUniformID& id) const {
-    return HasResource_Unlocked_<FTexelBuffer>(id);
+    return HasResource_<FTexelBuffer>(id);
 }
 bool FPipelineResources::HasRayTracingScene(const FUniformID& id) const {
-    return HasResource_Unlocked_<FRayTracingScene>(id);
+    return HasResource_<FRayTracingScene>(id);
 }
 //----------------------------------------------------------------------------
 void FPipelineResources::Reset(const FUniformID& uniform) {
@@ -89,7 +89,7 @@ void FPipelineResources::Reset(const FUniformID& uniform) {
     const auto exclusiveData = _dynamicData.LockExclusive();
 
     const auto uniforms = exclusiveData->Uniforms();
-    const auto it = std::lower_bound(uniforms.begin(), uniforms.end(), uniform);
+    const auto it = Meta::LowerBound(uniforms.begin(), uniforms.end(), uniform);
     Assert(uniforms.end() != it);
     Assert(*it == uniform);
 
@@ -123,7 +123,7 @@ FPipelineResources& FPipelineResources::BindImage(const FUniformID& id, FRawImag
     Assert(id.Valid());
     Assert(image.Valid());
 
-    auto& resource = Resource_Unlocked_<FImage>(id);
+    auto& resource = Resource_<FImage>(id);
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
@@ -141,7 +141,7 @@ FPipelineResources& FPipelineResources::BindImage(const FUniformID& id, FRawImag
     Assert(id.Valid());
     Assert(image.Valid());
 
-    auto& resource = Resource_Unlocked_<FImage>(id);
+    auto& resource = Resource_<FImage>(id);
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
@@ -163,7 +163,7 @@ FPipelineResources& FPipelineResources::BindImages(const FUniformID& id, TMemory
 FPipelineResources& FPipelineResources::BindImages(const FUniformID& id, TMemoryView<const FRawImageID> images) {
     Assert(id.Valid());
 
-    auto& resource = Resource_Unlocked_<FImage>(id);
+    auto& resource = Resource_<FImage>(id);
 
     Assert(images.size() <= resource.Elements.Capacity);
     bool needUpdate = (images.size() != resource.Elements.Count);
@@ -192,7 +192,7 @@ FPipelineResources& FPipelineResources::BindTexture(const FUniformID& id, FRawIm
     Assert(image.Valid());
     Assert(sampler.Valid());
 
-    auto& resource = Resource_Unlocked_<FTexture>(id);
+    auto& resource = Resource_<FTexture>(id);
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
@@ -212,7 +212,7 @@ FPipelineResources& FPipelineResources::BindTexture(const FUniformID& id, FRawIm
     Assert(image.Valid());
     Assert(sampler.Valid());
 
-    auto& resource = Resource_Unlocked_<FTexture>(id);
+    auto& resource = Resource_<FTexture>(id);
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
@@ -236,7 +236,7 @@ FPipelineResources& FPipelineResources::BindTextures(const FUniformID& id, TMemo
     Assert(id.Valid());
     Assert(sampler.Valid());
 
-    auto& resource = Resource_Unlocked_<FTexture>(id);
+    auto& resource = Resource_<FTexture>(id);
 
     Assert(images.size() <= resource.Elements.Capacity);
     bool needUpdate = (images.size() != resource.Elements.Count);
@@ -265,7 +265,7 @@ FPipelineResources& FPipelineResources::BindSampler(const FUniformID& id, FRawSa
     Assert(id.Valid());
     Assert(sampler.Valid());
 
-    auto& resource = Resource_Unlocked_<FSampler>(id);
+    auto& resource = Resource_<FSampler>(id);
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
@@ -286,7 +286,7 @@ FPipelineResources& FPipelineResources::BindSamplers(const FUniformID& id, TMemo
 FPipelineResources& FPipelineResources::BindSamplers(const FUniformID& id, TMemoryView<const FRawSamplerID> samplers) {
     Assert(id.Valid());
 
-    auto& resource = Resource_Unlocked_<FSampler>(id);
+    auto& resource = Resource_<FSampler>(id);
 
     Assert(samplers.size() <= resource.Elements.Capacity);
     bool needUpdate = (samplers.size() != resource.Elements.Count);
@@ -313,11 +313,11 @@ FPipelineResources& FPipelineResources::BindBuffer(const FUniformID& id, FRawBuf
     return BindBuffer(id, buffer, 0, UMax, elementIndex);
 }
 //----------------------------------------------------------------------------
-FPipelineResources& FPipelineResources::BindBuffer(const FUniformID& id, FRawBufferID buffer, u32 offset, u32 size, u32 elementIndex) {
+FPipelineResources& FPipelineResources::BindBuffer(const FUniformID& id, FRawBufferID buffer, size_t offset, size_t size, u32 elementIndex) {
     Assert(id.Valid());
     Assert(buffer.Valid());
 
-    auto& resource = Resource_Unlocked_<FBuffer>(id);
+    auto& resource = Resource_<FBuffer>(id);
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
@@ -353,14 +353,14 @@ FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemor
 FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemoryView<const FRawBufferID> buffers) {
     Assert(id.Valid());
 
-    auto& resource = Resource_Unlocked_<FBuffer>(id);
+    auto& resource = Resource_<FBuffer>(id);
 
     Assert(buffers.size() <= resource.Elements.Capacity);
     bool needUpdate = (buffers.size() != resource.Elements.Count);
     resource.Elements.Count = checked_cast<u16>(buffers.size());
 
-    constexpr u32 offset = 0;
-    constexpr u32 size = UMax;
+    constexpr size_t offset = 0;
+    constexpr size_t size = UMax;
     forrange(i, 0, checked_cast<u32>(buffers.size())) {
         Assert(buffers[i].Valid());
 
@@ -389,7 +389,7 @@ FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemor
 FPipelineResources& FPipelineResources::SetBufferBase(const FUniformID& id, u32 offset, u32 elementIndex) {
     Assert(id.Valid());
 
-    auto& resource = Resource_Unlocked_<FBuffer>(id);
+    auto& resource = Resource_<FBuffer>(id);
     Assert(elementIndex < resource.Elements.Capacity);
 
     bool needUpdate = (resource.Elements.Count <= elementIndex);
@@ -413,7 +413,7 @@ FPipelineResources& FPipelineResources::BindTexelBuffer(const FUniformID& id, FR
     Assert(id.Valid());
     Assert(buffer.Valid());
 
-    auto& resource = Resource_Unlocked_<FTexelBuffer>(id);
+    auto& resource = Resource_<FTexelBuffer>(id);
     Assert(elementIndex < resource.Elements.Capacity);
 
     bool needUpdate = (resource.Elements.Count <= elementIndex);
@@ -437,7 +437,7 @@ FPipelineResources& FPipelineResources::BindRayTracingScene(const FUniformID& id
     Assert(id.Valid());
     Assert(scene.Valid());
 
-    auto& resource = Resource_Unlocked_<FRayTracingScene>(id);
+    auto& resource = Resource_<FRayTracingScene>(id);
     Assert(elementIndex < resource.Elements.Capacity);
 
     bool needUpdate = (resource.Elements.Count <= elementIndex);
@@ -605,8 +605,8 @@ void FPipelineResources::CreateDynamicData(
     UNUSED(numDBO);
 
     const auto writtenUniforms = pDynamicData->Storage.MakeView().SubRange(pDynamicData->UniformsOffset, pDynamicData->UniformsCount * sizeof(FUniform)).Cast<FUniform>();
-    std::sort(writtenUniforms.begin(),  writtenUniforms.end(), [](const FUniform& lhs, const FUniform& rhs) {
-        return (lhs.Id < rhs.Id); // for binary search later (std::lower_bound)
+    Meta::BubbleSort(writtenUniforms.begin(),  writtenUniforms.end(), [](const FUniform& lhs, const FUniform& rhs) {
+        return (lhs.Id < rhs.Id); // for binary search later (Meta::LowerBound)
     });
 }
 //----------------------------------------------------------------------------

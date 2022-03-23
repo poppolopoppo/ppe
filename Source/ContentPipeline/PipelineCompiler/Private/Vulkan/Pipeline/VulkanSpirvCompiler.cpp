@@ -785,6 +785,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             bool isBuffer = false;
             bool isUniform = false;
             bool isUniformImage = false;
+            bool isUniformSampler = false;
 
             if (Equals(word, "buffer")) {
                 isBuffer = true;
@@ -795,6 +796,10 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                 EatSpaces(it);
                 isUniformImage = it.Eat("image"); // optional
                 UNUSED(isUniformImage);
+                isUniformSampler = it.StartsWith("sampler"); // optional
+                if (isUniformSampler) {
+                    EatIdentifier(it);
+                }
             }
 
             EatSpaces(it);
@@ -806,65 +811,62 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             if (not it.Eat("{"))
                 continue;
 
-            if ((isBuffer | isUniform)) {
+            if ((isBuffer || isUniform)) {
                 const FUniformID id{ name };
 
-                const TPtrRef<FPipelineDesc::FDescriptorSet> descriptorSetRef =
-                    ctx.Reflection->Layout.DescriptorSets.MakeView().Any(
-                        [&](FPipelineDesc::FDescriptorSet& ds) NOEXCEPT -> bool {
-                            const auto jt = ds.Uniforms->find(id);
-                            if (ds.Uniforms->end() == jt)
-                                return false;
+                bool found = true;
+                for (FPipelineDesc::FDescriptorSet& ds : ctx.Reflection->Layout.DescriptorSets) {
+                    const auto jt = ds.Uniforms->find(id);
+                    if (ds.Uniforms->end() == jt)
+                        continue;
 
-                            return Meta::Visit(jt->second.Data,
-                                [&](FPipelineDesc::FImage& image) {
-                                    if (annotations & EShaderAnnotation::DynamicOffset)
-                                        *ctx.Log << L"@dynamic-offset is only supported on buffers, but found on image <" << name << L">" << Eol;
-                                    if (annotations & EShaderAnnotation::WriteDiscard)
-                                        image.State |= EResourceState::InvalidateBefore;
-                                    return true;
-                                },
-                                [&](FPipelineDesc::FUniformBuffer& ubo) {
-                                    if (annotations & EShaderAnnotation::DynamicOffset)
-                                        ubo.State |= EResourceState::_BufferDynamicOffset;
-                                    if (annotations & EShaderAnnotation::WriteDiscard)
-                                        *ctx.Log << L"@write-discard is only supported on images or storage buffers, but found on uniform buffer <" << name << L">" << Eol;
-                                    return true;
-                                },
-                                [&](FPipelineDesc::FStorageBuffer& ssbo) {
-                                    if (annotations & EShaderAnnotation::DynamicOffset)
-                                        ssbo.State |= EResourceState::_BufferDynamicOffset;
-                                    if (annotations & EShaderAnnotation::WriteDiscard)
-                                        ssbo.State |= EResourceState::InvalidateBefore;
-                                    return true;
-                                },
-                                [&](FPipelineDesc::FTexture&) {
-                                    *ctx.Log << L"unsupported annotation found on texture <" << name << L">" << Eol;
-                                    return false;
-                                },
-                                [&](FPipelineDesc::FSampler&) {
-                                    *ctx.Log << L"unsupported annotation found on sampler <" << name << L">" << Eol;
-                                    return false;
-                                },
-                                [&](FPipelineDesc::FSubpassInput&) {
-                                    *ctx.Log << L"unsupported annotation found on subpass input <" << name << L">" << Eol;
-                                    return false;
-                                },
-                                [&](FPipelineDesc::FRayTracingScene&) {
-                                    *ctx.Log << L"unsupported annotation found on raytracing scene input <" << name << L">" << Eol;
-                                    return false;
-                                },
-                                [](std::monostate&) {
-                                    AssertNotReached();
-                                });
+                    found = Meta::Visit(jt->second.Data,
+                        [&](FPipelineDesc::FImage& image) {
+                            if (annotations & EShaderAnnotation::DynamicOffset)
+                                *ctx.Log << L"@dynamic-offset is only supported on buffers, but found on image <" << name << L">" << Eol;
+                            if (annotations & EShaderAnnotation::WriteDiscard)
+                                image.State |= EResourceState::InvalidateBefore;
+                            return true;
+                        },
+                        [&](FPipelineDesc::FUniformBuffer& ubo) {
+                            if (annotations & EShaderAnnotation::DynamicOffset)
+                                ubo.State |= EResourceState::_BufferDynamicOffset;
+                            if (annotations & EShaderAnnotation::WriteDiscard)
+                                *ctx.Log << L"@write-discard is only supported on images or storage buffers, but found on uniform buffer <" << name << L">" << Eol;
+                            return true;
+                        },
+                        [&](FPipelineDesc::FStorageBuffer& ssbo) {
+                            if (annotations & EShaderAnnotation::DynamicOffset)
+                                ssbo.State |= EResourceState::_BufferDynamicOffset;
+                            if (annotations & EShaderAnnotation::WriteDiscard)
+                                ssbo.State |= EResourceState::InvalidateBefore;
+                            return true;
+                        },
+                        [&](FPipelineDesc::FTexture&) {
+                            *ctx.Log << L"unsupported annotation found on texture <" << name << L">" << Eol;
+                            return true;
+                        },
+                        [&](FPipelineDesc::FSampler&) {
+                            *ctx.Log << L"unsupported annotation found on sampler <" << name << L">" << Eol;
+                            return true;
+                        },
+                        [&](FPipelineDesc::FSubpassInput&) {
+                            *ctx.Log << L"unsupported annotation found on subpass input <" << name << L">" << Eol;
+                            return true;
+                        },
+                        [&](FPipelineDesc::FRayTracingScene&) {
+                            *ctx.Log << L"unsupported annotation found on raytracing scene input <" << name << L">" << Eol;
+                            return true;
+                        },
+                        [](std::monostate&) {
+                            AssertNotReached();
                         });
 
-                Assert(descriptorSetRef);
-                if (Likely(!!descriptorSetRef)) {
-                    source = it;
-                    return true;
+                    break;
                 }
-                return false;
+
+                source = it;
+                return true;
             }
         }
 
@@ -876,15 +878,15 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         const char n = (source.size() > 1 ? source[1] : 0);
         source.Eat(1);
 
-        const bool newLine1 = (c == '\r') & (n == '\n'); // windows
-        const bool newLine2 = (c == '\n') | (c == '\r'); // linux | mac
-        if (newLine1 | newLine2) {
+        const bool newLine1 = (c == '\r') && (n == '\n'); // windows
+        const bool newLine2 = (c == '\n') || (c == '\r'); // linux | mac
+        if (newLine1 || newLine2) {
             if (newLine1)
                 source.Eat(1);
             commentSingleLine = false;
             lineNumber++;
 
-            if (annotations != Default) {
+            if ((annotations ^ (EShaderAnnotation::DynamicOffset | EShaderAnnotation::WriteDiscard)) && not commentMultiLine) {
                 LOG_CHECK(PipelineCompiler, parseUniform());
                 annotations = Default;
             }
@@ -892,20 +894,18 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         }
 
         if (commentMultiLine) {
-            if ((c == '*') & (n == '/'))
+            if ((c == '*') && (n == '/'))
                 commentMultiLine = false;
         }
         else {
-            if ((c == '/') & (n == '*'))
+            if ((c == '/') && (n == '*'))
                 commentMultiLine = true;
-            if ((c == '/') & (n == '/'))
+            if ((c == '/') && (n == '/'))
                 commentSingleLine = true;
         }
 
-        if (not ((commentSingleLine | commentMultiLine) & (c == '@')))
+        if (not ((commentSingleLine || commentMultiLine) && (c == '@')))
             continue;
-
-        Verify( Equals("@"_view, source.Eat(1)) );
 
         const FStringView id = EatIdentifier(source);
 
@@ -955,10 +955,13 @@ bool FVulkanSpirvCompiler::ProcessExternalObjects_(
 }
 //----------------------------------------------------------------------------
 FBindingIndex FVulkanSpirvCompiler::ToBindingIndex_(const FCompilationContext& ctx, u32 index) {
+    const FBindingIndex::index_t bindingIndex = (index != UMax
+        ? checked_cast<FBindingIndex::index_t>(index)
+        : UMax);
     if (ctx.TargetVulkan)
-        return FBindingIndex{ UMax, checked_cast<FBindingIndex::index_t>(index) };
+        return FBindingIndex{ UMax, bindingIndex };
     else
-        return FBindingIndex{ checked_cast<FBindingIndex::index_t>(index), UMax };
+        return FBindingIndex{ bindingIndex, UMax };
 }
 //----------------------------------------------------------------------------
 FPipelineDesc::FDescriptorSet& FVulkanSpirvCompiler::ToDescriptorSet_(const FCompilationContext& ctx, u32 index) {
@@ -982,7 +985,7 @@ FStringView FVulkanSpirvCompiler::ExtractNodeName_(const TIntermNode* node) {
 
     const glslang::TString& str = node->getAsSymbolNode()->getName();
     const FStringView result{ str.c_str(), str.size() };
-    return StartsWith(result, "anon@") ? result : Default;
+    return StartsWith(result, "anon@") ? Default : result;
 }
 //----------------------------------------------------------------------------
 FUniformID FVulkanSpirvCompiler::ExtractBufferUniformID_(const glslang::TType& type) {
@@ -1041,60 +1044,72 @@ EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const glslang::TType& t
             case TLayoutFormat::ElfR8ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::R8u); break;
 
             case TLayoutFormat::ElfNone: break;
+
+            case TLayoutFormat::ElfEsFloatGuard:
+            case TLayoutFormat::ElfFloatGuard:
+            case TLayoutFormat::ElfEsIntGuard:
+            case TLayoutFormat::ElfIntGuard:
+            case TLayoutFormat::ElfEsUintGuard:
+            case TLayoutFormat::ElfCount:
             default: AssertNotImplemented();
             }
+        }
 
-            if (sampler.type == TBasicType::EbtFloat) {
-                resource |= EImageSampler::_Float;
-            }
-            else
-            if (sampler.type == TBasicType::EbtUint) {
-                resource |= EImageSampler::_UInt;
-            }
-            else
-            if (sampler.type == TBasicType::EbtInt) {
-                resource |= EImageSampler::_Int;
-            }
-            else {
-                LOG(PipelineCompiler, Error, L"unsupported image value type");
-                return Zero;
-            }
+        if (sampler.type == TBasicType::EbtFloat) {
+            resource |= EImageSampler::_Float;
+        }
+        else
+        if (sampler.type == TBasicType::EbtUint) {
+            resource |= EImageSampler::_UInt;
+        }
+        else
+        if (sampler.type == TBasicType::EbtInt) {
+            resource |= EImageSampler::_Int;
+        }
+        else {
+            LOG(PipelineCompiler, Error, L"unsupported image value type");
+            return Zero;
+        }
 
-            switch (sampler.dim) {
-            case TSamplerDim::Esd1D :
-                if (sampler.isShadow() and sampler.isArrayed())
-                    return resource | EImageSampler::_1DArray | EImageSampler::_Shadow;
-                if (sampler.isShadow())
-                    return resource | EImageSampler::_1D | EImageSampler::_Shadow;
-                if (sampler.isArrayed())
-                    return resource | EImageSampler::_1DArray;
-                return resource | EImageSampler::_1D;
+        switch (sampler.dim) {
+        case TSamplerDim::Esd1D :
+            if (sampler.isShadow() and sampler.isArrayed())
+                return resource | EImageSampler::_1DArray | EImageSampler::_Shadow;
+            if (sampler.isShadow())
+                return resource | EImageSampler::_1D | EImageSampler::_Shadow;
+            if (sampler.isArrayed())
+                return resource | EImageSampler::_1DArray;
+            return resource | EImageSampler::_1D;
 
-            case TSamplerDim::Esd2D :
-                if (sampler.isShadow() and sampler.isArrayed() )
-                    return resource | EImageSampler::_2DArray | EImageSampler::_Shadow;
-                if (sampler.isShadow())
-                    return resource | EImageSampler::_2D | EImageSampler::_Shadow;
-                if (sampler.isMultiSample() and sampler.isArrayed() )
-                    return resource | EImageSampler::_2DMSArray;
-                if (sampler.isArrayed())
-                    return resource | EImageSampler::_2DArray;
-                if (sampler.isMultiSample())
-                    return resource | EImageSampler::_2DMS;
-                return resource | EImageSampler::_2D;
+        case TSamplerDim::Esd2D :
+            if (sampler.isShadow() and sampler.isArrayed() )
+                return resource | EImageSampler::_2DArray | EImageSampler::_Shadow;
+            if (sampler.isShadow())
+                return resource | EImageSampler::_2D | EImageSampler::_Shadow;
+            if (sampler.isMultiSample() and sampler.isArrayed() )
+                return resource | EImageSampler::_2DMSArray;
+            if (sampler.isArrayed())
+                return resource | EImageSampler::_2DArray;
+            if (sampler.isMultiSample())
+                return resource | EImageSampler::_2DMS;
+            return resource | EImageSampler::_2D;
 
-            case TSamplerDim::Esd3D :
-                return resource | EImageSampler::_3D;
+        case TSamplerDim::Esd3D :
+            return resource | EImageSampler::_3D;
 
-            case TSamplerDim::EsdCube :
-                if (sampler.isShadow())
-                    return resource | EImageSampler::_Cube | EImageSampler::_Shadow;
-                if (sampler.isArrayed())
-                    return resource | EImageSampler::_CubeArray;
-                return resource | EImageSampler::_Cube;
+        case TSamplerDim::EsdCube :
+            if (sampler.isShadow())
+                return resource | EImageSampler::_Cube | EImageSampler::_Shadow;
+            if (sampler.isArrayed())
+                return resource | EImageSampler::_CubeArray;
+            return resource | EImageSampler::_Cube;
 
-            default: AssertNotImplemented();
-            }
+        case TSamplerDim::EsdBuffer:
+        case TSamplerDim::EsdNone: // to shutup warnings
+        case TSamplerDim::EsdRect:
+        case TSamplerDim::EsdSubpass:
+        case TSamplerDim::EsdNumDims:
+        default: AssertNotImplemented();
         }
     }
 
@@ -1213,7 +1228,7 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
                 : bufferType.getQualifier().layoutMatrix == ElmRowMajor );
 
         if (memberQualifier.hasOffset()) {
-            Assert(Meta::IsPow2(memberQualifier.layoutOffset));
+            Assert(Meta::IsPow2OrZero(memberQualifier.layoutOffset));
             Assert(Meta::IsPow2(memberAlignment));
 
             if (ctx.Intermediate->getSpv().spv == 0) {
@@ -1297,51 +1312,53 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
         ctx, qualifier.hasSet() ? checked_cast<u32>(qualifier.layoutSet) : 0);
     FPipelineDesc::FUniformMap& uniforms = *descriptorSet.Uniforms;
 
-    const auto insertUniform = [&](auto&& resource) {
+    const auto insertUniform = [&](FUniformID&& uniformId, auto&& resource) {
         FPipelineDesc::FVariantUniform un;
-        un.Index = ToBindingIndex_(ctx, qualifier.hasBinding() ? checked_cast<u32>(qualifier.layoutOffset) : UMax);
+        un.Index = ToBindingIndex_(ctx, (qualifier.hasBinding()
+            ? checked_cast<u32>(qualifier.layoutBinding)
+            : UMax ));
         un.StageFlags = ctx.CurrentStage;
         un.Data = std::move(resource);
         un.ArraySize = GLSLangArraySize_(type);
 
-        uniforms.insert({ ExtractUniformID_(&node), std::move(un) });
+        uniforms.insert({ uniformId, std::move(un) });
     };
 
     if (type.getBasicType() == TBasicType::EbtSampler) {
         // image
         if (type.getSampler().isImage()) {
-            FPipelineDesc::FImage image;
+            FPipelineDesc::FImage image{};
             image.Type = ExtractImageSampler_(type);
             image.State = ExtractShaderAccessType_(qualifier) | EResourceState_FromShaders(ctx.CurrentStage);
 
-            insertUniform(std::move(image));
+            insertUniform(ExtractUniformID_(&node), std::move(image));
             return true;
         }
 
         // subpass
         if (type.getSampler().isSubpass()) {
-            FPipelineDesc::FSubpassInput subpass;
+            FPipelineDesc::FSubpassInput subpass{};
             subpass.AttachmentIndex = (qualifier.hasAttachment() ? checked_cast<u32>(qualifier.layoutAttachment) : UMax);
             subpass.IsMultiSample = false; // #TODO
             subpass.State = EResourceState::InputAttachment | EResourceState_FromShaders(ctx.CurrentStage);
 
-            insertUniform(std::move(subpass));
+            insertUniform(ExtractUniformID_(&node), std::move(subpass));
             return true;
         }
 
         // sampler
         if (type.getSampler().isPureSampler()) {
-            insertUniform(FPipelineDesc::FSampler{});
+            insertUniform(ExtractUniformID_(&node), FPipelineDesc::FSampler{});
             return true;
         }
 
         // texture
         {
-            FPipelineDesc::FTexture texture;
+            FPipelineDesc::FTexture texture{};
             texture.Type = ExtractImageSampler_(type);
             texture.State = EResourceState::ShaderSample | EResourceState_FromShaders(ctx.CurrentStage);
 
-            insertUniform(std::move(texture));
+            insertUniform(ExtractUniformID_(&node), std::move(texture));
             return true;
         }
     }
@@ -1373,37 +1390,37 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
 
         // uniform block
         if (qualifier.storage == TStorageQualifier::EvqUniform) {
-            FPipelineDesc::FUniformBuffer ubuf;
+            FPipelineDesc::FUniformBuffer ubuf{};
             ubuf.State = EResourceState::UniformRead | EResourceState_FromShaders(ctx.CurrentStage);
 
             u32 stride{}, offset{};
             LOG_CHECK(PipelineCompiler, CalculateStructSize_(&ubuf.Size, &stride, &offset, ctx, type));
             LOG_CHECK(PipelineCompiler, 0 == offset);
 
-            insertUniform(std::move(ubuf));
+            insertUniform(ExtractBufferUniformID_(type), std::move(ubuf));
             return true;
         }
 
         // storage block
         if (qualifier.storage == TStorageQualifier::EvqBuffer) {
-            FPipelineDesc::FStorageBuffer sbuf;
+            FPipelineDesc::FStorageBuffer sbuf{};
             sbuf.State = ExtractShaderAccessType_(qualifier) | EResourceState_FromShaders(ctx.CurrentStage);
 
             u32 offset{};
             LOG_CHECK(PipelineCompiler, CalculateStructSize_(&sbuf.StaticSize, &sbuf.ArrayStride, &offset, ctx, type));
             LOG_CHECK(PipelineCompiler, 0 == offset);
 
-            insertUniform(std::move(sbuf));
+            insertUniform(ExtractBufferUniformID_(type), std::move(sbuf));
             return true;
         }
     }
 
     // acceleration structure
     if (type.getBasicType() == TBasicType::EbtAccStruct) {
-        FPipelineDesc::FRayTracingScene rtScene;
+        FPipelineDesc::FRayTracingScene rtScene{};
         rtScene.State = EResourceState::_RayTracingShader | EResourceState::ShaderRead;
 
-        insertUniform(std::move(rtScene));
+        insertUniform(ExtractUniformID_(&node), std::move(rtScene));
         return true;
     }
 

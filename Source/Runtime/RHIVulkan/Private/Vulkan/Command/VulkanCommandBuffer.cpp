@@ -37,7 +37,7 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(const SVulkanFrameGraph& fg, u32 inde
     Assert(_frameGraph);
 
     const auto exclusive = _data.LockExclusive();
-    exclusive->MainAllocator.SetSlabSize(16_MiB);
+    exclusive->MainAllocator.SetSlabSize(2_MiB);
 
     ResetLocalRemapping_(*exclusive);
 }
@@ -1134,11 +1134,17 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
 //----------------------------------------------------------------------------
 void FVulkanCommandBuffer::ResetLocalRemapping_(FInternalData& data) {
     auto resetLocalResources = [](auto& resources) {
+        if (resources.GlobalIndexRange.Empty())
+            return;
+
+        auto globalIndices = resources.ToLocal.MakeView()
+            .SubRange(resources.GlobalIndexRange.First, resources.GlobalIndexRange.Extent());
         FPlatformMemory::Memset(
-            resources.ToLocal.data() + resources.GlobalIndexRange.First,
+            globalIndices.data(),
             UMax,
-            sizeof(*resources.ToLocal.data()) * resources.GlobalIndexRange.Extent());
-        resources.GlobalIndexRange = { 0, 0 };
+            globalIndices.SizeInBytes());
+
+        resources.GlobalIndexRange.Reset();
     };
 
     resetLocalResources(data.RM.Images);
@@ -1155,6 +1161,9 @@ void FVulkanCommandBuffer::FlushLocalResourceStates_(
     FVulkanBarrierManager& barriers
     ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* pDebugger)) {
     auto resetStateAndDestroyLocalResources = [order, &barriers ARGS_IF_RHIDEBUG(pDebugger)](auto& localResources) {
+        if (localResources.LocalIndexRange.Empty())
+            return;
+
         forrange(i, checked_cast<FResourceIndex>(localResources.LocalIndexRange.First), checked_cast<FResourceIndex>(localResources.LocalIndexRange.Last)) {
             auto* const pResource = localResources.Pool[i];
             Assert(pResource);
@@ -1165,7 +1174,8 @@ void FVulkanCommandBuffer::FlushLocalResourceStates_(
                 localResources.Pool.Deallocate(i);
             }
         }
-        localResources.LocalIndexRange = { 0, 0 };
+
+        localResources.LocalIndexRange.Reset();
     };
 
     resetStateAndDestroyLocalResources(data.RM.Images);
@@ -1213,8 +1223,10 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
         return nullptr;
     }
 
-    localResources.LocalIndexRange.SelfUnion(TRange<u32>{ checked_cast<u32>(local), checked_cast<u32>(local) + 1 });
-    localResources.GlobalIndexRange.SelfUnion(TRange<u32>{ checked_cast<u32>(id.Index), checked_cast<u32>(id.Index) + 1 });
+    localResources.LocalIndexRange.SelfUnion(
+        TRange<u32>{ checked_cast<u32>(local), checked_cast<u32>(local + 1) });
+    localResources.GlobalIndexRange.SelfUnion(
+        TRange<u32>{ checked_cast<u32>(id.Index), checked_cast<u32>(id.Index + 1) });
 
     return std::addressof(pData->Data());
 }

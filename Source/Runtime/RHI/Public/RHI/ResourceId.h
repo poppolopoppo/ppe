@@ -65,7 +65,7 @@ struct TNamedId {
 
     TNamedId() = default;
 
-    CONSTEXPR TNamedId(const FStringView& name)
+    CONSTEXPR TNamedId(const FStringView& name) NOEXCEPT
         : Name(name)
         , HashValue(hash_mem_constexpr(name.data(), name.size())) {}
 
@@ -76,20 +76,23 @@ struct TNamedId {
 
     CONSTEXPR friend hash_t hash_value(const TNamedId& id) { return id.HashValue; }
 
-    CONSTEXPR bool operator ==(const TNamedId& other) const {
-        return (HashValue == other.HashValue && Name == other.Name);
-    }
-
     CONSTEXPR bool operator !=(const TNamedId& other) const { return (not operator ==(other)); }
-
-    CONSTEXPR bool operator <(const TNamedId& other) const {
-        return (HashValue != other.HashValue ? HashValue < other.HashValue : Name < other.Name);
+    CONSTEXPR bool operator ==(const TNamedId& other) const {
+        if (HashValue == other.HashValue) {
+            Assert(Name == other.Name);
+            return true;
+        }
+        else {
+            Assert(Name != other.Name);
+            return false;
+        }
     }
 
-    CONSTEXPR bool operator >=(const TNamedId& other) const { return (not operator <(other)); }
+    CONSTEXPR bool operator < (const TNamedId& other) const { return (HashValue <  other.HashValue); }
+    CONSTEXPR bool operator >=(const TNamedId& other) const { return (HashValue >= other.HashValue); }
 
-    CONSTEXPR bool operator >(const TNamedId& other) const { return (other < *this); }
-    CONSTEXPR bool operator <=(const TNamedId& other) const { return (not operator >(other)); }
+    CONSTEXPR bool operator > (const TNamedId& other) const { return (HashValue >  other.HashValue); }
+    CONSTEXPR bool operator <=(const TNamedId& other) const { return (HashValue <= other.HashValue); }
 
 };
 //----------------------------------------------------------------------------
@@ -99,7 +102,7 @@ struct TNamedId<_Uid, false> {
 
     TNamedId() = default;
 
-    CONSTEXPR TNamedId(const FStringView& name)
+    CONSTEXPR TNamedId(const FStringView& name) NOEXCEPT
         : HashValue(hash_mem_constexpr(name.data(), name.size())) {}
 
     CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
@@ -112,10 +115,10 @@ struct TNamedId<_Uid, false> {
     CONSTEXPR bool operator ==(const TNamedId& other) const { return (HashValue == other.HashValue); }
     CONSTEXPR bool operator !=(const TNamedId& other) const { return (HashValue != other.HashValue); }
 
-    CONSTEXPR bool operator <(const TNamedId& other) const { return (HashValue < other.HashValue); }
+    CONSTEXPR bool operator < (const TNamedId& other) const { return (HashValue <  other.HashValue); }
     CONSTEXPR bool operator >=(const TNamedId& other) const { return (HashValue >= other.HashValue); }
 
-    CONSTEXPR bool operator >(const TNamedId& other) const { return (HashValue > other.HashValue); }
+    CONSTEXPR bool operator > (const TNamedId& other) const { return (HashValue >  other.HashValue); }
     CONSTEXPR bool operator <=(const TNamedId& other) const { return (HashValue <= other.HashValue); }
 
 };

@@ -19,6 +19,9 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T>
+class TScopedResource;
+//----------------------------------------------------------------------------
 class PPE_RHI_API IFrameTask {
 protected:
     IFrameTask() = default;
@@ -180,6 +183,9 @@ public: // interface
 #endif
 
 public: // helpers
+    template <typename _RawId>
+    NODISCARD TScopedResource<details::TResourceWrappedId<_RawId>> ScopedResource(details::TResourceWrappedId<_RawId>&& resource) const;
+
     template <typename _Id0, typename... _Ids>
     void ReleaseResources(_Id0& resource0, _Ids&... resources) {
         (void)ReleaseResource(resource0);
@@ -188,6 +194,52 @@ public: // helpers
         }
     }
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _RawId>
+class TScopedResource< details::TResourceWrappedId<_RawId> > {
+public:
+    TScopedResource(IFrameGraph& fg, details::TResourceWrappedId<_RawId>&& resource) NOEXCEPT
+        : _frameGraph(&fg)
+        , _resource(std::move(resource)) {
+    }
+
+    ~TScopedResource() {
+        if (_resource.Valid()) {
+            Assert(_frameGraph);
+            VerifyRelease(_frameGraph->ReleaseResource(_resource));
+        }
+    }
+
+    bool Valid() const { return _resource.Valid(); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid();  }
+
+    _RawId Raw() const { return *_resource; }
+    operator _RawId () const { return *_resource; }
+    operator const details::TResourceWrappedId<_RawId>& () const { return _resource; }
+
+    details::TResourceWrappedId<_RawId>& Get() { return _resource; }
+    const details::TResourceWrappedId<_RawId>& Get() const { return _resource; }
+
+    details::TResourceWrappedId<_RawId>& operator *() { return _resource; }
+    details::TResourceWrappedId<_RawId>* operator ->() { return &_resource; }
+
+    const details::TResourceWrappedId<_RawId>& operator *() const { return _resource; }
+    const details::TResourceWrappedId<_RawId>* operator ->() const { return &_resource; }
+
+private:
+    SFrameGraph _frameGraph;
+    details::TResourceWrappedId<_RawId> _resource;
+};
+//----------------------------------------------------------------------------
+template <typename _RawId>
+TScopedResource(IFrameGraph&, details::TResourceWrappedId<_RawId>&&) -> TScopedResource<_RawId>;
+//----------------------------------------------------------------------------
+template <typename _RawId>
+TScopedResource<details::TResourceWrappedId<_RawId>> IFrameGraph::ScopedResource(details::TResourceWrappedId<_RawId>&& resource) const {
+    return TScopedResource<details::TResourceWrappedId<_RawId>>{ *this, std::move(resource) };
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

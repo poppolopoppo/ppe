@@ -32,7 +32,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 using FColorBuffers = TFixedSizeHashMap<ERenderTargetID, FColorBufferState, MaxViewports>;
 //----------------------------------------------------------------------------
-using FScissors = TFixedSizeStack<FRectangleI, MaxViewports>;
+using FScissors = TFixedSizeStack<FRectangleU, MaxViewports>;
 //----------------------------------------------------------------------------
 struct FImageDataRange {
     using FSubRange = TRange<u32>;

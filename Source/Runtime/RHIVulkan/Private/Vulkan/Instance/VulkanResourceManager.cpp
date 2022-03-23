@@ -84,7 +84,7 @@ void FVulkanResourceManager::TearDown() {
     ONLY_IF_RHIDEBUG(TearDownShaderDebuggerResources_());
 
     // release empty descriptor layout
-    VerifyRelease( ReleaseResource(_emptyDSLayout) );
+    VerifyRelease( ReleaseResource(_emptyDSLayout, 2u) );
 
     // release all pools (should all be empty !)
 
@@ -110,12 +110,12 @@ void FVulkanResourceManager::TearDown() {
         });
     };
 
-    tearDownCache(_resources.SamplerCache);
+    tearDownCache(_resources.PplnResourcesCache);
     tearDownCache(_resources.PplnLayoutCache);
     tearDownCache(_resources.DslayoutCache);
     tearDownCache(_resources.RenderPassCache);
     tearDownCache(_resources.FramebufferCache);
-    tearDownCache(_resources.PplnResourcesCache);
+    tearDownCache(_resources.SamplerCache);
 
     // release shader cache
     {
@@ -159,8 +159,13 @@ bool FVulkanResourceManager::CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLa
     FPipelineDesc::PUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
 
     TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, uniforms };
-    if (Likely(CreateCachedResource_(pId, std::move(emptyKey), _device, bindings.MakeConstView() ARGS_IF_RHIDEBUG("EmptyDSLayout")).first))
+    auto it = CreateCachedResource_(pId, std::move(emptyKey), _device, bindings.MakeConstView()
+        ARGS_IF_RHIDEBUG("EmptyDSLayout"));
+
+    if (Likely(it.first)) {
+        it.first->AddRef(); // emptyDS must not be trimmed by ReleaseMemory()
         return true;
+    }
 
     LOG(RHI, Error, L"failed to create an empty descriptor set layout");
     return false;
@@ -675,7 +680,8 @@ FRawRenderPassID FVulkanResourceManager::CreateRenderPass(const TMemoryView<cons
     TResourceProxy<FVulkanRenderPass> emptyKey{ passes };
 
     FRawRenderPassID renderPassId;
-    if (Likely(CreateCachedResource_(&renderPassId, std::move(emptyKey), _device ARGS_IF_RHIDEBUG(debugName)).first)) {
+    auto it = CreateCachedResource_(&renderPassId, std::move(emptyKey), _device ARGS_IF_RHIDEBUG(debugName));
+    if (Likely(it.first)) {
         Assert_NoAssume(renderPassId.Valid());
         return renderPassId;
     }
@@ -965,14 +971,13 @@ void FVulkanResourceManager::ReleaseMemory() {
         });
     };
 
-    constexpr size_t maxIterationsForTrim = 500;
-    trimDownCache(_resources.PplnLayoutCache, maxIterationsForTrim); // else kept alive due to manual AddRef()
-
-    // trimDownCache(_resources.SamplerCache);
-    // trimDownCache(_resources.DslayoutCache);
-    // trimDownCache(_resources.RenderPassCache);
-    // trimDownCache(_resources.FramebufferCache);
-    // trimDownCache(_resources.PplnResourcesCache);
+    constexpr size_t maxIterationsForTrim = 500; // else kept alive due to manual AddRef()
+    trimDownCache(_resources.PplnResourcesCache, maxIterationsForTrim);
+    trimDownCache(_resources.PplnLayoutCache, maxIterationsForTrim);
+    trimDownCache(_resources.DslayoutCache, maxIterationsForTrim);
+    trimDownCache(_resources.RenderPassCache, maxIterationsForTrim);
+    trimDownCache(_resources.FramebufferCache, maxIterationsForTrim);
+    trimDownCache(_resources.SamplerCache, maxIterationsForTrim);
 }
 //----------------------------------------------------------------------------
 // CreateStagingBuffer

@@ -190,7 +190,7 @@ NODISCARD static bool MergePipelineResources_(
     for (const auto& srcDs : src.DescriptorSets) {
         bool found = false;
 
-        for (const auto& dstDs : src.DescriptorSets) {
+        for (const auto& dstDs : dst->DescriptorSets) {
             if (srcDs.Id == dstDs.Id) {
                 Assert(dstDs.Uniforms);
                 Assert(srcDs.Uniforms);
@@ -389,8 +389,9 @@ NODISCARD static bool CheckDescriptorBindings_(const FPipelineDesc& desc) {
         bindingIndices.clear();
 
         for (const auto& un : *ds.Uniforms) {
+            const auto bindingIndex = un.second.Index.VKBinding();
             // binding index already occupied
-            LOG_CHECK(PipelineCompiler, not bindingIndices.Insert_ReturnIfExists(un.second.Index.VKBinding()));
+            LOG_CHECK(PipelineCompiler, not bindingIndices.Insert_ReturnIfExists(bindingIndex));
         }
     }
 

@@ -65,9 +65,9 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
     TDrawCallDesc(FConstChar name, const FLinearColor& color) NOEXCEPT : TDrawTaskDesc<_Task>(name, color) {}
 #endif
 
-    _Task& AddResources(const FDescriptorSetID& id, const FPipelineResources* res);
+    _Task& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
-    _Task& AddScissor(const FRectangleI& clip);
+    _Task& AddScissor(const FRectangleU& clip);
 
     _Task& AddColorBuffer(ERenderTargetID id, const FColorBufferState& cb);
     _Task& AddColorBuffer(ERenderTargetID id, EColorMask colorMask = EColorMask::All );

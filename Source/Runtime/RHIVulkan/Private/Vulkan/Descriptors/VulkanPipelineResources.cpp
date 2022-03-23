@@ -82,14 +82,16 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
     SLABHEAP_POOLED(RHIDescriptor) heap;
     heap.SetSlabSize(16_KiB);
 
-    FUpdateDescriptors update;
-    update.DescriptorIndex = 0;
-    update.Descriptors = update.Allocator.AllocateT<VkWriteDescriptorSet>(pDsLayout->Read()->MaxIndex + 1);
+    FUpdateDescriptors update{
+        heap,
+        heap.AllocateT<VkWriteDescriptorSet>(pDsLayout->Read()->MaxIndex + 1),
+        0
+    };
 
-    LOG_CHECK(RHI, not exclusiveRes->DynamicData.UniformByPred([&](const FUniformID& id, auto& data) -> bool {
+    exclusiveRes->DynamicData.EachUniform([&](const FUniformID& id, auto& data) {
         Assert(id.Valid());
-        return AddResource_(&update, *exclusiveRes, manager, id, data);
-    }) );
+        AddResource_(&update, *exclusiveRes, manager, id, data);
+    });
 
     device.vkUpdateDescriptorSets(
         device.vkDevice(),
@@ -97,6 +99,7 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
         update.Descriptors.data(),
         0, nullptr );
 
+    heap.DiscardAll();
     return true;
 }
 //----------------------------------------------------------------------------
@@ -121,39 +124,39 @@ void FVulkanPipelineResources::TearDown(FVulkanResourceManager& manager) {
 bool FVulkanPipelineResources::AllResourcesAlive(const FVulkanResourceManager& manager) const {
     const auto sharedRes = _resources.LockShared();
 
-    const auto isAlive = [&manager](const auto& id) {
-        return (not id or manager.IsResourceAlive(id));
+    const auto isNotAlive = [&manager](const auto& id) {
+        return (id && not manager.IsResourceAlive(id));
     };
 
     return (not sharedRes->DynamicData.UniformByPred(Meta::Overloaded(
-        [&isAlive](const FUniformID&, const FPipelineResources::FBuffer& buf) {
-            return buf.Elements.MakeView().Any([&isAlive](const FPipelineResources::FBuffer::FElement& elt) {
-                return isAlive(elt.BufferId);
+        [&isNotAlive](const FUniformID&, const FPipelineResources::FBuffer& buf) {
+            return buf.Elements.MakeView().Any([&isNotAlive](const FPipelineResources::FBuffer::FElement& elt) {
+                return isNotAlive(elt.BufferId);
             }).valid();
         },
-        [&isAlive](const FUniformID&, const FPipelineResources::FTexelBuffer& texel) {
-            return texel.Elements.MakeView().Any([&isAlive](const FPipelineResources::FTexelBuffer::FElement& elt) {
-                return isAlive(elt.BufferId);
+        [&isNotAlive](const FUniformID&, const FPipelineResources::FTexelBuffer& texel) {
+            return texel.Elements.MakeView().Any([&isNotAlive](const FPipelineResources::FTexelBuffer::FElement& elt) {
+                return isNotAlive(elt.BufferId);
             }).valid();
         },
-        [&isAlive](const FUniformID&, const FPipelineResources::FImage& img) {
-            return img.Elements.MakeView().Any([&isAlive](const FPipelineResources::FImage::FElement& elt) {
-                return isAlive(elt.ImageId);
+        [&isNotAlive](const FUniformID&, const FPipelineResources::FImage& img) {
+            return img.Elements.MakeView().Any([&isNotAlive](const FPipelineResources::FImage::FElement& elt) {
+                return isNotAlive(elt.ImageId);
             }).valid();
         },
-        [&isAlive](const FUniformID&, const FPipelineResources::FTexture& tex) {
-            return tex.Elements.MakeView().Any([&isAlive](const FPipelineResources::FTexture::FElement& elt) {
-                return isAlive(elt.ImageId) and isAlive(elt.SamplerId);
+        [&isNotAlive](const FUniformID&, const FPipelineResources::FTexture& tex) {
+            return tex.Elements.MakeView().Any([&isNotAlive](const FPipelineResources::FTexture::FElement& elt) {
+                return isNotAlive(elt.ImageId) and isNotAlive(elt.SamplerId);
             }).valid();
         },
-        [&isAlive](const FUniformID&, const FPipelineResources::FSampler& smp) {
-            return smp.Elements.MakeView().Any([&isAlive](const FPipelineResources::FSampler::FElement& elt) {
-                return isAlive(elt.SamplerId);
+        [&isNotAlive](const FUniformID&, const FPipelineResources::FSampler& smp) {
+            return smp.Elements.MakeView().Any([&isNotAlive](const FPipelineResources::FSampler::FElement& elt) {
+                return isNotAlive(elt.SamplerId);
             }).valid();
         },
-        [&isAlive](const FUniformID&, const FPipelineResources::FRayTracingScene& scene) {
-            return scene.Elements.MakeView().Any([&isAlive](const FPipelineResources::FRayTracingScene::FElement& elt) {
-                return isAlive(elt.SceneId);
+        [&isNotAlive](const FUniformID&, const FPipelineResources::FRayTracingScene& scene) {
+            return scene.Elements.MakeView().Any([&isNotAlive](const FPipelineResources::FRayTracingScene::FElement& elt) {
+                return isNotAlive(elt.SceneId);
             }).valid();
         }) ));
 }
@@ -169,7 +172,7 @@ bool FVulkanPipelineResources::operator ==(const FVulkanPipelineResources& other
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value) {
     UNUSED(id);
-    const auto infos = pList->Allocator.AllocateT<VkDescriptorBufferInfo>(value.Elements.Count );
+    const auto infos = pList->AllocateT<VkDescriptorBufferInfo>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -205,7 +208,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value) {
     UNUSED(id);
-    const auto infos = pList->Allocator.AllocateT<VkBufferView>(value.Elements.Count );
+    const auto infos = pList->AllocateT<VkBufferView>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -243,7 +246,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value) {
     UNUSED(id);
-    const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -285,7 +288,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value) {
     UNUSED(id);
-    const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -324,7 +327,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value) {
     UNUSED(id);
-    const auto infos = pList->Allocator.AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -353,7 +356,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
     UNUSED(id);
-    const auto tlas = pList->Allocator.AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
+    const auto tlas = pList->AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
         auto& elt = value.Elements[i];
@@ -367,7 +370,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
         tlas[i] = pRTScene->Handle();
     }
 
-    auto* const pTopAS = pList->Allocator.AllocateT<VkWriteDescriptorSetAccelerationStructureNV>();
+    auto* const pTopAS = pList->AllocateT<VkWriteDescriptorSetAccelerationStructureNV>(1).data();
     *pTopAS = {};
     pTopAS->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
     pTopAS->accelerationStructureCount = value.Elements.Count;
@@ -505,7 +508,7 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
         imageType |= EImageSampler::_UInt;
     }
     else
-    if (info.ValueType ^ (EPixelValueType::SFloat|EPixelValueType::UFloat|EPixelValueType::SNorm|EPixelValueType::UFloat)) {
+    if (info.ValueType ^ EPixelValueType::AnyFloat) {
         imageType |= EImageSampler::_Float;
     }
     else {

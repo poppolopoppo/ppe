@@ -297,6 +297,7 @@ private:
     struct {
         FFramebufferCache::FGCHandle FrameBuffersGC;
         FPplnResourcesCache::FGCHandle PplnResourcesGC;
+        FPplnResourcesCache::FGCHandle RenderPassGC;
     }   _validation;
 
 #if USE_PPE_RHIDEBUG
