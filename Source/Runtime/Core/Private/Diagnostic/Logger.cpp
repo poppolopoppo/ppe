@@ -58,6 +58,10 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 namespace {
 //----------------------------------------------------------------------------
 static ELoggerVerbosity GLoggerVerbosity_ = ELoggerVerbosity::All;
+#if USE_PPE_ASSERT
+static FLoggerCategory::EFlags GLoggerFlags_ = Default;
+#endif
+//----------------------------------------------------------------------------
 static THREAD_LOCAL bool GIsInLogger_ = false;
 struct FIsInLoggerScope {
     const bool WasInLogger;
@@ -387,7 +391,7 @@ class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public SLAB_ALLOCATOR(Logger), M
     struct FSuicideScope_ : FLogAllocator::FScope {
         FDeferredLog* Log;
         FSuicideScope_(FDeferredLog* log)
-        :    FScope(log->Bucket)
+        :   FScope(log->Bucket)
         ,   Log(log) {
             Assert(log);
             Assert_NoAssume(PPE_HASH_VALUE_SEED == Log->Canary);
@@ -636,9 +640,11 @@ NODISCARD static bool NotifyLoggerMessage_(
     const FLogger::FSiteInfo& site ) NOEXCEPT {
     UNUSED(site);
 #if USE_PPE_ASSERT
-    if (Unlikely(category.Flags & FLoggerCategory::BreakOnError && level == ELoggerVerbosity::Error))
+    if (Unlikely(category.Flags & FLoggerCategory::BreakOnError && level == ELoggerVerbosity::Error) ||
+        Unlikely(category.Flags & FLoggerCategory::BreakOnWarning && level == ELoggerVerbosity::Warning) )
         PPE_DEBUG_BREAK();
-    if (Unlikely(category.Flags & FLoggerCategory::BreakOnWarning && level == ELoggerVerbosity::Warning))
+    if ((GLoggerFlags_ & FLoggerCategory::BreakOnError && level == ELoggerVerbosity::Error) ||
+        (GLoggerFlags_ & FLoggerCategory::BreakOnWarning && level == ELoggerVerbosity::Warning) )
         PPE_DEBUG_BREAK();
 #endif
     return (category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level);
@@ -702,6 +708,11 @@ void FLogger::Start() {
     // don't create a log file when running with an attached debugger
     if (FCurrentProcess::StartedWithDebugger()) {
         RegisterLogger(MakeOutputDebug());
+
+#if USE_PPE_ASSERT
+        // break on errors when debugger is attached
+        GLoggerFlags_ |= FLoggerCategory::BreakOnError;
+#endif
     }
     else {
         const auto& proc = FCurrentProcess::Get();
