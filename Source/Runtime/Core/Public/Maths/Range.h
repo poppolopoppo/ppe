@@ -38,10 +38,15 @@ struct TRange {
 
     CONSTEXPR value_type Extent() const { return (Last - First); }
     CONSTEXPR bool Empty() const { return not Any(First < Last); }
-    CONSTEXPR bool Whole() const { return All(Last == MaxValue); }
+    CONSTEXPR bool Whole() const { return All(First == 0) && All(Last == MaxValue); }
 
     NODISCARD CONSTEXPR bool Overlaps(const TRange& other) const {
         return (not All((Last < other.First) | (other.Last < First)));
+    }
+
+    CONSTEXPR void Reset() {
+        *this = TRange{};
+        Assert_NoAssume(Empty());
     }
 
     CONSTEXPR TRange& Add(value_type value) {
