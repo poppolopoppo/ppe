@@ -34,7 +34,7 @@ class PPE_REMOTING_API FRTTIParameter final : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_REMOTING_API, FRTTIParameter, RTTI::FMetaObject);
 
     RTTI::FName Name;
-    RTTI::EParameterFlags Flags;
+    RTTI::EParameterFlags Flags{};
     PRTTITraits Traits;
 
     FRTTIParameter() = default;
@@ -45,7 +45,7 @@ class PPE_REMOTING_API FRTTIFunction final : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_REMOTING_API, FRTTIFunction, RTTI::FMetaObject);
 
     RTTI::FName Name;
-    RTTI::EFunctionFlags Flags;
+    RTTI::EFunctionFlags Flags{};
     PRTTITraits Result;
     VECTORINSITU(Remoting, PRTTIParameter, 4) Parameters;
 
@@ -57,7 +57,7 @@ class PPE_REMOTING_API FRTTIProperty final : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_REMOTING_API, FRTTIProperty, RTTI::FMetaObject);
 
     RTTI::FName Name;
-    RTTI::EPropertyFlags Flags;
+    RTTI::EPropertyFlags Flags{};
     PRTTITraits Traits;
 
     FRTTIProperty() = default;
@@ -68,7 +68,7 @@ class PPE_REMOTING_API FRTTIClass final : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_REMOTING_API, FRTTIClass, RTTI::FMetaObject);
 
     RTTI::FName Name;
-    RTTI::EClassFlags Flags;
+    RTTI::EClassFlags Flags{};
     VECTORINSITU(Remoting, PRTTIFunction, 8) Functions;
     VECTORINSITU(Remoting, PRTTIProperty, 8) Properties;
     PRTTIClass Parent;
@@ -81,7 +81,7 @@ class PPE_REMOTING_API FRTTIEnum final : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_REMOTING_API, FRTTIEnum, RTTI::FMetaObject);
 
     RTTI::FName Name;
-    RTTI::EEnumFlags Flags;
+    RTTI::EEnumFlags Flags{};
     PRTTITraits Traits;
     VECTORINSITU(Remoting, RTTI::FName, 4) Keys;
     VECTORINSITU(Remoting, RTTI::FMetaEnumOrd, 4) Values;
@@ -94,10 +94,10 @@ class PPE_REMOTING_API FRTTITraits : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_REMOTING_API, FRTTITraits, RTTI::FMetaObject);
 
     FString Name;
-    RTTI::ETypeFlags Flags;
-    RTTI::FTypeId TypeId;
-    u32 Alignment;
-    u32 SizeInBytes;
+    RTTI::ETypeFlags Flags{};
+    RTTI::FTypeId TypeId{};
+    u32 Alignment{0};
+    u32 SizeInBytes{0};
 
 protected:
     FRTTITraits() = default;
@@ -157,8 +157,8 @@ class PPE_REMOTING_API FRTTITransaction final : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_REMOTING_API, FRTTITransaction, RTTI::FMetaObject);
 
     RTTI::FName Namespace;
-    RTTI::ETransactionFlags Flags;
-    RTTI::ETransactionState State;
+    RTTI::ETransactionFlags Flags{};
+    RTTI::ETransactionState State{};
     VECTORINSITU(Remoting, RTTI::PMetaObject, 8) TopObjects;
 
     FRTTITransaction() = default;

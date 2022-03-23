@@ -50,7 +50,7 @@ public:
         VECTORINSITU(Remoting, FParameter, 1) Parameters;
         void* UserData{ nullptr };
         Network::FName Prefix;
-        Network::EHttpMethod Method;
+        Network::EHttpMethod Method{};
     };
 
     IRemotingEndpoint() = default;

@@ -9,7 +9,10 @@
 #include "Remoting/RTTIEndpoint.h"
 #include "Remoting/SwaggerEndpoint.h"
 
+#include "Application.h"
 #include "ApplicationModule.h"
+#include "HAL/PlatformNotification.h"
+#include "IO/String.h"
 #include "Modular/ModularDomain.h"
 
 namespace PPE {
@@ -26,7 +29,17 @@ public:
         _srv.reset<FRemotingServer>();
 
         // add default endpoints here
-        _srv->Add(MakeUnique<FSwaggerEndpoint>());
+        auto swagger = MakeUnique<FSwaggerEndpoint>();
+
+        _swapperCmdIndex = Application::FPlatformNotification::AddSystrayCommand(
+            L"Remoting",
+            L"Swagger/API",
+            [pSwagger{ swagger.get() }, pSrv{ _srv.get() }]() {
+                const FWString swaggerUrl = ToWString(pSwagger->SwaggerApi(*pSrv));
+                FPlatformProcess::OpenURL(swaggerUrl.c_str());
+            });
+
+        _srv->Add(std::move(swagger));
         _srv->Add(NEW_REF(Remoting, FProcessEndpoint));
         _srv->Add(NEW_REF(Remoting, FRTTIEndpoint));
 
@@ -40,6 +53,9 @@ public:
         Assert(_srv);
 
         FApplicationModule::Get(_domain).OnApplicationTick().Remove(_tickHandle);
+
+        Application::FPlatformNotification::RemoveSystrayCommand(_swapperCmdIndex);
+        _swapperCmdIndex = INDEX_NONE;
 
         _srv->Shutdown();
 
@@ -66,6 +82,7 @@ private:
     const FModularDomain& _domain;
     TUniquePtr<FRemotingServer> _srv;
     FEventHandle _tickHandle;
+    size_t _swapperCmdIndex{INDEX_NONE};
 
 };
 //----------------------------------------------------------------------------

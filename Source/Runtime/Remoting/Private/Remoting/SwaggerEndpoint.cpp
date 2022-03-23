@@ -20,8 +20,19 @@ namespace Remoting {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FSwaggerEndpoint::FSwaggerEndpoint() NOEXCEPT
-:   _prefix("/swagger") {}
-
+:   _prefix("/swagger") {
+}
+//----------------------------------------------------------------------------
+FSwaggerEndpoint::~FSwaggerEndpoint() {
+}
+//----------------------------------------------------------------------------
+FString FSwaggerEndpoint::SwaggerApi(const FRemotingServer& server) const {
+    return StringFormat(
+        "http://{0}:{1}{2}/api",
+        server.Localhost().Host(),
+        server.Localhost().Port(),
+        _prefix);
+}
 //----------------------------------------------------------------------------
 void FSwaggerEndpoint::PrivateEndpointOpenAPI(FOpenAPI& ) const {
     NOOP(); // this is handled bellow

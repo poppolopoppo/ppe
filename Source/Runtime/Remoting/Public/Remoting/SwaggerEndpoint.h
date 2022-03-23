@@ -14,8 +14,11 @@ namespace Remoting {
 class PPE_REMOTING_API FSwaggerEndpoint final : public IRemotingEndpoint {
 public:
     FSwaggerEndpoint() NOEXCEPT;
+    virtual ~FSwaggerEndpoint();
 
     virtual const FString& EndpointPrefix() const NOEXCEPT override { return _prefix; }
+
+    FString SwaggerApi(const FRemotingServer& server) const;
 
 protected:
     virtual void PrivateEndpointOpenAPI(FOpenAPI& api) const override;

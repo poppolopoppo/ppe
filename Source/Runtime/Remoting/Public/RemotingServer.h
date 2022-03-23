@@ -15,6 +15,7 @@
 
 #include <variant>
 
+#include "Container/Appendable.h"
 #include "Container/Enumerable.h"
 #include "Http/Header.h"
 #include "Meta/Functor.h"
@@ -46,6 +47,9 @@ public:
     void Start();
     void Tick(FTimespan dt);
     void Shutdown();
+
+    using Network::FHttpServer::Localhost;
+    using Network::FHttpServer::Name;
 
 private:
     friend struct FRemotingContext;
