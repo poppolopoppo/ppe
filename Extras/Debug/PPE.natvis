@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-	<!-- https://code.msdn.microsoft.com/windowsdesktop/Writing-type-visualizers-2eae77a2 -->
+	<!--
+		Link to the documentation for NATVIS files :
+		https://code.msdn.microsoft.com/windowsdesktop/Writing-type-visualizers-2eae77a2
+	-->
+	<!--
+		Misc
+		================================================================================
+	-->
 	<Type Name="PPE::hash_t">
 		<DisplayString>{_value,x}</DisplayString>
 		<Expand>
@@ -12,21 +19,6 @@
 		<Expand>
 			<Item Name="[Code]">Code</Item>
 			<Item Name="[Description]">Code,hr</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::TNumeric&lt; *, * &gt;">
-		<DisplayString>{ Value }</DisplayString>
-		<Expand>
-			<Item Name="[Value]">Value</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::Meta::TPointerWFlags&lt;*&gt;">
-		<DisplayString>{{ ptr={($T1*)(_packed._ptr)} flag0={(_packed._flags&amp;1)!=0} flag1={(_packed._flags&amp;2)!=0} flag01={_packed._flags} }}</DisplayString>
-		<Expand>
-			<Item Name="[Pointer]">($T1*)(_packed._ptr * 4)</Item>
-			<Item Name="[Flag0]">(_packed._flags&amp;1)!=0</Item>
-			<Item Name="[Flag1]">(_packed._flags&amp;2)!=0</Item>
-			<Item Name="[Flag01]">_packed._flags</Item>
 		</Expand>
 	</Type>
 <!-- #TODO : TFunction was refactored
@@ -44,6 +36,10 @@
     </Expand>
   </Type>
 -->
+	<!--
+		Strings
+		================================================================================
+	-->
 	<Type Name="PPE::TBasicString&lt;char&gt;">
 		<DisplayString Condition="_large.IsLarge == 0">{_small.Buffer,[_small.Size]s} [small:{size_t(_small.Size)}]</DisplayString>
 		<DisplayString Condition="_large.IsLarge != 0">{_large.Storage,[_large.Size]s} [large:{size_t(_large.Size)}]</DisplayString>
@@ -84,14 +80,10 @@
 		<DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
 		<StringView>_storage,[_size]su</StringView>
 	</Type>
-	<Type Name="PPE::Serialize::TTextHeap&lt;*, * &gt;::FText">
-		<DisplayString>{_small.IsSmall ? _small.Data : _large.Data, [_small.IsSmall ? _small.Size : _large.Size]} [{_small.IsSmall ? _small.Size : _large.Size}]</DisplayString>
-		<Expand>
-			<Item Name="[Data]">_small.IsSmall ? _small.Data : _large.Data, [_small.IsSmall ? _small.Size : _large.Size]</Item>
-			<Item Name="[Length]">_small.IsSmall ? _small.Size : _large.Size</Item>
-			<Item Name="[Small]">!!_small.IsSmall</Item>
-		</Expand>
-	</Type>
+	<!--
+		Containers
+		================================================================================
+	-->
 	<Type Name="PPE::TMemoryView&lt;*&gt;">
 		<DisplayString Condition="_size == 0">empty</DisplayString>
 		<DisplayString>{"$T1"} [{_size}] = {_storage}</DisplayString>
@@ -186,9 +178,9 @@
 		</Expand>
 	</Type>
 	<Type Name="PPE::TRawStorage&lt;*, *&gt;">
-		<DisplayString>{{ size={_size} }}</DisplayString>
+		<DisplayString>{{ rawSize={_sizeInBytes} }}</DisplayString>
 		<Expand>
-			<Item Name="[Size]">_size</Item>
+			<Item Name="[RawSize]">_sizeInBytes</Item>
 			<ArrayItems>
 				<Size>_size</Size>
 				<ValuePointer>_storage</ValuePointer>
@@ -216,6 +208,40 @@
 				<Size>_size</Size>
 				<ValuePointer>_storage</ValuePointer>
 			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="PPE::FBitMask">
+		<DisplayString>{Data,x}</DisplayString>
+		<Expand>
+			<Item Name="[Num]">Meta::popcnt(Data)</Item>
+			<Item Name="[Bits]">Data,b</Item>
+			<Item Name="[AllTrue]">Data == size_t(-1)</Item>
+			<Item Name="[AllFalse]">Data == 0</Item>
+			<CustomListItems>
+				<Variable Name="index" InitialValue="0" />
+				<Variable Name="mask" InitialValue="1" />
+				<!-- <Size>sizeof(Data) * 8</Size>-->
+				<Loop>
+					<If Condition="index == sizeof(Data)*8">
+						<Break />
+					</If>
+					<If Condition="(Data &amp; mask) != 0">
+						<Item Name="[{index}]">mask,x</Item>
+					</If>
+					<Exec>++index</Exec>
+					<Exec>mask *= 2</Exec>
+				</Loop>
+			</CustomListItems>
+		</Expand>
+	</Type>
+	<!--
+		Maths
+		================================================================================
+	-->
+	<Type Name="PPE::TNumeric&lt; *, * &gt;">
+		<DisplayString>{ Value }</DisplayString>
+		<Expand>
+			<Item Name="[Value]">Value</Item>
 		</Expand>
 	</Type>
 	<Type Name="PPE::TScalarVectorComponent&lt;*, 0&gt;">
@@ -284,6 +310,10 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
+	<!--
+		Token
+		================================================================================
+	-->
 	<Type Name="PPE::TToken&lt;*, char, *, * &gt;">
 		<DisplayString Condition="_handle != nullptr">{(const char*)(_handle+1),[(int)_handle-&gt;Length]s}</DisplayString>
 		<DisplayString>empty</DisplayString>
@@ -304,6 +334,10 @@
 			<Item Name="[HashValue]" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
 		</Expand>
 	</Type>
+	<!--
+		File system
+		================================================================================
+	-->
 	<Type Name="PPE::FFileSystemNode">
 		<DisplayString>{_token}</DisplayString>
 		<Expand>
@@ -327,6 +361,19 @@
 	</Type>
 	<Type Name="PPE::FFilename">
 		<DisplayString>{PPE::DebugPrintFilename(*this)}</DisplayString>
+	</Type>
+	<!--
+		Pointers
+		================================================================================
+	-->
+	<Type Name="PPE::Meta::TPointerWFlags&lt;*&gt;">
+		<DisplayString>{{ ptr={($T1*)(_packed._ptr)} flag0={(_packed._flags&amp;1)!=0} flag1={(_packed._flags&amp;2)!=0} flag01={_packed._flags} }}</DisplayString>
+		<Expand>
+			<Item Name="[Pointer]">($T1*)(_packed._ptr * 4)</Item>
+			<Item Name="[Flag0]">(_packed._flags&amp;1)!=0</Item>
+			<Item Name="[Flag1]">(_packed._flags&amp;2)!=0</Item>
+			<Item Name="[Flag01]">_packed._flags</Item>
+		</Expand>
 	</Type>
 	<Type Name="PPE::FRefCountable">
 		<DisplayString>{(void*)this} [Refs:{_refCount}]</DisplayString>
@@ -383,30 +430,85 @@
 			<ExpandedItem Condition="VTable != 0xDEADF001DEADF001ull &amp;&amp; VTable != 0xDEADF001ul">($T1*)(&amp;InSitu),na</ExpandedItem>
 		</Expand>
 	</Type>
-	<Type Name="PPE::FBitMask">
-		<DisplayString>{Data,x}</DisplayString>
+	<!--
+		ThreadSafe
+		================================================================================
+	-->
+	 <!-- PPE::EThreadBarrier::None -->
+	<Type Name="PPE::TThreadSafe&lt;*, 0&gt;">
+		<DisplayString>NoBarrier {_value}</DisplayString>
 		<Expand>
-			<Item Name="[Num]">Meta::popcnt(Data)</Item>
-			<Item Name="[Bits]">Data,b</Item>
-			<Item Name="[AllTrue]">Data == size_t(-1)</Item>
-			<Item Name="[AllFalse]">Data == 0</Item>
-			<CustomListItems>
-				<Variable Name="index" InitialValue="0" />
-				<Variable Name="mask" InitialValue="1" />
-				<!-- <Size>sizeof(Data) * 8</Size>-->
-				<Loop>
-					<If Condition="index == sizeof(Data)*8">
-						<Break />
-					</If>
-					<If Condition="(Data &amp; mask) != 0">
-						<Item Name="[{index}]">mask,x</Item>
-					</If>
-					<Exec>++index</Exec>
-					<Exec>mask *= 2</Exec>
-				</Loop>
-			</CustomListItems>
+			<Item Name="[Value]">_value</Item>
 		</Expand>
 	</Type>
+	 <!-- PPE::EThreadBarrier::CriticalSection -->
+	<Type Name="PPE::TThreadSafe&lt;*, 1&gt;">
+		<DisplayString>CriticalSection {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[CriticalSection]">_barrierCS</Item>
+		</Expand>
+	</Type>
+	 <!-- PPE::EThreadBarrier::RWLock -->
+	<Type Name="PPE::TThreadSafe&lt;*, 2&gt;">
+		<DisplayString>RWLock {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[RWLock]">_barrierRW</Item>
+		</Expand>
+	</Type>
+	 <!-- PPE::EThreadBarrier::AtomicSpinLock -->
+	<Type Name="PPE::TThreadSafe&lt;*, 3&gt;">
+		<DisplayString>AtomicSpinLock {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[AtomicSpinLock]">_spinLock</Item>
+		</Expand>
+	</Type>
+	 <!-- PPE::EThreadBarrier::AtomicReadWriteLock -->
+	<Type Name="PPE::TThreadSafe&lt;*, 4&gt;">
+		<DisplayString>AtomicRWLock {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[AtomicRWLock]">_spinLockRW</Item>
+		</Expand>
+	</Type>
+	 <!-- PPE::EThreadBarrier::AtomicTicketRWLock -->
+	<Type Name="PPE::TThreadSafe&lt;*, 5&gt;">
+		<DisplayString>AtomicTicketRWLock {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[AtomicTicketRWLock]">_spinLockRW</Item>
+		</Expand>
+	</Type>
+	 <!-- PPE::EThreadBarrier::DataRaceCheck -->
+	<Type Name="PPE::TThreadSafe&lt;*, 6&gt;">
+		<DisplayString>DataRaceCheck {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[DataRaceCheck]">_dataRaceCheck</Item>
+		</Expand>
+	</Type>
+	 <!-- PPE::EThreadBarrier::RWDataRaceCheck -->
+	<Type Name="PPE::TThreadSafe&lt;*, 7&gt;">
+		<DisplayString>RWDataRaceCheck {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[RWDataRaceCheck]">_dataRaceCheckRW</Item>
+		</Expand>
+	</Type>
+	 <!-- PPE::EThreadBarrier::ThreadLocal -->
+	<Type Name="PPE::TThreadSafe&lt;*, 8&gt;">
+		<DisplayString>ThreadLocal {_value}</DisplayString>
+		<Expand>
+			<Item Name="[Value]">_value</Item>
+			<Item Name="[ThreadLocal]">true</Item>
+		</Expand>
+	</Type>
+	<!--
+		RTTI
+		================================================================================
+	-->
 	<Type Name="PPE::RTTI::FTypeInfos">
 		<DisplayString>[{TypeId}] size: {SizeAndFlags.SizeInBytes}, align: {size_t(1) &lt;&lt; SizeAndFlags.PackedAlignment}</DisplayString>
 		<Expand>
@@ -491,6 +593,18 @@
 			<Item Name="[PP]">PPE::RTTI::DebugPrintObject(this)</Item>
 		</Expand>
 	</Type>
+	<!--
+		Serialize
+		================================================================================
+	-->
+	<Type Name="PPE::Serialize::TTextHeap&lt;*, * &gt;::FText">
+		<DisplayString>{_small.IsSmall ? _small.Data : _large.Data, [_small.IsSmall ? _small.Size : _large.Size]} [{_small.IsSmall ? _small.Size : _large.Size}]</DisplayString>
+		<Expand>
+			<Item Name="[Data]">_small.IsSmall ? _small.Data : _large.Data, [_small.IsSmall ? _small.Size : _large.Size]</Item>
+			<Item Name="[Length]">_small.IsSmall ? _small.Size : _large.Size</Item>
+			<Item Name="[Small]">!!_small.IsSmall</Item>
+		</Expand>
+	</Type>
 	<Type Name="PPE::Serialize::FJSON::FValue">
 		<DisplayString Condition="PPE::Serialize::FJSON::Null    == _type">null</DisplayString>
 		<DisplayString Condition="PPE::Serialize::FJSON::Bool    == _type">Bool {_bool}</DisplayString>
@@ -508,7 +622,11 @@
 			<Item Condition="PPE::Serialize::FJSON::Object  == _type" Name="[Object]">_object</Item>
 		</Expand>
 	</Type>
-	<!-- TEMPORARY WORKAROUND FOR : https://developercommunity.visualstudio.com/content/problem/605247/stlnatvis-fails-to-evaluate-stdatomic-in-vs2019.html -->
+	<!--
+		TEMPORARY WORKAROUND FOR :
+		https://developercommunity.visualstudio.com/content/problem/605247/stlnatvis-fails-to-evaluate-stdatomic-in-vs2019.html
+		================================================================================
+	-->
 	<Type Name="std::atomic&lt;*&gt;">
 		<DisplayString>{*($T1 *)&amp;_Storage._Value}</DisplayString>
 		<Expand>
