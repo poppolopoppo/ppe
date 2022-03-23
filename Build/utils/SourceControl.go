@@ -78,7 +78,7 @@ func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 	for reader.Scan() {
 		line := reader.Text()
 		if len(line) > 0 {
-			if line[0:1] == "A" || line[1:2] == "M" {
+			if line[0:1] == "A" || line[1:2] == "M" || line[0:2] == "AM" || line[0:2] == "??" {
 				file := UFS.Root.AbsoluteFile(strings.TrimSpace(line[3:]))
 				if file.Ext() == ".cpp" {
 					fileset.Append(file)
@@ -125,36 +125,20 @@ var SourceControlBuilder = MakeBuildable(func(BuildInit) *SourceControlStatus {
 	return &SourceControlStatus{}
 })
 
-type SourceControlModifiedFilesT struct {
-	Output Filename
-}
-
-func (x *SourceControlModifiedFilesT) Alias() BuildAlias {
-	return MakeBuildAlias("SourceControl", "ModifiedFilesList")
-}
-func (x *SourceControlModifiedFilesT) Build(bc BuildContext) (BuildStamp, error) {
-	SourceControlBuilder.Need(bc)
-	err := UFS.Create(x.Output, func(w io.Writer) error {
-		if modifiedFiles, err := GetSourceControlProvider().GetModifiedFiles(); err == nil {
-			for _, file := range modifiedFiles {
-				fmt.Fprintln(w, filepath.Clean(file.String()))
+var GenerateSourceControlModifiedFiles = Memoize(func() Future[Filename] {
+	return MakeFuture[Filename](func() (Filename, error) {
+		output := UFS.Saved.File(".modified_files_list.txt")
+		err := UFS.Create(output, func(w io.Writer) error {
+			if modifiedFiles, err := GetSourceControlProvider().GetModifiedFiles(); err == nil {
+				for _, file := range modifiedFiles {
+					fmt.Fprintln(w, filepath.Clean(file.String()))
+				}
+				LogInfo("Found %d modified files with source control", len(modifiedFiles))
+				return nil
+			} else {
+				return err
 			}
-			bc.OutputFile(x.Output)
-			return nil
-		} else {
-			return err
-		}
+		})
+		return output, err
 	})
-	if err == nil {
-		return MakeBuildStamp(x.Output)
-	} else {
-		return BuildStamp{}, err
-	}
-}
-
-var SourceControlModifiedFiles = MakeBuildable(func(_ BuildInit) *SourceControlModifiedFilesT {
-	builder := &SourceControlModifiedFilesT{
-		Output: UFS.Saved.File(".modified_files_list.txt"),
-	}
-	return builder
 })

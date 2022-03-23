@@ -218,6 +218,7 @@ func loadModuleDesc(src utils.Filename, namespace *NamespaceDesc) (result *Modul
 		}
 
 		result.rules.ForceIncludes.Append(result.ForceIncludes.ToFileSet(rootDir)...)
+		result.rules.Source.ExtraFiles.AppendUniq(src)
 
 		result.ApplyArchtypes(result, moduleId)
 

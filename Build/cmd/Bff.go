@@ -88,7 +88,7 @@ func (x *BffBuilder) Alias() BuildAlias {
 	return x.Output.Alias()
 }
 func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
-	sourceControlModifiedFiles := SourceControlModifiedFiles.Need(bc)
+	sourceControlModifiedFiles := GenerateSourceControlModifiedFiles()
 	targets := BuildTargets.Need(bc)
 
 	err := UFS.SafeCreate(x.Output, func(dst io.Writer) error {
@@ -117,7 +117,7 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Assign("CompilerOutputKeepBaseExtension", false)
 		bff.Assign("DeoptimizeWritableFilesWithToken", args.DeoptimizeWithToken)
 		bff.Assign("LinkerVerboseOutput", true)
-		bff.Assign("UnityInputIsolateListFile", sourceControlModifiedFiles.Output)
+		bff.Assign("UnityInputIsolateListFile", sourceControlModifiedFiles.Join().Success())
 
 		translatedUnits := targets.TranslatedUnits()
 		for _, unit := range translatedUnits.Slice() {
@@ -244,7 +244,7 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 			if moduleUnity != "" {
 				gen.Assign("CompilerInputUnity", moduleUnity)
 			} else {
-				gen.Assign("CompilerInputFiles", unit.Source.SourceFiles.Concat(unit.Source.IsolatedFiles...))
+				gen.Assign("CompilerInputFiles", unit.Source.SourceFiles)
 				if unit.Source.SourceDirs.Len() > 0 {
 					gen.Assign("CompilerInputPattern", unit.Source.SourceGlobs)
 					gen.Assign("CompilerInputPath", unit.Source.SourceDirs)

@@ -12,7 +12,7 @@ var FBuild = MakeCommand(
 	"fbuild",
 	"launch FASTBuild compilation process",
 	func(cmd *CommandEnvT) *FBuildArgs {
-		SourceControlModifiedFiles.Prepare(cmd.BuildGraph())
+		GenerateSourceControlModifiedFiles()
 		args := &FBuildArgs{
 			Cache:         FBUILD_CACHE_DISABLED,
 			Clean:         false,
@@ -28,7 +28,7 @@ var FBuild = MakeCommand(
 		return args
 	},
 	func(cmd *CommandEnvT, args *FBuildArgs) (err error) {
-		_, scm := SourceControlModifiedFiles.Prepare(cmd.BuildGraph())
+		scm := GenerateSourceControlModifiedFiles()
 		fbuild := MakeFBuildExecutor(args, cmd.ConsumeArgs(-1)...)
 		scm.Join().Success()
 		return fbuild.Run()

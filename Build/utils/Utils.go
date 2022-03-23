@@ -17,7 +17,6 @@ func InitUtils() {
 	gob.Register(Filename{})
 	gob.Register(Directory{})
 	gob.Register(&Downloader{})
-	gob.Register(&SourceControlModifiedFilesT{})
 	gob.Register(&SourceControlStatus{})
 	gob.Register(&ZipExtractor{})
 }
