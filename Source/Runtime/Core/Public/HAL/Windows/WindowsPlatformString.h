@@ -30,10 +30,10 @@ public:
     static void ToUpper(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT;
 
     static int Printf(char* dst, size_t capacity, const char* fmt, va_list args) {
-        return std::snprintf(dst, capacity, fmt, args);
+        return std::vsnprintf(dst, capacity, fmt, args);
     }
     static int Printf(wchar_t* dst, size_t capacity, const wchar_t* fmt, va_list args) {
-        return _snwprintf_s(dst, capacity, _TRUNCATE, fmt, args);
+        return _vsnwprintf_s(dst, capacity, _TRUNCATE, fmt, args);
     }
 
     static size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, size_t capacity, const char* cstr, size_t length);
