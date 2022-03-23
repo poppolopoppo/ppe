@@ -94,25 +94,7 @@ UStreamWriter VFS_OpenTextWritable(const FFilename& filename, EAccessPolicy poli
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
-    auto& vfs = VFS();
-
-    FFileStat fstat;
-    if (vfs.FileStats(&fstat, filename)) {
-        const FDateTime date = fstat.CreatedAt.ToDateTimeUTC();
-
-        wchar_t buffer[256];
-        FWFixedSizeTextWriter oss(buffer);
-        Format(oss, L"_{0:#4}-{1:#2}-{2:#2}_{3:#2}-{4:#2}-{5:#2}_UTC",
-            date.Year, date.Month, date.Day,
-            date.Hours, date.Minutes, date.Seconds);
-
-        FFilename logroll = filename;
-        logroll.AppendBasename(oss.Written());
-
-        Verify( vfs.MoveFile(filename, logroll) );
-    }
-
-    return vfs.OpenWritable(filename, policy);
+    return VFS_OpenWritable(filename, policy|EAccessPolicy::Create|EAccessPolicy::Roll);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
