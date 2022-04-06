@@ -221,6 +221,8 @@ func (env *CommandEnvT) Init(args []string) {
 		}})
 
 	} else {
+		env.persistent.resetFlagSet()
+
 		CommandFlags.FindOrAdd(env.Flags).InitFlags(env.persistent)
 
 		env.Persistent().Usage()
