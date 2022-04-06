@@ -6,10 +6,48 @@
 
 #include "Vulkan/Instance/VulkanDevice.h"
 
+#include "Memory/MemoryDomain.h"
+#include "Memory/MemoryTracking.h"
+
 #include "vma-external.h"
 
 namespace PPE {
 namespace RHI {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if USE_PPE_MEMORYDOMAINS
+namespace {
+//----------------------------------------------------------------------------
+static FMemoryTracking& VmaMemoryTypeDomain_(VmaAllocator allocator, uint32_t memoryType) {
+    const VkMemoryPropertyFlags memoryFlags = allocator->m_MemProps.memoryTypes[memoryType].propertyFlags;
+
+    if (memoryFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
+        return MEMORYDOMAIN_TRACKING_DATA(DeviceHostCached);
+    if (memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        return MEMORYDOMAIN_TRACKING_DATA(DeviceHostCoherent);
+    if (memoryFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+        return MEMORYDOMAIN_TRACKING_DATA(DeviceHostVisible);
+    if (memoryFlags & VK_MEMORY_PROPERTY_PROTECTED_BIT)
+        return MEMORYDOMAIN_TRACKING_DATA(DeviceProtected);
+    if (memoryFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+        return MEMORYDOMAIN_TRACKING_DATA(DeviceLocal);
+
+    return MEMORYDOMAIN_TRACKING_DATA(DeviceUnknown);
+}
+//----------------------------------------------------------------------------
+static void VmaMemoryUserAllocate_(VmaAllocator allocator, VmaAllocation allocation) {
+    FMemoryTracking& deviceDomain = VmaMemoryTypeDomain_(allocator, allocation->GetMemoryTypeIndex());
+    deviceDomain.AllocateUser(allocation->GetSize());
+}
+//----------------------------------------------------------------------------
+static void VmaMemoryUserDeallocate_(VmaAllocator allocator, VmaAllocation allocation) {
+    FMemoryTracking& deviceDomain = VmaMemoryTypeDomain_(allocator, allocation->GetMemoryTypeIndex());
+    deviceDomain.DeallocateUser(allocation->GetSize());
+}
+//----------------------------------------------------------------------------
+} //!namespace
+#endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -135,6 +173,36 @@ inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(cons
     info.pHeapSizeLimit = nullptr; // #TODO
     info.pVulkanFunctions = &funcs;
 
+#if USE_PPE_MEMORYDOMAINS
+    // Gpu memory allocations tracking
+    VmaDeviceMemoryCallbacks vmaMemoryCallbacks{};
+    vmaMemoryCallbacks.pUserData = this;
+    vmaMemoryCallbacks.pfnAllocate = [](
+        VmaAllocator VMA_NOT_NULL                    allocator,
+        uint32_t                                     memoryType,
+        VkDeviceMemory VMA_NOT_NULL_NON_DISPATCHABLE memory,
+        VkDeviceSize                                 size,
+        void* VMA_NULLABLE                           pUserData) {
+            UNUSED(memory);
+            UNUSED(pUserData);
+            FMemoryTracking& deviceTracking = VmaMemoryTypeDomain_(allocator, memoryType);
+            deviceTracking.AllocateSystem(size);
+        };
+    vmaMemoryCallbacks.pfnFree = [](
+        VmaAllocator VMA_NOT_NULL                    allocator,
+        uint32_t                                     memoryType,
+        VkDeviceMemory VMA_NOT_NULL_NON_DISPATCHABLE memory,
+        VkDeviceSize                                 size,
+        void* VMA_NULLABLE                           pUserData) {
+            UNUSED(memory);
+            UNUSED(pUserData);
+            FMemoryTracking& deviceTracking = VmaMemoryTypeDomain_(allocator, memoryType);
+            deviceTracking.DeallocateSystem(size);
+        };
+
+    info.pDeviceMemoryCallbacks = &vmaMemoryCallbacks;
+#endif
+
     VK_CALL( vmaCreateAllocator(&info, &exclusiveAllocator.Value()) );
 }
 //----------------------------------------------------------------------------
@@ -214,6 +282,8 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateImage(FBlock* 
             image, &info, &allocation, nullptr ));
     }
 
+    ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
+
     VK_CHECK(vmaBindImageMemory(exclusiveAllocator.Value(), allocation, image ));
 
     pData->MemoryHandle = allocation;
@@ -264,6 +334,8 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateBuffer(FBlock*
             exclusiveAllocator.Value(),
             buffer, &info, &allocation, nullptr ));
     }
+
+    ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
 
     VK_CHECK(vmaBindBufferMemory(exclusiveAllocator.Value(), allocation, buffer ));
 
@@ -317,6 +389,8 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
     bindInfo.memory = allocInfo.deviceMemory;
     bindInfo.memoryOffset = allocInfo.offset;
 
+    ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
+
     VK_CHECK(_device.vkBindAccelerationStructureMemoryNV(
         _device.vkDevice(), 1, &bindInfo ));
 
@@ -327,7 +401,11 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
 inline void FVulkanMemoryManager::FVulkanMemoryAllocator::Deallocate(FBlock& data) {
     const auto exclusiveAllocator = _allocator.LockExclusive();
 
-    vmaFreeMemory(exclusiveAllocator.Value(), static_cast<VmaAllocation>(data.MemoryHandle));
+    VmaAllocation const allocation = static_cast<VmaAllocation>(data.MemoryHandle);
+
+    ONLY_IF_MEMORYDOMAINS(VmaMemoryUserDeallocate_(exclusiveAllocator.Value(), allocation));
+
+    vmaFreeMemory(exclusiveAllocator.Value(), allocation);
 
     data.MemoryHandle = nullptr;
 }
