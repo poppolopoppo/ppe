@@ -35,7 +35,7 @@ NODISCARD CONSTEXPR bool IsDstFormatSupported_(EShaderLangFormat dst, bool hasDe
     }
 }
 //----------------------------------------------------------------------------
-NODISCARD static bool IsSupported_(const FVulkanPipelineCompiler::FshaderDataMap& shaders) {
+NODISCARD static bool IsSupported_(const FVulkanPipelineCompiler::FShaderDataMap& shaders) {
     Assert(not shaders.empty());
 
     for (const auto& it : shaders) {
@@ -400,6 +400,23 @@ NODISCARD static bool CheckDescriptorBindings_(const FPipelineDesc& desc) {
 #endif
 //----------------------------------------------------------------------------
 } //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Custom operators for merging shader binary data in shader cache
+//----------------------------------------------------------------------------
+bool FVulkanPipelineCompiler::FShaderBinaryDataTraits::operator ()(const PShaderBinaryData& lhs, const PShaderBinaryData& rhs) const NOEXCEPT {
+    if (Likely(!!lhs && !!rhs && lhs->Data() && rhs->Data())) {
+        if (lhs == rhs || (lhs->Fingerprint() == rhs->Fingerprint() && lhs->Data()->Equals(*rhs->Data())))
+            return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+hash_t FVulkanPipelineCompiler::FShaderBinaryDataTraits::operator ()(const PShaderBinaryData& shaderData) const NOEXCEPT {
+    Assert(shaderData);
+    return hash_value(shaderData->Fingerprint());
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -856,7 +873,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompilationCache& shaderCache) const {
+bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompiledModuleCache& shaderCache) const {
     Assert(shader);
     Assert(_deviceInfo);
     Assert(_deviceInfo->API.vkCreateShaderModule);

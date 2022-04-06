@@ -8,6 +8,8 @@
 #include "RHI/PipelineCompiler.h"
 #include "RHI/PipelineDesc.h"
 
+#include "Container/HashMap.h"
+#include "Container/HashHelpers.h"
 #include "Container/Vector.h"
 #include "IO/Dirpath.h"
 
@@ -20,7 +22,7 @@ class FVulkanSpirvCompiler;
 //----------------------------------------------------------------------------
 class PPE_PIPELINECOMPILER_API FVulkanPipelineCompiler final : public IPipelineCompiler {
 public:
-    using FshaderDataMap = FPipelineDesc::FShaderDataMap;
+    using FShaderDataMap = FPipelineDesc::FShaderDataMap;
 
     explicit FVulkanPipelineCompiler(Meta::FForceInit/* non-device specific */);
     explicit FVulkanPipelineCompiler(const FVulkanDeviceInfo& deviceInfo);
@@ -55,18 +57,47 @@ public: // IPipelineCompiler
     void ReleaseUnusedMemory() override { ReleaseUnusedShaders(); }
 
 private:
-    using FShaderCompilationCache = HASHMAP(PipelineCompiler, PShaderBinaryData, PVulkanDebuggableShaderModule);
+    struct FShaderBinaryDataTraits {
+        // EqualTo:
+        bool operator ()(const PShaderBinaryData& lhs, const PShaderBinaryData& rhs) const NOEXCEPT;
+        // Hash:
+        hash_t operator ()(const PShaderBinaryData& shaderData) const NOEXCEPT;
+    };
+    using FShaderBinaryMemoizedData = THashMemoizer<
+        PShaderBinaryData,
+        FShaderBinaryDataTraits,
+        FShaderBinaryDataTraits >;
+    using FShaderCompiledModuleCache = HASHMAP(
+        PipelineCompiler,
+        FShaderBinaryMemoizedData,
+        PVulkanDebuggableShaderModule);
+
+    //struct FShaderSourceTraits {
+    //    // EqualTo:
+    //    bool operator ()(const PShaderSource& lhs, const PShaderSource& rhs) const NOEXCEPT;
+    //    // Hash:
+    //    hash_t operator ()(const PShaderSource& shaderData) const NOEXCEPT;
+    //};
+    //using FShaderSourceMemoizedData = THashMemoizer<
+    //    PShaderSource,
+    //    FShaderBinaryDataTraits,
+    //    FShaderBinaryDataTraits >;
+    //using FShaderCompiledSourceCache = HASHMAP(
+    //    PipelineCompiler,
+    //    FShaderSourceMemoizedData,
+    //    PShaderBinaryData );
 
     struct FInternalData {
         VECTORINSITU(PipelineCompiler, FDirpath, 3) Directories;
-        FShaderCompilationCache ShaderCache;
+        FShaderCompiledModuleCache ShaderCache;
+        //FShaderCompiledSourceCache SourceCache;
         TUniquePtr<FVulkanSpirvCompiler> SpirvCompiler;
         EVulkanShaderCompilationFlags CompilationFlags{ Default };
     };
 
     NODISCARD bool CreateVulkanShader_(
         FPipelineDesc::FShader* shader,
-        FShaderCompilationCache& shaderCache ) const;
+        FShaderCompiledModuleCache& shaderCache ) const;
 
     const TPtrRef<const FVulkanDeviceInfo> _deviceInfo;
 

@@ -844,19 +844,19 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                         },
                         [&](FPipelineDesc::FTexture&) {
                             *ctx.Log << L"unsupported annotation found on texture <" << name << L">" << Eol;
-                            return true;
+                            return false;
                         },
                         [&](FPipelineDesc::FSampler&) {
                             *ctx.Log << L"unsupported annotation found on sampler <" << name << L">" << Eol;
-                            return true;
+                            return false;
                         },
                         [&](FPipelineDesc::FSubpassInput&) {
                             *ctx.Log << L"unsupported annotation found on subpass input <" << name << L">" << Eol;
-                            return true;
+                            return false;
                         },
                         [&](FPipelineDesc::FRayTracingScene&) {
                             *ctx.Log << L"unsupported annotation found on raytracing scene input <" << name << L">" << Eol;
-                            return true;
+                            return false;
                         },
                         [](std::monostate&) {
                             AssertNotReached();
@@ -866,7 +866,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                 }
 
                 source = it;
-                return true;
+                return found;
             }
         }
 
