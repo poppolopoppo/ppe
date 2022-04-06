@@ -29,6 +29,9 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
         ,   _hashValue(hashValue)
         ,   _poolIndex(poolIndex)
         {}
+        ~TCacheItem_() {
+            const_cast<pool_index_type&>(_poolIndex) = UMax;
+        }
         const K& key() const { return _key; }
         V& Value() { return _value; }
         const V& Value() const { return _value; }
@@ -50,6 +53,9 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
         ,   _hashValue(hashValue)
         ,   _poolIndex(poolIndex)
         {}
+        ~TCacheItem_() {
+            const_cast<pool_index_type&>(_poolIndex) = UMax;
+        }
         const T& Key() const { return _item; }
         const T& Value() const { return _item; }
         hash_t HashValue() const { return _hashValue; }
@@ -63,8 +69,8 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
     using FHashSegment_ = FAtomicOrderedLock;
     using FHashBucket_ = FCacheItem_*;
     struct FHashTable_ {
-        STATIC_CONST_INTEGRAL(u32, SegmentMask, FGenericPlatformMaths::NextPow2(static_cast<u32>(pool_type::MaxSize >> 3)) - 1);
-        STATIC_CONST_INTEGRAL(u32, BucketMask, FGenericPlatformMaths::NextPow2(static_cast<u32>(pool_type::MaxSize) + (pool_type::MaxSize >> 1)) - 1);
+        STATIC_CONST_INTEGRAL(u32, SegmentMask, FGenericPlatformMaths::NextPow2(static_cast<u32>(pool_type::ChunkSize >> 3)) - 1);
+        STATIC_CONST_INTEGRAL(u32, BucketMask, FGenericPlatformMaths::NextPow2(static_cast<u32>(pool_type::ChunkSize) + (pool_type::ChunkSize >> 1)) - 1);
 
         std::atomic<u32> Count{ 0 };
         FHashSegment_* pSegments;
@@ -101,13 +107,19 @@ public:
 
     const value_type* At(index_type id) const NOEXCEPT {
         block_type* const pBlock = _pool[id];
+        Assert(pBlock);
         Assert_NoAssume(pBlock->PoolIndex() == id);
         return std::addressof(pBlock->Value());
     }
-    auto* operator [](index_type id) const NOEXCEPT {
+    value_type* AtIFP(index_type id) const NOEXCEPT {
         block_type* const pBlock = _pool[id];
-        Assert_NoAssume(pBlock->PoolIndex() == id);
-        return (pBlock ? pBlock->MutableValue() : nullptr);
+        if (pBlock && pBlock->PoolIndex() == id) {
+            return pBlock->MutableValue();
+        }
+        return nullptr;
+    }
+    value_type* operator [](index_type id) const NOEXCEPT {
+        return AtIFP(id);
     }
 
     const key_type& Key(index_type id) const NOEXCEPT { return _pool.At(id)->Key(); }
@@ -330,16 +342,20 @@ size_t TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Garb
     size_t numObjectsReleased = 0;
 
     u32 segment = UINT32_MAX;
-    forrange(b, offset, offset + maxIterations) {
+    forrange(i, 0, maxIterations) {
+        const size_t b = (i + offset);
         const u32 s = (b & FHashTable_::SegmentMask);
+
+        FHashBucket_& pBucket = _cache.Bucket(b);
+        if (not pBucket)
+            continue;
+
         if (segment != s) {
             if (segment <= FHashTable_::SegmentMask)
                 _cache.pSegments[segment].Unlock();
             _cache.pSegments[s].Lock();
             segment = s;
         }
-
-        FHashBucket_& pBucket = _cache.Bucket(b);
 
         for (FCacheItem_* p = pBucket, *prev = nullptr; p; ) {
             const index_type id = p->PoolIndex();

@@ -67,7 +67,7 @@ public:
     void Deallocate(index_type block, u32 bucket);
 
     void* At(index_type block) const NOEXCEPT { return PoolNode_(_pool.Value_NotThreadSafe().pChunks, block); }
-    void* operator [](index_type block) const NOEXCEPT { return At(block); }
+    void* operator [](index_type block) const NOEXCEPT { return PoolNodeIFP_(_pool.Value_NotThreadSafe().pChunks, block); }
 
     void Clear_AssertCompletelyEmpty();
     void Clear_IgnoreLeaks();
@@ -90,10 +90,12 @@ private:
     };
     STATIC_ASSERT(sizeof(FPoolNode_) <= BlockSize);
 
-    STATIC_CONST_INTEGRAL(index_type, BundleMaxGarbage, 8u);
-    STATIC_CONST_INTEGRAL(index_type, BundleMaxSizeInBytes, 32_KiB);
-    STATIC_CONST_INTEGRAL(index_type, BundleMaxCount, Min(ChunkSize, Min(ChunkSize / ThreadGranularity, BundleMaxSizeInBytes / BlockSize)));
-    STATIC_CONST_INTEGRAL(index_type, BundleCountPerChunk, (ChunkSize + BundleMaxCount - 1u) / BundleMaxCount);
+    STATIC_CONST_INTEGRAL(index_type, BundleMaxGarbage, static_cast<index_type>(8u));
+    STATIC_CONST_INTEGRAL(index_type, BundleMaxSizeInBytes, static_cast<index_type>(32_KiB));
+    STATIC_CONST_INTEGRAL(index_type, BundleMaxCount, Min(ChunkSize, Min(
+        static_cast<index_type>(ChunkSize / ThreadGranularity),
+        static_cast<index_type>(BundleMaxSizeInBytes / BlockSize)) ));
+    STATIC_CONST_INTEGRAL(index_type, BundleCountPerChunk, (ChunkSize + BundleMaxCount - static_cast<index_type>(1u)) / BundleMaxCount);
 
     struct FPoolChunk_;
 
@@ -103,7 +105,18 @@ private:
         const index_type ch = (id / ChunkSize);
         Assert(ch < MaxChunks);
         Assert(pChunks[ch]);
+        Assert_NoAssume(pChunks[ch]->ChunkIndex == ch);
         return reinterpret_cast<FPoolNode_*>(pChunks[ch]->BundleData() + (id - ch * ChunkSize));
+    }
+    FORCE_INLINE static FPoolNode_* PoolNodeIFP_(FPoolChunk_** const pChunks, const index_type id) {
+        if (pChunks && id < MaxSize) {
+            const index_type ch = (id / ChunkSize);
+            if (ch < MaxChunks && pChunks[ch]) {
+                Assert_NoAssume(pChunks[ch]->ChunkIndex == ch);
+                return reinterpret_cast<FPoolNode_*>(pChunks[ch]->BundleData() + (id - ch * ChunkSize));
+            }
+        }
+        return nullptr;
     }
 
     struct FPoolBundle_ {
