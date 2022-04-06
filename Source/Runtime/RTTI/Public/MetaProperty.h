@@ -80,7 +80,7 @@ private:
         return FAtom(reinterpret_cast<const u8*>(&obj) + _memberOffset, _traits);
     }
 };
-PPE_ASSUME_TYPE_AS_POD(FMetaProperty);
+//PPE_ASSUME_TYPE_AS_POD(FMetaProperty); // NOT ALLOWED with FMetaPropertyFacet :/
 //----------------------------------------------------------------------------
 template <typename _Class, typename T, typename _Derived>
 Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaProperty>

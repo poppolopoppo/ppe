@@ -21,9 +21,9 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 #endif //!WITH_PPE_RTTI_PROPERTY_CHECKS
 
 namespace PPE {
-STATIC_ASSERT(Meta::is_pod_v<RTTI::FMetaProperty>);
+//STATIC_ASSERT(Meta::is_pod_v<RTTI::FMetaProperty>); // NOT ALLOWED with FMetaPropertyFacet :/
 namespace RTTI {
-STATIC_ASSERT(Meta::is_pod_v<FMetaProperty>);
+//STATIC_ASSERT(Meta::is_pod_v<FMetaProperty>); // NOT ALLOWED with FMetaPropertyFacet :/
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

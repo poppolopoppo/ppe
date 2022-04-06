@@ -61,7 +61,7 @@ private:
     Meta::TPointerWFlags<void> _traitsAndFlags;
     FMetaParameterFacet _facets;
 };
-PPE_ASSUME_TYPE_AS_POD(FMetaParameter);
+//PPE_ASSUME_TYPE_AS_POD(FMetaParameter); // NOT ALLOWED with FMetaParameterFacet :/
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

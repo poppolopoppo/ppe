@@ -25,7 +25,7 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 namespace PPE {
 namespace RTTI {
 EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
-STATIC_ASSERT(Meta::is_pod_v<FMetaParameter>);
+//STATIC_ASSERT(Meta::is_pod_v<FMetaParameter>); // NOT ALLOWED with FMetaParameterFacet :/
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ struct FMetaFunctionCallFormattor_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_ASSERT_TYPE_IS_POD(FMetaParameter);
+//PPE_ASSERT_TYPE_IS_POD(FMetaParameter); // NOT ALLOWED with FMetaParameterFacet :/
 //----------------------------------------------------------------------------
 FMetaParameter::FMetaParameter() NOEXCEPT {
     _traitsAndFlags.Reset(nullptr, false, false);

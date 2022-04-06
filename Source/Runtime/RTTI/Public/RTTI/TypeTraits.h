@@ -99,7 +99,6 @@ STATIC_ASSERT(sizeof(ITypeTraits) == sizeof(i64)+sizeof(intptr_t));
 struct PTypeTraits {
     const ITypeTraits* PTraits;
 
-    explicit PTypeTraits(Meta::FNoInit) NOEXCEPT {}
     CONSTEXPR PTypeTraits() NOEXCEPT : PTraits(nullptr) {}
     CONSTEXPR explicit PTypeTraits(const ITypeTraits* cpy) NOEXCEPT : PTraits(cpy) {}
 
