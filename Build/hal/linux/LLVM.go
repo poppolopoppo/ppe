@@ -82,16 +82,16 @@ func (llvm *LlvmCompiler) Define(f *Facet, def ...string) {
 		f.AddCompilationFlag("-D" + x)
 	}
 }
-func (llvm *LlvmCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename) {
+func (llvm *LlvmCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename, intermediate Directory) {
 	switch sym {
 	case DEBUG_DISABLED:
 		return
 	case DEBUG_SYMBOLS:
 		NotImplemented("DEBUG_SYMBOLS")
-		fallthrough
 	case DEBUG_EMBEDDED:
 		f.CompilerOptions.Append("-g")
-		return
+	case DEBUG_HOTRELOAD:
+		NotImplemented("DEBUG_HOTRELOAD")
 	default:
 		UnexpectedValue(sym)
 	}
@@ -199,7 +199,7 @@ func makeLlvmCompiler(
 		"-Wshadow",
 		"-Wno-unused-command-line-argument", // #TODO: unsilence this warning
 		"-fcolor-diagnostics",
-		"-march=native",
+		"-march=x86-64-v3 ",
 		"-mavx", "-msse4.2",
 		"-mlzcnt", "-mpopcnt",
 		"-cc1", "-fuse-ctor-homing",
@@ -296,13 +296,13 @@ func decorateLlvmConfig_Devel(f *Facet) {
 	llvm_CXX_runtimeChecks(f, false, false)
 }
 func decorateLlvmConfig_Test(f *Facet) {
-	f.AddCompilationFlag("-O3", "-fpie")
+	f.AddCompilationFlag("-O3", "-fpie", "-ffast-math")
 	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	llvm_CXX_linkTimeCodeGeneration(f, true, compileFlags.Incremental.Get())
 	llvm_CXX_runtimeChecks(f, false, false)
 }
 func decorateLlvmConfig_Shipping(f *Facet) {
-	f.AddCompilationFlag("-O3", "-fpie")
+	f.AddCompilationFlag("-O3", "-fpie", "-ffast-math")
 	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	llvm_CXX_linkTimeCodeGeneration(f, true, compileFlags.Incremental.Get())
 	llvm_CXX_runtimeChecks(f, false, false)

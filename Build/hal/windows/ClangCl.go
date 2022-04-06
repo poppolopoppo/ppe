@@ -45,8 +45,8 @@ func (clang *ClangCompiler) ExternIncludePath(f *Facet, dirs ...Directory) {
 func (clang *ClangCompiler) SystemIncludePath(facet *Facet, dirs ...Directory) {
 	clang.ExternIncludePath(facet, dirs...)
 }
-func (clang *ClangCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename) {
-	clang.MsvcCompiler.DebugSymbols(f, sym, output)
+func (clang *ClangCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename, intermediate Directory) {
+	clang.MsvcCompiler.DebugSymbols(f, sym, output, intermediate)
 
 	// https://blog.llvm.org/2018/01/improving-link-time-on-windows-with.html
 	if f.LinkerOptions.Contains("/DEBUG") {

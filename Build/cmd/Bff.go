@@ -215,28 +215,31 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 
 	UFS.Mkdir(UFS.Transient)
 
-	moduleSource := MakeBffVar(unit.Target.ModuleAlias().String() + "_Source")
+	moduleSource := MakeBffVar(unit.Target.ModuleAlias().String() + "_Source_" + unit.PCH.String() + "_" + unit.Unity.String())
 	gen.Once(moduleSource, func() {
-		gen.Comment("Target source details for %v", unit.ModuleDir)
+		gen.Comment("Target source details for %v", unit)
 
 		var moduleUnity string
 		if unit.Unity.Ord() > 0 {
-			moduleUnity = (unit.Target.ModuleAlias().String() + "-Unity")
-			gen.Func("Unity", func() {
-				gen.Assign("Hidden", true)
-				gen.Assign("UnityNumFiles", unit.Unity.Ord())
-				gen.Assign("UnityInputFiles", unit.Source.SourceFiles)
-				gen.Assign("UnityInputPath", unit.Source.SourceDirs)
-				gen.Assign("UnityInputPattern", unit.Source.SourceGlobs)
-				gen.Assign("UnityInputExcludedFiles", unit.Source.ExcludedFiles)
-				gen.Assign("UnityInputExcludePattern", unit.Source.ExcludedGlobs)
-				gen.Assign("UnityInputIsolatedFiles", unit.Source.IsolatedFiles)
-				gen.Assign("UnityOutputPath", unit.GeneratedDir)
-				gen.Assign("UnityOutputPattern", fmt.Sprintf("%s_*_of_%d.cpp", unit.Target.ModuleName, unit.Unity.Ord()))
-				if unit.PCH != PCH_DISABLED {
-					gen.Assign("UnityPCH", unit.PrecompiledHeader.Basename)
-				}
-			}, moduleUnity)
+			moduleUnity = (unit.Target.ModuleAlias().String() + "-Unity-" + unit.PCH.String())
+
+			gen.Once(BffVar(moduleUnity), func() {
+				gen.Func("Unity", func() {
+					gen.Assign("Hidden", true)
+					gen.Assign("UnityNumFiles", unit.Unity.Ord())
+					gen.Assign("UnityInputFiles", unit.Source.SourceFiles)
+					gen.Assign("UnityInputPath", unit.Source.SourceDirs)
+					gen.Assign("UnityInputPattern", unit.Source.SourceGlobs)
+					gen.Assign("UnityInputExcludedFiles", unit.Source.ExcludedFiles)
+					gen.Assign("UnityInputExcludePattern", unit.Source.ExcludedGlobs)
+					gen.Assign("UnityInputIsolatedFiles", unit.Source.IsolatedFiles)
+					gen.Assign("UnityOutputPath", unit.GeneratedDir)
+					gen.Assign("UnityOutputPattern", fmt.Sprintf("%s_*_of_%d.cpp", unit.Target.ModuleName, unit.Unity.Ord()))
+					if unit.PCH != PCH_DISABLED {
+						gen.Assign("UnityPCH", unit.PrecompiledHeader.Basename)
+					}
+				}, moduleUnity)
+			})
 		}
 
 		gen.Struct(moduleSource, func() {

@@ -112,22 +112,33 @@ func (msvc *MsvcCompiler) Define(f *Facet, def ...string) {
 		f.AddCompilationFlag_NoAnalysis("/D" + x)
 	}
 }
-func (msvc *MsvcCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename) {
+func (msvc *MsvcCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename, intermediate Directory) {
+	artifactPDB := output.ReplaceExt(".pdb")
+
 	switch sym {
 	case DEBUG_DISABLED:
 		f.LinkerOptions.Append("/DEBUG:NONE")
-		return
-	case DEBUG_SYMBOLS:
-		pdbPath := output.ReplaceExt(".pdb").String()
-		f.CompilerOptions.Append("/Z7")
-		f.PrecompiledHeaderOptions.Append("/Z7")
-		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+pdbPath+"\"")
-		return
+
 	case DEBUG_EMBEDDED:
 		f.CompilerOptions.Append("/Z7")
 		f.PrecompiledHeaderOptions.Append("/Z7")
-		f.LinkerOptions.Append("/DEBUG")
-		return
+		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+
+	case DEBUG_SYMBOLS:
+		intermediatePDB := output.ReplaceExt("-Intermediate.pdb")
+		intermediatePDB.Dirname = intermediate
+
+		f.AddCompilationFlag_NoPreprocessor("/Zi", "/FS", "/Fd\""+intermediatePDB.String()+"\"")
+		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+
+	case DEBUG_HOTRELOAD:
+		editAndContinuePDB := output.ReplaceExt("-EditAndContinue.pdb")
+		editAndContinuePDB.Dirname = intermediate
+
+		f.AddCompilationFlag_NoPreprocessor("/ZI", "/FS", "/Fd\""+editAndContinuePDB.String()+"\"")
+		f.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+artifactPDB.String()+"\"")
+		f.LinkerOptions.AppendUniq("/INCREMENTAL")
+
 	default:
 		UnexpectedValue(sym)
 	}
@@ -272,7 +283,6 @@ func makeMsvcCompiler(
 	facet.PreprocessorOptions.Append("/Fo\"%2\"")
 
 	facet.AddCompilationFlag(
-		"/Gm-",     // minimal rebuild is handled by FASTBuild
 		"/GF",      // string pooling
 		"/GT",      // fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
 		"/bigobj",  // more sections inside obj files, support larger translation units, needed for unity builds
@@ -370,11 +380,13 @@ func makeMsvcCompiler(
 		facet.LinkerOptions.Append("/d2:-cgsummary")
 	}
 
-	if windowsFlags.JustMyCode && msc_ver >= MSC_VER_2019 {
-		LogVeryVerbose("MSVC: using just-my-code")
-		facet.AddCompilationFlag_NoAnalysis("/JMC")
-	} else if msc_ver >= MSC_VER_2019 {
-		facet.AddCompilationFlag_NoAnalysis("/JMC-")
+	if msc_ver >= MSC_VER_2019 {
+		if windowsFlags.JustMyCode {
+			LogVeryVerbose("MSVC: using just-my-code")
+			facet.AddCompilationFlag_NoAnalysis("/JMC")
+		} else {
+			facet.AddCompilationFlag_NoAnalysis("/JMC-")
+		}
 	}
 
 	if msc_ver >= MSC_VER_2019 {
@@ -503,7 +515,9 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 	if compileFlags.Incremental && u.Sanitizer == SANITIZER_NONE {
 		LogVeryVerbose("MSVC: using incremental linker with fastlink")
-		if u.LinkerOptions.Contains("/LTCG") {
+		if u.LinkerOptions.Contains("/INCREMENTAL") {
+			u.LinkerOptions.Remove("/LTCG")
+		} else if u.LinkerOptions.Contains("/LTCG") {
 			u.LinkerOptions.Remove("/LTCG")
 			u.LinkerOptions.Append("/LTCG:INCREMENTAL")
 			u.LinkerOptions.Remove("/OPT:NOREF")
@@ -608,7 +622,7 @@ func msvc_STL_iteratorDebug(f *Facet, enabled bool) {
 }
 
 func decorateMsvcConfig_Debug(f *Facet) {
-	f.AddCompilationFlag("/Od", "/Oy-", "/Gw-")
+	f.AddCompilationFlag("/Od", "/Oy-", "/Gm-", "/Gw-")
 	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
 	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
@@ -618,8 +632,8 @@ func decorateMsvcConfig_Debug(f *Facet) {
 	msvc_STL_iteratorDebug(f, true)
 }
 func decorateMsvcConfig_FastDebug(f *Facet) {
-	f.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Zo")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
+	f.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Gm")
+	f.LinkerOptions.Append("/DYNAMICBASE:NO")
 	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
 	msvc_CXX_linkTimeCodeGeneration(f, false)
@@ -628,7 +642,7 @@ func decorateMsvcConfig_FastDebug(f *Facet) {
 	msvc_STL_iteratorDebug(f, true)
 }
 func decorateMsvcConfig_Devel(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Zo", "/GL")
+	f.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Gm-", "/Zo", "/GL")
 	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOICF")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
@@ -637,7 +651,7 @@ func decorateMsvcConfig_Devel(f *Facet) {
 	msvc_STL_iteratorDebug(f, false)
 }
 func decorateMsvcConfig_Test(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gy", "/GL", "/GA", "/Zo")
+	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
 	f.LinkerOptions.Append("/DYNAMICBASE", "/PROFILE", "/OPT:REF")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
@@ -646,7 +660,7 @@ func decorateMsvcConfig_Test(f *Facet) {
 	msvc_STL_iteratorDebug(f, false)
 }
 func decorateMsvcConfig_Shipping(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gy", "/GL", "/GA", "/Zo")
+	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
 	f.LinkerOptions.Append("/DYNAMICBASE", "/OPT:REF", "/OPT:ICF=3")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)

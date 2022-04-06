@@ -18,9 +18,11 @@ func (res *ResourceCompiler) EnvPath() DirSet            { return NewDirSet(res.
 func (res *ResourceCompiler) WorkingDir() Directory      { return res.CompilerRules.Executable.Dirname }
 func (res *ResourceCompiler) Extname(PayloadType) string { return ".res" }
 
-func (res *ResourceCompiler) CppRtti(*Facet, bool)                     {}
-func (res *ResourceCompiler) CppStd(*Facet, CppStdType)                {}
-func (res *ResourceCompiler) DebugSymbols(*Facet, DebugType, Filename) {}
+func (res *ResourceCompiler) CppRtti(*Facet, bool)      {}
+func (res *ResourceCompiler) CppStd(*Facet, CppStdType) {}
+
+func (res *ResourceCompiler) DebugSymbols(*Facet, DebugType, Filename, Directory) {}
+
 func (res *ResourceCompiler) Define(facet *Facet, def ...string) {
 	for _, x := range def {
 		facet.AddCompilationFlag(fmt.Sprintf("/d%s", x))

@@ -172,6 +172,10 @@ func (facet *Facet) AddCompilationFlag_NoAnalysis(flags ...string) {
 	facet.PreprocessorOptions.Append(flags...)
 	facet.CompilerOptions.Append(flags...)
 }
+func (facet *Facet) AddCompilationFlag_NoPreprocessor(flags ...string) {
+	facet.PrecompiledHeaderOptions.Append(flags...)
+	facet.CompilerOptions.Append(flags...)
+}
 func (facet *Facet) RemoveCompilationFlag(flags ...string) {
 	facet.AnalysisOptions.Remove(flags...)
 	facet.PrecompiledHeaderOptions.Remove(flags...)

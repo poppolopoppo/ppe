@@ -161,7 +161,6 @@ func makePPE_Internal(rules *ModuleRules) {
 	rules.Source.SourceDirs.Append(rules.PrivateDir())
 	rules.Source.SourceGlobs.Append("*.cpp")
 
-	rules.Debug.Inherit(DEBUG_SYMBOLS)
 	rules.PCH.Inherit(PCH_MONOLITHIC)
 	if rules.PCH == PCH_MONOLITHIC {
 		pch_h := rules.ModuleDir.File("stdafx.h")
@@ -190,7 +189,6 @@ func makePPE_Module(rules *ModuleRules) {
 	makePPE_Common(rules)
 	makePPE_Internal(rules)
 	rules.ModuleType = MODULE_LIBRARY
-	rules.Unity.Inherit(UNITY_AUTOMATIC)
 }
 func makePPE_Program(rules *ModuleRules, usage UsageType) {
 	makePPE_Common(rules)

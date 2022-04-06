@@ -37,6 +37,7 @@ func (r *result[S]) String() string {
 }
 
 type Future[T any] interface {
+	Available() bool
 	Join() Result[T]
 }
 
@@ -54,6 +55,9 @@ func make_sync_future[T any](f func() (T, error)) Future[T] {
 			}
 		}),
 	}
+}
+func (future *sync_future[T]) Available() bool {
+	return true
 }
 func (future *sync_future[T]) Join() Result[T] {
 	return future.memoized()
@@ -75,6 +79,9 @@ func make_async_future[T any](f func() (T, error)) Future[T] {
 	}()
 	return future
 }
+func (future *async_future[T]) Available() bool {
+	return future.result != nil
+}
 func (future *async_future[T]) Join() Result[T] {
 	if future.result != nil {
 		return future.result
@@ -90,6 +97,9 @@ type futureLiteral[T any] struct {
 	immediate result[T]
 }
 
+func (x futureLiteral[T]) Available() bool {
+	return true
+}
 func (x futureLiteral[T]) Join() Result[T] {
 	return &x.immediate
 }

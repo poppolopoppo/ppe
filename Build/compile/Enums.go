@@ -305,6 +305,7 @@ const (
 	DEBUG_DISABLED
 	DEBUG_EMBEDDED
 	DEBUG_SYMBOLS
+	DEBUG_HOTRELOAD
 )
 
 func DebugTypes() []DebugType {
@@ -313,6 +314,7 @@ func DebugTypes() []DebugType {
 		DEBUG_DISABLED,
 		DEBUG_EMBEDDED,
 		DEBUG_SYMBOLS,
+		DEBUG_HOTRELOAD,
 	}
 }
 func (x DebugType) String() string {
@@ -325,6 +327,8 @@ func (x DebugType) String() string {
 		return "EMBEDDED"
 	case DEBUG_SYMBOLS:
 		return "SYMBOLS"
+	case DEBUG_HOTRELOAD:
+		return "HOTRELOAD"
 	default:
 		utils.UnexpectedValue(x)
 		return ""
@@ -345,6 +349,8 @@ func (x *DebugType) Set(in string) error {
 		*x = DEBUG_EMBEDDED
 	case DEBUG_SYMBOLS.String():
 		*x = DEBUG_SYMBOLS
+	case DEBUG_HOTRELOAD.String():
+		*x = DEBUG_HOTRELOAD
 	default:
 		utils.UnexpectedValue(in)
 	}
@@ -876,7 +882,7 @@ func (x UnityType) String() string {
 		if x <= 0 {
 			utils.LogPanic("invalid unity type: %v", x)
 		}
-		return fmt.Sprint(string(x))
+		return fmt.Sprint(int32(x))
 	}
 }
 func (x *UnityType) Inherit(in UnityType) {
