@@ -517,18 +517,18 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     pipelineInfo.stage.flags = 0;
     pipelineInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 
-#if USE_PPE_RHIDEBUG
     // find module with required debug mode
     for (auto& sh : ppln->Shaders) {
+#if USE_PPE_RHIDEBUG
         if ( sh.DebugMode != debugMode)
             continue;
+#endif
 
         pipelineInfo.stage.module = sh.Module->vkShaderModule();
         pipelineInfo.stage.pName = sh.Module->EntryPoint();
         break;
     }
     AssertRelease( pipelineInfo.stage.module );
-#endif
 
     AddLocalGroupSizeSpecialization_(
         &_transientSpecializationEntries, &_transientSpecializationDatas,
@@ -1540,9 +1540,9 @@ void FVulkanPipelineCache::AddLocalGroupSizeSpecialization_(
 
     forrange(i, 0, 3) {
         if (localSizeSpec[i] != FComputePipelineDesc::UndefinedSpecialization) {
-            VkSpecializationMapEntry entry;
+            VkSpecializationMapEntry entry{};
             entry.constantID = localSizeSpec[i];
-            entry.offset = checked_cast<u32>(pEntries->MakeView().SizeInBytes());
+            entry.offset = checked_cast<u32>(pDatas->MakeView().SizeInBytes());
             entry.size = sizeof(u32);
 
             pEntries->push_back(std::move(entry));

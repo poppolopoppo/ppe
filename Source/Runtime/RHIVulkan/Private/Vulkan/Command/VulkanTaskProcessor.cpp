@@ -645,7 +645,11 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
     const FRawRenderPassID renderPassId = resources.CreateRenderPass(passes ARGS_IF_RHIDEBUG(debugName));
     LOG_CHECK(RHI, renderPassId.Valid());
 
+    // need to release the reference added by CreateRenderPass() after this batch, since CreateFramebuffer() will also add its own
+    _workerCmd->ReleaseResource(renderPassId);
+
     const FVulkanRenderPass& renderPass = resources.ResourceData(renderPassId);
+
     const u32 depthAttachmentIndex = (renderPass.Read()->CreateInfo.attachmentCount - 1);
     Assert(depthAttachmentIndex < MaxColorBuffers);
 
@@ -682,18 +686,19 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
 
     const FRawFramebufferID framebufferId = resources.CreateFramebuffer(
         renderTargets.MakeView(),
-        renderPassId,  checked_cast<unsigned int>(totalArea.Extents()), 1
+        renderPassId,
+        checked_cast<unsigned int>(totalArea.Extents()),
+        1
         ARGS_IF_RHIDEBUG(debugName) );
     LOG_CHECK(RHI, framebufferId.Valid());
+
+    _workerCmd->ReleaseResource(framebufferId);
 
     u32 subpass = 0;
     for (FVulkanLogicalRenderPass* pLogicalRenderPass : passes) {
         pLogicalRenderPass->SetRenderPass(
             renderPassId, subpass++, framebufferId, depthAttachmentIndex );
     }
-
-    _workerCmd->ReleaseResource(framebufferId);
-    _workerCmd->ReleaseResource(renderPassId);
 
     return true;
 }

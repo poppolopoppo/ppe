@@ -12,6 +12,10 @@
 #include "Diagnostic/Logger.h"
 #include "Modular/ModularDomain.h"
 
+#if USE_PPE_LOGGER
+#   include "IO/FormatHelpers.h"
+#endif
+
 namespace PPE {
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI)
@@ -113,8 +117,8 @@ void FVulkanResourceManager::TearDown() {
     tearDownCache(_resources.PplnResourcesCache);
     tearDownCache(_resources.PplnLayoutCache);
     tearDownCache(_resources.DslayoutCache);
-    tearDownCache(_resources.RenderPassCache);
     tearDownCache(_resources.FramebufferCache);
+    tearDownCache(_resources.RenderPassCache);
     tearDownCache(_resources.SamplerCache);
 
     // release shader cache
@@ -210,10 +214,10 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
             if (not exist) {
                 LOG_CHECK(RHI, pLayout->Construct(
                     _device,
-                    ResourceData(_emptyDSLayout).Read()->Layout
+                    ResourceData(_emptyDSLayout, false/* don't add ref for empty layout */).Read()->Layout
                     ARGS_IF_RHIDEBUG(debugName)) );
-                pLayout->AddRef(); // maintain lifetime in cache artificially
             }
+            pLayout->AddRef();
             return true;
         });
 
@@ -221,6 +225,7 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
 
     if (Likely(!!*pPplnLayoutRef)) {
         *pId = FRawPipelineLayoutID{ it.first, (*pPplnLayoutRef)->InstanceID() };
+        Assert_NoAssume(pId->Valid());
 
         if (it.second) {
             // release allocated resources if the ds was already cached
@@ -228,7 +233,6 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
                 ReleaseResource(ds.first);
         }
 
-        Assert_NoAssume(pId->Valid());
         return true;
     }
 
@@ -470,7 +474,6 @@ bool FVulkanResourceManager::CreateDevicePipeline_(details::TResourceId<_Uid>* p
     }
 
     Assert_NoAssume(pId->Valid());
-    pLayout->AddRef();
     pPipeline->AddRef();
     return true;
 }
@@ -699,7 +702,7 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(renderPass.Valid());
 
-    Verify( AcquireResource(renderPass) );
+    LOG_CHECK(RHI, AcquireResource(renderPass) );
 
     TResourceProxy<FVulkanFramebuffer> emptyKey{ attachments, renderPass, dim, layers };
 
@@ -736,7 +739,7 @@ const FVulkanPipelineResources* FVulkanResourceManager::CreateDescriptorSet(
     }
 
     TResourceProxy<FVulkanDescriptorSetLayout>* const pDSLayout = ResourcePool_(desc.Layout())[desc.Layout().Index];
-    Assert_NoAssume( pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID );
+    LOG_CHECK(RHI, pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID );
 
     TResourceProxy<FVulkanPipelineResources> emptyKey{ desc };
     const auto [pResources, exist] =
@@ -796,7 +799,7 @@ bool FVulkanResourceManager::CacheDescriptorSet(FPipelineResources& desc) {
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::ReleaseResource(FPipelineResources& desc) {
     if (const FRawPipelineResourcesID resourcesId = FPipelineResources::Cached(desc)) {
-        FPipelineResources::SetCached(desc,FRawPipelineResourcesID{});
+        FPipelineResources::SetCached(desc, FRawPipelineResourcesID{});
         ReleaseResource(resourcesId);
     }
 }
@@ -918,24 +921,42 @@ void FVulkanResourceManager::RunValidation(u32 maxIteration) {
     const auto garbageCollectIFP = [this](auto* pResource) {
         Assert(pResource);
         if (pResource->IsCreated() and not pResource->Data().AllResourcesAlive(*this)) {
+#if USE_PPE_RHI_RESOURCEREFS
+            {
+                char debug[200];
+                Format(debug, "run validation: remove <{0}> of type <{1}>, ref count = {2}\n", pResource->InstanceID(), Meta::type_info<decltype(*pResource)>.name, pResource->RefCount());
+                FPlatformDebug::OutputDebug(debug);
+                //PPE_DEBUG_BREAK();
+            }
+#endif
             Verify( pResource->RemoveRef(pResource->RefCount()) );
             pResource->TearDown(*this);
             return true; // release the cached item
         }
+        else {
+#if USE_PPE_RHI_RESOURCEREFS
+            if (pResource->IsCreated()) {
+                char debug[200];
+                Format(debug, "run validation: keep-alive <{0}> of type <{1}>, ref count = {2}\n", pResource->InstanceID(), Meta::type_info<decltype(*pResource)>.name, pResource->RefCount());
+                FPlatformDebug::OutputDebug(debug);
+                //PPE_DEBUG_BREAK();
+            }
+#endif
+        }
         return false; // keep alive
     };
-
-    _resources.FramebufferCache.GarbageCollect(
-        _validation.FrameBuffersGC,
-        maxIteration,
-        [&](TResourceProxy<FVulkanFramebuffer>* pResource) {
-            return garbageCollectIFP(pResource);
-        });
 
     _resources.PplnResourcesCache.GarbageCollect(
         _validation.PplnResourcesGC,
         maxIteration,
         [&](TResourceProxy<FVulkanPipelineResources>* pResource) {
+            return garbageCollectIFP(pResource);
+        });
+
+    _resources.FramebufferCache.GarbageCollect(
+        _validation.FrameBuffersGC,
+        maxIteration,
+        [&](TResourceProxy<FVulkanFramebuffer>* pResource) {
             return garbageCollectIFP(pResource);
         });
 }
@@ -971,7 +992,7 @@ void FVulkanResourceManager::ReleaseMemory() {
         });
     };
 
-    constexpr size_t maxIterationsForTrim = 500; // else kept alive due to manual AddRef()
+    constexpr size_t maxIterationsForTrim = MaxCached; // else kept alive due to manual AddRef()
     trimDownCache(_resources.PplnResourcesCache, maxIterationsForTrim);
     trimDownCache(_resources.PplnLayoutCache, maxIterationsForTrim);
     trimDownCache(_resources.DslayoutCache, maxIterationsForTrim);

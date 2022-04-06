@@ -27,10 +27,7 @@ public:
 
     using FInstanceID = FRawImageID::FInstanceID;
 
-    explicit FResourceBaseProxy(u16 instanceId)
-    :   _instanceId(instanceId) {
-        Assert_NoAssume(_instanceId); // 0 is considered invalid
-    }
+    explicit FResourceBaseProxy(FInstanceID instanceId) : _instanceId(instanceId) {}
 
 #if USE_PPE_DEBUG
     ~FResourceBaseProxy() {
@@ -43,26 +40,35 @@ public:
     bool IsCreated() const { return (State_() == EState::Created); }
     bool IsDestroyed() const { return (State_() <= EState::Failed); }
 
-    FInstanceID InstanceID() const { return _instanceId; }
+    FInstanceID InstanceID() const { return checked_cast<FInstanceID>(_instanceId.load(std::memory_order_relaxed)); }
     int RefCount() const { return _refCounter.load(std::memory_order_relaxed); }
 
 #if !USE_PPE_RHI_RESOURCEREFS
-    FORCE_INLINE void AddRef() const {
+    FORCE_INLINE void AddRef() NOEXCEPT const {
         _refCounter.fetch_add(1, std::memory_order_relaxed);
     }
-    NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const {
-        return (_refCounter.fetch_sub(refCount, std::memory_order_relaxed) == refCount);
+    NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const NOEXCEPT {
+        if (_refCounter.fetch_sub(refCount, std::memory_order_relaxed) == refCount) {
+            std::atomic_thread_fence(std::memory_order_acquire);
+            return true;
+        }
+        return false;
     }
 #endif
 
 protected:
     EState State_() const { return _state.load(std::memory_order_relaxed); }
 
-    const u16 _instanceId;
+    // instance counter used to detect deprecated handles
+    std::atomic<u32> _instanceId{ 0 };
     std::atomic<EState> _state{ EState::Initial };
-
     // reference counter may be used for cached resources like samples, pipeline layout and other
     mutable std::atomic<int> _refCounter{ 0 };
+
+#if USE_PPE_RHIDEBUG
+    template <typename T>
+    using if_has_debugname_ = decltype(std::declval<T&>().DebugName());
+#endif
 };
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
@@ -73,12 +79,10 @@ public:
     using value_type = T;
 
     TResourceProxy() NOEXCEPT;
+    TResourceProxy(TResourceProxy&& rvalue) NOEXCEPT;
 
     TResourceProxy(const TResourceProxy& ) = delete;
-    TResourceProxy(TResourceProxy&& rvalue) NOEXCEPT;
     TResourceProxy& operator =(TResourceProxy&& rvalue) NOEXCEPT = delete;
-
-    explicit TResourceProxy(T&& rdata) NOEXCEPT;
 
     template <typename... _Args>
     explicit TResourceProxy(_Args&&... args);
@@ -100,27 +104,41 @@ public:
         return hash_value(proxy._data);
     }
 
+#if USE_PPE_RHIDEBUG
+    auto DebugName() const {
+        IF_CONSTEXPR(Meta::has_defined_v< if_has_debugname_, T>) {
+            return _data.DebugName();
+        } else {
+            return "anonymous";
+        }
+    }
+#endif
+
 #if USE_PPE_RHI_RESOURCEREFS
     FORCE_INLINE void AddRef() const {
         auto x = _refCounter.fetch_add(1, std::memory_order_relaxed);
-        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
+        //IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
         {
             char debug[200];
-            Format(debug, " ++ AddRef(1) -> {1}   {0}\n", Meta::type_info<T>.name, x);
+            Format(debug, " +++ AddRef(1) -> {2}        #{0:#3}:{1} '{3}'\n", InstanceID(), Meta::type_info<T>.name, x, DebugName());
             FPlatformDebug::OutputDebug(debug);
-            PPE_DEBUG_BREAK();
+            //PPE_DEBUG_BREAK();
         }
     }
     NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const {
         auto x = _refCounter.fetch_sub(refCount, std::memory_order_relaxed);
-        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
+        //IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
         {
             char debug[200];
-            Format(debug, " -- RemoveRef({2}) -> {1}   {0}\n", Meta::type_info<T>.name, x, refCount);
+            Format(debug, " --- RemoveRef({3}) -> {2}     #{0:#3}:{1} '{4}'\n", InstanceID(), Meta::type_info<T>.name, x, refCount, DebugName());
             FPlatformDebug::OutputDebug(debug);
-            PPE_DEBUG_BREAK();
+            //PPE_DEBUG_BREAK();
         }
-        return (x == refCount);
+        if (x == refCount) {
+            std::atomic_thread_fence(std::memory_order_acquire);
+            return true;
+        }
+        return false;
     }
 #endif
 
@@ -145,16 +163,11 @@ TResourceProxy<T>::TResourceProxy() NOEXCEPT
 //----------------------------------------------------------------------------
 template <typename T>
 TResourceProxy<T>::TResourceProxy(TResourceProxy&& rvalue) NOEXCEPT
-:   FResourceBaseProxy(NextInstanceID_())
+:   FResourceBaseProxy(rvalue.InstanceID())
 ,   _data(std::move(rvalue._data)) {
     Assert_NoAssume(rvalue._refCounter.load(std::memory_order_relaxed) == 0);
+    rvalue._instanceId.store(0, std::memory_order_release);
 }
-//----------------------------------------------------------------------------
-template <typename T>
-TResourceProxy<T>::TResourceProxy(T&& rdata) NOEXCEPT
-:   FResourceBaseProxy(NextInstanceID_())
-,   _data(std::move(rdata))
-{}
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename... _Args>
@@ -174,6 +187,15 @@ bool TResourceProxy<T>::Construct(_Args&&... args) {
     // read state and flush cache
     _state.store(result ? EState::Created : EState::Failed, std::memory_order_release);
 
+#if USE_PPE_RHI_RESOURCEREFS
+    {
+        char debug[200];
+        Format(debug, " >> Construct(#{0:#3}:refs[{1}]) -> {2}        {3} '{4}'\n", InstanceID(), RefCount(), result, Meta::type_info<T>.name, DebugName());
+        FPlatformDebug::OutputDebug(debug);
+        //PPE_DEBUG_BREAK();
+    }
+#endif
+
     return result;
 }
 //----------------------------------------------------------------------------
@@ -189,12 +211,21 @@ template <typename... _Args>
 void TResourceProxy<T>::TearDown_Force(_Args&&... args) {
     Assert(not IsDestroyed());
 
+#if USE_PPE_RHI_RESOURCEREFS
+    {
+        char debug[200];
+        Format(debug, " << TearDown(#{0:#3}:refs[{1}])          {2} '{3}'\n", InstanceID(), RefCount(), Meta::type_info<T>.name, DebugName());
+        FPlatformDebug::OutputDebug(debug);
+        //PPE_DEBUG_BREAK();
+    }
+#endif
+
     _data.TearDown(std::forward<_Args>(args)...);
 
     // update atomics and flush cache
     _refCounter.store( 0, std::memory_order_relaxed );
     _state.store( EState::Initial, std::memory_order_relaxed );
-    ONLY_IF_ASSERT(const_cast<u16&>(_instanceId) = 0); // invalidate all references
+    _instanceId.store(0, std::memory_order_release);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
