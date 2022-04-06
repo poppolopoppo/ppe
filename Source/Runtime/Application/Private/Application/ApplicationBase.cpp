@@ -22,6 +22,10 @@
 #include "IO/StringBuilder.h"
 #include "VirtualFileSystem_fwd.h"
 
+#if !USE_PPE_FINAL_RELEASE
+#   include "Window/WindowService.h"
+#endif
+
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
@@ -30,25 +34,20 @@ namespace Application {
 namespace {
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
-static bool ShouldUseDebugSystray_() {
-    return true;//FCurrentProcess::StartedWithDebugger();
-}
-#endif
-//----------------------------------------------------------------------------
-#if !USE_PPE_FINAL_RELEASE
-static void SetupDebugMenuInSystray_() {
+static void SetupDebugMenuInSystray_(const FModularServices& services) {
+    IWindowService* pWindow = services.GetIFP<IWindowService>();
+    if (not pWindow)
+        return;
 
-    using FAppNotify = Application::FPlatformNotification;
+    pWindow->ShowSystray();
 
-    FAppNotify::ShowSystray();
-
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Debug",
         L"Create mini dump",
         []() {
         FPlatformCrash::WriteMiniDump();
     });
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Debug",
         L"Debug break",
         []() {
@@ -56,32 +55,32 @@ static void SetupDebugMenuInSystray_() {
     });
 
 #if USE_PPE_PLATFORM_DEBUG
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Memory",
         L"Check memory",
         []() {
         FPlatformDebug::CheckMemory();
     });
 #endif
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Memory",
         L"Dump memory leaks",
         []() {
         FMallocDebug::DumpMemoryLeaks();
     });
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Memory",
         L"Release memory in modules",
         []() {
         ReleaseMemoryInModules();
     });
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Memory",
         L"Report all tracking data",
         []() {
         ReportAllTrackingData();
     });
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Memory",
         L"Report tracking data to CSV",
     []() {
@@ -108,19 +107,19 @@ static void SetupDebugMenuInSystray_() {
         }
     });
 
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Process",
         L"Dump memory stats",
         []() {
         FCurrentProcess::Get().LogMemoryStats();
     });
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Process",
         L"Dump process infos",
         []() {
         FCurrentProcess::Get().LogProcessInfos();
     });
-    FAppNotify::AddSystrayCommand(
+    pWindow->AddSystrayCommand(
         L"Process",
         L"Dump storage infos",
         []() {
@@ -130,10 +129,11 @@ static void SetupDebugMenuInSystray_() {
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
-static void TearDebugMenuInSystray_() {
-    using FAppNotify = Application::FPlatformNotification;
-
-    FAppNotify::HideSystray();
+static void TearDebugMenuInSystray_(const FModularServices& services) {
+    IWindowService* pWindow = services.GetIFP<IWindowService>();
+    if (not pWindow)
+        return;
+    pWindow->HideSystray();
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
@@ -154,8 +154,7 @@ void FApplicationBase::Start() {
     FPlatformApplication::Start();
 
 #if !USE_PPE_FINAL_RELEASE
-    if (ShouldUseDebugSystray_())
-        SetupDebugMenuInSystray_();
+    SetupDebugMenuInSystray_(Services());
 #endif
 
     FApplicationModule::Get(Domain())._OnApplicationStart.Invoke(*this);
@@ -171,8 +170,7 @@ void FApplicationBase::Tick(FTimespan dt) {
 //----------------------------------------------------------------------------
 void FApplicationBase::Shutdown() {
 #if !USE_PPE_FINAL_RELEASE
-    if (ShouldUseDebugSystray_())
-        TearDebugMenuInSystray_();
+    TearDebugMenuInSystray_(Services());
 #endif
 
     FApplicationModule::Get(Domain())._OnApplicationShutdown.Invoke(*this);
@@ -190,8 +188,9 @@ void FApplicationBase::ApplicationLoop() {
         if (Unlikely(not HasFocus()))
             tickRate = Timespan_15hz();
 
-        if (tick.Tick_Every(tickRate, dt))
+        if (tick.Tick_Every(tickRate, dt)) {
             Tick(dt);
+        }
     }
 }
 //----------------------------------------------------------------------------

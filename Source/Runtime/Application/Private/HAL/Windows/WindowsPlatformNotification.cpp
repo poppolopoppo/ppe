@@ -7,9 +7,8 @@
 #include "Application.h"
 #include "Application/ApplicationBase.h"
 
-#include "Container/SparseArray.h"
-#include "Container/Stack.h"
 #include "Container/StringHashMap.h"
+#include "Container/Vector.h"
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformApplication.h"
@@ -19,11 +18,15 @@
 #include "HAL/Windows/ComPtr.h"
 #include "HAL/Windows/LastError.h"
 #include "Meta/AlignedStorage.h"
+#include "Meta/InPlace.h"
 #include "Meta/Singleton.h"
 #include "Misc/Function.h"
-#include "Thread/AtomicSpinLock.h"
+#include "Window/MainWindow.h"
+#include "Window/WindowService.h"
 #include "Thread/ThreadContext.h"
+#include "Thread/ThreadPool.h"
 
+#include <atomic>
 #include <shellapi.h>
 #include <Shobjidl.h>
 
@@ -35,10 +38,13 @@ LOG_CATEGORY(, Notification)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class FWindowsSystrayCmds_ : Meta::TStaticSingleton<FWindowsSystrayCmds_> {
-    friend Meta::TStaticSingleton<FWindowsSystrayCmds_>;
+static std::atomic<int> GWindowsSystrayRefCount_{ 0 };
+//----------------------------------------------------------------------------
+class FWindowsTaskbar_ : Meta::TStaticSingleton<FWindowsTaskbar_> {
+    friend Meta::TStaticSingleton<FWindowsTaskbar_>;
+    friend class FWindowsSystray_;
 public:
-    using singleton_type = Meta::TStaticSingleton<FWindowsSystrayCmds_>;
+    using singleton_type = Meta::TStaticSingleton<FWindowsTaskbar_>;
 
     using singleton_type::Get;
     using singleton_type::Destroy;
@@ -62,11 +68,67 @@ public:
         {}
     };
 
-    mutable FAtomicSpinLock Barrier;
-    SPARSEARRAY_INSITU(Window, FUserCmd) Commands;
+    using FUserCommands = SPARSEARRAY_INSITU(Window, FUserCmd);
+
+    void Commands(TFunction<void(FUserCommands& cmds)>&& event) {
+        const Meta::FLockGuard scopeLock(_barrier);
+        event(_commands);
+    }
+
+    void Taskbar(TFunction<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
+        AsyncSyscall([this, event(std::move(event))](ITaskContext&) {
+            const Meta::FLockGuard scopeLock(_barrier);
+
+            ::HWND hWindow{ NULL };
+
+            if (const IWindowService* const windowService = FModularDomain::Get().Services().GetIFP<IWindowService>()) {
+                if (const FMainWindow* const mainWindow = windowService->MainWindow()) {
+                    hWindow = mainWindow->HandleWin32();
+                }
+            }
+
+            if (NULL == hWindow)
+                hWindow = ::GetForegroundWindow();
+
+            if (Likely(_windowsTaskbarPtr->IsValid() && hWindow != NULL))
+                event.Invoke(*_windowsTaskbarPtr->Get(), hWindow);
+
+        }, ETaskPriority::Normal);
+    }
+
+    ~FWindowsTaskbar_() {
+        AsyncSyscall([this](ITaskContext&) {
+            const Meta::FLockGuard scopeLock(_barrier);
+
+            _windowsTaskbarPtr.Destroy();
+
+            ::CoUninitialize();
+
+        }, ETaskPriority::Low);
+        FSyscallThreadPool::Get().WaitForAll();
+        Assert(not _windowsTaskbarPtr.Available);
+    }
+
+private:
+    FWindowsTaskbar_() {
+        AsyncSyscall([this](ITaskContext&) {
+            const Meta::FLockGuard scopeLock(_barrier);
+
+            LOG_CHECKVOID(HAL, SUCCEEDED(::CoInitialize(NULL)));
+
+            ::ITaskbarList3* pTaskbar = nullptr;
+            if (not SUCCEEDED(::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_ITaskbarList3, (void**)&pTaskbar)))
+                PPE_THROW_IT(FLastErrorException("CoCreateInstance"));
+
+            _windowsTaskbarPtr.Construct(pTaskbar);
+
+        }, ETaskPriority::High);
+    }
+
+    mutable std::mutex _barrier;
+    FUserCommands _commands;
+    Meta::TInPlace<TComPtr<::ITaskbarList3>> _windowsTaskbarPtr;
 };
-//----------------------------------------------------------------------------
-static ::HWND GWindowsSystrayWindow_ = NULL;
 //----------------------------------------------------------------------------
 class FWindowsSystray_ : Meta::TStaticSingleton<FWindowsSystray_> {
     friend Meta::TStaticSingleton<FWindowsSystray_>;
@@ -142,14 +204,15 @@ public:
         // create popup menu from systray commands :
         ::HMENU const hSystrayPopup = ::CreatePopupMenu();
 
-        STACKLOCAL_POD_STACK(FSparseDataId, userCmdRefs, FWindowsSystrayCmds_::Get().Commands.capacity());
-
+        VECTORINSITU(Window, FSparseDataId, 16) userCmdRefs;
         WSTRING_HASHMAP(Window, ::HMENU, ECase::Insensitive) subMenus;
         {
-            const auto& systrayCmds = FWindowsSystrayCmds_::Get();
-            const FAtomicSpinLock::FScope scopeLock(systrayCmds.Barrier);
+            const auto& systrayCmds = FWindowsTaskbar_::Get();
+            const Meta::FLockGuard scopeLock(systrayCmds._barrier);
 
-            for (const FWindowsSystrayCmds_::FUserCmd& userCmd : systrayCmds.Commands) {
+            userCmdRefs.reserve_AssumeEmpty(systrayCmds._commands.size());
+
+            for (const FWindowsTaskbar_::FUserCmd& userCmd : systrayCmds._commands) {
                 ::HMENU hSubPopup = NULL;
                 if (not TryGetValue(subMenus, userCmd.Category, &hSubPopup)) {
                     Assert(NULL == hSubPopup);
@@ -160,8 +223,8 @@ public:
                 }
                 Assert(hSubPopup);
 
-                const FSparseDataId cmdIndex = systrayCmds.Commands.IndexOf(userCmd);
-                userCmdRefs.Push(cmdIndex);
+                const FSparseDataId cmdIndex = systrayCmds._commands.IndexOf(userCmd);
+                userCmdRefs.push_back(cmdIndex);
                 const ::UINT cmdIDI = checked_cast<::UINT>(userCmdRefs.size());
 
                 Verify(::AppendMenuW(hSubPopup, MF_STRING, (::UINT_PTR)cmdIDI, userCmd.Label.data()));
@@ -201,10 +264,10 @@ public:
         if (cmdIDI) {
             const FSparseDataId cmdIndex = userCmdRefs[cmdIDI - 1];
 
-            const auto& systrayCmds = FWindowsSystrayCmds_::Get();
-            const FAtomicSpinLock::FScope scopeLock(systrayCmds.Barrier);
+            const auto& systrayCmds = FWindowsTaskbar_::Get();
+            const Meta::FLockGuard scopeLock(systrayCmds._barrier);
 
-            const FWindowsSystrayCmds_::FUserCmd* const pUserCmd = systrayCmds.Commands.Find(cmdIndex);
+            const FWindowsTaskbar_::FUserCmd* const pUserCmd = systrayCmds._commands.Find(cmdIndex);
 
             if (pUserCmd) {
                 LOG(Notification, Emphasis, L"launch windows systray command <{0}/{1}>", pUserCmd->Category, pUserCmd->Label);
@@ -215,20 +278,17 @@ public:
 
 private:
     FWindowsSystray_()
-        : _active{ true }
-        , _hWnd(NULL) {
+    :   _active{ true } {
         // start the background thread for pumping events
         _backgroundWorker = std::thread(&WorkerEntryPoint_, this);
     }
 
     std::mutex _barrier;
     std::atomic_bool _active;
-    ::HWND _hWnd;
+    ::HWND _hWnd{ NULL };
     std::thread _backgroundWorker;
 
     static void WorkerEntryPoint_(FWindowsSystray_* systray) {
-        Assert(nullptr == GWindowsSystrayWindow_);
-
         const FThreadContextStartup threadStartup("WindowsBackgroundSystray", PPE_THREADTAG_OTHER);
 
         threadStartup.Context().SetAffinityMask(FPlatformThread::SecondaryThreadAffinity());
@@ -242,8 +302,10 @@ private:
         }
         {
             const Meta::FLockGuard scopeLock(systray->_barrier);
+
             Assert(NULL == systray->_hWnd);
-            GWindowsSystrayWindow_ = systray->_hWnd = hiddenWindow.HandleWin32();
+            systray->_hWnd = hiddenWindow.HandleWin32();
+
             ShowSystray_(systray->_hWnd);
         }
 
@@ -262,9 +324,8 @@ private:
         {
             const Meta::FLockGuard scopeLock(systray->_barrier);
             Assert(hiddenWindow.HandleWin32() == systray->_hWnd);
-            Assert(GWindowsSystrayWindow_ == systray->_hWnd);
             HideSystray_(systray->_hWnd);
-            GWindowsSystrayWindow_ = systray->_hWnd = NULL;
+            systray->_hWnd = NULL;
         }
     }
 
@@ -341,45 +402,46 @@ private:
     }
 };
 //----------------------------------------------------------------------------
-static TComPtr<::ITaskbarList3> GWindowsTaskBar_;
-static FAtomicSpinLock& WindowsTaskBarCS_() {
-    ONE_TIME_DEFAULT_INITIALIZE(FAtomicSpinLock, GInstance);
-    return GInstance;
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::ShowSystray() {
-    FWindowsSystray_::Create();
+    if (GWindowsSystrayRefCount_.fetch_add(1, std::memory_order_relaxed) == 0) {
+        std::atomic_thread_fence(std::memory_order_acquire);
+        PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+        FWindowsSystray_::Create();
+    }
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::HideSystray() {
-    FWindowsSystray_::Destroy();
+    if (GWindowsSystrayRefCount_.fetch_sub(1, std::memory_order_relaxed) == 1) {
+        std::atomic_thread_fence(std::memory_order_acquire);
+        PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+        FWindowsSystray_::Destroy();
+    }
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::NotifySystray(ENotificationIcon icon, const FWStringView& title, const FWStringView& text) {
-    if (GWindowsSystrayWindow_)
+    if (GWindowsSystrayRefCount_.load(std::memory_order_relaxed) > 0) {
+        std::atomic_thread_fence(std::memory_order_acquire);
         FWindowsSystray_::Get().Notify(icon, title, text);
+    }
 }
 //----------------------------------------------------------------------------
 size_t FWindowsPlatformNotification::AddSystrayCommand(
     const FWStringView& category,
     const FWStringView& label,
     FSystrayDelegate&& cmd ) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     Assert(not category.empty());
     Assert(not label.empty());
     Assert(cmd);
 
     FSparseDataId cmdIndex = INDEX_NONE;
-    {
-        auto& systray = FWindowsSystrayCmds_::Get();
-        const FAtomicSpinLock::FScope scopeLock(systray.Barrier);
-        cmdIndex = systray.Commands.Emplace(category, label, std::move(cmd));
-    }
-    Assert(INDEX_NONE != cmdIndex);
+    FWindowsTaskbar_::Get().Commands([&](FWindowsTaskbar_::FUserCommands& cmds) {
+        PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+        cmdIndex = cmds.Emplace(category, label, std::move(cmd));
+    });
 
     LOG(Notification, Debug, L"add systray command <{0}/{1}> -> #{2}", category, label, cmdIndex);
 
@@ -387,62 +449,61 @@ size_t FWindowsPlatformNotification::AddSystrayCommand(
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformNotification::RemoveSystrayCommand(size_t index) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     Assert(index != INDEX_NONE);
 
     LOG(Notification, Debug, L"remove systray command #{0}", index);
 
-    auto& systray = FWindowsSystrayCmds_::Get();
-    const FAtomicSpinLock::FScope scopeLock(systray.Barrier);
+    bool cmdFound = false;
+    FWindowsTaskbar_::Get().Commands([&](FWindowsTaskbar_::FUserCommands& cmds) {
+        PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+        cmdFound = cmds.Remove(index);
+    });
 
-    return systray.Commands.Remove(index);
+    return cmdFound;
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::SetTaskbarState(ETaskbarState state) {
-    Assert(GWindowsTaskBar_);
+    FWindowsTaskbar_::Get().Taskbar([state](::ITaskbarList3& taskbar, ::HWND hWindow) {
+        ::TBPFLAG tbpFlags;
 
-    ::TBPFLAG tbpFlags;
+        switch (state) {
+        case ETaskbarState::Normal:
+            tbpFlags = TBPF_NORMAL;
+            break;
+        case ETaskbarState::Progress:
+            tbpFlags = TBPF_INDETERMINATE;
+            break;
+        case ETaskbarState::NoProgress:
+            tbpFlags = TBPF_NOPROGRESS;
+            break;
+        case ETaskbarState::Paused:
+            tbpFlags = TBPF_PAUSED;
+            break;
+        case ETaskbarState::Error:
+            tbpFlags = TBPF_ERROR;
+            break;
+        case ETaskbarState::Indeterminate:
+            tbpFlags = TBPF_INDETERMINATE;
+            break;
+        default:
+            AssertNotImplemented();
+        }
 
-    switch (state) {
-    case ETaskbarState::Normal:
-        tbpFlags = TBPF_NORMAL;
-        break;
-    case ETaskbarState::Progress:
-        tbpFlags = TBPF_NORMAL;
-        break;
-    case ETaskbarState::NoProgress:
-        tbpFlags = TBPF_NOPROGRESS;
-        break;
-    case ETaskbarState::Paused:
-        tbpFlags = TBPF_PAUSED;
-        break;
-    case ETaskbarState::Error:
-        tbpFlags = TBPF_ERROR;
-        break;
-    case ETaskbarState::Indeterminate:
-        tbpFlags = TBPF_INDETERMINATE;
-        break;
-    default:
-        AssertNotImplemented();
-    }
-
-    const FAtomicSpinLock::FScope scopeLock(WindowsTaskBarCS_());
-
-    if (not SUCCEEDED(GWindowsTaskBar_->SetProgressState(GWindowsSystrayWindow_, tbpFlags)))
-        PPE_THROW_IT(FLastErrorException("SetProgressState"));
+        if (not SUCCEEDED(taskbar.SetProgressState(hWindow, tbpFlags)))
+            PPE_THROW_IT(FLastErrorException("SetProgressState"));
+    });
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::SetTaskbarProgress(size_t completed, size_t total) {
-    Assert(GWindowsTaskBar_);
     Assert(completed <= total);
 
-    const ::ULONGLONG ullCompleted = checked_cast<::ULONGLONG>(completed);
-    const ::ULONGLONG ullTotal = checked_cast<::ULONGLONG>(total);
+    FWindowsTaskbar_::Get().Taskbar([completed, total](::ITaskbarList3& taskbar, ::HWND hWindow) {
+        const ::ULONGLONG ullCompleted = checked_cast<::ULONGLONG>(completed);
+        const ::ULONGLONG ullTotal = checked_cast<::ULONGLONG>(total);
 
-    const FAtomicSpinLock::FScope scopeLock(WindowsTaskBarCS_());
-
-    if (not SUCCEEDED(GWindowsTaskBar_->SetProgressValue(GWindowsSystrayWindow_, ullCompleted, ullTotal)))
-        PPE_THROW_IT(FLastErrorException("SetProgressValue"));
+        if (not SUCCEEDED(taskbar.SetProgressValue(hWindow, ullCompleted, ullTotal)))
+            PPE_THROW_IT(FLastErrorException("SetProgressValue"));
+    });
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(::HWND hWnd) {
@@ -452,38 +513,13 @@ void FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(::HWND hWnd) {
 void FWindowsPlatformNotification::Start() {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    Verify(SUCCEEDED(::CoInitialize(NULL)));
-
-    {
-        Assert(not GWindowsTaskBar_);
-
-        const FAtomicSpinLock::FScope scopeLock(WindowsTaskBarCS_());
-
-        ::ITaskbarList3* taskbar = nullptr;
-        if (not SUCCEEDED(::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_ITaskbarList3, (void **)&taskbar)))
-            PPE_THROW_IT(FLastErrorException("CoCreateInstance"));
-
-        AssertRelease(taskbar);
-        GWindowsTaskBar_.Reset(taskbar);
-    }
-    {
-        FWindowsSystrayCmds_::Create();
-    }
+    FWindowsTaskbar_::Create();
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::Shutdown() {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    {
-        FWindowsSystrayCmds_::Destroy();
-    }
-    {
-        Assert(GWindowsTaskBar_);
-        const FAtomicSpinLock::FScope scopeLock(WindowsTaskBarCS_());
 
-        GWindowsTaskBar_.Reset();
-    }
-
-    ::CoUninitialize();
+    FWindowsTaskbar_::Destroy();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

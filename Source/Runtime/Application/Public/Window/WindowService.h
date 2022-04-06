@@ -24,6 +24,9 @@ public:
     virtual FMainWindow* MainWindow() const NOEXCEPT = 0;
     virtual void SetMainWindow(FMainWindow* window) = 0;
 
+    virtual void ShowSystray() = 0;
+    virtual void HideSystray() = 0;
+
     virtual void NotifySystrayNone(const FWStringView& title, const FWStringView& text) = 0;
     virtual void NotifySystrayInfo(const FWStringView& title, const FWStringView& text) = 0;
     virtual void NotifySystrayWarning(const FWStringView& title, const FWStringView& text) = 0;
