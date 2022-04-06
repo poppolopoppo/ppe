@@ -95,6 +95,8 @@ public:
         const TMemoryView<const FQueueCreateInfo>& queues = Default ) const;
     void DestroyDevice(FVulkanDeviceInfo* pDevice) const;
 
+    static TMemoryView<const FConstChar> DebuggingInstanceLayers(EVulkanVersion version);
+    static TMemoryView<const FConstChar> ProfilingInstanceLayers(EVulkanVersion version);
     static TMemoryView<const FConstChar> RecommendedInstanceLayers(EVulkanVersion version);
     static TMemoryView<const FQueueCreateInfo> RecommendedDeviceQueues(EVulkanVersion version);
 

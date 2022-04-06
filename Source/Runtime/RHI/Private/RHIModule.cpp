@@ -86,13 +86,20 @@ ERHIFeature FRHIModule::RecommendedFeatures(ERHIFeature features) const NOEXCEPT
         features -= ERHIFeature::VSync;
 
 #if USE_PPE_RHIDEBUG
+    features += ERHIFeature::Debugging;
+#endif
+#if USE_PPE_PROFILING
+    features += ERHIFeature::Profiling;
+#endif
+
+#if !USE_PPE_FINAL_RELEASE
     if (process.HasArgument(L"-RHIDebug"))
         features += ERHIFeature::Debugging;
     if (process.HasArgument(L"-RHINoDebug"))
         features -= ERHIFeature::Debugging;
 #endif
 
-#if USE_PPE_RHIDEBUG
+#if !USE_PPE_FINAL_RELEASE
     if (process.HasArgument(L"-RHIProfiling"))
         features += ERHIFeature::Debugging;
     if (process.HasArgument(L"-RHINoProfiling"))

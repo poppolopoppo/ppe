@@ -1236,14 +1236,13 @@ auto FVulkanInstance::PickPhysicalDeviceByName(FStringView deviceName) const NOE
     });
 }
 //----------------------------------------------------------------------------
-TMemoryView<const FConstChar> FVulkanInstance::RecommendedInstanceLayers(EVulkanVersion ) {
+TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVersion) {
     static const FConstChar GLayerNames[] = {
         "VK_LAYER_KHRONOS_validation",
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
         // may be unsupported:
         "VK_LAYER_ARM_MGD",
-        "VK_LAYER_ARM_mali_perf_doc"
 
 #else
         "VK_LAYER_LUNARG_standard_validation", // for old VulkanSDK
@@ -1251,6 +1250,21 @@ TMemoryView<const FConstChar> FVulkanInstance::RecommendedInstanceLayers(EVulkan
 #endif
     };
     return MakeView(GLayerNames);
+}
+//----------------------------------------------------------------------------
+TMemoryView<const FConstChar> FVulkanInstance::ProfilingInstanceLayers(EVulkanVersion) {
+#if defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
+    static const FConstChar GLayerNames[] = {
+        "VK_LAYER_ARM_mali_perf_doc"
+    };
+    return MakeView(GLayerNames);
+#else
+    return {}; // no profiling instance layers for now
+#endif
+}
+//----------------------------------------------------------------------------
+TMemoryView<const FConstChar> FVulkanInstance::RecommendedInstanceLayers(EVulkanVersion ) {
+    return {}; // no recommended instance layers for now
 }
 //----------------------------------------------------------------------------
 TMemoryView<const FVulkanInstance::FQueueCreateInfo> FVulkanInstance::RecommendedDeviceQueues(EVulkanVersion ) {

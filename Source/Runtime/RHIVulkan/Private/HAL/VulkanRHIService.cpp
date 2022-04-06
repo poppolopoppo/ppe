@@ -86,12 +86,22 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
     requiredInstanceExtensions |= FVulkanInstance::RequiredInstanceExtensions(version,
         pOptionalWindow ? pOptionalWindow->Hwnd : FWindowHandle{} );
 
+    VECTORINSITU(RHIInstance, FConstChar, 8) instanceLayers;
+    Append(instanceLayers, FVulkanInstance::RecommendedInstanceLayers(version));
+
+    if (_features & ERHIFeature::Debugging)
+        Append(instanceLayers, FVulkanInstance::DebuggingInstanceLayers(version));
+    if (_features & ERHIFeature::Profiling)
+        Append(instanceLayers, FVulkanInstance::ProfilingInstanceLayers(version));
+
     if (not _instance.Construct(
         *FString(applicationName),
         "PPE", version,
-        FVulkanInstance::RecommendedInstanceLayers(version),
-        requiredInstanceExtensions, optionalInstanceExtensions,
-        requiredDeviceExtensions, optionalDeviceExtensions )) {
+        instanceLayers,
+        requiredInstanceExtensions,
+            optionalInstanceExtensions,
+        requiredDeviceExtensions,
+            optionalDeviceExtensions )) {
         RHI_LOG(Error, L"failed to create vulkan instance, abort!");
         return false;
     }
