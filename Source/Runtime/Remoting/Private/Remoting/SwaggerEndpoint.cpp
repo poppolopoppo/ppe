@@ -64,7 +64,7 @@ void FSwaggerEndpoint::PrivateEndpointProcess(const FRemotingContext& ctx, const
         });
 
     ctx.pResponse->SetStatus(Network::EHttpStatus::OK);
-    ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_javascript());
+    ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_json());
 
     FTextWriter oss(&ctx.pResponse->Body());
     api.Content.ToStream(oss);
