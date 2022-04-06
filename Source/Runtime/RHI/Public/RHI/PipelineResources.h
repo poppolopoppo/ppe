@@ -15,6 +15,10 @@
 #include "Memory/UniquePtr.h"
 #include "Meta/Optional.h"
 
+#if USE_PPE_RHIDEBUG
+#   include "IO/StaticString.h"
+#endif
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -247,11 +251,16 @@ public:
         bool operator !=(const FDynamicData& other) const { return (not operator ==(other)); }
     };
 
-    FPipelineResources() NOEXCEPT { ResetCachedId_(); }
+    FPipelineResources() NOEXCEPT;
     ~FPipelineResources();
 
     FPipelineResources(const FPipelineResources& other);
     FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT;
+
+#if USE_PPE_RHIDEBUG
+    FConstChar DebugName() const { return _debugName; }
+    void SetDebugName(FConstChar name) { _debugName = name; }
+#endif
 
     FRawDescriptorSetLayoutID Layout() const { return _dynamicData.LockShared()->LayoutId; }
     TMemoryView<const u32> DynamicOffsets() const { return _dynamicData.LockShared()->DynamicOffsets(); }
@@ -311,10 +320,13 @@ public:
 private:
     using FCachedID_ = std::atomic< FRawPipelineResourcesID::FPackedData >;
 
-
     mutable FCachedID_ _cachedId;
     TRHIThreadSafe<FDynamicData> _dynamicData;
     bool _allowEmptyResources{ false };
+
+#if USE_PPE_RHIDEBUG
+    TStaticString<64> _debugName;
+#endif
 
     FRawPipelineResourcesID CachedId_() const { return FRawPipelineResourcesID(_cachedId.load(std::memory_order_acquire)); }
     void SetCachedId_(FRawPipelineResourcesID id) const { _cachedId.store(id.Packed, std::memory_order_relaxed); }
@@ -324,6 +336,7 @@ private:
     T& Resource_(const FUniformID& id);
     template <typename T>
     bool HasResource_(const FUniformID& id) const;
+
 };
 //----------------------------------------------------------------------------
 using FPipelineResourceSet = TFixedSizeAssociativeVector<

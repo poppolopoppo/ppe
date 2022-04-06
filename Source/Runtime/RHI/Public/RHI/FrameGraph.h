@@ -184,7 +184,7 @@ public: // interface
 
 public: // helpers
     template <typename _RawId>
-    NODISCARD TScopedResource<details::TResourceWrappedId<_RawId>> ScopedResource(details::TResourceWrappedId<_RawId>&& resource) const;
+    NODISCARD TScopedResource<details::TResourceWrappedId<_RawId>> ScopedResource(details::TResourceWrappedId<_RawId>&& resource);
 
     template <typename _Id0, typename... _Ids>
     void ReleaseResources(_Id0& resource0, _Ids&... resources) {
@@ -200,6 +200,14 @@ public: // helpers
 template <typename _RawId>
 class TScopedResource< details::TResourceWrappedId<_RawId> > {
 public:
+    TScopedResource() = default;
+
+    TScopedResource(TScopedResource&&) = default;
+    TScopedResource& operator =(TScopedResource&&) = default;
+
+    TScopedResource(const TScopedResource&) = delete;
+    TScopedResource& operator =(const TScopedResource&) = delete;
+
     TScopedResource(IFrameGraph& fg, details::TResourceWrappedId<_RawId>&& resource) NOEXCEPT
         : _frameGraph(&fg)
         , _resource(std::move(resource)) {
@@ -237,7 +245,7 @@ template <typename _RawId>
 TScopedResource(IFrameGraph&, details::TResourceWrappedId<_RawId>&&) -> TScopedResource<_RawId>;
 //----------------------------------------------------------------------------
 template <typename _RawId>
-TScopedResource<details::TResourceWrappedId<_RawId>> IFrameGraph::ScopedResource(details::TResourceWrappedId<_RawId>&& resource) const {
+TScopedResource<details::TResourceWrappedId<_RawId>> IFrameGraph::ScopedResource(details::TResourceWrappedId<_RawId>&& resource) {
     return TScopedResource<details::TResourceWrappedId<_RawId>>{ *this, std::move(resource) };
 }
 //----------------------------------------------------------------------------

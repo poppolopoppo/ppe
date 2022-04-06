@@ -218,9 +218,12 @@ private:
 
     FVulkanDevice _device;
 
+    std::atomic<EState> _state;
+    std::atomic<u32> _frameIndex{ 0 };
+
     FCriticalSection _queueCS;
-    FQueueMap _queueMap;
     EQueueUsage _queueUsage;
+    FQueueMap _queueMap;
 
     FCommandBufferPool _cmdBufferPool;
     FCommandBatchPool _cmdBatchPool;
@@ -228,16 +231,14 @@ private:
 
     FVulkanResourceManager _resourceManager;
 
-    std::atomic<EState> _state;
-    std::atomic<u32> _frameIndex{ 0 };
-
 #if USE_PPE_RHIDEBUG
-    mutable FVulkanDebugger _debugger;
-    VkQueryPool _vkQueryPool;
-    FShaderDebugCallback _shaderDebugCallback;
-
     mutable FCriticalSection _lastFrameStatsCS;
     mutable FFrameStatistics _lastFrameStats;
+
+    VkQueryPool _vkQueryPool;
+
+    FShaderDebugCallback _shaderDebugCallback;
+    mutable FVulkanDebugger _debugger;
 
     mutable std::atomic<u64> _submittingTime{ 0 };
     mutable std::atomic<u64> _waitingTime{ 0 };

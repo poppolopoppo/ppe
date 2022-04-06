@@ -32,7 +32,11 @@ FVulkanPipelineResources::FVulkanPipelineResources(const FPipelineResources& des
         FPipelineResources::CloneDynamicData(desc),
         desc.Layout(),
         desc.AllowEmptyResources()
-    }) {
+    })
+#if USE_PPE_RHIDEBUG
+,   _debugName(desc.DebugName())
+#endif
+{
 
 }
 //----------------------------------------------------------------------------
@@ -41,12 +45,20 @@ FVulkanPipelineResources::FVulkanPipelineResources(FPipelineResources&& rdesc) N
         FPipelineResources::StealDynamicData(rdesc),
         rdesc.Layout(),
         rdesc.AllowEmptyResources()
-    }) {
+    })
+#if USE_PPE_RHIDEBUG
+,   _debugName(rdesc.DebugName())
+#endif
+{
 
 }
 //----------------------------------------------------------------------------
 FVulkanPipelineResources::FVulkanPipelineResources(FVulkanPipelineResources&& rvalue) NOEXCEPT
-:   _resources(std::move(*rvalue.Write())) {
+:   _resources(std::move(*rvalue.Write()))
+#if USE_PPE_RHIDEBUG
+,   _debugName(rvalue._debugName)
+#endif
+{
 
 }
 //----------------------------------------------------------------------------

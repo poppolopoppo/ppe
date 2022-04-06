@@ -59,6 +59,10 @@ public:
     FVulkanPipelineResources(FVulkanPipelineResources&& rvalue) NOEXCEPT;
     FVulkanPipelineResources& operator =(FVulkanPipelineResources&&) = delete;
 
+#if USE_PPE_RHIDEBUG
+    const FVulkanDebugName& DebugName() const { return _debugName; }
+#endif
+
     auto Read() const { return _resources.LockShared(); }
     auto Write() { return _resources.LockExclusive(); }
 
@@ -99,6 +103,8 @@ private:
     TRHIThreadSafe<FInternalResources> _resources;
 
 #if USE_PPE_RHIDEBUG
+    FVulkanDebugName _debugName;
+
     static void ValidateEmptyUniform_(const FInternalResources& data, const FUniformID&, u32 idx);
 #endif
 };

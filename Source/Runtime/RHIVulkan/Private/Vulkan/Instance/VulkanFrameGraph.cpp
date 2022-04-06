@@ -21,9 +21,9 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI)
 //----------------------------------------------------------------------------
 FVulkanFrameGraph::FVulkanFrameGraph(const FVulkanDeviceInfo& deviceInfo)
 :   _device(deviceInfo)
+,   _state(EState::Initial)
 ,   _queueUsage(Default)
 ,   _resourceManager(_device)
-,   _state(EState::Initial)
 #if USE_PPE_RHIDEBUG
 ,   _vkQueryPool(VK_NULL_HANDLE)
 #endif
@@ -304,6 +304,8 @@ bool FVulkanFrameGraph::InitPipelineResources_(FPipelineResources* pResources, c
 
     const FVulkanDescriptorSetLayout& dsLayout = _resourceManager.ResourceData(layoutId);
     FPipelineResources::Initialize(pResources, layoutId, dsLayout.Resources());
+
+    ONLY_IF_RHIDEBUG( pResources->SetDebugName(dsLayout.DebugName()) );
     return true;
 }
 //----------------------------------------------------------------------------
