@@ -103,8 +103,12 @@ public: // override new/delete operators for memory tracking
 
 protected:
     friend void AddRef(const FRefCountable* ptr) NOEXCEPT;
+
     template <typename T>
     friend TEnableIfRefCountable<T, void> OnStrongRefCountReachZero(T* ptr) NOEXCEPT;
+
+    template <typename T>
+    using THasOnStrongRefCountReachZero = decltype(std::declval<T*>()->OnStrongRefCountReachZero());
 
     template <typename T>
     friend void RemoveRef(T* ptr);

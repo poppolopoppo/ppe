@@ -50,7 +50,7 @@ inline void FRefCountable::IncStrongRefCount() const NOEXCEPT {
 //----------------------------------------------------------------------------
 inline bool FRefCountable::DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT {
     Assert_NoAssume(_refCount > 0);
-    const int n = atomic_fetch_sub_explicit(&_refCount, 1, std::memory_order_release);
+    const int n = atomic_fetch_sub_explicit(&_refCount, 1, std::memory_order_relaxed);
     if (1 == n) {
         std::atomic_thread_fence(std::memory_order_acquire);
         return true;
@@ -102,7 +102,17 @@ NO_INLINE TEnableIfRefCountable<T, void> OnStrongRefCountReachZero(T* ptr) NOEXC
 template <typename T>
 void RemoveRef(T* ptr) {
     if (ptr->DecStrongRefCount_ReturnIfReachZero()) {
-        OnStrongRefCountReachZero(ptr);
+        /**
+         ** 2 ways available to override destruction behavior:
+         **  - use ADL with a custom overload of free function OnStrongRefCountReachZero, the default is using and can be overriden
+         **  - implement OnStrongRefCountReachZero() as a member function, this method will propagate to child classes
+         **/
+        IF_CONSTEXPR(Meta::has_defined_v<FRefCountable::THasOnStrongRefCountReachZero, T>) {
+            ptr->OnStrongRefCountReachZero();
+        }
+        else {
+            OnStrongRefCountReachZero(ptr);
+        }
     }
 }
 //----------------------------------------------------------------------------
@@ -165,7 +175,7 @@ inline void FRefCountable::IncSafeRefCount() const NOEXCEPT {
     _safeRefCount.fetch_add(1, std::memory_order_relaxed);
 }
 inline void FRefCountable::DecSafeRefCount() const NOEXCEPT {
-    Verify(_safeRefCount.fetch_sub(1, std::memory_order_release) > 0);
+    Verify(_safeRefCount.fetch_sub(1, std::memory_order_relaxed) > 0);
 }
 #endif //!WITH_PPE_SAFEPTR
 //----------------------------------------------------------------------------

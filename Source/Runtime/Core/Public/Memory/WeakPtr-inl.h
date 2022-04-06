@@ -116,7 +116,7 @@ inline void FWeakRefCountable::IncSafeRefCount() const NOEXCEPT {
     _safeRefCount.fetch_add(1, std::memory_order_relaxed);
 }
 inline void FWeakRefCountable::DecSafeRefCount() const NOEXCEPT {
-    Verify(_safeRefCount.fetch_sub(1, std::memory_order_release) > 0);
+    Verify(_safeRefCount.fetch_sub(1, std::memory_order_relaxed) > 0);
 }
 #endif //!WITH_PPE_SAFEPTR
 //----------------------------------------------------------------------------
