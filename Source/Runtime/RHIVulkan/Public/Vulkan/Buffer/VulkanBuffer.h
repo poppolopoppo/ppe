@@ -31,7 +31,7 @@ public:
         bool IsReadOnly() const NOEXCEPT;
         bool IsExclusiveSharing() const { return (QueueFamilyMask == Default); }
 
-        u32 SizeInBytes() const { return Desc.SizeInBytes; }
+        size_t SizeInBytes() const { return Desc.SizeInBytes; }
     };
 
     FVulkanBuffer() = default;
@@ -49,7 +49,7 @@ public:
 
     const FBufferDesc& Desc() const { return Read()->Desc; }
     VkBuffer Handle() const { return Read()->vkBuffer; }
-    u32 SizeInBytes() const { return Read()->Desc.SizeInBytes; }
+    size_t SizeInBytes() const { return Read()->Desc.SizeInBytes; }
 
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return _debugName; }

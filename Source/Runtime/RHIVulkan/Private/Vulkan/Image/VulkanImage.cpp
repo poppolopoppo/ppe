@@ -492,8 +492,8 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageViewDesc
         const FPixelFormatInfo required = EPixelFormat_Infos(sharedData->Desc.Format);
         const FPixelFormatInfo original = EPixelFormat_Infos(desc.Format);
 
-        const bool requiredUseBlock = Any(required.BlockDim < uint2::One);
-        const bool originalUseBlock = Any(original.BlockDim < uint2::One);
+        const bool requiredUseBlock = AnyLess(required.BlockDim, uint2::One);
+        const bool originalUseBlock = AnyLess(original.BlockDim, uint2::One);
 
         // compressed to uncompressed
         if (sharedData->Desc.Flags & EImageFlags::BlockTexelViewCompatible and originalUseBlock and not requiredUseBlock) {

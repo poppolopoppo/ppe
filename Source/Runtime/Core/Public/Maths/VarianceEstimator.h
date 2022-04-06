@@ -23,7 +23,7 @@ struct TNormalDistribution {
     :   Mean(mean)
     ,   Variance(variance) {
         Assert_NoAssume(Variance > T(0));
-        Scale = RSqrt(F_2PI * Variance);
+        Scale = RSqrt(static_cast<T>(D_2PI) * Variance);
         StandardDeviation = Sqrt(Variance);
     }
 
@@ -33,11 +33,11 @@ struct TNormalDistribution {
 
     // confidence interval :
 
-    T Low() const { return (Mean - 2 * StandardDeviation); } // <=> 95%
-    T High() const { return (Mean + 2 * StandardDeviation); }
+    T Low() const   { return (Mean - 2 * StandardDeviation); } // <=> 95%
+    T High() const  { return (Mean + 2 * StandardDeviation); }
 
-    T Min() const { return (Mean - 3 * StandardDeviation); } // <=> 99.7%
-    T Max() const { return (Mean + 3 * StandardDeviation); }
+    T Min() const   { return (Mean - 3 * StandardDeviation); } // <=> 99.7%
+    T Max() const   { return (Mean + 3 * StandardDeviation); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

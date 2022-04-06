@@ -13,26 +13,44 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR double D_Epsilon = 1e-5;
+CONSTEXPR float F_Epsilon       = 1e-3f;
+CONSTEXPR float F_EpsilonSQ     = 1e-9f;
+CONSTEXPR float F_SmallEpsilon  = 1e-6f;
+CONSTEXPR float F_LargeEpsilon  = 0.01f;
+CONSTEXPR float F_Delta         = 0.00001f;
 //----------------------------------------------------------------------------
-CONSTEXPR float F_Epsilon = 1e-3f;
-CONSTEXPR float F_EpsilonSQ = 1e-9f;
-CONSTEXPR float F_SmallEpsilon = 1e-6f;
-CONSTEXPR float F_LargeEpsilon = 0.01f;
-CONSTEXPR float F_Delta = 0.00001f;
-CONSTEXPR float F_PI = 3.14159265359f;
-CONSTEXPR float F_2PI = 6.28318530718f;
-CONSTEXPR float F_3PI = 9.42477796077f;
-CONSTEXPR float F_4PI = 12.5663706144f;
-CONSTEXPR float F_PIOver3 = 1.0471975512f;
-CONSTEXPR float F_PIOver4 = 0.78539816339f;
-CONSTEXPR float F_2PIOver3 = 2.09439510239f;
-CONSTEXPR float F_HalfPi = 1.57079632679f;
-CONSTEXPR float F_Deg2Rad = 0.01745329251f;
-CONSTEXPR float F_Rad2Deg = 57.2957795131f;
-CONSTEXPR float F_Sqrt2 = 1.4142135623730951f;
-CONSTEXPR float F_Sqrt2OO = 0.7071067811865475f;
-CONSTEXPR float F_SqrtHalf = F_Sqrt2OO;
+CONSTEXPR float F_E             = 2.718281828459045090795598298427648842334747314453f;
+CONSTEXPR float F_PI            = 3.141592653589793115997963468544185161590576171875f;
+CONSTEXPR float F_2PI           = 6.283185307179586231995926937088370323181152343750f;
+CONSTEXPR float F_3PI           = 9.424777960769379347993890405632555484771728515625f;
+CONSTEXPR float F_4PI           = 12.56637061435917246399185387417674064636230468750f;
+CONSTEXPR float F_PIOver2       = 1.047197551196597631317786181170959025621414184570f;
+CONSTEXPR float F_PIOver3       = 1.047197551196597631317786181170959025621414184570f;
+CONSTEXPR float F_PIOver4       = 0.785398163397448278999490867136046290397644042969f;
+CONSTEXPR float F_2PIOver3      = 2.094395102393195262635572362341918051242828369141f;
+CONSTEXPR float F_HalfPi        = F_PIOver2;
+CONSTEXPR float F_Deg2Rad       = 0.017453292519943295474371680597869271878153085709f;
+CONSTEXPR float F_Rad2Deg       = 57.29577951308232286464772187173366546630859375000f;
+CONSTEXPR float F_Sqrt2         = 1.414213562373095145474621858738828450441360473633f;
+CONSTEXPR float F_Sqrt2OO       = 0.707106781186547461715008466853760182857513427734f;
+CONSTEXPR float F_SqrtHalf      = F_Sqrt2OO;
+//----------------------------------------------------------------------------
+CONSTEXPR double D_Epsilon      = 1e-5;
+CONSTEXPR double D_E            = 2.718281828459045090795598298427648842334747314453;
+CONSTEXPR double D_PI           = 3.141592653589793115997963468544185161590576171875;
+CONSTEXPR double D_2PI          = 6.283185307179586231995926937088370323181152343750;
+CONSTEXPR double D_3PI          = 9.424777960769379347993890405632555484771728515625;
+CONSTEXPR double D_4PI          = 12.56637061435917246399185387417674064636230468750;
+CONSTEXPR double D_PIOver2      = 1.047197551196597631317786181170959025621414184570;
+CONSTEXPR double D_PIOver3      = 1.047197551196597631317786181170959025621414184570;
+CONSTEXPR double D_PIOver4      = 0.785398163397448278999490867136046290397644042969;
+CONSTEXPR double D_2PIOver3     = 2.094395102393195262635572362341918051242828369141;
+CONSTEXPR double D_HalfPi       = D_PIOver2;
+CONSTEXPR double D_Deg2Rad      = 0.017453292519943295474371680597869271878153085709;
+CONSTEXPR double D_Rad2Deg      = 57.29577951308232286464772187173366546630859375000;
+CONSTEXPR double D_Sqrt2        = 1.414213562373095145474621858738828450441360473633;
+CONSTEXPR double D_Sqrt2OO      = 0.707106781186547461715008466853760182857513427734;
+CONSTEXPR double D_SqrtHalf     = D_Sqrt2OO;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -77,8 +95,8 @@ inline float FMod(float f, float m) NOEXCEPT { return FPlatformMaths::Fmod(f, m)
 float Hypot(float a, float b) NOEXCEPT;
 double Hypot(double a, double b) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <typename T, typename U, class = Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>> >
-CONSTEXPR T Lerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT;
+CONSTEXPR float Lerp(float v0, float v1, float f) NOEXCEPT;
+CONSTEXPR double Lerp(double v0, double v1, double f) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
 CONSTEXPR float LinearStep(T value, Meta::TDontDeduce<T> vmin, Meta::TDontDeduce<T> vmax) NOEXCEPT;
@@ -102,9 +120,10 @@ CONSTEXPR double Rcp(double d) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline float RSqrt(float f) NOEXCEPT { return FPlatformMaths::RSqrt(f); }
 inline float RSqrt_Low(float f) NOEXCEPT { return FPlatformMaths::RSqrt_Low(f); }
+inline double RSqrt(double f) NOEXCEPT { return FPlatformMaths::RSqrt(f); }
 //----------------------------------------------------------------------------
 inline CONSTEXPR float Saturate(float value) NOEXCEPT { return Clamp(value, 0.0f, 1.0f); }
-inline CONSTEXPR double Saturate(double value) NOEXCEPT { return Clamp(value, 0.0f, 1.0f); }
+inline CONSTEXPR double Saturate(double value) NOEXCEPT { return Clamp(value, 0.0, 1.0); }
 //----------------------------------------------------------------------------
 inline CONSTEXPR i8 Sign(i8 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
 inline CONSTEXPR i16 Sign(i16 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
@@ -120,7 +139,7 @@ template <typename T>
 CONSTEXPR T Sqr(T x) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline float Sqrt(float f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
-double Sqrt(double d) NOEXCEPT;
+inline double Sqrt(double f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
 CONSTEXPR T Step(T y, Meta::TDontDeduce<T> x) NOEXCEPT;

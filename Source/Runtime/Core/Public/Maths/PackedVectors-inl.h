@@ -18,10 +18,10 @@ inline void UX10Y10Z10W2N::Pack_Float01(const TScalarVector<float, 3>& xyz, u8 w
         |   (w << 30);
 
 #if USE_PPE_ASSERT
-    TScalarVector<float, 3> tmp;
-    tmp.x = static_cast<float>(_data & 1023) / 1023.0f;
-    tmp.y = static_cast<float>((_data >> 10) & 1023) / 1023.0f;
-    tmp.z = static_cast<float>((_data >> 20) & 1023) / 1023.0f;
+    const float3 tmp{
+        static_cast<float>(_data & 1023) / 1023.0f,
+        static_cast<float>((_data >> 10) & 1023) / 1023.0f,
+        static_cast<float>((_data >> 20) & 1023) / 1023.0f };
 
     const u32 data2 =    static_cast<u32>(tmp.x * 1023.0f)
                     |   (static_cast<u32>(tmp.y * 1023.0f) << 10)

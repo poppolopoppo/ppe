@@ -94,17 +94,17 @@ struct FHashTableData_ {
     using bitmask_t = TBitMask<u32, GGroupSize>;
 
     size_t NumBuckets() const {
-        return static_cast<size_t>(CapacityM1 + 1);
+        return static_cast<size_t>(CapacityM1 + 1_u32);
     }
 
     size_t NumStates() const {
         // 15 last states are mirroring the 15th
         // allows to sample state across table boundary
-        return (CapacityM1 + 1 ? CapacityM1 + 1 + GGroupSize/* sentinel */ : 0);
+        return (CapacityM1 + 1_u32 ? CapacityM1 + 1_u32 + GGroupSize/* sentinel */ : 0);
     }
 
     const state_t* State(size_t index) const {
-        Assert(index < CapacityM1 + 1);
+        Assert(index < CapacityM1 + 1_u32);
         return (static_cast<const state_t*>(StatesAndBuckets) + index);
     }
 
@@ -145,7 +145,7 @@ struct FHashTableData_ {
     size_t FirstFilledIndex() const {
         const size_t first = (Size
             ? FirstFilledBucket_ReturnOffset(static_cast<const state_t*>(StatesAndBuckets))
-            : static_cast<size_t>(CapacityM1 + 1));
+            : static_cast<size_t>(CapacityM1 + 1_u32));
         return first;
     }
 

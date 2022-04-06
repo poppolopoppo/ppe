@@ -28,7 +28,7 @@ static void DefaultColorFormats_(
     const VkFormat defaultFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
     // add first 3 formats
-    forrange(i, 0, Min(3u, formats.size())) {
+    forrange(i, 0, Min(3_size_t, formats.size())) {
         auto& item = formats[i].surfaceFormat;
         supported.emplace_back(
             item.format != VK_FORMAT_UNDEFINED

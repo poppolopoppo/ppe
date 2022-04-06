@@ -11,9 +11,9 @@ CONSTEXPR T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT {
     return static_cast<T>(v0*f0 + v1*f1 + v2*f2);
 }
 //----------------------------------------------------------------------------
-inline CONSTEXPR bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float f1, float f2) NOEXCEPT {
-    return (((v0?1:0)*f0 + (v1?1:0)*f1 + (v2?1:0)*f2) >= 0.5f);
-}
+//inline CONSTEXPR bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float f1, float f2) NOEXCEPT {
+//    return (((v0?1:0)*f0 + (v1?1:0)*f1 + (v2?1:0)*f2) >= 0.5f);
+//}
 //----------------------------------------------------------------------------
 inline float Hypot(float a, float b) NOEXCEPT {
     return Sqrt(a * a + b * b);
@@ -23,15 +23,14 @@ inline double Hypot(double a, double b) NOEXCEPT {
     return Sqrt(a * a + b * b);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U, class>
-CONSTEXPR T Lerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT {
-    Assert(f >= U(0) && f <= U(1));
-    return static_cast<T>((v0 * (U(1) - f)) + (v1 * f));
+CONSTEXPR float Lerp(float v0, float v1, float f) NOEXCEPT {
+    Assert(f >= float(0) && f <= float(1));
+    return ((v0 * (float(1) - f)) + (v1 * f));
 }
 //----------------------------------------------------------------------------
-inline CONSTEXPR bool Lerp(bool v0, bool v1, float f) NOEXCEPT {
-    Assert(f >= 0 && f <= 1);
-    return (Lerp(v0 ? 1.f : 0.f, v1 ? 1.f : 0.f, f) >= 0.5f);
+CONSTEXPR double Lerp(double v0, double v1, double f) NOEXCEPT {
+    Assert(f >= double(0) && f <= double(1));
+    return ((v0 * (double(1) - f)) + (v1 * f));
 }
 //----------------------------------------------------------------------------
 template <typename T, class>
@@ -77,11 +76,6 @@ inline double Rcp(double d) {
     return (1. / d);
 }
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR T RSqrt(T f) NOEXCEPT {
-    return Rcp(Sqrt(f));
-}
-//----------------------------------------------------------------------------
 template <typename T, typename U, class>
 CONSTEXPR T SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT {
     Assert(f >= U(0) && f <= U(1));
@@ -93,10 +87,6 @@ CONSTEXPR T SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT {
 template <typename T>
 CONSTEXPR T Sqr(T x) NOEXCEPT {
     return x * x;
-}
-//----------------------------------------------------------------------------
-inline double Sqrt(double d) NOEXCEPT {
-    return std::sqrt(d);
 }
 //----------------------------------------------------------------------------
 template <typename T, class>

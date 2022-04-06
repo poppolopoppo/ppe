@@ -49,14 +49,14 @@ using has_trivial_compare_t = std::bool_constant<has_trivial_compare_v<_Lhs, _Rh
     template <typename _Lhs = void> \
     struct _NAME { \
         template <typename _Rhs> \
-        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
+        CONSTEXPR auto operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
             return (lhs _OP rhs); \
         } \
     }; \
     template <> \
     struct _NAME<void> { \
         template <typename _Lhs, typename _Rhs> \
-        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
+        CONSTEXPR auto operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
             return (lhs _OP rhs); \
         } \
     }
@@ -66,6 +66,10 @@ PPE_META_OPERATOR(TGreaterEqual, >= );
 PPE_META_OPERATOR(TLess, < );
 PPE_META_OPERATOR(TLessEqual, <= );
 PPE_META_OPERATOR(TEqualTo, == );
+PPE_META_OPERATOR(TNotEqual, != );
+PPE_META_OPERATOR(TBitAnd, & );
+PPE_META_OPERATOR(TBitOr, | );
+PPE_META_OPERATOR(TBitXor, ^ );
 //----------------------------------------------------------------------------
 // Indirect variants, see DerefPtr<>() in TypeTraits.h
 //----------------------------------------------------------------------------
@@ -130,25 +134,50 @@ using TMultiplies = std::multiplies<T>;
 template <typename T = void >
 using TDivides = std::divides<T>;
 //----------------------------------------------------------------------------
+template <typename T = void >
+struct TUnaryMinus {
+    CONSTEXPR auto operator ()(const T& x) const { return (-x); }
+};
+template <>
+struct TUnaryMinus<void> {
+    template <typename T>
+    CONSTEXPR auto operator ()(const T& x) const { return (-x); }
+};
+//----------------------------------------------------------------------------
+template <typename T = void >
+struct TUnaryComplement {
+    CONSTEXPR auto operator ()(const T& x) const { return (~x); }
+};
+template <>
+struct TUnaryComplement<void> {
+    template <typename T>
+    CONSTEXPR auto operator ()(const T& x) const { return (~x); }
+};
+//----------------------------------------------------------------------------
 // Generic Min/Max/Clamp/Compare() functions
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = TEnableIf<has_trivial_less_v<_Lhs, _Rhs>>>
-CONSTEXPR std::common_type_t<_Lhs, _Rhs> Max(const _Lhs& a, const _Rhs& b) NOEXCEPT {
+template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+CONSTEXPR const T& Less(const T& a, const T& b) NOEXCEPT {
+    return (a < b);
+}
+//----------------------------------------------------------------------------
+template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+CONSTEXPR const T& Max(const T& a, const T& b) NOEXCEPT {
     return (a < b ? b : a);
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = TEnableIf<has_trivial_less_v<_Lhs, _Rhs>> >
-CONSTEXPR std::common_type_t<_Lhs, _Rhs> Min(const _Lhs& a, const _Rhs& b) NOEXCEPT {
+template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+CONSTEXPR const T& Min(const T& a, const T& b) NOEXCEPT {
     return (a < b ? a : b);
 }
 //----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C, class = TEnableIf<has_trivial_less_v<_A, _B> && has_trivial_less_v<_B, _C>> >
-CONSTEXPR std::common_type_t<_A, std::common_type_t<_B, _C>> Max3(const _A& a, const _B& b, const _C& c) NOEXCEPT {
+template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+CONSTEXPR const T& Max3(const T& a, const T& b, const T& c) NOEXCEPT {
     return Max(a, Max(b, c));
 }
 //----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C, class = TEnableIf<has_trivial_less_v<_A, _B> && has_trivial_less_v<_B, _C>> >
-CONSTEXPR std::common_type_t<_A, std::common_type_t<_B, _C>> Min3(const _A& a, const _B& b, const _C& c) NOEXCEPT {
+template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+CONSTEXPR const T& Min3(const T& a, const T& b, const T& c) NOEXCEPT {
     return Min(a, Min(b, c));
 }
 //----------------------------------------------------------------------------
@@ -157,8 +186,8 @@ CONSTEXPR int Compare(const _Lhs& a, const _Rhs& b) NOEXCEPT {
     return (a < b ? -1 : a == b ? 0 : 1);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U, class = TEnableIf<has_trivial_less_v<T, U>> >
-CONSTEXPR std::common_type_t<T, U> Clamp(const T& value, const U& vmin, const U& vmax) NOEXCEPT {
+template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+CONSTEXPR const T& Clamp(const T& value, const T& vmin, const T& vmax) NOEXCEPT {
     return Min(vmax, Max(vmin, value));
 }
 //----------------------------------------------------------------------------

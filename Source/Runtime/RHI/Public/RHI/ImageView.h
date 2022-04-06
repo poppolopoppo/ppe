@@ -23,8 +23,8 @@ struct FImageView {
     FImageView(
         const TMemoryView<const subpart_type>& parts,
         const uint3& dimensions,
-        u32 rowPitch,
-        u32 slicePitch,
+        size_t rowPitch,
+        size_t  slicePitch,
         EPixelFormat format,
         EImageAspect aspect ) NOEXCEPT
     :   _parts(parts)
@@ -48,13 +48,13 @@ struct FImageView {
 
     TMemoryView<const subpart_type> Parts() const { return _parts.Parts(); }
     const uint3& Dimensions() const { return _dimensions; }
-    u32 RowPitch() const { return _rowPitch; }
-    u32 SlicePitch() const { return _rowPitch; }
-    u32 BitsPerPixel() const { return _bitsPerPixel; }
+    size_t RowPitch() const { return _rowPitch; }
+    size_t SlicePitch() const { return _rowPitch; }
+    size_t BitsPerPixel() const { return _bitsPerPixel; }
     EPixelFormat Format() const { return _format; }
 
-    u32 RowSize() const { return (_dimensions.x * _bitsPerPixel) / 8; }
-    u32 SliceSize() const { return (_rowPitch * _dimensions.y); }
+    size_t RowSize() const { return (_dimensions.x * _bitsPerPixel) / 8; }
+    size_t SliceSize() const { return (_rowPitch * _dimensions.y); }
 
     // implementation guaranties that single row completely placed to solid memory block.
     subpart_type Row(u32 y, u32 z = 0) const {
@@ -89,7 +89,7 @@ struct FImageView {
         Assert(AllGreaterEqual(clip, float3(-1.f)));
 
         const uint3 point = TruncToUnsigned(
-            (clip + 1.0f) * 0.5f * Dimensions().Cast<float>() + (0.5f - F_Epsilon) );
+            (clip + 1.0f) * 0.5f * float3(Dimensions()) + (0.5f - F_Epsilon) );
         return Pixel(point);
     }
 
@@ -128,9 +128,9 @@ struct FImageView {
 private:
     FBufferView _parts;
     uint3 _dimensions{ 0 };
-    u32 _rowPitch{ 0 };
-    u32 _slicePitch{ 0 };
-    u32 _bitsPerPixel{ 0 };
+    size_t _rowPitch{ 0 };
+    size_t _slicePitch{ 0 };
+    size_t _bitsPerPixel{ 0 };
     EPixelFormat _format{ Default };
 
     FPixelDecodeRGBA32f _loadRGBA32f{ nullptr };

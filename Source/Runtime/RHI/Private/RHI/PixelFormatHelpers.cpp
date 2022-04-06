@@ -53,7 +53,7 @@ void DecodeUIntVector_(FRgba32u* __restrict outv, FRawMemoryConst in) NOEXCEPT {
 
     TStaticArray<u32, 4> bits;
     Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(u32));
-    FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8));
+    FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8_size_t));
 
     outv->x = DecodeUIntScalar_<_R, 0>(bits);
     outv->y = DecodeUIntScalar_<_G, _R>(bits);
@@ -67,7 +67,7 @@ void DecodeIntVector_(FRgba32i* __restrict outv, FRawMemoryConst in) NOEXCEPT {
 
     TStaticArray<u32, 4> bits;
     Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(u32));
-    FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8));
+    FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8_size_t));
 
     outv->x = DecodeIntScalar_<_R, 0>(bits);
     outv->y = DecodeIntScalar_<_G, _R>(bits);
@@ -104,7 +104,7 @@ void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
 
         TStaticArray<ushort, 4> bits;
         Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(ushort));
-        FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8));
+        FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8_size_t));
 
         outv->x = FP16_to_FP32(bits[0]);
         outv->y = FP16_to_FP32(bits[(_R) / 16]);

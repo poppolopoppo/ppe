@@ -10,6 +10,7 @@
 #include "RHI/ShaderEnums.h"
 #include "RHI/VertexInputState.h"
 
+#include "Container/Appendable.h"
 #include "Container/AssociativeVector.h"
 #include "Container/FixedSizeHashTable.h"
 #include "Container/HashMap.h"
@@ -19,8 +20,6 @@
 
 #include <memory>
 #include <variant>
-
-#include "Container/Appendable.h"
 
 namespace PPE {
 namespace RHI {
@@ -427,8 +426,8 @@ struct FComputePipelineDesc final : FPipelineDesc {
         return (*this);
     }
 
-    FComputePipelineDesc& SetLocalGroupSize(u32 x, u32 y, u32 z) { DefaultLocalGroupSize = {x,y,z}; return (*this); }
-    FComputePipelineDesc& SetLocalGroupSpecialization(u32 x = UndefinedSpecialization, u32 y = UndefinedSpecialization, u32 z = UndefinedSpecialization) { LocalSizeSpecialization = {x,y,z}; return (*this); }
+    FComputePipelineDesc& SetLocalGroupSize(u32 x, u32 y, u32 z) { DefaultLocalGroupSize.Set(x,y,z); return (*this); }
+    FComputePipelineDesc& SetLocalGroupSpecialization(u32 x = UndefinedSpecialization, u32 y = UndefinedSpecialization, u32 z = UndefinedSpecialization) { LocalSizeSpecialization.Set(x,y,z); return (*this); }
     FComputePipelineDesc& SetPushConstants(TMemoryView<const FPushConstant> values) { SetPushConstants_(values); return (*this); }
     PPE_RHI_API FComputePipelineDesc& SetSpecializationConstants(TMemoryView<const FSpecializationConstant> values);
 

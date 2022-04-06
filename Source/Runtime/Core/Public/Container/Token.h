@@ -406,7 +406,7 @@ public:
 
 private:
     stringview_type _str;
-    hash_t _hash;
+    hash_t _hash{ 0 };
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(

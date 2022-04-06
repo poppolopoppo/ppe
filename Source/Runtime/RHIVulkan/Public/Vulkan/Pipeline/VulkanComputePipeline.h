@@ -48,7 +48,7 @@ public:
     };
 
     using FInstanceMap = HASHMAP(RHIPipeline, FPipelineInstance, VkPipeline);
-    using FShaderModules = TFixedSizeStack<FShaderModule, 4>;
+    using FShaderModules = TFixedSizeStack<FShaderModule, static_cast<size_t>(EShaderDebugMode::_Count)>;
 
     struct FInternalPipeline {
         FPipelineLayoutID BaseLayoutId;

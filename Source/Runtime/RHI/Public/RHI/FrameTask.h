@@ -163,7 +163,7 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
 struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchComputeIndirect> {
 
     struct FComputeCommand {
-        u32 IndirectBufferOffset{ 0 };
+        size_t IndirectBufferOffset{ 0 };
     };
     using FComputeCommands = TFixedSizeStack<FComputeCommand, MaxComputeCommands>;
 
@@ -199,7 +199,7 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 
     FDispatchComputeIndirect& SetIndirectBuffer(FRawBufferID buffer) { Assert(buffer); IndirectBuffer = buffer; return (*this); }
 
-    FDispatchComputeIndirect& Dispatch(u32 offset) { Emplace_Back(Commands, offset); return (*this); }
+    FDispatchComputeIndirect& Dispatch(size_t offset) { Emplace_Back(Commands, offset); return (*this); }
 
     template <typename T>
     FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
@@ -228,9 +228,9 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 struct FCopyBuffer final : details::TFrameTaskDesc<FCopyBuffer> {
 
     struct FRegion {
-        u32 SrcOffset;
-        u32 DstOffset;
-        u32 Size;
+        size_t SrcOffset;
+        size_t DstOffset;
+        size_t Size;
     };
     using FRegions = TFixedSizeStack<FRegion, MaxCopyRegions>;
 
@@ -247,7 +247,7 @@ struct FCopyBuffer final : details::TFrameTaskDesc<FCopyBuffer> {
     FCopyBuffer& From(FRawBufferID buffer) { Assert(buffer); SrcBuffer = buffer; return (*this); }
     FCopyBuffer& To(FRawBufferID buffer) { Assert(buffer); DstBuffer = buffer; return (*this); }
 
-    FCopyBuffer& AddRegion(u32 srcOffset, u32 dstOffset, u32 size) {
+    FCopyBuffer& AddRegion(size_t srcOffset, size_t dstOffset, size_t size) {
         Assert(size);
         Emplace_Back(Regions, srcOffset, dstOffset, size);
         return (*this);
@@ -291,7 +291,7 @@ struct FCopyImage final : details::TFrameTaskDesc<FCopyImage> {
         const FImageSubresourceRange& srcSubresource, const int3& srcOffset,
         const FImageSubresourceRange& dstSubresource, const int3& dstOffset,
         const uint3& size ) {
-        Assert(All(bool3(size > uint3(0))));
+        Assert(AllGreater(size, uint3(0)));
         Emplace_Back(Regions, srcSubresource, srcOffset, dstSubresource, dstOffset, size);
         return (*this);
     }
@@ -302,7 +302,7 @@ struct FCopyImage final : details::TFrameTaskDesc<FCopyImage> {
 struct FCopyBufferToImage final : details::TFrameTaskDesc<FCopyBufferToImage> {
 
     struct FRegion {
-        u32 BufferOffset;
+        size_t BufferOffset;
         u32 BufferRowLength;
         u32 BufferImageHeight;
         FImageSubresourceRange ImageLayers;
@@ -325,15 +325,15 @@ struct FCopyBufferToImage final : details::TFrameTaskDesc<FCopyBufferToImage> {
     FCopyBufferToImage& To(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
     FCopyBufferToImage& AddRegion(
-        u32 srcBufferOffset, u32 srcBufferRowLength, u32 srcBufferImageHeight,
+        size_t srcBufferOffset, u32 srcBufferRowLength, u32 srcBufferImageHeight,
         const FImageSubresourceRange& dstImageLayers, const int2& dstImageOffset, const uint2& dstImageSize ) {
         return AddRegion(srcBufferOffset, srcBufferRowLength, srcBufferImageHeight, dstImageLayers, int3(dstImageOffset, 0), uint3(dstImageSize, 1));
     }
 
     FCopyBufferToImage& AddRegion(
-        u32 SrcBufferOffset, u32 srcBufferRowLength, u32 srcBufferImageHeight,
+        size_t SrcBufferOffset, u32 srcBufferRowLength, u32 srcBufferImageHeight,
         const FImageSubresourceRange& dstImageLayers, const int3& dstImageOffset, const uint3& dstImageSize) {
-        Assert(All(bool3(dstImageSize > uint3(0))));
+        Assert(AllGreater(dstImageSize, uint3(0)));
         Emplace_Back(Regions, SrcBufferOffset, srcBufferRowLength, srcBufferImageHeight, dstImageLayers, dstImageOffset, dstImageSize);
         return (*this);
     }
@@ -362,14 +362,14 @@ struct FCopyImageToBuffer final : details::TFrameTaskDesc<FCopyImageToBuffer> {
 
     FCopyImageToBuffer& AddRegion(
         const FImageSubresourceRange& srcImageLayers, const int2& srcImageOffset, const uint2& srcImageSize,
-        u32 dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight ) {
+        size_t dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight ) {
         return AddRegion(srcImageLayers, int3(srcImageOffset, 0), uint3(srcImageSize, 1), dstBufferOffset, dstBufferRowLength, dstBufferImageHeight);
     }
 
     FCopyImageToBuffer& AddRegion(
         const FImageSubresourceRange& srcImageLayers, const int3& srcImageOffset, const uint3& srcImageSize,
-        u32 dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight ) {
-        Assert(All(bool3(srcImageSize > uint3(0))));
+        size_t dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight ) {
+        Assert(AllGreater(srcImageSize, uint3(0)));
         Emplace_Back(Regions, dstBufferOffset, dstBufferRowLength, dstBufferImageHeight, srcImageLayers, srcImageOffset, srcImageSize);
         return (*this);
     }
@@ -416,8 +416,8 @@ struct FBlitImage final : details::TFrameTaskDesc<FBlitImage> {
     FBlitImage& AddRegion(
         const FImageSubresourceRange& srcSubresource, const int3& srcOffsetStart, const int3& srcOffsetEnd,
         const FImageSubresourceRange& dstSubresource, const int3& dstOffsetStart, const int3& dstOffsetEnd ) {
-        Assert(All(bool3(srcOffsetStart < srcOffsetEnd)));
-        Assert(All(bool3(dstOffsetStart < dstOffsetEnd)));
+        Assert(AllLess(srcOffsetStart, srcOffsetEnd));
+        Assert(AllLess(dstOffsetStart, dstOffsetEnd));
         Emplace_Back(Regions, srcSubresource, srcOffsetStart, srcOffsetEnd, dstSubresource, dstOffsetStart, dstOffsetEnd);
         return (*this);
     }
@@ -480,7 +480,7 @@ struct FResolveImage final : details::TFrameTaskDesc<FResolveImage> {
         const FImageSubresourceRange& srcSubresource, const int3& srcOffset,
         const FImageSubresourceRange& dstSubresource, const int3& dstOffset,
         const uint3& extent ) {
-        Assert(All(bool3(extent > uint3(0))));
+        Assert(AllGreater(extent, uint3(0)));
         Emplace_Back(Regions, srcSubresource, srcOffset, dstSubresource, dstOffset, extent);
         return (*this);
     }
@@ -490,8 +490,8 @@ struct FResolveImage final : details::TFrameTaskDesc<FResolveImage> {
 //----------------------------------------------------------------------------
 struct FFillBuffer final : details::TFrameTaskDesc<FFillBuffer> {
     FRawBufferID DstBuffer;
-    u32 DstOffset{ 0 };
-    u32 Size{ 0 };
+    size_t DstOffset{ 0 };
+    size_t Size{ 0 };
     u32 Pattern{ 0 };
 
 #if USE_PPE_RHITASKNAME
@@ -501,7 +501,7 @@ struct FFillBuffer final : details::TFrameTaskDesc<FFillBuffer> {
 #endif
 
     FFillBuffer& SetBuffer(FRawBufferID buffer) { return SetBuffer(buffer, 0, UMax); }
-    FFillBuffer& SetBuffer(FRawBufferID buffer, u32 offset, u32 size) {
+    FFillBuffer& SetBuffer(FRawBufferID buffer, size_t offset, size_t size) {
         Assert(buffer);
         DstBuffer = buffer;
         DstOffset = offset;
@@ -588,7 +588,7 @@ struct FClearDepthStencilImage final : details::TFrameTaskDesc<FClearDepthStenci
 struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
 
     struct FRegion {
-        u32 Offset{ 0 };
+        size_t Offset{ 0 };
         FRawMemoryConst Data;
     };
     using FRegions = TFixedSizeStack<FRegion, MaxCopyRegions>;
@@ -605,9 +605,9 @@ struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
     FUpdateBuffer& SetBuffer(FRawBufferID buffer) { Assert(buffer); DstBuffer = buffer; return (*this); }
 
     template <typename T>
-    FUpdateBuffer& AddData(const TMemoryView<const T>& data, u32 offset = 0) { return AddData(data.template Cast<const u8>(), offset); }
-    FUpdateBuffer& AddData(const u8* p, const size_t size, u32 offset = 0) { return AddData(FRawMemoryConst(p, size), offset); }
-    FUpdateBuffer& AddData(const FRawMemoryConst& data, u32 offset = 0) {
+    FUpdateBuffer& AddData(const TMemoryView<const T>& data, size_t offset = 0) { return AddData(data.template Cast<const u8>(), offset); }
+    FUpdateBuffer& AddData(const u8* p, const size_t size, size_t offset = 0) { return AddData(FRawMemoryConst(p, size), offset); }
+    FUpdateBuffer& AddData(const FRawMemoryConst& data, size_t offset = 0) {
         Assert(not data.empty());
         Emplace_Back(Regions, offset, data);
         return (*this);
@@ -621,8 +621,8 @@ struct FReadBuffer final : details::TFrameTaskDesc<FReadBuffer> {
     using FCallback = TFunction<void(const FBufferView&)>;
 
     FRawBufferID SrcBuffer;
-    u32 SrcOffset{ 0 };
-    u32 SrcSize{ 0 };
+    size_t SrcOffset{ 0 };
+    size_t SrcSize{ 0 };
     FCallback Callback;
 
 #if USE_PPE_RHITASKNAME
@@ -631,7 +631,7 @@ struct FReadBuffer final : details::TFrameTaskDesc<FReadBuffer> {
     FReadBuffer() = default;
 #endif
 
-    FReadBuffer& SetBuffer(FRawBufferID buffer, u32 offset, u32 size) {
+    FReadBuffer& SetBuffer(FRawBufferID buffer, size_t offset, size_t size) {
         Assert(buffer);
         SrcBuffer = buffer;
         SrcOffset = offset;
@@ -656,8 +656,8 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
     uint3 ImageSize{ 0 };
     FImageLayer ArrayLayer;
     FMipmapLevel MipmapLevel;
-    u32 DataRowPitch{ 0 };
-    u32 DataSlicePitch{ 0 };
+    size_t DataRowPitch{ 0 };
+    size_t DataSlicePitch{ 0 };
     EImageAspect AspectMask{ EImageAspect::Color };
     FRawMemoryConst Data;
 
@@ -684,8 +684,8 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
         return (*this);
     }
 
-    FUpdateImage& SetData(FRawMemoryConst data, const uint2& dimension, u32 rowPitch = 0) { return SetData(data, uint3(dimension, 0), rowPitch); }
-    FUpdateImage& SetData(FRawMemoryConst data, const uint3& dimension, u32 rowPitch = 0, u32 slicePitch = 0) {
+    FUpdateImage& SetData(FRawMemoryConst data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data, uint3(dimension, 0), rowPitch); }
+    FUpdateImage& SetData(FRawMemoryConst data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0) {
         Assert(not data.empty());
         Data = data;
         ImageSize = dimension;
@@ -695,9 +695,9 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
     }
 
     template <typename T>
-    FUpdateImage& SetData(TMemoryView<const T> data, const uint2& dimension, u32 rowPitch = 0) { return SetData(data.template Cast<const u8>(), uint3(dimension, 0), rowPitch); }
+    FUpdateImage& SetData(TMemoryView<const T> data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data.template Cast<const u8>(), uint3(dimension, 0), rowPitch); }
     template <typename T>
-    FUpdateImage& SetData(TMemoryView<const T> data, const uint3& dimension, u32 rowPitch = 0, u32 slicePitch = 0) { return SetData(data.template Cast<const u8>(), dimension, rowPitch, slicePitch); }
+    FUpdateImage& SetData(TMemoryView<const T> data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0) { return SetData(data.template Cast<const u8>(), dimension, rowPitch, slicePitch); }
 };
 //----------------------------------------------------------------------------
 // FReadImage

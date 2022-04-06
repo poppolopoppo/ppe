@@ -1196,8 +1196,10 @@ bool FVulkanResourceManager::CheckHostVisibleMemory_() {
             transferHeapSize += props.memoryHeaps[i].size;
     }
 
+    _staging.MaxStagingBufferMemory = Min((4 * transferHeapSize) / 5, _staging.MaxStagingBufferMemory);
+
     size_t uniformSize = (uniformHeapSize / FStagingBufferPool::Capacity);
-    size_t transferSize = (transferHeapSize / FStagingBufferPool::Capacity);
+    size_t transferSize = (_staging.MaxStagingBufferMemory / FStagingBufferPool::Capacity);
 
 #if defined(PLATFORM_PC) || defined(PLATFORM_MOBILE)
     // keep some slack for other processes
@@ -1210,8 +1212,13 @@ bool FVulkanResourceManager::CheckHostVisibleMemory_() {
                                 transferSize =  64_MiB;
 #endif
 
-    _staging.WritePageSize = _staging.ReadPageSize = checked_cast<u32>(transferSize);
-    _staging.UniformPageSize = checked_cast<u32>(uniformSize);
+    _staging.UniformPageSize = uniformSize;
+    _staging.WritePageSize = _staging.ReadPageSize = transferSize;
+
+    LOG(RHI, Info, L"uniform buffer size: {0}", Fmt::SizeInBytes(_staging.UniformPageSize));
+    LOG(RHI, Info, L"write page size: {0}", Fmt::SizeInBytes(_staging.WritePageSize));
+    LOG(RHI, Info, L"max staging buffer memory: {0}, max available: {1}", Fmt::SizeInBytes(_staging.MaxStagingBufferMemory), Fmt::SizeInBytes(transferHeapSize));
+
     return true;
 }
 //----------------------------------------------------------------------------

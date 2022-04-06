@@ -17,7 +17,7 @@ STATIC_ASSERT(sizeof(u32) == sizeof(UX10Y10Z10W2N));
 //----------------------------------------------------------------------------
 UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const FQuaternion& quaternion) {
     float4 q = quaternion.data;
-    const size_t index = MaxComponentIndex(q.xyz);
+    const size_t index = q.xyz.MaxComponentIndex();
     if (0 == index) q = q.yzwx;
     if (1 == index) q = q.xzwy;
     if (2 == index) q = q.xywz;

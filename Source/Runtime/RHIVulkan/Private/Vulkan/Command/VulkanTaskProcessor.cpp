@@ -743,15 +743,17 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     VerifyRelease( CreateRenderPass_(logicalRenderPasses.MakeView() ARGS_IF_RHIDEBUG(task.TaskName())) );
 
     // begin render pass
-    const FRectangleU& area = task.LogicalPass()->Area();
-    Assert(area.HasPositiveExtentsStrict());
     const FVulkanFramebuffer* const pFramebuffer = Resource_(task.LogicalPass()->FramebufferId());
     Assert(pFramebuffer);
     const FVulkanRenderPass* const pRenderPass = Resource_(task.LogicalPass()->RenderPassId());
     Assert(pRenderPass);
+
     const auto sharedRp = pRenderPass->Read();
     Assert(VK_NULL_HANDLE != sharedRp->RenderPass);
     Assert_NoAssume(checked_cast<u32>(task.LogicalPass()->ClearValues().size()) >= sharedRp->CreateInfo.attachmentCount);
+
+    const FRectangleU& area = task.LogicalPass()->Area();
+    Assert(area.HasPositiveExtentsStrict());
 
     VkRenderPassBeginInfo info{};
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1524,8 +1526,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
     barrier.image = sharedImage->vkImage;
 
     forrange(i, 1, subresourceRange.levelCount) {
-        const int3 srcSize = checked_cast<int>(Max(1u, dimension / (1 << (i - 1))));
-        const int3 dstSize = checked_cast<int>(Max(1u, dimension / (1 << i)));
+        const int3 srcSize = checked_cast<int>(Max(uint3::One, dimension / (1u << (i - 1u))));
+        const int3 dstSize = checked_cast<int>(Max(uint3::One, dimension / (1u << i)));
 
         // transition from undefined to optimal layout
 

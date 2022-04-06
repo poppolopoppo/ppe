@@ -53,7 +53,7 @@ auto TScalarBoundingBox<T, _Dim>::operator =(const TScalarBoundingBox<U, _Dim>& 
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 auto TScalarBoundingBox<T, _Dim>::Center() const -> vector_type {
-    return ((_max + _min) / 2);
+    return ((_max + _min) / static_cast<T>(2));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -63,7 +63,7 @@ auto TScalarBoundingBox<T, _Dim>::Extents() const -> vector_type {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 auto TScalarBoundingBox<T, _Dim>::HalfExtents() const -> vector_type {
-    return ((_max - _min) / 2);
+    return ((_max - _min) / static_cast<T>(2));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -167,81 +167,24 @@ bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other, bo
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-template <size_t _Dim2>
-void TScalarBoundingBox<T, _Dim>::GetCorners(vector_type (&points)[_Dim2]) const {
-    return GetCorners(MakeView(points));
+auto TScalarBoundingBox<T, _Dim>::Corner(size_t index) const -> vector_type {
+    Assert(index < (1_size_t << _Dim));
+
+    return Meta::static_for<_Dim>([&](auto... c) {
+        return vector_type{
+            (index & (1_size_t << c) ? _max : _min).template get<c>()...
+        };
+    });
 }
 //----------------------------------------------------------------------------
-namespace details {
 template <typename T, size_t _Dim>
-struct TGetCornersAABB_;
-template <typename T>
-struct TGetCornersAABB_<T, 1> {
-    void operator ()(const TMemoryView<TScalarVector<T, 1>>& points, const TScalarVector<T, 1>& min, const TScalarVector<T, 1>& max) const {
-        Assert(points.size() == 2);
-        points[0].x = min.x;
-        points[1].x = max.x;
-    }
-};
-template <typename T>
-struct TGetCornersAABB_<T, 2> {
-    void operator ()(const TMemoryView<TScalarVector<T, 2>>& points, const TScalarVector<T, 2>& min, const TScalarVector<T, 2>& max) const {
-        Assert(points.size() == 4);
-        points[0].x = min.x;
-        points[0].y = min.y;
+void TScalarBoundingBox<T, _Dim>::MakeCorners(const TMemoryView<vector_type>& points) const {
+    CONSTEXPR const size_t numPoints = (1_size_t << _Dim);
+    Assert(points.size() == numPoints);
 
-        points[1].x = max.x;
-        points[1].y = min.y;
-
-        points[2].x = max.x;
-        points[2].y = max.y;
-
-        points[3].x = min.x;
-        points[3].y = max.y;
-    }
-};
-template <typename T>
-struct TGetCornersAABB_<T, 3> {
-    void operator ()(const TMemoryView<TScalarVector<T, 3>>& points, const TScalarVector<T, 3>& min, const TScalarVector<T, 3>& max) const {
-        Assert(points.size() == 8);
-        points[0].x = min.x;
-        points[0].y = min.y;
-        points[0].z = min.z;
-
-        points[1].x = min.x;
-        points[1].y = min.y;
-        points[1].z = max.z;
-
-        points[2].x = min.x;
-        points[2].y = max.y;
-        points[2].z = max.z;
-
-        points[3].x = min.x;
-        points[3].y = max.y;
-        points[3].z = min.z;
-
-        points[4].x = max.x;
-        points[4].y = min.y;
-        points[4].z = max.z;
-
-        points[5].x = max.x;
-        points[5].y = max.y;
-        points[5].z = max.z;
-
-        points[6].x = max.x;
-        points[6].y = max.y;
-        points[6].z = min.z;
-
-        points[7].x = max.x;
-        points[7].y = max.y;
-        points[7].z = max.z;
-    }
-};
-} //!details
-
-template <typename T, size_t _Dim>
-void TScalarBoundingBox<T, _Dim>::GetCorners(const TMemoryView<vector_type>& points) const {
-    details::TGetCornersAABB_<T, _Dim>()(points, _min, _max);
+    Meta::static_for<numPoints>([&](auto... i) {
+        (void)((points[i] = Corner(i), true) && ...);
+    });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>

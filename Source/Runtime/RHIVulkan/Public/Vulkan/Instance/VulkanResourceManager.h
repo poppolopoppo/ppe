@@ -99,9 +99,9 @@ public:
 
     u32 SubmitIndex() const { return _submissionCounter.load(std::memory_order_relaxed); }
 
-    u32 HostReadBufferSize() const { return _staging.ReadPageSize; }
-    u32 HostWriteBufferSize() const { return _staging.WritePageSize; }
-    u32 UniformBufferSize() const { return _staging.UniformPageSize; }
+    size_t HostReadBufferSize() const { return _staging.ReadPageSize; }
+    size_t HostWriteBufferSize() const { return _staging.WritePageSize; }
+    size_t UniformBufferSize() const { return _staging.UniformPageSize; }
 
     NODISCARD bool Construct();
     void TearDown();
@@ -286,9 +286,10 @@ private:
         FStagingBufferPool Write;
         FStagingBufferPool Uniform;
 
-        u32 ReadPageSize{ 0 };
-        u32 WritePageSize{ 0 };
-        u32 UniformPageSize{ 0 };
+        size_t ReadPageSize{ 0 };
+        size_t WritePageSize{ 0 };
+        size_t UniformPageSize{ 0 };
+        size_t MaxStagingBufferMemory{ UMax };
     }   _staging;
 
     const FBufferDesc _dummyBufferDesc;

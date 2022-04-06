@@ -132,7 +132,7 @@ bool FTransform::Equals(const FTransform& other, float espilon/* = F_Epsilon */)
 FTransform& FTransform::Accumulate(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Sqr(delta._rotation.w) < 1.f - F_Delta * F_Delta)
+    if (Sqr<float>(delta._rotation.w) < 1.f - F_Delta * F_Delta)
         _rotation = delta._rotation * _rotation;
 
     _translation += delta._translation;
@@ -166,7 +166,7 @@ FTransform& FTransform::AccumulateWithShortestRotation(const FTransform& delta) 
 FTransform& FTransform::AccumulateWithAdditiveScale(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Sqr(delta._rotation.w) < 1.f - F_Delta * F_Delta)
+    if (Sqr<float>(delta._rotation.w) < 1.f - F_Delta * F_Delta)
         _rotation = delta._rotation * _rotation;
 
     _translation += delta._translation;

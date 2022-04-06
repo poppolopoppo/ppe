@@ -75,9 +75,8 @@ public:
     bool Intersects(const TScalarBoundingBox& other) const;
     bool Intersects(const TScalarBoundingBox& other, bool* inside) const;
 
-    template <size_t _Dim2>
-    void GetCorners(vector_type (&points)[_Dim2]) const;
-    void GetCorners(const TMemoryView<vector_type>& points) const;
+    vector_type Corner(size_t index) const;
+    void MakeCorners(const TMemoryView<vector_type>& points) const;
 
     template <typename U>
     vector_type Lerp(U f) const;
@@ -109,8 +108,9 @@ public:
 
     template <size_t... _Indices>
     auto Shuffle() const {
-        STATIC_CONST_INTEGRAL(size_t, ShuffleDim, sizeof...(_Indices));
-        return TScalarBoundingBox<T, ShuffleDim>(PPE::Shuffle<_Indices...>(_min), PPE::Shuffle<_Indices...>(_max));
+        return TScalarBoundingBox<T, sizeof...(_Indices)>{
+            _min.template Shuffle<_Indices...>(),
+            _max.template Shuffle<_Indices...>() };
     }
 
     TScalarBoundingBox& operator +=(const vector_type& v) { _min += v; _max += v; return (*this); }
@@ -126,18 +126,18 @@ private:
 public:
     // All shuffle specializations :
 
-#define DEF_SCALARBOUNDINGBOX_SHUFFLE2(_Name, _0, _1) \
-    FORCE_INLINE TScalarBoundingBox<T, 2> _Name() const { return Shuffle<_0, _1>(); }
-#define DEF_SCALARBOUNDINGBOX_SHUFFLE3(_Name, _0, _1, _2) \
-    FORCE_INLINE TScalarBoundingBox<T, 3> _Name() const { return Shuffle<_0, _1, _2>(); }
-#define DEF_SCALARBOUNDINGBOX_SHUFFLE4(_Name, _0, _1, _2, _3) \
-    FORCE_INLINE TScalarBoundingBox<T, 4> _Name() const { return Shuffle<_0, _1, _2, _3>(); }
-
-#   include "Maths/ScalarBoundingBox.Shuffle-inl.h"
-
-#undef DEF_SCALARBOUNDINGBOX_SHUFFLE2
-#undef DEF_SCALARBOUNDINGBOX_SHUFFLE3
-#undef DEF_SCALARBOUNDINGBOX_SHUFFLE4
+//#define DEF_SCALARBOUNDINGBOX_SHUFFLE2(_Name, _0, _1) \
+//    FORCE_INLINE TScalarBoundingBox<T, 2> _Name() const { return Shuffle<_0, _1>(); }
+//#define DEF_SCALARBOUNDINGBOX_SHUFFLE3(_Name, _0, _1, _2) \
+//    FORCE_INLINE TScalarBoundingBox<T, 3> _Name() const { return Shuffle<_0, _1, _2>(); }
+//#define DEF_SCALARBOUNDINGBOX_SHUFFLE4(_Name, _0, _1, _2, _3) \
+//    FORCE_INLINE TScalarBoundingBox<T, 4> _Name() const { return Shuffle<_0, _1, _2, _3>(); }
+//
+//#   include "Maths/ScalarBoundingBox.Shuffle-inl.h"
+//
+//#undef DEF_SCALARBOUNDINGBOX_SHUFFLE2
+//#undef DEF_SCALARBOUNDINGBOX_SHUFFLE3
+//#undef DEF_SCALARBOUNDINGBOX_SHUFFLE4
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -147,15 +147,15 @@ class TScalarBoxWExtent {
 public:
     typedef TScalarVector<T, _Dim> vector_type;
 
-    TScalarBoxWExtent() : _center(T(0)), _halfExtents(T(0)) {}
+    TScalarBoxWExtent() : _center(vector_type::Zero), _halfExtents(vector_type::Zero) {}
 
     TScalarBoxWExtent(const vector_type& center, const vector_type& halfExtents)
         : _center(center), _halfExtents(halfExtents) {
-        Assert(_halfExtents.AllGreaterOrEqual(vector_type(T(0))));
+        Assert_NoAssume(HasPositiveExtents());
     }
 
     TScalarBoxWExtent(const TScalarBoundingBox<T, _Dim>& aabb)
-        : _center(aabb.Center()), _halfExtents(aabb.Extents() / 2) {}
+        : _center(aabb.Center()), _halfExtents(aabb.Extents() / static_cast<T>(2)) {}
 
     vector_type& Center() { return _center; }
     const vector_type& Center() const { return _center; }
@@ -166,16 +166,22 @@ public:
     vector_type Max() const { return (_center + _halfExtents); }
     vector_type Min() const { return (_center - _halfExtents); }
 
-    bool HasPositiveExtents() const { return (_halfExtents.AllGreaterOrEqual(T(0))); }
-    bool HasPositiveExtentsStrict() const { return (_halfExtents.AllGreaterThan(T(0))); }
+    bool HasPositiveExtents() const { return AllGreaterEqual(_halfExtents, vector_type::Zero); }
+    bool HasPositiveExtentsStrict() const { return AllGreater(_halfExtents, vector_type::Zero); }
 
     bool Contains(const vector_type& p) const {
-        return (Abs(p - _center).AllGreaterOrEqual(_halfExtents));
+        IF_CONSTEXPR(TNumericLimits<T>::is_integer && not TNumericLimits<T>::is_signed) {
+            using signed_t = std::make_signed_t<T>;
+            const auto dist = Abs(checked_cast<signed_t>(p) - checked_cast<signed_t>(_center));
+            return AllGreaterEqual(checked_cast<T>(dist), _halfExtents);
+        } else {
+            return AllGreaterEqual(Abs(p - _center), _halfExtents);
+        }
     }
 
     bool Contains(const TScalarBoxWExtent& other) const {
-        return (Min().AllLessOrEqual(other.Min()) &&
-                Max().AllGreaterOrEqual(other.Max()) );
+        return (AllLessEqual(Min(), other.Min()) &&
+                AllGreaterEqual(Max(), other.Max()) );
     }
 
     TScalarBoundingBox<T, _Dim> ToBoundingBox() const {
@@ -205,7 +211,7 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalar
 
 #include "Maths/ScalarBoundingBox-inl.h"
 
-#if 0
+#if 1
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -253,4 +259,4 @@ EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TScalarBoxWExtent<double, 4>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-#endif //!#if 0
+#endif

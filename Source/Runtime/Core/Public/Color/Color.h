@@ -20,26 +20,26 @@ enum class EGammaSpace {
     ACES,
 };
 //----------------------------------------------------------------------------
-float3 ACESFitted(float3 linear);
+PPE_CORE_API float3 ACESFitted(float3 linear);
 //----------------------------------------------------------------------------
-float3 Pastelizer(float hue);
+PPE_CORE_API float3 Pastelizer(float hue);
 //----------------------------------------------------------------------------
-float3 Hue_to_RGB(float hue);
+PPE_CORE_API float3 Hue_to_RGB(float hue);
 //----------------------------------------------------------------------------
-float3 RGB_to_HCV(const float3& rgb);
+PPE_CORE_API float3 RGB_to_HCV(const float3& rgb);
 //----------------------------------------------------------------------------
-float3 HSV_to_RGB(const float3& hsv);
-float3 RGB_to_HSV(const float3& rgb);
-float3 HSV_to_RGB_smooth(const float3& rgb);
+PPE_CORE_API float3 HSV_to_RGB(const float3& hsv);
+PPE_CORE_API float3 RGB_to_HSV(const float3& rgb);
+PPE_CORE_API float3 HSV_to_RGB_smooth(const float3& rgb);
 //----------------------------------------------------------------------------
-float3 HSL_to_RGB(const float3& hsl);
-float3 RGB_to_HSL(const float3& rgb);
+PPE_CORE_API float3 HSL_to_RGB(const float3& hsl);
+PPE_CORE_API float3 RGB_to_HSL(const float3& rgb);
 //----------------------------------------------------------------------------
-float3 YCoCg_to_RGB(const float3& yCoCg);
-float3 RGB_to_YCoCg(const float3& rgb);
+PPE_CORE_API float3 YCoCg_to_RGB(const float3& yCoCg);
+PPE_CORE_API float3 RGB_to_YCoCg(const float3& rgb);
 //----------------------------------------------------------------------------
 float SRGB_to_Linear(float srgb);
-float SRGB_to_Linear(u8 srgb); // optimized version with a precomputed table
+PPE_CORE_API float SRGB_to_Linear(u8 srgb); // optimized version with a precomputed table
 float Linear_to_SRGB(float lin);
 //----------------------------------------------------------------------------
 float Linear_to_Pow22(float lin);

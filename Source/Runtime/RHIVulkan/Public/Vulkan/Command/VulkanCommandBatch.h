@@ -46,7 +46,7 @@ public:
     enum class EState : u32 {
         Initial,
         Recording,  // build command buffers
-        Baked,     // command buffers built, all data locked
+        Baked,      // command buffers built, all data locked
         Ready,      // all dependencies in 'Ready', 'Submitted' or 'Complete' states
         Submitted,  // commands was submitted to the GPU
         Complete,   // commands complete execution on the GPU
@@ -56,16 +56,16 @@ public:
         FStagingBufferIndex Index{ Default };
         FRawBufferID BufferId;
         FRawMemoryID MemoryId;
-        u32 Capacity{ 0 };
-        u32 Size{ 0 };
+        size_t Capacity{ 0 };
+        size_t Size{ 0 };
 
         VkDeviceMemory DeviceMemory{ VK_NULL_HANDLE };
         ubyte* MappedPtr{ nullptr };
-        u32 MemoryOffset{ 0 }; // can be used to flush memory ranges
+        size_t MemoryOffset{ 0 }; // can be used to flush memory ranges
         bool IsCoherent{ false };
 
         FStagingBuffer() = default;
-        CONSTEXPR FStagingBuffer(FStagingBufferIndex index, FRawBufferID bufferId, FRawMemoryID memoryId, u32 capacity)
+        CONSTEXPR FStagingBuffer(FStagingBufferIndex index, FRawBufferID bufferId, FRawMemoryID memoryId, size_t capacity)
         :   Index(index), BufferId(bufferId), MemoryId(memoryId), Capacity(capacity)
         {}
 
@@ -75,8 +75,8 @@ public:
 
     struct FStagingDataRange {
         FStagingBuffer const* Buffer{ nullptr };
-        u32 Offset{ 0 };
-        u32 Size{ 0 };
+        size_t Offset{ 0 };
+        size_t Size{ 0 };
 
         FRawMemory MakeView() const NOEXCEPT {
             return { static_cast<u8*>(Buffer->MappedPtr) + Offset, Size };
@@ -89,13 +89,13 @@ public:
 
         FCallback Callback;
         FDataParts Parts;
-        u32 TotalSize{ 0 };
+        size_t TotalSize{ 0 };
 
         FOnBufferDataLoadedEvent() = default;
-        FOnBufferDataLoadedEvent(FCallback&& rcallback, u32 size) NOEXCEPT
+        FOnBufferDataLoadedEvent(FCallback&& rcallback, size_t size) NOEXCEPT
         :   Callback(std::move(rcallback)), TotalSize(size)
         {}
-        FOnBufferDataLoadedEvent(const FCallback& callback, u32 size) NOEXCEPT
+        FOnBufferDataLoadedEvent(const FCallback& callback, size_t size) NOEXCEPT
         :   Callback(callback), TotalSize(size)
         {}
     };
@@ -106,57 +106,27 @@ public:
 
         FCallback Callback;
         FDataParts Parts;
-        u32 TotalSize{ 0 };
+        size_t TotalSize{ 0 };
         uint3 ImageSize{ 0 };
-        u32 RowPitch{ 0 };
-        u32 SlicePitch{ 0 };
+        size_t RowPitch{ 0 };
+        size_t SlicePitch{ 0 };
         EPixelFormat Format{ Default };
         EImageAspect Aspect{ EImageAspect::Color };
 
         FOnImageDataLoadedEvent() = default;
         FOnImageDataLoadedEvent(
-            FCallback&& rcallback, u32 size, const uint3& imageSize,
-            u32 rowPitch, u32 slicePitch, EPixelFormat fmt, EImageAspect aspect ) NOEXCEPT
+            FCallback&& rcallback, size_t size, const uint3& imageSize,
+            size_t rowPitch, size_t slicePitch, EPixelFormat fmt, EImageAspect aspect ) NOEXCEPT
         :   Callback(std::move(rcallback)), TotalSize(size), ImageSize(imageSize)
         ,   RowPitch(rowPitch), SlicePitch(slicePitch), Format(fmt), Aspect(aspect)
         {}
         FOnImageDataLoadedEvent(
-            const FCallback& callback, u32 size, const uint3& imageSize,
-            u32 rowPitch, u32 slicePitch, EPixelFormat fmt, EImageAspect aspect ) NOEXCEPT
+            const FCallback& callback, size_t size, const uint3& imageSize,
+            size_t rowPitch, size_t slicePitch, EPixelFormat fmt, EImageAspect aspect ) NOEXCEPT
         :   Callback(callback), TotalSize(size), ImageSize(imageSize)
         ,   RowPitch(rowPitch), SlicePitch(slicePitch), Format(fmt), Aspect(aspect)
         {}
     };
-
-#if USE_PPE_RHIDEBUG
-    using FShaderModules = TFixedSizeStack<PVulkanShaderModule, 8>;
-    using FDebugBatchGraph = FVulkanLocalDebugger::FBatchGraph;
-
-    struct FDebugStorageBuffer {
-        FBufferID ShaderTraceBuffer;
-        FBufferID ReadBackBuffer;
-        u32 Capacity{ 0 };
-        u32 Size{ 0 };
-        VkPipelineStageFlags Stages{ Default };
-    };
-
-    struct FDebugMode {
-        FShaderModules Modules;
-        VkDescriptorSet DescriptorSet{ VK_NULL_HANDLE };
-        u32 Offset{ 0 };
-        u32 Size{ 0 };
-        u32 StorageBufferIndex{ UMax };
-        EShaderDebugMode Mode{ Default };
-        EShaderStages Stages{ Default };
-        FTaskName TaskName;
-        uint4 Payload{ 0 };
-    };
-
-    using FDebugStorageBuffers = VECTORINSITU(RHIDebug, FDebugStorageBuffer, 1);
-    using FDebugModes = VECTORINSITU(RHIDebug, FDebugMode, 1);
-    using FDebugDescriptorKey = TPair<FRawBufferID, FRawDescriptorSetLayoutID>;
-    using FDebugDescriptorCache = HASHMAP(RHIDebug, FDebugDescriptorKey, FVulkanDescriptorSet);
-#endif
 
     using FStagingBuffers = TFixedSizeStack<FStagingBuffer, 8>;
 
@@ -225,13 +195,18 @@ public:
 
     virtual void ReleaseForRecycling() NOEXCEPT override;
 
+    // call ReleaseForRecycling() when released, and skip delete
+   /* friend void OnStrongRefCountReachZero(FVulkanCommandBatch* batch) {
+        OnStrongRefCountReachZero(static_cast<ICommandBatch*>(batch));
+    }*/
+
     // staging buffer
 
-    NODISCARD bool StageWrite(FStagingBlock* pStaging, u32* pOutSize,
-        const u32 srcRequiredSize, const u32 blockAlign, const u32 offsetAlign, const u32 dstMinSize );
+    NODISCARD bool StageWrite(FStagingBlock* pStaging, size_t* pOutSize,
+        const size_t srcRequiredSize, const size_t blockAlign, const size_t offsetAlign, const size_t dstMinSize );
 
-    NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize);
-    NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize, u32 srcPitch);
+    NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, size_t srcOffset, size_t srcTotalSize);
+    NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, size_t srcOffset, size_t srcTotalSize, size_t srcPitch);
 
     void AddDataLoadedEvent(FOnImageDataLoadedEvent&& revent);
     void AddDataLoadedEvent(FOnBufferDataLoadedEvent&& revent);
@@ -239,17 +214,19 @@ public:
 #if USE_PPE_RHIDEBUG
     // shader debugger
 
+    const FVulkanDebugName& DebugName() const { return _debugName; }
+
     void SetShaderModuleForDebug(EShaderDebugIndex id, const PVulkanShaderModule& module);
 
     NODISCARD bool FindModeInfoForDebug(EShaderDebugMode* pMode, EShaderStages* pStages, EShaderDebugIndex id) const;
     NODISCARD bool FindDescriptorSetForDebug(u32* pBinding, VkDescriptorSet* pSet, u32* pDynamicOffset, EShaderDebugIndex id) const;
-    NODISCARD bool FindShaderTimemapForDebug(FRawBufferID* pBuf, u32* pOffset, u32* pSize, uint2* pDim, EShaderDebugIndex id) const;
+    NODISCARD bool FindShaderTimemapForDebug(FRawBufferID* pBuf, size_t* pOffset, size_t* pSize, uint2* pDim, EShaderDebugIndex id) const;
 
-    STATIC_CONST_INTEGRAL(u32, DebugBufferSize, 8 * 1024 * 1024);
+    STATIC_CONST_INTEGRAL(size_t, DebugBufferSize, 8 * 1024 * 1024);
 
-    EShaderDebugIndex AppendShaderForDebug(TMemoryView<const FRectangleU>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, u32 size = DebugBufferSize);
-    EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FComputeShaderDebugMode& mode, u32 size = DebugBufferSize);
-    EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FRayTracingShaderDebugMode& mode, u32 size = DebugBufferSize);
+    EShaderDebugIndex AppendShaderForDebug(TMemoryView<const FRectangleU>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, size_t size = DebugBufferSize);
+    EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FComputeShaderDebugMode& mode, size_t size = DebugBufferSize);
+    EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FRayTracingShaderDebugMode& mode, size_t size = DebugBufferSize);
 
     EShaderDebugIndex AppendTimemapForDebug(const uint2& dim, EShaderStages stages);
 
@@ -263,8 +240,8 @@ private:
     static void FinalizeCommands_(FInternalData& data);
 
     FStagingBuffer* FindOrAddStagingBuffer_(
-        FStagingBuffers *pStagingBuffers, u32 stagingSize, EBufferUsage usage,
-        u32 srcRequiredSize, u32 blockAlign, u32 offsetAlign, u32 dstMinSize ) const;
+        FStagingBuffers *pStagingBuffers, size_t stagingSize, EBufferUsage usage,
+        size_t srcRequiredSize, size_t blockAlign, size_t offsetAlign, size_t dstMinSize ) const;
 
     NODISCARD static bool MapMemory_(FVulkanResourceManager& resources, FStagingBuffer& staging);
     static void FinalizeStagingBuffers_(const FVulkanDevice& device, FVulkanResourceManager& resources, FInternalData& data);
@@ -286,8 +263,8 @@ private:
         FDebugStorageBuffers Buffers;
         FDebugModes Modes;
         FDebugDescriptorCache DescriptorCache;
-        u32 BufferAlign{ 0 };
-        const u32 BufferSize{ 64*1024*1024 };
+        size_t BufferAlign{ 0 };
+        const size_t BufferSize{ 64*1024*1024 };
     }   _shaderDebugger;
 
     // frame debugger
@@ -299,8 +276,8 @@ private:
     void BeginShaderDebugger_(VkCommandBuffer cmd);
     void EndShaderDebugger_(VkCommandBuffer cmd);
 
-    NODISCARD bool AllocStorageForDebug_(FDebugMode& debugMode, u32 size);
-    NODISCARD bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, u32 size, const FConstChar debugName);
+    NODISCARD bool AllocStorageForDebug_(FDebugMode& debugMode, size_t size);
+    NODISCARD bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, size_t size, const FConstChar debugName);
 
     using FDebugStrings = VECTORINSITU(RHIDebug, FString, 8);
 

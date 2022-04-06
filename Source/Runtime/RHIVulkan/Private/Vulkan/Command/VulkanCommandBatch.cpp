@@ -19,7 +19,7 @@ FVulkanCommandBatch::FVulkanCommandBatch(const SVulkanFrameGraph& fg, u32 indexI
     STATIC_ASSERT(decltype(_state)::is_always_lock_free);
 
 #if USE_PPE_RHIDEBUG
-    _shaderDebugger.BufferAlign = checked_cast<u32>(_frameGraph->Device().Limits().minStorageBufferOffsetAlignment);
+    _shaderDebugger.BufferAlign = _frameGraph->Device().Limits().minStorageBufferOffsetAlignment;
     Assert_NoAssume(not EnableShaderDebugging || _frameGraph->Device().Limits().maxBoundDescriptorSets > DebugDescriptorSet);
 #endif
 }
@@ -29,7 +29,7 @@ FVulkanCommandBatch::~FVulkanCommandBatch()
 
 }
 //----------------------------------------------------------------------------
-void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const FCommandBufferBatch> dependsOn) {
+void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn) {
     Assert_NoAssume(RefCount() == 0);
     const auto exclusiveData = _data.LockExclusive();
 
@@ -59,8 +59,10 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const FCommandB
     _state.store(EState::Initial, std::memory_order_relaxed);
 
     for (const FCommandBufferBatch& dep : dependsOn) {
-        if (PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep.Batch))
+        if (PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep.Batch()))
             exclusiveData->Dependencies.Push(std::move(batch));
+        else
+            AssertNotReached();
     }
 }
 //----------------------------------------------------------------------------
@@ -381,7 +383,7 @@ void FVulkanCommandBatch::FinalizeStagingBuffers_(const FVulkanDevice& device, F
     // trigger buffer events
     for (const FOnBufferDataLoadedEvent& evt : data.Staging.OnBufferLoadedEvents) {
         TFixedSizeStack<TMemoryView<const T>, MaxBufferParts> dataParts;
-        ONLY_IF_ASSERT(u32 totalSize = 0);
+        ONLY_IF_ASSERT(size_t totalSize = 0);
 
         for (const FStagingDataRange& part : evt.Parts) {
             const auto view = part.MakeView().Cast<T>();
@@ -397,7 +399,7 @@ void FVulkanCommandBatch::FinalizeStagingBuffers_(const FVulkanDevice& device, F
     // trigger image events
     for (const FOnImageDataLoadedEvent& evt : data.Staging.OnImageLoadedEvents) {
         TFixedSizeStack<TMemoryView<const T>, MaxImageParts> dataParts;
-        ONLY_IF_ASSERT(u32 totalSize = 0);
+        ONLY_IF_ASSERT(size_t totalSize = 0);
 
         for (const FStagingDataRange& part : evt.Parts) {
             const auto view = part.MakeView().Cast<T>();
@@ -476,19 +478,19 @@ void FVulkanCommandBatch::ReleaseVulkanObjects_(const FVulkanDevice& device, FIn
 }
 //----------------------------------------------------------------------------
 FVulkanCommandBatch::FStagingBuffer* FVulkanCommandBatch::FindOrAddStagingBuffer_(
-    FStagingBuffers* pStagingBuffers, u32 stagingSize, EBufferUsage usage,
-    u32 srcRequiredSize, u32 blockAlign, u32 offsetAlign, u32 dstMinSize ) const {
+    FStagingBuffers* pStagingBuffers, size_t stagingSize, EBufferUsage usage,
+    size_t srcRequiredSize, size_t blockAlign, size_t offsetAlign, size_t dstMinSize ) const {
     Assert(pStagingBuffers);
     Assert(blockAlign > 0 && offsetAlign > 0);
     Assert_NoAssume(dstMinSize == Meta::RoundToPrev(dstMinSize, blockAlign));
 
     // search in existing
-    u32 maxSize{ 0 };
+    size_t maxSize{ 0 };
     FStagingBuffer* suitable{ nullptr };
     FStagingBuffer* maxAvailable{ nullptr };
     for (FStagingBuffer& buf : *pStagingBuffers) {
-        const u32 off = Meta::RoundToNext(buf.Size, offsetAlign);
-        const u32 available = Meta::RoundToPrev(buf.Capacity - off, blockAlign);
+        const size_t off = Meta::RoundToNext(buf.Size, offsetAlign);
+        const size_t available = Meta::RoundToPrev(buf.Capacity - off, blockAlign);
 
         if (available >= srcRequiredSize) {
             suitable = &buf;
@@ -530,8 +532,8 @@ FVulkanCommandBatch::FStagingBuffer* FVulkanCommandBatch::FindOrAddStagingBuffer
 }
 //----------------------------------------------------------------------------
 bool FVulkanCommandBatch::StageWrite(
-    FStagingBlock* pStaging, u32* pOutSize,
-    const u32 srcRequiredSize, const u32 blockAlign, const u32 offsetAlign, const u32 dstMinSize ) {
+    FStagingBlock* pStaging, size_t* pOutSize,
+    const size_t srcRequiredSize, const size_t blockAlign, const size_t offsetAlign, const size_t dstMinSize ) {
     Assert(pStaging);
     Assert(pOutSize);
 
@@ -558,20 +560,20 @@ bool FVulkanCommandBatch::StageWrite(
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanCommandBatch::AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize) {
+bool FVulkanCommandBatch::AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, size_t srcOffset, size_t srcTotalSize) {
     return AddPendingLoad(pDstBuffer, pRange, srcOffset, srcTotalSize, 1);
 }
 //----------------------------------------------------------------------------
-bool FVulkanCommandBatch::AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, u32 srcOffset, u32 srcTotalSize, u32 srcPitch) {
+bool FVulkanCommandBatch::AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, size_t srcOffset, size_t srcTotalSize, size_t srcPitch) {
     Assert(pDstBuffer);
     Assert(pRange);
 
     const auto exclusiveData = _data.LockExclusive();
 
-    const u32 srcRequiredSize = srcTotalSize - srcOffset;
-    const u32 blockAlign = srcPitch;
-    const u32 offsetAlign = 16;
-    const u32 dstMinSize = Max( (srcTotalSize + MaxBufferParts - 1) / MaxBufferParts, srcPitch ); // skip blocks less than 1/N of data size
+    const size_t srcRequiredSize = srcTotalSize - srcOffset;
+    const size_t blockAlign = srcPitch;
+    const size_t offsetAlign = 16;
+    const size_t dstMinSize = Max( (srcTotalSize + MaxBufferParts - 1) / MaxBufferParts, srcPitch ); // skip blocks less than 1/N of data size
 
     FStagingBuffer* const pSuitable = FindOrAddStagingBuffer_(
         &exclusiveData->Staging.DeviceToHost,
@@ -678,7 +680,7 @@ void FVulkanCommandBatch::BeginShaderDebugger_(VkCommandBuffer cmd) {
         const u32 size = resources.DebugShaderStorageSize(dbg.Stages, dbg.Mode);
         Assert_NoAssume( size <= sizeof(dbg.Payload) );
 
-        dbg.Payload = Meta::ForceInit;
+        dbg.Payload = uint4(Meta::ForceInit);
         device.vkCmdUpdateBuffer( cmd, buf, static_cast<VkDeviceSize>(dbg.Offset), static_cast<VkDeviceSize>(size), &dbg.Payload );
     }
 
@@ -766,14 +768,14 @@ bool FVulkanCommandBatch::FindDescriptorSetForDebug(u32* pBinding, VkDescriptorS
     const FDebugMode& dbg = _shaderDebugger.Modes[static_cast<u32>(id)];
     *pBinding = DebugDescriptorSet;
     *pSet = dbg.DescriptorSet;
-    *pDynamicOffset = dbg.Offset;
+    *pDynamicOffset = checked_cast<u32>(dbg.Offset);
 
     return true;
 }
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-bool FVulkanCommandBatch::FindShaderTimemapForDebug(FRawBufferID* pBuf, u32* pOffset, u32* pSize, uint2* pDim, EShaderDebugIndex id) const {
+bool FVulkanCommandBatch::FindShaderTimemapForDebug(FRawBufferID* pBuf, size_t* pOffset, size_t* pSize, uint2* pDim, EShaderDebugIndex id) const {
     Assert(pBuf);
     Assert(pOffset);
     Assert(pSize);
@@ -793,7 +795,7 @@ bool FVulkanCommandBatch::FindShaderTimemapForDebug(FRawBufferID* pBuf, u32* pOf
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FRectangleU>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, u32 size) {
+EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FRectangleU>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, size_t size) {
     Assert_NoAssume(EnableShaderDebugging);
     Assert_NoAssume(not name.empty());
 
@@ -806,7 +808,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FR
     dbg.TaskName = name;
     dbg.Mode = mode.Mode;
     dbg.Stages = mode.Stages;
-    dbg.Payload = uint4(mode.FragCoord.xy.CastChecked<u32>(), 0, 0);
+    dbg.Payload = uint4(uint2(mode.FragCoord), 0, 0);
 
     LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
 
@@ -816,7 +818,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FR
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& name, const FComputeShaderDebugMode& mode, u32 size) {
+EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& name, const FComputeShaderDebugMode& mode, size_t size) {
     Assert_NoAssume(EnableShaderDebugging);
     Assert_NoAssume(not name.empty());
 
@@ -837,7 +839,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& nam
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& name, const FRayTracingShaderDebugMode& mode, u32 size) {
+EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& name, const FRayTracingShaderDebugMode& mode, size_t size) {
     Assert_NoAssume(EnableShaderDebugging);
     Assert_NoAssume(not name.empty());
 
@@ -867,14 +869,14 @@ EShaderDebugIndex FVulkanCommandBatch::AppendTimemapForDebug(const uint2& dim, E
     FDebugMode dbg;
     dbg.Mode = EShaderDebugMode::Timemap;
     dbg.Stages = stages;
-    dbg.Payload = uint4(float2(1.0f).BitCast<u32>(), dim.xy);
+    dbg.Payload = uint4(bit_cast<u32>(float2(1.0f)), dim);
 
-    const u32 size = checked_cast<u32>(
+    const size_t size{
         sizeof(uint4) + // first 4 components
         dim.y * sizeof(u64) + // output pixels
         _frameGraph->Device().Limits().minStorageBufferOffsetAlignment + // padding for alignment
         dim.x * dim.y * sizeof(u64) // temporary line
-        );
+    };
 
     LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
 
@@ -884,7 +886,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendTimemapForDebug(const uint2& dim, E
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, u32 size) {
+bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t size) {
     Assert(debugMode.StorageBufferIndex == UMax);
     Assert(size > 0);
 
@@ -932,7 +934,7 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, u32 size)
         debugMode.Offset = 0;
 
         FDebugStorageBuffer sb;
-        sb.Capacity = checked_cast<u32>(_shaderDebugger.BufferSize * (1 + _shaderDebugger.Buffers.size() / 2));
+        sb.Capacity = (_shaderDebugger.BufferSize * (1 + _shaderDebugger.Buffers.size() / 2));
         sb.Size = debugMode.Offset + size;
         sb.Stages = stages;
 
@@ -962,7 +964,7 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, u32 size)
 #if USE_PPE_RHIDEBUG
 bool FVulkanCommandBatch::AllocDescriptorSetForDebug_(
     VkDescriptorSet* pDescSet,
-    EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, u32 size,
+    EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, size_t size,
     FConstChar debugName ) {
     Assert(pDescSet);
     Assert(storageBuffer);

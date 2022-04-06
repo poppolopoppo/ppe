@@ -16,7 +16,7 @@ namespace RHI {
 namespace {
 //----------------------------------------------------------------------------
 static u32 NumMipmaps_(const uint3& dim) {
-    return (FPlatformMaths::FloorLog2(MaxComponent(dim)) + 1);
+    return (FPlatformMaths::FloorLog2(dim.MaxComponent()) + 1);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -222,7 +222,7 @@ void FImageViewDesc::Validate(const FImageDesc& desc) {
     else {
         // validate view type
         const u32 maxLayers = (desc.Type == EImageDim_3D && View != EImageView_3D
-            ? desc.Dimensions.z.get()
+            ? desc.Dimensions.z
             : *desc.ArrayLayers );
 
         BaseLayer = FImageLayer{ Clamp(*BaseLayer, 0u, maxLayers - 1) };

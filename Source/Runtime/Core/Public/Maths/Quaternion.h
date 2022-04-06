@@ -13,7 +13,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FQuaternion {
 public:
-    FORCE_INLINE  FQuaternion() {}
+    FORCE_INLINE FQuaternion() {}
     FQuaternion(Meta::FForceInit);
     explicit FQuaternion(float broadcast);
     explicit FQuaternion(const float4& value);
@@ -65,11 +65,10 @@ public:
 
     union {
         float4 data;
-
-        TScalarVectorComponent<float, 0> x;
-        TScalarVectorComponent<float, 0> y;
-        TScalarVectorComponent<float, 0> z;
-        TScalarVectorComponent<float, 0> w;
+        struct {
+            // to have FQuaternion.x
+            float x, y, z, w;
+        };
     };
 };
 //----------------------------------------------------------------------------

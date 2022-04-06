@@ -8,10 +8,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 FQuaternion BarycentricLerp(const FQuaternion& v0, const FQuaternion& v1, const FQuaternion& v2, float f0, float f1, float f2) {
     const float4 result(
-        BarycentricLerp(v0.x, v1.x, v2.x, f0, f1, f2),
-        BarycentricLerp(v0.y, v1.y, v2.y, f0, f1, f2),
-        BarycentricLerp(v0.z, v1.z, v2.z, f0, f1, f2),
-        BarycentricLerp(v0.w, v1.w, v2.w, f0, f1, f2) );
+        BarycentricLerp<float>(v0.x, v1.x, v2.x, f0, f1, f2),
+        BarycentricLerp<float>(v0.y, v1.y, v2.y, f0, f1, f2),
+        BarycentricLerp<float>(v0.z, v1.z, v2.z, f0, f1, f2),
+        BarycentricLerp<float>(v0.w, v1.w, v2.w, f0, f1, f2) );
 
     return FQuaternion(Normalize(result));
 }

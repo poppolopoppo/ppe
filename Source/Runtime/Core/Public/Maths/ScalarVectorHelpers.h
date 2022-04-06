@@ -13,37 +13,82 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Dot()
+// Any / All
 //----------------------------------------------------------------------------
-template <typename _Expr, size_t _Dim>
-CONSTEXPR auto Dot(const TScalarVectorExpr<_Expr, _Dim>& v) NOEXCEPT {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return (v.template get<idx>() + ...);
+template <size_t _Dim, typename _Expr>
+NODISCARD CONSTEXPR bool Any(const TScalarVectorExpr<bool, _Dim, _Expr>& v) {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR{
+        return (v.template get<idx>() || ...);
     });
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto Dot(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return Dot(lhs * rhs);
+template <size_t _Dim, typename _Expr>
+NODISCARD CONSTEXPR bool All(const TScalarVectorExpr<bool, _Dim, _Expr>& v) {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR{
+        return (v.template get<idx>() && ...);
+    });
 }
 //----------------------------------------------------------------------------
-template <typename _Expr, size_t _Dim>
-CONSTEXPR auto Dot2(const TScalarVectorExpr<_Expr, _Dim>& v) NOEXCEPT {
+// Dot
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+NODISCARD CONSTEXPR T Dot(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) {
+    return (lhs * rhs).HSum();
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Expr>
+NODISCARD CONSTEXPR T Dot2(const TScalarVectorExpr<T, _Dim, _Expr>& v) {
     return Dot(v, v);
 }
 //----------------------------------------------------------------------------
-// Det()
+// Length
 //----------------------------------------------------------------------------
-template <typename _Expr>
-CONSTEXPR auto Det(const TScalarVectorExpr<_Expr, 2>& lhs, const TScalarVectorExpr<_Expr, 2>& rhs) NOEXCEPT {
-    return (lhs.template get<0>() * rhs.template get<1>() -
-            lhs.template get<1>() * rhs.template get<0>() );
+template <typename T, size_t _Dim, typename _Expr>
+NODISCARD CONSTEXPR T LengthSq(const TScalarVectorExpr<T, _Dim, _Expr>& v) {
+    return Dot2(v);
 }
 //----------------------------------------------------------------------------
-// Cross()
+template <typename T, size_t _Dim, typename _Expr>
+NODISCARD CONSTEXPR auto Length(const TScalarVectorExpr<T, _Dim, _Expr>& v) {
+    return Sqrt(LengthSq(v));
+}
+//----------------------------------------------------------------------------
+// Distance
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename A, typename B>
+NODISCARD CONSTEXPR T DistanceSq(const TScalarVectorExpr<T, _Dim, A>& a, const TScalarVectorExpr<T, _Dim, B>& b) {
+    return LengthSq(b - a);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename A, typename B>
+NODISCARD CONSTEXPR auto Distance(const TScalarVectorExpr<T, _Dim, A>& a, const TScalarVectorExpr<T, _Dim, B>& b) {
+    return Length(b - a);
+}
+//----------------------------------------------------------------------------
+// Normalize
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Expr>
+CONSTEXPR auto Normalize(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
+#if USE_PPE_ASSERT
+    const T norm = Length(v);
+    Assert(norm);
+    return (v / norm);
+#else
+    return (v * RSqrt(LengthSq(v)));
+#endif
+}
+//----------------------------------------------------------------------------
+// Det
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR auto Cross(const TScalarVector<T, 2>& o, const Meta::TDontDeduce<TScalarVector<T, 2>>& a, const Meta::TDontDeduce<TScalarVector<T, 2>>& b) NOEXCEPT {
+CONSTEXPR T Det(const TScalarVector<T, 2>& a, const TScalarVector<T, 2>& b) NOEXCEPT {
+    return (a.x * b.y - a.y * b.x);
+}
+//----------------------------------------------------------------------------
+// Cross
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR T Cross(const TScalarVector<T, 2>& o, const Meta::TDontDeduce<TScalarVector<T, 2>>& a, const Meta::TDontDeduce<TScalarVector<T, 2>>& b) NOEXCEPT {
     // Det(a - o, b - o) <=> Twiced signed area of the triangle
     return (((a.x - o.x) * (b.y - o.y)) -
             ((a.y - o.y) * (b.x - o.x)) );
@@ -56,7 +101,7 @@ CONSTEXPR TScalarVector<T, 3> Cross(const TScalarVector<T, 3>& a, const Meta::TD
             a.x * b.y - a.y * b.x };
 }
 //----------------------------------------------------------------------------
-// Reflect/Refract()
+// Reflect / Refract
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR TScalarVector<T, 3> Reflect(const TScalarVector<T, 3>& incident, const Meta::TDontDeduce<TScalarVector<T, 3>>& normal) NOEXCEPT {
@@ -70,509 +115,282 @@ CONSTEXPR TScalarVector<T, 3> Reflect(const TScalarVector<T, 3>& incident, const
     Assert(k >= 0);
     return (incident * refractionIndex - normal * (refractionIndex * N_dot_I + Sqrt(k)));
 }
-//----------------------------------------------------------------------------
-// Distance()
-//----------------------------------------------------------------------------
-template <typename _Lhs, size_t _Dim, typename _Rhs>
-CONSTEXPR auto Distance(const TScalarVectorExpr<_Lhs, _Dim>& a, const TScalarVectorExpr<_Rhs, _Dim>& b) NOEXCEPT {
-    return Length(a - b);
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, size_t _Dim, typename _Rhs>
-CONSTEXPR auto DistanceSq(const TScalarVectorExpr<_Lhs, _Dim>& a, const TScalarVectorExpr<_Rhs, _Dim>& b) NOEXCEPT {
-    return LengthSq(a - b);
-}
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Length/LengthSq/Normalize()
+// Function to predicate struct
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-CONSTEXPR auto Length(const TScalarVector<T, _Dim>& v) NOEXCEPT {
-    return Sqrt(Dot2(v));
-}
+#define PPE_SCALARVECTOR_FUNCTION_PREDICATE(_Func) \
+    namespace details::predicate { \
+        struct F##_Func { \
+            template <typename... _Args> \
+            auto operator ()(_Args... args) const { \
+                return _Func(std::forward<_Args>(args)...); \
+            } \
+        }; \
+    } //!details
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-CONSTEXPR auto LengthSq(const TScalarVector<T, _Dim>& v) NOEXCEPT {
-    return Dot2(v);
-}
+// Unary functions
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-CONSTEXPR auto Normalize(const TScalarVector<T, _Dim>& v) NOEXCEPT {
-#if USE_PPE_ASSERT
-    const T norm = Length(v);
-    Assert(norm);
-    return (v * (T(1) / norm));
-#else
-    return (v * RSqrt(LengthSq(v)));
-#endif
-}
+#define PPE_SCALARVECTOR_UNARY_FUNC(_Func) \
+    PPE_SCALARVECTOR_FUNCTION_PREDICATE(_Func) \
+    template <typename T, size_t _Dim, typename _Expr> \
+    NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _Expr>& v) { \
+        return details::MakeScalarVectorUnaryExpr<details::predicate::F##_Func>(v); \
+    }
+//----------------------------------------------------------------------------
+PPE_SCALARVECTOR_UNARY_FUNC(Abs)
+PPE_SCALARVECTOR_UNARY_FUNC(Frac)
+PPE_SCALARVECTOR_UNARY_FUNC(Fractional)
+PPE_SCALARVECTOR_UNARY_FUNC(Saturate)
+PPE_SCALARVECTOR_UNARY_FUNC(Sign)
+PPE_SCALARVECTOR_UNARY_FUNC(Rcp)
+PPE_SCALARVECTOR_UNARY_FUNC(RSqrt)
+PPE_SCALARVECTOR_UNARY_FUNC(RSqrt_Low)
+PPE_SCALARVECTOR_UNARY_FUNC(Sqrt)
+PPE_SCALARVECTOR_UNARY_FUNC(CeilToFloat)
+PPE_SCALARVECTOR_UNARY_FUNC(FloorToFloat)
+PPE_SCALARVECTOR_UNARY_FUNC(RoundToFloat)
+PPE_SCALARVECTOR_UNARY_FUNC(TruncToFloat)
+PPE_SCALARVECTOR_UNARY_FUNC(CeilToInt)
+PPE_SCALARVECTOR_UNARY_FUNC(FloorToInt)
+PPE_SCALARVECTOR_UNARY_FUNC(RoundToInt)
+PPE_SCALARVECTOR_UNARY_FUNC(TruncToInt)
+PPE_SCALARVECTOR_UNARY_FUNC(CeilToUnsigned)
+PPE_SCALARVECTOR_UNARY_FUNC(FloorToUnsigned)
+PPE_SCALARVECTOR_UNARY_FUNC(RoundToUnsigned)
+PPE_SCALARVECTOR_UNARY_FUNC(TruncToUnsigned)
+PPE_SCALARVECTOR_UNARY_FUNC(Degrees)
+PPE_SCALARVECTOR_UNARY_FUNC(Radians)
+PPE_SCALARVECTOR_UNARY_FUNC(ClampAngle)
+PPE_SCALARVECTOR_UNARY_FUNC(NormalizeAngle)
+PPE_SCALARVECTOR_UNARY_FUNC(Float01_to_FloatM11)
+PPE_SCALARVECTOR_UNARY_FUNC(FloatM11_to_Float01)
+#undef PPE_SCALARVECTOR_UNARY_FUNC
+//----------------------------------------------------------------------------
+// binary functions
+//----------------------------------------------------------------------------
+#define PPE_SCALARVECTOR_BINARY_FUNC(_Func) \
+    PPE_SCALARVECTOR_FUNCTION_PREDICATE(_Func) \
+    template <typename T, size_t _Dim, typename _Lhs, typename _Rhs> \
+    NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs ) { \
+        return details::MakeScalarVectorBinaryExpr<details::predicate::F##_Func>(lhs, rhs); \
+    } \
+    template <typename T, size_t _Dim, typename _Expr> \
+    NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _Expr>& lhs, const T& rhs) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector(_Func(lhs.template get<idx>(), rhs)...); \
+        }); \
+    } \
+    template <typename T, size_t _Dim, typename _Expr> \
+    NODISCARD CONSTEXPR auto _Func(const T& lhs, const TScalarVectorExpr<T, _Dim, _Expr>& rhs ) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector(_Func(lhs, rhs.template get<idx>())...); \
+        }); \
+    }
+//----------------------------------------------------------------------------
+PPE_SCALARVECTOR_BINARY_FUNC(FMod)
+PPE_SCALARVECTOR_BINARY_FUNC(Hypot)
+PPE_SCALARVECTOR_BINARY_FUNC(Min)
+PPE_SCALARVECTOR_BINARY_FUNC(Max)
+PPE_SCALARVECTOR_BINARY_FUNC(Pow)
+PPE_SCALARVECTOR_BINARY_FUNC(Step)
+#undef PPE_SCALARVECTOR_BINARY_FUNC
+//----------------------------------------------------------------------------
+// ternary functions
+//----------------------------------------------------------------------------
+#define PPE_SCALARVECTOR_TERNARY_FUNC(_Func) \
+    PPE_SCALARVECTOR_FUNCTION_PREDICATE(_Func) \
+    template <typename T, size_t _Dim, typename _A, typename _B, typename _C> \
+    NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _A>& a, const TScalarVectorExpr<T, _Dim, _B>& b, const TScalarVectorExpr<T, _Dim, _C>& c ) { \
+        return details::MakeScalarVectorTernaryExpr<details::predicate::F##_Func>(a, b, c); \
+    } \
+    template <typename T, size_t _Dim, typename _A, typename _B> \
+    NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _A>& a, const TScalarVectorExpr<T, _Dim, _B>& b, const T& c) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector(_Func(a.template get<idx>(), b.template get<idx>(), c)...); \
+        }); \
+    } \
+    template <typename T, size_t _Dim, typename _A, typename _C> \
+    NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _A>& a, const T& b, const TScalarVectorExpr<T, _Dim, _C>& c) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector(_Func(a.template get<idx>(), b, c.template get<idx>())...); \
+        }); \
+    } \
+    template <typename T, size_t _Dim, typename _B, typename _C> \
+    NODISCARD CONSTEXPR auto _Func(const T& a, const TScalarVectorExpr<T, _Dim, _B>& b, const TScalarVectorExpr<T, _Dim, _C>& c) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector(_Func(a, b.template get<idx>(), c.template get<idx>())...); \
+        }); \
+    } \
+    template <typename T, size_t _Dim, typename _C> \
+    NODISCARD CONSTEXPR auto _Func(const T& a, const T& b, const TScalarVectorExpr<T, _Dim, _C>& c) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector( _Func(a, b, c.template get<idx>())...); \
+        }); \
+    } \
+    template <typename T, size_t _Dim, typename _B> \
+    NODISCARD CONSTEXPR auto _Func(const T& a, const TScalarVectorExpr<T, _Dim, _B>& b, const T& c) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector(_Func(a, b.template get<idx>(), c)...); \
+        }); \
+    } \
+    template <typename T, size_t _Dim, typename _A> \
+    NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _A>& a, const T& b, const T& c) { \
+        return Meta::static_for<_Dim>([&](auto... idx) { \
+            return details::MakeScalarVector(_Func(a.template get<idx>(), b, c)...); \
+        }); \
+    }
+//----------------------------------------------------------------------------
+PPE_SCALARVECTOR_TERNARY_FUNC(BiasScale)
+PPE_SCALARVECTOR_TERNARY_FUNC(Clamp)
+PPE_SCALARVECTOR_TERNARY_FUNC(Lerp)
+//PPE_SCALARVECTOR_TERNARY_FUNC(LinearStep)
+PPE_SCALARVECTOR_TERNARY_FUNC(Min3)
+PPE_SCALARVECTOR_TERNARY_FUNC(Max3)
+PPE_SCALARVECTOR_TERNARY_FUNC(SLerp)
+PPE_SCALARVECTOR_TERNARY_FUNC(SMin)
+PPE_SCALARVECTOR_TERNARY_FUNC(Smoothstep)
+PPE_SCALARVECTOR_TERNARY_FUNC(Smootherstep)
+#undef PPE_SCALARVECTOR_TERNARY_FUNC
+//----------------------------------------------------------------------------
+#undef PPE_SCALARVECTOR_FUNCTION_PREDICATE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// MaxComponent()
+// XXXMask()
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 1>& v) NOEXCEPT {
-    return v.template get<0>();
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR auto GreaterMask(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return TScalarVectorExpr<T, _Dim>::Map(Meta::TGreater<T>{}, lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 2>& v) NOEXCEPT {
-    return Max(v.template get<0>(), v.template get<1>());
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR auto GreaterEqualMask(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return TScalarVectorExpr<T, _Dim>::Map(Meta::TGreaterEqual<T>{}, lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
-    return Max3(v.template get<0>(), v.template get<1>(), v.template get<2>());
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR auto LessMask(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return TScalarVectorExpr<T, _Dim>::Map(Meta::TLess<T>{}, lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MaxComponent(const TScalarVectorExpr<T, 4>& v) NOEXCEPT {
-    return Max( Max(v.template get<0>(), v.template get<1>()),
-                Max(v.template get<2>(), v.template get<3>()) );
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR auto LessEqualMask(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return TScalarVectorExpr<T, _Dim>::Map(Meta::TLessEqual<T>{}, lhs, rhs);
 }
 //----------------------------------------------------------------------------
-// MaxComponentIndex()
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR u32 MaxComponentIndex(const TScalarVectorExpr<T, 2>& v) NOEXCEPT {
-    return (v.template get<0>() < v.template get<1>() ? 1 : 0);
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR auto EqualMask(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return TScalarVectorExpr<T, _Dim>::Map(Meta::TEqualTo<T>{}, lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR u32 MaxComponentIndex(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
-    return (CubeMapFaceID(v.template get<0>(), v.template get<1>(), v.template get<2>()) >> 1);
-}
-//----------------------------------------------------------------------------
-// MinComponent()
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 1>& v) NOEXCEPT {
-    return v.template get<0>();
-}
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 2>& v) NOEXCEPT {
-    return Min(v.template get<0>(), v.template get<1>());
-}
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 3>& v) NOEXCEPT {
-    return Min3(v.template get<0>(), v.template get<1>(), v.template get<2>());
-}
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR auto MinComponent(const TScalarVectorExpr<T, 4>& v) NOEXCEPT {
-    return Min( Min(v.template get<0>(), v.template get<1>()),
-                Min(v.template get<2>(), v.template get<3>()) );
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// MinMax/MinMax3()
-//----------------------------------------------------------------------------
-template <typename _A, size_t _Dim, typename _B, typename T>
-CONSTEXPR void MinMax(
-    const TScalarVectorExpr<_A, _Dim>& a,
-    const TScalarVectorExpr<_B, _Dim>& b,
-    TScalarVector<T, _Dim>* pmin,
-    TScalarVector<T, _Dim>* pmax ) {
-    Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        (MinMax( a.template get<idx>(), b.template get<idx>(),
-                 &pmin->data[idx], &pmax->data[idx]), ... );
-    });
-}
-//----------------------------------------------------------------------------
-template <typename _A, size_t _Dim, typename _B, typename _C, typename T>
-CONSTEXPR void MinMax3(
-    const TScalarVectorExpr<_A, _Dim>& a,
-    const TScalarVectorExpr<_B, _Dim>& b,
-    const TScalarVectorExpr<_B, _Dim>& c,
-    TScalarVector<T, _Dim>* pmin,
-    TScalarVector<T, _Dim>* pmax ) {
-    Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        (MinMax3(a.template get<idx>(), b.template get<idx>(), c.template get<idx>(),
-                 &pmin->data[idx], &pmax->data[idx]), ... );
-    });
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// BitAnd/BitOr/BitXor()
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto BitAnd(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return (a & b); });
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto BitOr(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return (a | b); });
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto BitXor(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return (a ^ b); });
-}
-//----------------------------------------------------------------------------
-// Any/All()
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-CONSTEXPR bool Any(const TScalarVector<T, _Dim>& mask) {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (Any(mask.template get<idx>()) | ...);
-    });
-}
-//----------------------------------------------------------------------------
-template <typename _Expr, size_t _Dim>
-CONSTEXPR bool Any(const TScalarVectorExpr<_Expr, _Dim>& expr) {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (Any(expr.template get<idx>()) || ...);
-    });
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-CONSTEXPR bool All(const TScalarVector<T, _Dim>& mask) {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (All(mask.template get<idx>()) && ...);
-    });
-}
-//----------------------------------------------------------------------------
-template <typename _Expr, size_t _Dim>
-CONSTEXPR bool All(const TScalarVectorExpr<_Expr, _Dim>& expr) {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> bool {
-        return (All(expr.template get<idx>()) && ...);
-    });
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR auto NotEqualMask(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return TScalarVectorExpr<T, _Dim>::Map(Meta::TNotEqual<T>{}, lhs, rhs);
 }
 //----------------------------------------------------------------------------
 // AllXXX()
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR bool AllGreater(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return ((lhs.template get<idx>() > rhs.template get<idx>()) && ...);
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AllGreater(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return All(GreaterMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AllGreaterEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return All(GreaterEqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AllLess(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return All(LessMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AllLessEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return All(LessEqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AllEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return All(EqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AllNotEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return All(NotEqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+// AnyXXX()
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AnyGreater(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return Any(GreaterMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AnyGreaterEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return Any(GreaterEqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AnyLess(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return Any(LessMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AnyLessEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return Any(LessEqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AnyEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return Any(EqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Lhs, typename _Rhs>
+CONSTEXPR bool AnyNotEqual(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) NOEXCEPT {
+    return Any(NotEqualMask(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+// Blend
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _IfTrue, typename _IfFalse, typename _Mask>
+CONSTEXPR auto Blend(const TScalarVectorExpr<T, _Dim, _IfTrue>& ifTrue, const TScalarVectorExpr<T, _Dim, _IfFalse>& ifFalse, const TScalarVectorExpr<bool, _Dim, _Mask>& mask) NOEXCEPT {
+    return Meta::static_for<_Dim>([&](auto... idx) {
+        return details::MakeScalarVector( Blend(ifTrue.template get<idx>(), ifFalse.template get<idx>(), mask.template get<idx>())... );
     });
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR bool AllGreaterEqual(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() >= rhs.template get<idx>()) && ...);
-    });
+template <typename T, size_t _Dim, typename _IfTrue, typename _IfFalse>
+CONSTEXPR auto Blend(const TScalarVectorExpr<T, _Dim, _IfTrue>& ifTrue, const TScalarVectorExpr<T, _Dim, _IfFalse>& ifFalse, bool mask) NOEXCEPT {
+    return Meta::static_for<_Dim>([&](auto... idx) {
+        return details::MakeScalarVector( Blend(ifTrue.template get<idx>(), ifFalse.template get<idx>(), mask)... );
+      });
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR bool AllLess(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() < rhs.template get<idx>()) && ...);
-    });
-}
+// BarycentricLerp
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR bool AllLessEqual(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() <= rhs.template get<idx>()) && ...);
-    });
-}
-//----------------------------------------------------------------------------
-// XXXMask()
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto GreaterMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a > b); });
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto GreaterEqualMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a >= b); });
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto LessMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a < b); });
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto LessEqualMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a <= b); });
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto EqualMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a == b); });
-}
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto NotEqualMask(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a != b); });
-}
-//----------------------------------------------------------------------------
-// Boolean operators
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-CONSTEXPR auto operator &(const TScalarVectorExpr<bool, _Dim>& lhs, const TScalarVectorExpr<bool, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a & b); });
-}
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto operator |(const TScalarVectorExpr<bool, _Dim>& lhs, const TScalarVectorExpr<bool, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a | b); });
-}
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto operator ^(const TScalarVectorExpr<bool, _Dim>& lhs, const TScalarVectorExpr<bool, _Dim>& rhs) NOEXCEPT {
-    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT -> bool { return (a ^ b); });
-}
-//----------------------------------------------------------------------------
-// Comparison operators
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto operator >(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return GreaterMask(lhs, rhs);
-}
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto operator >=(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return GreaterEqualMask(lhs, rhs);
-}
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto operator <(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return LessMask(lhs, rhs);
-}
-template <typename _Lhs, typename _Rhs, size_t _Dim>
-CONSTEXPR auto operator <=(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
-    return LessEqualMask(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-// Shuffle()
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, size_t... _Shuffle>
-struct TScalarVectorShuffle : TScalarVectorExpr<TScalarVectorShuffle<_Lhs, _Rhs, _Shuffle...>, sizeof...(_Shuffle)> {
-    using TScalarVectorExpr<TScalarVectorShuffle<_Lhs, _Rhs, _Shuffle...>, sizeof...(_Shuffle)>::Dim;
-
-    const typename _Lhs::expr_type& lhs;
-    const typename _Rhs::expr_type& rhs;
-
-    FORCE_INLINE CONSTEXPR TScalarVectorShuffle(const _Lhs& _lhs, const _Rhs& _rhs) NOEXCEPT
-        : lhs(_lhs.ref())
-        , rhs(_rhs.ref())
-    {}
-
-    static CONSTEXPR size_t indices[Dim] = { _Shuffle... };
-    template <size_t _Idx>
-    static CONSTEXPR size_t shuffled = indices[_Idx];
-
-    template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto shuffle(std::enable_if_t < _Idx < _Lhs::Dim>* = nullptr) const NOEXCEPT {
-        return (lhs.template get<_Idx>());
-    }
-    template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto shuffle(std::enable_if_t<_Idx >= _Lhs::Dim>* = nullptr) const NOEXCEPT {
-        static_assert(_Idx < _Lhs::Dim + _Rhs::Dim, "out of bounds shuffle index");
-        return (rhs.template get<_Idx - _Lhs::Dim>());
-    }
-
-    template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
-        return (shuffle< shuffled<_Idx> >());
-    }
-};
-//----------------------------------------------------------------------------
-template <size_t... _Shuffle, typename _Lhs, size_t _Dim0, typename _Rhs, size_t _Dim1>
-CONSTEXPR auto Shuffle(const TScalarVectorExpr<_Lhs, _Dim0>& lhs, const TScalarVectorExpr<_Rhs, _Dim1>& rhs) NOEXCEPT {
-    return TScalarVectorShuffle<TScalarVectorExpr<_Lhs, _Dim0>, TScalarVectorExpr<_Rhs, _Dim1>, _Shuffle...>(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <size_t... _Shuffle, typename T, size_t _Dim>
-CONSTEXPR auto Shuffle(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
-    return TScalarVectorShuffle<TScalarVectorExpr<T, _Dim>, TScalarVectorExpr<T, _Dim>, _Shuffle...>(v, v);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Unary functions :
-//----------------------------------------------------------------------------
-#define PPE_SCALARVECTOR_UNARYFUNC_DEF(_NAME, _FUNC) \
-    template <typename _Expr, size_t _Dim> \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_Expr, _Dim>& v) { \
-        return TScalarVectorUnaryOp(v, [](auto x) CONSTEXPR NOEXCEPT { return _FUNC(x); }); \
-    }
-
-#define PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(_NAME) PPE_SCALARVECTOR_UNARYFUNC_DEF(_NAME, _NAME)
-
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Abs)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Frac)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Fractional)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Saturate)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Sign)
-
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Rcp)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(RSqrt)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(RSqrt_Low)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Sqrt)
-
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(CeilToFloat)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(FloorToFloat)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(RoundToFloat)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(TruncToFloat)
-
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(CeilToInt)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(FloorToInt)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(RoundToInt)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(TruncToInt)
-
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(CeilToUnsigned)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(FloorToUnsigned)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(RoundToUnsigned)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(TruncToUnsigned)
-
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Degrees)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Radians)
-PPE_SCALARVECTOR_UNARYFUNC_DEF(Cos, FPlatformMaths::Cos)
-PPE_SCALARVECTOR_UNARYFUNC_DEF(Sin, FPlatformMaths::Sin)
-
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(Float01_to_FloatM11)
-PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(FloatM11_to_Float01)
-
-#undef PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF
-#undef PPE_SCALARVECTOR_UNARYFUNC_DEF
-//----------------------------------------------------------------------------
-// Binary functions :
-//----------------------------------------------------------------------------
-#define PPE_SCALARVECTOR_BINARYFUNC_DEF(_NAME, _FUNC) \
-    template <typename T, typename _Expr, size_t _Dim, typename _Result = TScalarCommonType<_Expr, T> > \
-    CONSTEXPR auto _NAME(const T& a, const TScalarVectorExpr<_Expr, _Dim>& b) { \
-        return TScalarVectorUnaryOp(b, [a](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, x); }); \
-    } \
-    template <typename _Expr, size_t _Dim, typename T, typename _Result = TScalarCommonType<_Expr, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_Expr, _Dim>& a, const T& b) { \
-        return TScalarVectorUnaryOp(a, [b](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b); }); \
-    } \
-    template <typename _Lhs, size_t _Dim, typename _Rhs> \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) { \
-        return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return _FUNC(a, b); }); \
-    }
-
-#define PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(_NAME) PPE_SCALARVECTOR_BINARYFUNC_DEF(_NAME, _NAME)
-
-PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(Hypot)
-
-PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(Max)
-PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(Min)
-
-PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(FMod)
-PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(Pow)
-
-PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(Step)
-
-#undef PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF
-#undef PPE_SCALARVECTOR_BINARYFUNC_DEF
-//----------------------------------------------------------------------------
-// Ternary functions :
-//----------------------------------------------------------------------------
-#define PPE_SCALARVECTOR_TERNARYFUNC_DEF(_NAME, _FUNC) \
-    template <typename T, typename _B, size_t _Dim, typename _C, typename _Result = TScalarCommonType<_B, T> > \
-    CONSTEXPR auto _NAME(const T& a, const TScalarVectorExpr<_B, _Dim>& b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        return TScalarVectorBinaryOp(b, c, [a](auto y, auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, y, z); }); \
-    } \
-    template <typename _A, size_t _Dim, typename T, typename _C, typename _Result = TScalarCommonType<_A, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const T& b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        return TScalarVectorBinaryOp(a, c, [b](auto x, auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b, z); }); \
-    } \
-    template <typename _A, size_t _Dim, typename _B, typename T, typename _Result = TScalarCommonType<_A, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const TScalarVectorExpr<_B, _Dim>& b, const T& c) { \
-        return TScalarVectorBinaryOp(a, b, [c](auto x, auto y) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, y, c); }); \
-    } \
-    template <typename T, typename _C, size_t _Dim, typename _Result = TScalarCommonType<_C, T> > \
-    CONSTEXPR auto _NAME(const T& a, const T& b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        return TScalarVectorUnaryOp(c, [a, b](auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, b, z); }); \
-    } \
-    template <typename T, typename _B, size_t _Dim, typename _Result = TScalarCommonType<_B, T> > \
-    CONSTEXPR auto _NAME(const T& a, const TScalarVectorExpr<_B, _Dim>& b, const T& c) { \
-        return TScalarVectorUnaryOp(b, [a, c](auto y) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, y, c); }); \
-    } \
-    template <typename _A, size_t _Dim, typename T, typename _Result = TScalarCommonType<_A, T> > \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const T& b, const T& c) { \
-        return TScalarVectorUnaryOp(a, [b, c](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b, c); }); \
-    } \
-    template <typename _A, size_t _Dim, typename _B, typename _C> \
-    CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const TScalarVectorExpr<_B, _Dim>& b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        return TScalarVectorTernaryOp(a, b, c, [](auto x, auto y, auto z) CONSTEXPR NOEXCEPT { return _FUNC(x, y, z); }); \
-    }
-
-#define PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(_NAME) PPE_SCALARVECTOR_TERNARYFUNC_DEF(_NAME, _NAME)
-
-template <typename _A, typename _B, typename _C, typename _Op>
-struct TScalarVectorTernaryOp : TScalarVectorExpr<TScalarVectorTernaryOp<_A, _B, _C, _Op>, _A::Dim> {
-    using TScalarVectorExpr<TScalarVectorTernaryOp<_A, _B, _C, _Op>, _A::Dim>::Dim;
-    STATIC_ASSERT(_A::Dim == _B::Dim);
-    STATIC_ASSERT(_A::Dim == _C::Dim);
-
-    const typename _A::expr_type& a;
-    const typename _B::expr_type& b;
-    const typename _C::expr_type& c;
-    _Op op;
-
-    FORCE_INLINE CONSTEXPR TScalarVectorTernaryOp(const _A& _a, const _B& _b, const _C& _c, _Op&& _op) NOEXCEPT
-        : a(_a.ref())
-        , b(_b.ref())
-        , c(_c.ref())
-        , op(std::move(_op))
-    {}
-
-    using component_type = std::decay_t<decltype(
-        std::declval<_Op>()(
-            std::declval<const _A&>().template get<0>(),
-            std::declval<const _B&>().template get<0>(),
-            std::declval<const _C&>().template get<0>() )
-    )>;
-
-    template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
-        return op(a.template get<_Idx>(), b.template get<_Idx>(), c.template get<_Idx>());
-    }
-};
-
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(BiasScale)
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Blend)
-
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Clamp)
-
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Lerp)
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(LinearStep)
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(SLerp)
-
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Min3)
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Max3)
-
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Smoothstep)
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(Smootherstep)
-
-PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF(SMin)
-
-#undef PPE_SCALARVECTOR_TERNARYFUNC_ALIAS_DEF
-#undef PPE_SCALARVECTOR_TERNARYFUNC_DEF
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _A, size_t _Dim, typename _B, typename _C, typename U>
+template <typename T, size_t _Dim, typename A, typename B, typename C>
 CONSTEXPR auto BarycentricLerp(
-    const TScalarVectorExpr<_A, _Dim>& a,
-    const TScalarVectorExpr<_B, _Dim>& b,
-    const TScalarVectorExpr<_C, _Dim>& c,
-    U f0, U f1, U f2 ) NOEXCEPT {
-    return TScalarVectorTernaryOp(a, b, c, [f0, f1, f2](auto x, auto y, auto z) CONSTEXPR NOEXCEPT {
-        return BarycentricLerp(x, y, z, f0, f1, f2);
-    });
+    const TScalarVectorExpr<T, _Dim, A>& a,
+    const TScalarVectorExpr<T, _Dim, B>& b,
+    const TScalarVectorExpr<T, _Dim, C>& c,
+    float f0, float f1, float f2 ) NOEXCEPT {
+    return TScalarVectorExpr<T, _Dim>::Map([&](const T& ai, const T& bi, const T& ci) {
+        return BarycentricLerp(ai, bi, ci, f0, f1, f2);
+    },  a, b, c);
 }
 //----------------------------------------------------------------------------
-template <typename _A, size_t _Dim, typename _B, typename _C, typename U>
+template <typename T, size_t _Dim, typename A, typename B, typename C, typename D>
 CONSTEXPR auto BarycentricLerp(
-    const TScalarVectorExpr<_A, _Dim>& a,
-    const TScalarVectorExpr<_B, _Dim>& b,
-    const TScalarVectorExpr<_C, _Dim>& c,
-    const TScalarVector<U, 3>& f ) NOEXCEPT {
-    return TScalarVectorTernaryOp(a, b, c, [&f](auto x, auto y, auto z) CONSTEXPR NOEXCEPT {
-        return BarycentricLerp(x, y, z, f.x, f.y, f.z);
-    });
+    const TScalarVectorExpr<T, _Dim, A>& a,
+    const TScalarVectorExpr<T, _Dim, B>& b,
+    const TScalarVectorExpr<T, _Dim, C>& c,
+    const TScalarVectorExpr<float, _Dim, D>& f) NOEXCEPT {
+    return BarycentricLerp(a, b, c, f.x, f.y, f.z);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -594,58 +412,60 @@ TScalarVector<double, 2> SinCos(double angle) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-bool IsINF(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT;
+template <typename T, size_t _Dim, typename _Expr>
+bool IsINF(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-bool IsNAN(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT;
+template <typename T, size_t _Dim, typename _Expr>
+bool IsNAN(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-bool IsNANorINF(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<float, _Dim> UByte0255_to_Float01(const TScalarVector<u8, _Dim>& value) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<float, _Dim> UByte0255_to_FloatM11(const TScalarVector<u8, _Dim>& value) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<u8, _Dim> Float01_to_UByte0255(const TScalarVector<float, _Dim>& value) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<u8, _Dim> FloatM11_to_UByte0255(const TScalarVector<float, _Dim>& value) NOEXCEPT;
+template <typename T, size_t _Dim, typename _Expr>
+bool IsNANorINF(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<float, _Dim> UShort065535_to_Float01(const TScalarVector<u16, _Dim>& value) NOEXCEPT;
+template <size_t _Dim, typename _Expr>
+TScalarVector<float, _Dim> UByte0255_to_Float01(const TScalarVectorExpr<u8, _Dim, _Expr>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<float, _Dim> UByte065535_to_FloatM11(const TScalarVector<u16, _Dim>& value) NOEXCEPT;
+template <size_t _Dim, typename _Expr>
+TScalarVector<float, _Dim> UByte0255_to_FloatM11(const TScalarVectorExpr<u8, _Dim, _Expr>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<u16, _Dim> Float01_to_UShort065535(const TScalarVector<float, _Dim>& value) NOEXCEPT;
+template <size_t _Dim, typename _Expr>
+TScalarVector<u8, _Dim> Float01_to_UByte0255(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<u16, _Dim> FloatM11_to_UShort065535(const TScalarVector<float, _Dim>& value) NOEXCEPT;
+template <size_t _Dim, typename _Expr>
+TScalarVector<u8, _Dim> FloatM11_to_UByte0255(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
-TScalarVector<u8, 4> Float3M11_to_UByte4N(const TScalarVector<float, 3>& value) NOEXCEPT;
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TScalarVector<float, 3> UByte4N_to_Float3M11(const TScalarVector<u8, 4>& value) NOEXCEPT;
+template <size_t _Dim, typename _Expr>
+TScalarVector<float, _Dim> UShort065535_to_Float01(const TScalarVectorExpr<u16, _Dim, _Expr>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<float, _Dim> Float01_to_FloatM11(const TScalarVector<float, _Dim>& v_01) NOEXCEPT;
+template <size_t _Dim, typename _Expr>
+TScalarVector<float, _Dim> UByte065535_to_FloatM11(const TScalarVectorExpr<u16, _Dim, _Expr>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-TScalarVector<float, _Dim> FloatM11_to_Float01(const TScalarVector<float, _Dim>& v_M11) NOEXCEPT;
+template <size_t _Dim, typename _Expr>
+TScalarVector<u16, _Dim> Float01_to_UShort065535(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <size_t _Dim, typename _Expr>
+TScalarVector<u16, _Dim> FloatM11_to_UShort065535(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename _Expr>
+TScalarVector<u8, 4> Float3M11_to_UByte4N(const TScalarVectorExpr<float, 3, _Expr>& value) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename _Expr>
+TScalarVector<float, 3> UByte4N_to_Float3M11(const TScalarVectorExpr<u8, 4, _Expr>& value) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <size_t _Dim, typename _Expr>
+TScalarVector<float, _Dim> Float01_to_FloatM11(const TScalarVectorExpr<float, _Dim, _Expr>& v_01) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <size_t _Dim, typename _Expr>
+TScalarVector<float, _Dim> FloatM11_to_Float01(const TScalarVectorExpr<float, _Dim, _Expr>& v_M11) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void SwapEndiannessInPlace(TScalarVector<T, _Dim>* value) NOEXCEPT {
-    FPlatformEndian::SwapInPlace(value->Data);
+    FPlatformEndian::SwapInPlace(value->data);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -219,7 +219,7 @@ EContainmentType FFrustum::Contains(const TMemoryView<const float3>& points) con
 //----------------------------------------------------------------------------
 EContainmentType FFrustum::Contains(const FBoundingBox& box) const {
     float3 boxCorners[8];
-    box.GetCorners(boxCorners);
+    box.MakeCorners(boxCorners);
     return FrustumContainsConvexVolume_(_planes, _corners, box, boxCorners);
 }
 //----------------------------------------------------------------------------
@@ -357,7 +357,7 @@ float FFrustum::GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& p
 //----------------------------------------------------------------------------
 float FFrustum::GetZoomToExtentsShiftDistance(const FBoundingBox& box) {
     float3 boxCorners[8];
-    box.GetCorners(boxCorners);
+    box.MakeCorners(boxCorners);
     return GetZoomToExtentsShiftDistance(boxCorners);
 }
 //----------------------------------------------------------------------------
@@ -386,8 +386,9 @@ FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, co
 
     FFrustum result;
 
-    result._matrix =    MakeLookAtLHMatrix(cameraPos, float3(cameraPos + lookDir * 10), upDir) *
-                        MakePerspectiveFovLHMatrix(fov, aspect, znear, zfar);
+    result._matrix = (
+        MakeLookAtLHMatrix(cameraPos, float3(cameraPos + lookDir * 10.f), upDir) *
+        MakePerspectiveFovLHMatrix(fov, aspect, znear, zfar));
 
     result._planes[size_t(EFrustumPlane::Near)]      = FPlane::FromTriangle(Near1, Near2, Near3).Normalize();
     result._planes[size_t(EFrustumPlane::Far)]       = FPlane::FromTriangle(Far3, Far2, Far1).Normalize();

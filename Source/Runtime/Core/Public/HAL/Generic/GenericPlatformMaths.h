@@ -161,6 +161,9 @@ public: // must be defined for every platform
     //------------------------------------------------------------------------
     // arithmetics
 
+    static FORCE_INLINE double Sqrt(double f) { return ::sqrt(f); }
+    static FORCE_INLINE double RSqrt(double f) { return 1.0 / ::sqrt(f); }
+
     static FORCE_INLINE float Sqrt(float f) { return ::sqrtf(f); }
     static FORCE_INLINE float Pow(float a, float b) { return ::powf(a, b); }
 

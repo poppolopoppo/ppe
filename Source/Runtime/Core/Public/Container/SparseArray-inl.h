@@ -598,7 +598,7 @@ NO_INLINE void TSparseArray<T, _Allocator>::GrabNewChunk_(size_t cls) {
 
         // reallocate to add a new slot when growing, always call realloc but should rarely effectively allocate a new block
         TMemoryView<FDataChunkRef> aliased(_chunks, _numChunks);
-        ReallocateAllocatorBlock_AssumePOD(allocator_traits::Get(*this), aliased, _numChunks, _numChunks + 1);
+        ReallocateAllocatorBlock_AssumePOD(allocator_traits::Get(*this), aliased, _numChunks, _numChunks + 1_size_t);
         _chunks = aliased.data();
     }
 
@@ -613,7 +613,7 @@ void TSparseArray<T, _Allocator>::ReleaseChunk_(FDataItem* chunk, size_t off, si
     Assert(sz);
 
     IF_CONSTEXPR(Meta::has_trivial_destructor<T>::value == false) {
-        for (size_t i = 0; (i < sz) & (off + i < _highestIndex); ++i) {
+        for (size_t i = 0; (i < sz) && (off + i < _highestIndex); ++i) {
             auto& it = reinterpret_cast<FDataItem*>(chunk)[i];
             if (not UnpackId_(it.Id).empty())
                 Meta::Destroy(&it.Data);

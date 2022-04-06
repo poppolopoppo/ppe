@@ -50,7 +50,7 @@ public:
 
     STATIC_CONST_INTEGRAL(u32, MaxBufferParts, FVulkanCommandBatch::MaxBufferParts);
     STATIC_CONST_INTEGRAL(u32, MaxImageParts, FVulkanCommandBatch::MaxImageParts);
-    STATIC_CONST_INTEGRAL(u32, MinBufferPart, 4_KiB);
+    STATIC_CONST_INTEGRAL(size_t, MinBufferPart, 4_KiB);
 
     using FPerQueuePool = ARRAYINSITU(RHICommand, FVulkanCommandPool, u32(EQueueType::_Count));
     using FResourceIndex = FVulkanResourceManager::FIndex;
@@ -218,9 +218,9 @@ private:
 
     template <typename T>
     NODISCARD bool StagingAlloc_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, T** pData, size_t count);
-    NODISCARD bool StagingStore_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, const void* srcData, u32 dataSize, u32 offsetAlign);
-    NODISCARD static bool StorePartialData_(FInternalData& data, FStagingBlock* pDstStaging, u32* pOutSize, FRawMemoryConst srcData, u32 srcOffset);
-    NODISCARD static bool StagingImageStore_(FInternalData& data, FStagingBlock* pDstStaging, u32* pOutSize, FRawMemoryConst srcData, u32 srcOffset, u32 srcPitch, u32 srcTotalSize);
+    NODISCARD bool StagingStore_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, const void* srcData, size_t dataSize, size_t offsetAlign);
+    NODISCARD static bool StorePartialData_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, FRawMemoryConst srcData, size_t srcOffset);
+    NODISCARD static bool StagingImageStore_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, FRawMemoryConst srcData, size_t srcOffset, size_t srcPitch, size_t srcTotalSize);
 
     NODISCARD PFrameTask MakeUpdateBufferTask_(FInternalData& data, const FUpdateBuffer& task);
     NODISCARD PFrameTask MakeUpdateImageTask_(FInternalData& data, const FUpdateImage& task);

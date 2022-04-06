@@ -101,7 +101,7 @@ struct FRenderPassDesc {
     FRenderPassDesc& SetDepthTestEnabled(bool value) { Depth.EnableDepthTest = value; return (*this); }
     FRenderPassDesc& SetDepthWriteEnabled(bool value) { Depth.EnableDepthWrite = value; return (*this); }
     FRenderPassDesc& SetDepthCompareOp(ECompareOp value) { Depth.CompareOp = value; return (*this); }
-    FRenderPassDesc& SetDepthBounds(float min, float max) { Depth.Bounds = { min, max }; return (*this); }
+    FRenderPassDesc& SetDepthBounds(float min, float max) { Depth.Bounds.Set(min, max); return (*this); }
     FRenderPassDesc& SetDepthBoundsEnabled(bool value) { Depth.EnableBounds = value; return (*this); }
 
     // Stencil
@@ -199,7 +199,7 @@ inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImage
 }
 //----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::AddViewport(const uint2& extent, float minDepth, float maxDepth, TMemoryView<const EShadingRatePalette> shadingRate) {
-    return AddViewport(FRectangleF(float2::Zero, extent.Cast<float>()), minDepth, maxDepth, shadingRate);
+    return AddViewport(FRectangleF(float2::Zero, float2(extent)), minDepth, maxDepth, shadingRate);
 }
 //----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::AddViewport(const float2& extent, float minDepth, float maxDepth, TMemoryView<const EShadingRatePalette> shadingRate) {

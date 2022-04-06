@@ -68,7 +68,7 @@ public:
 
     bool IsOrthographic() const;
 
-    TMemoryView<const float3> GetCorners() const { return MakeView(_corners); }
+    TMemoryView<const float3> MakeCorners() const { return MakeView(_corners); }
     const FBoundingBox& GetBoundingBox() const { return _box; }
 
     void GetCameraParams(FFrustumCameraParams& params) const;

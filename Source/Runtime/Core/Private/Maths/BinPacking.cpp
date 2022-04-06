@@ -52,10 +52,10 @@ static void Split_(
 }
 //----------------------------------------------------------------------------
 FORCE_INLINE static bool BoxLessHeuristic_(const float2& extents0, const float2& extents1) {
-    const float e0 = Max(extents0.x, extents0.y);
-    const float e1 = Max(extents1.x, extents1.y);
+    const float e0 = Max<float>(extents0.x, extents0.y);
+    const float e1 = Max<float>(extents1.x, extents1.y);
     return ((e1 < e0) || ((e1 ==  e0) &&
-            (Min(extents1.x, extents1.y) < Min(extents0.x, extents0.y)) ));
+            (Min<float>(extents1.x, extents1.y) < Min<float>(extents0.x, extents0.y)) ));
     //return (Max(extents1.x, extents1.y) < Max(extents0.x, extents0.y) ); // Max(w, h)
     //return ((extents1.x + extents1.y) < (extents0.x + extents0.y)); // perimeter <=> mean
     //return ((extents1.x * extents1.y) < (extents0.x * extents0.y)); // area

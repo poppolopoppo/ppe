@@ -85,7 +85,7 @@ template <typename _Task>
 _Task& TDrawCallDesc<_Task>::EnableFragmentDebugTrace(int x, int y) {
     DebugMode.Mode = EShaderDebugMode::Trace;
     DebugMode.Stages = DebugMode.Stages | EShaderStages::Fragment;
-    DebugMode.FragCoord = { checked_cast<i16>(x), checked_cast<i16>(y) };
+    DebugMode.FragCoord.Set(checked_cast<i16>(x), checked_cast<i16>(y));
     return static_cast<_Task&>(*this);
 }
 #endif
@@ -104,7 +104,7 @@ template <typename _Task>
 _Task& TDrawCallDesc<_Task>::EnableFragmentProfiling(int x, int y) {
     DebugMode.Mode = EShaderDebugMode::Profiling;
     DebugMode.Stages = DebugMode.Stages | EShaderStages::Fragment;
-    DebugMode.FragCoord = { checked_cast<i16>(x), checked_cast<i16>(y) };
+    DebugMode.FragCoord.Set(checked_cast<i16>(x), checked_cast<i16>(y));
     return static_cast<_Task&>(*this);
 }
 #endif

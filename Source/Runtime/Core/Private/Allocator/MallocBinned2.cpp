@@ -650,8 +650,8 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
         pool.BlockSize = checked_cast<u16>(FMallocBinned2::SmallPoolIndexToBlockSize(i));
         pool.MaxChunksEverAllocated = 0;
         pool.MaxBlocksPerBundle = checked_cast<u8>(Min( // bundle size doesn't depend on chunk size
-            PPE_MALLOCBINNED2_BUNDLE_MAX_COUNT,
-            (PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE + pool.BlockSize - 1u) / pool.BlockSize ));
+            static_cast<size_t>(PPE_MALLOCBINNED2_BUNDLE_MAX_COUNT),
+            static_cast<size_t>((PPE_MALLOCBINNED2_BUNDLE_MAX_SIZE + pool.BlockSize - 1u) / pool.BlockSize) ));
         Assert_NoAssume(pool.MaxBlocksPerBundle > 0);
 
         u32 bestWastedSize = UMax, bestPagesPerChunk = 0;

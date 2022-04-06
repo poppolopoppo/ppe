@@ -155,7 +155,7 @@ FLinearColor FLinearColor::FromHash(hash_t h, float a) {
 FLinearColor FLinearColor::FromHeatmap(float x, float a) {
     x = Saturate(x);
     const float4 x1{ 1.0, x, x * x, x * x * x }; // 1 x x2 x3
-    const float4 x2{ x1 * x1.w * x }; // x4 x5 x6 x7
+    const float4 x2{ x1 * (x1.w * x) }; // x4 x5 x6 x7
     return FLinearColor(
         Dot( x1.xyzw, float4( -0.027780558f, +1.228188385f, +0.278906882f, +3.892783760f ) ) + Dot( x2.xy, float2( -8.490712758f, +4.069046086f ) ),
         Dot( x1.xyzw, float4( +0.014065206f, +0.015360518f, +1.605395918f, -4.821108251f ) ) + Dot( x2.xy, float2( +8.389314011f, -4.193858954f ) ),
@@ -357,7 +357,7 @@ float3 RGB_to_HCV(const float3& rgb) {
 float3 HSV_to_RGB(const float3& hsv) {
     float3 RGB = Hue_to_RGB(hsv.x);
     float3 x = RGB * 2.f;
-    return ((x - 1) * hsv.y + 1) * hsv.z;
+    return ((x - 1.0f) * hsv.y + 1.0f) * hsv.z;
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_HSV(const float3& rgb) {

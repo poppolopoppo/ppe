@@ -34,7 +34,7 @@ PPE_ASSUME_TYPE_AS_POD(FCommandBufferDesc)
 //----------------------------------------------------------------------------
 struct FStagingBlock {
     FRawBufferID RawBufferID;
-    u32 Offset;
+    size_t Offset;
     ubyte* Mapped;
 };
 PPE_ASSUME_TYPE_AS_POD(FStagingBlock)

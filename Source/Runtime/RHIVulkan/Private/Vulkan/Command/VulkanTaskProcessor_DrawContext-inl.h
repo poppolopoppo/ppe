@@ -281,7 +281,7 @@ inline void FVulkanTaskProcessor::FDrawContext::SetStencilReference(u32 value) {
 inline void FVulkanTaskProcessor::FDrawContext::SetShadingRatePalette(u32 viewportIndex, TMemoryView<const EShadingRatePalette> value) {
     LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
 
-    STACKLOCAL_POD_ARRAY(VkShadingRatePaletteEntryNV, entries, Max(value.size(), 1u));
+    STACKLOCAL_POD_ARRAY(VkShadingRatePaletteEntryNV, entries, Max(value.size(), 1_size_t));
     entries[0] = VK_SHADING_RATE_PALETTE_ENTRY_1_INVOCATION_PER_PIXEL_NV;
 
     forrange(i, 0, value.size())

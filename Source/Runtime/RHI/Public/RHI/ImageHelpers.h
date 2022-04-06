@@ -53,8 +53,7 @@ CONSTEXPR uint4 Unswizzle(FImageSwizzle swizzle) {
         (swizzle.Value >> 12u) & 0xFu,
         (swizzle.Value >>  8u) & 0xFu,
         (swizzle.Value >>  4u) & 0xFu,
-        (swizzle.Value >> 0u) & 0xFu
-    };
+        (swizzle.Value >>  0u) & 0xFu };
 }
 //----------------------------------------------------------------------------
 CONSTEXPR FImageSwizzle operator "" _swizzle (unsigned long long value) {

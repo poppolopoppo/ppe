@@ -57,7 +57,7 @@ public:
     u32 MaxIterations{ 5000 };
     double MaxVarianceError{ 1e-2 };
 #else
-    u32 MinIterations{ Max(FApproximateHistogram::MinSamples * 2, 5000ul) };
+    u32 MinIterations{ Max(FApproximateHistogram::MinSamples * 2, 5000_u32) };
     u32 MaxIterations{ 1000000 };
     double MaxVarianceError{ 1e-3 };
 #endif

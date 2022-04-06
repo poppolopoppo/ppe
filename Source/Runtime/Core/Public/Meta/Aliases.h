@@ -291,6 +291,9 @@ using i64   = std::int64_t;
 #define EXTERN_TEMPLATE_CLASS_DECL(_API) extern template class
 #define EXTERN_TEMPLATE_CLASS_DEF(_API) template class _API
 //----------------------------------------------------------------------------
+#define EXTERN_TEMPLATE_STRUCT_DECL(_API) extern template struct
+#define EXTERN_TEMPLATE_STRUCT_DEF(_API) template struct _API
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
@@ -397,6 +400,21 @@ PACKED_STRUCT(uint192_t, { u128 lo; u64 hi; });
 using u192 = uint192_t;
 PACKED_STRUCT(uint224_t, { u128 lo; u96 hi; });
 using u224 = uint224_t;
+//----------------------------------------------------------------------------
+#define STATICCAST_LITERAL_OP(SRC, DST) \
+    CONSTEXPR DST operator "" CONCAT(_, DST)(SRC value) { \
+        return static_cast<DST>(value); \
+    }
+STATICCAST_LITERAL_OP(unsigned long long, size_t)
+STATICCAST_LITERAL_OP(unsigned long long, u8)
+STATICCAST_LITERAL_OP(unsigned long long, u16)
+STATICCAST_LITERAL_OP(unsigned long long, u32)
+STATICCAST_LITERAL_OP(unsigned long long, u64)
+STATICCAST_LITERAL_OP(unsigned long long, i8)
+STATICCAST_LITERAL_OP(unsigned long long, i16)
+STATICCAST_LITERAL_OP(unsigned long long, i32)
+STATICCAST_LITERAL_OP(unsigned long long, i64)
+#undef STATICCAST_LITERAL_OP
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
