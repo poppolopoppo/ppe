@@ -72,6 +72,21 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
+class PPE_CORE_API FSyscallThreadPool : Meta::TSingleton<FTaskManager, FSyscallThreadPool> {
+    friend class Meta::TSingleton<FTaskManager, FSyscallThreadPool>;
+    using singleton_type = Meta::TSingleton<FTaskManager, FSyscallThreadPool>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
+
+public:
+    using singleton_type::Get;
+#if USE_PPE_ASSERT
+    using singleton_type::HasInstance;
+#endif
+
+    static void Create();
+    static void Destroy();
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // same than Task_fwd.h, but optional parameter definition
@@ -79,6 +94,7 @@ PPE_CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority = ETaskPri
 PPE_CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 PPE_CORE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 PPE_CORE_API void AsyncBackground(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+PPE_CORE_API void AsyncSyscall(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -165,7 +165,7 @@ void FWindowsPlatformThread::SetPriority(EThreadPriority priority) {
 auto FWindowsPlatformThread::BackgroundThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
     info.Priority = EThreadPriority::Lowest;
-    info.NumWorkers = Min(size_t(2), FWindowsPlatformMisc::NumCores() / 2);
+    info.NumWorkers = Clamp(1_size_t, 4_size_t, FWindowsPlatformMisc::NumCores() / 2);
     forrange(i, 0, FAffinityMask(info.NumWorkers))
         info.Affinities[i] = SecondaryThreadAffinity();
     return info;
@@ -174,7 +174,7 @@ auto FWindowsPlatformThread::BackgroundThreadsInfo() -> FThreadGroupInfo {
 auto FWindowsPlatformThread::GlobalThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
     info.Priority = EThreadPriority::Normal;
-    info.NumWorkers = Max(FWindowsPlatformMisc::NumCores() - 1ul, 1ul);
+    info.NumWorkers = Max(FWindowsPlatformMisc::NumCores() - 1_size_t, 1_size_t);
     forrange(i, 0, FAffinityMask(info.NumWorkers))
         info.Affinities[i] = LogicalAffinityMask_(1ull << (i + 1ul));
     return info;

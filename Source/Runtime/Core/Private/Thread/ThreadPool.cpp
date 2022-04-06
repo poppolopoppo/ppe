@@ -148,6 +148,23 @@ void FBackgroundThreadPool::Destroy() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void* FSyscallThreadPool::class_singleton_storage() NOEXCEPT {
+    return singleton_type::make_singleton_storage(); // for shared libs
+}
+//----------------------------------------------------------------------------
+void FSyscallThreadPool::Create() {
+    CreateThreadPool_<singleton_type>("Syscall", PPE_THREADTAG_SYSCALL, {
+        1, EThreadPriority::Lowest,
+        { FPlatformThread::SecondaryThreadAffinity() }
+    });
+}
+//----------------------------------------------------------------------------
+void FSyscallThreadPool::Destroy() {
+    DestroyThreadPool_<singleton_type>();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FTaskManager& GlobalThreadPool() NOEXCEPT {
     return FGlobalThreadPool::Get();
 }
@@ -204,6 +221,10 @@ void AsyncBackground(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriorit
     FBackgroundThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
+void AsyncSyscall(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FSyscallThreadPool::Get().Run(std::move(rtask), priority);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::Start() {
@@ -211,6 +232,7 @@ void FThreadPoolStartup::Start() {
     FIOThreadPool::Create();
     FHighPriorityThreadPool::Create();
     FBackgroundThreadPool::Create();
+    FSyscallThreadPool::Create();
 
     DumpStats();
 }
@@ -218,6 +240,7 @@ void FThreadPoolStartup::Start() {
 void FThreadPoolStartup::Shutdown() {
     DumpStats();
 
+    FSyscallThreadPool::Destroy();
     FBackgroundThreadPool::Destroy();
     FHighPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
@@ -227,6 +250,7 @@ void FThreadPoolStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::DumpStats() {
+    FSyscallThreadPool::Get().DumpStats();
     FBackgroundThreadPool::Get().DumpStats();
     FHighPriorityThreadPool::Get().DumpStats();
     FIOThreadPool::Get().DumpStats();
@@ -234,6 +258,7 @@ void FThreadPoolStartup::DumpStats() {
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::DutyCycle() {
+    FSyscallThreadPool::Get().DutyCycle();
     FBackgroundThreadPool::Get().DutyCycle();
     FHighPriorityThreadPool::Get().DutyCycle();
     FIOThreadPool::Get().DutyCycle();
@@ -241,6 +266,7 @@ void FThreadPoolStartup::DutyCycle() {
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::ReleaseMemory() {
+    FSyscallThreadPool::Get().ReleaseMemory();
     FBackgroundThreadPool::Get().ReleaseMemory();
     FHighPriorityThreadPool::Get().ReleaseMemory();
     FIOThreadPool::Get().ReleaseMemory();

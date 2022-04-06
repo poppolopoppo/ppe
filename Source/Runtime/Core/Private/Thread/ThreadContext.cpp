@@ -158,7 +158,7 @@ void FThreadContext::SetAffinityMask(u64 mask) const {
 
     LOG(Thread, Debug, L"set thread {0} affinity mask to {1:#16b}", ThreadId(), mask);
 
-    FPlatformThread::SetAffinityMask(u64(mask));
+    FPlatformThread::SetAffinityMask(mask);
 }
 //----------------------------------------------------------------------------
 EThreadPriority FThreadContext::Priority() const {
