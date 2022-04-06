@@ -201,11 +201,15 @@ void FModularDomain::Start(FModularDomain& domain) {
     foreachitem(it, domain._modules)
         it->second->PostStart(domain);
 
+    domain._OnApplicationStart(domain);
+
     FLUSH_LOG();
 }
 //----------------------------------------------------------------------------
 void FModularDomain::Shutdown(FModularDomain& domain) {
     Assert(&domain == GAppDomainRef_);
+
+    domain._OnApplicationShutdown(domain);
 
     reverseforeachitem(it, domain._modules)
         it->second->PreShutdown(domain);
