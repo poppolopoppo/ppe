@@ -480,7 +480,7 @@ void FVulkanFrameGraph::PrepareNewFrame() {
 //----------------------------------------------------------------------------
 // Begin
 //----------------------------------------------------------------------------
-FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn) {
+FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn) {
     Assert(static_cast<u32>(desc.QueueType) < _queueMap.size());
     Assert_NoAssume(IsInitialized_());
 
@@ -511,20 +511,23 @@ FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMe
 // Execute
 //----------------------------------------------------------------------------
 bool FVulkanFrameGraph::Execute(FCommandBufferBatch& cmdBatch) {
-    Assert(cmdBatch.Batch);
-    Assert(cmdBatch.Buffer);
+    Assert(cmdBatch.Buffer());
+    Assert(cmdBatch.Batch());
     Assert_NoAssume(IsInitialized_());
 
-    PVulkanCommandBuffer cmd{ checked_cast<FVulkanCommandBuffer>(cmdBatch.Buffer) };
+    PVulkanCommandBuffer cmd{ checked_cast<FVulkanCommandBuffer>(cmdBatch.Buffer()) };
     PVulkanCommandBatch batch{ cmd->Batch() };
-    Assert_NoAssume(batch == cmdBatch.Batch);
+    Assert_NoAssume(batch == cmdBatch.Batch());
 
     // execute and release the command buffer
     const bool success = cmd->Execute();
     ONLY_IF_RHIDEBUG(CLOG(not success, RHI, Error, L"failed to execute command buffer <{0}>", cmd->DebugName()));
+    Assert_NoAssume(not cmd->Batch()); // release batch reference in buffer after Execute()
 
-    RemoveRef_AssertAlive(cmdBatch.Buffer); // release client ref first
-    _cmdBufferPool.Release(RemoveRef_AssertReachZero_KeepAlive(cmd)); //  then release tmp ref
+    cmdBatch = FCommandBufferBatch{
+        PCommandBuffer(), // release client ref first
+        PCommandBatch(cmdBatch.Batch()) };
+    _cmdBufferPool.Release(RemoveRef_AssertReachZero_KeepAlive(cmd)); // then release tmp ref to the pool
 
     if (success) {
         // add batch to the submission queue
@@ -786,8 +789,8 @@ bool FVulkanFrameGraph::Wait(TMemoryView<const FCommandBufferBatch> commands, FN
     bool result = true;
 
     for (const FCommandBufferBatch& cmd : commands) {
-        Assert(cmd.Batch);
-        const PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(cmd.Batch);
+        Assert(cmd.Valid());
+        const PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(cmd.Batch());
 
         switch (batch->State()) {
         case FVulkanCommandBatch::EState::Complete: {

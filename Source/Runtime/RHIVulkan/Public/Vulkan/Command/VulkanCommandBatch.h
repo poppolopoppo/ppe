@@ -158,6 +158,36 @@ public:
         FSwapchains Swapchains;
     };
 
+#if USE_PPE_RHIDEBUG
+    using FShaderModules = TFixedSizeStack<PVulkanShaderModule, 8>;
+    using FDebugBatchGraph = FVulkanLocalDebugger::FBatchGraph;
+
+    struct FDebugStorageBuffer {
+        FBufferID ShaderTraceBuffer;
+        FBufferID ReadBackBuffer;
+        size_t Capacity{ 0 };
+        size_t Size{ 0 };
+        VkPipelineStageFlags Stages{ Default };
+    };
+
+    struct FDebugMode {
+        FShaderModules Modules;
+        VkDescriptorSet DescriptorSet{ VK_NULL_HANDLE };
+        size_t Offset{ 0 };
+        size_t Size{ 0 };
+        u32 StorageBufferIndex{ UMax };
+        EShaderDebugMode Mode{ Default };
+        EShaderStages Stages{ Default };
+        FTaskName TaskName;
+        uint4 Payload{ 0 };
+    };
+
+    using FDebugStorageBuffers = VECTORINSITU(RHIDebug, FDebugStorageBuffer, 1);
+    using FDebugModes = VECTORINSITU(RHIDebug, FDebugMode, 1);
+    using FDebugDescriptorKey = TPair<FRawBufferID, FRawDescriptorSetLayoutID>;
+    using FDebugDescriptorCache = HASHMAP(RHIDebug, FDebugDescriptorKey, FVulkanDescriptorSet);
+#endif
+
     FVulkanCommandBatch(const SVulkanFrameGraph& fg, u32 indexInPool);
     virtual ~FVulkanCommandBatch() override;
 
@@ -167,13 +197,9 @@ public:
     FVulkanSubmitted* Submitted() const { return _submitted.load(std::memory_order_relaxed); }
     EQueueUsage QueueUsage() const NOEXCEPT;
 
-#if USE_PPE_RHIDEBUG
-    const FVulkanDebugName& DebugName() const { return _debugName; }
-#endif
-
     auto Read() const { return _data.LockShared(); }
 
-    void Construct(EQueueType type, TMemoryView<const FCommandBufferBatch> dependsOn);
+    void Construct(EQueueType type, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn);
 
     bool OnBegin(const FCommandBufferDesc& desc);
     void OnBeforeRecording(VkCommandBuffer cmd);

@@ -160,7 +160,7 @@ public: // interface
     virtual void PrepareNewFrame() = 0;
 
     // Begin command buffer recording.
-    NODISCARD virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const FCommandBufferBatch> dependsOn = {}) = 0;
+    NODISCARD virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn = {}) = 0;
 
     // Compile framegraph for current command buffer and append it to the pending command buffer queue (that are waiting for submitting to GPU).
     NODISCARD virtual bool Execute(FCommandBufferBatch& cmdBatch) = 0;

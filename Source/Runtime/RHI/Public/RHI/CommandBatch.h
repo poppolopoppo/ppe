@@ -12,15 +12,13 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FCommandBufferBatch {
-    PCommandBuffer Buffer;
-    PCommandBatch Batch;
-
+public:
     FCommandBufferBatch() = default;
     FCommandBufferBatch(std::nullptr_t) NOEXCEPT {}
 
     FCommandBufferBatch(PCommandBuffer&& rbuffer, PCommandBatch&& rbatch) NOEXCEPT
-    :   Buffer(std::move(rbuffer))
-    ,   Batch(std::move(rbatch))
+    :   _buffer(std::move(rbuffer))
+    ,   _batch(std::move(rbatch))
     {}
 
     FCommandBufferBatch(const FCommandBufferBatch&) = default;
@@ -31,17 +29,24 @@ struct FCommandBufferBatch {
 
 #if USE_PPE_RHIDEBUG
     ~FCommandBufferBatch() {
-        AssertMessage(L"command buffer batch was not executed", not Buffer);
+        AssertMessage(L"command buffer was not executed", not _buffer);
     }
 #endif
 
-    bool Valid() const { return (!!Buffer); }
+    bool Valid() const { return (!!_buffer); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
+    const PCommandBuffer& Buffer() const { return _buffer; }
+    const PCommandBatch& Batch() const { return _batch; }
+
     ICommandBuffer* operator ->() const NOEXCEPT {
-        Assert(Buffer);
-        return Buffer.get();
+        Assert(_buffer);
+        return _buffer.get();
     }
+
+private:
+    PCommandBuffer _buffer;
+    PCommandBatch _batch;
 };
 //----------------------------------------------------------------------------
 class PPE_RHI_API ICommandBatch : public FRefCountable {
@@ -50,15 +55,14 @@ public:
 
     virtual void ReleaseForRecycling() NOEXCEPT = 0;
 
-    // call TearDown() when released, just before delete
-    friend void OnStrongRefCountReachZero(ICommandBatch* batch) {
-        Assert(batch);
-        Assert_NoAssume(0 == batch->RefCount());
+    // call ReleaseForRecycling() when released, and skip delete, see RefPtr.h
+    void OnStrongRefCountReachZero() NOEXCEPT {
+        Assert_NoAssume(0 == RefCount());
 #if USE_PPE_SAFEPTR
-        Assert_Lightweight(0 == batch->SafeRefCount());
+        Assert_Lightweight(0 == SafeRefCount());
 #endif
 
-        batch->ReleaseForRecycling();
+        ReleaseForRecycling();
     }
 };
 //----------------------------------------------------------------------------
