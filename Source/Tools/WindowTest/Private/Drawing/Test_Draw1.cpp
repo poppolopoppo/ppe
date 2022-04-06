@@ -78,7 +78,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
             imageData.Load(&texel, float3(x, y, 0));
 
             const bool isEqual = DistanceSq(color, texel) < F_LargeEpsilon;
-            LOG(WindowTest, Info, L"Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
+            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
             LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return true;

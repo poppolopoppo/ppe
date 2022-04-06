@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Test_Draw4_(FWindowTestApp& app) {
+bool Test_Draw6_(FWindowTestApp& app) {
     using namespace PPE::RHI;
 
     IFrameGraph& fg = *app.RHI().FrameGraph();
@@ -95,16 +95,17 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     LOG_CHECK(WindowTest, fg.UpdateHostBuffer(positionsUb, 0_b, sizeof(positionsRaw), positionsRaw));
     LOG_CHECK(WindowTest, fg.UpdateHostBuffer(colorsUb, 0_b, sizeof(colorsRaw), colorsRaw));
 
-    TScopedResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw4")) };
+    TScopedResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw6")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources0 = NEW_REF(RHIPipeline, FPipelineResources);
     LOG_CHECK(WindowTest, fg.InitPipelineResources(resources0.get(), ppln, FDescriptorSetID{"PerObject"}));
-    resources0->BindBuffer(FUniformID{ "VertexPositionsUB" }, positionsUb);
-    resources0->BindTexture(FUniformID{ "un_ColorTexture" }, texture, sampler);
 
     PPipelineResources resources1 = NEW_REF(RHIPipeline, FPipelineResources);
     LOG_CHECK(WindowTest, fg.InitPipelineResources(resources1.get(), ppln, FDescriptorSetID{"PerPass"}));
+
+    resources0->BindBuffer(FUniformID{ "VertexPositionsUB" }, positionsUb);
+    resources0->BindTexture(FUniformID{ "un_ColorTexture" }, texture, sampler);
     resources1->BindBuffer(FUniformID{ "VertexColorsUB" }, colorsUb);
 
     bool dataIsCorrect = false;
@@ -136,31 +137,48 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     };
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
-        .SetName("Test_Draw4")
+        .SetName("Test_Draw6")
         .SetDebugFlags(EDebugFlags::Default)) };
     LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, image, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
-        .AddViewport(viewSize)
-        .AddResources(FDescriptorSetID{ "PerPass" }, resources1));
+        .AddViewport(viewSize));
     LOG_CHECK(WindowTest, !!renderPass);
 
-    cmd->Task(renderPass, FDrawVertices{}
-        .Draw(3)
-        .SetPipeline(ppln)
-        .SetTopology(EPrimitiveTopology::TriangleList)
-        .AddResources(FDescriptorSetID{ "PerObject" }, resources0));
+    struct payload_t {
+        FRawGPipelineID Pipeline;
+        const PPipelineResources& Resources0;
+        const PPipelineResources& Resources1;
+    }   customPayload{
+        *ppln.Get(), resources0, resources1
+    };
 
-    const PFrameTask tClear = cmd->Task(FClearColorImage{}
+    auto customDrawFunc_ = [](void* param, IDrawContext& ctx) {
+        UNUSED(param);
+
+        const payload_t& customPayload = *static_cast<payload_t*>(param);
+
+        FInputAssemblyState ia;
+        ia.Topology = EPrimitiveTopology::TriangleList;
+
+        ctx.SetInputAssembly(ia);
+        ctx.BindPipeline(customPayload.Pipeline);
+        ctx.BindResources(FDescriptorSetID{ "PerObject" }, *customPayload.Resources0);
+        ctx.BindResources(FDescriptorSetID{ "PerPass" }, *customPayload.Resources1);
+        ctx.DrawVertices(3);
+    };
+
+    cmd->Task(renderPass, FCustomDraw{ customDrawFunc_, &customPayload }
+        .AddImage(texture, EResourceState::ShaderSample));
+
+    auto tClear = cmd->Task(FClearColorImage{}
         .SetImage(texture)
         .AddRange(0_mipmap, 1, 0_layer, 1)
         .Clear(FLinearColor::White()));
-    UNUSED(tClear);
-    const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass }
+    auto tDraw = cmd->Task(FSubmitRenderPass{renderPass}
         .DependsOn(tClear));
-    UNUSED(tDraw);
-    const PFrameTask tRead = cmd->Task(FReadImage{}
+    auto tRead = cmd->Task(FReadImage{}
         .SetImage(image, int2{}, viewSize)
         .SetCallback(onLoaded)
         .DependsOn(tDraw));
