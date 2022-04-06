@@ -147,6 +147,7 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
     }
 
     FRemotingResponse response;
+    response.HTTP_SetServer("PPE-remoting-server");
     response.HTTP_SetAccessControlAllowOrigin(MakeStringView("*")); // avoid CORS policy issues
 
     if (Likely(pEndpoint)) {
