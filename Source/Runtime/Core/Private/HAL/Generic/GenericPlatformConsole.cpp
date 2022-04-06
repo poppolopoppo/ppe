@@ -13,12 +13,27 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
 static void SyntaxicHighlight_(const TBasicStringView<_Char>& str, FPlatformConsole::EAttribute base) {
-    constexpr auto stringStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_YELLOW;
-    constexpr auto literalStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_RED | FPlatformConsole::FG_BLUE | FPlatformConsole::FG_INTENSITY;
+    auto stringStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_YELLOW;
+    auto literalStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_GREEN | FPlatformConsole::FG_INTENSITY;
+
+    if (BitAnd(base, FPlatformConsole::_BG_MASK) != FPlatformConsole::BG_BLACK) {
+        stringStyle = ((stringStyle - FPlatformConsole::_BG_MASK) | BitAnd(base, FPlatformConsole::_BG_MASK));
+        literalStyle = ((literalStyle - FPlatformConsole::_BG_MASK) | BitAnd(base, FPlatformConsole::_BG_MASK));
+    }
 
     auto style = base;
 
+    static constexpr FPlatformConsole::EAttribute fg_rainbow[] = {
+        FPlatformConsole::FG_CYAN,
+        FPlatformConsole::FG_BLUE,
+        FPlatformConsole::FG_MAGENTA,
+        FPlatformConsole::FG_RED,
+        FPlatformConsole::FG_YELLOW,
+        FPlatformConsole::FG_GREEN,
+    };
+
     bool allnum = true;
+    int balance = 0;
     size_t o = 0;
     size_t s = 0;
     forrange(i, 0, str.size()) {
@@ -53,28 +68,35 @@ static void SyntaxicHighlight_(const TBasicStringView<_Char>& str, FPlatformCons
         o = i + 1;
 
         switch (ch) {
+        case STRING_LITERAL(_Char, '#'):
         case STRING_LITERAL(_Char, '$'):
         case STRING_LITERAL(_Char, '='):
         case STRING_LITERAL(_Char, ':'):
-            style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_GREEN | FPlatformConsole::FG_INTENSITY; break;
+        case STRING_LITERAL(_Char, '\\'):
+            style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_CYAN | FPlatformConsole::FG_INTENSITY; break;
         case STRING_LITERAL(_Char, '+'):
         case STRING_LITERAL(_Char, '-'):
         case STRING_LITERAL(_Char, '*'):
         case STRING_LITERAL(_Char, '/'):
-        case STRING_LITERAL(_Char, '<'):
-        case STRING_LITERAL(_Char, '>'):
         case STRING_LITERAL(_Char, '|'):
-            style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY; break;
+            style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_YELLOW | FPlatformConsole::FG_INTENSITY; break;
+        case STRING_LITERAL(_Char, '<'):
         case STRING_LITERAL(_Char, '('):
-        case STRING_LITERAL(_Char, ')'):
         case STRING_LITERAL(_Char, '{'):
-        case STRING_LITERAL(_Char, '}'):
         case STRING_LITERAL(_Char, '['):
+            style = fg_rainbow[++balance % lengthof(fg_rainbow)] | FPlatformConsole::BG_BLACK | FPlatformConsole::FG_INTENSITY; break;
+        case STRING_LITERAL(_Char, '>'):
+        case STRING_LITERAL(_Char, ')'):
+        case STRING_LITERAL(_Char, '}'):
         case STRING_LITERAL(_Char, ']'):
-        case STRING_LITERAL(_Char, '\\'):
-            style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_CYAN | FPlatformConsole::FG_INTENSITY; break;
+            style = fg_rainbow[balance-- % lengthof(fg_rainbow)] | FPlatformConsole::BG_BLACK | FPlatformConsole::FG_INTENSITY; break;
         default:
             style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_WHITE | FPlatformConsole::FG_INTENSITY; break;
+        }
+
+        if (BitAnd(style, FPlatformConsole::_BG_MASK) != BitAnd(base, FPlatformConsole::_BG_MASK) &&
+            BitAnd(base, FPlatformConsole::_BG_MASK) != FPlatformConsole::BG_BLACK) {
+            style = ((style - FPlatformConsole::_BG_MASK) | BitAnd(base, FPlatformConsole::_BG_MASK));
         }
 
         FPlatformConsole::Write(str.SubRange(i, 1), style);

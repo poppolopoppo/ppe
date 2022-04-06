@@ -640,11 +640,13 @@ NODISCARD static bool NotifyLoggerMessage_(
     const FLogger::FSiteInfo& site ) NOEXCEPT {
     UNUSED(site);
 #if USE_PPE_ASSERT
-    if (Unlikely(category.Flags & FLoggerCategory::BreakOnError && level == ELoggerVerbosity::Error) ||
-        Unlikely(category.Flags & FLoggerCategory::BreakOnWarning && level == ELoggerVerbosity::Warning) )
-        PPE_DEBUG_BREAK();
-    if ((GLoggerFlags_ & FLoggerCategory::BreakOnError && level == ELoggerVerbosity::Error) ||
-        (GLoggerFlags_ & FLoggerCategory::BreakOnWarning && level == ELoggerVerbosity::Warning) )
+    const bool breakOnError = (level == ELoggerVerbosity::Error) && (
+        (category.Flags & FLoggerCategory::BreakOnError) ||
+         (GLoggerFlags_ & FLoggerCategory::BreakOnError) );
+    const bool breakOnWarning = (level == ELoggerVerbosity::Warning) && (
+        (category.Flags & FLoggerCategory::BreakOnWarning) ||
+         (GLoggerFlags_ & FLoggerCategory::BreakOnWarning) );
+    if (Unlikely(breakOnError || breakOnWarning))
         PPE_DEBUG_BREAK();
 #endif
     return (category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level);
@@ -836,7 +838,7 @@ public: // ILogger
             attrs = (FPlatformConsole::FG_MAGENTA | FPlatformConsole::BG_BLACK | FPlatformConsole::FG_INTENSITY);
             break;
         case ELoggerVerbosity::Emphasis:
-            attrs = (FPlatformConsole::FG_GREEN | FPlatformConsole::BG_BLUE | FPlatformConsole::FG_INTENSITY);
+            attrs = (FPlatformConsole::FG_WHITE | FPlatformConsole::BG_BLUE | FPlatformConsole::FG_INTENSITY);
             break;
         case ELoggerVerbosity::Warning:
             attrs = (FPlatformConsole::FG_YELLOW | FPlatformConsole::BG_BLACK | FPlatformConsole::FG_INTENSITY);

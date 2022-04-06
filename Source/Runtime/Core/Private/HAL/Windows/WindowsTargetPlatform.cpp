@@ -5,6 +5,9 @@
 #include "HAL/PlatformMisc.h"
 #include "IO/String.h"
 
+#include <winnt_version.h>
+#include <VersionHelpers.h>
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,7 +22,38 @@ FString FWindowsTargetPlatform::DisplayName() const {
 }
 //----------------------------------------------------------------------------
 FString FWindowsTargetPlatform::FullName() const {
-    return "Windows 8.1 or higher";
+    FString version;
+
+    if (::IsWindows10OrGreater()) {
+        version = "Windows 10.0 or greater";
+    }
+    else if (::IsWindows8Point1OrGreater()) {
+        version = "Windows 8.1 or greater";
+    }
+    else if (::IsWindows8OrGreater()) {
+        version = "Windows 8.0 or greater";
+    }
+    else if (::IsWindows7SP1OrGreater()) {
+        version = "Windows 7 SP1 or greater";
+    }
+    else if (::IsWindows7OrGreater()) {
+        version = "Windows 7 or greater";
+    }
+    else if (::IsWindowsXPOrGreater()) {
+        version = "Windows XP or greater";
+    }
+    else {
+        version = "Windows Antique";
+    }
+
+    if (::IsWindowsServer()) {
+        version += " Server";
+    }
+    if (::IsActiveSessionCountLimited()) {
+        version += " [TRIAL]";
+    }
+
+    return version;
 }
 //----------------------------------------------------------------------------
 FString FWindowsTargetPlatform::ShortName() const {
