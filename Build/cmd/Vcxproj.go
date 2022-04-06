@@ -34,7 +34,7 @@ var Vcxproj = MakeCommand(
 	"generate projects and solution for Visual Studio",
 	func(cmd *CommandEnvT) *VcxprojArgsT {
 		AllCompilationFlags.Needed(cmd.Flags)
-		return VcxprojArgs.Create(cmd.Flags)
+		return VcxprojArgs.FindOrAdd(cmd.Flags)
 	},
 	func(cmd *CommandEnvT, args *VcxprojArgsT) error {
 		output := UFS.Output.File("vcxproj.bff")
@@ -51,7 +51,7 @@ var Vcxproj = MakeCommand(
 		}
 
 		fbuildArgs := FBuildArgs{
-			BffFile: output,
+			BffInput: output,
 		}
 
 		fbuildExec := MakeFBuildExecutor(&fbuildArgs)

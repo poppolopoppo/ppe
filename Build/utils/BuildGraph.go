@@ -42,6 +42,7 @@ type BuildGraph interface {
 	Create(Buildable, ...BuildAlias) BuildNode
 	Build(BuildAliasable) (BuildNode, Future[BuildStamp])
 	ForceBuild(Buildable) (BuildNode, Future[BuildStamp])
+	Join()
 	PostLoad()
 	Serialize(io.Writer) error
 	Deserialize(io.Reader) error
@@ -271,7 +272,20 @@ func (g *buildGraph) ForceBuild(it Buildable) (BuildNode, Future[BuildStamp]) {
 		return g.Build(g.Create(it))
 	}
 }
+func (g *buildGraph) Join() {
+	g.nodes.Range(func(alias BuildAlias, node *buildNode) {
+		if node != nil {
+			node.state.launch.Lock()
+			defer node.state.launch.Unlock()
 
+			fut := node.state.future
+			if fut != nil && fut.Available() == false {
+				LogWarning("builder <%v> wasn't available and needed to be joined", alias)
+				fut.Join()
+			}
+		}
+	})
+}
 func (g *buildGraph) PostLoad() {
 	if g.flags.Purge {
 		g.revision = 0
@@ -388,6 +402,7 @@ func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
 func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias, needUpdate bool) Future[BuildStamp] {
 	node.state.launch.Lock()
 	defer node.state.launch.Unlock()
+
 	if node.state.future == nil || needUpdate {
 		if node.state.future != nil {
 			node.state.future.Join()
@@ -408,12 +423,13 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias, needUpdate bool)
 						LogInfo("updated '%v'", a)
 						node.Stamp = stamp
 						g.makeDirty()
+						rebuild = true
 					}
 				}
 			}
 			if err != nil {
 				LogError("can't build '%v': %v", a, err)
-			} else {
+			} else if !rebuild {
 				LogVerbose("up-to-date '%v'", a)
 			}
 			return node.Stamp, err

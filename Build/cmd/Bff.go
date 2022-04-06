@@ -13,7 +13,7 @@ const BFF_VERSION = "1.0.0"
 var BFFFILE_DEFAULT = UFS.Output.File("fbuild.bff")
 
 type BffArgsT struct {
-	BffFile             Filename
+	BffOutput           Filename
 	DeoptimizeWithToken BoolVar
 	LightCache          BoolVar
 	Minify              BoolVar
@@ -21,7 +21,7 @@ type BffArgsT struct {
 }
 
 func (flags *BffArgsT) InitFlags(cfg *PersistentMap) {
-	cfg.Persistent(&flags.BffFile, "BffFile", "destination for generated FASTBuild config file (*.bff)")
+	cfg.Persistent(&flags.BffOutput, "BffOutput", "destination for generated FASTBuild config file (*.bff)")
 	cfg.Persistent(&flags.DeoptimizeWithToken, "DeoptimizeWithToken", "enable/disable compiler optimization with FASTBUILD_DEOPTIMIZE_OBJECT")
 	cfg.Persistent(&flags.LightCache, "LightCache", "enable/disable FASTBuild lightweight parsing for caching")
 	cfg.Persistent(&flags.Minify, "Minify", "enable/disable pretty print for generated FASTBuild file")
@@ -37,7 +37,7 @@ func (flags *BffArgsT) Build(BuildContext) (BuildStamp, error) {
 	return MakeBuildStamp(flags)
 }
 func (flags *BffArgsT) GetDigestable(o *bytes.Buffer) {
-	flags.BffFile.GetDigestable(o)
+	flags.BffOutput.GetDigestable(o)
 	flags.DeoptimizeWithToken.GetDigestable(o)
 	flags.LightCache.GetDigestable(o)
 	flags.Minify.GetDigestable(o)
@@ -48,7 +48,7 @@ var BffArgs = MakeServiceAccessor[ParsableFlags](newBffArgs)
 
 func newBffArgs() *BffArgsT {
 	return CommandEnv.BuildGraph().Create(&BffArgsT{
-		BffFile:             BFFFILE_DEFAULT,
+		BffOutput:           BFFFILE_DEFAULT,
 		DeoptimizeWithToken: false,
 		LightCache:          false,
 		Minify:              true,
@@ -61,14 +61,14 @@ var Bff = MakeCommand(
 	"generate FASTBuild config file",
 	func(cmd *CommandEnvT) *BffArgsT {
 		AllCompilationFlags.Needed(cmd.Flags)
-		return BffArgs.Create(cmd.Flags)
+		return BffArgs.FindOrAdd(cmd.Flags)
 	},
 	func(cmd *CommandEnvT, args *BffArgsT) error {
-		LogClaim("generating BFF config in '%v'", args.BffFile)
+		LogClaim("generating BFF config in '%v'", args.BffOutput)
 
 		bg := cmd.BuildGraph()
 		builder := bg.Create(&BffBuilder{
-			Output: args.BffFile,
+			Output: args.BffOutput,
 		}, args.Alias())
 
 		_, result := bg.Build(builder)

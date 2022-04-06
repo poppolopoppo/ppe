@@ -47,6 +47,21 @@ func (list *CommandList) Run(env *CommandEnvT) error {
 type CommandInfo struct {
 	Name, Usage string
 }
+type commandArgs struct {
+	Unparsed []string
+}
+
+func (x *commandArgs) Consume(n int) []string {
+	if n >= 0 {
+		result := x.Unparsed[:n]
+		x.Unparsed = x.Unparsed[n+1:]
+		return result
+	} else {
+		result := x.Unparsed
+		x.Unparsed = []string{}
+		return result
+	}
+}
 
 type Command interface {
 	Info() CommandInfo
@@ -144,12 +159,10 @@ type CommandEnvT struct {
 	barrier   sync.Mutex
 	immediate CommandList
 	deferred  CommandList
-	instanced []Command
+	unparsed  *commandArgs
 
 	configPath   Filename
 	databasePath Filename
-
-	unparsedArgs []string
 }
 
 var CommandEnv *CommandEnvT
@@ -180,41 +193,54 @@ func (env *CommandEnvT) Init(args []string) {
 	if len(args) == 0 {
 		LogFatal("missing command: use --help to show usage")
 	}
+
+	env.barrier.Lock()
+	defer env.barrier.Unlock()
+
 	if factory, ok := AllCommands.Get(args[0]); ok {
-		env.barrier.Lock()
-		defer env.barrier.Unlock()
 		cmd := factory()
-		env.instanced = append(env.instanced, cmd)
 		cmd.Init(env)
-		env.unparsedArgs = env.persistent.Parse(args[1:], env.Flags.Values()...)
-		env.buildGraph.PostLoad()
-		for _, flags := range env.Flags.Values() {
-			switch flags.(type) {
-			case Buildable:
-				env.BuildGraph().ForceBuild(flags.(Buildable))
-			}
-		}
+
 		LogClaim("running command <%v>", cmd.Info().Name)
-		env.immediate = append(env.immediate, CommandFunc{cmd.Info(), cmd.Run})
+
+		freeArgs := &commandArgs{
+			Unparsed: env.persistent.Parse(args[1:], env.Flags.Values()...),
+		}
+
 		env.deferred = append(env.deferred, CommandFunc{cmd.Info(), cmd.Clean})
+		env.immediate = append(env.immediate, CommandFunc{cmd.Info(), func(cet *CommandEnvT) error {
+			cet.unparsed = freeArgs
+			err := cmd.Run(cet)
+			cet.unparsed = nil
+
+			if err != nil && len(freeArgs.Unparsed) > 0 {
+				LogWarning("%v: unused arguments %v", args[0], strings.Join(freeArgs.Unparsed, ", "))
+			}
+
+			return err
+		}})
+
 	} else {
 		CommandFlags.FindOrAdd(env.Flags).InitFlags(env.persistent)
+
 		env.Persistent().Usage()
+
 		LogFatal("invalid command '%v', available names: %v", args[0], strings.Join(AllCommands.Keys(), ", "))
 	}
 }
 func (env *CommandEnvT) ConsumeArgs(n int) []string {
-	if n > 0 {
-		result := env.unparsedArgs[:n]
-		env.unparsedArgs = env.unparsedArgs[n+1:]
-		return result
-	} else {
-		result := env.unparsedArgs
-		env.unparsedArgs = []string{}
-		return result
-	}
+	return env.unparsed.Consume(n)
 }
 func (env *CommandEnvT) Run() error {
+	env.buildGraph.PostLoad()
+
+	for _, flags := range env.Flags.Values() {
+		switch flags.(type) {
+		case Buildable:
+			env.BuildGraph().ForceBuild(flags.(Buildable))
+		}
+	}
+
 	LogTrace("running immediate tasks (%v elts)", len(env.immediate))
 	if err := env.immediate.Run(env); err != nil {
 		return err
@@ -223,9 +249,8 @@ func (env *CommandEnvT) Run() error {
 	if err := env.deferred.Run(env); err != nil {
 		return err
 	}
-	if len(env.unparsedArgs) > 0 {
-		LogWarning("unused arguments: %v", strings.Join(env.unparsedArgs, ", "))
-	}
+
+	env.buildGraph.Join()
 	return nil
 }
 

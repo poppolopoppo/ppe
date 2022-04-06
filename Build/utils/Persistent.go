@@ -74,18 +74,24 @@ func (v IntVar) GetDigestable(o *bytes.Buffer) {
 }
 
 type PersistentMap struct {
-	Vars map[string]PersistentVar
-	Data map[string]string
-	*flag.FlagSet
+	Name  string
+	Vars  map[string]PersistentVar
+	Data  map[string]string
+	flags *flag.FlagSet
 }
 
 func NewPersistentMap(name string) (result *PersistentMap) {
 	result = &PersistentMap{
-		Vars:    map[string]PersistentVar{},
-		Data:    map[string]string{},
-		FlagSet: flag.NewFlagSet(name, flag.ExitOnError),
+		Name: name,
+		Vars: map[string]PersistentVar{},
+		Data: map[string]string{},
 	}
-	result.FlagSet.Usage = func() {
+	return result
+}
+func (pmp *PersistentMap) resetFlagSet() {
+	LogDebug("reset flag set")
+	pmp.flags = flag.NewFlagSet(pmp.Name, flag.ExitOnError)
+	pmp.flags.Usage = func() {
 		fmt.Printf("Program: %v@%v\n", MAIN_MODULEBASE, MAIN_MODULEVER)
 		fmt.Printf("%v%X%v\n", ANSI_FG1_BLACK, Seed, ANSI_RESET)
 		fmt.Println()
@@ -105,7 +111,7 @@ func NewPersistentMap(name string) (result *PersistentMap) {
 		var flagsShort []*flag.Flag
 		var flagsLong []*flag.Flag
 
-		result.FlagSet.VisitAll(func(f *flag.Flag) {
+		pmp.flags.VisitAll(func(f *flag.Flag) {
 			if len(f.Name) > 1 {
 				flagsLong = append(flagsLong, f)
 			} else {
@@ -147,51 +153,57 @@ func NewPersistentMap(name string) (result *PersistentMap) {
 
 		fmt.Println()
 	}
-	return result
 }
 func (pmp *PersistentMap) Usage() {
-	pmp.FlagSet.Usage()
+	pmp.flags.Usage()
 }
 func (pmp *PersistentMap) Parse(args []string, parsables ...ParsableFlags) []string {
-	LogTrace("parsing flags: %v", Inspect(parsables...))
+	pmp.resetFlagSet()
+
 	for _, x := range parsables {
-		//LogTrace("parse <%v>", x)
+		LogDebug("persistent: init flags for <%v>", Inspect(x))
 		x.InitFlags(pmp)
 	}
 	for k, v := range pmp.Vars {
 		pmp.LoadData(k, v)
 	}
+
+	LogTrace("persistent: parsing flags for %v", Inspect(parsables...))
+
 	var unparsedArgs []string
-	if err := pmp.FlagSet.Parse(args); err != nil {
+	if err := pmp.flags.Parse(args); err != nil {
 		LogPanic("command: %v", err)
-	} else if pmp.FlagSet.NArg() > 0 {
-		unparsedArgs = make([]string, pmp.FlagSet.NArg())
-		for i, x := range args[len(args)-pmp.FlagSet.NArg():] {
+	} else if pmp.flags.NArg() > 0 {
+		unparsedArgs = make([]string, pmp.flags.NArg())
+		for i, x := range args[len(args)-pmp.flags.NArg():] {
 			unparsedArgs[i] = x
 		}
 		LogTrace("provided arguments: %v", strings.Join(args, ", "))
 	}
+
 	for _, x := range parsables {
+		LogDebug("persistent: apply vars for %v", Inspect(x))
 		x.ApplyVars(pmp)
 	}
 	for k, v := range pmp.Vars {
 		pmp.StoreData(k, v)
 	}
+
 	return unparsedArgs
 }
 func (pmp *PersistentMap) Persistent(value PersistentVar, name, usage string) {
-	LogDebug("new persistent <%s> = %v", name, value)
+	LogDebug("persistent: new instance <%s> = %v", name, value)
 	pmp.Var(value, name, usage)
 	pmp.Vars[name] = value
 }
 func (pmp *PersistentMap) Var(value PersistentVar, name, usage string) {
-	pmp.FlagSet.Var(value, name, usage)
+	pmp.flags.Var(value, name, usage)
 }
 func (pmp *PersistentMap) BoolVar(value *bool, name, usage string) {
-	pmp.FlagSet.BoolVar(value, name, *value, usage)
+	pmp.flags.BoolVar(value, name, *value, usage)
 }
 func (pmp *PersistentMap) IntVar(value *int, name, usage string) {
-	pmp.FlagSet.IntVar(value, name, *value, usage)
+	pmp.flags.IntVar(value, name, *value, usage)
 }
 func (pmp *PersistentMap) LoadData(key string, dst PersistentVar) error {
 	if str, ok := pmp.Data[key]; ok {
@@ -204,12 +216,12 @@ func (pmp *PersistentMap) LoadData(key string, dst PersistentVar) error {
 	}
 }
 func (pmp *PersistentMap) StoreData(key string, dst interface{}) {
-	LogDebug("store persistent <%s> = %v", key, dst)
+	LogDebug("persistent: store in <%s> = %v", key, dst)
 	pmp.Data[key] = fmt.Sprint(dst)
 }
 func (pmp *PersistentMap) Serialize(dst io.Writer) error {
 	if err := JsonSerialize(&pmp.Data, dst); err == nil {
-		LogDebug("saved %d persistent vars from config to disk", len(pmp.Data))
+		LogDebug("persistent: saved %d vars from config to disk", len(pmp.Data))
 		return nil
 	} else {
 		return fmt.Errorf("failed to serialize config: %v", err)

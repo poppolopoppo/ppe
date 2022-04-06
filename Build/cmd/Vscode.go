@@ -36,7 +36,7 @@ var Vscode = MakeCommand(
 	"generate workspace for Visual Studio Code",
 	func(cmd *CommandEnvT) *VscodeArgsT {
 		AllCompilationFlags.Needed(cmd.Flags)
-		return VscodeArgs.Create(cmd.Flags)
+		return VscodeArgs.FindOrAdd(cmd.Flags)
 	},
 	func(cmd *CommandEnvT, args *VscodeArgsT) error {
 		outputDir := UFS.Root.Folder(".vscode")
@@ -250,7 +250,7 @@ func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) 
 	LogTrace("generating compile commands '%v' for <%v> environemnt...", output, env)
 
 	fbuildArgs := FBuildArgs{
-		BffFile: BFFFILE_DEFAULT,
+		BffInput: BFFFILE_DEFAULT,
 	}
 
 	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.String())

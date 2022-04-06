@@ -17,7 +17,7 @@ var FBuild = MakeCommand(
 			Cache:         FBUILD_CACHE_DISABLED,
 			Clean:         false,
 			Dist:          false,
-			BffFile:       BFFFILE_DEFAULT,
+			BffInput:      BFFFILE_DEFAULT,
 			NoUnity:       false,
 			NoStopOnError: false,
 			Report:        false,

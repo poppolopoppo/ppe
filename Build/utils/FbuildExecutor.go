@@ -69,7 +69,7 @@ type FBuildArgs struct {
 	Cache         FBuildCacheType
 	Clean         BoolVar
 	Dist          BoolVar
-	BffFile       Filename
+	BffInput      Filename
 	NoStopOnError BoolVar
 	NoUnity       BoolVar
 	Report        BoolVar
@@ -82,7 +82,7 @@ func (flags *FBuildArgs) InitFlags(cfg *PersistentMap) {
 	cfg.Var(&flags.Cache, "Cache", "set FASTBuild cache mode ["+JoinString(",", FBuildCacheTypes()...)+"]")
 	cfg.Var(&flags.Clean, "Clean", "FASTBuild will rebuild all cached artifacts if enabled")
 	cfg.Var(&flags.Dist, "Dist", "enable/disable FASTBuild to use distributed compilation")
-	cfg.Persistent(&flags.BffFile, "BffFile", "source for generated FASTBuild config file (*.bff)")
+	cfg.Persistent(&flags.BffInput, "BffInput", "source for input FASTBuild config file (*.bff)")
 	cfg.Var(&flags.NoStopOnError, "NoStopOnError", "FASTBuild will stop compiling on the first error if enabled")
 	cfg.Var(&flags.NoUnity, "NoUnity", "enable/disable use of generated unity source files")
 	cfg.Var(&flags.Report, "Report", "enable/disable FASTBuild compilation report generation")
@@ -111,7 +111,7 @@ func MakeFBuildExecutor(flags *FBuildArgs, args ...string) (result FBuildExecuto
 	enableDist := false
 
 	if flags != nil {
-		result.Args.Append("-config", flags.BffFile.String())
+		result.Args.Append("-config", flags.BffInput.String())
 
 		switch flags.Cache {
 		case FBUILD_CACHE_READ:
