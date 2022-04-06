@@ -176,6 +176,10 @@
 
 ## Memory
 
+- [ ] Integrate with MTuner SDK for multi-platform memory profiling
+    - MTuner is an open-source memory profiler : https://milostosic.github.io/MTuner/user_interface/
+    - Documentation for integration SDK: https://milostosic.github.io/MTuner/mtuner_sdk/
+    - Github, only for the SDK: https://github.com/milostosic/rmem
 - [x] Add a large mipmap allocator inside FMallocBinned in addition to current medium mipmaps
     - current medium mips can't allocate more than 2mb, and virtual memory cache is weak (concurrency bottleneck)
         - large mips would have 2mb/bit <=> 64mb per chunk
