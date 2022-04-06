@@ -68,38 +68,37 @@ namespace MemoryDomain {
         ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr, FMemoryTracking::Recursive);
         return GInstance;
     }
+    FMemoryTracking& MEMORYDOMAIN_NAME(UnaccountedMemory)::TrackingData() {
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UnaccountedMemory", nullptr, FMemoryTracking::Recursive);
+        return GInstance;
+    }
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
-// First pass for groups (which are not declared in header)
+// Pass for definition of everything
 #if !WITH_PPE_MEMORYDOMAINS_FULL_COLLAPSING
 #   define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \
-        struct MEMORYDOMAIN_NAME(_Name) { \
-            static FMemoryTracking& TrackingData(); \
-        }; \
+        const FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
+            auto& parent = const_cast<FMemoryTracking&>(MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent, FMemoryTracking::Recursive); \
+            return GInstance; \
+        } \
     }
-#   include "Memory/MemoryDomain.Definitions-inl.h"
-#   undef MEMORYDOMAIN_COLLAPSABLE_IMPL
-#   undef MEMORYDOMAIN_GROUP_IMPL
-#   undef MEMORYDOMAIN_DETAILLED_IMPL
-#   undef MEMORYDOMAIN_IMPL
-#endif
-//----------------------------------------------------------------------------
-// Second pass for definition of everything
-#if !WITH_PPE_MEMORYDOMAINS_FULL_COLLAPSING
 #   define MEMORYDOMAIN_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \
         FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
-            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &MEMORYDOMAIN_TRACKING_DATA(_Parent), FMemoryTracking::Recursive); \
+            auto& parent = const_cast<FMemoryTracking&>(MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent, FMemoryTracking::Recursive); \
             return GInstance; \
         } \
     }
 #   define MEMORYDOMAIN_DETAILLED_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \
         FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
-            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &MEMORYDOMAIN_TRACKING_DATA(_Parent), FMemoryTracking::Isolated); \
+            auto& parent = const_cast<FMemoryTracking&>(MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent, FMemoryTracking::Isolated); \
             return GInstance; \
         } \
     }

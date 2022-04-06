@@ -104,9 +104,32 @@ public:
     void MoveTo(FMemoryTracking* dst) NOEXCEPT;
     void Swap(FMemoryTracking& other) NOEXCEPT; // will swap statistics
 
-    static FMemoryTracking& UsedMemory();
-    static FMemoryTracking& ReservedMemory();
-    static FMemoryTracking& PooledMemory();
+    static FMemoryTracking& GpuMemory() NOEXCEPT;
+    static FMemoryTracking& UsedMemory() NOEXCEPT;
+    static FMemoryTracking& ReservedMemory() NOEXCEPT;
+    static FMemoryTracking& PooledMemory() NOEXCEPT;
+    static FMemoryTracking& UnaccountedMemory() NOEXCEPT;
+
+    static FMemoryTracking* ThreadTrackingData() NOEXCEPT;
+    static FMemoryTracking* SetThreadTrackingData(FMemoryTracking* trackingData) NOEXCEPT;
+
+    struct FThreadScope : Meta::FNonCopyableNorMovable {
+        FMemoryTracking& CurrentTrackingData;
+        FMemoryTracking* PreviousTrackingData{ nullptr };
+
+        explicit FThreadScope(FMemoryTracking& trackingData)
+        :   CurrentTrackingData(trackingData)
+        ,   PreviousTrackingData(SetThreadTrackingData(&CurrentTrackingData)) {
+        }
+
+        ~FThreadScope() {
+            Verify(SetThreadTrackingData(PreviousTrackingData) == &CurrentTrackingData);
+        }
+
+        FMemoryTracking* operator ->() const NOEXCEPT {
+            return std::addressof(CurrentTrackingData);
+        }
+    };
 
 private:
     FCounters _user;

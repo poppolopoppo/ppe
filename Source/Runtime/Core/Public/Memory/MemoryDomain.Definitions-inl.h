@@ -14,7 +14,12 @@
 //------------------------------------------------------------------------------
 // Gpu memory
 //------------------------------------------------------------------------------
-MEMORYDOMAIN_IMPL(DeviceHeap,                           GpuMemory)
+MEMORYDOMAIN_IMPL(DeviceLocal,                          GpuMemory)
+MEMORYDOMAIN_IMPL(DeviceHostCached,                     GpuMemory)
+MEMORYDOMAIN_IMPL(DeviceHostCoherent,                   GpuMemory)
+MEMORYDOMAIN_IMPL(DeviceHostVisible,                    GpuMemory)
+MEMORYDOMAIN_IMPL(DeviceProtected,                      GpuMemory)
+MEMORYDOMAIN_IMPL(DeviceUnknown,                        GpuMemory)
 //------------------------------------------------------------------------------
 // Reserved memory
 //------------------------------------------------------------------------------
@@ -114,26 +119,26 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIResource,              RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIShader,                RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIState,                 RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIVulkan,                RHI)
-//------------------------------------------------------------------------------
-MEMORYDOMAIN_GROUP_IMPL(Graphics,                       UsedMemory)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Device,                   Graphics)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Index,                    Graphics)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Resource,                 Graphics)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Shader,                   Graphics)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Texture,                  Graphics)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Value,                    Graphics)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Vertex,                   Graphics)
-//------------------------------------------------------------------------------
-MEMORYDOMAIN_GROUP_IMPL(Lattice,                        UsedMemory)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Collada,                  Lattice)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(GenericMesh,              Lattice)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(GenericMaterial,          Lattice)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(WaveFrontObj,             Lattice)
-//------------------------------------------------------------------------------
-MEMORYDOMAIN_GROUP_IMPL(Pixmap,                         UsedMemory)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(CompressedImage,          Pixmap)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(FloatImage,               Pixmap)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Image,                    Pixmap)
+////------------------------------------------------------------------------------
+//MEMORYDOMAIN_GROUP_IMPL(Graphics,                       UsedMemory)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Device,                   Graphics)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Index,                    Graphics)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Resource,                 Graphics)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Shader,                   Graphics)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Texture,                  Graphics)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Value,                    Graphics)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Vertex,                   Graphics)
+////------------------------------------------------------------------------------
+//MEMORYDOMAIN_GROUP_IMPL(Lattice,                        UsedMemory)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Collada,                  Lattice)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(GenericMesh,              Lattice)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(GenericMaterial,          Lattice)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(WaveFrontObj,             Lattice)
+////------------------------------------------------------------------------------
+//MEMORYDOMAIN_GROUP_IMPL(Pixmap,                         UsedMemory)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(CompressedImage,          Pixmap)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(FloatImage,               Pixmap)
+//MEMORYDOMAIN_COLLAPSABLE_IMPL(Image,                    Pixmap)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Network,                        UsedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(DNS,                      Network)
@@ -166,7 +171,17 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(MemoryPool,               PooledMemory)
 // External memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(External,                       UsedMemory)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(LZ4,                      External)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(STBImage,                 External)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(VMA,                      External)
+MEMORYDOMAIN_IMPL(LZ4,                                  External)
+MEMORYDOMAIN_IMPL(STBImage,                             External)
+MEMORYDOMAIN_IMPL(VMA,                                  External)
+MEMORYDOMAIN_GROUP_IMPL(Vulkan,                         External)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(VkCommand,                Vulkan)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(VkObject,                 Vulkan)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(VkCache,                  Vulkan)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(VkDevice,                 Vulkan)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(VkInstance,               Vulkan)
+//------------------------------------------------------------------------------
+// Unaccounted memory
+//------------------------------------------------------------------------------
+MEMORYDOMAIN_IMPL(UnaccountedMalloc,                    UnaccountedMemory)
 //------------------------------------------------------------------------------

@@ -43,16 +43,19 @@
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) // %_NOCOMMIT%
 #   define PPE_MALLOC_POISON_PROXY         1 // Erase all data from blocks when allocating and releasing them, helps to find necrophilia
+#   define PPE_MALLOC_UNACCOUNTED_PROXY    (USE_PPE_MEMORYDOMAINS)
 #elif not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING || USE_PPE_SANITIZER)
 #   define PPE_MALLOC_DEBUG_PROXY          1
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // %_NOCOMMIT%
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) // %_NOCOMMIT%
 #   define PPE_MALLOC_POISON_PROXY         (USE_PPE_DEBUG && !USE_PPE_FASTDEBUG) // %_NOCOMMIT%
+#   define PPE_MALLOC_UNACCOUNTED_PROXY    (USE_PPE_MEMORYDOMAINS)
 #else
 #   define PPE_MALLOC_DEBUG_PROXY          0
 #   define PPE_MALLOC_HISTOGRAM_PROXY      0
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   0
 #   define PPE_MALLOC_POISON_PROXY         0
+#   define PPE_MALLOC_UNACCOUNTED_PROXY    0
 #endif
 
 #define USE_PPE_MALLOC_PROXY               (PPE_MALLOC_HISTOGRAM_PROXY|PPE_MALLOC_LEAKDETECTOR_PROXY|PPE_MALLOC_POISON_PROXY)
@@ -62,6 +65,10 @@
 #endif
 #if PPE_MALLOC_HISTOGRAM_PROXY
 #   include "HAL/PlatformAtomics.h"
+#endif
+#if PPE_MALLOC_UNACCOUNTED_PROXY
+#   include "Memory/MemoryDomain.h"
+#   include "Memory/MemoryTracking.h"
 #endif
 
 namespace PPE {
@@ -237,7 +244,7 @@ void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {/* #TODO */}
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+// Allocation size histogram
 //----------------------------------------------------------------------------
 #if PPE_MALLOC_HISTOGRAM_PROXY
 namespace {
@@ -257,14 +264,14 @@ static constexpr size_t GMallocSizeClasses[GMallocNumClasses] = {
 static volatile i64 GMallocSizeAllocations[GMallocNumClasses] = { 0 };
 static volatile i64 GMallocSizeTotalBytes[GMallocNumClasses] = { 0 };
 struct FMallocHistogram {
-    FORCE_INLINE static size_t MakeSizeClass(size_t size) {
+    FORCE_INLINE static size_t MakeSizeClass(size_t size) NOEXCEPT {
         constexpr size_t POW_N = 2;
         constexpr size_t MinClassIndex = 19;
         const size_t index = FPlatformMaths::FloorLog2((size - 1) | 1);
         return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinClassIndex);
     }
 
-    static void Allocate(void*, size_t sizeInBytes) {
+    static void Allocate(void*, size_t sizeInBytes) NOEXCEPT {
         const size_t sizeClass = Min(MakeSizeClass(sizeInBytes), GMallocNumClasses - 1);
         FPlatformAtomics::Increment(&GMallocSizeAllocations[sizeClass]);
         FPlatformAtomics::Add(&GMallocSizeTotalBytes[sizeClass], sizeInBytes);
@@ -273,7 +280,28 @@ struct FMallocHistogram {
 } //!namespace
 #endif //!PPE_MALLOC_HISTOGRAM_PROXY
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+// Unaccounted allocations logger
+//----------------------------------------------------------------------------
+#if PPE_MALLOC_UNACCOUNTED_PROXY
+struct FMallocUnaccounted {
+
+    FORCE_INLINE static void Allocate(void* ptr, size_t /*userSize*/) NOEXCEPT {
+        if (Unlikely(FMemoryTracking::ThreadTrackingData() == nullptr)) {
+            const size_t systemSize = FMallocLowLevel::RegionSize(ptr);
+            MEMORYDOMAIN_TRACKING_DATA(UnaccountedMalloc).Allocate(systemSize, systemSize);
+        }
+    }
+
+    FORCE_INLINE static void Deallocate(void* ptr) NOEXCEPT {
+        if (Unlikely(FMemoryTracking::ThreadTrackingData() == nullptr)) {
+            const size_t systemSize = FMallocLowLevel::RegionSize(ptr);
+            MEMORYDOMAIN_TRACKING_DATA(UnaccountedMalloc).Deallocate(systemSize, systemSize);
+        }
+    }
+};
+#endif //!PPE_MALLOC_UNACCOUNTED_PROXY
+//----------------------------------------------------------------------------
+// Malloc proxy layer with added debug and validation
 //----------------------------------------------------------------------------
 #if !USE_PPE_MALLOC_PROXY
 using FMallocProxy = FMallocLowLevel;
@@ -326,6 +354,9 @@ private:
 #   if PPE_MALLOC_POISON_PROXY
         FPlatformMemory::Memuninitialized(ptr, SnapSize(sizeInBytes));
 #   endif
+#   if PPE_MALLOC_UNACCOUNTED_PROXY
+        FMallocUnaccounted::Allocate(ptr, sizeInBytes);
+#   endif
         return ptr;
     }
 
@@ -341,6 +372,9 @@ private:
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
         FPlatformMemory::Memdeadbeef(ptr, FMallocLowLevel::RegionSize(ptr));
+#   endif
+#   if PPE_MALLOC_UNACCOUNTED_PROXY
+        FMallocUnaccounted::Deallocate(ptr);
 #   endif
         return ptr;
     }
@@ -366,6 +400,11 @@ private:
 #   else
         UNUSED(oldp);
 #   endif
+#   if PPE_MALLOC_UNACCOUNTED_PROXY
+        if (oldp)
+            FMallocUnaccounted::Deallocate(oldp);
+        FMallocUnaccounted::Allocate(newp, sizeInBytes);
+#   endif
         return newp;
     }
 
@@ -378,6 +417,9 @@ private:
 #   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
         FLeakDetector::Get().Release(ptr);
+#   endif
+#   if PPE_MALLOC_UNACCOUNTED_PROXY
+        FMallocUnaccounted::Deallocate(ptr);
 #   endif
         return ptr;
     }

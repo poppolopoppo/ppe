@@ -112,6 +112,8 @@ bool TSlabHeap<_Allocator>::Deallocate_ReturnIfLast(void* ptr, size_t size) {
     Assert_NoAssume(CheckCanary_());
     size = SnapSize(size);
 
+    ONLY_IF_MEMORYDOMAINS(const FMemoryTracking::FThreadScope threadTracking{ _trackingData });
+
     Assert(not _slabs.empty());
 
     foreachitem(it, _slabs) {
@@ -163,6 +165,9 @@ void TSlabHeap<_Allocator>::DiscardAll() NOEXCEPT {
 template <typename _Allocator>
 void TSlabHeap<_Allocator>::ReleaseAll() {
     Assert_NoAssume(CheckCanary_());
+
+    ONLY_IF_MEMORYDOMAINS(const FMemoryTracking::FThreadScope threadTracking{ _trackingData });
+
     ONLY_IF_MEMORYDOMAINS(_trackingData.ReleaseAllUser());
 
     auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
@@ -185,6 +190,8 @@ void TSlabHeap<_Allocator>::TrimMemory() {
     Assert_NoAssume(CheckCanary_());
     if (_slabs.size() < 2)
         return; // keep one slab here for hysteresis
+
+    ONLY_IF_MEMORYDOMAINS(const FMemoryTracking::FThreadScope threadTracking{ _trackingData });
 
     Remove_If(_slabs, [this](FSlabPtr& slab) -> bool {
         if (slab.Offset == 0) {
@@ -232,6 +239,8 @@ template <typename _Allocator>
 void* TSlabHeap<_Allocator>::Allocate_FromNewSlab_(size_t size) {
     Assert(size);
     Assert_NoAssume(SnapSize(size) == size);
+
+    ONLY_IF_MEMORYDOMAINS(const FMemoryTracking::FThreadScope threadTracking{ _trackingData });
 
     auto& allocator = allocator_traits::AllocatorWithoutTracking(*this);
     using allocator_traits_without_tracking = TAllocatorTraits<Meta::TDecay<decltype(allocator)>>;

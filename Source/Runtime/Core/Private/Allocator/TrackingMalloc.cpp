@@ -39,7 +39,7 @@ struct FBlockTracking_ {
         return (pblock + 1);
     }
 
-    static void* ReleaseAlloc(void* ptr) {
+    static FBlockTracking_* ReleaseAlloc(void* ptr) {
         auto* const pblock = (reinterpret_cast<FBlockTracking_*>(ptr) - 1);
         Assert(pblock->CheckCanary());
 
@@ -60,6 +60,8 @@ void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
     if (0 == size)
         return nullptr;
 
+    const FMemoryTracking::FThreadScope threadTracking{ trackingData };
+
     void* const ptr = PPE::malloc(size + sizeof(FBlockTracking_));
 
     return FBlockTracking_::MakeAlloc(trackingData, ptr, size);
@@ -74,7 +76,9 @@ void  (tracking_free)(void *ptr) NOEXCEPT {
     if (nullptr == ptr)
         return;
 
-    void* const pblock = FBlockTracking_::ReleaseAlloc(ptr);
+    FBlockTracking_* const pblock = FBlockTracking_::ReleaseAlloc(ptr);
+
+    const FMemoryTracking::FThreadScope threadTracking{ *pblock->TrackingData };
 
     PPE::free(pblock);
 #else
@@ -90,6 +94,8 @@ void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size
 //----------------------------------------------------------------------------
 void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) {
 #if USE_PPE_MEMORYDOMAINS
+    const FMemoryTracking::FThreadScope threadTracking{ trackingData };
+
     FBlockTracking_* pblock = nullptr;
     if (nullptr != ptr) {
         pblock = reinterpret_cast<FBlockTracking_*>(ptr) - 1;

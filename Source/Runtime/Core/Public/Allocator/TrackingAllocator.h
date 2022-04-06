@@ -79,41 +79,45 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) {
+        const FMemoryTracking::FThreadScope threadTracking{ StaticTracking() };
         const FAllocatorBlock r = allocator_traits::Allocate(*this, s);
-        StaticTracking().Allocate(r.SizeInBytes, SnapSize(r.SizeInBytes));
+        threadTracking->Allocate(r.SizeInBytes, SnapSize(r.SizeInBytes));
         return r;
     }
 
     void Deallocate(FAllocatorBlock b) {
-        StaticTracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+        const FMemoryTracking::FThreadScope threadTracking{ StaticTracking() };
+        threadTracking->Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
         allocator_traits::Deallocate(*this, b);
     }
 
     auto Reallocate(FAllocatorBlock& b, size_t s) {
+        const FMemoryTracking::FThreadScope threadTracking{ StaticTracking() };
         IF_CONSTEXPR(allocator_traits::reallocate_can_fail::value) {
             const size_t oldSize = b.SizeInBytes;
             if (allocator_traits::Reallocate(*this, b, s)) {
                 if (oldSize)
-                    StaticTracking().Deallocate(oldSize, SnapSize(oldSize));
+                    threadTracking->Deallocate(oldSize, SnapSize(oldSize));
                 if (b.SizeInBytes)
-                    StaticTracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+                    threadTracking->Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
                 return true;
             }
             return false;
         }
         else {
             if (b.SizeInBytes)
-                StaticTracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+                threadTracking->Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             allocator_traits::Reallocate(*this, b, s);
             if (b.SizeInBytes)
-                StaticTracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+                threadTracking->Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             return;
         }
     }
 
     bool Acquire(FAllocatorBlock b) NOEXCEPT {
         if (allocator_traits::Acquire(*this, b)) {
-            StaticTracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            const FMemoryTracking::FThreadScope threadTracking{ StaticTracking() };
+            threadTracking->Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             return true;
         }
         else {
@@ -123,7 +127,8 @@ public:
 
     bool Steal(FAllocatorBlock b) NOEXCEPT {
         if (allocator_traits::Steal(*this, b)) {
-            StaticTracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            const FMemoryTracking::FThreadScope threadTracking{ StaticTracking() };
+            threadTracking->Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
             return true;
         }
         return false;

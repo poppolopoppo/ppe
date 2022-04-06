@@ -40,6 +40,7 @@ struct MEMORYDOMAIN_NAME(GpuMemory) { static PPE_CORE_API FMemoryTracking& Track
 struct MEMORYDOMAIN_NAME(PooledMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
 struct MEMORYDOMAIN_NAME(ReservedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
 struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
+struct MEMORYDOMAIN_NAME(UnaccountedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
 }   // ^^^ don't use those directly ! always prefer explicit domains vvv
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -50,7 +51,12 @@ struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_CORE_API FMemoryTracking& Trac
         using MEMORYDOMAIN_NAME(_Name) = MEMORYDOMAIN_NAME(_Parent); \
     }
 #else
-#   define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) /* groups are not publicly visible */
+#   define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) /* groups are not publicly writable */ \
+    namespace MemoryDomain { \
+        struct MEMORYDOMAIN_NAME(_Name) { \
+            static PPE_CORE_API const FMemoryTracking& TrackingData(); \
+        }; \
+    }
 #   if WITH_PPE_MEMORYDOMAINS_COLLAPSING
 #       define MEMORYDOMAIN_COLLAPSABLE_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \

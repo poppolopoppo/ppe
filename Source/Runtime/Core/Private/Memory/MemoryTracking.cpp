@@ -21,6 +21,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+THREAD_LOCAL static FMemoryTracking* GThreadTrackingDataPtr_{ nullptr };
+//----------------------------------------------------------------------------
 static bool ShouldTrackRecursively_(const FMemoryTracking& trackingData) {
     return (!!trackingData.Parent() && (FMemoryTracking::Recursive == trackingData.Mode()));
 }
@@ -28,22 +30,29 @@ static bool ShouldTrackRecursively_(const FMemoryTracking& trackingData) {
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
 LOG_CATEGORY(, MemoryTracking)
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationCountWarning, 2000);
-STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 5);
+STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 15);
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationSizeThreshold, CODE3264(16_b, 32_b));
 static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTracking& domain, const FMemoryTracking::FCounters& system) {
-    // #TODO: WeakRef is a special case and should be optimized, but right now we ignore the warnings from this domain:
-    if (&MEMORYDOMAIN_TRACKING_DATA(WeakRef) == &domain)
-        return;
-
-    const size_t totalAllocs = system.AccumulatedAllocs.load(std::memory_order_relaxed);
+        const size_t totalAllocs = system.AccumulatedAllocs.load(std::memory_order_relaxed);
     const size_t smallAllocs = system.SmallAllocs.load(std::memory_order_relaxed);
 
     const float smallPercent = ((smallAllocs * 100.0f) / totalAllocs);
-    if (smallPercent < SmallAllocationPercentThreshold) // bail if less than N% of all allocations are small
+    if (Likely(smallPercent < SmallAllocationPercentThreshold)) // bail if less than N% of all allocations are small
         return;
 
+    // Unaccounted isn't in the engine ownership, so we skip the warning for small allocs in this domain:
+    if (&MEMORYDOMAIN_TRACKING_DATA(UnaccountedMalloc) == &domain)
+        return;
+    // #TODO: WeakRef is a special case and should be optimized, but right now we ignore the warnings from this domain:
+    if (&MEMORYDOMAIN_TRACKING_DATA(WeakRef) == &domain)
+        return;
+    // External memory is also ignored
+    if (domain.IsChildOf(MEMORYDOMAIN_TRACKING_DATA(External)))
+        return;
+
+
     LOG(MemoryTracking, Warning,
-        L"Too many small allocations for memory domain <{0}> ({1} / {2} = {3})",
+        L"Too many small allocations for memory domain <{0}> -> {1} small allocs / {2} total allocs = {3}",
         MakeCStringView(domain.Name()),
         Fmt::CountOfElements(smallAllocs),
         Fmt::CountOfElements(totalAllocs),
@@ -75,19 +84,34 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMemoryTracking& FMemoryTracking::PooledMemory() {
+FMemoryTracking& FMemoryTracking::GpuMemory() NOEXCEPT {
+    return MEMORYDOMAIN_TRACKING_DATA(UnaccountedMemory);
+}
+//----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::PooledMemory() NOEXCEPT {
     return MEMORYDOMAIN_TRACKING_DATA(PooledMemory);
 }
 //----------------------------------------------------------------------------
-FMemoryTracking& FMemoryTracking::UsedMemory() {
+FMemoryTracking& FMemoryTracking::UsedMemory() NOEXCEPT {
     return MEMORYDOMAIN_TRACKING_DATA(UsedMemory);
 }
 //----------------------------------------------------------------------------
-FMemoryTracking& FMemoryTracking::ReservedMemory() {
+FMemoryTracking& FMemoryTracking::ReservedMemory() NOEXCEPT {
     return MEMORYDOMAIN_TRACKING_DATA(ReservedMemory);
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+FMemoryTracking& FMemoryTracking::UnaccountedMemory() NOEXCEPT {
+    return MEMORYDOMAIN_TRACKING_DATA(UnaccountedMemory);
+}
+//----------------------------------------------------------------------------
+FMemoryTracking* FMemoryTracking::ThreadTrackingData() NOEXCEPT {
+    return GThreadTrackingDataPtr_;
+}
+//----------------------------------------------------------------------------
+FMemoryTracking* FMemoryTracking::SetThreadTrackingData(FMemoryTracking* trackingData) NOEXCEPT {
+    std::swap(GThreadTrackingDataPtr_, trackingData);
+    return trackingData;
+}
 //----------------------------------------------------------------------------
 FMemoryTracking::FMemoryTracking(
     const char* optionalName /*= "unknown"*/,
