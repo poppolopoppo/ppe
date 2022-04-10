@@ -29,6 +29,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4714) // function 'function' marked as __forceinline
 PRAGMA_MSVC_WARNING_DISABLE(6054) // String 'XXX' might not be zero-terminated.
 PRAGMA_MSVC_WARNING_DISABLE(6255) // _alloca indicates failure by raising a stack overflow exception. Consider using _malloca instead
 PRAGMA_MSVC_WARNING_DISABLE(6326) // Potential comparison of a constant with another constant.
+PRAGMA_MSVC_WARNING_DISABLE(26812) // unscoped enums
 
 #if USE_PPE_PLATFORM_DEBUG
 
