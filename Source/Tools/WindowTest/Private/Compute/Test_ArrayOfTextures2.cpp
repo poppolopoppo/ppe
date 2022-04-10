@@ -127,7 +127,7 @@ ARGS_IF_RHIDEBUG("Test_ArrayOfTextures2_CS"));
     const PFrameTask tComp = cmd->Task(FDispatchCompute{}
         .SetPipeline(ppln)
         .Dispatch({ imageDim.x / 8, imageDim.y })
-        .AddResources(FDescriptorSetID{ "0" }, resources.get())
+        .AddResources(FDescriptorSetID{ "0" }, resources)
         .DependsOn(tUpdate));
 
     const PFrameTask tRead = cmd->Task(FReadImage{}

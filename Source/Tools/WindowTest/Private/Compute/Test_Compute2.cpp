@@ -65,7 +65,7 @@ ARGS_IF_RHIDEBUG("Test_Compute2_CS"));
                     texel.z == 255 &&
                     texel.w == 0 );
 
-                LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, FRgba32u(r, g, 0, 255), isEqual);
+                //LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, FRgba32u(r, g, 0, 255), isEqual);
                 LOG_CHECKVOID(WindowTest, isEqual);
                 dataIsCorrect &= isEqual;
             }
@@ -81,7 +81,7 @@ ARGS_IF_RHIDEBUG("Test_Compute2_CS"));
 
     PFrameTask tRun = cmd->Task(FDispatchCompute{}
         .SetPipeline(ppln)
-        .AddResources(FDescriptorSetID{ "2" }, resources.get())
+        .AddResources(FDescriptorSetID{ "2" }, resources)
         .Dispatch({ 2, 2 }));
     LOG_CHECK(WindowTest, tRun);
 

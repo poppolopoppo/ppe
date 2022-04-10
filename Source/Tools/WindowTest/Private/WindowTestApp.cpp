@@ -24,6 +24,8 @@ struct FUnitTestFunc_ {
     _Macro(Test_Compute2_) \
     _Macro(Test_ArrayOfTextures1_) \
     _Macro(Test_ArrayOfTextures2_) \
+    _Macro(Test_AsyncCompute1_) \
+    _Macro(Test_AsyncCompute2_) \
     /* queue */ \
     _Macro(Test_CopyBuffer1_) \
     _Macro(Test_CopyImage1_) \
@@ -47,7 +49,9 @@ static void LaunchWindowTests_(FWindowTestApp& app) {
         UNUSED(name);
         LOG(WindowTest, Info, L"start framegraph test <{0}> ...", name);
 
+#if USE_PPE_PLATFORM_DEBUG
         FPlatformDebug::OutputDebug(StringFormat(L"run [{0}]\n", name).c_str());
+#endif
 
         RHI::IFrameGraph& fg = *app.RHI().FrameGraph();
         fg.PrepareNewFrame();
@@ -83,7 +87,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
         FThreefy_4x32 rng{};
         rng.RandomSeed();
 
-        forrange(loop, 0, 10) {
+        forrange(loop, 0, 100) {
             testIndex = 0;
             testSucceed = 0;
 
@@ -104,6 +108,8 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
             rng.Shuffle(MakeView(unitTests));
         }
+
+        ReportAllTrackingData();
 
         app.Window().EndTaskbarProgress();
 

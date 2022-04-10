@@ -35,7 +35,7 @@ bool Test_CopyBuffer1_(FWindowTestApp& app) {
 
         forrange(i, 0, srcBufferSize) {
             const bool isEqual = (srcData[i] == bufferData[i + 128]);
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", i, srcData[i], bufferData[i+128], isEqual);
+            //LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", i, srcData[i], bufferData[i+128], isEqual);
             dataIsCorrect &= isEqual;
         }
     };

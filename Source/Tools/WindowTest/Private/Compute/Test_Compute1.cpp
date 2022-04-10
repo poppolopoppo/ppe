@@ -78,7 +78,7 @@ ARGS_IF_RHIDEBUG("Test_Compute1_CS"));
                     texel.z == 255 &&
                     texel.w == 0 );
 
-                LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, FRgba32u(r, g, 0, 255), isEqual);
+                //LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, FRgba32u(r, g, 0, 255), isEqual);
                 LOG_CHECK(WindowTest, isEqual);
                 dataIsCorrect &= isEqual;
             }
@@ -100,14 +100,14 @@ ARGS_IF_RHIDEBUG("Test_Compute1_CS"));
     resources->BindImage(FUniformID{ "un_OutImage" }, image0);
     PFrameTask tRun0 = cmd->Task(FDispatchCompute{}
         .SetPipeline(ppln)
-        .AddResources(FDescriptorSetID{ "0" }, resources.get())
+        .AddResources(FDescriptorSetID{ "0" }, resources)
         .Dispatch({ 2, 2 }));
     LOG_CHECK(WindowTest, tRun0);
 
     resources->BindImage(FUniformID{ "un_OutImage" }, image1);
     PFrameTask tRun1 = cmd->Task(FDispatchCompute{}
         .SetPipeline(ppln)
-        .AddResources(FDescriptorSetID{ "0" }, resources.get())
+        .AddResources(FDescriptorSetID{ "0" }, resources)
         .Dispatch({ 4, 4 })
         .SetLocalSize({ 4, 4 }));
     LOG_CHECK(WindowTest, tRun1);
@@ -115,7 +115,7 @@ ARGS_IF_RHIDEBUG("Test_Compute1_CS"));
     resources->BindImage(FUniformID{ "un_OutImage" }, image2);
     PFrameTask tRun2 = cmd->Task(FDispatchCompute{}
         .SetPipeline(ppln)
-        .AddResources(FDescriptorSetID{ "0" }, resources.get())
+        .AddResources(FDescriptorSetID{ "0" }, resources)
         .Dispatch({ 2, 2 })
         .SetLocalSize({ 8, 8 }));
     LOG_CHECK(WindowTest, tRun2);
