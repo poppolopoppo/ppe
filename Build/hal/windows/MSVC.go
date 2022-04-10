@@ -449,10 +449,15 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	case ARCH_X86:
 		u.AddCompilationFlag_NoAnalysis("/favor:blend", "/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x86")
-		u.LinkerOptions.Append("/MACHINE:x86", "/SAFESEH")
+		u.LinkerOptions.Append("/MACHINE:x86")
 		u.LibraryPaths.Append(
 			msvc.VSInstallPath.Folder("VC", "Tools", "MSVC", msvc.MinorVer, "lib", "x86"),
 			msvc.VSInstallPath.Folder("VC", "Auxiliary", "VS", "lib", "x86"))
+
+		if u.Debug != DEBUG_HOTRELOAD {
+			u.LinkerOptions.Append("/SAFESEH")
+		}
+
 	case ARCH_X64:
 		u.AddCompilationFlag_NoAnalysis("/favor:AMD64", "/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x64")
