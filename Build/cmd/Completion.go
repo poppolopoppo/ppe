@@ -198,3 +198,23 @@ var ListPersistentVars = utils.MakeCommand(
 		return nil
 	},
 )
+
+var ShowVersion = utils.MakeCommand(
+	"version",
+	"print build version",
+	nil,
+	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
+		fmt.Println(utils.MAIN_SIGNATURE)
+		return nil
+	},
+)
+
+var ShowSeed = utils.MakeCommand(
+	"seed",
+	"print build seed",
+	nil,
+	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
+		fmt.Printf("%X\n", utils.Seed)
+		return nil
+	},
+)
