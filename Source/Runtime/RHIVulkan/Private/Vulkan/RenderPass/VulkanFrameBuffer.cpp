@@ -86,7 +86,7 @@ bool FVulkanFramebuffer::Construct(const FVulkanResourceManager& resources ARGS_
 
     VkFramebufferCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    info.renderPass = resources.ResourceData(exclusiveFB->RenderPassId).Handle();
+    info.renderPass = resources.ResourceData(exclusiveFB->RenderPassId, true).Handle();
     info.attachmentCount = checked_cast<u32>(imageViews.size());
     info.pAttachments = imageViews.data();
     info.width = exclusiveFB->Dimension.x;
@@ -117,7 +117,6 @@ void FVulkanFramebuffer::TearDown(FVulkanResourceManager& resources) {
         resources.ReleaseResource(exclusiveFB->RenderPassId);
 
     exclusiveFB->Framebuffer = VK_NULL_HANDLE;
-    exclusiveFB->RenderPassId = Default;
     exclusiveFB->Dimension = uint2::Zero;
     exclusiveFB->Layers = Default;
     exclusiveFB->HashValue = Default;

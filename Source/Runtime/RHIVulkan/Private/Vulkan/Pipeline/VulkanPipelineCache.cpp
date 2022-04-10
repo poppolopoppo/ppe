@@ -214,9 +214,8 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     *pLayout = workerCmd.AcquireTransient(layoutId);
 
     // find already existing instance
-    *pPipeline = gPipeline._sharedInstances.LockShared()->GetIFP(inst);
-    if (*pPipeline != VK_NULL_HANDLE)
-        return true; // cache hit
+    if (FindCachedPipeline_(pPipeline, gPipeline, inst))
+        return true;
 
     // else create a new instance
 
@@ -356,9 +355,8 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     *pLayout = workerCmd.AcquireTransient(layoutId);
 
     // find already existing instance
-    *pPipeline = mPipeline._sharedInstances.LockShared()->GetIFP(inst);
-    if (*pPipeline != VK_NULL_HANDLE)
-        return true; // cache hit
+    if (FindCachedPipeline_(pPipeline, mPipeline, inst))
+        return true;
 
     // else create a new instance
 
@@ -497,9 +495,8 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     *pLayout = workerCmd.AcquireTransient(layoutId);
 
     // find already existing instance
-    *pPipeline = cPipeline._sharedInstances.LockShared()->GetIFP(inst);
-    if (*pPipeline != VK_NULL_HANDLE)
-        return true; // cache hit
+    if (FindCachedPipeline_(pPipeline, cPipeline, inst))
+        return true;
 
     // else create a new instance
 
@@ -707,7 +704,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             resources.ReleaseResource(table.LayoutId.Release());
 
         if (table.Pipeline)
-            workerCmd.Batch()->DestroyPostponed(VK_OBJECT_TYPE_PIPELINE, reinterpret_cast<uintptr_t>(table.Pipeline));
+            workerCmd.Batch()->DestroyPostponed(VK_OBJECT_TYPE_PIPELINE, table.Pipeline);
     }
 
     exclusiveTable->Tables.clear();
@@ -1012,6 +1009,27 @@ bool FVulkanPipelineCache::CreateShaderStage_(
     }
 
     return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Pipeline>
+bool FVulkanPipelineCache::FindCachedPipeline_(VkPipeline* pInCache, const _Pipeline& ppln, const typename _Pipeline::FPipelineInstance& inst) const {
+    Assert(pInCache);
+#if (VK_USE_64_BIT_PTR_DEFINES==1)
+    * pInCache = ppln._sharedInstances.LockShared()->GetIFP(inst);
+    if (*pInCache != VK_NULL_HANDLE)
+        return true; // cache hit
+
+#else
+    * pInCache = VK_NULL_HANDLE;
+
+    if (auto* cachedIFP = ppln._sharedInstances.LockShared()->GetIFP(inst)) {
+        *pInCache = *cachedIFP;
+        Assert(*pInCache != VK_NULL_HANDLE);
+        return true;
+    }
+#endif
+
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineCache::FindShaderGroup_(

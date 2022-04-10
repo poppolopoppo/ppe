@@ -135,7 +135,7 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
     FDispatchCompute& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
     FDispatchCompute& AddPushConstant(const FPushConstantID& id, const void* p, size_t size) { PushConstants.Push(id, p, size); return (*this); }
 
-    FDispatchCompute& AddResources(const FDescriptorSetID& id, const FPipelineResources* res) {
+    FDispatchCompute& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res) {
         Assert(id);
         Assert(res);
         Resources.Add(id) = res;
@@ -205,7 +205,7 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
     FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
     FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const void* p, size_t size) { PushConstants.Push(id, p, size); return (*this); }
 
-    FDispatchComputeIndirect& AddResources(const FDescriptorSetID& id, const FPipelineResources* res) {
+    FDispatchComputeIndirect& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res) {
         Assert(id);
         Assert(res);
         Resources.Add(id) = res;

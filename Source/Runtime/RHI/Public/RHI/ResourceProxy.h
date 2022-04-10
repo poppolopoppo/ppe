@@ -44,8 +44,9 @@ public:
     int RefCount() const { return _refCounter.load(std::memory_order_relaxed); }
 
 #if !USE_PPE_RHI_RESOURCEREFS
-    FORCE_INLINE void AddRef() NOEXCEPT const {
-        _refCounter.fetch_add(1, std::memory_order_relaxed);
+    FORCE_INLINE void AddRef(int refCount = 1) const NOEXCEPT {
+        Assert(refCount > 0);
+        _refCounter.fetch_add(refCount, std::memory_order_relaxed);
     }
     NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const NOEXCEPT {
         if (_refCounter.fetch_sub(refCount, std::memory_order_relaxed) == refCount) {
@@ -115,19 +116,20 @@ public:
 #endif
 
 #if USE_PPE_RHI_RESOURCEREFS
-    FORCE_INLINE void AddRef() const {
-        auto x = _refCounter.fetch_add(1, std::memory_order_relaxed);
-        //IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
+    FORCE_INLINE void AddRef(int refCount = 1) const {
+        Assert(refCount > 0);
+        auto x = _refCounter.fetch_add(refCount, std::memory_order_relaxed);
+        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanRenderPass"))
         {
             char debug[200];
-            Format(debug, " +++ AddRef(1) -> {2}        #{0:#3}:{1} '{3}'\n", InstanceID(), Meta::type_info<T>.name, x, DebugName());
+            Format(debug, " +++ AddRef({4}) -> {2}        #{0:#3}:{1} '{3}'\n", InstanceID(), Meta::type_info<T>.name, x, DebugName(), refCount);
             FPlatformDebug::OutputDebug(debug);
             //PPE_DEBUG_BREAK();
         }
     }
     NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const {
         auto x = _refCounter.fetch_sub(refCount, std::memory_order_relaxed);
-        //IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanPipelineLayout"))
+        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanRenderPass"))
         {
             char debug[200];
             Format(debug, " --- RemoveRef({3}) -> {2}     #{0:#3}:{1} '{4}'\n", InstanceID(), Meta::type_info<T>.name, x, refCount, DebugName());

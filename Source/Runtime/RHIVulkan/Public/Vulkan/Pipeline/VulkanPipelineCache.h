@@ -170,6 +170,12 @@ private:
         const FVulkanRayTracingPipeline::FInternalPipeline& pipeline, const FRTShaderID& id
         ARGS_IF_RHIDEBUG(EShaderDebugMode mode) );
 
+    template <typename _Pipeline>
+    NODISCARD bool FindCachedPipeline_(
+        VkPipeline* pInCache,
+        const _Pipeline& ppln,
+        const typename _Pipeline::FPipelineInstance& inst) const;
+
     NODISCARD bool FindShaderGroup_(
         VkRayTracingShaderGroupCreateInfoKHR* pInfo,
         const FVulkanRayTracingPipeline::FInternalPipeline& pipeline,

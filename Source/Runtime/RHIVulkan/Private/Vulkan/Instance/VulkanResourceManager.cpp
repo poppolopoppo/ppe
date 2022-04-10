@@ -702,8 +702,6 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(renderPass.Valid());
 
-    LOG_CHECK(RHI, AcquireResource(renderPass) );
-
     TResourceProxy<FVulkanFramebuffer> emptyKey{ attachments, renderPass, dim, layers };
 
     FRawFramebufferID framebufferId;
@@ -715,7 +713,6 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
     }
 
     RHI_LOG(Error, L"failed to create frame buffer for '{0}", debugName);
-    ReleaseResource(renderPass);
     return Default;
 }
 //----------------------------------------------------------------------------

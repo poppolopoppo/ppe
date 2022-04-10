@@ -248,7 +248,7 @@ struct FTraceRays final : details::TFrameTaskDesc<FTraceRays> {
     FTraceRays() NOEXCEPT : TFrameTaskDesc<FTraceRays>("TraceRays", FDebugColorScheme::Get().RayTracing) {}
 #endif
 
-    FTraceRays& AddResources(const FDescriptorSetID& id, const FPipelineResources* res);
+    FTraceRays& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
     FTraceRays& SetGroupCount(const uint3& value) { GroupCount = value; return (*this); }
     FTraceRays& SetGroupCount(u32 x, u32 y = 1, u32 z = 1) { GroupCount = uint3(x, y, z); return (*this); }

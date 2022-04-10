@@ -91,7 +91,7 @@ struct FRenderPassDesc {
         EBlendOp blendOpColor, EBlendOp blendOpAlpha,
         EColorMask colorMask = EColorMask::RGBA );
 
-    FRenderPassDesc& AddResources(const FDescriptorSetID& id, const PPipelineResources& res);
+    FRenderPassDesc& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
     // Blend
     FRenderPassDesc& SetLogicOp(ELogicOp logicOp) { Blend.LogicOp = logicOp; return (*this); }
@@ -237,7 +237,7 @@ inline FRenderPassDesc& FRenderPassDesc::AddColorBuffer(ERenderTargetID id,
     return (*this);
 }
 //----------------------------------------------------------------------------
-inline FRenderPassDesc& FRenderPassDesc::AddResources(const FDescriptorSetID& id, const PPipelineResources& res) {
+inline FRenderPassDesc& FRenderPassDesc::AddResources(const FDescriptorSetID& id, const PCPipelineResources& res) {
     Assert(id);
     Assert(res);
     PerPassResources.Add(id) = res;

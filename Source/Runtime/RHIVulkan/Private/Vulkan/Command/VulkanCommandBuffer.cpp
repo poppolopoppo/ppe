@@ -96,7 +96,7 @@ bool FVulkanCommandBuffer::Begin(
     // create command pool
     {
         const u32 index = static_cast<u32>(exclusive->QueueIndex);
-        exclusive->PerQueue.resize(index + 1);
+        exclusive->PerQueue.resize(Max(exclusive->PerQueue.size(), index + 1_size_t));
 
         if (not exclusive->PerQueue[index].Valid() &&
             not exclusive->PerQueue[index].Construct(Device(), queue ARGS_IF_RHIDEBUG(queue->DebugName))) {
