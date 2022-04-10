@@ -14,7 +14,7 @@ LOG_CATEGORY(, DynamicLib)
 //----------------------------------------------------------------------------
 // Cross platform code
 //----------------------------------------------------------------------------
-FDynamicLibrary::FDynamicLibrary() {
+FDynamicLibrary::FDynamicLibrary() NOEXCEPT {
     _handle.Reset(nullptr, false, false);
 }
 //----------------------------------------------------------------------------
@@ -57,6 +57,8 @@ bool FDynamicLibrary::Attach(const wchar_t* path) {
 
         LOG(DynamicLib, Debug, L"attached to module '{0}'", MakeCStringView(path) );
 
+        _OnAttachLibrary.Invoke(*this, path);
+
         return true;
     }
     else {
@@ -72,6 +74,8 @@ bool FDynamicLibrary::Load(const wchar_t* path) {
 
         LOG(DynamicLib, Debug, L"loaded module '{0}'", MakeCStringView(path) );
 
+        _OnLoadLibrary.Invoke(*this, path);
+
         return true;
     }
     else {
@@ -83,6 +87,8 @@ void FDynamicLibrary::Unload() {
     AssertRelease_NoAssume(IsValid());
 
     auto* const hModule = (FPlatformProcess::FDynamicLibraryHandle)_handle.Get();
+
+    _OnUnloadLibrary.Invoke(*this);
 
     if (IsSharedResource()) {
         LOG(DynamicLib, Debug, L"detaching module '{0}'", FPlatformProcess::DynamicLibraryFilename(hModule));

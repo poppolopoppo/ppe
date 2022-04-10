@@ -4,6 +4,8 @@
 
 #include "IO/StringView.h"
 #include "Meta/PointerWFlags.h"
+#include "Misc/Function.h"
+#include "Misc/Event.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -11,7 +13,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FDynamicLibrary {
 public:
-    FDynamicLibrary();
+    FDynamicLibrary() NOEXCEPT;
     ~FDynamicLibrary();
 
     FDynamicLibrary(const FDynamicLibrary&) = delete;
@@ -43,6 +45,14 @@ public:
     friend inline void swap(FDynamicLibrary& lhs, FDynamicLibrary& rhs) NOEXCEPT {
         swap(lhs._handle, rhs._handle);
     }
+
+public: // events
+    using FLibraryLoadDelegate = TFunction<void(const FDynamicLibrary&, const wchar_t* path)>;
+    using FLibraryUnloadDelegate = TFunction<void(const FDynamicLibrary&)>;
+
+    PUBLIC_EVENT(OnAttachLibrary,   FLibraryLoadDelegate)
+    PUBLIC_EVENT(OnLoadLibrary,     FLibraryLoadDelegate)
+    PUBLIC_EVENT(OnUnloadLibrary,   FLibraryUnloadDelegate)
 
 private:
     Meta::TPointerWFlags<void> _handle;
