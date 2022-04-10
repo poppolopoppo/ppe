@@ -129,6 +129,8 @@ bool FVulkanCommandBuffer::Begin(
 bool FVulkanCommandBuffer::Execute() {
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
+    Assert_NoAssume(Default != exclusive->QueueIndex);
+
     exclusive->State = EState::Compiling;
 
     RHI_PROFILINGSCOPE("BakeCommandBuffer", &exclusive->Batch->_statistics.Renderer.CpuTime);
@@ -201,7 +203,7 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
         Assert(VK_NULL_HANDLE != cmd);
 
 #if USE_PPE_RHIDEBUG
-        device.SetObjectName(bit_cast<u64>(cmd), data.DebugName.c_str(), VK_OBJECT_TYPE_COMMAND_BUFFER);
+        device.SetObjectName(cmd, data.DebugName.c_str(), VK_OBJECT_TYPE_COMMAND_BUFFER);
 #endif
 
         data.Batch->PushCommandToBack(&pool, cmd);
@@ -1078,7 +1080,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
         &ssb, &ssbTimemapOffset, &ssbTimemapSize, &ssbDim,
         exclusive->ShaderDbg.TimemapIndex) );
 
-    const size_t ssbAlign = _frameGraph->Device().Limits().minStorageBufferOffsetAlignment;
+    const size_t ssbAlign = checked_cast<size_t>(_frameGraph->Device().Limits().minStorageBufferOffsetAlignment);
     const size_t ssbMaxValuesSize = ssbDim.y * sizeof(u64);
     ssbTimemapSize -= ssbMaxValuesSize + ssbAlign;
     const size_t ssbMaxValuesOffset = Meta::RoundToNextPow2(ssbTimemapOffset + ssbTimemapSize, ssbAlign);

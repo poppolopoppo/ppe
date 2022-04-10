@@ -142,7 +142,7 @@ bool FVulkanBuffer::Construct(
 #if USE_PPE_RHIDEBUG
     if (debugName) {
         _debugName = debugName;
-        device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+        device.SetObjectName(exclusiveData->vkBuffer, _debugName, VK_OBJECT_TYPE_BUFFER);
     }
 #endif
 
@@ -175,7 +175,7 @@ bool FVulkanBuffer::Construct(
 #if USE_PPE_RHIDEBUG
     if (debugName) {
         _debugName = debugName;
-        device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+        device.SetObjectName(exclusiveData->vkBuffer, _debugName, VK_OBJECT_TYPE_BUFFER);
     }
 #endif
 
@@ -207,7 +207,7 @@ bool FVulkanBuffer::Construct(
     Assert_NoAssume(VK_NULL_HANDLE == exclusiveData->vkBuffer);
     Assert_NoAssume(not exclusiveData->MemoryId);
 
-    exclusiveData->vkBuffer = static_cast<VkBuffer>(externalBuffer.Value);
+    exclusiveData->vkBuffer = FVulkanExternalObject(externalBuffer).Cast<VkBuffer>();
     exclusiveData->Desc = desc;
     exclusiveData->OnRelease = std::move(onRelease);
     exclusiveData->IsExternal = true;
@@ -220,7 +220,7 @@ bool FVulkanBuffer::Construct(
 #if USE_PPE_RHIDEBUG
     if (debugName) {
         _debugName = debugName;
-        device.SetObjectName(reinterpret_cast<u64>(exclusiveData->vkBuffer), _debugName, VK_OBJECT_TYPE_BUFFER);
+        device.SetObjectName(exclusiveData->vkBuffer, _debugName, VK_OBJECT_TYPE_BUFFER);
     }
 #endif
 
@@ -243,7 +243,7 @@ void FVulkanBuffer::TearDown(FVulkanResourceManager& resources) {
 
     if (exclusiveData->IsExternal) {
         if (exclusiveData->OnRelease)
-            exclusiveData->OnRelease(FExternalBuffer{ exclusiveData->vkBuffer });
+            exclusiveData->OnRelease(FVulkanExternalObject(exclusiveData->vkBuffer).ExternalBuffer());
     }
     else
         device.vkDestroyBuffer(device.vkDevice(), exclusiveData->vkBuffer, device.vkAllocator());

@@ -563,7 +563,7 @@ VkSemaphore FVulkanFrameGraph::CreateSemaphore_() {
     Assert_NoAssume(VK_NULL_HANDLE != result);
 
 #if USE_PPE_RHITASKNAME
-    _device.SetObjectName(reinterpret_cast<u64>(result), "BatchSemaphore", VK_OBJECT_TYPE_SEMAPHORE);
+    _device.SetObjectName(result, "BatchSemaphore", VK_OBJECT_TYPE_SEMAPHORE);
 #endif
 
     return result;

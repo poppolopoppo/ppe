@@ -132,7 +132,7 @@ void FVulkanCommandBatch::DependsOn(FVulkanCommandBatch* other) {
     exclusiveData->Dependencies.Push(MakeSafePtr(other));
 }
 //----------------------------------------------------------------------------
-void FVulkanCommandBatch::DestroyPostponed(VkObjectType type, uintptr_t handle) {
+void FVulkanCommandBatch::DestroyPostponed(VkObjectType type, FVulkanExternalObject handle) {
     Assert(handle);
     Assert_NoAssume(State() < EState::Baked);
 
@@ -449,25 +449,25 @@ void FVulkanCommandBatch::ReleaseVulkanObjects_(const FVulkanDevice& device, FIn
 
     for (auto& it : data.ReadyToDelete) {
         switch (it.first) {
-        case VK_OBJECT_TYPE_SEMAPHORE: device.vkDestroySemaphore(vkDevice, VkSemaphore(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_FENCE: device.vkDestroyFence(vkDevice, VkFence(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_DEVICE_MEMORY: device.vkFreeMemory(vkDevice, VkDeviceMemory(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_IMAGE: device.vkDestroyImage(vkDevice, VkImage(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_IMAGE_VIEW: device.vkDestroyImageView(vkDevice, VkImageView(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_EVENT: device.vkDestroyEvent(vkDevice, VkEvent(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_QUERY_POOL: device.vkDestroyQueryPool(vkDevice, VkQueryPool(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_BUFFER: device.vkDestroyBuffer(vkDevice, VkBuffer(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_BUFFER_VIEW: device.vkDestroyBufferView(vkDevice, VkBufferView(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_PIPELINE_LAYOUT: device.vkDestroyPipelineLayout(vkDevice, VkPipelineLayout(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_RENDER_PASS: device.vkDestroyRenderPass(vkDevice, VkRenderPass(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_PIPELINE: device.vkDestroyPipeline(vkDevice, VkPipeline(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: device.vkDestroyDescriptorSetLayout(vkDevice, VkDescriptorSetLayout(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_SAMPLER: device.vkDestroySampler(vkDevice, VkSampler(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_DESCRIPTOR_POOL: device.vkDestroyDescriptorPool(vkDevice, VkDescriptorPool(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_FRAMEBUFFER: device.vkDestroyFramebuffer(vkDevice, VkFramebuffer(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION: device.vkDestroySamplerYcbcrConversion(vkDevice, VkSamplerYcbcrConversion(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE: device.vkDestroyDescriptorUpdateTemplate(vkDevice, VkDescriptorUpdateTemplate(it.second), pAllocator); break;
-        case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR: device.vkDestroyAccelerationStructureKHR(vkDevice, VkAccelerationStructureKHR(it.second), pAllocator); break;
+        case VK_OBJECT_TYPE_SEMAPHORE: device.vkDestroySemaphore(vkDevice, it.second.Cast<VkSemaphore>(), pAllocator); break;
+        case VK_OBJECT_TYPE_FENCE: device.vkDestroyFence(vkDevice, it.second.Cast<VkFence>(), pAllocator); break;
+        case VK_OBJECT_TYPE_DEVICE_MEMORY: device.vkFreeMemory(vkDevice, it.second.Cast<VkDeviceMemory>(), pAllocator); break;
+        case VK_OBJECT_TYPE_IMAGE: device.vkDestroyImage(vkDevice, it.second.Cast<VkImage>(), pAllocator); break;
+        case VK_OBJECT_TYPE_IMAGE_VIEW: device.vkDestroyImageView(vkDevice, it.second.Cast<VkImageView>(), pAllocator); break;
+        case VK_OBJECT_TYPE_EVENT: device.vkDestroyEvent(vkDevice, it.second.Cast<VkEvent>(), pAllocator); break;
+        case VK_OBJECT_TYPE_QUERY_POOL: device.vkDestroyQueryPool(vkDevice, it.second.Cast<VkQueryPool>(), pAllocator); break;
+        case VK_OBJECT_TYPE_BUFFER: device.vkDestroyBuffer(vkDevice, it.second.Cast<VkBuffer>(), pAllocator); break;
+        case VK_OBJECT_TYPE_BUFFER_VIEW: device.vkDestroyBufferView(vkDevice, it.second.Cast<VkBufferView>(), pAllocator); break;
+        case VK_OBJECT_TYPE_PIPELINE_LAYOUT: device.vkDestroyPipelineLayout(vkDevice, it.second.Cast<VkPipelineLayout>(), pAllocator); break;
+        case VK_OBJECT_TYPE_RENDER_PASS: device.vkDestroyRenderPass(vkDevice, it.second.Cast<VkRenderPass>(), pAllocator); break;
+        case VK_OBJECT_TYPE_PIPELINE: device.vkDestroyPipeline(vkDevice, it.second.Cast<VkPipeline>(), pAllocator); break;
+        case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: device.vkDestroyDescriptorSetLayout(vkDevice, it.second.Cast<VkDescriptorSetLayout>(), pAllocator); break;
+        case VK_OBJECT_TYPE_SAMPLER: device.vkDestroySampler(vkDevice, it.second.Cast<VkSampler>(), pAllocator); break;
+        case VK_OBJECT_TYPE_DESCRIPTOR_POOL: device.vkDestroyDescriptorPool(vkDevice, it.second.Cast<VkDescriptorPool>(), pAllocator); break;
+        case VK_OBJECT_TYPE_FRAMEBUFFER: device.vkDestroyFramebuffer(vkDevice, it.second.Cast<VkFramebuffer>(), pAllocator); break;
+        case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION: device.vkDestroySamplerYcbcrConversion(vkDevice, it.second.Cast<VkSamplerYcbcrConversion>(), pAllocator); break;
+        case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE: device.vkDestroyDescriptorUpdateTemplate(vkDevice, it.second.Cast<VkDescriptorUpdateTemplate>(), pAllocator); break;
+        case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR: device.vkDestroyAccelerationStructureKHR(vkDevice, it.second.Cast<VkAccelerationStructureKHR>(), pAllocator); break;
 
         default: AssertNotImplemented();
         }

@@ -433,7 +433,7 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderM
 
 #if USE_PPE_RHITASKNAME
     _device.SetObjectName(
-        reinterpret_cast<u64>(vkShaderModule),
+        vkShaderModule,
         rawSpirv.DebugName(),
         VK_OBJECT_TYPE_SHADER_MODULE );
 #endif
@@ -1209,9 +1209,9 @@ bool FVulkanResourceManager::CheckHostVisibleMemory_() {
     size_t transferHeapSize = 0;
     forrange(i, 0, props.memoryHeapCount) {
         if (uniformHeaps.test(i))
-            uniformHeapSize += props.memoryHeaps[i].size;
+            uniformHeapSize += checked_cast<size_t>(props.memoryHeaps[i].size);
         if (cachedHeaps.test(i) || coherentHeaps.test(i))
-            transferHeapSize += props.memoryHeaps[i].size;
+            transferHeapSize += checked_cast<size_t>(props.memoryHeaps[i].size);
     }
 
     _staging.MaxStagingBufferMemory = Min((4 * transferHeapSize) / 5, _staging.MaxStagingBufferMemory);

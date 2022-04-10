@@ -34,7 +34,7 @@ static void MakeSwapchainDesc_(
 
     using namespace RHI;
 
-    pSwapchainDesc->Surface = FWindowSurface{ backBuffer };
+    pSwapchainDesc->Surface = FVulkanExternalObject(backBuffer).WindowSurface();
     pSwapchainDesc->Dimensions = surfaceInfo.Dimensions;
 
     if (surfaceInfo.EnableVSync) {
@@ -216,6 +216,10 @@ void FVulkanRHIService::TearDown() {
 //----------------------------------------------------------------------------
 RHI::SFrameGraph FVulkanRHIService::FrameGraph() const NOEXCEPT {
     return RHI::SFrameGraph{ _frameGraph };
+}
+//----------------------------------------------------------------------------
+RHI::FWindowSurface FVulkanRHIService::BackBuffer() const NOEXCEPT {
+    return RHI::FVulkanExternalObject{ _backBuffer }.WindowSurface();
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {

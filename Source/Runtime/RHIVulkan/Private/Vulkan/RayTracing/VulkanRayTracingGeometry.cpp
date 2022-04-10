@@ -159,7 +159,7 @@ bool FVulkanRayTracingGeometry::Construct(
 #if USE_PPE_RHIDEBUG
     if (debugName) {
         _debugName = debugName;
-        device.SetObjectName(bit_cast<u64>(exclusiveData->BottomLevelAS), _debugName, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV);
+        device.SetObjectName(exclusiveData->BottomLevelAS, _debugName, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV);
     }
 #endif
 

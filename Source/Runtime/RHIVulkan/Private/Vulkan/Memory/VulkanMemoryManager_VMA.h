@@ -38,12 +38,12 @@ static FMemoryTracking& VmaMemoryTypeDomain_(VmaAllocator allocator, uint32_t me
 //----------------------------------------------------------------------------
 static void VmaMemoryUserAllocate_(VmaAllocator allocator, VmaAllocation allocation) {
     FMemoryTracking& deviceDomain = VmaMemoryTypeDomain_(allocator, allocation->GetMemoryTypeIndex());
-    deviceDomain.AllocateUser(allocation->GetSize());
+    deviceDomain.AllocateUser(checked_cast<size_t>(allocation->GetSize()));
 }
 //----------------------------------------------------------------------------
 static void VmaMemoryUserDeallocate_(VmaAllocator allocator, VmaAllocation allocation) {
     FMemoryTracking& deviceDomain = VmaMemoryTypeDomain_(allocator, allocation->GetMemoryTypeIndex());
-    deviceDomain.DeallocateUser(allocation->GetSize());
+    deviceDomain.DeallocateUser(checked_cast<size_t>(allocation->GetSize()));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -186,7 +186,7 @@ inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(cons
             UNUSED(memory);
             UNUSED(pUserData);
             FMemoryTracking& deviceTracking = VmaMemoryTypeDomain_(allocator, memoryType);
-            deviceTracking.AllocateSystem(size);
+            deviceTracking.AllocateSystem(checked_cast<size_t>(size));
         };
     vmaMemoryCallbacks.pfnFree = [](
         VmaAllocator VMA_NOT_NULL                    allocator,
@@ -197,7 +197,7 @@ inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(cons
             UNUSED(memory);
             UNUSED(pUserData);
             FMemoryTracking& deviceTracking = VmaMemoryTypeDomain_(allocator, memoryType);
-            deviceTracking.DeallocateSystem(size);
+            deviceTracking.DeallocateSystem(checked_cast<size_t>(size));
         };
 
     info.pDeviceMemoryCallbacks = &vmaMemoryCallbacks;

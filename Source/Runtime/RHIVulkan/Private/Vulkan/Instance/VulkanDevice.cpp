@@ -140,7 +140,7 @@ const FVulkanDeviceQueue& FVulkanDevice::DeviceQueue(EVulkanQueueFamily familyIn
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_RHITASKNAME
-bool FVulkanDevice::SetObjectName(u64 id, FConstChar name, VkObjectType type) const {
+bool FVulkanDevice::SetObjectName(FVulkanExternalObject id, FConstChar name, VkObjectType type) const {
     if (_enabled.DebugUtils && !!name && !!id) {
         VkDebugUtilsObjectNameInfoEXT info{};
         info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;

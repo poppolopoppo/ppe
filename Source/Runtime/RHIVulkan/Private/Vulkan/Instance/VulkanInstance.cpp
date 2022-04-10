@@ -1119,7 +1119,7 @@ bool FVulkanInstance::CreateSurface(VkSurfaceKHR* pSurface, FVulkanWindowHandle 
 #   error "platform not supported"
 #endif
 
-    LOG(RHI, Debug, L"created vulkan surface {0} -> {1}", Fmt::Pointer(window), Fmt::Pointer(*pSurface));
+    LOG(RHI, Debug, L"created vulkan surface {0} -> {1}", Fmt::Pointer((void*)window), Fmt::Pointer((void*)*pSurface));
 
     Assert_NoAssume(VK_NULL_HANDLE != *pSurface);
     return true;
@@ -1129,7 +1129,7 @@ void FVulkanInstance::DestroySurface(VkSurfaceKHR vkSurface) const {
     Assert(VK_NULL_HANDLE != vkSurface);
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
 
-    LOG(RHI, Debug, L"destroying vulkan surface {0}", Fmt::Pointer(vkSurface));
+    LOG(RHI, Debug, L"destroying vulkan surface {0}", Fmt::Pointer((void*)vkSurface));
 
     vkDestroySurfaceKHR(_vkInstance, vkSurface, &_vkAllocationCallbacks);
 }

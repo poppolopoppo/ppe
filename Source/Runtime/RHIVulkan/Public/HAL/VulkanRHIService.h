@@ -31,7 +31,7 @@ public: // IRHIService
     virtual ERHIFeature Features() const NOEXCEPT override { return _features; }
 
     virtual RHI::SFrameGraph FrameGraph() const NOEXCEPT override;
-    virtual RHI::FWindowSurface BackBuffer() const NOEXCEPT override { return RHI::FWindowSurface{ _backBuffer }; }
+    virtual RHI::FWindowSurface BackBuffer() const NOEXCEPT override;
     virtual const RHI::FSwapchainID& Swapchain() const NOEXCEPT override { return _swapchain; }
 
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) override;

@@ -293,18 +293,16 @@ bool FVulkanSwapchain::Construct(
     FVulkanFrameGraph& fg, const FSwapchainDesc& desc
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     const auto& exclusiveData = _data.LockExclusive();
+    const FVulkanExternalObject windowSurface{ desc.Surface.Value };
 
-    if (exclusiveData->vkSwapchain) {
-        LOG_CHECK(RHI, desc.Surface == exclusiveData->vkSurface);
-    }
-
-    const FVulkanDevice& device = fg.Device();
-
-    exclusiveData->vkSurface = bit_cast<VkSurfaceKHR>(desc.Surface.Value);
+    LOG_CHECK(RHI, not exclusiveData->vkSwapchain || windowSurface.Cast<VkSurfaceKHR>() == exclusiveData->vkSurface);
+    exclusiveData->vkSurface = windowSurface.Cast<VkSurfaceKHR>();
 
     VkPhysicalDeviceSurfaceInfo2KHR surfaceInfo{};
     surfaceInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR;
     surfaceInfo.surface = exclusiveData->vkSurface;
+
+    const FVulkanDevice& device = fg.Device();
 
     // get surface capabilities
     VkSurfaceCapabilities2KHR surfaceCaps{};
@@ -628,7 +626,7 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
 
 #if USE_PPE_RHIDEBUG
     if (debugName) {
-        device.SetObjectName(bit_cast<u64>(vkSwapchain), debugName, VK_OBJECT_TYPE_SWAPCHAIN_KHR);
+        device.SetObjectName(vkSwapchain, debugName, VK_OBJECT_TYPE_SWAPCHAIN_KHR);
     }
 #endif
 

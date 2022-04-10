@@ -40,7 +40,7 @@ public:
     using FSwapchains = TFixedSizeStack<const FVulkanSwapchain*, MaxSwapchains>;
     using FWaitSemaphores = TUPLEVECTOR_INSITU(RHIBatch, MaxBatchItems, VkSemaphore, VkPipelineStageFlags);
 
-    using FResourceArray = VECTORINSITU(RHICommand, TPair<VkObjectType COMMA uintptr_t>, 3);
+    using FResourceArray = VECTORINSITU(RHICommand, TPair<VkObjectType COMMA FVulkanExternalObject>, 3);
     using FResourceMap = HASHMAP(RHICommand, FResourceHandle, u32);
 
     enum class EState : u32 {
@@ -216,7 +216,7 @@ public:
     void PushCommandToFront(FVulkanCommandPool* pPool, VkCommandBuffer vkCmdBuffer);
     void PushCommandToBack(FVulkanCommandPool* pPool, VkCommandBuffer vkCmdBuffer);
     void DependsOn(FVulkanCommandBatch* other);
-    void DestroyPostponed(VkObjectType type, uintptr_t handle);
+    void DestroyPostponed(VkObjectType type, FVulkanExternalObject handle);
 
     // ICommandBatch
 

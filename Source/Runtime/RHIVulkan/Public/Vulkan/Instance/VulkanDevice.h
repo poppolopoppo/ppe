@@ -216,7 +216,7 @@ public:
     }
 
 #if USE_PPE_RHITASKNAME
-    bool SetObjectName(u64 id, FConstChar name, VkObjectType type) const;
+    bool SetObjectName(FVulkanExternalObject id, FConstChar name, VkObjectType type) const;
 #endif
 
 private:

@@ -38,13 +38,15 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
         // validation
 
         Assert_NoAssume(size >= buffer.StaticSize);
-        Assert_NoAssume(buffer.ArrayStride == 0 or Meta::IsAlignedPow2(buffer.ArrayStride, size - buffer.StaticSize));
+        Assert_NoAssume(buffer.ArrayStride == 0 or Meta::IsAlignedPow2(buffer.ArrayStride, checked_cast<size_t>(size) - buffer.StaticSize));
         Assert_NoAssume(offset < localBuf->SizeInBytes());
         Assert_NoAssume(offset + size <= localBuf->SizeInBytes());
 
         auto& limits = _processor._workerCmd->Device().Limits();
         UNUSED(limits);
-        Assert_NoAssume(Meta::IsAlignedPow2(limits.minUniformBufferOffsetAlignment, offset));
+        Assert_NoAssume(Meta::IsAlignedPow2(
+            checked_cast<size_t>(limits.minUniformBufferOffsetAlignment),
+            checked_cast<size_t>(offset)));
 
         if (Meta::EnumAnd(buffer.State, EResourceState::_StateMask) == EResourceState::UniformRead) {
             Assert_NoAssume(size == buffer.StaticSize);

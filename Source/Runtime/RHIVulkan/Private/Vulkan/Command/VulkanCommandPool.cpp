@@ -38,7 +38,7 @@ bool FVulkanCommandPool::Construct(
 #if USE_PPE_RHIDEBUG
     _debugName = debugName;
     if (not _debugName.empty())
-        device.SetObjectName(reinterpret_cast<u64>(_pool), _debugName.c_str(), VK_OBJECT_TYPE_COMMAND_POOL);
+        device.SetObjectName(_pool, _debugName.c_str(), VK_OBJECT_TYPE_COMMAND_POOL);
 #endif
 
     return true;

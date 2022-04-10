@@ -81,6 +81,39 @@ enum class EShaderDebugIndex : u32 {
 };
 #endif
 //----------------------------------------------------------------------------
+struct FVulkanExternalObject {
+    u64 Id;
+
+    FVulkanExternalObject() = default;
+    CONSTEXPR FVulkanExternalObject(u64 vkObjectId) NOEXCEPT : Id(vkObjectId) {}
+    FVulkanExternalObject(const void* vkHandle) NOEXCEPT : FVulkanExternalObject(bit_cast<uintptr_t>(vkHandle)) {}
+    FVulkanExternalObject(const FExternalBuffer& externalBuffer) NOEXCEPT : FVulkanExternalObject(externalBuffer.Value) {}
+    FVulkanExternalObject(const FExternalImage& externalImage) NOEXCEPT : FVulkanExternalObject(externalImage.Value) {}
+    FVulkanExternalObject(const FWindowSurface& windowSurface) NOEXCEPT : FVulkanExternalObject(windowSurface.Value) {}
+
+    bool Valid() const { return !!Id; }
+
+    void* Pointer() const {
+        return bit_cast<void*>(checked_cast<uintptr_t>(Id));
+    }
+
+    operator u64 () const NOEXCEPT { return Id; }
+    u64 operator *() const NOEXCEPT { return Id; }
+
+    FExternalBuffer ExternalBuffer() const { return FExternalBuffer{ Pointer() }; }
+    FExternalImage ExternalImage() const { return FExternalImage{ Pointer() }; }
+    FWindowSurface WindowSurface() const { return FWindowSurface{ Pointer() }; }
+
+    template <typename _Vk>
+    _Vk Cast() const NOEXCEPT {
+        IF_CONSTEXPR(std::is_same_v<decltype(Id), _Vk>) {
+            return Id;
+        } else {
+            return bit_cast<_Vk>(Pointer());
+        }
+    }
+};
+//----------------------------------------------------------------------------
 struct FVulkanExternalImageDesc {
     VkImage Image{};
     VkImageType Type{};

@@ -200,7 +200,7 @@ bool FVulkanImage::Construct(
 #if USE_PPE_RHIDEBUG
     if (debugName) {
         _debugName = debugName;
-        device.SetObjectName(bit_cast<u64>(exclusiveData->vkImage), _debugName, VK_OBJECT_TYPE_IMAGE);
+        device.SetObjectName(exclusiveData->vkImage, _debugName, VK_OBJECT_TYPE_IMAGE);
     }
 #endif
 
@@ -234,7 +234,7 @@ bool FVulkanImage::Construct(
 #if USE_PPE_RHIDEBUG
     if (debugName) {
         _debugName = debugName;
-        device.SetObjectName(bit_cast<u64>(exclusiveData->vkImage), _debugName, VK_OBJECT_TYPE_IMAGE);
+        device.SetObjectName(exclusiveData->vkImage, _debugName, VK_OBJECT_TYPE_IMAGE);
     }
 #endif
 
@@ -267,7 +267,7 @@ bool FVulkanImage::Construct(
     AssertMessage_NoAssume(L"not supported", desc.Queues == EQueueUsage::Unknown);
     AssertMessage_NoAssume(L"not supported", queueFamilyIndices.empty() or queueFamilyIndices.size() >= 2);
 
-    exclusiveData->vkImage = bit_cast<VkImage>(externalImage.Value);
+    exclusiveData->vkImage = FVulkanExternalObject(externalImage.Value).Cast<VkImage>();
     exclusiveData->Desc = desc;
 
     AssertRelease( IsSupported(device, exclusiveData->Desc, EMemoryType::Default) );
@@ -284,7 +284,7 @@ bool FVulkanImage::Construct(
 #if USE_PPE_RHIDEBUG
     if (debugName) {
         _debugName = debugName;
-        device.SetObjectName(bit_cast<u64>(exclusiveData->vkImage), _debugName, VK_OBJECT_TYPE_IMAGE);
+        device.SetObjectName(exclusiveData->vkImage, _debugName, VK_OBJECT_TYPE_IMAGE);
     }
 #endif
 
@@ -309,7 +309,7 @@ void FVulkanImage::TearDown(FVulkanResourceManager& resources) {
 
     if (exclusiveData->Desc.IsExternal) {
         if (exclusiveData->OnRelease)
-            exclusiveData->OnRelease(FExternalImage{ bit_cast<void*>(exclusiveData->vkImage) });
+            exclusiveData->OnRelease(FVulkanExternalObject(exclusiveData->vkImage).ExternalImage());
     }
     else
         device.vkDestroyImage(device.vkDevice(), exclusiveData->vkImage, device.vkAllocator() );
