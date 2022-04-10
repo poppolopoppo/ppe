@@ -8,8 +8,11 @@
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryView.h"
 #include "Meta/Functor.h"
-#include "Meta/TypeInfo.h"
 #include "Thread/ThreadSafe.h"
+
+#if USE_PPE_MEMORYDOMAINS
+#   include "Meta/TypeInfo.h"
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -369,20 +372,13 @@ private:
 #endif
 
 #if USE_PPE_MEMORYDOMAINS
-        mutable FMemoryTracking TrackingData{
+        mutable FAutoRegisterMemoryTracking TrackingData{
             Meta::type_info<TMemoryPool>.name,
-            std::addressof(MEMORYDOMAIN_TRACKING_DATA(MemoryPool))
-        };
-        FInternalPool_() {
-            RegisterTrackingData(&TrackingData);
-        }
-        ~FInternalPool_() {
-            Assert_NoAssume(NumLiveBlocks == 0);
-            UnregisterTrackingData(&TrackingData);
-        }
-#else
-        FInternalPool_() = default;
+            std::addressof(MEMORYDOMAIN_TRACKING_DATA(MemoryPool)) };
 #endif
+
+        FInternalPool_() = default;
+
         explicit FInternalPool_(_Allocator&& ralloc) : _Allocator(std::move(ralloc)) {
             ONLY_IF_MEMORYDOMAINS(RegisterTrackingData(&TrackingData));
         }

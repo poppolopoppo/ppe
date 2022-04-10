@@ -143,6 +143,16 @@ public:
     TIntrusiveListNode<FMemoryTracking> Node;
 };
 //----------------------------------------------------------------------------
+class PPE_CORE_API FAutoRegisterMemoryTracking : public FMemoryTracking {
+public:
+    explicit FAutoRegisterMemoryTracking(
+        const char* name,
+        FMemoryTracking* parent = nullptr,
+        EMode mode = Recursive) NOEXCEPT;
+
+    ~FAutoRegisterMemoryTracking();
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

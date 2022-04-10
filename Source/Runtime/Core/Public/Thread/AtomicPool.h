@@ -3,9 +3,16 @@
 #include "Core.h"
 
 #include "HAL/PlatformMemory.h"
+#include "Memory/MemoryDomain.h"
+#include "Memory/MemoryTracking.h"
+#include "Memory/RefPtr.h"
 #include "Meta/AlignedStorage.h"
 #include "Meta/Functor.h"
 #include "Thread/AtomicSet.h"
+
+#if USE_PPE_MEMORYDOMAINS
+#   include "Meta/TypeInfo.h"
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -28,20 +35,26 @@ class TAtomicPool : Meta::FNonCopyableNorMovable {
     using block_type = std::aligned_storage_t<sizeof(T), _Align>;
     block_type _storage[mask_type::Capacity * _Chunks];
 
+#if USE_PPE_MEMORYDOMAINS
+    mutable FAutoRegisterMemoryTracking _trackingData{
+        Meta::type_info<TAtomicPool>.name,
+        std::addressof(MEMORYDOMAIN_TRACKING_DATA(AtomicPool)) };
+#endif
+
 public:
     using index_type = typename mask_type::value_type;
     STATIC_CONST_INTEGRAL(size_t, Capacity, mask_type::Capacity * _Chunks);
 
 #if USE_PPE_MEMORYDOMAINS
     TAtomicPool() NOEXCEPT {
-        MEMORYDOMAIN_TRACKING_DATA(AtomicPool).AllocateSystem(Capacity * sizeof(block_type));
+        _trackingData.AllocateSystem(Capacity * sizeof(block_type));
     }
 #else
     TAtomicPool() = default;
 #endif
 #if USE_PPE_ASSERT || USE_PPE_MEMORYDOMAINS
     ~TAtomicPool() {
-        ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(AtomicPool).DeallocateSystem(Capacity * sizeof(block_type)) );
+        ONLY_IF_MEMORYDOMAINS(_trackingData.DeallocateSystem(Capacity * sizeof(block_type)) );
 #   if USE_PPE_ASSERT
         for (auto& set : _sets) {
             Assert_NoAssume(set.Alloc.AllTrue());
@@ -99,7 +112,7 @@ public:
                 T* const p = reinterpret_cast<T*>(_storage + id);
                 Assert_NoAssume(Aliases(p));
 
-                ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(AtomicPool).AllocateUser(sizeof(block_type)) );
+                ONLY_IF_MEMORYDOMAINS( _trackingData.AllocateUser(sizeof(block_type)) );
 
                 if (set.Create.Set(alloc)) {
                     ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(p, sizeof(block_type)));
@@ -120,7 +133,7 @@ public:
         Assert(p);
         Assert_NoAssume(Aliases(p));
 
-        ONLY_IF_MEMORYDOMAINS( MEMORYDOMAIN_TRACKING_DATA(AtomicPool).DeallocateUser(sizeof(block_type)) );
+        ONLY_IF_MEMORYDOMAINS( _trackingData.DeallocateUser(sizeof(block_type)) );
 
         auto abs = checked_cast<index_type>(reinterpret_cast<const block_type*>(p) - _storage);
         auto ch = abs / mask_type::Capacity;
