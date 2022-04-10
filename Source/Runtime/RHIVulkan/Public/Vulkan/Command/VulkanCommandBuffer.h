@@ -158,6 +158,8 @@ public:
 
     // ICommandBuffer
 
+    virtual void OnStrongRefCountReachZero() NOEXCEPT override;
+
     virtual SFrameGraph FrameGraph() const NOEXCEPT override;
     virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId) override;
     NODISCARD virtual bool DependsOn(const FCommandBufferBatch& cmd) override;

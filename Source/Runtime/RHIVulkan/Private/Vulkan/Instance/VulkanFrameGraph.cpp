@@ -130,11 +130,18 @@ void FVulkanFrameGraph::TearDown() {
     _resourceManager.TearDown();
 }
 //----------------------------------------------------------------------------
-void FVulkanFrameGraph::RecycleBatch(FVulkanCommandBatch* batch) {
+void FVulkanFrameGraph::RecycleBatch(FVulkanCommandBatch* batch) NOEXCEPT {
     Assert(batch);
     Assert_NoAssume(IsInitialized_());
 
     _cmdBatchPool.Release(batch);
+}
+//----------------------------------------------------------------------------
+void FVulkanFrameGraph::RecycleBuffer(FVulkanCommandBuffer* buffer) NOEXCEPT {
+    Assert(buffer);
+    Assert_NoAssume(IsInitialized_());
+
+    _cmdBufferPool.Release(buffer);
 }
 //----------------------------------------------------------------------------
 void FVulkanFrameGraph::ReleaseMemory() noexcept {
@@ -421,16 +428,18 @@ NODISCARD FBufferID FVulkanFrameGraph::CreateBuffer(
 //----------------------------------------------------------------------------
 // ExternalDescription
 //----------------------------------------------------------------------------
-const void* FVulkanFrameGraph::ExternalDescription(FRawBufferID id) const NOEXCEPT {
+FExternalBuffer FVulkanFrameGraph::ExternalDescription(FRawBufferID id) const NOEXCEPT {
     Assert_NoAssume(IsInitialized_());
-    const FVulkanBuffer* const pBuffer = _resourceManager.ResourceDataIFP(id);
-    return (pBuffer ? pBuffer->Read()->vkBuffer : nullptr);
+    if (const FVulkanBuffer* const pBuffer = _resourceManager.ResourceDataIFP(id))
+        return FVulkanExternalObject(pBuffer->Read()->vkBuffer).ExternalBuffer();
+    return FExternalBuffer{ nullptr };
 }
 //----------------------------------------------------------------------------
-const void* FVulkanFrameGraph::ExternalDescription(FRawImageID id) const NOEXCEPT {
+FExternalImage FVulkanFrameGraph::ExternalDescription(FRawImageID id) const NOEXCEPT {
     Assert_NoAssume(IsInitialized_());
-    const FVulkanImage* const pImage = _resourceManager.ResourceDataIFP(id);
-    return (pImage ? pImage->Read()->vkImage : nullptr);
+    if (const FVulkanImage* const pImage = _resourceManager.ResourceDataIFP(id))
+        return FVulkanExternalObject(pImage->Read()->vkImage).ExternalImage();
+    return FExternalImage{ nullptr };
 }
 //----------------------------------------------------------------------------
 // UpdateHostBuffer
@@ -486,19 +495,16 @@ FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMe
     Assert(static_cast<u32>(desc.QueueType) < _queueMap.size());
     Assert_NoAssume(IsInitialized_());
 
-    PVulkanCommandBuffer cmd = _cmdBufferPool.Allocate([this](FVulkanCommandBuffer* pCmd, u32 id) {
-        INPLACE_NEW(pCmd, FVulkanCommandBuffer){ this, id };
-    });
+    PVulkanCommandBuffer cmd = _cmdBufferPool.Allocate(this);
     AssertReleaseMessage(L"command buffer pool overflow !", cmd);
 
     FQueueData& queue = QueueData_(desc.QueueType);
     Assert(queue.Ptr);
 
-    PVulkanCommandBatch batch = _cmdBatchPool.Allocate([this, &queue, dependsOn](FVulkanCommandBatch* pBatch, u32 id) {
-        INPLACE_NEW(pBatch, FVulkanCommandBatch){ this, id };
-        pBatch->Construct(queue.Type, dependsOn);
-    });
+    PVulkanCommandBatch batch = _cmdBatchPool.Allocate(this);
     AssertReleaseMessage(L"command batch pool overflow !", batch);
+
+    batch->Construct(queue.Type, dependsOn);
 
     if (not cmd->Begin(desc, batch, queue.Ptr)) {
         LOG(RHI, Error, L"failed to begin command buffer recording");

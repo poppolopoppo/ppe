@@ -104,7 +104,7 @@ void RemoveRef(T* ptr) {
     if (ptr->DecStrongRefCount_ReturnIfReachZero()) {
         /**
          ** 2 ways available to override destruction behavior:
-         **  - use ADL with a custom overload of free function OnStrongRefCountReachZero, the default is using and can be overriden
+         **  - implement a custom overload of free function OnStrongRefCountReachZero, can be overriden with ADL
          **  - implement OnStrongRefCountReachZero() as a member function, this method will propagate to child classes
          **/
         IF_CONSTEXPR(Meta::has_defined_v<FRefCountable::THasOnStrongRefCountReachZero, T>) {

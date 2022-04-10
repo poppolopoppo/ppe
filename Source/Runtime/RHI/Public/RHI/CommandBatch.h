@@ -53,17 +53,9 @@ class PPE_RHI_API ICommandBatch : public FRefCountable {
 public:
     virtual ~ICommandBatch() = default;
 
-    virtual void ReleaseForRecycling() NOEXCEPT = 0;
+    // Implement for refptr recycling, see RefPtr-inl.h
+    virtual void OnStrongRefCountReachZero() NOEXCEPT = 0;
 
-    // call ReleaseForRecycling() when released, and skip delete, see RefPtr.h
-    void OnStrongRefCountReachZero() NOEXCEPT {
-        Assert_NoAssume(0 == RefCount());
-#if USE_PPE_SAFEPTR
-        Assert_Lightweight(0 == SafeRefCount());
-#endif
-
-        ReleaseForRecycling();
-    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

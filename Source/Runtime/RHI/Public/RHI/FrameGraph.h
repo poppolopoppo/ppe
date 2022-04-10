@@ -120,9 +120,9 @@ public: // interface
         TMemoryView<const u32> queueFamilyIndices
         ARGS_IF_RHIDEBUG(FConstChar debugName)) = 0;
 
-    // api-specific variant (#TODO)
-    NODISCARD virtual const void* ExternalDescription(FRawBufferID id) const NOEXCEPT = 0;
-    NODISCARD virtual const void* ExternalDescription(FRawImageID id) const NOEXCEPT = 0;
+    // api-specific variant
+    NODISCARD virtual FExternalBuffer ExternalDescription(FRawBufferID id) const NOEXCEPT = 0;
+    NODISCARD virtual FExternalImage ExternalDescription(FRawImageID id) const NOEXCEPT = 0;
 
     // Returns 'true' if resource is not deleted.
     NODISCARD virtual bool IsResourceAlive(FRawGPipelineID id) const NOEXCEPT = 0;

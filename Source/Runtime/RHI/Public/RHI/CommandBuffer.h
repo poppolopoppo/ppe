@@ -45,6 +45,9 @@ public: // interface
 
     virtual SFrameGraph FrameGraph() const NOEXCEPT = 0;
 
+    // Implement for refptr recycling, see RefPtr-inl.h
+    virtual void OnStrongRefCountReachZero() NOEXCEPT = 0;
+
     // Acquire next swapchain image. This image will be presented after command buffer execution.
     // Do not use this image in any other command buffers.
     NODISCARD virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId) = 0;

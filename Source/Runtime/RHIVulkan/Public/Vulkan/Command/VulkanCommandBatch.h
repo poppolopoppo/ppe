@@ -44,6 +44,7 @@ public:
     using FResourceMap = HASHMAP(RHICommand, FResourceHandle, u32);
 
     enum class EState : u32 {
+        Uninitialized = 0,
         Initial,
         Recording,  // build command buffers
         Baked,      // command buffers built, all data locked
@@ -219,12 +220,7 @@ public:
 
     // ICommandBatch
 
-    virtual void ReleaseForRecycling() NOEXCEPT override;
-
-    // call ReleaseForRecycling() when released, and skip delete
-   /* friend void OnStrongRefCountReachZero(FVulkanCommandBatch* batch) {
-        OnStrongRefCountReachZero(static_cast<ICommandBatch*>(batch));
-    }*/
+    virtual void OnStrongRefCountReachZero() NOEXCEPT override;
 
     // staging buffer
 
@@ -275,7 +271,7 @@ private:
     const SVulkanFrameGraph _frameGraph;
     const u32 _indexInPool;
 
-    std::atomic<EState> _state{ EState::Initial };
+    std::atomic<EState> _state{ EState::Uninitialized };
     std::atomic<FVulkanSubmitted*> _submitted{ nullptr };
 
     TRHIThreadSafe<FInternalData> _data;

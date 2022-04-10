@@ -19,18 +19,17 @@ FVulkanCommandBatch::FVulkanCommandBatch(const SVulkanFrameGraph& fg, u32 indexI
     STATIC_ASSERT(decltype(_state)::is_always_lock_free);
 
 #if USE_PPE_RHIDEBUG
-    _shaderDebugger.BufferAlign = _frameGraph->Device().Limits().minStorageBufferOffsetAlignment;
+    _shaderDebugger.BufferAlign = checked_cast<size_t>(_frameGraph->Device().Limits().minStorageBufferOffsetAlignment);
     Assert_NoAssume(not EnableShaderDebugging || _frameGraph->Device().Limits().maxBoundDescriptorSets > DebugDescriptorSet);
 #endif
 }
 //----------------------------------------------------------------------------
-FVulkanCommandBatch::~FVulkanCommandBatch()
-{
-
+FVulkanCommandBatch::~FVulkanCommandBatch() {
+    Assert_NoAssume(State() == EState::Uninitialized);
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn) {
-    Assert_NoAssume(RefCount() == 0);
+    Assert_NoAssume(State() == EState::Uninitialized);
     const auto exclusiveData = _data.LockExclusive();
 
     Assert_NoAssume(exclusiveData->Dependencies.empty());
@@ -56,7 +55,7 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const TPtrRef<c
     else
         exclusiveData->SubmitImmediately = false;
 
-    _state.store(EState::Initial, std::memory_order_relaxed);
+    SetState_(EState::Uninitialized, EState::Initial);
 
     for (const FCommandBufferBatch& dep : dependsOn) {
         if (PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep.Batch()))
@@ -66,14 +65,14 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const TPtrRef<c
     }
 }
 //----------------------------------------------------------------------------
-void FVulkanCommandBatch::ReleaseForRecycling() NOEXCEPT {
+void FVulkanCommandBatch::OnStrongRefCountReachZero() NOEXCEPT {
     Assert_NoAssume(RefCount() == 0);
     Assert_NoAssume(State() == EState::Complete);
 
     const auto exclusiveData = _data.LockExclusive();
     UNUSED(exclusiveData); // just for locking
 
-    _state.store(EState::Initial, std::memory_order_relaxed);
+    _state.store(EState::Uninitialized, std::memory_order_relaxed);
     _frameGraph->RecycleBatch(this);
 }
 //----------------------------------------------------------------------------
@@ -874,7 +873,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendTimemapForDebug(const uint2& dim, E
     const size_t size{
         sizeof(uint4) + // first 4 components
         dim.y * sizeof(u64) + // output pixels
-        _frameGraph->Device().Limits().minStorageBufferOffsetAlignment + // padding for alignment
+        checked_cast<size_t>(_frameGraph->Device().Limits().minStorageBufferOffsetAlignment) + // padding for alignment
         dim.x * dim.y * sizeof(u64) // temporary line
     };
 

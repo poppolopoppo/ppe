@@ -15,6 +15,7 @@
 #include "Container/RingBuffer.h"
 #include "Container/Vector.h"
 #include "Thread/AtomicPool.h"
+#include "Thread/AtomicRefPtrPool.h"
 #include "Vulkan/Debugger/VulkanDebugger.h"
 
 namespace PPE {
@@ -48,8 +49,8 @@ public:
         FPerQueueSemaphore Semaphores{};
     };
 
-    using FCommandBufferPool = TAtomicPool<FVulkanCommandBuffer, 4, u32>;
-    using FCommandBatchPool = TAtomicPool<FVulkanCommandBatch, 16, u32>;
+    using FCommandBufferPool = TAtomicRefPtrPool<ARG0_IF_MEMORYDOMAINS(MEMORYDOMAIN_TAG(RHICommand) COMMA) FVulkanCommandBuffer, 4>;
+    using FCommandBatchPool = TAtomicRefPtrPool<ARG0_IF_MEMORYDOMAINS(MEMORYDOMAIN_TAG(RHICommand) COMMA) FVulkanCommandBatch, 16>;
     using FSubmittedPool = TAtomicPool<FVulkanSubmitted, 8, u32>;
     using FQueueMap = TStaticArray<FQueueData, static_cast<u32>(EQueueType::_Count)>;
     using FFences = VECTOR(RHIFrameGraph, VkFence);
@@ -66,7 +67,9 @@ public:
     VkQueryPool QueryPool() const { return _vkQueryPool; }
 #endif
 
-    void RecycleBatch(FVulkanCommandBatch* batch);
+    void RecycleBatch(FVulkanCommandBatch* batch) NOEXCEPT;
+    void RecycleBuffer(FVulkanCommandBuffer* buffer) NOEXCEPT;
+
     NODISCARD PVulkanDeviceQueue FindQueue(EQueueType queueType) const;
 
     NODISCARD bool Construct();
@@ -140,8 +143,8 @@ public:
         TMemoryView<const u32> queueFamilyIndices
         ARGS_IF_RHIDEBUG(FConstChar debugName)) override;
 
-    NODISCARD const void* ExternalDescription(FRawBufferID id) const NOEXCEPT override;
-    NODISCARD const void* ExternalDescription(FRawImageID id) const NOEXCEPT override;
+    NODISCARD FExternalBuffer ExternalDescription(FRawBufferID id) const NOEXCEPT override;
+    NODISCARD FExternalImage ExternalDescription(FRawImageID id) const NOEXCEPT override;
 
     NODISCARD bool IsResourceAlive(FRawGPipelineID id) const NOEXCEPT override { return _resourceManager.IsResourceAlive(id); }
     NODISCARD bool IsResourceAlive(FRawCPipelineID id) const NOEXCEPT override { return _resourceManager.IsResourceAlive(id); }

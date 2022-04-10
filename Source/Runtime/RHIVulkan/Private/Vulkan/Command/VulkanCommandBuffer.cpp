@@ -59,6 +59,16 @@ const FVulkanDevice& FVulkanCommandBuffer::Device() const NOEXCEPT {
     return _frameGraph->Device();
 }
 //----------------------------------------------------------------------------
+void FVulkanCommandBuffer::OnStrongRefCountReachZero() NOEXCEPT {
+    Assert_NoAssume(RefCount() == 0);
+
+    const auto exclusiveData = _data.LockExclusive();
+    UNUSED(exclusiveData); // just for locking
+
+    Assert_NoAssume(exclusiveData->State == EState::Initial);
+    _frameGraph->RecycleBuffer(this);
+}
+//----------------------------------------------------------------------------
 SFrameGraph FVulkanCommandBuffer::FrameGraph() const NOEXCEPT {
     return _frameGraph;
 }
@@ -723,7 +733,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
 
     // #TODO: virtual buffer or buffer cache
     FBufferID scratchBuf = _frameGraph->CreateBuffer(FBufferDesc{
-        memReq2.memoryRequirements.size,
+        checked_cast<size_t>(memReq2.memoryRequirements.size),
         EBufferUsage::RayTracing,
     },  mem ARGS_IF_RHIDEBUG("ScratchBuffer") );
     Assert(scratchBuf);
