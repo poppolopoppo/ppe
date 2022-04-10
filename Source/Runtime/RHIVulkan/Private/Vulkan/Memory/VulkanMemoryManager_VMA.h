@@ -383,13 +383,13 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
     VmaAllocationInfo allocInfo{};
     vmaGetAllocationInfo(exclusiveAllocator.Value(), allocation, &allocInfo);
 
+    ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
+
     VkBindAccelerationStructureMemoryInfoNV bindInfo{};
     bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
     bindInfo.accelerationStructure = accelStruct;
     bindInfo.memory = allocInfo.deviceMemory;
     bindInfo.memoryOffset = allocInfo.offset;
-
-    ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
 
     VK_CHECK(_device.vkBindAccelerationStructureMemoryNV(
         _device.vkDevice(), 1, &bindInfo ));

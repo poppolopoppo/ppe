@@ -62,6 +62,7 @@ LOG_CATEGORY(, VMA)
 #   pragma warning (disable: 4062)
 #   pragma warning (disable: 4701)
 #   pragma warning (disable: 4703)
+#   pragma warning (disable: 4826)
 #endif
 #ifdef CPP_CLANG
 #   pragma clang diagnostic push
