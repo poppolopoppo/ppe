@@ -23,9 +23,29 @@ namespace {
 //----------------------------------------------------------------------------
 THREAD_LOCAL static FMemoryTracking* GThreadTrackingDataPtr_{ nullptr };
 //----------------------------------------------------------------------------
-static bool ShouldTrackRecursively_(const FMemoryTracking& trackingData) {
+static bool CONSTF ShouldTrackRecursively_(const FMemoryTracking& trackingData) NOEXCEPT {
     return (!!trackingData.Parent() && (FMemoryTracking::Recursive == trackingData.Mode()));
 }
+//----------------------------------------------------------------------------
+#if USE_PPE_ASSERT
+static bool CONSTF PPE_DEBUG_SECTION CheckMemoryPredicates2_(const FMemoryTracking::FCounters& user, const FMemoryTracking::FCounters& system) NOEXCEPT {
+    forrange(n, 0, 10) {
+        u64 usz = user.TotalSize.load(std::memory_order_relaxed);
+        u64 ssz = system.TotalSize.load(std::memory_order_relaxed);
+        std::atomic_thread_fence(std::memory_order_acquire);
+        if (usz <= ssz)
+            return true;
+    }
+
+    return false;
+}
+FORCE_INLINE static bool CONSTF CheckMemoryPredicates_(const FMemoryTracking::FCounters& user, const FMemoryTracking::FCounters& system) NOEXCEPT {
+    if (Likely(user.TotalSize <= system.TotalSize))
+        return true;
+
+    return CheckMemoryPredicates2_(user, system);
+}
+#endif
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
 LOG_CATEGORY(, MemoryTracking)
@@ -172,7 +192,7 @@ void FMemoryTracking::AllocateUser(size_t size, const FMemoryTracking*/* = nullp
     if (ShouldTrackRecursively_(*this))
         _parent->AllocateUser(size, this);
 
-    Assert_NoAssume((_user.TotalSize <= _system.TotalSize) || (_user.TotalSize <= _system.TotalSize));
+    Assert_NoAssume(CheckMemoryPredicates_(_user, _system));
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::DeallocateUser(size_t size, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
@@ -183,7 +203,7 @@ void FMemoryTracking::DeallocateUser(size_t size, const FMemoryTracking*/* = nul
     if (ShouldTrackRecursively_(*this))
         _parent->DeallocateUser(size, this);
 
-    Assert_NoAssume((_user.TotalSize <= _system.TotalSize) || (_user.TotalSize <= _system.TotalSize));
+    Assert_NoAssume(CheckMemoryPredicates_(_user, _system));
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::AllocateSystem(size_t size, const FMemoryTracking* child/* = nullptr */) NOEXCEPT {
@@ -195,7 +215,7 @@ void FMemoryTracking::AllocateSystem(size_t size, const FMemoryTracking* child/*
     if (ShouldTrackRecursively_(*this))
         _parent->AllocateSystem(size, this);
 
-    Assert_NoAssume((_user.TotalSize <= _system.TotalSize) || (_user.TotalSize <= _system.TotalSize));
+    Assert_NoAssume(CheckMemoryPredicates_(_user, _system));
 
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
     if (Unlikely((!child) & (size <= SmallAllocationSizeThreshold) & (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
@@ -211,7 +231,7 @@ void FMemoryTracking::DeallocateSystem(size_t size, const FMemoryTracking*/* = n
     if (ShouldTrackRecursively_(*this))
         _parent->DeallocateSystem(size, this);
 
-    Assert_NoAssume((_user.TotalSize <= _system.TotalSize) || (_user.TotalSize <= _system.TotalSize));
+    Assert_NoAssume(CheckMemoryPredicates_(_user, _system));
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::ReleaseBatch(size_t numAllocs, size_t userTotal, size_t systemTotal, const FMemoryTracking*/* = nullptr */) NOEXCEPT {
@@ -245,7 +265,7 @@ void FMemoryTracking::ReleaseBatchSystem(size_t numAllocs, size_t totalSize, con
     if (ShouldTrackRecursively_(*this))
         _parent->ReleaseBatchSystem(numAllocs, totalSize, this);
 
-    Assert_NoAssume((_user.TotalSize <= _system.TotalSize) || (_user.TotalSize <= _system.TotalSize));
+    Assert_NoAssume(CheckMemoryPredicates_(_user, _system));
 }
 //----------------------------------------------------------------------------
 void FMemoryTracking::ReleaseAllUser(const FMemoryTracking*/* = nullptr */) NOEXCEPT {
@@ -259,7 +279,7 @@ void FMemoryTracking::ReleaseAllUser(const FMemoryTracking*/* = nullptr */) NOEX
         if (ShouldTrackRecursively_(*this))
             _parent->ReleaseBatchUser(n, sz, this);
 
-        Assert_NoAssume((_user.TotalSize <= _system.TotalSize) || (_user.TotalSize <= _system.TotalSize));
+        Assert_NoAssume(CheckMemoryPredicates_(_user, _system));
     }
     else {
         Assert_NoAssume(0 == _user.TotalSize);
@@ -379,6 +399,20 @@ void FMemoryTracking::FCounters::ResetAt(const FSnapshot& snapshot) {
     SmallAllocs.store(checked_cast<size_t>(snapshot.SmallAllocs), std::memory_order_relaxed);
 
     std::atomic_thread_fence(std::memory_order_acquire);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FAutoRegisterMemoryTracking::FAutoRegisterMemoryTracking(
+    const char* name,
+    FMemoryTracking* parent,
+    EMode mode ) NOEXCEPT
+:   FMemoryTracking(name, parent, mode) {
+    ONLY_IF_MEMORYDOMAINS(RegisterTrackingData(this));
+}
+//----------------------------------------------------------------------------
+FAutoRegisterMemoryTracking::~FAutoRegisterMemoryTracking() {
+    ONLY_IF_MEMORYDOMAINS(UnregisterTrackingData(this));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
