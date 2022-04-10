@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"sync"
@@ -431,7 +432,7 @@ func (pg *pinnedLogProgress) String() (result string) {
 
 	result += ANSI_FG1_CYAN.String() + " ["
 
-	fillPattern := func(off, w int, pattern string, swing bool) {
+	fillPattern := func(off, w int, pattern []string, swing bool) {
 		n := len(pattern)
 		m := len(ANSI_COLORS)
 		for i := 0; i < w; i += 1 {
@@ -444,11 +445,65 @@ func (pg *pinnedLogProgress) String() (result string) {
 			} else if i%10 == 0 && i > 1 && i+1 != w {
 				result += string(ANSI_FG1_CYAN) + "-"
 			} else {
-				result += make_ansi_color("fg1", ANSI_COLORS[(i)%m]).String()
-				result += pattern[c : c+1]
+				result += make_ansi_color("fg1", ANSI_COLORS[(off+i)%m]).String()
+				result += pattern[c]
 			}
 		}
 		result += string(ANSI_RESET)
+	}
+
+	sliderPattern := func() {
+		t := int(totalSecs.Milliseconds() / 30)
+		pattern := []string{"`", "`", "'", "-", ".", ",", "_", ",", ".", "-", "'", "`", "`", "'", "-", ".", ",", "_", ",", ".", "=", "'", `"`}
+		// pattern := []string{`▁`, `▂`, `▃`, `▄`, `▅`, `▆`, `▇`, `█`, `▇`, `▆`, `▅`, `▄`, `▃`, `▂`}
+		fillPattern(t, width+1, pattern, false)
+	}
+
+	wavePattern := func() {
+		pattern := []string{`▁`, `▂`, `▃`, `▄`, `▅`, `▆`, `▇`, `█`, `▇`, `▆`, `▅`, `▄`, `▃`, `▂`}
+		t := float64(totalSecs.Seconds()) * 2.0
+		for i := 0; i < width; i += 1 {
+			x := t + 4*float64(i)*math.Pi/width
+			//f := math.Abs(math.Cos(x-math.Cos(t)*math.Pi*2)*math.Sin(x+t))
+			f := 0.0
+			m := 0.5
+			for b := 0; b < 4; b += 1 {
+				f += m * (math.Cos(x+math.Sin((t+float64(i)/width)/m)*m*math.Pi)*0.5 + 0.5)
+				m *= 0.5
+				x *= 2.0
+			}
+
+			j := int(math.Floor(f * float64(len(pattern))))
+			// c := int(math.Floor(f * float64(len(ANSI_COLORS))))
+			//result += make_ansi_color("fg1", ANSI_COLORS[(c+int(totalSecs.Seconds()))%len(ANSI_COLORS)]).String()
+			result += pattern[j]
+		}
+	}
+
+	ballPattern := func() {
+		ping := []string{"`", "`", "'", "-", ".", ",", "_", ",", ".", "-", "'", "`", "`", "'", "-", ".", ",", "_", ",", ".", "=", "'", `"`}
+		// ping := []string{`▁`, `▂`, `▃`, `▄`, `▅`, `▆`, `▇`, `█`, `▇`, `▆`, `▅`, `▄`, `▃`, `▂`}
+
+		pong := make([]string, width)
+		for i := 0; i < width; i += 1 {
+			pong[i] = " "
+		}
+
+		ball := func(x int, color string) {
+			pos := (pg.startedat.Nanosecond() + x) % (width * 2)
+			if pos >= width {
+				pos = width*2 - pos - 1
+			}
+			frm := x % len(ping)
+			pong[pos] = color + ping[frm]
+		}
+
+		ball(pg.tick, string(ANSI_FG1_MAGENTA))
+		ball(pg.tick+1, string(ANSI_FG1_RED))
+		ball(pg.tick+2, string(ANSI_FG1_YELLOW))
+		ball(pg.tick+3, string(ANSI_FG1_WHITE))
+
+		result += strings.Join(pong, "")
 	}
 
 	if pg.first < pg.last {
@@ -489,8 +544,15 @@ func (pg *pinnedLogProgress) String() (result string) {
 		result += fmt.Sprintf(" %.3f/s", eltPerSec)
 	} else {
 		result += ANSI_FG0_CYAN.String()
-		t := int((totalSecs.Milliseconds() / 30))
-		fillPattern(t, width+1, "``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='", false)
+
+		if true {
+			wavePattern()
+		} else if false {
+			sliderPattern()
+		} else {
+			ballPattern()
+		}
+
 		result += ANSI_FG1_CYAN.String()
 		result += "]"
 		result += ANSI_FG0_GREEN.String()
