@@ -181,6 +181,8 @@ func (x *FBuildExecutor) Run() (err error) {
 	LogVerbose("fbuild: running with '%v'", x)
 
 	cmd := exec.Command(FBUILD_BIN.String(), x.Args.Slice()...)
+	defer cmd.Wait()
+
 	cmd.Dir = UFS.Root.String()
 	cmd.Env = append(os.Environ(),
 		"FASTBUILD_CACHE_PATH="+UFS.Cache.String(),

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"sort"
 )
 
 const BFF_VERSION = "1.0.0"
@@ -334,6 +335,7 @@ func (gen bffGenerator) CustomUnits(unit *Unit) []string {
 func (gen bffGenerator) MakeAliases(units []*Unit) {
 	environments := make(map[BuildAlias]*[]TargetAlias, len(units))
 	namespaces := make(map[BuildAlias]*[]TargetAlias, len(units))
+	modules := make(map[BuildAlias]*[]TargetAlias, len(units))
 
 	for _, u := range units {
 		target := u.Target
@@ -349,16 +351,27 @@ func (gen bffGenerator) MakeAliases(units []*Unit) {
 		} else {
 			*list = append(*list, target)
 		}
+
+		if list, ok := modules[u.Target.ModuleAlias()]; !ok {
+			modules[u.Target.ModuleAlias()] = &[]TargetAlias{target}
+		} else {
+			*list = append(*list, target)
+		}
 	}
 
-	for alias, list := range environments {
-		gen.Func("Alias", func() {
-			gen.Assign("Targets", Stringize(*list...))
-		}, alias.String())
+	for _, sorted := range []map[BuildAlias]*[]TargetAlias{environments, namespaces, modules} {
+		for alias, list := range sorted {
+			names := Stringize(*list...)
+			sort.Strings(names)
+			gen.Func("Alias", func() {
+				gen.Assign("Targets", names)
+			}, alias.String())
+		}
 	}
-	for alias, list := range namespaces {
-		gen.Func("Alias", func() {
-			gen.Assign("Targets", Stringize(*list...))
-		}, alias.String())
-	}
+
+	gen.Func("Alias", func() {
+		names := Stringize(Keys(environments)...)
+		sort.Strings(names)
+		gen.Assign("Targets", names)
+	}, "all")
 }
