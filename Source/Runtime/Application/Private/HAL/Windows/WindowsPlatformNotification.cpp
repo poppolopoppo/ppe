@@ -106,7 +106,7 @@ public:
 
         }, ETaskPriority::Low);
         FSyscallThreadPool::Get().WaitForAll();
-        Assert(not _windowsTaskbarPtr.Available);
+        Assert_NoAssume(not _windowsTaskbarPtr.Available);
     }
 
 private:

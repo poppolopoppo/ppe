@@ -559,32 +559,34 @@ public:
     }
 
 public: // ILowLevelLogger
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        Assert(category.Verbosity ^ level);
+    using FTransientMemoryStream_ = TMemoryStream<INLINE_ALLOCATOR(Logger, u8, 4096)>;
 
-        wchar_t tmp[16 << 10];
-        FWFixedSizeTextWriter oss(tmp);
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        Assert_NoAssume(category.Verbosity ^ level);
+
+        FTransientMemoryStream_ tmp;
+        FWTextWriter oss(&tmp);
 
         FLogFormat::Header(oss, category, level, site);
         oss.Write(text);
         FLogFormat::Footer(oss, category, level, site);
         oss << Eos;
 
-        FPlatformDebug::OutputDebug(tmp);
+        FPlatformDebug::OutputDebug(reinterpret_cast<wchar_t*>(tmp.Storage().data()));
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
-        Assert(category.Verbosity ^ level);
+        Assert_NoAssume(category.Verbosity ^ level);
 
-        wchar_t tmp[16 << 10];
-        FWFixedSizeTextWriter oss(tmp);
+        FTransientMemoryStream_ tmp;
+        FWTextWriter oss(&tmp);
 
         FLogFormat::Header(oss, category, level, site);
         FormatArgs(oss, format, args);
         FLogFormat::Footer(oss, category, level, site);
         oss << Eos;
 
-        FPlatformDebug::OutputDebug(tmp);
+        FPlatformDebug::OutputDebug(reinterpret_cast<wchar_t*>(tmp.Storage().data()));
     }
 
     virtual void Flush(bool) override final {} // always synchronous => no need to flush
