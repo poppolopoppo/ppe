@@ -450,7 +450,7 @@ public: // export table results
             oss.SetFormat(originalFormat);
         });
 
-        oss << FTextFormat::Truncate;
+        oss << FTextFormat::TruncateR;
         oss << L"Benchmark table <" << table.Name << L">, units = " << FCounter::Units() << L" :" << Eol;
 
         constexpr u32 header = 20;

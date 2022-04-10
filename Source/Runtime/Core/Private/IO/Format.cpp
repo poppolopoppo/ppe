@@ -42,7 +42,8 @@ struct TFormatTraits_<char> {
         fmt_minus   = '-',
         fmt_sharp   = '#',
         fmt_center  = '@',
-        fmt_trunc   = '/',
+        fmt_truncR  = '/',
+        fmt_truncL  = '\\',
     };
 };
 //----------------------------------------------------------------------------
@@ -76,7 +77,8 @@ struct TFormatTraits_<wchar_t> {
         fmt_minus   = L'-',
         fmt_sharp   = L'#',
         fmt_center  = L'@',
-        fmt_trunc   = L'/',
+        fmt_truncR  = L'/',
+        fmt_truncL  = L'\\',
     };
 };
 //----------------------------------------------------------------------------
@@ -212,8 +214,12 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                         format = format.ShiftFront();
                         continue;
 
-                    case format_traits::fmt_trunc:
-                        props.Format.SetMisc(FTextFormat::Truncate, true);
+                    case format_traits::fmt_truncR:
+                        props.Format.SetMisc(FTextFormat::TruncateR, true);
+                        format = format.ShiftFront();
+                        continue;
+                    case format_traits::fmt_truncL:
+                        props.Format.SetMisc(FTextFormat::TruncateL, true);
                         format = format.ShiftFront();
                         continue;
                     }

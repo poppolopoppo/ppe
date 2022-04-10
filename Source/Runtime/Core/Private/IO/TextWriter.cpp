@@ -26,7 +26,7 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     // Fast path for trivial case :
     if ((fmt.Case() == FTextFormat::Original) &&
         (fmt.Padding() == FTextFormat::Padding_None || str.size() >= fmt.Width()) &&
-        (not (fmt.Misc() & FTextFormat::Truncate) || str.size() <= fmt.Width()) ) {
+        (not (fmt.Misc() ^ FTextFormat::_Truncate) || str.size() <= fmt.Width()) ) {
         ostream->WriteView(str);
 
         // Reset width padding each output to mimic std behavior
@@ -39,8 +39,14 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     const _Char pad_ch = w.FillChar();
 
     // Handles truncate :
-    if ((!!width) && (fmt.Misc() & FTextFormat::Truncate) && (str.size() > static_cast<size_t>(width)))
-        str = str.CutBefore(width);
+    if ((!!width) && (fmt.Misc() ^ FTextFormat::_Truncate) && (str.size() > static_cast<size_t>(width))) {
+        if (fmt.Misc() & FTextFormat::TruncateR)
+            str = str.CutBefore(width);
+        else if (fmt.Misc() & FTextFormat::TruncateL)
+            str = str.CutStartingAt(str.size() - width);
+        else
+            AssertNotImplemented();
+    }
 
     // Handles padding & case :
     int pad_left;
