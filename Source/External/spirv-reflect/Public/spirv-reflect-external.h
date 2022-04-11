@@ -22,7 +22,7 @@
 
 #ifndef EXPORT_PPE_EXTERNAL_SPIRV_REFLECT
 
-#   include "External/spirv-cross/SPIRV-Reflect.git/spirv_reflect.h"
+#   include "External/spirv-reflect/SPIRV-Reflect.git/spirv_reflect.h"
 
 #   ifdef __clang__
 #       pragma clang diagnostic pop
