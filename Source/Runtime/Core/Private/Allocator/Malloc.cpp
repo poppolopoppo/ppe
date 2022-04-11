@@ -401,8 +401,6 @@ private:
         UNUSED(oldp);
 #   endif
 #   if PPE_MALLOC_UNACCOUNTED_PROXY
-        if (oldp)
-            FMallocUnaccounted::Deallocate(oldp);
         FMallocUnaccounted::Allocate(newp, sizeInBytes);
 #   endif
         return newp;
