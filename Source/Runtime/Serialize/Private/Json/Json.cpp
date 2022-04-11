@@ -55,7 +55,8 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value)
         if (not lexer.Expect(Lexer::FSymbols::Colon))
             PPE_THROW_IT(FJsonException("missing comma", key.Site()));
 
-        FJson::FValue& v = object.Add(doc.MakeText(key.Value()));
+        const FJson::FText name = doc.MakeText(key.Value());
+        FJson::FValue& v = object.Add(name);
         if (not ParseValue_(lexer, doc, v))
             PPE_THROW_IT(FJsonException("missing value", key.Site()));
     }

@@ -517,7 +517,10 @@ public:
 
         for (const RTTI::FMetaProperty* prop : klass->AllProperties()) {
             const FJson::FText key = FJson::LiteralText(prop->Name());
+
             const auto it = jsonObj.find(key);
+            if (jsonObj.end() == it)
+                continue; // assume default value for missing properties
 
             Assert_NoAssume(_values.empty());
             _values.push_back(&it->second);
