@@ -25,19 +25,20 @@ public:
 
     class FText {
     public:
-        CONSTEXPR FText() : _small{} { _small.IsSmall = true; }
+        CONSTEXPR FText() : _small{} {}
 
         CONSTEXPR FText(const FText& other) { operator =(other); }
         CONSTEXPR FText& operator =(const FText& other) {
+            STATIC_ASSERT(sizeof(FSmallText_) == sizeof(FLargeText_));
             _large = other._large;
-            Assert(_small.IsSmall == other._small.IsSmall);
+            Assert(_small.IsLarge == other._small.IsLarge);
             return (*this);
         }
 
         CONSTEXPR bool empty() const { return (0 == size()); }
-        CONSTEXPR size_t size() const { return (_small.IsSmall ? _small.Size : _large.Size); }
+        CONSTEXPR size_t size() const { return (_small.IsLarge ? _large.Size : _small.Size); }
 
-        FStringView MakeView() const { return (_small.IsSmall ? _small.MakeView() : _large.MakeView()); }
+        FStringView MakeView() const { return (_small.IsLarge ? _large.MakeView() : _small.MakeView()); }
         operator FStringView () const { return MakeView(); }
 
         inline friend hash_t hash_value(const FText& txt) { return hash_string(txt.MakeView()); }
@@ -58,7 +59,7 @@ public:
         // we might somewhat lose some perf when comparing small strings since it won't benefit from pointer equality.
 
         struct FLargeTextNotPadded_ {
-            size_t IsSmall : 1;
+            size_t IsLarge : 1;
             size_t Size : sizeof(size_t) * 8 - 1;
             const char* Data;
             FStringView MakeView() const { return FStringView(Data, Size); }
@@ -72,7 +73,7 @@ public:
 
         struct FSmallText_ {
             STATIC_CONST_INTEGRAL(size_t, GCapacity, (sizeof(FLargeText_) - sizeof(u8)) / sizeof(char));
-            u8 IsSmall  : 1;
+            u8 IsLarge  : 1;
             u8 Size     : 7;
             char Data[GCapacity];
             FStringView MakeView() const { return FStringView(Data, Size); }
@@ -86,31 +87,30 @@ public:
         static FText MakeSmall_(const FStringView& str) {
             Assert(str.size() <= FSmallText_::GCapacity);
             FText txt;
-            txt._small.IsSmall = true;
+            txt._small.IsLarge = false;
             txt._small.Size = checked_cast<u8>(str.size());
             FPlatformMemory::Memcpy(txt._small.Data, str.data(), str.SizeInBytes());
-            Assert(txt._small.IsSmall);
-            Assert(txt._large.IsSmall);
-            Assert(txt._small.Size == str.size());
+            Assert_NoAssume(not txt._small.IsLarge);
+            Assert_NoAssume(not txt._large.IsLarge);
+            Assert_NoAssume(txt._small.Size == str.size());
             return txt;
         }
 
         static CONSTEXPR FText MakeLarge_(const FStringView& str) {
             FLargeText_ large{};
-            large.IsSmall = false;
+            large.IsLarge = true;
             large.Size = str.size();
             large.Data = str.data();
             return FText{ std::move(large) };
         }
 
-        CONSTEXPR explicit FText(FSmallText_&& small) : _small(std::move(small)) {}
-        CONSTEXPR explicit FText(FLargeText_&& large) : _large(std::move(large)) {}
+        CONSTEXPR explicit FText(FSmallText_&& rsmall) : _small(std::move(rsmall)) {}
+        CONSTEXPR explicit FText(FLargeText_&& rlarge) : _large(std::move(rlarge)) {}
 
     };
 
     explicit TTextHeap(heap_type& heap) NOEXCEPT
     :   _heap(heap) {
-        STATIC_ASSERT(sizeof(typename FText::FLargeText_) == sizeof(typename FText::FSmallText_));
         STATIC_ASSERT(_Padded
             ? sizeof(typename FText::FLargeText_) == 2 * sizeof(size_t) + sizeof(u64)
             : sizeof(typename FText::FLargeText_) == 2 * sizeof(size_t) );
