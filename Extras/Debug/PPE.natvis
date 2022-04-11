@@ -599,11 +599,11 @@
 		================================================================================
 	-->
 	<Type Name="PPE::Serialize::TTextHeap&lt;*, * &gt;::FText">
-		<DisplayString>{_small.IsSmall ? _small.Data : _large.Data, [_small.IsSmall ? _small.Size : _large.Size]} [{_small.IsSmall ? _small.Size : _large.Size}]</DisplayString>
+		<DisplayString>{!_small.IsLarge ? _small.Data : _large.Data, [!_small.IsLarge ? _small.Size : _large.Size]} [{!_small.IsLarge ? _small.Size : _large.Size}]</DisplayString>
 		<Expand>
-			<Item Name="[Data]">_small.IsSmall ? _small.Data : _large.Data, [_small.IsSmall ? _small.Size : _large.Size]</Item>
-			<Item Name="[Length]">_small.IsSmall ? _small.Size : _large.Size</Item>
-			<Item Name="[Small]">!!_small.IsSmall</Item>
+			<Item Name="[Data]">!_small.IsLarge ? _small.Data : _large.Data, [!_small.IsLarge ? _small.Size : _large.Size]</Item>
+			<Item Name="[Length]">!_small.IsLarge ? _small.Size : _large.Size</Item>
+			<Item Name="[Small]">!_small.IsLarge</Item>
 		</Expand>
 	</Type>
 	<Type Name="PPE::Serialize::FJSON::FValue">
