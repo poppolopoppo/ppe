@@ -715,7 +715,8 @@ void FLogger::Start() {
 
 #if USE_PPE_ASSERT
         // break on errors when debugger is attached
-        GLoggerFlags_ |= FLoggerCategory::BreakOnError;
+        if (FCurrentProcess::Get().HasArgument(L"-LOGBreakOnError"))
+            GLoggerFlags_ |= FLoggerCategory::BreakOnError;
 #endif
     }
     else {
