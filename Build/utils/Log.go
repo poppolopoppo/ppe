@@ -358,18 +358,18 @@ func (log *pinnedLogScope) Log(msg string, args ...interface{}) {
 	log.subText = fmt.Sprintf(msg, args...)
 	log.subText = strings.TrimSpace(log.subText)
 	log.subText = strings.ReplaceAll(log.subText, "\r", "")
-	log.subText = strings.ReplaceAll(log.subText, ANSI_KILL_LINE, "")
-	log.subText = strings.ReplaceAll(log.subText, ANSI_CURSOR_UP, "")
+	log.subText = strings.ReplaceAll(log.subText, ANSI_KILL_LINE.String(), "")
+	log.subText = strings.ReplaceAll(log.subText, ANSI_CURSOR_UP.String(), "")
 	pinnedLog.refresh()
 }
 func (log *pinnedLogScope) String() string {
 	if log.subText != "" {
-		const maxLen = 30
+		const maxLen = 20
 		off := len(log.mainText) - maxLen
 		if off < 0 {
 			off = 0
 		}
-		return fmt.Sprintf("%30s %s", log.mainText[off:], log.subText)
+		return fmt.Sprintf("%20s %s", log.mainText[off:], log.subText)
 	} else {
 		return log.mainText
 	}
@@ -425,12 +425,27 @@ func (pg *pinnedLogProgress) Set(x int) {
 	pg.log.Log(pg.String())
 }
 
+func smootherstep(edge0, edge1, x float64) float64 {
+	x = (x - edge0) / (edge1 - edge0)
+	x = math.Max(0.0, math.Min(1.0, x))
+	return x * x * x * (x*(x*6.-15.) + 10.)
+}
+
 func (pg *pinnedLogProgress) String() (result string) {
-	const width = 60
+	const width = 70
 
 	totalSecs := time.Now().Sub(pg.startedat)
 
-	result += ANSI_FG1_CYAN.String() + " ["
+	result += ANSI_FG1_CYAN.String() + " "
+
+	colb0 := [3]uint8{0, 250, 154}  // medium spring green
+	colb1 := [3]uint8{60, 139, 113} // medium sea green
+
+	cola0 := [3]uint8{255, 202, 229} // bubble gum pink
+	cola1 := [3]uint8{255, 119, 188} // dark  bubble gum pink
+
+	col2 := [3]uint8{52, 39, 89} // dark indigo
+	// col3 := [3]uint8{255, 255, 255} // white
 
 	fillPattern := func(off, w int, pattern []string, swing bool) {
 		n := len(pattern)
@@ -461,21 +476,31 @@ func (pg *pinnedLogProgress) String() (result string) {
 
 	wavePattern := func() {
 		pattern := []string{`▁`, `▂`, `▃`, `▄`, `▅`, `▆`, `▇`, `█`, `▇`, `▆`, `▅`, `▄`, `▃`, `▂`}
-		t := float64(totalSecs.Seconds()) * 2.0
+		t := float64(totalSecs.Seconds()) * 3.0
+
 		for i := 0; i < width; i += 1 {
-			x := t + 4*float64(i)*math.Pi/width
-			//f := math.Abs(math.Cos(x-math.Cos(t)*math.Pi*2)*math.Sin(x+t))
+			y := t + 4*float64(i)*math.Pi/width
+			x := y
+
 			f := 0.0
 			m := 0.5
-			for b := 0; b < 4; b += 1 {
-				f += m * (math.Cos(x+math.Sin((t+float64(i)/width)/m)*m*math.Pi)*0.5 + 0.5)
+			for b := 0; b < 5; b += 1 {
+				f += m * (math.Cos(x+math.Sin((t+2.0*float64(i)/width)/m)*m*math.Pi)*0.5 + 0.5)
 				m *= 0.5
 				x *= 2.0
 			}
 
 			j := int(math.Floor(f * float64(len(pattern))))
-			// c := int(math.Floor(f * float64(len(ANSI_COLORS))))
-			//result += make_ansi_color("fg1", ANSI_COLORS[(c+int(totalSecs.Seconds()))%len(ANSI_COLORS)]).String()
+
+			f = smootherstep(0.0, 1.0, f)
+			result += make_ansi_bg_truecolor(col2[0], col2[1], col2[2])
+
+			xx := float64(i) / width
+			xx = math.Cos(t*2.5+xx*math.Phi*3.0)*0.5 + 0.5
+			col0 := lerp_color(cola0, colb0, xx)
+			col1 := lerp_color(cola1, colb1, xx)
+
+			result += lerp_ansi_fg_truecolor(col0, col1, f)
 			result += pattern[j]
 		}
 	}
@@ -508,38 +533,49 @@ func (pg *pinnedLogProgress) String() (result string) {
 
 	if pg.first < pg.last {
 		result += ANSI_FG1_WHITE.String()
-		f := float32(pg.progress-pg.first) / float32(pg.last-pg.first)
-		if f < 0 {
-			f = 0
-		}
-		if f > 1 {
-			f = 1
-		}
+		f := float64(pg.progress-pg.first) / float64(pg.last-pg.first)
+		f = math.Max(0.0, math.Min(1.0, f))
 		i := int(f * width)
 
-		pos := 0
-		if i > 0 {
-			pos = pg.tick % width
-			if pos > i {
-				pos = 0
-				pg.tick = 0
-			} else if pg.progress == pg.last {
-				pos = i
+		for j := 0; j < width; j += 1 {
+			f := float64(j+1) / width
+
+			xx := math.Cos(float64(totalSecs.Seconds()*5.0)+f*math.Phi*4.0)*0.5 + 0.5
+			col0 := lerp_color(cola0, colb0, xx)
+			col1 := lerp_color(cola1, colb1, xx)
+
+			a := float64(j & 1)
+			if j < i {
+				result += lerp_ansi_bg_truecolor(col1, col0, a*0.2+0.8)
+				result += lerp_ansi_fg_truecolor(col0, col1, a*0.1+0.9)
+				result += `▂` //`▁`
+			} else if j == i {
+				result += make_ansi_bg_truecolor(col2[0], col2[1], col2[2])
+				result += lerp_ansi_fg_truecolor(col0, col1, a*0.1+0.9)
+				result += `▌` // `▋` //`▎`
+			} else {
+				result += make_ansi_bg_truecolor(col2[0], col2[1], col2[2])
+				result += ` `
 			}
+
 		}
-		result += strings.Repeat("=", pos)
-		result += string(ANSI_FG1_YELLOW) + string(ANSI_BLINK0)
-		result += ">"
-		result += string(ANSI_RESET) + ANSI_FG1_WHITE.String()
-		result += strings.Repeat("=", i-pos)
-		result += ANSI_FG1_CYAN.String()
-		result += "]"
-		result += ANSI_FG1_BLACK.String()
-		result += strings.Repeat("-", width-i)
-		result += ANSI_FG1_GREEN.String()
+
+		xx := math.Cos(float64(totalSecs.Seconds()*5.0)+1.0*math.Phi*4.0)*0.5 + 0.5
+		col1 := lerp_color(cola1, colb1, xx)
+
+		result += ANSI_RESET.String()
+		if i < width {
+			result += make_ansi_fg_truecolor(col2[0], col2[1], col2[2])
+		} else {
+			result += make_ansi_fg_truecolor(col1[0], col1[1], col1[2])
+		}
+		result += `▌` // `▋` //`▎`
+		result += ANSI_RESET.String()
+
+		result += lerp_ansi_fg_truecolor(cola1, colb0, f)
 		result += fmt.Sprintf(" %6.2f  ", f*100)
 
-		eltPerSec := float32(pg.progress-pg.first) / float32(totalSecs.Seconds())
+		eltPerSec := float32(totalSecs.Seconds()) / float32(pg.progress-pg.first)
 		result += ANSI_FG1_YELLOW.String()
 		result += fmt.Sprintf(" %.3f/s", eltPerSec)
 	} else {
@@ -553,8 +589,11 @@ func (pg *pinnedLogProgress) String() (result string) {
 			ballPattern()
 		}
 
-		result += ANSI_FG1_CYAN.String()
-		result += "]"
+		result += ANSI_RESET.String()
+		result += make_ansi_fg_truecolor(col2[0], col2[1], col2[2])
+		result += `▌` // `▋` //`▎`
+
+		result += ANSI_RESET.String()
 		result += ANSI_FG0_GREEN.String()
 		result += fmt.Sprintf(" %6.2fs ", totalSecs.Seconds())
 	}

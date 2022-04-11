@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"math/rand"
 )
 
@@ -64,8 +65,11 @@ const (
 	ANSI_BG1_CYAN    AnsiCode = "\033[46;1m"
 	ANSI_BG1_WHITE   AnsiCode = "\033[47;1m"
 
-	ANSI_KILL_LINE string = "\033[K"
-	ANSI_CURSOR_UP string = "\033[A"
+	ANSI_KILL_LINE AnsiCode = "\033[K"
+	ANSI_CURSOR_UP AnsiCode = "\033[A"
+
+	ANSI_BG_TRUECOLOR_FMT AnsiCode = "\033[48;2;%d;%d;%dm"
+	ANSI_FG_TRUECOLOR_FMT AnsiCode = "\033[38;2;%d;%d;%dm"
 )
 
 var (
@@ -111,6 +115,31 @@ var (
 
 func make_ansi_color(prefix string, color string) AnsiCode {
 	return ANSI_CODES[prefix+"_"+color]
+}
+func make_ansi_fg_truecolor(r, g, b uint8) string {
+	return make_ansi_truecolor(ANSI_FG_TRUECOLOR_FMT, r, g, b)
+}
+func make_ansi_bg_truecolor(r, g, b uint8) string {
+	return make_ansi_truecolor(ANSI_BG_TRUECOLOR_FMT, r, g, b)
+}
+func lerp_ansi_fg_truecolor(col0, col1 [3]uint8, f float64) string {
+	return lerp_ansi_truecolor(ANSI_FG_TRUECOLOR_FMT, col0, col1, f)
+}
+func lerp_ansi_bg_truecolor(col0, col1 [3]uint8, f float64) string {
+	return lerp_ansi_truecolor(ANSI_BG_TRUECOLOR_FMT, col0, col1, f)
+}
+func make_ansi_truecolor(fgOrbg AnsiCode, r, g, b uint8) string {
+	return fmt.Sprintf(fgOrbg.String(), r, g, b)
+}
+func lerp_color(col0, col1 [3]uint8, f float64) [3]uint8 {
+	return [3]uint8{
+		uint8(float64(col0[0])*(1.0-f) + float64(col1[0])*f),
+		uint8(float64(col0[1])*(1.0-f) + float64(col1[1])*f),
+		uint8(float64(col0[2])*(1.0-f) + float64(col1[2])*f)}
+}
+func lerp_ansi_truecolor(fgOrbg AnsiCode, col0, col1 [3]uint8, f float64) string {
+	col := lerp_color(col0, col1, f)
+	return make_ansi_truecolor(fgOrbg, col[0], col[1], col[2])
 }
 func make_random_color(prefix string) AnsiCode {
 	return make_ansi_color(prefix, ANSI_COLORS[rand.Intn(len(ANSI_COLORS))])
