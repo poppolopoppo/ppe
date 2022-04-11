@@ -202,7 +202,7 @@ struct TApproximateHistogram {
 
             if (total + Histogram[bin].Count >= axis) {
                 if (total) {
-                    const float fx = float(axis - total) / Histogram[bin].Count;
+                    const T fx = static_cast<T>(axis - total) / Histogram[bin].Count;
                     return Lerp(Histogram[prv].Mean, Histogram[bin].Mean, fx);
                 }
                 else {
