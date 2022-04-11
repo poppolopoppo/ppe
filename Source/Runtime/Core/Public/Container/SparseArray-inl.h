@@ -74,6 +74,7 @@ auto TBasicSparseArray<T>::IndexOf(const_reference data) const -> FDataId {
 //----------------------------------------------------------------------------
 template <typename T>
 auto TBasicSparseArray<T>::Iterator(FDataId id) -> iterator {
+    Assert(not UnpackId_(id).empty());
     Assert_NoAssume(CheckInvariants());
     Assert(_numChunks);
 
@@ -91,14 +92,16 @@ auto TBasicSparseArray<T>::At(size_t index) -> reference {
     Assert_NoAssume(CheckInvariants());
     Assert(_numChunks);
 
-    pointer const it = At_(index);
-    AssertRelease(it);
+    FDataItem* const it = At_(index);
+    Assert(it);
+    Assert_NoAssume(not UnpackId_(it->Id).empty());
 
     return (*it);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 auto TBasicSparseArray<T>::Find(FDataId id) -> pointer {
+    Assert(not UnpackId_(id).empty());
     Assert_NoAssume(CheckInvariants());
     Assert(_numChunks);
 
@@ -175,7 +178,7 @@ bool TBasicSparseArray<T>::AliasesToContainer(const_iterator it) const {
 //----------------------------------------------------------------------------
 template <typename T>
 auto TBasicSparseArray<T>::At_(size_t index) -> FDataItem* {
-    Assert(index < _highestIndex);
+    Assert(index < _highestIndex); // out-of-bounds
     Assert_NoAssume(index < capacity());
 
     const size_t cls = ckIndex_(index);
