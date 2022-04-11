@@ -61,8 +61,9 @@ struct TScalarVectorExpr {
     NODISCARD CONSTEXPR auto MinComponent() const;
 
     NODISCARD CONSTEXPR TScalarVector<T, _Dim> Expand() const;
+    NODISCARD CONSTEXPR auto Shift() const;
     template <size_t... _Idx>
-    NODISCARD CONSTEXPR TScalarVector<T, _Dim> Shuffle() const;
+    NODISCARD CONSTEXPR TScalarVector<T, sizeof...(_Idx)> Shuffle() const;
 
 };
 //----------------------------------------------------------------------------
@@ -116,6 +117,19 @@ CONSTEXPR auto MakeScalarVector(const _x& x, _yzw... yzw) {
 namespace details {
 template <typename T, size_t _Dim>
 using TScalarVectorLiteral = TScalarVectorExpr<T, _Dim>;
+} //!details
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T, size_t _Dim, size_t _Axis>
+struct TScalarVectorAxis : TScalarVectorExpr<T, _Dim, TScalarVectorAxis<T, _Dim, _Axis>> {
+    using parent_type = TScalarVectorExpr<T, _Dim, TScalarVectorAxis<T, _Dim, _Axis>>;
+    using typename parent_type::component_type;
+
+    template <size_t _Index>
+    NODISCARD CONSTEXPR auto get() const {
+        return (_Axis == _Index ? static_cast<T>(1) : static_cast<T>(0));
+    }
+};
 } //!details
 //----------------------------------------------------------------------------
 // TScalarVectorAssignable<>
@@ -368,6 +382,9 @@ struct TScalarVector<T, 2> : details::TMakeScalarVectorAssignable<T, 2, TScalarV
     CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<_Src, 2, _Other>& src) {
         return parent_type::Assign(src);
     }
+
+    static CONSTEXPR const details::TScalarVectorAxis<T, 2, 0> X;
+    static CONSTEXPR const details::TScalarVectorAxis<T, 2, 1> Y;
 };
 //----------------------------------------------------------------------------
 // TScalarVector<T, 3>
@@ -468,6 +485,12 @@ struct TScalarVector<T, 3> : details::TMakeScalarVectorAssignable<T, 3, TScalarV
     CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<_Src, 3, _Other>& src) {
         return parent_type::Assign(src);
     }
+
+    CONSTEXPR const auto& Shift() const { return xy; }
+
+    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 0> X;
+    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 1> Y;
+    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 2> Z;
 };
 //----------------------------------------------------------------------------
 // TScalarVector<T, 4>
@@ -658,6 +681,13 @@ struct TScalarVector<T, 4> : details::TMakeScalarVectorAssignable<T, 4, TScalarV
     CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<_Src, 4, _Other>& src) {
         return parent_type::Assign(src);
     }
+
+    CONSTEXPR const auto& Shift() const { return xyz; }
+
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 0> X;
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 1> Y;
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 2> Z;
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 3> W;
 };
 //----------------------------------------------------------------------------
 // operator ==/!=
@@ -799,11 +829,17 @@ template <typename T, size_t _Dim, typename _Expr>
 CONSTEXPR TScalarVector<T, _Dim> TScalarVectorExpr<T, _Dim, _Expr>::Expand() const {
     return Meta::static_for<_Dim>([this](auto... idx) {
         return details::MakeScalarVector( this->template get<idx>()... );
-     });
+    });
+}
+template <typename T, size_t _Dim, typename _Expr>
+CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::Shift() const {
+    return Meta::static_for<_Dim - 1 ? _Dim - 1 : 1>([this](auto... idx) {
+        return details::MakeScalarVector( this->template get<idx>()... );
+    });
 }
 template <typename T, size_t _Dim, typename _Expr>
 template <size_t... _Idx>
-CONSTEXPR TScalarVector<T, _Dim> TScalarVectorExpr<T, _Dim, _Expr>::Shuffle() const {
+CONSTEXPR TScalarVector<T, sizeof...(_Idx)> TScalarVectorExpr<T, _Dim, _Expr>::Shuffle() const {
     return Meta::static_for<sizeof...(_Idx)>([this](auto... idx) {
         CONSTEXPR size_t shuffled[sizeof...(_Idx)] = { _Idx... };
         return details::MakeScalarVector( this->template get<shuffled[idx]>()... );

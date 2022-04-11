@@ -125,7 +125,7 @@ CONSTEXPR TScalarVector<T, 3> Reflect(const TScalarVector<T, 3>& incident, const
     namespace details::predicate { \
         struct F##_Func { \
             template <typename... _Args> \
-            auto operator ()(_Args... args) const { \
+            CONSTEXPR auto operator ()(_Args... args) const { \
                 return _Func(std::forward<_Args>(args)...); \
             } \
         }; \
@@ -179,13 +179,13 @@ PPE_SCALARVECTOR_UNARY_FUNC(FloatM11_to_Float01)
     } \
     template <typename T, size_t _Dim, typename _Expr> \
     NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _Expr>& lhs, const T& rhs) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector(_Func(lhs.template get<idx>(), rhs)...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _Expr> \
     NODISCARD CONSTEXPR auto _Func(const T& lhs, const TScalarVectorExpr<T, _Dim, _Expr>& rhs ) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector(_Func(lhs, rhs.template get<idx>())...); \
         }); \
     }
@@ -208,37 +208,37 @@ PPE_SCALARVECTOR_BINARY_FUNC(Step)
     } \
     template <typename T, size_t _Dim, typename _A, typename _B> \
     NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _A>& a, const TScalarVectorExpr<T, _Dim, _B>& b, const T& c) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector(_Func(a.template get<idx>(), b.template get<idx>(), c)...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _A, typename _C> \
     NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _A>& a, const T& b, const TScalarVectorExpr<T, _Dim, _C>& c) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector(_Func(a.template get<idx>(), b, c.template get<idx>())...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _B, typename _C> \
     NODISCARD CONSTEXPR auto _Func(const T& a, const TScalarVectorExpr<T, _Dim, _B>& b, const TScalarVectorExpr<T, _Dim, _C>& c) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector(_Func(a, b.template get<idx>(), c.template get<idx>())...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _C> \
     NODISCARD CONSTEXPR auto _Func(const T& a, const T& b, const TScalarVectorExpr<T, _Dim, _C>& c) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector( _Func(a, b, c.template get<idx>())...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _B> \
     NODISCARD CONSTEXPR auto _Func(const T& a, const TScalarVectorExpr<T, _Dim, _B>& b, const T& c) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector(_Func(a, b.template get<idx>(), c)...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _A> \
     NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _A>& a, const T& b, const T& c) { \
-        return Meta::static_for<_Dim>([&](auto... idx) { \
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
             return details::MakeScalarVector(_Func(a.template get<idx>(), b, c)...); \
         }); \
     }
