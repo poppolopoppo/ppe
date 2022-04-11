@@ -331,14 +331,14 @@ public:
     FContainerBenchmark(const FStringView& name)
     :   FBenchmark{ name } {
 #if !USE_PPE_CONTAINERS_LONGRUN
-        MaxIterations = Min(MaxIterations, 1000000ul);
+        MaxIterations = Min(MaxIterations, 1000000_u32);
         ONLY_IF_ASSERT(MaxIterations = Min(MinIterations, MaxIterations));
 #else
         // should run a fixed number of iterations for volume comparisons
 #   if USE_PPE_DEBUG
-        MinIterations = MaxIterations = 10000ul;
+        MinIterations = MaxIterations = 10000_u32;
 #   else
-        MinIterations = MaxIterations = 1000000ul;
+        MinIterations = MaxIterations = 1000000_u32;
 #   endif
         MaxVarianceError = 1e-9f;
 #endif

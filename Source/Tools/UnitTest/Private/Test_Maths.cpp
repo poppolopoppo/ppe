@@ -77,11 +77,11 @@ static NO_INLINE void Test_Iterable_() {
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Vector_() {
     {
-        CONSTEXPR int2 x = int2::X;
-        CONSTEXPR int2 y = int2::Y;
+        CONSTEXPR int2 x{1, 0};
+        CONSTEXPR int2 y{0, 1};
         CONSTEXPR int2 ad = ((x + y) * (x - y) * 10) / 5;
         STATIC_ASSERT(ad == int2(2,-2));
-        CONSTEXPR int2 mb = Blend(x, y, x > y);
+        CONSTEXPR int2 mb = Blend(x, y, GreaterMask(x, y));
         STATIC_ASSERT(mb == int2(1,1));
         CONSTEXPR int2 ma = Max(x, y);
         CONSTEXPR int2 mi = Min(x, y);
@@ -117,15 +117,15 @@ static NO_INLINE void Test_Vector_() {
         int3 y = int3::Y;
         int3 z = int3::Z;
         int3 a = x + y + z;
-        AssertRelease(a == float3::One);
+        AssertRelease(a == int3::One);
     }
     {
         int3 x = int3::X;
-        bool3 m = x > int3(0);
+        bool3 m = GreaterMask(x, int3(0));
         AssertRelease(Any( m));
         AssertRelease(not All( m));
         int3 select = Blend(int3::MinusOne, int3::One, m);
-        int broadcast = Dot(select);
+        int broadcast = select.HSum();
         AssertRelease(broadcast == 1);
     }
 
@@ -154,7 +154,7 @@ static NO_INLINE void Test_BoundingBox_() {
         AssertRelease(not box.HasPositiveExtentsStrict());
         box.Add(int3::Z);
         AssertRelease(box.HasPositiveExtentsStrict());
-        FAabb2i box2D = box.xy();
+        FAabb2i box2D = box.Shuffle<0, 1>();
         AssertRelease(box2D.HasPositiveExtentsStrict());
         int3 ext = box.Extents();
         AssertRelease(ext == int3::One);

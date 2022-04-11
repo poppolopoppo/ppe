@@ -740,7 +740,7 @@ static NO_INLINE void Test_InteractiveConsole_() {
         forrange(i, 0, site.Column)
             FPlatformConsole::Write(" ");
         FPlatformConsole::Write(L"\u2558", attrs);
-        forrange(i, 0, Max(site.Length, 1ul))
+        forrange(i, 0, Max(site.Length, 1_u32))
             FPlatformConsole::Write(L"\u2550", attrs);
         FPlatformConsole::Write(L"\u255B", attrs);
         FPlatformConsole::Write("\n");

@@ -595,7 +595,7 @@ private:
 #endif
 
     NO_INLINE void rehash_ForCollision_() {
-        rehash_(Max(mask_t(1), num_buckets_() * 2) * bucket_t::Capacity);
+        rehash_(Max(1_size_t, num_buckets_() * 2_size_t) * bucket_t::Capacity);
     }
     NO_INLINE void rehash_ForGrowth_(size_t n) {
         rehash_(n);
