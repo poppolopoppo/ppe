@@ -12,7 +12,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T, class = TEnableIfRefCountable<T> >
 struct TAtomicRefPtrPoolTraits {
-    STATIC_ASSERT(Meta::has_defined_v<FRefCountable::THasOnStrongRefCountReachZero, T>);
+    //STATIC_ASSERT(Meta::has_defined_v<FRefCountable::THasOnStrongRefCountReachZero, T>);
 
     static u32 IndexInPool(T* p) NOEXCEPT {
         return p->IndexInPool();
