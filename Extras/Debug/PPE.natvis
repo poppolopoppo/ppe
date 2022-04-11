@@ -112,10 +112,11 @@
 			<Item Name="[Size]">_size</Item>
 			<Item Name="[Capacity]">_numChunks ? (size_t(1) &lt;&lt; (2 + _numChunks - 1)) : 0</Item>
 			<CustomListItems>
+				<Variable Name="global" InitialValue="0" />
 				<Variable Name="index" InitialValue="0" />
 				<Variable Name="chunk" InitialValue="0" />
-				<Variable Name="slice" InitialValue="_chunks" />
 				<Variable Name="limit" InitialValue="4" />
+				<Variable Name="slice" InitialValue="_chunks" />
 				<Size>_size</Size>
 				<If Condition="_numChunks &lt; 2">
 					<Loop>
@@ -134,7 +135,7 @@
 							<Break />
 						</If>
 						<Exec>index = 0</Exec>
-						<Exec>limit = (1u &lt;&lt; (2+chunk))</Exec>
+						<Exec>limit = (1u &lt;&lt; (2+chunk)) - global</Exec>
 						<Loop>
 							<If Condition="index == limit">
 								<Break />
@@ -144,7 +145,7 @@
 							</If>
 							<Exec>++index</Exec>
 						</Loop>
-						<Exec>++chunk, ++slice</Exec>
+						<Exec>++chunk, ++slice, global += limit</Exec>
 					</Loop>
 				</If>
 			</CustomListItems>
