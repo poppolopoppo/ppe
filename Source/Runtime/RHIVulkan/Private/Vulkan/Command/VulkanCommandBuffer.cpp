@@ -1566,8 +1566,10 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
 
         Assert_NoAssume(zOffset == imageSize.z);
     }
-        // copy to staging buffer row by row
+    // copy to staging buffer row by row
     else {
+        AssertRelease(rowPitch < minSizeInBytes);
+
         forrange(slice, 0, imageSize.z) {
             u32 yOffset = 0;
             for (size_t srcOffset = 0; srcOffset < slicePitch;) {

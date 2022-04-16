@@ -41,6 +41,7 @@ NODISCARD static VkImageLayout ChooseDefaultLayout_(EImageUsage usage, VkImageLa
         result = defaultLayout;
     }
     else
+    // render target layouts has high priority to avoid unnecessary decompressions
     if (usage & EImageUsage::ColorAttachment) {
         result = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }

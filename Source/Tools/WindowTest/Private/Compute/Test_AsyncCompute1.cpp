@@ -183,7 +183,8 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute1_CS"));
 
     FCommandBufferBatch cmd3{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
         .SetName("Graphics-2")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags::Default),
+        { cmd2  }) };
     LOG_CHECK(WindowTest, !!cmd3);
 
     FCommandBufferBatch cmd4{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }

@@ -202,7 +202,7 @@ void FVulkanLocalImage::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RH
                 barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
                 barrier.pNext = nullptr;
                 barrier.image = sharedImg->vkImage;
-                barrier.oldLayout = (it->InvalidateAfter or it->InvalidateBefore
+                barrier.oldLayout = (it->InvalidateAfter or pending.InvalidateBefore
                     ? VK_IMAGE_LAYOUT_UNDEFINED
                     : it->Layout );
                 barrier.newLayout = pending.Layout;
