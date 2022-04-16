@@ -92,7 +92,7 @@ public:
 //----------------------------------------------------------------------------
 static ILowLevelLogger* GLoggerImpl_ = nullptr;
 //----------------------------------------------------------------------------
-// Use a custom allocator for logger to diminish content, fragmentation and get re-entrancy
+// Use a custom allocator for logger to handle contention, fragmentation and get re-entrancy
 class FLogAllocator : public Meta::TStaticSingleton<FLogAllocator> {
     friend Meta::TStaticSingleton<FLogAllocator>;
     using singleton_type = Meta::TStaticSingleton<FLogAllocator>;
@@ -115,27 +115,48 @@ public:
         }
     };
 
-    struct FScope {
+    struct FScope : Meta::FNonCopyable {
         size_t Index;
-        FBucket& Bucket;
-        Meta::FRecursiveLockGuard Lock;
+        TPtrRef<FBucket> pBucket;
 
-        auto& Heap() const { return Bucket.Heap; }
-        operator allocator_type() const NOEXCEPT { return { Bucket.Heap }; }
+        auto& Heap() const { return pBucket->Heap; }
+        operator allocator_type() const NOEXCEPT { return { pBucket->Heap }; }
 
-        FScope() : FScope(Get()) {}
-
-        explicit FScope(size_t index)
-            : Index(index)
-            , Bucket(Get().OpenBucket_(Index))
-            , Lock(Bucket.Barrier)
+        FScope() NOEXCEPT
+        :   FScope(Get())
         {}
 
-        explicit FScope(FLogAllocator& alloc)
-            : Index(alloc.NextBucketIndex_())
-            , Bucket(alloc.OpenBucket_(Index))
-            , Lock(Bucket.Barrier)
-        {}
+        explicit FScope(size_t index) NOEXCEPT
+        :   Index(index)
+        ,   pBucket(Get().OpenBucket_(Index)) {
+            pBucket->Barrier.lock();
+        }
+
+        explicit FScope(FLogAllocator& alloc) NOEXCEPT
+        :   Index(alloc.NextBucketIndex_())
+        ,   pBucket(alloc.OpenBucket_(Index)) {
+            if (Unlikely(not pBucket->Barrier.try_lock()))
+                LookForAFreeBucket_(alloc);
+        }
+
+        ~FScope() {
+            pBucket->Barrier.unlock();
+        }
+
+    private:
+        // slow-path: cycle through all buckets to find a free one
+        NO_INLINE void LookForAFreeBucket_(FLogAllocator& alloc) NOEXCEPT {
+            for (i32 backoff = 0;;) {
+                forrange(i, 0, NumAllocationBuckets) {
+                    Index = alloc.NextBucketIndex_();
+                    pBucket = alloc.OpenBucket_(Index);
+                    if (Likely(pBucket->Barrier.try_lock()))
+                        return; // exit if we got a free bucket
+                }
+
+                FPlatformProcess::SleepForSpinning(backoff);
+            }
+        }
     };
 
     void TrimCache() {
@@ -157,12 +178,12 @@ private:
 
     FLogAllocator() = default;
 
-    FBucket& OpenBucket_(size_t index) {
+    FORCE_INLINE FBucket& OpenBucket_(size_t index) {
         Assert(index < NumAllocationBuckets);
         return _buckets[index];
     }
 
-    size_t NextBucketIndex_() {
+    FORCE_INLINE size_t NextBucketIndex_() {
         return (_revision.fetch_add(1, std::memory_order_relaxed) & MaskAllocationBuckets);
     }
 };
@@ -388,19 +409,19 @@ class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public SLAB_ALLOCATOR(Logger), M
     STATIC_ASSERT(std::is_trivially_destructible_v<FDeferredLog>);
 
     // used for exception safety :
-    struct FSuicideScope_ : FLogAllocator::FScope {
-        FDeferredLog* Log;
-        FSuicideScope_(FDeferredLog* log)
-        :   FScope(log->Bucket)
-        ,   Log(log) {
+    struct FSuicideScope_ : Meta::FNonCopyableNorMovable {
+        FDeferredLog* const Log;
+        FSuicideScope_(FDeferredLog* log) NOEXCEPT
+        :   Log(log) {
             Assert(log);
             Assert_NoAssume(PPE_HASH_VALUE_SEED == Log->Canary);
             ONLY_IF_ASSERT(Log->Canary = reinterpret_cast<uintptr_t>(this));
         }
         ~FSuicideScope_() {
+            const FLogAllocator::FScope scope{ Log->Bucket };
             Assert_NoAssume(uintptr_t(this) == Log->Canary);
             ONLY_IF_ASSERT(Log->Canary = 0);
-            Heap().Deallocate(Log, Log->AllocSizeInBytes);
+            scope.Heap().Deallocate(Log, Log->AllocSizeInBytes);
         }
     };
 };
