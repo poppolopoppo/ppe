@@ -3,6 +3,7 @@ package utils
 import (
 	"bufio"
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"hash"
 	"hash/fnv"
@@ -210,4 +211,31 @@ func (dw *DigestWriter) Write(data []byte) (int, error) {
 }
 func (dw *DigestWriter) Finalize() Digest {
 	return dw.digester.Finalize()
+}
+
+/***************************************
+ * JSON: marshal as string instead of array
+ ***************************************/
+
+func (d Digest) String() string {
+	return hex.EncodeToString(d[:])
+}
+func (d *Digest) Set(str string) (err error) {
+	var data []byte
+	if data, err = hex.DecodeString(str); err == nil {
+		if len(data) == sha256.Size {
+			copy(d[:], data)
+			return nil
+		} else {
+			err = fmt.Errorf("digest: unexpected string length '%s'", str)
+		}
+	}
+	return err
+}
+
+func (d Digest) MarshalJSON() ([]byte, error) {
+	return MarshalJSON(d)
+}
+func (d *Digest) UnmarshalJSON(data []byte) error {
+	return UnmarshalJSON(d, data)
 }

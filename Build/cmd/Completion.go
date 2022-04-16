@@ -152,6 +152,26 @@ var ListTargets = utils.MakeCommand(
 	},
 )
 
+var ExportNode = utils.MakeCommand(
+	"export-node",
+	"export build node to json",
+	nil,
+	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
+		aliases := cmd.BuildGraph().Aliases()
+		completion := make(map[string]utils.BuildAlias, len(aliases))
+		for _, a := range aliases {
+			completion[a.String()] = a
+		}
+		results := make(map[utils.BuildAlias]utils.BuildNode, 8)
+		mapCompletion(cmd, func(s string) {
+			alias := completion[s]
+			results[alias] = cmd.BuildGraph().Node(alias)
+		}, completion)
+		fmt.Println(utils.PrettyPrint(results))
+		return nil
+	},
+)
+
 var ExportUnit = utils.MakeCommand(
 	"export-unit",
 	"export translated unit to json",
@@ -163,9 +183,11 @@ var ExportUnit = utils.MakeCommand(
 			for _, unit := range targets.Slice() {
 				exportedUnits[unit.String()] = unit
 			}
+			results := []*compile.Unit{}
 			mapCompletion(cmd, func(s string) {
-				fmt.Println(utils.PrettyPrint(exportedUnits[s]))
+				results = append(results, exportedUnits[s])
 			}, exportedUnits)
+			fmt.Println(utils.PrettyPrint(results))
 		} else {
 			panic(err)
 		}
