@@ -106,6 +106,11 @@ func (node *buildNode) Alias() BuildAlias         { return node.Buildable.Alias(
 func (node *buildNode) String() string            { return node.Alias().String() }
 func (node *buildNode) GetBuildStamp() BuildStamp { return node.Stamp }
 func (node *buildNode) GetBuildable() Buildable   { return node.Buildable }
+func (node *buildNode) Join() Result[BuildStamp] {
+	node.state.launch.Lock()
+	defer node.state.launch.Unlock()
+	return node.state.future.Join()
+}
 func (node *buildNode) AddStatic(g BuildGraph, a BuildAlias) (Buildable, error) {
 	LogDebug("buildgraph: <%v> has static dependency on '%v'", node, a)
 	dep, fut := g.Build(a)
@@ -318,29 +323,51 @@ func (g *buildGraph) Equals(other BuildGraph) bool {
 	return other.(*buildGraph) == g
 }
 
-func (deps BuildDependencies) prepareBuild(g *buildGraph, futures *map[BuildAlias]Future[BuildStamp]) {
-	for a := range deps {
-		_, fut := g.Build(a)
-		(*futures)[a] = fut
+type buildBatch struct {
+	Graph    *buildGraph
+	Caller   *buildNode
+	Prepared map[BuildAlias]*buildNode
+	Received map[BuildAlias]Result[BuildStamp]
+}
+
+func (batch *buildBatch) Join(pbar PinnedProgress) {
+	// first pass: join all dependencies
+	for _, fut := range batch.Prepared {
+		fut.Join()
+		if pbar != nil {
+			pbar.Inc()
+		}
+	}
+
+	// second-pass: collect results only *after* join
+	batch.Received = make(map[BuildAlias]Result[BuildStamp], len(batch.Prepared))
+	for a, fut := range batch.Prepared {
+		batch.Received[a] = fut.Join()
 	}
 }
-func (deps BuildDependencies) joinBuild(node *buildNode, depType string, futures map[BuildAlias]Future[BuildStamp], pbar PinnedProgress) (bool, error) {
+
+func (deps BuildDependencies) prepareBuild(batch *buildBatch) {
+	for a := range deps {
+		Assert(func() bool { return batch.Prepared[a] == nil })
+		node, _ := batch.Graph.Build(a) // trigger async build, don't wait for the result here
+		batch.Prepared[a] = node.(*buildNode)
+	}
+}
+func (deps BuildDependencies) joinBuild(batch *buildBatch, depType string) (bool, error) {
 	var err error
 	rebuild := false
 
 	for a, oldStamp := range deps {
-		fut := futures[a].Join()
-		if pbar != nil {
-			pbar.Inc()
-		}
-		if depErr := fut.Failure(); depErr == nil {
-			if newStamp := fut.Success(); newStamp != oldStamp {
-				LogVeryVerbose("%v: need to rebuild %v dependency <%v>:\n\tnew: %v\n\told: %v", node.Alias(), depType, a, newStamp, oldStamp)
+		result := batch.Received[a]
+
+		if depErr := result.Failure(); depErr == nil {
+			if newStamp := result.Success(); newStamp != oldStamp {
+				LogVeryVerbose("%v: need to rebuild %v dependency <%v>:\n\tnew: %v\n\told: %v", batch.Caller.Alias(), depType, a, newStamp, oldStamp)
 				deps[a] = newStamp
 				rebuild = true
 			}
 		} else {
-			LogWarning("%v: %s dependency failed with %v", node.Alias(), depType, depErr)
+			LogWarning("%v: %s dependency failed with %v", batch.Caller.Alias(), depType, depErr)
 			err = depErr
 		}
 	}
@@ -357,29 +384,36 @@ func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
 	pbar := LogProgress(0, n, node.Alias().String())
 	defer pbar.Close()
 
+	batch := buildBatch{
+		Graph:    g,
+		Caller:   node,
+		Prepared: make(map[BuildAlias]*buildNode, n),
+	}
+
+	node.Static.prepareBuild(&batch)
+	node.Dynamic.prepareBuild(&batch)
+	node.Output.prepareBuild(&batch)
+
+	batch.Join(pbar)
+
 	var err error
 	rebuild := false
-	futures := make(map[BuildAlias]Future[BuildStamp], n)
 
-	node.Static.prepareBuild(g, &futures)
-	node.Dynamic.prepareBuild(g, &futures)
-	node.Output.prepareBuild(g, &futures)
-
-	if rebuildStatic, errStatic := node.Static.joinBuild(node, "static", futures, pbar); rebuildStatic || errStatic != nil {
+	if rebuildStatic, errStatic := node.Static.joinBuild(&batch, "static"); rebuildStatic || errStatic != nil {
 		rebuild = rebuild || rebuildStatic
 		if errStatic != nil {
 			LogWarning("%v: %v", node.Alias(), errStatic)
 			rebuild = true
 		}
 	}
-	if rebuildDynamic, errDynamic := node.Dynamic.joinBuild(node, "dynamic", futures, pbar); rebuildDynamic || errDynamic != nil {
+	if rebuildDynamic, errDynamic := node.Dynamic.joinBuild(&batch, "dynamic"); rebuildDynamic || errDynamic != nil {
 		rebuild = rebuild || rebuildDynamic
 		if errDynamic != nil {
 			LogWarning("%v: %v", node.Alias(), errDynamic)
 			rebuild = true
 		}
 	}
-	if rebuildOutput, errOutput := node.Output.joinBuild(node, "output", futures, pbar); rebuildOutput || errOutput != nil {
+	if rebuildOutput, errOutput := node.Output.joinBuild(&batch, "output"); rebuildOutput || errOutput != nil {
 		rebuild = rebuild || rebuildOutput
 		if errOutput != nil {
 			LogError("%v: %v", node.Alias(), errOutput)
@@ -419,8 +453,10 @@ func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias, needUpdate bool)
 				var stamp BuildStamp
 				if stamp, err = node.Build(&ctx); err == nil {
 					Assert(func() bool { return stamp.Content.Valid() })
+
 					if node.Stamp != stamp {
 						LogInfo("updated '%v'", a)
+
 						node.Stamp = stamp
 						g.makeDirty()
 						rebuild = true
