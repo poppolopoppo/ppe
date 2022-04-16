@@ -78,6 +78,7 @@ enum class EShaderLangFormat : u32 {
     Vulkan_100          = (100 << _VersionOffset) | Vulkan,
     Vulkan_110          = (110 << _VersionOffset) | Vulkan,
     Vulkan_120          = (120 << _VersionOffset) | Vulkan,
+    Vulkan_130          = (130 << _VersionOffset) | Vulkan,
     OpenGL_450          = (450 << _VersionOffset) | OpenGL,
     OpenGL_460          = (460 << _VersionOffset) | OpenGL,
     OpenGLES_200        = (200 << _VersionOffset) | OpenGLES,
@@ -136,6 +137,7 @@ enum class EShaderLangFormat : u32 {
     VkShader_100    = Vulkan_100 | ShaderModule,
     VkShader_110    = Vulkan_110 | ShaderModule,
     VkShader_120    = Vulkan_120 | ShaderModule,
+    VkShader_130    = Vulkan_130 | ShaderModule,
 };
 ENUM_FLAGS(EShaderLangFormat);
 //----------------------------------------------------------------------------

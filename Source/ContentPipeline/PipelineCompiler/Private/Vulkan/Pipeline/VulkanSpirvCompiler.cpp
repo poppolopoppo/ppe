@@ -247,6 +247,7 @@ FVulkanSpirvCompiler::FVulkanSpirvCompiler(const FDirectories& directories)
 }
 //----------------------------------------------------------------------------
 FVulkanSpirvCompiler::~FVulkanSpirvCompiler() {
+
     glslang::FinalizeProcess();
 }
 //----------------------------------------------------------------------------
@@ -489,10 +490,10 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     switch (Meta::EnumAnd(dstShaderFormat, EShaderLangFormat::_ApiMask)) {
     case EShaderLangFormat::Vulkan: {
         ctx.TargetVulkan = true;
-        const u32 dstVersion = EShaderLangFormat_Version(dstShaderFormat);
         client = EShClientVulkan;
         target = EShTargetSpv;
 
+        const u32 dstVersion = EShaderLangFormat_Version(dstShaderFormat);
         switch (dstVersion) {
         case 100:
             clientVersion = EShTargetVulkan_1_0;
@@ -508,6 +509,11 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
             clientVersion = EShTargetVulkan_1_2;
             targetVersion = EShTargetSpv_1_4;
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_1_SPIRV_1_4;
+            break;
+        case 130:
+            clientVersion = EShTargetVulkan_1_3;
+            targetVersion = EShTargetSpv_1_6;
+            ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_3;
             break;
         default:
             LOG(PipelineCompiler, Error, L"unsupported vulkan version: {0}", dstVersion);
