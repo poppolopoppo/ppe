@@ -87,6 +87,7 @@ static bool PPE_DEBUG_SECTION DefaultDebugAssertHandler_(const wchar_t* msg, con
 
         switch (AssertIgnoreOnceAlwaysAbortRetry_(FPlatformDialog::Warning, L"Assert debug failed !", msg, file, line)) {
         case FPlatformDialog::Abort:
+            PPE_DEBUG_CRASH();
             break;
         case FPlatformDialog::Retry:
             if (FPlatformDebug::IsDebuggerPresent())
