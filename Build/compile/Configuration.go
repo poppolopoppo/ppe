@@ -90,7 +90,7 @@ var Configuration_FastDebug = &ConfigRules{
 	Sanitizer:  SANITIZER_NONE,
 	Unity:      UNITY_DISABLED,
 	Facet: Facet{
-		Defines: []string{"DEBUG", "_DEBUG"},
+		Defines: []string{"DEBUG", "_DEBUG", "FASTDEBUG"},
 		Tags:    []TagType{TAG_FASTDEBUG, TAG_DEBUG},
 	},
 }

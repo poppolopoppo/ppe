@@ -58,7 +58,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 namespace {
 //----------------------------------------------------------------------------
 static ELoggerVerbosity GLoggerVerbosity_ = ELoggerVerbosity::All;
-#if USE_PPE_ASSERT
+#if !USE_PPE_FINALRELEASE
 static FLoggerCategory::EFlags GLoggerFlags_ = Default;
 #endif
 //----------------------------------------------------------------------------
@@ -662,7 +662,7 @@ NODISCARD static bool NotifyLoggerMessage_(
     const ELoggerVerbosity level,
     const FLogger::FSiteInfo& site ) NOEXCEPT {
     UNUSED(site);
-#if USE_PPE_ASSERT
+#if !USE_PPE_FINALRELEASE
     const bool breakOnError = (level == ELoggerVerbosity::Error) && (
         (category.Flags & FLoggerCategory::BreakOnError) ||
          (GLoggerFlags_ & FLoggerCategory::BreakOnError) );
@@ -734,10 +734,12 @@ void FLogger::Start() {
     if (FCurrentProcess::StartedWithDebugger()) {
         RegisterLogger(MakeOutputDebug());
 
-#if USE_PPE_ASSERT
-        // break on errors when debugger is attached
+#if !USE_PPE_FINAL_RELEASE
+        // break on warnings/errors when debugger is attached
         if (FCurrentProcess::Get().HasArgument(L"-LOGBreakOnError"))
             GLoggerFlags_ |= FLoggerCategory::BreakOnError;
+        if (FCurrentProcess::Get().HasArgument(L"-LOGBreakOnWarning"))
+            GLoggerFlags_ |= FLoggerCategory::BreakOnWarning;
 #endif
     }
     else {
@@ -1032,8 +1034,6 @@ TBasicTextWriter<_Char>& ELoggerVerbosity_Oss_(TBasicTextWriter<_Char>& oss, ELo
 }
 //----------------------------------------------------------------------------
 } //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
     return ELoggerVerbosity_Oss_(oss, level);

@@ -145,7 +145,8 @@ public: // must be defined for every platform
         }
     }
 
-#if USE_PPE_ASSERT
+#if USE_PPE_DEBUG
+#   if !USE_PPE_FASTDEBUG
     static bool Memtest(void* dst, u8 pattern, size_t sizeInBytes) {
         forrange(it, (u8*)dst, (u8*)dst + sizeInBytes)
             if (*it != pattern)
@@ -158,6 +159,11 @@ public: // must be defined for every platform
     static void Memdeadbeef(void* dst, size_t sizeInBytes) {
         Memset(dst, 0xDD, sizeInBytes);
     }
+#   else
+    static FORCE_INLINE bool Memtest(void*, u8, size_t) { return true; }
+    static FORCE_INLINE void Memuninitialized(void* , size_t ) {}
+    static FORCE_INLINE void Memdeadbeef(void* , size_t ) {}
+#   endif
 #endif
 
     //------------------------------------------------------------------------

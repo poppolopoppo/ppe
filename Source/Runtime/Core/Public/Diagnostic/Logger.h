@@ -25,10 +25,12 @@ enum class ELoggerVerbosity : u8 {
     NoDebug     = (Info|Profiling|Emphasis|Warning|Error|Fatal),
     NoDebugInfo = (Profiling|Emphasis|Warning|Error|Fatal),
 
-#if USE_PPE_PROFILING
+#if USE_PPE_PROFILING || USE_PPE_FINAL_RELEASE
     All         = NoDebugInfo
+#elif !USE_PPE_DEBUG || USE_PPE_FASTDEBUG
+    All         = (Verbose|NoDebug)
 #else
-    All         = (Debug|Verbose|Info|Profiling|Emphasis|Warning|Error|Fatal)
+    All         = (Debug|Verbose|NoDebug)
 #endif
 };
 ENUM_FLAGS(ELoggerVerbosity);
@@ -55,7 +57,7 @@ FWD_INTERFACE_REFPTR(Logger);
 struct FLoggerCategory {
     enum EFlags : u32 {
         Unknown         = 0,
-#if USE_PPE_ASSERT
+#if !USE_PPE_FINALRELEASE
         BreakOnError    = 1<<0,
         BreakOnWarning  = 1<<1,
 #endif
