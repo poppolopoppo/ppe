@@ -6,6 +6,7 @@
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 #include "Memory/MemoryView.h"
+#include "Memory/PtrRef.h"
 #include "Maths/Units.h"
 #include "Misc/Function.h"
 #include "Meta/StronglyTyped.h"
@@ -96,19 +97,22 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v);
 namespace Fmt {
 template <typename T, typename _Quote>
 struct TQuoted {
-    const T* Value;
+    T Value;
     _Quote Quote;
 };
 template <typename T, typename _Quote>
-TQuoted<T, _Quote> Quoted(const T& value, _Quote quote) NOEXCEPT {
-    return TQuoted<T, _Quote>{ &value, quote };
+auto Quoted(const T& value, _Quote quote) NOEXCEPT {
+    return TQuoted<TPtrRef<const Meta::TDecay<T>>, _Quote>{ value, quote };
+}
+template <typename T, typename _Quote>
+auto Quoted(T&& rvalue, _Quote quote) NOEXCEPT {
+    return TQuoted<Meta::TDecay<T>, _Quote>{ std::move(rvalue), quote };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 template <typename _Char, typename T, typename _Quote>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TQuoted<T, _Quote>& quoted) {
-    Assert(quoted.Value);
-    return oss << quoted.Quote << *quoted.Value << quoted.Quote;
+    return oss << quoted.Quote << quoted.Value << quoted.Quote;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -116,40 +120,52 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TQ
 namespace Fmt {
 template <typename T, typename _Char>
 struct TPadded {
-    const T* Outp;
+    T Outp;
     FTextFormat::EPadding Align;
     size_t Width;
     _Char FillChar;
 };
 template <typename T, typename _Char>
-TPadded<T, _Char> PadLeft(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
-    return TPadded<T, _Char>{ &value, FTextFormat::Padding_Left, width, ch };
+auto PadLeft(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TPtrRef<const Meta::TDecay<T>>, _Char>{ value, FTextFormat::Padding_Left, width, ch };
 }
 template <typename T, typename _Char>
-TPadded<T, _Char> PadCenter(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
-    return TPadded<T, _Char>{ &value, FTextFormat::Padding_Center, width, ch };
+auto PadCenter(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TPtrRef<const Meta::TDecay<T>>, _Char>{ value, FTextFormat::Padding_Center, width, ch };
 }
 template <typename T, typename _Char>
-TPadded<T, _Char> PadRight(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
-    return TPadded<T, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
+auto PadRight(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TPtrRef<const Meta::TDecay<T>>, _Char>{ value, FTextFormat::Padding_Right, width, ch };
+}
+template <typename _Char, size_t _Dim>
+auto PadLeft(const _Char (&value)[_Dim], size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TBasicStringView<_Char>, _Char>{ MakeStringView(value), FTextFormat::Padding_Left, width, ch };
+}
+template <typename _Char, size_t _Dim>
+auto PadCenter(const _Char (&value)[_Dim], size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TBasicStringView<_Char>, _Char>{ MakeStringView(value), FTextFormat::Padding_Center, width, ch };
+}
+template <typename _Char, size_t _Dim>
+auto PadRight(const _Char (&value)[_Dim], size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TBasicStringView<_Char>, _Char>{ MakeStringView(value), FTextFormat::Padding_Right, width, ch };
 }
 template <typename _Char>
-TPadded<TBasicStringView<_Char>, _Char> AlignLeft(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
-    return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
+auto AlignLeft(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TPtrRef<const TBasicStringView<_Char>>, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
 }
 template <typename _Char>
-TPadded<TBasicStringView<_Char>, _Char> AlignCenter(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
-    return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Center, width, ch };
+auto AlignCenter(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TPtrRef<const TBasicStringView<_Char>>, _Char>{ value, FTextFormat::Padding_Center, width, ch };
 }
 template <typename _Char>
-TPadded<TBasicStringView<_Char>, _Char> AlignRight(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
-    return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Left, width, ch };
+auto AlignRight(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
+    return TPadded<TPtrRef<const TBasicStringView<_Char>>, _Char>{ value, FTextFormat::Padding_Left, width, ch };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 template <typename _Char, typename T>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TPadded<T, _Char>& padded) {
-    return oss << FTextFormat::Pad(padded.Align, padded.Width, padded.FillChar) << *padded.Outp;
+    return oss << FTextFormat::Pad(padded.Align, padded.Width, padded.FillChar) << padded.Outp;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

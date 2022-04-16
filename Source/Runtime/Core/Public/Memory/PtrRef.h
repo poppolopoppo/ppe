@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Meta/Hash_fwd.h"
+#include "IO/TextWriter_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -179,6 +180,11 @@ CONSTEXPR TPtrRef<T> MakePtrRef(T& ref) {
 template <typename T>
 CONSTEXPR TPtrRef<T> MakePtrRef(T* ptr) {
     return TPtrRef{ ptr };
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename T>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TPtrRef<T>& ref) {
+    return oss << (*ref);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

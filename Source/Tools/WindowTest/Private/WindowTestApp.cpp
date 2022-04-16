@@ -7,6 +7,7 @@
 #include "IO/FormatHelpers.h"
 #include "Maths/Threefy.h"
 #include "Window/WindowService.h"
+#include <RHIModule.h>
 
 namespace PPE {
 LOG_CATEGORY(, WindowTest)
@@ -49,15 +50,13 @@ static void LaunchWindowTests_(FWindowTestApp& app) {
         UNUSED(name);
         LOG(WindowTest, Info, L"start framegraph test <{0}> ...", name);
 
-#if USE_PPE_PLATFORM_DEBUG
-        FPlatformDebug::OutputDebug(StringFormat(L"run [{0}]\n", name).c_str());
-#endif
-
         RHI::IFrameGraph& fg = *app.RHI().FrameGraph();
         fg.PrepareNewFrame();
 
         if (Likely(test(app))) {
+#if USE_PPE_DEBUG && !USE_PPE_FASTDEBUG
             ONLY_IF_RHIDEBUG(fg.LogFrame());
+#endif
             LOG(WindowTest, Emphasis, L"frame graph test <{0}> [PASSED]", name);
             return true;
         }
@@ -91,6 +90,8 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
             testIndex = 0;
             testSucceed = 0;
 
+            LOG(WindowTest, Info, L"-==================- [LOOP:{0:#4}] -==================-", loop);
+
             for (const auto& test : unitTests) {
                 ++testIndex;
 
@@ -106,6 +107,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
                 app.Window().SetTaskbarProgress(testIndex, testCount);
             }
 
+            FLUSH_LOG();
             rng.Shuffle(MakeView(unitTests));
         }
 

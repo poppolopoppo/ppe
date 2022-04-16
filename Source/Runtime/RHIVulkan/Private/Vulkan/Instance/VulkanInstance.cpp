@@ -312,13 +312,19 @@ bool CreateVulkanInstance_(
 //----------------------------------------------------------------------------
 // Debug utils
 //----------------------------------------------------------------------------
+#if USE_PPE_LOGGER
 #if USE_PPE_RHIDEBUG
+LOG_CATEGORY_VERBOSITY(, VkGeneral, All)
+#else
+LOG_CATEGORY_VERBOSITY(, VkGeneral, NoDebug)
+#endif
+LOG_CATEGORY_VERBOSITY(, VkPerformance, All)
+LOG_CATEGORY_VERBOSITY(, VkValidation, All)
 static void CreateDebugUtilsMessengerIFP_(
     VkDebugUtilsMessengerEXT* pDebugUtilsMessenger,
     VkInstance vkInstance,
     const VkAllocationCallbacks& vkAllocator,
     PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT ) {
-#   if USE_PPE_LOGGER
     PFN_vkDebugUtilsMessengerCallbackEXT debugCallback = [](
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -328,22 +334,28 @@ static void CreateDebugUtilsMessengerIFP_(
 
         ELoggerVerbosity level;
         switch (messageSeverity) {
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: level = ELoggerVerbosity::Verbose; break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: level = ELoggerVerbosity::Info; break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: level = ELoggerVerbosity::Warning; break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT: level = ELoggerVerbosity::Error; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+            level = ELoggerVerbosity::Verbose; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            level = ELoggerVerbosity::Info; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            level = ELoggerVerbosity::Warning; break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            level = ELoggerVerbosity::Error; break;
         default:
             AssertNotImplemented();
         }
 
-        auto fmtMessageType = [messageType](FWTextWriter& oss) {
-            if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
-                oss << L"[GENERAL] ";
-            if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-                oss << L"[VALIDATION] ";
-            if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-                oss << L"[PERFORMANCE] ";
-        };
+        const FLoggerCategory* pLogCategory = &LOG_CATEGORY_GET(RHI);
+        if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+            pLogCategory = &LOG_CATEGORY_GET(VkGeneral);
+        if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+            pLogCategory = &LOG_CATEGORY_GET(VkValidation);
+        if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+            pLogCategory = &LOG_CATEGORY_GET(VkPerformance);
+
+        if (not (pLogCategory->Verbosity & level))
+            return false;
 
         auto fmtCallbackData = [pCallbackData, level](FWTextWriter& oss) {
             if (level <= ELoggerVerbosity::Verbose)
@@ -419,14 +431,12 @@ static void CreateDebugUtilsMessengerIFP_(
         };
 
         FLogger::Log(
-            LOG_CATEGORY_GET(RHI),
+            *pLogCategory,
             level,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            L"{3}<{1}> {0} ({2}){4}",
-            MakeCStringView(pCallbackData->pMessage),
+            L"<{0}> {1}{2}",
             MakeCStringView(pCallbackData->pMessageIdName),
-            pCallbackData->messageIdNumber,
-            Fmt::Formator<wchar_t>(fmtMessageType),
+            MakeCStringView(pCallbackData->pMessage),
             Fmt::Formator<wchar_t>(fmtCallbackData));
 
         return VK_FALSE;
@@ -447,18 +457,10 @@ static void CreateDebugUtilsMessengerIFP_(
 
     *pDebugUtilsMessenger = VK_NULL_HANDLE;
     VK_CALL( vkCreateDebugUtilsMessengerEXT(vkInstance, &createInfo, &vkAllocator, pDebugUtilsMessenger) );
-
-#   else
-    UNUSED(pDebugUtilsMessenger);
-    UNUSED(vkInstance);
-    UNUSED(vkAllocator);
-    UNUSED(vkCreateDebugUtilsMessengerEXT);
-#   endif
 }
-#endif
+#endif //!USE_PPE_LOGGER
 //----------------------------------------------------------------------------
 // Device features
-
 //----------------------------------------------------------------------------
 struct FVulkanDeviceFeatures_ {
 
@@ -1023,7 +1025,7 @@ bool FVulkanInstance::Construct(
 
             _instanceAPI.setup_backward_compatibility();
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_LOGGER
             if (HasExtension(EVulkanInstanceExtension::EXT_debug_utils)) {
                 CreateDebugUtilsMessengerIFP_(&_vkDebugUtilsMessenger, _vkInstance, _vkAllocationCallbacks, _instanceAPI.vkCreateDebugUtilsMessengerEXT);
             }
@@ -1074,7 +1076,7 @@ void FVulkanInstance::TearDown() {
 
     LOG(RHI, Debug, L"destroying vulkan instance");
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_LOGGER
     if (VK_NULL_HANDLE != _vkDebugUtilsMessenger) {
         vkDestroyDebugUtilsMessengerEXT(_vkInstance, _vkDebugUtilsMessenger, &_vkAllocationCallbacks);
         _vkDebugUtilsMessenger = VK_NULL_HANDLE;

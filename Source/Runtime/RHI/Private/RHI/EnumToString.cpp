@@ -23,7 +23,25 @@ namespace RHI {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-auto Separator_() { return Fmt::NotFirstTime(STRING_LITERAL(_Char, "|")); }
+auto Separator_() { return Fmt::NotFirstTime(STRING_LITERAL(_Char, " | ")); }
+//----------------------------------------------------------------------------
+template <typename _Char>
+struct TEnumFlagsNone_ {
+    TBasicTextWriter<_Char>& Oss;
+    const std::streamoff StartedAt;
+
+    explicit TEnumFlagsNone_(TBasicTextWriter<_Char>& oss) NOEXCEPT
+    :   Oss(oss)
+    ,   StartedAt(Oss.Stream()->TellO()) {
+    }
+
+    ~TEnumFlagsNone_() {
+        if (Oss.Stream()->TellO() == StartedAt)
+            Oss << STRING_LITERAL(_Char, "0");
+    }
+};
+template <typename _Char>
+TEnumFlagsNone_(TBasicTextWriter<_Char>&)->TEnumFlagsNone_<_Char>;
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EQueueType value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<EQueueType>);
@@ -41,10 +59,12 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (value == EQueueUsage::Unknown) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EQueueUsage::Graphics & value) oss << sep << STRING_LITERAL(_Char, "Graphics");
-    if (EQueueUsage::AsyncCompute & value) oss << sep << STRING_LITERAL(_Char, "AsyncCompute");
-    if (EQueueUsage::AsyncTransfer & value) oss << sep << STRING_LITERAL(_Char, "AsyncTransfer");
+    if (value & EQueueUsage::Graphics) oss << sep << STRING_LITERAL(_Char, "Graphics");
+    if (value & EQueueUsage::AsyncCompute) oss << sep << STRING_LITERAL(_Char, "AsyncCompute");
+    if (value & EQueueUsage::AsyncTransfer) oss << sep << STRING_LITERAL(_Char, "AsyncTransfer");
 
     return oss;
 }
@@ -54,10 +74,12 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (value == EMemoryType::Default) return oss << STRING_LITERAL(_Char, "Default");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EMemoryType::HostRead & value) oss << sep << STRING_LITERAL(_Char, "HostRead");
-    if (EMemoryType::HostWrite & value) oss << sep << STRING_LITERAL(_Char, "HostWrite");
-    if (EMemoryType::Dedicated & value) oss << sep << STRING_LITERAL(_Char, "Dedicated");
+    if (value & EMemoryType::HostRead) oss << sep << STRING_LITERAL(_Char, "HostRead");
+    if (value & EMemoryType::HostWrite) oss << sep << STRING_LITERAL(_Char, "HostWrite");
+    if (value & EMemoryType::Dedicated) oss << sep << STRING_LITERAL(_Char, "Dedicated");
 
     return oss;
 }
@@ -69,22 +91,24 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EBufferUsage::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EBufferUsage::TransferSrc & value) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
-    if (EBufferUsage::TransferDst & value) oss << sep << STRING_LITERAL(_Char, "TransferDst");
-    if (EBufferUsage::UniformTexel & value) oss << sep << STRING_LITERAL(_Char, "UniformTexel");
-    if (EBufferUsage::StorageTexel & value) oss << sep << STRING_LITERAL(_Char, "StorageTexel");
-    if (EBufferUsage::Uniform & value) oss << sep << STRING_LITERAL(_Char, "Uniform");
-    if (EBufferUsage::Storage & value) oss << sep << STRING_LITERAL(_Char, "Storage");
-    if (EBufferUsage::Index & value) oss << sep << STRING_LITERAL(_Char, "Index");
-    if (EBufferUsage::Vertex & value) oss << sep << STRING_LITERAL(_Char, "Vertex");
-    if (EBufferUsage::Indirect & value) oss << sep << STRING_LITERAL(_Char, "Indirect");
-    if (EBufferUsage::RayTracing & value) oss << sep << STRING_LITERAL(_Char, "RayTracing");
+    if (value & EBufferUsage::TransferSrc) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
+    if (value & EBufferUsage::TransferDst) oss << sep << STRING_LITERAL(_Char, "TransferDst");
+    if (value & EBufferUsage::UniformTexel) oss << sep << STRING_LITERAL(_Char, "UniformTexel");
+    if (value & EBufferUsage::StorageTexel) oss << sep << STRING_LITERAL(_Char, "StorageTexel");
+    if (value & EBufferUsage::Uniform) oss << sep << STRING_LITERAL(_Char, "Uniform");
+    if (value & EBufferUsage::Storage) oss << sep << STRING_LITERAL(_Char, "Storage");
+    if (value & EBufferUsage::Index) oss << sep << STRING_LITERAL(_Char, "Index");
+    if (value & EBufferUsage::Vertex) oss << sep << STRING_LITERAL(_Char, "Vertex");
+    if (value & EBufferUsage::Indirect) oss << sep << STRING_LITERAL(_Char, "Indirect");
+    if (value & EBufferUsage::RayTracing) oss << sep << STRING_LITERAL(_Char, "RayTracing");
 
 
-    if (EBufferUsage::VertexPplnStore & value) oss << sep << STRING_LITERAL(_Char, "VertexPplnStore");
-    if (EBufferUsage::FragmentPplnStore & value) oss << sep << STRING_LITERAL(_Char, "FragmentPplnStore");
-    if (EBufferUsage::StorageTexelAtomic & value) oss << sep << STRING_LITERAL(_Char, "StorageTexelAtomic");
+    if (value & EBufferUsage::VertexPplnStore) oss << sep << STRING_LITERAL(_Char, "VertexPplnStore");
+    if (value & EBufferUsage::FragmentPplnStore) oss << sep << STRING_LITERAL(_Char, "FragmentPplnStore");
+    if (value & EBufferUsage::StorageTexelAtomic) oss << sep << STRING_LITERAL(_Char, "StorageTexelAtomic");
 
     return oss;
 }
@@ -120,6 +144,8 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EImageFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
     if (EImageFlags::MutableFormat == value) oss << sep << STRING_LITERAL(_Char, "MutableFormat");
     if (EImageFlags::CubeCompatible == value) oss << sep << STRING_LITERAL(_Char, "CubeCompatible");
@@ -136,20 +162,22 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EImageUsage::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EImageUsage::TransferSrc & value) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
-    if (EImageUsage::TransferDst & value) oss << sep << STRING_LITERAL(_Char, "TransferDst");
-    if (EImageUsage::Sampled & value) oss << sep << STRING_LITERAL(_Char, "Sampled");
-    if (EImageUsage::Storage & value) oss << sep << STRING_LITERAL(_Char, "Storage");
-    if (EImageUsage::ColorAttachment & value) oss << sep << STRING_LITERAL(_Char, "ColorAttachment");
-    if (EImageUsage::DepthStencilAttachment & value) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment");
-    if (EImageUsage::TransientAttachment & value) oss << sep << STRING_LITERAL(_Char, "TransientAttachment");
-    if (EImageUsage::InputAttachment & value) oss << sep << STRING_LITERAL(_Char, "InputAttachment");
-    if (EImageUsage::ShadingRate & value) oss << sep << STRING_LITERAL(_Char, "ShadingRate");
+    if (value & EImageUsage::TransferSrc) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
+    if (value & EImageUsage::TransferDst) oss << sep << STRING_LITERAL(_Char, "TransferDst");
+    if (value & EImageUsage::Sampled) oss << sep << STRING_LITERAL(_Char, "Sampled");
+    if (value & EImageUsage::Storage) oss << sep << STRING_LITERAL(_Char, "Storage");
+    if (value & EImageUsage::ColorAttachment) oss << sep << STRING_LITERAL(_Char, "ColorAttachment");
+    if (value & EImageUsage::DepthStencilAttachment) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment");
+    if (value & EImageUsage::TransientAttachment) oss << sep << STRING_LITERAL(_Char, "TransientAttachment");
+    if (value & EImageUsage::InputAttachment) oss << sep << STRING_LITERAL(_Char, "InputAttachment");
+    if (value & EImageUsage::ShadingRate) oss << sep << STRING_LITERAL(_Char, "ShadingRate");
 
-    if (EImageUsage::StorageAtomic & value) oss << sep << STRING_LITERAL(_Char, "StorageAtomic");
-    if (EImageUsage::ColorAttachmentBlend & value) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
-    if (EImageUsage::SampledMinMax & value) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
+    if (value & EImageUsage::StorageAtomic) oss << sep << STRING_LITERAL(_Char, "StorageAtomic");
+    if (value & EImageUsage::ColorAttachmentBlend) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
+    if (value & EImageUsage::SampledMinMax) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
 
     return oss;
 }
@@ -160,12 +188,14 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EImageAspect::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EImageAspect::Color & value) oss << sep << STRING_LITERAL(_Char, "Color");
-    if (EImageAspect::Depth & value) oss << sep << STRING_LITERAL(_Char, "Depth");
-    if (EImageAspect::Stencil & value) oss << sep << STRING_LITERAL(_Char, "Stencil");
-    if (EImageAspect::Metadata & value) oss << sep << STRING_LITERAL(_Char, "Metadata");
-    if (EImageAspect::DepthStencil & value) oss << sep << STRING_LITERAL(_Char, "DepthStencil");
+    if (value & EImageAspect::Color) oss << sep << STRING_LITERAL(_Char, "Color");
+    if (value & EImageAspect::Depth) oss << sep << STRING_LITERAL(_Char, "Depth");
+    if (value & EImageAspect::Stencil) oss << sep << STRING_LITERAL(_Char, "Stencil");
+    if (value & EImageAspect::Metadata) oss << sep << STRING_LITERAL(_Char, "Metadata");
+    if (value & EImageAspect::DepthStencil) oss << sep << STRING_LITERAL(_Char, "DepthStencil");
 
     return oss;
 }
@@ -398,29 +428,29 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     return oss;
 }
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EDebugFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EDebugFlags>);
     if (EDebugFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
     if (EDebugFlags::Default == value) return oss << STRING_LITERAL(_Char, "Default");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EDebugFlags::LogTasks & value) oss << sep << STRING_LITERAL(_Char, "LogTasks");
-    if (EDebugFlags::LogBarriers & value) oss << sep << STRING_LITERAL(_Char, "LogBarriers");
-    if (EDebugFlags::LogResourceUsage & value) oss << sep << STRING_LITERAL(_Char, "LogResourceUsage");
-    if (EDebugFlags::VisTasks & value) oss << sep << STRING_LITERAL(_Char, "VisTasks");
-    if (EDebugFlags::VisDrawTasks & value) oss << sep << STRING_LITERAL(_Char, "VisDrawTasks");
-    if (EDebugFlags::VisResources & value) oss << sep << STRING_LITERAL(_Char, "VisResources");
-    if (EDebugFlags::VisBarriers & value) oss << sep << STRING_LITERAL(_Char, "VisBarriers");
-    if (EDebugFlags::VisBarrierLabels & value) oss << sep << STRING_LITERAL(_Char, "VisBarrierLabels");
-    if (EDebugFlags::VisTaskDependencies & value) oss << sep << STRING_LITERAL(_Char, "VisTaskDependencies");
-    if (EDebugFlags::FullBarrier & value) oss << sep << STRING_LITERAL(_Char, "FullBarrier");
-    if (EDebugFlags::QueueSync & value) oss << sep << STRING_LITERAL(_Char, "QueueSync");
+    if (value & EDebugFlags::LogTasks) oss << sep << STRING_LITERAL(_Char, "LogTasks");
+    if (value & EDebugFlags::LogBarriers) oss << sep << STRING_LITERAL(_Char, "LogBarriers");
+    if (value & EDebugFlags::LogResourceUsage) oss << sep << STRING_LITERAL(_Char, "LogResourceUsage");
+    if (value & EDebugFlags::VisTasks) oss << sep << STRING_LITERAL(_Char, "VisTasks");
+    if (value & EDebugFlags::VisDrawTasks) oss << sep << STRING_LITERAL(_Char, "VisDrawTasks");
+    if (value & EDebugFlags::VisResources) oss << sep << STRING_LITERAL(_Char, "VisResources");
+    if (value & EDebugFlags::VisBarriers) oss << sep << STRING_LITERAL(_Char, "VisBarriers");
+    if (value & EDebugFlags::VisBarrierLabels) oss << sep << STRING_LITERAL(_Char, "VisBarrierLabels");
+    if (value & EDebugFlags::VisTaskDependencies) oss << sep << STRING_LITERAL(_Char, "VisTaskDependencies");
+    if (value & EDebugFlags::FullBarrier) oss << sep << STRING_LITERAL(_Char, "FullBarrier");
+    if (value & EDebugFlags::QueueSync) oss << sep << STRING_LITERAL(_Char, "QueueSync");
 
     return oss;
 }
-#endif
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EBlendFactor value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<EBlendFactor>);
@@ -493,11 +523,13 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EColorMask::All == value) return oss << STRING_LITERAL(_Char, "All");
 
     Assert(value != Zero);
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EColorMask::R & value) oss << STRING_LITERAL(_Char, "R");
-    if (EColorMask::G & value) oss << STRING_LITERAL(_Char, "G");
-    if (EColorMask::B & value) oss << STRING_LITERAL(_Char, "B");
-    if (EColorMask::A & value) oss << STRING_LITERAL(_Char, "A");
+    if (value & EColorMask::R) oss << STRING_LITERAL(_Char, "R");
+    if (value & EColorMask::G) oss << STRING_LITERAL(_Char, "G");
+    if (value & EColorMask::B) oss << STRING_LITERAL(_Char, "B");
+    if (value & EColorMask::A) oss << STRING_LITERAL(_Char, "A");
 
     return oss;
 }
@@ -581,14 +613,16 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EPipelineDynamicState::Default == value) return oss << STRING_LITERAL(_Char, "Default");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EPipelineDynamicState::Viewport & value) oss << sep << STRING_LITERAL(_Char, "Viewport");
-    if (EPipelineDynamicState::Scissor & value) oss << sep << STRING_LITERAL(_Char, "Scissor");
-    if (EPipelineDynamicState::StencilCompareMask & value) oss << sep << STRING_LITERAL(_Char, "StencilCompareMask");
-    if (EPipelineDynamicState::StencilWriteMask & value) oss << sep << STRING_LITERAL(_Char, "StencilWriteMask");
-    if (EPipelineDynamicState::StencilReference & value) oss << sep << STRING_LITERAL(_Char, "StencilReference");
-    if (EPipelineDynamicState::ShadingRatePalette & value) oss << sep << STRING_LITERAL(_Char, "ShadingRatePalette");
-    if (EPipelineDynamicState::RasterizerMask & value) oss << sep << STRING_LITERAL(_Char, "RasterizerMask");
+    if (value & EPipelineDynamicState::Viewport) oss << sep << STRING_LITERAL(_Char, "Viewport");
+    if (value & EPipelineDynamicState::Scissor) oss << sep << STRING_LITERAL(_Char, "Scissor");
+    if (value & EPipelineDynamicState::StencilCompareMask) oss << sep << STRING_LITERAL(_Char, "StencilCompareMask");
+    if (value & EPipelineDynamicState::StencilWriteMask) oss << sep << STRING_LITERAL(_Char, "StencilWriteMask");
+    if (value & EPipelineDynamicState::StencilReference) oss << sep << STRING_LITERAL(_Char, "StencilReference");
+    if (value & EPipelineDynamicState::ShadingRatePalette) oss << sep << STRING_LITERAL(_Char, "ShadingRatePalette");
+    if (value & EPipelineDynamicState::RasterizerMask) oss << sep << STRING_LITERAL(_Char, "RasterizerMask");
 
     return oss;
 }
@@ -599,8 +633,8 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
 
-    if (ERayTracingGeometryFlags::Opaque & value) return oss << sep << STRING_LITERAL(_Char, "Opaque");
-    if (ERayTracingGeometryFlags::NoDuplicateAnyHitInvocation & value) return oss << sep << STRING_LITERAL(_Char, "NoDuplicateAnyHitInvocation");
+    if (value & ERayTracingGeometryFlags::Opaque) return oss << sep << STRING_LITERAL(_Char, "Opaque");
+    if (value & ERayTracingGeometryFlags::NoDuplicateAnyHitInvocation) return oss << sep << STRING_LITERAL(_Char, "NoDuplicateAnyHitInvocation");
 
     return oss;
 }
@@ -610,11 +644,13 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (ERayTracingInstanceFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (ERayTracingInstanceFlags::TriangleCullDisable & value) return oss << sep << STRING_LITERAL(_Char, "TriangleCullDisable");
-    if (ERayTracingInstanceFlags::TriangleFrontCCW & value) return oss << sep << STRING_LITERAL(_Char, "TriangleFrontCCW");
-    if (ERayTracingInstanceFlags::ForceOpaque & value) return oss << sep << STRING_LITERAL(_Char, "ForceOpaque");
-    if (ERayTracingInstanceFlags::ForceNonOpaque & value) return oss << sep << STRING_LITERAL(_Char, "ForceNonOpaque");
+    if (value & ERayTracingInstanceFlags::TriangleCullDisable) return oss << sep << STRING_LITERAL(_Char, "TriangleCullDisable");
+    if (value & ERayTracingInstanceFlags::TriangleFrontCCW) return oss << sep << STRING_LITERAL(_Char, "TriangleFrontCCW");
+    if (value & ERayTracingInstanceFlags::ForceOpaque) return oss << sep << STRING_LITERAL(_Char, "ForceOpaque");
+    if (value & ERayTracingInstanceFlags::ForceNonOpaque) return oss << sep << STRING_LITERAL(_Char, "ForceNonOpaque");
 
     return oss;
 }
@@ -624,12 +660,14 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (ERayTracingBuildFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (ERayTracingBuildFlags::AllowUpdate & value) return oss << sep << STRING_LITERAL(_Char, "AllowUpdate");
-    if (ERayTracingBuildFlags::AllowCompaction & value) return oss << sep << STRING_LITERAL(_Char, "AllowCompaction");
-    if (ERayTracingBuildFlags::PreferFastTrace & value) return oss << sep << STRING_LITERAL(_Char, "PreferFastTrace");
-    if (ERayTracingBuildFlags::PreferFastBuild & value) return oss << sep << STRING_LITERAL(_Char, "PreferFastBuild");
-    if (ERayTracingBuildFlags::LowMemory & value) return oss << sep << STRING_LITERAL(_Char, "LowMemory");
+    if (value & ERayTracingBuildFlags::AllowUpdate) return oss << sep << STRING_LITERAL(_Char, "AllowUpdate");
+    if (value & ERayTracingBuildFlags::AllowCompaction) return oss << sep << STRING_LITERAL(_Char, "AllowCompaction");
+    if (value & ERayTracingBuildFlags::PreferFastTrace) return oss << sep << STRING_LITERAL(_Char, "PreferFastTrace");
+    if (value & ERayTracingBuildFlags::PreferFastBuild) return oss << sep << STRING_LITERAL(_Char, "PreferFastBuild");
+    if (value & ERayTracingBuildFlags::LowMemory) return oss << sep << STRING_LITERAL(_Char, "LowMemory");
 
     return oss;
 }
@@ -664,21 +702,23 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (EShaderStages::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
 
     auto sep = Separator_<_Char>();
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
 
-    if (EShaderStages::Vertex & value) oss << sep << STRING_LITERAL(_Char, "Vertex");
-    if (EShaderStages::TessControl & value) oss << sep << STRING_LITERAL(_Char, "TessControl");
-    if (EShaderStages::TessEvaluation & value) oss << sep << STRING_LITERAL(_Char, "TessEvaluation");
-    if (EShaderStages::Geometry & value) oss << sep << STRING_LITERAL(_Char, "Geometry");
-    if (EShaderStages::Fragment & value) oss << sep << STRING_LITERAL(_Char, "Fragment");
-    if (EShaderStages::Compute & value) oss << sep << STRING_LITERAL(_Char, "Compute");
-    if (EShaderStages::MeshTask & value) oss << sep << STRING_LITERAL(_Char, "MeshTask");
-    if (EShaderStages::Mesh & value) oss << sep << STRING_LITERAL(_Char, "Mesh");
-    if (EShaderStages::RayGen & value) oss << sep << STRING_LITERAL(_Char, "RayGen");
-    if (EShaderStages::RayAnyHit & value) oss << sep << STRING_LITERAL(_Char, "RayAnyHit");
-    if (EShaderStages::RayClosestHit & value) oss << sep << STRING_LITERAL(_Char, "RayClosestHit");
-    if (EShaderStages::RayMiss & value) oss << sep << STRING_LITERAL(_Char, "RayMiss");
-    if (EShaderStages::RayIntersection & value) oss << sep << STRING_LITERAL(_Char, "RayIntersection");
-    if (EShaderStages::RayCallable & value) oss << sep << STRING_LITERAL(_Char, "RayCallable");
+    if (value & EShaderStages::Vertex) oss << sep << STRING_LITERAL(_Char, "Vertex");
+    if (value & EShaderStages::TessControl) oss << sep << STRING_LITERAL(_Char, "TessControl");
+    if (value & EShaderStages::TessEvaluation) oss << sep << STRING_LITERAL(_Char, "TessEvaluation");
+    if (value & EShaderStages::Geometry) oss << sep << STRING_LITERAL(_Char, "Geometry");
+    if (value & EShaderStages::Fragment) oss << sep << STRING_LITERAL(_Char, "Fragment");
+    if (value & EShaderStages::Compute) oss << sep << STRING_LITERAL(_Char, "Compute");
+    if (value & EShaderStages::MeshTask) oss << sep << STRING_LITERAL(_Char, "MeshTask");
+    if (value & EShaderStages::Mesh) oss << sep << STRING_LITERAL(_Char, "Mesh");
+    if (value & EShaderStages::RayGen) oss << sep << STRING_LITERAL(_Char, "RayGen");
+    if (value & EShaderStages::RayAnyHit) oss << sep << STRING_LITERAL(_Char, "RayAnyHit");
+    if (value & EShaderStages::RayClosestHit) oss << sep << STRING_LITERAL(_Char, "RayClosestHit");
+    if (value & EShaderStages::RayMiss) oss << sep << STRING_LITERAL(_Char, "RayMiss");
+    if (value & EShaderStages::RayIntersection) oss << sep << STRING_LITERAL(_Char, "RayIntersection");
+    if (value & EShaderStages::RayCallable) oss << sep << STRING_LITERAL(_Char, "RayCallable");
 
     return oss;
 }
@@ -698,42 +738,42 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderLangFormat>);
     auto sep = Separator_<_Char>();
 
-    if (EShaderLangFormat::Vulkan & value) oss << sep << STRING_LITERAL(_Char, "Vulkan");
-    if (EShaderLangFormat::OpenGL & value) oss << sep << STRING_LITERAL(_Char, "OpenGL");
-    if (EShaderLangFormat::OpenGLES & value) oss << sep << STRING_LITERAL(_Char, "OpenGLES");
-    if (EShaderLangFormat::DirectX & value) oss << sep << STRING_LITERAL(_Char, "DirectX");
-    if (EShaderLangFormat::Vulkan_100 & value) oss << sep << STRING_LITERAL(_Char, "Vulkan_100");
-    if (EShaderLangFormat::Vulkan_110 & value) oss << sep << STRING_LITERAL(_Char, "Vulkan_110");
-    if (EShaderLangFormat::Vulkan_120 & value) oss << sep << STRING_LITERAL(_Char, "Vulkan_120");
-    if (EShaderLangFormat::OpenGL_450 & value) oss << sep << STRING_LITERAL(_Char, "OpenGL_450");
-    if (EShaderLangFormat::OpenGL_460 & value) oss << sep << STRING_LITERAL(_Char, "OpenGL_460");
-    if (EShaderLangFormat::OpenGLES_200 & value) oss << sep << STRING_LITERAL(_Char, "OpenGLES_200");
-    if (EShaderLangFormat::OpenGLES_320 & value) oss << sep << STRING_LITERAL(_Char, "OpenGLES_320");
-    if (EShaderLangFormat::DirectX_11 & value) oss << sep << STRING_LITERAL(_Char, "DirectX_11");
-    if (EShaderLangFormat::DirectX_12 & value) oss << sep << STRING_LITERAL(_Char, "DirectX_12");
-    if (EShaderLangFormat::Source & value) oss << sep << STRING_LITERAL(_Char, "Source");
-    if (EShaderLangFormat::Binary & value) oss << sep << STRING_LITERAL(_Char, "Binary");
-    if (EShaderLangFormat::Executable & value) oss << sep << STRING_LITERAL(_Char, "Executable");
-    if (EShaderLangFormat::HighLevel & value) oss << sep << STRING_LITERAL(_Char, "HighLevel");
-    if (EShaderLangFormat::SPIRV & value) oss << sep << STRING_LITERAL(_Char, "SPIRV");
-    if (EShaderLangFormat::ShaderModule & value) oss << sep << STRING_LITERAL(_Char, "ShaderModule");
-    if (EShaderLangFormat::EnableDebugTrace & value) oss << sep << STRING_LITERAL(_Char, "EnableDebugTrace");
-    if (EShaderLangFormat::EnableProfiling & value) oss << sep << STRING_LITERAL(_Char, "EnableProfiling");
-    if (EShaderLangFormat::EnableTimeMap & value) oss << sep << STRING_LITERAL(_Char, "EnableTimeMap");
-    if (EShaderLangFormat::Unknown & value) oss << sep << STRING_LITERAL(_Char, "Unknown");
-    if (EShaderLangFormat::GLSL_450 & value) oss << sep << STRING_LITERAL(_Char, "GLSL_450");
-    if (EShaderLangFormat::GLSL_460 & value) oss << sep << STRING_LITERAL(_Char, "GLSL_460");
-    if (EShaderLangFormat::HLSL_11 & value) oss << sep << STRING_LITERAL(_Char, "HLSL_11");
-    if (EShaderLangFormat::HLSL_12 & value) oss << sep << STRING_LITERAL(_Char, "HLSL_12");
-    if (EShaderLangFormat::VKSL_100 & value) oss << sep << STRING_LITERAL(_Char, "VKSL_100");
-    if (EShaderLangFormat::VKSL_110 & value) oss << sep << STRING_LITERAL(_Char, "VKSL_110");
-    if (EShaderLangFormat::VKSL_120 & value) oss << sep << STRING_LITERAL(_Char, "VKSL_120");
-    if (EShaderLangFormat::SPIRV_100 & value) oss << sep << STRING_LITERAL(_Char, "SPIRV_100");
-    if (EShaderLangFormat::SPIRV_110 & value) oss << sep << STRING_LITERAL(_Char, "SPIRV_110");
-    if (EShaderLangFormat::SPIRV_120 & value) oss << sep << STRING_LITERAL(_Char, "SPIRV_120");
-    if (EShaderLangFormat::VkShader_100 & value) oss << sep << STRING_LITERAL(_Char, "VkShader_100");
-    if (EShaderLangFormat::VkShader_110 & value) oss << sep << STRING_LITERAL(_Char, "VkShader_110");
-    if (EShaderLangFormat::VkShader_120 & value) oss << sep << STRING_LITERAL(_Char, "VkShader_120");
+    if (value & EShaderLangFormat::Vulkan) oss << sep << STRING_LITERAL(_Char, "Vulkan");
+    if (value & EShaderLangFormat::OpenGL) oss << sep << STRING_LITERAL(_Char, "OpenGL");
+    if (value & EShaderLangFormat::OpenGLES) oss << sep << STRING_LITERAL(_Char, "OpenGLES");
+    if (value & EShaderLangFormat::DirectX) oss << sep << STRING_LITERAL(_Char, "DirectX");
+    if (value & EShaderLangFormat::Vulkan_100) oss << sep << STRING_LITERAL(_Char, "Vulkan_100");
+    if (value & EShaderLangFormat::Vulkan_110) oss << sep << STRING_LITERAL(_Char, "Vulkan_110");
+    if (value & EShaderLangFormat::Vulkan_120) oss << sep << STRING_LITERAL(_Char, "Vulkan_120");
+    if (value & EShaderLangFormat::OpenGL_450) oss << sep << STRING_LITERAL(_Char, "OpenGL_450");
+    if (value & EShaderLangFormat::OpenGL_460) oss << sep << STRING_LITERAL(_Char, "OpenGL_460");
+    if (value & EShaderLangFormat::OpenGLES_200) oss << sep << STRING_LITERAL(_Char, "OpenGLES_200");
+    if (value & EShaderLangFormat::OpenGLES_320) oss << sep << STRING_LITERAL(_Char, "OpenGLES_320");
+    if (value & EShaderLangFormat::DirectX_11) oss << sep << STRING_LITERAL(_Char, "DirectX_11");
+    if (value & EShaderLangFormat::DirectX_12) oss << sep << STRING_LITERAL(_Char, "DirectX_12");
+    if (value & EShaderLangFormat::Source) oss << sep << STRING_LITERAL(_Char, "Source");
+    if (value & EShaderLangFormat::Binary) oss << sep << STRING_LITERAL(_Char, "Binary");
+    if (value & EShaderLangFormat::Executable) oss << sep << STRING_LITERAL(_Char, "Executable");
+    if (value & EShaderLangFormat::HighLevel) oss << sep << STRING_LITERAL(_Char, "HighLevel");
+    if (value & EShaderLangFormat::SPIRV) oss << sep << STRING_LITERAL(_Char, "SPIRV");
+    if (value & EShaderLangFormat::ShaderModule) oss << sep << STRING_LITERAL(_Char, "ShaderModule");
+    if (value & EShaderLangFormat::EnableDebugTrace) oss << sep << STRING_LITERAL(_Char, "EnableDebugTrace");
+    if (value & EShaderLangFormat::EnableProfiling) oss << sep << STRING_LITERAL(_Char, "EnableProfiling");
+    if (value & EShaderLangFormat::EnableTimeMap) oss << sep << STRING_LITERAL(_Char, "EnableTimeMap");
+    if (value & EShaderLangFormat::Unknown) oss << sep << STRING_LITERAL(_Char, "Unknown");
+    if (value & EShaderLangFormat::GLSL_450) oss << sep << STRING_LITERAL(_Char, "GLSL_450");
+    if (value & EShaderLangFormat::GLSL_460) oss << sep << STRING_LITERAL(_Char, "GLSL_460");
+    if (value & EShaderLangFormat::HLSL_11) oss << sep << STRING_LITERAL(_Char, "HLSL_11");
+    if (value & EShaderLangFormat::HLSL_12) oss << sep << STRING_LITERAL(_Char, "HLSL_12");
+    if (value & EShaderLangFormat::VKSL_100) oss << sep << STRING_LITERAL(_Char, "VKSL_100");
+    if (value & EShaderLangFormat::VKSL_110) oss << sep << STRING_LITERAL(_Char, "VKSL_110");
+    if (value & EShaderLangFormat::VKSL_120) oss << sep << STRING_LITERAL(_Char, "VKSL_120");
+    if (value & EShaderLangFormat::SPIRV_100) oss << sep << STRING_LITERAL(_Char, "SPIRV_100");
+    if (value & EShaderLangFormat::SPIRV_110) oss << sep << STRING_LITERAL(_Char, "SPIRV_110");
+    if (value & EShaderLangFormat::SPIRV_120) oss << sep << STRING_LITERAL(_Char, "SPIRV_120");
+    if (value & EShaderLangFormat::VkShader_100) oss << sep << STRING_LITERAL(_Char, "VkShader_100");
+    if (value & EShaderLangFormat::VkShader_110) oss << sep << STRING_LITERAL(_Char, "VkShader_110");
+    if (value & EShaderLangFormat::VkShader_120) oss << sep << STRING_LITERAL(_Char, "VkShader_120");
 
     return oss;
 }
@@ -939,39 +979,58 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceState value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, ", "));
-    if (value & EResourceState::_Access_ShaderStorage) oss << sep << STRING_LITERAL(_Char, "ShaderStorage");
-    if (value & EResourceState::_Access_Uniform) oss << sep << STRING_LITERAL(_Char, "Uniform");
-    if (value & EResourceState::_Access_ShaderSample) oss << sep << STRING_LITERAL(_Char, "ShaderSample");
-    if (value & EResourceState::_Access_InputAttachment) oss << sep << STRING_LITERAL(_Char, "InputAttachment");
-    if (value & EResourceState::_Access_Transfer) oss << sep << STRING_LITERAL(_Char, "Transfer");
-    if (value & EResourceState::_Access_ColorAttachment) oss << sep << STRING_LITERAL(_Char, "ColorAttachment");
-    if (value & EResourceState::_Access_DepthStencilAttachment) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment");
-    if (value & EResourceState::_Access_Host) oss << sep << STRING_LITERAL(_Char, "Host");
-    if (value & EResourceState::_Access_Present) oss << sep << STRING_LITERAL(_Char, "Present");
-    if (value & EResourceState::_Access_IndirectBuffer) oss << sep << STRING_LITERAL(_Char, "IndirectBuffer");
-    if (value & EResourceState::_Access_IndexBuffer) oss << sep << STRING_LITERAL(_Char, "IndexBuffer");
-    if (value & EResourceState::_Access_VertexBuffer) oss << sep << STRING_LITERAL(_Char, "VertexBuffer");
-    if (value & EResourceState::_Access_ConditionalRendering) oss << sep << STRING_LITERAL(_Char, "ConditionalRendering");
-    if (value & EResourceState::_Access_CommandProcess) oss << sep << STRING_LITERAL(_Char, "CommandProcess");
-    if (value & EResourceState::_Access_ShadingRateImage) oss << sep << STRING_LITERAL(_Char, "ShadingRateImage");
-    if (value & EResourceState::_Access_BuildRayTracingAS) oss << sep << STRING_LITERAL(_Char, "BuildRayTracingAS");
-    if (value & EResourceState::_Access_RTASBuildingBuffer) oss << sep << STRING_LITERAL(_Char, "RTASBuildingBuffer");
-    if (value & EResourceState::_VertexShader) oss << sep << STRING_LITERAL(_Char, "VertexShader");
-    if (value & EResourceState::_TessControlShader) oss << sep << STRING_LITERAL(_Char, "TessControlShader");
-    if (value & EResourceState::_TessEvaluationShader) oss << sep << STRING_LITERAL(_Char, "TessEvaluationShader");
-    if (value & EResourceState::_GeometryShader) oss << sep << STRING_LITERAL(_Char, "GeometryShader");
-    if (value & EResourceState::_FragmentShader) oss << sep << STRING_LITERAL(_Char, "FragmentShader");
-    if (value & EResourceState::_ComputeShader) oss << sep << STRING_LITERAL(_Char, "ComputeShader");
-    if (value & EResourceState::_MeshTaskShader) oss << sep << STRING_LITERAL(_Char, "MeshTaskShader");
-    if (value & EResourceState::_MeshShader) oss << sep << STRING_LITERAL(_Char, "MeshShader");
-    if (value & EResourceState::_RayTracingShader) oss << sep << STRING_LITERAL(_Char, "RayTracingShader");
-    if (value & EResourceState::_BufferDynamicOffset) oss << sep << STRING_LITERAL(_Char, "BufferDynamicOffset");
-    if (value & EResourceState::InvalidateBefore) oss << sep << STRING_LITERAL(_Char, "InvalidateBefore");
-    if (value & EResourceState::InvalidateAfter) oss << sep << STRING_LITERAL(_Char, "InvalidateAfter");
-    if (value & EResourceState::EarlyFragmentTests) oss << sep << STRING_LITERAL(_Char, "EarlyFragmentTests");
-    if (value & EResourceState::LateFragmentTests) oss << sep << STRING_LITERAL(_Char, "LateFragmentTests");
-    if (value & EResourceState::_Read) oss << sep << STRING_LITERAL(_Char, "Read");
-    if (value & EResourceState::_Write) oss << sep << STRING_LITERAL(_Char, "Write");
+    TEnumFlagsNone_ none{ oss };
+    UNUSED(none);
+
+    switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
+    case EResourceState::Unknown: oss << STRING_LITERAL(_Char, "Unknown"); break;
+    case EResourceState::ShaderRead: oss << STRING_LITERAL(_Char, "Storage-R"); break;
+    case EResourceState::ShaderWrite: oss << STRING_LITERAL(_Char, "Storage-W"); break;
+    case EResourceState::ShaderReadWrite: oss << STRING_LITERAL(_Char, "Storage-RW"); break;
+    case EResourceState::UniformRead: oss << STRING_LITERAL(_Char, "Uniform"); break;
+    case EResourceState::ShaderSample: oss << STRING_LITERAL(_Char, "ShaderSample"); break;
+    case EResourceState::InputAttachment: oss << STRING_LITERAL(_Char, "SubpassInput"); break;
+    case EResourceState::TransferSrc: oss << STRING_LITERAL(_Char, "Transfer-R"); break;
+    case EResourceState::TransferDst: oss << STRING_LITERAL(_Char, "Transfer-W"); break;
+    case EResourceState::ColorAttachmentRead: oss << STRING_LITERAL(_Char, "Color-R"); break;
+    case EResourceState::ColorAttachmentWrite: oss << STRING_LITERAL(_Char, "Color-W"); break;
+    case EResourceState::ColorAttachmentReadWrite: oss << STRING_LITERAL(_Char, "Color-RW"); break;
+    case EResourceState::DepthStencilAttachmentRead: oss << STRING_LITERAL(_Char, "DepthStencil-R"); break;
+    case EResourceState::DepthStencilAttachmentWrite: oss << STRING_LITERAL(_Char, "DepthStencil-W"); break;
+    case EResourceState::DepthStencilAttachmentReadWrite: oss << STRING_LITERAL(_Char, "DepthStencil-RW"); break;
+    case EResourceState::HostRead: oss << STRING_LITERAL(_Char, "Host-R"); break;
+    case EResourceState::HostWrite: oss << STRING_LITERAL(_Char, "Host-W"); break;
+    case EResourceState::HostReadWrite: oss << STRING_LITERAL(_Char, "Host-RW"); break;
+    case EResourceState::PresentImage: oss << STRING_LITERAL(_Char, "PresentImage"); break;
+    case EResourceState::IndirectBuffer: oss << STRING_LITERAL(_Char, "IndirectBuffer"); break;
+    case EResourceState::IndexBuffer: oss << STRING_LITERAL(_Char, "IndexBuffer"); break;
+    case EResourceState::VertexBuffer: oss << STRING_LITERAL(_Char, "VertexBuffer"); break;
+    case EResourceState::BuildRayTracingStructWrite: oss << STRING_LITERAL(_Char, "BuildRTAS-W"); break;
+    case EResourceState::BuildRayTracingStructReadWrite: oss << STRING_LITERAL(_Char, "BuildRTAS-RW"); break;
+    case EResourceState::RTASBuildingBufferRead: oss << STRING_LITERAL(_Char, "RTASBuild-Buffer-R"); break;
+    case EResourceState::RTASBuildingBufferReadWrite: oss << STRING_LITERAL(_Char, "RTASBuild-Buffer-RW"); break;
+    case EResourceState::ShadingRateImageRead: oss << STRING_LITERAL(_Char, "ShadingRate"); break;
+    default: AssertNotImplemented();
+    }
+
+    if (value & EResourceState::_VertexShader) oss << STRING_LITERAL(_Char, ", VS");
+    if (value & EResourceState::_TessControlShader) oss << STRING_LITERAL(_Char, ", TCS");
+    if (value & EResourceState::_TessEvaluationShader) oss << STRING_LITERAL(_Char, ", TES");
+    if (value & EResourceState::_GeometryShader) oss << STRING_LITERAL(_Char, ", GS");
+    if (value & EResourceState::_FragmentShader) oss << STRING_LITERAL(_Char, ", FS");
+    if (value & EResourceState::_ComputeShader) oss << STRING_LITERAL(_Char, ", CS");
+    if (value & EResourceState::_MeshTaskShader) oss << STRING_LITERAL(_Char, ", MTS");
+    if (value & EResourceState::_MeshShader) oss << STRING_LITERAL(_Char, ", MS");
+    if (value & EResourceState::_RayTracingShader) oss << STRING_LITERAL(_Char, ", RTS");
+    if (value & EResourceState::InvalidateBefore) oss << STRING_LITERAL(_Char, ", InvalidateBefore");
+    if (value & EResourceState::InvalidateAfter) oss << STRING_LITERAL(_Char, ", InvalidateAfter");
+    if (value & EResourceState::_BufferDynamicOffset) oss << STRING_LITERAL(_Char, ", Dynamic");
+
+    if (not (value & (EResourceState::EarlyFragmentTests | EResourceState::LateFragmentTests))) {
+        if (value & EResourceState::EarlyFragmentTests) oss << STRING_LITERAL(_Char, ", EarlyTests");
+        if (value & EResourceState::LateFragmentTests)	oss << STRING_LITERAL(_Char, ", LateTests");
+    }
+
     return oss;
 }
 //----------------------------------------------------------------------------
@@ -998,9 +1057,7 @@ PPE_RHI_ENUMTOSTRING_DEF(EShadingRatePalette);
 PPE_RHI_ENUMTOSTRING_DEF(EPixelFormat);
 PPE_RHI_ENUMTOSTRING_DEF(EColorSpace);
 PPE_RHI_ENUMTOSTRING_DEF(EFragmentOutput);
-#if USE_PPE_RHIDEBUG
 PPE_RHI_ENUMTOSTRING_DEF(EDebugFlags);
-#endif
 PPE_RHI_ENUMTOSTRING_DEF(EBlendFactor);
 PPE_RHI_ENUMTOSTRING_DEF(EBlendOp);
 PPE_RHI_ENUMTOSTRING_DEF(ELogicOp);

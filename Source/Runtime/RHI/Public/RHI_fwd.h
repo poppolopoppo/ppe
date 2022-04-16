@@ -79,9 +79,7 @@ enum class EPixelFormat : u32;
 enum class EColorSpace : u32;
 enum class EFragmentOutput : u32;
 enum class EResourceState : u32;
-#if USE_PPE_RHIDEBUG
 enum class EDebugFlags : u32;
-#endif
 //----------------------------------------------------------------------------
 enum class EBlendFactor : u32;
 enum class EBlendOp : u32;

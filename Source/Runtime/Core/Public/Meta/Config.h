@@ -29,7 +29,7 @@
 #endif
 
 //----------------------------------------------------------------------------
-// Global switch for using LOG() event it should be disabled
+// Global switch for using LOG() even if it should be disabled
 //----------------------------------------------------------------------------
 #ifndef USE_PPE_FORCE_LOGGING
 #   define USE_PPE_FORCE_LOGGING      0 //%_NOCOMMIT%
