@@ -103,7 +103,7 @@ static void SyntaxicHighlight_(const TBasicStringView<_Char>& str, FPlatformCons
 
         style = base;
     }
-    Assert_NoAssume(0 == s);
+
     if (s > 0) // still handling unbalanced parentheses, but the coloring will be wrong, obviously
         FPlatformConsole::Write(str.CutStartingAt(s), style);
     else if (o != str.size())
