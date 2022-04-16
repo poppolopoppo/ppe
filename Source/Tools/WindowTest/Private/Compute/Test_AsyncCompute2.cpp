@@ -7,16 +7,18 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 /*
-    Async compute with one render target and with synchronization
-    between frames to avoid race condition.
+    Async compute without synchronizations between frames,
+    used double buffering for render targets to avoid race condition.
 
-  .--------------------.--------------------.
-  |      frame 1       |      frame 2       |
-  |----------.---------|----------.---------|
-  | graphics |         | graphics |         |
-  |----------|---------|----------|---------|
-  |          | compute |          | compute |
-  '----------'---------'----------'---------'
+  .------------------------.
+  |      frame 1           |
+  |             .------------------------.
+  |             |        frame 2         |
+  |-------------|-------------.----------|
+  |  graphics1  |  graphics2  |          |
+  |-------------|-------------|----------|
+  |             | compute1 |  | compute2 |
+  '-------------'----------'--'----------'
 */
 bool Test_AsyncCompute2_(FWindowTestApp& app) {
     using namespace PPE::RHI;
@@ -85,13 +87,19 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
 
     const uint2 viewSize{ 800, 600 };
 
-    TScopedResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
+    const FImageDesc imageDesc = FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Storage | EImageUsage::TransferSrc)
-        .SetQueues(EQueueUsage::Graphics | EQueueUsage::AsyncCompute),
-        Default ARGS_IF_RHIDEBUG("RenderTarget")) };
-    LOG_CHECK(WindowTest, image.Valid());
+        .SetQueues(EQueueUsage::Graphics | EQueueUsage::AsyncCompute);
+
+    TScopedResource<FImageID> image1{ fg, fg.CreateImage(imageDesc,
+        Default ARGS_IF_RHIDEBUG("RenderTarget-1")) };
+    LOG_CHECK(WindowTest, image1.Valid());
+
+    TScopedResource<FImageID> image2{ fg, fg.CreateImage(imageDesc,
+        Default ARGS_IF_RHIDEBUG("RenderTarget-2")) };
+    LOG_CHECK(WindowTest, image1.Valid());
 
     TScopedResource<FGPipelineID> gppln{ fg, fg.CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute2_G")) };
     LOG_CHECK(WindowTest, gppln.Valid());
@@ -146,7 +154,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
         // graphics queue
         {
             FLogicalPassID renderPass = cmd1->CreateRenderPass(FRenderPassDesc{ viewSize }
-                .AddTarget(ERenderTargetID::Color0, image, FLinearColor::White(), EAttachmentStoreOp::Store)
+                .AddTarget(ERenderTargetID::Color0, image1, FLinearColor::White(), EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
             LOG_CHECK(WindowTest, !!renderPass);
 
@@ -162,7 +170,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
         }
         // compute queue
         {
-            resources->BindImage(FUniformID{ "un_Image" }, image);
+            resources->BindImage(FUniformID{ "un_Image" }, image1);
 
             PFrameTask tComp = cmd2->Task(FDispatchCompute{}
                 .SetPipeline(cppln)
@@ -170,7 +178,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
                 .Dispatch(viewSize));
 
             PFrameTask tRead = cmd2->Task(FReadImage{}
-                .SetImage(image, int2::Zero, viewSize)
+                .SetImage(image1, int2::Zero, viewSize)
                 .SetCallback(onLoaded)
                 .DependsOn(tComp));
             UNUSED(tRead);
@@ -197,7 +205,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
         // graphics queue
         {
             FLogicalPassID renderPass = cmd3->CreateRenderPass(FRenderPassDesc{ viewSize }
-                .AddTarget(ERenderTargetID::Color0, image, FLinearColor::White(), EAttachmentStoreOp::Store)
+                .AddTarget(ERenderTargetID::Color0, image2, FLinearColor::White(), EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
             LOG_CHECK(WindowTest, !!renderPass);
 
@@ -213,7 +221,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
         }
         // compute queue
         {
-            resources->BindImage(FUniformID{ "un_Image" }, image);
+            resources->BindImage(FUniformID{ "un_Image" }, image2);
 
             PFrameTask tComp = cmd4->Task(FDispatchCompute{}
                 .SetPipeline(cppln)
@@ -221,12 +229,64 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
                 .Dispatch(viewSize));
 
             PFrameTask tRead = cmd4->Task(FReadImage{}
-                .SetImage(image, int2::Zero, viewSize)
+                .SetImage(image2, int2::Zero, viewSize)
                 .SetCallback(onLoaded)
                 .DependsOn(tComp));
             UNUSED(tRead);
 
             LOG_CHECK(WindowTest, fg.Execute(cmd4));
+        }
+
+        LOG_CHECK(WindowTest, fg.Flush());
+    }
+
+    FCommandBufferBatch cmd5{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
+        .SetName("Graphics-3")
+        .SetDebugFlags(EDebugFlags::Default),
+        { cmd2 }) };
+    LOG_CHECK(WindowTest, !!cmd5);
+
+    FCommandBufferBatch cmd6{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
+        .SetName("Compute-3")
+        .SetDebugFlags(EDebugFlags::Default),
+        { cmd5 }) };
+    LOG_CHECK(WindowTest, !!cmd6);
+
+    // frame 3
+    {
+        // graphics queue
+        {
+            FLogicalPassID renderPass = cmd5->CreateRenderPass(FRenderPassDesc{ viewSize }
+                .AddTarget(ERenderTargetID::Color0, image1, FLinearColor::White(), EAttachmentStoreOp::Store)
+                .AddViewport(viewSize));
+            LOG_CHECK(WindowTest, !!renderPass);
+
+            cmd5->Task(renderPass, FDrawVertices{}
+                .Draw(3)
+                .SetPipeline(gppln)
+                .SetTopology(EPrimitiveTopology::TriangleList));
+
+            PFrameTask tDraw = cmd5->Task(FSubmitRenderPass{ renderPass });
+            UNUSED(tDraw);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd5));
+        }
+        // compute queue
+        {
+            resources->BindImage(FUniformID{ "un_Image" }, image1);
+
+            PFrameTask tComp = cmd6->Task(FDispatchCompute{}
+                .SetPipeline(cppln)
+                .AddResources(FDescriptorSetID{ "0" }, resources)
+                .Dispatch(viewSize));
+
+            PFrameTask tRead = cmd6->Task(FReadImage{}
+                .SetImage(image1, int2::Zero, viewSize)
+                .SetCallback(onLoaded)
+                .DependsOn(tComp));
+            UNUSED(tRead);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd6));
         }
 
         LOG_CHECK(WindowTest, fg.Flush());

@@ -85,14 +85,14 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
         };
 
         dataIsCorrect = true;
-        dataIsCorrect &= testPixel(0.00f, -0.49f, FLinearColor{ 1.0f, 0.0f, 0.0f, 1.0f });
-        dataIsCorrect &= testPixel(0.49f, 0.49f, FLinearColor{ 0.0f, 1.0f, 0.0f, 1.0f });
-        dataIsCorrect &= testPixel(-0.49f, 0.49f, FLinearColor{ 0.0f, 0.0f, 1.0f, 1.0f });
-        dataIsCorrect &= testPixel(0.00f, -0.51f, Zero);
-        dataIsCorrect &= testPixel(0.51f, 0.51f, Zero);
-        dataIsCorrect &= testPixel(-0.51f, 0.51f, Zero);
-        dataIsCorrect &= testPixel(0.00f, 0.51f, Zero);
-        dataIsCorrect &= testPixel(0.51f, -0.51f, Zero);
+        dataIsCorrect &= testPixel( 0.00f, -0.49f, FLinearColor{ 1.0f, 0.0f, 0.0f, 1.0f });
+        dataIsCorrect &= testPixel( 0.49f,  0.49f, FLinearColor{ 0.0f, 1.0f, 0.0f, 1.0f });
+        dataIsCorrect &= testPixel(-0.49f,  0.49f, FLinearColor{ 0.0f, 0.0f, 1.0f, 1.0f });
+        dataIsCorrect &= testPixel( 0.00f, -0.51f, Zero);
+        dataIsCorrect &= testPixel( 0.51f,  0.51f, Zero);
+        dataIsCorrect &= testPixel(-0.51f,  0.51f, Zero);
+        dataIsCorrect &= testPixel( 0.00f,  0.51f, Zero);
+        dataIsCorrect &= testPixel( 0.51f, -0.51f, Zero);
         dataIsCorrect &= testPixel(-0.51f, -0.51f, Zero);
     };
 
