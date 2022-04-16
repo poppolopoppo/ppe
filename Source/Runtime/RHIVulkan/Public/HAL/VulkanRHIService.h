@@ -21,8 +21,8 @@ public:
 
     NODISCARD bool Construct(
         const FStringView& applicationName,
-        const FRHISurfaceCreateInfo* pOptionalWindow = nullptr,
-        FStringView deviceName = Default);
+        const FRHIDeviceCreateInfo& deviceInfo,
+        const FRHISurfaceCreateInfo* pOptionalWindow = nullptr);
 
 public: // IRHIService
     virtual void TearDown() override;

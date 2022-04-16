@@ -73,14 +73,13 @@ bool FVulkanTargetRHI::SupportsFeature(ERHIFeature feature) const NOEXCEPT {
 bool FVulkanTargetRHI::CreateService(
     URHIService* pRHIService,
     const FModularDomain& domain,
-    const FRHISurfaceCreateInfo* pOptionalWindow,
-    ERHIFeature features,
-    FStringView deviceName ) const {
+    const FRHIDeviceCreateInfo& deviceInfo,
+    const FRHISurfaceCreateInfo* pOptionalWindow ) const {
     Assert(pRHIService);
 
     if (pRHIService
-            ->reset<FVulkanRHIService>(*this, features)
-            ->Construct(domain.Name(), pOptionalWindow, deviceName) )
+            ->reset<FVulkanRHIService>(*this, deviceInfo.Features)
+            ->Construct(domain.Name(), deviceInfo, pOptionalWindow) )
         return true;
 
     pRHIService->reset();

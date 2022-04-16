@@ -23,7 +23,7 @@ FVulkanFrameGraph::FVulkanFrameGraph(const FVulkanDeviceInfo& deviceInfo)
 :   _device(deviceInfo)
 ,   _state(EState::Initial)
 ,   _queueUsage(Default)
-,   _resourceManager(_device)
+,   _resourceManager(_device, deviceInfo.MaxStagingBufferMemory, deviceInfo.StagingBufferSize)
 #if USE_PPE_RHIDEBUG
 ,   _vkQueryPool(VK_NULL_HANDLE)
 #endif

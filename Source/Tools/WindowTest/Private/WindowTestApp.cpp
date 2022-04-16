@@ -136,6 +136,9 @@ FWindowTestApp::FWindowTestApp(const FModularDomain& domain)
 #if 0 //%_NOCOMMIT%
     FLogger::SetGlobalVerbosity(ELoggerVerbosity::None);
 #endif
+
+    FRHIModule& rhiModule = FRHIModule::Get(domain);
+    rhiModule.SetStagingBufferSize(2_MiB);
 }
 //----------------------------------------------------------------------------
 FWindowTestApp::~FWindowTestApp() = default;

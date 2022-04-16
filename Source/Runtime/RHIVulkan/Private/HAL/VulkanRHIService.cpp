@@ -67,7 +67,11 @@ FVulkanRHIService::~FVulkanRHIService() {
     Assert_NoAssume(VK_NULL_HANDLE  == _backBuffer);
 }
 //----------------------------------------------------------------------------
-bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHISurfaceCreateInfo* pOptionalWindow, FStringView deviceName) {
+bool FVulkanRHIService::Construct(
+    const FStringView& applicationName,
+    const FRHIDeviceCreateInfo& deviceInfo,
+    const FRHISurfaceCreateInfo* pOptionalWindow ) {
+    Assert_NoAssume(deviceInfo.Features == _features);
     Assert_NoAssume(not _instance.Valid());
     Assert_NoAssume(VK_NULL_HANDLE == _backBuffer);
 
@@ -89,10 +93,16 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
     VECTORINSITU(RHIInstance, FConstChar, 8) instanceLayers;
     Append(instanceLayers, FVulkanInstance::RecommendedInstanceLayers(version));
 
-    if (_features & ERHIFeature::Debugging)
+    if (_features & ERHIFeature::Debugging) {
         Append(instanceLayers, FVulkanInstance::DebuggingInstanceLayers(version));
-    if (_features & ERHIFeature::Profiling)
+        optionalInstanceExtensions |= FVulkanInstance::DebuggingInstanceExtensions(version);
+        optionalDeviceExtensions |= FVulkanInstance::DebuggingDeviceExtensions(version);
+    }
+    if (_features & ERHIFeature::Profiling) {
         Append(instanceLayers, FVulkanInstance::ProfilingInstanceLayers(version));
+        optionalInstanceExtensions |= FVulkanInstance::ProfilingInstanceExtensions(version);
+        optionalDeviceExtensions |= FVulkanInstance::ProfilingDeviceExtensions(version);
+    }
 
     if (not _instance.Construct(
         *FString(applicationName),
@@ -127,12 +137,16 @@ bool FVulkanRHIService::Construct(const FStringView& applicationName, const FRHI
     RHI_LOG(Verbose, L"creating vulkan device for service");
 
     const FVulkanInstance::FPhysicalDeviceInfo* const pPhysicalDevice =
-        (deviceName.empty()
+        (deviceInfo.DeviceName.empty()
             ? _instance.PickHighPerformanceDevice()
-            : _instance.PickPhysicalDeviceByName(deviceName) );
+            : _instance.PickPhysicalDeviceByName(deviceInfo.DeviceName) );
+    LOG_CHECK(RHI, !!pPhysicalDevice);
 
     const TMemoryView<const FVulkanInstance::FQueueCreateInfo> deviceQueues =
         _instance.RecommendedDeviceQueues(version);
+
+    _deviceInfo.MaxStagingBufferMemory = deviceInfo.MaxStagingBufferMemory;
+    _deviceInfo.StagingBufferSize = deviceInfo.StagingBufferSize;
 
     if (not _instance.CreateDevice(
         &_deviceInfo, _backBuffer,

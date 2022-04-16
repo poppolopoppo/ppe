@@ -47,6 +47,13 @@ ENUM_FLAGS(ERHIFeature);
 PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, ERHIFeature features);
 PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, ERHIFeature features);
 //----------------------------------------------------------------------------
+struct FRHIDeviceCreateInfo {
+    FStringView DeviceName;
+    size_t MaxStagingBufferMemory{ ~0_b };
+    size_t StagingBufferSize{ 0_b };
+    ERHIFeature Features{ ERHIFeature::Recommended };
+};
+//----------------------------------------------------------------------------
 struct FRHISurfaceCreateInfo {
     RHI::FWindowHandle Hwnd{ nullptr };
     uint2 Dimensions{ uint2::MaxValue };
@@ -72,9 +79,8 @@ public:
     NODISCARD virtual bool CreateService(
         URHIService* pRHIService,
         const FModularDomain& domain,
-        const FRHISurfaceCreateInfo* pOptionalWindow = nullptr,
-        ERHIFeature features = ERHIFeature::Recommended,
-        FStringView deviceName = Default ) const = 0;
+        const FRHIDeviceCreateInfo& deviceInfo,
+        const FRHISurfaceCreateInfo* pOptionalWindow = nullptr) const = 0;
 
 };
 //----------------------------------------------------------------------------

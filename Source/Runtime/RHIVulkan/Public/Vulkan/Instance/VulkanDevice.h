@@ -51,6 +51,8 @@ struct FVulkanDeviceInfo {
     VkPhysicalDevice vkPhysicalDevice{ VK_NULL_HANDLE };
     VkDevice vkDevice{ VK_NULL_HANDLE };
     const VkAllocationCallbacks* pAllocator{ nullptr };
+    size_t MaxStagingBufferMemory{ ~0_b };
+    size_t StagingBufferSize{ 0_b };
 };
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanDevice final : public FVulkanDeviceFunctions, Meta::FNonCopyable {

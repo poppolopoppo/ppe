@@ -38,6 +38,8 @@ FRHIModule& FRHIModule::Get(const FModularDomain& domain) {
 //----------------------------------------------------------------------------
 FRHIModule::FRHIModule() NOEXCEPT
 :   IModuleInterface(StaticInfo)
+,   _maxStagingBufferMemory(~0_b)
+,   _stagingBufferSize(8_MiB) // #TODO: config layer?
 {}
 //----------------------------------------------------------------------------
 FRHIModule::~FRHIModule() NOEXCEPT {

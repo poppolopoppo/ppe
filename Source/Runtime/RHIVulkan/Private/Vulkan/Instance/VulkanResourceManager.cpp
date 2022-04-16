@@ -52,12 +52,19 @@ static TFixedSizeStack<EShaderLangFormat, 16> BuiltinFormats_(const FVulkanDevic
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVulkanResourceManager::FVulkanResourceManager(const FVulkanDevice& device)
+FVulkanResourceManager::FVulkanResourceManager(
+    const FVulkanDevice& device,
+    size_t maxStagingBufferMemory,
+    size_t stagingBufferSize )
 :   _device(device)
 ,   _memoryManager(device)
 ,   _descriptorManager(device)
-,   _submissionCounter(0)
-{}
+,   _submissionCounter(0) {
+
+    _staging.MaxStagingBufferMemory = maxStagingBufferMemory < 1_MiB ? UMax : maxStagingBufferMemory;
+    _staging.WritePageSize = stagingBufferSize < 1_KiB ? 0 : stagingBufferSize;
+    _staging.ReadPageSize = _staging.WritePageSize;
+}
 //----------------------------------------------------------------------------
 FVulkanResourceManager::~FVulkanResourceManager()
 {}
@@ -1225,13 +1232,15 @@ bool FVulkanResourceManager::CheckHostVisibleMemory_() {
     if (uniformSize >  64_MiB)  uniformSize = 16_MiB; else
                                 uniformSize =  8_MiB;
 
-    if (transferSize > 512_MiB) transferSize = 256_MiB; else
-    if (transferSize > 128_MiB) transferSize = 128_MiB; else
-                                transferSize =  64_MiB;
+    if (transferSize > 256_MiB) transferSize = 128_MiB; else
+    if (transferSize > 128_MiB) transferSize = 64_MiB; else
+                                transferSize = 32_MiB;
 #endif
 
     _staging.UniformPageSize = uniformSize;
-    _staging.WritePageSize = _staging.ReadPageSize = transferSize;
+
+    if (_staging.WritePageSize == 0)
+        _staging.WritePageSize = _staging.ReadPageSize = transferSize;
 
     LOG(RHI, Info, L"uniform buffer size: {0}", Fmt::SizeInBytes(_staging.UniformPageSize));
     LOG(RHI, Info, L"write page size: {0}", Fmt::SizeInBytes(_staging.WritePageSize));

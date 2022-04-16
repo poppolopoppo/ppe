@@ -72,25 +72,9 @@ private:
         FShaderBinaryMemoizedData,
         PVulkanDebuggableShaderModule);
 
-    //struct FShaderSourceTraits {
-    //    // EqualTo:
-    //    bool operator ()(const PShaderSource& lhs, const PShaderSource& rhs) const NOEXCEPT;
-    //    // Hash:
-    //    hash_t operator ()(const PShaderSource& shaderData) const NOEXCEPT;
-    //};
-    //using FShaderSourceMemoizedData = THashMemoizer<
-    //    PShaderSource,
-    //    FShaderBinaryDataTraits,
-    //    FShaderBinaryDataTraits >;
-    //using FShaderCompiledSourceCache = HASHMAP(
-    //    PipelineCompiler,
-    //    FShaderSourceMemoizedData,
-    //    PShaderBinaryData );
-
     struct FInternalData {
         VECTORINSITU(PipelineCompiler, FDirpath, 3) Directories;
         FShaderCompiledModuleCache ShaderCache;
-        //FShaderCompiledSourceCache SourceCache;
         TUniquePtr<FVulkanSpirvCompiler> SpirvCompiler;
         EVulkanShaderCompilationFlags CompilationFlags{ Default };
     };

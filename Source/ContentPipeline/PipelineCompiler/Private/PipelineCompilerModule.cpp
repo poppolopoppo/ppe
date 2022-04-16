@@ -22,11 +22,10 @@ namespace RHI {
 LOG_CATEGORY(PPE_PIPELINECOMPILER_API, PipelineCompiler)
 //----------------------------------------------------------------------------
 CONSTEXPR const EShaderLangFormat GVulkanPipelineFormat_ =
-    EShaderLangFormat::SPIRV | EShaderLangFormat::ShaderModule;
+    EShaderLangFormat::SPIRV |
+    EShaderLangFormat::ShaderModule;
 //----------------------------------------------------------------------------
 static void CreateVulkanDeviceCompiler_(const FVulkanDeviceInfo& deviceInfo) {
-    auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
-
     TRefPtr<FVulkanPipelineCompiler> compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, deviceInfo) };
 
     compiler->SetCompilationFlags(
@@ -36,12 +35,13 @@ static void CreateVulkanDeviceCompiler_(const FVulkanDeviceInfo& deviceInfo) {
         EVulkanShaderCompilationFlags::ParseAnnotations |
         EVulkanShaderCompilationFlags::UseCurrentDeviceLimits );
 
+    auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
     rhiModule.RegisterCompiler(GVulkanPipelineFormat_, PPipelineCompiler{ std::move(compiler) });
 }
 //----------------------------------------------------------------------------
 static void TearDownVulkanDeviceCompiler_(const FVulkanDeviceInfo& ) {
-    auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
 
+    auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
     rhiModule.UnregisterCompiler(GVulkanPipelineFormat_);
 }
 //----------------------------------------------------------------------------

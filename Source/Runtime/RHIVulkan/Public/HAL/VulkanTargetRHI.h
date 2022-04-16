@@ -27,9 +27,8 @@ public:
     virtual bool CreateService(
         URHIService* pRHIService,
         const FModularDomain& domain,
-        const FRHISurfaceCreateInfo* pOptionalWindow,
-        ERHIFeature features,
-        FStringView deviceName ) const override;
+        const FRHIDeviceCreateInfo& deviceInfo,
+        const FRHISurfaceCreateInfo* pOptionalWindow ) const override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

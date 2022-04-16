@@ -3,6 +3,7 @@
 #include "Vulkan/VulkanCommon.h"
 
 #include "Container/Vector.h"
+#include "Diagnostic/Logger_fwd.h"
 #include "IO/ConstChar.h"
 #include "Misc/DynamicLibrary.h"
 
@@ -100,10 +101,14 @@ public:
     static TMemoryView<const FConstChar> RecommendedInstanceLayers(EVulkanVersion version);
     static TMemoryView<const FQueueCreateInfo> RecommendedDeviceQueues(EVulkanVersion version);
 
+    static FVulkanInstanceExtensionSet DebuggingInstanceExtensions(EVulkanVersion version);
+    static FVulkanInstanceExtensionSet ProfilingInstanceExtensions(EVulkanVersion version);
     static FVulkanInstanceExtensionSet RecommendedInstanceExtensions(EVulkanVersion version);
     static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version);
     static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version, FWindowHandle window);
 
+    static FVulkanDeviceExtensionSet DebuggingDeviceExtensions(EVulkanVersion version);
+    static FVulkanDeviceExtensionSet ProfilingDeviceExtensions(EVulkanVersion version);
     static FVulkanDeviceExtensionSet RecommendedDeviceExtensions(EVulkanVersion version);
     static FVulkanDeviceExtensionSet RequiredDeviceExtensions(EVulkanVersion version);
 
@@ -119,7 +124,7 @@ private:
 
     FDynamicLibrary _vulkanLib;
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_LOGGER
     VkDebugUtilsMessengerEXT _vkDebugUtilsMessenger{ VK_NULL_HANDLE };
 #endif
 };

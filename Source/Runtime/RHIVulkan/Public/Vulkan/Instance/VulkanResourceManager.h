@@ -90,7 +90,10 @@ public:
     using FDebugLayoutCache = HASHMAP(RHIResource, u32, FRawDescriptorSetLayoutID);
 #endif
 
-    explicit FVulkanResourceManager(const FVulkanDevice& device);
+    FVulkanResourceManager(
+        const FVulkanDevice& device,
+        size_t maxStagingBufferMemory,
+        size_t stagingBufferSize );
     ~FVulkanResourceManager();
 
     const FVulkanDevice& Device() const { return _device; }

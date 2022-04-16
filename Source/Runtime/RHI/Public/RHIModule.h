@@ -38,6 +38,15 @@ public:
 
     ERHIFeature RecommendedFeatures(ERHIFeature) const NOEXCEPT;
 
+    size_t MaxStagingBufferMemory() const { return _maxStagingBufferMemory; }
+    size_t StagingBufferSize() const { return _stagingBufferSize; }
+
+    // you can limit max size of host visible memory that may be used by FrameGraph, by default used max available size.
+    void SetMaxStagingBufferMemory(size_t value) { _maxStagingBufferMemory = value; }
+
+    // max size of single staging buffer (needed for tests), 0 - auto
+    void SetStagingBufferSize(size_t value) { _stagingBufferSize = value; }
+
     // --- TargetRHI ---
 
     using FTargetEvent = TFunction<void(ETargetRHI rhi, TPtrRef<const ITargetRHI>)>;
@@ -66,8 +75,12 @@ public:
 
 private:
     FReadWriteLock _barrierRW;
+
     ASSOCIATIVE_VECTORINSITU(RHIMisc, ETargetRHI, TPtrRef<const ITargetRHI>, static_cast<u32>(ETargetRHI::_Count)) _targets;
     ASSOCIATIVE_VECTORINSITU(RHIMisc, RHI::EShaderLangFormat, RHI::PPipelineCompiler, static_cast<u32>(ETargetRHI::_Count)) _compilers;
+
+    size_t _maxStagingBufferMemory;
+    size_t _stagingBufferSize;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
