@@ -201,7 +201,7 @@ func (env *CommandEnvT) Init(args []string) {
 		cmd := factory()
 		cmd.Init(env)
 
-		LogClaim("running command <%v>", cmd.Info().Name)
+		LogVerbose("running command <%v>", cmd.Info().Name)
 
 		freeArgs := &commandArgs{
 			Unparsed: env.persistent.Parse(args[1:], env.Flags.Values()...),

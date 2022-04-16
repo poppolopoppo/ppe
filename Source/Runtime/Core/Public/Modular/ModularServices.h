@@ -72,7 +72,7 @@ private:
     using FReleaseMemoryFunc_ = void (*)(void*) NOEXCEPT;
 
     template <typename T>
-    static FReleaseMemoryFunc_ MakeReleaseFunc_(T*) NOEXCEPT {
+    static CONSTEXPR FReleaseMemoryFunc_ MakeReleaseFunc_(T*) NOEXCEPT {
         IF_CONSTEXPR(Meta::has_defined_v<THasReleaseMemoryFunc_, T>) {
             return [](void* p) NOEXCEPT {
                 static_cast<T*>(p)->ReleaseMemory();
@@ -84,7 +84,7 @@ private:
     struct FPolymorphicServiceTraits_ {
         using type = TTuple<FReleaseMemoryFunc_>;
         template <typename T>
-        static type BindCallbacks(T* p) NOEXCEPT {
+        static CONSTEXPR type BindCallbacks(T* p) NOEXCEPT {
             return std::make_tuple(MakeReleaseFunc_(p));
         }
     };

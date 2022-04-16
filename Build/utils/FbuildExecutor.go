@@ -189,7 +189,7 @@ func (x *FBuildExecutor) Run() (err error) {
 		"FASTBUILD_TEMP_PATH="+UFS.Transient.String())
 
 	if x.Capture {
-		pbar := LogSpinner("FBuild")
+		pbar := LogSpinner(strings.Join(x.Args.Slice(), " "))
 		defer pbar.Close()
 
 		cmd.Stderr = cmd.Stdout

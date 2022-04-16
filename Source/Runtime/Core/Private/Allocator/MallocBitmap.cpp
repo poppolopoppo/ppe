@@ -87,7 +87,7 @@ static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBi
         << L" (" << Fmt::CountOfElements(info.Pages.size()) << L" pages)"
         << Eol;
 
-    CONSTEXPR const FWStringView AllocationTags = L"▒▓";
+    CONSTEXPR const FWStringView AllocationTags = L"█▓"; // L"░▒▓█"
         // L"❶❷❸❹❺❻❼❽❾";
         // L"▬";// L"●◉"; // L"◇◈";// L"►◄"; // L"▪▫";// L"▮▯"; // L"▼▲";// L"◉○";
 

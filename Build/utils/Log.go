@@ -573,7 +573,7 @@ func (pg *pinnedLogProgress) String() (result string) {
 		result += ANSI_RESET.String()
 
 		result += lerp_ansi_fg_truecolor(cola1, colb0, f)
-		result += fmt.Sprintf(" %6.2f  ", f*100)
+		result += fmt.Sprintf(" %6.2f", f*100) + "%%%%  " // Sprintf() escaping hell
 
 		eltPerSec := float32(totalSecs.Seconds()) / float32(pg.progress-pg.first)
 		result += ANSI_FG1_YELLOW.String()
