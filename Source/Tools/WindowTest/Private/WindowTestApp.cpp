@@ -39,7 +39,9 @@ struct FUnitTestFunc_ {
     _Macro(Test_Draw4_) \
     _Macro(Test_Draw5_) \
     _Macro(Test_Draw6_) \
-    _Macro(Test_Draw7_)
+    _Macro(Test_Draw7_) \
+    _Macro(Test_DrawMeshes1_) \
+
 //----------------------------------------------------------------------------
 #define WINDOWTEST_EXTERN_DECL(_Func) extern bool _Func(FWindowTestApp&);
 EACH_WINDOWTEST(WINDOWTEST_EXTERN_DECL)
