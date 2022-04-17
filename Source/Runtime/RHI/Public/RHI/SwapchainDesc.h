@@ -45,6 +45,13 @@ enum class ESurfaceTransform : u32 {
 struct FSurfaceFormat {
     EPixelFormat Format{ Default };
     EColorSpace ColorSpace{ Default };
+
+    friend bool operator ==(const FSurfaceFormat& lhs, const FSurfaceFormat& rhs) NOEXCEPT {
+        return (lhs.Format == rhs.Format && lhs.ColorSpace == rhs.ColorSpace);
+    }
+    friend bool operator !=(const FSurfaceFormat& lhs, const FSurfaceFormat& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
 };
 //----------------------------------------------------------------------------
 struct FSwapchainDesc {

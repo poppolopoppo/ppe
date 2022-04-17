@@ -19,6 +19,7 @@ public:
     ~FVulkanSwapchain();
 #endif
 
+
     NODISCARD bool Construct(FVulkanFrameGraph& fg, const FSwapchainDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
@@ -26,6 +27,14 @@ public:
     NODISCARD bool Present(const FVulkanDevice& device) const;
 
     const PVulkanDeviceQueue& PresentQueue() const { return _data.LockShared()->PresentQueue; }
+
+    VkFormat ColorFormat() const { return _data.LockShared()->ColorFormat; }
+    VkColorSpaceKHR ColorSpace() const { return _data.LockShared()->ColorSpace; }
+    u32 MinImageCount() const { return _data.LockShared()->MinImageCount; }
+    VkSurfaceTransformFlagBitsKHR PreTransform() const { return _data.LockShared()->PreTransform; }
+    VkPresentModeKHR PresentMode() const { return _data.LockShared()->PresentMode; }
+    VkCompositeAlphaFlagBitsKHR CompositeAlpha() const { return _data.LockShared()->CompositeAlpha; }
+    VkImageUsageFlagBits ColorImageUsage() const { return _data.LockShared()->ColorImageUsage; }
 
 private:
     struct FInternalData_ {

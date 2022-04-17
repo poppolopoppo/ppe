@@ -78,7 +78,7 @@ bool FVulkanTargetRHI::CreateService(
     Assert(pRHIService);
 
     if (pRHIService
-            ->reset<FVulkanRHIService>(*this, deviceInfo.Features)
+            ->reset<FVulkanRHIService>(*this)
             ->Construct(domain.Name(), deviceInfo, pOptionalWindow) )
         return true;
 

@@ -207,6 +207,9 @@ public:
     bool HasExtension(EVulkanInstanceExtension ext) const NOEXCEPT { return (_instanceExtensions & ext); }
     bool HasExtension(EVulkanDeviceExtension ext) const NOEXCEPT { return (_deviceExtensions & ext); }
 
+    bool AnyExtension(const FVulkanInstanceExtensionSet& exts) const NOEXCEPT { return exts.Contains(_instanceExtensions & exts); }
+    bool AnyExtension(const FVulkanDeviceExtensionSet& exts) const NOEXCEPT { return exts.Contains(_deviceExtensions & exts); }
+
     const FDeviceCaps& Capabilities() const { return _caps; }
     const VkPhysicalDeviceFeatures& Features() const { return _caps.Features; }
     const VkPhysicalDeviceLimits& Limits() const { return _caps.Properties.limits; }

@@ -41,6 +41,9 @@ public:
         VkPhysicalDeviceFeatures Features{};
         VkPhysicalDeviceMemoryProperties Memory{};
 
+        bool IsDiscreteGPU() const NOEXCEPT;
+        bool IsIntegratedGPU() const NOEXCEPT;
+
         float PerfRating() const NOEXCEPT;
     };
     using FPhysicalDeviceInfoRef = TPtrRef<const FPhysicalDeviceInfo>;
@@ -60,6 +63,9 @@ public:
 
     bool HasExtension(EVulkanInstanceExtension ext) const {
         return (_instanceAPI.instance_extensions_ & ext);
+    }
+    bool AnyExtension(const FVulkanInstanceExtensionSet& exts) const {
+        return exts.Contains(_instanceAPI.instance_extensions_ & exts);
     }
 
     NODISCARD bool Construct(
@@ -96,21 +102,21 @@ public:
         const TMemoryView<const FQueueCreateInfo>& queues = Default ) const;
     void DestroyDevice(FVulkanDeviceInfo* pDevice) const;
 
-    static TMemoryView<const FConstChar> DebuggingInstanceLayers(EVulkanVersion version);
-    static TMemoryView<const FConstChar> ProfilingInstanceLayers(EVulkanVersion version);
-    static TMemoryView<const FConstChar> RecommendedInstanceLayers(EVulkanVersion version);
-    static TMemoryView<const FQueueCreateInfo> RecommendedDeviceQueues(EVulkanVersion version);
+    static TMemoryView<const FConstChar> DebuggingInstanceLayers(EVulkanVersion version) NOEXCEPT;
+    static TMemoryView<const FConstChar> ProfilingInstanceLayers(EVulkanVersion version) NOEXCEPT;
+    static TMemoryView<const FConstChar> RecommendedInstanceLayers(EVulkanVersion version) NOEXCEPT;
+    static TMemoryView<const FQueueCreateInfo> RecommendedDeviceQueues(EVulkanVersion version) NOEXCEPT;
 
-    static FVulkanInstanceExtensionSet DebuggingInstanceExtensions(EVulkanVersion version);
-    static FVulkanInstanceExtensionSet ProfilingInstanceExtensions(EVulkanVersion version);
-    static FVulkanInstanceExtensionSet RecommendedInstanceExtensions(EVulkanVersion version);
-    static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version);
-    static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version, FWindowHandle window);
+    static FVulkanInstanceExtensionSet DebuggingInstanceExtensions(EVulkanVersion version) NOEXCEPT;
+    static FVulkanInstanceExtensionSet ProfilingInstanceExtensions(EVulkanVersion version) NOEXCEPT;
+    static FVulkanInstanceExtensionSet RecommendedInstanceExtensions(EVulkanVersion version) NOEXCEPT;
+    static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version) NOEXCEPT;
+    static FVulkanInstanceExtensionSet RequiredInstanceExtensions(EVulkanVersion version, FWindowHandle window) NOEXCEPT;
 
-    static FVulkanDeviceExtensionSet DebuggingDeviceExtensions(EVulkanVersion version);
-    static FVulkanDeviceExtensionSet ProfilingDeviceExtensions(EVulkanVersion version);
-    static FVulkanDeviceExtensionSet RecommendedDeviceExtensions(EVulkanVersion version);
-    static FVulkanDeviceExtensionSet RequiredDeviceExtensions(EVulkanVersion version);
+    static FVulkanDeviceExtensionSet DebuggingDeviceExtensions(EVulkanVersion version) NOEXCEPT;
+    static FVulkanDeviceExtensionSet ProfilingDeviceExtensions(EVulkanVersion version) NOEXCEPT;
+    static FVulkanDeviceExtensionSet RecommendedDeviceExtensions(EVulkanVersion version) NOEXCEPT;
+    static FVulkanDeviceExtensionSet RequiredDeviceExtensions(EVulkanVersion version) NOEXCEPT;
 
 private:
     VkInstance _vkInstance{ VK_NULL_HANDLE };

@@ -24,40 +24,19 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void MakeSwapchainDesc_(
-    RHI::FSwapchainDesc* pSwapchainDesc,
-    VkSurfaceKHR backBuffer,
-    const ERHIFeature features,
-    const FRHISurfaceCreateInfo& surfaceInfo ) NOEXCEPT {
-    Assert(pSwapchainDesc);
-    Assert(VK_NULL_HANDLE != backBuffer);
-
-    using namespace RHI;
-
-    pSwapchainDesc->Surface = FVulkanExternalObject(backBuffer).WindowSurface();
-    pSwapchainDesc->Dimensions = surfaceInfo.Dimensions;
-
-    if (surfaceInfo.EnableVSync) {
-        pSwapchainDesc->PresentModes.Push(EPresentMode::RelaxedFifo);
-    }
-
-    if (features & ERHIFeature::HighDynamicRange) {
-        pSwapchainDesc->SurfaceFormats.Push(
-            EPixelFormat::RGB10_A2_UNorm,
-            EColorSpace::HDR10_ST2084 );
-        pSwapchainDesc->SurfaceFormats.Push(
-            EPixelFormat::RGB10_A2_UNorm,
-            EColorSpace::HDR10_HLG );
-    }
-}
+CONSTEXPR const RHI::EPresentMode GVsyncPresentMode_{ RHI::EPresentMode::RelaxedFifo };
+//----------------------------------------------------------------------------
+CONSTEXPR const RHI::FSurfaceFormat GHDRSurfaceFormats_[] = {
+    { RHI::EPixelFormat::RGB10_A2_UNorm, RHI::EColorSpace::HDR10_ST2084 },
+    { RHI::EPixelFormat::RGB10_A2_UNorm, RHI::EColorSpace::HDR10_HLG },
+};
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVulkanRHIService::FVulkanRHIService(const FVulkanTargetRHI& vulkanRHI, ERHIFeature features)
+FVulkanRHIService::FVulkanRHIService(const FVulkanTargetRHI& vulkanRHI) NOEXCEPT
 :   _vulkanRHI(vulkanRHI)
-,   _features(features)
 {
 
 }
@@ -71,7 +50,7 @@ bool FVulkanRHIService::Construct(
     const FStringView& applicationName,
     const FRHIDeviceCreateInfo& deviceInfo,
     const FRHISurfaceCreateInfo* pOptionalWindow ) {
-    Assert_NoAssume(deviceInfo.Features == _features);
+    Assert_NoAssume(Zero == _features);
     Assert_NoAssume(not _instance.Valid());
     Assert_NoAssume(VK_NULL_HANDLE == _backBuffer);
 
@@ -93,13 +72,15 @@ bool FVulkanRHIService::Construct(
     VECTORINSITU(RHIInstance, FConstChar, 8) instanceLayers;
     Append(instanceLayers, FVulkanInstance::RecommendedInstanceLayers(version));
 
-    if (_features & ERHIFeature::Debugging) {
+    if (deviceInfo.Features & ERHIFeature::Debugging) {
         Append(instanceLayers, FVulkanInstance::DebuggingInstanceLayers(version));
+
         optionalInstanceExtensions |= FVulkanInstance::DebuggingInstanceExtensions(version);
         optionalDeviceExtensions |= FVulkanInstance::DebuggingDeviceExtensions(version);
     }
-    if (_features & ERHIFeature::Profiling) {
+    if (deviceInfo.Features & ERHIFeature::Profiling) {
         Append(instanceLayers, FVulkanInstance::ProfilingInstanceLayers(version));
+
         optionalInstanceExtensions |= FVulkanInstance::ProfilingInstanceExtensions(version);
         optionalDeviceExtensions |= FVulkanInstance::ProfilingDeviceExtensions(version);
     }
@@ -170,16 +151,45 @@ bool FVulkanRHIService::Construct(
         Assert(pOptionalWindow);
         RHI_LOG(Verbose, L"creating vulkan swapchain for service");
 
-        FSwapchainDesc swapchainDesc{};
-        MakeSwapchainDesc_(&swapchainDesc, _backBuffer, _features, *pOptionalWindow);
-
-        _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, Default ARGS_IF_RHIDEBUG("BackBuffer"));
-
-        if (not _swapchain) {
+        if (not CreateBackBufferSwapchain_(deviceInfo.Features, Default, *pOptionalWindow)) {
             RHI_LOG(Error, L"failed to create vulkan swapchain, abort!");
             return false;
         }
     }
+    else {
+        _features |= ERHIFeature::Headless;
+    }
+
+    if (pPhysicalDevice and pPhysicalDevice->IsDiscreteGPU())
+        _features |= ERHIFeature::Discrete;
+
+    if (!!_frameGraph->FindQueue(EQueueType::Graphics))
+        _features |= ERHIFeature::Graphics + ERHIFeature::Compute;
+    if (!!_frameGraph->FindQueue(EQueueType::AsyncCompute))
+        _features |= ERHIFeature::AsyncCompute + ERHIFeature::Compute;
+
+    const FVulkanDevice& device = _frameGraph->Device();
+
+    if (device.Enabled().RayTracingNV)
+        _features |= ERHIFeature::Raytracing;
+    if (device.Enabled().MeshShaderNV)
+        _features |= ERHIFeature::MeshDraw;
+    if (device.Enabled().ImageFootprintNV)
+        _features |= ERHIFeature::SamplerFeedback;
+    if (device.Enabled().ShadingRateImageNV)
+        _features |= ERHIFeature::VariableShadingRate;
+    if (device.HasExtension(EVulkanDeviceExtension::EXT_conservative_rasterization))
+        _features |= ERHIFeature::VariableShadingRate;
+
+    if ((deviceInfo.Features & ERHIFeature::Debugging) &&
+        device.AnyExtension(FVulkanInstance::DebuggingInstanceExtensions(version)) &&
+        device.AnyExtension(FVulkanInstance::DebuggingDeviceExtensions(version)) )
+        _features |= ERHIFeature::Debugging;
+
+    if ((deviceInfo.Features & ERHIFeature::Profiling) &&
+        device.AnyExtension(FVulkanInstance::ProfilingInstanceExtensions(version)) &&
+        device.AnyExtension(FVulkanInstance::ProfilingDeviceExtensions(version)) )
+        _features |= ERHIFeature::Profiling;
 
     Assert_NoAssume(_instance.Valid());
     success = true; // assign true to success to avoid TearDown()
@@ -224,6 +234,7 @@ void FVulkanRHIService::TearDown() {
     RHI_LOG(Verbose, L"destroying vulkan instance for rhi service");
 
     _instance.TearDown();
+    _features = Zero;
 
     Assert_NoAssume(not _instance.Valid());
 }
@@ -248,12 +259,8 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
 
     _frameGraph->WaitIdle();
 
-    FSwapchainDesc swapchainDesc;
-    MakeSwapchainDesc_(&swapchainDesc, _backBuffer, _features, surfaceInfo);
-
-    _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, _swapchain.Release() ARGS_IF_RHIDEBUG("BackBuffer"));
-
-    AssertReleaseMessage(L"failed to resize swapchain", !!_swapchain);
+    if (not CreateBackBufferSwapchain_(_features, _swapchain.Release(), surfaceInfo))
+        AssertReleaseMessage(L"failed to resize swapchain", !!_swapchain);
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::ReleaseMemory() NOEXCEPT {
@@ -264,6 +271,48 @@ void FVulkanRHIService::ReleaseMemory() NOEXCEPT {
 
     if (_frameGraph)
         _frameGraph->ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+bool FVulkanRHIService::CreateBackBufferSwapchain_(
+    ERHIFeature features,
+    RHI::FRawSwapchainID oldSwapchain,
+    const FRHISurfaceCreateInfo& surfaceInfo ) {
+    using namespace RHI;
+
+    FSwapchainDesc swapchainDesc{};
+    swapchainDesc.Surface = FVulkanExternalObject(_backBuffer).WindowSurface();
+    swapchainDesc.Dimensions = surfaceInfo.Dimensions;
+
+    if (surfaceInfo.EnableVSync)
+        swapchainDesc.PresentModes.Push(GVsyncPresentMode_);
+
+    if (features & ERHIFeature::HighDynamicRange)
+        swapchainDesc.SurfaceFormats.Append(GHDRSurfaceFormats_);
+
+    _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, oldSwapchain ARGS_IF_RHIDEBUG("BackBuffer"));
+    if (Unlikely(not _swapchain)) {
+        RHI_LOG(Error, L"failed to create vulkan swapchain, abort!");
+        return false;
+    }
+
+    // check actual surface format after construction:
+    const auto& swapchainResource = _frameGraph->ResourceManager().ResourceData(_swapchain);
+
+    if (swapchainResource.PresentMode() == VkCast(GVsyncPresentMode_))
+        _features += ERHIFeature::VSync;
+    else
+        _features -= ERHIFeature::VSync;
+
+    const FSurfaceFormat swapchainFormat{
+        RHICast(swapchainResource.ColorFormat()),
+        RHICast(swapchainResource.ColorSpace()),
+    };
+    if (MakeView(GHDRSurfaceFormats_).Contains(swapchainFormat))
+        _features += ERHIFeature::HighDynamicRange;
+    else
+        _features -= ERHIFeature::HighDynamicRange;
+
+    return true;
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG

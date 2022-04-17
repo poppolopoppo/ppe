@@ -146,6 +146,7 @@ PPE_RHIVULKAN_API EImageFlags RHICast(VkImageCreateFlagBits value);
 PPE_RHIVULKAN_API EImageUsage RHICast(VkImageUsageFlagBits flags);
 PPE_RHIVULKAN_API FMultiSamples RHICast(VkSampleCountFlagBits flags);
 PPE_RHIVULKAN_API EImageAspect RHICast(VkImageAspectFlagBits flags);
+PPE_RHIVULKAN_API EColorSpace RHICast(VkColorSpaceKHR value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

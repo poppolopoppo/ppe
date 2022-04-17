@@ -1194,16 +1194,17 @@ void FVulkanInstance::DestroyDevice(FVulkanDeviceInfo* pDevice) const {
     *pDevice = FVulkanDeviceInfo{}; // reset structure before yielding
 }
 //----------------------------------------------------------------------------
+bool FVulkanInstance::FPhysicalDeviceInfo::IsDiscreteGPU() const NOEXCEPT {
+    return (Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
+}
+//----------------------------------------------------------------------------
+bool FVulkanInstance::FPhysicalDeviceInfo::IsIntegratedGPU() const NOEXCEPT {
+    return (Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU);
+}
+//----------------------------------------------------------------------------
 float FVulkanInstance::FPhysicalDeviceInfo::PerfRating() const noexcept {
-    const bool isGPU = (
-        Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU or
-        Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU );
-
-    const bool isIntegrated = (
-        Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU);
-
     return (
-        static_cast<float>(isGPU and not isIntegrated ? 4 : 1) +
+        static_cast<float>(IsDiscreteGPU() and not IsIntegratedGPU() ? 4 : 1) +
         static_cast<float>(Properties.limits.maxComputeSharedMemorySize >> 10) / 64.0f + // big local cache is good
         static_cast<float>(Properties.limits.maxComputeWorkGroupInvocations) / 1024.0f +
         static_cast<float>(Features.tessellationShader) +
@@ -1238,7 +1239,7 @@ auto FVulkanInstance::PickPhysicalDeviceByName(FStringView deviceName) const NOE
     });
 }
 //----------------------------------------------------------------------------
-TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVersion) {
+TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVersion) NOEXCEPT {
     static const FConstChar GLayerNames[] = {
         "VK_LAYER_KHRONOS_validation",
 
@@ -1254,7 +1255,7 @@ TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVe
     return MakeView(GLayerNames);
 }
 //----------------------------------------------------------------------------
-TMemoryView<const FConstChar> FVulkanInstance::ProfilingInstanceLayers(EVulkanVersion) {
+TMemoryView<const FConstChar> FVulkanInstance::ProfilingInstanceLayers(EVulkanVersion) NOEXCEPT {
 #if defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
     static const FConstChar GLayerNames[] = {
         "VK_LAYER_ARM_mali_perf_doc"
@@ -1265,11 +1266,11 @@ TMemoryView<const FConstChar> FVulkanInstance::ProfilingInstanceLayers(EVulkanVe
 #endif
 }
 //----------------------------------------------------------------------------
-TMemoryView<const FConstChar> FVulkanInstance::RecommendedInstanceLayers(EVulkanVersion ) {
+TMemoryView<const FConstChar> FVulkanInstance::RecommendedInstanceLayers(EVulkanVersion ) NOEXCEPT {
     return {}; // no recommended instance layers for now
 }
 //----------------------------------------------------------------------------
-TMemoryView<const FVulkanInstance::FQueueCreateInfo> FVulkanInstance::RecommendedDeviceQueues(EVulkanVersion ) {
+TMemoryView<const FVulkanInstance::FQueueCreateInfo> FVulkanInstance::RecommendedDeviceQueues(EVulkanVersion ) NOEXCEPT {
     static const FQueueCreateInfo GCreateInfos[] = {
         { VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_SPARSE_BINDING_BIT, 0.f ARGS_IF_RHIDEBUG("Graphics") },
         { VK_QUEUE_COMPUTE_BIT, 0.f ARGS_IF_RHIDEBUG("Compute") },
@@ -1278,7 +1279,7 @@ TMemoryView<const FVulkanInstance::FQueueCreateInfo> FVulkanInstance::Recommende
     return GCreateInfos;
 }
 //----------------------------------------------------------------------------
-FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanVersion version) {
+FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanVersion version) NOEXCEPT {
     if (EVulkanVersion::API_version_1_0 == version)
         return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_KHR_surface
@@ -1315,29 +1316,39 @@ FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanV
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulkanVersion version) {
+FVulkanInstanceExtensionSet FVulkanInstance::DebuggingInstanceExtensions(EVulkanVersion version) NOEXCEPT {
     if (EVulkanVersion::API_version_1_0 == version)
         return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_EXT_debug_utils
             EVulkanInstanceExtension::EXT_debug_utils,
     #endif
-        });
+            });
     if (EVulkanVersion::API_version_1_1 == version)
         return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_EXT_debug_utils
             EVulkanInstanceExtension::EXT_debug_utils,
     #endif
-        });
+            });
     if (EVulkanVersion::API_version_1_2 == version)
         return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
     #ifdef VK_EXT_debug_utils
             EVulkanInstanceExtension::EXT_debug_utils,
     #endif
-        });
+            });
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanVersion, FWindowHandle window) {
+FVulkanInstanceExtensionSet FVulkanInstance::ProfilingInstanceExtensions(EVulkanVersion version) NOEXCEPT {
+    UNUSED(version);
+    return Default;
+}
+//----------------------------------------------------------------------------
+FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulkanVersion version) NOEXCEPT {
+    UNUSED(version);
+    return Default;
+}
+//----------------------------------------------------------------------------
+FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanVersion, FWindowHandle window) NOEXCEPT {
     if (nullptr == window) return {}; // test if a window handle was really given
     return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
 #if defined(VK_USE_PLATFORM_WIN32_KHR) && VK_USE_PLATFORM_WIN32_KHR
@@ -1348,7 +1359,7 @@ FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanV
     });
 }
 //----------------------------------------------------------------------------
-FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersion version) {
+FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersion version) NOEXCEPT {
     UNUSED(version);
     FVulkanDeviceExtensionSet result;
 
@@ -1369,7 +1380,17 @@ FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersi
     return vk::device_extensions_require(result);
 }
 //----------------------------------------------------------------------------
-FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVersion version) {
+FVulkanDeviceExtensionSet FVulkanInstance::DebuggingDeviceExtensions(EVulkanVersion version) NOEXCEPT {
+    UNUSED(version);
+    return Default;
+}
+//----------------------------------------------------------------------------
+FVulkanDeviceExtensionSet FVulkanInstance::ProfilingDeviceExtensions(EVulkanVersion version) NOEXCEPT {
+    UNUSED(version);
+    return Default;
+}
+//----------------------------------------------------------------------------
+FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVersion version) NOEXCEPT {
     FVulkanDeviceExtensionSet result;
 
     if (EVulkanVersion::API_version_1_0 == version)

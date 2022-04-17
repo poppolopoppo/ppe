@@ -14,9 +14,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanRHIService final : public IRHIService {
 public:
-    FVulkanRHIService(
-        const FVulkanTargetRHI& vulkanRHI,
-        ERHIFeature features );
+    explicit FVulkanRHIService(const FVulkanTargetRHI& vulkanRHI) NOEXCEPT;
     virtual ~FVulkanRHIService();
 
     NODISCARD bool Construct(
@@ -42,9 +40,14 @@ public: // IRHIService
 #endif
 
 private:
-    const FVulkanTargetRHI& _vulkanRHI;
-    const ERHIFeature _features;
+    NODISCARD bool CreateBackBufferSwapchain_(
+        ERHIFeature features,
+        RHI::FRawSwapchainID oldSwapchain,
+        const FRHISurfaceCreateInfo& surfaceInfo );
 
+    const FVulkanTargetRHI& _vulkanRHI;
+
+    ERHIFeature _features{ Zero };
     RHI::FVulkanInstance _instance;
     RHI::FVulkanDeviceInfo _deviceInfo;
     RHI::PVulkanFrameGraph _frameGraph;
