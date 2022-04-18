@@ -27,6 +27,7 @@ struct FUnitTestFunc_ {
     _Macro(Test_ArrayOfTextures2_) \
     _Macro(Test_AsyncCompute1_) \
     _Macro(Test_AsyncCompute2_) \
+    _Macro(Test_DynamicOffset1_) \
     /* queue */ \
     _Macro(Test_CopyBuffer1_) \
     _Macro(Test_CopyImage1_) \
