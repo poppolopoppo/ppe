@@ -294,7 +294,7 @@ public:
     FPipelineResources& BindBuffers(const FUniformID& id, TMemoryView<const FBufferID> buffers);
     FPipelineResources& BindBuffers(const FUniformID& id, TMemoryView<const FRawBufferID> buffers);
 
-    FPipelineResources& SetBufferBase(const FUniformID& id, u32 offset, u32 elementIndex = 0);
+    FPipelineResources& SetBufferBase(const FUniformID& id, size_t offset, u32 elementIndex = 0);
 
     FPipelineResources& BindTexelBuffer(const FUniformID& id, FRawBufferID buffer, const FBufferViewDesc& desc, u32 elementIndex = 0);
     FPipelineResources& BindRayTracingScene(const FUniformID& id, FRawRTSceneID scene, u32 elementIndex = 0);

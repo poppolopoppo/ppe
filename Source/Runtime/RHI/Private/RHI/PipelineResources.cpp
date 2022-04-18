@@ -386,7 +386,7 @@ FPipelineResources& FPipelineResources::BindBuffers(const FUniformID& id, TMemor
     return (*this);
 }
 //----------------------------------------------------------------------------
-FPipelineResources& FPipelineResources::SetBufferBase(const FUniformID& id, u32 offset, u32 elementIndex) {
+FPipelineResources& FPipelineResources::SetBufferBase(const FUniformID& id, size_t offset, u32 elementIndex) {
     Assert(id.Valid());
 
     auto& resource = Resource_<FBuffer>(id);
