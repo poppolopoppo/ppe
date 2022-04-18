@@ -257,7 +257,7 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
     using namespace RHI;
     RHI_LOG(Info, L"resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
 
-    _frameGraph->WaitIdle();
+    _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
 
     if (not CreateBackBufferSwapchain_(_features, _swapchain.Release(), surfaceInfo))
         AssertReleaseMessage(L"failed to resize swapchain", !!_swapchain);

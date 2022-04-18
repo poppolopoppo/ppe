@@ -171,13 +171,15 @@ public: // interface
     NODISCARD virtual bool Execute(FCommandBufferBatch& cmdBatch) = 0;
 
     // Wait until all commands complete execution on the GPU or until time runs out.
-    NODISCARD virtual bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout = FNanoseconds{3600'000'000'000}) = 0;
+    NODISCARD virtual bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout = MaxTimeout) = 0;
 
     // Submit all pending command buffers and present all pending swapchain images.
     NODISCARD virtual bool Flush(EQueueUsage queues = EQueueUsage::All) = 0;
 
     // Wait until all commands will complete their work on GPU, trigger events for 'FReadImage' and 'FReadBuffer' tasks.
-    NODISCARD virtual bool WaitIdle() = 0;
+    NODISCARD virtual bool WaitIdle(FNanoseconds timeout = MaxTimeout) = 0;
+
+    static CONSTEXPR FNanoseconds MaxTimeout{ 60'000'000'000 };
 
     // Debugging
 #if USE_PPE_RHIDEBUG

@@ -180,7 +180,7 @@ public:
     NODISCARD bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout) override;
 
     bool Flush(EQueueUsage queues) override;
-    bool WaitIdle() override;
+    bool WaitIdle(FNanoseconds timeout) override;
 
 #if USE_PPE_RHIDEBUG
     void LogFrame() const override;

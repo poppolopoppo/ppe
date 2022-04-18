@@ -94,7 +94,7 @@ void FVulkanFrameGraph::TearDown() {
 
     LOG(RHI, Emphasis, L"tearing down vulkan frame graph");
 
-    WaitIdle();
+    WaitIdle(MaxTimeout);
     ReleaseMemory();
 
     Verify(SetState_(EState::Idle, EState::Destroyed));
@@ -857,10 +857,26 @@ bool FVulkanFrameGraph::Wait(TMemoryView<const FCommandBufferBatch> commands, FN
     return result;
 }
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::WaitIdle() {
+bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout) {
+    bool succeed = true;
     ONLY_IF_RHIDEBUG(FAtomicTimedScope waitedTime(&_waitingTime));
     {
         FTransientFences fences;
+
+        auto waitAndReleaseFences = [this, &fences, timeout, &succeed]() {
+            const VkResult vkResult = _device.vkWaitForFences(
+                _device.vkDevice(),
+                checked_cast<u32>(fences.size()),
+                fences.data(),
+                VK_TRUE, checked_cast<u64>(timeout.Value()));
+
+            if (Unlikely(VK_SUCCESS != vkResult)) {
+                AssertRelease(VK_TIMEOUT == vkResult);
+                succeed = false;
+            }
+
+            fences.clear();
+        };
 
         const FCriticalScope queueLock(&_queueCS);
 
@@ -869,34 +885,35 @@ bool FVulkanFrameGraph::WaitIdle() {
         for (FQueueData& q : _queueMap) {
             Assert_NoAssume(q.Pending.empty());
             for (FVulkanSubmitted* submitted : q.Submitted) {
-                if (const VkFence fence = submitted->Read()->Fence)
+                if (const VkFence fence = submitted->Read()->Fence) {
                     fences.Push(fence);
+
+                    if (fences.full())
+                        waitAndReleaseFences();
+                }
             }
         }
 
-        if (not fences.empty()) {
-            VK_CALL( _device.vkWaitForFences(
-                _device.vkDevice(),
-                checked_cast<u32>(fences.size()),
-                fences.data(),
-                VK_TRUE, UMax ));
-        }
+        if (not fences.empty())
+            waitAndReleaseFences();
 
-        ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));
+        if (succeed) {
+            ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));
 
-        for (FQueueData& q : _queueMap) {
-            for (FVulkanSubmitted* submitted : q.Submitted) {
-                submitted->Release(_device ARGS_IF_RHIDEBUG(&_lastFrameStats, _debugger, _shaderDebugCallback));
-                _submittedPool.Release(submitted);
+            for (FQueueData& q : _queueMap) {
+                for (FVulkanSubmitted* submitted : q.Submitted) {
+                    submitted->Release(_device ARGS_IF_RHIDEBUG(&_lastFrameStats, _debugger, _shaderDebugCallback));
+                    _submittedPool.Release(submitted);
+                }
+
+                q.Submitted.clear();
             }
-
-            q.Submitted.clear();
         }
     }
 
     _resourceManager.RunValidation(PPE_RHIVK__VALIDATION_ITERATIONS);
 
-    return true;
+    return succeed;
 }
 //----------------------------------------------------------------------------
 // Debug
