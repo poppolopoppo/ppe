@@ -175,11 +175,11 @@ public:
         VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPropertiesKHR;
     #endif
     #ifdef VK_VERSION_1_2
-            VkPhysicalDeviceVulkan11Properties Properties110;
-            VkPhysicalDeviceVulkan12Properties Properties120;
+        VkPhysicalDeviceVulkan11Properties Properties110;
+        VkPhysicalDeviceVulkan12Properties Properties120;
     #endif
     #ifdef VK_VERSION_1_1
-            VkPhysicalDeviceSubgroupProperties Subgroup;
+        VkPhysicalDeviceSubgroupProperties Subgroup;
     #endif
     };
 

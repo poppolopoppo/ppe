@@ -164,6 +164,35 @@ void FVulkanFrameGraph::ReleaseMemory() noexcept {
     _resourceManager.ReleaseMemory();
 }
 //----------------------------------------------------------------------------
+FDeviceProperties FVulkanFrameGraph::DeviceProperties() const NOEXCEPT {
+    const FVulkanDevice::FEnabledFeatures& enabled = _device.Enabled();
+    const FVulkanDevice::FDeviceCaps& caps = _device.Capabilities();
+
+    FDeviceProperties result;
+    result.GeometryShader = (caps.Features.geometryShader == VK_TRUE);
+    result.TessellationShader = (caps.Features.tessellationShader == VK_TRUE);
+    result.VertexPipelineStoresAndAtomics = (caps.Features.vertexPipelineStoresAndAtomics == VK_TRUE);
+    result.FragmentStoresAndAtomics = (caps.Features.fragmentStoresAndAtomics == VK_TRUE);
+    result.DedicatedAllocation = (enabled.DedicatedAllocation);
+    result.DispatchBase = (enabled.DispatchBase);
+    result.ImageCubeArray = (caps.Features.imageCubeArray);
+    result.Array2DCompatible = (enabled.Array2DCompatible);
+    result.BlockTexelView = (enabled.BlockTexelView);
+    result.SamplerMirrorClamp = (enabled.SamplerMirrorClamp);
+    result.DescriptorIndexing = (enabled.DescriptorIndexing);
+    result.DrawIndirectCount = (enabled.DrawIndirectCount);
+    result.Swapchain = (enabled.Surface and enabled.Swapchain);
+    result.MeshShaderNV = (enabled.MeshShaderNV);
+    result.RayTracingNV = (enabled.RayTracingNV);
+    result.ShadingRateImageNV = (enabled.ShadingRateImageNV);
+    result.MinStorageBufferOffsetAlignment = checked_cast<size_t>(caps.Properties.limits.minStorageBufferOffsetAlignment);
+    result.MinUniformBufferOffsetAlignment = checked_cast<size_t>(caps.Properties.limits.minUniformBufferOffsetAlignment);
+    result.MaxDrawIndirectCount = (caps.Properties.limits.maxDrawIndirectCount);
+    result.MaxDrawIndexedIndexValue = (caps.Properties.limits.maxDrawIndexedIndexValue);
+
+    return result;
+}
+//----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 bool FVulkanFrameGraph::SetShaderDebugCallback(FShaderDebugCallback&& rcallback) {
     Assert_NoAssume(IsInitialized_());

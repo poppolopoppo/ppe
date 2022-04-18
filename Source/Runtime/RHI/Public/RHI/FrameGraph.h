@@ -5,6 +5,7 @@
 #include "HAL/TargetRHI.h"
 
 #include "RHI/CommandBatch.h"
+#include "RHI/DeviceProperties.h"
 #include "RHI/FrameDebug.h"
 #include "RHI/MemoryDesc.h"
 #include "RHI/ResourceEnums.h"
@@ -49,6 +50,10 @@ public: // interface
 
     // Returns bitmask for all available queues.
     virtual EQueueUsage AvailableQueues() const NOEXCEPT = 0;
+
+    // Returns device features, properties and limits.
+    // Some parameters in commands must comply with these restrictions.
+    virtual FDeviceProperties DeviceProperties() const NOEXCEPT = 0;
 
 #if USE_PPE_RHIDEBUG
     // Callback will be called at end of the frame if debugging enabled by

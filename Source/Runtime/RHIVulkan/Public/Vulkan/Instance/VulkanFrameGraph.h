@@ -84,6 +84,9 @@ public:
     void ReleaseMemory() NOEXCEPT override;
 
     EQueueUsage AvailableQueues() const NOEXCEPT override { return _queueUsage; }
+
+    FDeviceProperties DeviceProperties() const NOEXCEPT override;
+
 #if USE_PPE_RHIDEBUG
     bool SetShaderDebugCallback(FShaderDebugCallback&& rcallback) override;
 #endif
