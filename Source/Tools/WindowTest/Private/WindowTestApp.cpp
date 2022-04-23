@@ -25,9 +25,11 @@ struct FUnitTestFunc_ {
     _Macro(Test_Compute2_) \
     _Macro(Test_ArrayOfTextures1_) \
     _Macro(Test_ArrayOfTextures2_) \
+    /* #TODO: _Macro(Test_InvalidID_)*/ \
+    _Macro(Test_DynamicOffset1_) \
+    _Macro(Test_PushConstant1_) \
     _Macro(Test_AsyncCompute1_) \
     _Macro(Test_AsyncCompute2_) \
-    _Macro(Test_DynamicOffset1_) \
     /* queue */ \
     _Macro(Test_CopyBuffer1_) \
     _Macro(Test_CopyImage1_) \
@@ -41,7 +43,15 @@ struct FUnitTestFunc_ {
     _Macro(Test_Draw5_) \
     _Macro(Test_Draw6_) \
     _Macro(Test_Draw7_) \
+    _Macro(Test_ReadAttachment1_) \
+    /* debugger */ \
+    _Macro(Test_ShaderDebugger1_) \
+    /* vendor-specific */ \
     _Macro(Test_DrawMeshes1_) \
+    _Macro(Test_ShadingRate1_) \
+    _Macro(Test_TraceRays1_) \
+    _Macro(Test_TraceRays2_) \
+    _Macro(Test_TraceRays3_) \
 
 //----------------------------------------------------------------------------
 #define WINDOWTEST_EXTERN_DECL(_Func) extern bool _Func(FWindowTestApp&);
@@ -143,7 +153,7 @@ FWindowTestApp::FWindowTestApp(const FModularDomain& domain)
 #endif
 
     FRHIModule& rhiModule = FRHIModule::Get(domain);
-    rhiModule.SetStagingBufferSize(2_MiB);
+    rhiModule.SetStagingBufferSize(8_MiB);
 }
 //----------------------------------------------------------------------------
 FWindowTestApp::~FWindowTestApp() = default;

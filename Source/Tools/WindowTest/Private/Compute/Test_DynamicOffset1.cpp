@@ -76,6 +76,7 @@ ARGS_IF_RHIDEBUG("Test_DynamicOffset1_CS"));
     const auto onLoaded = [&](const FBufferView& bufferData) {
         callbackWasCalled = true;
         dataIsCorrect = (bufferData.size() == dstSize);
+        AssertRelease(bufferData.Parts().size() == 1);
 
         const TMemoryView<const float> dstData = bufferData.Parts().front().Cast<const float>();
 
