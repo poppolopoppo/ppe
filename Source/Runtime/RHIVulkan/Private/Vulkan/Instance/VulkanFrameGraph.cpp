@@ -189,7 +189,8 @@ FDeviceProperties FVulkanFrameGraph::DeviceProperties() const NOEXCEPT {
     result.MinUniformBufferOffsetAlignment = checked_cast<size_t>(caps.Properties.limits.minUniformBufferOffsetAlignment);
     result.MaxDrawIndirectCount = (caps.Properties.limits.maxDrawIndirectCount);
     result.MaxDrawIndexedIndexValue = (caps.Properties.limits.maxDrawIndexedIndexValue);
-
+    result.ShadingRateTexelSize = { caps.ShadingRateImageProperties.shadingRateTexelSize.width, caps.ShadingRateImageProperties.shadingRateTexelSize.height };
+    result.ShadingRatePaletteSize = caps.ShadingRateImageProperties.shadingRatePaletteSize;
     return result;
 }
 //----------------------------------------------------------------------------

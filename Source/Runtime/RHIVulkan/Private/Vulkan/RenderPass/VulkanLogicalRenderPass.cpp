@@ -190,12 +190,13 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 #ifdef VK_NV_shading_rate_image
         if (enableShadingRateImage) {
             VkShadingRatePaletteNV palette{};
-            palette.shadingRatePaletteEntryCount = Max(checked_cast<u32>(src.ShadingRate.size()), 1u);
+            palette.shadingRatePaletteEntryCount = Max(checked_cast<u32>(src.ShadingRate.size()), 1_u32);
             palette.pShadingRatePaletteEntries = &GShadingRateDefaultEntry;
 
             if (not src.ShadingRate.empty()) {
                 const auto entries = _allocator->AllocateT<VkShadingRatePaletteEntryNV>(
                     checked_cast<u32>(src.ShadingRate.size()) );
+                palette.pShadingRatePaletteEntries = entries.data();
 
                 forrange(i, 0, src.ShadingRate.size())
                     entries[i] = VkCast(src.ShadingRate[i]);
