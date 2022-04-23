@@ -31,7 +31,7 @@ public:
     using FSpecializationEntries = VECTORMINSIZE(RHIPipeline, VkSpecializationMapEntry, MaxStages * MaxSpecializationConstants);
     using FSpecializationDatas = VECTOR(RHIPipeline, u32);
     using FShaderStages = VECTORMINSIZE(RHIPipeline, VkPipelineShaderStageCreateInfo, MaxStages);
-    using FRTShaderGroups = VECTORMINSIZE(RHIPipeline, VkRayTracingShaderGroupCreateInfoKHR, MaxStages);
+    using FRTShaderGroups = VECTORMINSIZE(RHIPipeline, VkRayTracingShaderGroupCreateInfoNV, MaxStages);
 
     using EGroupType = FUpdateRayTracingShaderTable::EGroupType;
     using FRayGenShader = FUpdateRayTracingShaderTable::FRayGenShader;
@@ -177,7 +177,7 @@ private:
         const typename _Pipeline::FPipelineInstance& inst) const;
 
     NODISCARD bool FindShaderGroup_(
-        VkRayTracingShaderGroupCreateInfoKHR* pInfo,
+        VkRayTracingShaderGroupCreateInfoNV* pInfo,
         const FVulkanRayTracingPipeline::FInternalPipeline& pipeline,
         const FRTShaderGroup& shaderGroup
         ARGS_IF_RHIDEBUG(EShaderDebugMode mode) );

@@ -52,10 +52,10 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
 
         FTriangles() = default;
         explicit FTriangles(const FGeometryID& geometry) NOEXCEPT {
-            SetGeometry(geometry);
+            SetGeometryId(geometry);
         }
 
-        FTriangles& SetGeometry(const FGeometryID& geometry) { Assert(geometry); Geometry = geometry; return (*this); }
+        FTriangles& SetGeometryId(const FGeometryID& geometry) { Assert(geometry); Geometry = geometry; return (*this); }
 
         template <typename T>
         FTriangles& SetVertices(u32 count, u32 stride = 0) { return SetVertices(count, VertexAttrib<T>(), stride); }
@@ -89,10 +89,10 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
 
         FBoundingVolumes() = default;
         explicit FBoundingVolumes(const FGeometryID& geometry) NOEXCEPT {
-            SetGeometry(geometry);
+            SetGeometryId(geometry);
         }
 
-        FBoundingVolumes& SetGeometry(const FGeometryID& geometry) { Assert(geometry); Geometry = geometry; return (*this); }
+        FBoundingVolumes& SetGeometryId(const FGeometryID& geometry) { Assert(geometry); Geometry = geometry; return (*this); }
 
         FBoundingVolumes& SetCount(u32 count, u32 stride = 0);
         FBoundingVolumes& SetBuffer(FRawBufferID buffer, u32 offset = 0);
@@ -130,7 +130,7 @@ struct FBuildRayTracingScene final : details::TFrameTaskDesc<FBuildRayTracingSce
         explicit FInstance(const FInstanceID& id) NOEXCEPT { SetInstanceId(id); }
 
         FInstance& SetInstanceId(const FInstanceID& value);
-        FInstance& SetGeometry(const FRawRTGeometryID& value);
+        FInstance& SetGeometryId(const FRawRTGeometryID& value);
         FInstance& SetInstanceIndex(u32 value) { CustomId = value; return (*this); }
         FInstance& SetTransform(const float4x3& value) { Transform = value; return (*this); }
         FInstance& AddFlags(EFlags value) { Flags = Flags | value; return (*this); }

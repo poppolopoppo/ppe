@@ -171,7 +171,7 @@ bool FVulkanRHIService::Construct(
     const FVulkanDevice& device = _frameGraph->Device();
 
     if (device.Enabled().RayTracingNV)
-        _features |= ERHIFeature::Raytracing;
+        _features |= ERHIFeature::RayTracing;
     if (device.Enabled().MeshShaderNV)
         _features |= ERHIFeature::MeshDraw;
     if (device.Enabled().ImageFootprintNV)

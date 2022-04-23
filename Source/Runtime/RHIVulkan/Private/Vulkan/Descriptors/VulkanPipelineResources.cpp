@@ -97,8 +97,7 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
     FUpdateDescriptors update{
         heap,
         heap.AllocateT<VkWriteDescriptorSet>(pDsLayout->Read()->MaxIndex + 1),
-        0
-    };
+        0 };
 
     exclusiveRes->DynamicData.EachUniform([&](const FUniformID& id, auto& data) {
         Assert(id.Valid());
@@ -389,11 +388,12 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
     pTopAS->pAccelerationStructures = tlas.data();
 
     VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
-    wds.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+    wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    wds.pNext = pTopAS;
+    wds.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
     wds.descriptorCount = value.Elements.Count;
     wds.dstBinding = value.Index.VKBinding();
     wds.dstSet = data.DescriptorSet.First;
-    wds.pNext = pTopAS;
 
     return true;
 }

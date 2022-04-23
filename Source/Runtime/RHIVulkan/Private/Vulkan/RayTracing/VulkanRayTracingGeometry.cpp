@@ -87,7 +87,7 @@ bool FVulkanRayTracingGeometry::Construct(
     Assert(not desc.Triangles.empty() || not desc.Aabbs.empty());
 
     const FVulkanDevice& device = resources.Device();
-    AssertRelease((desc.Triangles.size() + desc.Aabbs.size()) <= device.Capabilities().RayTracingNVProperties.maxGeometryCount);
+    AssertRelease((desc.Triangles.size() + desc.Aabbs.size()) <= device.Capabilities().RayTracingPropertiesNV.maxGeometryCount);
 
     CopyAndSortGeometry_(&exclusiveData->Triangles, &exclusiveData->Aabbs, desc);
 
@@ -147,7 +147,7 @@ bool FVulkanRayTracingGeometry::Construct(
         resources.MemoryManager(),
         exclusiveData->BottomLevelAS ) );
 
-    LOG_CHECK(RHI, device.vkGetAccelerationStructureHandleNV(
+    VK_CHECK( device.vkGetAccelerationStructureHandleNV(
         device.vkDevice(),
         exclusiveData->BottomLevelAS,
         sizeof(exclusiveData->BLAS.Value),

@@ -581,9 +581,10 @@ bool FVulkanPipelineCache::CreateShaderTable(
     const FRayGenShader& rayGenShader,
     TMemoryView<const FRTShaderGroup> shaderGroups,
     const u32 maxRecursionDepth ) {
+#ifdef VK_NV_ray_tracing
+
     Assert(pShaderTable);
     Assert(pCopyRegions);
-
     const auto sharedData = scene.SharedData();
 
     const FVulkanDevice& device = workerCmd.Device();
@@ -595,7 +596,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
     const u32 maxHitShaders = sharedData->MaxHitShaderCount;
 
     Assert_NoAssume(baseAlignment >= handleSize);
-    Assert_NoAssume(Meta::IsAlignedPow2(baseAlignment, handleSize));
+    Assert_NoAssume(Meta::IsAlignedPow2(handleSize, baseAlignment));
 
     auto* rtPipeline = workerCmd.AcquireTransient(pipelineId);
     LOG_CHECK(RHI, !!rtPipeline);
@@ -720,12 +721,12 @@ bool FVulkanPipelineCache::CreateShaderTable(
         LOG_CHECK(RHI, CreateShaderStage_(pShaderStage, *ppln, rayGenShader.Shader ARGS_IF_RHIDEBUG(mode)));
 
         auto& groupCi = _transientRTShaderGroups[0];
-        groupCi.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+        groupCi.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
         groupCi.pNext = nullptr;
-        groupCi.anyHitShader = VK_SHADER_UNUSED_KHR;
-        groupCi.closestHitShader = VK_SHADER_UNUSED_KHR;
-        groupCi.intersectionShader = VK_SHADER_UNUSED_KHR;
-        groupCi.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+        groupCi.anyHitShader = VK_SHADER_UNUSED_NV;
+        groupCi.closestHitShader = VK_SHADER_UNUSED_NV;
+        groupCi.intersectionShader = VK_SHADER_UNUSED_NV;
+        groupCi.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
         groupCi.generalShader = checked_cast<u32>(_transientStages.size() - 1);
 
         // create miss & hit shaders
@@ -757,21 +758,20 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
         // create pipeline
 
-        VkRayTracingPipelineCreateInfoKHR pipelineInfo{};
-        pipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+        VkRayTracingPipelineCreateInfoNV pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
         pipelineInfo.flags = 0;
         pipelineInfo.stageCount = checked_cast<u32>(_transientStages.size());
         pipelineInfo.pStages = _transientStages.data();
         pipelineInfo.groupCount = checked_cast<u32>(_transientRTShaderGroups.size());
         pipelineInfo.pGroups = _transientRTShaderGroups.data();
-        pipelineInfo.maxPipelineRayRecursionDepth = maxRecursionDepth;
+        pipelineInfo.maxRecursionDepth = maxRecursionDepth;
         pipelineInfo.layout = workerCmd.AcquireTransient(layoutId)->Handle();
         pipelineInfo.basePipelineIndex = -1;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-        VK_CHECK( device.vkCreateRayTracingPipelinesKHR(
+        VK_CHECK( device.vkCreateRayTracingPipelinesNV(
             device.vkDevice(),
-            VK_NULL_HANDLE,
             _pipelineCache,
             1, &pipelineInfo,
             device.vkAllocator(),
@@ -802,7 +802,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
         // ray-gen shader
 
-        VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
+        VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
             device.vkDevice(),
             table.Pipeline,
             0, 1, handleSize,
@@ -818,7 +818,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                 const u32 dstOffset = exclusiveTable->RayMissOffset + handleSize * sh.RecordOffset;
                 Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
-                VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
+                VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                     device.vkDevice(), table.Pipeline, group, 1, handleSize,
                     stagingBlock.Mapped + dstOffset ));
                 break;
@@ -828,7 +828,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                 const u32 dstOffset = exclusiveTable->CallableOffset + handleSize * callableShaderIndex++;
                 Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
-                VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
+                VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                     device.vkDevice(), table.Pipeline, group, 1, handleSize,
                     stagingBlock.Mapped + dstOffset ));
                 break;
@@ -838,7 +838,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             case EGroupType::ProceduralHitShader: {
                 Assert_NoAssume(sh.RecordOffset < geometryStride);
 
-                const auto instance = std::lower_bound(
+                const auto instance = Meta::LowerBound(
                     sharedData->GeometryInstances.begin(),
                     sharedData->GeometryInstances.end(),
                     sh.InstanceId );
@@ -848,6 +848,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                 const auto* const pRTGeometry = workerCmd.AcquireTransient(*instance->GeometryId);
                 Assert(pRTGeometry);
 
+                // if 'GeometryId' is not defined then bind shader group for each geometry in instance
                 if (sh.GeometryId == Default) {
                     const auto aabbs = pRTGeometry->Aabbs();
                     const auto triangles = pRTGeometry->Triangles();
@@ -859,7 +860,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                         const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
                         Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
-                        VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
+                        VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                             device.vkDevice(),
                             table.Pipeline, group, 1, handleSize,
                             stagingBlock.Mapped + dstOffset ));
@@ -872,7 +873,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                         const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
                         Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
-                        VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
+                        VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                             device.vkDevice(),
                             table.Pipeline, group, 1, handleSize,
                             stagingBlock.Mapped + dstOffset ));
@@ -888,7 +889,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                     const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
                     Assert_NoAssume(dstOffset + handleSize <= stagingSize);
 
-                    VK_CALL( device.vkGetRayTracingShaderGroupHandlesKHR(
+                    VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                         device.vkDevice(),
                         table.Pipeline, group, 1, handleSize,
                         stagingBlock.Mapped + dstOffset ));
@@ -938,6 +939,19 @@ bool FVulkanPipelineCache::CreateShaderTable(
     }
 
     return true;
+
+#else
+    UNUSED(pShaderTable);
+    UNUSED(pCopyRegions);
+    UNUSED(workerCmd);
+    UNUSED(pipelineId);
+    UNUSED(scene);
+    UNUSED(rayGenShader);
+    UNUSED(shaderGroups);
+    UNUSED(maxRecursionDepth);
+    return false;
+
+#endif
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineCache::CreateShaderStage_(
@@ -950,7 +964,7 @@ bool FVulkanPipelineCache::CreateShaderStage_(
     // find suitable shader module
 
     auto bestMatch = pipeline.Shaders.end();
-    for (auto it = pipeline.Shaders.find(id); it != pipeline.Shaders.end() && *it == id; ++it) {
+    for (auto it = Meta::LowerBound(pipeline.Shaders.begin(), pipeline.Shaders.end(), id); it != pipeline.Shaders.end() && *it == id; ++it) {
 #if USE_PPE_RHIDEBUG
         if (it->DebugMode == mode) {
             bestMatch = it;
@@ -977,13 +991,14 @@ bool FVulkanPipelineCache::CreateShaderStage_(
     pStage->flags = 0;
     pStage->module = bestMatch->Module->vkShaderModule();
     pStage->pName = bestMatch->Module->EntryPoint();
+    pStage->stage = bestMatch->Stage;
     pStage->pSpecializationInfo = nullptr;
 
     // set specialization constants
 
-    if (bestMatch->Stage == VK_SHADER_STAGE_RAYGEN_BIT_KHR ||
-        bestMatch->Stage == VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR ||
-        bestMatch->Stage == VK_SHADER_STAGE_MISS_BIT_KHR ) {
+    if (bestMatch->Stage == VK_SHADER_STAGE_RAYGEN_BIT_NV ||
+        bestMatch->Stage == VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV ||
+        bestMatch->Stage == VK_SHADER_STAGE_MISS_BIT_NV ) {
 
 
         for (auto& spec : _transientRTShaderSpecializations) {
@@ -1028,22 +1043,21 @@ bool FVulkanPipelineCache::FindCachedPipeline_(VkPipeline* pInCache, const _Pipe
         return true;
     }
 #endif
-
     return false;
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineCache::FindShaderGroup_(
-    VkRayTracingShaderGroupCreateInfoKHR* pInfo,
+    VkRayTracingShaderGroupCreateInfoNV* pInfo,
     const FVulkanRayTracingPipeline::FInternalPipeline& pipeline, const FRTShaderGroup& shaderGroup
     ARGS_IF_RHIDEBUG(EShaderDebugMode mode) ) {
     Assert(pInfo);
 
-    pInfo->sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+    pInfo->sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
     pInfo->pNext = nullptr;
-    pInfo->generalShader = VK_SHADER_UNUSED_KHR;
-    pInfo->closestHitShader = VK_SHADER_UNUSED_KHR;
-    pInfo->anyHitShader = VK_SHADER_UNUSED_KHR;
-    pInfo->intersectionShader = VK_SHADER_UNUSED_KHR;
+    pInfo->generalShader = VK_SHADER_UNUSED_NV;
+    pInfo->closestHitShader = VK_SHADER_UNUSED_NV;
+    pInfo->anyHitShader = VK_SHADER_UNUSED_NV;
+    pInfo->intersectionShader = VK_SHADER_UNUSED_NV;
 
     switch (shaderGroup.Type) {
     case EGroupType::MissShader: {
@@ -1051,13 +1065,13 @@ bool FVulkanPipelineCache::FindShaderGroup_(
             _transientStages.push_back_Uninitialized(),
             pipeline, shaderGroup.MainShader ARGS_IF_RHIDEBUG(mode) ));
 
-        pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+        pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
         pInfo->generalShader = checked_cast<u32>(_transientStages.size() - 1);
 
         return true;
     }
     case EGroupType::TriangleHitShader: {
-        pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+        pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
 
         if (shaderGroup.MainShader.Valid()) {
             LOG_CHECK(RHI, CreateShaderStage_(
@@ -1078,7 +1092,7 @@ bool FVulkanPipelineCache::FindShaderGroup_(
         return true;
     }
     case EGroupType::ProceduralHitShader: {
-        pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR;
+        pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_NV;
 
         LOG_CHECK(RHI, CreateShaderStage_(
             _transientStages.push_back_Uninitialized(),
@@ -1481,7 +1495,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
         AssertMessage_NoAssume(L"can't write to read-only stencil attachment", pRender->Stencil.ReadOnly());
         break;
 
-#ifdef VK_KHR_separate_depth_stencil_layouts
+#ifdef VK_NV_separate_depth_stencil_layouts
     case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL_KHR:
         AssertMessage_NoAssume(L"stencil attachment doesn't exists", not pRender->Stencil.EnabledStencilTests);
         break;

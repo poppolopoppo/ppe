@@ -110,7 +110,7 @@ inline FBuildRayTracingScene::FInstance& FBuildRayTracingScene::FInstance::SetIn
     return (*this);
 }
 //----------------------------------------------------------------------------
-inline FBuildRayTracingScene::FInstance& FBuildRayTracingScene::FInstance::SetGeometry(const FRawRTGeometryID& value) {
+inline FBuildRayTracingScene::FInstance& FBuildRayTracingScene::FInstance::SetGeometryId(const FRawRTGeometryID& value) {
     Assert(value);
     GeometryId = value;
     return (*this);

@@ -1005,10 +1005,12 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     case EResourceState::IndirectBuffer: oss << STRING_LITERAL(_Char, "IndirectBuffer"); break;
     case EResourceState::IndexBuffer: oss << STRING_LITERAL(_Char, "IndexBuffer"); break;
     case EResourceState::VertexBuffer: oss << STRING_LITERAL(_Char, "VertexBuffer"); break;
+    case EResourceState::BuildRayTracingStructRead: oss << STRING_LITERAL(_Char, "BuildRTAS-R"); break;
     case EResourceState::BuildRayTracingStructWrite: oss << STRING_LITERAL(_Char, "BuildRTAS-W"); break;
     case EResourceState::BuildRayTracingStructReadWrite: oss << STRING_LITERAL(_Char, "BuildRTAS-RW"); break;
     case EResourceState::RTASBuildingBufferRead: oss << STRING_LITERAL(_Char, "RTASBuild-Buffer-R"); break;
     case EResourceState::RTASBuildingBufferReadWrite: oss << STRING_LITERAL(_Char, "RTASBuild-Buffer-RW"); break;
+    case EResourceState::RayTracingShaderRead: oss << STRING_LITERAL(_Char, "RayTracingShader-R"); break;
     case EResourceState::ShadingRateImageRead: oss << STRING_LITERAL(_Char, "ShadingRate"); break;
     default: AssertNotImplemented();
     }

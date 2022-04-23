@@ -28,7 +28,7 @@ public:
 
         FGeometryAccess() NOEXCEPT : IsReadable(false), IsWritable(false) {}
 
-        bool Valid() const { return !!(IsReadable | IsWritable); }
+        bool Valid() const { return (IsReadable || IsWritable); }
     };
 
     FVulkanRayTracingLocalGeometry() = default;

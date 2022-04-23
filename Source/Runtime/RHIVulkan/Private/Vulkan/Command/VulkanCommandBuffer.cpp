@@ -665,6 +665,9 @@ PFrameTask FVulkanCommandBuffer::Task(const FCustomTask& task) {
 // RayTracing
 //----------------------------------------------------------------------------
 PFrameTask FVulkanCommandBuffer::Task(const FUpdateRayTracingShaderTable& task) {
+    Assert(task.Pipeline);
+
+#if VK_NV_ray_tracing
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(Device().Enabled().RayTracingNV);
@@ -672,33 +675,188 @@ PFrameTask FVulkanCommandBuffer::Task(const FUpdateRayTracingShaderTable& task) 
 
     TVulkanFrameTask<FUpdateRayTracingShaderTable>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
+    LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
+
+#else
+    AssertNotImplemented();
+#endif
 }
 //----------------------------------------------------------------------------
 PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
     Assert(task.Geometry);
 
-#if 0 // #TODO: VK_KHR_ray_tracing_pipeline
+#if VK_NV_ray_tracing
     const auto exclusive = Write();
+
+    const FVulkanDevice& device = Device();
+
     Assert_NoAssume(EState::Recording == exclusive->State);
-    Assert_NoAssume(Device().EnableRayTracingNV());
-    Assert_NoAssume(exclusive->Batch->QueueUsage() & RayTracingBit_);
+    Assert_NoAssume(device.Enabled().RayTracingNV);
+    Assert_NoAssume(GRayTracingBit_ & exclusive->Batch->QueueUsage());
 
     FVulkanRTLocalGeometry* const rtGeometry = ToLocal(task.Geometry);
-    Assert(rtGeometry);
+    LOG_CHECK(RHI, !!rtGeometry);
     Assert_NoAssume(task.Aabbs.size() <= rtGeometry->Aabbs().size());
     Assert_NoAssume(task.Triangles.size() <= rtGeometry->Triangles().size());
 
     TVulkanFrameTask<FBuildRayTracingGeometry>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
-    Assert(pFrameTask);
+    LOG_CHECK(RHI, !!pFrameTask);
     pFrameTask->RTGeometry = rtGeometry;
 
-    VkMemoryRequirements2 memReq2{};
-    VkBufferMemoryRequirementsInfo2 bufInfo2{};
-    bufInfo2.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2_KHR;
-    bufInfo2.buffer = rtGeometry->();
+    VkAccelerationStructureMemoryRequirementsInfoNV asInfo{};
+    asInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+    asInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
+    asInfo.accelerationStructure = rtGeometry->Handle();
+
+    VkMemoryRequirements2 memReq{};
+    device.vkGetAccelerationStructureMemoryRequirementsNV(device.vkDevice(), &asInfo, &memReq);
+
+    // #TODO: virtual buffer of buffer cache
+    FBufferID buffer = _frameGraph->CreateBuffer(FBufferDesc{
+        memReq.memoryRequirements.size,
+        EBufferUsage::RayTracing },
+        Default ARGS_IF_RHIDEBUG("ScratchBuffer"));
+    LOG_CHECK(RHI, !!buffer);
+
+    pFrameTask->ScratchBuffer = ToLocal(*buffer);
+    ReleaseResource(buffer.Release());
+
+    Assert(pFrameTask->ScratchBuffer->Desc().Usage & EBufferUsage::RayTracing);
+
+    const TMemoryView<VkGeometryNV> geometries = exclusive->MainAllocator.AllocateT<VkGeometryNV>(task.Triangles.size() + task.Aabbs.size());
+    pFrameTask->Geometries = geometries;
+
+    // initialize geometries
+    forrange(i, 0, geometries.size()) {
+        VkGeometryNV& dst = geometries[i];
+        dst = VkGeometryNV{};
+        dst.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
+        dst.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV;
+        dst.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
+        dst.geometryType = (i < task.Triangles.size()
+            ? VK_GEOMETRY_TYPE_TRIANGLES_NV
+            : VK_GEOMETRY_TYPE_AABBS_NV );
+    }
+
+    // add triangles
+    for (const FBuildRayTracingGeometry::FTriangles& src : task.Triangles) {
+        const auto ref = Meta::LowerBound(rtGeometry->Triangles().begin(), rtGeometry->Triangles().end(), src.Geometry);
+        LOG_CHECK(RHI, rtGeometry->Triangles().end() != ref);
+
+        const size_t pos = std::distance(rtGeometry->Triangles().begin(), ref);
+
+        VkGeometryNV& dst = geometries[pos];
+        dst.flags = VkCast(ref->Flags);
+
+        Assert(src.VertexBuffer or src.VertexData.size());
+        Assert(src.VertexCount > 0);
+        Assert(src.VertexCount <= ref->MaxVertexCount);
+        Assert(src.IndexCount <= ref->MaxIndexCount);
+        Assert(src.VertexFormat <= ref->VertexFormat);
+        Assert(src.IndexFormat == ref->IndexFormat);
+
+        // vertices
+        dst.geometry.triangles.vertexCount = src.VertexCount;
+        dst.geometry.triangles.vertexStride = src.VertexStride;
+        dst.geometry.triangles.vertexFormat = VkCast(src.VertexFormat);
+
+        if (src.VertexData.size() > 0) {
+            const FVulkanLocalBuffer* vb = nullptr;
+            LOG_CHECK(RHI, StagingStore_(*exclusive, &vb, &dst.geometry.triangles.vertexOffset, src.VertexData.data(), src.VertexData.SizeInBytes(), ref->VertexSize));
+            dst.geometry.triangles.vertexData = vb->Handle();
+            //pFrameTask->UsableBuffers.Add(vb); // staging buffer is already immutable
+        }
+        else {
+            const FVulkanLocalBuffer* vb = ToLocal(src.VertexBuffer);
+            LOG_CHECK(RHI, !!vb);
+            dst.geometry.triangles.vertexData = vb->Handle();
+            dst.geometry.triangles.vertexOffset = src.VertexOffset;
+            pFrameTask->UsableBuffers.Add(vb);
+        }
+
+        // indices
+        if (src.IndexCount > 0) {
+            Assert(src.IndexBuffer or src.IndexData.size() > 0);
+            dst.geometry.triangles.indexCount = src.IndexCount;
+            dst.geometry.triangles.indexType = VkCast(src.IndexFormat);
+        }
+        else {
+            Assert(not src.IndexBuffer or src.IndexData.empty());
+            Assert(EIndexFormat::Unknown == src.IndexFormat);
+            dst.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_NV;
+        }
+
+        if (src.IndexData.size() > 0) {
+            const FVulkanLocalBuffer* ib = nullptr;
+            LOG_CHECK(RHI, StagingStore_(*exclusive, &ib, &dst.geometry.triangles.indexOffset, src.IndexData.data(), src.IndexData.SizeInBytes(), ref->IndexSize));
+            dst.geometry.triangles.indexData = ib->Handle();
+            //pFrameTask->UsableBuffers.Add(ib); // staging buffer is already immutable
+        }
+        else if (!!src.IndexBuffer) {
+            const FVulkanLocalBuffer* ib = ToLocal(src.IndexBuffer);
+            LOG_CHECK(RHI, !!ib);
+            dst.geometry.triangles.indexData = ib->Handle();
+            dst.geometry.triangles.indexOffset = src.IndexOffset;
+            pFrameTask->UsableBuffers.Add(ib);
+        }
+
+        // transforms
+        if (!!src.TransformBuffer) {
+            const FVulkanLocalBuffer* tb = ToLocal(src.TransformBuffer);
+            LOG_CHECK(RHI, !!tb);
+            dst.geometry.triangles.transformData = tb->Handle();
+            dst.geometry.triangles.transformOffset = src.TransformOffset;
+            pFrameTask->UsableBuffers.Add(tb);
+        }
+        else if (src.TransformData.has_value()) {
+            const FVulkanLocalBuffer* tb = nullptr;
+            const float3x4& transform = src.TransformData.value();
+            LOG_CHECK(RHI, StagingStore_(*exclusive, &tb, &dst.geometry.triangles.transformOffset, &transform, sizeof(transform), 16_b));
+            dst.geometry.triangles.transformData = tb->Handle();
+            //pFrameTask->UsableBuffers.Add(tb); // staging buffer is already immutable
+        }
+    }
+
+    // add aabbs
+    for (const FBuildRayTracingGeometry::FBoundingVolumes& src : task.Aabbs) {
+        const auto ref = Meta::LowerBound(rtGeometry->Aabbs().begin(), rtGeometry->Aabbs().end(), src.Geometry);
+        LOG_CHECK(RHI, rtGeometry->Aabbs().end() != ref);
+
+        const size_t pos = std::distance(rtGeometry->Aabbs().begin(), ref);
+
+        VkGeometryNV& dst = geometries[pos + task.Triangles.size()];
+        dst.flags = VkCast(ref->Flags);
+
+        Assert(src.AabbBuffer or src.AabbData.size() > 0);
+        Assert(src.AabbCount > 0);
+        Assert(src.AabbCount <= ref->MaxAabbCount);
+        Assert(src.AabbStride % 8 == 0);
+
+        dst.flags = VkCast(ref->Flags);
+        dst.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV;
+        dst.geometry.aabbs.numAABBs = src.AabbCount;
+        dst.geometry.aabbs.stride = src.AabbStride;
+
+        if (src.AabbData.size() > 0) {
+            const FVulkanLocalBuffer* ab = nullptr;
+            LOG_CHECK(RHI, StagingStore_(*exclusive, &ab, &dst.geometry.aabbs.offset, src.AabbData.data(), src.AabbData.SizeInBytes(), 8_b));
+            dst.geometry.aabbs.aabbData = ab->Handle();
+            //pFrameTask->UsableBuffers.Add(ab); // staging buffer is already immutable
+        }
+        else {
+            const FVulkanLocalBuffer* ab = ToLocal(src.AabbBuffer);
+            LOG_CHECK(RHI, !!ab);
+            dst.geometry.aabbs.aabbData = ab->Handle();
+            dst.geometry.aabbs.offset = src.AabbOffset;
+            pFrameTask->UsableBuffers.Add(ab);
+        }
+    }
+
+    return pFrameTask;
+
 #else
     AssertNotImplemented();
 #endif
@@ -707,38 +865,46 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
 PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     Assert(task.Scene);
 
+#if VK_NV_ray_tracing
     const auto exclusive = Write();
+
+    const FVulkanDevice& device = Device();
+
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(Device().Enabled().RayTracingNV);
     Assert_NoAssume(GRayTracingBit_ & exclusive->Batch->QueueUsage());
 
     FVulkanRTLocalScene* const rtScene = ToLocal(task.Scene);
-    Assert(rtScene);
+    LOG_CHECK(RHI, !!rtScene);
     Assert_NoAssume(task.Instances.size() <= rtScene->MaxInstanceCount());
 
     TVulkanFrameTask<FBuildRayTracingScene>* const pBuildTask =
         exclusive->TaskGraph.AddTask(*this, task);
-    Assert(pBuildTask);
-    Assert_NoAssume(task.Instances.size() <= rtScene->MaxInstanceCount());
+    LOG_CHECK(RHI, !!pBuildTask);
     pBuildTask->RTScene = rtScene;
 
-    VkMemoryRequirements2 memReq2{};
-    // #TODO: VK_KHR_ray_tracing_pipeline
+    VkAccelerationStructureMemoryRequirementsInfoNV asInfo{};
+    asInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+    asInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
+    asInfo.accelerationStructure = rtScene->Handle();
+
+    VkMemoryRequirements2 memReq{};
+    device.vkGetAccelerationStructureMemoryRequirementsNV(device.vkDevice(), &asInfo, &memReq);
 
     FMemoryDesc mem;
     mem.Type = EMemoryType::Default;
-    mem.Alignment = checked_cast<u32>(memReq2.memoryRequirements.alignment);
+    mem.Alignment = checked_cast<u32>(memReq.memoryRequirements.alignment);
     mem.ExternalRequirements = FMemoryRequirements{
-        checked_cast<u32>(memReq2.memoryRequirements.memoryTypeBits),
-        checked_cast<u32>(memReq2.memoryRequirements.alignment)
+        checked_cast<u32>(memReq.memoryRequirements.memoryTypeBits),
+        checked_cast<u32>(memReq.memoryRequirements.alignment)
     };
 
     // #TODO: virtual buffer or buffer cache
     FBufferID scratchBuf = _frameGraph->CreateBuffer(FBufferDesc{
-        checked_cast<size_t>(memReq2.memoryRequirements.size),
+        checked_cast<size_t>(memReq.memoryRequirements.size),
         EBufferUsage::RayTracing,
     },  mem ARGS_IF_RHIDEBUG("ScratchBuffer") );
-    Assert(scratchBuf);
+    LOG_CHECK(RHI, !!scratchBuf);
 
     pBuildTask->ScratchBuffer = ToLocal(*scratchBuf);
     ReleaseResource(scratchBuf.Release());
@@ -787,10 +953,12 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
         Assert_NoAssume((src.CustomId >> 24) == 0);
 
         pLocalGeom = ToLocal(src.GeometryId);
-        AssertRelease(pLocalGeom);
+        Assert(pLocalGeom);
 
         dst.BlasHandle = pLocalGeom->BLAS();
-        dst.Transform = src.Transform;
+        dst.TransformRow0 = src.Transform.Row_x(); // decompose for row-major order
+        dst.TransformRow1 = src.Transform.Row_y();
+        dst.TransformRow2 = src.Transform.Row_z();
         dst.CustomIndex = src.CustomId;
         dst.Mask = src.Mask;
         dst.InstanceOffset = pBuildTask->MaxHitShaderCount;
@@ -806,11 +974,16 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     }
 
     return pBuildTask;
+
+#else
+    AssertNotImplemented();
+#endif
 }
 //----------------------------------------------------------------------------
 PFrameTask FVulkanCommandBuffer::Task(const FTraceRays& task) {
     Assert(task.ShaderTable);
 
+#if VK_NV_ray_tracing
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
     Assert_NoAssume(Device().Enabled().RayTracingNV);
@@ -818,7 +991,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FTraceRays& task) {
 
     TVulkanFrameTask<FTraceRays>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
-    Assert(pFrameTask);
+    LOG_CHECK(RHI, !!pFrameTask);
 
 #if USE_PPE_RHIDEBUG
     if (exclusive->ShaderDbg.TimemapIndex != Default &&
@@ -830,6 +1003,10 @@ PFrameTask FVulkanCommandBuffer::Task(const FTraceRays& task) {
 #endif
 
     return pFrameTask;
+
+#else
+    AssertNotImplemented();
+#endif
 }
 //----------------------------------------------------------------------------
 // Draw

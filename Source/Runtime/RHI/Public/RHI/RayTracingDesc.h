@@ -30,7 +30,7 @@ struct FRayTracingGeometryDesc {
 
         explicit FTriangles(const FGeometryID& geometryId) : GeometryId(geometryId) {}
 
-        FTriangles& SetId(const FGeometryID& id) {
+        FTriangles& SetGeometryId(const FGeometryID& id) {
             GeometryId = id;
             return (*this);
         }
@@ -66,7 +66,7 @@ struct FRayTracingGeometryDesc {
 
         explicit FBoundingVolumes(const FGeometryID& geometryId) : GeometryId(geometryId) {}
 
-        FBoundingVolumes& SetId(const FGeometryID& id) {
+        FBoundingVolumes& SetGeometryId(const FGeometryID& id) {
             GeometryId = id;
             return (*this);
         }

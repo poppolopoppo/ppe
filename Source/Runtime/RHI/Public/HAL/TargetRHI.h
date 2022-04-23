@@ -27,7 +27,7 @@ enum class ERHIFeature : u32 {
     Graphics            = 1u<<2,
     Compute             = 1u<<3,
     AsyncCompute        = 1u<<4,
-    Raytracing          = 1u<<5,
+    RayTracing          = 1u<<5,
     MeshDraw            = 1u<<6,
     SamplerFeedback     = 1u<<7,
     TextureSpaceShading = 1u<<8,

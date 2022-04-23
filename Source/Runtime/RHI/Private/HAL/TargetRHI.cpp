@@ -36,7 +36,7 @@ TBasicTextWriter<_Char>& ExpandRHIFeature_(TBasicTextWriter<_Char>& oss, ERHIFea
     if (ERHIFeature::Graphics & feature) oss << sep << STRING_LITERAL(_Char, "Graphics");
     if (ERHIFeature::Compute & feature) oss << sep << STRING_LITERAL(_Char, "Compute");
     if (ERHIFeature::AsyncCompute & feature) oss << sep << STRING_LITERAL(_Char, "AsyncCompute");
-    if (ERHIFeature::Raytracing & feature) oss << sep << STRING_LITERAL(_Char, "Raytracing");
+    if (ERHIFeature::RayTracing & feature) oss << sep << STRING_LITERAL(_Char, "Raytracing");
     if (ERHIFeature::MeshDraw & feature) oss << sep << STRING_LITERAL(_Char, "MeshDraw");
     if (ERHIFeature::SamplerFeedback & feature) oss << sep << STRING_LITERAL(_Char, "SamplerFeedback");
     if (ERHIFeature::TextureSpaceShading & feature) oss << sep << STRING_LITERAL(_Char, "TextureSpaceShading");

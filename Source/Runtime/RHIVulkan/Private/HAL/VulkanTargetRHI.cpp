@@ -37,7 +37,7 @@ bool FVulkanTargetRHI::RequiresFeature(ERHIFeature feature) const NOEXCEPT {
         return true;
     case ERHIFeature::Headless:
     case ERHIFeature::Discrete:
-    case ERHIFeature::Raytracing:
+    case ERHIFeature::RayTracing:
     case ERHIFeature::MeshDraw:
     case ERHIFeature::SamplerFeedback:
     case ERHIFeature::TextureSpaceShading:
@@ -57,7 +57,7 @@ bool FVulkanTargetRHI::SupportsFeature(ERHIFeature feature) const NOEXCEPT {
     case ERHIFeature::Graphics:
     case ERHIFeature::Compute:
     case ERHIFeature::AsyncCompute:
-    case ERHIFeature::Raytracing:
+    case ERHIFeature::RayTracing:
     case ERHIFeature::MeshDraw:
     case ERHIFeature::SamplerFeedback:
     case ERHIFeature::TextureSpaceShading:

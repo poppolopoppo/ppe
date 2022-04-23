@@ -326,19 +326,18 @@ TVulkanFrameTask<FUpdateRayTracingShaderTable>::TVulkanFrameTask(FVulkanCommandB
 ,   ShaderGroups(cmd.Allocator().AllocateCopyT(desc.ShaderGroups.MakeView()))
 ,   RayGenShader(desc.RayGenShader)
 ,   MaxRecursionDepth(desc.MaxRecursionDepth) {
-    Assert_NoAssume(RTScene);
-    Assert_NoAssume(ShaderTable);
+
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FBuildRayTracingGeometry>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingGeometry& desc, FProcessFunc process)
 :   IVulkanFrameTask(desc, process)
 ,   UsableBuffers(cmd.Allocator()) {
-
+    UNUSED(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task)
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FBuildRayTracingScene>::TVulkanFrameTask(FVulkanCommandBuffer& , const FBuildRayTracingScene& desc, FProcessFunc process)
+TVulkanFrameTask<FBuildRayTracingScene>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingScene& desc, FProcessFunc process)
 :   IVulkanFrameTask(desc, process) {
-
+    UNUSED(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task)
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FTraceRays>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FTraceRays& desc, FProcessFunc process)

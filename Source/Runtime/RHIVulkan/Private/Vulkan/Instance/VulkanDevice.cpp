@@ -399,7 +399,7 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 #endif
 #ifdef VK_NV_ray_tracing
         if (_enabled.RayTracingNV)
-            enableProperties(&_caps.RayTracingNVProperties, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV);
+            enableProperties(&_caps.RayTracingPropertiesNV, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV);
 #endif
 #ifdef VK_KHR_ray_tracing_pipeline
         if (_enabled.RayTracingKHR)

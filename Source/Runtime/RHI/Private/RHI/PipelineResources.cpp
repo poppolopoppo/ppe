@@ -399,7 +399,7 @@ FPipelineResources& FPipelineResources::SetBufferBase(const FUniformID& id, size
     if (resource.DynamicOffsetIndex != FPipelineDesc::StaticOffset) {
         needUpdate |= (element.Offset != offset);
         u32& dynOffset = _dynamicData.LockExclusive()->DynamicOffsets()[resource.DynamicOffsetIndex + elementIndex];
-        dynOffset = static_cast<u32>((dynOffset + element.Offset - offset) & 0xFFFFFFFFull);
+        dynOffset = static_cast<u32>((dynOffset + element.Offset - offset) & 0xFFFFFFFF_size_t);
         element.Offset = offset;
     }
 
@@ -445,6 +445,8 @@ FPipelineResources& FPipelineResources::BindRayTracingScene(const FUniformID& id
 
     auto& element = resource.Elements[elementIndex];
     needUpdate |= (element.SceneId != scene);
+
+    element.SceneId = scene;
 
     if (needUpdate)
         ResetCachedId_();

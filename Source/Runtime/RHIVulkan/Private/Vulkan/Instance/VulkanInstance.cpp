@@ -419,6 +419,7 @@ static void CreateDebugUtilsMessengerIFP_(
                 case VK_OBJECT_TYPE_PERFORMANCE_CONFIGURATION_INTEL: objectTypeName = L"PERFORMANCE_CONFIGURATION_INTEL"; break;
                 case VK_OBJECT_TYPE_DEFERRED_OPERATION_KHR: objectTypeName = L"DEFERRED_OPERATION_KHR"; break;
                 case VK_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NV: objectTypeName = L"INDIRECT_COMMANDS_LAYOUT_NV"; break;
+                case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV: objectTypeName = L"ACCELERATION_STRUCTURE_NV"; break;
                 default:
                     AssertNotImplemented();
                 }

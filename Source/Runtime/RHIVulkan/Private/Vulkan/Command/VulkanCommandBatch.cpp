@@ -468,6 +468,7 @@ void FVulkanCommandBatch::ReleaseVulkanObjects_(const FVulkanDevice& device, FIn
         case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION: device.vkDestroySamplerYcbcrConversion(vkDevice, it.second.Cast<VkSamplerYcbcrConversion>(), pAllocator); break;
         case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE: device.vkDestroyDescriptorUpdateTemplate(vkDevice, it.second.Cast<VkDescriptorUpdateTemplate>(), pAllocator); break;
         case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR: device.vkDestroyAccelerationStructureKHR(vkDevice, it.second.Cast<VkAccelerationStructureKHR>(), pAllocator); break;
+        case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV: device.vkDestroyAccelerationStructureNV(vkDevice, it.second.Cast<VkAccelerationStructureNV>(), pAllocator); break;
 
         default: AssertNotImplemented();
         }

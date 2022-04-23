@@ -29,13 +29,13 @@ bool FVulkanRayTracingLocalGeometry::Construct(const FVulkanRayTracingGeometry* 
 //----------------------------------------------------------------------------
 void FVulkanRayTracingLocalGeometry::TearDown() {
     Assert(_rtGeometry);
-    Assert(_pendingAccesses.Valid());
-    Assert(_accessForReadWrite.Valid());
+    Assert(not _pendingAccesses.Valid()); // check for uncommitted barriers
+    Assert(not _accessForReadWrite.Valid());
 
     _rtGeometry = nullptr;
 
     _pendingAccesses = Default;
-    _pendingAccesses = Default;
+    _accessForReadWrite = Default;
 }
 //----------------------------------------------------------------------------
 void FVulkanRayTracingLocalGeometry::AddPendingState(const FGeometryState& state) const {

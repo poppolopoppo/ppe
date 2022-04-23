@@ -288,7 +288,7 @@ void FVulkanDescriptorSetLayout::AddUniform_(FBindings* pBinding, FInternalPool&
         arraySize );
 
     BindDescriptor_(pBinding, pool,
-        VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+        VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV,
         bindingIndex, arraySize, stageFlags);
 }
 //----------------------------------------------------------------------------

@@ -129,9 +129,6 @@ public:
     #ifdef VK_NV_shader_image_footprint
         VkPhysicalDeviceShaderImageFootprintFeaturesNV ShaderImageFootprintFeatures;
     #endif
-    #ifdef VK_NV_ray_tracing
-        VkPhysicalDeviceRayTracingPropertiesNV RayTracingNVProperties;
-    #endif
     #ifdef VK_KHR_timeline_semaphore
         VkPhysicalDeviceTimelineSemaphorePropertiesKHR TimelineSemaphoreProperties;
     #endif
