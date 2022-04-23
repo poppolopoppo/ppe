@@ -48,13 +48,14 @@ struct FResourceHandle {
         std::swap(lhs.Packed, rhs.Packed);
     }
 };
-
+//----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FResourceHandle);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
+// TNamedId<> computes a hashed id based on an input string, which can be optimized out
 template <u32 _Uid, bool _KeepName>
 struct TNamedId {
     STATIC_CONST_INTEGRAL(u32, StringCapacity, 32);
@@ -225,6 +226,7 @@ struct TResourceWrappedId<TResourceId<_Uid>> {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// FResourceHandle can be used as a polymorphic resource id
 template <typename _Visitor>
 CONSTEXPR auto FResourceHandle::Visit(_Visitor&& visitor) const NOEXCEPT {
     switch (Uid) {
@@ -252,11 +254,32 @@ CONSTEXPR auto FResourceHandle::Visit(_Visitor&& visitor) const NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// String literal user operator for declaring TNamedId<>
+#define PPE_RHI_RESOURCEID_USERLITERAL_DECL(_TYPE, _ALIAS) \
+    CONSTEXPR _TYPE operator "" CONCAT(_, _ALIAS)(const char* str, size_t len) { \
+        return { FStringView(str, len) }; \
+    }
+//----------------------------------------------------------------------------
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FUniformID, uniform)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FPushConstantID, pushconstant)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FDescriptorSetID, descriptorset)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FSpecializationID, specialization)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FVertexID, vertex)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FVertexBufferID, vertexbuffer)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FMemPoolID, mempool)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FRTShaderID, rtshader)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FGeometryID, geometry)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(FInstanceID, instance)
+//----------------------------------------------------------------------------
+#undef PPE_RHI_RESOURCEID_USERLITERAL_DECL
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
 #define PPE_RHI_TEXTWRITEROPERATOR_DECL(_TYPE) \
-PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, const _TYPE& value); \
-PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, const _TYPE& value);
+    PPE_RHI_API FTextWriter& operator <<(FTextWriter& oss, const _TYPE& value); \
+    PPE_RHI_API FWTextWriter& operator <<(FWTextWriter& oss, const _TYPE& value);
 //----------------------------------------------------------------------------
 PPE_RHI_TEXTWRITEROPERATOR_DECL(FUniformID)
 PPE_RHI_TEXTWRITEROPERATOR_DECL(FPushConstantID)
