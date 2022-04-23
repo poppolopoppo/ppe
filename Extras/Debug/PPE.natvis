@@ -21,6 +21,14 @@
 			<Item Name="[Description]">Code,hr</Item>
 		</Expand>
 	</Type>
+	<Type Name="PPE::TCheckedArrayIterator&lt;*&gt;">
+		<DisplayString Condition="_Myindex &lt; _Mysize">{_Myarray[_Myindex]}</DisplayString>
+		<Expand>
+			<Item Name="[Index]">_Myindex</Item>
+			<Item Name="[Value]">_Myarray[_Myindex]</Item>
+			<Item Name="[Array]">_Myarray,[_Mysize]</Item>
+		</Expand>
+	</Type>
 <!-- #TODO : TFunction was refactored
   <Type Name="PPE::Meta::TFunction&lt;*&gt;">
     <DisplayString Condition="_func == nullptr">none</DisplayString>
