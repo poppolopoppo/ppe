@@ -98,7 +98,9 @@ struct TBasicConstChar {
         other.Data = tmp;
     }
 
-    CONSTEXPR TBasicStringView<_Char> MakeView() const NOEXCEPT { return TBasicStringView<_Char>(Data, Length(Data)); }
+    CONSTEXPR TBasicStringView<_Char> MakeView() const NOEXCEPT {
+        return TBasicStringView<_Char>(Data, Data ? Length(Data) : 0);
+    }
 
     CONSTEXPR inline friend bool operator ==(const TBasicConstChar& lhs, const TBasicConstChar& rhs) NOEXCEPT { return lhs.Equals(rhs); }
     CONSTEXPR inline friend bool operator !=(const TBasicConstChar& lhs, const TBasicConstChar& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
