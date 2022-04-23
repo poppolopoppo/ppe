@@ -1275,7 +1275,7 @@ FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDebugDescriptorSetLayout
     sbUniform.StageFlags = debuggableShaders;
     sbUniform.Index = FBindingIndex{ UMax, 0 };
 
-    FPipelineDesc::PUniformMap uniforms;
+    FPipelineDesc::PUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
     uniforms->Emplace_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, sbUniform);
 
     const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(uniforms, debugName);
@@ -1310,7 +1310,7 @@ FRawPipelineLayoutID FVulkanResourceManager::CreateDebugPipelineLayout(
     for (const auto& src : originReadable->DescriptorSets) {
         Assert_NoAssume(src.second.Index != DebugDescriptorSet);
 
-        auto& dsLayout = dsPool.Value(checked_cast<FIndex>(src.second.Index));
+        auto& dsLayout = dsPool.Value(src.second.Id.Index);
         dsLayout.AddRef();
 
         FPipelineDesc::FDescriptorSet dst;

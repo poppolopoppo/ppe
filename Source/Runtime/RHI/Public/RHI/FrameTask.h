@@ -131,7 +131,7 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
     FDispatchCompute& SetLocalSize(u32 x, u32 y, u32 z) { return SetLocalSize(uint3(x, y, z)); }
     FDispatchCompute& SetLocalSize(const uint3& count) { LocalGroupSize = count; return (*this); }
 
-    template <typename T>
+    template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
     FDispatchCompute& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
     FDispatchCompute& AddPushConstant(const FPushConstantID& id, const void* p, size_t size) { PushConstants.Push(id, p, size); return (*this); }
 
@@ -149,12 +149,20 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
 
 #if USE_PPE_RHIDEBUG
     FDispatchCompute& EnableShaderDebugTrace() { return EnableShaderDebugTrace(uint3(~0u)); }
-    FDispatchCompute& EnableShaderDebugTrace(const uint3& globalId);
+    FDispatchCompute& EnableShaderDebugTrace(const uint3& globalId) {
+        DebugMode.Mode = EShaderDebugMode::Trace;
+        DebugMode.GlobalId = globalId;
+        return (*this);
+    }
 #endif
 
 #if USE_PPE_RHIDEBUG
     FDispatchCompute& EnableShaderProfiling() { return EnableShaderProfiling(uint3(~0u)); }
-    FDispatchCompute& EnableShaderProfiling(const uint3& globalId);
+    FDispatchCompute& EnableShaderProfiling(const uint3& globalId) {
+        DebugMode.Mode = EShaderDebugMode::Profiling;
+        DebugMode.GlobalId = globalId;
+        return (*this);
+    }
 #endif
 };
 //----------------------------------------------------------------------------
@@ -201,7 +209,7 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 
     FDispatchComputeIndirect& Dispatch(size_t offset) { Emplace_Back(Commands, offset); return (*this); }
 
-    template <typename T>
+    template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
     FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
     FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const void* p, size_t size) { PushConstants.Push(id, p, size); return (*this); }
 
@@ -214,12 +222,20 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 
 #if USE_PPE_RHIDEBUG
     FDispatchComputeIndirect& EnableShaderDebugTrace() { return EnableShaderDebugTrace(uint3(~0u)); }
-    FDispatchComputeIndirect& EnableShaderDebugTrace(const uint3& globalId);
+    FDispatchComputeIndirect& EnableShaderDebugTrace(const uint3& globalId) {
+        DebugMode.Mode = EShaderDebugMode::Trace;
+        DebugMode.GlobalId = globalId;
+        return (*this);
+    }
 #endif
 
 #if USE_PPE_RHIDEBUG
     FDispatchComputeIndirect& EnableShaderProfiling() { return EnableShaderProfiling(uint3(~0u)); }
-    FDispatchComputeIndirect& EnableShaderProfiling(const uint3& globalId);
+    FDispatchComputeIndirect& EnableShaderProfiling(const uint3& globalId) {
+        DebugMode.Mode = EShaderDebugMode::Profiling;
+        DebugMode.GlobalId = globalId;
+        return (*this);
+    }
 #endif
 };
 //----------------------------------------------------------------------------

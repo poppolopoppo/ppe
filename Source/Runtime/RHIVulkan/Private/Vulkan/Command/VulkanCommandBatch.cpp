@@ -680,11 +680,10 @@ void FVulkanCommandBatch::BeginShaderDebugger_(VkCommandBuffer cmd) {
         const u32 size = resources.DebugShaderStorageSize(dbg.Stages, dbg.Mode);
         Assert_NoAssume( size <= sizeof(dbg.Payload) );
 
-        dbg.Payload = uint4(Meta::ForceInit);
         device.vkCmdUpdateBuffer( cmd, buf, static_cast<VkDeviceSize>(dbg.Offset), static_cast<VkDeviceSize>(size), &dbg.Payload );
     }
 
-    addBarriers(VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, 0);
+    addBarriers(VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, 0);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -902,14 +901,25 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
         case EShaderStages::Geometry: stages |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT; break;
         case EShaderStages::Fragment: stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT; break;
         case EShaderStages::Compute: stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; break;
+
+#ifdef VK_NV_mesh_shader
         case EShaderStages::MeshTask: stages |= VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV; break;
         case EShaderStages::Mesh: stages |= VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV; break;
+#else
+        case EShaderStages::MeshTask:
+        case EShaderStages::Mesh: break;
+#endif
+
         case EShaderStages::RayGen:
         case EShaderStages::RayAnyHit:
         case EShaderStages::RayClosestHit:
         case EShaderStages::RayMiss:
         case EShaderStages::RayIntersection:
-        case EShaderStages::RayCallable: stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR; break;
+        case EShaderStages::RayCallable:
+#ifdef VK_NV_ray_tracing
+            stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+#endif
+            break;
         default: AssertNotImplemented();
         }
     }
@@ -945,7 +955,8 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
 
         sb.ReadBackBuffer = _frameGraph->CreateBuffer(
             FBufferDesc{ sb.Capacity, EBufferUsage::TransferDst },
-            Default, "DebugOutputReadBack" );
+            FMemoryDesc{ EMemoryType::HostRead },
+            "DebugOutputReadBack" );
         LOG_CHECK( RHI, sb.ReadBackBuffer );
 
         _shaderDebugger.Buffers.push_back(std::move(sb));

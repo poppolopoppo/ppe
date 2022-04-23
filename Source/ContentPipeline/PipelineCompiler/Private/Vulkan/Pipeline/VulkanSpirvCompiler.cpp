@@ -424,7 +424,7 @@ bool FVulkanSpirvCompiler::Compile(
 
             PShaderBinaryData debugShader{
                 NEW_REF(PipelineCompiler, FVulkanDebuggableShaderSPIRV,
-                    entry.MakeView(), std::move(debugSpirv), debugFingerprint ARGS_IF_RHIDEBUG(debugName.MakeView()) ) };
+                    entry.MakeView(), std::move(debugSpirv), debugFingerprint, debugName.MakeView(), std::move(debugUtils))};
 
             outShader->AddShader(dstShaderFormat | mode, FShaderDataVariant{ std::move(debugShader) });
         }
@@ -506,7 +506,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_1;
             break;
         case 120:
-            clientVersion = EShTargetVulkan_1_2;
+            clientVersion = EShTargetVulkan_1_1; // #TODO: EShTargetVulkan_1_2;
             targetVersion = EShTargetSpv_1_4;
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_1_SPIRV_1_4;
             break;
@@ -1319,6 +1319,8 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
     FPipelineDesc::FUniformMap& uniforms = *descriptorSet.Uniforms;
 
     const auto insertUniform = [&](FUniformID&& uniformId, auto&& resource) {
+        Assert(!!uniformId);
+
         FPipelineDesc::FVariantUniform un;
         un.Index = ToBindingIndex_(ctx, (qualifier.hasBinding()
             ? checked_cast<u32>(qualifier.layoutBinding)
@@ -1430,19 +1432,17 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
         return true;
     }
 
-    // uniform
-    if (qualifier.storage == TStorageQualifier::EvqUniform) {
-        LOG(PipelineCompiler, Error, L"uniform is not supported for Vulkan!");
-        return false;
-    }
-
-    // #TODO
     if (qualifier.storage == TStorageQualifier::EvqPayload or
         qualifier.storage == TStorageQualifier::EvqPayloadIn or
         qualifier.storage == TStorageQualifier::EvqHitAttr or
         qualifier.storage == TStorageQualifier::EvqCallableData or
         qualifier.storage == TStorageQualifier::EvqCallableDataIn ) {
-        LOG(PipelineCompiler, Error, L"#TODO: support is still back for this type!");
+        return true; // #TODO
+    }
+
+    // uniform
+    if (qualifier.storage == TStorageQualifier::EvqUniform) {
+        LOG(PipelineCompiler, Error, L"uniform is not supported for Vulkan!");
         return false;
     }
 
