@@ -97,7 +97,7 @@ auto TScalarMatrix<T, _Width, _Height>::Column() const -> column_type {
     STATIC_ASSERT(_Idx < _Width);
     column_type result;
     for (size_t j = 0; j < _Height; ++j)
-        result._data[j] = at_(_Idx, j);
+        result[j] = at_(_Idx, j);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -106,7 +106,7 @@ auto TScalarMatrix<T, _Width, _Height>::Column(size_t i) const -> column_type {
     Assert(i < _Width);
     column_type result;
     for (size_t j = 0; j < _Height; ++j)
-        result._data[j] = at_(i, j);
+        result[j] = at_(i, j);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ template <typename T, size_t _Width, size_t _Height>
 void TScalarMatrix<T, _Width, _Height>::SetColumn(size_t i, const column_type& v) {
     Assert(i < _Width);
     for (size_t j = 0; j < _Height; ++j)
-        at_(i, j) = v._data[j];
+        at_(i, j) = v[j];
 }
 #else
 // benefits from memory layout
@@ -159,10 +159,9 @@ template <typename T, size_t _Width, size_t _Height>
 template <size_t _Idx>
 auto TScalarMatrix<T, _Width, _Height>::Row() const -> row_type {
     STATIC_ASSERT(_Idx < _Height);
-    row_type result;
-    for (size_t i = 0; i < _Width; ++i)
-        result._data[i] = at_(i, _Idx);
-    return result;
+    return Meta::static_for<_Width>([&](auto... w) NOEXCEPT {
+        return row_type{ at_(w, _Idx)... };
+    });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -170,7 +169,7 @@ auto TScalarMatrix<T, _Width, _Height>::Row(size_t j) const -> row_type {
     Assert(j < _Height);
     row_type result;
     for (size_t i = 0; i < _Width; ++i)
-        result._data[i] = at_(i, j);
+        result[i] = at_(i, j);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -178,7 +177,7 @@ template <typename T, size_t _Width, size_t _Height>
 void TScalarMatrix<T, _Width, _Height>::SetRow(size_t j, const row_type& v) {
     Assert(j < _Height);
     for (size_t i = 0; i < _Width; ++i)
-        at_(i, j) = v._data[i];
+        at_(i, j) = v[i];
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -186,7 +185,7 @@ TScalarVector<T, _Width> TScalarMatrix<T, _Width, _Height>::Diagonal() const {
     STATIC_ASSERT(_Width == _Height);
     TScalarVector<T, _Width> result;
     for (size_t i = 0; i < _Width; ++i)
-        result._data[i] = at_(i, i);
+        result[i] = at_(i, i);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -194,7 +193,7 @@ template <typename T, size_t _Width, size_t _Height>
 void TScalarMatrix<T, _Width, _Height>::SetDiagonal(const TScalarVector<T, _Width>& v) {
     STATIC_ASSERT(_Width == _Height);
     for (size_t i = 0; i < _Width; ++i)
-        at_(i, i) = v._data[i];
+        at_(i, i) = v[i];
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
