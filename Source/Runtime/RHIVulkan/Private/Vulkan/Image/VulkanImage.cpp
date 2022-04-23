@@ -22,13 +22,11 @@ NODISCARD static VkImageAspectFlagBits ChooseAspect_(EPixelFormat fmt) {
     if (EPixelFormat_IsColor(fmt)) {
         result |= VK_IMAGE_ASPECT_COLOR_BIT;
     }
-    else
-    if (EPixelFormat_IsDepth(fmt)) {
-        result |= VK_IMAGE_ASPECT_DEPTH_BIT;
-    }
-    else
-    if (EPixelFormat_IsStencil(fmt)) {
-        result |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    else {
+        if (EPixelFormat_HasDepth(fmt))
+            result |= VK_IMAGE_ASPECT_DEPTH_BIT;
+        if (EPixelFormat_HasStencil(fmt))
+            result |= VK_IMAGE_ASPECT_STENCIL_BIT;
     }
 
     return result;
@@ -355,6 +353,12 @@ VkImageView FVulkanImage::MakeView(const FVulkanDevice& device, const FImageView
     return it->second;
 }
 //----------------------------------------------------------------------------
+VkImageView FVulkanImage::MakeView(const FVulkanDevice& device, FImageViewDesc& desc) const {
+    desc.Validate(_data.LockShared()->Desc);
+
+    return MakeView(device, Memoize(desc));
+}
+//----------------------------------------------------------------------------
 VkImageView FVulkanImage::MakeView(const FVulkanDevice& device, Meta::TOptional<FImageViewDesc>& desc) const {
     if (not desc.has_value())
         desc = FImageViewDesc{ _data.LockShared()->Desc };
@@ -415,6 +419,7 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageDesc& de
             case EImageUsage::ShadingRate:
                 if (not device.Enabled().ShadingRateImageNV)
                     return false;
+                break;
 
             case EImageUsage::_Last:
             case EImageUsage::All:

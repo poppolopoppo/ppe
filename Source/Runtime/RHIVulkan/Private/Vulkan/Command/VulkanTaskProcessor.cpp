@@ -560,14 +560,14 @@ void FVulkanTaskProcessor::AddRenderTargetBarriers_(const FVulkanLogicalRenderPa
 
     if (rp.DepthStencilTarget().Valid()) {
         const auto& rt = rp.DepthStencilTarget();
-        const bool clear = (rt.LoadOp == VK_ATTACHMENT_LOAD_OP_CLEAR);
+        const bool needClear = (rt.LoadOp == VK_ATTACHMENT_LOAD_OP_CLEAR);
 
         EResourceState state = rt.State;
         if (info.EnableEarlyFragmentTests())
             state += EResourceState::EarlyFragmentTests;
         if (info.EnableLateFragmentTests())
             state += EResourceState::LateFragmentTests;
-        if (not (info.EnableDepthWrite() | clear))
+        if (not (info.EnableDepthWrite() || needClear))
             state -= EResourceState::_Write;
 
         rt.Layout = EResourceState_ToImageLayout(state, rt.LocalImage->Read()->AspectMask);
@@ -614,7 +614,7 @@ void FVulkanTaskProcessor::SetShadingRateImage_(VkImageView* pView, const FVulka
     if (not rp.ShadingRateImage(&pLocalImage, &desc))
         return;
 
-    *pView = pLocalImage->MakeView(_workerCmd->Device(), Memoize(desc) );
+    *pView = pLocalImage->MakeView(_workerCmd->Device(), desc);
 
     AddImage_(
         pLocalImage,
@@ -1113,7 +1113,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanSubmitRenderPassTask& task) {
     _isDefaultScissor = false;
     _perPassStatesUpdated = false;
 
-    if (not task.IsSubpass()) {
+    if (Likely(not task.IsSubpass())) {
         ONLY_IF_RHIDEBUG( CmdPushDebugGroup_(task.TaskName(), task.DebugColor()) );
 
         BeginRenderPass_(task);
@@ -1670,7 +1670,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanClearDepthStencilImageTask& task) 
     ranges.Resize(task.Ranges.size());
 
     forrange(i, 0, ranges.size()) {
-        const FClearColorImage::FRange& src = task.Ranges[i];
+        const FClearDepthStencilImage::FRange& src = task.Ranges[i];
 
         VkImageSubresourceRange& dst = ranges[i];
         dst.aspectMask = VkCast(src.AspectMask, dstImage->PixelFormat());

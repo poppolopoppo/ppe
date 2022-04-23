@@ -72,6 +72,7 @@ public:
 #endif
 
     VkImageView MakeView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const;
+    VkImageView MakeView(const FVulkanDevice& device, FImageViewDesc& desc) const;
     VkImageView MakeView(const FVulkanDevice& device, Meta::TOptional<FImageViewDesc>& desc) const;
 
     static bool IsSupported(const FVulkanDevice& device, const FImageDesc& desc, EMemoryType memoryType);

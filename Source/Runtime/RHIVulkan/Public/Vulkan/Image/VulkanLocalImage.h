@@ -82,6 +82,9 @@ public:
     VkImageView MakeView(const FVulkanDevice& device, const FImageViewDescMemoized& desc) const {
         return _imageData->MakeView(device, desc);
     }
+    VkImageView MakeView(const FVulkanDevice& device, FImageViewDesc& desc) const {
+        return _imageData->MakeView(device, desc);
+    }
     VkImageView MakeView(const FVulkanDevice& device, Meta::TOptional<FImageViewDesc>& desc) const {
         return _imageData->MakeView(device, desc);
     }

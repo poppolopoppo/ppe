@@ -310,7 +310,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindShadingRateImage(FRawImageID
     desc.AspectMask = EImageAspect::Color;
 
     const VkImageView vkImageView = pImage->MakeView(
-        _processor._workerCmd->Device(), Memoize(desc) );
+        _processor._workerCmd->Device(), desc );
     Assert(VK_NULL_HANDLE != vkImageView);
 
     _processor.BindShadingRateImage_(vkImageView);
