@@ -33,7 +33,7 @@
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
 [submodule "Source/External/glsl_trace/glsl_trace.git"]
 	path = Source/External/glsl_trace/glsl_trace.git
-	url = https://github.com/azhirnov/glsl_trace.git
+	url = https://github.com/poppolopoppo/glsl_trace.git
 [submodule "Source/External/spirv-reflect/SPIRV-Reflect.git"]
 	path = Source/External/spirv-reflect/SPIRV-Reflect.git
 	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
