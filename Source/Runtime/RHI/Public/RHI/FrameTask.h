@@ -573,12 +573,12 @@ struct FClearDepthStencilImage final : details::TFrameTaskDesc<FClearDepthStenci
 
     FClearDepthStencilImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
-    FClearDepthStencilImage& Clear(FDepthValue depth, FStencilValue stencil) { ClearDepth = depth; ClearStencil = stencil; return (*this); }
+    FClearDepthStencilImage& Clear(FDepthValue depth, FStencilValue stencil = FStencilValue(0)) { ClearDepth = depth; ClearStencil = stencil; return (*this); }
 
     FClearDepthStencilImage& AddRange(FMipmapLevel baseMipLevel, u32 levelCount, FImageLayer baseLayer, u32 layerCount) {
         Assert(levelCount > 0);
         Assert(layerCount > 0);
-        Emplace_Back(Ranges, EImageAspect::Color, baseMipLevel, levelCount, baseLayer, layerCount);
+        Emplace_Back(Ranges, EImageAspect::DepthStencil, baseMipLevel, levelCount, baseLayer, layerCount);
         return (*this);
     }
 };
