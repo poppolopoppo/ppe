@@ -40,7 +40,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef bool (*FAssertHandler)(const wchar_t* msg, const wchar_t *file, unsigned line);
+using FAssertionHandler = bool (*)(const wchar_t* msg, const wchar_t* file, unsigned line);
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 //----------------------------------------------------------------------------
@@ -62,7 +62,8 @@ private:
 };
 
 PPE_CORE_API void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
-PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
+PPE_CORE_API FAssertionHandler SetAssertionHandler(FAssertionHandler handler) NOEXCEPT;
+PPE_CORE_API FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHandler handler) NOEXCEPT;
 
 #if WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
 #   define AssertMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))
@@ -85,7 +86,8 @@ PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 #else
 //----------------------------------------------------------------------------
 inline CONSTEXPR void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
-inline CONSTEXPR void SetAssertionHandler(FAssertHandler ) {}
+inline CONSTEXPR FAssertionHandler SetAssertionHandler(FAssertionHandler) { return nullptr; }
+inline CONSTEXPR FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHandler) { return nullptr; }
 
 #   if WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
 #       define AssertMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))
@@ -118,8 +120,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef bool (*FAssertReleaseHandler)(const wchar_t* msg, const wchar_t* file, unsigned line);
-//----------------------------------------------------------------------------
 #if USE_PPE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
 class PPE_CORE_API FAssertReleaseException : public FException {
@@ -140,7 +140,8 @@ private:
 };
 
 PPE_CORE_API void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
-PPE_CORE_API void SetAssertionReleaseHandler(FAssertReleaseHandler handler);
+PPE_CORE_API FAssertionHandler SetAssertionReleaseHandler(FAssertionHandler handler) NOEXCEPT;
+PPE_CORE_API FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FAssertionHandler handler) NOEXCEPT;
 
 NORETURN inline void PPE_DEBUG_SECTION AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
     AssertionReleaseFailed(msg, file, line);
@@ -166,7 +167,8 @@ NORETURN inline void PPE_DEBUG_SECTION AssertionReleaseFailed_NoReturn(const wch
 //----------------------------------------------------------------------------
 inline CONSTEXPR void AssertionReleaseFailed(const wchar_t*, const wchar_t*, unsigned ) {}
 NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t*, const wchar_t*, unsigned ) { abort(); }
-inline CONSTEXPR void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
+inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandler(FAssertionHandler) { return nullptr; }
+inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FAssertionHandler) { return nullptr; }
 
 #   if WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
 #       define AssertReleaseMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))

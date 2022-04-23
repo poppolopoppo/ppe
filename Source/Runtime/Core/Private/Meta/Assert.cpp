@@ -10,6 +10,7 @@
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformDebug.h"
 #include "HAL/PlatformDialog.h"
+#include "HAL/PlatformProcess.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 
@@ -108,7 +109,8 @@ static bool PPE_DEBUG_SECTION DefaultDebugAssertHandler_(const wchar_t* msg, con
     return false; // debug assertions are ignored by default
 }
 //----------------------------------------------------------------------------
-static std::atomic<FAssertHandler> GAssertionHandler{ &DefaultDebugAssertHandler_ };
+static std::atomic<FAssertionHandler> GAssertionHandler{ &DefaultDebugAssertHandler_ };
+static THREAD_LOCAL FAssertionHandler GAssertionHandlerForCurrentThread{ nullptr };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -144,7 +146,12 @@ NO_INLINE void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar
     GIsInAssertion = true;
 
     bool failure = false;
-    if (FAssertHandler const handler = GAssertionHandler.load())
+
+    FAssertionHandler handler{ GAssertionHandlerForCurrentThread };
+    if (Likely(nullptr == handler))
+        handler = GAssertionHandler.load();
+
+    if (Likely(!!handler))
         failure = (*handler)(msg, file, line);
 
     GIsInAssertion = false;
@@ -153,8 +160,19 @@ NO_INLINE void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar
         PPE_THROW_IT(FAssertException("Assert debug failed !", file, line));
 }
 //----------------------------------------------------------------------------
-void SetAssertionHandler(FAssertHandler handler) {
-    GAssertionHandler.store(handler);
+FAssertionHandler SetAssertionHandler(FAssertionHandler handler) NOEXCEPT {
+    FAssertionHandler previous = GAssertionHandler.load(std::memory_order_relaxed);
+    for (i32 backoff = 0;;) {
+        if (GAssertionHandler.compare_exchange_weak(previous, handler, std::memory_order_release, std::memory_order_relaxed))
+            return previous;
+
+        FPlatformProcess::SleepForSpinning(backoff);
+    }
+}
+//----------------------------------------------------------------------------
+FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHandler handler) NOEXCEPT {
+    std::swap(handler, GAssertionHandlerForCurrentThread);
+    return handler;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -204,7 +222,8 @@ static bool PPE_DEBUG_SECTION DefaultReleaseAssertHandler_(const wchar_t* msg, c
     return true; // release assertions emit errors by default
 }
 //----------------------------------------------------------------------------
-static std::atomic<FAssertReleaseHandler> GAssertionReleaseHandler{ &DefaultReleaseAssertHandler_ };
+static std::atomic<FAssertionHandler> GAssertionReleaseHandler{ &DefaultReleaseAssertHandler_ };
+static THREAD_LOCAL FAssertionHandler GAssertionReleaseHandlerForCurrentThread{ nullptr };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -240,7 +259,12 @@ NO_INLINE void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, cons
     GIsInAssertion = true;
 
     bool failure = true; // AssertRelease() fails by default
-    if (FAssertReleaseHandler const handler = GAssertionReleaseHandler.load())
+
+    FAssertionHandler handler{ GAssertionReleaseHandlerForCurrentThread };
+    if (Likely(nullptr == handler))
+        handler = GAssertionReleaseHandler.load();
+
+    if (Likely(!!handler))
         failure = (*handler)(msg, file, line);
 
     GIsInAssertion = false;
@@ -249,8 +273,19 @@ NO_INLINE void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, cons
         PPE_THROW_IT(FAssertReleaseException("Assert release failed !", file, line));
 }
 //----------------------------------------------------------------------------
-void SetAssertionReleaseHandler(FAssertReleaseHandler handler) {
-    GAssertionReleaseHandler.store(handler);
+FAssertionHandler SetAssertionReleaseHandler(FAssertionHandler handler) NOEXCEPT {
+    FAssertionHandler previous = GAssertionReleaseHandler.load(std::memory_order_relaxed);
+    for (i32 backoff = 0;;) {
+        if (GAssertionReleaseHandler.compare_exchange_weak(previous, handler, std::memory_order_release, std::memory_order_relaxed))
+            return previous;
+
+        FPlatformProcess::SleepForSpinning(backoff);
+    }
+}
+//----------------------------------------------------------------------------
+FAssertionHandler SetAssertionReleaseHandlerForCurrentThrad(FAssertionHandler handler) NOEXCEPT {
+    std::swap(handler, GAssertionReleaseHandlerForCurrentThread);
+    return handler;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -98,7 +98,7 @@ FCurrentProcess::FCurrentProcess(
 
 #if !USE_PPE_FINAL_RELEASE
     if (HasArgument(L"-AbortOnAssert")) {
-        const FAssertHandler abortHandler = [](const wchar_t*, const wchar_t*, unsigned) -> bool { abort(); };
+        const FAssertionHandler abortHandler = [](const wchar_t*, const wchar_t*, unsigned) -> bool { PPE_DEBUG_CRASH(), ::abort(); };
         SetAssertionHandler(abortHandler);
         SetAssertionReleaseHandler(abortHandler);
     }
