@@ -84,7 +84,7 @@ struct FImageSubresourceRange {
         FMipmapLevel mipLevel,
         FImageLayer baseLayer = Default,
         u32 layerCount = 1,
-        EImageAspect aspectMask = EImageAspect::Auto)
+        EImageAspect aspectMask = EImageAspect::Auto) NOEXCEPT
     :   AspectMask(aspectMask)
     ,   MipLevel(mipLevel)
     ,   BaseLayer(baseLayer)
@@ -99,7 +99,7 @@ struct FPushConstantData {
     u8 Data[MaxPushConstantsSize];
 
     FPushConstantData() = default;
-    FPushConstantData(const FPushConstantID& id, const void* p, size_t size)
+    FPushConstantData(const FPushConstantID& id, const void* p, size_t size) NOEXCEPT
     :   Id(id), Size(checked_cast<u16>(size)) {
         Assert(Id);
         Assert(p);

@@ -8,6 +8,7 @@
 #include "Vulkan/Pipeline/VulkanShaderModule.h"
 
 #include "Diagnostic/Logger.h"
+#include "Meta/Algorithm.h"
 
 namespace PPE {
 namespace RHI {
@@ -525,7 +526,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         pipelineInfo.stage.pName = sh.Module->EntryPoint();
         break;
     }
-    AssertRelease( pipelineInfo.stage.module );
+    LOG_CHECK(RHI, VK_NULL_HANDLE != pipelineInfo.stage.module);
 
     AddLocalGroupSizeSpecialization_(
         &_transientSpecializationEntries, &_transientSpecializationDatas,
@@ -1140,6 +1141,7 @@ bool FVulkanPipelineCache::SetShaderStages_(
 
     for (const FShaderModule& sh : shaders) {
         Assert(sh.Module);
+        Assert(sh.Stage);
 
 #if USE_PPE_RHIDEBUG
         existingStages |= sh.Stage;

@@ -148,10 +148,8 @@ TVulkanFrameTask<FCopyBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const
 ,   SrcBuffer(cmd.ToLocal(desc.SrcBuffer))
 ,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
 ,   Regions(desc.Regions) {
-    Assert_NoAssume(SrcBuffer);
-    Assert_NoAssume(SrcBuffer->Read()->Desc.Usage & EBufferUsage::TransferSrc);
-    Assert_NoAssume(DstBuffer);
-    Assert_NoAssume(DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
+    Assert_NoAssume(SrcBuffer and SrcBuffer->Read()->Desc.Usage & EBufferUsage::TransferSrc);
+    Assert_NoAssume(DstBuffer and DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FCopyImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImage& desc, FProcessFunc process)
@@ -161,10 +159,8 @@ TVulkanFrameTask<FCopyImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const 
 ,   DstImage(cmd.ToLocal(desc.DstImage))
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 ,   Regions(desc.Regions) {
-    Assert_NoAssume(SrcImage);
-    Assert_NoAssume(SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
-    Assert_NoAssume(DstImage);
-    Assert_NoAssume(DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
+    Assert_NoAssume(SrcImage and SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
+    Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FCopyBufferToImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBufferToImage& desc, FProcessFunc process)
@@ -173,10 +169,8 @@ TVulkanFrameTask<FCopyBufferToImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd
 ,   DstImage(cmd.ToLocal(desc.DstImage))
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 ,   Regions(desc.Regions) {
-    Assert_NoAssume(SrcBuffer);
-    Assert_NoAssume(SrcBuffer->Read()->Desc.Usage & EBufferUsage::TransferSrc);
-    Assert_NoAssume(DstImage);
-    Assert_NoAssume(DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
+    Assert_NoAssume(SrcBuffer and SrcBuffer->Read()->Desc.Usage & EBufferUsage::TransferSrc);
+    Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FCopyImageToBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImageToBuffer& desc, FProcessFunc process)
@@ -185,10 +179,8 @@ TVulkanFrameTask<FCopyImageToBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd
 ,   SrcLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
 ,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
 ,   Regions(desc.Regions) {
-    Assert_NoAssume(SrcImage);
-    Assert_NoAssume(SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
-    Assert_NoAssume(DstBuffer);
-    Assert_NoAssume(DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
+    Assert_NoAssume(SrcImage and SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
+    Assert_NoAssume(DstBuffer and DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 // Blit
@@ -201,10 +193,8 @@ TVulkanFrameTask<FBlitImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const 
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 ,   Filter(VkCast(desc.Filter))
 ,   Regions(desc.Regions) {
-    Assert_NoAssume(SrcImage);
-    Assert_NoAssume(SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
-    Assert_NoAssume(DstImage);
-    Assert_NoAssume(DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
+    Assert_NoAssume(SrcImage and SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
+    Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 // GenerateMipMaps
@@ -216,8 +206,7 @@ TVulkanFrameTask<FGenerateMipmaps>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, 
 ,   LevelCount(desc.LevelCount)
 ,   BaseLayer(*desc.BaseLayer)
 ,   LayerCount(desc.LayerCount) {
-    Assert_NoAssume(Image);
-    Assert_NoAssume(Image->Read()->Desc.Usage & (EImageUsage::TransferSrc + EImageUsage::TransferDst));
+    Assert_NoAssume(Image and Image->Read()->Desc.Usage & (EImageUsage::TransferSrc + EImageUsage::TransferDst));
 }
 //----------------------------------------------------------------------------
 // ResolveImage
@@ -229,10 +218,8 @@ TVulkanFrameTask<FResolveImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, con
 ,   DstImage(cmd.ToLocal(desc.DstImage))
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 ,   Regions(desc.Regions) {
-    Assert_NoAssume(SrcImage);
-    Assert_NoAssume(SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
-    Assert_NoAssume(DstImage);
-    Assert_NoAssume(DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
+    Assert_NoAssume(SrcImage and SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
+    Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 // FillBuffer
@@ -243,8 +230,7 @@ TVulkanFrameTask<FFillBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const
 ,   DstOffset(checked_cast<VkDeviceSize>(desc.DstOffset))
 ,   Size(checked_cast<VkDeviceSize>(desc.Size))
 ,   Pattern(desc.Pattern) {
-    Assert_NoAssume(DstBuffer);
-    Assert_NoAssume(DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
+    Assert_NoAssume(DstBuffer and DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 // Clear
@@ -255,8 +241,7 @@ TVulkanFrameTask<FClearColorImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, 
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 ,   Ranges(desc.Ranges)
 ,   ClearValue(VKClearColorValue_(desc.ClearColor)) {
-    Assert_NoAssume(DstImage);
-    Assert_NoAssume(DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
+    Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FClearDepthStencilImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearDepthStencilImage& desc, FProcessFunc process)
@@ -265,8 +250,7 @@ TVulkanFrameTask<FClearDepthStencilImage>::TVulkanFrameTask(FVulkanCommandBuffer
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 ,   Ranges(desc.Ranges)
 ,   ClearValue{ desc.ClearDepth, desc.ClearStencil } {
-    Assert_NoAssume(DstImage);
-    Assert_NoAssume(DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
+    Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
 // UpdateBuffer
@@ -275,8 +259,7 @@ TVulkanFrameTask<FUpdateBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, con
 :   IVulkanFrameTask(desc, process)
 ,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
 ,   Regions(cmd.Allocator().AllocateT<FRegion>(desc.Regions.size())) {
-    Assert_NoAssume(DstBuffer);
-    Assert_NoAssume(DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
+    Assert_NoAssume(DstBuffer and DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 
     forrange(i, 0, checked_cast<u32>(Regions.size())) {
         const FUpdateBuffer::FRegion& src = desc.Regions[i];
@@ -298,8 +281,7 @@ TVulkanFrameTask<FPresent>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FP
 ,   SrcImage(cmd.ToLocal(desc.SrcImage))
 ,   Layer(desc.Layer)
 ,   Mipmap(desc.Mipmap) {
-    Assert_NoAssume(SrcImage);
-    Assert_NoAssume(SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
+    Assert_NoAssume(SrcImage and SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
 }
 //----------------------------------------------------------------------------
 // Custom

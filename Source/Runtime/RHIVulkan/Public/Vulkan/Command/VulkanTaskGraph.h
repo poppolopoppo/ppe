@@ -38,7 +38,9 @@ public:
 private:
     template <typename _Task>
     static void Visitor_(void* visitor, const void* task) {
-        static_cast<_Visitor*>(visitor)->Visit(*static_cast<TVulkanFrameTask<_Task> const*>(task));
+        auto* const pActual = static_cast<TVulkanFrameTask<_Task> const*>(task);
+        if (Ensure(pActual->Valid()))
+            static_cast<_Visitor*>(visitor)->Visit(*pActual);
     }
 
     TInSituPtr<FSearchableNodes> _nodes;

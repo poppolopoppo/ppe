@@ -13,11 +13,24 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+struct TIndexDesc;
+template <typename T>
 CONSTEXPR EIndexFormat IndexAttrib() {
-    IF_CONSTEXPR(std::is_same_v<T, u16>) return EIndexFormat::UShort;
-    IF_CONSTEXPR(std::is_same_v<T, u32>) return EIndexFormat::UInt;
-    AssertNotImplemented();
+    return TIndexDesc<T>::Attrib;
 }
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T, EIndexFormat _Attrib>
+struct TIndexDescImpl {
+    using type = T;
+    STATIC_CONST_INTEGRAL(EIndexFormat, Attrib, _Attrib);
+};
+} //!details
+//----------------------------------------------------------------------------
+template <>
+struct TIndexDesc<u16> : details::TIndexDescImpl<u16, EIndexFormat::UShort> {};
+template <>
+struct TIndexDesc<u32> : details::TIndexDescImpl<u16, EIndexFormat::UInt> {};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
