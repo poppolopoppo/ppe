@@ -96,6 +96,10 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Assign("BaseProjectRebuildCommand", selfExecutable+" fbuild -v -Clean ")
 		bff.Assign("BaseProjectCleanCommand", selfExecutable+" distclean -v ")
 
+		bff.Assign("ProjectPatternToExclude", NewStringSet(
+			"*/.vs/*",
+			"*/.vscode/*"))
+
 		compileEnvs := NewSet[EnvironmentAlias]()
 		moduleUnits := make(map[Module]*BffArray, translatedUnits.Len())
 		for _, x := range translatedUnits.Slice() {
@@ -161,12 +165,49 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			}
 		}
 
+		{ // meta project for build inspection/regen/natvis
+			moduleVcxprojet := "BuildConfig-vcxproject"
+			buildProjects.Append(moduleVcxprojet)
+			solutionFolders["Build"] = &StringSet{moduleVcxprojet}
+
+			bff.Func("VCXProject", func() {
+				sourceFiles := NewFileSet( // #TODO: this is very project specific
+					BFFFILE_DEFAULT,
+					vcx.Output,
+					UFS.Root.File("PPE.go"),
+					UFS.Root.File("README.md"),
+					UFS.Root.File("TODO.md"),
+					UFS.Extras.Folder("Debug").File("PPE.natvis"))
+
+				bff.Assign("ProjectBuildCommand", selfExecutable+" bff -v -and vcxproj -and vscode")
+				bff.Assign("ProjectRebuildCommand", selfExecutable+" bff -v -f -and vcxproj -and vscode")
+				bff.Assign("ProjectCleanCommand", selfExecutable+" distclean -v -F")
+
+				configVars := BffArray{}
+				for _, env := range compileEnvs {
+					configVar := MakeBffVar("BuildConfig-" + env.String())
+					bff.Struct(configVar, func() {
+						bff.Assign("Platform", vcx.solutionPlatform(env.PlatformName))
+						bff.Assign("Config", env.ConfigName)
+					})
+					configVars = append(configVars, configVar)
+				}
+
+				bff.Assign("ProjectBasePath", UFS.Root)
+				bff.Assign("ProjectOutput", UFS.Projects.AbsoluteFolder("BuildConfig").String()+".vcxproj")
+				bff.Assign("ProjectConfigs", configVars)
+				bff.Assign("ProjectInputPaths", NewDirSet(UFS.Build, UFS.Source))
+				bff.Assign("ProjectAllowedFileExtensions", NewStringSet("*.go", "*.bff", "*.json", "*.exe"))
+				bff.Assign("ProjectFiles", sourceFiles)
+			}, moduleVcxprojet)
+		}
+
 		bff.Func("VSSolution", func() {
-			bff.Assign("SolutionVisualStudioVersion", "16")
+			bff.Assign("SolutionVisualStudioVersion", "16") // #TODO: not hard-coding visual studio version
 			bff.Assign("SolutionOutput", UFS.Output.File(CommandEnv.Prefix()+".sln"))
 			bff.Assign("SolutionBuildProject", buildProjects)
 			bff.Assign("SolutionConfigs", MakeBffArray(Map(func(a EnvironmentAlias) interface{} {
-				result := BffVar(SanitizeIdentifier(a.CompileEnvAlias().String()))
+				result := MakeBffVar(a.CompileEnvAlias().String())
 				bff.Struct(result, func() {
 					bff.Assign("Platform", vcx.solutionPlatform(a.PlatformName))
 					bff.Assign("Config", a.ConfigName)
@@ -174,7 +215,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 				return result
 			}, compileEnvs...)...))
 			bff.Assign("SolutionFolders", MakeBffArray(Map(func(namespace string) BffVar {
-				result := BffVar("Folder_" + SanitizeIdentifier(namespace))
+				result := MakeBffVar("Folder_" + namespace)
 				bff.Struct(result, func() {
 					bff.Assign("Path", namespace)
 					bff.Assign("Projects", solutionFolders[namespace])
