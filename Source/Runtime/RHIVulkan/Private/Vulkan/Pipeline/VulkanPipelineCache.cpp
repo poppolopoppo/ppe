@@ -153,8 +153,12 @@ bool FVulkanPipelineCache::SetupShaderDebugging_(
     layoutId = workerCmd.ResourceManager().CreateDebugPipelineLayout(
         layoutId, *pDebugMode, *pDebuggableShaders, FDescriptorSetID{ "dbgStorage" });
 
-    Assert_NoAssume(layoutId.Valid());
-    return true;
+    if (layoutId.Valid()) {
+        workerCmd.ReleaseResource(layoutId);
+        return true;
+    }
+
+    return false;
 }
 #endif
 //----------------------------------------------------------------------------
