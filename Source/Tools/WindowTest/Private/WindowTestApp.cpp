@@ -94,6 +94,8 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
         size_t testIndex = 0;
         size_t testSucceed = 0;
+        size_t testInvocation = 0;
+
         const size_t testCount = lengthof(unitTests);
 
         FThreefy_4x32 rng{};
@@ -101,12 +103,12 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
         forrange(loop, 0, 100) {
             testIndex = 0;
-            testSucceed = 0;
 
             LOG(WindowTest, Info, L"-==================- [LOOP:{0:#4}] -==================-", loop);
 
             for (const auto& test : unitTests) {
                 ++testIndex;
+                ++testInvocation;
 
                 if (launchTest(test.Name, test.Callback)) {
                     ++testSucceed;
@@ -118,6 +120,8 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
                 }
 
                 app.Window().SetTaskbarProgress(testIndex, testCount);
+
+                Unused(app.PumpMessages());
             }
 
             FLUSH_LOG();
@@ -130,12 +134,12 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
         if (testSucceed == testCount) {
             app.Window().NotifySystrayInfo(
-                StringFormat(L"all {0} tests passed", testCount),
+                StringFormat(L"all {0} tests passed", testInvocation),
                 L"finished unit testing");
         }
         else {
             app.Window().NotifySystrayWarning(
-                StringFormat(L"{0} / {1} tests passed", testSucceed, testCount),
+                StringFormat(L"{0} / {1} tests passed", testSucceed, testInvocation),
                 L"finished unit testing");
         }
     }
