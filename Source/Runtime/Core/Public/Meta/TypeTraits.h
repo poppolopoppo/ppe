@@ -506,8 +506,8 @@ CONSTEXPR T& DerefPtr(T* ptr) {
 template <typename... _Args>
 FORCE_INLINE CONSTEXPR void Unused(_Args&& ...) NOEXCEPT {}
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-CONSTEXPR size_t lengthof(const T (&)[_Dim]) { return _Dim; }
+template <typename T, u32 _Dim>
+CONSTEXPR u32 lengthof(const T (&)[_Dim]) { return _Dim; }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

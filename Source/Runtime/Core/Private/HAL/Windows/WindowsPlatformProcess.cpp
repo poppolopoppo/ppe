@@ -546,7 +546,7 @@ bool FWindowsPlatformProcess::Name(FString* pName, FProcessHandle process) {
     Assert(pName);
 
     char buffer[MAX_PATH + 1];
-    ::DWORD len = lengthof(buffer);
+    ::DWORD len = static_cast<::DWORD>(lengthof(buffer));
 
 #if WINVER == 0x0502
     if ((len = ::GetProcessImageFileNameA(process, buffer, len)) != 0) {

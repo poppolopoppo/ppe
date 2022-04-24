@@ -116,11 +116,11 @@ static bool WindowsStorageInfo_(const wchar_t* path, FWindowsPlatformSurvey::FSt
     ::DWORD filesystemFlags = 0;
     if (not ::GetVolumeInformationW(
         path,
-        volumeName, lengthof(volumeName),
+        volumeName, static_cast<::DWORD>(lengthof(volumeName)),
         &serialNumber,
         &maximumComponentLength,
         &filesystemFlags,
-        filesystemName, lengthof(filesystemName)) ) {
+        filesystemName, static_cast<::DWORD>(lengthof(filesystemName))) ) {
         LOG_LASTERROR(Survey, L"GetVolumeInformationW");
         return false;
     }
@@ -317,7 +317,7 @@ bool FWindowsPlatformSurvey::StorageFromPath(const FWStringView& path, FStorageI
 
     const FWString cpath(path); // null terminated
     wchar_t fullname[MAX_PATH + 1];
-    if (0 == ::GetFullPathNameW(cpath.data(), lengthof(fullname), fullname, NULL)) {
+    if (0 == ::GetFullPathNameW(cpath.data(), static_cast<::DWORD>(lengthof(fullname)), fullname, NULL)) {
         LOG_LASTERROR(Survey, L"GetFullPathNameW");
         return false;
     }
@@ -330,7 +330,7 @@ bool FWindowsPlatformSurvey::StorageInfos(FStorageInfos* storages) {
     Assert(storages->empty());
 
     wchar_t drivePaths[1024];
-    const ::DWORD bufferSize = ::GetLogicalDriveStringsW(lengthof(drivePaths) - 1, drivePaths);
+    const ::DWORD bufferSize = ::GetLogicalDriveStringsW(static_cast<::DWORD>(lengthof(drivePaths)) - 1, drivePaths);
 
     FStorageInfo storage;
     const wchar_t* const driveBegin = drivePaths;

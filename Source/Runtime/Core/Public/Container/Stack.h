@@ -455,6 +455,7 @@ inline void* operator new(size_t sizeInBytes, PPE::TStack<T, _IsPod>& stack) {
 }
 template <typename T, bool _IsPod>
 inline void operator delete(void* ptr, PPE::TStack<T, _IsPod>& stack) {
+    using namespace PPE;
     Assert_NoAssume(stack.AliasesToContainer(static_cast<T*>(ptr)));
     Unused(ptr);
     Unused(stack);

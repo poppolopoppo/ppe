@@ -473,13 +473,13 @@ bool FWindowsPlatformMisc::ErasePersistentVariable(const char* storeId, const ch
 
         // Query for sub-keys in the open key
         char checkKeyName[256];
-        ::DWORD checkKeyNameLength = lengthof(checkKeyName);
+        ::DWORD checkKeyNameLength = static_cast<::DWORD>(lengthof(checkKeyName));
         enumResult = ::RegEnumKeyExA(hKey, 0, checkKeyName, &checkKeyNameLength, NULL, NULL, NULL, NULL);
         const bool zeroSubKeys = (enumResult != ERROR_SUCCESS);
 
         // Query for a remaining value in the open key
         char checkValueName[256];
-        ::DWORD checkValueNameLength = lengthof(checkValueName);
+        ::DWORD checkValueNameLength = static_cast<::DWORD>(lengthof(checkValueName));
         enumResult = ::RegEnumValueA(hKey, 0, checkValueName, &checkValueNameLength, NULL, NULL, NULL, NULL);
         const bool zeroValues = (enumResult != ERROR_SUCCESS);
 
@@ -522,7 +522,7 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
             oss << Eos;
         }
 
-        ::ExpandEnvironmentStringsW(format, buffer, lengthof(buffer));
+        ::ExpandEnvironmentStringsW(format, buffer, static_cast<::DWORD>(lengthof(buffer)));
 
         ZeroMemory(&startupInfo, sizeof(startupInfo));
         ZeroMemory(&processInfo, sizeof(processInfo));

@@ -33,7 +33,7 @@ FTextWriter& operator <<(FTextWriter& oss, const FLastError& error) {
         error.Code,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
         buffer,
-        lengthof(buffer),
+        static_cast<::DWORD>(lengthof(buffer)),
         nullptr)) {
         oss << Chomp(MakeCStringView(buffer)) << " (code=";
     }
@@ -51,7 +51,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
         error.Code,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
         buffer,
-        lengthof(buffer),
+        static_cast<::DWORD>(lengthof(buffer)),
         nullptr)) {
         oss << Chomp(MakeCStringView(buffer)) << L" (code=";
     }
