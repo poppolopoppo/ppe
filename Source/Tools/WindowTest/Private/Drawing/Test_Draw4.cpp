@@ -156,15 +156,15 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
         .SetImage(texture)
         .AddRange(0_mipmap, 1, 0_layer, 1)
         .Clear(FLinearColor::White()));
-    UNUSED(tClear);
+    Unused(tClear);
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass }
         .DependsOn(tClear));
-    UNUSED(tDraw);
+    Unused(tDraw);
     const PFrameTask tRead = cmd->Task(FReadImage{}
         .SetImage(image, int2{}, viewSize)
         .SetCallback(onLoaded)
         .DependsOn(tDraw));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

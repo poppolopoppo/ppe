@@ -796,9 +796,9 @@ bool FVulkanPipelineCache::CreateShaderTable(
         CONSTEXPR u8 UninitializedPattern_ = 0xAE;
         FPlatformMemory::Memset(stagingBlock.Mapped, 0, stagingSize);
         FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayGenOffset, UninitializedPattern_, handleSize);
-        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayMissOffset, UninitializedPattern_, handleSize * missShaderCount);
-        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayHitOffset, UninitializedPattern_, handleSize * maxHitShaders);
-        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->CallableOffset, UninitializedPattern_, handleSize * callableShaderCount);
+        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayMissOffset, UninitializedPattern_, static_cast<size_t>(handleSize) * missShaderCount);
+        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayHitOffset, UninitializedPattern_, static_cast<size_t>(handleSize) * maxHitShaders);
+        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->CallableOffset, UninitializedPattern_, static_cast<size_t>(handleSize) * callableShaderCount);
 #endif
 
         // ray-gen shader
@@ -942,14 +942,14 @@ bool FVulkanPipelineCache::CreateShaderTable(
     return true;
 
 #else
-    UNUSED(pShaderTable);
-    UNUSED(pCopyRegions);
-    UNUSED(workerCmd);
-    UNUSED(pipelineId);
-    UNUSED(scene);
-    UNUSED(rayGenShader);
-    UNUSED(shaderGroups);
-    UNUSED(maxRecursionDepth);
+    Unused(pShaderTable);
+    Unused(pCopyRegions);
+    Unused(workerCmd);
+    Unused(pipelineId);
+    Unused(scene);
+    Unused(rayGenShader);
+    Unused(shaderGroups);
+    Unused(maxRecursionDepth);
     return false;
 
 #endif
@@ -1549,7 +1549,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
     }
 
 #else
-    UNUSED(logicalRenderPass);
+    Unused(logicalRenderPass);
 #endif
 
     // validate depth states

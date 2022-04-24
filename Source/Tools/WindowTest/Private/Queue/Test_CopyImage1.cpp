@@ -88,7 +88,7 @@ bool Test_CopyImage1_(FWindowTestApp& app) {
         .SetImage(dstImage, int2(0), dstDim)
         .SetCallback(onLoaded)
         .DependsOn(tCopy));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
 

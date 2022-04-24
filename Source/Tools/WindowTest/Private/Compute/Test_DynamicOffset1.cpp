@@ -126,7 +126,7 @@ ARGS_IF_RHIDEBUG("Test_DynamicOffset1_CS"));
         .SetCallback(onLoaded)
         .DependsOn(tDispatch));
     LOG_CHECK(WindowTest, !!tRead);
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
 

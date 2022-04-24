@@ -124,10 +124,16 @@ struct TBasicStaticString {
     CONSTEXPR bool operator > (const TBasicStaticString& other) const { return other.Less(*this); }
     CONSTEXPR bool operator <=(const TBasicStaticString& other) const { return (not operator > (other)); }
 
-    friend hash_t hash_value(const TBasicStaticString& value) { return hash_string(value.Str()); }
+    friend hash_t hash_value(const TBasicStaticString& value) {
+        return hash_string(value.Str());
+    }
 
     friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicStaticString& str) {
         return oss << str.Str();
+    }
+
+    CONSTEXPR size_t lengthof(const TBasicStaticString& s) {
+        return s.size();
     }
 };
 //----------------------------------------------------------------------------

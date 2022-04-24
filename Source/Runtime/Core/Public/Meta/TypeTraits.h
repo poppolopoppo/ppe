@@ -355,7 +355,7 @@ void Construct(T* p, T&& rvalue) {
 #if USE_PPE_MEMORY_CHECK_INITIALIZATION
     ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
 #endif
-    INPLACE_NEW(p, T)(std::move(rvalue));
+    INPLACE_NEW(p, T)(std::forward<T>(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -503,6 +503,14 @@ CONSTEXPR T& DerefPtr(T* ptr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename... _Args>
+FORCE_INLINE CONSTEXPR void Unused(_Args&& ...) NOEXCEPT {}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+CONSTEXPR size_t lengthof(const T (&)[_Dim]) { return _Dim; }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...) \
     class _API _NAME final : public __VA_ARGS__ { \
     public: \
@@ -542,6 +550,8 @@ CONSTEXPR T& DerefPtr(T* ptr) {
 using Meta::Default;
 using Meta::ForceInit;
 using Meta::Zero;
+using Meta::Unused;
+using Meta::lengthof;
 
 PPE_ASSERT_TYPE_IS_POD(u128);
 PPE_ASSERT_TYPE_IS_POD(u256);

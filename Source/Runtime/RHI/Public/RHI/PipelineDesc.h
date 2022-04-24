@@ -29,8 +29,8 @@ namespace RHI {
 struct FPipelineDescUniform {
     FUniformID Id;
     FBindingIndex Index;
-    u32 ArraySize;
-    EShaderStages StageFlags;
+    u32 ArraySize{ 0 };
+    EShaderStages StageFlags{ Default };
 
     FPipelineDescUniform() = default;
     FPipelineDescUniform(
@@ -45,10 +45,10 @@ struct FPipelineDescUniform {
         Assert(id.Valid());
     }
 
-    bool operator ==(const FPipelineDescUniform& other) const NOEXCEPT {
+    NODISCARD bool operator ==(const FPipelineDescUniform& other) const NOEXCEPT {
         return (Id == other.Id && Index == other.Index && ArraySize == other.ArraySize && StageFlags == other.StageFlags);
     }
-    bool operator !=(const FPipelineDescUniform& other) const NOEXCEPT {
+    NODISCARD bool operator !=(const FPipelineDescUniform& other) const NOEXCEPT {
         return (not operator ==(other));
     }
 };
@@ -90,10 +90,10 @@ struct TPipelineDescUniform : FPipelineDescUniform {
     ,   Data(std::forward<_Args>(rargs)...)
     {}
 
-    bool operator ==(const TPipelineDescUniform& other) const NOEXCEPT {
+    NODISCARD bool operator ==(const TPipelineDescUniform& other) const NOEXCEPT {
         return (static_cast<const FPipelineDescUniform&>(*this) == other && Data == other.Data);
     }
-    bool operator !=(const TPipelineDescUniform& other) const NOEXCEPT {
+    NODISCARD bool operator !=(const TPipelineDescUniform& other) const NOEXCEPT {
         return (not operator ==(other));
     }
 };
@@ -115,20 +115,20 @@ public:
     using FDataRef = Meta::TAddPointer<Meta::TAddConst<Meta::TRemovePointer<T>>>;
     using FFingerprint = FShaderDataFingerprint;
 
-    virtual FDataRef Data() const NOEXCEPT = 0;
-    virtual FConstChar EntryPoint() const NOEXCEPT = 0;
-    virtual FFingerprint Fingerprint() const NOEXCEPT = 0;
+    NODISCARD virtual FDataRef Data() const NOEXCEPT = 0;
+    NODISCARD virtual FConstChar EntryPoint() const NOEXCEPT = 0;
+    NODISCARD virtual FFingerprint Fingerprint() const NOEXCEPT = 0;
 
 #if USE_PPE_RHIDEBUG
-    virtual FConstChar DebugName() const NOEXCEPT = 0;
-    virtual bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) = 0;
+    NODISCARD virtual FConstChar DebugName() const NOEXCEPT = 0;
+    NODISCARD virtual bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) = 0;
 #endif
 
-    friend hash_t hash_value(const IShaderData& data) NOEXCEPT {
+    NODISCARD friend hash_t hash_value(const IShaderData& data) NOEXCEPT {
         return hash_value(data.Fingerprint());
     }
 
-    friend hash_t hash_value(const TRefPtr<IShaderData>& dataRef) NOEXCEPT {
+    NODISCARD friend hash_t hash_value(const TRefPtr<IShaderData>& dataRef) NOEXCEPT {
         return hash_value(*dataRef);
     }
 };
@@ -140,13 +140,13 @@ struct FPipelineDesc {
         EResourceState State{ Default };
         EImageSampler Type{ Default };
 
-        bool operator ==(const FTexture& other) const { return (State == other.State && Type == other.Type); }
-        bool operator !=(const FTexture& other) const { return (not operator ==(other)); }
+        NODISCARD bool operator ==(const FTexture& other) const { return (State == other.State && Type == other.Type); }
+        NODISCARD bool operator !=(const FTexture& other) const { return (not operator ==(other)); }
     };
 
     struct FSampler {
-        CONSTEXPR bool operator ==(const FSampler&) const { return true; }
-        CONSTEXPR bool operator !=(const FSampler&) const { return false; }
+        NODISCARD CONSTEXPR bool operator ==(const FSampler&) const { return true; }
+        NODISCARD CONSTEXPR bool operator !=(const FSampler&) const { return false; }
     };
 
     struct FSubpassInput {
@@ -154,16 +154,16 @@ struct FPipelineDesc {
         u32 AttachmentIndex{ UMax };
         bool IsMultiSample{ false };
 
-        bool operator ==(const FSubpassInput& other) const { return (State == other.State && AttachmentIndex == other.AttachmentIndex && IsMultiSample == other.IsMultiSample); }
-        bool operator !=(const FSubpassInput& other) const { return (not operator ==(other)); }
+        NODISCARD bool operator ==(const FSubpassInput& other) const { return (State == other.State && AttachmentIndex == other.AttachmentIndex && IsMultiSample == other.IsMultiSample); }
+        NODISCARD bool operator !=(const FSubpassInput& other) const { return (not operator ==(other)); }
     };
 
     struct FImage {
         EResourceState State{ Default };
         EImageSampler Type{ Default };
 
-        bool operator ==(const FImage& other) const { return (State == other.State && Type == other.Type); }
-        bool operator !=(const FImage& other) const { return (not operator ==(other)); }
+        NODISCARD bool operator ==(const FImage& other) const { return (State == other.State && Type == other.Type); }
+        NODISCARD bool operator !=(const FImage& other) const { return (not operator ==(other)); }
     };
 
     struct FUniformBuffer {
@@ -171,8 +171,8 @@ struct FPipelineDesc {
         u32 DynamicOffsetIndex{ StaticOffset };
         u32 Size{ UMax };
 
-        bool operator ==(const FUniformBuffer& other) const { return (State == other.State && DynamicOffsetIndex == other.DynamicOffsetIndex && Size == other.Size); }
-        bool operator !=(const FUniformBuffer& other) const { return (not operator ==(other)); }
+        NODISCARD bool operator ==(const FUniformBuffer& other) const { return (State == other.State && DynamicOffsetIndex == other.DynamicOffsetIndex && Size == other.Size); }
+        NODISCARD bool operator !=(const FUniformBuffer& other) const { return (not operator ==(other)); }
     };
 
     struct FStorageBuffer {
@@ -181,15 +181,15 @@ struct FPipelineDesc {
         u32 StaticSize{ UMax };
         u32 ArrayStride{ UMax };
 
-        bool operator ==(const FStorageBuffer& other) const { return (State == other.State && DynamicOffsetIndex == other.DynamicOffsetIndex && StaticSize == other.StaticSize && ArrayStride == other.ArrayStride); }
-        bool operator !=(const FStorageBuffer& other) const { return (not operator ==(other)); }
+        NODISCARD bool operator ==(const FStorageBuffer& other) const { return (State == other.State && DynamicOffsetIndex == other.DynamicOffsetIndex && StaticSize == other.StaticSize && ArrayStride == other.ArrayStride); }
+        NODISCARD bool operator !=(const FStorageBuffer& other) const { return (not operator ==(other)); }
     };
 
     struct FRayTracingScene {
         EResourceState State{ Default };
 
-        bool operator ==(const FRayTracingScene& other) const { return (State == other.State); }
-        bool operator !=(const FRayTracingScene& other) const { return (not operator ==(other)); }
+        NODISCARD bool operator ==(const FRayTracingScene& other) const { return (State == other.State); }
+        NODISCARD bool operator !=(const FRayTracingScene& other) const { return (not operator ==(other)); }
     };
 
     struct FPushConstant {
@@ -207,7 +207,7 @@ struct FPipelineDesc {
             STATIC_ASSERT(Meta::is_pod_v<FPushConstantID>);
         }
 
-        friend hash_t hash_value(const FPushConstant& value) NOEXCEPT {
+        NODISCARD friend hash_t hash_value(const FPushConstant& value) NOEXCEPT {
             return hash_tuple(value.Id, value.StageFlags, value.Offset, value.Size);
         }
     };
@@ -268,8 +268,8 @@ struct FPipelineDesc {
         FFragmentOutput() = default;
         FFragmentOutput(u32 index, EFragmentOutput type) : Index(index), Type(type) {}
 
-        bool operator ==(const FFragmentOutput& other) const { return (Index == other.Index && Type == other.Type); }
-        bool operator !=(const FFragmentOutput& other) const { return (not operator ==(other)); }
+        NODISCARD bool operator ==(const FFragmentOutput& other) const { return (Index == other.Index && Type == other.Type); }
+        NODISCARD bool operator !=(const FFragmentOutput& other) const { return (not operator ==(other)); }
     };
 
     using FTopologyBits = TFixedSizeBitMask<size_t(EPrimitiveTopology::_Count)>;

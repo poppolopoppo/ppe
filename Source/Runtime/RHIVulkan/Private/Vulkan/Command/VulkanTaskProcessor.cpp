@@ -506,8 +506,8 @@ void FVulkanTaskProcessor::SetScissor_(
 
         for (const FRectangleU& src : rects) {
             VkRect2D dst{};
-            dst.offset.x = src.Left();
-            dst.offset.x = src.Top();
+            dst.offset.x = checked_cast<int32_t>(src.Left());
+            dst.offset.x = checked_cast<int32_t>(src.Top());
             dst.extent.width = src.Width();
             dst.extent.height = src.Height();
 
@@ -763,8 +763,8 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     VkRenderPassBeginInfo info{};
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     info.renderPass = sharedRp->RenderPass;
-    info.renderArea.offset.x = area.Left();
-    info.renderArea.offset.y = area.Top();
+    info.renderArea.offset.x = checked_cast<int32_t>(area.Left());
+    info.renderArea.offset.y = checked_cast<int32_t>(area.Top());
     info.renderArea.extent.width = area.Width();
     info.renderArea.extent.height = area.Height();
     info.clearValueCount = sharedRp->CreateInfo.attachmentCount;
@@ -1057,8 +1057,8 @@ void FVulkanTaskProcessor::CommitBarriers_() {
 
         const FVulkanDevice& device = _workerCmd->Device();
         EQueueUsage queueUsage = exclusiveWorker->Batch->QueueUsage();
-        UNUSED(device);
-        UNUSED(queueUsage);
+        Unused(device);
+        Unused(queueUsage);
 
         if ((queueUsage & EQueueUsage::Graphics) and device.Enabled().ShadingRateImageNV)
             barrier.srcAccessMask |= VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV;
@@ -1833,7 +1833,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
     info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
     info.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV;
     info.geometryCount = checked_cast<u32>(task.Geometries.size());
-    info.pGeometries = task.Geometries.data();;
+    info.pGeometries = task.Geometries.data();
     info.flags = VkCast(task.RTGeometry->Flags());
 
     vkCmdBuildAccelerationStructureNV(

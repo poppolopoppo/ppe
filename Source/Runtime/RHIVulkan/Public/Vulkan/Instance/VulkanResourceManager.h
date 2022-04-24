@@ -146,7 +146,7 @@ public:
     NODISCARD FRawRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
     NODISCARD FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FStringView debugName));
 
-    NODISCARD FRawDescriptorSetLayoutID CreateDescriptorSetLayout(const FPipelineDesc::PUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD FRawDescriptorSetLayoutID CreateDescriptorSetLayout(FPipelineDesc::PUniformMap&& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD FRawSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain, FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName));
 
@@ -262,7 +262,7 @@ private:
     NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, const FPipelineDesc::FPipelineLayout& desc, const FDSLayouts& dsLayouts ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD bool CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId);
-    NODISCARD bool CreateDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId, TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout, const FPipelineDesc::PUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool CreateDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId, TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout, FPipelineDesc::PUniformMap&& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     template <typename _Desc>
     NODISCARD bool CompileShaders_(_Desc& desc);
@@ -358,7 +358,7 @@ const auto& FVulkanResourceManager::ResourceData(details::TResourceId<_Uid> id, 
 //----------------------------------------------------------------------------
 template <u32 _Uid>
 const auto* FVulkanResourceManager::ResourceDataIFP(details::TResourceId<_Uid> id, bool incRef, bool tolerant) const {
-    UNUSED(tolerant);
+    Unused(tolerant);
     auto& pool = ResourcePoolConst_(id);
 
     using resource_type = typename TPooledResource_<_Uid>::value_type;
@@ -421,7 +421,7 @@ bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>&
     Assert(refCount > 0);
 
     return cache.RemoveIf(index, [this, pdata, refCount](T* inCache) {
-        UNUSED(pdata);
+        Unused(pdata);
         Assert_NoAssume(inCache == pdata);
 
         if (inCache->RemoveRef(refCount)) {

@@ -179,7 +179,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays1_RayClosestHit"));
         .SetImage(dstImage, Default, viewSize)
         .SetCallback(onLoaded)
         .DependsOn(tTrace));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

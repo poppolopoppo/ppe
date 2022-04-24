@@ -59,8 +59,8 @@ void TaskFunc_ExtraConstRef_(ITaskContext&, const FTask_Member_&) {}
 NO_INLINE void Test_Function_() {
     FTask_Member_ m;
     auto lambda = [&m, p{ 42 }](ITaskContext&) {
-        UNUSED(m);
-        UNUSED(p);
+        Unused(m);
+        Unused(p);
     };
 
     FTaskFunc task;
@@ -106,12 +106,12 @@ NO_INLINE void Test_Aggregation_() {
 //--------------------1--------------------------------------------------------
 NO_INLINE void Test_Event_() {
     TEvent< TFunction<void(int)> > evt;
-    evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"A = {0}", i); });
-    evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"B = {0}", i); });
-    evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"C = {0}", i); });
+    evt.Emplace([](int i) { Unused(i); LOG(Test_Thread, Info, L"A = {0}", i); });
+    evt.Emplace([](int i) { Unused(i); LOG(Test_Thread, Info, L"B = {0}", i); });
+    evt.Emplace([](int i) { Unused(i); LOG(Test_Thread, Info, L"C = {0}", i); });
 
     FEventHandle id = evt.Add([](int i) {
-        UNUSED(i);
+        Unused(i);
         LOG(Test_Thread, Info, L"DELETED = {0}", i);
     });
 
@@ -165,7 +165,7 @@ NO_INLINE void Test_Future_() {
 
     const PFuture<int> future = Future<int>([]() -> int {
         auto threadName = MakeCStringView(CurrentThreadContext().Name());
-        UNUSED(threadName);
+        Unused(threadName);
         LOG(Test_Thread, Info, L"{0}: future start", threadName);
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
         LOG(Test_Thread, Info, L"{0}: future stop", threadName);
@@ -192,7 +192,7 @@ NO_INLINE void Test_ParallelFor_() {
 
     std::atomic<size_t> parallel_sum{ 0 };
     ParallelForEachValue(std::begin(values), std::end(values), [&parallel_sum](size_t v) {
-        UNUSED(v);
+        Unused(v);
         LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}",
             MakeCStringView(CurrentThreadContext().Name()), v );
         parallel_sum += v;
@@ -295,7 +295,7 @@ struct FGraph {
     }
 
     void OnBuildFinished(const FWStringView& executor) {
-        UNUSED(executor);
+        Unused(executor);
 
         FPlatformAtomics::MemoryBarrier();
 

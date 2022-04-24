@@ -8,15 +8,15 @@
 
 #if USE_PPE_RHIVULKAN_CHECKS
 
-#   define VK_CALL(...) { \
+#   define VK_CALL(...) do { \
         const VkResult ANONYMIZE(__vkResult) = ( __VA_ARGS__ ); \
         ::PPE::RHI::VulkanCheckNoErrors( \
             ANONYMIZE(__vkResult), \
             WSTRINGIZE(__VA_ARGS__), \
             WSTRINGIZE(EXPAND(PPE_PRETTY_FUNCTION)), \
             WSTRINGIZE(__FILE__),  __LINE__ ); \
-    }
-#   define VK_CHECK_EX(_RESULT, ...) { \
+    } while(0)
+#   define VK_CHECK_EX(_RESULT, ...) do { \
         const VkResult ANONYMIZE(__vkResult) = ( __VA_ARGS__ ); \
         if (not ::PPE::RHI::VulkanCheckIfErrors( \
             ANONYMIZE(__vkResult), \
@@ -24,13 +24,13 @@
             WSTRINGIZE(EXPAND(PPE_PRETTY_FUNCTION)), \
             WSTRINGIZE(__FILE__),  __LINE__ )) \
             return (_RESULT); \
-    }
+    } while (0)
 #   define VK_CHECK(...) VK_CHECK_EX(::PPE::Default, __VA_ARGS__)
 
 #else
 
-#   define VK_CALL(...) { (void)(__VA_ARGS__); }
-#   define VK_CHECK(...) { if ((__VA_ARGS__) != VK_SUCCESS) return ::PPE::Default; }
+#   define VK_CALL(...) (void)(__VA_ARGS__)
+#   define VK_CHECK(...) do { if ((__VA_ARGS__) != VK_SUCCESS) return ::PPE::Default; } while (0)
 
 #endif
 

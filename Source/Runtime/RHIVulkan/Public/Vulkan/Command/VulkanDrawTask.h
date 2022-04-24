@@ -20,7 +20,7 @@ protected:
     IVulkanDrawTask(const _Task& desc, FProcessFunc pass1, FProcessFunc pass2) NOEXCEPT
     :   _pass1(pass1), _pass2(pass2)
     ARGS_IF_RHIDEBUG(_taskName(desc.Name), _debugColor(desc.DebugColor)) {
-        UNUSED(desc);
+        Unused(desc);
     }
 
 public:

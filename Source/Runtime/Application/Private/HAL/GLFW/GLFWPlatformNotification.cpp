@@ -25,9 +25,9 @@ void FGLFWPlatformNotification::HideSystray() {
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::NotifySystray(ENotificationIcon icon, const FWStringView& title, const FWStringView& text) {
-    UNUSED(icon);
-    UNUSED(title);
-    UNUSED(text);
+    Unused(icon);
+    Unused(title);
+    Unused(text);
     LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
@@ -35,27 +35,27 @@ size_t FGLFWPlatformNotification::AddSystrayCommand(
     const FWStringView& category,
     const FWStringView& label,
     FSystrayDelegate&& cmd ) {
-    UNUSED(category);
-    UNUSED(label);
-    UNUSED(cmd);
+    Unused(category);
+    Unused(label);
+    Unused(cmd);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return INDEX_NONE;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformNotification::RemoveSystrayCommand(size_t index) {
-    UNUSED(index);
+    Unused(index);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::SetTaskbarState(ETaskbarState state) {
-    UNUSED(state);
+    Unused(state);
     LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::SetTaskbarProgress(size_t completed, size_t total) {
-    UNUSED(completed);
-    UNUSED(total);
+    Unused(completed);
+    Unused(total);
     LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------

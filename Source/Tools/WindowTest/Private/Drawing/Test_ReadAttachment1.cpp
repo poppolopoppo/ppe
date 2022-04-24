@@ -157,7 +157,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     const PFrameTask tClear = cmd->Task(FClearDepthStencilImage{}.SetImage(depthImage).Clear(FDepthValue(1.f)).AddRange(0_mipmap, 1, 0_layer, 1));
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass }.DependsOn(tClear));
     const PFrameTask tRead = cmd->Task(FReadImage{}.SetImage(colorImage, int2::Zero, viewSize).SetCallback(onLoaded).DependsOn(tDraw));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

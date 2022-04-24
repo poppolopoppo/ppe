@@ -38,7 +38,7 @@ static FORCE_INLINE bool Any_FitInSitu_(size_t sizeInBytes) {
 #if USE_PPE_RTTI_ANY_INSITU
     return (sizeInBytes <= FAny::GInSituSize);
 #else
-    UNUSED(sizeInBytes);
+    Unused(sizeInBytes);
     return false;
 #endif
 }

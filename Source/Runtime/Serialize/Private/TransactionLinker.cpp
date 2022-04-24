@@ -154,8 +154,8 @@ void FTransactionLinker::CheckAssignment(const RTTI::PTypeTraits& traits, const 
     if (not expected->IsAssignableFrom(*found))
         PPE_THROW_IT(FUnexpectedObjectClass(expected, found));
 #else
-    UNUSED(traits);
-    UNUSED(obj);
+    Unused(traits);
+    Unused(obj);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ RTTI::FMetaObject* FTransactionLinker::ResolveImport(
         if (traits)
             CheckAssignment(traits, *obj);
 #else
-        UNUSED(traits);
+        Unused(traits);
 #endif
 
         return obj;

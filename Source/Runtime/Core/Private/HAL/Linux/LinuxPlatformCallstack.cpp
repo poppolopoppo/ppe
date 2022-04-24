@@ -41,8 +41,8 @@ void FLinuxPlatformCallstack::OnLoadModule() {
 size_t FLinuxPlatformCallstack::CaptureCallstack(const TMemoryView<FProgramCounter>& backtrace, size_t framesToSkip) {
     Assert(not backtrace.empty());
 
-    UNUSED(backtrace);
-    UNUSED(framesToSkip);
+    Unused(backtrace);
+    Unused(framesToSkip);
     LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return 0;
@@ -52,8 +52,8 @@ bool FLinuxPlatformCallstack::ProgramCounterToModuleName(FWString* moduleName, F
     Assert(moduleName);
     Assert(pc);
 
-    UNUSED(moduleName);
-    UNUSED(pc);
+    Unused(moduleName);
+    Unused(pc);
     LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return false;
@@ -63,8 +63,8 @@ bool FLinuxPlatformCallstack::ProgramCounterToSymbolInfo(FProgramCounterSymbolIn
     Assert(symbolInfo);
     Assert(pc);
 
-    UNUSED(symbolInfo);
-    UNUSED(pc);
+    Unused(symbolInfo);
+    Unused(pc);
     LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return false;

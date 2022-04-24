@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "Memory/MemoryDomain.h"
+#include "Memory/MemoryDomain_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -40,7 +40,7 @@ private: // RTTI::IAtomVisitor
 #if USE_PPE_BINA_MARKERS
 #   define BINA_WRITE_TRAITS(_Traits) _sections.Data.WritePOD((_Traits)->TypeId())
 #else
-#   define BINA_WRITE_TRAITS(_Traits) UNUSED(_Traits)
+#   define BINA_WRITE_TRAITS(_Traits) Unused(_Traits)
 #endif
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \

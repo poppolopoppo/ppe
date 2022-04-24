@@ -679,7 +679,7 @@ public:
     CONSTEXPR TFunction(TFunction&& rvalue) NOEXCEPT : parent_type(std::move(rvalue)) {}
     CONSTEXPR TFunction& operator =(TFunction&& rvalue) NOEXCEPT { return parent_type::operator =(std::move(rvalue)); }
 
-    CONSTEXPR _Ret operator()(_Args... args) const {
+    FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) const {
         return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
     }
 
@@ -720,7 +720,7 @@ public:
     CONSTEXPR TFunction(TFunction && rvalue) NOEXCEPT : parent_type(std::move(rvalue)) {}
     CONSTEXPR TFunction& operator =(TFunction && rvalue) NOEXCEPT { return parent_type::operator =(std::move(rvalue)); }
 
-    CONSTEXPR _Ret operator()(_Args... args) const NOEXCEPT {
+    FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) const NOEXCEPT {
         return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
     }
 

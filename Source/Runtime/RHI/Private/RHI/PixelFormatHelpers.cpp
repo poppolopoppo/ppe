@@ -48,10 +48,10 @@ i32 DecodeIntScalar_(const TStaticArray<u32, 4>& data) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
-void DecodeUIntVector_(FRgba32u* __restrict outv, FRawMemoryConst in) NOEXCEPT {
+void DecodeUIntVector_(FRgba32u* __restrict outv, const FRawMemoryConst& in) NOEXCEPT {
     STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
-    TStaticArray<u32, 4> bits;
+    TStaticArray<u32, 4> bits{};
     Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(u32));
     FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8_size_t));
 
@@ -62,10 +62,10 @@ void DecodeUIntVector_(FRgba32u* __restrict outv, FRawMemoryConst in) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
-void DecodeIntVector_(FRgba32i* __restrict outv, FRawMemoryConst in) NOEXCEPT {
+void DecodeIntVector_(FRgba32i* __restrict outv, const FRawMemoryConst& in) NOEXCEPT {
     STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
-    TStaticArray<u32, 4> bits;
+    TStaticArray<u32, 4> bits{};
     Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(u32));
     FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8_size_t));
 
@@ -76,7 +76,7 @@ void DecodeIntVector_(FRgba32i* __restrict outv, FRawMemoryConst in) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
-void DecodeUNormVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT {
+void DecodeUNormVector_(FRgba32f* __restrict outv, const FRawMemoryConst& in) NOEXCEPT {
     FRgba32u c;
     DecodeUIntVector_<_R, _G, _B, _A>(&c, in);
 
@@ -87,7 +87,7 @@ void DecodeUNormVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
 }
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
-void DecodeSNormVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT {
+void DecodeSNormVector_(FRgba32f* __restrict outv, const FRawMemoryConst& in) NOEXCEPT {
     FRgba32i c;
     DecodeIntVector_<_R, _G, _B, _A>(&c, in);
 
@@ -98,11 +98,11 @@ void DecodeSNormVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
 }
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
-void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT {
+void DecodeFloatVector_(FRgba32f* __restrict outv, const FRawMemoryConst& in) NOEXCEPT {
     IF_CONSTEXPR( _R == 16 ) {
         STATIC_ASSERT(Meta::IsAlignedPow2(16, _R + _G + _B + _A));
 
-        TStaticArray<ushort, 4> bits;
+        TStaticArray<ushort, 4> bits{};
         Assert((_R + _G + _B + _A) / 8 <= bits.size() * sizeof(ushort));
         FPlatformMemory::Memcpy(bits.data(), in.data(), Min(sizeof(bits), (_R + _G + _B + _A + 7) / 8_size_t));
 
@@ -114,7 +114,8 @@ void DecodeFloatVector_(FRgba32f* __restrict outv, FRawMemoryConst in) NOEXCEPT 
     else IF_CONSTEXPR ( _R == 32 ) {
         STATIC_ASSERT(Meta::IsAlignedPow2(32, _R + _G + _B + _A));
 
-        in.Cast<const float>().CopyTo(MakeView(outv->data));
+        *outv = {};
+        FPlatformMemory::Memcpy(outv->data, in.data(), Min(in.SizeInBytes(), (_R + _G + _B + _A + 7) / 8_size_t));
     }
     else IF_CONSTEXPR( _R == 10 && _G == 10 && _B == 10 && _A == 2 ) {
         STATIC_ASSERT(sizeof(UX10Y10Z10W2N) == sizeof(u32));
@@ -177,7 +178,7 @@ template <u32 _R, u32 _G, u32 _B, u32 _A>
 void EncodeUIntVector_(FRawMemory outp, const FRgba32u& value) NOEXCEPT {
     STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
-    TStaticArray<u32, 4> bits;
+    TStaticArray<u32, 4> bits{};
     EncodeUIntScalar_<_R, 0>(&bits, value.x);
     EncodeUIntScalar_<_G, _R>(&bits, value.y);
     EncodeUIntScalar_<_B, _R + _G>(&bits, value.z);
@@ -190,7 +191,7 @@ template <u32 _R, u32 _G, u32 _B, u32 _A>
 void EncodeIntVector_(FRawMemory outp, const FRgba32i& value) NOEXCEPT {
     STATIC_ASSERT(Meta::IsAlignedPow2(8, _R + _G + _B + _A)); // must be aligned on 8 bits boundary
 
-    TStaticArray<u32, 4> bits;
+    TStaticArray<u32, 4> bits{};
     EncodeIntScalar_<_R, 0>(&bits, value.x);
     EncodeIntScalar_<_G, _R>(&bits, value.y);
     EncodeIntScalar_<_B, _R + _G>(&bits, value.z);
@@ -269,7 +270,7 @@ void EncodeFloatVector_(FRawMemory outp, const FRgba32f& value) NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FPixelFormatEncoding EPixelFormat_Encoding(EPixelFormat format, EImageAspect aspect) NOEXCEPT {
-    UNUSED(aspect);
+    Unused(aspect);
     switch (format) {
 
     /// packed vectors

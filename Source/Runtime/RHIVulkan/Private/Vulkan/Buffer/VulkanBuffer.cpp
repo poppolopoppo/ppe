@@ -293,7 +293,7 @@ VkBufferView FVulkanBuffer::MakeView(const FVulkanDevice& device, const FBufferV
 }
 //----------------------------------------------------------------------------
 bool FVulkanBuffer::IsSupported(const FVulkanDevice& device, const FBufferDesc& desc, EMemoryType memoryType) NOEXCEPT {
-    UNUSED(memoryType);
+    Unused(memoryType);
 
     for (u32 t = 1; t <= static_cast<u32>(desc.Usage); t <<= 1) {
         if (not Meta::EnumHas(desc.Usage, t))

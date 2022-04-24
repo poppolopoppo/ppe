@@ -57,8 +57,8 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const TPtrRef<c
 
     SetState_(EState::Uninitialized, EState::Initial);
 
-    for (const FCommandBufferBatch& dep : dependsOn) {
-        if (PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep.Batch()))
+    for (const TPtrRef<const FCommandBufferBatch>& dep : dependsOn) {
+        if (PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep->Batch()))
             exclusiveData->Dependencies.Push(std::move(batch));
         else
             AssertNotReached();
@@ -70,7 +70,7 @@ void FVulkanCommandBatch::OnStrongRefCountReachZero() NOEXCEPT {
     Assert_NoAssume(State() == EState::Complete);
 
     const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // just for locking
+    Unused(exclusiveData); // just for locking
 
     _state.store(EState::Uninitialized, std::memory_order_relaxed);
     _frameGraph->RecycleBatch(this);
@@ -148,10 +148,10 @@ void FVulkanCommandBatch::DestroyPostponed(VkObjectType type, FVulkanExternalObj
 void FVulkanCommandBatch::SetState_(EState from, EState to) {
     Assert_NoAssume(State() == from);
     Assert_NoAssume(static_cast<u32>(from) < static_cast<u32>(to));
-    UNUSED(from);
+    Unused(from);
 
     const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // just for locking
+    Unused(exclusiveData); // just for locking
 
     _state.store(to, std::memory_order_relaxed);
 }
@@ -169,7 +169,7 @@ bool FVulkanCommandBatch::OnBegin(const FCommandBufferDesc& desc) {
     _debugName = desc.Name;
     _statistics.Reset();
 #else
-    UNUSED(desc);
+    Unused(desc);
 #endif
 
     return true;
@@ -184,7 +184,7 @@ void FVulkanCommandBatch::OnBeforeRecording(VkCommandBuffer cmd) {
 
     if (exclusiveData->SupportsQuery) {
         const FVulkanDevice& device = _frameGraph->Device();
-        const VkQueryPool queryPool = _frameGraph->QueryPool();
+        VkQueryPool queryPool = _frameGraph->QueryPool();
         Assert_NoAssume(VK_NULL_HANDLE != queryPool);
 
         device.vkCmdResetQueryPool(cmd, queryPool, _indexInPool*2, 2);
@@ -193,7 +193,7 @@ void FVulkanCommandBatch::OnBeforeRecording(VkCommandBuffer cmd) {
 
     BeginShaderDebugger_(cmd);
 #else
-    UNUSED(cmd);
+    Unused(cmd);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -208,14 +208,14 @@ void FVulkanCommandBatch::OnAfterRecording(VkCommandBuffer cmd) {
 
     if (exclusiveData->SupportsQuery) {
         const FVulkanDevice& device = _frameGraph->Device();
-        const VkQueryPool queryPool = _frameGraph->QueryPool();
+        VkQueryPool queryPool = _frameGraph->QueryPool();
         Assert_NoAssume(VK_NULL_HANDLE != queryPool);
 
         device.vkCmdWriteTimestamp(cmd, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, queryPool, _indexInPool*2 + 1);
     }
 
 #else
-    UNUSED(cmd);
+    Unused(cmd);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -223,7 +223,7 @@ bool FVulkanCommandBatch::OnBaked(FResourceMap& resources) {
     SetState_(EState::Recording, EState::Baked);
 
     const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // just for locking
+    Unused(exclusiveData); // just for locking
 
     Assert_NoAssume(exclusiveData->ResourcesToRelease.empty());
     exclusiveData->ResourcesToRelease = std::move(resources);
@@ -239,7 +239,7 @@ bool FVulkanCommandBatch::OnBeforeSubmit(VkSubmitInfo* pSubmit) {
     Assert(pSubmit);
 
     const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // just for locking
+    Unused(exclusiveData); // just for locking
 
     const FVulkanDevice& device = _frameGraph->Device();
 
@@ -301,7 +301,7 @@ bool FVulkanCommandBatch::OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, 
     SetState_(EState::Submitted, EState::Complete);
 
     const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // only for locking
+    Unused(exclusiveData); // only for locking
 
     const FVulkanDevice& device = _frameGraph->Device();
     FVulkanResourceManager& resources = _frameGraph->ResourceManager();
@@ -317,14 +317,14 @@ bool FVulkanCommandBatch::OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, 
     debugger.AddBatchGraph(std::move(_frameDebugger.DebugGraph));
 
     if (exclusiveData->SupportsQuery) {
-        const VkQueryPool queryPool = _frameGraph->QueryPool();
+        VkQueryPool queryPool = _frameGraph->QueryPool();
 
         u64 queryResults[2];
         VK_CALL( device.vkGetQueryPoolResults(
             device.vkDevice(), queryPool,
             _indexInPool*2, checked_cast<u32>(lengthof(queryResults)),
             sizeof(queryResults), queryResults,
-            sizeof(queryResults[0]), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT) )
+            sizeof(queryResults[0]), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT) );
 
         _statistics.Renderer.GpuTime += FNanoseconds{
             static_cast<double>(queryResults[1] - queryResults[0])
@@ -341,7 +341,7 @@ bool FVulkanCommandBatch::OnComplete(ARG0_IF_RHIDEBUG(FFrameStatistics* pStats, 
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::FinalizeCommands_(FInternalData& data) {
-    for (const auto& it : data.Batch.Commands) {
+    for (const auto it : data.Batch.Commands) {
         if (FVulkanCommandPool* const pPool = std::get<1>(it))
             pPool->RecyclePrimary(std::get<0>(it));
     }
@@ -444,8 +444,8 @@ void FVulkanCommandBatch::ReleaseResources_(FVulkanResourceManager& resources, F
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::ReleaseVulkanObjects_(const FVulkanDevice& device, FInternalData& data) {
-    const VkDevice vkDevice = device.vkDevice();
-    const VkAllocationCallbacks* const pAllocator = device.vkAllocator();
+    VkDevice const vkDevice = device.vkDevice();
+    VkAllocationCallbacks const* const pAllocator = device.vkAllocator();
 
     for (auto& it : data.ReadyToDelete) {
         switch (it.first) {
@@ -469,7 +469,6 @@ void FVulkanCommandBatch::ReleaseVulkanObjects_(const FVulkanDevice& device, FIn
         case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE: device.vkDestroyDescriptorUpdateTemplate(vkDevice, it.second.Cast<VkDescriptorUpdateTemplate>(), pAllocator); break;
         case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR: device.vkDestroyAccelerationStructureKHR(vkDevice, it.second.Cast<VkAccelerationStructureKHR>(), pAllocator); break;
         case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV: device.vkDestroyAccelerationStructureNV(vkDevice, it.second.Cast<VkAccelerationStructureNV>(), pAllocator); break;
-
         default: AssertNotImplemented();
         }
     }
@@ -665,7 +664,7 @@ void FVulkanCommandBatch::BeginShaderDebugger_(VkCommandBuffer cmd) {
 
     // clear all buffers to zero
     for (FDebugStorageBuffer& sb : _shaderDebugger.Buffers) {
-        const VkBuffer buf = resources.ResourceData(sb.ShaderTraceBuffer).Handle();
+        VkBuffer buf = resources.ResourceData(sb.ShaderTraceBuffer).Handle();
         Assert(VK_NULL_HANDLE != buf);
 
         device.vkCmdFillBuffer( cmd, buf, 0, checked_cast<VkDeviceSize>(sb.Size), 0 );
@@ -675,7 +674,7 @@ void FVulkanCommandBatch::BeginShaderDebugger_(VkCommandBuffer cmd) {
 
     // copy data
     for (FDebugMode& dbg : _shaderDebugger.Modes) {
-        const VkBuffer buf = resources.ResourceData(_shaderDebugger.Buffers[dbg.StorageBufferIndex].ShaderTraceBuffer).Handle();
+        VkBuffer buf = resources.ResourceData(_shaderDebugger.Buffers[dbg.StorageBufferIndex].ShaderTraceBuffer).Handle();
         Assert(VK_NULL_HANDLE != buf);
         const u32 size = resources.DebugShaderStorageSize(dbg.Stages, dbg.Mode);
         Assert_NoAssume( size <= sizeof(dbg.Payload) );
@@ -698,8 +697,8 @@ void FVulkanCommandBatch::EndShaderDebugger_(VkCommandBuffer cmd) {
 
     // copy to staging buffer
     for (FDebugStorageBuffer& sb : _shaderDebugger.Buffers) {
-        const VkBuffer srcBuf = resources.ResourceData(sb.ShaderTraceBuffer).Handle();
-        const VkBuffer dstBuf = resources.ResourceData(sb.ReadBackBuffer).Handle();
+        VkBuffer srcBuf = resources.ResourceData(sb.ShaderTraceBuffer).Handle();
+        VkBuffer dstBuf = resources.ResourceData(sb.ReadBackBuffer).Handle();
         Assert(VK_NULL_HANDLE != srcBuf);
         Assert(VK_NULL_HANDLE != dstBuf);
 
@@ -732,7 +731,7 @@ void FVulkanCommandBatch::SetShaderModuleForDebug(EShaderDebugIndex id, const PV
     Assert(module);
 
     const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // only for locking
+    Unused(exclusiveData); // only for locking
 
     FDebugMode& dbg = _shaderDebugger.Modes[static_cast<u32>(id)];
     dbg.Modules.Push(module);
@@ -745,7 +744,7 @@ bool FVulkanCommandBatch::FindModeInfoForDebug(EShaderDebugMode* pMode, EShaderS
     Assert(pStages);
 
     const auto sharedData = _data.LockShared();
-    UNUSED(sharedData); // only for locking
+    Unused(sharedData); // only for locking
 
     const FDebugMode& dbg = _shaderDebugger.Modes[static_cast<u32>(id)];
     *pMode = dbg.Mode;
@@ -762,7 +761,7 @@ bool FVulkanCommandBatch::FindDescriptorSetForDebug(u32* pBinding, VkDescriptorS
     Assert(pDynamicOffset);
 
     const auto sharedData = _data.LockShared();
-    UNUSED(sharedData); // only for locking
+    Unused(sharedData); // only for locking
 
     const FDebugMode& dbg = _shaderDebugger.Modes[static_cast<u32>(id)];
     *pBinding = DebugDescriptorSet;
@@ -781,7 +780,7 @@ bool FVulkanCommandBatch::FindShaderTimemapForDebug(FRawBufferID* pBuf, size_t* 
     Assert(pDim);
 
     const auto sharedData = _data.LockShared();
-    UNUSED(sharedData); // only for locking
+    Unused(sharedData); // only for locking
 
     const FDebugMode& dbg = _shaderDebugger.Modes[static_cast<u32>(id)];
     *pBuf = _shaderDebugger.Buffers[dbg.StorageBufferIndex].ShaderTraceBuffer.Get();
@@ -798,10 +797,10 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FR
     Assert_NoAssume(EnableShaderDebugging);
     Assert_NoAssume(not name.empty());
 
-    UNUSED(regions);
+    Unused(regions);
 
     const auto sharedData = _data.LockShared();
-    UNUSED(sharedData); // only for locking
+    Unused(sharedData); // only for locking
 
     FDebugMode dbg;
     dbg.TaskName = name;
@@ -822,7 +821,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& nam
     Assert_NoAssume(not name.empty());
 
     const auto sharedData = _data.LockShared();
-    UNUSED(sharedData); // only for locking
+    Unused(sharedData); // only for locking
 
     FDebugMode dbg;
     dbg.TaskName = name;
@@ -843,7 +842,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& nam
     Assert_NoAssume(not name.empty());
 
     const auto sharedData = _data.LockShared();
-    UNUSED(sharedData); // only for locking
+    Unused(sharedData); // only for locking
 
     FDebugMode dbg;
     dbg.TaskName = name;
@@ -863,18 +862,20 @@ EShaderDebugIndex FVulkanCommandBatch::AppendTimemapForDebug(const uint2& dim, E
     Assert_NoAssume(EnableShaderDebugging);
 
     const auto sharedData = _data.LockShared();
-    UNUSED(sharedData); // only for locking
+    Unused(sharedData); // only for locking
 
     FDebugMode dbg;
     dbg.Mode = EShaderDebugMode::Timemap;
     dbg.Stages = stages;
-    dbg.Payload = uint4(bit_cast<u32>(float2(1.0f)), dim);
+
+    uint2 tmp = bit_cast<u32>(float2(1.0f));
+    dbg.Payload = uint4(tmp, dim);
 
     const size_t size{
         sizeof(uint4) + // first 4 components
         dim.y * sizeof(u64) + // output pixels
         checked_cast<size_t>(_frameGraph->Device().Limits().minStorageBufferOffsetAlignment) + // padding for alignment
-        dim.x * dim.y * sizeof(u64) // temporary line
+        static_cast<size_t>(dim.x) * dim.y * sizeof(u64) // temporary line
     };
 
     LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );

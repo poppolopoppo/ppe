@@ -26,8 +26,8 @@ struct TVkEnumFlagsNone_ {
     const std::streamoff StartedAt;
 
     explicit TVkEnumFlagsNone_(TBasicTextWriter<_Char>& oss) NOEXCEPT
-        :   Oss(oss)
-        , StartedAt(Oss.Stream()->TellO()) {
+    :   Oss(oss)
+    ,   StartedAt(Oss.Stream()->TellO()) {
     }
 
     ~TVkEnumFlagsNone_() {
@@ -42,7 +42,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPipelineStageFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
     TVkEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (PopBit_(value, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)) oss << sep << STRING_LITERAL(_Char, "TopOfPipe");
     if (PopBit_(value, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT)) oss << sep << STRING_LITERAL(_Char, "DrawIndirect");
@@ -80,7 +80,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkDependencyFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
     TVkEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (PopBit_(value, VK_DEPENDENCY_BY_REGION_BIT)) oss << sep << STRING_LITERAL(_Char, "ByRegion");
     if (PopBit_(value, VK_DEPENDENCY_DEVICE_GROUP_BIT)) oss << sep << STRING_LITERAL(_Char, "DeviceGroup");
@@ -95,7 +95,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkAccessFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
     TVkEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (PopBit_(value, VK_ACCESS_INDIRECT_COMMAND_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "IndirectCommandRead");
     if (PopBit_(value, VK_ACCESS_INDEX_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "IndexRead");
@@ -166,7 +166,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageAspectFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
     TVkEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (PopBit_(value, VK_IMAGE_ASPECT_COLOR_BIT)) oss << sep << STRING_LITERAL(_Char, "Color");
     if (PopBit_(value, VK_IMAGE_ASPECT_DEPTH_BIT)) oss << sep << STRING_LITERAL(_Char, "Depth");
@@ -244,7 +244,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkSurfaceTransformFlagBitsKHR value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
     TVkEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (PopBit_(value, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "Identity");
     if (PopBit_(value, VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "Rotate90");
@@ -265,7 +265,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkCompositeAlphaFlagBitsKHR value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
     TVkEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (PopBit_(value, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AlphaOpaque");
     if (PopBit_(value, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AlphaPreMultiplied");
@@ -281,7 +281,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageUsageFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
     TVkEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (PopBit_(value, VK_IMAGE_USAGE_TRANSFER_SRC_BIT)) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
     if (PopBit_(value, VK_IMAGE_USAGE_TRANSFER_DST_BIT)) oss << sep << STRING_LITERAL(_Char, "TransferDst");

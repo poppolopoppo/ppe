@@ -429,7 +429,7 @@ bool FVulkanSwapchain::Construct(
                 exclusiveData->PresentMode = presentMode;
 
                 if (IsSupported_(&exclusiveData->ColorImageUsage, device, surfaceCaps, exclusiveData->SurfaceSize, exclusiveData->PresentMode, exclusiveData->ColorFormat) && (
-                    not requiredUsage || Meta::EnumHas(exclusiveData->ColorImageUsage, static_cast<VkFlags>(requiredUsage)) )) {
+                    not requiredUsage || Meta::EnumHas(exclusiveData->ColorImageUsage, checked_cast<VkImageUsageFlagBits>(requiredUsage)) )) {
                     return exclusiveData->CreateSwapchain_(fg ARGS_IF_RHIDEBUG(debugName));
                 }
             }
@@ -594,7 +594,7 @@ bool FVulkanSwapchain::FInternalData_::IsImageAcquired_() const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg ARGS_IF_RHIDEBUG(FConstChar debugName)) {
-    const VkSwapchainKHR oldSwapchain = vkSwapchain;
+    VkSwapchainKHR oldSwapchain = vkSwapchain;
     const FVulkanDevice& device = fg.Device();
 
     VkSwapchainCreateInfoKHR createInfo{};

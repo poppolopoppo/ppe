@@ -47,9 +47,9 @@ bool FGLFWPlatformGamepad::Poll(FControllerId index, FGamepadState* gamepad) {
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformGamepad::Rumble(FControllerId index, float left, float right) {
-    UNUSED(index);
-    UNUSED(left);
-    UNUSED(right);
+    Unused(index);
+    Unused(left);
+    Unused(right);
     return false;
 }
 //----------------------------------------------------------------------------

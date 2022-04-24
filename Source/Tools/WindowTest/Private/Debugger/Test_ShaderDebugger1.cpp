@@ -9,6 +9,13 @@ namespace PPE {
 bool Test_ShaderDebugger1_(FWindowTestApp& app) {
     using namespace PPE::RHI;
 
+    if (not EnableShaderDebugging) {
+        Unused(app);
+        LOG(WindowTest, Warning, L"Test_ShaderDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
+        return true;
+    }
+
+#if USE_PPE_RHIDEBUG
     IFrameGraph& fg = *app.RHI().FrameGraph();
 
     FComputePipelineDesc desc;
@@ -35,7 +42,7 @@ ARGS_IF_RHIDEBUG("Test_ShaderDebugger1_CS"));
 
     TScopedResource<FImageID> imageDst{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
-        .SetFormat(EPixelFormat::RGBA8_UNorm)
+        .SetFormat(EPixelFormat::R32f)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Output")) };
     LOG_CHECK(WindowTest, imageDst.Valid());
@@ -80,7 +87,7 @@ no source
         shaderOutputIsCorrect &= (taskName == "DebuggableCompute");
         shaderOutputIsCorrect &= (shaderName == "Test_ShaderDebugger1_CS");
         shaderOutputIsCorrect &= (output.size() == 1);
-        shaderOutputIsCorrect &= (output.size() > 1 ? output[0] == ref : false);
+        shaderOutputIsCorrect &= (output.size() == 1 ? output[0] == ref : false);
 
         LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
     };
@@ -90,7 +97,7 @@ no source
     const auto onLoaded = [&dataIsCorrect, &debugCoord](const FImageView& imageData) {
         FRgba32f texel;
         imageData.Load(&texel, uint3(debugCoord, 0));
-        dataIsCorrect &= (texel.x == 0.53125f);
+        dataIsCorrect = (texel.x == 0.53125f);
         LOG_CHECKVOID(WindowTest, dataIsCorrect);
     };
 
@@ -112,13 +119,14 @@ no source
         .SetImage(imageDst, int2{}, imageDim)
         .SetCallback(onLoaded)
         .DependsOn(tComp));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());
 
     LOG_CHECK(WindowTest, shaderOutputIsCorrect);
     LOG_CHECK(WindowTest, dataIsCorrect);
+#endif
 
     return true;
 }

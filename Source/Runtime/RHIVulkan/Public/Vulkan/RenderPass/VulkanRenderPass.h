@@ -38,7 +38,7 @@ public:
     };
 
     FVulkanRenderPass() = default;
-    explicit FVulkanRenderPass(TMemoryView<const FVulkanLogicalRenderPass* const> logicalRenderPasses);
+    explicit FVulkanRenderPass(const TMemoryView<const FVulkanLogicalRenderPass* const>& logicalRenderPasses);
 
 #if USE_PPE_RHIDEBUG
     ~FVulkanRenderPass();

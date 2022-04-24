@@ -18,8 +18,8 @@ FFATSerializer::~FFATSerializer() = default;
 void FFATSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
-    UNUSED(input);
-    UNUSED(linker);
+    Unused(input);
+    Unused(linker);
     AssertNotImplemented();
     /*
     UsingBufferedStream(&input, [linker](IBufferedStreamReader* buffered) {
@@ -32,8 +32,8 @@ void FFATSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linke
 void FFATSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* output) const {
     Assert(output);
 
-    UNUSED(saver);
-    UNUSED(output);
+    Unused(saver);
+    Unused(output);
     AssertNotImplemented();
     /*
     FBinaryFormatWriter writer;

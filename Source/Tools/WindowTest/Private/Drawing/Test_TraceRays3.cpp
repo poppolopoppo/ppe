@@ -161,7 +161,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays3_RayClosestHit"));
             .AddMissShader("PrimaryMiss"_rtshader, 0)
             .AddHitShader("0"_instance, "Triangle"_geometry, 0, "PrimaryHit"_rtshader)
             .DependsOn(tBuildScene));
-        UNUSED(tUpdateTable);
+        Unused(tUpdateTable);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd1));
     }
@@ -184,7 +184,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays3_RayClosestHit"));
             .SetImage(dstImage, Default, viewSize)
             .SetCallback(onLoaded)
             .DependsOn(tTrace));
-        UNUSED(tRead);
+        Unused(tRead);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd2));
     }

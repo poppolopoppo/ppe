@@ -182,15 +182,20 @@ FDeviceProperties FVulkanFrameGraph::DeviceProperties() const NOEXCEPT {
     result.DescriptorIndexing = (enabled.DescriptorIndexing);
     result.DrawIndirectCount = (enabled.DrawIndirectCount);
     result.Swapchain = (enabled.Surface and enabled.Swapchain);
+
     result.MeshShaderNV = (enabled.MeshShaderNV);
     result.RayTracingNV = (enabled.RayTracingNV);
     result.ShadingRateImageNV = (enabled.ShadingRateImageNV);
+
     result.MinStorageBufferOffsetAlignment = checked_cast<size_t>(caps.Properties.limits.minStorageBufferOffsetAlignment);
     result.MinUniformBufferOffsetAlignment = checked_cast<size_t>(caps.Properties.limits.minUniformBufferOffsetAlignment);
     result.MaxDrawIndirectCount = (caps.Properties.limits.maxDrawIndirectCount);
+
     result.MaxDrawIndexedIndexValue = (caps.Properties.limits.maxDrawIndexedIndexValue);
+
     result.ShadingRateTexelSize = { caps.ShadingRateImageProperties.shadingRateTexelSize.width, caps.ShadingRateImageProperties.shadingRateTexelSize.height };
     result.ShadingRatePaletteSize = caps.ShadingRateImageProperties.shadingRatePaletteSize;
+
     return result;
 }
 //----------------------------------------------------------------------------
@@ -687,7 +692,7 @@ bool FVulkanFrameGraph::FlushQueue_(EQueueType index, u32 maxIter) {
 
     // add image layout transitions
     if (not q.ImageBarriers.empty()) {
-        const VkCommandBuffer cmdBuf = q.CommandPool.AllocPrimary(_device);
+        VkCommandBuffer cmdBuf = q.CommandPool.AllocPrimary(_device);
         Assert_NoAssume(VK_NULL_HANDLE != cmdBuf);
 
         VkCommandBufferBeginInfo begin{};
@@ -836,7 +841,7 @@ bool FVulkanFrameGraph::Wait(TMemoryView<const FCommandBufferBatch> commands, FN
         }
         case FVulkanCommandBatch::EState::Submitted: {
             FVulkanSubmitted* const submitted = batch->Submitted();
-            const VkFence fence = submitted->Read()->Fence;
+            VkFence fence = submitted->Read()->Fence;
             Assert(VK_NULL_HANDLE != fence);
 
             if (not transientFences.Contains(fence)) {
@@ -886,7 +891,7 @@ bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout) {
         for (FQueueData& q : _queueMap) {
             Assert_NoAssume(q.Pending.empty());
             for (FVulkanSubmitted* submitted : q.Submitted) {
-                if (const VkFence fence = submitted->Read()->Fence) {
+                if (VkFence fence = submitted->Read()->Fence) {
                     fences.Push(fence);
 
                     if (fences.full())
@@ -947,9 +952,9 @@ bool FVulkanFrameGraph::DumpStatistics(FFrameStatistics* pStats) const {
 
     *pStats = _lastFrameStats;
     pStats->Renderer.SubmittingTime = FSeconds{ FPlatformTime::ToSeconds(
-        _submittingTime.exchange(0, std::memory_order_relaxed)) };
+        checked_cast<i64>(_submittingTime.exchange(0, std::memory_order_relaxed))) };
     pStats->Renderer.WaitingTime = FSeconds{ FPlatformTime::ToSeconds(
-        _waitingTime.exchange(0, std::memory_order_relaxed)) };
+        checked_cast<i64>(_waitingTime.exchange(0, std::memory_order_relaxed))) };
 
     return true;
 }

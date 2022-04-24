@@ -142,8 +142,8 @@ const FMetaFunction* FMetaClass::FunctionIFP(const FLazyName& name, EFunctionFla
 const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionFlags flags/* = EFunctionFlags::All */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
-    UNUSED(name);
-    UNUSED(flags);
+    Unused(name);
+    Unused(flags);
 
     LOG(RTTI, Error, L"missing function {0}::{1} !", _name, name);
 
@@ -232,8 +232,8 @@ const FMetaProperty* FMetaClass::PropertyIFP(const FLazyName& name, EPropertyFla
 const FMetaProperty* FMetaClass::OnMissingProperty(const FName& name, EPropertyFlags flags/* = EPropertyFlags::All */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
-    UNUSED(name);
-    UNUSED(flags);
+    Unused(name);
+    Unused(flags);
 
     LOG(RTTI, Error, L"missing property {0}::{1} !", _name, name);
 

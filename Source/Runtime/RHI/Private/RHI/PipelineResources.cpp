@@ -22,14 +22,16 @@ FPipelineResources::~FPipelineResources() {
 }
 //----------------------------------------------------------------------------
 FPipelineResources::FPipelineResources(const FPipelineResources& other)
-:   _dynamicData(*other._dynamicData.LockShared())
+:   FRefCountable(other)
+,   _dynamicData(*other._dynamicData.LockShared())
 ,   _allowEmptyResources(other._allowEmptyResources) {
     STATIC_ASSERT(FCachedID_::is_always_lock_free);
     SetCachedId_(other.CachedId_());
 }
 //----------------------------------------------------------------------------
 FPipelineResources::FPipelineResources(FPipelineResources&& rvalue) NOEXCEPT
-:   _dynamicData(std::move(*rvalue._dynamicData.LockExclusive()))
+:   FRefCountable(std::move(rvalue))
+,   _dynamicData(std::move(*rvalue._dynamicData.LockExclusive()))
 ,   _allowEmptyResources(rvalue._allowEmptyResources) {
     SetCachedId_(rvalue.CachedId_());
     rvalue.SetCachedId_(FRawPipelineResourcesID{0});
@@ -495,8 +497,8 @@ void FPipelineResources::CreateDynamicData(
     const size_t requestedSize{
         sizeof(FUniform) * uniforms.size() +
         sizeof(u32) * bufferDynamicOffsetCount +
-        sizeofResources * resourceCount +
-        sizeofElements * arrayElemCount };
+        static_cast<size_t>(sizeofResources) * resourceCount +
+        static_cast<size_t>(sizeofElements) * arrayElemCount };
 
     pDynamicData->Storage.Resize_DiscardData(requestedSize);
     FRawMemory rawData = pDynamicData->Storage.MakeView();
@@ -508,7 +510,7 @@ void FPipelineResources::CreateDynamicData(
     pDynamicData->DynamicOffsetsOffset = checked_cast<u32>(rawData.data() - pDynamicData->Storage.data());
     pDynamicData->DynamicOffsetsCount = bufferDynamicOffsetCount;
     const TMemoryView<u32> dynamicOffsetData = rawData.Eat(sizeof(u32) * bufferDynamicOffsetCount).Cast<u32>();
-    UNUSED(dynamicOffsetData);
+    Unused(dynamicOffsetData);
 
     u32 numDBO = 0;
     for (auto& it : uniforms) {
@@ -604,7 +606,7 @@ void FPipelineResources::CreateDynamicData(
     }
     Assert_NoAssume(uniformData.empty());
     AssertRelease(numDBO == bufferDynamicOffsetCount);
-    UNUSED(numDBO);
+    Unused(numDBO);
 
     const auto writtenUniforms = pDynamicData->Storage.MakeView().SubRange(pDynamicData->UniformsOffset, pDynamicData->UniformsCount * sizeof(FUniform)).Cast<FUniform>();
     Meta::BubbleSort(writtenUniforms.begin(),  writtenUniforms.end(), [](const FUniform& lhs, const FUniform& rhs) {

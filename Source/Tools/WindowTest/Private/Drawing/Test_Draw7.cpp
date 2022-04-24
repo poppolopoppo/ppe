@@ -131,8 +131,8 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
         .SetImage(image2, int2{}, viewSize)
         .SetCallback(onLoaded2)
         .DependsOn(tDraw));
-    UNUSED(tRead1);
-    UNUSED(tRead2);
+    Unused(tRead1);
+    Unused(tRead2);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

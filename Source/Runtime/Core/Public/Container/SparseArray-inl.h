@@ -623,7 +623,7 @@ void TSparseArray<T, _Allocator>::ReleaseChunk_(FDataItem* chunk, size_t off, si
         }
     }
     else {
-        UNUSED(off);
+        Unused(off);
     }
 
     allocator_traits::DeallocateT(*this, chunk, sz);

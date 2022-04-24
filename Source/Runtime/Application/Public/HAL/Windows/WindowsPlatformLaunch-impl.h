@@ -13,8 +13,12 @@ int APIENTRY wWinMain(
     _In_opt_ HINSTANCE  hPrevInstance,
     _In_ LPWSTR         lpCmdLine,
     _In_ int            nCmdShow) {
-    UNUSED(hPrevInstance);
-    UNUSED(lpCmdLine);
+
+    using namespace PPE;
+    using namespace PPE::Application;
+
+    Unused(hPrevInstance);
+    Unused(lpCmdLine);
 
     int argc = __argc;
     wchar_t* const* argv = __wargv;
@@ -22,9 +26,6 @@ int APIENTRY wWinMain(
     const wchar_t* filename = argv[0];
     argv = &argv[1];
     argc--;
-
-    using namespace PPE;
-    using namespace PPE::Application;
 
     int exitCode = 0;
 

@@ -154,7 +154,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize, const FMemory
     Assert(userSize);
     Assert(systemSize);
     Assert_NoAssume(userSize <= systemSize);
-    UNUSED(child);
+    Unused(child);
 
 #if not USE_PPE_MEMORY_DEBUGGING // this is a performance consideration
     Assert_NoAssume(systemSize <= ALLOCATION_BOUNDARY || userSize * 2 > systemSize);
@@ -208,7 +208,7 @@ void FMemoryTracking::DeallocateUser(size_t size, const FMemoryTracking*/* = nul
 //----------------------------------------------------------------------------
 void FMemoryTracking::AllocateSystem(size_t size, const FMemoryTracking* child/* = nullptr */) NOEXCEPT {
     Assert(size);
-    UNUSED(child);
+    Unused(child);
 
     _system.Allocate(size);
 

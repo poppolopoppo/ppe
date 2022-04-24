@@ -186,7 +186,7 @@ FVulkanRenderPass::~FVulkanRenderPass() {
 }
 #endif
 //----------------------------------------------------------------------------
-FVulkanRenderPass::FVulkanRenderPass(TMemoryView<const FVulkanLogicalRenderPass* const> logicalRenderPasses) {
+FVulkanRenderPass::FVulkanRenderPass(const TMemoryView<const FVulkanLogicalRenderPass* const>& logicalRenderPasses) {
     AssertReleaseMessage(L"not supported yet", 1 == logicalRenderPasses.size());
 
     const FVulkanLogicalRenderPass* const pLogicalRenderPass = logicalRenderPasses.front();

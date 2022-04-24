@@ -253,7 +253,7 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Erase(const const_iterato
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Remove_AssertExists(const _Key& key, const _Value& valueForDebug) {
-    UNUSED(valueForDebug);
+    Unused(valueForDebug);
     const const_iterator it = find(key);
     Assert(end() != it);
     Assert(valueForDebug == it->second);

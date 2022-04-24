@@ -368,7 +368,7 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Erase(const const_iter
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Remove_AssertExists(const _Key& key, const _Value& valueForDebug) {
-    UNUSED(valueForDebug);
+    Unused(valueForDebug);
     const const_iterator it = Find(key);
     Assert(end() != it);
     Assert(valueForDebug == it->second);

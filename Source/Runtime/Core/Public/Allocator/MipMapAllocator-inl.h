@@ -403,7 +403,7 @@ template <typename _Traits>
 TMipMapAllocator2<_Traits>::~TMipMapAllocator2() {
     const FReadWriteLock::FScopeLockWrite scopeWrite(RWLock);
     Pages.Foreach([](uintptr_t key, uintptr_t value) {
-        UNUSED(key);
+        Unused(key);
 
         FMipmapPage* const page = reinterpret_cast<FMipmapPage*>(value);
         Assert_NoAssume(uintptr_t(page->vAddressSpace) == key);

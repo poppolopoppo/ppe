@@ -52,10 +52,10 @@ static bool ReportAssertionForDebug_(
         return true;
     }
 #else
-    UNUSED(level);
-    UNUSED(msg);
-    UNUSED(file);
-    UNUSED(line);
+    Unused(level);
+    Unused(msg);
+    Unused(file);
+    Unused(line);
 #endif
     return false;
 }

@@ -252,7 +252,7 @@ TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index)
     Assert(index <= count);
     Assert(0 == count || nullptr != ptr);
 #else
-    UNUSED(count);
+    Unused(count);
 #endif
     return ptr + index;
 }
@@ -813,7 +813,7 @@ CONSTEXPR void Construct(const TIterable<_It>& range, _Args&&... args) {
             Meta::Construct(&it, args...);
     }
     else {
-        UNUSED(range);
+        Unused(range);
     }
 }
 //----------------------------------------------------------------------------
@@ -825,7 +825,7 @@ CONSTEXPR void Destroy(const TIterable<_It>& range) {
             Meta::Destroy(&it);
     }
     else {
-        UNUSED(range);
+        Unused(range);
     }
 }
 //----------------------------------------------------------------------------

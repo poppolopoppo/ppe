@@ -155,7 +155,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     };
 
     auto customDrawFunc_ = [](void* param, IDrawContext& ctx) {
-        UNUSED(param);
+        Unused(param);
 
         const payload_t& customPayload = *static_cast<payload_t*>(param);
 
@@ -182,7 +182,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
         .SetImage(image, int2{}, viewSize)
         .SetCallback(onLoaded)
         .DependsOn(tDraw));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

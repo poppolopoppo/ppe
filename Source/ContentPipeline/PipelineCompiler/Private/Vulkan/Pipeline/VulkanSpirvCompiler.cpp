@@ -195,8 +195,8 @@ public: // glslang::TShader::Includer
     }
 
     IncludeResult* includeLocal(const char* headerName, const char* includerName, size_t inclusionDepth) override {
-        UNUSED(includerName);
-        UNUSED(inclusionDepth);
+        Unused(includerName);
+        Unused(inclusionDepth);
 
         FRawStorage headerData;
         FWString relativeName = ToWString(MakeCStringView(headerName));
@@ -801,7 +801,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                 isUniform = true;
                 EatSpaces(it);
                 isUniformImage = it.Eat("image"); // optional
-                UNUSED(isUniformImage);
+                Unused(isUniformImage);
                 isUniformSampler = it.StartsWith("sampler"); // optional
                 if (isUniformSampler) {
                     EatIdentifier(it);

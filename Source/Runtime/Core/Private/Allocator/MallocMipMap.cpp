@@ -186,7 +186,7 @@ const size_t FMallocMipMap::LargeMaxAllocSize = FLargeMipMaps_::MaxAllocSize;
 const size_t FMallocMipMap::MipMaxAllocSize = FLargeMipMaps_::MaxAllocSize;
 //----------------------------------------------------------------------------
 void* FMallocMipMap::MediumAlloc(size_t sz, size_t alignment) {
-    UNUSED(alignment);
+    Unused(alignment);
     void* const newp = MediumMips_().Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(alignment, newp));
     return newp;
@@ -203,7 +203,7 @@ void* FMallocMipMap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOE
     if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(MediumMips_().AllocationSize(newp) == newSize);
-        UNUSED(oldSize);
+        Unused(oldSize);
         return newp;
     }
 
@@ -233,7 +233,7 @@ size_t FMallocMipMap::MediumRegionSize(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void* FMallocMipMap::LargeAlloc(size_t sz, size_t alignment) {
-    UNUSED(alignment);
+    Unused(alignment);
     void* const newp = LargeMips_().Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(alignment, newp));
     return newp;
@@ -250,7 +250,7 @@ void* FMallocMipMap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEX
     if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(LargeMips_().AllocationSize(newp) == newSize);
-        UNUSED(oldSize);
+        Unused(oldSize);
         return newp;
     }
 

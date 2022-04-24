@@ -103,10 +103,10 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FVulkanError& error) {
 #if USE_PPE_RHIVULKAN_CHECKS
 NODISCARD static bool VulkanCheckErrors_( VkResult result,
     FWStringView call, FWStringView func, FWStringView file, u32 line ) NOEXCEPT {
-    UNUSED(call);
-    UNUSED(func);
-    UNUSED(file);
-    UNUSED(line);
+    Unused(call);
+    Unused(func);
+    Unused(file);
+    Unused(line);
     if (Likely(VK_SUCCESS == result))
         return true;
 

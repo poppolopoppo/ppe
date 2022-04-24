@@ -36,7 +36,7 @@ private: // RTTI::IAtomVisitor
 #if USE_PPE_BINA_MARKERS
 #   define BINA_READ_TRAITS(_Traits) VerifyRelease(_iss->ExpectPOD((_Traits)->TypeId()))
 #else
-#   define BINA_READ_TRAITS(_Traits) UNUSED(_Traits)
+#   define BINA_READ_TRAITS(_Traits) Unused(_Traits)
 #endif
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \

@@ -21,32 +21,32 @@ IModuleInterface::IModuleInterface(const FModuleInfo& info) NOEXCEPT
 IModuleInterface::~IModuleInterface() NOEXCEPT {}
 //----------------------------------------------------------------------------
 void IModuleInterface::Start(FModularDomain& domain) {
-    UNUSED(domain);
+    Unused(domain);
     LOG(Modular, Info, L"Start application module <{0}> in domain <{1}>", _name, domain.Name());
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::Shutdown(FModularDomain& domain) {
-    UNUSED(domain);
+    Unused(domain);
     LOG(Modular, Info, L"Shutdown application module <{0}> in domain <{1}>", _name, domain.Name());
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::PostStart(FModularDomain& domain) {
-    UNUSED(domain);
+    Unused(domain);
     LOG(Modular, Info, L"PostStart application module <{0}> in domain <{1}>", _name, domain.Name());
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::PreShutdown(FModularDomain& domain) {
-    UNUSED(domain);
+    Unused(domain);
     LOG(Modular, Info, L"PreShutdown application module <{0}> in domain <{1}>", _name, domain.Name());
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::DutyCycle(FModularDomain& domain) {
-    UNUSED(domain);
+    Unused(domain);
     LOG(Modular, Info, L"Duty cycle in application module <{0}> in domain <{1}>", _name, domain.Name());
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
-    UNUSED(domain);
+    Unused(domain);
     LOG(Modular, Info, L"Release memory in application module <{0}> in domain <{1}>", _name, domain.Name());
 }
 //----------------------------------------------------------------------------

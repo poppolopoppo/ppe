@@ -21,6 +21,7 @@ struct FDeviceProperties {
     bool    DescriptorIndexing                  : 1;    // FPipelineResources::***::ElementCount can be set in runtime.
     bool    DrawIndirectCount                   : 1;    // FDrawVerticesIndirectCount/FDrawIndexedIndirectCount can be used.
     bool    Swapchain                           : 1;    // CreateSwapchain() can be used.
+
     bool    MeshShaderNV                        : 1;    // CreatePipeline(FMeshPipelineDesc), FDrawMeshes*** can be used.
     bool    RayTracingNV                        : 1;    // CreatePipeline(FRayTracingPipelineDesc), CreateRayTracingGeometry(), CreateRayTracingScene(), CreateRayTracingShaderTable(),
                                                         // FBuildRayTracingGeometry, FBuildRayTracingScene, FUpdateRayTracingShaderTable, FTraceRays can be used.

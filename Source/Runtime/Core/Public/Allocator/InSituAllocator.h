@@ -54,7 +54,7 @@ public:
     TInSituAllocator& operator =(const TInSituAllocator& other) NOEXCEPT {
         Assert_NoAssume(EState::Freed == State);
         Assert_NoAssume(EState::Freed == other.State);
-        UNUSED(other);
+        Unused(other);
         return (*this);
     }
 
@@ -63,7 +63,7 @@ public:
     TInSituAllocator& operator =(TInSituAllocator&& rvalue) NOEXCEPT {
         Assert_NoAssume(EState::Freed == State);
         Assert_NoAssume(EState::Freed == rvalue.State);
-        UNUSED(rvalue);
+        Unused(rvalue);
         return (*this);
     }
 
@@ -101,7 +101,7 @@ public:
 
         State = EState::Allocated;
 #else
-        UNUSED(s);
+        Unused(s);
 #endif
         return FAllocatorBlock{ std::addressof(InSitu), SizeInBytes };
     }
@@ -115,7 +115,7 @@ public:
         State = EState::Freed;
         FPlatformMemory::Memdeadbeef(b.Data, b.SizeInBytes);
 #else
-        UNUSED(b);
+        Unused(b);
 #endif
     }
 
@@ -162,7 +162,7 @@ public:
     TInSituStackAllocator& operator =(const TInSituStackAllocator& other) NOEXCEPT {
         Assert_NoAssume(0 == Offset);
         Assert_NoAssume(0 == other.Offset);
-        UNUSED(other);
+        Unused(other);
         return (*this);
     }
 
@@ -171,7 +171,7 @@ public:
     TInSituStackAllocator& operator =(TInSituStackAllocator&& rvalue) NOEXCEPT {
         Assert_NoAssume(0 == Offset);
         Assert_NoAssume(0 == rvalue.Offset);
-        UNUSED(rvalue);
+        Unused(rvalue);
         return (*this);
     }
 

@@ -158,8 +158,8 @@ public:
 
     static void WritePrefetch(const void* p, size_t offset = 0) {
 #ifdef __clang__
-        UNUSED(p);
-        UNUSED(offset);
+        Unused(p);
+        Unused(offset);
 #else
         ::_m_prefetchw((char const*)(p)+offset);
 #endif

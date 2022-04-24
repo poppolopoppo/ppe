@@ -52,7 +52,7 @@ bool FVulkanDescriptorManager::AllocateDescriptorSet(FVulkanDescriptorSet* pDesc
     const auto exclusivePools = _descriptorPools.LockExclusive();
 
     forrange(i, 0, exclusivePools->size()) {
-        const VkDescriptorPool vkPool = exclusivePools->at(i);
+        VkDescriptorPool vkPool = exclusivePools->at(i);
         Assert(VK_NULL_HANDLE != vkPool);
 
         info.descriptorPool = vkPool;

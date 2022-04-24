@@ -317,8 +317,8 @@ bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTr
     FetchAllTrackingDataSorted_(&datas);
     return each(user, datas.MakeView());
 #else
-    UNUSED(user);
-    UNUSED(each);
+    Unused(user);
+    Unused(each);
     return false;
 #endif
 }
@@ -328,7 +328,7 @@ void RegisterTrackingData(FMemoryTracking *pTrackingData) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     FTrackingDataRegistry_::Get().Register(pTrackingData);
 #else
-    UNUSED(pTrackingData);
+    Unused(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -337,13 +337,13 @@ void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     FTrackingDataRegistry_::Get().Unregister(pTrackingData);
 #else
-    UNUSED(pTrackingData);
+    Unused(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
 void ReportAllocationFragmentation(FWTextWriter& oss) {
 #if USE_PPE_FINAL_RELEASE
-    UNUSED(oss);
+    Unused(oss);
 #else
     oss << L"Reporting allocator memory info:" << Eol;
     FMallocDebug::DumpMemoryInfo(oss);
@@ -409,7 +409,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
         GPrevAllocations[i] = allocations[i];
     }
 #else
-    UNUSED(oss);
+    Unused(oss);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -456,7 +456,7 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
         FLUSH_LOG();
 
 #else
-    UNUSED(optional);
+    Unused(optional);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -512,7 +512,7 @@ void ReportCsvTrackingData(FTextWriter* optional/* = nullptr */) {
 #   endif
 
 #else
-    UNUSED(optional);
+    Unused(optional);
 #endif
 }
 //----------------------------------------------------------------------------

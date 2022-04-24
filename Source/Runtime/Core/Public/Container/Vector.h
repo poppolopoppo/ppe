@@ -279,7 +279,7 @@ private:
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
 
     void allocator_copy_(const allocator_type& other, std::true_type );
-    void allocator_copy_(const allocator_type& other, std::false_type ) { UNUSED(other); }
+    void allocator_copy_(const allocator_type& other, std::false_type ) { Unused(other); }
 
     template <typename _It>
     void assign_(_It first, _It last, std::input_iterator_tag );

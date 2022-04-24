@@ -181,8 +181,8 @@ static LRESULT CALLBACK Template_TextProc_(HWND hwndDlg, UINT message, WPARAM wP
 }
 //----------------------------------------------------------------------------
 static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-    UNUSED(wParam);
-    UNUSED(lParam);
+    Unused(wParam);
+    Unused(lParam);
     switch (message)
     {
         case WM_LBUTTONDBLCLK:

@@ -56,8 +56,9 @@ private:
         return GNumAssertsTLS;
     }
 
-    static bool OnAssert(const wchar_t* msg, const wchar_t* , unsigned ) {
-        LOG(WindowTest, Info, L"Expected assert: '{0}'", MakeCStringView(msg));
+    static bool OnAssert(const wchar_t* msg, const wchar_t* file, unsigned line) {
+        Unused(msg, file, line);
+        LOG(WindowTest, Info, L"Expected assert: '{0}' in {1}:{2}", MakeCStringView(msg), MakeCStringView(file), line);
         ++NumAssertsTLS_();
         return false; // no failure
     }

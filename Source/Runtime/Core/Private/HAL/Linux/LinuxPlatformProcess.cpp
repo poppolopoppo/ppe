@@ -295,7 +295,7 @@ bool FLinuxPlatformProcess::IsProcessAlive(FProcessHandle process) {
 }
 //----------------------------------------------------------------------------
 auto FLinuxPlatformProcess::OpenProcess(FProcessId pid, bool fullAccess/* = true */) -> FProcessHandle {
-    UNUSED(fullAccess);
+    Unused(fullAccess);
 
     // check if actually running
     int killResult = ::kill(pid, 0); // no actual signal is sent
@@ -389,7 +389,7 @@ bool FLinuxPlatformProcess::ExitCode(int* pExitCode, FProcessHandle process) {
 bool FLinuxPlatformProcess::MemoryStats(FMemoryStats* pStats, FProcessHandle process) {
     Assert(pStats);
     Assert(process.Valid());
-    UNUSED(pStats);
+    Unused(pStats);
     AssertNotImplemented(); // #TODO popen() ?
 }
 //----------------------------------------------------------------------------
@@ -516,15 +516,15 @@ const FLinuxPlatformProcess::FAffinityMask& FLinuxPlatformProcess::AllCoresAffin
 //----------------------------------------------------------------------------
 auto FLinuxPlatformProcess::AffinityMask(FProcessHandle process) -> FAffinityMask {
     Assert(process.Valid());
-    UNUSED(process);
+    Unused(process);
     AssertNotImplemented();
     return FAffinityMask{ 0 };
 }
 //----------------------------------------------------------------------------
 bool FLinuxPlatformProcess::SetAffinityMask(FProcessHandle process, FAffinityMask mask) {
     Assert(process.Valid());
-    UNUSED(process);
-    UNUSED(mask);
+    Unused(process);
+    Unused(mask);
     AssertNotImplemented(); // #TODO ???
     return false;
 }
@@ -545,7 +545,7 @@ bool FLinuxPlatformProcess::CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite, 
     Assert(pRead);
     Assert(pWrite);
 
-    UNUSED(shareRead);
+    Unused(shareRead);
 
     int pipeFd[2];
     if (-1 == ::pipe(pipeFd)) {
@@ -629,10 +629,10 @@ auto FLinuxPlatformProcess::CreateProcess(
     Assert(pPID);
     Assert(executable);
 
-    UNUSED(workingDir);
-    UNUSED(hidden);
-    UNUSED(inheritHandles);
-    UNUSED(noWindow);
+    Unused(workingDir);
+    Unused(hidden);
+    Unused(inheritHandles);
+    Unused(noWindow);
 
     CLOG(workingDir != nullptr, HAL, Error,
         L"::posix_spawn() doesn't support working directory yet: {0}",
@@ -819,7 +819,7 @@ void FLinuxPlatformProcess::LockSemaphore(FSemaphore semaphore) {
 //----------------------------------------------------------------------------
 bool FLinuxPlatformProcess::TryLockSemaphore(FSemaphore semaphore, u64 nanoSeconds) {
     Assert(semaphore);
-    UNUSED(nanoSeconds);
+    Unused(nanoSeconds);
 
     ::timespec tm;
     tm.tv_sec = 0;;

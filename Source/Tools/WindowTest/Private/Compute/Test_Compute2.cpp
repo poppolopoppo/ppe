@@ -90,7 +90,7 @@ ARGS_IF_RHIDEBUG("Test_Compute2_CS"));
         .DependsOn(tRun)
         .SetCallback(onLoaded));
     LOG_CHECK(WindowTest, tRead);
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

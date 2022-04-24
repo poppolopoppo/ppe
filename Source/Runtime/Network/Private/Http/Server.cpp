@@ -58,15 +58,15 @@ void FHttpServer::Start(size_t workerCount) {
 }
 //----------------------------------------------------------------------------
 void FHttpServer::OnConnect(FServicingPort& port) const {
-    UNUSED(port);
+    Unused(port);
 
     LOG(Network, Verbose, L"HTTP: <{0}> server has new connection {1} -> {2} ({3})",
         _name, port.Socket().Local(), port.Socket().Remote(), port.UID() );
 }
 //----------------------------------------------------------------------------
 bool FHttpServer::OnRequest(FServicingPort& port, const FHttpRequest& request) const {
-    UNUSED(port);
-    UNUSED(request);
+    Unused(port);
+    Unused(request);
 
     LOG(Network, Error, L"HTTP: <{0}> server unhandled request: {1} {2} ({3})",
         _name, request.Method(), request.Uri(), port.UID() );
@@ -75,7 +75,7 @@ bool FHttpServer::OnRequest(FServicingPort& port, const FHttpRequest& request) c
 }
 //----------------------------------------------------------------------------
 void FHttpServer::OnDisconnect(FServicingPort& port) const {
-    UNUSED(port);
+    Unused(port);
 
     LOG(Network, Verbose, L"HTTP: <{0}> server closed connection {1} ({2})",
         _name, port.Socket().Remote(), port.UID());

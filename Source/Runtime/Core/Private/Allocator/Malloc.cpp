@@ -398,7 +398,7 @@ private:
         if (nullptr == oldp)
             FPlatformMemory::Memuninitialized(newp, SnapSize(sizeInBytes));
 #   else
-        UNUSED(oldp);
+        Unused(oldp);
 #   endif
 #   if PPE_MALLOC_UNACCOUNTED_PROXY
         FMallocUnaccounted::Allocate(newp, sizeInBytes);
@@ -516,7 +516,7 @@ bool FMallocDebug::SetLeakDetectorWhiteListed(bool ignoreleaks) {
     whitelistedTLS = ignoreleaks;
     return wasIgnoringLeaks;
 #else
-    UNUSED(ignoreleaks);
+    Unused(ignoreleaks);
     return false;
 #endif
 }
@@ -530,7 +530,7 @@ void FMallocDebug::DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
         ? FLeakDetector::ReportOnlyNonDeleters
         : FLeakDetector::ReportOnlyLeaks );
 #else
-    UNUSED(onlyNonDeleters);
+    Unused(onlyNonDeleters);
 #endif
 }
 #endif //!USE_PPE_FINAL_RELEASE
@@ -546,9 +546,9 @@ bool FMallocDebug::FetchAllocationHistogram(
     *totalBytes = TMemoryView<const i64>((const i64*)&GMallocSizeTotalBytes, lengthof(GMallocSizeTotalBytes));
     return true;
 #else
-    UNUSED(classes);
-    UNUSED(allocations);
-    UNUSED(totalBytes);
+    Unused(classes);
+    Unused(allocations);
+    Unused(totalBytes);
     return false;
 #endif
 }

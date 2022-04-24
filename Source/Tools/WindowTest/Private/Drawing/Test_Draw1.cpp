@@ -110,7 +110,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
 
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass });
     const PFrameTask tRead = cmd->Task(FReadImage{}.SetImage(*image, int2{}, viewSize).SetCallback(onLoaded).DependsOn(tDraw));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

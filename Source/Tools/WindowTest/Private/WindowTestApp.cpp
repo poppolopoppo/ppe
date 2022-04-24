@@ -60,7 +60,7 @@ EACH_WINDOWTEST(WINDOWTEST_EXTERN_DECL)
 //----------------------------------------------------------------------------
 static void LaunchWindowTests_(FWindowTestApp& app) {
     auto launchTest = [&app](FWStringView name, auto&& test) {
-        UNUSED(name);
+        Unused(name);
         LOG(WindowTest, Info, L"start framegraph test <{0}> ...", name);
 
         RHI::IFrameGraph& fg = *app.RHI().FrameGraph();

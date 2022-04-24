@@ -82,13 +82,13 @@ public:
 
     bool Acquire(FAllocatorBlock b) NOEXCEPT {
         Assert_NoAssume(Heap->AliasesToHeap(b.Data));
-        UNUSED(b); // nothing to do
+        Unused(b); // nothing to do
         return true;
     }
 
     bool Steal(FAllocatorBlock b) NOEXCEPT {
         Assert_NoAssume(Heap->AliasesToHeap(b.Data));
-        UNUSED(b); // nothing to do
+        Unused(b); // nothing to do
         return true;
     }
 

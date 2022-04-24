@@ -134,7 +134,7 @@ ARGS_IF_RHIDEBUG("Test_ArrayOfTextures2_CS"));
         .SetImage(imageDst, int2{}, imageDim)
         .SetCallback(onLoaded)
         .DependsOn(tComp));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

@@ -494,7 +494,7 @@ private:
             oss.ToString() );
 
 #else
-        UNUSED(ref);
+        Unused(ref);
         AssertNotReached();
 #endif
     }

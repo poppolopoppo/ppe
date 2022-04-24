@@ -46,7 +46,7 @@ template <typename T>
 static void WriteAlign_(IStreamWriter& outp, const FBinaryFormat::FRawData& section, const TMemoryView<T>& view) {
     Assert_NoAssume(section.Offset == outp.TellO());
     Assert_NoAssume(section.Size == view.SizeInBytes());
-    UNUSED(section);
+    Unused(section);
     WriteAlign_(outp, view);
 }
 //----------------------------------------------------------------------------
@@ -509,4 +509,3 @@ void FBinaryFormatWriter::WriteFileData_(const FBinaryFormat::FHeaders& h, IStre
 //----------------------------------------------------------------------------
 } //!namespace Serialize
 } //!namespace PPE
-

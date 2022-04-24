@@ -109,7 +109,7 @@ inline void* TBitmapPage<_PageSize>::Allocate(u32 sizeInBytes, bool& exhausted) 
                 if (Pages.compare_exchange_weak(pages, insert, std::memory_order_release, std::memory_order_relaxed)) {
                     Assert(off + numPages - 1 < MaxPages);
                     const mask_t backup = (Sizes |= (mask_t(1) << (off + numPages - 1)));
-                    UNUSED(backup);
+                    Unused(backup);
                     void* const result = (reinterpret_cast<u8*>(vAddressSpace) + PageSize * off);
                     Assert_NoAssume(backup & (mask_t(1) << (off + numPages - 1)));
                     Assert_NoAssume(RegionSize(result) == SnapSize(sizeInBytes));
@@ -240,7 +240,7 @@ template <typename _Traits>
 TBitmapHeap<_Traits>::~TBitmapHeap() {
     const FReadWriteLock::FScopeLockWrite scopeWrite(RWLock);
     Pages.DeleteIf([this](uintptr_t key, uintptr_t value) {
-        UNUSED(key);
+        Unused(key);
 
         auto* const page = reinterpret_cast<page_type*>(value);
         Assert_NoAssume(uintptr_t(page->vAddressSpace) == key); // check for leaks

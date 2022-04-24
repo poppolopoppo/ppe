@@ -21,8 +21,8 @@ namespace Application {
 struct FGLFWWindow::FKeyboardCallbacks {
     static void Keyboard(GLFWwindow* nativeHandle, int key, int scancode, int action, int mods) {
         Assert(nativeHandle);
-        UNUSED(scancode);
-        UNUSED(mods); // #TODO
+        Unused(scancode);
+        Unused(mods); // #TODO
 
         auto* const window = static_cast<FGLFWWindow*>(glfwGetWindowUserPointer(nativeHandle));
         Assert(window);

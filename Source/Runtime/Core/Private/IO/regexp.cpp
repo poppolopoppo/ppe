@@ -108,7 +108,7 @@ bool TBasicRegexp<_Char>::ValidateSyntax(const stringview_type& expr) NOEXCEPT {
         default:
             AssertNotImplemented();
         }
-        UNUSED(errorStr); // when logger is disabled
+        Unused(errorStr); // when logger is disabled
         LOG(Regex, Error, L"regex_error caught: {0} (code: {1})\n\texpr: {2}", e.what(), errorStr, expr);
         return false;
     }

@@ -422,8 +422,8 @@ public:
     TPair<iterator, bool> insert(const value_type& value);
     TPair<iterator, bool> insert(value_type&& rvalue);
 
-    TPair<iterator, bool> insert(iterator hint, const value_type& value) { UNUSED(hint); return insert(value); }
-    TPair<iterator, bool> insert(iterator hint, value_type&& rvalue) { UNUSED(hint); return insert(std::move(rvalue)); }
+    TPair<iterator, bool> insert(iterator hint, const value_type& value) { Unused(hint); return insert(value); }
+    TPair<iterator, bool> insert(iterator hint, value_type&& rvalue) { Unused(hint); return insert(std::move(rvalue)); }
 
     bool insert_ReturnIfExists(const value_type& value) { return (not insert(value).second); }
     void insert_AssertUnique(const value_type& value);

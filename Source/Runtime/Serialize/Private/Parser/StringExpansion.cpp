@@ -100,7 +100,7 @@ private:
 
     void PrettyPrint_(const RTTI::ITypeTraits* traits, const void* data) {
         Assert(traits);
-        UNUSED(data);
+        Unused(data);
 
         FStringBuilder sb;
         PrettyPrint(sb, RTTI::FAtom{ data, RTTI::PTypeTraits(traits) },
@@ -125,8 +125,8 @@ private:
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& scalar, const RTTI::IScalarTraits& traits, const Lexer::FSpan& site) {
     Assert(scalar);
-    UNUSED(traits);
-    UNUSED(site);
+    Unused(traits);
+    Unused(site);
 
     FAtomFormatArgVisitor_ args;
     scalar.Accept(&args);
@@ -138,8 +138,8 @@ FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& scalar, co
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& tuple, const RTTI::ITupleTraits& traits, const Lexer::FSpan& site) {
     Assert(tuple);
-    UNUSED(traits);
-    UNUSED(site);
+    Unused(traits);
+    Unused(site);
 
     FAtomFormatArgVisitor_ args;
     traits.ForEach(tuple.Data(), [&args](const RTTI::FAtom& it) {
@@ -153,8 +153,8 @@ FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& tuple, con
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& list, const RTTI::IListTraits& traits, const Lexer::FSpan& site) {
     Assert(list);
-    UNUSED(traits);
-    UNUSED(site);
+    Unused(traits);
+    Unused(site);
 
     FAtomFormatArgVisitor_ args;
     traits.ForEach(list.Data(), [&args](const RTTI::FAtom& it) {

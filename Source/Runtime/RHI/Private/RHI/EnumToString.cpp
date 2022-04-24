@@ -60,7 +60,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EQueueUsage::Graphics) oss << sep << STRING_LITERAL(_Char, "Graphics");
     if (value & EQueueUsage::AsyncCompute) oss << sep << STRING_LITERAL(_Char, "AsyncCompute");
@@ -75,7 +75,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EMemoryType::HostRead) oss << sep << STRING_LITERAL(_Char, "HostRead");
     if (value & EMemoryType::HostWrite) oss << sep << STRING_LITERAL(_Char, "HostWrite");
@@ -92,7 +92,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EBufferUsage::TransferSrc) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
     if (value & EBufferUsage::TransferDst) oss << sep << STRING_LITERAL(_Char, "TransferDst");
@@ -145,7 +145,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (EImageFlags::MutableFormat == value) oss << sep << STRING_LITERAL(_Char, "MutableFormat");
     if (EImageFlags::CubeCompatible == value) oss << sep << STRING_LITERAL(_Char, "CubeCompatible");
@@ -163,7 +163,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EImageUsage::TransferSrc) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
     if (value & EImageUsage::TransferDst) oss << sep << STRING_LITERAL(_Char, "TransferDst");
@@ -189,7 +189,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EImageAspect::Color) oss << sep << STRING_LITERAL(_Char, "Color");
     if (value & EImageAspect::Depth) oss << sep << STRING_LITERAL(_Char, "Depth");
@@ -435,7 +435,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EDebugFlags::LogTasks) oss << sep << STRING_LITERAL(_Char, "LogTasks");
     if (value & EDebugFlags::LogBarriers) oss << sep << STRING_LITERAL(_Char, "LogBarriers");
@@ -524,7 +524,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     Assert(value != Zero);
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EColorMask::R) oss << STRING_LITERAL(_Char, "R");
     if (value & EColorMask::G) oss << STRING_LITERAL(_Char, "G");
@@ -614,7 +614,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EPipelineDynamicState::Viewport) oss << sep << STRING_LITERAL(_Char, "Viewport");
     if (value & EPipelineDynamicState::Scissor) oss << sep << STRING_LITERAL(_Char, "Scissor");
@@ -645,7 +645,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & ERayTracingInstanceFlags::TriangleCullDisable) return oss << sep << STRING_LITERAL(_Char, "TriangleCullDisable");
     if (value & ERayTracingInstanceFlags::TriangleFrontCCW) return oss << sep << STRING_LITERAL(_Char, "TriangleFrontCCW");
@@ -661,7 +661,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & ERayTracingBuildFlags::AllowUpdate) return oss << sep << STRING_LITERAL(_Char, "AllowUpdate");
     if (value & ERayTracingBuildFlags::AllowCompaction) return oss << sep << STRING_LITERAL(_Char, "AllowCompaction");
@@ -703,7 +703,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 
     auto sep = Separator_<_Char>();
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     if (value & EShaderStages::Vertex) oss << sep << STRING_LITERAL(_Char, "Vertex");
     if (value & EShaderStages::TessControl) oss << sep << STRING_LITERAL(_Char, "TessControl");
@@ -978,9 +978,8 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceState value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, ", "));
     TEnumFlagsNone_ none{ oss };
-    UNUSED(none);
+    Unused(none);
 
     switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
     case EResourceState::Unknown: oss << STRING_LITERAL(_Char, "Unknown"); break;

@@ -45,7 +45,7 @@ private:
         CLOG(_CONDITION, _CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
 #else
 #   define LOG_LASTERROR(_CATEGORY, _CONTEXT) NOOP()
-#   define CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) UNUSED(_CONDITION)
+#   define CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) Unused(_CONDITION)
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

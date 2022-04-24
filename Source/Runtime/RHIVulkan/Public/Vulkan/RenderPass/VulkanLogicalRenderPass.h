@@ -102,8 +102,8 @@ public:
 
     NODISCARD bool Submit(
         FVulkanCommandBuffer& cmd,
-        TMemoryView<const TPair<FRawImageID, EResourceState>> images,
-        TMemoryView<const TPair<FRawBufferID, EResourceState>> buffers );
+        const TMemoryView<const TPair<FRawImageID, EResourceState>>& images,
+        const TMemoryView<const TPair<FRawBufferID, EResourceState>>& buffers );
 
 #if USE_PPE_RHIDEBUG
     void SetShaderDebugIndex(EShaderDebugIndex id);

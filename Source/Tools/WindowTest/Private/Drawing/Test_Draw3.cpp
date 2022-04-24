@@ -114,12 +114,12 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
         .AddScissor(FRectangleU{0, 0, viewSize.x, viewSize.y / 2}) );
 
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass });
-    UNUSED(tDraw);
+    Unused(tDraw);
     const PFrameTask tRead = cmd->Task(FReadImage{}
         .SetImage(*image, int2{}, viewSize)
         .SetCallback(onLoaded)
         .DependsOn(tDraw));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

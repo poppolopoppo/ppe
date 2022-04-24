@@ -234,9 +234,9 @@ CONSTEXPR bool EPixelFormat_HasDepthOrStencil(EPixelFormat fmt) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FPixelDecodeRGBA32f = void (*)(FRgba32f* __restrict, FRawMemoryConst) NOEXCEPT;
-using FPixelDecodeRGBA32i = void (*)(FRgba32i* __restrict, FRawMemoryConst) NOEXCEPT;
-using FPixelDecodeRGBA32u = void (*)(FRgba32u* __restrict, FRawMemoryConst) NOEXCEPT;
+using FPixelDecodeRGBA32f = void (*)(FRgba32f* __restrict, const FRawMemoryConst&) NOEXCEPT;
+using FPixelDecodeRGBA32i = void (*)(FRgba32i* __restrict, const FRawMemoryConst&) NOEXCEPT;
+using FPixelDecodeRGBA32u = void (*)(FRgba32u* __restrict, const FRawMemoryConst&) NOEXCEPT;
 //----------------------------------------------------------------------------
 using FPixelEncodeRGBA32f = void (*)(FRawMemory, const FRgba32f&) NOEXCEPT;
 using FPixelEncodeRGBA32i = void (*)(FRawMemory, const FRgba32i&) NOEXCEPT;

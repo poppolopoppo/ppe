@@ -170,8 +170,8 @@ struct TAllocatorTraits {
             *dst = src;
         }
         else {
-            UNUSED(dst);
-            UNUSED(src);
+            Unused(dst);
+            Unused(src);
         }
     }
 
@@ -180,7 +180,7 @@ struct TAllocatorTraits {
             return _Allocator{ other };
         }
         else {
-            UNUSED(other);
+            Unused(other);
             return Meta::MakeForceInit<_Allocator>();
         }
     }
@@ -190,8 +190,8 @@ struct TAllocatorTraits {
             *dst = std::move(src);
         }
         else {
-            UNUSED(dst);
-            UNUSED(src);
+            Unused(dst);
+            Unused(src);
         }
     }
 
@@ -200,7 +200,7 @@ struct TAllocatorTraits {
             return _Allocator{ std::move(rvalue) };
         }
         else {
-            UNUSED(rvalue);
+            Unused(rvalue);
             return Meta::MakeForceInit<_Allocator>();
         }
     }
@@ -211,15 +211,15 @@ struct TAllocatorTraits {
             swap(lhs, rhs); // can be overloaded
         }
         else {
-            UNUSED(lhs);
-            UNUSED(rhs);
+            Unused(lhs);
+            Unused(rhs);
         }
     }
 
     NODISCARD static bool Equals(const _Allocator& lhs, const _Allocator& rhs) NOEXCEPT {
         IF_CONSTEXPR(is_always_equal::value) {
-            UNUSED(lhs);
-            UNUSED(rhs);
+            Unused(lhs);
+            Unused(rhs);
             return true;
         }
         else
@@ -231,8 +231,8 @@ struct TAllocatorTraits {
         IF_CONSTEXPR(Meta::has_trivial_equal_v<_Allocator, _AllocatorOther>)
             return (lhs == rhs);
         else {
-            UNUSED(lhs);
-            UNUSED(rhs);
+            Unused(lhs);
+            Unused(rhs);
             return false;
         }
     }
@@ -267,8 +267,8 @@ struct TAllocatorTraits {
             return a.Owns(b);
         }
         else {
-            UNUSED(a);
-            UNUSED(b);
+            Unused(a);
+            Unused(b);
             AssertNotImplemented();
         }
     }
@@ -390,8 +390,8 @@ struct TAllocatorTraits {
         IF_CONSTEXPR(has_acquire::value)
             return a.Acquire(b);
         else {
-            UNUSED(a);
-            UNUSED(b);
+            Unused(a);
+            Unused(b);
             return false;
         }
     }
@@ -403,8 +403,8 @@ struct TAllocatorTraits {
         IF_CONSTEXPR(has_steal::value)
             return a.Steal(b);
         else {
-            UNUSED(a);
-            UNUSED(b);
+            Unused(a);
+            Unused(b);
             return false;
         }
     }
@@ -421,9 +421,9 @@ struct TAllocatorTraits {
             return (Steal(src, b) && dst_t::Acquire(*dst, b));
         }
         else {
-            UNUSED(dst);
-            UNUSED(src);
-            UNUSED(b);
+            Unused(dst);
+            Unused(src);
+            Unused(b);
             return false;
         }
     }
@@ -471,9 +471,9 @@ NODISCARD bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBl
     using traits_t = TAllocatorTraits<_Allocator>;
     IF_CONSTEXPR(traits_t::propagate_on_container_move_assignment::value) {
         // nothing to do : the allocator is trivially movable
-        UNUSED(dst);
-        UNUSED(src);
-        UNUSED(b);
+        Unused(dst);
+        Unused(src);
+        Unused(b);
 
         traits_t::Move(dst, std::move(src));
 

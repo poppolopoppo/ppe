@@ -59,12 +59,12 @@ struct TBitmapCpuTraits {
         FVirtualMemory::PageDecommit(ptr, sizeInBytes, TrackingData());
     }
     static void OnUserAlloc(void* ptr, size_t sizeInBytes) {
-        UNUSED(ptr);
+        Unused(ptr);
         PPE_DEBUG_UNPOISONMEMORY(ptr, sizeInBytes); // ASAN
         TrackingData().AllocateUser(sizeInBytes);
     }
     static void OnUserFree(void* ptr, size_t sizeInBytes) {
-        UNUSED(ptr);
+        Unused(ptr);
         PPE_DEBUG_POISONMEMORY(ptr, sizeInBytes); // ASAN
         TrackingData().DeallocateUser(sizeInBytes);
     }

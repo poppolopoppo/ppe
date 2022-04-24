@@ -344,8 +344,9 @@ inline void* operator new(size_t sizeInBytes, PPE::TSlabHeap<_Allocator>& heap) 
 }
 template <typename _Allocator>
 inline void operator delete(void* ptr, PPE::TSlabHeap<_Allocator>& heap) NOEXCEPT {
-    UNUSED(ptr);
-    UNUSED(heap);
+    using namespace PPE;
+    Unused(ptr);
+    Unused(heap);
     AssertNotImplemented(); // not supported
 }
 //----------------------------------------------------------------------------
@@ -357,8 +358,9 @@ inline void* operator new(size_t sizeInBytes, PPE::TPoolingSlabHeap<_Allocator>&
 }
 template <typename _Allocator>
 inline void operator delete(void* ptr, PPE::TPoolingSlabHeap<_Allocator>& heap) NOEXCEPT {
-    UNUSED(ptr);
-    UNUSED(heap);
+    using namespace PPE;
+    Unused(ptr);
+    Unused(heap);
     AssertNotImplemented(); // could be supported if block size was known
 }
 //----------------------------------------------------------------------------

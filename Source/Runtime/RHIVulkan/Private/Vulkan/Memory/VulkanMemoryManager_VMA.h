@@ -183,8 +183,8 @@ inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(cons
         VkDeviceMemory VMA_NOT_NULL_NON_DISPATCHABLE memory,
         VkDeviceSize                                 size,
         void* VMA_NULLABLE                           pUserData) {
-            UNUSED(memory);
-            UNUSED(pUserData);
+            Unused(memory);
+            Unused(pUserData);
             FMemoryTracking& deviceTracking = VmaMemoryTypeDomain_(allocator, memoryType);
             deviceTracking.AllocateSystem(checked_cast<size_t>(size));
         };
@@ -194,8 +194,8 @@ inline FVulkanMemoryManager::FVulkanMemoryAllocator::FVulkanMemoryAllocator(cons
         VkDeviceMemory VMA_NOT_NULL_NON_DISPATCHABLE memory,
         VkDeviceSize                                 size,
         void* VMA_NULLABLE                           pUserData) {
-            UNUSED(memory);
-            UNUSED(pUserData);
+            Unused(memory);
+            Unused(pUserData);
             FMemoryTracking& deviceTracking = VmaMemoryTypeDomain_(allocator, memoryType);
             deviceTracking.DeallocateSystem(checked_cast<size_t>(size));
         };
@@ -215,7 +215,7 @@ inline void FVulkanMemoryManager::FVulkanMemoryAllocator::DutyCycle(u32 frameInd
 }
 //----------------------------------------------------------------------------
 inline void FVulkanMemoryManager::FVulkanMemoryAllocator::DefragmentMemory(FVulkanResourceManager& resources) {
-    UNUSED(resources);
+    Unused(resources);
 
     // #TODO: defragment CPU and GPU memory:
     // https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/defragmentation.html
@@ -378,7 +378,7 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
         UINT32_MAX, // #TODO ?
         vmaInfo,
         VMA_SUBALLOCATION_TYPE_UNKNOWN,
-        1, &allocation ))
+        1, &allocation ));
 
     VmaAllocationInfo allocInfo{};
     vmaGetAllocationInfo(exclusiveAllocator.Value(), allocation, &allocInfo);

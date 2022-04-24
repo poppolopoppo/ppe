@@ -358,7 +358,7 @@ static NO_INLINE void TestRTTI_() {
         const RTTI::FMetaEnum* metaEnum = RTTI::MetaEnum<ETutut>();
 
         const auto defaultValue = metaEnum->DefaultValue();
-        UNUSED(defaultValue);
+        Unused(defaultValue);
 
         LOG(RTTI_UnitTest, Debug, L"Enum<{0}> : {1} = {2} ({3})",
             metaEnum->Name(),
@@ -471,7 +471,7 @@ static NO_INLINE void TestRTTI_() {
             {
                 const auto& prop = metaClass->Property(RTTI::FName("Dict"));
                 const auto value = prop.Get(*titi);
-                UNUSED(value);
+                Unused(value);
 
                 LOG(RTTI_UnitTest, Debug, L"{0} = {1}", prop.Name(), value);
             }

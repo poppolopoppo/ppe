@@ -124,7 +124,7 @@ const size_t FMallocBitmap::LargeMaxAllocSize = FBitmapHeapLarge_::MaxAllocSize;
 const size_t FMallocBitmap::MaxAllocSize = FBitmapHeapLarge_::MaxAllocSize;
 //----------------------------------------------------------------------------
 void* FMallocBitmap::MediumAlloc(size_t sz, size_t alignment) {
-    UNUSED(alignment);
+    Unused(alignment);
     void* const newp = FBitmapHeaps_::Get().Medium.Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(alignment, newp));
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(FBitmapHeapMedium_::Granularity, newp));
@@ -142,7 +142,7 @@ void* FMallocBitmap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOE
     if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(FBitmapHeaps_::Get().Medium.AllocationSize(newp) == newSize);
-        UNUSED(oldSize);
+        Unused(oldSize);
         return newp;
     }
 
@@ -172,7 +172,7 @@ size_t FMallocBitmap::MediumRegionSize(void* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void* FMallocBitmap::LargeAlloc(size_t sz, size_t alignment) {
-    UNUSED(alignment);
+    Unused(alignment);
     void* const newp = FBitmapHeaps_::Get().Large.Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(alignment, newp));
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(FBitmapHeapLarge_::Granularity, newp));
@@ -190,7 +190,7 @@ void* FMallocBitmap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEX
     if (Likely(newp)) {
         Assert(newp == ptr);
         Assert_NoAssume(FBitmapHeaps_::Get().Large.AllocationSize(newp) == newSize);
-        UNUSED(oldSize);
+        Unused(oldSize);
         return newp;
     }
 

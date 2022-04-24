@@ -516,7 +516,7 @@ public: // export table results
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             sb.ToString() );
 #else
-        UNUSED(table);
+        Unused(table);
 #endif
     }
 

@@ -314,12 +314,12 @@ TVulkanFrameTask<FUpdateRayTracingShaderTable>::TVulkanFrameTask(FVulkanCommandB
 TVulkanFrameTask<FBuildRayTracingGeometry>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingGeometry& desc, FProcessFunc process)
 :   IVulkanFrameTask(desc, process)
 ,   UsableBuffers(cmd.Allocator()) {
-    UNUSED(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task)
+    Unused(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task)
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FBuildRayTracingScene>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingScene& desc, FProcessFunc process)
 :   IVulkanFrameTask(desc, process) {
-    UNUSED(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task)
+    Unused(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task)
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FTraceRays>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FTraceRays& desc, FProcessFunc process)

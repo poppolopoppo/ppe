@@ -352,7 +352,7 @@ inline void FVulkanLocalDebugger::FRawTextDump_::DumpResourceUsage(const TMemory
 }
 //----------------------------------------------------------------------------
 inline void FVulkanLocalDebugger::FRawTextDump_::DumpTaskInfo(const FVulkanSubmitRenderPassTask& task) const {
-    UNUSED(task);
+    Unused(task);
 }
 //----------------------------------------------------------------------------
 inline void FVulkanLocalDebugger::FRawTextDump_::DumpTaskInfo(const FVulkanDispatchComputeTask& task) const {

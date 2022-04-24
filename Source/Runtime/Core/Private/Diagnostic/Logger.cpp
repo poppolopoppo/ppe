@@ -466,8 +466,8 @@ public:
             Format(oss, L"\n\tat {0}:{1}", site.Filename, site.Line);
         oss << Eol;
 #else
-        UNUSED(level);
-        UNUSED(site);
+        Unused(level);
+        Unused(site);
         oss << Eol;
 #endif
     }
@@ -661,7 +661,7 @@ NODISCARD static bool NotifyLoggerMessage_(
     const FLoggerCategory& category,
     const ELoggerVerbosity level,
     const FLogger::FSiteInfo& site ) NOEXCEPT {
-    UNUSED(site);
+    Unused(site);
 #if !USE_PPE_FINALRELEASE
     const bool breakOnError = (level == ELoggerVerbosity::Error) && (
         (category.Flags & FLoggerCategory::BreakOnError) ||

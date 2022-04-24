@@ -59,7 +59,7 @@ public:
 #endif
 
 private:
-    const FVulkanRayTracingGeometry* _rtGeometry;
+    const FVulkanRayTracingGeometry* _rtGeometry{ nullptr };
 
     mutable FGeometryAccess _pendingAccesses;
     mutable FGeometryAccess _accessForReadWrite;

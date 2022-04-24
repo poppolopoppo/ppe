@@ -81,7 +81,7 @@ void FFiber::Destroy(size_t stackSize) {
 
     MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateSystem(stackSize);
 #else
-    UNUSED(stackSize);
+    Unused(stackSize);
 #endif
 }
 //----------------------------------------------------------------------------

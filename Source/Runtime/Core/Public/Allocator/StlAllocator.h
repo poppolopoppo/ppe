@@ -75,7 +75,7 @@ public:
     }
 
     pointer allocate(size_type n, const void* hint) {
-        UNUSED(hint);
+        Unused(hint);
         return static_cast<pointer>(ppe_traits::Allocate(*this, n * sizeof(T)).Data);
     }
 
@@ -170,12 +170,12 @@ public:
     }
 
     bool Acquire(FAllocatorBlock b) NOEXCEPT {
-        UNUSED(b); // nothing to do
+        Unused(b); // nothing to do
         return true;
     }
 
     bool Steal(FAllocatorBlock b) NOEXCEPT {
-        UNUSED(b); // nothing to do
+        Unused(b); // nothing to do
         return true;
     }
 };

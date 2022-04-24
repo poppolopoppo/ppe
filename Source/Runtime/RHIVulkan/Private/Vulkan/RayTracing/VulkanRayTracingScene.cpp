@@ -105,7 +105,7 @@ void FVulkanRayTracingScene::SetGeometryInstances(
     u32 hitShadersPerInstance, u32 maxHitShaders ) const {
     const auto exclusiveData = _data.LockExclusive();
 
-    UNUSED(exclusiveData);
+    Unused(exclusiveData);
 
     const auto exclusiveInstances = _currentData.LockExclusive();
 

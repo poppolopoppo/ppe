@@ -112,10 +112,10 @@ u32 StackMarkerBegin(
     const u32 off = stack.Offset;
     stack.OnEnterFrame(rsp);
 
-    UNUSED(caption);
-    UNUSED(function);
-    UNUSED(filename);
-    UNUSED(line);
+    Unused(caption);
+    Unused(function);
+    Unused(filename);
+    Unused(line);
 
 #if USE_PPE_STACKMARKER_LOG
 #   if 0

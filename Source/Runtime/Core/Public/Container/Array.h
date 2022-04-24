@@ -82,6 +82,10 @@ struct TStaticArray {
     CONSTEXPR inline friend hash_t hash_value(const TStaticArray& arr) {
         return hash_mem_constexpr(arr.Data, _Dim);
     }
+
+    CONSTEXPR inline friend size_t lengthof(const TStaticArray&) {
+        return _Dim;
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -206,7 +210,7 @@ private:
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
 
     void allocator_copy_(const allocator_type& other, std::true_type );
-    void allocator_copy_(const allocator_type& other, std::false_type ) { UNUSED(other); }
+    void allocator_copy_(const allocator_type& other, std::false_type ) { Unused(other); }
 
     pointer _data;
     size_type _size;

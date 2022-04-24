@@ -61,7 +61,7 @@
     } \
     \
     _Type& _Name = *(_Name##_OneTimePData); \
-    UNUSED(_Name##_OneTimePData)
+    Unused(_Name##_OneTimePData)
 
 #endif //!PPE_HAS_MAGIC_STATICS
 

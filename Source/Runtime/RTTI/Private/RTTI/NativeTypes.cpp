@@ -539,7 +539,7 @@ public:
             const FRawMemory oldM = _outp.Storage();
             const FRawMemory newM = _heap.ReallocateT_AssumeLast(oldM, _outp.size()); // shrink to fit
             Assert_NoAssume(oldM.data() == newM.data()); // should realloc inplace
-            UNUSED(newM);
+            Unused(newM);
         }
 
         void Append(const FStringView& str) {

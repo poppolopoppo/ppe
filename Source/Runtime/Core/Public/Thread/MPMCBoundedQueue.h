@@ -197,7 +197,7 @@ public:
 
     explicit TMPMCFixedSizeQueue(size_type bufferSize) // compatibility with TMPMCBoundedQueue<T>
         : TMPMCFixedSizeQueue() {
-        UNUSED(bufferSize);
+        Unused(bufferSize);
     }
 
 private:

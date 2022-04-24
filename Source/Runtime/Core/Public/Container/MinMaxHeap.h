@@ -147,8 +147,8 @@ public:
 
     static CONSTEXPR _It min(_It first, _It last, const _Less& less) {
         Assert(first < last);
-        UNUSED(last);
-        UNUSED(less);
+        Unused(last);
+        Unused(less);
         CheckInvariantsIFN(first, last, less);
 
         return first;

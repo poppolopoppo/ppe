@@ -157,7 +157,7 @@ void FApplicationWindow::OnWindowResize(const uint2& size) {
     FRHISurfaceCreateInfo surfaceInfo;
     RecommendedSurfaceInfo_(&surfaceInfo, _rhi->Features(), *_main);
 
-    UNUSED(size);
+    Unused(size);
     Assert_NoAssume(size == surfaceInfo.Dimensions);
 
     _rhi->ResizeWindow(surfaceInfo);

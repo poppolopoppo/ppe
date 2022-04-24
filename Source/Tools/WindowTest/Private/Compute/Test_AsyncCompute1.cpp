@@ -156,7 +156,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute1_CS"));
                 .SetTopology(EPrimitiveTopology::TriangleList));
 
             PFrameTask tDraw = cmd1->Task(FSubmitRenderPass{ renderPass });
-            UNUSED(tDraw);
+            Unused(tDraw);
 
             LOG_CHECK(WindowTest, fg.Execute(cmd1));
         }
@@ -173,7 +173,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute1_CS"));
                 .SetImage(image, int2::Zero, viewSize)
                 .SetCallback(onLoaded)
                 .DependsOn(tComp));
-            UNUSED(tRead);
+            Unused(tRead);
 
             LOG_CHECK(WindowTest, fg.Execute(cmd2));
         }
@@ -208,7 +208,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute1_CS"));
                 .SetTopology(EPrimitiveTopology::TriangleList));
 
             PFrameTask tDraw = cmd3->Task(FSubmitRenderPass{ renderPass });
-            UNUSED(tDraw);
+            Unused(tDraw);
 
             LOG_CHECK(WindowTest, fg.Execute(cmd3));
         }
@@ -225,7 +225,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute1_CS"));
                 .SetImage(image, int2::Zero, viewSize)
                 .SetCallback(onLoaded)
                 .DependsOn(tComp));
-            UNUSED(tRead);
+            Unused(tRead);
 
             LOG_CHECK(WindowTest, fg.Execute(cmd4));
         }

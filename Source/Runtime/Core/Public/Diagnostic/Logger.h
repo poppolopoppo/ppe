@@ -57,7 +57,7 @@ FWD_INTERFACE_REFPTR(Logger);
 struct FLoggerCategory {
     enum EFlags : u32 {
         Unknown         = 0,
-#if !USE_PPE_FINALRELEASE
+#if !USE_PPE_FINAL_RELEASE
         BreakOnError    = 1<<0,
         BreakOnWarning  = 1<<1,
 #endif
@@ -268,12 +268,12 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #   endif
 #endif
 
-#define LOG_CHECKEX( _CATEGORY, _RETURN, ... ) {\
+#define LOG_CHECKEX( _CATEGORY, _RETURN, ... ) do {\
     if (Likely(!!( __VA_ARGS__ ))) {} \
     else { \
         LOG( _CATEGORY, Error, L"failed expr: '{0}', at: {1}:{2}", WSTRINGIZE(__VA_ARGS__), WIDESTRING(__FILE__), WSTRINGIZE(__LINE__) ); \
         return (_RETURN); \
-    }}
+    }} while (0)
 #define LOG_CHECK( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, ::PPE::Default, __VA_ARGS__ )
 #define LOG_CHECKVOID( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, void(), __VA_ARGS__ )
 

@@ -88,7 +88,7 @@ bool Test_CopyImage2_(FWindowTestApp& app) {
             .From(srcImage).To(dstImage)
             .AddRegion({}, int2(0), {}, imgOffset, testDim)
             .DependsOn(tUpdate));
-        UNUSED(tCopy);
+        Unused(tCopy);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd));
     }
@@ -114,7 +114,7 @@ bool Test_CopyImage2_(FWindowTestApp& app) {
             .SetImage(dstImage, int2(0), dstDim)
             .SetCallback(onLoaded)
             .DependsOn(tCopy));
-        UNUSED(tRead);
+        Unused(tRead);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd));
     }

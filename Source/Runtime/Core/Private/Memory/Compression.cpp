@@ -57,9 +57,9 @@ struct FCompressionBenchmark_ {
             b * 100.0 / a,
             FMegabytes(FBytes((double)Max(a, b))).Value() / FSeconds(elapsed).Value() );
 #else
-        UNUSED(msg);
-        UNUSED(a);
-        UNUSED(b);
+        Unused(msg);
+        Unused(a);
+        Unused(b);
 #endif
     }
 };

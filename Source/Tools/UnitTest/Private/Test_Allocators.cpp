@@ -60,7 +60,7 @@ static constexpr size_t GSlidingWindow_ = 150;
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static NO_INLINE void Test_Allocator_ST_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    UNUSED(category); UNUSED(name);
+    Unused(category); Unused(name);
     BENCHMARK_SCOPE(category, name);
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
@@ -78,7 +78,7 @@ static NO_INLINE void Test_Allocator_ST_(const FWStringView& category, const FWS
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static NO_INLINE void Test_Allocator_MT_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    UNUSED(category); UNUSED(name);
+    Unused(category); Unused(name);
     BENCHMARK_SCOPE(category, name);
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
@@ -97,7 +97,7 @@ static NO_INLINE void Test_Allocator_MT_(const FWStringView& category, const FWS
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static NO_INLINE void Test_Allocator_Sliding_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
-    UNUSED(category); UNUSED(name);
+    Unused(category); Unused(name);
     BENCHMARK_SCOPE(category, name);
 
     const size_t numDeallocs = Max(size_t(1), window / 10);
@@ -132,7 +132,7 @@ static NO_INLINE void Test_Allocator_Sliding_(const FWStringView& category, cons
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static NO_INLINE void Test_Allocator_Trashing_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    UNUSED(category); UNUSED(name);
+    Unused(category); Unused(name);
     BENCHMARK_SCOPE(category, name);
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
@@ -195,7 +195,7 @@ static NO_INLINE void Test_Allocator_Dangling_(const FWStringView& category, con
     std::random_device rdevice;
     std::mt19937 rand(rdevice());
 
-    UNUSED(category); UNUSED(name);
+    Unused(category); Unused(name);
     BENCHMARK_SCOPE(category, name);
 
     // tries to free blocks from another thread from which they were allocated initially
@@ -212,7 +212,7 @@ static NO_INLINE void Test_Allocator_Dangling_(const FWStringView& category, con
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static NO_INLINE void Test_Allocator_Realloc_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
-    UNUSED(category); UNUSED(name);
+    Unused(category); Unused(name);
     BENCHMARK_SCOPE(category, name);
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
@@ -385,7 +385,7 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
 //----------------------------------------------------------------------------
 template <typename _Word>
 static NO_INLINE void Test_BitTree_Impl_(FWStringView name, TMemoryView<const u32> sizes) {
-    UNUSED(name);
+    Unused(name);
     TAllocaBlock<_Word> alloc;
     TBitTree<_Word, false> tree;
 
@@ -555,7 +555,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
 //----------------------------------------------------------------------------
 template <typename _MemoryPool>
 static NO_INLINE void Test_MemoryPool_Impl_(FWStringView name, ETaskPriority priority, ITaskContext* context) {
-    UNUSED(name);
+    Unused(name);
     LOG(Test_Allocators, Emphasis, L"testing {0}", name);
 
     BENCHMARK_SCOPE(L"Pool", name);
@@ -628,7 +628,7 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
     TMemoryView<const FDummyForPool_> uniq,
     TMemoryView<const FDummyForPool_> shuf,
     ETaskPriority priority, ITaskContext* context) {
-    UNUSED(name);
+    Unused(name);
     LOG(Test_Allocators, Emphasis, L"testing {0}", name);
 
 #if USE_PPE_DEBUG
@@ -949,9 +949,9 @@ void Test_Allocators() {
         mixedBlocksSizeInBytes += generator(&mixedBlocks, BlockSizeMid, BlockSizeLarge, 128, totalSizePerWorker / 2);
     }
 
-    UNUSED(smallBlocksSizeInBytes);
-    UNUSED(mixedBlocksSizeInBytes);
-    UNUSED(largeBlocksSizeInBytes);
+    Unused(smallBlocksSizeInBytes);
+    Unused(mixedBlocksSizeInBytes);
+    Unused(largeBlocksSizeInBytes);
 
     LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::SizeInBytes(smallBlocksSizeInBytes) );
     LOG(Test_Allocators, Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::SizeInBytes(largeBlocksSizeInBytes) );

@@ -41,7 +41,7 @@ bool FVulkanRayTracingPipeline::Construct(const FRayTracingPipelineDesc& desc, F
                 stage.second.Specializations
                 ARGS_IF_RHIDEBUG(EShaderDebugMode_From(src.first)) }, &added);
             Assert_NoAssume(added);
-            UNUSED(it);
+            Unused(it);
             ONLY_IF_RHIDEBUG(exclusive->DebugModeBits.set(static_cast<u32>(it->DebugMode)));
         }
     }

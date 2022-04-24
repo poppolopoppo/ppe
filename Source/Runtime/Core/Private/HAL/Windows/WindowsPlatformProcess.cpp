@@ -187,10 +187,10 @@ void FWindowsPlatformProcess::OnProcessStart(
     constexpr int debugNecrophilia = _CRTDBG_DELAY_FREE_MEM_DF;
     constexpr int debugLeaks = _CRTDBG_LEAK_CHECK_DF;
 
-    UNUSED(debugHeapEnabled);
-    UNUSED(debugCheckMemory);
-    UNUSED(debugNecrophilia);
-    UNUSED(debugLeaks);
+    Unused(debugHeapEnabled);
+    Unused(debugCheckMemory);
+    Unused(debugNecrophilia);
+    Unused(debugLeaks);
 
     int debugHeapFlag = 0
         | debugHeapEnabled
@@ -198,7 +198,7 @@ void FWindowsPlatformProcess::OnProcessStart(
         //| debugNecrophilia //%_NOCOMMIT%
         | debugLeaks;
 
-    UNUSED(debugHeapFlag);
+    Unused(debugHeapFlag);
 
     _CrtSetDbgFlag(debugHeapFlag);
 
@@ -856,7 +856,7 @@ auto FWindowsPlatformProcess::CreateProcess(
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
-            UNUSED(stats);
+            Unused(stats);
             LOG(HAL, Warning, TEXT("Mem used: {0}, OS Free {1}"),
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical) );
@@ -931,7 +931,7 @@ bool FWindowsPlatformProcess::ExecDetachedProcess(
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
-            UNUSED(stats);
+            Unused(stats);
             LOG(HAL, Warning, TEXT("Mem used: {0}, OS Free {1}"),
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical));

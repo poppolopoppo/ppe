@@ -127,7 +127,7 @@ ARGS_IF_RHIDEBUG("Test_Compute1_CS"));
             dataIsCorrect0 = checkImageData(imageData, 8);
         }));
     LOG_CHECK(WindowTest, tRead0);
-    UNUSED(tRead0);
+    Unused(tRead0);
 
     PFrameTask tRead1 = cmd->Task(FReadImage{}
         .SetImage(image1, int2(0), imageDim)
@@ -136,7 +136,7 @@ ARGS_IF_RHIDEBUG("Test_Compute1_CS"));
             dataIsCorrect1 = checkImageData(imageData, 4);
         }));
     LOG_CHECK(WindowTest, tRead1);
-    UNUSED(tRead1);
+    Unused(tRead1);
 
     PFrameTask tRead2 = cmd->Task(FReadImage{}
         .SetImage(image2, int2(0), imageDim)
@@ -145,7 +145,7 @@ ARGS_IF_RHIDEBUG("Test_Compute1_CS"));
             dataIsCorrect2 = checkImageData(imageData, 8);
         }));
     LOG_CHECK(WindowTest, tRead2);
-    UNUSED(tRead2);
+    Unused(tRead2);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

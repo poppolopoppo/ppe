@@ -63,7 +63,7 @@ void FVulkanCommandBuffer::OnStrongRefCountReachZero() NOEXCEPT {
     Assert_NoAssume(RefCount() == 0);
 
     const auto exclusiveData = _data.LockExclusive();
-    UNUSED(exclusiveData); // just for locking
+    Unused(exclusiveData); // just for locking
 
     Assert_NoAssume(exclusiveData->State == EState::Initial);
     _frameGraph->RecycleBuffer(this);
@@ -305,7 +305,7 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
 
             processor.Run(*pTask);
 
-            pending.erase(pending.begin() + i);
+            pending.erase(pending.begin() + checked_cast<ptrdiff_t>(i));
             Append(pending, pTask->Outputs());
         }
     }
@@ -751,7 +751,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         VkGeometryNV& dst = geometries[pos];
         dst.flags = VkCast(ref->Flags);
 
-        Assert(src.VertexBuffer or src.VertexData.size());
+        Assert(src.VertexBuffer or not src.VertexData.empty());
         Assert(src.VertexCount > 0);
         Assert(src.VertexCount <= ref->MaxVertexCount);
         Assert(src.IndexCount <= ref->MaxIndexCount);
@@ -763,7 +763,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         dst.geometry.triangles.vertexStride = src.VertexStride;
         dst.geometry.triangles.vertexFormat = VkCast(src.VertexFormat);
 
-        if (src.VertexData.size() > 0) {
+        if (not src.VertexData.empty()) {
             const FVulkanLocalBuffer* vb = nullptr;
             LOG_CHECK(RHI, StagingStore_(*exclusive, &vb, &dst.geometry.triangles.vertexOffset, src.VertexData.data(), src.VertexData.SizeInBytes(), ref->VertexSize));
             dst.geometry.triangles.vertexData = vb->Handle();
@@ -779,7 +779,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
 
         // indices
         if (src.IndexCount > 0) {
-            Assert(src.IndexBuffer or src.IndexData.size() > 0);
+            Assert(src.IndexBuffer or not src.IndexData.empty());
             dst.geometry.triangles.indexCount = src.IndexCount;
             dst.geometry.triangles.indexType = VkCast(src.IndexFormat);
         }
@@ -789,7 +789,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
             dst.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_NV;
         }
 
-        if (src.IndexData.size() > 0) {
+        if (not src.IndexData.empty()) {
             const FVulkanLocalBuffer* ib = nullptr;
             LOG_CHECK(RHI, StagingStore_(*exclusive, &ib, &dst.geometry.triangles.indexOffset, src.IndexData.data(), src.IndexData.SizeInBytes(), ref->IndexSize));
             dst.geometry.triangles.indexData = ib->Handle();
@@ -830,7 +830,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         VkGeometryNV& dst = geometries[pos + task.Triangles.size()];
         dst.flags = VkCast(ref->Flags);
 
-        Assert(src.AabbBuffer or src.AabbData.size() > 0);
+        Assert(src.AabbBuffer or not src.AabbData.empty());
         Assert(src.AabbCount > 0);
         Assert(src.AabbCount <= ref->MaxAabbCount);
         Assert(src.AabbStride % 8 == 0);
@@ -840,7 +840,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         dst.geometry.aabbs.numAABBs = src.AabbCount;
         dst.geometry.aabbs.stride = src.AabbStride;
 
-        if (src.AabbData.size() > 0) {
+        if (not src.AabbData.empty()) {
             const FVulkanLocalBuffer* ab = nullptr;
             LOG_CHECK(RHI, StagingStore_(*exclusive, &ab, &dst.geometry.aabbs.offset, src.AabbData.data(), src.AabbData.SizeInBytes(), 8_b));
             dst.geometry.aabbs.aabbData = ab->Handle();
@@ -1407,7 +1407,7 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
     if (not pData->Construct(pResource)) {
         Meta::Destroy(pData);
         localResources.Pool.Deallocate(local);
-        ONLY_IF_RHIDEBUG(UNUSED(debugMessage));
+        ONLY_IF_RHIDEBUG(Unused(debugMessage));
         RHI_LOG(Error, L"{1}: {0}", debugMessage, _data.Value_NotThreadSafe().DebugName);
         return nullptr;
     }
@@ -1565,7 +1565,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
             copy.AddRegion(
                 staging.Offset, rowLength, imageHeight,
                 FImageSubresourceRange{task.MipmapLevel, task.ArrayLayer, 1, task.AspectMask},
-                task.ImageOffset + int3(0, 0, zOffset),
+                task.ImageOffset + int3(0, 0, checked_cast<int>(zOffset)),
                 uint3{imageSize.xy, zSize});
 
             srcOffset += blockSize;
@@ -1607,7 +1607,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                 copy.AddRegion(
                     staging.Offset, rowLength, ySize,
                     FImageSubresourceRange{task.MipmapLevel, task.ArrayLayer, 1, task.AspectMask},
-                    task.ImageOffset + int3(0, yOffset, slice),
+                    task.ImageOffset + int3(0, checked_cast<int>(yOffset), checked_cast<int>(slice)),
                     uint3{imageSize.x, ySize, 1});
 
                 srcOffset += blockSize;
@@ -1730,7 +1730,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
             const u32 zSize = checked_cast<u32>(range.Size / slicePitch);
             copy.AddRegion(
                 FImageSubresourceRange(task.MipmapLevel, task.ArrayLayer, 1, task.AspectMask),
-                task.ImageOffset + int3(0, 0, zOffset),
+                task.ImageOffset + int3(0, 0, checked_cast<int>(zOffset)),
                 uint3(task.ImageSize.xy, zSize),
                 range.Offset, rowLength, imageHeight);
 
@@ -1771,7 +1771,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
                 const u32 ySize = checked_cast<u32>((range.Size * blockDim.y) / rowPitch);
                 copy.AddRegion(
                     FImageSubresourceRange(task.MipmapLevel, task.ArrayLayer, 1, task.AspectMask),
-                    task.ImageOffset + int3(0, yOffset, slice),
+                    task.ImageOffset + int3(0, checked_cast<int>(yOffset), checked_cast<int>(slice)),
                     uint3(task.ImageSize.x, ySize, 1u),
                     range.Offset, rowLength, imageHeight);
 
@@ -1796,7 +1796,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
 bool FVulkanCommandBuffer::StorePartialData_(
     FInternalData& data,
     FStagingBlock* pDstStaging, size_t* pOutSize,
-    FRawMemoryConst srcData, size_t srcOffset ) {
+    const FRawMemoryConst& srcData, size_t srcOffset ) {
     Assert(pDstStaging);
     Assert(pOutSize);
 
@@ -1817,7 +1817,7 @@ bool FVulkanCommandBuffer::StorePartialData_(
 bool FVulkanCommandBuffer::StagingImageStore_(
     FInternalData& data,
     FStagingBlock* pDstStaging, size_t* pOutSize,
-    FRawMemoryConst srcData, size_t srcOffset, size_t srcPitch, size_t srcTotalSize ) {
+    const FRawMemoryConst& srcData, size_t srcOffset, size_t srcPitch, size_t srcTotalSize ) {
     Assert(pDstStaging);
     Assert(pOutSize);
 

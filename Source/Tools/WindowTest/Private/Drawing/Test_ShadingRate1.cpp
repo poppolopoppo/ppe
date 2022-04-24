@@ -159,7 +159,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     const PFrameTask tUpdate = cmd->Task(FUpdateImage{}.SetImage(shadingRateImage).SetData(shadingRateData, shadingRateSize, shadingRateSize.x));
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass }.DependsOn(tUpdate));
     const PFrameTask tRead = cmd->Task(FReadImage{}.SetImage(image, int2::Zero, viewSize).SetCallback(onLoaded).DependsOn(tDraw));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

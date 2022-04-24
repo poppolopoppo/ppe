@@ -239,7 +239,7 @@ auto FLinuxPlatformThread::CreateFiber(
     void* fiberData ) -> FFiber {
     Assert(entryPoint);
     Assert(stackReservedSize > stackCommitSize);
-    UNUSED(stackCommitSize);
+    Unused(stackCommitSize);
 
     FFiber fiber = (FFiber)FLinuxFiberAllocator_::Allocate(sizeof(FLinuxFiber) + stackReservedSize).Data;
 

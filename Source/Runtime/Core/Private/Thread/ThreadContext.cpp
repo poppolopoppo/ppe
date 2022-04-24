@@ -97,8 +97,8 @@ static void RegisterThreadName_(std::thread::id thread_id, const char* name) {
     WRITESCOPELOCK(thread_names.RWLock);
     thread_names.Names.Insert_AssertUnique(thread_id, MakeCStringView(name));
 #else
-    UNUSED(thread_id);
-    UNUSED(name);
+    Unused(thread_id);
+    Unused(name);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -109,7 +109,7 @@ static void UnregisterThreadName_(std::thread::id thread_id) {
     thread_names.Names.Remove_AssertExists(thread_id);
     thread_names.Names.Vector().shrink_to_fit(); // release memory early-on
 #else
-    UNUSED(thread_id);
+    Unused(thread_id);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -195,7 +195,7 @@ const char* FThreadContext::GetThreadName(std::thread::id thread_id) {
 #ifdef WITH_PPE_THREADCONTEXT_NAME
     return GetThreadName_(thread_id).data();
 #else
-    UNUSED(thread_id);
+    Unused(thread_id);
     return nullptr;
 #endif
 }

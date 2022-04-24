@@ -196,7 +196,7 @@ public:
 
     void clear();
     void reserve(size_t n) {
-        UNUSED(n);
+        Unused(n);
         Assert_NoAssume(n < _Capacity);
     }
 
@@ -621,7 +621,7 @@ void Remove_AssertExistsAndSameValue(TFixedSizeHashMap<_Key, _Value, _Capacity, 
         hashmap.erase(it);
     }
 #else
-    UNUSED(value);
+    Unused(value);
     Remove_AssertExists(hashmap, key);
 #endif
 }

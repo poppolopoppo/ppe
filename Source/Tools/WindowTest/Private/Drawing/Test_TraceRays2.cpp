@@ -163,7 +163,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays2_RayClosestHit"));
             .AddMissShader("PrimaryMiss"_rtshader, 0)
             .AddHitShader("0"_instance, "Triangle"_geometry, 0, "PrimaryHit"_rtshader)
             .DependsOn(tBuildScene));
-        UNUSED(tUpdateTable);
+        Unused(tUpdateTable);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd));
         LOG_CHECK(WindowTest, fg.Flush());
@@ -183,7 +183,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays2_RayClosestHit"));
             .SetShaderTable(rtShaders)
             .SetGroupCount(viewSize.x, viewSize.y)
             .DependsOn(tBuildGeom));
-        UNUSED(tTrace);
+        Unused(tTrace);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd));
         LOG_CHECK(WindowTest, fg.Flush());
@@ -208,7 +208,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays2_RayClosestHit"));
             .SetImage(dstImage, Default, viewSize)
             .SetCallback(onLoaded)
             .DependsOn(tTrace));
-        UNUSED(tRead);
+        Unused(tRead);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd));
         LOG_CHECK(WindowTest, fg.Flush());

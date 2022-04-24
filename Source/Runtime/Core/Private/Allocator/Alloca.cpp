@@ -110,7 +110,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
     }
     else
 #else
-    UNUSED(keepData);
+    Unused(keepData);
 #endif
     {
 #if USE_PPE_ALLOCA_SLABHEAP

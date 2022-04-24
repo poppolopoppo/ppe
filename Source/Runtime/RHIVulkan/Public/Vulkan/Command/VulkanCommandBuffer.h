@@ -221,8 +221,8 @@ private:
     template <typename T>
     NODISCARD bool StagingAlloc_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, T** pData, size_t count);
     NODISCARD bool StagingStore_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, const void* srcData, size_t dataSize, size_t offsetAlign);
-    NODISCARD static bool StorePartialData_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, FRawMemoryConst srcData, size_t srcOffset);
-    NODISCARD static bool StagingImageStore_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, FRawMemoryConst srcData, size_t srcOffset, size_t srcPitch, size_t srcTotalSize);
+    NODISCARD static bool StorePartialData_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, const FRawMemoryConst& srcData, size_t srcOffset);
+    NODISCARD static bool StagingImageStore_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, const FRawMemoryConst& srcData, size_t srcOffset, size_t srcPitch, size_t srcTotalSize);
 
     NODISCARD PFrameTask MakeUpdateBufferTask_(FInternalData& data, const FUpdateBuffer& task);
     NODISCARD PFrameTask MakeUpdateImageTask_(FInternalData& data, const FUpdateImage& task);

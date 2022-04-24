@@ -2,7 +2,6 @@
 
 #include "Container/Tuple.h"
 #include "Container/Vector.h"
-#include "Memory/PtrRef.h"
 #include "Memory/RefPtr.h"
 
 namespace PPE {
@@ -129,7 +128,7 @@ public:
         template <bool _Const2>
         bool operator> (const TBaseIterator<_Const2, _Indices...>& other) const { Assert(_owner == other._owner); return (_pos > other._pos); }
         template <bool _Const2>
-        bool operator<=(const TBaseIterator<_Const2, _Indices...>& other) const { return not operator >(other); };
+        bool operator<=(const TBaseIterator<_Const2, _Indices...>& other) const { return not operator >(other); }
 
         friend void swap(TBaseIterator& lhs, TBaseIterator& rhs) NOEXCEPT {
             std::swap(lhs._owner, rhs._owner);
@@ -209,40 +208,40 @@ public:
     TTupleVector(const TMemoryView<const _Elts>&... view) : TTupleVector(MakeBroadcast_(ForwardAsTuple(view...))) {}
     TTupleVector(const allocator_type& alloc, const TMemoryView<const _Elts>&... view) : TTupleVector(MakeBroadcast_(ForwardAsTuple(view...), alloc)) {}
 
-    size_type size() const { return std::get<0>(_vectors).size(); }
-    size_type capacity() const { return std::get<0>(_vectors).capacity(); }
-    size_type max_size() const { return std::numeric_limits<size_type>::max(); }
-    bool empty() const { return std::get<0>(_vectors).empty(); }
+    NODISCARD size_type size() const { return std::get<0>(_vectors).size(); }
+    NODISCARD size_type capacity() const { return std::get<0>(_vectors).capacity(); }
+    NODISCARD size_type max_size() const { return std::numeric_limits<size_type>::max(); }
+    NODISCARD bool empty() const { return std::get<0>(_vectors).empty(); }
 
-    iterator begin() { return { this, 0 }; }
-    iterator end() { return { this, size() }; }
+    NODISCARD iterator begin() { return { this, 0 }; }
+    NODISCARD iterator end() { return { this, size() }; }
 
-    const_iterator begin() const { return { this , 0 }; }
-    const_iterator end() const { return { this, size() }; }
+    NODISCARD const_iterator begin() const { return { this , 0 }; }
+    NODISCARD const_iterator end() const { return { this, size() }; }
 
-    const_iterator cbegin() const { return begin(); }
-    const_iterator cend() const { return end(); }
+    NODISCARD const_iterator cbegin() const { return begin(); }
+    NODISCARD const_iterator cend() const { return end(); }
 
-    reverse_iterator rbegin() { return reverse_iterator(end()); }
-    reverse_iterator rend() { return reverse_iterator(begin()); }
+    NODISCARD reverse_iterator rbegin() { return reverse_iterator(end()); }
+    NODISCARD reverse_iterator rend() { return reverse_iterator(begin()); }
 
-    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+    NODISCARD const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    NODISCARD const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 
-    const_reverse_iterator crbegin() const { return const_reverse_iterator(end()); }
-    const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
+    NODISCARD const_reverse_iterator crbegin() const { return const_reverse_iterator(end()); }
+    NODISCARD const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
 
-    auto at(size_type pos) { return Aggregate_(pos, std::make_index_sequence<Arity>{}); }
-    auto at(size_type pos) const { return Aggregate_(pos, std::make_index_sequence<Arity>{}); }
+    NODISCARD auto at(size_type pos) { return Aggregate_(pos, std::make_index_sequence<Arity>{}); }
+    NODISCARD auto at(size_type pos) const { return Aggregate_(pos, std::make_index_sequence<Arity>{}); }
 
-    auto operator[](size_type pos) { return at(pos); }
-    auto operator[](size_type pos) const { return at(pos); }
+    NODISCARD auto operator[](size_type pos) { return at(pos); }
+    NODISCARD auto operator[](size_type pos) const { return at(pos); }
 
-    auto front() { return at(0); }
-    auto front() const { return at(0); }
+    NODISCARD auto front() { return at(0); }
+    NODISCARD auto front() const { return at(0); }
 
-    auto back() { return at(size() - 1); }
-    auto back() const { return at(size() - 1); }
+    NODISCARD auto back() { return at(size() - 1); }
+    NODISCARD auto back() const { return at(size() - 1); }
 
     template <typename _It>
     Meta::TEnableIf<Meta::is_iterator_v<_It>> assign(_It first, _It last);
@@ -312,33 +311,33 @@ public:
     friend void swap(TTupleVector& lhs, TTupleVector& rhs) NOEXCEPT { lhs.swap(rhs); }
 
     template <size_t _Idx>
-    const auto& get() const NOEXCEPT { return std::get<_Idx>(_vectors); }
+    NODISCARD const auto& get() const NOEXCEPT { return std::get<_Idx>(_vectors); }
 
     template <size_t... _Indices>
-    auto Aggregate(size_type pos) NOEXCEPT { return Aggregate_(pos, std::index_sequence<_Indices...>{}); }
+    NODISCARD auto Aggregate(size_type pos) NOEXCEPT { return Aggregate_(pos, std::index_sequence<_Indices...>{}); }
     template <size_t... _Indices>
-    auto Aggregate(size_type pos) const NOEXCEPT { return Aggregate_(pos, std::index_sequence<_Indices...>{}); }
+    NODISCARD auto Aggregate(size_type pos) const NOEXCEPT { return Aggregate_(pos, std::index_sequence<_Indices...>{}); }
 
     template <size_t _Idx>
-    TMemoryView<std::tuple_element_t<_Idx, value_type>> MakeView() const { return std::get<_Idx>(_vectors).MakeView(); }
+    NODISCARD TMemoryView<std::tuple_element_t<_Idx, value_type>> MakeView() const { return std::get<_Idx>(_vectors).MakeView(); }
     template <size_t _Idx>
-    TMemoryView<Meta::TAddConst<std::tuple_element_t<_Idx, value_type>>> MakeConstView() const { return std::get<_Idx>(_vectors).MakeConstView(); }
+    NODISCARD TMemoryView<Meta::TAddConst<std::tuple_element_t<_Idx, value_type>>> MakeConstView() const { return std::get<_Idx>(_vectors).MakeConstView(); }
 
     template <size_t... _Indices>
-    auto MakeIterable() NOEXCEPT {
+    NODISCARD auto MakeIterable() NOEXCEPT {
         return PPE::MakeIterable( TIterator<_Indices...>{ this, 0 }, TIterator<_Indices...>{ this, size() } );
     }
     template <size_t... _Indices>
-    auto MakeIterable() const NOEXCEPT {
+    NODISCARD auto MakeIterable() const NOEXCEPT {
         return PPE::MakeIterable( TConstIterator<_Indices...>{ this, 0 }, TConstIterator<_Indices...>{ this, size() } );
     }
 
-    bool CheckInvariants() const;
+    NODISCARD bool CheckInvariants() const;
 
-    bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it < end()); }
-    bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }
+    NODISCARD bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it < end()); }
+    NODISCARD bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }
 
-    friend hash_t hash_value(const TTupleVector& v) NOEXCEPT {
+    NODISCARD friend hash_t hash_value(const TTupleVector& v) NOEXCEPT {
         return Meta::static_for<Arity>([&v](auto... idx) NOEXCEPT {
             return hash_tuple(std::get<idx>(v._vectors)...);
         });

@@ -36,7 +36,7 @@ public:
         owner = 0;
         const bool locked = _state.compare_exchange_strong(owner, id, std::memory_order_relaxed);
         AssertReleaseMessage_NoAssume(L"Race condition detected!", locked && 0 == owner); // locked by another thread
-        UNUSED(locked);
+        Unused(locked);
 
         return true;
     }

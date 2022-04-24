@@ -66,7 +66,7 @@ void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
 
     return FBlockTracking_::MakeAlloc(trackingData, ptr, size);
 #else
-    UNUSED(trackingData);
+    Unused(trackingData);
     return PPE::malloc(size);
 #endif
 }
@@ -122,7 +122,7 @@ void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) 
         return (pblock + 1);
     }
 #else
-    UNUSED(trackingData);
+    Unused(trackingData);
     return PPE::realloc(ptr, size);
 #endif
 }

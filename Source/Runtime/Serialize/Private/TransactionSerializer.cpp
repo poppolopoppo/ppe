@@ -338,7 +338,7 @@ void FDirectoryTransaction::FetchSources(FSources& sources) {
 
     for (const FDirpath& path : _inputPaths) {
         const size_t n = sources.size();
-        UNUSED(n);
+        Unused(n);
 
         if (_inputPattern.empty())
             VFS_EnumerateFiles(path, true, each_source);

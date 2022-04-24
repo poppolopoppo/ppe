@@ -61,8 +61,8 @@ static size_t FetchNumCoresWithSMT_() {
 }
 //----------------------------------------------------------------------------
 void GracefulTerminationHandler_(i32 signal, ::siginfo_t* info, void* context) {
-    UNUSED(info);
-    UNUSED(context);
+    Unused(info);
+    Unused(context);
 
     static bool GHasRequestedExit_ = false;
 
@@ -430,20 +430,20 @@ void FLinuxPlatformMisc::PreventScreenSaver() {
 //----------------------------------------------------------------------------
 void FLinuxPlatformMisc::ClipboardCopy(const char* src, size_t len) {
     Assert(src);
-    UNUSED(src);
-    UNUSED(len);
+    Unused(src);
+    Unused(len);
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformMisc::ClipboardCopy(const wchar_t* src, size_t len) {
     Assert(src);
-    UNUSED(src);
-    UNUSED(len);
+    Unused(src);
+    Unused(len);
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 bool FLinuxPlatformMisc::ClipboardPaste(FString& dst) {
-    UNUSED(dst);
+    Unused(dst);
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------

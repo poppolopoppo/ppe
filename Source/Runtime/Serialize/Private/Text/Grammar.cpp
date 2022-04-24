@@ -720,7 +720,7 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 ,   _exprSeq(_expr.Join(Parser::Expect<symbol_t::Comma>()))
 
 ,   _statement(_expr.Select<statement_t>([](statement_t* dst, const site_t& site, expr_t&& expr){
-        UNUSED(site);
+        Unused(site);
         *dst = Parser::MakeEvalExpr(expr);
     }))
 
@@ -1120,8 +1120,8 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
 ,   _ternary(Parser::TernaryOp<symbol_t::Question, symbol_t::Colon, expr_t>(_or,
         [](const expr_t& cond, match_p question, const expr_t& ifTrue, match_p colon, const expr_t& ifFalse) -> expr_t {
-            UNUSED(question);
-            UNUSED(colon);
+            Unused(question);
+            Unused(colon);
             return Parser::MakeTernary(FTernaryOp(), cond.get(), ifTrue.get(), ifFalse.get(),
                 site_t::FromSite(cond->Site(), ifFalse->Site()) );
         }))

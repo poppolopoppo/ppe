@@ -26,14 +26,14 @@ void FGLFWPlatformApplicationMisc::Shutdown() {
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformApplicationMisc::PickScreenColorAt(int x, int y, FColor* color) {
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(color);
+    Unused(x);
+    Unused(y);
+    Unused(color);
     return false;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformApplicationMisc::PickScreenColorUnderMouse(FColor* color) {
-    UNUSED(color);
+    Unused(color);
     return false;
 }
 //----------------------------------------------------------------------------

@@ -61,6 +61,7 @@ ARGS_IF_RHIDEBUG("Test_InvalidID_CS"));
     LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
 
     const FImageDesc& invalidDesc = fg.Description(*image3);
+    Unused(invalidDesc);
     LOG(WindowTest, Info, L"invalid image dimension: {0}", invalidDesc.Dimensions);
 
     // Frame 1
@@ -74,7 +75,7 @@ ARGS_IF_RHIDEBUG("Test_InvalidID_CS"));
             .SetPipeline(ppln)
             .AddResources(FDescriptorSetID{ "0" }, resources));
         LOG_CHECK(WindowTest, tRun);
-        UNUSED(tRun);
+        Unused(tRun);
 
         {
             FExpectAssertInScope expectAssertOnInvalidID;
@@ -82,14 +83,14 @@ ARGS_IF_RHIDEBUG("Test_InvalidID_CS"));
                 .From(*image2).To(*image4) // should assert, but not crash
                 .AddRegion(Default, int2::Zero, Default, int2::Zero, imageDim));
             LOG_CHECK(WindowTest, tCopy);
-            UNUSED(tCopy);
-            UNUSED(expectAssertOnInvalidID);
+            Unused(tCopy);
+            Unused(expectAssertOnInvalidID);
         }
 
         LOG_CHECK(WindowTest, fg.Execute(cmd1));
     }
 
-    UNUSED(fg.ReleaseResource(image2));
+    Unused(fg.ReleaseResource(image2));
     //fg.ReleaseResource(image3); // #TODO
 
     // Frame 2
@@ -107,16 +108,16 @@ ARGS_IF_RHIDEBUG("Test_InvalidID_CS"));
             .AddRegion(Default, int2::Zero, Default, int2::Zero, imageDim));
         LOG_CHECK(WindowTest, tCopy);
 
-        UNUSED(tRun);
-        UNUSED(tCopy);
+        Unused(tRun);
+        Unused(tCopy);
 
         LOG_CHECK(WindowTest, fg.Execute(cmd2));
     }
 
     LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    UNUSED(image3.Release());
-    UNUSED(image4.Release());
+    Unused(image3.Release());
+    Unused(image4.Release());
 
     return true;
 }

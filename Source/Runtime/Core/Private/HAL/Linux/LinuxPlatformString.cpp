@@ -383,8 +383,8 @@ size_t FLinuxPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, siz
     }
 
     Assert(cstr);
-    UNUSED(capacity);
-    UNUSED(codePage);
+    Unused(capacity);
+    Unused(codePage);
 
     size_t od = 0;
     for (size_t os = 0; os != length && od < capacity; ++od) {
@@ -412,7 +412,7 @@ size_t FLinuxPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t
     }
 
     Assert(wcstr);
-    UNUSED(codePage);
+    Unused(codePage);
 
     size_t od = 0;
     for (size_t os = 0; os != length && od < capacity; ++os) {

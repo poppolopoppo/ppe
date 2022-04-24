@@ -40,34 +40,34 @@ static FMemoryTracking& VulkanTrackingData_(VkSystemAllocationScope vkScope) {
 #endif
 //----------------------------------------------------------------------------
 static VkAllocationCallbacks MakeVulkanAllocator_() {
-    const PFN_vkAllocationFunction pfnAllocation = [](void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
-        UNUSED(pUserData);
+    PFN_vkAllocationFunction pfnAllocation = [](void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
+        Unused(pUserData);
 #if USE_PPE_MEMORYDOMAINS
         return PPE::tracking_aligned_malloc(VulkanTrackingData_(allocationScope), size, alignment);
 #else
-        UNUSED(alignment);
-        UNUSED(allocationScope);
+        Unused(alignment);
+        Unused(allocationScope);
         Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
         void* const p = PPE::malloc(size);
         Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
         return p;
 #endif
     };
-    const PFN_vkReallocationFunction pfnReallocation = [](void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
-        UNUSED(pUserData);
+    PFN_vkReallocationFunction pfnReallocation = [](void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
+        Unused(pUserData);
 #if USE_PPE_MEMORYDOMAINS
         return PPE::tracking_aligned_realloc(VulkanTrackingData_(allocationScope), pOriginal, size, alignment);
 #else
-        UNUSED(alignment);
-        UNUSED(allocationScope);
+        Unused(alignment);
+        Unused(allocationScope);
         Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
         void* const p = PPE::realloc(pOriginal, size);
         Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
         return p;
 #endif
     };
-    const PFN_vkFreeFunction pfnFree = [](void* pUserData, void* pMemory) {
-        UNUSED(pUserData);
+    PFN_vkFreeFunction pfnFree = [](void* pUserData, void* pMemory) {
+        Unused(pUserData);
 #if USE_PPE_MEMORYDOMAINS
         PPE::tracking_free(pMemory);
 #else
@@ -84,15 +84,15 @@ static VkAllocationCallbacks MakeVulkanAllocator_() {
         void*, size_t size,
         VkInternalAllocationType allocationType,
         VkSystemAllocationScope allocationScope) {
-        UNUSED(allocationType);
-        UNUSED(allocationScope);
+        Unused(allocationType);
+        Unused(allocationScope);
         MEMORYDOMAIN_TRACKING_DATA(RHIInternal).Allocate(size, size);
     };
     pfnInternalFree = [](void*, size_t size,
         VkInternalAllocationType allocationType,
         VkSystemAllocationScope allocationScope) {
-        UNUSED(allocationType);
-        UNUSED(allocationScope);
+        Unused(allocationType);
+        Unused(allocationScope);
         MEMORYDOMAIN_TRACKING_DATA(RHIInternal).Deallocate(size, size);
     };
 #else
@@ -330,7 +330,7 @@ static void CreateDebugUtilsMessengerIFP_(
         VkDebugUtilsMessageTypeFlagsEXT messageType,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData ) -> VkBool32 {
-        UNUSED(pUserData);
+        Unused(pUserData);
 
         ELoggerVerbosity level;
         switch (messageSeverity) {
@@ -425,7 +425,7 @@ static void CreateDebugUtilsMessengerIFP_(
                 }
 
                 Format(oss, L" --OBJECT-- {0} - <{1}> - \"{2}\"",
-                    Fmt::Pointer((void*)obj.objectHandle),
+                    Fmt::Pointer(bit_cast<void*>(obj.objectHandle)),
                     objectTypeName,
                     MakeCStringView(obj.pObjectName));
             }
@@ -465,76 +465,72 @@ static void CreateDebugUtilsMessengerIFP_(
 //----------------------------------------------------------------------------
 struct FVulkanDeviceFeatures_ {
 
-    FVulkanDeviceFeatures_() NOEXCEPT {
-        FPlatformMemory::Memzero(this, sizeof(*this));
-    }
-
-    VkPhysicalDeviceFeatures Main;
-    VkPhysicalDeviceFeatures2 Main2;
+    VkPhysicalDeviceFeatures Main{};
+    VkPhysicalDeviceFeatures2 Main2{};
     //VkDeviceGeneratedCommandsFeaturesNVX GeneratedCommands;
-    VkPhysicalDeviceMultiviewFeatures Multiview;
+    VkPhysicalDeviceMultiviewFeatures Multiview{};
     //VkPhysicalDeviceShaderAtomicInt64FeaturesKHR ShaderAtomicI64;
-    VkPhysicalDevice8BitStorageFeaturesKHR Storage8Bit;
-    VkPhysicalDevice16BitStorageFeatures Storage16Bit;
-    VkPhysicalDeviceSamplerYcbcrConversionFeatures SamplerYcbcrConversion;
-    VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT BlendOpAdvanced;
-    VkPhysicalDeviceConditionalRenderingFeaturesEXT ConditionalRendering;
-    VkPhysicalDeviceShaderDrawParameterFeatures ShaderDrawParameters;
+    VkPhysicalDevice8BitStorageFeaturesKHR Storage8Bit{};
+    VkPhysicalDevice16BitStorageFeatures Storage16Bit{};
+    VkPhysicalDeviceSamplerYcbcrConversionFeatures SamplerYcbcrConversion{};
+    VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT BlendOpAdvanced{};
+    VkPhysicalDeviceConditionalRenderingFeaturesEXT ConditionalRendering{};
+    VkPhysicalDeviceShaderDrawParameterFeatures ShaderDrawParameters{};
     #ifdef VK_NV_mesh_shader
-    VkPhysicalDeviceMeshShaderFeaturesNV MeshShader;
+    VkPhysicalDeviceMeshShaderFeaturesNV MeshShader{};
     #endif
     #ifdef VK_EXT_descriptor_indexing
-    VkPhysicalDeviceDescriptorIndexingFeaturesEXT DescriptorIndexing;
+    VkPhysicalDeviceDescriptorIndexingFeaturesEXT DescriptorIndexing{};
     #endif
     //VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT VertexAttribDivisor;
     //VkPhysicalDeviceASTCDecodeFeaturesEXT AstcDecode;
     #ifdef VK_KHR_vulkan_memory_model
-    VkPhysicalDeviceVulkanMemoryModelFeaturesKHR MemoryModel;
+    VkPhysicalDeviceVulkanMemoryModelFeaturesKHR MemoryModel{};
     #endif
     #ifdef VK_EXT_inline_uniform_block
-    VkPhysicalDeviceInlineUniformBlockFeaturesEXT InlineUniformBlock;
+    VkPhysicalDeviceInlineUniformBlockFeaturesEXT InlineUniformBlock{};
     #endif
     #ifdef VK_NV_representative_fragment_test
-    VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV RepresentativeFragmentTest;
+    VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV RepresentativeFragmentTest{};
     #endif
     //VkPhysicalDeviceExclusiveScissorFeaturesNV ExclusiveScissorTest;
     //VkPhysicalDeviceCornerSampledImageFeaturesNV CornerSampledImage;
     //VkPhysicalDeviceComputeShaderDerivativesFeaturesNV ComputeShaderDerivatives;
     #ifdef VK_NV_fragment_shader_barycentric
-    VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV FragmentShaderBarycentric;
+    VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV FragmentShaderBarycentric{};
     #endif
     #ifdef VK_NV_shader_image_footprint
-    VkPhysicalDeviceShaderImageFootprintFeaturesNV ShaderImageFootprint;
+    VkPhysicalDeviceShaderImageFootprintFeaturesNV ShaderImageFootprint{};
     #endif
     #ifdef VK_NV_shading_rate_image
-    VkPhysicalDeviceShadingRateImageFeaturesNV ShadingRateImage;
+    VkPhysicalDeviceShadingRateImageFeaturesNV ShadingRateImage{};
     #endif
     #ifdef VK_KHR_shader_float16_int8
-    VkPhysicalDeviceShaderFloat16Int8FeaturesKHR ShaderFloat16Int8;
+    VkPhysicalDeviceShaderFloat16Int8FeaturesKHR ShaderFloat16Int8{};
     #endif
     #ifdef VK_KHR_timeline_semaphore
-    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR TimelineSemaphore;
+    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR TimelineSemaphore{};
     #endif
     #ifdef VK_KHR_buffer_device_address
-    VkPhysicalDeviceBufferDeviceAddressFeaturesKHR BufferDeviceAddress;
+    VkPhysicalDeviceBufferDeviceAddressFeaturesKHR BufferDeviceAddress{};
     #endif
     #ifdef VK_KHR_shader_atomic_int64
-    VkPhysicalDeviceShaderAtomicInt64FeaturesKHR ShaderAtomicInt64;
+    VkPhysicalDeviceShaderAtomicInt64FeaturesKHR ShaderAtomicInt64{};
     #endif
     #ifdef VK_KHR_shader_clock
-    VkPhysicalDeviceShaderClockFeaturesKHR ShaderClock;
+    VkPhysicalDeviceShaderClockFeaturesKHR ShaderClock{};
     #endif
     #ifdef VK_EXT_extended_dynamic_state
-    VkPhysicalDeviceExtendedDynamicStateFeaturesEXT ExtendedDynamicState;
+    VkPhysicalDeviceExtendedDynamicStateFeaturesEXT ExtendedDynamicState{};
     #endif
     #ifdef VK_KHR_ray_tracing_pipeline
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracing;
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracing{};
     #endif
     #ifdef VK_AMD_device_coherent_memory
-    VkPhysicalDeviceCoherentMemoryFeaturesAMD DeviceCoherentMemory;
+    VkPhysicalDeviceCoherentMemoryFeaturesAMD DeviceCoherentMemory{};
     #endif
     #ifdef VK_EXT_memory_priority
-    VkPhysicalDeviceMemoryPriorityFeaturesEXT MemoryPriority;
+    VkPhysicalDeviceMemoryPriorityFeaturesEXT MemoryPriority{};
     #endif
 };
 //----------------------------------------------------------------------------
@@ -1340,12 +1336,12 @@ FVulkanInstanceExtensionSet FVulkanInstance::DebuggingInstanceExtensions(EVulkan
 }
 //----------------------------------------------------------------------------
 FVulkanInstanceExtensionSet FVulkanInstance::ProfilingInstanceExtensions(EVulkanVersion version) NOEXCEPT {
-    UNUSED(version);
+    Unused(version);
     return Default;
 }
 //----------------------------------------------------------------------------
 FVulkanInstanceExtensionSet FVulkanInstance::RecommendedInstanceExtensions(EVulkanVersion version) NOEXCEPT {
-    UNUSED(version);
+    Unused(version);
     return Default;
 }
 //----------------------------------------------------------------------------
@@ -1361,7 +1357,7 @@ FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanV
 }
 //----------------------------------------------------------------------------
 FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersion version) NOEXCEPT {
-    UNUSED(version);
+    Unused(version);
     FVulkanDeviceExtensionSet result;
 
     // platform specific extensions
@@ -1382,12 +1378,12 @@ FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersi
 }
 //----------------------------------------------------------------------------
 FVulkanDeviceExtensionSet FVulkanInstance::DebuggingDeviceExtensions(EVulkanVersion version) NOEXCEPT {
-    UNUSED(version);
+    Unused(version);
     return Default;
 }
 //----------------------------------------------------------------------------
 FVulkanDeviceExtensionSet FVulkanInstance::ProfilingDeviceExtensions(EVulkanVersion version) NOEXCEPT {
-    UNUSED(version);
+    Unused(version);
     return Default;
 }
 //----------------------------------------------------------------------------

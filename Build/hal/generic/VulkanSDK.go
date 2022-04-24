@@ -461,7 +461,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 		})
 		cpp.Func("instance_api::setup_backward_compatibility", "void", []string{}, "", func() {
 			cpp.Statement("const uint32_t vkVersion = static_cast<uint32_t>(version_)")
-			cpp.Statement("UNUSED(vkVersion)")
+			cpp.Statement("PPE::Unused(vkVersion)")
 			for i, x := range vk.InstanceBwds {
 				from := vk.InstanceFuncs[x.From]
 				to := vk.InstanceFuncs[x.To]
@@ -526,7 +526,7 @@ func (g VulkanGeneratedSource) Generate(ctx GeneratorContext, dst io.Writer) err
 		})
 		cpp.Func("device_api::setup_backward_compatibility", "void", []string{}, "", func() {
 			cpp.Statement("const uint32_t vkVersion = static_cast<uint32_t>(instance_api_->version_)")
-			cpp.Statement("UNUSED(vkVersion)")
+			cpp.Statement("PPE::Unused(vkVersion)")
 			for i, x := range vk.DeviceBwds {
 				from := vk.DeviceFuncs[x.From]
 				to := vk.DeviceFuncs[x.To]

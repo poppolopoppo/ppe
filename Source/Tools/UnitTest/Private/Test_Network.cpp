@@ -121,7 +121,7 @@ static void LogRequest_(const FHttpRequest& req) {
         oss.Written() );
 
 #else
-    UNUSED(req);
+    Unused(req);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -148,7 +148,7 @@ static void LogResponse_(const FHttpResponse& resp) {
         oss.Written());
 
 #else
-    UNUSED(resp);
+    Unused(resp);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -204,7 +204,7 @@ static void Test_SocketAccept_() {
             }
             PPE_CATCH(FHttpException e)
             PPE_CATCH_BLOCK({
-                UNUSED(e);
+                Unused(e);
                 LOG(Test_Network, Error, L"HTTP error {0} : {1}", e.Status(), MakeCStringView(e.What()));
             });
 

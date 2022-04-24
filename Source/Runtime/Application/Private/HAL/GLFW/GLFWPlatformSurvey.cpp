@@ -40,13 +40,13 @@ static void MonitorInfo_(FGLFWPlatformSurvey::FMonitorInfo* monitor, GLFWmonitor
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::PrimaryDisplayAdapter(FDisplayAdapter* displayAdapter) {
-    UNUSED(displayAdapter);
+    Unused(displayAdapter);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::DisplayAdapters(FDisplayAdapters* displayAdapters) {
-    UNUSED(displayAdapters);
+    Unused(displayAdapters);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
@@ -60,15 +60,15 @@ bool FGLFWPlatformSurvey::PrimaryMonitor(FMonitorInfo* monitor) {
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::MonitorFromPoint(int x, int y, FMonitorInfo* monitor) {
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(monitor);
+    Unused(x);
+    Unused(y);
+    Unused(monitor);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::MonitorFromCursor(FMonitorInfo* monitor) {
-    UNUSED(monitor);
+    Unused(monitor);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
@@ -92,26 +92,26 @@ bool FGLFWPlatformSurvey::MonitorInfos(FMonitorInfos* monitors) {
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::ApplicationStorage(FStorageInfo* storage) {
-    UNUSED(storage);
+    Unused(storage);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::SystemStorage(FStorageInfo* storage) {
-    UNUSED(storage);
+    Unused(storage);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::StorageFromPath(const FWStringView& path, FStorageInfo* storage) {
-    UNUSED(path);
-    UNUSED(storage);
+    Unused(path);
+    Unused(storage);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformSurvey::StorageInfos(FStorageInfos* storages) {
-    UNUSED(storages);
+    Unused(storages);
     LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }

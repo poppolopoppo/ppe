@@ -48,7 +48,7 @@ bool Test_CopyBuffer1_(FWindowTestApp& app) {
     const PFrameTask tUpdate = cmd->Task(FUpdateBuffer{}.SetBuffer(srcBuffer).AddData(srcData.MakeView()));
     const PFrameTask tCopy = cmd->Task(FCopyBuffer{}.From(srcBuffer).To(dstBuffer).AddRegion(0,128,256).DependsOn(tUpdate));
     const PFrameTask tRead = cmd->Task(FReadBuffer{}.SetBuffer(dstBuffer, 0, dstBufferSize).SetCallback(onLoaded).DependsOn(tCopy));
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
 

@@ -68,11 +68,11 @@ void FWindowsPlatformDebug::TraceVerbose(const wchar_t* category, i64 timestamp,
 #if USE_PPE_WINDOWS_TRACELOGGING
     FWindowsTraceLogging::TraceVerbose(category, timestamp, filename, line, text);
 #else
-    UNUSED(category);
-    UNUSED(timestamp);
-    UNUSED(filename);
-    UNUSED(line);
-    UNUSED(text);
+    Unused(category);
+    Unused(timestamp);
+    Unused(filename);
+    Unused(line);
+    Unused(text);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -80,11 +80,11 @@ void FWindowsPlatformDebug::TraceInformation(const wchar_t* category, i64 timest
 #if USE_PPE_WINDOWS_TRACELOGGING
     FWindowsTraceLogging::TraceInformation(category, timestamp, filename, line, text);
 #else
-    UNUSED(category);
-    UNUSED(timestamp);
-    UNUSED(filename);
-    UNUSED(line);
-    UNUSED(text);
+    Unused(category);
+    Unused(timestamp);
+    Unused(filename);
+    Unused(line);
+    Unused(text);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -92,11 +92,11 @@ void FWindowsPlatformDebug::TraceWarning(const wchar_t* category, i64 timestamp,
 #if USE_PPE_WINDOWS_TRACELOGGING
     FWindowsTraceLogging::TraceWarning(category, timestamp, filename, line, text);
 #else
-    UNUSED(category);
-    UNUSED(timestamp);
-    UNUSED(filename);
-    UNUSED(line);
-    UNUSED(text);
+    Unused(category);
+    Unused(timestamp);
+    Unused(filename);
+    Unused(line);
+    Unused(text);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -104,11 +104,11 @@ void FWindowsPlatformDebug::TraceError(const wchar_t* category, i64 timestamp, c
 #if USE_PPE_WINDOWS_TRACELOGGING
     FWindowsTraceLogging::TraceError(category, timestamp, filename, line, text);
 #else
-    UNUSED(category);
-    UNUSED(timestamp);
-    UNUSED(filename);
-    UNUSED(line);
-    UNUSED(text);
+    Unused(category);
+    Unused(timestamp);
+    Unused(filename);
+    Unused(line);
+    Unused(text);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -116,11 +116,11 @@ void FWindowsPlatformDebug::TraceFatal(const wchar_t* category, i64 timestamp, c
 #if USE_PPE_WINDOWS_TRACELOGGING
     FWindowsTraceLogging::TraceFatal(category, timestamp, filename, line, text);
 #else
-    UNUSED(category);
-    UNUSED(timestamp);
-    UNUSED(filename);
-    UNUSED(line);
-    UNUSED(text);
+    Unused(category);
+    Unused(timestamp);
+    Unused(filename);
+    Unused(line);
+    Unused(text);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -130,8 +130,8 @@ void FWindowsPlatformDebug::BeginNamedEvent(u32 uid, const char* name) {
 #if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::MarkAndComment(uid, name);
 #else
-    UNUSED(uid);
-    UNUSED(name);
+    Unused(uid);
+    Unused(name);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -139,7 +139,7 @@ void FWindowsPlatformDebug::EndNamedEvent(u32 uid) {
 #if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::Mark(uid);
 #else
-    UNUSED(uid);
+    Unused(uid);
 #endif
 }
 //----------------------------------------------------------------------------

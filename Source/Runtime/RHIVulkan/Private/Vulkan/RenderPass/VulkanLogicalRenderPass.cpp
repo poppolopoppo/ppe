@@ -116,7 +116,7 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
             dst.Desc.Format = sharedImg->Desc.Format;
 
         if (samples.has_value())
-            LOG_CHECK(RHI, sharedImg->Desc.Samples == *samples)
+            LOG_CHECK(RHI, sharedImg->Desc.Samples == *samples);
         else
             samples = sharedImg->Desc.Samples;
 
@@ -220,8 +220,8 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
         _viewports.Push(dst);
 
         VkRect2D scissor;
-        scissor.offset.x = desc.Area.Left();
-        scissor.offset.y = desc.Area.Top();
+        scissor.offset.x = checked_cast<int32_t>(desc.Area.Left());
+        scissor.offset.y = checked_cast<int32_t>(desc.Area.Top());
         scissor.extent.width = desc.Area.Width();
         scissor.extent.height = desc.Area.Height();
         _scissors.Push(scissor);
@@ -294,8 +294,8 @@ bool FVulkanLogicalRenderPass::ShadingRateImage(const FVulkanLocalImage** outIma
 //----------------------------------------------------------------------------
 bool FVulkanLogicalRenderPass::Submit(
     FVulkanCommandBuffer& cmd,
-    TMemoryView<const TPair<FRawImageID, EResourceState>> images,
-    TMemoryView<const TPair<FRawBufferID, EResourceState>> buffers ) {
+    const TMemoryView<const TPair<FRawImageID, EResourceState>>& images,
+    const TMemoryView<const TPair<FRawBufferID, EResourceState>>& buffers ) {
     LOG_CHECK(RHI, not _isSubmitted);
 
     if (not images.empty()) {

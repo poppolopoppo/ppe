@@ -155,10 +155,10 @@ void FVulkanResourceManager::OnSubmit() {
 //----------------------------------------------------------------------------
 // CreateDescriptorSetLayout
 //----------------------------------------------------------------------------
-FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDescriptorSetLayout(const FPipelineDesc::PUniformMap& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDescriptorSetLayout(FPipelineDesc::PUniformMap&& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     FRawDescriptorSetLayoutID result;
     TResourceProxy<FVulkanDescriptorSetLayout>* setLayout{ nullptr };
-    VerifyRelease( CreateDescriptorSetLayout_(&result, &setLayout, uniforms ARGS_IF_RHIDEBUG(debugName)) );
+    VerifyRelease( CreateDescriptorSetLayout_(&result, &setLayout, std::move(uniforms) ARGS_IF_RHIDEBUG(debugName)) );
     Assert_NoAssume(result.Valid());
     return result;
 }
@@ -195,7 +195,9 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
     for (const FPipelineDesc::FDescriptorSet& ds : desc.DescriptorSets) {
         FRawDescriptorSetLayoutID dsId;
         TResourceProxy<FVulkanDescriptorSetLayout>* dsLayout{ nullptr };
-        VerifyRelease( CreateDescriptorSetLayout_(&dsId, &dsLayout, ds.Uniforms ARGS_IF_RHIDEBUG(debugName)) );
+        VerifyRelease( CreateDescriptorSetLayout_(&dsId, &dsLayout,
+            FPipelineDesc::PUniformMap{ ds.Uniforms }
+            ARGS_IF_RHIDEBUG(debugName)) );
 
         dsLayouts.Push(dsId, dsLayout);
     }
@@ -252,14 +254,14 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
 bool FVulkanResourceManager::CreateDescriptorSetLayout_(
     FRawDescriptorSetLayoutID* pId,
     TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout,
-    const FPipelineDesc::PUniformMap& uniforms
+    FPipelineDesc::PUniformMap&& uniforms
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(pId);
     Assert(pDSLayout);
     Assert(uniforms);
 
     FVulkanDescriptorSetLayout::FBindings bindings;
-    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, uniforms };
+    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, std::move(uniforms) };
 
     *pDSLayout = CreateCachedResource_(pId, std::move(emptyKey), _device, std::move(bindings) ARGS_IF_RHIDEBUG(debugName)).first;
     if (Likely(!!*pDSLayout))
@@ -461,7 +463,7 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderM
 template <u32 _Uid, typename _Desc>
 bool FVulkanResourceManager::CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringView pipelineType, FConstChar debugName)) {
     if (not CompileShaders_(desc)) {
-        ONLY_IF_RHIDEBUG(UNUSED(pipelineType));
+        ONLY_IF_RHIDEBUG(Unused(pipelineType));
         RHI_LOG(Error, L"failed to compile shaders for {1} pipeline '{0}'", debugName, pipelineType);
         return false;
     }
@@ -1276,9 +1278,9 @@ FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDebugDescriptorSetLayout
     sbUniform.Index = FBindingIndex{ UMax, 0 };
 
     FPipelineDesc::PUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
-    uniforms->Emplace_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, sbUniform);
+    uniforms->Emplace_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, std::move(sbUniform));
 
-    const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(uniforms, debugName);
+    const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(std::move(uniforms), debugName);
     Assert_NoAssume(layout.Valid());
 
     _shaderDebug.dsLayoutCaches.insert_AssertUnique({ key, layout });

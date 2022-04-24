@@ -45,12 +45,12 @@ struct TMakeFunction;
             Assert(sizeof...(_Args) == parametersName.size()); \
             \
             auto nameIt = std::begin(parametersName); \
-            UNUSED(nameIt); \
+            Unused(nameIt); \
             \
             CONSTEXPR const EFunctionFlags opt_ = Default; \
             CONSTEXPR const EFunctionFlags opt_const = EFunctionFlags::Const; \
             CONSTEXPR const EFunctionFlags CONCAT(opt_, NOEXCEPT) = EFunctionFlags::NoExcept; \
-            UNUSED(opt_), UNUSED(opt_const), UNUSED(CONCAT(opt_, NOEXCEPT)); \
+            Unused(opt_), Unused(opt_const), Unused(CONCAT(opt_, NOEXCEPT)); \
             flags += CONCAT(opt_, _CONST) + CONCAT(opt_, _NOEXCEPT); \
             \
             return FMetaFunction( \
@@ -63,10 +63,10 @@ struct TMakeFunction;
                     \
                     const FAtom* parg = arguments.data(); \
                     TTuple<Meta::TReference<_Args>...> args{ (*parg++).TypedData<Meta::TDecay<_Args>>()... }; \
-                    UNUSED(parg); \
+                    Unused(parg); \
                     \
                     IF_CONSTEXPR(std::is_void_v<_Result>) \
-                        UNUSED(result), CallTuple(_Member, concrete, std::move(args)); \
+                        Unused(result), CallTuple(_Member, concrete, std::move(args)); \
                     else \
                         result.TypedData<_Result>() = CallTuple(_Member, concrete, std::move(args)); \
                 } \

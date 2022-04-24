@@ -405,8 +405,8 @@ void FWindowsPlatformCrash::AbortProgramWithDump() {
 //----------------------------------------------------------------------------
 void FWindowsPlatformCrash::SubmitErrorReport(const FStringView& context, EReportMode mode/* = Unattended */) {
     // #TODO pain in the ass atm
-    UNUSED(context);
-    UNUSED(mode);
+    Unused(context);
+    Unused(mode);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

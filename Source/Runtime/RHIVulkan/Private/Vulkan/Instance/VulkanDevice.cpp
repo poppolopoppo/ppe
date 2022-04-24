@@ -43,6 +43,9 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
 ,   _vkDevice(info.vkDevice)
 ,   _vkVersion(EShaderLangFormat::Unknown)
 ,   _vkAllocator(*info.pAllocator)
+,   _caps{}
+,   _flags{}
+,   _enabled{}
 ,   _instanceExtensions(info.RequiredInstanceExtensions | info.OptionalInstanceExtensions)
 ,   _deviceExtensions(info.RequiredDeviceExtensions | info.OptionalDeviceExtensions) {
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
@@ -278,7 +281,7 @@ void FVulkanDevice::SetupDeviceFeatures_() {
         features2.features.samplerAnisotropy = VK_TRUE;
 
         void** pNextFeature = &features2.pNext;
-        UNUSED(pNextFeature);
+        Unused(pNextFeature);
 
         auto enableFeature = [&](auto* pFeature, VkStructureType sType) NOEXCEPT {
             *pNextFeature = pFeature;
@@ -381,7 +384,7 @@ void FVulkanDevice::SetupDeviceFeatures_() {
         properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
         void** pNextProperties = &properties2.pNext;
-        UNUSED(pNextProperties);
+        Unused(pNextProperties);
 
         auto enableProperties = [&](auto* pProperties, VkStructureType sType) NOEXCEPT {
             *pNextProperties = pProperties;

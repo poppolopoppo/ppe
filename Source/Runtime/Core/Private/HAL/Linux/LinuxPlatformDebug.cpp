@@ -26,7 +26,7 @@ namespace {
 static void SyslogTrace_(int priority,
     const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line,
     const wchar_t* text) {
-    UNUSED(timestamp);
+    Unused(timestamp);
 
     FStringBuilder sb;
     sb  << '[' << MakeCStringView(category) << "] "
@@ -111,7 +111,7 @@ void FLinuxPlatformDebug::SetThreadDebugName(const char* name) {
         ::pthread_self(), name
     );
     CLOG(0 != error, HAL, Error, L"failed to set thread debug name: '{1}' ({0})", error, MakeCStringView(name));
-    UNUSED(error);
+    Unused(error);
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformDebug::TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
@@ -135,13 +135,13 @@ void FLinuxPlatformDebug::TraceFatal(const wchar_t* category, i64 timestamp, con
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformDebug::BeginNamedEvent(u32 uid, const char* name) {
-    UNUSED(uid);
-    UNUSED(name);
+    Unused(uid);
+    Unused(name);
     // #TODO?
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformDebug::EndNamedEvent(u32 uid) {
-    UNUSED(uid);
+    Unused(uid);
     // #TODO?
 }
 //----------------------------------------------------------------------------

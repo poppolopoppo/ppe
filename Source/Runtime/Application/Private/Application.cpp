@@ -36,7 +36,7 @@ static FApplicationBase* GRunningApp_ = nullptr;
 //----------------------------------------------------------------------------
 template <typename _Functor>
 static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
-    UNUSED(step);
+    Unused(step);
 #if USE_APPLICATION_EXCEPTION_TRAP
     PPE_TRY
 #endif
@@ -84,7 +84,7 @@ int LaunchApplication(FApplicationBase* app) {
 #if USE_APPLICATION_EXCEPTION_TRAP
         PPE_CATCH(const std::exception& e)
         PPE_CATCH_BLOCK({
-            UNUSED(e);
+            Unused(e);
             LOG(Application, Fatal, L"exception caught while starting : {0}", MakeCStringView(e.what()));
             FCurrentProcess::Get().SetExitCode(3);
         })
@@ -99,7 +99,7 @@ int LaunchApplication(FApplicationBase* app) {
 #if USE_APPLICATION_EXCEPTION_TRAP
         PPE_CATCH(const std::exception& e)
         PPE_CATCH_BLOCK({
-            UNUSED(e);
+            Unused(e);
             LOG(Application, Fatal, L"exception caught while shutting down : {0}", MakeCStringView(e.what()));
             FCurrentProcess::Get().SetExitCode(3);
         })

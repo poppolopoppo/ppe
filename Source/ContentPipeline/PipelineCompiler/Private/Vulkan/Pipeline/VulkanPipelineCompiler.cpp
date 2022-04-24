@@ -74,7 +74,7 @@ NODISCARD static bool MergeUniformData_(FPipelineDesc::FVariantUniform* dst, con
         [&](const FPipelineDesc::FSampler& ) NOEXCEPT -> bool {
             if (auto* const rhs = std::get_if<FPipelineDesc::FSampler>(&dst->Data)) {
                 if (Ensure(src.Index == dst->Index)) {
-                    UNUSED(rhs);
+                    Unused(rhs);
                     dst->StageFlags |= src.StageFlags;
                     return true;
                 }
@@ -170,7 +170,7 @@ NODISCARD static bool MergeUniformMap_(
                 }
             }
 
-            UNUSED(found);
+            Unused(found);
             CLOG(not found, RHI, Error, L"failed to find an unused unique uniform name");
         }
         else {

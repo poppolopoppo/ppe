@@ -86,8 +86,8 @@ bool FLinuxPlatformLowLevelIO::Close(FHandle handle) {
 //----------------------------------------------------------------------------
 bool FLinuxPlatformLowLevelIO::SetMode(FHandle handle, EAccessPolicy flags) {
     Assert(InvalidHandle != handle);
-    UNUSED(handle);
-    UNUSED(flags);
+    Unused(handle);
+    Unused(flags);
     return true; // irrelevant on linux
 }
 //----------------------------------------------------------------------------
@@ -149,7 +149,7 @@ std::streamsize FLinuxPlatformLowLevelIO::Write(FHandle handle, const void* src,
 //----------------------------------------------------------------------------
 bool FLinuxPlatformLowLevelIO::Commit(FHandle handle) {
     Assert(InvalidHandle != handle);
-    UNUSED(handle);
+    Unused(handle);
     return true; // irrelevant for linux
 }
 //----------------------------------------------------------------------------

@@ -24,10 +24,10 @@ auto FLinuxPlatformCrash::WriteMiniDump(
     const void* exception_ptrs/* = nullptr */,
     bool suspendThreads/* = true */) -> EResult {
 
-    UNUSED(filename);
-    UNUSED(level);
-    UNUSED(exception_ptrs);
-    UNUSED(suspendThreads);
+    Unused(filename);
+    Unused(level);
+    Unused(exception_ptrs);
+    Unused(suspendThreads);
 
     // #TODO 
     // http://www.scribd.com/doc/3726406/Crash-N-Burn-Writing-Linux-application-fault-handlers
@@ -46,8 +46,8 @@ void FLinuxPlatformCrash::AbortProgramWithDump() {
 //----------------------------------------------------------------------------
 void FLinuxPlatformCrash::SubmitErrorReport(const FStringView& context, EReportMode mode/* = Unattended */) {
     // #TODO no support on linux ?
-    UNUSED(context);
-    UNUSED(mode);
+    Unused(context);
+    Unused(mode);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

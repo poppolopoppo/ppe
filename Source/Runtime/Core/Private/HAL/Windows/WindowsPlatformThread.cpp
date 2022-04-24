@@ -101,7 +101,7 @@ void FWindowsPlatformThread::SetAffinityMask(FAffinityMask mask) {
     const FAffinityMask actualMask = FWindowsPlatformThread::AffinityMask();
     Assert((mask & AllCoresAffinity) == actualMask);
 #endif
-    UNUSED(affinityMask);
+    Unused(affinityMask);
 }
 //----------------------------------------------------------------------------
 EThreadPriority FWindowsPlatformThread::Priority() {

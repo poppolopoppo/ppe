@@ -103,7 +103,7 @@ ARGS_IF_RHIDEBUG("Test_PushConstant1_CS"));
         .DependsOn(tDispatch)
         .SetCallback(onLoaded));
     LOG_CHECK(WindowTest, tRead);
-    UNUSED(tRead);
+    Unused(tRead);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
 

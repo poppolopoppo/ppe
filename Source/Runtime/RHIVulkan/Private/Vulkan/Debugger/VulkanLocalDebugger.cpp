@@ -54,7 +54,7 @@ void FVulkanLocalDebugger::End(
             FGraphVizDump_ graphViz{ pgraph, *this, fg.Device() };
             graphViz.DumpGraph();
 #else
-            UNUSED(pgraph); // #TODO
+            Unused(pgraph); // #TODO
 #endif
         }
     }

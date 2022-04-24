@@ -75,7 +75,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     cmd->Task(renderPass, FDrawVertices{}.Draw(3).SetPipeline(*ppln).SetTopology(EPrimitiveTopology::TriangleList));
 
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass });
-    UNUSED(tDraw);
+    Unused(tDraw);
 
     LOG_CHECK(WindowTest, fg.Execute(cmd));
     LOG_CHECK(WindowTest, fg.WaitIdle());

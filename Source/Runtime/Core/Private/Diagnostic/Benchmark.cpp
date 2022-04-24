@@ -11,7 +11,7 @@ LOG_CATEGORY_VERBOSITY(PPE_CORE_API, Benchmark, NoDebug)
 //----------------------------------------------------------------------------
 PRAGMA_DISABLE_OPTIMIZATION
 void FBenchmark::UseCharPointer_(char const volatile* p) NOEXCEPT {
-    UNUSED(p);
+    Unused(p);
 }
 PRAGMA_ENABLE_OPTIMIZATION
 //----------------------------------------------------------------------------

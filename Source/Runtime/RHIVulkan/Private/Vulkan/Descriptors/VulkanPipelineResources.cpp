@@ -182,7 +182,7 @@ bool FVulkanPipelineResources::operator ==(const FVulkanPipelineResources& other
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value) {
-    UNUSED(id);
+    Unused(id);
     const auto infos = pList->AllocateT<VkDescriptorBufferInfo>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
@@ -218,7 +218,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value) {
-    UNUSED(id);
+    Unused(id);
     const auto infos = pList->AllocateT<VkBufferView>(value.Elements.Count );
 
     forrange(i, 0, value.Elements.Count) {
@@ -256,7 +256,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value) {
-    UNUSED(id);
+    Unused(id);
     const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -298,7 +298,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value) {
-    UNUSED(id);
+    Unused(id);
     const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -337,7 +337,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value) {
-    UNUSED(id);
+    Unused(id);
     const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -366,7 +366,7 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
-    UNUSED(id);
+    Unused(id);
     const auto tlas = pList->AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
@@ -400,9 +400,9 @@ bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternal
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 void FVulkanPipelineResources::ValidateEmptyUniform_(const FInternalResources& data, const FUniformID& id, u32 idx) {
-    UNUSED(data);
-    UNUSED(id);
-    UNUSED(idx);
+    Unused(data);
+    Unused(id);
+    Unused(idx);
     if (not data.AllowEmptyResources)
         RHI_LOG(Error, L"uniform '{0}' [{1}] contains invalid resource(s)!", id.MakeView(), idx);
 }
@@ -418,8 +418,8 @@ void FVulkanPipelineResources::CheckBufferUsage(const FVulkanBuffer& buffer, ERe
     default: AssertReleaseFailed(L"unknown resource state");
     }
 #else
-    UNUSED(buffer);
-    UNUSED(state);
+    Unused(buffer);
+    Unused(state);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -433,8 +433,8 @@ void FVulkanPipelineResources::CheckTexelBufferUsage(const FVulkanBuffer& buffer
     default: AssertReleaseFailed(L"unknown resource state");
     }
 #else
-    UNUSED(buffer);
-    UNUSED(state);
+    Unused(buffer);
+    Unused(state);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -448,8 +448,8 @@ void FVulkanPipelineResources::CheckImageUsage(const FVulkanImage& image, EResou
     default: AssertReleaseFailed(L"unknown resource state");
     }
 #else
-    UNUSED(image);
-    UNUSED(state);
+    Unused(image);
+    Unused(state);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -470,11 +470,11 @@ void FVulkanPipelineResources::CheckImageType(const FUniformID& id, u32 index, c
 
     CheckTextureType(id, index, img, desc, shaderType - EImageSampler::_FormatMask);
 #else
-    UNUSED(id);
-    UNUSED(index);
-    UNUSED(img);
-    UNUSED(desc);
-    UNUSED(shaderType);
+    Unused(id);
+    Unused(index);
+    Unused(img);
+    Unused(desc);
+    Unused(shaderType);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -482,8 +482,8 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
 #if USE_PPE_RHIDEBUG
     Assert(id.Valid());
     Assert(not (shaderType ^ EImageSampler::_FormatMask));
-    UNUSED(img);
-    UNUSED(index);
+    Unused(img);
+    Unused(index);
 
     EImageSampler imageType = static_cast<EImageSampler>(0);
 
@@ -538,11 +538,11 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
     }
 
 #else
-    UNUSED(id);
-    UNUSED(index);
-    UNUSED(img);
-    UNUSED(desc);
-    UNUSED(shaderType);
+    Unused(id);
+    Unused(index);
+    Unused(img);
+    Unused(desc);
+    Unused(shaderType);
 #endif
 }
 //----------------------------------------------------------------------------

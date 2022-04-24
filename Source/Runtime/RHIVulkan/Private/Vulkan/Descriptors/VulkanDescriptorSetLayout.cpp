@@ -51,7 +51,7 @@ FVulkanDescriptorSetLayout::~FVulkanDescriptorSetLayout() {
     Assert_NoAssume(VK_NULL_HANDLE == _pool.LockExclusive()->Layout);
 }
 //----------------------------------------------------------------------------
-bool FVulkanDescriptorSetLayout::Construct(const FVulkanDevice& device, TMemoryView<const VkDescriptorSetLayoutBinding> bindings ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+bool FVulkanDescriptorSetLayout::Construct(const FVulkanDevice& device, const TMemoryView<const VkDescriptorSetLayoutBinding>& bindings ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     const auto exclusivePool = _pool.LockExclusive();
     Assert(exclusivePool->Uniforms.valid());
     Assert_NoAssume(VK_NULL_HANDLE == exclusivePool->Layout);
@@ -123,7 +123,7 @@ void FVulkanDescriptorSetLayout::DeallocateDescriptorSet(FVulkanResourceManager&
     Assert(VK_NULL_HANDLE != descriptors.First);
 
     const auto sharedPool = _pool.LockShared();
-    UNUSED(sharedPool);
+    Unused(sharedPool);
 
     const auto exclusiveCache = _descriptorSetCache.LockExclusive();
 

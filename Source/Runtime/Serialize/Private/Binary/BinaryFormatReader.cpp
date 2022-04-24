@@ -179,7 +179,7 @@ bool FBinaryFormatReader::CheckFingerprint(const FBinaryFormat::FHeaders& h) con
     return (fp == h.Fingerprint);
 
 #else
-    UNUSED(h);
+    Unused(h);
     return true;
 
 #endif

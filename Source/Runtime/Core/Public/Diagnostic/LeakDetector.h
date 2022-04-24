@@ -270,7 +270,7 @@ public:
                     Assert(callstack.CallstackUID == alloc.CallstackUID);
                     callstack.Add(alloc);
 
-                    UNUSED(ptr); // #TODO log pointers ?
+                    Unused(ptr); // #TODO log pointers ?
                 }
             });
         }

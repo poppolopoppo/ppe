@@ -53,7 +53,7 @@ public:
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    NODISCARD bool Construct(const FVulkanDevice& device, TMemoryView<const VkDescriptorSetLayoutBinding> bindings ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool Construct(const FVulkanDevice& device, const TMemoryView<const VkDescriptorSetLayoutBinding>& bindings ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     NODISCARD bool AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, FVulkanResourceManager& resources) const;

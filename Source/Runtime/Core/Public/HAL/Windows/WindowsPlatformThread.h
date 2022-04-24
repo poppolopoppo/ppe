@@ -64,7 +64,7 @@ public:
     static void RevertCurrentFiberToThread(FFiber threadFiber) {
         Assert(threadFiber && threadFiber != INVALID_HANDLE_VALUE);
         Assert_NoAssume(::GetCurrentFiber() == threadFiber);
-        UNUSED(threadFiber);
+        Unused(threadFiber);
 
         ::ConvertFiberToThread();
     }

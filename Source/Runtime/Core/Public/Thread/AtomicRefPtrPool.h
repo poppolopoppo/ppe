@@ -71,7 +71,7 @@ public:
             Assert(*p);
             Assert_NoAssume((*p)->RefCount() == 0);
             Assert_NoAssume(traits_type::IndexInPool(p->get()) == id);
-            UNUSED(id);
+            Unused(id);
 #if USE_PPE_SAFEPTR
             RemoveSafeRef(p->get());
 #endif

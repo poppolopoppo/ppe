@@ -56,7 +56,7 @@ static GLFWcursor* StandardCursor_(EGLFWCursorType shape) {
 struct FGLFWWindow::FMouseCallbacks {
     static void Button(GLFWwindow* nativeHandle, int button, int action, int mods) {
         Assert(nativeHandle);
-        UNUSED(mods); // #TODO
+        Unused(mods); // #TODO
 
         auto* const window = static_cast<FGLFWWindow*>(glfwGetWindowUserPointer(nativeHandle));
         Assert(window);
@@ -193,7 +193,7 @@ void FGLFWPlatformMouse::ResetCapture() {
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformMouse::SetCapture(const FGLFWWindow& window) {
-    UNUSED(window);
+    Unused(window);
     LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------

@@ -349,7 +349,7 @@ private:
 
     void Randomize_(RTTI::PMetaObject& obj) {
 #if 0
-        UNUSED(obj);
+        Unused(obj);
         // can't do anything since we don't know the metaclass, this is no trivial task ...
         /*
         const float d = ((float)_depth)/_maxDim;
@@ -404,7 +404,7 @@ static void print_atom(const RTTI::FAtom& atom) {
         typeInfo.Flags(),
         atom.IsDefaultValue());
 #else
-    UNUSED(atom);
+    Unused(atom);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -996,20 +996,20 @@ static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) 
 
         const RTTI::FAtom result = expr->Eval(context);
 
-        UNUSED(result);
+        Unused(result);
         LOG(Test_RTTI, Info, L" -> {0} : {1}", result, result.NamedTypeInfos());
 
         return true;
     }
     catch (const Parser::FParserException& e) {
-        UNUSED(e);
+        Unused(e);
         if (e.Item())
             LOG(Test_RTTI, Error, L" !! Parser error : <{0}> {1}, {2}.", e.Item()->ToString(), MakeCStringView(e.What()), e.Site());
         else
             LOG(Test_RTTI, Error, L" !! Parser error : {0}, {1}.", MakeCStringView(e.What()), e.Site());
     }
     catch (const Lexer::FLexerException& e) {
-        UNUSED(e);
+        Unused(e);
         LOG(Test_RTTI, Error, L" ?? Lexer error : <{0}>: {1}, {2}.", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site());
     }
 

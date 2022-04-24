@@ -55,7 +55,7 @@ public:
 #endif
 
 private:
-    const FVulkanRayTracingScene* _rtScene;
+    const FVulkanRayTracingScene* _rtScene{ nullptr };
 
     mutable FSceneAccess _pendingAccesses;
     mutable FSceneAccess _accessForReadWrite;

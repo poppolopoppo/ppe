@@ -229,7 +229,7 @@ void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
 
     }
 #else
-    UNUSED(oss);
+    Unused(oss);
 #endif //!USE_PPE_MEMORYDOMAINS
 }
 //----------------------------------------------------------------------------
