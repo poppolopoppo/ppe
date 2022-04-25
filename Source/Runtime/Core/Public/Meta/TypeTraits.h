@@ -440,7 +440,7 @@ CONSTEXPR T DefaultValue() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 struct FDefaultValue final {
-    template <typename T>
+    template <typename T, class = TEnableIf<has_default_constructor<T>::value> >
     CONSTEXPR operator T () const { return DefaultValue<T>(); }
     template <typename T>
     CONSTEXPR friend bool operator ==(T lhs, FDefaultValue rhs) { return (T(rhs) == lhs); }
