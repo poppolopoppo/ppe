@@ -29,8 +29,8 @@ CONSTEXPR CONSTF hash_t hash_value(i64 v)      NOEXCEPT { return hash_uint(stati
 CONSTEXPR CONSTF hash_t hash_value(u64 v)      NOEXCEPT { return hash_uint(v); }
 CONSTEXPR CONSTF hash_t hash_value(u128 v)     NOEXCEPT { return hash_uint(v); }
 FORCE_INLINE CONSTF hash_t hash_value(u256 v)  NOEXCEPT { return hash_as_pod(v); }
-FORCE_INLINE CONSTF hash_t hash_value(float v) NOEXCEPT { return hash_uint(*reinterpret_cast<u32*>(&v)); }
-FORCE_INLINE CONSTF hash_t hash_value(double v)NOEXCEPT { return hash_uint(*reinterpret_cast<u64*>(&v)); }
+FORCE_INLINE CONSTF hash_t hash_value(float v) NOEXCEPT { return hash_uint(bit_cast<u32>(v)); }
+FORCE_INLINE CONSTF hash_t hash_value(double v)NOEXCEPT { return hash_uint(bit_cast<u64>(v)); }
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE CONSTF hash_t hash_value(const T *ptr) NOEXCEPT {
