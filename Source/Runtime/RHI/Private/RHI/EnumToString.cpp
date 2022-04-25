@@ -236,11 +236,24 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     }
 }
 //----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EAttachmentLoadOp value) {
+    STATIC_ASSERT(not Meta::enum_is_flags_v<EAttachmentLoadOp>);
+    switch (value) {
+    case EAttachmentLoadOp::Invalidate: return oss << STRING_LITERAL(_Char, "Invalidate");
+    case EAttachmentLoadOp::Clear: return oss << STRING_LITERAL(_Char, "Clear");
+    case EAttachmentLoadOp::Keep: return oss << STRING_LITERAL(_Char, "Keep");
+    case EAttachmentLoadOp::Load: return oss << STRING_LITERAL(_Char, "Load");
+    case EAttachmentLoadOp::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EAttachmentStoreOp value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<EAttachmentStoreOp>);
     switch (value) {
     case EAttachmentStoreOp::Invalidate: return oss << STRING_LITERAL(_Char, "Invalidate");
     case EAttachmentStoreOp::Store: return oss << STRING_LITERAL(_Char, "Store");
+    case EAttachmentStoreOp::Keep: return oss << STRING_LITERAL(_Char, "Keep");
     case EAttachmentStoreOp::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
     }
     return oss;

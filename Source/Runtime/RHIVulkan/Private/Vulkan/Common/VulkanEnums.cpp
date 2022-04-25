@@ -13,6 +13,7 @@
 #include "RHI/ShaderEnums.h"
 #include "RHI/SwapchainDesc.h"
 #include "RHI/VertexEnums.h"
+#include "Vulkan/Instance/VulkanDevice.h"
 
 namespace PPE {
 namespace RHI {
@@ -255,21 +256,31 @@ VkDynamicState VkCast(EPipelineDynamicState value) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-VkAttachmentLoadOp VkCast(EAttachmentLoadOp value) {
+VkAttachmentLoadOp VkCast(EAttachmentLoadOp value, const FVulkanDevice& device) {
     switch (value) {
     case EAttachmentLoadOp::Invalidate: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     case EAttachmentLoadOp::Load: return VK_ATTACHMENT_LOAD_OP_LOAD;
     case EAttachmentLoadOp::Clear: return VK_ATTACHMENT_LOAD_OP_CLEAR;
+
+    case EAttachmentLoadOp::Keep:
+        if (device.HasExtension(EVulkanDeviceExtension::EXT_load_store_op_none))
+            return VK_ATTACHMENT_LOAD_OP_NONE_EXT;
+        return VK_ATTACHMENT_LOAD_OP_LOAD;
 
     case EAttachmentLoadOp::Unknown: break;
     }
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-VkAttachmentStoreOp VkCast(EAttachmentStoreOp value) {
+VkAttachmentStoreOp VkCast(EAttachmentStoreOp value, const FVulkanDevice& device) {
     switch (value) {
     case EAttachmentStoreOp::Invalidate: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
     case EAttachmentStoreOp::Store: return VK_ATTACHMENT_STORE_OP_STORE;
+
+    case EAttachmentStoreOp::Keep:
+        if (device.HasExtension(EVulkanDeviceExtension::EXT_load_store_op_none))
+            return VK_ATTACHMENT_STORE_OP_NONE_EXT;
+        return VK_ATTACHMENT_STORE_OP_STORE;
 
     case EAttachmentStoreOp::Unknown: break;
     }

@@ -762,10 +762,30 @@ bool SetupVulkanQueues_(
 //----------------------------------------------------------------------------
 bool ValidateDeviceExtensions_(
     VECTOR(RHIInstance, FConstChar)* pExtensionNames,
-    VkPhysicalDevice vkPhysicalDevice,
     const FVulkanInstanceFunctions& api,
-    FVulkanDeviceExtensionSet& requiredDeviceExts,
-    FVulkanDeviceExtensionSet& optionalDeviceExts ) {
+    FVulkanDeviceInfo& deviceInfo ) {
+    FVulkanDeviceExtensionSet& requiredDeviceExts = deviceInfo.RequiredDeviceExtensions;
+    FVulkanDeviceExtensionSet& optionalDeviceExts = deviceInfo.OptionalDeviceExtensions;
+
+#if defined(VK_EXT_load_store_op_none) && VK_EXT_load_store_op_none
+    // See FVulkanInstance::RecommendedDeviceExtensions()
+    if (deviceInfo.Features & ERHIFeature::Debugging) {
+        // Validation layer is not compatible with this extension:
+        //   Device Extension VK_EXT_load_store_op_none is not supported by this layer.
+        //   Using this extension may adversely affect validation results and/or produce undefined behavior.
+        // https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_load_store_op_none.html
+
+        // Need to handle this extension dynamically, see EAttachmentLoadOp/StoreOp
+        if (requiredDeviceExts & EVulkanDeviceExtension::EXT_load_store_op_none ||
+            optionalDeviceExts & EVulkanDeviceExtension::EXT_load_store_op_none ) {
+            LOG(RHI, Warning, L"disabled EXT_load_store_op_none extension since it's not compatible with KHRONOS validation layer");
+
+            requiredDeviceExts -= EVulkanDeviceExtension::EXT_load_store_op_none;
+            optionalDeviceExts -= EVulkanDeviceExtension::EXT_load_store_op_none;
+        }
+    }
+#endif
+
     const FVulkanDeviceExtensionSet userDeviceExts{ requiredDeviceExts };
 
     // expand requirements:
@@ -804,7 +824,7 @@ bool ValidateDeviceExtensions_(
     }
 
     u32 numExtensions = 0;
-    VK_CHECK( api.vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &numExtensions, nullptr) );
+    VK_CHECK( api.vkEnumerateDeviceExtensionProperties(deviceInfo.vkPhysicalDevice, nullptr, &numExtensions, nullptr) );
 
     if (0 == numExtensions) {
         CLOG(numExtensions != pExtensionNames->size(), RHI, Warning, L"vulkan device extensions are not supported and will be ignored");
@@ -813,7 +833,7 @@ bool ValidateDeviceExtensions_(
     }
 
     STACKLOCAL_POD_ARRAY(VkExtensionProperties, extProperties, numExtensions);
-    VK_CHECK( api.vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &numExtensions, extProperties.data()) );
+    VK_CHECK( api.vkEnumerateDeviceExtensionProperties(deviceInfo.vkPhysicalDevice, nullptr, &numExtensions, extProperties.data()) );
 
     for (auto jt = pExtensionNames->begin(); jt != pExtensionNames->end(); ) {
         const auto found = extProperties.FindIf([name{*jt}](const VkExtensionProperties& props) {
@@ -874,7 +894,7 @@ bool CreateVulkanDevice_(
 
     // extensions
     VECTOR(RHIInstance, FConstChar) extensionNames;
-    if (not ValidateDeviceExtensions_(&extensionNames, pDevice->vkPhysicalDevice, api, pDevice->RequiredDeviceExtensions, pDevice->OptionalDeviceExtensions)) {
+    if (not ValidateDeviceExtensions_(&extensionNames, api, *pDevice)) {
         LOG(RHI, Error, L"failed to validate vulkan device extensions");
         return false;
     }
@@ -1608,6 +1628,11 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
         });
     else
         AssertNotImplemented();
+
+#if defined(VK_EXT_load_store_op_none) && VK_EXT_load_store_op_none
+    // See EAttachmentLoadOp::Keep and EAttachementStoreOp::Keep
+    result += EVulkanDeviceExtension::EXT_load_store_op_none;
+#endif
 
     return vk::device_extensions_require(result);
 }

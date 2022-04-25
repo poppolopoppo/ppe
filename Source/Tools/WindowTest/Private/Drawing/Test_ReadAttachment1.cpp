@@ -138,7 +138,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, colorImage, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
-        .AddTarget(ERenderTargetID::Depth, depthImage, EAttachmentLoadOp::Load, EAttachmentStoreOp::Store)
+        .AddTarget(ERenderTargetID::Depth, depthImage, EAttachmentLoadOp::Load, EAttachmentStoreOp::Keep)
         .SetDepthTestEnabled(true)
         .SetDepthWriteEnabled(false)
         .AddViewport(viewSize));

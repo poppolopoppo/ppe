@@ -102,8 +102,8 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 
         dst.ImageId = src.ImageId;
         dst.Samples = VkCast(sharedImg->Desc.Samples);
-        dst.LoadOp = VkCast(src.LoadOp);
-        dst.StoreOp = VkCast(src.StoreOp);
+        dst.LoadOp = VkCast(src.LoadOp, cmd.Device());
+        dst.StoreOp = VkCast(src.StoreOp, cmd.Device());
         dst.State = EResourceState::Unknown;
         dst.Index = checked_cast<u32>(i);
         dst.ImageHash = hash_tuple(dst.ImageId, dst.Desc);

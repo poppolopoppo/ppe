@@ -75,12 +75,14 @@ enum class EAttachmentLoadOp : u32 {
     Invalidate,
     Load,
     Clear,
+    Keep,
     Unknown = ~0u,
 };
 //----------------------------------------------------------------------------
 enum class EAttachmentStoreOp : u32 {
     Invalidate,
     Store,
+    Keep,
     Unknown = ~0u,
 };
 
