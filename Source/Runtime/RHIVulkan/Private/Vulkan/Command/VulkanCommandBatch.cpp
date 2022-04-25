@@ -1074,9 +1074,11 @@ bool FVulkanCommandBatch::ParseDebugOutput2_(FDebugStrings* pDump, const FShader
     Assert( info.MappedPtr );
     for (const PVulkanShaderModule& shader : dbg.Modules) {
         const FRawMemoryConst trace{ static_cast<const u8*>(info.MappedPtr) + dbg.Offset, dbg.Size };
+
+        const size_t numMessagesBefore = pDump->size();
         LOG_CHECK( RHI, shader->ParseDebugOutput(MakeAppendable(*pDump), dbg.Mode, trace) );
 
-        callback(dbg.TaskName, shader->DebugName().MakeView(), dbg.Stages, pDump->MakeView());
+        callback(dbg.TaskName, shader->DebugName().MakeView(), dbg.Stages, pDump->MakeView().CutStartingAt(numMessagesBefore));
     }
 
     return true;
