@@ -434,8 +434,13 @@ CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T* pend) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<u8> MakeRawView(T& assumePod) {
-    return TMemoryView<u8>(reinterpret_cast<u8*>(&assumePod), sizeof(T));
+CONSTF TMemoryView<Meta::TEnableIf<Meta::is_pod_v<T>, u8>> MakeRawView(T& assumePod) {
+    return { reinterpret_cast<u8*>(&assumePod), sizeof(T) };
+}
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTF TMemoryView<Meta::TEnableIf<Meta::is_pod_v<T>, const u8>> MakeRawView(const T& assumePod) {
+    return { reinterpret_cast<const u8*>(&assumePod), sizeof(T) };
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -444,18 +449,13 @@ TMemoryView<u8> MakeRawView(const TMemoryView<T>& assumePods) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<const u8> MakeRawView(const T& assumePod) {
-    return TMemoryView<const u8>(reinterpret_cast<const u8*>(&assumePod), sizeof(T));
-}
-//----------------------------------------------------------------------------
-template <typename T>
 TMemoryView<const u8> MakeRawView(const TMemoryView<const T>& assumePods) {
     return assumePods.template Cast<const u8>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<const u8> MakeRawConstView(const T& assumePod) {
-    return TMemoryView<const u8>(reinterpret_cast<const u8*>(&assumePod), sizeof(T));
+auto MakeRawConstView(const T& assumePod) {
+    return MakeRawView(assumePod);
 }
 //----------------------------------------------------------------------------
 template <typename T>
