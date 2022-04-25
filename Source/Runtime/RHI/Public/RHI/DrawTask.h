@@ -128,7 +128,8 @@ struct TDrawVerticesDesc : TDrawCallDesc<_Task> {
     _Task& SetVertexInput(const FVertexInputState& value) { VertexInput = value; return static_cast<_Task&>(*this); }
     _Task& SetEnablePrimitiveRestart(bool value) { EnablePrimitiveRestart = value; return static_cast<_Task&>(*this); }
 
-    _Task& AddVertexBuffer(const FVertexBufferID& id, FRawBufferID buffer, u32 offset = 0) {
+    _Task& AddVertexBuffer(const FVertexBufferID& id, FRawBufferID buffer, size_t offset = 0) {
+        //Assert(id); // support one anonymous vertex buffer
         Assert(buffer);
         VertexBuffers.Emplace_Overwrite(id, FVertexBuffer{ buffer, offset });
         return static_cast<_Task&>(*this);

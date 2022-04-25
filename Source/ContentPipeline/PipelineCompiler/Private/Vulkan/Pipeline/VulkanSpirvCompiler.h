@@ -141,9 +141,9 @@ private: // GLSL deserializer
     NODISCARD static FPipelineDesc::FDescriptorSet& ToDescriptorSet_(const FCompilationContext& ctx, u32 index);
 
     NODISCARD static FStringView ExtractNodeName_(const TIntermNode* node);
-    NODISCARD static FUniformID ExtractUniformID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
-    NODISCARD static FVertexID ExtractVertexID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
-    NODISCARD static FSpecializationID ExtractSpecializationID_(const TIntermNode* node) { return { ExtractNodeName_(node) }; }
+    NODISCARD static FUniformID ExtractUniformID_(const TIntermNode* node) { return FUniformID{ ExtractNodeName_(node) }; }
+    NODISCARD static FVertexID ExtractVertexID_(const TIntermNode* node) { return FVertexID{ ExtractNodeName_(node) }; }
+    NODISCARD static FSpecializationID ExtractSpecializationID_(const TIntermNode* node) { return FSpecializationID{ ExtractNodeName_(node) }; }
 
     NODISCARD static FUniformID ExtractBufferUniformID_(const glslang::TType& type);
     NODISCARD static EImageSampler ExtractImageSampler_(const glslang::TType& type);

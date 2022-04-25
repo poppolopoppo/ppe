@@ -56,7 +56,7 @@ EVertexFormat FVertexInput::DestinationFormat() const {
 }
 //----------------------------------------------------------------------------
 FVertexInputState& FVertexInputState::Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId) NOEXCEPT {
-    Assert(vertexId.Valid());
+    // Assert(vertexId.Valid()); // support one anonymous vertex buffer
 
     const FVertexBufferBinding& binding = BufferBindings.Get(bufferId);
     Vertices.Emplace_Overwrite(vertexId, FVertexInput{ fmt, offset, binding.Index });

@@ -5,6 +5,7 @@
 #include "RHI/Config.h"
 
 #include "Container/Hash.h"
+#include "Container/HashHelpers.h"
 #include "IO/StaticString.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
@@ -61,14 +62,21 @@ struct TNamedId {
     STATIC_CONST_INTEGRAL(u32, StringCapacity, 32);
     using string_t = TStaticString<StringCapacity>;
 
-    string_t Name;
     hash_t HashValue{0};
+    string_t Name;
 
     TNamedId() = default;
 
-    CONSTEXPR TNamedId(const FStringView& name) NOEXCEPT
-        : Name(name)
-        , HashValue(hash_mem_constexpr(name.data(), name.size())) {}
+    CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT // for Meta::TEmptyKey<> traits
+        : HashValue(UMax)
+#if USE_PPE_ASSERT
+        , Name(UMax, 0)
+#endif
+    {}
+
+    CONSTEXPR explicit TNamedId(const FStringView& name) NOEXCEPT
+        : HashValue(hash_mem_constexpr(name.data(), name.size()))
+        , Name(name) {}
 
     CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
@@ -80,11 +88,11 @@ struct TNamedId {
     CONSTEXPR bool operator !=(const TNamedId& other) const { return (not operator ==(other)); }
     CONSTEXPR bool operator ==(const TNamedId& other) const {
         if (HashValue == other.HashValue) {
-            Assert(Name == other.Name);
+            Assert_NoAssume(Name == other.Name);
             return true;
         }
         else {
-            Assert(Name != other.Name);
+            Assert_NoAssume(Name != other.Name);
             return false;
         }
     }
@@ -103,7 +111,9 @@ struct TNamedId<_Uid, false> {
 
     TNamedId() = default;
 
-    CONSTEXPR TNamedId(const FStringView& name) NOEXCEPT
+    CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT : HashValue(UMax) {} // for Meta::TEmptyKey<> traits
+
+    CONSTEXPR explicit TNamedId(const FStringView& name) NOEXCEPT
         : HashValue(hash_mem_constexpr(name.data(), name.size())) {}
 
     CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
@@ -257,7 +267,7 @@ CONSTEXPR auto FResourceHandle::Visit(_Visitor&& visitor) const NOEXCEPT {
 // String literal user operator for declaring TNamedId<>
 #define PPE_RHI_RESOURCEID_USERLITERAL_DECL(_TYPE, _ALIAS) \
     CONSTEXPR _TYPE operator "" CONCAT(_, _ALIAS)(const char* str, size_t len) { \
-        return { FStringView(str, len) }; \
+        return _TYPE{ FStringView(str, len) }; \
     }
 //----------------------------------------------------------------------------
 PPE_RHI_RESOURCEID_USERLITERAL_DECL(FUniformID, uniform)

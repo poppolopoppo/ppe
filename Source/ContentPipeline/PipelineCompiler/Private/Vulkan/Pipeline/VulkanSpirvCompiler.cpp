@@ -1026,7 +1026,7 @@ FStringView FVulkanSpirvCompiler::ExtractNodeName_(const TIntermNode* node) {
 //----------------------------------------------------------------------------
 FUniformID FVulkanSpirvCompiler::ExtractBufferUniformID_(const glslang::TType& type) {
     const glslang::TString& name = type.getTypeName();
-    return { FStringView{ name.c_str(), name.size() } };
+    return FUniformID{ FStringView{ name.c_str(), name.size() } };
 }
 //----------------------------------------------------------------------------
 EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const glslang::TType& type) {
@@ -1262,10 +1262,10 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
             subLayoutMatrix != ElmNone
                 ? subLayoutMatrix == ElmRowMajor
                 : bufferType.getQualifier().layoutMatrix == ElmRowMajor );
+        Assert(Meta::IsPow2(memberAlignment));
 
         if (memberQualifier.hasOffset()) {
-            Assert(Meta::IsPow2OrZero(memberQualifier.layoutOffset));
-            Assert(Meta::IsPow2(memberAlignment));
+            Assert(glslang::IsMultipleOfPow2(memberQualifier.layoutOffset, memberAlignment));
 
             if (ctx.Intermediate->getSpv().spv == 0) {
                 Assert(memberQualifier.layoutOffset >= offset);
@@ -1280,10 +1280,10 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
             memberAlignment = Max(memberAlignment, memberQualifier.layoutAlign);
 
         glslang::RoundToPow2(offset, memberAlignment);
-
         *outMinOffset = Min(*outMinOffset, checked_cast<u32>(offset));
         offset += memberSize;
 
+        // for last member:
         if (member + 1 == structFields.size() and memberType.isUnsizedArray()) {
             Assert(0 == memberSize);
             *outArrayStride = checked_cast<u32>(dummyStride);

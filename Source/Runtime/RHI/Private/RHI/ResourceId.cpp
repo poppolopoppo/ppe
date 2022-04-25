@@ -7,6 +7,9 @@
 
 namespace PPE {
 namespace RHI {
+STATIC_ASSERT(FVertexBufferID{}.HashValue._value == Zero);
+STATIC_ASSERT(FVertexBufferID(EmptyKey).HashValue == UMax);
+STATIC_ASSERT(std::is_constructible_v<FVertexBufferID, Meta::FEmptyKey>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
