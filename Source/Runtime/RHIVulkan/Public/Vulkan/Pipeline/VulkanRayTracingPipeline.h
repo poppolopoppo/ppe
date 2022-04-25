@@ -27,19 +27,22 @@ public:
         FSpecializationConstants SpecializationConstants;
 #if USE_PPE_RHIDEBUG
         EShaderDebugMode DebugMode{ Default };
+
+        bool operator ==(const FShaderModule& other) const { return (ShaderId == other.ShaderId and DebugMode == other.DebugMode); }
+        bool operator < (const FShaderModule& other) const { return (ShaderId == other.ShaderId ? DebugMode < other.DebugMode : ShaderId < other.ShaderId); }
+#else
+        bool operator ==(const FShaderModule& other) const { return (ShaderId == other.ShaderId); }
+        bool operator < (const FShaderModule& other) const { return operator < (other.ShaderId); }
 #endif
 
-        bool operator ==(const FShaderModule& other) const { return operator ==(other.ShaderId); }
-        bool operator !=(const FShaderModule& other) const { return operator !=(other.ShaderId); }
+        bool operator !=(const FShaderModule& other) const { return not operator ==(other); }
+        bool operator >=(const FShaderModule& other) const { return not operator <(other); }
 
-        bool operator < (const FShaderModule& other) const { return operator < (other.ShaderId); }
-        bool operator >=(const FShaderModule& other) const { return operator >=(other.ShaderId); }
+        bool operator ==(const FRTShaderID& shaderId) const { return (ShaderId == shaderId); }
+        bool operator !=(const FRTShaderID& shaderId) const { return (not operator ==(shaderId)); }
 
-        bool operator ==(const FRTShaderID& other) const { return (ShaderId == other); }
-        bool operator !=(const FRTShaderID& other) const { return (not operator ==(other)); }
-
-        bool operator < (const FRTShaderID& other) const { return (ShaderId < other); }
-        bool operator >=(const FRTShaderID& other) const { return (not operator < (other)); }
+        bool operator < (const FRTShaderID& shaderId) const { return (ShaderId < shaderId); }
+        bool operator >=(const FRTShaderID& shaderId) const { return (not operator < (shaderId)); }
     };
 
     using FShaderModules = FLATSET_INSITU(RHIRayTracing, FShaderModule, 4);
