@@ -435,8 +435,7 @@ static void CreateDebugUtilsMessengerIFP_(
             *pLogCategory,
             level,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            L"<{0}> {1}{2}",
-            MakeCStringView(pCallbackData->pMessageIdName),
+            L"{0}{1}",
             MakeCStringView(pCallbackData->pMessage),
             Fmt::Formator<wchar_t>(fmtCallbackData));
 

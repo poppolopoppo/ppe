@@ -113,7 +113,7 @@ using FPushConstantDatas = TFixedSizeStack<FPushConstantData, MaxPushConstantsCo
 //----------------------------------------------------------------------------
 struct FVertexBuffer {
     FRawBufferID Id{ Default };
-    u32 Offset{ UMax };
+    size_t Offset{ UMax };
 };
 PPE_ASSUME_TYPE_AS_POD(FVertexBuffer);
 //----------------------------------------------------------------------------

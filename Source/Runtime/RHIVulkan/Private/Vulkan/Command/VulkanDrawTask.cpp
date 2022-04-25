@@ -41,7 +41,7 @@ FVulkanBaseDrawVerticesTask::FVulkanBaseDrawVerticesTask(
         Assert_NoAssume(pLocalBuffer->Read()->Desc.Usage & EBufferUsage::Vertex);
 
         _vertexBuffers[it->second.Index] = pLocalBuffer;
-        _vertexOffsets[it->second.Index] = static_cast<VkDeviceSize>(vb.second.Offset);
+        _vertexOffsets[it->second.Index] = checked_cast<VkDeviceSize>(vb.second.Offset);
         _vertexStrides[it->second.Index] = it->second.Stride;
     }
 
