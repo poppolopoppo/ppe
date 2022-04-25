@@ -753,6 +753,8 @@ bool FVulkanPipelineCache::CreateShaderTable(
                 FDescriptorSetID{ "dbgStorage" });
 
             LOG_CHECK(RHI, !!layoutId);
+
+            workerCmd.ReleaseResource(layoutId);
         }
 #endif
 
