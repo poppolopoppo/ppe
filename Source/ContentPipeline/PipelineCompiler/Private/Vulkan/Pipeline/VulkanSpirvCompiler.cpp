@@ -638,6 +638,7 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
     spvOptions.generateDebugInfo = (_compilationFlags & EVulkanShaderCompilationFlags::GenerateDebug);
     spvOptions.disableOptimizer = not (_compilationFlags & EVulkanShaderCompilationFlags::Optimize);
     spvOptions.optimizeSize = (_compilationFlags & EVulkanShaderCompilationFlags::OptimizeSize);
+    spvOptions.validate = (_compilationFlags & EVulkanShaderCompilationFlags::Validate);
 
     spv::SpvBuildLogger logger;
     std::vector<unsigned> spirvTmp;

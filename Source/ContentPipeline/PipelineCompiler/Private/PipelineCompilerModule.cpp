@@ -2,10 +2,11 @@
 
 #include "PipelineCompilerModule.h"
 
-#include "Vulkan/Pipeline/VulkanPipelineCompiler.h"
-
 #include "RHIModule.h"
 #include "RHIVulkanModule.h"
+
+#include "Vulkan/Instance/VulkanDevice.h"
+#include "Vulkan/Pipeline/VulkanPipelineCompiler.h"
 
 #include "Diagnostic/Logger.h"
 #include "Modular/ModularDomain.h"
@@ -26,14 +27,19 @@ CONSTEXPR const EShaderLangFormat GVulkanPipelineFormat_ =
     EShaderLangFormat::ShaderModule;
 //----------------------------------------------------------------------------
 static void CreateVulkanDeviceCompiler_(const FVulkanDeviceInfo& deviceInfo) {
-    TRefPtr<FVulkanPipelineCompiler> compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, deviceInfo) };
-
-    compiler->SetCompilationFlags(
+    EVulkanShaderCompilationFlags compilationFlags = (
         EVulkanShaderCompilationFlags::Quiet |
-        EVulkanShaderCompilationFlags::GenerateDebug |
         EVulkanShaderCompilationFlags::Optimize |
         EVulkanShaderCompilationFlags::ParseAnnotations |
         EVulkanShaderCompilationFlags::UseCurrentDeviceLimits );
+
+#if !USE_PPE_FINAL_RELEASE
+    if (deviceInfo.Features & ERHIFeature::Debugging)
+        compilationFlags += EVulkanShaderCompilationFlags::Validate | EVulkanShaderCompilationFlags::GenerateDebug;
+#endif
+
+    TRefPtr<FVulkanPipelineCompiler> compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, deviceInfo) };
+    compiler->SetCompilationFlags(compilationFlags);
 
     auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
     rhiModule.RegisterCompiler(GVulkanPipelineFormat_, PPipelineCompiler{ std::move(compiler) });

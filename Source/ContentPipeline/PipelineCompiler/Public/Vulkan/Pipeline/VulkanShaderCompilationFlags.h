@@ -21,6 +21,7 @@ enum class EVulkanShaderCompilationFlags : u32
     Optimize                    = 1 << 16,
     OptimizeSize                = 1 << 17,
     StrongOptimization          = 1 << 18, // very slow, may be usable for offline compilation
+    Validate                    = 1 << 19,
 
     ParseAnnotations            = 1 << 20,
 

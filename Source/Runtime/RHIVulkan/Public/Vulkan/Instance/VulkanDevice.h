@@ -5,6 +5,7 @@
 #include "Container/HashSet.h"
 #include "Container/Stack.h"
 #include "Container/Vector.h"
+#include "HAL/TargetRHI.h"
 #include "IO/ConstChar.h"
 #include "Thread/CriticalSection.h"
 
@@ -51,6 +52,7 @@ struct FVulkanDeviceInfo {
     VkPhysicalDevice vkPhysicalDevice{ VK_NULL_HANDLE };
     VkDevice vkDevice{ VK_NULL_HANDLE };
     const VkAllocationCallbacks* pAllocator{ nullptr };
+    ERHIFeature Features{ Default };
     size_t MaxStagingBufferMemory{ ~0_b };
     size_t StagingBufferSize{ 0_b };
 };

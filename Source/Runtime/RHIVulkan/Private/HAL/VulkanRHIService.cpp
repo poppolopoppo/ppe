@@ -126,6 +126,7 @@ bool FVulkanRHIService::Construct(
     const TMemoryView<const FVulkanInstance::FQueueCreateInfo> deviceQueues =
         _instance.RecommendedDeviceQueues(version);
 
+    _deviceInfo.Features = deviceInfo.Features;
     _deviceInfo.MaxStagingBufferMemory = deviceInfo.MaxStagingBufferMemory;
     _deviceInfo.StagingBufferSize = deviceInfo.StagingBufferSize;
 
