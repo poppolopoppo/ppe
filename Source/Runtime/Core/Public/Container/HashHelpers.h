@@ -12,6 +12,14 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Meta {
+//----------------------------------------------------------------------------
+// Empty key abstraction for hash-like containers:
+//----------------------------------------------------------------------------
+struct FEmptyKey {
+    CONSTEXPR explicit FEmptyKey(int) {} // avoid promotion/copy
+};
+CONSTEXPR const FEmptyKey EmptyKey{0};
+//----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TEmptyKey {
     static CONSTEXPR bool is_empty(const T& v) NOEXCEPT = delete;
@@ -33,7 +41,17 @@ template <typename T>
 struct TEmptyKey< T, Meta::TEnableIf<
     not std::is_enum_v<T> &&
     not std::is_integral_v<T> &&
-    Meta::has_default_constructor<T>::value> > {
+    has_constructor<T, FEmptyKey>::value >> {
+    static CONSTEXPR const T value{ EmptyKey };
+    static CONSTEXPR bool is_empty(const T& v) NOEXCEPT { return (v == value); }
+    static CONSTEXPR void set_empty(T* v) NOEXCEPT { *v = value; }
+};
+template <typename T>
+struct TEmptyKey< T, Meta::TEnableIf<
+    not std::is_enum_v<T> &&
+    not std::is_integral_v<T> &&
+    not has_constructor<T, FEmptyKey>::value &&
+    has_default_constructor<T>::value >> {
     static CONSTEXPR const T value{ Meta::MakeForceInit<T>() };
     static CONSTEXPR bool is_empty(const T& v) NOEXCEPT { return (value == v); }
     static CONSTEXPR void set_empty(T* v) NOEXCEPT { *v = value; }
@@ -52,7 +70,10 @@ struct TEmptyKey< u256, void > {
     static CONSTEXPR bool is_empty(const u256& v) NOEXCEPT { return (value == v); }
     static CONSTEXPR void set_empty(u256* v) NOEXCEPT { *v = value; }
 };
+//----------------------------------------------------------------------------
 } //!namespace Meta
+//----------------------------------------------------------------------------
+using Meta::EmptyKey;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
