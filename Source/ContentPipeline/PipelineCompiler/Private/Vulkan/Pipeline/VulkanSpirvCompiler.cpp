@@ -52,6 +52,16 @@ static const FGuid GVulkanSpirvFingerprint{ {{
     0xB554D506ull,
 }}};
 //----------------------------------------------------------------------------
+template <typename... _Args>
+NODISCARD FShaderDataFingerprint MakeShaderFingerprint_(const FShaderDataFingerprint& seed, _Args&&... args) {
+    constexpr size_t capacityInBytes = (sizeof(_Args) + ... + 0);
+
+    VECTORINSITU(PipelineCompiler, u8, capacityInBytes) blob;
+    FOLD_EXPR(Append(blob, MakeRawConstView(args)));
+
+    return Fingerprint128(blob.MakeView(), seed);
+}
+//----------------------------------------------------------------------------
 NODISCARD u32 GLSLangArraySize_(const glslang::TType& type) {
     const glslang::TArraySizes* const sizes = type.getArraySizes();
 
@@ -162,8 +172,8 @@ public:
     struct FIncludeResultImpl final : public IncludeResult {
         const FRawStorage RawData;
 
-        FIncludeResultImpl(FRawStorage&& rawData, const std::string& headerName, void* userData = nullptr) NOEXCEPT
-        :   IncludeResult{ headerName, nullptr, 0, userData }
+        FIncludeResultImpl(FRawStorage&& rawData, const std::string& headerName_, void* userData_ = nullptr) NOEXCEPT
+        :   IncludeResult{ headerName_, nullptr, 0, userData_ }
         ,   RawData(std::move(rawData)) {
             const auto source = Source();
             const_cast<const char*&>(headerData) = source.data();
@@ -244,6 +254,14 @@ FVulkanSpirvCompiler::FVulkanSpirvCompiler(const FDirectories& directories)
     glslang::InitializeProcess();
 
     GenerateDefaultResources_(&_builtInResources);
+
+    // precompute fingeprint for glslang toolchain
+    const glslang::Version glslangVer = glslang::Version();
+    _glslangFingerprint = MakeShaderFingerprint_(
+        Fingerprint128(MakeRawView(GVulkanSpirvFingerprint)),
+        glslang::GetKhronosToolId(),
+        glslangVer.major, glslangVer.minor,
+        glslang::GetSpirvGeneratorVersion() );
 }
 //----------------------------------------------------------------------------
 FVulkanSpirvCompiler::~FVulkanSpirvCompiler() {
@@ -318,7 +336,8 @@ bool FVulkanSpirvCompiler::Compile(
     compilationContext.CurrentStage = EShaderStages_FromShader(shaderType);
     compilationContext.Reflection = outReflection;
 
-    FShaderDataFingerprint sourceFingerprint = Fingerprint128(source.MakeView(), GVulkanSpirvFingerprint);
+    const FShaderDataFingerprint sourceFingerprint = Fingerprint128(source.MakeView(),
+        Fingerprint128(entry.MakeView(), _glslangFingerprint));
 
     // compiler shader without debug info
     {
@@ -333,15 +352,20 @@ bool FVulkanSpirvCompiler::Compile(
             shaderType, srcShaderFormat, dstShaderFormat,
             entry, { source.c_str() }, resolver ));
 
-        for (const auto& file : resolver.Results())
-            sourceFingerprint = Fingerprint128(file->Source(), sourceFingerprint);
+        FShaderDataFingerprint shaderFingerprint = MakeShaderFingerprint_(
+            sourceFingerprint,
+            EDebugFlags::Unknown,
+            srcShaderFormat,
+            dstShaderFormat,
+            compilationContext.CurrentStage,
+            _compilationFlags,
+            _builtInResources );
 
-        const FShaderDataFingerprint shaderFingerprint = Fingerprint128(MakeRawView(
-            MakeTuple(
-                entry.MakeView(),
-                srcShaderFormat, dstShaderFormat,
-                compilationContext.CurrentStage, _compilationFlags, _builtInResources)),
-            sourceFingerprint );
+        for (const auto& file : resolver.Results())
+            shaderFingerprint = Fingerprint128(file->Source(), shaderFingerprint);
+
+        for (const auto& process : glslang.Shader->getIntermediate()->getProcesses())
+            shaderFingerprint = Fingerprint128(process.data(), process.size() * sizeof(*process.data()), shaderFingerprint);
 
         // #TODO: caching with shaderFingerprint?
 
@@ -409,13 +433,20 @@ bool FVulkanSpirvCompiler::Compile(
                 break;
             }
 
-            const FShaderDataFingerprint debugFingerprint = Fingerprint128(MakeRawView(
-                MakeTuple(
-                    mode,
-                    entry.MakeView(),
-                    srcShaderFormat, dstShaderFormat,
-                    compilationContext.CurrentStage, _compilationFlags, _builtInResources)),
-                sourceFingerprint );
+            FShaderDataFingerprint debugFingerprint = MakeShaderFingerprint_(
+                sourceFingerprint,
+                mode,
+                srcShaderFormat,
+                dstShaderFormat,
+                compilationContext.CurrentStage,
+                _compilationFlags,
+                _builtInResources );
+
+            for (const auto& file : resolver.Results())
+                debugFingerprint = Fingerprint128(file->Source(), debugFingerprint);
+
+            for (const auto& process : interm.getProcesses())
+                debugFingerprint = Fingerprint128(process.data(), process.size() * sizeof(*process.data()), debugFingerprint);
 
             // #TODO: caching with debugFingerprint?
 
@@ -447,39 +478,36 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
 
     using namespace ::glslang;
 
+    ctx.SpirvTargetEnvironment = SPV_ENV_UNIVERSAL_1_0;
+    ctx.TargetVulkan = false;
+
     EShClient client = EShClientOpenGL;
     EShTargetClientVersion clientVersion = EShTargetOpenGL_450;
 
     EShTargetLanguage target = EShTargetNone;
     EShTargetLanguageVersion targetVersion = EShTargetLanguageVersion(0);
 
-    int version = 0;
-    int shVersion = 460; // #TODO
+    const int shVersion = 460; // #TODO
+    const int version = checked_cast<int>(EShaderLangFormat_Version(srcShaderFormat));
+
     EProfile shProfile = ENoProfile;
     EShSource shSource = EShSourceCount;
-
-    ctx.SpirvTargetEnvironment = SPV_ENV_UNIVERSAL_1_0;
-    ctx.TargetVulkan = false;
 
     switch (Meta::EnumAnd(srcShaderFormat, EShaderLangFormat::_ApiMask)) {
     case EShaderLangFormat::OpenGL:
         shSource = EShSourceGlsl;
-        version = EShaderLangFormat_Version(srcShaderFormat);
         shProfile = (version >= 330 ? ECoreProfile : ENoProfile);
         break;
     case EShaderLangFormat::OpenGLES:
         shSource = EShSourceGlsl;
-        version = EShaderLangFormat_Version(srcShaderFormat);
         shProfile = EEsProfile;
         break;
     case EShaderLangFormat::DirectX:
         shSource = EShSourceHlsl;
-        version = EShaderLangFormat_Version(srcShaderFormat);
         shProfile = ENoProfile; // #TODO: check
         break;
     case EShaderLangFormat::Vulkan:
         shSource = EShSourceGlsl;
-        version = EShaderLangFormat_Version(srcShaderFormat);
         shProfile = ECoreProfile;
         break;
     default:
@@ -506,7 +534,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_1;
             break;
         case 120:
-            clientVersion = EShTargetVulkan_1_1; // #TODO: EShTargetVulkan_1_2;
+            clientVersion = EShTargetVulkan_1_2;
             targetVersion = EShTargetSpv_1_4;
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_1_SPIRV_1_4;
             break;
@@ -546,6 +574,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     shader->setEnvInput(shSource, stage, client, version);
     shader->setEnvClient(client, clientVersion);
     shader->setEnvTarget(target, targetVersion);
+    // shader->setPreamble(); // #TODO: use to pass optional macro definitions with a generated header
 
     if (not shader->parse(&_builtInResources, shVersion, shProfile, false, true, messages, resolver)) {
         *ctx.Log << MakeCStringView(shader->getInfoLog());
@@ -882,7 +911,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
 
     while (not source.empty()) {
         const char c = source.front();
-        const char n = (source.size() > 1 ? source[1] : 0);
+        const char n = (source.size() > 1 ? source[1] : 0_i8);
         source.Eat(1);
 
         const bool newLine1 = (c == '\r') && (n == '\n'); // windows
@@ -1587,7 +1616,7 @@ void FVulkanSpirvCompiler::SetDefaultResourceLimits() {
 void FVulkanSpirvCompiler::GenerateDefaultResources_(TBuiltInResource* outResources) noexcept {
     Assert(outResources);
 
-    *outResources = {};
+    FPlatformMemory::Memset(outResources, 0, sizeof(*outResources)); // reset eventual padding
 
     outResources->maxLights = 0;
     outResources->maxClipPlanes = 6;
@@ -1734,53 +1763,52 @@ void FVulkanSpirvCompiler::SetCurrentResourceLimits(const FVulkanDeviceInfo& dev
         deviceInfo.API.instance_api_->vkGetPhysicalDeviceProperties2(deviceInfo.vkPhysicalDevice, &properties2);
     }
 
-    _builtInResources.maxVertexAttribs = Min( MaxVertexAttribs, properties.limits.maxVertexInputAttributes );
-    _builtInResources.maxDrawBuffers = Min( MaxColorBuffers, properties.limits.maxColorAttachments );
-    _builtInResources.minProgramTexelOffset = properties.limits.minTexelOffset;
-    _builtInResources.maxProgramTexelOffset = properties.limits.maxTexelOffset;
+    _builtInResources.maxVertexAttribs = checked_cast<int>(Min( MaxVertexAttribs, properties.limits.maxVertexInputAttributes ));
+    _builtInResources.maxDrawBuffers = checked_cast<int>(Min( MaxColorBuffers, properties.limits.maxColorAttachments ));
+    _builtInResources.minProgramTexelOffset = checked_cast<int>(properties.limits.minTexelOffset);
+    _builtInResources.maxProgramTexelOffset = checked_cast<int>(properties.limits.maxTexelOffset);
 
-    _builtInResources.maxComputeWorkGroupCountX = properties.limits.maxComputeWorkGroupCount[0];
-    _builtInResources.maxComputeWorkGroupCountY = properties.limits.maxComputeWorkGroupCount[1];
-    _builtInResources.maxComputeWorkGroupCountZ = properties.limits.maxComputeWorkGroupCount[2];
-    _builtInResources.maxComputeWorkGroupSizeX = properties.limits.maxComputeWorkGroupSize[0];
-    _builtInResources.maxComputeWorkGroupSizeY = properties.limits.maxComputeWorkGroupSize[1];
-    _builtInResources.maxComputeWorkGroupSizeZ = properties.limits.maxComputeWorkGroupSize[2];
+    _builtInResources.maxComputeWorkGroupCountX = checked_cast<int>(properties.limits.maxComputeWorkGroupCount[0]);
+    _builtInResources.maxComputeWorkGroupCountY = checked_cast<int>(properties.limits.maxComputeWorkGroupCount[1]);
+    _builtInResources.maxComputeWorkGroupCountZ = checked_cast<int>(properties.limits.maxComputeWorkGroupCount[2]);
+    _builtInResources.maxComputeWorkGroupSizeX = checked_cast<int>(properties.limits.maxComputeWorkGroupSize[0]);
+    _builtInResources.maxComputeWorkGroupSizeY = checked_cast<int>(properties.limits.maxComputeWorkGroupSize[1]);
+    _builtInResources.maxComputeWorkGroupSizeZ = checked_cast<int>(properties.limits.maxComputeWorkGroupSize[2]);
 
-    _builtInResources.maxVertexOutputComponents = properties.limits.maxVertexOutputComponents;
-    _builtInResources.maxGeometryInputComponents = properties.limits.maxGeometryInputComponents;
-    _builtInResources.maxGeometryOutputComponents = properties.limits.maxGeometryOutputComponents;
-    _builtInResources.maxFragmentInputComponents = properties.limits.maxFragmentInputComponents;
+    _builtInResources.maxVertexOutputComponents = checked_cast<int>(properties.limits.maxVertexOutputComponents);
+    _builtInResources.maxGeometryInputComponents = checked_cast<int>(properties.limits.maxGeometryInputComponents);
+    _builtInResources.maxGeometryOutputComponents = checked_cast<int>(properties.limits.maxGeometryOutputComponents);
+    _builtInResources.maxFragmentInputComponents = checked_cast<int>(properties.limits.maxFragmentInputComponents);
 
-    _builtInResources.maxCombinedImageUnitsAndFragmentOutputs = properties.limits.maxFragmentCombinedOutputResources;
-    _builtInResources.maxGeometryOutputVertices = properties.limits.maxGeometryOutputVertices;
-    _builtInResources.maxGeometryTotalOutputComponents = properties.limits.maxGeometryTotalOutputComponents;
+    _builtInResources.maxCombinedImageUnitsAndFragmentOutputs = checked_cast<int>(properties.limits.maxFragmentCombinedOutputResources);
+    _builtInResources.maxGeometryOutputVertices = checked_cast<int>(properties.limits.maxGeometryOutputVertices);
+    _builtInResources.maxGeometryTotalOutputComponents = checked_cast<int>(properties.limits.maxGeometryTotalOutputComponents);
 
-    _builtInResources.maxTessControlInputComponents = properties.limits.maxTessellationControlPerVertexInputComponents;
-    _builtInResources.maxTessControlOutputComponents = properties.limits.maxTessellationControlPerVertexOutputComponents;
-    _builtInResources.maxTessControlTotalOutputComponents = properties.limits.maxTessellationControlTotalOutputComponents;
-    _builtInResources.maxTessEvaluationInputComponents = properties.limits.maxTessellationEvaluationInputComponents;
-    _builtInResources.maxTessEvaluationOutputComponents = properties.limits.maxTessellationEvaluationOutputComponents;
-    _builtInResources.maxTessPatchComponents = properties.limits.maxTessellationControlPerPatchOutputComponents;
-    _builtInResources.maxPatchVertices = properties.limits.maxTessellationPatchSize;
-    _builtInResources.maxTessGenLevel = properties.limits.maxTessellationGenerationLevel;
+    _builtInResources.maxTessControlInputComponents = checked_cast<int>(properties.limits.maxTessellationControlPerVertexInputComponents);
+    _builtInResources.maxTessControlOutputComponents = checked_cast<int>(properties.limits.maxTessellationControlPerVertexOutputComponents);
+    _builtInResources.maxTessControlTotalOutputComponents = checked_cast<int>(properties.limits.maxTessellationControlTotalOutputComponents);
+    _builtInResources.maxTessEvaluationInputComponents = checked_cast<int>(properties.limits.maxTessellationEvaluationInputComponents);
+    _builtInResources.maxTessEvaluationOutputComponents = checked_cast<int>(properties.limits.maxTessellationEvaluationOutputComponents);
+    _builtInResources.maxTessPatchComponents = checked_cast<int>(properties.limits.maxTessellationControlPerPatchOutputComponents);
+    _builtInResources.maxPatchVertices = checked_cast<int>(properties.limits.maxTessellationPatchSize);
+    _builtInResources.maxTessGenLevel = checked_cast<int>(properties.limits.maxTessellationGenerationLevel);
 
-    _builtInResources.maxViewports = Min(MaxViewports, properties.limits.maxViewports);
-    _builtInResources.maxClipDistances = properties.limits.maxClipDistances;
-    _builtInResources.maxCullDistances = properties.limits.maxCullDistances;
-    _builtInResources.maxCombinedClipAndCullDistances = properties.limits.maxCombinedClipAndCullDistances;
+    _builtInResources.maxViewports = checked_cast<int>(Min(MaxViewports, properties.limits.maxViewports));
+    _builtInResources.maxClipDistances = checked_cast<int>(properties.limits.maxClipDistances);
+    _builtInResources.maxCullDistances = checked_cast<int>(properties.limits.maxCullDistances);
+    _builtInResources.maxCombinedClipAndCullDistances = checked_cast<int>(properties.limits.maxCombinedClipAndCullDistances);
 
 #if VK_NV_mesh_shader
-    if (meshShaderFeatures.meshShader and meshShaderFeatures.taskShader)
-    {
-        _builtInResources.maxMeshOutputVerticesNV = meshShaderProperties.maxMeshOutputVertices;
-        _builtInResources.maxMeshOutputPrimitivesNV = meshShaderProperties.maxMeshOutputPrimitives;
-        _builtInResources.maxMeshWorkGroupSizeX_NV = meshShaderProperties.maxMeshWorkGroupSize[0];
-        _builtInResources.maxMeshWorkGroupSizeY_NV = meshShaderProperties.maxMeshWorkGroupSize[1];
-        _builtInResources.maxMeshWorkGroupSizeZ_NV = meshShaderProperties.maxMeshWorkGroupSize[2];
-        _builtInResources.maxTaskWorkGroupSizeX_NV = meshShaderProperties.maxTaskWorkGroupSize[0];
-        _builtInResources.maxTaskWorkGroupSizeY_NV = meshShaderProperties.maxTaskWorkGroupSize[1];
-        _builtInResources.maxTaskWorkGroupSizeZ_NV = meshShaderProperties.maxTaskWorkGroupSize[2];
-        _builtInResources.maxMeshViewCountNV = meshShaderProperties.maxMeshMultiviewViewCount;
+    if (meshShaderFeatures.meshShader and meshShaderFeatures.taskShader) {
+        _builtInResources.maxMeshOutputVerticesNV = checked_cast<int>(meshShaderProperties.maxMeshOutputVertices);
+        _builtInResources.maxMeshOutputPrimitivesNV = checked_cast<int>(meshShaderProperties.maxMeshOutputPrimitives);
+        _builtInResources.maxMeshWorkGroupSizeX_NV = checked_cast<int>(meshShaderProperties.maxMeshWorkGroupSize[0]);
+        _builtInResources.maxMeshWorkGroupSizeY_NV = checked_cast<int>(meshShaderProperties.maxMeshWorkGroupSize[1]);
+        _builtInResources.maxMeshWorkGroupSizeZ_NV = checked_cast<int>(meshShaderProperties.maxMeshWorkGroupSize[2]);
+        _builtInResources.maxTaskWorkGroupSizeX_NV = checked_cast<int>(meshShaderProperties.maxTaskWorkGroupSize[0]);
+        _builtInResources.maxTaskWorkGroupSizeY_NV = checked_cast<int>(meshShaderProperties.maxTaskWorkGroupSize[1]);
+        _builtInResources.maxTaskWorkGroupSizeZ_NV = checked_cast<int>(meshShaderProperties.maxTaskWorkGroupSize[2]);
+        _builtInResources.maxMeshViewCountNV = checked_cast<int>(meshShaderProperties.maxMeshMultiviewViewCount);
     }
 #endif
 }

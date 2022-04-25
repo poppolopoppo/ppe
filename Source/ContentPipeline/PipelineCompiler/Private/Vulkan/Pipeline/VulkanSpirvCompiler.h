@@ -153,8 +153,10 @@ private: // GLSL deserializer
 
 private:
     const FDirectories& _directories;
-    EVulkanShaderCompilationFlags _compilationFlags{ Default };
     TBuiltInResource _builtInResources{};
+    FShaderDataFingerprint _glslangFingerprint;
+
+    EVulkanShaderCompilationFlags _compilationFlags{ Default };
 
 #if USE_PPE_RHIDEBUG
     EShaderLangFormat _debugFlags{ Default };
