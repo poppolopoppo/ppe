@@ -25,6 +25,10 @@ struct TBasicStaticString {
     TBasicStaticString(const TBasicStaticString&) = default;
     TBasicStaticString& operator =(const TBasicStaticString&) = default;
 
+    CONSTEXPR TBasicStaticString(size_t len, _Char broadcast = Zero) {
+        Assign(len, broadcast);
+    }
+
     CONSTEXPR TBasicStaticString(const TBasicStringView<_Char>& str) {
         Assign(str);
     }
@@ -41,27 +45,37 @@ struct TBasicStaticString {
         return (*this);
     }
 
-    CONSTEXPR bool empty() const { return (0 == Len); }
-    CONSTEXPR size_t size() const { return Len; }
-    CONSTEXPR size_t capacity() const { return _Capacity; }
+    template <size_t _Len, class = Meta::TEnableIf<_Len <= _Capacity>>
+    CONSTEXPR TBasicStaticString(const _Char (&arr)[_Len]) {
+        Assign(MakeStringView(arr));
+    }
+    template <size_t _Len, class = Meta::TEnableIf<_Len <= _Capacity>>
+    CONSTEXPR TBasicStaticString& operator =(const _Char (&arr)[_Len]) {
+        Assign(MakeStringView(arr));
+        return (*this);
+    }
 
-    CONSTEXPR TMemoryView<_Char> Buf() { return MakeView(Data); }
-    CONSTEXPR auto Str() const { return TBasicStringView<_Char>(Data, Len); }
-    CONSTEXPR auto c_str() const { return TBasicConstChar<_Char>{ NullTerminated() }; }
+    CONSTEXPR CONSTF bool empty() const { return (0 == Len); }
+    CONSTEXPR CONSTF size_t size() const { return Len; }
+    CONSTEXPR CONSTF size_t capacity() const { return _Capacity; }
+
+    CONSTEXPR CONSTF TMemoryView<_Char> Buf() { return MakeView(Data); }
+    CONSTEXPR CONSTF auto Str() const { return TBasicStringView<_Char>(Data, Len); }
+    CONSTEXPR CONSTF auto c_str() const { return TBasicConstChar<_Char>{ NullTerminated() }; }
 
     CONSTEXPR operator _Char* () { return NullTerminated(); }
-    CONSTEXPR operator const _Char* () const { return NullTerminated(); }
-    CONSTEXPR operator TBasicStringView<_Char> () const { return Str(); }
-    CONSTEXPR operator TBasicConstChar<_Char> () const { return c_str(); }
+    CONSTEXPR CONSTF operator const _Char* () const { return NullTerminated(); }
+    CONSTEXPR CONSTF operator TBasicStringView<_Char> () const { return Str(); }
+    CONSTEXPR CONSTF operator TBasicConstChar<_Char> () const { return c_str(); }
 
     CONSTEXPR _Char* NullTerminated() {
         Assert(capacity() >= Len + 1);
-        Data[Len] = _Char(0);
+        Data[Len] = Zero;
         return Data;
     }
     CONSTEXPR const _Char* NullTerminated() const {
         Assert(capacity() >= Len + 1);
-        Assert(Data[Len] == _Char(0));
+        Assert(Data[Len] == Zero);
         return Data;
     }
 
@@ -69,18 +83,31 @@ struct TBasicStaticString {
         Len = str.size();
         if (Len >= _Capacity)
             Len = _Capacity - 1;
-        for (size_t i = 0; i < Len; ++i)
+        forrange(i, 0, Len)
             Data[i] = str.data()[i]; // constexpr
-        Data[Len] = _Char(0); // null-terminated
+        Data[Len] = Zero; // null-terminated
     }
 
-    CONSTEXPR bool Equals(const TBasicStaticString& other) const {
+    CONSTEXPR void Assign(size_t len, _Char broadcast = Zero) {
+        Len = len;
+        if (Len >= _Capacity)
+            Len = _Capacity - 1;
+        forrange(p, Data, Data + Len)
+            *p = broadcast; // constexpr
+        Data[Len] = Zero; // null-terminated
+    }
+
+    CONSTEXPR CONSTF bool Equals(const TBasicStaticString& other) const {
         if (Len != other.Len)
             return false;
-        return std::equal(Data, Data + Len, other.Data, other.Data + other.Len);
+        forrange(i, 0, Len) {
+            if (Data[i] != other.Data[i])
+                return false; // constexpr
+        }
+        return true;
     }
 
-    CONSTEXPR bool Less(const TBasicStaticString& other) const {
+    CONSTEXPR CONSTF bool Less(const TBasicStaticString& other) const {
         forrange(i, 0, Min(Len, other.Len)) {
             if (Data[i] != other.Data[i])
                 return (Data[i] < other.Data[i]);
@@ -90,18 +117,20 @@ struct TBasicStaticString {
 
     CONSTEXPR void Clear() {
         Len = 0;
-        Data[0] = _Char(0);
+        Data[0] = Zero;
     }
 
     CONSTEXPR void Resize(size_t len, bool keepData = true) {
         Assert(len < _Capacity);
         Len = len;
-        if (not keepData)
-            std::fill(Data, Data + Len, _Char(0));
-        Data[Len] = _Char(0);
+        if (not keepData) {
+            forrange(p, Data, Data + Len)
+                *p = Zero;
+        }
+        Data[Len] = Zero;
     }
 
-    CONSTEXPR size_t SubstringOffset(const TBasicStringView<_Char>& str) const {
+    CONSTEXPR CONSTF size_t SubstringOffset(const TBasicStringView<_Char>& str) const {
         size_t off = 0;
         for (; off + str.size() <= Len; ++off) {
             size_t subl = 0;
@@ -124,7 +153,7 @@ struct TBasicStaticString {
     CONSTEXPR bool operator > (const TBasicStaticString& other) const { return other.Less(*this); }
     CONSTEXPR bool operator <=(const TBasicStaticString& other) const { return (not operator > (other)); }
 
-    friend hash_t hash_value(const TBasicStaticString& value) {
+    friend CONSTF hash_t hash_value(const TBasicStaticString& value) {
         return hash_string(value.Str());
     }
 
@@ -132,7 +161,7 @@ struct TBasicStaticString {
         return oss << str.Str();
     }
 
-    CONSTEXPR size_t lengthof(const TBasicStaticString& s) {
+    CONSTEXPR CONSTF size_t lengthof(const TBasicStaticString& s) {
         return s.size();
     }
 };
