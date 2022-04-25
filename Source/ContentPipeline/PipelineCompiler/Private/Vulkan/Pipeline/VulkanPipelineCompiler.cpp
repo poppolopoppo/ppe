@@ -406,11 +406,16 @@ NODISCARD static bool CheckDescriptorBindings_(const FPipelineDesc& desc) {
 // Custom operators for merging shader binary data in shader cache
 //----------------------------------------------------------------------------
 bool FVulkanPipelineCompiler::FShaderBinaryDataTraits::operator ()(const PShaderBinaryData& lhs, const PShaderBinaryData& rhs) const NOEXCEPT {
-    if (Likely(!!lhs && !!rhs && lhs->Data() && rhs->Data())) {
-        if (lhs == rhs || (lhs->Fingerprint() == rhs->Fingerprint() && lhs->Data()->Equals(*rhs->Data())))
-            return true;
+    Assert(lhs and lhs->Data());
+    Assert(rhs and rhs->Data());
+
+    if (lhs == rhs || lhs->Fingerprint() == rhs->Fingerprint()) {
+        // Assert_NoAssume(lhs->Data()->Equals(*rhs->Data())); // #TODO: GlslangToSpv() output one different for 2 consecutive builds :/
+        return true;
+    } else {
+        Assert_NoAssume(not lhs->Data()->Equals(*rhs->Data()));
+        return false;
     }
-    return false;
 }
 //----------------------------------------------------------------------------
 hash_t FVulkanPipelineCompiler::FShaderBinaryDataTraits::operator ()(const PShaderBinaryData& shaderData) const NOEXCEPT {
