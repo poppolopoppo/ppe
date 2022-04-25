@@ -168,12 +168,7 @@ bool TRawStorage<T, _Allocator>::Equals(const TRawStorage& other) const {
     if (_storage == other._storage)
         return true;
 
-    Assert(_sizeInBytes == other._sizeInBytes);
-    forrange(i, 0, size())
-        if (_storage[i] != other._storage[i])
-            return false;
-
-    return true;
+    return MakeView().RangeEqual(other.MakeView());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
