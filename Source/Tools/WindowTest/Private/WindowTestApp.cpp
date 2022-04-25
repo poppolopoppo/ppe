@@ -48,6 +48,8 @@ struct FUnitTestFunc_ {
     _Macro(Test_ShaderDebugger1_) \
     _Macro(Test_ShaderDebugger2_) \
     _Macro(Test_RayTracingDebugger1_) \
+    /* Impl */ \
+    _Macro(Test_Scene1_) \
     /* vendor-specific */ \
     _Macro(Test_DrawMeshes1_) \
     _Macro(Test_ShadingRate1_) \
