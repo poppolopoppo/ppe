@@ -1384,7 +1384,11 @@ FVulkanDeviceExtensionSet FVulkanInstance::DebuggingDeviceExtensions(EVulkanVers
 //----------------------------------------------------------------------------
 FVulkanDeviceExtensionSet FVulkanInstance::ProfilingDeviceExtensions(EVulkanVersion version) NOEXCEPT {
     Unused(version);
-    return Default;
+    FVulkanDeviceExtensionSet result;
+#ifdef VK_KHR_shader_clock
+    result += EVulkanDeviceExtension::KHR_shader_clock;
+#endif
+    return vk::device_extensions_require(result);
 }
 //----------------------------------------------------------------------------
 FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVersion version) NOEXCEPT {
@@ -1476,9 +1480,6 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
     #ifdef VK_EXT_memory_budget
         EVulkanDeviceExtension::EXT_memory_budget,
     #endif
-    #ifdef VK_KHR_shader_clock
-        EVulkanDeviceExtension::KHR_shader_clock,
-    #endif
     #ifdef VK_KHR_timeline_semaphore
         EVulkanDeviceExtension::KHR_timeline_semaphore,
     #endif
@@ -1557,9 +1558,6 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
     #endif
     #ifdef VK_KHR_buffer_device_address
         EVulkanDeviceExtension::KHR_buffer_device_address,
-    #endif
-    #ifdef VK_KHR_shader_clock
-        EVulkanDeviceExtension::KHR_shader_clock,
     #endif
     #ifdef VK_EXT_subgroup_size_control
         EVulkanDeviceExtension::EXT_subgroup_size_control,
