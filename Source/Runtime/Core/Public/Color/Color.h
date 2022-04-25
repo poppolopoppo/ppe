@@ -51,7 +51,8 @@ struct PPE_CORE_API FLinearColor {
     float R, G, B, A;
 
     FLinearColor() NOEXCEPT {}
-    CONSTEXPR explicit FLinearColor(Meta::FForceInit) NOEXCEPT : R(0), G(0), B(0), A(0) {}
+    CONSTEXPR explicit FLinearColor(Meta::FZeroValue) NOEXCEPT : R(0), G(0), B(0), A(0) {}
+    CONSTEXPR explicit FLinearColor(Meta::FForceInit) NOEXCEPT : FLinearColor(Zero) {}
     CONSTEXPR FLinearColor(float r, float g, float b, float a = 1.0f) NOEXCEPT : R(r), G(g), B(b), A(a) {}
 
     FLinearColor(const FColor& color);
@@ -254,7 +255,8 @@ struct PPE_CORE_API FColor {
     };
 
     FColor() NOEXCEPT {}
-    CONSTEXPR explicit FColor(Meta::FForceInit) NOEXCEPT : DWord(0) {}
+    CONSTEXPR explicit FColor(Meta::FZeroValue) NOEXCEPT : DWord(0) {}
+    CONSTEXPR explicit FColor(Meta::FForceInit) NOEXCEPT : FColor(Zero) {}
     CONSTEXPR explicit FColor(u32 dword) NOEXCEPT : DWord(dword) {}
     CONSTEXPR FColor(u8 r, u8 g, u8 b, u8 a = 0xFF) NOEXCEPT : R(r), G(g), B(b), A(a) {}
 
