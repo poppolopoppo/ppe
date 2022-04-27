@@ -162,6 +162,25 @@ public:
         //SRW locks do not need to be explicitly destroyed.
     }
 
+    //------------------------------------------------------------------------
+    // synchronization barrier
+
+    using FSynchronizationBarrier = ::SYNCHRONIZATION_BARRIER;
+
+    static FORCE_INLINE void CreateSynchronizationBarrier(FSynchronizationBarrier* pbarrier, size_t numThreads) {
+        Assert(pbarrier);
+        ::InitializeSynchronizationBarrier(pbarrier, static_cast<int>(numThreads), UMax);
+    }
+
+    static FORCE_INLINE void EnterSynchronizationBarrier(FSynchronizationBarrier& barrier) {
+        ::EnterSynchronizationBarrier(&barrier, SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE);
+    }
+
+    static FORCE_INLINE void DestroySynchronizationBarrier(FSynchronizationBarrier* pbarrier) NOEXCEPT {
+        Assert(pbarrier);
+        Verify(::DeleteSynchronizationBarrier(pbarrier));
+    }
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

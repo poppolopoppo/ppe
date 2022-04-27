@@ -35,7 +35,7 @@ public:
     };
 
 private:
-    mutable FPlatformThread::FCriticalSection _cs;
+    mutable FPlatformThread::FCriticalSection _cs{};
 };
 //----------------------------------------------------------------------------
 using FCriticalScope = FCriticalSection::FScopeLock;
