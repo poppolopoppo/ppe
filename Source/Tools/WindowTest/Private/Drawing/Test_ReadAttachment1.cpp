@@ -54,7 +54,7 @@ void main() {
 )#"
 ARGS_IF_RHIDEBUG("Test_Draw_PS"));
 
-    TScopedResource<FGPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ReadAttachment1"))) };
+    TAutoResource<FGPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ReadAttachment1"))) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     const uint2 viewSize{ 800, 600 };
@@ -80,7 +80,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     }
     LOG_CHECK(WindowTest, depthFormat != Default);
 
-    TScopedResource<FImageID> colorImage{ fg.ScopedResource(
+    TAutoResource<FImageID> colorImage{ fg.ScopedResource(
         fg.CreateImage(FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(EPixelFormat::RGBA8_UNorm)
@@ -88,7 +88,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
             Default ARGS_IF_RHIDEBUG("ColorTarget"))) };
     LOG_CHECK(WindowTest, !!colorImage);
 
-    TScopedResource<FImageID> depthImage{ fg.ScopedResource(
+    TAutoResource<FImageID> depthImage{ fg.ScopedResource(
         fg.CreateImage(FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(depthFormat)
@@ -96,7 +96,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
             Default ARGS_IF_RHIDEBUG("DepthTarget"))) };
     LOG_CHECK(WindowTest, !!depthImage);
 
-    TScopedResource<FSamplerID> sampler{ fg.ScopedResource(
+    TAutoResource<FSamplerID> sampler{ fg.ScopedResource(
         fg.CreateSampler(FSamplerDesc{} ARGS_IF_RHIDEBUG("Sampler"))) };
     LOG_CHECK(WindowTest, !!sampler);
 

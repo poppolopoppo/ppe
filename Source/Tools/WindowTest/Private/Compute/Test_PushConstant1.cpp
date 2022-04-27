@@ -47,13 +47,13 @@ ARGS_IF_RHIDEBUG("Test_PushConstant1_CS"));
 
     const size_t dstBufferSize{ 32_b };
 
-    const TScopedResource<FBufferID> dstBuffer{ fg, fg.CreateBuffer(FBufferDesc{
+    const TAutoResource<FBufferID> dstBuffer{ fg, fg.CreateBuffer(FBufferDesc{
         dstBufferSize,
         EBufferUsage::Storage | EBufferUsage::TransferSrc },
         Default ARGS_IF_RHIDEBUG("DstBuffer")) };
     LOG_CHECK(WindowTest, dstBuffer.Valid());
 
-    const TScopedResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_PushConstant1")) };
+    const TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_PushConstant1")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     FPushConstant_ pc;

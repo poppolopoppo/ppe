@@ -139,28 +139,28 @@ ARGS_IF_RHIDEBUG("Test_Scene1_Ppln2_PS"));
     const size_t cbufOffset = Max(cbufSize, properties.MinUniformBufferOffsetAlignment);
     const size_t cbufAlignedSize = Meta::RoundToNext(cbufSize, cbufOffset);
 
-    TScopedResource<FBufferID> constBuf1{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize      , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf1")) };
-    TScopedResource<FBufferID> constBuf2{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize * 2  , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf2")) };
-    TScopedResource<FBufferID> constBuf3{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize      , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf3")) };
+    TAutoResource<FBufferID> constBuf1{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize      , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf1")) };
+    TAutoResource<FBufferID> constBuf2{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize * 2  , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf2")) };
+    TAutoResource<FBufferID> constBuf3{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize      , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf3")) };
     LOG_CHECK(WindowTest, constBuf1 && constBuf2 && constBuf3);
 
-    TScopedResource<FBufferID> vertexBuf1{ fg, fg.CreateBuffer(FBufferDesc{ sizeof(FVertex1) * 3*1000, EBufferUsage::Vertex | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("VertexBuf1")) };
-    TScopedResource<FBufferID> vertexBuf2{ fg, fg.CreateBuffer(FBufferDesc{ sizeof(FVertex1) * 3*2000, EBufferUsage::Vertex | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("VertexBuf2")) };
+    TAutoResource<FBufferID> vertexBuf1{ fg, fg.CreateBuffer(FBufferDesc{ sizeof(FVertex1) * 3*1000, EBufferUsage::Vertex | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("VertexBuf1")) };
+    TAutoResource<FBufferID> vertexBuf2{ fg, fg.CreateBuffer(FBufferDesc{ sizeof(FVertex1) * 3*2000, EBufferUsage::Vertex | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("VertexBuf2")) };
     LOG_CHECK(WindowTest, vertexBuf1 && vertexBuf2);
 
-    TScopedResource<FImageID> texture1{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> texture1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension({ 512, 512 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
         Default ARGS_IF_RHIDEBUG("Texture1")) };
     LOG_CHECK(WindowTest, !!texture1);
-    TScopedResource<FImageID> texture2{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> texture2{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension({ 256, 512 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
         Default ARGS_IF_RHIDEBUG("Texture2")) };
     LOG_CHECK(WindowTest, !!texture2);
-    TScopedResource<FSamplerID> sampler1{ fg, fg.CreateSampler(Default ARGS_IF_RHIDEBUG("Sampler1")) };
+    TAutoResource<FSamplerID> sampler1{ fg, fg.CreateSampler(Default ARGS_IF_RHIDEBUG("Sampler1")) };
 
     const FVertexInputState vertexInput = FVertexInputState{}
         .Bind(""_vertexbuffer, sizeof(FVertex1))
@@ -168,9 +168,9 @@ ARGS_IF_RHIDEBUG("Test_Scene1_Ppln2_PS"));
         .Add("at_Texcoord"_vertex, &FVertex1::TexCoord, true);
 
 
-    TScopedResource<FGPipelineID> pipeline1{ fg, fg.CreatePipeline(pplnDesc1 ARGS_IF_RHIDEBUG("Test_Scene1_Pipeline1")) };
+    TAutoResource<FGPipelineID> pipeline1{ fg, fg.CreatePipeline(pplnDesc1 ARGS_IF_RHIDEBUG("Test_Scene1_Pipeline1")) };
     LOG_CHECK(WindowTest, !!pipeline1);
-    TScopedResource<FGPipelineID> pipeline2{ fg, fg.CreatePipeline(pplnDesc1 ARGS_IF_RHIDEBUG("Test_Scene1_Pipeline2")) };
+    TAutoResource<FGPipelineID> pipeline2{ fg, fg.CreatePipeline(pplnDesc1 ARGS_IF_RHIDEBUG("Test_Scene1_Pipeline2")) };
     LOG_CHECK(WindowTest, !!pipeline2);
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
@@ -182,14 +182,14 @@ ARGS_IF_RHIDEBUG("Test_Scene1_Ppln2_PS"));
         .SetDebugFlags(EDebugFlags::Default)) };
     LOG_CHECK(WindowTest, !!cmd);
 
-    TScopedResource<FImageID> colorTarget{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> colorTarget{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("ColorTarget")) };
     LOG_CHECK(WindowTest, colorTarget.Valid());
 
-    TScopedResource<FImageID> depthTarget{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> depthTarget{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::Depth32f)
         .SetUsage(EImageUsage::DepthStencilAttachment),

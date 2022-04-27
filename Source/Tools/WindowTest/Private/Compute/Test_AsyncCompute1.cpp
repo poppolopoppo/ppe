@@ -85,7 +85,7 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute1_CS"));
 
     const uint2 viewSize{ 800, 600 };
 
-    TScopedResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Storage | EImageUsage::TransferSrc)
@@ -93,10 +93,10 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute1_CS"));
         Default ARGS_IF_RHIDEBUG("RenderTarget")) };
     LOG_CHECK(WindowTest, image.Valid());
 
-    TScopedResource<FGPipelineID> gppln{ fg, fg.CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute1_G")) };
+    TAutoResource<FGPipelineID> gppln{ fg, fg.CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute1_G")) };
     LOG_CHECK(WindowTest, gppln.Valid());
 
-    TScopedResource<FCPipelineID> cppln{ fg, fg.CreatePipeline(cdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute1_C")) };
+    TAutoResource<FCPipelineID> cppln{ fg, fg.CreatePipeline(cdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute1_C")) };
     LOG_CHECK(WindowTest, cppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);

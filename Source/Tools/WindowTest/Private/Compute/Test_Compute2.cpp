@@ -33,14 +33,14 @@ ARGS_IF_RHIDEBUG("Test_Compute2_CS"));
 
     const uint2 imageDim{ 16, 16 };
 
-    TScopedResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Image")) };
     LOG_CHECK(WindowTest, image.Valid());
 
-    TScopedResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Compute2")) };
+    TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Compute2")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);

@@ -57,7 +57,7 @@ void main() {
 ARGS_IF_RHIDEBUG("Test_Draw_PS"));
 
     const uint2 viewSize{ 800, 600 };
-    TScopedResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
@@ -65,14 +65,14 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     LOG_CHECK(WindowTest, image.Valid());
 
     const uint2 texSize{ 128, 128 };
-    TScopedResource<FImageID> texture{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> texture{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(texSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
         Default ARGS_IF_RHIDEBUG("Texture")) };
     LOG_CHECK(WindowTest, texture.Valid());
 
-    TScopedResource<FSamplerID> sampler{ fg, fg.CreateSampler(FSamplerDesc{}
+    TAutoResource<FSamplerID> sampler{ fg, fg.CreateSampler(FSamplerDesc{}
         .SetFilter(ETextureFilter::Linear, ETextureFilter::Linear, EMipmapFilter::Nearest)
         ARGS_IF_RHIDEBUG("TextureSampler")) };
     LOG_CHECK(WindowTest, sampler.Valid());
@@ -80,13 +80,13 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     const float4 positionsRaw[] = { {0.0f, -0.5f, 0.0f, 0.0f},  {0.5f, 0.5f, 0.0f, 0.0f},  {-0.5f, 0.5f, 0.0f, 0.0f} };
     const float4 colorsRaw[] = { {1.0f, 0.0f, 0.0f, 1.0f},   {0.0f, 1.0f, 0.0f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f} };
 
-    TScopedResource<FBufferID> positionsUb{ fg, fg.CreateBuffer(
+    TAutoResource<FBufferID> positionsUb{ fg, fg.CreateBuffer(
         FBufferDesc{ sizeof(positionsRaw), EBufferUsage::Uniform },
         FMemoryDesc{ EMemoryType::HostWrite }
         ARGS_IF_RHIDEBUG("PositionsUB")) };
     LOG_CHECK(WindowTest, positionsUb.Valid());
 
-    TScopedResource<FBufferID> colorsUb{ fg, fg.CreateBuffer(
+    TAutoResource<FBufferID> colorsUb{ fg, fg.CreateBuffer(
         FBufferDesc{ sizeof(colorsRaw), EBufferUsage::Uniform },
         FMemoryDesc{ EMemoryType::HostWrite }
         ARGS_IF_RHIDEBUG("ColorsUB")) };
@@ -95,7 +95,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     LOG_CHECK(WindowTest, fg.UpdateHostBuffer(positionsUb, 0_b, sizeof(positionsRaw), positionsRaw));
     LOG_CHECK(WindowTest, fg.UpdateHostBuffer(colorsUb, 0_b, sizeof(colorsRaw), colorsRaw));
 
-    TScopedResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw6")) };
+    TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw6")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources0 = NEW_REF(RHIPipeline, FPipelineResources);

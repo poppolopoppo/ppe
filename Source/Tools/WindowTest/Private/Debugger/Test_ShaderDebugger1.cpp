@@ -40,14 +40,14 @@ ARGS_IF_RHIDEBUG("Test_ShaderDebugger1_CS"));
     const uint2 imageDim{ 16, 16 };
     const uint2 debugCoord{ imageDim / 2_u32 };
 
-    TScopedResource<FImageID> imageDst{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> imageDst{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::R32f)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Output")) };
     LOG_CHECK(WindowTest, imageDst.Valid());
 
-    TScopedResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ShaderDebugger1")) };
+    TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ShaderDebugger1")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);

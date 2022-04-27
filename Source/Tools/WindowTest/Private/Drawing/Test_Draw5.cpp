@@ -53,14 +53,14 @@ void main() {
 ARGS_IF_RHIDEBUG("Test_Draw_PS"));
 
     const uint2 viewSize{ 800, 600 };
-    TScopedResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget")) };
     LOG_CHECK(WindowTest, image.Valid());
 
-    TScopedResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw5")) };
+    TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw5")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     bool dataIsCorrect = false;
@@ -105,7 +105,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
         FInputAssemblyState ia;
         ia.Topology = EPrimitiveTopology::TriangleList;
 
-        ctx.BindPipeline(static_cast<TScopedResource<FGPipelineID>*>(param)->Raw());
+        ctx.BindPipeline(static_cast<TAutoResource<FGPipelineID>*>(param)->Raw());
         ctx.SetInputAssembly(ia);
         ctx.DrawVertices(3);
     };

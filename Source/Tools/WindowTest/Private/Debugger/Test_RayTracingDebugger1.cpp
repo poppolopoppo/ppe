@@ -67,13 +67,13 @@ void main ()
 )#"
 ARGS_IF_RHIDEBUG("RayClosestHit"));
 
-    const TScopedResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_RayTracingDebugger1"))) };
+    const TAutoResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_RayTracingDebugger1"))) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     const uint2 viewSize{ 800, 600 };
     const uint2 debugCoord{ viewSize / 2_u32 };
 
-    const TScopedResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
+    const TAutoResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
@@ -96,17 +96,17 @@ ARGS_IF_RHIDEBUG("RayClosestHit"));
         .SetVertices<Meta::TDecay< decltype(vertices[0]) >>(checked_cast<u32>(vertices.size()))
         .SetFlag(ERayTracingGeometryFlags::Opaque);
 
-    TScopedResource<FRTGeometryID> rtGeometry{ fg.ScopedResource(fg.CreateRayTracingGeometry(
+    TAutoResource<FRTGeometryID> rtGeometry{ fg.ScopedResource(fg.CreateRayTracingGeometry(
         FRayTracingGeometryDesc({ trianglesDesc }),
         Default ARGS_IF_RHIDEBUG("RayTracingDebugger1_Geometry"))) };
     LOG_CHECK(WindowTest, rtGeometry.Valid());
 
-    TScopedResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
+    TAutoResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
         FRayTracingSceneDesc(1),
         Default ARGS_IF_RHIDEBUG("RayTracingDebugger1_Scene"))) };
     LOG_CHECK(WindowTest, rtScene.Valid());
 
-    TScopedResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
+    TAutoResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
         fg.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG("RayTracingDebugger1_Shaders"))) };
     LOG_CHECK(WindowTest, rtShaders.Valid());
 

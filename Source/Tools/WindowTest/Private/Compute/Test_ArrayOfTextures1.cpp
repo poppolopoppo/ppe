@@ -53,17 +53,17 @@ ARGS_IF_RHIDEBUG("Test_ArrayOfTextures1_CS"));
         }
     });
 
-    TScopedResource<FImageID> imageDst{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> imageDst{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Output")) };
     LOG_CHECK(WindowTest, imageDst.Valid());
 
-    TScopedResource<FSamplerID> sampler{ fg, fg.CreateSampler(FSamplerDesc{} ARGS_IF_RHIDEBUG("Sampler_ArrayOfTextures1")) };
+    TAutoResource<FSamplerID> sampler{ fg, fg.CreateSampler(FSamplerDesc{} ARGS_IF_RHIDEBUG("Sampler_ArrayOfTextures1")) };
     LOG_CHECK(WindowTest, sampler.Valid());
 
-    TScopedResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ArrayOfTextures1")) };
+    TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ArrayOfTextures1")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);

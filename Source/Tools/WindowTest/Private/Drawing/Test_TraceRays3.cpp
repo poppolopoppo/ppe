@@ -65,7 +65,7 @@ void main ()
 )#"
 ARGS_IF_RHIDEBUG("Test_TraceRays3_RayClosestHit"));
 
-    const TScopedResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_TraceRays3"))) };
+    const TAutoResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_TraceRays3"))) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     const TMemoryView<const u32> indices{ 0, 1, 2 };
@@ -90,12 +90,12 @@ ARGS_IF_RHIDEBUG("Test_TraceRays3_RayClosestHit"));
         Default ARGS_IF_RHIDEBUG("TraceRays3_Geometry")) };
     LOG_CHECK(WindowTest, rtGeometry.Valid());
 
-    TScopedResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
+    TAutoResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
         FRayTracingSceneDesc(1),
         Default ARGS_IF_RHIDEBUG("TraceRays3_Scene"))) };
     LOG_CHECK(WindowTest, rtScene.Valid());
 
-    TScopedResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
+    TAutoResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
         fg.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG("TraceRays3_Shaders"))) };
     LOG_CHECK(WindowTest, rtShaders.Valid());
 
@@ -132,7 +132,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays3_RayClosestHit"));
 
     const uint2 viewSize{ 800, 600 };
 
-    const TScopedResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
+    const TAutoResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };

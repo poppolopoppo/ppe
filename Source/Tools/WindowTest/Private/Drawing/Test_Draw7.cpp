@@ -53,21 +53,21 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
 
     const uint2 viewSize{ 800, 600 };
 
-    TScopedResource<FImageID> image1{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget_1")) };
     LOG_CHECK(WindowTest, image1.Valid());
 
-    TScopedResource<FImageID> image2{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image2{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget_2")) };
     LOG_CHECK(WindowTest, image2.Valid());
 
-    TScopedResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw7")) };
+    TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_Draw7")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     const auto testPixel = [](const FImageView& imageData, float x, float y, const FRgba32f& color) -> bool {

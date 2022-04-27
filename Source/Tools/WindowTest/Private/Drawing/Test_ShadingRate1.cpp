@@ -76,13 +76,13 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
     };
     LOG_CHECK(WindowTest, lengthof(shadingRatePalette) < properties.ShadingRatePaletteSize);
 
-    TScopedResource<FGPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ShadingRate1"))) };
+    TAutoResource<FGPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_ShadingRate1"))) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     const uint2 viewSize{ 256, 256 };
     const uint2 shadingRateSize = (viewSize / properties.ShadingRateTexelSize);
 
-    TScopedResource<FImageID> image{ fg.ScopedResource(
+    TAutoResource<FImageID> image{ fg.ScopedResource(
         fg.CreateImage(FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(EPixelFormat::RGBA8_UNorm)
@@ -90,7 +90,7 @@ ARGS_IF_RHIDEBUG("Test_Draw_PS"));
             Default ARGS_IF_RHIDEBUG("RenderTarget"))) };
     LOG_CHECK(WindowTest, !!image);
 
-    TScopedResource<FImageID> shadingRateImage{ fg.ScopedResource(
+    TAutoResource<FImageID> shadingRateImage{ fg.ScopedResource(
         fg.CreateImage(FImageDesc{}
             .SetDimension(shadingRateSize)
             .SetFormat(EPixelFormat::R8u)

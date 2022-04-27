@@ -49,7 +49,6 @@ struct FResourceHandle {
         std::swap(lhs.Packed, rhs.Packed);
     }
 };
-//----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FResourceHandle);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -205,12 +204,13 @@ struct TResourceWrappedId<TResourceId<_Uid>> {
         return (*this);
     }
 
-    explicit CONSTEXPR TResourceWrappedId(id_t id) : Id(id) {}
+    CONSTEXPR explicit TResourceWrappedId(id_t id) : Id(id) {}
 
     CONSTEXPR CONSTF bool Valid() const { return Id.Valid(); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR id_t Get() const { return Id; }
+    CONSTEXPR operator id_t () const { return Id; }
     CONSTEXPR id_t operator *() const { return Id; }
 
     CONSTEXPR FResourceHandle Pack() const { return Id.Pack(); }

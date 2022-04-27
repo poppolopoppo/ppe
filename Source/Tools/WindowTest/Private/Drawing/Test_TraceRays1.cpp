@@ -67,7 +67,7 @@ void main ()
 )#"
 ARGS_IF_RHIDEBUG("Test_TraceRays1_RayClosestHit"));
 
-    const TScopedResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_TraceRays1"))) };
+    const TAutoResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_TraceRays1"))) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     const TMemoryView<const u32> indices{ 0, 1, 2 };
@@ -87,17 +87,17 @@ ARGS_IF_RHIDEBUG("Test_TraceRays1_RayClosestHit"));
         .SetVertices<Meta::TDecay< decltype(vertices[0]) >>(checked_cast<u32>(vertices.size()))
         .SetFlag(ERayTracingGeometryFlags::Opaque);
 
-    TScopedResource<FRTGeometryID> rtGeometry{ fg.ScopedResource(fg.CreateRayTracingGeometry(
+    TAutoResource<FRTGeometryID> rtGeometry{ fg.ScopedResource(fg.CreateRayTracingGeometry(
         FRayTracingGeometryDesc({ trianglesDesc }),
         Default ARGS_IF_RHIDEBUG("TraceRays1_Geometry"))) };
     LOG_CHECK(WindowTest, rtGeometry.Valid());
 
-    TScopedResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
+    TAutoResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
         FRayTracingSceneDesc(1),
         Default ARGS_IF_RHIDEBUG("TraceRays1_Scene"))) };
     LOG_CHECK(WindowTest, rtScene.Valid());
 
-    TScopedResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
+    TAutoResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
         fg.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG("TraceRays1_Shaders"))) };
     LOG_CHECK(WindowTest, rtShaders.Valid());
 

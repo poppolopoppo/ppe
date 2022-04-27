@@ -33,14 +33,14 @@ ARGS_IF_RHIDEBUG("Test_InvalidID_CS"));
 
     const uint2 imageDim{ 16, 16 };
 
-    TScopedResource<FImageID> image0{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image0{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Image0")) };
     LOG_CHECK(WindowTest, image0.Valid());
 
-    TScopedResource<FImageID> image1{ fg, fg.CreateImage(FImageDesc{}
+    TAutoResource<FImageID> image1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
@@ -54,7 +54,7 @@ ARGS_IF_RHIDEBUG("Test_InvalidID_CS"));
     FImageID image3{ FRawImageID(1111, 0) };
     FImageID image4{ FRawImageID(2222, 0) };
 
-    TScopedResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_InvalidID")) };
+    TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_InvalidID")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);

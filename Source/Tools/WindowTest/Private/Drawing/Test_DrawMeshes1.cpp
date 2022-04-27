@@ -77,13 +77,13 @@ ARGS_IF_RHIDEBUG("Test_DrawMeshes_PS"));
 
     const uint2 viewSize{ 800, 600 };
 
-    const TScopedResource<FImageID> image{ fg.ScopedResource(fg.CreateImage(
+    const TAutoResource<FImageID> image{ fg.ScopedResource(fg.CreateImage(
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget"))) };
     LOG_CHECK(WindowTest, image.Valid());
 
-    const TScopedResource<FMPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_DrawMeshes1"))) };
+    const TAutoResource<FMPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_DrawMeshes1"))) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     bool dataIsCorrect = false;

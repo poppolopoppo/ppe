@@ -93,18 +93,18 @@ ARGS_IF_RHIDEBUG("Test_AsyncCompute2_CS"));
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Storage | EImageUsage::TransferSrc)
         .SetQueues(EQueueUsage::Graphics | EQueueUsage::AsyncCompute);
 
-    TScopedResource<FImageID> image1{ fg, fg.CreateImage(imageDesc,
+    TAutoResource<FImageID> image1{ fg, fg.CreateImage(imageDesc,
         Default ARGS_IF_RHIDEBUG("RenderTarget-1")) };
     LOG_CHECK(WindowTest, image1.Valid());
 
-    TScopedResource<FImageID> image2{ fg, fg.CreateImage(imageDesc,
+    TAutoResource<FImageID> image2{ fg, fg.CreateImage(imageDesc,
         Default ARGS_IF_RHIDEBUG("RenderTarget-2")) };
     LOG_CHECK(WindowTest, image1.Valid());
 
-    TScopedResource<FGPipelineID> gppln{ fg, fg.CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute2_G")) };
+    TAutoResource<FGPipelineID> gppln{ fg, fg.CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute2_G")) };
     LOG_CHECK(WindowTest, gppln.Valid());
 
-    TScopedResource<FCPipelineID> cppln{ fg, fg.CreatePipeline(cdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute2_C")) };
+    TAutoResource<FCPipelineID> cppln{ fg, fg.CreatePipeline(cdesc ARGS_IF_RHIDEBUG("Test_AsyncCompute2_C")) };
     LOG_CHECK(WindowTest, cppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);

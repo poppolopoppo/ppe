@@ -37,7 +37,7 @@ void main ()
 )#"
 ARGS_IF_RHIDEBUG("Test_DynamicOffset1_CS"));
 
-    TScopedResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_DynamicOffset1")) };
+    TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_DynamicOffset1")) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
     const FDeviceProperties properties = fg.DeviceProperties();
@@ -57,7 +57,7 @@ ARGS_IF_RHIDEBUG("Test_DynamicOffset1_CS"));
     const size_t ubOffset = Meta::RoundToNext(baseOffset + bufferOffset, ubAlign);
     const size_t sbOffset = Meta::RoundToNext(baseOffset + bufferOffset + srcSize, ubAlign);
 
-    const TScopedResource<FBufferID> buffer = fg.ScopedResource(fg.CreateBuffer(
+    const TAutoResource<FBufferID> buffer = fg.ScopedResource(fg.CreateBuffer(
         FBufferDesc{
             Max(ubOffset + srcSize, sbOffset + dstSize),
             EBufferUsage::Uniform |
