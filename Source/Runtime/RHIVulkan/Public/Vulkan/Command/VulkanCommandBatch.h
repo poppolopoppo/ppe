@@ -200,7 +200,7 @@ public:
 
     auto Read() const { return _data.LockShared(); }
 
-    void Construct(EQueueType type, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn);
+    void Construct(EQueueType type, TMemoryView<const SCommandBatch> dependsOn);
 
     bool OnBegin(const FCommandBufferDesc& desc);
     void OnBeforeRecording(VkCommandBuffer cmd);
@@ -215,7 +215,7 @@ public:
     void WaitSemaphore(VkSemaphore vkSemaphore, VkPipelineStageFlags stages);
     void PushCommandToFront(FVulkanCommandPool* pPool, VkCommandBuffer vkCmdBuffer);
     void PushCommandToBack(FVulkanCommandPool* pPool, VkCommandBuffer vkCmdBuffer);
-    void DependsOn(FVulkanCommandBatch* other);
+    void DependsOn(const SVulkanCommandBatch& other);
     void DestroyPostponed(VkObjectType type, FVulkanExternalObject handle);
 
     // ICommandBatch

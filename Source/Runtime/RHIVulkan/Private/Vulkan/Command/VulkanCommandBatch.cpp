@@ -28,7 +28,7 @@ FVulkanCommandBatch::~FVulkanCommandBatch() {
     Assert_NoAssume(State() == EState::Uninitialized);
 }
 //----------------------------------------------------------------------------
-void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn) {
+void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const SCommandBatch> dependsOn) {
     Assert_NoAssume(State() == EState::Uninitialized);
     const auto exclusiveData = _data.LockExclusive();
 
@@ -57,8 +57,8 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const TPtrRef<c
 
     SetState_(EState::Uninitialized, EState::Initial);
 
-    for (const TPtrRef<const FCommandBufferBatch>& dep : dependsOn) {
-        if (PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep->Batch()))
+    for (const SCommandBatch& dep : dependsOn) {
+        if (SVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep))
             exclusiveData->Dependencies.Push(std::move(batch));
         else
             AssertNotReached();
@@ -122,14 +122,14 @@ void FVulkanCommandBatch::PushCommandToBack(FVulkanCommandPool* pPool, VkCommand
     exclusiveData->Batch.Commands.emplace_back(vkCmdBuffer, pPool);
 }
 //----------------------------------------------------------------------------
-void FVulkanCommandBatch::DependsOn(FVulkanCommandBatch* other) {
+void FVulkanCommandBatch::DependsOn(const SVulkanCommandBatch& other) {
     Assert(other);
     Assert_NoAssume(State() < EState::Baked);
 
     const auto exclusiveData = _data.LockExclusive();
 
     Assert_NoAssume(not exclusiveData->Dependencies.Contains(other));
-    exclusiveData->Dependencies.Push(MakeSafePtr(other));
+    exclusiveData->Dependencies.Push(other);
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::DestroyPostponed(VkObjectType type, FVulkanExternalObject handle) {

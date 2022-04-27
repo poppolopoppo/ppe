@@ -175,9 +175,9 @@ public:
     NODISCARD bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) override;
 
     void PrepareNewFrame() override;
-    NODISCARD FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn) override;
+    NODISCARD FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const SCommandBatch> dependsOn) override;
     NODISCARD bool Execute(FCommandBufferBatch& cmdBatch) override;
-    NODISCARD bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout) override;
+    NODISCARD bool Wait(TMemoryView<const SCommandBatch> commands, FNanoseconds timeout) override;
 
     bool Flush(EQueueUsage queues) override;
     bool WaitIdle(FNanoseconds timeout) override;

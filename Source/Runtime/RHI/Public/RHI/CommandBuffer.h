@@ -54,7 +54,7 @@ public: // interface
 
     // Add input dependency.
     // Current command buffer will be executed on the GPU only when input dependencies finished execution.
-    NODISCARD virtual bool DependsOn(const FCommandBufferBatch& batch) = 0;
+    virtual bool DependsOn(const SCommandBatch& batch) = 0;
 
     // Allocate space in the staging buffer.
     NODISCARD virtual bool StagingAlloc(FStagingBlock* pStaging, size_t size, size_t align) = 0;

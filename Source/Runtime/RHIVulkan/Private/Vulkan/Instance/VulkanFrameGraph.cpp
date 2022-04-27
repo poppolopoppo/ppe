@@ -526,7 +526,7 @@ void FVulkanFrameGraph::PrepareNewFrame() {
 //----------------------------------------------------------------------------
 // Begin
 //----------------------------------------------------------------------------
-FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn) {
+FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMemoryView<const SCommandBatch> dependsOn) {
     Assert(static_cast<u32>(desc.QueueType) < _queueMap.size());
     Assert_NoAssume(IsInitialized_());
 
@@ -799,16 +799,17 @@ bool FVulkanFrameGraph::Flush(EQueueUsage queues) {
 //----------------------------------------------------------------------------
 // Wait
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout) {
+bool FVulkanFrameGraph::Wait(TMemoryView<const SCommandBatch> commands, FNanoseconds timeout) {
     ONLY_IF_RHIDEBUG(FAtomicTimedScope waitedTime(&_waitingTime));
 
-    //bool result = true;
     FTransientFences transientFences;
     FTransientSubmitted transientSubmitted;
 
     const FCriticalScope queueLock{ &_queueCS };
 
-    const auto waitAndRelease = [&, this, timeout]() -> bool {
+    bool success = true;
+
+    const auto waitAndRelease = [&, this, timeout]() {
         const VkResult result = _device.vkWaitForFences(
             _device.vkDevice(),
             checked_cast<u32>(transientFences.size()),
@@ -822,18 +823,18 @@ bool FVulkanFrameGraph::Wait(TMemoryView<const FCommandBufferBatch> commands, FN
         }
         else {
             Assert_NoAssume(VK_TIMEOUT == result);
+            success = false;
         }
 
         transientFences.clear();
         transientSubmitted.clear();
-        return (VK_SUCCESS == result);
     };
 
-    bool result = true;
+    for (const SCommandBatch& cmd : commands) {
+        if (not cmd)
+            continue;
 
-    for (const FCommandBufferBatch& cmd : commands) {
-        Assert(cmd.Valid());
-        const PVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(cmd.Batch());
+        const SVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(cmd);
 
         switch (batch->State()) {
         case FVulkanCommandBatch::EState::Complete: {
@@ -841,26 +842,30 @@ bool FVulkanFrameGraph::Wait(TMemoryView<const FCommandBufferBatch> commands, FN
         }
         case FVulkanCommandBatch::EState::Submitted: {
             FVulkanSubmitted* const submitted = batch->Submitted();
-            VkFence fence = submitted->Read()->Fence;
-            Assert(VK_NULL_HANDLE != fence);
+            if (Ensure(submitted)) {
+                VkFence fence = submitted->Read()->Fence;
+                Assert(VK_NULL_HANDLE != fence);
 
-            if (not transientFences.Contains(fence)) {
-                transientFences.Push(fence);
-                transientSubmitted.Push(submitted);
+                if (not transientFences.Contains(fence)) {
+                    transientFences.Push(fence);
+                    transientSubmitted.Push(submitted);
+                }
+            } else {
+                success = false;
             }
             break;
         }
-        default: break;
+        default: AssertNotImplemented();
         }
 
-        if (transientFences.size() == transientSubmitted.size())
-            result = waitAndRelease();
+        if (not transientFences.empty() and transientFences.size() == transientSubmitted.size())
+            waitAndRelease();
     }
 
     if (not transientFences.empty())
-        result = waitAndRelease();
+        waitAndRelease();
 
-    return result;
+    return success;
 }
 //----------------------------------------------------------------------------
 bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout) {

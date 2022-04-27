@@ -21,8 +21,8 @@ public:
     ,   _batch(std::move(rbatch))
     {}
 
-    FCommandBufferBatch(const FCommandBufferBatch&) = default;
-    FCommandBufferBatch& operator =(const FCommandBufferBatch&) = default;
+    FCommandBufferBatch(const FCommandBufferBatch&) = delete;
+    FCommandBufferBatch& operator =(const FCommandBufferBatch&) = delete;
 
     FCommandBufferBatch(FCommandBufferBatch&&) = default;
     FCommandBufferBatch& operator =(FCommandBufferBatch&&) = default;
@@ -33,11 +33,17 @@ public:
     }
 #endif
 
-    bool Valid() const { return (!!_buffer); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
-
     const PCommandBuffer& Buffer() const { return _buffer; }
     const PCommandBatch& Batch() const { return _batch; }
+
+    operator const PCommandBuffer& () const NOEXCEPT { return _buffer; }
+    operator const PCommandBatch& () const NOEXCEPT { return _batch; }
+
+    operator SCommandBuffer () const NOEXCEPT { return _buffer; }
+    operator SCommandBatch () const NOEXCEPT { return _batch; }
+
+    bool Valid() const { return (!!_buffer); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     ICommandBuffer* operator ->() const NOEXCEPT {
         Assert(_buffer);

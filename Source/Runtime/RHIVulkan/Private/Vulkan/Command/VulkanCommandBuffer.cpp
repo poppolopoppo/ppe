@@ -3,6 +3,8 @@
 #include "Vulkan/Command/VulkanCommandBuffer.h"
 
 #include "Vulkan/Command/VulkanTaskGraph-inl.h"
+
+#include "Vulkan/Command/VulkanCommandBatch.h"
 #include "Vulkan/Debugger/VulkanLocalDebugger.h"
 #include "Vulkan/Instance/VulkanFrameGraph.h"
 #include "Vulkan/RayTracing/VulkanRayTracingGeometryInstance.h"
@@ -368,16 +370,16 @@ bool FVulkanCommandBuffer::ExternalCommands(const FVulkanExternalCommandBatch& i
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanCommandBuffer::DependsOn(const FCommandBufferBatch& cmd) {
-    Assert(cmd.Valid());
-    if (not cmd.Batch() || cmd.Buffer() == this)
+bool FVulkanCommandBuffer::DependsOn(const SCommandBatch& cmd) {
+    if (not cmd)
         return false;
+
+    SVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(cmd);
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
 
-    exclusive->Batch->DependsOn(
-        checked_cast<FVulkanCommandBatch*>(cmd.Batch().get()));
+    exclusive->Batch->DependsOn(batch);
 
     return true;
 }

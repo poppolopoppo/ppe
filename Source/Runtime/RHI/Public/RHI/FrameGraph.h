@@ -165,19 +165,19 @@ public: // interface
     virtual void PrepareNewFrame() = 0;
 
     // Begin command buffer recording.
-    NODISCARD virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const TPtrRef<const FCommandBufferBatch>> dependsOn = {}) = 0;
+    NODISCARD virtual FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const SCommandBatch> dependsOn = {}) = 0;
 
     // Compile framegraph for current command buffer and append it to the pending command buffer queue (that are waiting for submitting to GPU).
-    NODISCARD virtual bool Execute(FCommandBufferBatch& cmdBatch) = 0;
+    virtual bool Execute(FCommandBufferBatch& cmdBatch) = 0;
 
     // Wait until all commands complete execution on the GPU or until time runs out.
-    NODISCARD virtual bool Wait(TMemoryView<const FCommandBufferBatch> commands, FNanoseconds timeout = MaxTimeout) = 0;
+    virtual bool Wait(TMemoryView<const SCommandBatch> commands, FNanoseconds timeout = MaxTimeout) = 0;
 
     // Submit all pending command buffers and present all pending swapchain images.
-    NODISCARD virtual bool Flush(EQueueUsage queues = EQueueUsage::All) = 0;
+    virtual bool Flush(EQueueUsage queues = EQueueUsage::All) = 0;
 
     // Wait until all commands will complete their work on GPU, trigger events for 'FReadImage' and 'FReadBuffer' tasks.
-    NODISCARD virtual bool WaitIdle(FNanoseconds timeout = MaxTimeout) = 0;
+    virtual bool WaitIdle(FNanoseconds timeout = MaxTimeout) = 0;
 
     static CONSTEXPR FNanoseconds MaxTimeout{ 60'000'000'000 };
 

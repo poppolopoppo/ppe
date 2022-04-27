@@ -62,8 +62,8 @@ public:
 
     template <typename T, typename _GlobalPool, size_t _MaxChunks = 16>
     struct TLocalPool {
-        TPool<T, _GlobalPool::MaxSize / _MaxChunks,  _MaxChunks> Pool;
-        TStaticArray<FResourceIndex, _GlobalPool::MaxSize> ToLocal;
+        TPool<T, _GlobalPool::MaxSize / _MaxChunks, _MaxChunks> Pool;
+        TStaticArray<FResourceIndex, _GlobalPool::MaxSize> ToLocal{};
         TRange<u32> LocalIndexRange{};
         TRange<u32> GlobalIndexRange{ 0, TPool<T, _GlobalPool::MaxSize / _MaxChunks,  _MaxChunks>::MaxSize };
     };
@@ -162,7 +162,7 @@ public:
 
     virtual SFrameGraph FrameGraph() const NOEXCEPT override;
     virtual FRawImageID SwapchainImage(FRawSwapchainID swapchainId) override;
-    NODISCARD virtual bool DependsOn(const FCommandBufferBatch& cmd) override;
+    virtual bool DependsOn(const SCommandBatch& cmd) override;
     NODISCARD virtual bool StagingAlloc(FStagingBlock* pStaging, size_t size, size_t align) override;
 
     virtual void AcquireImage(FRawImageID id, bool makeMutable, bool invalidate) override;
