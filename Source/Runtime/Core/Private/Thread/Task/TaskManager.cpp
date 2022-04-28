@@ -2,6 +2,7 @@
 
 #include "Thread/Task/TaskManager.h"
 
+#include "Thread/SynchronizationBarrier.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/Task/CompletionPort.h"
 #include "Thread/Task/TaskManagerImpl.h"
@@ -200,95 +201,70 @@ FWD_REFPTR(WaitForTask_);
 class FWaitForTask_ : public FRefCountable {
 public:
     const FTaskFunc Task;
-    std::mutex Barrier;
-    std::condition_variable OnTaskFinished;
-    const int NumTotal;
-    int NumPending;
 
-    explicit FWaitForTask_(FTaskFunc&& rtask, int numTotal) NOEXCEPT
+    std::mutex Barrier;
+    std::condition_variable OnFinished;
+
+    bool ActuallyReady{ false };
+
+    explicit FWaitForTask_(FTaskFunc&& rtask) NOEXCEPT
     :   Task(std::move(rtask))
-    ,   NumTotal(numTotal)
-    ,   NumPending(NumTotal)
     {}
 
     static void DoNothing(ITaskContext&) { NOOP(); }
 
-    static void Broadcast(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
-        Assert_NoAssume(not FFiber::IsInFiber()); // won't work if we stall a worker thread !
+    static void Broadcast(FTaskManagerImpl& pimpl, const FTaskFunc& task, ETaskPriority priority) {
+        Assert_NoAssume(not FFiber::IsInFiber());
 
-        std::condition_variable onTaskBroadcast;
-        FWaitForTask_ waitfor{ std::move(rtask), checked_cast<int>(pimpl.Threads().size()) };
-
-        const FTaskFunc broadcast = [&waitfor, &onTaskBroadcast](ITaskContext& ctx) {
-            waitfor.Task(ctx);
-
-            {
-                Meta::FUniqueLock scopeLock(waitfor.Barrier);
-                Assert_NoAssume(0 < waitfor.NumPending);
-
-                --waitfor.NumPending;
-
-                waitfor.OnTaskFinished.wait(scopeLock, [&]() NOEXCEPT {
-                    return (0 >= waitfor.NumPending);
-                });
-
-                --waitfor.NumPending;
-
-                if (-1 == waitfor.NumPending)
-                    waitfor.OnTaskFinished.notify_all();
-                if (-waitfor.NumTotal == waitfor.NumPending)
-                    onTaskBroadcast.notify_one();
-            }
+        FSynchronizationBarrier sync{ pimpl.WorkerCount() + 1/* current thread */ };
+        const FTaskFunc broadcast = [&sync, &task](ITaskContext& ctx) {
+            task(ctx);
+            sync.Wait(); // wait for all threads
         };
         Assert_NoAssume(broadcast.FitInSitu());
 
-        Meta::FUniqueLock scopeLock(waitfor.Barrier);
-        forrange(n, 0, waitfor.NumTotal)
+        forrange(n, 0, pimpl.WorkerCount())
             pimpl.Scheduler().Produce(priority, broadcast, nullptr);
 
-        onTaskBroadcast.wait(scopeLock, [&waitfor]() NOEXCEPT {
-            return (waitfor.NumTotal == -waitfor.NumPending);
-        });
+        sync.Wait(); // all threads synchronized passed this line
     }
 
-    static void Wait(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
-        FWaitForTask_ waitfor{ std::move(rtask), 1 };
+    static void Wait(FTaskManagerImpl& pimpl, const FTaskFunc& task, ETaskPriority priority) {
+        Assert_NoAssume(not FFiber::IsInFiber());
 
-        Meta::FUniqueLock scopeLock(waitfor.Barrier);
-        pimpl.Scheduler().Produce(priority, [&waitfor](ITaskContext& ctx) {
-            waitfor.Task(ctx);
-            {
-                const Meta::FLockGuard scopeLock(waitfor.Barrier);
-                Assert_NoAssume(1 == waitfor.NumPending);
-                waitfor.NumPending = 0;
-            }
-            waitfor.OnTaskFinished.notify_all();
-        },  nullptr );
+        FSynchronizationBarrier sync{ 1 + 1/* current thread */ };
+        const FTaskFunc broadcast = [&sync, &task](ITaskContext& ctx) {
+            task(ctx);
+            sync.Wait(); // wait for all threads
+        };
+        Assert_NoAssume(broadcast.FitInSitu());
 
-        waitfor.OnTaskFinished.wait(scopeLock, [&]() NOEXCEPT {
-            return (0 == waitfor.NumPending);
-        });
+        pimpl.Scheduler().Produce(priority, broadcast, nullptr);
+
+        sync.Wait(); // all threads synchronized passed this line
     }
 
     static bool WaitFor(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority, int timeoutMS) {
-        PWaitForTask_ pWaitfor{ NEW_REF(Task, FWaitForTask_, std::move(rtask), 1) };
+        Assert_NoAssume(not FFiber::IsInFiber());
+
+        PWaitForTask_ pWaitfor{ NEW_REF(Task, FWaitForTask_, std::move(rtask)) };
 
         Meta::FUniqueLock scopeLock(pWaitfor->Barrier);
         pimpl.Scheduler().Produce(priority, [pWaitfor](ITaskContext& ctx) {
             pWaitfor->Task(ctx);
             {
                 const Meta::FLockGuard scopeLock(pWaitfor->Barrier);
-                Assert_NoAssume(1 == pWaitfor->NumPending);
-                pWaitfor->NumPending = 0;
+                Assert_NoAssume(not pWaitfor->ActuallyReady);
+                pWaitfor->ActuallyReady = true;
             }
-            pWaitfor->OnTaskFinished.notify_all();
+            pWaitfor->OnFinished.notify_all();
         },  nullptr);
 
-        pWaitfor->OnTaskFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&]() NOEXCEPT {
-            return (0 == pWaitfor->NumPending);
+        pWaitfor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&]() NOEXCEPT {
+            return pWaitfor->ActuallyReady;
         });
 
-        return (0 == pWaitfor->NumPending);
+        return pWaitfor->ActuallyReady;
     }
 };
 //----------------------------------------------------------------------------
