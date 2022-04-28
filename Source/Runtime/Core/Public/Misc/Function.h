@@ -134,7 +134,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-using PFunctionPayload = TRefPtr< TFunctionPayload<T> >;
+using PFunctionPayload = TRefPtr< const TFunctionPayload<T> >;
 //----------------------------------------------------------------------------
 // TFunctionVTable<> describes how to manipulate each function payload
 //----------------------------------------------------------------------------
@@ -674,10 +674,16 @@ public:
     TFunction() = default;
 
     CONSTEXPR TFunction(const TFunction& other) : parent_type(other) {}
-    CONSTEXPR TFunction& operator =(const TFunction& other) { return parent_type::operator =(other); }
+    CONSTEXPR TFunction& operator =(const TFunction& other) {
+        parent_type::operator =(other);
+        return (*this);
+    }
 
     CONSTEXPR TFunction(TFunction&& rvalue) NOEXCEPT : parent_type(std::move(rvalue)) {}
-    CONSTEXPR TFunction& operator =(TFunction&& rvalue) NOEXCEPT { return parent_type::operator =(std::move(rvalue)); }
+    CONSTEXPR TFunction& operator =(TFunction&& rvalue) NOEXCEPT {
+        parent_type::operator =(std::move(rvalue));
+        return (*this);
+    }
 
     FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) const {
         return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
@@ -715,10 +721,16 @@ public:
     TFunction() = default;
 
     CONSTEXPR TFunction(const TFunction & other) : parent_type(other) {}
-    CONSTEXPR TFunction& operator =(const TFunction & other) { return parent_type::operator =(other); }
+    CONSTEXPR TFunction& operator =(const TFunction & other) {
+        parent_type::operator =(other);
+        return (*this);
+    }
 
     CONSTEXPR TFunction(TFunction && rvalue) NOEXCEPT : parent_type(std::move(rvalue)) {}
-    CONSTEXPR TFunction& operator =(TFunction && rvalue) NOEXCEPT { return parent_type::operator =(std::move(rvalue)); }
+    CONSTEXPR TFunction& operator =(TFunction && rvalue) NOEXCEPT {
+        parent_type::operator =(std::move(rvalue));
+        return (*this);
+    }
 
     FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) const NOEXCEPT {
         return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
