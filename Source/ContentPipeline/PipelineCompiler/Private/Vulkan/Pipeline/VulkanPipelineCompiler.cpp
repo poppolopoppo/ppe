@@ -6,6 +6,10 @@
 #include "Vulkan/Pipeline/VulkanDebuggableShaderData.h"
 #include "Vulkan/Pipeline/VulkanSpirvCompiler.h"
 
+#if USE_PPE_RHIDEBUG
+#   include "RHI/EnumToString.h"
+#endif
+
 #include "Meta/Functor.h"
 #include "IO/Format.h"
 
@@ -410,7 +414,7 @@ bool FVulkanPipelineCompiler::FShaderBinaryDataTraits::operator ()(const PShader
     Assert(rhs and rhs->Data());
 
     if (lhs == rhs || lhs->Fingerprint() == rhs->Fingerprint()) {
-        // Assert_NoAssume(lhs->Data()->Equals(*rhs->Data())); // #TODO: GlslangToSpv() output one different for 2 consecutive builds :/
+        // Assert_NoAssume(lhs->Data()->Equals(*rhs->Data())); // #TODO: GlslangToSpv() output is different for 2 consecutive builds :/ (check InsertTraceRecording)
         return true;
     } else {
         Assert_NoAssume(not lhs->Data()->Equals(*rhs->Data()));
@@ -643,7 +647,7 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             }
 
             if (createModule)
-                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache));
+                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef)));
 
             LOG_CHECK(PipelineCompiler, MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout));
 
@@ -717,7 +721,7 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
             }
 
             if (createModule)
-                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache));
+                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef) ));
 
             LOG_CHECK(PipelineCompiler, MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout));
 
@@ -785,7 +789,7 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
             }
 
             if (createModule)
-                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache));
+                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef)) );
 
             LOG_CHECK(PipelineCompiler, MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout));
 
@@ -859,7 +863,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
         }
 
         if (createModule)
-            LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache));
+            LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef)));
 
         ppln.DefaultLocalGroupSize = reflection.Compute.LocalGroupSize;
         ppln.LocalSizeSpecialization = reflection.Compute.LocalGroupSpecialization;
@@ -878,7 +882,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompiledModuleCache& shaderCache) const {
+bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompiledModuleCache& shaderCache ARGS_IF_RHIDEBUG(const PShaderSource& shaderSource)) const {
     Assert(shader);
     Assert(_deviceInfo);
     Assert(_deviceInfo->API.vkCreateShaderModule);
@@ -915,6 +919,24 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
                     _deviceInfo->pAllocator,
                     &shaderId ));
                 Assert(VK_NULL_HANDLE != shaderId);
+
+#if USE_PPE_RHITASKNAME
+                // set debug name for shader module if using vulkan debug utils extension
+                if (shaderSource && shaderSource->DebugName() && (
+                    _deviceInfo->RequiredInstanceExtensions & EVulkanInstanceExtension::EXT_debug_utils ||
+                    _deviceInfo->OptionalInstanceExtensions & EVulkanInstanceExtension::EXT_debug_utils)) {
+
+                    FString debugName = StringFormat("{0}::{1}", shaderSource->DebugName(), shaderSource->EntryPoint());
+
+                    VkDebugUtilsObjectNameInfoEXT info{};
+                    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+                    info.objectType = VK_OBJECT_TYPE_SHADER_MODULE;
+                    info.objectHandle = FVulkanExternalObject{ shaderId };
+                    info.pObjectName = debugName.c_str();
+
+                    VK_CHECK( _deviceInfo->API.instance_api_->vkSetDebugUtilsObjectNameEXT(_deviceInfo->vkDevice, &info) );
+                }
+#endif
 
                 auto module = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, spirvData);
                 it = shaderCache.insert({ spirvData, std::move(module) }).first;

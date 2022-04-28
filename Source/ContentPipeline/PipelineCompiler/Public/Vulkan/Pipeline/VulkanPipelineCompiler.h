@@ -81,7 +81,8 @@ private:
 
     NODISCARD bool CreateVulkanShader_(
         FPipelineDesc::FShader* shader,
-        FShaderCompiledModuleCache& shaderCache ) const;
+        FShaderCompiledModuleCache& shaderCache
+        ARGS_IF_RHIDEBUG(const PShaderSource& shaderSource) ) const;
 
     const TPtrRef<const FVulkanDeviceInfo> _deviceInfo;
 
