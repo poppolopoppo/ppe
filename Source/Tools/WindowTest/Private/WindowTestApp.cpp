@@ -164,7 +164,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWindowTestApp::FWindowTestApp(FModularDomain& domain)
-:   parent_type(domain, "WindowTest", true) {
+:   parent_type(domain, "Tools/WindowTest", true) {
 
 #if 0 //%_NOCOMMIT%
     FLogger::SetGlobalVerbosity(ELoggerVerbosity::None);

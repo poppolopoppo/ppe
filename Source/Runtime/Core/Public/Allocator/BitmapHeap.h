@@ -219,7 +219,7 @@ struct TBitmapHeap : Meta::FNonCopyableNorMovable {
     }
 
 private:
-    struct ALIGN(16) FStackMRU {
+    struct CACHELINE_ALIGNED FStackMRU {
         struct lrupage_t {
             page_type* Page;
             size_t Revision;

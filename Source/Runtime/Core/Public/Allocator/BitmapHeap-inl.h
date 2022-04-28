@@ -138,7 +138,7 @@ inline bool TBitmapPage<_PageSize>::Free_ReturnIfUnused(void* ptr) NOEXCEPT {
     const u32 numPages = u32(FPlatformMaths::tzcnt(Sizes >> off) + 1);
     Assert(off + numPages <= MaxPages);
 
-    // remove size tag before reseting allocation mask,
+    // remove size tag before resetting allocation mask,
     // because we can't guarantee thread safety after the next compare_exchange_weak()
     Sizes &= ~(mask_t(1) << (off + numPages - 1));
 

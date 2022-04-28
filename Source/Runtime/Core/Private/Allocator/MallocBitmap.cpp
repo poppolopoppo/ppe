@@ -94,13 +94,8 @@ static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBi
     forrange(p, 0, info.Pages.size()) {
         const FBitmapPageInfo& page = info.Pages[p];
 
-        Format(oss, L"   Page#{0} : {1} allocations -> {2} / {3}, external fragmentation = {4}",
-            p, page.Stats.NumAllocations,
-            Fmt::SizeInBytes(page.Stats.LargestFreeBlock),
-            Fmt::SizeInBytes(page.Stats.TotalSizeCommitted),
-            Fmt::FPercentage{ 100.f - page.Stats.LargestFreeBlock * (100.f / page.Stats.TotalSizeAvailable) });
 
-        oss << Eol << L"   " << Fmt::Pointer(page.vAddressSpace) << L"   ";
+        oss << L"   " << Fmt::Pointer(page.vAddressSpace) << L"   ";
 
         size_t tag = size_t(0);
         forrange(b, 0, info.PagesPerBlock) {
@@ -109,7 +104,17 @@ static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBi
             tag = (tag + ((page.Sizes & select) ? 1 : 0)) % AllocationTags.size();
         }
 
-        oss << L"  " << Fmt::SizeInBytes(page.Stats.TotalSizeAvailable) << Eol;
+        Format(oss, L" #{0:#2}: {1:4} allocs, {2:10f2}/{3:10f2}/{4:10f2}, fragmentation: {5}",
+            p,
+            Fmt::CountOfElements(page.Stats.NumAllocations),
+            Fmt::SizeInBytes(page.Stats.LargestFreeBlock),
+            Fmt::SizeInBytes(page.Stats.TotalSizeAvailable),
+            Fmt::SizeInBytes(page.Stats.TotalSizeAllocated),
+            Fmt::FPercentage{ page.Stats.TotalSizeAvailable
+                ? 100.f - static_cast<float>(page.Stats.LargestFreeBlock) * (100.f / static_cast<float>(page.Stats.TotalSizeAvailable))
+                : 0.0f });
+
+        oss << Eol;
     }
 }
 #endif //#if !USE_PPE_FINAL_RELEASE

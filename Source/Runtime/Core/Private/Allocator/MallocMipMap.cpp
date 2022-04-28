@@ -150,8 +150,11 @@ void DumpMipsFragmentation_(
     forrange(p, 0, info.Pages.size()) {
         const FMallocMipMap::FMipmapInfo::FPage& page = info.Pages[p];
 
-        Format(oss, L"Page#{0} : {1} blocks committed -> {2}, external fragmentation = {3}",
-            p, page.NumBlocks, Fmt::SizeInBytes(page.NumBlocks * info.BlockSize), Fmt::FPercentage{ page.ExternalFragmentation });
+        Format(oss, L"Page#{0} : {1:8f2} blocks committed -> {2:10f2}, external fragmentation = {3}",
+            p,
+            Fmt::CountOfElements(page.NumBlocks),
+            Fmt::SizeInBytes(page.NumBlocks * info.BlockSize),
+            Fmt::FPercentage{ page.ExternalFragmentation });
         const u8* const vAddr = reinterpret_cast<const u8*>(page.vAddress);
 
         size_t tag = size_t(-1);
