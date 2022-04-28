@@ -29,13 +29,13 @@ struct TDrawTaskDesc {
 
     TDrawTaskDesc(FConstChar name, FLinearColor color) NOEXCEPT : Name(name), DebugColor(color) {}
 
-    self_type& SetName(FStringView value) { Name.Assign(value); return static_cast<self_type&>(*this); }
-    self_type& SetDebugColor(FLinearColor value) { DebugColor = value; return static_cast<self_type&>(*this); }
+    self_type& SetName(const FStringView& value) { Name.Assign(value); return static_cast<self_type&>(*this); }
+    self_type& SetDebugColor(const FLinearColor& value) { DebugColor = value; return static_cast<self_type&>(*this); }
 
 #else
     // tolerant API to simply client integration:
-    CONSTEXPR self_type& SetName(FStringView) { return static_cast<self_type&>(*this); }
-    CONSTEXPR self_type& SetDebugColor(FLinearColor) { return static_cast<self_type&>(*this); }
+    CONSTEXPR self_type& SetName(const FStringView&) { return static_cast<self_type&>(*this); }
+    CONSTEXPR self_type& SetDebugColor(const FLinearColor&) { return static_cast<self_type&>(*this); }
 
 #endif
 };

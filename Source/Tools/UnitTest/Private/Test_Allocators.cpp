@@ -838,7 +838,7 @@ NO_INLINE void Test_SlabHeap_() {
     AssertRelease(test_canary(canary1, seed1));
     AssertRelease(test_canary(canary2, seed2));
 
-    PP_FOREACH_ARGS(UNUSED, canary0, canary1, canary2);
+    Unused(canary0, canary1, canary2);
 
     heap.DiscardAll();
 }

@@ -130,13 +130,31 @@ struct TScalarVectorAxis : TScalarVectorExpr<T, _Dim, TScalarVectorAxis<T, _Dim,
         return (_Axis == _Index ? static_cast<T>(1) : static_cast<T>(0));
     }
 };
+template <typename T, size_t _Dim, size_t _Axis>
+struct TScalarVectorAxisDecl : TScalarVectorAxisDecl<T, _Dim, _Axis-1> {};
+template <typename T, size_t _Dim>
+struct TScalarVectorAxisDecl<T, _Dim, 0> {
+    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 0> X{};
+};
+template <typename T, size_t _Dim>
+struct TScalarVectorAxisDecl<T, _Dim, 1> : TScalarVectorAxisDecl<T, _Dim, 0> {
+    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 1> Y{};
+};
+template <typename T, size_t _Dim>
+struct TScalarVectorAxisDecl<T, _Dim, 2> : TScalarVectorAxisDecl<T, _Dim, 1> {
+    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 2> Z{};
+};
+template <typename T, size_t _Dim>
+struct TScalarVectorAxisDecl<T, _Dim, 3> : TScalarVectorAxisDecl<T, _Dim, 2> {
+    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 3> W{};
+};
 } //!details
 //----------------------------------------------------------------------------
 // TScalarVectorAssignable<>
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T, size_t _Dim, typename _Expr, size_t... _Idx>
-struct TScalarVectorAssignable : TScalarVectorExpr<T, _Dim, _Expr> {
+struct EMPTY_BASES TScalarVectorAssignable : TScalarVectorExpr<T, _Dim, _Expr>, TScalarVectorAxisDecl<T, _Dim, _Dim-1> {
     using parent_type = TScalarVectorExpr<T, _Dim, _Expr>;
     using typename parent_type::component_type;
 
@@ -383,8 +401,8 @@ struct TScalarVector<T, 2> : details::TMakeScalarVectorAssignable<T, 2, TScalarV
         return parent_type::Assign(src);
     }
 
-    static CONSTEXPR const details::TScalarVectorAxis<T, 2, 0> X;
-    static CONSTEXPR const details::TScalarVectorAxis<T, 2, 1> Y;
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 2, 0> X{};
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 2, 1> Y{};
 };
 //----------------------------------------------------------------------------
 // TScalarVector<T, 3>
@@ -488,9 +506,9 @@ struct TScalarVector<T, 3> : details::TMakeScalarVectorAssignable<T, 3, TScalarV
 
     CONSTEXPR const auto& Shift() const { return xy; }
 
-    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 0> X;
-    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 1> Y;
-    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 2> Z;
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 3, 0> X{};
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 3, 1> Y{};
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 3, 2> Z{};
 };
 //----------------------------------------------------------------------------
 // TScalarVector<T, 4>
@@ -684,10 +702,10 @@ struct TScalarVector<T, 4> : details::TMakeScalarVectorAssignable<T, 4, TScalarV
 
     CONSTEXPR const auto& Shift() const { return xyz; }
 
-    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 0> X;
-    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 1> Y;
-    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 2> Z;
-    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 3> W;
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 0> X{};
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 1> Y{};
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 2> Z{};
+    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 3> W{};
 };
 //----------------------------------------------------------------------------
 // operator ==/!=

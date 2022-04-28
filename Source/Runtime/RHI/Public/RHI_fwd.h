@@ -228,8 +228,14 @@ struct FVertexBuffer;
 PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(float, FDepthValue, 0.0f);
 PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(u8, FStencilValue, 0xFF);
 struct FDepthStencilValue {
-    FDepthValue Depth;
-    FStencilValue Stencil;
+    FDepthValue Depth{0};
+    FStencilValue Stencil{0};
+
+    FDepthStencilValue() = default;
+
+    CONSTEXPR FDepthStencilValue(FDepthValue depth) : Depth(depth) {}
+    CONSTEXPR FDepthStencilValue(FStencilValue stencil) : Stencil(stencil) {}
+    CONSTEXPR FDepthStencilValue(FDepthValue depth, FStencilValue stencil) : Depth(depth), Stencil(stencil) {}
 };
 //----------------------------------------------------------------------------
 template <typename T>

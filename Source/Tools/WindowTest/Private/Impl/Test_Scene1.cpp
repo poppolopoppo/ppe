@@ -198,7 +198,7 @@ ARGS_IF_RHIDEBUG("Test_Scene1_Ppln2_PS"));
 
 
     FLogicalPassID depthPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
-        .AddTarget(ERenderTargetID::Depth, depthTarget, FDepthStencilValue{Zero}, EAttachmentStoreOp::Store)
+        .AddTarget(ERenderTargetID::Depth, depthTarget, FDepthStencilValue{}, EAttachmentStoreOp::Store)
         .SetDepthTestEnabled(true).SetDepthWriteEnabled(true));
     LOG_CHECK(WindowTest, !!depthPass);
     FLogicalPassID opaquePass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }

@@ -74,7 +74,9 @@ static void LaunchWindowTests_(FWindowTestApp& app) {
 
         FTimedScope chrono;
         const bool success = test(app);
+
         const FMilliseconds elapsed = chrono.Elapsed();
+        Unused(elapsed);
 
         if (Likely(success)) {
 #if USE_PPE_DEBUG && !USE_PPE_FASTDEBUG

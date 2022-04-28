@@ -59,12 +59,12 @@ struct TFrameTaskDesc {
     ,   DebugColor(color) {
     }
 
-    self_type& SetName(FStringView value) { TaskName.Assign(value); return static_cast<self_type&>(*this); }
+    self_type& SetName(const FStringView& value) { TaskName.Assign(value); return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FRgba8u& value) { DebugColor = FColor(value).ToLinear(); return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FColor& value) { DebugColor = value.ToLinear(); return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FLinearColor& value) { DebugColor = value; return static_cast<self_type&>(*this); }
 #else
-    self_type& SetName(FStringView) { return static_cast<self_type&>(*this); }
+    self_type& SetName(const FStringView&) { return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FRgba8u&) { return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FColor&) { return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FLinearColor&) { return static_cast<self_type&>(*this); }
