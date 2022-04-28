@@ -365,11 +365,12 @@ func (log *pinnedLogScope) Log(msg string, args ...interface{}) {
 func (log *pinnedLogScope) String() string {
 	if log.subText != "" {
 		const maxLen = 20
-		off := len(log.mainText) - maxLen
-		if off < 0 {
-			off = 0
+		elapsed := int(16. * time.Now().Sub(programStartedAt).Seconds())
+		croppedText := make([]byte, maxLen)
+		for i := 0; i < maxLen; i += 1 {
+			croppedText[i] = log.mainText[(elapsed+i)%len(log.mainText)]
 		}
-		return fmt.Sprintf("%20s %s", log.mainText[off:], log.subText)
+		return fmt.Sprintf("%20s %s", croppedText, log.subText)
 	} else {
 		return log.mainText
 	}
