@@ -149,9 +149,12 @@ void FVulkanFrameGraph::ReleaseMemory() noexcept {
 
     // delete command buffers
     {
-        LOG(RHI, Verbose, L"max command batches = {0}", _cmdBatchPool.NumCreatedBlocks());
-        LOG(RHI, Verbose, L"max command buffers = {0}", _cmdBufferPool.NumCreatedBlocks());
-        LOG(RHI, Verbose, L"max submitted batches = {0}", _submittedPool.NumCreatedBlocks());
+        RHI_LOG(Verbose, L"release memory in Vulkan frame graph pools:\n"
+            " - max command batches = {0}\n"
+            " - max command buffers = {1}\n"
+            " - max submitted batches = {2}\n",
+            _cmdBufferPool.NumCreatedBlocks(),
+            _submittedPool.NumCreatedBlocks());
 
         _cmdBatchPool.Clear_ReleaseMemory();
         _cmdBufferPool.Clear_ReleaseMemory();

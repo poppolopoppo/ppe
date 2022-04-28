@@ -67,21 +67,25 @@ EACH_WINDOWTEST(WINDOWTEST_EXTERN_DECL)
 static void LaunchWindowTests_(FWindowTestApp& app) {
     auto launchTest = [&app](FWStringView name, auto&& test) {
         Unused(name);
-        LOG(WindowTest, Info, L"start framegraph test <{0}> ...", name);
+        // LOG(WindowTest, Debug, L"start framegraph test <{0}> ...", name);
 
         RHI::IFrameGraph& fg = *app.RHI().FrameGraph();
         fg.PrepareNewFrame();
 
-        if (Likely(test(app))) {
+        FTimedScope chrono;
+        const bool success = test(app);
+        const FMilliseconds elapsed = chrono.Elapsed();
+
+        if (Likely(success)) {
 #if USE_PPE_DEBUG && !USE_PPE_FASTDEBUG
             ONLY_IF_RHIDEBUG(fg.LogFrame());
 #endif
-            LOG(WindowTest, Emphasis, L"frame graph test <{0}> [PASSED]", name);
-            return true;
+            LOG(WindowTest, Emphasis, L" -- OK : {0:10f3} -- {1}", Fmt::DurationInMs(elapsed), name);
+        } else {
+            LOG(WindowTest, Error, L" !! KO : {0:10f3} -- {1}", Fmt::DurationInMs(elapsed), name);
         }
 
-        LOG(WindowTest, Error, L"frame graph test <{0}> [FAILED]", name);
-        return false;
+        return success;
     };
 
     FUnitTestFunc_ unitTests[] = {
@@ -98,6 +102,8 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
         app.Window().BeginTaskbarProgress();
 
+        const size_t numLoops = (app.RHI().Features() & ERHIFeature::Debugging ? 10 : 200);
+
         size_t testIndex = 0;
         size_t testSucceed = 0;
         size_t testInvocation = 0;
@@ -107,7 +113,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
         FThreefy_4x32 rng{};
         rng.RandomSeed();
 
-        forrange(loop, 0, 100) {
+        forrange(loop, 0, numLoops) {
             testIndex = 0;
 
             LOG(WindowTest, Info, L"-==================- [LOOP:{0:#4}] -==================-", loop);
