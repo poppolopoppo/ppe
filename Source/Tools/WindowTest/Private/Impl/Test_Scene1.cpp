@@ -170,7 +170,7 @@ ARGS_IF_RHIDEBUG("Test_Scene1_Ppln2_PS"));
 
     TAutoResource<FGPipelineID> pipeline1{ fg, fg.CreatePipeline(pplnDesc1 ARGS_IF_RHIDEBUG("Test_Scene1_Pipeline1")) };
     LOG_CHECK(WindowTest, !!pipeline1);
-    TAutoResource<FGPipelineID> pipeline2{ fg, fg.CreatePipeline(pplnDesc1 ARGS_IF_RHIDEBUG("Test_Scene1_Pipeline2")) };
+    TAutoResource<FGPipelineID> pipeline2{ fg, fg.CreatePipeline(pplnDesc2 ARGS_IF_RHIDEBUG("Test_Scene1_Pipeline2")) };
     LOG_CHECK(WindowTest, !!pipeline2);
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
@@ -212,6 +212,9 @@ ARGS_IF_RHIDEBUG("Test_Scene1_Ppln2_PS"));
         .AddColorBuffer(ERenderTargetID::Color0, EBlendFactor::SrcAlpha, EBlendFactor::OneMinusSrcAlpha, EBlendOp::Add)
         .SetDepthTestEnabled(true).SetDepthWriteEnabled(false));
     LOG_CHECK(WindowTest, !!transparentPass);
+    LOG_CHECK(WindowTest, depthPass != opaquePass);
+    LOG_CHECK(WindowTest, opaquePass != transparentPass);
+    LOG_CHECK(WindowTest, transparentPass != depthPass);
 
 
     {
@@ -340,6 +343,7 @@ ARGS_IF_RHIDEBUG("Test_Scene1_Ppln2_PS"));
                 .SetName("TransparentPass")
                 .DependsOn(tSubmitOpaque, tUpdateBuf3));
         }
+        Unused(tSubmitTransparent);
 
         // Present
         PFrameTask present = cmd->Task(FPresent{ app.RHI().Swapchain().Get(), colorTarget });
