@@ -75,6 +75,9 @@ private:
     static CONSTEXPR FReleaseMemoryFunc_ MakeReleaseFunc_(T*) NOEXCEPT {
         IF_CONSTEXPR(Meta::has_defined_v<THasReleaseMemoryFunc_, T>) {
             return [](void* p) NOEXCEPT {
+#if USE_PPE_LOGGER
+                LogServiceReleaseMemory_(Meta::type_info<T>.name.MakeView());
+#endif
                 static_cast<T*>(p)->ReleaseMemory();
             };
         }
@@ -95,6 +98,7 @@ private:
 #if USE_PPE_LOGGER
     void LogServiceAdd_(FStringView base, FStringView derived) const NOEXCEPT;
     void LogServiceRemove_(FStringView base) const NOEXCEPT;
+    static void LogServiceReleaseMemory_(FStringView base) NOEXCEPT;
 #endif
 };
 PRAGMA_MSVC_WARNING_POP()

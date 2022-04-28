@@ -43,6 +43,9 @@ void FModularServices::LogServiceAdd_(FStringView base, FStringView derived) con
 void FModularServices::LogServiceRemove_(FStringView base) const NOEXCEPT {
     LOG(Modular, Verbose, L"remove modular service <{0}> from '{1}'", base, _name);
 }
+void FModularServices::LogServiceReleaseMemory_(FStringView base) NOEXCEPT {
+    LOG(Modular, Verbose, L"release memory in service <{0}>", base);
+}
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

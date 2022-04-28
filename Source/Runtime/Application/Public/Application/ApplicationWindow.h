@@ -19,8 +19,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 class PPE_APPLICATION_API FApplicationWindow : public FApplicationBase, private IWindowListener {
 public:
-    FApplicationWindow(const FModularDomain& domain, FString&& name, bool needRHI);
-    virtual ~FApplicationWindow();
+    FApplicationWindow(FModularDomain& domain, FString&& name, bool needRHI);
+    virtual ~FApplicationWindow() override;
 
     FMainWindow& Main() const { return *_main; }
     IInputService& Input() const { return *_input; }

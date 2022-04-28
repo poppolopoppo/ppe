@@ -20,6 +20,7 @@ public: // must be defined for every platform
     virtual void Start();
     virtual bool PumpMessages() NOEXCEPT;
     virtual void Tick(FTimespan dt);
+    virtual void ReleaseMemory() NOEXCEPT;
     virtual void Shutdown();
 
 public: // generic
@@ -30,14 +31,14 @@ public: // generic
     bool HasFocus() const { return _hasFocus; }
 
 protected:
-    explicit FGenericApplication(const FModularDomain& domain, FString&& name);
+    explicit FGenericApplication(FModularDomain& domain, FString&& name);
 
     FModularServices& Services() { return _services; }
 
     void SetFocus(bool value) { _hasFocus = value; }
 
 private:
-    const FModularDomain& _domain;
+    FModularDomain& _domain;
     FString _name;
     FModularServices _services;
     FSeconds _elapsed;

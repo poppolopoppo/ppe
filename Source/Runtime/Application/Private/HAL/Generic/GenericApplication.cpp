@@ -12,7 +12,7 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FGenericApplication::FGenericApplication(const FModularDomain& domain, FString&& name)
+FGenericApplication::FGenericApplication(FModularDomain& domain, FString&& name)
 :   _domain(domain)
 ,   _name(std::move(name))
 ,   _services(_name, &_domain.Services()) {
@@ -35,6 +35,13 @@ bool FGenericApplication::PumpMessages() NOEXCEPT {
 //----------------------------------------------------------------------------
 void FGenericApplication::Tick(FTimespan dt) {
     _elapsed += dt;
+}
+//----------------------------------------------------------------------------
+void FGenericApplication::ReleaseMemory() NOEXCEPT {
+    LOG(Application, Emphasis, L"release memory in application <{0}>", _name);
+
+    _services.ReleaseMemory();
+    _domain.ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::Shutdown() {

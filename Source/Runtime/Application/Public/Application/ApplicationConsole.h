@@ -11,8 +11,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 class PPE_APPLICATION_API FApplicationConsole : public FApplicationBase {
 public:
-    FApplicationConsole(const FModularDomain& domain, FString&& name);
-    virtual ~FApplicationConsole();
+    FApplicationConsole(FModularDomain& domain, FString&& name);
+    virtual ~FApplicationConsole() override;
 
     virtual void Start() override;
     virtual void Shutdown() override;

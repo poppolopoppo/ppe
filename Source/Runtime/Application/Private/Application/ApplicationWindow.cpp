@@ -56,9 +56,9 @@ static void RecommendedSurfaceInfo_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(const FModularDomain& domain, FString&& name, bool needRHI)
-    : FApplicationBase(domain, std::move(name))
-      , _targetRHI(RetrieveTargetRHI_(domain, needRHI)) {}
+FApplicationWindow::FApplicationWindow(FModularDomain& domain, FString&& name, bool needRHI)
+:   FApplicationBase(domain, std::move(name))
+,   _targetRHI(RetrieveTargetRHI_(domain, needRHI)) {}
 
 //----------------------------------------------------------------------------
 FApplicationWindow::~FApplicationWindow() = default;

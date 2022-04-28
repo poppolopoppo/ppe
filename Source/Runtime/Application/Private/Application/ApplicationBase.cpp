@@ -141,7 +141,7 @@ static void TearDebugMenuInSystray_(const FModularServices& services) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationBase::FApplicationBase(const FModularDomain& domain, FString&& name)
+FApplicationBase::FApplicationBase(FModularDomain& domain, FString&& name)
 :   FPlatformApplication(domain, std::move(name)) {
     FApplicationModule::Get(Domain())._OnApplicationCreate.Invoke(*this);
 }

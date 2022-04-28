@@ -10,8 +10,8 @@ namespace Test {
 class FTestApp : public Application::FApplicationConsole {
     typedef Application::FApplicationConsole parent_type;
 public:
-    explicit FTestApp(const FModularDomain& domain);
-    ~FTestApp();
+    explicit FTestApp(FModularDomain& domain);
+    ~FTestApp() override;
 
     virtual void Start() override;
     virtual void Shutdown() override;

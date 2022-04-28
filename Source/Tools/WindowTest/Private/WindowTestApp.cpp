@@ -3,11 +3,12 @@
 #include "WindowTestApp.h"
 #include "Test_Includes.h"
 
+#include "RHIModule.h"
+#include "Window/WindowService.h"
+
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "Maths/Threefy.h"
-#include "Window/WindowService.h"
-#include <RHIModule.h>
 
 namespace PPE {
 LOG_CATEGORY(, WindowTest)
@@ -148,13 +149,15 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
                 L"finished unit testing");
         }
     }
+
+    app.ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 #undef EACH_WINDOWTEST
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWindowTestApp::FWindowTestApp(const FModularDomain& domain)
+FWindowTestApp::FWindowTestApp(FModularDomain& domain)
 :   parent_type(domain, "WindowTest", true) {
 
 #if 0 //%_NOCOMMIT%

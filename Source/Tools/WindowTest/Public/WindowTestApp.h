@@ -9,8 +9,8 @@ namespace PPE {
 class FWindowTestApp : public Application::FApplicationWindow {
     typedef Application::FApplicationWindow parent_type;
 public:
-    explicit FWindowTestApp(const FModularDomain& domain);
-    ~FWindowTestApp();
+    explicit FWindowTestApp(FModularDomain& domain);
+    ~FWindowTestApp() override;
 
     virtual void Start() override;
     virtual void Shutdown() override;

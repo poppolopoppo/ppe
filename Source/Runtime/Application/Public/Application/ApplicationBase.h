@@ -14,8 +14,8 @@ namespace Application {
 // Dummy wrapper for fwd declaration (FPlatformApplication is a using)
 class PPE_APPLICATION_API FApplicationBase : public FPlatformApplication {
 public:
-    explicit FApplicationBase(const FModularDomain& domain, FString&& name);
-    virtual ~FApplicationBase() NOEXCEPT;
+    explicit FApplicationBase(FModularDomain& domain, FString&& name);
+    virtual ~FApplicationBase() NOEXCEPT override;
 
     virtual void Start() override;
     virtual void Tick(FTimespan dt) override;
