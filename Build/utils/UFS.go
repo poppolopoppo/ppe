@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
 /***************************************
@@ -697,6 +698,17 @@ func (ufs *UFSFrontEnd) File(str string) Filename {
 }
 func (ufs *UFSFrontEnd) Dir(str string) Directory {
 	return MakeDirectory(str)
+}
+func (ufs *UFSFrontEnd) Touch(dst Filename) error {
+	LogDebug("ufs: touch %v", dst)
+	path := dst.String()
+	currentTime := time.Now().Local()
+	if err := os.Chtimes(path, currentTime, currentTime); err == nil {
+		invalidate_file_info(dst)
+		return nil
+	} else {
+		return err
+	}
 }
 func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
 	LogDebug("ufs: mkdir %v", dst)
