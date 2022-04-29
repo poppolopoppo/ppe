@@ -55,6 +55,9 @@
     - https://blog.demofox.org/2020/05/25/casual-shadertoy-path-tracing-1-basic-camera-diffuse-emissive/
     - https://blog.demofox.org/2020/06/06/casual-shadertoy-path-tracing-2-image-improvement-and-glossy-reflections/
     - https://blog.demofox.org/2020/06/14/casual-shadertoy-path-tracing-3-fresnel-rough-refraction-absorption-orbit-camera/
+    - http://three-eyed-games.com/2018/05/03/gpu-ray-tracing-in-unity-part-1/
+    - http://three-eyed-games.com/2018/05/12/gpu-path-tracing-in-unity-part-2/
+    - http://three-eyed-games.com/2019/03/18/gpu-path-tracing-in-unity-part-3/
     - https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
 
 - [ ] Improved Shader and Texture Level of Details using Ray Cones
