@@ -11,6 +11,7 @@
 #include "Modular/ModuleRegistration.h"
 
 #include "BuildModules.generated.h"
+#include "Diagnostic/BuildVersion.h"
 #include "Vulkan/Instance/VulkanDevice.h"
 
 namespace PPE {
@@ -24,7 +25,8 @@ const FModuleInfo FRHIVulkanModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        Generated::DependencyList )
+        Generated::DependencyList,
+        CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
 FRHIVulkanModule& FRHIVulkanModule::Get(const FModularDomain& domain) {

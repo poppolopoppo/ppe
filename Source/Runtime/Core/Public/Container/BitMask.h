@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core.h"
-#include "External/stb/stb.git/stb_c_lexer.h"
 
 #include "HAL/PlatformMaths.h"
 

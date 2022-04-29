@@ -19,6 +19,7 @@
 #include "Thread/ThreadPool.h"
 
 #include "BuildModules.generated.h"
+#include "Diagnostic/BuildVersion.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -46,7 +47,8 @@ const FModuleInfo FCoreModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        FModuleDependencyList{}/* always empty since this is the root module */)
+        FModuleDependencyList{},/* always empty since this is the root module */
+        CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
 FCoreModule::FCoreModule() NOEXCEPT

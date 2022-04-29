@@ -10,6 +10,7 @@
 #include "Diagnostic/Logger.h"
 
 #include "BuildModules.generated.h"
+#include "Diagnostic/BuildVersion.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -30,7 +31,8 @@ const FModuleInfo FApplicationModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        Generated::DependencyList )
+        Generated::DependencyList,
+        CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
 FApplicationModule& FApplicationModule::Get(const FModularDomain& domain) {

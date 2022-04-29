@@ -13,6 +13,7 @@
 
 #include "BuildModules.generated.h"
 #include "RemotingService.h"
+#include "Diagnostic/BuildVersion.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -35,7 +36,8 @@ const FModuleInfo FRemotingModule::StaticInfo{
         EModuleUsage::Developer,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        Generated::DependencyList )
+        Generated::DependencyList,
+        CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
 FRemotingModule::FRemotingModule() NOEXCEPT

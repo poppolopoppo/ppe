@@ -12,7 +12,7 @@
 #include "Time/Timeline.h"
 
 #include "Application.h"
-#include "Diagnostic/BuildVersion.h"
+#include "CoreModule.h"
 #include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
 #include "IO/ConstNames.h"
@@ -91,7 +91,7 @@ static void SetupDebugMenuInSystray_(const FModularServices& services) {
             const FFilename saveFilename{
                 savePath,
                 FBasename{
-                    StringFormat(L"{0}_{1}", RunningApp().Name(), CurrentBuildVersion().Family),
+                    StringFormat(L"{0}_{1}", RunningApp().Name(), FCoreModule::StaticInfo.BuildVersion.Family),
                     FFSConstNames::Csv() }};
 
             const UStreamWriter saveWriter{

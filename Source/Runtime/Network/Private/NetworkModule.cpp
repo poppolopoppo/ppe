@@ -12,6 +12,7 @@
 #include "Modular/ModuleRegistration.h"
 
 #include "BuildModules.generated.h"
+#include "Diagnostic/BuildVersion.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -32,7 +33,8 @@ const FModuleInfo FNetworkModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        Generated::DependencyList )
+        Generated::DependencyList,
+        CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
 FNetworkModule::FNetworkModule() NOEXCEPT

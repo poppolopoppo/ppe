@@ -3,7 +3,6 @@
 #include "Remoting/ProcessEndpoint.h"
 
 #include "RemotingModule.h"
-#include "Diagnostic/BuildVersion.h"
 #include "Diagnostic/CurrentProcess.h"
 
 #include "Json/Json.h"
@@ -17,6 +16,7 @@
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
 #include "Memory/RefPtr.h"
+#include "Modular/ModuleInfo.h"
 
 namespace PPE {
 namespace Remoting {
@@ -134,7 +134,7 @@ PProcessAbout FProcessEndpoint::About() const {
     });
     about->Directory = ToString(proc.Directory());
 
-    const FBuildVersion build = CurrentBuildVersion();
+    const FBuildVersion& build = FRemotingModule::StaticInfo.BuildVersion;
 
     about->Branch = build.Branch;
     about->Revision = build.Revision;
@@ -207,15 +207,15 @@ PProcessMemoryStats FProcessEndpoint::MemoryStats() const {
     const auto stats = FPlatformMemory::Stats();
 
     auto result = NEW_RTTI(FProcessMemoryStats);
-    result->AllocationGranularity = infos.AllocationGranularity;
-    result->CacheLineSize = infos.CacheLineSize;
-    result->PageSize = infos.PageSize;
-    result->AvailablePhysical = stats.AvailablePhysical;
-    result->AvailableVirtual = stats.AvailableVirtual;
-    result->UsedPhysical = stats.UsedPhysical;
-    result->UsedVirtual = stats.UsedVirtual;
-    result->PeakUsedPhysical = stats.PeakUsedPhysical;
-    result->PeakUsedVirtual = stats.PeakUsedVirtual;
+    result->AllocationGranularity = checked_cast<i64>(infos.AllocationGranularity);
+    result->CacheLineSize = checked_cast<i64>(infos.CacheLineSize);
+    result->PageSize = checked_cast<i64>(infos.PageSize);
+    result->AvailablePhysical = checked_cast<i64>(stats.AvailablePhysical);
+    result->AvailableVirtual = checked_cast<i64>(stats.AvailableVirtual);
+    result->UsedPhysical = checked_cast<i64>(stats.UsedPhysical);
+    result->UsedVirtual = checked_cast<i64>(stats.UsedVirtual);
+    result->PeakUsedPhysical = checked_cast<i64>(stats.PeakUsedPhysical);
+    result->PeakUsedVirtual = checked_cast<i64>(stats.PeakUsedVirtual);
 
     return result;
 }

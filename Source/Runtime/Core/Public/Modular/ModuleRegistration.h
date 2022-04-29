@@ -10,8 +10,6 @@
 #include "Misc/DynamicLibrary.h"
 #include "Thread/ReadWriteLock.h"
 
-#include "Diagnostic/BuildVersion.h" // DO NOT include this file outside XXXModule.cpp
-
 #include <mutex>
 
 namespace PPE {
@@ -48,10 +46,12 @@ public:
         EModuleUsage usage,
         EModuleSource source,
         FModuleLoadOrder loadOrder,
-        FModuleDependencyList dependencyList ) NOEXCEPT {
+        FModuleDependencyList&& dependencyList,
+        FBuildVersion&& buildVersion ) NOEXCEPT {
         FModuleInfo info{
-            name, phase, usage, source, loadOrder, dependencyList,
-            CurrentBuildVersion(),
+            name, phase, usage, source, loadOrder,
+            std::move(dependencyList),
+            std::move(buildVersion),
             []() NOEXCEPT -> TUniquePtr<IModuleInterface> {
                 return MakeUnique<_StaticModule>();
             }

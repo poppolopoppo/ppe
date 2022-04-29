@@ -14,6 +14,7 @@
 #include "Modular/ModuleRegistration.h"
 
 #include "BuildModules.generated.h"
+#include "Diagnostic/BuildVersion.h"
 
 namespace PPE {
 namespace RHI {
@@ -29,7 +30,8 @@ const FModuleInfo FRHIModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        Generated::DependencyList )
+        Generated::DependencyList,
+        CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
 FRHIModule& FRHIModule::Get(const FModularDomain& domain) {

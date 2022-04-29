@@ -2,11 +2,12 @@
 
 #include "Maths/RandomGenerator.h"
 
+#include "CoreModule.h"
 #include "Container/Hash.h"
-#include "Diagnostic/BuildVersion.h" // seed salt
+#include "Modular/ModuleInfo.h"
+#include "Time/Timestamp.h"
 
 #include <chrono> // seed salt
-
 
 namespace PPE {
 namespace Random {
@@ -67,7 +68,7 @@ u64 MakeSeed(u64 salt/* = 0 */) {
     seed[0] = salt;
     seed[1] = u64(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     seed[2] = hash_value(seed[0]);
-    seed[3] = hash_value(seed[1]) + CurrentBuildVersion().Timestamp.Value();
+    seed[3] = (hash_value(seed[1]) + FCoreModule::StaticInfo.BuildVersion.Timestamp.Value());
     return Fingerprint64(&seed, sizeof(seed));
 }
 //----------------------------------------------------------------------------

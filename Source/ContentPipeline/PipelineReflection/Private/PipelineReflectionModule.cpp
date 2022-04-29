@@ -7,6 +7,7 @@
 #include "Modular/ModuleRegistration.h"
 
 #include "BuildModules.generated.h"
+#include "Diagnostic/BuildVersion.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -25,7 +26,8 @@ const FModuleInfo FPipelineReflectionModule::StaticInfo{
         EModuleUsage::Runtime,
         EModuleSource::Core,
         BUILD_TARGET_ORDINAL,
-        Generated::DependencyList )
+        Generated::DependencyList,
+        CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
 FPipelineReflectionModule::FPipelineReflectionModule() NOEXCEPT
