@@ -171,16 +171,23 @@ struct EMPTY_BASES TScalarVectorAssignable : TScalarVectorExpr<T, _Dim, _Expr>, 
         FOLD_EXPR( this->template get<_Idx>() = in );
     }
 
-    template <typename _Src, typename _Other>
-    using enable_if_assignable_t = std::enable_if_t< std::is_same_v<T, std::common_type_t<T, _Src>> >;
-
-    template <typename _Src, typename _Other, typename = enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVectorAssignable(const TScalarVectorExpr<_Src, _Dim, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVectorAssignable(const TScalarVectorExpr<T, _Dim, _Other>& src) {
         Assign(src);
     }
-    template <typename _Src, typename _Other, typename = enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVectorAssignable& operator =(const TScalarVectorExpr<_Src, _Dim, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVectorAssignable& operator =(const TScalarVectorExpr<T, _Dim, _Other>& src) {
         return Assign(src);
+    }
+
+    template <typename _Src, typename _Other>
+    using enable_if_assignable_t = std::enable_if_t<
+        std::is_nothrow_assignable_v<T&, _Src>
+    >;
+
+    template <typename _Src, typename _Other, typename = enable_if_assignable_t<_Src, _Other> >
+    CONSTEXPR explicit TScalarVectorAssignable(const TScalarVectorExpr<_Src, _Dim, _Other>& src) {
+        Assign(src);
     }
 
     NODISCARD CONSTEXPR auto& data() { return TScalarVectorExpr<T, _Dim, _Expr>::ref().data; }
@@ -330,13 +337,18 @@ struct TScalarVector<T, 1> : details::TMakeScalarVectorAssignable<T, 1, TScalarV
         return data[_Index];
     }
 
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector(const TScalarVectorExpr<_Src, 1, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector(const TScalarVectorExpr<T, 1, _Other>& src) {
         parent_type::Assign(src);
     }
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<_Src, 1, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<T, 1, _Other>& src) {
         return parent_type::Assign(src);
+    }
+
+    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
+    CONSTEXPR explicit TScalarVector(const TScalarVectorExpr<_Src, 1, _Other>& src) {
+        parent_type::Assign(src);
     }
 };
 //----------------------------------------------------------------------------
@@ -392,13 +404,18 @@ struct TScalarVector<T, 2> : details::TMakeScalarVectorAssignable<T, 2, TScalarV
     using parent_type = details::TMakeScalarVectorAssignable<T, 2, TScalarVector<T, 2>>;
     using parent_type::operator [];
 
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector(const TScalarVectorExpr<_Src, 2, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector(const TScalarVectorExpr<T, 2, _Other>& src) {
         parent_type::Assign(src);
     }
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<_Src, 2, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<T, 2, _Other>& src) {
         return parent_type::Assign(src);
+    }
+
+    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
+    CONSTEXPR explicit TScalarVector(const TScalarVectorExpr<_Src, 2, _Other>& src) {
+        parent_type::Assign(src);
     }
 
     // static CONSTEXPR const details::TScalarVectorAxis<T, 2, 0> X{};
@@ -495,13 +512,18 @@ struct TScalarVector<T, 3> : details::TMakeScalarVectorAssignable<T, 3, TScalarV
     using parent_type = details::TMakeScalarVectorAssignable<T, 3, TScalarVector<T, 3>>;
     using parent_type::operator [];
 
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector(const TScalarVectorExpr<_Src, 3, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector(const TScalarVectorExpr<T, 3, _Other>& src) {
         parent_type::Assign(src);
     }
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<_Src, 3, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<T, 3, _Other>& src) {
         return parent_type::Assign(src);
+    }
+
+    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
+    CONSTEXPR explicit TScalarVector(const TScalarVectorExpr<_Src, 3, _Other>& src) {
+        parent_type::Assign(src);
     }
 
     CONSTEXPR const auto& Shift() const { return xy; }
@@ -691,13 +713,18 @@ struct TScalarVector<T, 4> : details::TMakeScalarVectorAssignable<T, 4, TScalarV
     using parent_type = details::TMakeScalarVectorAssignable<T, 4, TScalarVector<T, 4>>;
     using parent_type::operator [];
 
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector(const TScalarVectorExpr<_Src, 4, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector(const TScalarVectorExpr<T, 4, _Other>& src) {
         parent_type::Assign(src);
     }
-    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
-    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<_Src, 4, _Other>& src) {
+    template <typename _Other>
+    CONSTEXPR TScalarVector& operator =(const TScalarVectorExpr<T, 4, _Other>& src) {
         return parent_type::Assign(src);
+    }
+
+    template <typename _Src, typename _Other, typename = typename parent_type::template enable_if_assignable_t<_Src, _Other> >
+    CONSTEXPR explicit TScalarVector(const TScalarVectorExpr<_Src, 4, _Other>& src) {
+        parent_type::Assign(src);
     }
 
     CONSTEXPR const auto& Shift() const { return xyz; }
