@@ -4,7 +4,7 @@ import (
 	utils "build/utils"
 	"bytes"
 	"fmt"
-	"path"
+	"strings"
 )
 
 type EnvironmentAlias struct {
@@ -18,27 +18,32 @@ func NewEnvironmentAlias(platform Platform, config Configuration) EnvironmentAli
 		ConfigName:   config.GetConfig().ConfigName,
 	}
 }
-func (x EnvironmentAlias) CompileEnvAlias() utils.BuildAlias {
+func (x EnvironmentAlias) Alias() utils.BuildAlias {
 	return utils.BuildAlias(fmt.Sprintf("%v-%v", x.PlatformName, x.ConfigName))
+}
+func (x EnvironmentAlias) GetEnvironmentAlias() utils.BuildAlias {
+	return x.Alias()
 }
 func (x EnvironmentAlias) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.PlatformName)
 	o.WriteString(x.ConfigName)
 }
-func (x EnvironmentAlias) String() string {
-	return x.CompileEnvAlias().String()
+func (x EnvironmentAlias) Compare(o EnvironmentAlias) int {
+	if x.PlatformName == o.PlatformName {
+		return strings.Compare(x.ConfigName, o.ConfigName)
+	} else {
+		return strings.Compare(x.PlatformName, o.PlatformName)
+	}
 }
 
 type TargetAlias struct {
-	NamespaceName string
-	ModuleName    string
+	ModuleAlias
 	EnvironmentAlias
 }
 
 func NewTargetAlias(module Module, platform Platform, config Configuration) TargetAlias {
 	return TargetAlias{
-		NamespaceName:    module.GetNamespace().String(),
-		ModuleName:       module.GetModule().ModuleName,
+		ModuleAlias:      NewModuleAlias(module),
 		EnvironmentAlias: NewEnvironmentAlias(platform, config),
 	}
 }
@@ -47,17 +52,21 @@ func (x TargetAlias) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.ModuleName)
 	x.EnvironmentAlias.GetDigestable(o)
 }
-func (x TargetAlias) UnitAlias() utils.BuildAlias {
-	return utils.BuildAlias(fmt.Sprintf("%v-%v-%v", x.ModuleAlias(), x.PlatformName, x.ConfigName))
+func (x TargetAlias) Alias() utils.BuildAlias {
+	return utils.BuildAlias(fmt.Sprintf("%v-%v-%v", x.ModuleAlias, x.PlatformName, x.ConfigName))
 }
-func (x TargetAlias) ModuleAlias() utils.BuildAlias {
-	return utils.BuildAlias(path.Join(x.NamespaceName, x.ModuleName))
+func (x TargetAlias) GetUnitAlias() utils.BuildAlias {
+	return x.Alias()
 }
-func (x TargetAlias) NamespaceAlias() utils.BuildAlias {
-	return utils.BuildAlias(x.NamespaceName)
+func (x TargetAlias) Compare(o TargetAlias) int {
+	if cmp := x.ModuleAlias.Compare(o.ModuleAlias); cmp == 0 {
+		return x.EnvironmentAlias.Compare(o.EnvironmentAlias)
+	} else {
+		return cmp
+	}
 }
 func (x TargetAlias) String() string {
-	return string(x.UnitAlias())
+	return x.Alias().String()
 }
 
 type UnitDecorator interface {
@@ -107,7 +116,7 @@ type Unit struct {
 }
 
 func (unit *Unit) String() string {
-	return unit.Target.String()
+	return unit.Target.Alias().String()
 }
 func (unit *Unit) GetCompiler() *CompilerRules {
 	if unit.Compiler != nil {

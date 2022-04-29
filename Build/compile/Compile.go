@@ -126,10 +126,10 @@ type EnvironmentTargetsT struct {
 }
 
 func (e *EnvironmentTargetsT) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Targets", e.Environment.String())
+	return utils.MakeBuildAlias("Targets", e.Environment.Alias().String())
 }
 func (e *EnvironmentTargetsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	pbar := utils.LogProgress(0, 0, "%v/Compile", e.Environment.String())
+	pbar := utils.LogProgress(0, 0, "%v/Compile", e.Environment.Alias().String())
 
 	e.SetT.Clear()
 
@@ -195,8 +195,8 @@ func (b *BuildTargetsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
 
 	bc.DependsOn(targets...)
 
-	sort.Slice(b.Aliases, func(i, j int) bool {
-		return b.Aliases[i].String() < b.Aliases[j].String()
+	sort.SliceStable(b.Aliases, func(i, j int) bool {
+		return b.Aliases[i].Compare(b.Aliases[j]) < 0
 	})
 
 	return utils.MakeBuildStamp(b)

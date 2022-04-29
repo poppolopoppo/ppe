@@ -132,7 +132,7 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 		}
 
 		configurations = append(configurations, JsonMap{
-			"name":             env.EnvironmentAlias().String(),
+			"name":             env.EnvironmentAlias().Alias().String(),
 			"compilerPath":     env.GetCompiler().Executable.String(),
 			"compileCommands":  compiledb.String(),
 			"cStandard":        "c11",
@@ -253,7 +253,7 @@ func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) 
 		BffInput: BFFFILE_DEFAULT,
 	}
 
-	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.String())
+	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.Alias().String())
 	fbuildExec.Capture = false
 
 	if err := fbuildExec.Run(); err != nil {

@@ -216,13 +216,13 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 
 	UFS.Mkdir(UFS.Transient)
 
-	moduleSource := MakeBffVar(unit.Target.ModuleAlias().String() + "_Source_" + unit.PCH.String() + "_" + unit.Unity.String())
+	moduleSource := MakeBffVar(unit.Target.GetModuleAlias().String() + "_Source_" + unit.PCH.String() + "_" + unit.Unity.String())
 	gen.Once(moduleSource, func() {
 		gen.Comment("Target source details for %v", unit)
 
 		var moduleUnity string
 		if unit.Unity.Ord() > 0 {
-			moduleUnity = (unit.Target.ModuleAlias().String() + "-Unity-" + unit.PCH.String())
+			moduleUnity = (unit.Target.GetModuleAlias().String() + "-Unity-" + unit.PCH.String())
 
 			gen.Once(BffVar(moduleUnity), func() {
 				gen.Func("Unity", func() {

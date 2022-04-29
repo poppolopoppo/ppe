@@ -104,7 +104,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		moduleUnits := make(map[Module]*BffArray, translatedUnits.Len())
 		for _, x := range translatedUnits.Slice() {
 			configVar := vcx.vcxconfig(bff, x)
-			module := moduleGraph.Module(x.Target.ModuleAlias())
+			module := moduleGraph.Module(x.Target.GetModuleAlias())
 
 			if arr, ok := moduleUnits[module]; ok {
 				*arr = append(*arr, configVar)
@@ -185,7 +185,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 
 				configVars := BffArray{}
 				for _, env := range compileEnvs {
-					configVar := MakeBffVar("BuildConfig-" + env.String())
+					configVar := MakeBffVar("BuildConfig-" + env.Alias().String())
 					bff.Struct(configVar, func() {
 						bff.Assign("Platform", vcx.solutionPlatform(env.PlatformName))
 						bff.Assign("Config", env.ConfigName)
@@ -207,7 +207,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			bff.Assign("SolutionOutput", UFS.Output.File(CommandEnv.Prefix()+".sln"))
 			bff.Assign("SolutionBuildProject", buildProjects)
 			bff.Assign("SolutionConfigs", MakeBffArray(Map(func(a EnvironmentAlias) interface{} {
-				result := MakeBffVar(a.CompileEnvAlias().String())
+				result := MakeBffVar(a.GetEnvironmentAlias().String())
 				bff.Struct(result, func() {
 					bff.Assign("Platform", vcx.solutionPlatform(a.PlatformName))
 					bff.Assign("Config", a.ConfigName)

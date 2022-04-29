@@ -5,13 +5,49 @@ import (
 	"bytes"
 	"fmt"
 	"path"
+	"strings"
 )
+
+type ModuleAlias struct {
+	NamespaceName string
+	ModuleName    string
+}
+
+func NewModuleAlias(module Module) ModuleAlias {
+	return ModuleAlias{
+		NamespaceName: path.Join(module.GetNamespace().Path()...),
+		ModuleName:    module.GetModule().ModuleName,
+	}
+}
+func (x ModuleAlias) Alias() utils.BuildAlias {
+	return utils.BuildAlias(path.Join(x.NamespaceName, x.ModuleName))
+}
+func (x ModuleAlias) GetModuleAlias() utils.BuildAlias {
+	return x.Alias()
+}
+func (x ModuleAlias) GetNamespaceAlias() utils.BuildAlias {
+	return utils.BuildAlias(x.NamespaceName)
+}
+func (x ModuleAlias) GetDigestable(o *bytes.Buffer) {
+	o.WriteString(x.NamespaceName)
+	o.WriteString(x.ModuleName)
+}
+func (x ModuleAlias) Compare(o ModuleAlias) int {
+	if x.NamespaceName == o.NamespaceName {
+		return strings.Compare(x.ModuleName, o.ModuleName)
+	} else {
+		return strings.Compare(x.NamespaceName, o.NamespaceName)
+	}
+}
+func (x ModuleAlias) String() string {
+	return x.Alias().String()
+}
 
 type ModuleList []Module
 
 func (list ModuleList) Len() int { return len(list) }
 func (list ModuleList) Less(i, j int) bool {
-	return list[i].GetModule().String() < list[j].GetModule().String()
+	return list[i].GetModule().ModuleAlias().Compare(list[j].GetModule().ModuleAlias()) < 0
 }
 func (list ModuleList) Swap(i, j int) { list[i], list[j] = list[j], list[i] }
 
@@ -111,16 +147,19 @@ type ModuleRules struct {
 }
 
 type Module interface {
+	ModuleAlias() ModuleAlias
 	GetModule() *ModuleRules
 	GetNamespace() *NamespaceRules
 	utils.Digestable
 	fmt.Stringer
 }
 
-func (rules *ModuleRules) String() string {
-	return path.Join(rules.Path()...)
+func (rules *ModuleRules) ModuleAlias() ModuleAlias {
+	return NewModuleAlias(rules)
 }
-
+func (rules *ModuleRules) String() string {
+	return rules.ModuleAlias().Alias().String()
+}
 func (rules *ModuleRules) Path() []string {
 	return append(rules.Namespace.GetNamespace().Path(), rules.ModuleName)
 }

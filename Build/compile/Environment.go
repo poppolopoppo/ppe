@@ -304,7 +304,7 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 
 			unit.Ordinal = moduleNode.Ordinal
 			unit.Defines.Append(
-				"BUILD_TARGET_NAME="+unit.Target.ModuleAlias().String(),
+				"BUILD_TARGET_NAME="+unit.Target.GetModuleAlias().String(),
 				fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", unit.Ordinal))
 
 			moduleNode.Range(func(dep Module, vis VisibilityType) {
@@ -364,7 +364,7 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 		unit := translated[m.GetModule()]
 
 		unit.IncludeDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.ModuleAlias())
+			dep := moduleGraph.Module(target.GetModuleAlias())
 			if other, ok := translated[dep.GetModule()]; ok {
 				utils.LogDebug("[%v] include dep -> %v", unit.Target, target)
 				unit.Facet.Append(&other.TransitiveFacet)
@@ -374,7 +374,7 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 		})
 
 		unit.CompileDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.ModuleAlias())
+			dep := moduleGraph.Module(target.GetModuleAlias())
 			if other, ok := translated[dep.GetModule()]; ok {
 				utils.LogDebug("[%v] compile dep -> %v", unit.Target, target)
 				unit.Facet.Append(&other.TransitiveFacet)
@@ -384,7 +384,7 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 		})
 
 		unit.LinkDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.ModuleAlias())
+			dep := moduleGraph.Module(target.GetModuleAlias())
 			if other, ok := translated[dep.GetModule()]; ok {
 				utils.LogDebug("[%v] link dep -> %v", unit.Target, target)
 				unit.Facet.Append(&other.TransitiveFacet)
@@ -394,7 +394,7 @@ func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, tra
 		})
 
 		unit.RuntimeDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.ModuleAlias())
+			dep := moduleGraph.Module(target.GetModuleAlias())
 			if other, ok := translated[dep.GetModule()]; ok {
 				utils.LogDebug("[%v] runtime dep -> %v", unit.Target, target)
 				unit.IncludePaths.Append(other.TransitiveFacet.IncludePaths...)

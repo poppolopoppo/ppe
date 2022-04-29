@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -18,6 +19,15 @@ func MakeBuildAlias(category string, name string) BuildAlias {
 	return BuildAlias(category + "://" + name)
 }
 func (x BuildAlias) Alias() BuildAlias { return x }
+func (x BuildAlias) Equals(o BuildAlias) bool {
+	return string(x) == string(o)
+}
+func (x BuildAlias) Compare(o BuildAlias) int {
+	return strings.Compare(string(x), string(o))
+}
+func (x BuildAlias) String() string {
+	return string(x)
+}
 
 type BuildStamp struct {
 	ModTime time.Time
@@ -67,10 +77,6 @@ type BuildAliasable interface {
 type Buildable interface {
 	BuildAliasable
 	Build(BuildContext) (BuildStamp, error)
-}
-
-func (x BuildAlias) String() string {
-	return string(x)
 }
 
 type buildState struct {

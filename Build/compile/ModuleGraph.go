@@ -215,7 +215,7 @@ var GetModuleGraph = utils.MemoizePod(func(targets *BuildModulesT) *ModuleGraph 
 		if a.Level != b.Level {
 			return a.Level < b.Level
 		} else {
-			return result.keys[i].String() < result.keys[j].String()
+			return result.keys[i].ModuleAlias().Compare(result.keys[j].ModuleAlias()) < 0
 		}
 	})
 
