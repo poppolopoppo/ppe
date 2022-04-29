@@ -10,6 +10,8 @@
 #include "Misc/DynamicLibrary.h"
 #include "Thread/ReadWriteLock.h"
 
+#include "Diagnostic/BuildVersion.h" // DO NOT include this file outside XXXModule.cpp
+
 #include <mutex>
 
 namespace PPE {

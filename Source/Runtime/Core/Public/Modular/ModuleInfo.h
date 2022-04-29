@@ -5,7 +5,8 @@
 #include "Modular/Modular_fwd.h"
 #include "Modular/ModuleEnums.h"
 
-#include "Diagnostic/BuildVersion.h"
+#include "IO/StringView.h"
+#include "Time/Timestamp.h"
 #include "Memory/UniquePtr.h"
 
 #include <initializer_list>
@@ -17,15 +18,23 @@ namespace PPE {
 using FModuleDependencyList = TMemoryView<const FStringView>;
 using FModuleStaticInitializer = TUniquePtr<IModuleInterface> (*)() NOEXCEPT;
 //----------------------------------------------------------------------------
+struct FBuildVersion {
+    FStringView Branch;
+    FStringView Revision;
+    FStringView Family;
+    FStringView Compiler;
+    FTimestamp Timestamp;
+};
+//----------------------------------------------------------------------------
 struct FModuleInfo {
     FStringView Name;
-    EModulePhase Phase;
-    EModuleUsage Usage;
-    EModuleSource Source;
-    FModuleLoadOrder LoadOrder;
+    EModulePhase Phase{};
+    EModuleUsage Usage{};
+    EModuleSource Source{};
+    FModuleLoadOrder LoadOrder{};
+    FModuleStaticInitializer Initializer{};
     FModuleDependencyList DependencyList;
     FBuildVersion BuildVersion;
-    FModuleStaticInitializer Initializer;
 
     FModuleInfo() = default;
 
@@ -43,9 +52,9 @@ struct FModuleInfo {
     ,   Usage(usage)
     ,   Source(source)
     ,   LoadOrder(loadOrder)
+    ,   Initializer(initializer)
     ,   DependencyList(dependencyList)
-    ,   BuildVersion(buildVersion)
-    ,   Initializer(initializer) {
+    ,   BuildVersion(buildVersion) {
         Assert_NoAssume(not Name.empty());
         Assert_NoAssume(Initializer);
     }

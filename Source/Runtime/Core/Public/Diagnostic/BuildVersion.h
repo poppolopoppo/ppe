@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "IO/StringView.h"
+#include "Modular/ModuleInfo.h"
 #include "Time/Timestamp.h"
 
 #include "BuildVersion.generated.h"
@@ -10,14 +10,6 @@
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-struct FBuildVersion {
-    FStringView Branch;
-    FStringView Revision;
-    FStringView Family;
-    FStringView Compiler;
-    FTimestamp Timestamp;
-};
 //----------------------------------------------------------------------------
 inline CONSTEXPR FBuildVersion CurrentBuildVersion() NOEXCEPT {
     return FBuildVersion{
