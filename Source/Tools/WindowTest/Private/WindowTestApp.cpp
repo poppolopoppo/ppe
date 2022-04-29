@@ -52,6 +52,7 @@ struct FUnitTestFunc_ {
     /* Impl */ \
     _Macro(Test_Scene1_) \
     _Macro(Test_Multithreading1_) \
+    _Macro(Test_Multithreading2_) \
     /* vendor-specific */ \
     _Macro(Test_DrawMeshes1_) \
     _Macro(Test_ShadingRate1_) \
