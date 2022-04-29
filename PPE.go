@@ -189,6 +189,11 @@ func makePPE_Module(rules *ModuleRules) {
 	makePPE_Common(rules)
 	makePPE_Internal(rules)
 	rules.ModuleType = MODULE_LIBRARY
+
+	moduleCpp := rules.PrivateDir().File(rules.ModuleName + "Module.cpp")
+	if moduleCpp.Exists() { // isolate module since it's including BuildXXX.generated.h files
+		rules.Source.IsolatedFiles.Append(moduleCpp)
+	}
 }
 func makePPE_Program(rules *ModuleRules, usage UsageType) {
 	makePPE_Common(rules)
