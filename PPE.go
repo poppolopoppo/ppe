@@ -63,7 +63,7 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 
 	modules := BuildModules.Need(ctx)
 	isNotModuleLibrary := func(alias TargetAlias) bool {
-		m := modules.Get(alias.ModuleAlias()).GetModule()
+		m := modules.Get(alias.GetModuleAlias()).GetModule()
 		return m.ModuleType == MODULE_LIBRARY
 	}
 
@@ -71,7 +71,7 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 	runtimeDependencies := RemoveUnless(isNotModuleLibrary, u.RuntimeDependencies.Slice()...)
 
 	getModuleAnchor := func(alias TargetAlias) string {
-		return SanitizeIdentifier(string(alias.ModuleAlias()))
+		return SanitizeIdentifier(string(alias.GetModuleAlias()))
 	}
 	getModuleClass := func(alias TargetAlias) string {
 		return alias.ModuleName + "Module"
@@ -120,9 +120,9 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 		fmt.Fprintln(dst, "    auto& registry = FModuleDynamicRegistration::Get();")
 		for _, x := range runtimeDependencies {
 			fmt.Fprintf(dst, "    registry.RegisterLibrary(\"%s\", \"%s\", L\"%s\");\n",
-				x.ModuleAlias(),
+				x.GetModuleAlias(),
 				getModuleStaticInfo(x),
-				ctx.Env.GetBinariesOutput(x.ModuleAlias().String(), PAYLOAD_SHAREDLIB))
+				ctx.Env.GetBinariesOutput(x.GetModuleAlias().String(), PAYLOAD_SHAREDLIB))
 		}
 	}
 	fmt.Fprintln(dst, "}")
@@ -131,7 +131,7 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 		fmt.Fprintln(dst, "    auto& registry = FModuleDynamicRegistration::Get();")
 		for _, x := range runtimeDependencies {
 			fmt.Fprintf(dst, "    registry.UnregisterLibrary(\"%s\");\n",
-				x.ModuleAlias().String())
+				x.GetModuleAlias().String())
 		}
 	}
 	fmt.Fprintln(dst, "}")
@@ -140,11 +140,11 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 		len(linkDependencies)+len(runtimeDependencies))
 	for _, x := range linkDependencies {
 		fmt.Fprintf(dst, "    MakeStringView(\"%s\"),\n",
-			x.ModuleAlias().String())
+			x.GetModuleAlias().String())
 	}
 	for _, x := range runtimeDependencies {
 		fmt.Fprintf(dst, "    MakeStringView(\"%s\"),\n",
-			x.ModuleAlias().String())
+			x.GetModuleAlias().String())
 	}
 	fmt.Fprintln(dst, "};")
 	fmt.Fprintln(dst, "} //!namespace PPE::Generated")

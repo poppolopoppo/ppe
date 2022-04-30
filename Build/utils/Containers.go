@@ -35,6 +35,15 @@ func IndexIf[T any](pred func(T) bool, values ...T) (int, bool) {
 	return -1, false
 }
 
+func InsertAt[T any](arr []T, index int, value T) []T {
+	if len(arr) == index {
+		return append(arr, value)
+	}
+	arr = append(arr[:index+1], arr[index:]...)
+	arr[index] = value
+	return arr
+}
+
 func Contains[T comparable](arr []T, values ...T) bool {
 	for _, x := range values {
 		if _, ok := IndexOf(x, arr...); !ok {
@@ -186,6 +195,10 @@ func (set SetT[T]) Sort(less func(a, b T) bool) {
 	})
 }
 
+/***************************************
+ * String interner
+ ***************************************/
+
 const STRING_INTERNER_BUCKETS uint32 = 16
 const STRING_INTERNER_MINLEN int = 12
 
@@ -204,6 +217,10 @@ func InternString(in string) string {
 		return out
 	}
 }
+
+/***************************************
+ * String set
+ ***************************************/
 
 type StringSet SetT[string]
 
@@ -352,6 +369,10 @@ func (set StringSet) ToFileSet(root Directory) (result FileSet) {
 	}, set.Slice()...)
 }
 
+/***************************************
+ * Shared map
+ ***************************************/
+
 type SharedMapT[K comparable, V any] struct {
 	intern sync.Map
 }
@@ -419,6 +440,9 @@ func (shared *SharedMapT[K, V]) Clear() {
 	shared.intern = sync.Map{}
 }
 
+/***************************************
+ * Services
+ ***************************************/
 type ServiceLocator[V any] struct {
 	*SharedMapT[string, V]
 }
@@ -493,5 +517,104 @@ func (evt *ServiceEvent[V]) Needed(services ServiceLocator[V]) {
 	defer evt.barrier.Unlock()
 	for _, x := range evt.arr {
 		x(services)
+	}
+}
+
+/***************************************
+ * Collector
+ ***************************************/
+
+type KeyValuePair[K, V any] struct {
+	Key   K
+	Value V
+}
+
+type Collector[K Comparable[K], V any] struct {
+	keys   []KeyValuePair[K, int]
+	values []*[]V
+}
+
+func NewCollector[K Comparable[K], V any]() *Collector[K, V] {
+	return &Collector[K, V]{
+		keys:   []KeyValuePair[K, int]{},
+		values: []*[]V{},
+	}
+}
+func (x *Collector[K, V]) IndexOf(key K) (int, bool) {
+	it := sort.Search(len(x.keys), func(i int) bool {
+		return x.keys[i].Key.Compare(key) >= 0
+	})
+	return it, it < len(x.keys) && x.keys[it].Key.Compare(key) == 0
+}
+func (x *Collector[K, V]) Add(key K, value V) {
+	if it, found := x.IndexOf(key); found {
+		arr := x.values[x.keys[it].Value]
+		*arr = append(*arr, value)
+	} else {
+		Assert(func() bool {
+			for i := 0; i < len(x.keys); i += 1 {
+				if x.keys[i].Key.Compare(key) == 0 {
+					return false
+				}
+			}
+			return true
+		})
+		x.keys = InsertAt(x.keys, it, KeyValuePair[K, int]{key, len(x.values)})
+		x.values = append(x.values, &[]V{value})
+	}
+}
+func (x *Collector[K, V]) Keys() []K {
+	result := make([]K, len(x.keys))
+	for i, kv := range x.keys {
+		result[i] = kv.Key
+	}
+	return result
+}
+func (x *Collector[K, V]) Values(key K) *[]V {
+	if it, found := x.IndexOf(key); found {
+		return x.values[x.keys[it].Value]
+	} else {
+		return nil
+	}
+}
+func (x *Collector[K, V]) Each(each func(K, []V)) {
+	for _, it := range x.keys {
+		each(it.Key, *x.values[it.Value])
+	}
+}
+
+type StringCollector[T any] struct {
+	keys   []string
+	values map[string]*[]T
+}
+
+func NewStringCollector[T any]() *StringCollector[T] {
+	return &StringCollector[T]{
+		keys:   []string{},
+		values: make(map[string]*[]T),
+	}
+}
+func (x *StringCollector[T]) IndexOf(key string) (int, bool) {
+	it := sort.SearchStrings(x.keys, key)
+	return it, it < len(x.keys) && x.keys[it] == key
+}
+func (x *StringCollector[T]) Add(key string, value T) {
+	if it, found := x.IndexOf(key); found {
+		arr := x.values[x.keys[it]]
+		*arr = append(*arr, value)
+	} else {
+		x.values[key] = &[]T{value}
+		x.keys = InsertAt(x.keys, it, key)
+	}
+}
+func (x *StringCollector[T]) Keys() []string {
+	return x.keys
+}
+func (x *StringCollector[T]) Values(key string) *[]T {
+	return x.values[key]
+}
+func (x *StringCollector[T]) Each(each func(string, []T)) {
+	for _, key := range x.keys {
+		each(key, *x.values[key])
 	}
 }

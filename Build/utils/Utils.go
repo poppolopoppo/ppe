@@ -35,6 +35,9 @@ type Closable interface {
 type Equatable[T any] interface {
 	Equals(other T) bool
 }
+type Comparable[T any] interface {
+	Compare(other T) int
+}
 
 var re_nonAlphaNumeric = regexp.MustCompile(`[^\w\d]+`)
 
