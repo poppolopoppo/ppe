@@ -92,7 +92,7 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	sourceControlModifiedFiles := GenerateSourceControlModifiedFiles()
 	targets := BuildTargets.Need(bc)
 
-	err := UFS.SafeCreate(x.Output, func(dst io.Writer) error {
+	err := UFS.LazyCreate(x.Output, func(dst io.Writer) error {
 		args := BffArgs.Need(CommandEnv.Flags)
 		bff := newBffGenerator(dst, args)
 

@@ -365,7 +365,7 @@ func (log *pinnedLogScope) Log(msg string, args ...interface{}) {
 func (log *pinnedLogScope) String() string {
 	if log.subText != "" {
 		const maxLen = 20
-		elapsed := int(16. * time.Now().Sub(programStartedAt).Seconds())
+		elapsed := int(maxLen * time.Now().Sub(programStartedAt).Seconds())
 		croppedText := make([]byte, maxLen)
 		for i := 0; i < maxLen; i += 1 {
 			croppedText[i] = log.mainText[(elapsed+i)%len(log.mainText)]

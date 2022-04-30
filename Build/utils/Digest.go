@@ -84,7 +84,6 @@ type Digester interface {
 type digester struct {
 	intern hash.Hash
 	buf    *bytes.Buffer
-	cnt    int
 }
 
 func (digest Digest) Valid() bool {
@@ -110,7 +109,6 @@ func make_digester(seed []byte) (result digester) {
 	result = digester{
 		intern: sha256.New(),
 		buf:    &bytes.Buffer{},
-		cnt:    0,
 	}
 	result.buf.Grow(1024)
 	result.Write(seed)
@@ -178,19 +176,28 @@ func FNV32a(in string) uint32 {
 	return h.Sum32()
 }
 
-func FileDigest(src Filename) Future[Digest] {
+func DigestReader(output Digester, rd io.Reader) error {
+	const capacity = 64 << 20
+	scanner := bufio.NewScanner(rd)
+	scanner.Buffer(make([]byte, capacity), capacity)
+	intern := output.(digester).intern
+	for scanner.Scan() {
+		if _, err := intern.Write(scanner.Bytes()); err != nil {
+			return err
+		}
+	}
+	return scanner.Err()
+}
+func MakeFileDigest(src Filename) (Digest, error) {
+	digester := MakeDigester()
+	err := UFS.Open(src, func(rd io.Reader) error {
+		return DigestReader(digester, rd)
+	})
+	return digester.Finalize(), err
+}
+func AsyncFileDigest(src Filename) Future[Digest] {
 	return MakeFuture(func() (Digest, error) {
-		digester := MakeDigester()
-		err := UFS.Open(src, func(rd io.Reader) error {
-			const capacity = 64 << 20
-			scanner := bufio.NewScanner(rd)
-			scanner.Buffer(make([]byte, capacity), capacity)
-			for scanner.Scan() {
-				digester.Append(RawBytes(scanner.Bytes()))
-			}
-			return scanner.Err()
-		})
-		return digester.Finalize(), err
+		return MakeFileDigest(src)
 	})
 }
 

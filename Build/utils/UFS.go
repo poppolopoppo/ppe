@@ -773,6 +773,34 @@ func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) er
 	return err
 }
 func (ufs *UFSFrontEnd) LazyCreate(dst Filename, write func(io.Writer) error) error {
+	if org, err := dst.Info(); err == nil {
+		tmp := bytes.Buffer{}
+		write(&tmp)
+
+		new := tmp.Bytes()
+
+		if org.Size() == int64(tmp.Len()) {
+			async := AsyncFileDigest(dst)
+
+			digester := MakeDigester()
+			if err := DigestReader(digester, bytes.NewReader(new)); err == nil {
+				current := digester.Finalize()
+				if previous := async.Join(); previous.Failure() == nil {
+					if previous.Success() == current {
+						LogVerbose("ufs: skip update of '%v', content didn't change", dst)
+						return nil // we finally can skip writing
+					} else {
+						LogVerbose("ufs: keep update of '%v', content DID change\n\told: %v\n\tnew: %v", dst, previous.Success(), current)
+					}
+				}
+			}
+		}
+
+		return ufs.SafeCreate(dst, func(w io.Writer) error {
+			w.Write(new) // reuse already bytes already dumped in memory
+			return nil
+		})
+	}
 	return ufs.SafeCreate(dst, write)
 }
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
