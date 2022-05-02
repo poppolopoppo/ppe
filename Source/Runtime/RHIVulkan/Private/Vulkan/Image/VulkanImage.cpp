@@ -124,7 +124,6 @@ bool FVulkanImage::Construct(
     Assert(desc.Usage != Default);
 
     const FVulkanDevice& device = resources.Device();
-    const bool optTiling = (not (memoryObject.MemoryType() ^ EVulkanMemoryType::HostVisible));
 
     exclusiveData->Desc = desc;
     exclusiveData->Desc.Validate();
@@ -146,6 +145,7 @@ bool FVulkanImage::Construct(
     info.samples = VkCast(exclusiveData->Desc.Samples);
     info.usage = VkCast(exclusiveData->Desc.Usage);
 
+    const bool optTiling = (not (memoryObject.MemoryType() ^ EVulkanMemoryType::HostVisible));
     if (optTiling) {
         info.tiling = VK_IMAGE_TILING_OPTIMAL;
         info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -192,7 +192,6 @@ bool FVulkanImage::Construct(
     exclusiveData->DefaultLayout = ChooseDefaultLayout_(
         exclusiveData->Desc.Usage,
         EResourceState_ToImageLayout(defaultState, exclusiveData->AspectMask) );
-    exclusiveData->QueueFamilyMask = queueFamilyMask;
     exclusiveData->QueueFamilyMask = queueFamilyMask;
     exclusiveData->ReadAccessMask = AllImageAccessMasks_(info.usage);
 

@@ -221,12 +221,11 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
     auto& pool = ResourcePool_(*pId);
     const auto it = pool.FindOrAdd(std::move(layout),
         [this ARGS_IF_RHIDEBUG(debugName)](TResourceProxy<FVulkanPipelineLayout>* pLayout, FIndex , bool exist) -> bool {
-            if (not exist) {
+            if (not exist)
                 LOG_CHECK(RHI, pLayout->Construct(
                     _device,
                     ResourceData(_emptyDSLayout, false/* don't add ref for empty layout */).Read()->Layout
                     ARGS_IF_RHIDEBUG(debugName)) );
-            }
             pLayout->AddRef();
             return true;
         });
@@ -719,6 +718,7 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
 
     if (Likely(it.first)) {
         Assert_NoAssume(framebufferId.Valid());
+
         return framebufferId;
     }
 
@@ -794,6 +794,7 @@ bool FVulkanResourceManager::CacheDescriptorSet(FPipelineResources& desc) {
         Assert_NoAssume(resourcesId.Valid());
         if (Unlikely(not exist))
             pDSLayout->AddRef();
+
         FPipelineResources::SetCached(desc, resourcesId);
         return true;
     }
@@ -978,7 +979,6 @@ void FVulkanResourceManager::ReleaseMemory() {
             Assert(pResource);
             RHI_TRACE(L"TrimDownCache", Meta::type_info<resource_type>.name, pResource->DebugName(), pResource->IsCreated(), pResource->RefCount());
             if (pResource->IsCreated() and pResource->RefCount() == 1) {
-                Verify( pResource->RemoveRef(pResource->RefCount()) );
                 pResource->TearDown(*this);
                 return true; // release the cached item
             }
@@ -1109,9 +1109,9 @@ auto FVulkanResourceManager::CreateCachedResource_(
     Assert(pId);
 
     auto& pool = ResourcePool_(*pId);
-    const TPair<FIndex, bool> it = pool.FindOrAdd(std::move(rkey), [&](TPooledResource_<_Uid>* pResource, FIndex , bool exist) {
-        if (Unlikely(not exist && not pResource->Construct(std::forward<_Args>(args)...)))
-            return false;
+    const TPair<FIndex, bool> it = pool.FindOrAdd(std::move(rkey), [&](TPooledResource_<_Uid>* pResource, FIndex , bool exist) -> bool {
+        if (not exist)
+            LOG_CHECK(RHI, pResource->Construct(std::forward<_Args>(args)...));
         pResource->AddRef();
         return true;
     });

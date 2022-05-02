@@ -29,7 +29,7 @@ bool FVulkanLocalImage::Construct(const FVulkanImage* pImageData) {
     _isImmutable = false; //sharedImg->IsReadOnly();
 
     // set initial state
-    FImageAccess pending;
+    FImageAccess pending{};
     pending.IsReadable = false;
     pending.IsWritable = false;
     pending.Stages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -198,13 +198,13 @@ void FVulkanLocalImage::CommitBarrier(FVulkanBarrierManager& barriers ARGS_IF_RH
                 it->IsWritable );                           // write -> read/write
 
             if (not range.Empty() and isModified) {
+                const bool mustInvalidate = (it->InvalidateAfter or pending.InvalidateBefore);
+
                 VkImageMemoryBarrier barrier{};
                 barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
                 barrier.pNext = nullptr;
                 barrier.image = sharedImg->vkImage;
-                barrier.oldLayout = (it->InvalidateAfter or pending.InvalidateBefore
-                    ? VK_IMAGE_LAYOUT_UNDEFINED
-                    : it->Layout );
+                barrier.oldLayout = (mustInvalidate ? VK_IMAGE_LAYOUT_UNDEFINED : it->Layout);
                 barrier.newLayout = pending.Layout;
                 barrier.srcAccessMask = it->Access;
                 barrier.dstAccessMask = pending.Access;
