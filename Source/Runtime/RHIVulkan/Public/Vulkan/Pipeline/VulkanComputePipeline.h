@@ -33,7 +33,8 @@ public:
         void Invalidate() NOEXCEPT; // updates HashValue
 
         bool operator ==(const FPipelineInstance& other) const {
-            return (LayoutId == other.LayoutId && LocalGroupSize == other.LocalGroupSize && Flags == other.Flags ARG0_IF_RHIDEBUG(&& DebugMode != other.DebugMode));
+            ONLY_IF_RHIDEBUG(if (DebugMode != other.DebugMode) return false);
+            return (LayoutId == other.LayoutId && LocalGroupSize == other.LocalGroupSize && Flags == other.Flags);
         }
         bool operator !=(const FPipelineInstance& other) const { return (not operator ==(other)); }
 
