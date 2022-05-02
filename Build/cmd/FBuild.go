@@ -36,7 +36,7 @@ var FBuild = MakeCommand(
 				Dist:          false,
 				BffInput:      BFFFILE_DEFAULT,
 				NoUnity:       false,
-				NoStopOnError: false,
+				NoStopOnError: true,
 				Report:        false,
 				ShowCmds:      false,
 				Threads:       0,
