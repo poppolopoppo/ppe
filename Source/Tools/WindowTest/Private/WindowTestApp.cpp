@@ -49,17 +49,18 @@ struct FUnitTestFunc_ {
     _Macro(Test_ShaderDebugger1_) \
     _Macro(Test_ShaderDebugger2_) \
     _Macro(Test_RayTracingDebugger1_) \
-    /* Impl */ \
-    _Macro(Test_Scene1_) \
-    _Macro(Test_Multithreading1_) \
-    _Macro(Test_Multithreading2_) \
-    _Macro(Test_Multithreading3_) \
     /* vendor-specific */ \
     _Macro(Test_DrawMeshes1_) \
     _Macro(Test_ShadingRate1_) \
     _Macro(Test_TraceRays1_) \
     _Macro(Test_TraceRays2_) \
     _Macro(Test_TraceRays3_) \
+    /* Impl */ \
+    _Macro(Test_Scene1_) \
+    _Macro(Test_Multithreading1_) \
+    _Macro(Test_Multithreading2_) \
+    _Macro(Test_Multithreading3_) \
+    _Macro(Test_Multithreading4_) \
 
 //----------------------------------------------------------------------------
 #define WINDOWTEST_EXTERN_DECL(_Func) extern bool _Func(FWindowTestApp&);
@@ -69,15 +70,14 @@ EACH_WINDOWTEST(WINDOWTEST_EXTERN_DECL)
 static void LaunchWindowTests_(FWindowTestApp& app) {
     auto launchTest = [&app](FWStringView name, auto&& test) {
         Unused(name);
-        // LOG(WindowTest, Debug, L"start framegraph test <{0}> ...", name);
 
         RHI::IFrameGraph& fg = *app.RHI().FrameGraph();
         fg.PrepareNewFrame();
 
-        FTimedScope chrono;
+        const FTimedScope timer{};
         const bool success = test(app);
 
-        const FMilliseconds elapsed = chrono.Elapsed();
+        const FMilliseconds elapsed = timer.Elapsed();
         Unused(elapsed);
 
         if (Likely(success)) {
@@ -142,6 +142,8 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
             FLUSH_LOG();
             rng.Shuffle(MakeView(unitTests));
+
+            // app.RHI().ReleaseMemory();
         }
 
         ReportAllTrackingData();

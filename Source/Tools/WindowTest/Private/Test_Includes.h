@@ -20,6 +20,8 @@
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "Maths/PackedVectors.h"
+#include "Maths/ScalarVector.h"
+#include "Maths/ScalarVectorHelpers.h"
 #include "Memory/RefPtr.h"
 #include "Meta/Assert.h"
 #include "Meta/Utility.h"
