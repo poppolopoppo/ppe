@@ -5,10 +5,7 @@
 
 #include <atomic>
 
-#define USE_PPE_RHI_RESOURCEREFS (0) //%_NOCOMMIT%
-#if USE_PPE_RHI_RESOURCEREFS
-#   include "HAL/PlatformDebug.h"
-#   include "IO/Format.h"
+#if USE_PPE_RHITRACE
 #   include "Meta/TypeInfo.h"
 #endif
 
@@ -43,7 +40,7 @@ public:
     FInstanceID InstanceID() const { return checked_cast<FInstanceID>(_instanceId.load(std::memory_order_relaxed)); }
     int RefCount() const { return _refCounter.load(std::memory_order_relaxed); }
 
-#if !USE_PPE_RHI_RESOURCEREFS
+#if !USE_PPE_RHITRACE
     FORCE_INLINE void AddRef(int refCount = 1) const NOEXCEPT {
         Assert(refCount > 0);
         _refCounter.fetch_add(refCount, std::memory_order_relaxed);
@@ -115,27 +112,17 @@ public:
     }
 #endif
 
-#if USE_PPE_RHI_RESOURCEREFS
+#if USE_PPE_RHITRACE
     FORCE_INLINE void AddRef(int refCount = 1) const {
         Assert(refCount > 0);
         auto x = _refCounter.fetch_add(refCount, std::memory_order_relaxed);
-        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanRenderPass"))
-        {
-            char debug[200];
-            Format(debug, " +++ AddRef({4}) -> {2}        #{0:#3}:{1} '{3}'\n", InstanceID(), Meta::type_info<T>.name, x, DebugName(), refCount);
-            FPlatformDebug::OutputDebug(debug);
-            //PPE_DEBUG_BREAK();
-        }
+        Unused(x);
+        RHI_TRACE(L"AddRef", Meta::type_info<T>.name, InstanceID(), DebugName(), x, refCount);
+        ONLY_IF_RHIDEBUG(if (x > 100) PPE_DEBUG_BREAK());
     }
     NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const {
         auto x = _refCounter.fetch_sub(refCount, std::memory_order_relaxed);
-        IF_CONSTEXPR(Meta::type_info<T>.name.Equals("class PPE::RHI::FVulkanRenderPass"))
-        {
-            char debug[200];
-            Format(debug, " --- RemoveRef({3}) -> {2}     #{0:#3}:{1} '{4}'\n", InstanceID(), Meta::type_info<T>.name, x, refCount, DebugName());
-            FPlatformDebug::OutputDebug(debug);
-            //PPE_DEBUG_BREAK();
-        }
+        RHI_TRACE(L"RemoveRef", Meta::type_info<T>.name, InstanceID(), DebugName(), x, refCount);
         if (x == refCount) {
             std::atomic_thread_fence(std::memory_order_acquire);
             return true;
@@ -189,14 +176,7 @@ bool TResourceProxy<T>::Construct(_Args&&... args) {
     // read state and flush cache
     _state.store(result ? EState::Created : EState::Failed, std::memory_order_release);
 
-#if USE_PPE_RHI_RESOURCEREFS
-    {
-        char debug[200];
-        Format(debug, " >> Construct(#{0:#3}:refs[{1}]) -> {2}        {3} '{4}'\n", InstanceID(), RefCount(), result, Meta::type_info<T>.name, DebugName());
-        FPlatformDebug::OutputDebug(debug);
-        //PPE_DEBUG_BREAK();
-    }
-#endif
+    RHI_TRACE(L"Construct", Meta::type_info<T>.name, InstanceID(), DebugName(), RefCount(), result);
 
     return result;
 }
@@ -213,14 +193,7 @@ template <typename... _Args>
 void TResourceProxy<T>::TearDown_Force(_Args&&... args) {
     Assert(not IsDestroyed());
 
-#if USE_PPE_RHI_RESOURCEREFS
-    {
-        char debug[200];
-        Format(debug, " << TearDown(#{0:#3}:refs[{1}])          {2} '{3}'\n", InstanceID(), RefCount(), Meta::type_info<T>.name, DebugName());
-        FPlatformDebug::OutputDebug(debug);
-        //PPE_DEBUG_BREAK();
-    }
-#endif
+    RHI_TRACE(L"TearDown", Meta::type_info<T>.name, InstanceID(), DebugName(), RefCount());
 
     _data.TearDown(std::forward<_Args>(args)...);
 

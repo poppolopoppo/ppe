@@ -19,6 +19,9 @@
 namespace PPE {
 namespace RHI {
 LOG_CATEGORY(PPE_RHI_API, RHI)
+#if USE_PPE_RHITRACE
+LOG_CATEGORY_EX(PPE_RHI_API, RHITrace, All, Immediate)
+#endif
 } //!namespace RHI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

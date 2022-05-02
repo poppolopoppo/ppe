@@ -11,6 +11,10 @@
 #include "RHI/ResourceId.h"
 #include "RHI/ResourceTypes.h"
 
+#if USE_PPE_RHITRACE
+#   include "Vulkan/Common/VulkanEnumToString.h"
+#endif
+
 #include "Container/Stack.h"
 #include "Diagnostic/Logger_fwd.h"
 #include "IO/TextWriter_fwd.h"

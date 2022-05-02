@@ -14,8 +14,14 @@
 #   include "Diagnostic/Logger.h"
 #   include "IO/FormatHelpers.h"
 #   define RHI_LOG(_LEVEL, ...) LOG(RHI, _LEVEL, __VA_ARGS__)
+#   if USE_PPE_RHITRACE
+#       define RHI_TRACE(...) LOG_RECORD(RHITrace, Verbose, __VA_ARGS__)
+#   else
+#       define RHI_TRACE(...) NOOP()
+#   endif
 #else
 #   define RHI_LOG(_LEVEL, ...) NOOP()
+#   define RHI_TRACE(...) NOOP()
 #endif
 
 #include "IO/String.h"
@@ -46,6 +52,10 @@ using FShaderDebugCallback = TFunction<void(
     EShaderStages stages,
     TMemoryView<const FString> output )
 >;
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_RHITRACE
+EXTERN_LOG_CATEGORY(PPE_RHI_API, RHITrace)
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG

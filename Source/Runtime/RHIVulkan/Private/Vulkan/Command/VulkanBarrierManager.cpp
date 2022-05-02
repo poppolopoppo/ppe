@@ -65,6 +65,12 @@ void FVulkanBarrierManager::AddBufferBarrier(VkPipelineStageFlags srcStages, VkP
     _srcStages |= srcStages;
     _dstStages |= dstStages;
     _bufferBarriers.push_back(barrier);
+
+    RHI_TRACE(L"AddBufferBarrier",
+        static_cast<VkPipelineStageFlagBits>(srcStages),
+        static_cast<VkPipelineStageFlagBits>(dstStages),
+        static_cast<VkAccessFlagBits>(barrier.srcAccessMask),
+        static_cast<VkAccessFlagBits>(barrier.dstAccessMask) );
 }
 //----------------------------------------------------------------------------
 void FVulkanBarrierManager::AddImageBarrier(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages, VkDependencyFlags dependencies, const VkImageMemoryBarrier& barrier) {
@@ -72,6 +78,15 @@ void FVulkanBarrierManager::AddImageBarrier(VkPipelineStageFlags srcStages, VkPi
     _dstStages |= dstStages;
     _dependencies |= dependencies;
     _imageBarriers.push_back(barrier);
+
+    RHI_TRACE(L"AddImageBarrier",
+        static_cast<VkPipelineStageFlagBits>(srcStages),
+        static_cast<VkPipelineStageFlagBits>(dstStages),
+        static_cast<VkAccessFlagBits>(barrier.srcAccessMask),
+        static_cast<VkAccessFlagBits>(barrier.dstAccessMask),
+        static_cast<VkDependencyFlagBits>(dependencies),
+        barrier.oldLayout,
+        barrier.newLayout );
 }
 //----------------------------------------------------------------------------
 void FVulkanBarrierManager::AddMemoryBarrier(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages, const VkMemoryBarrier& barrier) {
@@ -81,6 +96,12 @@ void FVulkanBarrierManager::AddMemoryBarrier(VkPipelineStageFlags srcStages, VkP
     _dstStages |= dstStages;
     _memoryBarrier.srcAccessMask |= barrier.srcAccessMask;
     _memoryBarrier.dstAccessMask |= barrier.dstAccessMask;
+
+    RHI_TRACE(L"AddMemoryBarrier",
+        static_cast<VkPipelineStageFlagBits>(srcStages),
+        static_cast<VkPipelineStageFlagBits>(dstStages),
+        static_cast<VkAccessFlagBits>(barrier.srcAccessMask),
+        static_cast<VkAccessFlagBits>(barrier.dstAccessMask) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

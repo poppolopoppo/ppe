@@ -115,6 +115,7 @@ void FVulkanResourceManager::TearDown() {
     auto tearDownCache = [this](auto& cache) {
         using resource_type = typename Meta::TDecay<decltype(cache)>::value_type;
         cache.Clear_IgnoreLeaks([this](resource_type* pCached) {
+            RHI_TRACE(L"TearDownCache", Meta::type_info<resource_type>.name, pCached->DebugName(), pCached->RefCount());
             Assert_NoAssume(pCached->RefCount() == 1);
             pCached->TearDown_Force(*this);
             return true;
@@ -927,27 +928,13 @@ void FVulkanResourceManager::RunValidation(u32 maxIteration) {
     const auto garbageCollectIFP = [this](auto* pResource) {
         Assert(pResource);
         if (pResource->IsCreated() and not pResource->Data().AllResourcesAlive(*this)) {
-#if USE_PPE_RHI_RESOURCEREFS
-            {
-                char debug[200];
-                Format(debug, "run validation: remove <{0}> of type <{1}>, ref count = {2}\n", pResource->InstanceID(), Meta::type_info<decltype(*pResource)>.name, pResource->RefCount());
-                FPlatformDebug::OutputDebug(debug);
-                //PPE_DEBUG_BREAK();
-            }
-#endif
+            RHI_TRACE(L"RunValidation", L"TearDown", Meta::type_info<decltype(*pResource)>.name, pResource->InstanceID(), pResource->RefCount());
             Verify( pResource->RemoveRef(pResource->RefCount()) );
             pResource->TearDown(*this);
             return true; // release the cached item
         }
         else {
-#if USE_PPE_RHI_RESOURCEREFS
-            if (pResource->IsCreated()) {
-                char debug[200];
-                Format(debug, "run validation: keep-alive <{0}> of type <{1}>, ref count = {2}\n", pResource->InstanceID(), Meta::type_info<decltype(*pResource)>.name, pResource->RefCount());
-                FPlatformDebug::OutputDebug(debug);
-                //PPE_DEBUG_BREAK();
-            }
-#endif
+            RHI_TRACE(L"RunValidation", L"KeepAlive", Meta::type_info<decltype(*pResource)>.name, pResource->InstanceID(), pResource->RefCount());
         }
         return false; // keep alive
     };
@@ -989,6 +976,7 @@ void FVulkanResourceManager::ReleaseMemory() {
         std::atomic<size_t> gc;
         cache.GarbageCollect(gc, maxIterations, [this](resource_type* pResource) {
             Assert(pResource);
+            RHI_TRACE(L"TrimDownCache", Meta::type_info<resource_type>.name, pResource->DebugName(), pResource->IsCreated(), pResource->RefCount());
             if (pResource->IsCreated() and pResource->RefCount() == 1) {
                 Verify( pResource->RemoveRef(pResource->RefCount()) );
                 pResource->TearDown(*this);

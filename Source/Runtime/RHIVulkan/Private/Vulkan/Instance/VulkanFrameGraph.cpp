@@ -238,8 +238,12 @@ void FVulkanFrameGraph::TransitImageLayoutToDefault_(FRawImageID imageId, VkImag
     barrier.srcQueueFamilyIndex = queueFamily;
     barrier.dstQueueFamilyIndex = queueFamily;
 
-    const FCriticalScope queueLock{ &_queueCS };
+    RHI_TRACE(L"TransitImageLayoutToDefault",
+        barrier.oldLayout,
+        barrier.newLayout,
+        image.DebugName());
 
+    const FCriticalScope queueLock{ &_queueCS };
     const auto it = _queueMap.MakeView().FindIf([queueFamily](const FQueueData& q) NOEXCEPT {
         return (q.Ptr && (
             queueFamily == static_cast<u32>(q.Ptr->FamilyIndex) ||
