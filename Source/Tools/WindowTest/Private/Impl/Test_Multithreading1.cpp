@@ -67,25 +67,25 @@ struct FMultithreading1_ {
     }
 
     bool RenderThread2() {
-        const uint2 viewSize{ 500, 1700 };
+        const uint2 viewSize{ 1280, 960 };
 
         RHI::TAutoResource<RHI::FImageID> image{ *Fg, Fg->CreateImage(RHI::FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(RHI::EPixelFormat::RGBA16_UNorm)
             .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc),
-            Default ARGS_IF_RHIDEBUG("RenderTarget3")) };
+            Default ARGS_IF_RHIDEBUG("RenderTarget2")) };
         LOG_CHECK(WindowTest, !!image);
 
         forrange(i, 0, MaxCount) {
-            // (1) wake for second command buffer
-            Sync.Wait();
-
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::Graphics }
                 .SetName("RenderThread2"));
             LOG_CHECK(WindowTest, !!cmd);
 
-            CmdBuffers[2] = cmd;
-            cmd->DependsOn(CmdBuffers[1]);
+            CmdBuffers[1] = cmd;
+
+            // (1) wake for first command buffer
+            Sync.Wait();
+            cmd->DependsOn(CmdBuffers[0]);
 
             RHI::FLogicalPassID renderPass = cmd->CreateRenderPass(RHI::FRenderPassDesc{ viewSize }
                 .AddTarget(RHI::ERenderTargetID::Color0, image, FLinearColor::Transparent(), RHI::EAttachmentStoreOp::Store)
@@ -110,25 +110,25 @@ struct FMultithreading1_ {
     }
 
     bool RenderThread3() {
-        const uint2 viewSize{ 1280, 960 };
+        const uint2 viewSize{ 500, 1700 };
 
         RHI::TAutoResource<RHI::FImageID> image{ *Fg, Fg->CreateImage(RHI::FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(RHI::EPixelFormat::RGBA16_UNorm)
             .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc),
-            Default ARGS_IF_RHIDEBUG("RenderTarget2")) };
+            Default ARGS_IF_RHIDEBUG("RenderTarget3")) };
         LOG_CHECK(WindowTest, !!image);
 
         forrange(i, 0, MaxCount) {
+            // (1) wait for second command buffer
+            Sync.Wait();
+
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::Graphics }
                 .SetName("RenderThread3"));
             LOG_CHECK(WindowTest, !!cmd);
 
-            CmdBuffers[1] = cmd;
-
-            // (1) wake for first command buffer
-            Sync.Wait();
-            cmd->DependsOn(CmdBuffers[0]);
+            CmdBuffers[2] = cmd;
+            cmd->DependsOn(CmdBuffers[1]);
 
             RHI::FLogicalPassID renderPass = cmd->CreateRenderPass(RHI::FRenderPassDesc{ viewSize }
                 .AddTarget(RHI::ERenderTargetID::Color0, image, FLinearColor::Transparent(), RHI::EAttachmentStoreOp::Store)
