@@ -167,11 +167,7 @@ bool FBinaryFormatReader::CheckFingerprint(const FBinaryFormat::FHeaders& h) con
     s.Bulk = sectionFingerprint(h.Sections.Bulk);
 
 #if USE_PPE_BINA_MARKERS && USE_PPE_LOGGER
-    FLogger::Log(
-        GLogCategory_Serialize,
-        FLogger::EVerbosity::Debug,
-        FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-        FBinaryFormat::DumpInfos(h, s) );
+    FLogger::Log(LOG_MAKESITE(Serialize, Debug), FBinaryFormat::DumpInfos(h, s) );
     FLogger::Flush(true);
 #endif
 

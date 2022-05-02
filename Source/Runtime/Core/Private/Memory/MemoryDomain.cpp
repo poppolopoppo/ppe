@@ -428,11 +428,7 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
 #if USE_PPE_LOGGER
     auto flushLogIFN = [optional, &sb]() {
         if (not optional) {
-            FLogger::Log(
-                LOG_CATEGORY_GET(MemoryDomain),
-                FLogger::EVerbosity::Info,
-                FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-                sb.Written());
+            FLogger::Log(LOG_MAKESITE(MemoryDomain, Info), sb.Written());
             sb.clear();
         }
     };
@@ -503,11 +499,7 @@ void ReportCsvTrackingData(FTextWriter* optional/* = nullptr */) {
 
 #   if USE_PPE_LOGGER
     if (not optional) {
-        FLogger::Log(
-            LOG_CATEGORY_GET(MemoryDomain),
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            ToWString(sb.Written()) );
+        FLogger::Log(LOG_MAKESITE(MemoryDomain, Info), ToWString(sb.Written()) );
     }
 #   endif
 

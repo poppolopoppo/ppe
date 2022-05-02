@@ -114,11 +114,7 @@ static void LogRequest_(const FHttpRequest& req) {
         }
     }
 
-    FLogger::Log(
-        LOG_CATEGORY_GET(Test_Network),
-        FLogger::EVerbosity::Debug,
-        FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-        oss.Written() );
+    FLogger::Log(LOG_MAKESITE(Test_Network, Debug),oss.Written() );
 
 #else
     Unused(req);
@@ -141,11 +137,7 @@ static void LogResponse_(const FHttpResponse& resp) {
     oss << L"> Body     : " << Fmt::FSizeInBytes{ checked_cast<size_t>(resp.Body().SizeInBytes()) } << Eol
         << resp.MakeView();
 
-    FLogger::Log(
-        LOG_CATEGORY_GET(Test_Network),
-        FLogger::EVerbosity::Debug,
-        FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-        oss.Written());
+    FLogger::Log(LOG_MAKESITE(Test_Network, Debug), oss.Written());
 
 #else
     Unused(resp);

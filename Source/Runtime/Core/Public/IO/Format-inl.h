@@ -36,6 +36,14 @@ struct TBasicFormatFunctor_ {
     static TBasicFormatFunctor_ Make(const T* pointer) {
         return TBasicFormatFunctor_{ &FromPointer<const T*>, pointer };
     }
+
+    static TBasicFormatFunctor_ Make(const _Char* cstr) {
+        return TBasicFormatFunctor_{
+            [](TBasicTextWriter<_Char>& oss, const void *arg) {
+                oss << MakeCStringView(static_cast<const _Char*>(arg));
+            },
+            cstr };
+    }
 };
 //----------------------------------------------------------------------------
 using FFormatFunctor_ = TBasicFormatFunctor_<char>;
@@ -43,6 +51,9 @@ using FWFormatFunctor_ = TBasicFormatFunctor_<wchar_t>;
 //----------------------------------------------------------------------------
 PPE_CORE_API void FormatArgs_(FTextWriter& oss, const FStringView& format, const TMemoryView<const FFormatFunctor_>& args);
 PPE_CORE_API void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const TMemoryView<const FWFormatFunctor_>& args);
+//----------------------------------------------------------------------------
+PPE_CORE_API void FormatRecord_(FTextWriter& oss, const TMemoryView<const FFormatFunctor_>& record);
+PPE_CORE_API void FormatRecord_(FWTextWriter& oss, const TMemoryView<const FWFormatFunctor_>& record);
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
@@ -63,6 +74,11 @@ auto MakeFormatLambda(typename details::template TBasicFormatFunctor_<_Char>::he
 template <typename _Char>
 void FormatArgs(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format, const TBasicFormatArgList<_Char>& args) {
     details::FormatArgs_(oss, format, args);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+void FormatRecord(TBasicTextWriter<_Char>& oss, const TBasicFormatArgList<_Char>& record) {
+    details::FormatRecord_(oss, record);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>

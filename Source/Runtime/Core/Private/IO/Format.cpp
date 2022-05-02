@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "IO/Format.h"
-
+#include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 
 namespace PPE {
@@ -90,9 +90,9 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct TBasicFormatProps_ {
-    size_t Repeat;
-    _Char FillChar;
-    FTextFormat Format;
+    size_t Repeat{};
+    _Char FillChar{};
+    FTextFormat Format{};
 
     inline friend TBasicTextWriter<_Char>& operator >>(TBasicTextWriter<_Char>& in, TBasicFormatProps_& props) {
         props.Repeat = 1;
@@ -344,6 +344,24 @@ NO_INLINE static void FormatArgsImpl_(
     oss << original; // restores original state
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+NO_INLINE static void FormatRecordImpl_(
+    TBasicTextWriter<_Char>& oss,
+    const TMemoryView<const details::TBasicFormatFunctor_<_Char>>& record ) {
+    Assert(not record.empty());
+
+    oss << record.front();
+
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, ", "));
+
+    oss << Fmt::LParenthese << Fmt::Space;
+    for (const details::TBasicFormatFunctor_<_Char>& fmt : record.ShiftFront()) {
+        oss << sep;
+        fmt.Helper(oss, fmt.Arg);
+    }
+    oss << Fmt::Space << Fmt::RParenthese;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -356,6 +374,14 @@ void FormatArgs_(FTextWriter& oss, const FStringView& format, const TMemoryView<
 //----------------------------------------------------------------------------
 void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const TMemoryView<const FWFormatFunctor_>& args) {
     FormatArgsImpl_(oss, format, args);
+}
+//----------------------------------------------------------------------------
+void FormatRecord_(FTextWriter& oss, const TMemoryView<const FFormatFunctor_>& record) {
+    FormatRecordImpl_(oss, record);
+}
+//----------------------------------------------------------------------------
+void FormatRecord_(FWTextWriter& oss, const TMemoryView<const FWFormatFunctor_>& record) {
+    FormatRecordImpl_(oss, record);
 }
 //----------------------------------------------------------------------------
 } //!namespace details

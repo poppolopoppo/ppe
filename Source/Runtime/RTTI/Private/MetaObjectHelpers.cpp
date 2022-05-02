@@ -487,11 +487,7 @@ private:
             indent.Inc();
         }
 
-        FLogger::Log(
-            LOG_CATEGORY_GET(RTTI),
-            FLogger::EVerbosity::Error,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString() );
+        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString() );
 
 #else
         Unused(ref);

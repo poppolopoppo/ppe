@@ -510,11 +510,7 @@ public: // export table results
         FWStringBuilder sb;
         const bool detailed = (table.dim() < 5);
         WTxt(table, sb, detailed);
-        FLogger::Log(
-            LOG_CATEGORY_GET(Benchmark),
-            FLogger::EVerbosity::Profiling,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            sb.ToString() );
+        FLogger::Log(LOG_MAKESITE(Benchmark, Profiling), sb.ToString() );
 #else
         Unused(table);
 #endif

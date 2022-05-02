@@ -66,10 +66,12 @@ FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count) {
     if (oss.Format().Width() > 1) // fixes alignment for units
         oss.Format().SetWidth(oss.Format().Width() - 2);
 
-    if (count > 9e5f)
-        oss << (count / 1e6f) << " M";
-    else if (count > 9e2f)
-        oss << (count / 1e3f) << " K";
+    const float fCount = static_cast<float>(count.Value);
+
+    if (fCount > 9e5f)
+        oss << (fCount / 1e6f) << " M";
+    else if (fCount > 9e2f)
+        oss << (fCount / 1e3f) << " K";
     else
         oss << count.Value << "  "/* for alignment */;
 
@@ -80,10 +82,12 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count) {
     if (oss.Format().Width() > 1) // fixes alignment for units
         oss.Format().SetWidth(oss.Format().Width() - 2);
 
-    if (count > 9e5f)
-        oss << (count / 1e6f) << L" M";
-    else if (count > 9e2f)
-        oss << (count / 1e3f) << L" K";
+    const float fCount = static_cast<float>(count.Value);
+
+    if (fCount > 9e5f)
+        oss << (fCount / 1e6f) << L" M";
+    else if (fCount > 9e2f)
+        oss << (fCount / 1e3f) << L" K";
     else
         oss << count.Value << L"  "/* for alignment */;
 
@@ -517,7 +521,7 @@ FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
     case PPE::Fmt::Space:
         return oss << ' ';
     case PPE::Fmt::Tab:
-        return oss << ' ';
+        return oss << '\t';
     case PPE::Fmt::Zero:
         return oss << '0';
     case PPE::Fmt::A:
@@ -609,7 +613,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch) {
     case PPE::Fmt::Space:
         return oss << L' ';
     case PPE::Fmt::Tab:
-        return oss << L' ';
+        return oss << L'\t';
     case PPE::Fmt::Zero:
         return oss << L'0';
     case PPE::Fmt::A:

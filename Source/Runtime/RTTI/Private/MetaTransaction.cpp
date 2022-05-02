@@ -107,11 +107,7 @@ void ReportLoadedTransaction_(
             << obj->RTTI_Flags() << L')'
             << Eol;
 
-        FLogger::Log(
-            LOG_CATEGORY_GET(RTTI),
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString());
+        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
     }
     oss << indent << L" - Exported objects : " << linearized.ExportedRefs.size() << Eol;
     {
@@ -126,11 +122,7 @@ void ReportLoadedTransaction_(
             << obj->RTTI_Flags() << L')'
             << Eol;
 
-        FLogger::Log(
-            LOG_CATEGORY_GET(RTTI),
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString());
+        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
     }
     oss << indent << L" - Loaded objects : " << linearized.LoadedRefs.size() << Eol;
     {
@@ -144,11 +136,7 @@ void ReportLoadedTransaction_(
             << obj->RTTI_Flags() << L')'
             << Eol;
 
-        FLogger::Log(
-            LOG_CATEGORY_GET(RTTI),
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString());
+        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
     }
     oss << indent << L" - Imported objects : " << linearized.ImportedRefs.size() << Eol;
     {
@@ -163,11 +151,7 @@ void ReportLoadedTransaction_(
             << obj->RTTI_Flags() << L')'
             << Eol;
 
-        FLogger::Log(
-            LOG_CATEGORY_GET(RTTI),
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString());
+        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
     }
 }
 #endif //!USE_PPE_LOGGER

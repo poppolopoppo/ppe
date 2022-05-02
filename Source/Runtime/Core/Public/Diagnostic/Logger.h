@@ -57,9 +57,10 @@ FWD_INTERFACE_REFPTR(Logger);
 struct FLoggerCategory {
     enum EFlags : u32 {
         Unknown         = 0,
+        Immediate       = 1<<0,
 #if !USE_PPE_FINAL_RELEASE
-        BreakOnError    = 1<<0,
-        BreakOnWarning  = 1<<1,
+        BreakOnError    = 1<<1,
+        BreakOnWarning  = 1<<2,
 #endif
     };
     ENUM_FLAGS_FRIEND(EFlags);
@@ -92,18 +93,27 @@ public:
     static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format);
     static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const wchar_t* format, .../* va_list */);
 
+    static PPE_CORE_API void RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record);
+
+    static PPE_CORE_API void Flush(bool synchronous = true);
+
     template <typename _Arg0, typename... _Args>
     static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
         typedef details::TBasicFormatFunctor_<wchar_t> format_functor_t;
-        const format_functor_t functors[] = {
+        LogArgs(category, level, site, format, {
             MakeFormatArg<wchar_t>(arg0),
             MakeFormatArg<wchar_t>(args)...
-        };
-
-        LogArgs(category, level, site, format, FWFormatArgList(functors));
+        });
     }
 
-    static PPE_CORE_API void Flush(bool synchronous = true);
+    template <typename _Arg0, typename... _Args>
+    static void Record(const FCategory& category, EVerbosity level, const FSiteInfo& site, _Arg0&& arg0, _Args&&... args) {
+        typedef details::TBasicFormatFunctor_<wchar_t> format_functor_t;
+        RecordArgs(category, level, site, {
+            MakeFormatArg<wchar_t>(arg0),
+            MakeFormatArg<wchar_t>(args)...
+        });
+    }
 
 public:
     static PPE_CORE_API void Start();
@@ -152,14 +162,23 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
+#define LOG_CATEGORY_EX(_API, _NAME, _VERBOSITY, _FLAGS) \
     _API ::PPE::FLoggerCategory& LOG_CATEGORY_GET(_NAME) { \
         ONE_TIME_INITIALIZE(::PPE::FLoggerCategory, GLogCategory, \
-            WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY, ::PPE::Meta::Default ); \
+            WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY, ::PPE::FLoggerCategory::EFlags::_FLAGS ); \
         return GLogCategory; \
     }
+#define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
+    LOG_CATEGORY_EX(_API, _NAME, _VERBOSITY, Unknown)
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
+
+#define LOG_MAKESITE(_CATEGORY, _LEVEL) \
+    LOG_CATEGORY_GET(_CATEGORY), \
+    ::PPE::FLogger::EVerbosity::_LEVEL, \
+    ::PPE::FLogger::FSiteInfo::Make( \
+        WIDESTRING(__FILE__), \
+        __LINE__ )
 
 #define LOG_VALIDATEFORMAT(_FORMAT, ...) \
     static_assert( /* validate format strings statically */ \
@@ -168,56 +187,37 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 
 // #TODO: remove this workaround when MSVC is fixed... (ShouldCompileMessage invalidly detected as not constexpr)
 #if defined(_MSC_VER) && !defined(__clang__) /* clang-cl works just fine */
-#define LOG_SHOULDCOMPILE(_LEVEL) \
+#   define LOG_SHOULDCOMPILE(_LEVEL) \
     (::PPE::FLogger::EVerbosity::_LEVEL ^ ::PPE::FLogger::EVerbosity::All)
 #else
-#define LOG_SHOULDCOMPILE(_LEVEL) \
+#   define LOG_SHOULDCOMPILE(_LEVEL) \
     (::PPE::FLogger::ShouldCompileMessage(::PPE::FLogger::EVerbosity::_LEVEL))
 #endif
 
 #define LOG(_CATEGORY, _LEVEL, ...) do { \
     IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
         EXPAND( LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
-        ::PPE::FLogger::Log( \
-            LOG_CATEGORY_GET(_CATEGORY), \
-            ::PPE::FLogger::EVerbosity::_LEVEL, \
-            ::PPE::FLogger::FSiteInfo::Make( \
-                WIDESTRING(__FILE__), \
-                __LINE__ ), \
-            __VA_ARGS__ ); \
+        ::PPE::FLogger::Log( LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
     } } while(0)
 
 #define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
     IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        ::PPE::FLogger::LogArgs( \
-            LOG_CATEGORY_GET(_CATEGORY), \
-            ::PPE::FLogger::EVerbosity::_LEVEL, \
-            ::PPE::FLogger::FSiteInfo::Make( \
-                WIDESTRING(__FILE__), \
-                __LINE__ ), \
-            _FORMAT, _FORMAT_ARG_LIST ); \
+        ::PPE::FLogger::LogArgs( LOG_MAKESITE(_CATEGORY, _LEVEL), _FORMAT, _FORMAT_ARG_LIST ); \
     } } while(0)
 
 #define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) do { \
     IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        ::PPE::FLogger::Log( \
-            LOG_CATEGORY_GET(_CATEGORY), \
-            ::PPE::FLogger::EVerbosity::_LEVEL, \
-            ::PPE::FLogger::FSiteInfo::Make( \
-                WIDESTRING(__FILE__), \
-                __LINE__ ), \
-            _MESSAGE ); \
+        ::PPE::FLogger::Log( LOG_MAKESITE(_CATEGORY, _LEVEL), _MESSAGE ); \
     } } while(0)
 
 #define LOG_PRINTF(_CATEGORY, _LEVEL, ...) do { \
     IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        ::PPE::FLogger::Printf( \
-            LOG_CATEGORY_GET(_CATEGORY), \
-            ::PPE::FLogger::EVerbosity::_LEVEL, \
-            ::PPE::FLogger::FSiteInfo::Make( \
-                WIDESTRING(__FILE__), \
-                __LINE__ ), \
-            __VA_ARGS__ ); \
+        ::PPE::FLogger::Printf( LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+    } } while(0)
+
+#define LOG_RECORD(_CATEGORY, _LEVEL, ...) do { \
+    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
+        ::PPE::FLogger::Record( LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
     } } while(0)
 
 #define FLUSH_LOG() \
@@ -227,29 +227,31 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 
 #   include "Meta/Assert.h"
 
-#define LOG_CATEGORY_VERBOSITY(...)
-#define LOG_CATEGORY(...)
-#define FLUSH_LOG() NOOP()
+#   define LOG_CATEGORY_VERBOSITY(...)
+#   define LOG_CATEGORY(...)
+#   define FLUSH_LOG() NOOP()
 
 #   if USE_PPE_FINAL_RELEASE
 #       define LOG(_CATEGORY, _LEVEL, ...) NOOP()
 #       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) NOOP()
 #       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) NOOP()
 #       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
+#       define LOG_RECORD(_CATEGORY, _LEVEL, ...) NOOP()
 #   else
-#       define _LOG_Debug() NOOP()
-#       define _LOG_Verbose() NOOP()
-#       define _LOG_Info() NOOP()
-#       define _LOG_Profiling() NOOP()
-#       define _LOG_Emphasis() NOOP()
-#       define _LOG_Warning() NOOP()
-#       define _LOG_Error() NOOP()
-#       define _LOG_Fatal() AssertReleaseFailed(L"log : fatal error")
+#       define _PPE_LOG_Debug() NOOP()
+#       define _PPE_LOG_Verbose() NOOP()
+#       define _PPE_LOG_Info() NOOP()
+#       define _PPE_LOG_Profiling() NOOP()
+#       define _PPE_LOG_Emphasis() NOOP()
+#       define _PPE_LOG_Warning() NOOP()
+#       define _PPE_LOG_Error() NOOP()
+#       define _PPE_LOG_Fatal() AssertReleaseFailed(L"log : fatal error")
 
-#       define LOG(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_RECORD(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
 #   endif
 
 #endif //!#if USE_PPE_LOGGER
