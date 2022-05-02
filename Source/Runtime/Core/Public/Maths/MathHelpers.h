@@ -173,6 +173,13 @@ inline double TruncToFloat(double d) NOEXCEPT { return FPlatformMaths::TruncToDo
 inline int TruncToInt(float f) NOEXCEPT { return FPlatformMaths::TruncToInt(f); }
 inline unsigned TruncToUnsigned(float f) NOEXCEPT { return FPlatformMaths::TruncToUnsigned(f); }
 //----------------------------------------------------------------------------
+template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+CONSTEXPR T IntDivCeil(T x, T divider) { return (x + divider - 1) / divider; }
+template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+CONSTEXPR T IntDivFloor(T x, T divider) { return x / divider; }
+template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+CONSTEXPR T IntDivRound(T x, T divider) { return (x + divider / 2 - 1) / divider; }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 CONSTEXPR float Degrees(float radians) NOEXCEPT;
