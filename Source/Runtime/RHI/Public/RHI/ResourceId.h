@@ -264,27 +264,6 @@ CONSTEXPR auto FResourceHandle::Visit(_Visitor&& visitor) const NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// String literal user operator for declaring TNamedId<>
-#define PPE_RHI_RESOURCEID_USERLITERAL_DECL(_TYPE, _ALIAS) \
-    CONSTEXPR _TYPE operator "" CONCAT(_, _ALIAS)(const char* str, size_t len) { \
-        return _TYPE{ FStringView(str, len) }; \
-    }
-//----------------------------------------------------------------------------
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FUniformID, uniform)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FPushConstantID, pushconstant)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FDescriptorSetID, descriptorset)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FSpecializationID, specialization)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FVertexID, vertex)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FVertexBufferID, vertexbuffer)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FMemPoolID, mempool)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FRTShaderID, rtshader)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FGeometryID, geometry)
-PPE_RHI_RESOURCEID_USERLITERAL_DECL(FInstanceID, instance)
-//----------------------------------------------------------------------------
-#undef PPE_RHI_RESOURCEID_USERLITERAL_DECL
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
 #define PPE_RHI_TEXTWRITEROPERATOR_DECL(_TYPE) \
@@ -347,4 +326,32 @@ PPE_RHI_TEXTWRITEROPERATOR_DECL(FDescriptorSetLayoutID)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RHI
+} //!namespace PPE
+
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// String literal user operator for declaring TNamedId<>
+// Defined in PPE namespace for easier access
+#define PPE_RHI_RESOURCEID_USERLITERAL_DECL(_TYPE, _ALIAS) \
+CONSTEXPR _TYPE operator "" CONCAT(_, _ALIAS)(const char* str, size_t len) { \
+return _TYPE{ FStringView(str, len) }; \
+}
+//----------------------------------------------------------------------------
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FUniformID, uniform)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FPushConstantID, pushconstant)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FDescriptorSetID, descriptorset)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FSpecializationID, specialization)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FVertexID, vertex)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FVertexBufferID, vertexbuffer)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FMemPoolID, mempool)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FRTShaderID, rtshader)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FGeometryID, geometry)
+PPE_RHI_RESOURCEID_USERLITERAL_DECL(RHI::FInstanceID, instance)
+//----------------------------------------------------------------------------
+#undef PPE_RHI_RESOURCEID_USERLITERAL_DECL
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE
