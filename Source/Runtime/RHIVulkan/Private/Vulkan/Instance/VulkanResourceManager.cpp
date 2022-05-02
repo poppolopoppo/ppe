@@ -695,6 +695,9 @@ FRawRenderPassID FVulkanResourceManager::CreateRenderPass(const TMemoryView<cons
     auto it = CreateCachedResource_(&renderPassId, std::move(emptyKey), _device ARGS_IF_RHIDEBUG(debugName));
     if (Likely(it.first)) {
         Assert_NoAssume(renderPassId.Valid());
+        if (not it.second)
+            it.first->AddRef(); // keep render pass in cache
+
         return renderPassId;
     }
 
