@@ -258,6 +258,9 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 		Basename: rootDir[len(rootDir)-1],
 	}, unit.Payload)
 
+	utils.UFS.Mkdir(unit.OutputFile.Dirname)
+	utils.UFS.Mkdir(unit.IntermediateDir)
+
 	switch unit.PCH {
 	case PCH_DISABLED:
 		break
