@@ -1074,7 +1074,6 @@ void FVulkanTaskProcessor::CommitBarriers_() {
 
     barriers.Commit(_workerCmd->Device(), _vkCommandBuffer);
 }
-
 //----------------------------------------------------------------------------
 // PushConstants
 //----------------------------------------------------------------------------
@@ -1853,7 +1852,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
 
     // copy instance data to GPU memory
     AddBuffer_(task.InstanceStagingBuffer, EResourceState::TransferSrc, task.InstanceStagingBufferOffset, task.InstanceBufferSizeInBytes());
-    AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, task.ScratchBufferOffset(), task.ScratchBufferSizeInBytes());
+    AddBuffer_(task.InstanceBuffer, EResourceState::TransferDst, task.InstanceBufferOffset, task.InstanceBufferSizeInBytes());
 
     CommitBarriers_();
 
