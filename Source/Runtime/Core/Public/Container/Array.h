@@ -88,6 +88,9 @@ struct TStaticArray {
     }
 };
 //----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+CONSTEXPR u32 lengthof(const TStaticArray<T, _Dim>& arr) { return static_cast<u32>(arr.size()); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -216,6 +219,9 @@ private:
     size_type _size;
     size_type _capacity;
 };
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+FORCE_INLINE u32 lengthof(const TArray<T, _Allocator>& arr) { return checked_cast<u32>(arr.size()); }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>

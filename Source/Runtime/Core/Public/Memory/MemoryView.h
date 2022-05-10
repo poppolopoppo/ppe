@@ -362,6 +362,9 @@ using FRawMemoryConst = TMemoryView<const u8>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR u32 lengthof(const TMemoryView<T>& view) { return checked_cast<u32>(view.size()); }
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 CONSTEXPR TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
     return TMemoryView<T>(&staticArray[0], _Dim);
