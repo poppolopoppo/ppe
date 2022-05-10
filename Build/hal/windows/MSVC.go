@@ -651,7 +651,7 @@ func decorateMsvcConfig_Devel(f *Facet) {
 	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOICF")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
-	msvc_CXX_runtimeChecks(f, false, false)
+	msvc_CXX_runtimeChecks(f, CompileFlags.Need(CommandEnv.Flags).RuntimeChecks.Get(), false)
 	msvc_STL_debugHeap(f, false)
 	msvc_STL_iteratorDebug(f, false)
 }
