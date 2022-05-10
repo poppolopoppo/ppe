@@ -1269,6 +1269,7 @@ TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVe
 
 #else
         "VK_LAYER_LUNARG_standard_validation", // for old VulkanSDK
+        "VK_LAYER_LUNARG_parameter_validation",
 
 #endif
     };
