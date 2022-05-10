@@ -523,7 +523,7 @@ FVulkanCommandBatch::FStagingBuffer* FVulkanCommandBatch::FindOrAddStagingBuffer
         pStagingBuffers->Push(stagingBufferIndex, bufferId, memoryId, stagingSize);
         suitable = pStagingBuffers->Peek();
 
-        Verify( MapMemory_(resources, *suitable) );
+        VerifyRelease( MapMemory_(resources, *suitable) );
     }
 
     Assert(suitable);

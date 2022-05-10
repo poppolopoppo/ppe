@@ -47,14 +47,10 @@ IVulkanFrameTask::IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProc
 {
     Assert_NoAssume(_process);
 
-#if USE_PPE_RHIDEBUG
     _inputs.Append(desc.Dependencies.MakeView().Map([](auto dep) NOEXCEPT {
         Assert(dep);
         return checked_cast<IVulkanFrameTask*>(dep.get());
     }));
-#else
-    _inputs.Append(desc.Dependencies.MakeView().template Cast<const PVulkanFrameTask>());
-#endif
 }
 //----------------------------------------------------------------------------
 void IVulkanFrameTask::CopyDescriptorSets(

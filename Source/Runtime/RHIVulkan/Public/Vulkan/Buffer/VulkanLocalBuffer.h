@@ -34,7 +34,7 @@ public:
 
         FBufferAccess() NOEXCEPT : IsReadable(false), IsWritable(false) {}
 
-        bool Valid() const { return (IsReadable | IsWritable); }
+        bool Valid() const { return (IsReadable || IsWritable); }
     };
 
     using FAccessRecords = TVulkanAccessRecords<FBufferAccess, VkDeviceSize>;

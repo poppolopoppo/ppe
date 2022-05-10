@@ -91,18 +91,18 @@ bool FVertexInputState::CopyAttributes(const TMemoryView<const FVertexAttribute>
 
         pinput->Index = attr.Index;
 
-#if USE_PPE_RHIDEBUG
         const EVertexFormat decl = pinput->DestinationFormat();
         if (attr.Format != decl) {
+#if USE_PPE_RHIDEBUG
             LOG(RHI, Error,
                 L"vertex attribute at index {0} called {1} mismatch:\n"
                 L"    - in shader: {2}\n"
                 L"    - in declaration: {3}",
                 attr.Index, attr.Id, attr.Format,
                 decl );
+#endif
             return false;
         }
-#endif
     }
 
     return true;

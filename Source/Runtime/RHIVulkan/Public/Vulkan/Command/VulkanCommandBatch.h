@@ -261,7 +261,7 @@ private:
     static void ReleaseVulkanObjects_(const FVulkanDevice& device, FInternalData& data);
     static void FinalizeCommands_(FInternalData& data);
 
-    FStagingBuffer* FindOrAddStagingBuffer_(
+    NODISCARD FStagingBuffer* FindOrAddStagingBuffer_(
         FStagingBuffers *pStagingBuffers, size_t stagingSize, EBufferUsage usage,
         size_t srcRequiredSize, size_t blockAlign, size_t offsetAlign, size_t dstMinSize ) const;
 

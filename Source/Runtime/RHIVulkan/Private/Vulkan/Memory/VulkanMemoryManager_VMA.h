@@ -489,11 +489,8 @@ inline VkMemoryPropertyFlags FVulkanMemoryManager::FVulkanMemoryAllocator::Conve
 
     VkMemoryPropertyFlags flags = 0;
 
-    for (u32 t = 1; t < static_cast<u32>(EVulkanMemoryType::_Last); t <<= 1) {
-        if (not Meta::EnumHas(values, t))
-            continue;
-
-        switch (static_cast<EVulkanMemoryType>(t)) {
+    for (auto mask = MakeEnumBitMask(values); mask; ) {
+        switch (static_cast<EVulkanMemoryType>(mask.PopFront_AssumeNotEmpty())) {
         case EVulkanMemoryType::HostRead: flags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT; break;
         case EVulkanMemoryType::HostWrite: flags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT; break;
         case EVulkanMemoryType::LocalInGPU: flags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT; break;

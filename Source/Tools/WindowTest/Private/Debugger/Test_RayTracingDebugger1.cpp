@@ -9,6 +9,12 @@ namespace PPE {
 bool Test_RayTracingDebugger1_(FWindowTestApp& app) {
     using namespace PPE::RHI;
 
+    if (not EnableShaderDebugging) {
+        Unused(app);
+        LOG(WindowTest, Warning, L"Test_RayTracingDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
+        return true;
+    }
+
     IFrameGraph& fg = *app.RHI().FrameGraph();
 
     if (not (fg.DeviceProperties().RayTracingNV and (

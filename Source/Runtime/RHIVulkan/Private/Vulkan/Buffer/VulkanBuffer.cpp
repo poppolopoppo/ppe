@@ -35,14 +35,25 @@ static VkAccessFlagBits AllBufferReadAccessMasks_(VkBufferUsageFlags usage) {
         case VK_BUFFER_USAGE_INDEX_BUFFER_BIT: result |= VK_ACCESS_INDEX_READ_BIT; break;
         case VK_BUFFER_USAGE_VERTEX_BUFFER_BIT: result |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT; break;
         case VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT: result |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT; break;
-        case VK_BUFFER_USAGE_RAY_TRACING_BIT_NV: break;
+
+#ifdef VK_NV_ray_tracing
+        case VK_BUFFER_USAGE_RAY_TRACING_BIT_NV: result |= VK_ACCESS_SHADER_READ_BIT; break;
+#endif
+#ifdef VK_KHR_buffer_device_address
+        case VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT: result |= VK_ACCESS_SHADER_READ_BIT; break;
+#endif
+#ifdef VK_EXT_transform_feedback
+        case VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT: break;
+        case VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT: result |= VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT;	break;
+#endif
+#ifdef VK_EXT_conditional_rendering
+        case VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT:
+#endif
+#ifdef VK_KHR_ray_tracing_pipeline
         case VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR: break;
         case VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR: break;
+#endif
 
-        case VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT:
-        case VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT:
-        case VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT:
-        case VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT:
         case VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM: break;	// to shutup compiler warnings
         }
     }

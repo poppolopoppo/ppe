@@ -143,7 +143,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays2_RayClosestHit"));
         FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
             .SetName("Test_TraceRays2-Frame1")
             .SetDebugFlags(EDebugFlags::Default)) };
-            LOG_CHECK(WindowTest, !!cmd);
+        LOG_CHECK(WindowTest, !!cmd);
 
         resources->BindImage("un_Output"_uniform, dstImage);
         resources->BindRayTracingScene("un_RtScene"_uniform, rtScene);
@@ -174,7 +174,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays2_RayClosestHit"));
         FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
             .SetName("Test_TraceRays2-Frame2")
             .SetDebugFlags(EDebugFlags::Default)) };
-            LOG_CHECK(WindowTest, !!cmd);
+        LOG_CHECK(WindowTest, !!cmd);
 
         PFrameTask tBuildGeom = cmd->Task(FBuildRayTracingGeometry{}.SetTarget(rtGeometry).Add(trianglesData));
 
@@ -205,7 +205,7 @@ ARGS_IF_RHIDEBUG("Test_TraceRays2_RayClosestHit"));
             .DependsOn(tBuildGeom));
 
         PFrameTask tRead = cmd->Task(FReadImage{}
-            .SetImage(dstImage, Default, viewSize)
+            .SetImage(dstImage, int2::Zero, viewSize)
             .SetCallback(onLoaded)
             .DependsOn(tTrace));
         Unused(tRead);

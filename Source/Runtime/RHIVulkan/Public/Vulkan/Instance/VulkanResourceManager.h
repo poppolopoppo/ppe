@@ -267,7 +267,7 @@ private:
     template <typename _Desc>
     NODISCARD bool CompileShaders_(_Desc& desc);
     NODISCARD bool CompileShaders_(FComputePipelineDesc& desc);
-    NODISCARD bool CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const FShaderDataVariant& spirv);
+    NODISCARD bool CompileShaderSPIRV_(PVulkanShaderModule* pShaderModule, const FShaderDataVariant& spirv);
 
     NODISCARD bool CheckHostVisibleMemory_();
     void TearDownStagingBuffers_();

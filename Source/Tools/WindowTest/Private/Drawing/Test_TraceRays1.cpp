@@ -121,9 +121,9 @@ ARGS_IF_RHIDEBUG("Test_TraceRays1_RayClosestHit"));
         };
 
         dataIsCorrect = true;
-        dataIsCorrect &= testPixel( 0.00f, -0.49f, FLinearColor{ 1.0f, 0.0f, 0.0f, 1.0f });
+        dataIsCorrect &= testPixel( 0.00f, -0.49f, FLinearColor{ 0.0f, 0.0f, 1.0f, 1.0f });
         dataIsCorrect &= testPixel( 0.49f,  0.49f, FLinearColor{ 0.0f, 1.0f, 0.0f, 1.0f });
-        dataIsCorrect &= testPixel(-0.49f,  0.49f, FLinearColor{ 0.0f, 0.0f, 1.0f, 1.0f });
+        dataIsCorrect &= testPixel(-0.49f,  0.49f, FLinearColor{ 1.0f, 0.0f, 0.0f, 1.0f });
         dataIsCorrect &= testPixel( 0.00f, -0.51f, Zero);
         dataIsCorrect &= testPixel( 0.51f,  0.51f, Zero);
         dataIsCorrect &= testPixel(-0.51f,  0.51f, Zero);
@@ -137,10 +137,10 @@ ARGS_IF_RHIDEBUG("Test_TraceRays1_RayClosestHit"));
         .SetDebugFlags(EDebugFlags::Default)) };
     LOG_CHECK(WindowTest, !!cmd);
 
-#if 0
+#if 1
     const uint2 viewSize{ 800, 600 };
 
-    const TScopedResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
+    const TAutoResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };

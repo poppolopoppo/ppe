@@ -192,14 +192,20 @@ VkShaderStageFlagBits VkCast(EShaderType value) {
     case EShaderType::Geometry: return VK_SHADER_STAGE_GEOMETRY_BIT;
     case EShaderType::Fragment: return VK_SHADER_STAGE_FRAGMENT_BIT;
     case EShaderType::Compute: return VK_SHADER_STAGE_COMPUTE_BIT;
+
+#ifdef VK_NV_mesh_shader
     case EShaderType::MeshTask: return VK_SHADER_STAGE_TASK_BIT_NV;
     case EShaderType::Mesh: return VK_SHADER_STAGE_MESH_BIT_NV;
-    case EShaderType::RayGen: return VK_SHADER_STAGE_RAYGEN_BIT_KHR;
-    case EShaderType::RayAnyHit: return VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
-    case EShaderType::RayClosestHit: return VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
-    case EShaderType::RayMiss: return VK_SHADER_STAGE_MISS_BIT_KHR;
-    case EShaderType::RayIntersection: return VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
-    case EShaderType::RayCallable: return VK_SHADER_STAGE_CALLABLE_BIT_KHR;
+#endif
+
+#ifdef VK_NV_ray_tracing
+    case EShaderType::RayGen: return VK_SHADER_STAGE_RAYGEN_BIT_NV;
+    case EShaderType::RayAnyHit: return VK_SHADER_STAGE_ANY_HIT_BIT_NV;
+    case EShaderType::RayClosestHit: return VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+    case EShaderType::RayMiss: return VK_SHADER_STAGE_MISS_BIT_NV;
+    case EShaderType::RayIntersection: return VK_SHADER_STAGE_INTERSECTION_BIT_NV;
+    case EShaderType::RayCallable: return VK_SHADER_STAGE_CALLABLE_BIT_NV;
+#endif
 
     case EShaderType::_Count:
     case EShaderType::Unknown: break;
@@ -220,14 +226,20 @@ VkShaderStageFlagBits VkCast(EShaderStages values) {
         case EShaderStages::Geometry: flags |= VK_SHADER_STAGE_GEOMETRY_BIT; break;
         case EShaderStages::Fragment: flags |= VK_SHADER_STAGE_FRAGMENT_BIT; break;
         case EShaderStages::Compute: flags |= VK_SHADER_STAGE_COMPUTE_BIT; break;
+
+#ifdef VK_NV_mesh_shader
         case EShaderStages::MeshTask: flags |= VK_SHADER_STAGE_TASK_BIT_NV; break;
         case EShaderStages::Mesh: flags |= VK_SHADER_STAGE_MESH_BIT_NV; break;
-        case EShaderStages::RayGen: flags |= VK_SHADER_STAGE_RAYGEN_BIT_KHR; break;
-        case EShaderStages::RayAnyHit: flags |= VK_SHADER_STAGE_ANY_HIT_BIT_KHR; break;
-        case EShaderStages::RayClosestHit: flags |= VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR; break;
-        case EShaderStages::RayMiss: flags |= VK_SHADER_STAGE_MISS_BIT_KHR; break;
-        case EShaderStages::RayIntersection: flags |= VK_SHADER_STAGE_INTERSECTION_BIT_KHR; break;
-        case EShaderStages::RayCallable: flags |= VK_SHADER_STAGE_CALLABLE_BIT_KHR; break;
+#endif
+
+#ifdef VK_NV_ray_tracing
+        case EShaderStages::RayGen: flags |= VK_SHADER_STAGE_RAYGEN_BIT_NV; break;
+        case EShaderStages::RayAnyHit: flags |= VK_SHADER_STAGE_ANY_HIT_BIT_NV; break;
+        case EShaderStages::RayClosestHit: flags |= VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV; break;
+        case EShaderStages::RayMiss: flags |= VK_SHADER_STAGE_MISS_BIT_NV; break;
+        case EShaderStages::RayIntersection: flags |= VK_SHADER_STAGE_INTERSECTION_BIT_NV; break;
+        case EShaderStages::RayCallable: flags |= VK_SHADER_STAGE_CALLABLE_BIT_NV; break;
+#endif
 
         case EShaderStages::All:
         case EShaderStages::AllGraphics:
@@ -557,57 +569,63 @@ VkPrimitiveTopology VkCast(EPrimitiveTopology value) {
 //----------------------------------------------------------------------------
 VkGeometryFlagBitsKHR VkCast(ERayTracingGeometryFlags values) {
     VkGeometryFlagBitsKHR flags{ static_cast<VkGeometryFlagBitsKHR>(0) };
+#ifdef VK_NV_ray_tracing
     for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
         if (not Meta::EnumHas(values, st))
             continue;
 
         switch (static_cast<ERayTracingGeometryFlags>(st)) {
-        case ERayTracingGeometryFlags::Opaque: flags |= VK_GEOMETRY_OPAQUE_BIT_KHR; break;
-        case ERayTracingGeometryFlags::NoDuplicateAnyHitInvocation: flags |= VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR; break;
+        case ERayTracingGeometryFlags::Opaque: flags |= VK_GEOMETRY_OPAQUE_BIT_NV; break;
+        case ERayTracingGeometryFlags::NoDuplicateAnyHitInvocation: flags |= VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_NV; break;
 
         case ERayTracingGeometryFlags::_Last:
         case ERayTracingGeometryFlags::Unknown: AssertNotImplemented();
         }
     }
+#endif
     return flags;
 }
 //----------------------------------------------------------------------------
 VkGeometryInstanceFlagBitsNV VkCast(ERayTracingInstanceFlags values) {
-    VkGeometryInstanceFlagBitsNV flags{ static_cast<VkGeometryInstanceFlagBitsNV>(0) };
+    VkGeometryInstanceFlagBitsNV flags = Zero;
+#ifdef VK_NV_ray_tracing
     for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
         if (not Meta::EnumHas(values, st))
             continue;
 
         switch (static_cast<ERayTracingInstanceFlags>(st)) {
-        case ERayTracingInstanceFlags::TriangleCullDisable: flags |= VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR; break;
-        case ERayTracingInstanceFlags::TriangleFrontCCW: flags |= VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR; break;
-        case ERayTracingInstanceFlags::ForceOpaque: flags |= VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR; break;
-        case ERayTracingInstanceFlags::ForceNonOpaque: flags |= VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_KHR; break;
+        case ERayTracingInstanceFlags::TriangleCullDisable: flags |= VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV; break;
+        case ERayTracingInstanceFlags::TriangleFrontCCW: flags |= VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_NV; break;
+        case ERayTracingInstanceFlags::ForceOpaque: flags |= VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_NV; break;
+        case ERayTracingInstanceFlags::ForceNonOpaque: flags |= VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_NV; break;
 
         case ERayTracingInstanceFlags::_Last:
         case ERayTracingInstanceFlags::Unknown: AssertNotImplemented();
         }
     }
+#endif
     return flags;
 }
 //----------------------------------------------------------------------------
 VkBuildAccelerationStructureFlagBitsNV VkCast(ERayTracingBuildFlags values) {
-    VkBuildAccelerationStructureFlagBitsNV flags{ static_cast<VkBuildAccelerationStructureFlagBitsNV>(0) };
+    VkBuildAccelerationStructureFlagBitsNV flags = Zero;
+#ifdef VK_NV_ray_tracing
     for (u32 st = 1; st <= static_cast<u32>(values); st <<= 1) {
         if (not Meta::EnumHas(values, st))
             continue;
 
         switch (static_cast<ERayTracingBuildFlags>(st)) {
-        case ERayTracingBuildFlags::AllowUpdate: flags |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR; break;
-        case ERayTracingBuildFlags::AllowCompaction: flags |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR; break;
-        case ERayTracingBuildFlags::PreferFastTrace: flags |= VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR; break;
-        case ERayTracingBuildFlags::PreferFastBuild: flags |= VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR; break;
-        case ERayTracingBuildFlags::LowMemory: flags |= VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR; break;
+        case ERayTracingBuildFlags::AllowUpdate: flags |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV; break;
+        case ERayTracingBuildFlags::AllowCompaction: flags |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_NV; break;
+        case ERayTracingBuildFlags::PreferFastTrace: flags |= VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV; break;
+        case ERayTracingBuildFlags::PreferFastBuild: flags |= VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_NV; break;
+        case ERayTracingBuildFlags::LowMemory: flags |= VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_NV; break;
 
         case ERayTracingBuildFlags::_Last:
         case ERayTracingBuildFlags::Unknown: AssertNotImplemented();
         }
     }
+#endif
     return flags;
 }
 //----------------------------------------------------------------------------
@@ -692,12 +710,21 @@ EBufferUsage RHICast(VkBufferUsageFlagBits flags) {
         case VK_BUFFER_USAGE_INDEX_BUFFER_BIT: result |= EBufferUsage::Index; break;
         case VK_BUFFER_USAGE_VERTEX_BUFFER_BIT: result |= EBufferUsage::Vertex; break;
         case VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT: result |= EBufferUsage::Indirect; break;
-        case VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT: result |= EBufferUsage::TransferDst; break;
-        case VK_BUFFER_USAGE_RAY_TRACING_BIT_NV: result |= EBufferUsage::RayTracing; break;
 
+#ifdef VK_NV_ray_tracing
+        case VK_BUFFER_USAGE_RAY_TRACING_BIT_NV: result |= EBufferUsage::RayTracing; break;
+#endif
+#ifdef VK_KHR_buffer_device_address
+        case VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT: //result |= EBufferUsage::ShaderAddress; break;
+#endif
+#ifdef VK_EXT_transform_feedback
         case VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT:
         case VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT: // #TODO
+#endif
+#ifdef VK_EXT_conditional_rendering
         case VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT:
+#endif
+
         case VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR:
         case VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR:
 
@@ -770,8 +797,12 @@ EImageUsage RHICast(VkImageUsageFlagBits flags) {
         case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT: result |= EImageUsage::TransientAttachment; break;
         case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT: result |= EImageUsage::InputAttachment; break;
 
-        case VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV:
-        case VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT:
+#ifdef VK_NV_shading_rate_image
+        case VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV: result |= EImageUsage::ShadingRate; break;
+#endif
+#ifdef VK_EXT_fragment_density_map
+        case VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT: //result |= EImageUsage::FragmentDensityMap; break;
+#endif
 
         default: AssertNotImplemented();
         }
@@ -853,31 +884,43 @@ VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value) {
     case EResourceState::_Access_IndexBuffer: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
     case EResourceState::_Access_VertexBuffer: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
     case EResourceState::_Access_ConditionalRendering: return VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT;
+#ifdef VK_NV_device_generated_commands
     case EResourceState::_Access_CommandProcess: return VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV;
+#elif defined(VK_NVX_device_generated_commands)
+    case EResourceState::_Access_CommandProcess: return VK_PIPELINE_STAGE_COMMAND_PROCESS_BIT_NVX;
+#endif
+#ifdef VK_NV_shading_rate_image
     case EResourceState::_Access_ShadingRateImage: return VK_PIPELINE_STAGE_SHADING_RATE_IMAGE_BIT_NV;
+#endif
+#ifdef VK_NV_ray_tracing
     case EResourceState::_Access_BuildRayTracingAS:
-    case EResourceState::_Access_RTASBuildingBuffer: return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+    case EResourceState::_Access_RTASBuildingBuffer: return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV;
+#endif
 
     case EResourceState::_Access_ShaderStorage:
     case EResourceState::_Access_Uniform:
     case EResourceState::_Access_ShaderSample: {
         Assert(value ^ EResourceState::_ShaderMask);
-        VkPipelineStageFlagBits result = static_cast<VkPipelineStageFlagBits>(0);
+        VkPipelineStageFlagBits result = Zero;
         if (value & EResourceState::_VertexShader) result |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
         if (value & EResourceState::_TessControlShader) result |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
         if (value & EResourceState::_TessEvaluationShader) result |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
         if (value & EResourceState::_GeometryShader) result |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
         if (value & EResourceState::_FragmentShader) result |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         if (value & EResourceState::_ComputeShader) result |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+#ifdef VK_NV_mesh_shader
         if (value & EResourceState::_MeshTaskShader) result |= VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV;
         if (value & EResourceState::_MeshShader) result |= VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV;
-        if (value & EResourceState::_RayTracingShader) result |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+#endif
+#ifdef VK_NV_ray_tracing
+        if (value & EResourceState::_RayTracingShader) result |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV;
+#endif
         return result;
     }
 
     case EResourceState::_Access_DepthStencilAttachment: {
         Assert(value ^ (EResourceState::EarlyFragmentTests | EResourceState::LateFragmentTests));
-        VkPipelineStageFlagBits result = static_cast<VkPipelineStageFlagBits>(0);
+        VkPipelineStageFlagBits result = Zero;
         if (value & EResourceState::EarlyFragmentTests) result |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         if (value & EResourceState::LateFragmentTests) result |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         return result;
@@ -890,7 +933,8 @@ VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value) {
 //----------------------------------------------------------------------------
 VkAccessFlagBits EResourceState_ToAccess(EResourceState value) {
     switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
-    case EResourceState::Unknown: return static_cast<VkAccessFlagBits>(0);
+    case EResourceState::Unknown: return Zero;
+
     case EResourceState::UniformRead: return VK_ACCESS_UNIFORM_READ_BIT;
     case EResourceState::ShaderSample:
     case EResourceState::ShaderRead: return VK_ACCESS_SHADER_READ_BIT;
@@ -911,14 +955,21 @@ VkAccessFlagBits EResourceState_ToAccess(EResourceState value) {
     case EResourceState::IndirectBuffer: return VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
     case EResourceState::IndexBuffer: return VK_ACCESS_INDEX_READ_BIT;
     case EResourceState::VertexBuffer: return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-    case EResourceState::PresentImage: return static_cast<VkAccessFlagBits>(0);
-    case EResourceState::BuildRayTracingStructRead: return VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-    case EResourceState::BuildRayTracingStructWrite: return VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-    case EResourceState::BuildRayTracingStructReadWrite: return (VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR);
+    case EResourceState::PresentImage: return Zero;
+
+#ifdef VK_NV_ray_tracing
+    case EResourceState::BuildRayTracingStructRead: return VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
+    case EResourceState::BuildRayTracingStructWrite: return VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV;
+    case EResourceState::BuildRayTracingStructReadWrite: return (VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV);
+#endif
+
     case EResourceState::RTASBuildingBufferRead: // cache invalidation is not needed for buffers
     case EResourceState::RTASBuildingBufferReadWrite:
-    case EResourceState::RayTracingShaderRead: return static_cast<VkAccessFlagBits>(0);
+    case EResourceState::RayTracingShaderRead: return Zero;
+
+#ifdef VK_NV_shading_rate_image
     case EResourceState::ShadingRateImageRead: return VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV;
+#endif
     default: break;
     }
     AssertNotImplemented();

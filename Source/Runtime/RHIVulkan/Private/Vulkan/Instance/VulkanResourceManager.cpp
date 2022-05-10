@@ -418,7 +418,8 @@ bool FVulkanResourceManager::CompileShaders_(FComputePipelineDesc& desc) {
     return false;
 }
 //----------------------------------------------------------------------------
-bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderModule, const FShaderDataVariant& spirv) {
+bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pShaderModule, const FShaderDataVariant& spirv) {
+    Assert(pShaderModule);
     const auto* const shaderData = std::get_if<PShaderBinaryData>(&spirv);
     if (not shaderData || not *shaderData || not (*shaderData)->Data()) {
         LOG(RHI, Error, L"expected valid binary shader data (SPIRV)");
@@ -447,13 +448,13 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pVkShaderM
         VK_OBJECT_TYPE_SHADER_MODULE );
 #endif
 
-    *pVkShaderModule = NEW_REF(RHIShader, FVulkanShaderModule,
+    *pShaderModule = NEW_REF(RHIShader, FVulkanShaderModule,
         vkShaderModule,
         rawSpirv.Fingerprint(),
         rawSpirv.EntryPoint().MakeView()
         ARGS_IF_RHIDEBUG(rawSpirv.DebugName().MakeView()) );
 
-    _shaderCache.LockExclusive()->push_back(*pVkShaderModule);
+    _shaderCache.LockExclusive()->push_back(*pShaderModule);
 
     return true;
 }
@@ -982,6 +983,7 @@ void FVulkanResourceManager::ReleaseMemory() {
             Assert(pResource);
             RHI_TRACE(L"TrimDownCache", Meta::type_info<resource_type>.name, pResource->DebugName(), pResource->IsCreated(), pResource->RefCount());
             if (pResource->IsCreated() and pResource->RefCount() == 1) {
+                Verify( pResource->RemoveRef(1) );
                 pResource->TearDown(*this);
                 return true; // release the cached item
             }

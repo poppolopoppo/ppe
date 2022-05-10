@@ -889,8 +889,9 @@ bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout) {
                 VK_TRUE, checked_cast<u64>(timeout.Value()));
 
             if (Unlikely(VK_SUCCESS != vkResult)) {
-                AssertRelease(VK_TIMEOUT == vkResult);
                 succeed = false;
+                if (VK_TIMEOUT != vkResult)
+                    PPE_THROW_IT(FVulkanException("vkWaitForFences", vkResult));
             }
 
             fences.clear();
