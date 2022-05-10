@@ -111,7 +111,7 @@ public: // must be defined for every platform
     using FSynchronizationBarrier = void*;
 
     static void CreateSynchronizationBarrier(FSynchronizationBarrier* pbarrier, size_t numThreads) = delete;
-    static void EnterSynchronizationBarrier(FSynchronizationBarrier& barrier) = delete;
+    static bool EnterSynchronizationBarrier(FSynchronizationBarrier& barrier) = delete;
     static void DestroySynchronizationBarrier(FSynchronizationBarrier* pbarrier) = delete;
 
 };

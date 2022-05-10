@@ -169,11 +169,13 @@ public:
 
     static FORCE_INLINE void CreateSynchronizationBarrier(FSynchronizationBarrier* pbarrier, size_t numThreads) {
         Assert(pbarrier);
-        ::InitializeSynchronizationBarrier(pbarrier, static_cast<int>(numThreads), UMax);
+        ::InitializeSynchronizationBarrier(pbarrier, static_cast<int>(numThreads), -1);
     }
 
-    static FORCE_INLINE void EnterSynchronizationBarrier(FSynchronizationBarrier& barrier) {
-        ::EnterSynchronizationBarrier(&barrier, SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE);
+    static FORCE_INLINE bool EnterSynchronizationBarrier(FSynchronizationBarrier& barrier) {
+        // return true for only *ONE* thread
+        // https://docs.microsoft.com/fr-fr/windows/win32/sync/synchronization-barriers
+        return ::EnterSynchronizationBarrier(&barrier, SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE);
     }
 
     static FORCE_INLINE void DestroySynchronizationBarrier(FSynchronizationBarrier* pbarrier) NOEXCEPT {
