@@ -56,10 +56,8 @@ void FIgnoreList::Add(const FIgnoreKey& key) {
 //----------------------------------------------------------------------------
 auto FIgnoreList::Hit(const FIgnoreKey& key) -> FHitCount {
     const auto exclusive = _hits.LockExclusive();
-    const auto it = exclusive->find(key);
-    if (exclusive->end() != it)
-        return (++it->second);
-    return 0;
+    const auto [it, exist] = exclusive->insert({key, 0});
+    return it->second++;
 }
 //----------------------------------------------------------------------------
 bool FIgnoreList::Ignored(const FIgnoreKey& key) const NOEXCEPT {
