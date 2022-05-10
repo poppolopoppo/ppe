@@ -49,6 +49,10 @@ public:
     void Task(ITaskContext&) {
         NOOP();
     }
+
+    void Task_NoExcept(ITaskContext&) NOEXCEPT_IF(false) {
+        NOOP();
+    }
 };
 
 void TaskFunc_(ITaskContext&) {}
@@ -75,6 +79,7 @@ NO_INLINE void Test_Function_() {
     task = FTaskFunc::Bind<&FTask_Member_::Task_Extra>(&m, 42, false, 3.1415f, &task);
     task = FTaskFunc::Bind<&FTask_Member_::TaskConst>(&m);
     task = FTaskFunc::Bind<&FTask_Member_::TaskConst_Extra>(&m, 42, false, 3.1415f, &task);
+    Unused(task);
 
     PRefCountableTask_ a = NEW_REF(Task, FRefCountableTask_);
 
@@ -82,10 +87,21 @@ NO_INLINE void Test_Function_() {
     taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(a);
     taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(a.get());
     taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(MakeSafePtr(a));
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task_NoExcept>(a);
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task_NoExcept>(a.get());
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task_NoExcept>(MakeSafePtr(a));
 
     FTaskFunc taskComposite = [taskRef](ITaskContext& ctx) {
         taskRef(ctx);
     };
+    Unused(taskComposite);
+
+    FRefCountableTask_ b;
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(&b);
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task>(MakePtrRef(b));
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task_NoExcept>(&b);
+    taskRef = FTaskFunc::Bind<&FRefCountableTask_::Task_NoExcept>(MakePtrRef(b));
+    Unused(taskRef);
 }
 //--------------------1--------------------------------------------------------
 NO_INLINE void Test_Aggregation_() {

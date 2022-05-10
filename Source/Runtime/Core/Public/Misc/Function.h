@@ -344,6 +344,10 @@ struct TFunctionTraits {
             using type = TFunctionTuple<_Class*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
+        struct extra_t<TPtrRef<_Class>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<_Class>, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
         struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
             using type = TFunctionTuple<TSafePtr<_Class>, _ExtraArgs...>;
         };
@@ -373,6 +377,10 @@ struct TFunctionTraits {
             using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
+        struct extra_t<TPtrRef<_Class>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<_Class>, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
         struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
             using type = TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
         };
@@ -383,6 +391,10 @@ struct TFunctionTraits {
         template <typename... _ExtraArgs>
         struct extra_t<const _Class*, _ExtraArgs...> {
             using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
+        };
+        template <typename... _ExtraArgs>
+        struct extra_t<TPtrRef<const _Class>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<const _Class>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
         struct extra_t<TSafePtr<const _Class>, _ExtraArgs...> {
