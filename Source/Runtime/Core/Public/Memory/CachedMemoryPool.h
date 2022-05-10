@@ -5,6 +5,7 @@
 #include "Container/HashMap.h"
 #include "Memory/MemoryPool.h"
 #include "Meta/Functor.h"
+#include "Thread/CriticalSection.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -66,17 +67,17 @@ class TCachedMemoryPool : Meta::FNonCopyableNorMovable {
     using FCacheItem_ = TCacheItem_<_Key, _Value>;
     using pool_type = TTypedMemoryPool<FCacheItem_, _ChunkSize, _MaxChunks, _Allocator>;
 
-    using FHashSegment_ = FAtomicOrderedLock;
+    using FHashSegment_ = FCriticalSection;
     using FHashBucket_ = FCacheItem_*;
     struct FHashTable_ {
         STATIC_CONST_INTEGRAL(u32, SegmentMask, FGenericPlatformMaths::NextPow2(static_cast<u32>(pool_type::ChunkSize >> 3)) - 1);
         STATIC_CONST_INTEGRAL(u32, BucketMask, FGenericPlatformMaths::NextPow2(static_cast<u32>(pool_type::ChunkSize) + (pool_type::ChunkSize >> 1)) - 1);
 
         std::atomic<u32> Count{ 0 };
-        FHashSegment_* pSegments;
-        FHashBucket_* pBuckets;
+        FHashSegment_* pSegments{ nullptr };
+        FHashBucket_* pBuckets{ nullptr };
 
-        FHashSegment_& Segment(hash_t h) const { return pSegments[h & SegmentMask]; }
+        FHashSegment_& Segment(hash_t h) const { return pSegments[(h >> 3) & SegmentMask]; }
         FHashBucket_& Bucket(hash_t h) const { return pBuckets[h & BucketMask]; }
     };
 
@@ -188,7 +189,7 @@ template <typename _Ctor>
 auto TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::FindOrAdd(key_type&& rkey, _Ctor&& ctor) -> TPair<index_type, bool> {
 
     const hash_t h = hash_value(rkey);
-    const FHashSegment_::FScope scopeLock( _cache.Segment(h) );
+    const FHashSegment_::FScopeLock scopeLock( &_cache.Segment(h) );
 
     auto*& pBucket = _cache.Bucket(h);
 
@@ -228,7 +229,7 @@ bool TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Remove
     FCacheItem_* const pBlock = _pool.At(id);
     Assert_NoAssume(pBlock->PoolIndex() == id);
 
-    const FHashSegment_::FScope scopeLock( _cache.Segment(pBlock->HashValue()) );
+    const FHashSegment_::FScopeLock scopeLock( &_cache.Segment(pBlock->HashValue()) );
 
     bool shouldRemove;
     IF_CONSTEXPR(FCacheItem_::has_separated_key)
@@ -269,21 +270,21 @@ template <typename _Key, typename _Value, size_t _ChunkSize, size_t _MaxChunks, 
 void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_AssertCompletelyEmpty() {
     Assert_NoAssume(_cache.Count.load(std::memory_order_relaxed) == 0);
 
-    u32 segment = UINT32_MAX;
+    FHashSegment_* pSegment{ nullptr };
     forrange(b, 0, FHashTable_::BucketMask + 1) {
-        const u32 s = (b & FHashTable_::SegmentMask);
-        if (segment != s) {
-            if (segment <= FHashTable_::SegmentMask)
-                _cache.pSegments[segment].Unlock();
-            _cache.pSegments[s].Lock();
-            segment = s;
+        FHashSegment_& seg = _cache.Segment(b);
+        if (&seg != pSegment) {
+            if (pSegment)
+                pSegment->Unlock();
+            pSegment = &seg;
+            pSegment->Lock();
         }
 
         _cache.pBuckets[b] = nullptr;
     }
 
-    if (segment <= FHashTable_::SegmentMask)
-        _cache.pSegments[segment].Unlock();
+    if (pSegment)
+        pSegment->Unlock();
 
     _cache.Count.store(0, std::memory_order_release);
     _pool.Clear_AssertCompletelyEmpty();
@@ -297,14 +298,14 @@ void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_
 template <typename _Key, typename _Value, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
 template <typename _Dtor>
 void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_IgnoreLeaks(_Dtor&& dtor) {
-    u32 segment = UINT32_MAX;
+    FHashSegment_* pSegment{ nullptr };
     forrange(b, 0, FHashTable_::BucketMask + 1) {
-        const u32 s = (b & FHashTable_::SegmentMask);
-        if (segment != s) {
-            if (segment <= FHashTable_::SegmentMask)
-                _cache.pSegments[segment].Unlock();
-            _cache.pSegments[s].Lock();
-            segment = s;
+        FHashSegment_& seg = _cache.Segment(b);
+        if (&seg != pSegment) {
+            if (pSegment)
+                pSegment->Unlock();
+            pSegment = &seg;
+            pSegment->Lock();
         }
 
         for (FCacheItem_* p = _cache.pBuckets[b]; p; ) {
@@ -328,8 +329,8 @@ void TCachedMemoryPool<_Key, _Value, _ChunkSize, _MaxChunks, _Allocator>::Clear_
         _cache.pBuckets[b] = nullptr;
     }
 
-    if (segment <= FHashTable_::SegmentMask)
-        _cache.pSegments[segment].Unlock();
+    if (pSegment)
+        pSegment->Unlock();
 
     _pool.Clear_AssertCompletelyEmpty();
 }
