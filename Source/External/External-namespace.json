@@ -5,6 +5,7 @@
 		"glslang",
 		"glsl_trace",
 		"iaca",
+		"imgui",
 		"lz4",
 		"renderdoc",
 		"spirv-cross",

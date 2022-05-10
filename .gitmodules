@@ -40,3 +40,7 @@
 [submodule "Source/External/spirv-headers/SPIRV-Headers.git"]
 	path = Source/External/spirv-headers/SPIRV-Headers.git
 	url = https://github.com/KhronosGroup/SPIRV-Headers.git
+[submodule "Source/External/imgui/imgui.git"]
+	path = Source/External/imgui/imgui.git
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
