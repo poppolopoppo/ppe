@@ -263,6 +263,8 @@ func (x *VcxprojBuilder) vcxconfig(bff *BffFile, u *Unit) BffVar {
 		bff.Assign("Platform", x.solutionPlatform(u.Target.PlatformName))
 		bff.Assign("Config", u.Target.ConfigName)
 		bff.Assign("PlatformToolset", "v"+u.Facet.Exports.Get("VisualStudio/PlatformToolset"))
+		bff.Assign("Output", u.OutputFile)
+		bff.Assign("OutputDirectory", UFS.Binaries)
 		bff.Assign("IntermediateDirectory", u.IntermediateDir)
 		bff.Assign("BuildLogFile", u.IntermediateDir.File("BuildLog.log"))
 		bff.Assign("AdditionalOptions", u.AnalysisOptions.Join(" "))
