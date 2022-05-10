@@ -112,6 +112,11 @@ public:
     :   FVulkanShaderModule(vkShaderModule, fingerprint, entryPoint ARGS_IF_RHIDEBUG(debugName))
     {}
 
+    TVulkanDebuggableShaderData(VkShaderModule vkShaderModule, const PShaderBinaryData& compiledSpirv) NOEXCEPT
+    :   FVulkanShaderModule(vkShaderModule, compiledSpirv->Fingerprint(), compiledSpirv->EntryPoint().MakeView() ARGS_IF_RHIDEBUG(compiledSpirv->DebugName().MakeView())) {
+        Assert(VK_NULL_HANDLE != vkShaderModule);
+    }
+
 #if USE_PPE_RHIDEBUG
     TVulkanDebuggableShaderData(
         const FStringView& entryPoint, VkShaderModule vkShaderModule, const FFingerprint& fingerprint,
@@ -119,22 +124,13 @@ public:
     :   FVulkanShaderModule(vkShaderModule, fingerprint, entryPoint ARGS_IF_RHIDEBUG(debugName))
     ,   _debugInfo(std::move(debugInfo))
     {}
-#endif
 
-    TVulkanDebuggableShaderData(
-        VkShaderModule vkShaderModule,
-        const PShaderBinaryData& spirvCache ) NOEXCEPT
-    :   FVulkanShaderModule(vkShaderModule, spirvCache->Fingerprint(), spirvCache->EntryPoint().MakeView() ARGS_IF_ASSERT(spirvCache->DebugName().MakeView())) {
+    TVulkanDebuggableShaderData(VkShaderModule vkShaderModule, const FVulkanDebuggableShaderSPIRV& debuggableSpirv) NOEXCEPT
+    :   FVulkanShaderModule(vkShaderModule, debuggableSpirv.Fingerprint(), debuggableSpirv.EntryPoint().MakeView() ARGS_IF_RHIDEBUG(debuggableSpirv.DebugName().MakeView()))
+    ,   _debugInfo(debuggableSpirv._debugInfo) {
         Assert(VK_NULL_HANDLE != vkShaderModule);
-        Assert(spirvCache);
-
-#if USE_PPE_RHIDEBUG
-        if (const auto* spirvData = dynamic_cast<const FVulkanDebuggableShaderSPIRV*>(spirvCache.get()))
-            _debugInfo = spirvData->_debugInfo;
-#endif
     }
 
-#if USE_PPE_RHIDEBUG
     bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) override final {
         LOG_CHECK(PipelineCompiler, EShaderDebugMode::Trace == mode || EShaderDebugMode::Profiling == mode);
         if (not _debugInfo)
@@ -154,7 +150,7 @@ public:
         FVulkanShaderModule::TearDown(
             deviceInfo.vkDevice,
             deviceInfo.API.vkDestroyShaderModule,
-            deviceInfo.pAllocator );
+            deviceInfo.pAllocator);
     }
 
 private:

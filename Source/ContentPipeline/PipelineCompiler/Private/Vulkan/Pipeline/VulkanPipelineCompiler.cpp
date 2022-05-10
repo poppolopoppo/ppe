@@ -214,6 +214,7 @@ NODISCARD static bool MergePipelineResources_(
     // merge push constants
     for (const auto& srcPc : src.PushConstants ) {
         // Vulkan valid user:
+        // Vulkan valid user:
         //  * offset must be a multiple of 4
         //  * size must be a multiple of 4
         // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VUID-vkCmdPushConstants-offset-00368
@@ -683,7 +684,7 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
 
     std::swap(desc, ppln);
 
-    Assert_NoAssume(CheckDescriptorBindings_(desc));
+    ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -750,7 +751,7 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
 
     std::swap(desc, ppln);
 
-    Assert_NoAssume(CheckDescriptorBindings_(desc));
+    ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
 }
 
@@ -827,7 +828,7 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
 
     std::swap(desc, ppln);
 
-    Assert_NoAssume(CheckDescriptorBindings_(desc));
+    ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -878,7 +879,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
 
     std::swap(desc, ppln);
 
-    Assert_NoAssume(CheckDescriptorBindings_(desc));
+    ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -938,8 +939,23 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
                 }
 #endif
 
-                auto module = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, spirvData);
-                it = shaderCache.insert({ spirvData, std::move(module) }).first;
+                PShaderModule shaderModule;
+                switch (Meta::EnumAnd(sh->first, EShaderLangFormat::_DebugModeMask)) {
+#if USE_PPE_RHIDEBUG
+                case EShaderLangFormat::EnableDebugTrace:
+                case EShaderLangFormat::EnableProfiling:
+                case EShaderLangFormat::EnableTimeMap:
+                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId,
+                        *checked_cast<const FVulkanDebuggableShaderSPIRV*>(spirvData.get()));
+                    break;
+#endif
+                case EShaderLangFormat::Unknown:
+                default:
+                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, spirvData);
+                    break;
+                }
+
+                it = shaderCache.insert({ spirvData, std::move(shaderModule) }).first;
             }
 
             shader->Data.Erase(sh);
