@@ -41,6 +41,14 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'XXX': conversion from 'YYY' to 'ZZZ', poss
 
 #else
 
+#	define ASSERT( _expr_ ) AssertRelease_NoAssume(_expr_)
+#	define __GETARG_0( _0_, ... )		_0_
+#	define __GETARG_1( _0_, _1_, ... )	_1_
+#	define __CHECK_ERR( _expr_, _ret_ )	{if (not (_expr_)) { ASSERT(!(#_expr_)); return _ret_; } }
+#	define CHECK_ERR( ... )				__CHECK_ERR( __GETARG_0( __VA_ARGS__ ), __GETARG_1( __VA_ARGS__, 0 ))
+#	define RETURN_ERR( _msg_ )			{ ASSERT(!(#_msg_)); return 0; }
+#	define CHECK( _expr_ )				{ ASSERT(_expr_); }
+
 #	define BEGIN_ENUM_CHECKS()
 #	define END_ENUM_CHECKS()
 
