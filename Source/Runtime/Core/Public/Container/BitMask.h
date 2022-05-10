@@ -251,11 +251,18 @@ struct TBitMask<u128> {
 };
 //----------------------------------------------------------------------------
 using FBitMask = TBitMask<>;
-PPE_ASSUME_TEMPLATE_AS_POD(TBitMask<T>, typename T)
+PPE_ASSUME_TEMPLATE_AS_POD(COMMA_PROTECT(TBitMask<T, SignifiantBits>), typename T, int SignifiantBits)
+//----------------------------------------------------------------------------
+template <typename _Integral, class = Meta::TEnableIf<std::is_integral_v<_Integral>> >
+CONSTEXPR CONSTF auto MakeBitMask(_Integral flags) {
+    using integral_t = std::conditional_t < // clamp small enums to u32 for lzcnt/tzcnt overloads
+        sizeof(_Integral) < sizeof(u32), u32, std::make_unsigned_t<_Integral> > ;
+    return TBitMask<integral_t, Meta::BitCount<_Integral>>{ checked_cast<integral_t>(flags) };
+}
 //----------------------------------------------------------------------------
 template <typename _Enum, class = Meta::TEnableIf<Meta::enum_is_flags_v<_Enum>> >
-CONSTEXPR TBitMask<Meta::TEnumOrd<_Enum>> MakeEnumBitMask(_Enum flags) {
-    return { Meta::EnumOrd(flags) };
+CONSTEXPR CONSTF auto MakeEnumBitMask(_Enum flags) {
+    return MakeBitMask( Meta::EnumOrd(flags) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
