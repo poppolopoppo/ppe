@@ -180,18 +180,18 @@ void FVulkanCommandBuffer::AfterCompilation_(FInternalData& data) {
     // destroy logical render passes
     FVulkanResourceManager& resources = ResourceManager();
 
-    forrange(i, 0, checked_cast<FResourceIndex>(data.RM.LogicalRenderPassCount)) {
-        TResourceProxy<FVulkanLogicalRenderPass>* const pPass = data.RM.LogicalRenderPasses[i];
+    for (const FResourceIndex& id : data.RM.AllocatedRenderPasses) {
+        TResourceProxy<FVulkanLogicalRenderPass>* const pPass = data.RM.LogicalRenderPasses[id];
         Assert(pPass);
 
         if (not pPass->IsDestroyed()) {
             pPass->TearDown(resources);
             Meta::Destroy(pPass);
-            data.RM.LogicalRenderPasses.Deallocate(i);
+            data.RM.LogicalRenderPasses.Deallocate(id);
         }
     }
 
-    data.RM.LogicalRenderPassCount = 0;
+    data.RM.AllocatedRenderPasses.clear();
 }
 //----------------------------------------------------------------------------
 bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
@@ -914,9 +914,9 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     // #TODO: virtual buffer or buffer cache
     FBufferID instanceBuf = _frameGraph->CreateBuffer(FBufferDesc{
         task.Instances.MakeView().SizeInBytes(),
-        EBufferUsage::TransferDst + EBufferUsage::RayTracing
+        EBufferUsage::TransferDst | EBufferUsage::RayTracing
     },  mem ARGS_IF_RHIDEBUG("InstanceBuffer") );
-    Assert(instanceBuf);
+    LOG_CHECK(RHI, !!instanceBuf);
 
     pBuildTask->InstanceBuffer = ToLocal(*instanceBuf);
     ReleaseResource(instanceBuf.Release());
@@ -931,7 +931,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     Assert_NoAssume(pBuildTask->ScratchBuffer->Read()->Desc.Usage & EBufferUsage::RayTracing);
     Assert_NoAssume(pBuildTask->InstanceBuffer->Read()->Desc.Usage & EBufferUsage::RayTracing);
 
-    // sort instance by instance ID
+    // sort instances by instance ID
     STACKLOCAL_POD_ARRAY(u32, sorted, task.Instances.size());
     forrange(i, 0, checked_cast<u32>(sorted.size())) sorted[i] = i;
     std::sort(sorted.begin(), sorted.end(), [&instances{task.Instances}](auto lhs, auto rhs) NOEXCEPT {
@@ -1207,9 +1207,7 @@ FLogicalPassID FVulkanCommandBuffer::CreateRenderPass(const FRenderPassDesc& des
         return Default;
     }
 
-    exclusive->RM.LogicalRenderPassCount = Max(
-        static_cast<u32>(index) + 1,
-        exclusive->RM.LogicalRenderPassCount);
+    exclusive->RM.AllocatedRenderPasses.Push(index);
 
     const FLogicalPassID logicalPassId{index, pLogicalPass->InstanceID()};
     Assert_NoAssume(logicalPassId.Valid());
@@ -1429,17 +1427,17 @@ FVulkanLocalBuffer* FVulkanCommandBuffer::ToLocal(FRawBufferID id) {
 //----------------------------------------------------------------------------
 FVulkanLocalImage* FVulkanCommandBuffer::ToLocal(FRawImageID id) {
     return ToLocal_(id, Write()->RM.Images
-           ARGS_IF_RHIDEBUG(L"failed when creating local image"));
+        ARGS_IF_RHIDEBUG(L"failed when creating local image"));
 }
 //----------------------------------------------------------------------------
 FVulkanRayTracingLocalGeometry* FVulkanCommandBuffer::ToLocal(FRawRTGeometryID id) {
     return ToLocal_(id, Write()->RM.RTGeometries
-           ARGS_IF_RHIDEBUG(L"failed when creating local ray tracing geometry"));
+        ARGS_IF_RHIDEBUG(L"failed when creating local ray tracing geometry"));
 }
 //----------------------------------------------------------------------------
 FVulkanRayTracingLocalScene* FVulkanCommandBuffer::ToLocal(FRawRTSceneID id) {
     return ToLocal_(id, Write()->RM.RTScenes
-           ARGS_IF_RHIDEBUG(L"failed when creating local ray tracing scene"));
+        ARGS_IF_RHIDEBUG(L"failed when creating local ray tracing scene"));
 }
 //----------------------------------------------------------------------------
 FVulkanLogicalRenderPass* FVulkanCommandBuffer::ToLocal(FLogicalPassID id) {

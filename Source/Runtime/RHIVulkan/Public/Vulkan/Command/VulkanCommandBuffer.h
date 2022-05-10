@@ -90,7 +90,7 @@ public:
             FLocalRTScenes RTScenes;
             FLocalRTGeometries RTGeometries;
             FLogicalRenderPasses LogicalRenderPasses;
-            u32 LogicalRenderPassCount{ 0 };
+            TFixedSizeStack<FResourceIndex, 8> AllocatedRenderPasses;
         }   RM;
 
         FPerQueuePool PerQueue; // #TODO: use global command pool manager to minimize memory usage
