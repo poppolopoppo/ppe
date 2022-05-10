@@ -140,10 +140,12 @@ bool TSlabHeap<_Allocator>::Deallocate_ReturnIfLast(void* ptr, size_t size) {
 
                 return true;
             }
+
+            return false;
         }
     }
 
-    return false;
+    AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
