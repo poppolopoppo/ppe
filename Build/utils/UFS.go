@@ -711,15 +711,16 @@ func (ufs *UFSFrontEnd) Touch(dst Filename) error {
 	}
 }
 func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
-	LogDebug("ufs: mkdir %v", dst)
 	path := dst.String()
 	if st, err := os.Stat(path); st != nil && err != nil {
 		if os.IsExist(err) {
 			if !st.IsDir() {
+				LogDebug("ufs: mkdir %v", dst)
 				LogPanic("ufs: '%v' already exist, but is not a directory", dst)
 			}
 		}
 	} else {
+		LogDebug("ufs: mkdir %v", dst)
 		invalidate_directory_info(dst)
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			LogPanic("%v: '%v'", dst, err)

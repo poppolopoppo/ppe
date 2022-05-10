@@ -58,6 +58,10 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 		cpp.Include(strings.ReplaceAll(x.Relative(UFS.Source), "\\", "/"))
 	}
 
+	cpp.IfnDef("VKLOG_APICALL", func() {
+		cpp.Define("VKLOG_APICALL(_NAME, ...)", "NOOP()")
+	})
+
 	makeExtensionEnumDecl := func(name string, exts []VkExtension) {
 		cpp.Comment(name)
 		cpp.EnumC99(name, "uint32_t", func() {
@@ -112,7 +116,9 @@ func (g VulkanGeneratedHeader) Generate(ctx GeneratorContext, dst io.Writer) err
 					}
 					cpp.Func(x.Name, funcRes, Stringize(x.Args...), "const", func() {
 						argNames := Map(func(a VkFunctionArg) string { return re_vkIdentifier.FindString(a.Name) }, x.Args...)
-						funCall := fmt.Sprintf("%s->%s(%s)", ptr, x.Name, strings.Join(argNames, ", "))
+						argList := strings.Join(argNames, ", ")
+						funCall := fmt.Sprintf("%s->%s(%s)", ptr, x.Name, argList)
+						cpp.Statement(fmt.Sprintf("VKLOG_APICALL(%s, %s)", x.Name, argList))
 						if x.HasReturn() {
 							cpp.Statement("return " + funCall)
 						} else {
@@ -641,6 +647,26 @@ func (b VkBinding) GetDigestable(o *bytes.Buffer) {
 	}
 }
 
+type VkEnumValue KeyValuePair[string, int32]
+
+func (x VkEnumValue) GetDigestable(o *bytes.Buffer) {
+	o.WriteString(x.Key)
+	o.WriteByte(byte((x.Value >> 0) & 0xFF))
+	o.WriteByte(byte((x.Value >> 8) & 0xFF))
+	o.WriteByte(byte((x.Value >> 16) & 0xFF))
+	o.WriteByte(byte((x.Value >> 24) & 0xFF))
+}
+
+type VkEnum struct {
+	Name   string
+	Values []VkEnumValue
+}
+
+func (x VkEnum) GetDigestable(o *bytes.Buffer) {
+	o.WriteString(x.Name)
+	MakeDigestable(o, x.Values...)
+}
+
 type VkFunctionArg struct {
 	Name string
 	Type string
@@ -675,6 +701,10 @@ func (f VkFunctionPointer) GetDigestable(o *bytes.Buffer) {
 	}
 }
 
+/***************************************
+ * Vulkan bindings
+ ***************************************/
+
 var re_vkComma = regexp.MustCompile(`\s*,\s*`)
 
 func vkParseBindingArgs(in string) (result []string) {
@@ -682,32 +712,6 @@ func vkParseBindingArgs(in string) (result []string) {
 		result = append(result, x)
 	}
 	return result
-}
-
-var re_vkSpace = regexp.MustCompile(`\s+`)
-
-func vkParseFunctionArgs(in string) (result []VkFunctionArg) {
-	for _, x := range re_vkComma.Split(in, -1) {
-		it := re_vkSpace.Split(x, -1)
-		result = append(result, VkFunctionArg{
-			Name: it[len(it)-1],
-			Type: strings.Join(it[:len(it)-1], " "),
-		})
-	}
-	return result
-}
-
-var re_VkFunctionPointer = regexp.MustCompile(`(?m)^\s*typedef\s+(\w+\*?)\s+\(VKAPI_PTR\s+\*PFN_(\w+)\)\((.*?)\)\s*;\s*$`)
-
-func vkParseFunctionPointers(filename Filename, match func(VkFunctionPointer)) error {
-	return UFS.Scan(filename, re_VkFunctionPointer, func(m []string) error {
-		match(VkFunctionPointer{
-			Return: m[0],
-			Name:   m[1],
-			Args:   vkParseFunctionArgs(m[2]),
-		})
-		return nil
-	})
 }
 
 var re_VkBinding = regexp.MustCompile(`(?m)^\s*(VK_\w+)\s*\(\s*(.*?)\s*\)\s*$`)
@@ -725,10 +729,6 @@ func vkParseBindings(filename Filename, match func(VkBinding)) error {
 		return nil
 	})
 }
-
-/***************************************
- * Vulkan bindings
- ***************************************/
 
 type VulkanBindingsT struct {
 	Src      Filename
@@ -769,10 +769,37 @@ func (vk *VulkanBindingsT) GetDigestable(o *bytes.Buffer) {
  * Vulkan headers
  ***************************************/
 
+var re_vkSpace = regexp.MustCompile(`\s+`)
+
+func vkParseFunctionArgs(in string) (result []VkFunctionArg) {
+	for _, x := range re_vkComma.Split(in, -1) {
+		it := re_vkSpace.Split(x, -1)
+		result = append(result, VkFunctionArg{
+			Name: it[len(it)-1],
+			Type: strings.Join(it[:len(it)-1], " "),
+		})
+	}
+	return result
+}
+
+var re_VkFunctionPointer = regexp.MustCompile(`(?m)^\s*typedef\s+(\w+\*?)\s+\(VKAPI_PTR\s+\*PFN_(\w+)\)\((.*?)\)\s*;\s*$`)
+
+func vkParseFunctionPointers(filename Filename, match func(VkFunctionPointer)) error {
+	return UFS.Scan(filename, re_VkFunctionPointer, func(m []string) error {
+		match(VkFunctionPointer{
+			Return: m[0],
+			Name:   m[1],
+			Args:   vkParseFunctionArgs(m[2]),
+		})
+		return nil
+	})
+}
+
 type VulkanHeadersT struct {
 	Src Directory
 
 	Headers   FileSet
+	Enums     []VkEnum
 	Functions []VkFunctionPointer
 }
 
@@ -823,8 +850,8 @@ func (vk *VulkanHeadersT) Build(bc BuildContext) (BuildStamp, error) {
 		}
 	}
 
-	LogTrace("vulkan: found %d functions", len(vk.Functions))
 	LogTrace("vulkan: found %d headers", len(vk.Headers))
+	LogTrace("vulkan: found %d functions", len(vk.Functions))
 
 	return MakeBuildStamp(vk)
 }
@@ -900,6 +927,7 @@ type VulkanInterfaceT struct {
 
 	Headers       FileSet
 	Versions      StringSet
+	EnumTypes     []VkEnum
 	ExportedFuncs []VkFunction
 	GlobalFuncs   []VkFunction
 	InstanceFuncs []VkFunction
@@ -971,6 +999,7 @@ func (vk *VulkanInterfaceT) Build(bc BuildContext) (BuildStamp, error) {
 	}
 
 	vk.Versions = NewStringSet()
+	vk.EnumTypes = vkHeaders.Enums
 	vk.ExportedFuncs = []VkFunction{}
 	vk.GlobalFuncs = []VkFunction{}
 	vk.InstanceFuncs = []VkFunction{}
@@ -1068,6 +1097,7 @@ func (vk *VulkanInterfaceT) Build(bc BuildContext) (BuildStamp, error) {
 	}
 
 	LogTrace("vulkan: found %d versions", len(vk.Versions))
+	LogTrace("vulkan: found %d enum types", len(vk.EnumTypes))
 	LogTrace("vulkan: found %d exported functions", len(vk.ExportedFuncs))
 	LogTrace("vulkan: found %d global functions", len(vk.GlobalFuncs))
 	LogTrace("vulkan: found %d instance functions", len(vk.InstanceFuncs))
@@ -1082,6 +1112,7 @@ func (vk *VulkanInterfaceT) GetDigestable(o *bytes.Buffer) {
 	vk.BindingsFile.GetDigestable(o)
 	vk.Headers.GetDigestable(o)
 	vk.Versions.GetDigestable(o)
+	MakeDigestable(o, vk.EnumTypes...)
 	MakeDigestable(o, vk.ExportedFuncs...)
 	MakeDigestable(o, vk.GlobalFuncs...)
 	MakeDigestable(o, vk.InstanceFuncs...)

@@ -74,6 +74,13 @@ func (cpp *CppFile) IfDef(symbol string, inner func()) {
 		inner()
 	}
 }
+func (cpp *CppFile) IfnDef(symbol string, inner func()) {
+	if len(symbol) > 0 {
+		cpp.IfMacro("!defined("+symbol+")", inner)
+	} else {
+		inner()
+	}
+}
 
 func (cpp *CppFile) Declare(name, result string, value func()) {
 	cpp.Print("%s %s{", result, name)
