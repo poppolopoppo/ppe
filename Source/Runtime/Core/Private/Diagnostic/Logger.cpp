@@ -8,7 +8,9 @@
 #   include "Allocator/SlabAllocator.h"
 #   include "Container/SparseArray.h"
 #   include "Container/Vector.h"
+
 #   include "Diagnostic/CurrentProcess.h"
+#   include "Diagnostic/IgnoreList.h"
 
 #   include "HAL/PlatformConsole.h"
 #   include "HAL/PlatformDebug.h"
@@ -728,11 +730,24 @@ NODISCARD static bool NotifyLoggerMessage_(
     const bool breakOnError = (level == ELoggerVerbosity::Error) && (
         (category.Flags & FLoggerCategory::BreakOnError) ||
          (GLoggerFlags_ & FLoggerCategory::BreakOnError) );
+
     const bool breakOnWarning = (level == ELoggerVerbosity::Warning) && (
         (category.Flags & FLoggerCategory::BreakOnWarning) ||
          (GLoggerFlags_ & FLoggerCategory::BreakOnWarning) );
-    if (Unlikely(breakOnError || breakOnWarning))
-        PPE_DEBUG_BREAK();
+
+    if (Unlikely(breakOnError || breakOnWarning)) {
+#   if USE_PPE_IGNORELIST
+        FIgnoreList::FIgnoreKey ignoreKey;
+        ignoreKey << MakeStringView("NotifyLoggerMessage")
+                  << MakeCStringView(category.Name)
+                  << MakeCStringView(site.Filename)
+                  << MakeRawConstView(site.Line);
+        if (FIgnoreList::HitIFP(ignoreKey) == 0)
+#   endif
+        {
+            PPE_DEBUG_BREAK();
+        }
+    }
 #endif
     return (category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level);
 }
