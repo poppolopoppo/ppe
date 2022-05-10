@@ -52,14 +52,7 @@ LOG_CATEGORY(, MemoryTracking)
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationCountWarning, 2000);
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 15);
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationSizeThreshold, CODE3264(16_b, 32_b));
-static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTracking& domain, const FMemoryTracking::FCounters& system) {
-        const size_t totalAllocs = system.AccumulatedAllocs.load(std::memory_order_relaxed);
-    const size_t smallAllocs = system.SmallAllocs.load(std::memory_order_relaxed);
-
-    const float smallPercent = ((smallAllocs * 100.0f) / totalAllocs);
-    if (Likely(smallPercent < SmallAllocationPercentThreshold)) // bail if less than N% of all allocations are small
-        return;
-
+static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTracking& domain, size_t totalAllocs, size_t smallAllocs) {
     // Unaccounted isn't in the engine ownership, so we skip the warning for small allocs in this domain:
     if (&MEMORYDOMAIN_TRACKING_DATA(UnaccountedMalloc) == &domain)
         return;
@@ -69,7 +62,6 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
     // External memory is also ignored
     if (domain.IsChildOf(MEMORYDOMAIN_TRACKING_DATA(External)))
         return;
-
 
     LOG(MemoryTracking, Warning,
         L"Too many small allocations for memory domain <{0}> -> {1} small allocs / {2} total allocs = {3}",
@@ -97,6 +89,14 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
             FIgnoreList::AddIFP(ignoreKey);
 #   endif
     }
+}
+static void CheckForSmallAllocs_(const FMemoryTracking& domain, const FMemoryTracking::FCounters& system) {
+    const size_t totalAllocs = system.AccumulatedAllocs.load(std::memory_order_relaxed);
+    const size_t smallAllocs = system.SmallAllocs.load(std::memory_order_relaxed);
+
+    const float smallPercent = ((smallAllocs * 100.0f) / totalAllocs);
+    if (Unlikely(smallPercent > SmallAllocationPercentThreshold)) // bail if less than N% of all allocations are small
+        WarnAboutSmallAllocs_(domain, totalAllocs, smallAllocs);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -165,7 +165,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize, const FMemory
 
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
     if (Unlikely((!child) & (systemSize <= SmallAllocationSizeThreshold) & (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
-        WarnAboutSmallAllocs_(*this, _system);
+        CheckForSmallAllocs_(*this, _system);
 #endif
 
     if (ShouldTrackRecursively_(*this))
@@ -219,7 +219,7 @@ void FMemoryTracking::AllocateSystem(size_t size, const FMemoryTracking* child/*
 
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
     if (Unlikely((!child) & (size <= SmallAllocationSizeThreshold) & (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
-        WarnAboutSmallAllocs_(*this, _system);
+        CheckForSmallAllocs_(*this, _system);
 #endif
 }
 //----------------------------------------------------------------------------
