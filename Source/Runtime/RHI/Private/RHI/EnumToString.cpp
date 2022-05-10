@@ -12,6 +12,7 @@
 #include "RHI/SwapchainDesc.h"
 #include "RHI/VertexEnums.h"
 
+#include "Container/BitMask.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 
@@ -21,27 +22,6 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-//----------------------------------------------------------------------------
-template <typename _Char>
-auto Separator_() { return Fmt::NotFirstTime(STRING_LITERAL(_Char, " | ")); }
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct TEnumFlagsNone_ {
-    TBasicTextWriter<_Char>& Oss;
-    const std::streamoff StartedAt;
-
-    explicit TEnumFlagsNone_(TBasicTextWriter<_Char>& oss) NOEXCEPT
-    :   Oss(oss)
-    ,   StartedAt(Oss.Stream()->TellO()) {
-    }
-
-    ~TEnumFlagsNone_() {
-        if (Oss.Stream()->TellO() == StartedAt)
-            Oss << STRING_LITERAL(_Char, "0");
-    }
-};
-template <typename _Char>
-TEnumFlagsNone_(TBasicTextWriter<_Char>&)->TEnumFlagsNone_<_Char>;
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EQueueType value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<EQueueType>);
@@ -56,59 +36,73 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EQueueUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EQueueUsage>);
-    if (value == EQueueUsage::Unknown) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EQueueUsage>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EQueueUsage::Graphics) oss << sep << STRING_LITERAL(_Char, "Graphics");
-    if (value & EQueueUsage::AsyncCompute) oss << sep << STRING_LITERAL(_Char, "AsyncCompute");
-    if (value & EQueueUsage::AsyncTransfer) oss << sep << STRING_LITERAL(_Char, "AsyncTransfer");
+        switch (it) {
+        case EQueueUsage::Graphics: oss << sep << STRING_LITERAL(_Char, "Graphics"); break;
+        case EQueueUsage::AsyncCompute: oss << sep << STRING_LITERAL(_Char, "AsyncCompute"); break;
+        case EQueueUsage::AsyncTransfer: oss << sep << STRING_LITERAL(_Char, "AsyncTransfer"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EMemoryType value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EMemoryType>);
-    if (value == EMemoryType::Default) return oss << STRING_LITERAL(_Char, "Default");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EMemoryType>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EMemoryType::HostRead) oss << sep << STRING_LITERAL(_Char, "HostRead");
-    if (value & EMemoryType::HostWrite) oss << sep << STRING_LITERAL(_Char, "HostWrite");
-    if (value & EMemoryType::Dedicated) oss << sep << STRING_LITERAL(_Char, "Dedicated");
+        switch (it) {
+        case EMemoryType::HostRead: oss << sep << STRING_LITERAL(_Char, "HostRead"); break;
+        case EMemoryType::HostWrite: oss << sep << STRING_LITERAL(_Char, "HostWrite"); break;
+        case EMemoryType::Dedicated: oss << sep << STRING_LITERAL(_Char, "Dedicated"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EBufferUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EBufferUsage>);
-    if (EBufferUsage::All == value) return oss << STRING_LITERAL(_Char, "All");
-    if (EBufferUsage::Transfer == value) return oss << STRING_LITERAL(_Char, "Transfer");
-    if (EBufferUsage::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EBufferUsage>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EBufferUsage::TransferSrc) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
-    if (value & EBufferUsage::TransferDst) oss << sep << STRING_LITERAL(_Char, "TransferDst");
-    if (value & EBufferUsage::UniformTexel) oss << sep << STRING_LITERAL(_Char, "UniformTexel");
-    if (value & EBufferUsage::StorageTexel) oss << sep << STRING_LITERAL(_Char, "StorageTexel");
-    if (value & EBufferUsage::Uniform) oss << sep << STRING_LITERAL(_Char, "Uniform");
-    if (value & EBufferUsage::Storage) oss << sep << STRING_LITERAL(_Char, "Storage");
-    if (value & EBufferUsage::Index) oss << sep << STRING_LITERAL(_Char, "Index");
-    if (value & EBufferUsage::Vertex) oss << sep << STRING_LITERAL(_Char, "Vertex");
-    if (value & EBufferUsage::Indirect) oss << sep << STRING_LITERAL(_Char, "Indirect");
-    if (value & EBufferUsage::RayTracing) oss << sep << STRING_LITERAL(_Char, "RayTracing");
+        switch (it) {
+        case EBufferUsage::TransferSrc: oss << sep << STRING_LITERAL(_Char, "TransferSrc"); break;
+        case EBufferUsage::TransferDst: oss << sep << STRING_LITERAL(_Char, "TransferDst"); break;
+        case EBufferUsage::UniformTexel: oss << sep << STRING_LITERAL(_Char, "UniformTexel"); break;
+        case EBufferUsage::StorageTexel: oss << sep << STRING_LITERAL(_Char, "StorageTexel"); break;
+        case EBufferUsage::Uniform: oss << sep << STRING_LITERAL(_Char, "Uniform"); break;
+        case EBufferUsage::Storage: oss << sep << STRING_LITERAL(_Char, "Storage"); break;
+        case EBufferUsage::Index: oss << sep << STRING_LITERAL(_Char, "Index"); break;
+        case EBufferUsage::Vertex: oss << sep << STRING_LITERAL(_Char, "Vertex"); break;
+        case EBufferUsage::Indirect: oss << sep << STRING_LITERAL(_Char, "Indirect"); break;
+        case EBufferUsage::RayTracing: oss << sep << STRING_LITERAL(_Char, "RayTracing"); break;
+        case EBufferUsage::VertexPplnStore: oss << sep << STRING_LITERAL(_Char, "VertexPplnStore"); break;
+        case EBufferUsage::FragmentPplnStore: oss << sep << STRING_LITERAL(_Char, "FragmentPplnStore"); break;
+        case EBufferUsage::StorageTexelAtomic: oss << sep << STRING_LITERAL(_Char, "StorageTexelAtomic"); break;
+        default: AssertNotImplemented();
+        }
+    }
 
-
-    if (value & EBufferUsage::VertexPplnStore) oss << sep << STRING_LITERAL(_Char, "VertexPplnStore");
-    if (value & EBufferUsage::FragmentPplnStore) oss << sep << STRING_LITERAL(_Char, "FragmentPplnStore");
-    if (value & EBufferUsage::StorageTexelAtomic) oss << sep << STRING_LITERAL(_Char, "StorageTexelAtomic");
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -141,61 +135,75 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageFlags>);
-    if (EImageFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EImageFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (EImageFlags::MutableFormat == value) oss << sep << STRING_LITERAL(_Char, "MutableFormat");
-    if (EImageFlags::CubeCompatible == value) oss << sep << STRING_LITERAL(_Char, "CubeCompatible");
-    if (EImageFlags::Array2DCompatible == value) oss << sep << STRING_LITERAL(_Char, "Array2DCompatible");
-    if (EImageFlags::BlockTexelViewCompatible == value) oss << sep << STRING_LITERAL(_Char, "BlockTexelViewCompatible");
+        switch (it) {
+        case EImageFlags::MutableFormat: oss << sep << STRING_LITERAL(_Char, "MutableFormat"); break;
+        case EImageFlags::CubeCompatible: oss << sep << STRING_LITERAL(_Char, "CubeCompatible"); break;
+        case EImageFlags::Array2DCompatible: oss << sep << STRING_LITERAL(_Char, "Array2DCompatible"); break;
+        case EImageFlags::BlockTexelViewCompatible: oss << sep << STRING_LITERAL(_Char, "BlockTexelViewCompatible"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageUsage>);
-    if (EImageUsage::All == value) return oss << STRING_LITERAL(_Char, "All");
-    if (EImageUsage::Transfer == value) return oss << STRING_LITERAL(_Char, "Transfer");
-    if (EImageUsage::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EImageUsage>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EImageUsage::TransferSrc) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
-    if (value & EImageUsage::TransferDst) oss << sep << STRING_LITERAL(_Char, "TransferDst");
-    if (value & EImageUsage::Sampled) oss << sep << STRING_LITERAL(_Char, "Sampled");
-    if (value & EImageUsage::Storage) oss << sep << STRING_LITERAL(_Char, "Storage");
-    if (value & EImageUsage::ColorAttachment) oss << sep << STRING_LITERAL(_Char, "ColorAttachment");
-    if (value & EImageUsage::DepthStencilAttachment) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment");
-    if (value & EImageUsage::TransientAttachment) oss << sep << STRING_LITERAL(_Char, "TransientAttachment");
-    if (value & EImageUsage::InputAttachment) oss << sep << STRING_LITERAL(_Char, "InputAttachment");
-    if (value & EImageUsage::ShadingRate) oss << sep << STRING_LITERAL(_Char, "ShadingRate");
+        switch (it) {
+        case EImageUsage::TransferSrc: oss << sep << STRING_LITERAL(_Char, "TransferSrc"); break;
+        case EImageUsage::TransferDst: oss << sep << STRING_LITERAL(_Char, "TransferDst"); break;
+        case EImageUsage::Sampled: oss << sep << STRING_LITERAL(_Char, "Sampled"); break;
+        case EImageUsage::Storage: oss << sep << STRING_LITERAL(_Char, "Storage"); break;
+        case EImageUsage::ColorAttachment: oss << sep << STRING_LITERAL(_Char, "ColorAttachment"); break;
+        case EImageUsage::DepthStencilAttachment: oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment"); break;
+        case EImageUsage::TransientAttachment: oss << sep << STRING_LITERAL(_Char, "TransientAttachment"); break;
+        case EImageUsage::InputAttachment: oss << sep << STRING_LITERAL(_Char, "InputAttachment"); break;
+        case EImageUsage::ShadingRate: oss << sep << STRING_LITERAL(_Char, "ShadingRate"); break;
+        case EImageUsage::StorageAtomic: oss << sep << STRING_LITERAL(_Char, "StorageAtomic"); break;
+        case EImageUsage::ColorAttachmentBlend: oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend"); break;
+        case EImageUsage::SampledMinMax: oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend"); break;
+        default: AssertNotImplemented();
+        }
+    }
 
-    if (value & EImageUsage::StorageAtomic) oss << sep << STRING_LITERAL(_Char, "StorageAtomic");
-    if (value & EImageUsage::ColorAttachmentBlend) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
-    if (value & EImageUsage::SampledMinMax) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentBlend");
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageAspect value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageAspect>);
-    if (EImageAspect::Auto == value) return oss << STRING_LITERAL(_Char, "Auto");
-    if (EImageAspect::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EImageAspect>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EImageAspect::Color) oss << sep << STRING_LITERAL(_Char, "Color");
-    if (value & EImageAspect::Depth) oss << sep << STRING_LITERAL(_Char, "Depth");
-    if (value & EImageAspect::Stencil) oss << sep << STRING_LITERAL(_Char, "Stencil");
-    if (value & EImageAspect::Metadata) oss << sep << STRING_LITERAL(_Char, "Metadata");
-    if (value & EImageAspect::DepthStencil) oss << sep << STRING_LITERAL(_Char, "DepthStencil");
+        switch (it) {
+        case EImageAspect::Color: oss << sep << STRING_LITERAL(_Char, "Color"); break;
+        case EImageAspect::Depth: oss << sep << STRING_LITERAL(_Char, "Depth"); break;
+        case EImageAspect::Stencil: oss << sep << STRING_LITERAL(_Char, "Stencil"); break;
+        case EImageAspect::Metadata: oss << sep << STRING_LITERAL(_Char, "Metadata"); break;
+        case EImageAspect::DepthStencil: oss << sep << STRING_LITERAL(_Char, "DepthStencil"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -443,24 +451,29 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EDebugFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EDebugFlags>);
-    if (EDebugFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
-    if (EDebugFlags::Default == value) return oss << STRING_LITERAL(_Char, "Default");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EDebugFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EDebugFlags::LogTasks) oss << sep << STRING_LITERAL(_Char, "LogTasks");
-    if (value & EDebugFlags::LogBarriers) oss << sep << STRING_LITERAL(_Char, "LogBarriers");
-    if (value & EDebugFlags::LogResourceUsage) oss << sep << STRING_LITERAL(_Char, "LogResourceUsage");
-    if (value & EDebugFlags::VisTasks) oss << sep << STRING_LITERAL(_Char, "VisTasks");
-    if (value & EDebugFlags::VisDrawTasks) oss << sep << STRING_LITERAL(_Char, "VisDrawTasks");
-    if (value & EDebugFlags::VisResources) oss << sep << STRING_LITERAL(_Char, "VisResources");
-    if (value & EDebugFlags::VisBarriers) oss << sep << STRING_LITERAL(_Char, "VisBarriers");
-    if (value & EDebugFlags::VisBarrierLabels) oss << sep << STRING_LITERAL(_Char, "VisBarrierLabels");
-    if (value & EDebugFlags::VisTaskDependencies) oss << sep << STRING_LITERAL(_Char, "VisTaskDependencies");
-    if (value & EDebugFlags::FullBarrier) oss << sep << STRING_LITERAL(_Char, "FullBarrier");
-    if (value & EDebugFlags::QueueSync) oss << sep << STRING_LITERAL(_Char, "QueueSync");
+        switch (it) {
+        case EDebugFlags::LogTasks: oss << sep << STRING_LITERAL(_Char, "LogTasks"); break;
+        case EDebugFlags::LogBarriers: oss << sep << STRING_LITERAL(_Char, "LogBarriers"); break;
+        case EDebugFlags::LogResourceUsage: oss << sep << STRING_LITERAL(_Char, "LogResourceUsage"); break;
+        case EDebugFlags::VisTasks: oss << sep << STRING_LITERAL(_Char, "VisTasks"); break;
+        case EDebugFlags::VisDrawTasks: oss << sep << STRING_LITERAL(_Char, "VisDrawTasks"); break;
+        case EDebugFlags::VisResources: oss << sep << STRING_LITERAL(_Char, "VisResources"); break;
+        case EDebugFlags::VisBarriers: oss << sep << STRING_LITERAL(_Char, "VisBarriers"); break;
+        case EDebugFlags::VisBarrierLabels: oss << sep << STRING_LITERAL(_Char, "VisBarrierLabels"); break;
+        case EDebugFlags::VisTaskDependencies: oss << sep << STRING_LITERAL(_Char, "VisTaskDependencies"); break;
+        case EDebugFlags::FullBarrier: oss << sep << STRING_LITERAL(_Char, "FullBarrier"); break;
+        case EDebugFlags::QueueSync: oss << sep << STRING_LITERAL(_Char, "QueueSync"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -508,7 +521,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ELogicOp value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<ELogicOp>);
     switch (value) {
-    case ELogicOp::None: return oss << STRING_LITERAL(_Char, "None");
+    case ELogicOp::None: return oss << STRING_LITERAL(_Char, "0");
     case ELogicOp::Clear: return oss << STRING_LITERAL(_Char, "Clear");
     case ELogicOp::Set: return oss << STRING_LITERAL(_Char, "Set");
     case ELogicOp::Copy: return oss << STRING_LITERAL(_Char, "Copy");
@@ -532,17 +545,21 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EColorMask value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EColorMask>);
-    if (EColorMask::RGBA == value) return oss << STRING_LITERAL(_Char, "RGBA");
-    if (EColorMask::All == value) return oss << STRING_LITERAL(_Char, "All");
 
-    Assert(value != Zero);
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EColorMask>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EColorMask::R) oss << STRING_LITERAL(_Char, "R");
-    if (value & EColorMask::G) oss << STRING_LITERAL(_Char, "G");
-    if (value & EColorMask::B) oss << STRING_LITERAL(_Char, "B");
-    if (value & EColorMask::A) oss << STRING_LITERAL(_Char, "A");
+        switch (it) {
+        case EColorMask::R: oss << STRING_LITERAL(_Char, "R"); break;
+        case EColorMask::G: oss << STRING_LITERAL(_Char, "G"); break;
+        case EColorMask::B: oss << STRING_LITERAL(_Char, "B"); break;
+        case EColorMask::A: oss << STRING_LITERAL(_Char, "A"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -611,7 +628,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ECullMode value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ECullMode>);
     switch (value) {
-    case ECullMode::None: return oss << STRING_LITERAL(_Char, "None");
+    case ECullMode::None: return oss << STRING_LITERAL(_Char, "0");
     case ECullMode::Front: return oss << STRING_LITERAL(_Char, "Front");
     case ECullMode::Back: return oss << STRING_LITERAL(_Char, "Back");
     case ECullMode::FontAndBack: return oss << STRING_LITERAL(_Char, "FontAndBack");
@@ -621,66 +638,90 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EPipelineDynamicState value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EPipelineDynamicState>);
-    if (EPipelineDynamicState::All == value) return oss << STRING_LITERAL(_Char, "All");
-    if (EPipelineDynamicState::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
-    if (EPipelineDynamicState::Default == value) return oss << STRING_LITERAL(_Char, "Default");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EPipelineDynamicState>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EPipelineDynamicState::Viewport) oss << sep << STRING_LITERAL(_Char, "Viewport");
-    if (value & EPipelineDynamicState::Scissor) oss << sep << STRING_LITERAL(_Char, "Scissor");
-    if (value & EPipelineDynamicState::StencilCompareMask) oss << sep << STRING_LITERAL(_Char, "StencilCompareMask");
-    if (value & EPipelineDynamicState::StencilWriteMask) oss << sep << STRING_LITERAL(_Char, "StencilWriteMask");
-    if (value & EPipelineDynamicState::StencilReference) oss << sep << STRING_LITERAL(_Char, "StencilReference");
-    if (value & EPipelineDynamicState::ShadingRatePalette) oss << sep << STRING_LITERAL(_Char, "ShadingRatePalette");
-    if (value & EPipelineDynamicState::RasterizerMask) oss << sep << STRING_LITERAL(_Char, "RasterizerMask");
+        switch (it) {
+        case EPipelineDynamicState::Viewport: oss << sep << STRING_LITERAL(_Char, "Viewport"); break;
+        case EPipelineDynamicState::Scissor: oss << sep << STRING_LITERAL(_Char, "Scissor"); break;
+        case EPipelineDynamicState::StencilCompareMask: oss << sep << STRING_LITERAL(_Char, "StencilCompareMask"); break;
+        case EPipelineDynamicState::StencilWriteMask: oss << sep << STRING_LITERAL(_Char, "StencilWriteMask"); break;
+        case EPipelineDynamicState::StencilReference: oss << sep << STRING_LITERAL(_Char, "StencilReference"); break;
+        case EPipelineDynamicState::ShadingRatePalette: oss << sep << STRING_LITERAL(_Char, "ShadingRatePalette"); break;
+        case EPipelineDynamicState::RasterizerMask: oss << sep << STRING_LITERAL(_Char, "RasterizerMask"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingGeometryFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingGeometryFlags>);
-    if (ERayTracingGeometryFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<ERayTracingGeometryFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & ERayTracingGeometryFlags::Opaque) return oss << sep << STRING_LITERAL(_Char, "Opaque");
-    if (value & ERayTracingGeometryFlags::NoDuplicateAnyHitInvocation) return oss << sep << STRING_LITERAL(_Char, "NoDuplicateAnyHitInvocation");
+        switch (it) {
+        case ERayTracingGeometryFlags::Opaque: return oss << sep << STRING_LITERAL(_Char, "Opaque"); break;
+        case ERayTracingGeometryFlags::NoDuplicateAnyHitInvocation: return oss << sep << STRING_LITERAL(_Char, "NoDuplicateAnyHitInvocation"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingInstanceFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingInstanceFlags>);
-    if (ERayTracingInstanceFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<ERayTracingInstanceFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & ERayTracingInstanceFlags::TriangleCullDisable) return oss << sep << STRING_LITERAL(_Char, "TriangleCullDisable");
-    if (value & ERayTracingInstanceFlags::TriangleFrontCCW) return oss << sep << STRING_LITERAL(_Char, "TriangleFrontCCW");
-    if (value & ERayTracingInstanceFlags::ForceOpaque) return oss << sep << STRING_LITERAL(_Char, "ForceOpaque");
-    if (value & ERayTracingInstanceFlags::ForceNonOpaque) return oss << sep << STRING_LITERAL(_Char, "ForceNonOpaque");
+        switch (it) {
+        case ERayTracingInstanceFlags::TriangleCullDisable: oss << sep << STRING_LITERAL(_Char, "TriangleCullDisable"); break;
+        case ERayTracingInstanceFlags::TriangleFrontCCW: oss << sep << STRING_LITERAL(_Char, "TriangleFrontCCW"); break;
+        case ERayTracingInstanceFlags::ForceOpaque: oss << sep << STRING_LITERAL(_Char, "ForceOpaque"); break;
+        case ERayTracingInstanceFlags::ForceNonOpaque: oss << sep << STRING_LITERAL(_Char, "ForceNonOpaque"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingBuildFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingBuildFlags>);
-    if (ERayTracingBuildFlags::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<ERayTracingBuildFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & ERayTracingBuildFlags::AllowUpdate) return oss << sep << STRING_LITERAL(_Char, "AllowUpdate");
-    if (value & ERayTracingBuildFlags::AllowCompaction) return oss << sep << STRING_LITERAL(_Char, "AllowCompaction");
-    if (value & ERayTracingBuildFlags::PreferFastTrace) return oss << sep << STRING_LITERAL(_Char, "PreferFastTrace");
-    if (value & ERayTracingBuildFlags::PreferFastBuild) return oss << sep << STRING_LITERAL(_Char, "PreferFastBuild");
-    if (value & ERayTracingBuildFlags::LowMemory) return oss << sep << STRING_LITERAL(_Char, "LowMemory");
+        switch (it) {
+        case ERayTracingBuildFlags::AllowUpdate: oss << sep << STRING_LITERAL(_Char, "AllowUpdate"); break;
+        case ERayTracingBuildFlags::AllowCompaction: oss << sep << STRING_LITERAL(_Char, "AllowCompaction"); break;
+        case ERayTracingBuildFlags::PreferFastTrace: oss << sep << STRING_LITERAL(_Char, "PreferFastTrace"); break;
+        case ERayTracingBuildFlags::PreferFastBuild: oss << sep << STRING_LITERAL(_Char, "PreferFastBuild"); break;
+        case ERayTracingBuildFlags::LowMemory: oss << sep << STRING_LITERAL(_Char, "LowMemory"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -709,29 +750,32 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderStages value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderStages>);
-    if (EShaderStages::All == value) return oss << STRING_LITERAL(_Char, "All");
-    if (EShaderStages::AllGraphics == value) return oss << STRING_LITERAL(_Char, "AllGraphics");
-    if (EShaderStages::AllRayTracing == value) return oss << STRING_LITERAL(_Char, "AllRayTracing");
-    if (EShaderStages::Unknown == value) return oss << STRING_LITERAL(_Char, "Unknown");
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
-    auto sep = Separator_<_Char>();
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EShaderStages>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value & EShaderStages::Vertex) oss << sep << STRING_LITERAL(_Char, "Vertex");
-    if (value & EShaderStages::TessControl) oss << sep << STRING_LITERAL(_Char, "TessControl");
-    if (value & EShaderStages::TessEvaluation) oss << sep << STRING_LITERAL(_Char, "TessEvaluation");
-    if (value & EShaderStages::Geometry) oss << sep << STRING_LITERAL(_Char, "Geometry");
-    if (value & EShaderStages::Fragment) oss << sep << STRING_LITERAL(_Char, "Fragment");
-    if (value & EShaderStages::Compute) oss << sep << STRING_LITERAL(_Char, "Compute");
-    if (value & EShaderStages::MeshTask) oss << sep << STRING_LITERAL(_Char, "MeshTask");
-    if (value & EShaderStages::Mesh) oss << sep << STRING_LITERAL(_Char, "Mesh");
-    if (value & EShaderStages::RayGen) oss << sep << STRING_LITERAL(_Char, "RayGen");
-    if (value & EShaderStages::RayAnyHit) oss << sep << STRING_LITERAL(_Char, "RayAnyHit");
-    if (value & EShaderStages::RayClosestHit) oss << sep << STRING_LITERAL(_Char, "RayClosestHit");
-    if (value & EShaderStages::RayMiss) oss << sep << STRING_LITERAL(_Char, "RayMiss");
-    if (value & EShaderStages::RayIntersection) oss << sep << STRING_LITERAL(_Char, "RayIntersection");
-    if (value & EShaderStages::RayCallable) oss << sep << STRING_LITERAL(_Char, "RayCallable");
+        switch (it) {
+        case EShaderStages::Vertex: oss << sep << STRING_LITERAL(_Char, "Vertex"); break;
+        case EShaderStages::TessControl: oss << sep << STRING_LITERAL(_Char, "TessControl"); break;
+        case EShaderStages::TessEvaluation: oss << sep << STRING_LITERAL(_Char, "TessEvaluation"); break;
+        case EShaderStages::Geometry: oss << sep << STRING_LITERAL(_Char, "Geometry"); break;
+        case EShaderStages::Fragment: oss << sep << STRING_LITERAL(_Char, "Fragment"); break;
+        case EShaderStages::Compute: oss << sep << STRING_LITERAL(_Char, "Compute"); break;
+        case EShaderStages::MeshTask: oss << sep << STRING_LITERAL(_Char, "MeshTask"); break;
+        case EShaderStages::Mesh: oss << sep << STRING_LITERAL(_Char, "Mesh"); break;
+        case EShaderStages::RayGen: oss << sep << STRING_LITERAL(_Char, "RayGen"); break;
+        case EShaderStages::RayAnyHit: oss << sep << STRING_LITERAL(_Char, "RayAnyHit"); break;
+        case EShaderStages::RayClosestHit: oss << sep << STRING_LITERAL(_Char, "RayClosestHit"); break;
+        case EShaderStages::RayMiss: oss << sep << STRING_LITERAL(_Char, "RayMiss"); break;
+        case EShaderStages::RayIntersection: oss << sep << STRING_LITERAL(_Char, "RayIntersection"); break;
+        case EShaderStages::RayCallable: oss << sep << STRING_LITERAL(_Char, "RayCallable"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -749,7 +793,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderLangFormat value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderLangFormat>);
-    auto sep = Separator_<_Char>();
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
     if (value & EShaderLangFormat::Vulkan) oss << sep << STRING_LITERAL(_Char, "Vulkan");
     if (value & EShaderLangFormat::OpenGL) oss << sep << STRING_LITERAL(_Char, "OpenGL");
@@ -773,7 +817,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     if (value & EShaderLangFormat::EnableDebugTrace) oss << sep << STRING_LITERAL(_Char, "EnableDebugTrace");
     if (value & EShaderLangFormat::EnableProfiling) oss << sep << STRING_LITERAL(_Char, "EnableProfiling");
     if (value & EShaderLangFormat::EnableTimeMap) oss << sep << STRING_LITERAL(_Char, "EnableTimeMap");
-    if (value & EShaderLangFormat::Unknown) oss << sep << STRING_LITERAL(_Char, "Unknown");
+    if (value & EShaderLangFormat::Unknown) oss << STRING_LITERAL(_Char, "Unknown");
     if (value & EShaderLangFormat::GLSL_450) oss << sep << STRING_LITERAL(_Char, "GLSL_450");
     if (value & EShaderLangFormat::GLSL_460) oss << sep << STRING_LITERAL(_Char, "GLSL_460");
     if (value & EShaderLangFormat::HLSL_11) oss << sep << STRING_LITERAL(_Char, "HLSL_11");
@@ -794,7 +838,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderDebugMode value) {
     STATIC_ASSERT(not Meta::enum_is_flags_v<EShaderDebugMode>);
     switch (value) {
-    case EShaderDebugMode::None: return oss << STRING_LITERAL(_Char, "None");
+    case EShaderDebugMode::None: return oss << STRING_LITERAL(_Char, "0");
 #if USE_PPE_RHIDEBUG
     case EShaderDebugMode::Trace: return oss << STRING_LITERAL(_Char, "Trace");
     case EShaderDebugMode::Profiling: return oss << STRING_LITERAL(_Char, "Profiling");
@@ -991,9 +1035,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceState value) {
-    TEnumFlagsNone_ none{ oss };
-    Unused(none);
-
     switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
     case EResourceState::Unknown: oss << STRING_LITERAL(_Char, "Unknown"); break;
     case EResourceState::ShaderRead: oss << STRING_LITERAL(_Char, "Storage-R"); break;
@@ -1044,6 +1085,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         if (value & EResourceState::EarlyFragmentTests) oss << STRING_LITERAL(_Char, ", EarlyTests");
         if (value & EResourceState::LateFragmentTests)	oss << STRING_LITERAL(_Char, ", LateTests");
     }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }

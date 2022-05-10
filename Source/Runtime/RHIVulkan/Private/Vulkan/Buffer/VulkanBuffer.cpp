@@ -66,9 +66,11 @@ bool FVulkanBuffer::FInternalData::IsReadOnly() const NOEXCEPT {
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 FVulkanBuffer::~FVulkanBuffer() {
+#   if USE_PPE_ASSERT
     const auto& sharedData = _data.LockShared();
     Assert_NoAssume(VK_NULL_HANDLE == sharedData->vkBuffer);
     Assert_NoAssume(not sharedData->MemoryId);
+#   endif
 }
 #endif
 //----------------------------------------------------------------------------

@@ -173,7 +173,7 @@ bool ValidateInstanceLayers_(VECTOR(RHIInstance, FConstChar)* pLayerNames, const
             it = pLayerNames->erase(it);
         }
         else {
-            LOG(RHI, Debug, L"vulkan layer '{0}' is supported and will be initialized", it->MakeView());
+            LOG(RHI, Verbose, L"vulkan layer '{0}' is supported and will be initialized", it->MakeView());
             ++it;
         }
     }
@@ -246,7 +246,7 @@ bool ValidateInstanceExtensions_(
             jt = pExtensionNames->erase(jt);
         }
         else {
-            LOG(RHI, Debug, L"vulkan instance extension '{0}' is supported and will be initialized", jt->MakeView());
+            LOG(RHI, Verbose, L"vulkan instance extension '{0}' is supported and will be initialized", jt->MakeView());
             ++jt;
         }
     }
@@ -447,7 +447,6 @@ static void CreateDebugUtilsMessengerIFP_(
     createInfo.pfnUserCallback = debugCallback;
     createInfo.pUserData = nullptr;
     createInfo.messageSeverity =
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     createInfo.messageType =
@@ -455,8 +454,14 @@ static void CreateDebugUtilsMessengerIFP_(
         VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
+#if USE_PPE_DEBUG
+    createInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+#endif
+
     *pDebugUtilsMessenger = VK_NULL_HANDLE;
     VK_CALL( vkCreateDebugUtilsMessengerEXT(vkInstance, &createInfo, &vkAllocator, pDebugUtilsMessenger) );
+
+    LOG(RHI, Verbose, L"created vulkan debug utils messenger for performance and validation");
 }
 #endif //!USE_PPE_LOGGER
 //----------------------------------------------------------------------------
@@ -852,7 +857,7 @@ bool ValidateDeviceExtensions_(
             jt = pExtensionNames->erase(jt);
         }
         else {
-            LOG(RHI, Debug, L"vulkan device extension '{0}' is supported and will be initialized", jt->MakeView());
+            LOG(RHI, Verbose, L"vulkan device extension '{0}' is supported and will be initialized", jt->MakeView());
             ++jt;
         }
     }
@@ -869,7 +874,7 @@ bool CreateVulkanDevice_(
     pDevice->vkPhysicalDevice = physicalDevice->vkPhysicalDevice;
     Assert(pDevice->vkPhysicalDevice);
 
-    LOG(RHI, Info, L"pick vulkan gpu: #{0} {1} (vendor={2},driver={3}){4}",
+    LOG(RHI, Info, L"pick vulkan gpu: #{0} {1} (vendor={2}, driver={3}){4}",
         physicalDevice->Properties.deviceID,
         MakeCStringView(physicalDevice->Properties.deviceName),
         static_cast<EVulkanVendor>(physicalDevice->Properties.vendorID),
@@ -877,7 +882,7 @@ bool CreateVulkanDevice_(
         Fmt::Formator<wchar_t>([&](FWTextWriter& oss) {
             u32 cnt = 0;
             for (auto& heap : MakeView(physicalDevice->Memory.memoryHeaps, physicalDevice->Memory.memoryHeaps + physicalDevice->Memory.memoryHeapCount))
-                oss << Eol << Tab << L"- HEAP" << cnt++ << L" " << Fmt::SizeInBytes(heap.size);
+                oss << Eol << Tab << L"- Heap#" << cnt++ << L":         " << Fmt::SizeInBytes(heap.size);
         }));
 
     if (not SetupVulkanQueues_(&pDevice->Queues, pDevice->vkPhysicalDevice, vkSurface, api, queues)) {
@@ -1042,9 +1047,8 @@ bool FVulkanInstance::Construct(
             _instanceAPI.setup_backward_compatibility();
 
 #if USE_PPE_LOGGER
-            if (HasExtension(EVulkanInstanceExtension::EXT_debug_utils)) {
+            if (HasExtension(EVulkanInstanceExtension::EXT_debug_utils))
                 CreateDebugUtilsMessengerIFP_(&_vkDebugUtilsMessenger, _vkInstance, _vkAllocationCallbacks, _instanceAPI.vkCreateDebugUtilsMessengerEXT);
-            }
 #endif
 
             // retrieve physical device infos once and for all

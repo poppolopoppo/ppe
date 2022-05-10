@@ -282,6 +282,13 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateImage(FBlock* 
             image, &info, &allocation, nullptr ));
     }
 
+    RHI_TRACE(L"AllocateImage",
+        info.flags,
+        info.usage,
+        info.requiredFlags,
+        info.preferredFlags,
+        info.memoryTypeBits);
+
     ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
 
     VK_CHECK(vmaBindImageMemory(exclusiveAllocator.Value(), allocation, image ));
@@ -335,6 +342,13 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateBuffer(FBlock*
             buffer, &info, &allocation, nullptr ));
     }
 
+    RHI_TRACE(L"AllocateBuffer",
+        info.flags,
+        info.usage,
+        info.requiredFlags,
+        info.preferredFlags,
+        info.memoryTypeBits);
+
     ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
 
     VK_CHECK(vmaBindBufferMemory(exclusiveAllocator.Value(), allocation, buffer ));
@@ -382,6 +396,16 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
 
     VmaAllocationInfo allocInfo{};
     vmaGetAllocationInfo(exclusiveAllocator.Value(), allocation, &allocInfo);
+
+    RHI_TRACE(L"AllocateAccelStruct",
+        vmaInfo.flags,
+        vmaInfo.usage,
+        vmaInfo.requiredFlags,
+        vmaInfo.preferredFlags,
+        vmaInfo.memoryTypeBits,
+        memoryRequirements2.memoryRequirements.alignment,
+        memoryRequirements2.memoryRequirements.memoryTypeBits,
+        memoryRequirements2.memoryRequirements.size );
 
     ONLY_IF_MEMORYDOMAINS(VmaMemoryUserAllocate_(exclusiveAllocator.Value(), allocation));
 

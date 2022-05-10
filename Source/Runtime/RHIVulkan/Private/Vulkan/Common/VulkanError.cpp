@@ -26,7 +26,7 @@ FVulkanException::FVulkanException(const char* what, long errorCode)
 :   FRHIException(what)
 ,   _errorCode(errorCode) {
 #if !USE_PPE_FINAL_RELEASE
-    LOG(RHI, Error, L"Vulkan: {0} failed with {1}", MakeCStringView(what), FVulkanError(_errorCode));
+    LOG(RHI, Error, L"vulkan exception: {0} failed with {1}", MakeCStringView(what), FVulkanError(_errorCode));
     FLUSH_LOG();
 #endif
 }
@@ -102,7 +102,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FVulkanError& error) {
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 NODISCARD static bool VulkanCheckErrors_( VkResult result,
-    FWStringView call, FWStringView func, FWStringView file, u32 line ) NOEXCEPT {
+    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) NOEXCEPT {
     Unused(call);
     Unused(func);
     Unused(file);
@@ -110,8 +110,8 @@ NODISCARD static bool VulkanCheckErrors_( VkResult result,
     if (Likely(VK_SUCCESS == result))
         return true;
 
-    LOG(RHI, Error, L"vulkan error: {0}, in {1} function {2} ({3}:{4})",
-        FVulkanError{ result }, call, func, file, line );
+    LOG(RHI, Error, L"vulkan error: got result {0}\n{1}({2}:1): {3}\n\tin function: {4}",
+        FVulkanError{ result }, file, line, call, func );
 
     return false;
 }
@@ -119,15 +119,15 @@ NODISCARD static bool VulkanCheckErrors_( VkResult result,
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 PPE_RHIVULKAN_API void VulkanCheckNoErrors( VkResult result,
-    FWStringView call, FWStringView func, FWStringView file, u32 line ) {
+    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) {
     if (Unlikely(not VulkanCheckErrors_(result, call, func, file, line)))
-        PPE_THROW_IT(FVulkanException("vulkan error", static_cast<u32>(result)));
+        PPE_THROW_IT(FVulkanException(call, static_cast<u32>(result)));
 }
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 NODISCARD PPE_RHIVULKAN_API bool VulkanCheckIfErrors( VkResult result,
-    FWStringView call, FWStringView func, FWStringView file, u32 line ) NOEXCEPT {
+    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) NOEXCEPT {
     return VulkanCheckErrors_(result, call, func, file, line);
 }
 #endif

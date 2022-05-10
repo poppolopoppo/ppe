@@ -102,7 +102,7 @@ void FVulkanDebugger::LogDump() {
         FWStringBuilder wchar;
         wchar << L"--- frame dump <" << name << L"> ---" << Eol;
         wchar << dump;
-        LOG_DIRECT(RHI, Debug, wchar.Written());
+        LOG_DIRECT(RHI, Verbose, wchar.Written());
     }
 #endif
 

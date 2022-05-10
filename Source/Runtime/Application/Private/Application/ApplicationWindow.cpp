@@ -8,9 +8,15 @@
 
 #include "RHIModule.h"
 #include "HAL/RHIService.h"
+#include "HAL/TargetRHI.h"
 
 #include "Diagnostic/Logger.h"
 #include "Thread/ThreadPool.h"
+
+#if USE_PPE_LOGGER
+#   include "IO/Format.h"
+#   include "IO/FormatHelpers.h"
+#endif
 
 namespace PPE {
 namespace Application {
@@ -39,6 +45,14 @@ static void RecommendedDeviceInfo_(
     outDeviceInfo->Features = rhiModule.RecommendedFeatures(outDeviceInfo->Features);
     outDeviceInfo->MaxStagingBufferMemory = rhiModule.MaxStagingBufferMemory();
     outDeviceInfo->StagingBufferSize = rhiModule.StagingBufferSize();
+
+    LOG(Application, Info, L"create RHI service with device info:\n"
+        L"\tFeatures                : {0}\n"
+        L"\tMaxStagingBufferMemory  : {1}\n"
+        L"\tStagingBufferSize       : {2}",
+        outDeviceInfo->Features,
+        Fmt::SizeInBytes(outDeviceInfo->MaxStagingBufferMemory),
+        Fmt::SizeInBytes(outDeviceInfo->StagingBufferSize) );
 }
 //----------------------------------------------------------------------------
 static void RecommendedSurfaceInfo_(
@@ -50,6 +64,16 @@ static void RecommendedSurfaceInfo_(
     outSurfaceInfo->Dimensions = window.Dimensions();
     outSurfaceInfo->EnableFullscreen = window.Fullscreen();
     outSurfaceInfo->EnableVSync = (deviceFeatures & ERHIFeature::VSync);
+
+    LOG(Application, Info, L"create RHI service with surface info:\n"
+        L"\tHandle                  : {0}\n"
+        L"\tDimensions              : {1}\n"
+        L"\tEnableFullscreen        : {2:a}\n"
+        L"\tEnableVSync             : {3:a}",
+        Fmt::Pointer(outSurfaceInfo->Hwnd.Value),
+        outSurfaceInfo->Dimensions,
+        outSurfaceInfo->EnableFullscreen,
+        outSurfaceInfo->EnableVSync );
 }
 //----------------------------------------------------------------------------
 } //!namespace

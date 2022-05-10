@@ -457,9 +457,11 @@ enum class EDebugFlags : u32 {
 
     Unknown                 = 0,
 
-#if USE_PPE_RHIDEBUG
-    Default                 = LogTasks | LogBarriers | LogResourceUsage |
+    Verbose                 = LogTasks | LogBarriers | LogResourceUsage |
                               VisTasks | VisDrawTasks | VisResources | VisBarriers,
+
+#if USE_PPE_RHIDEBUG
+    Default                 = Verbose,
 #else
     Default                 = Unknown,
 #endif

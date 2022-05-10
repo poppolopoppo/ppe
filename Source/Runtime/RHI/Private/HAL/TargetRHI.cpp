@@ -24,29 +24,36 @@ TBasicTextWriter<_Char>& ExpandTargetRHI_(TBasicTextWriter<_Char>& oss, ETargetR
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextWriter<_Char>& ExpandRHIFeature_(TBasicTextWriter<_Char>& oss, ERHIFeature feature) {
+TBasicTextWriter<_Char>& ExpandRHIFeature_(TBasicTextWriter<_Char>& oss, ERHIFeature features) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERHIFeature>);
-    if (ERHIFeature::All == feature) return oss << "All";
-    if (ERHIFeature::Recommended == feature) return oss << "Recommended";
-    if (ERHIFeature::Minimal == feature) return oss << "Minimal";
 
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, "|"));
 
-    if (ERHIFeature::Headless & feature) oss << sep << STRING_LITERAL(_Char, "Headless");
-    if (ERHIFeature::Graphics & feature) oss << sep << STRING_LITERAL(_Char, "Graphics");
-    if (ERHIFeature::Compute & feature) oss << sep << STRING_LITERAL(_Char, "Compute");
-    if (ERHIFeature::AsyncCompute & feature) oss << sep << STRING_LITERAL(_Char, "AsyncCompute");
-    if (ERHIFeature::RayTracing & feature) oss << sep << STRING_LITERAL(_Char, "Raytracing");
-    if (ERHIFeature::MeshDraw & feature) oss << sep << STRING_LITERAL(_Char, "MeshDraw");
-    if (ERHIFeature::SamplerFeedback & feature) oss << sep << STRING_LITERAL(_Char, "SamplerFeedback");
-    if (ERHIFeature::TextureSpaceShading & feature) oss << sep << STRING_LITERAL(_Char, "TextureSpaceShading");
-    if (ERHIFeature::VariableShadingRate & feature) oss << sep << STRING_LITERAL(_Char, "VariableShadingRate");
-    if (ERHIFeature::ConservativeDepth & feature) oss << sep << STRING_LITERAL(_Char, "ConservativeDepth");
-    if (ERHIFeature::HighDynamicRange & feature) oss << sep << STRING_LITERAL(_Char, "HighDynamicRange");
-    if (ERHIFeature::VSync & feature) oss << sep << STRING_LITERAL(_Char, "VSync");
+    for (auto mask = MakeEnumBitMask(features); mask; ) {
+        const auto feature = static_cast<ERHIFeature>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (ERHIFeature::Debugging & feature) oss << sep << STRING_LITERAL(_Char, "Debugging");
-    if (ERHIFeature::Profiling & feature) oss << sep << STRING_LITERAL(_Char, "Profiling");
+        switch (feature) {
+        case ERHIFeature::Headless: oss << sep << STRING_LITERAL(_Char, "Headless"); break;
+        case ERHIFeature::Discrete: oss << sep << STRING_LITERAL(_Char, "Discrete"); break;
+        case ERHIFeature::Graphics: oss << sep << STRING_LITERAL(_Char, "Graphics"); break;
+        case ERHIFeature::Compute: oss << sep << STRING_LITERAL(_Char, "Compute"); break;
+        case ERHIFeature::AsyncCompute: oss << sep << STRING_LITERAL(_Char, "AsyncCompute"); break;
+        case ERHIFeature::RayTracing: oss << sep << STRING_LITERAL(_Char, "Raytracing"); break;
+        case ERHIFeature::MeshDraw: oss << sep << STRING_LITERAL(_Char, "MeshDraw"); break;
+        case ERHIFeature::SamplerFeedback: oss << sep << STRING_LITERAL(_Char, "SamplerFeedback"); break;
+        case ERHIFeature::TextureSpaceShading: oss << sep << STRING_LITERAL(_Char, "TextureSpaceShading"); break;
+        case ERHIFeature::VariableShadingRate: oss << sep << STRING_LITERAL(_Char, "VariableShadingRate"); break;
+        case ERHIFeature::ConservativeDepth: oss << sep << STRING_LITERAL(_Char, "ConservativeDepth"); break;
+        case ERHIFeature::HighDynamicRange: oss << sep << STRING_LITERAL(_Char, "HighDynamicRange"); break;
+        case ERHIFeature::VSync: oss << sep << STRING_LITERAL(_Char, "VSync"); break;
+        case ERHIFeature::Debugging: oss << sep << STRING_LITERAL(_Char, "Debugging"); break;
+        case ERHIFeature::Profiling: oss << sep << STRING_LITERAL(_Char, "Profiling"); break;
+        default: AssertReleaseMessage(L"unsupported ERHIFeature flag", features == ERHIFeature::All);
+        }
+    }
+
+    if (features == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }

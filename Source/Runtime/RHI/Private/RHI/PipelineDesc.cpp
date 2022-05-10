@@ -4,6 +4,8 @@
 
 #include "RHI/EnumHelpers.h"
 
+#include "IO/StaticString.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -37,10 +39,10 @@ public:
 
 private:
     T _data;
-    FConstChar _entryPoint;
+    TStaticString<64> _entryPoint;
     FFingerprint _fingerprint;
-#if USE_PPE_DEBUG
-    const FConstChar _debugName;
+#if USE_PPE_RHIDEBUG
+    TStaticString<64> _debugName;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -137,7 +139,7 @@ void FPipelineDesc::AddDescriptorSet_(
     Assert(id.Valid());
     Assert(index < MaxDescriptorSets);
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG && USE_PPE_ASSERT
     for (const FDescriptorSet& it : PipelineLayout.DescriptorSets) {
         Assert_NoAssume(it.Id != id);
         Assert_NoAssume(it.BindingIndex != index);

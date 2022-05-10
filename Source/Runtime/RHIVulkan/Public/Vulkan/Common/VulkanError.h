@@ -12,17 +12,17 @@
         const VkResult ANONYMIZE(__vkResult) = ( __VA_ARGS__ ); \
         ::PPE::RHI::VulkanCheckNoErrors( \
             ANONYMIZE(__vkResult), \
-            WSTRINGIZE(__VA_ARGS__), \
-            WSTRINGIZE(EXPAND(PPE_PRETTY_FUNCTION)), \
-            WSTRINGIZE(__FILE__),  __LINE__ ); \
+            STRINGIZE(__VA_ARGS__), \
+            WIDESTRING(PPE_PRETTY_FUNCTION), \
+            WIDESTRING(__FILE__),  __LINE__ ); \
     } while(0)
 #   define VK_CHECK_EX(_RESULT, ...) do { \
         const VkResult ANONYMIZE(__vkResult) = ( __VA_ARGS__ ); \
         if (not ::PPE::RHI::VulkanCheckIfErrors( \
             ANONYMIZE(__vkResult), \
-            WSTRINGIZE(__VA_ARGS__), \
-            WSTRINGIZE(EXPAND(PPE_PRETTY_FUNCTION)), \
-            WSTRINGIZE(__FILE__),  __LINE__ )) \
+            STRINGIZE(__VA_ARGS__), \
+            WIDESTRING(PPE_PRETTY_FUNCTION), \
+            WIDESTRING(__FILE__),  __LINE__ )) \
             return (_RESULT); \
     } while (0)
 #   define VK_CHECK(...) VK_CHECK_EX(::PPE::Default, __VA_ARGS__)
@@ -64,9 +64,9 @@ private:
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 PPE_RHIVULKAN_API void VulkanCheckNoErrors( VkResult result,
-    FWStringView call, FWStringView func, FWStringView file, u32 line );
+    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line );
 NODISCARD PPE_RHIVULKAN_API bool VulkanCheckIfErrors( VkResult result,
-    FWStringView call, FWStringView func, FWStringView file, u32 line ) NOEXCEPT;
+    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) NOEXCEPT;
 #endif
 //----------------------------------------------------------------------------
 PPE_RHIVULKAN_API FTextWriter& operator <<(FTextWriter& oss, const FVulkanError& error);

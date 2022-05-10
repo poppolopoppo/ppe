@@ -2,6 +2,7 @@
 
 #include "Vulkan/Common/VulkanEnumToString.h"
 
+#include "Container/BitMask.h"
 #include "IO/FormatHelpers.h"
 
 namespace PPE {
@@ -11,67 +12,62 @@ namespace RHI {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <typename T>
-static bool PopBit_(T& value, T bit) NOEXCEPT {
-    if (Meta::EnumHas(value, bit)) {
-        value = Meta::EnumRemove(value, bit);
-        return true;
-    }
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct TVkEnumFlagsNone_ {
-    TBasicTextWriter<_Char>& Oss;
-    const std::streamoff StartedAt;
-
-    explicit TVkEnumFlagsNone_(TBasicTextWriter<_Char>& oss) NOEXCEPT
-    :   Oss(oss)
-    ,   StartedAt(Oss.Stream()->TellO()) {
-    }
-
-    ~TVkEnumFlagsNone_() {
-        if (Oss.Stream()->TellO() == StartedAt)
-            Oss << STRING_LITERAL(_Char, "0");
-    }
-};
-template <typename _Char>
-TVkEnumFlagsNone_(TBasicTextWriter<_Char>&)->TVkEnumFlagsNone_<_Char>;
-//----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPipelineStageFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
-    TVkEnumFlagsNone_ none{ oss };
-    Unused(none);
 
-    if (PopBit_(value, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)) oss << sep << STRING_LITERAL(_Char, "TopOfPipe");
-    if (PopBit_(value, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT)) oss << sep << STRING_LITERAL(_Char, "DrawIndirect");
-    if (PopBit_(value, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT)) oss << sep << STRING_LITERAL(_Char, "VertexInput");
-    if (PopBit_(value, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)) oss << sep << STRING_LITERAL(_Char, "VertexShader");
-    if (PopBit_(value, VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT)) oss << sep << STRING_LITERAL(_Char, "TessellationControlShader");
-    if (PopBit_(value, VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT)) oss << sep << STRING_LITERAL(_Char, "TessellationEvaluationShader");
-    if (PopBit_(value, VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT)) oss << sep << STRING_LITERAL(_Char, "GeometryShader");
-    if (PopBit_(value, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)) oss << sep << STRING_LITERAL(_Char, "FragmentShader");
-    if (PopBit_(value, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)) oss << sep << STRING_LITERAL(_Char, "EarlyFragmentTests");
-    if (PopBit_(value, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT)) oss << sep << STRING_LITERAL(_Char, "LateFragmentTests");
-    if (PopBit_(value, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentOutput");
-    if (PopBit_(value, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT)) oss << sep << STRING_LITERAL(_Char, "ComputeShader");
-    if (PopBit_(value, VK_PIPELINE_STAGE_TRANSFER_BIT)) oss << sep << STRING_LITERAL(_Char, "Transfer");
-    if (PopBit_(value, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)) oss << sep << STRING_LITERAL(_Char, "BottomOfPipe");
-    if (PopBit_(value, VK_PIPELINE_STAGE_HOST_BIT)) oss << sep << STRING_LITERAL(_Char, "Host");
-    if (PopBit_(value, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT)) oss << sep << STRING_LITERAL(_Char, "AllGraphics");
-    if (PopBit_(value, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT)) oss << sep << STRING_LITERAL(_Char, "AllCommands");
-    if (PopBit_(value, VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "TransformFeedbackExt");
-    if (PopBit_(value, VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "ConditionalRenderingExt");
-    if (PopBit_(value, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AccelerationStructureBuildKhr");
-    if (PopBit_(value, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "RayTracingShaderKhr");
-    if (PopBit_(value, VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV)) oss << sep << STRING_LITERAL(_Char, "TaskShaderNv");
-    if (PopBit_(value, VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV)) oss << sep << STRING_LITERAL(_Char, "MeshShaderNv");
-    if (PopBit_(value, VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "FragmentDensityProcessExt");
-    if (PopBit_(value, VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "FragmentShadingRateAttachmentKhr");
-    if (PopBit_(value, VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV)) oss << sep << STRING_LITERAL(_Char, "CommandPreprocessNv");
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<VkPipelineStageFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value != 0) oss << sep << STRING_LITERAL(_Char, "<Unknown!>");
+        switch (it) {
+        case VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT: return oss << sep << STRING_LITERAL(_Char, "TopOfPipe"); break;
+        case VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT: return oss << sep << STRING_LITERAL(_Char, "DrawIndirect"); break;
+        case VK_PIPELINE_STAGE_VERTEX_INPUT_BIT: return oss << sep << STRING_LITERAL(_Char, "VertexInput"); break;
+        case VK_PIPELINE_STAGE_VERTEX_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "VertexShader"); break;
+        case VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "TessellationControlShader"); break;
+        case VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "TessellationEvaluationShader"); break;
+        case VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "GeometryShader"); break;
+        case VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "FragmentShader"); break;
+        case VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT: return oss << sep << STRING_LITERAL(_Char, "EarlyFragmentTests"); break;
+        case VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT: return oss << sep << STRING_LITERAL(_Char, "LateFragmentTests"); break;
+        case VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT: return oss << sep << STRING_LITERAL(_Char, "ColorAttachmentOutput"); break;
+        case VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "ComputeShader"); break;
+        case VK_PIPELINE_STAGE_TRANSFER_BIT: return oss << sep << STRING_LITERAL(_Char, "Transfer"); break;
+        case VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT: return oss << sep << STRING_LITERAL(_Char, "BottomOfPipe"); break;
+        case VK_PIPELINE_STAGE_HOST_BIT: return oss << sep << STRING_LITERAL(_Char, "Host"); break;
+        case VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT: return oss << sep << STRING_LITERAL(_Char, "AllGraphics"); break;
+        case VK_PIPELINE_STAGE_ALL_COMMANDS_BIT: return oss << sep << STRING_LITERAL(_Char, "AllCommands"); break;
+#ifdef VK_EXT_transform_feedback
+        case VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT: return oss << sep << STRING_LITERAL(_Char, "TransformFeedbackExt"); break;
+#endif
+#ifdef VK_EXT_conditional_rendering
+        case VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT: return oss << sep << STRING_LITERAL(_Char, "ConditionalRenderingExt"); break;
+#endif
+#ifdef VK_NV_shading_rate_image
+        case VK_PIPELINE_STAGE_SHADING_RATE_IMAGE_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "ShadingRateImageNV"); break;
+#endif
+#ifdef VK_NV_ray_tracing
+        case VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "AccelerationStructureBuildNv"); break;
+        case VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "RayTracingShaderNv"); break;
+#endif
+#ifdef VK_NV_mesh_shader
+        case VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "TaskShaderNv"); break;
+        case VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "MeshShaderNv"); break;
+#endif
+#ifdef VK_EXT_fragment_density_map
+        case VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT: return oss << sep << STRING_LITERAL(_Char, "FragmentDensityProcessExt"); break;
+#endif
+#ifdef VK_NV_device_generated_commands
+        case VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "CommandPreprocessNv"); break;
+#elif defined(VK_NVX_device_generated_commands)
+        case VK_PIPELINE_STAGE_COMMAND_PROCESS_BIT_NVX: return oss << sep << STRING_LITERAL(_Char, "CommandPreprocessNvx"); break;
+#endif
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -79,14 +75,20 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPipelineStageFla
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkDependencyFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
-    TVkEnumFlagsNone_ none{ oss };
-    Unused(none);
 
-    if (PopBit_(value, VK_DEPENDENCY_BY_REGION_BIT)) oss << sep << STRING_LITERAL(_Char, "ByRegion");
-    if (PopBit_(value, VK_DEPENDENCY_DEVICE_GROUP_BIT)) oss << sep << STRING_LITERAL(_Char, "DeviceGroup");
-    if (PopBit_(value, VK_DEPENDENCY_VIEW_LOCAL_BIT)) oss << sep << STRING_LITERAL(_Char, "ViewLocal");
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<VkDependencyFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value != 0) oss << sep << STRING_LITERAL(_Char, "<Unknown!>");
+        switch (it) {
+        case VK_DEPENDENCY_BY_REGION_BIT: oss << sep << STRING_LITERAL(_Char, "ByRegion"); break;
+        case VK_DEPENDENCY_DEVICE_GROUP_BIT: oss << sep << STRING_LITERAL(_Char, "DeviceGroup"); break;
+        case VK_DEPENDENCY_VIEW_LOCAL_BIT: oss << sep << STRING_LITERAL(_Char, "ViewLocal"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -94,39 +96,62 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkDependencyFlagBi
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkAccessFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
-    TVkEnumFlagsNone_ none{ oss };
-    Unused(none);
 
-    if (PopBit_(value, VK_ACCESS_INDIRECT_COMMAND_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "IndirectCommandRead");
-    if (PopBit_(value, VK_ACCESS_INDEX_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "IndexRead");
-    if (PopBit_(value, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "VertexAttributeRead");
-    if (PopBit_(value, VK_ACCESS_UNIFORM_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "UniformRead");
-    if (PopBit_(value, VK_ACCESS_INPUT_ATTACHMENT_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "InputAttachmentRead");
-    if (PopBit_(value, VK_ACCESS_SHADER_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "ShaderRead");
-    if (PopBit_(value, VK_ACCESS_SHADER_WRITE_BIT)) oss << sep << STRING_LITERAL(_Char, "ShaderWrite");
-    if (PopBit_(value, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentRead");
-    if (PopBit_(value, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentWrite");
-    if (PopBit_(value, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachmentRead");
-    if (PopBit_(value, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachmentWrite");
-    if (PopBit_(value, VK_ACCESS_TRANSFER_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "TransferRead");
-    if (PopBit_(value, VK_ACCESS_TRANSFER_WRITE_BIT)) oss << sep << STRING_LITERAL(_Char, "TransferWrite");
-    if (PopBit_(value, VK_ACCESS_HOST_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "HostRead");
-    if (PopBit_(value, VK_ACCESS_HOST_WRITE_BIT)) oss << sep << STRING_LITERAL(_Char, "HostWrite");
-    if (PopBit_(value, VK_ACCESS_MEMORY_READ_BIT)) oss << sep << STRING_LITERAL(_Char, "MemoryRead");
-    if (PopBit_(value, VK_ACCESS_MEMORY_WRITE_BIT)) oss << sep << STRING_LITERAL(_Char, "MemoryWrite");
-    if (PopBit_(value, VK_ACCESS_TRANSFORM_FEEDBACK_WRITE_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "TransformFeedbackWriteExt");
-    if (PopBit_(value, VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "TransformFeedbackCounterReadExt");
-    if (PopBit_(value, VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "TransformFeedbackCounterWriteExt");
-    if (PopBit_(value, VK_ACCESS_CONDITIONAL_RENDERING_READ_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "ConditionalRenderingReadExt");
-    if (PopBit_(value, VK_ACCESS_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "ColorAttachmentReadNoncoherentKhr");
-    if (PopBit_(value, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AccelerationStructureReadKhr");
-    if (PopBit_(value, VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AccelerationStructureWriteKhr");
-    if (PopBit_(value, VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "FragmentDensityMapReadExt");
-    if (PopBit_(value, VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "FragmentShadingRateAttachmentReadKhr");
-    if (PopBit_(value, VK_ACCESS_COMMAND_PREPROCESS_READ_BIT_NV)) oss << sep << STRING_LITERAL(_Char, "CommandPreprocessReadNv");
-    if (PopBit_(value, VK_ACCESS_COMMAND_PREPROCESS_WRITE_BIT_NV)) oss << sep << STRING_LITERAL(_Char, "CommandPreprocessWriteNv");
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<VkAccessFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value != 0) oss << sep << STRING_LITERAL(_Char, "<Unknown!>");
+        switch (it) {
+        case VK_ACCESS_INDIRECT_COMMAND_READ_BIT: oss << sep << STRING_LITERAL(_Char, "IndirectCommandRead"); break;
+        case VK_ACCESS_INDEX_READ_BIT: oss << sep << STRING_LITERAL(_Char, "IndexRead"); break;
+        case VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT: oss << sep << STRING_LITERAL(_Char, "VertexAttributeRead"); break;
+        case VK_ACCESS_UNIFORM_READ_BIT: oss << sep << STRING_LITERAL(_Char, "UniformRead"); break;
+        case VK_ACCESS_INPUT_ATTACHMENT_READ_BIT: oss << sep << STRING_LITERAL(_Char, "InputAttachmentRead"); break;
+        case VK_ACCESS_SHADER_READ_BIT: oss << sep << STRING_LITERAL(_Char, "ShaderRead"); break;
+        case VK_ACCESS_SHADER_WRITE_BIT: oss << sep << STRING_LITERAL(_Char, "ShaderWrite"); break;
+        case VK_ACCESS_COLOR_ATTACHMENT_READ_BIT: oss << sep << STRING_LITERAL(_Char, "ColorAttachmentRead"); break;
+        case VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT: oss << sep << STRING_LITERAL(_Char, "ColorAttachmentWrite"); break;
+        case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT: oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachmentRead"); break;
+        case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT: oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachmentWrite"); break;
+        case VK_ACCESS_TRANSFER_READ_BIT: oss << sep << STRING_LITERAL(_Char, "TransferRead"); break;
+        case VK_ACCESS_TRANSFER_WRITE_BIT: oss << sep << STRING_LITERAL(_Char, "TransferWrite"); break;
+        case VK_ACCESS_HOST_READ_BIT: oss << sep << STRING_LITERAL(_Char, "HostRead"); break;
+        case VK_ACCESS_HOST_WRITE_BIT: oss << sep << STRING_LITERAL(_Char, "HostWrite"); break;
+        case VK_ACCESS_MEMORY_READ_BIT: oss << sep << STRING_LITERAL(_Char, "MemoryRead"); break;
+        case VK_ACCESS_MEMORY_WRITE_BIT: oss << sep << STRING_LITERAL(_Char, "MemoryWrite"); break;
+#ifdef VK_EXT_transform_feedback
+        case VK_ACCESS_TRANSFORM_FEEDBACK_WRITE_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "TransformFeedbackWriteExt"); break;
+        case VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "TransformFeedbackCounterReadExt"); break;
+        case VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "TransformFeedbackCounterWriteExt"); break;
+#endif
+#ifdef VK_EXT_conditional_rendering
+        case VK_ACCESS_CONDITIONAL_RENDERING_READ_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "ConditionalRenderingReadExt"); break;
+#endif
+#ifdef VK_EXT_blend_operation_advanced
+        case VK_ACCESS_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "ColorAttachmentReadNoncoherentExt"); break;
+#endif
+#ifdef VK_NV_ray_tracing
+        case VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "AccelerationStructureReadKhr"); break;
+        case VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "AccelerationStructureWriteKhr"); break;
+#endif
+#ifdef VK_EXT_fragment_density_map
+        case VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "FragmentDensityMapReadExt"); break;
+#endif
+#ifdef VK_NV_shading_rate_image
+        case VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "FragmentShadingRateAttachmentReadKhr"); break;
+#endif
+#ifdef VK_NV_device_generated_commands
+        case VK_ACCESS_COMMAND_PREPROCESS_READ_BIT_NV: oss << sep << STRING_LITERAL(_Char, "CommandPreprocessReadNv"); break;
+        case VK_ACCESS_COMMAND_PREPROCESS_WRITE_BIT_NV: oss << sep << STRING_LITERAL(_Char, "CommandPreprocessWriteNv"); break;
+#elif defined(VK_NVX_device_generated_commands)
+        case VK_ACCESS_COMMAND_PREPROCESS_READ_BIT_NVX: oss << sep << STRING_LITERAL(_Char, "CommandPreprocessReadNvx"); break;
+        case VK_ACCESS_COMMAND_PREPROCESS_WRITE_BIT_NVX: oss << sep << STRING_LITERAL(_Char, "CommandPreprocessWriteNvx"); break;
+#endif
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -137,22 +162,36 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageLayout valu
     case VK_IMAGE_LAYOUT_UNDEFINED: return oss << STRING_LITERAL(_Char, "Undefined");
     case VK_IMAGE_LAYOUT_GENERAL: return oss << STRING_LITERAL(_Char, "General");
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: return oss << STRING_LITERAL(_Char, "ColorAttachmentOptimal");
-    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthStencilAttachmentOptimal");
-    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthStencilReadOnlyOptimal");
+
     case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "ShaderReadOnlyOptimal");
     case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: return oss << STRING_LITERAL(_Char, "TransferSrcOptimal");
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: return oss << STRING_LITERAL(_Char, "TransferDstOptimal");
     case VK_IMAGE_LAYOUT_PREINITIALIZED: return oss << STRING_LITERAL(_Char, "Preinitialized");
-    case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthReadOnlyStencilAttachmentOptimal");
-    case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthAttachmentStencilReadOnlyOptimal");
+
     case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthAttachmentOptimal");
     case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthReadOnlyOptimal");
     case VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL: return oss << STRING_LITERAL(_Char, "StencilAttachmentOptimal");
     case VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "StencilReadOnlyOptimal");
     case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR: return oss << STRING_LITERAL(_Char, "PresentSrcKhr");
     case VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR: return oss << STRING_LITERAL(_Char, "SharedPresentKhr");
+
+#ifdef VK_EXT_fragment_density_map
     case VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT: return oss << STRING_LITERAL(_Char, "FragmentDensityMapOptimalExt");
+#endif
+#ifdef VK_NV_shading_rate_image
+    //case VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV: return oss << STRING_LITERAL(_Char, "ShadingRateAttachmentOptimalNV");
     case VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "FragmentShadingRateAttachmentOptimalKhr");
+#endif
+#ifdef VK_KHR_separate_depth_stencil_layouts
+    //case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "DepthAttachmentOptimalKhr");
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthStencilAttachmentOptimal");
+    //case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "DepthReadOnlyKhr");
+    case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthReadOnlyStencilAttachmentOptimal");
+    //case VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "StencilAttachmentOptimalKhr");
+    case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthAttachmentStencilReadOnlyOptimal");
+    //case VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "StencilReadOnlyKhr");
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthStencilReadOnlyOptimal");
+#endif
     case VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "ReadOnlyOptimalKhr");
     case VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "AttachmentOptimalKhr");
     case VK_IMAGE_LAYOUT_MAX_ENUM:
@@ -165,22 +204,28 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageLayout valu
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageAspectFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
-    TVkEnumFlagsNone_ none{ oss };
-    Unused(none);
 
-    if (PopBit_(value, VK_IMAGE_ASPECT_COLOR_BIT)) oss << sep << STRING_LITERAL(_Char, "Color");
-    if (PopBit_(value, VK_IMAGE_ASPECT_DEPTH_BIT)) oss << sep << STRING_LITERAL(_Char, "Depth");
-    if (PopBit_(value, VK_IMAGE_ASPECT_STENCIL_BIT)) oss << sep << STRING_LITERAL(_Char, "Stencil");
-    if (PopBit_(value, VK_IMAGE_ASPECT_METADATA_BIT)) oss << sep << STRING_LITERAL(_Char, "Metadata");
-    if (PopBit_(value, VK_IMAGE_ASPECT_PLANE_0_BIT)) oss << sep << STRING_LITERAL(_Char, "Plane0");
-    if (PopBit_(value, VK_IMAGE_ASPECT_PLANE_1_BIT)) oss << sep << STRING_LITERAL(_Char, "Plane1");
-    if (PopBit_(value, VK_IMAGE_ASPECT_PLANE_2_BIT)) oss << sep << STRING_LITERAL(_Char, "Plane2");
-    if (PopBit_(value, VK_IMAGE_ASPECT_MEMORY_PLANE_0_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "MemoryPlane0Ext");
-    if (PopBit_(value, VK_IMAGE_ASPECT_MEMORY_PLANE_1_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "MemoryPlane1Ext");
-    if (PopBit_(value, VK_IMAGE_ASPECT_MEMORY_PLANE_2_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "MemoryPlane2Ext");
-    if (PopBit_(value, VK_IMAGE_ASPECT_MEMORY_PLANE_3_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "MemoryPlane3Ext");
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<VkImageAspectFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value != 0) oss << sep << STRING_LITERAL(_Char, "<Unknown!>");
+        switch (it) {
+        case VK_IMAGE_ASPECT_COLOR_BIT: oss << sep << STRING_LITERAL(_Char, "Color"); break;
+        case VK_IMAGE_ASPECT_DEPTH_BIT: oss << sep << STRING_LITERAL(_Char, "Depth"); break;
+        case VK_IMAGE_ASPECT_STENCIL_BIT: oss << sep << STRING_LITERAL(_Char, "Stencil"); break;
+        case VK_IMAGE_ASPECT_METADATA_BIT: oss << sep << STRING_LITERAL(_Char, "Metadata"); break;
+        case VK_IMAGE_ASPECT_PLANE_0_BIT: oss << sep << STRING_LITERAL(_Char, "Plane0"); break;
+        case VK_IMAGE_ASPECT_PLANE_1_BIT: oss << sep << STRING_LITERAL(_Char, "Plane1"); break;
+        case VK_IMAGE_ASPECT_PLANE_2_BIT: oss << sep << STRING_LITERAL(_Char, "Plane2"); break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_0_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "MemoryPlane0Ext"); break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_1_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "MemoryPlane1Ext"); break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_2_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "MemoryPlane2Ext"); break;
+        case VK_IMAGE_ASPECT_MEMORY_PLANE_3_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "MemoryPlane3Ext"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -243,20 +288,26 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPresentModeKHR v
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkSurfaceTransformFlagBitsKHR value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
-    TVkEnumFlagsNone_ none{ oss };
-    Unused(none);
 
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "Identity");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "Rotate90");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "Rotate180");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "Rotate270");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "HorizontalMirror");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "HorizontalMirrorRotate90");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "HorizontalMirrorRotate180");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "HorizontalMirrorRotate270");
-    if (PopBit_(value, VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "Inherit");
+    for (auto mask = MakeBitMask(static_cast<std::underlying_type_t<VkSurfaceTransformFlagBitsKHR>>(value)); mask; ) {
+        const auto it = static_cast<VkSurfaceTransformFlagBitsKHR>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value != 0) oss << sep << STRING_LITERAL(_Char, "<Unknown!>");
+        switch (it) {
+        case VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "Identity"); break;
+        case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "Rotate90"); break;
+        case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "Rotate180"); break;
+        case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "Rotate270"); break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "HorizontalMirror"); break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "HorizontalMirrorRotate90"); break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "HorizontalMirrorRotate180"); break;
+        case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "HorizontalMirrorRotate270"); break;
+        case VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "Inherit"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -264,15 +315,21 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkSurfaceTransform
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkCompositeAlphaFlagBitsKHR value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
-    TVkEnumFlagsNone_ none{ oss };
-    Unused(none);
 
-    if (PopBit_(value, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AlphaOpaque");
-    if (PopBit_(value, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AlphaPreMultiplied");
-    if (PopBit_(value, VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AlphaPostMultiplied");
-    if (PopBit_(value, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "AlphaInherit");
+    for (auto mask = MakeBitMask(static_cast<std::underlying_type_t<VkCompositeAlphaFlagBitsKHR>>(value)); mask; ) {
+        const auto it = static_cast<VkCompositeAlphaFlagBitsKHR>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value != 0) oss << sep << STRING_LITERAL(_Char, "<Unknown!>");
+        switch (it) {
+        case VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "AlphaOpaque"); break;
+        case VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "AlphaPreMultiplied"); break;
+        case VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "AlphaPostMultiplied"); break;
+        case VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "AlphaInherit"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -280,22 +337,28 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkCompositeAlphaFl
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageUsageFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
-    TVkEnumFlagsNone_ none{ oss };
-    Unused(none);
 
-    if (PopBit_(value, VK_IMAGE_USAGE_TRANSFER_SRC_BIT)) oss << sep << STRING_LITERAL(_Char, "TransferSrc");
-    if (PopBit_(value, VK_IMAGE_USAGE_TRANSFER_DST_BIT)) oss << sep << STRING_LITERAL(_Char, "TransferDst");
-    if (PopBit_(value, VK_IMAGE_USAGE_SAMPLED_BIT)) oss << sep << STRING_LITERAL(_Char, "Sampled");
-    if (PopBit_(value, VK_IMAGE_USAGE_STORAGE_BIT)) oss << sep << STRING_LITERAL(_Char, "Storage");
-    if (PopBit_(value, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)) oss << sep << STRING_LITERAL(_Char, "ColorAttachment");
-    if (PopBit_(value, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)) oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment");
-    if (PopBit_(value, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)) oss << sep << STRING_LITERAL(_Char, "TransientAttachment");
-    if (PopBit_(value, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT)) oss << sep << STRING_LITERAL(_Char, "InputAttachment");
-    if (PopBit_(value, VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT)) oss << sep << STRING_LITERAL(_Char, "FragmentDensityMap");
-    if (PopBit_(value, VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR)) oss << sep << STRING_LITERAL(_Char, "FragmentShadingRateAttachment");
-    if (PopBit_(value, VK_IMAGE_USAGE_INVOCATION_MASK_BIT_HUAWEI)) oss << sep << STRING_LITERAL(_Char, "InvocationMaskHuawei");
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<VkImageUsageFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
 
-    if (value != 0) oss << sep << STRING_LITERAL(_Char, "<Unknown!>");
+        switch (it) {
+        case VK_IMAGE_USAGE_TRANSFER_SRC_BIT: oss << sep << STRING_LITERAL(_Char, "TransferSrc"); break;
+        case VK_IMAGE_USAGE_TRANSFER_DST_BIT: oss << sep << STRING_LITERAL(_Char, "TransferDst"); break;
+        case VK_IMAGE_USAGE_SAMPLED_BIT: oss << sep << STRING_LITERAL(_Char, "Sampled"); break;
+        case VK_IMAGE_USAGE_STORAGE_BIT: oss << sep << STRING_LITERAL(_Char, "Storage"); break;
+        case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT: oss << sep << STRING_LITERAL(_Char, "ColorAttachment"); break;
+        case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT: oss << sep << STRING_LITERAL(_Char, "DepthStencilAttachment"); break;
+        case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT: oss << sep << STRING_LITERAL(_Char, "TransientAttachment"); break;
+        case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT: oss << sep << STRING_LITERAL(_Char, "InputAttachment"); break;
+        case VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "FragmentDensityMap"); break;
+        case VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR: oss << sep << STRING_LITERAL(_Char, "FragmentShadingRateAttachment"); break;
+        case VK_IMAGE_USAGE_INVOCATION_MASK_BIT_HUAWEI: oss << sep << STRING_LITERAL(_Char, "InvocationMaskHuawei"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }

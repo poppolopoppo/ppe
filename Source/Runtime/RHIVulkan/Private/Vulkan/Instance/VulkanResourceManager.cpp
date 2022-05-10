@@ -1007,7 +1007,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
     EMemoryType memType;
     FStagingBufferPool* pool;
     u32 poolIndexMask;
-    ONLY_IF_ASSERT(FConstChar debugName);
+    ONLY_IF_RHIDEBUG(FConstChar debugName);
 
     FBufferDesc desc;
     desc.Usage = usage;
@@ -1018,7 +1018,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         desc.SetSize(_staging.WritePageSize);
         memType = EMemoryType::HostWrite;
         poolIndexMask = 1u << 30;
-        ONLY_IF_ASSERT(debugName = "HostWriteBuffer");
+        ONLY_IF_RHIDEBUG(debugName = "HostWriteBuffer");
         break;
 
     case EBufferUsage::TransferDst:
@@ -1026,7 +1026,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         desc.SetSize(_staging.ReadPageSize);
         memType = EMemoryType::HostRead;
         poolIndexMask = 2u << 30;
-        ONLY_IF_ASSERT(debugName = "HostReadBuffer");
+        ONLY_IF_RHIDEBUG(debugName = "HostReadBuffer");
         break;
 
     case EBufferUsage::Uniform:
@@ -1034,7 +1034,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         desc.SetSize(_staging.UniformPageSize);
         memType = EMemoryType::HostWrite;
         poolIndexMask = 3u << 30;
-        ONLY_IF_ASSERT(debugName = "HostUniformBuffer");
+        ONLY_IF_RHIDEBUG(debugName = "HostUniformBuffer");
         break;
 
     default: AssertReleaseFailed(L"unsupported buffer usage");
@@ -1054,7 +1054,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         return true;
     }
 
-    ONLY_IF_ASSERT(LOG(RHI, Error, L"failed to allocate staging buffer for '{0}'", debugName));
+    ONLY_IF_RHIDEBUG(RHI_LOG(Error, L"failed to allocate staging buffer for '{0}'", debugName));
     return false;
 }
 //----------------------------------------------------------------------------

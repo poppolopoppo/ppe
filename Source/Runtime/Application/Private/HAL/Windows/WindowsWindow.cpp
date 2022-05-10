@@ -414,7 +414,6 @@ bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, cons
         if (not ::AdjustWindowRect(&wRect, dwStyle, FALSE))
             PPE_THROW_IT(FLastErrorException("AdjustWindowRect"));
 
-
         corrected.Left = checked_cast<int>(wRect.left);
         corrected.Top = checked_cast<int>(wRect.top);
         corrected.Width = checked_cast<size_t>(wRect.right - wRect.left);
