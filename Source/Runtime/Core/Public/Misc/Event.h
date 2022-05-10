@@ -12,7 +12,7 @@
 #endif
 
 #define PUBLIC_EVENT(_NAME, ...) \
-    private: \
+    protected: \
         ::PPE::TEvent< __VA_ARGS__ , false > CONCAT(_, _NAME); \
     public: \
         ::PPE::TPublicEvent< __VA_ARGS__ , false >& _NAME() { \
@@ -20,7 +20,7 @@
         }
 
 #define THREADSAFE_EVENT(_NAME, ...) \
-    private: \
+    protected: \
         ::PPE::TEvent< __VA_ARGS__ , true > CONCAT(_, _NAME); \
     public: \
         ::PPE::TPublicEvent< __VA_ARGS__ , true >& _NAME() { \

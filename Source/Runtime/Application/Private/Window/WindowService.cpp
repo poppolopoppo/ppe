@@ -28,6 +28,9 @@ public:
     virtual FMainWindow* MainWindow() const NOEXCEPT override final;
     virtual void SetMainWindow(FMainWindow* window) override final;
 
+    virtual void AddWindowListener(IWindowListener* listener) override final;
+    virtual void RemoveWindowListener(IWindowListener* listener) override final;
+
     virtual void ShowSystray() override final;
     virtual void HideSystray() override final;
 
@@ -84,6 +87,20 @@ FMainWindow* FDefaultWindowService_::MainWindow() const NOEXCEPT {
 //----------------------------------------------------------------------------
 void FDefaultWindowService_::SetMainWindow(FMainWindow* window) {
     _mainWindow.reset(window);
+}
+//----------------------------------------------------------------------------
+void FDefaultWindowService_::AddWindowListener(IWindowListener* listener) {
+    Assert(listener);
+    if (FMainWindow* const wnd = _mainWindow) {
+        wnd->AddListener(listener);
+    }
+}
+//----------------------------------------------------------------------------
+void FDefaultWindowService_::RemoveWindowListener(IWindowListener* listener) {
+    Assert(listener);
+    if (FMainWindow* const wnd = _mainWindow) {
+        wnd->RemoveListener(listener);
+    }
 }
 //----------------------------------------------------------------------------
 void FDefaultWindowService_::ShowSystray() {

@@ -167,6 +167,7 @@ void FApplicationWindow::Tick(FTimespan dt) {
     FApplicationBase::Tick(dt);
 
     _input->Update(dt);
+    _rhi->RenderFrame(dt);
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::OnWindowFocus(bool enabled) {

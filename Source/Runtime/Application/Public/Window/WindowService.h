@@ -24,6 +24,9 @@ public:
     virtual FMainWindow* MainWindow() const NOEXCEPT = 0;
     virtual void SetMainWindow(FMainWindow* window) = 0;
 
+    virtual void AddWindowListener(IWindowListener* listener) = 0;
+    virtual void RemoveWindowListener(IWindowListener* listener) = 0;
+
     virtual void ShowSystray() = 0;
     virtual void HideSystray() = 0;
 

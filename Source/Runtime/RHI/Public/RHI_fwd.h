@@ -61,6 +61,7 @@ template <typename T>
 using TRHIThreadSafe = TThreadSafe<T, EThreadBarrier::None>;
 #endif
 //----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(u32,   FFrameIndex);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowHandle);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowSurface);
 //----------------------------------------------------------------------------

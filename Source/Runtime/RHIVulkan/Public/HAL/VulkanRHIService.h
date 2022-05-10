@@ -32,7 +32,13 @@ public: // IRHIService
     virtual RHI::FWindowSurface BackBuffer() const NOEXCEPT override;
     virtual const RHI::FSwapchainID& Swapchain() const NOEXCEPT override { return _swapchain; }
 
+    virtual RHI::FFrameIndex CurrentFrame() const NOEXCEPT override { return _currentFrame; }
+    virtual FTimespan ElapsedTime() const NOEXCEPT override { return _elspasedTime; }
+
+    virtual void RenderFrame(FTimespan dt) override;
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) override;
+
+    virtual void DeviceLost() override;
     virtual void ReleaseMemory() NOEXCEPT override;
 
 #if USE_PPE_RHIDEBUG
@@ -51,6 +57,9 @@ private:
     RHI::FVulkanInstance _instance;
     RHI::FVulkanDeviceInfo _deviceInfo;
     RHI::PVulkanFrameGraph _frameGraph;
+
+    RHI::FFrameIndex _currentFrame;
+    FTimespan _elspasedTime;
 
     RHI::FSwapchainID _swapchain;
     VkSurfaceKHR _backBuffer{ VK_NULL_HANDLE };

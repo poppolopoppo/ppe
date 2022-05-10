@@ -24,7 +24,7 @@ EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-CONSTEXPR const RHI::EPresentMode GVsyncPresentMode_{ RHI::EPresentMode::RelaxedFifo };
+CONSTEXPR const RHI::EPresentMode GVSyncPresentMode_{ RHI::EPresentMode::RelaxedFifo };
 //----------------------------------------------------------------------------
 CONSTEXPR const RHI::FSurfaceFormat GHDRSurfaceFormats_[] = {
     { RHI::EPixelFormat::RGB10_A2_UNorm, RHI::EColorSpace::HDR10_ST2084 },
@@ -37,6 +37,8 @@ CONSTEXPR const RHI::FSurfaceFormat GHDRSurfaceFormats_[] = {
 //----------------------------------------------------------------------------
 FVulkanRHIService::FVulkanRHIService(const FVulkanTargetRHI& vulkanRHI) NOEXCEPT
 :   _vulkanRHI(vulkanRHI)
+,   _currentFrame(UMax)
+,   _elspasedTime(0)
 {
 
 }
@@ -58,6 +60,8 @@ bool FVulkanRHIService::Construct(
 
     RHI_LOG(Info, L"creating vulkan RHI service");
     RHI_LOG(Verbose, L"creating vulkan instance for rhi service");
+
+    _elspasedTime = 0;
 
     const EVulkanVersion version = EVulkanVersion::API_version_latest;
 
@@ -180,7 +184,7 @@ bool FVulkanRHIService::Construct(
     if (device.Enabled().ShadingRateImageNV)
         _features |= ERHIFeature::VariableShadingRate;
     if (device.HasExtension(EVulkanDeviceExtension::EXT_conservative_rasterization))
-        _features |= ERHIFeature::VariableShadingRate;
+        _features |= ERHIFeature::ConservativeDepth;
 
     if ((deviceInfo.Features & ERHIFeature::Debugging) &&
         device.AnyExtension(FVulkanInstance::DebuggingInstanceExtensions(version)) &&
@@ -248,20 +252,51 @@ RHI::FWindowSurface FVulkanRHIService::BackBuffer() const NOEXCEPT {
     return RHI::FVulkanExternalObject{ _backBuffer }.WindowSurface();
 }
 //----------------------------------------------------------------------------
+void FVulkanRHIService::RenderFrame(FTimespan dt) {
+    Assert(_frameGraph);
+
+    using namespace RHI;
+
+    _elspasedTime += dt;
+
+    const FFrameIndex previousFrame = _currentFrame;
+    _currentFrame = _frameGraph->PrepareNewFrame();
+
+    if (_currentFrame != previousFrame) {
+        _OnRenderFrame.Invoke(*this, dt);
+
+        _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
+    }
+}
+//----------------------------------------------------------------------------
 void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
     Assert(surfaceInfo.Hwnd);
     Assert(_backBuffer);
 
+    using namespace RHI;
+
     if (surfaceInfo.Dimensions == uint2::Zero)
         return;
 
-    using namespace RHI;
     RHI_LOG(Info, L"resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
 
     _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
 
     if (not CreateBackBufferSwapchain_(_features, _swapchain.Release(), surfaceInfo))
         AssertReleaseMessage(L"failed to resize swapchain", !!_swapchain);
+
+    _OnWindowResized.Invoke(*this, surfaceInfo);
+}
+//----------------------------------------------------------------------------
+void FVulkanRHIService::DeviceLost() {
+    using namespace RHI;
+
+    if (_frameGraph) {
+        RHI_LOG(Warning, L"device lost!");
+
+        // #TODO: try to recreate the device
+        _OnDeviceLost.Invoke(*this);
+    }
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::ReleaseMemory() NOEXCEPT {
@@ -285,7 +320,7 @@ bool FVulkanRHIService::CreateBackBufferSwapchain_(
     swapchainDesc.Dimensions = surfaceInfo.Dimensions;
 
     if (surfaceInfo.EnableVSync)
-        swapchainDesc.PresentModes.Push(GVsyncPresentMode_);
+        swapchainDesc.PresentModes.Push(GVSyncPresentMode_);
 
     if (features & ERHIFeature::HighDynamicRange)
         swapchainDesc.SurfaceFormats.Append(GHDRSurfaceFormats_);
@@ -299,7 +334,7 @@ bool FVulkanRHIService::CreateBackBufferSwapchain_(
     // check actual surface format after construction:
     const auto& swapchainResource = _frameGraph->ResourceManager().ResourceData(_swapchain);
 
-    if (swapchainResource.PresentMode() == VkCast(GVsyncPresentMode_))
+    if (swapchainResource.PresentMode() == VkCast(GVSyncPresentMode_))
         _features += ERHIFeature::VSync;
     else
         _features -= ERHIFeature::VSync;

@@ -174,7 +174,7 @@ public:
     NODISCARD bool UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) override;
     NODISCARD bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) override;
 
-    void PrepareNewFrame() override;
+    FFrameIndex PrepareNewFrame() override;
     NODISCARD FCommandBufferBatch Begin(const FCommandBufferDesc& desc, TMemoryView<const SCommandBatch> dependsOn) override;
     NODISCARD bool Execute(FCommandBufferBatch& cmdBatch) override;
     NODISCARD bool Wait(TMemoryView<const SCommandBatch> commands, FNanoseconds timeout) override;

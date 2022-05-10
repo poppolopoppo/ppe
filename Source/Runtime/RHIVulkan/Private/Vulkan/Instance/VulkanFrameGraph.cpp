@@ -525,10 +525,12 @@ bool FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t& s
 //----------------------------------------------------------------------------
 // PrepareNewFrame
 //----------------------------------------------------------------------------
-void FVulkanFrameGraph::PrepareNewFrame() {
+FFrameIndex FVulkanFrameGraph::PrepareNewFrame() {
     const u32 currentFrame{ _frameIndex.fetch_add(1, std::memory_order_acquire) + 1 };
 
     _resourceManager.MemoryManager().DutyCycle(currentFrame);
+
+    return FFrameIndex{ currentFrame };
 }
 //----------------------------------------------------------------------------
 // Begin
