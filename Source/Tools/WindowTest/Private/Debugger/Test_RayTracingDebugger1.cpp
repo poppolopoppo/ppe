@@ -80,8 +80,8 @@ ARGS_IF_RHIDEBUG("RayClosestHit"));
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
     LOG_CHECK(WindowTest, dstImage.Valid());
 
-    const TMemoryView<const u32> indices{ 0, 1, 2 };
-    const TMemoryView<const float3> vertices{
+    const u32 indices[] = {0, 1, 2};
+    const float3 vertices[] = {
         { 0.25f, 0.25f, 0.0f },
         { 0.75f, 0.25f, 0.0f },
         { 0.50f, 0.75f, 0.0f } };
@@ -93,8 +93,8 @@ ARGS_IF_RHIDEBUG("RayClosestHit"));
 
     FRayTracingGeometryDesc::FTriangles trianglesDesc;
     trianglesDesc.SetGeometryId("Triangle"_geometry)
-        .SetIndices(checked_cast<u32>(indices.size()), EIndexFormat::UInt)
-        .SetVertices<Meta::TDecay< decltype(vertices[0]) >>(checked_cast<u32>(vertices.size()))
+        .SetIndices(lengthof(indices), EIndexFormat::UInt)
+        .SetVertices<float3>(lengthof(vertices))
         .SetFlag(ERayTracingGeometryFlags::Opaque);
 
     TAutoResource<FRTGeometryID> rtGeometry{ fg.ScopedResource(fg.CreateRayTracingGeometry(

@@ -68,21 +68,16 @@ ARGS_IF_RHIDEBUG("Test_TraceRays3_RayClosestHit"));
     const TAutoResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_TraceRays3"))) };
     LOG_CHECK(WindowTest, ppln.Valid());
 
-    const TMemoryView<const u32> indices{ 0, 1, 2 };
-    const TMemoryView<const float3> vertices{
+    const u32 indices[] = {0, 1, 2};
+    const float3 vertices[] = {
         { 0.25f, 0.25f, 0.0f },
         { 0.75f, 0.25f, 0.0f },
         { 0.50f, 0.75f, 0.0f } };
 
-    FBuildRayTracingGeometry::FTriangles trianglesData;
-    trianglesData.SetGeometryId("Triangle"_geometry)
-        .SetIndexData(indices)
-        .SetVertexData(vertices);
-
     FRayTracingGeometryDesc::FTriangles trianglesDesc;
     trianglesDesc.SetGeometryId("Triangle"_geometry)
-        .SetIndices(checked_cast<u32>(indices.size()), EIndexFormat::UInt)
-        .SetVertices<Meta::TDecay< decltype(vertices[0]) >>(checked_cast<u32>(vertices.size()))
+        .SetIndices(lengthof(indices), EIndexFormat::UInt)
+        .SetVertices<float3>(lengthof(vertices))
         .SetFlag(ERayTracingGeometryFlags::Opaque);
 
     FRTGeometryID rtGeometry{ fg.CreateRayTracingGeometry(
@@ -144,6 +139,11 @@ ARGS_IF_RHIDEBUG("Test_TraceRays3_RayClosestHit"));
         .SetDebugFlags(EDebugFlags::Default)) };
     LOG_CHECK(WindowTest, !!cmd1);
     {
+        FBuildRayTracingGeometry::FTriangles trianglesData;
+        trianglesData.SetGeometryId("Triangle"_geometry)
+            .SetIndexData(indices)
+            .SetVertexData(vertices);
+
         FBuildRayTracingScene::FInstance rtInstance;
         rtInstance.SetInstanceId("0"_instance);
         rtInstance.SetGeometryId(*rtGeometry);

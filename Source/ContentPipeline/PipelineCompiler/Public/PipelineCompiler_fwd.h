@@ -11,6 +11,7 @@
 #include "RHI_fwd.h"
 
 #include "Diagnostic/Logger_fwd.h"
+#include "Memory/RefPtr.h"
 
 namespace PPE {
 namespace RHI {

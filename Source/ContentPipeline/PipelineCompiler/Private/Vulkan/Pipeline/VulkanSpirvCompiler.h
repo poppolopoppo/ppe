@@ -116,7 +116,7 @@ private:
         EShaderLangFormat srcShaderFormat,
         EShaderLangFormat dstShaderFormat,
         FConstChar entry,
-        TMemoryView<const FConstChar> source,
+        const FConstChar source,
         FIncludeResolver& resolver ) const;
 
     NODISCARD bool CompileSPIRV_(FRawData* outSPIRV, const FCompilationContext& ctx) const;

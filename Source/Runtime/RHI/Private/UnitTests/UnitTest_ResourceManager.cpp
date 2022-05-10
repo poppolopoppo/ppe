@@ -45,7 +45,7 @@ NO_INLINE static void Test_PipelineResources_(IFrameGraph& fg) {
         {},
         {{FUniformID("un_SSBO"), 16, 0, EShaderAccess::ReadOnly, FBindingIndex{UMax, 1u}, 1, EShaderStages::Compute, false }});
 
-    const TMemoryView<const u32> rawShader{
+    const u32 rawShader[] = {
         0x07230203, 0x00010000, 0x00080007, 0x0000003B, 0x00000000, 0x00020011, 0x00000001, 0x0006000B, 0x00000002, 0x4C534C47, 0x6474732E, 0x3035342E,
         0x00000000, 0x0003000E, 0x00000000, 0x00000001, 0x0007000F, 0x00000005, 0x00000005, 0x6E69616D, 0x00000000, 0x0000000E, 0x00000017, 0x00060010,
         0x00000005, 0x00000011, 0x00000010, 0x00000008, 0x00000001, 0x00030007, 0x00000001, 0x00000000, 0x00410003, 0x00000002, 0x000001C2, 0x00000001,
@@ -88,8 +88,8 @@ NO_INLINE static void Test_PipelineResources_(IFrameGraph& fg) {
 
     desc.AddShader(
         EShaderLangFormat::SPIRV_100, "main",
-        FRawData(rawShader.Cast<const u8>()),
-        Fingerprint128(rawShader)
+        MakeRawView(rawShader),
+        Fingerprint128(MakeView(rawShader))
         ARGS_IF_RHIDEBUG("Test_PipelineResources") );
 
     FCPipelineID ppln = fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Test_PipelineResources"));

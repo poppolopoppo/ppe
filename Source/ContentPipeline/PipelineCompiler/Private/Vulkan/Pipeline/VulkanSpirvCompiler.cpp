@@ -350,7 +350,7 @@ bool FVulkanSpirvCompiler::Compile(
         LOG_CHECK(PipelineCompiler, ParseGLSL_(
             compilationContext,
             shaderType, srcShaderFormat, dstShaderFormat,
-            entry, { source.c_str() }, resolver ));
+            entry, source, resolver ));
 
         FShaderDataFingerprint shaderFingerprint = MakeShaderFingerprint_(
             sourceFingerprint,
@@ -403,13 +403,13 @@ bool FVulkanSpirvCompiler::Compile(
             LOG_CHECK(PipelineCompiler, ParseGLSL_(
                 compilationContext,
                 shaderType, srcShaderFormat, dstShaderFormat,
-                entry, { source.c_str() },
+                entry, source,
                 resolver ));
 
             PVulkanSharedDebugUtils debugUtils = NEW_REF(PipelineCompiler, FVulkanSharedDebugUtils, std::in_place_type_t<ShaderTrace>{});
 
+            const EShLanguage stage = glslang.Shader->getStage();
             ShaderTrace& trace = std::get<ShaderTrace>(*debugUtils);
-            EShLanguage stage = glslang.Shader->getStage();
             glslang::TIntermediate& interm = *glslang.Program.getIntermediate(stage);
 
             trace.SetSource(source.c_str(), source.length());
@@ -471,7 +471,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     EShaderLangFormat srcShaderFormat,
     EShaderLangFormat dstShaderFormat,
     FConstChar entry,
-    TMemoryView<const FConstChar> source,
+    const FConstChar source,
     FIncludeResolver& resolver ) const {
     Assert(ctx.Log);
     Assert(ctx.Glslang);
@@ -569,7 +569,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     auto& shader = ctx.Glslang->Shader;
 
     shader.reset<TShader>(stage);
-    shader->setStrings(reinterpret_cast<const char* const*>(source.data()), checked_cast<int>(source.size()));
+    shader->setStrings(&source.Data, 1_i32);
     shader->setEntryPoint(entry.c_str());
     shader->setEnvInput(shSource, stage, client, version);
     shader->setEnvClient(client, clientVersion);
@@ -578,7 +578,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
 
     if (not shader->parse(&_builtInResources, shVersion, shProfile, false, true, messages, resolver)) {
         *ctx.Log << MakeCStringView(shader->getInfoLog());
-        OnCompilationFailed_(ctx, source);
+        OnCompilationFailed_(ctx, { &source, 1 });
         return false;
     }
 
@@ -586,7 +586,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
 
     if (not ctx.Glslang->Program.link(messages)) {
         *ctx.Log << MakeCStringView(shader->getInfoLog());
-        OnCompilationFailed_(ctx, source);
+        OnCompilationFailed_(ctx, { &source, 1 });
         return false;
     }
 

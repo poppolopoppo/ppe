@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <array>
-#include <initializer_list>
+//#include <initializer_list>
 #include <iterator>
 #include <type_traits>
 
@@ -41,7 +41,9 @@ public:
 
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
     CONSTEXPR TMemoryView(std::initializer_list<T> list) NOEXCEPT
-        : TMemoryView(list.begin(), std::distance(list.begin(), list.end())) {}
+        // /!\ std::initializer_list<T> don't guarantee static lifetime !
+        // https://en.cppreference.com/w/cpp/utility/initializer_list#:~:text=underlying%20array%20is%20a%20temporary%20array
+        : TMemoryView(list.begin(), list.size()) {}
 
     // enables type promotion between std::array<T, _Dim> and TMemoryView<T>
     template <size_t _Dim>
@@ -464,6 +466,16 @@ auto MakeRawConstView(const T& assumePod) {
 template <typename T>
 TMemoryView<const u8> MakeRawConstView(const TMemoryView<T>& assumePods) {
     return assumePods.template Cast<const u8>();
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+auto MakeRawView(T(&staticArray)[_Dim]) {
+    return MakeRawView(MakeView(staticArray));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+auto MakeRawConstView(T(&staticArray)[_Dim]) {
+    return MakeRawConstView(MakeView(staticArray));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -62,6 +62,8 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
         FTriangles& SetVertices(u32 count, EVertexFormat fmt, u32 stride = 0);
         FTriangles& SetVertexBuffer(FRawBufferID buffer, u32 offset = 0);
 
+        template <typename T, size_t _Dim>
+        FTriangles& SetVertexData(const T(&vertices)[_Dim]) { return SetVertexData(MakeView(vertices)); }
         template <typename T>
         FTriangles& SetVertexData(TMemoryView<const T> vertices);
         FTriangles& SetVertexData(FRawMemoryConst data);
@@ -69,6 +71,8 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
         FTriangles& SetIndices(u32 count, EIndexFormat fmt);
         FTriangles& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0);
 
+        template <typename T, size_t _Dim>
+        FTriangles& SetIndexData(const T(&indices)[_Dim]) { return SetIndexData(MakeView(indices)); }
         template <typename T>
         FTriangles& SetIndexData(TMemoryView<const T> indices);
         FTriangles& SetIndexData(FRawMemoryConst data);
@@ -140,6 +144,10 @@ struct FBuildRayTracingScene final : details::TFrameTaskDesc<FBuildRayTracingSce
     FRawRTSceneID Scene;
     TArray<FInstance> Instances;
     u32 HitShadersPerInstance{ 1 }; // same as 'sbtRecordStride' in ray gen shader
+
+#if USE_PPE_RHITASKNAME
+    FBuildRayTracingScene() NOEXCEPT : TFrameTaskDesc<FBuildRayTracingScene>("BuildRayTracingScene", FDebugColorScheme::Get().BuildRayTracingStruct) {}
+#endif
 
     FBuildRayTracingScene& SetTarget(FRawRTSceneID id) { Assert(id); Scene = id; return (*this); }
     FBuildRayTracingScene& SetHitShadersPerInstance(u32 count) { Assert(count > 0); HitShadersPerInstance = count; return (*this); }
