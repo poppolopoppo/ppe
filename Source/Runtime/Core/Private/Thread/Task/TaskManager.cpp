@@ -2,7 +2,6 @@
 
 #include "Thread/Task/TaskManager.h"
 
-#include "Thread/SynchronizationBarrier.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/Task/CompletionPort.h"
 #include "Thread/Task/TaskManagerImpl.h"
@@ -211,60 +210,64 @@ public:
     :   Task(std::move(rtask))
     {}
 
+    void Run(ITaskContext& ctx) {
+        Task(ctx);
+        {
+            const Meta::FLockGuard scopeLock(Barrier);
+            Assert_NoAssume(not ActuallyReady);
+            ActuallyReady = true;
+        }
+        OnFinished.notify_all();
+    }
+
     static void DoNothing(ITaskContext&) { NOOP(); }
 
     static void Broadcast(FTaskManagerImpl& pimpl, const FTaskFunc& task, ETaskPriority priority) {
         Assert_NoAssume(not FFiber::IsInFiber());
 
-        FSynchronizationBarrier sync{ pimpl.WorkerCount() + 1/* current thread */ };
-        const FTaskFunc broadcast = [&sync, &task](ITaskContext& ctx) {
+        const FTaskFunc broadcast = [&pimpl, &task](ITaskContext& ctx) {
             task(ctx);
-            sync.Wait(); // wait for all threads
+            pimpl.Sync().Wait(); // wait for all threads
         };
         Assert_NoAssume(broadcast.FitInSitu());
 
         forrange(n, 0, pimpl.WorkerCount())
             pimpl.Scheduler().Produce(priority, broadcast, nullptr);
 
-        sync.Wait(); // all threads synchronized passed this line
+        pimpl.Sync().Wait(); // all threads synchronized passed this line
     }
 
-    static void Wait(FTaskManagerImpl& pimpl, const FTaskFunc& task, ETaskPriority priority) {
+    static void Wait(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
         Assert_NoAssume(not FFiber::IsInFiber());
 
-        FSynchronizationBarrier sync{ 1 + 1/* current thread */ };
-        const FTaskFunc broadcast = [&sync, &task](ITaskContext& ctx) {
-            task(ctx);
-            sync.Wait(); // wait for all threads
-        };
+        FWaitForTask_ waitFor{ std::move(rtask) };
+
+        const FTaskFunc broadcast = FTaskFunc::Bind<&FWaitForTask_::Run>(MakePtrRef(waitFor));
         Assert_NoAssume(broadcast.FitInSitu());
+
+        Meta::FUniqueLock scopeLock(waitFor.Barrier);
 
         pimpl.Scheduler().Produce(priority, broadcast, nullptr);
 
-        sync.Wait(); // all threads synchronized passed this line
+        waitFor.OnFinished.wait(scopeLock, [&waitFor]() NOEXCEPT{
+            return waitFor.ActuallyReady;
+        });
     }
 
     static bool WaitFor(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority, int timeoutMS) {
         Assert_NoAssume(not FFiber::IsInFiber());
 
-        PWaitForTask_ pWaitfor{ NEW_REF(Task, FWaitForTask_, std::move(rtask)) };
+        // use an allocation since the task can outlive this function
+        PWaitForTask_ pWaitFor{ NEW_REF(Task, FWaitForTask_, std::move(rtask)) };
 
-        Meta::FUniqueLock scopeLock(pWaitfor->Barrier);
-        pimpl.Scheduler().Produce(priority, [pWaitfor](ITaskContext& ctx) {
-            pWaitfor->Task(ctx);
-            {
-                const Meta::FLockGuard scopeLock(pWaitfor->Barrier);
-                Assert_NoAssume(not pWaitfor->ActuallyReady);
-                pWaitfor->ActuallyReady = true;
-            }
-            pWaitfor->OnFinished.notify_all();
-        },  nullptr);
+        Meta::FUniqueLock scopeLock(pWaitFor->Barrier);
+        pimpl.Scheduler().Produce(priority, FTaskFunc::Bind<&FWaitForTask_::Run>(pWaitFor/* copy TRefPtr<> */), nullptr);
 
-        pWaitfor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&]() NOEXCEPT {
-            return pWaitfor->ActuallyReady;
+        pWaitFor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&pWaitFor]() NOEXCEPT{
+            return pWaitFor->ActuallyReady;
         });
 
-        return pWaitfor->ActuallyReady;
+        return pWaitFor->ActuallyReady;
     }
 };
 //----------------------------------------------------------------------------
@@ -275,7 +278,8 @@ public:
 FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 :   _scheduler(manager.WorkerCount())
 ,   _fibers(MakeFunction<&FTaskManagerImpl::WorkerLoop_>())
-,   _manager(manager) {
+,   _manager(manager)
+,   _sync(_manager.WorkerCount() + 1/* main thread */) {
     _threads.reserve(_manager.WorkerCount());
 #if USE_PPE_LOGGER
     _dumpStatsCooldown = FTimeline::StartNow();

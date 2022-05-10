@@ -2,6 +2,7 @@
 
 #include "Thread/Task/TaskManager.h"
 
+#include "Thread/SynchronizationBarrier.h"
 #include "Thread/Task/TaskFiberPool.h"
 #include "Thread/Task/TaskScheduler.h"
 
@@ -18,10 +19,11 @@ public:
     explicit FTaskManagerImpl(FTaskManager& manager);
     ~FTaskManagerImpl();
 
+    FTaskFiberPool& Fibers() { return _fibers; }
     FTaskManager& Manager() { return _manager; }
     FTaskScheduler& Scheduler() { return _scheduler; }
+    FSynchronizationBarrier& Sync() { return _sync; }
     TMemoryView<std::thread> Threads() { return MakeView(_threads); }
-    FTaskFiberPool& Fibers() { return _fibers; }
 
     void Start(const TMemoryView<const u64>& threadAffinities);
     void Shutdown();
@@ -56,6 +58,7 @@ private:
     FTaskFiberPool _fibers;
 
     FTaskManager& _manager;
+    FSynchronizationBarrier _sync; // for broadcast
     VECTOR(Task, std::thread) _threads;
 
 #if USE_PPE_LOGGER
