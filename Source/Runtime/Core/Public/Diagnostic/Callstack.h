@@ -2,6 +2,7 @@
 
 #include "Core.h"
 
+#include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
 
 namespace PPE {
@@ -52,6 +53,11 @@ private:
 inline hash_t hash_value(const FCallstack& callstack) {
     return callstack.Hash();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FCallstack& callstack);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FCallstack& callstack);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

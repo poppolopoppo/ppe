@@ -14,21 +14,22 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FCallstack::FCallstack()
-: _hash(0), _depth(0) {
+:   _hash(0), _depth(0) {
 #if USE_PPE_ASSERT
     FPlatformMemory::Memset(_frames, 0xCD, sizeof(_frames));
 #endif
 }
 //----------------------------------------------------------------------------
 FCallstack::FCallstack(size_t framesToSkip, size_t framesToCapture)
-: FCallstack() {
+:   FCallstack() {
     Capture(this, framesToSkip, framesToCapture);
 }
 //----------------------------------------------------------------------------
 FCallstack::~FCallstack() = default;
 //----------------------------------------------------------------------------
 FCallstack::FCallstack(const FCallstack& other)
-: _hash(other._hash), _depth(other._depth) {
+:   _hash(other._hash)
+,   _depth(other._depth) {
     FPlatformMemory::Memcpy(_frames, other._frames, sizeof(_frames));
 }
 //----------------------------------------------------------------------------
@@ -104,6 +105,16 @@ void FCallstack::SetFrames(const TMemoryView<void* const>& frames) {
         if (nullptr == frames[_depth]) break;
         _frames[_depth] = frames[_depth];
     }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FCallstack& callstack) {
+    return oss << FDecodedCallstack{ callstack };
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FCallstack& callstack) {
+    return oss << FDecodedCallstack{ callstack };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
