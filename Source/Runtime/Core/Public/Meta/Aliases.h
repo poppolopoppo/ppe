@@ -327,10 +327,10 @@ using i64   = std::int64_t;
 #   error "need to implement PRAGMA_INITSEG_LIB/COMPILER !"
 #endif
 //----------------------------------------------------------------------------
-#if defined(__clang__) || defined(__GNUC__)
-#   define PPE_PRETTY_FUNCTION __PRETTY_FUNCTION__
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
 #   define PPE_PRETTY_FUNCTION __FUNCSIG__
+#elif defined(__clang__) || defined(__GNUC__)
+#   define PPE_PRETTY_FUNCTION __PRETTY_FUNCTION__
 #else
 #   error "need to implement PPE_PRETTY_FUNCTION !"
 #endif
