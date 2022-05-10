@@ -384,13 +384,13 @@
 			<Item Name="[Flag01]">_packed._flags</Item>
 		</Expand>
 	</Type>
-	<Type Name="PPE::FRefCountable">
+	<!--<Type Name="PPE::FRefCountable">
 		<DisplayString>{(void*)this} [Refs:{_refCount}]</DisplayString>
 		<Expand>
 			<Item Name="[RefCount]">_refCount</Item>
 			<Item Name="[SafeCount]">_safeRefCount</Item>
 		</Expand>
-	</Type>
+	</Type>-->
 	<Type Name="PPE::FWeakRefCountable">
 		<DisplayString>{(void*)this} [Refs:{_cnt._ptr ? _cnt._ptr-&gt;_strongRefCount : 0}]</DisplayString>
 		<Expand>
