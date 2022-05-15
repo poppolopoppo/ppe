@@ -97,7 +97,7 @@ RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_RTTI_API, ETypeFlags);
 RTTI_ENUM_FLAGS_BEGIN(RTTI, ETypeFlags)
-RTTI_ENUM_VALUE(None)
+RTTI_ENUM_VALUE(Unknown)
 RTTI_ENUM_VALUE(Scalar)
 RTTI_ENUM_VALUE(Tuple)
 RTTI_ENUM_VALUE(List)
@@ -135,7 +135,7 @@ RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 RTTI_ENUM_HEADER(PPE_RTTI_API, EVisitorFlags);
 RTTI_ENUM_BEGIN(RTTI, EVisitorFlags)
-RTTI_ENUM_VALUE(Default)
+RTTI_ENUM_VALUE(Unknown)
 RTTI_ENUM_VALUE(KeepDeprecated)
 RTTI_ENUM_VALUE(KeepTransient)
 RTTI_ENUM_VALUE(OnlyObjects)

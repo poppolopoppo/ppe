@@ -42,7 +42,7 @@ enum class ETypeFlags : u16 {
     POD                     = 1<<13,
     TriviallyDestructible   = 1<<14,
 
-    None = 0
+    Unknown = 0
 };
 ENUM_FLAGS(ETypeFlags);
 //----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ class FSizeAndFlags { // minimal packed type infos
 public:
     u16 PackedAlignment : 2;
     u16 SizeInBytes : 14;
-    ETypeFlags Flags;
+    ETypeFlags Flags{ Default };
 
     CONSTEXPR size_t Alignment() const { return UnpackAlignment(PackedAlignment); }
 
@@ -121,9 +121,13 @@ CONSTEXPR const TTypeTag< Meta::TDecay<T> > TypeTag;
 //----------------------------------------------------------------------------
 struct FTypeInfos {
     FTypeId TypeId{ 0 };
-    FSizeAndFlags SizeAndFlags;
+    FSizeAndFlags SizeAndFlags{};
 
     FTypeInfos() = default;
+    CONSTEXPR FTypeInfos(FTypeId typeId, FSizeAndFlags sizeAndFlags) NOEXCEPT
+    :   TypeId(typeId)
+    ,   SizeAndFlags(sizeAndFlags)
+    {}
 
     CONSTEXPR FTypeId Id() const { return TypeId; }
     CONSTEXPR size_t Alignment() const { return SizeAndFlags.Alignment(); }
@@ -161,16 +165,16 @@ struct FTypeInfos {
     }
 
     template <typename T>
-    static CONSTEXPR FSizeAndFlags BasicInfos(ETypeFlags base = ETypeFlags::None) {
+    static CONSTEXPR FSizeAndFlags BasicInfos(ETypeFlags base = Default) {
         return {
             alignof(T), sizeof(T), base
-            + (std::is_arithmetic_v<T> ? ETypeFlags::Arithmetic : ETypeFlags::None)
-            + (std::is_floating_point_v<T> ? ETypeFlags::FloatingPoint : ETypeFlags::None)
-            + (std::is_integral_v<T> && std::is_signed_v<T> ? ETypeFlags::SignedIntegral : ETypeFlags::None)
-            + (std::is_integral_v<T> && std::is_unsigned_v<T> ? ETypeFlags::UnsignedIntegral : ETypeFlags::None)
-            + (Meta::has_trivial_compare_v<T> ? ETypeFlags::Comparable : ETypeFlags::None)
-            + (Meta::is_pod_v<T> ? ETypeFlags::POD : ETypeFlags::None)
-            + (Meta::has_trivial_destructor<T>::value ? ETypeFlags::TriviallyDestructible : ETypeFlags::None)
+            + (std::is_arithmetic_v<T> ? ETypeFlags::Arithmetic : Default)
+            + (std::is_floating_point_v<T> ? ETypeFlags::FloatingPoint : Default)
+            + (std::is_integral_v<T> && std::is_signed_v<T> ? ETypeFlags::SignedIntegral : Default)
+            + (std::is_integral_v<T> && std::is_unsigned_v<T> ? ETypeFlags::UnsignedIntegral : Default)
+            + (Meta::has_trivial_compare_v<T> ? ETypeFlags::Comparable : Default)
+            + (Meta::is_pod_v<T> ? ETypeFlags::POD : Default)
+            + (Meta::has_trivial_destructor<T>::value ? ETypeFlags::TriviallyDestructible : Default)
         };
     }
 
@@ -183,13 +187,13 @@ struct FTypeInfos {
     static CONSTEXPR ETypeFlags CombineFlags(ETypeFlags seed, _TypeFlags... typeFlags) {
         return (seed
             // if any has object then the result has object
-            + ( ... + (typeFlags ^ ETypeFlags::Object ? ETypeFlags::Object : ETypeFlags::None) )
+            + ( ... + (typeFlags ^ ETypeFlags::Object ? ETypeFlags::Object : Default) )
             // if any non comparable then the result can't be comparable
-            - ( ... + (typeFlags ^ ETypeFlags::Comparable ? ETypeFlags::None : ETypeFlags::Comparable) )
+            - ( ... + (typeFlags ^ ETypeFlags::Comparable ? Default : ETypeFlags::Comparable) )
             // if any non POD then the result can't be POD
-            - ( ... + (typeFlags ^ ETypeFlags::POD ? ETypeFlags::None : ETypeFlags::POD) )
+            - ( ... + (typeFlags ^ ETypeFlags::POD ? Default : ETypeFlags::POD) )
             // if any non trivially destructible then the result can't be trivially destructible
-            - ( ... + (typeFlags ^ ETypeFlags::TriviallyDestructible ? ETypeFlags::None : ETypeFlags::TriviallyDestructible) )
+            - ( ... + (typeFlags ^ ETypeFlags::TriviallyDestructible ? Default : ETypeFlags::TriviallyDestructible) )
         );
     }
 
@@ -213,7 +217,8 @@ public:
     :   FNamedTypeInfos(name, type.Id(), type.Flags(), type.Alignment(), type.SizeInBytes())
     {}
     CONSTEXPR FNamedTypeInfos(const FStringView& name, FTypeId id, ETypeFlags flags, size_t alignment, size_t sizeInBytes) NOEXCEPT
-    :   _name(name) , _typeInfos{ id, FSizeAndFlags(alignment, sizeInBytes, flags) } {
+    :   _name(name)
+    ,   _typeInfos(id, FSizeAndFlags(alignment, sizeInBytes, flags)) {
         Assert(not _name.empty());
         Assert(_typeInfos.Id());
         Assert(_typeInfos.SizeInBytes());

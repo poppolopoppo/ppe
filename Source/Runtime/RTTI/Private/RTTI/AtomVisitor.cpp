@@ -63,8 +63,8 @@ class TPrettyPrinter_ : public IAtomVisitor {
 public:
     TPrettyPrinter_(TBasicTextWriter<_Char>& oss, EPrettyPrintFlags flags)
         : IAtomVisitor(flags ^ EPrettyPrintFlags::NoRecursion
-            ? EVisitorFlags::NoRecursion|EVisitorFlags::Default
-            : EVisitorFlags::Default )
+            ? EVisitorFlags::NoRecursion|Default
+            : Default )
         , _oss(oss)
         , _flags(flags)
     {}

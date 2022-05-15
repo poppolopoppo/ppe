@@ -10,7 +10,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FBaseReferenceCollector::FBaseReferenceCollector() NOEXCEPT
-:   FBaseReferenceCollector(EVisitorFlags::Default)
+:   FBaseReferenceCollector(Default)
 {}
 //----------------------------------------------------------------------------
 FBaseReferenceCollector::FBaseReferenceCollector(EVisitorFlags flags) NOEXCEPT

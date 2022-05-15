@@ -81,10 +81,7 @@ NOALIAS Meta::TEnableIf<
 //----------------------------------------------------------------------------
 // https://en.cppreference.com/w/cpp/numeric/bit_cast
 #if PPE_HAS_CXX20
-template< class To, class From >
-constexpr To bit_cast( const From& from ) noexcept {
-    return std::bit_cast<To, From>(from);
-}
+using std::bit_cast;
 #else
 template <class To, class From>
 Meta::TEnableIf<

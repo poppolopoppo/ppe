@@ -22,8 +22,6 @@ public:
         VkImageAspectFlagBits Aspect{ Default };
         FImageDataRange Range;
         PVulkanFrameTask Task;
-
-        FImageState() = default;
     };
 
     struct FImageAccess {
@@ -37,7 +35,7 @@ public:
         bool InvalidateBefore : 1;
         bool InvalidateAfter : 1;
 
-        FImageAccess() : IsReadable(false), IsWritable(false), InvalidateBefore(false), InvalidateAfter(false) {}
+        FImageAccess() NOEXCEPT : IsReadable(false), IsWritable(false), InvalidateBefore(false), InvalidateAfter(false) {}
     };
 
     using FAccessRecords = TVulkanAccessRecords<FImageAccess, FSubRange::value_type>;

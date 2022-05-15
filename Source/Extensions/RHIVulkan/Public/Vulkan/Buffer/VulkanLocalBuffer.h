@@ -20,8 +20,6 @@ public:
         EResourceState State{ Default };
         FBufferRange Range;
         PVulkanFrameTask Task;
-
-        FBufferState() = default;
     };
 
     struct FBufferAccess {

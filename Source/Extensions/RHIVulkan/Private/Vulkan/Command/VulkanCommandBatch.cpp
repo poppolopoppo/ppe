@@ -868,7 +868,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendTimemapForDebug(const uint2& dim, E
     dbg.Mode = EShaderDebugMode::Timemap;
     dbg.Stages = stages;
 
-    uint2 tmp = bit_cast<u32>(float2(1.0f));
+    uint2 tmp = bit_cast<uword>(float2(1.0f));
     dbg.Payload = uint4(tmp, dim);
 
     const size_t size{

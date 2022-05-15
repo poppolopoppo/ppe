@@ -103,12 +103,6 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
-    using parent_type::operator ==;
-    using parent_type::operator !=;
-    using parent_type::operator <;
-    using parent_type::operator >;
-    using parent_type::operator <=;
-    using parent_type::operator >=;
     using parent_type::operator *;
     using parent_type::operator ->;
     using parent_type::operator ++;
@@ -119,24 +113,24 @@ public:
     using parent_type::operator -=;
     using parent_type::operator [];
 
-    TCheckedArrayIterator() {}
+    TCheckedArrayIterator() = default;
 
     TCheckedArrayIterator(const TCheckedArrayIterator&) = default;
     TCheckedArrayIterator& operator=(const TCheckedArrayIterator&) = default;
 
     template <typename U, class = Meta::TEnableIf< std::is_convertible<U*, T*>::value> >
-    TCheckedArrayIterator(const TCheckedArrayIterator<U>& other)
+    TCheckedArrayIterator(const TCheckedArrayIterator<U>& other) NOEXCEPT
         : parent_type(reinterpret_cast<const parent_type&>(other))
     {}
 
     template <typename U, class = Meta::TEnableIf< std::is_convertible<U*, T*>::value> >
-    TCheckedArrayIterator& operator=(const TCheckedArrayIterator<U>& other) {
+    TCheckedArrayIterator& operator=(const TCheckedArrayIterator<U>& other) NOEXCEPT {
         parent_type::operator=(reinterpret_cast<const parent_type&>(other));
         return *this;
     }
 
     // needed for implicit conversion
-    TCheckedArrayIterator(const parent_type& other) : parent_type(other) {}
+    TCheckedArrayIterator(const parent_type& other) NOEXCEPT : parent_type(other) {}
     TCheckedArrayIterator& operator =(const parent_type& other) {
         parent_type::operator=(other);
         return *this;
@@ -145,50 +139,50 @@ public:
     // overload stdext::checked_array_iterator<> for this constructor
     // std needs iterator = const_iterator which is supported by default
     template <typename U>
-    TCheckedArrayIterator(U* ptr, size_t count, size_t index)
+    TCheckedArrayIterator(U* ptr, size_t count, size_t index) NOEXCEPT
         : parent_type(ptr, count, index)
     {}
 
     // All those are specialized to return a TCheckArrayIterator instead of stdext::checked_array_iterator
 
-    TCheckedArrayIterator& operator++() {
+    TCheckedArrayIterator& operator++() NOEXCEPT {
         parent_type::operator++();
         return (*this);
     }
 
-    TCheckedArrayIterator operator++(int) {
+    TCheckedArrayIterator operator++(int) NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         ++(*this);
         return tmp;
     }
 
-    TCheckedArrayIterator& operator--() {
+    TCheckedArrayIterator& operator--() NOEXCEPT {
         parent_type::operator--();
         return (*this);
     }
 
-    TCheckedArrayIterator operator--(int) {
+    TCheckedArrayIterator operator--(int) NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         --(*this);
         return tmp;
     }
 
-    TCheckedArrayIterator& operator+=(const difference_type offset) {
+    TCheckedArrayIterator& operator+=(const difference_type offset) NOEXCEPT {
         parent_type::operator+=(offset);
         return (*this);
     }
 
-    TCheckedArrayIterator operator+(const difference_type offset) const {
+    TCheckedArrayIterator operator+(const difference_type offset) const NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         return (tmp += offset);
     }
 
-    TCheckedArrayIterator& operator-=(const difference_type offset) {
+    TCheckedArrayIterator& operator-=(const difference_type offset) NOEXCEPT {
         parent_type::operator-=(offset);
         return (*this);
     }
 
-    TCheckedArrayIterator operator-(const difference_type offset) const {
+    TCheckedArrayIterator operator-(const difference_type offset) const NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         return (tmp -= offset);
     }
@@ -201,39 +195,87 @@ public:
     >;
 
     template <typename U, class = TCastable<U> >
-    difference_type operator-(const TCheckedArrayIterator<U>& other) const {
+    difference_type operator-(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
         return parent_type::operator-(reinterpret_cast<const parent_type&>(other));
     }
 
+#if PPE_HAS_CXX20
+    using parent_type::operator <=>;
+
     template <typename U, class = TCastable<U> >
-    bool operator==(const TCheckedArrayIterator<U>& other) const {
+    auto operator<=>(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
+        return parent_type::operator<=>(reinterpret_cast<const parent_type&>(other));
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator==(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
+        return parent_type::operator<=>(reinterpret_cast<const parent_type&>(other)) == 0;
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator!=(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
+        return parent_type::operator<=>(reinterpret_cast<const parent_type&>(other)) != 0;
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator<(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
+        return parent_type::operator<=>(reinterpret_cast<const parent_type&>(other)) < 0;
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator>(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
+        return parent_type::operator<=>(reinterpret_cast<const parent_type&>(other)) > 0;
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator<=(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
+        return parent_type::operator<=>(reinterpret_cast<const parent_type&>(other)) <= 0;
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator>=(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
+        return parent_type::operator<=>(reinterpret_cast<const parent_type&>(other)) >= 0;
+    }
+
+#else
+    using parent_type::operator ==;
+    using parent_type::operator !=;
+    using parent_type::operator <;
+    using parent_type::operator >;
+    using parent_type::operator <=;
+    using parent_type::operator >=;
+
+    template <typename U, class = TCastable<U> >
+    bool operator==(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
         return parent_type::operator==(reinterpret_cast<const parent_type&>(other));
     }
 
     template <typename U, class = TCastable<U> >
-    bool operator!=(const TCheckedArrayIterator<U>& other) const {
+    bool operator!=(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
         return parent_type::operator!=(reinterpret_cast<const parent_type&>(other));
     }
 
     template <typename U, class = TCastable<U> >
-    bool operator<(const TCheckedArrayIterator<U>& other) const {
+    bool operator<(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
         return parent_type::operator<(reinterpret_cast<const parent_type&>(other));
     }
 
     template <typename U, class = TCastable<U> >
-    bool operator>(const TCheckedArrayIterator<U>& other) const {
+    bool operator>(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
         return parent_type::operator>(reinterpret_cast<const parent_type&>(other));
     }
 
     template <typename U, class = TCastable<U> >
-    bool operator<=(const TCheckedArrayIterator<U>& other) const {
+    bool operator<=(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
         return parent_type::operator<=(reinterpret_cast<const parent_type&>(other));
     }
 
     template <typename U, class = TCastable<U> >
-    bool operator>=(const TCheckedArrayIterator<U>& other) const {
+    bool operator>=(const TCheckedArrayIterator<U>& other) const NOEXCEPT {
         return parent_type::operator>=(reinterpret_cast<const parent_type&>(other));
     }
+#endif
+
 };
 //----------------------------------------------------------------------------
 template <typename T>

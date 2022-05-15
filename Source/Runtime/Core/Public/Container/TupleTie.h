@@ -34,6 +34,18 @@
     TIE_AS_TUPLE_EQUALS(_NAME, friend) \
     TIE_AS_TUPLE_HASH(_NAME, friend)
 
+#include <climits>      // CHAR_BIT
+#include <type_traits>
+#include <utility>      // metaprogramming stuff
+
+#ifndef BOOST_PFR_HAS_GUARANTEED_COPY_ELISION
+#   if  defined(__cpp_guaranteed_copy_elision) && (!defined(_MSC_VER) || _MSC_VER > 1928)
+#       define BOOST_PFR_HAS_GUARANTEED_COPY_ELISION 1
+#   else
+#       define BOOST_PFR_HAS_GUARANTEED_COPY_ELISION 0
+#   endif
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -50,34 +62,64 @@ namespace PPE {
 #endif
 //----------------------------------------------------------------------------
 namespace details {
-///////////////////// General utility stuff
+//----------------------------------------------------------------------------
 template <std::size_t Index>
 using size_t_ = std::integral_constant<std::size_t, Index >;
+
+// This function serves as a link-time assert. If linker requires it, then
+// `unsafe_declval()` is used at runtime.
+void report_if_you_see_link_error_with_this_function() noexcept;
+
+// For returning non default constructible types. Do NOT use at runtime!
+//
+// GCCs std::declval may not be used in potentionally evaluated contexts,
+// so we reinvent it.
+template <class T>
+constexpr T unsafe_declval() noexcept {
+    report_if_you_see_link_error_with_this_function();
+
+    typename std::remove_reference<T>::type* ptr = 0;
+    ptr += 42; // suppresses 'null pointer dereference' warnings
+    return static_cast<T>(*ptr);
+}
 
 ///////////////////// Structure that can be converted to reference to anything
 struct ubiq_lref_constructor {
     std::size_t ignore;
-    template <class Type> constexpr operator Type&() const noexcept; // Undefined, allows initialization of reference fields (T& and const T&)
+    template <class Type> constexpr operator Type&() const && noexcept {  // tweak for template_unconstrained.cpp like cases
+        return details::unsafe_declval<Type&>();
+    }
+
+    template <class Type> constexpr operator Type&() const & noexcept {  // tweak for optional_chrono.cpp like cases
+        return details::unsafe_declval<Type&>();
+    }
 };
 
 ///////////////////// Structure that can be converted to rvalue reference to anything
 struct ubiq_rref_constructor {
     std::size_t ignore;
-    template <class Type> constexpr operator Type&&() const noexcept; // Undefined, allows initialization of rvalue reference fields and move-only types
+    template <class Type> /*constexpr*/ operator Type() const && noexcept {  // Allows initialization of rvalue reference fields and move-only types
+        return details::unsafe_declval<Type>();
+    }
 };
 
-///////////////////// Structure that can be converted to reference to anything except reference to T
+
+#ifndef __cpp_lib_is_aggregate
+///////////////////// Hand-made is_aggregate_initializable_n<T> trait
+
+// Structure that can be converted to reference to anything except reference to T
 template <class T, bool IsCopyConstructible>
 struct ubiq_constructor_except {
+    std::size_t ignore;
     template <class Type> constexpr operator std::enable_if_t<!std::is_same<T, Type>::value, Type&> () const noexcept; // Undefined
 };
 
 template <class T>
 struct ubiq_constructor_except<T, false> {
+    std::size_t ignore;
     template <class Type> constexpr operator std::enable_if_t<!std::is_same<T, Type>::value, Type&&> () const noexcept; // Undefined
 };
 
-///////////////////// Hand-made is_aggregate_initializable_n<T> trait
 
 // `std::is_constructible<T, ubiq_constructor_except<T>>` consumes a lot of time, so we made a separate lazy trait for it.
 template <std::size_t N, class T> struct is_single_field_and_aggregate_initializable: std::false_type {};
@@ -86,7 +128,8 @@ template <class T> struct is_single_field_and_aggregate_initializable<1, T>: std
 > {};
 
 // Hand-made is_aggregate<T> trait:
-// Aggregates could be constructed from `decltype(ubiq_?ref_constructor{I})...` but report that there's no constructor from `decltype(ubiq_?ref_constructor{I})...`
+// Before C++20 aggregates could be constructed from `decltype(ubiq_?ref_constructor{I})...` but type traits report that
+// there's no constructor from `decltype(ubiq_?ref_constructor{I})...`
 // Special case for N == 1: `std::is_constructible<T, ubiq_?ref_constructor>` returns true if N == 1 and T is copy/move constructible.
 template <class T, std::size_t N>
 struct is_aggregate_initializable_n {
@@ -101,170 +144,236 @@ struct is_aggregate_initializable_n {
            std::is_empty<T>::value
         || std::is_array<T>::value
         || std::is_fundamental<T>::value
-        || is_not_constructible_n(std::make_index_sequence<N>{})
+        || is_not_constructible_n(details::make_index_sequence<N>{})
     ;
 };
 
+#endif // #ifndef __cpp_lib_is_aggregate
+
+///////////////////// Detect aggregates with inheritance
+template <class Derived, class U>
+constexpr bool static_assert_non_inherited() noexcept {
+    static_assert(
+            !std::is_base_of<U, Derived>::value,
+            "====================> Boost.PFR: Boost.PFR: Inherited types are not supported."
+    );
+    return true;
+}
+
+template <class Derived>
+struct ubiq_lref_base_asserting {
+    template <class Type> constexpr operator Type&() const &&  // tweak for template_unconstrained.cpp like cases
+        noexcept(details::static_assert_non_inherited<Derived, Type>())  // force the computation of assert function
+    {
+        return details::unsafe_declval<Type&>();
+    }
+
+    template <class Type> constexpr operator Type&() const &  // tweak for optional_chrono.cpp like cases
+        noexcept(details::static_assert_non_inherited<Derived, Type>())  // force the computation of assert function
+    {
+        return details::unsafe_declval<Type&>();
+    }
+};
+
+template <class Derived>
+struct ubiq_rref_base_asserting {
+    template <class Type> /*constexpr*/ operator Type() const &&  // Allows initialization of rvalue reference fields and move-only types
+        noexcept(details::static_assert_non_inherited<Derived, Type>())  // force the computation of assert function
+    {
+        return details::unsafe_declval<Type>();
+    }
+};
+
+template <class T, std::size_t I0, std::size_t... I, class /*Enable*/ = typename std::enable_if<std::is_copy_constructible<T>::value>::type>
+constexpr auto assert_first_not_base(std::index_sequence<I0, I...>) noexcept
+    -> typename std::add_pointer<decltype(T{ ubiq_lref_base_asserting<T>{}, ubiq_lref_constructor{I}... })>::type
+{
+    return nullptr;
+}
+
+template <class T, std::size_t I0, std::size_t... I, class /*Enable*/ = typename std::enable_if<!std::is_copy_constructible<T>::value>::type>
+constexpr auto assert_first_not_base(std::index_sequence<I0, I...>) noexcept
+    -> typename std::add_pointer<decltype(T{ ubiq_rref_base_asserting<T>{}, ubiq_rref_constructor{I}... })>::type
+{
+    return nullptr;
+}
+
+template <class T>
+constexpr void* assert_first_not_base(std::index_sequence<>) noexcept
+{
+    return nullptr;
+}
+
 ///////////////////// Helper for SFINAE on fields count
-template <class T, std::size_t... I, class /*Enable*/ = std::enable_if_t<std::is_copy_constructible<T>::value> >
+template <class T, std::size_t... I, class /*Enable*/ = typename std::enable_if<std::is_copy_constructible<T>::value>::type>
 constexpr auto enable_if_constructible_helper(std::index_sequence<I...>) noexcept
     -> typename std::add_pointer<decltype(T{ ubiq_lref_constructor{I}... })>::type;
 
-template <class T, std::size_t... I, class /*Enable*/ = std::enable_if_t<!std::is_copy_constructible<T>::value> >
+template <class T, std::size_t... I, class /*Enable*/ = typename std::enable_if<!std::is_copy_constructible<T>::value>::type>
 constexpr auto enable_if_constructible_helper(std::index_sequence<I...>) noexcept
     -> typename std::add_pointer<decltype(T{ ubiq_rref_constructor{I}... })>::type;
 
-template <class T, std::size_t N, class /*Enable*/ = decltype( enable_if_constructible_helper<T>(std::make_index_sequence<N>()) ) >
+template <class T, std::size_t N, class /*Enable*/ = decltype( enable_if_constructible_helper<T>(std::make_integer_sequence<std::size_t, N>()) ) >
 using enable_if_constructible_helper_t = std::size_t;
 
+///////////////////// Helpers for range size detection
+template <std::size_t Begin, std::size_t Last>
+using is_one_element_range = std::integral_constant<bool, Begin == Last>;
+
+using multi_element_range = std::false_type;
+using one_element_range = std::true_type;
+
 ///////////////////// Non greedy fields count search. Templates instantiation depth is log(sizeof(T)), templates instantiation count is log(sizeof(T)).
-
-// PPE BEGIN (POP) - This is not working for me, replacing with a simpler classical trait
-#ifndef _MSC_VER // pfr :
-template <class T, std::size_t N>
-constexpr std::size_t detect_fields_count(size_t_<N>, size_t_<N>, long) noexcept {
-    return N;
+template <class T, std::size_t Begin, std::size_t Middle>
+constexpr std::size_t detect_fields_count(details::one_element_range, long) noexcept {
+    static_assert(
+        Begin == Middle,
+        "====================> Boost.PFR: Internal logic error."
+    );
+    return Begin;
 }
 
 template <class T, std::size_t Begin, std::size_t Middle>
-constexpr std::size_t detect_fields_count(size_t_<Begin>, size_t_<Middle>, int) noexcept;
+constexpr std::size_t detect_fields_count(details::multi_element_range, int) noexcept;
 
 template <class T, std::size_t Begin, std::size_t Middle>
-constexpr auto detect_fields_count(size_t_<Begin>, size_t_<Middle>, long) noexcept
-    -> enable_if_constructible_helper_t<T, Middle> {
-    using next_t = size_t_<Middle + (Middle - Begin + 1) / 2>;
-    return details::detect_fields_count<T>(size_t_<Middle>{}, next_t{}, 1L);
+constexpr auto detect_fields_count(details::multi_element_range, long) noexcept
+    -> details::enable_if_constructible_helper_t<T, Middle>
+{
+    constexpr std::size_t next_v = Middle + (Middle - Begin + 1) / 2;
+    return details::detect_fields_count<T, Middle, next_v>(details::is_one_element_range<Middle, next_v>{}, 1L);
 }
 
 template <class T, std::size_t Begin, std::size_t Middle>
-constexpr std::size_t detect_fields_count(size_t_<Begin>, size_t_<Middle>, int) noexcept {
-    using next_t = size_t_<(Begin + Middle) / 2>;
-    return details::detect_fields_count<T>(size_t_<Begin>{}, next_t{}, 1L);
+constexpr std::size_t detect_fields_count(details::multi_element_range, int) noexcept {
+    constexpr std::size_t next_v = Begin + (Middle - Begin) / 2;
+    return details::detect_fields_count<T, Begin, next_v>(details::is_one_element_range<Begin, next_v>{}, 1L);
 }
-#else // pop :
-template <typename T, size_t Begin, size_t Middle>
-struct detect_fields_count_t {
-    template <size_t X, class = enable_if_constructible_helper_t<T, X> >
-    static constexpr size_t Next(long) noexcept {
-        return detect_fields_count_t<T, Middle, Middle + (Middle - Begin + 1) / 2>::value;
-    }
-    template <size_t X>
-    static constexpr size_t Next(int) noexcept {
-        return detect_fields_count_t<T, Begin, (Begin + Middle) / 2>::value;
-    }
-    STATIC_CONST_INTEGRAL(size_t, value, Next<Middle>(1L));
-};
-
-template <typename T, size_t N>
-struct detect_fields_count_t<T, N, N> {
-    STATIC_CONST_INTEGRAL(size_t, value, N);
-};
-
-template <class T, size_t Begin, size_t Middle>
-constexpr std::size_t detect_fields_count(size_t_<Begin>, size_t_<Middle>, long) noexcept {
-    return detect_fields_count_t<T, Begin, Middle>::value;
-}
-#endif
-// PPE END
 
 ///////////////////// Greedy search. Templates instantiation depth is log(sizeof(T)), templates instantiation count is log(sizeof(T))*T in worst case.
 template <class T, std::size_t N>
-constexpr auto detect_fields_count_greedy_remember(size_t_<N>, long) noexcept
-    -> enable_if_constructible_helper_t<T, N> {
+constexpr auto detect_fields_count_greedy_remember(long) noexcept
+    -> details::enable_if_constructible_helper_t<T, N>
+{
     return N;
 }
 
 template <class T, std::size_t N>
-constexpr std::size_t detect_fields_count_greedy_remember(size_t_<N>, int) noexcept {
+constexpr std::size_t detect_fields_count_greedy_remember(int) noexcept {
     return 0;
 }
 
-template <class T, std::size_t N>
-constexpr std::size_t detect_fields_count_greedy(size_t_<N>, size_t_<N>) noexcept {
-    return details::detect_fields_count_greedy_remember<T, N>(size_t_<N>{}, 1L);
+template <class T, std::size_t Begin, std::size_t Last>
+constexpr std::size_t detect_fields_count_greedy(details::one_element_range) noexcept {
+    static_assert(
+        Begin == Last,
+        "====================> Boost.PFR: Internal logic error."
+    );
+    return details::detect_fields_count_greedy_remember<T, Begin>(1L);
 }
 
 template <class T, std::size_t Begin, std::size_t Last>
-constexpr std::size_t detect_fields_count_greedy(size_t_<Begin>, size_t_<Last>) noexcept {
+constexpr std::size_t detect_fields_count_greedy(details::multi_element_range) noexcept {
     constexpr std::size_t middle = Begin + (Last - Begin) / 2;
-    constexpr std::size_t fields_count_big = details::detect_fields_count_greedy<T>(size_t_<middle + 1>{}, size_t_<Last>{});
-    constexpr std::size_t fields_count_small = details::detect_fields_count_greedy<T>(size_t_<Begin>{}, size_t_<fields_count_big ? Begin : middle>{});
-    return fields_count_big ? fields_count_big : fields_count_small;
+    constexpr std::size_t fields_count_big_range = details::detect_fields_count_greedy<T, middle + 1, Last>(
+        details::is_one_element_range<middle + 1, Last>{}
+    );
+
+    constexpr std::size_t small_range_begin = (fields_count_big_range ? 0 : Begin);
+    constexpr std::size_t small_range_last = (fields_count_big_range ? 0 : middle);
+    constexpr std::size_t fields_count_small_range = details::detect_fields_count_greedy<T, small_range_begin, small_range_last>(
+        details::is_one_element_range<small_range_begin, small_range_last>{}
+    );
+    return fields_count_big_range ? fields_count_big_range : fields_count_small_range;
 }
 
 ///////////////////// Choosing between array size, greedy and non greedy search.
 template <class T, std::size_t N>
 constexpr auto detect_fields_count_dispatch(size_t_<N>, long, long) noexcept
-    -> typename std::enable_if<std::is_array<T>::value, std::size_t>::type {
+    -> typename std::enable_if<std::is_array<T>::value, std::size_t>::type
+{
     return sizeof(T) / sizeof(typename std::remove_all_extents<T>::type);
 }
 
 template <class T, std::size_t N>
 constexpr auto detect_fields_count_dispatch(size_t_<N>, long, int) noexcept
-    -> decltype(sizeof(T{})) {
-    return details::detect_fields_count<T>(size_t_<0>{}, size_t_<N / 2 + 1>{}, 1L);
+    -> decltype(sizeof(T{}))
+{
+    constexpr std::size_t middle = N / 2 + 1;
+    return details::detect_fields_count<T, 0, middle>(details::multi_element_range{}, 1L);
 }
 
 template <class T, std::size_t N>
 constexpr std::size_t detect_fields_count_dispatch(size_t_<N>, int, int) noexcept {
-    // T is not default aggregate initializable. It means that at least one of the members is not default constructible,
-    // so we have to check all the aggregate initializations for T up to N parameters and return the biggest succeeded
+    // T is not default aggregate initialzable. It means that at least one of the members is not default constructible,
+    // so we have to check all the aggregate initializations for T up to N parameters and return the bigest succeeded
     // (we can not use binary search for detecting fields count).
-    return details::detect_fields_count_greedy<T>(size_t_<0>{}, size_t_<N>{});
+    return details::detect_fields_count_greedy<T, 0, N>(details::multi_element_range{});
 }
-
+//----------------------------------------------------------------------------
 } //!namespace details
-///////////////////// Returns non-flattened fields count
+//----------------------------------------------------------------------------
 template <class T>
 constexpr std::size_t struct_num_fields() noexcept {
     using type = std::remove_cv_t<T>;
 
     static_assert(
         !std::is_reference<type>::value,
-        "Attempt to get fields count on a reference. This is not allowed because that could hide an issue and different library users expect different behavior in that case."
+        "====================> Boost.PFR: Attempt to get fields count on a reference. This is not allowed because that could hide an issue and different library users expect different behavior in that case."
     );
 
+#if !BOOST_PFR_HAS_GUARANTEED_COPY_ELISION
     static_assert(
         std::is_copy_constructible<std::remove_all_extents_t<type>>::value || (
             std::is_move_constructible<std::remove_all_extents_t<type>>::value
             && std::is_move_assignable<std::remove_all_extents_t<type>>::value
         ),
-        "Type and each field in the type must be copy constructible (or move constructible and move assignable)."
+        "====================> Boost.PFR: Type and each field in the type must be copy constructible (or move constructible and move assignable)."
     );
+#endif  // #if !BOOST_PFR_HAS_GUARANTEED_COPY_ELISION
 
     static_assert(
         !std::is_polymorphic<type>::value,
-        "Type must have no virtual function, because otherwise it is not aggregate initializable."
+        "====================> Boost.PFR: Type must have no virtual function, because otherwise it is not aggregate initializable."
     );
 
 #ifdef __cpp_lib_is_aggregate
     static_assert(
-        std::is_aggregate<type>::value             // Does not return `true` for build in types.
-        || std::is_standard_layout<type>::value,   // Does not return `true` for structs that have non standard layout members.
-        "Type must be aggregate initializable."
+        std::is_aggregate<type>::value             // Does not return `true` for built-in types.
+        || std::is_scalar<type>::value,
+        "====================> Boost.PFR: Type must be aggregate initializable."
     );
 #endif
 
 // Can't use the following. See the non_std_layout.cpp test.
+//#if !BOOST_PFR_USE_CPP17
 //    static_assert(
 //        std::is_standard_layout<type>::value,   // Does not return `true` for structs that have non standard layout members.
 //        "Type must be aggregate initializable."
 //    );
+//#endif
 
-// PPE BEGIN (POP) - we don't handle bit fields
-    //constexpr std::size_t max_fields_count = (sizeof(type) * CHAR_BIT); // We multiply by CHAR_BIT because the type may have bit fields in T
-    constexpr std::size_t max_fields_count = sizeof(type);
-// PPE END
+#if defined(_MSC_VER) && (_MSC_VER <= 1920)
+    // Workaround for msvc compilers. Versions <= 1920 have a limit of max 1024 elements in template parameter pack
+    constexpr std::size_t max_fields_count = (sizeof(type) * CHAR_BIT >= 1024 ? 1024 : sizeof(type) * CHAR_BIT);
+#else
+    constexpr std::size_t max_fields_count = (sizeof(type) * CHAR_BIT); // We multiply by CHAR_BIT because the type may have bitfields in T
+#endif
+
     constexpr std::size_t result = details::detect_fields_count_dispatch<type>(details::size_t_<max_fields_count>{}, 1L, 1L);
 
+    details::assert_first_not_base<type>(std::make_index_sequence<result>{});
+
+#ifndef __cpp_lib_is_aggregate
     static_assert(
         details::is_aggregate_initializable_n<type, result>::value,
-        "Types with user specified constructors (non-aggregate initializable types) are not supported."
+        "====================> Boost.PFR: Types with user specified constructors (non-aggregate initializable types) are not supported."
     );
+#endif
 
     static_assert(
         result != 0 || std::is_empty<type>::value || std::is_fundamental<type>::value || std::is_reference<type>::value,
-        "If there's no other failed static asserts then something went wrong. Please report this issue to the github along with the structure you're reflecting."
+        "====================> Boost.PFR: If there's no other failed static asserts then something went wrong. Please report this issue to the github along with the structure you're reflecting."
     );
 
     return result;
@@ -286,23 +395,35 @@ static constexpr size_t MaxArityForTieAsTuple = 26;
 template <typename T>
 constexpr bool has_tie_as_tuple() noexcept {
     using type = std::remove_cv_t<T>;
-    if constexpr (not
-        (!std::is_reference<type>::value) &&
-        (std::is_copy_constructible<std::remove_all_extents_t<type>>::value || (
-            std::is_move_constructible<std::remove_all_extents_t<type>>::value
-            && std::is_move_assignable<std::remove_all_extents_t<type>>::value
-            )) &&
-#ifdef __cpp_lib_is_aggregate
-        (std::is_aggregate<type>::value             // Does not return `true` for build in types.
-        || std::is_standard_layout<type>::value) && // Does not return `true` for structs that have non standard layout members.
-#endif
-        (!std::is_polymorphic<type>::value ) )
+
+    if constexpr (std::is_reference<type>::value)
         return false;
-    constexpr size_t numFields = details::detect_fields_count_greedy<T>(
-        details::size_t_<0>{},
-        details::size_t_<MaxArityForTieAsTuple + 1>{} );
-    return (numFields &&
-            details::is_aggregate_initializable_n<type, numFields>::value);
+
+#if !BOOST_PFR_HAS_GUARANTEED_COPY_ELISION
+    if constexpr (not (std::is_copy_constructible<std::remove_all_extents_t<type>>::value || (
+            std::is_move_constructible<std::remove_all_extents_t<type>>::value
+        &&  std::is_move_assignable<std::remove_all_extents_t<type>>::value )))
+        return false;
+#endif // #if !BOOST_PFR_HAS_GUARANTEED_COPY_ELISION
+
+    if constexpr (std::is_polymorphic<type>::value)
+        return false;
+
+#ifdef __cpp_lib_is_aggregate
+    if constexpr (not (std::is_aggregate<type>::value || std::is_scalar<type>::value))
+        return false;
+#else
+    if constexpr (not details::is_aggregate_initializable_n<type, result>::value)
+        return false;
+#endif
+
+    constexpr size_t numFields = details::detect_fields_count_dispatch<type>(details::size_t_<MaxArityForTieAsTuple+1>{}, 1L, 1L);
+    static_assert(
+        numFields != 0 || std::is_empty<type>::value || std::is_fundamental<type>::value || std::is_reference<type>::value,
+        "====================> Boost.PFR: If there's no other failed static asserts then something went wrong. Please report this issue to the github along with the structure you're reflecting."
+    );
+
+    return (!!numFields);
 }
 //----------------------------------------------------------------------------
 // Use new structured bindings with C++17

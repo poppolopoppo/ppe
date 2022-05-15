@@ -43,7 +43,7 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FNonCopyable {
+struct PPE_CORE_API FNonCopyable {
     FNonCopyable() NOEXCEPT = default;
     FNonCopyable(const FNonCopyable&) = delete;
     FNonCopyable& operator =(const FNonCopyable&) = delete;
@@ -51,7 +51,7 @@ struct FNonCopyable {
     FNonCopyable& operator =(FNonCopyable&&) = default;
 };
 //----------------------------------------------------------------------------
-struct FNonMovable {
+struct PPE_CORE_API FNonMovable {
     FNonMovable() NOEXCEPT = default;
     FNonMovable(const FNonMovable&) = default;
     FNonMovable& operator =(const FNonMovable&) = default;
@@ -59,7 +59,7 @@ struct FNonMovable {
     FNonMovable& operator =(FNonMovable&&) = delete;
 };
 //----------------------------------------------------------------------------
-struct FNonCopyableNorMovable {
+struct PPE_CORE_API FNonCopyableNorMovable {
     FNonCopyableNorMovable() NOEXCEPT = default;
     FNonCopyableNorMovable(const FNonCopyableNorMovable&) = delete;
     FNonCopyableNorMovable& operator =(const FNonCopyableNorMovable&) = delete;

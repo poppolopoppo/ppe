@@ -62,7 +62,7 @@ RTTI_ENUM_VALUE(Maybe)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 struct FAnonymousStructAsTuple {
-    ETutut Tutut;
+    ETutut Tutut{ ETutut::Maybe };
     float Ratings;
     FString Name;
     float3 Position;
@@ -70,83 +70,6 @@ struct FAnonymousStructAsTuple {
 STATIC_ASSERT(struct_num_fields<FAnonymousStructAsTuple>() == 4);
 RTTI_STRUCT_DECL(CONSTEXPR, FAnonymousStructAsTuple);
 RTTI_STRUCT_DEF(CONSTEXPR, FAnonymousStructAsTuple);
-//----------------------------------------------------------------------------
-#if 0//_DEBUG - just keep track of reverse work for debugging boost::pfr
-template <class T, std::size_t N>
-using TupleRTTI = details::enable_if_constructible_helper_t<T, N>;
-
-template <class T, std::size_t N>
-constexpr auto detect_fields_count_greedy_remember2(details::size_t_<N>) noexcept
--> TupleRTTI<T, N> {
-    return N;
-}
-
-template <class T, std::size_t N>
-constexpr std::size_t detect_fields_count2(details::size_t_<N>, details::size_t_<N>, long) noexcept {
-    return N;
-}
-
-template <class T, std::size_t Begin, std::size_t Middle>
-constexpr std::size_t detect_fields_count2(details::size_t_<Begin>, details::size_t_<Middle>, int) noexcept;
-
-template <class T, std::size_t Begin, std::size_t Middle>
-constexpr auto detect_fields_count2(details::size_t_<Begin>, details::size_t_<Middle>, long) noexcept
--> TupleRTTI<T, Middle> {
-    return detect_fields_count2<T>(
-        details::size_t_<Middle>{},
-        details::size_t_<(Middle + (Middle - Begin + 1) / 2)>{}, 1L);
-}
-template <class T, std::size_t Begin, std::size_t Middle>
-constexpr std::size_t detect_fields_count2(details::size_t_<Begin>, details::size_t_<Middle>, int) noexcept {
-    return detect_fields_count2<T>(
-        details::size_t_<Begin>{},
-        details::size_t_<((Begin + Middle) / 2)>{}, 1L);
-}
-
-template <typename T, size_t Begin, size_t Middle>
-struct detect_fields_count3_t {
-    template <size_t X, class = details::enable_if_constructible_helper_t<T, X> >
-    static constexpr size_t Next(long) {
-        return detect_fields_count3_t<T, Middle, Middle + (Middle - Begin + 1) / 2>::value;
-    }
-    template <size_t X>
-    static constexpr size_t Next(int) {
-        return detect_fields_count3_t<T, Begin, (Begin + Middle) / 2>::value;
-    }
-    static constexpr size_t value = Next<Middle>(1L);
-};
-
-template <typename T, size_t N>
-struct detect_fields_count3_t<T, N, N> {
-    static constexpr size_t value = N;
-};
-
-STATIC_ASSERT(sizeof(details::enable_if_constructible_helper_t<FAnonymousStructAsTuple, 0>));
-STATIC_ASSERT(sizeof(details::enable_if_constructible_helper_t<FAnonymousStructAsTuple, 1>));
-STATIC_ASSERT(sizeof(details::enable_if_constructible_helper_t<FAnonymousStructAsTuple, 2>));
-STATIC_ASSERT(sizeof(details::enable_if_constructible_helper_t<FAnonymousStructAsTuple, 3>));
-STATIC_ASSERT(sizeof(details::enable_if_constructible_helper_t<FAnonymousStructAsTuple, 4>));
-STATIC_ASSERT(sizeof(TestRTTI<FAnonymousStructAsTuple, 4>) == sizeof(size_t));
-STATIC_ASSERT(detect_fields_count_greedy_remember2<FAnonymousStructAsTuple, 0>(details::size_t_<0>{}) == 0);
-STATIC_ASSERT(detect_fields_count_greedy_remember2<FAnonymousStructAsTuple, 1>(details::size_t_<1>{}) == 1);
-STATIC_ASSERT(detect_fields_count_greedy_remember2<FAnonymousStructAsTuple, 2>(details::size_t_<2>{}) == 2);
-STATIC_ASSERT(detect_fields_count_greedy_remember2<FAnonymousStructAsTuple, 3>(details::size_t_<3>{}) == 3);
-STATIC_ASSERT(detect_fields_count_greedy_remember2<FAnonymousStructAsTuple, 4>(details::size_t_<4>{}) == 4);
-STATIC_ASSERT(details::detect_fields_count_greedy_remember<FAnonymousStructAsTuple, 0>(details::size_t_<0>{}, long(1)) == 0);
-STATIC_ASSERT(details::detect_fields_count_greedy_remember<FAnonymousStructAsTuple, 1>(details::size_t_<1>{}, long(1)) == 1);
-STATIC_ASSERT(details::detect_fields_count_greedy_remember<FAnonymousStructAsTuple, 2>(details::size_t_<2>{}, long(1)) == 2);
-STATIC_ASSERT(details::detect_fields_count_greedy_remember<FAnonymousStructAsTuple, 3>(details::size_t_<3>{}, long(1)) == 3);
-STATIC_ASSERT(details::detect_fields_count_greedy_remember<FAnonymousStructAsTuple, 4>(details::size_t_<4>{}, long(1)) == 4);
-//STATIC_ASSERT(details::detect_fields_count_dispatch<FAnonymousStructAsTuple>(details::size_t_<8>{}, 1L, 1L) == 0);
-STATIC_ASSERT(details::detect_fields_count_greedy<FAnonymousStructAsTuple>(details::size_t_<0>{}, details::size_t_<sizeof(FAnonymousStructAsTuple)>{}) == 4);
-STATIC_ASSERT(detect_fields_count3_t<FAnonymousStructAsTuple, 0, sizeof(FAnonymousStructAsTuple)> ::value == 4);
-STATIC_ASSERT(detect_fields_count2<FAnonymousStructAsTuple>(details::size_t_<4>{}, details::size_t_<4>{}, 1L) == 4);
-STATIC_ASSERT(detect_fields_count2<FAnonymousStructAsTuple, 0, 4>(details::size_t_<0>{}, details::size_t_<4>{}, 1L) == 4);
-STATIC_ASSERT(detect_fields_count2<FAnonymousStructAsTuple, 4, 5>(details::size_t_<4>{}, details::size_t_<5>{}, 1L) == 4);
-//STATIC_ASSERT(detect_fields_count2<FAnonymousStructAsTuple, 0, sizeof(FAnonymousStructAsTuple) / 2 + 1>(details::size_t_<0>{}, details::size_t_<sizeof(FAnonymousStructAsTuple) / 2 + 1>{}, 1L) == 4);
-STATIC_ASSERT(details::detect_fields_count<FAnonymousStructAsTuple>(details::size_t_<0>{}, details::size_t_<sizeof(FAnonymousStructAsTuple) / 2 + 1>{}, 1L) == 4);
-STATIC_ASSERT(details::detect_fields_count_dispatch<FAnonymousStructAsTuple>(details::size_t_<8>{}, 1L, 1L) == 4);
-#endif //!_DEBUG
 //----------------------------------------------------------------------------
 struct FAnonymousStructAsTuple2 {
     FAnonymousStructAsTuple Struct;

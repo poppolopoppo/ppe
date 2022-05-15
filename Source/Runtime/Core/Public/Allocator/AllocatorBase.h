@@ -16,23 +16,27 @@ struct NODISCARD FAllocatorBlock {
     size_t SizeInBytes{ 0 };
 
     FAllocatorBlock() = default;
+    CONSTEXPR FAllocatorBlock(void* data, size_t sizeInBytes) NOEXCEPT
+    :   Data(data)
+    ,   SizeInBytes(sizeInBytes)
+    {}
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return (!!Data); }
-    FRawMemory MakeView() const { return FRawMemory((u8*)Data, SizeInBytes); }
+    CONSTEXPR FRawMemory MakeView() const { return { static_cast<u8*>(Data), SizeInBytes }; }
 
-    FAllocatorBlock Reset() {
+    CONSTEXPR FAllocatorBlock Reset() {
         const FAllocatorBlock cpy{ *this };
         *this = Null();
         return cpy;
     }
 
     static CONSTEXPR FAllocatorBlock Null() NOEXCEPT {
-        return FAllocatorBlock{ nullptr, 0 };
+        return { nullptr, 0 };
     }
 
     template <typename T>
-    static FAllocatorBlock From(TMemoryView<T> v) NOEXCEPT {
-        return FAllocatorBlock{ v.data(), v.SizeInBytes() };
+    static CONSTEXPR FAllocatorBlock From(TMemoryView<T> v) NOEXCEPT {
+        return { v.data(), v.SizeInBytes() };
     }
 };
 //----------------------------------------------------------------------------

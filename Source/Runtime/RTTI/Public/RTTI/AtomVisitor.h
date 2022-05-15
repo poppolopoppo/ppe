@@ -15,7 +15,7 @@ namespace RTTI {
 enum class EVisitorFlags : u32 {
     // /!\ Report changes to MetaEnumHelpers.cpp
 
-    Default             = 0,
+    Unknown             = 0,
     KeepDeprecated      = 1<<0,
     KeepTransient       = 1<<1,
     OnlyObjects         = 1<<2,
@@ -25,7 +25,7 @@ ENUM_FLAGS(EVisitorFlags);
 //----------------------------------------------------------------------------
 class IAtomVisitor {
 public:
-    explicit IAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) NOEXCEPT : _flags(flags) {}
+    explicit IAtomVisitor(EVisitorFlags flags = Default) NOEXCEPT : _flags(flags) {}
 
     virtual ~IAtomVisitor() = default;
 
@@ -65,7 +65,7 @@ protected:
 //----------------------------------------------------------------------------
 class FBaseAtomVisitor : public IAtomVisitor {
 public:
-    explicit FBaseAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) NOEXCEPT
+    explicit FBaseAtomVisitor(EVisitorFlags flags = Default) NOEXCEPT
         : IAtomVisitor(flags) {}
 
     using IAtomVisitor::Visit;

@@ -10,10 +10,13 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API IModuleInterface : public Meta::FNonCopyableNorMovable {
+class PPE_CORE_API IModuleInterface {
 public:
     explicit IModuleInterface(const FModuleInfo& info) NOEXCEPT;
     virtual ~IModuleInterface() NOEXCEPT;
+
+    IModuleInterface(const IModuleInterface& ) = delete;
+    IModuleInterface& operator =(const IModuleInterface& ) = delete;
 
     const FStringView& Name() const { return _name; }
     EModulePhase Phase() const { return _phase; }

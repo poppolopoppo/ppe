@@ -76,7 +76,7 @@ void LinearizeTransaction_(
             Add_AssertUnique(linearized->LoadedRefs, SMetaObject{ &obj }); // postfix order
             return true; // never fails recursion here
         },
-        (EVisitorFlags::Default +
+        (EVisitorFlags::Unknown +
             (outer.KeepDeprecated() ? EVisitorFlags::KeepDeprecated : EVisitorFlags{ 0 }) +
             (outer.KeepTransient() ? EVisitorFlags::KeepTransient : EVisitorFlags{ 0 }))
         );
