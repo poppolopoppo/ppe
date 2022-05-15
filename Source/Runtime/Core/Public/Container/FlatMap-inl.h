@@ -44,7 +44,7 @@ auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::operator =(const TFlatMap
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(std::initializer_list<value_type> values) {
+TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(std::initializer_list<value_type> values) : TFlatMap() {
     insert(std::begin(values), std::end(values));
 }
 //----------------------------------------------------------------------------
