@@ -17,6 +17,8 @@
 #include <utility>
 #include <type_traits>
 
+PRAGMA_DISABLE_RUNTIMECHECKS
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -405,3 +407,5 @@ inline void operator delete(void* ptr, PPE::TVector<T, _Allocator>& vector) {
 #endif
 
 #include "Container/Vector-inl.h"
+
+PRAGMA_RESTORE_RUNTIMECHECKS

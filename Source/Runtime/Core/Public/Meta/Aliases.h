@@ -293,11 +293,15 @@ using i64   = std::int64_t;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
-#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL __pragma(optimize("",off))
-#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  __pragma(optimize("",on ))
+#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL   __pragma(optimize("",off))
+#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL    __pragma(optimize("",on ))
+#   define PRAGMA_DISABLE_RUNTIMECHECKS_ACTUAL  __pragma(runtime_checks("",off))     __pragma(check_stack(off)) __pragma(strict_gs_check(push,off))
+#   define PRAGMA_RESTORE_RUNTIMECHECKS_ACTUAL  __pragma(runtime_checks("",restore)) __pragma(check_stack())    __pragma(strict_gs_check(pop))
 #elif defined(CPP_CLANG)
-#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL _Pragma("clang optimize off")
-#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  _Pragma("clang optimize on")
+#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL   _Pragma("clang optimize off")
+#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL    _Pragma("clang optimize on")
+#   define PRAGMA_DISABLE_RUNTIMECHECKS_ACTUAL  //#TODO
+#   define PRAGMA_RESTORE_RUNTIMECHECKS_ACTUAL  //#TODO
 #else
 #   error "need to implement PRAGMA_ENABLE/DISABLE_OPTIMIZATION !"
 #endif
@@ -308,6 +312,9 @@ using i64   = std::int64_t;
 #else
 #   define PRAGMA_ENABLE_OPTIMIZATION PRAGMA_ENABLE_OPTIMIZATION_ACTUAL
 #endif
+//----------------------------------------------------------------------------
+#define PRAGMA_DISABLE_RUNTIMECHECKS PRAGMA_DISABLE_RUNTIMECHECKS_ACTUAL
+#define PRAGMA_RESTORE_RUNTIMECHECKS PRAGMA_RESTORE_RUNTIMECHECKS_ACTUAL
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
 #   define PRAGMA_INITSEG_LIB \

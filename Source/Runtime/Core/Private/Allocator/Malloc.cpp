@@ -71,6 +71,8 @@
 #   include "Memory/MemoryTracking.h"
 #endif
 
+PRAGMA_DISABLE_RUNTIMECHECKS
+
 namespace PPE {
 STATIC_ASSERT(PPE_MALLOC_LEAKDETECTOR_PROXY || not USE_PPE_MALLOC_LEAKDETECTOR);
 //----------------------------------------------------------------------------
@@ -563,3 +565,5 @@ void FMallocDebug::DumpMemoryInfo(FWTextWriter& oss) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+PRAGMA_RESTORE_RUNTIMECHECKS

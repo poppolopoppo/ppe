@@ -14,6 +14,8 @@
 
 // https://godbolt.org/z/dEvY3n1zq
 
+PRAGMA_DISABLE_RUNTIMECHECKS
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -1098,3 +1100,5 @@ EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<double, 4>;
 //----------------------------------------------------------------------------
 } //!namespace
 #endif //!
+
+PRAGMA_RESTORE_RUNTIMECHECKS

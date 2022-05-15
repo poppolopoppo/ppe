@@ -52,6 +52,8 @@
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 
+PRAGMA_DISABLE_RUNTIMECHECKS
+
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, MallocBinned2)
 //------------------------------------------------------------------------------
@@ -1057,5 +1059,7 @@ void FMallocBinned2::DumpMemoryInfo(FWTextWriter& oss) {
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 } //!namespace PPE
+
+PRAGMA_RESTORE_RUNTIMECHECKS
 
 PRAGMA_MSVC_WARNING_POP()
