@@ -41,7 +41,8 @@ auto TScalarBoundingBox<T, _Dim>::operator =(std::initializer_list<vector_type> 
 template <typename T, size_t _Dim>
 template <typename U>
 TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(const TScalarBoundingBox<U, _Dim>& other)
-:   _min(other._min), _max(other._max) {}
+:   _min(checked_cast<T>(other._min))
+,   _max(checked_cast<T>(other._max)) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>

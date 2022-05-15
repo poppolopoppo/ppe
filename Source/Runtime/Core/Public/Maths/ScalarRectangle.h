@@ -27,7 +27,7 @@ public:
     TScalarRectangle& operator =(const TScalarRectangle& other);
 
     template <typename U>
-    TScalarRectangle(const TScalarRectangle<U, _Dim>& other);
+    explicit TScalarRectangle(const TScalarRectangle<U, _Dim>& other);
     template <typename U>
     TScalarRectangle& operator =(const TScalarRectangle<U, _Dim>& other);
 

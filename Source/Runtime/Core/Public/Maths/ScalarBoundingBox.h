@@ -32,7 +32,7 @@ public:
     TScalarBoundingBox& operator =(std::initializer_list<vector_type> points);
 
     template <typename U>
-    TScalarBoundingBox(const TScalarBoundingBox<U, _Dim>& other);
+    explicit TScalarBoundingBox(const TScalarBoundingBox<U, _Dim>& other);
     template <typename U>
     TScalarBoundingBox& operator =(const TScalarBoundingBox<U, _Dim>& other);
 
