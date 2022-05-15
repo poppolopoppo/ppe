@@ -59,6 +59,11 @@ public:
         return FHandle(delegatesRW->Emplace(std::move(rfunc)));
     }
 
+    template <auto _OtherFunc, typename... _Extra>
+    NODISCARD FHandle Bind(_Extra... extra) {
+        return Add(FDelegate::template Bind<_OtherFunc>(std::forward<_Extra>(extra)...));
+    }
+
     void Emplace(FDelegate&& rfunc) {
         Assert(rfunc);
         const auto delegatesRW = _delegates.LockExclusive();
