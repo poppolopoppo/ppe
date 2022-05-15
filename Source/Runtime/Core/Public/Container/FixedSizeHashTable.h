@@ -166,6 +166,8 @@ public:
     TFixedSizeHashTable() NOEXCEPT;
     ~TFixedSizeHashTable() NOEXCEPT;
 
+    explicit TFixedSizeHashTable(std::initializer_list<value_type> uniq) NOEXCEPT;
+
     FORCE_INLINE TFixedSizeHashTable(const TFixedSizeHashTable& other) NOEXCEPT : TFixedSizeHashTable() { operator =(other); }
     TFixedSizeHashTable& operator =(const TFixedSizeHashTable&) NOEXCEPT;
 
@@ -241,7 +243,7 @@ public:
     }
 
 private:
-    size_t _size;
+    size_t _size{ 0 };
     value_type _values[_Capacity];
 
     static size_t InitIndex_(key_type key) NOEXCEPT {
@@ -279,20 +281,31 @@ TFixedSizeHashTable<_Traits, _Capacity>::~TFixedSizeHashTable() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
+TFixedSizeHashTable<_Traits, _Capacity>::TFixedSizeHashTable(std::initializer_list<value_type> uniq)  NOEXCEPT
+:   TFixedSizeHashTable() {
+    Assert(uniq.size() <= _Capacity);
+    for (const value_type& it : uniq)
+        Emplace_AssertUnique(it);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, size_t _Capacity>
 auto TFixedSizeHashTable<_Traits, _Capacity>::operator =(const TFixedSizeHashTable& other) NOEXCEPT -> TFixedSizeHashTable& {
-    // trivial copy/destructor thanks to PODs
-    _size = other._size;
-    FPlatformMemory::Memcpy(_values, other._values, sizeof(_values));
-
+    if (&other != this) {
+        // trivial copy/destructor thanks to PODs
+        _size = other._size;
+        FPlatformMemory::Memcpy(_values, other._values, sizeof(_values));
+    }
     return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
 auto TFixedSizeHashTable<_Traits, _Capacity>::operator =(TFixedSizeHashTable&& rvalue) NOEXCEPT -> TFixedSizeHashTable& {
-    // trivial move/destructor thanks to PODs
-    _size = rvalue._size;
-    FPlatformMemory::Memcpy(_values, rvalue._values, sizeof(_values));
-    rvalue.clear();
+    if (&rvalue != this) {
+        // trivial move/destructor thanks to PODs
+        _size = rvalue._size;
+        FPlatformMemory::Memcpy(_values, rvalue._values, sizeof(_values));
+        rvalue.clear();
+    }
     return (*this);
 }
 //----------------------------------------------------------------------------
