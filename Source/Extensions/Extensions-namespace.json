@@ -1,0 +1,9 @@
+{
+	"Archtypes": [
+		"PPE/Module"
+	],
+	"Modules": [
+		"ApplicationUI",
+		"RHIVulkan"
+	]
+}

@@ -45,6 +45,7 @@ TBasicTextWriter<_Char>& ExpandRHIFeature_(TBasicTextWriter<_Char>& oss, ERHIFea
         case ERHIFeature::VariableShadingRate: oss << sep << STRING_LITERAL(_Char, "VariableShadingRate"); break;
         case ERHIFeature::ConservativeDepth: oss << sep << STRING_LITERAL(_Char, "ConservativeDepth"); break;
         case ERHIFeature::HighDynamicRange: oss << sep << STRING_LITERAL(_Char, "HighDynamicRange"); break;
+        case ERHIFeature::HighDPIAwareness: oss << sep << STRING_LITERAL(_Char, "HighDPIAwareness"); break;
         case ERHIFeature::VSync: oss << sep << STRING_LITERAL(_Char, "VSync"); break;
         case ERHIFeature::Debugging: oss << sep << STRING_LITERAL(_Char, "Debugging"); break;
         case ERHIFeature::Profiling: oss << sep << STRING_LITERAL(_Char, "Profiling"); break;

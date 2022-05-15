@@ -110,6 +110,7 @@ public: // interface
     // Returns resource description.
     NODISCARD virtual const FImageDesc& Description(FRawImageID id) const = 0;
     NODISCARD virtual const FBufferDesc& Description(FRawBufferID id) const = 0;
+    NODISCARD virtual const FSwapchainDesc& Description(FRawSwapchainID id) const = 0;
 
     NODISCARD virtual FImageID CreateImage(
         const FImageDesc& desc,
@@ -192,6 +193,11 @@ public: // interface
 public: // helpers
     template <typename _RawId>
     NODISCARD TAutoResource<details::TResourceWrappedId<_RawId>> ScopedResource(details::TResourceWrappedId<_RawId>&& resource);
+
+    NODISCARD PPipelineResources CreatePipelineResources(FRawGPipelineID pipeline, const FDescriptorSetID& id) const;
+    NODISCARD PPipelineResources CreatePipelineResources(FRawCPipelineID pipeline, const FDescriptorSetID& id) const;
+    NODISCARD PPipelineResources CreatePipelineResources(FRawMPipelineID pipeline, const FDescriptorSetID& id) const;
+    NODISCARD PPipelineResources CreatePipelineResources(FRawRTPipelineID pipeline, const FDescriptorSetID& id) const;
 
     template <typename _Id0, typename... _Ids>
     void ReleaseResources(_Id0& resource0, _Ids&... resources) {

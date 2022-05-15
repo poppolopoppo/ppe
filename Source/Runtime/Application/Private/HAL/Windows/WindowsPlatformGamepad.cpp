@@ -23,7 +23,7 @@ static bool GamepadIsButtonPressed_(const ::XINPUT_STATE& stateXInput, ::WORD bt
 static void GamepadFilterStick_(float* x, float* y, i16 axisX, i16 axisY, i16 deadzone) {
     float fx = ShortM3276832767_to_FloatM11(axisX);
     float fy = ShortM3276832767_to_FloatM11(axisY);
-    const float d = (deadzone / 32767.f);
+    const float d = ShortM3276832767_to_FloatM11(deadzone);
     const float l = Sqrt(fx * fx + fy * fy);
     if (l <= d) {
         *x = 0.f;

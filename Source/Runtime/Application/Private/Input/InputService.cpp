@@ -19,6 +19,7 @@ namespace {
 class FDefaultInputService_ : public IInputService {
 public:
     FDefaultInputService_() = default;
+    ~FDefaultInputService_() override = default;
 
     virtual const FKeyboardState& Keyboard() const override final;
     virtual const FMouseState& Mouse() const override final;
@@ -31,11 +32,17 @@ public:
     virtual void Update(FTimespan dt) override final;
     virtual void Clear() override final;
 
+    virtual FGenericWindow* FocusedWindow() const override final { return _focusedWindow; }
+    virtual void SetWindowFocused(FGenericWindow*) override final;
+
 private:
     FReadWriteLock _barrierRW;
     FKeyboardInputHandler _keyboard;
     FGamepadInputHandler _gamepad;
     FMouseInputHandler _mouse;
+
+    FPlatformWindow* _focusedWindow{ nullptr };
+    FPlatformWindow* _nextFocusedWindow{ nullptr };
 };
 //----------------------------------------------------------------------------
 const FKeyboardState& FDefaultInputService_::Keyboard() const {
@@ -67,6 +74,15 @@ void FDefaultInputService_::SetupWindow(FGenericWindow& window) {
     _mouse.SetupWindow(*platformWindow);
 }
 //----------------------------------------------------------------------------
+void FDefaultInputService_::SetWindowFocused(FGenericWindow* window) {
+    WRITESCOPELOCK(_barrierRW);
+
+    if (window)
+        _nextFocusedWindow = checked_cast<FPlatformWindow*>(window);
+    else
+        _nextFocusedWindow = nullptr;
+}
+//----------------------------------------------------------------------------
 void FDefaultInputService_::Poll() {
     WRITESCOPELOCK(_barrierRW);
 
@@ -74,11 +90,26 @@ void FDefaultInputService_::Poll() {
 }
 //----------------------------------------------------------------------------
 void FDefaultInputService_::Update(FTimespan dt) {
-    WRITESCOPELOCK(_barrierRW);
+    bool focusChanged = false;
+    FGenericWindow* previousFocus = nullptr;
+    {
+        WRITESCOPELOCK(_barrierRW);
 
-    _keyboard.Update(dt);
-    _gamepad.Update(dt);
-    _mouse.Update(dt);
+        _keyboard.Update(dt);
+        _gamepad.Update(dt);
+        _mouse.Update(dt);
+
+        if (_nextFocusedWindow != _focusedWindow) {
+            focusChanged = true;
+            previousFocus = _focusedWindow;
+            _focusedWindow = _nextFocusedWindow;
+        }
+    }
+
+    if (focusChanged)
+        _OnWindowFocus.Invoke(*this, previousFocus);
+
+    _OnInputUpdate.Invoke(*this, dt);
 }
 //----------------------------------------------------------------------------
 void FDefaultInputService_::Clear() {
@@ -93,12 +124,13 @@ void FDefaultInputService_::Clear() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Application
+//----------------------------------------------------------------------------
 void IInputService::MakeDefault(UInputService* input) {
     Assert(input);
-    input->reset<FDefaultInputService_>();
+    input->create<Application::FDefaultInputService_>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
 } //!namespace PPE

@@ -60,6 +60,7 @@ constexpr FTimespan::value_type Timespan_120hz() { return Units::ConvertValue<FT
 constexpr FTimespan::value_type Timespan_60hz()  { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /  60); }
 constexpr FTimespan::value_type Timespan_30hz()  { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /  30); }
 constexpr FTimespan::value_type Timespan_15hz()  { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /  15); }
+constexpr FTimespan::value_type Timespan_5hz()   { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /   5); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

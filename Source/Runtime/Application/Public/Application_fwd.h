@@ -13,6 +13,9 @@
 
 namespace PPE {
 class FApplicationModule;
+FWD_INTEFARCE_UNIQUEPTR(InputService);
+FWD_INTEFARCE_UNIQUEPTR(UIService);
+FWD_INTEFARCE_UNIQUEPTR(WindowService);
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -23,12 +26,10 @@ enum class EMouseButton : u8;
 class FKeyboardState;
 class FGamepadState;
 class FMouseState;
-FWD_INTEFARCE_UNIQUEPTR(InputService);
 //----------------------------------------------------------------------------
 class FGenericWindow;
 class IWindowListener;
 FWD_REFPTR(MainWindow);
-FWD_INTEFARCE_UNIQUEPTR(WindowService);
 //----------------------------------------------------------------------------
 class FGenericApplication;
 class FApplicationBase;

@@ -8,5 +8,8 @@
 		"Runtime/Remoting",
 		"Runtime/Application",
 		"ContentPipeline/BuildGraph"
+	],
+	"ExtraFiles": [
+		"resource.rc"
 	]
 }

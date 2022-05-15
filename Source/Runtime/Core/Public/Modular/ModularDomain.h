@@ -86,9 +86,6 @@ public: // events
 
     using FDomainDelegate = TFunction<void(const FModularDomain&)>;
 
-    PUBLIC_EVENT(OnApplicationStart, FDomainDelegate)
-    PUBLIC_EVENT(OnApplicationShutdown, FDomainDelegate)
-
     PUBLIC_EVENT(OnPreDutyCycle, FDomainDelegate)
     PUBLIC_EVENT(OnPostDutyCycle, FDomainDelegate)
 

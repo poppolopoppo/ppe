@@ -568,7 +568,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     EShLanguage stage = EShaderType_ToShLanguage(shaderType);
     auto& shader = ctx.Glslang->Shader;
 
-    shader.reset<TShader>(stage);
+    shader.create<TShader>(stage);
     shader->setStrings(&source.Data, 1_i32);
     shader->setEntryPoint(entry.c_str());
     shader->setEnvInput(shSource, stage, client, version);

@@ -44,6 +44,7 @@
 #include <variant>
 
 namespace PPE {
+class IRHIService;
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
 //----------------------------------------------------------------------------

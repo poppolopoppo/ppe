@@ -432,7 +432,7 @@ hash_t FVulkanPipelineCompiler::FShaderBinaryDataTraits::operator ()(const PShad
 //----------------------------------------------------------------------------
 FVulkanPipelineCompiler::FVulkanPipelineCompiler(Meta::FForceInit) {
     const auto exclusiveData = _data.LockExclusive();
-    exclusiveData->SpirvCompiler.reset<FVulkanSpirvCompiler>(
+    exclusiveData->SpirvCompiler.create<FVulkanSpirvCompiler>(
         exclusiveData->Directories );
 
     exclusiveData->SpirvCompiler->SetShaderClockFeatures(true, true);
@@ -448,7 +448,7 @@ FVulkanPipelineCompiler::FVulkanPipelineCompiler(const FVulkanDeviceInfo& device
     Assert(_deviceInfo->API.vkDestroyShaderModule);
 
     const auto exclusiveData = _data.LockExclusive();
-    exclusiveData->SpirvCompiler.reset<FVulkanSpirvCompiler>(
+    exclusiveData->SpirvCompiler.create<FVulkanSpirvCompiler>(
         exclusiveData->Directories );
 
     exclusiveData->SpirvCompiler->SetShaderClockFeatures(true, true);

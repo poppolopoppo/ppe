@@ -29,6 +29,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, EModulePhase phase);
 enum class EModuleSource {
     Core,                       // modules inside core source code
     Program,                    // program specific modules
+    Extensions,                 // dynamically loaded modules
     External,                   // external modules, potentially loaded on-the-fly
 };
 //----------------------------------------------------------------------------

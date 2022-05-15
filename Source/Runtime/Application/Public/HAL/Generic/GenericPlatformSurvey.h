@@ -52,6 +52,8 @@ struct PPE_APPLICATION_API FGenericMonitorInfo {
     bool Primary;
     EOrientation Orientation;
 
+    u32 DPIScale;
+
     FResolution CurrentResolution;
     VECTORINSITU(Survey, FResolution, 8) SupportedResolutions;
 };

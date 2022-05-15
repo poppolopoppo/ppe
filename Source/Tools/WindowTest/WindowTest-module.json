@@ -6,8 +6,12 @@
 		"Runtime/Serialize",
 		"Runtime/Network",
 		"Runtime/RHI",
-		"Runtime/RHIVulkan",
-		"Runtime/Application"
+		"Runtime/Application",
+		"Extensions/RHIVulkan",
+		"Extensions/ApplicationUI"
+	],
+	"ExtraFiles": [
+		"resource.rc"
 	],
 	"IsolatedFiles": [
 		"Private/Drawing/Test_Draw1.cpp",

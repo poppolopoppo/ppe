@@ -3,6 +3,7 @@
 #include "Application/ApplicationWindow.h"
 
 #include "Input/InputService.h"
+#include "UI/UIService.h"
 #include "Window/WindowService.h"
 #include "Window/MainWindow.h"
 
@@ -11,6 +12,8 @@
 #include "HAL/TargetRHI.h"
 
 #include "Diagnostic/Logger.h"
+#include "HAL/PlatformApplicationMisc.h"
+#include "HAL/PlatformSurvey.h"
 #include "Thread/ThreadPool.h"
 
 #if USE_PPE_LOGGER
@@ -65,7 +68,7 @@ static void RecommendedSurfaceInfo_(
     outSurfaceInfo->EnableFullscreen = window.Fullscreen();
     outSurfaceInfo->EnableVSync = (deviceFeatures & ERHIFeature::VSync);
 
-    LOG(Application, Info, L"create RHI service with surface info:\n"
+    LOG(Application, Info, L"create RHI framebuffer with surface info:\n"
         L"\tHandle                  : {0}\n"
         L"\tDimensions              : {1}\n"
         L"\tEnableFullscreen        : {2:a}\n"
@@ -119,14 +122,22 @@ void FApplicationWindow::Start() {
         services.Add<IRHIService>(_rhi.get());
     }
 
+    if (_rhi->Features() & ERHIFeature::HighDPIAwareness)
+        FPlatformApplicationMisc::SetHighDPIAwareness();
+
     VerifyRelease(_main->Show());
     VerifyRelease(_main->SetFocus());
+
+    UpdateTickRateFromRefreshRate_();
 
     FApplicationBase::Start();
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Shutdown() {
     FApplicationBase::Shutdown();
+
+    if (_input->FocusedWindow() == _main.get())
+        _input->SetWindowFocused(nullptr);
 
     if (_main->Visible())
         VerifyRelease(_main->Close());
@@ -156,6 +167,7 @@ void FApplicationWindow::Shutdown() {
 bool FApplicationWindow::PumpMessages() NOEXCEPT {
     if (FApplicationBase::PumpMessages() &&
         _main->PumpMessages()) {
+
         _input->Poll();
         return true;
     }
@@ -166,26 +178,48 @@ bool FApplicationWindow::PumpMessages() NOEXCEPT {
 void FApplicationWindow::Tick(FTimespan dt) {
     FApplicationBase::Tick(dt);
 
+    if (_windowWasResized) {
+        _windowWasResized = false;
+
+        FRHISurfaceCreateInfo surfaceInfo;
+        RecommendedSurfaceInfo_(&surfaceInfo, _rhi->Features(), *_main);
+
+        _rhi->ResizeWindow(surfaceInfo);
+    }
+
     _input->Update(dt);
-    _rhi->RenderFrame(dt);
+
+    if (_main->Visible())
+        _rhi->RenderFrame(dt);
 }
 //----------------------------------------------------------------------------
-void FApplicationWindow::OnWindowFocus(bool enabled) {
+void FApplicationWindow::OnWindowFocus(bool enabled) NOEXCEPT {
     SetFocus(enabled);
+
+    if (enabled)
+        _input->SetWindowFocused(_main.get());
+    else
+        _input->SetWindowFocused(nullptr);
 }
 //----------------------------------------------------------------------------
-void FApplicationWindow::OnWindowPaint() {
+void FApplicationWindow::OnWindowMove(const int2& pos) NOEXCEPT {
+    Unused(pos);
 
+    UpdateTickRateFromRefreshRate_();
 }
 //----------------------------------------------------------------------------
-void FApplicationWindow::OnWindowResize(const uint2& size) {
-    FRHISurfaceCreateInfo surfaceInfo;
-    RecommendedSurfaceInfo_(&surfaceInfo, _rhi->Features(), *_main);
-
+void FApplicationWindow::OnWindowResize(const uint2& size) NOEXCEPT {
     Unused(size);
-    Assert_NoAssume(size == surfaceInfo.Dimensions);
 
-    _rhi->ResizeWindow(surfaceInfo);
+    _windowWasResized = true;
+
+    UpdateTickRateFromRefreshRate_();
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::UpdateTickRateFromRefreshRate_() {
+    FPlatformSurvey::FMonitorInfo primaryMonitor;
+    if (_main && FPlatformSurvey::MonitorFromWindow(*_main, &primaryMonitor))
+        SetTickRate(primaryMonitor.CurrentResolution.RefreshRate);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -27,14 +27,15 @@ enum class EWindowsCursorType : ::DWORD {
     Pen                 = /*OCR_PEN*/OCR_UP,
     SizeAll             = OCR_SIZEALL,
     SizeTop             = OCR_SIZENS,
-    SizeTopLeft         = OCR_SIZENWSE,
-    SizeTopRight        = OCR_SIZENESW,
     SizeBottom          = OCR_SIZENS,
-    SizeBottomLeft      = OCR_SIZENESW,
-    SizeBottomRight     = OCR_SIZENWSE,
     SizeLeft            = OCR_SIZEWE,
     SizeRight           = OCR_SIZEWE,
+    SizeTopLeft         = OCR_SIZENWSE,
+    SizeBottomRight     = OCR_SIZENWSE,
+    SizeTopRight        = OCR_SIZENESW,
+    SizeBottomLeft      = OCR_SIZENESW,
     WaitCursor          = OCR_WAIT,
+    Invisible           = 0,
     Unknown             = Arrow,
 };
 //----------------------------------------------------------------------------
@@ -44,9 +45,11 @@ public: // must be defined for every platform
 
     using ECursorType = EWindowsCursorType;
 
-    static ECursorType CursorType();
-    static ECursorType SetCursorType(ECursorType type);
-    static void ResetCursorType();
+    static ECursorType SystemCursor();
+    static ECursorType SetSystemCursor(ECursorType type);
+    static void ResetSystemCursor();
+
+    static void SetWindowCursor(const FWindowsWindow& window);
 
     static bool Visible();
     static bool SetVisible(bool value);
@@ -58,6 +61,7 @@ public: // must be defined for every platform
     static bool ScreenToClient(const FWindowsWindow& window, int* x, int *y);
 
     static void CenterCursorOnWindow(const FWindowsWindow& window);
+    static void SetCursorPosition(int screenX, int screenY);
 
     static FEventHandle SetupMessageHandler(FWindowsWindow& window, FMouseState* mouse);
     static void RemoveMessageHandler(FWindowsWindow& window, FEventHandle& handle);

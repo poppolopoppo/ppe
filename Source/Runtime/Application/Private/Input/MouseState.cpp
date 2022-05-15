@@ -71,8 +71,12 @@ void FMouseState::SetButtonUp(EMouseButton btn) {
     _buttonsQueued.Remove_ReturnIfExists(btn);
 }
 //----------------------------------------------------------------------------
-void FMouseState::SetWheelDelta(int delta) {
-    _wheelDetaAccum += delta;
+void FMouseState::SetWheelDeltaX(float delta) {
+    _wheelDeltaAccumX += delta;
+}
+//----------------------------------------------------------------------------
+void FMouseState::SetWheelDeltaY(float delta) {
+    _wheelDeltaAccumY += delta;
 }
 //----------------------------------------------------------------------------
 void FMouseState::Update(float dt) {
@@ -80,9 +84,13 @@ void FMouseState::Update(float dt) {
     _onLeave = (_wasInside && not _inside);
     _wasInside = _inside;
 
-    _wheelDeta.SetRaw(float(_wheelDetaAccum));
-    _wheelDeta.Update(dt);
-    _wheelDetaAccum = 0;
+    _wheelDeltaX.SetRaw(_wheelDeltaAccumX);
+    _wheelDeltaX.Update(dt);
+    _wheelDeltaAccumX = 0;
+
+    _wheelDeltaY.SetRaw(_wheelDeltaAccumY);
+    _wheelDeltaY.Update(dt);
+    _wheelDeltaAccumY = 0;
 
     const float rxRaw = _relativeX.Raw();
     const float ryRaw = _relativeY.Raw();
@@ -118,8 +126,11 @@ void FMouseState::Clear() {
     _inside = _wasInside = false;
     _onEnter = _onLeave = false;
 
-    _wheelDeta.Clear();
-    _wheelDetaAccum = 0;
+    _wheelDeltaX.Clear();
+    _wheelDeltaAccumX = 0;
+
+    _wheelDeltaY.Clear();
+    _wheelDeltaAccumY = 0;
 
     _screenX = _screenY = 0;
     _clientX = _clientY = 0;

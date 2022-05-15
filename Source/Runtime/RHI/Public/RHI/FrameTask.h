@@ -636,7 +636,7 @@ struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
 
     template <typename T>
     FUpdateBuffer& AddData(const TMemoryView<const T>& data, size_t offset = 0) { return AddData(data.template Cast<const u8>(), offset); }
-    FUpdateBuffer& AddData(const u8* p, const size_t size, size_t offset = 0) { return AddData(FRawMemoryConst(p, size), offset); }
+    FUpdateBuffer& AddData(const void* p, const size_t size, size_t offset = 0) { return AddData(FRawMemoryConst(static_cast<const u8*>(p), size), offset); }
     FUpdateBuffer& AddData(const FRawMemoryConst& data, size_t offset = 0) {
         Assert(not data.empty());
         Emplace_Back(Regions, offset, data);

@@ -112,12 +112,22 @@ enum class EKeyboardKey : u8 {
     PageUp,
     PageDown,
 
+    Comma,             // ,
+    Plus,              // +
+    Minus,             // -
+    Period,            // .
+
+    CapsLock,
+    NumLock,
+
     // Modifiers
 
     Alt,
-    Menu,           // Windows key
     Control,
     Shift,
+
+    Menu,           // Windows key
+    Super,
 };
 //----------------------------------------------------------------------------
 FStringView KeyboardKeyToCStr(EKeyboardKey value);

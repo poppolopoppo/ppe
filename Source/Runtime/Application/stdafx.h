@@ -9,6 +9,9 @@
 
 #include "Application_fwd.h"
 
+#include "RHI_fwd.h"
+#include "VirtualFileSystem_fwd.h"
+
 #if BUILD_PCH
 #   include "stdafx.generated.h"
 #endif

@@ -9,6 +9,7 @@ namespace Application {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EGenericCursorType {
+    Invisible = 0,
     AppStarting,
     Arrow,
     Cross,
@@ -33,13 +34,15 @@ enum class EGenericCursorType {
 //----------------------------------------------------------------------------
 struct PPE_APPLICATION_API FGenericPlatformMouse {
 public: // must be defined for every platform
-    STATIC_CONST_INTEGRAL(bool, HasKeyboard, false);
+    STATIC_CONST_INTEGRAL(bool, HasMouse, false);
 
     using ECursorType = EGenericCursorType;
 
-    static ECursorType CursorType() = delete;
-    static ECursorType SetCursorType(ECursorType type) = delete;
-    static void ResetCursorType() = delete;
+    static ECursorType SystemCursor() = delete;
+    static ECursorType SetSystemCursor(ECursorType type) = delete;
+    static void ResetSystemCursor() = delete;
+
+    static void SetWindowCursor(const FGenericWindow& window) = delete;
 
     static bool Visible() = delete;
     static bool SetVisible(bool value) = delete;
@@ -51,6 +54,7 @@ public: // must be defined for every platform
     static bool ScreenToClient(const FGenericWindow& window, int* x, int *y) = delete;
 
     static void CenterCursorOnScreen(const FGenericWindow& window) = delete;
+    static void SetCursorPosition(int screenX, int screenY) = delete;
 
     static FEventHandle SetupMessageHandler(FGenericWindow& window, FMouseState* mouse) = delete;
     static void RemoveMessageHandler(FGenericWindow& window, FEventHandle& handle) = delete;

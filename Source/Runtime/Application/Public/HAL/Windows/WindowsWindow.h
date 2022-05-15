@@ -49,6 +49,7 @@ public: // platform specific
     }
 
     void SetHandleWin32(::HWND hWnd) { SetNativeHandle(hWnd); }
+    void UpdateMonitorDPIWin32();
     bool WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lParam);
 
     static void Start();

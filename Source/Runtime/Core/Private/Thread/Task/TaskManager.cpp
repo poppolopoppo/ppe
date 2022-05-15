@@ -559,10 +559,10 @@ void FTaskManager::Start(const TMemoryView<const u64>& threadAffinities) {
 
     LOG(Task, Info, L"start manager <{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
-    _pimpl.reset(*this);
+    _pimpl.create(*this);
     _pimpl->Start(threadAffinities);
 
-    _context.reset<FGlobalTaskContext_>(*this);
+    _context.create<FGlobalTaskContext_>(*this);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Shutdown() {

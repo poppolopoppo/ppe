@@ -55,7 +55,8 @@ public:
 
     bool HasMoved() const { return (_deltaClientX || _deltaClientY); }
 
-    const FFilteredAnalog& WheelDelta() const { return _wheelDeta; }
+    const FFilteredAnalog& WheelDeltaX() const { return _wheelDeltaX; }
+    const FFilteredAnalog& WheelDeltaY() const { return _wheelDeltaY; }
 
     bool Inside() const { return _inside; }
     bool OnEnter() const { return _onEnter; }
@@ -77,7 +78,8 @@ public:
     void SetPosition(int screenX, int screenY, int clientX, int clientY, float relativeX, float relativeY);
     void SetButtonDown(EMouseButton btn);
     void SetButtonUp(EMouseButton btn);
-    void SetWheelDelta(int delta);
+    void SetWheelDeltaX(float dx);
+    void SetWheelDeltaY(float dy);
 
     void Update(float dt);
     void Clear();
@@ -89,20 +91,22 @@ private:
     bool _onEnter   : 1;
     bool _onLeave   : 1;
 
-    FFilteredAnalog _wheelDeta;
-    int _wheelDetaAccum;
-
-    int _screenX, _screenY;
-    int _clientX, _clientY;
+    int _screenX{0}, _screenY{0};
+    int _clientX{0}, _clientY{0};
     FFilteredAnalog _relativeX, _relativeY;
 
-    int _prevClientX, _prevClientY;
-    float _prevRelativeRawX, _prevRelativeRawY;
-    float _prevRelativeFilteredX, _prevRelativeFilteredY;
+    int _prevClientX{0}, _prevClientY{0};
+    float _prevRelativeRawX{0}, _prevRelativeRawY{0};
+    float _prevRelativeFilteredX{0}, _prevRelativeFilteredY{0};
 
-    int _deltaClientX, _deltaClientY;
-    float _deltaRelativeRawX, _deltaRelativeRawY;
-    float _deltaRelativeFilteredX, _deltaRelativeFilteredY;
+    int _deltaClientX{0}, _deltaClientY{0};
+    float _deltaRelativeRawX{0}, _deltaRelativeRawY{0};
+    float _deltaRelativeFilteredX{0}, _deltaRelativeFilteredY{0};
+
+    FFilteredAnalog _wheelDeltaX;
+    FFilteredAnalog _wheelDeltaY;
+    float _wheelDeltaAccumX{0};
+    float _wheelDeltaAccumY{0};
 
     FButtonState _buttonsDown;
     FButtonState _buttonsPressed;

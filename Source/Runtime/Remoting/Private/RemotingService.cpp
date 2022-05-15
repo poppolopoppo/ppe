@@ -26,7 +26,7 @@ class FDefaultRemotingService_ final : public IRemotingService {
 public:
     explicit FDefaultRemotingService_(const FModularDomain& domain)
     :   _domain(domain) {
-        _srv.reset<FRemotingServer>();
+        _srv.create<FRemotingServer>();
 
         // add default endpoints here
         auto swagger = MakeUnique<FSwaggerEndpoint>();
@@ -95,7 +95,7 @@ void IRemotingService::MakeDefault(
     URemotingService* remoting,
     const FModularDomain& domain ) {
     Assert(remoting);
-    remoting->reset<Remoting::FDefaultRemotingService_>(domain);
+    remoting->create<Remoting::FDefaultRemotingService_>(domain);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -16,6 +16,7 @@
 	],
 	"SourceFiles": [
 		"imgui.git/imgui.cpp",
+		"imgui.git/imgui_demo.cpp",
 		"imgui.git/imgui_draw.cpp",
 		"imgui.git/imgui_tables.cpp",
 		"imgui.git/imgui_widgets.cpp"

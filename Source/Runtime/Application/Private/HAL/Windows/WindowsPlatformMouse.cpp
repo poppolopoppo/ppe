@@ -7,6 +7,9 @@
 #include "Input/MouseState.h"
 #include "HAL/Windows/WindowsWindow.h"
 #include "HAL/PlatformIncludes.h"
+
+#include "Container/FlatMap.h"
+#include "Diagnostic/Logger.h"
 #include "Maths/MathHelpers.h"
 #include "Thread/AtomicSpinLock.h"
 
@@ -91,8 +94,22 @@ static bool MouseMessageHandler_(const FWindowsWindow& window, const FWindowsMes
         return true;
 
     case EWindowsMessageType::MouseWheel:
-        mouse->SetWheelDelta(GET_WHEEL_DELTA_WPARAM(msg.WParam));
+        mouse->SetWheelDeltaY(
+            static_cast<float>(GET_WHEEL_DELTA_WPARAM(msg.WParam)) /
+            static_cast<float>(WHEEL_DELTA) );
         return true;
+    case EWindowsMessageType::MouseHWheel:
+        mouse->SetWheelDeltaX(
+            static_cast<float>(GET_WHEEL_DELTA_WPARAM(msg.WParam)) /
+            static_cast<float>(WHEEL_DELTA) );
+        return true;
+
+    case EWindowsMessageType::SetCursor:
+        if (LOWORD(msg.LParam) == HTCLIENT) {
+            FWindowsPlatformMouse::SetWindowCursor(window);
+            return true;
+        }
+        return false;
 
     default:
         return false; // unhandled
@@ -103,25 +120,69 @@ static bool MouseMessageHandler_(const FWindowsWindow& window, const FWindowsMes
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-auto FWindowsPlatformMouse::CursorType() -> ECursorType {
+auto FWindowsPlatformMouse::SystemCursor() -> ECursorType {
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
     return GWindowsCursorType;
 }
 //----------------------------------------------------------------------------
-auto FWindowsPlatformMouse::SetCursorType(ECursorType type) ->ECursorType {
+auto FWindowsPlatformMouse::SetSystemCursor(ECursorType type) -> ECursorType {
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
     const ECursorType oldCursor = GWindowsCursorType;
-    VerifyRelease(::SetSystemCursor(::GetCursor(), ::DWORD(type)));
+    if (oldCursor == type)
+        return type;
+
+    GWindowsCursorType = type;
+
+    ::HCURSOR hCursorCopy = CopyCursor(::GetCursor());
+    Verify(::SetSystemCursor(hCursorCopy, ::DWORD(type)));
+
     return oldCursor;
 }
 //----------------------------------------------------------------------------
 // https://www.dreamincode.net/forums/topic/58083-how-to-replace-cursor-pointer-with-setsystemcursor-from-busy-or-app/
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724947(v=vs.85).aspx
-void FWindowsPlatformMouse::ResetCursorType() {
+void FWindowsPlatformMouse::ResetSystemCursor() {
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
     // Reloads the system cursors. Set the uiParam parameter to zero and the pvParam parameter to NULL.
-    ::SystemParametersInfo(SPI_SETCURSORS, 0, NULL, 0);
+    LOG_CHECKVOID(HAL, ::SystemParametersInfoW(SPI_SETCURSORS, 0, NULL, 0));
     GWindowsCursorType = EWindowsCursorType::Unknown;
+}
+//----------------------------------------------------------------------------
+// must be called on WM_SETCURSOR
+void FWindowsPlatformMouse::SetWindowCursor(const FWindowsWindow& window) {
+
+    auto loadCursorOCR = [](ECursorType type) -> TPair<ECursorType, ::HCURSOR> {
+        ::HCURSOR hCursor = (::HCURSOR)::LoadImageW(
+            NULL, MAKEINTRESOURCE(type), IMAGE_CURSOR, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
+        return { type, hCursor };
+    };
+
+    static const TFixedSizeFlatMap<ECursorType, ::HCURSOR, 20> GCursorIcons_{
+        loadCursorOCR(ECursorType::AppStarting),
+        loadCursorOCR(ECursorType::Arrow),
+        loadCursorOCR(ECursorType::Cross),
+        loadCursorOCR(ECursorType::Hand),
+        loadCursorOCR(ECursorType::Help),
+        loadCursorOCR(ECursorType::IBeam),
+        //preloadCursor(ECursorType::Move),
+        loadCursorOCR(ECursorType::No),
+        loadCursorOCR(ECursorType::Pen),
+        loadCursorOCR(ECursorType::SizeAll),
+        loadCursorOCR(ECursorType::SizeTop),
+        // preloadCursor(ECursorType::SizeBottom),
+        loadCursorOCR(ECursorType::SizeLeft),
+        // preloadCursor(ECursorType::SizeRight),
+        loadCursorOCR(ECursorType::SizeTopLeft),
+        // preloadCursor(ECursorType::SizeBottomRight),
+        loadCursorOCR(ECursorType::SizeTopRight),
+        // preloadCursor(ECursorType::SizeBottomLeft),
+        loadCursorOCR(ECursorType::WaitCursor) };
+
+    ::HCURSOR hCursor = NULL;
+    if (ECursorType::Invisible != window.CursorType())
+        hCursor = GCursorIcons_.Get(window.CursorType());
+
+    LOG_CHECKVOID(HAL, ::SetCursor(hCursor));
 }
 //----------------------------------------------------------------------------
 // https://docs.microsoft.com/fr-fr/windows/desktop/api/winuser/nf-winuser-getcursorinfo
@@ -183,13 +244,17 @@ bool FWindowsPlatformMouse::ScreenToClient(const FWindowsWindow& window, int* x,
 void FWindowsPlatformMouse::CenterCursorOnWindow(const FWindowsWindow& window) {
     Assert(window.NativeHandle());
 
-    const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
-
     int x = checked_cast<int>(window.Width() / 2);
     int y = checked_cast<int>(window.Height() / 2);
-    Verify(FWindowsPlatformMouse::ScreenToClient(window, &x, &y));
+    LOG_CHECKVOID(HAL, FWindowsPlatformMouse::ClientToScreen(window, &x, &y));
 
-    ::SetCursorPos(x, y);
+    SetCursorPosition(x, y);
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformMouse::SetCursorPosition(int screenX, int screenY) {
+    const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
+
+    LOG_CHECKVOID(HAL, ::SetCursorPos(screenX, screenY));
 }
 //----------------------------------------------------------------------------
 FEventHandle FWindowsPlatformMouse::SetupMessageHandler(FWindowsWindow& window, FMouseState* mouse) {

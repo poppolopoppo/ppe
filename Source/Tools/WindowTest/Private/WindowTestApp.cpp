@@ -106,7 +106,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
         app.Window().BeginTaskbarProgress();
 
-        const size_t numLoops = (app.RHI().Features() & ERHIFeature::Debugging ? 10 : 200);
+        const size_t numLoops = (app.RHI().Features() & ERHIFeature::Debugging ? 10 : 100);
 
         size_t testIndex = 0;
         size_t testSucceed = 0;
@@ -185,7 +185,9 @@ FWindowTestApp::~FWindowTestApp() = default;
 void FWindowTestApp::Start() {
     parent_type::Start();
 
-    LaunchWindowTests_(*this);
+    static volatile bool GLaunchTests_ = false;
+    if (GLaunchTests_)
+        LaunchWindowTests_(*this);
 
     ApplicationLoop();
 }

@@ -15,12 +15,19 @@ void FKeyboardState::SetKeyUp(EKeyboardKey key) {
     _keysQueued.Remove_ReturnIfExists(key);
 }
 //----------------------------------------------------------------------------
+void FKeyboardState::AddCharacterInput(FCharacterInput utf16) {
+    _charactersQueued.Push(utf16);
+}
+//----------------------------------------------------------------------------
 void FKeyboardState::Update(float dt) {
     Unused(dt); // key repeat ?
 
     // that way we never miss an input
     _keysPressed.Update(&_keysUp, &_keysDown, _keysQueued);
     _keysQueued = _keysPressed;
+
+    _charactersDown = _charactersQueued;
+    _charactersQueued.clear();
 }
 //----------------------------------------------------------------------------
 void FKeyboardState::Clear() {
@@ -28,6 +35,9 @@ void FKeyboardState::Clear() {
     _keysPressed.Clear();
     _keysUp.Clear();
     _keysQueued.Clear();
+
+    _charactersDown.clear();
+    _charactersQueued.clear();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

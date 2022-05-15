@@ -4,7 +4,7 @@
 		"External/glslang",
 		"External/spirv-tools",
 		"External/glsl_trace",
-		"Runtime/RHIVulkan"
+		"Extensions/RHIVulkan"
 	],
 	"PublicDependencies": [
 		"Runtime/Core",

@@ -34,7 +34,8 @@ enum class ERHIFeature : u32 {
     VariableShadingRate = 1u<<9,
     ConservativeDepth   = 1u<<10,
     HighDynamicRange    = 1u<<11,
-    VSync               = 1u<<12,
+    HighDPIAwareness    = 1u<<12,
+    VSync               = 1u<<13,
 
     Debugging           = 1u<<30,
     Profiling           = 1u<<31,

@@ -14,6 +14,7 @@
 #include "HAL/Windows/WindowsWindow.h"
 
 #include <ShellScalingApi.h>
+#pragma comment(lib, "Shcore.lib")
 
 namespace PPE {
 namespace Application {
@@ -23,6 +24,7 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 void FWindowsPlatformApplicationMisc::Start() {
     Verify(SUCCEEDED(::CoInitialize(NULL)));
+
     FWindowsPlatformGamepad::Start();
     FWindowsWindow::Start();
     FWindowsPlatformNotification::Start();
@@ -32,6 +34,7 @@ void FWindowsPlatformApplicationMisc::Shutdown() {
     FWindowsPlatformNotification::Shutdown();
     FWindowsWindow::Shutdown();
     FWindowsPlatformGamepad::Shutdown();
+
     ::CoUninitialize();
 }
 //----------------------------------------------------------------------------
@@ -80,45 +83,24 @@ void FWindowsPlatformApplicationMisc::PreventScreenSaver() {
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformApplicationMisc::SetHighDPIAwareness() {
-    ::HMODULE const hShcore = FPlatformProcess::AttachToDynamicLibrary(L"Shcore.dll");
-    if (NULL == hShcore)
-        return false;
-
-    typedef ::HRESULT (STDAPICALLTYPE *FSetProcessDpiAwareness)(
-        _In_ ::PROCESS_DPI_AWARENESS value);
-    typedef ::HRESULT (STDAPICALLTYPE *FGetProcessDpiAwareness)(
-        _In_opt_ ::HANDLE hprocess,
-        _Out_ ::PROCESS_DPI_AWARENESS *value);
-    typedef ::HRESULT (STDAPICALLTYPE *FGetDpiForMonitor)(
-        _In_ ::HMONITOR hmonitor,
-        _In_ ::MONITOR_DPI_TYPE dpiType,
-        _Out_ ::UINT *dpiX,
-        _Out_ ::UINT *dpiY);
-
-    auto hSetProcessDpiAwareness = (FSetProcessDpiAwareness)FPlatformProcess::DynamicLibraryFunction(hShcore, "SetProcessDpiAwareness");
-    auto hGetProcessDpiAwareness = (FGetProcessDpiAwareness)FPlatformProcess::DynamicLibraryFunction(hShcore, "GetProcessDpiAwareness");
-    auto hGetDpiForMonitor = (FGetDpiForMonitor)FPlatformProcess::DynamicLibraryFunction(hShcore, "GetDpiForMonitor");
-    if (not (hSetProcessDpiAwareness && hGetProcessDpiAwareness && hGetDpiForMonitor)) {
-        LOG(Application, Warning, L"failed to bind DPI awareness functions from Shcore.dll");
-        return false;
-    }
-
     bool success = true;
 
     ::PROCESS_DPI_AWARENESS CurrentAwareness = PROCESS_DPI_UNAWARE;
-    hGetProcessDpiAwareness(NULL, &CurrentAwareness);
+    ::GetProcessDpiAwareness(NULL, &CurrentAwareness);
 
     if (CurrentAwareness != PROCESS_PER_MONITOR_DPI_AWARE) {
         LOG(Application, Info, L"setting application aware of per monitor DPI");
-        if (not SUCCEEDED(hSetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE))) {
+        if (not SUCCEEDED(::SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE))) {
             LOG_LASTERROR(Application, L"SetProcessDpiAwareness");
             success = false;
         }
     }
 
-    FPlatformProcess::DetachFromDynamicLibrary(hShcore);
-
     return success;
+}
+//----------------------------------------------------------------------------
+int FWindowsPlatformApplicationMisc::ApplyDPIScale(int pixels, u32 dpi) {
+    return ::MulDiv(pixels, static_cast<int>(dpi), DefaultScreenDPI);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

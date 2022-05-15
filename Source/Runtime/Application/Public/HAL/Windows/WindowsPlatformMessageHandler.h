@@ -28,8 +28,10 @@ enum class EWindowsMessageType { // matching WM_XXX macros value
     Close               = 0x0010,
     Quit                = 0x0012,
     Show                = 0x0018,
+    SetCursor           = 0x0020,
     KeyDown             = 0x0100,
     KeyUp               = 0x0101,
+    Char                = 0x0102,
     SysKeyDown          = 0x0104,
     SysKeyUp            = 0x0105,
     MouseMove           = 0x0200,
@@ -43,10 +45,12 @@ enum class EWindowsMessageType { // matching WM_XXX macros value
     MButtonUp           = 0x0208,
     MButtonDblClick     = 0x0209,
     MouseWheel          = 0x020A,
+    MouseHWheel         = 0x020E,
     XButtonDown         = 0x020B,
     XButtonUp           = 0x020C,
     MouseHover          = 0x02A1,
     MouseLeave          = 0x02A3,
+    DPIChanged          = 0x02E0,
 };
 //----------------------------------------------------------------------------
 struct PPE_APPLICATION_API FWindowsMessage {

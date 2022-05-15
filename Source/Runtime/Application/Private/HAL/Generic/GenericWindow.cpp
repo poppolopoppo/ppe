@@ -2,6 +2,7 @@
 
 #include "HAL/Generic/GenericWindow.h"
 
+#include "HAL/PlatformApplicationMisc.h"
 #include "HAL/PlatformMouse.h"
 #include "HAL/PlatformWindow.h"
 
@@ -19,6 +20,7 @@ FGenericWindow::FGenericWindow()
 ,   _top(0)
 ,   _width(0)
 ,   _height(0)
+,   _dpi(FPlatformApplicationMisc::DefaultScreenDPI)
 ,   _allowDragDrop(false)
 ,   _hasCloseButton(true)
 ,   _hasResizeButton(true)
@@ -162,10 +164,20 @@ void FGenericWindow::OnWindowClose() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _visible = false;
 }
+void FGenericWindow::OnWindowDPI(u32 dpi) {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+    _dpi = dpi;
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowDPI(_dpi);
+}
 void FGenericWindow::OnWindowMove(int x, int y) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _left = x;
     _top = y;
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowMove({ _left, _top });
 }
 void FGenericWindow::OnWindowResize(size_t w, size_t h) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
@@ -238,6 +250,15 @@ void FGenericWindow::ScreenToClient(int* screenX, int* screenY) const {
 void FGenericWindow::ClientToScreen(int* clientX, int* clientY) const {
     PPE_DATARACE_SHARED_SCOPE(this);
     Verify(FPlatformMouse::ClientToScreen(*checked_cast<const FPlatformWindow*>(this), clientX, clientY));
+}
+
+ECursorType FGenericWindow::SetCursorType(ECursorType value) {
+    const ECursorType previous = _cursor;
+    if (previous != value) {
+        _cursor = value;
+        FPlatformMouse::SetWindowCursor(*checked_cast<const FPlatformWindow*>(this));
+    }
+    return previous;
 }
 //----------------------------------------------------------------------------
 void FGenericWindow::SetCursorCapture(bool enabled) const {

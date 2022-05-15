@@ -34,17 +34,21 @@ public:
     virtual void Tick(FTimespan dt) override;
 
 protected:
-    virtual void OnWindowFocus(bool enabled) override;
-    virtual void OnWindowPaint() override;
-    virtual void OnWindowResize(const uint2& size) override;
+    virtual void OnWindowFocus(bool enabled) NOEXCEPT override;
+    virtual void OnWindowMove(const int2& pos) NOEXCEPT override;
+    virtual void OnWindowResize(const uint2& size) NOEXCEPT override;
 
 private:
+    void UpdateTickRateFromRefreshRate_();
+
     const TPtrRef<const ITargetRHI> _targetRHI;
 
     PMainWindow _main;
     UInputService _input;
     URHIService _rhi;
     UWindowService _window;
+
+    bool _windowWasResized{ false };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

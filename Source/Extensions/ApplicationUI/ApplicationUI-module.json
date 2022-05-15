@@ -1,0 +1,11 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/Application",
+		"Runtime/RHI",
+		"Runtime/VFS"
+	],
+	"PrivateDependencies": [
+		"External/imgui"
+	]
+}

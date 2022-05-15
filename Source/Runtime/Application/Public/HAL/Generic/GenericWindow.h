@@ -3,6 +3,7 @@
 #include "Application_fwd.h"
 
 #include "Container/Vector.h"
+#include "HAL/PlatformMouse.h"
 #include "IO/String.h"
 #include "Maths/ScalarVector_fwd.h"
 #include "Misc/Event.h"
@@ -65,6 +66,8 @@ public: // must be defined for every platform
 
     uint2 Dimensions() const NOEXCEPT;
 
+    u32 DPI() const { return _dpi; }
+
     bool AllowDragDrop() const { PPE_DATARACE_SHARED_SCOPE(this); return _allowDragDrop; }
     bool HasCloseButton() const { PPE_DATARACE_SHARED_SCOPE(this); return _hasCloseButton; }
     bool HasResizeButton() const { PPE_DATARACE_SHARED_SCOPE(this); return _hasResizeButton; }
@@ -95,6 +98,9 @@ public: // must be defined for every platform
     virtual void ScreenToClient(int* screenX, int* screenY) const;
     virtual void ClientToScreen(int* clientX, int* clientY) const;
 
+    ECursorType CursorType() const NOEXCEPT { return _cursor; }
+    ECursorType SetCursorType(ECursorType value);
+
     virtual void SetCursorCapture(bool enabled) const;
     virtual void SetCursorOnWindowCenter() const;
 
@@ -122,6 +128,7 @@ protected:
     virtual void OnWindowShow(bool visible);
     virtual void OnWindowClose();
 
+    virtual void OnWindowDPI(u32 dpi);
     virtual void OnWindowMove(int x, int y);
     virtual void OnWindowResize(size_t w, size_t h);
 
@@ -140,6 +147,7 @@ private:
 
     int _left, _top;
     u32 _width, _height;
+    u32 _dpi;
 
     bool _allowDragDrop     : 1;
     bool _hasCloseButton    : 1;
@@ -150,6 +158,7 @@ private:
     bool _hasFocus          : 1;
     bool _visible           : 1;
 
+    ECursorType _cursor{ Default };
     EWindowType _type;
 
     TThreadSafe<VECTORINSITU(Window, TPtrRef<IWindowListener>, 1), EThreadBarrier::RWDataRaceCheck> _listeners;

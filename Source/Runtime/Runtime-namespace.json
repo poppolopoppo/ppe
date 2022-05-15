@@ -8,7 +8,6 @@
 		"RTTI",
 		"Serialize",
 		"RHI",
-		"RHIVulkan",
 		"Network",
 		"Remoting",
 		"Application"

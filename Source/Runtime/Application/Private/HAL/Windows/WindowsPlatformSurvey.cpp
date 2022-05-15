@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "HAL/PlatformApplicationMisc.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -10,6 +11,8 @@
 #include "HAL/Windows/WindowsWindow.h"
 
 #include "Diagnostic/Logger.h"
+
+#include <ShellScalingApi.h>
 
 namespace PPE {
 namespace Application {
@@ -39,8 +42,8 @@ static bool WindowsMonitorInfo_(::HMONITOR hMonitor, FWindowsPlatformSurvey::FMo
         return false;
     }
 
-    ONLY_IF_ASSERT(const size_t screenW = checked_cast<size_t>(mi.rcMonitor.right - mi.rcMonitor.left));
-    ONLY_IF_ASSERT(const size_t screenH = checked_cast<size_t>(mi.rcMonitor.bottom - mi.rcMonitor.top));
+    // ONLY_IF_ASSERT(const size_t screenW = checked_cast<size_t>(mi.rcMonitor.right - mi.rcMonitor.left));
+    // ONLY_IF_ASSERT(const size_t screenH = checked_cast<size_t>(mi.rcMonitor.bottom - mi.rcMonitor.top));
 
     monitor->MonitorName = MakeCStringView(mi.szDevice);
     monitor->Primary = !!(mi.dwFlags & MONITORINFOF_PRIMARY);
@@ -50,6 +53,18 @@ static bool WindowsMonitorInfo_(::HMONITOR hMonitor, FWindowsPlatformSurvey::FMo
     monitor->SafeY = checked_cast<int>(mi.rcWork.top);
     monitor->SafeWidth = checked_cast<size_t>(mi.rcWork.right - mi.rcWork.left);
     monitor->SafeHeight = checked_cast<size_t>(mi.rcWork.bottom - mi.rcWork.top);
+    monitor->DPIScale = FPlatformApplicationMisc::DefaultScreenDPI;
+
+    // check monitor DPI scaling
+    u32 dpiScaleX{ FPlatformApplicationMisc::DefaultScreenDPI };
+    u32 dpiScaleY{ FPlatformApplicationMisc::DefaultScreenDPI };
+    if (not SUCCEEDED(::GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, &dpiScaleX, &dpiScaleY))) {
+        LOG_LASTERROR(Survey, L"GetDpiForMonitor");
+        return false;
+    }
+
+    Assert_NoAssume(dpiScaleX == dpiScaleY);
+    monitor->DPIScale = Max(dpiScaleX, dpiScaleY);
 
     // check current display resolution and orientation
     ::DEVMODE devmode;
@@ -80,8 +95,13 @@ static bool WindowsMonitorInfo_(::HMONITOR hMonitor, FWindowsPlatformSurvey::FMo
     monitor->CurrentResolution.BitsPerPixel = checked_cast<u32>(devmode.dmBitsPerPel);
     monitor->CurrentResolution.RefreshRate = checked_cast<u32>(devmode.dmDisplayFrequency);
 
-    Assert_NoAssume(screenW == monitor->CurrentResolution.Width);
-    Assert_NoAssume(screenH == monitor->CurrentResolution.Height);
+    // const int dpiAwareW = FPlatformApplicationMisc::ApplyDPIScale(checked_cast<int>(monitor->CurrentResolution.Width), monitor->DPIScale);
+    // AssertRelease_NoAssume(checked_cast<int>(screenW) == dpiAwareW);
+    // Unused(dpiAwareW);
+    //
+    // const int dpiAwareH = FPlatformApplicationMisc::ApplyDPIScale(checked_cast<int>(monitor->CurrentResolution.Height), monitor->DPIScale);
+    // AssertRelease_NoAssume(checked_cast<int>(screenH) == dpiAwareH);
+    // Unused(dpiAwareH);
 
     // list supported resolutions :
     for (int iModeNum = 0; ; ++iModeNum) {

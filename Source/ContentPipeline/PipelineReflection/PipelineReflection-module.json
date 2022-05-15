@@ -1,7 +1,7 @@
 {
 	"PrivateDependencies": [
 		"External/spirv-cross",
-		"Runtime/RHIVulkan"
+		"Extensions/RHIVulkan"
 	],
 	"PublicDependencies": [
 		"Runtime/Core",

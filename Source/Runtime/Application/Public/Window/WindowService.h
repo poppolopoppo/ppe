@@ -7,7 +7,6 @@
 #include "Misc/Function_fwd.h"
 
 namespace PPE {
-namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -17,15 +16,15 @@ public:
     IWindowService() = default;
     virtual ~IWindowService() = default;
 
-    virtual void CreateMainWindow(PMainWindow* window, FWString&& title) = 0;
-    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, size_t width, size_t height) = 0;
-    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
+    virtual void CreateMainWindow(Application::PMainWindow* window, FWString&& title) = 0;
+    virtual void CreateMainWindow(Application::PMainWindow* window, FWString&& title, size_t width, size_t height) = 0;
+    virtual void CreateMainWindow(Application::PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
 
-    virtual FMainWindow* MainWindow() const NOEXCEPT = 0;
-    virtual void SetMainWindow(FMainWindow* window) = 0;
+    virtual Application::FMainWindow* MainWindow() const NOEXCEPT = 0;
+    virtual void SetMainWindow(Application::FMainWindow* window) = 0;
 
-    virtual void AddWindowListener(IWindowListener* listener) = 0;
-    virtual void RemoveWindowListener(IWindowListener* listener) = 0;
+    virtual void AddWindowListener(Application::IWindowListener* listener) = 0;
+    virtual void RemoveWindowListener(Application::IWindowListener* listener) = 0;
 
     virtual void ShowSystray() = 0;
     virtual void HideSystray() = 0;
@@ -59,5 +58,4 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
 } //!namespace PPE

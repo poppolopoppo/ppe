@@ -3,6 +3,7 @@
 	"Children": [
 		"External",
 		"Runtime",
+		"Extensions",
 		"ContentPipeline",
 		"Tools"
 	]

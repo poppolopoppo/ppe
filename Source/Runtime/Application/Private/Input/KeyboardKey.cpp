@@ -113,12 +113,22 @@ static constexpr EKeyboardKey GEachKeyboardKeys[] = {
     EKeyboardKey::PageUp,
     EKeyboardKey::PageDown,
 
+    EKeyboardKey::Comma,             // ,
+    EKeyboardKey::Plus,              // +
+    EKeyboardKey::Minus,             // -
+    EKeyboardKey::Period,            // .
+
+    EKeyboardKey::CapsLock,
+    EKeyboardKey::NumLock,
+
     // Modifiers
 
     EKeyboardKey::Alt,
-    EKeyboardKey::Menu,          // windows key
     EKeyboardKey::Control,
     EKeyboardKey::Shift,
+
+    EKeyboardKey::Menu,
+    EKeyboardKey::Super,
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -296,6 +306,20 @@ FStringView KeyboardKeyToCStr(EKeyboardKey value) {
         return MakeStringView("Control");
     case PPE::Application::EKeyboardKey::Shift:
         return MakeStringView("Shift");
+    case EKeyboardKey::Comma:
+        return MakeStringView("Comma");
+    case EKeyboardKey::Plus:
+        return MakeStringView("Plus");
+    case EKeyboardKey::Minus:
+        return MakeStringView("Minus");
+    case EKeyboardKey::Period:
+        return MakeStringView("Period");
+    case EKeyboardKey::CapsLock:
+        return MakeStringView("CapsLock");
+    case EKeyboardKey::NumLock:
+        return MakeStringView("NumLock");
+    case EKeyboardKey::Super:
+        return MakeStringView("Super");
     }
 
     AssertNotImplemented();

@@ -85,7 +85,7 @@ public:
     }
 
     template <typename U = T, typename... _Args>
-    Meta::TAddPointer<U> reset(_Args&&... args) {
+    Meta::TAddPointer<U> create(_Args&&... args) {
         reset();
 
         const Meta::TAddPointer<U> result =

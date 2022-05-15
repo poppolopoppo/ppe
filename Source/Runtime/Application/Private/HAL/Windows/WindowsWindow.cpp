@@ -104,19 +104,18 @@ static void AppCreateWindowClass_() {
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = WindowsWindowProc_;
     wc.hInstance = hInstance;
-    wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon = (HICON)LoadImage(hInstance,
+    wc.hIcon = (HICON)LoadImageW(hInstance,
         MAKEINTRESOURCE(appIcon),
         IMAGE_ICON,
         ::GetSystemMetrics(SM_CXICON),
         ::GetSystemMetrics(SM_CYICON),
-        LR_DEFAULTCOLOR);
+        LR_DEFAULTCOLOR | LR_SHARED);
     wc.hIconSm = (::HICON)::LoadImageW(hInstance,
         MAKEINTRESOURCEW(appIcon),
         IMAGE_ICON,
         ::GetSystemMetrics(SM_CXSMICON),
         ::GetSystemMetrics(SM_CYSMICON),
-        LR_DEFAULTCOLOR);
+        LR_DEFAULTCOLOR | LR_SHARED);
     wc.hbrBackground = (::HBRUSH)COLOR_WINDOW;
     wc.lpszClassName = GAppWindowClassName_;
 
@@ -443,6 +442,7 @@ bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, cons
         PPE_THROW_IT(FLastErrorException("CreateWindowExW"));
 
     window->SetHandleWin32(hWnd);
+    window->UpdateMonitorDPIWin32();
 
     if (def.Maximized)
         window->UpdateClientRect();
@@ -467,9 +467,9 @@ void FWindowsWindow::Shutdown() {
 bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lParam) {
     switch (msg) {
     // Paint :
-    case WM_PAINT:
+    /*case WM_PAINT:
         PaintProcWin32();
-        return true;
+        break;*/
 
     // Focus :
     case WM_SETFOCUS:
@@ -515,6 +515,9 @@ bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lPara
         break;
 
     // Window events :
+    case WM_DPICHANGED:
+        OnWindowDPI(HIWORD(wParam));
+        break;
     case WM_MOVE:
         OnWindowMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
@@ -528,8 +531,10 @@ bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lPara
         OnWindowClose();
         break;
     case WM_DESTROY:
-        if (Type() == EWindowType::Main)
+        if (Type() == EWindowType::Main) {
+            LOG(Window, Info, L"post quit message from <{0}> window", Title());
             ::PostQuitMessage(0);
+        }
         break;
 
     case WM_NCDESTROY:
@@ -572,8 +577,15 @@ void FWindowsWindow::UpdateClientRect() {
     parent_type::Resize(clientW, clientH);
 }
 //----------------------------------------------------------------------------
+void FWindowsWindow::UpdateMonitorDPIWin32() {
+    FPlatformSurvey::FMonitorInfo monitorInfo;
+    if (FPlatformSurvey::MonitorFromWindow(*this, &monitorInfo)) {
+        OnWindowDPI(monitorInfo.DPIScale);
+    }
+}
+//----------------------------------------------------------------------------
 bool FWindowsWindow::DispatchEventWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lParam) {
-    FWindowsMessage broadcast;
+    FWindowsMessage broadcast{};
     broadcast.Type = EWindowsMessageType(msg);
     broadcast.LParam = lParam;
     broadcast.WParam = wParam;

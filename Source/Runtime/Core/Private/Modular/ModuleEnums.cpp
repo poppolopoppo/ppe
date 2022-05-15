@@ -37,6 +37,7 @@ FTextWriter& operator <<(FTextWriter& oss, EModuleSource source) {
     switch (source) {
     case EModuleSource::Core: return oss << "Core";
     case EModuleSource::Program: return oss << "Program";
+    case EModuleSource::Extensions: return oss << "Extensions";
     case EModuleSource::External: return oss << "External";
     default: AssertNotImplemented();
     }

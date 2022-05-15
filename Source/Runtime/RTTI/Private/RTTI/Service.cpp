@@ -78,7 +78,7 @@ void FDefaultRTTIService_::UnregisterModule(TPtrRef<const IModuleInterface> modu
 //----------------------------------------------------------------------------
 void IRTTIService::MakeDefault(TUniquePtr<IRTTIService>* service) {
     Assert(service);
-    service->reset<FDefaultRTTIService_>();
+    service->create<FDefaultRTTIService_>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

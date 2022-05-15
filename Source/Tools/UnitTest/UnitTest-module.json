@@ -11,6 +11,9 @@
 		"Runtime/Network",
 		"Runtime/Application"
 	],
+	"ExtraFiles": [
+		"resource.rc"
+	],
 	"IsolatedFiles": [
 		"Private/Test_Allocators.cpp",
 		"Private/Test_Containers.cpp",

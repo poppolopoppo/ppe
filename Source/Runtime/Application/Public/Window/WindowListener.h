@@ -11,9 +11,11 @@ namespace Application {
 //----------------------------------------------------------------------------
 class PPE_APPLICATION_API IWindowListener {
 public:
-    virtual void OnWindowFocus(bool enabled) = 0;
-    virtual void OnWindowPaint() = 0;
-    virtual void OnWindowResize(const uint2& size) = 0;
+    virtual void OnWindowDPI(u32 dpi) NOEXCEPT { Unused(dpi); }
+    virtual void OnWindowFocus(bool enabled) NOEXCEPT { Unused(enabled); }
+    virtual void OnWindowMove(const int2& pos) NOEXCEPT { Unused(pos); }
+    virtual void OnWindowPaint() NOEXCEPT {}
+    virtual void OnWindowResize(const uint2& size) NOEXCEPT { Unused(size); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -269,7 +269,7 @@ UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& f
     FFileStreamReader tmp = FFileStream::OpenRead(nativeFilename, policy);
     if (tmp.Good()) {
         LOG(VFS, Debug, L"open native readable '{0}' : {1}", filename, policy);
-        result.reset<FFileStreamReader>(std::move(tmp));
+        result.create<FFileStreamReader>(std::move(tmp));
     }
     else {
         LOG(VFS, Error, L"failed to open native readable '{0}' : {1}", filename, policy);
@@ -292,13 +292,10 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
         CLOG(existed, VFS, Debug, L"native directory '{0}' already existed", dirpath);
         return true;
     }
-    else {
-        LOG(VFS, Error, L"failed to create native directory '{0}' ({1})",
-            dirpath, MakeCStringView(buffer));
-        return false;
-    }
 
-    return true;
+    LOG(VFS, Error, L"failed to create native directory '{0}' ({1})",
+        dirpath, MakeCStringView(buffer));
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::MoveFile(const FFilename& src, const FFilename& dst) {
@@ -314,10 +311,9 @@ bool FVirtualFileSystemNativeComponent::MoveFile(const FFilename& src, const FFi
         LOG(VFS, Debug, L"move native file '{0}' -> '{1}'", src, dst);
         return true;
     }
-    else {
-        LOG(VFS, Error, L"failed to move native file '{0}' -> '{1}'", src, dst);
-        return false;
-    }
+
+    LOG(VFS, Error, L"failed to move native file '{0}' -> '{1}'", src, dst);
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath, bool force) {
@@ -330,10 +326,9 @@ bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath,
         LOG(VFS, Debug, L"remove native directory '{0}' (force={1:A})", dirpath, force);
         return true;
     }
-    else {
-        LOG(VFS, Error, L"failed remove native directory '{0}' (force={1:A})", dirpath, force);
-        return false;
-    }
+
+    LOG(VFS, Error, L"failed remove native directory '{0}' (force={1:A})", dirpath, force);
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
@@ -346,10 +341,8 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
         LOG(VFS, Debug, L"remove native file '{0}'", filename);
         return true;
     }
-    else {
-        LOG(VFS, Error, L"failed to remove native file '{0}'", filename);
-        return false;
-    }
+    LOG(VFS, Error, L"failed to remove native file '{0}'", filename);
+    return false;
 }
 //----------------------------------------------------------------------------
 UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& filename, EAccessPolicy policy) {
@@ -375,7 +368,7 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
     FFileStreamWriter tmp = FFileStream::OpenWrite(nativeFilename, policy);
     if (tmp.Good()) {
         LOG(VFS, Debug, L"open native writable '{0}' : {1}", filename, policy);
-        result.reset<FFileStreamWriter>(std::move(tmp));
+        result.create<FFileStreamWriter>(std::move(tmp));
     }
     else {
         LOG(VFS, Error, L"failed to open native writable '{0}' : {1}", filename, policy);
@@ -400,7 +393,7 @@ UStreamReadWriter FVirtualFileSystemNativeComponent::OpenReadWritable(const FFil
     FFileStreamReadWriter tmp = FFileStream::OpenReadWrite(nativeFilename, policy);
     if (tmp.Good()) {
         LOG(VFS, Debug, L"open native read/writable '{0}' : {1}", filename, policy);
-        result.reset<FFileStreamReadWriter>(std::move(tmp));
+        result.create<FFileStreamReadWriter>(std::move(tmp));
     }
     else {
         LOG(VFS, Error, L"failed to open native read/writable '{0}' : {1}", filename, policy);

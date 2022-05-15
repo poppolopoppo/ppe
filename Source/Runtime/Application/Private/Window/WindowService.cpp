@@ -19,7 +19,7 @@ namespace {
 class FDefaultWindowService_ final : public IWindowService {
 public:
     FDefaultWindowService_() NOEXCEPT;
-    virtual ~FDefaultWindowService_() = default;
+    ~FDefaultWindowService_() override = default;
 
     virtual void CreateMainWindow(PMainWindow* window, FWString&& title) override final;
     virtual void CreateMainWindow(PMainWindow* window, FWString&& title, size_t width, size_t height) override final;
@@ -187,12 +187,13 @@ void FDefaultWindowService_::EndTaskbarProgress() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Application
+//----------------------------------------------------------------------------
 void IWindowService::MakeDefault(UWindowService* window) {
     Assert(window);
-    window->reset<FDefaultWindowService_>();
+    window->create<Application::FDefaultWindowService_>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
 } //!namespace PPE

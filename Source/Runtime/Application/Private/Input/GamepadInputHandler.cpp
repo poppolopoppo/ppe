@@ -43,7 +43,7 @@ void FGamepadInputHandler::Update(FTimespan dt) {
         FGamepadState& gamepad = _states[controllerId];
         gamepad.Update(float(*dt));
 
-        if (INDEX_NONE == _firstConnected && gamepad.OnConnect())
+        if (INDEX_NONE == _firstConnected)
             _firstConnected = controllerId;
     }
 }

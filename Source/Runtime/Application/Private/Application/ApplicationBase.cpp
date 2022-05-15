@@ -21,6 +21,7 @@
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "VirtualFileSystem_fwd.h"
+#include "Maths/MathHelpers.h"
 
 #if !USE_PPE_FINAL_RELEASE
 #   include "Window/WindowService.h"
@@ -142,7 +143,8 @@ static void TearDebugMenuInSystray_(const FModularServices& services) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationBase::FApplicationBase(FModularDomain& domain, FString&& name)
-:   FPlatformApplication(domain, std::move(name)) {
+:   FPlatformApplication(domain, std::move(name))
+,   _tickRate(Timespan_120hz()) {
     FApplicationModule::Get(Domain())._OnApplicationCreate.Invoke(*this);
 }
 //----------------------------------------------------------------------------
@@ -157,7 +159,7 @@ void FApplicationBase::Start() {
     SetupDebugMenuInSystray_(Services());
 #endif
 
-    FApplicationModule::Get(Domain())._OnApplicationStart.Invoke(*this);
+    FApplicationModule::Get(Domain())._OnApplicationStart.Invoke(*this, Services());
 
     ReportAllTrackingData();
 }
@@ -173,9 +175,14 @@ void FApplicationBase::Shutdown() {
     TearDebugMenuInSystray_(Services());
 #endif
 
-    FApplicationModule::Get(Domain())._OnApplicationShutdown.Invoke(*this);
+    FApplicationModule::Get(Domain())._OnApplicationShutdown.Invoke(*this, Services());
 
     FPlatformApplication::Shutdown();
+}
+//----------------------------------------------------------------------------
+void FApplicationBase::SetTickRate(FTimespan period) {
+    Assert(period > 0);
+    _tickRate = Rcp(*period);
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::ApplicationLoop() {
@@ -183,14 +190,13 @@ void FApplicationBase::ApplicationLoop() {
     FTimeline tick = FTimeline::StartNow();
 
     while (PumpMessages()) {
-        FTimespan tickRate{ Timespan_120hz() };
+        FTimespan tickRate{ _tickRate };
 
         if (Unlikely(not HasFocus()))
-            tickRate = Timespan_15hz();
+            tickRate = Timespan_5hz();
 
-        if (tick.Tick_Every(tickRate, dt)) {
+        if (tick.Tick_Every(tickRate, dt))
             Tick(dt);
-        }
     }
 }
 //----------------------------------------------------------------------------

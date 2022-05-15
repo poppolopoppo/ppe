@@ -21,8 +21,13 @@ public:
     virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
 
+    void SetTickRate(FTimespan period);
+    FTimespan TickRate() const { return _tickRate; }
+
     void ApplicationLoop();
 
+private:
+    FTimespan _tickRate;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

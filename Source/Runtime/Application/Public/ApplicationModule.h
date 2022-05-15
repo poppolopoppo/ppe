@@ -7,6 +7,7 @@
 #include "Diagnostic/Logger_fwd.h"
 #include "Misc/Event.h"
 #include "Misc/Function.h"
+#include "Modular/ModularServices.h"
 #include "Time/Timepoint.h"
 
 namespace PPE {
@@ -38,8 +39,10 @@ public:
     PUBLIC_EVENT(OnApplicationCreate, FApplicationEvent);
     PUBLIC_EVENT(OnApplicationDestroy, FApplicationEvent);
 
-    PUBLIC_EVENT(OnApplicationStart, FApplicationEvent);
-    PUBLIC_EVENT(OnApplicationShutdown, FApplicationEvent);
+    using FApplicationServicesEvent = TFunction<void(Application::FApplicationBase&, FModularServices&) NOEXCEPT>;
+
+    PUBLIC_EVENT(OnApplicationStart, FApplicationServicesEvent);
+    PUBLIC_EVENT(OnApplicationShutdown, FApplicationServicesEvent);
 
     using FApplicationTick = TFunction<void(Application::FApplicationBase&, FTimespan dt) NOEXCEPT>;
 
