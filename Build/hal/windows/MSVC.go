@@ -128,14 +128,14 @@ func (msvc *MsvcCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename,
 		intermediatePDB := output.ReplaceExt("-Intermediate.pdb")
 		intermediatePDB.Dirname = intermediate
 
-		f.AddCompilationFlag_NoPreprocessor("/Zi", "/FS", "/Fd\""+intermediatePDB.String()+"\"")
+		f.AddCompilationFlag_NoPreprocessor("/Zi", "/Zf", "/FS", "/Fd\""+intermediatePDB.String()+"\"")
 		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
 
 	case DEBUG_HOTRELOAD:
 		editAndContinuePDB := output.ReplaceExt("-EditAndContinue.pdb")
 		editAndContinuePDB.Dirname = intermediate
 
-		f.AddCompilationFlag_NoPreprocessor("/ZI", "/FS", "/Fd\""+editAndContinuePDB.String()+"\"")
+		f.AddCompilationFlag_NoPreprocessor("/ZI", "/Zf", "/FS", "/Fd\""+editAndContinuePDB.String()+"\"")
 		f.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+artifactPDB.String()+"\"")
 		f.LinkerOptions.AppendUniq("/INCREMENTAL")
 
