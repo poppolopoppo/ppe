@@ -10,9 +10,8 @@
 #include "RHI/ResourceState.h"
 
 #include "Container/AssociativeVector.h"
-#include "Container/TupleTie.h"
 #include "Memory/RefPtr.h"
-#include "Memory/UniquePtr.h"
+#include "Meta/AutoStruct.h"
 #include "Meta/Optional.h"
 
 #if USE_PPE_RHIDEBUG
@@ -63,134 +62,112 @@ public:
             return MakeView()[index];
         }
 
-        bool operator ==(const TElementArray& other) const {
+        bool operator ==(const TElementArray& other) const NOEXCEPT {
             const auto lhs = MakeView();
             const auto rhs = other.MakeView();
             return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
         }
-        bool operator !=(const TElementArray& other) const {
+        bool operator !=(const TElementArray& other) const NOEXCEPT {
             return (not operator ==(other));
         }
 
         friend hash_t hash_value(const TElementArray& arr) NOEXCEPT {
             return hash_range(arr.Data, arr.Count);
         }
+
     };
+
 
     struct FBuffer {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Buffer);
 
-        struct FElement {
-            FRawBufferID BufferId;
-            size_t Offset;
-            size_t Size;
+        PPE_DEFINE_AUTOPOD(FElement,
+            (FRawBufferID, BufferId),
+            (size_t, Offset),
+            (size_t, Size))
 
-            TIE_AS_TUPLE_STRUCT(FElement)
-            PPE_ASSUME_FRIEND_AS_POD(FElement)
-        };
+        PPE_AUTOSTRUCT_MEMBERS(FBuffer,
+            (FBindingIndex, Index),
+            (EResourceState, State),
+            (u32, DynamicOffsetIndex),
+            (size_t, StaticSize),
+            (size_t, ArrayStride),
+            (TElementArray<FElement>, Elements))
 
-        FBindingIndex Index;
-        EResourceState State;
-        u32 DynamicOffsetIndex;
-        size_t StaticSize;
-        size_t ArrayStride;
-        TElementArray<FElement> Elements;
-
-        TIE_AS_TUPLE_STRUCT(FBuffer)
         PPE_ASSUME_FRIEND_AS_POD(FBuffer)
     };
 
     struct FTexelBuffer {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::TexelBuffer);
 
-        struct FElement {
-            FRawBufferID BufferId;
-            FBufferViewDesc Desc;
+        PPE_DEFINE_AUTOPOD(FElement,
+            (FRawBufferID, BufferId),
+            (FBufferViewDesc, Desc))
 
-            TIE_AS_TUPLE_STRUCT(FElement)
-            PPE_ASSUME_FRIEND_AS_POD(FElement)
-        };
+        PPE_AUTOSTRUCT_MEMBERS(FTexelBuffer,
+            (FBindingIndex, Index),
+            (EResourceState, State),
+            (TElementArray<FElement>, Elements))
 
-        FBindingIndex Index;
-        EResourceState State;
-        TElementArray<FElement> Elements;
-
-        TIE_AS_TUPLE_STRUCT(FTexelBuffer)
         PPE_ASSUME_FRIEND_AS_POD(FTexelBuffer)
     };
 
     struct FImage {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Image);
 
-        struct FElement {
-            FRawImageID ImageId;
-            Meta::TOptional<FImageViewDesc> Desc;
+        PPE_DEFINE_AUTOPOD(FElement,
+            (FRawImageID, ImageId),
+            (Meta::TOptional<FImageViewDesc>, Desc))
 
-            TIE_AS_TUPLE_STRUCT(FElement)
-            PPE_ASSUME_FRIEND_AS_POD(FElement)
-        };
+        PPE_AUTOSTRUCT_MEMBERS(FImage,
+            (FBindingIndex, Index),
+            (EResourceState, State),
+            (EImageSampler, ImageType),
+            (TElementArray<FElement>, Elements))
 
-        FBindingIndex Index;
-        EResourceState State;
-        EImageSampler ImageType;
-        TElementArray<FElement> Elements;
-
-        TIE_AS_TUPLE_STRUCT(FImage)
         PPE_ASSUME_FRIEND_AS_POD(FImage)
     };
 
     struct FTexture {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Texture);
 
-        struct FElement {
-            FRawImageID ImageId;
-            FRawSamplerID SamplerId;
-            Meta::TOptional<FImageViewDesc> Desc;
+        PPE_DEFINE_AUTOPOD(FElement,
+            (FRawImageID, ImageId),
+            (FRawSamplerID, SamplerId),
+            (Meta::TOptional<FImageViewDesc>, Desc))
 
-            TIE_AS_TUPLE_STRUCT(FElement)
-            PPE_ASSUME_FRIEND_AS_POD(FElement)
-        };
+        PPE_AUTOSTRUCT_MEMBERS(FTexture,
+            (FBindingIndex, Index),
+            (EResourceState, State),
+            (EImageSampler, SamplerType),
+            (TElementArray<FElement>, Elements))
 
-        FBindingIndex Index;
-        EResourceState State;
-        EImageSampler SamplerType;
-        TElementArray<FElement> Elements;
-
-        TIE_AS_TUPLE_STRUCT(FTexture)
         PPE_ASSUME_FRIEND_AS_POD(FTexture)
     };
 
     struct FSampler {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Sampler);
 
-        struct FElement {
-            FRawSamplerID SamplerId;
+        PPE_DEFINE_AUTOPOD(FElement,
+            (FRawSamplerID, SamplerId))
 
-            TIE_AS_TUPLE_STRUCT(FElement)
-            PPE_ASSUME_FRIEND_AS_POD(FElement)
-        };
+        PPE_AUTOSTRUCT_MEMBERS(FSampler,
+            (FBindingIndex, Index),
+            (TElementArray<FElement>, Elements))
 
-        FBindingIndex Index;
-        TElementArray<FElement> Elements;
-
-        TIE_AS_TUPLE_STRUCT(FSampler)
         PPE_ASSUME_FRIEND_AS_POD(FSampler)
     };
 
     struct FRayTracingScene {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::RayTracingScene);
 
-        struct FElement {
-            FRawRTSceneID SceneId;
+        PPE_DEFINE_AUTOPOD(FElement,
+            (FRawRTSceneID, SceneId))
 
-            TIE_AS_TUPLE_STRUCT(FElement)
-            PPE_ASSUME_FRIEND_AS_POD(FElement)
-        };
+        PPE_AUTOSTRUCT_MEMBERS(FRayTracingScene,
+            (FBindingIndex, Index),
+            (TElementArray<FElement>, Elements))
 
-        FBindingIndex Index;
-        TElementArray<FElement> Elements;
-
-        TIE_AS_TUPLE_STRUCT(FRayTracingScene)
         PPE_ASSUME_FRIEND_AS_POD(FRayTracingScene)
     };
 
@@ -210,11 +187,11 @@ public:
             return Get<T>(const_cast<void*>(p));
         }
 
-        bool operator ==(const FUniformID& id) const { return (id == Id); }
-        bool operator !=(const FUniformID& id) const { return (id != Id); }
+        bool operator ==(const FUniformID& id) const NOEXCEPT { return (id == Id); }
+        bool operator !=(const FUniformID& id) const NOEXCEPT { return (id != Id); }
 
-        bool operator < (const FUniformID& id) const { return (Id <  id); }
-        bool operator >=(const FUniformID& id) const { return (Id >= id); }
+        bool operator < (const FUniformID& id) const NOEXCEPT { return (Id <  id); }
+        bool operator >=(const FUniformID& id) const NOEXCEPT { return (Id >= id); }
 
         PPE_ASSUME_FRIEND_AS_POD(FUniform)
     };

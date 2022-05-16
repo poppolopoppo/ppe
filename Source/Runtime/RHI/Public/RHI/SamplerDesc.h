@@ -7,7 +7,6 @@
 
 #include "Container/Array.h"
 #include "Container/Hash.h"
-#include "Container/TupleTie.h"
 #include "Meta/Optional.h"
 
 namespace PPE {
@@ -28,7 +27,7 @@ struct FSamplerDesc {
     float MipLodBias{ 0.0f };
     float MinLod{ -FLT_MAX };
     float MaxLod{ FLT_MAX };
-    bool EnableUnnormalizedCoords{ false };
+    bool EnableDenormalizedCoords{ false };
 
     FSamplerDesc& SetFilter(ETextureFilter mag, ETextureFilter min, EMipmapFilter mipmap) {
         MagFilter = mag;
@@ -44,9 +43,23 @@ struct FSamplerDesc {
     FSamplerDesc& SetLodRange(float min, float max) { Assert(min <= max); MinLod = min; MaxLod = max; return (*this); }
     FSamplerDesc& SetAnisotropy(float value) { MaxAnisotropy = value; return (*this); }
     FSamplerDesc& SetCompareOp(ECompareOp value) { CompareOp = value; return (*this); }
-    FSamplerDesc& SetNormCoordinates(bool value) { EnableUnnormalizedCoords = value; return (*this); }
+    FSamplerDesc& SetEnableDenormalizedCoords(bool value) { EnableDenormalizedCoords = value; return (*this); }
 
-    TIE_AS_TUPLE_STRUCT(FSamplerDesc)
+    friend bool operator !=(const FSamplerDesc& lhs, const FSamplerDesc& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
+    friend bool operator ==(const FSamplerDesc& lhs, const FSamplerDesc& rhs) NOEXCEPT {
+        return (lhs.BorderColor == rhs.BorderColor &&
+                lhs.MagFilter == rhs.MagFilter &&
+                lhs.MinFilter == rhs.MinFilter &&
+                lhs.MipmapFilter == rhs.MipmapFilter &&
+                lhs.AddressModes == rhs.AddressModes &&
+                lhs.CompareOp == rhs.CompareOp &&
+                lhs.MaxAnisotropy == rhs.MaxAnisotropy &&
+                lhs.MipLodBias == rhs.MipLodBias &&
+                lhs.MinLod == rhs.MinLod &&
+                lhs.MaxLod == rhs.MaxLod &&
+                lhs.EnableDenormalizedCoords == rhs.EnableDenormalizedCoords);
+    }
+
 };
 PPE_ASSUME_TYPE_AS_POD(FSamplerDesc);
 //----------------------------------------------------------------------------
