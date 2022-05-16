@@ -69,7 +69,7 @@ FVulkanSampler::FVulkanSampler(const FVulkanDevice& device, const FSamplerDesc& 
     exclusiveData->CreateInfo.minLod = desc.MinLod;
     exclusiveData->CreateInfo.maxLod = desc.MaxLod;
     exclusiveData->CreateInfo.borderColor = VkCast( desc.BorderColor );
-    exclusiveData->CreateInfo.unnormalizedCoordinates = desc.EnableUnnormalizedCoords ? VK_TRUE : VK_FALSE;
+    exclusiveData->CreateInfo.unnormalizedCoordinates = desc.EnableDenormalizedCoords ? VK_TRUE : VK_FALSE;
 
     // validate
 

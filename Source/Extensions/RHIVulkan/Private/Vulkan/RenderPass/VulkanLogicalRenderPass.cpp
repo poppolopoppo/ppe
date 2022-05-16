@@ -286,7 +286,7 @@ bool FVulkanLogicalRenderPass::ShadingRateImage(const FVulkanLocalImage** outIma
     return true;
 
 #else
-    PP_FOREACH_ARGS(UNUSED, pImage, pDesc);
+    Unused(pImage, pDesc);
     return false;
 
 #endif

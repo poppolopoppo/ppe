@@ -385,7 +385,7 @@ public: // Read
         for (i32 backoff = 0; Queue.s.Read != val;)
             FPlatformProcess::SleepForSpinning(backoff);
 
-        Queue.s.Read++;
+        const_cast<u8&>(Queue.s.Read)++;
     }
 
     void UnlockRead() NOEXCEPT {

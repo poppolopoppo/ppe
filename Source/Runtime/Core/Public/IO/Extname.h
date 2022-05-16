@@ -28,6 +28,7 @@ public:
     FExtname& operator =(const FFileSystemToken& token) NOEXCEPT;
 
     void Swap(FExtname& other) NOEXCEPT;
+
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FExtname)

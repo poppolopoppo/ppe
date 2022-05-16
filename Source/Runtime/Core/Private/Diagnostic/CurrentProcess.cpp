@@ -92,7 +92,7 @@ FCurrentProcess::FCurrentProcess(
         while (bTurnThisOffWhenDebuggerIsAttached) {
             LOG_DIRECT(Process, Warning, L"waiting for debugger to be attached");
             std::this_thread::sleep_for(std::chrono::milliseconds(500)); // wait for debugger to be attached
-            loopCount++;
+            const_cast<size_t&>(loopCount)++;
         }
     }
 #endif

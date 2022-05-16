@@ -34,10 +34,6 @@
         \
         using parent_type::parent_type; \
         using parent_type::operator =; \
-        using parent_type::operator ==; \
-        using parent_type::operator !=; \
-        using parent_type::operator < ; \
-        using parent_type::operator >=; \
         PPE_ASSUME_FRIEND_AS_POD(CONCAT(F, _NAME_WITHOUT_F)) \
     }; \
     class _API CONCAT(FLazy, _NAME_WITHOUT_F) : public PPE::TLazyToken< \
@@ -56,10 +52,6 @@
         \
         using parent_type::parent_type; \
         using parent_type::operator =; \
-        using parent_type::operator ==; \
-        using parent_type::operator !=; \
-        using parent_type::operator < ; \
-        using parent_type::operator >=; \
         PPE_ASSUME_FRIEND_AS_POD(CONCAT(FLazy, _NAME_WITHOUT_F)) \
     }
 
@@ -235,17 +227,15 @@ public:
     friend hash_t hash_value(const TToken& token) NOEXCEPT { return token.HashValue(); }
     friend stringview_type MakeStringView(const TToken& token) NOEXCEPT { return token.MakeView(); }
 
-    bool operator ==(const TToken& other) const { return Equals(other); }
-    bool operator !=(const TToken& other) const { return !operator ==(other); }
+    friend bool operator ==(const TToken& lhs, const TToken& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    friend bool operator !=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
+    friend bool operator < (const TToken& lhs, const TToken& rhs) NOEXCEPT { return lhs.Less(rhs); }
+    friend bool operator >=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
 
-    bool operator < (const TToken& other) const { return Less(other); }
-    bool operator >=(const TToken& other) const { return !operator < (other); }
-
-    friend bool operator ==(const TToken& lhs, const stringview_type& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TToken& lhs, const stringview_type& rhs) { return not (lhs == rhs); }
-
-    friend bool operator ==(const stringview_type& lhs, const TToken& rhs) { return rhs.Equals(lhs); }
-    friend bool operator !=(const stringview_type& lhs, const TToken& rhs) { return not (lhs == rhs); }
+    friend bool operator ==(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    friend bool operator !=(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return not (lhs == rhs); }
+    friend bool operator ==(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return rhs.Equals(lhs); }
+    friend bool operator !=(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return not (lhs == rhs); }
 
     operator stringview_type () const NOEXCEPT { return MakeView(); }
 
@@ -361,48 +351,44 @@ public:
         std::swap(_hash, other._hash);
     }
 
-    CONSTF bool Valid() const { return IsValidToken(_str); }
+    CONSTF bool Valid() const NOEXCEPT { return IsValidToken(_str); }
 
-    bool Equals(const TLazyToken& other) const { return (_hash == other._hash && equalto_type{}(_str, other._str)); }
-    bool Less(const TLazyToken& other) const { return (less_type{}(_str, other._str)); }
+    bool Equals(const TLazyToken& other) const NOEXCEPT { return (_hash == other._hash && equalto_type{}(_str, other._str)); }
+    bool Less(const TLazyToken& other) const NOEXCEPT { return (less_type{}(_str, other._str)); }
 
-    bool Equals(const token_type& token) const { return (_hash == token.HashValue() && token.Equals(_str)); }
-    bool Less(const token_type& token) const { return less_type{}(_str, token.MakeView()); }
+    bool Equals(const token_type& token) const NOEXCEPT { return (_hash == token.HashValue() && token.Equals(_str)); }
+    bool Less(const token_type& token) const NOEXCEPT { return less_type{}(_str, token.MakeView()); }
 
-    bool Equals(const stringview_type& str) const { return equalto_type{}(_str, str); }
-    bool Less(const stringview_type& str) const { return less_type{}(_str, str); }
+    bool Equals(const stringview_type& str) const NOEXCEPT { return equalto_type{}(_str, str); }
+    bool Less(const stringview_type& str) const NOEXCEPT { return less_type{}(_str, str); }
 
     friend void swap(TLazyToken& lhs, TLazyToken& rhs) NOEXCEPT { lhs.Swap(rhs); }
     friend hash_t hash_value(const TLazyToken& token) NOEXCEPT { return token.HashValue(); }
-    friend stringview_type MakeStringView(const TLazyToken& token) { return token.MakeView(); }
+    friend stringview_type MakeStringView(const TLazyToken& token) NOEXCEPT { return token.MakeView(); }
 
-    static CONSTF bool IsValidToken(const stringview_type & str) {
+    static CONSTF bool IsValidToken(const stringview_type & str) NOEXCEPT {
         return PPE::IsValidToken<token_traits>(str);
     }
 
-    bool operator ==(const TLazyToken& other) const { return Equals(other); }
-    bool operator !=(const TLazyToken& other) const { return !operator ==(other); }
+    friend bool operator ==(const TLazyToken& lhs, const TLazyToken& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    friend bool operator !=(const TLazyToken& lhs, const TLazyToken& rhs) NOEXCEPT { return !operator ==(lhs, rhs); }
+    friend bool operator < (const TLazyToken& lhs, const TLazyToken& rhs) NOEXCEPT { return lhs.Less(rhs); }
+    friend bool operator >=(const TLazyToken& lhs, const TLazyToken& rhs) NOEXCEPT { return !operator < (lhs, rhs); }
 
-    bool operator < (const TLazyToken& other) const { return Less(other); }
-    bool operator >=(const TLazyToken& other) const { return !operator < (other); }
+    friend bool operator ==(const TLazyToken& lhs, const token_type& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    friend bool operator !=(const TLazyToken& lhs, const token_type& rhs) NOEXCEPT { return not (lhs == rhs); }
+    friend bool operator ==(const token_type& lhs, const TLazyToken& rhs) NOEXCEPT { return rhs.Equals(lhs); }
+    friend bool operator !=(const token_type& lhs, const TLazyToken& rhs) NOEXCEPT { return not (lhs == rhs); }
 
-    friend bool operator ==(const TLazyToken& lhs, const token_type& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TLazyToken& lhs, const token_type& rhs) { return not (lhs == rhs); }
+    friend bool operator ==(const TLazyToken& lhs, const stringview_type & rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    friend bool operator !=(const TLazyToken& lhs, const stringview_type & rhs) NOEXCEPT { return not (lhs == rhs); }
+    friend bool operator ==(const stringview_type & lhs, const TLazyToken& rhs) NOEXCEPT { return rhs.Equals(lhs); }
+    friend bool operator !=(const stringview_type & lhs, const TLazyToken& rhs) NOEXCEPT { return not (lhs == rhs); }
 
-    friend bool operator ==(const token_type& lhs, const TLazyToken& rhs) { return rhs.Equals(lhs); }
-    friend bool operator !=(const token_type& lhs, const TLazyToken& rhs) { return not (lhs == rhs); }
-
-    friend bool operator ==(const TLazyToken& lhs, const stringview_type & rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TLazyToken& lhs, const stringview_type & rhs) { return not (lhs == rhs); }
-
-    friend bool operator ==(const stringview_type & lhs, const TLazyToken& rhs) { return rhs.Equals(lhs); }
-    friend bool operator !=(const stringview_type & lhs, const TLazyToken& rhs) { return not (lhs == rhs); }
-
-    friend bool operator < (const TLazyToken& lhs, const token_type& rhs) { return lhs.Less(rhs); }
-    friend bool operator >=(const TLazyToken& lhs, const token_type& rhs) { return not (lhs < rhs); }
-
-    friend bool operator < (const token_type& lhs, const TLazyToken& rhs) { return lhs.Less(rhs.MakeView()); }
-    friend bool operator >=(const token_type& lhs, const TLazyToken& rhs) { return not (lhs < rhs); }
+    friend bool operator < (const TLazyToken& lhs, const token_type& rhs) NOEXCEPT { return lhs.Less(rhs); }
+    friend bool operator >=(const TLazyToken& lhs, const token_type& rhs) NOEXCEPT { return not (lhs < rhs); }
+    friend bool operator < (const token_type& lhs, const TLazyToken& rhs) NOEXCEPT { return lhs.Less(rhs.MakeView()); }
+    friend bool operator >=(const token_type& lhs, const TLazyToken& rhs) NOEXCEPT { return not (lhs < rhs); }
 
 private:
     stringview_type _str;

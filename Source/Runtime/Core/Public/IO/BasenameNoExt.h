@@ -26,6 +26,7 @@ public:
     FBasenameNoExt& operator =(const FFileSystemToken& token) NOEXCEPT;
 
     void Swap(FBasenameNoExt& other) NOEXCEPT;
+
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FBasenameNoExt)
