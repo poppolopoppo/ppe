@@ -72,7 +72,7 @@ func newCompileFlags() *CompileFlagsT {
 		PCH:           PCH_INHERIT,
 		Sanitizer:     SANITIZER_NONE,
 		Unity:         UNITY_INHERIT,
-		SizePerUnity:  150 * 1024.0, // 150 KiB
+		SizePerUnity:  300 * 1024.0, // 300 KiB
 		AdaptiveUnity: true,
 		LTO:           true,
 		Incremental:   true,
