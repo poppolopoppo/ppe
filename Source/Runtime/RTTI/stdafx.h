@@ -9,6 +9,15 @@
 
 #include "RTTI_fwd.h"
 
+#include "Container/AssociativeVector.h"
+#include "Container/HashMap.h"
+#include "Container/RawStorage.h"
+#include "Container/Vector.h"
+#include "IO/String.h"
+#include "IO/TextWriter.h"
+#include "Maths/ScalarBoundingBox.h"
+#include "Maths/ScalarVector.h"
+
 #if BUILD_PCH
 #   include "stdafx.generated.h"
 #endif

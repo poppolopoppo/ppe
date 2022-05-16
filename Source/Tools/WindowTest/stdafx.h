@@ -6,3 +6,7 @@
 #pragma once
 
 #include "HAL/PlatformIncludes.h"
+
+#include "Runtime/Core/stdafx.h"
+#include "Runtime/Application/stdafx.h"
+#include "Runtime/RHI/stdafx.h"

@@ -638,8 +638,10 @@ struct TStringHasher : TStringViewHasher<_Char, _Sensitive> {
 #define USE_PPE_EXTERN_TEMPLATE_STRING 1
 
 #if USE_PPE_EXTERN_TEMPLATE_STRING
+#   ifndef EXPORT_PPE_RUNTIME_CORE_STRING
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TBasicString<char>;
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TBasicString<wchar_t>;
+#   endif
 #else
 #   include "IO/String-inl.h"
 #endif

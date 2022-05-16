@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_CORE_TEXTWRITER
+
 #include "IO/TextWriter.h"
 
 #include "IO/StreamProvider.h"

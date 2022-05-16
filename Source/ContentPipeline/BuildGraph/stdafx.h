@@ -9,6 +9,9 @@
 
 #include "BuildGraph_fwd.h"
 
+#include "RTTI/Macros.h"
+#include "RTTI/Macros-impl.h"
+
 #if BUILD_PCH
 #   include "stdafx.generated.h"
 #endif

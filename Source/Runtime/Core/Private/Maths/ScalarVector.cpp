@@ -1,5 +1,8 @@
 #include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR
+#define EXPORT_PPE_RUNTIME_CORE_SCALARBOUNDINGBOX
+
 #include "Maths/ScalarBoundingBox.h"
 #include "Maths/ScalarRectangle.h"
 #include "Maths/ScalarVector.h"

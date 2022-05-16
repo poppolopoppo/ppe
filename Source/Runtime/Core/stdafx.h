@@ -7,7 +7,10 @@
 
 #include "HAL/PlatformIncludes.h"
 
-#include "Core_fwd.h"
+#include "Runtime/Core/stdafx.h"
+
+#include "Container/Vector.h"
+#include "IO/String.h"
 
 #if BUILD_PCH
 #   include "stdafx.generated.h"

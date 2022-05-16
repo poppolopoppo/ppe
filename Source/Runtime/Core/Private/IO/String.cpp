@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_CORE_STRING
+
 #include "IO/String.h"
 
 #include "HAL/PlatformString.h"

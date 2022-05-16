@@ -145,6 +145,7 @@ void swap(TRawStorage<U, AU>& lhs, TRawStorage<V, AV>& rhs) NOEXCEPT {
 
 #include "Container/RawStorage-inl.h"
 
+#ifndef EXPORT_PPE_RUNTIME_CORE_RAWSTORAGE
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -154,3 +155,4 @@ EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TRawStorage<u8>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+#endif

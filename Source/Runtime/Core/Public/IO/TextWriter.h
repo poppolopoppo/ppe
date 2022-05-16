@@ -293,8 +293,10 @@ template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(void* v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const wchar_t* v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
 //----------------------------------------------------------------------------
+#ifndef EXPORT_PPE_RUNTIME_CORE_TEXTWRITER
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicTextWriter<char>;
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicTextWriter<wchar_t>;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -442,7 +444,9 @@ public:
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
+#ifndef EXPORT_PPE_RUNTIME_CORE_TEXTWRITER
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<char>& (PPE::TBasicTextWriter<char>&)>;
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<wchar_t>& (PPE::TBasicTextWriter<wchar_t>&)>;
+#endif
 
 #include "IO/TextWriter-inl.h"

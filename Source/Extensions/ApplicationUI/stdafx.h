@@ -9,7 +9,13 @@
 
 #include "ApplicationUI_fwd.h"
 
-#include "RHI_fwd.h"
+#include "RHIApi.h"
+
+#include "Diagnostic/Logger.h"
+
+#include "Runtime/Core/stdafx.h"
+#include "Runtime/Application/stdafx.h"
+#include "Runtime/RHI/stdafx.h"
 
 #if BUILD_PCH
 #   include "stdafx.generated.h"

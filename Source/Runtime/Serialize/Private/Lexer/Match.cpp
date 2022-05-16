@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_SERIALIZE_BASICMATCH
+
 #include "Lexer/Match.h"
 
 #include "Lexer/Symbols.h"

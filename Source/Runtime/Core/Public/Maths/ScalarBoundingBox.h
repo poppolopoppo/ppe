@@ -211,7 +211,7 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalar
 
 #include "Maths/ScalarBoundingBox-inl.h"
 
-#if 1
+#ifndef EXPORT_PPE_RUNTIME_CORE_SCALARBOUNDINGBOX
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

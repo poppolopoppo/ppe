@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_CORE_REGEX
+
 #include "IO/regexp.h"
 
 #include "Diagnostic/Logger.h"

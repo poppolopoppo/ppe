@@ -107,8 +107,10 @@ bool TBasicRegexp<_Char>::Capture(TTuple<_Args...>* outArgs, const stringview_ty
     });
 }
 //----------------------------------------------------------------------------
+#ifndef EXPORT_PPE_RUNTIME_CORE_REGEX
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicRegexp<char>;
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicRegexp<wchar_t>;
+#endif
 //----------------------------------------------------------------------------
 using FRegexp = TBasicRegexp<char>;
 using FWRegexp = TBasicRegexp<wchar_t>;

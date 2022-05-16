@@ -60,8 +60,10 @@ using FMatchView = TBasicMatch<FStringView>;
 } //!namespace Lexer
 } //!namespace PPE
 
+#ifndef EXPORT_PPE_RUNTIME_SERIALIZE_BASICMATCH
 EXTERN_TEMPLATE_CLASS_DECL(PPE_SERIALIZE_API) PPE::Lexer::TBasicMatch<PPE::FString>;
 EXTERN_TEMPLATE_CLASS_DECL(PPE_SERIALIZE_API) PPE::Lexer::TBasicMatch<PPE::FStringView>;
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------

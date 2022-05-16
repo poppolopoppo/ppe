@@ -1,5 +1,7 @@
 ﻿#include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_CORE_RAWSTORAGE
+
 #include "Container/RawStorage.h"
 
 namespace PPE {

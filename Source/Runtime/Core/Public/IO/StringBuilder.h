@@ -87,8 +87,10 @@ public:
 
 };
 //----------------------------------------------------------------------------
+#ifndef EXPORT_PPE_RUNTIME_CORE_STRINGBUILDER
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicStringBuilder<char>;
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicStringBuilder<wchar_t>;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

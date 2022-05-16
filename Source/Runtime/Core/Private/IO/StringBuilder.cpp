@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_CORE_STRINGBUILDER
+
 #include "IO/StringBuilder.h"
 
 #include "IO/String.h"

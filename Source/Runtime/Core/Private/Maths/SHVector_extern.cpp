@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#define EXPORT_PPE_RUNTIME_CORE_SHVECTOR
+
 #include "Maths/SHVector.h"
 #include "Maths/SHVector_extern.h"
 
