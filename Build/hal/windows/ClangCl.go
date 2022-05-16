@@ -60,7 +60,7 @@ func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 	u.RemoveCompilationFlag("/WX", "/JMC-")
 	u.LibrarianOptions.Remove("/WX", "/SUBSYSTEM:WINDOWS", "/NODEFAULTLIB")
-	u.LinkerOptions.Remove("/WX", "/LTCG", "/LTCG:INCREMENTAL", "/LTCG:OFF", "/NODEFAULTLIB")
+	u.LinkerOptions.Remove("/WX", "/LTCG", "/LTCG:INCREMENTAL", "/LTCG:OFF", "/NODEFAULTLIB", "/d2:-cgsummary")
 
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_ARM, ARCH_X86:
@@ -82,8 +82,9 @@ func (clang *ClangCompiler) Alias() BuildAlias {
 func (clang *ClangCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	llvm := GetLlvmProductInstall()
 	msvc := GetMsvcCompiler(clang.Arch)
+	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	windowsFlags := WindowsFlags.Need(CommandEnv.Flags)
-	bc.DependsOn(llvm, msvc, windowsFlags)
+	bc.DependsOn(llvm, msvc, compileFlags, windowsFlags)
 
 	clang.ProductInstall = llvm
 	clang.MsvcCompiler = *msvc
@@ -114,6 +115,11 @@ func (clang *ClangCompiler) Build(bc BuildContext) (BuildStamp, error) {
 		"/clang:-fmacro-backtrace-limit=0",
 		"/clang:-ftemplate-backtrace-limit=0",
 	)
+
+	if compileFlags.Benchmark {
+		// https: //aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/
+		rules.CompilerOptions.Append("/clang:-ftime-trace")
+	}
 
 	if windowsFlags.Permissive {
 		rules.AddCompilationFlag_NoAnalysis("-Wno-error")
