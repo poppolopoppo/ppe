@@ -665,7 +665,7 @@ func decorateMsvcConfig_Test(f *Facet) {
 	msvc_STL_iteratorDebug(f, false)
 }
 func decorateMsvcConfig_Shipping(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
+	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo-")
 	f.LinkerOptions.Append("/DYNAMICBASE", "/OPT:REF", "/OPT:ICF=3")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
