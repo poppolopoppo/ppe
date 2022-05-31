@@ -222,3 +222,30 @@ struct is_packed_integral<UX10Y10Z10W2N> : std::bool_constant<true> {};
 //----------------------------------------------------------------------------
 } //!namespace Meta
 } //!namespace PPE
+
+#ifndef EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u8>, 2>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u8>, 4>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u8>, 2>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u8>, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u16>, 2>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u16>, 4>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u16>, 2>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u16>, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u32>, 2>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u32>, 3>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u32>, 4>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u32>, 2>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u32>, 3>;
+EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u32>, 4>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace PPE
+#endif //!EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR

@@ -253,14 +253,24 @@ struct TBasicNorm {
 
     static CONSTEXPR TBasicNorm DefaultValue() { return TBasicNorm(T(0)); }
 
-    CONSTEXPR bool operator ==(const TBasicNorm& other) const { return _data == other._data; }
-    CONSTEXPR bool operator !=(const TBasicNorm& other) const { return !operator ==(other); }
+    CONSTEXPR bool operator ==(const TBasicNorm& other) const NOEXCEPT { return _data == other._data; }
+    CONSTEXPR bool operator !=(const TBasicNorm& other) const NOEXCEPT { return !operator ==(other); }
 
-    CONSTEXPR bool operator <(const TBasicNorm& other) const { return _data < other._data; }
-    CONSTEXPR bool operator >=(const TBasicNorm& other) const { return !operator <(other); }
+    CONSTEXPR bool operator < (const TBasicNorm& other) const NOEXCEPT { return _data < other._data; }
+    CONSTEXPR bool operator >=(const TBasicNorm& other) const NOEXCEPT { return !operator <(other); }
 
-    CONSTEXPR bool operator >(const TBasicNorm& other) const { return _data > other._data; }
-    CONSTEXPR bool operator <=(const TBasicNorm& other) const { return !operator >(other); }
+    CONSTEXPR bool operator > (const TBasicNorm& other) const NOEXCEPT { return _data > other._data; }
+    CONSTEXPR bool operator <=(const TBasicNorm& other) const NOEXCEPT { return !operator >(other); }
+
+    CONSTEXPR TBasicNorm& operator +=(const TBasicNorm& other) NOEXCEPT { _data += other._data; return (*this); }
+    CONSTEXPR TBasicNorm& operator -=(const TBasicNorm& other) NOEXCEPT { _data -= other._data; return (*this); }
+    CONSTEXPR TBasicNorm& operator *=(const TBasicNorm& other) NOEXCEPT { _data *= other._data; return (*this); }
+    CONSTEXPR TBasicNorm& operator /=(const TBasicNorm& other) NOEXCEPT { _data /= other._data; return (*this); }
+
+    CONSTEXPR friend TBasicNorm operator +(const TBasicNorm& lhs, const TBasicNorm& rhs) NOEXCEPT { return TBasicNorm(lhs._data + rhs._data); }
+    CONSTEXPR friend TBasicNorm operator -(const TBasicNorm& lhs, const TBasicNorm& rhs) NOEXCEPT { return TBasicNorm(lhs._data - rhs._data); }
+    CONSTEXPR friend TBasicNorm operator *(const TBasicNorm& lhs, const TBasicNorm& rhs) NOEXCEPT { return TBasicNorm(lhs._data * rhs._data); }
+    CONSTEXPR friend TBasicNorm operator /(const TBasicNorm& lhs, const TBasicNorm& rhs) NOEXCEPT { return TBasicNorm(lhs._data / rhs._data); }
 
     inline friend hash_t hash_value(const TBasicNorm& n) { return hash_as_pod(n._data); }
 };

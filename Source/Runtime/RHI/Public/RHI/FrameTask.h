@@ -82,25 +82,11 @@ struct FSubmitRenderPass : details::TFrameTaskDesc<FSubmitRenderPass> {
     FImages Images;
     FBuffers Buffers;
 
-    explicit FSubmitRenderPass(FLogicalPassID renderPassId) NOEXCEPT :
-#if USE_PPE_RHIDEBUG
-        TFrameTaskDesc<FSubmitRenderPass>("SubmitRenderPass", FDebugColorScheme::Get().RenderPass),
-#endif
-        RenderPassId(std::move(renderPassId)) {
-        Assert(renderPassId);
-    }
+    PPE_RHI_API explicit FSubmitRenderPass(FLogicalPassID renderPassId) NOEXCEPT;
+    PPE_RHI_API ~FSubmitRenderPass();
 
-    FSubmitRenderPass& AddImage(FRawImageID id, EResourceState state = EResourceState::ShaderSample) {
-        Assert(id);
-        Images.Push(id, state);
-        return (*this);
-    }
-
-    FSubmitRenderPass& AddBuffer(FRawBufferID id, EResourceState state = EResourceState::UniformRead) {
-        Assert(id);
-        Buffers.Push(id, state);
-        return (*this);
-    }
+    PPE_RHI_API FSubmitRenderPass& AddImage(FRawImageID id, EResourceState state = EResourceState::ShaderSample);
+    PPE_RHI_API FSubmitRenderPass& AddBuffer(FRawBufferID id, EResourceState state = EResourceState::UniformRead);
 };
 //----------------------------------------------------------------------------
 // FDispatchCompute
@@ -124,11 +110,8 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
     FDebugMode DebugMode;
 #endif
 
-#if USE_PPE_RHITASKNAME
-    FDispatchCompute() NOEXCEPT : TFrameTaskDesc<FDispatchCompute>("DispatchCompute", FDebugColorScheme::Get().Compute) {}
-#else
-    FDispatchCompute() = default;
-#endif
+    PPE_RHI_API FDispatchCompute() NOEXCEPT;
+    PPE_RHI_API ~FDispatchCompute();
 
     FDispatchCompute& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
 
@@ -138,19 +121,15 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
 
     template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
     FDispatchCompute& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
-    FDispatchCompute& AddPushConstant(const FPushConstantID& id, const void* p, size_t size) { PushConstants.Push(id, p, size); return (*this); }
 
-    FDispatchCompute& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res) {
-        Assert(id);
-        Assert(res);
-        Resources.Add(id) = res;
-        return (*this);
-    }
+    PPE_RHI_API FDispatchCompute& AddPushConstant(const FPushConstantID& id, const void* p, size_t size);
+    PPE_RHI_API FDispatchCompute& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
     FDispatchCompute& Dispatch(const uint2& count) { return Dispatch(uint3(0), uint3(count, 1)); }
     FDispatchCompute& Dispatch(const uint3& count) { return Dispatch(uint3(0), count); }
     FDispatchCompute& Dispatch(const uint2& off, const uint2& count) { return Dispatch(uint3(off, 0), uint3(count, 1)); }
-    FDispatchCompute& Dispatch(const uint3& off, const uint3& count) { Emplace_Back(Commands, off, count); return (*this); }
+
+    PPE_RHI_API FDispatchCompute& Dispatch(const uint3& off, const uint3& count);
 
 #if USE_PPE_RHIDEBUG
     FDispatchCompute& EnableShaderDebugTrace() { return EnableShaderDebugTrace(uint3(~0u)); }
@@ -198,11 +177,8 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
     FDebugMode DebugMode;
 #endif
 
-#if USE_PPE_RHITASKNAME
-    FDispatchComputeIndirect() NOEXCEPT : TFrameTaskDesc<FDispatchComputeIndirect>("DispatchComputeIndirect", FDebugColorScheme::Get().Compute) {}
-#else
-    FDispatchComputeIndirect() = default;
-#endif
+    PPE_RHI_API FDispatchComputeIndirect() NOEXCEPT;
+    PPE_RHI_API ~FDispatchComputeIndirect();
 
     FDispatchComputeIndirect& SetPipeline(FRawCPipelineID value) { Assert(value); Pipeline = value; return (*this); }
 
@@ -212,18 +188,13 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 
     FDispatchComputeIndirect& SetIndirectBuffer(FRawBufferID buffer) { Assert(buffer); IndirectBuffer = buffer; return (*this); }
 
-    FDispatchComputeIndirect& Dispatch(size_t offset) { Emplace_Back(Commands, offset); return (*this); }
+    PPE_RHI_API FDispatchComputeIndirect& Dispatch(size_t offset);
 
     template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
     FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
-    FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const void* p, size_t size) { PushConstants.Push(id, p, size); return (*this); }
 
-    FDispatchComputeIndirect& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res) {
-        Assert(id);
-        Assert(res);
-        Resources.Add(id) = res;
-        return (*this);
-    }
+    PPE_RHI_API FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const void* p, size_t size);
+    PPE_RHI_API FDispatchComputeIndirect& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
 #if USE_PPE_RHIDEBUG
     FDispatchComputeIndirect& EnableShaderDebugTrace() { return EnableShaderDebugTrace(uint3(~0u)); }
@@ -259,20 +230,13 @@ struct FCopyBuffer final : details::TFrameTaskDesc<FCopyBuffer> {
     FRawBufferID DstBuffer;
     FRegions Regions;
 
-#if USE_PPE_RHITASKNAME
-    FCopyBuffer() NOEXCEPT : TFrameTaskDesc<FCopyBuffer>("CopyBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FCopyBuffer() = default;
-#endif
+    PPE_RHI_API FCopyBuffer() NOEXCEPT;
+    PPE_RHI_API ~FCopyBuffer();
 
     FCopyBuffer& From(FRawBufferID buffer) { Assert(buffer); SrcBuffer = buffer; return (*this); }
     FCopyBuffer& To(FRawBufferID buffer) { Assert(buffer); DstBuffer = buffer; return (*this); }
 
-    FCopyBuffer& AddRegion(size_t srcOffset, size_t dstOffset, size_t size) {
-        Assert(size);
-        Emplace_Back(Regions, srcOffset, dstOffset, size);
-        return (*this);
-    }
+    PPE_RHI_API FCopyBuffer& AddRegion(size_t srcOffset, size_t dstOffset, size_t size);
 };
 //----------------------------------------------------------------------------
 // FCopyImage
@@ -292,30 +256,21 @@ struct FCopyImage final : details::TFrameTaskDesc<FCopyImage> {
     FRawImageID DstImage;
     FRegions Regions;
 
-#if USE_PPE_RHITASKNAME
-    FCopyImage() NOEXCEPT : TFrameTaskDesc<FCopyImage>("CopyImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FCopyImage() = default;
-#endif
+    PPE_RHI_API FCopyImage() NOEXCEPT;
+    PPE_RHI_API ~FCopyImage();
 
     FCopyImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
     FCopyImage& To(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
-    FCopyImage& AddRegion(
+    PPE_RHI_API FCopyImage& AddRegion(
         const FImageSubresourceRange& srcSubresource, const int2& srcOffset,
         const FImageSubresourceRange& dstSubresource, const int2& dstOffset,
-        const uint2& size ) {
-        return AddRegion(srcSubresource, int3(srcOffset, 0), dstSubresource, int3(dstOffset, 0), uint3(size, 1));
-    }
+        const uint2& size );
 
-    FCopyImage& AddRegion(
+    PPE_RHI_API FCopyImage& AddRegion(
         const FImageSubresourceRange& srcSubresource, const int3& srcOffset,
         const FImageSubresourceRange& dstSubresource, const int3& dstOffset,
-        const uint3& size ) {
-        Assert(AllGreater(size, uint3(0)));
-        Emplace_Back(Regions, srcSubresource, srcOffset, dstSubresource, dstOffset, size);
-        return (*this);
-    }
+        const uint3& size );
 };
 //----------------------------------------------------------------------------
 // FCopyBufferToImage
@@ -336,28 +291,18 @@ struct FCopyBufferToImage final : details::TFrameTaskDesc<FCopyBufferToImage> {
     FRawImageID DstImage;
     FRegions Regions;
 
-#if USE_PPE_RHITASKNAME
-    FCopyBufferToImage() NOEXCEPT : TFrameTaskDesc<FCopyBufferToImage>("CopyBufferToImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FCopyBufferToImage() = default;
-#endif
+    PPE_RHI_API FCopyBufferToImage() NOEXCEPT;
+    PPE_RHI_API ~FCopyBufferToImage();
 
     FCopyBufferToImage& From(FRawBufferID buffer) { Assert(buffer); SrcBuffer = buffer; return (*this); }
     FCopyBufferToImage& To(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
-    FCopyBufferToImage& AddRegion(
+    PPE_RHI_API FCopyBufferToImage& AddRegion(
         size_t srcBufferOffset, u32 srcBufferRowLength, u32 srcBufferImageHeight,
-        const FImageSubresourceRange& dstImageLayers, const int2& dstImageOffset, const uint2& dstImageSize ) {
-        return AddRegion(srcBufferOffset, srcBufferRowLength, srcBufferImageHeight, dstImageLayers, int3(dstImageOffset, 0), uint3(dstImageSize, 1));
-    }
-
-    FCopyBufferToImage& AddRegion(
+        const FImageSubresourceRange& dstImageLayers, const int2& dstImageOffset, const uint2& dstImageSize );
+    PPE_RHI_API FCopyBufferToImage& AddRegion(
         size_t SrcBufferOffset, u32 srcBufferRowLength, u32 srcBufferImageHeight,
-        const FImageSubresourceRange& dstImageLayers, const int3& dstImageOffset, const uint3& dstImageSize) {
-        Assert(AllGreater(dstImageSize, uint3(0)));
-        Emplace_Back(Regions, SrcBufferOffset, srcBufferRowLength, srcBufferImageHeight, dstImageLayers, dstImageOffset, dstImageSize);
-        return (*this);
-    }
+        const FImageSubresourceRange& dstImageLayers, const int3& dstImageOffset, const uint3& dstImageSize );
 };
 
 //----------------------------------------------------------------------------
@@ -372,28 +317,18 @@ struct FCopyImageToBuffer final : details::TFrameTaskDesc<FCopyImageToBuffer> {
     FRawBufferID DstBuffer;
     FRegions Regions;
 
-#if USE_PPE_RHITASKNAME
-    FCopyImageToBuffer() NOEXCEPT : TFrameTaskDesc<FCopyImageToBuffer>("CopyImageToBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FCopyImageToBuffer() = default;
-#endif
+    PPE_RHI_API FCopyImageToBuffer() NOEXCEPT;
+    PPE_RHI_API ~FCopyImageToBuffer();
 
     FCopyImageToBuffer& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
     FCopyImageToBuffer& To(FRawBufferID buffer) { Assert(buffer); DstBuffer = buffer; return (*this); }
 
-    FCopyImageToBuffer& AddRegion(
+    PPE_RHI_API FCopyImageToBuffer& AddRegion(
         const FImageSubresourceRange& srcImageLayers, const int2& srcImageOffset, const uint2& srcImageSize,
-        size_t dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight ) {
-        return AddRegion(srcImageLayers, int3(srcImageOffset, 0), uint3(srcImageSize, 1), dstBufferOffset, dstBufferRowLength, dstBufferImageHeight);
-    }
-
-    FCopyImageToBuffer& AddRegion(
+        size_t dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight );
+    PPE_RHI_API FCopyImageToBuffer& AddRegion(
         const FImageSubresourceRange& srcImageLayers, const int3& srcImageOffset, const uint3& srcImageSize,
-        size_t dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight ) {
-        Assert(AllGreater(srcImageSize, uint3(0)));
-        Emplace_Back(Regions, dstBufferOffset, dstBufferRowLength, dstBufferImageHeight, srcImageLayers, srcImageOffset, srcImageSize);
-        return (*this);
-    }
+        size_t dstBufferOffset, u32 dstBufferRowLength, u32 dstBufferImageHeight );
 };
 //----------------------------------------------------------------------------
 // FBlitImage
@@ -415,33 +350,20 @@ struct FBlitImage final : details::TFrameTaskDesc<FBlitImage> {
     ETextureFilter Filter{ ETextureFilter::Nearest };
     FRegions Regions;
 
-#if USE_PPE_RHITASKNAME
-    FBlitImage() NOEXCEPT : TFrameTaskDesc<FBlitImage>("BlitImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FBlitImage() = default;
-#endif
+    PPE_RHI_API FBlitImage() NOEXCEPT;
+    PPE_RHI_API ~FBlitImage();
 
     FBlitImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
     FBlitImage& To(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
     FBlitImage& SetFilter(ETextureFilter filter) { Filter = filter; return (*this); }
 
-    FBlitImage& AddRegion(
+    PPE_RHI_API FBlitImage& AddRegion(
         const FImageSubresourceRange& srcSubresource, const int2& srcOffsetStart, const int2 srcOffsetEnd,
-        const FImageSubresourceRange& dstSubresource, const int2& dstOffsetStart, const int2 dstOffsetEnd ) {
-        return AddRegion(
-            srcSubresource, int3(srcOffsetStart, 0), int3(srcOffsetEnd, 1),
-            dstSubresource, int3(dstOffsetStart, 0), int3(dstOffsetEnd, 1) );
-    }
-
-    FBlitImage& AddRegion(
+        const FImageSubresourceRange& dstSubresource, const int2& dstOffsetStart, const int2 dstOffsetEnd );
+    PPE_RHI_API FBlitImage& AddRegion(
         const FImageSubresourceRange& srcSubresource, const int3& srcOffsetStart, const int3& srcOffsetEnd,
-        const FImageSubresourceRange& dstSubresource, const int3& dstOffsetStart, const int3& dstOffsetEnd ) {
-        Assert(AllLess(srcOffsetStart, srcOffsetEnd));
-        Assert(AllLess(dstOffsetStart, dstOffsetEnd));
-        Emplace_Back(Regions, srcSubresource, srcOffsetStart, srcOffsetEnd, dstSubresource, dstOffsetStart, dstOffsetEnd);
-        return (*this);
-    }
+        const FImageSubresourceRange& dstSubresource, const int3& dstOffsetStart, const int3& dstOffsetEnd );
 };
 //----------------------------------------------------------------------------
 // FGenerateMipmaps
@@ -453,11 +375,8 @@ struct FGenerateMipmaps : details::TFrameTaskDesc<FGenerateMipmaps> {
     FImageLayer BaseLayer; // specify array layers that will be used
     u32 LayerCount{ 0 };
 
-#if USE_PPE_RHITASKNAME
-    FGenerateMipmaps() NOEXCEPT : TFrameTaskDesc<FGenerateMipmaps>("GenerateMipmaps", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FGenerateMipmaps() = default;
-#endif
+    PPE_RHI_API FGenerateMipmaps() NOEXCEPT;
+    PPE_RHI_API ~FGenerateMipmaps();
 
     FGenerateMipmaps& SetImage(FRawImageID image) { Assert(image); Image = image; return (*this); }
     FGenerateMipmaps& SetMipmaps(u32 base, u32 count) { BaseLevel = FMipmapLevel{ base }; LevelCount = count; return (*this); }
@@ -481,30 +400,20 @@ struct FResolveImage final : details::TFrameTaskDesc<FResolveImage> {
     FRawImageID DstImage;
     FRegions Regions;
 
-#if USE_PPE_RHITASKNAME
-    FResolveImage() NOEXCEPT : TFrameTaskDesc<FResolveImage>("ResolveImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FResolveImage() = default;
-#endif
+    PPE_RHI_API FResolveImage() NOEXCEPT;
+    PPE_RHI_API ~FResolveImage();
 
     FResolveImage& From(FRawImageID image) { Assert(image); SrcImage = image; return (*this); }
     FResolveImage& To(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
-    FResolveImage& AddRegion(
+    PPE_RHI_API FResolveImage& AddRegion(
         const FImageSubresourceRange& srcSubresource, const int2& srcOffset,
         const FImageSubresourceRange& dstSubresource, const int2& dstOffset,
-        const uint2& extent ) {
-        return AddRegion(srcSubresource, int3(srcOffset, 0), dstSubresource, int3(dstOffset, 0), uint3(extent, 1));
-    }
-
-    FResolveImage& AddRegion(
+        const uint2& extent );
+    PPE_RHI_API FResolveImage& AddRegion(
         const FImageSubresourceRange& srcSubresource, const int3& srcOffset,
         const FImageSubresourceRange& dstSubresource, const int3& dstOffset,
-        const uint3& extent ) {
-        Assert(AllGreater(extent, uint3(0)));
-        Emplace_Back(Regions, srcSubresource, srcOffset, dstSubresource, dstOffset, extent);
-        return (*this);
-    }
+        const uint3& extent );
 };
 //----------------------------------------------------------------------------
 // FFillBuffer
@@ -515,20 +424,11 @@ struct FFillBuffer final : details::TFrameTaskDesc<FFillBuffer> {
     size_t Size{ 0 };
     u32 Pattern{ 0 };
 
-#if USE_PPE_RHITASKNAME
-    FFillBuffer() NOEXCEPT : TFrameTaskDesc<FFillBuffer>("FillBuffer", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FFillBuffer() = default;
-#endif
+    PPE_RHI_API FFillBuffer() NOEXCEPT;
+    PPE_RHI_API ~FFillBuffer();
 
     FFillBuffer& SetBuffer(FRawBufferID buffer) { return SetBuffer(buffer, 0, UMax); }
-    FFillBuffer& SetBuffer(FRawBufferID buffer, size_t offset, size_t size) {
-        Assert(buffer);
-        DstBuffer = buffer;
-        DstOffset = offset;
-        Size = size;
-        return (*this);
-    }
+    PPE_RHI_API FFillBuffer& SetBuffer(FRawBufferID buffer, size_t offset, size_t size);
 
     FFillBuffer& SetPattern(u32 pattern) { Pattern = pattern; return (*this); }
 };
@@ -555,24 +455,16 @@ struct FClearColorImage final : details::TFrameTaskDesc<FClearColorImage> {
     FClearColor ClearColor;
     FRanges Ranges;
 
-#if USE_PPE_RHITASKNAME
-    FClearColorImage() NOEXCEPT : TFrameTaskDesc<FClearColorImage>("ClearColorImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FClearColorImage() = default;
-#endif
+    PPE_RHI_API FClearColorImage() NOEXCEPT;
+    PPE_RHI_API ~FClearColorImage();
 
     FClearColorImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
-    FClearColorImage& Clear(const FRgba32u& color) { ClearColor.emplace<FRgba32u>(color); return (*this); }
-    FClearColorImage& Clear(const FRgba32i& color) { ClearColor.emplace<FRgba32i>(color); return (*this); }
-    FClearColorImage& Clear(const FLinearColor& color) { ClearColor.emplace<FLinearColor>(color); return (*this); }
+    PPE_RHI_API FClearColorImage& Clear(const FRgba32u& color);
+    PPE_RHI_API FClearColorImage& Clear(const FRgba32i& color);
+    PPE_RHI_API FClearColorImage& Clear(const FLinearColor& color);
 
-    FClearColorImage& AddRange(FMipmapLevel baseMipLevel, u32 levelCount, FImageLayer baseLayer, u32 layerCount) {
-        Assert(levelCount > 0);
-        Assert(layerCount > 0);
-        Emplace_Back(Ranges, EImageAspect::Color, baseMipLevel, levelCount, baseLayer, layerCount);
-        return (*this);
-    }
+    PPE_RHI_API FClearColorImage& AddRange(FMipmapLevel baseMipLevel, u32 levelCount, FImageLayer baseLayer, u32 layerCount);
 };
 //----------------------------------------------------------------------------
 // FClearDepthStencilImage
@@ -586,22 +478,14 @@ struct FClearDepthStencilImage final : details::TFrameTaskDesc<FClearDepthStenci
     FStencilValue ClearStencil{ 0 };
     FRanges Ranges;
 
-#if USE_PPE_RHITASKNAME
-    FClearDepthStencilImage() NOEXCEPT : TFrameTaskDesc<FClearDepthStencilImage>("ClearDepthStencilImage", FDebugColorScheme::Get().DeviceLocalTransfer) {}
-#else
-    FClearDepthStencilImage() = default;
-#endif
+    PPE_RHI_API FClearDepthStencilImage() NOEXCEPT;
+    PPE_RHI_API ~FClearDepthStencilImage();
 
     FClearDepthStencilImage& SetImage(FRawImageID image) { Assert(image); DstImage = image; return (*this); }
 
     FClearDepthStencilImage& Clear(FDepthValue depth, FStencilValue stencil = FStencilValue(0)) { ClearDepth = depth; ClearStencil = stencil; return (*this); }
 
-    FClearDepthStencilImage& AddRange(FMipmapLevel baseMipLevel, u32 levelCount, FImageLayer baseLayer, u32 layerCount) {
-        Assert(levelCount > 0);
-        Assert(layerCount > 0);
-        Emplace_Back(Ranges, EImageAspect::DepthStencil, baseMipLevel, levelCount, baseLayer, layerCount);
-        return (*this);
-    }
+    PPE_RHI_API FClearDepthStencilImage& AddRange(FMipmapLevel baseMipLevel, u32 levelCount, FImageLayer baseLayer, u32 layerCount);
 };
 //----------------------------------------------------------------------------
 // FUpdateBuffer
@@ -617,31 +501,18 @@ struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
     FRawBufferID DstBuffer;
     FRegions Regions;
 
-#if USE_PPE_RHITASKNAME
-    FUpdateBuffer() NOEXCEPT : TFrameTaskDesc<FUpdateBuffer>("UpdateBuffer", FDebugColorScheme::Get().HostToDeviceTransfer) {}
-#else
-    FUpdateBuffer() = default;
-#endif
+    PPE_RHI_API FUpdateBuffer() NOEXCEPT;
+    PPE_RHI_API ~FUpdateBuffer();
 
-    FUpdateBuffer(FRawBufferID buffer, size_t offset, const FRawMemoryConst& data)
-    :   FUpdateBuffer() {
-        SetBuffer(buffer).AddData(data, offset);
-    }
+    PPE_RHI_API FUpdateBuffer(FRawBufferID buffer, size_t offset, const FRawMemoryConst& data) NOEXCEPT;
 
-    FUpdateBuffer& SetBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        DstBuffer = buffer;
-        return (*this);
-    }
+    PPE_RHI_API FUpdateBuffer& SetBuffer(FRawBufferID buffer);
 
     template <typename T>
     FUpdateBuffer& AddData(const TMemoryView<const T>& data, size_t offset = 0) { return AddData(data.template Cast<const u8>(), offset); }
     FUpdateBuffer& AddData(const void* p, const size_t size, size_t offset = 0) { return AddData(FRawMemoryConst(static_cast<const u8*>(p), size), offset); }
-    FUpdateBuffer& AddData(const FRawMemoryConst& data, size_t offset = 0) {
-        Assert(not data.empty());
-        Emplace_Back(Regions, offset, data);
-        return (*this);
-    }
+
+    PPE_RHI_API FUpdateBuffer& AddData(const FRawMemoryConst& data, size_t offset = 0);
 };
 //----------------------------------------------------------------------------
 // FReadBuffer
@@ -655,26 +526,13 @@ struct FReadBuffer final : details::TFrameTaskDesc<FReadBuffer> {
     size_t SrcSize{ 0 };
     FCallback Callback;
 
-#if USE_PPE_RHITASKNAME
-    FReadBuffer() NOEXCEPT : TFrameTaskDesc<FReadBuffer>("ReadBuffer", FDebugColorScheme::Get().DeviceToHostTransfer) {}
-#else
-    FReadBuffer() = default;
-#endif
+    PPE_RHI_API FReadBuffer() NOEXCEPT;
+    PPE_RHI_API ~FReadBuffer();
 
-    FReadBuffer& SetBuffer(FRawBufferID buffer, size_t offset, size_t size) {
-        Assert(buffer);
-        SrcBuffer = buffer;
-        SrcOffset = offset;
-        SrcSize = size;
-        return (*this);
-    }
+    PPE_RHI_API FReadBuffer& SetBuffer(FRawBufferID buffer, size_t offset, size_t size);
 
     FReadBuffer& SetCallback(const FCallback& callback) { return SetCallback(FCallback(callback)); }
-    FReadBuffer& SetCallback(FCallback&& rcallback) {
-        Assert(rcallback);
-        Callback = std::move(rcallback);
-        return (*this);
-    }
+    PPE_RHI_API FReadBuffer& SetCallback(FCallback&& rcallback);
 };
 //----------------------------------------------------------------------------
 // FUpdateImage
@@ -691,38 +549,15 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
     EImageAspect AspectMask{ EImageAspect::Color };
     FRawMemoryConst Data;
 
-#if USE_PPE_RHITASKNAME
-    FUpdateImage() NOEXCEPT : TFrameTaskDesc<FUpdateImage>("UpdateImage", FDebugColorScheme::Get().HostToDeviceTransfer) {}
-#else
-    FUpdateImage() = default;
-#endif
+    PPE_RHI_API FUpdateImage() NOEXCEPT;
+    PPE_RHI_API ~FUpdateImage();
 
     FUpdateImage& SetImage(FRawImageID image, const int2& offset, FMipmapLevel mipmap = Default) { return SetImage(image, int3(offset, 0), mipmap); }
-    FUpdateImage& SetImage(FRawImageID image, const int3& offset = Default, FMipmapLevel mipmap = Default) {
-        Assert(image);
-        DstImage = image;
-        ImageOffset = offset;
-        MipmapLevel = mipmap;
-        return (*this);
-    }
-    FUpdateImage& SetImage(FRawImageID image, const int2& offset, FImageLayer layer, FMipmapLevel mipmap) {
-        Assert(image);
-        DstImage = image;
-        ImageOffset = int3(offset, 0);
-        ArrayLayer = layer;
-        MipmapLevel = mipmap;
-        return (*this);
-    }
+    PPE_RHI_API FUpdateImage& SetImage(FRawImageID image, const int3& offset = Default, FMipmapLevel mipmap = Default);
+    PPE_RHI_API FUpdateImage& SetImage(FRawImageID image, const int2& offset, FImageLayer layer, FMipmapLevel mipmap);
 
     FUpdateImage& SetData(FRawMemoryConst data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data, uint3(dimension, 0), rowPitch); }
-    FUpdateImage& SetData(FRawMemoryConst data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0) {
-        Assert(not data.empty());
-        Data = data;
-        ImageSize = dimension;
-        DataRowPitch = rowPitch;
-        DataSlicePitch = slicePitch;
-        return (*this);
-    }
+    PPE_RHI_API FUpdateImage& SetData(FRawMemoryConst data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0);
 
     template <typename T>
     FUpdateImage& SetData(TMemoryView<const T> data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data.template Cast<const u8>(), uint3(dimension, 0), rowPitch); }
@@ -744,37 +579,15 @@ struct FReadImage final : details::TFrameTaskDesc<FReadImage> {
     EImageAspect AspectMask = EImageAspect::Color;
     FCallback Callback;
 
-#if USE_PPE_RHITASKNAME
-    FReadImage() NOEXCEPT : TFrameTaskDesc<FReadImage>("ReadImage", FDebugColorScheme::Get().DeviceToHostTransfer) {}
-#else
-    FReadImage() = default;
-#endif
+    PPE_RHI_API FReadImage() NOEXCEPT;
+    PPE_RHI_API ~FReadImage();
 
     FReadImage& SetImage(FRawImageID image, const int2& offset, const uint2& size, FMipmapLevel mipmap = Default) { return SetImage(image, int3(offset, 0), uint3(size, 0), mipmap); }
-    FReadImage& SetImage(FRawImageID image, const int3& offset, const uint3& size, FMipmapLevel mipmap = Default) {
-        Assert(image);
-        SrcImage = image;
-        ImageOffset = offset;
-        ImageSize = size;
-        MipmapLevel = mipmap;
-        return (*this);
-    }
-    FReadImage& SetImage(FRawImageID image, const int2& offset, const uint2& size, FImageLayer layer, FMipmapLevel mipmap = Default) {
-        Assert(image);
-        SrcImage = image;
-        ImageOffset = int3(offset, 0);
-        ImageSize = uint3(size, 0);
-        ArrayLayer = layer;
-        MipmapLevel = mipmap;
-        return (*this);
-    }
+    PPE_RHI_API FReadImage& SetImage(FRawImageID image, const int3& offset, const uint3& size, FMipmapLevel mipmap = Default);
+    PPE_RHI_API FReadImage& SetImage(FRawImageID image, const int2& offset, const uint2& size, FImageLayer layer, FMipmapLevel mipmap = Default);
 
     FReadImage& SetCallback(const FCallback& callback) { return SetCallback(FCallback(callback)); }
-    FReadImage& SetCallback(FCallback&& rcallback) {
-        Assert(rcallback);
-        Callback = std::move(rcallback);
-        return (*this);
-    }
+    PPE_RHI_API FReadImage& SetCallback(FCallback&& rcallback);
 };
 //----------------------------------------------------------------------------
 // FPresent
@@ -785,29 +598,13 @@ struct FPresent final : details::TFrameTaskDesc<FPresent> {
     FImageLayer Layer;
     FMipmapLevel Mipmap;
 
-#if USE_PPE_RHITASKNAME
-    FPresent() NOEXCEPT : TFrameTaskDesc<FPresent>("Present", FDebugColorScheme::Get().Present) {}
-#else
-    FPresent() = default;
-#endif
+    PPE_RHI_API FPresent() NOEXCEPT;
+    PPE_RHI_API ~FPresent();
 
-    explicit FPresent(FRawSwapchainID swapchain, FRawImageID image) : FPresent() {
-        SetSwapchain(swapchain).SetImage(image);
-    }
+    PPE_RHI_API explicit FPresent(FRawSwapchainID swapchain, FRawImageID image) NOEXCEPT;
 
-    FPresent& SetSwapchain(FRawSwapchainID swapchain) {
-        Assert(swapchain);
-        Swapchain = swapchain;
-        return (*this);
-    }
-
-    FPresent& SetImage(FRawImageID image, FImageLayer layer = Default, FMipmapLevel mipmap = Default) {
-        Assert(image);
-        SrcImage = image;
-        Layer = layer;
-        Mipmap = mipmap;
-        return (*this);
-    }
+    PPE_RHI_API FPresent& SetSwapchain(FRawSwapchainID swapchain);
+    PPE_RHI_API FPresent& SetImage(FRawImageID image, FImageLayer layer = Default, FMipmapLevel mipmap = Default);
 };
 //----------------------------------------------------------------------------
 // FCustomTask
@@ -823,27 +620,13 @@ struct FCustomTask final : details::TFrameTaskDesc<FCustomTask> {
     FImages Images;
     FBuffers Buffers;
 
-#if USE_PPE_RHITASKNAME
-    FCustomTask() NOEXCEPT : TFrameTaskDesc<FCustomTask>("CustomTask", FDebugColorScheme::Get().Debug) {}
-#else
-    FCustomTask() = default;
-#endif
+    PPE_RHI_API FCustomTask() NOEXCEPT;
+    PPE_RHI_API ~FCustomTask();
 
-    explicit FCustomTask(FCallback&& rcallback) : FCustomTask() {
-        Callback = std::move(rcallback);
-    }
+    PPE_RHI_API explicit FCustomTask(FCallback&& rcallback) NOEXCEPT;
 
-    FCustomTask& AddImage(FRawImageID image, EResourceState state) {
-        Assert(image);
-        Images.Push(image, state);
-        return (*this);
-    }
-
-    FCustomTask& AddBuffer(FRawBufferID image, EResourceState state) {
-        Assert(image);
-        Buffers.Push(image, state);
-        return (*this);
-    }
+    PPE_RHI_API FCustomTask& AddImage(FRawImageID image, EResourceState state);
+    PPE_RHI_API FCustomTask& AddBuffer(FRawBufferID image, EResourceState state);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

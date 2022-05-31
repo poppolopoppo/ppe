@@ -158,17 +158,10 @@ struct FDrawVertices final : details::TDrawVerticesDesc<FDrawVertices> {
 
     FDrawCommands Commands;
 
-#if USE_PPE_RHITASKNAME
-    FDrawVertices() NOEXCEPT : TDrawVerticesDesc<FDrawVertices>{ "DrawVertices", FDebugColorScheme::Get().Draw } {}
-#else
-    FDrawVertices() = default;
-#endif
+    PPE_RHI_API FDrawVertices() NOEXCEPT;
+    PPE_RHI_API ~FDrawVertices();
 
-    FDrawVertices& Draw(u32 vertexCount, u32 instanceCount = 1, u32 firstVertex = 0, u32 firstInstance = 0) {
-        Assert(vertexCount > 0);
-        Emplace_Back(Commands, vertexCount, instanceCount, firstVertex, firstInstance);
-        return (*this);
-    }
+    PPE_RHI_API FDrawVertices& Draw(u32 vertexCount, u32 instanceCount = 1, u32 firstVertex = 0, u32 firstInstance = 0);
 };
 //----------------------------------------------------------------------------
 // FDrawIndexed
@@ -189,25 +182,11 @@ struct FDrawIndexed : details::TDrawVerticesDesc<FDrawIndexed> {
     EIndexFormat IndexFormat{ Default };
     FDrawCommands Commands;
 
-#if USE_PPE_RHITASKNAME
-    FDrawIndexed() NOEXCEPT : TDrawVerticesDesc<FDrawIndexed>{ "DrawIndexed", FDebugColorScheme::Get().Draw } {}
-#else
-    FDrawIndexed() = default;
-#endif
+    PPE_RHI_API FDrawIndexed() NOEXCEPT;
+    PPE_RHI_API ~FDrawIndexed();
 
-    FDrawIndexed& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
-        Assert(buffer);
-        IndexBuffer = buffer;
-        IndexBufferOffset = offset;
-        IndexFormat = fmt;
-        return (*this);
-    }
-
-    FDrawIndexed& Draw(u32 indexCount, u32 instanceCount = 1, u32 firstIndex = 0, i32 vertexOffset = 0, u32 firstInstance = 0) {
-        Assert(indexCount > 0);
-        Emplace_Back(Commands, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
-        return (*this);
-    }
+    PPE_RHI_API FDrawIndexed& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default);
+    PPE_RHI_API FDrawIndexed& Draw(u32 indexCount, u32 instanceCount = 1, u32 firstIndex = 0, i32 vertexOffset = 0, u32 firstInstance = 0);
 };
 //----------------------------------------------------------------------------
 // FDrawVerticesIndirect
@@ -232,23 +211,11 @@ struct FDrawVerticesIndirect : details::TDrawVerticesDesc<FDrawVerticesIndirect>
     FDrawCommands Commands;
     FRawBufferID IndirectBuffer;
 
-#if USE_PPE_RHITASKNAME
-    FDrawVerticesIndirect() NOEXCEPT : TDrawVerticesDesc<FDrawVerticesIndirect>{ "DrawVerticesIndirect", FDebugColorScheme::Get().Draw } {}
-#else
-    FDrawVerticesIndirect() = default;
-#endif
+    PPE_RHI_API FDrawVerticesIndirect() NOEXCEPT;
+    PPE_RHI_API ~FDrawVerticesIndirect();
 
-    FDrawVerticesIndirect& SetIndirectBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        IndirectBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawVerticesIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand)) {
-        Assert(drawCount > 0);
-        Emplace_Back(Commands, indirectBufferOffset, drawCount, indirectBufferStride);
-        return (*this);
-    }
+    PPE_RHI_API FDrawVerticesIndirect& SetIndirectBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawVerticesIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand));
 };
 //----------------------------------------------------------------------------
 // FDrawIndexedIndirect
@@ -273,31 +240,12 @@ struct FDrawIndexedIndirect : details::TDrawVerticesDesc<FDrawIndexedIndirect> {
     FDrawCommands Commands;
     FRawBufferID IndirectBuffer;
 
-#if USE_PPE_RHITASKNAME
-    FDrawIndexedIndirect() NOEXCEPT : TDrawVerticesDesc<FDrawIndexedIndirect>{ "DrawIndexedIndirect", FDebugColorScheme::Get().Draw } {}
-#else
-    FDrawIndexedIndirect() = default;
-#endif
+    PPE_RHI_API FDrawIndexedIndirect() NOEXCEPT;
+    PPE_RHI_API ~FDrawIndexedIndirect();
 
-    FDrawIndexedIndirect& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
-        Assert(buffer);
-        IndexBuffer = buffer;
-        IndexBufferOffset = offset;
-        IndexFormat = fmt;
-        return (*this);
-    }
-
-    FDrawIndexedIndirect& SetIndirectBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        IndirectBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawIndexedIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 stride = sizeof(FIndirectCommand)) {
-        Assert(drawCount > 0);
-        Emplace_Back(Commands, indirectBufferOffset, drawCount, stride);
-        return (*this);
-    }
+    PPE_RHI_API FDrawIndexedIndirect& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default);
+    PPE_RHI_API FDrawIndexedIndirect& SetIndirectBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawIndexedIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 stride = sizeof(FIndirectCommand));
 };
 //----------------------------------------------------------------------------
 // FDrawVerticesIndirectCount
@@ -317,29 +265,12 @@ struct FDrawVerticesIndirectCount : details::TDrawVerticesDesc<FDrawVerticesIndi
     FRawBufferID IndirectBuffer; // contains array of 'DrawIndirectCommand'
     FRawBufferID CountBuffer; // contains single 'uint' value
 
-#if USE_PPE_RHITASKNAME
-    FDrawVerticesIndirectCount() NOEXCEPT : TDrawVerticesDesc<FDrawVerticesIndirectCount>{ "DrawVerticesIndirectCount", FDebugColorScheme::Get().Draw } {}
-#else
-    FDrawVerticesIndirectCount() = default;
-#endif
+    PPE_RHI_API FDrawVerticesIndirectCount() NOEXCEPT;
+    PPE_RHI_API ~FDrawVerticesIndirectCount();
 
-    FDrawVerticesIndirectCount& SetIndirectBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        IndirectBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawVerticesIndirectCount& SetCountBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        CountBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawVerticesIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand)) {
-        Assert(maxDrawCount > 0);
-        Emplace_Back(Commands, indirectBufferOffset, countBufferOffset, maxDrawCount, indirectBufferStride);
-        return (*this);
-    }
+    PPE_RHI_API FDrawVerticesIndirectCount& SetIndirectBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawVerticesIndirectCount& SetCountBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawVerticesIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand));
 };
 //----------------------------------------------------------------------------
 // FDrawIndexedIndirectCount
@@ -357,37 +288,13 @@ struct FDrawIndexedIndirectCount : details::TDrawVerticesDesc<FDrawIndexedIndire
     FRawBufferID IndirectBuffer; // contains array of 'DrawIndirectCommand'
     FRawBufferID CountBuffer; // contains single 'uint' value
 
-#if USE_PPE_RHITASKNAME
-    FDrawIndexedIndirectCount() NOEXCEPT : TDrawVerticesDesc<FDrawIndexedIndirectCount>{ "DrawIndexedIndirectCount", FDebugColorScheme::Get().Draw } {}
-#else
-    FDrawIndexedIndirectCount() = default;
-#endif
+    PPE_RHI_API FDrawIndexedIndirectCount() NOEXCEPT;
+    PPE_RHI_API ~FDrawIndexedIndirectCount();
 
-    FDrawIndexedIndirectCount& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default) {
-        Assert(buffer);
-        IndexBuffer = buffer;
-        IndexBufferOffset = offset;
-        IndexFormat = fmt;
-        return (*this);
-    }
-
-    FDrawIndexedIndirectCount& SetIndirectBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        IndirectBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawIndexedIndirectCount& SetCountBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        CountBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawIndexedIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand)) {
-        Assert(maxDrawCount > 0);
-        Emplace_Back(Commands, indirectBufferOffset, countBufferOffset, maxDrawCount, indirectBufferStride);
-        return (*this);
-    }
+    PPE_RHI_API FDrawIndexedIndirectCount& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0, EIndexFormat fmt = Default);
+    PPE_RHI_API FDrawIndexedIndirectCount& SetIndirectBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawIndexedIndirectCount& SetCountBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawIndexedIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indirectBufferStride = sizeof(FIndirectCommand));
 };
 //----------------------------------------------------------------------------
 // FDrawMeshes
@@ -403,23 +310,11 @@ struct FDrawMeshes final : details::TDrawCallDesc<FDrawMeshes> {
     FRawMPipelineID Pipeline;
     FDrawCommands Commands;
 
-#if USE_PPE_RHITASKNAME
-    FDrawMeshes() NOEXCEPT : TDrawCallDesc<FDrawMeshes>{ "DrawMeshes", FDebugColorScheme::Get().DrawMeshes } {}
-#else
-    FDrawMeshes() = default;
-#endif
+    PPE_RHI_API FDrawMeshes() NOEXCEPT;
+    PPE_RHI_API ~FDrawMeshes();
 
-    FDrawMeshes& SetPipeline(FRawMPipelineID value) {
-        Assert(value);
-        Pipeline = value;
-        return (*this);
-    }
-
-    FDrawMeshes& Draw(u32 meshCount, u32 firstMesh = 0) {
-        Assert(meshCount > 0);
-        Emplace_Back(Commands, meshCount, firstMesh);
-        return (*this);
-    }
+    PPE_RHI_API FDrawMeshes& SetPipeline(FRawMPipelineID value);
+    PPE_RHI_API FDrawMeshes& Draw(u32 meshCount, u32 firstMesh = 0);
 };
 //----------------------------------------------------------------------------
 // FDrawMeshesIndirect
@@ -438,29 +333,12 @@ struct FDrawMeshesIndirect final : details::TDrawCallDesc<FDrawMeshesIndirect> {
     FDrawCommands Commands;
     FRawBufferID IndirectBuffer;
 
-#if USE_PPE_RHITASKNAME
-    FDrawMeshesIndirect() NOEXCEPT : TDrawCallDesc<FDrawMeshesIndirect>{ "DrawMeshesIndirect", FDebugColorScheme::Get().DrawMeshes } {}
-#else
-    FDrawMeshesIndirect() = default;
-#endif
+    PPE_RHI_API FDrawMeshesIndirect() NOEXCEPT;
+    PPE_RHI_API ~FDrawMeshesIndirect();
 
-    FDrawMeshesIndirect& SetPipeline(FRawMPipelineID value) {
-        Assert(value);
-        Pipeline = value;
-        return (*this);
-    }
-
-    FDrawMeshesIndirect& SetIndirectBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        IndirectBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawMeshesIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 stride = sizeof(FIndirectCommand)) {
-        Assert(drawCount > 0);
-        Emplace_Back(Commands, drawCount, indirectBufferOffset, stride);
-        return (*this);
-    }
+    PPE_RHI_API FDrawMeshesIndirect& SetPipeline(FRawMPipelineID value);
+    PPE_RHI_API FDrawMeshesIndirect& SetIndirectBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawMeshesIndirect& Draw(u32 drawCount, u32 indirectBufferOffset = 0, u32 stride = sizeof(FIndirectCommand));
 };
 //----------------------------------------------------------------------------
 // FDrawMeshesIndirectCount
@@ -474,35 +352,13 @@ struct FDrawMeshesIndirectCount final : details::TDrawCallDesc<FDrawMeshesIndire
     FRawBufferID IndirectBuffer; // contains array of 'DrawIndirectCommand'
     FRawBufferID CountBuffer; // contains single 'uint' value
 
-#if USE_PPE_RHITASKNAME
-    FDrawMeshesIndirectCount() NOEXCEPT : TDrawCallDesc<FDrawMeshesIndirectCount>{ "DrawMeshesIndirectCount", FDebugColorScheme::Get().DrawMeshes } {}
-#else
-    FDrawMeshesIndirectCount() = default;
-#endif
+    PPE_RHI_API FDrawMeshesIndirectCount() NOEXCEPT;
+    PPE_RHI_API ~FDrawMeshesIndirectCount();
 
-    FDrawMeshesIndirectCount& SetPipeline(FRawMPipelineID value) {
-        Assert(value);
-        Pipeline = value;
-        return (*this);
-    }
-
-    FDrawMeshesIndirectCount& SetIndirectBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        IndirectBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawMeshesIndirectCount& SetCountBuffer(FRawBufferID buffer) {
-        Assert(buffer);
-        CountBuffer = buffer;
-        return (*this);
-    }
-
-    FDrawMeshesIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indexBufferStride = sizeof(FIndirectCommand)) {
-        Assert(maxDrawCount > 0);
-        Emplace_Back(Commands, indirectBufferOffset, countBufferOffset, maxDrawCount, indexBufferStride);
-        return (*this);
-    }
+    PPE_RHI_API FDrawMeshesIndirectCount& SetPipeline(FRawMPipelineID value);
+    PPE_RHI_API FDrawMeshesIndirectCount& SetIndirectBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawMeshesIndirectCount& SetCountBuffer(FRawBufferID buffer);
+    PPE_RHI_API FDrawMeshesIndirectCount& Draw(u32 maxDrawCount, u32 indirectBufferOffset = 0, u32 countBufferOffset = 0, u32 indexBufferStride = sizeof(FIndirectCommand));
 };
 //----------------------------------------------------------------------------
 // FCustomDraw
@@ -518,26 +374,12 @@ struct FCustomDraw final : details::TDrawTaskDesc<FCustomDraw> {
     FImages Images;
     FBuffers Buffers;
 
-#if !USE_PPE_RHITASKNAME
-    FCustomDraw() = default;
-#else
-    FCustomDraw() NOEXCEPT : TDrawTaskDesc<FCustomDraw>{ "CustomDraw", FDebugColorScheme::Get().CustomDraw } {}
-#endif
+    PPE_RHI_API FCustomDraw() NOEXCEPT;
+    PPE_RHI_API explicit FCustomDraw(FCallback&& rcallback, void* userParam = nullptr) NOEXCEPT;
+    PPE_RHI_API ~FCustomDraw();
 
-    explicit FCustomDraw(FCallback&& rcallback, void* userParam = nullptr) : FCustomDraw() {
-        Callback = std::move(rcallback);
-        UserParam = userParam;
-    }
-
-    FCustomDraw& AddImage(FRawImageID image, EResourceState state = EResourceState::ShaderSample) {
-        Images.Push(image, state);
-        return (*this);
-    }
-
-    FCustomDraw& AddBuffer(FRawBufferID buffer, EResourceState state = EResourceState::ShaderSample) {
-        Buffers.Push(buffer, state);
-        return (*this);
-    }
+    PPE_RHI_API FCustomDraw& AddImage(FRawImageID image, EResourceState state = EResourceState::ShaderSample);
+    PPE_RHI_API FCustomDraw& AddBuffer(FRawBufferID buffer, EResourceState state = EResourceState::ShaderSample);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

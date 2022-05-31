@@ -54,10 +54,14 @@ func (clang *ClangCompiler) DebugSymbols(f *Facet, sym DebugType, output Filenam
 		f.LinkerOptions.Remove("/DEBUG")
 		f.LinkerOptions.Append("/DEBUG:GHASH")
 	}
+
+	// not supported by clang-cl
+	f.RemoveCompilationFlag("/Zf")
 }
 func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	clang.MsvcCompiler.Decorate(compileEnv, u)
 
+	// flags added by msvc but not supported by clang-cl, llvm-lib or lld-link
 	u.RemoveCompilationFlag("/WX", "/JMC-")
 	u.LibrarianOptions.Remove("/WX", "/SUBSYSTEM:WINDOWS", "/NODEFAULTLIB")
 	u.LinkerOptions.Remove("/WX", "/LTCG", "/LTCG:INCREMENTAL", "/LTCG:OFF", "/NODEFAULTLIB", "/d2:-cgsummary")

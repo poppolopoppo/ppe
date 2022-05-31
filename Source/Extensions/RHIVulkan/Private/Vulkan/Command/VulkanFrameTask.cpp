@@ -37,6 +37,10 @@ static VkClearColorValue VKClearColorValue_(const FClearColorImage::FClearColor&
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+IVulkanFrameTask::IVulkanFrameTask() NOEXCEPT = default;
+//----------------------------------------------------------------------------
+IVulkanFrameTask::~IVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 template <typename T>
 IVulkanFrameTask::IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProcessFunc process) NOEXCEPT
 :   _process(process)
@@ -94,7 +98,7 @@ void IVulkanFrameTask::CopyDescriptorSets(
 //----------------------------------------------------------------------------
 // Submit
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FSubmitRenderPass>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FSubmitRenderPass& desc, FProcessFunc process)
+TVulkanFrameTask<FSubmitRenderPass>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FSubmitRenderPass& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   _logicalPass(cmd.ToLocal(desc.RenderPassId)) {
 
@@ -102,9 +106,11 @@ TVulkanFrameTask<FSubmitRenderPass>::TVulkanFrameTask(FVulkanCommandBuffer& cmd,
         VerifyRelease( _logicalPass->Submit(cmd, desc.Images.MakeView(), desc.Buffers.MakeView()) );
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FSubmitRenderPass>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // Compute
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FDispatchCompute>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchCompute& desc, FProcessFunc process)
+TVulkanFrameTask<FDispatchCompute>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchCompute& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   Pipeline(cmd.AcquireTransient(desc.Pipeline))
 ,   PushConstants(desc.PushConstants)
@@ -119,7 +125,9 @@ TVulkanFrameTask<FDispatchCompute>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, 
 #endif
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FDispatchComputeIndirect>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchComputeIndirect& desc, FProcessFunc process)
+TVulkanFrameTask<FDispatchCompute>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FDispatchComputeIndirect>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchComputeIndirect& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   Pipeline(cmd.AcquireTransient(desc.Pipeline))
 ,   PushConstants(desc.PushConstants)
@@ -137,9 +145,11 @@ TVulkanFrameTask<FDispatchComputeIndirect>::TVulkanFrameTask(FVulkanCommandBuffe
 #endif
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FDispatchComputeIndirect>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // Copy
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FCopyBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBuffer& desc, FProcessFunc process)
+TVulkanFrameTask<FCopyBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBuffer& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   SrcBuffer(cmd.ToLocal(desc.SrcBuffer))
 ,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
@@ -148,7 +158,11 @@ TVulkanFrameTask<FCopyBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const
     Assert_NoAssume(DstBuffer and DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FCopyImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImage& desc, FProcessFunc process)
+TVulkanFrameTask<FCopyBuffer>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+// FCopyImage
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FCopyImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImage& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   SrcImage(cmd.ToLocal(desc.SrcImage))
 ,   SrcLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
@@ -159,7 +173,11 @@ TVulkanFrameTask<FCopyImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const 
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FCopyBufferToImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBufferToImage& desc, FProcessFunc process)
+TVulkanFrameTask<FCopyImage>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+// FCopyBufferToImage
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FCopyBufferToImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBufferToImage& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   SrcBuffer(cmd.ToLocal(desc.SrcBuffer))
 ,   DstImage(cmd.ToLocal(desc.DstImage))
@@ -169,7 +187,11 @@ TVulkanFrameTask<FCopyBufferToImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FCopyImageToBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImageToBuffer& desc, FProcessFunc process)
+TVulkanFrameTask<FCopyBufferToImage>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+// FCopyImageToBuffer
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FCopyImageToBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImageToBuffer& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   SrcImage(cmd.ToLocal(desc.SrcImage))
 ,   SrcLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
@@ -178,10 +200,12 @@ TVulkanFrameTask<FCopyImageToBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd
     Assert_NoAssume(SrcImage and SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
     Assert_NoAssume(DstBuffer and DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 }
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FCopyImageToBuffer>::~TVulkanFrameTask() = default;
 //----------------------------------------------------------------------------
 // Blit
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FBlitImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBlitImage& desc, FProcessFunc process)
+TVulkanFrameTask<FBlitImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBlitImage& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   SrcImage(cmd.ToLocal(desc.SrcImage))
 ,   SrcLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
@@ -193,9 +217,11 @@ TVulkanFrameTask<FBlitImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const 
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FBlitImage>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // GenerateMipMaps
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FGenerateMipmaps>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process)
+TVulkanFrameTask<FGenerateMipmaps>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   Image(cmd.ToLocal(desc.Image))
 ,   BaseMipLevel(*desc.BaseLevel)
@@ -205,9 +231,11 @@ TVulkanFrameTask<FGenerateMipmaps>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, 
     Assert_NoAssume(Image and Image->Read()->Desc.Usage & (EImageUsage::TransferSrc + EImageUsage::TransferDst));
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FGenerateMipmaps>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // ResolveImage
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FResolveImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FResolveImage& desc, FProcessFunc process)
+TVulkanFrameTask<FResolveImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FResolveImage& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   SrcImage(cmd.ToLocal(desc.SrcImage))
 ,   SrcLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
@@ -218,9 +246,11 @@ TVulkanFrameTask<FResolveImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, con
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FResolveImage>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // FillBuffer
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FFillBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FFillBuffer& desc, FProcessFunc process)
+TVulkanFrameTask<FFillBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FFillBuffer& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
 ,   DstOffset(checked_cast<VkDeviceSize>(desc.DstOffset))
@@ -229,9 +259,11 @@ TVulkanFrameTask<FFillBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const
     Assert_NoAssume(DstBuffer and DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FFillBuffer>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // Clear
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FClearColorImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearColorImage& desc, FProcessFunc process)
+TVulkanFrameTask<FClearColorImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearColorImage& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   DstImage(cmd.ToLocal(desc.DstImage))
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
@@ -240,7 +272,11 @@ TVulkanFrameTask<FClearColorImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, 
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FClearDepthStencilImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearDepthStencilImage& desc, FProcessFunc process)
+TVulkanFrameTask<FClearColorImage>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+// FClearDepthStencilImage
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FClearDepthStencilImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearDepthStencilImage& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   DstImage(cmd.ToLocal(desc.DstImage))
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
@@ -249,9 +285,11 @@ TVulkanFrameTask<FClearDepthStencilImage>::TVulkanFrameTask(FVulkanCommandBuffer
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FClearDepthStencilImage>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // UpdateBuffer
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FUpdateBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process)
+TVulkanFrameTask<FUpdateBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   DstBuffer(cmd.ToLocal(desc.DstBuffer))
 ,   Regions(cmd.Allocator().AllocateT<FRegion>(desc.Regions.size())) {
@@ -269,9 +307,11 @@ TVulkanFrameTask<FUpdateBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, con
     }
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FUpdateBuffer>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // Present
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FPresent>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FPresent& desc, FProcessFunc process)
+TVulkanFrameTask<FPresent>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FPresent& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   Swapchain(cmd.AcquireTransient(desc.Swapchain))
 ,   SrcImage(cmd.ToLocal(desc.SrcImage))
@@ -280,9 +320,11 @@ TVulkanFrameTask<FPresent>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FP
     Assert_NoAssume(SrcImage and SrcImage->Read()->Desc.Usage & EImageUsage::TransferSrc);
 }
 //----------------------------------------------------------------------------
+TVulkanFrameTask<FPresent>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
 // Custom
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FCustomTask>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCustomTask& desc, FProcessFunc process)
+TVulkanFrameTask<FCustomTask>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCustomTask& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   Callback(desc.Callback)
 ,   Images(cmd.Allocator().AllocateCopyT(desc.Images.MakeView(), [&cmd](auto src) {
@@ -291,12 +333,13 @@ TVulkanFrameTask<FCustomTask>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const
 ,   Buffers(cmd.Allocator().AllocateCopyT(desc.Buffers.MakeView(), [&cmd](auto src) {
         return TPair<const FVulkanLocalBuffer*, EResourceState>(cmd.ToLocal(src.first), src.second);
     })) {
-
 }
 //----------------------------------------------------------------------------
-// RayTracing
+TVulkanFrameTask<FCustomTask>::~TVulkanFrameTask() = default;
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FUpdateRayTracingShaderTable>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateRayTracingShaderTable& desc, FProcessFunc process)
+// FUpdateRayTracingShaderTable
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FUpdateRayTracingShaderTable>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateRayTracingShaderTable& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   Pipeline(desc.Pipeline)
 ,   RTScene(cmd.ToLocal(desc.Scene))
@@ -307,18 +350,30 @@ TVulkanFrameTask<FUpdateRayTracingShaderTable>::TVulkanFrameTask(FVulkanCommandB
 
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FBuildRayTracingGeometry>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingGeometry& desc, FProcessFunc process)
+TVulkanFrameTask<FUpdateRayTracingShaderTable>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+// FBuildRayTracingGeometry
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FBuildRayTracingGeometry>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingGeometry& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   UsableBuffers(cmd.Allocator()) {
     Unused(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task)
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FBuildRayTracingScene>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingScene& desc, FProcessFunc process)
+TVulkanFrameTask<FBuildRayTracingGeometry>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+// FBuildRayTracingScene
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FBuildRayTracingScene>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingScene& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process) {
     Unused(cmd); // Initialized in FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task)
 }
 //----------------------------------------------------------------------------
-TVulkanFrameTask<FTraceRays>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FTraceRays& desc, FProcessFunc process)
+TVulkanFrameTask<FBuildRayTracingScene>::~TVulkanFrameTask() = default;
+//----------------------------------------------------------------------------
+// FTraceRays
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FTraceRays>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FTraceRays& desc, FProcessFunc process) NOEXCEPT
 :   IVulkanFrameTask(desc, process)
 ,   ShaderTable(cmd.AcquireTransient(desc.ShaderTable))
 ,   PushConstants(desc.PushConstants)
@@ -332,6 +387,8 @@ TVulkanFrameTask<FTraceRays>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, const 
         DebugModeIndex = cmd.Batch()->AppendShaderForDebug(desc.TaskName, desc.DebugMode);
 #endif
 }
+//----------------------------------------------------------------------------
+TVulkanFrameTask<FTraceRays>::~TVulkanFrameTask() = default;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

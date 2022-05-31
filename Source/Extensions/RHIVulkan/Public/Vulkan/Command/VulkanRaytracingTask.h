@@ -33,7 +33,8 @@ public:
     const FRayGenShader RayGenShader;
     const u32 MaxRecursionDepth;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateRayTracingShaderTable& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateRayTracingShaderTable& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Pipeline && !!RTScene && !!ShaderTable); }
 
@@ -55,7 +56,8 @@ public:
 
     FUsableBuffers UsableBuffers;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingGeometry& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingGeometry& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return true/*(!!RTGeometry && !!ScratchBuffer && not Geometries.empty())*/; }
 
@@ -87,7 +89,8 @@ public:
     u32 HitShadersPerInstance{ 0 };
     u32 MaxHitShaderCount{ 0 };
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingScene& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBuildRayTracingScene& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const {
         //Assert_NoAssume(Instances.size() == NumInstances);
@@ -118,7 +121,8 @@ public:
     EShaderDebugIndex DebugModeIndex{ Default };
 #endif
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FTraceRays& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FTraceRays& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!ShaderTable && !!GroupCount.x && !!GroupCount.y && !!GroupCount.z); }
 

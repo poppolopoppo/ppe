@@ -3,6 +3,8 @@
 #define EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR
 #define EXPORT_PPE_RUNTIME_CORE_SCALARBOUNDINGBOX
 
+#include "Maths/PackedVectors.h"
+#include "Maths/PackingHelpers.h"
 #include "Maths/ScalarBoundingBox.h"
 #include "Maths/ScalarRectangle.h"
 #include "Maths/ScalarVector.h"
@@ -56,47 +58,66 @@ EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 4>;
 //----------------------------------------------------------------------------
 // TScalarBoundingBox
 //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 4>;
- //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 4>;
- //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 4>;
- //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 4>;
- //----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<int, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<unsigned int, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<float, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoundingBox<double, 4>;
+//----------------------------------------------------------------------------
 // TScalarBoxWExtent
- //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 4>;
- //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 4>;
- //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 4>;
- //----------------------------------------------------------------------------
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 1>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 2>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 3>;
- EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<int, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<unsigned int, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<float, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 4>;
+//----------------------------------------------------------------------------
+// Packed vectors
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 4>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 4>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 3>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 4>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 3>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 4>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

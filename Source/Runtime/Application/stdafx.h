@@ -10,6 +10,9 @@
 #include "Application_fwd.h"
 
 #include "RHI_fwd.h"
+#include "IO/String.h"
+#include "IO/StringBuilder.h"
+#include "Thread/ThreadPool.h"
 #include "VirtualFileSystem_fwd.h"
 
 #if BUILD_PCH

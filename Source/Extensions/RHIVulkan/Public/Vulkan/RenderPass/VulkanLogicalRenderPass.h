@@ -48,10 +48,8 @@ public:
     using FMutableImages = TMemoryView<TPair<const FVulkanLocalImage*, EResourceState>>;
     using FMutableBuffers = TMemoryView<TPair<const FVulkanLocalBuffer*, EResourceState>>;
 
-    FVulkanLogicalRenderPass() = default;
-#if USE_PPE_RHIDEBUG
+    FVulkanLogicalRenderPass() NOEXCEPT;
     ~FVulkanLogicalRenderPass();
-#endif
 
     FVulkanLogicalRenderPass(FVulkanLogicalRenderPass&& rvalue) = default;
     FVulkanLogicalRenderPass& operator =(FVulkanLogicalRenderPass&& ) = delete;

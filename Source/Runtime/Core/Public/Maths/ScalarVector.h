@@ -1099,6 +1099,6 @@ EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<double, 4>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace
-#endif //!
+#endif //!EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR
 
 PRAGMA_RESTORE_RUNTIMECHECKS

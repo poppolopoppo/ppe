@@ -115,6 +115,7 @@ public:
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawVertices& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 // FDrawIndexed:
@@ -130,6 +131,7 @@ public:
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawIndexed& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 // FDrawVerticesIndirect:
@@ -143,6 +145,7 @@ public:
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawVerticesIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 // FDrawIndexedIndirect:
@@ -160,6 +163,7 @@ public:
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawIndexedIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 // FDrawVerticesIndirectCount:
@@ -174,6 +178,7 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawVerticesIndirectCount> final : publ
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawVerticesIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 // FDrawIndexedIndirectCount:
@@ -192,6 +197,7 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawIndexedIndirectCount> final : publi
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawIndexedIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -239,6 +245,7 @@ public:
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawMeshes& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 // FDrawMeshesIndirect:
@@ -252,6 +259,7 @@ public:
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawMeshesIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 // FDrawMeshesIndirect:
@@ -266,6 +274,7 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshesIndirectCount> final : public
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawMeshesIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 };
 //----------------------------------------------------------------------------
 #endif //!VK_NV_mesh_shader
@@ -290,6 +299,7 @@ public:
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FCustomDraw& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
+    ~TVulkanDrawTask();
 
     bool Valid() const { return (!!Callback); }
 };

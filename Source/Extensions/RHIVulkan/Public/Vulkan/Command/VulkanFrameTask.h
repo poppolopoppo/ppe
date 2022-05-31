@@ -77,7 +77,8 @@ public:
         const FPipelineResourceSet& input );
 
 protected:
-    IVulkanFrameTask() = default;
+    IVulkanFrameTask() NOEXCEPT;
+    ~IVulkanFrameTask();
 
     template <typename T>
     IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProcessFunc process) NOEXCEPT;
@@ -101,7 +102,8 @@ protected:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FSubmitRenderPass> final : public IVulkanFrameTask {
 public:
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FSubmitRenderPass& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FSubmitRenderPass& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!_logicalPass); }
 
@@ -139,7 +141,8 @@ public:
     virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
 #endif
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchCompute& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchCompute& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Pipeline); }
 
@@ -167,7 +170,8 @@ public:
     virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
 #endif
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchComputeIndirect& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FDispatchComputeIndirect& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Pipeline && !!IndirectBuffer); }
 
@@ -189,7 +193,8 @@ public:
     const FVulkanLocalBuffer* const DstBuffer;
     const FRegions Regions;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBuffer& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBuffer& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!SrcBuffer && !!DstBuffer && not Regions.empty()); }
 
@@ -212,7 +217,8 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImage> final : public IVulkanFrame
     const VkImageLayout DstLayout;
     const FRegions Regions;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImage& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImage& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!SrcImage && !!DstImage && not Regions.empty()); }
 
@@ -234,7 +240,8 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyBufferToImage> final : public IVul
     const VkImageLayout DstLayout;
     const FRegions Regions;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBufferToImage& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBufferToImage& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!SrcBuffer && !!DstImage && not Regions.empty()); }
 
@@ -256,7 +263,8 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImageToBuffer> final : public IVul
     const FVulkanLocalBuffer* const DstBuffer;
     const FRegions Regions;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImageToBuffer& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImageToBuffer& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!SrcImage && !!DstBuffer && not Regions.empty()); }
 
@@ -280,7 +288,8 @@ public:
     const VkFilter Filter;
     const FRegions Regions;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBlitImage& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBlitImage& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!SrcImage && !!DstImage && not Regions.empty()); }
 
@@ -300,7 +309,8 @@ public:
     const u32 BaseLayer;
     const u32 LayerCount;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FGenerateMipmaps& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Image && LevelCount > 0); }
 
@@ -323,7 +333,8 @@ public:
     const VkImageLayout DstLayout;
     const FRegions Regions;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FResolveImage& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FResolveImage& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!SrcImage && !!DstImage && not Regions.empty()); }
 
@@ -342,7 +353,8 @@ public:
     const VkDeviceSize Size;
     const u32 Pattern;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FFillBuffer& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FFillBuffer& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!DstBuffer && Size > 0); }
 
@@ -364,7 +376,8 @@ public:
     const FRanges Ranges;
     const VkClearColorValue ClearValue;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearColorImage& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearColorImage& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!DstImage && not Ranges.empty()); }
 
@@ -386,7 +399,8 @@ public:
     const FRanges Ranges;
     const VkClearDepthStencilValue ClearValue;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearDepthStencilImage& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearDepthStencilImage& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!DstImage && not Ranges.empty()); }
 
@@ -409,7 +423,8 @@ public:
     const FVulkanLocalBuffer* const DstBuffer;
     const TMemoryView<const FRegion> Regions;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!DstBuffer && not Regions.empty()); }
 
@@ -428,7 +443,8 @@ public:
     const FImageLayer Layer;
     const FMipmapLevel Mipmap;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FPresent& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FPresent& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Swapchain && !!SrcImage); }
 
@@ -450,7 +466,8 @@ public:
     const FImages Images;
     const FBuffers Buffers;
 
-    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCustomTask& desc, FProcessFunc process);
+    TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCustomTask& desc, FProcessFunc process) NOEXCEPT;
+    ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Callback); }
 

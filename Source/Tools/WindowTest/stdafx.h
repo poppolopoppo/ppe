@@ -7,6 +7,9 @@
 
 #include "HAL/PlatformIncludes.h"
 
+#include "RHIApi.h"
+#include "Application/ApplicationWindow.h"
+
 #include "Runtime/Core/stdafx.h"
 #include "Runtime/Application/stdafx.h"
 #include "Runtime/RHI/stdafx.h"

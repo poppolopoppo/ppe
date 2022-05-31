@@ -98,6 +98,15 @@ void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FPipelineDesc::FPipelineDesc() NOEXCEPT = default;
+FPipelineDesc::~FPipelineDesc() = default;
+//----------------------------------------------------------------------------
+FPipelineDesc::FPipelineDesc(FPipelineDesc&&) NOEXCEPT = default;
+FPipelineDesc& FPipelineDesc::operator =(FPipelineDesc&&) NOEXCEPT = default;
+//----------------------------------------------------------------------------
+FPipelineDesc::FShader::FShader() NOEXCEPT = default;
+FPipelineDesc::FShader::~FShader() = default;
+//----------------------------------------------------------------------------
 void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(entry);
     Assert(not rsource.empty());
@@ -181,6 +190,12 @@ void FPipelineDesc::SetPushConstants_(TMemoryView<const FPushConstant> values) {
 //----------------------------------------------------------------------------
 // Graphics
 //----------------------------------------------------------------------------
+FGraphicsPipelineDesc::FGraphicsPipelineDesc() NOEXCEPT = default;
+FGraphicsPipelineDesc::~FGraphicsPipelineDesc() = default;
+//----------------------------------------------------------------------------
+FGraphicsPipelineDesc::FGraphicsPipelineDesc(FGraphicsPipelineDesc&&) NOEXCEPT = default;
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::operator =(FGraphicsPipelineDesc&&) NOEXCEPT = default;
+//----------------------------------------------------------------------------
 FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
     AddShaderData_(&Shaders, type, fmt, module);
@@ -212,6 +227,12 @@ FGraphicsPipelineDesc& FGraphicsPipelineDesc::SetSpecializationConstants(EShader
 }
 //----------------------------------------------------------------------------
 // Compute
+//----------------------------------------------------------------------------
+FComputePipelineDesc::FComputePipelineDesc() NOEXCEPT = default;
+FComputePipelineDesc::~FComputePipelineDesc() = default;
+//----------------------------------------------------------------------------
+FComputePipelineDesc::FComputePipelineDesc(FComputePipelineDesc&&) NOEXCEPT = default;
+FComputePipelineDesc& FComputePipelineDesc::operator =(FComputePipelineDesc&&) NOEXCEPT = default;
 //----------------------------------------------------------------------------
 FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, const PShaderModule& module) {
     Assert_NoAssume(Shader.Data.end() == Shader.Data.find(fmt));
@@ -246,6 +267,12 @@ FComputePipelineDesc& FComputePipelineDesc::SetSpecializationConstants(TMemoryVi
 //----------------------------------------------------------------------------
 // Mesh
 //----------------------------------------------------------------------------
+FMeshPipelineDesc::FMeshPipelineDesc() NOEXCEPT = default;
+FMeshPipelineDesc::~FMeshPipelineDesc() = default;
+//----------------------------------------------------------------------------
+FMeshPipelineDesc::FMeshPipelineDesc(FMeshPipelineDesc&&) NOEXCEPT = default;
+FMeshPipelineDesc& FMeshPipelineDesc::operator =(FMeshPipelineDesc&&) NOEXCEPT = default;
+//----------------------------------------------------------------------------
 FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
     AddShaderData_(&Shaders, type, fmt, module);
@@ -277,6 +304,12 @@ FMeshPipelineDesc& FMeshPipelineDesc::SetSpecializationConstants(EShaderType typ
 }
 //----------------------------------------------------------------------------
 // RayTracing
+//----------------------------------------------------------------------------
+FRayTracingPipelineDesc::FRayTracingPipelineDesc() NOEXCEPT = default;
+FRayTracingPipelineDesc::~FRayTracingPipelineDesc() = default;
+//----------------------------------------------------------------------------
+FRayTracingPipelineDesc::FRayTracingPipelineDesc(FRayTracingPipelineDesc&&) NOEXCEPT = default;
+FRayTracingPipelineDesc& FRayTracingPipelineDesc::operator =(FRayTracingPipelineDesc&&) NOEXCEPT = default;
 //----------------------------------------------------------------------------
 FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, const PShaderModule& module) {
     Assert(id.Valid());

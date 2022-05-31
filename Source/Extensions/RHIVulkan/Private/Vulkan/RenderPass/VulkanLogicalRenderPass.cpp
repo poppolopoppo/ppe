@@ -39,10 +39,14 @@ static void SetVulkanClearValue_(VkClearValue* pout, const FRenderPassDesc::FCle
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FVulkanLogicalRenderPass::FVulkanLogicalRenderPass() NOEXCEPT = default;
+//----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 FVulkanLogicalRenderPass::~FVulkanLogicalRenderPass() {
     Assert_NoAssume(not _drawTasks.Available);
 }
+#else
+FVulkanLogicalRenderPass::~FVulkanLogicalRenderPass() = default;
 #endif
 //----------------------------------------------------------------------------
 bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRenderPassDesc& desc) {

@@ -89,6 +89,7 @@ TVulkanDrawTask<FDrawVertices>::TVulkanDrawTask(
 ,   Commands(desc.Commands) {
 
 }
+TVulkanDrawTask<FDrawVertices>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 TVulkanDrawTask<FDrawIndexed>::TVulkanDrawTask(
     FVulkanLogicalRenderPass& renderPass,
@@ -103,6 +104,7 @@ TVulkanDrawTask<FDrawIndexed>::TVulkanDrawTask(
     Assert_NoAssume(IndexBuffer);
     Assert_NoAssume(IndexBuffer->Read()->Desc.Usage & EBufferUsage::Index);
 }
+TVulkanDrawTask<FDrawIndexed>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 TVulkanDrawTask<FDrawVerticesIndirect>::TVulkanDrawTask(
     FVulkanLogicalRenderPass& renderPass,
@@ -115,6 +117,7 @@ TVulkanDrawTask<FDrawVerticesIndirect>::TVulkanDrawTask(
     Assert_NoAssume(IndirectBuffer);
     Assert_NoAssume(IndirectBuffer->Read()->Desc.Usage & EBufferUsage::Indirect);
 }
+TVulkanDrawTask<FDrawVerticesIndirect>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 TVulkanDrawTask<FDrawIndexedIndirect>::TVulkanDrawTask(
     FVulkanLogicalRenderPass& renderPass,
@@ -132,6 +135,7 @@ TVulkanDrawTask<FDrawIndexedIndirect>::TVulkanDrawTask(
     Assert_NoAssume(IndexBuffer);
     Assert_NoAssume(IndexBuffer->Read()->Desc.Usage & EBufferUsage::Index);
 }
+TVulkanDrawTask<FDrawIndexedIndirect>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 TVulkanDrawTask<FDrawVerticesIndirectCount>::TVulkanDrawTask(
     FVulkanLogicalRenderPass& renderPass,
@@ -147,6 +151,7 @@ TVulkanDrawTask<FDrawVerticesIndirectCount>::TVulkanDrawTask(
     Assert_NoAssume(CountBuffer);
     Assert_NoAssume(CountBuffer->Read()->Desc.Usage & EBufferUsage::Index);
 }
+TVulkanDrawTask<FDrawVerticesIndirectCount>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 TVulkanDrawTask<FDrawIndexedIndirectCount>::TVulkanDrawTask(
     FVulkanLogicalRenderPass& renderPass,
@@ -167,6 +172,7 @@ TVulkanDrawTask<FDrawIndexedIndirectCount>::TVulkanDrawTask(
     Assert_NoAssume(IndexBuffer);
     Assert_NoAssume(IndexBuffer->Read()->Desc.Usage & EBufferUsage::Index);
 }
+TVulkanDrawTask<FDrawIndexedIndirectCount>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 // Draw meshes tasks
 //----------------------------------------------------------------------------
@@ -181,6 +187,7 @@ TVulkanDrawTask<FDrawMeshes>::TVulkanDrawTask(
 ,   Commands(desc.Commands) {
 
 }
+TVulkanDrawTask<FDrawMeshes>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 TVulkanDrawTask<FDrawMeshesIndirect>::TVulkanDrawTask(
     FVulkanLogicalRenderPass& renderPass,
@@ -193,6 +200,7 @@ TVulkanDrawTask<FDrawMeshesIndirect>::TVulkanDrawTask(
     Assert_NoAssume(IndirectBuffer);
     Assert_NoAssume(IndirectBuffer->Read()->Desc.Usage & EBufferUsage::Indirect);
 }
+TVulkanDrawTask<FDrawMeshesIndirect>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 TVulkanDrawTask<FDrawMeshesIndirectCount>::TVulkanDrawTask(
     FVulkanLogicalRenderPass& renderPass,
@@ -208,6 +216,7 @@ TVulkanDrawTask<FDrawMeshesIndirectCount>::TVulkanDrawTask(
     Assert_NoAssume(CountBuffer);
     Assert_NoAssume(CountBuffer->Read()->Desc.Usage & EBufferUsage::Index);
 }
+TVulkanDrawTask<FDrawMeshesIndirectCount>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 #endif
 //----------------------------------------------------------------------------
@@ -229,6 +238,7 @@ TVulkanDrawTask<FCustomDraw>::TVulkanDrawTask(
     })) {
 
 }
+TVulkanDrawTask<FCustomDraw>::~TVulkanDrawTask() = default;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
