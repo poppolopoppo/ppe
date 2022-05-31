@@ -15,25 +15,25 @@ const MODULEDESC_EXT = "-module.json"
 const PCH_DEFAULT_HEADER = "stdafx.h"
 const PCH_DEFAULT_SOURCE = "stdafx.cpp"
 
-var AllArchtypes utils.SharedMapT[string, ModuleArchtype]
+var AllArchetypes utils.SharedMapT[string, ModuleArchetype]
 
-type ModuleArchtype func(*ModuleRules)
+type ModuleArchetype func(*ModuleRules)
 
-func RegisterArchtype(archtype string, fn ModuleArchtype) ModuleArchtype {
+func RegisterArchetype(archtype string, fn ModuleArchetype) ModuleArchetype {
 	archtype = strings.ToUpper(archtype)
-	AllArchtypes.Add(archtype, fn)
+	AllArchetypes.Add(archtype, fn)
 	return fn
 }
 
 type ExtensionDesc struct {
-	Archtypes utils.StringSet
+	Archetypes utils.StringSet
 	HAL       map[utils.HostId]*ModuleDesc
 }
 
-func (src ExtensionDesc) ApplyArchtypes(dst *ModuleDesc, name string) {
-	src.Archtypes.Range(func(id string) {
+func (src ExtensionDesc) ApplyArchetypes(dst *ModuleDesc, name string) {
+	src.Archetypes.Range(func(id string) {
 		id = strings.ToUpper(id)
-		if decorator, ok := AllArchtypes.Get(id); ok {
+		if decorator, ok := AllArchetypes.Get(id); ok {
 			utils.LogTrace("%v: inherit module archtype <%v>", name, id)
 			decorator(dst.rules)
 		} else {
@@ -52,7 +52,7 @@ func (src ExtensionDesc) ApplyHAL(dst *ModuleDesc, name string) {
 	}
 }
 func (x *ExtensionDesc) ExtendDesc(other *ExtensionDesc) {
-	x.Archtypes.Prepend(other.Archtypes...)
+	x.Archetypes.Prepend(other.Archetypes...)
 	for key, src := range other.HAL {
 		if dst, ok := x.HAL[key]; ok {
 			dst.Append(src)
@@ -162,7 +162,7 @@ func (x *ModuleDesc) Append(other *ModuleDesc) {
 	x.PublicDependencies.Append(other.PublicDependencies...)
 	x.RuntimeDependencies.Append(other.RuntimeDependencies...)
 
-	x.Archtypes = append(x.Archtypes, other.Archtypes...)
+	x.Archetypes = append(x.Archetypes, other.Archetypes...)
 
 	x.Facet.Append(other)
 }
@@ -220,7 +220,7 @@ func loadModuleDesc(src utils.Filename, namespace *NamespaceDesc) (result *Modul
 		result.rules.ForceIncludes.Append(result.ForceIncludes.ToFileSet(rootDir)...)
 		result.rules.Source.ExtraFiles.AppendUniq(src)
 
-		result.ApplyArchtypes(result, moduleId)
+		result.ApplyArchetypes(result, moduleId)
 
 		if result.PrecompiledHeader != nil {
 			f := rootDir.AbsoluteFile(*result.PrecompiledHeader).Normalize()

@@ -209,12 +209,12 @@ func main() {
 	gob.Register(BuildModulesHeader{})
 	gob.Register(BuildVersionHeader{})
 
-	RegisterArchtype("PPE/Headers", makePPE_Headers)
-	RegisterArchtype("PPE/External", makePPE_External)
-	RegisterArchtype("PPE/Module", makePPE_Module)
+	RegisterArchetype("PPE/Headers", makePPE_Headers)
+	RegisterArchetype("PPE/External", makePPE_External)
+	RegisterArchetype("PPE/Module", makePPE_Module)
 
 	for _, usage := range UsageTypes() {
-		RegisterArchtype("PPE/Program/"+string(usage), func(rules *ModuleRules) {
+		RegisterArchetype("PPE/Program/"+string(usage), func(rules *ModuleRules) {
 			makePPE_Program(rules, usage)
 		})
 	}

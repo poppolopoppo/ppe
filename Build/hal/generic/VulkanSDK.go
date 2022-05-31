@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-var Vulkan = RegisterArchtype("SDK/VULKAN", func(rules *ModuleRules) {
+var Vulkan = RegisterArchetype("SDK/VULKAN", func(rules *ModuleRules) {
 	bindingsFile := rules.ModuleDir.AbsoluteFile(rules.Exports.Get("Vulkan/Bindings"))
 	headersDir := rules.ModuleDir.AbsoluteFolder(rules.Exports.Get("Vulkan/Path"))
 

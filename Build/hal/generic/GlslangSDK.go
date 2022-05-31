@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var Glslang = RegisterArchtype("SDK/GLSLANG", func(rules *ModuleRules) {
+var Glslang = RegisterArchetype("SDK/GLSLANG", func(rules *ModuleRules) {
 	extractDir := rules.ModuleDir.AbsoluteFolder(rules.Exports.Get("Glslang/Path"))
 
 	LogTrace("glslang: use '%v' as extraction path", extractDir)

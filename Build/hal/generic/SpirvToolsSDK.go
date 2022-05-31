@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var SpirvTools = RegisterArchtype("SDK/SPIRV-TOOLS", func(rules *ModuleRules) {
+var SpirvTools = RegisterArchetype("SDK/SPIRV-TOOLS", func(rules *ModuleRules) {
 	extractDir := rules.ModuleDir.AbsoluteFolder(rules.Exports.Get("SpirvTools/Path"))
 
 	LogTrace("SPIRV-Tools: use '%v' as extraction path", extractDir)

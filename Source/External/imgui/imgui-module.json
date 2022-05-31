@@ -1,9 +1,6 @@
 {
-	"Archtypes": [
-		"PPE/External"
-	],
-	"ForceIncludes": [
-		"Public/imgui-external.h"
+	"Archetypes": [
+		"PPE/Headers"
 	],
 	"ExtraFiles": [
 		"Public/imgui-external.h",
