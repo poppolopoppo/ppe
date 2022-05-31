@@ -13,6 +13,9 @@ CONSTEXPR size_t GFunctionInSitu = (4 * sizeof(size_t) - sizeof(void*));
 template <typename T, size_t _InSitu = GFunctionInSitu>
 class TFunction;
 //----------------------------------------------------------------------------
+template <typename T>
+using TSmallFunction = TFunction<T, sizeof(intptr_t)>;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
