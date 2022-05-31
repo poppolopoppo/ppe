@@ -187,10 +187,9 @@ public:
         EShaderDebugMode debugMode,
         EShaderStages debuggableShaders,
         const FDescriptorSetID& descriptorSet );
-    NODISCARD FRawDescriptorSetLayoutID CreateDebugDescriptorSetLayout(
+    NODISCARD TPair<FRawDescriptorSetLayoutID, bool> CreateDebugDescriptorSetLayout(
         EShaderDebugMode debugMode,
-        EShaderStages debuggableShaders,
-        FConstChar debugName );
+        EShaderStages debuggableShaders );
 
     static u32 DebugShaderStorageSize(EShaderStages stages, EShaderDebugMode mode);
 #endif
@@ -260,7 +259,7 @@ private:
     NODISCARD bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount);
 
     NODISCARD bool CreateMemory_(FRawMemoryID* pId, TResourceProxy<FVulkanMemoryObject>** pMemory, const FMemoryDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
-    NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, FPipelineDesc::FPipelineLayout&& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, const FPipelineDesc::FPipelineLayout& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
     NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, const FPipelineDesc::FPipelineLayout& desc, const FDSLayouts& dsLayouts ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD bool CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId);

@@ -201,6 +201,7 @@ public:
     auto Read() const { return _data.LockShared(); }
 
     void Construct(EQueueType type, TMemoryView<const SCommandBatch> dependsOn);
+    void TearDown();
 
     bool OnBegin(const FCommandBufferDesc& desc);
     void OnBeforeRecording(VkCommandBuffer cmd);
@@ -299,7 +300,7 @@ private:
     void EndShaderDebugger_(VkCommandBuffer cmd);
 
     NODISCARD bool AllocStorageForDebug_(FDebugMode& debugMode, size_t size);
-    NODISCARD bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, size_t size, const FConstChar debugName);
+    NODISCARD bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, size_t size);
 
     using FDebugStrings = VECTORINSITU(RHIDebug, FString, 8);
 

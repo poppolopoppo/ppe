@@ -65,15 +65,23 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const SCommandB
     }
 }
 //----------------------------------------------------------------------------
-void FVulkanCommandBatch::OnStrongRefCountReachZero() NOEXCEPT {
-    Assert_NoAssume(RefCount() == 0);
+void FVulkanCommandBatch::TearDown() {
     Assert_NoAssume(State() == EState::Complete);
 
     const auto exclusiveData = _data.LockExclusive();
     Unused(exclusiveData); // just for locking
 
     _state.store(EState::Uninitialized, std::memory_order_relaxed);
-    _frameGraph->RecycleBatch(this);
+
+
+
+    _frameGraph->RecycleBatch(this); // put this batch back in cache
+}
+//----------------------------------------------------------------------------
+void FVulkanCommandBatch::OnStrongRefCountReachZero() NOEXCEPT {
+    Assert_NoAssume(RefCount() == 0);
+
+    TearDown();
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::SignalSemaphore(VkSemaphore vkSemaphore) {
@@ -967,7 +975,7 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
     LOG_CHECK( RHI, AllocDescriptorSetForDebug_(
         &debugMode.DescriptorSet, debugMode.Mode, debugMode.Stages,
         _shaderDebugger.Buffers[debugMode.StorageBufferIndex].ShaderTraceBuffer.Get(),
-        debugMode.Size, "DebugDescriptorSet" ));
+        debugMode.Size ));
 
     return true;
 }
@@ -976,8 +984,7 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
 #if USE_PPE_RHIDEBUG
 bool FVulkanCommandBatch::AllocDescriptorSetForDebug_(
     VkDescriptorSet* pDescSet,
-    EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, size_t size,
-    FConstChar debugName ) {
+    EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, size_t size ) {
     Assert(pDescSet);
     Assert(storageBuffer);
     Assert(size > 0);
@@ -985,8 +992,8 @@ bool FVulkanCommandBatch::AllocDescriptorSetForDebug_(
     const FVulkanDevice& device = _frameGraph->Device();
     FVulkanResourceManager& resources = _frameGraph->ResourceManager();
 
-    FRawDescriptorSetLayoutID layoutId = resources.CreateDebugDescriptorSetLayout(debugMode, stages, debugName);
-    const FVulkanDescriptorSetLayout& layout = resources.ResourceData(layoutId);
+    const auto [layoutId, layoutCacheHit] = resources.CreateDebugDescriptorSetLayout(debugMode, stages);
+    const FVulkanDescriptorSetLayout& layout = resources.ResourceData(layoutId, layoutCacheHit);
     const FVulkanBuffer& buffer = resources.ResourceData(storageBuffer);
 
     // find descriptor set in cache
@@ -1001,6 +1008,8 @@ bool FVulkanCommandBatch::AllocDescriptorSetForDebug_(
     LOG_CHECK( RHI, resources.DescriptorManager().AllocateDescriptorSet(&ds, layout.Handle()) );
     Assert_NoAssume(VK_NULL_HANDLE != ds.First);
     *pDescSet = ds.First;
+
+    _shaderDebugger.DescriptorCache.insert_AssertUnique({ { storageBuffer, layoutId }, ds });
 
     // update descriptor set
     VkDescriptorBufferInfo bufferInfo{};
@@ -1030,8 +1039,10 @@ void FVulkanCommandBatch::ParseDebugOutput_(const FShaderDebugCallback& callback
     FVulkanResourceManager& resources = _frameGraph->ResourceManager();
 
     // release descriptor sets
-    for (auto& ds : _shaderDebugger.DescriptorCache)
+    for (auto& ds : _shaderDebugger.DescriptorCache) {
         resources.DescriptorManager().DeallocateDescriptorSet(ds.second);
+        resources.ReleaseResource(ds.first.second);
+    }
     _shaderDebugger.DescriptorCache.clear();
 
     // process shader debug output

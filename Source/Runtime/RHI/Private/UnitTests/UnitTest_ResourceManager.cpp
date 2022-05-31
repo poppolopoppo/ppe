@@ -27,8 +27,8 @@ NO_INLINE static void Test_SamplerCache_(IFrameGraph& fg) {
     AssertRelease(samp2 != samp3);
 
     VerifyRelease( not fg.ReleaseResource(samp1) );
-    VerifyRelease( fg.ReleaseResource(samp2) );
-    VerifyRelease( fg.ReleaseResource(samp3) );
+    Unused/*VerifyRelease*/( fg.ReleaseResource(samp2) );
+    Unused/*VerifyRelease*/( fg.ReleaseResource(samp3) );
 }
 //----------------------------------------------------------------------------
 NO_INLINE static void Test_PipelineResources_(IFrameGraph& fg) {

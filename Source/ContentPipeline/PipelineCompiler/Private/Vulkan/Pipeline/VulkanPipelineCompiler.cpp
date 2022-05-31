@@ -682,7 +682,7 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
 
     UpdateBufferDynamicOffsets_(&ppln.PipelineLayout.DescriptorSets);
 
-    std::swap(desc, ppln);
+    desc = std::move(ppln);
 
     ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
@@ -749,7 +749,7 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
 
     UpdateBufferDynamicOffsets_(&ppln.PipelineLayout.DescriptorSets);
 
-    std::swap(desc, ppln);
+    desc = std::move(ppln);
 
     ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
@@ -826,7 +826,7 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
     ValidatePrimitiveTopology_(&ppln.SupportedTopology);
     UpdateBufferDynamicOffsets_(&ppln.PipelineLayout.DescriptorSets);
 
-    std::swap(desc, ppln);
+    desc = std::move(ppln);
 
     ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
@@ -877,7 +877,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
 
     UpdateBufferDynamicOffsets_(&ppln.PipelineLayout.DescriptorSets);
 
-    std::swap(desc, ppln);
+    desc = std::move(ppln);
 
     ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;

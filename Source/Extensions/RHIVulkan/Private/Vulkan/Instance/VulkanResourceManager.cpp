@@ -174,10 +174,8 @@ bool FVulkanResourceManager::CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLa
     auto it = CreateCachedResource_(pId, std::move(emptyKey), _device, bindings.MakeConstView()
         ARGS_IF_RHIDEBUG("EmptyDSLayout"));
 
-    if (Likely(it.first)) {
-        it.first->AddRef(); // emptyDS must not be trimmed by ReleaseMemory()
+    if (Likely(it.first))
         return true;
-    }
 
     LOG(RHI, Error, L"failed to create an empty descriptor set layout");
     return false;
@@ -188,7 +186,7 @@ bool FVulkanResourceManager::CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLa
 bool FVulkanResourceManager::CreatePipelineLayout_(
     FRawPipelineLayoutID* pId,
     const TResourceProxy<FVulkanPipelineLayout>** pPplnLayoutRef,
-    FPipelineDesc::FPipelineLayout&& desc
+    const FPipelineDesc::FPipelineLayout& desc
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
 
     // init pipeline layout mode
@@ -226,7 +224,7 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
                     _device,
                     ResourceData(_emptyDSLayout, false/* don't add ref for empty layout */).Read()->Layout
                     ARGS_IF_RHIDEBUG(debugName)) );
-            pLayout->AddRef();
+            pLayout->AddRef(exist ? 1 : 2);
             return true;
         });
 
@@ -471,7 +469,7 @@ bool FVulkanResourceManager::CreateDevicePipeline_(details::TResourceId<_Uid>* p
 
     FRawPipelineLayoutID layoutId;
     const TResourceProxy<FVulkanPipelineLayout>* pLayout{ nullptr };
-    VerifyRelease( CreatePipelineLayout_(&layoutId, &pLayout, std::move(desc.PipelineLayout) ARGS_IF_RHIDEBUG(debugName)) );
+    VerifyRelease( CreatePipelineLayout_(&layoutId, &pLayout, desc.PipelineLayout ARGS_IF_RHIDEBUG(debugName)) );
 
     TPooledResource_<_Uid>* const pPipeline = CreatePooledResource_(pId);
     Assert(pPipeline);
@@ -678,7 +676,8 @@ FRawSamplerID FVulkanResourceManager::CreateSampler(const FSamplerDesc& desc ARG
     TResourceProxy<FVulkanSampler> emptyKey{ _device, desc };
 
     FRawSamplerID samplerId;
-    if (Likely(CreateCachedResource_(&samplerId, std::move(emptyKey), _device ARGS_IF_RHIDEBUG(debugName)).first)) {
+    auto it = CreateCachedResource_(&samplerId, std::move(emptyKey), _device ARGS_IF_RHIDEBUG(debugName));
+    if (Likely(it.first)) {
         Assert_NoAssume(samplerId.Valid());
         return samplerId;
     }
@@ -696,9 +695,6 @@ FRawRenderPassID FVulkanResourceManager::CreateRenderPass(const TMemoryView<cons
     auto it = CreateCachedResource_(&renderPassId, std::move(emptyKey), _device ARGS_IF_RHIDEBUG(debugName));
     if (Likely(it.first)) {
         Assert_NoAssume(renderPassId.Valid());
-        if (not it.second)
-            it.first->AddRef(); // keep render pass in cache
-
         return renderPassId;
     }
 
@@ -722,7 +718,6 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
 
     if (Likely(it.first)) {
         Assert_NoAssume(framebufferId.Valid());
-
         return framebufferId;
     }
 
@@ -737,15 +732,15 @@ const FVulkanPipelineResources* FVulkanResourceManager::CreateDescriptorSet(
     FRawPipelineResourcesID resourcesId = FPipelineResources::Cached(desc);
 
     if (Likely(resourcesId)) { // use cached resources ?
-        TResourceProxy<FVulkanPipelineResources>* const pResources = ResourcePool_(resourcesId)[resourcesId.Index];
-        Assert(pResources);
+        TResourceProxy<FVulkanPipelineResources>* const pPplnResources = ResourcePool_(resourcesId)[resourcesId.Index];
+        Assert(pPplnResources);
 
-        if (pResources->InstanceID() == resourcesId.InstanceID) {
+        if (pPplnResources->InstanceID() == resourcesId.InstanceID) {
             if (resources.insert({ resourcesId.Pack(), 1 }).second)
-                pResources->AddRef();
+                pPplnResources->AddRef();
 
-            Assert_NoAssume(pResources->Data().AllResourcesAlive(*this));
-            return std::addressof(pResources->Data());
+            Assert_NoAssume(pPplnResources->Data().AllResourcesAlive(*this));
+            return std::addressof(pPplnResources->Data());
         }
     }
 
@@ -753,20 +748,17 @@ const FVulkanPipelineResources* FVulkanResourceManager::CreateDescriptorSet(
     LOG_CHECK(RHI, pDSLayout && pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID );
 
     TResourceProxy<FVulkanPipelineResources> emptyKey{ desc };
-    const auto [pResources, exist] =
+    const auto [pPplnResources, exist] =
         CreateCachedResource_(&resourcesId, std::move(emptyKey), *this);
 
-    if (Likely(pResources)) {
+    if (Likely(pPplnResources)) {
         Assert_NoAssume(resourcesId.Valid());
-        if (Unlikely(not exist))
-            pDSLayout->AddRef();
 
         FPipelineResources::SetCached(desc, resourcesId);
-        if (resources.insert({ resourcesId.Pack(), 1 }).second)
-            pResources->AddRef();
+        resources.insert({ resourcesId.Pack(), 1 });
 
-        Assert_NoAssume(pResources->Data().AllResourcesAlive(*this));
-        return std::addressof(pResources->Data());
+        Assert_NoAssume(pPplnResources->Data().AllResourcesAlive(*this));
+        return std::addressof(pPplnResources->Data());
     }
 
     LOG(RHI, Error, L"failed to create descriptor set layout");
@@ -796,8 +788,6 @@ bool FVulkanResourceManager::CacheDescriptorSet(FPipelineResources& desc) {
 
     if (Likely(pResources)) {
         Assert_NoAssume(resourcesId.Valid());
-        if (Unlikely(not exist))
-            pDSLayout->AddRef();
 
         FPipelineResources::SetCached(desc, resourcesId);
         return true;
@@ -1117,7 +1107,7 @@ auto FVulkanResourceManager::CreateCachedResource_(
     const TPair<FIndex, bool> it = pool.FindOrAdd(std::move(rkey), [&](TPooledResource_<_Uid>* pResource, FIndex , bool exist) -> bool {
         if (not exist)
             LOG_CHECK(RHI, pResource->Construct(std::forward<_Args>(args)...));
-        pResource->AddRef();
+        pResource->AddRef(exist ? 1 : 2 /* keep in cache */);
         return true;
     });
 
@@ -1247,14 +1237,13 @@ bool FVulkanResourceManager::CheckHostVisibleMemory_() {
 // Debugger
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDebugDescriptorSetLayout(
+TPair<FRawDescriptorSetLayoutID, bool> FVulkanResourceManager::CreateDebugDescriptorSetLayout(
     EShaderDebugMode debugMode,
-    EShaderStages debuggableShaders,
-    FConstChar debugName ) {
+    EShaderStages debuggableShaders ) {
     const u32 key = ((static_cast<u32>(debuggableShaders) & 0xFFFFFFu) | (static_cast<u32>(debugMode) << 24));
     const auto it = _shaderDebug.dsLayoutCaches.find(key);
     if (_shaderDebug.dsLayoutCaches.end() != it)
-        return it->second;
+        return MakePair(it->second, true);
 
     FPipelineDesc::FStorageBuffer sbDesc;
     sbDesc.DynamicOffsetIndex = 0;
@@ -1273,11 +1262,12 @@ FRawDescriptorSetLayoutID FVulkanResourceManager::CreateDebugDescriptorSetLayout
     FPipelineDesc::PUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
     uniforms->Emplace_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, std::move(sbUniform));
 
-    const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(std::move(uniforms), debugName);
+    const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(std::move(uniforms),
+        INLINE_FORMAT(256, "dbg_{0}({1})", debugMode, debuggableShaders).data());
     Assert_NoAssume(layout.Valid());
 
     _shaderDebug.dsLayoutCaches.insert_AssertUnique({ key, layout });
-    return layout;
+    return MakePair(layout, false);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -1319,11 +1309,12 @@ FRawPipelineLayoutID FVulkanResourceManager::CreateDebugPipelineLayout(
 
     // append descriptor set layout for shader trace
     {
-        const FRawDescriptorSetLayoutID dsLayoutId = CreateDebugDescriptorSetLayout(debugMode, debuggableShaders, origin.DebugName());
+        const auto [dsLayoutId, layoutCacheHit] = CreateDebugDescriptorSetLayout(debugMode, debuggableShaders);
         Assert(dsLayoutId.Valid());
 
         auto& dsLayout = dsPool.Value(checked_cast<FIndex>(dsLayoutId.Index));
-        dsLayout.AddRef();
+        if (layoutCacheHit)
+            dsLayout.AddRef();
 
         FPipelineDesc::FDescriptorSet dst;
         dst.Id = descriptorSet;
