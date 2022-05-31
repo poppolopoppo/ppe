@@ -49,6 +49,8 @@ public:
 
 public: // specific to this platform
 
+    static ::HWND FindProcessWindow(::DWORD pid);
+
     static bool QueryRegKey(const ::HKEY key, const char* subKey, const char* name, FString* pValue);
     static bool QueryRegKey(const ::HKEY key, const wchar_t* subKey, const wchar_t* name, FWString* pValue);
 };

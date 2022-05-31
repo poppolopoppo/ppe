@@ -550,6 +550,31 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
     return false;
 }
 //----------------------------------------------------------------------------
+::HWND FWindowsPlatformMisc::FindProcessWindow(::DWORD pid) {
+    using lparams_type = TPair<::HWND, ::DWORD>;
+    lparams_type params{ NULL, pid };
+
+    const ::BOOL bFound = ::EnumWindows([](::HWND hWnd, ::LPARAM lParam) -> BOOL {
+        lparams_type* const pParams = (lparams_type*)lParam;
+
+        ::DWORD windowPid;
+        if (::GetWindowThreadProcessId(hWnd, &windowPid) && windowPid == pParams->second) {
+            // stop enumeration
+            ::SetLastError(INDEX_NONE);
+            pParams->first = hWnd;
+            return FALSE;
+        }
+
+        // continue enumeration
+        return TRUE;
+    }, (::LPARAM)&params );
+
+    if (not bFound && ::GetLastError() == INDEX_NONE && params.first)
+        return params.first;
+
+    return NULL;
+}
+//----------------------------------------------------------------------------
 bool FWindowsPlatformMisc::QueryRegKey(const ::HKEY key, const char* subKey, const char* name, FString* pValue) {
     Assert(subKey);
     Assert(pValue);

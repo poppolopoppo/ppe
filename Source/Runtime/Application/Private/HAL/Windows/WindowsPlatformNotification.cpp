@@ -13,6 +13,7 @@
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformApplication.h"
 #include "HAL/PlatformIncludes.h"
+#include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformWindow.h"
 #include "HAL/Windows/ComPtr.h"
@@ -70,12 +71,14 @@ public:
 
     using FUserCommands = SPARSEARRAY_INSITU(Window, FUserCmd);
 
-    void Commands(TFunction<void(FUserCommands& cmds)>&& event) {
+    void Commands(TSmallFunction<void(FUserCommands& cmds)>&& event) {
+        Assert_NoAssume(event.FitInSitu());
         const Meta::FLockGuard scopeLock(_barrier);
         event(_commands);
     }
 
-    void Taskbar(TFunction<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
+    void Taskbar(TSmallFunction<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
+        Assert_NoAssume(event.FitInSitu());
         AsyncSyscall([this, event(std::move(event))](ITaskContext&) {
             const Meta::FLockGuard scopeLock(_barrier);
 
@@ -87,8 +90,10 @@ public:
                 }
             }
 
-            if (NULL == hWindow)
-                hWindow = ::GetForegroundWindow();
+            if (NULL == hWindow) {
+                const ::DWORD pid = ::GetCurrentProcessId();
+                hWindow = FWindowsPlatformMisc::FindProcessWindow(pid);
+            }
 
             if (Likely(_windowsTaskbarPtr->IsValid() && hWindow != NULL))
                 event.Invoke(*_windowsTaskbarPtr->Get(), hWindow);
@@ -125,9 +130,13 @@ private:
         }, ETaskPriority::High);
     }
 
+    static ::HWND ApplicationMainWindow_() {
+
+    }
+
     mutable std::mutex _barrier;
     FUserCommands _commands;
-    Meta::TInPlace<TComPtr<::ITaskbarList3>> _windowsTaskbarPtr;
+    Meta::TInPlace<TComPtr<::ITaskbarList3>> _windowsTaskbarPtr{};
 };
 //----------------------------------------------------------------------------
 class FWindowsSystray_ : Meta::TStaticSingleton<FWindowsSystray_> {
@@ -497,13 +506,16 @@ void FWindowsPlatformNotification::SetTaskbarState(ETaskbarState state) {
 void FWindowsPlatformNotification::SetTaskbarProgress(size_t completed, size_t total) {
     Assert(completed <= total);
 
-    FWindowsTaskbar_::Get().Taskbar([completed, total](::ITaskbarList3& taskbar, ::HWND hWindow) {
-        const ::ULONGLONG ullCompleted = checked_cast<::ULONGLONG>(completed);
-        const ::ULONGLONG ullTotal = checked_cast<::ULONGLONG>(total);
+    FWindowsTaskbar_::Get().Taskbar([
+        completed{ checked_cast<u32>(completed) },
+        total{ checked_cast<u32>(total) }]
+        (::ITaskbarList3& taskbar, ::HWND hWindow) {
+            const ::ULONGLONG ullCompleted = checked_cast<::ULONGLONG>(completed);
+            const ::ULONGLONG ullTotal = checked_cast<::ULONGLONG>(total);
 
-        if (not SUCCEEDED(taskbar.SetProgressValue(hWindow, ullCompleted, ullTotal)))
-            PPE_THROW_IT(FLastErrorException("SetProgressValue"));
-    });
+            if (not SUCCEEDED(taskbar.SetProgressValue(hWindow, ullCompleted, ullTotal)))
+                PPE_THROW_IT(FLastErrorException("SetProgressValue"));
+        });
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(::HWND hWnd) {
