@@ -103,8 +103,13 @@ using i64   = std::int64_t;
 #   define NOEXCEPT     noexcept
 #   define NOOP(...)    (void)0
 #   define NORETURN     [[noreturn]]
-#   define CONSTF       __attribute__((const))
-#   define PUREF        __attribute__((pure))
+#   if defined(_MSC_VER) && (defined(__INTELLISENSE__) || defined(_PREFAST_))
+#       define CONSTF       __attribute__((const))
+#       define PUREF        __attribute__((pure))
+#   else
+#       define CONSTF
+#       define PUREF
+#   endif
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #   if defined(_MSC_VER)
@@ -147,11 +152,13 @@ using i64   = std::int64_t;
 #else
 #   error "unsupported compiler"
 #endif
-#if !defined(_DEBUG) || defined(NDEBUG)
-#   if defined(CPP_CLANG) || defined(CPP_GCC)
+#if !defined(_DEBUG) || defined(NDEBUG) || (defined(USE_PPE_FASTDEBUG) && USE_PPE_FASTDEBUG)
+#   if defined(_MSC_VER)
+#       define FORCE_INLINE __forceinline
+#   elif defined(CPP_CLANG) || defined(CPP_GCC)
 #       define FORCE_INLINE inline __attribute__((always_inline))
 #   else
-#       define FORCE_INLINE __forceinline
+#       error "unsupported compiler"
 #   endif
 #else
 #   define FORCE_INLINE inline // don't want force inline when debugging
@@ -195,6 +202,11 @@ using i64   = std::int64_t;
 #else
 #   define CONSTEXPR
 #   define NOEXCEPT_IF(...)
+#endif
+#if PPE_HAS_CXX20
+#   define CONSTEVAL consteval
+#else
+#   define CONSTEVAL CONSTEXPR
 #endif
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17

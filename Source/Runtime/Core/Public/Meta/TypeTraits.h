@@ -18,7 +18,7 @@
 #define PPE_ASSERT_TYPE_IS_POD(T) \
     static_assert(::PPE::Meta::is_pod_v<T>, STRINGIZE(T) " is not a POD type");
 #define PPE_ASSUME_TYPE_AS_POD(...) \
-    CONSTEXPR bool is_pod_type(__VA_ARGS__*) NOEXCEPT { return true; }
+    CONSTEVAL bool is_pod_type(__VA_ARGS__*) NOEXCEPT { return true; }
 #define PPE_ASSUME_FRIEND_AS_POD(...) \
     friend PPE_ASSUME_TYPE_AS_POD(__VA_ARGS__)
 #define PPE_ASSUME_TEMPLATE_AS_POD(T, ...) \
@@ -30,7 +30,7 @@
 #define PPE_ASSERT_TYPE_IS_POINTER(T) \
     static_assert(::PPE::Meta::is_pointer_v<T>, STRINGIZE(T) " is not a POINTER type");
 #define PPE_ASSUME_TYPE_AS_POINTER(...) \
-    CONSTEXPR bool is_pointer_type(__VA_ARGS__*) NOEXCEPT { return true; }
+    CONSTEVAL bool is_pointer_type(__VA_ARGS__*) NOEXCEPT { return true; }
 #define PPE_ASSUME_FRIEND_AS_POINTER(...) \
     friend PPE_ASSUME_TYPE_AS_POINTER(__VA_ARGS__)
 #define PPE_ASSUME_TEMPLATE_AS_POINTER(T, ...) \
@@ -165,7 +165,7 @@ using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
 // is_pod_type(T*) can be overloaded for specific types, respects ADL
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR bool is_pod_type(T*) NOEXCEPT { return std::is_trivial_v<T> && std::is_standard_layout_v<T>; }
+CONSTEVAL bool is_pod_type(T*) NOEXCEPT { return std::is_trivial_v<T> && std::is_standard_layout_v<T>; }
 template <typename T>
 CONSTEXPR bool is_pod_v{ is_pod_type(static_cast<T*>(nullptr)) };
 //----------------------------------------------------------------------------
@@ -186,7 +186,7 @@ using has_trivial_move = std::bool_constant<(std::is_trivially_move_constructibl
 // is_pointer_type(T*) can be overloaded for specific types, respects ADL
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR bool is_pointer_type(T*) NOEXCEPT { return std::is_pointer_v<T>; }
+CONSTEVAL bool is_pointer_type(T*) NOEXCEPT { return std::is_pointer_v<T>; }
 template <typename T>
 CONSTEXPR bool is_pointer_v{ is_pointer_type(static_cast< Meta::TDecay<T> *>(nullptr)) };
 //----------------------------------------------------------------------------
