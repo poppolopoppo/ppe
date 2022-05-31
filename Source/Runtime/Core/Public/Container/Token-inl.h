@@ -7,7 +7,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _TokenTraits, typename _Char>
-bool IsValidToken(const TBasicStringView<_Char>& content) {
+bool IsValidToken(const TBasicStringView<_Char>& content) NOEXCEPT {
     if (content.empty())
         return false;
 
@@ -20,6 +20,15 @@ bool IsValidToken(const TBasicStringView<_Char>& content) {
             return false;
 
     return true;
+}
+//----------------------------------------------------------------------------
+template <typename _TokenTraits, typename _Char>
+void SanitizeToken(const TMemoryView<_Char>& content) NOEXCEPT {
+    const _TokenTraits traits = {};
+    for (_Char& ch : content) {
+        if (!traits.IsAllowedChar(ch))
+            ch = STRING_LITERAL(_Char, '_');
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -28,6 +28,10 @@ void FFileSystemStartup::Clear() {
     //FFileSystemTrie::Get().Clear_ReleaseMemory(); // #TODO ref counting ?
 }
 //----------------------------------------------------------------------------
+void FileSystem::Sanitize(const TMemoryView<char_type>& str) NOEXCEPT {
+    FFileSystemToken::SanitizeToken(str);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

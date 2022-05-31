@@ -82,7 +82,10 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _TokenTraits, typename _Char>
-bool IsValidToken(const TBasicStringView<_Char>& content);
+bool IsValidToken(const TBasicStringView<_Char>& content) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename _TokenTraits, typename _Char>
+void SanitizeToken(const TMemoryView<_Char>& content) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -157,6 +160,7 @@ public:
     using token_traits = _TokenTraits;
     using lazytoken_type = TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>;
 
+    using memoryview_type = TMemoryView<_Char>;
     using stringview_type = TBasicStringView<_Char>;
 
     using equalto_type = TStringViewEqualTo<_Char, _Sensitive>;
@@ -244,6 +248,10 @@ public:
 
     static bool IsValidToken(const stringview_type& str) NOEXCEPT {
         return PPE::IsValidToken<token_traits>(str);
+    }
+
+    static void SanitizeToken(const memoryview_type& str) NOEXCEPT {
+        PPE::SanitizeToken<token_traits>(str);
     }
 
     static hash_t HashValue(const stringview_type& str) NOEXCEPT {

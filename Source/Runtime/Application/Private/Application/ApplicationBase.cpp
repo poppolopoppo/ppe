@@ -89,11 +89,10 @@ static void SetupDebugMenuInSystray_(const FModularServices& services) {
             FDirname{ L"TrackingData" } });
 
         if (VFS_CreateDirectory(savePath)) {
-            const FFilename saveFilename{
-                savePath,
-                FBasename{
-                    StringFormat(L"{0}_{1}", RunningApp().Name(), FCoreModule::StaticInfo.BuildVersion.Family),
-                    FFSConstNames::Csv() }};
+            FWString basename = StringFormat(L"{0}_{1}", RunningApp().Name(), FCoreModule::StaticInfo.BuildVersion.Family);
+            FileSystem::Sanitize(basename.MutableView());
+
+            const FFilename saveFilename{ savePath, FBasename(basename, FFSConstNames::Csv()) };
 
             const UStreamWriter saveWriter{
                 VFS_RollFile(saveFilename, EAccessPolicy::Binary) };
