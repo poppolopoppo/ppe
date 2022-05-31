@@ -161,6 +161,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Input,                    Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Message,                  Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Remoting,                 Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Survey,                   Application)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(UI,                       Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Window,                   Application)
 //------------------------------------------------------------------------------
 // Pooled memory
@@ -171,6 +172,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(MemoryPool,               PooledMemory)
 // External memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(External,                       UsedMemory)
+MEMORYDOMAIN_IMPL(ImGui,                                External)
 MEMORYDOMAIN_IMPL(LZ4,                                  External)
 MEMORYDOMAIN_IMPL(STBImage,                             External)
 MEMORYDOMAIN_IMPL(VMA,                                  External)

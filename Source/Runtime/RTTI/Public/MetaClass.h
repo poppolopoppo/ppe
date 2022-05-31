@@ -86,7 +86,7 @@ public:
 
     FMetaFunction& RegisterFunction(FMetaFunction&& function);
 
-    auto AllFunctions() const { return _functionsAll.Values(); }
+    TIterable<TValueIterator<HASHMAP(MetaClass, FName, const FMetaFunction*)::const_iterator>> AllFunctions() const { return _functionsAll.Values(); }
 
     TMemoryView<const FMetaFunction> SelfFunctions() const { return _functionsSelf.MakeConstView(); }
 
@@ -117,7 +117,7 @@ public:
 
     FMetaProperty& RegisterProperty(FMetaProperty&& property);
 
-    auto AllProperties() const { return _propertiesAll.Values(); }
+    TIterable<TValueIterator<HASHMAP(MetaClass, FName, const FMetaProperty*)::const_iterator>> AllProperties() const { return _propertiesAll.Values(); }
 
     TMemoryView<const FMetaProperty> SelfProperties() const { return _propertiesSelf.MakeConstView(); }
 

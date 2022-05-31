@@ -3,7 +3,9 @@
 #include "WindowTestApp.h"
 #include "Test_Includes.h"
 
+#include "ApplicationModule.h"
 #include "RHIModule.h"
+#include "UI/Imgui.h"
 #include "Window/WindowService.h"
 
 #include "IO/Format.h"
@@ -67,7 +69,8 @@ struct FUnitTestFunc_ {
 EACH_WINDOWTEST(WINDOWTEST_EXTERN_DECL)
 #undef WINDOWTEST_EXTERN_DECL
 //----------------------------------------------------------------------------
-static void LaunchWindowTests_(FWindowTestApp& app) {
+static void LaunchWindowTests_(Application::FApplicationBase& baseApp, FTimespan) {
+    auto& app = *checked_cast<FWindowTestApp*>(&baseApp);
     auto launchTest = [&app](FWStringView name, auto&& test) {
         Unused(name);
 
@@ -185,9 +188,8 @@ FWindowTestApp::~FWindowTestApp() = default;
 void FWindowTestApp::Start() {
     parent_type::Start();
 
-    static volatile bool GLaunchTests_ = false;
-    if (GLaunchTests_)
-        LaunchWindowTests_(*this);
+    auto& appmodule = FApplicationModule::Get(Domain());
+    appmodule.OnApplicationTick().FireAndForget(&LaunchWindowTests_);
 
     ApplicationLoop();
 }
@@ -196,6 +198,12 @@ void FWindowTestApp::Shutdown() {
     Window().NotifySystrayWarning(L"Here I go", L"WindowTest");
 
     parent_type::Shutdown();
+}
+//----------------------------------------------------------------------------
+void FWindowTestApp::Render(FTimespan dt) {
+    parent_type::Render(dt);
+
+    ImGui::ShowDemoWindow();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

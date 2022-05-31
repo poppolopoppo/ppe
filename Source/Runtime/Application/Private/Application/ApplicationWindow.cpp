@@ -176,8 +176,6 @@ bool FApplicationWindow::PumpMessages() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Tick(FTimespan dt) {
-    FApplicationBase::Tick(dt);
-
     if (_windowWasResized) {
         _windowWasResized = false;
 
@@ -187,10 +185,24 @@ void FApplicationWindow::Tick(FTimespan dt) {
         _rhi->ResizeWindow(surfaceInfo);
     }
 
+    FApplicationBase::Tick(dt);
+
+    Update(dt);
+
     _input->Update(dt);
+
+    Render(dt);
 
     if (_main->Visible())
         _rhi->RenderFrame(dt);
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::Update(FTimespan dt) {
+    Unused(dt);
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::Render(FTimespan dt) {
+    Unused(dt);
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::OnWindowFocus(bool enabled) NOEXCEPT {

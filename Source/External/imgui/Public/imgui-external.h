@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HAL/PlatformMacros.h"
+
 #include "Maths/ScalarVector.h"
 #include "Meta/Assert.h"
 
@@ -16,9 +17,17 @@
     PRAGMA_MSVC_WARNING_PUSH()
 
 #   ifdef __clang__
-#       pragma clang diagnostic push
+#       pragma clang diagnostic push,
 #   endif
 
+#endif
+
+#ifndef IMGUI_API
+#   ifndef EXPORT_PPE_EXTENSIONS_APPLICATIONUI
+#       define IMGUI_API DLL_IMPORT
+#   else
+#       define IMGUI_API DLL_EXPORT
+#   endif
 #endif
 
 PRAGMA_MSVC_WARNING_DISABLE(4505) // 'GetInputSourceName': unreferenced function with internal linkage has been removed

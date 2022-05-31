@@ -17,7 +17,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API FApplicationWindow : public FApplicationBase, private IWindowListener {
+class PPE_APPLICATION_API  FApplicationWindow : public FApplicationBase, private IWindowListener {
 public:
     FApplicationWindow(FModularDomain& domain, FString&& name, bool needRHI);
     virtual ~FApplicationWindow() override;
@@ -34,6 +34,9 @@ public:
     virtual void Tick(FTimespan dt) override;
 
 protected:
+    virtual void Update(FTimespan dt);
+    virtual void Render(FTimespan dt);
+
     virtual void OnWindowFocus(bool enabled) NOEXCEPT override;
     virtual void OnWindowMove(const int2& pos) NOEXCEPT override;
     virtual void OnWindowResize(const uint2& size) NOEXCEPT override;

@@ -1,25 +1,21 @@
-#pragma once
+﻿#include "stdafx.h"
 
-#include "Application/ApplicationWindow.h"
+#include "UI/Imgui.h"
+
+#include "External/imgui/imgui.git/imgui.cpp"
+#include "External/imgui/imgui.git/imgui_draw.cpp"
+#include "External/imgui/imgui.git/imgui_tables.cpp"
+#include "External/imgui/imgui.git/imgui_widgets.cpp"
+#include "External/imgui/imgui.git/imgui_demo.cpp"
 
 namespace PPE {
+namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FWindowTestApp : public Application::FApplicationWindow {
-    typedef Application::FApplicationWindow parent_type;
-public:
-    explicit FWindowTestApp(FModularDomain& domain);
-    ~FWindowTestApp() override;
 
-    virtual void Start() override;
-    virtual void Shutdown() override;
-
-protected:
-    virtual void Render(FTimespan dt) override;
-
-};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Application
 } //!namespace PPE

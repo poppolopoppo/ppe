@@ -20,7 +20,7 @@
 #include "IO/Filename.h"
 #include "VirtualFileSystem_fwd.h"
 
-#include "imgui-external.h"
+#include "UI/Imgui.h"
 #include "External/imgui/imgui.git/imgui_internal.h"
 
 namespace PPE {
@@ -401,7 +401,7 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
 
     const RHI::SFrameGraph fg = rhi.FrameGraph();
 
-    ImGui::StyleColorsClassic();
+    ImGui::StyleColorsDark();
 
     // initialize options
     {
@@ -447,7 +447,9 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
     {
         ImGuiStyle& style = ImGui::GetStyle();
 
+        style.FramePadding.y = 2;
         style.FrameRounding = 3;
+        style.ItemSpacing.y = 3;
         style.WindowRounding = 4;
     }
 
@@ -508,7 +510,6 @@ void FImguiService::OnUpdateInput(const IInputService& input, FTimespan dt) {
     PollImguiMouseEvents_(io, input);
 
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
 }
 //----------------------------------------------------------------------------
 void FImguiService::OnWindowFocus(const IInputService& input, const FGenericWindow* ) {
