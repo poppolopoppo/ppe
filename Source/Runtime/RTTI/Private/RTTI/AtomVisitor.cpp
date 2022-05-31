@@ -66,7 +66,7 @@ public:
             ? EVisitorFlags::NoRecursion|Default
             : Default )
         , _oss(oss)
-        , _flags(flags)
+        , _prettyPrintFlags(flags)
     {}
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) override final {
@@ -156,7 +156,7 @@ private:
 
     template <typename T>
     void PrintDispatch_(const IScalarTraits* scalar, const T& value, std::false_type) {
-        if (_flags & EPrettyPrintFlags::ShowTypeNames)
+        if (_prettyPrintFlags & EPrettyPrintFlags::ShowTypeNames)
             _oss << scalar->TypeName() << Fmt::Colon;
 
         Print_(value);
@@ -164,7 +164,7 @@ private:
 
     template <typename T>
     void PrintDispatch_(const IScalarTraits* scalar, T integral, std::true_type) {
-        if (_flags & EPrettyPrintFlags::ShowEnumNames) {
+        if (_prettyPrintFlags & EPrettyPrintFlags::ShowEnumNames) {
             if (const FMetaEnum* const e = scalar->EnumClass()) {
                 if (e->IsFlags()) {
                     FMetaEnum::FExpansion values;
@@ -182,7 +182,7 @@ private:
                     }
                 }
                 else {
-                    const FMetaEnumValue* const v = e->ValueToNameIFP(integral);;
+                    const FMetaEnumValue* const v = e->ValueToNameIFP(integral);
                     if (v) {
                         _oss << scalar->TypeName() << Fmt::Colon << v->Name;
                         return;
@@ -214,7 +214,7 @@ private:
             bool empty = true;
             for (const FMetaProperty* prop : metaClass->AllProperties()) {
                 const RTTI::FAtom val = prop->Get(obj);
-                if (not (_flags & EPrettyPrintFlags::ShowDefaults) && val.IsDefaultValue())
+                if (not (_prettyPrintFlags & EPrettyPrintFlags::ShowDefaults) && val.IsDefaultValue())
                     continue;
 
                 if (empty) {
@@ -260,7 +260,7 @@ private:
 
     typename PP::FIndent _indent;
     TBasicTextWriter<_Char>& _oss;
-    const EPrettyPrintFlags _flags;
+    const EPrettyPrintFlags _prettyPrintFlags;
 };
 //----------------------------------------------------------------------------
 } //!namespace

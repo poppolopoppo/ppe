@@ -18,7 +18,7 @@ struct TFunctorTraits_<_Ret(_Args...)> {
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
     template <typename... _Unused>
-    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) {
+    FORCE_INLINE static constexpr return_type varcall(func_type f, _Args... args, _Unused...) {
         return f(std::forward<_Args>(args)...);
     }
 };
@@ -28,7 +28,7 @@ struct TFunctorTraits_<_Ret(_Args...) noexcept> {
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
     template <typename... _Unused>
-    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) noexcept {
+    FORCE_INLINE static constexpr return_type varcall(func_type f, _Args... args, _Unused...) noexcept {
         return f(std::forward<_Args>(args)...);
     }
 };
@@ -38,7 +38,7 @@ struct TFunctorTraits_<_Ret(*)(_Args...)> {
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
     template <typename... _Unused>
-    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) {
+    FORCE_INLINE static constexpr return_type varcall(func_type f, _Args... args, _Unused...) {
         return f(std::forward<_Args>(args)...);
     }
 };
@@ -48,7 +48,7 @@ struct TFunctorTraits_<_Ret(*)(_Args...) noexcept> {
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
     template <typename... _Unused>
-    static constexpr return_type varcall(func_type f, _Args... args, _Unused...) noexcept {
+    FORCE_INLINE static constexpr return_type varcall(func_type f, _Args... args, _Unused...) noexcept {
         return f(std::forward<_Args>(args)...);
     }
 };
@@ -58,7 +58,7 @@ struct TFunctorTraits_<_Ret(_Class::*)(_Args...)> {
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
     template <typename... _Unused>
-    static constexpr return_type varcall(func_type f, _Class* obj, _Args... args, _Unused...) {
+    FORCE_INLINE static constexpr return_type varcall(func_type f, _Class* obj, _Args... args, _Unused...) {
         return (obj->*f)(std::forward<_Args>(args)...);
     }
 };
@@ -68,7 +68,7 @@ struct TFunctorTraits_<_Ret(_Class::*)(_Args...) const> {
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
     template <typename... _Unused>
-    static constexpr return_type varcall(func_type f, const _Class* obj, _Args... args, _Unused...) {
+    FORCE_INLINE static constexpr return_type varcall(func_type f, const _Class* obj, _Args... args, _Unused...) {
         return (obj->*f)(std::forward<_Args>(args)...);
     }
 };
@@ -78,26 +78,25 @@ struct TFunctorTraits_<_Ret(_Class::*)(_Args...) const noexcept> {
     using return_type = _Ret;
     static constexpr size_t arity = sizeof...(_Args);
     template <typename... _Unused>
-    static constexpr return_type varcall(func_type f, const _Class* obj, _Args... args, _Unused...) noexcept {
+    FORCE_INLINE static constexpr return_type varcall(func_type f, const _Class* obj, _Args... args, _Unused...) noexcept {
         return (obj->*f)(std::forward<_Args>(args)...);
     }
 };
 template <typename T>
-struct TFunctorTraits_ :
-    TFunctorTraits_<decltype(&T::operator())> {
+struct TFunctorTraits_ : TFunctorTraits_<decltype(&T::operator())> {
     using parent_type = TFunctorTraits_<decltype(&T::operator())>;
     using typename parent_type::return_type;
     using parent_type::arity;
     template <typename... _Args>
-    static constexpr return_type varcall(T& obj, _Args... args) {
+    FORCE_INLINE static constexpr return_type varcall(T& obj, _Args... args) {
         return parent_type::template varcall(&T::operator(), &obj, std::forward<_Args>(args)...);
     }
     template <typename... _Args>
-    static constexpr return_type varcall(T&& obj, _Args... args) {
+    FORCE_INLINE static constexpr return_type varcall(T&& obj, _Args... args) {
         return parent_type::template varcall(&T::operator(), &obj, std::forward<_Args>(args)...);
     }
     template <typename... _Args>
-    static constexpr return_type varcall(const T& obj, _Args... args) {
+    FORCE_INLINE static constexpr return_type varcall(const T& obj, _Args... args) {
         return parent_type::template varcall(&T::operator(), &obj, std::forward<_Args>(args)...);
     }
 };
