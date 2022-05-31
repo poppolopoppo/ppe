@@ -87,11 +87,11 @@ void FVulkanDescriptorManager::DeallocateDescriptorSet(const FVulkanDescriptorSe
 void FVulkanDescriptorManager::DeallocateDescriptorSets(TMemoryView<const FVulkanDescriptorSet> many) {
     const auto exclusivePools = _descriptorPools.LockExclusive();
 
-    TFixedSizeStack<VkDescriptorSet, 16> batch;
+    TFixedSizeStack<VkDescriptorSet, 32> batch;
     u8 lastIndex = UMax;
 
     for (const FVulkanDescriptorSet& ds : many) {
-        if (lastIndex != ds.IndexInPool && not batch.empty()) {
+        if (batch.full() || (lastIndex != ds.IndexInPool && not batch.empty()) ) {
             VK_CALL( _device.vkFreeDescriptorSets(
                 _device.vkDevice(),
                 exclusivePools->at(lastIndex),
