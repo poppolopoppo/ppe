@@ -550,8 +550,7 @@ void FVulkanPipelineCompiler::ReleaseShaderCache() {
     const auto exclusiveData = _data.LockExclusive();
 
     for (const auto& it : exclusiveData->ShaderCache) {
-        AssertMessage(L"", it.second->RefCount() == 1);
-
+        Assert_NoAssume(it.second->RefCount() == 1);
         it.second.as<FVulkanDebuggableShaderModule>()->TearDown(*_deviceInfo);
     }
 
