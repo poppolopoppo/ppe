@@ -780,7 +780,7 @@ bool FVulkanResourceManager::CacheDescriptorSet(FPipelineResources& desc) {
     AssertReleaseMessage(L"dynamic offsets are not supported here", desc.DynamicOffsets().empty());
 
     TResourceProxy<FVulkanDescriptorSetLayout>* const pDSLayout = ResourcePool_(desc.Layout())[desc.Layout().Index];
-    Assert_NoAssume( pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID );
+    LOG_CHECK(RHI, pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID);
 
     TResourceProxy<FVulkanPipelineResources> emptyKey{ desc };
     const auto [pResources, exist] =
