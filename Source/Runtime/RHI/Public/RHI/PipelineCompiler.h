@@ -8,12 +8,35 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EShaderCompilationFlags : u32
+{
+    Quiet                       = 1 << 8,
+    //KeepSrcShaderData         = 1 << 9,   // compiler will keep incoming GLSL source and adds SPIRV or VkShaderModule
+
+    UseCurrentDeviceLimits      = 1 << 10,  // get current device properties and use it to setup spirv compiler
+
+    GenerateDebug               = 1 << 15,
+    Optimize                    = 1 << 16,
+    OptimizeSize                = 1 << 17,
+    StrongOptimization          = 1 << 18, // very slow, may be usable for offline compilation
+    Validate                    = 1 << 19,
+
+    ParseAnnotations            = 1 << 20,
+
+    _Last,
+    Unknown = 0,
+};
+ENUM_FLAGS(EShaderCompilationFlags);
+//----------------------------------------------------------------------------
 class PPE_RHI_API IPipelineCompiler : public FRefCountable {
 public:
     virtual ~IPipelineCompiler() = default;
 
     virtual FString DisplayName() const NOEXCEPT = 0;
     virtual ETargetRHI TargetRHI() const NOEXCEPT = 0;
+
+    virtual EShaderCompilationFlags CompilationFlags() const NOEXCEPT = 0;
+    virtual void SetCompilationFlags(EShaderCompilationFlags value) NOEXCEPT = 0;
 
     virtual bool IsSupported(const FMeshPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
     virtual bool IsSupported(const FRayTracingPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;

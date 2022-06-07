@@ -29,6 +29,8 @@ public: // virtual
     virtual RHI::FFrameIndex CurrentFrame() const NOEXCEPT = 0;
     virtual FTimespan ElapsedTime() const NOEXCEPT = 0;
 
+    virtual RHI::SPipelineCompiler Compiler(RHI::EShaderLangFormat lang) const NOEXCEPT = 0;
+
     virtual void RenderFrame(FTimespan dt) = 0;
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) = 0;
 

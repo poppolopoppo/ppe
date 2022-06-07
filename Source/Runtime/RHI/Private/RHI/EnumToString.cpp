@@ -3,6 +3,7 @@
 #include "RHI/EnumToString.h"
 
 #include "RHI/PixelFormatHelpers.h"
+#include "RHI/PipelineCompiler.h"
 #include "RHI/RayTracingEnums.h"
 #include "RHI/RenderStateEnums.h"
 #include "RHI/ResourceEnums.h"
@@ -1092,6 +1093,32 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     return oss;
 }
 //----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderCompilationFlags value) {
+    STATIC_ASSERT(Meta::enum_is_flags_v<EShaderCompilationFlags>);
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<EShaderCompilationFlags>(1u << mask.PopFront_AssumeNotEmpty());
+
+        switch (it) {
+        case EShaderCompilationFlags::Quiet: oss << STRING_LITERAL(_Char, "Quiet");
+        case EShaderCompilationFlags::UseCurrentDeviceLimits: oss << STRING_LITERAL(_Char, "UseCurrentDeviceLimits");
+        case EShaderCompilationFlags::GenerateDebug: oss << STRING_LITERAL(_Char, "GenerateDebug");
+        case EShaderCompilationFlags::Optimize: oss << STRING_LITERAL(_Char, "Optimize");
+        case EShaderCompilationFlags::OptimizeSize: oss << STRING_LITERAL(_Char, "OptimizeSize");
+        case EShaderCompilationFlags::StrongOptimization: oss << STRING_LITERAL(_Char, "StrongOptimization");
+        case EShaderCompilationFlags::Validate: oss << STRING_LITERAL(_Char, "Validate");
+        case EShaderCompilationFlags::ParseAnnotations: oss << STRING_LITERAL(_Char, "ParseAnnotations");
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
+
+    return oss;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -1144,6 +1171,7 @@ PPE_RHI_ENUMTOSTRING_DEF(EPixelValueType);
 PPE_RHI_ENUMTOSTRING_DEF(EPresentMode);
 PPE_RHI_ENUMTOSTRING_DEF(ESurfaceTransform);
 PPE_RHI_ENUMTOSTRING_DEF(EResourceState);
+PPE_RHI_ENUMTOSTRING_DEF(EShaderCompilationFlags);
 //----------------------------------------------------------------------------
 #undef PPE_RHI_ENUMTOSTRING_DEF
 //----------------------------------------------------------------------------

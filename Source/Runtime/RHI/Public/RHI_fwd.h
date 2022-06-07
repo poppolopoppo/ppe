@@ -204,6 +204,7 @@ struct FComputePipelineDesc;
 struct FMeshPipelineDesc;
 struct FRayTracingPipelineDesc;
 //----------------------------------------------------------------------------
+enum class EShaderCompilationFlags : u32;
 FWD_INTERFACE_REFPTR(PipelineCompiler);
 //----------------------------------------------------------------------------
 struct FRayTracingGeometryDesc;
