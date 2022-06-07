@@ -23,6 +23,11 @@ struct FUnitTestFunc_ {
 };
 //----------------------------------------------------------------------------
 #define EACH_WINDOWTEST(_Macro) \
+    /* compiler */ \
+    _Macro(Test_Annotation1_) \
+    _Macro(Test_Annotation2_) \
+    _Macro(Test_Annotation3_) \
+    _Macro(Test_Annotation4_) \
     /* compute */ \
     _Macro(Test_Compute1_) \
     _Macro(Test_Compute2_) \

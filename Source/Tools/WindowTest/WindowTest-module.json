@@ -20,6 +20,7 @@
 	"PrivateDependencies": [
 		"ContentPipeline/BuildGraph",
 		"ContentPipeline/PipelineCompiler",
+		"ContentPipeline/PipelineReflection",
 		"Runtime/Remoting"
 	]
 }
