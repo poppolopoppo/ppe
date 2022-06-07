@@ -136,13 +136,29 @@ void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FShaderDataVariant
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+auto FPipelineDesc::DescriptorSet(const FDescriptorSetID& id) NOEXCEPT -> FDescriptorSet* {
+    for (auto& it : PipelineLayout.DescriptorSets) {
+        if (it.Id == id)
+            return &it;
+    }
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+auto FPipelineDesc::DescriptorSet(const FDescriptorSetID& id) const NOEXCEPT -> const FDescriptorSet* {
+    for ( auto& it : PipelineLayout.DescriptorSets) {
+        if (it.Id == id)
+            return &it;
+    }
+    return nullptr;
+}
+//---------------------------------------------------------------(-------------
 void FPipelineDesc::AddDescriptorSet_(
     const FDescriptorSetID& id, u32 index,
     TMemoryView<const FTextureUniform> textures,
     TMemoryView<const FSamplerUniform> samplers,
     TMemoryView<const FSubpassInputUniform> subpassInputs,
     TMemoryView<const FImageUniform> images,
-    TMemoryView<const FUniformBufferUniform> uniformBuffers,
+    TMemoryView<const FBufferUniform> uniformBuffers,
     TMemoryView<const FStorageBufferUniform> storageBuffers,
     TMemoryView<const FRayTracingSceneUniform> rayTracingScenes ) {
     Assert(id.Valid());
@@ -393,7 +409,7 @@ FImageUniform::FImageUniform(const FUniformID& id, EImageSampler imageType, ESha
     })
 {}
 //----------------------------------------------------------------------------
-FUniformBufferUniform::FUniformBufferUniform(const FUniformID& id, u32 size, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex) NOEXCEPT
+FBufferUniform::FBufferUniform(const FUniformID& id, u32 size, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex) NOEXCEPT
 :   base_type(id, index, arraySize, stageFlags, FPipelineDesc::FUniformBuffer{
         EResourceState::UniformRead | EResourceState_FromShaders(stageFlags) |
             (dynamicOffsetIndex != FPipelineDesc::StaticOffset

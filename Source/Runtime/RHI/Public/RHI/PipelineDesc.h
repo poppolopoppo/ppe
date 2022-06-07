@@ -104,7 +104,7 @@ struct FTextureUniform;
 struct FSamplerUniform;
 struct FSubpassInputUniform;
 struct FImageUniform;
-struct FUniformBufferUniform;
+struct FBufferUniform;
 struct FStorageBufferUniform;
 struct FRayTracingSceneUniform;
 //----------------------------------------------------------------------------
@@ -136,8 +136,8 @@ public:
 //----------------------------------------------------------------------------
 STATIC_CONST_INTEGRAL(u32, PipelineStaticOffset, UMax);
 PPE_DEFINE_AUTOPOD(FPipelineTexture,
-        (EResourceState, State, { Default }),
-        (EImageSampler, Type, { Default }))
+    (EResourceState, State, { Default }),
+    (EImageSampler, Type, { Default }))
 PPE_DEFINE_AUTOPOD(FPipelineSampler)
 PPE_DEFINE_AUTOPOD(FPipelineSubpassInput,
     (EResourceState, State, { Default }),
@@ -222,10 +222,25 @@ struct FPipelineDesc {
     using FUniformMap = TRefCountable<TFixedSizeHashMap<FUniformID, FVariantUniform, MaxUniforms>>;
     using PUniformMap = TRefPtr<FUniformMap>;
 
-    PPE_DEFINE_AUTOSTRUCT(FDescriptorSet,
-       (FDescriptorSetID, Id, { Default }),
-       (u32, BindingIndex, { UMax }),
-       (PUniformMap, Uniforms))
+    struct FDescriptorSet {
+        PPE_AUTOSTRUCT_MEMBERS(FDescriptorSet,
+            (FDescriptorSetID, Id, { Default }),
+            (u32, BindingIndex, { UMax }),
+            (PUniformMap, Uniforms))
+
+        template <typename T>
+        TPair<const FVariantUniform*, const T*> Uniform(const FUniformID& id) const {
+            if (const FUniformMap* pUniforms = Uniforms.get()) {
+                for (const auto& it : *pUniforms) {
+                    if (it.first == id) {
+                        if (const auto* ptr = std::get_if<T>(&it.second.Data))
+                            return MakePair(&it.second, ptr);
+                    }
+                }
+            }
+            return Default;
+        }
+    };
 
     using FDescriptorSets = TFixedSizeStack<FDescriptorSet, MaxDescriptorSets>;
     using FPushConstants = TFixedSizeHashMap<FPushConstantID, FPushConstant, MaxPushConstantsCount>;
@@ -266,6 +281,9 @@ struct FPipelineDesc {
     PPE_RHI_API FPipelineDesc(FPipelineDesc&&) NOEXCEPT;
     PPE_RHI_API FPipelineDesc& operator =(FPipelineDesc&&) NOEXCEPT;
 
+    PPE_RHI_API FDescriptorSet* DescriptorSet(const FDescriptorSetID& id) NOEXCEPT;
+    PPE_RHI_API const FDescriptorSet* DescriptorSet(const FDescriptorSetID& id) const NOEXCEPT;
+
 protected:
     PPE_RHI_API FPipelineDesc() NOEXCEPT;
 
@@ -276,13 +294,15 @@ protected:
         TMemoryView<const FSamplerUniform> samplers,
         TMemoryView<const FSubpassInputUniform> subpassInputs,
         TMemoryView<const FImageUniform> images,
-        TMemoryView<const FUniformBufferUniform> uniformBuffers,
+        TMemoryView<const FBufferUniform> uniformBuffers,
         TMemoryView<const FStorageBufferUniform> storageBuffers,
         TMemoryView<const FRayTracingSceneUniform> rayTracingScenes );
 
     PPE_RHI_API void SetPushConstants_(TMemoryView<const FPushConstant> values);
 
 };
+//----------------------------------------------------------------------------
+using FDescriptorSet = FPipelineDesc::FDescriptorSet;
 //----------------------------------------------------------------------------
 // Uniforms
 //----------------------------------------------------------------------------
@@ -318,12 +338,12 @@ struct FImageUniform : details::TPipelineDescUniform<FPipelineDesc::FImage> {
     PPE_RHI_API FImageUniform(const FUniformID& id, EImageSampler imageType, EShaderAccess access, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
-struct FUniformBufferUniform : details::TPipelineDescUniform<FPipelineDesc::FUniformBuffer> {
+struct FBufferUniform : details::TPipelineDescUniform<FPipelineDesc::FUniformBuffer> {
     using base_type = details::TPipelineDescUniform<FPipelineDesc::FUniformBuffer>;
     using base_type::operator==;
     using base_type::operator!=;
 
-    PPE_RHI_API FUniformBufferUniform(const FUniformID& id, u32 size, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex = FPipelineDesc::StaticOffset) NOEXCEPT;
+    PPE_RHI_API FBufferUniform(const FUniformID& id, u32 size, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex = FPipelineDesc::StaticOffset) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 struct FStorageBufferUniform : details::TPipelineDescUniform<FPipelineDesc::FStorageBuffer> {
@@ -373,7 +393,7 @@ struct FGraphicsPipelineDesc final : FPipelineDesc {
         TMemoryView<const FSamplerUniform> samplers,
         TMemoryView<const FSubpassInputUniform> subpassInputs,
         TMemoryView<const FImageUniform> images,
-        TMemoryView<const FUniformBufferUniform> uniformBuffers,
+        TMemoryView<const FBufferUniform> uniformBuffers,
         TMemoryView<const FStorageBufferUniform> storageBuffers ) {
         AddDescriptorSet_(id, index, textures, samplers, subpassInputs, images, uniformBuffers, storageBuffers, Default);
         return (*this);
@@ -415,7 +435,7 @@ struct FComputePipelineDesc final : FPipelineDesc {
         TMemoryView<const FSamplerUniform> samplers,
         TMemoryView<const FSubpassInputUniform> subpassInputs,
         TMemoryView<const FImageUniform> images,
-        TMemoryView<const FUniformBufferUniform> uniformBuffers,
+        TMemoryView<const FBufferUniform> uniformBuffers,
         TMemoryView<const FStorageBufferUniform> storageBuffers ) {
         AddDescriptorSet_(id, index, textures, samplers, subpassInputs, images, uniformBuffers, storageBuffers, Default);
         return (*this);
@@ -463,7 +483,7 @@ struct FMeshPipelineDesc final : FPipelineDesc {
         TMemoryView<const FSamplerUniform> samplers,
         TMemoryView<const FSubpassInputUniform> subpassInputs,
         TMemoryView<const FImageUniform> images,
-        TMemoryView<const FUniformBufferUniform> uniformBuffers,
+        TMemoryView<const FBufferUniform> uniformBuffers,
         TMemoryView<const FStorageBufferUniform> storageBuffers ) {
         AddDescriptorSet_(id, index, textures, samplers, subpassInputs, images, uniformBuffers, storageBuffers, Default);
         return (*this);
@@ -507,7 +527,7 @@ struct FRayTracingPipelineDesc final : FPipelineDesc {
         TMemoryView<const FSamplerUniform> samplers,
         TMemoryView<const FSubpassInputUniform> subpassInputs,
         TMemoryView<const FImageUniform> images,
-        TMemoryView<const FUniformBufferUniform> uniformBuffers,
+        TMemoryView<const FBufferUniform> uniformBuffers,
         TMemoryView<const FStorageBufferUniform> storageBuffers,
         TMemoryView<const FRayTracingSceneUniform> rayTracingScenes ) {
         AddDescriptorSet_(id, index, textures, samplers, subpassInputs, images, uniformBuffers, storageBuffers, rayTracingScenes);
