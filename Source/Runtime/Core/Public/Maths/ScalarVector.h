@@ -37,32 +37,22 @@ struct TScalarVectorExpr {
 
     CONSTEXPR TScalarVectorExpr() = default;
 
-    NODISCARD CONSTEXPR operator TScalarVector<T, _Dim>() const { return Expand(); }
-
-    NODISCARD CONSTEXPR _Expr& ref() {
-        return static_cast<_Expr&>(*this);
-    }
-    NODISCARD CONSTEXPR const _Expr& ref() const {
-        return static_cast<const _Expr&>(*this);
-    }
+    NODISCARD CONSTEXPR _Expr& ref();
+    NODISCARD CONSTEXPR const _Expr& ref() const;
 
     template <size_t _Index>
-    NODISCARD CONSTEXPR component_type& get() {
-        static_assert(_Index < _Dim, "out-of-bounds");
-        return ref().template get<_Index>();
-    }
+    NODISCARD CONSTEXPR component_type& get();
     template <size_t _Index>
-    NODISCARD CONSTEXPR component_type get() const {
-        static_assert(_Index < _Dim, "out-of-bounds");
-        return ref().template get<_Index>();
-    }
+    NODISCARD CONSTEXPR component_type get() const;
 
     NODISCARD CONSTEXPR auto HSum() const;
 
     NODISCARD CONSTEXPR auto MaxComponent() const;
     NODISCARD CONSTEXPR auto MinComponent() const;
 
+    NODISCARD CONSTEXPR operator TScalarVector<T, _Dim>() const;
     NODISCARD CONSTEXPR TScalarVector<T, _Dim> Expand() const;
+
     NODISCARD CONSTEXPR auto Shift() const;
     template <size_t... _Idx>
     NODISCARD CONSTEXPR TScalarVector<T, sizeof...(_Idx)> Shuffle() const;
@@ -855,6 +845,26 @@ CONSTEXPR auto MakeScalarVectorTernaryExpr(
 // TScalarVectorExpr<> helpers
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename _Expr>
+CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::ref() -> _Expr& {
+    return *static_cast<_Expr*>(this);
+}
+template <typename T, size_t _Dim, typename _Expr>
+CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::ref() const -> const _Expr& {
+    return *static_cast<const _Expr*>(this);
+}
+template <typename T, size_t _Dim, typename _Expr>
+template <size_t _Index>
+CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::get() -> component_type& {
+    static_assert(_Index < _Dim, "out-of-bounds");
+    return ref().template get<_Index>();
+}
+template <typename T, size_t _Dim, typename _Expr>
+template <size_t _Index>
+CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::get() const -> component_type {
+    static_assert(_Index < _Dim, "out-of-bounds");
+    return ref().template get<_Index>();
+}
+template <typename T, size_t _Dim, typename _Expr>
 CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::HSum() const {
     return Meta::static_for<_Dim>([this](auto... idx) {
         return (this->template get<idx>() + ...);
@@ -871,6 +881,10 @@ CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::MinComponent() const {
     return Meta::static_for<_Dim>([this](auto... idx) {
         return std::min({ this->template get<idx>()... });
     });
+}
+template <typename T, size_t _Dim, typename _Expr>
+CONSTEXPR TScalarVectorExpr<T, _Dim, _Expr>::operator TScalarVector<T, _Dim>() const {
+    return Expand();
 }
 template <typename T, size_t _Dim, typename _Expr>
 CONSTEXPR TScalarVector<T, _Dim> TScalarVectorExpr<T, _Dim, _Expr>::Expand() const {
@@ -1066,7 +1080,14 @@ struct TNumericLimits< TScalarVector<T, _Dim> > {
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#ifndef EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR
+// for some reason I don't understand clang-cl is refusing to compile CRTP with dllexport and extern decl :/
+#if defined(BUILD_LINK_DYNAMIC) && defined(_MSC_VER) && defined(__clang__)
+#   define EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR_DISABLED (1)
+#else
+#   define EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR_DISABLED (0)
+#endif
+
+#if not defined(EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR) and not EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR_DISABLED
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -273,10 +273,7 @@ using i64   = std::int64_t;
 #   define DLL_EXPORT
 #   define DLL_NOINLINE
 #elif   defined(BUILD_LINK_DYNAMIC)
-#   if     defined(CPP_CLANG)
-#       define DLL_IMPORT __declspec(dllimport)
-#       define DLL_EXPORT __declspec(dllexport)
-#   elif   defined(CPP_VISUALSTUDIO)
+#   if   defined(CPP_VISUALSTUDIO) || defined(CPP_CLANG)
 #       define DLL_IMPORT __declspec(dllimport)
 #       define DLL_EXPORT __declspec(dllexport)
 #   elif   defined(CPP_GCC)
@@ -288,12 +285,6 @@ using i64   = std::int64_t;
 #   define DLL_NOINLINE NO_INLINE
 #else
 #   error "inconsistent configuration"
-#endif
-//----------------------------------------------------------------------------
-#ifdef BUILD_LINK_DYNAMIC
-#   define EXPORT_DELETED_FUNCTION = default
-#else
-#   define EXPORT_DELETED_FUNCTION = delete
 #endif
 //----------------------------------------------------------------------------
 #define EXTERN_TEMPLATE_CLASS_DECL(_API) extern template class

@@ -31,6 +31,7 @@ namespace Constants {
 //----------------------------------------------------------------------------
 // TScalarVector
 //----------------------------------------------------------------------------
+#if not EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR_DISABLED
 EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<bool, 1>;
 EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<bool, 2>;
 EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<bool, 3>;
@@ -55,6 +56,26 @@ EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 1>;
 EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 2>;
 EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 3>;
 EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 4>;
+//----------------------------------------------------------------------------
+// Packed vectors
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 4>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 4>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 4>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 3>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 4>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 2>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 3>;
+EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 4>;
+#endif //!EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR_DISABLED
 //----------------------------------------------------------------------------
 // TScalarBoundingBox
 //----------------------------------------------------------------------------
@@ -99,25 +120,6 @@ EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 1>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 2>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 3>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 4>;
-//----------------------------------------------------------------------------
-// Packed vectors
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 4>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 4>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 4>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 4>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
