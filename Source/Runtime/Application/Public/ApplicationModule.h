@@ -44,7 +44,7 @@ public:
     PUBLIC_EVENT(OnApplicationStart, FApplicationServicesEvent);
     PUBLIC_EVENT(OnApplicationShutdown, FApplicationServicesEvent);
 
-    using FApplicationTick = TFunction<void(Application::FApplicationBase&, FTimespan dt) NOEXCEPT>;
+    using FApplicationTick = TFunction<void(Application::FApplicationBase&, FTimespan) NOEXCEPT>;
 
     PUBLIC_EVENT(OnApplicationTick, FApplicationTick);
 };

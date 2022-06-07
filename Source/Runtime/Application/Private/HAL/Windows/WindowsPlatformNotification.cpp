@@ -130,10 +130,6 @@ private:
         }, ETaskPriority::High);
     }
 
-    static ::HWND ApplicationMainWindow_() {
-
-    }
-
     mutable std::mutex _barrier;
     FUserCommands _commands;
     Meta::TInPlace<TComPtr<::ITaskbarList3>> _windowsTaskbarPtr{};
