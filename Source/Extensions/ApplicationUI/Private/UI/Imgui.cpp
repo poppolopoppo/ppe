@@ -8,6 +8,10 @@ PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 
 #ifdef __clang__
 #   pragma clang diagnostic push,
+#   pragma clang diagnostic ignored "-Wsign-compare"
+#   pragma clang diagnostic ignored "-Wreorder-ctor"
+#   pragma clang diagnostic ignored "-Wunused-function"
+#   pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 
 #include "External/imgui/imgui.git/imgui.cpp"
