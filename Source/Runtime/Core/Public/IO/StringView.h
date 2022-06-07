@@ -118,50 +118,50 @@ PPE_ASSUME_TYPE_AS_POD(FWStringView)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR FStringView operator "" _view(const char* str, size_t len) {
+CONSTEXPR FStringView operator "" _view(const char* str, size_t len) NOEXCEPT {
     return { str, len };
 }
 //----------------------------------------------------------------------------
-CONSTEXPR FWStringView operator "" _view(const wchar_t* wstr, size_t len) {
+CONSTEXPR FWStringView operator "" _view(const wchar_t* wstr, size_t len) NOEXCEPT {
     return { wstr, len };
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str) {
+TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str) NOEXCEPT {
     return TBasicStringView<_Char>(str.data(), str.size());
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-CONSTEXPR FStringView MakeStringView(const char(&cstr)[_Dim]) {
+CONSTEXPR FStringView MakeStringView(const char(&cstr)[_Dim]) NOEXCEPT {
     return FStringView(cstr);
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-CONSTEXPR FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]) {
+CONSTEXPR FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]) NOEXCEPT {
     return FWStringView(cstr);
 }
 //----------------------------------------------------------------------------
-CONSTEXPR FStringView MakeStringView(const TMemoryView<const char>& view) {
+CONSTEXPR FStringView MakeStringView(const TMemoryView<const char>& view) NOEXCEPT {
     return FStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-CONSTEXPR FWStringView MakeStringView(const TMemoryView<const wchar_t>& view) {
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<const wchar_t>& view) NOEXCEPT {
     return FWStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-CONSTEXPR FStringView MakeStringView(const TMemoryView<char>& view) {
+CONSTEXPR FStringView MakeStringView(const TMemoryView<char>& view) NOEXCEPT {
     return FStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-CONSTEXPR FWStringView MakeStringView(const TMemoryView<wchar_t>& view) {
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<wchar_t>& view) NOEXCEPT {
     return FWStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-CONSTEXPR const FStringView& MakeStringView(const FStringView& view) {
+CONSTEXPR const FStringView& MakeStringView(const FStringView& view) NOEXCEPT {
     return view;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR const FWStringView& MakeStringView(const FWStringView& view) {
+CONSTEXPR const FWStringView& MakeStringView(const FWStringView& view) NOEXCEPT {
     return view;
 }
 //----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ template <typename _It>
 typename std::enable_if<
     Meta::is_iterator_of<_It, char>::value,
     FStringView
->::type MakeStringView(_It first, _It last) {
+>::type CONSTF MakeStringView(_It first, _It last) NOEXCEPT {
     typedef std::iterator_traits<_It> traits_type;
     STATIC_ASSERT(std::is_same<typename traits_type::iterator_category, std::random_access_iterator_tag>::value);
     return FStringView(std::addressof(*first), std::distance(first, last));
@@ -179,7 +179,7 @@ template <typename _It>
 typename std::enable_if<
     Meta::is_iterator_of<_It, wchar_t>::value,
     FWStringView
->::type MakeStringView(_It first, _It last) {
+>::type CONSTF MakeStringView(_It first, _It last) NOEXCEPT {
     typedef std::iterator_traits<_It> traits_type;
     STATIC_ASSERT(std::is_same<typename traits_type::iterator_category, std::random_access_iterator_tag>::value);
     return FWStringView(std::addressof(*first), std::distance(first, last));
@@ -187,317 +187,323 @@ typename std::enable_if<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline size_t Length(const char* string) { return ::strlen(string); }
-inline size_t Length(const wchar_t* string) { return ::wcslen(string); }
+inline size_t CONSTF Length(const char* string) { return ::strlen(string); }
+inline size_t CONSTF Length(const wchar_t* string) { return ::wcslen(string); }
 //----------------------------------------------------------------------------
 template <typename _Char>
-FORCE_INLINE TBasicStringView<_Char> MakeCStringView(const _Char* cstr) {
+FORCE_INLINE TBasicStringView<_Char> CONSTF MakeCStringView(const _Char* cstr) NOEXCEPT {
     return TBasicStringView<_Char>(cstr, cstr ? Length(cstr) : 0);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline const char *StrChr(const char* cstr, char ch) { return ::strchr(cstr, ch); }
-inline const char *StrRChr(const char* cstr, char ch) { return ::strrchr(cstr, ch); }
+inline const char* CONSTF StrChr(const char* cstr, char ch) NOEXCEPT { return ::strchr(cstr, ch); }
+inline const char* CONSTF StrRChr(const char* cstr, char ch) NOEXCEPT { return ::strrchr(cstr, ch); }
 //----------------------------------------------------------------------------
-inline const wchar_t *StrChr(const wchar_t* wcstr, wchar_t wch) { return ::wcschr(wcstr, wch); }
-inline const wchar_t *StrRChr(const wchar_t* wcstr, wchar_t wch) { return ::wcsrchr(wcstr, wch); }
+inline const wchar_t* CONSTF StrChr(const wchar_t* wcstr, wchar_t wch) NOEXCEPT { return ::wcschr(wcstr, wch); }
+inline const wchar_t* CONSTF StrRChr(const wchar_t* wcstr, wchar_t wch) NOEXCEPT { return ::wcsrchr(wcstr, wch); }
 //----------------------------------------------------------------------------
-inline const char *StrStr(const char* cstr, const char* firstOccurence) { return ::strstr(cstr, firstOccurence); }
-inline const wchar_t *StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence) { return ::wcsstr(wcstr, firstOccurence); }
+inline const char* CONSTF StrStr(const char* cstr, const char* firstOccurence) NOEXCEPT { return ::strstr(cstr, firstOccurence); }
+inline const wchar_t* CONSTF StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence) NOEXCEPT { return ::wcsstr(wcstr, firstOccurence); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView::iterator StrChr(const FStringView& str, char ch);
-PPE_CORE_API FStringView::reverse_iterator StrRChr(const FStringView& str, char ch);
+PPE_CORE_API FStringView::iterator CONSTF StrChr(const FStringView& str, char ch) NOEXCEPT;
+PPE_CORE_API FStringView::reverse_iterator CONSTF StrRChr(const FStringView& str, char ch) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FWStringView::iterator StrChr(const FWStringView& wstr, wchar_t wch);
-PPE_CORE_API FWStringView::reverse_iterator StrRChr(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API FWStringView::iterator CONSTF StrChr(const FWStringView& wstr, wchar_t wch) NOEXCEPT;
+PPE_CORE_API FWStringView::reverse_iterator CONSTF StrRChr(const FWStringView& wstr, wchar_t wch) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView::iterator StrStr(const FStringView& str, const FStringView& firstOccurence);
-PPE_CORE_API FWStringView::iterator StrStr(const FWStringView& wstr, const FWStringView& firstOccurence);
+PPE_CORE_API FStringView::iterator CONSTF StrStr(const FStringView& str, const FStringView& firstOccurence) NOEXCEPT;
+PPE_CORE_API FWStringView::iterator CONSTF StrStr(const FWStringView& wstr, const FWStringView& firstOccurence) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView::iterator StrStrI(const FStringView& str, const FStringView& firstOccurence);
-PPE_CORE_API FWStringView::iterator StrStrI(const FWStringView& wstr, const FWStringView& firstOccurence);
+PPE_CORE_API FStringView::iterator CONSTF StrStrI(const FStringView& str, const FStringView& firstOccurence) NOEXCEPT;
+PPE_CORE_API FWStringView::iterator CONSTF StrStrI(const FWStringView& wstr, const FWStringView& firstOccurence) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline bool HasSubString(const FStringView& str, const FStringView& substr) { return str.end() != StrStr(str, substr); }
-inline bool HasSubString(const FWStringView& str, const FWStringView& substr) { return str.end() != StrStr(str, substr); }
+inline bool CONSTF HasSubString(const FStringView& str, const FStringView& substr) NOEXCEPT { return str.end() != StrStr(str, substr); }
+inline bool CONSTF HasSubString(const FWStringView& str, const FWStringView& substr) NOEXCEPT { return str.end() != StrStr(str, substr); }
 //----------------------------------------------------------------------------
-inline bool HasSubStringI(const FStringView& str, const FStringView& substr) { return str.end() != StrStrI(str, substr); }
-inline bool HasSubStringI(const FWStringView& str, const FWStringView& substr) { return str.end() != StrStrI(str, substr); }
+inline bool CONSTF HasSubStringI(const FStringView& str, const FStringView& substr) NOEXCEPT { return str.end() != StrStrI(str, substr); }
+inline bool CONSTF HasSubStringI(const FWStringView& str, const FWStringView& substr) NOEXCEPT { return str.end() != StrStrI(str, substr); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Used LLVM to reverse the optimal ASM generated to C: https://godbolt.org/z/hanWdq
 //----------------------------------------------------------------------------
 #if 1 //optimized ASM
-CONSTEXPR bool IsAlpha(char ch) { return (static_cast<uint8_t>('z' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a' - 1)) - 'A')); }
+CONSTEXPR bool CONSTF IsAlpha(char ch) NOEXCEPT { return (static_cast<uint8_t>('z' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a' - 1)) - 'A')); }
 #else
-CONSTEXPR bool IsAlpha(char ch) { return ( ( ch >= 'a' ) & ( ch <= 'z' ) ) | ( ( ch >= 'A' ) & ( ch <= 'Z' ) ); }
+CONSTEXPR bool CONSTF IsAlpha(char ch) NOEXCEPT { return ( ( ch >= 'a' ) & ( ch <= 'z' ) ) | ( ( ch >= 'A' ) & ( ch <= 'Z' ) ); }
 #endif
-inline bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
+inline bool CONSTF IsAlpha(wchar_t wch) NOEXCEPT { return 0 != std::iswalpha(wch); }
 //----------------------------------------------------------------------------
 #if 1 //optimized ASM
-CONSTEXPR bool IsDigit(char ch) { return (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0')); }
+CONSTEXPR bool CONSTF IsDigit(char ch) NOEXCEPT { return (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0')); }
 #else
-CONSTEXPR bool IsDigit(char ch) { return ( ( ch >= '0' ) & ( ch <= '9' ) ); }
+CONSTEXPR bool CONSTF IsDigit(char ch) NOEXCEPT { return ( ( ch >= '0' ) & ( ch <= '9' ) ); }
 #endif
-inline bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
+inline bool CONSTF IsDigit(wchar_t wch) NOEXCEPT { return 0 != std::iswdigit(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsEndLine(char ch) { return ( ( ch == '\r' ) | ( ch == '\n' ) ); }
-CONSTEXPR bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) | ( wch == L'\n' ) ); }
+CONSTEXPR bool CONSTF IsEndLine(char ch) NOEXCEPT { return ( ( ch == '\r' ) || ( ch == '\n' ) ); }
+CONSTEXPR bool CONSTF IsEndLine(wchar_t wch) NOEXCEPT { return ( ( wch == L'\r' ) || ( wch == L'\n' ) ); }
 //----------------------------------------------------------------------------
 #if 1 //optimized ASM
-CONSTEXPR bool IsXDigit(char ch) { return (
-    (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0')) |
+CONSTEXPR bool CONSTF IsXDigit(char ch) NOEXCEPT { return (
+    (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0')) ||
     (static_cast<uint8_t>('f' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a'  - 1)) - 'A')) ); }
 #else
-CONSTEXPR bool IsXDigit(char ch) { return IsDigit(ch) | ( ( ch >= 'a' ) & ( ch <= 'f' ) ) | ( ( ch >= 'A' ) & ( ch <= 'F' ) ); }
+CONSTEXPR bool CONSTF IsXDigit(char ch) NOEXCEPT { return IsDigit(ch) | ( ( ch >= 'a' ) & ( ch <= 'f' ) ) | ( ( ch >= 'A' ) & ( ch <= 'F' ) ); }
 #endif
-inline bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
+inline bool CONSTF IsXDigit(wchar_t wch) NOEXCEPT { return 0 != std::iswxdigit(wch); }
 //----------------------------------------------------------------------------
 #if 1 //optimized ASM
-CONSTEXPR bool IsAlnum(char ch) { return (
-    (static_cast<uint8_t>('z' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a' - 1)) - 'A')) |
+CONSTEXPR bool CONSTF IsAlnum(char ch) NOEXCEPT { return (
+    (static_cast<uint8_t>('z' - 'a' + 1) > static_cast<uint8_t>((ch & ('A' - 'a' - 1)) - 'A')) ||
     (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0'))  ); }
 #else
-CONSTEXPR bool IsAlnum(char ch) { return (IsAlpha(ch) | IsDigit(ch)); }
+CONSTEXPR bool CONSTF IsAlnum(char ch) NOEXCEPT { return (IsAlpha(ch) | IsDigit(ch)); }
 #endif
-inline bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
+inline bool CONSTF IsAlnum(wchar_t wch) NOEXCEPT { return 0 != std::iswalnum(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsIdentifier(char ch) { return (IsAlnum(ch) | ( ch == '_' ) | ( ch == '.' )); }
-inline bool IsIdentifier(wchar_t wch) { return (IsAlnum(wch) || ((wch == L'_') | (wch == L'.'))); }
+CONSTEXPR bool CONSTF IsIdentifier(char ch) NOEXCEPT { return (IsAlnum(ch) || ( ch == '_' ) || ( ch == '.' )); }
+inline bool CONSTF IsIdentifier(wchar_t wch) NOEXCEPT { return (IsAlnum(wch) || ((wch == L'_') || (wch == L'.'))); }
 //----------------------------------------------------------------------------
 #if 1 //optimized ASM
-CONSTEXPR bool IsOctal(char ch) { return (static_cast<uint8_t>('7' - '0' + 1) > static_cast<uint8_t>(ch - '0')); }
+CONSTEXPR bool CONSTF IsOctal(char ch) NOEXCEPT { return (static_cast<uint8_t>('7' - '0' + 1) > static_cast<uint8_t>(ch - '0')); }
 #else
-CONSTEXPR bool IsOctal(char ch) { return ( ( ch >= '0' ) & ( ch <= '7' ) ); }
+CONSTEXPR bool CONSTF IsOctal(char ch) NOEXCEPT { return ( ( ch >= '0' ) & ( ch <= '7' ) ); }
 #endif
-inline bool IsOctal(wchar_t wch) { return (IsDigit(wch) & (wch != '8') & (wch != '9')); }
+inline bool CONSTF IsOctal(wchar_t wch) NOEXCEPT { return (IsDigit(wch) && (wch != '8') && (wch != '9')); }
 //----------------------------------------------------------------------------
-inline bool IsPrint(char ch) { return 0 != std::isprint((int)((unsigned char)ch)); }
-inline bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
+inline bool CONSTF IsPrint(char ch) NOEXCEPT { return 0 != std::isprint((int)((unsigned char)ch)); }
+inline bool CONSTF IsPrint(wchar_t wch) NOEXCEPT { return 0 != std::iswprint(wch); }
 //----------------------------------------------------------------------------
-inline bool IsPunct(char ch) { return 0 != std::ispunct((int)((unsigned char)ch)); }
-inline bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
+inline bool CONSTF IsPunct(char ch) NOEXCEPT { return 0 != std::ispunct((int)((unsigned char)ch)); }
+inline bool CONSTF IsPunct(wchar_t wch) NOEXCEPT { return 0 != std::iswpunct(wch); }
 //----------------------------------------------------------------------------
-CONSTEXPR bool IsSpace(char ch) { return ((ch == ' ') | (ch == '\f') | (ch == '\n') | (ch == '\r') | (ch == '\t') | (ch == '\v')); }
-inline bool IsSpace(wchar_t wch) { return 0 != std::iswspace(wch); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsAlnum(const FStringView& str);
-PPE_CORE_API bool IsAlnum(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsAlpha(const FStringView& str);
-PPE_CORE_API bool IsAlpha(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsDigit(const FStringView& str);
-PPE_CORE_API bool IsDigit(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsXDigit(const FStringView& str);
-PPE_CORE_API bool IsXDigit(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsIdentifier(const FStringView& str);
-PPE_CORE_API bool IsIdentifier(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsOctal(const FStringView& str);
-PPE_CORE_API bool IsOctal(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsPrint(const FStringView& str);
-PPE_CORE_API bool IsPrint(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool IsSpace(const FStringView& str);
-PPE_CORE_API bool IsSpace(const FWStringView& wstr);
+CONSTEXPR bool CONSTF IsSpace(char ch) NOEXCEPT { return ((ch == ' ') || (ch == '\f') || (ch == '\n') || (ch == '\r') || (ch == '\t') || (ch == '\v')); }
+inline bool CONSTF IsSpace(wchar_t wch) NOEXCEPT { return 0 != std::iswspace(wch); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool HasAlnum(const FStringView& str);
-PPE_CORE_API bool HasAlnum(const FWStringView& wstr);
+PPE_CORE_API bool CONSTF IsAlnum(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsAlnum(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool HasAlpha(const FStringView& str);
-PPE_CORE_API bool HasAlpha(const FWStringView& wstr);
+PPE_CORE_API bool CONSTF IsAlpha(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsAlpha(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool HasDigit(const FStringView& str);
-PPE_CORE_API bool HasDigit(const FWStringView& wstr);
+PPE_CORE_API bool CONSTF IsDigit(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsDigit(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool HasXDigit(const FStringView& str);
-PPE_CORE_API bool HasXDigit(const FWStringView& wstr);
+PPE_CORE_API bool CONSTF IsXDigit(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsXDigit(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool HasPrint(const FStringView& str);
-PPE_CORE_API bool HasPrint(const FWStringView& wstr);
+PPE_CORE_API bool CONSTF IsIdentifier(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsIdentifier(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool HasSpace(const FStringView& str);
-PPE_CORE_API bool HasSpace(const FWStringView& wstr);
+PPE_CORE_API bool CONSTF IsOctal(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsOctal(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+PPE_CORE_API bool CONSTF IsPrint(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsPrint(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatAlnums(FStringView& str);
-PPE_CORE_API FWStringView EatAlnums(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatAlphas(FStringView& str);
-PPE_CORE_API FWStringView EatAlphas(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatDigits(FStringView& str);
-PPE_CORE_API FWStringView EatDigits(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatXDigits(FStringView& str);
-PPE_CORE_API FWStringView EatXDigits(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatIdentifier(FStringView& str);
-PPE_CORE_API FWStringView EatIdentifier(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatOctals(FStringView& str);
-PPE_CORE_API FWStringView EatOctals(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatPrints(FStringView& str);
-PPE_CORE_API FWStringView EatPrints(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatSpaces(FStringView& str);
-PPE_CORE_API FWStringView EatSpaces(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatWhile(FStringView& str, char ch);
-PPE_CORE_API FWStringView EatWhile(FWStringView& wstr, wchar_t wch);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatWhile(FStringView& str, const FStringView& multiple);
-PPE_CORE_API FWStringView EatWhile(FWStringView& wstr, const FWStringView& wmultiple);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatUntil(FStringView& str, char ch);
-PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, wchar_t wch);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView EatUntil(FStringView& str, const FStringView& multiple);
-PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple);
+PPE_CORE_API bool CONSTF IsSpace(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF IsSpace(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView TrimStart(const FStringView& str, char ch);
-PPE_CORE_API FWStringView TrimStart(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API bool CONSTF HasAlnum(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF HasAlnum(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView TrimStart(const FStringView& str, const FStringView& chars);
-PPE_CORE_API FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars);
+PPE_CORE_API bool CONSTF HasAlpha(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF HasAlpha(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView TrimEnd(const FStringView& str, char ch);
-PPE_CORE_API FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API bool CONSTF HasDigit(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF HasDigit(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView TrimEnd(const FStringView& str, const FStringView& chars);
-PPE_CORE_API FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars);
+PPE_CORE_API bool CONSTF HasXDigit(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF HasXDigit(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView Trim(const FStringView& str, char ch);
-PPE_CORE_API FWStringView Trim(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API bool CONSTF HasPrint(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF HasPrint(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API FStringView Trim(const FStringView& str, const FStringView& chars);
-PPE_CORE_API FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView Chomp(const FStringView& str);
-PPE_CORE_API FWStringView Chomp(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_CORE_API FStringView Strip(const FStringView& str);
-PPE_CORE_API FWStringView Strip(const FWStringView& wstr);
+PPE_CORE_API bool CONSTF HasSpace(const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool CONSTF HasSpace(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API int Compare(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
-PPE_CORE_API int Compare(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
+PPE_CORE_API FStringView EatAlnums(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatAlnums(FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API int CompareI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
-PPE_CORE_API int CompareI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
+PPE_CORE_API FStringView EatAlphas(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatAlphas(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatDigits(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatDigits(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatXDigits(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatXDigits(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatIdentifier(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatIdentifier(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatOctals(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatOctals(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatPrints(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatPrints(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatSpaces(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatSpaces(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatWhile(FStringView& str, char ch) NOEXCEPT;
+PPE_CORE_API FWStringView EatWhile(FWStringView& wstr, wchar_t wch) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatWhile(FStringView& str, const FStringView& multiple) NOEXCEPT;
+PPE_CORE_API FWStringView EatWhile(FWStringView& wstr, const FWStringView& wmultiple) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatWhile(FStringView& str, bool (*is_a)(char)) NOEXCEPT;
+PPE_CORE_API FWStringView EatWhile(FWStringView& wstr, bool (*is_a)(wchar_t)) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatUntil(FStringView& str, char ch) NOEXCEPT;
+PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, wchar_t wch) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatUntil(FStringView& str, const FStringView& multiple) NOEXCEPT;
+PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatUntil(FStringView& str, bool (*is_not_a)(char)) NOEXCEPT;
+PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, bool (*is_not_a)(wchar_t)) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool EqualsN(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
-PPE_CORE_API bool EqualsNI(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
+PPE_CORE_API FStringView TrimStart(const FStringView& str, char ch) NOEXCEPT;
+PPE_CORE_API FWStringView TrimStart(const FWStringView& wstr, wchar_t wch) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
-PPE_CORE_API bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
+PPE_CORE_API FStringView TrimStart(const FStringView& str, const FStringView& chars) NOEXCEPT;
+PPE_CORE_API FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Equals(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
-PPE_CORE_API bool Equals(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
+PPE_CORE_API FStringView TrimEnd(const FStringView& str, char ch) NOEXCEPT;
+PPE_CORE_API FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool EqualsI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
-PPE_CORE_API bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
+PPE_CORE_API FStringView TrimEnd(const FStringView& str, const FStringView& chars) NOEXCEPT;
+PPE_CORE_API FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline bool EqualsI(char lhs, char rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
-inline bool EqualsI(wchar_t lhs, wchar_t rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
+PPE_CORE_API FStringView Trim(const FStringView& str, char ch) NOEXCEPT;
+PPE_CORE_API FWStringView Trim(const FWStringView& wstr, wchar_t wch) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline bool Equals(char lhs, char rhs, ECase cmp) NOEXCEPT { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
-inline bool Equals(wchar_t lhs, wchar_t rhs, ECase cmp) NOEXCEPT { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
+PPE_CORE_API FStringView Trim(const FStringView& str, const FStringView& chars) NOEXCEPT;
+PPE_CORE_API FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars) NOEXCEPT;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+PPE_CORE_API FStringView Chomp(const FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView Chomp(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool StartsWith(const FStringView& str, const FStringView& prefix);
-PPE_CORE_API bool StartsWith(const FWStringView& wstr, const FWStringView& wprefix);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool StartsWithI(const FStringView& str, const FStringView& prefix);
-PPE_CORE_API bool StartsWithI(const FWStringView& wstr, const FWStringView& wprefix);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool EndsWith(const FStringView& str, const FStringView& suffix);
-PPE_CORE_API bool EndsWith(const FWStringView& wstr, const FWStringView& wsuffix);
-//----------------------------------------------------------------------------
-PPE_CORE_API bool EndsWithI(const FStringView& str, const FStringView& suffix);
-PPE_CORE_API bool EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix);
+PPE_CORE_API FStringView Strip(const FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView Strip(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Split(FStringView& str, char separator, FStringView& slice);
-PPE_CORE_API bool Split(FWStringView& wstr, wchar_t separator, FWStringView& slice);
+PPE_CORE_API int CONSTF Compare(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API int CONSTF Compare(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Split(FStringView& str, const FStringView& separators, FStringView& slice);
-PPE_CORE_API bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice);
+PPE_CORE_API int CONSTF CompareI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API int CONSTF CompareI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool SplitR(FStringView& str, char separator, FStringView& slice);
-PPE_CORE_API bool SplitR(FWStringView& wstr, wchar_t separator, FWStringView& slice);
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice);
-PPE_CORE_API bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice);
+PPE_CORE_API bool CONSTF EqualsN(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
+PPE_CORE_API bool CONSTF EqualsNI(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool SplitNth(FStringView& str, char separator, FStringView& slice, size_t nth);
-PPE_CORE_API bool SplitNth(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth);
+PPE_CORE_API bool CONSTF EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
+PPE_CORE_API bool CONSTF EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool SplitNth(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth);
-PPE_CORE_API bool SplitNth(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth);
+PPE_CORE_API bool CONSTF Equals(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API bool CONSTF Equals(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool SplitNthR(FStringView& str, char separator, FStringView& slice, size_t nth);
-PPE_CORE_API bool SplitNthR(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth);
+PPE_CORE_API bool CONSTF EqualsI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API bool CONSTF EqualsI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool SplitNthR(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth);
-PPE_CORE_API bool SplitNthR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth);
+inline bool CONSTF EqualsI(char lhs, char rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
+inline bool CONSTF EqualsI(wchar_t lhs, wchar_t rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
+//----------------------------------------------------------------------------
+inline bool CONSTF Equals(char lhs, char rhs, ECase cmp) NOEXCEPT { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
+inline bool CONSTF Equals(wchar_t lhs, wchar_t rhs, ECase cmp) NOEXCEPT { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_CORE_API bool CONSTF StartsWith(const FStringView& str, const FStringView& prefix) NOEXCEPT;
+PPE_CORE_API bool CONSTF StartsWith(const FWStringView& wstr, const FWStringView& wprefix) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool CONSTF StartsWithI(const FStringView& str, const FStringView& prefix) NOEXCEPT;
+PPE_CORE_API bool CONSTF StartsWithI(const FWStringView& wstr, const FWStringView& wprefix) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool CONSTF EndsWith(const FStringView& str, const FStringView& suffix) NOEXCEPT;
+PPE_CORE_API bool CONSTF EndsWith(const FWStringView& wstr, const FWStringView& wsuffix) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool CONSTF EndsWithI(const FStringView& str, const FStringView& suffix) NOEXCEPT;
+PPE_CORE_API bool CONSTF EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix) NOEXCEPT;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_CORE_API bool Split(FStringView& str, char separator, FStringView& slice) NOEXCEPT;
+PPE_CORE_API bool Split(FWStringView& wstr, wchar_t separator, FWStringView& slice) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool Split(FStringView& str, const FStringView& separators, FStringView& slice) NOEXCEPT;
+PPE_CORE_API bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitR(FStringView& str, char separator, FStringView& slice) NOEXCEPT;
+PPE_CORE_API bool SplitR(FWStringView& wstr, wchar_t separator, FWStringView& slice) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice) NOEXCEPT;
+PPE_CORE_API bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNth(FStringView& str, char separator, FStringView& slice, size_t nth) NOEXCEPT;
+PPE_CORE_API bool SplitNth(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNth(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth) NOEXCEPT;
+PPE_CORE_API bool SplitNth(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNthR(FStringView& str, char separator, FStringView& slice, size_t nth) NOEXCEPT;
+PPE_CORE_API bool SplitNthR(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API bool SplitNthR(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth) NOEXCEPT;
+PPE_CORE_API bool SplitNthR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicStringView<_Char> Slice(const TBasicStringView<_Char>& str, size_t offset, size_t count) {
+TBasicStringView<_Char> Slice(const TBasicStringView<_Char>& str, size_t offset, size_t count)  NOEXCEPT {
     return str.SubRange(offset, count);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Atoi(i32* dst, const FStringView& str, size_t base);
-PPE_CORE_API bool Atoi(u32* dst, const FStringView& str, size_t base);
-PPE_CORE_API bool Atoi(i64* dst, const FStringView& str, size_t base);
-PPE_CORE_API bool Atoi(u64* dst, const FStringView& str, size_t base);
+PPE_CORE_API bool Atoi(i32* dst, const FStringView& str, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u32* dst, const FStringView& str, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(i64* dst, const FStringView& str, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u64* dst, const FStringView& str, size_t base) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Atoi(i32* dst, const FWStringView& wstr, size_t base);
-PPE_CORE_API bool Atoi(u32* dst, const FWStringView& wstr, size_t base);
-PPE_CORE_API bool Atoi(i64* dst, const FWStringView& wstr, size_t base);
-PPE_CORE_API bool Atoi(u64* dst, const FWStringView& wstr, size_t base);
+PPE_CORE_API bool Atoi(i32* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u32* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(i64* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u64* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Atof(float* dst, const FStringView& str);
-PPE_CORE_API bool Atod(double* dst, const FStringView& str);
+PPE_CORE_API bool Atof(float* dst, const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool Atod(double* dst, const FStringView& str) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Atof(float* dst, const FWStringView& wstr);
-PPE_CORE_API bool Atod(double* dst, const FWStringView& wstr);
+PPE_CORE_API bool Atof(float* dst, const FWStringView& wstr) NOEXCEPT;
+PPE_CORE_API bool Atod(double* dst, const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool WildMatch(const FStringView& pattern, const FStringView& str);
-PPE_CORE_API bool WildMatch(const FWStringView& pattern, const FWStringView& wstr);
+PPE_CORE_API bool WildMatch(const FStringView& pattern, const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool WildMatch(const FWStringView& pattern, const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool WildMatchI(const FStringView& pattern, const FStringView& str);
-PPE_CORE_API bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr);
+PPE_CORE_API bool WildMatchI(const FStringView& pattern, const FStringView& str) NOEXCEPT;
+PPE_CORE_API bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t LevenshteinDistance(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API size_t LevenshteinDistance(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API size_t LevenshteinDistance(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API size_t LevenshteinDistance(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t LevenshteinDistanceI(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API size_t LevenshteinDistanceI(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API size_t LevenshteinDistanceI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API size_t LevenshteinDistanceI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -509,11 +515,11 @@ PPE_CORE_API const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, cons
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API hash_t hash_string(const FStringView& str);
-PPE_CORE_API hash_t hash_string(const FWStringView& wstr);
+PPE_CORE_API hash_t hash_string(const FStringView& str) NOEXCEPT;
+PPE_CORE_API hash_t hash_string(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API hash_t hash_stringI(const FStringView& str);
-PPE_CORE_API hash_t hash_stringI(const FWStringView& wstr);
+PPE_CORE_API hash_t hash_stringI(const FStringView& str) NOEXCEPT;
+PPE_CORE_API hash_t hash_stringI(const FWStringView& wstr) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

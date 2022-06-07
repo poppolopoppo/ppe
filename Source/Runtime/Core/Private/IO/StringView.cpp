@@ -508,101 +508,107 @@ void ToUpper(const TMemoryView<wchar_t>& dst, const TBasicStringView<wchar_t>& s
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView::iterator StrChr(const FStringView& str, char ch) { return StrChr_(str, ch); }
-FStringView::reverse_iterator StrRChr(const FStringView& str, char ch) { return StrRChr_(str, ch); }
+FStringView::iterator CONSTF StrChr(const FStringView& str, char ch) NOEXCEPT { return StrChr_(str, ch); }
+FStringView::reverse_iterator CONSTF StrRChr(const FStringView& str, char ch) NOEXCEPT { return StrRChr_(str, ch); }
 //----------------------------------------------------------------------------
-FWStringView::iterator StrChr(const FWStringView& wstr, wchar_t wch) { return StrChr_(wstr, wch); }
-FWStringView::reverse_iterator StrRChr(const FWStringView& wstr, wchar_t wch) { return StrRChr_(wstr, wch); }
+FWStringView::iterator CONSTF StrChr(const FWStringView& wstr, wchar_t wch) NOEXCEPT { return StrChr_(wstr, wch); }
+FWStringView::reverse_iterator CONSTF StrRChr(const FWStringView& wstr, wchar_t wch) NOEXCEPT { return StrRChr_(wstr, wch); }
 //----------------------------------------------------------------------------
-FStringView::iterator StrStr(const FStringView& str, const FStringView& firstOccurence) { return StrStr_(str, firstOccurence); }
-FWStringView::iterator StrStr(const FWStringView& wstr, const FWStringView& firstOccurence) { return StrStr_(wstr, firstOccurence); }
+FStringView::iterator CONSTF StrStr(const FStringView& str, const FStringView& firstOccurence) NOEXCEPT { return StrStr_(str, firstOccurence); }
+FWStringView::iterator CONSTF StrStr(const FWStringView& wstr, const FWStringView& firstOccurence) NOEXCEPT { return StrStr_(wstr, firstOccurence); }
 //----------------------------------------------------------------------------
-FStringView::iterator StrStrI(const FStringView& str, const FStringView& firstOccurence) { return StrStrI_(str, firstOccurence); }
-FWStringView::iterator StrStrI(const FWStringView& wstr, const FWStringView& firstOccurence) { return StrStrI_(wstr, firstOccurence); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool IsAlnum(const FStringView& str) { return IsAll_(str, &IsAlnum); }
-bool IsAlnum(const FWStringView& wstr) { return IsAll_(wstr, &IsAlnum); }
-//----------------------------------------------------------------------------
-bool IsAlpha(const FStringView& str) { return IsAll_(str, &IsAlpha); }
-bool IsAlpha(const FWStringView& wstr) { return IsAll_(wstr, &IsAlpha); }
-//----------------------------------------------------------------------------
-bool IsDigit(const FStringView& str) { return IsAll_(str, &IsDigit); }
-bool IsDigit(const FWStringView& wstr) { return IsAll_(wstr, &IsDigit); }
-//----------------------------------------------------------------------------
-bool IsXDigit(const FStringView& str) { return IsAll_(str, &IsXDigit); }
-bool IsXDigit(const FWStringView& wstr) { return IsAll_(wstr, &IsXDigit); }
-//----------------------------------------------------------------------------
-bool IsIdentifier(const FStringView& str) { return IsAll_(str, &IsIdentifier); }
-bool IsIdentifier(const FWStringView& wstr) { return IsAll_(wstr, &IsIdentifier); }
-//----------------------------------------------------------------------------
-bool IsOctal(const FStringView& str) { return IsAll_(str, &IsOctal); }
-bool IsOctal(const FWStringView& wstr) { return IsAll_(wstr, &IsOctal); }
-//----------------------------------------------------------------------------
-bool IsPrint(const FStringView& str) { return IsAll_(str, &IsPrint); }
-bool IsPrint(const FWStringView& wstr) { return IsAll_(wstr, &IsPrint); }
-//----------------------------------------------------------------------------
-bool IsSpace(const FStringView& str) { return IsAll_(str, &IsSpace); }
-bool IsSpace(const FWStringView& wstr) { return IsAll_(wstr, &IsSpace); }
+FStringView::iterator CONSTF StrStrI(const FStringView& str, const FStringView& firstOccurence) NOEXCEPT { return StrStrI_(str, firstOccurence); }
+FWStringView::iterator CONSTF StrStrI(const FWStringView& wstr, const FWStringView& firstOccurence) NOEXCEPT { return StrStrI_(wstr, firstOccurence); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool HasAlnum(const FStringView& str) { return Has_(str, &IsAlnum); }
-bool HasAlnum(const FWStringView& wstr) { return Has_(wstr, &IsAlnum); }
+bool CONSTF IsAlnum(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsAlnum); }
+bool CONSTF IsAlnum(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsAlnum); }
 //----------------------------------------------------------------------------
-bool HasAlpha(const FStringView& str) { return Has_(str, &IsAlpha); }
-bool HasAlpha(const FWStringView& wstr) { return Has_(wstr, &IsAlpha); }
+bool CONSTF IsAlpha(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsAlpha); }
+bool CONSTF IsAlpha(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsAlpha); }
 //----------------------------------------------------------------------------
-bool HasDigit(const FStringView& str) { return Has_(str, &IsDigit); }
-bool HasDigit(const FWStringView& wstr) { return Has_(wstr, &IsDigit); }
+bool CONSTF IsDigit(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsDigit); }
+bool CONSTF IsDigit(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsDigit); }
 //----------------------------------------------------------------------------
-bool HasXDigit(const FStringView& str) { return Has_(str, &IsXDigit); }
-bool HasXDigit(const FWStringView& wstr) { return Has_(wstr, &IsXDigit); }
+bool CONSTF IsXDigit(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsXDigit); }
+bool CONSTF IsXDigit(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsXDigit); }
 //----------------------------------------------------------------------------
-bool HasPrint(const FStringView& str) { return Has_(str, &IsPrint); }
-bool HasPrint(const FWStringView& wstr) { return Has_(wstr, &IsPrint); }
+bool CONSTF IsIdentifier(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsIdentifier); }
+bool CONSTF IsIdentifier(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsIdentifier); }
 //----------------------------------------------------------------------------
-bool HasSpace(const FStringView& str) { return Has_(str, &IsSpace); }
-bool HasSpace(const FWStringView& wstr) { return Has_(wstr, &IsSpace); }
+bool CONSTF IsOctal(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsOctal); }
+bool CONSTF IsOctal(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsOctal); }
+//----------------------------------------------------------------------------
+bool CONSTF IsPrint(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsPrint); }
+bool CONSTF IsPrint(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsPrint); }
+//----------------------------------------------------------------------------
+bool CONSTF IsSpace(const FStringView& str) NOEXCEPT { return IsAll_(str, &IsSpace); }
+bool CONSTF IsSpace(const FWStringView& wstr) NOEXCEPT { return IsAll_(wstr, &IsSpace); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView EatAlnums(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsAlnum); }
-FWStringView EatAlnums(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlnum); }
+bool CONSTF HasAlnum(const FStringView& str) NOEXCEPT { return Has_(str, &IsAlnum); }
+bool CONSTF HasAlnum(const FWStringView& wstr) NOEXCEPT { return Has_(wstr, &IsAlnum); }
 //----------------------------------------------------------------------------
-FStringView EatAlphas(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsAlpha); }
-FWStringView EatAlphas(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlpha); }
+bool CONSTF HasAlpha(const FStringView& str) NOEXCEPT { return Has_(str, &IsAlpha); }
+bool CONSTF HasAlpha(const FWStringView& wstr) NOEXCEPT { return Has_(wstr, &IsAlpha); }
 //----------------------------------------------------------------------------
-FStringView EatDigits(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsDigit); }
-FWStringView EatDigits(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsDigit); }
+bool CONSTF HasDigit(const FStringView& str) NOEXCEPT { return Has_(str, &IsDigit); }
+bool CONSTF HasDigit(const FWStringView& wstr) NOEXCEPT { return Has_(wstr, &IsDigit); }
 //----------------------------------------------------------------------------
-FStringView EatXDigits(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsXDigit); }
-FWStringView EatXDigits(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsXDigit); }
+bool CONSTF HasXDigit(const FStringView& str) NOEXCEPT { return Has_(str, &IsXDigit); }
+bool CONSTF HasXDigit(const FWStringView& wstr) NOEXCEPT { return Has_(wstr, &IsXDigit); }
 //----------------------------------------------------------------------------
-FStringView EatIdentifier(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsIdentifier); }
-FWStringView EatIdentifier(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsIdentifier); }
+bool CONSTF HasPrint(const FStringView& str) NOEXCEPT { return Has_(str, &IsPrint); }
+bool CONSTF HasPrint(const FWStringView& wstr) NOEXCEPT { return Has_(wstr, &IsPrint); }
 //----------------------------------------------------------------------------
-FStringView EatOctals(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsOctal); }
-FWStringView EatOctals(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsOctal); }
+bool CONSTF HasSpace(const FStringView& str) NOEXCEPT { return Has_(str, &IsSpace); }
+bool CONSTF HasSpace(const FWStringView& wstr) NOEXCEPT { return Has_(wstr, &IsSpace); }
 //----------------------------------------------------------------------------
-FStringView EatPrints(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsPrint); }
-FWStringView EatPrints(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsPrint); }
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView EatSpaces(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsSpace); }
-FWStringView EatSpaces(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsSpace); }
+FStringView EatAlnums(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsAlnum); }
+FWStringView EatAlnums(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlnum); }
 //----------------------------------------------------------------------------
-FStringView EatWhile(FStringView& str, char ch) { return SplitInplaceIf_ReturnEaten_(str, [ch](char x) { return (x == ch); }); }
-FWStringView EatWhile(FWStringView& wstr, wchar_t wch) { return SplitInplaceIf_ReturnEaten_(wstr, [wch](wchar_t x) { return (x == wch); }); }
+FStringView EatAlphas(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsAlpha); }
+FWStringView EatAlphas(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlpha); }
 //----------------------------------------------------------------------------
-FStringView EatWhile(FStringView& str, const FStringView& multiple) { return SplitInplaceIf_ReturnEaten_(str, [multiple](char x) { return (multiple.Contains(x)); }); }
-FWStringView EatWhile(FWStringView& wstr, const FWStringView& wmultiple) { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](wchar_t x) { return (wmultiple.Contains(x)); }); }
+FStringView EatDigits(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsDigit); }
+FWStringView EatDigits(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsDigit); }
 //----------------------------------------------------------------------------
-FStringView EatUntil(FStringView& str, char ch) { return SplitInplaceIf_ReturnEaten_(str, [ch](char x) { return (x != ch); }); }
-FWStringView EatUntil(FWStringView& wstr, wchar_t wch) { return SplitInplaceIf_ReturnEaten_(wstr, [wch](wchar_t x) { return (x != wch); }); }
+FStringView EatXDigits(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsXDigit); }
+FWStringView EatXDigits(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsXDigit); }
 //----------------------------------------------------------------------------
-FStringView EatUntil(FStringView& str, const FStringView& multiple) { return SplitInplaceIf_ReturnEaten_(str, [multiple](char x) { return (not multiple.Contains(x)); }); }
-FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple) { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](wchar_t x) { return (not wmultiple.Contains(x)); }); }
+FStringView EatIdentifier(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsIdentifier); }
+FWStringView EatIdentifier(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsIdentifier); }
+//----------------------------------------------------------------------------
+FStringView EatOctals(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsOctal); }
+FWStringView EatOctals(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsOctal); }
+//----------------------------------------------------------------------------
+FStringView EatPrints(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsPrint); }
+FWStringView EatPrints(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsPrint); }
+//----------------------------------------------------------------------------
+FStringView EatSpaces(FStringView& str) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, &IsSpace); }
+FWStringView EatSpaces(FWStringView& wstr) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, &IsSpace); }
+//----------------------------------------------------------------------------
+FStringView EatWhile(FStringView& str, char ch) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, [ch](char x) { return (x == ch); }); }
+FWStringView EatWhile(FWStringView& wstr, wchar_t wch) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, [wch](wchar_t x) { return (x == wch); }); }
+//----------------------------------------------------------------------------
+FStringView EatWhile(FStringView& str, const FStringView& multiple) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, [multiple](char x) { return (multiple.Contains(x)); }); }
+FWStringView EatWhile(FWStringView& wstr, const FWStringView& wmultiple) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](wchar_t x) { return (wmultiple.Contains(x)); }); }
+//----------------------------------------------------------------------------
+FStringView EatWhile(FStringView& str, bool (*is_a)(char)) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, is_a); }
+FWStringView EatWhile(FWStringView& wstr, bool (*is_a)(wchar_t)) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, is_a); }
+//----------------------------------------------------------------------------
+FStringView EatUntil(FStringView& str, char ch) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, [ch](char x) { return (x != ch); }); }
+FWStringView EatUntil(FWStringView& wstr, wchar_t wch) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, [wch](wchar_t x) { return (x != wch); }); }
+//----------------------------------------------------------------------------
+FStringView EatUntil(FStringView& str, const FStringView& multiple) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, [multiple](char x) { return (not multiple.Contains(x)); }); }
+FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, [wmultiple](wchar_t x) { return (not wmultiple.Contains(x)); }); }
+//----------------------------------------------------------------------------
+FStringView EatUntil(FStringView& str, bool (*is_not_a)(char)) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, is_not_a); }
+FWStringView EatUntil(FWStringView& wstr, bool (*is_not_a)(wchar_t)) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, is_not_a); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -646,29 +652,29 @@ static TBasicStringView<_Char> Trim_(const TBasicStringView<_Char>& str, const T
     return TrimEnd_(TrimStart_(str, chars), chars);
 }
 //----------------------------------------------------------------------------
-FStringView TrimStart(const FStringView& str, char ch) { return TrimStart_(str, ch); }
-FWStringView TrimStart(const FWStringView& wstr, wchar_t wch) { return TrimStart_(wstr, wch); }
+FStringView TrimStart(const FStringView& str, char ch) NOEXCEPT { return TrimStart_(str, ch); }
+FWStringView TrimStart(const FWStringView& wstr, wchar_t wch) NOEXCEPT { return TrimStart_(wstr, wch); }
 //----------------------------------------------------------------------------
-FStringView TrimStart(const FStringView& str, const FStringView& chars) { return TrimStart_(str, chars); }
-FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars) { return TrimStart_(wstr, wchars); }
+FStringView TrimStart(const FStringView& str, const FStringView& chars) NOEXCEPT { return TrimStart_(str, chars); }
+FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars) NOEXCEPT { return TrimStart_(wstr, wchars); }
 //----------------------------------------------------------------------------
-FStringView TrimEnd(const FStringView& str, char ch) { return TrimEnd_(str, ch); }
-FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch) { return TrimEnd_(wstr, wch); }
+FStringView TrimEnd(const FStringView& str, char ch) NOEXCEPT { return TrimEnd_(str, ch); }
+FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch) NOEXCEPT { return TrimEnd_(wstr, wch); }
 //----------------------------------------------------------------------------
-FStringView TrimEnd(const FStringView& str, const FStringView& chars) { return TrimEnd_(str, chars); }
-FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars) { return TrimEnd_(wstr, wchars); }
+FStringView TrimEnd(const FStringView& str, const FStringView& chars) NOEXCEPT { return TrimEnd_(str, chars); }
+FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars) NOEXCEPT { return TrimEnd_(wstr, wchars); }
 //----------------------------------------------------------------------------
-FStringView Trim(const FStringView& str, char ch) { return Trim_(str, ch); }
-FWStringView Trim(const FWStringView& wstr, wchar_t wch) { return Trim_(wstr, wch); }
+FStringView Trim(const FStringView& str, char ch) NOEXCEPT { return Trim_(str, ch); }
+FWStringView Trim(const FWStringView& wstr, wchar_t wch) NOEXCEPT { return Trim_(wstr, wch); }
 //----------------------------------------------------------------------------
-FStringView Trim(const FStringView& str, const FStringView& chars) { return Trim_(str, chars); }
-FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars) { return Trim_(wstr, wchars); }
+FStringView Trim(const FStringView& str, const FStringView& chars) NOEXCEPT { return Trim_(str, chars); }
+FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars) NOEXCEPT { return Trim_(wstr, wchars); }
 //----------------------------------------------------------------------------
-FStringView Chomp(const FStringView& str) { return TrimEnd_(str, MakeStringView("\n\r")); }
-FWStringView Chomp(const FWStringView& wstr) { return TrimEnd_(wstr, MakeStringView(L"\n\r")); }
+FStringView Chomp(const FStringView& str) NOEXCEPT { return TrimEnd_(str, MakeStringView("\n\r")); }
+FWStringView Chomp(const FWStringView& wstr) NOEXCEPT { return TrimEnd_(wstr, MakeStringView(L"\n\r")); }
 //----------------------------------------------------------------------------
-FStringView Strip(const FStringView& str) { return Trim_(str, MakeStringView(" \t\r")); }
-FWStringView Strip(const FWStringView& wstr) { return Trim_(wstr, MakeStringView(L" \t\r")); }
+FStringView Strip(const FStringView& str) NOEXCEPT { return Trim_(str, MakeStringView(" \t\r")); }
+FWStringView Strip(const FWStringView& wstr) NOEXCEPT { return Trim_(wstr, MakeStringView(L" \t\r")); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -715,227 +721,227 @@ FORCE_INLINE static int CompareI_(
     });
 }
 //----------------------------------------------------------------------------
-int Compare(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
+int CONSTF Compare(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return Compare_(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-int Compare(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
+int CONSTF Compare(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return Compare_(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-int CompareI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
+int CONSTF CompareI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return CompareI_(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-int CompareI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
+int CONSTF CompareI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return CompareI_(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool EqualsN(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
+bool CONSTF EqualsN(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::Equals(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool EqualsNI(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
+bool CONSTF EqualsNI(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::EqualsI(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
+bool CONSTF EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::Equals(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
+bool CONSTF EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::EqualsI(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool Equals(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
+bool CONSTF Equals(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::Equals(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
-bool Equals(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
+bool CONSTF Equals(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::Equals(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
-bool EqualsI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
+bool CONSTF EqualsI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::EqualsI(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
-bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
+bool CONSTF EqualsI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::EqualsI(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool StartsWith(const FStringView& str, const FStringView& prefix) {
+bool CONSTF StartsWith(const FStringView& str, const FStringView& prefix) NOEXCEPT {
     return StartsWith_(str, prefix);
 }
 //----------------------------------------------------------------------------
-bool StartsWith(const FWStringView& wstr, const FWStringView& wprefix) {
+bool CONSTF StartsWith(const FWStringView& wstr, const FWStringView& wprefix) NOEXCEPT {
     return StartsWith_(wstr, wprefix);
 }
 //----------------------------------------------------------------------------
-bool StartsWithI(const FStringView& str, const FStringView& prefix) {
+bool CONSTF StartsWithI(const FStringView& str, const FStringView& prefix) NOEXCEPT {
     return StartsWithI_(str, prefix);
 }
 //----------------------------------------------------------------------------
-bool StartsWithI(const FWStringView& wstr, const FWStringView& wprefix) {
+bool CONSTF StartsWithI(const FWStringView& wstr, const FWStringView& wprefix) NOEXCEPT {
     return StartsWithI_(wstr, wprefix);
 }
 //----------------------------------------------------------------------------
-bool EndsWith(const FStringView& str, const FStringView& suffix) {
+bool CONSTF EndsWith(const FStringView& str, const FStringView& suffix) NOEXCEPT {
     return EndsWith_(str, suffix);
 }
 //----------------------------------------------------------------------------
-bool EndsWith(const FWStringView& wstr, const FWStringView& wsuffix) {
+bool CONSTF EndsWith(const FWStringView& wstr, const FWStringView& wsuffix) NOEXCEPT {
     return EndsWith_(wstr, wsuffix);
 }
 //----------------------------------------------------------------------------
-bool EndsWithI(const FStringView& str, const FStringView& suffix) {
+bool CONSTF EndsWithI(const FStringView& str, const FStringView& suffix) NOEXCEPT {
     return EndsWithI_(str, suffix);
 }
 //----------------------------------------------------------------------------
-bool EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix) {
+bool CONSTF EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix) NOEXCEPT {
     return EndsWithI_(wstr, wsuffix);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Split(FStringView& str, char separator, FStringView& slice) {
+bool Split(FStringView& str, char separator, FStringView& slice) NOEXCEPT {
     return Split_<char, true>(str, separator, slice);
 }
 //----------------------------------------------------------------------------
-bool Split(FWStringView& wstr, wchar_t separator, FWStringView& slice) {
+bool Split(FWStringView& wstr, wchar_t separator, FWStringView& slice) NOEXCEPT {
     return Split_<wchar_t, true>(wstr, separator, slice);
 }
 //----------------------------------------------------------------------------
-bool Split(FStringView& str, const FStringView& separators, FStringView& slice) {
+bool Split(FStringView& str, const FStringView& separators, FStringView& slice) NOEXCEPT {
     return SplitMulti_<char, true>(str, separators, slice);
 }
 //----------------------------------------------------------------------------
-bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) {
+bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) NOEXCEPT {
     return SplitMulti_<wchar_t, true>(wstr, separators, slice);
 }
 //----------------------------------------------------------------------------
-bool SplitR(FStringView& str, char separator, FStringView& slice) {
+bool SplitR(FStringView& str, char separator, FStringView& slice) NOEXCEPT {
     return Split_<char, false>(str, separator, slice);
 }
 //----------------------------------------------------------------------------
-bool SplitR(FWStringView& wstr, wchar_t separator, FWStringView& slice) {
+bool SplitR(FWStringView& wstr, wchar_t separator, FWStringView& slice) NOEXCEPT {
     return Split_<wchar_t, false>(wstr, separator, slice);
 }
 //----------------------------------------------------------------------------
-bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice) {
+bool SplitR(FStringView& str, const FStringView& separators, FStringView& slice) NOEXCEPT {
     return SplitMulti_<char, false>(str, separators, slice);
 }
 //----------------------------------------------------------------------------
-bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) {
+bool SplitR(FWStringView& wstr, const FWStringView& separators, FWStringView& slice) NOEXCEPT {
     return SplitMulti_<wchar_t, false>(wstr, separators, slice);
 }
 //----------------------------------------------------------------------------
-bool SplitNth(FStringView& str, char separator, FStringView& slice, size_t nth) {
+bool SplitNth(FStringView& str, char separator, FStringView& slice, size_t nth) NOEXCEPT {
     return SplitNth_<char, true>(str, separator, slice, nth);
 }
 //----------------------------------------------------------------------------
-bool SplitNth(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth) {
+bool SplitNth(FWStringView& wstr, wchar_t separator, FWStringView& slice, size_t nth) NOEXCEPT {
     return SplitNth_<wchar_t, true>(wstr, separator, slice, nth);
 }
 //----------------------------------------------------------------------------
-bool SplitNth(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth) {
+bool SplitNth(FStringView& str, const FStringView& separators, FStringView& slice, size_t nth) NOEXCEPT {
     return SplitNth_<char, false>(str, separators, slice, nth);
 }
 //----------------------------------------------------------------------------
-bool SplitNth(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth) {
+bool SplitNth(FWStringView& wstr, const FWStringView& separators, FWStringView& slice, size_t nth) NOEXCEPT {
     return SplitNth_<wchar_t, false>(wstr, separators, slice, nth);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Atoi(i32* dst, const FStringView& str, size_t base) {
+bool Atoi(i32* dst, const FStringView& str, size_t base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u32* dst, const FStringView& str, size_t base) {
+bool Atoi(u32* dst, const FStringView& str, size_t base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(i64* dst, const FStringView& str, size_t base) {
+bool Atoi(i64* dst, const FStringView& str, size_t base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u64* dst, const FStringView& str, size_t base) {
+bool Atoi(u64* dst, const FStringView& str, size_t base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(i32* dst, const FWStringView& wstr, size_t base) {
+bool Atoi(i32* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u32* dst, const FWStringView& wstr, size_t base) {
+bool Atoi(u32* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(i64* dst, const FWStringView& wstr, size_t base) {
+bool Atoi(i64* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u64* dst, const FWStringView& wstr, size_t base) {
+bool Atoi(u64* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atof(float* dst, const FStringView& str) {
+bool Atof(float* dst, const FStringView& str) NOEXCEPT {
     return Atof_(dst, str);
 }
 //----------------------------------------------------------------------------
-bool Atod(double* dst, const FStringView& str) {
+bool Atod(double* dst, const FStringView& str) NOEXCEPT {
     return Atof_(dst, str);
 }
 //----------------------------------------------------------------------------
-bool Atof(float* dst, const FWStringView& wstr) {
+bool Atof(float* dst, const FWStringView& wstr) NOEXCEPT {
     return Atof_(dst, wstr);
 }
 //----------------------------------------------------------------------------
-bool Atod(double* dst, const FWStringView& wstr) {
+bool Atod(double* dst, const FWStringView& wstr) NOEXCEPT {
     return Atof_(dst, wstr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool WildMatch(const FStringView& pattern, const FStringView& str) {
+bool WildMatch(const FStringView& pattern, const FStringView& str) NOEXCEPT {
     return WildMatch_<ECase::Sensitive, char>(pattern, str);
 }
 //----------------------------------------------------------------------------
-bool WildMatch(const FWStringView& pattern, const FWStringView& wstr) {
+bool WildMatch(const FWStringView& pattern, const FWStringView& wstr) NOEXCEPT {
     return WildMatch_<ECase::Sensitive, wchar_t>(pattern, wstr);
 }
 //----------------------------------------------------------------------------
-bool WildMatchI(const FStringView& pattern, const FStringView& str) {
+bool WildMatchI(const FStringView& pattern, const FStringView& str) NOEXCEPT {
     return WildMatch_<ECase::Insensitive, char>(pattern, str);
 }
 //----------------------------------------------------------------------------
-bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr) {
+bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr) NOEXCEPT {
     return WildMatch_<ECase::Insensitive, wchar_t>(pattern, wstr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-size_t LevenshteinDistance(const FStringView& lhs, const FStringView& rhs) {
+size_t LevenshteinDistance(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return LevenshteinDistance_<char, ECase::Sensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-size_t LevenshteinDistance(const FWStringView& lhs, const FWStringView& rhs) {
+size_t LevenshteinDistance(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return LevenshteinDistance_<wchar_t, ECase::Sensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-size_t LevenshteinDistanceI(const FStringView& lhs, const FStringView& rhs) {
+size_t LevenshteinDistanceI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return LevenshteinDistance_<char, ECase::Insensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-size_t LevenshteinDistanceI(const FWStringView& lhs, const FWStringView& rhs) {
+size_t LevenshteinDistanceI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return LevenshteinDistance_<wchar_t, ECase::Insensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
@@ -967,15 +973,15 @@ const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, const FWStringVie
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_string(const FStringView& str) {
+hash_t hash_string(const FStringView& str) NOEXCEPT {
     return hash_mem(str.data(), str.SizeInBytes(), hash_value(str.size()));
 }
 //----------------------------------------------------------------------------
-hash_t hash_string(const FWStringView& wstr) {
+hash_t hash_string(const FWStringView& wstr) NOEXCEPT {
     return hash_mem(wstr.data(), wstr.SizeInBytes(), hash_value(wstr.size()));
 }
 //----------------------------------------------------------------------------
-hash_t hash_stringI(const FStringView& str) {
+hash_t hash_stringI(const FStringView& str) NOEXCEPT {
 #if 0 // don't want to use another hash function :/
     char (*transform)(char) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(str.begin(), transform), MakeOutputIterator(str.end(), transform));
@@ -989,7 +995,7 @@ hash_t hash_stringI(const FStringView& str) {
 #endif
 }
 //----------------------------------------------------------------------------
-hash_t hash_stringI(const FWStringView& wstr) {
+hash_t hash_stringI(const FWStringView& wstr) NOEXCEPT {
 #if 0 // don't want to use another hash function :/
     wchar_t (*transform)(wchar_t) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(wstr.begin(), transform), MakeOutputIterator(wstr.end(), transform));

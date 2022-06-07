@@ -32,20 +32,20 @@ using FStringView = TBasicStringView<char>;
 using FWStringView = TBasicStringView<wchar_t>;
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicStringView<_Char> MakeCStringView(const _Char* cstr);
+TBasicStringView<_Char> MakeCStringView(const _Char* cstr) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str);
+TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str) NOEXCEPT;
 template <size_t _Dim>
-CONSTEXPR FStringView MakeStringView(const char(&cstr)[_Dim]);
+CONSTEXPR FStringView MakeStringView(const char(&cstr)[_Dim]) NOEXCEPT;
 template <size_t _Dim>
-CONSTEXPR FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]);
-CONSTEXPR FStringView MakeStringView(const TMemoryView<const char>& view);
-CONSTEXPR FWStringView MakeStringView(const TMemoryView<const wchar_t>& view);
-CONSTEXPR FStringView MakeStringView(const TMemoryView<char>& view);
-CONSTEXPR FWStringView MakeStringView(const TMemoryView<wchar_t>& view);
-CONSTEXPR const FStringView& MakeStringView(const FStringView& view);
-CONSTEXPR const FWStringView& MakeStringView(const FWStringView& view);
+CONSTEXPR FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]) NOEXCEPT;
+CONSTEXPR FStringView MakeStringView(const TMemoryView<const char>& view) NOEXCEPT;
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<const wchar_t>& view) NOEXCEPT;
+CONSTEXPR FStringView MakeStringView(const TMemoryView<char>& view) NOEXCEPT;
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<wchar_t>& view) NOEXCEPT;
+CONSTEXPR const FStringView& MakeStringView(const FStringView& view) NOEXCEPT;
+CONSTEXPR const FWStringView& MakeStringView(const FWStringView& view) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
