@@ -13,10 +13,6 @@
 	"ExtraFiles": [
 		"resource.rc"
 	],
-	"IsolatedFiles": [
-		"Private/Drawing/Test_Draw1.cpp",
-		"Private/Drawing/Test_Draw2.cpp"
-	],
 	"PrivateDependencies": [
 		"ContentPipeline/BuildGraph",
 		"ContentPipeline/PipelineCompiler",

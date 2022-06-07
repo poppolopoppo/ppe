@@ -1,0 +1,304 @@
+﻿#include "stdafx.h"
+
+#include "Test_Includes.h"
+
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+/*
+    Async compute without synchronizations between frames,
+    used double buffering for render targets to avoid race condition.
+
+  .------------------------.
+  |      frame 1           |
+  |             .------------------------.
+  |             |        frame 2         |
+  |-------------|-------------.----------|
+  |  graphics1  |  graphics2  |          |
+  |-------------|-------------|----------|
+  |             | compute1 |  | compute2 |
+  '-------------'----------'--'----------'
+*/
+bool Compute_AsyncCompute2_(FWindowTestApp& app) {
+    using namespace PPE::RHI;
+
+    IFrameGraph& fg = *app.RHI().FrameGraph();
+
+    FGraphicsPipelineDesc gdesc;
+    gdesc.AddShader(EShaderType::Vertex, EShaderLangFormat::VKSL_100, "main", R"#(
+#pragma shader_stage(vertex)
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout(location=0) out vec3  v_Color;
+
+const vec2	g_Positions[3] = vec2[](
+	vec2(0.0, -0.5),
+	vec2(0.5, 0.5),
+	vec2(-0.5, 0.5)
+);
+
+const vec3	g_Colors[3] = vec3[](
+	vec3(1.0, 0.0, 0.0),
+	vec3(0.0, 1.0, 0.0),
+	vec3(0.0, 0.0, 1.0)
+);
+
+void main() {
+	gl_Position	= vec4( g_Positions[gl_VertexIndex], 0.0, 1.0 );
+	v_Color		= g_Colors[gl_VertexIndex];
+}
+)#"
+ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_VS"));
+    gdesc.AddShader(EShaderType::Fragment, EShaderLangFormat::VKSL_100, "main", R"#(
+#pragma shader_stage(fragment)
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout(location=0) out vec4  out_Color;
+
+layout(location=0) in  vec3  v_Color;
+
+void main() {
+	out_Color = 1.0f - vec4(v_Color, 1.0);
+}
+)#"
+ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_PS"));
+
+    FComputePipelineDesc cdesc;
+    cdesc.AddShader(EShaderLangFormat::VKSL_100, "main", R"#(
+#pragma shader_stage(compute)
+#extension GL_ARB_shading_language_420pack : enable
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(binding=0, rgba8) uniform image2D  un_Image;
+
+void main ()
+{
+	ivec2	coord = ivec2(gl_GlobalInvocationID.xy);
+	vec4	color = imageLoad( un_Image, coord );
+
+	imageStore( un_Image, coord, 1.0f - color );
+}
+)#"
+ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
+
+    const uint2 viewSize{ 800, 600 };
+
+    const FImageDesc imageDesc = FImageDesc{}
+        .SetDimension(viewSize)
+        .SetFormat(EPixelFormat::RGBA8_UNorm)
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Storage | EImageUsage::TransferSrc)
+        .SetQueues(EQueueUsage::Graphics | EQueueUsage::AsyncCompute);
+
+    TAutoResource<FImageID> image1{ fg, fg.CreateImage(imageDesc,
+        Default ARGS_IF_RHIDEBUG("RenderTarget-1")) };
+    LOG_CHECK(WindowTest, image1.Valid());
+
+    TAutoResource<FImageID> image2{ fg, fg.CreateImage(imageDesc,
+        Default ARGS_IF_RHIDEBUG("RenderTarget-2")) };
+    LOG_CHECK(WindowTest, image1.Valid());
+
+    TAutoResource<FGPipelineID> gppln{ fg, fg.CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_G")) };
+    LOG_CHECK(WindowTest, gppln.Valid());
+
+    TAutoResource<FCPipelineID> cppln{ fg, fg.CreatePipeline(cdesc ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_C")) };
+    LOG_CHECK(WindowTest, cppln.Valid());
+
+    PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
+    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), cppln, FDescriptorSetID{ "0" }));
+
+    bool dataIsCorrect = false;
+    const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
+        const auto testPixel = [&imageData](float x, float y, const FRgba32f& color) -> bool {
+            const u32 ix = FPlatformMaths::RoundToUnsigned((x + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().x) + 0.5f);
+            const u32 iy = FPlatformMaths::RoundToUnsigned((y + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().y) + 0.5f);
+
+            FRgba32f texel;
+            imageData.Load(&texel, uint3(ix, iy, 0));
+
+            const bool isEqual = DistanceSq(color, texel) < F_LargeEpsilon;
+            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
+            LOG_CHECK(WindowTest, isEqual);
+            Assert(isEqual);
+            return isEqual;
+        };
+
+        dataIsCorrect = true;
+        dataIsCorrect &= testPixel( 0.00f, -0.49f, FRgba32f{1.0f, 0.0f, 0.0f, 1.0f} );
+		dataIsCorrect &= testPixel( 0.49f,  0.49f, FRgba32f{0.0f, 1.0f, 0.0f, 1.0f} );
+		dataIsCorrect &= testPixel(-0.49f,  0.49f, FRgba32f{0.0f, 0.0f, 1.0f, 1.0f} );
+		dataIsCorrect &= testPixel( 0.00f, -0.51f, FRgba32f{0.0f} );
+		dataIsCorrect &= testPixel( 0.51f,  0.51f, FRgba32f{0.0f} );
+		dataIsCorrect &= testPixel(-0.51f,  0.51f, FRgba32f{0.0f} );
+		dataIsCorrect &= testPixel( 0.00f,  0.51f, FRgba32f{0.0f} );
+		dataIsCorrect &= testPixel( 0.51f, -0.51f, FRgba32f{0.0f} );
+		dataIsCorrect &= testPixel(-0.51f, -0.51f, FRgba32f{0.0f} );
+    };
+
+    FCommandBufferBatch cmd1{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
+        .SetName("Graphics-1")
+        .SetDebugFlags(EDebugFlags::Default)) };
+    LOG_CHECK(WindowTest, !!cmd1);
+
+    FCommandBufferBatch cmd2{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
+        .SetName("Compute-1")
+        .SetDebugFlags(EDebugFlags::Default),
+        { cmd1 }) };
+    LOG_CHECK(WindowTest, !!cmd2);
+
+    // frame 1
+    {
+        // graphics queue
+        {
+            FLogicalPassID renderPass = cmd1->CreateRenderPass(FRenderPassDesc{ viewSize }
+                .AddTarget(ERenderTargetID::Color0, image1, FLinearColor::White(), EAttachmentStoreOp::Store)
+                .AddViewport(viewSize));
+            LOG_CHECK(WindowTest, !!renderPass);
+
+            cmd1->Task(renderPass, FDrawVertices{}
+                .Draw(3)
+                .SetPipeline(gppln)
+                .SetTopology(EPrimitiveTopology::TriangleList));
+
+            PFrameTask tDraw = cmd1->Task(FSubmitRenderPass{ renderPass });
+            Unused(tDraw);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd1));
+        }
+        // compute queue
+        {
+            resources->BindImage(FUniformID{ "un_Image" }, image1);
+
+            PFrameTask tComp = cmd2->Task(FDispatchCompute{}
+                .SetPipeline(cppln)
+                .AddResources(FDescriptorSetID{ "0" }, resources)
+                .Dispatch(viewSize));
+
+            PFrameTask tRead = cmd2->Task(FReadImage{}
+                .SetImage(image1, int2::Zero, viewSize)
+                .SetCallback(onLoaded)
+                .DependsOn(tComp));
+            Unused(tRead);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd2));
+        }
+
+        LOG_CHECK(WindowTest, fg.Flush());
+    }
+
+    FCommandBufferBatch cmd3{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
+        .SetName("Graphics-2")
+        .SetDebugFlags(EDebugFlags::Default)) };
+    LOG_CHECK(WindowTest, !!cmd3);
+
+    FCommandBufferBatch cmd4{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
+        .SetName("Compute-2")
+        .SetDebugFlags(EDebugFlags::Default),
+        { cmd3 }) };
+    LOG_CHECK(WindowTest, !!cmd4);
+
+    // frame 2
+    {
+        // graphics queue
+        {
+            FLogicalPassID renderPass = cmd3->CreateRenderPass(FRenderPassDesc{ viewSize }
+                .AddTarget(ERenderTargetID::Color0, image2, FLinearColor::White(), EAttachmentStoreOp::Store)
+                .AddViewport(viewSize));
+            LOG_CHECK(WindowTest, !!renderPass);
+
+            cmd3->Task(renderPass, FDrawVertices{}
+                .Draw(3)
+                .SetPipeline(gppln)
+                .SetTopology(EPrimitiveTopology::TriangleList));
+
+            PFrameTask tDraw = cmd3->Task(FSubmitRenderPass{ renderPass });
+            Unused(tDraw);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd3));
+        }
+        // compute queue
+        {
+            resources->BindImage(FUniformID{ "un_Image" }, image2);
+
+            PFrameTask tComp = cmd4->Task(FDispatchCompute{}
+                .SetPipeline(cppln)
+                .AddResources(FDescriptorSetID{ "0" }, resources)
+                .Dispatch(viewSize));
+
+            PFrameTask tRead = cmd4->Task(FReadImage{}
+                .SetImage(image2, int2::Zero, viewSize)
+                .SetCallback(onLoaded)
+                .DependsOn(tComp));
+            Unused(tRead);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd4));
+        }
+
+        LOG_CHECK(WindowTest, fg.Flush());
+    }
+
+    FCommandBufferBatch cmd5{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
+        .SetName("Graphics-3")
+        .SetDebugFlags(EDebugFlags::Default),
+        { cmd2 }) };
+    LOG_CHECK(WindowTest, !!cmd5);
+
+    FCommandBufferBatch cmd6{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
+        .SetName("Compute-3")
+        .SetDebugFlags(EDebugFlags::Default),
+        { cmd5 }) };
+    LOG_CHECK(WindowTest, !!cmd6);
+
+    // frame 3
+    {
+        // graphics queue
+        {
+            FLogicalPassID renderPass = cmd5->CreateRenderPass(FRenderPassDesc{ viewSize }
+                .AddTarget(ERenderTargetID::Color0, image1, FLinearColor::White(), EAttachmentStoreOp::Store)
+                .AddViewport(viewSize));
+            LOG_CHECK(WindowTest, !!renderPass);
+
+            cmd5->Task(renderPass, FDrawVertices{}
+                .Draw(3)
+                .SetPipeline(gppln)
+                .SetTopology(EPrimitiveTopology::TriangleList));
+
+            PFrameTask tDraw = cmd5->Task(FSubmitRenderPass{ renderPass });
+            Unused(tDraw);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd5));
+        }
+        // compute queue
+        {
+            resources->BindImage(FUniformID{ "un_Image" }, image1);
+
+            PFrameTask tComp = cmd6->Task(FDispatchCompute{}
+                .SetPipeline(cppln)
+                .AddResources(FDescriptorSetID{ "0" }, resources)
+                .Dispatch(viewSize));
+
+            PFrameTask tRead = cmd6->Task(FReadImage{}
+                .SetImage(image1, int2::Zero, viewSize)
+                .SetCallback(onLoaded)
+                .DependsOn(tComp));
+            Unused(tRead);
+
+            LOG_CHECK(WindowTest, fg.Execute(cmd6));
+        }
+
+        LOG_CHECK(WindowTest, fg.Flush());
+    }
+
+    LOG_CHECK(WindowTest, fg.WaitIdle());
+
+    LOG_CHECK(WindowTest, dataIsCorrect);
+
+    return true;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace PPE

@@ -24,50 +24,50 @@ struct FUnitTestFunc_ {
 //----------------------------------------------------------------------------
 #define EACH_WINDOWTEST(_Macro) \
     /* compiler */ \
-    _Macro(Test_Annotation1_) \
-    _Macro(Test_Annotation2_) \
-    _Macro(Test_Annotation3_) \
-    _Macro(Test_Annotation4_) \
+    _Macro(Compiler_Annotation1_) \
+    _Macro(Compiler_Annotation2_) \
+    _Macro(Compiler_Annotation3_) \
+    _Macro(Compiler_Annotation4_) \
     /* compute */ \
-    _Macro(Test_Compute1_) \
-    _Macro(Test_Compute2_) \
-    _Macro(Test_ArrayOfTextures1_) \
-    _Macro(Test_ArrayOfTextures2_) \
-    /* #TODO: _Macro(Test_InvalidID_)*/ \
-    _Macro(Test_DynamicOffset1_) \
-    _Macro(Test_PushConstant1_) \
-    _Macro(Test_AsyncCompute1_) \
-    _Macro(Test_AsyncCompute2_) \
+    _Macro(Compute_Compute1_) \
+    _Macro(Compute_Compute2_) \
+    _Macro(Compute_ArrayOfTextures1_) \
+    _Macro(Compute_ArrayOfTextures2_) \
+    /* #TODO: _Macro(Compute_InvalidID_)*/ \
+    _Macro(Compute_DynamicOffset1_) \
+    _Macro(Compute_PushConstant1_) \
+    _Macro(Compute_AsyncCompute1_) \
+    _Macro(Compute_AsyncCompute2_) \
     /* queue */ \
-    _Macro(Test_CopyBuffer1_) \
-    _Macro(Test_CopyImage1_) \
-    _Macro(Test_CopyImage2_) \
-    _Macro(Test_CopyImage3_) \
+    _Macro(Queue_CopyBuffer1_) \
+    _Macro(Queue_CopyImage1_) \
+    _Macro(Queue_CopyImage2_) \
+    _Macro(Queue_CopyImage3_) \
     /* drawing */ \
-    _Macro(Test_Draw1_) \
-    _Macro(Test_Draw2_) \
-    _Macro(Test_Draw3_) \
-    _Macro(Test_Draw4_) \
-    _Macro(Test_Draw5_) \
-    _Macro(Test_Draw6_) \
-    _Macro(Test_Draw7_) \
-    _Macro(Test_ReadAttachment1_) \
+    _Macro(Drawing_Draw1_) \
+    _Macro(Drawing_Draw2_) \
+    _Macro(Drawing_Draw3_) \
+    _Macro(Drawing_Draw4_) \
+    _Macro(Drawing_Draw5_) \
+    _Macro(Drawing_Draw6_) \
+    _Macro(Drawing_Draw7_) \
+    _Macro(Debugger_ReadAttachment1_) \
     /* debugger */ \
-    _Macro(Test_ShaderDebugger1_) \
-    _Macro(Test_ShaderDebugger2_) \
-    _Macro(Test_RayTracingDebugger1_) \
+    _Macro(Debugger_ShaderDebugger1_) \
+    _Macro(Debugger_ShaderDebugger2_) \
+    _Macro(Debugger_RayTracingDebugger1_) \
     /* vendor-specific */ \
-    _Macro(Test_DrawMeshes1_) \
-    _Macro(Test_ShadingRate1_) \
-    _Macro(Test_TraceRays1_) \
-    _Macro(Test_TraceRays2_) \
-    _Macro(Test_TraceRays3_) \
+    _Macro(Drawing_DrawMeshes1_) \
+    _Macro(Drawing_ShadingRate1_) \
+    _Macro(Drawing_TraceRays1_) \
+    _Macro(Drawing_TraceRays2_) \
+    _Macro(Drawing_TraceRays3_) \
     /* Impl */ \
-    _Macro(Test_Scene1_) \
-    _Macro(Test_Multithreading1_) \
-    _Macro(Test_Multithreading2_) \
-    _Macro(Test_Multithreading3_) \
-    _Macro(Test_Multithreading4_) \
+    _Macro(Impl_Scene1_) \
+    _Macro(Impl_Multithreading1_) \
+    _Macro(Impl_Multithreading2_) \
+    _Macro(Impl_Multithreading3_) \
+    _Macro(Impl_Multithreading4_) \
 
 //----------------------------------------------------------------------------
 #define WINDOWTEST_EXTERN_DECL(_Func) extern bool _Func(FWindowTestApp&);
