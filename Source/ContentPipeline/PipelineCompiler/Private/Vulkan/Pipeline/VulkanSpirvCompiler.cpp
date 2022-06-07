@@ -5,9 +5,9 @@
 #include "Vulkan/Instance/VulkanInstance.h"
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Pipeline/VulkanDebuggableShaderData.h"
-#include "Vulkan/Pipeline/VulkanShaderCompilationFlags.h"
 
 #include "RHI/EnumHelpers.h"
+#include "RHI/PipelineCompiler.h"
 
 #include "Container/BitMask.h"
 #include "Container/HashMap.h"
@@ -269,7 +269,7 @@ FVulkanSpirvCompiler::~FVulkanSpirvCompiler() {
     glslang::FinalizeProcess();
 }
 //----------------------------------------------------------------------------
-void FVulkanSpirvCompiler::SetCompilationFlags(EVulkanShaderCompilationFlags flags) {
+void FVulkanSpirvCompiler::SetCompilationFlags(EShaderCompilationFlags flags) {
     _compilationFlags = flags;
 }
 //----------------------------------------------------------------------------
@@ -373,7 +373,7 @@ bool FVulkanSpirvCompiler::Compile(
         LOG_CHECK(PipelineCompiler, CompileSPIRV_(&spirv, compilationContext));
         LOG_CHECK(PipelineCompiler, BuildReflection_(compilationContext));
 
-        if (_compilationFlags & EVulkanShaderCompilationFlags::ParseAnnotations) {
+        if (_compilationFlags & EShaderCompilationFlags::ParseAnnotations) {
             LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, source.MakeView()));
 
             for (const auto& file : resolver.Results())
@@ -664,10 +664,10 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
     LOG_CHECK(PipelineCompiler, !!intermediate);
 
     SpvOptions spvOptions{};
-    spvOptions.generateDebugInfo = (_compilationFlags & EVulkanShaderCompilationFlags::GenerateDebug);
-    spvOptions.disableOptimizer = not (_compilationFlags & EVulkanShaderCompilationFlags::Optimize);
-    spvOptions.optimizeSize = (_compilationFlags & EVulkanShaderCompilationFlags::OptimizeSize);
-    spvOptions.validate = (_compilationFlags & EVulkanShaderCompilationFlags::Validate);
+    spvOptions.generateDebugInfo = (_compilationFlags & EShaderCompilationFlags::GenerateDebug);
+    spvOptions.disableOptimizer = not (_compilationFlags & EShaderCompilationFlags::Optimize);
+    spvOptions.optimizeSize = (_compilationFlags & EShaderCompilationFlags::OptimizeSize);
+    spvOptions.validate = (_compilationFlags & EShaderCompilationFlags::Validate);
 
     spv::SpvBuildLogger logger;
     std::vector<unsigned> spirvTmp;
@@ -677,7 +677,7 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
     *ctx.Log << FStringView{ allMessages.c_str(), allMessages.size() };
 
 #ifdef INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_
-    if (_compilationFlags & EVulkanShaderCompilationFlags::StrongOptimization)
+    if (_compilationFlags & EShaderCompilationFlags::StrongOptimization)
         LOG_CHECK(PipelineCompiler, OptimizeSPIRV_(*ctx.Log, spirvTmp, ctx.SpirvTargetEnvironment));
 #endif
 
@@ -779,9 +779,18 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         if (id.empty() || EatSpaces(it).empty())
             return false;
 
-        const FStringView name = EatIdentifier(it);
-        if (name.empty())
-            return false;
+        FStringView name;
+        if (it.StartsWith('"')) { // identifiers can be quoted
+            it.Eat(1);
+            name = EatUntil(it, '"');
+            if (name.empty() || not Equals(it.Eat(1), "\""))
+                return false;
+        }
+        else {
+            name = EatIdentifier(it);
+            if (name.empty())
+                return false;
+        }
 
         u32 index{ INDEX_NONE };
         if (not Atoi(&index, id, 10))
@@ -823,28 +832,34 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             bool isUniformImage = false;
             bool isUniformSampler = false;
 
+            FStringView name;
             if (Equals(word, "buffer")) {
                 isBuffer = true;
+
+                EatSpaces(it);
+                name = EatIdentifier(it);
             }
             else
             if (Equals(word, "uniform")) {
                 isUniform = true;
                 EatSpaces(it);
-                isUniformImage = it.Eat("image"); // optional
-                Unused(isUniformImage);
+                isUniformImage = it.StartsWith("image"); // optional
                 isUniformSampler = it.StartsWith("sampler"); // optional
-                if (isUniformSampler) {
+                if (isUniformImage || isUniformSampler)
                     EatIdentifier(it);
-                }
+
+                EatSpaces(it);
+                name = EatIdentifier(it);
+            }
+            else {
+                name = word;
             }
 
-            EatSpaces(it);
-            const FStringView name = EatIdentifier(it);
             if (name.empty())
-                continue;
+                return false;
 
             EatSpaces(it);
-            if (not it.Eat("{"))
+            if (not (it.Eat("{") || it.Eat(";")))
                 continue;
 
             if ((isBuffer || isUniform)) {
@@ -943,7 +958,9 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         if (not ((commentSingleLine || commentMultiLine) && (c == '@')))
             continue;
 
-        const FStringView id = EatIdentifier(source);
+        const FStringView id = EatWhile(source, [](char ch) {
+            return (IsIdentifier(ch) || ch == '-');
+        });
 
         if (Equals(id, "set")) {
             LOG_CHECK(PipelineCompiler, parseSet());
@@ -955,6 +972,10 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         else
         if (Equals(id, "dynamic-offset"))
             annotations |= EShaderAnnotation::DynamicOffset;
+        else {
+            LOG(PipelineCompiler, Error, L"unsupported annotation: @{0}", id);
+            return false;
+        }
 
         source.Eat(",");
     }

@@ -35,6 +35,8 @@ public: // IRHIService
     virtual RHI::FFrameIndex CurrentFrame() const NOEXCEPT override { return _currentFrame; }
     virtual FTimespan ElapsedTime() const NOEXCEPT override { return _elspasedTime; }
 
+    virtual RHI::SPipelineCompiler Compiler(RHI::EShaderLangFormat lang) const NOEXCEPT override;
+
     virtual void RenderFrame(FTimespan dt) override;
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) override;
 

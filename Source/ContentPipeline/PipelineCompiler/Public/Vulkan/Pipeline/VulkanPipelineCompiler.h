@@ -2,7 +2,6 @@
 
 #include "PipelineCompiler_fwd.h"
 
-#include "Vulkan/Pipeline/VulkanShaderCompilationFlags.h"
 #include "Vulkan/Pipeline/VulkanShaderModule.h"
 
 #include "RHI/PipelineCompiler.h"
@@ -30,8 +29,8 @@ public:
 
     void AddDirectory(const FDirpath& path);
 
-    EVulkanShaderCompilationFlags CompilationFlags() const { return _data.LockShared()->CompilationFlags; }
-    void SetCompilationFlags(EVulkanShaderCompilationFlags flags);
+    EShaderCompilationFlags CompilationFlags() const NOEXCEPT override;
+    void SetCompilationFlags(EShaderCompilationFlags flags) NOEXCEPT override;
 
 #if USE_PPE_RHIDEBUG
     void SetDebugFlags(EShaderLangFormat flags);
@@ -76,7 +75,7 @@ private:
         VECTORINSITU(PipelineCompiler, FDirpath, 3) Directories;
         FShaderCompiledModuleCache ShaderCache;
         TUniquePtr<FVulkanSpirvCompiler> SpirvCompiler;
-        EVulkanShaderCompilationFlags CompilationFlags{ Default };
+        EShaderCompilationFlags CompilationFlags{ Default };
     };
 
     NODISCARD bool CreateVulkanShader_(

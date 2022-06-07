@@ -496,12 +496,16 @@ FVulkanPipelineCompiler::~FVulkanPipelineCompiler() {
     ReleaseShaderCache();
 }
 //----------------------------------------------------------------------------
-void FVulkanPipelineCompiler::SetCompilationFlags(EVulkanShaderCompilationFlags flags) {
+EShaderCompilationFlags FVulkanPipelineCompiler::CompilationFlags() const NOEXCEPT {
+    return _data.LockShared()->CompilationFlags;
+}
+//----------------------------------------------------------------------------
+void FVulkanPipelineCompiler::SetCompilationFlags(EShaderCompilationFlags flags) NOEXCEPT {
     const auto exclusiveData = _data.LockExclusive();
 
     exclusiveData->CompilationFlags = flags;
 
-    if (flags & EVulkanShaderCompilationFlags::UseCurrentDeviceLimits and !!_deviceInfo) {
+    if (flags & EShaderCompilationFlags::UseCurrentDeviceLimits and !!_deviceInfo) {
         Assert(_deviceInfo->vkInstance);
         exclusiveData->SpirvCompiler->SetCurrentResourceLimits(*_deviceInfo);
     }

@@ -28,15 +28,15 @@ CONSTEXPR const EShaderLangFormat GVulkanPipelineFormat_ =
     EShaderLangFormat::ShaderModule;
 //----------------------------------------------------------------------------
 static void CreateVulkanDeviceCompiler_(const FVulkanDeviceInfo& deviceInfo) {
-    EVulkanShaderCompilationFlags compilationFlags = (
-        EVulkanShaderCompilationFlags::Quiet |
-        EVulkanShaderCompilationFlags::Optimize |
-        EVulkanShaderCompilationFlags::ParseAnnotations |
-        EVulkanShaderCompilationFlags::UseCurrentDeviceLimits );
+    EShaderCompilationFlags compilationFlags = (
+        EShaderCompilationFlags::Quiet |
+        EShaderCompilationFlags::Optimize |
+        EShaderCompilationFlags::ParseAnnotations |
+        EShaderCompilationFlags::UseCurrentDeviceLimits );
 
 #if !USE_PPE_FINAL_RELEASE
     if (deviceInfo.Features & ERHIFeature::Debugging)
-        compilationFlags += EVulkanShaderCompilationFlags::Validate | EVulkanShaderCompilationFlags::GenerateDebug;
+        compilationFlags += EShaderCompilationFlags::Validate | EShaderCompilationFlags::GenerateDebug;
 #endif
 
     TRefPtr<FVulkanPipelineCompiler> compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, deviceInfo) };

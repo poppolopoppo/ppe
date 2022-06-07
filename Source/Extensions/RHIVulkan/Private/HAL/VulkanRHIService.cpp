@@ -1,12 +1,17 @@
 ﻿#include "stdafx.h"
 
 #include "HAL/VulkanRHIService.h"
+
 #include "Vulkan/Instance/VulkanFrameGraph.h"
 
+#include "RHIModule.h"
+#include "RHI/SwapchainDesc.h"
+
+#include "Meta/Utility.h"
 #include "Diagnostic/Logger.h"
 #include "Memory/MemoryStream.h"
 #include "Meta/Utility.h"
-#include "RHI/SwapchainDesc.h"
+#include "Modular/ModularDomain.h"
 
 #if USE_PPE_RHIDEBUG
 namespace PPE::RHI {
@@ -250,6 +255,10 @@ RHI::SFrameGraph FVulkanRHIService::FrameGraph() const NOEXCEPT {
 //----------------------------------------------------------------------------
 RHI::FWindowSurface FVulkanRHIService::BackBuffer() const NOEXCEPT {
     return RHI::FVulkanExternalObject{ _backBuffer }.WindowSurface();
+}
+//----------------------------------------------------------------------------
+RHI::SPipelineCompiler FVulkanRHIService::Compiler(RHI::EShaderLangFormat lang) const NOEXCEPT {
+    return FRHIModule::Get(FModularDomain::Get()).Compiler(lang);
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::RenderFrame(FTimespan dt) {

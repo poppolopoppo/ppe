@@ -83,7 +83,11 @@ public:
     explicit FVulkanSpirvCompiler(const FDirectories& directories);
     ~FVulkanSpirvCompiler();
 
-    void SetCompilationFlags(EVulkanShaderCompilationFlags flags);
+    EShaderCompilationFlags CompilationFlags() const {
+        return _compilationFlags;
+    }
+
+    void SetCompilationFlags(EShaderCompilationFlags flags);
     void SetShaderClockFeatures(bool shaderSubgroupClock, bool shaderDeviceClock);
     void SetShaderFeatures(bool vertexPipelineStoresAndAtomics, bool fragmentStoresAndAtomic);
 
@@ -156,7 +160,7 @@ private:
     TBuiltInResource _builtInResources{};
     FShaderDataFingerprint _glslangFingerprint;
 
-    EVulkanShaderCompilationFlags _compilationFlags{ Default };
+    EShaderCompilationFlags _compilationFlags{ Default };
 
 #if USE_PPE_RHIDEBUG
     EShaderLangFormat _debugFlags{ Default };
