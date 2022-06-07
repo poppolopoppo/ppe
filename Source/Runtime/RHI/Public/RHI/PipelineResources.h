@@ -45,8 +45,9 @@ public:
         TElementArray() = default;
         TElementArray(u16 capacity, u16 count) NOEXCEPT
         :   Capacity(capacity)
-        ,   Count(count)
-        {}
+        ,   Count(count) {
+            FPlatformMemory::Memzero(Data, Count * sizeof(T));
+        }
 
         TMemoryView<T> MakeView() {
             return { Data, Count };
@@ -221,8 +222,8 @@ public:
         template <typename _Pred>
         bool UniformByPred(_Pred&& pred) const { return const_cast<FDynamicData*>(this)->UniformByPred(std::forward<_Pred>(pred)); }
 
-        TMemoryView<u32> DynamicOffsets() { return { reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + DynamicOffsetsOffset), DynamicOffsetsCount }; }
-        TMemoryView<const u32> DynamicOffsets() const { return { reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(this) + DynamicOffsetsOffset), DynamicOffsetsCount }; }
+        TMemoryView<u32> DynamicOffsets() { return Storage.SubRange(DynamicOffsetsOffset, DynamicOffsetsCount * sizeof(u32)).Cast<u32>(); }
+        TMemoryView<const u32> DynamicOffsets() const { return const_cast<FDynamicData*>(this)->DynamicOffsets(); }
 
         bool operator ==(const FDynamicData& other) const { return CompareDynamicData(*this, other); }
         bool operator !=(const FDynamicData& other) const { return (not operator ==(other)); }

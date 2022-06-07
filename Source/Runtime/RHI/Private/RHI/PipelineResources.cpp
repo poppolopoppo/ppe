@@ -58,7 +58,8 @@ template <typename T>
 bool FPipelineResources::HasResource_(const FUniformID& id) const {
     Assert(id.Valid());
 
-    const auto uniforms = _dynamicData.LockShared()->Uniforms();
+    const auto sharedDynamicData = _dynamicData.LockShared();
+    const auto uniforms = sharedDynamicData->Uniforms();
     const auto it = Meta::LowerBound(uniforms.begin(), uniforms.end(), id);
     if (Likely(uniforms.end() != it && *it == id))
         return (it->Type == T::TypeId);
@@ -400,7 +401,8 @@ FPipelineResources& FPipelineResources::SetBufferBase(const FUniformID& id, size
     auto& element = resource.Elements[elementIndex];
     if (resource.DynamicOffsetIndex != FPipelineDesc::StaticOffset) {
         needUpdate |= (element.Offset != offset);
-        u32& dynOffset = _dynamicData.LockExclusive()->DynamicOffsets()[resource.DynamicOffsetIndex + elementIndex];
+        const auto exclusiveDynamicData = _dynamicData.LockExclusive();
+        u32& dynOffset = exclusiveDynamicData->DynamicOffsets()[resource.DynamicOffsetIndex + elementIndex];
         dynOffset = static_cast<u32>((dynOffset + element.Offset - offset) & 0xFFFFFFFF_size_t);
         element.Offset = offset;
     }
