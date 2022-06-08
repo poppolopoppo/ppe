@@ -231,15 +231,15 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     case EImageSampler::IntCube: return oss << STRING_LITERAL(_Char, "IntCube");
     case EImageSampler::IntCubeArray: return oss << STRING_LITERAL(_Char, "IntCubeArray");
     case EImageSampler::Int3D: return oss << STRING_LITERAL(_Char, "Int3D");
-    case EImageSampler::Uint1D: return oss << STRING_LITERAL(_Char, "Uint1D");
-    case EImageSampler::Uint1DArray: return oss << STRING_LITERAL(_Char, "Uint1DArray");
-    case EImageSampler::Uint2D: return oss << STRING_LITERAL(_Char, "Uint2D");
-    case EImageSampler::Uint2DArray: return oss << STRING_LITERAL(_Char, "Uint2DArray");
-    case EImageSampler::Uint2DMS: return oss << STRING_LITERAL(_Char, "Uint2DMS");
-    case EImageSampler::Uint2DMSArray: return oss << STRING_LITERAL(_Char, "Uint2DMSArray");
-    case EImageSampler::UintCube: return oss << STRING_LITERAL(_Char, "UintCube");
-    case EImageSampler::UintCubeArray: return oss << STRING_LITERAL(_Char, "UintCubeArray");
-    case EImageSampler::Uint3D: return oss << STRING_LITERAL(_Char, "Uint3D");
+    case EImageSampler::UInt1D: return oss << STRING_LITERAL(_Char, "UInt1D");
+    case EImageSampler::UInt1DArray: return oss << STRING_LITERAL(_Char, "UInt1DArray");
+    case EImageSampler::UInt2D: return oss << STRING_LITERAL(_Char, "UInt2D");
+    case EImageSampler::UInt2DArray: return oss << STRING_LITERAL(_Char, "UInt2DArray");
+    case EImageSampler::UInt2DMS: return oss << STRING_LITERAL(_Char, "UInt2DMS");
+    case EImageSampler::UInt2DMSArray: return oss << STRING_LITERAL(_Char, "UInt2DMSArray");
+    case EImageSampler::UIntCube: return oss << STRING_LITERAL(_Char, "UIntCube");
+    case EImageSampler::UIntCubeArray: return oss << STRING_LITERAL(_Char, "UIntCubeArray");
+    case EImageSampler::UInt3D: return oss << STRING_LITERAL(_Char, "UInt3D");
     case EImageSampler::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
     default: AssertNotImplemented();
     }

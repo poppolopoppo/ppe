@@ -242,6 +242,14 @@ FGraphicsPipelineDesc& FGraphicsPipelineDesc::SetSpecializationConstants(EShader
     return (*this);
 }
 //----------------------------------------------------------------------------
+const FVertexAttribute* FGraphicsPipelineDesc::VertexInput(const FVertexID& vertexId) const NOEXCEPT {
+    for (const FVertexAttribute& attribute : VertexAttributes) {
+        if (attribute.Id == vertexId)
+            return &attribute;
+    }
+    return nullptr;
+}
+//----------------------------------------------------------------------------
 // Compute
 //----------------------------------------------------------------------------
 FComputePipelineDesc::FComputePipelineDesc() NOEXCEPT = default;

@@ -405,6 +405,8 @@ struct FGraphicsPipelineDesc final : FPipelineDesc {
     FGraphicsPipelineDesc& SetPushConstants(TMemoryView<const FPushConstant> values) { SetPushConstants_(values); return (*this); }
     PPE_RHI_API FGraphicsPipelineDesc& SetSpecializationConstants(EShaderType type, TMemoryView<const FSpecializationConstant> values);
 
+    PPE_RHI_API const FVertexAttribute* VertexInput(const FVertexID& vertexId) const NOEXCEPT;
+
 };
 //----------------------------------------------------------------------------
 // Compute
@@ -460,9 +462,9 @@ struct FMeshPipelineDesc final : FPipelineDesc {
     u32 MaxVertices{ 0 };
     u32 MaxIndices{ 0 };
     uint3 DefaultTaskGroupSize{ 0 };
-    uint3 TaskSizeSpec{ UndefinedSpecialization };
+    uint3 TaskSizeSpecialization{ UndefinedSpecialization };
     uint3 DefaultMeshGroupSize{ 0 };
-    uint3 MeshSizeSpec{ UndefinedSpecialization };
+    uint3 MeshSizeSpecialization{ UndefinedSpecialization };
     bool EarlyFragmentTests{ true };
 
     PPE_RHI_API FMeshPipelineDesc() NOEXCEPT;

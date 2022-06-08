@@ -658,14 +658,14 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             switch (sh.first) {
             case EShaderType::MeshTask:
                 ppln.DefaultTaskGroupSize = reflection.Mesh.TaskGroupSize;
-                ppln.TaskSizeSpec = reflection.Mesh.TaskGroupSpecialization;
+                ppln.TaskSizeSpecialization = reflection.Mesh.TaskGroupSpecialization;
                 break;
             case EShaderType::Mesh:
                 ppln.MaxIndices = reflection.Mesh.MaxIndices;
                 ppln.MaxVertices = reflection.Mesh.MaxVertices;
                 ppln.Topology = reflection.Mesh.Topology;
                 ppln.DefaultMeshGroupSize = reflection.Mesh.MeshGroupSize;
-                ppln.MeshSizeSpec = reflection.Mesh.MeshGroupSpecialization;
+                ppln.MeshSizeSpecialization = reflection.Mesh.MeshGroupSpecialization;
                 break;
             case EShaderType::Fragment:
                 ppln.FragmentOutputs = reflection.Fragment.FragmentOutputs;
