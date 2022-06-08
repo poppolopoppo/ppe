@@ -401,8 +401,6 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
 
     const RHI::SFrameGraph fg = rhi.FrameGraph();
 
-    ImGui::StyleColorsDark();
-
     // initialize options
     {
         ImGuiIO& io = ImGui::GetIO();
@@ -445,12 +443,18 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
 
     // initialize style
     {
+        ImGui::StyleColorsClassic();
         ImGuiStyle& style = ImGui::GetStyle();
 
         style.FramePadding.y = 2;
         style.FrameRounding = 3;
         style.ItemSpacing.y = 3;
         style.WindowRounding = 4;
+
+        ImVec4* colors = style.Colors;
+        colors[ImGuiCol_WindowBg] = ImVec4(0.09f, 0.05f, 0.11f, 0.85f);
+        colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.07f, 0.10f, 0.00f);
+        colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.63f, 0.57f, 0.79f, 0.07f);
     }
 
     // initialize font atlas
