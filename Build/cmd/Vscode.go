@@ -220,21 +220,21 @@ func (vsc *VscodeBuilder) launch_configs(modules *BuildModulesT, compiler Compil
 	}, modules.ModuleKeys()...)
 
 	configurations := Map(func(moduleName string) JsonMap {
+		executable := strings.ReplaceAll(moduleName, "/", "-")
 		cfg := JsonMap{
-			"name":            moduleName,
-			"type":            debuggerType,
-			"request":         "launch",
-			"program":         UFS.Binaries.File(moduleName + "-${command:cpptools.activeConfigName}").ReplaceExt(compiler.Extname(PAYLOAD_EXECUTABLE)),
-			"args":            []string{},
-			"externalConsole": false,
-			"stopAtEntry":     false,
-			"cwd":             UFS.Binaries,
+			"name":        moduleName,
+			"type":        debuggerType,
+			"request":     "launch",
+			"program":     UFS.Binaries.File(executable + "-${command:cpptools.activeConfigName}" + compiler.Extname(PAYLOAD_EXECUTABLE)),
+			"args":        []string{},
+			"stopAtEntry": false,
+			"cwd":         UFS.Binaries,
 		}
 		if envPath := compiler.EnvPath(); len(envPath) > 0 {
-			cfg["environment"] = []JsonMap{{
-				"PATH":         JoinString(";", envPath...) + ";%PATH%",
-				"ASAN_OPTIONS": "windows_hook_rtl_allocators=true",
-			}}
+			cfg["environment"] = []JsonMap{
+				{"name": "PATH", "value": JoinString(";", envPath...) + ";%PATH%"},
+				{"name": "ASAN_OPTIONS", "value": "windows_hook_rtl_allocators=true"},
+			}
 		}
 		return cfg
 	}, executableNames...)
