@@ -42,7 +42,6 @@ uint2 FGenericWindow::Dimensions() const noexcept {
 //----------------------------------------------------------------------------
 bool FGenericWindow::Show() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
-    Assert(not _visible);
 
     _visible = true;
     return true;
@@ -50,7 +49,6 @@ bool FGenericWindow::Show() {
 //----------------------------------------------------------------------------
 bool FGenericWindow::Close() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
-    Assert(_visible);
 
     _visible = false;
     return true;
