@@ -47,7 +47,7 @@ var Vscode = MakeCommand(
 			OutputDir: outputDir,
 		}, args.Alias())
 
-		_, result := bg.Build(builder)
+		_, result := bg.ForceBuild(builder.GetBuildable())
 		return result.Join().Failure()
 	},
 )
