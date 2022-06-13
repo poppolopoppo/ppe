@@ -889,13 +889,13 @@ CONSTEXPR TScalarVectorExpr<T, _Dim, _Expr>::operator TScalarVector<T, _Dim>() c
 template <typename T, size_t _Dim, typename _Expr>
 CONSTEXPR TScalarVector<T, _Dim> TScalarVectorExpr<T, _Dim, _Expr>::Expand() const {
     return Meta::static_for<_Dim>([this](auto... idx) {
-        return details::MakeScalarVector( this->template get<idx>()... );
+        return PPE::details::template MakeScalarVector( this->template get<idx>()... );
     });
 }
 template <typename T, size_t _Dim, typename _Expr>
 CONSTEXPR auto TScalarVectorExpr<T, _Dim, _Expr>::Shift() const {
     return Meta::static_for<_Dim - 1 ? _Dim - 1 : 1>([this](auto... idx) {
-        return details::MakeScalarVector( this->template get<idx>()... );
+        return PPE::details::template MakeScalarVector( this->template get<idx>()... );
     });
 }
 template <typename T, size_t _Dim, typename _Expr>
@@ -903,28 +903,28 @@ template <size_t... _Idx>
 CONSTEXPR TScalarVector<T, sizeof...(_Idx)> TScalarVectorExpr<T, _Dim, _Expr>::Shuffle() const {
     return Meta::static_for<sizeof...(_Idx)>([this](auto... idx) {
         CONSTEXPR size_t shuffled[sizeof...(_Idx)] = { _Idx... };
-        return details::MakeScalarVector( this->template get<shuffled[idx]>()... );
+        return PPE::details::template MakeScalarVector( this->template get<shuffled[idx]>()... );
     });
 }
 template <typename T, size_t _Dim>
 template <typename _Transform, typename A>
 CONSTEXPR auto TScalarVectorExpr<T, _Dim, void>::Map(_Transform callable, const TScalarVectorExpr<T, _Dim, A>& a) {
     return Meta::static_for<_Dim>([&](auto... idx) {
-        return details::MakeScalarVector( callable(a.template get<idx>())... );
+        return PPE::details::template MakeScalarVector( callable(a.template get<idx>())... );
     });
 }
 template <typename T, size_t _Dim>
 template <typename _Transform, typename A, typename B>
 CONSTEXPR auto TScalarVectorExpr<T, _Dim, void>::Map(_Transform callable, const TScalarVectorExpr<T, _Dim, A>& a, const TScalarVectorExpr<T, _Dim, B>& b) {
     return Meta::static_for<_Dim>([&](auto... idx) {
-        return details::MakeScalarVector( callable(a.template get<idx>(), b.template get<idx>())... );
+        return PPE::details::template MakeScalarVector( callable(a.template get<idx>(), b.template get<idx>())... );
     });
 }
 template <typename T, size_t _Dim>
 template <typename _Transform, typename A, typename B, typename C>
 CONSTEXPR auto TScalarVectorExpr<T, _Dim, void>::Map(_Transform callable, const TScalarVectorExpr<T, _Dim, A>& a, const TScalarVectorExpr<T, _Dim, B>& b, const TScalarVectorExpr<T, _Dim, C>& c) {
     return Meta::static_for<_Dim>([&](auto... idx) {
-        return details::MakeScalarVector( callable(a.template get<idx>(), b.template get<idx>(), c.template get<idx>())... );
+        return PPE::details::template MakeScalarVector( callable(a.template get<idx>(), b.template get<idx>(), c.template get<idx>())... );
     });
 }
 //----------------------------------------------------------------------------
@@ -976,25 +976,25 @@ CONSTEXPR size_t TScalarVectorAssignable<T, _Dim, _Expr, _Idx...>::MinComponentI
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename _Expr>
 CONSTEXPR auto operator -(const TScalarVectorExpr<T, _Dim, _Expr>& e) {
-    return details::MakeScalarVectorUnaryExpr<Meta::TUnaryMinus<T>>(e);
+    return PPE::details::template MakeScalarVectorUnaryExpr<Meta::TUnaryMinus<T>>(e);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename _Expr>
 CONSTEXPR auto operator ~(const TScalarVectorExpr<T, _Dim, _Expr>& e) {
-    return details::MakeScalarVectorUnaryExpr<Meta::TUnaryComplement<T>>(e);
+    return PPE::details::template MakeScalarVectorUnaryExpr<Meta::TUnaryComplement<T>>(e);
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, typename T, size_t _Dim, typename _Expr>
 CONSTEXPR auto bit_cast(const TScalarVectorExpr<T, _Dim, _Expr>& e) {
     return Meta::static_for<_Dim>([&](auto... idx) {
-        return details::MakeScalarVector(bit_cast<_Dst>(e.template get<idx>())...);
+        return PPE::details::template MakeScalarVector(bit_cast<_Dst>(e.template get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, typename T, size_t _Dim, typename _Expr>
 CONSTEXPR auto checked_cast(const TScalarVectorExpr<T, _Dim, _Expr>& e) {
     return Meta::static_for<_Dim>([&](auto... idx) {
-        return details::MakeScalarVector(checked_cast<_Dst>(e.template get<idx>())...);
+        return PPE::details::template MakeScalarVector(checked_cast<_Dst>(e.template get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
@@ -1010,18 +1010,18 @@ hash_t hash_value(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
 #define PPE_SCALARVECTOR_BINARY_OP(_Func, _Pred) \
     template <typename T, size_t _Dim, typename _Lhs, typename _Rhs> \
     NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim, _Rhs>& rhs) { \
-        return details::MakeScalarVectorBinaryExpr<_Pred>(lhs, rhs); \
+        return PPE::details::template MakeScalarVectorBinaryExpr<_Pred>(lhs, rhs); \
     } \
     template <typename T, size_t _Dim, typename _Expr> \
     NODISCARD CONSTEXPR auto _Func(const TScalarVectorExpr<T, _Dim, _Expr>& lhs, const T& rhs) { \
         return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
-            return details::MakeScalarVector(_Pred{}(lhs.template get<idx>(), rhs)...); \
+            return PPE::details::template MakeScalarVector(_Pred{}(lhs.template get<idx>(), rhs)...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _Expr> \
     NODISCARD CONSTEXPR auto _Func(const T& lhs, const TScalarVectorExpr<T, _Dim, _Expr>& rhs) { \
         return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR { \
-            return details::MakeScalarVector(_Pred{}(lhs, rhs.template get<idx>())...); \
+            return PPE::details::template MakeScalarVector(_Pred{}(lhs, rhs.template get<idx>())...); \
         }); \
     } \
     template <typename T, size_t _Dim, typename _Lhs, typename _Rhs> \
