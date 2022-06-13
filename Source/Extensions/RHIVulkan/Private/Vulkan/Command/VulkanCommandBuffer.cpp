@@ -1384,8 +1384,8 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
     TLocalPool<_Resource, _MainPool, _MaxChunks>& localResources
     ARGS_IF_RHIDEBUG(FWStringView debugMessage) ) {
     Assert(id);
-    Assert_NoAssume(EState::Recording == _data.Value_NotThreadSafe().State ||
-                    EState::Compiling == _data.Value_NotThreadSafe().State );
+    Assert_NoAssume(EState::Recording == _data.Value_Unsafe().State ||
+                    EState::Compiling == _data.Value_Unsafe().State );
 
     if (id.Index >= localResources.ToLocal.size())
         return nullptr;
@@ -1408,7 +1408,7 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
         Meta::Destroy(pData);
         localResources.Pool.Deallocate(local);
         ONLY_IF_RHIDEBUG(Unused(debugMessage));
-        RHI_LOG(Error, L"{1}: {0}", debugMessage, _data.Value_NotThreadSafe().DebugName);
+        RHI_LOG(Error, L"{1}: {0}", debugMessage, _data.Value_Unsafe().DebugName);
         return nullptr;
     }
 

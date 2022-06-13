@@ -54,11 +54,11 @@ public:
 
     ~TMemoryPool();
 
-    _Allocator& Allocator() { return _pool.Value_NotThreadSafe(); }
-    const _Allocator& Allocator() const { return _pool.Value_NotThreadSafe(); }
+    _Allocator& Allocator() { return _pool.Value_Unsafe(); }
+    const _Allocator& Allocator() const { return _pool.Value_Unsafe(); }
 
 #if USE_PPE_DEBUG
-    u32 NumLiveBlocks_ForDebug() const { return _pool.Value_NotThreadSafe().NumLiveBlocks.load(std::memory_order_relaxed); }
+    u32 NumLiveBlocks_ForDebug() const { return _pool.Value_Unsafe().NumLiveBlocks.load(std::memory_order_relaxed); }
 #endif
 
     static u32 BucketHint(hash_t seed) { return BucketIndexTLS_(seed); }
@@ -69,8 +69,8 @@ public:
     void Deallocate(index_type block) { Deallocate(block, BucketIndexTLS_()); }
     void Deallocate(index_type block, u32 bucket);
 
-    void* At(index_type block) const NOEXCEPT { return PoolNode_(_pool.Value_NotThreadSafe().pChunks, block); }
-    void* operator [](index_type block) const NOEXCEPT { return PoolNodeIFP_(_pool.Value_NotThreadSafe().pChunks, block); }
+    void* At(index_type block) const NOEXCEPT { return PoolNode_(_pool.Value_Unsafe().pChunks, block); }
+    void* operator [](index_type block) const NOEXCEPT { return PoolNodeIFP_(_pool.Value_Unsafe().pChunks, block); }
 
     void Clear_AssertCompletelyEmpty();
     void Clear_IgnoreLeaks();
@@ -583,11 +583,11 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Initia
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
 auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Allocate(u32 bucket) -> index_type {
-    const index_type freeBlock = _buckets[bucket].LockExclusive()->PopFromFront(_pool.Value_NotThreadSafe().pChunks);
+    const index_type freeBlock = _buckets[bucket].LockExclusive()->PopFromFront(_pool.Value_Unsafe().pChunks);
 
     if (UMax != freeBlock) {
-        ONLY_IF_MEMORYDOMAINS( _pool.Value_NotThreadSafe().TrackingData.AllocateUser(BlockSize) );
-        ONLY_IF_ASSERT( _pool.Value_NotThreadSafe().NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) );
+        ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.AllocateUser(BlockSize) );
+        ONLY_IF_ASSERT( _pool.Value_Unsafe().NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) );
 
         return freeBlock;
     }
@@ -601,12 +601,12 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Deallo
 
     FPoolNode_* node;
     {
-        node = PoolNode_(_pool.Value_NotThreadSafe().pChunks, block);
+        node = PoolNode_(_pool.Value_Unsafe().pChunks, block);
         ONLY_IF_ASSERT( FPlatformMemory::Memdeadbeef(node, BlockSize) );
 
         if (_buckets[bucket].LockExclusive()->PushToFront(block, node)) {
-            ONLY_IF_MEMORYDOMAINS( _pool.Value_NotThreadSafe().TrackingData.DeallocateUser(BlockSize) );
-            Assert_NoAssume( _pool.Value_NotThreadSafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
+            ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.DeallocateUser(BlockSize) );
+            Assert_NoAssume( _pool.Value_Unsafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
             return;
         }
     }
@@ -718,12 +718,12 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Recycl
     {
         const auto exclusiveBucket = _buckets[bucket].LockExclusive();
 
-        needRecycling  = exclusiveBucket->RecycleFull(_pool.Value_NotThreadSafe().pChunks, _recycler);
+        needRecycling  = exclusiveBucket->RecycleFull(_pool.Value_Unsafe().pChunks, _recycler);
 
         Verify( exclusiveBucket->PushToFront(block, node) );
 
-        ONLY_IF_MEMORYDOMAINS( _pool.Value_NotThreadSafe().TrackingData.DeallocateUser(BlockSize) );
-        Assert_NoAssume( _pool.Value_NotThreadSafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
+        ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.DeallocateUser(BlockSize) );
+        Assert_NoAssume( _pool.Value_Unsafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
     }
 
     if (Unlikely(UMax != needRecycling))

@@ -69,8 +69,8 @@ public:
     FSharedLock LockShared() const { return FSharedLock(*this); }
     FExclusiveLock LockExclusive() { return FExclusiveLock(*this); }
 
-    T& Value_NotThreadSafe() { return _value; }
-    const T& Value_NotThreadSafe() const { return _value; }
+    T& Value_Unsafe() { return _value; }
+    const T& Value_Unsafe() const { return _value; }
 
 private:
     T _value;
