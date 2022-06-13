@@ -40,8 +40,12 @@ struct TRange {
     CONSTEXPR bool Empty() const { return not Any(First < Last); }
     CONSTEXPR bool Whole() const { return All(First == 0) && All(Last == MaxValue); }
 
+    NODISCARD CONSTEXPR bool Contains(const TRange& other) const {
+        return All((First <= other.First) && (other.Last <= Last));
+    }
+
     NODISCARD CONSTEXPR bool Overlaps(const TRange& other) const {
-        return (not All((Last < other.First) | (other.Last < First)));
+        return (not All((Last < other.First) || (other.Last < First)));
     }
 
     CONSTEXPR void Reset() {
@@ -55,12 +59,20 @@ struct TRange {
         return (*this);
     }
 
+    CONSTEXPR TRange& Append(const TRange& other) {
+        if (Empty())
+            *this = other;
+        else
+            SelfUnion(other);
+        return (*this);
+    }
+
     NODISCARD CONSTEXPR TRange operator +(T value) const { return (TRange(*this) += value); }
     CONSTEXPR TRange& operator +=(T value) { return Add(value); }
 
     NODISCARD CONSTEXPR TRange Union(const TRange& other) const { return TRange(*this).SelfUnion(other); }
     CONSTEXPR TRange& SelfUnion(const TRange& other) {
-        Assert(Overlaps(other));
+        //Assert(Overlaps(other));
         First = Min(First, other.First);
         Last = Max(Last, other.Last);
         return (*this);
@@ -70,18 +82,19 @@ struct TRange {
     CONSTEXPR TRange& SelfIntersect(const TRange& other) {
         First = Max(First, other.First);
         Last = Min(Last, other.Last);
+        if (Empty()) *this = TRange{};
         return (*this);
-    }
-
-    CONSTEXPR bool operator ==(const TRange& other) const { return (All((First == other.First) & (Last == other.Last))); }
-    CONSTEXPR bool operator !=(const TRange& other) const { return (not operator ==(other)); }
-
-    CONSTEXPR friend hash_t hash_value(const TRange& range) {
-        return hash_size_t_constexpr(range.First, range.Last);
     }
 
     CONSTEXPR static bool Overlaps(T firstA, T lastA, T firstB, T lastB) {
         return TRange{ firstA, lastA }.Overlaps({ firstB, lastB });
+    }
+
+    CONSTEXPR bool operator ==(const TRange& other) const { return (All((First == other.First) && (Last == other.Last))); }
+    CONSTEXPR bool operator !=(const TRange& other) const { return (not operator ==(other)); }
+
+    CONSTEXPR friend hash_t hash_value(const TRange& range) {
+        return hash_size_t_constexpr(range.First, range.Last);
     }
 
     struct FIterator : Meta::TIterator<value_type, std::random_access_iterator_tag> {

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 
+#include "Maths/Range.h"
 #include "Maths/ScalarVectorHelpers.h"
 #include "Maths/ScalarBoundingBoxHelpers.h"
 #include "Maths/ScalarMatrixHelpers.h"
@@ -221,6 +222,115 @@ static NO_INLINE void Test_Matrix_() {
     }
 }
 //----------------------------------------------------------------------------
+static NO_INLINE void Test_Range_() {
+    CONSTEXPR FRange32u a{ 4,48 };
+    CONSTEXPR FRange32u b{ 32,73 };
+    CONSTEXPR FRange32u c{ 17,26 };
+
+    u32 countA = 0;
+    for (u32 x : a) {
+        countA++;
+        Unused(x);
+    }
+    AssertRelease(countA == 44);
+    AssertRelease(countA == a.Extent());
+
+    u32 countB = 0;
+    for (u32 x : b) {
+        countB++;
+        Unused(x);
+    }
+    AssertRelease(countB == 41);
+    AssertRelease(countB == b.Extent());
+
+    u32 countC = 0;
+    for (u32 x : c) {
+        countC++;
+        Unused(x);
+    }
+    AssertRelease(countC == 9);
+    AssertRelease(countC == c.Extent());
+
+    const u32 sumA = std::accumulate(a.begin(), a.end(), 0);
+    AssertRelease(sumA == 1122);
+    const u32 sumB = std::accumulate(b.begin(), b.end(), 0);
+    AssertRelease(sumB == 2132);
+    const u32 sumC = std::accumulate(c.begin(), c.end(), 0);
+    AssertRelease(sumC == 189);
+
+    STATIC_ASSERT(a.Contains(a));
+    STATIC_ASSERT(not a.Contains(b));
+    STATIC_ASSERT(a.Contains(c));
+    STATIC_ASSERT(a.Overlaps(b));
+    STATIC_ASSERT(a.Overlaps(c));
+
+    AssertRelease(not b.Contains(a));
+    AssertRelease(not b.Contains(c));
+    AssertRelease(b.Overlaps(a));
+    AssertRelease(not b.Overlaps(c));
+
+    AssertRelease(not c.Contains(a));
+    AssertRelease(not c.Contains(b));
+    AssertRelease(c.Overlaps(a));
+    AssertRelease(not c.Overlaps(b));
+
+    const FRange32u intersectAB = a.Intersect(b);
+    AssertRelease(intersectAB == FRange32u(32, 48));
+    AssertRelease(a.Contains(intersectAB));
+    AssertRelease(b.Contains(intersectAB));
+    AssertRelease(not c.Contains(intersectAB));
+    AssertRelease(a.Overlaps(intersectAB));
+    AssertRelease(b.Overlaps(intersectAB));
+    AssertRelease(not c.Overlaps(intersectAB));
+
+    const FRange32u intersectBC = b.Intersect(c);
+    AssertRelease(intersectBC.Empty());
+    AssertRelease(a.Contains(intersectBC));
+    AssertRelease(b.Contains(intersectBC));
+    AssertRelease(c.Contains(intersectBC));
+    AssertRelease(not a.Overlaps(intersectBC));
+    AssertRelease(not b.Overlaps(intersectBC));
+    AssertRelease(not c.Overlaps(intersectBC));
+
+    const FRange32u intersectAC = a.Intersect(c);
+    AssertRelease(intersectAC == c);
+    AssertRelease(a.Contains(intersectAC));
+    AssertRelease(not b.Contains(intersectAC));
+    AssertRelease(c.Contains(intersectAC));
+    AssertRelease(a.Overlaps(intersectAC));
+    AssertRelease(not b.Overlaps(intersectAC));
+    AssertRelease(c.Overlaps(intersectAC));
+
+    const FRange32u unionAB = a.Union(b);
+    AssertRelease(unionAB == FRange32u(4, 73));
+    AssertRelease(unionAB.Contains(a));
+    AssertRelease(unionAB.Contains(b));
+    AssertRelease(unionAB.Contains(c));
+    AssertRelease(a.Overlaps(unionAB));
+    AssertRelease(b.Overlaps(unionAB));
+    AssertRelease(c.Overlaps(unionAB));
+
+#if 0 // union of non overlapping ranges is not allowed
+    const FRange32u unionBC = b.Union(c);
+    AssertRelease(unionBC == FRange32u(17, 73));
+    AssertRelease(not unionBC.Contains(a));
+    AssertRelease(unionBC.Contains(b));
+    AssertRelease(unionBC.Contains(c));
+    AssertRelease(a.Overlaps(unionBC));
+    AssertRelease(b.Overlaps(unionBC));
+    AssertRelease(c.Overlaps(unionBC));
+#endif
+
+    const FRange32u unionAC = a.Union(c);
+    AssertRelease(unionAC == a);
+    AssertRelease(unionAC.Contains(a));
+    AssertRelease(not unionAC.Contains(b));
+    AssertRelease(unionAC.Contains(c));
+    AssertRelease(a.Overlaps(unionAC));
+    AssertRelease(b.Overlaps(unionAC));
+    AssertRelease(c.Overlaps(unionAC));
+}
+//----------------------------------------------------------------------------
 } //!namedspace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -234,6 +344,7 @@ void Test_Maths() {
     Test_Vector_();
     Test_BoundingBox_();
     Test_Matrix_();
+    Test_Range_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

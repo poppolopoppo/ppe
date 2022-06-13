@@ -1412,10 +1412,10 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
         return nullptr;
     }
 
-    localResources.LocalIndexRange.SelfUnion(
-        TRange<u32>{ checked_cast<u32>(local), checked_cast<u32>(local + 1) });
-    localResources.GlobalIndexRange.SelfUnion(
-        TRange<u32>{ checked_cast<u32>(id.Index), checked_cast<u32>(id.Index + 1) });
+    localResources.LocalIndexRange.Append(
+        { checked_cast<u32>(local), checked_cast<u32>(local + 1) });
+    localResources.GlobalIndexRange.Append(
+        { checked_cast<u32>(id.Index), checked_cast<u32>(id.Index + 1) });
 
     return std::addressof(pData->Data());
 }
