@@ -187,8 +187,10 @@ NODISCARD static bool MergeUniformMap_(
 //----------------------------------------------------------------------------
 NODISCARD static bool MergePipelineResources_(
     FPipelineDesc::FPipelineLayout* dst,
-    const FPipelineDesc::FPipelineLayout& src) {
+    const FPipelineDesc::FPipelineLayout& src,
+    EShaderCompilationFlags flags ) {
     Assert(dst);
+	Unused(flags);
 
     // merge descriptor sets
     for (const auto& srcDs : src.DescriptorSets) {
@@ -232,7 +234,7 @@ NODISCARD static bool MergePipelineResources_(
 
                 if (FRange32u::Overlaps(srcPc.second.Offset, srcPc.second.Offset + srcPc.second.Size,
                                         dstPc.second.Offset, dstPc.second.Offset + dstPc.second.Size )) {
-                    LOG(PipelineCompiler, Error, L""
+                    CLOG(not (flags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L""
                         "push constants with different names uses same memory range, which is not handled:\n"
                         "\tA=({0}):{1}..{2}\n"
                         "\tB=({3}):{4}..{5}\n",
@@ -631,7 +633,7 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
 
         const auto it = HighestPriorityShaderFormat_(sh.second.Data, spirvFormat);
         if (sh.second.Data.end() == it) {
-            LOG(PipelineCompiler, Error, L"mesh pipeline: no suitable shader format found!");
+            CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"mesh pipeline: no suitable shader format found!");
             return false;
         }
 
@@ -646,14 +648,21 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
                 (*pShaderSourceRef)->EntryPoint(),
                 (*pShaderSourceRef)->Data()->c_str()
                 ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
-                LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+                if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
+                    LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+                }
                 return false;
             }
 
-            if (createModule)
-                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef)));
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+                CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"mesh pipeline: failed to create vulkan shader module!");
+                return false;
+            }
 
-            LOG_CHECK(PipelineCompiler, MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout));
+            if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
+                CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"mesh pipeline: failed to merge vulkan pipeline layout!");
+                return false;
+            }
 
             switch (sh.first) {
             case EShaderType::MeshTask:
@@ -678,7 +687,7 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             ppln.Shaders.Insert_Overwrite(EShaderType{ sh.first }, std::move(shader));
         }
         else {
-            LOG(PipelineCompiler, Error, L"mesh pipeline: invalid shader data type, expected a source!");
+            CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"mesh pipeline: invalid shader data type, expected a source!");
             return false;
         }
     }
@@ -705,7 +714,7 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
 
         const auto it = HighestPriorityShaderFormat_(sh.second.Data, spirvFormat);
         if (sh.second.Data.end() == it) {
-            LOG(PipelineCompiler, Error, L"ray-tracing pipeline: no suitable shader format found!");
+            CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"ray-tracing pipeline: no suitable shader format found!");
             return false;
         }
 
@@ -720,14 +729,21 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
                 (*pShaderSourceRef)->EntryPoint(),
                 (*pShaderSourceRef)->Data()->c_str()
                 ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
-                LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+                if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
+                    LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+                }
                 return false;
             }
 
-            if (createModule)
-                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef) ));
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+                CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"ray-tracing pipeline: failed to create vulkan shader module!");
+                return false;
+            }
 
-            LOG_CHECK(PipelineCompiler, MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout));
+            if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
+                CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"ray-tracing pipeline: failed to merge vulkan pipeline layout!");
+                return false;
+            }
 
             switch (sh.second.Type) {
             case EShaderType::RayGen:
@@ -757,7 +773,6 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
     ONLY_IF_RHIDEBUG(AssertRelease_NoAssume(CheckDescriptorBindings_(desc)));
     return true;
 }
-
 //----------------------------------------------------------------------------
 bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) {
     Assert_NoAssume(IsSupported(desc, fmt));
@@ -773,7 +788,7 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
 
         const auto it = HighestPriorityShaderFormat_(sh.second.Data, spirvFormat);
         if (sh.second.Data.end() == it) {
-            LOG(PipelineCompiler, Error, L"graphics pipeline: no suitable shader format found!");
+            CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"graphics pipeline: no suitable shader format found!");
             return false;
         }
 
@@ -787,15 +802,22 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
                 sh.first, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
                 (*pShaderSourceRef)->Data()->c_str()
-                ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
-                LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+                ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()))) {
+                if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
+                    LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+                }
                 return false;
             }
 
-            if (createModule)
-                LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef)) );
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+                CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"graphics pipeline: failed to create vulkan shader module!");
+                return false;
+            }
 
-            LOG_CHECK(PipelineCompiler, MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout));
+            if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
+                CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"graphics pipeline: failed to merge vulkan pipeline layout!");
+                return false;
+            }
 
             ppln.SupportedTopology |= reflection.Vertex.SupportedTopology;
 
@@ -821,7 +843,7 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
             ppln.Shaders.Insert_Overwrite(EShaderType{ sh.first }, std::move(shader));
         }
         else {
-            LOG(PipelineCompiler, Error, L"graphics pipeline: invalid shader data type, expected a source!");
+            CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"graphics pipeline: invalid shader data type, expected a source!");
             return false;
         }
     }
@@ -848,7 +870,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
 
     const auto it = HighestPriorityShaderFormat_(desc.Shader.Data, spirvFormat);
     if (desc.Shader.Data.end() == it) {
-        LOG(PipelineCompiler, Error, L"compute pipeline: no suitable shader format found!");
+        CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"compute pipeline: no suitable shader format found!");
         return false;
     }
 
@@ -862,12 +884,16 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
             (*pShaderSourceRef)->EntryPoint(),
             (*pShaderSourceRef)->Data()->c_str()
             ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
-            LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+            if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
+                LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
+            }
             return false;
         }
 
-        if (createModule)
-            LOG_CHECK(PipelineCompiler, CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef)));
+        if (createModule && not CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+            CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"compute pipeline: failed to create vulkan shader module!");
+            return false;
+        }
 
         ppln.DefaultLocalGroupSize = reflection.Compute.LocalGroupSize;
         ppln.LocalSizeSpecialization = reflection.Compute.LocalGroupSpecialization;
