@@ -212,7 +212,7 @@ static void RTTIPrintClass_() {
     LOG(RTTI_UnitTest, Debug, L"TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Flags());
 
     for (const auto& it : metaClass->AllFunctions()) {
-        LOG(RTTI_UnitTest, Debug, L"   - FUNC {0} {1}({2}) : <{3}>",
+        LOG(RTTI_UnitTest, Verbose, L"   - FUNC {0} {1}({2}) : <{3}>",
             it->HasReturnValue() ? it->Result()->TypeName() : "void",
             it->Name(),
             Fmt::FWFormator([&it](FWTextWriter& oss) {
@@ -222,13 +222,12 @@ static void RTTIPrintClass_() {
                     oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeName() << L" <" << prms[i].Flags() << L'>';
                 }
             }),
-            it->Flags()
-        );
+            it->Flags() );
     }
 
     for (const auto& it : metaClass->AllProperties()) {
         const RTTI::FNamedTypeInfos typeInfos = it->Traits()->NamedTypeInfos();
-        LOG(RTTI_UnitTest, Debug, L"   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
+		LOG(RTTI_UnitTest, Verbose, L"   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
             it->Name(),
             it->Flags(),
             typeInfos.Name(),
