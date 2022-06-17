@@ -28,6 +28,22 @@ struct FUnitTestFunc_ {
     _Macro(Compiler_Annotation2_) \
     _Macro(Compiler_Annotation3_) \
     _Macro(Compiler_Annotation4_) \
+    _Macro(Compiler_ComputeLocalSize1_) \
+    _Macro(Compiler_MeshShader1_) \
+    _Macro(Compiler_MRT1_) \
+    _Macro(Compiler_Optimization1_) \
+    _Macro(Compiler_PushConst1_) \
+    _Macro(Compiler_PushConst2_) \
+    _Macro(Compiler_PushConst3_) \
+    _Macro(Compiler_RayTracing1_) \
+    _Macro(Compiler_Reflection1_) \
+    _Macro(Compiler_Reflection2_) \
+    _Macro(Compiler_Reflection3_) \
+    _Macro(Compiler_Reflection4_) \
+    _Macro(Compiler_Reflection5_) \
+    _Macro(Compiler_ShaderTrace1_) \
+    _Macro(Compiler_UniformArray1_) \
+    _Macro(Compiler_UniformArray2_) \
     /* compute */ \
     _Macro(Compute_Compute1_) \
     _Macro(Compute_Compute2_) \
