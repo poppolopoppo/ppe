@@ -1262,10 +1262,10 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
     *outMinOffset = ~0u;
 
     LOG_CHECK(PipelineCompiler, bufferType.isStruct());
-    LOG_CHECK(PipelineCompiler, (bufferType.getQualifier().isUniformOrBuffer() or
-                    bufferType.getQualifier().layoutPushConstant ));
-    LOG_CHECK(PipelineCompiler, (bufferType.getQualifier().layoutPacking == ElpStd140 or
-                    bufferType.getQualifier().layoutPacking == ElpStd430 ));
+    LOG_CHECK(PipelineCompiler, bufferType.getQualifier().isUniformOrBuffer() or
+                                bufferType.getQualifier().layoutPushConstant );
+    LOG_CHECK(PipelineCompiler, bufferType.getQualifier().layoutPacking == ElpStd140 or
+                                bufferType.getQualifier().layoutPacking == ElpStd430 );
 
     int memberSize{ 0 };
     int offset{ 0 };
@@ -1274,14 +1274,14 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
     forrange(member, 0, structFields.size()) {
         const TType& memberType = *structFields[member].type;
         const TQualifier& memberQualifier = memberType.getQualifier();
-        TLayoutMatrix subLayoutMatrix = memberQualifier.layoutMatrix;
+        const TLayoutMatrix subMatrixLayout = memberQualifier.layoutMatrix;
 
         int dummyStride;
         int memberAlignment = ctx.Intermediate->getBaseAlignment(
             memberType, memberSize, dummyStride,
             bufferType.getQualifier().layoutPacking,
-            subLayoutMatrix != ElmNone
-                ? subLayoutMatrix == ElmRowMajor
+            subMatrixLayout != ElmNone
+                ? subMatrixLayout == ElmRowMajor
                 : bufferType.getQualifier().layoutMatrix == ElmRowMajor );
         Assert(Meta::IsPow2(memberAlignment));
 
@@ -1302,13 +1302,12 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
 
         glslang::RoundToPow2(offset, memberAlignment);
         *outMinOffset = Min(*outMinOffset, checked_cast<u32>(offset));
-        offset += memberSize;
 
         // for last member:
-        if (member + 1 == structFields.size() and memberType.isUnsizedArray()) {
-            Assert(0 == memberSize);
+        if (member + 1 == structFields.size() and memberType.isUnsizedArray())
             *outArrayStride = checked_cast<u32>(dummyStride);
-        }
+        else
+            offset += memberSize;
     }
 
     *outStaticSize = checked_cast<u32>(offset);
