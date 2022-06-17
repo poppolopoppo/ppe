@@ -264,6 +264,8 @@ struct FPipelineDesc {
         PPE_RHI_API void AddShader(EShaderLangFormat fmt, PShaderModule&& rmodule);
         PPE_RHI_API void AddShader(EShaderLangFormat fmt, FShaderDataVariant&& rdata);
         void AddShader(EShaderLangFormat fmt, const PShaderModule& module) { AddShader(fmt, PShaderModule{ module }); }
+
+        PPE_RHI_API const FShaderDataVariant* Find(EShaderLangFormat fmt) const NOEXCEPT;
     };
 
     using FTopologyBits = TFixedSizeBitMask<size_t(EPrimitiveTopology::_Count)>;
@@ -275,7 +277,7 @@ struct FPipelineDesc {
 
     PPE_RHI_API ~FPipelineDesc();
 
-    FPipelineDesc(const FPipelineDesc&) = delete;
+    PPE_RHI_API FPipelineDesc(const FPipelineDesc&);
     FPipelineDesc& operator =(const FPipelineDesc&) = delete;
 
     PPE_RHI_API FPipelineDesc(FPipelineDesc&&) NOEXCEPT;
@@ -303,6 +305,11 @@ protected:
 };
 //----------------------------------------------------------------------------
 using FDescriptorSet = FPipelineDesc::FDescriptorSet;
+using FTopologyBits = FPipelineDesc::FTopologyBits;
+//----------------------------------------------------------------------------
+CONSTEXPR bool operator &(const FTopologyBits& bits, EPrimitiveTopology topology) {
+    return bits.Get(Meta::EnumOrd(topology));
+}
 //----------------------------------------------------------------------------
 // Uniforms
 //----------------------------------------------------------------------------
@@ -376,6 +383,9 @@ struct FGraphicsPipelineDesc final : FPipelineDesc {
     PPE_RHI_API FGraphicsPipelineDesc() NOEXCEPT;
     PPE_RHI_API ~FGraphicsPipelineDesc();
 
+    PPE_RHI_API FGraphicsPipelineDesc(const FGraphicsPipelineDesc&);
+    FGraphicsPipelineDesc& operator =(const FGraphicsPipelineDesc&) = delete;
+
     PPE_RHI_API FGraphicsPipelineDesc(FGraphicsPipelineDesc&&) NOEXCEPT;
     PPE_RHI_API FGraphicsPipelineDesc& operator =(FGraphicsPipelineDesc&&) NOEXCEPT;
 
@@ -421,6 +431,9 @@ struct FComputePipelineDesc final : FPipelineDesc {
 
     PPE_RHI_API FComputePipelineDesc() NOEXCEPT;
     PPE_RHI_API ~FComputePipelineDesc();
+
+    PPE_RHI_API FComputePipelineDesc(const FComputePipelineDesc&);
+    FComputePipelineDesc& operator =(const FComputePipelineDesc&) = delete;
 
     PPE_RHI_API FComputePipelineDesc(FComputePipelineDesc&&) NOEXCEPT;
     PPE_RHI_API FComputePipelineDesc& operator =(FComputePipelineDesc&&) NOEXCEPT;
@@ -470,6 +483,9 @@ struct FMeshPipelineDesc final : FPipelineDesc {
     PPE_RHI_API FMeshPipelineDesc() NOEXCEPT;
     PPE_RHI_API ~FMeshPipelineDesc();
 
+    PPE_RHI_API FMeshPipelineDesc(const FMeshPipelineDesc&);
+    FMeshPipelineDesc& operator =(const FMeshPipelineDesc&) = delete;
+
     PPE_RHI_API FMeshPipelineDesc(FMeshPipelineDesc&&) NOEXCEPT;
     PPE_RHI_API FMeshPipelineDesc& operator =(FMeshPipelineDesc&&) NOEXCEPT;
 
@@ -513,6 +529,9 @@ struct FRayTracingPipelineDesc final : FPipelineDesc {
 
     PPE_RHI_API FRayTracingPipelineDesc() NOEXCEPT;
     PPE_RHI_API ~FRayTracingPipelineDesc();
+
+    PPE_RHI_API FRayTracingPipelineDesc(const FRayTracingPipelineDesc&);
+    FRayTracingPipelineDesc& operator =(const FRayTracingPipelineDesc&) = delete;
 
     PPE_RHI_API FRayTracingPipelineDesc(FRayTracingPipelineDesc&&) NOEXCEPT;
     PPE_RHI_API FRayTracingPipelineDesc& operator =(FRayTracingPipelineDesc&&) NOEXCEPT;

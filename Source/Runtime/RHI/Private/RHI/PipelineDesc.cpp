@@ -101,6 +101,8 @@ void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
 FPipelineDesc::FPipelineDesc() NOEXCEPT = default;
 FPipelineDesc::~FPipelineDesc() = default;
 //----------------------------------------------------------------------------
+FPipelineDesc::FPipelineDesc(const FPipelineDesc&) = default;
+//----------------------------------------------------------------------------
 FPipelineDesc::FPipelineDesc(FPipelineDesc&&) NOEXCEPT = default;
 FPipelineDesc& FPipelineDesc::operator =(FPipelineDesc&&) NOEXCEPT = default;
 //----------------------------------------------------------------------------
@@ -132,6 +134,12 @@ void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, PShaderModule&& rm
 void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FShaderDataVariant&& rdata) {
     Assert(not std::holds_alternative<std::monostate>(rdata));
     Data.GetOrAdd(fmt) = std::move(rdata);
+}
+//----------------------------------------------------------------------------
+const FShaderDataVariant* FPipelineDesc::FShader::Find(EShaderLangFormat fmt) const NOEXCEPT {
+    if (const auto it = Data.find(fmt); Data.end() != it)
+        return std::addressof(it->second);
+    return nullptr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -209,6 +217,8 @@ void FPipelineDesc::SetPushConstants_(TMemoryView<const FPushConstant> values) {
 FGraphicsPipelineDesc::FGraphicsPipelineDesc() NOEXCEPT = default;
 FGraphicsPipelineDesc::~FGraphicsPipelineDesc() = default;
 //----------------------------------------------------------------------------
+FGraphicsPipelineDesc::FGraphicsPipelineDesc(const FGraphicsPipelineDesc&) = default;
+//----------------------------------------------------------------------------
 FGraphicsPipelineDesc::FGraphicsPipelineDesc(FGraphicsPipelineDesc&&) NOEXCEPT = default;
 FGraphicsPipelineDesc& FGraphicsPipelineDesc::operator =(FGraphicsPipelineDesc&&) NOEXCEPT = default;
 //----------------------------------------------------------------------------
@@ -255,6 +265,8 @@ const FVertexAttribute* FGraphicsPipelineDesc::VertexInput(const FVertexID& vert
 FComputePipelineDesc::FComputePipelineDesc() NOEXCEPT = default;
 FComputePipelineDesc::~FComputePipelineDesc() = default;
 //----------------------------------------------------------------------------
+FComputePipelineDesc::FComputePipelineDesc(const FComputePipelineDesc&) = default;
+//----------------------------------------------------------------------------
 FComputePipelineDesc::FComputePipelineDesc(FComputePipelineDesc&&) NOEXCEPT = default;
 FComputePipelineDesc& FComputePipelineDesc::operator =(FComputePipelineDesc&&) NOEXCEPT = default;
 //----------------------------------------------------------------------------
@@ -294,6 +306,8 @@ FComputePipelineDesc& FComputePipelineDesc::SetSpecializationConstants(TMemoryVi
 FMeshPipelineDesc::FMeshPipelineDesc() NOEXCEPT = default;
 FMeshPipelineDesc::~FMeshPipelineDesc() = default;
 //----------------------------------------------------------------------------
+FMeshPipelineDesc::FMeshPipelineDesc(const FMeshPipelineDesc&) = default;
+//----------------------------------------------------------------------------
 FMeshPipelineDesc::FMeshPipelineDesc(FMeshPipelineDesc&&) NOEXCEPT = default;
 FMeshPipelineDesc& FMeshPipelineDesc::operator =(FMeshPipelineDesc&&) NOEXCEPT = default;
 //----------------------------------------------------------------------------
@@ -331,6 +345,8 @@ FMeshPipelineDesc& FMeshPipelineDesc::SetSpecializationConstants(EShaderType typ
 //----------------------------------------------------------------------------
 FRayTracingPipelineDesc::FRayTracingPipelineDesc() NOEXCEPT = default;
 FRayTracingPipelineDesc::~FRayTracingPipelineDesc() = default;
+//----------------------------------------------------------------------------
+FRayTracingPipelineDesc::FRayTracingPipelineDesc(const FRayTracingPipelineDesc&) = default;
 //----------------------------------------------------------------------------
 FRayTracingPipelineDesc::FRayTracingPipelineDesc(FRayTracingPipelineDesc&&) NOEXCEPT = default;
 FRayTracingPipelineDesc& FRayTracingPipelineDesc::operator =(FRayTracingPipelineDesc&&) NOEXCEPT = default;
