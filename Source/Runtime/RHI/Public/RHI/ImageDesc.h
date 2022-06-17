@@ -13,15 +13,15 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FImageDesc {
+    uint3 Dimensions{ 0 };
     EImageDim Type{ Default };
     EImageView View{ Default }; // optional
     EImageFlags Flags{ Default };
-    uint3 Dimensions{ 0 };
+    FMultiSamples Samples; // enable multisampling if > 1
     EPixelFormat Format{ Default };
     EImageUsage Usage{ Default };
     FImageLayer ArrayLayers{ 1_layer };
     FMipmapLevel MaxLevel{ 1_mipmap };
-    FMultiSamples Samples; // enable multisampling if > 1
     EQueueUsage Queues{ Default };
     bool IsExternal{ false };
 
@@ -34,8 +34,8 @@ struct FImageDesc {
         FImageLayer arrayLayers = Default,
         FMipmapLevel maxLevel = Default,
         EQueueUsage queues = Default )
-    :   Type(type)
-    ,   Dimensions(dimensions)
+    :   Dimensions(dimensions)
+    ,   Type(type)
     ,   Format(format)
     ,   Usage(usage)
     ,   ArrayLayers(arrayLayers)
