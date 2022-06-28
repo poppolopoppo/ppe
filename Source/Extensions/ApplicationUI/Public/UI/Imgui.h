@@ -4,6 +4,7 @@
 
 #define IMGUI_API PPE_APPLICATIONUI_API
 #include "External/imgui/Public/imgui-external.h"
+#include "External/imgui/imgui.git/imgui_internal.h"
 
 namespace PPE {
 namespace Application {
