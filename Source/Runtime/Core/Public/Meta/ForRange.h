@@ -57,11 +57,12 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 //----------------------------------------------------------------------------
 // https://stackoverflow.com/questions/48045470/portably-detect-va-opt-support
 // https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
-#if __cplusplus <= 201703 && defined __GNUC__ \
-&& !defined __clang__ && !defined __EDG__ // These compilers pretend to be GCC
-#   define PPE_VA_OPT_SUPPORTED false
+#if __cplusplus <= 201703 && defined __GNUC__ && !defined __clang__ && !defined __EDG__
+#   define PPE_VA_OPT_SUPPORTED false // These compilers pretend to be GCC
 #elif defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
-#   define PPE_VA_OPT_SUPPORTED false
+#   define PPE_VA_OPT_SUPPORTED false // Legacy MSVC preprocessor
+#elif !PPE_HAS_CXX20
+#   define PPE_VA_OPT_SUPPORTED false // __VA_OPT__ is supported only since C++20
 #else
 #   define PPE_THIRD_ARG(a,b,c,...) c
 #   define PPE_VA_OPT_SUPPORTED_I(...) PPE_THIRD_ARG(__VA_OPT__(,),true,false,)

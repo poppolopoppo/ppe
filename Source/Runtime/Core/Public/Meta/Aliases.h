@@ -34,7 +34,7 @@ using i64   = std::int64_t;
 #   error "unknown architecture !"
 #endif
 //----------------------------------------------------------------------------
-#if (defined(__cplusplus) && __cplusplus >/* strict */ 201703L) || (defined(_HAS_CXX20) && _HAS_CXX20 == 1)
+#if (defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_HAS_CXX20) && _HAS_CXX20 == 1)
 #   define PPE_HAS_CXX20 1
 #else
 #   define PPE_HAS_CXX20 0

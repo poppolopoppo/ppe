@@ -299,6 +299,7 @@ func makeMsvcCompiler(
 		"/Zc:strictStrings",    // https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
 		"/Zc:wchar_t",          // promote wchar_t as a native type
 		"/Zc:forScope",         // prevent from spilling iterators outside loops
+		"/Zc:__cplusplus",		// https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-170
 		"/utf-8",               // https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
 		"/W4",                  // warning level 4 (verbose)
 		"/TP",                  // compile as C++

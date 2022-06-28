@@ -15,7 +15,11 @@
 #define USE_PPE_RTTI_CHECKS (!USE_PPE_PROFILING && !USE_PPE_FINAL_RELEASE)
 
 #if USE_PPE_MEMORYDOMAINS
-#   define NEW_RTTI(T, ...) PPE::RTTI::NewRtti< T >( *::PPE::RTTI::MetaClass<T>() ,## __VA_ARGS__ )
+#   if PPE_VA_OPT_SUPPORTED
+#       define NEW_RTTI(T, ...) PPE::RTTI::NewRtti< T >( *::PPE::RTTI::MetaClass<T>() __VA_OPT__(,) __VA_ARGS__ )
+#   else
+#       define NEW_RTTI(T, ...) PPE::RTTI::NewRtti< T >( *::PPE::RTTI::MetaClass<T>() ,## __VA_ARGS__ )
+#   endif
 #else
 #   define NEW_RTTI(T, ...) PPE::RTTI::NewRtti< T >( __VA_ARGS__ )
 #endif

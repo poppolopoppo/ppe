@@ -39,6 +39,7 @@ STATIC_ASSERT(Meta::has_common_type_v<float, i32>);
 STATIC_ASSERT(Meta::has_common_type_v<float, double>);
 STATIC_ASSERT(Meta::has_common_type_v<FMallocator, double> == false);
 //----------------------------------------------------------------------------
+static_assert(not PPE_HAS_CXX20 || PPE_VA_OPT_SUPPORTED, "C++20 compilers should support __VA_OPT__");
 STATIC_ASSERT(PP_NUM_ARGS() == 0);
 STATIC_ASSERT(PP_NUM_ARGS(a) == 1);
 STATIC_ASSERT(PP_NUM_ARGS(a, b) == 2);
