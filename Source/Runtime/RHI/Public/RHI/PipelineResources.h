@@ -49,17 +49,17 @@ public:
             FPlatformMemory::Memzero(Data, Count * sizeof(T));
         }
 
-        TMemoryView<T> MakeView() {
+        NODISCARD TMemoryView<T> MakeView() {
             return { Data, Count };
         }
-        TMemoryView<const T> MakeView() const {
+        NODISCARD TMemoryView<const T> MakeView() const {
             return { Data, Count };
         }
 
-        T& operator [](size_t index) {
+        NODISCARD T& operator [](size_t index) {
             return MakeView()[index];
         }
-        const T& operator [](size_t index) const {
+        NODISCARD const T& operator [](size_t index) const {
             return MakeView()[index];
         }
 
@@ -178,12 +178,12 @@ public:
         u16 Offset{ 0 };
 
         template <typename T>
-        T& Get(void* p) const {
+        NODISCARD T& Get(void* p) const NOEXCEPT {
             Assert(T::TypeId == Type);
             return *reinterpret_cast<T*>(static_cast<u8*>(p) + Offset);
         }
         template <typename T>
-        const T& Get(const void* p) const {
+        NODISCARD const T& Get(const void* p) const NOEXCEPT {
             return Get<T>(const_cast<void*>(p));
         }
 
@@ -206,8 +206,8 @@ public:
         u32 DynamicOffsetsCount{ 0 };
         u32 DynamicOffsetsOffset{ 0 };
 
-        TMemoryView<FUniform> Uniforms() { return Storage.SubRange(UniformsOffset, UniformsCount * sizeof(FUniform)).Cast<FUniform>(); }
-        TMemoryView<const FUniform> Uniforms() const { return const_cast<FDynamicData*>(this)->Uniforms(); }
+        NODISCARD TMemoryView<FUniform> Uniforms() { return Storage.SubRange(UniformsOffset, UniformsCount * sizeof(FUniform)).Cast<FUniform>(); }
+        NODISCARD TMemoryView<const FUniform> Uniforms() const { return const_cast<FDynamicData*>(this)->Uniforms(); }
 
         template <typename _Each>
         void EachUniform(_Each&& each);
@@ -215,12 +215,12 @@ public:
         void EachUniform(_Each&& each) const { const_cast<FDynamicData*>(this)->EachUniform(std::forward<_Each>(each)); }
 
         template <typename _Pred>
-        bool UniformByPred(_Pred&& pred);
+        NODISCARD bool UniformByPred(_Pred&& pred);
         template <typename _Pred>
-        bool UniformByPred(_Pred&& pred) const { return const_cast<FDynamicData*>(this)->UniformByPred(std::forward<_Pred>(pred)); }
+        NODISCARD bool UniformByPred(_Pred&& pred) const { return const_cast<FDynamicData*>(this)->UniformByPred(std::forward<_Pred>(pred)); }
 
-        TMemoryView<u32> DynamicOffsets() { return Storage.SubRange(DynamicOffsetsOffset, DynamicOffsetsCount * sizeof(u32)).Cast<u32>(); }
-        TMemoryView<const u32> DynamicOffsets() const { return const_cast<FDynamicData*>(this)->DynamicOffsets(); }
+        NODISCARD TMemoryView<u32> DynamicOffsets() { return Storage.SubRange(DynamicOffsetsOffset, DynamicOffsetsCount * sizeof(u32)).Cast<u32>(); }
+        NODISCARD TMemoryView<const u32> DynamicOffsets() const { return const_cast<FDynamicData*>(this)->DynamicOffsets(); }
 
         bool operator ==(const FDynamicData& other) const NOEXCEPT { return CompareDynamicData(*this, other); }
         bool operator !=(const FDynamicData& other) const NOEXCEPT { return (not operator ==(other)); }

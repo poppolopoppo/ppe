@@ -46,7 +46,7 @@
 
 #define PPE_RUN_BENCHMARK_POOLSIZE          (2000) // avoid cache coherency
 #define PPE_RUN_EXHAUSTIVE_BENCHMARKS       (0) // %_NOCOMMIT%
-#define PPE_RUN_BENCHARMK_ALLTESTS          (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHMARK_ALLTESTS          (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER     (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_MULTITHREADED     (1) // %_NOCOMMIT%
 #define PPE_DONT_USE_STD_UNORDEREDSET       (1) // %_NOCOMMIT%
@@ -912,7 +912,7 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
 
     auto bm = FBenchmark::MakeTable(
         name,
-#if (PPE_RUN_BENCHARMK_ALLTESTS || PPE_RUN_EXHAUSTIVE_BENCHMARKS)
+#if (PPE_RUN_BENCHMARK_ALLTESTS || PPE_RUN_EXHAUSTIVE_BENCHMARKS)
         construct_noreserve_t{},
         construct_reserve_t{},
         copy_empty_t{},

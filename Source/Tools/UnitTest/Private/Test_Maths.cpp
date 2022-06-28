@@ -292,14 +292,14 @@ static NO_INLINE void Test_Range_() {
     AssertRelease(not b.Overlaps(intersectBC));
     AssertRelease(not c.Overlaps(intersectBC));
 
-    const FRange32u intersectAC = a.Intersect(c);
-    AssertRelease(intersectAC == c);
-    AssertRelease(a.Contains(intersectAC));
-    AssertRelease(not b.Contains(intersectAC));
-    AssertRelease(c.Contains(intersectAC));
-    AssertRelease(a.Overlaps(intersectAC));
-    AssertRelease(not b.Overlaps(intersectAC));
-    AssertRelease(c.Overlaps(intersectAC));
+    CONSTEXPR FRange32u intersectAC = a.Intersect(c);
+    STATIC_ASSERT(intersectAC == c);
+    STATIC_ASSERT(a.Contains(intersectAC));
+    STATIC_ASSERT(not b.Contains(intersectAC));
+    STATIC_ASSERT(c.Contains(intersectAC));
+    STATIC_ASSERT(a.Overlaps(intersectAC));
+    STATIC_ASSERT(not b.Overlaps(intersectAC));
+    STATIC_ASSERT(c.Overlaps(intersectAC));
 
     const FRange32u unionAB = a.Union(b);
     AssertRelease(unionAB == FRange32u(4, 73));
@@ -321,14 +321,14 @@ static NO_INLINE void Test_Range_() {
     AssertRelease(c.Overlaps(unionBC));
 #endif
 
-    const FRange32u unionAC = a.Union(c);
-    AssertRelease(unionAC == a);
-    AssertRelease(unionAC.Contains(a));
-    AssertRelease(not unionAC.Contains(b));
-    AssertRelease(unionAC.Contains(c));
-    AssertRelease(a.Overlaps(unionAC));
-    AssertRelease(b.Overlaps(unionAC));
-    AssertRelease(c.Overlaps(unionAC));
+    CONSTEXPR FRange32u unionAC = a.Union(c);
+    STATIC_ASSERT(unionAC == a);
+    STATIC_ASSERT(unionAC.Contains(a));
+    STATIC_ASSERT(not unionAC.Contains(b));
+    STATIC_ASSERT(unionAC.Contains(c));
+    STATIC_ASSERT(a.Overlaps(unionAC));
+    STATIC_ASSERT(b.Overlaps(unionAC));
+    STATIC_ASSERT(c.Overlaps(unionAC));
 }
 //----------------------------------------------------------------------------
 } //!namedspace
