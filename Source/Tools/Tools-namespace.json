@@ -5,6 +5,7 @@
 	"Modules": [
 		"BuildRobot",
 		"ShaderToy",
+		"VoxelCube",
 		"UnitTest",
 		"WindowTest"
 	]

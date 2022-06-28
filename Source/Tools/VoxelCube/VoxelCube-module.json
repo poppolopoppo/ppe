@@ -1,0 +1,21 @@
+{
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/VFS",
+		"Runtime/RTTI",
+		"Runtime/Serialize",
+		"Runtime/Network",
+		"Runtime/RHI",
+		"Runtime/Application",
+		"Extensions/RHIVulkan",
+		"Extensions/ApplicationUI"
+	],
+	"ExtraFiles": [
+		"resource.rc"
+	],
+	"PrivateDependencies": [
+		"ContentPipeline/BuildGraph",
+		"ContentPipeline/PipelineCompiler",
+		"Runtime/Remoting"
+	]
+}
