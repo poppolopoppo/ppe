@@ -21,6 +21,10 @@
 #   include "IO/FormatHelpers.h"
 #endif
 
+#if USE_PPE_RHIDEBUG
+#   include "Diagnostic/CurrentProcess.h"
+#endif
+
 namespace PPE {
 namespace Application {
 EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
@@ -115,8 +119,11 @@ void FApplicationWindow::Start() {
             LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort!", Domain().Name(), Name());
 
 #if USE_PPE_RHIDEBUG
-        _rhi->UnitTest();
-        _rhi->ReleaseMemory();
+        const auto& process = FCurrentProcess::Get();
+        if (not process.HasArgument(L"-NoUnitTest")) {
+            _rhi->UnitTest();
+            _rhi->ReleaseMemory();
+        }
 #endif
 
         services.Add<IRHIService>(_rhi.get());

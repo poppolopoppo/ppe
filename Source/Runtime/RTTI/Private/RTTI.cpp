@@ -23,6 +23,7 @@
 
 #include "Container/Pair.h"
 #include "Container/TupleTie.h"
+#include "Diagnostic/CurrentProcess.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
 #include "IO/Format.h"
@@ -424,9 +425,12 @@ static NO_INLINE void TestRTTI_() {
 //----------------------------------------------------------------------------
 namespace RTTI {
 void RTTI_UnitTests() {
-    LOG_DIRECT(RTTI_UnitTest, Debug, L"begin unit tests");
-    TestRTTI_();
-    LOG_DIRECT(RTTI_UnitTest, Debug, L"end unit tests");
+    const auto& process = FCurrentProcess::Get();
+    if (not process.HasArgument(L"-NoUnitTest")) {
+        LOG_DIRECT(RTTI_UnitTest, Debug, L"begin unit tests");
+        TestRTTI_();
+        LOG_DIRECT(RTTI_UnitTest, Debug, L"end unit tests");
+    }
 }
 } //!namespace RTTI
 //----------------------------------------------------------------------------
