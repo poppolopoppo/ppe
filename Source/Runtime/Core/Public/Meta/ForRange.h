@@ -108,10 +108,10 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
             (x __VA_OPT__(,) __VA_ARGS__) )
 #else
 #   define PP_FOREACH_ARGS(x, ...) \
-    EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, \
+    EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, \
         _PP_FE_ARGS_15, _PP_FE_ARGS_14, _PP_FE_ARGS_13, _PP_FE_ARGS_12, _PP_FE_ARGS_11, _PP_FE_ARGS_10, _PP_FE_ARGS_9, \
         _PP_FE_ARGS_8, _PP_FE_ARGS_7, _PP_FE_ARGS_6, _PP_FE_ARGS_5, _PP_FE_ARGS_4, _PP_FE_ARGS_3, _PP_FE_ARGS_2, _PP_FE_ARGS_1, _PP_FE_ARGS_0) \
-            (x, ##__VA_ARGS__) )
+            (x , ## __VA_ARGS__) )
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -159,10 +159,10 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
             (x __VA_OPT__(,) __VA_ARGS__) )
 #else
 #   define PP_FOREACH_TUPLE(x, ...) \
-    EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, \
+    EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, \
         _PP_FE_TUPLE_15, _PP_FE_TUPLE_14, _PP_FE_TUPLE_13, _PP_FE_TUPLE_12, _PP_FE_TUPLE_11, _PP_FE_TUPLE_10, _PP_FE_TUPLE_9, \
         _PP_FE_TUPLE_8, _PP_FE_TUPLE_7, _PP_FE_TUPLE_6, _PP_FE_TUPLE_5, _PP_FE_TUPLE_4, _PP_FE_TUPLE_3, _PP_FE_TUPLE_2, _PP_FE_TUPLE_1, _PP_FE_TUPLE_0) \
-            (x, ##__VA_ARGS__) )
+            (x , ## __VA_ARGS__) )
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -210,10 +210,10 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
             (x __VA_OPT__(,) __VA_ARGS__) )
 #else
 #   define PP_FOREACH(x, ...) \
-    EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, \
+    EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, \
         _PP_FE_15, _PP_FE_14, _PP_FE_13, _PP_FE_12, _PP_FE_11, _PP_FE_10, _PP_FE_9, \
         _PP_FE_8, _PP_FE_7, _PP_FE_6, _PP_FE_5, _PP_FE_4, _PP_FE_3, _PP_FE_2, _PP_FE_1, _PP_FE_0) \
-            (x, ##__VA_ARGS__) )
+            (x , ## __VA_ARGS__) )
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -234,10 +234,10 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
     EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0) )
 #elif defined(_MSC_VER) && not defined(__clang__)
 #   define PP_NUM_ARGS(...) \
-    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA(unused, ##__VA_ARGS__), 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
+    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA(unused , ## __VA_ARGS__), 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
 #else
 #   define PP_NUM_ARGS(...) \
-    EXPAND( _GET_NTH_ARG(unused, ##__VA_ARGS__, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, error) )
+    EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, error) )
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
