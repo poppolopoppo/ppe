@@ -15,7 +15,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanMeshPipeline final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanMeshPipeline final {
     friend class FVulkanPipelineCache;
 public:
 
@@ -42,7 +42,7 @@ public:
         }
         bool operator !=(const FPipelineInstance& other) const { return (not operator ==(other)); }
 
-        friend hash_t hash_value(const FPipelineInstance& instance) { return instance.HashValue; }
+        friend hash_t hash_value(const FPipelineInstance& instance) NOEXCEPT { return instance.HashValue; }
     };
 
     using FShaderModule = FVulkanGraphicsPipeline::FShaderModule;

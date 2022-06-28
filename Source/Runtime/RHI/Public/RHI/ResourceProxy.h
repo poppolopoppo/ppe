@@ -171,6 +171,8 @@ bool TResourceProxy<T>::Construct(_Args&&... args) {
     Assert_NoAssume(IsDestroyed());
     Assert_NoAssume(RefCount() == 0);
 
+    STATIC_ASSERT(not IsRefCountable<T>::value);
+
     const bool result = _data.Construct(std::forward<_Args>(args)...);
 
     // read state and flush cache

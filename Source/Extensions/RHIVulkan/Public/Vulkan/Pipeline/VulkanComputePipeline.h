@@ -7,7 +7,6 @@
 #include "RHI/PipelineDesc.h"
 
 #include "Container/HashMap.h"
-#include "Thread/ReadWriteLock.h"
 #include "Thread/ThreadSafe.h"
 
 namespace PPE {
@@ -15,7 +14,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanComputePipeline final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanComputePipeline final {
     friend class FVulkanPipelineCache;
 public:
 
@@ -38,7 +37,7 @@ public:
         }
         bool operator !=(const FPipelineInstance& other) const { return (not operator ==(other)); }
 
-        friend hash_t hash_value(const FPipelineInstance& instance) { return instance.HashValue; }
+        friend hash_t hash_value(const FPipelineInstance& instance) NOEXCEPT { return instance.HashValue; }
     };
 
     struct FShaderModule {

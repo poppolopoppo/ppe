@@ -64,10 +64,10 @@ class FVulkanMemoryObject;
 //----------------------------------------------------------------------------
 // Pipeline:
 //----------------------------------------------------------------------------
-FWD_REFPTR(VulkanComputePipeline);
-FWD_REFPTR(VulkanGraphicsPipeline);
-FWD_REFPTR(VulkanMeshPipeline);
-FWD_REFPTR(VulkanRayTracingPipeline);
+class FVulkanComputePipeline;
+class FVulkanGraphicsPipeline;
+class FVulkanMeshPipeline;
+class FVulkanRayTracingPipeline;
 class FVulkanPipelineCache;
 class FVulkanPipelineLayout;
 //----------------------------------------------------------------------------

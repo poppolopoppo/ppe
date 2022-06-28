@@ -12,7 +12,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanRayTracingPipeline final : public FRefCountable {
+class PPE_RHIVULKAN_API FVulkanRayTracingPipeline final {
     friend class FVulkanPipelineCache;
 public:
     using FSpecializationConstants = FPipelineDesc::FSpecializationConstants;

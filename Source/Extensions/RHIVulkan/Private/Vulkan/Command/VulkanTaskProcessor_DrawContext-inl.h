@@ -26,9 +26,10 @@ inline FVulkanTaskProcessor::FDrawContext::FDrawContext(
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawContext::Reset() {
-    _gPipelineRef = nullptr;
-    _mPipelineRef = nullptr;
-    _pipelineLayoutRef = nullptr;
+    _gPipelineRef.reset();
+    _mPipelineRef.reset();
+    _pipelineLayoutRef.reset();
+
     _dynamicStates = Default;
     _vertexInput = Default;
     _changed = ALL_BITS;
@@ -49,7 +50,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindPipeline(FRawGPipelineID id,
     Assert(id);
 
     _gPipelineRef = _processor.Resource_(id);
-    _mPipelineRef = nullptr;
+    _mPipelineRef.reset();
     _dynamicStates = dynamicState;
     _changed |= ALL_BITS;
 
@@ -59,7 +60,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindPipeline(FRawGPipelineID id,
 inline void FVulkanTaskProcessor::FDrawContext::BindPipeline(FRawMPipelineID id, EPipelineDynamicState dynamicState) {
     Assert(id);
 
-    _gPipelineRef = nullptr;
+    _gPipelineRef.reset();
     _mPipelineRef = _processor.Resource_(id);
     _dynamicStates = dynamicState;
     _changed |= ALL_BITS;

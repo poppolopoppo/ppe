@@ -267,8 +267,8 @@ private:
     FVulkanTaskProcessor& _processor;
     const FVulkanLogicalRenderPass& _logicalRenderPass;
 
-    SCVulkanGraphicsPipeline _gPipelineRef{ nullptr };
-    SCVulkanMeshPipeline _mPipelineRef{ nullptr };
+    TPtrRef<const FVulkanGraphicsPipeline> _gPipelineRef{ nullptr };
+    TPtrRef<const FVulkanMeshPipeline> _mPipelineRef{ nullptr };
     TPtrRef<const FVulkanPipelineLayout> _pipelineLayoutRef{ nullptr };
 
     FRenderState _renderState;
