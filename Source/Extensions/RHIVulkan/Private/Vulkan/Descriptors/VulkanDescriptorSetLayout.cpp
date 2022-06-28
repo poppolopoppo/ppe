@@ -11,6 +11,8 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout() NOEXCEPT = default;
+//----------------------------------------------------------------------------
 FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(
     FBindings* pBindings,
     const FVulkanDevice& device,

@@ -38,8 +38,8 @@ public:
 
     template <typename T>
     struct TElementArray {
-        const u16 Capacity;
-        u16 Count;
+        const u16 Capacity{};
+        u16 Count{};
         T Data[1];
 
         TElementArray() = default;
@@ -78,21 +78,20 @@ public:
 
     };
 
-
     struct FBuffer {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Buffer);
 
         PPE_DEFINE_AUTOPOD(FElement,
             (FRawBufferID, BufferId),
-            (size_t, Offset),
-            (size_t, Size))
+            (size_t, Offset, {}),
+            (size_t, Size, {}))
 
         PPE_AUTOSTRUCT_MEMBERS(FBuffer,
             (FBindingIndex, Index),
             (EResourceState, State),
-            (u32, DynamicOffsetIndex),
-            (size_t, StaticSize),
-            (size_t, ArrayStride),
+            (u32, DynamicOffsetIndex, {}),
+            (size_t, StaticSize, {}),
+            (size_t, ArrayStride, {}),
             (TElementArray<FElement>, Elements))
 
         PPE_ASSUME_FRIEND_AS_POD(FBuffer)
@@ -200,14 +199,12 @@ public:
     // FDynamicData
     using FDynamicDataStorage = RAWSTORAGE(RHIDynamicData, u8);
     struct FDynamicData {
+        FDynamicDataStorage Storage;
         FRawDescriptorSetLayoutID LayoutId;
         u32 UniformsCount{ 0 };
         u32 UniformsOffset{ 0 };
         u32 DynamicOffsetsCount{ 0 };
         u32 DynamicOffsetsOffset{ 0 };
-        FDynamicDataStorage Storage;
-
-        FDynamicData() = default;
 
         TMemoryView<FUniform> Uniforms() { return Storage.SubRange(UniformsOffset, UniformsCount * sizeof(FUniform)).Cast<FUniform>(); }
         TMemoryView<const FUniform> Uniforms() const { return const_cast<FDynamicData*>(this)->Uniforms(); }
@@ -225,8 +222,8 @@ public:
         TMemoryView<u32> DynamicOffsets() { return Storage.SubRange(DynamicOffsetsOffset, DynamicOffsetsCount * sizeof(u32)).Cast<u32>(); }
         TMemoryView<const u32> DynamicOffsets() const { return const_cast<FDynamicData*>(this)->DynamicOffsets(); }
 
-        bool operator ==(const FDynamicData& other) const { return CompareDynamicData(*this, other); }
-        bool operator !=(const FDynamicData& other) const { return (not operator ==(other)); }
+        bool operator ==(const FDynamicData& other) const NOEXCEPT { return CompareDynamicData(*this, other); }
+        bool operator !=(const FDynamicData& other) const NOEXCEPT { return (not operator ==(other)); }
     };
 
     FPipelineResources() NOEXCEPT;

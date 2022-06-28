@@ -25,10 +25,10 @@ public:
     using FSharedUniformMap = FPipelineDesc::PUniformMap;
 
     struct FInternalPool {
-        hash_t HashValue{ Meta::ForceInit };
         VkDescriptorSetLayout Layout{ VK_NULL_HANDLE };
         FDynamicData ResourcesTemplate;
         FSharedUniformMap Uniforms;
+        hash_t HashValue{ Meta::ForceInit };
 
         FPoolSizeArray PoolSizes;
         u32 MaxIndex{ 0 };
@@ -36,7 +36,7 @@ public:
         u32 DynamicOffsetCount{ 0 };
     };
 
-    FVulkanDescriptorSetLayout() = default;
+    FVulkanDescriptorSetLayout() NOEXCEPT;
     FVulkanDescriptorSetLayout(FBindings* pBindings, const FVulkanDevice& device, const FSharedUniformMap& uniforms);
     ~FVulkanDescriptorSetLayout();
 
@@ -60,9 +60,9 @@ public:
     void DeallocateDescriptorSet(FVulkanResourceManager& resources, const FVulkanDescriptorSet& descriptors) const;
 
     bool operator ==(const FVulkanDescriptorSetLayout& other) const NOEXCEPT;
-    bool operator !=(const FVulkanDescriptorSetLayout& other) const { return (not operator ==(other)); }
+    bool operator !=(const FVulkanDescriptorSetLayout& other) const NOEXCEPT { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FVulkanDescriptorSetLayout& layout) { return layout.HashValue(); }
+    friend hash_t hash_value(const FVulkanDescriptorSetLayout& layout) NOEXCEPT { return layout.HashValue(); }
 
 private:
     static void AddUniform_(FBindings* pBinding, FInternalPool& pool, const FPipelineDesc::FVariantUniform& var);

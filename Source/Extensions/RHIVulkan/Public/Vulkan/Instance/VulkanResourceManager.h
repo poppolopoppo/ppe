@@ -354,7 +354,7 @@ bool FVulkanResourceManager::AcquireResource(details::TResourceId<_Uid> id) {
 template <u32 _Uid>
 const auto& FVulkanResourceManager::ResourceData(details::TResourceId<_Uid> id, bool incRef) const {
     const auto *pData = ResourceDataIFP(id, incRef, false);
-    Assert(pData);
+    AssertRelease(pData);
     return (*pData);
 }
 //----------------------------------------------------------------------------
