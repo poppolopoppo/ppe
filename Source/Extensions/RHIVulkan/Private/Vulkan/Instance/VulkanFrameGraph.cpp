@@ -351,7 +351,7 @@ bool FVulkanFrameGraph::InitPipelineResources_(FPipelineResources* pResources, c
     if (not pplnLayout.DescriptorSetLayout(&binding, &layoutId, dsId))
         return false;
 
-    const FVulkanDescriptorSetLayout& dsLayout = _resourceManager.ResourceData(layoutId, true);
+    const FVulkanDescriptorSetLayout& dsLayout = _resourceManager.ResourceData(layoutId);
     FPipelineResources::Initialize(pResources, layoutId, dsLayout.Resources());
 
     ONLY_IF_RHIDEBUG( pResources->SetDebugName(dsLayout.DebugName()) );

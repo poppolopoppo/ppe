@@ -70,7 +70,7 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
     const auto exclusiveRes = _resources.LockExclusive();
     Assert_NoAssume(VK_NULL_HANDLE == exclusiveRes->DescriptorSet.First);
 
-    const FVulkanDescriptorSetLayout* const pDsLayout = manager.ResourceDataIFP(exclusiveRes->LayoutId);
+    const FVulkanDescriptorSetLayout* const pDsLayout = manager.ResourceDataIFP(exclusiveRes->LayoutId, true);
     LOG_CHECK(RHI, !!pDsLayout );
 
     const FVulkanDevice& device = manager.Device();
