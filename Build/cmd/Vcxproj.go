@@ -142,6 +142,9 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 				if moduleRules.PrecompiledSource != nil {
 					sourceFiles.AppendUniq(*moduleRules.PrecompiledSource)
 				}
+				if gitignore := moduleRules.ModuleDir.File(".gitignore"); gitignore.Exists() {
+					sourceFiles.AppendUniq(gitignore);
+				}
 
 				bff.Assign("ProjectBasePath", moduleRules.ModuleDir)
 				bff.Assign("ProjectOutput", outputDir.String()+".vcxproj")
@@ -177,6 +180,9 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 					UFS.Root.File("PPE.go"),
 					UFS.Root.File("README.md"),
 					UFS.Root.File("TODO.md"),
+					UFS.Source.File("cpp.hint"),
+					UFS.Source.File(".gitignore"),
+					UFS.Source.File("winnt_version.h"),
 					UFS.Extras.Folder("Debug").File("PPE.natvis"))
 
 				bff.Assign("ProjectBuildCommand", selfExecutable+" bff -v -and vcxproj -and vscode")
