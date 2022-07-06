@@ -40,14 +40,14 @@ public:
     }
 
 public: // IStreamReader
-    virtual bool Eof() const override final;
+    virtual bool Eof() const NOEXCEPT override final;
 
-    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const override final { return _nonBuffered->IsSeekableI(origin); }
+    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const NOEXCEPT override final { return _nonBuffered->IsSeekableI(origin); }
 
-    virtual std::streamoff TellI() const override final;
+    virtual std::streamoff TellI() const NOEXCEPT override final;
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
-    virtual std::streamsize SizeInBytes() const override final { return _nonBuffered->SizeInBytes(); }
+    virtual std::streamsize SizeInBytes() const NOEXCEPT override final { return _nonBuffered->SizeInBytes(); }
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
@@ -93,9 +93,9 @@ public:
     }
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const override final { return _nonBuffered->IsSeekableO(origin); }
+    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const NOEXCEPT override final { return _nonBuffered->IsSeekableO(origin); }
 
-    virtual std::streamoff TellO() const override final;
+    virtual std::streamoff TellO() const NOEXCEPT override final;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
@@ -119,7 +119,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Lambda, typename _Return = void>
+template <typename _Lambda, typename _Return = decltype(std::declval<const _Lambda&>()(std::declval<IBufferedStreamReader*>()))>
 _Return UsingBufferedStream(IStreamReader* reader, _Lambda&& lambda) {
     Assert(reader);
     if (IBufferedStreamReader* bufferedIFP = reader->ToBufferedI()) {
@@ -131,7 +131,7 @@ _Return UsingBufferedStream(IStreamReader* reader, _Lambda&& lambda) {
     }
 }
 //----------------------------------------------------------------------------
-template <typename _Lambda, typename _Return = void>
+template <typename _Lambda, typename _Return = decltype(std::declval<const _Lambda&>()(std::declval<IBufferedStreamWriter*>()))>
 _Return UsingBufferedStream(IStreamWriter* writer, _Lambda&& lambda) {
     Assert(writer);
     if (IBufferedStreamWriter* bufferedIFP = writer->ToBufferedO()) {

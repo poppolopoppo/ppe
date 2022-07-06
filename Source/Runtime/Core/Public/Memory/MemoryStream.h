@@ -35,6 +35,12 @@ public:
     explicit TMemoryStream(storage_type&& storage);
     TMemoryStream(storage_type&& storage, std::streamsize size);
 
+    TMemoryStream(const TMemoryStream&) = delete;
+    TMemoryStream& operator =(const TMemoryStream&) = delete;
+
+    TMemoryStream(TMemoryStream&& rvalue) NOEXCEPT { operator =(std::move(rvalue)); }
+    TMemoryStream& operator =(TMemoryStream&& rvalue) NOEXCEPT;
+
     CONSTF u8* data() { return _storage.data(); }
     CONSTF const u8* data() const { return _storage.data(); }
 
@@ -94,14 +100,14 @@ public:
     }
 
 public: // IStreamReader
-    virtual bool Eof() const override final;
+    virtual bool Eof() const NOEXCEPT override final;
 
-    virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
+    virtual bool IsSeekableI(ESeekOrigin ) const NOEXCEPT override final { return true; }
 
-    virtual std::streamoff TellI() const override final;
+    virtual std::streamoff TellI() const NOEXCEPT override final;
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
-    virtual std::streamsize SizeInBytes() const override final;
+    virtual std::streamsize SizeInBytes() const NOEXCEPT override final;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
@@ -113,9 +119,9 @@ public: // IBufferedStreamReader
     virtual bool ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) override final;
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
+    virtual bool IsSeekableO(ESeekOrigin ) const NOEXCEPT override final { return true; }
 
-    virtual std::streamoff TellO() const override final;
+    virtual std::streamoff TellO() const NOEXCEPT override final;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
@@ -155,6 +161,20 @@ TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage, std::streamsize
     : _size(checked_cast<size_t>(size)), _offsetI(0), _offsetO(0)
     , _storage(std::move(storage)) {
     Assert(_size <= _storage.size());
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+auto TMemoryStream<_Allocator>::operator =(TMemoryStream&& rvalue) NOEXCEPT -> TMemoryStream& {
+    _size = rvalue._size;
+    _offsetI = rvalue._offsetI;
+    _offsetO = rvalue._offsetO;
+    _storage = std::move(rvalue._storage);
+
+    rvalue._size = 0;
+    rvalue._offsetI = 0;
+    rvalue._offsetO = 0;
+
+    return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -233,13 +253,13 @@ void TMemoryStream<_Allocator>::clear_StealMemory(storage_type& storage) {
 // IStreamReader
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-bool TMemoryStream<_Allocator>::Eof() const {
+bool TMemoryStream<_Allocator>::Eof() const NOEXCEPT {
     Assert(_offsetI <= _size);
     return (_size == _offsetI);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-std::streamoff TMemoryStream<_Allocator>::TellI() const {
+std::streamoff TMemoryStream<_Allocator>::TellI() const NOEXCEPT {
     Assert(_offsetI <= _size);
     return checked_cast<std::streamoff>(_offsetI);
 }
@@ -271,7 +291,7 @@ std::streamoff TMemoryStream<_Allocator>::SeekI(std::streamoff offset, ESeekOrig
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-std::streamsize TMemoryStream<_Allocator>::SizeInBytes() const {
+std::streamsize TMemoryStream<_Allocator>::SizeInBytes() const NOEXCEPT {
     return checked_cast<std::streamsize>(_size);
 }
 //----------------------------------------------------------------------------
@@ -336,7 +356,7 @@ bool TMemoryStream<_Allocator>::ReadAt_SkipBuffer(const FRawMemory& storage, std
 // IStreamWriter
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-std::streamoff TMemoryStream<_Allocator>::TellO() const {
+std::streamoff TMemoryStream<_Allocator>::TellO() const NOEXCEPT {
     Assert(_offsetO <= _size);
     return checked_cast<std::streamoff>(_offsetO);
 }

@@ -1002,9 +1002,9 @@ public: // ILogger
     }
 
 public: // IStreamWriter, implemented to be low level and without calls to LOG()
-    virtual bool IsSeekableO(ESeekOrigin) const override final { return true; }
+    virtual bool IsSeekableO(ESeekOrigin) const NOEXCEPT override final { return true; }
 
-    virtual std::streamoff TellO() const override final { return FPlatformLowLevelIO::Tell(_hFile); }
+    virtual std::streamoff TellO() const NOEXCEPT override final { return FPlatformLowLevelIO::Tell(_hFile); }
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final {
         return FPlatformLowLevelIO::Seek(_hFile, offset, origin);
     }
@@ -1018,7 +1018,7 @@ public: // IStreamWriter, implemented to be low level and without calls to LOG()
         return checked_cast<size_t>(written / eltsize);
     }
 
-    virtual class IBufferedStreamWriter* ToBufferedO() override final { return nullptr; }
+    virtual class IBufferedStreamWriter* ToBufferedO() NOEXCEPT override final { return nullptr; }
 
 private:
     FPlatformLowLevelIO::FHandle _hFile;

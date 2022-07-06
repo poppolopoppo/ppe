@@ -20,9 +20,9 @@ public:
     const FSocketBuffered& Socket() const { return _socket; }
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin ) const override final { return false; }
+    virtual bool IsSeekableO(ESeekOrigin ) const NOEXCEPT override final { return false; }
 
-    virtual std::streamoff TellO() const override final;
+    virtual std::streamoff TellO() const NOEXCEPT override final;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;

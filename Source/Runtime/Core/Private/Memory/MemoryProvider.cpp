@@ -89,7 +89,7 @@ bool FMemoryViewReader::ReadAt_SkipBuffer(const FRawMemory& storage, std::stream
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::streamoff FMemoryViewWriter::TellO() const {
+std::streamoff FMemoryViewWriter::TellO() const NOEXCEPT {
     Assert(_offsetO <= _size);
     Assert(_size <= _rawData.SizeInBytes());
     return checked_cast<std::streamsize>(_offsetO);

@@ -65,14 +65,14 @@ public:
     explicit FFileStreamReader(FFileHandle handle) : FFileStream(handle) {}
 
 public: // IStreamReader
-    virtual bool Eof() const override final;
+    virtual bool Eof() const NOEXCEPT override final;
 
-    virtual bool IsSeekableI(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableI(ESeekOrigin = ESeekOrigin::All) const NOEXCEPT override final { return true; }
 
-    virtual std::streamoff TellI() const override final;
+    virtual std::streamoff TellI() const NOEXCEPT override final;
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
-    virtual std::streamsize SizeInBytes() const override final;
+    virtual std::streamsize SizeInBytes() const NOEXCEPT override final;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
@@ -84,9 +84,9 @@ public:
     explicit FFileStreamWriter(FFileHandle handle) : FFileStream(handle) {}
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableO(ESeekOrigin = ESeekOrigin::All) const NOEXCEPT override final { return true; }
 
-    virtual std::streamoff TellO() const override final;
+    virtual std::streamoff TellO() const NOEXCEPT override final;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
@@ -99,22 +99,22 @@ public:
     explicit FFileStreamReadWriter(FFileHandle handle) : FFileStream(handle) {}
 
 public: // IStreamReader
-    virtual bool Eof() const override final;
+    virtual bool Eof() const NOEXCEPT override final;
 
-    virtual bool IsSeekableI(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableI(ESeekOrigin = ESeekOrigin::All) const NOEXCEPT override final { return true; }
 
-    virtual std::streamoff TellI() const override final;
+    virtual std::streamoff TellI() const NOEXCEPT override final;
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
-    virtual std::streamsize SizeInBytes() const override final;
+    virtual std::streamsize SizeInBytes() const NOEXCEPT override final;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableO(ESeekOrigin = ESeekOrigin::All) const NOEXCEPT override final { return true; }
 
-    virtual std::streamoff TellO() const override final;
+    virtual std::streamoff TellO() const NOEXCEPT override final;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;

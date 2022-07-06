@@ -19,14 +19,14 @@ public:
     inline friend void swap(FDeferredStreamReader& lhs, FDeferredStreamReader& rhs) NOEXCEPT = delete;
 
 public: // IStreamReader
-    virtual bool Eof() const override final { return _nonBuffered->Eof(); }
+    virtual bool Eof() const NOEXCEPT override final { return _nonBuffered->Eof(); }
 
-    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const override final { return _nonBuffered->IsSeekableI(origin); }
+    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const NOEXCEPT override final { return _nonBuffered->IsSeekableI(origin); }
 
-    virtual std::streamoff TellI() const override final { return _nonBuffered->TellI(); }
+    virtual std::streamoff TellI() const NOEXCEPT override final { return _nonBuffered->TellI(); }
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final { return _nonBuffered->SeekI(offset, origin); }
 
-    virtual std::streamsize SizeInBytes() const override final { return _nonBuffered->SizeInBytes(); }
+    virtual std::streamsize SizeInBytes() const NOEXCEPT override final { return _nonBuffered->SizeInBytes(); }
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
@@ -46,9 +46,9 @@ public:
     inline friend void swap(FDeferredStreamWriter& lhs, FDeferredStreamWriter& rhs) NOEXCEPT = delete;
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const override final { return _nonBuffered->IsSeekableO(origin); }
+    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const NOEXCEPT override final { return _nonBuffered->IsSeekableO(origin); }
 
-    virtual std::streamoff TellO() const override final { return _nonBuffered->TellO(); }
+    virtual std::streamoff TellO() const NOEXCEPT override final { return _nonBuffered->TellO(); }
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final { return _nonBuffered->SeekO(offset, origin); }
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;

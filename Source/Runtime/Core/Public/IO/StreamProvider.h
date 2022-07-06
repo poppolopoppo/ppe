@@ -21,19 +21,19 @@ class PPE_CORE_API IStreamReader {
 public: // virtual interface
     virtual ~IStreamReader() = default;
 
-    virtual bool Eof() const = 0;
+    virtual bool Eof() const NOEXCEPT = 0;
 
-    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const = 0;
+    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const NOEXCEPT = 0;
 
-    virtual std::streamoff TellI() const = 0;
+    virtual std::streamoff TellI() const NOEXCEPT = 0;
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) = 0;
 
-    virtual std::streamsize SizeInBytes() const = 0;
+    virtual std::streamsize SizeInBytes() const NOEXCEPT = 0;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) = 0;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) = 0;
 
-    virtual class IBufferedStreamReader* ToBufferedI() { return nullptr; }
+    virtual class IBufferedStreamReader* ToBufferedI() NOEXCEPT { return nullptr; }
 
 public: // helpers
     template <typename T, size_t _Dim>
@@ -52,7 +52,7 @@ public: // helpers
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API IBufferedStreamReader : public IStreamReader {
-    virtual IBufferedStreamReader* ToBufferedI() override final { return this; }
+    virtual IBufferedStreamReader* ToBufferedI() NOEXCEPT override final { return this; }
 
 public:
     virtual bool Peek(char& ch) = 0;
@@ -92,15 +92,15 @@ class PPE_CORE_API IStreamWriter {
 public: // virtual interface
     virtual ~IStreamWriter() = default;
 
-    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const = 0;
+    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const NOEXCEPT = 0;
 
-    virtual std::streamoff TellO() const = 0;
+    virtual std::streamoff TellO() const NOEXCEPT = 0;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) = 0;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) = 0;
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) = 0;
 
-    virtual class IBufferedStreamWriter* ToBufferedO() { return nullptr; }
+    virtual class IBufferedStreamWriter* ToBufferedO() NOEXCEPT { return nullptr; }
 
 public: // helpers
     template <typename T, size_t _Dim>
@@ -117,7 +117,7 @@ public: // helpers
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API IBufferedStreamWriter : public IStreamWriter {
-    virtual class IBufferedStreamWriter* ToBufferedO() override final { return this; }
+    virtual class IBufferedStreamWriter* ToBufferedO() NOEXCEPT override final { return this; }
 
 public:
     using read_f = TFunction<size_t(const FRawMemory&)>;

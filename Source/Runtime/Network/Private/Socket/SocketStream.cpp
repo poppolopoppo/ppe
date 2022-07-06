@@ -17,7 +17,7 @@ FSocketStreamWriter::FSocketStreamWriter(FSocketBuffered& socket)
 //----------------------------------------------------------------------------
 FSocketStreamWriter::~FSocketStreamWriter() = default;
 //----------------------------------------------------------------------------
-std::streamoff FSocketStreamWriter::TellO() const {
+std::streamoff FSocketStreamWriter::TellO() const NOEXCEPT {
     return _tellO;
 }
 //----------------------------------------------------------------------------

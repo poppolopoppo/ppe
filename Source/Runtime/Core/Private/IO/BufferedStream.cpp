@@ -66,14 +66,14 @@ bool FBufferedStreamReader::ReadAt_SkipBuffer(const FRawMemory& storage, std::st
     return success;
 }
 //----------------------------------------------------------------------------
-bool FBufferedStreamReader::Eof() const {
+bool FBufferedStreamReader::Eof() const NOEXCEPT {
     Assert(_nonBuffered);
     Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
 
     return (_offset == _capacity && _nonBuffered->Eof());
 }
 //----------------------------------------------------------------------------
-std::streamoff FBufferedStreamReader::TellI() const {
+std::streamoff FBufferedStreamReader::TellI() const NOEXCEPT {
     Assert(_nonBuffered);
     Assert(_origin >= 0);
     Assert(_offset <= _capacity);
@@ -88,8 +88,7 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
     Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
 
     std::streamoff newOrigin;
-    switch (origin)
-    {
+    switch (origin) {
     case PPE::ESeekOrigin::Begin:
         newOrigin = offset;
         break;
@@ -316,7 +315,7 @@ void FBufferedStreamWriter::ResetStream() {
     _origin = 0;
 }
 //----------------------------------------------------------------------------
-std::streamoff FBufferedStreamWriter::TellO() const {
+std::streamoff FBufferedStreamWriter::TellO() const NOEXCEPT {
     Assert(_nonBuffered);
     Assert(_origin >= 0);
     Assert(_offset <= _bufferSize);

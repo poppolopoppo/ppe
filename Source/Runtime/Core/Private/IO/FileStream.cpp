@@ -143,13 +143,13 @@ void FFileStream::Shutdown() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FFileStreamReader::Eof() const {
+bool FFileStreamReader::Eof() const NOEXCEPT {
     Assert(Good());
 
     return FPlatformLowLevelIO::Eof(_handle);
 }
 //----------------------------------------------------------------------------
-std::streamoff FFileStreamReader::TellI() const {
+std::streamoff FFileStreamReader::TellI() const NOEXCEPT {
     Assert(Good());
 
     return FPlatformLowLevelIO::Tell(_handle);
@@ -161,7 +161,7 @@ std::streamoff FFileStreamReader::SeekI(std::streamoff offset, ESeekOrigin origi
     return FPlatformLowLevelIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
-std::streamsize FFileStreamReader::SizeInBytes() const {
+std::streamsize FFileStreamReader::SizeInBytes() const NOEXCEPT {
     Assert(Good());
 
     const std::streamoff offset = FPlatformLowLevelIO::Tell(_handle);
@@ -203,7 +203,7 @@ size_t FFileStreamReader::ReadSome(void* storage, size_t eltsize, size_t count) 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::streamoff FFileStreamWriter::TellO() const {
+std::streamoff FFileStreamWriter::TellO() const NOEXCEPT {
     return FPlatformLowLevelIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
@@ -236,13 +236,13 @@ size_t FFileStreamWriter::WriteSome(const void* storage, size_t eltsize, size_t 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FFileStreamReadWriter::Eof() const {
+bool FFileStreamReadWriter::Eof() const NOEXCEPT {
     Assert(Good());
 
     return FPlatformLowLevelIO::Eof(_handle);
 }
 //----------------------------------------------------------------------------
-std::streamoff FFileStreamReadWriter::TellI() const {
+std::streamoff FFileStreamReadWriter::TellI() const NOEXCEPT {
     Assert(Good());
 
     return FPlatformLowLevelIO::Tell(_handle);
@@ -254,7 +254,7 @@ std::streamoff FFileStreamReadWriter::SeekI(std::streamoff offset, ESeekOrigin o
     return FPlatformLowLevelIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
-std::streamsize FFileStreamReadWriter::SizeInBytes() const {
+std::streamsize FFileStreamReadWriter::SizeInBytes() const NOEXCEPT {
     Assert(Good());
 
     const std::streamoff offset = FPlatformLowLevelIO::Tell(_handle);
@@ -294,7 +294,7 @@ size_t FFileStreamReadWriter::ReadSome(void* storage, size_t eltsize, size_t cou
     return checked_cast<size_t>(read / eltsize);
 }
 //----------------------------------------------------------------------------
-std::streamoff FFileStreamReadWriter::TellO() const {
+std::streamoff FFileStreamReadWriter::TellO() const NOEXCEPT {
     return FPlatformLowLevelIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
