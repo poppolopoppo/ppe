@@ -31,7 +31,9 @@ public: // virtual
 
     virtual RHI::SPipelineCompiler Compiler(RHI::EShaderLangFormat lang) const NOEXCEPT = 0;
 
-    virtual void RenderFrame(FTimespan dt) = 0;
+    NODISCARD virtual bool BeginFrame(FTimespan dt) = 0;
+    virtual void EndFrame() = 0;
+
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) = 0;
 
     virtual void DeviceLost() = 0;

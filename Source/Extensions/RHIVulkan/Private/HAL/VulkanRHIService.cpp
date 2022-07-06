@@ -43,7 +43,7 @@ CONSTEXPR const RHI::FSurfaceFormat GHDRSurfaceFormats_[] = {
 FVulkanRHIService::FVulkanRHIService(const FVulkanTargetRHI& vulkanRHI) NOEXCEPT
 :   _vulkanRHI(vulkanRHI)
 ,   _currentFrame(UMax)
-,   _elspasedTime(0)
+,   _elapsedTime(0)
 {
 
 }
@@ -66,7 +66,7 @@ bool FVulkanRHIService::Construct(
     RHI_LOG(Info, L"creating vulkan RHI service");
     RHI_LOG(Verbose, L"creating vulkan instance for rhi service");
 
-    _elspasedTime = 0;
+    _elapsedTime = 0;
 
     const EVulkanVersion version = EVulkanVersion::API_version_latest;
 
@@ -261,22 +261,27 @@ RHI::SPipelineCompiler FVulkanRHIService::Compiler(RHI::EShaderLangFormat lang) 
     return FRHIModule::Get(FModularDomain::Get()).Compiler(lang);
 }
 //----------------------------------------------------------------------------
-void FVulkanRHIService::RenderFrame(FTimespan dt) {
+bool FVulkanRHIService::BeginFrame(FTimespan dt) {
     Assert(_frameGraph);
 
     using namespace RHI;
 
-    _elspasedTime += dt;
+    _dt = dt;
+    _elapsedTime += dt;
 
     const FFrameIndex previousFrame = _currentFrame;
     _currentFrame = _frameGraph->PrepareNewFrame();
 
-    if (_currentFrame != previousFrame) {
-        _OnRenderFrame.Invoke(*this, dt);
+    return (previousFrame != _currentFrame);
+}
+//----------------------------------------------------------------------------
+void FVulkanRHIService::EndFrame() {
+    using namespace RHI;
 
-        LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage::All));
-        LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout));
-    }
+    _OnRenderFrame.Invoke(*this, _dt);
+
+    LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage::All));
+    LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout));
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {

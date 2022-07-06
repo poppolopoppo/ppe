@@ -103,7 +103,7 @@ template <typename T, size_t _Dim>
 struct TVertexDesc< TScalarVector<T, _Dim> > : details::TVertexDescImpl<
     TScalarVector<T, _Dim>,
     BitAnd(VertexAttrib<T>(), EVertexFormat::_FlagsMask | EVertexFormat::_TypeMask) |
-    EVertexFormat(_Dim << u32(EVertexFormat::_VecOffset))
+    static_cast<EVertexFormat>(_Dim << u32(EVertexFormat::_VecOffset))
 >   {};
 //----------------------------------------------------------------------------
 // Decay

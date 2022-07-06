@@ -192,16 +192,17 @@ void FApplicationWindow::Tick(FTimespan dt) {
         _rhi->ResizeWindow(surfaceInfo);
     }
 
-    FApplicationBase::Tick(dt);
+    _input->Update(dt);
 
     Update(dt);
 
-    _input->Update(dt);
+    FApplicationBase::Tick(dt);
 
-    Render(dt);
+    if (_main->Visible() && _rhi->BeginFrame(dt)) {
+        Render(dt);
 
-    if (_main->Visible())
-        _rhi->RenderFrame(dt);
+        _rhi->EndFrame();
+    }
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Update(FTimespan dt) {

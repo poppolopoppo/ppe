@@ -33,11 +33,13 @@ public: // IRHIService
     virtual const RHI::FSwapchainID& Swapchain() const NOEXCEPT override { return _swapchain; }
 
     virtual RHI::FFrameIndex CurrentFrame() const NOEXCEPT override { return _currentFrame; }
-    virtual FTimespan ElapsedTime() const NOEXCEPT override { return _elspasedTime; }
+    virtual FTimespan ElapsedTime() const NOEXCEPT override { return _elapsedTime; }
 
     virtual RHI::SPipelineCompiler Compiler(RHI::EShaderLangFormat lang) const NOEXCEPT override;
 
-    virtual void RenderFrame(FTimespan dt) override;
+    NODISCARD virtual bool BeginFrame(FTimespan dt) override;
+    virtual void EndFrame() override;
+
     virtual void ResizeWindow(const FRHISurfaceCreateInfo& window) override;
 
     virtual void DeviceLost() override;
@@ -61,7 +63,8 @@ private:
     RHI::PVulkanFrameGraph _frameGraph;
 
     RHI::FFrameIndex _currentFrame;
-    FTimespan _elspasedTime;
+    FTimespan _dt;
+    FTimespan _elapsedTime;
 
     RHI::FSwapchainID _swapchain;
     VkSurfaceKHR _backBuffer{ VK_NULL_HANDLE };

@@ -24,12 +24,12 @@ struct FVertexAttribute {
     u32 Index{UMax};
     EVertexFormat Format{Default};
 
-    bool operator ==(const FVertexAttribute& other) const {
+    bool operator ==(const FVertexAttribute& other) const NOEXCEPT {
         return (Id == other.Id && Index == other.Index && Format == other.Format);
     }
-    bool operator !=(const FVertexAttribute& other) const { return (not operator ==(other)); }
+    bool operator !=(const FVertexAttribute& other) const NOEXCEPT { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FVertexAttribute& attr) {
+    friend hash_t hash_value(const FVertexAttribute& attr) NOEXCEPT {
         return hash_tuple(attr.Id, attr.Index, attr.Format);
     }
 
@@ -43,18 +43,19 @@ struct FVertexInput {
     u32 BufferBinding{UMax};
 
     FVertexInput() = default;
-    FVertexInput(EVertexFormat fmt, u32 offset, u32 bufferBinding) : Format(fmt), Offset(offset), BufferBinding(bufferBinding) {}
+    FVertexInput(EVertexFormat fmt, u32 offset, u32 bufferBinding) NOEXCEPT
+        : Format(fmt), Offset(offset), BufferBinding(bufferBinding) {}
 
     PPE_RHI_API EVertexFormat DestinationFormat() const;
 
-    bool operator ==(const FVertexInput& other) const {
+    bool operator ==(const FVertexInput& other) const NOEXCEPT {
         Assert(Index != UMax);
         Assert(other.Index != UMax);
         return (Format == other.Format && Index == other.Index && Offset == other.Offset && BufferBinding == other.BufferBinding);
     }
-    bool operator !=(const FVertexInput& other) const { return (not operator ==(other)); }
+    bool operator !=(const FVertexInput& other) const NOEXCEPT { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FVertexInput& input) {
+    friend hash_t hash_value(const FVertexInput& input) NOEXCEPT {
         return hash_tuple(input.Format, input.Index, input.Offset, input.Format);
     }
 
@@ -67,14 +68,15 @@ struct FVertexBufferBinding {
     EVertexInputRate Rate{Default};
 
     FVertexBufferBinding() = default;
-    FVertexBufferBinding(u32 index, u32 stride, EVertexInputRate rate) : Index(index), Stride(stride), Rate(rate) {}
+    FVertexBufferBinding(u32 index, u32 stride, EVertexInputRate rate) NOEXCEPT
+        : Index(index), Stride(stride), Rate(rate) {}
 
-    bool operator ==(const FVertexBufferBinding& other) const {
+    bool operator ==(const FVertexBufferBinding& other) const NOEXCEPT {
         return (Index == other.Index && Stride == other.Stride && Rate == other.Rate);
     }
-    bool operator !=(const FVertexBufferBinding& other) const { return (not operator ==(other)); }
+    bool operator !=(const FVertexBufferBinding& other) const NOEXCEPT { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FVertexBufferBinding& binding) {
+    friend hash_t hash_value(const FVertexBufferBinding& binding) NOEXCEPT {
         return hash_tuple(binding.Index, binding.Stride, binding.Rate);
     }
 
@@ -117,10 +119,10 @@ struct FVertexInputState {
         Vertices.clear();
     }
 
-    bool operator ==(const FVertexInputState& other) const { return (BufferBindings == other.BufferBindings && Vertices == other.Vertices); }
-    bool operator !=(const FVertexInputState& other) const { return (not operator ==(other)); }
+    bool operator ==(const FVertexInputState& other) const NOEXCEPT { return (BufferBindings == other.BufferBindings && Vertices == other.Vertices); }
+    bool operator !=(const FVertexInputState& other) const NOEXCEPT { return (not operator ==(other)); }
 
-    friend hash_t hash_value(const FVertexInputState& state) {
+    friend hash_t hash_value(const FVertexInputState& state) NOEXCEPT {
         return hash_tuple(state.BufferBindings, state.Vertices);
     }
 
