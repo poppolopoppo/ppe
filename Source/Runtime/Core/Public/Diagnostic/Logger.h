@@ -99,7 +99,6 @@ public:
 
     template <typename _Arg0, typename... _Args>
     static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
-        typedef details::TBasicFormatFunctor_<wchar_t> format_functor_t;
         LogArgs(category, level, site, format, {
             MakeFormatArg<wchar_t>(arg0),
             MakeFormatArg<wchar_t>(args)...
@@ -108,7 +107,6 @@ public:
 
     template <typename _Arg0, typename... _Args>
     static void Record(const FCategory& category, EVerbosity level, const FSiteInfo& site, _Arg0&& arg0, _Args&&... args) {
-        typedef details::TBasicFormatFunctor_<wchar_t> format_functor_t;
         RecordArgs(category, level, site, {
             MakeFormatArg<wchar_t>(arg0),
             MakeFormatArg<wchar_t>(args)...
