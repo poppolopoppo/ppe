@@ -859,9 +859,12 @@ func (ufs *UFSFrontEnd) Copy(src, dst Filename) error {
 	invalidate_file_info(dst)
 	LogDebug("ufs: copy file '%v' to '%v'", src, dst)
 	return ufs.Open(src, func(r io.Reader) error {
-		return ufs.SafeCreate(dst, func(w io.Writer) error {
-			_, err := io.Copy(w, r)
+		info, err := src.Info()
+		if err != nil {
 			return err
+		}
+		return ufs.SafeCreate(dst, func(w io.Writer) error {
+			return CopyWithProgress(dst.Basename, info.Size(), w, r)
 		})
 	})
 }

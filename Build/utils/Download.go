@@ -161,22 +161,7 @@ func DownloadFile(dst Filename, src url.URL) error {
 					return err
 				}
 
-				pbar := LogProgress(0, totalSize, dst.Basename)
-				defer pbar.Close()
-
-				const READ_STRIDE = 64 * 1024
-				for alreadyRead := 0; alreadyRead != totalSize; {
-					toRead := READ_STRIDE
-					if alreadyRead+toRead > totalSize {
-						toRead = totalSize - alreadyRead
-					}
-					if sz, err := io.CopyN(w, resp.Body, int64(toRead)); err == nil {
-						alreadyRead += int(sz)
-						pbar.Set(alreadyRead)
-					} else {
-						return err
-					}
-				}
+				err = CopyWithProgress(dst.Basename, int64(totalSize), w, resp.Body)
 			} else {
 				_, err = io.Copy(w, resp.Body)
 			}
@@ -218,7 +203,7 @@ func DownloadHttpRedirect(dst Filename, src url.URL) error {
 
 	if err == nil {
 		match := re_metaRefreshRedirect.FindSubmatch(parse.Bytes())
-		if match != nil && len(match) > 1 {
+		if len(match) > 1 {
 			var url *url.URL
 			if url, err = url.Parse(string(match[1])); err == nil {
 				return DownloadFile(dst, *url)

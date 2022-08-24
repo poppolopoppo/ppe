@@ -205,15 +205,13 @@ func (x *FBuildExecutor) Run() (err error) {
 		}
 
 		scanner := bufio.NewScanner(stdout)
-		// const MAX_LINESIZE int = 512 * 1024
-		// scanner.Buffer(make([]byte, MAX_LINESIZE), MAX_LINESIZE)
-
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
 
 			for scanner.Scan() {
 				line := scanner.Text()
+				line = strings.TrimRight(line, "\r\n")
 				line = strings.TrimSpace(line)
 				if len(line) > 0 {
 					LogForward(line)

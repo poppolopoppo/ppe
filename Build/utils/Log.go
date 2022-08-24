@@ -241,7 +241,6 @@ type pinnedLogManager struct {
 	inflight int
 
 	cooldown int32
-	readers  int32
 }
 
 var pinnedFake = &pinnedLogFake{}
@@ -299,7 +298,7 @@ func refreshPinUnsafe(pin *pinnedLogManager) {
 func (pin *pinnedLogManager) push(msg string, args ...interface{}) PinnedLog {
 	if msg != "" && enableInteractiveShell {
 		log := &pinnedLogScope{
-			mainText: fmt.Sprintf(msg, args...),
+			mainText: fmt.Sprintf(msg, args...) + " ",
 		}
 
 		logger.Queue(func() {
@@ -365,8 +364,8 @@ func (log *pinnedLogScope) Log(msg string, args ...interface{}) {
 func (log *pinnedLogScope) String() string {
 	if log.subText != "" {
 		const maxLen = 20
-		elapsed := int(maxLen * time.Now().Sub(programStartedAt).Seconds())
-		croppedText := make([]byte, maxLen)
+		elapsed := int(maxLen * time.Since(programStartedAt).Seconds())
+		croppedText := [maxLen]byte{}
 		for i := 0; i < maxLen; i += 1 {
 			croppedText[i] = log.mainText[(elapsed+i)%len(log.mainText)]
 		}
@@ -435,7 +434,7 @@ func smootherstep(edge0, edge1, x float64) float64 {
 func (pg *pinnedLogProgress) String() (result string) {
 	const width = 70
 
-	totalSecs := time.Now().Sub(pg.startedat)
+	totalDuration := time.Since(pg.startedat)
 
 	result += ANSI_FG1_CYAN.String() + " "
 
@@ -445,7 +444,7 @@ func (pg *pinnedLogProgress) String() (result string) {
 	cola0 := [3]uint8{255, 202, 229} // bubble gum pink
 	cola1 := [3]uint8{255, 119, 188} // dark  bubble gum pink
 
-	col2 := [3]uint8{52, 39, 89} // dark indigo
+	col2 := [3]uint8{42, 29, 69} // dark indigo
 	// col3 := [3]uint8{255, 255, 255} // white
 
 	fillPattern := func(off, w int, pattern []string, swing bool) {
@@ -469,7 +468,7 @@ func (pg *pinnedLogProgress) String() (result string) {
 	}
 
 	sliderPattern := func() {
-		t := int(totalSecs.Milliseconds() / 30)
+		t := int(totalDuration.Milliseconds() / 30)
 		pattern := []string{"`", "`", "'", "-", ".", ",", "_", ",", ".", "-", "'", "`", "`", "'", "-", ".", ",", "_", ",", ".", "=", "'", `"`}
 		// pattern := []string{`▁`, `▂`, `▃`, `▄`, `▅`, `▆`, `▇`, `█`, `▇`, `▆`, `▅`, `▄`, `▃`, `▂`}
 		fillPattern(t, width+1, pattern, false)
@@ -477,7 +476,7 @@ func (pg *pinnedLogProgress) String() (result string) {
 
 	wavePattern := func() {
 		pattern := []string{`▁`, `▂`, `▃`, `▄`, `▅`, `▆`, `▇`, `█`, `▇`, `▆`, `▅`, `▄`, `▃`, `▂`}
-		t := float64(totalSecs.Seconds()) * 3.0
+		t := float64(totalDuration.Seconds()) * 3.0
 
 		for i := 0; i < width; i += 1 {
 			y := t + 4*float64(i)*math.Pi/width
@@ -541,7 +540,7 @@ func (pg *pinnedLogProgress) String() (result string) {
 		for j := 0; j < width; j += 1 {
 			f := float64(j+1) / width
 
-			xx := math.Cos(float64(totalSecs.Seconds()*5.0)+f*math.Phi*4.0)*0.5 + 0.5
+			xx := math.Cos(float64(totalDuration.Seconds()*5.0)+f*math.Phi*4.0)*0.5 + 0.5
 			col0 := lerp_color(cola0, colb0, xx)
 			col1 := lerp_color(cola1, colb1, xx)
 
@@ -558,10 +557,9 @@ func (pg *pinnedLogProgress) String() (result string) {
 				result += make_ansi_bg_truecolor(col2[0], col2[1], col2[2])
 				result += ` `
 			}
-
 		}
 
-		xx := math.Cos(float64(totalSecs.Seconds()*5.0)+1.0*math.Phi*4.0)*0.5 + 0.5
+		xx := math.Cos(float64(totalDuration.Seconds()*5.0)+1.0*math.Phi*4.0)*0.5 + 0.5
 		col1 := lerp_color(cola1, colb1, xx)
 
 		result += ANSI_RESET.String()
@@ -574,11 +572,21 @@ func (pg *pinnedLogProgress) String() (result string) {
 		result += ANSI_RESET.String()
 
 		result += lerp_ansi_fg_truecolor(cola1, colb0, f)
-		result += fmt.Sprintf(" %6.2f", f*100) + "%%%%  " // Sprintf() escaping hell
+		result += fmt.Sprintf(" %6.2f", f*100) + "%%  " // Sprintf() escaping hell
 
-		eltPerSec := float32(totalSecs.Seconds()) / float32(pg.progress-pg.first)
+		numElts := float32(pg.progress - pg.first)
+		eltUnit := ""
+		if numElts > 5000 {
+			eltUnit = "K"
+			numElts /= 1000
+		}
+		if numElts > 5000 {
+			eltUnit = "M"
+			numElts /= 1000
+		}
+		eltPerSec := numElts / float32(totalDuration.Seconds()+0.00001)
 		result += ANSI_FG1_YELLOW.String()
-		result += fmt.Sprintf(" %.3f/s", eltPerSec)
+		result += fmt.Sprintf(" %.3f %s/s", eltPerSec, eltUnit)
 	} else {
 		result += ANSI_FG0_CYAN.String()
 
@@ -596,7 +604,7 @@ func (pg *pinnedLogProgress) String() (result string) {
 
 		result += ANSI_RESET.String()
 		result += ANSI_FG0_GREEN.String()
-		result += fmt.Sprintf(" %6.2fs ", totalSecs.Seconds())
+		result += fmt.Sprintf(" %6.2fs ", totalDuration.Seconds())
 	}
 
 	if pg.progress == pg.last {
@@ -635,7 +643,7 @@ type benchmarkLog struct {
 }
 
 func (x benchmarkLog) Close() {
-	duration := time.Now().Sub(x.startedAt)
+	duration := time.Since(x.startedAt)
 	LogTrace("Benchmark <%s>: %v", x.message, duration)
 }
 func LogBenchmark(msg string, args ...interface{}) Closable {
@@ -653,4 +661,37 @@ func (x lambdaStringer) String() string {
 }
 func MakeStringer(fn func() string) fmt.Stringer {
 	return lambdaStringer(fn)
+}
+
+func CopyWithProgress(context string, totalSize int64, dst io.Writer, src io.Reader) (err error) {
+	if enableInteractiveShell {
+		var pbar PinnedProgress
+		if totalSize > 0 {
+			pbar = LogProgress(0, int(totalSize), context)
+		} else {
+			pbar = LogSpinner(context)
+		}
+		defer pbar.Close()
+
+		for {
+			var toRead int64 = TRANSIENT_BYTES_CAPACITY
+			if toRead, err = io.CopyN(dst, src, toRead); err == nil {
+				pbar.Add(int(toRead))
+			} else {
+				break
+			}
+		}
+
+		if err == io.EOF {
+			err = nil
+		}
+
+	} else {
+		_, err = io.Copy(dst, src)
+	}
+	return err
+}
+
+func CopyWithSpinner(context string, dst io.Writer, src io.Reader) (err error) {
+	return CopyWithProgress(context, 0, dst, src)
 }
