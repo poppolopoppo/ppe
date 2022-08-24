@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 func InitHAL() {
@@ -26,12 +28,22 @@ func InitHAL() {
 	linux.InitLinux()
 }
 
+func isTty() bool {
+	// https://stackoverflow.com/questions/68889637/is-it-possible-to-detect-if-a-writer-is-tty-or-not
+	_, err := unix.IoctlGetWinsize(int(os.Stdout.Fd()), unix.TIOCGWINSZ)
+	return err != nil
+}
+
 func isInteractiveShell() bool {
-	switch os.Getenv("TERM") {
-	case "xterm", "xterm-256", "xterm-256color", "alacritty":
+	// if !isTty() {
+	// 	return false
+	// }
+	term := os.Getenv("TERM")
+	switch term {
+	case "xterm", "alacritty":
 		return true
 	default:
-		return false
+		return strings.HasPrefix(term, "xterm-")
 	}
 }
 
