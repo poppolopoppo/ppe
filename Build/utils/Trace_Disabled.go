@@ -5,6 +5,6 @@ package utils
 
 const TRACE_ENABLED = false
 
-var StartTrace = func() func() {
+func StartTrace() func() {
 	return func() {}
 }

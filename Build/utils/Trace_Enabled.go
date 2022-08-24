@@ -10,7 +10,7 @@ import (
 
 const TRACE_ENABLED = true
 
-var StartTrace = func() func() {
+func StartTrace() func() {
 	if fd, err := os.Create("app.trace"); err == nil {
 		trace.Start(fd)
 		return func() {

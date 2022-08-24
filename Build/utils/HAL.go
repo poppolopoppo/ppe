@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
 )
 
 type HostId string
@@ -78,12 +77,15 @@ func IfDarwin(block func()) {
 // program if it receives an interrupt from the OS. We then handle this by calling
 // our clean up procedure and exiting the program.
 func setupCloseHandler() {
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
 		<-c
+
 		LogWarning("\r- Ctrl+C pressed in Terminal")
 		PurgePinnedLogs()
+		PurgeProfiling()
+
 		os.Exit(0)
 	}()
 }

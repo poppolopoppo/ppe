@@ -5,6 +5,8 @@ package utils
 
 const PROFILING_ENABLED = false
 
-var StartProfiling = func() func() {
-	return func() {}
+func StartProfiling() func() {
+	return PurgeProfiling
 }
+
+func PurgeProfiling() {}
