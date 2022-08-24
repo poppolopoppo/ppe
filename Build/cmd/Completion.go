@@ -236,7 +236,7 @@ var ShowSeed = utils.MakeCommand(
 	"print build seed",
 	nil,
 	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
-		fmt.Printf("%X\n", utils.Seed)
+		fmt.Printf("%X\n", utils.Seed.Slice())
 		return nil
 	},
 )

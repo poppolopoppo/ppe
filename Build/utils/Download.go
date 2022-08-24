@@ -105,7 +105,7 @@ func downloadFromCachedArtifcats(resp *http.Response) (Filename, downloadCacheRe
 		}
 
 		uid := digest.Finalize()
-		inCache := UFS.Transient.Folder("DownloadCache").File(fmt.Sprintf("%X.bin", uid))
+		inCache := UFS.Transient.Folder("DownloadCache").File(fmt.Sprintf("%X.bin", uid.Slice()))
 		if info, err := inCache.Info(); info != nil && err == nil {
 			var totalSize int
 			totalSize, err = strconv.Atoi(resp.Header.Get("Content-Length"))

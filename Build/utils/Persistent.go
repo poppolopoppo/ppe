@@ -93,7 +93,7 @@ func (pmp *PersistentMap) resetFlagSet() {
 	pmp.flags = flag.NewFlagSet(pmp.Name, flag.ExitOnError)
 	pmp.flags.Usage = func() {
 		fmt.Printf("Program: %v@%v\n", MAIN_MODULEBASE, MAIN_MODULEVER)
-		fmt.Printf("%v%X%v\n", ANSI_FG1_BLACK, Seed, ANSI_RESET)
+		fmt.Printf("%v%X%v\n", ANSI_FG1_BLACK, Seed.Slice(), ANSI_RESET)
 		fmt.Println()
 		fmt.Println("Usage:")
 		fmt.Println(" ", ANSI_FG0_YELLOW, MAIN_MODULEPATH.Basename, ANSI_FG1_GREEN, "< COMMAND >", ANSI_FG1_BLUE, "[OPTIONS]*", ANSI_FG0_WHITE, "[ARGS]*", ANSI_RESET)
@@ -121,8 +121,8 @@ func (pmp *PersistentMap) resetFlagSet() {
 
 		printFlags := func(flags ...*flag.Flag) {
 			for _, f := range flags {
-				name, usage := flag.UnquoteUsage(f)
-				name = "value"
+				_, usage := flag.UnquoteUsage(f)
+				name := "value"
 				switch f.Value.(type) {
 				case BoolFlag:
 					name = ""
