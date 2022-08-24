@@ -9,6 +9,7 @@ import (
 
 type LinuxFlagsT struct {
 	Compiler  CompilerType
+	LlvmVer   LlvmVersion
 	StackSize IntVar
 }
 
@@ -17,11 +18,13 @@ var LinuxFlags = MakeServiceAccessor[ParsableFlags](newLinuxFlags)
 func newLinuxFlags() *LinuxFlagsT {
 	return CommandEnv.BuildGraph().Create(&LinuxFlagsT{
 		Compiler:  COMPILER_CLANG,
+		LlvmVer:   llvm_any,
 		StackSize: 2000000,
 	}).GetBuildable().(*LinuxFlagsT)
 }
 func (flags *LinuxFlagsT) InitFlags(cfg *PersistentMap) {
 	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]")
+	cfg.Persistent(&flags.LlvmVer, "LlvmVer", "select LLVM toolchain version ["+JoinString(",", LlvmVersions()...)+"]")
 	cfg.Persistent(&flags.StackSize, "StackSize", "set default thread stack size in bytes")
 }
 func (flags *LinuxFlagsT) ApplyVars(cfg *PersistentMap) {
@@ -35,6 +38,7 @@ func (flags *LinuxFlagsT) Build(BuildContext) (BuildStamp, error) {
 }
 func (flags *LinuxFlagsT) GetDigestable(o *bytes.Buffer) {
 	flags.Compiler.GetDigestable(o)
+	flags.LlvmVer.GetDigestable(o)
 	flags.StackSize.GetDigestable(o)
 }
 
@@ -94,6 +98,7 @@ func InitLinux() {
 	LogTrace("build/hal/linux.Init()")
 
 	gob.Register(&LinuxFlagsT{})
+	gob.Register(&LinuxPlatform{})
 	gob.Register(&LlvmProductInstall{})
 	gob.Register(&LlvmCompiler{})
 

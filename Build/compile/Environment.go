@@ -269,7 +269,11 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 			unit.PCH = PCH_DISABLED
 		} else {
 			unit.PrecompiledHeader = *moduleRules.PrecompiledHeader
-			unit.PrecompiledSource = *moduleRules.PrecompiledSource
+			unit.PrecompiledSource = unit.PrecompiledHeader
+			utils.IfWindows(func() {
+				// CPP is only used on Windows platform
+				unit.PrecompiledSource = *moduleRules.PrecompiledSource
+			})
 			unit.PrecompiledObject = env.GetPayloadOutput(unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
 		}
 	default:

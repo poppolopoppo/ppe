@@ -14,7 +14,8 @@ import (
  ***************************************/
 
 type LlvmCompiler struct {
-	Arch ArchType
+	Arch    ArchType
+	Version LlvmVersion
 	CompilerRules
 	ProductInstall *LlvmProductInstall
 }
@@ -23,6 +24,7 @@ func (llvm *LlvmCompiler) GetCompiler() *CompilerRules { return &llvm.CompilerRu
 
 func (llvm *LlvmCompiler) GetDigestable(o *bytes.Buffer) {
 	llvm.Arch.GetDigestable(o)
+	llvm.Version.GetDigestable(o)
 	llvm.CompilerRules.GetDigestable(o)
 	llvm.ProductInstall.GetDigestable(o)
 }
@@ -66,6 +68,10 @@ func (llvm *LlvmCompiler) CppRtti(f *Facet, enabled bool) {
 	}
 }
 func (llvm *LlvmCompiler) CppStd(f *Facet, std CppStdType) {
+	maxSupported := getCppStdFromLlvm(llvm.Version)
+	if int32(std) > int32(maxSupported) {
+		std = maxSupported
+	}
 	switch std {
 	case CPPSTD_20:
 		f.AddCompilationFlag("-std=c++20")
@@ -87,30 +93,32 @@ func (llvm *LlvmCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename,
 	case DEBUG_DISABLED:
 		return
 	case DEBUG_SYMBOLS:
-		NotImplemented("DEBUG_SYMBOLS")
-	case DEBUG_EMBEDDED:
-		f.CompilerOptions.Append("-g")
+		LogVeryVerbose("not available on linux: DEBUG_SYMBOLS")
 	case DEBUG_HOTRELOAD:
-		NotImplemented("DEBUG_HOTRELOAD")
+		LogVeryVerbose("not available on linux: DEBUG_HOTRELOAD")
+	case DEBUG_EMBEDDED:
 	default:
 		UnexpectedValue(sym)
 	}
+
+	f.CompilerOptions.Append("-g") // embedded debug info
 }
 func (llvm *LlvmCompiler) Link(f *Facet, lnk LinkType) {
 	switch lnk {
 	case LINK_STATIC:
 		return // nothing to do
 	case LINK_DYNAMIC:
-		return // nothing to do
+		f.LinkerOptions.Append("-shared")
 	default:
 		UnexpectedValue(lnk)
 	}
 }
 func (llvm *LlvmCompiler) PrecompiledHeader(f *Facet, mode PrecompiledHeaderType, header Filename, source Filename, object Filename) {
 	switch mode {
-	case PCH_MONOLITHIC, PCH_SHARED:
-		NotImplemented("%v", mode)
-		fallthrough
+	case PCH_MONOLITHIC:
+		f.Defines.Append("BUILD_PCH=1")
+		f.CompilerOptions.Append("-include-pch " + object.String())
+		f.PrecompiledHeaderOptions.Prepend("-emit-pch", "-x c++-header")
 	case PCH_DISABLED:
 		f.Defines.Append("BUILD_PCH=0")
 	default:
@@ -122,12 +130,15 @@ func (llvm *LlvmCompiler) Sanitizer(f *Facet, sanitizer SanitizerType) {
 	case SANITIZER_NONE:
 		return
 	case SANITIZER_ADDRESS:
-		// https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-llvm/
-		f.Defines.Append("USE_PPE_SANITIZER=1")
-		f.AddCompilationFlag_NoAnalysis("-fsanitize=address")
+		f.AddCompilationFlag_NoPreprocessor("-fsanitize=address")
+	case SANITIZER_THREAD:
+		f.AddCompilationFlag_NoPreprocessor("-fsanitize=thread")
+	case SANITIZER_UNDEFINED_BEHAVIOR:
+		f.AddCompilationFlag_NoPreprocessor("-fsanitize=ub")
 	default:
 		UnexpectedValue(sanitizer)
 	}
+	f.Defines.Append("USE_PPE_SANITIZER=1")
 }
 
 func (llvm *LlvmCompiler) ForceInclude(f *Facet, inc ...Filename) {
@@ -168,17 +179,20 @@ func (llvm *LlvmCompiler) LibraryPath(f *Facet, dirs ...Directory) {
 func makeLlvmCompiler(
 	result *LlvmCompiler,
 	bc BuildContext,
+	version LlvmVersion,
 	executable Filename,
 	librarian Filename,
 	linker Filename,
 	extraFiles ...Filename) {
+	result.Version = version
+
 	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
 	linuxFlags := LinuxFlags.FindOrAdd(CommandEnv.Flags)
 
 	bc.DependsOn(compileFlags, linuxFlags)
 
 	result.CompilerRules.CompilerName = fmt.Sprintf("Llvm_%v_%v",
-		SanitizeIdentifier(result.ProductInstall.Version), result.ProductInstall.Arch)
+		SanitizeIdentifier(result.Version.String()), result.ProductInstall.Arch)
 	result.CompilerRules.CompilerFamily = "clang"
 	result.CompilerRules.CppStd = CPPSTD_17
 	result.CompilerRules.Executable = executable
@@ -202,7 +216,7 @@ func makeLlvmCompiler(
 		"-march=x86-64-v3 ",
 		"-mavx", "-msse4.2",
 		"-mlzcnt", "-mpopcnt",
-		"-cc1", "-fuse-ctor-homing",
+		"-Xclang", "-fuse-ctor-homing",
 		"-c",               // compile only
 		"-o \"%2\" \"%1\"", // input file injection
 	)
@@ -212,8 +226,6 @@ func makeLlvmCompiler(
 }
 
 func (llvm *LlvmCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
-	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
-
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
 		u.AddCompilationFlag_NoAnalysis("-m32")
@@ -237,23 +249,6 @@ func (llvm *LlvmCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	default:
 		UnexpectedValue(compileEnv.GetConfig().ConfigType)
 	}
-
-	switch u.Sanitizer {
-	case SANITIZER_ADDRESS:
-		u.AddCompilationFlag_NoAnalysis("-fsanitize=address")
-	case SANITIZER_THREAD:
-		u.AddCompilationFlag_NoAnalysis("-fsanitize=thread")
-	case SANITIZER_UNDEFINED_BEHAVIOR:
-		u.AddCompilationFlag_NoAnalysis("-fsanitize=ub")
-	case SANITIZER_NONE:
-	}
-
-	// set dependent linker options
-	if compileFlags.Incremental && u.Sanitizer == SANITIZER_NONE {
-		NotImplemented("incremental linker")
-	} else {
-
-	}
 }
 
 /***************************************
@@ -264,17 +259,26 @@ func llvm_CXX_linkTimeCodeGeneration(f *Facet, enabled bool, incremental bool) {
 	if enabled {
 		f.LibrarianOptions.Append("-T")
 		if incremental {
-			f.LinkerOptions.Append("-flto=thin")
+			f.CompilerOptions.Append("-flto=thin")
+			f.LinkerOptions.Append("-Wl,--thinlto-cache-dir=" + UFS.Transient.AbsoluteFolder("ThinLTO").String())
 		} else {
-			f.LinkerOptions.Append("-flto")
+			f.CompilerOptions.Append("-flto")
 		}
 
 	} else {
-		f.LinkerOptions.Append("-fno-lto")
+		f.CompilerOptions.Append("-fno-lto")
 	}
 }
-func llvm_CXX_runtimeChecks(facet *Facet, enabled bool, rtc1 bool) {
-	NotImplemented("runtime checks")
+func llvm_CXX_runtimeChecks(facet *Facet, enabled bool, strong bool) {
+	if enabled {
+		if strong {
+			facet.AddCompilationFlag_NoPreprocessor("-fstack-protector")
+		} else {
+			facet.AddCompilationFlag_NoPreprocessor("-fstack-protector-strong")
+		}
+	} else {
+		facet.AddCompilationFlag_NoPreprocessor("-fno-stack-protector")
+	}
 }
 
 func decorateLlvmConfig_Debug(f *Facet) {
@@ -313,9 +317,10 @@ func decorateLlvmConfig_Shipping(f *Facet) {
  ***************************************/
 
 type LlvmProductInstall struct {
-	Arch string
+	Arch      string
+	WantedVer LlvmVersion
 
-	Version       string
+	ActualVer     LlvmVersion
 	InstallDir    Directory
 	Ar            Filename
 	Clang         Filename
@@ -323,49 +328,76 @@ type LlvmProductInstall struct {
 }
 
 func (x *LlvmProductInstall) Alias() BuildAlias {
-	name := fmt.Sprintf("LlvmProductInstall_%s", x.Arch)
+	name := fmt.Sprintf("LlvmProductInstall_%s_%s", x.Arch, x.WantedVer)
 	return MakeBuildAlias("HAL", name)
 }
 func (x *LlvmProductInstall) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.Arch)
-	o.WriteString(x.Version)
+	x.WantedVer.GetDigestable(o)
+	x.ActualVer.GetDigestable(o)
 	x.InstallDir.GetDigestable(o)
 	x.Ar.GetDigestable(o)
 	x.Clang.GetDigestable(o)
 	x.ClangPlusPlus.GetDigestable(o)
 }
 func (x *LlvmProductInstall) Build(bc BuildContext) (BuildStamp, error) {
-	c := exec.Command("/bin/sh", "-c", "which clang++")
-	if outp, err := c.Output(); err == nil {
-		x.ClangPlusPlus = MakeFilename(strings.TrimSpace(string(outp)))
-	} else {
+	buildCompilerVer := func(suffix string) error {
+		LogDebug("llvm: looking for clang-%s...", suffix)
+		c := exec.Command("/bin/sh", "-c", "which clang++"+suffix)
+		if outp, err := c.Output(); err == nil {
+			x.ClangPlusPlus = MakeFilename(strings.TrimSpace(string(outp)))
+		} else {
+			return err
+		}
+
+		c = exec.Command("/bin/sh", "-c", "realpath $(which clang"+suffix+")")
+		if outp, err := c.Output(); err == nil {
+			x.Clang = MakeFilename(strings.TrimSpace(string(outp)))
+		} else {
+			return err
+		}
+
+		bin := x.Clang.Dirname
+		x.InstallDir = bin.Parent()
+		x.Ar = bin.File("llvm-ar")
+
+		if _, err := x.Ar.Info(); err != nil {
+			return err
+		}
+
+		c = exec.Command("llvm-config"+suffix, "--version")
+		if outp, err := c.Output(); err == nil {
+			parsed := strings.TrimSpace(string(outp))
+			if n := strings.IndexByte(parsed, '.'); n != -1 {
+				parsed = parsed[:n]
+			}
+			if err = x.ActualVer.Set(parsed); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+
+		bc.NeedFolder(x.InstallDir)
+		bc.NeedFile(x.Ar, x.Clang, x.ClangPlusPlus)
+		return nil
+	}
+	var err error
+	switch x.WantedVer {
+	case LLVM_LATEST:
+		for _, actualVer := range LlvmVersions() {
+			if err = buildCompilerVer("-" + actualVer.String()); err == nil {
+				break
+			}
+		}
+	case llvm_any:
+		err = buildCompilerVer("" /* no suffix */)
+	default:
+		err = buildCompilerVer("-" + x.WantedVer.String())
+	}
+	if err != nil {
 		return BuildStamp{}, err
 	}
-
-	c = exec.Command("/bin/sh", "-c", "realpath $(which clang)")
-	if outp, err := c.Output(); err == nil {
-		x.Clang = MakeFilename(strings.TrimSpace(string(outp)))
-	} else {
-		return BuildStamp{}, err
-	}
-
-	bin := x.Clang.Dirname
-	x.InstallDir = bin.Parent()
-	x.Ar = bin.File("llvm-ar")
-
-	if _, err := x.Ar.Info(); err != nil {
-		return BuildStamp{}, err
-	}
-
-	c = exec.Command("llvm-config", "--version")
-	if outp, err := c.Output(); err == nil {
-		x.Version = strings.TrimSpace(string(outp))
-	} else {
-		return BuildStamp{}, err
-	}
-
-	bc.NeedFolder(x.InstallDir)
-	bc.NeedFile(x.Ar, x.Clang, x.ClangPlusPlus)
 	return MakeBuildStamp(x)
 }
 
@@ -375,12 +407,14 @@ func (llvm *LlvmCompiler) Alias() BuildAlias {
 func (llvm *LlvmCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	*llvm = LlvmCompiler{Arch: llvm.Arch}
 
-	llvm.ProductInstall = GetLlvmProductInstall(llvm.Arch)
+	linuxFlags := LinuxFlags.Need(CommandEnv.Flags)
+	llvm.ProductInstall = GetLlvmProductInstall(llvm.Arch, linuxFlags.LlvmVer)
 	bc.DependsOn(llvm.ProductInstall)
 
 	makeLlvmCompiler(
 		llvm,
 		bc,
+		llvm.ProductInstall.ActualVer,
 		llvm.ProductInstall.ClangPlusPlus,
 		llvm.ProductInstall.Ar,
 		llvm.ProductInstall.Clang)
@@ -388,9 +422,10 @@ func (llvm *LlvmCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	return MakeBuildStamp(llvm)
 }
 
-var GetLlvmProductInstall = MemoizeArg(func(arch ArchType) *LlvmProductInstall {
+var GetLlvmProductInstall = MemoizeArgs2(func(arch ArchType, ver LlvmVersion) *LlvmProductInstall {
 	builder := &LlvmProductInstall{
-		Arch: arch.String(),
+		Arch:      arch.String(),
+		WantedVer: ver,
 	}
 	return CommandEnv.BuildGraph().Create(builder).GetBuildable().(*LlvmProductInstall)
 })
