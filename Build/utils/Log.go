@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -253,10 +254,18 @@ func attachPinUnsafe(pin *pinnedLogManager) {
 		pin.inflight = len(pin.messages)
 
 		// format messages in local buffer
-		buf := strings.Builder{}
-		fmt.Println(&buf)
+		tmp := TransientBytes.Allocate()
+		defer TransientBytes.Release(tmp)
+
+		buf := bytes.NewBuffer(tmp)
+		buf.Reset()
+
+		fmt.Fprintln(buf, "")
 		for _, x := range pin.messages {
-			fmt.Fprintln(&buf,
+			if x == nil {
+				continue
+			}
+			fmt.Fprintln(buf,
 				"\r", ANSI_KILL_LINE,
 				ANSI_FG1_YELLOW,
 				x,
@@ -264,30 +273,35 @@ func attachPinUnsafe(pin *pinnedLogManager) {
 		}
 
 		// flush with one call
-		fmt.Fprintf(pin.stream, buf.String())
+		pin.stream.Write(buf.Bytes())
 	}
 }
 func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 	if pin.inflight > 0 {
 		// format messages in local buffer
-		buf := strings.Builder{}
-		if false && len(pin.messages) == pin.inflight && !clear {
+		tmp := TransientBytes.Allocate()
+		defer TransientBytes.Release(tmp)
+
+		buf := bytes.NewBuffer(tmp)
+		buf.Reset()
+
+		if true && len(pin.messages) == pin.inflight && !clear {
 			// one clear line: ghosting
 			for i := 0; i < pin.inflight+1; i += 1 {
-				fmt.Fprint(&buf, ANSI_CURSOR_UP)
+				fmt.Fprint(buf, ANSI_CURSOR_UP)
 			}
-			fmt.Fprint(&buf, ANSI_KILL_LINE)
+			fmt.Fprint(buf, ANSI_KILL_LINE)
 		} else {
 			// multiple clear lines: flicker
 			for i := 0; i < pin.inflight+1; i += 1 {
-				fmt.Fprint(&buf, ANSI_CURSOR_UP, ANSI_KILL_LINE)
+				fmt.Fprint(buf, ANSI_CURSOR_UP, ANSI_KILL_LINE)
 			}
 		}
 
 		pin.inflight = 0
 
 		// flush with one call
-		fmt.Fprintf(pin.stream, buf.String())
+		pin.stream.Write(buf.Bytes())
 	}
 }
 func refreshPinUnsafe(pin *pinnedLogManager) {

@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"strings"
 )
 
 type JsonMap map[string]interface{}
@@ -27,12 +26,23 @@ func UnmarshalJSON[T flag.Value](x T, data []byte) error {
 }
 
 func JsonSerialize(x interface{}, dst io.Writer) error {
-	str := strings.Builder{}
-	encoder := json.NewEncoder(&str)
+	tmp := TransientBytes.Allocate()
+	defer TransientBytes.Release(tmp)
+
+	buf := bytes.NewBuffer(tmp)
+	buf.Reset()
+
+	encoder := json.NewEncoder(buf)
+
 	var err error
 	if err = encoder.Encode(x); err == nil {
-		var pretty bytes.Buffer
-		if err = json.Indent(&pretty, []byte(str.String()), "", "\t"); err == nil {
+		tmp2 := TransientBytes.Allocate()
+		defer TransientBytes.Release(tmp2)
+
+		pretty := bytes.NewBuffer(tmp2)
+		pretty.Reset()
+
+		if err = json.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
 			dst.Write(pretty.Bytes())
 			return nil
 		}
@@ -49,12 +59,23 @@ func JsonDeserialize(x interface{}, src io.Reader) error {
 }
 
 func PrettyPrint(x interface{}) string {
-	str := strings.Builder{}
-	encoder := json.NewEncoder(&str)
+	tmp := TransientBytes.Allocate()
+	defer TransientBytes.Release(tmp)
+
+	buf := bytes.NewBuffer(tmp)
+	buf.Reset()
+
+	encoder := json.NewEncoder(buf)
+
 	var err error
 	if err = encoder.Encode(x); err == nil {
-		var pretty bytes.Buffer
-		if err = json.Indent(&pretty, []byte(str.String()), "", "\t"); err == nil {
+		tmp2 := TransientBytes.Allocate()
+		defer TransientBytes.Release(tmp2)
+
+		pretty := bytes.NewBuffer(tmp2)
+		pretty.Reset()
+
+		if err = json.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
 			return pretty.String()
 		}
 	}

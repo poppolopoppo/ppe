@@ -822,12 +822,12 @@ func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
 	return err
 }
 func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]string) error) error {
-	const capacity = 64 << 20
-
 	return ufs.Open(src, func(rd io.Reader) error {
-		buf := make([]byte, capacity*2)
-
 		LogDebug("ufs: scan '%v' with regexp %v", src, re)
+
+		const capacity = TRANSIENT_BYTES_CAPACITY / 2
+		buf := TransientBytes.Allocate()
+		defer TransientBytes.Release(buf)
 
 		scanner := bufio.NewScanner(rd)
 		scanner.Buffer(buf, capacity)

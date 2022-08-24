@@ -177,15 +177,19 @@ func FNV32a(in string) uint32 {
 }
 
 func DigestReader(output Digester, rd io.Reader) error {
-	const capacity = 64 << 20
 	scanner := bufio.NewScanner(rd)
-	scanner.Buffer(make([]byte, capacity), capacity)
+
+	buffer := TransientBytes.Allocate()
+	defer TransientBytes.Release(buffer)
+
+	scanner.Buffer(buffer, TRANSIENT_BYTES_CAPACITY)
 	intern := output.(digester).intern
 	for scanner.Scan() {
 		if _, err := intern.Write(scanner.Bytes()); err != nil {
 			return err
 		}
 	}
+
 	return scanner.Err()
 }
 func MakeFileDigest(src Filename) (Digest, error) {
