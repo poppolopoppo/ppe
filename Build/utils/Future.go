@@ -65,32 +65,28 @@ func (future *sync_future[T]) Join() Result[T] {
 
 type async_future[T any] struct {
 	result *result[T]
-	wait   <-chan bool
+	wait   chan bool
 }
 
 func make_async_future[T any](f func() (T, error)) Future[T] {
 	wait := make(chan bool)
 	future := &async_future[T]{wait: wait}
-	go func() {
+	go func(future *async_future[T]) {
 		defer close(wait)
 		success, failure := f()
 		future.result = &result[T]{success, failure}
 		wait <- true
-	}()
+	}(future)
 	return future
 }
 func (future *async_future[T]) Available() bool {
 	return future.result != nil
 }
 func (future *async_future[T]) Join() Result[T] {
-	if future.result != nil {
-		return future.result
-	} else {
-		select {
-		case <-future.wait:
-			return future.result
-		}
+	if future.result == nil {
+		<-future.wait
 	}
+	return future.result
 }
 
 type futureLiteral[T any] struct {

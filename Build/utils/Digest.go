@@ -32,7 +32,7 @@ func makeModuleSignature() string {
 			MAIN_MODULEPATH = MakeFilename(x.Main.Path)
 		} else {
 			MAIN_MODULESUM = "XXXXXXXX"
-			MAIN_MODULEVER = "1.0.1"
+			MAIN_MODULEVER = "1.0.2"
 			MAIN_MODULEPATH = UFS.Output.File("Build.go")
 		}
 		MAIN_MODULEBASE = MAIN_MODULEPATH.TrimExt()
