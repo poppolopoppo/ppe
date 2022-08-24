@@ -21,7 +21,7 @@ func InitUtils() {
 	gob.Register(Directory{})
 	gob.Register(&Downloader{})
 	gob.Register(&SourceControlStatus{})
-	gob.Register(&ZipExtractor{})
+	gob.Register(&ArchiveExtractor{})
 }
 
 /***************************************
