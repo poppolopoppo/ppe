@@ -339,10 +339,11 @@ using i64   = std::int64_t;
 //----------------------------------------------------------------------------
 #if defined(_MSC_VER)
 #   define PPE_PRETTY_FUNCTION __FUNCSIG__
-#elif defined(__clang__) || defined(__GNUC__)
+#elif defined(CPP_GCC) or defined(CPP_CLANG)
 #   define PPE_PRETTY_FUNCTION __PRETTY_FUNCTION__
 #else
 #   error "need to implement PPE_PRETTY_FUNCTION !"
+#   define PPE_PRETTY_FUNCTION __func__
 #endif
 //----------------------------------------------------------------------------
 #if defined(__cpp_rtti)
