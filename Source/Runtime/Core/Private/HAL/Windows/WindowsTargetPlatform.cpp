@@ -2,6 +2,8 @@
 
 #include "HAL/Windows/WindowsTargetPlatform.h"
 
+#ifdef PLATFORM_WINDOWS
+
 #include "HAL/PlatformMisc.h"
 #include "IO/String.h"
 
@@ -101,3 +103,6 @@ bool FWindowsTargetPlatform::SupportsFeature(EPlatformFeature feature) const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+#endif //!PLATFORM_WINDOWS
+

@@ -106,7 +106,7 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
     }
 
     Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_GRANULARITY, cst.AllocationGranularity));
-    cst.AllocationGranularity = Max(cst.AllocationGranularity, ALLOCATION_GRANULARITY);
+    cst.AllocationGranularity = Max(cst.AllocationGranularity, static_cast<u64>(ALLOCATION_GRANULARITY));
     return cst;
 }
 //----------------------------------------------------------------------------
