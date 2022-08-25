@@ -130,21 +130,21 @@ template <typename T, size_t _Width, size_t _Height>
 template <size_t _Idx>
 auto TScalarMatrix<T, _Width, _Height>::Column() const -> const column_type& {
     STATIC_ASSERT(_Idx < _Width);
-    STATIC_ASSERT(sizeof(_data.m[_Idx]) == sizeof(column_type));
+    STATIC_ASSERT(Meta::TCheckSameSize<decltype(_data.m[_Idx]), column_type>::value);
     return *reinterpret_cast<const column_type*>(&_data.m[_Idx][0]);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 auto TScalarMatrix<T, _Width, _Height>::Column(size_t i) -> column_type& {
     Assert(i < _Width);
-    STATIC_ASSERT(sizeof(_data.m[0]) == sizeof(column_type));
+    STATIC_ASSERT(Meta::TCheckSameSize<decltype(_data.m[0]), column_type>::value);
     return *reinterpret_cast<column_type*>(&_data.m[i][0]);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 auto TScalarMatrix<T, _Width, _Height>::Column(size_t i) const -> const column_type& {
     Assert(i < _Width);
-    STATIC_ASSERT(sizeof(_data.m[0]) == sizeof(column_type));
+    STATIC_ASSERT(Meta::TCheckSameSize<decltype(_data.m[0]), column_type>::value);
     return *reinterpret_cast<const column_type*>(&_data.m[i][0]);
 }
 //----------------------------------------------------------------------------

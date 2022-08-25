@@ -17,6 +17,12 @@ STATIC_ASSERT(Meta::has_forceinit_constructor<uint2>::value);
 STATIC_ASSERT(Meta::has_forceinit_constructor<word3>::value);
 STATIC_ASSERT(Meta::has_forceinit_constructor<float4>::value);
 //----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::TCheckSameSize<float, TScalarVector<float, 1>>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<float[2], float2>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<float[3], float3>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<float[4], float4>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<u32[2], u322>::value);
+//----------------------------------------------------------------------------
 namespace Constants {
     const float2 Float2_One     = float2(1.0f);
     const float2 Float2_Half    = float2(0.5f);

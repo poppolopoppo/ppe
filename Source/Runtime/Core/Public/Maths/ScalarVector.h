@@ -122,31 +122,13 @@ struct TScalarVectorAxis : TScalarVectorExpr<T, _Dim, TScalarVectorAxis<T, _Dim,
         return (_Axis == _Index ? static_cast<T>(1) : static_cast<T>(0));
     }
 };
-template <typename T, size_t _Dim, size_t _Axis>
-struct TScalarVectorAxisDecl : TScalarVectorAxisDecl<T, _Dim, _Axis-1> {};
-template <typename T, size_t _Dim>
-struct TScalarVectorAxisDecl<T, _Dim, 0> {
-    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 0> X{};
-};
-template <typename T, size_t _Dim>
-struct TScalarVectorAxisDecl<T, _Dim, 1> : TScalarVectorAxisDecl<T, _Dim, 0> {
-    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 1> Y{};
-};
-template <typename T, size_t _Dim>
-struct TScalarVectorAxisDecl<T, _Dim, 2> : TScalarVectorAxisDecl<T, _Dim, 1> {
-    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 2> Z{};
-};
-template <typename T, size_t _Dim>
-struct TScalarVectorAxisDecl<T, _Dim, 3> : TScalarVectorAxisDecl<T, _Dim, 2> {
-    static CONSTEXPR const TScalarVectorAxis<T, _Dim, 3> W{};
-};
 } //!details
 //----------------------------------------------------------------------------
 // TScalarVectorAssignable<>
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T, size_t _Dim, typename _Expr, size_t... _Idx>
-struct EMPTY_BASES TScalarVectorAssignable : TScalarVectorExpr<T, _Dim, _Expr>, TScalarVectorAxisDecl<T, _Dim, _Dim-1> {
+struct TScalarVectorAssignable : TScalarVectorExpr<T, _Dim, _Expr> {
     using parent_type = TScalarVectorExpr<T, _Dim, _Expr>;
     using typename parent_type::component_type;
 
@@ -230,14 +212,14 @@ template <typename T, size_t _Dim, typename _Expr>
 using TMakeScalarVectorAssignable = typename TMakeScalarVectorAssignable_<T, _Dim, _Expr, std::make_index_sequence<_Dim>>::type;
 } //!details
 //----------------------------------------------------------------------------
-// TScalarVectorSwizzle<T, N, Indices...>
+// TScalarVectorShuffle<T, N, Indices...>
 //----------------------------------------------------------------------------
 namespace details {
-template <typename T, size_t _Dim, size_t... _Swizzle>
-struct TScalarVectorSwizzle : TMakeScalarVectorAssignable<T, sizeof...(_Swizzle), TScalarVectorSwizzle<T, _Dim, _Swizzle...>> {
+template <typename T, size_t _Dim, size_t... _Shuffle>
+struct TScalarVectorShuffle : TMakeScalarVectorAssignable<T, sizeof...(_Shuffle), TScalarVectorShuffle<T, _Dim, _Shuffle...>> {
     using component_type = T;
 
-    static CONSTEXPR size_t indices[sizeof...(_Swizzle)] = { _Swizzle... };
+    static CONSTEVAL size_t indices[sizeof...(_Shuffle)] = { _Shuffle... };
 
     T data[_Dim];
 
@@ -252,12 +234,33 @@ struct TScalarVectorSwizzle : TMakeScalarVectorAssignable<T, sizeof...(_Swizzle)
         return data[indices[_Idx]];
     }
 
-    using parent_type = TMakeScalarVectorAssignable<T, sizeof...(_Swizzle), TScalarVectorSwizzle<T, _Dim, _Swizzle...>>;
+    using parent_type = TMakeScalarVectorAssignable<T, sizeof...(_Shuffle), TScalarVectorShuffle<T, _Dim, _Shuffle...>>;
     using parent_type::parent_type;
     using parent_type::operator =;
     using parent_type::operator [];
 };
 } //!details
+//----------------------------------------------------------------------------
+// TScalarVectorSwizzle<T, N, Indices...>
+//----------------------------------------------------------------------------
+// namespace details {
+// template <typename T, size_t _Dim, size_t... _Swizzle>
+// struct TScalarVectorSwizzle : TScalarVectorExpr<T, sizeof...(_Swizzle), TScalarVectorSwizzle<T, _Dim, _Swizzle...>> {
+//     using component_type = T;
+
+//     static CONSTEVAL size_t indices[sizeof...(_Swizzle)] = { _Swizzle... };
+
+//     T data[_Dim];
+
+//     template <size_t _Idx>
+//     NODISCARD CONSTEXPR const component_type& get() const {
+//         static_assert(indices[_Idx] < _Dim, "out-of-bounds");
+//         return data[indices[_Idx]];
+//     }
+
+//     using parent_type = TScalarVectorExpr<T, sizeof...(_Swizzle), TScalarVectorSwizzle<T, _Dim, _Swizzle...>>;
+// };
+// } //!details
 //----------------------------------------------------------------------------
 // TScalarVector<T, N>
 //----------------------------------------------------------------------------
@@ -410,8 +413,8 @@ struct TScalarVector<T, 2> : details::TMakeScalarVectorAssignable<T, 2, TScalarV
         parent_type::Assign(src);
     }
 
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 2, 0> X{};
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 2, 1> Y{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 2, 0> X{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 2, 1> Y{};
 };
 //----------------------------------------------------------------------------
 // TScalarVector<T, 3>
@@ -428,19 +431,19 @@ struct TScalarVector<T, 3> : details::TMakeScalarVectorAssignable<T, 3, TScalarV
             T z;
         };
 
-        details::TScalarVectorSwizzle<T, 3, 0, 1> xy;
-        details::TScalarVectorSwizzle<T, 3, 0, 2> xz;
-        details::TScalarVectorSwizzle<T, 3, 1, 0> yx;
-        details::TScalarVectorSwizzle<T, 3, 1, 2> yz;
-        details::TScalarVectorSwizzle<T, 3, 2, 0> zx;
-        details::TScalarVectorSwizzle<T, 3, 2, 1> zy;
+        details::TScalarVectorShuffle<T, 3, 0, 1> xy;
+        details::TScalarVectorShuffle<T, 3, 0, 2> xz;
+        details::TScalarVectorShuffle<T, 3, 1, 0> yx;
+        details::TScalarVectorShuffle<T, 3, 1, 2> yz;
+        details::TScalarVectorShuffle<T, 3, 2, 0> zx;
+        details::TScalarVectorShuffle<T, 3, 2, 1> zy;
 
-        details::TScalarVectorSwizzle<T, 3, 0, 1, 2> xyz;
-        details::TScalarVectorSwizzle<T, 3, 0, 2, 1> xzy;
-        details::TScalarVectorSwizzle<T, 3, 1, 0, 2> yxz;
-        details::TScalarVectorSwizzle<T, 3, 1, 2, 0> yzx;
-        details::TScalarVectorSwizzle<T, 3, 2, 0, 1> zxy;
-        details::TScalarVectorSwizzle<T, 3, 2, 1, 0> zyx;
+        details::TScalarVectorShuffle<T, 3, 0, 1, 2> xyz;
+        details::TScalarVectorShuffle<T, 3, 0, 2, 1> xzy;
+        details::TScalarVectorShuffle<T, 3, 1, 0, 2> yxz;
+        details::TScalarVectorShuffle<T, 3, 1, 2, 0> yzx;
+        details::TScalarVectorShuffle<T, 3, 2, 0, 1> zxy;
+        details::TScalarVectorShuffle<T, 3, 2, 1, 0> zyx;
 
         //const details::TScalarVectorSwizzle<T, 3, 0, 0> xx;
         //const details::TScalarVectorSwizzle<T, 3, 1, 1> yy;
@@ -520,9 +523,9 @@ struct TScalarVector<T, 3> : details::TMakeScalarVectorAssignable<T, 3, TScalarV
 
     CONSTEXPR const auto& Shift() const { return xy; }
 
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 3, 0> X{};
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 3, 1> Y{};
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 3, 2> Z{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 0> X{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 1> Y{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 3, 2> Z{};
 };
 //----------------------------------------------------------------------------
 // TScalarVector<T, 4>
@@ -540,68 +543,68 @@ struct TScalarVector<T, 4> : details::TMakeScalarVectorAssignable<T, 4, TScalarV
             T w;
         };
 
-        details::TScalarVectorSwizzle<T, 4, 0, 1> xy;
-        details::TScalarVectorSwizzle<T, 4, 0, 2> xz;
-        details::TScalarVectorSwizzle<T, 4, 0, 3> xw;
-        details::TScalarVectorSwizzle<T, 4, 1, 0> yx;
-        details::TScalarVectorSwizzle<T, 4, 1, 2> yz;
-        details::TScalarVectorSwizzle<T, 4, 1, 3> yw;
-        details::TScalarVectorSwizzle<T, 4, 2, 0> zx;
-        details::TScalarVectorSwizzle<T, 4, 2, 1> zy;
-        details::TScalarVectorSwizzle<T, 4, 2, 3> zw;
-        details::TScalarVectorSwizzle<T, 4, 3, 0> wx;
-        details::TScalarVectorSwizzle<T, 4, 3, 1> wy;
-        details::TScalarVectorSwizzle<T, 4, 3, 2> wz;
+        details::TScalarVectorShuffle<T, 4, 0, 1> xy;
+        details::TScalarVectorShuffle<T, 4, 0, 2> xz;
+        details::TScalarVectorShuffle<T, 4, 0, 3> xw;
+        details::TScalarVectorShuffle<T, 4, 1, 0> yx;
+        details::TScalarVectorShuffle<T, 4, 1, 2> yz;
+        details::TScalarVectorShuffle<T, 4, 1, 3> yw;
+        details::TScalarVectorShuffle<T, 4, 2, 0> zx;
+        details::TScalarVectorShuffle<T, 4, 2, 1> zy;
+        details::TScalarVectorShuffle<T, 4, 2, 3> zw;
+        details::TScalarVectorShuffle<T, 4, 3, 0> wx;
+        details::TScalarVectorShuffle<T, 4, 3, 1> wy;
+        details::TScalarVectorShuffle<T, 4, 3, 2> wz;
 
-        details::TScalarVectorSwizzle<T, 4, 0, 1, 2> xyz;
-        details::TScalarVectorSwizzle<T, 4, 0, 2, 1> xzy;
-        details::TScalarVectorSwizzle<T, 4, 0, 1, 3> xyw;
-        details::TScalarVectorSwizzle<T, 4, 0, 3, 1> xwy;
-        details::TScalarVectorSwizzle<T, 4, 0, 2, 3> xzw;
-        details::TScalarVectorSwizzle<T, 4, 0, 3, 2> xwz;
-        details::TScalarVectorSwizzle<T, 4, 1, 0, 2> yxz;
-        details::TScalarVectorSwizzle<T, 4, 1, 2, 0> yzx;
-        details::TScalarVectorSwizzle<T, 4, 1, 0, 3> yxw;
-        details::TScalarVectorSwizzle<T, 4, 1, 3, 0> ywx;
-        details::TScalarVectorSwizzle<T, 4, 1, 2, 3> yzw;
-        details::TScalarVectorSwizzle<T, 4, 1, 3, 2> ywz;
-        details::TScalarVectorSwizzle<T, 4, 2, 0, 1> zxy;
-        details::TScalarVectorSwizzle<T, 4, 2, 1, 0> zyx;
-        details::TScalarVectorSwizzle<T, 4, 2, 0, 3> zxw;
-        details::TScalarVectorSwizzle<T, 4, 2, 3, 0> zwx;
-        details::TScalarVectorSwizzle<T, 4, 2, 1, 3> zyw;
-        details::TScalarVectorSwizzle<T, 4, 2, 3, 1> zwy;
-        details::TScalarVectorSwizzle<T, 4, 3, 0, 1> wxy;
-        details::TScalarVectorSwizzle<T, 4, 3, 1, 0> wyx;
-        details::TScalarVectorSwizzle<T, 4, 3, 0, 2> wxz;
-        details::TScalarVectorSwizzle<T, 4, 3, 2, 0> wzx;
-        details::TScalarVectorSwizzle<T, 4, 3, 1, 2> wyz;
-        details::TScalarVectorSwizzle<T, 4, 3, 2, 1> wzy;
+        details::TScalarVectorShuffle<T, 4, 0, 1, 2> xyz;
+        details::TScalarVectorShuffle<T, 4, 0, 2, 1> xzy;
+        details::TScalarVectorShuffle<T, 4, 0, 1, 3> xyw;
+        details::TScalarVectorShuffle<T, 4, 0, 3, 1> xwy;
+        details::TScalarVectorShuffle<T, 4, 0, 2, 3> xzw;
+        details::TScalarVectorShuffle<T, 4, 0, 3, 2> xwz;
+        details::TScalarVectorShuffle<T, 4, 1, 0, 2> yxz;
+        details::TScalarVectorShuffle<T, 4, 1, 2, 0> yzx;
+        details::TScalarVectorShuffle<T, 4, 1, 0, 3> yxw;
+        details::TScalarVectorShuffle<T, 4, 1, 3, 0> ywx;
+        details::TScalarVectorShuffle<T, 4, 1, 2, 3> yzw;
+        details::TScalarVectorShuffle<T, 4, 1, 3, 2> ywz;
+        details::TScalarVectorShuffle<T, 4, 2, 0, 1> zxy;
+        details::TScalarVectorShuffle<T, 4, 2, 1, 0> zyx;
+        details::TScalarVectorShuffle<T, 4, 2, 0, 3> zxw;
+        details::TScalarVectorShuffle<T, 4, 2, 3, 0> zwx;
+        details::TScalarVectorShuffle<T, 4, 2, 1, 3> zyw;
+        details::TScalarVectorShuffle<T, 4, 2, 3, 1> zwy;
+        details::TScalarVectorShuffle<T, 4, 3, 0, 1> wxy;
+        details::TScalarVectorShuffle<T, 4, 3, 1, 0> wyx;
+        details::TScalarVectorShuffle<T, 4, 3, 0, 2> wxz;
+        details::TScalarVectorShuffle<T, 4, 3, 2, 0> wzx;
+        details::TScalarVectorShuffle<T, 4, 3, 1, 2> wyz;
+        details::TScalarVectorShuffle<T, 4, 3, 2, 1> wzy;
 
-        details::TScalarVectorSwizzle<T, 4, 0, 1, 2, 3> xyzw;
-        details::TScalarVectorSwizzle<T, 4, 0, 1, 3, 2> xywz;
-        details::TScalarVectorSwizzle<T, 4, 0, 2, 1, 3> xzyw;
-        details::TScalarVectorSwizzle<T, 4, 0, 2, 3, 1> xzwy;
-        details::TScalarVectorSwizzle<T, 4, 0, 3, 1, 2> xwyz;
-        details::TScalarVectorSwizzle<T, 4, 0, 3, 2, 1> xwzy;
-        details::TScalarVectorSwizzle<T, 4, 1, 0, 2, 3> yxzw;
-        details::TScalarVectorSwizzle<T, 4, 1, 0, 3, 2> yxwz;
-        details::TScalarVectorSwizzle<T, 4, 1, 2, 0, 3> yzxw;
-        details::TScalarVectorSwizzle<T, 4, 1, 2, 3, 0> yzwx;
-        details::TScalarVectorSwizzle<T, 4, 1, 3, 0, 2> ywxz;
-        details::TScalarVectorSwizzle<T, 4, 1, 3, 2, 0> ywzx;
-        details::TScalarVectorSwizzle<T, 4, 2, 0, 1, 3> zxyw;
-        details::TScalarVectorSwizzle<T, 4, 2, 0, 3, 1> zxwy;
-        details::TScalarVectorSwizzle<T, 4, 2, 1, 0, 3> zyxw;
-        details::TScalarVectorSwizzle<T, 4, 2, 1, 3, 0> zywx;
-        details::TScalarVectorSwizzle<T, 4, 2, 3, 0, 1> zwxy;
-        details::TScalarVectorSwizzle<T, 4, 2, 3, 1, 0> zwyx;
-        details::TScalarVectorSwizzle<T, 4, 3, 0, 1, 2> wxyz;
-        details::TScalarVectorSwizzle<T, 4, 3, 0, 2, 1> wxzy;
-        details::TScalarVectorSwizzle<T, 4, 3, 1, 0, 2> wyxz;
-        details::TScalarVectorSwizzle<T, 4, 3, 1, 2, 0> wyzx;
-        details::TScalarVectorSwizzle<T, 4, 3, 2, 0, 1> wzxy;
-        details::TScalarVectorSwizzle<T, 4, 3, 2, 1, 0> wzyx;
+        details::TScalarVectorShuffle<T, 4, 0, 1, 2, 3> xyzw;
+        details::TScalarVectorShuffle<T, 4, 0, 1, 3, 2> xywz;
+        details::TScalarVectorShuffle<T, 4, 0, 2, 1, 3> xzyw;
+        details::TScalarVectorShuffle<T, 4, 0, 2, 3, 1> xzwy;
+        details::TScalarVectorShuffle<T, 4, 0, 3, 1, 2> xwyz;
+        details::TScalarVectorShuffle<T, 4, 0, 3, 2, 1> xwzy;
+        details::TScalarVectorShuffle<T, 4, 1, 0, 2, 3> yxzw;
+        details::TScalarVectorShuffle<T, 4, 1, 0, 3, 2> yxwz;
+        details::TScalarVectorShuffle<T, 4, 1, 2, 0, 3> yzxw;
+        details::TScalarVectorShuffle<T, 4, 1, 2, 3, 0> yzwx;
+        details::TScalarVectorShuffle<T, 4, 1, 3, 0, 2> ywxz;
+        details::TScalarVectorShuffle<T, 4, 1, 3, 2, 0> ywzx;
+        details::TScalarVectorShuffle<T, 4, 2, 0, 1, 3> zxyw;
+        details::TScalarVectorShuffle<T, 4, 2, 0, 3, 1> zxwy;
+        details::TScalarVectorShuffle<T, 4, 2, 1, 0, 3> zyxw;
+        details::TScalarVectorShuffle<T, 4, 2, 1, 3, 0> zywx;
+        details::TScalarVectorShuffle<T, 4, 2, 3, 0, 1> zwxy;
+        details::TScalarVectorShuffle<T, 4, 2, 3, 1, 0> zwyx;
+        details::TScalarVectorShuffle<T, 4, 3, 0, 1, 2> wxyz;
+        details::TScalarVectorShuffle<T, 4, 3, 0, 2, 1> wxzy;
+        details::TScalarVectorShuffle<T, 4, 3, 1, 0, 2> wyxz;
+        details::TScalarVectorShuffle<T, 4, 3, 1, 2, 0> wyzx;
+        details::TScalarVectorShuffle<T, 4, 3, 2, 0, 1> wzxy;
+        details::TScalarVectorShuffle<T, 4, 3, 2, 1, 0> wzyx;
 
         //const details::TScalarVectorSwizzle<T, 4, 0, 0> xx;
         //const details::TScalarVectorSwizzle<T, 4, 1, 1> yy;
@@ -721,10 +724,10 @@ struct TScalarVector<T, 4> : details::TMakeScalarVectorAssignable<T, 4, TScalarV
 
     CONSTEXPR const auto& Shift() const { return xyz; }
 
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 0> X{};
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 1> Y{};
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 2> Z{};
-    // static CONSTEXPR const details::TScalarVectorAxis<T, 4, 3> W{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 0> X{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 1> Y{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 2> Z{};
+    static CONSTEXPR const details::TScalarVectorAxis<T, 4, 3> W{};
 };
 //----------------------------------------------------------------------------
 // operator ==/!=
