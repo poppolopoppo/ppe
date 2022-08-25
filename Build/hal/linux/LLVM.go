@@ -195,6 +195,7 @@ func makeLlvmCompiler(
 		SanitizeIdentifier(result.Version.String()), result.ProductInstall.Arch)
 	result.CompilerRules.CompilerFamily = "clang"
 	result.CompilerRules.CppStd = CPPSTD_17
+
 	result.CompilerRules.Executable = executable
 	result.CompilerRules.Librarian = librarian
 	result.CompilerRules.Linker = linker
@@ -216,13 +217,26 @@ func makeLlvmCompiler(
 		"-march=x86-64-v3 ",
 		"-mavx", "-msse4.2",
 		"-mlzcnt", "-mpopcnt",
-		"-Xclang", "-fuse-ctor-homing",
 		"-c",               // compile only
 		"-o \"%2\" \"%1\"", // input file injection
 	)
 
 	facet.LibrarianOptions.Append("rcs \"%2\" \"%1\"")
 	facet.LinkerOptions.Append("\"%1\" -o \"%2\"")
+
+	if int(version) >= int(LLVM_14) {
+		facet.AddCompilationFlag_NoPreprocessor("-Xclang -fuse-ctor-homing")
+	}
+
+	switch linuxFlags.DumpRecordLayouts {
+	case DUMPRECORDLAYOUTS_NONE:
+	case DUMPRECORDLAYOUTS_SIMPLE:
+		facet.CompilerOptions.Append("-Xclang -fdump-record-layouts-simple")
+	case DUMPRECORDLAYOUTS_FULL:
+		facet.CompilerOptions.Append("-Xclang -fdump-record-layouts")
+	default:
+		UnexpectedValue(linuxFlags.DumpRecordLayouts)
+	}
 }
 
 func (llvm *LlvmCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {

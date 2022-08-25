@@ -161,3 +161,58 @@ func getCppStdFromLlvm(ver LlvmVersion) CppStdType {
 		return CPPSTD_11
 	}
 }
+
+/***************************************
+ * Dump record layouts type
+ ***************************************/
+
+type DumpRecordLayoutsType int32
+
+const (
+	DUMPRECORDLAYOUTS_NONE DumpRecordLayoutsType = iota
+	DUMPRECORDLAYOUTS_SIMPLE
+	DUMPRECORDLAYOUTS_FULL
+)
+
+func DumpRecordLayouts() []DumpRecordLayoutsType {
+	return []DumpRecordLayoutsType{
+		DUMPRECORDLAYOUTS_NONE,
+		DUMPRECORDLAYOUTS_SIMPLE,
+		DUMPRECORDLAYOUTS_FULL,
+	}
+}
+func (x DumpRecordLayoutsType) String() string {
+	switch x {
+	case DUMPRECORDLAYOUTS_NONE:
+		return "NONE"
+	case DUMPRECORDLAYOUTS_SIMPLE:
+		return "SIMPLE"
+	case DUMPRECORDLAYOUTS_FULL:
+		return "FULL"
+	default:
+		UnexpectedValue(x)
+		return ""
+	}
+}
+func (x *DumpRecordLayoutsType) Set(in string) error {
+	switch strings.ToUpper(in) {
+	case DUMPRECORDLAYOUTS_NONE.String():
+		*x = DUMPRECORDLAYOUTS_NONE
+	case DUMPRECORDLAYOUTS_SIMPLE.String():
+		*x = DUMPRECORDLAYOUTS_SIMPLE
+	case DUMPRECORDLAYOUTS_FULL.String():
+		*x = DUMPRECORDLAYOUTS_FULL
+	default:
+		UnexpectedValue(in)
+	}
+	return nil
+}
+func (x DumpRecordLayoutsType) GetDigestable(o *bytes.Buffer) {
+	o.WriteString(x.String())
+}
+func (x DumpRecordLayoutsType) MarshalJSON() ([]byte, error) {
+	return MarshalJSON(x)
+}
+func (x *DumpRecordLayoutsType) UnmarshalJSON(data []byte) error {
+	return UnmarshalJSON(x, data)
+}

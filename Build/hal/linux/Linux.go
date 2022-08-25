@@ -8,23 +8,26 @@ import (
 )
 
 type LinuxFlagsT struct {
-	Compiler  CompilerType
-	LlvmVer   LlvmVersion
-	StackSize IntVar
+	Compiler          CompilerType
+	LlvmVer           LlvmVersion
+	DumpRecordLayouts DumpRecordLayoutsType
+	StackSize         IntVar
 }
 
 var LinuxFlags = MakeServiceAccessor[ParsableFlags](newLinuxFlags)
 
 func newLinuxFlags() *LinuxFlagsT {
 	return CommandEnv.BuildGraph().Create(&LinuxFlagsT{
-		Compiler:  COMPILER_CLANG,
-		LlvmVer:   llvm_any,
-		StackSize: 2000000,
+		Compiler:          COMPILER_CLANG,
+		LlvmVer:           llvm_any,
+		DumpRecordLayouts: DUMPRECORDLAYOUTS_NONE,
+		StackSize:         2000000,
 	}).GetBuildable().(*LinuxFlagsT)
 }
 func (flags *LinuxFlagsT) InitFlags(cfg *PersistentMap) {
 	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]")
 	cfg.Persistent(&flags.LlvmVer, "LlvmVer", "select LLVM toolchain version ["+JoinString(",", LlvmVersions()...)+"]")
+	cfg.Persistent(&flags.DumpRecordLayouts, "DumpRecordLayouts", "use to investigate structure layouts ["+JoinString(",", DumpRecordLayouts()...)+"]")
 	cfg.Persistent(&flags.StackSize, "StackSize", "set default thread stack size in bytes")
 }
 func (flags *LinuxFlagsT) ApplyVars(cfg *PersistentMap) {
@@ -39,6 +42,7 @@ func (flags *LinuxFlagsT) Build(BuildContext) (BuildStamp, error) {
 func (flags *LinuxFlagsT) GetDigestable(o *bytes.Buffer) {
 	flags.Compiler.GetDigestable(o)
 	flags.LlvmVer.GetDigestable(o)
+	flags.DumpRecordLayouts.GetDigestable(o)
 	flags.StackSize.GetDigestable(o)
 }
 
