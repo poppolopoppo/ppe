@@ -327,6 +327,25 @@ auto FLinuxPlatformThread::IOThreadsInfo() -> FThreadGroupInfo {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Synchronization barrier
+//----------------------------------------------------------------------------
+void FLinuxPlatformThread::CreateSynchronizationBarrier(FSynchronizationBarrier* pbarrier, size_t numThreads) {
+    Assert(pbarrier);
+    ::pthread_barrierattr_t attr;
+    Verify(::pthread_barrier_init(pbarrier, &attr, checked_cast<unsigned>(numThreads)) == 0);
+}
+//----------------------------------------------------------------------------
+bool FLinuxPlatformThread::EnterSynchronizationBarrier(FSynchronizationBarrier& barrier) {
+    return (::pthread_barrier_wait(&barrier) == PTHREAD_BARRIER_SERIAL_THREAD);
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformThread::DestroySynchronizationBarrier(FSynchronizationBarrier* pbarrier) {
+    Assert(pbarrier);
+    Verify(::pthread_barrier_destroy(pbarrier) == 0);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE
 
 #endif //!PLATFORM_LINUX

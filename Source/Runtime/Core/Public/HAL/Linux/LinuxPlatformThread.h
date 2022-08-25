@@ -6,6 +6,7 @@
 
 #include "HAL/Linux/LinuxPlatformIncludes.h"
 
+#include <bits/pthreadtypes.h>
 #include <mutex>
 
 #if PPE_HAS_CXX14
@@ -139,6 +140,16 @@ public:
     static FORCE_INLINE void DestroyReadWriteLock(FReadWriteLock* ) NOEXCEPT {
         // std::shared_timed_mutex doesn't require destrucion
     }
+
+    //------------------------------------------------------------------------
+    // synchronization barrier
+
+    using FSynchronizationBarrier = ::pthread_barrier_t;
+
+    static void CreateSynchronizationBarrier(FSynchronizationBarrier* pbarrier, size_t numThreads);
+    static bool EnterSynchronizationBarrier(FSynchronizationBarrier& barrier);
+    static void DestroySynchronizationBarrier(FSynchronizationBarrier* pbarrier);
+
 
 };
 //----------------------------------------------------------------------------
