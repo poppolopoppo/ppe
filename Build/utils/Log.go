@@ -285,7 +285,7 @@ func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 		buf := bytes.NewBuffer(tmp)
 		buf.Reset()
 
-		if true && len(pin.messages) == pin.inflight && !clear {
+		if false && len(pin.messages) == pin.inflight && !clear {
 			// one clear line: ghosting
 			for i := 0; i < pin.inflight+1; i += 1 {
 				fmt.Fprint(buf, ANSI_CURSOR_UP)
