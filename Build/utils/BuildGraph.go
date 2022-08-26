@@ -371,6 +371,8 @@ func (deps BuildDependencies) joinBuild(batch *buildBatch, depType string) (bool
 				LogVeryVerbose("%v: need to rebuild %v dependency <%v>:\n\tnew: %v\n\told: %v", batch.Caller.Alias(), depType, a, newStamp, oldStamp)
 				deps[a] = newStamp
 				rebuild = true
+			} else {
+				LogDebug("%v: %v %s dependency is up-to-date", batch.Caller.Alias(), a, depType)
 			}
 		} else {
 			LogWarning("%v: %s dependency failed with %v", batch.Caller.Alias(), depType, depErr)

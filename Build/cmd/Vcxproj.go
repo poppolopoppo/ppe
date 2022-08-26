@@ -143,7 +143,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 					sourceFiles.AppendUniq(*moduleRules.PrecompiledSource)
 				}
 				if gitignore := moduleRules.ModuleDir.File(".gitignore"); gitignore.Exists() {
-					sourceFiles.AppendUniq(gitignore);
+					sourceFiles.AppendUniq(gitignore)
 				}
 
 				bff.Assign("ProjectBasePath", moduleRules.ModuleDir)
@@ -246,6 +246,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	})
 
 	if err == nil {
+		bc.OutputFile(vcx.Output)
 		return vcx.Output.Build(bc)
 	} else {
 		return BuildStamp{}, err
