@@ -32,7 +32,7 @@ namespace Meta {
 #define PPE_DEFINE_AUTOPOD(_STRUCT_NAME, ...) struct _STRUCT_NAME { \
         PPE_AUTOSTRUCT_MEMBERS(_STRUCT_NAME, __VA_ARGS__) \
         PPE_ASSUME_FRIEND_AS_POD(_STRUCT_NAME) \
-    }; \
+    };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

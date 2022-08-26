@@ -1,6 +1,4 @@
-﻿#include <corecrt_io.h>
-
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 #include "RHIVulkan_fwd.h"
 

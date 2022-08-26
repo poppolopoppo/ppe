@@ -145,8 +145,8 @@ struct FGLFWWindow::FMouseCallbacks {
             window.OnMouseClick(mouse->ClientX(), mouse->ClientY(), event.Button);
             break;
         case FGLFWMessageMouse::Scroll:
-            mouse->SetWheelDelta(FPlatformMaths::RoundToInt(static_cast<float>(event.Coords.x)));
-            window.OnMouseWheel(mouse->ClientX(), mouse->ClientY(), mouse->WheelDelta().Raw());
+            mouse->SetWheelDeltaY(FPlatformMaths::RoundToInt(static_cast<float>(event.Coords.x)));
+            window.OnMouseWheel(mouse->ClientX(), mouse->ClientY(), mouse->WheelDeltaY().Raw());
             break;
         }
     }
@@ -172,6 +172,12 @@ void FGLFWPlatformMouse::ResetCursorType() {
     glfwSetCursor(
         static_cast<GLFWwindow*>(FGLFWWindow::ActiveNativeHandle()),
         nullptr );
+}
+//----------------------------------------------------------------------------
+void FGLFWPlatformMouse::SetWindowCursor(const FGLFWWindow& window) {
+    glfwSetCursor(
+        static_cast<GLFWwindow*>(window.NativeHandle()),
+        StandardCursor_(window.CursorType()) );
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformMouse::Visible() {
@@ -215,6 +221,11 @@ void FGLFWPlatformMouse::CenterCursorOnWindow(const FGLFWWindow& window) {
     const double clientX = (window.Width() / 2.0);
     const double clientY = (window.Height() / 2.0);
     glfwSetCursorPos(nativeHandle, clientX, clientY);
+}
+//----------------------------------------------------------------------------
+void FGLFWPlatformMouse::SetCursorPosition(int screenX, int screenY) {
+    Unused(screenX, screenY);
+    LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 FEventHandle FGLFWPlatformMouse::SetupMessageHandler(FGLFWWindow& window, FMouseState* mouse) {

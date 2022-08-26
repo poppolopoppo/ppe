@@ -135,10 +135,21 @@ public:
 };
 //----------------------------------------------------------------------------
 STATIC_CONST_INTEGRAL(u32, PipelineStaticOffset, UMax);
+#if 0 // empty struct is a special case that we prefer to dodge
+PPE_DEFINE_AUTOPOD(FPipelineSampler)
+#else
+struct FPipelineSampler {
+    PPE_ASSUME_FRIEND_AS_POD(FPipelineSampler)
+    CONSTEXPR bool operator ==(const FPipelineSampler& ) const NOEXCEPT { return true; }
+    CONSTEXPR bool operator !=(const FPipelineSampler& ) const NOEXCEPT { return false; }
+    CONSTEXPR friend hash_t hash_value(const FPipelineSampler& ) NOEXCEPT {
+        return PPE::hash_str_constexpr(STRINGIZE(FPipelineSampler));
+    }
+};
+#endif
 PPE_DEFINE_AUTOPOD(FPipelineTexture,
     (EResourceState, State, { Default }),
     (EImageSampler, Type, { Default }))
-PPE_DEFINE_AUTOPOD(FPipelineSampler)
 PPE_DEFINE_AUTOPOD(FPipelineSubpassInput,
     (EResourceState, State, { Default }),
     (u32, AttachmentIndex, { UMax }),

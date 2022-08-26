@@ -110,6 +110,8 @@ struct TNamedId<_Uid, false> {
 
     TNamedId() = default;
 
+    CONSTEXPR TNamedId(const TNamedId<_Uid, true>& keepName) NOEXCEPT : HashValue(keepName.HashValue) {}
+
     CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT : HashValue(UMax) {} // for Meta::TEmptyKey<> traits
 
     CONSTEXPR explicit TNamedId(const FStringView& name) NOEXCEPT

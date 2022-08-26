@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Diagnostic/Logger_fwd.h"
+#include "IO/StaticString.h"
 #include "Meta/Enum.h"
 #include "Memory/RefPtr.h"
 #include "Time/Timestamp.h"
@@ -279,6 +280,6 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 
 #define LOG_UNSUPPORTED_FUNCTION( _CATEGORY ) \
     LOG( _CATEGORY, Warning, L"unsupported: {0}, at {1}:{2}", \
-        PPE_PRETTY_FUNCTION, \
+        UTF_8_TO_WCHAR(PPE_PRETTY_FUNCTION), \
         WIDESTRING(__FILE__), \
         __LINE__ )

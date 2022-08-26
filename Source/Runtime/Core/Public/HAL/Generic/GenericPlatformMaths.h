@@ -3,6 +3,7 @@
 #include "HAL/TargetPlatform.h"
 
 #include <cmath>
+#include <limits.h> // CHAR_BIT
 #include <pmmintrin.h> // FP_ASSIST : denormals are zero (DAZ)
 #include <xmmintrin.h> // FP_ASSIST : flush to zero (FTZ)
 

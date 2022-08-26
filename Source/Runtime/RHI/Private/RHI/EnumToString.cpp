@@ -1101,14 +1101,14 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         const auto it = static_cast<EShaderCompilationFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
         switch (it) {
-        case EShaderCompilationFlags::Quiet: oss << STRING_LITERAL(_Char, "Quiet");
-        case EShaderCompilationFlags::UseCurrentDeviceLimits: oss << STRING_LITERAL(_Char, "UseCurrentDeviceLimits");
-        case EShaderCompilationFlags::GenerateDebug: oss << STRING_LITERAL(_Char, "GenerateDebug");
-        case EShaderCompilationFlags::Optimize: oss << STRING_LITERAL(_Char, "Optimize");
-        case EShaderCompilationFlags::OptimizeSize: oss << STRING_LITERAL(_Char, "OptimizeSize");
-        case EShaderCompilationFlags::StrongOptimization: oss << STRING_LITERAL(_Char, "StrongOptimization");
-        case EShaderCompilationFlags::Validate: oss << STRING_LITERAL(_Char, "Validate");
-        case EShaderCompilationFlags::ParseAnnotations: oss << STRING_LITERAL(_Char, "ParseAnnotations");
+        case EShaderCompilationFlags::Quiet: oss << sep << STRING_LITERAL(_Char, "Quiet");
+        case EShaderCompilationFlags::UseCurrentDeviceLimits: oss << sep << STRING_LITERAL(_Char, "UseCurrentDeviceLimits");
+        case EShaderCompilationFlags::GenerateDebug: oss << sep << STRING_LITERAL(_Char, "GenerateDebug");
+        case EShaderCompilationFlags::Optimize: oss << sep << STRING_LITERAL(_Char, "Optimize");
+        case EShaderCompilationFlags::OptimizeSize: oss << sep << STRING_LITERAL(_Char, "OptimizeSize");
+        case EShaderCompilationFlags::StrongOptimization: oss << sep << STRING_LITERAL(_Char, "StrongOptimization");
+        case EShaderCompilationFlags::Validate: oss << sep << STRING_LITERAL(_Char, "Validate");
+        case EShaderCompilationFlags::ParseAnnotations: oss << sep << STRING_LITERAL(_Char, "ParseAnnotations");
         default: AssertNotImplemented();
         }
     }

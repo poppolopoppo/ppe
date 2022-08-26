@@ -56,6 +56,8 @@ public: // must be defined for every platform
     static ECursorType SetCursorType(ECursorType type);
     static void ResetCursorType();
 
+    static void SetWindowCursor(const FGLFWWindow& window);
+
     static bool Visible();
     static bool SetVisible(bool value);
 
@@ -66,6 +68,7 @@ public: // must be defined for every platform
     static bool ScreenToClient(const FGLFWWindow& window, int* x, int *y);
 
     static void CenterCursorOnWindow(const FGLFWWindow& window);
+    static void SetCursorPosition(int screenX, int screenY);
 
     static FEventHandle SetupMessageHandler(FGLFWWindow& window, FMouseState* mouse);
     static void RemoveMessageHandler(FGLFWWindow& window, FEventHandle& handle);

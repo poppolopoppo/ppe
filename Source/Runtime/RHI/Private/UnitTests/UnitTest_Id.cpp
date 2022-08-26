@@ -32,7 +32,7 @@ NO_INLINE static void Test_Id2_() {
     using ID1 = details::TNamedId<100, false>;
     using ID2 = details::TNamedId<100, true>;
 
-    ID2 a{"test"};
+    ID1 a{"test"};
     ID2 b{"test"};
     AssertRelease(a == b);
 }

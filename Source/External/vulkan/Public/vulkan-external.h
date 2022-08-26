@@ -30,4 +30,11 @@ PRAGMA_MSVC_WARNING_PUSH()
 #   include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_wayland.h"
 #endif
 
+#ifdef Always // spilled from X11/X.h
+#   undef Always
+#endif
+#ifdef None // spilled from X11/X.h
+#   undef None
+#endif
+
 PRAGMA_MSVC_WARNING_POP()

@@ -15,7 +15,7 @@ class PPE_APPLICATION_API FLinuxApplication : public FGLFWApplication {
 public: // must be defined for every platform
     using parent_type = FGLFWApplication;
 
-    explicit FLinuxApplication(const FModularDomain& domain, FString&& name);
+    explicit FLinuxApplication(FModularDomain& domain, FString&& name);
     virtual ~FLinuxApplication();
 
     virtual void Start() override;

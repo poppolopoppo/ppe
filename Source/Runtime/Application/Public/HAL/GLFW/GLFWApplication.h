@@ -15,7 +15,7 @@ class PPE_APPLICATION_API FGLFWApplication : public FGenericApplication {
 public: // must be defined for every platform
     using parent_type = FGenericApplication;
 
-    explicit FGLFWApplication(const FModularDomain& domain, FString&& name);
+    explicit FGLFWApplication(FModularDomain& domain, FString&& name);
     virtual ~FGLFWApplication();
 
     virtual void Start() override;

@@ -249,7 +249,7 @@ void FGenericWindow::ClientToScreen(int* clientX, int* clientY) const {
     PPE_DATARACE_SHARED_SCOPE(this);
     Verify(FPlatformMouse::ClientToScreen(*checked_cast<const FPlatformWindow*>(this), clientX, clientY));
 }
-
+//----------------------------------------------------------------------------
 ECursorType FGenericWindow::SetCursorType(ECursorType value) {
     const ECursorType previous = _cursor;
     if (previous != value) {

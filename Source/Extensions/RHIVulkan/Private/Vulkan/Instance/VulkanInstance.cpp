@@ -1131,11 +1131,19 @@ bool FVulkanInstance::CreateSurface(VkSurfaceKHR* pSurface, FVulkanWindowHandle 
 
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
     VkAndroidSurfaceCreateInfoKHR createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+    createInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
     createInfo.flags = 0;
     createInfo.window = static_cast<::ANativeWindow>(window);
 
     VK_CHECK( vkCreateAndroidSurfaceKHR(_vkInstance, &createInfo, &_vkAllocationCallbacks, pSurface) );
+
+#elif defined(VK_USE_PLATFORM_XLIB_KHR) && VK_USE_PLATFORM_XLIB_KHR
+    VkXlibSurfaceCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+    createInfo.flags = 0;
+    createInfo.window = reinterpret_cast<::Window>(window);
+
+    VK_CHECK( vkCreateXlibSurfaceKHR(_vkInstance, &createInfo, &_vkAllocationCallbacks, pSurface) );
 
 #else
 #   error "platform not supported"
@@ -1374,6 +1382,10 @@ FVulkanInstanceExtensionSet FVulkanInstance::RequiredInstanceExtensions(EVulkanV
     return vk::instance_extensions_require(FVulkanInstanceExtensionSet{
 #if defined(VK_USE_PLATFORM_WIN32_KHR) && VK_USE_PLATFORM_WIN32_KHR
         EVulkanInstanceExtension::KHR_win32_surface,
+#elif defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
+        EVulkanInstanceExtension::KHR_android_surface,
+#elif defined(VK_USE_PLATFORM_XLIB_KHR) && VK_USE_PLATFORM_XLIB_KHR
+        EVulkanInstanceExtension::KHR_xlib_surface,
 #else
 #   error "platform not supported (#TODO)"
 #endif
@@ -1390,6 +1402,8 @@ FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersi
         EVulkanDeviceExtension::KHR_external_fence_win32,
         EVulkanDeviceExtension::KHR_external_memory_win32,
         EVulkanDeviceExtension::KHR_external_semaphore_win32 });
+#elif defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
+#elif defined(VK_USE_PLATFORM_XLIB_KHR) && VK_USE_PLATFORM_XLIB_KHR
 #else
 #   error "platform not supported (#TODO)"
 #endif

@@ -8,12 +8,14 @@
 
 #if USE_PPE_RHIVULKAN_CHECKS
 
+#   include "IO/StaticString.h"
+
 #   define VK_CALL(...) do { \
         const VkResult ANONYMIZE(__vkResult) = ( __VA_ARGS__ ); \
         ::PPE::RHI::VulkanCheckNoErrors( \
             ANONYMIZE(__vkResult), \
             STRINGIZE(__VA_ARGS__), \
-            WIDESTRING(PPE_PRETTY_FUNCTION), \
+            UTF_8_TO_WCHAR(PPE_PRETTY_FUNCTION), \
             WIDESTRING(__FILE__),  __LINE__ ); \
     } while(0)
 #   define VK_CHECK_EX(_RESULT, ...) do { \
@@ -21,7 +23,7 @@
         if (not ::PPE::RHI::VulkanCheckIfErrors( \
             ANONYMIZE(__vkResult), \
             STRINGIZE(__VA_ARGS__), \
-            WIDESTRING(PPE_PRETTY_FUNCTION), \
+            UTF_8_TO_WCHAR(PPE_PRETTY_FUNCTION), \
             WIDESTRING(__FILE__),  __LINE__ )) \
             return (_RESULT); \
     } while (0)

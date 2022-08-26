@@ -9,7 +9,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FGLFWApplication::FGLFWApplication(const FModularDomain& domain, FString&& name)
+FGLFWApplication::FGLFWApplication(FModularDomain& domain, FString&& name)
 :   FGenericApplication(domain, std::move(name))
 {}
 //----------------------------------------------------------------------------
