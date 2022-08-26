@@ -19,6 +19,26 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Vertex ID names
+//----------------------------------------------------------------------------
+namespace VertexID {
+//----------------------------------------------------------------------------
+CONSTEXPR FVertexID PositionN(size_t index) NOEXCEPT { return FVertexID("v_Position", index); }
+CONSTEXPR FVertexID NormalN(size_t index) NOEXCEPT { return FVertexID("v_Normal", index); }
+CONSTEXPR FVertexID TangentN(size_t index) NOEXCEPT { return FVertexID("v_Tangent", index); }
+CONSTEXPR FVertexID BinormalN(size_t index) NOEXCEPT { return FVertexID("v_Binormal", index); }
+CONSTEXPR FVertexID TexcoordN(size_t index) NOEXCEPT { return FVertexID("v_Texcoord", index); }
+CONSTEXPR FVertexID ColorN(size_t index) NOEXCEPT { return FVertexID("v_Color", index); }
+//----------------------------------------------------------------------------
+CONSTEXPR FVertexID Position{ PositionN(0) };
+CONSTEXPR FVertexID Normal{ NormalN(0) };
+CONSTEXPR FVertexID Tangent{ TangentN(0) };
+CONSTEXPR FVertexID Binormal{ BinormalN(0) };
+CONSTEXPR FVertexID Texcoord{ TexcoordN(0) };
+CONSTEXPR FVertexID Color{ ColorN(0) };
+//----------------------------------------------------------------------------
+} //!namespace VertexID
+//----------------------------------------------------------------------------
 struct FVertexAttribute {
     FVertexID Id;
     u32 Index{UMax};
@@ -111,6 +131,8 @@ struct FVertexInputState {
 
     PPE_RHI_API FVertexInputState& Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId = Default) NOEXCEPT;
     PPE_RHI_API FVertexInputState& Bind(const FVertexBufferID& bufferId, u32 stride, u32 index = AutoBindingIndex, EVertexInputRate rate = EVertexInputRate::Vertex) NOEXCEPT;
+
+    PPE_RHI_API const FVertexBufferBinding* Binding(const FVertexInput& input) const NOEXCEPT;
 
     NODISCARD PPE_RHI_API bool CopyAttributes(const TMemoryView<const FVertexAttribute> attribs) NOEXCEPT;
 

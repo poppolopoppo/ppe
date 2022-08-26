@@ -55,13 +55,14 @@ PPE_ASSUME_TYPE_AS_POD(FResourceHandle);
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-// TNamedId<> computes a hashed id based on an input string, which can be optimized out
+// TNamedId<> computes a hashed id based on an input string and an index, which can be optimized out
 template <u32 _Uid, bool _KeepName>
 struct TNamedId {
     STATIC_CONST_INTEGRAL(u32, StringCapacity, 32);
     using string_t = TStaticString<StringCapacity>;
 
-    hash_t HashValue{0};
+    hash_t HashValue{ 0 };
+    size_t Index{ 0 };
     string_t Name;
 
     TNamedId() = default;
@@ -70,12 +71,15 @@ struct TNamedId {
         : HashValue(UMax)
 #if USE_PPE_ASSERT
         , Name(UMax, 0)
+        , Index(UMax)
 #endif
     {}
 
-    CONSTEXPR explicit TNamedId(const FStringView& name) NOEXCEPT
-        : HashValue(hash_mem_constexpr(name.data(), name.size()))
-        , Name(name) {}
+    CONSTEXPR explicit TNamedId(const FStringView& name, size_t index = 0) NOEXCEPT
+        : HashValue(hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
+        , Name(name)
+        , Index(index)
+    {}
 
     CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
@@ -88,10 +92,11 @@ struct TNamedId {
     CONSTEXPR bool operator ==(const TNamedId& other) const {
         if (HashValue == other.HashValue) {
             Assert_NoAssume(Name == other.Name);
+            Assert_NoAssume(Index == other.Index);
             return true;
         }
         else {
-            Assert_NoAssume(Name != other.Name);
+            Assert_NoAssume(Name != other.Name || Index != other.Index);
             return false;
         }
     }
@@ -114,8 +119,9 @@ struct TNamedId<_Uid, false> {
 
     CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT : HashValue(UMax) {} // for Meta::TEmptyKey<> traits
 
-    CONSTEXPR explicit TNamedId(const FStringView& name) NOEXCEPT
-        : HashValue(hash_mem_constexpr(name.data(), name.size())) {}
+    CONSTEXPR explicit TNamedId(const FStringView& name, size_t index = 0) NOEXCEPT
+        : HashValue(hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
+    {}
 
     CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }

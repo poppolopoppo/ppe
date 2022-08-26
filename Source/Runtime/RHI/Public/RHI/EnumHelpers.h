@@ -232,23 +232,139 @@ inline CONSTEXPR u32 EPrimitiveTopology_PrimitiveCount(EPrimitiveTopology topolo
 //----------------------------------------------------------------------------
 // Vertices
 //----------------------------------------------------------------------------
+inline CONSTEXPR u32 EVertexFormat_Arity(EVertexFormat fmt) {
+    return u32(BitAnd(fmt, EVertexFormat::_VecMask)) >> u32(EVertexFormat::_VecOffset);
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR EVertexFormat EVertexFormat_Flags(EVertexFormat fmt) {
+    return BitAnd(fmt, EVertexFormat::_FlagsMask);
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR EVertexFormat EVertexFormat_Type(EVertexFormat fmt) {
+    return BitAnd(fmt, EVertexFormat::_TypeMask);
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR bool EVertexFormat_IsSignedInt(EVertexFormat fmt) {
+    switch (EVertexFormat_Type(fmt)) {
+    case EVertexFormat::_Byte:
+    case EVertexFormat::_Short:
+    case EVertexFormat::_Int:
+    case EVertexFormat::_Long:
+        return (EVertexFormat_Flags(fmt) == EVertexFormat(0));
+    case EVertexFormat::_UByte:
+    case EVertexFormat::_UShort:
+    case EVertexFormat::_UInt:
+    case EVertexFormat::_ULong:
+    case EVertexFormat::_Half:
+    case EVertexFormat::_Float:
+    case EVertexFormat::_Double:
+        return false;
+    default:
+        AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR bool EVertexFormat_IsUnsignedInt(EVertexFormat fmt) {
+    switch (EVertexFormat_Type(fmt)) {
+    case EVertexFormat::_UByte:
+    case EVertexFormat::_UShort:
+    case EVertexFormat::_UInt:
+    case EVertexFormat::_ULong:
+        return (EVertexFormat_Flags(fmt) == EVertexFormat(0));
+    case EVertexFormat::_Byte:
+    case EVertexFormat::_Short:
+    case EVertexFormat::_Int:
+    case EVertexFormat::_Long:
+    case EVertexFormat::_Half:
+    case EVertexFormat::_Float:
+    case EVertexFormat::_Double:
+        return false;
+    default:
+        AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR bool EVertexFormat_IsFloatingPoint(EVertexFormat fmt) {
+    switch (EVertexFormat_Type(fmt)) {
+    case EVertexFormat::_Byte:
+    case EVertexFormat::_Short:
+    case EVertexFormat::_Int:
+    case EVertexFormat::_Long:
+    case EVertexFormat::_UByte:
+    case EVertexFormat::_UShort:
+    case EVertexFormat::_UInt:
+    case EVertexFormat::_ULong:
+        switch (EVertexFormat_Flags(fmt)) {
+        case EVertexFormat::NormalizedFlag:
+        case EVertexFormat::ScaledFlag:
+            return true;
+        case EVertexFormat(0):
+            return false;
+        default:
+            AssertNotImplemented();
+        }
+    case EVertexFormat::_Half:
+    case EVertexFormat::_Float:
+    case EVertexFormat::_Double:
+        return (EVertexFormat_Flags(fmt) == EVertexFormat(0));
+    default:
+        AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR bool EVertexFormat_IsNormalized(EVertexFormat fmt) {
+    switch (EVertexFormat_Type(fmt)) {
+    case EVertexFormat::_Byte:
+    case EVertexFormat::_Short:
+    case EVertexFormat::_Int:
+    case EVertexFormat::_Long:
+    case EVertexFormat::_UByte:
+    case EVertexFormat::_UShort:
+    case EVertexFormat::_UInt:
+    case EVertexFormat::_ULong:
+        switch (EVertexFormat_Flags(fmt)) {
+        case EVertexFormat::NormalizedFlag:
+            return true;
+        case EVertexFormat(0):
+        case EVertexFormat::ScaledFlag:
+            return false;
+        default:
+            AssertNotImplemented();
+        }
+    case EVertexFormat::_Half:
+    case EVertexFormat::_Float:
+    case EVertexFormat::_Double:
+        return true;
+    default:
+        AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
 inline CONSTEXPR u32 EVertexFormat_SizeOf(EVertexFormat fmt) {
-    const EVertexFormat scalar = BitAnd(fmt, EVertexFormat::_TypeMask);
-    const u32 arity = u32(BitAnd(fmt, EVertexFormat::_VecMask)) >> u32(EVertexFormat::_VecOffset);
+    const EVertexFormat scalar = EVertexFormat_Type(fmt);
+    const u32 arity = EVertexFormat_Arity(fmt);
 
     switch (scalar) {
     case EVertexFormat::_Byte:
-    case EVertexFormat::_UByte: return sizeof(u8) * arity;
+    case EVertexFormat::_UByte:
+        return sizeof(u8) * arity;
     case EVertexFormat::_Short:
-    case EVertexFormat::_UShort: return sizeof(u16) * arity;
+    case EVertexFormat::_UShort:
+        return sizeof(u16) * arity;
     case EVertexFormat::_Int:
-    case EVertexFormat::_UInt: return sizeof(u32) * arity;
+    case EVertexFormat::_UInt:
+        return sizeof(u32) * arity;
     case EVertexFormat::_Long:
-    case EVertexFormat::_ULong: return sizeof(u64) * arity;
-    case EVertexFormat::_Half: return sizeof(u16) * arity;
-    case EVertexFormat::_Float: return sizeof(float) * arity;
-    case EVertexFormat::_Double: return sizeof(double) * arity;
-    default: AssertNotImplemented();
+    case EVertexFormat::_ULong:
+        return sizeof(u64) * arity;
+    case EVertexFormat::_Half:
+        return sizeof(u16) * arity;
+    case EVertexFormat::_Float:
+        return sizeof(float) * arity;
+    case EVertexFormat::_Double:
+        return sizeof(double) * arity;
+    default:
+        AssertNotImplemented();
     }
 }
 //----------------------------------------------------------------------------

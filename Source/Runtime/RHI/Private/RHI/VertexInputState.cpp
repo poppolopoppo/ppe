@@ -72,6 +72,14 @@ FVertexInputState& FVertexInputState::Bind(const FVertexBufferID& bufferId, u32 
     return (*this);
 }
 //----------------------------------------------------------------------------
+const FVertexBufferBinding* FVertexInputState::Binding(const FVertexInput& input) const noexcept {
+    for (const FVertexBufferBinding& binding : BufferBindings.Values()) {
+        if (binding.Index == input.BufferBinding)
+            return std::addressof(binding);
+    }
+    return nullptr;
+}
+//----------------------------------------------------------------------------
 bool FVertexInputState::CopyAttributes(const TMemoryView<const FVertexAttribute> attribs) NOEXCEPT {
     AssertRelease(attribs.size() == Vertices.size());
 

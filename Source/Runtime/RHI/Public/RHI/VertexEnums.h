@@ -16,32 +16,32 @@ enum class EIndexFormat : u32 {
 enum class EVertexFormat : u32 {
     // vector size
     _VecOffset      = 0,
-    _Vec1           = 1 << _VecOffset,
-    _Vec2           = 2 << _VecOffset,
-    _Vec3           = 3 << _VecOffset,
-    _Vec4           = 4 << _VecOffset,
+    _Vec1           = 1   << _VecOffset,
+    _Vec2           = 2   << _VecOffset,
+    _Vec3           = 3   << _VecOffset,
+    _Vec4           = 4   << _VecOffset,
     _VecMask        = 0xF << _VecOffset,
 
     // type
-    _TypeOffset     = 8,
-    _Byte           =  1 << _TypeOffset,
-    _UByte          =  2 << _TypeOffset,
-    _Short          =  3 << _TypeOffset,
-    _UShort         =  4 << _TypeOffset,
-    _Int            =  5 << _TypeOffset,
-    _UInt           =  6 << _TypeOffset,
-    _Long           =  7 << _TypeOffset,
-    _ULong          =  8 << _TypeOffset,
-    _Half           =  9 << _TypeOffset,
-    _Float          = 10 << _TypeOffset,
-    _Double         = 11 << _TypeOffset,
+    _TypeOffset     =  8,
+    _Byte           =  1  << _TypeOffset,
+    _UByte          =  2  << _TypeOffset,
+    _Short          =  3  << _TypeOffset,
+    _UShort         =  4  << _TypeOffset,
+    _Int            =  5  << _TypeOffset,
+    _UInt           =  6  << _TypeOffset,
+    _Long           =  7  << _TypeOffset,
+    _ULong          =  8  << _TypeOffset,
+    _Half           =  9  << _TypeOffset,
+    _Float          = 10  << _TypeOffset,
+    _Double         = 11  << _TypeOffset,
     _TypeMask       = 0xF << _TypeOffset,
 
     // flags
     _FlagsOffset    = 16,
     _FlagsMask      = 0xF << _FlagsOffset,
-    NormalizedFlag  = 1 << _FlagsOffset, // convert integer to normalized float value (-1..+1)
-    ScaledFlag      = 2 << _FlagsOffset, // convert integer to float value (min..max)
+    NormalizedFlag  = 1   << _FlagsOffset, // convert integer to normalized float value (-1..+1)
+    ScaledFlag      = 2   << _FlagsOffset, // convert integer to float value (min..max)
 
     // default types
     Byte            = _Byte | _Vec1,
@@ -110,7 +110,7 @@ enum class EVertexFormat : u32 {
     Int4            = _Int | _Vec4,
 
     UInt            = _UInt | _Vec1,
-    UInt2           = _UInt| _Vec2,
+    UInt2           = _UInt | _Vec2,
     UInt3           = _UInt | _Vec3,
     UInt4           = _UInt | _Vec4,
 

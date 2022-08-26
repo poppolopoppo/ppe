@@ -2,6 +2,7 @@
 
 #include "RHI_fwd.h"
 
+#include "RHI/ResourceId.h"
 #include "RHI/VertexEnums.h"
 
 #include "Color/Color_fwd.h"
