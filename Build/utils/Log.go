@@ -70,13 +70,19 @@ type logQueue interface {
 	Queue(logEvent)
 }
 
-type logQueue_immediate struct{}
+type logQueue_immediate struct {
+	barrier sync.Mutex
+}
 
 func make_logQueue_immediate() logQueue {
-	return logQueue_immediate{}
+	return logQueue_immediate{barrier: sync.Mutex{}}
 }
-func (x logQueue_immediate) Flush()           {}
-func (x logQueue_immediate) Queue(e logEvent) { e() }
+func (x logQueue_immediate) Flush() {}
+func (x logQueue_immediate) Queue(e logEvent) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	e()
+}
 
 type logQueue_deferred struct {
 	queue chan<- logEvent
@@ -86,15 +92,15 @@ func make_logQueue_deferred() logQueue {
 	queue := make(chan logEvent)
 	x := &logQueue_deferred{queue}
 	// start logging goroutine
-	go func() {
+	go func(q <-chan logEvent) {
 		for {
-			if event, ok := <-queue; ok {
-				event()
+			if deferredEvent, ok := <-q; ok {
+				deferredEvent()
 			} else {
 				break
 			}
 		}
-	}()
+	}(queue)
 	return x
 }
 func (x *logQueue_deferred) Flush() {
@@ -152,13 +158,11 @@ func FlushLog() {
 }
 func Log(level LogLevel, msg string, args ...interface{}) {
 	if IsLogLevelActive(level) {
-		logger.Queue(func() {
-			pinnedLog.without(func() {
-				log.Printf(level.String()+msg+ANSI_RESET.String()+"\n", args...)
-				if level >= LOG_WARNING {
-					log_callstack()
-				}
-			})
+		pinnedLog.without(func() {
+			log.Printf(level.String()+msg+ANSI_RESET.String()+"\n", args...)
+			if level >= LOG_WARNING {
+				log_callstack()
+			}
 		})
 	}
 }
@@ -220,24 +224,23 @@ func (fn FormatFunc) String() string {
 
 type PinnedLog interface {
 	Close()
-	Log(msg string, args ...interface{})
-	fmt.Stringer
+	LogF(msg string, args ...interface{})
+	Log(msg func(io.Writer))
 }
 
 type pinnedLogFake struct{}
 
-func (log *pinnedLogFake) Close()                     {}
-func (log *pinnedLogFake) Log(string, ...interface{}) {}
-func (log *pinnedLogFake) String() string             { return "" }
+func (log *pinnedLogFake) Close()                      {}
+func (log *pinnedLogFake) LogF(string, ...interface{}) {}
+func (log *pinnedLogFake) Log(func(io.Writer))         {}
 
 type pinnedLogScope struct {
 	mainText string
-	subText  string
+	subText  func(io.Writer)
 }
 
 type pinnedLogManager struct {
 	stream   io.Writer
-	barrier  sync.RWMutex
 	messages SetT[*pinnedLogScope]
 	inflight int
 
@@ -265,11 +268,9 @@ func attachPinUnsafe(pin *pinnedLogManager) {
 			if x == nil {
 				continue
 			}
-			fmt.Fprintln(buf,
-				"\r", ANSI_KILL_LINE,
-				ANSI_FG1_YELLOW,
-				x,
-				ANSI_RESET)
+			fmt.Fprint(buf, "\r", ANSI_KILL_LINE, ANSI_FG1_YELLOW)
+			x.Print(buf)
+			fmt.Fprintln(buf, ANSI_RESET)
 		}
 
 		// flush with one call
@@ -285,17 +286,22 @@ func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 		buf := bytes.NewBuffer(tmp)
 		buf.Reset()
 
-		if false && len(pin.messages) == pin.inflight && !clear {
-			// one clear line: ghosting
-			for i := 0; i < pin.inflight+1; i += 1 {
-				fmt.Fprint(buf, ANSI_CURSOR_UP)
-			}
-			fmt.Fprint(buf, ANSI_KILL_LINE)
-		} else {
-			// multiple clear lines: flicker
-			for i := 0; i < pin.inflight+1; i += 1 {
-				fmt.Fprint(buf, ANSI_CURSOR_UP, ANSI_KILL_LINE)
-			}
+		// if false && len(pin.messages) == pin.inflight && !clear {
+		// 	// one clear line: ghosting
+		// 	for i := 0; i < pin.inflight+1; i += 1 {
+		// 		fmt.Fprint(buf, ANSI_CURSOR_UP)
+		// 	}
+		// 	fmt.Fprint(buf, ANSI_KILL_LINE)
+		// } else {
+		// 	// multiple clear lines: flicker
+		// 	for i := 0; i < pin.inflight+1; i += 1 {
+		// 		fmt.Fprint(buf, string(ANSI_CURSOR_UP), string(ANSI_KILL_LINE))
+		// 	}
+		// }
+		// fmt.Fprint(buf, "\033[", pin.inflight+1, "A", ANSI_KILL_LINE)
+
+		for i := 0; i < pin.inflight+1; i += 1 {
+			fmt.Fprint(buf, string(ANSI_CURSOR_UP), string(ANSI_KILL_LINE))
 		}
 
 		pin.inflight = 0
@@ -305,8 +311,12 @@ func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 	}
 }
 func refreshPinUnsafe(pin *pinnedLogManager) {
-	detachPinUnsafe(pin, false)
-	attachPinUnsafe(pin)
+	if ref := atomic.AddInt32(&pin.cooldown, -1); ref == 0 {
+		detachPinUnsafe(pin, false)
+		attachPinUnsafe(pin)
+	} else {
+		Assert(func() bool { return ref > 0 })
+	}
 }
 
 func (pin *pinnedLogManager) push(msg string, args ...interface{}) PinnedLog {
@@ -314,11 +324,8 @@ func (pin *pinnedLogManager) push(msg string, args ...interface{}) PinnedLog {
 		log := &pinnedLogScope{
 			mainText: fmt.Sprintf(msg, args...) + " ",
 		}
-
+		atomic.AddInt32(&pin.cooldown, 1)
 		logger.Queue(func() {
-			pin.barrier.Lock()
-			defer pin.barrier.Unlock()
-
 			pin.messages.Append(log)
 			refreshPinUnsafe(pin)
 		})
@@ -328,64 +335,70 @@ func (pin *pinnedLogManager) push(msg string, args ...interface{}) PinnedLog {
 }
 func (pin *pinnedLogManager) pop(log *pinnedLogScope) {
 	if log != nil {
+		atomic.AddInt32(&pin.cooldown, 1)
 		logger.Queue(func() {
-			pin.barrier.Lock()
-			defer pin.barrier.Unlock()
-
 			pin.messages.Remove(log)
 			refreshPinUnsafe(pin)
 		})
 	}
 }
 func (pin *pinnedLogManager) refresh() {
-	if enableInteractiveShell && atomic.AddInt32(&pin.cooldown, 1) == 1 {
+	if enableInteractiveShell {
+		atomic.AddInt32(&pin.cooldown, 1)
 		logger.Queue(func() {
-			pin.barrier.Lock()
-			defer pin.barrier.Unlock()
-
 			refreshPinUnsafe(pin)
-			atomic.StoreInt32(&pin.cooldown, 0)
 		})
 	}
 }
 func (pin *pinnedLogManager) without(block func()) {
 	if enableInteractiveShell {
-		pin.barrier.Lock()
-		defer pin.barrier.Unlock()
-		detachPinUnsafe(pin, false)
-		block()
-		attachPinUnsafe(pin)
+		logger.Queue(func() {
+			detachPinUnsafe(pin, false)
+			block()
+			attachPinUnsafe(pin)
+		})
 	} else {
 		block()
 	}
 }
 func (pin *pinnedLogManager) forceClose() {
-	pin.barrier.Lock() // can't use pinned log after calling this
 	detachPinUnsafe(pin, true)
 }
 
 func (log *pinnedLogScope) Close() {
 	pinnedLog.pop(log)
 }
-func (log *pinnedLogScope) Log(msg string, args ...interface{}) {
-	log.subText = fmt.Sprintf(msg, args...)
-	log.subText = strings.TrimSpace(log.subText)
-	log.subText = strings.ReplaceAll(log.subText, "\r", "")
-	log.subText = strings.ReplaceAll(log.subText, ANSI_KILL_LINE.String(), "")
-	log.subText = strings.ReplaceAll(log.subText, ANSI_CURSOR_UP.String(), "")
-	pinnedLog.refresh()
+func (log *pinnedLogScope) LogF(msg string, args ...interface{}) {
+	log.Log(func(dst io.Writer) {
+		static := fmt.Sprintf(msg, args...)
+		static = strings.TrimSpace(static)
+		static = strings.ReplaceAll(static, "\r", "")
+		static = strings.ReplaceAll(static, ANSI_KILL_LINE.String(), "")
+		static = strings.ReplaceAll(static, ANSI_CURSOR_UP.String(), "")
+
+		log.subText = func(w io.Writer) {
+			w.Write([]byte(static))
+		}
+		log.subText(dst)
+	})
 }
-func (log *pinnedLogScope) String() string {
-	if log.subText != "" {
+func (log *pinnedLogScope) Log(msg func(io.Writer)) {
+	if log.subText = msg; log.subText != nil {
+		pinnedLog.refresh()
+	}
+}
+func (log *pinnedLogScope) Print(dst io.Writer) {
+	if log.subText != nil {
 		const maxLen = 20
 		elapsed := int(maxLen * time.Since(programStartedAt).Seconds())
 		croppedText := [maxLen]byte{}
 		for i := 0; i < maxLen; i += 1 {
 			croppedText[i] = log.mainText[(elapsed+i)%len(log.mainText)]
 		}
-		return fmt.Sprintf("%20s %s", croppedText, log.subText)
+		fmt.Fprintf(dst, "%20s ", croppedText)
+		log.subText(dst)
 	} else {
-		return log.mainText
+		fmt.Fprintf(dst, log.mainText)
 	}
 }
 
@@ -426,17 +439,17 @@ func (pg *pinnedLogProgress) Close() {
 func (pg *pinnedLogProgress) Add(n int) {
 	pg.tick += 1
 	pg.last += n
-	pg.log.Log(pg.String())
+	pg.log.Log(pg.Print)
 }
 func (pg *pinnedLogProgress) Inc() {
 	pg.tick += 1
 	pg.progress += 1
-	pg.log.Log(pg.String())
+	pg.log.Log(pg.Print)
 }
 func (pg *pinnedLogProgress) Set(x int) {
 	pg.tick += 1
 	pg.progress = x
-	pg.log.Log(pg.String())
+	pg.log.Log(pg.Print)
 }
 
 func smootherstep(edge0, edge1, x float64) float64 {
@@ -445,12 +458,12 @@ func smootherstep(edge0, edge1, x float64) float64 {
 	return x * x * x * (x*(x*6.-15.) + 10.)
 }
 
-func (pg *pinnedLogProgress) String() (result string) {
+func (pg *pinnedLogProgress) Print(dst io.Writer) {
 	const width = 70
 
 	totalDuration := time.Since(pg.startedat)
 
-	result += ANSI_FG1_CYAN.String() + " "
+	fmt.Fprint(dst, string(ANSI_FG1_CYAN), " ")
 
 	colb0 := [3]uint8{0, 250, 154}  // medium spring green
 	colb1 := [3]uint8{60, 139, 113} // medium sea green
@@ -470,15 +483,16 @@ func (pg *pinnedLogProgress) String() (result string) {
 				off += i/2 + 1
 			}
 			if i%20 == 0 && i > 1 && i+1 != w {
-				result += string(ANSI_FG1_WHITE) + "|"
+				fmt.Fprint(dst, string(ANSI_FG1_WHITE), "|")
 			} else if i%10 == 0 && i > 1 && i+1 != w {
-				result += string(ANSI_FG1_CYAN) + "-"
+				fmt.Fprint(dst, string(ANSI_FG1_CYAN), "-")
 			} else {
-				result += make_ansi_color("fg1", ANSI_COLORS[(off+i)%m]).String()
-				result += pattern[c]
+				fmt.Fprint(dst,
+					make_ansi_color("fg1", ANSI_COLORS[(off+i)%m]).String(),
+					pattern[c])
 			}
 		}
-		result += string(ANSI_RESET)
+		fmt.Fprint(dst, string(ANSI_RESET))
 	}
 
 	sliderPattern := func() {
@@ -507,15 +521,14 @@ func (pg *pinnedLogProgress) String() (result string) {
 			j := int(math.Floor(f * float64(len(pattern))))
 
 			f = smootherstep(0.0, 1.0, f)
-			result += make_ansi_bg_truecolor(col2[0], col2[1], col2[2])
+			fmt.Fprint(dst, make_ansi_bg_truecolor(col2[0], col2[1], col2[2]))
 
 			xx := float64(i) / width
 			xx = math.Cos(t*2.5+xx*math.Phi*3.0)*0.5 + 0.5
 			col0 := lerp_color(cola0, colb0, xx)
 			col1 := lerp_color(cola1, colb1, xx)
 
-			result += lerp_ansi_fg_truecolor(col0, col1, f)
-			result += pattern[j]
+			fmt.Fprint(dst, lerp_ansi_fg_truecolor(col0, col1, f), pattern[j])
 		}
 	}
 
@@ -542,11 +555,11 @@ func (pg *pinnedLogProgress) String() (result string) {
 		ball(pg.tick+2, string(ANSI_FG1_YELLOW))
 		ball(pg.tick+3, string(ANSI_FG1_WHITE))
 
-		result += strings.Join(pong, "")
+		fmt.Fprint(dst, strings.Join(pong, ""))
 	}
 
 	if pg.first < pg.last {
-		result += ANSI_FG1_WHITE.String()
+		fmt.Fprint(dst, string(ANSI_FG1_WHITE))
 		f := float64(pg.progress-pg.first) / float64(pg.last-pg.first)
 		f = math.Max(0.0, math.Min(1.0, f))
 		i := int(f * width)
@@ -559,34 +572,37 @@ func (pg *pinnedLogProgress) String() (result string) {
 			col1 := lerp_color(cola1, colb1, xx)
 
 			a := float64(j & 1)
+			// a := math.Cos(float64(j)*math.Pi+20*totalDuration.Seconds())*0.5 + 0.5
 			if j < i {
-				result += lerp_ansi_bg_truecolor(col1, col0, a*0.2+0.8)
-				result += lerp_ansi_fg_truecolor(col0, col1, a*0.1+0.9)
-				result += `▂` //`▁`
+				fmt.Fprint(dst,
+					lerp_ansi_bg_truecolor(col1, col0, a*0.2+0.8),
+					lerp_ansi_fg_truecolor(col0, col1, a*0.1+0.9),
+					`▂`) //`▁`)
 			} else if j == i {
-				result += make_ansi_bg_truecolor(col2[0], col2[1], col2[2])
-				result += lerp_ansi_fg_truecolor(col0, col1, a*0.1+0.9)
-				result += `▌` // `▋` //`▎`
+				fmt.Fprint(dst,
+					make_ansi_bg_truecolor(col2[0], col2[1], col2[2]),
+					lerp_ansi_fg_truecolor(col0, col1, a*0.1+0.9),
+					`▌`) // `▋`) //`▎`)
 			} else {
-				result += make_ansi_bg_truecolor(col2[0], col2[1], col2[2])
-				result += ` `
+				fmt.Fprint(dst,
+					make_ansi_bg_truecolor(col2[0], col2[1], col2[2]),
+					` `)
 			}
 		}
 
 		xx := math.Cos(float64(totalDuration.Seconds()*5.0)+1.0*math.Phi*4.0)*0.5 + 0.5
 		col1 := lerp_color(cola1, colb1, xx)
 
-		result += ANSI_RESET.String()
+		fmt.Fprint(dst, ANSI_RESET)
 		if i < width {
-			result += make_ansi_fg_truecolor(col2[0], col2[1], col2[2])
+			fmt.Fprint(dst, make_ansi_fg_truecolor(col2[0], col2[1], col2[2]))
 		} else {
-			result += make_ansi_fg_truecolor(col1[0], col1[1], col1[2])
+			fmt.Fprint(dst, make_ansi_fg_truecolor(col1[0], col1[1], col1[2]))
 		}
-		result += `▌` // `▋` //`▎`
-		result += ANSI_RESET.String()
-
-		result += lerp_ansi_fg_truecolor(cola1, colb0, f)
-		result += fmt.Sprintf(" %6.2f", f*100) + "%%  " // Sprintf() escaping hell
+		fmt.Fprint(dst, `▌`, /* `▋` `▎` | */
+			ANSI_RESET,
+			lerp_ansi_fg_truecolor(cola1, colb0, f))
+		fmt.Fprintf(dst, " %6.2f%% ", f*100) // Sprintf() escaping hell
 
 		numElts := float32(pg.progress - pg.first)
 		eltUnit := ""
@@ -599,10 +615,10 @@ func (pg *pinnedLogProgress) String() (result string) {
 			numElts /= 1000
 		}
 		eltPerSec := numElts / float32(totalDuration.Seconds()+0.00001)
-		result += ANSI_FG1_YELLOW.String()
-		result += fmt.Sprintf(" %.3f %s/s", eltPerSec, eltUnit)
+		fmt.Fprint(dst, string(ANSI_FG1_YELLOW))
+		fmt.Fprintf(dst, " %.3f %s/s", eltPerSec, eltUnit)
 	} else {
-		result += ANSI_FG0_CYAN.String()
+		fmt.Fprint(dst, ANSI_FG0_CYAN.String())
 
 		if true {
 			wavePattern()
@@ -612,19 +628,17 @@ func (pg *pinnedLogProgress) String() (result string) {
 			ballPattern()
 		}
 
-		result += ANSI_RESET.String()
-		result += make_ansi_fg_truecolor(col2[0], col2[1], col2[2])
-		result += `▌` // `▋` //`▎`
+		fmt.Fprint(dst, string(ANSI_RESET),
+			make_ansi_fg_truecolor(col2[0], col2[1], col2[2]),
+			`▌`) // `▋` //`▎`
 
-		result += ANSI_RESET.String()
-		result += ANSI_FG0_GREEN.String()
-		result += fmt.Sprintf(" %6.2fs ", totalDuration.Seconds())
+		fmt.Fprint(dst, string(ANSI_RESET), string(ANSI_FG0_GREEN))
+		fmt.Fprintf(dst, " %6.2fs ", totalDuration.Seconds())
 	}
 
 	if pg.progress == pg.last {
-		result += " DONE"
+		fmt.Fprint(dst, " DONE")
 	}
-	return result
 }
 
 func LogProgress(first, last int, msg string, args ...interface{}) PinnedProgress {
