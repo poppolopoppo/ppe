@@ -20,6 +20,8 @@ func SetEnableDiagnostics(enabled bool) {
 
 var enableAssertions bool = false
 
+func AssertMessage(pred func() bool, msg string, args ...interface{}) {}
+
 func Assert(pred func() bool)                    {}
 func AssertSameType[T any](T, T)                 {}
 func AssertIn[T comparable](T, ...T)             {}

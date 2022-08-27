@@ -21,10 +21,14 @@ func SetEnableDiagnostics(enabled bool) {
 
 var enableAssertions bool = true
 
-func Assert(pred func() bool) {
+func AssertMessage(pred func() bool, msg string, args ...interface{}) {
 	if !pred() {
-		panic("failed assertion")
+		log.Panicf(msg, args...)
 	}
+}
+
+func Assert(pred func() bool) {
+	AssertMessage(pred, "failed assertion")
 }
 
 func AssertSameType[T any](a T, b T) {

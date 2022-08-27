@@ -142,6 +142,7 @@ func (node *buildNode) AddDynamic(g BuildGraph, it ...BuildAliasable) error {
 	node.state.edit.Lock()
 	defer node.state.edit.Unlock()
 	for a, fut := range futures {
+		AssertMessage(func() bool { _, ok := node.Static[a]; return !ok }, "%v: dynamic dependency is already static <%v>", node, a)
 		if ret := fut.Join(); ret.Failure() == nil {
 			stamp := ret.Success()
 			Assert(func() bool { return stamp.Content.Valid() })
@@ -158,6 +159,8 @@ func (node *buildNode) AddOutput(g BuildGraph, f Filename) (Buildable, error) {
 	if ret := fut.Join(); ret.Failure() == nil {
 		node.state.edit.Lock()
 		defer node.state.edit.Unlock()
+		AssertMessage(func() bool { _, ok := node.Static[f.Alias()]; return !ok }, "%v: output dependency is already static <%v>", node, f)
+		AssertMessage(func() bool { _, ok := node.Dynamic[f.Alias()]; return !ok }, "%v: output dependency is already dynamic <%v>", node, f)
 		stamp := ret.Success()
 		Assert(func() bool { return stamp.Content.Valid() })
 		node.Output[f.Alias()] = stamp
@@ -354,7 +357,7 @@ func (batch *buildBatch) Join(pbar PinnedProgress) {
 
 func (deps BuildDependencies) prepareBuild(batch *buildBatch) {
 	for a := range deps {
-		Assert(func() bool { return batch.Prepared[a] == nil })
+		AssertMessage(func() bool { return batch.Prepared[a] == nil }, "%v: node already prepared <%v>\n\tprepared: %v\n\tstatic: %v\n\tdynamic: %v\n\toutput: %v", batch.Caller, a, batch.Prepared, batch.Caller.Static, batch.Caller.Dynamic, batch.Caller.Output)
 		node, _ := batch.Graph.Build(a) // trigger async build, don't wait for the result here
 		batch.Prepared[a] = node.(*buildNode)
 	}
