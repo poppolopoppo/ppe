@@ -237,9 +237,9 @@ func (env *CommandEnvT) Run() error {
 	env.buildGraph.PostLoad()
 
 	for _, flags := range env.Flags.Values() {
-		switch flags.(type) {
+		switch value := flags.(type) {
 		case Buildable:
-			env.BuildGraph().ForceBuild(flags.(Buildable))
+			env.BuildGraph().ForceBuild(value)
 		}
 	}
 

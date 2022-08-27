@@ -46,11 +46,11 @@ func bffIsDefaultValue(x interface{}) bool {
 	if x == nil {
 		return true
 	}
-	switch x.(type) {
+	switch value := x.(type) {
 	case BoolVar, IntVar, BffVar:
 		return false
 	case string:
-		return x.(string) == ""
+		return value == ""
 	case bool:
 		return false
 	case int8, int16, int32, int64:
@@ -60,15 +60,15 @@ func bffIsDefaultValue(x interface{}) bool {
 	case float32, float64:
 		return false
 	case []string:
-		return len(x.([]string)) == 0
+		return len(value) == 0
 	case StringSetable:
-		return len(x.(StringSetable).StringSet()) == 0
+		return len(value.StringSet()) == 0
 	case BffArray:
-		return len(x.(BffArray)) == 0
+		return len(value) == 0
 	case BffMap:
-		return len(x.(BffMap)) == 0
+		return len(value) == 0
 	case fmt.Stringer:
-		return bffIsDefaultValue(x.(fmt.Stringer).String())
+		return bffIsDefaultValue(value.String())
 	default:
 		UnexpectedValue(x)
 	}
@@ -128,35 +128,35 @@ func (bff *BffFile) Append(name string, value interface{}) *BffFile {
 	return bff.SetVar(name, value, BFF_CONCAT, BFF_LOCAL)
 }
 func (bff *BffFile) Value(x interface{}) *BffFile {
-	switch x.(type) {
+	switch value := x.(type) {
 	case BoolVar:
-		bff.Value(x.(BoolVar).Get())
+		bff.Value(value.Get())
 	case IntVar:
-		bff.Value(x.(IntVar).Get())
+		bff.Value(value.Get())
 	case BffVar:
-		bff.Print("." + x.(BffVar).String())
+		bff.Print("." + value.String())
 	case string:
-		bff.Print(`"%s"`, strings.ReplaceAll(x.(string), "\"", "^\""))
+		bff.Print(`"%s"`, strings.ReplaceAll(value, "\"", "^\""))
 	case bool:
-		if x.(bool) {
+		if value {
 			bff.Print("true")
 		} else {
 			bff.Print("false")
 		}
 	case int8, int16, int32, int64:
-		bff.Print("%d", x)
+		bff.Print("%d", value)
 	case uint8, uint16, uint32, uint64:
-		bff.Print("%u", x)
+		bff.Print("%u", value)
 	case float32, float64:
-		bff.Print("%f", x)
+		bff.Print("%f", value)
 	case []string:
-		bff.Value(MakeBffArray(x.([]string)...))
+		bff.Value(MakeBffArray(value...))
 	case StringSetable:
-		bff.Value(MakeBffArray(x.(StringSetable).StringSet()...))
+		bff.Value(MakeBffArray(value.StringSet()...))
 	case BffArray:
 		bff.Print("{")
 		bff.ScopeIndent(func() {
-			for i, x := range x.(BffArray) {
+			for i, x := range value {
 				if i > 0 {
 					if bff.Minify() {
 						bff.Print(",")
@@ -171,7 +171,7 @@ func (bff *BffFile) Value(x interface{}) *BffFile {
 	case BffMap:
 		bff.Print("[")
 		bff.ScopeIndent(func() {
-			for k, v := range x.(BffMap) {
+			for k, v := range value {
 				bff.Assign(k, v)
 			}
 		})

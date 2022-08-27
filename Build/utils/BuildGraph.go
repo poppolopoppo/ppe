@@ -222,7 +222,6 @@ type buildGraph struct {
 	nodes    *SharedMapT[BuildAlias, *buildNode]
 	revision int32
 }
-type buildGraphData map[BuildAlias]*buildNode
 
 func NewBuildGraph(flags *CommandFlagsT) BuildGraph {
 	return &buildGraph{
@@ -293,7 +292,7 @@ func (g *buildGraph) Join() {
 			defer node.state.launch.Unlock()
 
 			fut := node.state.future
-			if fut != nil && fut.Available() == false {
+			if fut != nil && !fut.Available() {
 				LogWarning("builder <%v> wasn't available and needed to be joined", alias)
 				fut.Join()
 			}

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -501,7 +500,7 @@ func (d Directory) FindFileRec(r *regexp.Regexp) (Filename, error) {
 				return f, nil
 			}
 		}
-		return Filename{}, errors.New(fmt.Sprintf("file not found '%v' in '%v'", r, d))
+		return Filename{}, fmt.Errorf("file not found '%v' in '%v'", r, d)
 	} else {
 		return Filename{}, err
 	}
@@ -552,12 +551,8 @@ func (list *DirSet) Clear() {
 }
 func (list DirSet) Concat(it ...Directory) (result DirSet) {
 	result = make(DirSet, len(list)+len(it))
-	for i, x := range list {
-		result[i] = x
-	}
-	for i, x := range it {
-		result[len(list)+i] = x
-	}
+	copy(result, list)
+	copy(result[len(list):], it)
 	return result
 }
 func (list DirSet) GetDigestable(o *bytes.Buffer) {
@@ -613,12 +608,8 @@ func (list *FileSet) Clear() {
 }
 func (list FileSet) Concat(it ...Filename) (result FileSet) {
 	result = make(FileSet, len(list)+len(it))
-	for i, x := range list {
-		result[i] = x
-	}
-	for i, x := range it {
-		result[len(list)+i] = x
-	}
+	copy(result, list)
+	copy(result[len(list):], it)
 	return result
 }
 func (list FileSet) ConcatUniq(it ...Filename) (result FileSet) {
@@ -750,7 +741,7 @@ func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) er
 	os.Remove(dst.String())
 	ufs.Mkdir(dst.Dirname)
 
-	file, err := ioutil.TempFile(
+	file, err := os.CreateTemp(
 		dst.Dirname.Relative(UFS.Root),
 		dst.ReplaceExt("-*"+dst.Ext()).Relative(dst.Dirname))
 	if err != nil {

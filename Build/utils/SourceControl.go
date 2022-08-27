@@ -126,7 +126,7 @@ var SourceControlBuilder = MakeBuildable(func(BuildInit) *SourceControlStatus {
 })
 
 var GenerateSourceControlModifiedFiles = Memoize(func() Future[Filename] {
-	return MakeFuture[Filename](func() (Filename, error) {
+	return MakeFuture(func() (Filename, error) {
 		output := UFS.Saved.File(".modified_files_list.txt")
 		err := UFS.Create(output, func(w io.Writer) error {
 			if modifiedFiles, err := GetSourceControlProvider().GetModifiedFiles(); err == nil {
