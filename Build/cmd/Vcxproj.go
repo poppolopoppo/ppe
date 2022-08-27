@@ -70,13 +70,12 @@ type VcxprojBuilder struct {
 }
 
 func (vcx *VcxprojBuilder) Alias() BuildAlias {
-	return vcx.Output.Alias()
+	return MakeBuildAlias("Vcxproj", vcx.Output.String())
 }
 func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
-	args := VcxprojArgs.Need(CommandEnv.Flags)
 	modules := BuildModules.Need(bc)
 	targets := BuildTargets.Need(bc)
-	bc.DependsOn(args, modules, targets)
+	bc.DependsOn(modules, targets)
 
 	translatedUnits := targets.TranslatedUnits()
 

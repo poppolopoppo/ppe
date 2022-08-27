@@ -61,7 +61,7 @@ type VscodeBuilder struct {
 }
 
 func (vsc *VscodeBuilder) Alias() BuildAlias {
-	return vsc.OutputDir.Alias()
+	return MakeBuildAlias("Vscode", vsc.OutputDir.String())
 }
 func (vsc *VscodeBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	LogVerbose("build vscode configuration in '%v'...", vsc.OutputDir)

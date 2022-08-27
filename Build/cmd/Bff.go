@@ -86,7 +86,7 @@ type BffBuilder struct {
 }
 
 func (x *BffBuilder) Alias() BuildAlias {
-	return "Cmd://BffBuilder"
+	return MakeBuildAlias("Bff", x.Output.String())
 }
 func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	sourceControlModifiedFiles := GenerateSourceControlModifiedFiles()
