@@ -219,7 +219,7 @@ template <typename T, size_t _Dim, size_t... _Shuffle>
 struct TScalarVectorShuffle : TMakeScalarVectorAssignable<T, sizeof...(_Shuffle), TScalarVectorShuffle<T, _Dim, _Shuffle...>> {
     using component_type = T;
 
-    static CONSTEVAL size_t indices[sizeof...(_Shuffle)] = { _Shuffle... };
+    static CONSTEXPR size_t indices[sizeof...(_Shuffle)] = { _Shuffle... };
 
     T data[_Dim];
 
@@ -248,7 +248,7 @@ struct TScalarVectorShuffle : TMakeScalarVectorAssignable<T, sizeof...(_Shuffle)
 // struct TScalarVectorSwizzle : TScalarVectorExpr<T, sizeof...(_Swizzle), TScalarVectorSwizzle<T, _Dim, _Swizzle...>> {
 //     using component_type = T;
 
-//     static CONSTEVAL size_t indices[sizeof...(_Swizzle)] = { _Swizzle... };
+//     static CONSTEXPR size_t indices[sizeof...(_Swizzle)] = { _Swizzle... };
 
 //     T data[_Dim];
 

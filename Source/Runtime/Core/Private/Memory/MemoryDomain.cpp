@@ -367,7 +367,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     }
 
     const auto distribution = [](i64 sz) -> float {
-        return (std::log(std::pow(static_cast<float>(sz), 2.0) + 1.f) - std::log(1.f));
+        return (std::log(std::pow(static_cast<float>(sz), 2.0f) + 1.f) - std::log(1.f));
     };
 
     const float distributionScale = distribution(maxCount);
