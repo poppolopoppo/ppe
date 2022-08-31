@@ -65,7 +65,7 @@ struct TNamedId {
     size_t Index{ 0 };
     string_t Name;
 
-    TNamedId() = default;
+    CONSTEXPR TNamedId() NOEXCEPT : TNamedId("") {}
 
     CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT // for Meta::TEmptyKey<> traits
         : HashValue(UMax)
@@ -76,10 +76,12 @@ struct TNamedId {
     {}
 
     CONSTEXPR explicit TNamedId(const FStringView& name, size_t index = 0) NOEXCEPT
-        : HashValue(hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
+        : HashValue(hash_mem_constexpr(name.data(), name.size()))
         , Name(name)
-        , Index(index)
-    {}
+        , Index(index) {
+        if (not Name.empty())
+            HashValue = hash_size_t_constexpr(index, HashValue);
+    }
 
     CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
@@ -92,7 +94,7 @@ struct TNamedId {
     CONSTEXPR bool operator ==(const TNamedId& other) const {
         if (HashValue == other.HashValue) {
             Assert_NoAssume(Name == other.Name);
-            Assert_NoAssume(Index == other.Index);
+            Assert_NoAssume(Name.empty() || Index == other.Index);
             return true;
         }
         else {

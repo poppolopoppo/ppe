@@ -37,9 +37,18 @@ NO_INLINE static void Test_Id2_() {
     AssertRelease(a == b);
 }
 //----------------------------------------------------------------------------
+NO_INLINE static void Test_Id3_() {
+    FVertexBufferID a;
+    FVertexBufferID b = Default;
+    FVertexBufferID c = ""_vertexbuffer;
+    AssertRelease(a == b);
+    AssertRelease(a == c);
+}
+//----------------------------------------------------------------------------
 void UnitTest_Id() {
     Test_Id1_();
     Test_Id2_();
+    Test_Id3_();
 
     LOG(RHI, Info, L"UnitTest_Id [PASSED]");
 }
