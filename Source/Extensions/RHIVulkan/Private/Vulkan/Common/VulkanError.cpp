@@ -102,7 +102,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FVulkanError& error) {
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 NODISCARD static bool VulkanCheckErrors_( VkResult result,
-    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) NOEXCEPT {
+    const FConstChar& call, const FConstChar& func, const FWStringView& file, u32 line ) NOEXCEPT {
     Unused(call);
     Unused(func);
     Unused(file);
@@ -119,7 +119,7 @@ NODISCARD static bool VulkanCheckErrors_( VkResult result,
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 PPE_RHIVULKAN_API void VulkanCheckNoErrors( VkResult result,
-    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) {
+    const FConstChar& call, const FConstChar& func, const FWStringView& file, u32 line ) {
     if (Unlikely(not VulkanCheckErrors_(result, call, func, file, line)))
         PPE_THROW_IT(FVulkanException(call, static_cast<u32>(result)));
 }
@@ -127,7 +127,7 @@ PPE_RHIVULKAN_API void VulkanCheckNoErrors( VkResult result,
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 NODISCARD PPE_RHIVULKAN_API bool VulkanCheckIfErrors( VkResult result,
-    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) NOEXCEPT {
+    const FConstChar& call, const FConstChar& func, const FWStringView& file, u32 line ) NOEXCEPT {
     return VulkanCheckErrors_(result, call, func, file, line);
 }
 #endif

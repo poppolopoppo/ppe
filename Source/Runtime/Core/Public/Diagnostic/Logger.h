@@ -280,6 +280,6 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 
 #define LOG_UNSUPPORTED_FUNCTION( _CATEGORY ) \
     LOG( _CATEGORY, Warning, L"unsupported: {0}, at {1}:{2}", \
-        UTF_8_TO_WCHAR(PPE_PRETTY_FUNCTION), \
+        ::PPE::MakeStringView(PPE_PRETTY_FUNCTION), \
         WIDESTRING(__FILE__), \
         __LINE__ )

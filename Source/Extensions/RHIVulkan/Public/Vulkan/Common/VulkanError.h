@@ -15,7 +15,7 @@
         ::PPE::RHI::VulkanCheckNoErrors( \
             ANONYMIZE(__vkResult), \
             STRINGIZE(__VA_ARGS__), \
-            UTF_8_TO_WCHAR(PPE_PRETTY_FUNCTION), \
+            PPE_PRETTY_FUNCTION, \
             WIDESTRING(__FILE__),  __LINE__ ); \
     } while(0)
 #   define VK_CHECK_EX(_RESULT, ...) do { \
@@ -23,7 +23,7 @@
         if (not ::PPE::RHI::VulkanCheckIfErrors( \
             ANONYMIZE(__vkResult), \
             STRINGIZE(__VA_ARGS__), \
-            UTF_8_TO_WCHAR(PPE_PRETTY_FUNCTION), \
+            PPE_PRETTY_FUNCTION, \
             WIDESTRING(__FILE__),  __LINE__ )) \
             return (_RESULT); \
     } while (0)
@@ -66,9 +66,9 @@ private:
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 PPE_RHIVULKAN_API void VulkanCheckNoErrors( VkResult result,
-    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line );
+    const FConstChar& call, const FConstChar& func, const FWStringView& file, u32 line );
 NODISCARD PPE_RHIVULKAN_API bool VulkanCheckIfErrors( VkResult result,
-    const FConstChar& call, const FWStringView& func, const FWStringView& file, u32 line ) NOEXCEPT;
+    const FConstChar& call, const FConstChar& func, const FWStringView& file, u32 line ) NOEXCEPT;
 #endif
 //----------------------------------------------------------------------------
 PPE_RHIVULKAN_API FTextWriter& operator <<(FTextWriter& oss, const FVulkanError& error);
