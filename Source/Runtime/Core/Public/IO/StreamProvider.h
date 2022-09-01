@@ -68,20 +68,6 @@ public: // helpers
     template <typename T>
     bool ExpectPOD(const T& pod);
 
-    TMemoryView<char> ReadUntil(const TMemoryView<char>& storage, char expected);
-    TMemoryView<wchar_t> ReadUntil(const TMemoryView<wchar_t>& storage, wchar_t expected);
-
-    TMemoryView<char> ReadUntil(const TMemoryView<char>& storage, const TMemoryView<const char>& any);
-    TMemoryView<wchar_t> ReadUntil(const TMemoryView<wchar_t>& storage, const TMemoryView<const wchar_t>& any);
-
-    TMemoryView<char> ReadLine(const TMemoryView<char>& storage);
-    TMemoryView<wchar_t> ReadLine(const TMemoryView<wchar_t>& storage);
-
-    TMemoryView<char> ReadWord(const TMemoryView<char>& storage);
-    TMemoryView<wchar_t> ReadWord(const TMemoryView<wchar_t>& storage);
-
-    bool SeekI_FirstOf(char cmp);
-    bool SeekI_FirstOf(wchar_t cmp);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

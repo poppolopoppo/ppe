@@ -30,7 +30,7 @@ using FWTextManipulator = TBasicTextManipulator<wchar_t>;
 class PPE_CORE_API FTextFormat {
 public:
     enum EBase : u32 {
-        Decimal = 0, // default
+        Decimal     = 0, // default
         Binary,
         Hexadecimal,
         Octal,
@@ -127,16 +127,6 @@ public:
         return FFloat{ flt, precision };
     }
 
-    friend CONSTEXPR int EBase_ToInt(EBase base) {
-        switch (base) {
-        case Binary: return 2;
-        case Octal: return 8;
-        case Decimal: return 10;
-        case Hexadecimal: return 16;
-        }
-        AssertNotImplemented();
-    }
-
     friend CONSTEXPR EBase operator "" _base (unsigned long long value) {
         switch (value) {
         case 2: return Binary;
@@ -160,10 +150,10 @@ STATIC_ASSERT(sizeof(FTextFormat) == sizeof(u32));
 //----------------------------------------------------------------------------
 class PPE_CORE_API FBaseTextWriter {
 public:
-    FBaseTextWriter(IStreamWriter* ostream);
+    FBaseTextWriter(TPtrRef<IStreamWriter> ostream);
     ~FBaseTextWriter();
 
-    IStreamWriter* Stream() const { return _ostream; }
+    IStreamWriter& Stream() const { return _ostream; }
 
     CONSTF FTextFormat& Format() { return _format; }
     CONSTF const FTextFormat& Format() const { return _format; }
@@ -175,7 +165,7 @@ public:
     void Reset();
 
 protected:
-    IStreamWriter* _ostream;
+    TPtrRef<IStreamWriter> _ostream;
     FTextFormat _format;
 };
 //----------------------------------------------------------------------------
@@ -186,7 +176,7 @@ public:
         return STRING_LITERAL(_Char, ' ');
     }
 
-    TBasicTextWriter(IStreamWriter* s) noexcept
+    TBasicTextWriter(TPtrRef<IStreamWriter> s) noexcept
         : FBaseTextWriter(s)
         , _fillChar(DefaultFillChar())
     {}

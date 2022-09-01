@@ -97,34 +97,32 @@ static bool SplitNth_(TBasicStringView<_Char>& str, _Separator separator, TBasic
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Char>
-static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
+static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, u32 base) {
     static_assert(std::is_integral<T>::value, "T must be an integral type");
-    Assert(1 < base && base <= 16);
-
+    Assert(base > 0);
     Assert(dst);
 
     if (str.empty())
         return false;
 
-#define STR(X) STRING_LITERAL(_Char, X)
-    STATIC_ASSERT(STR('9') - STR('0') == 9);
-    STATIC_ASSERT(STR('f') - STR('a') == 5);
-    STATIC_ASSERT(STR('F') - STR('A') == 5);
+    STATIC_ASSERT(STRING_LITERAL(_Char, '9') - STRING_LITERAL(_Char, '0') == 9);
+    STATIC_ASSERT(STRING_LITERAL(_Char, 'f') - STRING_LITERAL(_Char, 'a') == 5);
+    STATIC_ASSERT(STRING_LITERAL(_Char, 'F') - STRING_LITERAL(_Char, 'A') == 5);
 
-    const bool neg = (STR('-') == str[0]);
+    const bool neg = (STRING_LITERAL(_Char, '-') == str[0]);
     Assert(not neg || not std::is_unsigned_v<T>);
 
     i64 v = 0;
-    for (size_t i = size_t(neg); i < str.size(); ++i) {
+    for (u32 i = neg ? 1 : 0; i < str.size(); ++i) {
         const _Char ch = str[i];
 
         int d;
-        if (ch >= STR('0') && ch <= STR('9'))
-            d = ch - STR('0');
-        else if (base > 10 && ch >= STR('a') && ch <= STR('f'))
-            d = ch - STR('a') + 10;
-        else if (base > 10 && ch >= STR('A') && ch <= STR('F'))
-            d = ch - STR('A') + 10;
+        if (ch >= STRING_LITERAL(_Char, '0') && ch <= STRING_LITERAL(_Char, '9'))
+            d = ch - STRING_LITERAL(_Char, '0');
+        else if (base > 10 && ch >= STRING_LITERAL(_Char, 'a') && ch <= STRING_LITERAL(_Char, 'f'))
+            d = ch - STRING_LITERAL(_Char, 'a') + 10;
+        else if (base > 10 && ch >= STRING_LITERAL(_Char, 'A') && ch <= STRING_LITERAL(_Char, 'F'))
+            d = ch - STRING_LITERAL(_Char, 'A') + 10;
         else
             return false;
 
@@ -861,35 +859,35 @@ bool SplitNth(FWStringView& wstr, const FWStringView& separators, FWStringView& 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Atoi(i32* dst, const FStringView& str, size_t base) NOEXCEPT {
+bool Atoi(i32* dst, const FStringView& str, u32 base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u32* dst, const FStringView& str, size_t base) NOEXCEPT {
+bool Atoi(u32* dst, const FStringView& str, u32 base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(i64* dst, const FStringView& str, size_t base) NOEXCEPT {
+bool Atoi(i64* dst, const FStringView& str, u32 base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u64* dst, const FStringView& str, size_t base) NOEXCEPT {
+bool Atoi(u64* dst, const FStringView& str, u32 base) NOEXCEPT {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(i32* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
+bool Atoi(i32* dst, const FWStringView& wstr, u32 base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u32* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
+bool Atoi(u32* dst, const FWStringView& wstr, u32 base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(i64* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
+bool Atoi(i64* dst, const FWStringView& wstr, u32 base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi(u64* dst, const FWStringView& wstr, size_t base) NOEXCEPT {
+bool Atoi(u64* dst, const FWStringView& wstr, u32 base) NOEXCEPT {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------

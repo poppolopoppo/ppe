@@ -14,6 +14,7 @@
 #include "IO/StringBuilder.h"
 #include "IO/StringConversion.h"
 #include "IO/StringView.h"
+#include "IO/TextReader.h"
 #include "IO/TextWriter.h"
 #include "Maths/RandomGenerator.h"
 
@@ -100,44 +101,63 @@ static void Test_Format_() {
         "{0:/-32}", "123456789");
 }
 //----------------------------------------------------------------------------
-static void Test_TextWriter_Ansi_() {
-    const void* heap = (void*)&Test_TextWriter_Ansi_;
-    FStringBuilder oss;
-    oss << "un lama sachant chasser doit savoir chasser sans son canard" << Eol
-        << FTextFormat::BoolAlpha << true << Eol
-        >> FTextFormat::BoolAlpha << true << Eol
-        << 42 << Eol
-        << 1.23f << Eol
-        << 1.23456789 << Eol
-        << -123456.789 << Eol
-        << 1e-7 << Eol
-        << 123.14159265359f << Eol
-        << 123.14159265358979323846 << Eol
-        << FTextFormat::FixedFloat
-        << 123.14159265359f << Eol
-        << 123.14159265358979323846 << Eol
-        << FTextFormat::PrecisionFloat
-        << 123.14159265359f << Eol
-        << 123.14159265358979323846 << Eol
-        << FTextFormat::ScientificFloat
-        << 123.14159265359f << Eol
-        << 123.14159265358979323846 << Eol;
-    oss << (const void*)&oss << Eol;
-    oss << heap << Eol;
-    oss << '<'
-        << FTextFormat::PadCenter(77, '-')
-        << FTextFormat::Uppercase
-        << " Centered Uppercase "
-        << '>' << Endl;
-    oss << FTextFormat::Capitalize
-        << "caPItaliZe tHIS tEXt pleAsE r2-d2, you're such a sweetheart !" << Endl;
-    LOG(Test_Format, Info, L"ANSI writer: {0}", oss.ToString());
+template <typename _Char>
+static void Test_TextReader_Impl_() {
+    FMemoryViewReader src(MakeStringView(STRING_LITERAL(_Char,
+        "f 123/2707/-4613243\n"
+        "vt 0.972642 0.024023\n"
+        " \t   vt \t0.950977   -0.024023  \n"
+        "done\n")));
+    TBasicTextReader<_Char> r(&src);
+
+    TBasicString<_Char> str;
+    VerifyRelease(r >> &str);
+    AssertRelease(str == STRING_LITERAL(_Char, "f"));
+
+    i8 i0; u16 i1; i32 i2;
+    VerifyRelease(r >> &i0);
+    AssertRelease(i0 == 123);
+    VerifyRelease(r.Expect(STRING_LITERAL(_Char, '/')));
+    VerifyRelease(r >> &i1);
+    AssertRelease(i1 == 2707);
+    VerifyRelease(r.Expect(STRING_LITERAL(_Char, '/')));
+    VerifyRelease(r >> &i2);
+    AssertRelease(i2 == -4613243);
+
+    VerifyRelease(r >> &str);
+    AssertRelease(str == STRING_LITERAL(_Char, "vt"));
+
+    float f0; double f1;
+    VerifyRelease(r >> &f0);
+    AssertRelease(f0 == 0.972642f);
+    VerifyRelease(r >> &f1);
+    AssertRelease(f1 == 0.024023);
+
+    VerifyRelease(r >> &str);
+    AssertRelease(str == STRING_LITERAL(_Char, "vt"));
+
+    VerifyRelease(r >> &f0);
+    AssertRelease(f0 == 0.950977f);
+    VerifyRelease(r >> &f1);
+    AssertRelease(f1 == -0.024023);
+
+    VerifyRelease(r >> &str);
+    AssertRelease(str == STRING_LITERAL(_Char, "done"));
+
+    r.SkipSpaces();
+
+    AssertRelease(r.Eof());
+}
+static void Test_TextReader_() {
+    Test_TextReader_Impl_<char>();
+    Test_TextReader_Impl_<wchar_t>();
 }
 //----------------------------------------------------------------------------
-static void Test_TextWriter_Wide_() {
-    const void* heap = (void*)&Test_TextWriter_Wide_;
-    FWStringBuilder oss;
-    oss << L"un lama sachant chasser doit savoir chasser sans son canard" << Eol
+template <typename _Char>
+static void Test_TextWriter_Impl_() {
+    const void* heap = (void*)&Test_TextWriter_Impl_<_Char>;
+    TBasicStringBuilder<_Char> oss;
+    oss << STRING_LITERAL(_Char, "un lama sachant chasser doit savoir chasser sans son canard") << Eol
         << FTextFormat::BoolAlpha << true << Eol
         >> FTextFormat::BoolAlpha << true << Eol
         << 42 << Eol
@@ -158,19 +178,18 @@ static void Test_TextWriter_Wide_() {
         << 123.14159265358979323846 << Eol;
     oss << (const void*)&oss << Eol;
     oss << heap << Eol;
-    oss << L'<'
+    oss << STRING_LITERAL(_Char, '<')
         << FTextFormat::PadCenter(77, L'-')
         << FTextFormat::Uppercase
-        << L" Centered Uppercase "
-        << L'>' << Endl;
+        << STRING_LITERAL(_Char, " Centered Uppercase ")
+        << STRING_LITERAL(_Char, '>') << Endl;
     oss << FTextFormat::Capitalize
-        << L"caPItaliZe tHIS tEXt pleAsE r2-d2, you're such a sweetheart !" << Endl;
-    LOG(Test_Format, Info, L"Wide writer: {0}", oss.ToString());
+        << STRING_LITERAL(_Char, "caPItaliZe tHIS tEXt pleAsE r2-d2, you're such a sweetheart !") << Endl;
+    LOG(Test_Format, Info, L"{1} writer: {0}", oss.ToString(), MakeCStringView(typeid(_Char).name()));
 }
-//----------------------------------------------------------------------------
 static void Test_TextWriter_() {
-    Test_TextWriter_Ansi_();
-    Test_TextWriter_Wide_();
+    Test_TextWriter_Impl_<char>();
+    Test_TextWriter_Impl_<wchar_t>();
 }
 //----------------------------------------------------------------------------
 template <typename _DstChar, typename _SrcChar>
@@ -294,6 +313,7 @@ void Test_Format() {
     Test_Base64_();
     Test_Conversion_();
     Test_Regexp_();
+    Test_TextReader_();
     Test_TextWriter_();
     Test_Format_();
     Test_StringEscaping_();

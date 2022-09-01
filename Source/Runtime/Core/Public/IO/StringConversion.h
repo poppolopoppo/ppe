@@ -18,14 +18,13 @@ struct TBasicStringConversion {
     using stringview_type = TBasicStringView<_Char>;
     using iterator = typename stringview_type::iterator;
 
-    using EBase = FTextFormat::EBase;
-
     stringview_type Input;
-    EBase Base{ FTextFormat::Decimal };
+    u32 Base{ 10 };
 
     TBasicStringConversion() = default;
 
     TBasicStringConversion(stringview_type input) NOEXCEPT : Input(input) {}
+    TBasicStringConversion(stringview_type input, u32 base) NOEXCEPT : Input(input), Base(base) {}
     TBasicStringConversion& operator =(stringview_type input) NOEXCEPT {
         Input = input;
         return (*this);
@@ -50,11 +49,11 @@ struct TBasicStringConversion {
         return false;
     }
 
-    bool operator >>(i32* dst) const NOEXCEPT { return Atoi(dst, Input, EBase_ToInt(Base)); }
-    bool operator >>(i64* dst) const NOEXCEPT { return Atoi(dst, Input, EBase_ToInt(Base)); }
+    bool operator >>(i32* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
+    bool operator >>(i64* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
 
-    bool operator >>(u32* dst) const NOEXCEPT { return Atoi(dst, Input, EBase_ToInt(Base)); }
-    bool operator >>(u64* dst) const NOEXCEPT { return Atoi(dst, Input, EBase_ToInt(Base)); }
+    bool operator >>(u32* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
+    bool operator >>(u64* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
 
     bool operator >>(i8* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
     bool operator >>(i16* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
@@ -93,7 +92,7 @@ private:
     template <typename _Int>
     bool CheckedIntConversion_(_Int* dst) const NOEXCEPT {
         Meta::TConditional<std::is_signed_v<_Int>, i64, u64> tmp;
-        if (Atoi(&tmp, Input, EBase_ToInt(Base))) {
+        if (Atoi(&tmp, Input, Base)) {
             *dst = checked_cast<_Int>(tmp);
             return true;
         }

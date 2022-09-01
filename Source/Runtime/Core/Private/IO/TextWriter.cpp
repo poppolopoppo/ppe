@@ -23,13 +23,13 @@ namespace {
 template <typename _Char>
 static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> str) {
     const FTextFormat& fmt = w.Format();
-    IStreamWriter* const ostream = w.Stream();
+    IStreamWriter& ostream = w.Stream();
 
     // Fast path for trivial case :
     if ((fmt.Case() == FTextFormat::Original) &&
         (fmt.Padding() == FTextFormat::Padding_None || str.size() >= fmt.Width()) &&
         (not (fmt.Misc() ^ FTextFormat::_Truncate) || str.size() <= fmt.Width()) ) {
-        ostream->WriteView(str);
+        ostream.WriteView(str);
 
         // Reset width padding each output to mimic std behavior
         w.Format().SetPadding(FTextFormat::Padding_None);
@@ -77,25 +77,25 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     // Don't use alloca() since it will break RelocateAlloca() for alloca streams
 
     forrange(i, 0, pad_left)
-        ostream->WritePOD(pad_ch);
+        ostream.WritePOD(pad_ch);
 
     switch (fmt.Case()) {
     case PPE::FTextFormat::Original:
-        ostream->WriteView(str);
+        ostream.WriteView(str);
         break;
     case PPE::FTextFormat::Lowercase:
         foreachitem(ch, str)
-            ostream->WritePOD(ToLower(*ch));
+            ostream.WritePOD(ToLower(*ch));
         break;
     case PPE::FTextFormat::Uppercase:
         foreachitem(ch, str)
-            ostream->WritePOD(ToUpper(*ch));
+            ostream.WritePOD(ToUpper(*ch));
         break;
     case PPE::FTextFormat::Capitalize:
         {
             bool to_lower = false;
             foreachitem(ch, str) {
-                ostream->WritePOD(to_lower ? ToLower(*ch) : ToUpper(*ch));
+                ostream.WritePOD(to_lower ? ToLower(*ch) : ToUpper(*ch));
                 to_lower = IsAlnum(*ch);
             }
         }
@@ -106,7 +106,7 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     }
 
     forrange(i, 0, pad_right)
-        ostream->WritePOD(pad_ch);
+        ostream.WritePOD(pad_ch);
 
     // Reset width padding each output to mimic std behavior
     w.Format().SetPadding(FTextFormat::Padding_None);
@@ -337,7 +337,7 @@ static void Write_(Meta::TType<wchar_t>, FWTextWriter& w, void* v) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBaseTextWriter::FBaseTextWriter(IStreamWriter* ostream)
+FBaseTextWriter::FBaseTextWriter(TPtrRef<IStreamWriter> ostream)
 :   _ostream(ostream) {
     Assert(_ostream);
 }

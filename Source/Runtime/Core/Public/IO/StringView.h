@@ -475,15 +475,15 @@ TBasicStringView<_Char> Slice(const TBasicStringView<_Char>& str, size_t offset,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Atoi(i32* dst, const FStringView& str, size_t base) NOEXCEPT;
-PPE_CORE_API bool Atoi(u32* dst, const FStringView& str, size_t base) NOEXCEPT;
-PPE_CORE_API bool Atoi(i64* dst, const FStringView& str, size_t base) NOEXCEPT;
-PPE_CORE_API bool Atoi(u64* dst, const FStringView& str, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(i32* dst, const FStringView& str, u32 base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u32* dst, const FStringView& str, u32 base) NOEXCEPT;
+PPE_CORE_API bool Atoi(i64* dst, const FStringView& str, u32 base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u64* dst, const FStringView& str, u32 base) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Atoi(i32* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
-PPE_CORE_API bool Atoi(u32* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
-PPE_CORE_API bool Atoi(i64* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
-PPE_CORE_API bool Atoi(u64* dst, const FWStringView& wstr, size_t base) NOEXCEPT;
+PPE_CORE_API bool Atoi(i32* dst, const FWStringView& wstr, u32 base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u32* dst, const FWStringView& wstr, u32 base) NOEXCEPT;
+PPE_CORE_API bool Atoi(i64* dst, const FWStringView& wstr, u32 base) NOEXCEPT;
+PPE_CORE_API bool Atoi(u64* dst, const FWStringView& wstr, u32 base) NOEXCEPT;
 //----------------------------------------------------------------------------
 PPE_CORE_API bool Atof(float* dst, const FStringView& str) NOEXCEPT;
 PPE_CORE_API bool Atod(double* dst, const FStringView& str) NOEXCEPT;
