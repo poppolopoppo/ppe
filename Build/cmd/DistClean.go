@@ -3,7 +3,6 @@ package cmd
 import (
 	. "build/compile"
 	. "build/utils"
-	utils "build/utils"
 	"os"
 )
 
@@ -37,7 +36,7 @@ var DistClean = MakeCommand(
 		} else {
 			targets, err := BuildTargets.Build(cmd.BuildGraph())
 			if err != nil {
-				utils.LogPanicErr(err)
+				LogPanicErr(err)
 			}
 
 			translatedUnits := targets.TranslatedUnits()

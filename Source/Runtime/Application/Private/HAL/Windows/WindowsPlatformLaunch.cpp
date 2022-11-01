@@ -4,13 +4,14 @@
 
 #include "HAL/Windows/WindowsPlatformLaunch.h"
 
-#if USE_PPE_MEMORYDOMAINS
+#ifndef USE_PPE_VIRTUALALLOC_TRAMPOLINE
+#   define USE_PPE_VIRTUALALLOC_TRAMPOLINE 0
+#endif
+
+#if USE_PPE_VIRTUALALLOC_TRAMPOLINE
 #   include "Memory/MemoryDomain.h"
 #   include "Meta/Singleton.h"
 #   include "HAL/Windows/WindowsPlatformMisc.h"
-#   define USE_PPE_VIRTUALALLOC_TRAMPOLINE 1
-#else
-#   define USE_PPE_VIRTUALALLOC_TRAMPOLINE 0
 #endif
 
 namespace PPE {

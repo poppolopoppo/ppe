@@ -659,9 +659,9 @@ void* FWindowsPlatformMisc::AllocateExecutablePageNearAddressRemote(::HANDLE hPr
     ::SYSTEM_INFO sysInfo;
     ::GetSystemInfo(&sysInfo);
 
-    const u64 startAddr = (u64(targetAddr) & ~u64(sysInfo.dwPageSize - 1)); //round down to nearest page boundary
-    const u64 minAddr = Min(startAddr - 0x7FFFFF00, (u64)sysInfo.lpMinimumApplicationAddress);
-    const u64 maxAddr = Max(startAddr + 0x7FFFFF00, (u64)sysInfo.lpMaximumApplicationAddress);
+    const uintptr_t startAddr = (uintptr_t(targetAddr) & ~uintptr_t(sysInfo.dwPageSize - 1)); //round down to nearest page boundary
+    const uintptr_t minAddr = Min(startAddr - 0x7FFFFF00, (uintptr_t)sysInfo.lpMinimumApplicationAddress);
+    const uintptr_t maxAddr = Max(startAddr + 0x7FFFFF00, (uintptr_t)sysInfo.lpMaximumApplicationAddress);
 
     const u64 startPage = (startAddr - (startAddr % sysInfo.dwPageSize));
 
@@ -729,10 +729,10 @@ static u32 WriteRelativeJump_(void* func2hook, void* jumpTarget) {
 
     u8 jmpInstruction[FDetour::Size] = { 0xE9, 0x0, 0x0, 0x0, 0x0 };
 
-    const i64 relativeToJumpTarget64 = (i64)jumpTarget - ((i64)func2hook + FDetour::Size);
+    const intptr_t relativeToJumpTarget64 = (intptr_t)jumpTarget - ((intptr_t)func2hook + FDetour::Size);
     AssertRelease(relativeToJumpTarget64 < INT32_MAX);
 
-    const i32 relativeToJumpTarget = (i32)relativeToJumpTarget64;
+    const i32 relativeToJumpTarget = checked_cast<i32>(relativeToJumpTarget64);
     ::memcpy(jmpInstruction + 1, &relativeToJumpTarget, 4);
 
     LOG_CHECK(HAL, ::WriteProcessMemory(
@@ -759,9 +759,6 @@ static bool CreateDetour_X86_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyF
     // build the trampoline
     ::DWORD* const hookAddress = (::DWORD*)(
         (::DWORD)(hook->OriginalFunc) + FDetour::Size);
-    ::DWORD* const relativeOffset = (::DWORD*)(
-        (::DWORD)(proxyFunc)-
-        (::DWORD)(hook->OriginalFunc) - FDetour::Size);
 
     hook->TrampolineAddress = ::VirtualAlloc(NULL, 11, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     LOG_CHECK(HAL, !!hook->TrampolineAddress);

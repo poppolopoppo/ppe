@@ -23,7 +23,7 @@
 			"HAL": {
 				"Windows": {
 					"Defines": [
-						"USE_PPE_VIRTUALALLOCTRAMPOLINE"
+						"USE_PPE_VIRTUALALLOC_TRAMPOLINE"
 					],
 					"RuntimeDependencies": [
 						"External/vstools"

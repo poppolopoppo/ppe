@@ -10,7 +10,9 @@
 #endif
 
 PRAGMA_MSVC_WARNING_DISABLE(4065) // switch statement contains 'default' but no 'case' labels
+PRAGMA_MSVC_WARNING_DISABLE(4701) // potentially uninitialized local variable
 PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
+PRAGMA_MSVC_WARNING_DISABLE(4703) // potentially uninitialized local pointer variable
 PRAGMA_MSVC_WARNING_DISABLE(4706) // assignment within conditional expression
 PRAGMA_MSVC_WARNING_DISABLE(4996) // 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead.
 

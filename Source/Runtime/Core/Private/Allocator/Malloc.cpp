@@ -119,7 +119,7 @@ void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) {
     return FPlatformMemory::SystemAlignedMalloc(size, alignment);
 }
 void  FMallocLowLevel::AlignedFree(void *ptr) {
-    FPlatformMemory::SystemAlignedFree(ptr, alignment);
+    FPlatformMemory::SystemAlignedFree(ptr, ALLOCATION_BOUNDARY);
 }
 void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
     alignment = Max(alignment, ALLOCATION_BOUNDARY);
@@ -638,7 +638,8 @@ bool FMallocDebug::FetchAllocationHistogram(
         *bins = MakeView(FMallocHistogram::Get().Bins);
     return true;
 #else
-    Unused(sizes);
+    Unused(sizeClasses);
+    Unused(bins);
     return false;
 #endif
 }

@@ -33,7 +33,7 @@ static NO_INLINE void Test_Iterable_() {
     STATIC_ASSERT(std::is_same_v<iterator_t::reference, const int&>);
     STATIC_ASSERT(std::is_same_v<iterator_t::pointer, const int*>);
 
-    AssertRelease(lengthof(values) == std::distance(range.begin(), range.end()));
+    AssertRelease(lengthof(values) == checked_cast<u32>(std::distance(range.begin(), range.end())));
 
     const size_t count_all = range.size();
     const size_t count_odd = range.CountIf(is_odd);
@@ -159,7 +159,7 @@ static NO_INLINE void Test_Vector_() {
         AssertRelease(v.z == 3);
         AssertRelease(v.w == 3);
     }
-y}
+}
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_BoundingBox_() {
     {

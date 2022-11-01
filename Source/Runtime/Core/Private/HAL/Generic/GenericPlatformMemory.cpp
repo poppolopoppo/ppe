@@ -96,6 +96,8 @@ void FGenericPlatformMemory::SystemAlignedFree(void* p, size_t boundary) {
 #if USE_PPE_MEMORYDOMAINS
     const size_t sys = ::_aligned_msize(p, boundary, 0);
     MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Deallocate(sys, sys);
+#else
+    Unused(boundary);
 #endif
 
     ::_aligned_free(p);

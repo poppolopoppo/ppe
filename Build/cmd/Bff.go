@@ -135,8 +135,7 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			case PAYLOAD_STATICLIB:
 				bff.StaticLib(unit)
 			default:
-				UnexpectedValue(unit.Payload)
-				break
+				UnexpectedValuePanic(unit.Payload, unit.Payload)
 			}
 		}
 
