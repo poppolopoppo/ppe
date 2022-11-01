@@ -45,11 +45,11 @@ func (x *CompilerType) Set(in string) (err error) {
 func (x CompilerType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x CompilerType) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(x)
+func (x CompilerType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *CompilerType) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(x, data)
+func (x *CompilerType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************

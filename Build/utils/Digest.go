@@ -246,9 +246,9 @@ func (d *Digest) Set(str string) (err error) {
 	return err
 }
 
-func (d Digest) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(d)
+func (x Digest) MarshalText() ([]byte, error) {
+	return x[:], nil
 }
-func (d *Digest) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(d, data)
+func (x *Digest) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }

@@ -64,7 +64,7 @@ func (x ArchType) String() string {
 		return ""
 	}
 }
-func (x *ArchType) Set(in string) error {
+func (x *ArchType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case ARCH_X86.String():
 		*x = ARCH_X86
@@ -75,18 +75,18 @@ func (x *ArchType) Set(in string) error {
 	case ARCH_ARM64.String():
 		*x = ARCH_ARM64
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x ArchType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x ArchType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x ArchType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *ArchType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *ArchType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -149,11 +149,11 @@ func (x *ConfigType) Set(in string) (err error) {
 func (x ConfigType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x ConfigType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x ConfigType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *ConfigType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *ConfigType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -209,11 +209,11 @@ func (x *CppRttiType) Set(in string) (err error) {
 func (x CppRttiType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x CppRttiType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x CppRttiType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *CppRttiType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *CppRttiType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -287,11 +287,11 @@ func (x *CppStdType) Inherit(in CppStdType) {
 func (x CppStdType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x CppStdType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x CppStdType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *CppStdType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *CppStdType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -359,11 +359,11 @@ func (x *DebugType) Set(in string) (err error) {
 func (x DebugType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x DebugType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x DebugType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *DebugType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *DebugType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -419,11 +419,11 @@ func (x *ExceptionType) Set(in string) (err error) {
 func (x ExceptionType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x ExceptionType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x ExceptionType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *ExceptionType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *ExceptionType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -479,11 +479,11 @@ func (x *LinkType) Set(in string) (err error) {
 func (x LinkType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x LinkType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x LinkType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *LinkType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *LinkType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -540,11 +540,11 @@ func (x *ModuleType) Set(in string) (err error) {
 func (x ModuleType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x ModuleType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x ModuleType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *ModuleType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *ModuleType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -606,11 +606,11 @@ func (x *PrecompiledHeaderType) Set(in string) (err error) {
 func (x PrecompiledHeaderType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x PrecompiledHeaderType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x PrecompiledHeaderType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *PrecompiledHeaderType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *PrecompiledHeaderType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -679,11 +679,11 @@ func (x *PayloadType) Set(in string) (err error) {
 func (x PayloadType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x PayloadType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x PayloadType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *PayloadType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *PayloadType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 func (x PayloadType) HasOutput() bool {
 	switch x {
@@ -762,11 +762,11 @@ func (x *SanitizerType) Set(in string) (err error) {
 func (x SanitizerType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x SanitizerType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x SanitizerType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *SanitizerType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *SanitizerType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -841,11 +841,13 @@ func (x *TagType) Set(in string) (err error) {
 func (x TagType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x TagType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x TagType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *TagType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *TagType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
+}
+
 }
 
 /***************************************
@@ -910,11 +912,11 @@ func (x *UnityType) Set(in string) error {
 func (x UnityType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x UnityType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x UnityType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *UnityType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *UnityType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -965,11 +967,11 @@ func (x *VisibilityType) Set(in string) (err error) {
 func (x VisibilityType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x VisibilityType) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(x)
+func (x VisibilityType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *VisibilityType) UnmarshalJSON(data []byte) error {
-	return utils.UnmarshalJSON(x, data)
+func (x *VisibilityType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -1034,4 +1036,10 @@ func (m VisibilityMask) String() (result string) {
 		}
 	}
 	return result
+}
+func (x VisibilityMask) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+func (x *VisibilityMask) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }

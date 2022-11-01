@@ -648,18 +648,18 @@ func (list FileSet) Join(delim string) string {
  * JSON: marshal as string instead of array
  ***************************************/
 
-func (f Filename) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(f)
+func (x Filename) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (f *Filename) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(f, data)
+func (x *Filename) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
-func (d Directory) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(d)
+func (x Directory) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (d *Directory) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(d, data)
+func (x *Directory) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************

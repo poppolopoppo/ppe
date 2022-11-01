@@ -72,11 +72,11 @@ func (x *ArchiveType) Set(in string) (err error) {
 func (x ArchiveType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x ArchiveType) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(x)
+func (x ArchiveType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *ArchiveType) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(x, data)
+func (x *ArchiveType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 type ArchiveExtractor struct {

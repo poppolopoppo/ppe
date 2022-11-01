@@ -58,11 +58,11 @@ func (x *FBuildCacheType) Set(in string) (err error) {
 func (x FBuildCacheType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x FBuildCacheType) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(x)
+func (x FBuildCacheType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *FBuildCacheType) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(x, data)
+func (x *FBuildCacheType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 type FBuildArgs struct {
