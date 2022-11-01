@@ -2,7 +2,6 @@
 
 #include "Vulkan/Instance/VulkanInstance.h"
 
-#include "RHIVulkanModule.h"
 #include "Vulkan/VulkanIncludes.h"
 #include "Vulkan/Instance/VulkanDevice.h"
 
@@ -39,44 +38,46 @@ static FMemoryTracking& VulkanTrackingData_(VkSystemAllocationScope vkScope) {
 }
 #endif
 //----------------------------------------------------------------------------
+static void* VulkanMalloc_(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
+    Unused(pUserData);
+#if USE_PPE_MEMORYDOMAINS
+    return PPE::tracking_aligned_malloc(VulkanTrackingData_(allocationScope), size, alignment);
+#else
+    Unused(alignment);
+    Unused(allocationScope);
+    Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
+    void* const p = PPE::malloc(size);
+    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
+    return p;
+#endif
+}
+//----------------------------------------------------------------------------
+static void* VulkanRealloc_(void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
+    Unused(pUserData);
+#if USE_PPE_MEMORYDOMAINS
+    return PPE::tracking_aligned_realloc(VulkanTrackingData_(allocationScope), pOriginal, size, alignment);
+#else
+    Unused(alignment);
+    Unused(allocationScope);
+    Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
+    void* const p = PPE::realloc(pOriginal, size);
+    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
+    return p;
+#endif
+}
+//----------------------------------------------------------------------------
+static void VulkanFree_(void* pUserData, void* pMemory) {
+    Unused(pUserData);
+#if USE_PPE_MEMORYDOMAINS
+    PPE::tracking_free(pMemory);
+#else
+    PPE::free(pMemory);
+#endif
+}
+//----------------------------------------------------------------------------
 static VkAllocationCallbacks MakeVulkanAllocator_() {
-    PFN_vkAllocationFunction pfnAllocation = [](void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
-        Unused(pUserData);
-#if USE_PPE_MEMORYDOMAINS
-        return PPE::tracking_aligned_malloc(VulkanTrackingData_(allocationScope), size, alignment);
-#else
-        Unused(alignment);
-        Unused(allocationScope);
-        Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
-        void* const p = PPE::malloc(size);
-        Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
-        return p;
-#endif
-    };
-    PFN_vkReallocationFunction pfnReallocation = [](void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
-        Unused(pUserData);
-#if USE_PPE_MEMORYDOMAINS
-        return PPE::tracking_aligned_realloc(VulkanTrackingData_(allocationScope), pOriginal, size, alignment);
-#else
-        Unused(alignment);
-        Unused(allocationScope);
-        Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
-        void* const p = PPE::realloc(pOriginal, size);
-        Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
-        return p;
-#endif
-    };
-    PFN_vkFreeFunction pfnFree = [](void* pUserData, void* pMemory) {
-        Unused(pUserData);
-#if USE_PPE_MEMORYDOMAINS
-        PPE::tracking_free(pMemory);
-#else
-        PPE::free(pMemory);
-#endif
-    };
-
-    PFN_vkInternalAllocationNotification pfnInternalAllocation;
-    PFN_vkInternalFreeNotification pfnInternalFree;
+    PFN_vkInternalAllocationNotification pfnInternalAllocation = nullptr;
+    PFN_vkInternalFreeNotification pfnInternalFree = nullptr;
 #if USE_PPE_MEMORYDOMAINS
     // Notified when Vulkan make an internal allocation without our own allocator,
     // this is intended only for tracking purpose (and shouldn't be a common need).
@@ -95,17 +96,23 @@ static VkAllocationCallbacks MakeVulkanAllocator_() {
         Unused(allocationScope);
         MEMORYDOMAIN_TRACKING_DATA(RHIInternal).Deallocate(size, size);
     };
-#else
-    pfnInternalAllocation = nullptr;
-    pfnInternalFree = nullptr;
 #endif
 
     void* const pUserData = nullptr;
-    return VkAllocationCallbacks{
+    VkAllocationCallbacks vkAllocator{
         pUserData,
-        pfnAllocation, pfnReallocation, pfnFree,
+        &VulkanMalloc_, &VulkanRealloc_, &VulkanFree_,
         pfnInternalAllocation, pfnInternalFree
     };
+
+#ifdef PLATFORM_WINDOWS
+    // Don't override vulkan allocator on windows, let NV/AMD do their things
+    //vkAllocator.pfnAllocation = nullptr;
+    //vkAllocator.pfnReallocation = nullptr;
+    //vkAllocator.pfnFree = nullptr;
+#endif
+
+    return vkAllocator;
 }
 //----------------------------------------------------------------------------
 // Global API
