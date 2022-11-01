@@ -145,7 +145,7 @@ public:
         const auto dst = MakeCheckedIterator(_storage, _capacity, 0);
         const auto it = std::uninitialized_copy(first, last, dst);
         _size = std::distance(dst, it);
-        Assert_NoAssume(_size < _capacity);
+        Assert_NoAssume(_size <= _capacity);
     }
 
     void Append(TMemoryView<const T> values) {
@@ -160,7 +160,7 @@ public:
         const auto dst = MakeCheckedIterator(_storage, _capacity, _size);
         const auto it = std::uninitialized_copy(first, last, dst);
         _size += std::distance(dst, it);
-        Assert_NoAssume(_size < _capacity);
+        Assert_NoAssume(_size <= _capacity);
     }
 
     void Resize(size_t size) { Resize(size, Meta::MakeForceInit<T>()); }
