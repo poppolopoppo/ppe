@@ -19,7 +19,7 @@ const (
 func (id HostId) String() string {
 	return string(id)
 }
-func (x *HostId) Set(in string) error {
+func (x *HostId) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case HOST_WINDOWS.String():
 		*x = HOST_WINDOWS
@@ -28,9 +28,9 @@ func (x *HostId) Set(in string) error {
 	case HOST_DARWIN.String():
 		*x = HOST_DARWIN
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (id HostId) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(id.String())

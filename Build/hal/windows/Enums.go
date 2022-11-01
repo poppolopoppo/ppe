@@ -31,16 +31,16 @@ func (x CompilerType) String() string {
 		return ""
 	}
 }
-func (x *CompilerType) Set(in string) error {
+func (x *CompilerType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case COMPILER_MSVC.String():
 		*x = COMPILER_MSVC
 	case COMPILER_CLANGCL.String():
 		*x = COMPILER_CLANGCL
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x CompilerType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -101,7 +101,7 @@ func (v MsvcVersion) String() string {
 		return ""
 	}
 }
-func (v *MsvcVersion) Set(in string) error {
+func (v *MsvcVersion) Set(in string) (err error) {
 	switch in {
 	case MSC_VER_LATEST.String():
 		*v = MSC_VER_LATEST
@@ -116,9 +116,9 @@ func (v *MsvcVersion) Set(in string) error {
 	case MSC_VER_2013.String():
 		*v = MSC_VER_2013
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(v, in)
 	}
-	return nil
+	return err
 }
 func (v MsvcVersion) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(v.String())

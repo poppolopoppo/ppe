@@ -13,6 +13,10 @@ import (
 	"time"
 )
 
+/***************************************
+ * Source control
+ ***************************************/
+
 type SourceControlStatus struct {
 	Branch    string
 	Revision  string
@@ -41,6 +45,10 @@ type SourceControlProvider interface {
 	GetStatus(*SourceControlStatus) error
 }
 
+/***************************************
+ * Dummy source control
+ ***************************************/
+
 type DummySourceControl struct{}
 
 func (x DummySourceControl) GetModifiedFiles() (FileSet, error) {
@@ -52,6 +60,10 @@ func (x DummySourceControl) GetStatus(status *SourceControlStatus) error {
 	status.Timestamp = time.Now()
 	return nil
 }
+
+/***************************************
+ * Git source control
+ ***************************************/
 
 type GitSourceControl struct {
 	GitDir Directory
@@ -65,7 +77,12 @@ func (git GitSourceControl) Command(name string, args ...string) ([]byte, error)
 	proc.Env = os.Environ()
 	proc.Dir = UFS.Root.String()
 
-	return proc.Output()
+	output, err := proc.Output()
+	if err != nil {
+		LogError("git: %v -> %v : %v", strings.Join(args, " "), err, output)
+	}
+
+	return output, err
 }
 func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 	fileset := NewFileSet()

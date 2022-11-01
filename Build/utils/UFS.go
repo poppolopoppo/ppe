@@ -60,7 +60,8 @@ func (d Directory) Relative(to Directory) string {
 	if path, err := filepath.Rel(to.String(), d.String()); err == nil {
 		return path
 	} else {
-		panic(err)
+		LogPanicErr(err)
+		return ""
 	}
 }
 func (d Directory) Normalize() (result Directory) {
@@ -147,7 +148,8 @@ func (f Filename) Relative(to Directory) string {
 	if path, err := filepath.Rel(to.String(), f.String()); err == nil {
 		return path
 	} else {
-		panic(err)
+		LogPanicErr(err)
+		return ""
 	}
 }
 func (f Filename) Normalize() (result Filename) {
@@ -734,7 +736,7 @@ func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error 
 			return nil
 		}
 	}
-	LogWarning("ufs: %v", err)
+	LogWarning("ufs: caught %v while trying to create %v", err, dst)
 	return err
 }
 func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) error {

@@ -116,7 +116,7 @@ func (flags *CommandFlagsT) ApplyVars(persistent *PersistentMap) {
 			SetEnableInteractiveShell(false)
 			SetLogOutput(outp)
 		} else {
-			panic(err)
+			LogPanicErr(err)
 		}
 	}
 	if flags.Quiet {
@@ -163,6 +163,8 @@ type CommandEnvT struct {
 
 	configPath   Filename
 	databasePath Filename
+
+	lastPanic error
 }
 
 var CommandEnv *CommandEnvT
@@ -178,6 +180,7 @@ func InitCommandEnv(prefix string, rootFile Filename) *CommandEnvT {
 		deferred:     NewCommandList(),
 		configPath:   MAIN_MODULEPATH.Dirname.File(fmt.Sprint(".", prefix, "-config.json")),
 		databasePath: MAIN_MODULEPATH.Dirname.File(fmt.Sprint(".", prefix, "-cache.db")),
+		lastPanic:    nil,
 	}
 	CommandEnv.buildGraph = NewBuildGraph(CommandFlags.Create(CommandEnv.Flags))
 	return CommandEnv
@@ -188,6 +191,11 @@ func (env *CommandEnvT) Persistent() *PersistentMap { return env.persistent }
 func (env *CommandEnvT) ConfigPath() Filename       { return env.configPath }
 func (env *CommandEnvT) DatabasePath() Filename     { return env.databasePath }
 func (env *CommandEnvT) RootFile() Filename         { return env.rootFile }
+
+// don't save the db when panic occured
+func (env *CommandEnvT) OnPanic(err error) {
+	env.lastPanic = err
+}
 
 func (env *CommandEnvT) Init(args []string) {
 	if len(args) == 0 {
@@ -272,7 +280,9 @@ func (env *CommandEnvT) Save() {
 	LogTrace("saving config to '%v'...", env.configPath)
 	UFS.Create(env.configPath, env.persistent.Serialize)
 
-	if env.buildGraph.Dirty() {
+	if env.lastPanic != nil {
+		LogTrace("won't save build graph since a panic occured")
+	} else if env.buildGraph.Dirty() {
 		LogTrace("saving build graph to '%v'...", env.databasePath)
 		UFS.Create(env.databasePath, env.buildGraph.Serialize)
 	} else {

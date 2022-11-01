@@ -42,7 +42,7 @@ func (x FBuildCacheType) String() string {
 		return ""
 	}
 }
-func (x *FBuildCacheType) Set(in string) error {
+func (x *FBuildCacheType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case FBUILD_CACHE_DISABLED.String():
 		*x = FBUILD_CACHE_DISABLED
@@ -51,9 +51,9 @@ func (x *FBuildCacheType) Set(in string) error {
 	case FBUILD_CACHE_WRITE.String():
 		*x = FBUILD_CACHE_WRITE
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x FBuildCacheType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())

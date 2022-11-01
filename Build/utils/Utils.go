@@ -85,6 +85,10 @@ func Range[T any](transform func(int) T, n int) (dst []T) {
 	return dst
 }
 
+/***************************************
+ * String helpers
+ ***************************************/
+
 func Inspect[T any](it ...T) []string {
 	result := make([]string, len(it))
 	for i, x := range it {
@@ -118,6 +122,10 @@ func Stringize[T fmt.Stringer](it ...T) []string {
 	}
 	return result
 }
+
+/***************************************
+ * Memoize
+ ***************************************/
 
 func Memoize[T any](fn func() T) func() T {
 	var memoizedValue *T

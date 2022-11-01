@@ -158,7 +158,7 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) error {
 	selfExecutable, err := os.Executable()
 	if err != nil {
-		panic(err)
+		utils.LogPanicErr(err)
 	}
 
 	var problemMatcher string
@@ -168,7 +168,7 @@ func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) err
 	case HOST_WINDOWS:
 		problemMatcher = "$msCompile"
 	default:
-		UnexpectedValue(CurrentHost().Id)
+		return MakeUnexpectedValueError(problemMatcher, CurrentHost().Id)
 	}
 
 	tasks := Map(func(moduleName string) JsonMap {

@@ -104,7 +104,7 @@ var ListModules = utils.MakeCommand(
 		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
 			printCompletion(cmd, build.ModuleKeys())
 		} else {
-			panic(err)
+			utils.LogPanicErr(err)
 		}
 		return nil
 	},
@@ -118,7 +118,7 @@ var ListNamespaces = utils.MakeCommand(
 		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
 			printCompletion(cmd, build.NamespaceKeys())
 		} else {
-			panic(err)
+			utils.LogPanicErr(err)
 		}
 		return nil
 	},
@@ -132,7 +132,7 @@ var ListEnvironments = utils.MakeCommand(
 		if build, err := compile.BuildEnvironments.Build(cmd.BuildGraph()); err == nil {
 			printCompletion(cmd, utils.Stringize(build.Slice()...))
 		} else {
-			panic(err)
+			utils.LogPanicErr(err)
 		}
 		return nil
 	},
@@ -146,7 +146,7 @@ var ListTargets = utils.MakeCommand(
 		if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
 			printCompletion(cmd, utils.Stringize(build.TranslatedUnits()...))
 		} else {
-			panic(err)
+			utils.LogPanicErr(err)
 		}
 		return nil
 	},
@@ -189,7 +189,7 @@ var ExportUnit = utils.MakeCommand(
 			}, exportedUnits)
 			fmt.Println(utils.PrettyPrint(results))
 		} else {
-			panic(err)
+			utils.LogPanicErr(err)
 		}
 		return nil
 	},

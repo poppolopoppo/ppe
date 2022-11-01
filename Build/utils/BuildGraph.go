@@ -198,7 +198,7 @@ type buildExecuteContext struct {
 
 func (ctx *buildExecuteContext) DependsOn(it ...BuildAliasable) {
 	if err := ctx.AddDynamic(ctx.buildGraph, it...); err != nil {
-		panic(err)
+		LogPanicErr(err)
 	}
 }
 func (ctx *buildExecuteContext) NeedFile(files ...Filename) {
@@ -516,7 +516,8 @@ func (f BuilderFactory[T]) Need(bc BuildContext) T {
 	if builder, err := f.Get(bc); err == nil {
 		return builder
 	} else {
-		panic(err)
+		LogPanicErr(err)
+		return builder
 	}
 }
 

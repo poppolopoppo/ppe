@@ -129,7 +129,7 @@ func (x ConfigType) String() string {
 		return ""
 	}
 }
-func (x *ConfigType) Set(in string) error {
+func (x *ConfigType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case CONFIG_DEBUG.String():
 		*x = CONFIG_DEBUG
@@ -142,9 +142,9 @@ func (x *ConfigType) Set(in string) error {
 	case CONFIG_SHIPPING.String():
 		*x = CONFIG_SHIPPING
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x ConfigType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -193,7 +193,7 @@ func (x *CppRttiType) Inherit(in CppRttiType) {
 		*x = in
 	}
 }
-func (x *CppRttiType) Set(in string) error {
+func (x *CppRttiType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case CPPRTTI_INHERIT.String():
 		*x = CPPRTTI_INHERIT
@@ -202,9 +202,9 @@ func (x *CppRttiType) Set(in string) error {
 	case CPPRTTI_DISABLED.String():
 		*x = CPPRTTI_DISABLED
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x CppRttiType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -260,7 +260,7 @@ func (x CppStdType) String() string {
 		return ""
 	}
 }
-func (x *CppStdType) Set(in string) error {
+func (x *CppStdType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case CPPSTD_INHERIT.String():
 		*x = CPPSTD_INHERIT
@@ -275,9 +275,9 @@ func (x *CppStdType) Set(in string) error {
 	case CPPSTD_11.String():
 		*x = CPPSTD_11
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x *CppStdType) Inherit(in CppStdType) {
 	if *x == CPPSTD_INHERIT {
@@ -339,7 +339,7 @@ func (x *DebugType) Inherit(in DebugType) {
 		*x = in
 	}
 }
-func (x *DebugType) Set(in string) error {
+func (x *DebugType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case DEBUG_INHERIT.String():
 		*x = DEBUG_INHERIT
@@ -352,9 +352,9 @@ func (x *DebugType) Set(in string) error {
 	case DEBUG_HOTRELOAD.String():
 		*x = DEBUG_HOTRELOAD
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x DebugType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -403,7 +403,7 @@ func (x *ExceptionType) Inherit(in ExceptionType) {
 		*x = in
 	}
 }
-func (x *ExceptionType) Set(in string) error {
+func (x *ExceptionType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case EXCEPTION_INHERIT.String():
 		*x = EXCEPTION_INHERIT
@@ -412,9 +412,9 @@ func (x *ExceptionType) Set(in string) error {
 	case EXCEPTION_ENABLED.String():
 		*x = EXCEPTION_ENABLED
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x ExceptionType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -463,7 +463,7 @@ func (x *LinkType) Inherit(in LinkType) {
 		*x = in
 	}
 }
-func (x *LinkType) Set(in string) error {
+func (x *LinkType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case LINK_INHERIT.String():
 		*x = LINK_INHERIT
@@ -472,9 +472,9 @@ func (x *LinkType) Set(in string) error {
 	case LINK_DYNAMIC.String():
 		*x = LINK_DYNAMIC
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x LinkType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -522,7 +522,7 @@ func (x ModuleType) String() string {
 		return ""
 	}
 }
-func (x *ModuleType) Set(in string) error {
+func (x *ModuleType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case MODULE_PROGRAM.String():
 		*x = MODULE_PROGRAM
@@ -533,9 +533,9 @@ func (x *ModuleType) Set(in string) error {
 	case MODULE_HEADERS.String():
 		*x = MODULE_HEADERS
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x ModuleType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -588,7 +588,7 @@ func (x *PrecompiledHeaderType) Inherit(in PrecompiledHeaderType) {
 		*x = in
 	}
 }
-func (x *PrecompiledHeaderType) Set(in string) error {
+func (x *PrecompiledHeaderType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case PCH_INHERIT.String():
 		*x = PCH_INHERIT
@@ -599,9 +599,9 @@ func (x *PrecompiledHeaderType) Set(in string) error {
 	case PCH_SHARED.String():
 		*x = PCH_SHARED
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x PrecompiledHeaderType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -657,7 +657,7 @@ func (x PayloadType) String() string {
 		return ""
 	}
 }
-func (x *PayloadType) Set(in string) error {
+func (x *PayloadType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case PAYLOAD_EXECUTABLE.String():
 		*x = PAYLOAD_EXECUTABLE
@@ -672,9 +672,9 @@ func (x *PayloadType) Set(in string) error {
 	case PAYLOAD_HEADERS.String():
 		*x = PAYLOAD_HEADERS
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x PayloadType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -742,7 +742,7 @@ func (x *SanitizerType) Inherit(in SanitizerType) {
 		*x = in
 	}
 }
-func (x *SanitizerType) Set(in string) error {
+func (x *SanitizerType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case SANITIZER_INHERIT.String():
 		*x = SANITIZER_INHERIT
@@ -755,9 +755,9 @@ func (x *SanitizerType) Set(in string) error {
 	case SANITIZER_UNDEFINED_BEHAVIOR.String():
 		*x = SANITIZER_UNDEFINED_BEHAVIOR
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x SanitizerType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -817,7 +817,7 @@ func (x TagType) String() string {
 		return ""
 	}
 }
-func (x *TagType) Set(in string) error {
+func (x *TagType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case TAG_DEBUG.String():
 		*x = TAG_DEBUG
@@ -834,9 +834,9 @@ func (x *TagType) Set(in string) error {
 	case TAG_FASTDEBUG.String():
 		*x = TAG_FASTDEBUG
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x TagType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -949,7 +949,7 @@ func (x VisibilityType) String() string {
 		return ""
 	}
 }
-func (x *VisibilityType) Set(in string) error {
+func (x *VisibilityType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case PRIVATE.String():
 		*x = PRIVATE
@@ -958,9 +958,9 @@ func (x *VisibilityType) Set(in string) error {
 	case RUNTIME.String():
 		*x = RUNTIME
 	default:
-		utils.UnexpectedValue(in)
+		err = utils.MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x VisibilityType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())

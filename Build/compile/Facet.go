@@ -212,7 +212,8 @@ func (vars *VariableSubstitutions) Get(key string) string {
 	if x, ok := (*vars)[key]; ok {
 		return x
 	} else {
-		panic(fmt.Errorf("unknown variable substitution: '%s' (got [%v])", key, strings.Join(utils.Keys((*vars)), ",")))
+		utils.LogPanic("unknown variable substitution: '%s' (got [%v])", key, strings.Join(utils.Keys((*vars)), ","))
+		return ""
 	}
 }
 func (vars *VariableSubstitutions) ExpandString(it string) string {

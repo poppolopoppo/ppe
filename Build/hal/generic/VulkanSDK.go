@@ -600,7 +600,7 @@ func vkAllBindingTypes() []VkBindingType {
 func (v VkBindingType) String() string {
 	return string(v)
 }
-func (v *VkBindingType) Set(in string) error {
+func (v *VkBindingType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case VK_EXPORTED_FUNCTION.String():
 		*v = VK_EXPORTED_FUNCTION
@@ -623,9 +623,9 @@ func (v *VkBindingType) Set(in string) error {
 	case VK_DEVICE_LEVEL_BACKWARD_COMPATIBILITY.String():
 		*v = VK_DEVICE_LEVEL_BACKWARD_COMPATIBILITY
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(v, in)
 	}
-	return nil
+	return err
 }
 func (v VkBindingType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(v.String())
@@ -837,7 +837,7 @@ func (vk *VulkanHeadersT) Build(bc BuildContext) (BuildStamp, error) {
 				result <- vfp
 			})
 			if err != nil {
-				panic(err)
+				LogPanicErr(err)
 			}
 		}(f)
 		return result
@@ -984,7 +984,8 @@ func (vk *VulkanInterfaceT) Build(bc BuildContext) (BuildStamp, error) {
 		if i, ok := instanceExtByName[name]; ok {
 			return &vk.InstanceExts[i]
 		} else {
-			panic(fmt.Errorf("vulkan instance extension not found: %s", name))
+			LogPanic("vulkan instance extension not found: %s", name)
+			return nil
 		}
 	}
 

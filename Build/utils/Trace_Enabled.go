@@ -17,6 +17,6 @@ func StartTrace() func() {
 			trace.Stop()
 		}
 	} else {
-		panic(err)
+		LogPanic(err)
 	}
 }

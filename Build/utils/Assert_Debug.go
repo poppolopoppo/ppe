@@ -23,7 +23,7 @@ var enableAssertions bool = true
 
 func AssertMessage(pred func() bool, msg string, args ...interface{}) {
 	if !pred() {
-		log.Panicf(msg, args...)
+		LogPanic(msg, args...)
 	}
 }
 
@@ -35,7 +35,7 @@ func AssertSameType[T any](a T, b T) {
 	ta := reflect.TypeOf(a)
 	tb := reflect.TypeOf(b)
 	if ta != tb {
-		panic(fmt.Errorf("expected type <%v> but got <%v>", ta, tb))
+		LogPanic("expected type <%v> but got <%v>", ta, tb)
 	}
 }
 
@@ -45,12 +45,12 @@ func AssertIn[T comparable](elt T, values ...T) {
 			return
 		}
 	}
-	panic(fmt.Errorf("element <%v> is not in the slice", elt))
+	LogPanic("element <%v> is not in the slice", elt)
 }
 func AssertNotIn[T comparable](elt T, values ...T) {
 	for _, x := range values {
 		if x == elt {
-			panic(fmt.Errorf("element <%v> is already in the slice", elt))
+			LogPanic("element <%v> is already in the slice", elt)
 		}
 	}
 }
@@ -61,12 +61,12 @@ func AssertInStrings[T fmt.Stringer](elt T, values ...T) {
 			return
 		}
 	}
-	panic(fmt.Errorf("element <%v> is not in the slice", elt))
+	LogPanic("element <%v> is not in the slice", elt)
 }
 func AssertNotInStrings[T fmt.Stringer](elt T, values ...T) {
 	for _, x := range values {
 		if x.String() == elt.String() {
-			panic(fmt.Errorf("element <%v> is already in the slice", elt))
+			LogPanic("element <%v> is already in the slice", elt)
 		}
 	}
 }
@@ -75,14 +75,14 @@ func NotImplemented(m string, a ...interface{}) {
 	LogWarning("not implemented: "+m, a...)
 }
 func UnreachableCode() {
-	panic(fmt.Errorf("unreachable code"))
+	LogPanic("unreachable code")
 }
 func UnexpectedValue(x interface{}) {
-	panic(fmt.Errorf("unexpected value: <%T> %v", x, x))
+	LogPanic("unexpected value: <%T> %v", x, x)
 }
 func UnexpectedType(expected reflect.Type, given interface{}) {
 	if reflect.TypeOf(given) != expected {
-		panic(fmt.Errorf("expected <%v>, given %v <%T>", expected, given, given))
+		LogPanic("expected <%v>, given %v <%T>", expected, given, given)
 	}
 }
 
@@ -92,7 +92,7 @@ func AppendComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) {
 		if !Contains(src, x) {
 			result = append(result, x)
 		} else {
-			panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
+			LogPanic("element already in set: %v (%v)", x, elts)
 		}
 	}
 	return result
@@ -103,7 +103,7 @@ func PrependComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) 
 		if !Contains(src, x) {
 			result = append([]T{x}, result...)
 		} else {
-			panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
+			LogPanic("element already in set: %v (%v)", x, elts)
 		}
 	}
 	return result
@@ -114,7 +114,7 @@ func AppendEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T) 
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
+				LogPanic("element already in set: %v (%v)", x, elts)
 			}
 		}
 		result = append(result, x)
@@ -126,7 +126,7 @@ func PrependEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T)
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				panic(fmt.Errorf("element already in set: %v (%v)", x, elts))
+				LogPanic("element already in set: %v (%v)", x, elts)
 			}
 		}
 		result = append([]T{x}, result...)

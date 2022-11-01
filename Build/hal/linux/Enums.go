@@ -35,25 +35,25 @@ func (x CompilerType) String() string {
 		return ""
 	}
 }
-func (x *CompilerType) Set(in string) error {
+func (x *CompilerType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case COMPILER_CLANG.String():
 		*x = COMPILER_CLANG
 	case COMPILER_GCC.String():
 		*x = COMPILER_GCC
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x CompilerType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x CompilerType) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(x)
+func (x CompilerType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *CompilerType) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(x, data)
+func (x *CompilerType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 /***************************************
@@ -117,7 +117,7 @@ func (v LlvmVersion) String() string {
 		return ""
 	}
 }
-func (v *LlvmVersion) Set(in string) error {
+func (v *LlvmVersion) Set(in string) (err error) {
 	switch in {
 	case LLVM_LATEST.String():
 		*v = LLVM_LATEST
@@ -138,9 +138,9 @@ func (v *LlvmVersion) Set(in string) error {
 	case LLVM_9.String():
 		*v = LLVM_9
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(v, in)
 	}
-	return nil
+	return err
 }
 func (v LlvmVersion) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(v.String())
@@ -194,7 +194,7 @@ func (x DumpRecordLayoutsType) String() string {
 		return ""
 	}
 }
-func (x *DumpRecordLayoutsType) Set(in string) error {
+func (x *DumpRecordLayoutsType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case DUMPRECORDLAYOUTS_NONE.String():
 		*x = DUMPRECORDLAYOUTS_NONE
@@ -203,16 +203,16 @@ func (x *DumpRecordLayoutsType) Set(in string) error {
 	case DUMPRECORDLAYOUTS_FULL.String():
 		*x = DUMPRECORDLAYOUTS_FULL
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x DumpRecordLayoutsType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
 }
-func (x DumpRecordLayoutsType) MarshalJSON() ([]byte, error) {
-	return MarshalJSON(x)
+func (x DumpRecordLayoutsType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
 }
-func (x *DumpRecordLayoutsType) UnmarshalJSON(data []byte) error {
-	return UnmarshalJSON(x, data)
+func (x *DumpRecordLayoutsType) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }

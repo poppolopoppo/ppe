@@ -58,16 +58,16 @@ func (x ArchiveType) String() string {
 		return ""
 	}
 }
-func (x *ArchiveType) Set(in string) error {
+func (x *ArchiveType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
 	case ARCHIVE_ZIP.String():
 		*x = ARCHIVE_ZIP
 	case ARCHIVE_TGZ.String():
 		*x = ARCHIVE_TGZ
 	default:
-		UnexpectedValue(in)
+		err = MakeUnexpectedValueError(x, in)
 	}
-	return nil
+	return err
 }
 func (x ArchiveType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -275,7 +275,7 @@ func ExtractZipEx(exportFilter func(string) (Filename, bool), src Filename) erro
 
 				UFS.Mkdir(fpath.Dirname)
 				if err := extractFile(f, fpath); err != nil {
-					panic(err)
+					LogPanicErr(err)
 				}
 
 				pbar.Inc()

@@ -32,13 +32,14 @@ func makeModuleSignature() string {
 			MAIN_MODULEPATH = MakeFilename(x.Main.Path)
 		} else {
 			MAIN_MODULESUM = "XXXXXXXX"
-			MAIN_MODULEVER = "1.0.2"
+			MAIN_MODULEVER = "1.0.3"
 			MAIN_MODULEPATH = UFS.Output.File("Build.go")
 		}
 		MAIN_MODULEBASE = MAIN_MODULEPATH.TrimExt()
 		return fmt.Sprintf("%v@%v", MAIN_MODULEBASE, MAIN_MODULEVER)
 	} else {
-		panic("no module build info!")
+		LogPanic("no module build info!")
+		return ""
 	}
 }
 
@@ -57,7 +58,8 @@ func ReflectSourceFile() Filename {
 	if _, filename, _, ok := runtime.Caller(1); ok {
 		return MakeFilename(filename)
 	} else {
-		panic("invalid source file")
+		LogPanic("invalid source file")
+		return Filename{}
 	}
 }
 func ReflectSourceDir() Directory {

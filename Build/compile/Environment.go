@@ -161,7 +161,7 @@ func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result Payl
 		case LINK_DYNAMIC:
 			return PAYLOAD_SHAREDLIB
 		default:
-			utils.UnexpectedValue(link)
+			utils.UnexpectedValuePanic(module.ModuleType, link)
 		}
 	case MODULE_LIBRARY:
 		switch link {
@@ -172,7 +172,7 @@ func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result Payl
 		case LINK_DYNAMIC:
 			return PAYLOAD_SHAREDLIB
 		default:
-			utils.UnexpectedValue(link)
+			utils.UnexpectedValuePanic(module.ModuleType, link)
 		}
 	case MODULE_PROGRAM:
 		switch link {
@@ -181,14 +181,14 @@ func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result Payl
 		case LINK_STATIC:
 			return PAYLOAD_EXECUTABLE
 		case LINK_DYNAMIC:
-			utils.LogFatal("executable should have %s, but found %s", LINK_STATIC, link)
+			utils.LogPanic("executable should have %s, but found %s", LINK_STATIC, link)
 		default:
-			utils.UnexpectedValue(link)
+			utils.UnexpectedValuePanic(module.ModuleType, link)
 		}
 	case MODULE_HEADERS:
 		return PAYLOAD_HEADERS
 	default:
-		utils.UnexpectedValue(module.GetModule().ModuleType)
+		utils.UnexpectedValuePanic(module.ModuleType, module.ModuleType)
 	}
 	return result
 }
@@ -277,7 +277,7 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 			unit.PrecompiledObject = env.GetPayloadOutput(unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
 		}
 	default:
-		utils.UnexpectedValue(unit.PCH)
+		utils.UnexpectedValuePanic(unit.PCH, unit.PCH)
 	}
 
 	unit.Facet = NewFacet()
@@ -466,7 +466,8 @@ func (b *BuildEnvironmentsT) GetEnvironment(alias EnvironmentAlias) *CompileEnv 
 			return env
 		}
 	}
-	panic(fmt.Errorf("unknown compile environment <%v>", alias))
+	utils.LogPanic("unknown compile environment <%v>", alias)
+	return nil
 }
 
 var BuildEnvironments = utils.MakeBuildable(func(bi utils.BuildInit) *BuildEnvironmentsT {

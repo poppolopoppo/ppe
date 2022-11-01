@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -162,7 +161,7 @@ func (set *SetT[T]) Remove(x T) *SetT[T] {
 	if i, ok := set.IndexOf(x); ok {
 		set.Delete(i)
 	} else {
-		panic(errors.New("could not find item in set"))
+		LogPanic("could not find item in set")
 	}
 	return set
 }
@@ -476,7 +475,8 @@ func (acc ServiceAccessor[T, V]) Need(services ServiceLocator[V]) *T {
 	if x, err := acc.Get(services); err == nil {
 		return x
 	} else {
-		panic(err)
+		LogPanicErr(err)
+		return nil
 	}
 }
 func (acc ServiceAccessor[T, V]) Create(services ServiceLocator[V]) *T {

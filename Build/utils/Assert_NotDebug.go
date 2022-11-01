@@ -5,7 +5,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 )
 
@@ -29,10 +28,10 @@ func AssertNotIn[T comparable](T, ...T)          {}
 func AssertInStrings[T fmt.Stringer](T, ...T)    {}
 func AssertNotInStrings[T fmt.Stringer](T, ...T) {}
 
-func NotImplemented(string, ...interface{})    { log.Panic("not implemented") }
-func UnreachableCode()                         { log.Panic("unreachable code") }
-func UnexpectedValue(interface{})              { log.Panic("unexpected value") }
-func UnexpectedType(reflect.Type, interface{}) { log.Panic("unexpected type") }
+func NotImplemented(string, ...interface{})    { LogPanic("not implemented") }
+func UnreachableCode()                         { LogPanic("unreachable code") }
+func UnexpectedValue(interface{})              { LogPanic("unexpected value") }
+func UnexpectedType(reflect.Type, interface{}) { LogPanic("unexpected type") }
 
 func AppendComparable_CheckUniq[T comparable](src []T, elts ...T) []T {
 	return append(src, elts...)

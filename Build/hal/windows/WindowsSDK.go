@@ -147,7 +147,7 @@ var GetWindowsSDKInstall = utils.MemoizeArg(func(overrideDir utils.Directory) *W
 		if winUser, err := windowsSDK_User.Build(bg); err == nil {
 			return winUser
 		} else {
-			panic(err)
+			utils.LogPanicErr(err)
 		}
 	}
 	if win10, err := windowsSDK_10.Build(bg); err == nil {

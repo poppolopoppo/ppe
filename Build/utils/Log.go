@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -205,10 +206,25 @@ func LogFatal(msg string, args ...interface{}) {
 	log.Fatalf(msg, args...)
 }
 func LogPanic(msg string, args ...interface{}) {
+	LogPanicErr(fmt.Errorf(msg, args...))
+}
+func LogPanicErr(err error) {
+	CommandEnv.OnPanic(err)
 	log.Panicf(fmt.Sprint(
 		ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0,
-		"[PANIC] ", msg, ANSI_RESET),
-		args...)
+		"[PANIC] ", err, ANSI_RESET))
+}
+
+func MakeError(msg string, args ...interface{}) error {
+	LogError(msg, args...)
+	return fmt.Errorf(msg, args...)
+}
+
+func MakeUnexpectedValueError(dst interface{}, any interface{}) error {
+	return MakeError("unexpected <%v> value '%v'", reflect.TypeOf(dst), any)
+}
+func UnexpectedValuePanic(dst interface{}, any interface{}) {
+	LogPanicErr(MakeUnexpectedValueError(dst, any))
 }
 
 type FormatFunc func() string
