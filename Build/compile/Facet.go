@@ -3,7 +3,6 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
-	"fmt"
 	"strings"
 )
 
@@ -36,7 +35,7 @@ type Facet struct {
 	LibrarianOptions utils.StringSet
 	LinkerOptions    utils.StringSet
 
-	Tags    utils.SetT[TagType]
+	Tags    TagFlags
 	Exports VariableSubstitutions
 }
 
@@ -58,10 +57,10 @@ func (facet *Facet) GetDigestable(o *bytes.Buffer) {
 	digest.Append(facet.LibraryPaths)
 	digest.Append(facet.LibrarianOptions)
 	digest.Append(facet.LinkerOptions)
+	digest.Append(facet.Tags)
 	// digest.Append(facet.Exports)
 	result := digest.Finalize()
 	o.Write(result[:])
-	utils.MakeDigestable(o, facet.Tags...)
 }
 
 func NewFacet() Facet {
@@ -79,18 +78,13 @@ func NewFacet() Facet {
 		LibraryPaths:             utils.DirSet{},
 		LibrarianOptions:         utils.StringSet{},
 		LinkerOptions:            utils.StringSet{},
-		Tags:                     utils.SetT[TagType]{},
+		Tags:                     TagFlags(0),
 		Exports:                  VariableSubstitutions{},
 	}
 }
 
 func (facet *Facet) Tagged(tag ...TagType) bool {
-	for _, x := range tag {
-		if _, ok := utils.IndexOf(x, facet.Tags...); !ok {
-			return false
-		}
-	}
-	return true
+	return facet.Tags.Has(tag...)
 }
 func (facet *Facet) Append(others ...Facetable) {
 	for _, o := range others {
@@ -108,7 +102,7 @@ func (facet *Facet) Append(others ...Facetable) {
 		facet.LibraryPaths.Append(x.LibraryPaths...)
 		facet.LibrarianOptions.Append(x.LibrarianOptions...)
 		facet.LinkerOptions.Append(x.LinkerOptions...)
-		facet.Tags.Append(x.Tags...)
+		facet.Tags.Append(x.Tags)
 		for k, v := range x.Exports {
 			if _, ok := facet.Exports[k]; !ok {
 				facet.Exports[k] = v
@@ -132,7 +126,7 @@ func (facet *Facet) AppendUniq(others ...Facetable) {
 		facet.LibraryPaths.AppendUniq(x.LibraryPaths...)
 		facet.LibrarianOptions.AppendUniq(x.LibrarianOptions...)
 		facet.LinkerOptions.AppendUniq(x.LinkerOptions...)
-		facet.Tags.AppendUniq(x.Tags...)
+		facet.Tags.Append(x.Tags)
 		for k, v := range x.Exports {
 			if _, ok := facet.Exports[k]; !ok {
 				facet.Exports[k] = v
@@ -156,7 +150,7 @@ func (facet *Facet) Prepend(others ...Facetable) {
 		facet.LibraryPaths.Prepend(x.LibraryPaths...)
 		facet.LibrarianOptions.Prepend(x.LibrarianOptions...)
 		facet.LinkerOptions.Prepend(x.LinkerOptions...)
-		facet.Tags.Prepend(facet.Tags...)
+		facet.Tags.Append(facet.Tags)
 		for k, v := range x.Exports {
 			facet.Exports[k] = v
 		}

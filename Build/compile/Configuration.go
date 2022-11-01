@@ -76,7 +76,7 @@ var Configuration_Debug = &ConfigRules{
 	Unity:      UNITY_AUTOMATIC,
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG"},
-		Tags:    []TagType{TAG_DEBUG},
+		Tags:    MakeTagFlags(TAG_DEBUG),
 	},
 }
 var Configuration_FastDebug = &ConfigRules{
@@ -91,7 +91,7 @@ var Configuration_FastDebug = &ConfigRules{
 	Unity:      UNITY_DISABLED,
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG", "FASTDEBUG"},
-		Tags:    []TagType{TAG_FASTDEBUG, TAG_DEBUG},
+		Tags:    MakeTagFlags(TAG_FASTDEBUG, TAG_DEBUG),
 	},
 }
 var Configuration_Devel = &ConfigRules{
@@ -106,7 +106,7 @@ var Configuration_Devel = &ConfigRules{
 	Unity:      UNITY_AUTOMATIC,
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG"},
-		Tags:    []TagType{TAG_DEVEL, TAG_NDEBUG},
+		Tags:    MakeTagFlags(TAG_DEVEL, TAG_NDEBUG),
 	},
 }
 var Configuration_Test = &ConfigRules{
@@ -121,7 +121,7 @@ var Configuration_Test = &ConfigRules{
 	Unity:      UNITY_AUTOMATIC,
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "PROFILING_ENABLED"},
-		Tags:    []TagType{TAG_TEST, TAG_NDEBUG, TAG_PROFILING},
+		Tags:    MakeTagFlags(TAG_TEST, TAG_NDEBUG, TAG_PROFILING),
 	},
 }
 var Configuration_Shipping = &ConfigRules{
@@ -136,7 +136,7 @@ var Configuration_Shipping = &ConfigRules{
 	Unity:      UNITY_AUTOMATIC,
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "FINAL_RELEASE"},
-		Tags:    []TagType{TAG_SHIPPING, TAG_NDEBUG},
+		Tags:    MakeTagFlags(TAG_SHIPPING, TAG_NDEBUG),
 	},
 }
 

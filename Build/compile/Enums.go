@@ -3,6 +3,7 @@ package compile
 import (
 	utils "build/utils"
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -848,6 +849,84 @@ func (x *TagType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
 }
 
+/***************************************
+ * TagFlags
+ ***************************************/
+
+type TagFlags int32
+
+func (x TagFlags) int32() int32 {
+	return int32(x)
+}
+
+func (x TagFlags) Empty() bool {
+	return x.int32() == 0
+}
+func (x TagFlags) Tags() (result []TagType) {
+	for _, tag := range TagTypes() {
+		if x.Has(tag) {
+			result = append(result, tag)
+		}
+	}
+	return result
+}
+func (x TagFlags) Has(tags ...TagType) bool {
+	for _, tag := range tags {
+		if (x.int32() & (1 << int32(tag))) != (1 << int32(tag)) {
+			return false
+		}
+	}
+	return true
+}
+func (x *TagFlags) Clear() {
+	*x = TagFlags(0)
+}
+func (x TagFlags) Intersect(other TagFlags) TagFlags {
+	return TagFlags(x.int32() & other.int32())
+}
+func (x *TagFlags) Append(other TagFlags) {
+	*x = TagFlags(x.int32() | other.int32())
+}
+func (x *TagFlags) Add(tags ...TagType) {
+	for _, tag := range tags {
+		*x = TagFlags(x.int32() | (1 << int32(tag)))
+	}
+}
+func (x *TagFlags) Remove(tags ...TagType) {
+	for _, tag := range tags {
+		*x = TagFlags(x.int32() & ^(1 << int32(tag)))
+	}
+}
+func (x TagFlags) String() string {
+	return utils.JoinString("|", x.Tags()...)
+}
+func (x *TagFlags) Set(in string) error {
+	*x = TagFlags(0)
+	for _, s := range strings.Split(in, "|") {
+		var tag TagType
+		if err := tag.Set(strings.TrimSpace(s)); err == nil {
+			x.Add(tag)
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+func (x TagFlags) GetDigestable(o *bytes.Buffer) {
+	tmp := [4]byte{}
+	binary.BigEndian.PutUint32(tmp[:], uint32(x.int32()))
+	o.Write(tmp[:])
+}
+func (x TagFlags) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+func (x *TagFlags) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
+}
+
+func MakeTagFlags(tags ...TagType) (result TagFlags) {
+	result.Add(tags...)
+	return result
 }
 
 /***************************************
