@@ -1,0 +1,9 @@
+{
+	"PrivateDependencies": [
+		"Runtime/VFS"
+	],
+	"PublicDependencies": [
+		"Runtime/Core",
+		"Runtime/RHI"
+	]
+}

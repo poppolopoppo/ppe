@@ -4,6 +4,7 @@
 	],
 	"Modules": [
 		"BuildGraph",
+		"MeshBuilder",
 		"PipelineCompiler",
 		"PipelineReflection"
 	]
