@@ -217,9 +217,15 @@ func makeLlvmCompiler(
 		"-march=x86-64-v3 ",
 		"-mavx", "-msse4.2",
 		"-mlzcnt", "-mpopcnt",
-		"-c",               // compile only
-		"-o \"%2\" \"%1\"", // input file injection
+		"-fsized-deallocation", // https://isocpp.org/files/papers/n3778.html
+		"-c",                   // compile only
+		"-o \"%2\" \"%1\"",     // input file injection
 	)
+
+	if compileFlags.Benchmark {
+		// https: //aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/
+		facet.CompilerOptions.Append("-ftime-trace")
+	}
 
 	facet.LibrarianOptions.Append("rcs \"%2\" \"%1\"")
 	facet.LinkerOptions.Append("\"%1\" -o \"%2\"")
