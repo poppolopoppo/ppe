@@ -54,7 +54,7 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, float v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, double v);
 template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, void* v);
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const void* v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v);
 template <typename _Char>

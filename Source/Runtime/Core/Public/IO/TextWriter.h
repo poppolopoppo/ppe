@@ -207,7 +207,7 @@ public:
     void Write(u64 v);
     void Write(float v);
     void Write(double v);
-    void Write(void* v);
+    void Write(const void* v);
     void Write(const _Char* v);
     void Write(const TBasicStringView<_Char>& v);
 
@@ -264,7 +264,7 @@ template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u32 v);
 template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u64 v);
 template <> PPE_CORE_API void TBasicTextWriter<char>::Write(float v);
 template <> PPE_CORE_API void TBasicTextWriter<char>::Write(double v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(void* v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const void* v);
 template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const char* v);
 template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v);
 //----------------------------------------------------------------------------
@@ -279,7 +279,7 @@ template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u32 v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u64 v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(float v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(double v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(void* v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const void* v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const wchar_t* v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
 //----------------------------------------------------------------------------
@@ -324,7 +324,7 @@ template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, double v) { w.Write(v); return w; }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, void* v) { w.Write(v); return w; }
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const void* v) { w.Write(v); return w; }
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v) { w.Write(v); return w; }
