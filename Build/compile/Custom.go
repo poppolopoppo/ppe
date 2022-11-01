@@ -41,6 +41,9 @@ type CustomList []Custom
 func (list *CustomList) Append(it ...Custom) {
 	*list = append(*list, it...)
 }
+func (list *CustomList) Prepend(it ...Custom) {
+	*list = append(it, *list...)
+}
 func (list CustomList) GetDigestable(o *bytes.Buffer) {
 	utils.MakeDigestable(o, list...)
 }

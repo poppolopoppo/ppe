@@ -63,7 +63,7 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 
 	modules := BuildModules.Need(ctx)
 	isNotModuleLibrary := func(alias TargetAlias) bool {
-		m := modules.Get(alias.GetModuleAlias()).GetModule()
+		m := modules.Get(alias.GetModuleAlias()).GetModule(nil)
 		return m.ModuleType == MODULE_LIBRARY
 	}
 

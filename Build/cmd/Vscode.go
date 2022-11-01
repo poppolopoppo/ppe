@@ -158,7 +158,7 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) error {
 	selfExecutable, err := os.Executable()
 	if err != nil {
-		utils.LogPanicErr(err)
+		LogPanicErr(err)
 	}
 
 	var problemMatcher string
@@ -172,12 +172,11 @@ func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) err
 	}
 
 	tasks := Map(func(moduleName string) JsonMap {
-		rules := modules.Modules[moduleName].GetModule()
-		alias := rules.String()
+		alias := modules.Modules[moduleName].ModuleAlias()
 		return JsonMap{
 			"label":   alias,
 			"command": selfExecutable,
-			"args":    []string{"fbuild", "-v", alias + "-${command:cpptools.activeConfigName}"},
+			"args":    []string{"fbuild", "-v", alias.String() + "-${command:cpptools.activeConfigName}"},
 			"options": JsonMap{
 				"cwd": UFS.Root,
 			},
@@ -215,7 +214,7 @@ func (vsc *VscodeBuilder) launch_configs(modules *BuildModulesT, compiler Compil
 	}
 
 	executableNames := RemoveUnless(func(moduleName string) bool {
-		rules := modules.Modules[moduleName].GetModule()
+		rules := modules.Modules[moduleName].GetModule(nil)
 		return rules.ModuleType == MODULE_PROGRAM
 	}, modules.ModuleKeys()...)
 

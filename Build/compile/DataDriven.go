@@ -27,7 +27,8 @@ func RegisterArchetype(archtype string, fn ModuleArchetype) ModuleArchetype {
 
 type ExtensionDesc struct {
 	Archetypes utils.StringSet
-	HAL       map[utils.HostId]*ModuleDesc
+	HAL        map[utils.HostId]*ModuleDesc
+	TAG        map[TagFlags]*ModuleDesc
 }
 
 func (src ExtensionDesc) ApplyArchetypes(dst *ModuleDesc, name string) {
@@ -47,19 +48,35 @@ func (src ExtensionDesc) ApplyHAL(dst *ModuleDesc, name string) {
 		var hal utils.HostId
 		if err := hal.Set(id.String()); err == nil && hal == hostId {
 			utils.LogTrace("%v: inherit platform facet [%v]", name, id)
-			dst.Append(desc)
+			dst.Archetypes.Prepend(desc.Archetypes...)
+			dst.rules.Prepend(desc.rules)
+		} else if err != nil {
+			utils.LogError("%v: invalid platform id [%v], %v", name, id, err)
 		}
 	}
 }
-func (x *ExtensionDesc) ExtendDesc(other *ExtensionDesc) {
+func (x *ExtensionDesc) ApplyExtensions(other *ExtensionDesc) {
 	x.Archetypes.Prepend(other.Archetypes...)
+
 	for key, src := range other.HAL {
 		if dst, ok := x.HAL[key]; ok {
-			dst.Append(src)
+			dst.Archetypes.Prepend(src.Archetypes...)
+			dst.rules.Append(src.rules)
 		} else {
 			new := &ModuleDesc{}
 			*new = *src
 			x.HAL[key] = new
+		}
+	}
+
+	for key, src := range other.TAG {
+		if dst, ok := x.TAG[key]; ok {
+			dst.Archetypes.Prepend(src.Archetypes...)
+			dst.rules.Append(src.rules)
+		} else {
+			new := &ModuleDesc{}
+			*new = *src
+			x.TAG[key] = new
 		}
 	}
 }
@@ -118,54 +135,6 @@ type ModuleDesc struct {
 	rules *ModuleRules
 }
 
-func (x *ModuleDesc) Append(other *ModuleDesc) {
-	if x.CppRtti == CPPRTTI_INHERIT {
-		x.CppRtti = other.CppRtti
-	}
-	if x.CppStd == CPPSTD_INHERIT {
-		x.CppStd = other.CppStd
-	}
-	if x.Debug == DEBUG_INHERIT {
-		x.Debug = other.Debug
-	}
-	if x.PCH == PCH_INHERIT {
-		x.PCH = other.PCH
-	}
-	if x.Link == LINK_INHERIT {
-		x.Link = other.Link
-	}
-	if x.Sanitizer == SANITIZER_INHERIT {
-		x.Sanitizer = other.Sanitizer
-	}
-	if x.Unity == UNITY_INHERIT {
-		x.Unity = other.Unity
-	}
-
-	x.SourceDirs.Append(other.SourceDirs...)
-	x.SourceGlobs.Append(other.SourceGlobs...)
-	x.ExcludedGlobs.Append(other.ExcludedGlobs...)
-	x.SourceFiles.Append(other.SourceFiles...)
-	x.ExcludedFiles.Append(other.ExcludedFiles...)
-	x.ForceIncludes.Append(other.ForceIncludes...)
-	x.IsolatedFiles.Append(other.IsolatedFiles...)
-	x.ExtraFiles.Append(other.ExtraFiles...)
-	x.ExtraDirs.Append(other.ExtraDirs...)
-
-	if x.PrecompiledHeader == nil {
-		x.PrecompiledHeader = other.PrecompiledHeader
-	}
-	if x.PrecompiledSource == nil {
-		x.PrecompiledSource = other.PrecompiledSource
-	}
-
-	x.PrivateDependencies.Append(other.PrivateDependencies...)
-	x.PublicDependencies.Append(other.PublicDependencies...)
-	x.RuntimeDependencies.Append(other.RuntimeDependencies...)
-
-	x.Archetypes = append(x.Archetypes, other.Archetypes...)
-
-	x.Facet.Append(other)
-}
 func (x *ModuleDesc) Serialize(dst io.Writer) error {
 	return utils.JsonSerialize(x, dst)
 }
@@ -173,69 +142,93 @@ func (x *ModuleDesc) Deserialize(src io.Reader) error {
 	x.Facet = NewFacet()
 	return utils.JsonDeserialize(x, src)
 }
+func (x *ModuleDesc) CreateRules(rootDir utils.Directory, namespace *NamespaceDesc, moduleId string) error {
+	utils.LogVerbose("create rules for module: '%v'", moduleId)
 
-func loadModuleDesc(src utils.Filename, namespace *NamespaceDesc) (result *ModuleDesc, err error) {
+	x.rules = &ModuleRules{
+		ModuleName: x.Name,
+		Namespace:  namespace.rules,
+		ModuleDir:  rootDir,
+		ModuleType: x.Type,
+		CppRtti:    x.CppRtti,
+		CppStd:     x.CppStd,
+		Debug:      x.Debug,
+		PCH:        x.PCH,
+		Link:       x.Link,
+		Sanitizer:  x.Sanitizer,
+		Unity:      x.Unity,
+		Source: ModuleSource{
+			SourceGlobs:   x.SourceGlobs,
+			ExcludedGlobs: x.ExcludedGlobs,
+			SourceDirs:    x.SourceDirs.ToDirSet(rootDir),
+			SourceFiles:   x.SourceFiles.ToFileSet(rootDir),
+			ExcludedFiles: x.ExcludedFiles.ToFileSet(rootDir),
+			IsolatedFiles: x.IsolatedFiles.ToFileSet(rootDir),
+			ExtraFiles:    x.ExtraFiles.ToFileSet(rootDir),
+			ExtraDirs:     x.ExtraDirs.ToDirSet(rootDir),
+		},
+		PrivateDependencies: x.PrivateDependencies,
+		PublicDependencies:  x.PublicDependencies,
+		RuntimeDependencies: x.RuntimeDependencies,
+		Facet:               x.Facet,
+		PerTags:             map[TagFlags]*ModuleRules{},
+	}
+
+	for _, desc := range x.HAL {
+		if err := desc.CreateRules(rootDir, namespace, moduleId); err != nil {
+			return err
+		}
+	}
+
+	for _, desc := range x.TAG {
+		if err := desc.CreateRules(rootDir, namespace, moduleId); err != nil {
+			return err
+		}
+	}
+
+	x.ApplyHAL(x, moduleId)
+
+	for tags, desc := range x.TAG {
+		x.rules.PerTags[tags] = desc.rules
+	}
+
+	return nil
+}
+
+func loadModuleDesc(src utils.Filename, namespace *NamespaceDesc) (*ModuleDesc, error) {
 	utils.LogTrace("loading data-driven module from '%v'", src)
 
-	result = &ModuleDesc{
+	result := &ModuleDesc{
 		Name: strings.TrimSuffix(src.Basename, MODULEDESC_EXT),
 	}
 
 	if err := utils.UFS.Open(src, result.Deserialize); err == nil {
 		moduleId := path.Join(namespace.Name, result.Name)
-		utils.LogVerbose("parsed new module: '%v'", moduleId)
-
-		result.ExtendDesc(&namespace.ExtensionDesc)
-		result.ApplyHAL(result, moduleId)
-
 		rootDir := src.Dirname
-		result.rules = &ModuleRules{
-			ModuleName: result.Name,
-			Namespace:  namespace.rules,
-			ModuleDir:  rootDir,
-			ModuleType: result.Type,
-			CppRtti:    result.CppRtti,
-			CppStd:     result.CppStd,
-			Debug:      result.Debug,
-			PCH:        result.PCH,
-			Link:       result.Link,
-			Sanitizer:  result.Sanitizer,
-			Unity:      result.Unity,
-			Source: ModuleSource{
-				SourceGlobs:   result.SourceGlobs,
-				ExcludedGlobs: result.ExcludedGlobs,
-				SourceDirs:    result.SourceDirs.ToDirSet(rootDir),
-				SourceFiles:   result.SourceFiles.ToFileSet(rootDir),
-				ExcludedFiles: result.ExcludedFiles.ToFileSet(rootDir),
-				IsolatedFiles: result.IsolatedFiles.ToFileSet(rootDir),
-				ExtraFiles:    result.ExtraFiles.ToFileSet(rootDir),
-				ExtraDirs:     result.ExtraDirs.ToDirSet(rootDir),
-			},
-			PrivateDependencies: result.PrivateDependencies,
-			PublicDependencies:  result.PublicDependencies,
-			RuntimeDependencies: result.RuntimeDependencies,
-			Facet:               result.Facet,
+
+		if err = result.CreateRules(rootDir, namespace, moduleId); err == nil {
+			result.ApplyExtensions(&namespace.ExtensionDesc)
+
+			result.rules.ForceIncludes.Append(result.ForceIncludes.ToFileSet(rootDir)...)
+			result.rules.Source.ExtraFiles.AppendUniq(src)
+
+			result.ApplyArchetypes(result, moduleId)
+
+			if result.PrecompiledHeader != nil {
+				f := rootDir.AbsoluteFile(*result.PrecompiledHeader).Normalize()
+				result.rules.PrecompiledHeader = &f
+			} else if f := rootDir.File(PCH_DEFAULT_HEADER); f.Exists() {
+				result.rules.PrecompiledHeader = &f
+			}
+			if result.PrecompiledSource != nil {
+				f := rootDir.AbsoluteFile(*result.PrecompiledSource).Normalize()
+				result.rules.PrecompiledSource = &f
+			} else if f := rootDir.File(PCH_DEFAULT_SOURCE); f.Exists() {
+				result.rules.PrecompiledSource = &f
+			}
 		}
 
-		result.rules.ForceIncludes.Append(result.ForceIncludes.ToFileSet(rootDir)...)
-		result.rules.Source.ExtraFiles.AppendUniq(src)
-
-		result.ApplyArchetypes(result, moduleId)
-
-		if result.PrecompiledHeader != nil {
-			f := rootDir.AbsoluteFile(*result.PrecompiledHeader).Normalize()
-			result.rules.PrecompiledHeader = &f
-		} else if f := rootDir.File(PCH_DEFAULT_HEADER); f.Exists() {
-			result.rules.PrecompiledHeader = &f
-		}
-		if result.PrecompiledSource != nil {
-			f := rootDir.AbsoluteFile(*result.PrecompiledSource).Normalize()
-			result.rules.PrecompiledSource = &f
-		} else if f := rootDir.File(PCH_DEFAULT_SOURCE); f.Exists() {
-			result.rules.PrecompiledSource = &f
-		}
-
-		return result, nil
+		return result, err
 	} else {
 		return nil, err
 	}
@@ -266,7 +259,7 @@ func loadNamespaceDesc(
 
 		if parent != nil {
 			desc.rules.NamespaceParent = parent.rules
-			desc.ExtendDesc(&parent.ExtensionDesc)
+			desc.ApplyExtensions(&parent.ExtensionDesc)
 		}
 
 		utils.LogVerbose("parsed new namespace: '%v'", desc.rules)
@@ -304,6 +297,25 @@ func validateModuleDep(x *BuildModulesT, src utils.StringSet) error {
 			return fmt.Errorf("missing module: '%v'", id)
 		}
 	}
+	return nil
+}
+func validateModuleRec(x *BuildModulesT, rules *ModuleRules) error {
+	if err := validateModuleDep(x, rules.PrivateDependencies); err != nil {
+		return fmt.Errorf("private dep for '%v': %v", rules.String(), err)
+	}
+	if err := validateModuleDep(x, rules.PublicDependencies); err != nil {
+		return fmt.Errorf("public dep for '%v': %v", rules.String(), err)
+	}
+	if err := validateModuleDep(x, rules.RuntimeDependencies); err != nil {
+		return fmt.Errorf("runtime dep for '%v': %v", rules.String(), err)
+	}
+
+	for _, tagged := range rules.PerTags {
+		if err := validateModuleRec(x, tagged); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -356,16 +368,8 @@ func (x *BuildModulesT) Build(ctx utils.BuildContext) (utils.BuildStamp, error) 
 	sort.Sort(moduleRules)
 
 	for _, module := range moduleRules {
-		rules := module.GetModule()
-		if err := validateModuleDep(x, rules.PrivateDependencies); err != nil {
-			return utils.BuildStamp{}, fmt.Errorf("private dep for '%v': %v", rules.String(), err)
-		}
-		if err := validateModuleDep(x, rules.PublicDependencies); err != nil {
-			return utils.BuildStamp{}, fmt.Errorf("public dep for '%v': %v", rules.String(), err)
-		}
-		if err := validateModuleDep(x, rules.RuntimeDependencies); err != nil {
-			return utils.BuildStamp{}, fmt.Errorf("runtime dep for '%v': %v", rules.String(), err)
-		}
+		rules := module.GetModule(nil)
+		validateModuleRec(x, rules)
 	}
 
 	return utils.MakeBuildStamp(moduleRules)

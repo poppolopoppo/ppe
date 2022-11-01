@@ -557,6 +557,13 @@ func (list DirSet) Concat(it ...Directory) (result DirSet) {
 	copy(result[len(list):], it)
 	return result
 }
+func (list DirSet) ConcatUniq(it ...Directory) (result DirSet) {
+	result = NewDirSet(list...)
+	for _, x := range it {
+		result.AppendUniq(x)
+	}
+	return result
+}
 func (list DirSet) GetDigestable(o *bytes.Buffer) {
 	for _, x := range list {
 		x.GetDigestable(o)

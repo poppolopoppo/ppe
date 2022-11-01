@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -16,7 +17,7 @@ type ModuleAlias struct {
 func NewModuleAlias(module Module) ModuleAlias {
 	return ModuleAlias{
 		NamespaceName: path.Join(module.GetNamespace().Path()...),
-		ModuleName:    module.GetModule().ModuleName,
+		ModuleName:    module.GetModule(nil).ModuleName,
 	}
 }
 func (x ModuleAlias) Alias() utils.BuildAlias {
@@ -47,7 +48,7 @@ type ModuleList []Module
 
 func (list ModuleList) Len() int { return len(list) }
 func (list ModuleList) Less(i, j int) bool {
-	return list[i].GetModule().ModuleAlias().Compare(list[j].GetModule().ModuleAlias()) < 0
+	return list[i].GetModule(nil).ModuleAlias().Compare(list[j].GetModule(nil).ModuleAlias()) < 0
 }
 func (list ModuleList) Swap(i, j int) { list[i], list[j] = list[j], list[i] }
 
@@ -57,7 +58,7 @@ func (list *ModuleList) Append(it ...Module) {
 func (list *ModuleList) AppendUniq(it ...Module) {
 	for _, x := range it {
 		if _, found := utils.IndexIf(func(m Module) bool {
-			return x.GetModule() == m.GetModule()
+			return x.GetModule(nil) == m.GetModule(nil)
 		}, *list...); !found {
 			list.Append(x)
 		}
@@ -83,6 +84,26 @@ type ModuleSource struct {
 	ExtraDirs     utils.DirSet
 }
 
+func (x *ModuleSource) Append(o ModuleSource) {
+	x.SourceDirs.Append(o.SourceDirs...)
+	x.SourceGlobs.Append(o.SourceGlobs...)
+	x.ExcludedGlobs.Append(o.ExcludedGlobs...)
+	x.SourceFiles.Append(o.SourceFiles...)
+	x.ExcludedFiles.Append(o.ExcludedFiles...)
+	x.IsolatedFiles.Append(o.IsolatedFiles...)
+	x.ExtraFiles.Append(o.ExtraFiles...)
+	x.ExtraDirs.Append(o.ExtraDirs...)
+}
+func (x *ModuleSource) Prepend(o ModuleSource) {
+	x.SourceDirs.Prepend(o.SourceDirs...)
+	x.SourceGlobs.Prepend(o.SourceGlobs...)
+	x.ExcludedGlobs.Prepend(o.ExcludedGlobs...)
+	x.SourceFiles.Prepend(o.SourceFiles...)
+	x.ExcludedFiles.Prepend(o.ExcludedFiles...)
+	x.IsolatedFiles.Prepend(o.IsolatedFiles...)
+	x.ExtraFiles.Prepend(o.ExtraFiles...)
+	x.ExtraDirs.Prepend(o.ExtraDirs...)
+}
 func (x *ModuleSource) GetDigestable(o *bytes.Buffer) {
 	x.SourceDirs.GetDigestable(o)
 	x.SourceGlobs.GetDigestable(o)
@@ -144,11 +165,13 @@ type ModuleRules struct {
 
 	Facet
 	Source ModuleSource
+
+	PerTags map[TagFlags]*ModuleRules
 }
 
 type Module interface {
 	ModuleAlias() ModuleAlias
-	GetModule() *ModuleRules
+	GetModule(env *CompileEnv) *ModuleRules
 	GetNamespace() *NamespaceRules
 	utils.Digestable
 	fmt.Stringer
@@ -177,7 +200,26 @@ func (rules *ModuleRules) GeneratedDir(env *CompileEnv) utils.Directory {
 func (rules *ModuleRules) GetFacet() *Facet {
 	return rules.Facet.GetFacet()
 }
-func (rules *ModuleRules) GetModule() *ModuleRules {
+func (rules *ModuleRules) expandTagsRec(env *CompileEnv, dst *ModuleRules) {
+	for tags, tagged := range rules.PerTags {
+		if selectedTags := env.Tags.Intersect(tags); !selectedTags.Empty() {
+			utils.LogVeryVerbose("expand module <%v> with rules tagged [%v]", dst.ModuleName, selectedTags)
+			dst.Prepend(tagged)
+			tagged.expandTagsRec(env, dst)
+		}
+	}
+}
+func (rules *ModuleRules) GetModule(env *CompileEnv) *ModuleRules {
+	// we use this getter to create new rules and apply PerTags properties
+	if env != nil && len(rules.PerTags) > 0 {
+		// make a copy of the current rules
+		custom := &ModuleRules{}
+		*custom = *rules
+		// apply tags matching compile env recursively
+		rules.expandTagsRec(env, custom)
+		return custom
+	}
+	// nothing todo: just return the original rules
 	return rules
 }
 func (rules *ModuleRules) GetNamespace() *NamespaceRules {
@@ -243,6 +285,16 @@ func (rules *ModuleRules) GetDigestable(o *bytes.Buffer) {
 	rules.Generateds.GetDigestable(o)
 	rules.Facet.GetDigestable(o)
 	rules.Source.GetDigestable(o)
+
+	// sort for determinisn, since map[] order is random
+	sortedTags := utils.Keys(rules.PerTags)
+	sort.SliceStable(sortedTags, func(i, j int) bool {
+		return sortedTags[i].int32() < int32(sortedTags[j].int32())
+	})
+	for _, tags := range sortedTags {
+		tags.GetDigestable(o)
+		rules.PerTags[tags].GetDigestable(o)
+	}
 }
 
 func (rules *ModuleRules) Generate(vis VisibilityType, name string, gen Generator) {
@@ -251,4 +303,91 @@ func (rules *ModuleRules) Generate(vis VisibilityType, name string, gen Generato
 		Visibility:    vis,
 		Generator:     gen,
 	})
+}
+
+func (x *ModuleRules) Append(other *ModuleRules) {
+	if x.CppRtti == CPPRTTI_INHERIT {
+		x.CppRtti = other.CppRtti
+	}
+	if x.CppStd == CPPSTD_INHERIT {
+		x.CppStd = other.CppStd
+	}
+	if x.Debug == DEBUG_INHERIT {
+		x.Debug = other.Debug
+	}
+	if x.PCH == PCH_INHERIT {
+		x.PCH = other.PCH
+	}
+	if x.Link == LINK_INHERIT {
+		x.Link = other.Link
+	}
+	if x.Sanitizer == SANITIZER_INHERIT {
+		x.Sanitizer = other.Sanitizer
+	}
+	if x.Unity == UNITY_INHERIT {
+		x.Unity = other.Unity
+	}
+
+	x.ForceIncludes.Append(other.ForceIncludes...)
+
+	x.Source.Append(other.Source)
+
+	if x.PrecompiledHeader == nil {
+		x.PrecompiledHeader = other.PrecompiledHeader
+	}
+	if x.PrecompiledSource == nil {
+		x.PrecompiledSource = other.PrecompiledSource
+	}
+
+	x.PrivateDependencies.Append(other.PrivateDependencies...)
+	x.PublicDependencies.Append(other.PublicDependencies...)
+	x.RuntimeDependencies.Append(other.RuntimeDependencies...)
+
+	x.Customs.Append(other.Customs...)
+	x.Generateds.Append(other.Generateds...)
+
+	x.Facet.Append(other)
+}
+func (x *ModuleRules) Prepend(other *ModuleRules) {
+	if other.CppRtti != CPPRTTI_INHERIT {
+		x.CppRtti = other.CppRtti
+	}
+	if other.CppStd != CPPSTD_INHERIT {
+		x.CppStd = other.CppStd
+	}
+	if other.Debug != DEBUG_INHERIT {
+		x.Debug = other.Debug
+	}
+	if other.PCH != PCH_INHERIT {
+		x.PCH = other.PCH
+	}
+	if other.Link != LINK_INHERIT {
+		x.Link = other.Link
+	}
+	if other.Sanitizer != SANITIZER_INHERIT {
+		x.Sanitizer = other.Sanitizer
+	}
+	if other.Unity != UNITY_INHERIT {
+		x.Unity = other.Unity
+	}
+
+	x.ForceIncludes.Prepend(other.ForceIncludes...)
+
+	x.Source.Prepend(other.Source)
+
+	if other.PrecompiledHeader != nil {
+		x.PrecompiledHeader = other.PrecompiledHeader
+	}
+	if other.PrecompiledSource != nil {
+		x.PrecompiledSource = other.PrecompiledSource
+	}
+
+	x.PrivateDependencies.Prepend(other.PrivateDependencies...)
+	x.PublicDependencies.Prepend(other.PublicDependencies...)
+	x.RuntimeDependencies.Prepend(other.RuntimeDependencies...)
+
+	x.Customs.Prepend(other.Customs...)
+	x.Generateds.Prepend(other.Generateds...)
+
+	x.Facet.Prepend(other)
 }

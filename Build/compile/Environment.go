@@ -76,84 +76,84 @@ func (env *CompileEnv) GeneratedDir() utils.Directory {
 func (env *CompileEnv) IntermediateDir() utils.Directory {
 	return utils.UFS.Intermediate.Folder(env.Family()...)
 }
-func (env *CompileEnv) GetCppRtti(module Module) (result CppRttiType) {
+func (env *CompileEnv) GetCppRtti(module *ModuleRules) (result CppRttiType) {
 	if result = env.CompileFlagsT.CppRtti; CPPRTTI_INHERIT != result {
 		return result
-	} else if result = module.GetModule().CppRtti; CPPRTTI_INHERIT != result {
+	} else if result = module.CppRtti; CPPRTTI_INHERIT != result {
 		return result
 	} else {
 		return env.GetConfig().CppRtti
 	}
 }
-func (env *CompileEnv) GetCppStd(module Module) (result CppStdType) {
+func (env *CompileEnv) GetCppStd(module *ModuleRules) (result CppStdType) {
 	if result = env.CompileFlagsT.CppStd; CPPSTD_INHERIT != result {
 		return result
 	}
 	if module != nil {
-		if result = module.GetModule().CppStd; CPPSTD_INHERIT != result {
+		if result = module.CppStd; CPPSTD_INHERIT != result {
 			return result
 		}
 	}
 	return env.GetCompiler().CppStd
 }
-func (env *CompileEnv) GetDebugType(module Module) (result DebugType) {
+func (env *CompileEnv) GetDebugType(module *ModuleRules) (result DebugType) {
 	if result = env.CompileFlagsT.DebugSymbols; DEBUG_INHERIT != result {
 		return result
-	} else if result = module.GetModule().Debug; DEBUG_INHERIT != result {
+	} else if result = module.Debug; DEBUG_INHERIT != result {
 		return result
 	} else {
 		return env.GetConfig().Debug
 	}
 }
-func (env *CompileEnv) GetExceptionType(module Module) (result ExceptionType) {
+func (env *CompileEnv) GetExceptionType(module *ModuleRules) (result ExceptionType) {
 	if result = env.CompileFlagsT.Exceptions; EXCEPTION_INHERIT != result {
 		return result
-	} else if result = module.GetModule().Exceptions; EXCEPTION_INHERIT != result {
+	} else if result = module.Exceptions; EXCEPTION_INHERIT != result {
 		return result
 	} else {
 		return env.GetConfig().Exceptions
 	}
 }
-func (env *CompileEnv) GetPCHType(module Module) (result PrecompiledHeaderType) {
+func (env *CompileEnv) GetPCHType(module *ModuleRules) (result PrecompiledHeaderType) {
 	if result = env.PCH; PCH_INHERIT != result {
 		return result
-	} else if result = module.GetModule().PCH; PCH_INHERIT != result {
+	} else if result = module.PCH; PCH_INHERIT != result {
 		return result
 	} else {
 		return env.GetConfig().PCH
 	}
 }
-func (env *CompileEnv) GetLinkType(module Module) (result LinkType) {
+func (env *CompileEnv) GetLinkType(module *ModuleRules) (result LinkType) {
 	if result = env.CompileFlagsT.Link; LINK_INHERIT != result {
 		return result
-	} else if result = module.GetModule().Link; LINK_INHERIT != result {
+	} else if result = module.Link; LINK_INHERIT != result {
 		return result
 	} else {
 		return env.GetConfig().Link
 	}
 }
-func (env *CompileEnv) GetUnityType(module Module) (result UnityType) {
+func (env *CompileEnv) GetUnityType(module *ModuleRules) (result UnityType) {
 	if result = env.Unity; UNITY_INHERIT != result {
 		return result
-	} else if result = module.GetModule().Unity; UNITY_INHERIT != result {
+	} else if result = module.Unity; UNITY_INHERIT != result {
 		return result
 	} else {
 		return env.GetConfig().Unity
 	}
 }
-func (env *CompileEnv) GetSanitizerType(module Module) (result SanitizerType) {
+func (env *CompileEnv) GetSanitizerType(module *ModuleRules) (result SanitizerType) {
 	if result = env.CompileFlagsT.Sanitizer; SANITIZER_INHERIT != result {
 		return result
-	} else if result = module.GetModule().Sanitizer; SANITIZER_INHERIT != result {
+	} else if result = module.Sanitizer; SANITIZER_INHERIT != result {
 		return result
 	} else {
 		return env.GetConfig().Sanitizer
 	}
 }
-func (env *CompileEnv) GetPayloadType(module Module, link LinkType) (result PayloadType) {
-	switch module.GetModule().ModuleType {
+func (env *CompileEnv) GetPayloadType(module *ModuleRules, link LinkType) (result PayloadType) {
+	switch module.ModuleType {
 	case MODULE_EXTERNAL:
-		switch module.GetModule().Link {
+		switch module.Link {
 		case LINK_INHERIT:
 			fallthrough
 		case LINK_STATIC:
@@ -232,9 +232,8 @@ func (env *CompileEnv) EnvironmentAlias() EnvironmentAlias {
 func (env *CompileEnv) ModuleAlias(module Module) TargetAlias {
 	return NewTargetAlias(module, env.Platform, env.Configuration)
 }
-func (env *CompileEnv) Compile(module Module) *Unit {
-	moduleRules := module.GetModule()
-	rootDir := moduleRules.ModuleDir
+func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
+	rootDir := module.ModuleDir
 
 	unit := &Unit{
 		Target:          env.ModuleAlias(module),
@@ -246,10 +245,10 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 		Link:            env.GetLinkType(module),
 		Sanitizer:       env.GetSanitizerType(module),
 		Unity:           env.GetUnityType(module),
-		Source:          moduleRules.Source,
-		ModuleDir:       moduleRules.ModuleDir,
-		GeneratedDir:    env.GeneratedDir().Folder(moduleRules.Path()...),
-		IntermediateDir: env.IntermediateDir().Folder(moduleRules.Path()...),
+		Source:          module.Source,
+		ModuleDir:       module.ModuleDir,
+		GeneratedDir:    env.GeneratedDir().Folder(module.Path()...),
+		IntermediateDir: env.IntermediateDir().Folder(module.Path()...),
 		Compiler:        env.Compiler,
 	}
 	unit.Payload = env.GetPayloadType(module, unit.Link)
@@ -265,14 +264,14 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 	case PCH_DISABLED:
 		break
 	case PCH_MONOLITHIC:
-		if moduleRules.PrecompiledHeader == nil || moduleRules.PrecompiledSource == nil {
+		if module.PrecompiledHeader == nil || module.PrecompiledSource == nil {
 			unit.PCH = PCH_DISABLED
 		} else {
-			unit.PrecompiledHeader = *moduleRules.PrecompiledHeader
+			unit.PrecompiledHeader = *module.PrecompiledHeader
 			unit.PrecompiledSource = unit.PrecompiledHeader
 			utils.IfWindows(func() {
 				// CPP is only used on Windows platform
-				unit.PrecompiledSource = *moduleRules.PrecompiledSource
+				unit.PrecompiledSource = *module.PrecompiledSource
 			})
 			unit.PrecompiledObject = env.GetPayloadOutput(unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
 		}
@@ -284,138 +283,121 @@ func (env *CompileEnv) Compile(module Module) *Unit {
 	unit.Compiler = env.Compiler
 	unit.Facet.Append(
 		env,
-		moduleRules)
+		module)
 
 	unit.Decorate(
 		env,
-		moduleRules,
+		module,
 		env.GetPlatform(),
 		env.GetConfig())
 
 	return unit
 }
-func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph *ModuleGraph, translated map[*ModuleRules]*Unit) (utils.SetT[*Unit], error) {
-	pbar := utils.LogProgress(0, len(translated), "%v/Link", env)
+func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph ModuleGraph) (utils.SetT[*Unit], error) {
+	pbar := utils.LogProgress(0, len(moduleGraph.SortedKeys()), "%v/Link", env)
 	defer pbar.Close()
 
 	linked := utils.NewSet[*Unit]()
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(translated))
+	wg.Add(len(moduleGraph.SortedKeys()))
 
-	for keyModule, valueUnit := range translated {
-		go func(module *ModuleRules, unit *Unit) {
+	moduleGraph.EachNode(func(module Module, node *ModuleNode) {
+		go func(node *ModuleNode) {
 			defer pbar.Inc()
 			defer wg.Done()
-			moduleNode := moduleGraph.Get(module)
 
-			unit.Ordinal = moduleNode.Ordinal
-			unit.Defines.Append(
-				"BUILD_TARGET_NAME="+unit.Target.GetModuleAlias().String(),
-				fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", unit.Ordinal))
+			node.Unit.Ordinal = node.Ordinal
+			node.Unit.Defines.Append(
+				"BUILD_TARGET_NAME="+node.Unit.Target.GetModuleAlias().String(),
+				fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", node.Unit.Ordinal))
 
-			moduleNode.Range(func(dep Module, vis VisibilityType) {
-				moduleType := dep.GetModule().ModuleType
-				if other, ok := translated[dep.GetModule()]; ok {
-					switch other.Payload {
-					case PAYLOAD_HEADERS:
-						unit.IncludeDependencies.Append(other.Target)
-					case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER:
-						unit.CompileDependencies.Append(other.Target)
-					case PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
-						switch vis {
-						case PUBLIC, PRIVATE:
-							if moduleType != MODULE_EXTERNAL {
-								unit.LinkDependencies.AppendUniq(other.Target)
-							} else {
-								unit.CompileDependencies.AppendUniq(other.Target)
-							}
-						case RUNTIME:
-							if other.Payload == PAYLOAD_SHAREDLIB {
-								unit.RuntimeDependencies.AppendUniq(other.Target)
-							} else {
-								utils.LogPanic("%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
-									unit.Payload, unit, other.Payload, other, vis,
-									moduleNode.Dependencies)
-							}
-						default:
-							utils.UnexpectedValue(vis)
+			node.Range(func(dep Module, vis VisibilityType) {
+				other := moduleGraph.NodeByModule(dep)
+				moduleType := other.Rules.ModuleType
+
+				switch other.Unit.Payload {
+				case PAYLOAD_HEADERS:
+					node.Unit.IncludeDependencies.Append(other.Unit.Target)
+				case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER:
+					node.Unit.CompileDependencies.Append(other.Unit.Target)
+				case PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
+					switch vis {
+					case PUBLIC, PRIVATE:
+						if moduleType != MODULE_EXTERNAL {
+							node.Unit.LinkDependencies.AppendUniq(other.Unit.Target)
+						} else {
+							node.Unit.CompileDependencies.AppendUniq(other.Unit.Target)
 						}
-					case PAYLOAD_EXECUTABLE:
-						fallthrough // can't depend on an executable
+					case RUNTIME:
+						if other.Unit.Payload == PAYLOAD_SHAREDLIB {
+							node.Unit.RuntimeDependencies.AppendUniq(other.Unit.Target)
+						} else {
+							utils.LogPanic("%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
+								node.Unit.Payload, node.Unit, node.Unit.Payload, other, vis,
+								node.Dependencies)
+						}
 					default:
-						utils.UnexpectedValue(unit.Payload)
+						utils.UnexpectedValue(vis)
 					}
-				} else {
-					utils.UnreachableCode()
+				case PAYLOAD_EXECUTABLE:
+					fallthrough // can't depend on an executable
+				default:
+					utils.UnexpectedValuePanic(node.Unit.Payload, other.Unit.Payload)
 				}
+
 			}, VIS_EVERYTHING)
 
-			if unit.Unity == UNITY_AUTOMATIC {
-				unit.Unity = moduleNode.Unity(env.SizePerUnity.Get())
+			if node.Unit.Unity == UNITY_AUTOMATIC {
+				node.Unit.Unity = node.Unity(env.SizePerUnity.Get())
 			}
 
-			for _, x := range module.Generateds {
-				if err := x.GetGenerated().Generate(bc, env, unit); err != nil {
-					panic(err)
+			for _, x := range node.Rules.Generateds {
+				if err := x.GetGenerated().Generate(bc, env, node.Unit); err != nil {
+					utils.LogPanicErr(err)
 				}
 			}
-		}(keyModule, valueUnit)
-	}
+
+		}(node)
+	})
 
 	wg.Wait()
 	pbar.Set(0)
 
-	for _, m := range moduleGraph.keys {
+	moduleGraph.EachNode(func(module Module, node *ModuleNode) {
 		defer pbar.Inc()
-		unit := translated[m.GetModule()]
 
-		unit.IncludeDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.GetModuleAlias())
-			if other, ok := translated[dep.GetModule()]; ok {
-				utils.LogDebug("[%v] include dep -> %v", unit.Target, target)
-				unit.Facet.Append(&other.TransitiveFacet)
-			} else {
-				utils.UnreachableCode()
-			}
+		node.Unit.IncludeDependencies.Range(func(target TargetAlias) {
+			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			utils.LogDebug("[%v] include dep -> %v", node.Unit.Target, target)
+			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
 		})
 
-		unit.CompileDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.GetModuleAlias())
-			if other, ok := translated[dep.GetModule()]; ok {
-				utils.LogDebug("[%v] compile dep -> %v", unit.Target, target)
-				unit.Facet.Append(&other.TransitiveFacet)
-			} else {
-				utils.UnreachableCode()
-			}
+		node.Unit.CompileDependencies.Range(func(target TargetAlias) {
+			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			utils.LogDebug("[%v] compile dep -> %v", node.Unit.Target, target)
+			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
 		})
 
-		unit.LinkDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.GetModuleAlias())
-			if other, ok := translated[dep.GetModule()]; ok {
-				utils.LogDebug("[%v] link dep -> %v", unit.Target, target)
-				unit.Facet.Append(&other.TransitiveFacet)
-			} else {
-				utils.UnreachableCode()
-			}
+		node.Unit.LinkDependencies.Range(func(target TargetAlias) {
+			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			utils.LogDebug("[%v] link dep -> %v", node.Unit.Target, target)
+			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
 		})
 
-		unit.RuntimeDependencies.Range(func(target TargetAlias) {
-			dep := moduleGraph.Module(target.GetModuleAlias())
-			if other, ok := translated[dep.GetModule()]; ok {
-				utils.LogDebug("[%v] runtime dep -> %v", unit.Target, target)
-				unit.IncludePaths.Append(other.TransitiveFacet.IncludePaths...)
-				unit.ForceIncludes.Append(other.TransitiveFacet.ForceIncludes...)
-			} else {
-				utils.UnreachableCode()
-			}
+		node.Unit.RuntimeDependencies.Range(func(target TargetAlias) {
+			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			utils.LogDebug("[%v] runtime dep -> %v", node.Unit.Target, target)
+			node.Unit.IncludePaths.Append(other.Unit.TransitiveFacet.IncludePaths...)
+			node.Unit.ForceIncludes.Append(other.Unit.TransitiveFacet.ForceIncludes...)
+
 		})
 
-		unit.Decorate(env, unit.GetCompiler())
-		unit.Facet.PerformSubstitutions()
+		node.Unit.Decorate(env, node.Unit.GetCompiler())
+		node.Unit.Facet.PerformSubstitutions()
 
-		linked.Append(unit)
-	}
+		linked.Append(node.Unit)
+	})
 
 	return linked, nil
 }

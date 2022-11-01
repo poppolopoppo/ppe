@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -250,19 +251,21 @@ func (g *buildGraph) Node(a BuildAliasable) BuildNode {
 func (g *buildGraph) Create(b Buildable, static ...BuildAlias) BuildNode {
 	node, loaded := g.nodes.FindOrAdd(b.Alias(), newBuildNode(b))
 	AssertSameType(node.Buildable, b)
-	deps := BuildDependencies{}
+
 	dirty := !loaded || len(static) != len(node.Static)
+
+	staticDeps := BuildDependencies{}
 	for _, a := range static {
 		old, hit := node.Static[a]
-		deps[a] = old
-		if !hit {
-			dirty = true
-		}
+		dirty = dirty || !hit
+		staticDeps[a] = old
 	}
-	node.Static = deps
+	node.Static = staticDeps
+
 	if dirty {
 		g.makeDirty()
 	}
+
 	return node
 }
 func (g *buildGraph) Build(it BuildAliasable) (BuildNode, Future[BuildStamp]) {
@@ -387,6 +390,7 @@ func (deps BuildDependencies) joinBuild(batch *buildBatch, depType string) (bool
 
 func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
 	n := len(node.Static) + len(node.Dynamic) + len(node.Output)
+	LogDebug("%v: check if need to build (%d dependencies)", node.Alias(), n)
 	if n <= 0 {
 		return true, nil
 	}
@@ -446,6 +450,8 @@ func (node *buildNode) needToBuild(g *buildGraph) (bool, error) {
 func (g *buildGraph) launchBuild(node *buildNode, a BuildAlias, needUpdate bool) Future[BuildStamp] {
 	node.state.launch.Lock()
 	defer node.state.launch.Unlock()
+
+	LogDebug("%v: launch <%v> build (need update = %v)", a, reflect.TypeOf(node.GetBuildable()), needUpdate)
 
 	if node.state.future == nil || needUpdate {
 		if node.state.future != nil {

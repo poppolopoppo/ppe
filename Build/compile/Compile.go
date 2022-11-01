@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"sort"
-	"sync"
 )
 
 var AllCompilationFlags = utils.NewServiceEvent[utils.ParsableFlags]()
@@ -129,31 +128,15 @@ func (e *EnvironmentTargetsT) Alias() utils.BuildAlias {
 	return utils.MakeBuildAlias("Targets", e.Environment.Alias().String())
 }
 func (e *EnvironmentTargetsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	pbar := utils.LogProgress(0, 0, "%v/Compile", e.Environment.Alias().String())
-
 	e.SetT.Clear()
 
 	allModules := BuildModules.Need(bc)
-	moduleGraph := GetModuleGraph(allModules)
 	compileEnv := BuildEnvironments.Need(bc).GetEnvironment(e.Environment)
 
-	translated := utils.NewSharedMapT[*ModuleRules, *Unit]()
+	moduleGraph := NewModuleGraph(compileEnv, allModules)
+	moduleGraph.CompileUnits()
 
-	wg := sync.WaitGroup{}
-	wg.Add(len(moduleGraph.Keys()))
-
-	for _, m := range moduleGraph.Keys() {
-		go func(module Module) {
-			defer pbar.Inc()
-			defer wg.Done()
-			translated.Add(module.GetModule(), compileEnv.Compile(module))
-		}(m)
-	}
-
-	wg.Wait()
-	pbar.Close()
-
-	if units, err := compileEnv.Link(bc, moduleGraph, translated.Pin()); err == nil {
+	if units, err := compileEnv.Link(bc, moduleGraph); err == nil {
 		e.SetT = units
 		return utils.MakeBuildStamp(e)
 	} else {

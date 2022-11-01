@@ -81,6 +81,9 @@ type GeneratedList []Generated
 func (list *GeneratedList) Append(it ...Generated) {
 	*list = append(*list, it...)
 }
+func (list *GeneratedList) Prepend(it ...Generated) {
+	*list = append(it, *list...)
+}
 func (list GeneratedList) GetDigestable(o *bytes.Buffer) {
 	utils.MakeDigestable(o, list...)
 }
