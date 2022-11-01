@@ -115,10 +115,10 @@ void FShaderToyApp::Render(FTimespan dt) {
 	ImGui::ShowDemoWindow();
 	ImGui::ShowUserGuide();
 
-	using namespace RHI;
+	/*using namespace RHI;
 	const auto& fg = RHI().FrameGraph();
 	RHI::FImageDesc desc{ EImageDim_3D, uint3(256), EPixelFormat::R8u, EImageUsage::Sampled, 0_layer, 1_mipmap };
-	auto Voxels = fg->CreateImage(desc);
+	auto Voxels = fg->CreateImage(desc);*/
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
