@@ -1271,11 +1271,13 @@ auto FVulkanInstance::PickPhysicalDeviceByName(FStringView deviceName) const NOE
 //----------------------------------------------------------------------------
 TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVersion) NOEXCEPT {
     static const FConstChar GLayerNames[] = {
+        //"VK_LAYER_LUNARG_api_dump", // for logging all VK calls %_NOCOMMIT%
         "VK_LAYER_KHRONOS_validation",
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
         // may be unsupported:
         "VK_LAYER_ARM_MGD",
+        "VK_LAYER_ARM_mali_perf_doc",
 
 #else
         "VK_LAYER_LUNARG_standard_validation", // for old VulkanSDK
