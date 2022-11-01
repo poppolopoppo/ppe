@@ -911,13 +911,14 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
         case EShaderStages::Fragment: stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT; break;
         case EShaderStages::Compute: stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; break;
 
-#ifdef VK_NV_mesh_shader
-        case EShaderStages::MeshTask: stages |= VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV; break;
-        case EShaderStages::Mesh: stages |= VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV; break;
-#else
         case EShaderStages::MeshTask:
-        case EShaderStages::Mesh: break;
+        case EShaderStages::Mesh:
+#ifdef VK_NV_mesh_shader
+            stages |= VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV;
+#else
+            AssertNotReached();
 #endif
+            break;
 
         case EShaderStages::RayGen:
         case EShaderStages::RayAnyHit:
@@ -926,9 +927,12 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
         case EShaderStages::RayIntersection:
         case EShaderStages::RayCallable:
 #ifdef VK_NV_ray_tracing
-            stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+            stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV;
+#else
+            AssertNotReached();
 #endif
             break;
+
         default: AssertNotImplemented();
         }
     }

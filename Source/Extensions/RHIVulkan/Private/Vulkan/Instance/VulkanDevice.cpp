@@ -469,6 +469,9 @@ void FVulkanDevice::SetupDeviceFlags_() {
     _flags.AllWritableStages = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     _flags.AllReadableStages = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
+#if 0 // causing validation errors in FVulkanBarrierManager::ForceCommit()
+    // vkCmdPipelineBarrier() : .dstStageMask flag VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR is not compatible with the queue
+    // family properties(VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT) of this command buffer.
 #ifdef VK_NV_ray_tracing
     if (_enabled.RayTracingNV)
         _flags.AllReadableStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV;
@@ -476,6 +479,7 @@ void FVulkanDevice::SetupDeviceFlags_() {
 #ifdef VK_KHR_ray_tracing_pipeline
     if (_enabled.RayTracingKHR)
         _flags.AllReadableStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+#endif
 #endif
 
     // image create flags
