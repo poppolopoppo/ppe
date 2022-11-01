@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 struct TSHPolarFunctor_ {
     TSHPolarFunction<_Dim> Func;
     TSHCoefficient<_Dim> operator ()(const SHSphericalCoord& thetaPhi, const SHDirection& ) const {
@@ -19,7 +19,7 @@ struct TSHPolarFunctor_ {
     }
 };
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 struct TSH3DFunctor_ {
     TSH3DFunction<_Dim> Func;
     TSHCoefficient<_Dim> operator ()(const SHSphericalCoord& , const SHDirection& dir) const {
@@ -27,7 +27,7 @@ struct TSH3DFunctor_ {
     }
 };
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _SHFunctor>
+template <u32 _Dim, typename _SHFunctor>
 static void SHProjectFunctor_(TSHVector<_Dim> *coefficients, const _SHFunctor& functor, const FSHSampleCollection& samples) {
     Assert(coefficients);
     Assert(coefficients->Bands() == samples.Bands());

@@ -41,6 +41,7 @@ struct TNumericLimits<u128> {
     static constexpr u128 Inf() { return u128{ limits_type::Inf(), limits_type::Inf() }; }
     static constexpr u128 MaxValue() { return u128{ limits_type::MaxValue(), limits_type::MaxValue() }; }
     static constexpr u128 MinValue() { return u128{ limits_type::MinValue(), limits_type::MinValue() }; }
+    static constexpr u128 Lowest() { return u128{ limits_type::Lowest(), limits_type::Lowest() }; }
     static constexpr u128 Nan() { return u128{ limits_type::Nan(), limits_type::Nan() }; }
     static constexpr u128 Zero() { return u128{ limits_type::Zero(), limits_type::Zero() }; }
 };
@@ -58,6 +59,7 @@ struct TNumericLimits<u256> {
     static constexpr u256 Inf() { return u256{ limits_type::Inf(), limits_type::Inf() }; }
     static constexpr u256 MaxValue() { return u256{ limits_type::MaxValue(), limits_type::MaxValue() }; }
     static constexpr u256 MinValue() { return u256{ limits_type::MinValue(), limits_type::MinValue() }; }
+    static constexpr u256 Lowest() { return u256{ limits_type::Lowest(), limits_type::Lowest() }; }
     static constexpr u256 Nan() { return u256{ limits_type::Nan(), limits_type::Nan() }; }
     static constexpr u256 Zero() { return u256{ limits_type::Zero(), limits_type::Zero() }; }
 };

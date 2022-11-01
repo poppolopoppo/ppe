@@ -6,48 +6,50 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-struct TScalarVector;
+namespace details {
+template <typename T, u32 _Dim, typename _Expr>
+struct TScalarVectorExpr;
+template <typename T, u32 _Dim, typename _Expr>
+struct TScalarVectorAssignable;
+template <typename T, u32 _Dim>
+struct TScalarVectorStorage;
+} //!namespace details
 //----------------------------------------------------------------------------
-#define DECL_SCALARVECTOR_ALIAS(_Scalar, _ALIAS) \
+template <typename T, u32 _Dim>
+using TScalarVector = details::TScalarVectorExpr<T, _Dim, details::TScalarVectorAssignable<T, _Dim, details::TScalarVectorStorage<T, _Dim>>>;
+//----------------------------------------------------------------------------
+#define PPE_SCALARVECTOR_ALIAS(_Scalar, _ALIAS) \
     using CONCAT(_ALIAS, 2) = TScalarVector<_Scalar, 2>; \
     using CONCAT(_ALIAS, 3) = TScalarVector<_Scalar, 3>; \
     using CONCAT(_ALIAS, 4) = TScalarVector<_Scalar, 4>;
 
-#define DECL_SCALARVECTOR(_Scalar) DECL_SCALARVECTOR_ALIAS(_Scalar, _Scalar)
+#define PPE_SCALARVECTOR_DECL(_Scalar) PPE_SCALARVECTOR_ALIAS(_Scalar, _Scalar)
 //----------------------------------------------------------------------------
-DECL_SCALARVECTOR(byte);
-DECL_SCALARVECTOR(ubyte);
-DECL_SCALARVECTOR_ALIAS(i16, short);
-DECL_SCALARVECTOR(ushort);
-DECL_SCALARVECTOR(word);
-DECL_SCALARVECTOR(uword);
-DECL_SCALARVECTOR(int)
-DECL_SCALARVECTOR(unsigned)
-DECL_SCALARVECTOR(float)
-DECL_SCALARVECTOR(double)
+PPE_SCALARVECTOR_DECL(byte);
+PPE_SCALARVECTOR_DECL(ubyte);
+PPE_SCALARVECTOR_ALIAS(i16, short);
+PPE_SCALARVECTOR_DECL(ushort);
+PPE_SCALARVECTOR_DECL(word);
+PPE_SCALARVECTOR_DECL(uword);
+PPE_SCALARVECTOR_DECL(int)
+PPE_SCALARVECTOR_DECL(unsigned)
+PPE_SCALARVECTOR_DECL(float)
+PPE_SCALARVECTOR_DECL(double)
+PPE_SCALARVECTOR_DECL(i16);
+PPE_SCALARVECTOR_DECL(i32);
+PPE_SCALARVECTOR_DECL(i64);
+PPE_SCALARVECTOR_DECL(u16);
+PPE_SCALARVECTOR_DECL(u32);
+PPE_SCALARVECTOR_DECL(u64);
+PPE_SCALARVECTOR_DECL(bool);
+PPE_SCALARVECTOR_ALIAS(u32, mask);
 //----------------------------------------------------------------------------
-DECL_SCALARVECTOR(i16);
-DECL_SCALARVECTOR(i32);
-DECL_SCALARVECTOR(i64);
-DECL_SCALARVECTOR(u16);
-DECL_SCALARVECTOR(u32);
-DECL_SCALARVECTOR(u64);
+#undef PPE_SCALARVECTOR_DECL
+#undef PPE_SCALARVECTOR_ALIAS
 //----------------------------------------------------------------------------
 using uint2 = unsigned2;
 using uint3 = unsigned3;
 using uint4 = unsigned4;
-//----------------------------------------------------------------------------
-using bool2 = TScalarVector<bool, 2>;
-using bool3 = TScalarVector<bool, 3>;
-using bool4 = TScalarVector<bool, 4>;
-//----------------------------------------------------------------------------
-using mask2 = TScalarVector<u32, 2>;
-using mask3 = TScalarVector<u32, 3>;
-using mask4 = TScalarVector<u32, 4>;
-//----------------------------------------------------------------------------
-#undef DECL_SCALARVECTOR
-#undef DECL_SCALARVECTOR_ALIAS
 //----------------------------------------------------------------------------
 using FPoint = float3;
 //----------------------------------------------------------------------------

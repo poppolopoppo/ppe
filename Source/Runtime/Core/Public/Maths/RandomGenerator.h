@@ -92,7 +92,7 @@ public:
     void Randomize(float& f) { f = NextFloatM11(); }
     void Randomize(double& d) { d = static_cast<double>(NextFloatM11()); }
 
-    template <typename T, size_t _Dim>
+    template <typename T, u32 _Dim>
     void Randomize(TScalarVector<T, _Dim>& v) {
         for (size_t i = 0; i < _Dim; ++i)
             Randomize(v[i]);

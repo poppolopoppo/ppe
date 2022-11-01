@@ -43,7 +43,7 @@ int TBaseScalarTraits<T>::Compare(const void* lhs, const void* rhs) const NOEXCE
     Assert(lhs);
     Assert(rhs);
 
-    STATIC_ASSERT(Meta::has_destructor<T>::value);
+    STATIC_ASSERT(Meta::is_type_complete_v<T>);
     STATIC_ASSERT(Meta::has_trivial_equal_v<T>);
 
     IF_CONSTEXPR(Meta::has_trivial_compare_v<T>) {

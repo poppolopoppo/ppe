@@ -174,66 +174,66 @@ inline UX11Y11Z10 Float_to_UX11Y11Z10(float x, float y, float z) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<u16, _Dim> FP32_to_FP16(const TScalarVector<float, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<u16, _Dim> {
-        return { FP32_to_FP16(value.template get<idx>())... };
+        return { FP32_to_FP16(value.template Get<idx>())... };
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<float, _Dim> FP16_to_FP32(const TScalarVector<u16, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
-        return { FP16_to_FP32(value.template get<idx>())... };
+        return { FP16_to_FP32(value.template Get<idx>())... };
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<FHalfFloat, _Dim> HalfPack(const TScalarVector<float, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<FHalfFloat, _Dim> {
-        return { FHalfFloat{ value.template get<idx>() }... };
+        return { FHalfFloat{ value.template Get<idx>() }... };
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<float, _Dim> HalfUnpack(const TScalarVector<FHalfFloat, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
-        return { value.template get<idx>().Unpack()... };
+        return { value.template Get<idx>().Unpack()... };
     });
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 TScalarVector<TUNorm<T>, _Dim> UNormPack(const TScalarVector<float, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<TUNorm<T>, _Dim> {
-        return { TUNorm<T>{ value.template get<idx>() }... };
+        return { TUNorm<T>{ value.template Get<idx>() }... };
     });
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 TScalarVector<TSNorm<T>, _Dim> SNormPack(const TScalarVector<float, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<TSNorm<T>, _Dim> {
-        return { TSNorm<T>{ value.template get<idx>() }... };
+        return { TSNorm<T>{ value.template Get<idx>() }... };
     });
 }
 //----------------------------------------------------------------------------
-template <typename _Traits, typename T, size_t _Dim>
+template <typename _Traits, typename T, u32 _Dim>
 TScalarVector<float, _Dim> NormUnpack(const TScalarVector<TBasicNorm<T, _Traits>, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
-        return { value.template get<idx>().Normalized()... };
+        return { value.template Get<idx>().Normalized()... };
     });
 }
 //----------------------------------------------------------------------------
-template <u32 _Bits, typename T, size_t _Dim>
+template <u32 _Bits, typename T, u32 _Dim>
 TScalarVector<float, _Dim> ScaleUNorm(const TScalarVector<u32, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
-        return { ScaleUNorm<_Bits>(value.template get<idx>())... };
+        return { ScaleUNorm<_Bits>(value.template Get<idx>())... };
     });
 }
 //----------------------------------------------------------------------------
-template <u32 _Bits, typename T, size_t _Dim>
+template <u32 _Bits, typename T, u32 _Dim>
 TScalarVector<float, _Dim> ScaleSNorm(const TScalarVector<i32, _Dim>& value) {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT -> TScalarVector<float, _Dim> {
-        return { ScaleSNorm<_Bits>(value.template get<idx>())... };
+        return { ScaleSNorm<_Bits>(value.template Get<idx>())... };
     });
 }
 //----------------------------------------------------------------------------

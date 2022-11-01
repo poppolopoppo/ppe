@@ -36,10 +36,10 @@ public:
     bool Tick_Every(const FTimeline& other, const FTimespan& target, FTimespan& elapsed);
     bool Tick_Every(const FTimepoint& now, const FTimespan& target, FTimespan& elapsed);
 
-    FORCE_INLINE bool Tick_Target120FPS(FTimespan& elapsed) { return Tick_Every(Timespan_120hz(), elapsed); }
-    FORCE_INLINE bool Tick_Target60FPS(FTimespan& elapsed) { return Tick_Every(Timespan_60hz(), elapsed); }
-    FORCE_INLINE bool Tick_Target30FPS(FTimespan& elapsed) { return Tick_Every(Timespan_30hz(), elapsed); }
-    FORCE_INLINE bool Tick_Target15FPS(FTimespan& elapsed) { return Tick_Every(Timespan_15hz(), elapsed); }
+    FORCE_INLINE bool Tick_Target120FPS(FTimespan& elapsed) { return Tick_Every(Timespan_120hz, elapsed); }
+    FORCE_INLINE bool Tick_Target60FPS(FTimespan& elapsed) { return Tick_Every(Timespan_60hz, elapsed); }
+    FORCE_INLINE bool Tick_Target30FPS(FTimespan& elapsed) { return Tick_Every(Timespan_30hz, elapsed); }
+    FORCE_INLINE bool Tick_Target15FPS(FTimespan& elapsed) { return Tick_Every(Timespan_15hz, elapsed); }
 
 private:
     FTimepoint _now;

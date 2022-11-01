@@ -76,7 +76,7 @@ public:
     float4x4 ToMatrixWithScale() const;
     float4x4 ToInvertMatrixWithScale() const;
 
-    bool Equals(const FTransform& other, float espilon = F_Epsilon) const;
+    bool Equals(const FTransform& other, float espilon = Epsilon) const;
 
     FTransform& Accumulate(const FTransform& delta);
     FTransform& Accumulate(const FTransform& delta, float blendWeight) { return Accumulate(Multiply(delta, blendWeight)); }

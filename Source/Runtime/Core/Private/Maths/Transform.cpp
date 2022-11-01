@@ -123,7 +123,7 @@ float4x4 FTransform::ToInvertMatrixWithScale() const {
     return Invert().ToMatrixWithScale();
 }
 //----------------------------------------------------------------------------
-bool FTransform::Equals(const FTransform& other, float espilon/* = F_Epsilon */) const {
+bool FTransform::Equals(const FTransform& other, float espilon/* = Epsilon */) const {
     return (NearlyEquals(_rotation.data, other._rotation.data, espilon) &&
             NearlyEquals(_translation, other._translation, espilon) &&
             NearlyEquals(_scale, other._scale, espilon) );
@@ -132,7 +132,7 @@ bool FTransform::Equals(const FTransform& other, float espilon/* = F_Epsilon */)
 FTransform& FTransform::Accumulate(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Sqr<float>(delta._rotation.w) < 1.f - F_Delta * F_Delta)
+    if (Sqr<float>(delta._rotation.w) < 1.f - Delta_v<float> * Delta)
         _rotation = delta._rotation * _rotation;
 
     _translation += delta._translation;
@@ -166,7 +166,7 @@ FTransform& FTransform::AccumulateWithShortestRotation(const FTransform& delta) 
 FTransform& FTransform::AccumulateWithAdditiveScale(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Sqr<float>(delta._rotation.w) < 1.f - F_Delta * F_Delta)
+    if (Sqr<float>(delta._rotation.w) < 1.f - Delta_v<float> * Delta)
         _rotation = delta._rotation * _rotation;
 
     _translation += delta._translation;
@@ -179,10 +179,10 @@ FTransform FTransform::Blend(const FTransform& lhs, const FTransform& rhs, float
     Assert(lhs._rotation.IsNormalized());
     Assert(rhs._rotation.IsNormalized());
 
-    if (alpha <= F_LargeEpsilon) {
+    if (alpha <= LargeEpsilon) {
         return lhs;
     }
-    else if (alpha >= 1.f - F_LargeEpsilon) {
+    else if (alpha >= 1.f - LargeEpsilon) {
         return rhs;
     }
     else {

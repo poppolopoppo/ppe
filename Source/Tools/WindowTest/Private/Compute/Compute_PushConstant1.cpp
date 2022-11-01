@@ -94,7 +94,7 @@ ARGS_IF_RHIDEBUG("Compute_PushConstant1_CS"));
     PFrameTask tDispatch = cmd->Task(FDispatchCompute{}
         .SetPipeline(ppln)
         .Dispatch({ 1, 1 })
-        .AddPushConstant(FPushConstantID{ "MyPushConstant" }, pc)
+        .AddPushConstant(FPushConstantID{ "MyPushConstant" }, MakeRawView(pc))
         .AddResources(FDescriptorSetID{ "0" }, resources));
     LOG_CHECK(WindowTest, tDispatch);
 

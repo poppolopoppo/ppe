@@ -114,7 +114,7 @@ void DecodeFloatVector_(FRgba32f* __restrict outv, const FRawMemoryConst& in) NO
     else IF_CONSTEXPR ( _R == 32 ) {
         STATIC_ASSERT(Meta::IsAlignedPow2(32, _R + _G + _B + _A));
 
-        *outv = {};
+        outv->Broadcast(0);
         FPlatformMemory::Memcpy(outv->data, in.data(), Min(in.SizeInBytes(), (_R + _G + _B + _A + 7) / 8_size_t));
     }
     else IF_CONSTEXPR( _R == 10 && _G == 10 && _B == 10 && _A == 2 ) {

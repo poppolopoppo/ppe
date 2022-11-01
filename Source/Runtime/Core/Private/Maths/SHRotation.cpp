@@ -10,7 +10,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 static void SHRotation_Transform_(size_t bands, const SHScalar *matrices, TSHVector<_Dim> *dst, const TSHVector<_Dim>& src) {
     Assert(dst);
     Assert(dst->Bands() == src.Bands());

@@ -49,6 +49,14 @@ struct TStaticBitset {
         return N;
     }
 
+    NODISCARD CONSTEXPR bool add(size_t i) NOEXCEPT {
+        if (Likely(not test(i))) {
+            set(i);
+            return true;
+        }
+        return false;
+    }
+
     CONSTEXPR void set(size_t i) NOEXCEPT {
         Assert(i < N);
         Bytes[i / BitsPerByte] |= (u8(1) << u8(i % BitsPerByte));
@@ -81,6 +89,16 @@ struct TStaticBitset {
             b = 0;
     }
 };
+//----------------------------------------------------------------------------
+template <size_t N, typename T, T... _Values>
+CONSTEXPR bool Uniq(std::integer_sequence<T, _Values...>) {
+    TStaticBitset<N> set;
+    return (set.add(_Values) && ...);
+}
+//----------------------------------------------------------------------------
+template <size_t N, typename T, T... _Values>
+CONSTEXPR bool Uniq_v = Uniq<N, T, _Values...>(
+    std::integer_sequence<T, _Values...>{});
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

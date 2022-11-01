@@ -4,6 +4,9 @@
 
 #include "CoreModule.h"
 #include "Container/Hash.h"
+#include "HAL/PlatformMisc.h"
+#include "HAL/PlatformTime.h"
+#include "Misc/Guid.h"
 #include "Modular/ModuleInfo.h"
 #include "Time/Timestamp.h"
 
@@ -64,11 +67,19 @@ u64 FXorShift1024Star::NextU64() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 u64 MakeSeed(u64 salt/* = 0 */) {
-    u64 seed[4];
-    seed[0] = salt;
-    seed[1] = u64(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    seed[2] = hash_value(seed[0]);
-    seed[3] = (hash_value(seed[1]) + FCoreModule::StaticInfo.BuildVersion.Timestamp.Value());
+    static const FGuid GProcessGUID = FGuid::Generate();
+    const struct {
+        u64 Salt[4];
+        FGuid Guid;
+    }   seed{
+        {
+            salt,
+            FPlatformMisc::CPUInfo().Ordinal(),
+            FPlatformTime::NetworkTime(),
+            hash_value(FCoreModule::StaticInfo.BuildVersion.Timestamp.Value()),
+        },
+        GProcessGUID,
+    };
     return Fingerprint64(&seed, sizeof(seed));
 }
 //----------------------------------------------------------------------------

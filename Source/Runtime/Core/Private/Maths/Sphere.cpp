@@ -15,7 +15,7 @@ FBoundingBox FSphere::ToBox() const {
 }
 //----------------------------------------------------------------------------
 FSphere FSphere::FromSegment(const float3& a, const float3& b) {
-    Assert(LengthSq(a - b) > F_Epsilon);
+    Assert(LengthSq(a - b) > Epsilon);
 
     const float3& center = a;
     const float radius = Length(b - center);

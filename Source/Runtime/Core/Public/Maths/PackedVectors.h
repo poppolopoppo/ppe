@@ -161,34 +161,34 @@ PPE_ASSUME_TYPE_AS_POD(UX11Y11Z10)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<u16, _Dim> FP32_to_FP16(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<float, _Dim> FP16_to_FP32(const TScalarVector<u16, _Dim>& value);
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<float, _Dim> HalfUnpack(const TScalarVector<FHalfFloat, _Dim>& value);
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<FHalfFloat, _Dim> HalfPack(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 TScalarVector<float, _Dim> HalfUnpack(const TScalarVector<FHalfFloat, _Dim>& value);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 TScalarVector<TUNorm<T>, _Dim> UNormPack(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 TScalarVector<TSNorm<T>, _Dim> SNormPack(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
-template <typename _Traits, typename T, size_t _Dim>
+template <typename _Traits, typename T, u32 _Dim>
 TScalarVector<float, _Dim> NormUnpack(const TScalarVector<TBasicNorm<T, _Traits>, _Dim>& value);
 //----------------------------------------------------------------------------
-template <u32 _Bits, typename T, size_t _Dim>
+template <u32 _Bits, typename T, u32 _Dim>
 TScalarVector<float, _Dim> ScaleUNorm(const TScalarVector<u32, _Dim>& value);
 //----------------------------------------------------------------------------
-template <u32 _Bits, typename T, size_t _Dim>
+template <u32 _Bits, typename T, u32 _Dim>
 TScalarVector<float, _Dim> ScaleSNorm(const TScalarVector<i32, _Dim>& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -202,16 +202,16 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 struct is_basic_norm<TScalarVector<T, _Dim>> : is_basic_norm<T> {};
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 struct is_snorm<TScalarVector<T, _Dim>> : is_snorm<T> {};
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 struct is_unorm<TScalarVector<T, _Dim>> : is_unorm<T> {};
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 struct is_packed_integral<TScalarVector<T, _Dim>> : is_packed_integral<T> {};
 template <>
 struct is_packed_integral<UX11Y11Z10> : std::bool_constant<true> {};
@@ -223,29 +223,27 @@ struct is_packed_integral<UX10Y10Z10W2N> : std::bool_constant<true> {};
 } //!namespace Meta
 } //!namespace PPE
 
-#ifndef EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u8>, 2>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u8>, 4>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u8>, 2>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u8>, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u16>, 2>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u16>, 4>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u16>, 2>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u16>, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u32>, 2>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u32>, 3>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TSNorm<u32>, 4>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u32>, 2>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u32>, 3>;
-EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) TScalarVector<TUNorm<u32>, 4>;
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TSNorm<u8>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TSNorm<u8>, 4);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TUNorm<u8>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TUNorm<u8>, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TSNorm<u16>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TSNorm<u16>, 4);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TUNorm<u16>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TUNorm<u16>, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TSNorm<u32>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TSNorm<u32>, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TSNorm<u32>, 4);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TUNorm<u32>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TUNorm<u32>, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(TUNorm<u32>, 4);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-#endif //!EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR

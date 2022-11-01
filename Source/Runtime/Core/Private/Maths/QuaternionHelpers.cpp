@@ -46,7 +46,7 @@ FQuaternion SLerp(const FQuaternion& v0, const FQuaternion& v1, float f) {
     float inverse;
     float dot = Dot(v0, v1);
 
-    if (Abs(dot) > 1.0f - F_Epsilon) {
+    if (Abs(dot) > 1.0f - Epsilon) {
         inverse = 1.0f - f;
         opposite = f * (dot < 0 ? -1 : 1);
     }
@@ -122,7 +122,7 @@ static FQuaternion MakeQuaternionBetween_(const float3& A, const float3& B, floa
 
     FQuaternion Q;
 
-    if (W >= F_SmallEpsilon * NormAB) {
+    if (W >= SmallEpsilon * NormAB) {
         Q = FQuaternion(
             A.y * B.z - A.z * B.y,
             A.z * B.x - A.x * B.z,
@@ -162,7 +162,7 @@ FQuaternion MakeAxisQuaternion(const float3& axis, float radians) {
 }
 //----------------------------------------------------------------------------
 FQuaternion MakeAxisQuaternion(const float3& axis, float fsin, float fcos) {
-    Assert(Abs(1.0f - LengthSq(axis)) < F_Epsilon);
+    Assert(Abs(1.0f - LengthSq(axis)) < Epsilon);
 
     const float4 result(
         axis.x * fsin,

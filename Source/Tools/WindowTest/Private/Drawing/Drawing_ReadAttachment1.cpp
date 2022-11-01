@@ -112,7 +112,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
             FRgba32f texel;
             imageData.Load(&texel, uint3(ix, iy, 0));
 
-            const bool isEqual = DistanceSq(color, texel) < F_LargeEpsilon;
+            const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
             LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
             LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);

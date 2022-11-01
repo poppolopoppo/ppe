@@ -7,7 +7,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename U>
-CONSTEXPR T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT {
+CONSTEXPR Meta::TEnableIf<std::is_floating_point_v<T>, T> BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT {
     return static_cast<T>(v0*f0 + v1*f1 + v2*f2);
 }
 //----------------------------------------------------------------------------
@@ -54,6 +54,25 @@ CONSTEXPR void MinMax3(Meta::TDontDeduce<T> a, Meta::TDontDeduce<T> b, Meta::TDo
     *pmax = Max(*pmax, c);
 }
 //----------------------------------------------------------------------------
+template <typename T, typename>
+NODISCARD CONSTEXPR u32 MinElement(const std::initializer_list<T>& list) {
+    return static_cast<u32>(std::distance(list.begin(), std::min_element(list.begin(), list.end())));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename>
+NODISCARD CONSTEXPR u32 MaxElement(const std::initializer_list<T>& list) {
+    return static_cast<u32>(std::distance(list.begin(), std::max_element(list.begin(), list.end())));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename>
+NODISCARD CONSTEXPR TPair<u32, u32> MinMaxElement(const std::initializer_list<T>& list) {
+    const auto it = std::minmax_element(list.begin(), list.end());
+    return {
+        static_cast<u32>(std::distance(list.begin(), it.first)),
+        static_cast<u32>(std::distance(list.begin(), it.second))
+    };
+}
+//----------------------------------------------------------------------------
 inline double Pow(double d, double n) NOEXCEPT {
     return std::pow(d, n);
 }
@@ -62,7 +81,7 @@ inline double Pow(double d, double n) NOEXCEPT {
 inline CONSTEXPR float Rcp(float f) NOEXCEPT {
 #else
 inline float Rcp(float f) {
-    Assert(Abs(f) > F_SmallEpsilon);
+    Assert(Abs(f) > SmallEpsilon);
 #endif
     return (1.f / f);
 }
@@ -71,7 +90,7 @@ inline float Rcp(float f) {
 inline CONSTEXPR double Rcp(double d) NOEXCEPT {
 #else
 inline double Rcp(double d) {
-    Assert(Abs(d) > D_Epsilon);
+    Assert(Abs(d) > Epsilon);
 #endif
     return (1. / d);
 }
@@ -116,11 +135,11 @@ CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline CONSTEXPR float Degrees(float radians) NOEXCEPT {
-    return radians * F_Rad2Deg;
+    return radians * Rad2Deg;
 }
 //----------------------------------------------------------------------------
 inline CONSTEXPR float Radians(float degrees) NOEXCEPT {
-    return degrees * F_Deg2Rad;
+    return degrees * Deg2Rad;
 }
 //----------------------------------------------------------------------------
 inline void SinCos(float radians, float *fsin, float *fcos) NOEXCEPT {
@@ -135,7 +154,7 @@ inline void SinCos(double radians, double *fsin, double *fcos) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline bool NearlyEquals(float A, float B, float maxRelDiff/* = F_Epsilon */) NOEXCEPT {
+inline bool NearlyEquals(float A, float B, float maxRelDiff/* = Epsilon */) NOEXCEPT {
     Assert(maxRelDiff > 0);
 
     // Calculate the difference.

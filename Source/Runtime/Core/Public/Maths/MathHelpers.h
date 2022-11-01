@@ -13,44 +13,75 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR float F_Epsilon       = 1e-3f;
-CONSTEXPR float F_EpsilonSQ     = 1e-9f;
-CONSTEXPR float F_SmallEpsilon  = 1e-6f;
-CONSTEXPR float F_LargeEpsilon  = 0.01f;
-CONSTEXPR float F_Delta         = 0.00001f;
+struct FConstantNumber {
+    template <typename T>
+    struct TInvalid {
+        static_assert(Meta::AlwaysFalse<T>,
+            "A program that instantiates a primary template of a mathematical constant "
+            "variable template is ill-formed. (N4835 [math.constants]/3)");
+    };
+
+    const float Float;
+    const double Double;
+
+    constexpr FConstantNumber(double d)
+        : FConstantNumber(static_cast<float>(d), d)
+    {}
+
+    constexpr FConstantNumber(float f, double d) : Float(f), Double(d) {}
+
+    constexpr FORCE_INLINE operator float() const { return Float; }
+    constexpr FORCE_INLINE operator double() const { return Double; }
+
+    constexpr FORCE_INLINE float Get(Meta::TType<float>) const { return Float; }
+    constexpr FORCE_INLINE double Get(Meta::TType<double>) const { return Double; }
+
+#define PPE_CONSTANTNUMBER_OPERATOR_T_DEF(_Float, _Op) \
+    friend constexpr FORCE_INLINE decltype(std::declval<_Float>() _Op std::declval<_Float>()) operator _Op(const FConstantNumber& a, _Float b) { return a.Get(Meta::Type<_Float>) _Op b; } \
+    friend constexpr FORCE_INLINE decltype(std::declval<_Float>() _Op std::declval<_Float>()) operator _Op(_Float a, const FConstantNumber& b) { return a _Op b.Get(Meta::Type<_Float>); }
+#define PPE_CONSTANTNUMBER_OPERATOR_DEF(_Op) \
+    PPE_CONSTANTNUMBER_OPERATOR_T_DEF(float, _Op) \
+    PPE_CONSTANTNUMBER_OPERATOR_T_DEF(double, _Op)
+
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(+)
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(-)
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(*)
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(/)
+
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(<)
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(<=)
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(>)
+    PPE_CONSTANTNUMBER_OPERATOR_DEF(>=)
+
+#undef PPE_CONSTANTNUMBER_OPERATOR_DEF
+#undef PPE_CONSTANTNUMBER_OPERATOR_T_DEF
+};
 //----------------------------------------------------------------------------
-CONSTEXPR float F_E             = 2.718281828459045090795598298427648842334747314453f;
-CONSTEXPR float F_PI            = 3.141592653589793115997963468544185161590576171875f;
-CONSTEXPR float F_2PI           = 6.283185307179586231995926937088370323181152343750f;
-CONSTEXPR float F_3PI           = 9.424777960769379347993890405632555484771728515625f;
-CONSTEXPR float F_4PI           = 12.56637061435917246399185387417674064636230468750f;
-CONSTEXPR float F_PIOver2       = 1.047197551196597631317786181170959025621414184570f;
-CONSTEXPR float F_PIOver3       = 1.047197551196597631317786181170959025621414184570f;
-CONSTEXPR float F_PIOver4       = 0.785398163397448278999490867136046290397644042969f;
-CONSTEXPR float F_2PIOver3      = 2.094395102393195262635572362341918051242828369141f;
-CONSTEXPR float F_HalfPi        = F_PIOver2;
-CONSTEXPR float F_Deg2Rad       = 0.017453292519943295474371680597869271878153085709f;
-CONSTEXPR float F_Rad2Deg       = 57.29577951308232286464772187173366546630859375000f;
-CONSTEXPR float F_Sqrt2         = 1.414213562373095145474621858738828450441360473633f;
-CONSTEXPR float F_Sqrt2OO       = 0.707106781186547461715008466853760182857513427734f;
-CONSTEXPR float F_SqrtHalf      = F_Sqrt2OO;
-//----------------------------------------------------------------------------
-CONSTEXPR double D_Epsilon      = 1e-5;
-CONSTEXPR double D_E            = 2.718281828459045090795598298427648842334747314453;
-CONSTEXPR double D_PI           = 3.141592653589793115997963468544185161590576171875;
-CONSTEXPR double D_2PI          = 6.283185307179586231995926937088370323181152343750;
-CONSTEXPR double D_3PI          = 9.424777960769379347993890405632555484771728515625;
-CONSTEXPR double D_4PI          = 12.56637061435917246399185387417674064636230468750;
-CONSTEXPR double D_PIOver2      = 1.047197551196597631317786181170959025621414184570;
-CONSTEXPR double D_PIOver3      = 1.047197551196597631317786181170959025621414184570;
-CONSTEXPR double D_PIOver4      = 0.785398163397448278999490867136046290397644042969;
-CONSTEXPR double D_2PIOver3     = 2.094395102393195262635572362341918051242828369141;
-CONSTEXPR double D_HalfPi       = D_PIOver2;
-CONSTEXPR double D_Deg2Rad      = 0.017453292519943295474371680597869271878153085709;
-CONSTEXPR double D_Rad2Deg      = 57.29577951308232286464772187173366546630859375000;
-CONSTEXPR double D_Sqrt2        = 1.414213562373095145474621858738828450441360473633;
-CONSTEXPR double D_Sqrt2OO      = 0.707106781186547461715008466853760182857513427734;
-CONSTEXPR double D_SqrtHalf     = D_Sqrt2OO;
+#define PPE_CONSTANTNUMBER_DEF(_Name, ...) \
+    inline CONSTEXPR FConstantNumber _Name{ __VA_ARGS__ }; \
+    template <typename T> inline CONSTEXPR FConstantNumber::TInvalid<T> CONCAT(_Name, _v); \
+    template <> inline CONSTEXPR float CONCAT(_Name, _v)<float>{ _Name }; \
+    template <> inline CONSTEXPR double CONCAT(_Name, _v)<double>{ _Name }
+
+PPE_CONSTANTNUMBER_DEF(Epsilon, 1e-3f, 1e-5);
+PPE_CONSTANTNUMBER_DEF(EpsilonSQ, Epsilon_v<float>*Epsilon_v<float>, Epsilon_v<double>*Epsilon_v<double>);
+PPE_CONSTANTNUMBER_DEF(SmallEpsilon, 1e-7f, 1e-9);
+PPE_CONSTANTNUMBER_DEF(LargeEpsilon, 0.01f, 0.001f);
+PPE_CONSTANTNUMBER_DEF(Delta, 0.00001);
+
+PPE_CONSTANTNUMBER_DEF(E, 2.718281828459045090795598298427648842334747314453);
+PPE_CONSTANTNUMBER_DEF(PI, 3.141592653589793115997963468544185161590576171875);
+PPE_CONSTANTNUMBER_DEF(PIOver2, 1.047197551196597631317786181170959025621414184570);
+PPE_CONSTANTNUMBER_DEF(PIOver3, 1.047197551196597631317786181170959025621414184570);
+PPE_CONSTANTNUMBER_DEF(PIOver4, 0.785398163397448278999490867136046290397644042969);
+PPE_CONSTANTNUMBER_DEF(HalfPi, PIOver2);
+PPE_CONSTANTNUMBER_DEF(Deg2Rad, 0.017453292519943295474371680597869271878153085709);
+PPE_CONSTANTNUMBER_DEF(Rad2Deg, 57.29577951308232286464772187173366546630859375000);
+PPE_CONSTANTNUMBER_DEF(Sqrt2, 1.414213562373095145474621858738828450441360473633);
+PPE_CONSTANTNUMBER_DEF(Sqrt2OO, 0.707106781186547461715008466853760182857513427734);
+PPE_CONSTANTNUMBER_DEF(SqrtHalf, Sqrt2OO);
+
+#undef PPE_CONSTANTNUMBER_DEF
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -71,7 +102,7 @@ inline CONSTEXPR float Abs(float v) NOEXCEPT { return FPlatformMaths::Abs(v); }
 inline CONSTEXPR double Abs(double v) NOEXCEPT { return FPlatformMaths::Abs(v); }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
-CONSTEXPR T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT;
+CONSTEXPR Meta::TEnableIf<std::is_floating_point_v<T>, T> BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline CONSTEXPR auto BiasScale(float x, float bias, float scale) NOEXCEPT { return ((x + bias) * scale); }
 inline CONSTEXPR auto BiasScale(double x, double bias, double scale) NOEXCEPT { return ((x + bias) * scale); }
@@ -106,6 +137,15 @@ CONSTEXPR void MinMax(Meta::TDontDeduce<T> a, Meta::TDontDeduce<T> b, T* pmin, T
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
 CONSTEXPR void MinMax3(Meta::TDontDeduce<T> a, Meta::TDontDeduce<T> b, Meta::TDontDeduce<T> c, T* pmin, T* pmax) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T, typename = Meta::has_trivial_less_t<T>>
+NODISCARD CONSTEXPR u32 MinElement(const std::initializer_list<T>& list);
+//----------------------------------------------------------------------------
+template <typename T, typename = Meta::has_trivial_less_t<T>>
+NODISCARD CONSTEXPR u32 MaxElement(const std::initializer_list<T>& list);
+//----------------------------------------------------------------------------
+template <typename T, typename = Meta::has_trivial_less_t<T>>
+NODISCARD CONSTEXPR TPair<u32, u32> MinMaxElement(const std::initializer_list<T>& list);
 //----------------------------------------------------------------------------
 inline float Pow(float f, float n) NOEXCEPT { return FPlatformMaths::Pow(f, n); }
 double Pow(double d, double n) NOEXCEPT;
@@ -194,8 +234,8 @@ void SinCos(double radians, double *fsin, double *fcos) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool NearlyEquals(float A, float B, float maxRelDiff = F_Epsilon) NOEXCEPT;
-bool NearlyEquals(double A, double B, double maxRelDiff = D_Epsilon) NOEXCEPT;
+bool NearlyEquals(float A, float B, float maxRelDiff = Epsilon) NOEXCEPT;
+bool NearlyEquals(double A, double B, double maxRelDiff = Epsilon) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline bool IsINF(float f) NOEXCEPT { return std::isinf(f); }
 inline bool IsINF(double d) NOEXCEPT { return std::isinf(d); }

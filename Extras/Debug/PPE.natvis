@@ -253,54 +253,665 @@
 			<Item Name="[Value]">Value</Item>
 		</Expand>
 	</Type>
-	<Type Name="PPE::TScalarVectorComponent&lt;*, 0&gt;">
-		<DisplayString>x:{data[0]}</DisplayString>
-		<Expand>
-			<Item Name="x">data[0]</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::TScalarVectorComponent&lt;*, 1&gt;">
-		<DisplayString>y:{data[1]}</DisplayString>
-		<Expand>
-			<Item Name="y">data[1]</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::TScalarVectorComponent&lt;*, 2&gt;">
-		<DisplayString>z:{data[2]}</DisplayString>
-		<Expand>
-			<Item Name="z">data[2]</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::TScalarVectorComponent&lt;*, 3&gt;">
-		<DisplayString>w:{data[3]}</DisplayString>
-		<Expand>
-			<Item Name="w">data[3]</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::TScalarVector&lt;*, 2&gt;">
-		<DisplayString>({data[0]}, {data[1]})</DisplayString>
-		<Expand>
-			<Item Name="[x]">data[0]</Item>
-			<Item Name="[y]">data[1]</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::TScalarVector&lt;*, 3&gt;">
-		<DisplayString>({data[0]}, {data[1]}, {data[2]})</DisplayString>
-		<Expand>
-			<Item Name="[x]">data[0]</Item>
-			<Item Name="[y]">data[1]</Item>
-			<Item Name="[z]">data[2]</Item>
-		</Expand>
-	</Type>
-	<Type Name="PPE::TScalarVector&lt;*, 4&gt;">
-		<DisplayString>({data[0]}, {data[1]}, {data[2]}, {data[3]})</DisplayString>
-		<Expand>
-			<Item Name="[x]">data[0]</Item>
-			<Item Name="[y]">data[1]</Item>
-			<Item Name="[z]">data[2]</Item>
-			<Item Name="[w]">data[3]</Item>
-		</Expand>
-	</Type>
+  <Type Name="PPE::details::TScalarVectorStorage&lt;*, 1&gt;">
+    <DisplayString>({data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+    </Expand>
+  </Type>
+  <Type Name="PPE::details::TScalarVectorStorage&lt;*, 2&gt;">
+    <DisplayString>({data[0]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+  <Type Name="PPE::details::TScalarVectorStorage&lt;*, 3&gt;">
+    <DisplayString>({data[0]}, {data[1]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[1] * data[1] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[1] * data[1] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+  <Type Name="PPE::details::TScalarVectorStorage&lt;*, 4&gt;">
+    <DisplayString>({data[0]}, {data[1]}, {data[2]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="w">data[3]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 1&gt;">
+    <DisplayString>({data[0]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 1, 2&gt;">
+    <DisplayString>({data[0]}, {data[1]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[1] * data[1] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[1] * data[1] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 1, 2, 3&gt;">
+    <DisplayString>({data[0]}, {data[1]}, {data[2]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="w">data[3]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 1, 3&gt;">
+    <DisplayString>({data[0]}, {data[1]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[1] * data[1] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[1] * data[1] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 1, 3, 2&gt;">
+    <DisplayString>({data[0]}, {data[1]}, {data[3]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="w">data[2]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 2&gt;">
+    <DisplayString>({data[0]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 2, 1&gt;">
+    <DisplayString>({data[0]}, {data[2]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[2] * data[2] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[2] * data[2] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 2, 1, 3&gt;">
+    <DisplayString>({data[0]}, {data[2]}, {data[1]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="w">data[3]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 2, 3&gt;">
+    <DisplayString>({data[0]}, {data[2]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[2] * data[2] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[2] * data[2] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 2, 3, 1&gt;">
+    <DisplayString>({data[0]}, {data[2]}, {data[3]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="w">data[1]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 3&gt;">
+    <DisplayString>({data[0]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 3, 1&gt;">
+    <DisplayString>({data[0]}, {data[3]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[3] * data[3] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[3] * data[3] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 3, 1, 2&gt;">
+    <DisplayString>({data[0]}, {data[3]}, {data[1]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="w">data[2]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 3, 2&gt;">
+    <DisplayString>({data[0]}, {data[3]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="d²">(data[0] * data[0] + data[3] * data[3] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[0] * data[0] + data[3] * data[3] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 0, 3, 2, 1&gt;">
+    <DisplayString>({data[0]}, {data[3]}, {data[2]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[0]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="w">data[1]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 0&gt;">
+    <DisplayString>({data[1]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 0, 2&gt;">
+    <DisplayString>({data[1]}, {data[0]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[0] * data[0] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[0] * data[0] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 0, 2, 3&gt;">
+    <DisplayString>({data[1]}, {data[0]}, {data[2]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="w">data[3]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 0, 3&gt;">
+    <DisplayString>({data[1]}, {data[0]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[0] * data[0] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[0] * data[0] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 0, 3, 2&gt;">
+    <DisplayString>({data[1]}, {data[0]}, {data[3]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="w">data[2]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 2&gt;">
+    <DisplayString>({data[1]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 2, 0&gt;">
+    <DisplayString>({data[1]}, {data[2]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[2] * data[2] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[2] * data[2] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 2, 0, 3&gt;">
+    <DisplayString>({data[1]}, {data[2]}, {data[0]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="w">data[3]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 2, 3&gt;">
+    <DisplayString>({data[1]}, {data[2]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[2] * data[2] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[2] * data[2] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 2, 3, 0&gt;">
+    <DisplayString>({data[1]}, {data[2]}, {data[3]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="w">data[0]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 3&gt;">
+    <DisplayString>({data[1]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 3, 0&gt;">
+    <DisplayString>({data[1]}, {data[3]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[3] * data[3] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[3] * data[3] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 3, 0, 2&gt;">
+    <DisplayString>({data[1]}, {data[3]}, {data[0]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="w">data[2]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 3, 2&gt;">
+    <DisplayString>({data[1]}, {data[3]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="d²">(data[1] * data[1] + data[3] * data[3] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[1] * data[1] + data[3] * data[3] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 1, 3, 2, 0&gt;">
+    <DisplayString>({data[1]}, {data[3]}, {data[2]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[1]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="w">data[0]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 0&gt;">
+    <DisplayString>({data[2]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 0, 1&gt;">
+    <DisplayString>({data[2]}, {data[0]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[0] * data[0] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[0] * data[0] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 0, 1, 3&gt;">
+    <DisplayString>({data[2]}, {data[0]}, {data[1]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="w">data[3]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 0, 3&gt;">
+    <DisplayString>({data[2]}, {data[0]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[0] * data[0] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[0] * data[0] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 0, 3, 1&gt;">
+    <DisplayString>({data[2]}, {data[0]}, {data[3]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="w">data[1]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 1&gt;">
+    <DisplayString>({data[2]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 1, 0&gt;">
+    <DisplayString>({data[2]}, {data[1]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[1] * data[1] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[1] * data[1] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 1, 0, 3&gt;">
+    <DisplayString>({data[2]}, {data[1]}, {data[0]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="w">data[3]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 1, 3&gt;">
+    <DisplayString>({data[2]}, {data[1]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[1] * data[1] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[1] * data[1] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 1, 3, 0&gt;">
+    <DisplayString>({data[2]}, {data[1]}, {data[3]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[3]</Item>
+      <Item Name="w">data[0]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 3&gt;">
+    <DisplayString>({data[2]}, {data[3]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[3] * data[3])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[3] * data[3])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 3, 0&gt;">
+    <DisplayString>({data[2]}, {data[3]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[3] * data[3] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[3] * data[3] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 3, 0, 1&gt;">
+    <DisplayString>({data[2]}, {data[3]}, {data[0]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="w">data[1]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 3, 1&gt;">
+    <DisplayString>({data[2]}, {data[3]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="d²">(data[2] * data[2] + data[3] * data[3] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[2] * data[2] + data[3] * data[3] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 2, 3, 1, 0&gt;">
+    <DisplayString>({data[2]}, {data[3]}, {data[1]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[2]</Item>
+      <Item Name="y">data[3]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="w">data[0]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 0&gt;">
+    <DisplayString>({data[3]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 0, 1&gt;">
+    <DisplayString>({data[3]}, {data[0]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[0] * data[0] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[0] * data[0] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 0, 1, 2&gt;">
+    <DisplayString>({data[3]}, {data[0]}, {data[1]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="w">data[2]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 0, 2&gt;">
+    <DisplayString>({data[3]}, {data[0]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[0] * data[0] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[0] * data[0] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 0, 2, 1&gt;">
+    <DisplayString>({data[3]}, {data[0]}, {data[2]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[0]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="w">data[1]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 1&gt;">
+    <DisplayString>({data[3]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 1, 0&gt;">
+    <DisplayString>({data[3]}, {data[1]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[1] * data[1] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[1] * data[1] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 1, 0, 2&gt;">
+    <DisplayString>({data[3]}, {data[1]}, {data[0]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="w">data[2]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 1, 2&gt;">
+    <DisplayString>({data[3]}, {data[1]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[1] * data[1] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[1] * data[1] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 1, 2, 0&gt;">
+    <DisplayString>({data[3]}, {data[1]}, {data[2]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[1]</Item>
+      <Item Name="z">data[2]</Item>
+      <Item Name="w">data[0]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 2&gt;">
+    <DisplayString>({data[3]}, {data[2]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[2] * data[2])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[2] * data[2])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 2, 0&gt;">
+    <DisplayString>({data[3]}, {data[2]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[2] * data[2] + data[0] * data[0])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[2] * data[2] + data[0] * data[0])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 2, 0, 1&gt;">
+    <DisplayString>({data[3]}, {data[2]}, {data[0]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[0]</Item>
+      <Item Name="w">data[1]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 2, 1&gt;">
+    <DisplayString>({data[3]}, {data[2]}, {data[1]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="d²">(data[3] * data[3] + data[2] * data[2] + data[1] * data[1])</Item>
+      <Item Name="d">sqrt(data[3] * data[3] + data[2] * data[2] + data[1] * data[1])</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::details::TScalarVectorShuffle&lt;*, *, 3, 2, 1, 0&gt;">
+    <DisplayString>({data[3]}, {data[2]}, {data[1]}, {data[0]})</DisplayString>
+    <Expand>
+      <Item Name="x">data[3]</Item>
+      <Item Name="y">data[2]</Item>
+      <Item Name="z">data[1]</Item>
+      <Item Name="w">data[0]</Item>
+    </Expand>
+  </Type>
+
 	<Type Name="PPE::TScalarBoundingBox&lt;*, *&gt;">
 		<DisplayString>[{_min}, {_max}]</DisplayString>
 		<Expand>

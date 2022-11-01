@@ -590,7 +590,7 @@ public:
 
                 state.ResetTiming();
 
-                volatile uintptr_t hit = 0;
+                uintptr_t hit = 0;
                 for (const auto& it : s.Search) {
                     auto jt = c.find(it);
                     FContainerBenchmark::DoNotOptimize(jt);
@@ -616,7 +616,7 @@ public:
 
                 state.ResetTiming();
 
-                volatile u32 hit = 0;
+                u32 hit = 0;
                 const auto cend = c.end();
                 for (const auto& it : s.Unknown) {
                     auto jt = c.find(it);
@@ -645,7 +645,7 @@ public:
                 state.ResetTiming();
 
                 ONLY_IF_ASSERT(size_t n = 0);
-                volatile uintptr_t h = 0;
+                uintptr_t h = 0;
                 for (const auto& it : s.Dense) {
                     auto jt = c.find(it);
                     FContainerBenchmark::DoNotOptimize(jt);
@@ -673,7 +673,7 @@ public:
 
                 state.ResetTiming();
 
-                volatile u32 hit = 0;
+                u32 hit = 0;
                 const auto cend = c.end();
                 for (const auto& it : s.Unknown) {
                     auto jt = c.find(it);

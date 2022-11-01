@@ -294,14 +294,14 @@ struct TNumericLimits< TBasicNorm<T, _Traits> > {
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
     STATIC_CONST_INTEGRAL(bool, is_signed,  scalar_type::is_signed);
 
-    static CONSTEXPR const value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
-    static CONSTEXPR const value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
-    static CONSTEXPR const value_type Inf() { return value_type{ scalar_type::Inf() }; }
-    static CONSTEXPR const value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
-    static CONSTEXPR const value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
-    static CONSTEXPR const value_type Lowest() { return value_type{ scalar_type::Lowest() }; }
-    static CONSTEXPR const value_type Nan() { return value_type{ scalar_type::Nan() }; }
-    static CONSTEXPR const value_type Zero() { return value_type{ scalar_type::Zero() }; }
+    static CONSTEXPR value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
+    static CONSTEXPR value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
+    static CONSTEXPR value_type Inf() { return value_type{ scalar_type::Inf() }; }
+    static CONSTEXPR value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
+    static CONSTEXPR value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
+    static CONSTEXPR value_type Lowest() { return value_type{ scalar_type::Lowest() }; }
+    static CONSTEXPR value_type Nan() { return value_type{ scalar_type::Nan() }; }
+    static CONSTEXPR value_type Zero() { return value_type{ scalar_type::Zero() }; }
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(TBasicNorm<T COMMA _Traits>, typename T, typename _Traits)

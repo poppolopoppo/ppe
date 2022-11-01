@@ -129,9 +129,37 @@ static NO_INLINE void Test_Vector_() {
         int broadcast = select.HSum();
         AssertRelease(broadcast == 1);
     }
-
-}
-
+    {
+        int4 v;
+        v.xy = int2{ 1,2 };
+        AssertRelease(v.x == 1);
+        AssertRelease(v.y == 2);
+        const int2 xy{ 3,4 };
+        auto& zw = v.zw;
+        zw = xy;
+        AssertRelease(v.x == 1);
+        AssertRelease(v.y == 2);
+        AssertRelease(v.z == 3);
+        AssertRelease(v.w == 4);
+        v.yw = { 5, 6 };
+        AssertRelease(v.x == 1);
+        AssertRelease(v.y == 5);
+        AssertRelease(v.z == 3);
+        AssertRelease(v.w == 6);
+    }
+    {
+        int4 v{ int2{ 1,2 }, int2{ 3,4 } };
+        v.xy = v.xx;
+        AssertRelease(v.x == 1);
+        AssertRelease(v.y == 1);
+        v.zw = v.zz;
+        //v.zz = { 3,4 }; forbidden, should not compile !
+        AssertRelease(v.x == 1);
+        AssertRelease(v.y == 1);
+        AssertRelease(v.z == 3);
+        AssertRelease(v.w == 3);
+    }
+y}
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_BoundingBox_() {
     {

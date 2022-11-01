@@ -17,7 +17,7 @@ class FSHSampleCollection;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 using TSHPolarFunction = TSHCoefficient<_Dim> (*)(const SHSphericalCoord& thetaPhi);
 //----------------------------------------------------------------------------
 void SHProjectFunction(TSHVector<1> *coefficients, TSHPolarFunction<1> func, const FSHSampleCollection& samples);
@@ -27,7 +27,7 @@ void SHProjectFunction(TSHVector<4> *coefficients, TSHPolarFunction<4> func, con
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim>
+template <u32 _Dim>
 using TSH3DFunction = TSHCoefficient<_Dim> (*)(const SHDirection& dir);
 //----------------------------------------------------------------------------
 void SHProjectFunction(TSHVector<1> *coefficients, TSH3DFunction<1> func, const FSHSampleCollection& samples);

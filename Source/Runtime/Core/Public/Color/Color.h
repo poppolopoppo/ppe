@@ -30,7 +30,7 @@ PPE_CORE_API float3 RGB_to_HCV(const float3& rgb);
 //----------------------------------------------------------------------------
 PPE_CORE_API float3 HSV_to_RGB(const float3& hsv);
 PPE_CORE_API float3 RGB_to_HSV(const float3& rgb);
-PPE_CORE_API float3 HSV_to_RGB_smooth(const float3& rgb);
+PPE_CORE_API float3 HSV_to_RGB_smooth(const float3& hsv);
 //----------------------------------------------------------------------------
 PPE_CORE_API float3 HSL_to_RGB(const float3& hsl);
 PPE_CORE_API float3 RGB_to_HSL(const float3& rgb);

@@ -17,71 +17,71 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-bool IsHomogeneous(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = F_Epsilon);
+template <typename T, u32 _Width, u32 _Height>
+bool IsHomogeneous(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = Epsilon);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-bool IsInversible(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = F_Epsilon);
+template <typename T, u32 _Width, u32 _Height>
+bool IsInversible(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = Epsilon);
 //----------------------------------------------------------------------------
 template <typename T>
 bool IsInvertible(const TScalarMatrix<T, 4, 4>& m);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-bool IsOrthogonal(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = F_Epsilon);
+template <typename T, u32 _Width, u32 _Height>
+bool IsOrthogonal(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = Epsilon);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-bool IsOrthonormal(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = F_Epsilon);
+template <typename T, u32 _Width, u32 _Height>
+bool IsOrthonormal(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = Epsilon);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-bool IsSymetrical(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = F_Epsilon);
+template <typename T, u32 _Width, u32 _Height>
+bool IsSymetrical(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = Epsilon);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 bool IsINF(const TScalarMatrix<T, _Width, _Height>& m);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 bool IsNAN(const TScalarMatrix<T, _Width, _Height>& m);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 bool IsNANorINF(const TScalarMatrix<T, _Width, _Height>& m);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 bool NearlyEquals(  const TScalarMatrix<T, _Width, _Height>& lhs,
                     const TScalarMatrix<T, _Width, _Height>& rhs,
-                    float maxRelDiff = F_Epsilon);
+                    float maxRelDiff = Epsilon);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 TScalarMatrix<T, _Width, _Height> Abs(const TScalarMatrix<T, _Width, _Height>& m);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 void Lerp(  const TScalarMatrix<T, _Width, _Height>& v0,
             const TScalarMatrix<T, _Width, _Height>& v1,
             float f,
             TScalarMatrix<T, _Width, _Height>& result);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 TScalarMatrix<T, _Width, _Height> Lerp( const TScalarMatrix<T, _Width, _Height>& v0,
                                         const TScalarMatrix<T, _Width, _Height>& v1,
                                         float f );
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 void SLerp( const TScalarMatrix<T, _Width, _Height>& v0,
             const TScalarMatrix<T, _Width, _Height>& v1,
             float f,
             TScalarMatrix<T, _Width, _Height>& result);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 void Smoothstep(const TScalarMatrix<T, _Width, _Height>& v0,
                 const TScalarMatrix<T, _Width, _Height>& v1,
                 float f,
                 TScalarMatrix<T, _Width, _Height>& result);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 void Smootherstep(  const TScalarMatrix<T, _Width, _Height>& v0,
                     const TScalarMatrix<T, _Width, _Height>& v1,
                     float f,
@@ -92,7 +92,7 @@ void Smootherstep(  const TScalarMatrix<T, _Width, _Height>& v0,
 template <typename T>
 TScalarMatrix<T, 4, 4> Orthogonalize(const TScalarMatrix<T, 4, 4>& m);
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 TScalarMatrix<T, 4, 4> Orthonormalize(const TScalarMatrix<T, 4, 4>& m);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -147,7 +147,7 @@ TScalarMatrix<T, 4, 4> Invert_AssumeHomogeneous(const TScalarMatrix<T, 4, 4>& m)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 TScalarMatrix<T, _Height, _Width> InvertTranspose(const TScalarMatrix<T, _Width, _Height>& m);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -249,16 +249,16 @@ TScalarMatrix<T, 4, 4> MakeShadowMatrix(const TScalarVector<T, 4>& light, const 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _N>
+template <typename T, u32 _N>
 TScalarMatrix<T, _N + 1, _N + 1> MakeHomogeneousMatrix(const TScalarMatrix<T, _N, _N>& m);
 //----------------------------------------------------------------------------
-template <typename T, size_t _N>
+template <typename T, u32 _N>
 TScalarMatrix<T, _N + 1, _N + 1> MakeScalingMatrix(const TScalarVector<T, _N>& scale);
 //----------------------------------------------------------------------------
-template <typename T, size_t _N>
+template <typename T, u32 _N>
 TScalarMatrix<T, _N + 1, _N + 1> MakeTranslationMatrix(const TScalarVector<T, _N>& translate);
 //----------------------------------------------------------------------------
-template <typename T, size_t _N>
+template <typename T, u32 _N>
 TScalarMatrix<T, _N, _N - 1> PackHomogeneousMatrix(const TScalarMatrix<T, _N, _N>& m);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -366,7 +366,7 @@ TScalarVector<T, 4> Transform4(const TScalarMatrix<T, 4, 4>& m, const TScalarVec
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 void SwapEndiannessInPlace(TScalarMatrix<T, _Width, _Height>* value) {
     forrange(i, 0, lengthof(value->_data.raw))
         FPlatformEndian::SwapInPlace(&value->_data.raw[i]);

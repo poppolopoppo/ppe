@@ -70,7 +70,7 @@ inline void QuaternionToTangentSpace(   float3 *ptangent, float3 *pbinormal, flo
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline bool NearlyEquals(const FQuaternion& a, const FQuaternion& b, float maxRelDiff = F_Epsilon) {
+inline bool NearlyEquals(const FQuaternion& a, const FQuaternion& b, float maxRelDiff = Epsilon) {
     return NearlyEquals(a.data, b.data, maxRelDiff);
 }
 //----------------------------------------------------------------------------

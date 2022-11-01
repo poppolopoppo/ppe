@@ -41,10 +41,10 @@ FORCE_INLINE static float UnquantizeClip1_(u32 quantized, float vmin, float vmax
 }
 //----------------------------------------------------------------------------
 template <typename _Volume>
-static size_t CullBIHTree_(
+static u32 CullBIHTree_(
     const _Volume& volume,
     const FBasicBIHTree::hitrange_delegate& hitrange,
-    size_t count, FBIHNode* root, const FBoundingBox& bounds ) {
+    u32 count, FBIHNode* root, const FBoundingBox& bounds ) {
 
     if (0 == count)
         return 0;
@@ -58,14 +58,14 @@ static size_t CullBIHTree_(
     FBIHCandidate_ it{ root, bounds, 0, checked_cast<u32>(count) };
     STACKLOCAL_ASSUMEPOD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(count));
 
-    size_t intersections = 0;
+    u32 intersections = 0;
 
     do {
         Assert(it.Node);
         Assert(it.Bounds.HasPositiveExtents());
         Assert(it.Begin < it.End);
 
-        const size_t axis = it.Node->Axis;
+        const u32 axis = it.Node->Axis;
         const u32 split = it.Node->Split;
         Assert(it.Begin <= split);
         Assert(it.End >= split);
@@ -184,15 +184,15 @@ void FBasicBIHTree::Build(
         iteration++;
         Assert(iteration <= 3);
 
-        const size_t axis = it.Grid.Extents().MaxComponentIndex();
+        const u32 axis = it.Grid.Extents().MaxComponentIndex();
         const float splitD = (it.Grid.Min()[axis] + it.Grid.Max()[axis]) * 0.5f;
 
         float clip0 = -FLT_MAX;
         float clip1 = FLT_MAX;
 
         u32 pivot = it.End;
-        for (size_t i = it.Begin; i < pivot; ) {
-            const size_t p = indices[i];
+        for (u32 i = it.Begin; i < pivot; ) {
+            const u32 p = indices[i];
             const FBoundingBox& aabb = aabbs[p];
 
             const float minD = aabb.Min()[axis];
@@ -346,7 +346,7 @@ bool FBasicBIHTree::Intersects(const FRay& ray, FHitResult* firstHit, size_t cou
 
         bool intersectsLeaf = false;
 
-        const size_t axis = it.Node->Axis;
+        const u32 axis = it.Node->Axis;
         const u32 split = it.Node->Split;
         Assert(it.Begin <= split);
         Assert(it.End >= split);
@@ -419,7 +419,7 @@ bool FBasicBIHTree::Intersects(const FRay& ray, const onhit_delegate& onHit, siz
         Assert(it.Bounds.HasPositiveExtents());
         Assert(it.Begin < it.End);
 
-        const size_t axis = it.Node->Axis;
+        const u32 axis = it.Node->Axis;
         const u32 split = it.Node->Split;
         Assert(it.Begin <= split);
         Assert(it.End >= split);
@@ -480,7 +480,7 @@ size_t FBasicBIHTree::BatchIntersects(const TMemoryView<const FRay>& rays, const
         hit.Item = (decltype(hit.Item))-1;
     }
 
-    size_t intersections = 0;
+    u32 intersections = 0;
 
     do {
         Assert(it.Node);
@@ -488,7 +488,7 @@ size_t FBasicBIHTree::BatchIntersects(const TMemoryView<const FRay>& rays, const
         Assert(it.RaysBegin < it.RaysEnd);
         Assert(it.ItemsBegin < it.ItemsEnd);
 
-        const size_t axis = it.Node->Axis;
+        const u32 axis = it.Node->Axis;
         const u32 split = it.Node->Split;
         Assert(it.ItemsBegin <= split);
         Assert(it.ItemsEnd >= split);
@@ -586,7 +586,7 @@ size_t FBasicBIHTree::Intersects(const FBoundingBox& box, const hitrange_delegat
         }
     };
 
-    return CullBIHTree_(FBIHBox_{ box }, onhit, count, _root, _bounds);
+    return CullBIHTree_(FBIHBox_{ box }, onhit, static_cast<u32>(count), _root, _bounds);
 }
 //----------------------------------------------------------------------------
 size_t FBasicBIHTree::Intersects(const FFrustum& frustum, const hitrange_delegate& onhit, size_t count) const {
@@ -600,7 +600,7 @@ size_t FBasicBIHTree::Intersects(const FFrustum& frustum, const hitrange_delegat
         }
     };
 
-    return CullBIHTree_(FBIHFrustum_{ frustum }, onhit, count, _root, _bounds);
+    return CullBIHTree_(FBIHFrustum_{ frustum }, onhit, static_cast<u32>(count), _root, _bounds);
 }
 //----------------------------------------------------------------------------
 size_t FBasicBIHTree::Intersects(const FSphere& sphere, const hitrange_delegate& onhit, size_t count) const {
@@ -615,7 +615,7 @@ size_t FBasicBIHTree::Intersects(const FSphere& sphere, const hitrange_delegate&
         }
     };
 
-    return CullBIHTree_(FBIHSphere_{ sphere }, onhit, count, _root, _bounds);
+    return CullBIHTree_(FBIHSphere_{ sphere }, onhit, static_cast<u32>(count), _root, _bounds);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

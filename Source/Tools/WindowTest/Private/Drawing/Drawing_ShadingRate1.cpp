@@ -130,7 +130,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
                 const FRgba32f lhs = colors[shadingRateData[i]];
 
-                const bool isEqual = DistanceSq(lhs, rhs) < F_LargeEpsilon;
+                const bool isEqual = DistanceSq(lhs, rhs) < LargeEpsilon;
                 //LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", float2(x, y), lhs, rhs, isEqual);
                 LOG_CHECKVOID(WindowTest, isEqual);
                 Assert(isEqual);

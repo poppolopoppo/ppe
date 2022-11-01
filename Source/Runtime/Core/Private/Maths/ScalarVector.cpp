@@ -9,6 +9,8 @@
 #include "Maths/ScalarRectangle.h"
 #include "Maths/ScalarVector.h"
 
+PRAGMA_DISABLE_RUNTIMECHECKS
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -16,6 +18,11 @@ namespace PPE {
 STATIC_ASSERT(Meta::has_forceinit_constructor<uint2>::value);
 STATIC_ASSERT(Meta::has_forceinit_constructor<word3>::value);
 STATIC_ASSERT(Meta::has_forceinit_constructor<float4>::value);
+//----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::is_pod_v<int2>);
+STATIC_ASSERT(Meta::is_pod_v<uword2>);
+STATIC_ASSERT(Meta::is_pod_v<float3>);
+STATIC_ASSERT(Meta::is_pod_v<double4>);
 //----------------------------------------------------------------------------
 STATIC_ASSERT(Meta::TCheckSameSize<float, TScalarVector<float, 1>>::value);
 STATIC_ASSERT(Meta::TCheckSameSize<float[2], float2>::value);
@@ -37,51 +44,49 @@ namespace Constants {
 //----------------------------------------------------------------------------
 // TScalarVector
 //----------------------------------------------------------------------------
-#if not EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR_DISABLED
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<bool, 1>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<bool, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<bool, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<bool, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<int, 1>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<int, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<int, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<int, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<unsigned int, 1>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<unsigned int, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<unsigned int, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<unsigned int, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<float, 1>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<float, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<float, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<float, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 1>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<double, 4>;
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(bool, 1);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(bool, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(bool, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(bool, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(int, 1);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(int, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(int, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(int, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(unsigned int, 1);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(unsigned int, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(unsigned int, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(unsigned int, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(float, 1);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(float, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(float, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(float, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(double, 1);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(double, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(double, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(double, 4);
 //----------------------------------------------------------------------------
 // Packed vectors
 //----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u8>, 4>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u8>, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u16>, 4>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u16>, 4>;
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TSNorm<u32>, 4>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 2>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 3>;
-EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) TScalarVector<TUNorm<u32>, 4>;
-#endif //!EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR_DISABLED
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TSNorm<u8>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TSNorm<u8>, 4);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TUNorm<u8>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TUNorm<u8>, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TSNorm<u16>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TSNorm<u16>, 4);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TUNorm<u16>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TUNorm<u16>, 4);
+////----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TSNorm<u32>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TSNorm<u32>, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TSNorm<u32>, 4);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TUNorm<u32>, 2);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TUNorm<u32>, 3);
+EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(TUNorm<u32>, 4);
 //----------------------------------------------------------------------------
 // TScalarBoundingBox
 //----------------------------------------------------------------------------
@@ -130,3 +135,5 @@ EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 4>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+PRAGMA_RESTORE_RUNTIMECHECKS

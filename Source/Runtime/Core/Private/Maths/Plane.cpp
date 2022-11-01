@@ -29,7 +29,7 @@ FPlane FPlane::FromTriangle(const float3& a, const float3& b, const float3& c) {
     float xy = (x1 * y2) - (y1 * x2);
 
     float pyth = (yz * yz) + (xz * xz) + (xy * xy);
-    Assert(std::abs(pyth) > F_EpsilonSQ);
+    Assert(std::abs(pyth) > EpsilonSQ);
     float invPyth = 1.0f / std::sqrt(pyth);
 
     float3 normal(yz * invPyth, xz * invPyth, xy * invPyth);

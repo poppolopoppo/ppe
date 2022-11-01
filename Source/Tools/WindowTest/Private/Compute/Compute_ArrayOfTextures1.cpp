@@ -42,7 +42,7 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
             .SetDimension(textureDim)
             .SetFormat(EPixelFormat::RGBA8_UNorm)
             .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
-            Default ARGS_IF_RHIDEBUG(INLINE_FORMAT(16, "Texture-{0}", i).data()) );
+            Default ARGS_IF_RHIDEBUG(INLINE_FORMAT(16, "Texture-{0}", i)) );
         LOG_CHECK(WindowTest, textures[i].Valid());
     }
 
@@ -76,7 +76,7 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
             FRgba32f texel;
             imageData.Load(&texel, uint3{ x, y, 0 });
 
-            const bool isEqual = DistanceSq(color, texel) < F_LargeEpsilon;
+            const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
             LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, color, isEqual);
             LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);

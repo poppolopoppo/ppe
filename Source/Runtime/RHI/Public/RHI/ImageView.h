@@ -89,7 +89,7 @@ struct FImageView {
         Assert(AllGreaterEqual(clip, float3(-1.f)));
 
         const uint3 point = TruncToUnsigned(
-            (clip + 1.0f) * 0.5f * float3(Dimensions()) + (0.5f - F_Epsilon) );
+            (clip + 1.0f) * 0.5f * float3(Dimensions()) + (0.5f - Epsilon) );
         return Pixel(point);
     }
 

@@ -101,7 +101,7 @@ struct FRenderPassDesc {
     FRenderPassDesc& SetDepthTestEnabled(bool value) { Depth.EnableDepthTest = value; return (*this); }
     FRenderPassDesc& SetDepthWriteEnabled(bool value) { Depth.EnableDepthWrite = value; return (*this); }
     FRenderPassDesc& SetDepthCompareOp(ECompareOp value) { Depth.CompareOp = value; return (*this); }
-    FRenderPassDesc& SetDepthBounds(float min, float max) { Depth.Bounds.Set(min, max); return (*this); }
+    FRenderPassDesc& SetDepthBounds(float min, float max) { Depth.Bounds = float2(min, max); return (*this); }
     FRenderPassDesc& SetDepthBoundsEnabled(bool value) { Depth.EnableBounds = value; return (*this); }
 
     // Stencil

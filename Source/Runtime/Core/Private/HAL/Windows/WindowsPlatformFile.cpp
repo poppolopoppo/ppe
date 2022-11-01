@@ -142,8 +142,6 @@ static void GlobFilesNonRecursive_(
         return;
     }
 
-    size_t numFiles = 0;
-
     do {
         const auto fname = MakeCStringView(ffd.cFileName);
         if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
@@ -153,8 +151,6 @@ static void GlobFilesNonRecursive_(
         else {
             const size_t len = Format(tmp, L"{0}\\{1}", path, fname);
             onMatch(FWStringView(tmp, len));
-
-            ++numFiles;
         }
     } while (::FindNextFileW(hFind, &ffd));
 

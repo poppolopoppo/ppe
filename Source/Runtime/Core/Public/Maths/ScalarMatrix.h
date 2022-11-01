@@ -14,20 +14,20 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 union ScalarMatrixData {
     T m[_Width][_Height];
     T raw[_Width * _Height];
 };
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 class TScalarMatrix {
 public:
-    template <typename U, size_t _Width2, size_t _Height2>
+    template <typename U, u32 _Width2, u32 _Height2>
     friend class TScalarMatrix;
 
-    STATIC_CONST_INTEGRAL(size_t, Width, _Width);
-    STATIC_CONST_INTEGRAL(size_t, Height, _Height);
+    STATIC_CONST_INTEGRAL(u32, Width, _Width);
+    STATIC_CONST_INTEGRAL(u32, Height, _Height);
 
     typedef TScalarVector<T, _Width> row_type;
     typedef TScalarVector<T, _Height> column_type;
@@ -57,18 +57,18 @@ public:
     TScalarMatrix& operator =(const TScalarMatrix<U, _Width, _Height>& other);
 
 #if 0
-    template <size_t _Idx>
+    template <u32 _Idx>
     FORCE_INLINE column_type Column() const;
-    column_type Column(size_t i) const;
-    void SetColumn(size_t i, const column_type& v);
+    column_type Column(u32 i) const;
+    void SetColumn(u32 i, const column_type& v);
 #else
-    template <size_t _Idx>
+    template <u32 _Idx>
     FORCE_INLINE column_type& Column();
-    template <size_t _Idx>
+    template <u32 _Idx>
     FORCE_INLINE const column_type& Column() const;
-    column_type& Column(size_t i);
-    const column_type& Column(size_t i) const;
-    void SetColumn(size_t i, const column_type& v);
+    column_type& Column(u32 i);
+    const column_type& Column(u32 i) const;
+    void SetColumn(u32 i, const column_type& v);
 #endif
 
     FORCE_INLINE column_type Column_x() const { return Column<0>(); }
@@ -81,10 +81,10 @@ public:
     FORCE_INLINE void SetColumn_z(const column_type& value) { return SetColumn(2, value); }
     FORCE_INLINE void SetColumn_w(const column_type& value) { return SetColumn(3, value); }
 
-    template <size_t _Idx>
+    template <u32 _Idx>
     FORCE_INLINE row_type Row() const;
-    row_type Row(size_t i) const;
-    void SetRow(size_t i, const row_type& v);
+    row_type Row(u32 i) const;
+    void SetRow(u32 i, const row_type& v);
 
     FORCE_INLINE row_type Row_x() const { return Row<0>(); }
     FORCE_INLINE row_type Row_y() const { return Row<1>(); }
@@ -96,9 +96,9 @@ public:
     FORCE_INLINE void SetRow_z(const row_type& value) { return SetRow(2, value); }
     FORCE_INLINE void SetRow_w(const row_type& value) { return SetRow(3, value); }
 
-    template <size_t _Idx>
+    template <u32 _Idx>
     TScalarVector<T, 3> Axis() const;
-    template <size_t _Idx>
+    template <u32 _Idx>
     void SetAxis(const TScalarVector<T, 3>& v);
 
     FORCE_INLINE TScalarVector<T, 3> AxisX() const { return Axis<0>(); }
@@ -119,7 +119,7 @@ public:
     bool operator ==(const TScalarMatrix& other) const;
     bool operator !=(const TScalarMatrix& other) const { return !operator ==(other); }
 
-    template <size_t _NWidth>
+    template <u32 _NWidth>
     TScalarMatrix<T, _NWidth, _Height> Multiply(const TScalarMatrix<T, _NWidth, _Width>& other) const;
 
     TScalarVector<T, _Height> Multiply(const TScalarVector<T, _Width>& v) const;
@@ -140,7 +140,7 @@ public:
     template <typename U>
     TScalarMatrix<U, _Width, _Height> Cast() const;
 
-    template <size_t _NWidth, size_t _NHeight>
+    template <u32 _NWidth, u32 _NHeight>
     TScalarMatrix<T, _NWidth, _NHeight> Crop() const;
 
     TScalarMatrix<T, _Width + 1, _Height + 1> OneExtend() const;
@@ -150,24 +150,24 @@ public:
     static TScalarMatrix Zero() { return TScalarMatrix(T(0)); }
     static TScalarMatrix Identity();
 
-    STATIC_CONST_INTEGRAL(size_t, Dim, _Width * _Height);
+    STATIC_CONST_INTEGRAL(u32, Dim, _Width * _Height);
 
-    template <size_t _Col, size_t _Row>
+    template <u32 _Col, u32 _Row>
     FORCE_INLINE T& at();
-    template <size_t _Col, size_t _Row>
+    template <u32 _Col, u32 _Row>
     FORCE_INLINE const T& at() const;
 
-    FORCE_INLINE T& at(size_t col, size_t row);
-    FORCE_INLINE const T& at(size_t col, size_t row) const;
+    FORCE_INLINE T& at(u32 col, u32 row);
+    FORCE_INLINE const T& at(u32 col, u32 row) const;
 
-    FORCE_INLINE T& operator ()(size_t col, size_t row) { return at(col, row); }
-    FORCE_INLINE const T& operator ()(size_t col, size_t row) const { return at(col, row); }
+    FORCE_INLINE T& operator ()(u32 col, u32 row) { return at(col, row); }
+    FORCE_INLINE const T& operator ()(u32 col, u32 row) const { return at(col, row); }
 
     FORCE_INLINE ScalarMatrixData<T, _Width, _Height>& data() { return _data; }
     FORCE_INLINE const ScalarMatrixData<T, _Width, _Height>& data() const { return _data; }
 
-    FORCE_INLINE T& at_(size_t col, size_t row) { return _data.m[col][row]; }
-    FORCE_INLINE const T& at_(size_t col, size_t row) const { return _data.m[col][row]; }
+    FORCE_INLINE T& at_(u32 col, u32 row) { return _data.m[col][row]; }
+    FORCE_INLINE const T& at_(u32 col, u32 row) const { return _data.m[col][row]; }
 
 public:
     STATIC_ASSERT(0 < _Width);
@@ -217,9 +217,9 @@ public:
 #undef DECL_SCALARMATRIX_SCALAR_OP_LHS
 
 #define DECL_SCALARMATRIX_SCALAR_OP_RHS(_Op) \
-    template <typename U, size_t _W, size_t _H> \
+    template <typename U, u32 _W, u32 _H> \
     friend TScalarMatrix<U, _W, _H> operator _Op(U lhs, const TScalarMatrix<U, _W, _H>& rhs); \
-    template <typename U, typename V, size_t _W, size_t _H> \
+    template <typename U, typename V, u32 _W, u32 _H> \
     friend TScalarMatrix<U, _W, _H> operator _Op(U lhs, const TScalarMatrix<V, _W, _H>& rhs);
 
     DECL_SCALARMATRIX_SCALAR_OP_RHS(+)
@@ -239,22 +239,22 @@ public:
     TScalarMatrix    operator +(const TScalarMatrix& other) const;
     TScalarMatrix    operator -(const TScalarMatrix& other) const;
 
-    template <size_t _NWidth>
+    template <u32 _NWidth>
     TScalarMatrix<T, _NWidth, _Height> operator *(const TScalarMatrix<T, _NWidth, _Width>& other) const {
         return Multiply(other);
     }
 };
 //----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
+template <typename T, u32 _Width, u32 _Height>
 void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Height>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename T, size_t _Width, size_t _Height>
+template <typename _Char, typename T, u32 _Width, u32 _Height>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalarMatrix<T, _Width, _Height>& v) {
-    for (size_t i = 0; i < _Height; ++i)
+    for (u32 i = 0; i < _Height; ++i)
         oss << v.Row(i) << Eol;
     return oss;
 }
@@ -263,7 +263,7 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalar
 //----------------------------------------------------------------------------
 // All scalar matrices are considered as pods
 //----------------------------------------------------------------------------
-PPE_ASSUME_TEMPLATE_AS_POD(TScalarMatrix<T COMMA _Width COMMA _Height>, typename T, size_t _Width, size_t _Height)
+PPE_ASSUME_TEMPLATE_AS_POD(TScalarMatrix<T COMMA _Width COMMA _Height>, typename T, u32 _Width, u32 _Height)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

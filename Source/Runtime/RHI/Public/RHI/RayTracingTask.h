@@ -263,9 +263,8 @@ struct FTraceRays final : details::TFrameTaskDesc<FTraceRays> {
 
     FTraceRays& SetShaderTable(FRawRTShaderTableID value);
 
-    template <typename T>
-    FTraceRays& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
     FTraceRays& AddPushConstant(const FPushConstantID& id, const void* p, size_t size) { PushConstants.Push(id, p, size); return (*this); }
+    FTraceRays& AddPushConstant(const FPushConstantID& id, const FRawMemoryConst& raw) { return AddPushConstant(id, raw.data(), raw.SizeInBytes()); }
 
 #if USE_PPE_RHIDEBUG
     FTraceRays& EnableShaderDebugTrace() { return EnableShaderDebugTrace(uint3(~0u)); }

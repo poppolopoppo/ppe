@@ -23,15 +23,15 @@ UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const FQuaternion& quaternion) {
     if (2 == index) q = q.xywz;
 
     UX10Y10Z10W2N packed;
-    packed.Pack_Float01(q.xyz * (Sign(q.w) * F_Sqrt2OO) + 0.5f, (u8)index);
+    packed.Pack_Float01(q.xyz * (Sign(q.w) * Sqrt2OO) + 0.5f, (u8)index);
     return packed;
 }
 //----------------------------------------------------------------------------
 FQuaternion UX10Y10Z10W2N_to_Quaternion(const UX10Y10Z10W2N& packed) {
     float4 quaternion(
-        packed._x *  F_Sqrt2 - F_Sqrt2OO,
-        packed._y *  F_Sqrt2 - F_Sqrt2OO,
-        packed._z *  F_Sqrt2 - F_Sqrt2OO,
+        packed._x * Sqrt2_v<float> - Sqrt2OO,
+        packed._y * Sqrt2_v<float> - Sqrt2OO,
+        packed._z * Sqrt2_v<float> - Sqrt2OO,
         0.f );
     quaternion.w = Sqrt(1.f - Saturate(LengthSq(quaternion)));
 

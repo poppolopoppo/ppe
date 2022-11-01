@@ -10,14 +10,14 @@ namespace Meta {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
-template <class F, size_t... Is>
-FORCE_INLINE constexpr auto expand_indices_seq(F f, std::index_sequence<Is...>) {
-    return f(std::integral_constant<size_t, Is> {}...);
+template <class F, u32... Is>
+FORCE_INLINE constexpr auto expand_indices_seq(F f, std::integer_sequence<u32, Is...>) {
+    return f(std::integral_constant<u32, Is> {}...);
 }
 }//!details
 template <size_t N, class F>
 FORCE_INLINE constexpr auto static_for(F f) {
-    return details::expand_indices_seq(f, std::make_index_sequence<N>{});
+    return details::expand_indices_seq(f, std::make_integer_sequence<u32, N>{});
 }
 //----------------------------------------------------------------------------
 namespace details {

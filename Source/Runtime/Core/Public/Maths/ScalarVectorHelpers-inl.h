@@ -6,29 +6,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-TScalarVector<T, _Dim> GridSnap(const Meta::TDontDeduce<TScalarVector<T, _Dim>>& location, T grid) NOEXCEPT {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(GridSnap(location.template get<idx>(), grid)...);
-    });
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-TScalarVector<T, _Dim> GridSnap(const Meta::TDontDeduce<TScalarVector<T, _Dim>>& location, const TScalarVector<T, _Dim>& grid) NOEXCEPT {
-    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(GridSnap(location.template get<idx>(), grid.template get<idx>())...);
-    });
-}
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-bool IsNormalized(const TScalarVector<float, _Dim>& v, float epsilon/* = F_Epsilon */) NOEXCEPT {
+template <u32 _Dim>
+bool IsNormalized(const TScalarVector<float, _Dim>& v, float epsilon/* = Epsilon */) NOEXCEPT {
     return Abs(1.0f - LengthSq(v)) < epsilon;
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-bool NearlyEquals(const TScalarVector<float, _Dim>& a, const Meta::TDontDeduce<TScalarVector<float, _Dim>>& b, float maxRelDiff/* = F_Epsilon */) NOEXCEPT {
+template <u32 _Dim, typename _A, typename _B>
+bool NearlyEquals(const details::TScalarVectorExpr<float, _Dim, _A>& a, const details::TScalarVectorExpr<float, _Dim, _B>& b, float maxRelDiff/* = Epsilon */) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (NearlyEquals(a.template get<idx>(), b.template get<idx>(), maxRelDiff) && ...);
+        return (NearlyEquals(a.template Get<idx>(), b.template Get<idx>(), maxRelDiff) && ...);
     });
 }
 //----------------------------------------------------------------------------
@@ -46,110 +32,110 @@ inline TScalarVector<double, 2> SinCos(double angle) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim, typename _Expr>
-bool IsINF(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
+template <typename T, u32 _Dim, typename _Expr>
+bool IsINF(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (IsINF(v.template get<idx>()) || ...);
+        return (IsINF(v.template Get<idx>()) || ...);
     });
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim, typename _Expr>
-bool IsNAN(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
+template <typename T, u32 _Dim, typename _Expr>
+bool IsNAN(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (IsNAN(v.template get<idx>()) || ...);
+        return (IsNAN(v.template Get<idx>()) || ...);
     });
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim, typename _Expr>
-bool IsNANorINF(const TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
+template <typename T, u32 _Dim, typename _Expr>
+bool IsNANorINF(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) NOEXCEPT{
-        return (IsNANorINF(v.template get<idx>()) || ...);
+        return (IsNANorINF(v.template Get<idx>()) || ...);
     });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<float, _Dim> UByte0255_to_Float01(const TScalarVectorExpr<u8, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<float, _Dim> UByte0255_to_Float01(const details::TScalarVectorExpr<u8, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(UByte0255_to_Float01(value.template get<idx>())...);
+        return TScalarVector<float, _Dim>(UByte0255_to_Float01(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<float, _Dim> UByte0255_to_FloatM11(const TScalarVectorExpr<u8, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<float, _Dim> UByte0255_to_FloatM11(const details::TScalarVectorExpr<u8, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(UByte0255_to_FloatM11(value.template get<idx>())...);
+        return TScalarVector<float, _Dim>(UByte0255_to_FloatM11(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<u8, _Dim> Float01_to_UByte0255(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<u8, _Dim> Float01_to_UByte0255(const details::TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(Float01_to_UByte0255(value.template get<idx>())...);
+        return TScalarVector<u8, _Dim>(Float01_to_UByte0255(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<u8, _Dim> FloatM11_to_UByte0255(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<u8, _Dim> FloatM11_to_UByte0255(const details::TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(FloatM11_to_UByte0255(value.template get<idx>())...);
+        return TScalarVector<u8, _Dim>(FloatM11_to_UByte0255(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<float, _Dim> UShort065535_to_Float01(const TScalarVectorExpr<u16, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<float, _Dim> UShort065535_to_Float01(const details::TScalarVectorExpr<u16, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(UShort065535_to_Float01(value.template get<idx>())...);
+        return TScalarVector<float, _Dim>(UShort065535_to_Float01(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<float, _Dim> UByte065535_to_FloatM11(const TScalarVectorExpr<u16, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<float, _Dim> UByte065535_to_FloatM11(const details::TScalarVectorExpr<u16, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(UByte065535_to_FloatM11(value.template get<idx>())...);
+        return TScalarVector<float, _Dim>(UByte065535_to_FloatM11(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<u16, _Dim> Float01_to_UShort065535(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<u16, _Dim> Float01_to_UShort065535(const details::TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(Float01_to_UShort065535(value.template get<idx>())...);
+        return TScalarVector<u16, _Dim>(Float01_to_UShort065535(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<u16, _Dim> FloatM11_to_UShort065535(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<u16, _Dim> FloatM11_to_UShort065535(const details::TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return details::MakeScalarVector(FloatM11_to_UShort065535(value.template get<idx>())...);
+        return TScalarVector<u16, _Dim>(FloatM11_to_UShort065535(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<float, _Dim> Float01_to_FloatM11(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<float, _Dim> Float01_to_FloatM11(const details::TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> TScalarVector<float, _Dim>{
-        return details::MakeScalarVector(Float01_to_FloatM11(value.template get<idx>())...);
+        return TScalarVector<float, _Dim>(Float01_to_FloatM11(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim, typename _Expr>
-TScalarVector<float, _Dim> FloatM11_to_Float01(const TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
+template <u32 _Dim, typename _Expr>
+TScalarVector<float, _Dim> FloatM11_to_Float01(const details::TScalarVectorExpr<float, _Dim, _Expr>& value) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> TScalarVector<float, _Dim> {
-        return details::MakeScalarVector(FloatM11_to_Float01(value.template get<idx>())...);
+        return TScalarVector<float, _Dim>(FloatM11_to_Float01(value.template Get<idx>())...);
     });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Expr>
-TScalarVector<u8, 4> Float3M11_to_UByte4N(const TScalarVectorExpr<float, 3, _Expr>& value) NOEXCEPT {
+TScalarVector<u8, 4> Float3M11_to_UByte4N(const details::TScalarVectorExpr<float, 3, _Expr>& value) NOEXCEPT {
     return { FloatM11_to_UByte0255(value.xyz), 0_u8 };
 }
 //----------------------------------------------------------------------------
 template <typename _Expr>
-TScalarVector<float, 3> UByte4N_to_Float3M11(const TScalarVectorExpr<u8, 4, _Expr>& value) NOEXCEPT {
+TScalarVector<float, 3> UByte4N_to_Float3M11(const details::TScalarVectorExpr<u8, 4, _Expr>& value) NOEXCEPT {
     return Normalize(UByte0255_to_FloatM11(value.xyz));
 }
 //----------------------------------------------------------------------------

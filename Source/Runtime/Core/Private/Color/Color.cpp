@@ -45,7 +45,7 @@ FLinearColor FLinearColor::Desaturate(float desaturation) const {
 }
 //----------------------------------------------------------------------------
 FLinearColor FLinearColor::SetLuminance(float lum) const {
-    lum /= (F_SmallEpsilon + Luminance()); // normalize with old luminance and rescale with new luminance
+    lum /= (SmallEpsilon + Luminance()); // normalize with old luminance and rescale with new luminance
     return FLinearColor{ R * lum, G * lum, B * lum, A };
 }
 //----------------------------------------------------------------------------
@@ -343,12 +343,11 @@ float3 Hue_to_RGB(float hue) {
 //----------------------------------------------------------------------------
 // http://www.chilliant.com/rgb2hsv.html
 float3 RGB_to_HCV(const float3& rgb) {
-    const float Epsilon = 1e-10f;
     // Based on work by Sam Hocevar and Emil Persson
     float4 P = (rgb.y < rgb.z) ? float4(rgb.z, rgb.y, -1.0f, 2.0f/3.0f) : float4(rgb.y, rgb.z, 0.0f, -1.0f/3.0f);
     float4 Q = (rgb.x < P.x) ? float4(P.xyw, rgb.x) : float4(rgb.x, P.yzx);
     float C = Q.x - Min(Q.w, Q.y);
-    float H = Abs((Q.w - Q.y) / (6 * C + Epsilon) + Q.z);
+    float H = Abs((Q.w - Q.y) / (6 * C + SmallEpsilon) + Q.z);
     return float3(H, C, Q.x);
 }
 //----------------------------------------------------------------------------
@@ -361,16 +360,15 @@ float3 HSV_to_RGB(const float3& hsv) {
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_HSV(const float3& rgb) {
-    const float Epsilon = 1e-10f;
     float3 HCV = RGB_to_HCV(rgb);
-    float S = HCV.y / (HCV.z + Epsilon);
+    float S = HCV.y / (HCV.z + SmallEpsilon);
     return float3(HCV.x, S, HCV.z);
 }
 //----------------------------------------------------------------------------
 // IQ's goodness
 // https://www.shadertoy.com/view/MsS3Wc
-float3 HSV_to_RGB_smooth(const float3& rgb) {
-    return rgb.z * (1.f - rgb.y * Smoothstep(2.f, 1.f, Abs(FMod(rgb.x*6.f + float3(0, 4, 2), 6.f) - 3.f)));
+float3 HSV_to_RGB_smooth(const float3& hsv) {
+    return hsv.z * (1.f - hsv.y * Smoothstep(2.f, 1.f, Abs(FMod(hsv.x*6.f + float3(0, 4, 2), 6.f) - 3.f)));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -382,10 +380,9 @@ float3 HSL_to_RGB(const float3& hsl) {
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_HSL(const float3& rgb) {
-    const float Epsilon = 1e-10f;
     float3 HCV = RGB_to_HCV(rgb);
     float L = HCV.z - HCV.y * 0.5f;
-    float S = HCV.y / (1 - Abs(L * 2 - 1) + Epsilon);
+    float S = HCV.y / (1 - Abs(L * 2 - 1) + SmallEpsilon);
     return float3(HCV.x, S, L);
 }
 //----------------------------------------------------------------------------

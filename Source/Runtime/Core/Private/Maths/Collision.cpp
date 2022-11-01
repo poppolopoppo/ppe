@@ -217,7 +217,7 @@ float2 LineBisector(const float2& a, const float2& b, const float2& c) {
     const float2 d1 = Normalize(c - b);
 
     const float d = Dot(d0, LineOrtho(d1));
-    return (Abs(d) >= F_EpsilonSQ
+    return (Abs(d) >= EpsilonSQ
         ? (d0 - d1) / d
         : LineOrtho(d0) );
 }
@@ -227,7 +227,7 @@ bool LineIntersectsLine(const float2& a0, const float2& b0, const float2& a1, co
     const float2 slope1 = a1 - b1;
 
     const float d = Det(slope0, slope1);
-    if (Abs(d) < F_EpsilonSQ)
+    if (Abs(d) < EpsilonSQ)
         return false;
 
     *point = ( (slope1 * Det(a0, b0) - slope0 * Det(a1, b1)) / d );
@@ -251,7 +251,7 @@ bool RayIntersectsPoint(const FRay& ray, const float3& point) {
     //Same thing as RayIntersectsSphere except that the radius of the sphere (point)
     //is the epsilon for zero.
     float b = Dot(m, ray.Direction());
-    float c = Dot(m, m) - F_Epsilon;
+    float c = Dot(m, m) - Epsilon;
 
     if (c > 0.0f && b > 0.0f)
         return false;
@@ -272,12 +272,12 @@ bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3* point) {
     float denominator = Length(cross);
 
     //Lines are parallel.
-    if (Abs(denominator) < F_Epsilon)
+    if (Abs(denominator) < Epsilon)
     {
         //Lines are parallel and on top of each other.
-        if (Abs(ray2.Origin().x - ray1.Origin().x) < F_Epsilon &&
-            Abs(ray2.Origin().y - ray1.Origin().y) < F_Epsilon &&
-            Abs(ray2.Origin().z - ray1.Origin().z) < F_Epsilon)
+        if (Abs(ray2.Origin().x - ray1.Origin().x) < Epsilon &&
+            Abs(ray2.Origin().y - ray1.Origin().y) < Epsilon &&
+            Abs(ray2.Origin().z - ray1.Origin().z) < Epsilon)
         {
             *point = float3::Zero;
             return true;
@@ -329,9 +329,9 @@ bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3* point) {
     float3 point2 = ray2.Origin() + (t * ray2.Direction());
 
     //If the points are not equal, no intersection has occured.
-    if (Abs(point2.x - point1.x) > F_Epsilon ||
-        Abs(point2.y - point1.y) > F_Epsilon ||
-        Abs(point2.z - point1.z) > F_Epsilon)
+    if (Abs(point2.x - point1.x) > Epsilon ||
+        Abs(point2.y - point1.y) > Epsilon ||
+        Abs(point2.z - point1.z) > Epsilon)
     {
         *point = float3::Zero;
         return false;
@@ -347,7 +347,7 @@ bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float* distance) {
 
     float direction = Dot(plane.Normal(), ray.Direction());
 
-    if (Abs(direction) < F_Epsilon)
+    if (Abs(direction) < Epsilon)
     {
         *distance = 0.0f;
         return false;
@@ -359,7 +359,7 @@ bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float* distance) {
     if (d < 0.0f)
     {
         *distance = 0.0f;
-        if (d < -F_Epsilon)
+        if (d < -Epsilon_v<float>)
             return false;
     }
     else
@@ -416,7 +416,7 @@ bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3&
     //If the ray is parallel to the triangle plane, there is no collision.
     //This also means that we are not culling, the ray may hit both the
     //back and the front of the triangle.
-    if (determinant > -F_Epsilon && determinant < F_Epsilon)
+    if (Abs(determinant) < Epsilon)
     {
         *distance = 0.0f;
         return false;
@@ -492,7 +492,7 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float* distance)
     float d = 0.0f;
     float tmax = FLT_MAX;
 
-    if (Abs(ray.Direction().x) < F_Epsilon)
+    if (Abs(ray.Direction().x) < Epsilon)
     {
         if (ray.Origin().x < box.Min().x || ray.Origin().x > box.Max().x)
         {
@@ -519,7 +519,7 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float* distance)
         }
     }
 
-    if (Abs(ray.Direction().y) < F_Epsilon)
+    if (Abs(ray.Direction().y) < Epsilon)
     {
         if (ray.Origin().y < box.Min().y || ray.Origin().y > box.Max().y)
         {
@@ -546,7 +546,7 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float* distance)
         }
     }
 
-    if (Abs(ray.Direction().z) < F_Epsilon)
+    if (Abs(ray.Direction().z) < Epsilon)
     {
         if (ray.Origin().z < box.Min().z || ray.Origin().z > box.Max().z)
         {
@@ -655,7 +655,7 @@ bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2) {
     //coincident. It is not an intersection. The dot product will tell us.
     float denominator = Dot(direction, direction);
 
-    if (Abs(denominator) < F_Epsilon)
+    if (Abs(denominator) < Epsilon)
         return false;
 
     return true;
@@ -674,7 +674,7 @@ bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2, FRay& line
     //We assume the planes are normalized, therefore the denominator
     //only serves as a parallel and coincident check. Otherwise we need
     //to deivide the point by the denominator.
-    if (Abs(denominator) < F_Epsilon)
+    if (Abs(denominator) < Epsilon)
     {
         return false;
     }

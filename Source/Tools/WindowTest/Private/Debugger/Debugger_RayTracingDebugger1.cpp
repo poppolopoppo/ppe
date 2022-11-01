@@ -195,7 +195,7 @@ no source
 
         const FRgba32f color{ 0.249583f, 0.252086f,  0.498331f, 1.0f };
 
-        dataIsCorrect = DistanceSq(color, texel) < F_LargeEpsilon;
+        dataIsCorrect = DistanceSq(color, texel) < LargeEpsilon;
         LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", debugCoord, texel, color, dataIsCorrect);
         LOG_CHECKVOID(WindowTest, dataIsCorrect);
     };

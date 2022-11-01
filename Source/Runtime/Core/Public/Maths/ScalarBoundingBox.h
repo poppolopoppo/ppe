@@ -13,12 +13,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 class TScalarBoundingBox {
 public:
     typedef TScalarVector<T, _Dim> vector_type;
 
-    template <typename U, size_t _Dim2>
+    template <typename U, u32 _Dim2>
     friend class TScalarBoundingBox;
 
     TScalarBoundingBox();
@@ -75,7 +75,7 @@ public:
     bool Intersects(const TScalarBoundingBox& other) const;
     bool Intersects(const TScalarBoundingBox& other, bool* inside) const;
 
-    vector_type Corner(size_t index) const;
+    vector_type Corner(u32 index) const;
     void MakeCorners(const TMemoryView<vector_type>& points) const;
 
     template <typename U>
@@ -88,8 +88,8 @@ public:
     template <typename U>
     vector_type SLerp(const TScalarVector<U, _Dim>& f) const;
 
-    TScalarBoundingBox ClipAbove(size_t axis, T value) const;
-    TScalarBoundingBox ClipBelow(size_t axis, T value) const;
+    TScalarBoundingBox ClipAbove(u32 axis, T value) const;
+    TScalarBoundingBox ClipBelow(u32 axis, T value) const;
 
     void Swap(TScalarBoundingBox& other);
 
@@ -106,7 +106,7 @@ public:
 
     static TScalarBoundingBox<T, _Dim> DefaultValue() { return EmptyValue(); }
 
-    template <size_t... _Indices>
+    template <u32... _Indices>
     auto Shuffle() const {
         return TScalarBoundingBox<T, sizeof...(_Indices)>{
             _min.template Shuffle<_Indices...>(),
@@ -142,7 +142,7 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 class TScalarBoxWExtent {
 public:
     typedef TScalarVector<T, _Dim> vector_type;
@@ -193,14 +193,14 @@ private:
     vector_type _halfExtents;
 };
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
+template <typename T, u32 _Dim>
 void swap(TScalarBoundingBox<T, _Dim>& lhs, TScalarBoundingBox<T, _Dim>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename T, size_t _Dim>
+template <typename _Char, typename T, u32 _Dim>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalarBoundingBox<T, _Dim>& v) {
     return oss << v.Min() << v.Max();
 }

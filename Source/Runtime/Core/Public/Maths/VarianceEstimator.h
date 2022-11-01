@@ -23,7 +23,7 @@ struct TNormalDistribution {
     :   Mean(mean)
     ,   Variance(variance) {
         Assert_NoAssume(Variance > T(0));
-        Scale = RSqrt(static_cast<T>(D_2PI) * Variance);
+        Scale = RSqrt(PI_v<T> * 2 * Variance);
         StandardDeviation = Sqrt(Variance);
     }
 

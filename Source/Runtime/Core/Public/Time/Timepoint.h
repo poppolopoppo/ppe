@@ -31,6 +31,8 @@ public:
     value_type Value() const { return _value; }
     void SetValue(value_type value) { _value = value; }
 
+    value_type operator *() const { return _value; }
+
     FTimepoint operator +(value_type value) { return _value + value; }
     FTimepoint operator -(value_type value) { Assert(_value >= value); return _value - value; }
 
@@ -56,11 +58,17 @@ private:
 };
 PPE_ASSUME_TYPE_AS_POD(FTimepoint)
 //----------------------------------------------------------------------------
-constexpr FTimespan::value_type Timespan_120hz() { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 / 120); }
-constexpr FTimespan::value_type Timespan_60hz()  { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /  60); }
-constexpr FTimespan::value_type Timespan_30hz()  { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /  30); }
-constexpr FTimespan::value_type Timespan_15hz()  { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /  15); }
-constexpr FTimespan::value_type Timespan_5hz()   { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 /   5); }
+CONSTEXPR FTimespan::value_type operator "" _hz(unsigned long long value) {
+    Assert(value > 0);
+    return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 / value);
+}
+//----------------------------------------------------------------------------
+constexpr FTimespan Timespan_120hz{ 120_hz };
+constexpr FTimespan Timespan_60hz{ 60_hz };
+constexpr FTimespan Timespan_30hz{ 30_hz };
+constexpr FTimespan Timespan_15hz{ 15_hz };
+constexpr FTimespan Timespan_5hz{ 5_hz };
+constexpr FTimespan Timespan_1hz{ 1_hz };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

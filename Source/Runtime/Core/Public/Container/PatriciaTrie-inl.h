@@ -241,8 +241,8 @@ void TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Optimize
         return;
     }
 
-    size_type merged = 0;
-    size_type remaining = 0;
+    //size_type merged = 0;
+    //size_type remaining = 0;
 
     STACKLOCAL_POD_STACK(node_type*, queue, 32);
     queue.Push(_root);
@@ -288,7 +288,7 @@ void TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Optimize
 
             queue.Push(node); // try to recursively optimize the node
 
-            merged++;
+            //merged++;
         }
         else {
             if (node->_right)
@@ -298,7 +298,7 @@ void TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Optimize
             if (node->_left)
                 queue.Push(node->_left);
 
-            remaining++;
+            //remaining++;
         }
     }
 

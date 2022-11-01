@@ -73,6 +73,9 @@ using TArray = T[_Dim];
 template <typename T, T _Value>
 using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
 //----------------------------------------------------------------------------
+template <typename T>
+inline CONSTEXPR bool AlwaysFalse = false;
+//----------------------------------------------------------------------------
 // Function overloading helpers to use dummy parameters for specialization :
 //----------------------------------------------------------------------------
 template <typename T>
@@ -197,34 +200,17 @@ using has_constructor = typename std::is_constructible<T, _Args...>::type;
 template <typename T>
 using has_default_constructor = typename std::is_constructible<T>::type;
 //----------------------------------------------------------------------------
-// Very interesting, but did not work everywhere :'(
-// http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
+// A type must be complete in order to have the sizeof operator applied to it,
+// so we use SFINAE to define is_type_complete_v as true
+// https://devblogs.microsoft.com/oldnewthing/20190710-00/?p=102678
+// /!\ WARNING: the result will be cached by the compiler
+//      => ONCE UNDEFINED, NEVER DEFINED
 //----------------------------------------------------------------------------
-/*! The template `has_destructor<T>` exports a
-boolean constant `value that is true iff `T` has
-a public destructor.
-
-N.B. A compile error will occur if T has non-public destructor.
-*/
-template< typename T>
-struct has_destructor {
-    /* Has destructor :) */
-    template <typename A>
-    static CONSTEXPR std::true_type test(decltype(std::declval<A>().~A()) *) {
-        return std::true_type();
-    }
-
-    /* Has no destructor :( */
-    template<typename A>
-    static CONSTEXPR std::false_type test(...) {
-        return std::false_type();
-    }
-
-    /* This will be either `std::true_type` or `std::false_type` */
-    typedef decltype(test<T>(0)) type;
-
-    static CONSTEXPR bool value = type::value; /* Which is it? */
-};
+template<typename, size_t _Seed = 0, typename = void>
+CONSTEXPR bool is_type_complete_v = false;
+//----------------------------------------------------------------------------
+template<typename T, size_t _Seed>
+CONSTEXPR bool is_type_complete_v<T, _Seed, std::void_t<decltype(sizeof(T))>> = true;
 //----------------------------------------------------------------------------
 // Test is a class/struct is defining a using/function/typedef/value/enum ...
 // Ex:  // test for a using/typedef

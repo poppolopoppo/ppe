@@ -7,7 +7,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FRay FRay::FromSegment(const float3& a, const float3& b) {
-    Assert(LengthSq(a - b) > F_Epsilon);
+    Assert(LengthSq(a - b) > Epsilon);
 
     const float3& origin = a;
     const float3 direction = Normalize(b - origin);

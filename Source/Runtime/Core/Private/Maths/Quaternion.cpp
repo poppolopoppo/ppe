@@ -20,17 +20,17 @@ bool FQuaternion::IsIdentity() const {
 }
 //----------------------------------------------------------------------------
 bool FQuaternion::IsNormalized() const {
-    return Abs(LengthSq() - 1) <= F_Epsilon;
+    return Abs(LengthSq() - 1) <= Epsilon;
 }
 //----------------------------------------------------------------------------
 float FQuaternion::Angle() const {
-    Assert(Abs(Dot(data, data)) > F_SmallEpsilon);
+    Assert(Abs(Dot(data, data)) > SmallEpsilon);
     return (2.0f * FPlatformMaths::Acos(data.w));
 }
 //----------------------------------------------------------------------------
 float3 FQuaternion::Axis() const {
     const float length = Dot(data, data);
-    Assert(Abs(length) > F_SmallEpsilon);
+    Assert(Abs(length) > SmallEpsilon);
     const float inv = 1.0f / length;
     return float3(inv * data.x, inv * data.y, inv * data.z);
 }
@@ -41,7 +41,7 @@ FQuaternion FQuaternion::Exponential() const {
 
     float4 result;
 
-    if (Abs(fsin) > F_SmallEpsilon) {
+    if (Abs(fsin) > SmallEpsilon) {
         float coeff = fsin / angle;
         result.x = coeff * data.x;
         result.y = coeff * data.y;
@@ -62,7 +62,7 @@ FQuaternion FQuaternion::Logarithm() const {
         float angle = FPlatformMaths::Acos(data.w);
         float fsin = FPlatformMaths::Sin(angle);
 
-        if (Abs(fsin) > F_SmallEpsilon) {
+        if (Abs(fsin) > SmallEpsilon) {
             float coeff = angle / fsin;
             result.x = coeff * data.x;
             result.y = coeff * data.y;

@@ -175,7 +175,7 @@ void FFrustum::GetCameraParams(FFrustumCameraParams& params) const {
     params.Position = FPlane::Get3PlanesInterPoint(pright, ptop, pleft);
     params.LookAtDir = pnear.Normal();
     params.UpDir = Normalize(Cross(pright.Normal(), pnear.Normal()));
-    params.FOV = (F_HalfPi - std::acos(Dot(pnear.Normal(), ptop.Normal()))) * 2;
+    params.FOV = (HalfPi - std::acos(Dot(pnear.Normal(), ptop.Normal()))) * 2;
     params.AspectRatio = Length(_corners[6] - _corners[5]) / Length(_corners[4] - _corners[5]);
     params.ZNear = fabsf(pnear.DistanceToPoint(params.Position));
     params.ZFar = fabsf(pfar.DistanceToPoint(params.Position));
@@ -312,21 +312,21 @@ bool FFrustum::Intersects(const FRay& ray, float& in, float& out) const {
 }
 //----------------------------------------------------------------------------
 float FFrustum::GetWidthAtDepth(float depth) const {
-    float hAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Left().Normal())) );
+    float hAngle = (HalfPi - std::acos(Dot(Near().Normal(), Left().Normal())) );
     return std::tan(hAngle) * depth * 2;
 }
 //----------------------------------------------------------------------------
 float FFrustum::GetHeightAtDepth(float depth) const {
-    float vAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Top().Normal())) );
+    float vAngle = (HalfPi - std::acos(Dot(Near().Normal(), Top().Normal())) );
     return std::tan(vAngle) * depth * 2;
 }
 //----------------------------------------------------------------------------
 float FFrustum::GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& points) const {
-    float vAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Top().Normal())) );
+    float vAngle = (HalfPi - std::acos(Dot(Near().Normal(), Top().Normal())) );
     float vSin = std::sin(vAngle);
-    Assert(std::abs(vSin) > F_Epsilon);
+    Assert(std::abs(vSin) > Epsilon);
 
-    float hAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Left().Normal())) );
+    float hAngle = (HalfPi - std::acos(Dot(Near().Normal(), Left().Normal())) );
     float hSin = std::sin(hAngle);
 
     float horizontalToVerticalMapping = vSin / hSin;
