@@ -174,7 +174,7 @@ func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) err
 	tasks := Map(func(moduleName string) JsonMap {
 		alias := modules.Modules[moduleName].ModuleAlias()
 		return JsonMap{
-			"label":   alias,
+			"label":   alias.String(),
 			"command": selfExecutable,
 			"args":    []string{"fbuild", "-v", alias.String() + "-${command:cpptools.activeConfigName}"},
 			"options": JsonMap{
