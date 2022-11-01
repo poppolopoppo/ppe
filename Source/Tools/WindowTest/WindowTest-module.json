@@ -7,8 +7,7 @@
 		"Runtime/Network",
 		"Runtime/RHI",
 		"Runtime/Application",
-		"Extensions/RHIVulkan",
-		"Extensions/ApplicationUI"
+		"Extensions/RHIVulkan"
 	],
 	"ExtraFiles": [
 		"resource.rc"

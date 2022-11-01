@@ -5,9 +5,9 @@
 
 #include "ApplicationModule.h"
 #include "RHIModule.h"
-#include "UI/Imgui.h"
 #include "Window/WindowService.h"
 
+#include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "Maths/Threefy.h"
@@ -130,7 +130,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
         app.Window().BeginTaskbarProgress();
 
-        const size_t numLoops = (app.RHI().Features() & ERHIFeature::Debugging ? 10 : 100);
+        const size_t numLoops = (app.RHI().Features() & ERHIFeature::Debugging ? 1 : 100);
 
         size_t testIndex = 0;
         size_t testSucceed = 0;
@@ -224,7 +224,36 @@ void FWindowTestApp::Shutdown() {
 void FWindowTestApp::Render(FTimespan dt) {
     parent_type::Render(dt);
 
-    ImGui::ShowDemoWindow();
+    // call present() once before exit for captures
+    using namespace RHI;
+    IFrameGraph& fg = *RHI().FrameGraph();
+
+    const TAutoResource<FImageID> colorTarget{ fg, fg.CreateImage(FImageDesc{}
+        .SetDimension({ 32, 32 })
+        .SetFormat(EPixelFormat::RGBA8_UNorm)
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Transfer),
+        Default ARGS_IF_RHIDEBUG("ColorTarget")) };
+    LOG_CHECKVOID(WindowTest, !!colorTarget);
+
+    FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
+        .SetName("WindowTest")
+        .SetDebugFlags(EDebugFlags::Default)) };
+
+    const FLinearColor clearColor = HSV_to_RGB_smooth({
+        Saturate(float(std::cos(*FSeconds(Timeline().Total())) * .5 + .5)), 1.f, 1.f });
+    const PFrameTask tClear = cmd->Task(FClearColorImage()
+        .SetImage(colorTarget)
+        .AddRange(0_mipmap, 1, 0_layer, 1)
+        .Clear(clearColor));
+    LOG_CHECKVOID(WindowTest, !!tClear);
+
+    const PFrameTask tPresent = cmd->Task(FPresent{ RHI().Swapchain().Get(), colorTarget }
+        .DependsOn(tClear));
+    LOG_CHECKVOID(WindowTest, !!tPresent);
+
+    LOG_CHECKVOID(WindowTest, fg.Execute(cmd));
+
+    RequestExit(); // only render one loop
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
