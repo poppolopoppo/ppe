@@ -10,17 +10,26 @@
 		"External/xxHash"
 	],
 	"HAL": {
-		"Windows": {
-			"RuntimeDependencies": [
-				"External/vstools"
-			]
-		},
 		"Linux": {
 			"CompilerOptions": [
 				"-ldl",
 				"-lncurses",
 				"-lrt"
 			]
+		}
+	},
+	"TAG": {
+		"DEBUG|DEVEL": {
+			"HAL": {
+				"Windows": {
+					"Defines": [
+						"USE_PPE_VIRTUALALLOCTRAMPOLINE"
+					],
+					"RuntimeDependencies": [
+						"External/vstools"
+					]
+				}
+			}
 		}
 	}
 }
