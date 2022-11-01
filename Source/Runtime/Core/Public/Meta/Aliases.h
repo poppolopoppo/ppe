@@ -268,19 +268,21 @@ using i64   = std::int64_t;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if     defined(BUILD_LINK_STATIC)
+// https://gcc.gnu.org/wiki/Visibility
+#if defined(BUILD_LINK_STATIC)
 #   define DLL_IMPORT
 #   define DLL_EXPORT
 #   define DLL_NOINLINE
-#elif   defined(BUILD_LINK_DYNAMIC)
-#   if   defined(CPP_VISUALSTUDIO) || defined(CPP_CLANG)
+#   define DLL_LOCAL
+#elif defined(BUILD_LINK_DYNAMIC)
+#   if defined(_WIN32) || defined(__CYGWIN__)
 #       define DLL_IMPORT __declspec(dllimport)
 #       define DLL_EXPORT __declspec(dllexport)
-#   elif   defined(CPP_GCC)
-#       define DLL_IMPORT __attribute__ ((dllimport))
-#       define DLL_EXPORT __attribute__ ((dllexport))
+#       define DLL_LOCAL
 #   else
-#       error "unsupported compiler"
+#       define DLL_IMPORT __attribute__ ((visibility ("default")))
+#       define DLL_EXPORT __attribute__ ((visibility ("default")))
+#       define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
 #   endif
 #   define DLL_NOINLINE NO_INLINE
 #else
