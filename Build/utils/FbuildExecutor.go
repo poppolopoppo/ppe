@@ -79,11 +79,11 @@ type FBuildArgs struct {
 }
 
 func (flags *FBuildArgs) InitFlags(cfg *PersistentMap) {
-	cfg.Var(&flags.Cache, "Cache", "set FASTBuild cache mode ["+JoinString(",", FBuildCacheTypes()...)+"]")
+	cfg.Persistent(&flags.Cache, "Cache", "set FASTBuild cache mode ["+JoinString(",", FBuildCacheTypes()...)+"]")
 	cfg.Var(&flags.Clean, "Clean", "FASTBuild will rebuild all cached artifacts if enabled")
-	cfg.Var(&flags.Dist, "Dist", "enable/disable FASTBuild to use distributed compilation")
+	cfg.Persistent(&flags.Dist, "Dist", "enable/disable FASTBuild to use distributed compilation")
 	cfg.Persistent(&flags.BffInput, "BffInput", "source for input FASTBuild config file (*.bff)")
-	cfg.Var(&flags.NoStopOnError, "NoStopOnError", "FASTBuild will stop compiling on the first error if enabled")
+	cfg.Persistent(&flags.NoStopOnError, "NoStopOnError", "FASTBuild will stop compiling on the first error if enabled")
 	cfg.Var(&flags.NoUnity, "NoUnity", "enable/disable use of generated unity source files")
 	cfg.Var(&flags.Report, "Report", "enable/disable FASTBuild compilation report generation")
 	cfg.Var(&flags.ShowCmds, "ShowCmds", "display all command-lines executed by FASTBuild")
