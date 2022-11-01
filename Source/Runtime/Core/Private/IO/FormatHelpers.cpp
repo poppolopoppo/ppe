@@ -188,46 +188,42 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump) {
+template <typename _Char>
+static TBasicTextWriter<_Char>& HexDump_(TBasicTextWriter<_Char>& oss, const Fmt::FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
-    for (size_t offset = 0; offset < totalBytes; ) {
-        PPE::Format(oss, "0x{0:#8X} ", offset);
+    Assert(!!hexDump.RawData.data() || totalBytes == 0);
+
+    for (uintptr_t offset = 0; offset < totalBytes; ) {
+        PPE::Format(oss,  STRING_LITERAL(_Char, "0x{0:#8X} "),
+            hexDump.Absolute ? reinterpret_cast<uintptr_t>(hexDump.RawData.data() + offset) : offset);
+
         const size_t origin = offset;
-        for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
+        for (u32 row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
             if (offset < totalBytes)
-                PPE::Format(oss, " {0:#2X}", (unsigned)hexDump.RawData[offset]);
+                PPE::Format(oss, STRING_LITERAL(_Char, " {0:#2X}"), (unsigned)hexDump.RawData[offset]);
             else
-                oss << "   ";
+                oss << STRING_LITERAL(_Char, "   ");
         }
-        oss << "  ";
+
+        oss << STRING_LITERAL(_Char, "  ");
         offset = origin;
-        for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
+
+        for (u32 row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
             oss << (IsPrint(char(hexDump.RawData[offset])) && (char(hexDump.RawData[offset]) != '\t')
-                ? char(hexDump.RawData[offset]) : '.');
+                ? _Char(hexDump.RawData[offset]) : STRING_LITERAL(_Char, '.'));
+
         oss << Eol;
     }
+
     return oss;
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump) {
+    return HexDump_(oss, hexDump);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump) {
-    const size_t totalBytes = hexDump.RawData.SizeInBytes();
-    for (size_t offset = 0; offset < totalBytes; ) {
-        PPE::Format(oss, L"0x{0:#8X} ", offset);
-        const size_t origin = offset;
-        for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
-            if (offset < totalBytes)
-                PPE::Format(oss, L" {0:#2X}", (unsigned)hexDump.RawData[offset]);
-            else
-                oss << L"   ";
-        }
-        oss << L"  ";
-        offset = origin;
-        for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
-            oss << (IsPrint(char(hexDump.RawData[offset])) && (char(hexDump.RawData[offset]) != '\t')
-                ? wchar_t(hexDump.RawData[offset]) : L'.');
-        oss << Eol;
-    }
-    return oss;
+    return HexDump_(oss, hexDump);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -440,188 +436,107 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicIndent<wchar_t>& i
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
+template <typename _Char>
+static TBasicTextWriter<_Char>& FormatChar_(TBasicTextWriter<_Char>& oss, Fmt::EChar ch) {
     switch (ch) {
     case PPE::Fmt::LBrace:
-        return oss << '{';
+        return oss << STRING_LITERAL(_Char, '{');
     case PPE::Fmt::RBrace:
-        return oss << '}';
+        return oss << STRING_LITERAL(_Char, '}');
     case PPE::Fmt::LBracket:
-        return oss << '[';
+        return oss << STRING_LITERAL(_Char, '[');
     case PPE::Fmt::RBracket:
-        return oss << ']';
+        return oss << STRING_LITERAL(_Char, ']');
     case PPE::Fmt::LParenthese:
-        return oss << '(';
+        return oss << STRING_LITERAL(_Char, '(');
     case PPE::Fmt::RParenthese:
-        return oss << ')';
+        return oss << STRING_LITERAL(_Char, ')');
     case PPE::Fmt::Comma:
-        return oss << ',';
+        return oss << STRING_LITERAL(_Char, ',');
     case PPE::Fmt::Colon:
-        return oss << ':';
+        return oss << STRING_LITERAL(_Char, ':');
     case PPE::Fmt::SemiColon:
-        return oss << ';';
+        return oss << STRING_LITERAL(_Char, ';');
     case PPE::Fmt::Dot:
-        return oss << '.';
+        return oss << STRING_LITERAL(_Char, '.');
     case PPE::Fmt::Dollar:
-        return oss << '$';
+        return oss << STRING_LITERAL(_Char, '$');
     case PPE::Fmt::Question:
-        return oss << '?';
+        return oss << STRING_LITERAL(_Char, '?');
     case PPE::Fmt::Add:
-        return oss << '+';
+        return oss << STRING_LITERAL(_Char, '+');
     case PPE::Fmt::Sub:
-        return oss << '-';
+        return oss << STRING_LITERAL(_Char, '-');
     case PPE::Fmt::Mul:
-        return oss << '*';
+        return oss << STRING_LITERAL(_Char, '*');
     case PPE::Fmt::Div:
-        return oss << '/';
+        return oss << STRING_LITERAL(_Char, '/');
     case PPE::Fmt::Mod:
-        return oss << '%';
+        return oss << STRING_LITERAL(_Char, '%');
     case PPE::Fmt::Pow:
-        return oss << "**";
+        return oss << STRING_LITERAL(_Char, "**");
     case PPE::Fmt::Increment:
-        return oss << "++";
+        return oss << STRING_LITERAL(_Char, "++");
     case PPE::Fmt::Decrement:
-        return oss << "--";
+        return oss << STRING_LITERAL(_Char, "--");
     case PPE::Fmt::LShift:
-        return oss << "<<";
+        return oss << STRING_LITERAL(_Char, "<<");
     case PPE::Fmt::RShift:
-        return oss << ">>";
+        return oss << STRING_LITERAL(_Char, ">>");
     case PPE::Fmt::And:
-        return oss << '&';
+        return oss << STRING_LITERAL(_Char, '&');
     case PPE::Fmt::Or:
-        return oss << '|';
+        return oss << STRING_LITERAL(_Char, '|');
     case PPE::Fmt::Not:
-        return oss << '!';
+        return oss << STRING_LITERAL(_Char, '!');
     case PPE::Fmt::Xor:
-        return oss << '^';
+        return oss << STRING_LITERAL(_Char, '^');
     case PPE::Fmt::Complement:
-        return oss << '~';
+        return oss << STRING_LITERAL(_Char, '~');
     case PPE::Fmt::Assignment:
-        return oss << '=';
+        return oss << STRING_LITERAL(_Char, '=');
     case PPE::Fmt::Equals:
-        return oss << "==";
+        return oss << STRING_LITERAL(_Char, "==");
     case PPE::Fmt::NotEquals:
-        return oss << "!=";
+        return oss << STRING_LITERAL(_Char, "!=");
     case PPE::Fmt::Less:
-        return oss << '<';
+        return oss << STRING_LITERAL(_Char, '<');
     case PPE::Fmt::LessOrEqual:
-        return oss << "<=";
+        return oss << STRING_LITERAL(_Char, "<=");
     case PPE::Fmt::Greater:
-        return oss << '>';
+        return oss << STRING_LITERAL(_Char, '>');
     case PPE::Fmt::GreaterOrEqual:
-        return oss << ">=";
+        return oss << STRING_LITERAL(_Char, ">=");
     case PPE::Fmt::DotDot:
-        return oss << "..";
+        return oss << STRING_LITERAL(_Char, "..");
     case PPE::Fmt::Sharp:
-        return oss << '#';
+        return oss << STRING_LITERAL(_Char, '#');
     case PPE::Fmt::Quote:
-        return oss << '\'';
+        return oss << STRING_LITERAL(_Char, '\'');
     case PPE::Fmt::DoubleQuote:
-        return oss << '"';
+        return oss << STRING_LITERAL(_Char, '"');
     case PPE::Fmt::Space:
-        return oss << ' ';
+        return oss << STRING_LITERAL(_Char, ' ');
     case PPE::Fmt::Tab:
-        return oss << '\t';
+        return oss << STRING_LITERAL(_Char, '\t');
     case PPE::Fmt::Zero:
-        return oss << '0';
+        return oss << STRING_LITERAL(_Char, '0');
     case PPE::Fmt::A:
-        return oss << 'A';
+        return oss << STRING_LITERAL(_Char, 'A');
     case PPE::Fmt::a:
-        return oss << 'a';
+        return oss << STRING_LITERAL(_Char, 'a');
+    case PPE::Fmt::Eol:
+        return oss << Eol;
     }
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
+    return FormatChar_(oss, ch);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch) {
-    switch (ch) {
-    case PPE::Fmt::LBrace:
-        return oss << L'{';
-    case PPE::Fmt::RBrace:
-        return oss << L'}';
-    case PPE::Fmt::LBracket:
-        return oss << L'[';
-    case PPE::Fmt::RBracket:
-        return oss << L']';
-    case PPE::Fmt::LParenthese:
-        return oss << L'(';
-    case PPE::Fmt::RParenthese:
-        return oss << L')';
-    case PPE::Fmt::Comma:
-        return oss << L',';
-    case PPE::Fmt::Colon:
-        return oss << L':';
-    case PPE::Fmt::SemiColon:
-        return oss << L';';
-    case PPE::Fmt::Dot:
-        return oss << L'.';
-    case PPE::Fmt::Dollar:
-        return oss << L'$';
-    case PPE::Fmt::Question:
-        return oss << L'?';
-    case PPE::Fmt::Add:
-        return oss << L'+';
-    case PPE::Fmt::Sub:
-        return oss << L'-';
-    case PPE::Fmt::Mul:
-        return oss << L'*';
-    case PPE::Fmt::Div:
-        return oss << L'/';
-    case PPE::Fmt::Mod:
-        return oss << L'%';
-    case PPE::Fmt::Pow:
-        return oss << L"**";
-    case PPE::Fmt::Increment:
-        return oss << L"++";
-    case PPE::Fmt::Decrement:
-        return oss << L"--";
-    case PPE::Fmt::LShift:
-        return oss << L"<<";
-    case PPE::Fmt::RShift:
-        return oss << L">>";
-    case PPE::Fmt::And:
-        return oss << L'&';
-    case PPE::Fmt::Or:
-        return oss << L'|';
-    case PPE::Fmt::Not:
-        return oss << L'!';
-    case PPE::Fmt::Xor:
-        return oss << L'^';
-    case PPE::Fmt::Complement:
-        return oss << L'~';
-    case PPE::Fmt::Assignment:
-        return oss << L'=';
-    case PPE::Fmt::Equals:
-        return oss << L"==";
-    case PPE::Fmt::NotEquals:
-        return oss << L"!=";
-    case PPE::Fmt::Less:
-        return oss << L'<';
-    case PPE::Fmt::LessOrEqual:
-        return oss << L"<=";
-    case PPE::Fmt::Greater:
-        return oss << L'>';
-    case PPE::Fmt::GreaterOrEqual:
-        return oss << L">=";
-    case PPE::Fmt::DotDot:
-        return oss << L"..";
-    case PPE::Fmt::Sharp:
-        return oss << L'#';
-    case PPE::Fmt::Quote:
-        return oss << L'\'';
-    case PPE::Fmt::DoubleQuote:
-        return oss << L'"';
-    case PPE::Fmt::Space:
-        return oss << L' ';
-    case PPE::Fmt::Tab:
-        return oss << L'\t';
-    case PPE::Fmt::Zero:
-        return oss << L'0';
-    case PPE::Fmt::A:
-        return oss << L'A';
-    case PPE::Fmt::a:
-        return oss << L'a';
-    }
-    AssertNotImplemented();
+    return FormatChar_(oss, ch);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -71,10 +71,10 @@ TBasicString<_Char> StringFormat(const TBasicStringView<_Char>& format, _Arg0&& 
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-TMemoryView<_Char> InlineFormat(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     const size_t len = Format(dst, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     dst[len] = _Char(0); // end-of-string: InlineFormat() always returns null-terminated strings
-    return dst.CutBefore(len);
+    return dst.data();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ TBasicString<_Char> StringFormat(const _Char(&format)[_Dim], _Arg0&& arg0, _Args
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-TMemoryView<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
     return InlineFormat(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------

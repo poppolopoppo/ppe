@@ -533,13 +533,30 @@ class TFixedSizeHashMap : public details::TFixedSizeHashTable<
 
 public:
     using typename parent_type::key_type;
+    using typename parent_type::iterator;
+    using typename parent_type::const_iterator;
+
     using mapped_type = _Value;
 
     using parent_type::parent_type;
     using parent_type::operator=;
+    using parent_type::begin;
+    using parent_type::end;
 
     mapped_type& operator [](const key_type& key) NOEXCEPT { return Get(key); }
     const mapped_type& operator [](const key_type& key) const NOEXCEPT { return Get(key); }
+
+    typedef TKeyIterator<iterator> key_iterator;
+    typedef TKeyIterator<const_iterator> key_const_iterator;
+
+    TIterable<key_iterator> Keys() { return MakeIterable(MakeKeyIterator(begin()), MakeKeyIterator(end())); }
+    TIterable<key_const_iterator> Keys() const { return MakeIterable(MakeKeyIterator(begin()), MakeKeyIterator(end())); }
+
+    typedef TValueIterator<iterator> value_iterator;
+    typedef TValueIterator<const_iterator> value_const_iterator;
+
+    TIterable<value_iterator> Values() { return MakeIterable(MakeValueIterator(begin()), MakeValueIterator(end())); }
+    TIterable<value_const_iterator> Values() const { return MakeIterable(MakeValueIterator(begin()), MakeValueIterator(end())); }
 
     mapped_type& Get(const key_type& key) NOEXCEPT {
         const auto it = parent_type::find(key);

@@ -46,6 +46,9 @@
 #   endif
 #endif
 
+// Alternative implementation of tie_as_tuple()
+// https://godbolt.org/z/Kr5P4xhf6
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -305,8 +308,8 @@ constexpr auto detect_fields_count_dispatch(size_t_<N>, long, int) noexcept
 
 template <class T, std::size_t N>
 constexpr std::size_t detect_fields_count_dispatch(size_t_<N>, int, int) noexcept {
-    // T is not default aggregate initialzable. It means that at least one of the members is not default constructible,
-    // so we have to check all the aggregate initializations for T up to N parameters and return the bigest succeeded
+    // T is not default aggregate initializable. It means that at least one of the members is not default constructible,
+    // so we have to check all the aggregate initializations for T up to N parameters and return the biggest succeeded
     // (we can not use binary search for detecting fields count).
     return details::detect_fields_count_greedy<T, 0, N>(details::multi_element_range{});
 }
@@ -379,6 +382,9 @@ constexpr std::size_t struct_num_fields() noexcept {
     return result;
 }
 //----------------------------------------------------------------------------
+template <class T>
+constexpr std::size_t struct_num_fields_v = struct_num_fields<T>();
+//----------------------------------------------------------------------------
 #ifdef __clang__
 #   pragma clang diagnostic pop
 #endif
@@ -390,7 +396,7 @@ constexpr std::size_t struct_num_fields() noexcept {
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
 //----------------------------------------------------------------------------
-static constexpr size_t MaxArityForTieAsTuple = 26;
+static constexpr size_t MaxArityForTieAsTuple = 30;
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr bool has_tie_as_tuple() noexcept {
@@ -423,8 +429,11 @@ constexpr bool has_tie_as_tuple() noexcept {
         "====================> Boost.PFR: If there's no other failed static asserts then something went wrong. Please report this issue to the github along with the structure you're reflecting."
     );
 
-    return (!!numFields);
+    return (numFields > 0 && numFields <= MaxArityForTieAsTuple);
 }
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr bool has_tie_as_tuple_v = has_tie_as_tuple<T>();
 //----------------------------------------------------------------------------
 // Use new structured bindings with C++17
 namespace details {
@@ -432,158 +441,232 @@ namespace details {
 ** /!\ Forbid tying as tuple for types with a single or no element.
 **     Those shouldn't be tied as a tuple and add ambiguity to overloads.
 **
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<0>) noexcept {
+template <class T, typename _Tie>
+constexpr auto tie_as_tuple_impl_(T& val, size_t_<0>, _Tie&& ) noexcept {
     return TTuple<>{};
 }
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<1>, Meta::TEnableIf< not std::is_class_v< std::remove_cv_t<T> > >* = 0) noexcept {
-    return std::tie(val);
+template <class T, typename _Tie>
+constexpr auto tie_as_tuple(T& val, size_t_<1>, _Tie&& tie, Meta::TEnableIf< not std::is_class_v< std::remove_cv_t<T> > >* = 0) noexcept {
+    return tie(val);
 }
 */
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<1>, Meta::TEnableIf< std::is_class_v< std::remove_cv_t<T> > >* = 0) noexcept {
+template <class T, typename _Tie>
+constexpr auto tie_as_tuple(T& val, size_t_<1>, _Tie&& tie, Meta::TEnableIf< std::is_class_v< std::remove_cv_t<T> > >* = 0) noexcept {
     auto& [a] = val;
-    return std::tie(a);
+    return tie(a);
 }
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<2>) noexcept {
-    auto&[a, b] = val;
-    return std::tie(a, b);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<3>) noexcept {
-    auto&[a, b, c] = val;
-    return std::tie(a, b, c);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<4>) noexcept {
-    auto&[a, b, c, d] = val;
-    return std::tie(a, b, c, d);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<5>) noexcept {
-    auto&[a, b, c, d, e] = val;
-    return std::tie(a, b, c, d, e);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<6>) noexcept {
-    auto&[a, b, c, d, e, f] = val;
-    return std::tie(a, b, c, d, e, f);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<7>) noexcept {
-    auto&[a, b, c, d, e, f, g] = val;
-    return std::tie(a, b, c, d, e, f, g);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<8>) noexcept {
-    auto&[a, b, c, d, e, f, g, h] = val;
-    return std::tie(a, b, c, d, e, f, g, h);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<9>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<10>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<11>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<12>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<13>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<14>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<15>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<16>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<17>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<18>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<19>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<20>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<21>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<22>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<23>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<24>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<25>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y);
-}
-template <class T>
-constexpr auto tie_as_tuple(T& val, size_t_<26>) noexcept {
-    auto&[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z] = val;
-    return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z);
-}
+
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<2>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b] = val;
+    return tie(a,b); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<3>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c] = val;
+    return tie(a,b,c); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<4>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d] = val;
+    return tie(a,b,c,d); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<5>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e] = val;
+    return tie(a,b,c,d,e); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<6>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f] = val;
+    return tie(a,b,c,d,e,f); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<7>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g] = val;
+    return tie(a,b,c,d,e,f,g); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<8>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h] = val;
+    return tie(a,b,c,d,e,f,g,h); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<9>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i] = val;
+    return tie(a,b,c,d,e,f,g,h,i); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<10>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<11>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<12>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<13>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<14>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<15>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<16>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<17>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<18>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<19>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<20>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<21>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<22>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<23>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<24>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<25>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<26>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<27>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<28>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<29>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb); }
+template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<30>, _Tie&& tie) NOEXCEPT {
+    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db] = val;
+    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<31>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<32>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<33>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<34>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<35>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<36>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<37>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<38>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<39>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<40>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<41>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<42>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<43>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<44>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<45>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<46>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<47>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<48>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<49>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<50>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<51>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<52>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<53>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<54>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<55>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<56>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<57>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<58>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec,fc] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec,fc); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<59>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec,fc,gc] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec,fc,gc); }
+//template <class T, typename _Tie> CONSTEXPR auto tie_as_tuple_impl_(T& val, size_t_<60>, _Tie&& tie) NOEXCEPT {
+//    auto&[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec,fc,gc,hc] = val;
+//    return tie(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,ab,bb,cb,db,eb,fb,gb,hb,ib,jb,kb,lb,mb,nb,ob,pb,qb,rb,sb,tb,ub,vb,wb,xb,yb,zb,ac,bc,cc,dc,ec,fc,gc,hc); }
 } //!details
-template <typename T, size_t _NumFields = struct_num_fields<T>() >
+template <typename T, size_t _NumFields = struct_num_fields_v<T> >
 constexpr auto tie_as_tuple(T& val) noexcept {
-    STATIC_ASSERT(MaxArityForTieAsTuple == 26); // add details::tie_as_tuple() overloads if this number was incremented
-    return details::tie_as_tuple(val, details::size_t_<_NumFields>{});
+    STATIC_ASSERT(_NumFields <= MaxArityForTieAsTuple);
+    STATIC_ASSERT(MaxArityForTieAsTuple == 30); // add details::tie_as_tuple() overloads if this number was incremented
+    return details::tie_as_tuple_impl_(val, details::size_t_<_NumFields>{}, [](auto&... x) {
+        return std::tie(x...);
+    });
 }
+#if 0 // working, but waiting for C++23: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1061r1.html
+template <typename T>
+constexpr auto tie_as_tuple_rec(T& val) noexcept {
+    if constexpr (has_tie_as_tuple_v<T>) {i
+        return details::tie_as_tuple_impl_(val, details::size_t_<struct_num_fields_v<T>>{}, [](auto&... x) {
+            return std::tie(tie_as_tuple_rec(x)...);
+        });
+    }
+    else {
+        return val;
+    }
+}
+#endif
 //----------------------------------------------------------------------------
 #else //PPE_HAS_CXX17
+//----------------------------------------------------------------------------
+static constexpr size_t MaxArityForTieAsTuple = 0;
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR bool has_tie_as_tuple() noexcept {
     return false;
 }
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR bool has_tie_as_tuple_v = false;
 //----------------------------------------------------------------------------
 #endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------

@@ -15,7 +15,7 @@
 #   include "IO/FormatHelpers.h"
 #   define RHI_LOG(_LEVEL, ...) LOG(RHI, _LEVEL, __VA_ARGS__)
 #   if USE_PPE_RHITRACE
-#       define RHI_TRACE(...) LOG_RECORD(RHITrace, Verbose, __VA_ARGS__)
+#       define RHI_TRACE(...) LOG_RECORD(RHITrace, Verbose, __VA_ARGS__, ::PPE::RHI::FFrameStatistics::NextTraceUID() )
 #   else
 #       define RHI_TRACE(...) NOOP()
 #   endif
@@ -118,6 +118,11 @@ struct FFrameStatistics {
         explicit FProfilingScope(FNanoseconds* pCounter) NOEXCEPT : Counter(*pCounter) {}
         ~FProfilingScope() NOEXCEPT { Counter += Elapsed(); }
     };
+
+#if USE_PPE_RHITRACE
+    PPE_RHI_API static u64 NextTraceUID();
+    PPE_RHI_API static void SetBreakOnTraceUID(u64 uid);
+#endif
 
 };
 #endif

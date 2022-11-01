@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Container/Appendable.h"
+#include "Container/TupleTie.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 #include "Memory/MemoryView.h"
@@ -10,6 +11,7 @@
 #include "Maths/Units.h"
 #include "Misc/Function.h"
 #include "Meta/StronglyTyped.h"
+#include "Meta/TypeInfo.h"
 
 #include <initializer_list>
 
@@ -339,19 +341,99 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TJ
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
+template <typename... _Args>
+struct TStruct {
+    FConstChar Name;
+    TTuple<_Args...> Tuple;
+    TStruct() = default;
+    TStruct(FConstChar name, TTuple<_Args...>&& tuple) NOEXCEPT
+        : Name(name), Tuple(std::move(tuple))
+    {}
+};
+template <typename T, size_t _Depth = 0>
+constexpr auto Struct(const T& trivial, std::integral_constant<size_t, _Depth> = {});
+template <typename T, size_t _Depth = 0>
+constexpr auto Struct(const T* ptr, std::integral_constant<size_t, _Depth> = {});
+template <typename... _Args, size_t _Depth = 0>
+constexpr auto Struct(const TTuple<_Args...>& tuple, std::integral_constant<size_t, _Depth> = {});
+template <typename... _Args, size_t _Depth = 0>
+constexpr auto Struct(FConstChar name, const TTuple<_Args...>& tuple, std::integral_constant<size_t, _Depth> = {});
+template <typename T, size_t _Depth>
+constexpr auto Struct(const T& trivial, std::integral_constant<size_t, _Depth>) {
+    IF_CONSTEXPR(_Depth < 3 && Meta::is_type_complete_v<T>) {
+        IF_CONSTEXPR(has_tie_as_tuple_v<T> && struct_num_fields_v<T> > 1) {
+            return Struct(Meta::type_info<T>.name, tie_as_tuple(trivial), std::integral_constant<size_t, _Depth + 1>{});
+        }
+        else {
+            return trivial;
+        }
+    }
+    else {
+        return trivial;
+    }
+}
+template <typename T, size_t _Depth>
+constexpr auto Struct(const T* ptr, std::integral_constant<size_t, _Depth>) {
+    IF_CONSTEXPR(_Depth < 3 && Meta::is_type_complete_v<T>) {
+        IF_CONSTEXPR(has_tie_as_tuple_v<T> && struct_num_fields_v<T> > 1) {
+            if (ptr)
+                return Struct(Meta::type_info<T>.name, tie_as_tuple(*ptr), std::integral_constant<size_t, _Depth + 1>{});
+            return decltype(Struct(Meta::type_info<T>.name, tie_as_tuple(*ptr), std::integral_constant<size_t, _Depth + 1>{})){};
+        }
+        else {
+            return ptr;
+        }
+    }
+    else {
+        return ptr;
+    }
+}
+template <typename... _Args, size_t _Depth>
+constexpr auto Struct(FConstChar name, const TTuple<_Args...>& tuple, std::integral_constant<size_t, _Depth> depth) {
+    return Meta::static_for<sizeof...(_Args)>([&](auto... index) CONSTEXPR {
+        return TStruct{ name, std::make_tuple(Struct(std::get<index>(tuple), depth)...) };
+    });
+}
+template <typename... _Args, size_t _Depth>
+constexpr auto Struct(const TTuple<_Args...>& tuple, std::integral_constant<size_t, _Depth> depth) {
+    return Struct(FConstChar{}, tuple, depth);
+}
+template <typename... _Args>
+auto MakeStruct(FConstChar name, _Args... args) {
+    return Struct(name, std::make_tuple(std::forward<_Args>(args)...));
+}
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+template <typename _Char, typename... _Args>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TStruct<_Args...>& fmt) {
+    Meta::static_for<sizeof...(_Args)>([&](auto... index) {
+        auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, ", "));
+        oss << fmt.Name.MakeView() << STRING_LITERAL(_Char, '{');
+        if (fmt.Name.Data)
+            oss << Endl;
+        FOLD_EXPR(oss << sep << std::get<index>(fmt.Tuple));
+        oss << STRING_LITERAL(_Char, '}');
+    });
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
 struct FHexDump {
     TMemoryView<const u8> RawData;
-    size_t BytesPerRow;
-    FHexDump(const TMemoryView<const u8>& rawData, size_t bytesPerRow = 16) NOEXCEPT
-        : RawData(rawData), BytesPerRow(bytesPerRow) {}
+    u32 BytesPerRow;
+    bool Absolute = false;
+    FHexDump(const TMemoryView<const u8>& rawData, u32 bytesPerRow = 16, bool absolute = true) NOEXCEPT
+        : RawData(rawData), BytesPerRow(bytesPerRow), Absolute(absolute) {}
 };
 template <typename T>
-FHexDump HexDump(const TMemoryView<T>& data) NOEXCEPT {
-    return FHexDump(data.template Cast<const u8>());
+FHexDump HexDump(const TMemoryView<T>& data, u32 bytesPerRow = 16, bool absolute = true) NOEXCEPT {
+    return FHexDump(data.template Cast<const u8>(), bytesPerRow, absolute);
 }
 template <typename T>
-FHexDump HexDump(T* data, size_t n) NOEXCEPT {
-    return HexDump(TMemoryView<T>(data, n));
+FHexDump HexDump(T* data, size_t n, u32 bytesPerRow = 16, bool absolute = true) NOEXCEPT {
+    return HexDump(TMemoryView<T>(data, n), bytesPerRow, absolute);
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
@@ -510,6 +592,7 @@ namespace Fmt {
         Zero,
         A,
         a,
+        Eol,
     };
 } //!namespace Fmt
 //----------------------------------------------------------------------------

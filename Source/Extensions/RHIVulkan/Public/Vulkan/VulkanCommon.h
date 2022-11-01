@@ -2,10 +2,11 @@
 
 #include "Vulkan/Vulkan_fwd.h"
 
-#if USE_PPE_RHITRACE && 0
+#if USE_PPE_RHITRACE && 0 // %_NOCOMMIT%
 #   define VKLOG_APICALL(_NAME, ...) do { \
         using namespace PPE::RHI; \
         RHI_TRACE(WSTRINGIZE(_NAME), __VA_ARGS__); \
+        /*RHI_TRACE(WSTRINGIZE(_NAME), ::PPE::Fmt::MakeStruct(::PPE::FConstChar{}, __VA_ARGS__));*/ \
     } while(0)
 #endif
 

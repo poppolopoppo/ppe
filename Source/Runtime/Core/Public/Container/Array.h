@@ -72,6 +72,16 @@ struct TStaticArray {
     CONSTEXPR TMemoryView<const T> MakeView() const { return PPE::MakeView(Data); }
     CONSTEXPR TMemoryView<const T> MakeConstView() const { return PPE::MakeView(Data); }
 
+    template <typename U, size_t _OtherDim>
+    CONSTEXPR TStaticArray<std::common_type_t<T, U>, _Dim + _OtherDim> Concat(const TStaticArray<U, _OtherDim>& other) const {
+        TStaticArray<std::common_type_t<T, U>, _Dim + _OtherDim> result;
+        forrange(i, 0, _Dim)
+            result.Data[i] = Data[i];
+        forrange(i, 0, _OtherDim)
+            result.Data[_Dim + i] = other.Data[i];
+        return result;
+    }
+
     CONSTEXPR inline friend bool operator ==(const TStaticArray& lhs, const TStaticArray& rhs) {
         return std::equal(lhs.begin(), lhs.end(), rhs.Data);
     }

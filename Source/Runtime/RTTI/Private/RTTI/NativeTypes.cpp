@@ -457,8 +457,8 @@ FOREACH_RTTI_NATIVETYPES(DEF_RTTI_NATIVETYPE_TRAITS)
 // Use to create a tuple with arity only known at runtime (used by parsers)
 //----------------------------------------------------------------------------
 PTypeTraits MakeAnyTuple(size_t arity) NOEXCEPT {
-    STATIC_ASSERT(MaxArityForTieAsTuple == 26);
-    Assert(arity > 1); // tuple with arity < 2 aren't supported, should at least be a pair
+    STATIC_ASSERT(MaxArityForTieAsTuple == 30);
+    Assert(arity > 1 && arity <= 30); // tuple with arity < 2 aren't supported, should at least be a pair
     using a = FAny;
     switch (arity) {
 #define DEF_RTTI_MAKEANYTUPLE(N, ...) case N: return RTTI_Traits(TypeTag< TTuple<__VA_ARGS__> >)
@@ -487,6 +487,10 @@ PTypeTraits MakeAnyTuple(size_t arity) NOEXCEPT {
     DEF_RTTI_MAKEANYTUPLE(24, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
     DEF_RTTI_MAKEANYTUPLE(25, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
     DEF_RTTI_MAKEANYTUPLE(26, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(27, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(28, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(29, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
+    DEF_RTTI_MAKEANYTUPLE(30, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a);
 #undef DEF_RTTI_MAKEANYTUPLE
     default:
         // If you really really want support for higher dimensions,
