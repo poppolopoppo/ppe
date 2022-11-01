@@ -12,6 +12,7 @@
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
+#include "Meta/Utility.h"
 
 #include "HAL/Windows/LastError.h"
 #include "HAL/Windows/WindowsPlatformIncludes.h"
@@ -29,6 +30,32 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4191) // unsafe conversion from 'type of expression' to 'type required'
+bool IsProcess64Bit_(::HANDLE hProcess) {
+    typedef ::BOOL(WINAPI* LPFN_ISWOW64PROCESS)(::HANDLE, ::PBOOL);
+    ::HMODULE const hKernel32 = ::GetModuleHandleA("kernel32");
+    Assert(hKernel32);
+
+    LPFN_ISWOW64PROCESS const fnIsWow64Process = (LPFN_ISWOW64PROCESS)::GetProcAddress(hKernel32, "IsWow64Process");
+    ::BOOL bIsWoW64Process = FALSE;
+    if (fnIsWow64Process != NULL) {
+        if (fnIsWow64Process(hProcess, &bIsWoW64Process) == 0)
+            bIsWoW64Process = FALSE;
+    }
+
+    if (bIsWoW64Process) {
+        //process is 32 bit, running on 64 bit machine
+        return false;
+    }
+    else {
+        ::SYSTEM_INFO sysInfo;
+        ::GetSystemInfo(&sysInfo);
+        return sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64;
+    }
+}
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 static FWindowsPlatformMisc::FCPUInfo FetchCPUInfo_() {
     FWindowsPlatformMisc::FCPUInfo result;
@@ -222,7 +249,7 @@ FString FWindowsPlatformMisc::OSName() {
     if (::IsWindows8Point1OrGreater())
         osname = "Windows 8.1";
     if (::IsWindows10OrGreater())
-        osname = "Windows 10";
+        osname = "Windows 10 or greater";
 
     const FStringView arch = (Is64bitOperatingSystem()
         ? MakeStringView("64 bit")
@@ -296,23 +323,7 @@ void FWindowsPlatformMisc::SetUTF8Output() {
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 bool FWindowsPlatformMisc::Is64bitOperatingSystem() {
-#ifdef ARCH_X64
-    return true;
-#else
-    PRAGMA_MSVC_WARNING_PUSH()
-    PRAGMA_MSVC_WARNING_DISABLE(4191) // unsafe conversion from 'type of expression' to 'type required'
-    typedef ::BOOL(WINAPI *LPFN_ISWOW64PROCESS)(::HANDLE, ::PBOOL);
-    ::HMODULE const hKernel32 = ::GetModuleHandleA("kernel32");
-    Assert(hKernel32);
-    LPFN_ISWOW64PROCESS const fnIsWow64Process = (LPFN_ISWOW64PROCESS)::GetProcAddress(hKernel32, "IsWow64Process");
-    ::BOOL bIsWoW64Process = FALSE;
-    if (fnIsWow64Process != NULL) {
-        if (fnIsWow64Process(::GetCurrentProcess(), &bIsWoW64Process) == 0)
-            bIsWoW64Process = FALSE;
-    }
-    PRAGMA_MSVC_WARNING_POP()
-    return (bIsWoW64Process == TRUE);
-#endif
+    return IsProcess64Bit_(::GetCurrentProcess());
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformMisc::IsRunningOnBatery() {
@@ -634,6 +645,220 @@ bool FWindowsPlatformMisc::QueryRegKey(const ::HKEY key, const wchar_t* subKey, 
     }
 
     return succeed;
+}
+//----------------------------------------------------------------------------
+// https://github.com/khalladay/hooking-by-example/blob/master/hooking-by-example/hooking_common.h#L88
+//----------------------------------------------------------------------------
+void* FWindowsPlatformMisc::AllocateExecutablePageNearAddress(void* targetAddr) {
+    return AllocateExecutablePageNearAddressRemote(::GetCurrentProcess(), targetAddr);
+}
+//----------------------------------------------------------------------------
+void* FWindowsPlatformMisc::AllocateExecutablePageNearAddressRemote(::HANDLE hProcess, void* targetAddr) {
+    Assert_NoAssume(IsProcess64Bit_(hProcess));
+
+    ::SYSTEM_INFO sysInfo;
+    ::GetSystemInfo(&sysInfo);
+
+    const u64 startAddr = (u64(targetAddr) & ~u64(sysInfo.dwPageSize - 1)); //round down to nearest page boundary
+    const u64 minAddr = Min(startAddr - 0x7FFFFF00, (u64)sysInfo.lpMinimumApplicationAddress);
+    const u64 maxAddr = Max(startAddr + 0x7FFFFF00, (u64)sysInfo.lpMaximumApplicationAddress);
+
+    const u64 startPage = (startAddr - (startAddr % sysInfo.dwPageSize));
+
+    u64 pageOffset = 1;
+    for (;;) {
+        const u64 byteOffset = pageOffset * PAGE_SIZE;
+        const u64 highAddr = startPage + byteOffset;
+        const u64 lowAddr = (startPage > byteOffset) ? startPage - byteOffset : 0;
+
+        const bool needsExit = highAddr > maxAddr && lowAddr < minAddr;
+
+        if (highAddr < maxAddr) {
+            void* const outAddr = ::VirtualAllocEx(hProcess, (void*)highAddr, (size_t)PAGE_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (outAddr)
+                return outAddr;
+        }
+
+        if (lowAddr > minAddr) {
+            void* const outAddr = ::VirtualAllocEx(hProcess, (void*)lowAddr, (size_t)PAGE_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (outAddr != nullptr)
+                return outAddr;
+        }
+
+        pageOffset++;
+
+        if (needsExit) {
+            break;
+        }
+    }
+
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+// Basic Windows API Hooking
+// https://github.com/khalladay/hooking-by-example
+// https://medium.com/geekculture/basic-windows-api-hooking-acb8d275e9b8
+//----------------------------------------------------------------------------
+bool FWindowsPlatformMisc::CreateDetour(FDetour* hook, ::LPCWSTR libraryName, ::LPCSTR functionName, ::LPVOID proxyFunc) {
+    Assert(libraryName);
+    Assert(functionName);
+
+    const ::HMODULE hLibrary = ::LoadLibraryW(libraryName);
+    if (NULL == hLibrary) {
+        LOG_LASTERROR(HAL, L"LoadLibraryW");
+        return false;
+    }
+
+    const ::FARPROC lpFunction = ::GetProcAddress(hLibrary, functionName);
+    if (NULL == lpFunction) {
+        LOG_LASTERROR(HAL, L"GetProcAddress");
+        return false;
+    }
+
+    hook->FunctionName = functionName;
+    hook->OriginalFunc = lpFunction;
+    return CreateDetour(hook, proxyFunc);
+}
+//----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4302) // 'type cast': truncation from 'FARPROC' to 'DWORD'
+PRAGMA_MSVC_WARNING_DISABLE(4311) // 'type cast': pointer truncation from 'FARPROC' to 'DWORD'
+PRAGMA_MSVC_WARNING_DISABLE(4312) // 'type cast': conversion from 'DWORD' to 'DWORD *' of greater size
+static u32 WriteRelativeJump_(void* func2hook, void* jumpTarget) {
+    using FDetour = FWindowsPlatformMisc::FDetour;
+
+    u8 jmpInstruction[FDetour::Size] = { 0xE9, 0x0, 0x0, 0x0, 0x0 };
+
+    const i64 relativeToJumpTarget64 = (i64)jumpTarget - ((i64)func2hook + FDetour::Size);
+    AssertRelease(relativeToJumpTarget64 < INT32_MAX);
+
+    const i32 relativeToJumpTarget = (i32)relativeToJumpTarget64;
+    ::memcpy(jmpInstruction + 1, &relativeToJumpTarget, 4);
+
+    LOG_CHECK(HAL, ::WriteProcessMemory(
+        ::GetCurrentProcess(),
+        func2hook,
+        jmpInstruction,
+        sizeof(jmpInstruction),
+        nullptr));
+
+    return sizeof(jmpInstruction);
+}
+#if defined(ARCH_X86)
+static bool CreateDetour_X86_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyFunc) {
+    using FDetour = FWindowsPlatformMisc::FDetour;
+
+    // save the first 5 bytes of OriginalFunc into PrologueBackup
+    LOG_CHECK(HAL, ::ReadProcessMemory(
+        ::GetCurrentProcess(),
+        hook->OriginalFunc,
+        hook->PrologueBackup,
+        FDetour::Size,
+        nullptr));
+
+    // build the trampoline
+    ::DWORD* const hookAddress = (::DWORD*)(
+        (::DWORD)(hook->OriginalFunc) + FDetour::Size);
+    ::DWORD* const relativeOffset = (::DWORD*)(
+        (::DWORD)(proxyFunc)-
+        (::DWORD)(hook->OriginalFunc) - FDetour::Size);
+
+    hook->TrampolineAddress = ::VirtualAlloc(NULL, 11, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    LOG_CHECK(HAL, !!hook->TrampolineAddress);
+
+    ::memcpy((BYTE*)hook->TrampolineAddress +  0, hook->PrologueBackup, FDetour::Size);
+    ::memcpy((BYTE*)hook->TrampolineAddress +  5, "\x68", 1); // 68	PUSH imm16 / 32     Push Word, Doubleword or Quadword Onto the Stack
+    ::memcpy((BYTE*)hook->TrampolineAddress +  6, &hookAddress, 4);
+    ::memcpy((BYTE*)hook->TrampolineAddress + 10, "\xC3", 1); // C3	RETN                Return from procedure
+
+    return (FDetour::Size == WriteRelativeJump_(hook->OriginalFunc, proxyFunc));
+}
+#elif defined(ARCH_X64)
+// https://github.com/khalladay/hooking-by-example/blob/master/hooking-by-example/09%20-%20Trampoline%20Free%20Function%20In%20Same%20Process/trampoline-free-function.cpp
+static u32 WriteAbsoluteJump64_(void* absJumpMemory, void* addrToJumpTo) {
+    Assert_NoAssume(IsProcess64Bit_(::GetCurrentProcess()));
+
+    //this writes the absolute jump instructions into the memory allocated near the target
+    //the E9 jump installed in the target function (GetNum) will jump to here
+    u8 absJumpInstructions[] = {
+        0x49, 0xBA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, //mov 64 bit value into r10
+        0x41, 0xFF, 0xE2 }; //jmp r10
+
+    u64 addrToJumpTo64 = (u64)addrToJumpTo;
+    ::memcpy(&absJumpInstructions[2], &addrToJumpTo64, sizeof(addrToJumpTo64));
+    ::memcpy(absJumpMemory, absJumpInstructions, sizeof(absJumpInstructions));
+    return sizeof(absJumpInstructions);
+}
+static bool CreateDetour_X64_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyFunc) {
+    using FDetour = FWindowsPlatformMisc::FDetour;
+
+    ::DWORD oldProtect;
+    LOG_CHECK(HAL, ::VirtualProtect(hook->OriginalFunc, FDetour::Size, PAGE_EXECUTE_READWRITE, &oldProtect));
+    ::memcpy(hook->PrologueBackup, hook->OriginalFunc, FDetour::Size);
+
+    //we need to use JMP rel32 even on x64 to fit in 5 bytes, so the offset between the trampoline
+    //and the original function must fit inside a 32 bits integer: so we try to allocate the page
+    //for the trampoline near the original function
+    hook->TrampolineAddress = FWindowsPlatformMisc::AllocateExecutablePageNearAddress(hook->OriginalFunc);
+    LOG_CHECK(HAL, !!hook->TrampolineAddress);
+
+    //the trampoline consists of the stolen bytes from the target function, following by a jump back
+    //to the target function + 5 bytes, in order to continue the execution of that function. This continues like
+    //a normal function call
+    void* const trampolineJumpTarget = ((u8*)hook->OriginalFunc + FDetour::Size);
+
+    u8* const dst = (u8*)hook->TrampolineAddress;
+    ::memcpy(dst, hook->PrologueBackup, FDetour::Size);
+    LOG_CHECK(HAL, !!WriteAbsoluteJump64_(dst + FDetour::Size, trampolineJumpTarget));
+
+    //the last operation is to finally overwrite the first 5 bytes of the original function with a jump
+    //to our proxy function
+    return (FDetour::Size == WriteRelativeJump_(hook->OriginalFunc, proxyFunc));
+}
+#else
+#   error "Detour support is missing for current architecture"
+#endif
+PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
+bool FWindowsPlatformMisc::CreateDetour(FDetour* hook, LPVOID proxyFunc) {
+    Assert(hook);
+    Assert(proxyFunc);
+    Assert(hook->OriginalFunc);
+    Assert_NoAssume(not hook->TrampolineAddress);
+
+    // note: "5 bytes classic hook" is only guaranteed on specific WinAPI,
+    // more general support involves disasm and a dedicated library!
+    if (CONCAT(CreateDetour_, CODE3264(X86_, X64_))(hook, proxyFunc)) {
+        LOG(HAL, Info, L"created detour hook on WinAPI function {0}()",
+            MakeCStringView(hook->FunctionName));
+
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformMisc::DestroyDetour(FDetour* hook) {
+    Assert(hook);
+
+    if (not hook->TrampolineAddress)
+        return;
+
+    // same code for both x86 and x64
+    LOG(HAL, Info, L"destroy detour hook on WinAPI function {0}()",
+        MakeCStringView(hook->FunctionName));
+
+    // release virtual memory used by trampoline
+    ::VirtualFree(hook->TrampolineAddress, 0, MEM_RELEASE);
+    hook->TrampolineAddress = nullptr;
+
+    // restore function prologue backup
+    LOG_CHECKVOID(HAL, ::WriteProcessMemory(
+        ::GetCurrentProcess(),
+        (::LPVOID)hook->OriginalFunc,
+        hook->PrologueBackup,
+        FDetour::Size,
+        nullptr));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

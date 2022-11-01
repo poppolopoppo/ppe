@@ -9,6 +9,7 @@
 	"HAL": {
 		"Windows": {
 			"ExtraFiles": [
+				"Public/HAL/Windows/license.rc",
 				"Public/HAL/Windows/resource.rc"
 			]
 		},

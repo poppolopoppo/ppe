@@ -143,7 +143,9 @@ static void TearDebugMenuInSystray_(const FModularServices& services) {
 //----------------------------------------------------------------------------
 FApplicationBase::FApplicationBase(FModularDomain& domain, FString&& name)
 :   FPlatformApplication(domain, std::move(name))
-,   _tickRate(Timespan_120hz()) {
+,   _tickRate(Timespan_120hz)
+,   _requestedExit(false)
+,   _lowerTickRateInBackground(true) {
     FApplicationModule::Get(Domain())._OnApplicationCreate.Invoke(*this);
 }
 //----------------------------------------------------------------------------
@@ -153,6 +155,8 @@ FApplicationBase::~FApplicationBase() NOEXCEPT {
 //----------------------------------------------------------------------------
 void FApplicationBase::Start() {
     FPlatformApplication::Start();
+
+    _requestedExit = false;
 
 #if !USE_PPE_FINAL_RELEASE
     SetupDebugMenuInSystray_(Services());
@@ -184,19 +188,32 @@ void FApplicationBase::SetTickRate(FTimespan period) {
     _tickRate = Rcp(*period);
 }
 //----------------------------------------------------------------------------
+void FApplicationBase::RequestExit() {
+    if (not _requestedExit) {
+        _requestedExit = true;
+
+        LOG(Application, Info, L"application {0} exit requested, will stop next loop...", Name());
+
+        FApplicationModule::Get(Domain())._OnApplicationRequestExit.Invoke(*this);
+    }
+}
+//----------------------------------------------------------------------------
 void FApplicationBase::ApplicationLoop() {
-    FTimespan dt;
-    FTimeline tick = FTimeline::StartNow();
+    _timeline = FTimeline::StartNow();
 
-    while (PumpMessages()) {
-        FTimespan tickRate{ _tickRate };
+    while (PumpMessages() and not HasRequestedExit()) {
+        FTimespan actualTickRate = _tickRate;
+        if (LowerTickRateInBackground() and not HasFocus())
+            actualTickRate = Timespan_1hz;
 
-        if (Unlikely(not HasFocus()))
-            tickRate = Timespan_5hz();
-
-        if (tick.Tick_Every(tickRate, dt))
+        FTimespan dt;
+        if (_timeline.Tick_Every(actualTickRate, dt))
             Tick(dt);
     }
+
+    LOG(Application, Info, L"application {0} stopped looping, total uptime = {2} (request:{1})", Name(), HasRequestedExit(), _timeline.Total());
+
+    _timeline.Reset();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

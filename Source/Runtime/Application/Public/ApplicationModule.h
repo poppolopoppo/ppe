@@ -32,7 +32,7 @@ public:
 public:
     friend class Application::FApplicationBase;
 
-    static FApplicationModule& Get(const FModularDomain& domain);   
+    static FApplicationModule& Get(const FModularDomain& domain);
 
     using FApplicationEvent = TFunction<void(Application::FApplicationBase&) NOEXCEPT>;
 
@@ -47,6 +47,8 @@ public:
     using FApplicationTick = TFunction<void(Application::FApplicationBase&, FTimespan) NOEXCEPT>;
 
     PUBLIC_EVENT(OnApplicationTick, FApplicationTick);
+
+    PUBLIC_EVENT(OnApplicationRequestExit, FApplicationEvent);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

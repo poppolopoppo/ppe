@@ -23,8 +23,6 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FWindowsPlatformApplicationMisc::Start() {
-    Verify(SUCCEEDED(::CoInitialize(NULL)));
-
     FWindowsPlatformGamepad::Start();
     FWindowsWindow::Start();
     FWindowsPlatformNotification::Start();
@@ -34,8 +32,6 @@ void FWindowsPlatformApplicationMisc::Shutdown() {
     FWindowsPlatformNotification::Shutdown();
     FWindowsWindow::Shutdown();
     FWindowsPlatformGamepad::Shutdown();
-
-    ::CoUninitialize();
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformApplicationMisc::PickScreenColorAt(int x, int y, FColor* color) {

@@ -1,4 +1,4 @@
-
+#include "Runtime/Application/Public/HAL/Windows/license.rc"
 
 // ICONS
 IDI_ERROR_ICON				ICON    "../../../Data/Icons/Error.ico"

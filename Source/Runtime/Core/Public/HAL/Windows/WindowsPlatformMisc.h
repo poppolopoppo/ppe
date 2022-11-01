@@ -53,6 +53,46 @@ public: // specific to this platform
 
     static bool QueryRegKey(const ::HKEY key, const char* subKey, const char* name, FString* pValue);
     static bool QueryRegKey(const ::HKEY key, const wchar_t* subKey, const wchar_t* name, FWString* pValue);
+
+    // Basic Windows API Hooking
+    // https://medium.com/geekculture/basic-windows-api-hooking-acb8d275e9b8
+
+    static void* AllocateExecutablePageNearAddress(void* targetAddr);
+    static void* AllocateExecutablePageNearAddressRemote(::HANDLE hProcess, void* targetAddr);
+
+    struct FDetour {
+        STATIC_CONST_INTEGRAL(u32, Size, 5);
+        ::LPCSTR FunctionName{ nullptr };
+        ::FARPROC OriginalFunc{ nullptr };
+        ::LPVOID TrampolineAddress{ nullptr };
+        ::BYTE PrologueBackup[Size];
+    };
+
+    static bool CreateDetour(FDetour* hook, ::LPVOID proxyFunc);
+    static bool CreateDetour(FDetour* hook, ::LPCWSTR libraryName, ::LPCSTR functionName, ::LPVOID proxyFunc);
+    static void DestroyDetour(FDetour* hook);
+
+    template <auto _Func>
+    struct TAutoDetour : FDetour {
+        TAutoDetour(::LPCWSTR libraryName, ::LPCSTR functionName) {
+            FWindowsPlatformMisc::CreateDetour(this, libraryName, functionName, _Func);
+        }
+
+        ~TAutoDetour() {
+            FWindowsPlatformMisc::DestroyDetour(this);
+        }
+
+        TAutoDetour(const TAutoDetour&) = delete;
+        TAutoDetour& operator =(const TAutoDetour&) = delete;
+
+        // call inside the hook to give back execution to the original function
+        template <typename... _Args>
+        auto operator ()(_Args&&... args) const {
+            return reinterpret_cast<decltype(_Func)>(FDetour::TrampolineAddress)(
+                std::forward<_Args>(args)...);
+        }
+
+    };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
