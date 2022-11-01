@@ -3,7 +3,7 @@
 #include "Allocator/BitmapHeap.h"
 
 #include "Allocator/InitSegAllocator.h"
-#include "Allocator/SystemPageAllocator.h"
+#include "Allocator/PageAllocator.h"
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Thread/CriticalSection.h"
@@ -14,11 +14,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct FBitmapPagePool_ : FSystemPageAllocator {
-    using allocator_traits = TAllocatorTraits<FSystemPageAllocator>;
+struct FBitmapPagePool_ : FPageAllocator {
+    using allocator_traits = TAllocatorTraits<FPageAllocator>;
 
     STATIC_CONST_INTEGRAL(u32, BlockSize, sizeof(FBitmapBasicPage));
-    STATIC_CONST_INTEGRAL(u32, ChunkSize, FSystemPageAllocator::PageSize);
+    STATIC_CONST_INTEGRAL(u32, ChunkSize, FPageAllocator::PageSize);
     STATIC_CONST_INTEGRAL(u32, NumBlocksPerChunk, ChunkSize / BlockSize - 1/* first block stores a FChunk */);
 
     struct FChunk {

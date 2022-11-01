@@ -36,8 +36,8 @@ CONSTEXPR size_t MemoryDomainsMaxCount = 300;
 //----------------------------------------------------------------------------
 class FMemoryDomain : public FMemoryTracking {
 public:
-    FMemoryDomain(const char* name, FMemoryTracking* parent, EMode mode) NOEXCEPT
-    :   FMemoryTracking(name, parent, mode) {
+    FMemoryDomain(const char* name, FMemoryTracking* parent) NOEXCEPT
+    :   FMemoryTracking(name, parent) {
         RegisterTrackingData(this);
     }
 
@@ -53,23 +53,23 @@ public:
 //----------------------------------------------------------------------------
 namespace MemoryDomain {
     FMemoryTracking& MEMORYDOMAIN_NAME(GpuMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "GpuMemory", nullptr, FMemoryTracking::Recursive);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "GpuMemory", nullptr);
         return GInstance;
     }
     FMemoryTracking& MEMORYDOMAIN_NAME(PooledMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "PooledMemory", nullptr, FMemoryTracking::Recursive);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "PooledMemory", nullptr);
         return GInstance;
     }
     FMemoryTracking& MEMORYDOMAIN_NAME(ReservedMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "ReservedMemory", nullptr, FMemoryTracking::Recursive);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "ReservedMemory", nullptr);
         return GInstance;
     }
     FMemoryTracking& MEMORYDOMAIN_NAME(UsedMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr, FMemoryTracking::Recursive);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr);
         return GInstance;
     }
     FMemoryTracking& MEMORYDOMAIN_NAME(UnaccountedMemory)::TrackingData() {
-        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UnaccountedMemory", nullptr, FMemoryTracking::Recursive);
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UnaccountedMemory", nullptr);
         return GInstance;
     }
 }
@@ -82,7 +82,7 @@ namespace MemoryDomain {
     namespace MemoryDomain { \
         const FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
             auto& parent = const_cast<FMemoryTracking&>(MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
-            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent, FMemoryTracking::Recursive); \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent); \
             return GInstance; \
         } \
     }
@@ -90,15 +90,7 @@ namespace MemoryDomain {
     namespace MemoryDomain { \
         FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
             auto& parent = const_cast<FMemoryTracking&>(MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
-            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent, FMemoryTracking::Recursive); \
-            return GInstance; \
-        } \
-    }
-#   define MEMORYDOMAIN_DETAILLED_IMPL(_Name, _Parent) \
-    namespace MemoryDomain { \
-        FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
-            auto& parent = const_cast<FMemoryTracking&>(MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
-            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent, FMemoryTracking::Isolated); \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &parent); \
             return GInstance; \
         } \
     }
@@ -109,7 +101,6 @@ namespace MemoryDomain {
 #include "Memory/MemoryDomain.Definitions-inl.h"
 #undef MEMORYDOMAIN_COLLAPSABLE_IMPL
 #undef MEMORYDOMAIN_GROUP_IMPL
-#undef MEMORYDOMAIN_DETAILLED_IMPL
 #undef MEMORYDOMAIN_IMPL
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_MEMORYDOMAINS
@@ -352,18 +343,19 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
 //----------------------------------------------------------------------------
 void ReportAllocationHistogram(FWTextWriter& oss) {
 #if USE_PPE_MEMORYDOMAINS && USE_PPE_LOGGER
-    TMemoryView<const size_t> classes;
-    TMemoryView<const i64> allocations, totalBytes;
-    if (not FMallocDebug::FetchAllocationHistogram(&classes, &allocations, &totalBytes))
+    TMemoryView<const u32> sizeClasses;
+    TMemoryView<const FMemoryTracking> bins;
+    if (not FMallocDebug::FetchAllocationHistogram(&sizeClasses, &bins))
         return;
 
-    Assert(classes.size() == allocations.size());
+    Assert_NoAssume(sizeClasses.size() == bins.size());
 
     i64 totalCount = 0;
     i64 maxCount = 0;
-    for (i64 count : allocations) {
-        totalCount += count;
-        maxCount = Max(maxCount, count);
+    for (const FMemoryTracking& trackingData : bins) {
+        const FMemoryTracking::FSnapshot user = trackingData.User();
+        totalCount += user.AccumulatedAllocs;
+        maxCount = Max(maxCount, user.AccumulatedAllocs);
     }
 
     const auto distribution = [](i64 sz) -> float {
@@ -379,34 +371,39 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
         << hr << Eol;
 
     static i64 GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
-    AssertRelease(lengthof(GPrevAllocations) >= classes.size());
+    AssertRelease(lengthof(GPrevAllocations) >= sizeClasses.size());
 
     constexpr float width = 115;
-    forrange(i, 0, classes.size()) {
-        if (0 == classes[i]) continue;
+    forrange(i, 0, sizeClasses.size()) {
+        Assert_NoAssume(sizeClasses[i] > 0);
 
-        if (0 == allocations[i]) {
+        const FMemoryTracking& trackingData = bins[i];
+        const FMemoryTracking::FSnapshot user = trackingData.User();
+        const FMemoryTracking::FSnapshot system = trackingData.System();
+
+        if (0 == user.AccumulatedAllocs) {
             Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |",
                 i,
-                Fmt::SizeInBytes(classes[i]),
-                Fmt::SizeInBytes(checked_cast<u64>(totalBytes[i])),
+                Fmt::SizeInBytes(sizeClasses[i]),
+                Fmt::SizeInBytes(checked_cast<u64>(system.AccumulatedSize)),
                 0.f );
         }
         else {
-            const auto delta = (allocations[i] - GPrevAllocations[i]);
-            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |{4}> {5} +{6}",
+            const auto delta = (user.AccumulatedAllocs - GPrevAllocations[i]);
+            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |{4}> {5} +{6} wasted:{7}",
                 i,
-                Fmt::SizeInBytes(classes[i]),
-                Fmt::SizeInBytes(checked_cast<u64>(totalBytes[i])),
-                100 * float(allocations[i]) / totalCount,
-                Fmt::Repeat(delta ? L'=' : L'-', size_t(std::round(Min(width, width * distribution(allocations[i]) / distributionScale)))),
-                Fmt::CountOfElements(checked_cast<u64>(allocations[i])),
-                delta );
+                Fmt::SizeInBytes(sizeClasses[i]),
+                Fmt::SizeInBytes(checked_cast<u64>(system.AccumulatedSize)),
+                100 * (float(user.AccumulatedAllocs) / totalCount),
+                Fmt::Repeat(delta ? L'=' : L'-', size_t(std::round(Min(width, width * distribution(user.AccumulatedAllocs) / distributionScale)))),
+                Fmt::CountOfElements(checked_cast<u64>(user.AccumulatedAllocs)),
+                delta,
+                Fmt::SizeInBytes(system.AccumulatedSize - user.AccumulatedSize) );
         }
 
         oss << Eol;
 
-        GPrevAllocations[i] = allocations[i];
+        GPrevAllocations[i] = user.AccumulatedAllocs;
     }
 #else
     Unused(oss);

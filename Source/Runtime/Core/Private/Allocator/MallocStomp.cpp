@@ -130,12 +130,12 @@ static const FStompPayload_* StompGetPayload_(const void* userPtr) {
 class FStompDelayedDeletes_ {
 public:
     static FStompDelayedDeletes_& Get() NOEXCEPT {
-        ONE_TIME_DEFAULT_INITIALIZE(TInitSegAlloc<FStompDelayedDeletes_>, GLocalInstance);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FStompDelayedDeletes_>, GLocalInstance, 100);
         return GLocalInstance;
     }
 
     FStompDelayedDeletes_() NOEXCEPT
-        : _delayeds((FDeletedBlock_*)FPlatformMemory::VirtualAlloc(sizeof(FDeletedBlock_)* MaxDelayedDeletes, true), MaxDelayedDeletes)
+        : _delayeds(static_cast<FDeletedBlock_*>(FPlatformMemory::VirtualAlloc(sizeof(FDeletedBlock_) * MaxDelayedDeletes, true)), MaxDelayedDeletes)
         , _delayedSizeInBytes(0)
     {}
 
@@ -367,7 +367,7 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
     void* const newPtr = FMallocStomp::AlignedMalloc(size, alignment);
 
     const FStompPayload_* payload = StompGetPayload_(ptr);
-    FPlatformMemory::Memcpy(newPtr, ptr, Min(payload->UserSize, size));
+    FPlatformMemory::Memcpy(newPtr, ptr, Min(static_cast<size_t>(payload->UserSize), size));
 
     FMallocStomp::AlignedFree(ptr);
 

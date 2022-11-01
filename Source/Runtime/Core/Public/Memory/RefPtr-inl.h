@@ -62,22 +62,22 @@ inline bool FRefCountable::DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT 
 }
 //----------------------------------------------------------------------------
 // /!\ Should **ALWAYS** allocate with NewRef<>() helper !
-inline void FRefCountable::operator delete(void* p) {
+inline void FRefCountable::operator delete(void* p, std::size_t size) {
 #if USE_PPE_MEMORYDOMAINS
-    tracking_free(p);
+    tracking_free_for_delete(p, size);
 #else
-    PPE::free(p);
+    PPE::free_for_delete(p, size);
 #endif
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 #if USE_PPE_MEMORYDOMAINS
 NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
-    return TRefPtr<T>{ new (tracking_malloc(trackingData, sizeof(T))) T{ std::forward<_Args>(args)... } };
+    return TRefPtr<T>{ new (tracking_malloc_for_new(trackingData, sizeof(T))) T{ std::forward<_Args>(args)... } };
 }
 #else
 NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args) {
-    return TRefPtr<T>{ new (PPE::malloc(sizeof(T))) T{ std::forward<_Args>(args)... } };
+    return TRefPtr<T>{ new (PPE::malloc_for_new(sizeof(T))) T{ std::forward<_Args>(args)... } };
 }
 #endif
 //----------------------------------------------------------------------------

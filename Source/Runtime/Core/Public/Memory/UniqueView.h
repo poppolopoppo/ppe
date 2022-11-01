@@ -91,7 +91,7 @@ using TUniqueArray = TUniqueView<T, checked_deleter<T[]> >;
 template <typename T>
 inline TUniqueArray<T> NewArray(size_t count) {
     return (count
-        ? TUniqueArray<T>{ new T[count], count }
+        ? TUniqueArray<T>{ new (std::nothrow) T[count], count }
         : TUniqueArray<T>{ nullptr, 0 } );
 }
 //----------------------------------------------------------------------------

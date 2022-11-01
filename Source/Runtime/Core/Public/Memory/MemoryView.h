@@ -439,12 +439,12 @@ CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T* pend) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTF TMemoryView<Meta::TEnableIf<Meta::is_pod_v<T>, u8>> MakeRawView(T& assumePod) {
+CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, u8>> MakeRawView(T& assumePod) {
     return { reinterpret_cast<u8*>(&assumePod), sizeof(T) };
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTF TMemoryView<Meta::TEnableIf<Meta::is_pod_v<T>, const u8>> MakeRawView(const T& assumePod) {
+CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, const u8>> MakeRawView(const T& assumePod) {
     return { reinterpret_cast<const u8*>(&assumePod), sizeof(T) };
 }
 //----------------------------------------------------------------------------

@@ -593,6 +593,10 @@ struct FBinnedSmallTable : Meta::FNonCopyableNorMovable {
 
     FSmallPoolInfo SmallPools[PPE_MALLOCBINNED2_SMALLPOOL_COUNT];
 
+#if USE_PPE_ASSERT
+    bool _available{false};
+#endif
+
     // don't inline ctor/dtor to help codegen size in allocation hotpath
     NO_INLINE FBinnedSmallTable() NOEXCEPT;
     NO_INLINE ~FBinnedSmallTable() NOEXCEPT;
@@ -628,6 +632,7 @@ struct FBinnedSmallTable : Meta::FNonCopyableNorMovable {
 
     FORCE_INLINE static FBinnedSmallTable& Get() NOEXCEPT {
         ONE_TIME_INITIALIZE(TInitSegAlloc<FBinnedSmallTable>, GInstance, 5000);
+        Assert_Lightweight(GInstance.Get()->_available);
         return GInstance;
     }
 
@@ -710,9 +715,16 @@ FBinnedSmallTable::FBinnedSmallTable() NOEXCEPT {
     Assert_NoAssume(pMetadata <= static_cast<byte*>(Meta.Data) + Meta.SizeInBytes);
 
     FBinnedSmallTable::GSmallPoolVirtualMemory = static_cast<byte*>(VM.Data);
+
+    ONLY_IF_ASSERT(_available = true);
 }
 //------------------------------------------------------------------------------
 FBinnedSmallTable::~FBinnedSmallTable() NOEXCEPT {
+#if USE_PPE_ASSERT
+    Assert_NoAssume(_available);
+    _available = false;
+#endif
+
     ReleasePendingBundles();
 
 #if USE_PPE_ASSERT
@@ -1012,17 +1024,22 @@ void* FMallocBinned2::Realloc(void* const ptr, size_t size) {
     return Meta::unlikely(&BinnedReallocFallback_, ptr, size);
 }
 //------------------------------------------------------------------------------
-void FMallocBinned2::ReleaseCacheMemory() {
-    LOG(MallocBinned2, Debug, L"release cache memory in {0}", std::this_thread::get_id());
-
-    FBinnedPerThreadFreeBlockList::Get().ReleaseCacheMemory();
-    FBinnedSmallTable::Get().ReleasePendingBundles();
-
-    FMallocBitmap::MemoryTrim();
+void* FMallocBinned2::MallocForNew(size_t size) {
+    return Malloc(size);
 }
 //------------------------------------------------------------------------------
-void FMallocBinned2::ReleasePendingBlocks() {
-    //LOG(MallocBinned2, Debug, L"release pending blocks in {0}", std::this_thread::get_id()); // too verbose
+void* FMallocBinned2::ReallocForNew(void* const ptr, size_t size, size_t old) {
+    Unused(old);
+    // #TODO: take advantage of sized deallocations,
+    // note that sized deallocations are not guaranteed !
+    return Realloc(ptr, size);
+}
+//------------------------------------------------------------------------------
+void FMallocBinned2::FreeForDelete(void* const ptr, size_t size) {
+    Unused(size);
+    // #TODO: take advantage of sized deallocations,
+    // note that sized deallocations are not guaranteed !
+    Free(ptr);
 }
 //------------------------------------------------------------------------------
 size_t FMallocBinned2::SnapSize(size_t size) NOEXCEPT {
@@ -1048,6 +1065,19 @@ size_t FMallocBinned2::RegionSize(void* ptr) NOEXCEPT {
         return sizeInBytes;
 
     return FVirtualMemory::SizeInBytes(ptr);
+}
+//------------------------------------------------------------------------------
+void FMallocBinned2::ReleaseCacheMemory() {
+    LOG(MallocBinned2, Debug, L"release cache memory in {0}", std::this_thread::get_id());
+
+    FBinnedPerThreadFreeBlockList::Get().ReleaseCacheMemory();
+    FBinnedSmallTable::Get().ReleasePendingBundles();
+
+    FMallocBitmap::MemoryTrim();
+}
+//------------------------------------------------------------------------------
+void FMallocBinned2::ReleasePendingBlocks() {
+    //LOG(MallocBinned2, Debug, L"release pending blocks in {0}", std::this_thread::get_id()); // too verbose
 }
 //------------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE

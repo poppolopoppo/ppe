@@ -39,7 +39,7 @@ using FBitmapHeapLarge_ = TBitmapHeap< TBitmapCpuTraits<
     PPE_BITMAPHEAPS_LARGE_GRANULARITY
     >>;
 struct FBitmapHeaps_ {
-    // packed together to avoid destruction order issues due to FSystemPageAllocator dependency
+    // packed together to avoid destruction order issues due to FPageAllocator dependency
     FBitmapHeapMedium_ Medium;
     FBitmapHeapLarge_ Large;
 

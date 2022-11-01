@@ -140,6 +140,7 @@ public:
     static void* operator new[](std::size_t) = delete;
 
     static void operator delete(void* p) = delete; // always use the deleter stored inside the counter
+    static void operator delete(void* p, std::size_t size) = delete; // always use the deleter stored inside the counter
 
     // still allows inplace new
     static void* operator new(std::size_t, void* p) { return p; }

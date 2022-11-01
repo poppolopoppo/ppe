@@ -22,23 +22,31 @@
 #       define _In_z_ // windows specific
 #   endif
 
+#if USE_PPE_SIZED_DEALLOCATION
+#   define PPE_MALLOC_FOR_NEW_OPERATOR(_SIZE) ((PPE::malloc_for_new)(_SIZE))
+#   define PPE_FREE_FOR_DELETE_OPERATOR(_PTR, _SIZE) ((PPE::free_for_delete)((_PTR), (_SIZE)))
+#else
+#   define PPE_MALLOC_FOR_NEW_OPERATOR(_SIZE) ((PPE::malloc)(_SIZE))
+#   define PPE_FREE_FOR_DELETE_OPERATOR(_PTR, _SIZE) (PPE::Unused(_SIZE), (PPE::free)(_PTR))
+#endif
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_NEW_API PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new(size_t size) {
-    return (PPE::malloc)(size);
+    return PPE_MALLOC_FOR_NEW_OPERATOR(size);
 }
 //----------------------------------------------------------------------------
 PPE_NEW_API PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new(size_t size, std::nothrow_t const&) noexcept {
-    return (PPE::malloc)(size);
+    return PPE_MALLOC_FOR_NEW_OPERATOR(size);
 }
 //----------------------------------------------------------------------------
 PPE_NEW_API PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size) {
-    return (PPE::malloc)(size);
+    return PPE_MALLOC_FOR_NEW_OPERATOR(size);
 }
 //----------------------------------------------------------------------------
 PPE_NEW_API PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size, std::nothrow_t const&) noexcept {
-    return (PPE::malloc)(size);
+    return PPE_MALLOC_FOR_NEW_OPERATOR(size);
 }
 //----------------------------------------------------------------------------
 PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block) noexcept {
@@ -57,13 +65,68 @@ PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::nothrow_t
     (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, size_t/* size */) noexcept {
-    (PPE::free)(block);
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// C++143 adds sized overloads for user-defined delete
+// NOTE: SHOULD BE FUNCTIONALLY EQUIVALENT, NON-SIZED OVERLOADS MAY STILL BE CALLED
+#if PPE_HAS_CXX14
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, size_t size) noexcept {
+    PPE_FREE_FOR_DELETE_OPERATOR(block, size);
 }
 //----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, size_t/* size */) noexcept {
-    (PPE::free)(block);
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, size_t size) noexcept {
+    PPE_FREE_FOR_DELETE_OPERATOR(block, size);
 }
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, size_t size, std::nothrow_t const&) noexcept {
+    PPE_FREE_FOR_DELETE_OPERATOR(block, size);
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, size_t size, std::nothrow_t const&) noexcept {
+    PPE_FREE_FOR_DELETE_OPERATOR(block, size);
+}
+//----------------------------------------------------------------------------
+#endif //!PPE_HAS_CXX14
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// C++17 adds aligned overloads for user-defined new/delete
+#if PPE_HAS_CXX17
+//----------------------------------------------------------------------------
+PPE_NEW_API PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new(size_t size, std::align_val_t al) {
+    return (PPE::aligned_malloc)(size, static_cast<size_t>(al));
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size, std::align_val_t al) {
+    return (PPE::aligned_malloc)(size, static_cast<size_t>(al));
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, std::align_val_t) noexcept {
+    (PPE::aligned_free)(block);
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::align_val_t) noexcept {
+    (PPE::aligned_free)(block);
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, std::size_t, std::align_val_t) noexcept {
+    (PPE::aligned_free)(block);
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::size_t, std::align_val_t) noexcept {
+    (PPE::aligned_free)(block);
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, std::align_val_t, std::nothrow_t const&) noexcept {
+    (PPE::aligned_free)(block);
+}
+//----------------------------------------------------------------------------
+PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::align_val_t, std::nothrow_t const&) noexcept {
+    (PPE::aligned_free)(block);
+}
+//----------------------------------------------------------------------------
+#endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -111,45 +174,6 @@ PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](
 }
 //----------------------------------------------------------------------------
 #endif //!defined(_DEBUG) or defined(_CRTDBG_MAP_ALLOC)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// C++17 adds new overloads for user-defined new/delete overloads
-#if PPE_HAS_CXX17
-//----------------------------------------------------------------------------
-PPE_NEW_API PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new(size_t size, std::align_val_t al) {
-    return (PPE::aligned_malloc)(size, static_cast<size_t>(al));
-}
-//----------------------------------------------------------------------------
-PPE_NEW_API PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size, std::align_val_t al) {
-    return (PPE::aligned_malloc)(size, static_cast<size_t>(al));
-}
-//----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, std::align_val_t) noexcept {
-    (PPE::aligned_free)(block);
-}
-//----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::align_val_t) noexcept {
-    (PPE::aligned_free)(block);
-}
-//----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, std::size_t, std::align_val_t) noexcept {
-    (PPE::aligned_free)(block);
-}
-//----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::size_t, std::align_val_t) noexcept {
-    (PPE::aligned_free)(block);
-}
-//----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete(void* block, std::align_val_t, std::nothrow_t const&) noexcept {
-    (PPE::aligned_free)(block);
-}
-//----------------------------------------------------------------------------
-PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::align_val_t, std::nothrow_t const&) noexcept {
-    (PPE::aligned_free)(block);
-}
-//----------------------------------------------------------------------------
-#endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

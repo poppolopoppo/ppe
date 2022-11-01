@@ -83,7 +83,7 @@ public: // override new/delete operators for memory tracking
     static void* operator new(std::size_t) = delete;
     static void* operator new[](std::size_t) = delete;
 
-    static void operator delete(void* p);
+    static void operator delete(void* p, std::size_t size);
 
     // provide memory tracking, don't support custom allocator (see FWeakRefCountable for that)
     template <typename T, typename... _Args>

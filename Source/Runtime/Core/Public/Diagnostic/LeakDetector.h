@@ -14,6 +14,7 @@
 
 #include "Container/CompressedRadixTrie.h"
 #include "Container/HashMap.h"
+#include "Container/Stack.h"
 #include "Container/Vector.h"
 #include "Diagnostic/Callstack.h"
 #include "Diagnostic/CurrentProcess.h"
@@ -24,6 +25,7 @@
 #include "IO/FileStream.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StreamProvider.h"
+#include "Maths/RandomGenerator.h"
 #include "Memory/HashFunctions.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
@@ -84,25 +86,30 @@ public:
             FCallstack::Capture(PPE::MakeView(Frames), nullptr, FramesToSkip, MaxDepth);
         }
 
-        void Decode(FDecodedCallstack* decoded) const {
+        TMemoryView<void* const> MakeView() const {
             size_t depth = 0;
             for (void* frame : Frames) {
                 if (nullptr == frame) break;
                 depth++;
             }
 
-            const auto frames = MakeConstView(Frames).CutBefore(depth);
-            Verify(FCallstack::Decode(decoded, 0, frames));
+            return MakeConstView(Frames).CutBefore(depth);
+        }
+
+        void Decode(FDecodedCallstack* decoded) const {
+            Verify(FCallstack::Decode(decoded, 0, MakeView()));
         }
 
         FCallstackFingerprint MakeFingerprint() const {
-            auto h = Fingerprint128(MakeConstView(Frames));
+            auto frames = MakeView();
+            const FCallstackFingerprint h = hash_128(frames.data(), frames.SizeInBytes());
             Assert(EmptyKey != h);
             return h;
         }
     };
 
     struct FCallstackBlocks {
+        TFixedSizeStack<FRawMemory, 3> Samples;
         u32 CallstackUID;
         u32 NumAllocs;
         u32 MinSizeInBytes;
@@ -118,12 +125,22 @@ public:
             , TotalSizeInBytes(0)
         {}
 
-        void Add(const FBlockHeader& alloc) {
-            Assert(alloc.CallstackUID == CallstackUID);
+        void Add(FRandomGenerator& rng, void* ptr, const FBlockHeader& alloc) NOEXCEPT {
+            Assert_NoAssume(alloc.CallstackUID == CallstackUID);
+
             NumAllocs++;
             MinSizeInBytes = Min(MinSizeInBytes, alloc.SizeInBytes);
             MaxSizeInBytes = Max(MaxSizeInBytes, alloc.SizeInBytes);
             TotalSizeInBytes += alloc.SizeInBytes;
+
+            const u32 i = rng.NextU32(NumAllocs);
+            if (i < Samples.capacity()) {
+                //  reservoir sampling
+                if (Samples.full())
+                    Samples[i] = { static_cast<u8*>(ptr), alloc.SizeInBytes };
+                else
+                    Samples.Push(static_cast<u8*>(ptr), alloc.SizeInBytes);
+            }
         }
     };
 
@@ -135,12 +152,13 @@ public:
     };
 
     struct FLeakReport {
+        FRandomGenerator Rng;
+        VECTOR(LeakDetector, FCallstackBlocks) Callstacks;
         EReportMode Mode;
         u32 NumAllocs;
         u32 MinSizeInBytes;
         u32 MaxSizeInBytes;
         u32 TotalSizeInBytes;
-        VECTOR(LeakDetector, FCallstackBlocks) Callstacks;
 
         explicit FLeakReport(EReportMode mode)
             : Mode(mode)
@@ -268,7 +286,7 @@ public:
 
                     FCallstackBlocks& callstack = report->Callstacks[it.first->second];
                     Assert(callstack.CallstackUID == alloc.CallstackUID);
-                    callstack.Add(alloc);
+                    callstack.Add(report->Rng, ptr, alloc);
 
                     Unused(ptr); // #TODO log pointers ?
                 }
@@ -299,8 +317,8 @@ public:
             Fmt::SizeInBytes(report.MinSizeInBytes),
             Fmt::SizeInBytes(report.MaxSizeInBytes),
             report.Mode == ReportAllBlocks
-                ? "all blocks" : (report.Mode == ReportOnlyNonDeleters
-                    ? "only non deleters" : "all leaks") );
+                ? L"all blocks" : (report.Mode == ReportOnlyNonDeleters
+                    ? L"only non deleters" : L"all leaks") );
 
         FCallstackHeader callstackHeader;
         FCallstackData callstackData;
@@ -310,14 +328,15 @@ public:
 
             callstackData.Decode(&decodedCallstack);
 
-            LOG(Leaks, Error, L"{0} leaking blocks, total {1} [{2}, {3}], known trimmers = {4:a}, known deleters = {5:a}\n{6}",
+            LOG(Leaks, Error, L"{0} leaking blocks, total {1} [{2}, {3}], known trimmers = {4:a}, known deleters = {5:a}\n{6}\n{7}",
                 Fmt::CountOfElements(callstack.NumAllocs),
                 Fmt::SizeInBytes(callstack.TotalSizeInBytes),
                 Fmt::SizeInBytes(callstack.MinSizeInBytes),
                 Fmt::SizeInBytes(callstack.MaxSizeInBytes),
                 (callstackHeader.KnownTrimmer != 0),
                 (callstackHeader.KnownDeleter != 0),
-                decodedCallstack );
+                decodedCallstack,
+                Fmt::Join(callstack.Samples.MakeView().Map([](auto x) { return Fmt::HexDump(x); }), Fmt::Eol));
         }
 
         FLUSH_LOG();
@@ -391,7 +410,7 @@ private:
                 forrange(b, 0, NumBuckets) {
                     Buckets[b].Foreach([&foreach, b](uintptr_t key, uintptr_t value) {
                         foreach((void*)(key | (b * ALLOCATION_BOUNDARY)), FBlockHeader::Unpack(value));
-                        });
+                    });
                 }
             }
         }
@@ -407,7 +426,7 @@ private:
 
         FBlockTracker& PtrToTracker(void* ptr) {
             Assert(ptr);
-            Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, ptr));
+            Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, ptr));
             return Trackers[hash_ptr(ptr) % NumTrackers];
         }
 
@@ -417,7 +436,7 @@ private:
         }
 
         FBlockHeader Fetch(void* ptr) {
-            Assert(TotalAllocs);
+            Assert_NoAssume(TotalAllocs);
             return PtrToTracker(ptr).Fetch(ptr);
         }
 
@@ -498,14 +517,14 @@ private:
         }
 
         void OpenStream() {
-            Assert(FPlatformLowLevelIO::InvalidHandle == FileHandle);
+            Assert_NoAssume(FPlatformLowLevelIO::InvalidHandle == FileHandle);
 
             const FWString fname = FPlatformFile::MakeTemporaryFile(L"LeakDetector", L".bin");
             FileHandle = FPlatformLowLevelIO::Open(fname.data(), EOpenPolicy::ReadWritable, EAccessPolicy::Temporary | EAccessPolicy::Truncate_Binary);
         }
 
         void Flush() {
-            Assert(FPlatformLowLevelIO::InvalidHandle != FileHandle);
+            Assert_NoAssume(FPlatformLowLevelIO::InvalidHandle != FileHandle);
 
             const FAtomicSpinLock::FScope scopeLock(Barrier);
 
@@ -557,28 +576,30 @@ private:
 
         u32 FindOrAdd(const FCallstackData& callstack) {
             const FCallstackFingerprint fingerprint = callstack.MakeFingerprint();
+            const hash_t h = hash_uint(fingerprint);
 
             // first search without locking
             u32 uid = u32(-1);
             forrange(i, 0, HashTableCapacity) {
-                uid = checked_cast<u32>(((fingerprint.hi ^ fingerprint.lo) + i) & HashTableMask);
+                uid = checked_cast<u32>((h + i) & HashTableMask);
                 const FCallstackFingerprint& key = HashKeys[uid];
-                if ((key == EmptyKey) | (key == fingerprint))
+                if ((key == EmptyKey) || (key == fingerprint))
                     break;
             }
 
             Assert(uid < HashTableCapacity);
 
             // if absent, take the lock and insert
-            return (Unlikely(fingerprint != HashKeys[uid])
-                ? AddIFN_Locked(fingerprint, callstack)
-                : uid );
+            if (Unlikely(fingerprint != HashKeys[uid]))
+                uid = AddIFN_Locked(fingerprint, callstack, h);
+
+            return uid;
         }
 
     private:
         NO_INLINE void Flush_AssumeLocked() {
-            Assert(FPlatformLowLevelIO::InvalidHandle != FileHandle);
-            Assert(checked_cast<u64>(FPlatformLowLevelIO::Tell(FileHandle)) == NativeOffset);
+            Assert_NoAssume(FPlatformLowLevelIO::InvalidHandle != FileHandle);
+            Assert_NoAssume(checked_cast<u64>(FPlatformLowLevelIO::Tell(FileHandle)) == NativeOffset);
 
             if (BufferOffset) {
                 Verify(FPlatformLowLevelIO::Write(FileHandle, WriteBuffer, BufferOffset * sizeof(WriteBuffer[0])));
@@ -602,12 +623,12 @@ private:
             return streamOffset;
         }
 
-        NO_INLINE u32 AddIFN_Locked(FCallstackFingerprint fingerprint, const FCallstackData& callstack) {
+        NO_INLINE u32 AddIFN_Locked(FCallstackFingerprint fingerprint, const FCallstackData& callstack, hash_t h) {
             const FAtomicSpinLock::FScope scopeLock(Barrier);
 
             u32 uid = u32(-1);
             forrange(i, 0, HashTableCapacity) {
-                uid = checked_cast<u32>(((fingerprint.hi ^ fingerprint.lo) + i) & HashTableMask);
+                uid = checked_cast<u32>((h + i) & HashTableMask);
                 const FCallstackFingerprint & key = HashKeys[uid];
                 if (Likely(key == EmptyKey))
                     break;

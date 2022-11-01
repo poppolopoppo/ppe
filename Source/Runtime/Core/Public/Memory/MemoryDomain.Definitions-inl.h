@@ -1,9 +1,6 @@
 #ifndef MEMORYDOMAIN_IMPL
 #   define MEMORYDOMAIN_IMPL(_Name, _Parent)
 #endif
-#ifndef MEMORYDOMAIN_DETAILLED_IMPL
-#   define MEMORYDOMAIN_DETAILLED_IMPL(_Name, _Parent) MEMORYDOMAIN_IMPL(_Name, _Parent)
-#endif
 #ifndef MEMORYDOMAIN_GROUP_IMPL
 #   define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) MEMORYDOMAIN_IMPL(_Name, _Parent)
 #endif
@@ -22,7 +19,7 @@ MEMORYDOMAIN_IMPL(DeviceProtected,                      GpuMemory)
 MEMORYDOMAIN_IMPL(DeviceUnknown,                        GpuMemory)
 //------------------------------------------------------------------------------
 // Reserved memory
-//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------FSys
 MEMORYDOMAIN_GROUP_IMPL(Bookkeeping,                    ReservedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MipmapCache,              Bookkeeping)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(SmallPoolInfo,            Bookkeeping)
@@ -34,7 +31,8 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Heaps,                    Malloc)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MediumHeap,               Heaps)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(LargeHeap,                Heaps)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VeryLargeBlocks,          Malloc)
-MEMORYDOMAIN_IMPL(SystemPage,                           ReservedMemory)
+MEMORYDOMAIN_IMPL(PageAllocator,                        ReservedMemory)
+MEMORYDOMAIN_IMPL(SystemMalloc,                         ReservedMemory)
 //------------------------------------------------------------------------------
 // Used memory
 //------------------------------------------------------------------------------
@@ -164,11 +162,6 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Survey,                   Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(UI,                       Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Window,                   Application)
 //------------------------------------------------------------------------------
-// Pooled memory
-//------------------------------------------------------------------------------
-MEMORYDOMAIN_COLLAPSABLE_IMPL(AtomicPool,               PooledMemory)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(MemoryPool,               PooledMemory)
-//------------------------------------------------------------------------------
 // External memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(External,                       UsedMemory)
@@ -182,6 +175,11 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(VkObject,                 Vulkan)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VkCache,                  Vulkan)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VkDevice,                 Vulkan)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VkInstance,               Vulkan)
+//------------------------------------------------------------------------------
+// Pooled memory
+//------------------------------------------------------------------------------
+MEMORYDOMAIN_COLLAPSABLE_IMPL(AtomicPool,               PooledMemory)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(MemoryPool,               PooledMemory)
 //------------------------------------------------------------------------------
 // Unaccounted memory
 //------------------------------------------------------------------------------

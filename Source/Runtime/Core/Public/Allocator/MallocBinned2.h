@@ -32,11 +32,15 @@ public:
         return p;
     }
 
-    static void     ReleaseCacheMemory();
-    static void     ReleasePendingBlocks();
+    static void*    MallocForNew(size_t size);
+    static void*    ReallocForNew(void* const ptr, size_t size, size_t old);
+    static void     FreeForDelete(void* const ptr, size_t size);
 
     static size_t   RegionSize(void* ptr) NOEXCEPT;
     static size_t   SnapSize(size_t size) NOEXCEPT;
+
+    static void     ReleaseCacheMemory();
+    static void     ReleasePendingBlocks();
 
 #if !USE_PPE_FINAL_RELEASE
     static void     DumpMemoryInfo(FWTextWriter& oss);

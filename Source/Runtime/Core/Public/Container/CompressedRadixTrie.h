@@ -3,7 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
-#include "Allocator/SystemPageAllocator.h"
+#include "Allocator/PageAllocator.h"
 #include "HAL/PlatformMaths.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
@@ -20,9 +20,9 @@ namespace PPE {
 //  - Memory allocated will only released when cleared/destroyed
 // You shouldn't be using as a regular container, as it's more intended for low level
 //
-class FCompressedRadixTrie : FSystemPageAllocator {
+class FCompressedRadixTrie : FPageAllocator {
 public:
-    using allocator_traits = TAllocatorTraits<FSystemPageAllocator>;
+    using allocator_traits = TAllocatorTraits<FPageAllocator>;
 
     struct ALIGN(16) FNode {
         uintptr_t Keys[2];

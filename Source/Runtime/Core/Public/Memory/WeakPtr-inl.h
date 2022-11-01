@@ -46,15 +46,15 @@ template <typename T, typename... _Args>
 TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
     return FWeakRefCountable::NewRefImpl<T>(
         tracking_malloc(trackingData, sizeof(T)),
-        &tracking_free,
+        [](void* ptr) NOEXCEPT{ tracking_free_for_delete(ptr, sizeof(T)); },
         std::forward<_Args>(args)... );
 }
 #else
 template <typename T, typename... _Args>
 TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
     return FWeakRefCountable::NewRefImpl<T>(
-        PPE::malloc(sizeof(T)),
-        [](void* p) NOEXCEPT { PPE::free(p); },
+        PPE::malloc_for_new(sizeof(T)),
+        [](void* ptr) NOEXCEPT{ free_for_delete(ptr, sizeof(T)); },
         std::forward<_Args>(args)... );
 }
 #endif

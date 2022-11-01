@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core_fwd.h"
 
@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FSystemPageAllocator : public FGenericAllocator {
+class FPageAllocator : public FGenericAllocator {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
@@ -20,18 +20,19 @@ public:
     STATIC_CONST_INTEGRAL(size_t, Alignment, PAGE_SIZE);
     STATIC_CONST_INTEGRAL(size_t, PageSize, PAGE_SIZE);
 
-    FSystemPageAllocator() = default;
+    FPageAllocator() = default;
 
-    size_t MaxSize() const NOEXCEPT {
+    NODISCARD static size_t MaxSize() NOEXCEPT {
         return PageSize;
     }
 
-    size_t SnapSize(size_t s) const NOEXCEPT {
+    NODISCARD size_t SnapSize(size_t s) const NOEXCEPT {
         return Meta::RoundToNextPow2(Alignment, s);
     }
 
-    FAllocatorBlock Allocate(size_t s);
-    void Deallocate(FAllocatorBlock b);
+    NODISCARD PPE_CORE_API FAllocatorBlock Allocate(size_t s);
+    PPE_CORE_API void Deallocate(FAllocatorBlock b);
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

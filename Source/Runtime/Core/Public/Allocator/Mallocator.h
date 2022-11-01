@@ -85,15 +85,26 @@ public:
 
     FAllocatorBlock Allocate(size_t s) const {
         STATIC_ASSERT(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, Alignment));
-        return FAllocatorBlock{ PPE::malloc<_Alignment>(s), s };
+        void* result;
+        IF_CONSTEXPR(Meta::need_alignment_v<_Alignment>)
+            result = PPE::aligned_malloc(s, Alignment);
+        else
+            result = PPE::malloc_for_new(s);
+        return FAllocatorBlock{ result, s };
     }
 
     void Deallocate(FAllocatorBlock b) const {
-        PPE::free<_Alignment>(b.Data);
+        IF_CONSTEXPR(Meta::need_alignment_v<_Alignment>)
+            PPE::aligned_free(b.Data);
+        else
+            PPE::free_for_delete(b.Data, b.SizeInBytes);
     }
 
     void Reallocate(FAllocatorBlock& b, size_t s) const {
-        b.Data = PPE::realloc<_Alignment>(b.Data, s);
+        IF_CONSTEXPR(Meta::need_alignment_v<_Alignment>)
+            b.Data = PPE::aligned_realloc(b.Data, s, _Alignment);
+        else
+            b.Data = PPE::realloc_for_new(b.Data, s, b.SizeInBytes);
         b.SizeInBytes = s;
     }
 

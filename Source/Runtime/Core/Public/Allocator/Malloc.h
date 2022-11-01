@@ -8,6 +8,11 @@
 #   include "IO/TextWriter_fwd.h"
 #endif
 
+// C++ Sized Deallocation
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3536.html
+// #TODO: ENABLE WHEN ALL DELETE() CALLS WILL USE SIZED OVERLOADS
+#define USE_PPE_SIZED_DEALLOCATION (PPE_HAS_CXX14 && 0)
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -36,6 +41,15 @@ void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment);
 PPE_CORE_API NOALIAS RESTRICT
 void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment);
 //----------------------------------------------------------------------------
+PPE_CORE_API NOALIAS RESTRICT PPE_DECLSPEC_ALLOCATOR()
+void*   (malloc_for_new)(size_t size);
+//----------------------------------------------------------------------------
+PPE_CORE_API NOALIAS RESTRICT
+void*   (realloc_for_new)(void *ptr, size_t size, size_t old);
+//----------------------------------------------------------------------------
+PPE_CORE_API NOALIAS
+void    (free_for_delete)(void *ptr, size_t size);
+//----------------------------------------------------------------------------
 PPE_CORE_API NOALIAS
 void    (malloc_release_cache_memory)();
 //----------------------------------------------------------------------------
@@ -47,72 +61,8 @@ size_t  (malloc_snap_size)(size_t size) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _Alignment>
-using unaligned_alloc_t = Meta::TEnableIf<not Meta::need_alignment_v<_Alignment>>;
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS RESTRICT
-void* (malloc)(size_t size, unaligned_alloc_t<_Alignment>* = 0) {
-    void* const p = (PPE::malloc)(size);
-    Assert(Meta::IsAlignedPow2(_Alignment, p));
-    return p;
-}
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS
-void (free)(void *ptr, unaligned_alloc_t<_Alignment>* = 0) {
-    Assert(Meta::IsAlignedPow2(_Alignment, ptr));
-    (PPE::free)(ptr);
-}
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS RESTRICT
-void* (calloc)(size_t nmemb, size_t size, unaligned_alloc_t<_Alignment>* = 0) {
-    void* const p = (PPE::calloc)(nmemb, size);
-    Assert(Meta::IsAlignedPow2(_Alignment, p));
-    return p;
-}
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS RESTRICT
-void* (realloc)(void *ptr, size_t size, unaligned_alloc_t<_Alignment>* = 0) {
-    void* const p = (PPE::realloc)(ptr, size);
-    Assert(Meta::IsAlignedPow2(_Alignment, p));
-    return p;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-using aligned_alloc_t = Meta::TEnableIf<Meta::need_alignment_v<_Alignment>>;
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS RESTRICT
-void* (malloc)(size_t size, aligned_alloc_t<_Alignment>* = 0) {
-    return (PPE::aligned_malloc)(size, _Alignment);
-}
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS
-void (free)(void *ptr, aligned_alloc_t<_Alignment>* = 0) {
-    (PPE::aligned_free)(ptr);
-}
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS RESTRICT
-void* (calloc)(size_t nmemb, size_t size, aligned_alloc_t<_Alignment>* = 0) {
-    return (PPE::aligned_calloc)(nmemb, size, _Alignment);
-}
-//----------------------------------------------------------------------------
-template <size_t _Alignment>
-FORCE_INLINE NOALIAS RESTRICT
-void* (realloc)(void *ptr, size_t size, aligned_alloc_t<_Alignment>* = 0) {
-    return (PPE::aligned_realloc)(ptr, size, _Alignment);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
+class FMemoryTracking;
 template <typename T>
 class TMemoryView;
 struct FMallocDebug {
@@ -121,11 +71,11 @@ public: // leak detector
     static PPE_CORE_API void ShutdownLeakDetector();
     static PPE_CORE_API bool SetLeakDetectorWhiteListed(bool ignoreleaks);
     static PPE_CORE_API void DumpMemoryLeaks(bool onlyNonDeleters = false);
+    static PPE_CORE_API size_t RegionSize(void* ptr);
 public: // statistics
     static PPE_CORE_API bool FetchAllocationHistogram(
-        TMemoryView<const size_t>* classes,
-        TMemoryView<const i64>* allocations,
-        TMemoryView<const i64>* totalBytes );
+        TMemoryView<const u32>* sizeClasses,
+        TMemoryView<const FMemoryTracking>* bins );
     static PPE_CORE_API void DumpMemoryInfo(FWTextWriter& oss);
 };
 struct FLeakDetectorWhiteListScope {

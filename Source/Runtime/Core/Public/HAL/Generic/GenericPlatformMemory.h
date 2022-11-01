@@ -64,6 +64,21 @@ public: // must be defined for every platform
     static bool PageProtect(void* ptr, size_t sizeInBytes, bool read, bool write) = delete;
 
     //------------------------------------------------------------------------
+    // system allocator
+
+    NODISCARD static void* SystemMalloc(size_t s);
+    NODISCARD static void* SystemRealloc(void* p, size_t s);
+    static void SystemFree(void* p);
+
+    NODISCARD static void* SystemAlignedMalloc(size_t s, size_t boundary);
+    NODISCARD static void* SystemAlignedRealloc(void* p, size_t s, size_t boundary);
+    static void SystemAlignedFree(void* p, size_t boundary);
+
+#if !USE_PPE_FINAL_RELEASE
+    static size_t SystemAlignedRegionSize(void* p, size_t boundary);
+#endif
+
+    //------------------------------------------------------------------------
     // memory block helpers
 
     static bool Memaliases(const void* vspace, size_t sz, const void* ptr) {

@@ -30,6 +30,7 @@
 #include <random>
 
 #include "Allocator/SlabAllocator.h"
+#include "Allocator/SystemAllocator.h"
 #include "Container/Map.h"
 
 #define USE_TESTALLOCATOR_MEMSET (0) // we don't want to benchmark memset() performance
@@ -416,6 +417,7 @@ static NO_INLINE void Test_BitTree_Impl_(FWStringView name, TMemoryView<const u3
             ++available;
         }
 
+        Unused(available);
         AssertRelease_NoAssume(available == capacity);
         AssertRelease_NoAssume(tree.Full());
         AssertRelease_NoAssume(tree.CountOnes(capacity) == capacity);
@@ -963,7 +965,7 @@ void Test_Allocators() {
 
     ReleaseMemoryInModules();
 
-    Test_Allocator_(L"FStdMallocator", FStdMallocator{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+    Test_Allocator_(L"FSystemMallocator", FSystemMallocator{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
 
     ReleaseMemoryInModules();
 }

@@ -30,9 +30,9 @@ public:
     typedef typename storage_type::allocator_type allocator_type;
     typedef typename storage_type::allocator_traits allocator_traits;
 
-    TMemoryStream();
-    explicit TMemoryStream(allocator_type&& alloc);
-    explicit TMemoryStream(storage_type&& storage);
+    TMemoryStream() = default;
+    explicit TMemoryStream(allocator_type&& alloc) NOEXCEPT;
+    explicit TMemoryStream(storage_type&& storage) NOEXCEPT;
     TMemoryStream(storage_type&& storage, std::streamsize size);
 
     TMemoryStream(const TMemoryStream&) = delete;
@@ -134,33 +134,26 @@ public: // IBufferedStreamWriter
     virtual void Flush() override final {}
 
 private:
-    size_t _size;
-
-    size_t _offsetI;
-    size_t _offsetO;
-
     storage_type _storage;
+
+    size_t _size{ 0 };
+
+    size_t _offsetI{ 0 };
+    size_t _offsetO{ 0 };
 };
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-TMemoryStream<_Allocator>::TMemoryStream()
-    : _size(0), _offsetI(0), _offsetO(0) {}
+TMemoryStream<_Allocator>::TMemoryStream(allocator_type&& alloc) NOEXCEPT
+    : _storage(std::move(alloc)) {}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-TMemoryStream<_Allocator>::TMemoryStream(allocator_type&& alloc)
-    : _size(0), _offsetI(0), _offsetO(0)
-    , _storage(std::move(alloc)) {}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage)
-    : _size(0), _offsetI(0), _offsetO(0)
-    , _storage(std::move(storage)) {}
+TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage) NOEXCEPT
+    : _storage(std::move(storage)) {}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage, std::streamsize size)
-    : _size(checked_cast<size_t>(size)), _offsetI(0), _offsetO(0)
-    , _storage(std::move(storage)) {
-    Assert(_size <= _storage.size());
+    : _storage(std::move(storage)), _size(checked_cast<size_t>(size)) {
+    Assert_NoAssume(_size <= _storage.size());
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>

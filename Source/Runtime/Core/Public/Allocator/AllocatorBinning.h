@@ -35,7 +35,7 @@ struct FAllocatorBinning {
         return IndexFromSize(checked_cast<u16>(blockSize));
     }
     static u32 IndexFromSize(u16 blockSize) NOEXCEPT {
-#ifdef __clang__ // codegen should out-perform the explicit SSE version bellow
+#ifdef __clang__ // code-gen should out-perform the explicit SSE version bellow
         return IndexFromSizeConst(blockSize);
 
 #else
@@ -63,7 +63,7 @@ struct FAllocatorBinning {
     }
 
     static u32 BoundSizeToBins(u32 sizeInBytes) NOEXCEPT {
-        Assert(sizeInBytes <= MaxBinSize);
+        Assert_NoAssume(sizeInBytes <= MaxBinSize);
         return IndexToBlockSize(IndexFromSize(u16(sizeInBytes)));
     }
     static CONSTEXPR u32 LowestBoundIndex(size_t sizeInBytes) NOEXCEPT {

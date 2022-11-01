@@ -24,8 +24,27 @@ namespace {
 THREAD_LOCAL static FMemoryTracking* GThreadTrackingDataPtr_{ nullptr };
 //----------------------------------------------------------------------------
 static bool CONSTF ShouldTrackRecursively_(const FMemoryTracking& trackingData) NOEXCEPT {
-    return (!!trackingData.Parent() && (FMemoryTracking::Recursive == trackingData.Mode()));
+    return !!trackingData.Parent();
 }
+//----------------------------------------------------------------------------
+#if USE_PPE_ASSERT || USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
+static bool CONSTF ShouldIgnoreMemoryChecks_(const FMemoryTracking& domain) {
+    // Detached domains are ignored, also ignores root domains by side-effect (but we want to warn on leaves anyway)
+    if (domain.Parent() == nullptr)
+        return true;
+    // Unaccounted isn't in the engine ownership, so we skip the warning for small allocs in this domain:
+    if (&MEMORYDOMAIN_TRACKING_DATA(UnaccountedMalloc) == &domain)
+        return true;
+    // #TODO: WeakRef is a special case and should be optimized, but right now we ignore the warnings from this domain:
+    if (&MEMORYDOMAIN_TRACKING_DATA(WeakRef) == &domain)
+        return true;
+    // External memory is also ignored
+    if (domain.IsChildOf(MEMORYDOMAIN_TRACKING_DATA(External)))
+        return true;
+
+    return false;
+}
+#endif
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 static bool CONSTF PPE_DEBUG_SECTION CheckMemoryPredicates2_(const FMemoryTracking::FCounters& user, const FMemoryTracking::FCounters& system) NOEXCEPT {
@@ -53,14 +72,7 @@ STATIC_CONST_INTEGRAL(size_t, SmallAllocationCountWarning, 2000);
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 15);
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationSizeThreshold, CODE3264(16_b, 32_b));
 static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTracking& domain, size_t totalAllocs, size_t smallAllocs) {
-    // Unaccounted isn't in the engine ownership, so we skip the warning for small allocs in this domain:
-    if (&MEMORYDOMAIN_TRACKING_DATA(UnaccountedMalloc) == &domain)
-        return;
-    // #TODO: WeakRef is a special case and should be optimized, but right now we ignore the warnings from this domain:
-    if (&MEMORYDOMAIN_TRACKING_DATA(WeakRef) == &domain)
-        return;
-    // External memory is also ignored
-    if (domain.IsChildOf(MEMORYDOMAIN_TRACKING_DATA(External)))
+    if (ShouldIgnoreMemoryChecks_(domain))
         return;
 
     LOG(MemoryTracking, Warning,
@@ -68,7 +80,7 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
         MakeCStringView(domain.Name()),
         Fmt::CountOfElements(smallAllocs),
         Fmt::CountOfElements(totalAllocs),
-        Fmt::Percentage(smallAllocs, totalAllocs) );
+        Fmt::Percentage(smallAllocs, totalAllocs));
 
     if (FCurrentProcess::StartedWithDebugger()) {
         static FCriticalSection GBarrier;
@@ -135,10 +147,9 @@ FMemoryTracking* FMemoryTracking::SetThreadTrackingData(FMemoryTracking* trackin
 //----------------------------------------------------------------------------
 FMemoryTracking::FMemoryTracking(
     const char* optionalName /*= "unknown"*/,
-    FMemoryTracking* optionalParent /*= nullptr*/,
-    EMode mode/* = Recursive */) NOEXCEPT
+    FMemoryTracking* optionalParent /*= nullptr*/) NOEXCEPT
 :   Node{ nullptr, nullptr } {
-    Reparent(optionalName, optionalParent, mode);
+    Reparent(optionalName, optionalParent);
 }
 //----------------------------------------------------------------------------
 bool FMemoryTracking::IsChildOf(const FMemoryTracking& other) const {
@@ -156,12 +167,15 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize, const FMemory
     Assert_NoAssume(userSize <= systemSize);
     Unused(child);
 
-#if not USE_PPE_MEMORY_DEBUGGING // this is a performance consideration
-    Assert_NoAssume(systemSize <= ALLOCATION_BOUNDARY || userSize * 2 > systemSize);
-#endif
-
     _user.Allocate(userSize);
     _system.Allocate(systemSize);
+
+#if not USE_PPE_MEMORY_DEBUGGING
+    AssertMessage_NoAssume(
+        L"more than 50% of the allocated space is wasted",
+        userSize <= ALLOCATION_BOUNDARY || userSize * 2 >= systemSize ||
+        ShouldIgnoreMemoryChecks_(*this) );
+#endif
 
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
     if (Unlikely((!child) & (systemSize <= SmallAllocationSizeThreshold) & (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
@@ -405,9 +419,8 @@ void FMemoryTracking::FCounters::ResetAt(const FSnapshot& snapshot) {
 //----------------------------------------------------------------------------
 FAutoRegisterMemoryTracking::FAutoRegisterMemoryTracking(
     const char* name,
-    FMemoryTracking* parent,
-    EMode mode ) NOEXCEPT
-:   FMemoryTracking(name, parent, mode) {
+    FMemoryTracking* parent) NOEXCEPT
+:   FMemoryTracking(name, parent) {
     ONLY_IF_MEMORYDOMAINS(RegisterTrackingData(this));
 }
 //----------------------------------------------------------------------------
