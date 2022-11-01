@@ -15,13 +15,15 @@ FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout() NOEXCEPT = default;
 //----------------------------------------------------------------------------
 FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(
     FBindings* pBindings,
+    FOptionalFlags* pOptionalFlags,
     const FVulkanDevice& device,
-    const FSharedUniformMap& uniforms ) {
+    FSharedUniformMap&& uniforms ) {
     Assert(pBindings);
+    Assert(pOptionalFlags);
     Assert(uniforms);
 
     const auto exclusivePool = _pool.LockExclusive();
-    exclusivePool->Uniforms = uniforms;
+    exclusivePool->Uniforms = std::move(uniforms);
 
     const bool enableDescriptorIndexing = device.Enabled().DescriptorIndexing;
 
@@ -32,13 +34,33 @@ FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(
     pBindings->clear();
     pBindings->reserve(exclusivePool->Uniforms->size());
 
+    pOptionalFlags->clear();
+    pOptionalFlags->reserve(exclusivePool->Uniforms->size());
+
+    VkDescriptorSetLayoutCreateFlags allFlags = 0;
+
     for (const auto& it : *exclusivePool->Uniforms) {
         Assert(it.first.Valid());
         hash_combine(uniformsHash, it.first);
 
         AssertReleaseMessage(L"requires Vulkan 1.2 or VK_EXT_descriptor_indexing", enableDescriptorIndexing or it.second.ArraySize != 0);
+
+        VkDescriptorSetLayoutCreateFlags flags = 0;
+        if (it.second.ArraySize == 0) {
+            // https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDescriptorBindingFlagBits.html
+            //  indicates that descriptors in this binding that are not dynamically used need not contain valid descriptors at the time the
+            //  descriptors are consumed.A descriptor is dynamically used if any shader invocation executes an instruction that performs any
+            //  memory access using the descriptor.If a descriptor is not dynamically used, any resource referenced by the descriptor is not
+            //  considered to be referenced during command execution.
+            allFlags |= flags |= VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
+        }
+
         AddUniform_(pBindings, *exclusivePool, it.second);
+        pOptionalFlags->push_back(std::move(flags));
     }
+
+    if (not allFlags)
+        pOptionalFlags->clear_ReleaseMemory();
 
     exclusivePool->HashValue = uniformsHash;
 }
@@ -53,7 +75,10 @@ FVulkanDescriptorSetLayout::~FVulkanDescriptorSetLayout() {
     Assert_NoAssume(VK_NULL_HANDLE == _pool.LockExclusive()->Layout);
 }
 //----------------------------------------------------------------------------
-bool FVulkanDescriptorSetLayout::Construct(const FVulkanDevice& device, const TMemoryView<const VkDescriptorSetLayoutBinding>& bindings ARGS_IF_RHIDEBUG(FConstChar debugName)) {
+bool FVulkanDescriptorSetLayout::Construct(const FVulkanDevice& device,
+    const TMemoryView<const VkDescriptorSetLayoutBinding>& bindings,
+    const TMemoryView<const VkDescriptorSetLayoutCreateFlags>& optionalFlags
+    ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     const auto exclusivePool = _pool.LockExclusive();
     Assert(exclusivePool->Uniforms.valid());
     Assert_NoAssume(VK_NULL_HANDLE == exclusivePool->Layout);
@@ -64,6 +89,14 @@ bool FVulkanDescriptorSetLayout::Construct(const FVulkanDevice& device, const TM
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     info.bindingCount = checked_cast<u32>(bindings.size());
     info.pBindings = bindings.data();
+
+    VkDescriptorSetLayoutBindingFlagsCreateInfo flags{};
+    flags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+    flags.bindingCount = checked_cast<u32>(optionalFlags.size());
+    flags.pBindingFlags = optionalFlags.data();
+
+    if (not optionalFlags.empty())
+        info.pNext = &flags;
 
     VK_CHECK( device.vkCreateDescriptorSetLayout(
         device.vkDevice(),
@@ -123,7 +156,7 @@ bool FVulkanDescriptorSetLayout::AllocateDescriptorSet(FVulkanDescriptorSet* pDe
     if (_descriptorSetCache.LockExclusive()->Pop(pDescriptors))
         return true; // cache hit
 
-    return resources.DescriptorManager().AllocateDescriptorSet(pDescriptors, sharedPool->Layout);
+    return resources.DescriptorManager().AllocateDescriptorSet(pDescriptors, sharedPool->Layout ARGS_IF_RHIDEBUG(_debugName.c_str()));
 }
 //----------------------------------------------------------------------------
 void FVulkanDescriptorSetLayout::DeallocateDescriptorSet(FVulkanResourceManager& resources, const FVulkanDescriptorSet& descriptors) const {

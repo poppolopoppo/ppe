@@ -19,6 +19,7 @@ struct FVulkanDescriptorSet {
 class PPE_RHIVULKAN_API FVulkanDescriptorSetLayout final : Meta::FNonCopyable {
 public:
     using FBindings = VECTORINSITU(RHIDescriptor, VkDescriptorSetLayoutBinding, 5);
+    using FOptionalFlags = VECTORINSITU(RHIDescriptor, VkDescriptorBindingFlags, 5);
     using FDescriptorSetCache = TFixedSizeStack<FVulkanDescriptorSet, 32>;
     using FDynamicData = FPipelineResources::FDynamicData;
     using FPoolSizeArray = TFixedSizeStack<VkDescriptorPoolSize, 10>;
@@ -37,7 +38,11 @@ public:
     };
 
     FVulkanDescriptorSetLayout() NOEXCEPT;
-    FVulkanDescriptorSetLayout(FBindings* pBindings, const FVulkanDevice& device, const FSharedUniformMap& uniforms);
+    FVulkanDescriptorSetLayout(
+        FBindings* pBindings,
+        FOptionalFlags* pOptionalFlags,
+        const FVulkanDevice& device,
+        FSharedUniformMap&& uniforms);
     ~FVulkanDescriptorSetLayout();
 
     FVulkanDescriptorSetLayout(FVulkanDescriptorSetLayout&& rvalue) NOEXCEPT;
@@ -53,7 +58,11 @@ public:
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    NODISCARD bool Construct(const FVulkanDevice& device, const TMemoryView<const VkDescriptorSetLayoutBinding>& bindings ARGS_IF_RHIDEBUG(FConstChar debugName));
+    NODISCARD bool Construct(
+        const FVulkanDevice& device,
+        const TMemoryView<const VkDescriptorSetLayoutBinding>& bindings,
+        const TMemoryView<const VkDescriptorBindingFlags>& optionalFlags
+        ARGS_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     NODISCARD bool AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, FVulkanResourceManager& resources) const;
