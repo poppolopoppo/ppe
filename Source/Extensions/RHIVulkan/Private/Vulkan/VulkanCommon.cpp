@@ -9,6 +9,10 @@
 
 namespace PPE {
 namespace RHI {
+#if USE_PPE_RHITRACE
+STATIC_ASSERT(has_tie_as_tuple_v<VkAllocationCallbacks>);
+STATIC_ASSERT(has_tie_as_tuple_v<VkDescriptorBufferInfo>);
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

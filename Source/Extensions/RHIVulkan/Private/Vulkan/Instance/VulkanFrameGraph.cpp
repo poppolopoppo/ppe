@@ -111,6 +111,9 @@ void FVulkanFrameGraph::TearDown() {
 
             for (auto& vkSemaphore : q.Semaphores) {
                 if (VK_NULL_HANDLE != vkSemaphore) {
+#if USE_PPE_RHIDEBUG
+                    _device.SetObjectName(vkSemaphore, nullptr, VK_OBJECT_TYPE_SEMAPHORE);
+#endif
                     _device.vkDestroySemaphore(_device.vkDevice(), vkSemaphore, _device.vkAllocator());
                     vkSemaphore = VK_NULL_HANDLE;
                 }

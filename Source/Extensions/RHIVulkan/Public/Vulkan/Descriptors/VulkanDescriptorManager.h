@@ -24,7 +24,7 @@ public:
     NODISCARD bool Construct();
     void TearDown();
 
-    NODISCARD bool AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, VkDescriptorSetLayout layout);
+    NODISCARD bool AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, VkDescriptorSetLayout layout ARGS_IF_RHIDEBUG(FConstChar debugName));
     void DeallocateDescriptorSet(const FVulkanDescriptorSet& descriptors);
     void DeallocateDescriptorSets(TMemoryView<const FVulkanDescriptorSet> many);
 

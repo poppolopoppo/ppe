@@ -17,21 +17,25 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _Char, u32 _Uid, bool _KeepName>
 TBasicTextWriter<_Char>& WriteValue_(const TBasicStringView<_Char>& name, TBasicTextWriter<_Char>& oss, const details::TNamedId<_Uid, _KeepName>& value) {
-    oss << STRING_LITERAL(_Char, '[') << name << STRING_LITERAL(_Char, ':') << _Uid << STRING_LITERAL(_Char, ']');
+    oss << name << STRING_LITERAL(_Char, '<') << _Uid << STRING_LITERAL(_Char, ">(");
     IF_CONSTEXPR(_KeepName) oss << value.Name.Str();
-    return oss << STRING_LITERAL(_Char, '#') << value.HashValue;
+    return oss << STRING_LITERAL(_Char, ", ") << value.HashValue << STRING_LITERAL(_Char, ')');
 }
 //----------------------------------------------------------------------------
 template <typename _Char, u32 _Uid>
 TBasicTextWriter<_Char>& WriteValue_(const TBasicStringView<_Char>& name, TBasicTextWriter<_Char>& oss, const details::TResourceId<_Uid>& value) {
-    oss << STRING_LITERAL(_Char, '[') << name << STRING_LITERAL(_Char, ':') << _Uid << STRING_LITERAL(_Char, ']');
-    return oss << value.Index << STRING_LITERAL(_Char, '/') << value.InstanceID;
+    return oss << name
+        << STRING_LITERAL(_Char, '<') << _Uid << STRING_LITERAL(_Char, ">(")
+        << value.Index << STRING_LITERAL(_Char, ", ") << value.InstanceID
+        << STRING_LITERAL(_Char, ')');
 }
 //----------------------------------------------------------------------------
 template <typename _Char, u32 _Uid>
 TBasicTextWriter<_Char>& WriteValue_(const TBasicStringView<_Char>& name, TBasicTextWriter<_Char>& oss, const details::TResourceWrappedId<details::TResourceId<_Uid>>& value) {
-    oss << STRING_LITERAL(_Char, '[') << name << STRING_LITERAL(_Char, ':') << _Uid << STRING_LITERAL(_Char, ']');
-    return oss << value.Id.Index << STRING_LITERAL(_Char, '/') << value.Id.InstanceID;
+    return oss << name
+        << STRING_LITERAL(_Char, '<') << _Uid << STRING_LITERAL(_Char, ">(")
+        << value.Id.Index << STRING_LITERAL(_Char, " / ") << value.Id.InstanceID
+        << STRING_LITERAL(_Char, ')');
 }
 //----------------------------------------------------------------------------
 } //!namespace

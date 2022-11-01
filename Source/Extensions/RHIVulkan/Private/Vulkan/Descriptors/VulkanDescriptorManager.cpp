@@ -40,7 +40,7 @@ void FVulkanDescriptorManager::TearDown() {
     exclusivePools->clear();
 }
 //----------------------------------------------------------------------------
-bool FVulkanDescriptorManager::AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, VkDescriptorSetLayout layout) {
+bool FVulkanDescriptorManager::AllocateDescriptorSet(FVulkanDescriptorSet* pDescriptors, VkDescriptorSetLayout layout ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(pDescriptors);
     Assert(VK_NULL_HANDLE != layout);
 
@@ -58,6 +58,11 @@ bool FVulkanDescriptorManager::AllocateDescriptorSet(FVulkanDescriptorSet* pDesc
         info.descriptorPool = vkPool;
 
         if (_device.vkAllocateDescriptorSets(_device.vkDevice(), &info, &pDescriptors->First) == VK_SUCCESS ) {
+#if USE_PPE_RHIDEBUG
+            if (debugName)
+                _device.SetObjectName(FVulkanExternalObject{ pDescriptors->First }, debugName, VK_OBJECT_TYPE_DESCRIPTOR_SET);
+#endif
+
             Assert_NoAssume(VK_NULL_HANDLE != pDescriptors->First);
             pDescriptors->IndexInPool = checked_cast<u8>(i);
             return true;
@@ -69,8 +74,14 @@ bool FVulkanDescriptorManager::AllocateDescriptorSet(FVulkanDescriptorSet* pDesc
 
     VK_CHECK( _device.vkAllocateDescriptorSets(_device.vkDevice(), &info, &pDescriptors->First) );
 
+#if USE_PPE_RHIDEBUG
+    if (debugName)
+        _device.SetObjectName(FVulkanExternalObject{ pDescriptors->First }, debugName, VK_OBJECT_TYPE_DESCRIPTOR_SET);
+#endif
+
     Assert_NoAssume(VK_NULL_HANDLE != pDescriptors->First);
     pDescriptors->IndexInPool = checked_cast<u8>(exclusivePools->size() - 1);
+
     return true;
 }
 //----------------------------------------------------------------------------

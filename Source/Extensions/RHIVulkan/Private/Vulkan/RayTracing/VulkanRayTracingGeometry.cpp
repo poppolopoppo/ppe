@@ -171,6 +171,12 @@ void FVulkanRayTracingGeometry::TearDown(FVulkanResourceManager& resources) {
 
     if (exclusiveData->BottomLevelAS != VK_NULL_HANDLE) {
         const FVulkanDevice& device = resources.Device();
+
+#if USE_PPE_RHIDEBUG
+        if (_debugName)
+            device.SetObjectName(exclusiveData->BottomLevelAS, nullptr, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV);
+#endif
+
         device.vkDestroyAccelerationStructureNV(
             device.vkDevice(),
             exclusiveData->BottomLevelAS,

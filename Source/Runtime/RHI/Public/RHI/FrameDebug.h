@@ -125,40 +125,34 @@ struct FFrameStatistics {
 #if USE_PPE_RHIDEBUG || USE_PPE_RHITASKNAME
 struct FDebugColorScheme {
     FLinearColor
-        RenderPass{ FLinearColor::OrangeRed() },
-        Compute{ FLinearColor::MediumBlue() },
-        DeviceLocalTransfer{ FLinearColor::Green() },
-        HostToDeviceTransfer{ FLinearColor::BlueViolet() },
-        DeviceToHostTransfer{ FLinearColor::BlueViolet() },
-        Present{ FLinearColor::Red() },
-        RayTracing{ FLinearColor::Lime() },
-        BuildRayTracingStruct{ FLinearColor::Lime() },
+        RenderPass,
+        Compute,
+        DeviceLocalTransfer,
+        HostToDeviceTransfer,
+        DeviceToHostTransfer,
+        Present,
+        RayTracing,
+        BuildRayTracingStruct,
+        Draw,
+        DrawMeshes,
+        CustomDraw,
+        CmdSubBatchBackground,
+        CmdSubBatchLabel,
+        CmbBatchBackground,
+        CmdBatchLabel,
+        TaskLabel,
+        ResourceBackground,
+        BarrierGroupBorder,
+        GroupBorder,
+        TaskDependency,
+        Debug,
+        LayoutBarrier,
+        WriteAfterWriteBarrier,
+        WriteAfterReadBarrier,
+        ReadAfterWriteBarrier;
 
-        Draw{ FLinearColor::Bisque() },
-        DrawMeshes{ FLinearColor::Bisque() },
-        CustomDraw{ FLinearColor::Bisque() },
-
-        CmdSubBatchBackground{ FLinearColor::SlateBlue() },
-        CmdSubBatchLabel{ FLinearColor::LightGray() },
-        CmbBatchBackground{ FLinearColor::Aquamarine() },
-        CmdBatchLabel{ FLinearColor::LightGray() },
-        TaskLabel{ FLinearColor::White() },
-        ResourceBackground{ FLinearColor::Silver() },
-        BarrierGroupBorder{ FLinearColor::Olive() },
-        GroupBorder{ FLinearColor::DarkGray() },
-        TaskDependency{ FLinearColor::GhostWhite() },
-
-        Debug{ FLinearColor::Pink() },
-
-        LayoutBarrier{ FLinearColor::Yellow() },
-        WriteAfterWriteBarrier{ FLinearColor::DodgerBlue() },
-        WriteAfterReadBarrier{ FLinearColor::LimeGreen() },
-        ReadAfterWriteBarrier{ FLinearColor::Red() };
-
-    static FDebugColorScheme Get() NOEXCEPT {
-        // #TODO
-        return FDebugColorScheme{};
-    }
+    PPE_RHI_API FDebugColorScheme() NOEXCEPT;
+    PPE_RHI_API static const FDebugColorScheme& Get() NOEXCEPT;
 };
 #endif
 //----------------------------------------------------------------------------

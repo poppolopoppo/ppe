@@ -8,10 +8,261 @@
 
 #include "RHI/EnumToString.h"
 
+#include "Allocator/SlabAllocator.h"
 #include "Diagnostic/Logger.h"
 
 namespace PPE {
 namespace RHI {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+struct FVulkanPipelineResources::FUpdateDescriptors {
+    SLAB_ALLOCATOR(RHIDescriptor) Allocator;
+    TMemoryView<VkWriteDescriptorSet> DescriptorWrites;
+    u32 DescriptorWriteCount{ 0 };
+
+    template <typename T>
+    TMemoryView<T> AllocateT(size_t n) NOEXCEPT {
+        return TAllocatorTraits<Meta::TDecay<decltype(Allocator)>>::template AllocateT<T>(Allocator, n);
+    }
+
+    VkWriteDescriptorSet& NextDescriptorWrite() NOEXCEPT {
+        VkWriteDescriptorSet& wds = DescriptorWrites[DescriptorWriteCount++];
+        wds = {};
+        wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        return wds;
+    }
+
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value);
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value);
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value);
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value);
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value);
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value);
+};
+//----------------------------------------------------------------------------
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value) {
+    Unused(id);
+    const auto infos = AllocateT<VkDescriptorBufferInfo>(value.Elements.Count);
+
+    forrange(i, 0, value.Elements.Count) {
+        auto& elt = value.Elements[i];
+        const FVulkanBuffer* const pBuffer = manager.ResourceDataIFP(elt.BufferId, false, true);
+
+        if (Unlikely(not pBuffer)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        VkDescriptorBufferInfo& info = infos[i];
+        info.buffer = pBuffer->Handle();
+        info.offset = static_cast<VkDeviceSize>(elt.Offset);
+        info.range = static_cast<VkDeviceSize>(elt.Size);
+
+        CheckBufferUsage(*pBuffer, value.State);
+    }
+
+    const bool isUniform{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::UniformRead };
+    const bool isDynamic{ value.State & EResourceState::_BufferDynamicOffset };
+
+    VkWriteDescriptorSet& wds = NextDescriptorWrite();
+    wds.descriptorType = (isUniform
+        ? (isDynamic ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        : (isDynamic ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER));
+    wds.descriptorCount = value.Elements.Count;
+    wds.dstBinding = value.Index.VKBinding();
+    wds.dstSet = data.DescriptorSet.First;
+    wds.pBufferInfo = infos.data();
+
+    RHI_TRACE(L"UpdateDescriptors_Buffer", id, Fmt::Struct(wds));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value) {
+    Unused(id);
+    const auto infos = AllocateT<VkBufferView>(value.Elements.Count);
+
+    forrange(i, 0, value.Elements.Count) {
+        auto& elt = value.Elements[i];
+        const FVulkanBuffer* const pBuffer = manager.ResourceDataIFP(elt.BufferId, false, true);
+
+        if (Unlikely(not pBuffer)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        VkBufferView& info = infos[i];
+        info = pBuffer->MakeView(manager.Device(), elt.Desc);
+
+        if (Unlikely(VK_NULL_HANDLE == info)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        CheckBufferUsage(*pBuffer, value.State);
+    }
+
+    const bool isUniform{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::UniformRead };
+
+    VkWriteDescriptorSet& wds = NextDescriptorWrite();
+    wds.descriptorType = (isUniform
+        ? VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
+        : VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER);
+    wds.descriptorCount = value.Elements.Count;
+    wds.dstBinding = value.Index.VKBinding();
+    wds.dstSet = data.DescriptorSet.First;
+    wds.pTexelBufferView = infos.data();
+
+    RHI_TRACE(L"UpdateDescriptors_TexelBuffer", id, Fmt::Struct(wds));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value) {
+    Unused(id);
+    const auto infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+
+    forrange(i, 0, value.Elements.Count) {
+        auto& elt = value.Elements[i];
+        const FVulkanImage* const pImage = manager.ResourceDataIFP(elt.ImageId, false, true);
+
+        if (Unlikely(not pImage)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        VkDescriptorImageInfo& info = infos[i];
+        info.imageLayout = EResourceState_ToImageLayout(value.State, pImage->Read()->AspectMask);
+        info.imageView = pImage->MakeView(manager.Device(), elt.Desc);
+        info.sampler = VK_NULL_HANDLE;
+
+        if (Unlikely(VK_NULL_HANDLE == info.imageView)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        AssertRelease(elt.Desc.has_value());
+        CheckImageType(id, i, *pImage, *elt.Desc, value.ImageType);
+        CheckImageUsage(*pImage, value.State);
+    }
+
+    const bool isInputAttachment{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::InputAttachment };
+
+    VkWriteDescriptorSet& wds = NextDescriptorWrite();
+    wds.descriptorType = (isInputAttachment
+        ? VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+        : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+    wds.descriptorCount = value.Elements.Count;
+    wds.dstBinding = value.Index.VKBinding();
+    wds.dstSet = data.DescriptorSet.First;
+    wds.pImageInfo = infos.data();
+
+    RHI_TRACE(L"UpdateDescriptors_Image", id, Fmt::Struct(wds));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value) {
+    Unused(id);
+    const auto infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+
+    forrange(i, 0, value.Elements.Count) {
+        auto& elt = value.Elements[i];
+        const FVulkanImage* const pImage = manager.ResourceDataIFP(elt.ImageId, false, true);
+        const FVulkanSampler* const pSampler = manager.ResourceDataIFP(elt.SamplerId, false, true);
+
+        if (Unlikely(not (pImage and pSampler))) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        VkDescriptorImageInfo& info = infos[i];
+        info.imageLayout = EResourceState_ToImageLayout(value.State, pImage->Read()->AspectMask);
+        info.imageView = pImage->MakeView(manager.Device(), elt.Desc);
+        info.sampler = pSampler->Handle();
+
+        if (Unlikely(VK_NULL_HANDLE == info.imageView)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        AssertRelease(elt.Desc.has_value());
+        CheckTextureType(id, i, *pImage, *elt.Desc, value.SamplerType);
+        CheckImageUsage(*pImage, value.State);
+    }
+
+    VkWriteDescriptorSet& wds = NextDescriptorWrite();
+    wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    wds.descriptorCount = value.Elements.Count;
+    wds.dstBinding = value.Index.VKBinding();
+    wds.dstSet = data.DescriptorSet.First;
+    wds.pImageInfo = infos.data();
+
+    RHI_TRACE(L"UpdateDescriptors_Texture", id, Fmt::Struct(wds));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value) {
+    Unused(id);
+    const auto infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+
+    forrange(i, 0, value.Elements.Count) {
+        auto& elt = value.Elements[i];
+        const FVulkanSampler* const pSampler = manager.ResourceDataIFP(elt.SamplerId, false, true);
+
+        if (Unlikely(not pSampler)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        VkDescriptorImageInfo& info = infos[i];
+        info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        info.imageView = VK_NULL_HANDLE;
+        info.sampler = pSampler->Handle();
+    }
+
+    VkWriteDescriptorSet& wds = NextDescriptorWrite();
+    wds.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    wds.descriptorCount = value.Elements.Count;
+    wds.dstBinding = value.Index.VKBinding();
+    wds.dstSet = data.DescriptorSet.First;
+    wds.pImageInfo = infos.data();
+
+    RHI_TRACE(L"UpdateDescriptors_Sampler", id, Fmt::Struct(wds));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
+    Unused(id);
+    const auto tlas = AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
+
+    forrange(i, 0, value.Elements.Count) {
+        auto& elt = value.Elements[i];
+        const FVulkanRTScene* const pRTScene = manager.ResourceDataIFP(elt.SceneId, false, true);
+
+        if (Unlikely(not pRTScene)) {
+            ONLY_IF_RHIDEBUG(ValidateEmptyUniform_(data, id, i));
+            return false;
+        }
+
+        tlas[i] = pRTScene->Handle();
+    }
+
+    auto* const pTopAS = AllocateT<VkWriteDescriptorSetAccelerationStructureNV>(1).data();
+    *pTopAS = {};
+    pTopAS->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+    pTopAS->accelerationStructureCount = value.Elements.Count;
+    pTopAS->pAccelerationStructures = tlas.data();
+
+    VkWriteDescriptorSet& wds = NextDescriptorWrite();
+    wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    wds.pNext = pTopAS;
+    wds.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+    wds.descriptorCount = value.Elements.Count;
+    wds.dstBinding = value.Index.VKBinding();
+    wds.dstSet = data.DescriptorSet.First;
+
+    RHI_TRACE(L"UpdateDescriptors_RayTracingScene", id, Fmt::Struct(wds));
+    return true;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -100,14 +351,14 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
         0 };
 
     exclusiveRes->DynamicData.EachUniform([&](const FUniformID& id, auto& data) {
-        Assert(id.Valid());
-        AddResource_(&update, *exclusiveRes, manager, id, data);
+        Assert_NoAssume(id.Valid());
+        update.AddResource(*exclusiveRes, manager, id, data);
     });
 
     device.vkUpdateDescriptorSets(
         device.vkDevice(),
-        update.DescriptorIndex,
-        update.Descriptors.data(),
+        update.DescriptorWriteCount,
+        update.DescriptorWrites.data(),
         0, nullptr );
 
     heap.DiscardAll();
@@ -181,223 +432,6 @@ bool FVulkanPipelineResources::operator ==(const FVulkanPipelineResources& other
             FPipelineResources::CompareDynamicData(lhs->DynamicData, rhs->DynamicData) );
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value) {
-    Unused(id);
-    const auto infos = pList->AllocateT<VkDescriptorBufferInfo>(value.Elements.Count );
-
-    forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
-        const FVulkanBuffer* const pBuffer = manager.ResourceDataIFP(elt.BufferId, false, true);
-
-        if (Unlikely(not pBuffer)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        VkDescriptorBufferInfo& info = infos[i];
-        info.buffer = pBuffer->Handle();
-        info.offset = static_cast<VkDeviceSize>(elt.Offset);
-        info.range = static_cast<VkDeviceSize>(elt.Size);
-
-        CheckBufferUsage(*pBuffer, value.State);
-    }
-
-    const bool isUniform{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::UniformRead };
-    const bool isDynamic{ value.State & EResourceState::_BufferDynamicOffset };
-
-    VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
-    wds.descriptorType = (isUniform
-        ? (isDynamic ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-        : (isDynamic ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER) );
-    wds.descriptorCount = value.Elements.Count;
-    wds.dstBinding = value.Index.VKBinding();
-    wds.dstSet = data.DescriptorSet.First;
-    wds.pBufferInfo = infos.data();
-
-    return true;
-}
-//----------------------------------------------------------------------------
-bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value) {
-    Unused(id);
-    const auto infos = pList->AllocateT<VkBufferView>(value.Elements.Count );
-
-    forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
-        const FVulkanBuffer* const pBuffer = manager.ResourceDataIFP(elt.BufferId, false, true);
-
-        if (Unlikely(not pBuffer)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        VkBufferView& info = infos[i];
-        info = pBuffer->MakeView(manager.Device(), elt.Desc);
-
-        if (Unlikely(VK_NULL_HANDLE == info)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        CheckBufferUsage(*pBuffer, value.State);
-    }
-
-    const bool isUniform{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::UniformRead };
-
-    VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
-    wds.descriptorType = (isUniform
-        ? VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
-        : VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER );
-    wds.descriptorCount = value.Elements.Count;
-    wds.dstBinding = value.Index.VKBinding();
-    wds.dstSet = data.DescriptorSet.First;
-    wds.pTexelBufferView = infos.data();
-
-    return true;
-}
-//----------------------------------------------------------------------------
-bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value) {
-    Unused(id);
-    const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
-
-    forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
-        const FVulkanImage* const pImage = manager.ResourceDataIFP(elt.ImageId, false, true);
-
-        if (Unlikely(not pImage)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        VkDescriptorImageInfo& info = infos[i];
-        info.imageLayout = EResourceState_ToImageLayout(value.State, pImage->Read()->AspectMask);
-        info.imageView = pImage->MakeView(manager.Device(), elt.Desc);
-        info.sampler = VK_NULL_HANDLE;
-
-        if (Unlikely(VK_NULL_HANDLE == info.imageView)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        AssertRelease(elt.Desc.has_value());
-        CheckImageType(id, i, *pImage, *elt.Desc, value.ImageType);
-        CheckImageUsage(*pImage, value.State);
-    }
-
-    const bool isInputAttachment{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::InputAttachment };
-
-    VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
-    wds.descriptorType = (isInputAttachment
-        ? VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
-        : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE );
-    wds.descriptorCount = value.Elements.Count;
-    wds.dstBinding = value.Index.VKBinding();
-    wds.dstSet = data.DescriptorSet.First;
-    wds.pImageInfo = infos.data();
-
-    return true;
-}
-//----------------------------------------------------------------------------
-bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value) {
-    Unused(id);
-    const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
-
-    forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
-        const FVulkanImage* const pImage = manager.ResourceDataIFP(elt.ImageId, false, true);
-        const FVulkanSampler* const pSampler = manager.ResourceDataIFP(elt.SamplerId, false, true);
-
-        if (Unlikely(not (pImage and pSampler))) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        VkDescriptorImageInfo& info = infos[i];
-        info.imageLayout = EResourceState_ToImageLayout(value.State, pImage->Read()->AspectMask);
-        info.imageView = pImage->MakeView(manager.Device(), elt.Desc);
-        info.sampler = pSampler->Handle();
-
-        if (Unlikely(VK_NULL_HANDLE == info.imageView)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        AssertRelease(elt.Desc.has_value());
-        CheckTextureType(id, i, *pImage, *elt.Desc, value.SamplerType);
-        CheckImageUsage(*pImage, value.State);
-    }
-
-    VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
-    wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    wds.descriptorCount = value.Elements.Count;
-    wds.dstBinding = value.Index.VKBinding();
-    wds.dstSet = data.DescriptorSet.First;
-    wds.pImageInfo = infos.data();
-
-    return true;
-}
-//----------------------------------------------------------------------------
-bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value) {
-    Unused(id);
-    const auto infos = pList->AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
-
-    forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
-        const FVulkanSampler* const pSampler = manager.ResourceDataIFP(elt.SamplerId, false, true);
-
-        if (Unlikely(not pSampler)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        VkDescriptorImageInfo& info = infos[i];
-        info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        info.imageView = VK_NULL_HANDLE;
-        info.sampler = pSampler->Handle();
-    }
-
-    VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
-    wds.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    wds.descriptorCount = value.Elements.Count;
-    wds.dstBinding = value.Index.VKBinding();
-    wds.dstSet = data.DescriptorSet.First;
-    wds.pImageInfo = infos.data();
-
-    return true;
-}
-//----------------------------------------------------------------------------
-bool FVulkanPipelineResources::AddResource_(FUpdateDescriptors* pList, FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
-    Unused(id);
-    const auto tlas = pList->AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
-
-    forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
-        const FVulkanRTScene* const pRTScene = manager.ResourceDataIFP(elt.SceneId, false, true);
-
-        if (Unlikely(not pRTScene)) {
-            ONLY_IF_RHIDEBUG( ValidateEmptyUniform_(data, id, i) );
-            return false;
-        }
-
-        tlas[i] = pRTScene->Handle();
-    }
-
-    auto* const pTopAS = pList->AllocateT<VkWriteDescriptorSetAccelerationStructureNV>(1).data();
-    *pTopAS = {};
-    pTopAS->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
-    pTopAS->accelerationStructureCount = value.Elements.Count;
-    pTopAS->pAccelerationStructures = tlas.data();
-
-    VkWriteDescriptorSet& wds = pList->NextWriteDescriptorSet();
-    wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    wds.pNext = pTopAS;
-    wds.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
-    wds.descriptorCount = value.Elements.Count;
-    wds.dstBinding = value.Index.VKBinding();
-    wds.dstSet = data.DescriptorSet.First;
-
-    return true;
-}
-//----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 void FVulkanPipelineResources::ValidateEmptyUniform_(const FInternalResources& data, const FUniformID& id, u32 idx) {
     Unused(data);
@@ -465,7 +499,7 @@ void FVulkanPipelineResources::CheckImageType(const FUniformID& id, u32 index, c
             L"  in image : {3}, name: {4}\n",
             id.MakeView(), index,
             fmt, desc.Format,
-            img.DebugName() );
+            img.DebugName());
     }
 
     CheckTextureType(id, index, img, desc, shaderType - EImageSampler::_FormatMask);
@@ -502,13 +536,13 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
 
     if (desc.AspectMask == EImageAspect::Stencil) {
         Assert((info.ValueType & EPixelValueType::Stencil) ||
-               (info.ValueType & EPixelValueType::DepthStencil) );
+            (info.ValueType & EPixelValueType::DepthStencil));
         imageType |= EImageSampler::_Int;
     }
     else
     if (desc.AspectMask == EImageAspect::Depth) {
         Assert((info.ValueType & EPixelValueType::Depth) ||
-               (info.ValueType & EPixelValueType::DepthStencil) );
+            (info.ValueType & EPixelValueType::DepthStencil));
         imageType |= EImageSampler::_Float;
     }
     else
@@ -534,7 +568,7 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
             L"  in image : {3}, name: {4}\n",
             id.MakeView(), index,
             shaderType, imageType,
-            img.DebugName() );
+            img.DebugName());
     }
 
 #else

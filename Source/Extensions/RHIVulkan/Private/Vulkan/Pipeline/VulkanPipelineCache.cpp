@@ -171,7 +171,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     const FVertexInputState& vertexInput,
     const FRenderState& renderState,
     EPipelineDynamicState dynamicStates
-    ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex) ) {
+    ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex)) {
     Assert(pPipeline);
     Assert(pLayout);
     Assert_NoAssume(logicalRenderPass.RenderPassId());
@@ -190,7 +190,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     EShaderDebugMode debugMode = Default;
     EShaderStages debugStages = Default;
     if (debugModeIndex != Default)
-        Verify( SetupShaderDebugging_(&debugMode, &debugStages, layoutId, workerCmd, *ppln, debugModeIndex) );
+        Verify(SetupShaderDebugging_(&debugMode, &debugStages, layoutId, workerCmd, *ppln, debugModeIndex));
 #endif
 
     FVulkanGraphicsPipeline::FPipelineInstance inst;
@@ -236,9 +236,9 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     VkPipelineViewportStateCreateInfo viewportInfo{};
 
-    VerifyRelease( SetShaderStages_(
+    VerifyRelease(SetShaderStages_(
         &_transientStages, &_transientSpecializationInfos, &_transientSpecializationEntries,
-        ppln->Shaders.MakeView() ARGS_IF_RHIDEBUG(debugMode, debugStages)) );
+        ppln->Shaders.MakeView() ARGS_IF_RHIDEBUG(debugMode, debugStages)));
 
     SetDynamicState_(&dynamicStateInfo, &_transientDynamicStates, inst.DynamicState);
     SetColorBlendState_(&blendInfo, &_transientColorAttachments, inst.RenderState.Blend, *pRenderPass, inst.SubpassIndex);
@@ -247,7 +247,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     SetDepthStencilState_(&depthStencilInfo, inst.RenderState.Depth, inst.RenderState.Stencil);
     SetRasterizationState_(&rasterizationInfo, inst.RenderState.Rasterization);
     SetupPipelineInputAssemblyState_(&inputAssemblyInfo, inst.RenderState.InputAssembly);
-    SetVertexInputState_(&vertexInputInfo, &_transientVertexAttributes, &_transientVertexBindings, inst.VertexInput );
+    SetVertexInputState_(&vertexInputInfo, &_transientVertexAttributes, &_transientVertexBindings, inst.VertexInput);
     SetViewportState_(&viewportInfo, &_transientViewports, &_transientScissors, GViewportDefaultSize_, inst.ViewportCount, inst.DynamicState);
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -272,7 +272,8 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
 
     if (not rasterizationInfo.rasterizerDiscardEnable) {
         pipelineInfo.pViewportState = &viewportInfo;
-    } else {
+    }
+    else {
         pipelineInfo.pViewportState = nullptr;
         pipelineInfo.pMultisampleState = nullptr;
         pipelineInfo.pDepthStencilState = nullptr;
@@ -281,18 +282,23 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
 
     *pPipeline = VK_NULL_HANDLE;
 
-    VK_CHECK( device.vkCreateGraphicsPipelines(
+    VK_CHECK(device.vkCreateGraphicsPipelines(
         device.vkDevice(),
         _pipelineCache,
         1, &pipelineInfo,
         device.vkAllocator(),
-        pPipeline) );
+        pPipeline));
 
     LOG_CHECK(RHI, *pPipeline);
 
-    ONLY_IF_RHIDEBUG( workerCmd.EditStatistics([](FFrameStatistics& stats) {
-       stats.Resources.NumNewGraphicsPipeline++;
-    }) );
+    ONLY_IF_RHIDEBUG(workerCmd.EditStatistics([](FFrameStatistics& stats) {
+        stats.Resources.NumNewGraphicsPipeline++;
+        }));
+
+    ONLY_IF_RHIDEBUG(device.SetObjectName(
+        FVulkanExternalObject{ *pPipeline },
+        INLINE_FORMAT(128, "Graphics:{0}", gPipeline.DebugName()),
+        VK_OBJECT_TYPE_PIPELINE));
 
     // try to insert new instance
     const auto[it, inserted] = gPipeline._sharedInstances.LockExclusive()
@@ -433,6 +439,11 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
        stats.Resources.NumNewMeshPipeline++;
     }) );
 
+    ONLY_IF_RHIDEBUG(device.SetObjectName(
+        FVulkanExternalObject{ *pPipeline },
+        INLINE_FORMAT(128, "Mesh:{0}", mPipeline.DebugName()),
+        VK_OBJECT_TYPE_PIPELINE));
+
     // try to insert new instance
     const auto[it, inserted] = mPipeline._sharedInstances.LockExclusive()
         ->insert({ std::move(inst), *pPipeline });
@@ -560,6 +571,11 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     ONLY_IF_RHIDEBUG( workerCmd.EditStatistics([](FFrameStatistics& stats) {
        stats.Resources.NumNewComputePipeline++;
     }) );
+
+    ONLY_IF_RHIDEBUG(device.SetObjectName(
+        FVulkanExternalObject{ *pPipeline },
+        INLINE_FORMAT(128, "Compute:{0}", cPipeline.DebugName()),
+        VK_OBJECT_TYPE_PIPELINE));
 
     // try to insert new instance
     const auto[it, inserted] = cPipeline._sharedInstances.LockExclusive()

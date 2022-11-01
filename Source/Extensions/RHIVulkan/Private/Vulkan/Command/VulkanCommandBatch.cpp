@@ -1005,7 +1005,7 @@ bool FVulkanCommandBatch::AllocDescriptorSetForDebug_(
 
     // allocate descriptor set
     FVulkanDescriptorSet ds;
-    LOG_CHECK( RHI, resources.DescriptorManager().AllocateDescriptorSet(&ds, layout.Handle()) );
+    LOG_CHECK( RHI, resources.DescriptorManager().AllocateDescriptorSet(&ds, layout.Handle() ARGS_IF_RHIDEBUG("Debug")));
     Assert_NoAssume(VK_NULL_HANDLE != ds.First);
     *pDescSet = ds.First;
 

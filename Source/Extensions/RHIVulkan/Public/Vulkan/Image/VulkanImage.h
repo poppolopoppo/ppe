@@ -101,7 +101,8 @@ private:
         VkImageView* pImageView,
         const FInternalData& data,
         const FVulkanDevice& device,
-        const FImageViewDescMemoized& desc );
+        const FImageViewDescMemoized& desc
+        ARGS_IF_RHIDEBUG(const FVulkanDebugName& debugName) );
 
     TRHIThreadSafe<FInternalData> _data;
 

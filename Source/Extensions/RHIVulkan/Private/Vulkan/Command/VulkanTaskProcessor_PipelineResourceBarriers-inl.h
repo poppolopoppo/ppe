@@ -19,7 +19,7 @@ inline FVulkanTaskProcessor::FPipelineResourceBarriers::FPipelineResourceBarrier
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FBuffer& buffer) {
     for (const auto& elem : buffer.Elements.MakeView()) {
         const FVulkanLocalBuffer* const pLocalBuffer = _processor.ToLocal_(elem.BufferId);
-        if (not pLocalBuffer)
+        if (not Ensure(pLocalBuffer))
             continue;
 
         const auto localBuf = pLocalBuffer->Read();
@@ -64,7 +64,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FTexelBuffer& texelBuffer) {
     for (const auto& elem : texelBuffer.Elements.MakeView()) {
         const FVulkanLocalBuffer* const pLocalBuffer = _processor.ToLocal_(elem.BufferId);
-        if (not pLocalBuffer)
+        if (not Ensure(pLocalBuffer))
             continue;
 
         const auto localBuf = pLocalBuffer->Read();
@@ -83,7 +83,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
     for (const auto& elem : image.Elements.MakeView()) {
         const FVulkanLocalImage* const pLocalImage = _processor.ToLocal_(elem.ImageId);
 
-        if (pLocalImage) {
+        if (Ensure(pLocalImage)) {
             _processor.AddImage_(pLocalImage,
                 image.State,
                 EResourceState_ToImageLayout(image.State, pLocalImage->Read()->AspectMask),
@@ -96,7 +96,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
     for (const auto& elem : texture.Elements.MakeView()) {
         const FVulkanLocalImage* const pLocalImage = _processor.ToLocal_(elem.ImageId);
 
-        if (pLocalImage) {
+        if (Ensure(pLocalImage)) {
             _processor.AddImage_(pLocalImage, texture.State,
                 EResourceState_ToImageLayout(texture.State, pLocalImage->Read()->AspectMask),
                 *elem.Desc );
@@ -107,7 +107,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
 inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FUniformID& , const FPipelineResources::FRayTracingScene& scene) {
     for (const auto& elem : scene.Elements.MakeView()) {
         const FVulkanRTLocalScene* const pLocalScene = _processor.ToLocal_(elem.SceneId);
-        if (not pLocalScene)
+        if (not Ensure(pLocalScene))
             continue;
 
         _processor.AddRTScene_(pLocalScene, EResourceState::RayTracingShaderRead);

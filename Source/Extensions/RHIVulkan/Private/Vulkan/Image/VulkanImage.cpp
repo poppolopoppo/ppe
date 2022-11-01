@@ -295,6 +295,11 @@ void FVulkanImage::TearDown(FVulkanResourceManager& resources) {
 
     const FVulkanDevice& device = resources.Device();
 
+#if USE_PPE_RHIDEBUG
+    if (_debugName && exclusiveData->vkImage)
+        device.SetObjectName(exclusiveData->vkImage, nullptr, VK_OBJECT_TYPE_IMAGE);
+#endif
+
     {
         const auto exclusiveViewMap = _viewMap.LockExclusive();
 
@@ -345,7 +350,7 @@ VkImageView FVulkanImage::MakeView(const FVulkanDevice& device, const FImageView
     auto[it, inserted] = exclusiveViewMap->insert({ desc, VK_NULL_HANDLE });
     if (inserted) {
         LOG_CHECK(RHI, IsSupported(device, desc) );
-        LOG_CHECK(RHI, CreateView_(&it->second, *sharedData, device, desc) );
+        LOG_CHECK(RHI, CreateView_(&it->second, *sharedData, device, desc ARGS_IF_RHIDEBUG(_debugName)) );
     }
 
     Assert_NoAssume(VK_NULL_HANDLE != it->second);
@@ -526,7 +531,12 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageViewDesc
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanImage::CreateView_(VkImageView* pImageView, const FInternalData& data, const FVulkanDevice& device, const FImageViewDescMemoized& desc) {
+bool FVulkanImage::CreateView_(
+    VkImageView* pImageView,
+    const FInternalData& data,
+    const FVulkanDevice& device,
+    const FImageViewDescMemoized& desc
+    ARGS_IF_RHIDEBUG(const FVulkanDebugName& debugName) ) {
     Assert(pImageView);
     CONSTEXPR const VkComponentSwizzle vkComponents[] = {
         VK_COMPONENT_SWIZZLE_IDENTITY, // unknown
@@ -567,6 +577,11 @@ bool FVulkanImage::CreateView_(VkImageView* pImageView, const FInternalData& dat
         &info,
         device.vkAllocator(),
         pImageView ));
+
+#if USE_PPE_RHIDEBUG
+    if (debugName)
+        device.SetObjectName(FVulkanExternalObject{ *pImageView }, INLINE_FORMAT(256, "{0}-{1}-{2}(layer={3}:{4},level={5}:{6})", debugName, desc.Value().Format, desc.Value().AspectMask, desc.Value().BaseLayer, desc.Value().LayerCount, desc.Value().BaseLevel, desc.Value().LevelCount), VK_OBJECT_TYPE_IMAGE_VIEW);
+#endif
 
     return true;
 }

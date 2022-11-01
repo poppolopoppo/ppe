@@ -116,7 +116,7 @@ public:
     void operator ()(const FUniformID& uni, const FPipelineResources::FTexelBuffer& texelBuffer);
     void operator ()(const FUniformID& uni, const FPipelineResources::FImage& image);
     void operator ()(const FUniformID& uni, const FPipelineResources::FTexture& texture);
-    void operator ()(const FUniformID& , const FPipelineResources::FSampler& ) {}
+    void operator ()(const FUniformID&    , const FPipelineResources::FSampler& ) {}
     void operator ()(const FUniformID& uni, const FPipelineResources::FRayTracingScene& scene);
 
 private:

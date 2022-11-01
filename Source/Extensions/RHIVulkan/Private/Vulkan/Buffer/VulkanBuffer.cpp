@@ -247,6 +247,11 @@ void FVulkanBuffer::TearDown(FVulkanResourceManager& resources) {
     const auto exclusiveData = _data.LockExclusive();
     Assert_NoAssume(VK_NULL_HANDLE != exclusiveData->vkBuffer);
 
+#if USE_PPE_RHIDEBUG
+    if (_debugName && exclusiveData->vkBuffer)
+        device.SetObjectName(exclusiveData->vkBuffer, nullptr, VK_OBJECT_TYPE_BUFFER);
+#endif
+
     { // release buffer views first
         const auto exclusiveViewMap = _viewMap.LockExclusive();
         for (auto& view : *exclusiveViewMap)
@@ -299,6 +304,11 @@ VkBufferView FVulkanBuffer::MakeView(const FVulkanDevice& device, const FBufferV
         info.range = checked_cast<VkDeviceSize>(desc.SizeInBytes);
 
         VK_CALL( device.vkCreateBufferView(device.vkDevice(), &info, device.vkAllocator(), &it->second) );
+
+#if USE_PPE_RHIDEBUG
+        if (_debugName)
+            device.SetObjectName(FVulkanExternalObject{ it->second }, INLINE_FORMAT(128, "{0}-{1}(offset:{2}:{3})", _debugName, desc.Format, desc.Offset, desc.SizeInBytes), VK_OBJECT_TYPE_BUFFER_VIEW);
+#endif
     }
 
     Assert_NoAssume(VK_NULL_HANDLE != it->second);

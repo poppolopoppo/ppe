@@ -70,15 +70,15 @@ struct TNamedId {
     CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT // for Meta::TEmptyKey<> traits
         : HashValue(UMax)
 #if USE_PPE_ASSERT
-        , Name(UMax, 0)
         , Index(UMax)
+        , Name(UMax, 0)
 #endif
     {}
 
     CONSTEXPR explicit TNamedId(const FStringView& name, size_t index = 0) NOEXCEPT
         : HashValue(hash_mem_constexpr(name.data(), name.size()))
-        , Name(name)
-        , Index(index) {
+        , Index(index)
+        , Name(name) {
         if (not Name.empty())
             HashValue = hash_size_t_constexpr(index, HashValue);
     }

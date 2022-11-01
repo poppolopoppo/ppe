@@ -71,6 +71,11 @@ bool FVulkanDescriptorSetLayout::Construct(const FVulkanDevice& device, const TM
         device.vkAllocator(),
         &exclusivePool->Layout ));
 
+    ONLY_IF_RHIDEBUG( device.SetObjectName(
+        FVulkanExternalObject{ exclusivePool->Layout },
+        _debugName,
+        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT ));
+
     FPipelineResources::CreateDynamicData(
         &exclusivePool->ResourcesTemplate,
         *exclusivePool->Uniforms,

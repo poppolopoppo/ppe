@@ -119,10 +119,9 @@ struct FDispatchCompute : details::TFrameTaskDesc<FDispatchCompute> {
     FDispatchCompute& SetLocalSize(u32 x, u32 y, u32 z) { return SetLocalSize(uint3(x, y, z)); }
     FDispatchCompute& SetLocalSize(const uint3& count) { LocalGroupSize = count; return (*this); }
 
-    template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
-    FDispatchCompute& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
-
     PPE_RHI_API FDispatchCompute& AddPushConstant(const FPushConstantID& id, const void* p, size_t size);
+    FDispatchCompute& AddPushConstant(const FPushConstantID& id, const FRawMemoryConst& raw) { return AddPushConstant(id, raw.data(), raw.SizeInBytes()); }
+
     PPE_RHI_API FDispatchCompute& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
     FDispatchCompute& Dispatch(const uint2& count) { return Dispatch(uint3(0), uint3(count, 1)); }
@@ -190,10 +189,9 @@ struct FDispatchComputeIndirect final : details::TFrameTaskDesc<FDispatchCompute
 
     PPE_RHI_API FDispatchComputeIndirect& Dispatch(size_t offset);
 
-    template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
-    FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const T& value) { return AddPushConstant(id, &value, sizeof(value)); }
-
     PPE_RHI_API FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const void* p, size_t size);
+    FDispatchComputeIndirect& AddPushConstant(const FPushConstantID& id, const FRawMemoryConst& raw) { return AddPushConstant(id, raw.data(), raw.SizeInBytes()); }
+
     PPE_RHI_API FDispatchComputeIndirect& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
 #if USE_PPE_RHIDEBUG

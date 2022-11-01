@@ -36,9 +36,10 @@ bool FVulkanCommandPool::Construct(
     VK_CHECK( device.vkCreateCommandPool( device.vkDevice(), &info, device.vkAllocator(), &_pool ) );
 
 #if USE_PPE_RHIDEBUG
-    _debugName = debugName;
-    if (not _debugName.empty())
+    if (debugName) {
+        _debugName = debugName;
         device.SetObjectName(_pool, _debugName.c_str(), VK_OBJECT_TYPE_COMMAND_POOL);
+    }
 #endif
 
     return true;
@@ -50,6 +51,11 @@ void FVulkanCommandPool::TearDown(const FVulkanDevice& device) {
 
     _freePrimaries.clear();
     _freeSecondaries.clear();
+
+#if USE_PPE_RHIDEBUG
+    if (_debugName)
+        device.SetObjectName(_pool, nullptr, VK_OBJECT_TYPE_COMMAND_POOL);
+#endif
 
     device.vkDestroyCommandPool( device.vkDevice(), _pool, device.vkAllocator() );
     _pool = VK_NULL_HANDLE;
