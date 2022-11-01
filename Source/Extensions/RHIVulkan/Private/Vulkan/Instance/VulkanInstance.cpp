@@ -163,6 +163,11 @@ bool ValidateInstanceLayers_(VECTOR(RHIInstance, FConstChar)* pLayerNames, const
     STACKLOCAL_POD_ARRAY(VkLayerProperties, layerProperties, numLayers);
     VK_CHECK( api.vkEnumerateInstanceLayerProperties(&numLayers, layerProperties.data()) );
 
+    LOG(RHI, Info, L"available vulkan layers: [\n    {0} ]",
+        Fmt::Join(MakeIterable(layerProperties).Map([](const VkLayerProperties& x) {
+                return FConstChar(x.layerName);
+            }), MakeStringView(L",\n    ")));
+
     for (auto it = pLayerNames->begin(); it != pLayerNames->end(); ) {
         const auto found = layerProperties.FindIf([name{*it}](const VkLayerProperties& props) {
             return FConstChar(props.layerName).Equals(name);
@@ -993,7 +998,6 @@ bool CreateVulkanDevice_(
     for (FVulkanDeviceQueueInfo& queue : pDevice->Queues)
         deviceFn.vkGetDeviceQueue(pDevice->vkDevice, static_cast<u32>(queue.FamilyIndex), queue.QueueIndex, &queue.Handle);
 
-    FRHIVulkanModule::Get(FModularDomain::Get()).DeviceCreated(*pDevice);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -1214,8 +1218,6 @@ void FVulkanInstance::DestroyDevice(FVulkanDeviceInfo* pDevice) const {
     Assert_NoAssume(&_vkAllocationCallbacks == pDevice->pAllocator);
 
     LOG(RHI, Debug, L"destroying vulkan device {0}", Fmt::Pointer(pDevice->vkDevice));
-
-    FRHIVulkanModule::Get(FModularDomain::Get()).DeviceTearDown(*pDevice);
 
     pDevice->API.vkDestroyDevice(pDevice->vkDevice, pDevice->pAllocator);
 

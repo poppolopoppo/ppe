@@ -15,6 +15,7 @@ public:
     using IShaderData<FShaderModule>::FFingerprint;
 
     FVulkanShaderModule(
+        const FVulkanDevice& device,
         VkShaderModule vkShaderModule,
         FFingerprint sourceFingerprint,
         FStringView entryPoint
@@ -34,10 +35,7 @@ public:
     virtual bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) override;
 #endif
 
-    void TearDown(
-        VkDevice vkDevice,
-        PFN_vkDestroyShaderModule vkDestroyShaderModule,
-        const VkAllocationCallbacks* pAllocator );
+    void TearDown(const FVulkanDevice& device);
 
 private:
     VkShaderModule _vkShaderModule;

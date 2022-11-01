@@ -24,7 +24,7 @@ public:
     using FShaderDataMap = FPipelineDesc::FShaderDataMap;
 
     explicit FVulkanPipelineCompiler(Meta::FForceInit/* non-device specific */);
-    explicit FVulkanPipelineCompiler(const FVulkanDeviceInfo& deviceInfo);
+    explicit FVulkanPipelineCompiler(const FVulkanDevice& deviceInfo);
     ~FVulkanPipelineCompiler() override;
 
     void AddDirectory(const FDirpath& path);
@@ -80,10 +80,9 @@ private:
 
     NODISCARD bool CreateVulkanShader_(
         FPipelineDesc::FShader* shader,
-        FShaderCompiledModuleCache& shaderCache
-        ARGS_IF_RHIDEBUG(const PShaderSource& shaderSource) ) const;
+        FShaderCompiledModuleCache& shaderCache ) const;
 
-    const TPtrRef<const FVulkanDeviceInfo> _deviceInfo;
+    const TPtrRef<const FVulkanDevice> _device;
 
     TThreadSafe<FInternalData, EThreadBarrier::CriticalSection> _data;
 };

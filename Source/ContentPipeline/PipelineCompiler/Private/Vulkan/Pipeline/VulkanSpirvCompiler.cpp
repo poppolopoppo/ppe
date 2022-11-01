@@ -695,14 +695,12 @@ void FVulkanSpirvCompiler::OnCompilationFailed_(
     FWStringView line;
     FWStringView log{ ctx.Log->Written() };
 
-    u32 lineNumber{ 0 };
     u32 prevErrorLine{ 0 };
 
     FWStringBuilder parsedLog;
     parsedLog.reserve(ctx.Log->capacity());
 
     while (Split(log, L'\n', line)) {
-        ++lineNumber;
         EatSpaces(line);
         if (line.empty())
             continue;
@@ -766,7 +764,6 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
     Assert(ctx.Glslang);
     Assert(ctx.Reflection);
 
-    u32 lineNumber{ 0 };
     bool commentSingleLine{ false };
     bool commentMultiLine{ false };
     EShaderAnnotation annotations{ Default };
@@ -935,7 +932,6 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             if (newLine1)
                 source.Eat(1);
             commentSingleLine = false;
-            lineNumber++;
 
             if ((annotations ^ (EShaderAnnotation::DynamicOffset | EShaderAnnotation::WriteDiscard)) && not commentMultiLine) {
                 LOG_CHECK(PipelineCompiler, parseUniform());
@@ -1741,8 +1737,8 @@ void FVulkanSpirvCompiler::GenerateDefaultResources_(TBuiltInResource* outResour
     outResources->limits.generalConstantMatrixVectorIndexing = 1;
 }
 //----------------------------------------------------------------------------
-void FVulkanSpirvCompiler::SetCurrentResourceLimits(const FVulkanDeviceInfo& deviceInfo) {
-    Assert(VK_NULL_HANDLE != deviceInfo.vkPhysicalDevice);
+void FVulkanSpirvCompiler::SetCurrentResourceLimits(const FVulkanDevice& device) {
+    Assert(VK_NULL_HANDLE != device.vkPhysicalDevice());
 
     GenerateDefaultResources_(&_builtInResources);
 
@@ -1753,7 +1749,7 @@ void FVulkanSpirvCompiler::SetCurrentResourceLimits(const FVulkanDeviceInfo& dev
     VkPhysicalDeviceMeshShaderPropertiesNV meshShaderProperties = {};
 #endif
 
-    deviceInfo.API.instance_api_->vkGetPhysicalDeviceProperties(deviceInfo.vkPhysicalDevice, &properties);
+    device.vkGetPhysicalDeviceProperties(device.vkPhysicalDevice(), &properties);
 
     if (VK_VERSION_MAJOR(properties.apiVersion) >= 1 and
         VK_VERSION_MINOR(properties.apiVersion) >  0 ) {
@@ -1779,8 +1775,8 @@ void FVulkanSpirvCompiler::SetCurrentResourceLimits(const FVulkanDeviceInfo& dev
         meshShaderProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
 #endif
 
-        deviceInfo.API.instance_api_->vkGetPhysicalDeviceFeatures2(deviceInfo.vkPhysicalDevice, &features2);
-        deviceInfo.API.instance_api_->vkGetPhysicalDeviceProperties2(deviceInfo.vkPhysicalDevice, &properties2);
+        device.vkGetPhysicalDeviceFeatures2(device.vkPhysicalDevice(), &features2);
+        device.vkGetPhysicalDeviceProperties2(device.vkPhysicalDevice(), &properties2);
     }
 
     _builtInResources.maxVertexAttribs = checked_cast<int>(Min( MaxVertexAttribs, properties.limits.maxVertexInputAttributes ));

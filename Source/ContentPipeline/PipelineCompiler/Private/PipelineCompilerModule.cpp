@@ -27,7 +27,7 @@ CONSTEXPR const EShaderLangFormat GVulkanPipelineFormat_ =
     EShaderLangFormat::SPIRV |
     EShaderLangFormat::ShaderModule;
 //----------------------------------------------------------------------------
-static void CreateVulkanDeviceCompiler_(const FVulkanDeviceInfo& deviceInfo) {
+static void CreateVulkanDeviceCompiler_(const FVulkanDevice& device, ERHIFeature features) {
     EShaderCompilationFlags compilationFlags = (
         EShaderCompilationFlags::Quiet |
         EShaderCompilationFlags::Optimize |
@@ -35,18 +35,18 @@ static void CreateVulkanDeviceCompiler_(const FVulkanDeviceInfo& deviceInfo) {
         EShaderCompilationFlags::UseCurrentDeviceLimits );
 
 #if !USE_PPE_FINAL_RELEASE
-    if (deviceInfo.Features & ERHIFeature::Debugging)
+    if (features & ERHIFeature::Debugging)
         compilationFlags += EShaderCompilationFlags::Validate | EShaderCompilationFlags::GenerateDebug;
 #endif
 
-    TRefPtr<FVulkanPipelineCompiler> compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, deviceInfo) };
+    TRefPtr<FVulkanPipelineCompiler> compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, device) };
     compiler->SetCompilationFlags(compilationFlags);
 
     auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
     rhiModule.RegisterCompiler(GVulkanPipelineFormat_, PPipelineCompiler{ std::move(compiler) });
 }
 //----------------------------------------------------------------------------
-static void TearDownVulkanDeviceCompiler_(const FVulkanDeviceInfo& ) {
+static void TearDownVulkanDeviceCompiler_(const FVulkanDevice& ) {
 
     auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
     rhiModule.UnregisterCompiler(GVulkanPipelineFormat_);

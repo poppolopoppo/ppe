@@ -29,13 +29,14 @@ public:
 
     // --- FVulkanDevice ---
 
-    using FVulkanDeviceEvent = TFunction<void(const RHI::FVulkanDeviceInfo&)>;
+    using FVulkanDeviceCreateEvent = TFunction<void(const RHI::FVulkanDevice&, ERHIFeature features)>;
+    using FVulkanDeviceTearDownEvent = TFunction<void(const RHI::FVulkanDevice&)>;
 
-    THREADSAFE_EVENT(OnDeviceCreated, FVulkanDeviceEvent);
-    THREADSAFE_EVENT(OnDeviceTearDown, FVulkanDeviceEvent);
+    THREADSAFE_EVENT(OnDeviceCreated, FVulkanDeviceCreateEvent);
+    THREADSAFE_EVENT(OnDeviceTearDown, FVulkanDeviceTearDownEvent);
 
-    void DeviceCreated(RHI::FVulkanDeviceInfo& device);
-    void DeviceTearDown(RHI::FVulkanDeviceInfo& device);
+    void DeviceCreated(RHI::FVulkanDevice& device, ERHIFeature features);
+    void DeviceTearDown(RHI::FVulkanDevice& device);
 
 private:
     TUniquePtr<class FVulkanTargetRHI> _targetRHI;

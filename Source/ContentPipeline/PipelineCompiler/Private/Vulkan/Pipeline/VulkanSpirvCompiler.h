@@ -92,7 +92,7 @@ public:
     void SetShaderFeatures(bool vertexPipelineStoresAndAtomics, bool fragmentStoresAndAtomic);
 
     void SetDefaultResourceLimits();
-    void SetCurrentResourceLimits(const FVulkanDeviceInfo& deviceInfo);
+    void SetCurrentResourceLimits(const FVulkanDevice& device);
 
 #if USE_PPE_RHIDEBUG
     void SetShaderDebugFlags(EShaderLangFormat flags);

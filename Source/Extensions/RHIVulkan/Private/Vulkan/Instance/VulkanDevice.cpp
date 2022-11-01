@@ -3,6 +3,8 @@
 
 #include "Vulkan/Instance/VulkanDevice.h"
 
+#include "RHIVulkanModule.h"
+
 #include "Diagnostic/Logger.h"
 #include "Modular/ModularDomain.h"
 
@@ -126,13 +128,16 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
     AssertRelease(_caps.Properties.limits.maxBoundDescriptorSets >= MaxDescriptorSets);
     AssertRelease(_caps.Properties.limits.maxDescriptorSetUniformBuffersDynamic +
                   _caps.Properties.limits.maxDescriptorSetStorageBuffersDynamic >= MaxBufferDynamicOffsets);
+
+    FRHIVulkanModule::Get(FModularDomain::Get()).DeviceCreated(*this, info.Features);
 }
 //----------------------------------------------------------------------------
-#if USE_PPE_RHIDEBUG
 FVulkanDevice::~FVulkanDevice() {
     LOG(RHI, Info, L"destroying vulkan device...");
+
+
+    FRHIVulkanModule::Get(FModularDomain::Get()).DeviceTearDown(*this);
 }
-#endif
 //----------------------------------------------------------------------------
 const FVulkanDeviceQueue& FVulkanDevice::DeviceQueue(EVulkanQueueFamily familyIndex) const NOEXCEPT {
     const auto ptr = _vkQueues.MakeView().Any([familyIndex](const FVulkanDeviceQueue& q) NOEXCEPT {

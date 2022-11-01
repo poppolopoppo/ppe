@@ -761,7 +761,7 @@ bool FVulkanSwapchain::FInternalData_::CreateSemaphores_(const FVulkanDevice& de
                 device.vkAllocator(),
                 &semaphore ));
             ONLY_IF_RHIDEBUG(device.SetObjectName(
-                bit_cast<u64>(semaphore),
+                semaphore,
                 "ImageAvailable",
                 VK_OBJECT_TYPE_SEMAPHORE ));
         }
@@ -775,7 +775,7 @@ bool FVulkanSwapchain::FInternalData_::CreateSemaphores_(const FVulkanDevice& de
                 device.vkAllocator(),
                 &semaphore ));
             ONLY_IF_RHIDEBUG(device.SetObjectName(
-                bit_cast<u64>(semaphore),
+                semaphore,
                 "RenderFinished",
                 VK_OBJECT_TYPE_SEMAPHORE ));
         }

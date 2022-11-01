@@ -441,13 +441,11 @@ FVulkanPipelineCompiler::FVulkanPipelineCompiler(Meta::FForceInit) {
     exclusiveData->SpirvCompiler->SetShaderFeatures(true, true);
 }
 //----------------------------------------------------------------------------
-FVulkanPipelineCompiler::FVulkanPipelineCompiler(const FVulkanDeviceInfo& deviceInfo)
-:   _deviceInfo(deviceInfo) {
-    Assert(_deviceInfo->vkInstance);
-    Assert(_deviceInfo->vkPhysicalDevice);
-    Assert(_deviceInfo->vkDevice);
-    Assert(_deviceInfo->API.vkCreateShaderModule);
-    Assert(_deviceInfo->API.vkDestroyShaderModule);
+FVulkanPipelineCompiler::FVulkanPipelineCompiler(const FVulkanDevice& device)
+:   _device(device) {
+    Assert(_device->vkInstance());
+    Assert(_device->vkPhysicalDevice());
+    Assert(_device->vkDevice());
 
     const auto exclusiveData = _data.LockExclusive();
     exclusiveData->SpirvCompiler.create<FVulkanSpirvCompiler>(
@@ -457,40 +455,33 @@ FVulkanPipelineCompiler::FVulkanPipelineCompiler(const FVulkanDeviceInfo& device
     exclusiveData->SpirvCompiler->SetShaderFeatures(true, true);
 
 #ifdef VK_KHR_shader_clock
-    PFN_vkGetPhysicalDeviceFeatures2KHR vkGetPhysicalDeviceFeatures2KHR_ = bit_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
-        _deviceInfo->API.instance_api_->global_api_->vkGetInstanceProcAddr(_deviceInfo->vkInstance, "vkGetPhysicalDeviceFeatures2KHR") );
-
-    if (nullptr == vkGetPhysicalDeviceFeatures2KHR_) {
-        vkGetPhysicalDeviceFeatures2KHR_ = bit_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
-            _deviceInfo->API.instance_api_->global_api_->vkGetInstanceProcAddr(_deviceInfo->vkInstance, "vkGetPhysicalDeviceFeatures2") );
-    }
-
-    if (vkGetPhysicalDeviceFeatures2KHR_) {
+    if (_device->Enabled().ShaderClock) {
         VkPhysicalDeviceShaderClockFeaturesKHR clockFeatures{};
         clockFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR;
 
-        VkPhysicalDeviceFeatures2 deviceFeatures{};
-        deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        deviceFeatures.pNext = &clockFeatures;
+        VkPhysicalDeviceFeatures2 deviceFeatures2{};
+        deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        deviceFeatures2.pNext = &clockFeatures;
 
-        vkGetPhysicalDeviceFeatures2KHR_(_deviceInfo->vkPhysicalDevice, &deviceFeatures);
+        _device->vkGetPhysicalDeviceFeatures2(_device->vkPhysicalDevice(), &deviceFeatures2);
 
         exclusiveData->SpirvCompiler->SetShaderClockFeatures(
             clockFeatures.shaderSubgroupClock,
             clockFeatures.shaderDeviceClock );
+
         exclusiveData->SpirvCompiler->SetShaderFeatures(
-            deviceFeatures.features.vertexPipelineStoresAndAtomics,
-            deviceFeatures.features.fragmentStoresAndAtomics );
+            deviceFeatures2.features.vertexPipelineStoresAndAtomics,
+            deviceFeatures2.features.fragmentStoresAndAtomics);
     }
     else
 #endif
     {
         VkPhysicalDeviceFeatures deviceFeatures{};
-        _deviceInfo->API.instance_api_->vkGetPhysicalDeviceFeatures(_deviceInfo->vkPhysicalDevice, &deviceFeatures);
+        _device->vkGetPhysicalDeviceFeatures(_device->vkPhysicalDevice(), &deviceFeatures);
 
         exclusiveData->SpirvCompiler->SetShaderFeatures(
             deviceFeatures.vertexPipelineStoresAndAtomics,
-            deviceFeatures.fragmentStoresAndAtomics );
+            deviceFeatures.fragmentStoresAndAtomics);
     }
 }
 //----------------------------------------------------------------------------
@@ -507,9 +498,9 @@ void FVulkanPipelineCompiler::SetCompilationFlags(EShaderCompilationFlags flags)
 
     exclusiveData->CompilationFlags = flags;
 
-    if (flags & EShaderCompilationFlags::UseCurrentDeviceLimits and !!_deviceInfo) {
-        Assert(_deviceInfo->vkInstance);
-        exclusiveData->SpirvCompiler->SetCurrentResourceLimits(*_deviceInfo);
+    if (flags & EShaderCompilationFlags::UseCurrentDeviceLimits and !!_device) {
+        Assert(_device->vkInstance());
+        exclusiveData->SpirvCompiler->SetCurrentResourceLimits(*_device);
     }
     else {
         exclusiveData->SpirvCompiler->SetDefaultResourceLimits();
@@ -532,7 +523,7 @@ void FVulkanPipelineCompiler::AddDirectory(const FDirpath& path) {
 }
 //----------------------------------------------------------------------------
 void FVulkanPipelineCompiler::ReleaseUnusedShaders() {
-    if (nullptr == _deviceInfo)
+    if (nullptr == _device)
         return; // not device specific -> can't prune unused variants
 
     const auto exclusiveData = _data.LockExclusive();
@@ -543,21 +534,21 @@ void FVulkanPipelineCompiler::ReleaseUnusedShaders() {
             continue;
         }
 
-        it->second.as<FVulkanDebuggableShaderModule>()->TearDown(*_deviceInfo);
+        it->second.as<FVulkanDebuggableShaderModule>()->TearDown(*_device);
 
         it = exclusiveData->ShaderCache.erase_ReturnNext(it);
     }
 }
 //----------------------------------------------------------------------------
 void FVulkanPipelineCompiler::ReleaseShaderCache() {
-    if (nullptr == _deviceInfo)
+    if (nullptr == _device)
         return; // not device specific -> can't prune unused variants
 
     const auto exclusiveData = _data.LockExclusive();
 
     for (const auto& it : exclusiveData->ShaderCache) {
         Assert_NoAssume(it.second->RefCount() == 1);
-        it.second.as<FVulkanDebuggableShaderModule>()->TearDown(*_deviceInfo);
+        it.second.as<FVulkanDebuggableShaderModule>()->TearDown(*_device);
     }
 
     exclusiveData->ShaderCache.clear_ReleaseMemory();
@@ -569,7 +560,7 @@ bool FVulkanPipelineCompiler::IsSupported(const FMeshPipelineDesc& desc, EShader
     if (desc.Shaders.empty())
         return false;
 
-    if (not IsDstFormatSupported_(fmt, !!_deviceInfo))
+    if (not IsDstFormatSupported_(fmt, !!_device))
         return false;
 
     for (const auto& it : desc.Shaders) {
@@ -584,7 +575,7 @@ bool FVulkanPipelineCompiler::IsSupported(const FRayTracingPipelineDesc& desc, E
     if (desc.Shaders.empty())
         return false;
 
-    if (not IsDstFormatSupported_(fmt, !!_deviceInfo))
+    if (not IsDstFormatSupported_(fmt, !!_device))
         return false;
 
     for (const auto& it : desc.Shaders) {
@@ -599,7 +590,7 @@ bool FVulkanPipelineCompiler::IsSupported(const FGraphicsPipelineDesc& desc, ESh
     if (desc.Shaders.empty())
         return false;
 
-    if (not IsDstFormatSupported_(fmt, !!_deviceInfo))
+    if (not IsDstFormatSupported_(fmt, !!_device))
         return false;
 
     for (const auto& it : desc.Shaders) {
@@ -611,7 +602,7 @@ bool FVulkanPipelineCompiler::IsSupported(const FGraphicsPipelineDesc& desc, ESh
 }
 //----------------------------------------------------------------------------
 bool FVulkanPipelineCompiler::IsSupported(const FComputePipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT {
-    if (not IsDstFormatSupported_(fmt, !!_deviceInfo))
+    if (not IsDstFormatSupported_(fmt, !!_device))
         return false;
 
     return IsSupported_(desc.Shader.Data);
@@ -647,14 +638,14 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
                 sh.first, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
                 (*pShaderSourceRef)->Data()->c_str()
-                ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
+                ARGS_IF_RHIDEBUG(INLINE_FORMAT(512, "{0}::{1}", (*pShaderSourceRef)->DebugName(), (*pShaderSourceRef)->EntryPoint())) )) {
                 if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
                     LOG_DIRECT(PipelineCompiler, Error, log.Written()); // #TODO: export the log when logger is disabled?
                 }
                 return false;
             }
 
-            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache)) {
                 CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"mesh pipeline: failed to create vulkan shader module!");
                 return false;
             }
@@ -735,7 +726,7 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
                 return false;
             }
 
-            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache)) {
                 CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"ray-tracing pipeline: failed to create vulkan shader module!");
                 return false;
             }
@@ -809,7 +800,7 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
                 return false;
             }
 
-            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache)) {
                 CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"graphics pipeline: failed to create vulkan shader module!");
                 return false;
             }
@@ -890,7 +881,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
             return false;
         }
 
-        if (createModule && not CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache ARGS_IF_RHIDEBUG(*pShaderSourceRef))) {
+        if (createModule && not CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache)) {
             CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, L"compute pipeline: failed to create vulkan shader module!");
             return false;
         }
@@ -912,11 +903,9 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompiledModuleCache& shaderCache ARGS_IF_RHIDEBUG(const PShaderSource& shaderSource)) const {
+bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompiledModuleCache& shaderCache) const {
     Assert(shader);
-    Assert(_deviceInfo);
-    Assert(_deviceInfo->API.vkCreateShaderModule);
-    Assert(_deviceInfo->API.vkDestroyShaderModule);
+    Assert(_device);
 
     u32 numSpirvData = 0;
 
@@ -943,30 +932,12 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
                 shaderInfo.codeSize = spirvCode.SizeInBytes();
 
                 VkShaderModule shaderId = VK_NULL_HANDLE;
-                VK_CHECK(_deviceInfo->API.vkCreateShaderModule(
-                    _deviceInfo->vkDevice,
+                VK_CHECK(_device->vkCreateShaderModule(
+                    _device->vkDevice(),
                     &shaderInfo,
-                    _deviceInfo->pAllocator,
+                    _device->vkAllocator(),
                     &shaderId ));
                 Assert(VK_NULL_HANDLE != shaderId);
-
-#if USE_PPE_RHITASKNAME
-                // set debug name for shader module if using vulkan debug utils extension
-                if (shaderSource && shaderSource->DebugName() && (
-                    _deviceInfo->RequiredInstanceExtensions & EVulkanInstanceExtension::EXT_debug_utils ||
-                    _deviceInfo->OptionalInstanceExtensions & EVulkanInstanceExtension::EXT_debug_utils)) {
-
-                    FString debugName = StringFormat("{0}::{1}", shaderSource->DebugName(), shaderSource->EntryPoint());
-
-                    VkDebugUtilsObjectNameInfoEXT info{};
-                    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-                    info.objectType = VK_OBJECT_TYPE_SHADER_MODULE;
-                    info.objectHandle = FVulkanExternalObject{ shaderId };
-                    info.pObjectName = debugName.c_str();
-
-                    VK_CHECK( _deviceInfo->API.instance_api_->vkSetDebugUtilsObjectNameEXT(_deviceInfo->vkDevice, &info) );
-                }
-#endif
 
                 PShaderModule shaderModule;
                 switch (Meta::EnumAnd(sh->first, EShaderLangFormat::_DebugModeMask)) {
@@ -974,13 +945,13 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
                 case EShaderLangFormat::EnableDebugTrace:
                 case EShaderLangFormat::EnableProfiling:
                 case EShaderLangFormat::EnableTimeMap:
-                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId,
+                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, _device, shaderId,
                         *checked_cast<const FVulkanDebuggableShaderSPIRV*>(spirvData.get()));
                     break;
 #endif
                 case EShaderLangFormat::Unknown:
                 default:
-                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, spirvData);
+                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, _device, shaderId, spirvData);
                     break;
                 }
 

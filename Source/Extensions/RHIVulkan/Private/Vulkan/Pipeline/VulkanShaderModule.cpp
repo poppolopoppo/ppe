@@ -10,6 +10,7 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanShaderModule::FVulkanShaderModule(
+    const FVulkanDevice& device,
     VkShaderModule vkShaderModule,
     FFingerprint sourceFingerprint,
     FStringView entryPoint
@@ -23,20 +24,25 @@ FVulkanShaderModule::FVulkanShaderModule(
     // combine entry point with source fingerprint for fingerprint
     _fingerprint = Fingerprint128(_entryPoint.Str());
     _fingerprint = Fingerprint128(&sourceFingerprint, sizeof(FFingerprint), _fingerprint);
+
+#if USE_PPE_RHIDEBUG
+    if (_vkShaderModule && _debugName)
+        device.SetObjectName(_vkShaderModule, _debugName.c_str(), VK_OBJECT_TYPE_SHADER_MODULE);
+#endif
 }
 //----------------------------------------------------------------------------
 FVulkanShaderModule::~FVulkanShaderModule() NOEXCEPT {
     Assert_NoAssume(VK_NULL_HANDLE == _vkShaderModule); // must call TearDown() before destruction !
 }
 //----------------------------------------------------------------------------
-void FVulkanShaderModule::TearDown(
-    VkDevice vkDevice,
-    PFN_vkDestroyShaderModule vkDestroyShaderModule,
-    const VkAllocationCallbacks* pAllocator ) {
+void FVulkanShaderModule::TearDown(const FVulkanDevice& device) {
     if (_vkShaderModule) {
-        Assert(VK_NULL_HANDLE != vkDevice);
-        Assert(vkDestroyShaderModule);
-        vkDestroyShaderModule(vkDevice, _vkShaderModule, pAllocator);
+#if USE_PPE_RHIDEBUG
+        device.SetObjectName(_vkShaderModule, nullptr, VK_OBJECT_TYPE_SHADER_MODULE);
+#endif
+
+        device.vkDestroyShaderModule(device.vkDevice(), _vkShaderModule, device.vkAllocator());
+
         _vkShaderModule = VK_NULL_HANDLE;
     }
 }

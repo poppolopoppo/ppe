@@ -137,10 +137,7 @@ void FVulkanResourceManager::TearDown() {
             Assert(sh);
             Assert_NoAssume(sh->RefCount() == 1);
 
-            sh->TearDown(
-                _device.vkDevice(),
-                _device.api()->vkDestroyShaderModule,
-                _device.vkAllocator() );
+            sh->TearDown(_device);
         }
 
         exclusiveShaderCache->clear_ReleaseMemory();
@@ -168,10 +165,17 @@ bool FVulkanResourceManager::CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLa
     Assert(pId);
 
     FVulkanDescriptorSetLayout::FBindings bindings;
-    FPipelineDesc::PUniformMap uniforms = NEW_REF(RHIResource, FPipelineDesc::FUniformMap);
+    FVulkanDescriptorSetLayout::FOptionalFlags optionalFlags;
+    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{
+        &bindings, &optionalFlags, _device,
+        NEW_REF(RHIResource, FPipelineDesc::FUniformMap)
+    };
 
-    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, uniforms };
-    auto it = CreateCachedResource_(pId, std::move(emptyKey), _device, bindings.MakeConstView()
+    auto it = CreateCachedResource_(pId,
+        std::move(emptyKey),
+        _device,
+        bindings.MakeConstView(),
+        optionalFlags.MakeConstView()
         ARGS_IF_RHIDEBUG("EmptyDSLayout"));
 
     if (Likely(it.first))
@@ -259,9 +263,17 @@ bool FVulkanResourceManager::CreateDescriptorSetLayout_(
     Assert(uniforms);
 
     FVulkanDescriptorSetLayout::FBindings bindings;
-    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{ &bindings, _device, std::move(uniforms) };
+    FVulkanDescriptorSetLayout::FOptionalFlags optionalFlags;
+    TResourceProxy<FVulkanDescriptorSetLayout> emptyKey{
+        &bindings, &optionalFlags, _device, std::move(uniforms) };
 
-    *pDSLayout = CreateCachedResource_(pId, std::move(emptyKey), _device, std::move(bindings) ARGS_IF_RHIDEBUG(debugName)).first;
+    *pDSLayout = CreateCachedResource_(pId,
+        std::move(emptyKey),
+        _device,
+        std::move(bindings),
+        std::move(optionalFlags)
+        ARGS_IF_RHIDEBUG(debugName)).first;
+
     if (Likely(!!*pDSLayout))
         return true;
 
@@ -439,14 +451,8 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pShaderMod
         &vkShaderModule) );
     Assert_NoAssume(VK_NULL_HANDLE != vkShaderModule);
 
-#if USE_PPE_RHITASKNAME
-    _device.SetObjectName(
-        vkShaderModule,
-        rawSpirv.DebugName(),
-        VK_OBJECT_TYPE_SHADER_MODULE );
-#endif
-
     *pShaderModule = NEW_REF(RHIShader, FVulkanShaderModule,
+        _device,
         vkShaderModule,
         rawSpirv.Fingerprint(),
         rawSpirv.EntryPoint().MakeView()
@@ -1263,7 +1269,7 @@ TPair<FRawDescriptorSetLayoutID, bool> FVulkanResourceManager::CreateDebugDescri
     uniforms->Emplace_AssertUnique(FUniformID{ "dbg_ShaderTrace" }, std::move(sbUniform));
 
     const FRawDescriptorSetLayoutID layout = CreateDescriptorSetLayout(std::move(uniforms),
-        INLINE_FORMAT(256, "dbg_{0}({1})", debugMode, debuggableShaders).data());
+        INLINE_FORMAT(256, "dbg_{0}({1})", debugMode, debuggableShaders));
     Assert_NoAssume(layout.Valid());
 
     _shaderDebug.dsLayoutCaches.insert_AssertUnique({ key, layout });

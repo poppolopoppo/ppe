@@ -68,18 +68,18 @@ void FRHIVulkanModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
 
 }
 //----------------------------------------------------------------------------
-void FRHIVulkanModule::DeviceCreated(RHI::FVulkanDeviceInfo& device) {
-    Assert(device.vkInstance);
-    Assert(device.vkPhysicalDevice);
-    Assert(device.vkDevice);
+void FRHIVulkanModule::DeviceCreated(RHI::FVulkanDevice& device, ERHIFeature features) {
+    Assert_NoAssume(device.vkInstance());
+    Assert_NoAssume(device.vkPhysicalDevice());
+    Assert_NoAssume(device.vkDevice());
 
-    _OnDeviceCreated.Invoke(device);
+    _OnDeviceCreated.Invoke(device, features);
 }
 //----------------------------------------------------------------------------
-void FRHIVulkanModule::DeviceTearDown(RHI::FVulkanDeviceInfo& device) {
-    Assert(device.vkInstance);
-    Assert(device.vkPhysicalDevice);
-    Assert(device.vkDevice);
+void FRHIVulkanModule::DeviceTearDown(RHI::FVulkanDevice& device) {
+    Assert_NoAssume(device.vkInstance());
+    Assert_NoAssume(device.vkPhysicalDevice());
+    Assert_NoAssume(device.vkDevice());
 
     _OnDeviceTearDown.Invoke(device);
 }

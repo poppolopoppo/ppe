@@ -183,9 +183,7 @@ public:
     };
 
     explicit FVulkanDevice(const FVulkanDeviceInfo& info);
-#if USE_PPE_RHIDEBUG
     ~FVulkanDevice();
-#endif
 
     VkDevice vkDevice() const { return _vkDevice; }
     VkPhysicalDevice vkPhysicalDevice () const { return _vkPhysicalDevice; }
