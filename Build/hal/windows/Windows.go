@@ -76,7 +76,7 @@ type WindowsPlatform struct {
 }
 
 func (win *WindowsPlatform) GetCompiler(bc BuildContext) (result Compiler) {
-	flags := WindowsFlags.Need(CommandEnv.Flags)
+	flags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
 	bc.DependsOn(flags)
 
 	switch flags.Compiler {

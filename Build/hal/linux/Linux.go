@@ -51,7 +51,7 @@ type LinuxPlatform struct {
 }
 
 func (linux *LinuxPlatform) GetCompiler(bc BuildContext) (result Compiler) {
-	flags := LinuxFlags.Need(CommandEnv.Flags)
+	flags := LinuxFlags.FindOrAdd(CommandEnv.Flags)
 	bc.DependsOn(flags)
 
 	switch flags.Compiler {

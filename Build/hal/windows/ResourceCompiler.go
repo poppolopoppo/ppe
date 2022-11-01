@@ -59,7 +59,7 @@ func (res *ResourceCompiler) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "WindowsResourcCompiler")
 }
 func (res *ResourceCompiler) Build(bc BuildContext) (BuildStamp, error) {
-	windowsFlags := WindowsFlags.Need(CommandEnv.Flags)
+	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
 	windowsSDKInstall := GetWindowsSDKInstall(windowsFlags.WindowsSDK)
 	bc.DependsOn(windowsFlags, windowsSDKInstall)
 
