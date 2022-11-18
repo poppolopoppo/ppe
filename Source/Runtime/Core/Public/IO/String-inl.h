@@ -460,7 +460,7 @@ NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Lar
 
     const size_t newCapacity = allocator_traits::SnapSizeT<_Char>(*this, count + 1/* null char */);
 #if USE_PPE_BASICSTRING_SBO
-    Assert(newCapacity > FSmallString_::GCapacity);
+    Assert(newCapacity >= FSmallString_::GCapacity);
 #endif
 
     if (is_large_()) {
