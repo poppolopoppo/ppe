@@ -218,32 +218,31 @@ public:
         _blocks.Allocate(ptr, alloc);
     }
 
-#if 0
     void Realloc(void* newPtr, size_t newSizeInBytes, void* oldPtr) {
         const FRecursiveLockTLS reentrantLock;
         if (reentrantLock.WasLocked)
             return;
 
-        Assert(newPtr);
-        Assert(oldPtr);
-        Assert(newSizeInBytes);
+        if (oldPtr) {
+            const FBlockHeader oldAlloc = _blocks.Release(oldPtr);
+            if (oldAlloc.SizeInBytes > newSizeInBytes && newSizeInBytes)
+                _callstacks.Trim(oldAlloc.CallstackUID);
+        }
 
-        const FBlockHeader oldAlloc = _blocks.Release(oldPtr);
+        if (newPtr) {
+            Assert(newSizeInBytes);
 
-        if (oldAlloc.SizeInBytes > newSizeInBytes)
-            _callstacks.Trim(oldAlloc.CallstackUID);
+            FCallstackData callstackData;
+            callstackData.CaptureBacktrace();
 
-        FCallstackData callstackData;
-        callstackData.CaptureBacktrace();
+            const FBlockHeader newAlloc{
+                DontDisregard(),
+                checked_cast<u32>(newSizeInBytes),
+                _callstacks.FindOrAdd(callstackData) };
 
-        FBlockHeader newAlloc;
-        newAlloc.Enabled = DontDisregard();
-        newAlloc.SizeInBytes = newSizeInBytes;
-        newAlloc.CallstackUID = _callstacks.FindOrAdd(callstackData);
-
-        _blocks.Allocate(newPtr, newAlloc);
+            _blocks.Allocate(newPtr, newAlloc);
+        }
     }
-#endif
 
     void Release(void* ptr) {
         Assert(ptr);
