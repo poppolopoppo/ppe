@@ -117,7 +117,7 @@ static void CheckForSmallAllocs_(const FMemoryTracking& domain, const FMemoryTra
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FMemoryTracking& FMemoryTracking::GpuMemory() NOEXCEPT {
-    return MEMORYDOMAIN_TRACKING_DATA(UnaccountedMemory);
+    return MEMORYDOMAIN_TRACKING_DATA(GpuMemory);
 }
 //----------------------------------------------------------------------------
 FMemoryTracking& FMemoryTracking::PooledMemory() NOEXCEPT {
@@ -130,6 +130,10 @@ FMemoryTracking& FMemoryTracking::UsedMemory() NOEXCEPT {
 //----------------------------------------------------------------------------
 FMemoryTracking& FMemoryTracking::ReservedMemory() NOEXCEPT {
     return MEMORYDOMAIN_TRACKING_DATA(ReservedMemory);
+}
+//----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::VirtualMemory() NOEXCEPT {
+    return MEMORYDOMAIN_TRACKING_DATA(VirtualMemory);
 }
 //----------------------------------------------------------------------------
 FMemoryTracking& FMemoryTracking::UnaccountedMemory() NOEXCEPT {
@@ -326,19 +330,18 @@ void FMemoryTracking::Swap(FMemoryTracking& other) NOEXCEPT {
 void FMemoryTracking::FCounters::Allocate(size_t s) {
     std::atomic_thread_fence(std::memory_order_release);
 
-    const size_t total = (TotalSize += s);
+    const size_t total = (TotalSize.fetch_add(s, std::memory_order_relaxed) + s);
 
     if (Unlikely(MinSize > s))
-        MinSize = s;
+        MinSize.store(s, std::memory_order_relaxed);
     if (Unlikely(MaxSize < s))
-        MaxSize = s;
+        MaxSize.store(s, std::memory_order_relaxed);
     if (Unlikely(total > PeakSize))
-        PeakSize = total;
+        PeakSize.store(total, std::memory_order_relaxed);
 
     const size_t n{ NumAllocs.fetch_add(1, std::memory_order_relaxed) + 1 };
-
     if (Unlikely(n > PeakAllocs))
-        PeakAllocs = n;
+        PeakAllocs.store(n, std::memory_order_relaxed);
 
     AccumulatedAllocs.fetch_add(1, std::memory_order_relaxed);
     AccumulatedSize.fetch_add(s, std::memory_order_relaxed);

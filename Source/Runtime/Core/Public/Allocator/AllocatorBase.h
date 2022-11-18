@@ -255,6 +255,7 @@ struct TAllocatorTraits {
         const size_t snapped = a.SnapSize(size);
         Assert(snapped >= size);
         Assert_NoAssume(a.SnapSize(snapped) == snapped);
+        Assert_NoAssume(!!size || !snapped); // SnapSize(0) == 0
         return snapped;
 #else
         return a.SnapSize(size);
@@ -320,71 +321,33 @@ struct TAllocatorTraits {
         Assert_NoAssume(b.SizeInBytes <= MaxSize(a));
         Assert_NoAssume(s <= MaxSize(a));
 
-        IF_CONSTEXPR(has_reallocate::value) {
-            return a.Reallocate(b, s);
-        }
-        else {
-            if ((!!b) & (!!s)) {
-                const FAllocatorBlock r = a.Allocate(s);
-                Assert_NoAssume(r);
-                FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, b.SizeInBytes));
-                a.Deallocate(b);
-                b = r;
+        if (Likely(b.SizeInBytes != s)) {
+            Assert_NoAssume(SnapSize(a, s) != SnapSize(a, b.SizeInBytes));
+
+            IF_CONSTEXPR(has_reallocate::value) {
+                return a.Reallocate(b, s);
             }
             else {
-                if (Likely(s)) {
-                    Assert_NoAssume(not b);
-                    b = a.Allocate(s);
+                if ((!!b) & (!!s)) {
+                    const FAllocatorBlock r = a.Allocate(s);
+                    Assert_NoAssume(r);
+                    FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, b.SizeInBytes));
+                    a.Deallocate(b);
+                    b = r;
                 }
                 else {
-                    Assert_NoAssume(b);
-                    a.Deallocate(b.Reset());
+                    if (Likely(s)) {
+                        Assert_NoAssume(not b);
+                        b = a.Allocate(s);
+                    }
+                    else {
+                        Assert_NoAssume(b);
+                        a.Deallocate(b.Reset());
+                    }
                 }
-            }
-            return;
-        }
-    }
-
-    // specialized this method to avoid over-copying when !has_reallocate
-    template <typename T>
-    NODISCARD static auto ReallocateT_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
-        Assert(oldSize >= items.size());
-        Assert_NoAssume(oldSize * sizeof(T) <= MaxSize(a));
-        Assert_NoAssume(newSize * sizeof(T) <= MaxSize(a));
-
-        FAllocatorBlock b{ items.data(), oldSize * sizeof(T) };
-        const size_t s = newSize * sizeof(T);
-
-        IF_CONSTEXPR(has_reallocate::value) {
-            IF_CONSTEXPR(reallocate_can_fail::value) {
-                Verify(a.Reallocate(b, s));
-            }
-            else {
-                a.Reallocate(b, s);
+                return;
             }
         }
-        else {
-            if ((!!b) & (!!s)) {
-                const FAllocatorBlock r = a.Allocate(s);
-                Assert_NoAssume(r);
-                // *HERE* copy potentially less since we're giving the actual used size (which can be less reserved size)
-                FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, /*b.SizeInBytes*/items.SizeInBytes()));
-                a.Deallocate(b);
-                b = r;
-            }
-            else {
-                if (Likely(s)) {
-                    Assert_NoAssume(not b);
-                    b = a.Allocate(s);
-                }
-                else {
-                    Assert_NoAssume(b);
-                    a.Deallocate(b.Reset());
-                }
-            }
-        }
-
-        items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
     }
 
     NODISCARD static bool Acquire(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
@@ -494,30 +457,80 @@ NODISCARD bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBl
 //----------------------------------------------------------------------------
 template <typename _Allocator, typename T>
 NODISCARD auto ReallocateAllocatorBlock_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
-    return TAllocatorTraits<_Allocator>::ReallocateT_AssumePOD(a, items, oldSize, newSize);
+    STATIC_ASSERT(Meta::has_trivial_move<T>::value);
+    STATIC_ASSERT(Meta::has_trivial_destructor<T>::value);
+    using traits_t = TAllocatorTraits<_Allocator>;
+
+    Assert(oldSize >= items.size());
+    Assert_NoAssume(oldSize * sizeof(T) <= traits_t::MaxSize(a));
+    Assert_NoAssume(newSize * sizeof(T) <= traits_t::MaxSize(a));
+
+    FAllocatorBlock b{ items.data(), oldSize * sizeof(T) };
+    const size_t s = newSize * sizeof(T);
+    if (b.SizeInBytes == s)
+        return;
+    Assert_NoAssume(traits_t::SnapSize(a, s) != traits_t::SnapSize(a, b.SizeInBytes));
+
+#if 1 // specialized to exploit user oldSize, see *HERE* bellow
+    IF_CONSTEXPR(traits_t::has_reallocate::value) {
+        IF_CONSTEXPR(traits_t::reallocate_can_fail::value) {
+            VerifyRelease(traits_t::Reallocate(a, b, s));
+        }
+        else {
+            traits_t::Reallocate(a, b, s);
+        }
+    }
+    else {
+        if ((!!b) & (!!s)) {
+            const FAllocatorBlock r = traits_t::Allocate(a, s);
+            Assert_NoAssume(r);
+            // *HERE* copy potentially less since we're giving the actual user size (which can be less than reserved size)
+            FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, /*b.SizeInBytes*/items.SizeInBytes()));
+            traits_t::Deallocate(a, b);
+            b = r;
+        }
+        else {
+            if (Likely(s)) {
+                Assert_NoAssume(not b);
+                b = traits_t::Allocate(a, s);
+            }
+            else {
+                Assert_NoAssume(b);
+                traits_t::Deallocate(a, b.Reset());
+            }
+        }
+    }
+#else
+    traits_t::Reallocate(a, b, newSize);
+#endif
+
+    items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
 }
 //---------------------------------------------------------------------------
 template <typename _Allocator, typename T>
 void ReallocateAllocatorBlock_NonPOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+    Assert(oldSize != newSize);
     using traits_t = TAllocatorTraits<_Allocator>;
 
     const FAllocatorBlock o{ items.data(), oldSize * sizeof(T) };
-    FAllocatorBlock b = traits_t::Allocate(a, newSize * sizeof(T));
+    if (Likely(o.SizeInBytes != newSize * sizeof(T))) {
+        FAllocatorBlock b = traits_t::Allocate(a, newSize * sizeof(T));
 
-    std::uninitialized_move(
-        items.begin(), items.begin() + Min(newSize, items.size()),
-        MakeCheckedIterator(static_cast<T*>(b.Data), newSize, 0));
+        std::uninitialized_move(
+            items.begin(), items.begin() + Min(newSize, items.size()),
+            MakeCheckedIterator(static_cast<T*>(b.Data), newSize, 0));
 
-    Meta::Destroy(items);
+        Meta::Destroy(items);
 
-    traits_t::Deallocate(a, o);
+        traits_t::Deallocate(a, o);
 
-    items = { static_cast<T*>(b.Data), Min(newSize, items.size()) };
+        items = { static_cast<T*>(b.Data), Min(newSize, items.size()) };
+    }
 }
 //---------------------------------------------------------------------------
 template <typename _Allocator, typename T>
 NODISCARD auto ReallocateAllocatorBlock(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
-    IF_CONSTEXPR(Meta::has_trivial_move<T>::value)
+    IF_CONSTEXPR(Meta::is_pod_v<T> || (Meta::has_trivial_move<T>::value && Meta::has_trivial_destructor<T>::value))
         return ReallocateAllocatorBlock_AssumePOD(a, items, oldSize, newSize);
     else
         return ReallocateAllocatorBlock_NonPOD(a, items, oldSize, newSize);

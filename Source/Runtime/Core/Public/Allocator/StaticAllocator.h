@@ -101,14 +101,6 @@ struct TStaticAllocator : TAllocatorTraits<_Allocator> {
         return allocator_traits::Reallocate(a, b, s);
     }
 
-    // specialized this method to avoid over-copying when !has_reallocate
-    template <typename T>
-    NODISCARD static auto ReallocateT_AssumePOD(TMemoryView<T>& items, size_t oldSize, size_t newSize) {
-        allocator_type a = Default;
-        return allocator_traits::template ReallocateT_AssumePOD<T>(
-            a, items, oldSize, newSize );
-    }
-
     NODISCARD static bool Acquire(FAllocatorBlock b) NOEXCEPT {
         allocator_type a = Default;
         return allocator_traits::Acquire(a, b);

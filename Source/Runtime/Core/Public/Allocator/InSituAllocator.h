@@ -73,7 +73,7 @@ public:
 
     static size_t SnapSize(size_t s) NOEXCEPT {
         Assert(s <= SizeInBytes);
-        return SizeInBytes;
+        return (s ? SizeInBytes : 0);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {

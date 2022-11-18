@@ -183,51 +183,35 @@ void FCurrentProcess::DumpPhysicalMemory(FTextWriter& oss) const {
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
 #if USE_PPE_MEMORYDOMAINS
-    {
-        Format(oss, "memory domains =") << Eol;
+    // take a snapshot of everything at the same time for consistency
+    struct FSnapshot_ {
+        const FMemoryTracking* Domain;
+        const FMemoryTracking::FSnapshot User;
+        const FMemoryTracking::FSnapshot System;
+        const FMemoryTracking::FSnapshot Wasted;
+        FSnapshot_(const FMemoryTracking& domain)
+            : Domain(&domain)
+            , User(Domain->User())
+            , System(Domain->System())
+            , Wasted(Domain->Wasted())
+        {}
+    } domains[] = {
+        FMemoryTracking::GpuMemory(),
+        FMemoryTracking::VirtualMemory(),
+        FMemoryTracking::ReservedMemory(),
+        FMemoryTracking::UsedMemory(),
+        FMemoryTracking::PooledMemory(),
+        FMemoryTracking::UnaccountedMemory(),
+    };
 
-        const FMemoryTracking* domains[] = {
-            &MemoryDomain::FReservedMemory::TrackingData(),
-            &MemoryDomain::FUsedMemory::TrackingData(),
-            &MemoryDomain::FPooledMemory::TrackingData()
-        };
-
-        for (const FMemoryTracking* domain : domains) {
-            const auto usr = domain->User();
-            const auto sys = domain->System();
-
-            Format(oss,
-                "   [{0}]", domain->Name()) << Eol;
-            Format(oss,
-                "      usr: num allocs          = {0}\n"
-                "      usr: min / max size      = {1:8f3} / {2:8f3}\n"
-                "      usr: total size          = {3:8f3}\n"
-                "      usr: peak allocs / size  = {4:8f3} / {5:8f3}\n"
-                "      usr: accum allocs / size = {6:8f3} / {7:8f3}",
-                Fmt::CountOfElements(usr.NumAllocs),
-                Fmt::SizeInBytes(usr.MinSize),
-                Fmt::SizeInBytes(usr.MaxSize),
-                Fmt::SizeInBytes(usr.TotalSize),
-                Fmt::CountOfElements(usr.PeakAllocs),
-                Fmt::SizeInBytes(usr.PeakSize),
-                Fmt::CountOfElements(usr.AccumulatedAllocs),
-                Fmt::SizeInBytes(usr.AccumulatedSize)) << Eol;
-            Format(oss,
-                "      sys: num allocs          = {0}\n"
-                "      sys: min / max size      = {1:8f3} / {2:8f3}\n"
-                "      sys: total size          = {3:8f3}\n"
-                "      sys: peak allocs / size  = {4:8f3} / {5:8f3}\n"
-                "      sys: accum allocs / size = {6:8f3} / {7:8f3}",
-                Fmt::CountOfElements(sys.NumAllocs),
-                Fmt::SizeInBytes(sys.MinSize),
-                Fmt::SizeInBytes(sys.MaxSize),
-                Fmt::SizeInBytes(sys.TotalSize),
-                Fmt::CountOfElements(sys.PeakAllocs),
-                Fmt::SizeInBytes(sys.PeakSize),
-                Fmt::CountOfElements(sys.AccumulatedAllocs),
-                Fmt::SizeInBytes(sys.AccumulatedSize)) << Eol;
-        }
-
+    Format(oss, "memory domains =") << Eol;
+    for (const FSnapshot_& snapshot : domains) {
+        Format(oss, "{0:-20} : {1:9f2} / {2:9f2} / {3:9f2}",
+            snapshot.Domain->Name(),
+            Fmt::SizeInBytes(snapshot.User.TotalSize),
+            Fmt::SizeInBytes(snapshot.System.TotalSize),
+            Fmt::SizeInBytes(snapshot.Wasted.TotalSize)
+            ) << Eol;
     }
 #else
     Unused(oss);

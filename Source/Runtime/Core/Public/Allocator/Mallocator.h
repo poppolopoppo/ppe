@@ -34,15 +34,15 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) const {
-        return FAllocatorBlock{ PPE::malloc(s), s };
+        return FAllocatorBlock{ PPE::malloc_for_new(s), s };
     }
 
     void Deallocate(FAllocatorBlock b) const {
-        PPE::free(b.Data);
+        PPE::free_for_delete(b.Data, b.SizeInBytes);
     }
 
     void Reallocate(FAllocatorBlock& b, size_t s) const {
-        b.Data = PPE::realloc(b.Data, s);
+        b.Data = PPE::realloc_for_new(b.Data, s, b.SizeInBytes);
         b.SizeInBytes = s;
     }
 

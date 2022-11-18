@@ -204,7 +204,7 @@ public:
 
     size_t SnapSize(size_t s) const NOEXCEPT {
         STATIC_ASSERT(_MinSize > 0); // or it's useless
-        return allocator_traits::SnapSize(*this, Max(s, _MinSize));
+        return allocator_traits::SnapSize(*this, (s ? Max(s, _MinSize) : 0));
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {

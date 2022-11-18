@@ -68,6 +68,10 @@ namespace MemoryDomain {
         ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr);
         return GInstance;
     }
+    FMemoryTracking& MEMORYDOMAIN_NAME(VirtualMemory)::TrackingData() {
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "VirtualMemory", nullptr);
+        return GInstance;
+    }
     FMemoryTracking& MEMORYDOMAIN_NAME(UnaccountedMemory)::TrackingData() {
         ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UnaccountedMemory", nullptr);
         return GInstance;
@@ -172,8 +176,8 @@ void ReportTrackingDatas_(
     oss << L"  Reporting tracking data :" << Eol;
 
     CONSTEXPR size_t width = 194;
-    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-35}";
-    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:6} {1:8} | {2:9} {3:9} | {4:10} {5:10}   ";
+    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-33}";
+    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:7} {1:8} | {2:9} {3:9} | {4:10} {5:10}   ";
     CONSTEXPR wchar_t fmtFooter[] = L"|| {0:10} {1:10}   ";
 
     const auto hr = Fmt::Repeat(L'-', width);
@@ -348,6 +352,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     if (not FMallocDebug::FetchAllocationHistogram(&sizeClasses, &bins))
         return;
 
+    Assert(not sizeClasses.empty());
     Assert_NoAssume(sizeClasses.size() == bins.size());
 
     i64 totalCount = 0;
@@ -358,8 +363,8 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
         maxCount = Max(maxCount, user.AccumulatedAllocs);
     }
 
-    const auto distribution = [](i64 sz) -> float {
-        return (std::log(std::pow(static_cast<float>(sz), 2.0f) + 1.f) - std::log(1.f));
+    const auto distribution = [bias{ std::log(1.f) }](i64 n) -> float {
+        return (std::log(std::pow(static_cast<float>(n), 2.0f) + 1.f) - bias);
     };
 
     const float distributionScale = distribution(maxCount);
@@ -373,32 +378,34 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     static i64 GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
     AssertRelease(lengthof(GPrevAllocations) >= sizeClasses.size());
 
-    constexpr float width = 115;
+    constexpr float width = 106;
     forrange(i, 0, sizeClasses.size()) {
         Assert_NoAssume(sizeClasses[i] > 0);
 
         const FMemoryTracking& trackingData = bins[i];
         const FMemoryTracking::FSnapshot user = trackingData.User();
         const FMemoryTracking::FSnapshot system = trackingData.System();
+        const FMemoryTracking::FSnapshot wasted = trackingData.Wasted();
 
         if (0 == user.AccumulatedAllocs) {
-            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |",
+            Format(oss, L" #{0:#3} | {1:9} | {2:9} | {3:9} | {4} |",
                 i,
                 Fmt::SizeInBytes(sizeClasses[i]),
                 Fmt::SizeInBytes(checked_cast<u64>(system.AccumulatedSize)),
-                0.f );
+                Fmt::SizeInBytes(checked_cast<u64>(wasted.AccumulatedSize)),
+                Fmt::Percentage(0, 1) );
         }
         else {
             const auto delta = (user.AccumulatedAllocs - GPrevAllocations[i]);
-            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |{4}> {5} +{6} wasted:{7}",
+            Format(oss, L" #{0:#3} | {1:9} | {2:9} | {3:9} | {4} |{5}> {6} +{7}",
                 i,
                 Fmt::SizeInBytes(sizeClasses[i]),
                 Fmt::SizeInBytes(checked_cast<u64>(system.AccumulatedSize)),
-                100 * (float(user.AccumulatedAllocs) / totalCount),
+                Fmt::SizeInBytes(checked_cast<u64>(wasted.AccumulatedSize)),
+                Fmt::Percentage(user.AccumulatedAllocs, totalCount),
                 Fmt::Repeat(delta ? L'=' : L'-', size_t(std::round(Min(width, width * distribution(user.AccumulatedAllocs) / distributionScale)))),
                 Fmt::CountOfElements(checked_cast<u64>(user.AccumulatedAllocs)),
-                delta,
-                Fmt::SizeInBytes(system.AccumulatedSize - user.AccumulatedSize) );
+                delta );
         }
 
         oss << Eol;

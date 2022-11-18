@@ -774,6 +774,32 @@ struct FNoFunction {
     CONSTEXPR operator TFunction<T, N> () const NOEXCEPT {
         return TFunction<T, N>{};
     }
+
+    template <typename... _Args>
+    Meta::FDefaultValue operator ()(_Args...) const NOEXCEPT {
+        return Default;
+    }
+
+    template <typename _Return, typename... _Args>
+    static _Return FreeFunc(_Args...) NOEXCEPT {
+        return Default;
+    }
+
+    // can't use NOEXCEPT_IF() due to MSVC...
+    template <typename _Return, typename... _Args>
+    using TFreeFunc = _Return(*)(_Args...);
+    template <typename _Return, typename... _Args>
+    using TFreeFuncNoExcept = _Return(*)(_Args...) NOEXCEPT;
+
+    template <typename _Return, typename... _Args>
+    operator TFreeFunc<_Return, _Args...>() const NOEXCEPT {
+        return &FreeFunc<_Return, _Args...>;
+    }
+
+    template <typename _Return, typename... _Args>
+    operator TFreeFuncNoExcept<_Return, _Args...>() const NOEXCEPT {
+        return &FreeFunc<_Return, _Args...>;
+    }
 };
 //----------------------------------------------------------------------------
 CONSTEXPR const FNoFunction NoFunction;

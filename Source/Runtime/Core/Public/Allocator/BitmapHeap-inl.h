@@ -108,8 +108,7 @@ inline void* TBitmapPage<_PageSize>::Allocate(u32 sizeInBytes, bool& exhausted) 
                 const mask_t insert = (pages & ~(blk << off));
                 if (Pages.compare_exchange_weak(pages, insert, std::memory_order_release, std::memory_order_relaxed)) {
                     Assert(off + numPages - 1 < MaxPages);
-                    const mask_t backup = (Sizes |= (mask_t(1) << (off + numPages - 1)));
-                    Unused(backup);
+                    ONLY_IF_ASSERT(const mask_t backup = (Sizes |= (mask_t(1) << (off + numPages - 1))));
                     void* const result = (reinterpret_cast<u8*>(vAddressSpace) + PageSize * off);
                     Assert_NoAssume(backup & (mask_t(1) << (off + numPages - 1)));
                     Assert_NoAssume(RegionSize(result) == SnapSize(sizeInBytes));
@@ -608,7 +607,7 @@ auto TBitmapHeap<_Traits>::AliasingPage_AssumeLocked_(const void* ptr) const NOE
 
     FStackMRU& hint = FStackMRU::Tls();
     for (const auto& MRU : hint.MRU) {
-        if ((MRU.Revision == Revision) & (!!MRU.Page)) {
+        if ((MRU.Revision == Revision) && (!!MRU.Page)) {
             if (MRU.Page->vAddressSpace == vAddressSpace)
                 return MRU.Page;
         }
@@ -780,8 +779,8 @@ void* TBitmapFixedSizeHeap<_ReservedSize, _Traits>::Allocate(size_t sizeInBytes)
             for (u32 pageIndex : hint.MRU) {
                 if (pageIndex < NumReservedPages) {
                     page_type* const page = (PageTable + pageIndex);
-                    if ((page->LargestBlockAvailable() >= sizeInBytes) &
-                        ((allocIndex == UINT32_MAX) | (ate ? allocIndex < pageIndex : allocIndex > pageIndex)) )
+                    if ((page->LargestBlockAvailable() >= sizeInBytes) &&
+                        ((allocIndex == UINT32_MAX) || (ate ? allocIndex < pageIndex : allocIndex > pageIndex)) )
                         allocIndex = pageIndex;
                 }
             }

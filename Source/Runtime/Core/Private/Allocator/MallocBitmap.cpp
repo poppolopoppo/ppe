@@ -238,14 +238,17 @@ void* FMallocBitmap::HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXC
     Assert(newSize);
     Assert(oldSize);
     Assert(newSize != oldSize);
-    Assert_NoAssume(AliasesToHeaps(ptr));
 
-    if (Likely((newSize <= FBitmapHeapMedium_::MaxAllocSize) & (oldSize <= FBitmapHeapMedium_::MaxAllocSize)))
+    if (Likely((newSize <= FBitmapHeapMedium_::MaxAllocSize) && (oldSize <= FBitmapHeapMedium_::MaxAllocSize))) {
+        Assert_NoAssume(AliasesToMediumHeap(ptr));
         return MediumResize(ptr, MediumSnapSize(newSize), MediumSnapSize(oldSize));
+    }
 
-    if ((newSize <= FBitmapHeapLarge_::MaxAllocSize) & (oldSize <= FBitmapHeapLarge_::MaxAllocSize) &
-        (newSize >  FBitmapHeapMedium_::MaxAllocSize) & (oldSize >  FBitmapHeapMedium_::MaxAllocSize) )
+    if ((newSize <= FBitmapHeapLarge_::MaxAllocSize) && (oldSize <= FBitmapHeapLarge_::MaxAllocSize) &&
+        (newSize > FBitmapHeapMedium_::MaxAllocSize) && (oldSize > FBitmapHeapMedium_::MaxAllocSize)) {
+        Assert_NoAssume(AliasesToLargeHeap(ptr));
         return LargeResize(ptr, LargeSnapSize(newSize), LargeSnapSize(oldSize));
+    }
 
     return nullptr; // can't resize without moving the data, but there might still be some space left
 }

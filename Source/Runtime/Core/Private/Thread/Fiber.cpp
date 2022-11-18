@@ -14,7 +14,7 @@ namespace {
 //----------------------------------------------------------------------------
 enum : size_t {
     FiberStackCommitSize    = 0,
-    FiberStackReserveSize   = (2048/* kb */<<10),
+    FiberStackReserveSize   = 1_MiB,
 };
 //----------------------------------------------------------------------------
 static THREAD_LOCAL void* GCurrentThreadFiber = nullptr;
@@ -43,19 +43,22 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
     Assert(!_pimpl);
     Assert(entryPoint);
 
-    if (0 == stackSize)
-        stackSize = FiberStackReserveSize;
+    size_t commitSize = FiberStackCommitSize;
+    size_t reservedSize = stackSize;
+    if (0 == reservedSize)
+        reservedSize = FiberStackReserveSize;
+    Assert_NoAssume(commitSize <= reservedSize);
 
     _pimpl = FPlatformThread::CreateFiber(
-        FiberStackCommitSize,
-        stackSize,
+        commitSize,
+        reservedSize,
         entryPoint,
         arg );
 
     Assert(_pimpl);
 
 #if USE_PPE_MEMORYDOMAINS
-    MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateSystem(stackSize);
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateSystem(reservedSize);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -76,10 +79,11 @@ void FFiber::Destroy(size_t stackSize) {
     _pimpl = nullptr;
 
 #if USE_PPE_MEMORYDOMAINS
-    if (0 == stackSize)
-        stackSize = FiberStackReserveSize;
+    size_t reservedSize = stackSize;
+    if (0 == reservedSize)
+        reservedSize = FiberStackReserveSize;
 
-    MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateSystem(stackSize);
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateSystem(reservedSize);
 #else
     Unused(stackSize);
 #endif

@@ -12,7 +12,7 @@
 
 #include <atomic>
 
-#define USE_PPE_VIRTUALPAGECACHE (!USE_PPE_SANITIZER)
+#define USE_PPE_VIRTUALPAGE_CACHE (!USE_PPE_SANITIZER)
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#if USE_PPE_VIRTUALPAGECACHE
+#if USE_PPE_VIRTUALPAGE_CACHE
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 //----------------------------------------------------------------------------
@@ -206,7 +206,7 @@ private:
         for (last->NextPage = FreePages.load(std::memory_order_relaxed);;) {
             if (FreePages.compare_exchange_weak(last->NextPage, static_cast<FFreePage*>(first),
                     std::memory_order_release, std::memory_order_relaxed)) {
-                ONLY_IF_ASSERT(const i32 numPages = checked_cast<i32>(last - first + 1));
+                ONLY_IF_ASSERT(const i32 numPages = checked_cast<i32>((last + 1) - first));
                 Assert_NoAssume(NumUsedPages.fetch_add(-numPages, std::memory_order_relaxed) >= numPages);
                 ONLY_IF_ASSERT(NumFreePages.fetch_add(numPages, std::memory_order_relaxed));
                 break;
@@ -303,7 +303,7 @@ private:
 };
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_POP() // Padding
-#endif //!USE_PPE_VIRTUALPAGECACHE
+#endif //!USE_PPE_VIRTUALPAGE_CACHE
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -314,7 +314,7 @@ FAllocatorBlock FPageAllocator::Allocate(size_t s) {
 
     FAllocatorBlock blk;
     blk.SizeInBytes = s;
-#if USE_PPE_VIRTUALPAGECACHE
+#if USE_PPE_VIRTUALPAGE_CACHE
     blk.Data = FVirtualPageCache_::Get().Allocate();
 #else
     blk.Data = FPlatformMemory::SystemAlignedMalloc(PageSize, PageSize);
@@ -330,7 +330,7 @@ void FPageAllocator::Deallocate(FAllocatorBlock blk) {
     Assert(PageSize == blk.SizeInBytes);
     Assert_NoAssume(Meta::IsAlignedPow2(PageSize, blk.Data));
 
-#if USE_PPE_VIRTUALPAGECACHE
+#if USE_PPE_VIRTUALPAGE_CACHE
     FVirtualPageCache_::Get().Deallocate(blk.Data);
 #else
     FPlatformMemory::SystemAlignedFree(blk.Data, PageSize);

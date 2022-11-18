@@ -64,7 +64,7 @@ struct FAllocatorBinning {
 
     static u32 BoundSizeToBins(u32 sizeInBytes) NOEXCEPT {
         Assert_NoAssume(sizeInBytes <= MaxBinSize);
-        return IndexToBlockSize(IndexFromSize(u16(sizeInBytes)));
+        return (sizeInBytes ? IndexToBlockSize(IndexFromSize(static_cast<u16>(sizeInBytes))) : 0);
     }
     static CONSTEXPR u32 LowestBoundIndex(size_t sizeInBytes) NOEXCEPT {
         if (sizeInBytes <= MaxBinSize) {

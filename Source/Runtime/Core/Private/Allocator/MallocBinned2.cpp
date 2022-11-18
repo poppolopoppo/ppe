@@ -196,7 +196,7 @@ struct FBinnedFreeBlockList {
 
     NODISCARD FORCE_INLINE bool PushToFront(void* ptr, u32 blockSize) {
         Assert(ptr);
-        AssertRelease_NoAssume(blockSize >= sizeof(FBinnedBundleNode));
+        Assert_NoAssume(blockSize >= sizeof(FBinnedBundleNode));
         if (PartialBundle.Full(blockSize)) {
             if (FullBundle.Head)
                 return false;
@@ -760,11 +760,12 @@ struct FBinnedPerThreadFreeBlockList : Meta::FNonCopyableNorMovable, Meta::FThre
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(FreeLists, sizeof(FreeLists))); // poison to crash if used after destructor
     }
 
+    void RecycleFullBundles() NOEXCEPT;
     void ReleaseCacheMemory() NOEXCEPT;
 
     FBinnedFreeBlockList FreeLists[PPE_MALLOCBINNED2_SMALLPOOL_COUNT];
 
-    FORCE_INLINE void* Malloc(u32 pool) {
+    NODISCARD FORCE_INLINE void* Malloc(u32 pool) {
         THIS_THREADRESOURCE_CHECKACCESS();
         Assert(pool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
         void* const result = FreeLists[pool].PopFromFront();
@@ -789,8 +790,49 @@ struct FBinnedPerThreadFreeBlockList : Meta::FNonCopyableNorMovable, Meta::FThre
 #endif
         return couldFree;
     }
+    // return null if the block could not be reallocated
+    NODISCARD FORCE_INLINE Meta::TOptional<void*> Realloc(void* ptr, u32 size, u32 old = 0) {
+        Unused(old);
+        u32 oldPool = UMax, oldBlockSize = 0;
+        const u32 newPool = FMallocBinned2::SmallPoolIndex(checked_cast<u16>(size));
+
+        bool canFree = true;
+        if (ptr) {
+            Assert_NoAssume(old > 0);
+            oldPool = FBinnedSmallTable::SmallPoolIndexFromPtr(ptr);
+            oldBlockSize = FMallocBinned2::SmallPoolIndexToBlockSize(oldPool);
+            Assert_NoAssume(oldBlockSize >= old);
+
+            if (!!size && oldPool == newPool)
+                return ptr; // no need to resize the block
+
+            canFree = CanFree(oldPool, oldBlockSize);
+        }
+
+        if (Likely(canFree)) {
+            const u32 newBlockSize = FMallocBinned2::SmallPoolIndexToBlockSize(newPool);
+            void* const newPtr = (size ? Malloc(newPool) : nullptr);
+
+            if (!!newPtr || !size) {
+                if (!!newPtr && !!ptr) {
+                    Assert(oldPool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
+                    // copy previous data to new block without polluting caches
+                    FPlatformMemory::Memstream(newPtr, ptr, Min(oldBlockSize, newBlockSize));
+                }
+
+                if (ptr)
+                    VerifyRelease(Free(oldPool, ptr, oldBlockSize));
+
+                Assert_NoAssume(!newPtr || FBinnedSmallTable::IsSmallBlock(newPtr));
+                Assert_NoAssume(!newPtr || FBinnedSmallTable::SmallPoolIndexFromPtr(newPtr) == newPool);
+                return newPtr;
+            }
+        }
+
+        return {};
+    }
     // return true if a pointer can be pushed
-    FORCE_INLINE bool CanFree(u32 pool, u32 blockSize) const {
+    NODISCARD FORCE_INLINE bool CanFree(u32 pool, u32 blockSize) const {
         Assert(pool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
         Assert_NoAssume(FMallocBinned2::SmallPoolIndexToBlockSize(pool) == blockSize);
         return FreeLists[pool].CanPushToFront(blockSize);
@@ -802,24 +844,35 @@ struct FBinnedPerThreadFreeBlockList : Meta::FNonCopyableNorMovable, Meta::FThre
         return FreeLists[pool].PushBundle(std::move(rbundle));
     }
     // returns a bundle that needs to be freed if it can't be recycled
-    FBinnedBundleNode* RecycleFullBundle(u32 pool) {
+    NODISCARD FBinnedBundleNode* RecycleFullBundle(u32 pool) {
         THIS_THREADRESOURCE_CHECKACCESS();
         Assert(pool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
         return FreeLists[pool].RecycleFull(pool);
     }
     // returns true if we have anything to pop
-    bool ObtainRecycledPartial(u32 pool) {
+    NODISCARD bool ObtainRecycledPartial(u32 pool) {
         THIS_THREADRESOURCE_CHECKACCESS();
         Assert(pool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
         return FreeLists[pool].ObtainPartial(pool);
     }
-    FBinnedBundleNode* PopBundles(u32 pool) {
+    NODISCARD FBinnedBundleNode* PopBundles(u32 pool) {
         THIS_THREADRESOURCE_CHECKACCESS();
         Assert(pool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
         return FreeLists[pool].PopBundles();
     }
 
 };
+//------------------------------------------------------------------------------
+void FBinnedPerThreadFreeBlockList::RecycleFullBundles() NOEXCEPT {
+    forrange(pool, 0, PPE_MALLOCBINNED2_SMALLPOOL_COUNT) {
+        FBinnedBundleNode* bundles = RecycleFullBundle(pool);
+        while (bundles) {
+            FBinnedBundleNode* const nextBundles = bundles->NextBundle;
+            FBinnedSmallTable::Get().ReleaseBundle(pool, bundles);
+            bundles = nextBundles;
+        }
+    }
+}
 //------------------------------------------------------------------------------
 void FBinnedPerThreadFreeBlockList::ReleaseCacheMemory() NOEXCEPT {
     forrange(pool, 0, PPE_MALLOCBINNED2_SMALLPOOL_COUNT) {
@@ -882,44 +935,77 @@ static void* BinnedMallocFallback_(size_t size) {
     }
 }
 //------------------------------------------------------------------------------
+FORCE_INLINE static void BinnedFreeSmallBlock_(void* ptr) {
+    const u32 pool = FBinnedSmallTable::SmallPoolIndexFromPtr(ptr);
+    const u32 blockSize = FMallocBinned2::SmallPoolIndexToBlockSize(pool);
+
+    auto& freeBlocks = FBinnedPerThreadFreeBlockList::Get();
+    FBinnedBundleNode* const recycling = freeBlocks.RecycleFullBundle(pool);
+
+    // guaranteed to have free space thanks to RecycleFullBundle() ^^^
+    Verify(freeBlocks.Free(pool, ptr, blockSize));
+
+    // maybe the global recycler was full ?
+    if (Unlikely(recycling))
+        FBinnedSmallTable::Get().ReleaseBundle(pool, recycling);
+}
+//------------------------------------------------------------------------------
+static void BinnedFreeVeryLargeBlock_(void* ptr, size_t size) {
+    FVirtualMemory::Free(ptr, size ARGS_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(VeryLargeBlocks)));
+}
+//------------------------------------------------------------------------------
 static void BinnedFreeFallback_(void* ptr) {
     Assert(ptr);
 
-    if (FBinnedSmallTable::IsSmallBlock(ptr)) {
-        const u32 pool = FBinnedSmallTable::SmallPoolIndexFromPtr(ptr);
-        const u32 blockSize = FMallocBinned2::SmallPoolIndexToBlockSize(pool);
-
-        auto& freeBlocks = FBinnedPerThreadFreeBlockList::Get();
-        FBinnedBundleNode* const recycling = freeBlocks.RecycleFullBundle(pool);
-
-        // guaranteed to have free space thanks to RecycleFullBundle() ^^^
-        if (not freeBlocks.Free(pool, ptr, blockSize))
-            AssertNotReached();
-
-        // maybe the global recycler was full ?
-        if (Unlikely(recycling))
-            FBinnedSmallTable::Get().ReleaseBundle(pool, recycling);
+    if (Likely(FBinnedSmallTable::IsSmallBlock(ptr))) {
+        BinnedFreeSmallBlock_(ptr);
     }
     else {
         // large blocks are handled externally
         if (Unlikely(not FMallocBitmap::HeapFree_ReturnIfAliases(ptr)))
-            FVirtualMemory::Free(ptr, FVirtualMemory::SizeInBytes(ptr) ARGS_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(VeryLargeBlocks)) );
+            BinnedFreeVeryLargeBlock_(ptr,
+#if USE_PPE_ASSERT
+                FVirtualMemory::SizeInBytes(ptr)
+#else
+                0 // size is only used for assertion
+#endif
+            );
     }
+}
+//------------------------------------------------------------------------------
+static void BinnedFreeForDeleteFallback_(void* ptr, size_t size) {
+    Assert(ptr);
+
+    if (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)) {
+        Assert_NoAssume(FBinnedSmallTable::IsSmallBlock(ptr));
+
+        BinnedFreeSmallBlock_(ptr);
+    }
+    // large blocks are handled externally
+    else if (size <= FMallocBitmap::MediumMaxAllocSize)
+        FMallocBitmap::MediumFree(ptr);
+    else if (size <= FMallocBitmap::LargeMaxAllocSize)
+        FMallocBitmap::LargeFree(ptr);
+    else
+        BinnedFreeVeryLargeBlock_(ptr, size);
 }
 //------------------------------------------------------------------------------
 static void* BinnedReallocFallback_(void* ptr, size_t newSize) {
     Assert(!!ptr | !!newSize);
 
-    // treat large block reallocations separetely
-    if (!!ptr && !FBinnedSmallTable::IsSmallBlock(ptr) && newSize > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE) {
-        const size_t oldSize = FMallocBitmap::RegionSize(ptr);
-        if (FMallocBitmap::SnapSize(newSize) == oldSize)
-            return ptr;
-        if (void* bitmapPtr = FMallocBitmap::HeapResize(ptr, newSize, oldSize))
-            return bitmapPtr;
+    // handle bitmap block reallocations separately
+    if (!!ptr && newSize > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE && newSize <= FMallocBitmap::MaxAllocSize && !FBinnedSmallTable::IsSmallBlock(ptr)) {
+        size_t oldSize;
+        if (Likely(FMallocBitmap::RegionSize_ReturnIfAliases(&oldSize, ptr))) {
+            if (FMallocBitmap::SnapSize(newSize) == oldSize)
+                return ptr;
+
+            if (void* bitmapPtr = FMallocBitmap::HeapResize(ptr, newSize, oldSize))
+                return bitmapPtr;
+        }
     }
 
-    // trivial path: allocate a new block, copy data and release old block
+    // naive path: allocate a new block, copy data and release old block
     void* newPtr = nullptr;
     if (newSize)
         newPtr = BinnedMallocFallback_(newSize);
@@ -928,12 +1014,46 @@ static void* BinnedReallocFallback_(void* ptr, size_t newSize) {
     if (!!newPtr && !!ptr) {
         Assert(newPtr != ptr);
         const size_t oldSize = FMallocBinned2::RegionSize(ptr);
-        Assert(oldSize != newSize); // don't want to realloc into a block a same size apriori
+        Assert(oldSize != newSize); // don't want to realloc into a block a same size a-priori
         FPlatformMemory::Memstream(newPtr, ptr, Min(newSize, oldSize));
     }
 
     if (ptr)
         BinnedFreeFallback_(ptr);
+
+    return newPtr;
+}
+//------------------------------------------------------------------------------
+static void* BinnedReallocForNewFallback_(void* ptr, size_t newSize, size_t oldSize) {
+    Assert(!!ptr | !!newSize);
+
+    // handle large block reallocations separately
+    if (!!ptr && oldSize > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE && newSize > PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE) {
+        Assert_NoAssume(!FBinnedSmallTable::IsSmallBlock(ptr));
+
+        // works for both bitmap and virtual allocations
+        if (FMallocBinned2::SnapSize(newSize) == FMallocBinned2::SnapSize(oldSize))
+            return ptr; // no need to allocate a new block
+
+        // try to handle bitmap realloc
+        if (void* bitmapPtr = FMallocBitmap::HeapResize(ptr, newSize, oldSize))
+            return bitmapPtr;
+    }
+
+    // naive path: allocate a new block, copy data and release old block
+    void* newPtr = nullptr;
+    if (newSize)
+        newPtr = BinnedMallocFallback_(newSize);
+    Assert_NoAssume(!!newPtr | !newSize);
+
+    if (!!newPtr && !!ptr) {
+        Assert(newPtr != ptr);
+        Assert_NoAssume(FMallocBinned2::SnapSize(oldSize) != FMallocBinned2::SnapSize(newSize)); // should not realloc into a block of same size
+        FPlatformMemory::Memstream(newPtr, ptr, Min(newSize, oldSize));
+    }
+
+    if (ptr)
+        BinnedFreeForDeleteFallback_(ptr, oldSize);
 
     return newPtr;
 }
@@ -981,43 +1101,12 @@ void* FMallocBinned2::Realloc(void* const ptr, size_t size) {
     AssertRelease(ptr || size);
 
     if (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)) {
-        if (!ptr || FBinnedSmallTable::IsSmallBlock(ptr) ) {
-            auto& freeBlocks = FBinnedPerThreadFreeBlockList::Get();
+        if (!ptr || FBinnedSmallTable::IsSmallBlock(ptr)) {
+            const Meta::TOptional<void*> newPtr = FBinnedPerThreadFreeBlockList::Get().Realloc(
+                ptr, checked_cast<u32>(size), ptr ? ALLOCATION_BOUNDARY : 0 /*only used for assertions*/);
 
-            u32 oldPool = UMax, oldBlockSize = 0;
-            bool canFree = true;
-            if (ptr) {
-                oldPool = FBinnedSmallTable::SmallPoolIndexFromPtr(ptr);
-                oldBlockSize = SmallPoolIndexToBlockSize(oldPool);
-
-                if (!!size && oldPool == SmallPoolIndex(checked_cast<u16>(size)))
-                    return ptr; // no need to resize the block
-
-                canFree = freeBlocks.CanFree(oldPool, oldBlockSize);
-            }
-
-            if (canFree) {
-                const u32 newPool = SmallPoolIndex(checked_cast<u16>(size));
-                const u32 newBlockSize = SmallPoolIndexToBlockSize(newPool);
-                void* const newPtr = (size ? freeBlocks.Malloc(newPool) : nullptr);
-
-                if (!!newPtr || !size) {
-                    if (!!newPtr && !!ptr) {
-                        Assert(oldPool < PPE_MALLOCBINNED2_SMALLPOOL_COUNT);
-                        // copy previous data to new block without polluting caches
-                        FPlatformMemory::Memstream(newPtr, ptr, Min(oldBlockSize, newBlockSize));
-                    }
-
-                    if (ptr) {
-                        if (not freeBlocks.Free(oldPool, ptr, oldBlockSize))
-                            AssertNotImplemented();
-                    }
-
-                    Assert_NoAssume(FBinnedSmallTable::IsSmallBlock(newPtr));
-                    Assert_NoAssume(FBinnedSmallTable::SmallPoolIndexFromPtr(newPtr) == newPool);
-                    return newPtr;
-                }
-            }
+            if (Likely(newPtr.has_value()))
+                return *newPtr;
         }
     }
 
@@ -1029,29 +1118,51 @@ void* FMallocBinned2::MallocForNew(size_t size) {
 }
 //------------------------------------------------------------------------------
 void* FMallocBinned2::ReallocForNew(void* const ptr, size_t size, size_t old) {
-    Unused(old);
-    // #TODO: take advantage of sized deallocations,
-    // note that sized deallocations are not guaranteed !
-    return Realloc(ptr, size);
+    AssertRelease(ptr || size);
+    Assert_NoAssume(size != old);
+
+    if (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE && old <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE)) {
+        Assert_NoAssume(!ptr || FBinnedSmallTable::IsSmallBlock(ptr));
+        const Meta::TOptional<void*> newPtr = FBinnedPerThreadFreeBlockList::Get().Realloc(
+            ptr, checked_cast<u32>(size), checked_cast<u32>(old));
+
+        if (Likely(newPtr.has_value()))
+            return *newPtr;
+    }
+
+    return Meta::unlikely(&BinnedReallocForNewFallback_, ptr, size, old);
 }
 //------------------------------------------------------------------------------
 void FMallocBinned2::FreeForDelete(void* const ptr, size_t size) {
-    Unused(size);
-    // #TODO: take advantage of sized deallocations,
-    // note that sized deallocations are not guaranteed !
-    Free(ptr);
+    AssertRelease(ptr);
+
+    if (Likely(size <= MaxSmallBlockSize)) {
+        Assert_NoAssume(FBinnedSmallTable::IsSmallBlock(ptr));
+
+        const u32 pool = FBinnedSmallTable::SmallPoolIndexFromPtr(ptr);
+        const u32 blockSize = SmallPoolIndexToBlockSize(pool);
+        Assert_NoAssume(blockSize >= size);
+
+        auto& freeBlocks = FBinnedPerThreadFreeBlockList::Get();
+        if (freeBlocks.Free(pool, ptr, blockSize))
+            return;
+    }
+
+    Meta::unlikely(&BinnedFreeForDeleteFallback_, ptr, size);
 }
 //------------------------------------------------------------------------------
 size_t FMallocBinned2::SnapSize(size_t size) NOEXCEPT {
-    Assert(size);
+    if (Likely(size)) {
+        if (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE))
+            return BoundSizeToSmallPool(checked_cast<u32>(size));
 
-    if (Likely(size <= PPE_MALLOCBINNED2_SMALLPOOL_MAX_SIZE))
-        return BoundSizeToSmallPool(checked_cast<u32>(size));
+        if (Likely(size <= FMallocBitmap::MaxAllocSize))
+            return FMallocBitmap::SnapSize(size);
 
-    if (Likely(size <= FMallocBitmap::MaxAllocSize))
-        return FMallocBitmap::SnapSize(size);
+        return FVirtualMemory::SnapSize(size);
+    }
 
-    return FVirtualMemory::SnapSize(size);
+    return 0;
 }
 //------------------------------------------------------------------------------
 size_t FMallocBinned2::RegionSize(void* ptr) NOEXCEPT {
@@ -1078,6 +1189,7 @@ void FMallocBinned2::ReleaseCacheMemory() {
 //------------------------------------------------------------------------------
 void FMallocBinned2::ReleasePendingBlocks() {
     //LOG(MallocBinned2, Debug, L"release pending blocks in {0}", std::this_thread::get_id()); // too verbose
+    FBinnedPerThreadFreeBlockList::Get().RecycleFullBundles();
 }
 //------------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE

@@ -82,7 +82,7 @@ void FCoreModule::Shutdown(FModularDomain& domain) {
     IModuleInterface::Shutdown(domain);
 
     // 6 - logger
-    #if USE_PPE_LOGGER
+#if USE_PPE_LOGGER
     FLogger::Shutdown();
 #endif
     // 5 - file system
@@ -103,7 +103,7 @@ void FCoreModule::DutyCycle(FModularDomain& domain) {
     IModuleInterface::DutyCycle(domain);
 
     // will release dangling blocks in every worker thread (keep cache)
-    FThreadPoolStartup::ReleaseMemory();
+    FThreadPoolStartup::DutyCycle();
 
     // release dangling block in current thread
     malloc_release_pending_blocks();

@@ -277,7 +277,7 @@ void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {/* #TODO */}
 #if PPE_MALLOC_HISTOGRAM_PROXY
 namespace {
 struct FMallocHistogram {
-    static constexpr const u32 BlockSizes[192] = {
+    static constexpr const u32 BlockSizes[123] = {
        0x00000010u,0x00000020u,0x00000030u,0x00000040u,0x00000050u,0x00000060u,0x00000070u,0x00000080u,
        0x00000090u,0x000000b0u,0x000000d0u,0x000000f0u,0x00000110u,0x00000140u,0x00000170u,0x000001a0u,
        0x000001e0u,0x00000220u,0x00000270u,0x000002c0u,0x00000320u,0x000003a0u,0x00000420u,0x000004c0u,
@@ -291,17 +291,9 @@ struct FMallocHistogram {
        0x00300000u,0x00400000u,0x00500000u,0x00600000u,0x00700000u,0x00800000u,0x00900000u,0x00a00000u,
        0x00b00000u,0x00c00000u,0x00d00000u,0x00e00000u,0x00f00000u,0x01000000u,0x01100000u,0x01200000u,
        0x01300000u,0x01400000u,0x01500000u,0x01600000u,0x01700000u,0x01800000u,0x01900000u,0x01a00000u,
-       0x01b00000u,0x01c00000u,0x01d00000u,0x01e00000u,0x01f00000u,0x02000000u,0x02100000u,0x02200000u,
-       0x02400000u,0x02600000u,0x02800000u,0x02a00000u,0x02c00000u,0x02e00000u,0x03000000u,0x03200000u,
-       0x03400000u,0x03600000u,0x03800000u,0x03a00000u,0x03c00000u,0x03e00000u,0x04000000u,0x04200000u,
-       0x04400000u,0x04600000u,0x04800000u,0x04a00000u,0x04c00000u,0x04e00000u,0x05000000u,0x05200000u,
-       0x05400000u,0x05600000u,0x05800000u,0x05a00000u,0x05c00000u,0x05e00000u,0x06000000u,0x06200000u,
-       0x06400000u,0x06600000u,0x06800000u,0x06a00000u,0x06c00000u,0x06e00000u,0x07000000u,0x07200000u,
-       0x07400000u,0x07600000u,0x07800000u,0x07a00000u,0x07c00000u,0x07e00000u,0x08000000u,0x08400000u,
-       0x08800000u,0x08c00000u,0x09000000u,0x09400000u,0x09800000u,0x09c00000u,0x0a000000u,0x0a400000u,
-       0x0a800000u,0x0ac00000u,0x0b000000u,0x0b400000u,0x0b800000u,0x0bc00000u,0x0c000000u,0x0c400000u,
-       0x0c800000u,0x0cc00000u,0x0d000000u,0x0d400000u,0x0d800000u,0x0dc00000u,0x0e000000u,0x0e400000u,
-       0x0e800000u,0x0ec00000u,0x0f000000u,0x0f400000u,0x0f800000u,0x0fc00000u,0x10000000u,0xFFFFFFFFu
+       0x01b00000u,0x01c00000u,0x01d00000u,0x01e00000u,0x01f00000u,0x02000000u,0x02800000u,0x03000000u,
+       0x03800000u,0x04000000u,0x04800000u,0x05000000u,0x05800000u,0x06000000u,0x06800000u,0x07000000u,
+       0x07800000u,0x08000000u,0xFFFFFFFFu
     };
     STATIC_CONST_INTEGRAL(u32, NumBlockSizes, lengthof(BlockSizes));
 
@@ -387,7 +379,7 @@ public:
     FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return ReallocAllocateBlock(FMallocLowLevel::AlignedRealloc(ReallocReleaseBlock(ptr, 0, alignment), size, alignment), ptr , size, alignment); }
 
     FORCE_INLINE static void* MallocForNew(size_t size) { return AllocateBlock<MLP_UserSize>(FMallocLowLevel::MallocForNew(size), size); }
-    FORCE_INLINE static void* ReallocForNew(void* ptr, size_t size, size_t old) { return ReallocAllocateBlock<MLP_UserSize>(FMallocLowLevel::Realloc(ReallocReleaseBlock<MLP_UserSize>(ptr, old), size), ptr, size); }
+    FORCE_INLINE static void* ReallocForNew(void* ptr, size_t size, size_t old) { return ReallocAllocateBlock<MLP_UserSize>(FMallocLowLevel::ReallocForNew(ReallocReleaseBlock<MLP_UserSize>(ptr, old), size, old), ptr, size); }
     FORCE_INLINE static void  FreeForDelete(void* ptr, size_t size) { FMallocLowLevel::FreeForDelete(ReleaseBlock<MLP_UserSize>(ptr, size), size); }
 
     FORCE_INLINE static size_t SnapSize(size_t size) NOEXCEPT { // must always return a block size larger or equal than user input
@@ -425,12 +417,14 @@ private:
         }
 
 #   if PPE_MALLOC_DEBUG_PROXY
-        IF_CONSTEXPR(not (_Flags& MLP_Realloc)) {
+        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
             PPE_DEBUG_ALLOCATEEVENT(Malloc, ptr, userSize);
         }
 #   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
-        FLeakDetector::Get().Allocate(ptr, userSize);
+        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
+            FLeakDetector::Get().Allocate(ptr, userSize);
+        }
 #   endif
 #   if PPE_MALLOC_HISTOGRAM_PROXY
         FMallocHistogram::Get().Allocate(userSize, systemSize);
@@ -439,7 +433,7 @@ private:
         FMallocUnaccounted::Allocate(userSize, systemSize);
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
-        IF_CONSTEXPR(not (_Flags& MLP_Realloc)) {
+        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
             FPlatformMemory::Memuninitialized(ptr, systemSize);
         }
 #   endif
@@ -467,7 +461,7 @@ private:
         PPE_DEBUG_DEALLOCATEEVENT(Malloc, ptr);
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
-        IF_CONSTEXPR(not (_Flags& MLP_Realloc)) {
+        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
             FPlatformMemory::Memdeadbeef(ptr, systemSize);
         }
 #   endif
@@ -478,7 +472,9 @@ private:
         FMallocUnaccounted::Deallocate(userSize, systemSize);
 #   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
-        FLeakDetector::Get().Release(ptr);
+        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
+            FLeakDetector::Get().Release(ptr);
+        }
 #   endif
         return ptr;
     }
@@ -489,6 +485,9 @@ private:
 
 #   if PPE_MALLOC_DEBUG_PROXY
         PPE_DEBUG_REALLOCATEEVENT(Malloc, newp, sizeInBytes, oldp);
+#   endif
+#   if PPE_MALLOC_LEAKDETECTOR_PROXY
+        FLeakDetector::Get().Realloc(newp, sizeInBytes, oldp);
 #   endif
 
         return AllocateBlock<_Flags | MLP_Realloc>(newp, sizeInBytes, alignment);
