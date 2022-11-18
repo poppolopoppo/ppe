@@ -226,11 +226,13 @@ func loadModuleDesc(src utils.Filename, namespace *NamespaceDesc) (*ModuleDesc, 
 			} else if f := rootDir.File(PCH_DEFAULT_SOURCE); f.Exists() {
 				result.rules.PrecompiledSource = &f
 			}
+		} else {
+			err = fmt.Errorf("%v: %v", src, err)
 		}
 
 		return result, err
 	} else {
-		return nil, err
+		return nil, fmt.Errorf("%v: %v", src, err)
 	}
 }
 
@@ -287,7 +289,7 @@ func loadNamespaceDesc(
 
 		return desc, nil
 	} else {
-		return nil, err
+		return nil, fmt.Errorf("%v: %v", src, err)
 	}
 }
 
