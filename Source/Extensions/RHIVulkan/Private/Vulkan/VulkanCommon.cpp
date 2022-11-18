@@ -19,17 +19,16 @@ STATIC_ASSERT(has_tie_as_tuple_v<VkDescriptorBufferInfo>);
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-static TBasicTextWriter<_Char>& VendorToTextWriter_(TBasicTextWriter<_Char>& oss, EVulkanVendor vendor) {
+static TBasicStringView<_Char> EVulkanVendor_Name_(EVulkanVendor vendor) {
     switch (vendor) {
-    case EVulkanVendor::AMD: return oss << STRING_LITERAL(_Char, "AMD");
-    case EVulkanVendor::ImgTec: return oss << STRING_LITERAL(_Char, "ImgTec");
-    case EVulkanVendor::NVIDIA: return oss << STRING_LITERAL(_Char, "NVIDIA");
-    case EVulkanVendor::ARM: return oss << STRING_LITERAL(_Char, "ARM");
-    case EVulkanVendor::Qualcomm: return oss << STRING_LITERAL(_Char, "Qualcomm");
-    case EVulkanVendor::INTEL: return oss << STRING_LITERAL(_Char, "INTEL");
-    case EVulkanVendor::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    case EVulkanVendor::AMD: return STRING_LITERAL(_Char, "AMD");
+    case EVulkanVendor::ImgTec: return STRING_LITERAL(_Char, "ImgTec");
+    case EVulkanVendor::NVIDIA: return STRING_LITERAL(_Char, "NVIDIA");
+    case EVulkanVendor::ARM: return STRING_LITERAL(_Char, "ARM");
+    case EVulkanVendor::Qualcomm: return STRING_LITERAL(_Char, "Qualcomm");
+    case EVulkanVendor::INTEL: return STRING_LITERAL(_Char, "INTEL");
+    default: return STRING_LITERAL(_Char, "Unknown");
     }
-    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -37,22 +36,14 @@ static TBasicTextWriter<_Char>& VendorToTextWriter_(TBasicTextWriter<_Char>& oss
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FStringView EVulkanVendor_Name(EVulkanVendor vendor) {
-    switch (vendor) {
-    case EVulkanVendor::AMD: return "AMD";
-    case EVulkanVendor::ImgTec: return "ImgTec";
-    case EVulkanVendor::NVIDIA: return "NVIDIA";
-    case EVulkanVendor::ARM: return "ARM";
-    case EVulkanVendor::Qualcomm: return "Qualcomm";
-    case EVulkanVendor::INTEL: return "INTEL";
-    default: return "Unknown";
-    }
+    return EVulkanVendor_Name_<char>(vendor);
 }
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, EVulkanVendor vendor) {
-    return VendorToTextWriter_(oss, vendor);
+    return oss << EVulkanVendor_Name_<char>(vendor);
 }
 FWTextWriter& operator <<(FWTextWriter& oss, EVulkanVendor vendor) {
-    return VendorToTextWriter_(oss, vendor);
+    return oss << EVulkanVendor_Name_<wchar_t>(vendor);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

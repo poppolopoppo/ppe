@@ -62,7 +62,17 @@ TOptional<T> MakeOptional(T&& value) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-hash_t hash_value(const Meta::TOptional<T>& optional) {
+T* MakePtrRef(TOptional<T>& optional) NOEXCEPT {
+    return (optional.has_value() ? std::addressof(optional.value()) : nullptr);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+const T* MakePtrRef(const TOptional<T>& optional) NOEXCEPT {
+    return (optional.has_value() ? std::addressof(optional.value()) : nullptr);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+hash_t hash_value(const TOptional<T>& optional) {
     return (optional.has_value()
         ? hash_value(*optional)
         : hash_t{} );
@@ -78,13 +88,21 @@ namespace std {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// For ADL:
+//----------------------------------------------------------------------------
 template <typename T>
-PPE::hash_t hash_value(const std::optional<T>& optional) {
-    using namespace PPE;
-    using PPE::hash_value;
-    return (optional.has_value()
-        ? hash_value(*optional)
-        : hash_t{} );
+auto hash_value(const std::optional<T>& optional) {
+    return PPE::Meta::hash_value(optional);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+auto MakePtrRef(std::optional<T>& optional) NOEXCEPT {
+    return PPE::Meta::MakePtrRef(optional);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+auto MakePtrRef(const std::optional<T>& optional) NOEXCEPT {
+    return PPE::Meta::MakePtrRef(optional);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

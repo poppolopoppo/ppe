@@ -45,6 +45,13 @@ public:
         bool IsIntegratedGPU() const NOEXCEPT;
 
         float PerfRating() const NOEXCEPT;
+
+        EVulkanVersion ApiVersion() const { return static_cast<EVulkanVersion>(Properties.apiVersion); }
+        FStringView DeviceName() const { return MakeCStringView(Properties.deviceName); }
+        EVulkanVendor VendorID() const { return static_cast<EVulkanVendor>(Properties.vendorID); }
+
+        friend FTextWriter& operator <<(FTextWriter& oss, const FPhysicalDeviceInfo& info);
+        friend FWTextWriter& operator <<(FWTextWriter& oss, const FPhysicalDeviceInfo& info);
     };
     using FPhysicalDeviceInfoRef = TPtrRef<const FPhysicalDeviceInfo>;
 
@@ -54,7 +61,7 @@ public:
     bool Valid() const { return (VK_NULL_HANDLE != _vkInstance); }
 
     VkInstance vkInstance() const { return _vkInstance; }
-    const VkAllocationCallbacks* vkAllocationCallbacks() const { return &_vkAllocationCallbacks; }
+    const VkAllocationCallbacks* vkAllocationCallbacks() const { return MakePtrRef(_vkAllocationCallbacks); }
 
     EVulkanVersion Version() const { return _instanceAPI.version_; }
     const FVulkanInstanceFunctions& Fn() const { return *this; }
@@ -120,7 +127,7 @@ public:
 
 private:
     VkInstance _vkInstance{ VK_NULL_HANDLE };
-    const VkAllocationCallbacks _vkAllocationCallbacks;
+    const Meta::TOptional<VkAllocationCallbacks> _vkAllocationCallbacks;
 
     FVulkanExportedAPI _exportedAPI;
     FVulkanGlobalAPI _globalAPI;

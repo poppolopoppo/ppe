@@ -11,6 +11,7 @@
 #include "Modular/ModularDomain.h"
 
 #if USE_PPE_LOGGER
+#   include "Vulkan/Common/VulkanEnumToString.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #endif
@@ -75,7 +76,9 @@ static void VulkanFree_(void* pUserData, void* pMemory) {
 #endif
 }
 //----------------------------------------------------------------------------
-static VkAllocationCallbacks MakeVulkanAllocator_() {
+static VkAllocationCallbacks MakeVulkanAllocator_(FVulkanInstance* pInstance) {
+    Assert(pInstance);
+
     PFN_vkInternalAllocationNotification pfnInternalAllocation = nullptr;
     PFN_vkInternalFreeNotification pfnInternalFree = nullptr;
 #if USE_PPE_MEMORYDOMAINS
@@ -98,21 +101,11 @@ static VkAllocationCallbacks MakeVulkanAllocator_() {
     };
 #endif
 
-    void* const pUserData = nullptr;
-    VkAllocationCallbacks vkAllocator{
-        pUserData,
+    return VkAllocationCallbacks{
+        pInstance,
         &VulkanMalloc_, &VulkanRealloc_, &VulkanFree_,
         pfnInternalAllocation, pfnInternalFree
     };
-
-#ifdef PLATFORM_WINDOWS
-    // Don't override vulkan allocator on windows, let NV/AMD do their things
-    //vkAllocator.pfnAllocation = nullptr;
-    //vkAllocator.pfnReallocation = nullptr;
-    //vkAllocator.pfnFree = nullptr;
-#endif
-
-    return vkAllocator;
 }
 //----------------------------------------------------------------------------
 // Global API
@@ -269,7 +262,7 @@ bool ValidateInstanceExtensions_(
 bool CreateVulkanInstance_(
     VkInstance* pVkInstance,
     const FVulkanGlobalAPI& api,
-    const VkAllocationCallbacks& allocator,
+    const VkAllocationCallbacks* pVkAllocator,
     FConstChar applicationName,
     FConstChar engineName,
     EVulkanVersion& version,
@@ -317,7 +310,7 @@ bool CreateVulkanInstance_(
     LOG(RHI, Debug, L"create vulkan instance version {0}\n\t- Layers: {1}\n\t- Extensions: {2}",
         version, Fmt::CommaSeparatedW(layerNames.MakeView()), Fmt::CommaSeparatedW(extensionNames.MakeView()) );
 
-    VK_CHECK( api.vkCreateInstance(&createInfo, &allocator, pVkInstance) );
+    VK_CHECK( api.vkCreateInstance(&createInfo, pVkAllocator, pVkInstance) );
 
     return true;
 }
@@ -335,7 +328,7 @@ LOG_CATEGORY_VERBOSITY(, VkValidation, All)
 static void CreateDebugUtilsMessengerIFP_(
     VkDebugUtilsMessengerEXT* pDebugUtilsMessenger,
     VkInstance vkInstance,
-    const VkAllocationCallbacks& vkAllocator,
+    const VkAllocationCallbacks* vkAllocator,
     PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT ) {
     PFN_vkDebugUtilsMessengerCallbackEXT debugCallback = [](
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -471,7 +464,7 @@ static void CreateDebugUtilsMessengerIFP_(
 #endif
 
     *pDebugUtilsMessenger = VK_NULL_HANDLE;
-    VK_CALL( vkCreateDebugUtilsMessengerEXT(vkInstance, &createInfo, &vkAllocator, pDebugUtilsMessenger) );
+    VK_CALL( vkCreateDebugUtilsMessengerEXT(vkInstance, &createInfo, vkAllocator, pDebugUtilsMessenger) );
 
     LOG(RHI, Verbose, L"created vulkan debug utils messenger for performance and validation");
 }
@@ -886,16 +879,7 @@ bool CreateVulkanDevice_(
     pDevice->vkPhysicalDevice = physicalDevice->vkPhysicalDevice;
     Assert(pDevice->vkPhysicalDevice);
 
-    LOG(RHI, Info, L"pick vulkan gpu: #{0} {1} (vendor={2}, driver={3}){4}",
-        physicalDevice->Properties.deviceID,
-        MakeCStringView(physicalDevice->Properties.deviceName),
-        static_cast<EVulkanVendor>(physicalDevice->Properties.vendorID),
-        physicalDevice->Properties.driverVersion,
-        Fmt::Formator<wchar_t>([&](FWTextWriter& oss) {
-            u32 cnt = 0;
-            for (auto& heap : MakeView(physicalDevice->Memory.memoryHeaps, physicalDevice->Memory.memoryHeaps + physicalDevice->Memory.memoryHeapCount))
-                oss << Eol << Tab << L"- Heap#" << cnt++ << L":         " << Fmt::SizeInBytes(heap.size);
-        }));
+    LOG(RHI, Info, L"pick vulkan gpu: {0}", *physicalDevice);
 
     if (not SetupVulkanQueues_(&pDevice->Queues, pDevice->vkPhysicalDevice, vkSurface, api, queues)) {
         LOG(RHI, Error, L"failed to setup vulkan device queues");
@@ -1008,12 +992,45 @@ bool CreateVulkanDevice_(
     return true;
 }
 //----------------------------------------------------------------------------
+// Physical Device Info logging
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& WritePhysicalDeviceInfo_(TBasicTextWriter<_Char>& oss, const FVulkanInstance::FPhysicalDeviceInfo& info) {
+    oss << STRING_LITERAL(_Char, '[') << info.Properties.deviceType
+        << STRING_LITERAL(_Char, ':') << info.Properties.deviceID
+        << STRING_LITERAL(_Char, "]  ") << info.DeviceName()
+        << STRING_LITERAL(_Char, " - ") << info.VendorID()
+        << STRING_LITERAL(_Char, " - Vulkan ") << info.ApiVersion()
+        << STRING_LITERAL(_Char, " - Driver v") << info.Properties.driverVersion;
+
+    u32 numMemoryTypes = 0;
+    for (const VkMemoryType& type : MakeView(info.Memory.memoryTypes, info.Memory.memoryTypes + info.Memory.memoryTypeCount)) {
+        oss << Eol << Tab
+            << STRING_LITERAL(_Char, "- MemoryType#") << numMemoryTypes++
+            << STRING_LITERAL(_Char, " Heap: ") << type.heapIndex
+            << STRING_LITERAL(_Char, " Flags: ") << static_cast<VkMemoryPropertyFlagBits>(type.propertyFlags);
+    }
+
+    u32 numMemoryHeaps = 0;
+    for (const VkMemoryHeap& heap : MakeView(info.Memory.memoryHeaps, info.Memory.memoryHeaps + info.Memory.memoryHeapCount)) {
+        oss << Eol << Tab
+            << STRING_LITERAL(_Char, "- MemoryHeap#") << numMemoryHeaps++
+            << STRING_LITERAL(_Char, " Size: ") << Fmt::SizeInBytes(heap.size)
+            << STRING_LITERAL(_Char, " Flags: ") << static_cast<VkMemoryHeapFlagBits>(heap.flags);
+    }
+
+    oss << Eol << Tab
+        << STRING_LITERAL(_Char, "- Perf Rating = ") << info.PerfRating();
+
+    return oss;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanInstance::FVulkanInstance()
-:   _vkAllocationCallbacks(MakeVulkanAllocator_()) {
+:   _vkAllocationCallbacks(MakeVulkanAllocator_(this)) {
 }
 //----------------------------------------------------------------------------
 FVulkanInstance::~FVulkanInstance() {
@@ -1039,7 +1056,7 @@ bool FVulkanInstance::Construct(
     Assert_NoAssume(not _vulkanLib.IsValid());
 
     if (LoadVulkanGlobalAPI_(&_vulkanLib, &_exportedAPI, &_globalAPI) &&
-        CreateVulkanInstance_(&_vkInstance, _globalAPI, _vkAllocationCallbacks, applicationName, engineName, version, instanceLayers,
+        CreateVulkanInstance_(&_vkInstance, _globalAPI, vkAllocationCallbacks(), applicationName, engineName, version, instanceLayers,
             requiredInstanceExtensions, optionalInstanceExtensions,
             requiredDeviceExtensions, optionalDeviceExtensions )) {
         Assert(VK_NULL_HANDLE != _vkInstance);
@@ -1049,7 +1066,7 @@ bool FVulkanInstance::Construct(
         if (const char* err = _instanceAPI.attach_return_error(&_globalAPI, _vkInstance, version, requiredInstanceExtensions, optionalInstanceExtensions)) {
             LOG(RHI, Error, L"failed to attach vulkan instance API: {0}, abort!", MakeCStringView(err));
 
-            vkDestroyInstance(_vkInstance, &_vkAllocationCallbacks);
+            vkDestroyInstance(_vkInstance, vkAllocationCallbacks());
             _vkInstance = VK_NULL_HANDLE;
         }
         else {
@@ -1059,7 +1076,7 @@ bool FVulkanInstance::Construct(
 
 #if USE_PPE_LOGGER
             if (HasExtension(EVulkanInstanceExtension::EXT_debug_utils))
-                CreateDebugUtilsMessengerIFP_(&_vkDebugUtilsMessenger, _vkInstance, _vkAllocationCallbacks, _instanceAPI.vkCreateDebugUtilsMessengerEXT);
+                CreateDebugUtilsMessengerIFP_(&_vkDebugUtilsMessenger, _vkInstance, vkAllocationCallbacks(), _instanceAPI.vkCreateDebugUtilsMessengerEXT);
 #endif
 
             // retrieve physical device infos once and for all
@@ -1080,6 +1097,10 @@ bool FVulkanInstance::Construct(
                 vkGetPhysicalDeviceFeatures(physicalDevice.vkPhysicalDevice, &physicalDevice.Features);
                 vkGetPhysicalDeviceMemoryProperties(physicalDevice.vkPhysicalDevice, &physicalDevice.Memory);
             }
+
+            LOG(RHI, Debug, L"listed {0} available physical devices for vulkan:\n {1}",
+                numPhysicalDevices,
+                Fmt::Join(_physicalDevices.MakeView(), L"\n"));
 
             return true;
         }
@@ -1109,12 +1130,12 @@ void FVulkanInstance::TearDown() {
 
 #if USE_PPE_LOGGER
     if (VK_NULL_HANDLE != _vkDebugUtilsMessenger) {
-        vkDestroyDebugUtilsMessengerEXT(_vkInstance, _vkDebugUtilsMessenger, &_vkAllocationCallbacks);
+        vkDestroyDebugUtilsMessengerEXT(_vkInstance, _vkDebugUtilsMessenger, vkAllocationCallbacks());
         _vkDebugUtilsMessenger = VK_NULL_HANDLE;
     }
 #endif
 
-    vkDestroyInstance(_vkInstance, &_vkAllocationCallbacks);
+    vkDestroyInstance(_vkInstance, vkAllocationCallbacks());
     _vkInstance = VK_NULL_HANDLE;
 
     _vulkanLib.Unload();
@@ -1138,7 +1159,7 @@ bool FVulkanInstance::CreateSurface(VkSurfaceKHR* pSurface, FVulkanWindowHandle 
     createInfo.hwnd = static_cast<HWND>(window);
     createInfo.hinstance = static_cast<::HINSTANCE>(FCurrentProcess::Get().AppHandle());
 
-    VK_CHECK( vkCreateWin32SurfaceKHR(_vkInstance, &createInfo, &_vkAllocationCallbacks, pSurface) );
+    VK_CHECK( vkCreateWin32SurfaceKHR(_vkInstance, &createInfo, vkAllocationCallbacks(), pSurface) );
 
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
     VkAndroidSurfaceCreateInfoKHR createInfo{};
@@ -1146,7 +1167,7 @@ bool FVulkanInstance::CreateSurface(VkSurfaceKHR* pSurface, FVulkanWindowHandle 
     createInfo.flags = 0;
     createInfo.window = static_cast<::ANativeWindow>(window);
 
-    VK_CHECK( vkCreateAndroidSurfaceKHR(_vkInstance, &createInfo, &_vkAllocationCallbacks, pSurface) );
+    VK_CHECK( vkCreateAndroidSurfaceKHR(_vkInstance, &createInfo, vkAllocationCallbacks(), pSurface) );
 
 #elif defined(VK_USE_PLATFORM_XLIB_KHR) && VK_USE_PLATFORM_XLIB_KHR
     VkXlibSurfaceCreateInfoKHR createInfo{};
@@ -1154,7 +1175,7 @@ bool FVulkanInstance::CreateSurface(VkSurfaceKHR* pSurface, FVulkanWindowHandle 
     createInfo.flags = 0;
     createInfo.window = reinterpret_cast<::Window>(window);
 
-    VK_CHECK( vkCreateXlibSurfaceKHR(_vkInstance, &createInfo, &_vkAllocationCallbacks, pSurface) );
+    VK_CHECK( vkCreateXlibSurfaceKHR(_vkInstance, &createInfo, vkAllocationCallbacks(), pSurface) );
 
 #else
 #   error "platform not supported"
@@ -1172,7 +1193,7 @@ void FVulkanInstance::DestroySurface(VkSurfaceKHR vkSurface) const {
 
     LOG(RHI, Debug, L"destroying vulkan surface {0}", Fmt::Pointer((void*)vkSurface));
 
-    vkDestroySurfaceKHR(_vkInstance, vkSurface, &_vkAllocationCallbacks);
+    vkDestroySurfaceKHR(_vkInstance, vkSurface, vkAllocationCallbacks());
 }
 //----------------------------------------------------------------------------
 bool FVulkanInstance::CreateDevice(
@@ -1192,7 +1213,7 @@ bool FVulkanInstance::CreateDevice(
     pDevice->RequiredInstanceExtensions = _instanceAPI.instance_extensions_;
     pDevice->RequiredDeviceExtensions = requiredDeviceExtensions;
     pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
-    pDevice->pAllocator = &_vkAllocationCallbacks;
+    pDevice->pAllocator = vkAllocationCallbacks();
 
     return CreateVulkanDevice_(pDevice, Fn(), vkSurface, physicalDevice, queues);
 }
@@ -1213,7 +1234,7 @@ bool FVulkanInstance::CreateDevice(
     pDevice->RequiredInstanceExtensions = _instanceAPI.instance_extensions_;
     pDevice->RequiredDeviceExtensions = requiredDeviceExtensions;
     pDevice->OptionalDeviceExtensions = optionalDeviceExtensions;
-    pDevice->pAllocator = &_vkAllocationCallbacks;
+    pDevice->pAllocator = vkAllocationCallbacks();
 
     return CreateVulkanDevice_(pDevice, Fn(), VK_NULL_HANDLE, physicalDevice, queues);
 }
@@ -1222,7 +1243,7 @@ void FVulkanInstance::DestroyDevice(FVulkanDeviceInfo* pDevice) const {
     Assert(pDevice);
     Assert(VK_NULL_HANDLE != pDevice->vkDevice);
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
-    Assert_NoAssume(&_vkAllocationCallbacks == pDevice->pAllocator);
+    Assert_NoAssume(vkAllocationCallbacks() == pDevice->pAllocator);
 
     LOG(RHI, Debug, L"destroying vulkan device {0}", Fmt::Pointer(pDevice->vkDevice));
 
@@ -1270,9 +1291,9 @@ auto FVulkanInstance::PickHighPerformanceDevice() const NOEXCEPT -> FPhysicalDev
 auto FVulkanInstance::PickPhysicalDeviceByName(FStringView deviceName) const NOEXCEPT -> FPhysicalDeviceInfoRef {
     Assert(VK_NULL_HANDLE != _vkInstance);
 
-    return _physicalDevices.MakeConstView().Any([deviceName](const FPhysicalDeviceInfo& pdi) NOEXCEPT -> bool {
+    return _physicalDevices.MakeConstView().Any([deviceName](const FPhysicalDeviceInfo& pdi) NOEXCEPT -> bool{
         return (HasSubStringI(MakeCStringView(pdi.Properties.deviceName), deviceName) or
-                HasSubStringI(EVulkanVendor_Name(static_cast<EVulkanVendor>(pdi.Properties.vendorID)), deviceName) );
+                HasSubStringI(EVulkanVendor_Name(pdi.VendorID()), deviceName));
     });
 }
 //----------------------------------------------------------------------------
@@ -1664,6 +1685,14 @@ FVulkanDeviceExtensionSet FVulkanInstance::RecommendedDeviceExtensions(EVulkanVe
 #endif
 
     return vk::device_extensions_require(result);
+}
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FVulkanInstance::FPhysicalDeviceInfo& info) {
+    return WritePhysicalDeviceInfo_(*oss.FormatScope(), info);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FVulkanInstance::FPhysicalDeviceInfo& info) {
+    return WritePhysicalDeviceInfo_(*oss.FormatScope(), info);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

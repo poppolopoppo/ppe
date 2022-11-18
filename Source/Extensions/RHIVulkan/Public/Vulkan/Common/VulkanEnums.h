@@ -12,6 +12,8 @@
 //----------------------------------------------------------------------------
 // Enum operators for Vk:
 //----------------------------------------------------------------------------
+ENUM_FLAGS(VkMemoryHeapFlagBits);
+ENUM_FLAGS(VkMemoryPropertyFlagBits);
 ENUM_FLAGS(VkPipelineStageFlagBits);
 ENUM_FLAGS(VkAccessFlagBits);
 ENUM_FLAGS(VkDependencyFlagBits);

@@ -3,6 +3,15 @@
 #include "Vulkan/VulkanCommon.h"
 
 //----------------------------------------------------------------------------
+PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkMemoryHeapFlagBits);
+PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkMemoryHeapFlagBits);
+//----------------------------------------------------------------------------
+PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkMemoryPropertyFlagBits);
+PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkMemoryPropertyFlagBits);
+//----------------------------------------------------------------------------
+PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkPhysicalDeviceType);
+PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkPhysicalDeviceType);
+//----------------------------------------------------------------------------
 PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkPipelineStageFlagBits);
 PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkPipelineStageFlagBits);
 //----------------------------------------------------------------------------

@@ -13,6 +13,66 @@ namespace RHI {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
+TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkMemoryHeapFlagBits value) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<VkMemoryHeapFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
+
+        switch (it) {
+        case VK_MEMORY_HEAP_DEVICE_LOCAL_BIT: oss << sep << STRING_LITERAL(_Char, "DEVICE_LOCAL"); break;
+        case VK_MEMORY_HEAP_MULTI_INSTANCE_BIT: oss << sep << STRING_LITERAL(_Char, "MULTI_INSTANCE"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkMemoryPropertyFlagBits value) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    for (auto mask = MakeEnumBitMask(value); mask; ) {
+        const auto it = static_cast<VkMemoryPropertyFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
+
+        switch (it) {
+        case VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT: oss << sep << STRING_LITERAL(_Char, "DEVICE_LOCAL"); break;
+        case VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT: oss << sep << STRING_LITERAL(_Char, "HOST_VISIBLE"); break;
+        case VK_MEMORY_PROPERTY_HOST_COHERENT_BIT: oss << sep << STRING_LITERAL(_Char, "HOST_COHERENT"); break;
+        case VK_MEMORY_PROPERTY_HOST_CACHED_BIT: oss << sep << STRING_LITERAL(_Char, "HOST_CACHED"); break;
+        case VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT: oss << sep << STRING_LITERAL(_Char, "LAZILY_ALLOCATED"); break;
+        case VK_MEMORY_PROPERTY_PROTECTED_BIT: oss << sep << STRING_LITERAL(_Char, "PROTECTED"); break;
+        case VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD: oss << sep << STRING_LITERAL(_Char, "DEVICE_COHERENT_AMD"); break;
+        case VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD: oss << sep << STRING_LITERAL(_Char, "DEVICE_UNCACHED_AMD"); break;
+        case VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV: oss << sep << STRING_LITERAL(_Char, "RDMA_CAPABLE_NV"); break;
+        default: AssertNotImplemented();
+        }
+    }
+
+    if (value == Zero)
+        oss << STRING_LITERAL(_Char, "0");
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPhysicalDeviceType value) {
+    switch (value) {
+    case VK_PHYSICAL_DEVICE_TYPE_OTHER: return oss << STRING_LITERAL(_Char, "OTHER");
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: return oss << STRING_LITERAL(_Char, "INTEGRATED_GPU");
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: return oss << STRING_LITERAL(_Char, "DISCRETE_GPU");
+    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: return oss << STRING_LITERAL(_Char, "VIRTUAL_GPU");
+    case VK_PHYSICAL_DEVICE_TYPE_CPU: return oss << STRING_LITERAL(_Char, "CPU");
+    case VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM: AssertNotImplemented();
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPipelineStageFlagBits value) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
@@ -20,47 +80,47 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPipelineStageFla
         const auto it = static_cast<VkPipelineStageFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
 
         switch (it) {
-        case VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT: return oss << sep << STRING_LITERAL(_Char, "TopOfPipe"); break;
-        case VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT: return oss << sep << STRING_LITERAL(_Char, "DrawIndirect"); break;
-        case VK_PIPELINE_STAGE_VERTEX_INPUT_BIT: return oss << sep << STRING_LITERAL(_Char, "VertexInput"); break;
-        case VK_PIPELINE_STAGE_VERTEX_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "VertexShader"); break;
-        case VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "TessellationControlShader"); break;
-        case VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "TessellationEvaluationShader"); break;
-        case VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "GeometryShader"); break;
-        case VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "FragmentShader"); break;
-        case VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT: return oss << sep << STRING_LITERAL(_Char, "EarlyFragmentTests"); break;
-        case VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT: return oss << sep << STRING_LITERAL(_Char, "LateFragmentTests"); break;
-        case VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT: return oss << sep << STRING_LITERAL(_Char, "ColorAttachmentOutput"); break;
-        case VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT: return oss << sep << STRING_LITERAL(_Char, "ComputeShader"); break;
-        case VK_PIPELINE_STAGE_TRANSFER_BIT: return oss << sep << STRING_LITERAL(_Char, "Transfer"); break;
-        case VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT: return oss << sep << STRING_LITERAL(_Char, "BottomOfPipe"); break;
-        case VK_PIPELINE_STAGE_HOST_BIT: return oss << sep << STRING_LITERAL(_Char, "Host"); break;
-        case VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT: return oss << sep << STRING_LITERAL(_Char, "AllGraphics"); break;
-        case VK_PIPELINE_STAGE_ALL_COMMANDS_BIT: return oss << sep << STRING_LITERAL(_Char, "AllCommands"); break;
+        case VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT: oss << sep << STRING_LITERAL(_Char, "TopOfPipe"); break;
+        case VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT: oss << sep << STRING_LITERAL(_Char, "DrawIndirect"); break;
+        case VK_PIPELINE_STAGE_VERTEX_INPUT_BIT: oss << sep << STRING_LITERAL(_Char, "VertexInput"); break;
+        case VK_PIPELINE_STAGE_VERTEX_SHADER_BIT: oss << sep << STRING_LITERAL(_Char, "VertexShader"); break;
+        case VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT: oss << sep << STRING_LITERAL(_Char, "TessellationControlShader"); break;
+        case VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT: oss << sep << STRING_LITERAL(_Char, "TessellationEvaluationShader"); break;
+        case VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT: oss << sep << STRING_LITERAL(_Char, "GeometryShader"); break;
+        case VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT: oss << sep << STRING_LITERAL(_Char, "FragmentShader"); break;
+        case VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT: oss << sep << STRING_LITERAL(_Char, "EarlyFragmentTests"); break;
+        case VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT: oss << sep << STRING_LITERAL(_Char, "LateFragmentTests"); break;
+        case VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT: oss << sep << STRING_LITERAL(_Char, "ColorAttachmentOutput"); break;
+        case VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT: oss << sep << STRING_LITERAL(_Char, "ComputeShader"); break;
+        case VK_PIPELINE_STAGE_TRANSFER_BIT: oss << sep << STRING_LITERAL(_Char, "Transfer"); break;
+        case VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT: oss << sep << STRING_LITERAL(_Char, "BottomOfPipe"); break;
+        case VK_PIPELINE_STAGE_HOST_BIT: oss << sep << STRING_LITERAL(_Char, "Host"); break;
+        case VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT: oss << sep << STRING_LITERAL(_Char, "AllGraphics"); break;
+        case VK_PIPELINE_STAGE_ALL_COMMANDS_BIT: oss << sep << STRING_LITERAL(_Char, "AllCommands"); break;
 #ifdef VK_EXT_transform_feedback
-        case VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT: return oss << sep << STRING_LITERAL(_Char, "TransformFeedbackExt"); break;
+        case VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "TransformFeedbackExt"); break;
 #endif
 #ifdef VK_EXT_conditional_rendering
-        case VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT: return oss << sep << STRING_LITERAL(_Char, "ConditionalRenderingExt"); break;
+        case VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "ConditionalRenderingExt"); break;
 #endif
 #ifdef VK_NV_shading_rate_image
-        case VK_PIPELINE_STAGE_SHADING_RATE_IMAGE_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "ShadingRateImageNV"); break;
+        case VK_PIPELINE_STAGE_SHADING_RATE_IMAGE_BIT_NV: oss << sep << STRING_LITERAL(_Char, "ShadingRateImageNV"); break;
 #endif
 #ifdef VK_NV_ray_tracing
-        case VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "AccelerationStructureBuildNv"); break;
-        case VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "RayTracingShaderNv"); break;
+        case VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV: oss << sep << STRING_LITERAL(_Char, "AccelerationStructureBuildNv"); break;
+        case VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV: oss << sep << STRING_LITERAL(_Char, "RayTracingShaderNv"); break;
 #endif
 #ifdef VK_NV_mesh_shader
-        case VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "TaskShaderNv"); break;
-        case VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "MeshShaderNv"); break;
+        case VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV: oss << sep << STRING_LITERAL(_Char, "TaskShaderNv"); break;
+        case VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV: oss << sep << STRING_LITERAL(_Char, "MeshShaderNv"); break;
 #endif
 #ifdef VK_EXT_fragment_density_map
-        case VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT: return oss << sep << STRING_LITERAL(_Char, "FragmentDensityProcessExt"); break;
+        case VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT: oss << sep << STRING_LITERAL(_Char, "FragmentDensityProcessExt"); break;
 #endif
 #ifdef VK_NV_device_generated_commands
-        case VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV: return oss << sep << STRING_LITERAL(_Char, "CommandPreprocessNv"); break;
+        case VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV: oss << sep << STRING_LITERAL(_Char, "CommandPreprocessNv"); break;
 #elif defined(VK_NVX_device_generated_commands)
-        case VK_PIPELINE_STAGE_COMMAND_PROCESS_BIT_NVX: return oss << sep << STRING_LITERAL(_Char, "CommandPreprocessNvx"); break;
+        case VK_PIPELINE_STAGE_COMMAND_PROCESS_BIT_NVX: oss << sep << STRING_LITERAL(_Char, "CommandPreprocessNvx"); break;
 #endif
         default: AssertNotImplemented();
         }
@@ -370,6 +430,15 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageUsageFlagBi
 } //!namespace RHI
 } //!namespace PPE
 
+//----------------------------------------------------------------------------
+PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkMemoryHeapFlagBits value) { return PPE::RHI::Write_(oss, value); }
+PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkMemoryHeapFlagBits value) { return PPE::RHI::Write_(oss, value); }
+//----------------------------------------------------------------------------
+PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkMemoryPropertyFlagBits value) { return PPE::RHI::Write_(oss, value); }
+PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkMemoryPropertyFlagBits value) { return PPE::RHI::Write_(oss, value); }
+//----------------------------------------------------------------------------
+PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkPhysicalDeviceType value) { return PPE::RHI::Write_(oss, value); }
+PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkPhysicalDeviceType value) { return PPE::RHI::Write_(oss, value); }
 //----------------------------------------------------------------------------
 PPE_RHIVULKAN_API PPE::FTextWriter& operator <<(PPE::FTextWriter& oss, VkPipelineStageFlagBits value) { return PPE::RHI::Write_(oss, value); }
 PPE_RHIVULKAN_API PPE::FWTextWriter& operator <<(PPE::FWTextWriter& oss, VkPipelineStageFlagBits value) { return PPE::RHI::Write_(oss, value); }
