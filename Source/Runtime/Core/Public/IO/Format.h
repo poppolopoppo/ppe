@@ -112,14 +112,23 @@ TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatManip(char ch) noexcept;
-constexpr bool ValidateFormatManip(wchar_t ch) noexcept;
+enum class EValidateFormat {
+    Valid = 0,
+    InvalidFormatString,
+    ArgumentOutOfBounds,
+    InvalidFormatManip,
+    UnusedArguments,
+    TooManyArguments,
+};
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatString(const char* str, size_t len, size_t numArgs) noexcept;
-constexpr bool ValidateFormatString(const wchar_t* str, size_t len, size_t numArgs) noexcept;
+constexpr EValidateFormat ValidateFormatManip(char ch) noexcept;
+constexpr EValidateFormat ValidateFormatManip(wchar_t ch) noexcept;
+//----------------------------------------------------------------------------
+constexpr EValidateFormat ValidateFormatString(const char* str, size_t len, size_t numArgs) noexcept;
+constexpr EValidateFormat ValidateFormatString(const wchar_t* str, size_t len, size_t numArgs) noexcept;
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim>
-constexpr bool ValidateFormatString(const _Char(&fmt)[_Dim], size_t numArgs) noexcept {
+constexpr EValidateFormat ValidateFormatString(const _Char(&fmt)[_Dim], size_t numArgs) noexcept {
     return ValidateFormatString(fmt, _Dim - 1/* - null char */, numArgs);
 }
 //----------------------------------------------------------------------------

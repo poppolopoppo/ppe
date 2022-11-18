@@ -131,7 +131,7 @@ const _Char* Format(TBasicStaticString<_Char, _Capacity>& dst, const TBasicStrin
 //----------------------------------------------------------------------------
 namespace details {
 template <typename _Char>
-constexpr bool ValidateFormatManip_(_Char ch) noexcept {
+constexpr EValidateFormat ValidateFormatManip_(_Char ch) noexcept {
     switch (ch) {
     case STRING_LITERAL(_Char, '*'):
     case STRING_LITERAL(_Char, '0'):
@@ -158,20 +158,23 @@ constexpr bool ValidateFormatManip_(_Char ch) noexcept {
     case STRING_LITERAL(_Char, '#'):
     case STRING_LITERAL(_Char, '@'):
     case STRING_LITERAL(_Char, '/'):
-        return true;
+        return EValidateFormat::Valid;
     default:
-        return false;
+        return EValidateFormat::InvalidFormatManip;
     }
 }
 template <typename _Char>
-constexpr bool ValidateFormatString_(const _Char* fmt, size_t len, size_t numArgs) noexcept {
+constexpr EValidateFormat ValidateFormatString_(const _Char* fmt, size_t len, size_t numArgs) noexcept {
+    if (numArgs > 10) // not handled by validation, but can actually be handled by Format()
+        return EValidateFormat::TooManyArguments;
+
     size_t unusedArgs = ((size_t(1) << numArgs) - 1);
     for (size_t i = 0; i <= len - 2; ++i) {
-        if (fmt[i] == STRING_LITERAL(_Char, '\0')) return false;
+        if (fmt[i] == STRING_LITERAL(_Char, '\0')) return EValidateFormat::InvalidFormatString;
         if (fmt[i] == STRING_LITERAL(_Char, '{') && fmt[i + 1] >= STRING_LITERAL(_Char, '0') && fmt[i + 1] <= STRING_LITERAL(_Char, '9')) {
             const size_t argIndex = (size_t(fmt[i + 1]) - STRING_LITERAL(_Char, '0'));
             if (argIndex >= numArgs)
-                return false; // argument index out of bounds
+                return EValidateFormat::ArgumentOutOfBounds; // argument index out of bounds
 
             switch (fmt[i + 2]) {
             case STRING_LITERAL(_Char, '}'): // short format
@@ -179,9 +182,10 @@ constexpr bool ValidateFormatString_(const _Char* fmt, size_t len, size_t numArg
                 break;
             case STRING_LITERAL(_Char, ':'): // validate long format
                 i += 3;
-                while (i < len && fmt[i] != STRING_LITERAL(_Char, '}'))
-                    if (not ValidateFormatManip(fmt[i++]))
-                        return false;
+                while (i < len && fmt[i] != STRING_LITERAL(_Char, '}')) {
+                    if (const EValidateFormat error = ValidateFormatManip(fmt[i++]); error != EValidateFormat::Valid)
+                        return error;
+                }
                 break;
             default: // invalid format (assuming 1 digit)
                 continue; // could be a user '{', ignoring
@@ -191,23 +195,25 @@ constexpr bool ValidateFormatString_(const _Char* fmt, size_t len, size_t numArg
                 unusedArgs &= ~(size_t(1) << argIndex);
         }
     }
-    return (0 == unusedArgs); // each arg should be used at least once
+    return (0 == unusedArgs
+        ? EValidateFormat::Valid
+        : EValidateFormat::UnusedArguments); // each arg should be used at least once
 }
 } //!details
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatManip(char ch) noexcept {
+constexpr EValidateFormat ValidateFormatManip(char ch) noexcept {
     return details::ValidateFormatManip_(ch);
 }
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatManip(wchar_t ch) noexcept {
+constexpr EValidateFormat ValidateFormatManip(wchar_t ch) noexcept {
     return details::ValidateFormatManip_(ch);
 }
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs) noexcept {
+constexpr EValidateFormat ValidateFormatString(const char* fmt, size_t len, size_t numArgs) noexcept {
     return details::ValidateFormatString_(fmt, len, numArgs);
 }
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatString(const wchar_t* fmt, size_t len, size_t numArgs) noexcept {
+constexpr EValidateFormat ValidateFormatString(const wchar_t* fmt, size_t len, size_t numArgs) noexcept {
     return details::ValidateFormatString_(fmt, len, numArgs);
 }
 //----------------------------------------------------------------------------

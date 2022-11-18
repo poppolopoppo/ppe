@@ -121,6 +121,37 @@ static auto GetThreadHash_(std::thread::id id) {
     return UThreadIdIntegral_{ id }.Integral;
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicTextWriter<_Char>& WriteThreadPriority_(TBasicTextWriter<_Char>& oss, EThreadPriority priority) {
+    switch (priority)
+    {
+    case PPE::EThreadPriority::Realtime:
+        oss << STRING_LITERAL(_Char, "Realtime");
+        break;
+    case PPE::EThreadPriority::Highest:
+        oss << STRING_LITERAL(_Char, "Highest");
+        break;
+    case PPE::EThreadPriority::AboveNormal:
+        oss << STRING_LITERAL(_Char, "AboveNormal");
+        break;
+    case PPE::EThreadPriority::Normal:
+        oss << STRING_LITERAL(_Char, "Normal");
+        break;
+    case PPE::EThreadPriority::BelowNormal:
+        oss << STRING_LITERAL(_Char, "BelowNormal");
+        break;
+    case PPE::EThreadPriority::Lowest:
+        oss << STRING_LITERAL(_Char, "Lowest");
+        break;
+    case PPE::EThreadPriority::Idle:
+        oss << STRING_LITERAL(_Char, "Idle");
+        break;
+    default:
+        AssertNotImplemented();
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -270,63 +301,11 @@ FWTextWriter& operator <<(FWTextWriter& oss, std::thread::id thread_id) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, EThreadPriority priority) {
-    switch (priority)
-    {
-    case PPE::EThreadPriority::Realtime:
-        oss << "Realtime";
-        break;
-    case PPE::EThreadPriority::Highest:
-        oss << "Highest";
-        break;
-    case PPE::EThreadPriority::AboveNormal:
-        oss << "AboveNormal";
-        break;
-    case PPE::EThreadPriority::Normal:
-        oss << "Normal";
-        break;
-    case PPE::EThreadPriority::BelowNormal:
-        oss << "BelowNormal";
-        break;
-    case PPE::EThreadPriority::Lowest:
-        oss << "Lowest";
-        break;
-    case PPE::EThreadPriority::Idle:
-        oss << "Idle";
-        break;
-    default:
-        AssertNotImplemented();
-    }
-    return oss;
+    return WriteThreadPriority_(oss, priority);
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, EThreadPriority priority) {
-    switch (priority)
-    {
-    case PPE::EThreadPriority::Realtime:
-        oss << L"Realtime";
-        break;
-    case PPE::EThreadPriority::Highest:
-        oss << L"Highest";
-        break;
-    case PPE::EThreadPriority::AboveNormal:
-        oss << L"AboveNormal";
-        break;
-    case PPE::EThreadPriority::Normal:
-        oss << L"Normal";
-        break;
-    case PPE::EThreadPriority::BelowNormal:
-        oss << L"BelowNormal";
-        break;
-    case PPE::EThreadPriority::Lowest:
-        oss << L"Lowest";
-        break;
-    case PPE::EThreadPriority::Idle:
-        oss << L"Idle";
-        break;
-    default:
-        AssertNotImplemented();
-    }
-    return oss;
+    return WriteThreadPriority_(oss, priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

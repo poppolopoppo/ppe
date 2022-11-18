@@ -93,6 +93,11 @@ using TDontDeduce = typename TType<T>::type;
 // This ugly piece of crap is just used in STATIC_ASSERT() to get to see the
 // actual size of the types when the assertion fails :
 //----------------------------------------------------------------------------
+template <auto A, auto B>
+struct TCheckEquals {
+    STATIC_CONST_INTEGRAL(bool, value, (A == B));
+    static_assert(value, "A and B should be equal !");
+};
 template <typename A, typename B>
 struct TCheckSameSize {
     template <size_t X, size_t Y>

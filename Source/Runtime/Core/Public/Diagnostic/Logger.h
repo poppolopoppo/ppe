@@ -181,7 +181,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 
 #define LOG_VALIDATEFORMAT(_FORMAT, ...) \
     static_assert( /* validate format strings statically */ \
-        ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
+        ::PPE::Meta::TCheckEquals<::PPE::EValidateFormat::Valid, ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) )>::value, \
         "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) );
 
 // #TODO: remove this workaround when MSVC is fixed... (ShouldCompileMessage invalidly detected as not constexpr)

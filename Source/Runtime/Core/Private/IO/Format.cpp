@@ -317,6 +317,15 @@ NO_INLINE static void FormatArgsImpl_(
     const TMemoryView<const details::TBasicFormatFunctor_<_Char>>& args ) {
     Assert(format.data());
 
+#if USE_PPE_ASSERT
+    const EValidateFormat formatValidation = ValidateFormatString(format.data(), format.size(), args.size());
+    AssertMessage_NoAssume(L"invalid format string", EValidateFormat::InvalidFormatString != formatValidation);
+    AssertMessage_NoAssume(L"out-of-bounds argument index", EValidateFormat::ArgumentOutOfBounds != formatValidation);
+    AssertMessage_NoAssume(L"invalid format manipulator", EValidateFormat::InvalidFormatManip != formatValidation);
+    AssertMessage_NoAssume(L"unused arguments", EValidateFormat::UnusedArguments != formatValidation);
+    AssertMessage_NoAssume(L"too many arguments (>10)", EValidateFormat::TooManyArguments != formatValidation);
+#endif
+
     TBasicFormatProps_<_Char> props;
     TBasicStringView<_Char> formatIt = format;
     TBasicStringView<_Char> outp;
