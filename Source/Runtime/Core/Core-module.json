@@ -23,7 +23,10 @@
 			"HAL": {
 				"Windows": {
 					"Defines": [
-						"USE_PPE_VIRTUALALLOC_TRAMPOLINE"
+						"USE_PPE_VIRTUALALLOC_DETOUR=1"
+					],
+					"PrivateDependencies": [
+						"External/minhook"
 					],
 					"RuntimeDependencies": [
 						"External/vstools"

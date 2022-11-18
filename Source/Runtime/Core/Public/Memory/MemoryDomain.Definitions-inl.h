@@ -182,6 +182,10 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(VkInstance,               Vulkan)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(AtomicPool,               PooledMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MemoryPool,               PooledMemory)
 //------------------------------------------------------------------------------
+// Virtual memory
+//------------------------------------------------------------------------------
+MEMORYDOMAIN_IMPL(VirtualAlloc,                         VirtualMemory)
+//------------------------------------------------------------------------------
 // Unaccounted memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_IMPL(UnaccountedMalloc,                    UnaccountedMemory)

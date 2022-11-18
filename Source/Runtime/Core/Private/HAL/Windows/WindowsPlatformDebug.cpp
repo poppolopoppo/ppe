@@ -19,7 +19,7 @@ namespace PPE {
 void FWindowsPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery() {
     ULONG stackSizeInBytes = 0;
     if (::SetThreadStackGuarantee(&stackSizeInBytes)) {
-        stackSizeInBytes += 4 * 1024; // 4 kb
+        stackSizeInBytes += PAGE_SIZE; // 4 kb
         if (::SetThreadStackGuarantee(&stackSizeInBytes))
             return;
     }

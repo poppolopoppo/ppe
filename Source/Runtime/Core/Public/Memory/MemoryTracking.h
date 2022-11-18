@@ -100,6 +100,7 @@ public:
     static FMemoryTracking& UsedMemory() NOEXCEPT;
     static FMemoryTracking& ReservedMemory() NOEXCEPT;
     static FMemoryTracking& PooledMemory() NOEXCEPT;
+    static FMemoryTracking& VirtualMemory() NOEXCEPT;
     static FMemoryTracking& UnaccountedMemory() NOEXCEPT;
 
     static FMemoryTracking* ThreadTrackingData() NOEXCEPT;

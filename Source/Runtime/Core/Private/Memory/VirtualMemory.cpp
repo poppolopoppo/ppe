@@ -125,6 +125,7 @@ void FVirtualMemory::Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
 #if USE_VMALLOC_SIZE_PTRIE
     const size_t regionSize = FVMAllocSizePTrie_::Get().Erase(ptr);
     Assert(regionSize == sizeInBytes);
+    sizeInBytes = regionSize; // optimizer can ignore sizeInBytes in non-debug builds
 #endif
 
 #if USE_PPE_MEMORYDOMAINS
@@ -202,7 +203,7 @@ void* FVirtualMemory::InternalAlloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     AssertRelease(ptr);
 
 #if USE_PPE_MEMORYDOMAINS
-    Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
     trackingData.AllocateSystem(sizeInBytes);
 #endif
 
@@ -216,7 +217,7 @@ void FVirtualMemory::InternalFree(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG
 
 
 #if USE_PPE_MEMORYDOMAINS
-    Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
     trackingData.DeallocateSystem(sizeInBytes);
 #endif
 

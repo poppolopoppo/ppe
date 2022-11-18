@@ -20,29 +20,41 @@ namespace PPE {
 //  - Memory allocated will only released when cleared/destroyed
 // You shouldn't be using as a regular container, as it's more intended for low level
 //
-class FCompressedRadixTrie : FPageAllocator {
+template <typename _Allocator = FPageAllocator>
+class TCompressedRadixTrie : _Allocator {
 public:
-    using allocator_traits = TAllocatorTraits<FPageAllocator>;
+    using _Allocator::PageSize; // we need a *Page* allocator, not any allocator
+    using allocator_traits = TAllocatorTraits<_Allocator>;
 
     struct ALIGN(16) FNode {
         uintptr_t Keys[2];
         FNode* Children[2];
     };
 
-    explicit FCompressedRadixTrie(ARG0_IF_MEMORYDOMAINS(FMemoryTracking& trackingData))
-    :   _root((FNode*)NullSentinel_)
-    ,   _freeList(nullptr)
-    ,   _newPageAllocated(nullptr)
-    ,   _allPages(nullptr)
+    explicit TCompressedRadixTrie(ARG0_IF_MEMORYDOMAINS(FMemoryTracking& trackingData))
+#if USE_PPE_MEMORYDOMAINS
+    :   _trackingDataRef(&trackingData)
+#endif
+    {}
+
+    explicit TCompressedRadixTrie(_Allocator&& alloc ARGS_IF_MEMORYDOMAINS(FMemoryTracking& trackingData))
+    :   _Allocator(std::move(alloc))
 #if USE_PPE_MEMORYDOMAINS
     ,   _trackingDataRef(&trackingData)
 #endif
     {}
 
-    FCompressedRadixTrie(const FCompressedRadixTrie&) = delete;
-    FCompressedRadixTrie& operator =(const FCompressedRadixTrie&) = delete;
+    explicit TCompressedRadixTrie(const _Allocator& alloc ARGS_IF_MEMORYDOMAINS(FMemoryTracking& trackingData))
+    :   _Allocator(alloc)
+#if USE_PPE_MEMORYDOMAINS
+    ,   _trackingDataRef(&trackingData)
+#endif
+    {}
 
-    ~FCompressedRadixTrie() {
+    TCompressedRadixTrie(const TCompressedRadixTrie&) = delete;
+    TCompressedRadixTrie& operator =(const TCompressedRadixTrie&) = delete;
+
+    ~TCompressedRadixTrie() {
         Clear_ReleaseMemory();
     }
 
@@ -209,13 +221,13 @@ public:
 private:
     STATIC_CONST_INTEGRAL(uintptr_t, NullSentinel_, 1);
 
-    FNode* _root;
-    FNode* _freeList;
-    FNode* _newPageAllocated;
-    FNode* _allPages;
+    FNode* _root{ (FNode*)NullSentinel_ };
+    FNode* _freeList{ nullptr };
+    FNode* _newPageAllocated{ nullptr };
+    FNode* _allPages{ nullptr };
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking* const _trackingDataRef;
+    FMemoryTracking* const _trackingDataRef{ nullptr };
 #endif
 
     void InsertAt_(const uintptr_t key, const uintptr_t value, FNode* const newNode) {
@@ -337,59 +349,65 @@ private:
     }
 };
 //----------------------------------------------------------------------------
+using FCompressedRadixTrie = TCompressedRadixTrie<>;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FReadWriteCompressedRadixTrie : private FCompressedRadixTrie {
+template <typename _Allocator = FPageAllocator>
+class TReadWriteCompressedRadixTrie : private TCompressedRadixTrie<_Allocator> {
+    using parent_type = TCompressedRadixTrie<_Allocator>;
 public:
-    explicit FReadWriteCompressedRadixTrie(ARG0_IF_MEMORYDOMAINS(FMemoryTracking& trackingData)) NOEXCEPT
+    explicit TReadWriteCompressedRadixTrie(ARG0_IF_MEMORYDOMAINS(FMemoryTracking& trackingData)) NOEXCEPT
 #if USE_PPE_MEMORYDOMAINS
-    :   FCompressedRadixTrie(trackingData)
+    :   parent_type(trackingData)
 #endif
     {}
 
-    using FCompressedRadixTrie::empty;
+    using parent_type::empty;
 
     void Insert(uintptr_t key, uintptr_t value) {
         const FReadWriteLock::FScopeLockWrite scopeWrite(_rwlock);
-        FCompressedRadixTrie::Insert(key, value);
+        parent_type::Insert(key, value);
     }
 
     uintptr_t Lookup(uintptr_t key) const NOEXCEPT {
         const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
-        return FCompressedRadixTrie::Lookup(key);
+        return parent_type::Lookup(key);
     }
 
     bool Find(uintptr_t* pvalue, uintptr_t key) const NOEXCEPT {
         const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
-        return FCompressedRadixTrie::Find(pvalue, key);
+        return parent_type::Find(pvalue, key);
     }
 
     uintptr_t Erase(uintptr_t key) NOEXCEPT {
         const FReadWriteLock::FScopeLockWrite scopeWrite(_rwlock);
-        return FCompressedRadixTrie::Erase(key);
+        return parent_type::Erase(key);
     }
 
     template <typename _Predicate>
     void DeleteIf(_Predicate&& pred) NOEXCEPT {
         const FReadWriteLock::FScopeLockWrite scopeWrite(_rwlock);
-        FCompressedRadixTrie::DeleteIf(std::move(pred));
+        parent_type::DeleteIf(std::move(pred));
     }
 
     template <typename _Predicate>
     bool Where(_Predicate&& pred) const NOEXCEPT {
         const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
-        return FCompressedRadixTrie::Where(std::move(pred));
+        return parent_type::Where(std::move(pred));
     }
 
     template <typename _Functor>
     auto Foreach(_Functor&& functor) const NOEXCEPT {
         const FReadWriteLock::FScopeLockRead scopeRead(_rwlock);
-        return FCompressedRadixTrie::Foreach(std::move(functor));
+        return parent_type::Foreach(std::move(functor));
     }
 
 private:
     FReadWriteLock _rwlock;
 };
+//----------------------------------------------------------------------------
+using FReadWriteCompressedRadixTrie = TReadWriteCompressedRadixTrie<>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
