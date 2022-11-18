@@ -199,17 +199,17 @@ inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FA
 #if USE_PPE_ASSERT
 #   define ARG0_IF_ASSERT(...) __VA_ARGS__
 #   define ARGS_IF_ASSERT(...) COMMA __VA_ARGS__
-#   define ONLY_IF_ASSERT(_Code) _Code
+#   define ONLY_IF_ASSERT(...) __VA_ARGS__
 #else
 #   define ARG0_IF_ASSERT(...)
 #   define ARGS_IF_ASSERT(...)
-#   define ONLY_IF_ASSERT(_Code) NOOP()
+#   define ONLY_IF_ASSERT(...) NOOP()
 #endif
 
 #if USE_PPE_ASSERT_RELEASE
-#   define ONLY_IF_ASSERT_RELEASE(_Code) _Code
+#   define ONLY_IF_ASSERT_RELEASE(...) __VA_ARGS__
 #else
-#   define ONLY_IF_ASSERT_RELEASE(_Code) NOOP()
+#   define ONLY_IF_ASSERT_RELEASE(...) NOOP()
 #endif
 
 #define AssertFinalMessage(_Message, ...) \
