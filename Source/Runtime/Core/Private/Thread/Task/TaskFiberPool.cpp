@@ -175,6 +175,10 @@ bool FTaskFiberChunk::ReleaseChunk(FTaskFiberChunk** head, FTaskFiberChunk* chun
 }
 //----------------------------------------------------------------------------
 void STDCALL FTaskFiberChunk::FiberEntryPoint_(void* arg) {
+#if USE_PPE_PLATFORM_DEBUG
+    FPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery();
+#endif
+
     auto* h = static_cast<FHandleRef>(arg);
     Assert_NoAssume(FTaskFiberPool::CurrentHandleRef() == h);
 
