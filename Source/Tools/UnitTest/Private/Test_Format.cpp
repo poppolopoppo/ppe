@@ -1,4 +1,5 @@
-#include "stdafx.h"
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+
 #include "VirtualFileSystem_fwd.h"
 
 #include "Container/Tuple.h"

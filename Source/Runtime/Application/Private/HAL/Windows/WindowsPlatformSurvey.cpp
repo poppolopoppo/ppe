@@ -1,4 +1,5 @@
-#include "stdafx.h"
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+
 #include "HAL/PlatformApplicationMisc.h"
 
 #ifdef PLATFORM_WINDOWS

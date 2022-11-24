@@ -1,4 +1,5 @@
-﻿
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+
 #include "glslang-external.h"
 
 #include "glslang/Include/Types.h"

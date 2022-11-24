@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "Http/Client.h"
 #include "Http/Exceptions.h"

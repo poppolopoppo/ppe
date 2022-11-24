@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "HAL/Generic/GenericPlatformDialog.h"
 

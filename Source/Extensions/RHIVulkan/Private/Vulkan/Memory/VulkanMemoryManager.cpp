@@ -1,5 +1,4 @@
-
-#include "stdafx.h"
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "Vulkan/Memory/VulkanMemoryManager.h"
 

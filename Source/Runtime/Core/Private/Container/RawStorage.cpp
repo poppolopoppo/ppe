@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #define EXPORT_PPE_RUNTIME_CORE_RAWSTORAGE
 

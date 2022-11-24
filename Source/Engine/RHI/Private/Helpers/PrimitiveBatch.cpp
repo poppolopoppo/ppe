@@ -1,3 +1,5 @@
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+
 #include <stddef.h>
 
 #include "PrimitiveBatch.h"

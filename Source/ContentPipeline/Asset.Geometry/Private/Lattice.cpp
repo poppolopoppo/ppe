@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "Lattice.h"
 #include "Lattice_fwd.h"

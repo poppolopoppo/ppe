@@ -1,4 +1,5 @@
-﻿
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+
 #include "spirv-tools-external.h"
 
 #include "spirv-tools/optimizer.hpp"

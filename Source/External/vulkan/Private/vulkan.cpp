@@ -1,3 +1,4 @@
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "vulkan-exports.h"
 #include "vulkan-exports.generated.cpp"

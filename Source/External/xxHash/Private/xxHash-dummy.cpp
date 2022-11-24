@@ -1,3 +1,5 @@
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+
 #include "xxHash-external.h"
 
 // includes xxhash.c conditionally, simce it must be compiled if inlining is enabled

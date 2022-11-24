@@ -1,6 +1,6 @@
-#include <numeric>
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
-#include "stdafx.h"
+#include <numeric>
 
 #include "Allocator/SlabAllocator.h"
 #include "Allocator/SlabHeap.h"

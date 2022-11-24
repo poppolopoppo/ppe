@@ -1,3 +1,5 @@
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+
 #include "vstools.h"
 
 #if USE_PPE_EXTERNAL_VSTOOLS
