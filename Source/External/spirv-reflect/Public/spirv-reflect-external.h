@@ -9,14 +9,14 @@
 #   endif
 #endif
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang system_header
 #   pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #   pragma clang diagnostic ignored "-Wparentheses-equality"
 #   pragma clang diagnostic ignored "-Wsign-compare"
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #   pragma GCC system_header
 #endif
 

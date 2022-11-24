@@ -34,12 +34,13 @@ PRAGMA_MSVC_WARNING_DISABLE(4505) // 'XXX' unreferenced local function has been 
 PRAGMA_MSVC_WARNING_DISABLE(5033) // 'register' is no longer a supported storage class (C++17)
 PRAGMA_MSVC_WARNING_DISABLE(6237) // (<zero> && <expression>) is always zero.  <expression> is never evaluated and might have side effects
 PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) always evaluates to the result of <expression>.  Did you intend to use the bitwise-and operator?
+PRAGMA_MSVC_WARNING_DISABLE(6262) // function uses '16456' bytes of stack. consider moving some data to the heap.
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #    pragma clang system_header
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #    pragma GCC system_header
 #endif
 

@@ -27,6 +27,11 @@
 #include "Meta/Utility.h"
 #include "Thread/CriticalSection.h"
 
+#ifdef __clang__
+#   pragma clang diagnostic push,
+#   pragma clang diagnostic ignored "-Wmicrosoft-cast"
+#endif
+
 namespace PPE {
 LOG_CATEGORY(, VirtualAllocDetour)
 //----------------------------------------------------------------------------
@@ -235,10 +240,10 @@ struct TAutoWinAPIDetour_ {
             if (::MH_OK == status)
                 LOG(VirtualAllocDetour, Info, L"MH_CreateHookApiEx: hooked function {0} in module {1}", MakeCStringView(functionName), MakeCStringView(moduleName));
             else
-                LOG(VirtualAllocDetour, Error, L"MH_QueueEnableHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_(status));
+                LOG(VirtualAllocDetour, Error, L"MH_QueueEnableHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_{ status });
         }
         else {
-            LOG(VirtualAllocDetour, Error, L"MH_CreateHookApiEx({0}, {1}): {2}", MakeCStringView(moduleName), MakeCStringView(functionName), FMinHookStatus_(status));
+            LOG(VirtualAllocDetour, Error, L"MH_CreateHookApiEx({0}, {1}): {2}", MakeCStringView(moduleName), MakeCStringView(functionName), FMinHookStatus_{ status });
         }
     }
 
@@ -246,7 +251,7 @@ struct TAutoWinAPIDetour_ {
         if (Target) {
             const ::MH_STATUS status = ::MH_RemoveHook(Target);
             if (::MH_OK != status)
-                LOG(VirtualAllocDetour, Error, L"MH_RemoveHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_(status));
+                LOG(VirtualAllocDetour, Error, L"MH_RemoveHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_{ status });
         }
     }
 
@@ -303,7 +308,7 @@ public: // TSingleton<>
     static void Create() {
         const ::MH_STATUS status = ::MH_Initialize();
         if (::MH_OK != status)
-            LOG(VirtualAllocDetour, Error, L"MH_Initialize: {0}", FMinHookStatus_(status));
+            LOG(VirtualAllocDetour, Error, L"MH_Initialize: {0}", FMinHookStatus_{ status });
 
         singleton_type::Create();
     }
@@ -313,7 +318,7 @@ public: // TSingleton<>
 
         const ::MH_STATUS status = ::MH_Uninitialize();
         if (::MH_OK != status)
-            LOG(VirtualAllocDetour, Error, L"MH_Uninitialize: {0}", FMinHookStatus_(status));
+            LOG(VirtualAllocDetour, Error, L"MH_Uninitialize: {0}", FMinHookStatus_{ status });
     }
 
     bool Valid() const NOEXCEPT {
@@ -332,7 +337,7 @@ private:
 
         const ::MH_STATUS status = ::MH_ApplyQueued();
         if (::MH_OK != status)
-            LOG(VirtualAllocDetour, Error, L"MH_ApplyQueued: {0}", FMinHookStatus_(status));
+            LOG(VirtualAllocDetour, Error, L"MH_ApplyQueued: {0}", FMinHookStatus_{ status });
     }
 
     static FMemoryTracking& TrackingData() NOEXCEPT {
@@ -354,7 +359,7 @@ private:
                 Barrier.Lock();
 
                 // deallocate every user tracking (aka committed memory) before alloc/free
-                dwReservedSize = EachBlockInVirtualAlloc_(lpAddress, [this](::LPVOID, ::SIZE_T dwSize, ::DWORD flAllocationType) {
+                dwReservedSize = EachBlockInVirtualAlloc_(lpAddress, [](::LPVOID, ::SIZE_T dwSize, ::DWORD flAllocationType) {
                     if (flAllocationType & MEM_COMMIT)
                         TrackingData().ReleaseBatchUser(1, dwSize);
                     });
@@ -519,6 +524,10 @@ void FVirtualAllocDetour::ShutdownHooks() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+#ifdef __clang__
+#   pragma clang diagnostic pop
+#endif
 
 #else
 

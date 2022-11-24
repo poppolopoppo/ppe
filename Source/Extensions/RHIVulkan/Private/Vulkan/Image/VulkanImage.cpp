@@ -8,6 +8,11 @@
 #include "Diagnostic/Logger.h"
 #include "Maths/ScalarVectorHelpers.h"
 
+#if USE_PPE_RHIDEBUG
+#   include "RHI/EnumToString.h"
+#   include "Vulkan/Common/VulkanEnumToString.h"
+#endif
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------

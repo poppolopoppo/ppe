@@ -11,11 +11,11 @@
 
 // PRAGMA_MSVC_WARNING_DISABLE(4065) // switch statement contains 'default' but no 'case' labels
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #    pragma clang system_header
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #    pragma GCC system_header
 #endif
 

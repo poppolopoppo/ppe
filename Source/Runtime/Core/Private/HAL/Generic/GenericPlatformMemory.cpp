@@ -3,6 +3,7 @@
 #include "HAL/Generic/GenericPlatformMemory.h"
 
 #include "Memory/MemoryDomain.h"
+#include "Memory/MemoryTracking.h"
 
 #include <malloc.h>
 

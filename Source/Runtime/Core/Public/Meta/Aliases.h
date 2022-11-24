@@ -98,32 +98,7 @@ using i64   = std::int64_t;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if defined(CPP_CLANG)
-#   define NOALIAS
-#   define NOEXCEPT     noexcept
-#   define NOOP(...)    (void)0
-#   define NORETURN     [[noreturn]]
-#   if defined(_MSC_VER) && (defined(__INTELLISENSE__) || defined(_PREFAST_))
-#       define CONSTF       __attribute__((const))
-#       define PUREF        __attribute__((pure))
-#   else
-#       define CONSTF
-#       define PUREF
-#   endif
-#   define THREAD_LOCAL thread_local
-#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
-#   if defined(_MSC_VER)
-#       define EMPTY_BASES  __declspec(empty_bases)
-#       define RESTRICT     __declspec(restrict)
-#       define STDCALL      __stdcall
-#       define VECTORCALL   __vectorcall
-#   else
-#       define EMPTY_BASES
-#       define RESTRICT
-#       define STDCALL
-#       define VECTORCALL
-#   endif
-#elif defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
+#if defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
 #   define NOOP(...)    __noop(__VA_ARGS__)
@@ -149,13 +124,38 @@ using i64   = std::int64_t;
 #   define THREAD_LOCAL __declspec(thread)
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) enum : _TYPE { _NAME = (_TYPE)(__VA_ARGS__) }
 #   define EMPTY_BASES
+#elif defined(CPP_CLANG)
+#   define NOALIAS
+#   define NOEXCEPT     noexcept
+#   define NOOP(...)    (void)0
+#   define NORETURN     [[noreturn]]
+#   if defined(_MSC_VER) && (defined(__INTELLISENSE__) || defined(_PREFAST_))
+#       define CONSTF       __attribute__((const))
+#       define PUREF        __attribute__((pure))
+#   else
+#       define CONSTF
+#       define PUREF
+#   endif
+#   define THREAD_LOCAL thread_local
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
+#   if defined(_MSC_VER)
+#       define EMPTY_BASES  __declspec(empty_bases)
+#       define RESTRICT     __declspec(restrict)
+#       define STDCALL      __stdcall
+#       define VECTORCALL   __vectorcall
+#   else
+#       define EMPTY_BASES
+#       define RESTRICT
+#       define STDCALL
+#       define VECTORCALL
+#   endif
 #else
 #   error "unsupported compiler"
 #endif
 #if !defined(_DEBUG) || defined(NDEBUG) || (defined(USE_PPE_FASTDEBUG) && USE_PPE_FASTDEBUG)
 #   if defined(_MSC_VER)
 #       define FORCE_INLINE __forceinline
-#   elif defined(CPP_CLANG) || defined(CPP_GCC)
+#   elif defined(__clang__) || defined(__gcc__)
 #       define FORCE_INLINE inline __attribute__((always_inline))
 #   else
 #       error "unsupported compiler"
@@ -165,7 +165,7 @@ using i64   = std::int64_t;
 #endif
 #if defined(_MSC_VER)
 #   define NO_INLINE __declspec(noinline)
-#elif defined(CPP_CLANG) || defined(CPP_GCC)
+#elif defined(__clang__) || defined(__gcc__)
 #   define NO_INLINE __attribute__((noinline))
 #else
 #   error "unsupported compiler"

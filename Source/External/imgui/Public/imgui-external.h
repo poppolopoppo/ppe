@@ -5,11 +5,11 @@
 #include "Maths/ScalarVector.h"
 #include "Meta/Assert.h"
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #    pragma clang system_header
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #    pragma GCC system_header
 #endif
 
@@ -19,6 +19,10 @@
 #   ifdef __clang__
 #       pragma clang diagnostic push,
 #   endif
+
+#else
+
+#   include "HAL/PlatformIncludes.h"
 
 #endif
 
@@ -33,7 +37,7 @@
 PRAGMA_MSVC_WARNING_DISABLE(4505) // 'GetInputSourceName': unreferenced function with internal linkage has been removed
 PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang diagnostic ignored "-Wunused-function"
 #   pragma clang diagnostic ignored "-Wunused-parameter"
 #   pragma clang diagnostic ignored "-Wunused-variable"

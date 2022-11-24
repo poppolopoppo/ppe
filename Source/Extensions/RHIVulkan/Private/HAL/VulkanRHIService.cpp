@@ -5,6 +5,7 @@
 #include "Vulkan/Instance/VulkanFrameGraph.h"
 
 #include "RHIModule.h"
+#include "RHI/PipelineCompiler.h"
 #include "RHI/SwapchainDesc.h"
 
 #include "Meta/Utility.h"

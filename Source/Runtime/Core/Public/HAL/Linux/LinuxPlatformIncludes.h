@@ -2,11 +2,11 @@
 
 #include "HAL/Generic/GenericPlatformIncludes.h"
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #    pragma clang system_header
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #    pragma GCC system_header
 #endif
 

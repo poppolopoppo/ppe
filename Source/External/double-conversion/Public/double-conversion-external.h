@@ -29,16 +29,13 @@
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'const uc16' to 'char', possible loss of data
 PRAGMA_MSVC_WARNING_DISABLE(4505) // 'double_conversion::AssertTrimmedDigits': unreferenced local function has been removed
 
-#ifdef CPP_CLANG
-#    pragma clang system_header
-#endif
-
-#ifdef CPP_GCC
+#ifdef __gcc__
 #    pragma GCC system_header
 #endif
 
 #ifdef __clang__
-#   pragma clang diagnostic ignored "-Wunused-function"
+#    pragma clang system_header
+#    pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
 #ifndef EXPORT_PPE_EXTERNAL_DOUBLE_CONVERSION

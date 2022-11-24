@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RHIVulkan_fwd.h"
+
 #include "Meta/Utility.h"
 #include "Thread/ReadWriteLock.h"
 #include "Vulkan/VulkanCommon.h"

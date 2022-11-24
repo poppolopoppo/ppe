@@ -16,12 +16,12 @@ PRAGMA_MSVC_WARNING_DISABLE(4703) // potentially uninitialized local pointer var
 PRAGMA_MSVC_WARNING_DISABLE(4706) // assignment within conditional expression
 PRAGMA_MSVC_WARNING_DISABLE(4996) // 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead.
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang system_header
 #   pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #   pragma GCC system_header
 #endif
 

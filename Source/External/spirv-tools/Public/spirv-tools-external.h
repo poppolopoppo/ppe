@@ -15,12 +15,12 @@ PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 PRAGMA_MSVC_WARNING_DISABLE(4706) // assignment within conditional expression
 PRAGMA_MSVC_WARNING_DISABLE(4996) // this function or variable may be unsafe
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang system_header
 //#   pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #   pragma GCC system_header
 #endif
 

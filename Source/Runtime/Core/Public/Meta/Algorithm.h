@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Meta/Aliases.h"
+#include "Meta/Arithmetic.h"
 
 namespace PPE {
 namespace Meta {

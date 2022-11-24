@@ -30,12 +30,12 @@ PRAGMA_MSVC_WARNING_DISABLE(6246) // Local declaration of 'XXX' hides declaratio
 PRAGMA_MSVC_WARNING_DISABLE(6297) // Arithmetic overflow:  32-bit value is shifted, then cast to 64-bit value.  Results might not be an expected value.
 PRAGMA_MSVC_WARNING_DISABLE(6313) // Incorrect operator:  zero-valued flag cannot be tested with bitwise-and.  Use an equality test to check for zero-valued flags.
 
-#ifdef CPP_CLANG
-#    pragma clang system_header
+#ifdef __gcc__
+#    pragma GCC system_header
 #endif
 
-#ifdef CPP_GCC
-#    pragma GCC system_header
+#ifdef __clang__
+#    pragma clang system_header
 #endif
 
 #ifndef EXPORT_PPE_EXTERNAL_FARMHASH

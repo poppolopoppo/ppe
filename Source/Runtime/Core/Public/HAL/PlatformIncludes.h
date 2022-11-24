@@ -2,13 +2,13 @@
 
 // mark files including as system headers : warnings will be ignored starting from here
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang system_header
 #endif
-#ifdef CPP_GCC
+#ifdef __gcc__
 #   pragma GCC system_header
 #endif
-#if defined(CPP_VISUALSTUDIO) && defined(USE_PPE_MSVC_PRAGMA_SYSTEMHEADER)
+#if defined(_MSC_VER) && defined(USE_PPE_MSVC_PRAGMA_SYSTEMHEADER)
 #   pragma system_header
 #endif
 

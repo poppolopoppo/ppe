@@ -16,7 +16,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4100) // 'XXX': unreferenced formal parameter
 PRAGMA_MSVC_WARNING_DISABLE(4189) // local variable is initialized but not referenced
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'XXX': conversion from 'YYY' to 'ZZZ', possible loss of data
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang system_header
 #   pragma clang diagnostic ignored "-Wunused-function"
 #   pragma clang diagnostic ignored "-Wunused-parameter"
@@ -25,7 +25,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'XXX': conversion from 'YYY' to 'ZZZ', poss
 #   pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #   pragma GCC system_header
 #endif
 

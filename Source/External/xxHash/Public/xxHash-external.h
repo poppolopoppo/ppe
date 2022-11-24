@@ -2,11 +2,11 @@
 
 #include "HAL/PlatformMacros.h"
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #    pragma clang system_header
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #    pragma GCC system_header
 #endif
 
@@ -31,6 +31,7 @@
 #endif
 
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+PRAGMA_MSVC_WARNING_DISABLE(6011) // dereferencing NULL pointer 'ptr'
 
 #ifdef __clang__
 #   pragma clang diagnostic ignored "-Wpass-failed=transform-warning"

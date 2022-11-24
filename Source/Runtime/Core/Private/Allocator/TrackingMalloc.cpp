@@ -3,10 +3,13 @@
 #include "Allocator/TrackingMalloc.h"
 
 #include "Allocator/Malloc.h"
-
-#include "HAL/PlatformMemory.h"
+#include "Container/Hash.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
+
+#include "HAL/PlatformMemory.h"
+
+#define USE_PPE_TRACKINGMALLOC USE_PPE_MEMORYDOMAINS
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -14,7 +17,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_TRACKINGMALLOC
 struct FBlockTracking_ {
     FMemoryTracking* TrackingData;
     u32 UserSize;
@@ -68,14 +71,14 @@ struct FBlockTracking_ {
     }
 };
 STATIC_ASSERT(sizeof(FBlockTracking_) == ALLOCATION_BOUNDARY);
-#endif //!USE_PPE_MEMORYDOMAINS
+#endif //!USE_PPE_TRACKINGMALLOC
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_TRACKINGMALLOC
     return tracking_malloc_for_new(trackingData, size);
 #else
     Unused(trackingData);
@@ -84,7 +87,7 @@ void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
 }
 //----------------------------------------------------------------------------
 void* (tracking_malloc_for_new)(FMemoryTracking& trackingData, size_t size) {
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_TRACKINGMALLOC
     if (0 == size)
         return nullptr;
 
@@ -100,7 +103,7 @@ void* (tracking_malloc_for_new)(FMemoryTracking& trackingData, size_t size) {
 }
 //----------------------------------------------------------------------------
 void  (tracking_free)(void *ptr) NOEXCEPT {
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_TRACKINGMALLOC
     if (nullptr == ptr)
         return;
 
@@ -112,7 +115,7 @@ void  (tracking_free)(void *ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void  (tracking_free_for_delete)(void* ptr, size_t size) NOEXCEPT {
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_TRACKINGMALLOC
     if (nullptr == ptr) {
         Assert_NoAssume(0 == size);
         return;
@@ -136,7 +139,7 @@ void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size
 }
 //----------------------------------------------------------------------------
 void* (tracking_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size) {
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_TRACKINGMALLOC
     if (nullptr != ptr) {
         FBlockTracking_* const pblock = FBlockTracking_::BlockFromPtr(ptr);
         return tracking_realloc_for_new(trackingData, ptr, size, pblock->UserSize);
@@ -151,7 +154,7 @@ void* (tracking_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size) 
 }
 //----------------------------------------------------------------------------
 void* (tracking_realloc_for_new)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t old) {
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_TRACKINGMALLOC
     const FMemoryTracking::FThreadScope threadTracking{ trackingData };
 
     FBlockTracking_* pblock = nullptr;

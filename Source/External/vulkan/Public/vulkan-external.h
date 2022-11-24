@@ -2,17 +2,19 @@
 
 #include "vulkan-platform.h"
 
-#ifdef CPP_CLANG
+#ifdef __clang__
 #    pragma clang system_header
 #endif
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #    pragma GCC system_header
 #endif
 
 PRAGMA_MSVC_WARNING_PUSH()
 
 #pragma include_alias("vulkan/vk_platform.h", "External/vulkan/Vulkan-Header.git/include/vulkan/vk_platform.h")
+
+#include "HAL/PlatformIncludes.h"
 
 #include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan.h"
 

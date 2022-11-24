@@ -26,11 +26,15 @@ TRACELOGGING_DEFINE_PROVIDER(
     "PPE Logger",
     (0xf42256f3, 0x2773, 0x4c4f, 0x9e, 0x81, 0x99, 0x24, 0xdf, 0x0d, 0xcd, 0xb3) );
 //----------------------------------------------------------------------------
+#ifdef __clang__
+#   pragma clang diagnostic push,
+#   pragma clang diagnostic ignored "-Wbitwise-op-parentheses"
+#endif
 template <int _TraceLevel>
 static void TraceLoggingImpl_(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
     const FDateTime utc = FTimestamp{ timestamp }.ToDateTimeUTC();
 
-    SYSTEMTIME syst;
+    ::SYSTEMTIME syst;
     syst.wYear = checked_cast<::WORD>(utc.Year);
     syst.wMonth = checked_cast<::WORD>(utc.Month);
     syst.wDayOfWeek = checked_cast<::WORD>(utc.DayOfWeek);
@@ -40,16 +44,21 @@ static void TraceLoggingImpl_(const wchar_t* category, i64 timestamp, const wcha
     syst.wSecond = checked_cast<::WORD>(utc.Seconds);
     syst.wMilliseconds = 0;
 
+    const ::DWORD dwThreadId = ::GetThreadId(NULL);
+
     TraceLoggingWrite(GWindowsTraceLogging_,
         "LogEvent",
         TraceLoggingLevel(_TraceLevel),
-        TraceLoggingTid(::GetThreadId(NULL)),
+        TraceLoggingTid(dwThreadId),
         TraceLoggingWideString(category, "category"),
         TraceLoggingWideString(text, "message"),
         TraceLoggingSystemTimeUtc(syst, "date"),
         TraceLoggingWideString(filename, "filename"),
         TraceLoggingUInt32(u32(line), "line") );
 }
+#ifdef __clang__
+#   pragma clang diagnostic pop
+#endif
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

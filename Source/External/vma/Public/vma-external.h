@@ -2,6 +2,8 @@
 
 #include "Core_fwd.h"
 
+#include "HAL/PlatformIncludes.h"
+
 #include "Allocator/Allocation.h"
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
@@ -107,12 +109,12 @@ public:
     }
 };
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #   pragma GCC diagnostic push
 #   pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #   pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
-#ifdef CPP_VISUALSTUDIO
+#ifdef _MSC_VER
 #   pragma warning (push, 0)
 #   pragma warning (disable: 4100)
 #   pragma warning (disable: 4296)
@@ -121,7 +123,7 @@ public:
 #   pragma warning (disable: 4703)
 #   pragma warning (disable: 4826)
 #endif
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang diagnostic push
 #   pragma clang diagnostic ignored "-Wcast-align"
 #   pragma clang diagnostic ignored "-Wignored-qualifiers"
@@ -135,12 +137,12 @@ public:
 
 #include "External/vma/vma.git/include/vk_mem_alloc.h"
 
-#ifdef CPP_GCC
+#ifdef __gcc__
 #   pragma GCC diagnostic pop
 #endif
-#ifdef CPP_VISUALSTUDIO
+#ifdef _MSC_VER
 #   pragma warning (pop)
 #endif
-#ifdef CPP_CLANG
+#ifdef __clang__
 #   pragma clang diagnostic pop
 #endif

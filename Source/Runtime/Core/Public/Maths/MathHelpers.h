@@ -1,6 +1,8 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
+
+#include "Container/Pair.h"
 
 #include "HAL/PlatformMaths.h"
 

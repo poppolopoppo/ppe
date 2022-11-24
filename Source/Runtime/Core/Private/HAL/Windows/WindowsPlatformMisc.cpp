@@ -724,6 +724,10 @@ PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4302) // 'type cast': truncation from 'FARPROC' to 'DWORD'
 PRAGMA_MSVC_WARNING_DISABLE(4311) // 'type cast': pointer truncation from 'FARPROC' to 'DWORD'
 PRAGMA_MSVC_WARNING_DISABLE(4312) // 'type cast': conversion from 'DWORD' to 'DWORD *' of greater size
+#ifdef __clang__
+#   pragma clang diagnostic push,
+#   pragma clang diagnostic ignored "-Wmicrosoft-cast"
+#endif
 static u32 WriteRelativeJump_(void* func2hook, void* jumpTarget) {
     using FDetour = FWindowsPlatformMisc::FDetour;
 
@@ -814,6 +818,9 @@ static bool CreateDetour_X64_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyF
 }
 #else
 #   error "Detour support is missing for current architecture"
+#endif
+#ifdef __clang__
+#   pragma clang diagnostic pop
 #endif
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
