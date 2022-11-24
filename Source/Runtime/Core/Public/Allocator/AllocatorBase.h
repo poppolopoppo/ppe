@@ -321,32 +321,43 @@ struct TAllocatorTraits {
         Assert_NoAssume(b.SizeInBytes <= MaxSize(a));
         Assert_NoAssume(s <= MaxSize(a));
 
-        if (Likely(b.SizeInBytes != s)) {
-            Assert_NoAssume(SnapSize(a, s) != SnapSize(a, b.SizeInBytes));
-
+        if (Unlikely(b.SizeInBytes == s)) {
             IF_CONSTEXPR(has_reallocate::value) {
-                return a.Reallocate(b, s);
+                using return_type_t = decltype(a.Reallocate(b, s));
+                IF_CONSTEXPR(not std::is_void_v<return_type_t>)
+                    return return_type_t{};
+                else
+                    return;
             }
             else {
-                if ((!!b) & (!!s)) {
-                    const FAllocatorBlock r = a.Allocate(s);
-                    Assert_NoAssume(r);
-                    FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, b.SizeInBytes));
-                    a.Deallocate(b);
-                    b = r;
-                }
-                else {
-                    if (Likely(s)) {
-                        Assert_NoAssume(not b);
-                        b = a.Allocate(s);
-                    }
-                    else {
-                        Assert_NoAssume(b);
-                        a.Deallocate(b.Reset());
-                    }
-                }
                 return;
             }
+        }
+
+        Assert_NoAssume(SnapSize(a, s) != SnapSize(a, b.SizeInBytes));
+
+        IF_CONSTEXPR(has_reallocate::value) {
+            return a.Reallocate(b, s);
+        }
+        else {
+            if ((!!b) & (!!s)) {
+                const FAllocatorBlock r = a.Allocate(s);
+                Assert_NoAssume(r);
+                FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, b.SizeInBytes));
+                a.Deallocate(b);
+                b = r;
+            }
+            else {
+                if (Likely(s)) {
+                    Assert_NoAssume(not b);
+                    b = a.Allocate(s);
+                }
+                else {
+                    Assert_NoAssume(b);
+                    a.Deallocate(b.Reset());
+                }
+            }
+            return;
         }
     }
 
