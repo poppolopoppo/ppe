@@ -125,9 +125,9 @@ type ModuleDesc struct {
 	PrecompiledHeader *string
 	PrecompiledSource *string
 
-	PrivateDependencies utils.StringSet
-	PublicDependencies  utils.StringSet
-	RuntimeDependencies utils.StringSet
+	PrivateDependencies ModuleAliases
+	PublicDependencies  ModuleAliases
+	RuntimeDependencies ModuleAliases
 
 	Facet
 	ExtensionDesc
@@ -146,7 +146,7 @@ func (x *ModuleDesc) CreateRules(rootDir utils.Directory, namespace *NamespaceDe
 	utils.LogVerbose("create rules for module: '%v'", moduleId)
 
 	x.rules = &ModuleRules{
-		ModuleName: x.Name,
+		ModuleName: utils.InternString(x.Name),
 		Namespace:  namespace.rules,
 		ModuleDir:  rootDir,
 		ModuleType: x.Type,
@@ -293,22 +293,22 @@ func loadNamespaceDesc(
 	}
 }
 
-func validateModuleDep(x *BuildModulesT, src utils.StringSet) error {
+func validateModuleDep(x *BuildModulesT, src ...ModuleAlias) error {
 	for _, id := range src {
-		if _, ok := x.Modules[id]; !ok {
+		if _, ok := x.Modules[id.String()]; !ok {
 			return fmt.Errorf("missing module: '%v'", id)
 		}
 	}
 	return nil
 }
 func validateModuleRec(x *BuildModulesT, rules *ModuleRules) error {
-	if err := validateModuleDep(x, rules.PrivateDependencies); err != nil {
+	if err := validateModuleDep(x, rules.PrivateDependencies...); err != nil {
 		return fmt.Errorf("private dep for '%v': %v", rules.String(), err)
 	}
-	if err := validateModuleDep(x, rules.PublicDependencies); err != nil {
+	if err := validateModuleDep(x, rules.PublicDependencies...); err != nil {
 		return fmt.Errorf("public dep for '%v': %v", rules.String(), err)
 	}
-	if err := validateModuleDep(x, rules.RuntimeDependencies); err != nil {
+	if err := validateModuleDep(x, rules.RuntimeDependencies...); err != nil {
 		return fmt.Errorf("runtime dep for '%v': %v", rules.String(), err)
 	}
 
@@ -361,7 +361,7 @@ func (x *BuildModulesT) Build(ctx utils.BuildContext) (utils.BuildStamp, error) 
 	var moduleRules ModuleList
 	for _, desc := range moduleDescs {
 		moduleRules.Append(desc.rules)
-		x.Modules[desc.rules.String()] = desc.rules
+		x.Modules[desc.rules.ModuleAlias().String()] = desc.rules
 
 		namespace := desc.rules.GetNamespace()
 		x.Namespaces[namespace.String()] = namespace

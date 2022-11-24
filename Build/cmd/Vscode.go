@@ -253,7 +253,7 @@ func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) 
 	}
 
 	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.Alias().String())
-	fbuildExec.Capture = false
+	fbuildExec.Capture = IsLogLevelActive(LOG_VERYVERBOSE)
 
 	if err := fbuildExec.Run(); err != nil {
 		return err

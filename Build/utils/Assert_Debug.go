@@ -78,11 +78,11 @@ func UnreachableCode() {
 	LogPanic("unreachable code")
 }
 func UnexpectedValue(x interface{}) {
-	LogPanic("unexpected value: <%T> %v", x, x)
+	LogPanic("unexpected value: <%T> %#v", x, x)
 }
 func UnexpectedType(expected reflect.Type, given interface{}) {
 	if reflect.TypeOf(given) != expected {
-		LogPanic("expected <%v>, given %v <%T>", expected, given, given)
+		LogPanic("expected <%#v>, given %#v <%T>", expected, given, given)
 	}
 }
 

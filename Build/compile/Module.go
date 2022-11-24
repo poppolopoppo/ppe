@@ -16,7 +16,7 @@ type ModuleAlias struct {
 
 func NewModuleAlias(module Module) ModuleAlias {
 	return ModuleAlias{
-		NamespaceName: path.Join(module.GetNamespace().Path()...),
+		NamespaceName: utils.InternString(path.Join(module.GetNamespace().Path()...)),
 		ModuleName:    module.GetModule(nil).ModuleName,
 	}
 }
@@ -31,6 +31,7 @@ func (x ModuleAlias) GetNamespaceAlias() utils.BuildAlias {
 }
 func (x ModuleAlias) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.NamespaceName)
+	o.WriteByte(0)
 	o.WriteString(x.ModuleName)
 }
 func (x ModuleAlias) Compare(o ModuleAlias) int {
@@ -42,6 +43,20 @@ func (x ModuleAlias) Compare(o ModuleAlias) int {
 }
 func (x ModuleAlias) String() string {
 	return x.Alias().String()
+}
+func (x *ModuleAlias) Set(in string) (err error) {
+	if parts := utils.SplitPath(in); parts != nil && len(parts) > 1 {
+		x.ModuleName = utils.InternString(parts[len(parts)-1])
+		x.NamespaceName = utils.InternString(path.Join(parts[0 : len(parts)-1]...))
+		return nil
+	}
+	return fmt.Errorf("malformed ModuleAlias: '%s'", in)
+}
+func (x ModuleAlias) MarshalText() ([]byte, error) {
+	return []byte(x.NamespaceName + "/" + x.ModuleName), nil
+}
+func (x *ModuleAlias) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
 }
 
 type ModuleList []Module
@@ -137,6 +152,8 @@ func (x *ModuleSource) GetFileSet() (result utils.FileSet) {
 	return result
 }
 
+type ModuleAliases = utils.SetT[ModuleAlias]
+
 type ModuleRules struct {
 	ModuleName string
 	Namespace  Namespace
@@ -156,9 +173,9 @@ type ModuleRules struct {
 	PrecompiledHeader *utils.Filename
 	PrecompiledSource *utils.Filename
 
-	PublicDependencies  utils.StringSet
-	PrivateDependencies utils.StringSet
-	RuntimeDependencies utils.StringSet
+	PublicDependencies  ModuleAliases
+	PrivateDependencies ModuleAliases
+	RuntimeDependencies ModuleAliases
 
 	Customs    CustomList
 	Generateds GeneratedList
@@ -279,9 +296,9 @@ func (rules *ModuleRules) GetDigestable(o *bytes.Buffer) {
 	} else {
 		o.WriteString("PrecompiledSource")
 	}
-	rules.PublicDependencies.GetDigestable(o)
-	rules.PrivateDependencies.GetDigestable(o)
-	rules.RuntimeDependencies.GetDigestable(o)
+	utils.MakeDigestable(o, rules.PublicDependencies...)
+	utils.MakeDigestable(o, rules.PrivateDependencies...)
+	utils.MakeDigestable(o, rules.RuntimeDependencies...)
 	rules.Generateds.GetDigestable(o)
 	rules.Facet.GetDigestable(o)
 	rules.Source.GetDigestable(o)

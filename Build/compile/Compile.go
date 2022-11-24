@@ -14,6 +14,7 @@ func InitCompile() {
 
 	// register type for serialization
 	gob.Register(Facet{})
+	gob.Register(ModuleAlias{})
 	gob.Register(&Unit{})
 	gob.Register(CustomUnit{})
 

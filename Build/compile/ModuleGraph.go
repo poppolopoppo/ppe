@@ -214,9 +214,9 @@ func (graph *moduleGraph) CompileUnits() {
 	pbar.Close()
 }
 
-func (graph *moduleGraph) expandDependencies(env *CompileEnv, deps ...string) []*ModuleNode {
-	return utils.Map(func(name string) *ModuleNode {
-		if module, ok := graph.modules[name]; ok {
+func (graph *moduleGraph) expandDependencies(env *CompileEnv, deps ...ModuleAlias) []*ModuleNode {
+	return utils.Map(func(name ModuleAlias) *ModuleNode {
+		if module, ok := graph.modules[name.String()]; ok {
 			return graph.expandModule(env, module)
 		} else {
 			utils.LogPanic("module graph: can't find module dependency <%v>", name)
@@ -276,17 +276,17 @@ func (graph *moduleGraph) expandModule(env *CompileEnv, module Module) (node *Mo
 
 	// public and runtime dependencies are viral
 	for i, dep := range private {
-		node.addPrivate(graph.modules[rules.PrivateDependencies[i]])
+		node.addPrivate(graph.modules[rules.PrivateDependencies[i].String()])
 		dep.Public(node.addPrivate)
 		dep.Runtime(node.addRuntime)
 	}
 	for i, dep := range public {
-		node.addPublic(graph.modules[rules.PublicDependencies[i]])
+		node.addPublic(graph.modules[rules.PublicDependencies[i].String()])
 		dep.Public(node.addPublic)
 		dep.Runtime(node.addRuntime)
 	}
 	for i, dep := range runtime {
-		node.addRuntime(graph.modules[rules.RuntimeDependencies[i]])
+		node.addRuntime(graph.modules[rules.RuntimeDependencies[i].String()])
 		dep.Runtime(node.addRuntime)
 	}
 

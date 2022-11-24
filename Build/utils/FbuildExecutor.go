@@ -178,7 +178,7 @@ func MakeFBuildExecutor(flags *FBuildArgs, args ...string) (result FBuildExecuto
 	return result
 }
 func (x *FBuildExecutor) Run() (err error) {
-	LogVerbose("fbuild: running with '%v'", x)
+	LogVerbose("fbuild: running with '%v' (capture=%v)", x, x.Capture)
 
 	cmd := exec.Command(FBUILD_BIN.String(), x.Args.Slice()...)
 	defer cmd.Wait()

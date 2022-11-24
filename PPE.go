@@ -153,6 +153,23 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 
 func makePPE_Common(rules *ModuleRules) {
 	rules.Defines.Append("EXPORT_PPE_" + SanitizeIdentifier(strings.ToUpper(strings.Join(rules.Path(), "_"))))
+
+	// HAL handling
+	currentHost := CurrentHost()
+	for _, hostId := range HostIds() {
+		if hostId != currentHost.Id {
+			hostName := hostId.String()
+			hostName = strings.ToUpper(hostName[0:1]) + strings.ToLower(hostName[1:])
+
+			if halPublic := rules.ModuleDir.Folder("Public", "HAL", hostName); halPublic.Exists() {
+				rules.Source.ExcludedGlobs.AppendUniq(halPublic.Folder("*").String())
+			}
+			if halPrivate := rules.ModuleDir.Folder("Private", "HAL", hostName); halPrivate.Exists() {
+				rules.Source.ExcludedGlobs.AppendUniq(halPrivate.Folder("*").String())
+			}
+		}
+	}
+
 	IfWindows(func() {
 		rules.LinkerOptions.Append("/NATVIS:\"" + NatvisFile.String() + "\"")
 	})
@@ -162,11 +179,19 @@ func makePPE_Internal(rules *ModuleRules) {
 	rules.Source.SourceGlobs.Append("*.cpp")
 
 	rules.PCH.Inherit(PCH_MONOLITHIC)
-	if rules.PCH == PCH_MONOLITHIC {
+
+	switch rules.PCH {
+	case PCH_MONOLITHIC:
 		pch_h := rules.ModuleDir.File("stdafx.h")
 		pch_cpp := rules.ModuleDir.File("stdafx.cpp")
 		rules.PrecompiledHeader = &pch_h
 		rules.PrecompiledSource = &pch_cpp
+	case PCH_SHARED:
+		LogPanic("Shared PCH are not implemented")
+	case PCH_DISABLED:
+		// nothing TODO
+	default:
+		UnexpectedValuePanic(rules.PCH, rules.PCH)
 	}
 
 	rules.Generate(PRIVATE, "BuildModules.generated.h", BuildModulesHeader{})

@@ -181,7 +181,7 @@ func (env *CompileEnv) GetPayloadType(module *ModuleRules, link LinkType) (resul
 		case LINK_STATIC:
 			return PAYLOAD_EXECUTABLE
 		case LINK_DYNAMIC:
-			utils.LogPanic("executable should have %s, but found %s", LINK_STATIC, link)
+			utils.LogPanic("executable should have %s link, but found %s", LINK_STATIC, link)
 		default:
 			utils.UnexpectedValuePanic(module.ModuleType, link)
 		}
@@ -263,8 +263,14 @@ func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
 	switch unit.PCH {
 	case PCH_DISABLED:
 		break
-	case PCH_MONOLITHIC:
+	case PCH_MONOLITHIC, PCH_SHARED:
 		if module.PrecompiledHeader == nil || module.PrecompiledSource == nil {
+			if module.PrecompiledHeader != nil {
+				utils.LogPanic("unit is using PCH_%s, but precompiled header is nil (source: %v)", unit.PCH, module.PrecompiledSource)
+			}
+			if module.PrecompiledSource != nil {
+				utils.LogPanic("unit is using PCH_%s, but precompiled source is nil (header: %v)", unit.PCH, module.PrecompiledHeader)
+			}
 			unit.PCH = PCH_DISABLED
 		} else {
 			unit.PrecompiledHeader = *module.PrecompiledHeader
@@ -273,6 +279,9 @@ func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
 				// CPP is only used on Windows platform
 				unit.PrecompiledSource = *module.PrecompiledSource
 			})
+
+			utils.Assert(func() bool { return module.PrecompiledHeader.Exists() })
+			utils.Assert(func() bool { return module.PrecompiledSource.Exists() })
 			unit.PrecompiledObject = env.GetPayloadOutput(unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
 		}
 	default:

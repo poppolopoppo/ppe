@@ -263,7 +263,7 @@ func ExtractZipEx(exportFilter func(string) (Filename, bool), src Filename) erro
 		return nil
 	}
 
-	pbar := LogProgress(0, len(rd.File), src.String())
+	pbar := LogProgress(0, len(rd.File), "extracting %s", src.String())
 	defer pbar.Close()
 
 	for _, f := range rd.File {

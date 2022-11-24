@@ -209,10 +209,13 @@ func LogPanic(msg string, args ...interface{}) {
 	LogPanicErr(fmt.Errorf(msg, args...))
 }
 func LogPanicErr(err error) {
-	CommandEnv.OnPanic(err)
-	log.Panicf(fmt.Sprint(
-		ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0,
-		"[PANIC] ", err, ANSI_RESET))
+	if CommandEnv.OnPanic(err) {
+		log.Panicf(fmt.Sprint(
+			ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0,
+			"[PANIC] ", err, ANSI_RESET))
+	} else {
+		log.Panic("panic reentrancy!")
+	}
 }
 
 func MakeError(msg string, args ...interface{}) error {
@@ -303,7 +306,7 @@ func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 		buf := bytes.NewBuffer(tmp)
 		buf.Reset()
 
-		if false && len(pin.messages) == pin.inflight && !clear {
+		if len(pin.messages) == pin.inflight && !clear {
 			// one clear line: ghosting
 			// for i := 0; i < inflight+1; i += 1 {
 			// 	fmt.Fprint(buf, ANSI_CURSOR_UP)
@@ -708,9 +711,9 @@ func CopyWithProgress(context string, totalSize int64, dst io.Writer, src io.Rea
 	if enableInteractiveShell {
 		var pbar PinnedProgress
 		if totalSize > 0 {
-			pbar = LogProgress(0, int(totalSize), context)
+			pbar = LogProgress(0, int(totalSize), "copying %s -- %.3f MiB", context, float32(totalSize)/(1024*1024))
 		} else {
-			pbar = LogSpinner(context)
+			pbar = LogSpinner("copying %s -- unknown size", context)
 		}
 		defer pbar.Close()
 

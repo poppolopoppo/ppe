@@ -115,10 +115,14 @@ func (llvm *LlvmCompiler) Link(f *Facet, lnk LinkType) {
 }
 func (llvm *LlvmCompiler) PrecompiledHeader(f *Facet, mode PrecompiledHeaderType, header Filename, source Filename, object Filename) {
 	switch mode {
-	case PCH_MONOLITHIC:
+	case PCH_MONOLITHIC, PCH_SHARED:
 		f.Defines.Append("BUILD_PCH=1")
-		f.CompilerOptions.Append("-include-pch " + object.String())
-		f.PrecompiledHeaderOptions.Prepend("-emit-pch", "-x c++-header")
+		f.CompilerOptions.Append(
+			"-include "+header.String(),
+			"-include-pch "+object.String())
+		if mode != PCH_SHARED {
+			f.PrecompiledHeaderOptions.Prepend("-emit-pch", "-x c++-header")
+		}
 	case PCH_DISABLED:
 		f.Defines.Append("BUILD_PCH=0")
 	default:

@@ -156,12 +156,15 @@ func (msvc *MsvcCompiler) Link(f *Facet, lnk LinkType) {
 }
 func (msvc *MsvcCompiler) PrecompiledHeader(f *Facet, mode PrecompiledHeaderType, header Filename, source Filename, object Filename) {
 	switch mode {
-	case PCH_MONOLITHIC:
+	case PCH_MONOLITHIC, PCH_SHARED:
 		f.Defines.Append("BUILD_PCH=1")
 		f.CompilerOptions.Append(
+			"/FI\""+header.Basename+"\"",
 			"/Yu\""+header.Basename+"\"",
 			"/Fp\""+object.String()+"\"")
-		f.PrecompiledHeaderOptions.Append("/Yc\"" + header.Basename + "\"")
+		if mode != PCH_SHARED {
+			f.PrecompiledHeaderOptions.Append("/Yc\"" + header.Basename + "\"")
+		}
 	case PCH_DISABLED:
 		f.Defines.Append("BUILD_PCH=0")
 	default:

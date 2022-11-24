@@ -16,6 +16,14 @@ const (
 	HOST_DARWIN  HostId = "DARWIN"
 )
 
+func HostIds() []HostId {
+	return []HostId{
+		HOST_WINDOWS,
+		HOST_LINUX,
+		HOST_DARWIN,
+	}
+}
+
 func (id HostId) String() string {
 	return string(id)
 }

@@ -676,7 +676,8 @@ func (x *Directory) UnmarshalText(data []byte) error {
 var UFS UFSFrontEnd = make_ufs_frontend()
 
 type UFSFrontEnd struct {
-	Working Directory
+	Executable Filename
+	Working    Directory
 
 	Root   Directory
 	Build  Directory
@@ -804,6 +805,14 @@ func (ufs *UFSFrontEnd) LazyCreate(dst Filename, write func(io.Writer) error) er
 	}
 	return ufs.SafeCreate(dst, write)
 }
+func (ufs *UFSFrontEnd) MTime(src Filename) time.Time {
+	if info, err := src.Info(); err == nil {
+		return info.ModTime()
+	} else {
+		LogPanicErr(err)
+		return time.Time{}
+	}
+}
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
 	input, err := os.Open(src.String())
 	LogDebug("ufs: open '%v'", src)
@@ -884,6 +893,8 @@ func make_ufs_frontend() (ufs UFSFrontEnd) {
 	if caller, x = filepath.Split(caller); x != "Build" {
 		UnreachableCode()
 	}
+
+	ufs.Executable = MakeFilename(os.Args[0])
 
 	if wd, err := os.Getwd(); ok {
 		ufs.Working = MakeDirectory(wd)

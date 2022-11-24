@@ -547,7 +547,8 @@ func MemoizeBuildable[T Buildable](builder T, static ...BuildAlias) BuilderFacto
 }
 
 func MakeBuildStamp(content Digestable) (BuildStamp, error) {
-	return MakeTimedBuildStamp(time.Time{}, content)
+	// use binary's last modification time as seed here
+	return MakeTimedBuildStamp(CommandEnv.BuildTime(), content)
 }
 func MakeTimedBuildStamp(modTime time.Time, content Digestable) (BuildStamp, error) {
 	stamp := BuildStamp{

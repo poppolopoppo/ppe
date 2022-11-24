@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 )
 
 var AllCommands *SharedMapT[string, CommandFactory] = NewSharedMapT[string, CommandFactory]()
@@ -191,10 +192,15 @@ func (env *CommandEnvT) Persistent() *PersistentMap { return env.persistent }
 func (env *CommandEnvT) ConfigPath() Filename       { return env.configPath }
 func (env *CommandEnvT) DatabasePath() Filename     { return env.databasePath }
 func (env *CommandEnvT) RootFile() Filename         { return env.rootFile }
+func (env *CommandEnvT) BuildTime() time.Time       { return UFS.MTime(UFS.Executable) }
 
 // don't save the db when panic occured
-func (env *CommandEnvT) OnPanic(err error) {
-	env.lastPanic = err
+func (env *CommandEnvT) OnPanic(err error) bool {
+	if env.lastPanic == nil {
+		env.lastPanic = err
+		return true
+	}
+	return false // a fatal error was already reported
 }
 
 func (env *CommandEnvT) Init(args []string) {
