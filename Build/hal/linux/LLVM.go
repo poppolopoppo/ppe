@@ -73,7 +73,7 @@ func (llvm *LlvmCompiler) CppStd(f *Facet, std CppStdType) {
 		std = maxSupported
 	}
 	switch std {
-	case CPPSTD_20:
+	case CPPSTD_LATEST, CPPSTD_20:
 		f.AddCompilationFlag("-std=c++20")
 	case CPPSTD_17:
 		f.AddCompilationFlag("-std=c++17")
@@ -81,6 +81,8 @@ func (llvm *LlvmCompiler) CppStd(f *Facet, std CppStdType) {
 		f.AddCompilationFlag("-std=c++14")
 	case CPPSTD_11:
 		f.AddCompilationFlag("-std=c++11")
+	default:
+		UnexpectedValue(std)
 	}
 }
 func (llvm *LlvmCompiler) Define(f *Facet, def ...string) {
@@ -226,7 +228,7 @@ func makeLlvmCompiler(
 		"-o \"%2\" \"%1\"",     // input file injection
 	)
 
-	if compileFlags.Benchmark {
+	if compileFlags.Benchmark.Get() {
 		// https: //aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/
 		facet.CompilerOptions.Append("-ftime-trace")
 	}

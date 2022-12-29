@@ -152,6 +152,86 @@ var ListTargets = utils.MakeCommand(
 	},
 )
 
+var ExportConfig = utils.MakeCommand(
+	"export-config",
+	"export configuration to json",
+	nil,
+	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
+		if build, err := compile.BuildConfigs.Build(cmd.BuildGraph()); err == nil {
+			results := []compile.Configuration{}
+			completion := make(map[string]compile.Configuration, len(build.Values))
+			for _, a := range build.Values {
+				completion[a.String()] = a
+			}
+			mapCompletion(cmd, func(s string) {
+				results = append(results, completion[s])
+			}, completion)
+			fmt.Println(utils.PrettyPrint(results))
+		} else {
+			utils.LogPanicErr(err)
+		}
+		return nil
+	},
+)
+
+var ExportPlatform = utils.MakeCommand(
+	"export-platform",
+	"export platform to json",
+	nil,
+	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
+		if build, err := compile.BuildPlatforms.Build(cmd.BuildGraph()); err == nil {
+			results := []compile.Platform{}
+			completion := make(map[string]compile.Platform, len(build.Values))
+			for _, a := range build.Values {
+				completion[a.String()] = a
+			}
+			mapCompletion(cmd, func(s string) {
+				results = append(results, completion[s])
+			}, completion)
+			fmt.Println(utils.PrettyPrint(results))
+		} else {
+			utils.LogPanicErr(err)
+		}
+		return nil
+	},
+)
+
+var ExportModule = utils.MakeCommand(
+	"export-module",
+	"export parsed module to json",
+	nil,
+	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
+		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
+			results := []compile.Module{}
+			mapCompletion(cmd, func(s string) {
+				results = append(results, build.Modules[s])
+			}, build.Modules)
+			fmt.Println(utils.PrettyPrint(results))
+		} else {
+			utils.LogPanicErr(err)
+		}
+		return nil
+	},
+)
+
+var ExportNamespace = utils.MakeCommand(
+	"export-namespace",
+	"export parsed namespace to json",
+	nil,
+	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
+		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
+			results := []compile.Namespace{}
+			mapCompletion(cmd, func(s string) {
+				results = append(results, build.Namespaces[s])
+			}, build.Namespaces)
+			fmt.Println(utils.PrettyPrint(results))
+		} else {
+			utils.LogPanicErr(err)
+		}
+		return nil
+	},
+)
+
 var ExportNode = utils.MakeCommand(
 	"export-node",
 	"export build node to json",

@@ -81,6 +81,7 @@ type CommandFlagsT struct {
 	Debug       bool
 	Timestamp   bool
 	Diagnostics bool
+	Ide         bool
 	LogFile     Filename
 }
 
@@ -95,6 +96,7 @@ func newCommandFlags() *CommandFlagsT {
 		VeryVerbose: false,
 		Debug:       false,
 		Diagnostics: false,
+		Ide:         false,
 		Timestamp:   false,
 	}
 }
@@ -108,6 +110,7 @@ func (flags *CommandFlagsT) InitFlags(cfg *PersistentMap) {
 	cfg.BoolVar(&flags.Debug, "d", "turn on debug assertions and more log")
 	cfg.BoolVar(&flags.Timestamp, "T", "turn on timestamp logging")
 	cfg.BoolVar(&flags.Diagnostics, "X", "turn on diagnostics mode")
+	cfg.BoolVar(&flags.Ide, "Ide", "set output to IDE mode")
 	cfg.Var(&flags.LogFile, "LogFile", "output log to specified file (default: stdout)")
 }
 func (flags *CommandFlagsT) ApplyVars(persistent *PersistentMap) {
@@ -119,6 +122,11 @@ func (flags *CommandFlagsT) ApplyVars(persistent *PersistentMap) {
 		} else {
 			LogPanicErr(err)
 		}
+	}
+
+	if flags.Ide {
+		logger.Level = LOG_VERBOSE
+		enableInteractiveShell = false
 	}
 	if flags.Quiet {
 		logger.Level = LOG_ERROR
@@ -139,6 +147,7 @@ func (flags *CommandFlagsT) ApplyVars(persistent *PersistentMap) {
 	} else {
 		enableAssertions = false
 	}
+
 	SetLogTimestamp(flags.Timestamp)
 
 	if flags.Purge {

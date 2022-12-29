@@ -20,6 +20,8 @@ func (x AnsiCode) String() string {
 	return ""
 }
 
+// https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+
 const (
 	ANSI_RESET       AnsiCode = "\033[0m"
 	ANSI_BOLD        AnsiCode = "\033[1m"
@@ -65,8 +67,12 @@ const (
 	ANSI_BG1_CYAN    AnsiCode = "\033[46;1m"
 	ANSI_BG1_WHITE   AnsiCode = "\033[47;1m"
 
-	ANSI_KILL_LINE AnsiCode = "\033[K"
-	ANSI_CURSOR_UP AnsiCode = "\033[A"
+	ANSI_ERASE_END_LINE   AnsiCode = "\033[K"
+	ANSI_ERASE_START_LINE AnsiCode = "\033[1K"
+	ANSI_ERASE_ALL_LINE   AnsiCode = "\033[2K"
+
+	ANSI_CURSOR_UP        AnsiCode = "\033[A"
+	ANSI_CURSOR_PREV_LINE AnsiCode = "\033[F"
 
 	ANSI_BG_TRUECOLOR_FMT AnsiCode = "\033[48;2;%d;%d;%dm"
 	ANSI_FG_TRUECOLOR_FMT AnsiCode = "\033[38;2;%d;%d;%dm"

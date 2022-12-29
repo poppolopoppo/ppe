@@ -1,13 +1,10 @@
 package utils
 
 import (
-	"bytes"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -26,52 +23,8 @@ type BoolFlag interface {
 	flag.Value
 }
 
-type BoolVar bool
-
-func (v BoolVar) IsBoolFlag() bool { return true }
-func (v BoolVar) Get() bool        { return bool(v) }
-func (v BoolVar) Equals(o BoolVar) bool {
-	return (v == o)
-}
-func (v BoolVar) String() string {
-	return fmt.Sprint(v.Get())
-}
-func (v *BoolVar) Set(in string) error {
-	if x, err := strconv.ParseBool(in); err == nil {
-		*v = BoolVar(x)
-		return nil
-	} else {
-		return err
-	}
-}
-func (v BoolVar) GetDigestable(o *bytes.Buffer) {
-	tmp := [1]byte{}
-	if v.Get() {
-		tmp[0] = 1
-	}
-	o.Write(tmp[:])
-}
-
-type IntVar int
-
-func (v IntVar) Get() int             { return int(v) }
-func (v IntVar) Equals(o IntVar) bool { return (v == o) }
-func (v IntVar) String() string {
-	return fmt.Sprint(v.Get())
-}
-func (v *IntVar) Set(in string) error {
-	if x, err := strconv.Atoi(in); err == nil {
-		*v = IntVar(x)
-		return nil
-	} else {
-		return err
-	}
-}
-func (v IntVar) GetDigestable(o *bytes.Buffer) {
-	tmp := [binary.MaxVarintLen64]byte{}
-	len := binary.PutUvarint(tmp[:], uint64(v.Get()))
-	o.Write(tmp[:len])
-}
+type BoolVar = InheritableBool
+type IntVar = InheritableInt
 
 type PersistentMap struct {
 	Name  string

@@ -161,14 +161,7 @@ type ModuleRules struct {
 	ModuleDir  utils.Directory
 	ModuleType ModuleType
 
-	CppRtti    CppRttiType
-	CppStd     CppStdType
-	Debug      DebugType
-	Exceptions ExceptionType
-	PCH        PrecompiledHeaderType
-	Link       LinkType
-	Sanitizer  SanitizerType
-	Unity      UnityType
+	CppRules
 
 	PrecompiledHeader *utils.Filename
 	PrecompiledSource *utils.Filename
@@ -214,6 +207,9 @@ func (rules *ModuleRules) GeneratedDir(env *CompileEnv) utils.Directory {
 	return env.GeneratedDir().AbsoluteFolder(rules.ModuleDir.Relative(utils.UFS.Source))
 }
 
+func (rules *ModuleRules) GetCpp() *CppRules {
+	return rules.CppRules.GetCpp()
+}
 func (rules *ModuleRules) GetFacet() *Facet {
 	return rules.Facet.GetFacet()
 }
@@ -278,14 +274,7 @@ func (rules *ModuleRules) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(rules.GetNamespace().String())
 	rules.ModuleDir.GetDigestable(o)
 	rules.ModuleType.GetDigestable(o)
-	rules.CppRtti.GetDigestable(o)
-	rules.CppStd.GetDigestable(o)
-	rules.Debug.GetDigestable(o)
-	rules.Exceptions.GetDigestable(o)
-	rules.PCH.GetDigestable(o)
-	rules.Link.GetDigestable(o)
-	rules.Sanitizer.GetDigestable(o)
-	rules.Unity.GetDigestable(o)
+	rules.CppRules.GetDigestable(o)
 	if rules.PrecompiledHeader != nil {
 		rules.PrecompiledHeader.GetDigestable(o)
 	} else {
@@ -323,27 +312,7 @@ func (rules *ModuleRules) Generate(vis VisibilityType, name string, gen Generato
 }
 
 func (x *ModuleRules) Append(other *ModuleRules) {
-	if x.CppRtti == CPPRTTI_INHERIT {
-		x.CppRtti = other.CppRtti
-	}
-	if x.CppStd == CPPSTD_INHERIT {
-		x.CppStd = other.CppStd
-	}
-	if x.Debug == DEBUG_INHERIT {
-		x.Debug = other.Debug
-	}
-	if x.PCH == PCH_INHERIT {
-		x.PCH = other.PCH
-	}
-	if x.Link == LINK_INHERIT {
-		x.Link = other.Link
-	}
-	if x.Sanitizer == SANITIZER_INHERIT {
-		x.Sanitizer = other.Sanitizer
-	}
-	if x.Unity == UNITY_INHERIT {
-		x.Unity = other.Unity
-	}
+	x.CppRules.Inherit(other.GetCpp())
 
 	x.ForceIncludes.Append(other.ForceIncludes...)
 
@@ -366,27 +335,7 @@ func (x *ModuleRules) Append(other *ModuleRules) {
 	x.Facet.Append(other)
 }
 func (x *ModuleRules) Prepend(other *ModuleRules) {
-	if other.CppRtti != CPPRTTI_INHERIT {
-		x.CppRtti = other.CppRtti
-	}
-	if other.CppStd != CPPSTD_INHERIT {
-		x.CppStd = other.CppStd
-	}
-	if other.Debug != DEBUG_INHERIT {
-		x.Debug = other.Debug
-	}
-	if other.PCH != PCH_INHERIT {
-		x.PCH = other.PCH
-	}
-	if other.Link != LINK_INHERIT {
-		x.Link = other.Link
-	}
-	if other.Sanitizer != SANITIZER_INHERIT {
-		x.Sanitizer = other.Sanitizer
-	}
-	if other.Unity != UNITY_INHERIT {
-		x.Unity = other.Unity
-	}
+	x.Overwrite(other.GetCpp())
 
 	x.ForceIncludes.Prepend(other.ForceIncludes...)
 

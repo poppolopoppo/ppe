@@ -13,13 +13,7 @@ type ConfigRules struct {
 	ConfigName string
 	ConfigType ConfigType
 
-	CppRtti    CppRttiType
-	Debug      DebugType
-	Exceptions ExceptionType
-	PCH        PrecompiledHeaderType
-	Link       LinkType
-	Sanitizer  SanitizerType
-	Unity      UnityType
+	CppRules
 	Facet
 }
 
@@ -33,23 +27,19 @@ func (rules *ConfigRules) String() string {
 	return rules.ConfigName
 }
 
-func (rules *ConfigRules) GetFacet() *Facet {
-	return rules.Facet.GetFacet()
-}
 func (rules *ConfigRules) GetConfig() *ConfigRules {
 	return rules
+}
+func (rules *ConfigRules) GetCpp() *CppRules {
+	return rules.CppRules.GetCpp()
+}
+func (rules *ConfigRules) GetFacet() *Facet {
+	return rules.Facet.GetFacet()
 }
 func (rules *ConfigRules) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(rules.ConfigName)
 	rules.ConfigType.GetDigestable(o)
-	rules.CppRtti.GetDigestable(o)
-	rules.Debug.GetDigestable(o)
-	rules.Exceptions.GetDigestable(o)
-	rules.PCH.GetDigestable(o)
-	rules.Link.GetDigestable(o)
-	rules.Sanitizer.GetDigestable(o)
-	rules.Unity.GetDigestable(o)
-	rules.Facet.GetDigestable(o)
+	rules.CppRules.GetDigestable(o)
 }
 
 func (rules *ConfigRules) Decorate(_ *CompileEnv, unit *Unit) {
@@ -67,13 +57,15 @@ func (rules *ConfigRules) Decorate(_ *CompileEnv, unit *Unit) {
 var Configuration_Debug = &ConfigRules{
 	ConfigName: "Debug",
 	ConfigType: CONFIG_DEBUG,
-	CppRtti:    CPPRTTI_ENABLED,
-	Debug:      DEBUG_SYMBOLS,
-	Exceptions: EXCEPTION_ENABLED,
-	Link:       LINK_STATIC,
-	PCH:        PCH_MONOLITHIC,
-	Sanitizer:  SANITIZER_NONE,
-	Unity:      UNITY_AUTOMATIC,
+	CppRules: CppRules{
+		CppRtti:      CPPRTTI_ENABLED,
+		DebugSymbols: DEBUG_SYMBOLS,
+		Exceptions:   EXCEPTION_ENABLED,
+		Link:         LINK_STATIC,
+		PCH:          PCH_MONOLITHIC,
+		Sanitizer:    SANITIZER_NONE,
+		Unity:        UNITY_AUTOMATIC,
+	},
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG"},
 		Tags:    MakeTagFlags(TAG_DEBUG),
@@ -82,13 +74,15 @@ var Configuration_Debug = &ConfigRules{
 var Configuration_FastDebug = &ConfigRules{
 	ConfigName: "FastDebug",
 	ConfigType: CONFIG_FASTDEBUG,
-	CppRtti:    CPPRTTI_ENABLED,
-	Debug:      DEBUG_HOTRELOAD,
-	Exceptions: EXCEPTION_ENABLED,
-	Link:       LINK_DYNAMIC,
-	PCH:        PCH_MONOLITHIC,
-	Sanitizer:  SANITIZER_NONE,
-	Unity:      UNITY_DISABLED,
+	CppRules: CppRules{
+		CppRtti:      CPPRTTI_ENABLED,
+		DebugSymbols: DEBUG_HOTRELOAD,
+		Exceptions:   EXCEPTION_ENABLED,
+		Link:         LINK_DYNAMIC,
+		PCH:          PCH_MONOLITHIC,
+		Sanitizer:    SANITIZER_NONE,
+		Unity:        UNITY_DISABLED,
+	},
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG", "FASTDEBUG"},
 		Tags:    MakeTagFlags(TAG_FASTDEBUG, TAG_DEBUG),
@@ -97,13 +91,15 @@ var Configuration_FastDebug = &ConfigRules{
 var Configuration_Devel = &ConfigRules{
 	ConfigName: "Devel",
 	ConfigType: CONFIG_DEVEL,
-	CppRtti:    CPPRTTI_DISABLED,
-	Debug:      DEBUG_SYMBOLS,
-	Exceptions: EXCEPTION_ENABLED,
-	Link:       LINK_STATIC,
-	PCH:        PCH_MONOLITHIC,
-	Sanitizer:  SANITIZER_NONE,
-	Unity:      UNITY_AUTOMATIC,
+	CppRules: CppRules{
+		CppRtti:      CPPRTTI_DISABLED,
+		DebugSymbols: DEBUG_SYMBOLS,
+		Exceptions:   EXCEPTION_ENABLED,
+		Link:         LINK_STATIC,
+		PCH:          PCH_MONOLITHIC,
+		Sanitizer:    SANITIZER_NONE,
+		Unity:        UNITY_AUTOMATIC,
+	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG"},
 		Tags:    MakeTagFlags(TAG_DEVEL, TAG_NDEBUG),
@@ -112,13 +108,15 @@ var Configuration_Devel = &ConfigRules{
 var Configuration_Test = &ConfigRules{
 	ConfigName: "Test",
 	ConfigType: CONFIG_TEST,
-	CppRtti:    CPPRTTI_DISABLED,
-	Debug:      DEBUG_SYMBOLS,
-	Exceptions: EXCEPTION_ENABLED,
-	Link:       LINK_STATIC,
-	PCH:        PCH_MONOLITHIC,
-	Sanitizer:  SANITIZER_NONE,
-	Unity:      UNITY_AUTOMATIC,
+	CppRules: CppRules{
+		CppRtti:      CPPRTTI_DISABLED,
+		DebugSymbols: DEBUG_SYMBOLS,
+		Exceptions:   EXCEPTION_ENABLED,
+		Link:         LINK_STATIC,
+		PCH:          PCH_MONOLITHIC,
+		Sanitizer:    SANITIZER_NONE,
+		Unity:        UNITY_AUTOMATIC,
+	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "PROFILING_ENABLED"},
 		Tags:    MakeTagFlags(TAG_TEST, TAG_NDEBUG, TAG_PROFILING),
@@ -127,13 +125,15 @@ var Configuration_Test = &ConfigRules{
 var Configuration_Shipping = &ConfigRules{
 	ConfigName: "Shipping",
 	ConfigType: CONFIG_SHIPPING,
-	CppRtti:    CPPRTTI_DISABLED,
-	Debug:      DEBUG_SYMBOLS,
-	Exceptions: EXCEPTION_ENABLED,
-	Link:       LINK_STATIC,
-	PCH:        PCH_MONOLITHIC,
-	Sanitizer:  SANITIZER_NONE,
-	Unity:      UNITY_AUTOMATIC,
+	CppRules: CppRules{
+		CppRtti:      CPPRTTI_DISABLED,
+		DebugSymbols: DEBUG_SYMBOLS,
+		Exceptions:   EXCEPTION_ENABLED,
+		Link:         LINK_STATIC,
+		PCH:          PCH_MONOLITHIC,
+		Sanitizer:    SANITIZER_NONE,
+		Unity:        UNITY_AUTOMATIC,
+	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "FINAL_RELEASE"},
 		Tags:    MakeTagFlags(TAG_SHIPPING, TAG_NDEBUG),

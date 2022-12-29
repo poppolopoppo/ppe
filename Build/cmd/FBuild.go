@@ -29,16 +29,16 @@ var FBuild = MakeCommand(
 	func(cmd *CommandEnvT) *fbuildCmdArgs {
 		GenerateSourceControlModifiedFiles()
 		args := &fbuildCmdArgs{
-			Any: false,
+			Any: INHERITABLE_FALSE,
 			FBuildArgs: FBuildArgs{
 				Cache:         FBUILD_CACHE_DISABLED,
-				Clean:         false,
-				Dist:          false,
+				Clean:         INHERITABLE_FALSE,
+				Dist:          INHERITABLE_FALSE,
 				BffInput:      BFFFILE_DEFAULT,
-				NoUnity:       false,
-				NoStopOnError: true,
-				Report:        false,
-				ShowCmds:      false,
+				NoUnity:       INHERITABLE_FALSE,
+				NoStopOnError: INHERITABLE_TRUE,
+				Report:        INHERITABLE_FALSE,
+				ShowCmds:      INHERITABLE_FALSE,
 				Threads:       0,
 			},
 		}
@@ -48,7 +48,7 @@ var FBuild = MakeCommand(
 	func(cmd *CommandEnvT, args *fbuildCmdArgs) (err error) {
 		scm := GenerateSourceControlModifiedFiles()
 		targetInputs := cmd.ConsumeArgs(-1)
-		if args.Any {
+		if args.Any.Get() {
 			if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
 				targetNames := Stringize(build.TranslatedUnits()...)
 				targetGlobs := []string{}

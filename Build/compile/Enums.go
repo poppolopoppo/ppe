@@ -189,10 +189,8 @@ func (x CppRttiType) String() string {
 		return ""
 	}
 }
-func (x *CppRttiType) Inherit(in CppRttiType) {
-	if *x == CPPRTTI_INHERIT {
-		*x = in
-	}
+func (x CppRttiType) IsInheritable() bool {
+	return x == CPPRTTI_INHERIT
 }
 func (x *CppRttiType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
@@ -280,10 +278,8 @@ func (x *CppStdType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x *CppStdType) Inherit(in CppStdType) {
-	if *x == CPPSTD_INHERIT {
-		*x = in
-	}
+func (x CppStdType) IsInheritable() bool {
+	return x == CPPSTD_INHERIT
 }
 func (x CppStdType) GetDigestable(o *bytes.Buffer) {
 	o.WriteString(x.String())
@@ -335,10 +331,8 @@ func (x DebugType) String() string {
 		return ""
 	}
 }
-func (x *DebugType) Inherit(in DebugType) {
-	if *x == DEBUG_INHERIT {
-		*x = in
-	}
+func (x DebugType) IsInheritable() bool {
+	return x == DEBUG_INHERIT
 }
 func (x *DebugType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
@@ -399,10 +393,8 @@ func (x ExceptionType) String() string {
 		return ""
 	}
 }
-func (x *ExceptionType) Inherit(in ExceptionType) {
-	if *x == EXCEPTION_INHERIT {
-		*x = in
-	}
+func (x ExceptionType) IsInheritable() bool {
+	return x == EXCEPTION_INHERIT
 }
 func (x *ExceptionType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
@@ -459,10 +451,8 @@ func (x LinkType) String() string {
 		return ""
 	}
 }
-func (x *LinkType) Inherit(in LinkType) {
-	if *x == LINK_INHERIT {
-		*x = in
-	}
+func (x LinkType) IsInheritable() bool {
+	return x == LINK_INHERIT
 }
 func (x *LinkType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
@@ -584,10 +574,8 @@ func (x PrecompiledHeaderType) String() string {
 		return ""
 	}
 }
-func (x *PrecompiledHeaderType) Inherit(in PrecompiledHeaderType) {
-	if *x == PCH_INHERIT {
-		*x = in
-	}
+func (x PrecompiledHeaderType) IsInheritable() bool {
+	return x == PCH_INHERIT
 }
 func (x *PrecompiledHeaderType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
@@ -738,10 +726,8 @@ func (x SanitizerType) String() string {
 		return ""
 	}
 }
-func (x *SanitizerType) Inherit(in SanitizerType) {
-	if *x == SANITIZER_INHERIT {
-		*x = in
-	}
+func (x SanitizerType) IsInheritable() bool {
+	return x == SANITIZER_INHERIT
 }
 func (x *SanitizerType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
@@ -966,10 +952,8 @@ func (x UnityType) String() string {
 		return fmt.Sprint(int32(x))
 	}
 }
-func (x *UnityType) Inherit(in UnityType) {
-	if *x == UNITY_INHERIT {
-		*x = in
-	}
+func (x UnityType) IsInheritable() bool {
+	return x == UNITY_INHERIT
 }
 func (x *UnityType) Set(in string) error {
 	switch strings.ToUpper(in) {

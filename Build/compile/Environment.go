@@ -76,79 +76,21 @@ func (env *CompileEnv) GeneratedDir() utils.Directory {
 func (env *CompileEnv) IntermediateDir() utils.Directory {
 	return utils.UFS.Intermediate.Folder(env.Family()...)
 }
-func (env *CompileEnv) GetCppRtti(module *ModuleRules) (result CppRttiType) {
-	if result = env.CompileFlagsT.CppRtti; CPPRTTI_INHERIT != result {
-		return result
-	} else if result = module.CppRtti; CPPRTTI_INHERIT != result {
-		return result
-	} else {
-		return env.GetConfig().CppRtti
-	}
-}
-func (env *CompileEnv) GetCppStd(module *ModuleRules) (result CppStdType) {
-	if result = env.CompileFlagsT.CppStd; CPPSTD_INHERIT != result {
-		return result
+func (env *CompileEnv) GetCpp(module *ModuleRules) CppRules {
+	result := CppRules{}
+	if env.CompileFlagsT != nil {
+		result.Inherit((*CppRules)(env.CompileFlagsT))
 	}
 	if module != nil {
-		if result = module.CppStd; CPPSTD_INHERIT != result {
-			return result
-		}
+		result.Inherit(&module.CppRules)
 	}
-	return env.GetCompiler().CppStd
-}
-func (env *CompileEnv) GetDebugType(module *ModuleRules) (result DebugType) {
-	if result = env.CompileFlagsT.DebugSymbols; DEBUG_INHERIT != result {
-		return result
-	} else if result = module.Debug; DEBUG_INHERIT != result {
-		return result
-	} else {
-		return env.GetConfig().Debug
+	if config := env.GetConfig(); config != nil {
+		result.Inherit(&env.GetConfig().CppRules)
 	}
-}
-func (env *CompileEnv) GetExceptionType(module *ModuleRules) (result ExceptionType) {
-	if result = env.CompileFlagsT.Exceptions; EXCEPTION_INHERIT != result {
-		return result
-	} else if result = module.Exceptions; EXCEPTION_INHERIT != result {
-		return result
-	} else {
-		return env.GetConfig().Exceptions
+	if compiler := env.GetCompiler(); compiler != nil {
+		utils.Inherit(&result.CppStd, compiler.CppStd)
 	}
-}
-func (env *CompileEnv) GetPCHType(module *ModuleRules) (result PrecompiledHeaderType) {
-	if result = env.PCH; PCH_INHERIT != result {
-		return result
-	} else if result = module.PCH; PCH_INHERIT != result {
-		return result
-	} else {
-		return env.GetConfig().PCH
-	}
-}
-func (env *CompileEnv) GetLinkType(module *ModuleRules) (result LinkType) {
-	if result = env.CompileFlagsT.Link; LINK_INHERIT != result {
-		return result
-	} else if result = module.Link; LINK_INHERIT != result {
-		return result
-	} else {
-		return env.GetConfig().Link
-	}
-}
-func (env *CompileEnv) GetUnityType(module *ModuleRules) (result UnityType) {
-	if result = env.Unity; UNITY_INHERIT != result {
-		return result
-	} else if result = module.Unity; UNITY_INHERIT != result {
-		return result
-	} else {
-		return env.GetConfig().Unity
-	}
-}
-func (env *CompileEnv) GetSanitizerType(module *ModuleRules) (result SanitizerType) {
-	if result = env.CompileFlagsT.Sanitizer; SANITIZER_INHERIT != result {
-		return result
-	} else if result = module.Sanitizer; SANITIZER_INHERIT != result {
-		return result
-	} else {
-		return env.GetConfig().Sanitizer
-	}
+	return result
 }
 func (env *CompileEnv) GetPayloadType(module *ModuleRules, link LinkType) (result PayloadType) {
 	switch module.ModuleType {
@@ -237,19 +179,12 @@ func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
 
 	unit := &Unit{
 		Target:          env.ModuleAlias(module),
-		CppRtti:         env.GetCppRtti(module),
-		CppStd:          env.GetCppStd(module),
-		Debug:           env.GetDebugType(module),
-		Exceptions:      env.GetExceptionType(module),
-		PCH:             env.GetPCHType(module),
-		Link:            env.GetLinkType(module),
-		Sanitizer:       env.GetSanitizerType(module),
-		Unity:           env.GetUnityType(module),
 		Source:          module.Source,
 		ModuleDir:       module.ModuleDir,
 		GeneratedDir:    env.GeneratedDir().Folder(module.Path()...),
 		IntermediateDir: env.IntermediateDir().Folder(module.Path()...),
 		Compiler:        env.Compiler,
+		CppRules:        env.GetCpp(module),
 	}
 	unit.Payload = env.GetPayloadType(module, unit.Link)
 	unit.OutputFile = env.GetPayloadOutput(utils.Filename{

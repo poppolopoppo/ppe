@@ -52,10 +52,10 @@ var BffArgs = MakeServiceAccessor[ParsableFlags](newBffArgs)
 func newBffArgs() *BffArgsT {
 	return CommandEnv.BuildGraph().Create(&BffArgsT{
 		BffOutput:           BFFFILE_DEFAULT,
-		DeoptimizeWithToken: false,
-		LightCache:          false,
-		Minify:              true,
-		RelativePaths:       false,
+		DeoptimizeWithToken: INHERITABLE_FALSE,
+		LightCache:          INHERITABLE_FALSE,
+		Minify:              INHERITABLE_TRUE,
+		RelativePaths:       INHERITABLE_FALSE,
 	}).GetBuildable().(*BffArgsT)
 }
 
@@ -76,7 +76,7 @@ var Bff = MakeCommand(
 		}, args.Alias())
 
 		var result Future[BuildStamp]
-		if args.Clean {
+		if args.Clean.Get() {
 			_, result = bg.ForceBuild(builder.GetBuildable())
 		} else {
 			_, result = bg.Build(builder)

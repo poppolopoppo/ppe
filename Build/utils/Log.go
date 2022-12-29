@@ -262,6 +262,7 @@ type pinnedLogManager struct {
 	stream   io.Writer
 	messages SetT[*pinnedLogScope]
 	inflight int
+	maxLen   int
 
 	cooldown int32
 }
@@ -282,14 +283,23 @@ func attachPinUnsafe(pin *pinnedLogManager) {
 		buf := bytes.NewBuffer(tmp)
 		buf.Reset()
 
-		fmt.Fprintln(buf, "")
+		fmt.Println(buf, "")
+
+		pin.maxLen = 0
 		for _, x := range pin.messages {
 			if x == nil {
 				continue
 			}
-			fmt.Fprint(buf, "\r", ANSI_KILL_LINE, ANSI_FG1_YELLOW)
+
+			offset := buf.Len()
+
+			fmt.Fprint(buf, "\r", ANSI_ERASE_END_LINE, ANSI_FG1_YELLOW)
 			x.Print(buf)
 			fmt.Fprintln(buf, ANSI_RESET)
+
+			if len := int(buf.Len() - offset); pin.maxLen < len {
+				pin.maxLen = len
+			}
 		}
 
 		// flush with one call
@@ -312,15 +322,15 @@ func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 			// 	fmt.Fprint(buf, ANSI_CURSOR_UP)
 			// }
 			// fmt.Fprint(buf, ANSI_KILL_LINE)
-			fmt.Fprint(buf, "\033[", inflight+1, "A", ANSI_KILL_LINE)
+			fmt.Fprint(buf, "\033[", inflight+1, "F", ANSI_ERASE_END_LINE)
 		} else {
 			// multiple clear lines: flicker
 			for i := 0; i < inflight+1; i += 1 {
-				fmt.Fprint(buf, string(ANSI_CURSOR_UP), string(ANSI_KILL_LINE))
+				fmt.Fprint(buf, string(ANSI_CURSOR_UP), string(ANSI_ERASE_END_LINE))
 			}
 		}
 
-		pin.inflight -= inflight
+		pin.inflight = 0
 
 		// flush with one call
 		pin.stream.Write(buf.Bytes())
@@ -389,7 +399,6 @@ func (log *pinnedLogScope) LogF(msg string, args ...interface{}) {
 		static := fmt.Sprintf(msg, args...)
 		static = strings.TrimSpace(static)
 		static = strings.ReplaceAll(static, "\r", "")
-		static = strings.ReplaceAll(static, ANSI_KILL_LINE.String(), "")
 		static = strings.ReplaceAll(static, ANSI_CURSOR_UP.String(), "")
 
 		log.subText = func(w io.Writer) {

@@ -178,7 +178,7 @@ func makePPE_Internal(rules *ModuleRules) {
 	rules.Source.SourceDirs.Append(rules.PrivateDir())
 	rules.Source.SourceGlobs.Append("*.cpp")
 
-	rules.PCH.Inherit(PCH_MONOLITHIC)
+	Inherit(&rules.PCH, PCH_MONOLITHIC)
 
 	switch rules.PCH {
 	case PCH_MONOLITHIC:
@@ -200,14 +200,14 @@ func makePPE_Internal(rules *ModuleRules) {
 
 func makePPE_Headers(rules *ModuleRules) {
 	rules.ModuleType = MODULE_HEADERS
-	rules.Debug.Inherit(DEBUG_EMBEDDED)
+	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
 	rules.IncludePaths.Append(CorePublicDir)
 }
 func makePPE_External(rules *ModuleRules) {
 	makePPE_Common(rules)
 	rules.ModuleType = MODULE_EXTERNAL
-	rules.Debug.Inherit(DEBUG_EMBEDDED)
-	rules.Unity.Inherit(UNITY_DISABLED)
+	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
+	Inherit(&rules.Unity, UNITY_DISABLED)
 	rules.IncludePaths.Append(CorePublicDir)
 }
 func makePPE_Module(rules *ModuleRules) {
@@ -224,8 +224,8 @@ func makePPE_Program(rules *ModuleRules, usage UsageType) {
 	makePPE_Common(rules)
 	makePPE_Internal(rules)
 	rules.ModuleType = MODULE_PROGRAM
-	rules.Link.Inherit(LINK_STATIC)
-	rules.Unity.Inherit(UNITY_DISABLED)
+	Inherit(&rules.Link, LINK_STATIC)
+	Inherit(&rules.Unity, UNITY_DISABLED)
 	rules.Defines.Append("PPE_TARGET_NAME=" + rules.String())
 	rules.Defines.Append("PPE_TARGET_USAGE=" + string(usage))
 }

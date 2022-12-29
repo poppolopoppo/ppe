@@ -96,7 +96,7 @@ func (msvc *MsvcCompiler) CppStd(f *Facet, std CppStdType) {
 		std = maxSupported
 	}
 	switch std {
-	case CPPSTD_20:
+	case CPPSTD_LATEST, CPPSTD_20:
 		f.AddCompilationFlag("/std:c++20")
 	case CPPSTD_17:
 		f.AddCompilationFlag("/std:c++17")
@@ -104,6 +104,8 @@ func (msvc *MsvcCompiler) CppStd(f *Facet, std CppStdType) {
 		f.AddCompilationFlag("/std:c++14")
 	case CPPSTD_11:
 		f.AddCompilationFlag("/std:c++11")
+	default:
+		UnexpectedValue(std)
 	}
 
 }
@@ -346,7 +348,7 @@ func makeMsvcCompiler(
 	)
 
 	// strict vs permissive
-	if windowsFlags.Permissive {
+	if windowsFlags.Permissive.Get() {
 		LogVeryVerbose("MSVC: using permissive compilation options")
 
 		facet.AddCompilationFlag("/permissive", "/WX-")
@@ -379,14 +381,14 @@ func makeMsvcCompiler(
 		//facet.LinkerOptions.Append("/WX") // #TODO: **DON'T**, will freeze link.exe ¯\_(ツ)_/¯
 	}
 
-	if compileFlags.Benchmark {
+	if compileFlags.Benchmark.Get() {
 		LogVeryVerbose("MSVC: will dump compilation timings")
 		facet.CompilerOptions.Append("/d2cgsummary", "/Bt+")
 		facet.LinkerOptions.Append("/d2:-cgsummary")
 	}
 
 	if msc_ver >= MSC_VER_2019 {
-		if windowsFlags.JustMyCode {
+		if windowsFlags.JustMyCode.Get() {
 			LogVeryVerbose("MSVC: using just-my-code")
 			facet.AddCompilationFlag_NoAnalysis("/JMC")
 		} else {
@@ -419,9 +421,11 @@ func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filen
 			Target:          u.Target,
 			IntermediateDir: u.IntermediateDir,
 			Payload:         u.Payload,
-			PCH:             PCH_DISABLED,
-			Unity:           UNITY_DISABLED,
 			Facet:           u.Facet,
+			CppRules: CppRules{
+				PCH:   PCH_DISABLED,
+				Unity: UNITY_DISABLED,
+			},
 		},
 	}
 
@@ -459,7 +463,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 			msvc.VSInstallPath.Folder("VC", "Tools", "MSVC", msvc.MinorVer, "lib", "x86"),
 			msvc.VSInstallPath.Folder("VC", "Auxiliary", "VS", "lib", "x86"))
 
-		if u.Debug != DEBUG_HOTRELOAD {
+		if u.DebugSymbols != DEBUG_HOTRELOAD {
 			u.LinkerOptions.Append("/SAFESEH")
 		}
 
@@ -498,7 +502,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	u.AddCompilationFlag(fmt.Sprintf("/F\"%d\"", stackSize))
 	u.LinkerOptions.Append(fmt.Sprintf("/STACK:%d", stackSize))
 
-	if windowsFlags.Analyze {
+	if windowsFlags.Analyze.Get() {
 		LogVeryVerbose("MSVC: using static analysis")
 
 		u.AnalysisOptions.Append(
@@ -523,7 +527,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 		u.LinkerOptions.Remove("/LTCG")
 	}
 
-	if compileFlags.Incremental && u.Sanitizer == SANITIZER_NONE {
+	if compileFlags.Incremental.Get() && u.Sanitizer == SANITIZER_NONE {
 		LogVeryVerbose("MSVC: using incremental linker with fastlink")
 		if u.LinkerOptions.Contains("/INCREMENTAL") {
 			u.LinkerOptions.Remove("/LTCG")
@@ -542,7 +546,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	}
 
 	// enable perfSDK if necessary
-	if windowsFlags.PerfSDK {
+	if windowsFlags.PerfSDK.Get() {
 		LogVeryVerbose("MSVC: using Windows PerfSDK")
 		var perfSDK Directory
 		switch compileEnv.GetPlatform().Arch {
@@ -633,7 +637,7 @@ func msvc_STL_iteratorDebug(f *Facet, enabled bool) {
 
 func decorateMsvcConfig_Debug(f *Facet) {
 	f.AddCompilationFlag("/Od", "/Oy-", "/Gm-", "/Gw-")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOREF", "/OPT:NOICF")
+	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOREF", "/OPT:NOICF")
 	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
 	msvc_CXX_linkTimeCodeGeneration(f, false)
@@ -643,7 +647,7 @@ func decorateMsvcConfig_Debug(f *Facet) {
 }
 func decorateMsvcConfig_FastDebug(f *Facet) {
 	f.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Gm")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO")
+	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO")
 	compileFlags := CompileFlags.Need(CommandEnv.Flags)
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
 	msvc_CXX_linkTimeCodeGeneration(f, false)
@@ -653,7 +657,7 @@ func decorateMsvcConfig_FastDebug(f *Facet) {
 }
 func decorateMsvcConfig_Devel(f *Facet) {
 	f.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Gm-", "/Zo", "/GL")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/OPT:NOICF")
+	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOICF")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
 	msvc_CXX_runtimeChecks(f, CompileFlags.Need(CommandEnv.Flags).RuntimeChecks.Get(), false)
@@ -662,7 +666,7 @@ func decorateMsvcConfig_Devel(f *Facet) {
 }
 func decorateMsvcConfig_Test(f *Facet) {
 	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
-	f.LinkerOptions.Append("/DYNAMICBASE", "/PROFILE", "/OPT:REF")
+	f.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/PROFILE", "/OPT:REF")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
 	msvc_CXX_runtimeChecks(f, false, false)
@@ -671,7 +675,7 @@ func decorateMsvcConfig_Test(f *Facet) {
 }
 func decorateMsvcConfig_Shipping(f *Facet) {
 	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo-")
-	f.LinkerOptions.Append("/DYNAMICBASE", "/OPT:REF", "/OPT:ICF=3")
+	f.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/OPT:REF", "/OPT:ICF=3")
 	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
 	msvc_CXX_linkTimeCodeGeneration(f, true)
 	msvc_CXX_runtimeChecks(f, false, false)

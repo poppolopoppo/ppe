@@ -103,14 +103,7 @@ func (x *NamespaceDesc) Deserialize(src io.Reader) error {
 type ModuleDesc struct {
 	Name string
 
-	CppRtti   CppRttiType
-	CppStd    CppStdType
-	Debug     DebugType
-	PCH       PrecompiledHeaderType
-	Link      LinkType
-	Sanitizer SanitizerType
-	Type      ModuleType
-	Unity     UnityType
+	Type ModuleType
 
 	SourceDirs    utils.StringSet
 	SourceGlobs   utils.StringSet
@@ -130,6 +123,7 @@ type ModuleDesc struct {
 	RuntimeDependencies ModuleAliases
 
 	Facet
+	CppRules
 	ExtensionDesc
 
 	rules *ModuleRules
@@ -150,13 +144,7 @@ func (x *ModuleDesc) CreateRules(rootDir utils.Directory, namespace *NamespaceDe
 		Namespace:  namespace.rules,
 		ModuleDir:  rootDir,
 		ModuleType: x.Type,
-		CppRtti:    x.CppRtti,
-		CppStd:     x.CppStd,
-		Debug:      x.Debug,
-		PCH:        x.PCH,
-		Link:       x.Link,
-		Sanitizer:  x.Sanitizer,
-		Unity:      x.Unity,
+		CppRules:   x.CppRules,
 		Source: ModuleSource{
 			SourceGlobs:   x.SourceGlobs,
 			ExcludedGlobs: x.ExcludedGlobs,
@@ -255,7 +243,7 @@ func loadNamespaceDesc(
 			NamespaceParent:   nil,
 			NamespaceChildren: utils.NewStringSet(),
 			NamespaceDir:      src.Dirname,
-			NamespaceModules:  utils.NewStringSet(),
+			NamespaceModules:  ModuleAliases{},
 			Facet:             desc.Facet,
 		}
 
@@ -270,7 +258,7 @@ func loadNamespaceDesc(
 			f := desc.rules.NamespaceDir.Folder(x).File(x + MODULEDESC_EXT)
 			if module, err := loadModuleDesc(f, desc); err == nil {
 				ctx.NeedFile(f)
-				desc.rules.NamespaceModules.Append(module.rules.String())
+				desc.rules.NamespaceModules.Append(module.rules.ModuleAlias())
 				*modules = append(*modules, module)
 			} else {
 				return nil, err

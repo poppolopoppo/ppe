@@ -13,7 +13,7 @@ type NamespaceRules struct {
 	NamespaceParent   Namespace
 	NamespaceChildren utils.StringSet
 	NamespaceDir      utils.Directory
-	NamespaceModules  utils.StringSet
+	NamespaceModules  ModuleAliases
 
 	Facet
 }
@@ -60,6 +60,6 @@ func (rules *NamespaceRules) GetDigestable(o *bytes.Buffer) {
 	}
 	rules.NamespaceChildren.GetDigestable(o)
 	rules.NamespaceDir.GetDigestable(o)
-	rules.NamespaceModules.GetDigestable(o)
 	rules.Facet.GetDigestable(o)
+	utils.MakeDigestable(o, rules.NamespaceModules.Slice()...)
 }

@@ -26,14 +26,14 @@ var WindowsFlags = MakeServiceAccessor[ParsableFlags](newWindowsFlags)
 func newWindowsFlags() *WindowsFlagsT {
 	return CommandEnv.BuildGraph().Create(&WindowsFlagsT{
 		Compiler:   COMPILER_MSVC,
-		Analyze:    false,
-		Insider:    false,
-		JustMyCode: false,
+		Analyze:    INHERITABLE_FALSE,
+		Insider:    INHERITABLE_FALSE,
+		JustMyCode: INHERITABLE_FALSE,
 		MscVer:     MSC_VER_LATEST,
-		PerfSDK:    false,
-		Permissive: false,
+		PerfSDK:    INHERITABLE_FALSE,
+		Permissive: INHERITABLE_FALSE,
 		StackSize:  2000000,
-		StaticCRT:  false,
+		StaticCRT:  INHERITABLE_FALSE,
 		WindowsSDK: Directory{},
 	}).GetBuildable().(*WindowsFlagsT)
 }

@@ -74,6 +74,12 @@ func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	default:
 		UnexpectedValue(compileEnv.GetPlatform().Arch)
 	}
+
+	if u.Payload == PAYLOAD_SHAREDLIB {
+		// https://blog.llvm.org/2018/11/30-faster-windows-builds-with-clang-cl_14.html
+		u.CompilerOptions.Append("/Zc:dllexportInlines-")
+		u.PrecompiledHeaderOptions.Append("/Zc:dllexportInlines-")
+	}
 }
 func (clang *ClangCompiler) GetDigestable(o *bytes.Buffer) {
 	clang.ProductInstall.GetDigestable(o)
@@ -120,12 +126,12 @@ func (clang *ClangCompiler) Build(bc BuildContext) (BuildStamp, error) {
 		"/clang:-ftemplate-backtrace-limit=0",
 	)
 
-	if compileFlags.Benchmark {
+	if compileFlags.Benchmark.Get() {
 		// https: //aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/
 		rules.CompilerOptions.Append("/clang:-ftime-trace")
 	}
 
-	if windowsFlags.Permissive {
+	if windowsFlags.Permissive.Get() {
 		rules.AddCompilationFlag_NoAnalysis("-Wno-error")
 	} else {
 		rules.AddCompilationFlag_NoAnalysis(
@@ -151,9 +157,6 @@ func (clang *ClangCompiler) Build(bc BuildContext) (BuildStamp, error) {
 		clang.ProductInstall.InstallDir.Folder("lib", "clang", clang.ProductInstall.Version, "lib", "windows"),
 	)
 
-	// https://blog.llvm.org/2018/11/30-faster-windows-builds-with-clang-cl_14.html
-	// rules.CompilerOptions.Append("/Zc:dllexportInlines-") //#TODO: won't work with M$ STL
-	// rules.PrecompiledHeaderOptions.Append("/Zc:dllexportInlines-")
 	// https://blog.llvm.org/posts/2021-04-05-constructor-homing-for-debug-info/
 	rules.CompilerOptions.Append("-Xclang", "-fuse-ctor-homing")
 	rules.PrecompiledHeaderOptions.Append("-Xclang", "-fuse-ctor-homing")

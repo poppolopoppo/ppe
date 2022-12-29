@@ -107,9 +107,9 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			LogPanicErr(err)
 		}
 
-		bff.Assign("BaseProjectBuildCommand", selfExecutable+" fbuild -v ")
-		bff.Assign("BaseProjectRebuildCommand", selfExecutable+" fbuild -v -Clean ")
-		bff.Assign("BaseProjectCleanCommand", selfExecutable+" distclean -v ")
+		bff.Assign("BaseProjectBuildCommand", selfExecutable+" fbuild -Ide ")
+		bff.Assign("BaseProjectRebuildCommand", selfExecutable+" fbuild -Ide -Clean ")
+		bff.Assign("BaseProjectCleanCommand", selfExecutable+" distclean -Ide ")
 
 		bff.Assign("ProjectPatternToExclude", NewStringSet(
 			"*/.vs/*",

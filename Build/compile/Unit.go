@@ -77,18 +77,8 @@ type UnitDecorator interface {
 type Unit struct {
 	Target TargetAlias
 
-	Ordinal int
-
-	CppRtti    CppRttiType
-	CppStd     CppStdType
-	Debug      DebugType
-	Exceptions ExceptionType
-	PCH        PrecompiledHeaderType
-	Link       LinkType
-	Sanitizer  SanitizerType
-	Unity      UnityType
+	Ordinal    int
 	Payload    PayloadType
-
 	OutputFile utils.Filename
 
 	ModuleDir       utils.Directory
@@ -112,6 +102,8 @@ type Unit struct {
 
 	Source          ModuleSource
 	TransitiveFacet Facet // append in case of public dependency
+
+	CppRules
 	Facet
 }
 
@@ -142,14 +134,6 @@ func (unit *Unit) GetDigestable(o *bytes.Buffer) {
 	o.WriteString("Unit")
 	unit.Target.GetDigestable(o)
 	o.WriteString(fmt.Sprint(unit.Ordinal))
-	unit.CppRtti.GetDigestable(o)
-	unit.CppStd.GetDigestable(o)
-	unit.Debug.GetDigestable(o)
-	unit.Exceptions.GetDigestable(o)
-	unit.PCH.GetDigestable(o)
-	unit.Link.GetDigestable(o)
-	unit.Sanitizer.GetDigestable(o)
-	unit.Unity.GetDigestable(o)
 	unit.Payload.GetDigestable(o)
 	unit.OutputFile.GetDigestable(o)
 	unit.ModuleDir.GetDigestable(o)
@@ -172,5 +156,6 @@ func (unit *Unit) GetDigestable(o *bytes.Buffer) {
 	}
 	unit.Source.GetDigestable(o)
 	unit.TransitiveFacet.GetDigestable(o)
+	unit.CppRules.GetDigestable(o)
 	unit.Facet.GetDigestable(o)
 }

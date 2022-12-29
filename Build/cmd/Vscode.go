@@ -136,7 +136,7 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 			"compilerPath":     env.GetCompiler().Executable.String(),
 			"compileCommands":  compiledb.String(),
 			"cStandard":        "c11",
-			"cppStandard":      strings.ToLower(env.GetCppStd(nil).String()),
+			"cppStandard":      strings.ToLower(env.GetCpp(nil).CppStd.String()),
 			"defines":          env.Defines,
 			"includePath":      includePaths,
 			"intelliSenseMode": intelliSenseMode,
@@ -176,7 +176,7 @@ func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) err
 		return JsonMap{
 			"label":   alias.String(),
 			"command": selfExecutable,
-			"args":    []string{"fbuild", "-v", alias.String() + "-${command:cpptools.activeConfigName}"},
+			"args":    []string{"fbuild", "-Ide", alias.String() + "-${command:cpptools.activeConfigName}"},
 			"options": JsonMap{
 				"cwd": UFS.Root,
 			},

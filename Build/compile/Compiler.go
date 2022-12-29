@@ -77,7 +77,7 @@ func (rules *CompilerRules) Decorate(env *CompileEnv, unit *Unit) {
 	compiler.Decorate(env, unit)
 	compiler.CppStd(&unit.Facet, unit.CppStd)
 	compiler.CppRtti(&unit.Facet, unit.CppRtti == CPPRTTI_ENABLED)
-	compiler.DebugSymbols(&unit.Facet, unit.Debug, unit.OutputFile, unit.IntermediateDir)
+	compiler.DebugSymbols(&unit.Facet, unit.DebugSymbols, unit.OutputFile, unit.IntermediateDir)
 	compiler.Link(&unit.Facet, unit.Link)
 	compiler.Sanitizer(&unit.Facet, unit.Sanitizer)
 

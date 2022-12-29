@@ -126,7 +126,7 @@ func MakeFBuildExecutor(flags *FBuildArgs, args ...string) (result FBuildExecuto
 		if flags.Clean.Get() {
 			result.Args.Append("-clean")
 		}
-		if flags.Dist {
+		if flags.Dist.Get() {
 			enableDist = true
 			result.Args.Append("-dist")
 		}
@@ -144,10 +144,10 @@ func MakeFBuildExecutor(flags *FBuildArgs, args ...string) (result FBuildExecuto
 		if flags.Threads > 0 {
 			result.Args.Append("-j" + flags.Threads.String())
 		}
-		if flags.ShowCmds {
+		if flags.ShowCmds.Get() {
 			result.Args.Append("-showcmds")
 		}
-		if flags.ShowCmdOutput {
+		if flags.ShowCmdOutput.Get() {
 			result.Args.Append("-showcmdoutput")
 		}
 	}
