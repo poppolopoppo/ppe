@@ -40,9 +40,7 @@ public:
     using string_type = TBasicString<_Char>;
     using stringconversion_type = TBasicStringConversion<_Char>;
 
-    explicit TBasicTextReader(TPtrRef<IBufferedStreamReader> istream) NOEXCEPT
-    :   FBaseTextReader(istream) {
-    }
+    using FBaseTextReader::FBaseTextReader;
 
     bool Expect(_Char ch);
     bool Read(_Char* ch);
@@ -60,7 +58,7 @@ public:
     bool Read(double* p);
     bool Read(string_type* p);
 
-    bool SkipSpaces() { return SkipCharset(&IsSpace); }
+    bool SkipSpaces();
     bool SkipCharset(charset_func charset);
 
     bool ReadLine(string_type* line);
@@ -126,6 +124,7 @@ template <> PPE_CORE_API bool TBasicTextReader<char>::Read(u64* p);
 template <> PPE_CORE_API bool TBasicTextReader<char>::Read(float* p);
 template <> PPE_CORE_API bool TBasicTextReader<char>::Read(double* p);
 template <> PPE_CORE_API bool TBasicTextReader<char>::Read(FString* p);
+template <> PPE_CORE_API bool TBasicTextReader<char>::SkipSpaces();
 template <> PPE_CORE_API bool TBasicTextReader<char>::SkipCharset(charset_func charset);
 template <> PPE_CORE_API bool TBasicTextReader<char>::ReadLine(string_type* line);
 template <> PPE_CORE_API bool TBasicTextReader<char>::ReadWord(string_type* word);
@@ -146,6 +145,7 @@ template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::Read(u64* p);
 template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::Read(float* p);
 template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::Read(double* p);
 template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::Read(FWString* p);
+template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::SkipSpaces();
 template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::SkipCharset(charset_func charset);
 template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::ReadLine(string_type* line);
 template <> PPE_CORE_API bool TBasicTextReader<wchar_t>::ReadWord(string_type* word);

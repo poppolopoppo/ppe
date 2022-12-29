@@ -92,7 +92,7 @@ struct FBitmapPagePool_ : FPageAllocator {
         Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, p));
         const FCriticalScope scopeLock(&Barrier);
 
-        Assert_NoAssume(u64(-1) == p->Pages);
+        Assert_NoAssume(uintptr_t(-1) == p->Pages);
         Assert_NoAssume(0 == p->Sizes);
         Assert_NoAssume(nullptr == p->vAddressSpace);
 

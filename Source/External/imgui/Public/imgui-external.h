@@ -46,7 +46,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 #define IM_ASSERT(_EXPR) Assert(_EXPR)
 #define IM_DEBUG_BREAK() PPE_DEBUG_BREAK()
 
-#define IMGUI_DEFINE_MATH_OPERATORS
+//#define IMGUI_DEFINE_MATH_OPERATORS
 
 #define IM_VEC2_CLASS_EXTRA \
     CONSTEXPR ImVec2(const PPE::float2& f) : x(f.x), y(f.y) {} \

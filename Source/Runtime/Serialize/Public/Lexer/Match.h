@@ -24,27 +24,19 @@ public:
     TBasicMatch() NOEXCEPT;
     ~TBasicMatch();
 
-    TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT
-        : _symbol(symbol), _value(std::move(rvalue)), _site(site)
-    {}
-    TBasicMatch(const symbol_type* symbol, const value_type& value, const FSpan& site) NOEXCEPT
-        : TBasicMatch(symbol, value_type(value), site)
-    {}
-    TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FLocation& start, const FLocation& stop) NOEXCEPT
-        : TBasicMatch(symbol, std::move(rvalue), FSpan::FromSite(start, stop))
-    {}
-    TBasicMatch(const symbol_type* symbol, const value_type& value, const FLocation& start, const FLocation& stop) NOEXCEPT
-        : TBasicMatch(symbol, value_type(value), start, stop)
-    {}
+    TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT;
+    TBasicMatch(const symbol_type* symbol, const value_type& value, const FSpan& site) NOEXCEPT;
+    TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FLocation& start, const FLocation& stop) NOEXCEPT;
+    TBasicMatch(const symbol_type* symbol, const value_type& value, const FLocation& start, const FLocation& stop) NOEXCEPT;
 
-    const symbol_type *Symbol() const { return _symbol; }
-    value_type& Value() { return _value; }
-    const value_type& Value() const { return _value; }
-    const FSpan& Site() const { return _site; }
+    const symbol_type *Symbol() const;
+    value_type& Value();
+    const value_type& Value() const;
+    const FSpan& Site() const;
 
-    FStringView MakeView() const { return MakeStringView(_value); }
+    FStringView MakeView() const;
 
-    bool Valid() const { return symbol_type::Invalid != _symbol->Type(); }
+    bool Valid() const;
 
 private:
     const symbol_type* _symbol;

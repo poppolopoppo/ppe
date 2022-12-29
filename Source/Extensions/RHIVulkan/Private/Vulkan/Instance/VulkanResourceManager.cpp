@@ -452,11 +452,11 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pShaderMod
     Assert_NoAssume(VK_NULL_HANDLE != vkShaderModule);
 
     *pShaderModule = NEW_REF(RHIShader, FVulkanShaderModule,
-        _device,
         vkShaderModule,
         rawSpirv.Fingerprint(),
-        rawSpirv.EntryPoint().MakeView()
-        ARGS_IF_RHIDEBUG(rawSpirv.DebugName().MakeView()) );
+        rawSpirv.EntryPoint().MakeView() );
+
+    LOG_CHECK(RHI, (*pShaderModule)->Construct(_device ARGS_IF_RHIDEBUG(rawSpirv.DebugName().MakeView())));
 
     _shaderCache.LockExclusive()->push_back(*pShaderModule);
 

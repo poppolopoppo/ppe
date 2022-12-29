@@ -10,29 +10,30 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanShaderModule::FVulkanShaderModule(
-    const FVulkanDevice& device,
     VkShaderModule vkShaderModule,
     FFingerprint sourceFingerprint,
-    FStringView entryPoint
-    ARGS_IF_RHIDEBUG(FStringView debugName) ) NOEXCEPT
+    FStringView entryPoint ) NOEXCEPT
 :   _vkShaderModule(vkShaderModule)
 ,   _entryPoint(entryPoint)
-#if USE_PPE_RHIDEBUG
-,   _debugName(debugName.MakeView())
-#endif
 {
     // combine entry point with source fingerprint for fingerprint
     _fingerprint = Fingerprint128(_entryPoint.Str());
     _fingerprint = Fingerprint128(&sourceFingerprint, sizeof(FFingerprint), _fingerprint);
-
-#if USE_PPE_RHIDEBUG
-    if (_vkShaderModule && _debugName)
-        device.SetObjectName(_vkShaderModule, _debugName.c_str(), VK_OBJECT_TYPE_SHADER_MODULE);
-#endif
 }
 //----------------------------------------------------------------------------
 FVulkanShaderModule::~FVulkanShaderModule() NOEXCEPT {
     Assert_NoAssume(VK_NULL_HANDLE == _vkShaderModule); // must call TearDown() before destruction !
+}
+//----------------------------------------------------------------------------
+bool FVulkanShaderModule::Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FStringView debugName)) {
+#if USE_PPE_RHIDEBUG
+    _debugName = debugName.MakeView();
+    if (_vkShaderModule && _debugName)
+        device.SetObjectName(_vkShaderModule, _debugName.c_str(), VK_OBJECT_TYPE_SHADER_MODULE);
+#else
+    Unused(device);
+#endif
+    return true;
 }
 //----------------------------------------------------------------------------
 void FVulkanShaderModule::TearDown(const FVulkanDevice& device) {

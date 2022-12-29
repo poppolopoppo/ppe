@@ -15,11 +15,9 @@ public:
     using IShaderData<FShaderModule>::FFingerprint;
 
     FVulkanShaderModule(
-        const FVulkanDevice& device,
         VkShaderModule vkShaderModule,
         FFingerprint sourceFingerprint,
-        FStringView entryPoint
-        ARGS_IF_RHIDEBUG(FStringView debugName) ) NOEXCEPT;
+        FStringView entryPoint ) NOEXCEPT;
 
     virtual ~FVulkanShaderModule() NOEXCEPT override;
 
@@ -35,6 +33,7 @@ public:
     virtual bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) override;
 #endif
 
+    NODISCARD bool Construct(const FVulkanDevice& device ARGS_IF_RHIDEBUG(FStringView debugName));
     void TearDown(const FVulkanDevice& device);
 
 private:

@@ -61,6 +61,7 @@ public:
 
 #if USE_PPE_RHIDEBUG
     FConstChar DebugName() const NOEXCEPT override { return _debugName; }
+    const PVulkanSharedDebugUtils& DebugInfo() const NOEXCEPT { return _debugInfo; }
 
     bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) override {
         LOG_CHECK(PipelineCompiler, EShaderDebugMode::Trace == mode || EShaderDebugMode::Profiling == mode);
@@ -106,39 +107,24 @@ public:
     using FVulkanShaderModule::DebugName;
 #endif
 
-    using FVulkanShaderModule::TearDown;
-
-    TVulkanDebuggableShaderData(
-        const FVulkanDevice& device,
-        const FStringView& entryPoint, VkShaderModule vkShaderModule, const FFingerprint& fingerprint
-        ARGS_IF_RHIDEBUG(const FStringView& debugName) ) NOEXCEPT
-    :   FVulkanShaderModule(device, vkShaderModule, fingerprint, entryPoint ARGS_IF_RHIDEBUG(debugName))
+    TVulkanDebuggableShaderData(const FStringView& entryPoint, VkShaderModule vkShaderModule, const FFingerprint& fingerprint) NOEXCEPT
+    :   FVulkanShaderModule(vkShaderModule, fingerprint, entryPoint)
     {}
 
-    TVulkanDebuggableShaderData(
-        const FVulkanDevice& device,
-        VkShaderModule vkShaderModule,
-        const PShaderBinaryData& compiledSpirv) NOEXCEPT
-    :   FVulkanShaderModule(device, vkShaderModule, compiledSpirv->Fingerprint(), compiledSpirv->EntryPoint().MakeView() ARGS_IF_RHIDEBUG(compiledSpirv->DebugName().MakeView())) {
+    TVulkanDebuggableShaderData(VkShaderModule vkShaderModule, const PShaderBinaryData& compiledSpirv) NOEXCEPT
+    :   FVulkanShaderModule(vkShaderModule, compiledSpirv->Fingerprint(), compiledSpirv->EntryPoint().MakeView()) {
         Assert(VK_NULL_HANDLE != vkShaderModule);
     }
 
 #if USE_PPE_RHIDEBUG
-    TVulkanDebuggableShaderData(
-        const FVulkanDevice& device,
-        const FStringView& entryPoint, VkShaderModule vkShaderModule, const FFingerprint& fingerprint,
-        const FStringView& debugName, PVulkanSharedDebugUtils&& debugInfo ) NOEXCEPT
-    :   FVulkanShaderModule(device, vkShaderModule, fingerprint, entryPoint ARGS_IF_RHIDEBUG(debugName))
-    ,   _debugInfo(std::move(debugInfo))
-    {}
-
-    TVulkanDebuggableShaderData(
-        const FVulkanDevice& device,
-        VkShaderModule vkShaderModule,
-        const FVulkanDebuggableShaderSPIRV& debuggableSpirv) NOEXCEPT
-    :   FVulkanShaderModule(device, vkShaderModule, debuggableSpirv.Fingerprint(), debuggableSpirv.EntryPoint().MakeView() ARGS_IF_RHIDEBUG(debuggableSpirv.DebugName().MakeView()))
-    ,   _debugInfo(debuggableSpirv._debugInfo) {
+    TVulkanDebuggableShaderData(VkShaderModule vkShaderModule, const FVulkanDebuggableShaderSPIRV& debuggableSpirv) NOEXCEPT
+    :   FVulkanShaderModule(vkShaderModule, debuggableSpirv.Fingerprint(), debuggableSpirv.EntryPoint().MakeView()) {
         Assert(VK_NULL_HANDLE != vkShaderModule);
+    }
+
+    NODISCARD bool Construct(const FVulkanDevice& device, FStringView debugName, const PVulkanSharedDebugUtils& debugInfo) {
+        _debugInfo = debugInfo;
+        return FVulkanShaderModule::Construct(device, debugName);
     }
 
     bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) override final {
@@ -154,7 +140,10 @@ public:
 
         return result;
     }
+#else
+    using FVulkanShaderModule::Construct;
 #endif
+    using FVulkanShaderModule::TearDown;
 
 private:
 #if USE_PPE_RHIDEBUG

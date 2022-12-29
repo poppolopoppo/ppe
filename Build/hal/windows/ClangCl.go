@@ -75,11 +75,11 @@ func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 		UnexpectedValue(compileEnv.GetPlatform().Arch)
 	}
 
-	if u.Payload == PAYLOAD_SHAREDLIB {
-		// https://blog.llvm.org/2018/11/30-faster-windows-builds-with-clang-cl_14.html
-		u.CompilerOptions.Append("/Zc:dllexportInlines-")
-		u.PrecompiledHeaderOptions.Append("/Zc:dllexportInlines-")
-	}
+	// if u.Payload == PAYLOAD_SHAREDLIB {
+	// 	// https://blog.llvm.org/2018/11/30-faster-windows-builds-with-clang-cl_14.html
+	// 	u.CompilerOptions.Append("/Zc:dllexportInlines-") // not workig with /MD and std
+	// 	u.PrecompiledHeaderOptions.Append("/Zc:dllexportInlines-")
+	// }
 }
 func (clang *ClangCompiler) GetDigestable(o *bytes.Buffer) {
 	clang.ProductInstall.GetDigestable(o)

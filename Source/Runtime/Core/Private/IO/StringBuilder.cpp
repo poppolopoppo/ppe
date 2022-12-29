@@ -43,6 +43,21 @@ TBasicStringBuilder<_Char>::~TBasicStringBuilder() {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
+size_t TBasicStringBuilder<_Char>::size() const {
+    return (stream_type::size() / sizeof(_Char));
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+size_t TBasicStringBuilder<_Char>::capacity() const {
+    return (stream_type::capacity() / sizeof(_Char));
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool TBasicStringBuilder<_Char>::empty() const {
+    return stream_type::empty();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 void TBasicStringBuilder<_Char>::reserve(size_t count) {
     stream_type::reserve((count + 1/* null char */) * sizeof(_Char));
 }
@@ -55,6 +70,11 @@ void TBasicStringBuilder<_Char>::clear() {
 template <typename _Char>
 void TBasicStringBuilder<_Char>::clear_ReleaseMemory() {
     stream_type::clear_ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicStringView<_Char> TBasicStringBuilder<_Char>::Written() const {
+    return stream_type::MakeView().template Cast<const _Char>();
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -71,6 +91,23 @@ void TBasicStringBuilder<_Char>::ToString(string_type& output) {
         *this << Eos; // append '\0' terminator only to non empty strings
 
     output.assign(std::move(*this));
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TMemoryView<_Char> TBasicStringBuilder<_Char>::AppendUninitialized(size_t n) {
+    return stream_type::Append(n * sizeof(_Char)).template Cast<_Char>();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool TBasicStringBuilder<_Char>::AcquireDataUnsafe(FAllocatorBlock b, size_t len/* = 0 */) NOEXCEPT {
+    return stream_type::AcquireDataUnsafe(b, len * sizeof(_Char));
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+FAllocatorBlock TBasicStringBuilder<_Char>::StealDataUnsafe(size_t* len/* = nullptr */) NOEXCEPT {
+    const FAllocatorBlock b = stream_type::StealDataUnsafe(len);
+    if (len) *len /= sizeof(_Char);
+    return b;
 }
 //----------------------------------------------------------------------------
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicStringBuilder<char>;

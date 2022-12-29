@@ -101,7 +101,7 @@ using i64   = std::int64_t;
 #if defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
-#   define NOOP(...)    __noop(__VA_ARGS__)
+#   define NOOP(...)    (void)0
 #   define NORETURN     [[noreturn]]
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall

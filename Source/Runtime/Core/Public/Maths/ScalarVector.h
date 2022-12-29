@@ -104,8 +104,9 @@ struct TScalarVectorExprBase : _Expr {
         });
     }
 
+    template <u32 _Count = 1>
     NODISCARD CONSTEXPR auto Shift() const {
-        return Meta::static_for<(_Dim > 1 ? _Dim - 1 : 1)>([this](auto... idx) {
+        return Meta::static_for<(_Dim > _Count ? _Dim - _Count : 1)>([this](auto... idx) {
             return TScalarVector<T, sizeof...(idx)>(this->template Get<idx>()...);
         });
     }

@@ -389,6 +389,7 @@ private:
                         TrackingData().AllocateUser(dwSize);
                     });
 
+                Unused(dwNewReservedSize2);
                 Assert_NoAssume(dwNewReservedSize2 == dwNewReservedSize);
             }
         }

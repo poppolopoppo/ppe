@@ -211,6 +211,7 @@ template <> bool TBasicTextReader<char>::Read(u64* p) { return TextReader_ReadUn
 template <> bool TBasicTextReader<char>::Read(float* p) { return TextReader_ReadFloat_(*this, p); }
 template <> bool TBasicTextReader<char>::Read(double* p) { return TextReader_ReadFloat_(*this, p); }
 template <> bool TBasicTextReader<char>::Read(string_type* p) { return ReadWord(p); }
+template <> bool TBasicTextReader<char>::SkipSpaces() { return SkipCharset(&IsSpace); }
 template <> bool TBasicTextReader<char>::SkipCharset(charset_func charset) { return TextReader_SkipCharset_(*_istream, charset); }
 template <> bool TBasicTextReader<char>::ReadLine(string_type* line) { return TextReader_ReadLine_(*_istream, line); }
 template <> bool TBasicTextReader<char>::ReadWord(string_type* word) { return TextReader_ReadWord_(*_istream, word); }
@@ -237,6 +238,7 @@ template <> bool TBasicTextReader<wchar_t>::Read(u64* p) { return TextReader_Rea
 template <> bool TBasicTextReader<wchar_t>::Read(float* p) { return TextReader_ReadFloat_(*this, p); }
 template <> bool TBasicTextReader<wchar_t>::Read(double* p) { return TextReader_ReadFloat_(*this, p); }
 template <> bool TBasicTextReader<wchar_t>::Read(string_type* p) { return ReadWord(p); }
+template <> bool TBasicTextReader<wchar_t>::SkipSpaces() { return SkipCharset(&IsSpace); }
 template <> bool TBasicTextReader<wchar_t>::SkipCharset(charset_func charset) { return TextReader_SkipCharset_(*_istream, charset); }
 template <> bool TBasicTextReader<wchar_t>::ReadLine(string_type* line) { return TextReader_ReadLine_(*_istream, line); }
 template <> bool TBasicTextReader<wchar_t>::ReadWord(string_type* word) { return TextReader_ReadWord_(*_istream, word); }

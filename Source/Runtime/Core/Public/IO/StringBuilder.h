@@ -42,18 +42,16 @@ public:
     TBasicStringBuilder(const TBasicStringBuilder&) = delete;
     TBasicStringBuilder& operator =(const TBasicStringBuilder&) = delete;
 
-    CONSTF size_t size() const { return (stream_type::size() / sizeof(_Char)); }
-    CONSTF size_t capacity() const { return (stream_type::capacity() / sizeof(_Char)); }
-    CONSTF bool empty() const { return stream_type::empty(); }
+    CONSTF size_t size() const;
+    CONSTF size_t capacity() const;
+    CONSTF bool empty() const;
 
     void reserve(size_t count);
 
     void clear();
     void clear_ReleaseMemory();
 
-    TBasicStringView<_Char> Written() const {
-        return stream_type::MakeView().template Cast<const _Char>();
-    }
+    TBasicStringView<_Char> Written() const;
 
     auto begin() { return stream_type::MakeView().template Cast<_Char>().begin(); }
     auto end() { return stream_type::MakeView().template Cast<_Char>().end(); }
@@ -66,19 +64,10 @@ public:
     string_type ToString();
     void ToString(string_type& output);
 
-    TMemoryView<_Char> AppendUninitialized(size_t n) {
-        return stream_type::Append(n * sizeof(_Char)).template Cast<_Char>();
-    }
+    TMemoryView<_Char> AppendUninitialized(size_t n);
 
-    NODISCARD bool AcquireDataUnsafe(FAllocatorBlock b, size_t len = 0) NOEXCEPT {
-        return stream_type::AcquireDataUnsafe(b, len * sizeof(_Char));
-    }
-
-    NODISCARD FAllocatorBlock StealDataUnsafe(size_t* len = nullptr) NOEXCEPT {
-        const FAllocatorBlock b = stream_type::StealDataUnsafe(len);
-        if (len) *len /= sizeof(_Char);
-        return b;
-    }
+    NODISCARD bool AcquireDataUnsafe(FAllocatorBlock b, size_t len = 0) NOEXCEPT;
+    NODISCARD FAllocatorBlock StealDataUnsafe(size_t* len = nullptr) NOEXCEPT;
 
     using stream_type::AcquireDataUnsafe;
     using stream_type::StealDataUnsafe;

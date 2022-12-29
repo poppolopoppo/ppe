@@ -4,8 +4,8 @@
 
 #include "Diagnostic/Logger.h"
 
-#include "HAL/Linux/LinuxTargetPlatform.h"
-#include "HAL/Windows/WindowsTargetPlatform.h"
+#include "HAL/LinuxTargetPlatform.h"
+#include "HAL/WindowsTargetPlatform.h"
 
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, HAL)
@@ -17,8 +17,9 @@ namespace {
 static const ITargetPlaftorm* GAllPlatforms[] = {
     /* Windows  */&FWindowsTargetPlatform::Get(),
     /* Linux    */&FLinuxTargetPlatform::Get(),
-    /* MacOS    *///&FMacOSTargetPlatform::Get(), #TODO
+    /* MacOS    *///&FMacOSTargetPlatform::Get(),
     // #TODO add future platforms here
+    // #TODO put platform in extension modules and inverse this dependency
 };
 //----------------------------------------------------------------------------
 } //!namespace
