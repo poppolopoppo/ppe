@@ -419,6 +419,8 @@ func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filen
 		Unit: Unit{
 			Compiler:        msvc.ResourceCompiler,
 			Target:          u.Target,
+			ModuleDir:       u.ModuleDir,
+			GeneratedDir:    u.GeneratedDir,
 			IntermediateDir: u.IntermediateDir,
 			Payload:         u.Payload,
 			Facet:           u.Facet,

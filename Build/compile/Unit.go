@@ -35,6 +35,9 @@ func (x EnvironmentAlias) Compare(o EnvironmentAlias) int {
 		return strings.Compare(x.PlatformName, o.PlatformName)
 	}
 }
+func (x EnvironmentAlias) String() string {
+	return x.Alias().String()
+}
 
 type TargetAlias struct {
 	ModuleAlias
@@ -128,6 +131,43 @@ func (unit *Unit) Decorate(env *CompileEnv, decorator ...UnitDecorator) {
 	for _, x := range decorator {
 		x.Decorate(env, unit)
 	}
+}
+
+func sanitizePayloadPath(path string) string {
+	path = strings.ReplaceAll(path, "\\", "/")
+	path = strings.ReplaceAll(path, "/", "-")
+	return path
+}
+
+func (unit *Unit) GetBinariesOutput(modulePath string, payload PayloadType) utils.Filename {
+	utils.AssertIn(payload, PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB)
+	modulePath = unit.ModuleDir.AbsoluteFile(modulePath).Relative(utils.UFS.Source)
+	modulePath = sanitizePayloadPath(modulePath)
+	return utils.UFS.Binaries.AbsoluteFile(modulePath).ReplaceExt(
+		fmt.Sprintf("-%s%s", unit.Target.GetEnvironmentAlias(), unit.Compiler.Extname(payload)))
+}
+func (unit *Unit) GetGeneratedOutput(modulePath string, payload PayloadType) utils.Filename {
+	modulePath = sanitizePayloadPath(modulePath)
+	return unit.GeneratedDir.AbsoluteFile(modulePath).ReplaceExt(unit.Compiler.Extname(payload))
+}
+func (unit *Unit) GetIntermediateOutput(modulePath string, payload PayloadType) utils.Filename {
+	utils.AssertIn(payload, PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_STATICLIB)
+	modulePath = sanitizePayloadPath(modulePath)
+	return unit.IntermediateDir.AbsoluteFile(modulePath).ReplaceExt(unit.Compiler.Extname(payload))
+}
+func (unit *Unit) GetPayloadOutput(src utils.Filename, payload PayloadType) utils.Filename {
+	rel := src.Relative(unit.ModuleDir)
+	switch payload {
+	case PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB:
+		return unit.GetBinariesOutput(rel, payload)
+	case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_STATICLIB:
+		return unit.GetIntermediateOutput(rel, payload)
+	case PAYLOAD_HEADERS:
+		// nothing to do
+	default:
+		utils.UnexpectedValue(payload)
+	}
+	return src
 }
 
 func (unit *Unit) GetDigestable(o *bytes.Buffer) {

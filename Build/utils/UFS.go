@@ -569,6 +569,17 @@ func (list DirSet) GetDigestable(o *bytes.Buffer) {
 		x.GetDigestable(o)
 	}
 }
+func (list DirSet) Equals(other DirSet) bool {
+	if len(list) != len(other) {
+		return false
+	}
+	for i, it := range list {
+		if !other[i].Equals(it) {
+			return false
+		}
+	}
+	return true
+}
 func (list DirSet) StringSet() StringSet {
 	return MakeStringerSet(list...)
 }
@@ -643,6 +654,17 @@ func (list FileSet) GetDigestable(o *bytes.Buffer) {
 	for _, x := range list {
 		x.GetDigestable(o)
 	}
+}
+func (list FileSet) Equals(other FileSet) bool {
+	if len(list) != len(other) {
+		return false
+	}
+	for i, it := range list {
+		if !other[i].Equals(it) {
+			return false
+		}
+	}
+	return true
 }
 func (list FileSet) StringSet() StringSet {
 	return MakeStringerSet(list...)

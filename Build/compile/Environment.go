@@ -134,39 +134,6 @@ func (env *CompileEnv) GetPayloadType(module *ModuleRules, link LinkType) (resul
 	}
 	return result
 }
-func (env *CompileEnv) GetBinariesOutput(modulePath string, payload PayloadType) utils.Filename {
-	utils.AssertIn(payload, PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB)
-	modulePath = strings.ReplaceAll(modulePath, "\\", "/")
-	modulePath = strings.ReplaceAll(modulePath, "/", "-")
-	return utils.UFS.Binaries.AbsoluteFile(modulePath).ReplaceExt(
-		"-" + strings.Join(env.Family(), "-") + env.Extname(payload))
-}
-func (env *CompileEnv) GetIntermediateOutput(modulePath string, payload PayloadType) utils.Filename {
-	utils.AssertIn(payload, PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_STATICLIB)
-	modulePath = strings.ReplaceAll(modulePath, "\\", "/")
-	modulePath = strings.ReplaceAll(modulePath, "/", "-")
-	return env.IntermediateDir().AbsoluteFile(modulePath).
-		ReplaceExt(env.Extname(payload))
-}
-func (env *CompileEnv) GetPayloadOutput(src utils.Filename, payload PayloadType) utils.Filename {
-	rel := src.Relative(utils.UFS.Source)
-	switch payload {
-	case PAYLOAD_EXECUTABLE:
-		fallthrough
-	case PAYLOAD_SHAREDLIB:
-		return env.GetBinariesOutput(rel, payload)
-	case PAYLOAD_OBJECTLIST:
-		fallthrough
-	case PAYLOAD_PRECOMPILEDHEADER:
-		fallthrough
-	case PAYLOAD_STATICLIB:
-		return env.GetIntermediateOutput(rel, payload)
-	case PAYLOAD_HEADERS:
-	default:
-		utils.UnexpectedValue(payload)
-	}
-	return src
-}
 
 func (env *CompileEnv) EnvironmentAlias() EnvironmentAlias {
 	return NewEnvironmentAlias(env.Platform, env.Configuration)
@@ -187,7 +154,7 @@ func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
 		CppRules:        env.GetCpp(module),
 	}
 	unit.Payload = env.GetPayloadType(module, unit.Link)
-	unit.OutputFile = env.GetPayloadOutput(utils.Filename{
+	unit.OutputFile = unit.GetPayloadOutput(utils.Filename{
 		Dirname:  rootDir[:len(rootDir)-1],
 		Basename: rootDir[len(rootDir)-1],
 	}, unit.Payload)
@@ -210,6 +177,7 @@ func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
 		} else {
 			unit.PrecompiledHeader = *module.PrecompiledHeader
 			unit.PrecompiledSource = unit.PrecompiledHeader
+
 			utils.IfWindows(func() {
 				// CPP is only used on Windows platform
 				unit.PrecompiledSource = *module.PrecompiledSource
@@ -217,7 +185,7 @@ func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
 
 			utils.Assert(func() bool { return module.PrecompiledHeader.Exists() })
 			utils.Assert(func() bool { return module.PrecompiledSource.Exists() })
-			unit.PrecompiledObject = env.GetPayloadOutput(unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
+			unit.PrecompiledObject = unit.GetPayloadOutput(unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
 		}
 	default:
 		utils.UnexpectedValuePanic(unit.PCH, unit.PCH)

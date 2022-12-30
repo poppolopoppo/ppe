@@ -122,7 +122,7 @@ func (x BuildModulesHeader) Generate(ctx GeneratorContext, dst io.Writer) error 
 			fmt.Fprintf(dst, "    registry.RegisterLibrary(\"%s\", \"%s\", L\"%s\");\n",
 				x.GetModuleAlias(),
 				getModuleStaticInfo(x),
-				ctx.Env.GetBinariesOutput(x.GetModuleAlias().String(), PAYLOAD_SHAREDLIB))
+				ctx.Unit.GetBinariesOutput(x.GetModuleAlias().String(), PAYLOAD_SHAREDLIB))
 		}
 	}
 	fmt.Fprintln(dst, "}")
