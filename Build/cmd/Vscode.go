@@ -100,6 +100,41 @@ func (vsc *VscodeBuilder) Build(bc BuildContext) (BuildStamp, error) {
 	return vsc.OutputDir.Build(bc)
 }
 
+func sanitizeEnvironmentDefines(defines StringSet) (StringSet, error) {
+	ignoreds := make(map[string]string, len(defines))
+	keys := make(map[string]string, len(defines))
+	for _, it := range defines {
+		args := strings.Split(it, "=")
+		if len(args) > 2 {
+			return StringSet{}, fmt.Errorf("invalid define '%s'", it)
+		}
+
+		if len(args) == 2 {
+			if _, ok := ignoreds[args[0]]; ok {
+				// already ignored divergent define
+			} else if _, ok := keys[args[0]]; ok {
+				ignoreds[args[0]] = args[1]
+				delete(keys, args[0])
+			} else {
+				keys[args[0]] = args[1]
+			}
+		} else {
+			keys[args[0]] = ""
+		}
+	}
+
+	result := StringSet{}
+	for key, value := range keys {
+		if len(value) == 0 {
+			result.Append(key)
+		} else {
+			result.Append(fmt.Sprint(key, "=", value))
+		}
+	}
+
+	return result, nil
+}
+
 func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, targets *BuildTargetsT, outputFile Filename) error {
 	configurations := []JsonMap{}
 
@@ -126,9 +161,16 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 			return u.Target.EnvironmentAlias == environmentAlias
 		})
 
+		defines := StringSet{}
 		includePaths := DirSet{}
 		for _, u := range translatedUnits {
+			defines.AppendUniq(u.Defines...)
 			includePaths.AppendUniq(u.IncludePaths...)
+		}
+
+		defines, err := sanitizeEnvironmentDefines(defines)
+		if err != nil {
+			return nil
 		}
 
 		configurations = append(configurations, JsonMap{
@@ -137,7 +179,7 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 			"compileCommands":  compiledb.String(),
 			"cStandard":        "c11",
 			"cppStandard":      strings.ToLower(env.GetCpp(nil).CppStd.String()),
-			"defines":          env.Defines,
+			"defines":          defines,
 			"includePath":      includePaths,
 			"intelliSenseMode": intelliSenseMode,
 			"browse": JsonMap{
