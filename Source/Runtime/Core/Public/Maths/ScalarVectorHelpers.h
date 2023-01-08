@@ -67,9 +67,9 @@ struct TScalarVectorTernaryOp : private _Op {
     TScalarVectorExpr<T, _Dim, _C> C;
 
     CONSTEXPR explicit TScalarVectorTernaryOp(
-        TScalarVectorExpr<T, _Dim, _A>&& a,
-        TScalarVectorExpr<T, _Dim, _B>&& b,
-        TScalarVectorExpr<T, _Dim, _C>&& c,
+        TScalarVectorExpr<T, _Dim, _A>&& __restrict a,
+        TScalarVectorExpr<T, _Dim, _B>&& __restrict b,
+        TScalarVectorExpr<T, _Dim, _C>&& __restrict c,
         _Op&& ternaryOp)
         : _Op(std::move(ternaryOp))
         , A(std::move(a)), B(std::move(b)), C(std::move(c))
@@ -82,9 +82,9 @@ struct TScalarVectorTernaryOp : private _Op {
 //----------------------------------------------------------------------------
 template <typename T, u32 _Dim, typename _A, typename _B, typename _C, typename _Op>
 NODISCARD inline CONSTEXPR auto MakeScalarVectorOp(
-    TScalarVectorExpr<T, _Dim, _A>&& a,
-    TScalarVectorExpr<T, _Dim, _B>&& b,
-    TScalarVectorExpr<T, _Dim, _C>&& c,
+    TScalarVectorExpr<T, _Dim, _A>&& __restrict a,
+    TScalarVectorExpr<T, _Dim, _B>&& __restrict b,
+    TScalarVectorExpr<T, _Dim, _C>&& __restrict c,
     _Op&& ternaryOp) {
     using op_type = TScalarVectorTernaryOp<T, _Dim, _A, _B, _C, _Op>;
     using destination_type = decltype(ternaryOp(std::declval<T>(), std::declval<T>(), std::declval<T>()));

@@ -678,8 +678,8 @@ struct TScalarVectorBinaryOp : private _Op {
     TScalarVectorExpr<T, _Dim, _Rhs> Rhs;
 
     CONSTEXPR explicit TScalarVectorBinaryOp(
-        TScalarVectorExpr<T, _Dim, _Lhs>&& lhs,
-        TScalarVectorExpr<T, _Dim, _Rhs>&& rhs,
+        TScalarVectorExpr<T, _Dim, _Lhs>&& __restrict lhs,
+        TScalarVectorExpr<T, _Dim, _Rhs>&& __restrict rhs,
         _Op&& binaryOp)
         : _Op(std::move(binaryOp))
         , Lhs(std::move(lhs)), Rhs(std::move(rhs))
@@ -692,8 +692,8 @@ struct TScalarVectorBinaryOp : private _Op {
 //----------------------------------------------------------------------------
 template <typename T, u32 _Dim, typename _Lhs, typename _Rhs, typename _Op>
 NODISCARD CONSTEXPR auto MakeScalarVectorOp(
-    TScalarVectorExpr<T, _Dim, _Lhs>&& lhs,
-    TScalarVectorExpr<T, _Dim, _Rhs>&& rhs,
+    TScalarVectorExpr<T, _Dim, _Lhs>&& __restrict lhs,
+    TScalarVectorExpr<T, _Dim, _Rhs>&& __restrict rhs,
     _Op&& binaryOp) {
     using op_type = TScalarVectorBinaryOp<T, _Dim, _Lhs, _Rhs, _Op>;
     using destination_type = decltype(binaryOp(std::declval<T>(), std::declval<T>()));
