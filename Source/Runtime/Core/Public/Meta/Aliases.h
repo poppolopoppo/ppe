@@ -130,11 +130,11 @@ using i64   = std::int64_t;
 #   define NOOP(...)    (void)0
 #   define NORETURN     [[noreturn]]
 #   if defined(_MSC_VER) && (defined(__INTELLISENSE__) || defined(_PREFAST_))
-#       define CONSTF       __attribute__((const))
-#       define PUREF        __attribute__((pure))
-#   else
 #       define CONSTF
 #       define PUREF
+#   else
+#       define CONSTF       __attribute__((const))
+#       define PUREF        __attribute__((pure))
 #   endif
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
@@ -286,7 +286,7 @@ using i64   = std::int64_t;
 #   endif
 #   define DLL_NOINLINE NO_INLINE
 #else
-#   error "inconsistent configuration"
+// #   error "inconsistent configuration" // <- headers
 #endif
 //----------------------------------------------------------------------------
 #define EXTERN_TEMPLATE_CLASS_DECL(_API) extern template class
