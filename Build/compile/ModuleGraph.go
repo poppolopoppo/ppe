@@ -3,10 +3,8 @@ package compile
 import (
 	"build/utils"
 	"fmt"
-	"math"
 	"sort"
 	"strconv"
-	"sync"
 )
 
 /***************************************
@@ -24,16 +22,11 @@ func (x ModuleDependency) String() string {
 
 type ModuleNode struct {
 	Level   int
-	Ordinal int // Module deterministic sort order
+	Ordinal TargetBuildOrder // Module deterministic sort order
 
 	Dependencies []ModuleDependency
-
-	Files     func() utils.FileSet
-	TotalSize func() uint32
-	Unity     func(int) UnityType
-
-	Rules *ModuleRules
-	Unit  *Unit
+	Rules        *ModuleRules
+	Unit         *Unit
 }
 
 func (x *ModuleNode) Private(each func(Module)) int {
@@ -94,26 +87,24 @@ func (x *ModuleNode) sortDependencies(graph *moduleGraph) {
 }
 
 type ModuleGraph interface {
-	CompileUnits()
-	SortedKeys() []Module
-	Module(utils.BuildAlias) Module
+	SortedModules() []Module
+	Module(ModuleAlias) Module
 	NodeByModule(Module) *ModuleNode
-	NodeByAlias(utils.BuildAlias) *ModuleNode
-	EachNode(func(Module, *ModuleNode))
+	NodeByAlias(ModuleAlias) *ModuleNode
+	EachNode(func(Module, *ModuleNode) error) error
 }
 
 type moduleGraph struct {
-	env     *CompileEnv
 	keys    []Module
-	modules map[string]Module
+	modules map[ModuleAlias]Module
 	nodes   map[Module]*ModuleNode
 }
 
-func (graph *moduleGraph) SortedKeys() []Module {
+func (graph *moduleGraph) SortedModules() []Module {
 	return graph.keys
 }
-func (graph *moduleGraph) Module(name utils.BuildAlias) Module {
-	if module, ok := graph.modules[name.String()]; ok {
+func (graph *moduleGraph) Module(name ModuleAlias) Module {
+	if module, ok := graph.modules[name]; ok {
 		return module
 	} else {
 		utils.LogPanic("unknown module name '%v'", name)
@@ -128,28 +119,34 @@ func (graph *moduleGraph) NodeByModule(module Module) *ModuleNode {
 		return nil
 	}
 }
-func (graph *moduleGraph) NodeByAlias(a utils.BuildAlias) *ModuleNode {
+func (graph *moduleGraph) NodeByAlias(a ModuleAlias) *ModuleNode {
 	return graph.NodeByModule(graph.Module(a))
 }
-func (graph *moduleGraph) EachNode(each func(Module, *ModuleNode)) {
+func (graph *moduleGraph) EachNode(each func(Module, *ModuleNode) error) error {
 	for _, module := range graph.keys {
-		each(module, graph.nodes[module])
+		if err := each(module, graph.nodes[module]); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func NewModuleGraph(env *CompileEnv, targets *BuildModulesT) ModuleGraph {
+func MakeModuleGraph(env *CompileEnv, targets *BuildModules) (ModuleGraph, error) {
 	result := &moduleGraph{
-		env:     env,
-		modules: make(map[string]Module, len(targets.Modules)),
+		modules: make(map[ModuleAlias]Module, len(targets.Modules)),
 		nodes:   make(map[Module]*ModuleNode, len(targets.Modules)),
 	}
 
-	for _, module := range targets.Modules {
-		result.modules[module.String()] = module
+	for _, moduleAlias := range targets.Modules {
+		if module, err := GetBuildModule(moduleAlias); err == nil {
+			result.modules[moduleAlias] = module
+		} else {
+			return nil, err
+		}
 	}
 
-	for _, module := range targets.Modules {
-		result.expandModule(env, module)
+	for _, moduleAlias := range targets.Modules {
+		result.expandModule(env, result.modules[moduleAlias])
 	}
 
 	result.keys = make([]Module, 0, len(result.nodes))
@@ -163,13 +160,13 @@ func NewModuleGraph(env *CompileEnv, targets *BuildModulesT) ModuleGraph {
 		if a.Level != b.Level {
 			return a.Level < b.Level
 		} else {
-			return result.keys[i].ModuleAlias().Compare(result.keys[j].ModuleAlias()) < 0
+			return a.Rules.ModuleAlias.Compare(b.Rules.ModuleAlias) < 0
 		}
 	})
 
 	for ord, module := range result.keys {
 		node := result.nodes[module]
-		node.Ordinal = ord // record the enumeration order in the node
+		node.Ordinal = TargetBuildOrder(ord) // record the enumeration order in the node
 		utils.LogTrace("module %02d#%02d\t|%2d |%2d |%2d |\t%v",
 			node.Level,
 			node.Ordinal,
@@ -182,7 +179,9 @@ func NewModuleGraph(env *CompileEnv, targets *BuildModulesT) ModuleGraph {
 			utils.MakeStringer(func() string {
 				return strconv.FormatInt(int64(node.Runtime(func(Module) {})), 10)
 			}),
-			module.String())
+			utils.MakeStringer(func() string {
+				return module.String()
+			}))
 	}
 
 	for _, node := range result.nodes {
@@ -190,33 +189,12 @@ func NewModuleGraph(env *CompileEnv, targets *BuildModulesT) ModuleGraph {
 		node.sortDependencies(result)
 	}
 
-	return result
-}
-
-func (graph *moduleGraph) CompileUnits() {
-	utils.Assert(func() bool { return graph.env != nil })
-	pbar := utils.LogProgress(0, 0, "%v/Compile", graph.env.EnvironmentAlias())
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(graph.keys))
-
-	for _, m := range graph.keys {
-		go func(module Module) {
-			defer pbar.Inc()
-			defer wg.Done()
-
-			node := graph.NodeByModule(module)
-			node.Unit = graph.env.Compile(node.Rules)
-		}(m)
-	}
-
-	wg.Wait()
-	pbar.Close()
+	return result, nil
 }
 
 func (graph *moduleGraph) expandDependencies(env *CompileEnv, deps ...ModuleAlias) []*ModuleNode {
 	return utils.Map(func(name ModuleAlias) *ModuleNode {
-		if module, ok := graph.modules[name.String()]; ok {
+		if module, ok := graph.modules[name]; ok {
 			return graph.expandModule(env, module)
 		} else {
 			utils.LogPanic("module graph: can't find module dependency <%v>", name)
@@ -229,7 +207,7 @@ func (graph *moduleGraph) expandModule(env *CompileEnv, module Module) (node *Mo
 		return node
 	}
 
-	rules := module.GetModule(env)
+	rules := module.ExpandModule(env)
 
 	private := graph.expandDependencies(env, rules.PrivateDependencies...)
 	public := graph.expandDependencies(env, rules.PublicDependencies...)
@@ -257,18 +235,7 @@ func (graph *moduleGraph) expandModule(env *CompileEnv, module Module) (node *Mo
 		Level:        level,
 		Ordinal:      -1,
 		Dependencies: []ModuleDependency{},
-		Files:        utils.Memoize(rules.Source.GetFileSet),
-		TotalSize: utils.Memoize(func() uint32 {
-			return uint32(node.Files().TotalSize())
-		}),
-		Unity: utils.MemoizePod(func(sizePerUnity int) UnityType {
-			totalSize := float64(node.TotalSize())
-			numUnityFiles := totalSize / float64(sizePerUnity)
-			result := UnityType(int32(math.Ceil(numUnityFiles)))
-			utils.LogTrace("%v: %d unity files (%.2f KiB)", module.GetModule(nil), result, totalSize/1024)
-			return result
-		}),
-		Rules: rules,
+		Rules:        rules,
 	}
 
 	// keys keep track of insertion order
@@ -276,17 +243,17 @@ func (graph *moduleGraph) expandModule(env *CompileEnv, module Module) (node *Mo
 
 	// public and runtime dependencies are viral
 	for i, dep := range private {
-		node.addPrivate(graph.modules[rules.PrivateDependencies[i].String()])
+		node.addPrivate(graph.modules[rules.PrivateDependencies[i]])
 		dep.Public(node.addPrivate)
 		dep.Runtime(node.addRuntime)
 	}
 	for i, dep := range public {
-		node.addPublic(graph.modules[rules.PublicDependencies[i].String()])
+		node.addPublic(graph.modules[rules.PublicDependencies[i]])
 		dep.Public(node.addPublic)
 		dep.Runtime(node.addRuntime)
 	}
 	for i, dep := range runtime {
-		node.addRuntime(graph.modules[rules.RuntimeDependencies[i].String()])
+		node.addRuntime(graph.modules[rules.RuntimeDependencies[i]])
 		dep.Runtime(node.addRuntime)
 	}
 

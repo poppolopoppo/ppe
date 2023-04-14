@@ -1,13 +1,23 @@
 package generic
 
-import "encoding/gob"
+import "build/utils"
 
 func InitGeneric() {
-	gob.Register(GlslangGeneratedHeader{})
-	gob.Register(SpirvToolsGeneratedHeader{})
-	gob.Register(&VulkanHeadersT{})
-	gob.Register(&VulkanBindingsT{})
-	gob.Register(&VulkanInterfaceT{})
-	gob.Register(VulkanGeneratedHeader{})
-	gob.Register(VulkanGeneratedSource{})
+	utils.RegisterSerializable(&GlslangHeaderGenerator{})
+	utils.RegisterSerializable(&GlslangGeneratedHeader{})
+
+	utils.RegisterSerializable(&SpirvToolsHeaderGenerator{})
+	utils.RegisterSerializable(&SpirvToolsGeneratedHeader{})
+
+	utils.RegisterSerializable(&VulkanHeaderGenerator{})
+	utils.RegisterSerializable(&VulkanGeneratedHeader{})
+
+	utils.RegisterSerializable(&VulkanSourceGenerator{})
+	utils.RegisterSerializable(&VulkanGeneratedSource{})
+
+	utils.RegisterSerializable(&VulkanHeaders{})
+	utils.RegisterSerializable(&VulkanBindings{})
+	utils.RegisterSerializable(&VulkanInterface{})
+
+	utils.RegisterSerializable(&VkFunctionPointer{})
 }

@@ -3,101 +3,91 @@ package cmd
 import (
 	. "build/compile"
 	. "build/utils"
-	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 )
 
-type VscodeArgsT struct{}
-
-func (flags *VscodeArgsT) InitFlags(cfg *PersistentMap) {
-}
-func (flags *VscodeArgsT) ApplyVars(cfg *PersistentMap) {
-}
-func (flags *VscodeArgsT) Alias() BuildAlias {
-	return MakeBuildAlias("Flags", "VscodeArgs")
-}
-func (flags *VscodeArgsT) Build(BuildContext) (BuildStamp, error) {
-	return MakeBuildStamp(flags)
-}
-func (flags *VscodeArgsT) GetDigestable(o *bytes.Buffer) {
-}
-
-var VscodeArgs = MakeServiceAccessor[ParsableFlags](newVscodeArgs)
-
-func newVscodeArgs() *VscodeArgsT {
-	return CommandEnv.BuildGraph().Create(&VscodeArgsT{}).GetBuildable().(*VscodeArgsT)
-}
-
-var Vscode = MakeCommand(
+var Vscode = NewCommand(
+	"Configure",
 	"vscode",
 	"generate workspace for Visual Studio Code",
-	func(cmd *CommandEnvT) *VscodeArgsT {
-		AllCompilationFlags.Needed(cmd.Flags)
-		return VscodeArgs.FindOrAdd(cmd.Flags)
-	},
-	func(cmd *CommandEnvT, args *VscodeArgsT) error {
+	OptionCommandRun(func(cc CommandContext) error {
 		outputDir := UFS.Root.Folder(".vscode")
 		LogClaim("generating VSCode workspace in '%v'", outputDir)
 
-		bg := cmd.BuildGraph()
-		builder := bg.Create(&VscodeBuilder{
-			OutputDir: outputDir,
-		}, args.Alias())
-
-		_, result := bg.ForceBuild(builder.GetBuildable())
-		return result.Join().Failure()
-	},
-)
+		result := BuildVscode(outputDir).Build(CommandEnv.BuildGraph(), OptionBuildForce)
+		return result.Failure()
+	}))
 
 /***************************************
  * Visual Studio Code workspace generation
  ***************************************/
 
+func BuildVscode(outputDir Directory) BuildFactoryTyped[*VscodeBuilder] {
+	return func(bi BuildInitializer) (*VscodeBuilder, error) {
+		if err := CreateDirectory(bi, outputDir); err != nil {
+			return nil, err
+		}
+		return &VscodeBuilder{
+			Version:   VscodeBuilderVersion,
+			OutputDir: outputDir,
+		}, nil
+	}
+}
+
+var VscodeBuilderVersion = "VscodeBuilder-1-0-0"
+
 type VscodeBuilder struct {
+	Version   string
 	OutputDir Directory
 }
 
 func (vsc *VscodeBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("Vscode", vsc.OutputDir.String())
 }
-func (vsc *VscodeBuilder) Build(bc BuildContext) (BuildStamp, error) {
+func (vsc *VscodeBuilder) Serialize(ar Archive) {
+	ar.String(&vsc.Version)
+	ar.Serializable(&vsc.OutputDir)
+}
+func (vsc *VscodeBuilder) Build(bc BuildContext) error {
 	LogVerbose("build vscode configuration in '%v'...", vsc.OutputDir)
 
-	/*args := */
-	VscodeArgs.Need(CommandEnv.Flags)
-	environments := BuildEnvironments.Need(bc)
-	modules := BuildModules.Need(bc)
-	targets := BuildTargets.Need(bc)
-	platform := BuildPlatforms.Need(bc).Current()
-	compiler := platform.GetCompiler(bc)
-
-	CommandEnv.ConsumeArgs(-1) // eat args so FBuildExecutor won't use them
+	buildModules, err := GetBuildModules().Need(bc)
+	if err != nil {
+		return err
+	}
+	platform, err := GeLocalHostBuildPlatform().Need(bc)
+	if err != nil {
+		return err
+	}
+	compiler, err := platform.GetCompiler().Need(bc)
+	if err != nil {
+		return err
+	}
 
 	c_cpp_properties_json := vsc.OutputDir.File("c_cpp_properties.json")
 	LogTrace("generating vscode c/c++ properties in '%v'", c_cpp_properties_json)
-	if err := vsc.c_cpp_properties(environments, targets, c_cpp_properties_json); err != nil {
-		return BuildStamp{}, err
+	if err := vsc.c_cpp_properties(bc, c_cpp_properties_json); err != nil {
+		return err
 	}
-	bc.OutputFile(c_cpp_properties_json)
 
 	tasks_json := vsc.OutputDir.File("tasks.json")
 	LogTrace("generating vscode build tasks in '%v'", tasks_json)
-	if err := vsc.tasks(modules, tasks_json); err != nil {
-		return BuildStamp{}, err
+	if err := vsc.tasks(buildModules.Modules, tasks_json); err != nil {
+		return err
 	}
-	bc.OutputFile(tasks_json)
 
 	launch_json := vsc.OutputDir.File("launch.json")
 	LogTrace("generating vscode launch configuratiosn in '%v'", launch_json)
-	if err := vsc.launch_configs(modules, compiler, launch_json); err != nil {
-		return BuildStamp{}, err
+	if err := vsc.launch_configs(buildModules.Programs, compiler, launch_json); err != nil {
+		return err
 	}
-	bc.OutputFile(launch_json)
 
-	return vsc.OutputDir.Build(bc)
+	bc.OutputFile(c_cpp_properties_json, tasks_json, launch_json)
+
+	return nil
 }
 
 func sanitizeEnvironmentDefines(defines StringSet) (StringSet, error) {
@@ -123,7 +113,7 @@ func sanitizeEnvironmentDefines(defines StringSet) (StringSet, error) {
 		}
 	}
 
-	result := StringSet{}
+	result := make(StringSet, 0, len(keys))
 	for key, value := range keys {
 		if len(value) == 0 {
 			result.Append(key)
@@ -135,31 +125,39 @@ func sanitizeEnvironmentDefines(defines StringSet) (StringSet, error) {
 	return result, nil
 }
 
-func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, targets *BuildTargetsT, outputFile Filename) error {
+func (vsc *VscodeBuilder) c_cpp_properties(bc BuildContext, outputFile Filename) error {
 	configurations := []JsonMap{}
 
-	for _, env := range environments.Slice() {
-		environmentAlias := env.EnvironmentAlias()
+	err := ForeachCompileEnvironment(func(u BuildFactoryTyped[*CompileEnv]) error {
+		env, err := u.Need(bc)
+		if err != nil {
+			return err
+		}
 
 		var intelliSenseMode string
 		switch env.GetPlatform().Os {
 		case "Linux":
-			intelliSenseMode = fmt.Sprintf("linux-%s-x64", env.Compiler.FriendlyName())
+			intelliSenseMode = fmt.Sprintf("linux-%s-x64", env.CompilerAlias.CompilerFamily)
 		case "Windows":
-			intelliSenseMode = fmt.Sprintf("windows-%s-x64", env.Compiler.FriendlyName())
+			intelliSenseMode = fmt.Sprintf("windows-%s-x64", env.CompilerAlias.CompilerFamily)
 		default:
 			UnexpectedValue(env.GetPlatform().Os)
 		}
 
 		compiledb := env.IntermediateDir().File("compile_commands.json")
-		if err := vsc.make_compiledb(environmentAlias, compiledb); err != nil {
+		if err := vsc.make_compiledb(env.EnvironmentAlias, compiledb); err != nil {
 			return err
 		}
 
-		translatedUnits := targets.TranslatedUnits()
-		translatedUnits = translatedUnits.RemoveUnless(func(u *Unit) bool {
-			return u.Target.EnvironmentAlias == environmentAlias
-		})
+		targets, err := GetBuildTargets(env.EnvironmentAlias).Need(bc)
+		if err != nil {
+			return err
+		}
+
+		translatedUnits, err := targets.GetTranslatedUnits()
+		if err != nil {
+			return err
+		}
 
 		defines := StringSet{}
 		includePaths := DirSet{}
@@ -168,16 +166,16 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 			includePaths.AppendUniq(u.IncludePaths...)
 		}
 
-		defines, err := sanitizeEnvironmentDefines(defines)
+		defines, err = sanitizeEnvironmentDefines(defines)
 		if err != nil {
 			return nil
 		}
 
 		configurations = append(configurations, JsonMap{
-			"name":             env.EnvironmentAlias().Alias().String(),
+			"name":             env.EnvironmentAlias.String(),
 			"compilerPath":     env.GetCompiler().Executable.String(),
 			"compileCommands":  compiledb.String(),
-			"cStandard":        "c11",
+			"cStandard":        "c17",
 			"cppStandard":      strings.ToLower(env.GetCpp(nil).CppStd.String()),
 			"defines":          defines,
 			"includePath":      includePaths,
@@ -188,19 +186,25 @@ func (vsc *VscodeBuilder) c_cpp_properties(environments *BuildEnvironmentsT, tar
 				"databaseFilename":              env.IntermediateDir().File("vscode-vc.db"),
 			},
 		})
+
+		return nil
+	})
+
+	if err != nil {
+		return err
 	}
 
-	return UFS.Create(outputFile, func(w io.Writer) error {
+	return UFS.SafeCreate(outputFile, func(w io.Writer) error {
 		return JsonSerialize(JsonMap{
 			"version":        4,
 			"configurations": configurations,
 		}, w)
 	})
 }
-func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) error {
+func (vsc *VscodeBuilder) tasks(moduleAliases ModuleAliases, outputFile Filename) error {
 	selfExecutable, err := os.Executable()
 	if err != nil {
-		LogPanicErr(err)
+		return err
 	}
 
 	var problemMatcher string
@@ -213,12 +217,12 @@ func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) err
 		return MakeUnexpectedValueError(problemMatcher, CurrentHost().Id)
 	}
 
-	tasks := Map(func(moduleName string) JsonMap {
-		alias := modules.Modules[moduleName].ModuleAlias()
+	tasks := Map(func(moduleAliases ModuleAlias) JsonMap {
+		label := moduleAliases.String()
 		return JsonMap{
-			"label":   alias.String(),
+			"label":   label,
 			"command": selfExecutable,
-			"args":    []string{"fbuild", "-Ide", alias.String() + "-${command:cpptools.activeConfigName}"},
+			"args":    []string{"fbuild", "-Ide", label + "-${command:cpptools.activeConfigName}"},
 			"options": JsonMap{
 				"cwd": UFS.Root,
 			},
@@ -235,16 +239,16 @@ func (vsc *VscodeBuilder) tasks(modules *BuildModulesT, outputFile Filename) err
 			},
 			"problemMatcher": problemMatcher,
 		}
-	}, modules.ModuleKeys()...)
+	}, moduleAliases...)
 
-	return UFS.Create(outputFile, func(w io.Writer) error {
+	return UFS.SafeCreate(outputFile, func(w io.Writer) error {
 		return JsonSerialize(JsonMap{
 			"version": "2.0.0",
 			"tasks":   tasks,
 		}, w)
 	})
 }
-func (vsc *VscodeBuilder) launch_configs(modules *BuildModulesT, compiler Compiler, outputFile Filename) error {
+func (vsc *VscodeBuilder) launch_configs(programAliases ModuleAliases, compiler Compiler, outputFile Filename) error {
 	var debuggerType string
 	switch CurrentHost().Id {
 	case HOST_LINUX, HOST_DARWIN:
@@ -255,32 +259,33 @@ func (vsc *VscodeBuilder) launch_configs(modules *BuildModulesT, compiler Compil
 		UnexpectedValue(CurrentHost().Id)
 	}
 
-	executableNames := RemoveUnless(func(moduleName string) bool {
-		rules := modules.Modules[moduleName].GetModule(nil)
-		return rules.ModuleType == MODULE_PROGRAM
-	}, modules.ModuleKeys()...)
+	configurations := Map(func(programAlias ModuleAlias) JsonMap {
+		alias := programAlias.String()
+		executable := SanitizePath(alias, '-')
 
-	configurations := Map(func(moduleName string) JsonMap {
-		executable := strings.ReplaceAll(moduleName, "/", "-")
+		environment := []JsonMap{}
+		for name, values := range compiler.GetCompiler().Environment {
+			environment = append(environment, JsonMap{
+				"name":   name,
+				"values": strings.Join(values, ";"),
+			})
+		}
+
 		cfg := JsonMap{
-			"name":        moduleName,
+			"name":        alias,
 			"type":        debuggerType,
 			"request":     "launch",
 			"program":     UFS.Binaries.File(executable + "-${command:cpptools.activeConfigName}" + compiler.Extname(PAYLOAD_EXECUTABLE)),
 			"args":        []string{},
 			"stopAtEntry": false,
 			"cwd":         UFS.Binaries,
+			"environment": environment,
 		}
-		if envPath := compiler.EnvPath(); len(envPath) > 0 {
-			cfg["environment"] = []JsonMap{
-				{"name": "PATH", "value": JoinString(";", envPath...) + ";%PATH%"},
-				{"name": "ASAN_OPTIONS", "value": "windows_hook_rtl_allocators=true"},
-			}
-		}
-		return cfg
-	}, executableNames...)
 
-	return UFS.Create(outputFile, func(w io.Writer) error {
+		return cfg
+	}, programAliases...)
+
+	return UFS.SafeCreate(outputFile, func(w io.Writer) error {
 		return JsonSerialize(JsonMap{
 			"version":        "0.2.0",
 			"configurations": configurations,
@@ -294,7 +299,7 @@ func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) 
 		BffInput: BFFFILE_DEFAULT,
 	}
 
-	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.Alias().String())
+	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.String())
 	fbuildExec.Capture = IsLogLevelActive(LOG_VERYVERBOSE)
 
 	if err := fbuildExec.Run(); err != nil {

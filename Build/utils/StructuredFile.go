@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 const STRUCTUREDFILE_DEFAULT_TAB = "  "
@@ -56,7 +57,7 @@ func (sf *StructuredFile) Site() FileSite { return sf.site }
 
 func (sf *StructuredFile) IndentIFN() {
 	if sf.site.Column == 1 {
-		sf.site.Column += len(sf.tab)
+		sf.site.Column += len(sf.indent)
 		fmt.Fprint(sf.writer, sf.indent)
 	}
 }
@@ -71,6 +72,7 @@ func (sf *StructuredFile) ScopeIndent(infix func()) {
 		sf.LineBreak()
 		sf.BeginIndent()
 		infix()
+		sf.LineBreak()
 		sf.EndIndent()
 	}
 }
@@ -89,14 +91,37 @@ func (sf *StructuredFile) LineBreak() {
 		fmt.Fprintln(sf.writer)
 	}
 }
+func (sf *StructuredFile) Align(column int) {
+	sf.Pad(column, " ")
+}
+func (sf *StructuredFile) Pad(column int, in string) {
+	if sf.site.Column < column {
+		if len(in) == 1 {
+			fmt.Fprint(sf.writer, strings.Repeat(in[:1], column-sf.site.Column))
+		} else {
+			runes := Map(func(r rune) string { return string(r) }, []rune(in)...)
+			for i := sf.site.Column; i < column; i += 1 {
+				fmt.Fprint(sf.writer, runes[i%len(runes)])
+			}
+		}
+
+		sf.site.Column = column
+	}
+}
 
 func (sf *StructuredFile) Print_NoIndent(format string, args ...interface{}) {
-	txt := fmt.Sprintf(format, args...)
-	sf.site.Column += len(txt)
+	txt := format
+	if len(args) > 0 {
+		txt = fmt.Sprintf(format, args...)
+	}
+	sf.site.Column += ansi_escaped_len(txt)
 	fmt.Fprint(sf.writer, txt)
 }
 func (sf *StructuredFile) Println_NoIndent(format string, args ...interface{}) {
-	txt := fmt.Sprintf(format, args...)
+	txt := format
+	if len(args) > 0 {
+		txt = fmt.Sprintf(format, args...)
+	}
 	sf.site.LineBreak()
 	fmt.Fprintln(sf.writer, txt)
 }

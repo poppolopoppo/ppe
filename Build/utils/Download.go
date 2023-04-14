@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,6 +16,9 @@ const (
 	DOWNLOAD_REDIRECT
 )
 
+func (x *DownloadMode) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
+}
 func (x DownloadMode) String() string {
 	switch x {
 	case DOWNLOAD_DEFAULT:
@@ -29,19 +31,18 @@ func (x DownloadMode) String() string {
 	}
 }
 
-func NewDownloader(uri string, dst Filename, mode DownloadMode) *Downloader {
+func BuildDownloader(uri string, dst Filename, mode DownloadMode) BuildFactoryTyped[*Downloader] {
 	parsedUrl, err := url.Parse(uri)
 	if err != nil {
 		LogFatal("download: %v", err)
 	}
-	result := &Downloader{
-		Source:      *parsedUrl,
-		Destination: dst,
-		Mode:        mode,
-	}
-	return CommandEnv.BuildGraph().
-		Create(result).
-		GetBuildable().(*Downloader)
+	return MakeBuildFactory(func(bi BuildInitializer) (*Downloader, error) {
+		return &Downloader{
+			Source:      *parsedUrl,
+			Destination: dst,
+			Mode:        mode,
+		}, nil
+	})
 }
 
 type Downloader struct {
@@ -53,7 +54,7 @@ type Downloader struct {
 func (dl *Downloader) Alias() BuildAlias {
 	return MakeBuildAlias("Download", dl.Destination.String())
 }
-func (dl *Downloader) Build(bc BuildContext) (BuildStamp, error) {
+func (dl *Downloader) Build(bc BuildContext) error {
 	var err error
 	switch dl.Mode {
 	case DOWNLOAD_DEFAULT:
@@ -64,15 +65,27 @@ func (dl *Downloader) Build(bc BuildContext) (BuildStamp, error) {
 
 	if err == nil {
 		bc.OutputFile(dl.Destination)
-		return MakeBuildStamp(dl)
-	} else {
-		return BuildStamp{}, err
 	}
+	return err
 }
-func (dl *Downloader) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(dl.Source.String())
-	dl.Destination.GetDigestable(o)
-	o.WriteString(dl.Mode.String())
+func (dl *Downloader) Serialize(ar Archive) {
+	if ar.Flags().IsLoading() {
+		var uri string
+		ar.String(&uri)
+
+		parsedUrl, err := url.Parse(uri)
+		if err == nil {
+			dl.Source = *parsedUrl
+		} else {
+			ar.OnError(err)
+		}
+	} else {
+		uri := dl.Source.String()
+		ar.String(&uri)
+	}
+
+	ar.Serializable(&dl.Destination)
+	ar.Serializable(&dl.Mode)
 }
 
 type downloadCacheResult interface {
@@ -98,14 +111,15 @@ func downloadFromCachedArtifcats(resp *http.Response) (Filename, downloadCacheRe
 	if contentHash = resp.Header.Values("Content-Md5"); contentHash == nil {
 		contentHash = resp.Header.Values("X-Goog-Hash")
 	}
-	if contentHash != nil {
-		digest := MakeDigester()
-		for _, x := range contentHash {
-			digest.Write([]byte(x))
-		}
 
-		uid := digest.Finalize()
-		inCache := UFS.Transient.Folder("DownloadCache").File(fmt.Sprintf("%X.bin", uid.Slice()))
+	if contentHash != nil {
+		uid := SerializeAnyFingerprint(func(ar Archive) {
+			for _, it := range contentHash {
+				ar.String(&it)
+			}
+		}, Fingerprint{})
+
+		inCache := UFS.Transient.Folder("DownloadCache").File(fmt.Sprintf("%v.bin", uid))
 		if info, err := inCache.Info(); info != nil && err == nil {
 			var totalSize int
 			totalSize, err = strconv.Atoi(resp.Header.Get("Content-Length"))
@@ -198,8 +212,10 @@ func DownloadHttpRedirect(dst Filename, src url.URL) error {
 	}
 	defer resp.Body.Close()
 
-	parse := bytes.Buffer{}
-	_, err = io.Copy(&parse, resp.Body)
+	parse := TransientBuffer.Allocate()
+	defer TransientBuffer.Release(parse)
+
+	_, err = io.Copy(parse, resp.Body)
 
 	if err == nil {
 		match := re_metaRefreshRedirect.FindSubmatch(parse.Bytes())

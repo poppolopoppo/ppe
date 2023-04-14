@@ -3,7 +3,6 @@ package linux
 import (
 	. "build/compile"
 	. "build/utils"
-	"bytes"
 	"strings"
 )
 
@@ -46,14 +45,19 @@ func (x *CompilerType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x CompilerType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *CompilerType) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x CompilerType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *CompilerType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *CompilerType) AutoComplete(in AutoComplete) {
+	for _, it := range CompilerTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -142,8 +146,13 @@ func (v *LlvmVersion) Set(in string) (err error) {
 	}
 	return err
 }
-func (v LlvmVersion) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(v.String())
+func (x *LlvmVersion) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
+}
+func (x *LlvmVersion) AutoComplete(in AutoComplete) {
+	for _, it := range LlvmVersions() {
+		in.Add(it.String())
+	}
 }
 
 func getCppStdFromLlvm(ver LlvmVersion) CppStdType {
@@ -207,12 +216,17 @@ func (x *DumpRecordLayoutsType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x DumpRecordLayoutsType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *DumpRecordLayoutsType) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x DumpRecordLayoutsType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *DumpRecordLayoutsType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *DumpRecordLayoutsType) AutoComplete(in AutoComplete) {
+	for _, it := range DumpRecordLayouts() {
+		in.Add(it.String())
+	}
 }

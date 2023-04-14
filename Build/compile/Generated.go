@@ -2,47 +2,82 @@ package compile
 
 import (
 	utils "build/utils"
-	"bytes"
-	"fmt"
 	"io"
 )
 
-type GeneratorContext struct {
-	Env   *CompileEnv
-	Rules *GeneratedRules
-	Unit  *Unit
-	utils.BuildContext
+/***************************************
+ * Generated
+ ***************************************/
+
+func MakeGeneratedAlias(output utils.Filename) utils.BuildAlias {
+	return utils.MakeBuildAlias("Generated", output.String())
 }
+
+type Generated interface {
+	Generate(utils.BuildContext, *BuildGenerated, io.Writer) error
+	utils.Serializable
+}
+
+type BuildGenerated struct {
+	OutputFile utils.Filename
+	Generated
+}
+
+func (x *BuildGenerated) Alias() utils.BuildAlias {
+	return MakeGeneratedAlias(x.OutputFile)
+}
+func (x *BuildGenerated) Build(bc utils.BuildContext) error {
+	err := utils.UFS.SafeCreate(x.OutputFile, func(w io.Writer) error {
+		return x.Generate(bc, x, w)
+	})
+	if err == nil {
+		bc.OutputFile(x.OutputFile)
+		return nil
+	} else {
+		return err
+	}
+}
+func (x *BuildGenerated) Serialize(ar utils.Archive) {
+	ar.Serializable(&x.OutputFile)
+	utils.SerializeExternal(ar, &x.Generated)
+}
+
+/***************************************
+ * Generator
+ ***************************************/
 
 type Generator interface {
-	Generate(GeneratorContext, io.Writer) error
-	utils.Digestable
+	CreateGenerated(unit *Unit, output utils.Filename) Generated
+	utils.Serializable
 }
 
-type GeneratedRules struct {
+type GeneratorList []GeneratorRules
+
+func (list *GeneratorList) Append(it ...GeneratorRules) {
+	*list = append(*list, it...)
+}
+func (list *GeneratorList) Prepend(it ...GeneratorRules) {
+	*list = append(it, *list...)
+}
+func (list *GeneratorList) Serialize(ar utils.Archive) {
+	utils.SerializeSlice(ar, (*[]GeneratorRules)(list))
+}
+
+type GeneratorRules struct {
 	GeneratedName string
 	Visibility    VisibilityType
 	Generator
 }
 
-type Generated interface {
-	GetGenerated() *GeneratedRules
-	utils.Digestable
-	fmt.Stringer
-}
-
-func (rules *GeneratedRules) String() string {
-	return rules.GeneratedName
-}
-func (rules *GeneratedRules) GetGenerated() *GeneratedRules {
+func (rules *GeneratorRules) GetGenerator() *GeneratorRules {
 	return rules
 }
-func (rules *GeneratedRules) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(rules.GeneratedName)
-	rules.Visibility.GetDigestable(o)
-	rules.Generator.GetDigestable(o)
+func (rules *GeneratorRules) Serialize(ar utils.Archive) {
+	ar.String(&rules.GeneratedName)
+	ar.Serializable(&rules.Visibility)
+	utils.SerializeExternal(ar, &rules.Generator)
 }
-func (rules *GeneratedRules) GetGenerateDir(unit *Unit) utils.Directory {
+func (rules *GeneratorRules) GetGenerateDir(unit *Unit) utils.Directory {
 	result := unit.GeneratedDir
 	switch rules.Visibility {
 	case PRIVATE:
@@ -54,36 +89,20 @@ func (rules *GeneratedRules) GetGenerateDir(unit *Unit) utils.Directory {
 	}
 	return result
 }
-func (rules *GeneratedRules) GetGenerateFile(unit *Unit) utils.Filename {
+func (rules *GeneratorRules) GetGenerateFile(unit *Unit) utils.Filename {
 	return rules.GetGenerateDir(unit).AbsoluteFile(rules.GeneratedName)
 }
 
-func (rules *GeneratedRules) Generate(bc utils.BuildContext, env *CompileEnv, unit *Unit) error {
+func (rules *GeneratorRules) CreateGenerated(bc utils.BuildContext, module Module, unit *Unit) *BuildGenerated {
 	outputFile := rules.GetGenerateFile(unit)
-	err := utils.UFS.LazyCreate(outputFile, func(w io.Writer) error {
-		return rules.Generator.Generate(GeneratorContext{
-			BuildContext: bc,
-			Env:          env,
-			Rules:        rules,
-			Unit:         unit,
-		}, w)
-	})
-	if err == nil {
-		bc.OutputFile(outputFile)
-		unit.GeneratedFiles.Append(outputFile)
-		return nil
+	generated := &BuildGenerated{
+		OutputFile: outputFile,
+		Generated:  rules.Generator.CreateGenerated(unit, outputFile),
 	}
-	return err
-}
 
-type GeneratedList []Generated
+	bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (*BuildGenerated, error) {
+		return generated, nil
+	}))
 
-func (list *GeneratedList) Append(it ...Generated) {
-	*list = append(*list, it...)
-}
-func (list *GeneratedList) Prepend(it ...Generated) {
-	*list = append(it, *list...)
-}
-func (list GeneratedList) GetDigestable(o *bytes.Buffer) {
-	utils.MakeDigestable(o, list...)
+	return generated
 }

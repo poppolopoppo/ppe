@@ -2,74 +2,134 @@ package compile
 
 import (
 	"build/utils"
-	"bytes"
 	"fmt"
 	"strings"
-	"sync"
-	"time"
 )
 
-type CompileEnv struct {
-	Platform
-	Configuration
-	Compiler
-	*CompileFlagsT
-	Facet
+/***************************************
+ * Environment Alias
+ ***************************************/
+
+type EnvironmentAlias struct {
+	PlatformAlias
+	ConfigurationAlias
 }
 
-func NewCompileEnv(
-	platform Platform,
-	config Configuration,
-	compiler Compiler,
-	compileFlags *CompileFlagsT) (result *CompileEnv) {
-	result = &CompileEnv{
-		Platform:      platform,
-		Configuration: config,
-		Compiler:      compiler,
-		CompileFlagsT: compileFlags,
-		Facet:         NewFacet(),
+func NewEnvironmentAlias(platform Platform, config Configuration) EnvironmentAlias {
+	return EnvironmentAlias{
+		PlatformAlias:      platform.GetPlatform().PlatformAlias,
+		ConfigurationAlias: config.GetConfig().ConfigurationAlias,
 	}
+}
+func (x EnvironmentAlias) Valid() bool {
+	return x.PlatformAlias.Valid() && x.ConfigurationAlias.Valid()
+}
+func (x EnvironmentAlias) Alias() utils.BuildAlias {
+	return utils.MakeBuildAlias("Rules", "Environment", x.String())
+}
+func (x *EnvironmentAlias) Serialize(ar utils.Archive) {
+	ar.Serializable(&x.PlatformAlias)
+	ar.Serializable(&x.ConfigurationAlias)
+}
+func (x EnvironmentAlias) Compare(o EnvironmentAlias) int {
+	if cmp := x.PlatformAlias.Compare(o.PlatformAlias); cmp == 0 {
+		return x.ConfigurationAlias.Compare(o.ConfigurationAlias)
+	} else {
+		return cmp
+	}
+}
+func (x *EnvironmentAlias) Set(in string) error {
+	if _, err := fmt.Sscanf(in, "%s-%s", &x.PlatformName, &x.ConfigName); err == nil {
+		if err := x.PlatformAlias.Set(x.PlatformName); err != nil {
+			return err
+		}
+		if err := x.ConfigurationAlias.Set(x.ConfigName); err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return err
+	}
+}
+func (x EnvironmentAlias) String() string {
+	utils.Assert(func() bool { return x.Valid() })
+	return fmt.Sprintf("%v-%v", x.PlatformName, x.ConfigName)
+}
+func (x EnvironmentAlias) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+func (x *EnvironmentAlias) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
+}
+func (x *EnvironmentAlias) AutoComplete(in utils.AutoComplete) {
+	ForeachEnvironmentAlias(func(ea EnvironmentAlias) error {
+		in.Add(ea.String())
+		return nil
+	})
+}
 
-	result.Facet.Defines.Append(
-		"BUILD_ENVIRONMENT="+result.String(),
-		"BUILD_PLATFORM="+result.GetPlatform().PlatformName,
-		"BUILD_CONFIG="+result.GetConfig().ConfigName,
-		"BUILD_COMPILER="+result.GetCompiler().CompilerName,
-		"BUILD_FAMILY="+strings.Join(result.Family(), "-"),
-		"BUILD_"+strings.Join(result.Family(), "_"))
+/***************************************
+ * Compilation Environment
+ ***************************************/
 
-	result.Facet.IncludePaths.Append(utils.UFS.Source)
+type CompileEnv struct {
+	EnvironmentAlias EnvironmentAlias
+	Facet
 
-	result.Facet.Append(
-		result.GetPlatform(),
-		result.GetConfig(),
-		result.GetCompiler())
-
-	utils.LogDebug("%s: %s", result, &result.Facet)
-
-	return result
+	CompilerAlias CompilerAlias
+	CompileFlags  CompileFlags
 }
 
 func (env *CompileEnv) Family() []string {
-	return []string{env.GetPlatform().PlatformName, env.GetConfig().ConfigName}
+	return []string{env.EnvironmentAlias.PlatformName, env.EnvironmentAlias.ConfigName}
 }
 func (env *CompileEnv) String() string {
-	return strings.Join(append([]string{env.GetCompiler().CompilerName}, env.Family()...), "_")
+	return strings.Join(append([]string{env.CompilerAlias.CompilerName}, env.Family()...), "_")
 }
-func (env *CompileEnv) GetDigestable(o *bytes.Buffer) {
-	env.Platform.GetDigestable(o)
-	env.Configuration.GetDigestable(o)
-	env.Compiler.GetDigestable(o)
-	env.CompileFlagsT.GetDigestable(o)
-	env.Facet.GetDigestable(o)
+func (env *CompileEnv) Serialize(ar utils.Archive) {
+	ar.Serializable(&env.EnvironmentAlias)
+	ar.Serializable(&env.Facet)
+	ar.Serializable(&env.CompilerAlias)
+	utils.SerializeParsableFlags(ar, &env.CompileFlags)
 }
 
-func (env *CompileEnv) GetPlatform() *PlatformRules { return env.Platform.GetPlatform() }
-func (env *CompileEnv) GetConfig() *ConfigRules     { return env.Configuration.GetConfig() }
-func (env *CompileEnv) GetCompiler() *CompilerRules { return env.Compiler.GetCompiler() }
-func (env *CompileEnv) GetFacet() *Facet            { return &env.Facet }
+func (env *CompileEnv) GetBuildPlatform() (Platform, error) {
+	return utils.FindGlobalBuildable[Platform](env.EnvironmentAlias.PlatformAlias)
+}
+func (env *CompileEnv) GetBuildConfig() (*BuildConfig, error) {
+	return utils.FindGlobalBuildable[*BuildConfig](env.EnvironmentAlias.ConfigurationAlias)
+}
+func (env *CompileEnv) GetBuildCompiler() (Compiler, error) {
+	return utils.FindGlobalBuildable[Compiler](env.CompilerAlias)
+}
 
-func (env *CompileEnv) Extname(payload PayloadType) string { return env.Compiler.Extname(payload) }
+func (env *CompileEnv) GetPlatform() *PlatformRules {
+	if platform, err := env.GetBuildPlatform(); err == nil {
+		return platform.GetPlatform()
+	} else {
+		utils.LogPanicErr(err)
+		return nil
+	}
+}
+func (env *CompileEnv) GetConfig() *ConfigRules {
+	if config, err := env.GetBuildConfig(); err == nil {
+		return config.GetConfig()
+	} else {
+		utils.LogPanicErr(err)
+		return nil
+	}
+}
+func (env *CompileEnv) GetCompiler() *CompilerRules {
+	if compiler, err := env.GetBuildCompiler(); err == nil {
+		return compiler.GetCompiler()
+	} else {
+		utils.LogPanicErr(err)
+		return nil
+	}
+}
+
+func (env *CompileEnv) GetFacet() *Facet { return &env.Facet }
+
 func (env *CompileEnv) GeneratedDir() utils.Directory {
 	return utils.UFS.Generated.Folder(env.Family()...)
 }
@@ -78,9 +138,8 @@ func (env *CompileEnv) IntermediateDir() utils.Directory {
 }
 func (env *CompileEnv) GetCpp(module *ModuleRules) CppRules {
 	result := CppRules{}
-	if env.CompileFlagsT != nil {
-		result.Inherit((*CppRules)(env.CompileFlagsT))
-	}
+	result.Inherit((*CppRules)(&env.CompileFlags))
+
 	if module != nil {
 		result.Inherit(&module.CppRules)
 	}
@@ -135,237 +194,259 @@ func (env *CompileEnv) GetPayloadType(module *ModuleRules, link LinkType) (resul
 	return result
 }
 
-func (env *CompileEnv) EnvironmentAlias() EnvironmentAlias {
-	return NewEnvironmentAlias(env.Platform, env.Configuration)
-}
 func (env *CompileEnv) ModuleAlias(module Module) TargetAlias {
-	return NewTargetAlias(module, env.Platform, env.Configuration)
+	return TargetAlias{
+		EnvironmentAlias: env.EnvironmentAlias,
+		ModuleAlias:      module.GetModule().ModuleAlias,
+	}
 }
-func (env *CompileEnv) Compile(module *ModuleRules) *Unit {
-	rootDir := module.ModuleDir
+func (env CompileEnv) Compile(compiler Compiler, module Module) (*Unit, error) {
+	moduleRules := module.GetModule()
+	relativePath := moduleRules.RelativePath()
 
 	unit := &Unit{
-		Target:          env.ModuleAlias(module),
-		Source:          module.Source,
-		ModuleDir:       module.ModuleDir,
-		GeneratedDir:    env.GeneratedDir().Folder(module.Path()...),
-		IntermediateDir: env.IntermediateDir().Folder(module.Path()...),
-		Compiler:        env.Compiler,
-		CppRules:        env.GetCpp(module),
+		Target: TargetAlias{
+			EnvironmentAlias: env.EnvironmentAlias,
+			ModuleAlias:      moduleRules.ModuleAlias,
+		},
+		Source:          moduleRules.Source,
+		ModuleDir:       moduleRules.ModuleDir,
+		GeneratedDir:    env.GeneratedDir().AbsoluteFolder(relativePath),
+		IntermediateDir: env.IntermediateDir().AbsoluteFolder(relativePath),
+		CompilerAlias:   env.CompilerAlias,
+		CppRules:        env.GetCpp(moduleRules),
+		Environment:     compiler.GetCompiler().Environment,
 	}
-	unit.Payload = env.GetPayloadType(module, unit.Link)
-	unit.OutputFile = unit.GetPayloadOutput(utils.Filename{
-		Dirname:  rootDir[:len(rootDir)-1],
-		Basename: rootDir[len(rootDir)-1],
-	}, unit.Payload)
-
-	utils.UFS.Mkdir(unit.OutputFile.Dirname)
-	utils.UFS.Mkdir(unit.IntermediateDir)
+	unit.Payload = env.GetPayloadType(moduleRules, unit.Link)
+	unit.OutputFile = unit.GetPayloadOutput(compiler, unit.ModuleDir.Parent().File(unit.Target.ModuleAlias.ModuleName), unit.Payload)
 
 	switch unit.PCH {
 	case PCH_DISABLED:
 		break
 	case PCH_MONOLITHIC, PCH_SHARED:
-		if module.PrecompiledHeader == nil || module.PrecompiledSource == nil {
-			if module.PrecompiledHeader != nil {
-				utils.LogPanic("unit is using PCH_%s, but precompiled header is nil (source: %v)", unit.PCH, module.PrecompiledSource)
+		if moduleRules.PrecompiledHeader == nil || moduleRules.PrecompiledSource == nil {
+			if moduleRules.PrecompiledHeader != nil {
+				utils.LogPanic("unit is using PCH_%s, but precompiled header is nil (source: %v)", unit.PCH, moduleRules.PrecompiledSource)
 			}
-			if module.PrecompiledSource != nil {
-				utils.LogPanic("unit is using PCH_%s, but precompiled source is nil (header: %v)", unit.PCH, module.PrecompiledHeader)
+			if moduleRules.PrecompiledSource != nil {
+				utils.LogPanic("unit is using PCH_%s, but precompiled source is nil (header: %v)", unit.PCH, moduleRules.PrecompiledHeader)
 			}
 			unit.PCH = PCH_DISABLED
 		} else {
-			unit.PrecompiledHeader = *module.PrecompiledHeader
+			unit.PrecompiledHeader = *moduleRules.PrecompiledHeader
 			unit.PrecompiledSource = unit.PrecompiledHeader
 
 			utils.IfWindows(func() {
 				// CPP is only used on Windows platform
-				unit.PrecompiledSource = *module.PrecompiledSource
+				unit.PrecompiledSource = *moduleRules.PrecompiledSource
 			})
 
-			utils.Assert(func() bool { return module.PrecompiledHeader.Exists() })
-			utils.Assert(func() bool { return module.PrecompiledSource.Exists() })
-			unit.PrecompiledObject = unit.GetPayloadOutput(unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
+			utils.Assert(func() bool { return moduleRules.PrecompiledHeader.Exists() })
+			utils.Assert(func() bool { return moduleRules.PrecompiledSource.Exists() })
+			unit.PrecompiledObject = unit.GetPayloadOutput(compiler, unit.PrecompiledSource, PAYLOAD_PRECOMPILEDHEADER)
 		}
 	default:
 		utils.UnexpectedValuePanic(unit.PCH, unit.PCH)
 	}
 
 	unit.Facet = NewFacet()
-	unit.Compiler = env.Compiler
-	unit.Facet.Append(
-		env,
-		module)
+	unit.Facet.Append(&env, moduleRules)
 
-	unit.Decorate(
-		env,
-		module,
-		env.GetPlatform(),
-		env.GetConfig())
-
-	return unit
+	return unit, unit.Decorate(&env, moduleRules, env.GetPlatform(), env.GetConfig())
 }
-func (env *CompileEnv) Link(bc utils.BuildContext, moduleGraph ModuleGraph) (utils.SetT[*Unit], error) {
-	pbar := utils.LogProgress(0, len(moduleGraph.SortedKeys()), "%v/Link", env)
+func (env *CompileEnv) Link(moduleGraph ModuleGraph) (utils.SetT[*Unit], error) {
+	pbar := utils.LogProgress(0, len(moduleGraph.SortedModules()), "%v/Link", env)
 	defer pbar.Close()
+
+	err := utils.ParallelRange(func(module Module) error {
+		defer pbar.Inc()
+
+		node := moduleGraph.NodeByModule(module)
+
+		node.Unit.Ordinal = node.Ordinal
+		node.Unit.Defines.Append(
+			"BUILD_TARGET_NAME="+node.Unit.Target.ModuleAlias.String(),
+			fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", node.Unit.Ordinal))
+
+		node.Range(func(dep Module, vis VisibilityType) {
+			other := moduleGraph.NodeByModule(dep)
+			moduleType := other.Rules.ModuleType
+
+			switch other.Unit.Payload {
+			case PAYLOAD_HEADERS:
+				node.Unit.IncludeDependencies.Append(other.Unit.Target)
+			case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER:
+				node.Unit.CompileDependencies.Append(other.Unit.Target)
+			case PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
+				switch vis {
+				case PUBLIC, PRIVATE:
+					if moduleType == MODULE_LIBRARY {
+						node.Unit.LinkDependencies.AppendUniq(other.Unit.Target)
+					} else {
+						node.Unit.CompileDependencies.AppendUniq(other.Unit.Target)
+					}
+				case RUNTIME:
+					if other.Unit.Payload == PAYLOAD_SHAREDLIB {
+						node.Unit.RuntimeDependencies.AppendUniq(other.Unit.Target)
+					} else {
+						utils.LogPanic("%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
+							node.Unit.Payload, node.Unit, node.Unit.Payload, other, vis,
+							node.Dependencies)
+					}
+				default:
+					utils.UnexpectedValue(vis)
+				}
+			case PAYLOAD_EXECUTABLE:
+				fallthrough // can't depend on an executable
+			default:
+				utils.UnexpectedValuePanic(node.Unit.Payload, other.Unit.Payload)
+			}
+
+		}, VIS_EVERYTHING)
+
+		return nil
+	}, moduleGraph.SortedModules()...)
+	if err != nil {
+		return utils.SetT[*Unit]{}, err
+	}
+
+	pbar.Reset()
 
 	linked := utils.NewSet[*Unit]()
 
-	wg := sync.WaitGroup{}
-	wg.Add(len(moduleGraph.SortedKeys()))
-
-	moduleGraph.EachNode(func(module Module, node *ModuleNode) {
-		go func(node *ModuleNode) {
-			defer pbar.Inc()
-			defer wg.Done()
-
-			node.Unit.Ordinal = node.Ordinal
-			node.Unit.Defines.Append(
-				"BUILD_TARGET_NAME="+node.Unit.Target.GetModuleAlias().String(),
-				fmt.Sprintf("BUILD_TARGET_ORDINAL=%d", node.Unit.Ordinal))
-
-			node.Range(func(dep Module, vis VisibilityType) {
-				other := moduleGraph.NodeByModule(dep)
-				moduleType := other.Rules.ModuleType
-
-				switch other.Unit.Payload {
-				case PAYLOAD_HEADERS:
-					node.Unit.IncludeDependencies.Append(other.Unit.Target)
-				case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER:
-					node.Unit.CompileDependencies.Append(other.Unit.Target)
-				case PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
-					switch vis {
-					case PUBLIC, PRIVATE:
-						if moduleType != MODULE_EXTERNAL {
-							node.Unit.LinkDependencies.AppendUniq(other.Unit.Target)
-						} else {
-							node.Unit.CompileDependencies.AppendUniq(other.Unit.Target)
-						}
-					case RUNTIME:
-						if other.Unit.Payload == PAYLOAD_SHAREDLIB {
-							node.Unit.RuntimeDependencies.AppendUniq(other.Unit.Target)
-						} else {
-							utils.LogPanic("%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
-								node.Unit.Payload, node.Unit, node.Unit.Payload, other, vis,
-								node.Dependencies)
-						}
-					default:
-						utils.UnexpectedValue(vis)
-					}
-				case PAYLOAD_EXECUTABLE:
-					fallthrough // can't depend on an executable
-				default:
-					utils.UnexpectedValuePanic(node.Unit.Payload, other.Unit.Payload)
-				}
-
-			}, VIS_EVERYTHING)
-
-			if node.Unit.Unity == UNITY_AUTOMATIC {
-				node.Unit.Unity = node.Unity(env.SizePerUnity.Get())
-			}
-
-			for _, x := range node.Rules.Generateds {
-				if err := x.GetGenerated().Generate(bc, env, node.Unit); err != nil {
-					utils.LogPanicErr(err)
-				}
-			}
-
-		}(node)
-	})
-
-	wg.Wait()
-	pbar.Set(0)
-
-	moduleGraph.EachNode(func(module Module, node *ModuleNode) {
+	err = moduleGraph.EachNode(func(module Module, node *ModuleNode) error {
 		defer pbar.Inc()
 
 		node.Unit.IncludeDependencies.Range(func(target TargetAlias) {
-			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			other := moduleGraph.NodeByAlias(target.ModuleAlias)
 			utils.LogDebug("[%v] include dep -> %v", node.Unit.Target, target)
 			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
 		})
 
 		node.Unit.CompileDependencies.Range(func(target TargetAlias) {
-			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			other := moduleGraph.NodeByAlias(target.ModuleAlias)
 			utils.LogDebug("[%v] compile dep -> %v", node.Unit.Target, target)
 			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
 		})
 
 		node.Unit.LinkDependencies.Range(func(target TargetAlias) {
-			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			other := moduleGraph.NodeByAlias(target.ModuleAlias)
 			utils.LogDebug("[%v] link dep -> %v", node.Unit.Target, target)
 			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
 		})
 
 		node.Unit.RuntimeDependencies.Range(func(target TargetAlias) {
-			other := moduleGraph.NodeByAlias(target.GetModuleAlias())
+			other := moduleGraph.NodeByAlias(target.ModuleAlias)
 			utils.LogDebug("[%v] runtime dep -> %v", node.Unit.Target, target)
 			node.Unit.IncludePaths.Append(other.Unit.TransitiveFacet.IncludePaths...)
 			node.Unit.ForceIncludes.Append(other.Unit.TransitiveFacet.ForceIncludes...)
-
 		})
 
-		node.Unit.Decorate(env, node.Unit.GetCompiler())
+		if err := node.Unit.Decorate(env, node.Unit.GetCompiler()); err != nil {
+			return err
+		}
 		node.Unit.Facet.PerformSubstitutions()
 
 		linked.Append(node.Unit)
+		return nil
 	})
 
-	return linked, nil
+	return linked, err
 }
 
-type BuildEnvironmentsT struct {
-	utils.SetT[*CompileEnv]
+/***************************************
+ * Compilation Environment Factory
+ ***************************************/
+
+func (env *CompileEnv) Alias() utils.BuildAlias {
+	return env.EnvironmentAlias.Alias()
 }
+func (env *CompileEnv) Build(bc utils.BuildContext) error {
+	flags := GetCompileFlags()
+	env.CompileFlags = *flags
+	env.CompilerAlias = CompilerAlias{}
 
-func (b *BuildEnvironmentsT) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Build", "Environments")
-}
-func (b *BuildEnvironmentsT) Build(bc utils.BuildContext) (utils.BuildStamp, error) {
-	b.Clear()
-
-	compileFlags := CompileFlags.FindOrAdd(utils.CommandEnv.Flags)
-	bc.DependsOn(compileFlags)
-
-	allPlatforms := BuildPlatforms.Need(bc).Values
-	allConfigs := BuildConfigs.Need(bc).Values
-
-	count := len(allPlatforms) * len(allConfigs)
-
-	pbar := utils.LogProgress(0, count, b.Alias().String())
-	defer pbar.Close()
-
-	digester := utils.MakeDigester()
-	for _, platform := range allPlatforms {
-		compiler := platform.GetCompiler(bc)
-
-		for _, config := range allConfigs {
-			env := NewCompileEnv(platform, config, compiler, compileFlags)
-
-			utils.LogVerbose("build: new compile environment %v", env)
-			pbar.Inc()
-
-			b.Append(env)
-			digester.Append(env)
+	if platform, err := env.GetBuildPlatform(); err == nil {
+		if compiler, err := platform.GetCompiler().Need(bc); err == nil {
+			env.CompilerAlias = compiler.GetCompiler().CompilerAlias
+		} else {
+			return err
 		}
+	} else {
+		return err
 	}
 
-	utils.LogTrace("prepared %d compilation environments from %d platforms and %d configs",
-		b.Len(), len(allPlatforms), len(allConfigs))
-	return utils.MakeTimedBuildStamp(time.Now(), digester.Finalize())
-}
-func (b *BuildEnvironmentsT) GetEnvironment(alias EnvironmentAlias) *CompileEnv {
-	for _, env := range b.SetT {
-		if env.EnvironmentAlias() == alias {
-			return env
-		}
-	}
-	utils.LogPanic("unknown compile environment <%v>", alias)
+	env.Facet = NewFacet()
+	env.Facet.Defines.Append(
+		"BUILD_ENVIRONMENT="+env.String(),
+		"BUILD_PLATFORM="+env.EnvironmentAlias.PlatformName,
+		"BUILD_CONFIG="+env.EnvironmentAlias.ConfigName,
+		"BUILD_COMPILER="+env.CompilerAlias.String(),
+		"BUILD_FAMILY="+strings.Join(env.Family(), "-"),
+		"BUILD_"+strings.Join(env.Family(), "_"))
+
+	env.Facet.IncludePaths.Append(utils.UFS.Source)
+
+	env.Facet.Append(
+		env.GetPlatform(),
+		env.GetConfig(),
+		env.GetCompiler())
+
 	return nil
 }
 
-var BuildEnvironments = utils.MakeBuildable(func(bi utils.BuildInit) *BuildEnvironmentsT {
-	result := &BuildEnvironmentsT{}
-	bi.DependsOn(CompileFlags.FindOrAdd(utils.CommandEnv.Flags))
+func GetCompileEnvironment(env EnvironmentAlias) utils.BuildFactoryTyped[*CompileEnv] {
+	return func(bi utils.BuildInitializer) (*CompileEnv, error) {
+		// register dependency to Configuration/Platform
+		// Compiler is a dynamic dependency, since it depends on CompileFlags
+
+		config, err := GetBuildConfig(env.ConfigurationAlias).Need(bi)
+		if err != nil {
+			return nil, err
+		}
+
+		platform, err := GetBuildPlatform(env.PlatformAlias).Need(bi)
+		if err != nil {
+			return nil, err
+		}
+
+		return &CompileEnv{
+			EnvironmentAlias: NewEnvironmentAlias(platform, config),
+			Facet:            NewFacet(),
+		}, nil
+	}
+}
+
+func ForeachEnvironmentAlias(each func(EnvironmentAlias) error) error {
+	for _, platformName := range AllPlatforms.Keys() {
+		for _, configName := range AllConfigurations.Keys() {
+			ea := EnvironmentAlias{
+				PlatformAlias:      NewPlatformAlias(platformName),
+				ConfigurationAlias: NewConfigurationAlias(configName),
+			}
+			if err := each(ea); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func GetEnvironmentAliases() (result []EnvironmentAlias) {
+	result = make([]EnvironmentAlias, 0, AllPlatforms.Len()*AllConfigurations.Len())
+	for _, platformName := range AllPlatforms.Keys() {
+		for _, configName := range AllConfigurations.Keys() {
+			result = append(result, EnvironmentAlias{
+				PlatformAlias:      NewPlatformAlias(platformName),
+				ConfigurationAlias: NewConfigurationAlias(configName),
+			})
+		}
+	}
 	return result
-})
+}
+
+func ForeachCompileEnvironment(each func(utils.BuildFactoryTyped[*CompileEnv]) error) error {
+	return ForeachEnvironmentAlias(func(ea EnvironmentAlias) error {
+		return each(GetCompileEnvironment(ea))
+	})
+}

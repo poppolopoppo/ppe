@@ -3,68 +3,76 @@ package linux
 import (
 	. "build/compile"
 	. "build/utils"
-	"bytes"
-	"encoding/gob"
 )
 
-type LinuxFlagsT struct {
+func InitLinux() {
+	LogTrace("build/hal/linux.Init()")
+
+	RegisterSerializable(&LinuxPlatform{})
+	RegisterSerializable(&LlvmProductInstall{})
+	RegisterSerializable(&LlvmCompiler{})
+
+	AllPlatforms.Add("Linux32", getLinuxPlatform_X86())
+	AllPlatforms.Add("Linux64", getLinuxPlatform_X64())
+
+	AllCompilers.Append(
+		COMPILER_CLANG.String(),
+		COMPILER_GCC.String())
+}
+
+/***************************************
+ * Linux Flags
+ ***************************************/
+
+type LinuxFlags struct {
 	Compiler          CompilerType
 	LlvmVer           LlvmVersion
 	DumpRecordLayouts DumpRecordLayoutsType
 	StackSize         IntVar
 }
 
-var LinuxFlags = MakeServiceAccessor[ParsableFlags](newLinuxFlags)
+var GetLinuxFlags = NewCompilationFlags("linux_flags", "linux-specific compilation flags", &LinuxFlags{
+	Compiler:          COMPILER_CLANG,
+	LlvmVer:           llvm_any,
+	DumpRecordLayouts: DUMPRECORDLAYOUTS_NONE,
+	StackSize:         2000000,
+})
 
-func newLinuxFlags() *LinuxFlagsT {
-	return CommandEnv.BuildGraph().Create(&LinuxFlagsT{
-		Compiler:          COMPILER_CLANG,
-		LlvmVer:           llvm_any,
-		DumpRecordLayouts: DUMPRECORDLAYOUTS_NONE,
-		StackSize:         2000000,
-	}).GetBuildable().(*LinuxFlagsT)
-}
-func (flags *LinuxFlagsT) InitFlags(cfg *PersistentMap) {
-	cfg.Persistent(&flags.Compiler, "Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]")
-	cfg.Persistent(&flags.LlvmVer, "LlvmVer", "select LLVM toolchain version ["+JoinString(",", LlvmVersions()...)+"]")
-	cfg.Persistent(&flags.DumpRecordLayouts, "DumpRecordLayouts", "use to investigate structure layouts ["+JoinString(",", DumpRecordLayouts()...)+"]")
-	cfg.Persistent(&flags.StackSize, "StackSize", "set default thread stack size in bytes")
-}
-func (flags *LinuxFlagsT) ApplyVars(cfg *PersistentMap) {
+func (flags *LinuxFlags) Flags(cfv CommandFlagsVisitor) {
+	cfv.Persistent("Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]", &flags.Compiler)
+	cfv.Persistent("LlvmVer", "select LLVM toolchain version ["+JoinString(",", LlvmVersions()...)+"]", &flags.LlvmVer)
+	cfv.Persistent("DumpRecordLayouts", "use to investigate structure layouts ["+JoinString(",", DumpRecordLayouts()...)+"]", &flags.DumpRecordLayouts)
+	cfv.Persistent("StackSize", "set default thread stack size in bytes", &flags.StackSize)
 }
 
-func (flags *LinuxFlagsT) Alias() BuildAlias {
-	return MakeBuildAlias("Flags", "LinuxFlags")
-}
-func (flags *LinuxFlagsT) Build(BuildContext) (BuildStamp, error) {
-	return MakeBuildStamp(flags)
-}
-func (flags *LinuxFlagsT) GetDigestable(o *bytes.Buffer) {
-	flags.Compiler.GetDigestable(o)
-	flags.LlvmVer.GetDigestable(o)
-	flags.DumpRecordLayouts.GetDigestable(o)
-	flags.StackSize.GetDigestable(o)
-}
+/***************************************
+ * Linux Platform
+ ***************************************/
 
 type LinuxPlatform struct {
 	PlatformRules
+	CompilerType CompilerType
 }
 
-func (linux *LinuxPlatform) GetCompiler(bc BuildContext) (result Compiler) {
-	flags := LinuxFlags.FindOrAdd(CommandEnv.Flags)
-	bc.DependsOn(flags)
-
-	switch flags.Compiler {
+func (linux *LinuxPlatform) Build(bc BuildContext) (err error) {
+	linux.CompilerType = GetLinuxFlags().Compiler
+	return linux.PlatformRules.Build(bc)
+}
+func (linux *LinuxPlatform) Serialize(ar Archive) {
+	ar.Serializable(&linux.PlatformRules)
+	ar.Serializable(&linux.CompilerType)
+}
+func (linux *LinuxPlatform) GetCompiler() BuildFactoryTyped[Compiler] {
+	switch linux.CompilerType {
 	case COMPILER_CLANG:
-		result = GetLlvmCompiler(linux.Arch)
+		return GetLlvmCompiler(linux.Arch)
 	case COMPILER_GCC:
 		NotImplemented("need to implement GCC support")
+		return nil
 	default:
-		UnexpectedValue(flags.Compiler)
+		UnexpectedValue(linux.CompilerType)
+		return nil
 	}
-
-	bc.DependsOn(result)
-	return result
 }
 
 func makeLinuxPlatform(p *PlatformRules) {
@@ -83,7 +91,7 @@ func getLinuxPlatform_X86() Platform {
 	p.Facet = NewFacet()
 	p.Facet.Append(Platform_X86)
 	makeLinuxPlatform(&p.PlatformRules)
-	p.PlatformName = "Linux32"
+	p.PlatformAlias.PlatformName = "Linux32"
 	p.Defines.Append("_LINUX32", "_POSIX32", "__X86__")
 	return p
 }
@@ -93,25 +101,7 @@ func getLinuxPlatform_X64() Platform {
 	p.Facet = NewFacet()
 	p.Facet.Append(Platform_X64)
 	makeLinuxPlatform(&p.PlatformRules)
-	p.PlatformName = "Linux64"
+	p.PlatformAlias.PlatformName = "Linux64"
 	p.Defines.Append("_LINUX64", "_POSIX64", "__X64__")
 	return p
-}
-
-func InitLinux() {
-	LogTrace("build/hal/linux.Init()")
-
-	gob.Register(&LinuxFlagsT{})
-	gob.Register(&LinuxPlatform{})
-	gob.Register(&LlvmProductInstall{})
-	gob.Register(&LlvmCompiler{})
-
-	AllCompilationFlags.Append(LinuxFlags.Add)
-
-	AllPlatforms.Add("Linux32", getLinuxPlatform_X86())
-	AllPlatforms.Add("Linux64", getLinuxPlatform_X64())
-
-	AllCompilers.Append(
-		COMPILER_CLANG.String(),
-		COMPILER_GCC.String())
 }

@@ -6,23 +6,16 @@ import (
 	"os"
 )
 
-type DistCleanArgs struct{}
-
-func (*DistCleanArgs) InitFlags(cfg *PersistentMap) {
-}
-func (*DistCleanArgs) ApplyVars(cfg *PersistentMap) {
-}
-
-var DistClean = MakeCommand(
+var CommandDistClean = NewCommand(
+	"Compilation",
 	"distclean",
 	"erase generated artifacts",
-	func(cmd *CommandEnvT) *DistCleanArgs {
-		AllCompilationFlags.Needed(cmd.Flags)
-		return &DistCleanArgs{}
-	},
-	func(cmd *CommandEnvT, _ *DistCleanArgs) error {
-		args := cmd.ConsumeArgs(-1)
-		if len(args) == 0 {
+	OptionCommandCompletionArgs(),
+	OptionCommandRun(func(cc CommandContext) error {
+		args := GetCompletionArgs()
+		if len(args.Inputs) == 0 {
+			LogClaim("dist-clean all output folders and database")
+
 			distCleanDir(UFS.Binaries)
 			distCleanDir(UFS.Cache)
 			distCleanDir(UFS.Generated)
@@ -34,44 +27,59 @@ var DistClean = MakeCommand(
 			distCleanFile(CommandEnv.DatabasePath())
 
 		} else {
-			targets, err := BuildTargets.Build(cmd.BuildGraph())
-			if err != nil {
-				LogPanicErr(err)
-			}
+			re := MakeGlobRegexp(Stringize(args.Inputs...)...)
+			LogClaim("dist-clean all targets matching /%v/", re)
 
-			translatedUnits := targets.TranslatedUnits()
-
-			re := MakeGlobRegexp(args...)
-			LogClaim("matching %d translated units with /%v/", translatedUnits.Len(), re)
-			for _, u := range translatedUnits.Slice() {
-				if re.MatchString(u.Target.String()) {
-					distCleanDir(u.GeneratedDir)
-					distCleanDir(u.IntermediateDir)
-
-					outputRe := MakeGlobRegexp(u.OutputFile.ReplaceExt(".*").Basename)
-					u.OutputFile.Dirname.MatchFiles(func(f Filename) error {
-						distCleanFile(f)
-						return nil
-					}, outputRe)
+			buildGraph := CommandEnv.BuildGraph()
+			return ForeachBuildTargets(func(bf BuildFactoryTyped[*BuildTargets]) error {
+				buildTargets := bf.Build(buildGraph)
+				if err := buildTargets.Failure(); err != nil {
+					return err
 				}
-			}
+
+				for _, unitAlias := range buildTargets.Success().Aliases {
+					if re.MatchString(unitAlias.String()) {
+						if unit, err := GetBuildUnit(unitAlias); err == nil {
+							LogInfo("dist-clean %q build unit", unit.String())
+
+							distCleanDir(unit.GeneratedDir)
+							distCleanDir(unit.IntermediateDir)
+
+							unit.OutputFile.Dirname.MatchFiles(func(f Filename) error {
+								distCleanFile(f)
+								return nil
+							}, MakeGlobRegexp(unit.OutputFile.ReplaceExt(".*").Basename))
+
+						} else {
+							return err
+						}
+					}
+				}
+
+				return nil
+			})
 		}
 
 		return nil
-	},
-)
+	}))
 
 func distCleanFile(f Filename) {
-	LogInfo("remove file '%v'", f)
-	err := os.RemoveAll(f.String())
-	if err != nil {
-		LogWarning("distclean: %v", err)
+	if f.Exists() {
+		LogInfo("remove file '%v'", f)
+		err := os.RemoveAll(f.String())
+		if err != nil {
+			LogWarning("distclean: %v", err)
+		}
+		f.Invalidate()
 	}
 }
 func distCleanDir(d Directory) {
-	LogInfo("remove directory '%v'", d)
-	err := os.RemoveAll(d.String())
-	if err != nil {
-		LogWarning("distclean: %v", err)
+	if d.Exists() {
+		LogInfo("remove directory '%v'", d)
+		err := os.RemoveAll(d.String())
+		if err != nil {
+			LogWarning("distclean: %v", err)
+		}
+		d.Invalidate()
 	}
 }

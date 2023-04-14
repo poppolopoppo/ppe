@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -14,17 +13,60 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/djherbis/times"
 )
+
+/***************************************
+ * Path to string
+ ***************************************/
+
+// var re_pathSeparator = regexp.MustCompile(`[\\\/]+`)
+var OSPathSeparator = os.PathSeparator
+
+func BuildSanitizedPath(sb *strings.Builder, pathname string, sep rune) error {
+	hasSeparator := false
+	for _, ch := range pathname {
+		if os.IsPathSeparator((uint8)(ch)) {
+			if !hasSeparator {
+				hasSeparator = true
+				if _, err := sb.WriteRune(sep); err != nil {
+					return err
+				}
+			}
+		} else if _, err := sb.WriteRune(ch); err != nil {
+			return err
+		} else {
+			hasSeparator = false
+		}
+	}
+	return nil
+}
+func SanitizePath(pathname string, sep rune) string {
+	sb := strings.Builder{}
+	sb.Grow(len(pathname))
+	BuildSanitizedPath(&sb, pathname, sep)
+	return sb.String()
+}
+func SplitPath(in string) (results []string) {
+	first := 0
+	for i, ch := range in {
+		if os.IsPathSeparator((uint8)(ch)) {
+			if i > first {
+				results = append(results, in[first:i])
+			}
+			first = i + 1
+		}
+	}
+	if first < len(in) {
+		results = append(results, in[first:])
+	}
+	return
+}
 
 /***************************************
  * Directory
  ***************************************/
-
-var re_pathSeparator = regexp.MustCompile(`[\\\/]+`)
-
-func SplitPath(in string) []string {
-	return re_pathSeparator.Split(in, -1)
-}
 
 type Directory []string
 
@@ -47,14 +89,34 @@ func (d Directory) Folder(name ...string) Directory {
 func (d Directory) File(name ...string) Filename {
 	return Filename{Dirname: append(d, name[:len(name)-1]...), Basename: name[len(name)-1]}
 }
-func (d Directory) AbsoluteFolder(rel ...string) (result Directory) {
-	for _, x := range rel {
-		result = append(d, SplitPath(x)...)
+func (d Directory) IsIn(o Directory) bool {
+	return o.IsParentOf(d)
+}
+func (d Directory) IsParentOf(o Directory) bool {
+	n := len(d)
+	if n > len(o) {
+		return false
 	}
-	return result
+	for i := range d[:n] {
+		if d[i] != o[i] {
+			return false
+		}
+	}
+	return true
+}
+func (d Directory) AbsoluteFolder(rel ...string) (result Directory) {
+	result = append([]string(nil), d...)
+	for _, x := range rel {
+		path := SplitPath(x)
+		result = append(result, path...)
+	}
+	return
 }
 func (d Directory) AbsoluteFile(rel ...string) (result Filename) {
-	return MakeFilename(filepath.Join(append([]string{d.String()}, rel...)...))
+	result.Dirname = d.AbsoluteFolder(rel...)
+	result.Basename = result.Dirname.Basename()
+	result.Dirname = result.Dirname.Parent()
+	return
 }
 func (d Directory) Relative(to Directory) string {
 	if path, err := filepath.Rel(to.String(), d.String()); err == nil {
@@ -96,21 +158,36 @@ func (d Directory) Compare(o Directory) int {
 		return 1
 	}
 }
-func (d Directory) GetDigestable(o *bytes.Buffer) {
-	o.WriteByte(byte(len(d)))
-	for _, x := range d {
-		o.WriteString(x)
-	}
-}
 func (d Directory) String() string {
 	sb := strings.Builder{}
-	for i, x := range d {
-		if i > 0 {
-			sb.WriteString("/")
-		}
-		sb.WriteString(x)
+	if err := d.StringBuilder(&sb); err != nil {
+		LogPanicErr(err)
 	}
 	return sb.String()
+}
+func (d Directory) stringBuilderCapacity() (capacity int) {
+	for i, x := range d {
+		if i > 0 {
+			capacity += 1
+		}
+		capacity += len(x)
+	}
+	return
+}
+func (d Directory) StringBuilder(sb *strings.Builder) error {
+	sb.Grow(d.stringBuilderCapacity())
+
+	for i, x := range d {
+		if i > 0 {
+			if _, err := sb.WriteRune(OSPathSeparator); err != nil {
+				return err
+			}
+		}
+		if _, err := sb.WriteString(x); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 /***************************************
@@ -145,8 +222,8 @@ func (f Filename) ReplaceExt(ext string) Filename {
 	}
 }
 func (f Filename) Relative(to Directory) string {
-	if path, err := filepath.Rel(to.String(), f.String()); err == nil {
-		return path
+	if path, err := filepath.Rel(to.String(), f.Dirname.String()); err == nil {
+		return filepath.Join(path, f.Basename)
 	} else {
 		LogPanicErr(err)
 		return ""
@@ -167,13 +244,20 @@ func (f Filename) Compare(o Filename) int {
 		return strings.Compare(f.Basename, o.Basename)
 	}
 }
-func (f Filename) GetDigestable(o *bytes.Buffer) {
-	f.Dirname.GetDigestable(o)
-	o.WriteString(f.Basename)
-}
 func (f Filename) String() string {
 	if len(f.Dirname) > 0 {
-		return f.Dirname.String() + "/" + f.Basename
+		sb := strings.Builder{}
+		sb.Grow(f.Dirname.stringBuilderCapacity() + 1 + len(f.Basename))
+		if err := f.Dirname.StringBuilder(&sb); err != nil {
+			LogPanicErr(err)
+		}
+		if _, err := sb.WriteRune(OSPathSeparator); err != nil {
+			LogPanicErr(err)
+		}
+		if _, err := sb.WriteString(f.Basename); err != nil {
+			LogPanicErr(err)
+		}
+		return sb.String()
 	} else {
 		return f.Basename
 	}
@@ -221,7 +305,17 @@ type DirectoryInfo struct {
 	Directories  []Directory
 	os.FileInfo
 
-	barrier sync.Mutex
+	once sync.Once
+}
+
+func GetAccessTime(stat os.FileInfo) time.Time {
+	return times.Get(stat).AccessTime()
+}
+func GetCreationTime(stat os.FileInfo) time.Time {
+	return times.Get(stat).BirthTime()
+}
+func GetModificationTime(stat os.FileInfo) time.Time {
+	return times.Get(stat).ModTime()
 }
 
 type UFSCacheBin struct {
@@ -245,15 +339,15 @@ func newUFSCache() *UFSCache {
 	}
 	return result
 }
-func (cache *UFSCache) getBin(x Digestable) *UFSCacheBin {
-	h := MakeDigest(x)
+func (cache *UFSCache) getBin(x Serializable) *UFSCacheBin {
+	h := SerializeFingerpint(x, Fingerprint{})
 	return &cache.bins[h[0]]
 }
 
 var ufsCache = newUFSCache()
 
 func invalidate_file_info(f Filename) {
-	cacheBin := ufsCache.getBin(f)
+	cacheBin := ufsCache.getBin(&f)
 	cacheBin.barrier.Lock()
 	defer cacheBin.barrier.Unlock()
 	delete(cacheBin.FileCache, f.String())
@@ -261,7 +355,7 @@ func invalidate_file_info(f Filename) {
 func make_file_info(f Filename, optionalStat *os.FileInfo) (*FileInfo, error) {
 	path := f.String()
 
-	cacheBin := ufsCache.getBin(f)
+	cacheBin := ufsCache.getBin(&f)
 	cacheBin.barrier.RLock()
 	if cached, ok := cacheBin.FileCache[path]; ok {
 		cacheBin.barrier.RUnlock()
@@ -299,7 +393,7 @@ func make_file_info(f Filename, optionalStat *os.FileInfo) (*FileInfo, error) {
 }
 
 func invalidate_directory_info(d Directory) {
-	cacheBin := ufsCache.getBin(d)
+	cacheBin := ufsCache.getBin(&d)
 	cacheBin.barrier.Lock()
 	defer cacheBin.barrier.Unlock()
 	delete(cacheBin.DirectoryCache, d.String())
@@ -307,7 +401,7 @@ func invalidate_directory_info(d Directory) {
 func make_directory_info(d Directory, optionalStat *os.FileInfo) (*DirectoryInfo, error) {
 	path := d.String()
 
-	cacheBin := ufsCache.getBin(d)
+	cacheBin := ufsCache.getBin(&d)
 	cacheBin.barrier.RLock()
 	if cached, ok := cacheBin.DirectoryCache[path]; ok {
 		cacheBin.barrier.RUnlock()
@@ -328,7 +422,6 @@ func make_directory_info(d Directory, optionalStat *os.FileInfo) (*DirectoryInfo
 				FileInfo:     *optionalStat,
 				Files:        nil,
 				Directories:  nil,
-				barrier:      sync.Mutex{},
 			}
 		} else if stat, err = os.Stat(d.String()); !os.IsNotExist(err) {
 			if stat.IsDir() {
@@ -337,7 +430,6 @@ func make_directory_info(d Directory, optionalStat *os.FileInfo) (*DirectoryInfo
 					FileInfo:     stat,
 					Files:        nil,
 					Directories:  nil,
-					barrier:      sync.Mutex{},
 				}
 			} else {
 				err = errors.New("path does not point to a directory")
@@ -352,10 +444,7 @@ func make_directory_info(d Directory, optionalStat *os.FileInfo) (*DirectoryInfo
 
 func enumerate_directory(d Directory) (*DirectoryInfo, error) {
 	if info, err := d.Info(); err == nil && info != nil {
-		info.barrier.Lock() // lock the directory, not all cache
-		defer info.barrier.Unlock()
-
-		if info.Files == nil || info.Directories == nil {
+		info.once.Do(func() {
 			var entries []os.DirEntry
 			entries, err = os.ReadDir(info.AbsolutePath)
 
@@ -382,7 +471,7 @@ func enumerate_directory(d Directory) (*DirectoryInfo, error) {
 				info.Files = files
 				info.Directories = directories
 			}
-		}
+		})
 		return info, err
 	} else {
 		return nil, err
@@ -564,10 +653,8 @@ func (list DirSet) ConcatUniq(it ...Directory) (result DirSet) {
 	}
 	return result
 }
-func (list DirSet) GetDigestable(o *bytes.Buffer) {
-	for _, x := range list {
-		x.GetDigestable(o)
-	}
+func (list *DirSet) Serialize(ar Archive) {
+	SerializeSlice(ar, (*[]Directory)(list))
 }
 func (list DirSet) Equals(other DirSet) bool {
 	if len(list) != len(other) {
@@ -595,6 +682,7 @@ func NewFileSet(x ...Filename) FileSet {
 
 func (list FileSet) Len() int           { return len(list) }
 func (list FileSet) Less(i, j int) bool { return list[i].Compare(list[j]) < 0 }
+func (list FileSet) Slice() []Filename  { return list }
 func (list FileSet) Swap(i, j int)      { list[i], list[j] = list[j], list[i] }
 
 func (list *FileSet) Contains(it ...Filename) bool {
@@ -650,10 +738,8 @@ func (list FileSet) TotalSize() (result int64) {
 	// LogDebug("total size of %d files: %.3f KiB", len(list), float32(result)/1024.0)
 	return result
 }
-func (list FileSet) GetDigestable(o *bytes.Buffer) {
-	for _, x := range list {
-		x.GetDigestable(o)
-	}
+func (list *FileSet) Serialize(ar Archive) {
+	SerializeSlice(ar, (*[]Filename)(list))
 }
 func (list FileSet) Equals(other FileSet) bool {
 	if len(list) != len(other) {
@@ -734,21 +820,25 @@ func (ufs *UFSFrontEnd) Touch(dst Filename) error {
 	}
 }
 func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
+	if err := ufs.MkdirEx(dst); err != nil {
+		LogPanicErr(err)
+	}
+}
+func (ufs *UFSFrontEnd) MkdirEx(dst Directory) error {
 	path := dst.String()
-	if st, err := os.Stat(path); st != nil && err != nil {
-		if os.IsExist(err) {
-			if !st.IsDir() {
-				LogDebug("ufs: mkdir %v", dst)
-				LogPanic("ufs: '%v' already exist, but is not a directory", dst)
-			}
+	if st, err := os.Stat(path); st != nil && (err == nil || os.IsExist(err)) {
+		if !st.IsDir() {
+			LogDebug("ufs: mkdir %v", dst)
+			return fmt.Errorf("ufs: '%v' already exist, but is not a directory", dst)
 		}
 	} else {
 		LogDebug("ufs: mkdir %v", dst)
 		invalidate_directory_info(dst)
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			LogPanic("%v: '%v'", dst, err)
+			return fmt.Errorf("ufs: mkdir '%v' got error %v", dst, err)
 		}
 	}
+	return nil
 }
 func (ufs *UFSFrontEnd) CreateWriter(dst Filename) (*os.File, error) {
 	invalidate_file_info(dst)
@@ -758,10 +848,8 @@ func (ufs *UFSFrontEnd) CreateWriter(dst Filename) (*os.File, error) {
 }
 func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error {
 	outp, err := ufs.CreateWriter(dst)
-	if outp != nil {
-		defer outp.Close()
-	}
 	if err == nil {
+		defer outp.Close()
 		if err = write(outp); err == nil {
 			return nil
 		}
@@ -769,8 +857,16 @@ func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error 
 	LogWarning("ufs: caught %v while trying to create %v", err, dst)
 	return err
 }
+func (ufs *UFSFrontEnd) CreateBuffered(dst Filename, write func(io.Writer) error) error {
+	return ufs.Create(dst, func(w io.Writer) error {
+		buffered := bufio.NewWriter(w)
+		if err := write(buffered); err != nil {
+			return err
+		}
+		return buffered.Flush()
+	})
+}
 func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) error {
-	os.Remove(dst.String())
 	ufs.Mkdir(dst.Dirname)
 
 	file, err := os.CreateTemp(
@@ -779,6 +875,7 @@ func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) er
 	if err != nil {
 		return err
 	}
+	defer os.Remove(file.Name())
 
 	buf := bufio.NewWriter(file)
 	if err = write(buf); err == nil {
@@ -791,41 +888,9 @@ func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) er
 		}
 	}
 
-	defer os.Remove(file.Name())
 	file.Close()
 	LogWarning("UFS.SafeCreate: %v", err)
 	return err
-}
-func (ufs *UFSFrontEnd) LazyCreate(dst Filename, write func(io.Writer) error) error {
-	if org, err := dst.Info(); err == nil {
-		tmp := bytes.Buffer{}
-		write(&tmp)
-
-		new := tmp.Bytes()
-
-		if org.Size() == int64(tmp.Len()) {
-			async := AsyncFileDigest(dst)
-
-			digester := MakeDigester()
-			if err := DigestReader(digester, bytes.NewReader(new)); err == nil {
-				current := digester.Finalize()
-				if previous := async.Join(); previous.Failure() == nil {
-					if previous.Success() == current {
-						LogVerbose("ufs: skip update of '%v', content didn't change", dst)
-						return nil // we finally can skip writing
-					} else {
-						LogVerbose("ufs: keep update of '%v', content DID change\n\told: %v\n\tnew: %v", dst, previous.Success(), current)
-					}
-				}
-			}
-		}
-
-		return ufs.SafeCreate(dst, func(w io.Writer) error {
-			w.Write(new) // reuse already bytes already dumped in memory
-			return nil
-		})
-	}
-	return ufs.SafeCreate(dst, write)
 }
 func (ufs *UFSFrontEnd) MTime(src Filename) time.Time {
 	if info, err := src.Info(); err == nil {
@@ -851,6 +916,12 @@ func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
 
 	LogWarning("UFS.Open: %v", err)
 	return err
+}
+func (ufs *UFSFrontEnd) OpenBuffered(src Filename, read func(io.Reader) error) error {
+	return ufs.Open(src, func(r io.Reader) error {
+		buffered := bufio.NewReader(r)
+		return read(buffered)
+	})
 }
 func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]string) error) error {
 	return ufs.Open(src, func(rd io.Reader) error {
@@ -946,7 +1017,7 @@ func MakeGlobRegexp(glob ...string) *regexp.Regexp {
 	if len(glob) == 0 {
 		return nil
 	}
-	expr := "(?i)^("
+	expr := "(?i)("
 	for i, x := range glob {
 		x = regexp.QuoteMeta(x)
 		x = strings.ReplaceAll(x, "\\?", ".")
@@ -959,5 +1030,234 @@ func MakeGlobRegexp(glob ...string) *regexp.Regexp {
 			expr += "|" + x
 		}
 	}
-	return regexp.MustCompile(expr + ")$")
+	return regexp.MustCompile(expr + ")")
+}
+
+/***************************************
+ * UFS Bindings for Build Graph
+ ***************************************/
+
+func (x Filename) Alias() BuildAlias {
+	return BuildAlias(x.String())
+}
+func (x Filename) Digest() (BuildStamp, error) {
+	x.Invalidate()
+	if info, err := x.Info(); err == nil {
+		return MakeTimedBuildStamp(info.ModTime(), &x), nil
+	} else {
+		return BuildStamp{}, err
+	}
+}
+func (x Filename) Build(bc BuildContext) error {
+	x.Invalidate()
+	if info, err := x.Info(); err == nil {
+		bc.Timestamp(info.ModTime())
+		return nil
+	} else {
+		return err
+	}
+}
+func (x *Filename) Serialize(ar Archive) {
+	ar.Serializable(&x.Dirname)
+	ar.String(&x.Basename)
+}
+
+func (x Directory) Alias() BuildAlias {
+	return BuildAlias(x.String())
+}
+func (x Directory) Build(bc BuildContext) error {
+	x.Invalidate()
+	if info, err := x.Info(); err == nil {
+		bc.Timestamp(GetCreationTime(info))
+		return nil
+	} else {
+		return err
+	}
+}
+func (x *Directory) Serialize(ar Archive) {
+	SerializeMany(ar, ar.String, (*[]string)(x))
+}
+
+func BuildFile(source Filename) BuildFactoryTyped[*Filename] {
+	return func(init BuildInitializer) (*Filename, error) {
+		return &source, nil
+	}
+}
+func BuildDirectory(source Directory) BuildFactoryTyped[*Directory] {
+	return func(init BuildInitializer) (*Directory, error) {
+		return &source, nil
+	}
+}
+
+/***************************************
+ * Directory Creator
+ ***************************************/
+
+func CreateDirectory(bc BuildInitializer, source Directory) error {
+	_, err := BuildDirectoryCreator(source).Need(bc)
+	return err
+}
+
+type DirectoryCreator struct {
+	Source Directory
+}
+
+func BuildDirectoryCreator(source Directory) BuildFactoryTyped[*DirectoryCreator] {
+	return func(init BuildInitializer) (*DirectoryCreator, error) {
+		return &DirectoryCreator{
+			Source: source,
+		}, nil
+	}
+}
+
+func (x *DirectoryCreator) Alias() BuildAlias {
+	return MakeBuildAlias("UFS", "Create", x.Source.String())
+}
+func (x *DirectoryCreator) Build(bc BuildContext) error {
+	bc.OutputNode(BuildDirectory(x.Source))
+	return UFS.MkdirEx(x.Source)
+}
+func (x *DirectoryCreator) Serialize(ar Archive) {
+	ar.Serializable(&x.Source)
+}
+
+/***************************************
+ * Directory List
+ ***************************************/
+
+func ListDirectory(bc BuildContext, source Directory) (FileSet, error) {
+	factory := BuildDirectoryList(source)
+	if list, err := factory.Need(bc); err == nil {
+		return list.Results, nil
+	} else {
+		return FileSet{}, err
+	}
+}
+
+type DirectoryList struct {
+	Source  Directory
+	Results FileSet
+}
+
+func BuildDirectoryList(source Directory) BuildFactoryTyped[*DirectoryList] {
+	return func(init BuildInitializer) (*DirectoryList, error) {
+		if err := init.NeedDirectory(source); err != nil {
+			return nil, err
+		}
+		return &DirectoryList{
+			Source:  source,
+			Results: FileSet{},
+		}, nil
+	}
+}
+
+func (x *DirectoryList) Alias() BuildAlias {
+	return MakeBuildAlias("UFS", "List", x.Source.String())
+}
+func (x *DirectoryList) Build(bc BuildContext) error {
+	x.Results = FileSet{}
+
+	if info, err := x.Source.Info(); err == nil {
+		bc.Timestamp(info.ModTime())
+	} else {
+		return err
+	}
+
+	x.Results = x.Source.Files()
+	for _, filename := range x.Results {
+		if err := bc.NeedFile(filename); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+func (x *DirectoryList) Serialize(ar Archive) {
+	ar.Serializable(&x.Source)
+	ar.Serializable(&x.Results)
+}
+
+/***************************************
+ * Directory Glob
+ ***************************************/
+
+func GlobDirectory(
+	bc BuildContext,
+	source Directory,
+	includedGlobs StringSet,
+	excludedGlobs StringSet,
+	excludedFiles FileSet) (FileSet, error) {
+	factory := BuildDirectoryGlob(source, includedGlobs, excludedGlobs, excludedFiles)
+	if glob, err := factory.Need(bc); err == nil {
+		return glob.Results, nil
+	} else {
+		return FileSet{}, err
+	}
+}
+
+type DirectoryGlob struct {
+	Source        Directory
+	IncludedGlobs StringSet
+	ExcludedGlobs StringSet
+	ExcludedFiles FileSet
+	Results       FileSet
+}
+
+func BuildDirectoryGlob(
+	source Directory,
+	includedGlobs StringSet,
+	excludedGlobs StringSet,
+	excludedFiles FileSet) BuildFactoryTyped[*DirectoryGlob] {
+	return func(init BuildInitializer) (*DirectoryGlob, error) {
+		if err := init.NeedDirectory(source); err != nil {
+			return nil, err
+		}
+		return &DirectoryGlob{
+			Source:        source,
+			IncludedGlobs: includedGlobs,
+			ExcludedGlobs: excludedGlobs,
+			ExcludedFiles: excludedFiles,
+			Results:       FileSet{},
+		}, nil
+	}
+}
+
+func (x *DirectoryGlob) Alias() BuildAlias {
+	return MakeBuildAlias("UFS", "Glob", strings.Join([]string{
+		x.Source.String(),
+		x.IncludedGlobs.Join(";"),
+		x.ExcludedGlobs.Join(";"),
+		x.ExcludedFiles.Join(";")},
+		"|"))
+}
+func (x *DirectoryGlob) Build(bc BuildContext) error {
+	x.Results = FileSet{}
+
+	if dirInfo, err := x.Source.Info(); err == nil {
+		bc.Timestamp(dirInfo.ModTime())
+	} else {
+		return err
+	}
+
+	includeRE := MakeGlobRegexp(x.IncludedGlobs...)
+	excludeRE := MakeGlobRegexp(x.ExcludedGlobs...)
+	if includeRE == nil {
+		includeRE = MakeGlobRegexp("*")
+	}
+
+	return x.Source.MatchFilesRec(func(f Filename) error {
+		if !x.ExcludedFiles.Contains(f) {
+			if excludeRE == nil || !excludeRE.MatchString(f.String()) {
+				x.Results.Append(f)
+			}
+		}
+		return nil
+	}, includeRE)
+}
+func (x *DirectoryGlob) Serialize(ar Archive) {
+	ar.Serializable(&x.Source)
+	ar.Serializable(&x.IncludedGlobs)
+	ar.Serializable(&x.ExcludedGlobs)
+	ar.Serializable(&x.ExcludedFiles)
+	ar.Serializable(&x.Results)
 }

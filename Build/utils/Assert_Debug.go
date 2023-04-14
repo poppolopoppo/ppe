@@ -8,6 +8,7 @@ import (
 	"log"
 	"reflect"
 	"runtime/debug"
+	"sync/atomic"
 )
 
 var enableDiagnostics bool = true
@@ -109,6 +110,31 @@ func PrependComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) 
 	return result
 }
 
+func AppendSlice_CheckUniq[T any](src []T, elts []T, equals func(T, T) bool) (result []T) {
+	result = src
+	for _, x := range elts {
+		for _, y := range src {
+			if equals(x, y) {
+				LogPanic("element already in set: %v (%v)", x, elts)
+			}
+		}
+		result = append(result, x)
+	}
+	return result
+}
+func PrependSlice_CheckUniq[T any](src []T, elts []T, equals func(T, T) bool) (result []T) {
+	result = src
+	for _, x := range elts {
+		for _, y := range src {
+			if equals(x, y) {
+				LogPanic("element already in set: %v (%v)", x, elts)
+			}
+		}
+		result = append([]T{x}, result...)
+	}
+	return result
+}
+
 func AppendEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T) {
 	result = src
 	for _, x := range elts {
@@ -134,8 +160,29 @@ func PrependEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T)
 	return result
 }
 
-func MakeFuture[T any](f func() (T, error)) Future[T] {
-	return make_sync_future(f)
+type AtomicFuture[T any] struct {
+	atomic.Pointer[sync_future[T]]
+}
+
+func (x *AtomicFuture[T]) Reset() {
+	x.Pointer.Store(nil)
+}
+func (x *AtomicFuture[T]) Store(future Future[T]) {
+	x.Pointer.Store(future.(*sync_future[T]))
+}
+
+func MakeFuture[T any](f func() (T, error), debug ...fmt.Stringer) Future[T] {
+	return make_sync_future(f, debug...)
+}
+
+func ParallelJoin[T any](each func(int, T) error, futures ...Future[T]) error {
+	return ParallelJoin_Sync(each, futures...)
+}
+func ParallelMap[IN any, OUT any](each func(IN) (OUT, error), in ...IN) ([]OUT, error) {
+	return ParallelMap_Sync(each, in...)
+}
+func ParallelRange[IN any](each func(IN) error, in ...IN) error {
+	return ParallelRange_Sync(each, in...)
 }
 
 func make_logQueue() logQueue {

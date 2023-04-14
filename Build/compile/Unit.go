@@ -1,65 +1,47 @@
 package compile
 
 import (
-	utils "build/utils"
-	"bytes"
+	. "build/utils"
 	"fmt"
 	"strings"
 )
 
-type EnvironmentAlias struct {
-	PlatformName string
-	ConfigName   string
+/***************************************
+ * Target Build Order
+ ***************************************/
+
+type TargetBuildOrder int32
+
+func (x *TargetBuildOrder) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
 }
 
-func NewEnvironmentAlias(platform Platform, config Configuration) EnvironmentAlias {
-	return EnvironmentAlias{
-		PlatformName: platform.GetPlatform().PlatformName,
-		ConfigName:   config.GetConfig().ConfigName,
-	}
-}
-func (x EnvironmentAlias) Alias() utils.BuildAlias {
-	return utils.BuildAlias(fmt.Sprintf("%v-%v", x.PlatformName, x.ConfigName))
-}
-func (x EnvironmentAlias) GetEnvironmentAlias() utils.BuildAlias {
-	return x.Alias()
-}
-func (x EnvironmentAlias) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.PlatformName)
-	o.WriteString(x.ConfigName)
-}
-func (x EnvironmentAlias) Compare(o EnvironmentAlias) int {
-	if x.PlatformName == o.PlatformName {
-		return strings.Compare(x.ConfigName, o.ConfigName)
-	} else {
-		return strings.Compare(x.PlatformName, o.PlatformName)
-	}
-}
-func (x EnvironmentAlias) String() string {
-	return x.Alias().String()
-}
+/***************************************
+ * Target Alias
+ ***************************************/
 
 type TargetAlias struct {
-	ModuleAlias
 	EnvironmentAlias
+	ModuleAlias
 }
+
+type TargetAliases = SetT[TargetAlias]
 
 func NewTargetAlias(module Module, platform Platform, config Configuration) TargetAlias {
 	return TargetAlias{
-		ModuleAlias:      NewModuleAlias(module),
 		EnvironmentAlias: NewEnvironmentAlias(platform, config),
+		ModuleAlias:      module.GetModule().ModuleAlias,
 	}
 }
-func (x TargetAlias) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.NamespaceName)
-	o.WriteString(x.ModuleName)
-	x.EnvironmentAlias.GetDigestable(o)
+func (x TargetAlias) Valid() bool {
+	return x.EnvironmentAlias.Valid() && x.ModuleAlias.Valid()
 }
-func (x TargetAlias) Alias() utils.BuildAlias {
-	return utils.BuildAlias(fmt.Sprintf("%v-%v-%v", x.ModuleAlias, x.PlatformName, x.ConfigName))
+func (x TargetAlias) Alias() BuildAlias {
+	return MakeBuildAlias("Unit", x.String())
 }
-func (x TargetAlias) GetUnitAlias() utils.BuildAlias {
-	return x.Alias()
+func (x *TargetAlias) Serialize(ar Archive) {
+	ar.Serializable(&x.EnvironmentAlias)
+	ar.Serializable(&x.ModuleAlias)
 }
 func (x TargetAlias) Compare(o TargetAlias) int {
 	if cmp := x.ModuleAlias.Compare(o.ModuleAlias); cmp == 0 {
@@ -68,134 +50,226 @@ func (x TargetAlias) Compare(o TargetAlias) int {
 		return cmp
 	}
 }
+func (x *TargetAlias) Set(in string) error {
+	parts := strings.Split(in, "-")
+	if len(parts) < 3 {
+		return fmt.Errorf("invalid target alias: %q", in)
+	}
+	if err := x.ModuleAlias.Set(strings.Join(parts[:len(parts)-2], "-")); err != nil {
+		return err
+	}
+	if err := x.PlatformAlias.Set(parts[len(parts)-2]); err != nil {
+		return err
+	}
+	if err := x.ConfigurationAlias.Set(parts[len(parts)-1]); err != nil {
+		return err
+	}
+	return nil
+}
 func (x TargetAlias) String() string {
-	return x.Alias().String()
+	return fmt.Sprintf("%v-%v-%v", x.ModuleAlias, x.PlatformName, x.ConfigName)
+}
+func (x TargetAlias) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+func (x *TargetAlias) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
+}
+func (x *TargetAlias) AutoComplete(in AutoComplete) {
+	for _, a := range FindBuildAliases(CommandEnv.BuildGraph(), "Unit") {
+		in.Add(strings.TrimPrefix(a.String(), "Unit://"))
+	}
 }
 
+/***************************************
+ * Unit Rules
+ ***************************************/
+
 type UnitDecorator interface {
-	Decorate(env *CompileEnv, unit *Unit)
+	Decorate(env *CompileEnv, unit *Unit) error
 	fmt.Stringer
 }
+
+type Units = SetT[*Unit]
 
 type Unit struct {
 	Target TargetAlias
 
-	Ordinal    int
+	Ordinal    TargetBuildOrder
 	Payload    PayloadType
-	OutputFile utils.Filename
-
-	ModuleDir       utils.Directory
-	GeneratedDir    utils.Directory
-	IntermediateDir utils.Directory
-
-	CustomUnits    CustomUnitList
-	GeneratedFiles utils.FileSet
-
-	PrecompiledHeader utils.Filename
-	PrecompiledSource utils.Filename
-	PrecompiledObject utils.Filename
-
-	IncludeDependencies utils.SetT[TargetAlias]
-	CompileDependencies utils.SetT[TargetAlias]
-	LinkDependencies    utils.SetT[TargetAlias]
-	RuntimeDependencies utils.SetT[TargetAlias]
-
-	Compiler     Compiler
-	Preprocessor Compiler
+	OutputFile Filename
 
 	Source          ModuleSource
+	ModuleDir       Directory
+	GeneratedDir    Directory
+	IntermediateDir Directory
+
+	PrecompiledHeader Filename
+	PrecompiledSource Filename
+	PrecompiledObject Filename
+
+	IncludeDependencies TargetAliases
+	CompileDependencies TargetAliases
+	LinkDependencies    TargetAliases
+	RuntimeDependencies TargetAliases
+
+	CompilerAlias     CompilerAlias
+	PreprocessorAlias CompilerAlias
+
+	Environment ProcessEnvironment
+
 	TransitiveFacet Facet // append in case of public dependency
+	GeneratedFiles  FileSet
+	CustomUnits     CustomUnitList
 
 	CppRules
+	UnityRules
 	Facet
 }
 
 func (unit *Unit) String() string {
-	return unit.Target.Alias().String()
+	return unit.Alias().String()
 }
+
+func (unit *Unit) GetEnvironment() (*CompileEnv, error) {
+	return FindGlobalBuildable[*CompileEnv](unit.Target.EnvironmentAlias)
+}
+func (unit *Unit) GetBuildCompiler() (Compiler, error) {
+	return FindGlobalBuildable[Compiler](unit.CompilerAlias)
+}
+func (unit *Unit) GetBuildPreprocessor() (Compiler, error) {
+	return FindGlobalBuildable[Compiler](unit.PreprocessorAlias)
+}
+
 func (unit *Unit) GetCompiler() *CompilerRules {
-	if unit.Compiler != nil {
-		return unit.Compiler.GetCompiler()
+	if compiler, err := unit.GetBuildCompiler(); err == nil {
+		return compiler.GetCompiler()
 	} else {
+		LogPanicErr(err)
 		return nil
 	}
 }
+func (unit *Unit) GetPreprocessor() *CompilerRules {
+	if compiler, err := unit.GetBuildPreprocessor(); err == nil {
+		return compiler.GetCompiler()
+	} else {
+		LogPanicErr(err)
+		return nil
+	}
+}
+
 func (unit *Unit) GetFacet() *Facet {
 	return &unit.Facet
 }
 func (unit *Unit) DebugString() string {
-	return utils.PrettyPrint(unit)
+	return PrettyPrint(unit)
 }
-func (unit *Unit) Decorate(env *CompileEnv, decorator ...UnitDecorator) {
-	utils.LogVeryVerbose("unit %v: decorate with [%v]", unit.Target, utils.Join(",", decorator...))
+func (unit *Unit) Decorate(env *CompileEnv, decorator ...UnitDecorator) error {
+	LogVeryVerbose("unit %v: decorate with [%v]", unit.Target, MakeStringer(func() string {
+		return Join(",", decorator...).String()
+	}))
 	for _, x := range decorator {
-		x.Decorate(env, unit)
+		if err := x.Decorate(env, unit); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func sanitizePayloadPath(path string) string {
-	path = strings.ReplaceAll(path, "\\", "/")
-	path = strings.ReplaceAll(path, "/", "-")
-	return path
+func (unit *Unit) GetBinariesOutput(compiler Compiler, src Filename, payload PayloadType) Filename {
+	AssertIn(payload, PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB)
+	modulePath := src.Relative(UFS.Source)
+	modulePath = SanitizePath(modulePath, '-')
+	return UFS.Binaries.AbsoluteFile(modulePath).Normalize().ReplaceExt(
+		fmt.Sprintf("-%s%s", unit.Target.EnvironmentAlias, compiler.Extname(payload)))
 }
-
-func (unit *Unit) GetBinariesOutput(modulePath string, payload PayloadType) utils.Filename {
-	utils.AssertIn(payload, PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB)
-	modulePath = unit.ModuleDir.AbsoluteFile(modulePath).Relative(utils.UFS.Source)
-	modulePath = sanitizePayloadPath(modulePath)
-	return utils.UFS.Binaries.AbsoluteFile(modulePath).ReplaceExt(
-		fmt.Sprintf("-%s%s", unit.Target.GetEnvironmentAlias(), unit.Compiler.Extname(payload)))
+func (unit *Unit) GetGeneratedOutput(compiler Compiler, src Filename, payload PayloadType) Filename {
+	modulePath := src.Relative(unit.ModuleDir)
+	return unit.GeneratedDir.AbsoluteFile(modulePath).Normalize().ReplaceExt(compiler.Extname(payload))
 }
-func (unit *Unit) GetGeneratedOutput(modulePath string, payload PayloadType) utils.Filename {
-	modulePath = sanitizePayloadPath(modulePath)
-	return unit.GeneratedDir.AbsoluteFile(modulePath).ReplaceExt(unit.Compiler.Extname(payload))
+func (unit *Unit) GetIntermediateOutput(compiler Compiler, src Filename, payload PayloadType) Filename {
+	AssertIn(payload, PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_STATICLIB)
+	var modulePath string
+	if src.Dirname.IsIn(unit.GeneratedDir) {
+		modulePath = src.Relative(unit.GeneratedDir)
+	} else {
+		modulePath = src.Relative(unit.ModuleDir)
+	}
+	return unit.IntermediateDir.AbsoluteFile(modulePath).Normalize().ReplaceExt(compiler.Extname(payload))
 }
-func (unit *Unit) GetIntermediateOutput(modulePath string, payload PayloadType) utils.Filename {
-	utils.AssertIn(payload, PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_STATICLIB)
-	modulePath = sanitizePayloadPath(modulePath)
-	return unit.IntermediateDir.AbsoluteFile(modulePath).ReplaceExt(unit.Compiler.Extname(payload))
-}
-func (unit *Unit) GetPayloadOutput(src utils.Filename, payload PayloadType) utils.Filename {
-	rel := src.Relative(unit.ModuleDir)
+func (unit *Unit) GetPayloadOutput(compiler Compiler, src Filename, payload PayloadType) (result Filename) {
 	switch payload {
 	case PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB:
-		return unit.GetBinariesOutput(rel, payload)
+		result = unit.GetBinariesOutput(compiler, src, payload)
 	case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_STATICLIB:
-		return unit.GetIntermediateOutput(rel, payload)
+		result = unit.GetIntermediateOutput(compiler, src, payload)
 	case PAYLOAD_HEADERS:
-		// nothing to do
+		result = src
 	default:
-		utils.UnexpectedValue(payload)
+		UnexpectedValue(payload)
 	}
-	return src
+	return
 }
 
-func (unit *Unit) GetDigestable(o *bytes.Buffer) {
-	o.WriteString("Unit")
-	unit.Target.GetDigestable(o)
-	o.WriteString(fmt.Sprint(unit.Ordinal))
-	unit.Payload.GetDigestable(o)
-	unit.OutputFile.GetDigestable(o)
-	unit.ModuleDir.GetDigestable(o)
-	unit.GeneratedDir.GetDigestable(o)
-	unit.IntermediateDir.GetDigestable(o)
-	unit.CustomUnits.GetDigestable(o)
-	utils.MakeDigestable(o, unit.GeneratedFiles...)
-	unit.PrecompiledHeader.GetDigestable(o)
-	unit.PrecompiledSource.GetDigestable(o)
-	unit.PrecompiledObject.GetDigestable(o)
-	utils.MakeDigestable(o, unit.IncludeDependencies.Slice()...)
-	utils.MakeDigestable(o, unit.CompileDependencies.Slice()...)
-	utils.MakeDigestable(o, unit.LinkDependencies.Slice()...)
-	utils.MakeDigestable(o, unit.RuntimeDependencies.Slice()...)
-	unit.Compiler.GetDigestable(o)
-	if unit.Preprocessor != nil {
-		unit.Preprocessor.GetDigestable(o)
-	} else {
-		o.WriteString("%no-preprocessor%")
+func (unit *Unit) Serialize(ar Archive) {
+	ar.Serializable(&unit.Target)
+
+	ar.Serializable(&unit.Ordinal)
+	ar.Serializable(&unit.Payload)
+	ar.Serializable(&unit.OutputFile)
+
+	ar.Serializable(&unit.Source)
+	ar.Serializable(&unit.ModuleDir)
+	ar.Serializable(&unit.GeneratedDir)
+	ar.Serializable(&unit.IntermediateDir)
+
+	ar.Serializable(&unit.PrecompiledHeader)
+	ar.Serializable(&unit.PrecompiledSource)
+	ar.Serializable(&unit.PrecompiledObject)
+
+	SerializeSlice(ar, unit.IncludeDependencies.Ref())
+	SerializeSlice(ar, unit.CompileDependencies.Ref())
+	SerializeSlice(ar, unit.LinkDependencies.Ref())
+	SerializeSlice(ar, unit.RuntimeDependencies.Ref())
+
+	ar.Serializable(&unit.CompilerAlias)
+	ar.Serializable(&unit.PreprocessorAlias)
+
+	ar.Serializable(&unit.Environment)
+
+	ar.Serializable(&unit.TransitiveFacet)
+	ar.Serializable(&unit.GeneratedFiles)
+	ar.Serializable(&unit.CustomUnits)
+
+	ar.Serializable(&unit.CppRules)
+	ar.Serializable(&unit.UnityRules)
+	ar.Serializable(&unit.Facet)
+}
+
+/***************************************
+ * Unit Factory
+ ***************************************/
+
+func (unit *Unit) Alias() BuildAlias {
+	return unit.Target.Alias()
+}
+func (unit *Unit) Build(bc BuildContext) error {
+	if err := CreateDirectory(bc, unit.OutputFile.Dirname); err != nil {
+		return err
 	}
-	unit.Source.GetDigestable(o)
-	unit.TransitiveFacet.GetDigestable(o)
-	unit.CppRules.GetDigestable(o)
-	unit.Facet.GetDigestable(o)
+	if err := CreateDirectory(bc, unit.IntermediateDir); err != nil {
+		return err
+	}
+
+	if unit.Payload.HasOutput() {
+		if err := unit.UnityRules.Generate(unit, bc); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetBuildUnit(alias TargetAlias) (*Unit, error) {
+	return FindBuildable[*Unit](CommandEnv.BuildGraph(), alias)
 }

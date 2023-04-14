@@ -3,10 +3,9 @@ package windows
 import (
 	. "build/compile"
 	. "build/utils"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -28,39 +27,32 @@ type MsvcCompiler struct {
 	VCToolsPath     Directory
 
 	CompilerRules
-	*WindowsSDK
+
+	WindowsSDK       *WindowsSDK
 	ProductInstall   *MsvcProductInstall
 	ResourceCompiler *ResourceCompiler
 }
 
 func (msvc *MsvcCompiler) GetCompiler() *CompilerRules { return &msvc.CompilerRules }
 
-func (msvc *MsvcCompiler) GetDigestable(o *bytes.Buffer) {
-	msvc.MSC_VER.GetDigestable(o)
-	o.WriteString(msvc.MinorVer)
-	o.WriteString(msvc.Host)
-	o.WriteString(msvc.Target)
-	o.WriteString(msvc.PlatformToolset)
-	o.WriteString(msvc.VSInstallName)
-	msvc.VSInstallPath.GetDigestable(o)
-	msvc.VCToolsPath.GetDigestable(o)
-	msvc.CompilerRules.GetDigestable(o)
-	msvc.WindowsSDK.GetDigestable(o)
-	msvc.ProductInstall.GetDigestable(o)
-	msvc.ResourceCompiler.GetDigestable(o)
+func (msvc *MsvcCompiler) Serialize(ar Archive) {
+	ar.Serializable(&msvc.Arch)
+
+	ar.Serializable(&msvc.MSC_VER)
+	ar.String(&msvc.MinorVer)
+	ar.String(&msvc.Host)
+	ar.String(&msvc.Target)
+	ar.String(&msvc.PlatformToolset)
+	ar.String(&msvc.VSInstallName)
+	ar.Serializable(&msvc.VSInstallPath)
+	ar.Serializable(&msvc.VCToolsPath)
+
+	ar.Serializable(&msvc.CompilerRules)
+	SerializeExternal(ar, &msvc.WindowsSDK)
+	SerializeExternal(ar, &msvc.ProductInstall)
+	SerializeExternal(ar, &msvc.ResourceCompiler)
 }
 
-func (msvc *MsvcCompiler) FriendlyName() string {
-	return "msvc"
-}
-func (msvc *MsvcCompiler) EnvPath() DirSet {
-	return NewDirSet(
-		msvc.WorkingDir(),
-		msvc.WindowsSDK.ResourceCompiler.Dirname)
-}
-func (msvc *MsvcCompiler) WorkingDir() Directory {
-	return msvc.ProductInstall.VcToolsHostPath()
-}
 func (msvc *MsvcCompiler) Extname(x PayloadType) string {
 	switch x {
 	case PAYLOAD_EXECUTABLE:
@@ -75,12 +67,13 @@ func (msvc *MsvcCompiler) Extname(x PayloadType) string {
 		return ".pch"
 	case PAYLOAD_HEADERS:
 		return ".h"
+	case PAYLOAD_DEPENDENCIES:
+		return ".deps.json"
 	default:
 		UnexpectedValue(x)
 		return ""
 	}
 }
-
 func (msvc *MsvcCompiler) CppRtti(f *Facet, enabled bool) {
 	if enabled {
 		f.Defines.Append("PPE_HAS_CXXRTTI=1")
@@ -218,212 +211,25 @@ func (msvc *MsvcCompiler) LibraryPath(f *Facet, dirs ...Directory) {
 		f.LinkerOptions.Append(libPath)
 	}
 }
-
-func makeMsvcCompiler(
-	result *MsvcCompiler,
-	bc BuildContext,
-	msc_ver MsvcVersion,
-	minorVer string,
-	host string,
-	target string,
-	vsInstallName string,
-	vsInstallPath Directory,
-	vcToolsPath Directory,
-	executable Filename,
-	librarian Filename,
-	linker Filename,
-	extraFiles ...Filename) {
-	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
-	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
-	windowsSDKInstall := GetWindowsSDKInstall(windowsFlags.WindowsSDK)
-	bc.DependsOn(compileFlags, windowsFlags, windowsSDKInstall)
-
-	platformToolset := fmt.Sprintf("%s%s%s", minorVer[0:1], minorVer[1:2], minorVer[3:4])
-
-	result.MSC_VER = msc_ver
-	result.MinorVer = minorVer
-	result.Host = host
-	result.Target = target
-	result.PlatformToolset = platformToolset
-	result.VSInstallName = vsInstallName
-	result.VSInstallPath = vsInstallPath
-	result.VCToolsPath = vcToolsPath
-	result.WindowsSDK = windowsSDKInstall.WindowsSDK
-
-	result.CompilerRules.CompilerName = fmt.Sprintf("Msvc_%v_%v", msc_ver, target)
-	result.CompilerRules.CompilerFamily = "msvc"
-	result.CompilerRules.CppStd = getCppStdFromMsc(msc_ver)
-	result.CompilerRules.Executable = executable
-	result.CompilerRules.Librarian = librarian
-	result.CompilerRules.Linker = linker
-	result.CompilerRules.ExtraFiles = extraFiles
-
-	result.CompilerRules.Facet = NewFacet()
-	facet := &result.CompilerRules.Facet
-
-	facet.Append(result.WindowsSDK)
-
-	facet.Defines.Append(
-		"CPP_VISUALSTUDIO",
-		"_ENABLE_EXTENDED_ALIGNED_STORAGE", // https://devblogs.microsoft.com/cppblog/stl-features-and-fixes-in-vs-2017-15-8/
-	)
-
-	facet.Exports.Add("VisualStudio/Path", result.VSInstallPath.String())
-	facet.Exports.Add("VisualStudio/PlatformToolset", result.PlatformToolset)
-	facet.Exports.Add("VisualStudio/Tools", result.VCToolsPath.String())
-	facet.Exports.Add("VisualStudio/Version", result.MinorVer)
-
-	facet.SystemIncludePaths.Append(
-		vsInstallPath.Folder("VC", "Auxiliary", "VS", "include"),
-		vsInstallPath.Folder("VC", "Tools", "MSVC", result.MinorVer, "crt", "src"),
-		vsInstallPath.Folder("VC", "Tools", "MSVC", result.MinorVer, "include"))
-
-	facet.AddCompilationFlag_NoAnalysis(
-		"/nologo",   // no copyright when compiling
-		"/c \"%1\"", // input file injection
-	)
-
-	facet.CompilerOptions.Append("/Fo\"%2\"")
-	facet.PrecompiledHeaderOptions.Append("/Fp\"%2\"", "/Fo\"%3\"")
-	facet.PreprocessorOptions.Append("/Fo\"%2\"")
-
-	facet.AddCompilationFlag(
-		"/GF",      // string pooling
-		"/GT",      // fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
-		"/bigobj",  // more sections inside obj files, support larger translation units, needed for unity builds
-		"/d2FH4",   // https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
-		"/EHsc",    // structure exception support (#TODO: optional ?)
-		"/fp:fast", // non-deterministic, allow vendor specific float intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
-		"/vmb",     // class is always defined before pointer to member (https://docs.microsoft.com/en-us/cpp/build/reference/vmb-vmg-representation-method?view=vs-2019)
-		"/openmp-", // disable OpenMP automatic parallelization
-		//"/Za",                // disable non-ANSI features
-		"/Zc:inline",           // https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
-		"/Zc:implicitNoexcept", // https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
-		"/Zc:preprocessor",     // https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
-		"/Zc:rvalueCast",       // https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
-		"/Zc:strictStrings",    // https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
-		"/Zc:wchar_t",          // promote wchar_t as a native type
-		"/Zc:forScope",         // prevent from spilling iterators outside loops
-		"/Zc:sizedDealloc",     // https://learn.microsoft.com/en-us/cpp/build/reference/zc-sizeddealloc-enable-global-sized-dealloc-functions?view=msvc-170
-		"/Zc:__cplusplus",      // https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-170
-		"/utf-8",               // https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
-		"/W4",                  // warning level 4 (verbose)
-		"/TP",                  // compile as C++
-	)
-
-	// ignored warnings
-	facet.AddCompilationFlag(
-		"/wd4201", // nonstandard extension used: nameless struct/union'
-		"/wd4251", // 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
-	)
-
-	// configure librarian
-	facet.LibrarianOptions.Append(
-		"/OUT:\"%2\"",
-		"\"%1\"",
-		"/nologo",
-		"/SUBSYSTEM:WINDOWS",
-		"/IGNORE:4221",
-	)
-
-	// configure linker
-	facet.LinkerOptions.Append(
-		"/OUT:\"%2\"",
-		"\"%1\"",
-		"kernel32.lib",
-		"Shell32.lib",
-		"Gdi32.lib",
-		"Advapi32.lib",
-		"Shlwapi.lib",
-		"Version.lib",
-		"/nologo",            // no copyright when compiling
-		"/TLBID:1",           // https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
-		"/IGNORE:4001",       // https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
-		"/IGNORE:4099",       // don't have PDB for some externals
-		"/NXCOMPAT:NO",       // disable Data Execution Prevention (DEP)
-		"/LARGEADDRESSAWARE", // indicate support for VM > 2Gb (if 3Gb flag is toggled)
-		"/VERBOSE:INCR",      // incremental linker diagnosis
-		"/SUBSYSTEM:WINDOWS", // ~Windows~ application type (vs Console)
-		"/fastfail",          // better error reporting
-	)
-
-	// strict vs permissive
-	if windowsFlags.Permissive.Get() {
-		LogVeryVerbose("MSVC: using permissive compilation options")
-
-		facet.AddCompilationFlag("/permissive", "/WX-")
-		//facet.LinkerOptions.Append("/WX-")
-		facet.LibrarianOptions.Append("/WX-")
-	} else {
-		LogVeryVerbose("MSVC: using strict warnings and warings as error")
-
-		facet.AddCompilationFlag(
-			// https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
-			"/permissive-",
-			// warning as errors
-			"/WX",
-			// promote some warnings as errors
-			"/we4062", // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
-			"/we4263", // 'function' : member function does not override any base class virtual member function
-			"/we4265", // 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
-			"/we4296", // 'operator': expression is always false
-			"/we4555", // expression has no effect; expected expression with side-effect
-			"/we4619", // #pragma warning : there is no warning number 'number'
-			"/we4640", // 'instance' : construction of local static object is not thread-safe
-			"/we4826", // Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
-			"/we4836", // nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
-			"/we4905", // wide string literal cast to 'LPSTR'
-			"/we4906", // string literal cast to 'LPWSTR'
-		)
-
-		// warning as errors also for librarian and linker
-		facet.LibrarianOptions.Append("/WX")
-		//facet.LinkerOptions.Append("/WX") // #TODO: **DON'T**, will freeze link.exe ¯\_(ツ)_/¯
-	}
-
-	if compileFlags.Benchmark.Get() {
-		LogVeryVerbose("MSVC: will dump compilation timings")
-		facet.CompilerOptions.Append("/d2cgsummary", "/Bt+")
-		facet.LinkerOptions.Append("/d2:-cgsummary")
-	}
-
-	if msc_ver >= MSC_VER_2019 {
-		if windowsFlags.JustMyCode.Get() {
-			LogVeryVerbose("MSVC: using just-my-code")
-			facet.AddCompilationFlag_NoAnalysis("/JMC")
-		} else {
-			facet.AddCompilationFlag_NoAnalysis("/JMC-")
-		}
-	}
-
-	if msc_ver >= MSC_VER_2019 {
-		LogVeryVerbose("MSCV: using external headers to ignore warnings in foreign code")
-		// https://docs.microsoft.com/fr-fr/cpp/build/reference/jmc?view=msvc-160
-		facet.Defines.Append("USE_PPE_MSVC_PRAGMA_SYSTEMHEADER")
-		facet.AddCompilationFlag_NoAnalysis(
-			"/experimental:external",
-			"/external:W0",
-			"/external:anglebrackets")
-	}
-
-	// Windows 10 slow-down workaround
-	facet.LinkerOptions.Append(
-		"delayimp.lib",
-		"/DELAYLOAD:Shell32.dll",
-		"/IGNORE:4199", // warning LNK4199: /DELAYLOAD:XXX.dll ignored; no imports found from XXX.dll, caused by our added .libs
-	)
+func (msvc *MsvcCompiler) SourceDependencies(obj *ActionRules) Action {
+	action := obj.GetAction()
+	sourceDependenciesFile := action.Outputs[0]
+	sourceDependenciesFile.Basename += msvc.Extname(PAYLOAD_DEPENDENCIES)
+	return NewSourceDependenciesAction(obj, sourceDependenciesFile)
 }
 
-func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filename) {
-	resources := &CustomUnit{
+func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filename) error {
+	LogVeryVerbose("MSVC: add resource compiler custom unit to %v", u.Alias())
+
+	resources := CustomUnit{
 		Unit: Unit{
-			Compiler:        msvc.ResourceCompiler,
 			Target:          u.Target,
 			ModuleDir:       u.ModuleDir,
 			GeneratedDir:    u.GeneratedDir,
 			IntermediateDir: u.IntermediateDir,
 			Payload:         u.Payload,
 			Facet:           u.Facet,
+			CompilerAlias:   msvc.ResourceCompiler.GetCompiler().CompilerAlias,
 			CppRules: CppRules{
 				PCH:   PCH_DISABLED,
 				Unity: UNITY_DISABLED,
@@ -439,26 +245,42 @@ func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filen
 	resources.LibrarianOptions.Clear()
 	resources.LinkerOptions.Clear()
 
-	resources.Decorate(compileEnv, resources.GetCompiler())
+	if err := resources.Decorate(compileEnv, resources.GetCompiler()); err != nil {
+		return err
+	}
 	resources.Append(resources.GetCompiler()) // compiler options need to be at the end of command-line
 
 	u.CustomUnits.Append(resources)
+
+	return nil
 }
 
-func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
-	compileFlags := CompileFlags.FindOrAdd(CommandEnv.Flags)
-	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
+func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
+	windowsFlags := GetWindowsFlags()
+
+	if u.LinkerVerbose.Get() {
+		u.LinkerOptions.Append(
+			"/VERBOSE",
+			"/VERBOSE:LIB",
+			"/VERBOSE:ICF",
+			"/VERBOSE:REF",
+			"/VERBOSE:INCR",
+			"/VERBOSE:UNUSEDLIBS",
+		)
+	}
 
 	if u.Payload == PAYLOAD_EXECUTABLE || u.Payload == PAYLOAD_SHAREDLIB {
 		resource_rc := u.ModuleDir.File("resource.rc")
 		if resource_rc.Exists() {
-			msvc.AddResources(compileEnv, u, resource_rc)
+			if err := msvc.AddResources(compileEnv, u, resource_rc); err != nil {
+				return err
+			}
 		}
 	}
 
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
-		u.AddCompilationFlag_NoAnalysis("/favor:blend", "/arch:AVX2")
+		u.AddCompilationFlag_NoAnalysis("/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x86")
 		u.LinkerOptions.Append("/MACHINE:x86")
 		u.LibraryPaths.Append(
@@ -470,7 +292,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 		}
 
 	case ARCH_X64:
-		u.AddCompilationFlag_NoAnalysis("/favor:AMD64", "/arch:AVX2")
+		u.AddCompilationFlag_NoAnalysis("/arch:AVX2")
 		u.LibrarianOptions.Append("/MACHINE:x64")
 		u.LinkerOptions.Append("/MACHINE:x64")
 		u.LibraryPaths.Append(
@@ -482,15 +304,15 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 	switch compileEnv.GetConfig().ConfigType {
 	case CONFIG_DEBUG:
-		decorateMsvcConfig_Debug(&u.Facet)
+		decorateMsvcConfig_Debug(u)
 	case CONFIG_FASTDEBUG:
-		decorateMsvcConfig_FastDebug(&u.Facet)
+		decorateMsvcConfig_FastDebug(u)
 	case CONFIG_DEVEL:
-		decorateMsvcConfig_Devel(&u.Facet)
+		decorateMsvcConfig_Devel(u)
 	case CONFIG_TEST:
-		decorateMsvcConfig_Test(&u.Facet)
+		decorateMsvcConfig_Test(u)
 	case CONFIG_SHIPPING:
-		decorateMsvcConfig_Shipping(&u.Facet)
+		decorateMsvcConfig_Shipping(u)
 	default:
 		UnexpectedValue(compileEnv.GetConfig().ConfigType)
 	}
@@ -509,27 +331,24 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 
 		u.AnalysisOptions.Append(
 			"/analyze",
+			"/analyze:external-", // disable analysis of external headers
 			fmt.Sprint("/analyse:stacksize", stackSize),
 			fmt.Sprintf("/analyze:plugin\"%v\"", msvc.ProductInstall.VcToolsHostPath().File("EspXEngine.dll")),
 		)
 		u.Defines.Append("ANALYZE")
-		u.LinkerOptions.Append(
-			"/VERBOSE",
-			// "/VERBOSE:LIB",
-			// "/VERBOSE:ICF",
-			// "/VERBOSE:REF",
-			"/VERBOSE:UNUSEDLIBS",
-		)
 	}
 
 	// set dependent linker options
 
-	if u.Sanitizer != SANITIZER_NONE && u.CompilerOptions.Contains("/LTCG") {
-		LogVeryVerbose("MSVC: disable LTCG due to %v", u.Sanitizer)
-		u.LinkerOptions.Remove("/LTCG")
+	if u.Sanitizer != SANITIZER_NONE {
+		u.Environment["ASAN_OPTIONS"] = []string{"windows_hook_rtl_allocators=true"}
+		if u.CompilerOptions.Contains("/LTCG") {
+			LogVeryVerbose("MSVC: disable LTCG due to %v", u.Sanitizer)
+			u.LinkerOptions.Remove("/LTCG")
+		}
 	}
 
-	if compileFlags.Incremental.Get() && u.Sanitizer == SANITIZER_NONE {
+	if u.Incremental.Get() && u.Sanitizer == SANITIZER_NONE {
 		LogVeryVerbose("MSVC: using incremental linker with fastlink")
 		if u.LinkerOptions.Contains("/INCREMENTAL") {
 			u.LinkerOptions.Remove("/LTCG")
@@ -565,7 +384,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 	}
 
 	// don't forget the current windows SDK
-	msvc.WindowsSDK.Decorate(compileEnv, u)
+	return msvc.WindowsSDK.Decorate(compileEnv, u)
 }
 
 /***************************************
@@ -637,52 +456,50 @@ func msvc_STL_iteratorDebug(f *Facet, enabled bool) {
 	}
 }
 
-func decorateMsvcConfig_Debug(f *Facet) {
-	f.AddCompilationFlag("/Od", "/Oy-", "/Gm-", "/Gw-")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOREF", "/OPT:NOICF")
-	compileFlags := CompileFlags.Need(CommandEnv.Flags)
-	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
-	msvc_CXX_linkTimeCodeGeneration(f, false)
-	msvc_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), true)
-	msvc_STL_debugHeap(f, true)
-	msvc_STL_iteratorDebug(f, true)
+func decorateMsvcConfig_Debug(u *Unit) {
+	u.AddCompilationFlag("/Od", "/Oy-", "/Gm-", "/Gw-")
+	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOREF", "/OPT:NOICF")
+	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), true)
+	msvc_CXX_linkTimeCodeGeneration(&u.Facet, false)
+	msvc_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), true)
+	msvc_STL_debugHeap(&u.Facet, true)
+	msvc_STL_iteratorDebug(&u.Facet, true)
 }
-func decorateMsvcConfig_FastDebug(f *Facet) {
-	f.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Gm")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO")
-	compileFlags := CompileFlags.Need(CommandEnv.Flags)
-	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), true)
-	msvc_CXX_linkTimeCodeGeneration(f, false)
-	msvc_CXX_runtimeChecks(f, compileFlags.RuntimeChecks.Get(), false)
-	msvc_STL_debugHeap(f, true)
-	msvc_STL_iteratorDebug(f, true)
+func decorateMsvcConfig_FastDebug(u *Unit) {
+	u.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Gm")
+	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO")
+	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), true)
+	msvc_CXX_linkTimeCodeGeneration(&u.Facet, false)
+	msvc_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), false)
+	msvc_STL_debugHeap(&u.Facet, true)
+	msvc_STL_iteratorDebug(&u.Facet, true)
 }
-func decorateMsvcConfig_Devel(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Gm-", "/Zo", "/GL")
-	f.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOICF")
-	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(f, true)
-	msvc_CXX_runtimeChecks(f, CompileFlags.Need(CommandEnv.Flags).RuntimeChecks.Get(), false)
-	msvc_STL_debugHeap(f, false)
-	msvc_STL_iteratorDebug(f, false)
+func decorateMsvcConfig_Devel(u *Unit) {
+	u.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Gm-", "/Zo", "/GL")
+	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOICF")
+	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(&u.Facet, true)
+	msvc_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), false)
+	msvc_STL_debugHeap(&u.Facet, false)
+	msvc_STL_iteratorDebug(&u.Facet, false)
 }
-func decorateMsvcConfig_Test(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
-	f.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/PROFILE", "/OPT:REF")
-	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(f, true)
-	msvc_CXX_runtimeChecks(f, false, false)
-	msvc_STL_debugHeap(f, false)
-	msvc_STL_iteratorDebug(f, false)
+func decorateMsvcConfig_Test(u *Unit) {
+	u.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
+	u.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/PROFILE", "/OPT:REF")
+	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(&u.Facet, true)
+	msvc_CXX_runtimeChecks(&u.Facet, false, false)
+	msvc_STL_debugHeap(&u.Facet, false)
+	msvc_STL_iteratorDebug(&u.Facet, false)
 }
-func decorateMsvcConfig_Shipping(f *Facet) {
-	f.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo-")
-	f.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/OPT:REF", "/OPT:ICF=3")
-	msvc_CXX_runtimeLibrary(f, WindowsFlags.Need(CommandEnv.Flags).StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(f, true)
-	msvc_CXX_runtimeChecks(f, false, false)
-	msvc_STL_debugHeap(f, false)
-	msvc_STL_iteratorDebug(f, false)
+func decorateMsvcConfig_Shipping(u *Unit) {
+	u.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo-")
+	u.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/OPT:REF", "/OPT:ICF=3")
+	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(&u.Facet, true)
+	msvc_CXX_runtimeChecks(&u.Facet, false, false)
+	msvc_STL_debugHeap(&u.Facet, false)
+	msvc_STL_iteratorDebug(&u.Facet, false)
 }
 
 /***************************************
@@ -696,9 +513,9 @@ type VsWhereCatalog struct {
 	ProductLineVersion    string
 }
 
-func (x *VsWhereCatalog) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.ProductDisplayVersion)
-	o.WriteString(x.ProductLineVersion)
+func (x *VsWhereCatalog) Serialize(ar Archive) {
+	ar.String(&x.ProductDisplayVersion)
+	ar.String(&x.ProductLineVersion)
 }
 
 type VsWhereEntry struct {
@@ -707,10 +524,10 @@ type VsWhereEntry struct {
 	Catalog          VsWhereCatalog
 }
 
-func (x *VsWhereEntry) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.InstallationName)
-	o.WriteString(x.InstallationPath)
-	x.Catalog.GetDigestable(o)
+func (x *VsWhereEntry) Serialize(ar Archive) {
+	ar.String(&x.InstallationName)
+	ar.String(&x.InstallationPath)
+	ar.Serializable(&x.Catalog)
 }
 
 type MsvcProductInstall struct {
@@ -724,9 +541,10 @@ type MsvcProductInstall struct {
 	VsInstallPath  Directory
 	VcToolsPath    Directory
 	VcToolsFileSet FileSet
-	Cl_exe         Filename
-	Lib_exe        Filename
-	Link_exe       Filename
+
+	Cl_exe   Filename
+	Lib_exe  Filename
+	Link_exe Filename
 }
 
 func (x *MsvcProductInstall) VcToolsHostPath() Directory {
@@ -734,31 +552,29 @@ func (x *MsvcProductInstall) VcToolsHostPath() Directory {
 }
 
 func (x *MsvcProductInstall) Alias() BuildAlias {
-	name := fmt.Sprintf("MsvcProductInstall_%s_%s", x.WantedVer, x.Arch)
+	variant := "Stable"
 	if x.Insider {
-		name += "_Insider"
+		variant = "Insider"
 	}
-	return MakeBuildAlias("HAL", name)
+	return MakeBuildAlias("HAL", "Windows", "MSVC", x.WantedVer.String(), x.Arch, variant)
 }
-func (x *MsvcProductInstall) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.Arch)
-	x.WantedVer.GetDigestable(o)
-	if x.Insider {
-		o.WriteByte(0xFF)
-	} else {
-		o.WriteByte(0x00)
-	}
-	x.ActualVer.GetDigestable(o)
-	o.WriteString(x.HostArch)
-	x.Selected.GetDigestable(o)
-	x.VsInstallPath.GetDigestable(o)
-	x.VcToolsPath.GetDigestable(o)
-	x.VcToolsFileSet.GetDigestable(o)
-	x.Cl_exe.GetDigestable(o)
-	x.Lib_exe.GetDigestable(o)
-	x.Link_exe.GetDigestable(o)
+func (x *MsvcProductInstall) Serialize(ar Archive) {
+	ar.String(&x.Arch)
+	ar.Serializable(&x.WantedVer)
+	ar.Bool(&x.Insider)
+
+	ar.Serializable(&x.ActualVer)
+	ar.String(&x.HostArch)
+	ar.Serializable(&x.Selected)
+	ar.Serializable(&x.VsInstallPath)
+	ar.Serializable(&x.VcToolsPath)
+	ar.Serializable(&x.VcToolsFileSet)
+
+	ar.Serializable(&x.Cl_exe)
+	ar.Serializable(&x.Lib_exe)
+	ar.Serializable(&x.Link_exe)
 }
-func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
+func (x *MsvcProductInstall) Build(bc BuildContext) error {
 	x.HostArch = getWindowsHostPlatform()
 
 	name := fmt.Sprintf("MSVC_Host%v_%v", x.HostArch, x.Arch)
@@ -794,39 +610,38 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 		args = append(args, "-prerelease")
 	}
 
-	LogTrace(strings.Join(append([]string{MSVC_VSWHERE_EXE.String()}, args...), " "))
-
 	cmd := exec.Command(MSVC_VSWHERE_EXE.String(), args...)
 
 	var entries []VsWhereEntry
 	if outp, err := cmd.Output(); err != nil {
-		return BuildStamp{}, err
+		return err
 	} else if len(outp) > 0 {
 		if err := json.Unmarshal(outp, &entries); err != nil {
-			return BuildStamp{}, err
+			return err
 		}
 	}
 
 	if len(entries) == 0 {
-		return BuildStamp{}, fmt.Errorf("msvc: vswhere did not find any compiler")
+		return fmt.Errorf("msvc: vswhere did not find any compiler")
 	}
 
 	x.Selected = entries[0]
 	x.VsInstallPath = MakeDirectory(x.Selected.InstallationPath)
 	if _, err := x.VsInstallPath.Info(); err != nil {
-		return BuildStamp{}, err
+		return err
 	}
 
 	if err := x.ActualVer.Set(x.Selected.Catalog.ProductLineVersion); err != nil {
-		return BuildStamp{}, err
+		return err
 	}
 
 	var vcToolsVersion string
 	vcToolsVersionFile := x.VsInstallPath.Folder("VC", "Auxiliary", "Build").File("Microsoft.VCToolsVersion.default.txt")
-	if data, err := ioutil.ReadFile(vcToolsVersionFile.String()); err == nil {
+
+	if data, err := os.ReadFile(vcToolsVersionFile.String()); err == nil {
 		vcToolsVersion = strings.TrimSpace(string(data))
 	} else {
-		return BuildStamp{}, err
+		return err
 	}
 
 	x.VcToolsPath = x.VsInstallPath.Folder("VC", "Tools", "MSVC", vcToolsVersion)
@@ -854,67 +669,278 @@ func (x *MsvcProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 			cluiDll,
 			cluiDll.Dirname.File("mspft140ui.dll")) // Localized messages for static analysis
 	} else {
-		return BuildStamp{}, err
+		return err
 	}
 
 	x.Cl_exe = vcToolsHostPath.File("cl.exe")
 	x.Lib_exe = vcToolsHostPath.File("lib.exe")
 	x.Link_exe = vcToolsHostPath.File("link.exe")
-	bc.NeedFile(MSVC_VSWHERE_EXE, vcToolsVersionFile, x.Cl_exe, x.Lib_exe, x.Link_exe)
-	bc.NeedFile(x.VcToolsFileSet...)
-	bc.NeedFolder(x.VcToolsPath, x.VsInstallPath)
-
-	return MakeBuildStamp(x)
-}
-
-func (msvc *MsvcCompiler) Alias() BuildAlias {
-	return MakeBuildAlias("Compiler", "Msvc_"+msvc.Arch.String())
-}
-func (msvc *MsvcCompiler) Build(bc BuildContext) (BuildStamp, error) {
-	*msvc = MsvcCompiler{Arch: msvc.Arch}
-
-	windowsFlags := WindowsFlags.Need(CommandEnv.Flags)
-	msvc.ProductInstall = GetMsvcProductInstall(msvc.Arch, windowsFlags.MscVer, windowsFlags.Insider)
-	bc.DependsOn(windowsFlags, msvc.ProductInstall)
-	msvc.ResourceCompiler = WindowsResourceCompiler.Need(bc)
-
-	makeMsvcCompiler(
-		msvc,
-		bc,
-		msvc.ProductInstall.ActualVer,
-		msvc.ProductInstall.VcToolsPath.Basename(),
-		msvc.ProductInstall.HostArch,
-		msvc.Arch.String(),
-		msvc.ProductInstall.Selected.InstallationName,
-		msvc.ProductInstall.VsInstallPath,
-		msvc.ProductInstall.VcToolsPath,
-		msvc.ProductInstall.Cl_exe,
-		msvc.ProductInstall.Lib_exe,
-		msvc.ProductInstall.Link_exe,
-		msvc.ProductInstall.VcToolsFileSet...)
-
-	return MakeBuildStamp(msvc)
-}
-
-var GetMsvcProductInstall = MemoizeArgs3(func(arch ArchType, msc_ver MsvcVersion, insider BoolVar) *MsvcProductInstall {
-	if msc_ver == MSC_VER_LATEST {
-		msc_ver = msc_ver_any
+	if err := bc.NeedFile(vcToolsVersionFile, x.Cl_exe, x.Lib_exe, x.Link_exe); err != nil {
+		return err
+	}
+	if err := bc.NeedFile(x.VcToolsFileSet...); err != nil {
+		return err
+	}
+	if err := bc.NeedDirectory(x.VcToolsPath, x.VsInstallPath); err != nil {
+		return err
 	}
 
-	builder := &MsvcProductInstall{
-		WantedVer: msc_ver,
-		Arch:      arch.String(),
-		Insider:   insider.Get(),
+	return nil
+}
+
+func (msvc *MsvcCompiler) Build(bc BuildContext) (err error) {
+	compileFlags := GetCompileFlags()
+	windowsFlags := GetWindowsFlags()
+
+	msvc.ProductInstall, err = GetMsvcProductInstall(MsvcProductVer{
+		Arch:    msvc.Arch,
+		MscVer:  windowsFlags.MscVer,
+		Insider: windowsFlags.Insider,
+	}).Need(bc)
+	if err != nil {
+		return
 	}
 
-	return CommandEnv.BuildGraph().Create(builder).GetBuildable().(*MsvcProductInstall)
-})
-
-var GetMsvcCompiler = MemoizeArg(func(arch ArchType) *MsvcCompiler {
-	result := &MsvcCompiler{
-		Arch: arch,
+	msvc.ResourceCompiler, err = GetWindowsResourceCompiler().Need(bc)
+	if err != nil {
+		return
 	}
-	return CommandEnv.BuildGraph().
-		Create(result).
-		GetBuildable().(*MsvcCompiler)
-})
+
+	windowsSDKInstall := GetWindowsSDKInstall(bc, windowsFlags.WindowsSDK)
+
+	msc_ver := msvc.ProductInstall.ActualVer
+
+	msvc.MSC_VER = msc_ver
+	msvc.MinorVer = msvc.ProductInstall.VcToolsPath.Basename()
+	msvc.Host = msvc.ProductInstall.HostArch
+	msvc.Target = msvc.Arch.String()
+	msvc.PlatformToolset = fmt.Sprintf("%s%s%s", msvc.MinorVer[0:1], msvc.MinorVer[1:2], msvc.MinorVer[3:4])
+	msvc.VSInstallName = msvc.ProductInstall.Selected.InstallationName
+	msvc.VSInstallPath = msvc.ProductInstall.VsInstallPath
+	msvc.VCToolsPath = msvc.ProductInstall.VcToolsPath
+	msvc.WindowsSDK = &windowsSDKInstall.WindowsSDK
+
+	msvc.CompilerRules.CppStd = getCppStdFromMsc(msc_ver)
+	msvc.CompilerRules.Features = MakeEnumSet(
+		COMPILER_ALLOW_CACHING,
+		COMPILER_ALLOW_DISTRIBUTION,
+		COMPILER_ALLOW_RESPONSEFILE,
+		COMPILER_ALLOW_SOURCEMAPPING)
+
+	msvc.CompilerRules.Executable = msvc.ProductInstall.Cl_exe
+	msvc.CompilerRules.Librarian = msvc.ProductInstall.Lib_exe
+	msvc.CompilerRules.Linker = msvc.ProductInstall.Link_exe
+
+	tmpDir := UFS.Transient.Folder("TMP")
+	if err := CreateDirectory(bc, tmpDir); err != nil {
+		return err
+	}
+
+	msvc.CompilerRules.WorkingDir = msvc.ProductInstall.VcToolsHostPath()
+	msvc.CompilerRules.Environment = ProcessEnvironment{
+		"PATH": []string{
+			msvc.CompilerRules.WorkingDir.String(),
+			msvc.WindowsSDK.ResourceCompiler.Dirname.String(),
+			"%PATH%"},
+		"SystemRoot": []string{os.Getenv("SystemRoot")},
+		"TMP":        []string{tmpDir.String()},
+	}
+	msvc.CompilerRules.ExtraFiles = msvc.ProductInstall.VcToolsFileSet
+
+	msvc.CompilerRules.Facet = NewFacet()
+	facet := &msvc.CompilerRules.Facet
+
+	facet.Append(msvc.WindowsSDK)
+
+	facet.Defines.Append(
+		"CPP_VISUALSTUDIO",
+		"_ENABLE_EXTENDED_ALIGNED_STORAGE", // https://devblogs.microsoft.com/cppblog/stl-features-and-fixes-in-vs-2017-15-8/
+	)
+
+	facet.Exports.Add("VisualStudio/Path", msvc.VSInstallPath.String())
+	facet.Exports.Add("VisualStudio/PlatformToolset", msvc.PlatformToolset)
+	facet.Exports.Add("VisualStudio/Tools", msvc.VCToolsPath.String())
+	facet.Exports.Add("VisualStudio/Version", msvc.MinorVer)
+
+	facet.SystemIncludePaths.Append(
+		msvc.VSInstallPath.Folder("VC", "Auxiliary", "VS", "include"),
+		msvc.VSInstallPath.Folder("VC", "Tools", "MSVC", msvc.MinorVer, "crt", "src"),
+		msvc.VSInstallPath.Folder("VC", "Tools", "MSVC", msvc.MinorVer, "include"))
+
+	facet.AddCompilationFlag_NoAnalysis(
+		"/nologo",   // no copyright when compiling
+		"/c \"%1\"", // input file injection
+	)
+
+	facet.CompilerOptions.Append("/Fo\"%2\"")
+	facet.PrecompiledHeaderOptions.Append("/Fp\"%2\"", "/Fo\"%3\"")
+	facet.PreprocessorOptions.Append("/Fo\"%2\"")
+
+	facet.AddCompilationFlag(
+		"/GF",      // string pooling
+		"/GT",      // fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
+		"/bigobj",  // more sections inside obj files, support larger translation units, needed for unity builds
+		"/d2FH4",   // https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
+		"/EHsc",    // structure exception support (#TODO: optional ?)
+		"/fp:fast", // non-deterministic, allow vendor specific float intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
+		"/vmb",     // class is always defined before pointer to member (https://docs.microsoft.com/en-us/cpp/build/reference/vmb-vmg-representation-method?view=vs-2019)
+		"/openmp-", // disable OpenMP automatic parallelization
+		//"/Za",                // disable non-ANSI features
+		"/Zc:inline",           // https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
+		"/Zc:implicitNoexcept", // https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
+		"/Zc:preprocessor",     // https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
+		"/Zc:rvalueCast",       // https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
+		"/Zc:strictStrings",    // https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
+		"/Zc:wchar_t",          // promote wchar_t as a native type
+		"/Zc:forScope",         // prevent from spilling iterators outside loops
+		"/Zc:sizedDealloc",     // https://learn.microsoft.com/en-us/cpp/build/reference/zc-sizeddealloc-enable-global-sized-dealloc-functions?view=msvc-170
+		"/Zc:__cplusplus",      // https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-170
+		"/utf-8",               // https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
+		"/W4",                  // warning level 4 (verbose)
+		"/TP",                  // compile as C++
+	)
+
+	// ignored warnings
+	facet.AddCompilationFlag(
+		"/wd4201", // nonstandard extension used: nameless struct/union'
+		"/wd4251", // 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
+	)
+
+	// configure librarian
+	facet.LibrarianOptions.Append(
+		"/OUT:\"%2\"",
+		"\"%1\"",
+		"/nologo",
+		"/SUBSYSTEM:WINDOWS",
+		"/IGNORE:4221",
+	)
+
+	// configure linker
+	facet.LinkerOptions.Append(
+		"/OUT:\"%2\"",
+		"\"%1\"",
+		"kernel32.lib",
+		"Shell32.lib",
+		"Gdi32.lib",
+		"Advapi32.lib",
+		"Shlwapi.lib",
+		"Version.lib",
+		"/nologo",            // no copyright when compiling
+		"/TLBID:1",           // https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
+		"/IGNORE:4001",       // https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
+		"/IGNORE:4099",       // don't have PDB for some externals
+		"/NXCOMPAT:NO",       // disable Data Execution Prevention (DEP)
+		"/LARGEADDRESSAWARE", // indicate support for VM > 2Gb (if 3Gb flag is toggled)
+		"/SUBSYSTEM:WINDOWS", // ~Windows~ application type (vs Console)
+		"/fastfail",          // better error reporting
+	)
+
+	// strict vs permissive
+	if windowsFlags.Permissive.Get() {
+		LogVeryVerbose("MSVC: using permissive compilation options")
+
+		facet.AddCompilationFlag("/permissive", "/WX-")
+		//facet.LinkerOptions.Append("/WX-")
+		facet.LibrarianOptions.Append("/WX-")
+	} else {
+		LogVeryVerbose("MSVC: using strict warnings and warings as error")
+
+		facet.AddCompilationFlag(
+			// https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
+			"/permissive-",
+			// warning as errors
+			"/WX",
+			// promote some warnings as errors
+			"/we4062", // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
+			"/we4263", // 'function' : member function does not override any base class virtual member function
+			"/we4265", // 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
+			"/we4296", // 'operator': expression is always false
+			"/we4555", // expression has no effect; expected expression with side-effect
+			"/we4619", // #pragma warning : there is no warning number 'number'
+			"/we4640", // 'instance' : construction of local static object is not thread-safe
+			"/we4826", // Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
+			"/we4836", // nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
+			"/we4905", // wide string literal cast to 'LPSTR'
+			"/we4906", // string literal cast to 'LPWSTR'
+		)
+
+		// warning as errors also for librarian and linker
+		facet.LibrarianOptions.Append("/WX")
+		//facet.LinkerOptions.Append("/WX") // #TODO: **DON'T**, will freeze link.exe ¯\_(ツ)_/¯
+	}
+
+	if compileFlags.Benchmark.Get() {
+		LogVeryVerbose("MSVC: will dump compilation timings")
+		facet.CompilerOptions.Append("/d2cgsummary", "/Bt+")
+		facet.LinkerOptions.Append("/d2:-cgsummary")
+	}
+
+	if msc_ver >= MSC_VER_2019 {
+		if windowsFlags.JustMyCode.Get() {
+			LogVeryVerbose("MSVC: using just-my-code")
+			facet.AddCompilationFlag_NoAnalysis("/JMC")
+		} else {
+			facet.AddCompilationFlag_NoAnalysis("/JMC-")
+		}
+	}
+
+	if msc_ver >= MSC_VER_2019 {
+		LogVeryVerbose("MSCV: using external headers to ignore warnings in foreign code")
+		// https://docs.microsoft.com/fr-fr/cpp/build/reference/jmc?view=msvc-160
+		facet.Defines.Append("USE_PPE_MSVC_PRAGMA_SYSTEMHEADER")
+		facet.AddCompilationFlag_NoAnalysis(
+			"/experimental:external",
+			"/external:W0",
+			"/external:anglebrackets")
+	}
+
+	// Windows 10 slow-down workaround
+	facet.LinkerOptions.Append(
+		"delayimp.lib",
+		"/DELAYLOAD:Shell32.dll",
+		"/IGNORE:4199", // warning LNK4199: /DELAYLOAD:XXX.dll ignored; no imports found from XXX.dll, caused by our added .libs
+	)
+
+	return nil
+}
+
+type MsvcProductVer struct {
+	Arch    ArchType
+	MscVer  MsvcVersion
+	Insider BoolVar
+}
+
+func GetMsvcProductInstall(prms MsvcProductVer) BuildFactoryTyped[*MsvcProductInstall] {
+	return func(bi BuildInitializer) (*MsvcProductInstall, error) {
+		if err := bi.NeedFile(MSVC_VSWHERE_EXE); err != nil {
+			return nil, err
+		}
+
+		if prms.MscVer == MSC_VER_LATEST {
+			prms.MscVer = msc_ver_any
+		}
+
+		return &MsvcProductInstall{
+			WantedVer: prms.MscVer,
+			Arch:      prms.Arch.String(),
+			Insider:   prms.Insider.Get(),
+		}, nil
+	}
+}
+
+func GetMsvcCompiler(arch ArchType) BuildFactoryTyped[Compiler] {
+	return func(bi BuildInitializer) (Compiler, error) {
+		compileFlags := GetCompileFlags()
+		windowsFlags := GetWindowsFlags()
+		if err := bi.NeedFactories(
+			GetBuildableFlags(compileFlags),
+			GetBuildableFlags(windowsFlags)); err != nil {
+			return nil, err
+		}
+
+		return &MsvcCompiler{
+			Arch:          arch,
+			CompilerRules: NewCompilerRules(NewCompilerAlias("msvc", "cl", arch.String())),
+		}, nil
+	}
+}

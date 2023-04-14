@@ -1,13 +1,28 @@
 package utils
 
 import (
-	"bytes"
+	"flag"
 	"fmt"
-	"reflect"
+	"hash/fnv"
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
+
+func CopySlice[T any](in ...T) []T {
+	out := make([]T, len(in))
+	copy(out, in)
+	return out
+}
+
+func CopyMap[K comparable, V any](in map[K]V) map[K]V {
+	out := make(map[K]V, len(in))
+	for key, value := range in {
+		out[key] = value
+	}
+	return out
+}
 
 func Where[T any](pred func(T) bool, values ...T) (result T) {
 	if i, ok := IndexIf(pred, values...); ok {
@@ -84,12 +99,18 @@ func RemoveUnless[T any](pred func(T) bool, src ...T) (result []T) {
 	return result[:off]
 }
 
-func Keys[K comparable, V any](it map[K]V) []K {
+func Keys[K comparable, V any](elts ...map[K]V) []K {
+	n := 0
+	for _, it := range elts {
+		n += len(it)
+	}
 	off := 0
-	result := make([]K, len(it))
-	for key := range it {
-		result[off] = key
-		off += 1
+	result := make([]K, n)
+	for _, it := range elts {
+		for key := range it {
+			result[off] = key
+			off += 1
+		}
 	}
 	return result
 }
@@ -121,6 +142,9 @@ func (set SetT[T]) Range(each func(T)) {
 		each(x)
 	}
 }
+func (set *SetT[T]) Ref() *[]T {
+	return (*[]T)(set)
+}
 func (set SetT[T]) Slice() []T {
 	return set
 }
@@ -149,13 +173,14 @@ func (set *SetT[T]) Prepend(it ...T) *SetT[T] {
 	*set = PrependComparable_CheckUniq(it, (*set)...)
 	return set
 }
-func (set *SetT[T]) AppendUniq(it ...T) *SetT[T] {
+func (set *SetT[T]) AppendUniq(it ...T) bool {
 	for _, x := range it {
 		if !set.Contains(x) {
 			set.Append(x)
+			return true
 		}
 	}
-	return set
+	return false
 }
 func (set *SetT[T]) Remove(x T) *SetT[T] {
 	if i, ok := set.IndexOf(x); ok {
@@ -198,23 +223,142 @@ func (set SetT[T]) Sort(less func(a, b T) bool) {
  * String interner
  ***************************************/
 
-const STRING_INTERNER_BUCKETS uint32 = 16
-const STRING_INTERNER_MINLEN int = 12
+const (
+	STRING_INTERNER_ENABLED        = false
+	STRING_INTERNER_BUCKETS uint32 = 512
+	STRING_INTERNER_MINLEN  int    = 12
+)
 
 var stringInterner [STRING_INTERNER_BUCKETS]SharedMapT[string, string]
 
+func FNV32a(in string) uint32 {
+	buffer := TransientBuffer.Allocate()
+	defer TransientBuffer.Release(buffer)
+
+	buffer.WriteString(in)
+
+	h := fnv.New32a()
+	h.Write(buffer.Bytes())
+	return h.Sum32()
+}
+
+var stringInterner_CacheHit atomic.Int64
+var stringInterner_CacheMiss atomic.Int64
+
 func InternString(in string) string {
-	if len(in) < STRING_INTERNER_MINLEN {
+	if !STRING_INTERNER_ENABLED || len(in) < STRING_INTERNER_MINLEN {
 		return in
 	}
 	h := FNV32a(in) % STRING_INTERNER_BUCKETS
 	interner := &stringInterner[h]
 	if out, ok := interner.Get(in); !ok {
+		stringInterner_CacheMiss.Add(1)
 		interner.Add(in, in)
 		return in
 	} else {
+		stringInterner_CacheHit.Add(1)
 		return out
 	}
+}
+
+/***************************************
+ * Enum Flags
+ ***************************************/
+
+type EnumFlag interface {
+	Ord() int32
+	comparable
+	fmt.Stringer
+}
+
+type EnumSet[T EnumFlag, E interface {
+	*T
+	FromOrd(int32)
+	EnumFlag
+	flag.Value
+}] int32
+
+func (x EnumSet[T, E]) Ord() int32  { return int32(x) }
+func (x EnumSet[T, E]) Empty() bool { return x == 0 }
+func (x EnumSet[T, E]) Has(elements ...T) bool {
+	for _, it := range elements {
+		if (x.Ord() & (1 << E(&it).Ord())) != (1 << E(&it).Ord()) {
+			return false
+		}
+	}
+	return true
+}
+func (x EnumSet[T, E]) Elements() (result []T) {
+	var it T
+	for i := int32(0); i < 32; i += 1 {
+		E(&it).FromOrd(i)
+		if x.Has(it) {
+			result = append(result, it)
+		}
+	}
+	return
+}
+func (x EnumSet[T, E]) Intersect(other EnumSet[T, E]) EnumSet[T, E] {
+	return EnumSet[T, E](x.Ord() & other.Ord())
+}
+func (x *EnumSet[T, E]) Clear() {
+	*x = EnumSet[T, E](0)
+}
+func (x *EnumSet[T, E]) Append(other EnumSet[T, E]) {
+	*x = EnumSet[T, E](x.Ord() | other.Ord())
+}
+func (x *EnumSet[T, E]) Add(elements ...T) {
+	for _, it := range elements {
+		*x = EnumSet[T, E](x.Ord() | (1 << E(&it).Ord()))
+	}
+}
+func (x *EnumSet[T, E]) Remove(elements ...T) {
+	for _, it := range elements {
+		*x = EnumSet[T, E](x.Ord() & ^(1 << E(&it).Ord()))
+	}
+}
+func (x EnumSet[T, E]) Compare(other EnumSet[T, E]) int {
+	if x.Ord() < other.Ord() {
+		return -1
+	} else if x.Ord() == other.Ord() {
+		return 0
+	} else {
+		return 1
+	}
+}
+func (x EnumSet[T, E]) String() string {
+	return JoinString("|", x.Elements()...)
+}
+func (x *EnumSet[T, E]) Set(in string) error {
+	*x = EnumSet[T, E](0)
+	for _, s := range strings.Split(in, "|") {
+		var it T
+		if err := E(&it).Set(strings.TrimSpace(s)); err == nil {
+			x.Add(it)
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+func (x *EnumSet[T, E]) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
+}
+func (x EnumSet[T, E]) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+func (x *EnumSet[T, E]) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
+}
+
+func MakeEnumSet[T EnumFlag, E interface {
+	*T
+	FromOrd(int32)
+	EnumFlag
+	flag.Value
+}](elements ...T) (result EnumSet[T, E]) {
+	result.Add(elements...)
+	return result
 }
 
 /***************************************
@@ -274,12 +418,14 @@ func (set *StringSet) Concat(other StringSet) StringSet {
 }
 func (set *StringSet) Append(it ...string) *StringSet {
 	for _, x := range it {
+		Assert(func() bool { return len(x) > 0 })
 		*set = AppendComparable_CheckUniq(*set, InternString(x))
 	}
 	return set
 }
 func (set *StringSet) Prepend(it ...string) *StringSet {
 	for _, x := range it {
+		Assert(func() bool { return len(x) > 0 })
 		*set = PrependComparable_CheckUniq(*set, InternString(x))
 	}
 	return set
@@ -294,6 +440,7 @@ func (set *StringSet) AppendUniq(it ...string) *StringSet {
 }
 func (set *StringSet) Remove(it ...string) *StringSet {
 	for _, x := range it {
+		Assert(func() bool { return len(x) > 0 })
 		if i, ok := set.IndexOf(x); ok {
 			set.Delete(i)
 		}
@@ -317,6 +464,9 @@ func (set StringSet) Sort() {
 }
 func (set StringSet) StringSet() StringSet {
 	return set
+}
+func (set *StringSet) Serialize(ar Archive) {
+	SerializeMany(ar, ar.String, (*[]string)(set))
 }
 
 func NewStringSet(x ...string) StringSet {
@@ -351,12 +501,6 @@ func (set *StringSet) Set(in string) error {
 	return nil
 }
 
-func (set StringSet) GetDigestable(o *bytes.Buffer) {
-	for i, x := range set {
-		o.WriteByte(byte(i))
-		o.WriteString(x)
-	}
-}
 func (set StringSet) ToDirSet(root Directory) (result DirSet) {
 	return Map(func(x string) Directory {
 		return root.AbsoluteFolder(x).Normalize()
@@ -366,6 +510,26 @@ func (set StringSet) ToFileSet(root Directory) (result FileSet) {
 	return Map(func(x string) Filename {
 		return root.AbsoluteFile(x).Normalize()
 	}, set.Slice()...)
+}
+
+/***************************************
+ * Shared set
+ ***************************************/
+
+type SharedSliceT[T any] struct {
+	intern []T
+	sync.Mutex
+}
+
+func (x *SharedSliceT[T]) Append(it ...T) {
+	x.Lock()
+	x.intern = append(x.intern, it...)
+	x.Unlock()
+}
+func (x *SharedSliceT[T]) Slice() []T {
+	x.Lock()
+	defer x.Unlock()
+	return x.intern
 }
 
 /***************************************
@@ -437,184 +601,4 @@ func (shared *SharedMapT[K, V]) Make(fn func() (K, V)) V {
 }
 func (shared *SharedMapT[K, V]) Clear() {
 	shared.intern = sync.Map{}
-}
-
-/***************************************
- * Services
- ***************************************/
-type ServiceLocator[V any] struct {
-	*SharedMapT[string, V]
-}
-type ServiceAccessor[T, V any] struct {
-	key     string
-	factory func() *T
-}
-
-func NewServiceLocator[V any]() ServiceLocator[V] {
-	return ServiceLocator[V]{NewSharedMapT[string, V]()}
-}
-
-func MakeServiceAccessor[V, T any](factory func() *T) ServiceAccessor[T, V] {
-	var dummy *T
-	rt := reflect.TypeOf(dummy).Elem()
-	return ServiceAccessor[T, V]{
-		key:     rt.Name(),
-		factory: factory,
-	}
-}
-
-func (acc ServiceAccessor[T, V]) Get(services ServiceLocator[V]) (*T, error) {
-	if anon, ok := services.Get(acc.key); ok {
-		var x interface{} = anon
-		return x.(*T), nil
-	} else {
-		return nil, fmt.Errorf("service unavailable: '%v'", acc.key)
-	}
-}
-func (acc ServiceAccessor[T, V]) Need(services ServiceLocator[V]) *T {
-	if x, err := acc.Get(services); err == nil {
-		return x
-	} else {
-		LogPanicErr(err)
-		return nil
-	}
-}
-func (acc ServiceAccessor[T, V]) Create(services ServiceLocator[V]) *T {
-	concrete := acc.factory()
-	var x interface{} = concrete
-	services.Add(acc.key, x.(V))
-	return concrete
-}
-func (acc ServiceAccessor[T, V]) Add(services ServiceLocator[V]) {
-	acc.Create(services)
-}
-func (acc ServiceAccessor[T, V]) FindOrAdd(services ServiceLocator[V]) *T {
-	if x, err := acc.Get(services); err == nil {
-		return x
-	} else {
-		return acc.Create(services)
-	}
-}
-
-type ServiceEvent[V any] struct {
-	barrier sync.Mutex
-	arr     []func(ServiceLocator[V])
-}
-
-func NewServiceEvent[V any]() *ServiceEvent[V] {
-	return &ServiceEvent[V]{
-		barrier: sync.Mutex{},
-	}
-}
-
-func (evt *ServiceEvent[V]) Append(it ...func(ServiceLocator[V])) {
-	evt.barrier.Lock()
-	defer evt.barrier.Unlock()
-	evt.arr = append(evt.arr, it...)
-}
-func (evt *ServiceEvent[V]) Needed(services ServiceLocator[V]) {
-	evt.barrier.Lock()
-	defer evt.barrier.Unlock()
-	for _, x := range evt.arr {
-		x(services)
-	}
-}
-
-/***************************************
- * Collector
- ***************************************/
-
-type KeyValuePair[K, V any] struct {
-	Key   K
-	Value V
-}
-
-type Collector[K Comparable[K], V any] struct {
-	keys   []KeyValuePair[K, int]
-	values []*[]V
-}
-
-func NewCollector[K Comparable[K], V any]() *Collector[K, V] {
-	return &Collector[K, V]{
-		keys:   []KeyValuePair[K, int]{},
-		values: []*[]V{},
-	}
-}
-func (x *Collector[K, V]) IndexOf(key K) (int, bool) {
-	it := sort.Search(len(x.keys), func(i int) bool {
-		return x.keys[i].Key.Compare(key) >= 0
-	})
-	return it, it < len(x.keys) && x.keys[it].Key.Compare(key) == 0
-}
-func (x *Collector[K, V]) Add(key K, value V) {
-	if it, found := x.IndexOf(key); found {
-		arr := x.values[x.keys[it].Value]
-		*arr = append(*arr, value)
-	} else {
-		Assert(func() bool {
-			for i := 0; i < len(x.keys); i += 1 {
-				if x.keys[i].Key.Compare(key) == 0 {
-					return false
-				}
-			}
-			return true
-		})
-		x.keys = InsertAt(x.keys, it, KeyValuePair[K, int]{key, len(x.values)})
-		x.values = append(x.values, &[]V{value})
-	}
-}
-func (x *Collector[K, V]) Keys() []K {
-	result := make([]K, len(x.keys))
-	for i, kv := range x.keys {
-		result[i] = kv.Key
-	}
-	return result
-}
-func (x *Collector[K, V]) Values(key K) *[]V {
-	if it, found := x.IndexOf(key); found {
-		return x.values[x.keys[it].Value]
-	} else {
-		return nil
-	}
-}
-func (x *Collector[K, V]) Each(each func(K, []V)) {
-	for _, it := range x.keys {
-		each(it.Key, *x.values[it.Value])
-	}
-}
-
-type StringCollector[T any] struct {
-	keys   []string
-	values map[string]*[]T
-}
-
-func NewStringCollector[T any]() *StringCollector[T] {
-	return &StringCollector[T]{
-		keys:   []string{},
-		values: make(map[string]*[]T),
-	}
-}
-func (x *StringCollector[T]) IndexOf(key string) (int, bool) {
-	it := sort.SearchStrings(x.keys, key)
-	return it, it < len(x.keys) && x.keys[it] == key
-}
-func (x *StringCollector[T]) Add(key string, value T) {
-	if it, found := x.IndexOf(key); found {
-		arr := x.values[x.keys[it]]
-		*arr = append(*arr, value)
-	} else {
-		x.values[key] = &[]T{value}
-		x.keys = InsertAt(x.keys, it, key)
-	}
-}
-func (x *StringCollector[T]) Keys() []string {
-	return x.keys
-}
-func (x *StringCollector[T]) Values(key string) *[]T {
-	return x.values[key]
-}
-func (x *StringCollector[T]) Each(each func(string, []T)) {
-	for _, key := range x.keys {
-		each(key, *x.values[key])
-	}
 }

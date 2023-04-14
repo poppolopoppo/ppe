@@ -31,15 +31,16 @@ type BffMap map[string]interface{}
 func MakeBffVar(key string) BffVar {
 	return BffVar(SanitizeIdentifier(key))
 }
+
 func (x BffVar) Valid() bool    { return x != "" }
 func (x BffVar) String() string { return string(x) }
 
 func MakeBffArray[T any](it ...T) (result BffArray) {
-	result = make([]interface{}, len(it))
+	result = make(BffArray, len(it))
 	for i, x := range it {
 		result[i] = x
 	}
-	return result
+	return
 }
 
 func bffIsDefaultValue(x interface{}) bool {

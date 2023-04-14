@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/signal"
@@ -40,8 +39,8 @@ func (x *HostId) Set(in string) (err error) {
 	}
 	return err
 }
-func (id HostId) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(id.String())
+func (id *HostId) Serialize(ar Archive) {
+	ar.String((*string)(id))
 }
 
 type HostPlatform struct {
@@ -49,8 +48,9 @@ type HostPlatform struct {
 	Name string
 }
 
-func (x HostPlatform) GetDigestable(o *bytes.Buffer) {
-	MakeDigestable[Digestable](o, x.Id, RawBytes(x.Name))
+func (x *HostPlatform) Serialize(ar Archive) {
+	ar.Serializable(&x.Id)
+	ar.String(&x.Name)
 }
 func (x HostPlatform) String() string {
 	return fmt.Sprint(x.Id, x.Name)

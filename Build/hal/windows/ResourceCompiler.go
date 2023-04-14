@@ -2,8 +2,8 @@ package windows
 
 import (
 	. "build/compile"
+	"build/utils"
 	. "build/utils"
-	"bytes"
 	"fmt"
 )
 
@@ -13,9 +13,6 @@ type ResourceCompiler struct {
 
 func (res *ResourceCompiler) GetCompiler() *CompilerRules { return &res.CompilerRules }
 
-func (res *ResourceCompiler) FriendlyName() string       { return "rc" }
-func (res *ResourceCompiler) EnvPath() DirSet            { return NewDirSet(res.WorkingDir()) }
-func (res *ResourceCompiler) WorkingDir() Directory      { return res.CompilerRules.Executable.Dirname }
 func (res *ResourceCompiler) Extname(PayloadType) string { return ".res" }
 
 func (res *ResourceCompiler) CppRtti(*Facet, bool)      {}
@@ -47,39 +44,52 @@ func (res *ResourceCompiler) SystemIncludePath(facet *Facet, dirs ...Directory) 
 }
 func (res *ResourceCompiler) Library(*Facet, ...Filename)      {}
 func (res *ResourceCompiler) LibraryPath(*Facet, ...Directory) {}
+func (res *ResourceCompiler) SourceDependencies(obj *ActionRules) Action {
+	return obj
+}
 
-func (res *ResourceCompiler) Decorate(_ *CompileEnv, u *Unit) {
+func (res *ResourceCompiler) Decorate(_ *CompileEnv, u *Unit) error {
 	if u.Payload == PAYLOAD_SHAREDLIB {
 		// Generate minimal resources for DLLs
 		u.CompilerOptions.Append("/q")
 	}
+	return nil
 }
 
-func (res *ResourceCompiler) Alias() BuildAlias {
-	return MakeBuildAlias("HAL", "WindowsResourcCompiler")
-}
-func (res *ResourceCompiler) Build(bc BuildContext) (BuildStamp, error) {
-	windowsFlags := WindowsFlags.FindOrAdd(CommandEnv.Flags)
-	windowsSDKInstall := GetWindowsSDKInstall(windowsFlags.WindowsSDK)
-	bc.DependsOn(windowsFlags, windowsSDKInstall)
+func (res *ResourceCompiler) Build(bc BuildContext) error {
+	windowsFlags := GetWindowsFlags()
+	if _, err := utils.GetBuildableFlags(windowsFlags).Need(bc); err != nil {
+		return err
+	}
 
-	res.CompilerRules.CompilerName = "RC_" + windowsSDKInstall.Version
-	res.CompilerRules.CompilerFamily = "custom"
+	windowsSDKInstall := GetWindowsSDKInstall(bc, windowsFlags.WindowsSDK)
+
 	res.CompilerRules.Executable = windowsSDKInstall.ResourceCompiler
-	bc.NeedFile(res.CompilerRules.Executable)
+	if err := bc.NeedFile(res.CompilerRules.Executable); err != nil {
+		return err
+	}
 
-	return MakeBuildStamp(res)
-}
-func (res *ResourceCompiler) GetDigestable(o *bytes.Buffer) {
-	res.CompilerRules.GetDigestable(o)
-}
+	res.CompilerRules.WorkingDir = res.CompilerRules.Executable.Dirname
+	res.CompilerRules.Environment = ProcessEnvironment{
+		"PATH": []string{res.CompilerRules.WorkingDir.String(), "%PATH%"},
+	}
 
-var WindowsResourceCompiler = MakeBuildable(func(_ BuildInit) *ResourceCompiler {
-	result := &ResourceCompiler{}
-	result.CompilerOptions.Append(
+	res.CompilerOptions = StringSet{
 		"/nologo",   // no copyright when compiling
 		"/fo\"%2\"", // output file injection
 		"\"%1\"",    // input file
-	)
-	return result
-})
+	}
+
+	return nil
+}
+func (res *ResourceCompiler) Serialize(ar Archive) {
+	ar.Serializable(&res.CompilerRules)
+}
+
+func GetWindowsResourceCompiler() BuildFactoryTyped[*ResourceCompiler] {
+	return func(bi BuildInitializer) (*ResourceCompiler, error) {
+		return &ResourceCompiler{
+			CompilerRules: NewCompilerRules(NewCompilerAlias("custom", "rc", "windows_sdk")),
+		}, nil
+	}
+}

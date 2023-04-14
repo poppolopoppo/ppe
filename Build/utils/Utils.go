@@ -2,11 +2,11 @@ package utils
 
 import (
 	"bufio"
-	"encoding/gob"
 	"fmt"
 	"io"
 	"reflect"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,11 +17,32 @@ func InitUtils() {
 	setupCloseHandler()
 
 	// register type for serialization
-	gob.Register(Filename{})
-	gob.Register(Directory{})
-	gob.Register(&Downloader{})
-	gob.Register(&SourceControlStatus{})
-	gob.Register(&ArchiveExtractor{})
+	RegisterSerializable(&buildNode{})
+	RegisterSerializable(&CompressedArchiveExtractor{})
+	RegisterSerializable(&Directory{})
+	RegisterSerializable(&DirectoryCreator{})
+	RegisterSerializable(&DirectoryGlob{})
+	RegisterSerializable(&DirectoryList{})
+	RegisterSerializable(&Downloader{})
+	RegisterSerializable(&Filename{})
+	RegisterSerializable(&SourceControlModifiedFiles{})
+	RegisterSerializable(&SourceControlStatus{})
+}
+
+/***************************************
+ * https://mangatmodi.medium.com/go-check-nil-interface-the-right-way-d142776edef1
+ ***************************************/
+
+func IsNil(v interface{}) bool {
+	if v == nil {
+		return true
+	}
+	val := reflect.ValueOf(v)
+	switch val.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+		return val.IsNil()
+	}
+	return false
 }
 
 /***************************************
@@ -38,11 +59,9 @@ type Equatable[T any] interface {
 type Comparable[T any] interface {
 	Compare(other T) int
 }
-
-var re_nonAlphaNumeric = regexp.MustCompile(`[^\w\d]+`)
-
-func SanitizeIdentifier(in string) string {
-	return re_nonAlphaNumeric.ReplaceAllString(in, "_")
+type OrderedComparable[T any] interface {
+	Comparable[T]
+	comparable
 }
 
 type jointStringer[T fmt.Stringer] struct {
@@ -50,16 +69,17 @@ type jointStringer[T fmt.Stringer] struct {
 	delim string
 }
 
-func (join jointStringer[T]) String() (result string) {
+func (join jointStringer[T]) String() string {
 	var notFirst bool
+	sb := strings.Builder{}
 	for _, x := range join.it {
 		if notFirst {
-			result += join.delim
+			sb.WriteString(join.delim)
 		}
-		result += x.String()
+		sb.WriteString(x.String())
 		notFirst = true
 	}
-	return result
+	return sb.String()
 }
 
 func Join[T fmt.Stringer](delim string, it ...T) fmt.Stringer {
@@ -85,9 +105,56 @@ func Range[T any](transform func(int) T, n int) (dst []T) {
 	return dst
 }
 
+func Blend[T any](ifFalse, ifTrue T, selector bool) T {
+	if selector {
+		return ifTrue
+	} else {
+		return ifFalse
+	}
+}
+
 /***************************************
  * String helpers
  ***************************************/
+
+var re_nonAlphaNumeric = regexp.MustCompile(`[^\w\d]+`)
+
+type FourCC uint32
+
+func MakeFourCC(a, b, c, d rune) FourCC {
+	return FourCC(uint32(a) | (uint32(b) << 8) | (uint32(c) << 16) | (uint32(d) << 24))
+}
+func (x FourCC) Bytes() (result [4]byte) {
+	result[0] = byte((uint32(x) >> 0) & 0xFF)
+	result[1] = byte((uint32(x) >> 8) & 0xFF)
+	result[2] = byte((uint32(x) >> 16) & 0xFF)
+	result[3] = byte((uint32(x) >> 24) & 0xFF)
+	return
+}
+func (x FourCC) String() string {
+	raw := x.Bytes()
+	return string(raw[:])
+}
+func (x *FourCC) Serialize(ar Archive) {
+	ar.UInt32((*uint32)(x))
+}
+
+func SanitizeIdentifier(in string) string {
+	return re_nonAlphaNumeric.ReplaceAllString(in, "_")
+}
+
+var re_whiteSpace = regexp.MustCompile(`\s+`)
+
+func IsWhiteSpaceStr(s string) bool {
+	return re_whiteSpace.MatchString(s)
+}
+func IsWhiteSpaceRune(ch ...rune) bool {
+	return re_whiteSpace.MatchString(string(ch))
+}
+
+func SplitWords(in string) []string {
+	return re_whiteSpace.Split(in, -1)
+}
 
 func Inspect[T any](it ...T) []string {
 	result := make([]string, len(it))
@@ -115,6 +182,19 @@ func SplitRegex(re *regexp.Regexp, capacity int) bufio.SplitFunc {
 	}
 }
 
+func MakeString(x any) string {
+	switch it := x.(type) {
+	case string:
+		return it
+	case fmt.Stringer:
+		return it.String()
+	case []byte:
+		return string(it)
+	default:
+		return fmt.Sprint(x)
+	}
+}
+
 func Stringize[T fmt.Stringer](it ...T) []string {
 	result := make([]string, len(it))
 	for i, x := range it {
@@ -128,90 +208,49 @@ func Stringize[T fmt.Stringer](it ...T) []string {
  ***************************************/
 
 func Memoize[T any](fn func() T) func() T {
-	var memoizedValue *T
-	barrier := sync.Mutex{}
+	var memoized T
+	once := sync.Once{}
 	return func() T {
-		if memoizedValue == nil {
-			barrier.Lock()
-			defer barrier.Unlock()
-			if memoizedValue == nil {
-				tmp := fn()
-				memoizedValue = &tmp
-			}
-		}
-		return *memoizedValue
+		once.Do(func() { memoized = fn() })
+		return memoized
 	}
 }
-func MemoizePod[A comparable, T any](fn func(A) T) func(A) T {
-	var memoizedArg A
-	var memoizedValue *T
-	barrier := sync.Mutex{}
-	return func(arg A) T {
-		if memoizedValue == nil || memoizedArg != arg {
-			barrier.Lock()
-			defer barrier.Unlock()
-			if memoizedValue == nil || memoizedArg != arg {
-				tmp := fn(arg)
-				memoizedArg = arg
-				memoizedValue = &tmp
-			}
+
+func MemoizeComparable[T any, ARG comparable](fn func(ARG) T) func(ARG) T {
+	memoized := make(map[ARG]T)
+	mutex := sync.Mutex{}
+	return func(a ARG) T {
+		mutex.Lock()
+		result, ok := memoized[a]
+		if !ok {
+			result = fn(a)
+			memoized[a] = result
 		}
-		return *memoizedValue
+		mutex.Unlock()
+		return result
 	}
 }
-func MemoizeArg[A Equatable[A], T any](fn func(A) T) func(A) T {
-	var memoizedArg A
-	var memoizedValue *T
-	barrier := sync.Mutex{}
-	return func(arg A) T {
-		if memoizedValue == nil || !memoizedArg.Equals(arg) {
-			barrier.Lock()
-			defer barrier.Unlock()
-			if memoizedValue == nil || !memoizedArg.Equals(arg) {
-				tmp := fn(arg)
-				memoizedArg = arg
-				memoizedValue = &tmp
-			}
-		}
-		return *memoizedValue
-	}
+
+type memoized_equatable_arg[T any, ARG Equatable[ARG]] struct {
+	key   ARG
+	value T
 }
-func MemoizeArgs2[A Equatable[A], B Equatable[B], T any](fn func(A, B) T) func(A, B) T {
-	var memoizedArgA A
-	var memoizedArgB B
-	var memoizedValue *T
-	barrier := sync.Mutex{}
-	return func(argA A, argB B) T {
-		if memoizedValue == nil || !memoizedArgA.Equals(argA) || !memoizedArgB.Equals(argB) {
-			barrier.Lock()
-			defer barrier.Unlock()
-			if memoizedValue == nil || !memoizedArgA.Equals(argA) || !memoizedArgB.Equals(argB) {
-				tmp := fn(argA, argB)
-				memoizedArgA = argA
-				memoizedArgB = argB
-				memoizedValue = &tmp
+
+func MemoizeEquatable[T any, ARG Equatable[ARG]](fn func(ARG) T) func(ARG) T {
+	memoized := make([]memoized_equatable_arg[T, ARG], 0, 1)
+	mutex := sync.Mutex{}
+	return func(a ARG) T {
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		for _, it := range memoized {
+			if it.key.Equals(a) {
+				return it.value
 			}
 		}
-		return *memoizedValue
-	}
-}
-func MemoizeArgs3[A Equatable[A], B Equatable[B], C Equatable[C], T any](fn func(A, B, C) T) func(A, B, C) T {
-	var memoizedArgA A
-	var memoizedArgB B
-	var memoizedArgC C
-	var memoizedValue *T
-	barrier := sync.Mutex{}
-	return func(argA A, argB B, argC C) T {
-		if memoizedValue == nil || !memoizedArgA.Equals(argA) || !memoizedArgB.Equals(argB) || !memoizedArgC.Equals(argC) {
-			barrier.Lock()
-			defer barrier.Unlock()
-			if memoizedValue == nil || !memoizedArgA.Equals(argA) || !memoizedArgB.Equals(argB) || !memoizedArgC.Equals(argC) {
-				tmp := fn(argA, argB, argC)
-				memoizedArgA = argA
-				memoizedArgB = argB
-				memoizedValue = &tmp
-			}
-		}
-		return *memoizedValue
+
+		result := fn(a)
+		memoized = append(memoized, memoized_equatable_arg[T, ARG]{key: a, value: result})
+		return result
 	}
 }

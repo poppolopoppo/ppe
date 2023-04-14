@@ -25,29 +25,56 @@ func UnmarshalJSON[T flag.Value](x T, data []byte) error {
 	return x.Set(str)
 }
 
-func JsonSerialize(x interface{}, dst io.Writer) error {
-	tmp := TransientBytes.Allocate()
-	defer TransientBytes.Release(tmp)
+const jsonPrettyPrintByDefault = false
 
-	buf := bytes.NewBuffer(tmp)
-	buf.Reset()
+type JsonOptions struct {
+	PrettyPrint bool
+}
 
-	encoder := json.NewEncoder(buf)
+type JsonOptionFunc = func(*JsonOptions)
 
-	var err error
-	if err = encoder.Encode(x); err == nil {
+func OptionJsonPrettyPrint(enabled bool) JsonOptionFunc {
+	return func(jo *JsonOptions) {
+		jo.PrettyPrint = enabled
+	}
+}
+
+func JsonSerialize(x interface{}, dst io.Writer, options ...JsonOptionFunc) error {
+	var opts JsonOptions
+	for _, it := range options {
+		it(&opts)
+	}
+
+	if jsonPrettyPrintByDefault || opts.PrettyPrint {
+		tmp := TransientBytes.Allocate()
+		defer TransientBytes.Release(tmp)
+
+		buf := bytes.NewBuffer(tmp)
+		buf.Reset()
+
+		encoder := json.NewEncoder(buf)
+
+		if err := encoder.Encode(x); err != nil {
+			return err
+		}
+
 		tmp2 := TransientBytes.Allocate()
 		defer TransientBytes.Release(tmp2)
 
 		pretty := bytes.NewBuffer(tmp2)
 		pretty.Reset()
 
-		if err = json.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
+		if err := json.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
 			dst.Write(pretty.Bytes())
 			return nil
+		} else {
+			return err
 		}
+
+	} else {
+		encoder := json.NewEncoder(dst)
+		return encoder.Encode(x)
 	}
-	return err
 }
 func JsonDeserialize(x interface{}, src io.Reader) error {
 	decoder := json.NewDecoder(src)

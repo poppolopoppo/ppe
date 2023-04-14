@@ -2,7 +2,6 @@ package compile
 
 import (
 	"build/utils"
-	"bytes"
 )
 
 type CppRules struct {
@@ -15,38 +14,42 @@ type CppRules struct {
 	Sanitizer    SanitizerType
 	Unity        UnityType
 
-	SizePerUnity  utils.IntVar
-	AdaptiveUnity utils.BoolVar
-	Benchmark     utils.BoolVar
-	LTO           utils.BoolVar
-	Incremental   utils.BoolVar
-	RuntimeChecks utils.BoolVar
+	SizePerUnity    utils.IntVar
+	AdaptiveUnity   utils.BoolVar
+	Benchmark       utils.BoolVar
+	LTO             utils.BoolVar
+	Incremental     utils.BoolVar
+	RuntimeChecks   utils.BoolVar
+	CompilerVerbose utils.BoolVar
+	LinkerVerbose   utils.BoolVar
 }
 
 type Cpp interface {
 	GetCpp() *CppRules
-	utils.Digestable
+	utils.Serializable
 }
 
 func (rules *CppRules) GetCpp() *CppRules {
 	return rules
 }
-func (rules *CppRules) GetDigestable(o *bytes.Buffer) {
-	rules.CppStd.GetDigestable(o)
-	rules.CppRtti.GetDigestable(o)
-	rules.DebugSymbols.GetDigestable(o)
-	rules.Exceptions.GetDigestable(o)
-	rules.PCH.GetDigestable(o)
-	rules.Link.GetDigestable(o)
-	rules.Sanitizer.GetDigestable(o)
-	rules.Unity.GetDigestable(o)
+func (rules *CppRules) Serialize(ar utils.Archive) {
+	ar.Serializable(&rules.CppStd)
+	ar.Serializable(&rules.CppRtti)
+	ar.Serializable(&rules.DebugSymbols)
+	ar.Serializable(&rules.Exceptions)
+	ar.Serializable(&rules.PCH)
+	ar.Serializable(&rules.Link)
+	ar.Serializable(&rules.Sanitizer)
+	ar.Serializable(&rules.Unity)
 
-	rules.SizePerUnity.GetDigestable(o)
-	rules.AdaptiveUnity.GetDigestable(o)
-	rules.Benchmark.GetDigestable(o)
-	rules.LTO.GetDigestable(o)
-	rules.Incremental.GetDigestable(o)
-	rules.RuntimeChecks.GetDigestable(o)
+	ar.Serializable(&rules.SizePerUnity)
+	ar.Serializable(&rules.AdaptiveUnity)
+	ar.Serializable(&rules.Benchmark)
+	ar.Serializable(&rules.LTO)
+	ar.Serializable(&rules.Incremental)
+	ar.Serializable(&rules.RuntimeChecks)
+	ar.Serializable(&rules.CompilerVerbose)
+	ar.Serializable(&rules.LinkerVerbose)
 }
 func (rules *CppRules) Inherit(other *CppRules) {
 	utils.Inherit(&rules.CppStd, other.CppStd)
@@ -64,6 +67,8 @@ func (rules *CppRules) Inherit(other *CppRules) {
 	utils.Inherit(&rules.LTO, other.LTO)
 	utils.Inherit(&rules.Incremental, other.Incremental)
 	utils.Inherit(&rules.RuntimeChecks, other.RuntimeChecks)
+	utils.Inherit(&rules.CompilerVerbose, other.CompilerVerbose)
+	utils.Inherit(&rules.LinkerVerbose, other.LinkerVerbose)
 }
 func (rules *CppRules) Overwrite(other *CppRules) {
 	utils.Overwrite(&rules.CppStd, other.CppStd)
@@ -81,4 +86,6 @@ func (rules *CppRules) Overwrite(other *CppRules) {
 	utils.Overwrite(&rules.LTO, other.LTO)
 	utils.Overwrite(&rules.Incremental, other.Incremental)
 	utils.Overwrite(&rules.RuntimeChecks, other.RuntimeChecks)
+	utils.Overwrite(&rules.CompilerVerbose, other.CompilerVerbose)
+	utils.Overwrite(&rules.LinkerVerbose, other.LinkerVerbose)
 }

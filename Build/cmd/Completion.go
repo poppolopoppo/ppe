@@ -4,31 +4,60 @@ import (
 	compile "build/compile"
 	utils "build/utils"
 	"fmt"
+	"io"
+	"os"
 	"regexp"
 	"sort"
 )
 
-type CompletionArgs struct{}
-
-func (*CompletionArgs) InitFlags(cfg *utils.PersistentMap) {
-}
-func (*CompletionArgs) ApplyVars(cfg *utils.PersistentMap) {
+type CompletionArgs struct {
+	Inputs []utils.StringVar
+	Output utils.Filename
 }
 
-func printCompletion(cmd *utils.CommandEnvT, in []string) {
-	filterCompletion(cmd, func(s string) {
-		fmt.Println(s)
-	}, in...)
+var GetCompletionArgs = utils.NewCommandParsableFlags(&CompletionArgs{})
+
+func OptionCommandCompletionArgs() utils.CommandOptionFunc {
+	return utils.OptionCommandItem(func(ci utils.CommandItem) {
+		ci.Options(
+			utils.OptionCommandParsableAccessor("CompletionArgs", "control completion command output", GetCompletionArgs),
+			utils.OptionCommandConsumeMany("Input", "multiple command input", &GetCompletionArgs().Inputs, utils.COMMANDARG_OPTIONAL))
+	})
 }
-func mapCompletion[T any](cmd *utils.CommandEnvT, output func(string), values map[string]T) {
-	filterCompletion(cmd, output, utils.Keys(values)...)
+
+func (flags *CompletionArgs) Flags(cfv utils.CommandFlagsVisitor) {
+	cfv.Variable("Output", "optional output file", &flags.Output)
 }
-func filterCompletion(cmd *utils.CommandEnvT, output func(string), in ...string) {
+
+func openCompletion(args *CompletionArgs, closure func(io.Writer) error) error {
+	utils.LogVerbose("completion: input parameters = %v", args.Inputs)
+	if args.Output.Basename != "" {
+		utils.LogInfo("export completion results to %q...", args.Output)
+		return utils.UFS.CreateBuffered(args.Output, closure)
+	} else {
+		return closure(os.Stdout)
+	}
+}
+func printCompletion(args *CompletionArgs, in []string) error {
+	return openCompletion(args, func(w io.Writer) error {
+		filterCompletion(args, func(s string) {
+			utils.WithoutLog(func() {
+				fmt.Fprintln(w, s)
+			})
+		}, in...)
+		return nil
+	})
+}
+func mapCompletion[T any](completionArgs *CompletionArgs, output func(string), values map[string]T) {
+	filterCompletion(completionArgs, output, utils.Keys(values)...)
+}
+func filterCompletion(completionArgs *CompletionArgs, output func(string), in ...string) {
 	sort.Strings(in)
-	args := cmd.ConsumeArgs(-1)
+	args := completionArgs.Inputs
+
 	if len(args) > 0 {
 		for _, q := range args {
-			glob := regexp.MustCompile(q)
+			glob := regexp.MustCompile(q.Get())
 			for _, x := range in {
 				if glob.MatchString(x) {
 					output(x)
@@ -42,281 +71,131 @@ func filterCompletion(cmd *utils.CommandEnvT, output func(string), in ...string)
 	}
 }
 
-var ListArtifacts = utils.MakeCommand(
+var ListArtifacts = utils.NewCommand(
+	"Metadata",
 	"list-artifacts",
 	"list all known artifacts",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		filterCompletion(cmd, func(s string) {
-			a := utils.BuildAlias(s)
-			node := cmd.BuildGraph().Node(a)
-			fmt.Printf("%v --> %v (%T)\n", node.GetBuildStamp(), a, node.GetBuildable())
-		}, utils.Stringize(cmd.BuildGraph().Aliases()...)...)
-		return nil
-	},
-)
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		bg := utils.CommandEnv.BuildGraph()
+		args := GetCompletionArgs()
+		return openCompletion(args, func(w io.Writer) error {
+			filterCompletion(args, func(s string) {
+				a := utils.BuildAlias(s)
+				node := bg.Find(a)
 
-var ListCommands = utils.MakeCommand(
+				utils.WithoutLog(func() {
+					fmt.Fprintf(w, "%v --> %v (%T)\n", node.GetBuildStamp(), a, node.GetBuildable())
+				})
+			}, utils.Stringize(bg.Aliases()...)...)
+			return nil
+		})
+	}))
+
+var ListCommands = utils.NewCommand(
+	"Metadata",
 	"list-commands",
 	"list all available commands",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		printCompletion(cmd, utils.AllCommands.Keys())
-		return nil
-	},
-)
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		return printCompletion(GetCompletionArgs(), utils.Commands.Keys())
+	}))
 
-var ListPlatforms = utils.MakeCommand(
+var ListPlatforms = utils.NewCommand(
+	"Metadata",
 	"list-platforms",
 	"list all available platforms",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		printCompletion(cmd, compile.AllPlatforms.Keys())
-		return nil
-	},
-)
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		return printCompletion(GetCompletionArgs(), compile.AllPlatforms.Keys())
+	}))
 
-var ListConfigs = utils.MakeCommand(
+var ListConfigs = utils.NewCommand(
+	"Metadata",
 	"list-configs",
 	"list all available configurations",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		printCompletion(cmd, compile.AllConfigurations.Keys())
-		return nil
-	},
-)
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		return printCompletion(GetCompletionArgs(), compile.AllConfigurations.Keys())
+	}))
 
-var ListCompilers = utils.MakeCommand(
+var ListCompilers = utils.NewCommand(
+	"Metadata",
 	"list-compilers",
 	"list all available compilers",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		printCompletion(cmd, compile.AllCompilers.Slice())
-		return nil
-	},
-)
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		return printCompletion(GetCompletionArgs(), compile.AllCompilers.Slice())
+	}))
 
-var ListModules = utils.MakeCommand(
+var ListModules = utils.NewCommand(
+	"Metadata",
 	"list-modules",
 	"list all available modules",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
-			printCompletion(cmd, build.ModuleKeys())
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		bg := utils.CommandEnv.BuildGraph()
+		if result := compile.GetBuildModules().Build(bg); result.Failure() == nil {
+			return printCompletion(GetCompletionArgs(), utils.Stringize(result.Success().Modules...))
 		} else {
-			utils.LogPanicErr(err)
+			return result.Failure()
 		}
-		return nil
-	},
-)
+	}))
 
-var ListNamespaces = utils.MakeCommand(
+var ListNamespaces = utils.NewCommand(
+	"Metadata",
 	"list-namespaces",
 	"list all available namespaces",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
-			printCompletion(cmd, build.NamespaceKeys())
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		bg := utils.CommandEnv.BuildGraph()
+		if result := compile.GetBuildModules().Build(bg); result.Failure() == nil {
+			return printCompletion(GetCompletionArgs(), utils.Stringize(result.Success().Namespaces...))
 		} else {
-			utils.LogPanicErr(err)
+			result.Failure()
 		}
 		return nil
-	},
-)
+	}))
 
-var ListEnvironments = utils.MakeCommand(
+var ListEnvironments = utils.NewCommand(
+	"Metadata",
 	"list-environments",
 	"list all compilation environments",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildEnvironments.Build(cmd.BuildGraph()); err == nil {
-			printCompletion(cmd, utils.Stringize(build.Slice()...))
-		} else {
-			utils.LogPanicErr(err)
-		}
-		return nil
-	},
-)
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		return printCompletion(GetCompletionArgs(), utils.Stringize(compile.GetEnvironmentAliases()...))
+	}))
 
-var ListTargets = utils.MakeCommand(
+var ListTargets = utils.NewCommand(
+	"Metadata",
 	"list-targets",
 	"list all translated targets",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
-			printCompletion(cmd, utils.Stringize(build.TranslatedUnits()...))
-		} else {
-			utils.LogPanicErr(err)
-		}
-		return nil
-	},
-)
-
-var ExportConfig = utils.MakeCommand(
-	"export-config",
-	"export configuration to json",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildConfigs.Build(cmd.BuildGraph()); err == nil {
-			results := []compile.Configuration{}
-			completion := make(map[string]compile.Configuration, len(build.Values))
-			for _, a := range build.Values {
-				completion[a.String()] = a
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		bg := utils.CommandEnv.BuildGraph()
+		return compile.ForeachEnvironmentAlias(func(ea compile.EnvironmentAlias) error {
+			if result := compile.GetBuildTargets(ea).Build(bg); result.Failure() == nil {
+				return printCompletion(GetCompletionArgs(), utils.Stringize(utils.Keys(result.Success().Targets)...))
+			} else {
+				return result.Failure()
 			}
-			mapCompletion(cmd, func(s string) {
-				results = append(results, completion[s])
-			}, completion)
-			fmt.Println(utils.PrettyPrint(results))
-		} else {
-			utils.LogPanicErr(err)
-		}
-		return nil
-	},
-)
+		})
+	}))
 
-var ExportPlatform = utils.MakeCommand(
-	"export-platform",
-	"export platform to json",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildPlatforms.Build(cmd.BuildGraph()); err == nil {
-			results := []compile.Platform{}
-			completion := make(map[string]compile.Platform, len(build.Values))
-			for _, a := range build.Values {
-				completion[a.String()] = a
-			}
-			mapCompletion(cmd, func(s string) {
-				results = append(results, completion[s])
-			}, completion)
-			fmt.Println(utils.PrettyPrint(results))
-		} else {
-			utils.LogPanicErr(err)
-		}
-		return nil
-	},
-)
-
-var ExportModule = utils.MakeCommand(
-	"export-module",
-	"export parsed module to json",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
-			results := []compile.Module{}
-			mapCompletion(cmd, func(s string) {
-				results = append(results, build.Modules[s])
-			}, build.Modules)
-			fmt.Println(utils.PrettyPrint(results))
-		} else {
-			utils.LogPanicErr(err)
-		}
-		return nil
-	},
-)
-
-var ExportNamespace = utils.MakeCommand(
-	"export-namespace",
-	"export parsed namespace to json",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildModules.Build(cmd.BuildGraph()); err == nil {
-			results := []compile.Namespace{}
-			mapCompletion(cmd, func(s string) {
-				results = append(results, build.Namespaces[s])
-			}, build.Namespaces)
-			fmt.Println(utils.PrettyPrint(results))
-		} else {
-			utils.LogPanicErr(err)
-		}
-		return nil
-	},
-)
-
-var ExportNode = utils.MakeCommand(
-	"export-node",
-	"export build node to json",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		aliases := cmd.BuildGraph().Aliases()
-		completion := make(map[string]utils.BuildAlias, len(aliases))
-		for _, a := range aliases {
-			completion[a.String()] = a
-		}
-		results := make(map[utils.BuildAlias]utils.BuildNode, 8)
-		mapCompletion(cmd, func(s string) {
-			alias := completion[s]
-			results[alias] = cmd.BuildGraph().Node(alias)
-		}, completion)
-		fmt.Println(utils.PrettyPrint(results))
-		return nil
-	},
-)
-
-var ExportUnit = utils.MakeCommand(
-	"export-unit",
-	"export translated unit to json",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		if build, err := compile.BuildTargets.Build(cmd.BuildGraph()); err == nil {
-			targets := build.TranslatedUnits()
-			exportedUnits := make(map[string]*compile.Unit, targets.Len())
-			for _, unit := range targets.Slice() {
-				exportedUnits[unit.String()] = unit
-			}
-			results := []*compile.Unit{}
-			mapCompletion(cmd, func(s string) {
-				results = append(results, exportedUnits[s])
-			}, exportedUnits)
-			fmt.Println(utils.PrettyPrint(results))
-		} else {
-			utils.LogPanicErr(err)
-		}
-		return nil
-	},
-)
-
-var ListPersistentData = utils.MakeCommand(
-	"list-persistent-data",
+var ListPersistentData = utils.NewCommand(
+	"Metadata",
+	"list-persistents",
 	"list all persistent data",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		data := cmd.Persistent().Data
-		mapCompletion(cmd, func(s string) {
-			fmt.Printf("%v=%v\n", s, data[s])
-		}, data)
-		return nil
-	},
-)
-
-var ListPersistentVars = utils.MakeCommand(
-	"list-persistent-vars",
-	"list all persistent variables",
-	nil,
-	func(cmd *utils.CommandEnvT, _ *CompletionArgs) error {
-		vars := cmd.Persistent().Vars
-		mapCompletion(cmd, func(s string) {
-			fmt.Printf("%v=%v\n", s, vars[s])
-		}, vars)
-		return nil
-	},
-)
-
-var ShowVersion = utils.MakeCommand(
-	"version",
-	"print build version",
-	nil,
-	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
-		fmt.Println(utils.MAIN_SIGNATURE)
-		return nil
-	},
-)
-
-var ShowSeed = utils.MakeCommand(
-	"seed",
-	"print build seed",
-	nil,
-	func(_ *utils.CommandEnvT, _ *CompletionArgs) error {
-		fmt.Printf("%X\n", utils.Seed.Slice())
-		return nil
-	},
-)
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		args := GetCompletionArgs()
+		data := utils.CommandEnv.Persistent().PinData()
+		return openCompletion(args, func(w io.Writer) error {
+			mapCompletion(args, func(s string) {
+				utils.WithoutLog(func() {
+					fmt.Printf("%v=%v\n", s, data[s])
+				})
+			}, data)
+			return nil
+		})
+	}))

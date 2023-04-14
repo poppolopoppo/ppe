@@ -3,7 +3,6 @@ package windows
 import (
 	. "build/compile"
 	. "build/utils"
-	"bytes"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -26,17 +25,6 @@ type ClangCompiler struct {
 	MsvcCompiler
 }
 
-func (clang *ClangCompiler) FriendlyName() string {
-	return "clang"
-}
-func (clang *ClangCompiler) EnvPath() DirSet {
-	return NewDirSet(
-		clang.WorkingDir(),
-		clang.WindowsSDK.ResourceCompiler.Dirname)
-}
-func (clang *ClangCompiler) WorkingDir() Directory {
-	return clang.ProductInstall.InstallDir.Folder("bin")
-}
 func (clang *ClangCompiler) ExternIncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
 		f.AddCompilationFlag_NoAnalysis("/imsvc\"" + x.String() + "\"")
@@ -58,8 +46,11 @@ func (clang *ClangCompiler) DebugSymbols(f *Facet, sym DebugType, output Filenam
 	// not supported by clang-cl
 	f.RemoveCompilationFlag("/Zf")
 }
-func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
-	clang.MsvcCompiler.Decorate(compileEnv, u)
+func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
+	err := clang.MsvcCompiler.Decorate(compileEnv, u)
+	if err != nil {
+		return err
+	}
 
 	// flags added by msvc but not supported by clang-cl, llvm-lib or lld-link
 	u.RemoveCompilationFlag("/WX", "/JMC-")
@@ -75,33 +66,44 @@ func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) {
 		UnexpectedValue(compileEnv.GetPlatform().Arch)
 	}
 
+	if u.CppRules.CompilerVerbose.Get() {
+		// enable compiler verbose output
+		u.CompilerOptions.AppendUniq("-v")
+	}
+
+	// #TODO: wait for MSTL/llvm to be fixed with this optimization
 	// if u.Payload == PAYLOAD_SHAREDLIB {
 	// 	// https://blog.llvm.org/2018/11/30-faster-windows-builds-with-clang-cl_14.html
 	// 	u.CompilerOptions.Append("/Zc:dllexportInlines-") // not workig with /MD and std
 	// 	u.PrecompiledHeaderOptions.Append("/Zc:dllexportInlines-")
 	// }
+
+	return nil
 }
-func (clang *ClangCompiler) GetDigestable(o *bytes.Buffer) {
-	clang.ProductInstall.GetDigestable(o)
-	clang.MsvcCompiler.GetDigestable(o)
+func (clang *ClangCompiler) Serialize(ar Archive) {
+	SerializeExternal(ar, &clang.ProductInstall)
+	ar.Serializable(&clang.MsvcCompiler)
 }
 
-func (clang *ClangCompiler) Alias() BuildAlias {
-	return MakeBuildAlias("Compiler", "Clang_"+clang.Arch.String())
-}
-func (clang *ClangCompiler) Build(bc BuildContext) (BuildStamp, error) {
-	llvm := GetLlvmProductInstall()
-	msvc := GetMsvcCompiler(clang.Arch)
-	compileFlags := CompileFlags.Need(CommandEnv.Flags)
-	windowsFlags := WindowsFlags.Need(CommandEnv.Flags)
-	bc.DependsOn(llvm, msvc, compileFlags, windowsFlags)
+func (clang *ClangCompiler) Build(bc BuildContext) error {
+	if llvm, err := GetLlvmProductInstall().Need(bc); err == nil {
+		clang.ProductInstall = llvm
+	} else {
+		return err
+	}
 
-	clang.ProductInstall = llvm
-	clang.MsvcCompiler = *msvc
+	if msvc, err := GetMsvcCompiler(clang.Arch).Need(bc); err == nil {
+		compilerAlias := clang.CompilerAlias
+		clang.MsvcCompiler = *(msvc.(*MsvcCompiler))
+		clang.CompilerAlias = compilerAlias
+	} else {
+		return err
+	}
+
+	compileFlags := GetCompileFlags()
+	windowsFlags := GetWindowsFlags()
 
 	rules := clang.GetCompiler()
-	rules.CompilerName = fmt.Sprintf("ClangCl_%s_%s", SanitizeIdentifier(llvm.Version), rules.CompilerName)
-	rules.CompilerFamily = "clang-cl"
 	rules.Executable = clang.ProductInstall.ClangCl_exe
 	rules.Librarian = clang.ProductInstall.LlvmLib_exe
 	rules.Linker = clang.ProductInstall.LldLink_exe
@@ -161,7 +163,7 @@ func (clang *ClangCompiler) Build(bc BuildContext) (BuildStamp, error) {
 	rules.CompilerOptions.Append("-Xclang", "-fuse-ctor-homing")
 	rules.PrecompiledHeaderOptions.Append("-Xclang", "-fuse-ctor-homing")
 
-	return MakeBuildStamp(clang)
+	return nil
 }
 
 /***************************************
@@ -171,16 +173,16 @@ func (clang *ClangCompiler) Build(bc BuildContext) (BuildStamp, error) {
 var re_clangClVersion = regexp.MustCompile(`(?m)^clang\s+version\s+([\.\d]+)$`)
 
 func (llvm *LlvmProductInstall) Alias() BuildAlias {
-	return MakeBuildAlias("HAL", "LlvmForWindows_Latest")
+	return MakeBuildAlias("HAL", "Windows", "LLVM", "Latest")
 }
-func (llvm *LlvmProductInstall) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(llvm.Version)
-	llvm.InstallDir.GetDigestable(o)
-	llvm.ClangCl_exe.GetDigestable(o)
-	llvm.LlvmLib_exe.GetDigestable(o)
-	llvm.LldLink_exe.GetDigestable(o)
+func (llvm *LlvmProductInstall) Serialize(ar Archive) {
+	ar.String(&llvm.Version)
+	ar.Serializable(&llvm.InstallDir)
+	ar.Serializable(&llvm.ClangCl_exe)
+	ar.Serializable(&llvm.LlvmLib_exe)
+	ar.Serializable(&llvm.LldLink_exe)
 }
-func (llvm *LlvmProductInstall) Build(bc BuildContext) (BuildStamp, error) {
+func (llvm *LlvmProductInstall) Build(bc BuildContext) error {
 	candidatePaths := NewDirSet(
 		MakeDirectory("C:/Program Files/LLVM"),
 		MakeDirectory("C:/Program Files (x86)/LLVM"))
@@ -195,34 +197,46 @@ func (llvm *LlvmProductInstall) Build(bc BuildContext) (BuildStamp, error) {
 			if fullVersion, err := exec.Command(llvm.ClangCl_exe.String(), "--version").Output(); err == nil {
 				parsed := re_clangClVersion.FindStringSubmatch(string(fullVersion))
 				if nil == parsed {
-					return BuildStamp{}, fmt.Errorf("failed to parse clang-cl version: %v", fullVersion)
+					return fmt.Errorf("failed to parse clang-cl version: %v", fullVersion)
 				}
 				llvm.Version = parsed[1]
 			} else {
-				return BuildStamp{}, err
+				return err
 			}
 
 			LogTrace("using LLVM v%s for Windows found in '%v'", llvm.Version, llvm.InstallDir)
-			bc.NeedFile(
-				llvm.ClangCl_exe,
-				llvm.LlvmLib_exe,
-				llvm.LldLink_exe)
-			return MakeBuildStamp(llvm)
+			if err := bc.NeedFile(llvm.ClangCl_exe, llvm.LlvmLib_exe, llvm.LldLink_exe); err != nil {
+				return err
+			}
+
+			return nil
 		}
 	}
 
-	return BuildStamp{}, fmt.Errorf("can't find LLVM for Windows install path")
+	return fmt.Errorf("can't find LLVM for Windows install path")
 }
 
-var GetLlvmProductInstall = Memoize(func() *LlvmProductInstall {
-	builder := &LlvmProductInstall{}
-	return CommandEnv.BuildGraph().Create(builder).GetBuildable().(*LlvmProductInstall)
-})
+func GetLlvmProductInstall() BuildFactoryTyped[*LlvmProductInstall] {
+	return func(bi BuildInitializer) (*LlvmProductInstall, error) {
+		return &LlvmProductInstall{}, nil
+	}
+}
 
-var GetClangCompiler = MemoizeArg(func(arch ArchType) *ClangCompiler {
-	result := &ClangCompiler{}
-	result.Arch = arch
-	return CommandEnv.BuildGraph().
-		Create(result).
-		GetBuildable().(*ClangCompiler)
-})
+func GetClangCompiler(arch ArchType) BuildFactoryTyped[Compiler] {
+	return func(bi BuildInitializer) (Compiler, error) {
+		compileFlags := GetCompileFlags()
+		windowsFlags := GetWindowsFlags()
+		if err := bi.NeedFactories(
+			GetBuildableFlags(compileFlags),
+			GetBuildableFlags(windowsFlags)); err != nil {
+			return nil, err
+		}
+
+		return &ClangCompiler{
+			MsvcCompiler: MsvcCompiler{
+				Arch:          arch,
+				CompilerRules: NewCompilerRules(NewCompilerAlias("clang-cl", "llvm", arch.String())),
+			},
+		}, nil
+	}
+}

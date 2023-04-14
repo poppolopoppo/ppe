@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"container/list"
-	"time"
+	"bytes"
+	"sync"
 )
 
 type Recycler[T any] interface {
@@ -10,62 +10,45 @@ type Recycler[T any] interface {
 	Release(T)
 }
 
-type recyclerPoolT[T any] struct {
-	get, give chan T
+type recyclerPool[T any] struct {
+	pool       sync.Pool
+	onAllocate func(T)
+	onRelease  func(T)
 }
 
-type recyclerQueueT[T any] struct {
-	when  time.Time
-	slice T
+func NewRecycler[T any](factory func() T, allocate func(T), release func(T)) Recycler[T] {
+	result := &recyclerPool[T]{}
+	result.pool.New = func() any { return factory() }
+	result.onAllocate = release
+	result.onRelease = release
+	return result
 }
-
-func NewRecycler[T any](allocator func() T, lifetime time.Duration) Recycler[T] {
-	get := make(chan T)
-	give := make(chan T)
-	go func() {
-		q := new(list.List)
-		for {
-			if q.Len() == 0 {
-				q.PushFront(recyclerQueueT[T]{when: time.Now(), slice: allocator()})
-			}
-
-			e := q.Front()
-
-			timeout := time.NewTimer(lifetime)
-			select {
-			case b := <-give:
-				timeout.Stop()
-				q.PushFront(recyclerQueueT[T]{when: time.Now(), slice: b})
-
-			case get <- e.Value.(recyclerQueueT[T]).slice:
-				timeout.Stop()
-				q.Remove(e)
-
-			case <-timeout.C:
-				e := q.Front()
-				for e != nil {
-					n := e.Next()
-					if time.Since(e.Value.(recyclerQueueT[T]).when) > lifetime {
-						q.Remove(e)
-						e.Value = nil
-					}
-					e = n
-				}
-			}
-		}
-
-	}()
-	return &recyclerPoolT[T]{get, give}
+func (x *recyclerPool[T]) Allocate() (result T) {
+	result = x.pool.Get().(T)
+	x.onAllocate(result)
+	return
 }
-func (re *recyclerPoolT[T]) Allocate() T {
-	return <-re.get
-}
-func (re *recyclerPoolT[T]) Release(block T) {
-	re.give <- block
+func (x *recyclerPool[T]) Release(item T) {
+	x.onRelease(item)
+	x.pool.Put(item)
 }
 
 const TRANSIENT_BYTES_CAPACITY = 64 << 10
 
+// recycle temporary buffers
 var TransientBytes = NewRecycler(
 	func() []byte { return make([]byte, TRANSIENT_BYTES_CAPACITY) },
-	time.Minute)
+	func([]byte) {}, func([]byte) {})
+
+// recycle byte buffers
+var TransientBuffer = NewRecycler(
+	func() *bytes.Buffer { return &bytes.Buffer{} },
+	func(*bytes.Buffer) {},
+	func(b *bytes.Buffer) {
+		b.Reset()
+	})
+
+// recycle channels for Future[T]
+var AnyChannels = NewRecycler(
+	func() chan any { return make(chan any, 1) },
+	func(chan any) {}, func(chan any) {})

@@ -2,8 +2,6 @@ package compile
 
 import (
 	utils "build/utils"
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -80,14 +78,89 @@ func (x *ArchType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x ArchType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *ArchType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x ArchType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *ArchType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *ArchType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range ArchTypes() {
+		in.Add(it.String())
+	}
+}
+
+/***************************************
+ * CompilerFeatures
+ ***************************************/
+
+type CompilerFeature int32
+
+type CompilerFeatureFlags = utils.EnumSet[CompilerFeature, *CompilerFeature]
+
+const (
+	COMPILER_ALLOW_CACHING CompilerFeature = iota
+	COMPILER_ALLOW_DISTRIBUTION
+	COMPILER_ALLOW_RESPONSEFILE
+	COMPILER_ALLOW_SOURCEMAPPING
+)
+
+func CompilerFeatures() []CompilerFeature {
+	return []CompilerFeature{
+		COMPILER_ALLOW_CACHING,
+		COMPILER_ALLOW_DISTRIBUTION,
+		COMPILER_ALLOW_RESPONSEFILE,
+		COMPILER_ALLOW_SOURCEMAPPING,
+	}
+}
+func (x CompilerFeature) Ord() int32       { return int32(x) }
+func (x *CompilerFeature) FromOrd(v int32) { *x = CompilerFeature(v) }
+func (x CompilerFeature) String() string {
+	switch x {
+	case COMPILER_ALLOW_CACHING:
+		return "COMPILER_ALLOW_CACHING"
+	case COMPILER_ALLOW_DISTRIBUTION:
+		return "COMPILER_ALLOW_DISTRIBUTION"
+	case COMPILER_ALLOW_RESPONSEFILE:
+		return "COMPILER_ALLOW_RESPONSEFILE"
+	case COMPILER_ALLOW_SOURCEMAPPING:
+		return "COMPILER_ALLOW_SOURCEMAPPING"
+	default:
+		utils.UnexpectedValue(x)
+		return ""
+	}
+}
+func (x *CompilerFeature) Set(in string) error {
+	switch strings.ToUpper(in) {
+	case COMPILER_ALLOW_CACHING.String():
+		*x = COMPILER_ALLOW_CACHING
+	case COMPILER_ALLOW_DISTRIBUTION.String():
+		*x = COMPILER_ALLOW_DISTRIBUTION
+	case COMPILER_ALLOW_RESPONSEFILE.String():
+		*x = COMPILER_ALLOW_RESPONSEFILE
+	case COMPILER_ALLOW_SOURCEMAPPING.String():
+		*x = COMPILER_ALLOW_SOURCEMAPPING
+	default:
+		return utils.MakeUnexpectedValueError(x, in)
+	}
+	return nil
+}
+func (x *CompilerFeature) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
+}
+func (x CompilerFeature) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+func (x *CompilerFeature) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
+}
+func (x *CompilerFeature) AutoComplete(in utils.AutoComplete) {
+	for _, it := range CompilerFeatures() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -147,14 +220,19 @@ func (x *ConfigType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x ConfigType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *ConfigType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x ConfigType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *ConfigType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *ConfigType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range ConfigTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -205,14 +283,19 @@ func (x *CppRttiType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x CppRttiType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *CppRttiType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x CppRttiType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *CppRttiType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *CppRttiType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range CppRttiTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -281,14 +364,19 @@ func (x *CppStdType) Set(in string) (err error) {
 func (x CppStdType) IsInheritable() bool {
 	return x == CPPSTD_INHERIT
 }
-func (x CppStdType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *CppStdType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x CppStdType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *CppStdType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *CppStdType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range CppStdTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -351,14 +439,19 @@ func (x *DebugType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x DebugType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *DebugType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x DebugType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *DebugType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *DebugType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range DebugTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -409,14 +502,19 @@ func (x *ExceptionType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x ExceptionType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *ExceptionType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x ExceptionType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *ExceptionType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *ExceptionType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range ExceptionTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -467,14 +565,19 @@ func (x *LinkType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x LinkType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *LinkType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x LinkType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *LinkType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *LinkType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range LinkTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -528,14 +631,19 @@ func (x *ModuleType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x ModuleType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *ModuleType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x ModuleType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *ModuleType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *ModuleType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range ModuleTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -592,14 +700,19 @@ func (x *PrecompiledHeaderType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x PrecompiledHeaderType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *PrecompiledHeaderType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x PrecompiledHeaderType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *PrecompiledHeaderType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *PrecompiledHeaderType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range PrecompiledHeaderTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -615,7 +728,10 @@ const (
 	PAYLOAD_SHAREDLIB
 	PAYLOAD_PRECOMPILEDHEADER
 	PAYLOAD_HEADERS
+	PAYLOAD_DEPENDENCIES
 )
+
+const NumPayloadTypes = int32(PAYLOAD_HEADERS) + 1
 
 func PayloadTypes() []PayloadType {
 	return []PayloadType{
@@ -625,6 +741,7 @@ func PayloadTypes() []PayloadType {
 		PAYLOAD_SHAREDLIB,
 		PAYLOAD_PRECOMPILEDHEADER,
 		PAYLOAD_HEADERS,
+		PAYLOAD_DEPENDENCIES,
 	}
 }
 func (x PayloadType) String() string {
@@ -641,6 +758,8 @@ func (x PayloadType) String() string {
 		return "PRECOMPILEDHEADER"
 	case PAYLOAD_HEADERS:
 		return "HEADERS"
+	case PAYLOAD_DEPENDENCIES:
+		return "DEPENDENCIES"
 	default:
 		utils.UnexpectedValue(x)
 		return ""
@@ -660,13 +779,24 @@ func (x *PayloadType) Set(in string) (err error) {
 		*x = PAYLOAD_PRECOMPILEDHEADER
 	case PAYLOAD_HEADERS.String():
 		*x = PAYLOAD_HEADERS
+	case PAYLOAD_DEPENDENCIES.String():
+		*x = PAYLOAD_DEPENDENCIES
 	default:
 		err = utils.MakeUnexpectedValueError(x, in)
 	}
 	return err
 }
-func (x PayloadType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x PayloadType) Compare(o PayloadType) int {
+	if x < o {
+		return -1
+	} else if x == o {
+		return 0
+	} else {
+		return 1
+	}
+}
+func (x *PayloadType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x PayloadType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
@@ -674,11 +804,28 @@ func (x PayloadType) MarshalText() ([]byte, error) {
 func (x *PayloadType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
 }
+func (x *PayloadType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range PayloadTypes() {
+		in.Add(it.String())
+	}
+}
+
 func (x PayloadType) HasOutput() bool {
 	switch x {
 	case PAYLOAD_EXECUTABLE, PAYLOAD_OBJECTLIST, PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
 		return true
-	case PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER:
+	case PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_DEPENDENCIES:
+		return false
+	default:
+		utils.UnexpectedValue(x)
+		return false
+	}
+}
+func (x PayloadType) HasMultipleInput() bool {
+	switch x {
+	case PAYLOAD_EXECUTABLE, PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
+		return true
+	case PAYLOAD_OBJECTLIST, PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_DEPENDENCIES:
 		return false
 	default:
 		utils.UnexpectedValue(x)
@@ -746,8 +893,8 @@ func (x *SanitizerType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x SanitizerType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *SanitizerType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x SanitizerType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
@@ -755,12 +902,19 @@ func (x SanitizerType) MarshalText() ([]byte, error) {
 func (x *SanitizerType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
 }
+func (x *SanitizerType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range SanitizerTypes() {
+		in.Add(it.String())
+	}
+}
 
 /***************************************
  * TagType
  ***************************************/
 
 type TagType int32
+
+type TagFlags = utils.EnumSet[TagType, *TagType]
 
 const (
 	TAG_DEBUG TagType = iota
@@ -783,6 +937,8 @@ func TagTypes() []TagType {
 		TAG_FASTDEBUG,
 	}
 }
+func (x TagType) Ord() int32           { return int32(x) }
+func (x *TagType) FromOrd(value int32) { *x = TagType(value) }
 func (x TagType) String() string {
 	switch x {
 	case TAG_DEBUG:
@@ -825,8 +981,8 @@ func (x *TagType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x TagType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *TagType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x TagType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
@@ -834,85 +990,10 @@ func (x TagType) MarshalText() ([]byte, error) {
 func (x *TagType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
 }
-
-/***************************************
- * TagFlags
- ***************************************/
-
-type TagFlags int32
-
-func (x TagFlags) int32() int32 {
-	return int32(x)
-}
-
-func (x TagFlags) Empty() bool {
-	return x.int32() == 0
-}
-func (x TagFlags) Tags() (result []TagType) {
-	for _, tag := range TagTypes() {
-		if x.Has(tag) {
-			result = append(result, tag)
-		}
+func (x *TagType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range TagTypes() {
+		in.Add(it.String())
 	}
-	return result
-}
-func (x TagFlags) Has(tags ...TagType) bool {
-	for _, tag := range tags {
-		if (x.int32() & (1 << int32(tag))) != (1 << int32(tag)) {
-			return false
-		}
-	}
-	return true
-}
-func (x *TagFlags) Clear() {
-	*x = TagFlags(0)
-}
-func (x TagFlags) Intersect(other TagFlags) TagFlags {
-	return TagFlags(x.int32() & other.int32())
-}
-func (x *TagFlags) Append(other TagFlags) {
-	*x = TagFlags(x.int32() | other.int32())
-}
-func (x *TagFlags) Add(tags ...TagType) {
-	for _, tag := range tags {
-		*x = TagFlags(x.int32() | (1 << int32(tag)))
-	}
-}
-func (x *TagFlags) Remove(tags ...TagType) {
-	for _, tag := range tags {
-		*x = TagFlags(x.int32() & ^(1 << int32(tag)))
-	}
-}
-func (x TagFlags) String() string {
-	return utils.JoinString("|", x.Tags()...)
-}
-func (x *TagFlags) Set(in string) error {
-	*x = TagFlags(0)
-	for _, s := range strings.Split(in, "|") {
-		var tag TagType
-		if err := tag.Set(strings.TrimSpace(s)); err == nil {
-			x.Add(tag)
-		} else {
-			return err
-		}
-	}
-	return nil
-}
-func (x TagFlags) GetDigestable(o *bytes.Buffer) {
-	tmp := [4]byte{}
-	binary.BigEndian.PutUint32(tmp[:], uint32(x.int32()))
-	o.Write(tmp[:])
-}
-func (x TagFlags) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
-}
-func (x *TagFlags) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
-}
-
-func MakeTagFlags(tags ...TagType) (result TagFlags) {
-	result.Add(tags...)
-	return result
 }
 
 /***************************************
@@ -972,14 +1053,19 @@ func (x *UnityType) Set(in string) error {
 	}
 	return nil
 }
-func (x UnityType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *UnityType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x UnityType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *UnityType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *UnityType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range UnityTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -1027,14 +1113,19 @@ func (x *VisibilityType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x VisibilityType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *VisibilityType) Serialize(ar utils.Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x VisibilityType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 func (x *VisibilityType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
+}
+func (x *VisibilityType) AutoComplete(in utils.AutoComplete) {
+	for _, it := range VisibilityTypes() {
+		in.Add(it.String())
+	}
 }
 
 /***************************************
@@ -1099,6 +1190,9 @@ func (m VisibilityMask) String() (result string) {
 		}
 	}
 	return result
+}
+func (x *VisibilityMask) Serialize(ar utils.Archive) {
+	ar.UInt32((*uint32)(x))
 }
 func (x VisibilityMask) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil

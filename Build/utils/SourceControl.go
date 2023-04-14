@@ -13,8 +13,13 @@ import (
 	"time"
 )
 
+type SourceControlProvider interface {
+	GetModifiedFiles() (FileSet, error)
+	GetStatus(*SourceControlStatus) error
+}
+
 /***************************************
- * Source control
+ * Source Control Status
  ***************************************/
 
 type SourceControlStatus struct {
@@ -26,23 +31,66 @@ type SourceControlStatus struct {
 func (x *SourceControlStatus) Alias() BuildAlias {
 	return MakeBuildAlias("SourceControl", "Status")
 }
-func (x *SourceControlStatus) Build(BuildContext) (BuildStamp, error) {
-	if err := GetSourceControlProvider().GetStatus(x); err == nil {
-		return MakeTimedBuildStamp(x.Timestamp, x)
-	} else {
-		return BuildStamp{}, err
+func (x *SourceControlStatus) Build(BuildContext) (err error) {
+	err = GetSourceControlProvider().GetStatus(x)
+	if err == nil {
+		LogVerbose("source-control: branch=%s, revision=%s, timestamp=%s", x.Branch, x.Revision, x.Timestamp)
 	}
+	return
 }
-func (x *SourceControlStatus) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.Branch)
-	o.WriteString(x.Revision)
-	raw, _ := x.Timestamp.MarshalBinary()
-	o.Write(raw)
+func (x *SourceControlStatus) Serialize(ar Archive) {
+	ar.String(&x.Branch)
+	ar.String(&x.Revision)
+	ar.Time(&x.Timestamp)
 }
 
-type SourceControlProvider interface {
-	GetModifiedFiles() (FileSet, error)
-	GetStatus(*SourceControlStatus) error
+func BuildSourceControlStatus() BuildFactoryTyped[*SourceControlStatus] {
+	return func(bi BuildInitializer) (*SourceControlStatus, error) {
+		return &SourceControlStatus{}, nil
+	}
+}
+
+/***************************************
+ * Source Control Modified Files
+ ***************************************/
+
+type SourceControlModifiedFiles struct {
+	OutputFile    Filename
+	ModifiedFiles FileSet
+}
+
+func (x *SourceControlModifiedFiles) Alias() BuildAlias {
+	return MakeBuildAlias("SourceControl", "ModifiedFiles", x.OutputFile.String())
+}
+func (x *SourceControlModifiedFiles) Build(bc BuildContext) (err error) {
+	x.ModifiedFiles, err = GetSourceControlProvider().GetModifiedFiles()
+	if err != nil {
+		return
+	}
+	LogVerbose("source-control: found %d modified files", len(x.ModifiedFiles))
+
+	err = UFS.SafeCreate(x.OutputFile, func(w io.Writer) error {
+		for _, file := range x.ModifiedFiles {
+			fmt.Fprintln(w, filepath.Clean(file.String()))
+		}
+		return nil
+	})
+
+	LogVerbose("source-control: updated %q", x.OutputFile)
+	//bc.OutputFile(x.OutputFile)
+	return
+}
+func (x *SourceControlModifiedFiles) Serialize(ar Archive) {
+	ar.Serializable(&x.OutputFile)
+	ar.Serializable(&x.ModifiedFiles)
+}
+
+func BuildSourceControlModifiedFiles() BuildFactoryTyped[*SourceControlModifiedFiles] {
+	return func(bi BuildInitializer) (*SourceControlModifiedFiles, error) {
+		return &SourceControlModifiedFiles{
+			OutputFile: UFS.Saved.File(".modified_files_list.txt"),
+		}, nil
+	}
 }
 
 /***************************************
@@ -71,7 +119,9 @@ type GitSourceControl struct {
 
 func (git GitSourceControl) Command(name string, args ...string) ([]byte, error) {
 	args = append([]string{"--no-optional-locks", name}, args...)
-	LogVeryVerbose("git: %v", strings.Join(args, " "))
+	LogVeryVerbose("git: %v", MakeStringer(func() string {
+		return strings.Join(args, " ")
+	}))
 
 	proc := exec.Command("git", args...)
 	proc.Env = os.Environ()
@@ -136,26 +186,4 @@ var GetSourceControlProvider = Memoize(func() SourceControlProvider {
 		return &GitSourceControl{gitDir}
 	}
 	return &DummySourceControl{}
-})
-
-var SourceControlBuilder = MakeBuildable(func(BuildInit) *SourceControlStatus {
-	return &SourceControlStatus{}
-})
-
-var GenerateSourceControlModifiedFiles = Memoize(func() Future[Filename] {
-	return MakeFuture(func() (Filename, error) {
-		output := UFS.Saved.File(".modified_files_list.txt")
-		err := UFS.Create(output, func(w io.Writer) error {
-			if modifiedFiles, err := GetSourceControlProvider().GetModifiedFiles(); err == nil {
-				for _, file := range modifiedFiles {
-					fmt.Fprintln(w, filepath.Clean(file.String()))
-				}
-				LogInfo("Found %d modified files with source control", len(modifiedFiles))
-				return nil
-			} else {
-				return err
-			}
-		})
-		return output, err
-	})
 })

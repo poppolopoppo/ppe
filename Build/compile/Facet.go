@@ -2,7 +2,7 @@ package compile
 
 import (
 	utils "build/utils"
-	"bytes"
+	"sort"
 	"strings"
 )
 
@@ -11,7 +11,7 @@ type Facetable interface {
 }
 
 type FacetDecorator interface {
-	Decorate(*CompileEnv, *Unit)
+	Decorate(*CompileEnv, *Unit) error
 }
 
 type VariableSubstitutions map[string]string
@@ -42,25 +42,27 @@ type Facet struct {
 func (facet *Facet) GetFacet() *Facet {
 	return facet
 }
-func (facet *Facet) GetDigestable(o *bytes.Buffer) {
-	digest := utils.MakeDigester()
-	digest.Append(facet.Defines)
-	digest.Append(facet.ForceIncludes)
-	digest.Append(facet.IncludePaths)
-	digest.Append(facet.ExternIncludePaths)
-	digest.Append(facet.SystemIncludePaths)
-	digest.Append(facet.AnalysisOptions)
-	digest.Append(facet.PreprocessorOptions)
-	digest.Append(facet.CompilerOptions)
-	digest.Append(facet.PrecompiledHeaderOptions)
-	digest.Append(facet.Libraries)
-	digest.Append(facet.LibraryPaths)
-	digest.Append(facet.LibrarianOptions)
-	digest.Append(facet.LinkerOptions)
-	digest.Append(facet.Tags)
-	// digest.Append(facet.Exports)
-	result := digest.Finalize()
-	o.Write(result[:])
+func (facet *Facet) Serialize(ar utils.Archive) {
+	ar.Serializable(&facet.Defines)
+
+	ar.Serializable(&facet.ForceIncludes)
+	ar.Serializable(&facet.IncludePaths)
+	ar.Serializable(&facet.ExternIncludePaths)
+	ar.Serializable(&facet.SystemIncludePaths)
+
+	ar.Serializable(&facet.AnalysisOptions)
+	ar.Serializable(&facet.PreprocessorOptions)
+	ar.Serializable(&facet.CompilerOptions)
+	ar.Serializable(&facet.PrecompiledHeaderOptions)
+
+	ar.Serializable(&facet.Libraries)
+	ar.Serializable(&facet.LibraryPaths)
+
+	ar.Serializable(&facet.LibrarianOptions)
+	ar.Serializable(&facet.LinkerOptions)
+
+	ar.Serializable(&facet.Tags)
+	ar.Serializable(&facet.Exports)
 }
 
 func NewFacet() Facet {
@@ -103,11 +105,7 @@ func (facet *Facet) Append(others ...Facetable) {
 		facet.LibrarianOptions.Append(x.LibrarianOptions...)
 		facet.LinkerOptions.Append(x.LinkerOptions...)
 		facet.Tags.Append(x.Tags)
-		for k, v := range x.Exports {
-			if _, ok := facet.Exports[k]; !ok {
-				facet.Exports[k] = v
-			}
-		}
+		facet.Exports.Append(x.Exports)
 	}
 }
 func (facet *Facet) AppendUniq(others ...Facetable) {
@@ -127,11 +125,7 @@ func (facet *Facet) AppendUniq(others ...Facetable) {
 		facet.LibrarianOptions.AppendUniq(x.LibrarianOptions...)
 		facet.LinkerOptions.AppendUniq(x.LinkerOptions...)
 		facet.Tags.Append(x.Tags)
-		for k, v := range x.Exports {
-			if _, ok := facet.Exports[k]; !ok {
-				facet.Exports[k] = v
-			}
-		}
+		facet.Exports.Append(x.Exports)
 	}
 }
 func (facet *Facet) Prepend(others ...Facetable) {
@@ -151,9 +145,7 @@ func (facet *Facet) Prepend(others ...Facetable) {
 		facet.LibrarianOptions.Prepend(x.LibrarianOptions...)
 		facet.LinkerOptions.Prepend(x.LinkerOptions...)
 		facet.Tags.Append(facet.Tags)
-		for k, v := range x.Exports {
-			facet.Exports[k] = v
-		}
+		facet.Exports.Prepend(x.Exports)
 	}
 }
 
@@ -202,26 +194,18 @@ func (facet *Facet) String() string {
 func (vars *VariableSubstitutions) Add(key, value string) {
 	(*vars)[key] = value
 }
-func (vars *VariableSubstitutions) Get(key string) string {
-	if x, ok := (*vars)[key]; ok {
-		return x
-	} else {
-		utils.LogPanic("unknown variable substitution: '%s' (got [%v])", key, strings.Join(utils.Keys((*vars)), ","))
-		return ""
-	}
-}
-func (vars *VariableSubstitutions) ExpandString(it string) string {
-	if len(*vars) > 0 && strings.ContainsAny(it, "[[:") {
-		for old, new := range *vars {
-			it = strings.ReplaceAll(it, "[[:"+old+":]]", new)
+func (vars *VariableSubstitutions) ExpandString(str string) string {
+	if len(*vars) > 0 && strings.ContainsAny(str, "[[:") {
+		for from, to := range *vars {
+			str = strings.ReplaceAll(str, from, to)
 		}
 	}
-	return it
+	return str
 }
-func (vars *VariableSubstitutions) ExpandDirectory(it utils.Directory) (result utils.Directory) {
-	result = make([]string, len(it))
-	for i, x := range it {
-		result[i] = vars.ExpandString(x)
+func (vars *VariableSubstitutions) ExpandDirectory(dir utils.Directory) (result utils.Directory) {
+	result = make([]string, len(dir))
+	for i, it := range dir {
+		result[i] = vars.ExpandString(it)
 	}
 	return result
 }
@@ -229,5 +213,58 @@ func (vars *VariableSubstitutions) ExpandFilename(it utils.Filename) utils.Filen
 	return utils.Filename{
 		Dirname:  vars.ExpandDirectory(it.Dirname),
 		Basename: vars.ExpandString(it.Basename),
+	}
+}
+
+func (vars VariableSubstitutions) Get(from string) string {
+	to, ok := vars[from]
+	utils.AssertIn(ok, true)
+	return to
+}
+func (vars *VariableSubstitutions) Append(other VariableSubstitutions) {
+	for from, to := range other {
+		if _, ok := (*vars)[from]; !ok {
+			vars.Add(from, to)
+		}
+	}
+}
+func (vars *VariableSubstitutions) Prepend(other VariableSubstitutions) {
+	for from, to := range other {
+		vars.Add(from, to)
+	}
+}
+
+type variableSubstitutionPair struct {
+	From, To string
+}
+
+func (x *variableSubstitutionPair) Serialize(ar utils.Archive) {
+	ar.String(&x.From)
+	ar.String(&x.To)
+}
+
+func (vars *VariableSubstitutions) Serialize(ar utils.Archive) {
+	var pinned []variableSubstitutionPair
+	if ar.Flags().IsLoading() {
+		utils.SerializeSlice(ar, &pinned)
+
+		*vars = make(map[string]string, len(pinned))
+		for _, it := range pinned {
+			vars.Add(it.From, it.To)
+		}
+	} else {
+		pinned := make([]variableSubstitutionPair, 0, len(*vars))
+		for from, to := range *vars {
+			pinned = append(pinned, variableSubstitutionPair{
+				From: from,
+				To:   to,
+			})
+		}
+
+		sort.Slice(pinned, func(i, j int) bool {
+			return pinned[i].From < pinned[j].From
+		})
+
+		utils.SerializeSlice(ar, &pinned)
 	}
 }

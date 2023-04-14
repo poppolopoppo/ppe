@@ -3,7 +3,6 @@ package cmd
 import (
 	. "build/compile"
 	. "build/utils"
-	"bytes"
 	"fmt"
 	"io"
 	"sort"
@@ -13,7 +12,7 @@ const BFF_VERSION = "0.8"
 
 var BFFFILE_DEFAULT = UFS.Output.File("fbuild.bff")
 
-type BffArgsT struct {
+type BffArgs struct {
 	BffOutput           Filename
 	DeoptimizeWithToken BoolVar
 	LightCache          BoolVar
@@ -22,69 +21,55 @@ type BffArgsT struct {
 	Clean               BoolVar
 }
 
-func (flags *BffArgsT) InitFlags(cfg *PersistentMap) {
-	cfg.Persistent(&flags.BffOutput, "BffOutput", "destination for generated FASTBuild config file (*.bff)")
-	cfg.Persistent(&flags.DeoptimizeWithToken, "DeoptimizeWithToken", "enable/disable compiler optimization with FASTBUILD_DEOPTIMIZE_OBJECT")
-	cfg.Persistent(&flags.LightCache, "LightCache", "enable/disable FASTBuild lightweight parsing for caching")
-	cfg.Persistent(&flags.Minify, "Minify", "enable/disable pretty print for generated FASTBuild file")
-	cfg.Persistent(&flags.RelativePaths, "RelativePaths", "enable/disable FASTBuild relative paths for caching")
-	cfg.Var(&flags.Clean, "Clean", "invalidate and regenerate BFF file")
-}
-func (flags *BffArgsT) ApplyVars(cfg *PersistentMap) {
+func (x *BffArgs) Flags(cfv CommandFlagsVisitor) {
+	cfv.Persistent("BffOutput", "destination for generated FASTBuild config file (*.bff)", &x.BffOutput)
+	cfv.Persistent("DeoptimizeWithToken", "enable/disable compiler optimization with FASTBUILD_DEOPTIMIZE_OBJECT", &x.DeoptimizeWithToken)
+	cfv.Persistent("LightCache", "enable/disable FASTBuild lightweight parsing for caching", &x.LightCache)
+	cfv.Persistent("Minify", "enable/disable pretty print for generated FASTBuild file", &x.Minify)
+	cfv.Persistent("RelativePaths", "enable/disable FASTBuild relative paths for caching", &x.RelativePaths)
+	cfv.Variable("Clean", "invalidate and regenerate BFF file", &x.Clean)
 }
 
-func (flags *BffArgsT) Alias() BuildAlias {
-	return MakeBuildAlias("Flags", "BffArgs")
-}
-func (flags *BffArgsT) Build(BuildContext) (BuildStamp, error) {
-	return MakeBuildStamp(flags)
-}
-func (flags *BffArgsT) GetDigestable(o *bytes.Buffer) {
-	flags.BffOutput.GetDigestable(o)
-	flags.DeoptimizeWithToken.GetDigestable(o)
-	flags.LightCache.GetDigestable(o)
-	flags.Minify.GetDigestable(o)
-	flags.RelativePaths.GetDigestable(o)
-}
+var GetBffArgs = NewCommandParsableFlags(&BffArgs{
+	BffOutput:           BFFFILE_DEFAULT,
+	DeoptimizeWithToken: INHERITABLE_FALSE,
+	LightCache:          INHERITABLE_FALSE,
+	Minify:              INHERITABLE_TRUE,
+	RelativePaths:       INHERITABLE_FALSE,
+	Clean:               INHERITABLE_FALSE,
+})
 
-var BffArgs = MakeServiceAccessor[ParsableFlags](newBffArgs)
-
-func newBffArgs() *BffArgsT {
-	return CommandEnv.BuildGraph().Create(&BffArgsT{
-		BffOutput:           BFFFILE_DEFAULT,
-		DeoptimizeWithToken: INHERITABLE_FALSE,
-		LightCache:          INHERITABLE_FALSE,
-		Minify:              INHERITABLE_TRUE,
-		RelativePaths:       INHERITABLE_FALSE,
-	}).GetBuildable().(*BffArgsT)
-}
-
-var Bff = MakeCommand(
+var CommandBff = NewCommand(
+	"Configure",
 	"bff",
 	"generate FASTBuild config file",
-	func(cmd *CommandEnvT) *BffArgsT {
-		AllCompilationFlags.Needed(cmd.Flags)
-		return BffArgs.FindOrAdd(cmd.Flags)
-	},
-	func(cmd *CommandEnvT, args *BffArgsT) error {
-		LogClaim("generating BFF config in '%v'", args.BffOutput)
+	OptionCommandParsableAccessor("bff_flags", "bff generation options", GetBffArgs),
+	OptionCommandAllCompilationFlags(),
+	OptionCommandPrepare(func(cc CommandContext) error {
+		// prepare source control early on, without blocking
+		BuildSourceControlModifiedFiles().Prepare(CommandEnv.BuildGraph())
+		return nil
+	}),
+	OptionCommandRun(func(cc CommandContext) error {
+		flags := GetBffArgs()
+		LogClaim("generating BFF config in '%v'", flags.BffOutput)
 
-		bg := cmd.BuildGraph()
-		builder := bg.Create(&BffBuilder{
-			Output:  args.BffOutput,
-			Version: BFF_VERSION,
-		}, args.Alias())
+		return GetBffBuilder().Build(CommandEnv.BuildGraph()).Failure()
+	}))
 
-		var result Future[BuildStamp]
-		if args.Clean.Get() {
-			_, result = bg.ForceBuild(builder.GetBuildable())
-		} else {
-			_, result = bg.Build(builder)
+func GetBffBuilder() BuildFactoryTyped[*BffBuilder] {
+	return func(bi BuildInitializer) (*BffBuilder, error) {
+		flags := GetBffArgs()
+		if _, err := GetBuildableFlags(flags).Need(bi); err != nil {
+			return nil, err
 		}
 
-		return result.Join().Failure()
-	},
-)
+		return &BffBuilder{
+			Output:  flags.BffOutput,
+			Version: BFF_VERSION,
+		}, nil
+	}
+}
 
 /***************************************
  * FASTBuild config generation
@@ -98,35 +83,32 @@ type BffBuilder struct {
 func (x *BffBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("Bff", x.Output.String())
 }
-func (x *BffBuilder) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.Output.String())
-	o.WriteByte(0)
-	o.WriteString(x.Version)
+func (x *BffBuilder) Serialize(ar Archive) {
+	ar.Serializable(&x.Output)
+	ar.String(&x.Version)
 }
-func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
-	sourceControlModifiedFiles := GenerateSourceControlModifiedFiles()
-	targets := BuildTargets.Need(bc)
-	args := BffArgs.FindOrAdd(CommandEnv.Flags)
+func (x *BffBuilder) Build(bc BuildContext) (err error) {
+	sourceControlModifiedFiles, err := BuildSourceControlModifiedFiles().Need(bc)
+	if err != nil {
+		return nil
+	}
 
-	err := UFS.LazyCreate(x.Output, func(dst io.Writer) error {
+	args := GetBffArgs()
+
+	err = UFS.SafeCreate(x.Output, func(dst io.Writer) error {
 
 		bff := newBffGenerator(dst, args)
 
-		bff.Comment("BFF generated by %v", MAIN_SIGNATURE)
+		bff.Comment("BFF generated by %v", PROCESS_INFO)
 		bff.Func("Settings", func() {
 			bff.Assign("RootPath", UFS.Root)
 			bff.Assign("CachePath", UFS.Cache)
 			if CurrentHost().Id == HOST_WINDOWS {
-				platform := BuildPlatforms.Need(bc).Current()
-				compiler := platform.GetCompiler(bc)
+				platform := GeLocalHostBuildPlatform().SafeNeed(bc)
+				compiler := platform.GetCompiler().SafeNeed(bc)
 
-				path := JoinString(";", compiler.EnvPath()...)
-				bff.Import("TMP")
-				bff.Assign("Environment", BffArray{
-					"PATH=" + path,
-					"TMP=$TMP$",
-					"SystemRoot=C:\\Windows",
-				})
+				environment := ProcessEnvironment(CopyMap(compiler.GetCompiler().Environment))
+				bff.Assign("Environment", environment.Export())
 			}
 		})
 
@@ -134,10 +116,14 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 		bff.Assign("CompilerOutputKeepBaseExtension", false)
 		bff.Assign("DeoptimizeWritableFilesWithToken", args.DeoptimizeWithToken)
 		bff.Assign("LinkerVerboseOutput", true)
-		bff.Assign("UnityInputIsolateListFile", sourceControlModifiedFiles.Join().Success())
+		bff.Assign("UnityInputIsolateListFile", sourceControlModifiedFiles.OutputFile)
 
-		translatedUnits := targets.TranslatedUnits()
-		for _, unit := range translatedUnits.Slice() {
+		translatedUnits, err := BuildTranslatedUnits(bc)
+		if err != nil {
+			return err
+		}
+
+		for _, unit := range translatedUnits {
 			bff.Comment("Target %v", unit.Target)
 			switch unit.Payload {
 			case PAYLOAD_EXECUTABLE:
@@ -155,59 +141,93 @@ func (x *BffBuilder) Build(bc BuildContext) (BuildStamp, error) {
 			}
 		}
 
-		bff.MakeAliases(translatedUnits.Slice())
-
+		bff.MakeAliases(translatedUnits)
 		return nil
 	})
 
 	if err == nil {
 		bc.OutputFile(x.Output)
-		return MakeBuildStamp(x)
-	} else {
-		return BuildStamp{}, err
 	}
+	return
 }
 
 type bffGenerator struct {
-	*BffArgsT
+	*BffArgs
 	*BffFile
 }
 
-func newBffGenerator(dst io.Writer, args *BffArgsT) (result bffGenerator) {
+func newBffGenerator(dst io.Writer, args *BffArgs) (result bffGenerator) {
 	result = bffGenerator{
-		BffArgsT: args,
-		BffFile:  NewBffFile(dst, args.Minify.Get()),
+		BffArgs: args,
+		BffFile: NewBffFile(dst, args.Minify.Get()),
 	}
 	return result
 }
 
-func (gen bffGenerator) Executable(unit *Unit) {
-	gen.BaseDeliverable(unit, true)
+func (gen bffGenerator) Executable(unit *Unit) error {
+	return gen.BaseDeliverable(unit, true)
 }
-func (gen bffGenerator) Headers(unit *Unit) {
+func (gen bffGenerator) Headers(unit *Unit) error {
 	gen.Func("Alias", func() {
 		fileset := FileSet{}
 		fileset.Append(unit.Source.ExtraFiles...)
 		fileset.Append(unit.Libraries...)
 		gen.Assign("Targets", fileset)
 	}, unit.Target.String())
+	return nil
 }
-func (gen bffGenerator) ObjectList(unit *Unit) {
-	gen.BaseModule(unit, "", true)
+func (gen bffGenerator) ObjectList(unit *Unit) error {
+	compiler, preprocessor, err := gen.Toolchain(unit)
+	if err != nil {
+		return err
+	}
+	gen.BaseModule(unit, compiler, preprocessor, "", true)
+	return nil
 }
-func (gen bffGenerator) SharedLib(unit *Unit) {
-	gen.BaseDeliverable(unit, false)
+func (gen bffGenerator) SharedLib(unit *Unit) error {
+	return gen.BaseDeliverable(unit, false)
 }
-func (gen bffGenerator) StaticLib(unit *Unit) {
-	gen.BaseModule(unit, "", false)
+func (gen bffGenerator) StaticLib(unit *Unit) error {
+	compiler, preprocessor, err := gen.Toolchain(unit)
+	if err != nil {
+		return err
+	}
+
+	gen.BaseModule(unit, compiler, preprocessor, "", false)
+	return nil
 }
-func (gen bffGenerator) BaseDeliverable(unit *Unit, executable bool) {
-	libraries := []string{gen.BaseModule(unit, "-Obj", true)}
+func (gen bffGenerator) Toolchain(unit *Unit) (BffVar, BffVar, error) {
+	compiler, err := unit.GetBuildCompiler()
+	if err != nil {
+		var none BffVar
+		return none, none, err
+	}
+
+	compilerDetails := gen.Compiler(compiler)
+
+	var preprocessorDetails BffVar
+	if unit.PreprocessorAlias.Valid() {
+		preprocessor, err := unit.GetBuildPreprocessor()
+		if err != nil {
+			var none BffVar
+			return none, none, err
+		}
+
+		preprocessorDetails = gen.Compiler(preprocessor)
+	}
+
+	return compilerDetails, preprocessorDetails, nil
+}
+func (gen bffGenerator) BaseDeliverable(unit *Unit, executable bool) error {
+	compiler, preprocessor, err := gen.Toolchain(unit)
+	if err != nil {
+		return err
+	}
+
+	libraries := []string{gen.BaseModule(unit, compiler, preprocessor, "-Obj", true)}
 	libraries = append(libraries, Stringize(unit.CompileDependencies.Slice()...)...)
 	libraries = append(libraries, Stringize(unit.LinkDependencies.Slice()...)...)
 	libraries = append(libraries, gen.CustomUnits(unit)...)
-
-	compilerDetails := gen.Compiler(unit.Compiler)
 
 	funcName := "DLL"
 	if executable {
@@ -215,30 +235,24 @@ func (gen bffGenerator) BaseDeliverable(unit *Unit, executable bool) {
 	}
 
 	gen.Func(funcName, func() {
-		gen.Using(compilerDetails)
+		gen.Using(compiler)
 		gen.Assign("Libraries", MakeBffArray(libraries...))
 		gen.Assign("LinkerOptions", unit.LinkerOptions.Join(" "))
 		gen.Assign("LinkerOutput", unit.OutputFile)
 		gen.Assign("PreBuildDependencies", Stringize(unit.RuntimeDependencies.Slice()...))
 	}, unit.Target.String())
+	return nil
 }
-func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects bool) string {
-	compilerDetails := gen.Compiler(unit.Compiler)
-
-	var preprocessorDetails BffVar
-	if unit.Preprocessor != nil {
-		preprocessorDetails = gen.Compiler(unit.Preprocessor)
-	}
-
+func (gen bffGenerator) BaseModule(unit *Unit, compiler, preprocessor BffVar, suffix string, linkLibraryObjects bool) string {
 	UFS.Mkdir(UFS.Transient)
 
-	moduleSource := MakeBffVar(unit.Target.GetModuleAlias().String() + "_Source_" + unit.PCH.String() + "_" + unit.Unity.String())
+	moduleSource := MakeBffVar(unit.Target.ModuleAlias.String() + "_Source_" + unit.PCH.String() + "_" + unit.Unity.String())
 	gen.Once(moduleSource, func() {
 		gen.Comment("Target source details for %v", unit)
 
 		var moduleUnity string
 		if unit.Unity.Ord() > 0 {
-			moduleUnity = (unit.Target.GetModuleAlias().String() + "-Unity-PCH_" + unit.PCH.String())
+			moduleUnity = (unit.Target.ModuleAlias.String() + "-Unity-PCH_" + unit.PCH.String())
 
 			gen.Once(BffVar(moduleUnity), func() {
 				gen.Func("Unity", func() {
@@ -287,7 +301,7 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 	}
 
 	gen.Func(funcName, func() {
-		gen.Using(compilerDetails)
+		gen.Using(compiler)
 		gen.Using(moduleSource)
 
 		if suffix != "" {
@@ -302,8 +316,8 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 			gen.Assign("PCHOptions", unit.PrecompiledHeaderOptions.Join(" "))
 		}
 
-		if unit.Preprocessor != nil {
-			gen.Assign("Preprocessor", preprocessorDetails)
+		if preprocessor.Valid() {
+			gen.Assign("Preprocessor", preprocessor)
 			gen.Assign("PreprocessorOptions", unit.PreprocessorOptions.Join(" "))
 		}
 
@@ -325,18 +339,24 @@ func (gen bffGenerator) BaseModule(unit *Unit, suffix string, linkLibraryObjects
 }
 func (gen bffGenerator) Compiler(compiler Compiler) BffVar {
 	rules := compiler.GetCompiler()
-	details := MakeBffVar(rules.CompilerName + "_Details")
+	compilerName := rules.CompilerAlias.String()
+	details := MakeBffVar(compilerName + "_Details")
+
 	gen.Once(details, func() {
 		gen.Func("Compiler", func() {
-			gen.Assign("CompilerFamily", rules.CompilerFamily)
-			gen.Assign("Root", compiler.WorkingDir())
+			gen.Assign("CompilerFamily", rules.CompilerAlias.CompilerFamily)
 			gen.Assign("Executable", rules.Executable)
 			gen.Assign("ExtraFiles", rules.ExtraFiles)
+			gen.Assign("ExecutableRootPath", rules.WorkingDir)
+			gen.Assign("Environment", rules.Environment.Export())
+			gen.Assign("AllowDistribution", rules.Features.Has(COMPILER_ALLOW_DISTRIBUTION))
+			gen.Assign("AllowResponseFile", rules.Features.Has(COMPILER_ALLOW_RESPONSEFILE))
+			// gen.Assign("SourceMapping_Experimental", rules.Features.Has(COMPILER_ALLOW_SOURCEMAPPING))
 			gen.Assign("UseLightCache_Experimental", gen.LightCache)
 			gen.Assign("UseRelativePaths_Experimental", gen.RelativePaths)
-		}, rules.CompilerName)
+		}, compilerName)
 		gen.Struct(details, func() {
-			gen.Assign("Compiler", rules.CompilerName)
+			gen.Assign("Compiler", compilerName)
 			gen.Assign("Librarian", rules.Librarian)
 			gen.Assign("Linker", rules.Linker)
 		})
@@ -344,35 +364,46 @@ func (gen bffGenerator) Compiler(compiler Compiler) BffVar {
 	return details
 }
 func (gen bffGenerator) CustomUnits(unit *Unit) []string {
-	return Map(func(custom *CustomUnit) string {
-		return gen.BaseModule(&custom.Unit, "", true)
+	return Map(func(custom CustomUnit) string {
+		compiler, preprocessor, err := gen.Toolchain(&custom.Unit)
+		LogPanicIfFailed(err)
+
+		return gen.BaseModule(&custom.Unit, compiler, preprocessor, "", true)
 	}, unit.CustomUnits...)
 }
 func (gen bffGenerator) MakeAliases(units []*Unit) {
-	environments := NewCollector[BuildAlias, string]()
-	namespaces := NewCollector[BuildAlias, string]()
-	modules := NewCollector[BuildAlias, string]()
+	environments := make(map[string]StringSet)
+	namespaces := make(map[string]StringSet)
+	modules := make(map[string]StringSet)
+
+	registerAlias := func(m map[string]StringSet, k, v string) {
+		m[k] = append(m[k], v)
+	}
 
 	for _, u := range units {
 		target := u.Target
 		alias := target.String()
 
-		environments.Add(target.GetEnvironmentAlias(), alias)
-		namespaces.Add(target.GetNamespaceAlias(), alias)
-		modules.Add(target.GetModuleAlias(), alias)
+		registerAlias(environments, target.EnvironmentAlias.String(), alias)
+		registerAlias(namespaces, target.NamespaceAlias.String(), alias)
+		registerAlias(modules, target.ModuleAlias.String(), alias)
 	}
 
-	for _, sorted := range []*Collector[BuildAlias, string]{environments, namespaces, modules} {
-		sorted.Each(func(alias BuildAlias, list []string) {
+	for _, registry := range []map[string]StringSet{environments, namespaces, modules} {
+		sortedKeys := Keys(registry)
+		sort.Strings(sortedKeys)
+
+		for _, alias := range sortedKeys {
+			list := registry[alias]
 			sort.Strings(list)
 			gen.Func("Alias", func() {
 				gen.Assign("Targets", list)
-			}, alias.String())
-		})
+			}, alias)
+		}
 	}
 
 	gen.Func("Alias", func() {
-		names := Stringize(environments.Keys()...)
+		names := Keys(environments)
 		sort.Strings(names)
 		gen.Assign("Targets", names)
 	}, "all")

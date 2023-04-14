@@ -1,13 +1,7 @@
 package utils
 
 import (
-	"bufio"
-	"bytes"
-	"io"
-	"os"
-	"os/exec"
 	"strings"
-	"time"
 )
 
 /***************************************
@@ -55,8 +49,8 @@ func (x *FBuildCacheType) Set(in string) (err error) {
 	}
 	return err
 }
-func (x FBuildCacheType) GetDigestable(o *bytes.Buffer) {
-	o.WriteString(x.String())
+func (x *FBuildCacheType) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
 }
 func (x FBuildCacheType) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
@@ -64,6 +58,10 @@ func (x FBuildCacheType) MarshalText() ([]byte, error) {
 func (x *FBuildCacheType) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
 }
+
+/***************************************
+ * FBuild Args
+ ***************************************/
 
 type FBuildArgs struct {
 	Cache         FBuildCacheType
@@ -78,19 +76,28 @@ type FBuildArgs struct {
 	Threads       IntVar
 }
 
-func (flags *FBuildArgs) InitFlags(cfg *PersistentMap) {
-	cfg.Persistent(&flags.Cache, "Cache", "set FASTBuild cache mode ["+JoinString(",", FBuildCacheTypes()...)+"]")
-	cfg.Var(&flags.Clean, "Clean", "FASTBuild will rebuild all cached artifacts if enabled")
-	cfg.Persistent(&flags.Dist, "Dist", "enable/disable FASTBuild to use distributed compilation")
-	cfg.Persistent(&flags.BffInput, "BffInput", "source for input FASTBuild config file (*.bff)")
-	cfg.Persistent(&flags.NoStopOnError, "NoStopOnError", "FASTBuild will stop compiling on the first error if enabled")
-	cfg.Var(&flags.NoUnity, "NoUnity", "enable/disable use of generated unity source files")
-	cfg.Var(&flags.Report, "Report", "enable/disable FASTBuild compilation report generation")
-	cfg.Var(&flags.ShowCmds, "ShowCmds", "display all command-lines executed by FASTBuild")
-	cfg.Var(&flags.ShowCmdOutput, "ShowCmdOutput", "display full output of external processes regardless of outcome.")
-	cfg.Persistent(&flags.Threads, "Threads", "set count of worker thread spawned by FASTBuild")
-}
-func (flags *FBuildArgs) ApplyVars(cfg *PersistentMap) {
+var GetFBuildArgs = NewCommandParsableFlags(&FBuildArgs{
+	Cache:         FBUILD_CACHE_DISABLED,
+	Clean:         INHERITABLE_FALSE,
+	Dist:          INHERITABLE_FALSE,
+	NoUnity:       INHERITABLE_FALSE,
+	NoStopOnError: INHERITABLE_TRUE,
+	Report:        INHERITABLE_FALSE,
+	ShowCmds:      INHERITABLE_FALSE,
+	Threads:       0,
+})
+
+func (flags *FBuildArgs) Flags(cfv CommandFlagsVisitor) {
+	cfv.Persistent("Cache", "set FASTBuild cache mode ["+JoinString(",", FBuildCacheTypes()...)+"]", &flags.Cache)
+	cfv.Variable("Clean", "FASTBuild will rebuild all cached artifacts if enabled", &flags.Clean)
+	cfv.Persistent("Dist", "enable/disable FASTBuild to use distributed compilation", &flags.Dist)
+	cfv.Persistent("BffInput", "source for input FASTBuild config file (*.bff)", &flags.BffInput)
+	cfv.Persistent("NoStopOnError", "FASTBuild will stop compiling on the first error if enabled", &flags.NoStopOnError)
+	cfv.Variable("NoUnity", "enable/disable use of generated unity source files", &flags.NoUnity)
+	cfv.Variable("Report", "enable/disable FASTBuild compilation report generation", &flags.Report)
+	cfv.Variable("ShowCmds", "display all command-lines executed by FASTBuild", &flags.ShowCmds)
+	cfv.Variable("ShowCmdOutput", "display full output of external processes regardless of outcome.", &flags.ShowCmdOutput)
+	cfv.Persistent("Threads", "set count of worker thread spawned by FASTBuild", &flags.Threads)
 }
 
 /***************************************
@@ -180,62 +187,11 @@ func MakeFBuildExecutor(flags *FBuildArgs, args ...string) (result FBuildExecuto
 func (x *FBuildExecutor) Run() (err error) {
 	LogVerbose("fbuild: running with '%v' (capture=%v)", x, x.Capture)
 
-	cmd := exec.Command(FBUILD_BIN.String(), x.Args.Slice()...)
-	defer cmd.Wait()
-
-	cmd.Dir = UFS.Root.String()
-	cmd.Env = append(os.Environ(),
-		"FASTBUILD_CACHE_PATH="+UFS.Cache.String(),
-		"FASTBUILD_TEMP_PATH="+UFS.Transient.String())
-
-	if x.Capture {
-		pbar := LogSpinner(strings.Join(x.Args.Slice(), " "))
-		defer pbar.Close()
-
-		cmd.Stderr = cmd.Stdout
-
-		var stdout io.ReadCloser
-		if stdout, err = cmd.StdoutPipe(); err != nil {
-			return err
-		}
-		defer stdout.Close()
-
-		if err = cmd.Start(); err != nil {
-			return err
-		}
-
-		scanner := bufio.NewScanner(stdout)
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-
-			for scanner.Scan() {
-				line := scanner.Text()
-				line = strings.TrimRight(line, "\r\n")
-				line = strings.TrimSpace(line)
-				if len(line) > 0 {
-					LogForward(line)
-				}
-			}
-
-			done <- struct{}{}
-		}()
-
-		for {
-			select {
-			case <-done:
-				return cmd.Wait()
-			default:
-				pbar.Inc()
-				time.Sleep(10 * time.Millisecond)
-			}
-		}
-
-	} else {
-		cmd.Stderr = nil
-		cmd.Stdout = nil
-		return cmd.Run()
-	}
+	return RunProcess(FBUILD_BIN, x.Args.Slice(),
+		OptionProcessExport("FASTBUILD_CACHE_PATH", UFS.Cache.String()),
+		OptionProcessExport("FASTBUILD_TEMP_PATH", UFS.Transient.String()),
+		OptionProcessWorkingDir(UFS.Root),
+		OptionProcessCaptureOutputIf(x.Capture))
 }
 func (x *FBuildExecutor) String() string {
 	return strings.Join(x.Args.Slice(), " ")
