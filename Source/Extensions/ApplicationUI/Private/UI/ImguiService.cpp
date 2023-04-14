@@ -177,10 +177,10 @@ static void PollImguiKeyboardEvents_(ImGuiIO& io, const IInputService& input) {
         return;
 
     // update key modifiers
-    io.AddKeyEvent(ImGuiKey_ModCtrl, keyb.IsKeyPressed(EKeyboardKey::Control));
-    io.AddKeyEvent(ImGuiKey_ModAlt, keyb.IsKeyPressed(EKeyboardKey::Alt));
-    io.AddKeyEvent(ImGuiKey_ModShift, keyb.IsKeyPressed(EKeyboardKey::Shift));
-    io.AddKeyEvent(ImGuiKey_ModSuper, keyb.IsKeyPressed(EKeyboardKey::Super));
+    io.AddKeyEvent(ImGuiMod_Ctrl, keyb.IsKeyPressed(EKeyboardKey::Control));
+    io.AddKeyEvent(ImGuiMod_Alt, keyb.IsKeyPressed(EKeyboardKey::Alt));
+    io.AddKeyEvent(ImGuiMod_Shift, keyb.IsKeyPressed(EKeyboardKey::Shift));
+    io.AddKeyEvent(ImGuiMod_Super, keyb.IsKeyPressed(EKeyboardKey::Super));
 
     const auto pollKey = [&](ImGuiKey imGuiKey, EKeyboardKey keyboardKey) {
         if (keyb.IsKeyDown(keyboardKey))
