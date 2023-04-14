@@ -317,6 +317,12 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 		UnexpectedValue(compileEnv.GetConfig().ConfigType)
 	}
 
+	if u.CppStd >= CPPSTD_20 {
+		// Command line warning D9035 : option 'Gm' has been deprecated and will be removed in a future release
+		// Command line error D8016 : '/Gm' and '/std:c++20' command-line options are incompatible
+		u.RemoveCompilationFlag("/Gm-", "/Gm")
+	}
+
 	// set default thread stack size
 	stackSize := windowsFlags.StackSize
 	if u.Sanitizer != SANITIZER_NONE {
