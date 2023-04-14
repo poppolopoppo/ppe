@@ -531,7 +531,7 @@ func (pg *pinnedLogProgress) SetRandomColors() {
 }
 
 func (pg *pinnedLogProgress) Print(dst io.Writer) {
-	const width = 70
+	const width = 50
 
 	progress := int(pg.progress.Load())
 	duration := time.Since(pg.startedat)
