@@ -67,7 +67,6 @@ func (x *SourceControlModifiedFiles) Build(bc BuildContext) (err error) {
 	if err != nil {
 		return
 	}
-	LogVerbose("source-control: found %d modified files", len(x.ModifiedFiles))
 
 	err = UFS.SafeCreate(x.OutputFile, func(w io.Writer) error {
 		for _, file := range x.ModifiedFiles {
@@ -76,7 +75,7 @@ func (x *SourceControlModifiedFiles) Build(bc BuildContext) (err error) {
 		return nil
 	})
 
-	LogVerbose("source-control: updated %q", x.OutputFile)
+	LogVerbose("source-control: updated %q (%d files)", x.OutputFile, len(x.ModifiedFiles))
 	//bc.OutputFile(x.OutputFile)
 	return
 }
@@ -142,22 +141,33 @@ func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 	}
 
 	reader := bufio.NewScanner(bytes.NewReader(status))
-	for reader.Scan() {
-		line := reader.Text()
-		if len(line) > 0 {
-			if line[0:1] == "A" || line[1:2] == "M" || line[0:2] == "AM" || line[0:2] == "??" {
-				file := UFS.Root.AbsoluteFile(strings.TrimSpace(line[3:]))
-				if file.Ext() == ".cpp" {
-					fileset.Append(file)
-				}
-			}
+	for {
+		advance, token, err := bufio.ScanLines(status, true)
+		if err != nil {
+			return FileSet{}, err
+		}
+		if advance == 0 {
+			break
+		}
+		if advance <= len(status) {
+			status = status[advance:]
+		}
+		if len(token) == 0 {
+			continue
+		}
+		line := string(token)
+		if strings.HasPrefix(line, "A ") || strings.HasPrefix(line, " M") || strings.HasPrefix(line, "AM") || strings.HasPrefix(line, "??") {
+			file := UFS.Root.AbsoluteFile(strings.TrimSpace(line[3:]))
+			LogVeryVerbose("git: %q was modified", file)
+			fileset.Append(file)
 		}
 	}
 
-	if err := reader.Err(); err != nil {
-		return fileset, err
-	} else {
+	if err := reader.Err(); err == nil {
+		LogVeryVerbose("git: found %d modified files", len(fileset))
 		return fileset, nil
+	} else {
+		return fileset, err
 	}
 }
 func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
@@ -165,11 +175,14 @@ func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
 		line := strings.TrimSpace(string(outp))
 		line = strings.TrimPrefix(line, "\"")
 		line = strings.TrimSuffix(line, "\"")
+
 		log := strings.SplitN(line, ",", 4)
+
 		status.Revision = strings.TrimSpace(log[0])
 		branchInfo := strings.Split(log[len(log)-1], "->")
 		status.Branch = strings.TrimSpace(branchInfo[len(branchInfo)-1])
 		timestamp := strings.TrimSpace(log[1])
+
 		if unitT, err := strconv.ParseInt(timestamp, 10, 64); err == nil {
 			status.Timestamp = time.Unix(unitT, 0)
 			return nil
@@ -183,6 +196,7 @@ func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
 
 var GetSourceControlProvider = Memoize(func() SourceControlProvider {
 	if gitDir := UFS.Root.Folder(".git"); gitDir.Exists() {
+		LogVerbose("source-control: found Git source control in %q", gitDir)
 		return &GitSourceControl{gitDir}
 	}
 	return &DummySourceControl{}

@@ -199,3 +199,14 @@ var ListPersistentData = utils.NewCommand(
 			return nil
 		})
 	}))
+
+var ListModifiedFiles = utils.NewCommand(
+	"Metadata",
+	"list-modified-files",
+	"list modified files from source control",
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		bg := utils.CommandEnv.BuildGraph()
+		result := utils.BuildSourceControlModifiedFiles().Build(bg)
+		return printCompletion(GetCompletionArgs(), utils.Stringize(result.Success().ModifiedFiles...))
+	}))
