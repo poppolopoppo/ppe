@@ -34,7 +34,9 @@ static void CreateVulkanDeviceCompiler_(const FVulkanDevice& device, ERHIFeature
         EShaderCompilationFlags::ParseAnnotations |
         EShaderCompilationFlags::UseCurrentDeviceLimits );
 
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_FINAL_RELEASE
+    Unused(features);
+#else
     if (features & ERHIFeature::Debugging)
         compilationFlags += EShaderCompilationFlags::Validate | EShaderCompilationFlags::GenerateDebug;
 #endif

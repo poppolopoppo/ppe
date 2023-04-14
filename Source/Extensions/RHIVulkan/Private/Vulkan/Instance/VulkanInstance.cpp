@@ -7,12 +7,12 @@
 
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
+#include "IO/FormatHelpers.h"
 #include "Meta/Utility.h"
 #include "Modular/ModularDomain.h"
 
 #if USE_PPE_LOGGER
 #   include "Vulkan/Common/VulkanEnumToString.h"
-#   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #endif
 
