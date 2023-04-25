@@ -21,7 +21,6 @@ import (
  * Path to string
  ***************************************/
 
-// var re_pathSeparator = regexp.MustCompile(`[\\\/]+`)
 var OSPathSeparator = os.PathSeparator
 
 func BuildSanitizedPath(sb *strings.Builder, pathname string, sep rune) error {
@@ -62,6 +61,24 @@ func SplitPath(in string) (results []string) {
 		results = append(results, in[first:])
 	}
 	return
+}
+
+var localPathSeparator = `.` + string(OSPathSeparator)
+var localPathEnabled = true
+
+func MakeLocalDirectory(d Directory) (relative string) {
+	if localPathEnabled {
+		return d.Relative(UFS.Root)
+	} else {
+		return d.String()
+	}
+}
+func MakeLocalFilename(f Filename) (relative string) {
+	if localPathEnabled {
+		return f.Relative(UFS.Root)
+	} else {
+		return f.String()
+	}
 }
 
 /***************************************
@@ -125,8 +142,8 @@ func (d Directory) Relative(to Directory) string {
 	if path, err := filepath.Rel(to.String(), d.String()); err == nil {
 		return path
 	} else {
-		LogPanicErr(err)
-		return ""
+		LogVeryVerbose("Directory.%v", err)
+		return d.String()
 	}
 }
 func (d Directory) Normalize() (result Directory) {
@@ -231,8 +248,8 @@ func (f Filename) Relative(to Directory) string {
 	if path, err := filepath.Rel(to.String(), f.Dirname.String()); err == nil {
 		return filepath.Join(path, f.Basename)
 	} else {
-		LogPanicErr(err)
-		return ""
+		LogVeryVerbose("Filename.%v", err)
+		return f.String()
 	}
 }
 func (f Filename) Normalize() (result Filename) {
@@ -604,7 +621,7 @@ func (d Directory) FindFileRec(r *regexp.Regexp) (Filename, error) {
 }
 
 /***************************************
- * Containers
+ * DirSet
  ***************************************/
 
 type DirSet []Directory
@@ -679,6 +696,13 @@ func (list DirSet) StringSet() StringSet {
 func (list DirSet) Join(delim string) string {
 	return JoinString(delim, list...)
 }
+func (list DirSet) Local(path Directory) StringSet {
+	return NewStringSet(Map(MakeLocalDirectory, list...)...)
+}
+
+/***************************************
+ * FileSet
+ ***************************************/
 
 type FileSet []Filename
 
@@ -763,6 +787,9 @@ func (list FileSet) StringSet() StringSet {
 }
 func (list FileSet) Join(delim string) string {
 	return JoinString(delim, list...)
+}
+func (list FileSet) Local(path Directory) StringSet {
+	return NewStringSet(Map(MakeLocalFilename, list...)...)
 }
 
 /***************************************

@@ -11,6 +11,7 @@ type WorkerPool interface {
 	Arity() int
 	Queue(TaskFunc)
 	Join()
+	Resize(int)
 }
 
 var GetGlobalWorkerPool = Memoize(func() WorkerPool {
@@ -66,8 +67,30 @@ func (x *fixedSizeWorkerPool) Join() {
 	wg.Wait()
 	x.cond.Broadcast()
 }
+func (x *fixedSizeWorkerPool) Resize(n int) {
+	x.mutex.Lock()
+	defer x.mutex.Unlock()
+	LogVeryVerbose("workerpool: resizing pool from %d to %d worker threads", x.numWorkers, n)
+	Assert(func() bool { return n > 0 })
+	delta := n - x.numWorkers
+	if delta > 0 {
+		for i := 0; i < delta; i += 1 {
+			workerIndex := x.numWorkers + i // create a new worker
+			go x.workerLoop(workerIndex)
+		}
+	} else {
+		for i := 0; i < -delta; i += 1 {
+			x.give <- nil // push a nil task to kill the future
+		}
+	}
+	x.numWorkers += delta
+}
 func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
 	for {
-		(<-x.give)()
+		if task := (<-x.give); task != nil {
+			task()
+		} else {
+			break
+		}
 	}
 }

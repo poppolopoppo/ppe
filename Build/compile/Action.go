@@ -167,7 +167,7 @@ type TargetActions struct {
 }
 
 func (x *TargetActions) Alias() BuildAlias {
-	return MakeBuildAlias("Actions", "Targets", x.TargetAlias.String())
+	return MakeBuildAlias("Targets", x.TargetAlias.String())
 }
 func (x *TargetActions) Build(bc BuildContext) error {
 	x.OutputType = PAYLOAD_HEADERS
@@ -435,7 +435,7 @@ func (x *buildActionGenerator) PrecompilerHeaderActions(unit *Unit, dependencies
 			unit,
 			PAYLOAD_PRECOMPILEDHEADER,
 			compilerRules.Executable,
-			compilerRules.WorkingDir,
+			UFS.Root,
 			compilerRules.Environment,
 			FileSet{unit.PrecompiledSource, unit.PrecompiledHeader},
 			FileSet{pchObject},
@@ -471,7 +471,7 @@ func (x *buildActionGenerator) ObjectAction(
 		unit,
 		PAYLOAD_OBJECTLIST,
 		compilerRules.Executable,
-		compilerRules.WorkingDir,
+		UFS.Root,
 		compilerRules.Environment,
 		FileSet{input}, FileSet{output}, FileSet{output}, FileSet{},
 		dependencies,
@@ -529,7 +529,7 @@ func (x *buildActionGenerator) LibrarianActions(unit *Unit, pchs ActionSet, objs
 		unit,
 		PAYLOAD_STATICLIB,
 		compilerRules.Librarian,
-		compilerRules.WorkingDir,
+		UFS.Root,
 		compilerRules.Environment,
 		inputs, outputs, exports, extras,
 		dependencies,
@@ -579,7 +579,7 @@ func (x *buildActionGenerator) LinkActions(unit *Unit, pchs ActionSet, objs Acti
 		unit,
 		unit.Payload,
 		compilerRules.Linker,
-		compilerRules.WorkingDir,
+		UFS.Root,
 		compilerRules.Environment,
 		inputs, outputs, exports, extras,
 		append(dependencies, runtimeDeps...),
@@ -660,23 +660,26 @@ func performArgumentSubstitution(unit *Unit, payload PayloadType, inputs FileSet
 			if payload.HasMultipleInput() {
 				if strings.Contains(arg, "%1") {
 					for _, input := range inputs {
-						result.Append(strings.ReplaceAll(arg, "%1", input.String()))
+						relativePath := MakeLocalFilename(input)
+						result.Append(strings.ReplaceAll(arg, "%1", relativePath))
 					}
 					continue
 				}
 			} else {
 				for _, input := range inputs {
-					arg = strings.Replace(arg, "%1", input.String(), 1)
+					relativePath := MakeLocalFilename(input)
+					arg = strings.Replace(arg, "%1", relativePath, 1)
 				}
 			}
 
 			if payload != PAYLOAD_PRECOMPILEDHEADER {
 				for _, output := range outputs {
-					arg = strings.Replace(arg, "%2", output.String(), 1)
+					relativePath := MakeLocalFilename(output)
+					arg = strings.Replace(arg, "%2", relativePath, 1)
 				}
 			} else { // special for PCH generation
-				arg = strings.ReplaceAll(arg, "%2", unit.PrecompiledObject.String()) // stdafx.pch
-				arg = strings.ReplaceAll(arg, "%3", outputs[0].String())             // stdafx.pch.obj
+				arg = strings.ReplaceAll(arg, "%2", MakeLocalFilename(unit.PrecompiledObject)) // stdafx.pch
+				arg = strings.ReplaceAll(arg, "%3", MakeLocalFilename(outputs[0]))             // stdafx.pch.obj
 			}
 		}
 

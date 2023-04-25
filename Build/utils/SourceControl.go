@@ -135,7 +135,7 @@ func (git GitSourceControl) Command(name string, args ...string) ([]byte, error)
 }
 func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 	fileset := NewFileSet()
-	status, err := git.Command("status", "-s", "--porcelain=v1", UFS.Source.Relative(UFS.Root))
+	status, err := git.Command("status", "-s", "--porcelain=v1", MakeLocalDirectory(UFS.Source))
 	if err != nil {
 		return fileset, err
 	}

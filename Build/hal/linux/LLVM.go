@@ -110,8 +110,8 @@ func (llvm *LlvmCompiler) PrecompiledHeader(u *Unit) {
 	case PCH_MONOLITHIC, PCH_SHARED:
 		u.Defines.Append("BUILD_PCH=1")
 		u.CompilerOptions.Append(
-			"-include "+u.PrecompiledHeader.String(),
-			"-include-pch "+u.PrecompiledObject.String())
+			"-include "+u.PrecompiledHeader.Relative(UFS.Source),
+			"-include-pch "+MakeLocalFilename(u.PrecompiledObject))
 		if u.PCH != PCH_SHARED {
 			u.PrecompiledHeaderOptions.Prepend("-emit-pch", "-x c++-header")
 		}
@@ -139,27 +139,27 @@ func (llvm *LlvmCompiler) Sanitizer(f *Facet, sanitizer SanitizerType) {
 
 func (llvm *LlvmCompiler) ForceInclude(f *Facet, inc ...Filename) {
 	for _, x := range inc {
-		f.AddCompilationFlag_NoAnalysis("-include" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-include" + x.Relative(UFS.Source))
 	}
 }
 func (llvm *LlvmCompiler) IncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag_NoAnalysis("-I" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-I" + MakeLocalDirectory(x))
 	}
 }
 func (llvm *LlvmCompiler) ExternIncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag_NoAnalysis("-iframework" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-iframework" + MakeLocalDirectory(x))
 	}
 }
 func (llvm *LlvmCompiler) SystemIncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag_NoAnalysis("-isystem" + x.String())
+		f.AddCompilationFlag_NoAnalysis("-isystem" + MakeLocalDirectory(x))
 	}
 }
 func (llvm *LlvmCompiler) Library(f *Facet, lib ...Filename) {
 	for _, x := range lib {
-		s := x.String()
+		s := MakeLocalFilename(x)
 		f.LibrarianOptions.Append(s)
 		f.LinkerOptions.Append(s)
 	}
@@ -396,8 +396,6 @@ func (llvm *LlvmCompiler) Build(bc BuildContext) error {
 	llvm.CompilerRules.Linker = llvm.ProductInstall.Clang
 
 	llvm.CompilerRules.Environment = NewProcessEnvironment()
-	llvm.CompilerRules.WorkingDir = llvm.CompilerRules.Executable.Dirname
-
 	llvm.CompilerRules.Facet = NewFacet()
 	facet := &llvm.CompilerRules.Facet
 

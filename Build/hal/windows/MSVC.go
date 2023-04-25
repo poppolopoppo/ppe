@@ -119,7 +119,7 @@ func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
 	case DEBUG_EMBEDDED:
 		u.CompilerOptions.Append("/Z7")
 		u.PrecompiledHeaderOptions.Append("/Z7")
-		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
 
 		u.SymbolsFile = artifactPDB
 
@@ -127,8 +127,8 @@ func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
 		intermediatePDB := u.OutputFile.ReplaceExt("-Intermediate.pdb")
 		intermediatePDB.Dirname = u.IntermediateDir
 
-		u.AddCompilationFlag_NoPreprocessor("/Zi", "/Zf", "/FS", "/Fd\""+intermediatePDB.String()+"\"")
-		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+		u.AddCompilationFlag_NoPreprocessor("/Zi", "/Zf", "/FS", "/Fd\""+MakeLocalFilename(intermediatePDB)+"\"")
+		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
 
 		u.SymbolsFile = artifactPDB
 		u.ExtraFiles.Append(intermediatePDB)
@@ -137,8 +137,8 @@ func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
 		editAndContinuePDB := u.OutputFile.ReplaceExt("-EditAndContinue.pdb")
 		editAndContinuePDB.Dirname = u.IntermediateDir
 
-		u.AddCompilationFlag_NoPreprocessor("/ZI", "/Zf", "/FS", "/Fd\""+editAndContinuePDB.String()+"\"")
-		u.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+artifactPDB.String()+"\"")
+		u.AddCompilationFlag_NoPreprocessor("/ZI", "/Zf", "/FS", "/Fd\""+MakeLocalFilename(editAndContinuePDB)+"\"")
+		u.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
 		u.LinkerOptions.AppendUniq("/INCREMENTAL")
 
 		u.SymbolsFile = artifactPDB
@@ -166,7 +166,7 @@ func (msvc *MsvcCompiler) PrecompiledHeader(u *Unit) {
 		u.CompilerOptions.Append(
 			"/FI\""+u.PrecompiledHeader.Basename+"\"",
 			"/Yu\""+u.PrecompiledHeader.Basename+"\"",
-			"/Fp\""+u.PrecompiledObject.String()+"\"")
+			"/Fp\""+MakeLocalFilename(u.PrecompiledObject)+"\"")
 		if u.PCH != PCH_SHARED {
 			u.PrecompiledHeaderOptions.Append("/Yc\"" + u.PrecompiledHeader.Basename + "\"")
 		}
@@ -191,17 +191,17 @@ func (msvc *MsvcCompiler) Sanitizer(f *Facet, sanitizer SanitizerType) {
 
 func (msvc *MsvcCompiler) ForceInclude(f *Facet, inc ...Filename) {
 	for _, x := range inc {
-		f.AddCompilationFlag_NoAnalysis("/FI\"" + x.String() + "\"")
+		f.AddCompilationFlag_NoAnalysis("/FI\"" + x.Relative(UFS.Source) + "\"")
 	}
 }
 func (msvc *MsvcCompiler) IncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag_NoAnalysis("/I\"" + x.String() + "\"")
+		f.AddCompilationFlag_NoAnalysis("/I\"" + MakeLocalDirectory(x) + "\"")
 	}
 }
 func (msvc *MsvcCompiler) ExternIncludePath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		f.AddCompilationFlag_NoAnalysis("/external:I\"" + x.String() + "\"")
+		f.AddCompilationFlag_NoAnalysis("/external:I\"" + MakeLocalDirectory(x) + "\"")
 	}
 }
 func (msvc *MsvcCompiler) SystemIncludePath(facet *Facet, dirs ...Directory) {
@@ -209,14 +209,14 @@ func (msvc *MsvcCompiler) SystemIncludePath(facet *Facet, dirs ...Directory) {
 }
 func (msvc *MsvcCompiler) Library(f *Facet, lib ...Filename) {
 	for _, x := range lib {
-		libInc := "\"" + x.String() + "\""
+		libInc := "\"" + MakeLocalFilename(x) + "\""
 		f.LibrarianOptions.Append(libInc)
 		f.LinkerOptions.Append(libInc)
 	}
 }
 func (msvc *MsvcCompiler) LibraryPath(f *Facet, dirs ...Directory) {
 	for _, x := range dirs {
-		libPath := "/LIBPATH:\"" + x.String() + "\""
+		libPath := "/LIBPATH:\"" + MakeLocalDirectory(x) + "\""
 		f.LibrarianOptions.Append(libPath)
 		f.LinkerOptions.Append(libPath)
 	}
@@ -781,10 +781,9 @@ func (msvc *MsvcCompiler) Build(bc BuildContext) (err error) {
 		return err
 	}
 
-	msvc.CompilerRules.WorkingDir = msvc.ProductInstall.VcToolsHostPath()
 	msvc.CompilerRules.Environment = ProcessEnvironment{
 		"PATH": []string{
-			msvc.CompilerRules.WorkingDir.String(),
+			msvc.ProductInstall.VcToolsHostPath().String(),
 			msvc.WindowsSDK.ResourceCompiler.Dirname.String(),
 			"%PATH%"},
 		"SystemRoot": []string{os.Getenv("SystemRoot")},

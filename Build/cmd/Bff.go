@@ -346,7 +346,7 @@ func (gen bffGenerator) Compiler(compiler Compiler) BffVar {
 			gen.Assign("CompilerFamily", rules.CompilerAlias.CompilerFamily)
 			gen.Assign("Executable", rules.Executable)
 			gen.Assign("ExtraFiles", rules.ExtraFiles)
-			gen.Assign("ExecutableRootPath", rules.WorkingDir)
+			gen.Assign("ExecutableRootPath", rules.Executable.Dirname)
 			gen.Assign("Environment", rules.Environment.Export())
 			gen.Assign("AllowDistribution", rules.Features.Has(COMPILER_ALLOW_DISTRIBUTION))
 			gen.Assign("AllowResponseFile", rules.Features.Has(COMPILER_ALLOW_RESPONSEFILE))

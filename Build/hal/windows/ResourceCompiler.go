@@ -69,9 +69,8 @@ func (res *ResourceCompiler) Build(bc BuildContext) error {
 		return err
 	}
 
-	res.CompilerRules.WorkingDir = res.CompilerRules.Executable.Dirname
 	res.CompilerRules.Environment = ProcessEnvironment{
-		"PATH": []string{res.CompilerRules.WorkingDir.String(), "%PATH%"},
+		"PATH": []string{res.CompilerRules.Executable.Dirname.String(), "%PATH%"},
 	}
 
 	res.CompilerOptions = StringSet{

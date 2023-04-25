@@ -112,7 +112,6 @@ type CompilerRules struct {
 
 	Environment utils.ProcessEnvironment
 	ExtraFiles  utils.FileSet
-	WorkingDir  utils.Directory
 
 	Facet
 }
@@ -146,7 +145,6 @@ func (rules *CompilerRules) Serialize(ar utils.Archive) {
 
 	ar.Serializable(&rules.Environment)
 	ar.Serializable(&rules.ExtraFiles)
-	ar.Serializable(&rules.WorkingDir)
 
 	ar.Serializable(&rules.Facet)
 }

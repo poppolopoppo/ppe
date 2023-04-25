@@ -20,6 +20,7 @@ type CommandFlags struct {
 	Debug       BoolVar
 	Timestamp   BoolVar
 	Diagnostics BoolVar
+	Jobs        IntVar
 	Color       BoolVar
 	Ide         BoolVar
 	LogFile     Filename
@@ -35,6 +36,7 @@ var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &C
 	VeryVerbose: INHERITABLE_FALSE,
 	Debug:       INHERITABLE_FALSE,
 	Diagnostics: INHERITABLE_FALSE,
+	Jobs:        INHERIT_VALUE,
 	Color:       INHERITABLE_INHERIT,
 	Ide:         INHERITABLE_FALSE,
 	Timestamp:   INHERITABLE_FALSE,
@@ -51,6 +53,7 @@ func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("d", "turn on debug assertions and more log", &flags.Debug)
 	cfv.Variable("T", "turn on timestamp logging", &flags.Timestamp)
 	cfv.Variable("X", "turn on diagnostics mode", &flags.Diagnostics)
+	cfv.Variable("J", "override number for worker threads (default: numCpu-1)", &flags.Jobs)
 	cfv.Variable("Color", "control ansi color output in log messages", &flags.Color)
 	cfv.Variable("Ide", "set output to IDE mode (disable interactive shell)", &flags.Ide)
 	cfv.Variable("LogFile", "output log to specified file (default: stdout)", &flags.LogFile)
@@ -67,6 +70,10 @@ func (flags *CommandFlags) Apply() {
 		} else {
 			LogPanicErr(err)
 		}
+	}
+
+	if !flags.Jobs.IsInheritable() && flags.Jobs.Get() > 0 {
+		GetGlobalWorkerPool().Resize(flags.Jobs.Get())
 	}
 
 	if flags.Ide.Get() {
