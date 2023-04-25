@@ -68,10 +68,16 @@ func (x *fixedSizeWorkerPool) Join() {
 	x.cond.Broadcast()
 }
 func (x *fixedSizeWorkerPool) Resize(n int) {
+	Assert(func() bool { return n > 0 })
 	x.mutex.Lock()
 	defer x.mutex.Unlock()
-	LogVeryVerbose("workerpool: resizing pool from %d to %d worker threads", x.numWorkers, n)
-	Assert(func() bool { return n > 0 })
+
+	if n == x.numWorkers {
+		return
+	}
+
+	LogTrace("workerpool: resizing %q pool from %d to %d worker threads", x.name, x.numWorkers, n)
+
 	delta := n - x.numWorkers
 	if delta > 0 {
 		for i := 0; i < delta; i += 1 {

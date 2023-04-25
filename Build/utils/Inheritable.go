@@ -167,6 +167,16 @@ func (x *InheritableInt) UnmarshalText(data []byte) error {
 	return x.Set(string(data))
 }
 
+func (x *InheritableInt) CommandLine(name, input string) (bool, error) {
+	if ok, err := InheritableCommandLine(name, input, x); ok || err != nil {
+		return ok, err
+	}
+	if len(name) == 1 && len(input) > 2 && input[0] == '-' && input[1] == name[0] {
+		return true, x.Set(input[2:])
+	}
+	return false, nil
+}
+
 /***************************************
  * InheritableBool
  ***************************************/

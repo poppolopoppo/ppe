@@ -46,6 +46,7 @@ var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &C
 func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("f", "force build even if up-to-date", &flags.Force)
 	cfv.Variable("F", "force build and ignore cache", &flags.Purge)
+	cfv.Variable("j", "override number for worker threads (default: numCpu-1)", &flags.Jobs)
 	cfv.Variable("q", "disable all messages", &flags.Quiet)
 	cfv.Variable("v", "turn on verbose mode", &flags.Verbose)
 	cfv.Variable("t", "print more informations about progress", &flags.Trace)
@@ -53,7 +54,6 @@ func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("d", "turn on debug assertions and more log", &flags.Debug)
 	cfv.Variable("T", "turn on timestamp logging", &flags.Timestamp)
 	cfv.Variable("X", "turn on diagnostics mode", &flags.Diagnostics)
-	cfv.Variable("J", "override number for worker threads (default: numCpu-1)", &flags.Jobs)
 	cfv.Variable("Color", "control ansi color output in log messages", &flags.Color)
 	cfv.Variable("Ide", "set output to IDE mode (disable interactive shell)", &flags.Ide)
 	cfv.Variable("LogFile", "output log to specified file (default: stdout)", &flags.LogFile)
@@ -174,6 +174,7 @@ func (env *CommandEnvT) BuildTime() time.Time       { return PROCESS_INFO.Timest
 // don't save the db when panic occured
 func (env *CommandEnvT) OnPanic(err error) bool {
 	if env.lastPanic == nil {
+
 		env.lastPanic = err
 		env.commandEvents.OnPanic.Invoke(err)
 		return true
