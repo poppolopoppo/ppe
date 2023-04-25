@@ -33,18 +33,18 @@ func (clang *ClangCompiler) ExternIncludePath(f *Facet, dirs ...Directory) {
 func (clang *ClangCompiler) SystemIncludePath(facet *Facet, dirs ...Directory) {
 	clang.ExternIncludePath(facet, dirs...)
 }
-func (clang *ClangCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename, intermediate Directory) {
-	clang.MsvcCompiler.DebugSymbols(f, sym, output, intermediate)
+func (clang *ClangCompiler) DebugSymbols(u *Unit) {
+	clang.MsvcCompiler.DebugSymbols(u)
 
 	// https://blog.llvm.org/2018/01/improving-link-time-on-windows-with.html
-	if f.LinkerOptions.Contains("/DEBUG") {
+	if u.LinkerOptions.Contains("/DEBUG") {
 		//f.CompilerOptions.Append("-mllvm", "-emit-codeview-ghash-section")
-		f.LinkerOptions.Remove("/DEBUG")
-		f.LinkerOptions.Append("/DEBUG:GHASH")
+		u.LinkerOptions.Remove("/DEBUG")
+		u.LinkerOptions.Append("/DEBUG:GHASH")
 	}
 
 	// not supported by clang-cl
-	f.RemoveCompilationFlag("/Zf")
+	u.RemoveCompilationFlag("/Zf")
 }
 func (clang *ClangCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 	err := clang.MsvcCompiler.Decorate(compileEnv, u)

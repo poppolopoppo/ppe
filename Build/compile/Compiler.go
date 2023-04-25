@@ -76,9 +76,9 @@ type Compiler interface {
 	Define(*Facet, ...string)
 	CppRtti(*Facet, bool)
 	CppStd(*Facet, CppStdType)
-	DebugSymbols(*Facet, DebugType, utils.Filename, utils.Directory)
-	Link(*Facet, LinkType)
-	PrecompiledHeader(*Facet, PrecompiledHeaderType, utils.Filename, utils.Filename, utils.Filename)
+	DebugSymbols(u *Unit)
+	Link(f *Facet, link LinkType)
+	PrecompiledHeader(u *Unit)
 	Sanitizer(*Facet, SanitizerType)
 
 	ForceInclude(*Facet, ...utils.Filename)
@@ -162,15 +162,12 @@ func (rules *CompilerRules) Decorate(env *CompileEnv, unit *Unit) error {
 
 	compiler.CppStd(&unit.Facet, unit.CppStd)
 	compiler.CppRtti(&unit.Facet, unit.CppRtti == CPPRTTI_ENABLED)
-	compiler.DebugSymbols(&unit.Facet, unit.DebugSymbols, unit.OutputFile, unit.IntermediateDir)
+
+	compiler.DebugSymbols(unit)
+	compiler.PrecompiledHeader(unit)
+
 	compiler.Link(&unit.Facet, unit.Link)
 	compiler.Sanitizer(&unit.Facet, unit.Sanitizer)
-
-	compiler.PrecompiledHeader(&unit.Facet,
-		unit.PCH,
-		unit.PrecompiledHeader,
-		unit.PrecompiledSource,
-		unit.PrecompiledObject)
 
 	compiler.Define(&unit.Facet, unit.Facet.Defines...)
 	compiler.SystemIncludePath(&unit.Facet, unit.Facet.SystemIncludePaths...)

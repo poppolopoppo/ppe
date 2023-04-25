@@ -81,13 +81,14 @@ type BuildNode interface {
 }
 
 type BuildOptions struct {
-	Parent     *BuildOptions
-	Caller     BuildNode
-	OnLaunched func(BuildAlias)
-	OnBuilt    func(BuildAlias)
-	Stamp      *BuildStamp
-	Force      bool
-	Recursive  bool
+	Parent                   *BuildOptions
+	Caller                   BuildNode
+	OnLaunched               func(BuildAlias)
+	OnBuilt                  func(BuildAlias)
+	Stamp                    *BuildStamp
+	Force                    bool
+	Recursive                bool
+	NoWarningOnMissingOutput bool
 }
 
 type BuildOptionFunc func(*BuildOptions)
@@ -585,7 +586,9 @@ func (x *buildExecuteContext) needToBuild() (bool, BuildDependencyType, error) {
 			dependencyType = DEPENDENCY_OUTPUT
 		}
 	} else {
-		LogWarning("%v: missing output, trigger rebuild", x.node.Alias())
+		if !x.options.NoWarningOnMissingOutput {
+			LogWarning("%v: missing output, trigger rebuild", x.node.Alias())
+		}
 		rebuild = true // output dependencies can be regenerated
 		dependencyType = DEPENDENCY_OUTPUT
 	}
@@ -978,11 +981,13 @@ func (g *buildGraph) Serialize(ar Archive) {
 }
 func (g *buildGraph) Save(dst io.Writer) error {
 	g.revision = 0
-	return ArchiveBinaryWrite(dst, g.Serialize)
+	return ArchiveFileWrite(dst, g.Serialize)
 }
 func (g *buildGraph) Load(src io.Reader) error {
 	g.revision = 0
-	return ArchiveBinaryRead(src, g.Serialize)
+	file, err := ArchiveFileRead(src, g.Serialize)
+	LogVeryVerbose("buildgraph: archive version = %v tags = %v", file.Version, file.Tags)
+	return err
 }
 func (g *buildGraph) Equals(other BuildGraph) bool {
 	return other.(*buildGraph) == g
@@ -1217,7 +1222,7 @@ func (g *buildEvents) onBuildGraphStart_ThreadSafe() *pinnedLogProgress {
 	g.barrier.Lock()
 	defer g.barrier.Unlock()
 	if pbar := g.pbar.Load(); pbar == nil {
-		pbar := LogProgress(0, 0, "Build Graph ")
+		pbar := LogSpinner("Build Graph ")
 		if concrete, ok := pbar.(*pinnedLogProgress); ok {
 			g.pbar.Store(concrete)
 			return concrete
@@ -1249,7 +1254,7 @@ func (g *buildEvents) onBuildNodeStart(graph *buildGraph, node *buildNode) {
 			pbar = g.onBuildGraphStart_ThreadSafe()
 		}
 		if pbar != nil {
-			pbar.Grow(1)
+			//pbar.Grow(1)
 		}
 	}
 }
@@ -1381,7 +1386,7 @@ func MakeTimedBuildStamp(modTime time.Time, buildable Buildable) BuildStamp {
 }
 
 func (x BuildStamp) String() string {
-	return fmt.Sprintf("[%X] %v", x.Content[:8], x.ModTime.Local().Format(time.Stamp))
+	return fmt.Sprintf("[%v] %v", x.Content.ShortString(), x.ModTime.Local().Format(time.Stamp))
 }
 func (x *BuildStamp) Serialize(ar Archive) {
 	ar.Time(&x.ModTime)
@@ -1409,6 +1414,7 @@ func (x *BuildOptions) Recurse(node BuildNode) (result BuildOptions) {
 	result.Caller = node
 	result.OnBuilt = x.OnBuilt
 	result.OnLaunched = x.OnLaunched
+	result.NoWarningOnMissingOutput = x.NoWarningOnMissingOutput
 
 	if x.Recursive {
 		result.Force = x.Force
@@ -1492,6 +1498,14 @@ func OptionBuildForceIf(force bool) BuildOptionFunc {
 func OptionBuildForceRecursive(opts *BuildOptions) {
 	opts.Force = true
 	opts.Recursive = true
+}
+func OptionNoWarningOnMissingOutput(opts *BuildOptions) {
+	opts.NoWarningOnMissingOutput = true
+}
+func OptionWarningOnMissingOutputIf(warn bool) BuildOptionFunc {
+	return func(bo *BuildOptions) {
+		bo.NoWarningOnMissingOutput = !warn
+	}
 }
 func OptionBuildOnLaunched(event func(BuildAlias)) BuildOptionFunc {
 	return func(opts *BuildOptions) {

@@ -12,6 +12,7 @@ var CommandVcxproj = NewCommand(
 	"Configure",
 	"vcxproj",
 	"generate projects and solution for Visual Studio",
+	OptionCommandParsableAccessor("solution_flags", "solution generation option", GetSolutionFlags),
 	OptionCommandRun(func(cc CommandContext) error {
 		bg := CommandEnv.BuildGraph()
 		node := bg.Create(&VcxprojBuilder{
@@ -36,6 +37,22 @@ var CommandVcxproj = NewCommand(
 
 		return fbuildExec.Run()
 	}))
+
+/***************************************
+ * Solution Flags (also used by VSCode)
+ ***************************************/
+
+type SolutionFlags struct {
+	FASTBuild BoolVar
+}
+
+var GetSolutionFlags = NewCommandParsableFlags(&SolutionFlags{
+	FASTBuild: INHERITABLE_FALSE,
+})
+
+func (x *SolutionFlags) Flags(cfv CommandFlagsVisitor) {
+	cfv.Persistent("FASTBuild", "use FASTBuild for solution compilation", &x.FASTBuild)
+}
 
 /***************************************
  * VCXProj/SLN generation
@@ -108,9 +125,15 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) error {
 			return err
 		}
 
-		bff.Assign("BaseProjectBuildCommand", selfExecutable+" fbuild -Ide ")
-		bff.Assign("BaseProjectRebuildCommand", selfExecutable+" fbuild -Ide -Clean ")
-		bff.Assign("BaseProjectCleanCommand", selfExecutable+" distclean -Ide ")
+		if solutionFlags := GetSolutionFlags(); solutionFlags.FASTBuild.Get() {
+			bff.Assign("BaseProjectBuildCommand", selfExecutable+" fbuild -Ide ")
+			bff.Assign("BaseProjectRebuildCommand", selfExecutable+" fbuild -Ide -Clean ")
+			bff.Assign("BaseProjectCleanCommand", selfExecutable+" distclean -Ide ")
+		} else {
+			bff.Assign("BaseProjectBuildCommand", selfExecutable+" build -Ide ")
+			bff.Assign("BaseProjectRebuildCommand", selfExecutable+" build -Ide -Rebuild ")
+			bff.Assign("BaseProjectCleanCommand", selfExecutable+" build -Ide -Clean ")
+		}
 
 		bff.Assign("ProjectPatternToExclude", NewStringSet(
 			"*/.vs/*",
@@ -204,7 +227,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) error {
 
 			bff.Func("VCXProject", func() {
 				sourceFiles := NewFileSet( // #TODO: this is very project specific
-					BFFFILE_DEFAULT,
+					GetBffArgs().BffOutput,
 					vcx.Output,
 					UFS.Root.File("PPE.go"),
 					UFS.Root.File("README.md"),
@@ -319,12 +342,8 @@ func (x *VcxprojBuilder) vcxconfig(bff *BffFile, u *Unit) BffVar {
 				bff.Assign("LocalDebuggerCommand", u.OutputFile)
 				bff.Assign("LocalDebuggerWorkingDirectory", u.OutputFile.Dirname)
 
-				debugEnv := ProcessEnvironment(CopyMap(u.Environment))
-				debugEnv["PATH"] = append(debugEnv["PATH"],
-					"%PATH%&#xA",
-					"^$(LocalDebuggerEnvironment)")
-
-				bff.Assign("LocalDebuggerEnvironment", strings.Join(debugEnv.Export(), "\n"))
+				var htmlLineFeed = `&#10;`
+				bff.Assign("LocalDebuggerEnvironment", strings.Join(append(u.Environment.Export(), "^$(LocalDebuggerEnvironment)"), htmlLineFeed))
 			}
 		}
 	})

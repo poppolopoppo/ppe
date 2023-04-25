@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+var HalTag = MakeArchiveTag(MakeFourCC('W', 'I', 'N', 'X'))
+
 func InitWindows() {
 	LogTrace("build/hal/window.Init()")
 

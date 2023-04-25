@@ -80,8 +80,8 @@ func (llvm *LlvmCompiler) Define(f *Facet, def ...string) {
 		f.AddCompilationFlag("-D" + x)
 	}
 }
-func (llvm *LlvmCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename, intermediate Directory) {
-	switch sym {
+func (llvm *LlvmCompiler) DebugSymbols(u *Unit) {
+	switch u.DebugSymbols {
 	case DEBUG_DISABLED:
 		return
 	case DEBUG_SYMBOLS:
@@ -90,10 +90,10 @@ func (llvm *LlvmCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename,
 		LogVeryVerbose("not available on linux: DEBUG_HOTRELOAD")
 	case DEBUG_EMBEDDED:
 	default:
-		UnexpectedValue(sym)
+		UnexpectedValue(u.DebugSymbols)
 	}
 
-	f.CompilerOptions.Append("-g") // embedded debug info
+	u.CompilerOptions.Append("-g") // embedded debug info
 }
 func (llvm *LlvmCompiler) Link(f *Facet, lnk LinkType) {
 	switch lnk {
@@ -105,20 +105,20 @@ func (llvm *LlvmCompiler) Link(f *Facet, lnk LinkType) {
 		UnexpectedValue(lnk)
 	}
 }
-func (llvm *LlvmCompiler) PrecompiledHeader(f *Facet, mode PrecompiledHeaderType, header Filename, source Filename, object Filename) {
-	switch mode {
+func (llvm *LlvmCompiler) PrecompiledHeader(u *Unit) {
+	switch u.PCH {
 	case PCH_MONOLITHIC, PCH_SHARED:
-		f.Defines.Append("BUILD_PCH=1")
-		f.CompilerOptions.Append(
-			"-include "+header.String(),
-			"-include-pch "+object.String())
-		if mode != PCH_SHARED {
-			f.PrecompiledHeaderOptions.Prepend("-emit-pch", "-x c++-header")
+		u.Defines.Append("BUILD_PCH=1")
+		u.CompilerOptions.Append(
+			"-include "+u.PrecompiledHeader.String(),
+			"-include-pch "+u.PrecompiledObject.String())
+		if u.PCH != PCH_SHARED {
+			u.PrecompiledHeaderOptions.Prepend("-emit-pch", "-x c++-header")
 		}
 	case PCH_DISABLED:
-		f.Defines.Append("BUILD_PCH=0")
+		u.Defines.Append("BUILD_PCH=0")
 	default:
-		UnexpectedValue(mode)
+		UnexpectedValue(u.PCH)
 	}
 }
 func (llvm *LlvmCompiler) Sanitizer(f *Facet, sanitizer SanitizerType) {
@@ -211,56 +211,61 @@ func (llvm *LlvmCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
  * Compiler options per configuration
  ***************************************/
 
-func llvm_CXX_linkTimeCodeGeneration(f *Facet, enabled bool, incremental bool) {
+func llvm_CXX_linkTimeCodeGeneration(u *Unit, enabled bool, incremental bool) {
 	if enabled {
-		f.LibrarianOptions.Append("-T")
+		u.LibrarianOptions.Append("-T")
 		if incremental {
-			f.CompilerOptions.Append("-flto=thin")
-			f.LinkerOptions.Append("-Wl,--thinlto-cache-dir=" + UFS.Transient.AbsoluteFolder("ThinLTO").String())
+			LogVeryVerbose("%v: using llvm thin link time optimization with caching", u)
+			u.CompilerOptions.Append("-flto=thin")
+			u.LinkerOptions.Append("-Wl,--thinlto-cache-dir=" + UFS.Transient.AbsoluteFolder("ThinLTO").String())
 		} else {
-			f.CompilerOptions.Append("-flto")
+			LogVeryVerbose("%v: using llvm link time optimization", u)
+			u.CompilerOptions.Append("-flto")
 		}
-
 	} else {
-		f.CompilerOptions.Append("-fno-lto")
+		LogVeryVerbose("%v: disable llvm link time optimization", u)
+		u.CompilerOptions.Append("-fno-lto")
 	}
 }
-func llvm_CXX_runtimeChecks(facet *Facet, enabled bool, strong bool) {
+func llvm_CXX_runtimeChecks(u *Unit, enabled bool, strong bool) {
 	if enabled {
 		if strong {
-			facet.AddCompilationFlag_NoPreprocessor("-fstack-protector")
+			LogVeryVerbose("%v: using llvm strong stack protector", u)
+			u.AddCompilationFlag_NoPreprocessor("-fstack-protector-strong")
 		} else {
-			facet.AddCompilationFlag_NoPreprocessor("-fstack-protector-strong")
+			LogVeryVerbose("%v: using llvm stack protector", u)
+			u.AddCompilationFlag_NoPreprocessor("-fstack-protector")
 		}
 	} else {
-		facet.AddCompilationFlag_NoPreprocessor("-fno-stack-protector")
+		LogVeryVerbose("%v: disable llvm stack protector", u)
+		u.AddCompilationFlag_NoPreprocessor("-fno-stack-protector")
 	}
 }
 
 func decorateLlvmConfig_Debug(u *Unit) {
 	u.AddCompilationFlag("-O0", "-fno-pie")
-	llvm_CXX_linkTimeCodeGeneration(&u.Facet, false, u.Incremental.Get())
-	llvm_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), true)
+	llvm_CXX_linkTimeCodeGeneration(u, false, u.Incremental.Get())
+	llvm_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), true)
 }
 func decorateLlvmConfig_FastDebug(u *Unit) {
 	u.AddCompilationFlag("-O1", "-fno-pie")
-	llvm_CXX_linkTimeCodeGeneration(&u.Facet, true, u.Incremental.Get())
-	llvm_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), false)
+	llvm_CXX_linkTimeCodeGeneration(u, true, u.Incremental.Get())
+	llvm_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), false)
 }
 func decorateLlvmConfig_Devel(u *Unit) {
 	u.AddCompilationFlag("-O2", "-fno-pie")
-	llvm_CXX_linkTimeCodeGeneration(&u.Facet, true, u.Incremental.Get())
-	llvm_CXX_runtimeChecks(&u.Facet, false, false)
+	llvm_CXX_linkTimeCodeGeneration(u, true, u.Incremental.Get())
+	llvm_CXX_runtimeChecks(u, false, false)
 }
 func decorateLlvmConfig_Test(u *Unit) {
 	u.AddCompilationFlag("-O3", "-fpie", "-ffast-math")
-	llvm_CXX_linkTimeCodeGeneration(&u.Facet, true, u.Incremental.Get())
-	llvm_CXX_runtimeChecks(&u.Facet, false, false)
+	llvm_CXX_linkTimeCodeGeneration(u, true, u.Incremental.Get())
+	llvm_CXX_runtimeChecks(u, false, false)
 }
 func decorateLlvmConfig_Shipping(u *Unit) {
 	u.AddCompilationFlag("-O3", "-fpie", "-ffast-math")
-	llvm_CXX_linkTimeCodeGeneration(&u.Facet, true, u.Incremental.Get())
-	llvm_CXX_runtimeChecks(&u.Facet, false, false)
+	llvm_CXX_linkTimeCodeGeneration(u, true, u.Incremental.Get())
+	llvm_CXX_runtimeChecks(u, false, false)
 }
 
 /***************************************

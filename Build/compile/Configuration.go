@@ -108,7 +108,7 @@ var Configuration_Debug = &ConfigRules{
 	ConfigType:         CONFIG_DEBUG,
 	CppRules: CppRules{
 		CppRtti:      CPPRTTI_ENABLED,
-		DebugSymbols: DEBUG_SYMBOLS,
+		DebugSymbols: DEBUG_EMBEDDED,
 		Exceptions:   EXCEPTION_ENABLED,
 		Link:         LINK_STATIC,
 		PCH:          PCH_MONOLITHIC,
@@ -142,7 +142,7 @@ var Configuration_Devel = &ConfigRules{
 	ConfigType:         CONFIG_DEVEL,
 	CppRules: CppRules{
 		CppRtti:      CPPRTTI_DISABLED,
-		DebugSymbols: DEBUG_SYMBOLS,
+		DebugSymbols: DEBUG_EMBEDDED,
 		Exceptions:   EXCEPTION_ENABLED,
 		Link:         LINK_STATIC,
 		PCH:          PCH_MONOLITHIC,

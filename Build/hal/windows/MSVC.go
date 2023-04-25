@@ -67,6 +67,8 @@ func (msvc *MsvcCompiler) Extname(x PayloadType) string {
 		return ".pch"
 	case PAYLOAD_HEADERS:
 		return ".h"
+	case PAYLOAD_DEBUGSYMBOLS:
+		return ".pdb"
 	case PAYLOAD_DEPENDENCIES:
 		return ".deps.json"
 	default:
@@ -107,35 +109,43 @@ func (msvc *MsvcCompiler) Define(f *Facet, def ...string) {
 		f.AddCompilationFlag_NoAnalysis("/D" + x)
 	}
 }
-func (msvc *MsvcCompiler) DebugSymbols(f *Facet, sym DebugType, output Filename, intermediate Directory) {
-	artifactPDB := output.ReplaceExt(".pdb")
+func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
+	artifactPDB := u.OutputFile.ReplaceExt(".pdb")
 
-	switch sym {
+	switch u.DebugSymbols {
 	case DEBUG_DISABLED:
-		f.LinkerOptions.Append("/DEBUG:NONE")
+		u.LinkerOptions.Append("/DEBUG:NONE")
 
 	case DEBUG_EMBEDDED:
-		f.CompilerOptions.Append("/Z7")
-		f.PrecompiledHeaderOptions.Append("/Z7")
-		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+		u.CompilerOptions.Append("/Z7")
+		u.PrecompiledHeaderOptions.Append("/Z7")
+		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+
+		u.SymbolsFile = artifactPDB
 
 	case DEBUG_SYMBOLS:
-		intermediatePDB := output.ReplaceExt("-Intermediate.pdb")
-		intermediatePDB.Dirname = intermediate
+		intermediatePDB := u.OutputFile.ReplaceExt("-Intermediate.pdb")
+		intermediatePDB.Dirname = u.IntermediateDir
 
-		f.AddCompilationFlag_NoPreprocessor("/Zi", "/Zf", "/FS", "/Fd\""+intermediatePDB.String()+"\"")
-		f.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+		u.AddCompilationFlag_NoPreprocessor("/Zi", "/Zf", "/FS", "/Fd\""+intermediatePDB.String()+"\"")
+		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+artifactPDB.String()+"\"")
+
+		u.SymbolsFile = artifactPDB
+		u.ExtraFiles.Append(intermediatePDB)
 
 	case DEBUG_HOTRELOAD:
-		editAndContinuePDB := output.ReplaceExt("-EditAndContinue.pdb")
-		editAndContinuePDB.Dirname = intermediate
+		editAndContinuePDB := u.OutputFile.ReplaceExt("-EditAndContinue.pdb")
+		editAndContinuePDB.Dirname = u.IntermediateDir
 
-		f.AddCompilationFlag_NoPreprocessor("/ZI", "/Zf", "/FS", "/Fd\""+editAndContinuePDB.String()+"\"")
-		f.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+artifactPDB.String()+"\"")
-		f.LinkerOptions.AppendUniq("/INCREMENTAL")
+		u.AddCompilationFlag_NoPreprocessor("/ZI", "/Zf", "/FS", "/Fd\""+editAndContinuePDB.String()+"\"")
+		u.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+artifactPDB.String()+"\"")
+		u.LinkerOptions.AppendUniq("/INCREMENTAL")
+
+		u.SymbolsFile = artifactPDB
+		u.ExtraFiles.Append(editAndContinuePDB)
 
 	default:
-		UnexpectedValue(sym)
+		UnexpectedValue(u.DebugSymbols)
 	}
 }
 func (msvc *MsvcCompiler) Link(f *Facet, lnk LinkType) {
@@ -149,21 +159,21 @@ func (msvc *MsvcCompiler) Link(f *Facet, lnk LinkType) {
 		UnexpectedValue(lnk)
 	}
 }
-func (msvc *MsvcCompiler) PrecompiledHeader(f *Facet, mode PrecompiledHeaderType, header Filename, source Filename, object Filename) {
-	switch mode {
+func (msvc *MsvcCompiler) PrecompiledHeader(u *Unit) {
+	switch u.PCH {
 	case PCH_MONOLITHIC, PCH_SHARED:
-		f.Defines.Append("BUILD_PCH=1")
-		f.CompilerOptions.Append(
-			"/FI\""+header.Basename+"\"",
-			"/Yu\""+header.Basename+"\"",
-			"/Fp\""+object.String()+"\"")
-		if mode != PCH_SHARED {
-			f.PrecompiledHeaderOptions.Append("/Yc\"" + header.Basename + "\"")
+		u.Defines.Append("BUILD_PCH=1")
+		u.CompilerOptions.Append(
+			"/FI\""+u.PrecompiledHeader.Basename+"\"",
+			"/Yu\""+u.PrecompiledHeader.Basename+"\"",
+			"/Fp\""+u.PrecompiledObject.String()+"\"")
+		if u.PCH != PCH_SHARED {
+			u.PrecompiledHeaderOptions.Append("/Yc\"" + u.PrecompiledHeader.Basename + "\"")
 		}
 	case PCH_DISABLED:
-		f.Defines.Append("BUILD_PCH=0")
+		u.Defines.Append("BUILD_PCH=0")
 	default:
-		UnexpectedValue(mode)
+		UnexpectedValue(u.PCH)
 	}
 }
 func (msvc *MsvcCompiler) Sanitizer(f *Facet, sanitizer SanitizerType) {
@@ -327,13 +337,13 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 	stackSize := windowsFlags.StackSize
 	if u.Sanitizer != SANITIZER_NONE {
 		stackSize *= 2
-		LogVeryVerbose("MSVC: doubling thread stack size due to sanitizer (%d)", stackSize)
+		LogVeryVerbose("%v: doubling thread stack size due to msvc sanitizer (%d)", u, stackSize)
 	}
 	u.AddCompilationFlag(fmt.Sprintf("/F\"%d\"", stackSize))
 	u.LinkerOptions.Append(fmt.Sprintf("/STACK:%d", stackSize))
 
 	if windowsFlags.Analyze.Get() {
-		LogVeryVerbose("MSVC: using static analysis")
+		LogVeryVerbose("%v: using msvc static analysis", u)
 
 		u.AnalysisOptions.Append(
 			"/analyze",
@@ -355,7 +365,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 	}
 
 	if u.Incremental.Get() && u.Sanitizer == SANITIZER_NONE {
-		LogVeryVerbose("MSVC: using incremental linker with fastlink")
+		LogVeryVerbose("%v: using incremental msvc linker with fastlink", u)
 		if u.LinkerOptions.Contains("/INCREMENTAL") {
 			u.LinkerOptions.Remove("/LTCG")
 		} else if u.LinkerOptions.Contains("/LTCG") {
@@ -368,13 +378,13 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 			u.LinkerOptions.Remove("/OPT:NOREF")
 		}
 	} else if !u.LinkerOptions.Contains("/INCREMENTAL") {
-		LogVeryVerbose("MSVC: using non-incremental linker")
+		LogVeryVerbose("%v: using non-incremental msvc linker", u)
 		u.LinkerOptions.Append("/INCREMENTAL:NO")
 	}
 
 	// enable perfSDK if necessary
 	if windowsFlags.PerfSDK.Get() {
-		LogVeryVerbose("MSVC: using Windows PerfSDK")
+		LogVeryVerbose("%v: using Windows PerfSDK", u)
 		var perfSDK Directory
 		switch compileEnv.GetPlatform().Arch {
 		case ARCH_X64:
@@ -389,6 +399,23 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 		u.LibraryPaths.Append(perfSDK)
 	}
 
+	// register extra files generated by the compiler
+	switch u.Payload {
+	case PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB:
+		if u.Payload == PAYLOAD_SHAREDLIB {
+			u.ExtraFiles.Append(u.OutputFile.ReplaceExt(".lib"))
+			u.ExtraFiles.Append(u.OutputFile.ReplaceExt(".exp"))
+		}
+		if u.LinkerOptions.Contains("/INCREMENTAL") {
+			u.ExtraFiles.Append(u.OutputFile.ReplaceExt(".ilk"))
+		}
+
+	case PAYLOAD_STATICLIB:
+	case PAYLOAD_OBJECTLIST, PAYLOAD_HEADERS:
+	default:
+		UnexpectedValuePanic(u.Payload, u.Payload)
+	}
+
 	// don't forget the current windows SDK
 	return msvc.WindowsSDK.Decorate(compileEnv, u)
 }
@@ -397,8 +424,8 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
  * Compiler options per configuration
  ***************************************/
 
-func msvc_CXX_runtimeLibrary(f *Facet, staticCrt bool, debug bool) {
-	if f.CompilerOptions.Any("/MD", "/MDd", "/MT", "/MTd") {
+func msvc_CXX_runtimeLibrary(u *Unit, staticCrt bool, debug bool) {
+	if u.CompilerOptions.Any("/MD", "/MDd", "/MT", "/MTd") {
 		// don't override user configuration
 		return
 	}
@@ -408,54 +435,66 @@ func msvc_CXX_runtimeLibrary(f *Facet, staticCrt bool, debug bool) {
 	if debug {
 		suffix = "d"
 	}
+
 	if staticCrt {
+		LogVeryVerbose("%v: using msvc static CRT libraries (debug=%v)", u, debug)
 		runtimeFlag = "/MT"
-		f.AddCompilationFlag(
+		u.AddCompilationFlag(
 			"LIBCMT"+suffix+".LIB",
 			"libvcruntime"+suffix+".lib",
 			"libucrt"+suffix+".lib")
 	} else {
+		LogVeryVerbose("%v: using msvc dynamic CRT libraries (debug=%v)", u, debug)
 		runtimeFlag = "/MD"
-		f.Defines.Append("_DLL")
+		u.Defines.Append("_DLL")
 	}
-	f.AddCompilationFlag(runtimeFlag + suffix)
+
+	u.AddCompilationFlag(runtimeFlag + suffix)
 }
-func msvc_CXX_linkTimeCodeGeneration(f *Facet, enabled bool) {
-	if !f.LinkerOptions.Any("/LTCG", "/LTCG:OFF", "/LTCG:INCREMENTAL") {
+func msvc_CXX_linkTimeCodeGeneration(u *Unit, enabled bool) {
+	if !u.LinkerOptions.Any("/LTCG", "/LTCG:OFF", "/LTCG:INCREMENTAL") {
 		if enabled {
-			f.LinkerOptions.Append("/LTCG")
+			LogVeryVerbose("%v: using msvc link time code generation", u)
+			u.LinkerOptions.Append("/LTCG")
 		} else {
-			f.LinkerOptions.Append("/LTCG:OFF")
+			LogVeryVerbose("%v: disabling msvc link time code generation", u)
+			u.LinkerOptions.Append("/LTCG:OFF")
 		}
 	}
 }
-func msvc_CXX_runtimeChecks(f *Facet, enabled bool, rtc1 bool) {
+func msvc_CXX_runtimeChecks(u *Unit, enabled bool, rtc1 bool) {
 	if enabled {
+		LogVeryVerbose("%v: using msvc runtime checks and control flow guard", u)
 		// https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx
-		f.AddCompilationFlag("/GS", "/sdl")
+		u.AddCompilationFlag("/GS", "/sdl")
 		if rtc1 {
+			LogVeryVerbose("%v: using msvc RTC1 checks", u)
 			// https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx
-			f.AddCompilationFlag("/RTC1")
+			u.AddCompilationFlag("/RTC1")
 		}
-		f.LinkerOptions.Append("/GUARD:CF")
+		u.LinkerOptions.Append("/GUARD:CF")
 	} else {
-		f.AddCompilationFlag("/GS-", "/sdl-")
-		f.LinkerOptions.Append("/GUARD:NO")
+		LogVeryVerbose("%v: disabling msvc runtime checks", u)
+		u.AddCompilationFlag("/GS-", "/sdl-")
+		u.LinkerOptions.Append("/GUARD:NO")
 	}
 }
-func msvc_STL_debugHeap(f *Facet, enabled bool) {
+func msvc_STL_debugHeap(u *Unit, enabled bool) {
 	if !enabled {
-		f.Defines.Append("_NO_DEBUG_HEAP=1")
+		LogVeryVerbose("%v: disabling msvc debug heap", u)
+		u.Defines.Append("_NO_DEBUG_HEAP=1")
 	}
 }
-func msvc_STL_iteratorDebug(f *Facet, enabled bool) {
+func msvc_STL_iteratorDebug(u *Unit, enabled bool) {
 	if enabled {
-		f.Defines.Append(
+		LogVeryVerbose("%v: enable msvc STL iterator debugging", u)
+		u.Defines.Append(
 			"_SECURE_SCL=1",             // https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
 			"_ITERATOR_DEBUG_LEVEL=2",   // https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
 			"_HAS_ITERATOR_DEBUGGING=1") // https://msdn.microsoft.com/fr-fr/library/aa985939.aspx")
 	} else {
-		f.Defines.Append(
+		LogVeryVerbose("%v: disable msvc STL iterator debugging", u)
+		u.Defines.Append(
 			"_SECURE_SCL=0",             // https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
 			"_ITERATOR_DEBUG_LEVEL=0",   // https://msdn.microsoft.com/fr-fr/library/hh697468.aspx
 			"_HAS_ITERATOR_DEBUGGING=0") // https://msdn.microsoft.com/fr-fr/library/aa985939.aspx
@@ -465,47 +504,47 @@ func msvc_STL_iteratorDebug(f *Facet, enabled bool) {
 func decorateMsvcConfig_Debug(u *Unit) {
 	u.AddCompilationFlag("/Od", "/Oy-", "/Gm-", "/Gw-")
 	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOREF", "/OPT:NOICF")
-	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), true)
-	msvc_CXX_linkTimeCodeGeneration(&u.Facet, false)
-	msvc_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), true)
-	msvc_STL_debugHeap(&u.Facet, true)
-	msvc_STL_iteratorDebug(&u.Facet, true)
+	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), true)
+	msvc_CXX_linkTimeCodeGeneration(u, false)
+	msvc_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), true)
+	msvc_STL_debugHeap(u, true)
+	msvc_STL_iteratorDebug(u, true)
 }
 func decorateMsvcConfig_FastDebug(u *Unit) {
 	u.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Gm")
 	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO")
-	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), true)
-	msvc_CXX_linkTimeCodeGeneration(&u.Facet, false)
-	msvc_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), false)
-	msvc_STL_debugHeap(&u.Facet, true)
-	msvc_STL_iteratorDebug(&u.Facet, true)
+	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), true)
+	msvc_CXX_linkTimeCodeGeneration(u, false)
+	msvc_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), false)
+	msvc_STL_debugHeap(u, true)
+	msvc_STL_iteratorDebug(u, true)
 }
 func decorateMsvcConfig_Devel(u *Unit) {
 	u.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Gm-", "/Zo", "/GL")
 	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOICF")
-	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(&u.Facet, true)
-	msvc_CXX_runtimeChecks(&u.Facet, u.RuntimeChecks.Get(), false)
-	msvc_STL_debugHeap(&u.Facet, false)
-	msvc_STL_iteratorDebug(&u.Facet, false)
+	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(u, true)
+	msvc_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), false)
+	msvc_STL_debugHeap(u, false)
+	msvc_STL_iteratorDebug(u, false)
 }
 func decorateMsvcConfig_Test(u *Unit) {
 	u.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
 	u.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/PROFILE", "/OPT:REF")
-	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(&u.Facet, true)
-	msvc_CXX_runtimeChecks(&u.Facet, false, false)
-	msvc_STL_debugHeap(&u.Facet, false)
-	msvc_STL_iteratorDebug(&u.Facet, false)
+	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(u, true)
+	msvc_CXX_runtimeChecks(u, false, false)
+	msvc_STL_debugHeap(u, false)
+	msvc_STL_iteratorDebug(u, false)
 }
 func decorateMsvcConfig_Shipping(u *Unit) {
 	u.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo-")
 	u.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/OPT:REF", "/OPT:ICF=3")
-	msvc_CXX_runtimeLibrary(&u.Facet, GetWindowsFlags().StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(&u.Facet, true)
-	msvc_CXX_runtimeChecks(&u.Facet, false, false)
-	msvc_STL_debugHeap(&u.Facet, false)
-	msvc_STL_iteratorDebug(&u.Facet, false)
+	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), false)
+	msvc_CXX_linkTimeCodeGeneration(u, true)
+	msvc_CXX_runtimeChecks(u, false, false)
+	msvc_STL_debugHeap(u, false)
+	msvc_STL_iteratorDebug(u, false)
 }
 
 /***************************************

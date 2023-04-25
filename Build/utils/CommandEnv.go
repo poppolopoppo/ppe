@@ -23,6 +23,7 @@ type CommandFlags struct {
 	Color       BoolVar
 	Ide         BoolVar
 	LogFile     Filename
+	OutputDir   Directory
 }
 
 var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &CommandFlags{
@@ -37,6 +38,7 @@ var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &C
 	Color:       INHERITABLE_INHERIT,
 	Ide:         INHERITABLE_FALSE,
 	Timestamp:   INHERITABLE_FALSE,
+	OutputDir:   UFS.Output,
 })
 
 func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
@@ -52,11 +54,13 @@ func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("Color", "control ansi color output in log messages", &flags.Color)
 	cfv.Variable("Ide", "set output to IDE mode (disable interactive shell)", &flags.Ide)
 	cfv.Variable("LogFile", "output log to specified file (default: stdout)", &flags.LogFile)
+	cfv.Variable("OutputDir", "override default output directory", &flags.OutputDir)
 }
 func (flags *CommandFlags) Apply() {
 	SetEnableDiagnostics(flags.Diagnostics.Get())
+	SetLogTimestamp(flags.Timestamp.Get())
 
-	if flags.LogFile.Basename != "" {
+	if flags.LogFile.Valid() {
 		if outp, err := UFS.CreateWriter(flags.LogFile); err == nil {
 			SetEnableInteractiveShell(false)
 			SetLogOutput(outp)
@@ -92,6 +96,10 @@ func (flags *CommandFlags) Apply() {
 		SetEnableAnsiColor(flags.Color.Get())
 	}
 
+	if flags.OutputDir.Valid() {
+		UFS.MountOutputDir(flags.OutputDir)
+	}
+
 	if flags.Purge.Get() {
 		LogTrace("command: build will be forced due to '-F' command-line option")
 		flags.Force.Enable()
@@ -99,8 +107,6 @@ func (flags *CommandFlags) Apply() {
 	if flags.Force.Get() {
 		LogTrace("command: fbuild will be forced due to '-f' command-line option")
 	}
-
-	SetLogTimestamp(flags.Timestamp.Get())
 }
 
 /***************************************
@@ -126,12 +132,10 @@ var CommandEnv *CommandEnvT
 
 func InitCommandEnv(prefix string, rootFile Filename, args []string) *CommandEnvT {
 	CommandEnv = &CommandEnvT{
-		prefix:       prefix,
-		persistent:   NewPersistentMap(prefix),
-		rootFile:     rootFile,
-		configPath:   UFS.Working.File(fmt.Sprint(".", prefix, "-config.json")),
-		databasePath: UFS.Working.File(fmt.Sprint(".", prefix, "-cache.db")),
-		lastPanic:    nil,
+		prefix:     prefix,
+		persistent: NewPersistentMap(prefix),
+		rootFile:   rootFile,
+		lastPanic:  nil,
 	}
 
 	CommandEnv.commandLines = NewCommandLine(CommandEnv.persistent, args)
@@ -144,6 +148,11 @@ func InitCommandEnv(prefix string, rootFile Filename, args []string) *CommandEnv
 	// apply global command flags early-on
 	GetCommandFlags().Apply()
 
+	// use UFS.Output only after having parsed -OutputDir= flags
+	CommandEnv.configPath = UFS.Output.File(fmt.Sprint(".", prefix, "-config.json"))
+	CommandEnv.databasePath = UFS.Output.File(fmt.Sprint(".", prefix, "-cache.db"))
+
+	// finally create the build graph (empty)
 	CommandEnv.buildGraph = NewBuildGraph(GetCommandFlags())
 	return CommandEnv
 }
@@ -165,7 +174,7 @@ func (env *CommandEnvT) OnPanic(err error) bool {
 	return false // a fatal error was already reported
 }
 
-func (env *CommandEnvT) Run() error {
+func (env *CommandEnvT) Run() (result error) {
 	env.buildGraph.PostLoad()
 
 	// prepare specified commands
@@ -177,11 +186,23 @@ func (env *CommandEnvT) Run() error {
 		}
 	}
 
-	if err := env.commandEvents.Run(); err != nil {
-		return err
+	if !env.commandEvents.Bound() {
+		LogWarning("command: missing argument, use `help` to learn about command usage")
+		return nil
 	}
 
-	return env.buildGraph.Join() // detect futures never joined
+	defer func() {
+		// detect futures never joined
+		if err := env.buildGraph.Join(); err != nil {
+			result = err
+		}
+	}()
+
+	if err := env.commandEvents.Run(); err != nil {
+		result = err
+	}
+
+	return
 }
 
 func (env *CommandEnvT) Load() {

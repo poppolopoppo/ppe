@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 )
 
+var DebugTag = MakeArchiveTag(MakeFourCC('D', 'E', 'B', 'G'))
+
 var enableDiagnostics bool = true
 
 func EnableDiagnostics() bool {

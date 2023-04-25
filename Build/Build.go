@@ -38,15 +38,15 @@ func splitArgsIFN(args []string, each func([]string) error) error {
 
 func printBuildGraphSummary(startedAt time.Time, g utils.BuildGraph) {
 	totalDuration := time.Since(startedAt)
-	utils.LogVerbose("Took %.3f seconds to run", totalDuration.Seconds())
+	utils.LogVerbose("Program took %.3f seconds to run", totalDuration.Seconds())
 
 	stats := g.GetBuildStats()
 	if stats.Count == 0 {
 		return
 	}
 
-	utils.LogVerbose("Took %.3f seconds to build %d nodes",
-		stats.Duration.Exclusive.Seconds(), stats.Count)
+	utils.LogVerbose("Took %.3f seconds to build %d nodes using %d threads",
+		stats.Duration.Exclusive.Seconds(), stats.Count, utils.GetGlobalWorkerPool().Arity())
 	utils.LogVerbose("Most expansive nodes built:")
 
 	for i, node := range g.GetMostExpansiveNodes(10, false) {

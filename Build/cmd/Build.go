@@ -116,6 +116,7 @@ func (x *BuildCommand) doBuild(targets []*TargetActions) error {
 
 	future := CommandEnv.BuildGraph().BuildMany(aliases,
 		OptionBuildForceIf(x.Rebuild.Get()),
+		OptionWarningOnMissingOutputIf(!x.Rebuild.Get()),
 		OptionBuildOnLaunched(func(BuildAlias) {
 			pbar.Grow(1)
 		}),
@@ -146,6 +147,9 @@ func (x *BuildCommand) cleanBuild(targets []*TargetActions) error {
 
 	for _, it := range selecteds {
 		for _, file := range it.GetAction().Outputs {
+			distCleanFile(file)
+		}
+		for _, file := range it.GetAction().Extras {
 			distCleanFile(file)
 		}
 

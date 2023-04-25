@@ -280,7 +280,7 @@ var pinnedLog = Memoize(func() *pinnedLogManager {
 	}
 	go func() {
 		for {
-			time.Sleep(33 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			manager.refresh()
 		}
 	}()
@@ -602,7 +602,8 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 			var waves_x, waves_y float64
 			var steepness float64 = 1.0
 			var wavelength float64 = 100.0
-			for i := 0; i < 5; i += 1 {
+			bands := 5 - int(pg.progress.Load()%4)
+			for i := 0; i < bands; i += 1 {
 				k := 2.0 * math.Pi / wavelength
 				c := math.Sqrt(float64(gravitationalConst / k))
 				a := steepness / k

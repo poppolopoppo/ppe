@@ -16,6 +16,10 @@ type FacetDecorator interface {
 
 type VariableSubstitutions map[string]string
 
+/***************************************
+ * Facet
+ ***************************************/
+
 type Facet struct {
 	Defines utils.StringSet
 
@@ -190,6 +194,10 @@ func (facet *Facet) PerformSubstitutions() {
 func (facet *Facet) String() string {
 	return utils.PrettyPrint(facet)
 }
+
+/***************************************
+ * Variable Substitutions
+ ***************************************/
 
 func (vars *VariableSubstitutions) Add(key, value string) {
 	(*vars)[key] = value

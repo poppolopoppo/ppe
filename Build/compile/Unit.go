@@ -95,9 +95,12 @@ type Units = SetT[*Unit]
 type Unit struct {
 	Target TargetAlias
 
-	Ordinal    TargetBuildOrder
-	Payload    PayloadType
-	OutputFile Filename
+	Ordinal     TargetBuildOrder
+	Payload     PayloadType
+	OutputFile  Filename
+	SymbolsFile Filename
+	ExportFile  Filename
+	ExtraFiles  FileSet
 
 	Source          ModuleSource
 	ModuleDir       Directory
@@ -217,6 +220,9 @@ func (unit *Unit) Serialize(ar Archive) {
 	ar.Serializable(&unit.Ordinal)
 	ar.Serializable(&unit.Payload)
 	ar.Serializable(&unit.OutputFile)
+	ar.Serializable(&unit.SymbolsFile)
+	ar.Serializable(&unit.ExportFile)
+	ar.Serializable(&unit.ExtraFiles)
 
 	ar.Serializable(&unit.Source)
 	ar.Serializable(&unit.ModuleDir)

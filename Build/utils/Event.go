@@ -21,6 +21,7 @@ func (x EventDelegate[T]) Invoke(arg T) error {
 }
 
 type Event[T any] interface {
+	Bound() bool
 	Invoke(T) error
 }
 
@@ -40,6 +41,11 @@ type ConcurrentEvent[T any] struct {
 	barrier sync.RWMutex
 }
 
+func (x *ConcurrentEvent[T]) Bound() bool {
+	x.barrier.RLock()
+	defer x.barrier.RUnlock()
+	return x.PublicEvent.Bound()
+}
 func (x *ConcurrentEvent[T]) Add(e EventDelegate[T]) DelegateHandle {
 	x.barrier.Lock()
 	defer x.barrier.Unlock()
@@ -73,6 +79,9 @@ type AnyEvent struct {
 	nextHandle DelegateHandle
 }
 
+func (x *AnyEvent) Bound() bool {
+	return len(x.delegates) > 0
+}
 func (x *AnyEvent) Add(e AnyDelegate) DelegateHandle {
 	x.nextHandle += 1
 	x.delegates = append(x.delegates, struct {
@@ -117,6 +126,9 @@ type PublicEvent[T any] struct {
 	nextHandle DelegateHandle
 }
 
+func (x *PublicEvent[T]) Bound() bool {
+	return len(x.delegates) > 0
+}
 func (x *PublicEvent[T]) Add(e EventDelegate[T]) DelegateHandle {
 	x.nextHandle += 1
 	x.delegates = append(x.delegates, struct {

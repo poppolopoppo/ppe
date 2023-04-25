@@ -45,6 +45,9 @@ type Archive interface {
 
 	Flags() ArchiveFlags
 
+	HasTags(...FourCC) bool
+	SetTags(...FourCC)
+
 	Raw(value []byte)
 	Bool(value *bool)
 	Int32(value *int32)
@@ -264,6 +267,7 @@ func SerializeExternal[T Serializable](ar Archive, external *T) {
 type basicArchive struct {
 	bytes []byte
 	flags ArchiveFlags
+	tags  []FourCC
 	err   error
 }
 
@@ -284,11 +288,22 @@ func (x basicArchive) Error() error {
 	return x.err
 }
 func (x *basicArchive) OnError(err error) {
-	LogError("serializable: %v", err)
 	x.err = err
+	LogPanic("serializable: %v", err)
 }
 func (x basicArchive) Flags() ArchiveFlags {
 	return x.flags
+}
+func (x basicArchive) HasTags(tags ...FourCC) bool {
+	for _, tag := range tags {
+		if !Contains(x.tags, tag) {
+			return false
+		}
+	}
+	return true
+}
+func (x *basicArchive) SetTags(tags ...FourCC) {
+	x.tags = tags
 }
 
 /***************************************
@@ -302,10 +317,12 @@ type ArchiveBinaryReader struct {
 }
 
 func ArchiveBinaryRead(reader io.Reader, scope func(ar Archive)) (err error) {
-	ar := NewArchiveBinaryReader(reader)
-	defer ar.Close()
-	scope(NewArchiveGuard(&ar))
-	return ar.Error()
+	return Recover(func() error {
+		ar := NewArchiveBinaryReader(reader)
+		defer ar.Close()
+		scope(NewArchiveGuard(&ar))
+		return ar.Error()
+	})
 }
 
 func NewArchiveBinaryReader(reader io.Reader) ArchiveBinaryReader {
@@ -398,10 +415,12 @@ type ArchiveBinaryWriter struct {
 }
 
 func ArchiveBinaryWrite(writer io.Writer, scope func(ar Archive)) (err error) {
-	ar := NewArchiveBinaryWriter(writer)
-	defer ar.Close()
-	scope(NewArchiveGuard(&ar))
-	return ar.Error()
+	return Recover(func() error {
+		ar := NewArchiveBinaryWriter(writer)
+		defer ar.Close()
+		scope(NewArchiveGuard(&ar))
+		return ar.Error()
+	})
 }
 
 func NewArchiveBinaryWriter(writer io.Writer) ArchiveBinaryWriter {
@@ -504,6 +523,67 @@ func (ar *ArchiveBinaryWriter) Serializable(value Serializable) {
 }
 
 /***************************************
+ * ArchiveFile
+ ***************************************/
+
+type ArchiveFile struct {
+	Magic   FourCC
+	Version FourCC
+	Tags    []FourCC
+}
+
+var ArchiveTags = []FourCC{}
+
+func MakeArchiveTag(tag FourCC) FourCC {
+	AssertNotIn(tag, ArchiveTags...)
+	ArchiveTags = append(ArchiveTags, tag)
+	return tag
+}
+
+func NewArchiveFile() ArchiveFile {
+	return ArchiveFile{
+		Magic:   MakeFourCC('A', 'R', 'B', 'F'),
+		Version: MakeFourCC('1', '0', '0', '0'),
+		Tags:    ArchiveTags,
+	}
+}
+func (x *ArchiveFile) Serialize(ar Archive) {
+	ar.Serializable(&x.Magic)
+	ar.Serializable(&x.Version)
+	SerializeSlice(ar, &x.Tags)
+
+	// forward serialized tags to the archive
+	ar.SetTags(x.Tags...)
+}
+
+func ArchiveFileRead(reader io.Reader, scope func(ar Archive)) (file ArchiveFile, err error) {
+	return file, ArchiveBinaryRead(reader, func(ar Archive) {
+		ar.Serializable(&file)
+		if err := ar.Error(); err == nil {
+			defaultFile := NewArchiveFile()
+			if file.Magic != defaultFile.Magic {
+				ar.OnError(fmt.Errorf("archive: invalid file magic (%q != %q)", file.Magic, defaultFile.Magic))
+			}
+			if file.Version > defaultFile.Version {
+				ar.OnError(fmt.Errorf("archive: newer file version (%q > %q)", file.Version, defaultFile.Version))
+			}
+			if err = ar.Error(); err == nil {
+				scope(ar)
+			}
+		}
+	})
+}
+func ArchiveFileWrite(writer io.Writer, scope func(ar Archive)) (err error) {
+	return ArchiveBinaryWrite(writer, func(ar Archive) {
+		file := NewArchiveFile()
+		ar.Serializable(&file)
+		if err := ar.Error(); err == nil {
+			scope(ar)
+		}
+	})
+}
+
+/***************************************
  * ArchiveDiff
  ***************************************/
 
@@ -540,25 +620,27 @@ func (x *ArchiveDiff) Diff(a, b Serializable) error {
 	x.level = 0
 	x.stack = []Serializable{}
 
-	// write a in memory
-	ram := NewArchiveBinaryWriter(x.buffer)
-	defer ram.Close()
+	return Recover(func() error {
+		// write a in memory
+		ram := NewArchiveBinaryWriter(x.buffer)
+		defer ram.Close()
 
-	ram.Serializable(a)
-	if err := ram.Error(); err != nil {
-		return err
-	}
+		ram.Serializable(a)
+		if err := ram.Error(); err != nil {
+			return err
+		}
 
-	// record serialized size
-	x.len = x.buffer.Len()
+		// record serialized size
+		x.len = x.buffer.Len()
 
-	// read b from memory, but do not actually update b
-	x.compare = NewArchiveBinaryReader(x.buffer)
-	x.compare.flags = AR_NONE // unset AR_LOADING to avoid overwriting b
-	defer x.compare.Close()
+		// read b from memory, but do not actually update b
+		x.compare = NewArchiveBinaryReader(x.buffer)
+		x.compare.flags = AR_NONE // unset AR_LOADING to avoid overwriting b
+		defer x.compare.Close()
 
-	x.Serializable(b)
-	return x.Error()
+		x.Serializable(b)
+		return x.Error()
+	})
 }
 
 func (x *ArchiveDiff) Close() {
@@ -735,6 +817,12 @@ func (ar ArchiveGuard) OnError(err error) {
 }
 func (ar ArchiveGuard) Flags() ArchiveFlags {
 	return ar.inner.Flags()
+}
+func (ar ArchiveGuard) HasTags(tags ...FourCC) bool {
+	return ar.inner.HasTags(tags...)
+}
+func (ar ArchiveGuard) SetTags(tags ...FourCC) {
+	ar.inner.SetTags(tags...)
 }
 
 func (ar ArchiveGuard) Raw(value []byte) {

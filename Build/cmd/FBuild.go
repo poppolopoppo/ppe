@@ -27,7 +27,6 @@ func (x *FBuildCommand) Flags(cfv CommandFlagsVisitor) {
 	x.Args.Flags(cfv)
 }
 func (x *FBuildCommand) Init(cc CommandContext) error {
-	x.Args.BffInput = BFFFILE_DEFAULT
 	cc.Options(
 		OptionCommandParsableFlags("CommandFBuild", "optional flags to pass to FASTBuild when compiling", x),
 		OptionCommandAllCompilationFlags(),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"sort"
 	"strings"
 	"time"
 )
@@ -174,6 +175,7 @@ func (x *ProcessEnvironment) Export() []string {
 			result = append(result, name.String())
 		}
 	}
+	sort.Strings(result)
 	return result
 }
 func (x *ProcessEnvironment) Append(name string, values ...string) {

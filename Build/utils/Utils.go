@@ -113,31 +113,21 @@ func Blend[T any](ifFalse, ifTrue T, selector bool) T {
 	}
 }
 
+func Recover(scope func() error) (result error) {
+	defer func() {
+		if err := recover(); err != nil {
+			result = err.(error)
+		}
+	}()
+	result = scope()
+	return
+}
+
 /***************************************
  * String helpers
  ***************************************/
 
 var re_nonAlphaNumeric = regexp.MustCompile(`[^\w\d]+`)
-
-type FourCC uint32
-
-func MakeFourCC(a, b, c, d rune) FourCC {
-	return FourCC(uint32(a) | (uint32(b) << 8) | (uint32(c) << 16) | (uint32(d) << 24))
-}
-func (x FourCC) Bytes() (result [4]byte) {
-	result[0] = byte((uint32(x) >> 0) & 0xFF)
-	result[1] = byte((uint32(x) >> 8) & 0xFF)
-	result[2] = byte((uint32(x) >> 16) & 0xFF)
-	result[3] = byte((uint32(x) >> 24) & 0xFF)
-	return
-}
-func (x FourCC) String() string {
-	raw := x.Bytes()
-	return string(raw[:])
-}
-func (x *FourCC) Serialize(ar Archive) {
-	ar.UInt32((*uint32)(x))
-}
 
 func SanitizeIdentifier(in string) string {
 	return re_nonAlphaNumeric.ReplaceAllString(in, "_")
@@ -201,6 +191,31 @@ func Stringize[T fmt.Stringer](it ...T) []string {
 		result[i] = x.String()
 	}
 	return result
+}
+
+/***************************************
+ * FourCC
+ ***************************************/
+
+type FourCC uint32
+
+func MakeFourCC(a, b, c, d rune) FourCC {
+	return FourCC(uint32(a) | (uint32(b) << 8) | (uint32(c) << 16) | (uint32(d) << 24))
+}
+func (x FourCC) Valid() bool { return x != 0 }
+func (x FourCC) Bytes() (result [4]byte) {
+	result[0] = byte((uint32(x) >> 0) & 0xFF)
+	result[1] = byte((uint32(x) >> 8) & 0xFF)
+	result[2] = byte((uint32(x) >> 16) & 0xFF)
+	result[3] = byte((uint32(x) >> 24) & 0xFF)
+	return
+}
+func (x FourCC) String() string {
+	raw := x.Bytes()
+	return string(raw[:])
+}
+func (x *FourCC) Serialize(ar Archive) {
+	ar.UInt32((*uint32)(x))
 }
 
 /***************************************

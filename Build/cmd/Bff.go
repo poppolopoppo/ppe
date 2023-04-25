@@ -10,8 +10,6 @@ import (
 
 const BFF_VERSION = "0.8"
 
-var BFFFILE_DEFAULT = UFS.Output.File("fbuild.bff")
-
 type BffArgs struct {
 	BffOutput           Filename
 	DeoptimizeWithToken BoolVar
@@ -22,6 +20,8 @@ type BffArgs struct {
 }
 
 func (x *BffArgs) Flags(cfv CommandFlagsVisitor) {
+	x.BffOutput = UFS.Output.File(BFF_DEFAULT_BASENAME)
+
 	cfv.Persistent("BffOutput", "destination for generated FASTBuild config file (*.bff)", &x.BffOutput)
 	cfv.Persistent("DeoptimizeWithToken", "enable/disable compiler optimization with FASTBUILD_DEOPTIMIZE_OBJECT", &x.DeoptimizeWithToken)
 	cfv.Persistent("LightCache", "enable/disable FASTBuild lightweight parsing for caching", &x.LightCache)
@@ -31,7 +31,7 @@ func (x *BffArgs) Flags(cfv CommandFlagsVisitor) {
 }
 
 var GetBffArgs = NewCommandParsableFlags(&BffArgs{
-	BffOutput:           BFFFILE_DEFAULT,
+	BffOutput:           UFS.Output.File(BFF_DEFAULT_BASENAME),
 	DeoptimizeWithToken: INHERITABLE_FALSE,
 	LightCache:          INHERITABLE_FALSE,
 	Minify:              INHERITABLE_TRUE,
@@ -51,8 +51,7 @@ var CommandBff = NewCommand(
 		return nil
 	}),
 	OptionCommandRun(func(cc CommandContext) error {
-		flags := GetBffArgs()
-		LogClaim("generating BFF config in '%v'", flags.BffOutput)
+		LogClaim("generating BFF config in '%v'", GetBffArgs().BffOutput)
 
 		return GetBffBuilder().Build(CommandEnv.BuildGraph()).Failure()
 	}))

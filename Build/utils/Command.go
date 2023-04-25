@@ -114,6 +114,9 @@ type CommandEvents struct {
 	OnPanic   PublicEvent[error]
 }
 
+func (x *CommandEvents) Bound() bool {
+	return (x.OnPrepare.Bound() || x.OnRun.Bound() || x.OnClean.Bound() || x.OnPanic.Bound())
+}
 func (x *CommandEvents) Run() error {
 	if err := x.OnPrepare.Invoke(); err != nil {
 		return err
@@ -126,7 +129,6 @@ func (x *CommandEvents) Run() error {
 	}
 	return nil
 }
-
 func (x *CommandEvents) Parse(cl CommandLine) (err error) {
 	var name string
 	if name, err = cl.ConsumeArg(0); err != nil {
@@ -930,6 +932,14 @@ func FindCommand(name string) (CommandItem, error) {
 
 func PrintCommandHelp(w io.Writer, detailed bool) {
 	f := NewStructuredFile(w, "  ", false)
+
+	f.Print(`
+%v  v.%v  [%v]
+build-system for PoPpOlOpPoPo Engine
+
+  %vcompiled on %v%v`,
+		PROCESS_INFO.Path.Basename, PROCESS_INFO.Version, PROCESS_INFO.Checksum.ShortString(),
+		ANSI_FG1_BLACK, PROCESS_INFO.Timestamp.Local(), ANSI_RESET)
 
 	header := func(title string) {
 		f.Print("%v%v", ANSI_FG1_MAGENTA, ANSI_FAINT)

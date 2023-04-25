@@ -64,10 +64,10 @@ func (x *FBuildCacheType) UnmarshalText(data []byte) error {
  ***************************************/
 
 type FBuildArgs struct {
+	BffInput      Filename
 	Cache         FBuildCacheType
 	Clean         BoolVar
 	Dist          BoolVar
-	BffInput      Filename
 	NoStopOnError BoolVar
 	NoUnity       BoolVar
 	Report        BoolVar
@@ -75,6 +75,8 @@ type FBuildArgs struct {
 	ShowCmdOutput BoolVar
 	Threads       IntVar
 }
+
+var BFF_DEFAULT_BASENAME = `fbuild.bff`
 
 var GetFBuildArgs = NewCommandParsableFlags(&FBuildArgs{
 	Cache:         FBUILD_CACHE_DISABLED,

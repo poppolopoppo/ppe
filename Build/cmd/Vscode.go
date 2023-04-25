@@ -13,6 +13,7 @@ var Vscode = NewCommand(
 	"Configure",
 	"vscode",
 	"generate workspace for Visual Studio Code",
+	OptionCommandParsableAccessor("solution_flags", "solution generation option", GetSolutionFlags),
 	OptionCommandRun(func(cc CommandContext) error {
 		outputDir := UFS.Root.Folder(".vscode")
 		LogClaim("generating VSCode workspace in '%v'", outputDir)
@@ -217,12 +218,17 @@ func (vsc *VscodeBuilder) tasks(moduleAliases ModuleAliases, outputFile Filename
 		return MakeUnexpectedValueError(problemMatcher, CurrentHost().Id)
 	}
 
+	buildCommand := "build"
+	if solutionFlags := GetSolutionFlags(); solutionFlags.FASTBuild.Get() {
+		buildCommand = "fbuild"
+	}
+
 	tasks := Map(func(moduleAliases ModuleAlias) JsonMap {
 		label := moduleAliases.String()
 		return JsonMap{
 			"label":   label,
 			"command": selfExecutable,
-			"args":    []string{"fbuild", "-Ide", label + "-${command:cpptools.activeConfigName}"},
+			"args":    []string{buildCommand, "-Ide", label + "-${command:cpptools.activeConfigName}"},
 			"options": JsonMap{
 				"cwd": UFS.Root,
 			},
@@ -296,7 +302,7 @@ func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) 
 	LogTrace("generating compile commands '%v' for <%v> environemnt...", output, env)
 
 	fbuildArgs := FBuildArgs{
-		BffInput: BFFFILE_DEFAULT,
+		BffInput: GetBffArgs().BffOutput,
 	}
 
 	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.String())

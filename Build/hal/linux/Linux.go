@@ -5,6 +5,8 @@ import (
 	. "build/utils"
 )
 
+var HalTag = MakeArchiveTag(MakeFourCC('L', 'I', 'N', 'X'))
+
 func InitLinux() {
 	LogTrace("build/hal/linux.Init()")
 

@@ -25,6 +25,9 @@ func (x Fingerprint) Slice() []byte {
 func (x Fingerprint) String() string {
 	return hex.EncodeToString(x[:])
 }
+func (x Fingerprint) ShortString() string {
+	return hex.EncodeToString(x[:8])
+}
 func (x Fingerprint) Valid() bool {
 	for _, it := range x {
 		if it != 0 {
@@ -129,7 +132,6 @@ func SerializeDeepEqual(a, b Serializable) bool {
  ***************************************/
 
 type ProcessInfo struct {
-	Name      string
 	Path      Filename
 	Version   string
 	Timestamp time.Time
@@ -137,7 +139,6 @@ type ProcessInfo struct {
 }
 
 func (x *ProcessInfo) Serialize(ar Archive) {
-	ar.String(&x.Name)
 	ar.Serializable(&x.Path)
 	ar.String(&x.Version)
 	ar.Time(&x.Timestamp)
@@ -145,7 +146,7 @@ func (x *ProcessInfo) Serialize(ar Archive) {
 }
 
 func (x ProcessInfo) String() string {
-	return fmt.Sprintf("%v-%v-%v", x.Name, x.Version, x.Checksum.String()[8:])
+	return fmt.Sprintf("%v-%v-%v", x.Path, x.Version, x.Checksum.String()[8:])
 }
 
 var PROCESS_INFO = getExecutableInfo()
@@ -162,7 +163,7 @@ func getExecutableInfo_FromFile() (result ProcessInfo) {
 			}, Fingerprint{})
 		} else {
 			result.Path = UFS.Executable
-			result.Version = "0.5.2"
+			result.Version = "0.5.3"
 			result.Timestamp = UFS.MTime(result.Path)
 			var err error
 			if result.Checksum, err = FileFingerprint(result.Path, Fingerprint{}); err != nil {

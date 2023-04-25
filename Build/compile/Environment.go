@@ -218,7 +218,19 @@ func (env CompileEnv) Compile(compiler Compiler, module Module) (*Unit, error) {
 		Environment:     compiler.GetCompiler().Environment,
 	}
 	unit.Payload = env.GetPayloadType(moduleRules, unit.Link)
-	unit.OutputFile = unit.GetPayloadOutput(compiler, unit.ModuleDir.Parent().File(unit.Target.ModuleAlias.ModuleName), unit.Payload)
+	unit.OutputFile = unit.GetPayloadOutput(compiler,
+		unit.ModuleDir.Parent().File(unit.Target.ModuleAlias.ModuleName),
+		unit.Payload)
+
+	switch unit.Payload {
+	case PAYLOAD_SHAREDLIB:
+		// when linking against a shared lib we must provide the export .lib/.a, not the produced .dll/.so
+		unit.ExportFile = unit.OutputFile.ReplaceExt(compiler.Extname(PAYLOAD_STATICLIB))
+	default:
+		if unit.Payload.HasOutput() {
+			unit.ExportFile = unit.OutputFile
+		}
+	}
 
 	switch unit.PCH {
 	case PCH_DISABLED:

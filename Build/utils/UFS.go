@@ -73,6 +73,9 @@ type Directory []string
 func MakeDirectory(str string) Directory {
 	return SplitPath(filepath.Clean(str))
 }
+func (d Directory) Valid() bool {
+	return len(d) > 0
+}
 func (d Directory) Basename() string {
 	if len(d) > 0 {
 		return d[len(d)-1]
@@ -209,6 +212,9 @@ func MakeFilename(str string) Filename {
 	}
 }
 
+func (f Filename) Valid() bool {
+	return len(f.Basename) > 0
+}
 func (f Filename) Ext() string {
 	return path.Ext(f.Basename)
 }
@@ -971,6 +977,18 @@ func (ufs *UFSFrontEnd) Copy(src, dst Filename) error {
 	})
 }
 
+func (ufs *UFSFrontEnd) MountOutputDir(output Directory) {
+	LogTrace("ufs: mount output dir %q", output)
+	ufs.Output = output
+	ufs.Binaries = ufs.Output.Folder("Binaries")
+	ufs.Cache = ufs.Output.Folder("Cache")
+	ufs.Generated = ufs.Output.Folder("Generated")
+	ufs.Intermediate = ufs.Output.Folder("Intermediate")
+	ufs.Projects = ufs.Output.Folder("Projects")
+	ufs.Transient = ufs.Output.Folder("Transient")
+	ufs.Saved = ufs.Output.Folder("Saved")
+}
+
 func make_ufs_frontend() (ufs UFSFrontEnd) {
 	_, caller, _, ok := runtime.Caller(1)
 	if !ok {
@@ -1000,15 +1018,7 @@ func make_ufs_frontend() (ufs UFSFrontEnd) {
 	ufs.Build = ufs.Root.Folder("Build")
 	ufs.Extras = ufs.Root.Folder("Extras")
 	ufs.Source = ufs.Root.Folder("Source")
-	ufs.Output = ufs.Root.Folder("Output")
-
-	ufs.Binaries = ufs.Output.Folder("Binaries")
-	ufs.Cache = ufs.Output.Folder("Cache")
-	ufs.Generated = ufs.Output.Folder("Generated")
-	ufs.Intermediate = ufs.Output.Folder("Intermediate")
-	ufs.Projects = ufs.Output.Folder("Projects")
-	ufs.Transient = ufs.Output.Folder("Transient")
-	ufs.Saved = ufs.Output.Folder("Saved")
+	ufs.MountOutputDir(ufs.Root.Folder("Output"))
 
 	return ufs
 }

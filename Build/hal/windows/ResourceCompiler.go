@@ -18,7 +18,7 @@ func (res *ResourceCompiler) Extname(PayloadType) string { return ".res" }
 func (res *ResourceCompiler) CppRtti(*Facet, bool)      {}
 func (res *ResourceCompiler) CppStd(*Facet, CppStdType) {}
 
-func (res *ResourceCompiler) DebugSymbols(*Facet, DebugType, Filename, Directory) {}
+func (res *ResourceCompiler) DebugSymbols(*Unit) {}
 
 func (res *ResourceCompiler) Define(facet *Facet, def ...string) {
 	for _, x := range def {
@@ -26,7 +26,7 @@ func (res *ResourceCompiler) Define(facet *Facet, def ...string) {
 	}
 }
 func (res *ResourceCompiler) Link(*Facet, LinkType) {}
-func (res *ResourceCompiler) PrecompiledHeader(*Facet, PrecompiledHeaderType, Filename, Filename, Filename) {
+func (res *ResourceCompiler) PrecompiledHeader(*Unit) {
 }
 func (res *ResourceCompiler) Sanitizer(*Facet, SanitizerType) {}
 
@@ -88,8 +88,10 @@ func (res *ResourceCompiler) Serialize(ar Archive) {
 
 func GetWindowsResourceCompiler() BuildFactoryTyped[*ResourceCompiler] {
 	return func(bi BuildInitializer) (*ResourceCompiler, error) {
-		return &ResourceCompiler{
+		it := &ResourceCompiler{
 			CompilerRules: NewCompilerRules(NewCompilerAlias("custom", "rc", "windows_sdk")),
-		}, nil
+		}
+		var result Compiler = it // just to check statically that `ResourceCompiler` *IS* a `Compiler`
+		return result.(*ResourceCompiler), nil
 	}
 }

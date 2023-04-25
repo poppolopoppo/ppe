@@ -11,11 +11,13 @@ import (
  ***************************************/
 
 type ActionFlags struct {
-	ShowCmds BoolVar
+	ShowCmds   BoolVar
+	ShowOutput BoolVar
 }
 
 func (x *ActionFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("ShowCmds", "print executed compilation commands", &x.ShowCmds)
+	cfv.Variable("ShowOutput", "always show compilation commands output", &x.ShowOutput)
 }
 
 var GetActionFlags = NewCommandParsableFlags(&ActionFlags{
@@ -41,6 +43,7 @@ type ActionRules struct {
 	Environment  ProcessEnvironment
 	Inputs       FileSet
 	Outputs      FileSet
+	Exports      FileSet
 	Extras       FileSet
 	Arguments    StringSet
 	Dependencies BuildAliases
@@ -55,9 +58,11 @@ func (x *ActionRules) Build(bc BuildContext) error {
 		return err
 	}
 
-	// limit number of concurrent processes with MakeGlobalWorkerFuture()
+	// limit number of concurrent external processes with MakeGlobalWorkerFuture()
 	future := MakeGlobalWorkerFuture(func() (int, error) {
-		if flags := GetActionFlags(); flags.ShowCmds.Get() {
+		flags := GetActionFlags()
+
+		if flags.ShowCmds.Get() {
 			LogForwardf("%q %v", x.Executable, MakeStringer(func() string {
 				return fmt.Sprint("\"", strings.Join(x.Arguments, "\" \""), "\"")
 			}))
@@ -66,7 +71,7 @@ func (x *ActionRules) Build(bc BuildContext) error {
 		err := RunProcess(x.Executable, x.Arguments,
 			OptionProcessEnvironment(x.Environment),
 			OptionProcessWorkingDir(x.WorkingDir),
-			OptionProcessCaptureOutputIf(IsLogLevelActive(LOG_VERBOSE)),
+			OptionProcessCaptureOutputIf(flags.ShowOutput.Get()),
 			OptionProcessNoSpinner)
 		return 0, err
 	})
@@ -76,8 +81,12 @@ func (x *ActionRules) Build(bc BuildContext) error {
 	}
 
 	// check that process did write expected files and track them as outputs
-	bc.OutputFile(x.Outputs...)
-	bc.OutputFile(x.Extras...)
+	outputFiles := FileSet{}
+	outputFiles.AppendUniq(x.Outputs...) // some entries could be shared between the 3 sets
+	outputFiles.AppendUniq(x.Exports...)
+	outputFiles.AppendUniq(x.Extras...)
+
+	bc.OutputFile(outputFiles...)
 	return nil
 }
 
@@ -96,6 +105,7 @@ func (x *ActionRules) Serialize(ar Archive) {
 	ar.Serializable(&x.Environment)
 	ar.Serializable(&x.Inputs)
 	ar.Serializable(&x.Outputs)
+	ar.Serializable(&x.Exports)
 	ar.Serializable(&x.Extras)
 	ar.Serializable(&x.Arguments)
 	SerializeSlice(ar, x.Dependencies.Ref())
@@ -322,7 +332,7 @@ func (x *buildActionGenerator) NewActionRules(
 	executable Filename,
 	workingDir Directory,
 	environment ProcessEnvironment,
-	inputs, outputs, extras FileSet,
+	inputs, outputs, exports, extras FileSet,
 	dependentActions ActionSet,
 	arguments ...string) *ActionRules {
 	Assert(func() bool { return len(inputs) > 0 })
@@ -339,6 +349,7 @@ func (x *buildActionGenerator) NewActionRules(
 		Environment:  environment,
 		Inputs:       inputs,
 		Outputs:      outputs,
+		Exports:      exports,
 		Extras:       extras,
 		Arguments:    sanitizeArgumentsForAction(arguments...),
 		Dependencies: dependentActions.Aliases(),
@@ -351,12 +362,12 @@ func (x *buildActionGenerator) NewAction(
 	executable Filename,
 	workingDir Directory,
 	environment ProcessEnvironment,
-	inputs, outputs, extras FileSet,
+	inputs, outputs, exports, extras FileSet,
 	dependentActions ActionSet,
 	arguments ...string) Action {
 	rules := x.NewActionRules(
 		unit, payload, executable, workingDir, environment,
-		inputs, outputs, extras, dependentActions, arguments...,
+		inputs, outputs, exports, extras, dependentActions, arguments...,
 	)
 	x.BuildContext.OutputNode(makeActionFactory(unit.CompilerAlias, rules))
 	return rules
@@ -368,32 +379,41 @@ func (x *buildActionGenerator) NewSourceDependencyAction(
 	executable Filename,
 	workingDir Directory,
 	environment ProcessEnvironment,
-	inputs, outputs, extras FileSet,
+	inputs, outputs, exports, extras FileSet,
 	dependentActions ActionSet,
 	arguments ...string) Action {
 	rules := x.NewActionRules(
 		unit, payload, executable, workingDir, environment,
-		inputs, outputs, extras, dependentActions, arguments...,
+		inputs, outputs, exports, extras, dependentActions, arguments...,
 	)
 	action := compiler.SourceDependencies(rules)
 	x.BuildContext.OutputNode(makeActionFactory(compiler.GetCompiler().CompilerAlias, action))
 	return action
 }
 
-func (x *buildActionGenerator) GetOutputActions(targets ...TargetAlias) (ActionSet, error) {
-	result := ActionSet{}
+func (x *buildActionGenerator) ForEachTargetActions(each func(*TargetActions) error, targets ...TargetAlias) error {
 	for _, it := range targets {
 		if target, err := GetTargetActions(it).Need(x.BuildContext); err == nil {
-			if actions, err := target.GetOutputActions(); err == nil {
-				result = append(result, actions...)
-			} else {
-				return ActionSet{}, err
+			if err := each(target); err != nil {
+				return err
 			}
 		} else {
-			return ActionSet{}, err
+			return err
 		}
 	}
-	return result, nil
+	return nil
+}
+func (x *buildActionGenerator) GetOutputActions(targets ...TargetAlias) (ActionSet, error) {
+	result := ActionSet{}
+	err := x.ForEachTargetActions(func(ta *TargetActions) error {
+		if actions, err := ta.GetOutputActions(); err == nil {
+			result = append(result, actions...)
+		} else {
+			return err
+		}
+		return nil
+	}, targets...)
+	return result, err
 }
 
 func (x *buildActionGenerator) PrecompilerHeaderActions(unit *Unit, dependencies ActionSet) (ActionSet, error) {
@@ -418,6 +438,7 @@ func (x *buildActionGenerator) PrecompilerHeaderActions(unit *Unit, dependencies
 			compilerRules.WorkingDir,
 			compilerRules.Environment,
 			FileSet{unit.PrecompiledSource, unit.PrecompiledHeader},
+			FileSet{pchObject},
 			FileSet{pchObject},
 			FileSet{unit.PrecompiledObject},
 			dependencies,
@@ -452,7 +473,7 @@ func (x *buildActionGenerator) ObjectAction(
 		compilerRules.Executable,
 		compilerRules.WorkingDir,
 		compilerRules.Environment,
-		FileSet{input}, FileSet{output}, FileSet{},
+		FileSet{input}, FileSet{output}, FileSet{output}, FileSet{},
 		dependencies,
 		unit.CompilerOptions...)
 }
@@ -496,7 +517,13 @@ func (x *buildActionGenerator) LibrarianActions(unit *Unit, pchs ActionSet, objs
 	dependencies.Append(objs...)
 	dependencies.Append(compileDeps...)
 
-	inputs := dependencies.GetOutputFiles()
+	inputs := dependencies.GetExportFiles()
+	outputs := FileSet{unit.OutputFile}
+	exports := FileSet{unit.ExportFile}
+	extras := NewFileSet(unit.ExtraFiles...)
+	if unit.SymbolsFile.Valid() {
+		extras.Append(unit.SymbolsFile)
+	}
 
 	lib := x.NewAction(
 		unit,
@@ -504,7 +531,7 @@ func (x *buildActionGenerator) LibrarianActions(unit *Unit, pchs ActionSet, objs
 		compilerRules.Librarian,
 		compilerRules.WorkingDir,
 		compilerRules.Environment,
-		inputs, FileSet{unit.OutputFile}, FileSet{},
+		inputs, outputs, exports, extras,
 		dependencies,
 		unit.LibrarianOptions...)
 
@@ -533,22 +560,28 @@ func (x *buildActionGenerator) LinkActions(unit *Unit, pchs ActionSet, objs Acti
 		return ActionSet{}, err
 	}
 
-	compilerRules := compiler.GetCompiler()
 	dependencies := ActionSet{}
 	dependencies.Append(pchs...)
 	dependencies.Append(objs...)
 	dependencies.Append(compileDeps...)
 	dependencies.Append(linkDeps...)
 
-	inputs := dependencies.GetOutputFiles()
+	inputs := dependencies.GetExportFiles()
+	outputs := FileSet{unit.OutputFile}
+	exports := FileSet{unit.ExportFile}
+	extras := NewFileSet(unit.ExtraFiles...)
+	if unit.SymbolsFile.Valid() {
+		extras.Append(unit.SymbolsFile)
+	}
 
+	compilerRules := compiler.GetCompiler()
 	link := x.NewAction(
 		unit,
 		unit.Payload,
 		compilerRules.Linker,
 		compilerRules.WorkingDir,
 		compilerRules.Environment,
-		inputs, FileSet{unit.OutputFile}, FileSet{},
+		inputs, outputs, exports, extras,
 		append(dependencies, runtimeDeps...),
 		unit.LinkerOptions...)
 
@@ -602,9 +635,14 @@ func (x ActionSet) ExpandDependencies(result *ActionSet) error {
 	return nil
 }
 func (x ActionSet) GetOutputFiles() (result FileSet) {
-	result = FileSet{}
 	for _, action := range x {
 		result.Append(action.GetAction().Outputs...)
+	}
+	return result
+}
+func (x ActionSet) GetExportFiles() (result FileSet) {
+	for _, action := range x {
+		result.Append(action.GetAction().Exports...)
 	}
 	return result
 }
