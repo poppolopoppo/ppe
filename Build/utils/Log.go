@@ -191,20 +191,23 @@ func LogError(msg string, args ...interface{}) {
 	Log(LOG_ERROR, msg, args...)
 }
 func LogFatal(msg string, args ...interface{}) {
-	log.Fatalf(msg, args...)
+	WithoutLog(func() {
+		log.Fatalf(msg, args...)
+	})
 }
 
 func LogPanic(msg string, args ...interface{}) {
 	LogPanicErr(fmt.Errorf(msg, args...))
 }
 func LogPanicErr(err error) {
-	if CommandEnv.OnPanic(err) {
-		log.Panicf(fmt.Sprint(
-			ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0,
-			"[PANIC] ", err, ANSI_RESET))
-	} else {
-		log.Panic("panic reentrancy!")
-	}
+	WithoutLog(func() {
+		if CommandEnv.OnPanic(err) {
+			panic(fmt.Errorf("%v%v%v[PANIC] %v%v",
+				ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0, err, ANSI_RESET))
+		} else {
+			panic("panic reentrancy!")
+		}
+	})
 }
 func LogPanicIfFailed(err error) {
 	if err != nil {
@@ -602,8 +605,7 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 			var waves_x, waves_y float64
 			var steepness float64 = 1.0
 			var wavelength float64 = 100.0
-			bands := 5 - int(pg.progress.Load()%4)
-			for i := 0; i < bands; i += 1 {
+			for i := 0; i < 5; i += 1 {
 				k := 2.0 * math.Pi / wavelength
 				c := math.Sqrt(float64(gravitationalConst / k))
 				a := steepness / k
