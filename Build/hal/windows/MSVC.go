@@ -115,34 +115,45 @@ func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
 	switch u.DebugSymbols {
 	case DEBUG_DISABLED:
 		u.LinkerOptions.Append("/DEBUG:NONE")
+		return
 
 	case DEBUG_EMBEDDED:
-		u.CompilerOptions.Append("/Z7")
-		u.PrecompiledHeaderOptions.Append("/Z7")
-		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
+		u.AddCompilationFlag_NoPreprocessor("/Z7")
 
-		u.SymbolsFile = artifactPDB
+		if u.Payload.HasLinker() {
+			u.SymbolsFile = artifactPDB
+			u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
+		}
 
 	case DEBUG_SYMBOLS:
 		intermediatePDB := u.OutputFile.ReplaceExt("-Intermediate.pdb")
 		intermediatePDB.Dirname = u.IntermediateDir
 
-		u.AddCompilationFlag_NoPreprocessor("/Zi", "/Zf", "/FS", "/Fd\""+MakeLocalFilename(intermediatePDB)+"\"")
-		u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
-
 		u.SymbolsFile = artifactPDB
-		u.ExtraFiles.Append(intermediatePDB)
+		if u.Payload.HasLinker() {
+			u.SymbolsFile = artifactPDB
+			u.ExtraFiles.Append(intermediatePDB)
+			u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
+		} else {
+			u.SymbolsFile = intermediatePDB
+		}
+
+		u.AddCompilationFlag_NoPreprocessor("/Zi", "/Zf", "/FS", "/Fd\""+MakeLocalFilename(intermediatePDB)+"\"")
 
 	case DEBUG_HOTRELOAD:
 		editAndContinuePDB := u.OutputFile.ReplaceExt("-EditAndContinue.pdb")
 		editAndContinuePDB.Dirname = u.IntermediateDir
 
-		u.AddCompilationFlag_NoPreprocessor("/ZI", "/Zf", "/FS", "/Fd\""+MakeLocalFilename(editAndContinuePDB)+"\"")
-		u.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
-		u.LinkerOptions.AppendUniq("/INCREMENTAL")
+		if u.Payload.HasLinker() {
+			u.SymbolsFile = artifactPDB
+			u.ExtraFiles.Append(editAndContinuePDB)
+			u.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
+			u.LinkerOptions.AppendUniq("/INCREMENTAL")
+		} else {
+			u.SymbolsFile = editAndContinuePDB
+		}
 
-		u.SymbolsFile = artifactPDB
-		u.ExtraFiles.Append(editAndContinuePDB)
+		u.AddCompilationFlag_NoPreprocessor("/ZI", "/Zf", "/FS", "/Fd\""+MakeLocalFilename(editAndContinuePDB)+"\"")
 
 	default:
 		UnexpectedValue(u.DebugSymbols)

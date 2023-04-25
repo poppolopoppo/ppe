@@ -816,27 +816,36 @@ func (x *PayloadType) AutoComplete(in utils.AutoComplete) {
 	}
 }
 
+func (x PayloadType) HasLinker() bool {
+	switch x {
+	case PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB:
+		return true
+	case PAYLOAD_OBJECTLIST, PAYLOAD_STATICLIB:
+	case PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_DEBUGSYMBOLS, PAYLOAD_DEPENDENCIES:
+	default:
+		utils.UnexpectedValue(x)
+	}
+	return false
+}
 func (x PayloadType) HasOutput() bool {
 	switch x {
 	case PAYLOAD_EXECUTABLE, PAYLOAD_OBJECTLIST, PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
 		return true
 	case PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_DEBUGSYMBOLS, PAYLOAD_DEPENDENCIES:
-		return false
 	default:
 		utils.UnexpectedValue(x)
-		return false
 	}
+	return false
 }
 func (x PayloadType) HasMultipleInput() bool {
 	switch x {
 	case PAYLOAD_EXECUTABLE, PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
 		return true
 	case PAYLOAD_OBJECTLIST, PAYLOAD_HEADERS, PAYLOAD_PRECOMPILEDHEADER, PAYLOAD_DEBUGSYMBOLS, PAYLOAD_DEPENDENCIES:
-		return false
 	default:
 		utils.UnexpectedValue(x)
-		return false
 	}
+	return false
 }
 
 /***************************************
