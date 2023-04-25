@@ -23,8 +23,8 @@ var CommandBuild = NewCommandable(
 	})
 
 func (x *BuildCommand) Flags(cfv CommandFlagsVisitor) {
-	cfv.Variable("Glob", "treat provided targets as glob expressions", &x.Glob)
 	cfv.Variable("Clean", "erase all by files outputted by selected actions", &x.Clean)
+	cfv.Variable("Glob", "treat provided targets as glob expressions", &x.Glob)
 	cfv.Variable("Rebuild", "rebuild selected actions, same as building after a clean", &x.Rebuild)
 	GetActionFlags().Flags(cfv)
 }

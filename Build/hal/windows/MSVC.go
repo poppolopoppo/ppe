@@ -290,15 +290,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 		)
 	}
 
-	if u.Payload == PAYLOAD_EXECUTABLE || u.Payload == PAYLOAD_SHAREDLIB {
-		resource_rc := u.ModuleDir.File("resource.rc")
-		if resource_rc.Exists() {
-			if err := msvc.AddResources(compileEnv, u, resource_rc); err != nil {
-				return err
-			}
-		}
-	}
-
+	// set architecture options
 	switch compileEnv.GetPlatform().Arch {
 	case ARCH_X86:
 		u.AddCompilationFlag_NoAnalysis("/arch:AVX2")
@@ -323,6 +315,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 		UnexpectedValue(compileEnv.GetPlatform().Arch)
 	}
 
+	// set compiler options from configuration
 	switch compileEnv.GetConfig().ConfigType {
 	case CONFIG_DEBUG:
 		decorateMsvcConfig_Debug(u)
@@ -338,6 +331,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 		UnexpectedValue(compileEnv.GetConfig().ConfigType)
 	}
 
+	// C++20 deprecates /Gm
 	if u.CppStd >= CPPSTD_20 {
 		// Command line warning D9035 : option 'Gm' has been deprecated and will be removed in a future release
 		// Command line error D8016 : '/Gm' and '/std:c++20' command-line options are incompatible
@@ -368,10 +362,26 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 	// set dependent linker options
 
 	if u.Sanitizer != SANITIZER_NONE {
+		LogVeryVerbose("%v: using sanitizer %v", u, u.Sanitizer)
 		u.Environment["ASAN_OPTIONS"] = []string{"windows_hook_rtl_allocators=true"}
 		if u.CompilerOptions.Contains("/LTCG") {
-			LogVeryVerbose("MSVC: disable LTCG due to %v", u.Sanitizer)
+			LogVeryVerbose("%v: disable LTCG due to %v", u, u.Sanitizer)
 			u.LinkerOptions.Remove("/LTCG")
+		}
+	}
+
+	if u.Deterministic.Get() {
+		switch u.DebugSymbols {
+		case DEBUG_SYMBOLS, DEBUG_EMBEDDED, DEBUG_DISABLED:
+			// https://nikhilism.com/post/2020/windows-deterministic-builds/
+			u.Incremental.Disable()
+			u.AddCompilationFlag("/Brepro", "/d1nodatetime", "/experimental:deterministic")
+			u.LibrarianOptions.Append("/Brepro")
+			u.LinkerOptions.Append("/Brepro", "/pdbaltpath:%_PDB%")
+		case DEBUG_HOTRELOAD:
+			LogWarning("%v: deterministic build is not compatible with %v", u, u.DebugSymbols)
+		default:
+			UnexpectedValuePanic(u.DebugSymbols, u.DebugSymbols)
 		}
 	}
 
@@ -389,8 +399,21 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 			u.LinkerOptions.Remove("/OPT:NOREF")
 		}
 	} else if !u.LinkerOptions.Contains("/INCREMENTAL") {
+		if u.Incremental.Get() && u.Sanitizer != SANITIZER_NONE {
+			LogWarning("%v: incremental linker is not compatbile with %v", u, u.Sanitizer)
+		}
 		LogVeryVerbose("%v: using non-incremental msvc linker", u)
 		u.LinkerOptions.Append("/INCREMENTAL:NO")
+	}
+
+	// eventually detects resource file to compile on Windows
+	if u.Payload == PAYLOAD_EXECUTABLE || u.Payload == PAYLOAD_SHAREDLIB {
+		resource_rc := u.ModuleDir.File("resource.rc")
+		if resource_rc.Exists() {
+			if err := msvc.AddResources(compileEnv, u, resource_rc); err != nil {
+				return err
+			}
+		}
 	}
 
 	// enable perfSDK if necessary
@@ -516,7 +539,7 @@ func decorateMsvcConfig_Debug(u *Unit) {
 	u.AddCompilationFlag("/Od", "/Oy-", "/Gm-", "/Gw-")
 	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOREF", "/OPT:NOICF")
 	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), true)
-	msvc_CXX_linkTimeCodeGeneration(u, false)
+	msvc_CXX_linkTimeCodeGeneration(u, u.LTO.Get())
 	msvc_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), true)
 	msvc_STL_debugHeap(u, true)
 	msvc_STL_iteratorDebug(u, true)
@@ -525,7 +548,7 @@ func decorateMsvcConfig_FastDebug(u *Unit) {
 	u.AddCompilationFlag("/Ob1", "/Oy-", "/Gw-", "/Gm")
 	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO")
 	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), true)
-	msvc_CXX_linkTimeCodeGeneration(u, false)
+	msvc_CXX_linkTimeCodeGeneration(u, u.LTO.Get())
 	msvc_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), false)
 	msvc_STL_debugHeap(u, true)
 	msvc_STL_iteratorDebug(u, true)
@@ -534,7 +557,7 @@ func decorateMsvcConfig_Devel(u *Unit) {
 	u.AddCompilationFlag("/O2", "/Oy-", "/GA", "/Gm-", "/Zo", "/GL")
 	u.LinkerOptions.Append("/DYNAMICBASE:NO", "/HIGHENTROPYVA:NO", "/OPT:NOICF")
 	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(u, true)
+	msvc_CXX_linkTimeCodeGeneration(u, u.LTO.Get())
 	msvc_CXX_runtimeChecks(u, u.RuntimeChecks.Get(), false)
 	msvc_STL_debugHeap(u, false)
 	msvc_STL_iteratorDebug(u, false)
@@ -543,7 +566,7 @@ func decorateMsvcConfig_Test(u *Unit) {
 	u.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo")
 	u.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/PROFILE", "/OPT:REF")
 	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(u, true)
+	msvc_CXX_linkTimeCodeGeneration(u, u.LTO.Get())
 	msvc_CXX_runtimeChecks(u, false, false)
 	msvc_STL_debugHeap(u, false)
 	msvc_STL_iteratorDebug(u, false)
@@ -552,7 +575,7 @@ func decorateMsvcConfig_Shipping(u *Unit) {
 	u.AddCompilationFlag("/O2", "/Ob3", "/Gw", "/Gm-", "/Gy", "/GL", "/GA", "/Zo-")
 	u.LinkerOptions.Append("/DYNAMICBASE", "/HIGHENTROPYVA", "/OPT:REF", "/OPT:ICF=3")
 	msvc_CXX_runtimeLibrary(u, GetWindowsFlags().StaticCRT.Get(), false)
-	msvc_CXX_linkTimeCodeGeneration(u, true)
+	msvc_CXX_linkTimeCodeGeneration(u, u.LTO.Get())
 	msvc_CXX_runtimeChecks(u, false, false)
 	msvc_STL_debugHeap(u, false)
 	msvc_STL_iteratorDebug(u, false)

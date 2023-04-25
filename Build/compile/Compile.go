@@ -89,30 +89,31 @@ var GetCompileFlags = NewCompilationFlags("compile_flags", "cross-platform compi
 	SizePerUnity:    300 * 1024.0, // 300 KiB
 	AdaptiveUnity:   INHERITABLE_TRUE,
 	Benchmark:       INHERITABLE_FALSE,
-	LTO:             INHERITABLE_TRUE,
-	Incremental:     INHERITABLE_TRUE,
-	RuntimeChecks:   INHERITABLE_TRUE,
+	LTO:             INHERITABLE_INHERIT,
+	Incremental:     INHERITABLE_INHERIT,
+	RuntimeChecks:   INHERITABLE_INHERIT,
 	CompilerVerbose: INHERITABLE_FALSE,
 	LinkerVerbose:   INHERITABLE_FALSE,
 })
 
 func (flags *CompileFlags) Flags(cfv CommandFlagsVisitor) {
+	cfv.Persistent("AdaptiveUnity", "enable/disable adaptive unity using source control", &flags.AdaptiveUnity)
+	cfv.Persistent("Benchmark", "enable/disable compilation benchmarks", &flags.Benchmark)
+	cfv.Persistent("CompilerVerbose", "enable/disable compiler verbose output", &flags.CompilerVerbose)
 	cfv.Persistent("CppRtti", "override C++ rtti support ["+JoinString(",", CppRttiTypes()...)+"]", &flags.CppRtti)
 	cfv.Persistent("CppStd", "override C++ standard ["+JoinString(",", CppStdTypes()...)+"]", &flags.CppStd)
 	cfv.Persistent("DebugSymbols", "override debug symbols mode ["+JoinString(",", DebugTypes()...)+"]", &flags.DebugSymbols)
+	cfv.Persistent("Deterministic", "enable/disable deterministic compilation output", &flags.Deterministic)
 	cfv.Persistent("Exceptions", "override exceptions mode ["+JoinString(",", ExceptionTypes()...)+"]", &flags.Exceptions)
-	cfv.Persistent("Link", "override link type ["+JoinString(",", LinkTypes()...)+"]", &flags.Link)
-	cfv.Persistent("PCH", "override size limit for splitting unity files ["+JoinString(",", PrecompiledHeaderTypes()...)+"]", &flags.PCH)
-	cfv.Persistent("Sanitizer", "override sanitizer mode ["+JoinString(",", SanitizerTypes()...)+"]", &flags.Sanitizer)
-	cfv.Persistent("Unity", "override unity build mode ["+JoinString(",", UnityTypes()...)+"]", &flags.Unity)
-	cfv.Persistent("SizePerUnity", "size limit for splitting unity files", &flags.SizePerUnity)
-	cfv.Persistent("AdaptiveUnity", "enable/disable adaptive unity using source control", &flags.AdaptiveUnity)
-	cfv.Persistent("Benchmark", "enable/disable compilation benchmarks", &flags.Benchmark)
-	cfv.Persistent("LTO", "enable/disable link time optimization", &flags.LTO)
 	cfv.Persistent("Incremental", "enable/disable incremental linker", &flags.Incremental)
-	cfv.Persistent("RuntimeChecks", "enable/disable runtime security checks", &flags.RuntimeChecks)
-	cfv.Persistent("CompilerVerbose", "enable/disable compiler verbose output", &flags.CompilerVerbose)
+	cfv.Persistent("Link", "override link type ["+JoinString(",", LinkTypes()...)+"]", &flags.Link)
 	cfv.Persistent("LinkerVerbose", "enable/disable linker verbose output", &flags.LinkerVerbose)
+	cfv.Persistent("LTO", "enable/disable link time optimization", &flags.LTO)
+	cfv.Persistent("PCH", "override size limit for splitting unity files ["+JoinString(",", PrecompiledHeaderTypes()...)+"]", &flags.PCH)
+	cfv.Persistent("RuntimeChecks", "enable/disable runtime security checks", &flags.RuntimeChecks)
+	cfv.Persistent("Sanitizer", "override sanitizer mode ["+JoinString(",", SanitizerTypes()...)+"]", &flags.Sanitizer)
+	cfv.Persistent("SizePerUnity", "size limit for splitting unity files", &flags.SizePerUnity)
+	cfv.Persistent("Unity", "override unity build mode ["+JoinString(",", UnityTypes()...)+"]", &flags.Unity)
 }
 
 /***************************************

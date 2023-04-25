@@ -42,8 +42,8 @@ var GetLinuxFlags = NewCompilationFlags("linux_flags", "linux-specific compilati
 
 func (flags *LinuxFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Persistent("Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]", &flags.Compiler)
-	cfv.Persistent("LlvmVer", "select LLVM toolchain version ["+JoinString(",", LlvmVersions()...)+"]", &flags.LlvmVer)
 	cfv.Persistent("DumpRecordLayouts", "use to investigate structure layouts ["+JoinString(",", DumpRecordLayouts()...)+"]", &flags.DumpRecordLayouts)
+	cfv.Persistent("LlvmVer", "select LLVM toolchain version ["+JoinString(",", LlvmVersions()...)+"]", &flags.LlvmVer)
 	cfv.Persistent("StackSize", "set default thread stack size in bytes", &flags.StackSize)
 }
 

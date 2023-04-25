@@ -114,6 +114,7 @@ var Configuration_Debug = &ConfigRules{
 		PCH:          PCH_MONOLITHIC,
 		Sanitizer:    SANITIZER_NONE,
 		Unity:        UNITY_AUTOMATIC,
+		LTO:          utils.INHERITABLE_FALSE,
 	},
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG"},
@@ -131,6 +132,7 @@ var Configuration_FastDebug = &ConfigRules{
 		PCH:          PCH_MONOLITHIC,
 		Sanitizer:    SANITIZER_NONE,
 		Unity:        UNITY_DISABLED,
+		LTO:          utils.INHERITABLE_INHERIT,
 	},
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG", "FASTDEBUG"},
@@ -148,6 +150,7 @@ var Configuration_Devel = &ConfigRules{
 		PCH:          PCH_MONOLITHIC,
 		Sanitizer:    SANITIZER_NONE,
 		Unity:        UNITY_AUTOMATIC,
+		LTO:          utils.INHERITABLE_INHERIT,
 	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG"},
@@ -165,6 +168,7 @@ var Configuration_Test = &ConfigRules{
 		PCH:          PCH_MONOLITHIC,
 		Sanitizer:    SANITIZER_NONE,
 		Unity:        UNITY_AUTOMATIC,
+		LTO:          utils.INHERITABLE_TRUE,
 	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "PROFILING_ENABLED"},
@@ -175,13 +179,15 @@ var Configuration_Shipping = &ConfigRules{
 	ConfigurationAlias: NewConfigurationAlias("Shipping"),
 	ConfigType:         CONFIG_SHIPPING,
 	CppRules: CppRules{
-		CppRtti:      CPPRTTI_DISABLED,
-		DebugSymbols: DEBUG_SYMBOLS,
-		Exceptions:   EXCEPTION_ENABLED,
-		Link:         LINK_STATIC,
-		PCH:          PCH_MONOLITHIC,
-		Sanitizer:    SANITIZER_NONE,
-		Unity:        UNITY_AUTOMATIC,
+		CppRtti:       CPPRTTI_DISABLED,
+		DebugSymbols:  DEBUG_SYMBOLS,
+		Exceptions:    EXCEPTION_ENABLED,
+		Link:          LINK_STATIC,
+		PCH:           PCH_MONOLITHIC,
+		Sanitizer:     SANITIZER_NONE,
+		Unity:         UNITY_AUTOMATIC,
+		LTO:           utils.INHERITABLE_TRUE,
+		Deterministic: utils.INHERITABLE_TRUE,
 	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "FINAL_RELEASE"},

@@ -17,6 +17,7 @@ type CppRules struct {
 	SizePerUnity    utils.IntVar
 	AdaptiveUnity   utils.BoolVar
 	Benchmark       utils.BoolVar
+	Deterministic   utils.BoolVar
 	LTO             utils.BoolVar
 	Incremental     utils.BoolVar
 	RuntimeChecks   utils.BoolVar
@@ -45,6 +46,7 @@ func (rules *CppRules) Serialize(ar utils.Archive) {
 	ar.Serializable(&rules.SizePerUnity)
 	ar.Serializable(&rules.AdaptiveUnity)
 	ar.Serializable(&rules.Benchmark)
+	ar.Serializable(&rules.Deterministic)
 	ar.Serializable(&rules.LTO)
 	ar.Serializable(&rules.Incremental)
 	ar.Serializable(&rules.RuntimeChecks)
@@ -64,6 +66,7 @@ func (rules *CppRules) Inherit(other *CppRules) {
 	utils.Inherit(&rules.SizePerUnity, other.SizePerUnity)
 	utils.Inherit(&rules.AdaptiveUnity, other.AdaptiveUnity)
 	utils.Inherit(&rules.Benchmark, other.Benchmark)
+	utils.Inherit(&rules.Deterministic, other.Deterministic)
 	utils.Inherit(&rules.LTO, other.LTO)
 	utils.Inherit(&rules.Incremental, other.Incremental)
 	utils.Inherit(&rules.RuntimeChecks, other.RuntimeChecks)
@@ -83,6 +86,7 @@ func (rules *CppRules) Overwrite(other *CppRules) {
 	utils.Overwrite(&rules.SizePerUnity, other.SizePerUnity)
 	utils.Overwrite(&rules.AdaptiveUnity, other.AdaptiveUnity)
 	utils.Overwrite(&rules.Benchmark, other.Benchmark)
+	utils.Overwrite(&rules.Deterministic, other.Deterministic)
 	utils.Overwrite(&rules.LTO, other.LTO)
 	utils.Overwrite(&rules.Incremental, other.Incremental)
 	utils.Overwrite(&rules.RuntimeChecks, other.RuntimeChecks)

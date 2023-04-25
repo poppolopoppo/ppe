@@ -61,8 +61,8 @@ var GetWindowsFlags = NewCompilationFlags("windows_flags", "windows-specific com
 })
 
 func (flags *WindowsFlags) Flags(cfv CommandFlagsVisitor) {
-	cfv.Persistent("Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]", &flags.Compiler)
 	cfv.Persistent("Analyze", "enable/disable MSCV analysis", &flags.Analyze)
+	cfv.Persistent("Compiler", "select windows compiler ["+JoinString(",", CompilerTypes()...)+"]", &flags.Compiler)
 	cfv.Persistent("Insider", "enable/disable support for pre-release toolchain", &flags.Insider)
 	cfv.Persistent("JustMyCode", "enable/disable MSCV just-my-code", &flags.JustMyCode)
 	cfv.Persistent("MscVer", "select MSVC toolchain version ["+JoinString(",", MsvcVersions()...)+"]", &flags.MscVer)
