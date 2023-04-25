@@ -298,7 +298,7 @@ func (vcx *VcxprojBuilder) Build(bc BuildContext) error {
 	})
 
 	if err == nil {
-		bc.OutputFile(vcx.Output)
+		err = bc.OutputFile(vcx.Output)
 	}
 	return err
 }

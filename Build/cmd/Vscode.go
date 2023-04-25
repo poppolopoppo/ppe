@@ -86,9 +86,7 @@ func (vsc *VscodeBuilder) Build(bc BuildContext) error {
 		return err
 	}
 
-	bc.OutputFile(c_cpp_properties_json, tasks_json, launch_json)
-
-	return nil
+	return bc.OutputFile(c_cpp_properties_json, tasks_json, launch_json)
 }
 
 func sanitizeEnvironmentDefines(defines StringSet) (StringSet, error) {

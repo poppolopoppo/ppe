@@ -152,7 +152,9 @@ func (x *CompressedArchiveExtractor) Build(bc BuildContext) error {
 	}
 
 	for _, f := range x.ExtractedFiles {
-		bc.OutputFile(f)
+		if err := bc.OutputFile(f); err != nil {
+			return err
+		}
 	}
 	return nil
 }

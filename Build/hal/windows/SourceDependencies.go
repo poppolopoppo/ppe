@@ -72,7 +72,9 @@ func (x *SourceDependenciesAction) Build(bc BuildContext) error {
 
 	// track json file as an output dependency
 	// #TODO: necessary?
-	bc.OutputFile(x.SourceDependenciesFile)
+	if err := bc.OutputFile(x.SourceDependenciesFile); err != nil {
+		return err
+	}
 
 	// parse source dependencies outputted by cl.exe
 	var sourceDeps SourceDependencies

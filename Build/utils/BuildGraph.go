@@ -141,7 +141,7 @@ type BuildInitializer interface {
 type BuildContext interface {
 	BuildInitializer
 
-	OutputFile(...Filename)
+	OutputFile(...Filename) error
 	OutputNode(...BuildFactory)
 
 	Timestamp(time.Time)
@@ -727,7 +727,7 @@ func (x *buildExecuteContext) NeedDirectory(directories ...Directory) error {
 		return buildInit(x.graph, BuildDirectory(d), x.options).Alias()
 	}, directories...)...)
 }
-func (x *buildExecuteContext) OutputFile(files ...Filename) {
+func (x *buildExecuteContext) OutputFile(files ...Filename) error {
 	// files are treated as an exception: we build them outside of build scope, without using a future
 	x.Lock()
 	defer x.Unlock()
@@ -749,9 +749,11 @@ func (x *buildExecuteContext) OutputFile(files ...Filename) {
 		if stamp, err := file.Digest(); err == nil {
 			x.node.addOutputFile_AssumeLocked(file.Alias(), stamp)
 		} else {
-			LogPanicErr(err)
+			return err
 		}
 	}
+
+	return nil
 }
 func (x *buildExecuteContext) OutputNode(factories ...BuildFactory) {
 	x.Lock()

@@ -86,8 +86,7 @@ func (x *ActionRules) Build(bc BuildContext) error {
 	outputFiles.AppendUniq(x.Exports...)
 	outputFiles.AppendUniq(x.Extras...)
 
-	bc.OutputFile(outputFiles...)
-	return nil
+	return bc.OutputFile(outputFiles...)
 }
 
 func (x *ActionRules) GetAction() *ActionRules { return x }

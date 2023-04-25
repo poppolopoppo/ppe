@@ -213,7 +213,7 @@ func (x *UnityFile) Build(bc BuildContext) error {
 	})
 
 	if err == nil {
-		bc.OutputFile(x.Output)
+		err = bc.OutputFile(x.Output)
 	}
 	return err
 }

@@ -64,7 +64,7 @@ func (dl *Downloader) Build(bc BuildContext) error {
 	}
 
 	if err == nil {
-		bc.OutputFile(dl.Destination)
+		err = bc.OutputFile(dl.Destination)
 	}
 	return err
 }

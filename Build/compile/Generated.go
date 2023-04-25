@@ -31,11 +31,9 @@ func (x *BuildGenerated) Build(bc utils.BuildContext) error {
 		return x.Generate(bc, x, w)
 	})
 	if err == nil {
-		bc.OutputFile(x.OutputFile)
-		return nil
-	} else {
-		return err
+		err = bc.OutputFile(x.OutputFile)
 	}
+	return err
 }
 func (x *BuildGenerated) Serialize(ar utils.Archive) {
 	ar.Serializable(&x.OutputFile)

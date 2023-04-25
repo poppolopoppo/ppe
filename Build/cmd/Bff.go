@@ -145,7 +145,7 @@ func (x *BffBuilder) Build(bc BuildContext) (err error) {
 	})
 
 	if err == nil {
-		bc.OutputFile(x.Output)
+		err = bc.OutputFile(x.Output)
 	}
 	return
 }
