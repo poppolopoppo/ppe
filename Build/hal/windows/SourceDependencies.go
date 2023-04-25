@@ -56,7 +56,7 @@ type SourceDependenciesAction struct {
 }
 
 func NewSourceDependenciesAction(rules *ActionRules, output Filename) *SourceDependenciesAction {
-	rules.Arguments.Append("/sourceDependencies", output.String())
+	rules.Arguments.Append("/sourceDependencies", MakeLocalFilename(output))
 	rules.Extras.Append(output)
 
 	return &SourceDependenciesAction{
