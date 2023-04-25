@@ -37,7 +37,7 @@ func UsageTypes() []UsageType {
  * Build Version Header
  ***************************************/
 
-var BuildVersionHeaderVersion = "BuildVersionHeader-1.1.0"
+var BuildVersionHeaderVersion = "BuildVersionHeader-1.2.0"
 
 type BuildVersionHeaderGenerator struct {
 	Version string
@@ -48,19 +48,22 @@ func (x *BuildVersionHeaderGenerator) Serialize(ar Archive) {
 }
 func (x BuildVersionHeaderGenerator) CreateGenerated(unit *Unit, output Filename) Generated {
 	return &BuildVersionGeneratedHeader{
-		Version: x.Version,
+		ModuleDir: unit.ModuleDir,
+		Version:   x.Version,
 	}
 }
 
 type BuildVersionGeneratedHeader struct {
-	Version string
+	ModuleDir Directory
+	Version   string
 }
 
 func (x *BuildVersionGeneratedHeader) Serialize(ar Archive) {
+	ar.Serializable(&x.ModuleDir)
 	ar.String(&x.Version)
 }
 func (x BuildVersionGeneratedHeader) Generate(bc BuildContext, generated *BuildGenerated, dst io.Writer) error {
-	sourceControl, err := BuildSourceControlStatus().Need(bc)
+	sourceControl, err := BuildSourceControlStatus(x.ModuleDir).Need(bc)
 	if err != nil {
 		return err
 	}

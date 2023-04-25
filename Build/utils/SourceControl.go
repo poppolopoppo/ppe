@@ -23,13 +23,14 @@ type SourceControlProvider interface {
  ***************************************/
 
 type SourceControlStatus struct {
+	Path      Directory
 	Branch    string
 	Revision  string
 	Timestamp time.Time
 }
 
 func (x *SourceControlStatus) Alias() BuildAlias {
-	return MakeBuildAlias("SourceControl", "Status")
+	return MakeBuildAlias("SourceControl", "Status", x.Path.String())
 }
 func (x *SourceControlStatus) Build(BuildContext) (err error) {
 	err = GetSourceControlProvider().GetStatus(x)
@@ -39,14 +40,17 @@ func (x *SourceControlStatus) Build(BuildContext) (err error) {
 	return
 }
 func (x *SourceControlStatus) Serialize(ar Archive) {
+	ar.Serializable(&x.Path)
 	ar.String(&x.Branch)
 	ar.String(&x.Revision)
 	ar.Time(&x.Timestamp)
 }
 
-func BuildSourceControlStatus() BuildFactoryTyped[*SourceControlStatus] {
+func BuildSourceControlStatus(path Directory) BuildFactoryTyped[*SourceControlStatus] {
 	return func(bi BuildInitializer) (*SourceControlStatus, error) {
-		return &SourceControlStatus{}, nil
+		return &SourceControlStatus{
+			Path: path,
+		}, nil
 	}
 }
 
@@ -171,7 +175,7 @@ func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 	}
 }
 func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
-	if outp, err := git.Command("log", "-1", "--format=\"%H, %ct, %D\""); err == nil {
+	if outp, err := git.Command("log", "-1", "--format=\"%H, %ct, %D\"", MakeLocalDirectory(status.Path)); err == nil {
 		line := strings.TrimSpace(string(outp))
 		line = strings.TrimPrefix(line, "\"")
 		line = strings.TrimSuffix(line, "\"")
