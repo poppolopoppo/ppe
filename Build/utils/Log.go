@@ -349,8 +349,6 @@ func refreshPinUnsafe(pin *pinnedLogManager) {
 	if ref := atomic.AddInt32(&pin.cooldown, -1); ref == 0 {
 		detachPinUnsafe(pin, false)
 		attachPinUnsafe(pin)
-	} else {
-		Assert(func() bool { return ref > 0 })
 	}
 }
 
