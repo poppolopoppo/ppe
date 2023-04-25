@@ -374,8 +374,12 @@ func (env *CompileEnv) Alias() utils.BuildAlias {
 	return env.EnvironmentAlias.Alias()
 }
 func (env *CompileEnv) Build(bc utils.BuildContext) error {
-	flags := GetCompileFlags()
-	env.CompileFlags = *flags
+	if compile, err := utils.GetBuildableFlags(GetCompileFlags()).Need(bc); err == nil {
+		env.CompileFlags = compile.Flags
+	} else {
+		return err
+	}
+
 	env.CompilerAlias = CompilerAlias{}
 
 	if platform, err := env.GetBuildPlatform(); err == nil {
