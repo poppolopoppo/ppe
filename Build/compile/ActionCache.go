@@ -73,7 +73,6 @@ func (x *actionCache) GetCachePath() Directory {
 func (x *actionCache) CacheRead(a *ActionRules, artifacts FileSet) (key ActionCacheKey, err error) {
 	readStat := StartBuildStats()
 	defer x.stats.CacheRead.Append(readStat)
-	defer GlobalChromeTracer.BeginScope(a.Alias(), "CacheRead", 1234)()
 
 	key = x.makeActionKey(a)
 	entry, err := x.fetchCacheEntry(key, false)
@@ -99,7 +98,6 @@ func (x *actionCache) CacheRead(a *ActionRules, artifacts FileSet) (key ActionCa
 func (x *actionCache) CacheWrite(action BuildAlias, key ActionCacheKey, artifacts FileSet, inputs FileSet) (err error) {
 	scopedStat := StartBuildStats()
 	defer x.stats.CacheWrite.Append(scopedStat)
-	defer GlobalChromeTracer.BeginScope(action, "CacheWrite", 1234)()
 
 	if entry, err := x.fetchCacheEntry(key, true); err == nil {
 		deflateStat := StartBuildStats()

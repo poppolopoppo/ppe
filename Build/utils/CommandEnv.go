@@ -27,7 +27,6 @@ type CommandFlags struct {
 	LogFile     Filename
 	OutputDir   Directory
 	Summary     BoolVar
-	TraceEvents BoolVar
 }
 
 var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &CommandFlags{
@@ -45,7 +44,6 @@ var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &C
 	Timestamp:   INHERITABLE_FALSE,
 	OutputDir:   UFS.Output,
 	Summary:     INHERITABLE_FALSE,
-	TraceEvents: INHERITABLE_FALSE,
 })
 
 func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
@@ -64,7 +62,6 @@ func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("LogFile", "output log to specified file (default: stdout)", &flags.LogFile)
 	cfv.Variable("OutputDir", "override default output directory", &flags.OutputDir)
 	cfv.Variable("Summary", "print build graph execution summary when build finished", &flags.Summary)
-	cfv.Variable("TraceEvents", "generate a Chrome trace event with every node built", &flags.TraceEvents)
 }
 func (flags *CommandFlags) Apply() {
 	SetEnableDiagnostics(flags.Diagnostics.Get())
@@ -196,11 +193,6 @@ func InitCommandEnv(prefix string, rootFile Filename, args []string, startedAt t
 
 	// finally create the build graph (empty)
 	CommandEnv.buildGraph = NewBuildGraph(GetCommandFlags())
-
-	// setup chrome trace events if needed
-	if GetCommandFlags().TraceEvents.Get() {
-		SetupBuildGraphChromeTracer(PROCESS_INFO.Path.ReplaceExt(".trace.json"))
-	}
 
 	return CommandEnv
 }

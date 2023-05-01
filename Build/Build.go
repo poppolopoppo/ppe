@@ -17,12 +17,12 @@ func initInternals() {
 
 func LaunchCommand(prefix string, rootFile utils.Filename, args []string) {
 	startedAt := time.Now()
-
-	defer utils.StartProfiling()()
 	defer utils.StartTrace()()
 	defer utils.PurgePinnedLogs()
 
 	env := utils.InitCommandEnv(prefix, rootFile, args, startedAt)
+
+	defer utils.StartProfiling()()
 	initInternals()
 
 	env.Load()
