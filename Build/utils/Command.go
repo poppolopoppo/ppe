@@ -117,17 +117,18 @@ type CommandEvents struct {
 func (x *CommandEvents) Bound() bool {
 	return (x.OnPrepare.Bound() || x.OnRun.Bound() || x.OnClean.Bound() || x.OnPanic.Bound())
 }
-func (x *CommandEvents) Run() error {
-	if err := x.OnPrepare.Invoke(); err != nil {
-		return err
+func (x *CommandEvents) Run() (err error) {
+	if err = x.OnPrepare.Invoke(); err != nil {
+		return
 	}
-	if err := x.OnRun.Invoke(); err != nil {
-		return err
+	if err = x.OnRun.Invoke(); err != nil {
+		return
 	}
-	if err := x.OnClean.Invoke(); err != nil {
-		return err
+	if err = x.OnClean.Invoke(); err != nil {
+		return
 	}
-	return nil
+
+	return
 }
 func (x *CommandEvents) Parse(cl CommandLine) (err error) {
 	var name string
@@ -510,7 +511,9 @@ func (x *commandParsableArgument) Help(w *StructuredFile) {
 			w.Print("%v%v-%s%v", ANSI_ITALIC, colorFG, v.Name, ANSI_RESET)
 
 			w.Align(60)
-			if !v.Flags.Has(COMMANDARG_PERSISTENT) {
+			if v.Flags.Has(COMMANDARG_PERSISTENT) {
+				CommandEnv.persistent.LoadData(x.Long, v.Name, v.Value)
+			} else {
 				w.Print("%v", ANSI_FAINT)
 			}
 
@@ -938,7 +941,7 @@ func PrintCommandHelp(w io.Writer, detailed bool) {
 build-system for PoPpOlOpPoPo Engine
 
   %vcompiled on %v%v`,
-		PROCESS_INFO.Path.Basename, PROCESS_INFO.Version, PROCESS_INFO.Checksum.ShortString(),
+		PROCESS_INFO.Path.Basename, PROCESS_INFO.Version, GetProcessSeed().ShortString(),
 		ANSI_FG1_BLACK, PROCESS_INFO.Timestamp.Local(), ANSI_RESET)
 
 	header := func(title string) {

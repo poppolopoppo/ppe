@@ -62,16 +62,18 @@ func (x *Fingerprint) UnmarshalText(data []byte) error {
  * Serializable Fingerprint
  ***************************************/
 
-func SerializeAnyFingerprint(any func(ar Archive), seed Fingerprint) (result Fingerprint) {
+func SerializeAnyFingerprint(any func(ar Archive) error, seed Fingerprint) (result Fingerprint, err error) {
 	digester := sha256.New()
-	if _, err := digester.Write(seed[:]); err != nil {
+	if _, err = digester.Write(seed[:]); err != nil {
 		return
 	}
 
 	ar := NewArchiveBinaryWriter(digester)
 	defer ar.Close()
 
-	any(&ar)
+	if err = any(&ar); err != nil {
+		return
+	}
 	LogPanicIfFailed(ar.Error())
 
 	copy(result[:], digester.Sum(nil))
@@ -110,7 +112,7 @@ func FileFingerprint(src Filename, seed Fingerprint) (Fingerprint, error) {
 	return result, err
 }
 
-func StringFingeprint(in string) Fingerprint {
+func StringFingerprint(in string) Fingerprint {
 	tmp := TransientBuffer.Allocate()
 	defer TransientBuffer.Release(tmp)
 	tmp.WriteString(in) // avoid converting string to []byte
@@ -118,9 +120,12 @@ func StringFingeprint(in string) Fingerprint {
 }
 
 func SerializeFingerpint(value Serializable, seed Fingerprint) Fingerprint {
-	return SerializeAnyFingerprint(func(ar Archive) {
+	fingerprint, err := SerializeAnyFingerprint(func(ar Archive) error {
 		ar.Serializable(value)
+		return nil
 	}, seed)
+	LogPanicIfFailed(err)
+	return fingerprint
 }
 
 func SerializeDeepEqual(a, b Serializable) bool {
@@ -135,40 +140,38 @@ type ProcessInfo struct {
 	Path      Filename
 	Version   string
 	Timestamp time.Time
-	Checksum  Fingerprint
-}
-
-func (x *ProcessInfo) Serialize(ar Archive) {
-	ar.Serializable(&x.Path)
-	ar.String(&x.Version)
-	ar.Time(&x.Timestamp)
-	ar.Serializable(&x.Checksum)
+	Checksum  Future[Fingerprint]
 }
 
 func (x ProcessInfo) String() string {
-	return fmt.Sprintf("%v-%v-%v", x.Path, x.Version, x.Checksum.String()[8:])
+	return fmt.Sprintf("%v-%v-%v", x.Path, x.Version, x.Checksum.Join().Success().ShortString())
 }
 
 var PROCESS_INFO = getExecutableInfo()
-var PROCESS_SEED = SerializeFingerpint(&PROCESS_INFO, Fingerprint{})
+
+var GetProcessSeed = Memoize(func() Fingerprint {
+	result := PROCESS_INFO.Checksum.Join()
+	LogPanicIfFailed(result.Failure())
+	return result.Success()
+})
 
 func getExecutableInfo_FromFile() (result ProcessInfo) {
 	if x, ok := debug.ReadBuildInfo(); ok {
+
 		if x.Main.Path != "" {
 			result.Path = MakeFilename(x.Main.Path)
 			result.Version = x.Main.Version
 			result.Timestamp = UFS.MTime(result.Path)
-			result.Checksum = SerializeAnyFingerprint(func(ar Archive) {
-				ar.String(&x.Main.Sum)
-			}, Fingerprint{})
+			result.Checksum = MakeFuture(func() (Fingerprint, error) {
+				return StringFingerprint(x.Main.Sum), nil
+			})
 		} else {
 			result.Path = UFS.Executable
-			result.Version = "0.5.3"
+			result.Version = "0.60"
 			result.Timestamp = UFS.MTime(result.Path)
-			var err error
-			if result.Checksum, err = FileFingerprint(result.Path, Fingerprint{}); err != nil {
-				LogPanicErr(err)
-			}
+			result.Checksum = MakeFuture(func() (Fingerprint, error) {
+				return FileFingerprint(result.Path, Fingerprint{})
+			})
 		}
 	} else {
 		LogPanic("no module build info!")

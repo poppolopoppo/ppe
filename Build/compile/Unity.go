@@ -82,7 +82,7 @@ func (x *UnityRules) Generate(u *Unit, bc BuildContext) (err error) {
 		numUnityFiles = 0
 	case UNITY_AUTOMATIC:
 		numUnityFiles = int(math.Ceil(float64(totalSize) / float64(u.SizePerUnity)))
-		LogVeryVerbose("%v: %d unity files (%.2f KiB)", u.Target, numUnityFiles, totalSize/1024)
+		LogVeryVerbose("%v: %d unity files (%.2f KiB)", u.Target, numUnityFiles, float64(totalSize)/1024.0)
 	case UNITY_INHERIT:
 		UnexpectedValuePanic(u.Unity, UNITY_INHERIT)
 	default:
@@ -94,7 +94,7 @@ func (x *UnityRules) Generate(u *Unit, bc BuildContext) (err error) {
 	}
 
 	if numUnityFiles >= len(u.SourceFiles) {
-		LogWarning("%v: %d unity files (%.2f KiB) is superiori to source files count (%d files), disabling unity (was %v)", u.Target, numUnityFiles, len(x.SourceFiles), totalSize/1024, u.Unity)
+		LogWarning("%v: %d unity files (%.2f KiB) is superiori to source files count (%d files), disabling unity (was %v)", u.Target, numUnityFiles, len(x.SourceFiles), float64(totalSize)/1024.0, u.Unity)
 		numUnityFiles = 0
 	}
 
@@ -207,7 +207,7 @@ func (x *UnityFile) Build(bc BuildContext) error {
 		}
 		for _, it := range x.Inputs {
 			cpp.Pragma("message(\"unity: \" %q)", it)
-			cpp.Include(SanitizePath(it.String(), '/'))
+			cpp.Include(SanitizePath(it.Relative(UFS.Source), '/'))
 		}
 		return nil
 	})

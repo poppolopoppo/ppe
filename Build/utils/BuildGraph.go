@@ -54,8 +54,9 @@ type BuildResult struct {
 }
 
 type BuildStats struct {
-	StartedAt time.Time
-	Duration  struct {
+	InclusiveStart time.Time
+	ExclusiveStart time.Time
+	Duration       struct {
 		Inclusive time.Duration
 		Exclusive time.Duration
 	}
@@ -83,8 +84,8 @@ type BuildNode interface {
 type BuildOptions struct {
 	Parent                   *BuildOptions
 	Caller                   BuildNode
-	OnLaunched               func(BuildAlias)
-	OnBuilt                  func(BuildAlias)
+	OnLaunched               PublicEvent[BuildNode]
+	OnBuilt                  PublicEvent[BuildNode]
 	Stamp                    *BuildStamp
 	Force                    bool
 	Recursive                bool
@@ -111,8 +112,9 @@ type BuildGraph interface {
 	GetDynamicDependencies(BuildNode) []BuildNode
 	GetOutputDependencies(BuildNode) []BuildNode
 
-	GetDependencyLinks(BuildAlias) ([]BuildDependencyLink, error)
 	GetDependencyChain(a, b BuildAlias) ([]BuildDependencyLink, error)
+	GetDependencyInputFiles(BuildAlias) (FileSet, error)
+	GetDependencyLinks(BuildAlias) ([]BuildDependencyLink, error)
 
 	GetBuildStats() BuildStats
 	GetMostExpansiveNodes(n int, inclusive bool) []BuildNode
@@ -142,9 +144,11 @@ type BuildContext interface {
 	BuildInitializer
 
 	OutputFile(...Filename) error
-	OutputNode(...BuildFactory)
+	OutputNode(...BuildFactory) error
 
 	Timestamp(time.Time)
+
+	OnBuilt(func(BuildNode) error)
 }
 
 type BuildFactory interface {
@@ -344,12 +348,21 @@ func (x BuildFactoryTyped[T]) SafeNeed(context BuildInitializer) (result T) {
 	}
 	return result
 }
-func (x BuildFactoryTyped[T]) Init(graph BuildGraph, options ...BuildOptionFunc) BuildNode {
-	return buildInit(graph.(*buildGraph), x, NewBuildOptions(options...))
+func (x BuildFactoryTyped[T]) Init(graph BuildGraph, options ...BuildOptionFunc) (result T, err error) {
+	var node *buildNode
+	node, err = buildInit(graph.(*buildGraph), x, NewBuildOptions(options...))
+	if err == nil {
+		result = node.Buildable.(T)
+	}
+	return
 }
 func (x BuildFactoryTyped[T]) Prepare(graph BuildGraph, options ...BuildOptionFunc) Future[T] {
 	bo := NewBuildOptions(options...)
-	node := buildInit(graph.(*buildGraph), x, bo)
+	node, err := buildInit(graph.(*buildGraph), x, bo)
+	if err != nil {
+		return MakeFutureError[T](err)
+	}
+
 	future := graph.(*buildGraph).launchBuild(node, bo)
 	return MapFuture(future, func(it BuildResult) T {
 		return it.Buildable.(T)
@@ -387,7 +400,7 @@ type buildInitializer struct {
 	sync.Mutex
 }
 
-func buildInit(g *buildGraph, factory BuildFactory, options BuildOptions) *buildNode {
+func buildInit(g *buildGraph, factory BuildFactory, options BuildOptions) (*buildNode, error) {
 	context := buildInitializer{
 		graph:      g,
 		options:    options.Recurse(nil),
@@ -396,12 +409,15 @@ func buildInit(g *buildGraph, factory BuildFactory, options BuildOptions) *build
 	}
 
 	buildable, err := factory.Create(&context)
-	LogPanicIfFailed(err)
+	if err != nil {
+		return nil, err
+	}
 	Assert(func() bool { return !IsNil(buildable) })
 
 	node := g.Create(buildable, context.staticDeps, OptionBuildStruct(options))
 
-	return node.(*buildNode)
+	Assert(func() bool { return node.Alias().Equals(buildable.Alias()) })
+	return node.(*buildNode), nil
 }
 func (x *buildInitializer) Options() BuildOptions {
 	return x.options
@@ -421,7 +437,10 @@ func (x *buildInitializer) DependsOn(aliases ...BuildAlias) error {
 	return nil
 }
 func (x *buildInitializer) NeedFactory(factory BuildFactory) (Buildable, error) {
-	node := buildInit(x.graph, factory, x.options)
+	node, err := buildInit(x.graph, factory, x.options)
+	if err != nil {
+		return nil, err
+	}
 
 	x.Lock()
 	defer x.Unlock()
@@ -430,9 +449,14 @@ func (x *buildInitializer) NeedFactory(factory BuildFactory) (Buildable, error) 
 	return node.GetBuildable(), nil
 }
 func (x *buildInitializer) NeedFactories(factories ...BuildFactory) error {
-	aliases := Map(func(factory BuildFactory) BuildAlias {
-		return buildInit(x.graph, factory, x.options).Alias()
-	}, factories...)
+	aliases := make(BuildAliases, len(factories))
+	for i, factory := range factories {
+		node, err := buildInit(x.graph, factory, x.options)
+		if err != nil {
+			return err
+		}
+		aliases[i] = node.Alias()
+	}
 
 	x.Lock()
 	defer x.Unlock()
@@ -492,7 +516,7 @@ type buildExecuteContext struct {
 	stats     BuildStats
 	timestamp time.Time
 
-	sync.Mutex
+	barrier sync.Mutex
 }
 
 type buildDependencyError struct {
@@ -526,10 +550,17 @@ func makeBuildExecuteContext(g *buildGraph, node *buildNode, options BuildOption
 func (x *buildExecuteContext) buildOutputFiles() Future[[]BuildResult] {
 	results := make([]BuildResult, 0, len(x.outputFiles))
 	for alias := range x.outputFiles {
-		file := MakeFilename(alias.String())
+		node := x.graph.Find(alias)
+		if node == nil {
+			return MakeFutureError[[]BuildResult](fmt.Errorf("build-graph: can't find buildable file %q", alias))
+		}
+
+		file, ok := node.GetBuildable().(*Filename)
+		AssertIn(ok, true)
+
 		if stamp, err := file.Digest(); err == nil {
 			results = append(results, BuildResult{
-				Buildable:  &file,
+				Buildable:  file,
 				BuildStamp: stamp,
 			})
 		} else {
@@ -637,7 +668,7 @@ func (x *buildExecuteContext) Execute() (BuildResult, bool, error) {
 
 	err = x.node.Buildable.Build(x)
 
-	x.stats.pauseTimer()
+	x.stats.stopTimer()
 	x.node.state.stats.add(x.stats)
 	x.graph.stats.atomic_add(x.stats)
 
@@ -645,12 +676,17 @@ func (x *buildExecuteContext) Execute() (BuildResult, bool, error) {
 		x.node.Stamp = MakeTimedBuildStamp(x.timestamp, x.node.Buildable)
 	}
 
+	Assert(func() bool { return x.node.Alias().Equals(x.node.Buildable.Alias()) })
 	Assert(func() bool { return x.node.Dynamic.validate(x.node, DEPENDENCY_DYNAMIC) })
 	Assert(func() bool { return x.node.OutputFiles.validate(x.node, DEPENDENCY_OUTPUT) })
 	return BuildResult{
 		Buildable:  x.node.Buildable,
 		BuildStamp: x.node.Stamp,
 	}, true, err
+}
+func (x *buildExecuteContext) OnBuilt(e func(BuildNode) error) {
+	// add to parent to trigger the event in outer scope
+	x.options.Parent.OnBuilt.Add(e)
 }
 func (x *buildExecuteContext) Alias() BuildAlias {
 	return x.node.Alias()
@@ -659,18 +695,20 @@ func (x *buildExecuteContext) Options() BuildOptions {
 	return x.options
 }
 func (x *buildExecuteContext) Timestamp(timestamp time.Time) {
-	x.Lock()
-	defer x.Unlock()
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
 
 	x.timestamp = timestamp
 }
-func (x *buildExecuteContext) DependsOn(aliases ...BuildAlias) error {
-	x.Lock()
-	defer x.Unlock()
-
+func (x *buildExecuteContext) lock_for_dependency() {
+	x.barrier.Lock()
 	x.stats.pauseTimer()
-	defer x.stats.resumeTimer()
-
+}
+func (x *buildExecuteContext) unlock_for_dependency() {
+	x.stats.resumeTimer()
+	x.barrier.Unlock()
+}
+func (x *buildExecuteContext) dependsOn_AssumeLocked(aliases ...BuildAlias) error {
 	result := x.graph.BuildMany(aliases, OptionBuildStruct(x.options)).Join()
 	if err := result.Failure(); err != nil {
 		return err
@@ -681,16 +719,22 @@ func (x *buildExecuteContext) DependsOn(aliases ...BuildAlias) error {
 	}
 	return nil
 }
+func (x *buildExecuteContext) DependsOn(aliases ...BuildAlias) error {
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
+
+	return x.dependsOn_AssumeLocked(aliases...)
+}
 func (x *buildExecuteContext) NeedFactory(factory BuildFactory) (Buildable, error) {
-	x.Lock()
-	defer x.Unlock()
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
 
-	x.stats.pauseTimer()
-	defer x.stats.resumeTimer()
+	node, err := buildInit(x.graph, factory, x.options)
+	if err != nil {
+		return nil, err
+	}
 
-	node := buildInit(x.graph, factory, x.options)
 	alias := node.Alias()
-
 	_, future := x.graph.Build(alias, OptionBuildStruct(x.options))
 
 	if result := future.Join(); result.Failure() == nil {
@@ -701,46 +745,69 @@ func (x *buildExecuteContext) NeedFactory(factory BuildFactory) (Buildable, erro
 	}
 }
 func (x *buildExecuteContext) NeedFactories(factories ...BuildFactory) error {
-	x.Lock()
-	defer x.Unlock()
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
 
-	x.stats.pauseTimer()
-	defer x.stats.resumeTimer()
-
-	aliases := BuildAliases(Map(func(factory BuildFactory) BuildAlias {
-		return buildInit(x.graph, factory, x.options).Alias()
-	}))
+	aliases := make(BuildAliases, len(factories))
+	for i, factory := range factories {
+		node, err := buildInit(x.graph, factory, x.options)
+		if err != nil {
+			return err
+		}
+		aliases[i] = node.Alias()
+	}
 
 	future := x.graph.BuildMany(aliases, OptionBuildStruct(x.options))
 	return future.Join().Failure()
 }
 func (x *buildExecuteContext) NeedBuildable(buildables ...BuildAliasable) error {
-	return x.DependsOn(MakeBuildAliases(buildables...)...)
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
+
+	return x.dependsOn_AssumeLocked(MakeBuildAliases(buildables...)...)
 }
 func (x *buildExecuteContext) NeedFile(files ...Filename) error {
-	return x.DependsOn(Map(func(f Filename) BuildAlias {
-		return buildInit(x.graph, BuildFile(f), x.options).Alias()
-	}, files...)...)
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
+
+	aliases := make(BuildAliases, len(files))
+	for i, file := range files {
+		node, err := buildInit(x.graph, BuildFile(file), x.options)
+		if err != nil {
+			return err
+		}
+		aliases[i] = node.Alias()
+	}
+	return x.dependsOn_AssumeLocked(aliases...)
 }
 func (x *buildExecuteContext) NeedDirectory(directories ...Directory) error {
-	return x.DependsOn(Map(func(d Directory) BuildAlias {
-		return buildInit(x.graph, BuildDirectory(d), x.options).Alias()
-	}, directories...)...)
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
+
+	aliases := make(BuildAliases, len(directories))
+	for i, directory := range directories {
+		node, err := buildInit(x.graph, BuildDirectory(directory), x.options)
+		if err != nil {
+			return err
+		}
+		aliases[i] = node.Alias()
+	}
+	return x.dependsOn_AssumeLocked(aliases...)
 }
 func (x *buildExecuteContext) OutputFile(files ...Filename) error {
 	// files are treated as an exception: we build them outside of build scope, without using a future
-	x.Lock()
-	defer x.Unlock()
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
 
 	bo := x.options
 	bo.Force = true
 
-	for _, file := range files {
+	for _, it := range files {
 		// create output file with a static dependency pointing to its creator (e.g x.node here)
-		buildInit(x.graph, MakeBuildFactory(func(init BuildInitializer) (*Filename, error) {
-			err := init.DependsOn(x.node.Alias())
-			return &file, err
-		}), bo)
+		file, err := BuildFile(it, x.node.BuildAlias).Init(x.graph, OptionBuildStruct(bo))
+		if err != nil {
+			return err
+		}
 
 		// output files are an exception: we need file build stamp to track external modifications
 		// in the creator, but we also need to add a dependency from the creator on the file, creating a recursion.
@@ -755,12 +822,9 @@ func (x *buildExecuteContext) OutputFile(files ...Filename) error {
 
 	return nil
 }
-func (x *buildExecuteContext) OutputNode(factories ...BuildFactory) {
-	x.Lock()
-	defer x.Unlock()
-
-	x.stats.pauseTimer()
-	defer x.stats.resumeTimer()
+func (x *buildExecuteContext) OutputNode(factories ...BuildFactory) error {
+	x.lock_for_dependency()
+	defer x.unlock_for_dependency()
 
 	bo := x.options
 	bo.Force = true // force update freshly outputed nodes
@@ -768,16 +832,21 @@ func (x *buildExecuteContext) OutputNode(factories ...BuildFactory) {
 	for _, it := range factories {
 		factory := it
 
-		node := buildInit(x.graph, MakeBuildFactory(func(init BuildInitializer) (Buildable, error) {
+		node, err := buildInit(x.graph, MakeBuildFactory(func(init BuildInitializer) (Buildable, error) {
 			if err := init.DependsOn(x.node.Alias()); err != nil { // add caller node as a static dependency
 				return nil, err
 			}
 			return factory.Create(init)
 		}), bo)
-		LogDebug("%v: outputs node %q", x.Alias(), node.Alias())
+		if err != nil {
+			return err
+		}
 
+		LogDebug("%v: outputs node %q", x.Alias(), node.Alias())
 		x.node.addOutputNode_AssumeLocked(node.Alias())
 	}
+
+	return nil
 }
 
 /***************************************
@@ -828,6 +897,12 @@ func (g *buildGraph) Dirty() bool {
 }
 func (g *buildGraph) Find(alias BuildAlias) (result BuildNode) {
 	if node, _ := g.nodes.Get(alias); node != nil {
+		Assert(func() bool { return node.Alias().Equals(alias) })
+		AssertMessage(func() bool { return node.Buildable.Alias().Equals(alias) }, "%v: node alias do not match buildable -> %q",
+			alias, MakeStringer(func() string {
+				return node.Buildable.Alias().String()
+			}))
+
 		result = node
 	}
 	return
@@ -860,9 +935,7 @@ func (g *buildGraph) Create(buildable Buildable, static BuildAliases, options ..
 	Assert(func() bool { return alias == node.Alias() })
 	AssertSameType(node.Buildable, buildable)
 
-	if bo.OnLaunched != nil {
-		bo.OnLaunched(alias)
-	}
+	LogPanicIfFailed(bo.OnLaunched.Invoke(node))
 
 	dirty := !loaded || bo.Force || len(static) != len(node.Static)
 	oldStaticDeps := node.Static
@@ -877,9 +950,7 @@ func (g *buildGraph) Create(buildable Buildable, static BuildAliases, options ..
 	}
 
 	if dirty {
-		if bo.OnBuilt != nil {
-			bo.OnBuilt(alias)
-		}
+		LogPanicIfFailed(bo.OnBuilt.Invoke(node))
 
 		node.makeDirty_assumeLocked()
 		g.makeDirty()
@@ -888,6 +959,10 @@ func (g *buildGraph) Create(buildable Buildable, static BuildAliases, options ..
 		node.future.Reset()
 	}
 
+	AssertMessage(func() bool { return node.Buildable.Alias().Equals(alias) }, "%v: node alias do not match buildable -> %q",
+		alias, MakeStringer(func() string {
+			return node.Buildable.Alias().String()
+		}))
 	return node
 }
 func (g *buildGraph) Build(it BuildAliasable, options ...BuildOptionFunc) (BuildNode, Future[BuildResult]) {
@@ -896,6 +971,11 @@ func (g *buildGraph) Build(it BuildAliasable, options ...BuildOptionFunc) (Build
 
 	if node, ok := g.nodes.Get(a); ok {
 		Assert(func() bool { return node.Alias().Equals(a) })
+		AssertMessage(func() bool { return node.Buildable.Alias().Equals(a) }, "%v: node alias do not match buildable -> %q",
+			a, MakeStringer(func() string {
+				return node.Buildable.Alias().String()
+			}))
+
 		bo := NewBuildOptions(options...)
 		return node, g.launchBuild(node, bo)
 	} else {
@@ -983,11 +1063,11 @@ func (g *buildGraph) Serialize(ar Archive) {
 }
 func (g *buildGraph) Save(dst io.Writer) error {
 	g.revision = 0
-	return ArchiveFileWrite(dst, g.Serialize)
+	return CompressedArchiveFileWrite(dst, g.Serialize)
 }
 func (g *buildGraph) Load(src io.Reader) error {
 	g.revision = 0
-	file, err := ArchiveFileRead(src, g.Serialize)
+	file, err := CompressedArchiveFileRead(src, g.Serialize)
 	LogVeryVerbose("buildgraph: archive version = %v tags = %v", file.Version, file.Tags)
 	return err
 }
@@ -1024,6 +1104,54 @@ func (g *buildGraph) GetDependencyLinks(a BuildAlias) ([]BuildDependencyLink, er
 	} else {
 		return []BuildDependencyLink{}, fmt.Errorf("buildgraph: build node %q not found", a)
 	}
+}
+func (g *buildGraph) GetDependencyInputFiles(alias BuildAlias) (FileSet, error) {
+	var files FileSet
+
+	queue := make([]BuildAlias, 0, 32)
+	queue = append(queue, alias)
+
+	visiteds := make(map[BuildAlias]int)
+	visit := func(node *buildNode) {
+		node.state.RLock()
+		defer node.state.RUnlock()
+
+		switch file := node.Buildable.(type) {
+		case *Filename:
+			files.AppendUniq(*file)
+		}
+
+		for a := range node.Static {
+			if _, ok := visiteds[a]; !ok {
+				visiteds[a] = 1
+				queue = append(queue, a)
+			}
+		}
+		for a := range node.Dynamic {
+			if _, ok := visiteds[a]; !ok {
+				visiteds[a] = 1
+				queue = append(queue, a)
+			}
+		}
+	}
+
+	for {
+		if len(queue) == 0 {
+			break
+		}
+
+		a := queue[len(queue)-1]
+		queue = queue[:len(queue)-1]
+
+		node, _ := g.nodes.Get(a)
+		if node == nil {
+			return files, fmt.Errorf("buildgraph: build node %q not found", a)
+		}
+
+		visit(node)
+	}
+
+	return files, nil
 }
 func (g *buildGraph) GetDependencyChain(src, dst BuildAlias) ([]BuildDependencyLink, error) {
 	// https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#:~:text=in%20some%20topologies.-,Pseudocode,-%5Bedit%5D
@@ -1166,18 +1294,20 @@ func (g *buildGraph) launchBuild(node *buildNode, options BuildOptions) Future[B
 	}
 
 	newFuture := MakeFuture(func() (BuildResult, error) {
+		Assert(func() bool { return node.Alias().Equals(node.Buildable.Alias()) })
+
 		g.onBuildNodeStart(g, node)
 		defer g.onBuildNodeFinished(g, node)
 
 		context := makeBuildExecuteContext(g, node, options.Recurse(node))
 		result, built, err := context.Execute()
 
+		if err == nil && built {
+			err = options.OnBuilt.Invoke(node)
+		}
+
 		if err == nil {
 			if built {
-				if options.OnBuilt != nil {
-					options.OnBuilt(node.BuildAlias)
-				}
-
 				if result.BuildStamp != context.stamp {
 					if context.numDependencies() > 0 || IsLogLevelActive(LOG_VERYVERBOSE) {
 						LogInfo("%s%s%s %q (%v)",
@@ -1192,7 +1322,7 @@ func (g *buildGraph) launchBuild(node *buildNode, options BuildOptions) Future[B
 					g.makeDirty()
 
 				} else {
-					LogVeryVerbose("unchanged %q (%v)", node.BuildAlias, node.state.stats.Duration.Exclusive)
+					LogDebug("unchanged %q (%v)", node.BuildAlias, node.state.stats.Duration.Exclusive)
 				}
 			} else {
 				LogVerbose("up-to-date %q", node.BuildAlias)
@@ -1209,9 +1339,7 @@ func (g *buildGraph) launchBuild(node *buildNode, options BuildOptions) Future[B
 	})
 
 	node.future.Store(newFuture)
-	if options.OnLaunched != nil {
-		defer options.OnLaunched(node.BuildAlias)
-	}
+	LogPanicIfFailed(options.OnLaunched.Invoke(node))
 
 	return newFuture
 }
@@ -1255,9 +1383,9 @@ func (g *buildEvents) onBuildNodeStart(graph *buildGraph, node *buildNode) {
 		if pbar == nil {
 			pbar = g.onBuildGraphStart_ThreadSafe()
 		}
-		if pbar != nil {
-			//pbar.Grow(1)
-		}
+		// if pbar != nil {
+		// 	pbar.Grow(1)
+		// }
 	}
 }
 func (g *buildEvents) onBuildNodeFinished(graph *buildGraph, node *buildNode) {
@@ -1371,7 +1499,7 @@ func (x *BuildAlias) UnmarshalText(data []byte) error {
  ***************************************/
 
 func MakeBuildFingerprint(buildable Buildable) (result Fingerprint) {
-	result = SerializeFingerpint(buildable, PROCESS_SEED)
+	result = SerializeFingerpint(buildable, GetProcessSeed())
 	if !result.Valid() {
 		LogPanic("buildgraph: invalid buildstamp for %q", buildable.Alias())
 	}
@@ -1509,14 +1637,14 @@ func OptionWarningOnMissingOutputIf(warn bool) BuildOptionFunc {
 		bo.NoWarningOnMissingOutput = !warn
 	}
 }
-func OptionBuildOnLaunched(event func(BuildAlias)) BuildOptionFunc {
+func OptionBuildOnLaunched(event func(BuildNode) error) BuildOptionFunc {
 	return func(opts *BuildOptions) {
-		opts.OnLaunched = event
+		opts.OnLaunched.Add(event)
 	}
 }
-func OptionBuildOnBuilt(event func(BuildAlias)) BuildOptionFunc {
+func OptionBuildOnBuilt(event func(BuildNode) error) BuildOptionFunc {
 	return func(opts *BuildOptions) {
-		opts.OnBuilt = event
+		opts.OnBuilt.Add(event)
 	}
 }
 func OptionBuildParent(parent *BuildOptions) BuildOptionFunc {
@@ -1591,7 +1719,10 @@ func (deps *BuildDependencies) updateBuild(owner BuildNode, depType BuildDepende
 		alias := result.Alias()
 		Assert(func() bool { return result.Content.Valid() })
 
-		if oldStamp, ok := (*deps)[alias]; ok && oldStamp != result.BuildStamp {
+		oldStamp, ok := (*deps)[alias]
+		AssertIn(ok, true)
+
+		if oldStamp != result.BuildStamp {
 			LogTrace("%v: %v dependency <%v> has been updated:\n\tnew: %v\n\told: %v", owner.Alias(), depType, alias, result.BuildStamp, oldStamp)
 
 			(*deps)[alias] = result.BuildStamp
@@ -1606,33 +1737,46 @@ func (deps *BuildDependencies) updateBuild(owner BuildNode, depType BuildDepende
  * Build Stats
  ***************************************/
 
+func StartBuildStats() (result BuildStats) {
+	result.startTimer()
+	return
+}
+func (x *BuildStats) Append(other BuildStats) {
+	other.stopTimer()
+	x.atomic_add(other)
+}
+
 func (x *BuildStats) atomic_add(other BuildStats) {
-	atomic.AddInt64((*int64)(&x.Duration.Exclusive), int64(other.Duration.Exclusive))
-	atomic.AddInt64((*int64)(&x.Duration.Inclusive), int64(other.Duration.Inclusive))
-	if atomic.AddInt32(&x.Count, other.Count) == other.Count {
-		x.StartedAt = other.StartedAt
+	if expected := x.Count + other.Count; atomic.AddInt32(&x.Count, other.Count) == expected {
+		x.InclusiveStart = other.InclusiveStart
+		x.ExclusiveStart = other.ExclusiveStart
 	}
+
+	atomic.AddInt64((*int64)(&x.Duration.Inclusive), int64(other.Duration.Inclusive))
+	atomic.AddInt64((*int64)(&x.Duration.Exclusive), int64(other.Duration.Exclusive))
 }
 func (x *BuildStats) add(other BuildStats) {
 	if x.Count == 0 {
-		x.StartedAt = other.StartedAt
+		x.InclusiveStart = other.InclusiveStart
+		x.ExclusiveStart = other.ExclusiveStart
 	}
+
 	x.Count += other.Count
 	x.Duration.Inclusive += other.Duration.Inclusive
 	x.Duration.Exclusive += other.Duration.Exclusive
 }
 func (x *BuildStats) startTimer() {
 	x.Count += 1
-	x.StartedAt = time.Now()
+	x.InclusiveStart = time.Now()
+	x.ExclusiveStart = x.InclusiveStart
+}
+func (x *BuildStats) stopTimer() {
+	x.Duration.Inclusive += time.Since(x.InclusiveStart)
+	x.Duration.Exclusive += time.Since(x.ExclusiveStart)
 }
 func (x *BuildStats) pauseTimer() {
-	elapsed := time.Since(x.StartedAt)
-	x.Duration.Exclusive += elapsed
-	x.Duration.Inclusive += elapsed
-	x.StartedAt = time.Now()
+	x.Duration.Exclusive += time.Since(x.ExclusiveStart)
 }
 func (x *BuildStats) resumeTimer() {
-	elapsed := time.Since(x.StartedAt)
-	x.Duration.Inclusive += elapsed
-	x.StartedAt = time.Now()
+	x.ExclusiveStart = time.Now()
 }

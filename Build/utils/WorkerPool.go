@@ -14,12 +14,23 @@ type WorkerPool interface {
 	Resize(int)
 }
 
-var GetGlobalWorkerPool = Memoize(func() WorkerPool {
-	return NewFixedSizeWorkerPool("global", runtime.NumCPU()-1)
-})
+var allWorkerPools = []WorkerPool{}
 
-var GetBackgroundWorkerPool = Memoize(func() WorkerPool {
-	return NewFixedSizeWorkerPool("background", 1)
+func JoinAllWorkerPools() {
+	for _, pool := range allWorkerPools {
+		pool.Join()
+	}
+}
+
+var GetGlobalWorkerPool = Memoize(func() (result WorkerPool) {
+	result = NewFixedSizeWorkerPool("global", runtime.NumCPU()-1)
+	allWorkerPools = append([]WorkerPool{result}, allWorkerPools...)
+	return
+})
+var GetLoggerWorkerPool = Memoize(func() (result WorkerPool) {
+	result = NewFixedSizeWorkerPool("logger", 1)
+	allWorkerPools = append(allWorkerPools, result)
+	return
 })
 
 type fixedSizeWorkerPool struct {
@@ -53,6 +64,9 @@ func (x *fixedSizeWorkerPool) Queue(task TaskFunc) {
 	x.give <- task
 }
 func (x *fixedSizeWorkerPool) Join() {
+	pbar := LogProgress(0, x.numWorkers, "join %s worker pool", x.name)
+	defer pbar.Close()
+
 	wg := sync.WaitGroup{}
 	wg.Add(x.numWorkers)
 	for i := 0; i < x.numWorkers; i += 1 {
@@ -61,6 +75,7 @@ func (x *fixedSizeWorkerPool) Join() {
 
 			x.mutex.Lock()
 			x.cond.Wait()
+			pbar.Inc()
 			x.mutex.Unlock()
 		})
 	}
@@ -92,6 +107,15 @@ func (x *fixedSizeWorkerPool) Resize(n int) {
 	x.numWorkers += delta
 }
 func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
+	// LockOSThread wires the calling goroutine to its current operating system thread.
+	// The calling goroutine will always execute in that thread,
+	// and no other goroutine will execute in it,
+	// until the calling goroutine has made as many calls to
+	// UnlockOSThread as to LockOSThread.
+	// If the calling goroutine exits without unlocking the thread,
+	// the thread will be terminated.
+	runtime.LockOSThread()
+
 	for {
 		if task := (<-x.give); task != nil {
 			task()

@@ -3,6 +3,8 @@ package generic
 import "build/utils"
 
 func InitGeneric() {
+	utils.RegisterSerializable(&GnuSourceDependenciesAction{})
+
 	utils.RegisterSerializable(&GlslangHeaderGenerator{})
 	utils.RegisterSerializable(&GlslangGeneratedHeader{})
 

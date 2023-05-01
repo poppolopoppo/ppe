@@ -19,8 +19,8 @@ type LogLevel int32
 const (
 	LOG_ALL LogLevel = iota
 	LOG_DEBUG
-	LOG_VERYVERBOSE
 	LOG_TRACE
+	LOG_VERYVERBOSE
 	LOG_VERBOSE
 	LOG_INFO
 	LOG_CLAIM
@@ -33,10 +33,10 @@ func (x LogLevel) String() string {
 	switch x {
 	case LOG_DEBUG:
 		return fmt.Sprint(ANSI_FG0_MAGENTA, ANSI_ITALIC, ANSI_FAINT, " ~ ", " ")
-	case LOG_VERYVERBOSE:
-		return fmt.Sprint(ANSI_FG1_BLACK, ANSI_ITALIC, ANSI_FAINT, "   ", " ")
 	case LOG_TRACE:
 		return fmt.Sprint(ANSI_FG0_CYAN, ANSI_ITALIC, " - ", " ")
+	case LOG_VERYVERBOSE:
+		return fmt.Sprint(ANSI_FG1_MAGENTA, ANSI_ITALIC, ANSI_ITALIC, "   ", " ")
 	case LOG_VERBOSE:
 		return fmt.Sprint(ANSI_FG0_BLUE, "   ", " ")
 	case LOG_INFO:
@@ -94,7 +94,7 @@ type logQueue_deferred struct {
 }
 
 func make_logQueue_deferred() logQueue {
-	pool := GetBackgroundWorkerPool()
+	pool := GetLoggerWorkerPool()
 	return logQueue_deferred{pool}
 }
 func (x logQueue_deferred) Flush() {
@@ -200,14 +200,15 @@ func LogPanic(msg string, args ...interface{}) {
 	LogPanicErr(fmt.Errorf(msg, args...))
 }
 func LogPanicErr(err error) {
-	WithoutLog(func() {
-		if CommandEnv.OnPanic(err) {
-			panic(fmt.Errorf("%v%v%v[PANIC] %v%v",
-				ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0, err, ANSI_RESET))
-		} else {
-			panic("panic reentrancy!")
-		}
-	})
+	LogError("panic: caught error %v", err)
+
+	if CommandEnv == nil || CommandEnv.OnPanic(err) {
+		PurgePinnedLogs()
+		panic(fmt.Errorf("%v%v%v[PANIC] %v%v",
+			ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0, err, ANSI_RESET))
+	} else {
+		panic("panic reentrancy!")
+	}
 }
 func LogPanicIfFailed(err error) {
 	if err != nil {
@@ -452,6 +453,7 @@ func LogPin(msg string, args ...interface{}) PinnedLog {
 }
 
 func PurgePinnedLogs() {
+	JoinAllWorkerPools()
 	logger.Flush()
 	pinnedLog().forceClose()
 }
@@ -681,7 +683,7 @@ type benchmarkLog struct {
 
 func (x benchmarkLog) Close() {
 	duration := time.Since(x.startedAt)
-	LogTrace("benchmark: %10v   %s", duration, x.message)
+	LogVeryVerbose("benchmark: %10v   %s", duration, x.message)
 }
 func LogBenchmark(msg string, args ...interface{}) Closable {
 	formatted := fmt.Sprintf(msg, args...) // before measured scope

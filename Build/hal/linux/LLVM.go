@@ -48,6 +48,11 @@ func (llvm *LlvmCompiler) Extname(x PayloadType) string {
 	}
 }
 
+func (llvm *LlvmCompiler) AllowCaching(u *Unit, payload PayloadType) CacheModeType {
+	// #TODO: support deterministic builds with LLVM
+	// https://reproducible-builds.org/
+	return CACHE_NONE
+}
 func (llvm *LlvmCompiler) CppRtti(f *Facet, enabled bool) {
 	if enabled {
 		f.Defines.Append("PPE_HAS_CXXRTTI=1")

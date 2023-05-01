@@ -56,17 +56,25 @@ func filterCompletion(completionArgs *CompletionArgs, output func(string), in ..
 	args := completionArgs.Inputs
 
 	if len(args) > 0 {
+		pbar := utils.LogProgress(0, len(args), "filter-completion")
+		defer pbar.Close()
+
 		for _, q := range args {
-			glob := regexp.MustCompile(q.Get())
+			glob := regexp.MustCompile(regexp.QuoteMeta(q.Get()))
 			for _, x := range in {
 				if glob.MatchString(x) {
 					output(x)
 				}
 			}
+			pbar.Inc()
 		}
 	} else {
+		pbar := utils.LogProgress(0, len(in), "filter-completion")
+		defer pbar.Close()
+
 		for _, x := range in {
 			output(x)
+			pbar.Inc()
 		}
 	}
 }

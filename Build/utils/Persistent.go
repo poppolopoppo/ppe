@@ -35,6 +35,12 @@ func NewPersistentMap(name string) *persistentData {
 		Data: make(map[string]map[string]string),
 	}
 }
+func (pmp *persistentData) Len() (result int) {
+	for _, vars := range pmp.Data {
+		result += len(vars)
+	}
+	return
+}
 func (pmp *persistentData) PinData() (result map[string]string) {
 	result = make(map[string]string, len(pmp.Data))
 	for object, it := range pmp.Data {
@@ -72,7 +78,7 @@ func (pmp *persistentData) StoreData(object string, property string, dst Persist
 }
 func (pmp *persistentData) Serialize(dst io.Writer) error {
 	if err := JsonSerialize(&pmp.Data, dst, OptionJsonPrettyPrint(true)); err == nil {
-		LogDebug("persistent: saved %d vars from config to disk", len(pmp.Data))
+		LogDebug("persistent: saved %d vars from config to disk", pmp.Len())
 		return nil
 	} else {
 		return fmt.Errorf("failed to serialize config: %v", err)
@@ -80,7 +86,7 @@ func (pmp *persistentData) Serialize(dst io.Writer) error {
 }
 func (pmp *persistentData) Deserialize(src io.Reader) error {
 	if err := JsonDeserialize(&pmp.Data, src); err == nil {
-		LogVerbose("persistent: loaded %d vars from disk to config", len(pmp.Data))
+		LogVerbose("persistent: loaded %d vars from disk to config", pmp.Len())
 		return nil
 	} else {
 		return fmt.Errorf("failed to deserialize config: %v", err)

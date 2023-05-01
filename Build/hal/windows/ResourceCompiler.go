@@ -20,6 +20,9 @@ func (res *ResourceCompiler) CppStd(*Facet, CppStdType) {}
 
 func (res *ResourceCompiler) DebugSymbols(*Unit) {}
 
+func (res *ResourceCompiler) AllowCaching(*Unit, PayloadType) CacheModeType {
+	return CACHE_NONE
+}
 func (res *ResourceCompiler) Define(facet *Facet, def ...string) {
 	for _, x := range def {
 		facet.AddCompilationFlag(fmt.Sprintf("/d%s", x))

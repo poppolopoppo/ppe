@@ -354,7 +354,7 @@ func (x *BuildModules) Build(bc utils.BuildContext) error {
 			}
 		}
 
-		bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (Namespace, error) {
+		err := bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (Namespace, error) {
 			if err := bi.NeedFile(it.Source); err != nil {
 				return nil, err
 			}
@@ -365,6 +365,9 @@ func (x *BuildModules) Build(bc utils.BuildContext) error {
 			}
 			return it.rules, nil
 		}))
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, it := range deserializer.modules {
@@ -378,7 +381,7 @@ func (x *BuildModules) Build(bc utils.BuildContext) error {
 			return err
 		}
 
-		bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (Module, error) {
+		err := bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (Module, error) {
 			if err := bi.NeedFile(it.Source); err != nil {
 				return nil, err
 			}
@@ -387,6 +390,9 @@ func (x *BuildModules) Build(bc utils.BuildContext) error {
 			}
 			return it.rules, nil
 		}))
+		if err != nil {
+			return err
+		}
 	}
 
 	// need a separated pass for validation, or not every module will be declared!

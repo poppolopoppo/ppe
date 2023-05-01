@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -25,6 +26,8 @@ type CommandFlags struct {
 	Ide         BoolVar
 	LogFile     Filename
 	OutputDir   Directory
+	Summary     BoolVar
+	TraceEvents BoolVar
 }
 
 var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &CommandFlags{
@@ -41,6 +44,8 @@ var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &C
 	Ide:         INHERITABLE_FALSE,
 	Timestamp:   INHERITABLE_FALSE,
 	OutputDir:   UFS.Output,
+	Summary:     INHERITABLE_FALSE,
+	TraceEvents: INHERITABLE_FALSE,
 })
 
 func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
@@ -58,6 +63,8 @@ func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("Ide", "set output to IDE mode (disable interactive shell)", &flags.Ide)
 	cfv.Variable("LogFile", "output log to specified file (default: stdout)", &flags.LogFile)
 	cfv.Variable("OutputDir", "override default output directory", &flags.OutputDir)
+	cfv.Variable("Summary", "print build graph execution summary when build finished", &flags.Summary)
+	cfv.Variable("TraceEvents", "generate a Chrome trace event with every node built", &flags.TraceEvents)
 }
 func (flags *CommandFlags) Apply() {
 	SetEnableDiagnostics(flags.Diagnostics.Get())
@@ -116,6 +123,31 @@ func (flags *CommandFlags) Apply() {
 	}
 }
 
+func printBuildGraphSummary(startedAt time.Time, g BuildGraph) {
+	totalDuration := time.Since(startedAt)
+	LogForwardf("\nProgram took %.3f seconds to run", totalDuration.Seconds())
+
+	stats := g.GetBuildStats()
+	if stats.Count == 0 {
+		return
+	}
+
+	LogForwardf("Took %.3f seconds to build %d nodes using %d threads (x%.2f)",
+		stats.Duration.Exclusive.Seconds(), stats.Count, runtime.GOMAXPROCS(0),
+		float32(stats.Duration.Exclusive)/float32(totalDuration))
+
+	LogForwardf("\nMost expansive nodes built:")
+	for i, node := range g.GetMostExpansiveNodes(10, false) {
+		ns := node.GetBuildStats()
+		LogForwardf("[%02d] - %5.2f%% -  %6.3f  %6.3f  --  %s",
+			(i + 1),
+			(100.0*ns.Duration.Exclusive.Seconds())/stats.Duration.Exclusive.Seconds(),
+			ns.Duration.Exclusive.Seconds(),
+			ns.Duration.Inclusive.Seconds(),
+			node.Alias())
+	}
+}
+
 /***************************************
  * Command Env
  ***************************************/
@@ -125,10 +157,12 @@ type CommandEnvT struct {
 	buildGraph BuildGraph
 	persistent *persistentData
 	rootFile   Filename
+	startedAt  time.Time
 
 	configPath   Filename
 	databasePath Filename
 
+	onExit        ConcurrentEvent[*CommandEnvT]
 	commandEvents CommandEvents
 	commandLines  []CommandLine
 
@@ -137,11 +171,12 @@ type CommandEnvT struct {
 
 var CommandEnv *CommandEnvT
 
-func InitCommandEnv(prefix string, rootFile Filename, args []string) *CommandEnvT {
+func InitCommandEnv(prefix string, rootFile Filename, args []string, startedAt time.Time) *CommandEnvT {
 	CommandEnv = &CommandEnvT{
 		prefix:     prefix,
 		persistent: NewPersistentMap(prefix),
 		rootFile:   rootFile,
+		startedAt:  startedAt,
 		lastPanic:  nil,
 	}
 
@@ -161,6 +196,12 @@ func InitCommandEnv(prefix string, rootFile Filename, args []string) *CommandEnv
 
 	// finally create the build graph (empty)
 	CommandEnv.buildGraph = NewBuildGraph(GetCommandFlags())
+
+	// setup chrome trace events if needed
+	if GetCommandFlags().TraceEvents.Get() {
+		SetupBuildGraphChromeTracer(PROCESS_INFO.Path.ReplaceExt(".trace.json"))
+	}
+
 	return CommandEnv
 }
 func (env *CommandEnvT) Prefix() string             { return env.prefix }
@@ -169,7 +210,12 @@ func (env *CommandEnvT) Persistent() PersistentData { return env.persistent }
 func (env *CommandEnvT) ConfigPath() Filename       { return env.configPath }
 func (env *CommandEnvT) DatabasePath() Filename     { return env.databasePath }
 func (env *CommandEnvT) RootFile() Filename         { return env.rootFile }
+func (env *CommandEnvT) StartedAt() time.Time       { return env.startedAt }
 func (env *CommandEnvT) BuildTime() time.Time       { return PROCESS_INFO.Timestamp }
+
+func (env *CommandEnvT) OnExit(e EventDelegate[*CommandEnvT]) DelegateHandle {
+	return env.onExit.Add(e)
+}
 
 // don't save the db when panic occured
 func (env *CommandEnvT) OnPanic(err error) bool {
@@ -194,20 +240,27 @@ func (env *CommandEnvT) Run() (result error) {
 		}
 	}
 
+	// check if any command was successfully parsed
 	if !env.commandEvents.Bound() {
 		LogWarning("command: missing argument, use `help` to learn about command usage")
 		return nil
 	}
 
+	// queue print summary if specified on command-line
+	if GetCommandFlags().Summary.Get() {
+		env.onExit.Add(func(cet *CommandEnvT) error {
+			printBuildGraphSummary(cet.startedAt, cet.buildGraph)
+			return nil
+		})
+	}
+
 	defer func() {
-		// detect futures never joined
-		if err := env.buildGraph.Join(); err != nil {
-			result = err
-		}
+		JoinAllWorkerPools()
+		env.onExit.Invoke(env)
 	}()
 
-	if err := env.commandEvents.Run(); err != nil {
-		result = err
+	if result = env.commandEvents.Run(); result == nil {
+		result = env.buildGraph.Join()
 	}
 
 	return

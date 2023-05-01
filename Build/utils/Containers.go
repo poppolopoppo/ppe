@@ -587,6 +587,9 @@ func (shared *SharedMapT[K, V]) Get(key K) (result V, ok bool) {
 		return result, false
 	}
 }
+func (shared *SharedMapT[K, V]) Delete(key K) {
+	shared.intern.Delete(key)
+}
 func (shared *SharedMapT[K, V]) Pin() map[K]V {
 	result := make(map[K]V, shared.Len())
 	shared.Range(func(k K, v V) {

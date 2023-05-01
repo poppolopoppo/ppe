@@ -8,7 +8,7 @@ import (
 )
 
 const PROFILING_ENABLED = true
-const PROFILING_MEMORY = false
+const PROFILING_MEMORY = true
 
 var ProfilingTag = MakeArchiveTag(MakeFourCC('P', 'R', 'O', 'F'))
 

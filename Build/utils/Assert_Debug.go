@@ -95,7 +95,7 @@ func AppendComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) {
 		if !Contains(src, x) {
 			result = append(result, x)
 		} else {
-			LogPanic("element already in set: %v (%v)", x, elts)
+			LogPanic("element already in set: %v (%v)", x, src)
 		}
 	}
 	return result
@@ -106,7 +106,7 @@ func PrependComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) 
 		if !Contains(src, x) {
 			result = append([]T{x}, result...)
 		} else {
-			LogPanic("element already in set: %v (%v)", x, elts)
+			LogPanic("element already in set: %v (%v)", x, src)
 		}
 	}
 	return result
@@ -117,7 +117,7 @@ func AppendSlice_CheckUniq[T any](src []T, elts []T, equals func(T, T) bool) (re
 	for _, x := range elts {
 		for _, y := range src {
 			if equals(x, y) {
-				LogPanic("element already in set: %v (%v)", x, elts)
+				LogPanic("element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append(result, x)
@@ -129,7 +129,7 @@ func PrependSlice_CheckUniq[T any](src []T, elts []T, equals func(T, T) bool) (r
 	for _, x := range elts {
 		for _, y := range src {
 			if equals(x, y) {
-				LogPanic("element already in set: %v (%v)", x, elts)
+				LogPanic("element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append([]T{x}, result...)
@@ -142,7 +142,7 @@ func AppendEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T) 
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				LogPanic("element already in set: %v (%v)", x, elts)
+				LogPanic("element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append(result, x)
@@ -154,7 +154,7 @@ func PrependEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T)
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				LogPanic("element already in set: %v (%v)", x, elts)
+				LogPanic("element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append([]T{x}, result...)

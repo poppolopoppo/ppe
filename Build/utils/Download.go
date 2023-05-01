@@ -113,11 +113,13 @@ func downloadFromCachedArtifcats(resp *http.Response) (Filename, downloadCacheRe
 	}
 
 	if contentHash != nil {
-		uid := SerializeAnyFingerprint(func(ar Archive) {
+		uid, err := SerializeAnyFingerprint(func(ar Archive) error {
 			for _, it := range contentHash {
 				ar.String(&it)
 			}
+			return nil
 		}, Fingerprint{})
+		LogPanicIfFailed(err)
 
 		inCache := UFS.Transient.Folder("DownloadCache").File(fmt.Sprintf("%v.bin", uid))
 		if info, err := inCache.Info(); info != nil && err == nil {

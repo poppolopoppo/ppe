@@ -40,6 +40,7 @@ func InitCompile() {
 
 	// register type for serialization
 	RegisterSerializable(&ActionRules{})
+	RegisterSerializable(&actionCache{})
 	RegisterSerializable(&BuildConfig{})
 	RegisterSerializable(&BuildGenerated{})
 	RegisterSerializable(&BuildModules{})
@@ -166,7 +167,10 @@ func (x *BuildTargets) Build(bc BuildContext) error {
 		node.Unit = unit
 
 		for _, it := range node.Rules.Generators {
-			generated := it.GetGenerator().CreateGenerated(bc, node.Rules, node.Unit)
+			generated, err := it.GetGenerator().CreateGenerated(bc, node.Rules, node.Unit)
+			if err != nil {
+				return err
+			}
 			node.Unit.GeneratedFiles.Append(generated.OutputFile)
 		}
 
@@ -185,7 +189,7 @@ func (x *BuildTargets) Build(bc BuildContext) error {
 		x.Targets[unit.Target] = TargetBuildOrder(len(x.Aliases))
 		x.Aliases = append(x.Aliases, unit.Target)
 
-		bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (*Unit, error) {
+		err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (*Unit, error) {
 			if err := bi.NeedBuildable(unit.Target.ModuleAlias, compileEnv.EnvironmentAlias); err != nil {
 				return nil, err
 			}
@@ -196,6 +200,9 @@ func (x *BuildTargets) Build(bc BuildContext) error {
 			}
 			return unit, nil
 		}))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

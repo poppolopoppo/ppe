@@ -111,7 +111,7 @@ func (x *CompilationDatabaseBuilder) Build(bg BuildGraph) error {
 	}
 
 	err = UFS.SafeCreate(x.OutputFile, func(w io.Writer) error {
-		return JsonSerialize(x.Database, w)
+		return JsonSerialize(x.Database, w, OptionJsonPrettyPrint(true))
 	})
 	if err != nil {
 		return err

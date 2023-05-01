@@ -91,16 +91,15 @@ func (rules *GeneratorRules) GetGenerateFile(unit *Unit) utils.Filename {
 	return rules.GetGenerateDir(unit).AbsoluteFile(rules.GeneratedName)
 }
 
-func (rules *GeneratorRules) CreateGenerated(bc utils.BuildContext, module Module, unit *Unit) *BuildGenerated {
+func (rules *GeneratorRules) CreateGenerated(bc utils.BuildContext, module Module, unit *Unit) (*BuildGenerated, error) {
 	outputFile := rules.GetGenerateFile(unit)
 	generated := &BuildGenerated{
 		OutputFile: outputFile,
 		Generated:  rules.Generator.CreateGenerated(unit, outputFile),
 	}
 
-	bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (*BuildGenerated, error) {
+	err := bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (*BuildGenerated, error) {
 		return generated, nil
 	}))
-
-	return generated
+	return generated, err
 }

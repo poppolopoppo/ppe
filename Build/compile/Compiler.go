@@ -73,6 +73,7 @@ type Compiler interface {
 
 	Extname(PayloadType) string
 
+	AllowCaching(*Unit, PayloadType) CacheModeType
 	Define(*Facet, ...string)
 	CppRtti(*Facet, bool)
 	CppStd(*Facet, CppStdType)

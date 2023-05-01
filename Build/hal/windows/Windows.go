@@ -20,7 +20,7 @@ func InitWindows() {
 	utils.RegisterSerializable(&WindowsSDK{})
 	utils.RegisterSerializable(&ClangCompiler{})
 	utils.RegisterSerializable(&LlvmProductInstall{})
-	utils.RegisterSerializable(&SourceDependenciesAction{})
+	utils.RegisterSerializable(&MsvcSourceDependenciesAction{})
 
 	AllPlatforms.Add("Win32", getWindowsPlatform_X86())
 	AllPlatforms.Add("Win64", getWindowsPlatform_X64())
@@ -35,16 +35,17 @@ func InitWindows() {
  ***************************************/
 
 type WindowsFlags struct {
-	Compiler   CompilerType
-	Analyze    BoolVar
-	Insider    BoolVar
-	JustMyCode BoolVar
-	MscVer     MsvcVersion
-	PerfSDK    BoolVar
-	Permissive BoolVar
-	StackSize  IntVar
-	StaticCRT  BoolVar
-	WindowsSDK Directory
+	Compiler      CompilerType
+	Analyze       BoolVar
+	Insider       BoolVar
+	JustMyCode    BoolVar
+	MscVer        MsvcVersion
+	PerfSDK       BoolVar
+	Permissive    BoolVar
+	StackSize     IntVar
+	StaticCRT     BoolVar
+	WindowsSDK    Directory
+	LlvmToolchain BoolVar
 }
 
 var GetWindowsFlags = NewCompilationFlags("windows_flags", "windows-specific compilation flags", &WindowsFlags{
@@ -70,6 +71,7 @@ func (flags *WindowsFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Persistent("Permissive", "enable/disable MSCV permissive", &flags.Permissive)
 	cfv.Persistent("StackSize", "set default thread stack size in bytes", &flags.StackSize)
 	cfv.Persistent("StaticCRT", "use static CRT libraries instead of dynamic (/MT vs /MD)", &flags.StaticCRT)
+	cfv.Persistent("LlvmToolchain", "if enabled clang-cl will use llvm-lib and lld-link", &flags.LlvmToolchain)
 	cfv.Persistent("WindowsSDK", "override Windows SDK install path (use latest otherwise)", &flags.WindowsSDK)
 }
 

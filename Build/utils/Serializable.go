@@ -10,7 +10,11 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/klauspost/compress/zstd"
+	"github.com/pierrec/lz4/v4"
 )
 
 /***************************************
@@ -84,7 +88,7 @@ var globalSerializableFactory serializableFactory
 func (x *serializableFactory) registerName(name string, concreteType reflect.Type) {
 	Assert(func() bool { return len(name) > 0 })
 
-	fingerprint := StringFingeprint(name)
+	fingerprint := StringFingerprint(name)
 	guid := serializableGuid{}
 	copy(guid[:], fingerprint[:16])
 
@@ -532,7 +536,9 @@ type ArchiveFile struct {
 	Tags    []FourCC
 }
 
-var ArchiveTags = []FourCC{}
+var ArchiveTags = []FourCC{
+	StringToFourCC(PROCESS_INFO.Version),
+}
 
 func MakeArchiveTag(tag FourCC) FourCC {
 	AssertNotIn(tag, ArchiveTags...)
@@ -581,6 +587,112 @@ func ArchiveFileWrite(writer io.Writer, scope func(ar Archive)) (err error) {
 			scope(ar)
 		}
 	})
+}
+
+/***************************************
+ * CompressedArchiveFile
+ ***************************************/
+
+// Lz4 is almost as fast as uncompressed, but with fewer IO: when using Fast speed it is almost always a free win
+const UseLz4OverZStd = true
+
+type pooledLz4Reader struct {
+	*lz4.Reader
+}
+
+var lz4ReaderPool = sync.Pool{}
+
+func NewPooledLz4Reader(r io.Reader) io.ReadCloser {
+	if pooled := lz4ReaderPool.Get(); pooled != nil {
+		zd := pooled.(*lz4.Reader)
+		zd.Reset(r)
+		return pooledLz4Reader{Reader: zd}
+	} else {
+		return pooledLz4Reader{Reader: lz4.NewReader(r)}
+	}
+}
+func (x pooledLz4Reader) Close() error {
+	lz4ReaderPool.Put(x.Reader)
+	return nil
+}
+
+type pooledLz4Writer struct {
+	*lz4.Writer
+}
+
+var lz4WriterPool = sync.Pool{}
+
+func NewPooledLz4Writer(w io.Writer) (io.WriteCloser, error) {
+	if pooled := lz4WriterPool.Get(); pooled != nil {
+		ze := pooled.(*lz4.Writer)
+		ze.Reset(w)
+		return pooledLz4Writer{Writer: ze}, nil
+	} else {
+		ze := lz4.NewWriter(w)
+		return pooledLz4Writer{Writer: ze},
+			// https://indico.fnal.gov/event/16264/contributions/36466/attachments/22610/28037/Zstd__LZ4.pdf
+			// ze.Apply(lz4.CompressionLevelOption(lz4.Level4)) // Level4 is already very slow (1.21 Gb in 359s)
+			ze.Apply(lz4.CompressionLevelOption(lz4.Fast)) // Fast is... fast ^^ (1.40 Gb in 52s)
+	}
+}
+func (x pooledLz4Writer) Close() error {
+	err := x.Writer.Close()
+	lz4WriterPool.Put(x.Writer)
+	return err
+}
+
+func CompressedArchiveFileRead(reader io.Reader, scope func(ar Archive)) (file ArchiveFile, err error) {
+	if UseLz4OverZStd {
+		zd := NewPooledLz4Reader(reader)
+		defer zd.Close()
+		return ArchiveFileRead(zd, scope)
+
+	} else {
+		var compressed []byte
+		compressed, err = io.ReadAll(reader)
+		if err != nil {
+			return
+		}
+
+		var zd *zstd.Decoder
+		zd, err = zstd.NewReader(bytes.NewReader(compressed))
+		if err != nil {
+			return
+		}
+
+		return ArchiveFileRead(zd, scope)
+	}
+}
+func CompressedArchiveFileWrite(writer io.Writer, scope func(ar Archive)) error {
+	if UseLz4OverZStd {
+		ze, err := NewPooledLz4Writer(writer)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			closeErr := ze.Close()
+			if err == nil {
+				err = closeErr
+			}
+		}()
+
+		err = ArchiveFileWrite(ze, scope)
+		return err
+
+	} else {
+		ze, err := zstd.NewWriter(writer, zstd.WithEncoderCRC(true), zstd.WithEncoderLevel(zstd.SpeedFastest))
+		if err != nil {
+			return err
+		}
+
+		if err = ArchiveFileWrite(ze, scope); err != nil {
+			ze.Close()
+			return err
+		}
+
+		return ze.Close()
+	}
 }
 
 /***************************************

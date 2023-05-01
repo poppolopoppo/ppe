@@ -53,9 +53,10 @@ func (r result[S]) String() string {
  ***************************************/
 
 type sync_future[T any] struct {
-	await  func() (T, error)
-	result *result[T]
-	debug  []fmt.Stringer
+	await   func() (T, error)
+	result  *result[T]
+	debug   []fmt.Stringer
+	barrier sync.Mutex
 }
 
 func make_sync_future[T any](f func() (T, error), debug ...fmt.Stringer) Future[T] {
@@ -67,6 +68,9 @@ func make_sync_future[T any](f func() (T, error), debug ...fmt.Stringer) Future[
 	}
 }
 func (future *sync_future[T]) Join() Result[T] {
+	future.barrier.Lock()
+	defer future.barrier.Unlock()
+
 	if future.result == nil {
 		await := future.await
 		AssertMessage(func() bool { return await != nil }, "future reentrancy!\n%s", strings.Join(Stringize(future.debug...), "\n"))

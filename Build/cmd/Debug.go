@@ -145,7 +145,7 @@ var CheckSerialize = utils.NewCommand(
 
 		for _, class := range classBySize {
 			stats := perClass[class]
-			utils.LogInfo("%5d elts  -  %8.3f KiB  -  %v", stats.Num, float32(stats.Size)/1024.0, class)
+			utils.LogInfo("%6d elts  -  %10.3f KiB  -  %v", stats.Num, float32(stats.Size)/1024.0, class)
 		}
 
 		return nil
@@ -253,7 +253,7 @@ var ShowSeed = utils.NewCommand(
 	utils.OptionCommandRun(func(cc utils.CommandContext) error {
 		return openCompletion(GetCompletionArgs(), func(w io.Writer) (err error) {
 			utils.WithoutLog(func() {
-				_, err = fmt.Printf("%v\n", utils.PROCESS_SEED)
+				_, err = fmt.Printf("%v\n", utils.GetProcessSeed())
 			})
 			return err
 		})

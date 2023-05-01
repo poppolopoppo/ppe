@@ -25,6 +25,7 @@ func InitUtils() {
 	RegisterSerializable(&DirectoryList{})
 	RegisterSerializable(&Downloader{})
 	RegisterSerializable(&Filename{})
+	RegisterSerializable(&FileDigest{})
 	RegisterSerializable(&SourceControlModifiedFiles{})
 	RegisterSerializable(&SourceControlStatus{})
 }
@@ -56,9 +57,11 @@ type Closable interface {
 type Equatable[T any] interface {
 	Equals(other T) bool
 }
+
 type Comparable[T any] interface {
 	Compare(other T) int
 }
+
 type OrderedComparable[T any] interface {
 	Comparable[T]
 	comparable
@@ -116,7 +119,10 @@ func Blend[T any](ifFalse, ifTrue T, selector bool) T {
 func Recover(scope func() error) (result error) {
 	defer func() {
 		if err := recover(); err != nil {
-			result = err.(error)
+			var ok bool
+			if result, ok = err.(error); !ok {
+				result = fmt.Errorf("%v", err)
+			}
 		}
 	}()
 	result = scope()
@@ -134,13 +140,6 @@ func SanitizeIdentifier(in string) string {
 }
 
 var re_whiteSpace = regexp.MustCompile(`\s+`)
-
-func IsWhiteSpaceStr(s string) bool {
-	return re_whiteSpace.MatchString(s)
-}
-func IsWhiteSpaceRune(ch ...rune) bool {
-	return re_whiteSpace.MatchString(string(ch))
-}
 
 func SplitWords(in string) []string {
 	return re_whiteSpace.Split(in, -1)
@@ -199,6 +198,10 @@ func Stringize[T fmt.Stringer](it ...T) []string {
 
 type FourCC uint32
 
+func StringToFourCC(in string) FourCC {
+	runes := ([]rune)(in)[:4]
+	return MakeFourCC(runes[0], runes[1], runes[2], runes[3])
+}
 func MakeFourCC(a, b, c, d rune) FourCC {
 	return FourCC(uint32(a) | (uint32(b) << 8) | (uint32(c) << 16) | (uint32(d) << 24))
 }

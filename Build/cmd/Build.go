@@ -117,11 +117,13 @@ func (x *BuildCommand) doBuild(targets []*TargetActions) error {
 	future := CommandEnv.BuildGraph().BuildMany(aliases,
 		OptionBuildForceIf(x.Rebuild.Get()),
 		OptionWarningOnMissingOutputIf(!x.Rebuild.Get()),
-		OptionBuildOnLaunched(func(BuildAlias) {
+		OptionBuildOnLaunched(func(BuildNode) error {
 			pbar.Grow(1)
+			return nil
 		}),
-		OptionBuildOnBuilt(func(BuildAlias) {
+		OptionBuildOnBuilt(func(BuildNode) error {
 			pbar.Inc()
+			return nil
 		}))
 
 	return future.Join().Failure()

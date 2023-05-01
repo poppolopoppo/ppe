@@ -2,11 +2,25 @@
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
+<!-- code_chunk_output -->
+
+- [PPE TODO LIST](#ppe-todo-list)
+  - [Rendering](#rendering)
+  - [Architecture](#architecture)
+  - [Physics engine:](#physics-engine)
+  - [Algorithm](#algorithm)
+  - [ECS](#ecs)
+  - [Memory](#memory)
+  - [Content-pipeline](#content-pipeline)
+  - [Build](#build)
+
+<!-- /code_chunk_output -->
+
 ---
 
 ## Rendering
 
-- [ ] Vulkan integration, bootstrap new Runtime.RHI module :)
+- [X] Vulkan integration, bootstrap new Runtime.RHI module :)
     - Vulkan:
         - dynamic loader -> https://subscription.packtpub.com/book/game_development/9781786468154/1/ch01lvl1sec12/preparing-for-loading-vulkan-api-functions
         - frame graph RHI, instead of pure device abstraction -> https://github.com/azhirnov/FrameGraph.git
@@ -199,3 +213,24 @@
 - [ ] Integrate AMD's texture library for content pipeline (replacing clunky STB)
     - *OR* https://github.com/bkaradzic/bimg
 - [ ] Integrate AMD's mesh library for content pipeline (replacing old custom code)
+
+## Build
+
+- [x] Deterministic builds
+    - With MSVC:
+        - **disable incremental linking**
+        - use `/d1nodatetime` to neutralize `__DATE__`, `__TIME__` and `__TIMESTAMP__`
+        - use `/Brepro` with cl, lib and link to make object files binary-identical between builds
+        - use `/experimental:deterministic` to warn about problematic patterns in the code
+        - use `/pdbaltpath:%_PDB%` to store only PDB basename, instead of full path (requires `symsrv` to find symbols)
+        - might still need to use [ducible](https://github.com/jasonwhite/ducible) after all this to get hermetic executables/dlls
+    - References:
+        - https://nikhilism.com/post/2020/windows-deterministic-builds/
+        - https://blog.assarbad.net/20230201/aiding-reproducibility-in-builds-with-ms-visual-c/
+        - https://github.com/bazelbuild/bazel/issues/9466#issuecomment-682394297
+- [ ] Cache build objects
+    - **NOTE: caching is only efficient if we have deterministic builds**
+    - add an object store with both outputs *AND* expanded inputs
+    - the key to the cache is using fingperprint of all direct input of the action
+    - if the key hits a cache entry, we retrieve all indirect inputs and compare again fingerprints
+    - finally if everything matches, we have a cache-hit

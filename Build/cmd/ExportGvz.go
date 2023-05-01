@@ -76,7 +76,7 @@ func (x *buildGraphViz) Visit(node BuildNode, userOptions ...GraphVizOptionFunc)
 		options.FontSize = 7
 	default:
 		ty := reflect.TypeOf(buildable)
-		digest := StringFingeprint(ty.String())
+		digest := StringFingerprint(ty.String())
 
 		hsl := HSL{
 			H: float64(digest[len(digest)-1]) / 0xFF,

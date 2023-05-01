@@ -70,7 +70,7 @@ func (msvc *MsvcCompiler) Extname(x PayloadType) string {
 	case PAYLOAD_DEBUGSYMBOLS:
 		return ".pdb"
 	case PAYLOAD_DEPENDENCIES:
-		return ".deps.json"
+		return ".obj.json"
 	default:
 		UnexpectedValue(x)
 		return ""
@@ -104,6 +104,34 @@ func (msvc *MsvcCompiler) CppStd(f *Facet, std CppStdType) {
 	}
 
 }
+func (msvc *MsvcCompiler) AllowCaching(u *Unit, payload PayloadType) (result CacheModeType) {
+	switch payload {
+	case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER:
+		if u.DebugSymbols == DEBUG_EMBEDDED {
+			result = CACHE_READWRITE
+		} else {
+			result = CACHE_NONE
+			LogDebug("%v/%v: can't use caching with %v debug symbols", u, payload, u.DebugSymbols)
+		}
+	case PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB:
+		if !u.Incremental.Get() {
+			result = CACHE_READWRITE
+		} else {
+			result = CACHE_NONE
+			LogDebug("%v/%v: can't use caching with incremental linker", u, payload)
+		}
+	case PAYLOAD_STATICLIB, PAYLOAD_DEBUGSYMBOLS:
+		result = CACHE_READWRITE
+	}
+	if result == CACHE_INHERIT {
+		result = CACHE_NONE
+	}
+	if result != CACHE_NONE && !u.Deterministic.Get() {
+		result = CACHE_NONE
+		LogDebug("%v/%v: can't use caching without determinism", u, payload)
+	}
+	return result
+}
 func (msvc *MsvcCompiler) Define(f *Facet, def ...string) {
 	for _, x := range def {
 		f.AddCompilationFlag_NoAnalysis("/D" + x)
@@ -123,6 +151,10 @@ func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
 		if u.Payload.HasLinker() {
 			u.SymbolsFile = artifactPDB
 			u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
+
+			if u.DebugFastLink.Get() {
+				u.LinkerOptions.Append("/DEBUG:FASTLINK")
+			}
 		}
 
 	case DEBUG_SYMBOLS:
@@ -134,6 +166,10 @@ func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
 			u.SymbolsFile = artifactPDB
 			u.ExtraFiles.Append(intermediatePDB)
 			u.LinkerOptions.Append("/DEBUG", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
+
+			if u.DebugFastLink.Get() {
+				u.LinkerOptions.Append("/DEBUG:FASTLINK")
+			}
 		} else {
 			u.SymbolsFile = intermediatePDB
 		}
@@ -149,6 +185,10 @@ func (msvc *MsvcCompiler) DebugSymbols(u *Unit) {
 			u.ExtraFiles.Append(editAndContinuePDB)
 			u.LinkerOptions.Append("/DEBUG", "/EDITANDCONTINUE", "/PDB:\""+MakeLocalFilename(artifactPDB)+"\"")
 			u.LinkerOptions.AppendUniq("/INCREMENTAL")
+
+			if u.DebugFastLink.Get() {
+				u.LinkerOptions.Append("/DEBUG:FASTLINK")
+			}
 		} else {
 			u.SymbolsFile = editAndContinuePDB
 		}
@@ -233,10 +273,8 @@ func (msvc *MsvcCompiler) LibraryPath(f *Facet, dirs ...Directory) {
 	}
 }
 func (msvc *MsvcCompiler) SourceDependencies(obj *ActionRules) Action {
-	action := obj.GetAction()
-	sourceDependenciesFile := action.Outputs[0]
-	sourceDependenciesFile.Basename += msvc.Extname(PAYLOAD_DEPENDENCIES)
-	return NewSourceDependenciesAction(obj, sourceDependenciesFile)
+	actionOutput := obj.GetAction().Outputs[0]
+	return NewMsvcSourceDependenciesAction(obj, actionOutput.ReplaceExt(msvc.Extname(PAYLOAD_DEPENDENCIES)))
 }
 
 func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filename) error {
@@ -375,9 +413,14 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 		case DEBUG_SYMBOLS, DEBUG_EMBEDDED, DEBUG_DISABLED:
 			// https://nikhilism.com/post/2020/windows-deterministic-builds/
 			u.Incremental.Disable()
-			u.AddCompilationFlag("/Brepro", "/d1nodatetime", "/experimental:deterministic")
-			u.LibrarianOptions.Append("/Brepro")
-			u.LinkerOptions.Append("/Brepro", "/pdbaltpath:%_PDB%")
+			pathMap := fmt.Sprintf("/pathmap:%v=.", UFS.Root)
+			u.AddCompilationFlag("/Brepro", "/experimental:deterministic", pathMap, "/d1nodatetime")
+			//u.AddCompilationFlag("/d1trimfile:"+UFS.Root.String()) // implied by /experimental:deterministic + /pathmap: ?
+			u.PrecompiledHeaderOptions.Append("/wd5049") // Embedding a full path may result in machine-dependent output (always happen with PCH)
+			u.LibrarianOptions.Append("/Brepro", "/experimental:deterministic")
+			if !u.Incremental.Get() {
+				u.LinkerOptions.Append("/Brepro", "/experimental:deterministic", pathMap, "/pdbaltpath:%_PDB%")
+			}
 		case DEBUG_HOTRELOAD:
 			LogWarning("%v: deterministic build is not compatible with %v", u, u.DebugSymbols)
 		default:
@@ -386,7 +429,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 	}
 
 	if u.Incremental.Get() && u.Sanitizer == SANITIZER_NONE {
-		LogVeryVerbose("%v: using incremental msvc linker with fastlink", u)
+		LogVeryVerbose("%v: using msvc incremental linker", u)
 		if u.LinkerOptions.Contains("/INCREMENTAL") {
 			u.LinkerOptions.Remove("/LTCG")
 		} else if u.LinkerOptions.Contains("/LTCG") {
@@ -1008,17 +1051,15 @@ func GetMsvcProductInstall(prms MsvcProductVer) BuildFactoryTyped[*MsvcProductIn
 
 func GetMsvcCompiler(arch ArchType) BuildFactoryTyped[Compiler] {
 	return func(bi BuildInitializer) (Compiler, error) {
-		compileFlags := GetCompileFlags()
-		windowsFlags := GetWindowsFlags()
 		if err := bi.NeedFactories(
-			GetBuildableFlags(compileFlags),
-			GetBuildableFlags(windowsFlags)); err != nil {
+			GetBuildableFlags(GetCompileFlags()),
+			GetBuildableFlags(GetWindowsFlags())); err != nil {
 			return nil, err
 		}
 
 		return &MsvcCompiler{
 			Arch:          arch,
-			CompilerRules: NewCompilerRules(NewCompilerAlias("msvc", "cl", arch.String())),
+			CompilerRules: NewCompilerRules(NewCompilerAlias("msvc", "VisualStudio", arch.String())),
 		}, nil
 	}
 }
