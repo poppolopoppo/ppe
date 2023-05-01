@@ -164,8 +164,7 @@ func DownloadFile(dst Filename, src url.URL) error {
 		if cacheResult == nil { // cache hit
 			LogDebug("http: cache hit on '%v'", cacheFile)
 			return UFS.Open(cacheFile, func(r io.Reader) error {
-				_, err := io.Copy(w, r)
-				return err
+				return TransientIoCopy(w, r)
 			})
 		} else { // cache miss
 			shouldCache = cacheResult.ShouldCache() // cachable ?
@@ -179,7 +178,7 @@ func DownloadFile(dst Filename, src url.URL) error {
 
 				err = CopyWithProgress(dst.Basename, int64(totalSize), w, resp.Body)
 			} else {
-				_, err = io.Copy(w, resp.Body)
+				err = TransientIoCopy(w, resp.Body)
 			}
 		}
 
@@ -217,7 +216,7 @@ func DownloadHttpRedirect(dst Filename, src url.URL) error {
 	parse := TransientBuffer.Allocate()
 	defer TransientBuffer.Release(parse)
 
-	_, err = io.Copy(parse, resp.Body)
+	err = TransientIoCopy(parse, resp.Body)
 
 	if err == nil {
 		match := re_metaRefreshRedirect.FindSubmatch(parse.Bytes())

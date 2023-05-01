@@ -3,7 +3,9 @@ package utils
 import (
 	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
+	"os"
 	"runtime/debug"
 	"time"
 
@@ -54,21 +56,35 @@ func (x Fingerprint) MarshalText() ([]byte, error) {
 	hex.Encode(buf[:], x[:])
 	return buf[:], nil
 }
-func (x *Fingerprint) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+func (x *Fingerprint) UnmarshalText(data []byte) (err error) {
+	n, err := hex.Decode(x.Slice(), data)
+	if err == nil && n != sha256.Size {
+		err = fmt.Errorf("fingerprint: unexpected string length '%s'", data)
+	}
+	return err
 }
 
 /***************************************
  * Serializable Fingerprint
  ***************************************/
 
+var digesterPool = NewRecycler(
+	func() hash.Hash {
+		return sha256.New()
+	},
+	func(digester hash.Hash) {
+		digester.Reset()
+	})
+
 func SerializeAnyFingerprint(any func(ar Archive) error, seed Fingerprint) (result Fingerprint, err error) {
-	digester := sha256.New()
+	digester := digesterPool.Allocate()
+	defer digesterPool.Release(digester)
+
 	if _, err = digester.Write(seed[:]); err != nil {
 		return
 	}
 
-	ar := NewArchiveBinaryWriter(digester)
+	ar := NewArchiveBinaryWriter(digester, AR_DETERMINISM)
 	defer ar.Close()
 
 	if err = any(&ar); err != nil {
@@ -81,10 +97,12 @@ func SerializeAnyFingerprint(any func(ar Archive) error, seed Fingerprint) (resu
 }
 
 func ReaderFingerprint(rd io.Reader, seed Fingerprint) (result Fingerprint, err error) {
+	digester := digesterPool.Allocate()
+	defer digesterPool.Release(digester)
+
 	buffer := TransientBytes.Allocate()
 	defer TransientBytes.Release(buffer)
 
-	digester := sha256.New()
 	if _, err = digester.Write(seed[:]); err != nil {
 		return
 	}
@@ -105,7 +123,7 @@ func ReaderFingerprint(rd io.Reader, seed Fingerprint) (result Fingerprint, err 
 
 func FileFingerprint(src Filename, seed Fingerprint) (Fingerprint, error) {
 	var result Fingerprint
-	err := UFS.Open(src, func(rd io.Reader) (err error) {
+	err := UFS.OpenFile(src, func(rd *os.File) (err error) {
 		result, err = ReaderFingerprint(rd, seed)
 		return
 	})
@@ -115,7 +133,7 @@ func FileFingerprint(src Filename, seed Fingerprint) (Fingerprint, error) {
 func StringFingerprint(in string) Fingerprint {
 	tmp := TransientBuffer.Allocate()
 	defer TransientBuffer.Release(tmp)
-	tmp.WriteString(in) // avoid converting string to []byte
+	tmp.WriteString(in) // avoid allocating a new slice to convert string to []byte
 	return sha256.Sum256(tmp.Bytes())
 }
 
@@ -126,10 +144,6 @@ func SerializeFingerpint(value Serializable, seed Fingerprint) Fingerprint {
 	}, seed)
 	LogPanicIfFailed(err)
 	return fingerprint
-}
-
-func SerializeDeepEqual(a, b Serializable) bool {
-	return SerializeFingerpint(a, Fingerprint{}) == SerializeFingerpint(b, Fingerprint{})
 }
 
 /***************************************

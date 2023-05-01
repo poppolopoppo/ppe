@@ -777,6 +777,9 @@ func sanitizeArgumentsForAction(arguments ...string) (result StringSet) {
 		quoteBalance := 0
 		concatNextWord := false
 
+		sb := TransientBuffer.Allocate()
+		defer TransientBuffer.Release(sb)
+
 		for i, ch := range input {
 			commitWord := false
 			shouldConcatNextWord := true
@@ -808,11 +811,14 @@ func sanitizeArgumentsForAction(arguments ...string) (result StringSet) {
 			}
 
 			if commitWord {
-				if w := input[firstIndex:i]; concatNextWord && len(result) > 0 {
-					result[len(result)-1] += w
-				} else {
-					result = append(result, w)
+				if !concatNextWord {
+					if sb.Len() > 0 {
+						result = append(result, sb.String())
+						sb.Reset()
+					}
 				}
+
+				sb.WriteString(input[firstIndex:i])
 
 				firstIndex = n
 				concatNextWord = shouldConcatNextWord
@@ -820,11 +826,18 @@ func sanitizeArgumentsForAction(arguments ...string) (result StringSet) {
 		}
 
 		if firstIndex < n {
-			if w := input[firstIndex:n]; concatNextWord && len(result) > 0 {
-				result[len(result)-1] += w
-			} else {
-				result = append(result, w)
+			if !concatNextWord {
+				if sb.Len() > 0 {
+					result = append(result, sb.String())
+					sb.Reset()
+				}
 			}
+
+			sb.WriteString(input[firstIndex:n])
+		}
+
+		if sb.Len() > 0 {
+			result = append(result, sb.String())
 		}
 	}
 

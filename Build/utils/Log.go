@@ -132,17 +132,28 @@ func SetLogTimestamp(enabled bool) {
 		log.SetFlags(0)
 	}
 }
-func SetLogLevel(level LogLevel) {
+func SetLogLevel(level LogLevel) LogLevel {
+	previous := logger.Level
 	if level < LOG_FATAL {
 		logger.Level = level
 	} else {
 		logger.Level = LOG_FATAL
 	}
+	return previous
 }
-func SetLogLevelMininum(level LogLevel) {
+func SetLogLevelMininum(level LogLevel) LogLevel {
+	previous := logger.Level
 	if level < LOG_FATAL && level < logger.Level {
 		logger.Level = level
 	}
+	return previous
+}
+func SetLogLevelMaximum(level LogLevel) LogLevel {
+	previous := logger.Level
+	if level < LOG_FATAL && level > logger.Level {
+		logger.Level = level
+	}
+	return previous
 }
 func IsLogLevelActive(level LogLevel) bool {
 	return logger.Level <= level
@@ -704,31 +715,10 @@ func MakeStringer(fn func() string) fmt.Stringer {
 
 func CopyWithProgress(context string, totalSize int64, dst io.Writer, src io.Reader) (err error) {
 	if enableInteractiveShell {
-		var pbar PinnedProgress
-		if totalSize > 0 {
-			pbar = LogProgress(0, int(totalSize), "copying %s -- %.3f MiB", context, float32(totalSize)/(1024*1024))
-		} else {
-			pbar = LogSpinner("copying %s -- unknown size", context)
-		}
-		defer pbar.Close()
-
-		for {
-			var toRead int64 = TRANSIENT_BYTES_CAPACITY
-			if toRead, err = io.CopyN(dst, src, toRead); err == nil {
-				pbar.Add(int(toRead))
-			} else {
-				break
-			}
-		}
-
-		if err == io.EOF {
-			err = nil
-		}
-
+		return TransientIoCopyWithProgress(context, totalSize, dst, src)
 	} else {
-		_, err = io.Copy(dst, src)
+		return TransientIoCopy(dst, src)
 	}
-	return err
 }
 
 func CopyWithSpinner(context string, dst io.Writer, src io.Reader) (err error) {

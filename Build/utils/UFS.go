@@ -89,16 +89,17 @@ func CleanPath(in string) string {
 
 	// Those checks are cheap compared to the followings
 	in = filepath.Clean(in)
-	if cleaned, err := filepath.Abs(in); err == nil {
-		in = cleaned
-	} else {
-		LogPanicErr(err)
-	}
 
 	// /!\ EvalSymlinks() is **SUPER** expansive !
 	// Try to mitigate with an ad-hoc concurrent cache
 	if cleaned, ok := cleanPathCache.Get(in); ok {
 		return cleaned // cache-hit: already processed
+	}
+
+	if cleaned, err := filepath.Abs(in); err == nil {
+		in = cleaned
+	} else {
+		LogPanicErr(err)
 	}
 
 	result, err := filepath.EvalSymlinks(in)
@@ -917,16 +918,26 @@ func (ufs *UFSFrontEnd) CreateWriter(dst Filename) (*os.File, error) {
 	LogDebug("ufs: create '%v'", dst)
 	return os.Create(dst.String())
 }
-func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error {
+func (ufs *UFSFrontEnd) CreateFile(dst Filename, write func(*os.File) error) error {
 	outp, err := ufs.CreateWriter(dst)
 	if err == nil {
-		defer outp.Close()
+		defer func() {
+			closeErr := outp.Close()
+			if err == nil {
+				err = closeErr
+			}
+		}()
 		if err = write(outp); err == nil {
-			return nil
+			return err
 		}
 	}
-	LogWarning("ufs: caught %v while trying to create %v", err, dst)
+	LogWarning("UFS.CreateFile: caught %v while trying to create %v", err, dst)
 	return err
+}
+func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error {
+	return ufs.CreateFile(dst, func(f *os.File) error {
+		return write(f)
+	})
 }
 func (ufs *UFSFrontEnd) CreateBuffered(dst Filename, write func(io.Writer) error) error {
 	return ufs.Create(dst, func(w io.Writer) error {
@@ -937,31 +948,29 @@ func (ufs *UFSFrontEnd) CreateBuffered(dst Filename, write func(io.Writer) error
 		return buffered.Flush()
 	})
 }
+
+const forceUnsafeCreate = true // os.Rename() is expansive, at least on Windows
+
 func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) error {
-	ufs.Mkdir(dst.Dirname)
+	if forceUnsafeCreate {
+		return ufs.CreateBuffered(dst, write)
+	} else {
+		ufs.Mkdir(dst.Dirname)
 
-	file, err := os.CreateTemp(
-		dst.Dirname.Relative(UFS.Root),
-		dst.ReplaceExt("-*"+dst.Ext()).Relative(dst.Dirname))
-	if err != nil {
-		return err
-	}
-	defer os.Remove(file.Name())
+		tmpFilename := dst.ReplaceExt(dst.Ext() + ".tmp")
+		defer os.Remove(tmpFilename.String())
 
-	buf := bufio.NewWriter(file)
-	if err = write(buf); err == nil {
-		if err = buf.Flush(); err == nil {
-			if err = file.Close(); err == nil {
-				//LogVeryVerbose("moving temporary file '%v' to final destination '%v'", file.Name(), dst)
-				invalidate_file_info(dst)
-				return os.Rename(file.Name(), dst.String())
+		err := UFS.CreateBuffered(tmpFilename, func(w io.Writer) error {
+			return write(w)
+		})
+
+		if err == nil {
+			if err = os.Rename(tmpFilename.String(), dst.String()); err != nil {
+				LogWarning("UFS.SafeCreate: %v", err)
 			}
 		}
+		return err
 	}
-
-	file.Close()
-	LogWarning("UFS.SafeCreate: %v", err)
-	return err
 }
 func (ufs *UFSFrontEnd) MTime(src Filename) time.Time {
 	if info, err := src.Info(); err == nil {
@@ -975,17 +984,19 @@ func (ufs *UFSFrontEnd) OpenFile(src Filename, read func(*os.File) error) error 
 	input, err := os.Open(src.String())
 	LogDebug("ufs: open '%v'", src)
 
-	if input != nil {
-		defer input.Close()
-	}
-
 	if err == nil {
+		defer func() {
+			closeErr := input.Close()
+			if err == nil {
+				err = closeErr
+			}
+		}()
 		if err = read(input); err == nil {
-			return nil
+			return err
 		}
 	}
 
-	LogWarning("UFS.Open: %v", err)
+	LogWarning("UFS.OpenFile: %v", err)
 	return err
 }
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {

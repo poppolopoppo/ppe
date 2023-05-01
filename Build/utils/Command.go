@@ -934,6 +934,9 @@ func FindCommand(name string) (CommandItem, error) {
 }
 
 func PrintCommandHelp(w io.Writer, detailed bool) {
+	restoreLogLevel := SetLogLevelMaximum(LOG_VERBOSE)
+	defer SetLogLevel(restoreLogLevel)
+
 	f := NewStructuredFile(w, "  ", false)
 
 	f.Print(`

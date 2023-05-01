@@ -50,31 +50,31 @@ func (pmp *persistentData) PinData() (result map[string]string) {
 	}
 	return
 }
-func (pmp *persistentData) LoadData(object string, property string, dst PersistentVar) error {
-	if object, ok := pmp.Data[object]; ok {
+func (pmp *persistentData) LoadData(name string, property string, dst PersistentVar) error {
+	if object, ok := pmp.Data[name]; ok {
 		if value, ok := object[property]; ok {
-			LogDebug("load persistent object property %s.%s = %v", object, property, value)
+			LogDebug("load persistent object property %s.%s = %v", name, property, value)
 			return dst.Set(value)
 		} else {
-			err := fmt.Errorf("object %q has no property %q", object, property)
-			LogWarning("load(%s.%s): %v", object, property, err)
+			err := fmt.Errorf("object %q has no property %q", name, property)
+			LogWarning("load(%s.%s): %v", name, property, err)
 			return err
 		}
 
 	} else {
-		err := fmt.Errorf("object '%s' not found", object)
-		LogWarning("load(%s.%s): %v", object, property, err)
+		err := fmt.Errorf("object '%s' not found", name)
+		LogWarning("load(%s.%s): %v", name, property, err)
 		return err
 	}
 }
-func (pmp *persistentData) StoreData(object string, property string, dst PersistentVar) {
-	LogDebug("persistent: store in %s.%s = %v", object, property, dst)
-	it, ok := pmp.Data[object]
+func (pmp *persistentData) StoreData(name string, property string, dst PersistentVar) {
+	LogDebug("persistent: store in %s.%s = %v", name, property, dst)
+	object, ok := pmp.Data[name]
 	if !ok {
-		it = make(map[string]string)
-		pmp.Data[object] = it
+		object = make(map[string]string)
+		pmp.Data[name] = object
 	}
-	it[property] = dst.String()
+	object[property] = dst.String()
 }
 func (pmp *persistentData) Serialize(dst io.Writer) error {
 	if err := JsonSerialize(&pmp.Data, dst, OptionJsonPrettyPrint(true)); err == nil {

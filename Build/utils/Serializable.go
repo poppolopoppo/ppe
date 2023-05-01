@@ -21,15 +21,48 @@ import (
  * Archive
  ***************************************/
 
-type ArchiveFlags int32
+type ArchiveFlag int32
 
 const (
-	AR_NONE    ArchiveFlags = 0
-	AR_LOADING ArchiveFlags = 1 << 0
+	AR_LOADING ArchiveFlag = iota
+	AR_DETERMINISM
 )
 
+func (x ArchiveFlag) Ord() int32        { return int32(x) }
+func (x *ArchiveFlag) FromOrd(in int32) { *x = ArchiveFlag(in) }
+func (x *ArchiveFlag) Set(in string) (err error) {
+	switch in {
+	case AR_LOADING.String():
+		*x = AR_LOADING
+	case AR_DETERMINISM.String():
+		*x = AR_DETERMINISM
+	default:
+		err = fmt.Errorf("unkown archive flags: %v", in)
+	}
+	return
+}
+
+func (x ArchiveFlag) String() (str string) {
+	switch x {
+	case AR_LOADING:
+		str = "LOADING"
+	case AR_DETERMINISM:
+		str = "DETERMINISM"
+	default:
+		UnexpectedValuePanic(x, x)
+	}
+	return
+}
+
+type ArchiveFlags struct {
+	EnumSet[ArchiveFlag, *ArchiveFlag]
+}
+
 func (fl ArchiveFlags) IsLoading() bool {
-	return (fl & AR_LOADING) == AR_LOADING
+	return fl.Has(AR_LOADING)
+}
+func (fl ArchiveFlags) IsDeterministic() bool {
+	return fl.Has(AR_DETERMINISM)
 }
 
 const (
@@ -217,26 +250,49 @@ func SerializeMap[K OrderedComparable[K], V any,
 		*V
 		Serializable
 	}](ar Archive, assoc *map[K]V) {
-	var tmp []SerializablePair[K, V, SK, SV]
-	if ar.Flags().IsLoading() {
-		SerializeSlice(ar, &tmp)
+	if ar.Flags().IsDeterministic() {
+		// sort keys to serialize as a slice with deterministic order, since maps are randomized
+		var tmp []SerializablePair[K, V, SK, SV]
+		if ar.Flags().IsLoading() {
+			SerializeSlice(ar, &tmp)
 
-		*assoc = make(map[K]V, len(tmp))
-		for _, pair := range tmp {
-			(*assoc)[pair.Key] = pair.Value
+			*assoc = make(map[K]V, len(tmp))
+			for _, pair := range tmp {
+				(*assoc)[pair.Key] = pair.Value
+			}
+		} else {
+			tmp = make([]SerializablePair[K, V, SK, SV], 0, len(*assoc))
+			for key, value := range *assoc {
+				tmp = append(tmp, SerializablePair[K, V, SK, SV]{Key: key, Value: value})
+			}
+
+			sort.SliceStable(tmp, func(i, j int) bool {
+				return tmp[i].Key.Compare(tmp[j].Key) < 0
+			})
+
+			SerializeSlice(ar, &tmp)
 		}
 	} else {
-		tmp = make([]SerializablePair[K, V, SK, SV], 0, len(*assoc))
-		for key, value := range *assoc {
-			tmp = append(tmp, SerializablePair[K, V, SK, SV]{Key: key, Value: value})
+		// simply iterate through the map and serialize in random order whem determinism is not needed
+		size := uint32(len(*assoc))
+		ar.UInt32(&size)
+		AssertMessage(func() bool { return size < 32000 }, "serializable: sanity check failed on map length (%d > 32000)", size)
+
+		if ar.Flags().IsLoading() {
+			*assoc = make(map[K]V, size)
+			var key K
+			var value V
+			for i := uint32(0); i < size; i += 1 {
+				ar.Serializable(SK(&key))
+				ar.Serializable(SV(&value))
+				(*assoc)[key] = value
+			}
+		} else {
+			for key, value := range *assoc {
+				ar.Serializable(SK(&key))
+				ar.Serializable(SV(&value))
+			}
 		}
-
-		// sort keys to serialize in deterministic order, since maps are randomized
-		sort.SliceStable(tmp, func(i, j int) bool {
-			return tmp[i].Key.Compare(tmp[j].Key) < 0
-		})
-
-		SerializeSlice(ar, &tmp)
 	}
 }
 
@@ -275,12 +331,15 @@ type basicArchive struct {
 	err   error
 }
 
-func newBasicArchive(flags ArchiveFlags) basicArchive {
-	return basicArchive{
+func newBasicArchive(flags ...ArchiveFlag) basicArchive {
+	ar := basicArchive{
 		bytes: TransientBytes.Allocate(),
 		err:   nil,
-		flags: flags,
+		flags: ArchiveFlags{
+			MakeEnumSet(flags...),
+		},
 	}
+	return ar
 }
 func (x basicArchive) Byte() []byte { return x.bytes }
 func (x *basicArchive) Close() {
@@ -329,11 +388,11 @@ func ArchiveBinaryRead(reader io.Reader, scope func(ar Archive)) (err error) {
 	})
 }
 
-func NewArchiveBinaryReader(reader io.Reader) ArchiveBinaryReader {
+func NewArchiveBinaryReader(reader io.Reader, flags ...ArchiveFlag) ArchiveBinaryReader {
 	return ArchiveBinaryReader{
 		reader:        reader,
 		indexToString: []string{},
-		basicArchive:  newBasicArchive(AR_LOADING),
+		basicArchive:  newBasicArchive(append(flags, AR_LOADING)...),
 	}
 }
 
@@ -427,14 +486,14 @@ func ArchiveBinaryWrite(writer io.Writer, scope func(ar Archive)) (err error) {
 	})
 }
 
-func NewArchiveBinaryWriter(writer io.Writer) ArchiveBinaryWriter {
+func NewArchiveBinaryWriter(writer io.Writer, flags ...ArchiveFlag) ArchiveBinaryWriter {
 	str, hasStringWriter := writer.(io.StringWriter)
 	return ArchiveBinaryWriter{
 		writer:          writer,
 		str:             str,
 		hasStringWriter: hasStringWriter,
 		stringToIndex:   make(map[string]uint32),
-		basicArchive:    newBasicArchive(AR_NONE),
+		basicArchive:    newBasicArchive(flags...),
 	}
 }
 
@@ -734,7 +793,7 @@ func (x *ArchiveDiff) Diff(a, b Serializable) error {
 
 	return Recover(func() error {
 		// write a in memory
-		ram := NewArchiveBinaryWriter(x.buffer)
+		ram := NewArchiveBinaryWriter(x.buffer, AR_DETERMINISM)
 		defer ram.Close()
 
 		ram.Serializable(a)
@@ -746,8 +805,8 @@ func (x *ArchiveDiff) Diff(a, b Serializable) error {
 		x.len = x.buffer.Len()
 
 		// read b from memory, but do not actually update b
-		x.compare = NewArchiveBinaryReader(x.buffer)
-		x.compare.flags = AR_NONE // unset AR_LOADING to avoid overwriting b
+		x.compare = NewArchiveBinaryReader(x.buffer, AR_DETERMINISM)
+		x.compare.flags.Remove(AR_LOADING) // unset AR_LOADING to avoid overwriting b
 		defer x.compare.Close()
 
 		x.Serializable(b)
