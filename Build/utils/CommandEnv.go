@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"runtime"
 	"time"
@@ -12,38 +13,40 @@ import (
  ***************************************/
 
 type CommandFlags struct {
-	Force       BoolVar
-	Purge       BoolVar
-	Quiet       BoolVar
-	Verbose     BoolVar
-	Trace       BoolVar
-	VeryVerbose BoolVar
-	Debug       BoolVar
-	Timestamp   BoolVar
-	Diagnostics BoolVar
-	Jobs        IntVar
-	Color       BoolVar
-	Ide         BoolVar
-	LogFile     Filename
-	OutputDir   Directory
-	Summary     BoolVar
+	Force          BoolVar
+	Purge          BoolVar
+	Quiet          BoolVar
+	Verbose        BoolVar
+	Trace          BoolVar
+	VeryVerbose    BoolVar
+	Debug          BoolVar
+	Timestamp      BoolVar
+	Diagnostics    BoolVar
+	Jobs           IntVar
+	Color          BoolVar
+	Ide            BoolVar
+	LogFile        Filename
+	OutputDir      Directory
+	Summary        BoolVar
+	WarningAsError BoolVar
 }
 
 var GetCommandFlags = NewGlobalCommandParsableFlags("global command options", &CommandFlags{
-	Force:       INHERITABLE_FALSE,
-	Purge:       INHERITABLE_FALSE,
-	Quiet:       INHERITABLE_FALSE,
-	Verbose:     INHERITABLE_FALSE,
-	Trace:       INHERITABLE_FALSE,
-	VeryVerbose: INHERITABLE_FALSE,
-	Debug:       INHERITABLE_FALSE,
-	Diagnostics: INHERITABLE_FALSE,
-	Jobs:        INHERIT_VALUE,
-	Color:       INHERITABLE_INHERIT,
-	Ide:         INHERITABLE_FALSE,
-	Timestamp:   INHERITABLE_FALSE,
-	OutputDir:   UFS.Output,
-	Summary:     INHERITABLE_FALSE,
+	Force:          INHERITABLE_FALSE,
+	Purge:          INHERITABLE_FALSE,
+	Quiet:          INHERITABLE_FALSE,
+	Verbose:        INHERITABLE_FALSE,
+	Trace:          INHERITABLE_FALSE,
+	VeryVerbose:    INHERITABLE_FALSE,
+	Debug:          INHERITABLE_FALSE,
+	Diagnostics:    INHERITABLE_FALSE,
+	Jobs:           INHERIT_VALUE,
+	Color:          INHERITABLE_INHERIT,
+	Ide:            INHERITABLE_FALSE,
+	Timestamp:      INHERITABLE_FALSE,
+	OutputDir:      UFS.Output,
+	Summary:        INHERITABLE_FALSE,
+	WarningAsError: INHERITABLE_FALSE,
 })
 
 func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
@@ -62,6 +65,7 @@ func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Variable("LogFile", "output log to specified file (default: stdout)", &flags.LogFile)
 	cfv.Variable("OutputDir", "override default output directory", &flags.OutputDir)
 	cfv.Variable("Summary", "print build graph execution summary when build finished", &flags.Summary)
+	cfv.Variable("WX", "consider warnings as errors", &flags.WarningAsError)
 }
 func (flags *CommandFlags) Apply() {
 	SetEnableDiagnostics(flags.Diagnostics.Get())
@@ -105,6 +109,9 @@ func (flags *CommandFlags) Apply() {
 	}
 	if !flags.Color.IsInheritable() {
 		SetEnableAnsiColor(flags.Color.Get())
+	}
+	if flags.WarningAsError.Get() {
+		SetLogWarningAsError(true)
 	}
 
 	if flags.OutputDir.Valid() {

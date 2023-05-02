@@ -105,7 +105,8 @@ func (x logQueue_deferred) Queue(e logEvent) {
 }
 
 type Logger struct {
-	Level LogLevel
+	Level        LogLevel
+	WarningLevel LogLevel
 	logQueue
 }
 
@@ -117,7 +118,10 @@ func make_logger() Logger {
 		level = LOG_ALL
 	}
 
-	return Logger{Level: level, logQueue: make_logQueue()}
+	return Logger{
+		Level:        level,
+		WarningLevel: LOG_WARNING,
+		logQueue:     make_logQueue()}
 }
 
 var logger Logger = make_logger()
@@ -131,6 +135,15 @@ func SetLogTimestamp(enabled bool) {
 	} else {
 		log.SetFlags(0)
 	}
+}
+func SetLogWarningAsError(enabled bool) bool {
+	previous := logger.WarningLevel != LOG_WARNING
+	if enabled {
+		logger.WarningLevel = LOG_ERROR
+	} else {
+		logger.WarningLevel = LOG_WARNING
+	}
+	return previous
 }
 func SetLogLevel(level LogLevel) LogLevel {
 	previous := logger.Level
@@ -196,7 +209,7 @@ func LogClaim(msg string, args ...interface{}) {
 	Log(LOG_CLAIM, msg, args...)
 }
 func LogWarning(msg string, args ...interface{}) {
-	Log(LOG_WARNING, msg, args...)
+	Log(logger.WarningLevel, msg, args...)
 }
 func LogError(msg string, args ...interface{}) {
 	Log(LOG_ERROR, msg, args...)
