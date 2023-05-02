@@ -891,6 +891,13 @@ func (ufs *UFSFrontEnd) SetMTime(dst Filename, mtime time.Time) error {
 		return err
 	}
 }
+func (ufs *UFSFrontEnd) Remove(dst Filename) error {
+	if err := os.Remove(dst.String()); err != nil {
+		LogError("ufs: %v", err)
+		return err
+	}
+	return nil
+}
 func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
 	if err := ufs.MkdirEx(dst); err != nil {
 		LogPanicErr(err)
@@ -901,13 +908,13 @@ func (ufs *UFSFrontEnd) MkdirEx(dst Directory) error {
 	if st, err := os.Stat(path); st != nil && (err == nil || os.IsExist(err)) {
 		if !st.IsDir() {
 			LogDebug("ufs: mkdir %v", dst)
-			return fmt.Errorf("ufs: '%v' already exist, but is not a directory", dst)
+			return fmt.Errorf("ufs: %q already exist, but is not a directory", dst)
 		}
 	} else {
 		LogDebug("ufs: mkdir %v", dst)
 		invalidate_directory_info(dst)
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			return fmt.Errorf("ufs: mkdir '%v' got error %v", dst, err)
+			return fmt.Errorf("ufs: mkdir %q got error %v", dst, err)
 		}
 	}
 	return nil

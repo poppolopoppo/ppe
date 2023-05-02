@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"build/compile"
 	utils "build/utils"
 	"fmt"
 	"io"
 	"math/rand"
+	"os"
 	"reflect"
 	"sort"
 	"time"
@@ -32,6 +34,87 @@ var CommandCheckBuild = utils.NewCommand(
 		// build all nodes found
 		result := bg.BuildMany(targets)
 		return result.Join().Failure()
+	}))
+
+var CommandCheckCache = utils.NewCommand(
+	"Debug",
+	"check-cache",
+	"inspect action cache content validity and clean invalid/outdated entries",
+	OptionCommandCompletionArgs(),
+	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+		cache := compile.GetActionCache()
+		cachePath := cache.GetCachePath()
+
+		tempPath := utils.UFS.Transient.Folder("check-cache")
+		utils.UFS.Mkdir(tempPath)
+		defer os.RemoveAll(tempPath.String())
+
+		cacheGlob := utils.MakeGlobRegexp("*" + compile.ActionCacheEntryExtname)
+		expireTime := time.Now().AddDate(0, -1, 0) // remove all cached entries older than 1 month
+
+		return cachePath.MatchFilesRec(func(f utils.Filename) error {
+			utils.GetGlobalWorkerPool().Queue(func() {
+				var entry compile.ActionCacheEntry
+
+				removeCacheEntry := false
+				defer func() {
+					if !removeCacheEntry {
+						return
+					}
+					utils.LogWarning("check-cache: remove %q cache entry")
+					for _, bulk := range entry.Bulks {
+						utils.UFS.Remove(bulk.Path)
+					}
+
+					utils.UFS.Remove(f)
+				}()
+
+				utils.LogDebug("check-cache: found cache entry %q", f)
+				if err := entry.Load(f); err != nil {
+					utils.LogError("check-cache: %v", err)
+					removeCacheEntry = true
+				}
+
+				utils.LogVerbose("check-cache: read cache entry %q with key %s and %d bulks", f, entry.Key.GetFingerprint().ShortString(), len(entry.Bulks))
+				for i := 0; i < len(entry.Bulks); {
+					removeBulk := false
+					bulk := &entry.Bulks[i]
+
+					dst := tempPath.Folder(bulk.Path.ReplaceExt("").Basename)
+					defer os.RemoveAll(dst.String())
+
+					if artifacts, err := bulk.Inflate(dst); err == nil {
+						for _, it := range artifacts {
+							utils.UFS.Remove(it)
+						}
+					} else {
+						utils.LogError("check-cache: %v", err)
+						removeBulk = true
+					}
+
+					if !removeBulk { // expire cache entries
+						removeBulk = removeBulk || utils.UFS.MTime(bulk.Path).Before(expireTime)
+					}
+
+					if removeBulk {
+						utils.LogVerbose("check-cache: remove cache bulk %q", bulk)
+						utils.UFS.Remove(bulk.Path)
+
+						if i+1 < len(entry.Bulks) {
+							entry.Bulks[i] = entry.Bulks[len(entry.Bulks)-1]
+						}
+						entry.Bulks = entry.Bulks[:len(entry.Bulks)-1]
+					} else {
+						i += 1
+					}
+				}
+
+				if len(entry.Bulks) == 0 {
+					removeCacheEntry = true
+				}
+			})
+			return nil
+		}, cacheGlob)
 	}))
 
 var CheckFingerprint = utils.NewCommand(
