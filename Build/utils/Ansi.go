@@ -176,6 +176,7 @@ func make_ansi_truecolor(fgOrbg AnsiCode, r, g, b uint8) string {
 	}
 }
 func lerp_color(col0, col1 [3]uint8, f float64) [3]uint8 {
+	f = saturate(f)
 	return [3]uint8{
 		uint8(float64(col0[0])*(1.0-f) + float64(col1[0])*f),
 		uint8(float64(col0[1])*(1.0-f) + float64(col1[1])*f),
@@ -190,11 +191,7 @@ func lerp_ansi_truecolor(fgOrbg AnsiCode, col0, col1 [3]uint8, f float64) string
 	}
 }
 func heatmap_truecolor(x float64) [3]uint8 {
-	if x > 1 {
-		x = 1
-	} else if x < 0 {
-		x = 0
-	}
+	x = saturate(x)
 	x1 := [4]float64{1, x, x * x, x * x * x}   // 1 x x2 x3
 	x2 := [2]float64{x1[3] * x, x1[3] * x * x} // x4 x5
 	dot := func(a, b []float64) (result float64) {
@@ -208,20 +205,33 @@ func heatmap_truecolor(x float64) [3]uint8 {
 		dot(x1[:], []float64{+0.014065206, +0.015360518, +1.605395918, -4.821108251}) + dot(x2[:], []float64{+8.389314011, -4.193858954}),
 		dot(x1[:], []float64{-0.019628385, +3.122510347, -5.893222355, +2.798380308}) + dot(x2[:], []float64{-3.608884658, +4.324996022})}
 	return [3]uint8{
-		uint8(math.Floor(math.MaxUint8 * lin[0])),
-		uint8(math.Floor(math.MaxUint8 * lin[1])),
-		uint8(math.Floor(math.MaxUint8 * lin[2]))}
+		uint8(math.Floor(math.MaxUint8 * saturate(lin[0]))),
+		uint8(math.Floor(math.MaxUint8 * saturate(lin[1]))),
+		uint8(math.Floor(math.MaxUint8 * saturate(lin[2])))}
+}
+func smootherstep(x float64) float64 {
+	x = saturate(x)
+	return x * x * x * (x*(x*6.0-15.0) + 10.0)
+}
+func saturate(x float64) float64 {
+	if x > 1 {
+		return 1
+	} else if x < 0 {
+		return 0
+	} else {
+		return x
+	}
 }
 func pastelizer_truecolor(f float64) [3]uint8 {
 	_, h := math.Modf(f + 0.92620819117478)
-	h = math.Abs(h) * 2 * math.Pi
+	h = math.Abs(h) * 6.2831853071796
 	cocg_x, cocg_y := 0.25*math.Cos(h), 0.25*math.Sin(h)
 	br_x, br_y := -cocg_x-cocg_y, cocg_x-cocg_y
 	c_x, c_y, c_z := 0.729+br_y, 0.729+cocg_y, 0.729+br_x
 	return [3]uint8{
-		uint8(math.Floor(math.MaxUint8 * c_x * c_x)),
-		uint8(math.Floor(math.MaxUint8 * c_y * c_y)),
-		uint8(math.Floor(math.MaxUint8 * c_z * c_z))}
+		uint8(math.Floor(math.MaxUint8 * saturate(c_x*c_x))),
+		uint8(math.Floor(math.MaxUint8 * saturate(c_y*c_y))),
+		uint8(math.Floor(math.MaxUint8 * saturate(c_z*c_z)))}
 }
 func expose_truecolor(c [3]uint8, f float64) [3]uint8 {
 	brightness := math.Exp2((f*2.0 - 1.0) * 4.0)

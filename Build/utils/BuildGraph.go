@@ -1320,7 +1320,7 @@ func (g *buildGraph) launchBuild(node *buildNode, options BuildOptions) Future[B
 					if context.numDependencies() > 0 || IsLogLevelActive(LOG_VERYVERBOSE) {
 						LogInfo("%s%s%s %q (%v)",
 							Blend("", "force ", options.Force),
-							Blend("built", "updated", context.stamp.Content.Valid()),
+							Blend("build", "update", context.stamp.Content.Valid()),
 							Blend("", " standalone", context.numDependencies() == 0),
 							node.BuildAlias, node.state.stats.Duration.Exclusive)
 					}

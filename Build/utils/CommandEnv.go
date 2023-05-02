@@ -141,14 +141,25 @@ func printBuildGraphSummary(startedAt time.Time, g BuildGraph) {
 		float32(stats.Duration.Exclusive)/float32(totalDuration))
 
 	LogForwardf("\nMost expansive nodes built:")
+
+	colorHot := pastelizer_truecolor(0)
+	colorCold := pastelizer_truecolor(0.4)
 	for i, node := range g.GetMostExpansiveNodes(10, false) {
 		ns := node.GetBuildStats()
-		LogForwardf("[%02d] - %5.2f%% -  %6.3f  %6.3f  --  %s",
+		fract := ns.Duration.Exclusive.Seconds() / stats.Duration.Exclusive.Seconds()
+
+		sstep := smootherstep(math.Sqrt(ns.Duration.Exclusive.Seconds() / totalDuration.Seconds())) // use percent of blocking duration
+		rowColor := lerp_color(colorCold, colorHot, sstep)                                          // lerp_color(colorCold, colorHot, sstep)
+		rowColor = expose_truecolor(rowColor, 0.425+0.15*sstep)
+
+		LogForwardf("%v[%02d] - %5.2f%% -  %6.3f  %6.3f  --  %s%v",
+			make_ansi_fg_truecolor(rowColor[0], rowColor[1], rowColor[2]),
 			(i + 1),
-			(100.0*ns.Duration.Exclusive.Seconds())/stats.Duration.Exclusive.Seconds(),
+			100.0*fract,
 			ns.Duration.Exclusive.Seconds(),
 			ns.Duration.Inclusive.Seconds(),
-			node.Alias())
+			node.Alias(),
+			ANSI_RESET)
 	}
 }
 

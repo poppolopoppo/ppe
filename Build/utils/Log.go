@@ -576,11 +576,11 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 		fi := int(ff * (width - 1))
 
 		for i := 0; i < width; i += 1 {
-			ft := (math.Cos(t+float64(i)/(width-1)*math.Pi)*0.5 + 0.5)
-			mi := 0.50 + float64(i&1)*0.02
+			ft := smootherstep(math.Cos(t*2+float64(i)/(width-1)*math.Pi)*0.5 + 0.5)
+			mi := 0.49 + float64(i&1)*0.02
 
 			if i < fi {
-				bg := expose_truecolor(pg.color, ft*.2+.4)
+				bg := expose_truecolor(pg.color, ft*.3+.38)
 				fg := expose_truecolor(pg.color, mi)
 				fmt.Fprint(dst,
 					make_ansi_fg_truecolor(bg[0], bg[1], bg[2]),
@@ -588,7 +588,7 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 					`▂`) //`▁`)
 
 			} else {
-				bg := expose_truecolor(pg.color, ft*.1+.25)
+				bg := expose_truecolor(pg.color, ft*.09+.3)
 				fmt.Fprint(dst,
 					make_ansi_bg_truecolor(bg[0], bg[1], bg[1]),
 					` `)
@@ -652,7 +652,7 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 
 			fmt.Fprint(dst)
 
-			fg := expose_truecolor(pg.color, f*.4+.4)
+			fg := expose_truecolor(pg.color, smootherstep(f)*.3+.35)
 			bg := expose_truecolor(pg.color, (math.Cos(t+float64(i)/(width-1)*math.Pi)*0.5+0.5)*.2+.3)
 
 			fmt.Fprint(dst,

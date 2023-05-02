@@ -189,10 +189,10 @@ func (x ActionCacheKey) GetFingerprint() Fingerprint {
 	return (Fingerprint)(x)
 }
 
-var actionCacheEntryExtname = ".cache" + bulkCompressDefault.Extname
+var ActionCacheEntryExtname = ".cache" + bulkCompressDefault.Extname
 
 func (x ActionCacheKey) GetEntryPath(cachePath Directory) Filename {
-	return makeCachePath(cachePath, x.GetFingerprint(), actionCacheEntryExtname)
+	return makeCachePath(cachePath, x.GetFingerprint(), ActionCacheEntryExtname)
 }
 
 func makeCachePath(cachePath Directory, h Fingerprint, extname string) Filename {
@@ -237,7 +237,7 @@ type ActionCacheBulk struct {
 	Inputs []FileDigest
 }
 
-var actionCacheBulkExtname = ".bulk" + bulkCompressDefault.Extname
+var ActionCacheBulkExtname = ".bulk" + bulkCompressDefault.Extname
 
 func NewActionCacheBulk(cachePath Directory, key ActionCacheKey, inputs FileSet) (bulk ActionCacheBulk, err error) {
 	bulk.Inputs = make([]FileDigest, len(inputs))
@@ -259,7 +259,7 @@ func NewActionCacheBulk(cachePath Directory, key ActionCacheKey, inputs FileSet)
 	}, key.GetFingerprint())
 
 	if err == nil {
-		bulk.Path = makeCachePath(cachePath, fingerprint, actionCacheBulkExtname)
+		bulk.Path = makeCachePath(cachePath, fingerprint, ActionCacheBulkExtname)
 	}
 	return
 }
@@ -480,22 +480,44 @@ type ActionCacheStats struct {
 	CacheHit   int32
 	CacheMiss  int32
 	CacheStore int32
+
+	CacheReadCompressed   int64
+	CacheReadUncompressed int64
+
+	CacheWriteCompressed   int64
+	CacheWriteUncompressed int64
 }
 
+func (x *ActionCacheStats) StatRead(compressed, uncompressed int64) {
+	atomic.AddInt64(&x.CacheReadCompressed, compressed)
+	atomic.AddInt64(&x.CacheReadUncompressed, uncompressed)
+}
+func (x *ActionCacheStats) StatWrite(compressed, uncompressed int64) {
+	atomic.AddInt64(&x.CacheWriteCompressed, compressed)
+	atomic.AddInt64(&x.CacheWriteUncompressed, uncompressed)
+}
 func (x ActionCacheStats) Print() {
 	LogForwardf("\nAction cache was hit %d times and missed %d times, stored %d new cache entries (hit rate: %.3f%%)",
 		x.CacheHit, x.CacheMiss, x.CacheStore,
 		100*float32(x.CacheHit)/float32(x.CacheHit+x.CacheMiss))
 
-	LogForwardf("   READ <==  %10.4f seconds - %3d cache entries",
+	LogForwardf("   READ <==  %8.3f seconds - %5d cache entries",
 		x.CacheRead.Duration.Exclusive.Seconds(), x.CacheRead.Count)
-	LogForwardf("INFLATE <-   %10.4f seconds - %3d cache bulks",
-		x.CacheInflate.Duration.Exclusive.Seconds(), x.CacheInflate.Count)
+	LogForwardf("INFLATE  ->  %8.3f seconds - %5d cache bulks    - %8.3f MiB/Sec  - %8.3f MiB  ->> %9.3f MiB  (x%4.2f)",
+		x.CacheInflate.Duration.Exclusive.Seconds(), x.CacheInflate.Count,
+		(float64(x.CacheReadUncompressed)/(1024*1024.0))/(float64(x.CacheInflate.Duration.Exclusive.Seconds()+0.00001)),
+		float64(x.CacheReadCompressed)/(1024*1024.0),
+		float64(x.CacheReadUncompressed)/(1024*1024.0),
+		float64(x.CacheReadUncompressed)/(float64(x.CacheReadCompressed)+0.00001))
 
-	LogForwardf("  WRITE ==>  %10.4f seconds - %3d cache entries",
+	LogForwardf("  WRITE ==>  %8.3f seconds - %5d cache entries",
 		x.CacheWrite.Duration.Exclusive.Seconds(), x.CacheWrite.Count)
-	LogForwardf("DEFLATE  ->  %10.4f seconds - %3d cache bulks",
-		x.CacheDeflate.Duration.Exclusive.Seconds(), x.CacheDeflate.Count)
+	LogForwardf("DEFLATE <-   %8.3f seconds - %5d cache bulks    - %8.3f MiB/Sec  - %8.3f MiB  <<- %9.3f MiB  (x%4.2f)",
+		x.CacheDeflate.Duration.Exclusive.Seconds(), x.CacheDeflate.Count,
+		(float64(x.CacheWriteUncompressed)/(1024*1024.0))/(float64(x.CacheDeflate.Duration.Exclusive.Seconds())+0.00001),
+		float64(x.CacheWriteCompressed)/(1024*1024.0),
+		float64(x.CacheWriteUncompressed)/(1024*1024.0),
+		float64(x.CacheWriteUncompressed)/(float64(x.CacheWriteCompressed)+0.00001))
 }
 
 /***************************************
