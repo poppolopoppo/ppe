@@ -25,6 +25,8 @@ type ActionCache interface {
 	AsyncCacheWrite(node BuildNode, key ActionCacheKey, artifacts FileSet) error
 }
 
+var actionCacheStats *ActionCacheStats
+
 type actionCache struct {
 	path  Directory
 	seed  Fingerprint
@@ -34,6 +36,8 @@ type actionCache struct {
 var GetActionCache = Memoize(func() ActionCache {
 	result := BuildActionCache(UFS.Cache).Build(CommandEnv.BuildGraph())
 	if result.Failure() == nil {
+		// store global access to cache stats
+		actionCacheStats = &result.Success().stats
 		// print cache stats upon exit if specified on command-line
 		if GetCommandFlags().Summary.Get() {
 			CommandEnv.OnExit(func(*CommandEnvT) error {
@@ -77,10 +81,7 @@ func (x *actionCache) CacheRead(a *ActionRules, artifacts FileSet) (key ActionCa
 	key = x.makeActionKey(a)
 	entry, err := x.fetchCacheEntry(key, false)
 	if err == nil {
-		inflateStat := StartBuildStats()
-		if err = entry.CacheRead(a, artifacts); err == nil {
-			x.stats.CacheInflate.Append(inflateStat)
-		}
+		err = entry.CacheRead(a, artifacts)
 	}
 
 	if err == nil {
@@ -100,11 +101,8 @@ func (x *actionCache) CacheWrite(action BuildAlias, key ActionCacheKey, artifact
 	defer x.stats.CacheWrite.Append(scopedStat)
 
 	if entry, err := x.fetchCacheEntry(key, true); err == nil {
-		deflateStat := StartBuildStats()
-
 		var dirty bool
 		if dirty, err = entry.CacheWrite(x.path, inputs, artifacts); err == nil {
-			x.stats.CacheDeflate.Append(deflateStat)
 
 			if dirty {
 				if err = entry.writeCacheEntry(x.path); err == nil {
@@ -286,8 +284,8 @@ func (x *ActionCacheBulk) CacheHit() bool {
 	return true
 }
 func (x *ActionCacheBulk) Deflate(artifacts ...Filename) error {
-	benchmark := LogBenchmark("action-cache: deflate bulk storage %q", x.Path.Basename)
-	defer benchmark.Close()
+	deflateStat := StartBuildStats()
+	defer actionCacheStats.CacheInflate.Append(deflateStat)
 
 	return UFS.CreateBuffered(x.Path, func(w io.Writer) error {
 		zw := zip.NewWriter(w)
@@ -300,11 +298,13 @@ func (x *ActionCacheBulk) Deflate(artifacts ...Filename) error {
 			}
 
 			name := MakeLocalFilename(file)
-			w, err := zw.CreateHeader(&zip.FileHeader{
+			header := &zip.FileHeader{
 				Name:     name,
 				Method:   bulkCompressDefault.Method,
-				Modified: info.ModTime(), // save modified time stable
-			})
+				Modified: info.ModTime().UTC(), // keep modified time stable when restoring cache artifacts
+			}
+
+			w, err := zw.CreateHeader(header)
 			if err != nil {
 				return err
 			}
@@ -314,14 +314,16 @@ func (x *ActionCacheBulk) Deflate(artifacts ...Filename) error {
 			}); err != nil {
 				return err
 			}
+
+			actionCacheStats.StatWrite(int64(header.CompressedSize64), int64(header.UncompressedSize64))
 		}
 
 		return zw.Close()
 	})
 }
-func (x *ActionCacheBulk) Inflate() (FileSet, error) {
-	benchmark := LogBenchmark("action-cache: inflate bulk storage %q", x.Path.Basename)
-	defer benchmark.Close()
+func (x *ActionCacheBulk) Inflate(dst Directory) (FileSet, error) {
+	inflateStat := StartBuildStats()
+	defer actionCacheStats.CacheInflate.Append(inflateStat)
 
 	var artifacts FileSet
 	return artifacts, UFS.OpenFile(x.Path, func(r *os.File) error {
@@ -343,8 +345,14 @@ func (x *ActionCacheBulk) Inflate() (FileSet, error) {
 				return err
 			}
 
-			dst := UFS.Root.AbsoluteFile(file.Name)
-			err = UFS.Create(dst, func(w io.Writer) error {
+			actionCacheStats.StatRead(int64(file.CompressedSize64), int64(file.UncompressedSize64))
+
+			dst := dst.AbsoluteFile(file.Name)
+			err = UFS.CreateFile(dst, func(w *os.File) error {
+				// this is much faster than separate UFS.MTime()/os.Chtimes(), but OS dependant...
+				if err := SetMTime(w, file.ModTime()); err != nil {
+					return err
+				}
 				return CopyWithProgress(dst.String(), int64(file.UncompressedSize64), w, rc)
 			})
 			rc.Close()
@@ -352,9 +360,6 @@ func (x *ActionCacheBulk) Inflate() (FileSet, error) {
 			if err != nil {
 				return err
 			}
-
-			// restore modified time to keep other build stable
-			UFS.SetMTime(dst, file.Modified)
 
 			artifacts.Append(dst)
 		}
@@ -383,7 +388,7 @@ func (x *ActionCacheEntry) Serialize(ar Archive) {
 func (x *ActionCacheEntry) CacheRead(a *ActionRules, artifacts FileSet) error {
 	for _, bulk := range x.Bulks {
 		if bulk.CacheHit() {
-			retrieved, err := bulk.Inflate()
+			retrieved, err := bulk.Inflate(UFS.Root)
 
 			if err == nil && !retrieved.Equals(artifacts) {
 				err = fmt.Errorf("action-cache: artifacts file set do not match for action %q", a.Alias())
@@ -422,28 +427,31 @@ func (x *ActionCacheEntry) CacheWrite(cachePath Directory, inputs FileSet, artif
 	}
 
 	if dirty {
-		x.Bulks = append(x.Bulks, bulk)
 		err = bulk.Deflate(artifacts...)
+
+		x.Bulks = append(x.Bulks, bulk)
 	}
 	return dirty, err
 }
 
+func (x *ActionCacheEntry) Load(src Filename) error {
+	benchmark := LogBenchmark("action-cache: read cache entry with key %q", x.Key)
+	defer benchmark.Close()
+
+	return UFS.Open(src, func(r io.Reader) error {
+		_, err := CompressedArchiveFileRead(r, func(ar Archive) {
+			ar.Serializable(x)
+		})
+		return err
+	})
+}
 func (x *ActionCacheEntry) readCacheEntry(cachePath Directory) error {
 	path := x.Key.GetEntryPath(cachePath)
 	if !path.Exists() {
 		return fmt.Errorf("action-cache: no cache entry with key %q", x.Key)
 	}
 
-	benchmark := LogBenchmark("action-cache: read cache entry with key %q", x.Key)
-	defer benchmark.Close()
-
-	return UFS.Open(path, func(r io.Reader) error {
-		_, err := CompressedArchiveFileRead(r, func(ar Archive) {
-			ar.Serializable(x)
-		})
-		return err
-	})
-
+	return x.Load(path)
 }
 func (x *ActionCacheEntry) writeCacheEntry(cachePath Directory) error {
 	path := x.Key.GetEntryPath(cachePath)
