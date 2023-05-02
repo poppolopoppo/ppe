@@ -636,6 +636,8 @@ func (x *buildExecuteContext) needToBuild() (bool, BuildDependencyType, error) {
 	return rebuild, dependencyType, lastError
 }
 func (x *buildExecuteContext) Execute() (BuildResult, bool, error) {
+	stats := StartBuildStats()
+
 	needToBuild, _, err := x.needToBuild()
 	if err != nil || !(needToBuild || x.options.Force) {
 		x.node.state.RLock()
@@ -657,20 +659,26 @@ func (x *buildExecuteContext) Execute() (BuildResult, bool, error) {
 	// }
 
 	x.node.state.Lock()
-	defer x.node.state.Unlock()
+	defer func() {
+		stats.resumeTimer()
+		stats.stopTimer()
+
+		x.stats = stats
+		x.node.state.stats.add(stats)
+		x.node.state.Unlock()
+
+		x.graph.stats.atomic_add(stats)
+	}()
 
 	Assert(func() bool { return x.static.validate(x.node, DEPENDENCY_STATIC) })
 	x.node.Static = x.static
 
 	// keep static dependencies untouched, clear everything else
 	x.node.makeDirty_assumeLocked()
-	x.stats.startTimer()
 
+	stats.resumeTimer()
 	err = x.node.Buildable.Build(x)
-
-	x.stats.stopTimer()
-	x.node.state.stats.add(x.stats)
-	x.graph.stats.atomic_add(x.stats)
+	stats.pauseTimer()
 
 	if err == nil {
 		x.node.Stamp = MakeTimedBuildStamp(x.timestamp, x.node.Buildable)
