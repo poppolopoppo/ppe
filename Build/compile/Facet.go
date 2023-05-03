@@ -2,7 +2,7 @@ package compile
 
 import (
 	utils "build/utils"
-	"sort"
+	"fmt"
 	"strings"
 )
 
@@ -14,7 +14,10 @@ type FacetDecorator interface {
 	Decorate(*CompileEnv, *Unit) error
 }
 
-type VariableSubstitutions map[string]string
+type VariableDefinition struct {
+	Name, Value string
+}
+type VariableSubstitutions []VariableDefinition
 
 /***************************************
  * Facet
@@ -199,80 +202,92 @@ func (facet *Facet) String() string {
  * Variable Substitutions
  ***************************************/
 
-func (vars *VariableSubstitutions) Add(key, value string) {
-	(*vars)[key] = value
+func (vars *VariableSubstitutions) Add(name, value string) {
+	if i, ok := vars.IndexOf(name); ok {
+		(*vars)[i].Value = value
+	} else {
+		*vars = append(*vars, VariableDefinition{
+			Name: name, Value: value,
+		})
+	}
 }
-func (vars *VariableSubstitutions) ExpandString(str string) string {
-	if len(*vars) > 0 && strings.ContainsAny(str, "[[:") {
-		for from, to := range *vars {
-			str = strings.ReplaceAll(str, from, to)
+func (vars VariableSubstitutions) ExpandString(str string) string {
+	if len(vars) > 0 && strings.ContainsAny(str, "[[:") {
+		for _, it := range vars {
+			str = strings.ReplaceAll(str, it.Name, it.Value)
 		}
 	}
 	return str
 }
-func (vars *VariableSubstitutions) ExpandDirectory(dir utils.Directory) (result utils.Directory) {
-	result = make([]string, len(dir))
-	for i, it := range dir {
-		result[i] = vars.ExpandString(it)
+func (vars VariableSubstitutions) ExpandDirectory(dir utils.Directory) (result utils.Directory) {
+	if len(vars) > 0 {
+		result = make([]string, len(dir))
+		for i, it := range dir {
+			result[i] = vars.ExpandString(it)
+		}
+		return result
+	} else {
+		return dir
 	}
-	return result
 }
-func (vars *VariableSubstitutions) ExpandFilename(it utils.Filename) utils.Filename {
+func (vars VariableSubstitutions) ExpandFilename(it utils.Filename) utils.Filename {
 	return utils.Filename{
 		Dirname:  vars.ExpandDirectory(it.Dirname),
 		Basename: vars.ExpandString(it.Basename),
 	}
 }
-
 func (vars VariableSubstitutions) Get(from string) string {
-	to, ok := vars[from]
-	utils.AssertIn(ok, true)
-	return to
+	if i, ok := vars.IndexOf(from); ok {
+		return vars[i].Value
+	} else {
+		utils.LogPanic("variable-substitutions: could not find [[:%s:]] in %v", from, vars)
+		return ""
+	}
+}
+func (vars VariableSubstitutions) IndexOf(from string) (int, bool) {
+	for i, it := range vars {
+		if it.Name == from {
+			return i, true
+		}
+	}
+	return len(vars), false
 }
 func (vars *VariableSubstitutions) Append(other VariableSubstitutions) {
-	for from, to := range other {
-		if _, ok := (*vars)[from]; !ok {
-			vars.Add(from, to)
+	for _, it := range other {
+		if _, ok := vars.IndexOf(it.Name); !ok {
+			*vars = append(*vars, it)
 		}
 	}
 }
 func (vars *VariableSubstitutions) Prepend(other VariableSubstitutions) {
-	for from, to := range other {
-		vars.Add(from, to)
+	for _, it := range other {
+		vars.Add(it.Name, it.Value)
 	}
 }
-
-type variableSubstitutionPair struct {
-	From, To string
-}
-
-func (x *variableSubstitutionPair) Serialize(ar utils.Archive) {
-	ar.String(&x.From)
-	ar.String(&x.To)
-}
-
 func (vars *VariableSubstitutions) Serialize(ar utils.Archive) {
-	var pinned []variableSubstitutionPair
-	if ar.Flags().IsLoading() {
-		utils.SerializeSlice(ar, &pinned)
+	utils.SerializeSlice(ar, (*[]VariableDefinition)(vars))
+}
 
-		*vars = make(map[string]string, len(pinned))
-		for _, it := range pinned {
-			vars.Add(it.From, it.To)
-		}
-	} else {
-		pinned := make([]variableSubstitutionPair, 0, len(*vars))
-		for from, to := range *vars {
-			pinned = append(pinned, variableSubstitutionPair{
-				From: from,
-				To:   to,
-			})
-		}
-
-		sort.Slice(pinned, func(i, j int) bool {
-			return pinned[i].From < pinned[j].From
-		})
-
-		utils.SerializeSlice(ar, &pinned)
+func (def VariableDefinition) String() string {
+	return fmt.Sprint(def.Name, `=`, def.Value)
+}
+func (def *VariableDefinition) Set(in string) error {
+	parsed := strings.SplitN(in, `=`, 2)
+	if len(parsed) != 2 {
+		return fmt.Errorf("invalid variable definition %q", in)
 	}
+
+	def.Name = parsed[0]
+	def.Value = parsed[1]
+	return nil
+}
+func (x VariableDefinition) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+func (x *VariableDefinition) UnmarshalText(data []byte) error {
+	return x.Set(string(data))
+}
+func (def *VariableDefinition) Serialize(ar utils.Archive) {
+	ar.String(&def.Name)
+	ar.String(&def.Value)
 }
