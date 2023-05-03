@@ -64,23 +64,24 @@ func (x *fixedSizeWorkerPool) Queue(task TaskFunc) {
 	x.give <- task
 }
 func (x *fixedSizeWorkerPool) Join() {
+	x.cond.L.Lock()
+	defer x.cond.L.Unlock()
+
 	pbar := LogProgress(0, x.numWorkers, "join %s worker pool", x.name)
 	defer pbar.Close()
 
-	wg := sync.WaitGroup{}
-	wg.Add(x.numWorkers)
 	for i := 0; i < x.numWorkers; i += 1 {
 		x.Queue(func() {
-			wg.Done()
-
-			x.mutex.Lock()
-			x.cond.Wait()
 			pbar.Inc()
-			x.mutex.Unlock()
+
+			x.cond.L.Lock()
+			defer x.cond.L.Unlock()
+
+			x.cond.Broadcast()
 		})
 	}
-	wg.Wait()
-	x.cond.Broadcast()
+
+	x.cond.Wait()
 }
 func (x *fixedSizeWorkerPool) Resize(n int) {
 	Assert(func() bool { return n > 0 })
@@ -115,6 +116,7 @@ func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
 	// If the calling goroutine exits without unlocking the thread,
 	// the thread will be terminated.
 	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
 	for {
 		if task := (<-x.give); task != nil {
