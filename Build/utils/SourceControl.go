@@ -175,7 +175,15 @@ func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 	}
 }
 func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
+	status.Revision = "no-revision-available"
+	status.Branch = "no-branch-available"
+	status.Timestamp = CommandEnv.BuildTime()
+
 	if outp, err := git.Command("log", "-1", "--format=\"%H, %ct, %D\"", MakeLocalDirectory(status.Path)); err == nil {
+		if len(outp) == 0 {
+			return nil // output is empty when the path is known to Git (ignored or not git-added yet for instance)
+		}
+
 		line := strings.TrimSpace(string(outp))
 		line = strings.TrimPrefix(line, "\"")
 		line = strings.TrimSuffix(line, "\"")
@@ -184,6 +192,7 @@ func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
 
 		status.Revision = strings.TrimSpace(log[0])
 		branchInfo := strings.Split(log[len(log)-1], "->")
+
 		status.Branch = strings.TrimSpace(branchInfo[len(branchInfo)-1])
 		timestamp := strings.TrimSpace(log[1])
 
