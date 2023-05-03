@@ -147,13 +147,17 @@ func ForeachBuildPlatform(each func(utils.BuildFactoryTyped[Platform]) error) er
 	return nil
 }
 
-func GeLocalHostBuildPlatform() utils.BuildFactoryTyped[Platform] {
+var GetLocalHostPlatformAlias = utils.Memoize(func() PlatformAlias {
 	arch := CurrentArch()
 	for _, platform := range AllPlatforms.Values() {
 		if platform.GetPlatform().Arch == arch {
-			return GetBuildPlatform(platform.GetPlatform().PlatformAlias)
+			return platform.GetPlatform().PlatformAlias
 		}
 	}
 	utils.UnreachableCode()
-	return nil
+	return PlatformAlias{}
+})
+
+func GeLocalHostBuildPlatform() utils.BuildFactoryTyped[Platform] {
+	return GetBuildPlatform(GetLocalHostPlatformAlias())
 }

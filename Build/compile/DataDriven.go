@@ -33,9 +33,21 @@ func RegisterArchetype(archtype string, fn ModuleArchetype) ModuleArchetype {
  ***************************************/
 
 type ExtensionDesc struct {
-	Archetypes utils.StringSet
-	HAL        map[utils.HostId]*ModuleDesc
-	TAG        map[TagFlags]*ModuleDesc
+	Archetypes      utils.StringSet
+	AllowedPlaforms utils.SetT[PlatformAlias]
+	HAL             map[utils.HostId]*ModuleDesc
+	TAG             map[TagFlags]*ModuleDesc
+}
+
+func (src ExtensionDesc) ApplyAllowedPlatforms(name fmt.Stringer) bool {
+	if len(src.AllowedPlaforms) > 0 {
+		localPlatform := GetLocalHostPlatformAlias()
+		if src.AllowedPlaforms.Contains(localPlatform) {
+			utils.LogTrace("%v: not allowed on <%v> platform", name, localPlatform)
+			return false
+		}
+	}
+	return true
 }
 
 func (src ExtensionDesc) ApplyArchetypes(dst *ModuleDesc, name ModuleAlias) {
@@ -260,8 +272,11 @@ func (x *buildModulesDeserializer) loadModuleDesc(src utils.Filename, namespace 
 		result.rules.PrecompiledSource = &f
 	}
 
-	x.modules = append(x.modules, result)
+	if !result.ApplyAllowedPlatforms(result.rules.ModuleAlias) {
+		return nil, nil
+	}
 
+	x.modules = append(x.modules, result)
 	return result, nil
 }
 
@@ -293,12 +308,18 @@ func (x *buildModulesDeserializer) loadNamespaceDesc(src utils.Filename, parent 
 		result.ApplyExtensions(&parent.ExtensionDesc)
 	}
 
+	if !result.ApplyAllowedPlatforms(result.rules.NamespaceAlias) {
+		return nil, nil
+	}
+
 	x.namespaces = append(x.namespaces, result)
 
 	for _, it := range result.Modules {
 		f := result.rules.NamespaceDir.Folder(it).File(it + MODULEDESC_EXT)
 		if module, err := x.loadModuleDesc(f, result); err == nil {
-			result.rules.NamespaceModules.Append(module.rules.ModuleAlias)
+			if module != nil { // check if module is allowed
+				result.rules.NamespaceModules.Append(module.rules.ModuleAlias)
+			}
 		} else {
 			return nil, err
 		}
@@ -307,7 +328,9 @@ func (x *buildModulesDeserializer) loadNamespaceDesc(src utils.Filename, parent 
 	for _, it := range result.Children {
 		f := result.rules.NamespaceDir.Folder(it).File(it + NAMESPACEDESC_EXT)
 		if namespace, err := x.loadNamespaceDesc(f, result); err == nil {
-			result.rules.NamespaceChildren.Append(namespace.rules.String())
+			if namespace != nil { // check if namespace is allowed
+				result.rules.NamespaceChildren.Append(namespace.rules.String())
+			}
 		} else {
 			return nil, err
 		}
