@@ -89,8 +89,8 @@ func NewFacet() Facet {
 	}
 }
 
-func (facet *Facet) Tagged(tag ...TagType) bool {
-	return facet.Tags.Has(tag...)
+func (facet *Facet) Tagged(tag TagType) bool {
+	return facet.Tags.Has(tag)
 }
 func (facet *Facet) Append(others ...Facetable) {
 	for _, o := range others {

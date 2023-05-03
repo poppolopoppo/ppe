@@ -280,13 +280,8 @@ type EnumSet[T EnumFlag, E interface {
 
 func (x EnumSet[T, E]) Ord() int32  { return int32(x) }
 func (x EnumSet[T, E]) Empty() bool { return x == 0 }
-func (x EnumSet[T, E]) Has(elements ...T) bool {
-	for _, it := range elements {
-		if (x.Ord() & (1 << E(&it).Ord())) != (1 << E(&it).Ord()) {
-			return false
-		}
-	}
-	return true
+func (x EnumSet[T, E]) Has(it T) bool {
+	return (x.Ord() & (1 << E(&it).Ord())) == (1 << E(&it).Ord())
 }
 func (x EnumSet[T, E]) Elements() (result []T) {
 	var it T

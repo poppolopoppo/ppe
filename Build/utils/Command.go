@@ -217,7 +217,7 @@ func (x *CommandArgumentFlag) Set(in string) error {
 type CommandArgumentFlags = EnumSet[CommandArgumentFlag, *CommandArgumentFlag]
 
 type CommandArgument interface {
-	HasFlag(...CommandArgumentFlag) bool
+	HasFlag(CommandArgumentFlag) bool
 	Parse(CommandLine) error
 	Format() string
 	Help(*StructuredFile)
@@ -234,8 +234,8 @@ type commandBasicArgument struct {
 	Flags       CommandArgumentFlags
 }
 
-func (x *commandBasicArgument) HasFlag(flags ...CommandArgumentFlag) bool {
-	return x.Flags.Has(flags...)
+func (x *commandBasicArgument) HasFlag(flag CommandArgumentFlag) bool {
+	return x.Flags.Has(flag)
 }
 func (x *commandBasicArgument) AutoComplete(in AutoComplete) {
 	if len(x.Short) > 0 {
@@ -302,7 +302,7 @@ func (x *commandConsumeOneArgument[T, P]) AutoComplete(in AutoComplete) {
 	in.Any(x.Value)
 }
 func (x *commandConsumeOneArgument[T, P]) Parse(cl CommandLine) error {
-	Assert(func() bool { return !x.HasFlag(COMMANDARG_PERSISTENT, COMMANDARG_VARIADIC) })
+	Assert(func() bool { return !(x.HasFlag(COMMANDARG_PERSISTENT) || x.HasFlag(COMMANDARG_VARIADIC)) })
 
 	*x.Value = x.Default
 
