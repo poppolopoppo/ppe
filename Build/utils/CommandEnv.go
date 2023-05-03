@@ -153,7 +153,7 @@ func printBuildGraphSummary(startedAt time.Time, g BuildGraph) {
 		rowColor := lerp_color(colorCold, colorHot, sstep) // lerp_color(colorCold, colorHot, sstep)
 		rowColor = expose_truecolor(rowColor, 0.45+0.15*sstep)
 
-		LogForwardf("%v[%02d] - %5.2f%% -  %6.3f  %6.3f  --  %s%v",
+		LogForwardf("%v[%02d] - %6.2f%% -  %6.3f  %6.3f  --  %s%v",
 			make_ansi_fg_truecolor(rowColor[0], rowColor[1], rowColor[2]),
 			(i + 1),
 			100.0*fract,
