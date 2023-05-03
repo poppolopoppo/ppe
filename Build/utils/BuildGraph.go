@@ -63,7 +63,12 @@ type BuildStats struct {
 	Count int32
 }
 
-type BuildDependencies map[BuildAlias]BuildStamp
+type BuildDependency struct {
+	Alias BuildAlias
+	Stamp BuildStamp
+}
+
+type BuildDependencies []BuildDependency
 
 type BuildNode interface {
 	BuildAliasable
@@ -220,30 +225,30 @@ func (node *buildNode) GetBuildStats() BuildStats {
 func (node *buildNode) GetStaticDependencies() BuildAliases {
 	node.state.RLock()
 	defer node.state.RUnlock()
-	return Keys(node.Static)
+	return node.Static.Aliases()
 }
 func (node *buildNode) GetDynamicDependencies() BuildAliases {
 	node.state.RLock()
 	defer node.state.RUnlock()
-	return Keys(node.Dynamic)
+	return node.Dynamic.Aliases()
 }
 func (node *buildNode) GetOutputDependencies() BuildAliases {
 	node.state.RLock()
 	defer node.state.RUnlock()
-	return append(Keys(node.OutputFiles), node.OutputNodes...)
+	return append(node.OutputFiles.Aliases(), node.OutputNodes...)
 }
 func (node *buildNode) GetDependencyLinks() []BuildDependencyLink {
 	node.state.RLock()
 	defer node.state.RUnlock()
 	result := make([]BuildDependencyLink, 0, len(node.Static)+len(node.Dynamic)+len(node.OutputFiles)+len(node.OutputNodes))
-	for a := range node.Static {
-		result = append(result, BuildDependencyLink{Alias: a, Type: DEPENDENCY_STATIC})
+	for _, it := range node.Static {
+		result = append(result, BuildDependencyLink{Alias: it.Alias, Type: DEPENDENCY_STATIC})
 	}
-	for a := range node.Dynamic {
-		result = append(result, BuildDependencyLink{Alias: a, Type: DEPENDENCY_DYNAMIC})
+	for _, it := range node.Dynamic {
+		result = append(result, BuildDependencyLink{Alias: it.Alias, Type: DEPENDENCY_DYNAMIC})
 	}
-	for a := range node.OutputFiles {
-		result = append(result, BuildDependencyLink{Alias: a, Type: DEPENDENCY_OUTPUT})
+	for _, it := range node.OutputFiles {
+		result = append(result, BuildDependencyLink{Alias: it.Alias, Type: DEPENDENCY_OUTPUT})
 	}
 	for _, a := range node.OutputNodes {
 		result = append(result, BuildDependencyLink{Alias: a, Type: DEPENDENCY_OUTPUT})
@@ -254,12 +259,12 @@ func (node *buildNode) DependsOn(aliases ...BuildAlias) bool {
 	node.state.RLock()
 	defer node.state.RUnlock()
 	for _, a := range aliases {
-		if _, ok := node.Static[a]; ok {
+		if _, ok := node.Static.IndexOf(a); ok {
 			return true
 		}
 	}
 	for _, a := range aliases {
-		if _, ok := node.Dynamic[a]; ok {
+		if _, ok := node.Dynamic.IndexOf(a); ok {
 			return true
 		}
 	}
@@ -287,38 +292,38 @@ func (node *buildNode) makeDirty_assumeLocked() {
 func (node *buildNode) addStatic_AssumeLocked(a BuildAlias, stamp BuildStamp) {
 	AssertMessage(func() bool { return a.Valid() }, "%v: invalid empty alias for static dependency")
 	AssertMessage(func() bool { return !node.Alias().Equals(a) }, "%v: can't have a static dependency to self", a)
-	AssertMessage(func() bool { _, ok := node.Dynamic[a]; return !ok }, "%v: static dependency is already dynamic <%v>", node, a)
-	AssertMessage(func() bool { _, ok := node.OutputFiles[a]; return !ok }, "%v: static dependency is already output <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.Dynamic.IndexOf(a); return !ok }, "%v: static dependency is already dynamic <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.OutputFiles.IndexOf(a); return !ok }, "%v: static dependency is already output <%v>", node, a)
 	AssertMessage(func() bool { ok := node.OutputNodes.Contains(a); return !ok }, "%v: static dependency is already output <%v>", node, a)
 
-	node.Static[a] = stamp
+	node.Static.Add(a, stamp)
 }
 func (node *buildNode) addDynamic_AssumeLocked(a BuildAlias, stamp BuildStamp) {
 	Assert(func() bool { return stamp.Content.Valid() })
 	AssertMessage(func() bool { return a.Valid() }, "%v: invalid empty alias for dynamic dependency")
 	AssertMessage(func() bool { return !node.Alias().Equals(a) }, "%v: can't have an output dependency to self", a)
-	AssertMessage(func() bool { _, ok := node.Static[a]; return !ok }, "%v: dynamic dependency is already static <%v>", node, a)
-	AssertMessage(func() bool { _, ok := node.OutputFiles[a]; return !ok }, "%v: dynamic dependency is already output <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.Static.IndexOf(a); return !ok }, "%v: dynamic dependency is already static <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.OutputFiles.IndexOf(a); return !ok }, "%v: dynamic dependency is already output <%v>", node, a)
 	AssertMessage(func() bool { ok := node.OutputNodes.Contains(a); return !ok }, "%v: dynamic dependency is already output <%v>", node, a)
 
-	node.Dynamic[a] = stamp
+	node.Dynamic.Add(a, stamp)
 }
 func (node *buildNode) addOutputFile_AssumeLocked(a BuildAlias, stamp BuildStamp) {
 	Assert(func() bool { return stamp.Content.Valid() })
 	AssertMessage(func() bool { return a.Valid() }, "%v: invalid empty alias for output file dependency")
 	AssertMessage(func() bool { return !node.Alias().Equals(a) }, "%v: can't have an output dependency to self", a)
-	AssertMessage(func() bool { _, ok := node.Static[a]; return !ok }, "%v: output file dependency is already static <%v>", node, a)
-	AssertMessage(func() bool { _, ok := node.Dynamic[a]; return !ok }, "%v: output file dependency is already dynamic <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.Static.IndexOf(a); return !ok }, "%v: output file dependency is already static <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.Dynamic.IndexOf(a); return !ok }, "%v: output file dependency is already dynamic <%v>", node, a)
 	AssertMessage(func() bool { ok := node.OutputNodes.Contains(a); return !ok }, "%v: output file dependency is already output node <%v>", node, a)
 
-	node.OutputFiles[a] = stamp
+	node.OutputFiles.Add(a, stamp)
 }
 func (node *buildNode) addOutputNode_AssumeLocked(a BuildAlias) {
 	AssertMessage(func() bool { return a.Valid() }, "%v: invalid empty alias for output dependency")
 	AssertMessage(func() bool { return !node.Alias().Equals(a) }, "%v: can't have an output dependency to self", a)
-	AssertMessage(func() bool { _, ok := node.Static[a]; return !ok }, "%v: output node is already static dependency <%v>", node, a)
-	AssertMessage(func() bool { _, ok := node.Dynamic[a]; return !ok }, "%v: output node is already dynamic dependency <%v>", node, a)
-	AssertMessage(func() bool { _, ok := node.OutputFiles[a]; return !ok }, "%v: output node dependency is already output file dependency <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.Static.IndexOf(a); return !ok }, "%v: output node is already static dependency <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.Dynamic.IndexOf(a); return !ok }, "%v: output node is already dynamic dependency <%v>", node, a)
+	AssertMessage(func() bool { _, ok := node.OutputFiles.IndexOf(a); return !ok }, "%v: output node dependency is already output file dependency <%v>", node, a)
 
 	node.OutputNodes.AppendUniq(a)
 }
@@ -540,19 +545,19 @@ func makeBuildExecuteContext(g *buildGraph, node *buildNode, options BuildOption
 		node:        node,
 		options:     options,
 		stamp:       node.Stamp,
-		static:      CopyMap(node.Static),
-		dynamic:     CopyMap(node.Dynamic),
-		outputFiles: CopyMap(node.OutputFiles),
+		static:      node.Static.Copy(),
+		dynamic:     node.Dynamic.Copy(),
+		outputFiles: node.OutputFiles.Copy(),
 		timestamp:   CommandEnv.BuildTime(),
 	}
 }
 
 func (x *buildExecuteContext) buildOutputFiles() Future[[]BuildResult] {
 	results := make([]BuildResult, 0, len(x.outputFiles))
-	for alias := range x.outputFiles {
-		node := x.graph.Find(alias)
+	for _, it := range x.outputFiles {
+		node := x.graph.Find(it.Alias)
 		if node == nil {
-			return MakeFutureError[[]BuildResult](fmt.Errorf("build-graph: can't find buildable file %q", alias))
+			return MakeFutureError[[]BuildResult](fmt.Errorf("build-graph: can't find buildable file %q", it.Alias))
 		}
 
 		file, ok := node.GetBuildable().(*Filename)
@@ -578,8 +583,8 @@ func (x *buildExecuteContext) needToBuild() (bool, BuildDependencyType, error) {
 	}
 
 	bo := OptionBuildStruct(x.options)
-	static := x.graph.BuildMany(Keys(x.static), bo)
-	dynamic := x.graph.BuildMany(Keys(x.dynamic), bo)
+	static := x.graph.BuildMany(x.static.Aliases(), bo)
+	dynamic := x.graph.BuildMany(x.dynamic.Aliases(), bo)
 
 	// output files are an exception: we can't build them without recursing into this node.
 	// to avoid avoid looping (or more likely dead-locking) we don't the nodes for those,
@@ -949,12 +954,16 @@ func (g *buildGraph) Create(buildable Buildable, static BuildAliases, options ..
 	oldStaticDeps := node.Static
 
 	node.Buildable = buildable
-	node.Static = make(BuildDependencies, len(static))
+	node.Static = make(BuildDependencies, 0, len(static))
 
 	for _, a := range static {
-		old, hit := oldStaticDeps[a]
-		node.addStatic_AssumeLocked(a, old)
-		dirty = dirty || !hit
+		var oldStamp BuildStamp
+		if old, hit := oldStaticDeps.IndexOf(a); hit {
+			oldStamp = oldStaticDeps[old].Stamp
+		} else {
+			dirty = true
+		}
+		node.addStatic_AssumeLocked(a, oldStamp)
 	}
 
 	if dirty {
@@ -1129,16 +1138,17 @@ func (g *buildGraph) GetDependencyInputFiles(alias BuildAlias) (FileSet, error) 
 			files.AppendUniq(*file)
 		}
 
-		for a := range node.Static {
-			if _, ok := visiteds[a]; !ok {
-				visiteds[a] = 1
-				queue = append(queue, a)
+		for _, it := range node.Static {
+			if _, ok := visiteds[it.Alias]; !ok {
+				visiteds[it.Alias] = 1
+				queue = append(queue, it.Alias)
 			}
 		}
-		for a := range node.Dynamic {
-			if _, ok := visiteds[a]; !ok {
-				visiteds[a] = 1
-				queue = append(queue, a)
+
+		for _, it := range node.Dynamic {
+			if _, ok := visiteds[it.Alias]; !ok {
+				visiteds[it.Alias] = 1
+				queue = append(queue, it.Alias)
 			}
 		}
 	}
@@ -1707,15 +1717,46 @@ func (x *BuildDependencyType) Set(in string) error {
 	return nil
 }
 
+func (x *BuildDependency) Serialize(ar Archive) {
+	ar.Serializable(&x.Alias)
+	ar.Serializable(&x.Stamp)
+}
+
+func (deps BuildDependencies) Aliases() BuildAliases {
+	result := make(BuildAliases, len(deps))
+	for i, it := range deps {
+		result[i] = it.Alias
+	}
+	return result
+}
+func (deps BuildDependencies) Copy() BuildDependencies {
+	return CopySlice(deps...)
+}
+func (deps *BuildDependencies) Add(alias BuildAlias, stamp BuildStamp) {
+	if i, ok := deps.IndexOf(alias); ok {
+		(*deps)[i].Stamp = stamp
+	} else {
+		*deps = append(*deps, BuildDependency{Alias: alias, Stamp: stamp})
+	}
+}
+func (deps BuildDependencies) IndexOf(alias BuildAlias) (int, bool) {
+	// should not be used in critical path... or sort the slice and use binary search
+	for i, it := range deps {
+		if it.Alias == alias {
+			return i, true
+		}
+	}
+	return len(deps), false
+}
 func (deps *BuildDependencies) Serialize(ar Archive) {
-	SerializeMap(ar, (*map[BuildAlias]BuildStamp)(deps))
+	SerializeSlice(ar, (*[]BuildDependency)(deps))
 }
 func (deps BuildDependencies) validate(owner BuildNode, depType BuildDependencyType) bool {
 	valid := true
-	for a, stamp := range deps {
-		if !stamp.Content.Valid() {
+	for _, it := range deps {
+		if !it.Stamp.Content.Valid() {
 			valid = false
-			LogError("%v: %s dependency <%v> has an invalid build stamp (%v)", depType, owner.Alias(), a, stamp)
+			LogError("%v: %s dependency <%v> has an invalid build stamp (%v)", depType, owner.Alias(), it.Alias, it.Stamp)
 		}
 	}
 	return valid
@@ -1727,13 +1768,14 @@ func (deps *BuildDependencies) updateBuild(owner BuildNode, depType BuildDepende
 		alias := result.Alias()
 		Assert(func() bool { return result.Content.Valid() })
 
-		oldStamp, ok := (*deps)[alias]
+		oldStampIndex, ok := deps.IndexOf(alias)
 		AssertIn(ok, true)
+		oldStamp := (*deps)[oldStampIndex].Stamp
 
 		if oldStamp != result.BuildStamp {
 			LogTrace("%v: %v dependency <%v> has been updated:\n\tnew: %v\n\told: %v", owner.Alias(), depType, alias, result.BuildStamp, oldStamp)
 
-			(*deps)[alias] = result.BuildStamp
+			deps.Add(alias, result.BuildStamp)
 			rebuild = true
 		} // else // LogDebug("%v: %v %v dependency is up-to-date", owner.Alias(), alias, depType)
 	}
