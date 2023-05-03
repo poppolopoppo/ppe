@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/pierrec/lz4/v4"
@@ -103,57 +104,75 @@ type Serializable interface {
 }
 
 /***************************************
+ * Elimination of reflection
+ * https://github.com/goccy/go-json#elimination-of-reflection
+ ***************************************/
+
+type emptyInterface struct {
+	typ unsafe.Pointer
+	ptr unsafe.Pointer
+}
+
+func getTypeptr(v interface{}) uintptr {
+	iface := (*emptyInterface)(unsafe.Pointer(&v))
+	return uintptr(iface.typ)
+}
+
+/***************************************
  * Serializable Factory
  ***************************************/
 
 type serializableGuid [16]byte
 
-type serializableFactory struct {
-	nameToConcreteType SharedMapT[string, reflect.Type]
-	concreteTypeToName SharedMapT[reflect.Type, string]
+type serializableType struct {
+	Name string
+	Type reflect.Type
+	Guid serializableGuid
+}
 
-	guidToConcreteType SharedMapT[serializableGuid, reflect.Type]
-	concreteTypeToGuid SharedMapT[reflect.Type, serializableGuid]
+type serializableFactory struct {
+	typeptrToType SharedMapT[uintptr, serializableType]
+	guidToType    SharedMapT[serializableGuid, serializableType]
+	// nameToConcreteType SharedMapT[string, reflect.Type]
+	// concreteTypeToName SharedMapT[reflect.Type, string]
+
+	// guidToConcreteType SharedMapT[serializableGuid, reflect.Type]
+	// concreteTypeToGuid SharedMapT[reflect.Type, serializableGuid]
 }
 
 var globalSerializableFactory serializableFactory
 
-func (x *serializableFactory) registerName(name string, concreteType reflect.Type) {
+func (x *serializableFactory) registerName(typeptr uintptr, name string, concreteType reflect.Type) {
 	Assert(func() bool { return len(name) > 0 })
 
+	typ := serializableType{
+		Name: name,
+		Type: concreteType}
 	fingerprint := StringFingerprint(name)
-	guid := serializableGuid{}
-	copy(guid[:], fingerprint[:16])
+	copy(typ.Guid[:], fingerprint[:16])
 
-	LogDebug("serializable: register type %v as %q : [%v]", concreteType, name, hex.EncodeToString(guid[:]))
+	LogDebug("serializable: register type %v as %q : [%v]", concreteType, name, hex.EncodeToString(typ.Guid[:]))
 
-	if prev, ok := x.nameToConcreteType.FindOrAdd(name, concreteType); ok && prev != concreteType {
-		LogPanic("serializable: overwriting factory type %q from <%v> to <%v>", name, prev, concreteType)
+	if prev, ok := x.typeptrToType.FindOrAdd(typeptr, typ); ok && prev != typ {
+		LogPanic("serializable: overwriting factory type %q from <%v> to <%v>", name, prev.Type, concreteType)
 	}
-	if prev, ok := x.concreteTypeToName.FindOrAdd(concreteType, name); ok && prev != name {
-		LogPanic("serializable: duplicate factory type <%v> from %q to %q", concreteType, prev, name)
-	}
-
-	if prev, ok := x.guidToConcreteType.FindOrAdd(guid, concreteType); ok && prev != concreteType {
-		LogPanic("serializable: overwriting factory guid %q from <%v> to <%v>", guid, prev, concreteType)
-	}
-	if prev, ok := x.concreteTypeToGuid.FindOrAdd(concreteType, guid); ok && prev != guid {
-		LogPanic("serializable: duplicate factory guid <%v> from %q to %q", concreteType, prev, guid)
+	if prev, ok := x.guidToType.FindOrAdd(typ.Guid, typ); ok && prev != typ {
+		LogPanic("serializable: duplicate factory type <%v> from %q to %q", concreteType, prev.Type, concreteType)
 	}
 }
 func (x *serializableFactory) resolveConreteType(guid serializableGuid) reflect.Type {
-	concreteType, ok := x.guidToConcreteType.Get(guid)
+	it, ok := x.guidToType.Get(guid)
 	if !ok {
 		LogPanic("serializable: could not resolve concrete type from %q", guid)
 	}
-	return concreteType
+	return it.Type
 }
-func (x *serializableFactory) resolveTypename(concreteType reflect.Type) serializableGuid {
-	guid, ok := x.concreteTypeToGuid.Get(concreteType)
+func (x *serializableFactory) resolveTypename(typeptr uintptr) serializableGuid {
+	it, ok := x.typeptrToType.Get(typeptr)
 	if !ok {
-		LogPanic("serializable: could not resolve type name from %q", concreteType)
+		LogPanic("serializable: could not resolve type name from %q", typeptr)
 	}
-	return guid
+	return it.Guid
 }
 
 func reflectTypename(input reflect.Type) string {
@@ -185,11 +204,11 @@ func reflectTypename(input reflect.Type) string {
 
 func RegisterSerializable[T Serializable](value T) {
 	rt := reflect.TypeOf(value)
-	globalSerializableFactory.registerName(reflectTypename(rt), rt)
+	globalSerializableFactory.registerName(getTypeptr(value), reflectTypename(rt), rt)
 }
 
 func reflectSerializable[T Serializable](value T) serializableGuid {
-	return globalSerializableFactory.resolveTypename(reflect.TypeOf(value))
+	return globalSerializableFactory.resolveTypename(getTypeptr(value))
 }
 func resolveSerializable(guid serializableGuid) reflect.Type {
 	return globalSerializableFactory.resolveConreteType(guid)
