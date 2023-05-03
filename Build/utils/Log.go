@@ -700,20 +700,21 @@ func LogSpinner(msg string, args ...interface{}) PinnedProgress {
 	}
 }
 
-type benchmarkLog struct {
+type BenchmarkLog struct {
 	message   string
-	startedAt time.Time
+	startedAt time.Duration
 }
 
-func (x benchmarkLog) Close() {
-	duration := time.Since(x.startedAt)
+func (x BenchmarkLog) Close() time.Duration {
+	duration := Elapsed() - x.startedAt
 	LogVeryVerbose("benchmark: %10v   %s", duration, x.message)
+	return duration
 }
-func LogBenchmark(msg string, args ...interface{}) Closable {
+func LogBenchmark(msg string, args ...interface{}) BenchmarkLog {
 	formatted := fmt.Sprintf(msg, args...) // before measured scope
-	return benchmarkLog{
+	return BenchmarkLog{
 		message:   formatted,
-		startedAt: time.Now(),
+		startedAt: Elapsed(),
 	}
 }
 

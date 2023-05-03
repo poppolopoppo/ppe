@@ -54,8 +54,8 @@ type BuildResult struct {
 }
 
 type BuildStats struct {
-	InclusiveStart time.Time
-	ExclusiveStart time.Time
+	InclusiveStart time.Duration
+	ExclusiveStart time.Duration
 	Duration       struct {
 		Inclusive time.Duration
 		Exclusive time.Duration
@@ -1775,16 +1775,17 @@ func (x *BuildStats) add(other BuildStats) {
 }
 func (x *BuildStats) startTimer() {
 	x.Count += 1
-	x.InclusiveStart = time.Now()
+	x.InclusiveStart = Elapsed()
 	x.ExclusiveStart = x.InclusiveStart
 }
 func (x *BuildStats) stopTimer() {
-	x.Duration.Inclusive += time.Since(x.InclusiveStart)
-	x.Duration.Exclusive += time.Since(x.ExclusiveStart)
+	elapsed := Elapsed()
+	x.Duration.Inclusive += (elapsed - x.InclusiveStart)
+	x.Duration.Exclusive += (elapsed - x.ExclusiveStart)
 }
 func (x *BuildStats) pauseTimer() {
-	x.Duration.Exclusive += time.Since(x.ExclusiveStart)
+	x.Duration.Exclusive += (Elapsed() - x.ExclusiveStart)
 }
 func (x *BuildStats) resumeTimer() {
-	x.ExclusiveStart = time.Now()
+	x.ExclusiveStart = Elapsed()
 }

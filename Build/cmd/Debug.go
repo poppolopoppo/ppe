@@ -189,8 +189,9 @@ var CheckSerialize = utils.NewCommand(
 		defer ar.Close()
 
 		type Stats struct {
-			Num  int32
-			Size int64
+			Num      int32
+			Size     int64
+			Duration time.Duration
 		}
 		perClass := map[reflect.Type]Stats{}
 
@@ -208,12 +209,13 @@ var CheckSerialize = utils.NewCommand(
 				return err
 			}
 
-			bench.Close()
+			duration := bench.Close()
 			pbar.Inc()
 
 			stats := perClass[reflect.TypeOf(buildable)]
 			stats.Num += 1
 			stats.Size += int64(ar.Len())
+			stats.Duration += duration
 			perClass[reflect.TypeOf(buildable)] = stats
 		}
 
@@ -228,7 +230,11 @@ var CheckSerialize = utils.NewCommand(
 
 		for _, class := range classBySize {
 			stats := perClass[class]
-			utils.LogInfo("%6d elts  -  %10.3f KiB  -  %v", stats.Num, float32(stats.Size)/1024.0, class)
+			utils.LogInfo("%6d elts  -  %10.3f KiB  - %8.3f MiB/s  -  %v",
+				stats.Num,
+				float32(stats.Size)/1024.0,
+				(float64(stats.Size)/(1024*1024.0))/(float64(stats.Duration.Seconds())),
+				class)
 		}
 
 		return nil
