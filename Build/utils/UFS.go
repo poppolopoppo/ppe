@@ -82,37 +82,6 @@ func MakeLocalFilename(f Filename) (relative string) {
 	}
 }
 
-var cleanPathCache SharedMapT[string, string]
-
-func CleanPath(in string) string {
-	AssertMessage(func() bool { return filepath.IsAbs(in) }, "ufs: need absolute path -> %q", in)
-
-	// Those checks are cheap compared to the followings
-	in = filepath.Clean(in)
-
-	// /!\ EvalSymlinks() is **SUPER** expansive !
-	// Try to mitigate with an ad-hoc concurrent cache
-	if cleaned, ok := cleanPathCache.Get(in); ok {
-		return cleaned // cache-hit: already processed
-	}
-
-	if cleaned, err := filepath.Abs(in); err == nil {
-		in = cleaned
-	} else {
-		LogPanicErr(err)
-	}
-
-	result, err := filepath.EvalSymlinks(in)
-	if err != nil {
-		result = in
-		err = nil // if path does not exist yet
-	}
-
-	// Store cleaned path for future occurrences (expects many for directories)
-	cleanPathCache.Add(in, result)
-	return result
-}
-
 /***************************************
  * Directory
  ***************************************/
@@ -120,7 +89,7 @@ func CleanPath(in string) string {
 type Directory []string
 
 func MakeDirectory(str string) Directory {
-	return SplitPath(CleanPath(str))
+	return CleanPath(str)
 }
 func (d Directory) Valid() bool {
 	return len(d) > 0

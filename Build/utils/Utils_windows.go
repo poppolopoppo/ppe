@@ -4,6 +4,8 @@ package utils
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -30,6 +32,47 @@ func SetMTime(file *os.File, mtime time.Time) (err error) {
 		})
 	}
 	return err
+}
+
+/***************************************
+ * Cleaning path to get the correct case is terribly expansive on Windows
+ ***************************************/
+
+var cleanPathCache SharedMapT[string, Directory]
+
+func CleanPath(in string) Directory {
+	AssertMessage(func() bool { return filepath.IsAbs(in) }, "ufs: need absolute path -> %q", in)
+
+	// Maximize cache usage by always convert to lower-case on Windows
+	in = strings.ToLower(in)
+
+	// Those checks are cheap compared to the followings
+	in = filepath.Clean(in)
+
+	// /!\ EvalSymlinks() is **SUPER** expansive !
+	// Try to mitigate with an ad-hoc concurrent cache
+	if cleaned, ok := cleanPathCache.Get(in); ok {
+		return cleaned // cache-hit: already processed
+	}
+
+	if cleaned, err := filepath.Abs(in); err == nil {
+		in = cleaned
+	} else {
+		LogPanicErr(err)
+	}
+
+	cleaned, err := filepath.EvalSymlinks(in)
+	if err != nil {
+		cleaned = in
+		err = nil // if path does not exist yet
+	}
+
+	// Split path and store prebuilt directory to re-use this slice in the future
+	result := SplitPath(cleaned)
+
+	// Store cleaned path for future occurrences (expects many for directories)
+	cleanPathCache.Add(in, result)
+	return result
 }
 
 /***************************************
