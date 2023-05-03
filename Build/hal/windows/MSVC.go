@@ -3,11 +3,12 @@ package windows
 import (
 	. "build/compile"
 	. "build/utils"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/goccy/go-json"
 )
 
 /***************************************

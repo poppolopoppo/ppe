@@ -2,10 +2,11 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+
+	"github.com/goccy/go-json"
 )
 
 type JsonMap map[string]interface{}
