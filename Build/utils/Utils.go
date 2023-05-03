@@ -38,12 +38,13 @@ func IsNil(v interface{}) bool {
 	if v == nil {
 		return true
 	}
-	val := reflect.ValueOf(v)
-	switch val.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
-		return val.IsNil()
-	}
-	return false
+	// val := reflect.ValueOf(v)
+	// switch val.Kind() {
+	// case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+	// 	return val.IsNil()
+	// }
+	_, ok := getTypeptr(v)
+	return !ok
 }
 
 /***************************************

@@ -113,9 +113,13 @@ type emptyInterface struct {
 	ptr unsafe.Pointer
 }
 
-func getTypeptr(v interface{}) uintptr {
+func getTypeptr(v interface{}) (uintptr, bool) {
 	iface := (*emptyInterface)(unsafe.Pointer(&v))
-	return uintptr(iface.typ)
+	if iface.ptr != nil {
+		return uintptr(iface.typ), true
+	} else {
+		return 0, false
+	}
 }
 
 /***************************************
@@ -203,12 +207,20 @@ func reflectTypename(input reflect.Type) string {
 }
 
 func RegisterSerializable[T Serializable](value T) {
+	typ, ok := getTypeptr(value)
+	if !ok {
+		LogPanic("serializable: don't register a nil pointer to a struct %T", value)
+	}
 	rt := reflect.TypeOf(value)
-	globalSerializableFactory.registerName(getTypeptr(value), reflectTypename(rt), rt)
+	globalSerializableFactory.registerName(typ, reflectTypename(rt), rt)
 }
 
-func reflectSerializable[T Serializable](value T) serializableGuid {
-	return globalSerializableFactory.resolveTypename(getTypeptr(value))
+func reflectSerializable[T Serializable](value T) (serializableGuid, bool) {
+	if typ, ok := getTypeptr(value); ok {
+		return globalSerializableFactory.resolveTypename(typ), true
+	} else {
+		return serializableGuid{}, false
+	}
 }
 func resolveSerializable(guid serializableGuid) reflect.Type {
 	return globalSerializableFactory.resolveConreteType(guid)
@@ -316,8 +328,8 @@ func SerializeMap[K OrderedComparable[K], V any,
 }
 
 func SerializeExternal[T Serializable](ar Archive, external *T) {
-	var guid, null serializableGuid
 	if ar.Flags().IsLoading() {
+		var guid, null serializableGuid
 		if ar.Raw(guid[:]); guid != null {
 			concreteType := resolveSerializable(guid)
 			if concreteType.Kind() == reflect.Pointer {
@@ -326,17 +338,18 @@ func SerializeExternal[T Serializable](ar Archive, external *T) {
 
 			value := reflect.New(concreteType)
 			*external = value.Interface().(T)
+		} else {
+			return
 		}
 	} else {
-		if !IsNil(*external) {
-			guid = reflectSerializable(*external)
-		}
-
+		guid, ok := reflectSerializable(*external)
 		ar.Raw(guid[:])
+		if !ok {
+			return
+		}
 	}
-	if guid != null {
-		ar.Serializable(*external)
-	}
+
+	ar.Serializable(*external)
 }
 
 /***************************************
